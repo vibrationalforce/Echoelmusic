@@ -275,9 +275,15 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
     // MARK: 3 — the words
 
     func testTheWordsNameThePieceStageAndTheScenes() {
-        XCTAssertEqual(StudioStage.piece.label, "Piece", "ANCHOR: the note names this label")
-        XCTAssertTrue(PerformSessionView.emptyNote.contains(StudioStage.piece.label + " stage"),
-                      "the empty Perform grid names the stage where parts are made, by the seam's own word")
+        // DAW shell S2 (2026-10-02): parts are made in ARRANGE, the bottom switcher's first entry —
+        // "Piece" is no longer a word on screen, so the note names the switcher's word instead.
+        XCTAssertEqual(ShellTab.arrange.label, "Arrange", "ANCHOR: the note names this label")
+        XCTAssertTrue(PerformSessionView.emptyNote.contains("in " + ShellTab.arrange.label),
+                      "the empty Perform grid names the view where parts are made, by the switcher's own word")
+        XCTAssertFalse(PerformSessionView.emptyNote.contains(StudioStage.piece.label + " stage"), """
+            the empty note sends the player to the "Piece stage" — the seam that word labelled is \
+            gone (S2); a word for a door that no longer exists sends the player looking for it
+            """)
         XCTAssertTrue(PerformSessionView.emptyNote.contains("scene"))
         XCTAssertFalse(PerformSessionView.emptyNote.contains("Compose"), """
             the empty note names "Compose" — the area row that word labelled is gone (2026-10-01); \

@@ -251,7 +251,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
 
     /// The keys SwiftUI localises by content alone — `Text("Pause")`, `.accessibilityLabel("Guide")`.
     /// No code change carries them, so the counterweight is that each still occurs as such a literal.
-    private static let literalKeys = ["Pause", "Guide", "Stage", "Follows pulse", "Locked", "Demo", "Heart rate"]
+    private static let literalKeys = ["Pause", "Guide", "Views", "Follows pulse", "Locked", "Demo", "Heart rate"]
 
     // MARK: - helpers
 
@@ -321,8 +321,14 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
 
     func testEveryStageWordIsCatalogued() throws {
         let stage = StudioStage.allCases.flatMap { [$0.label, $0.spokenHint] }
-        XCTAssertEqual(StudioStage.allCases.count, 2, "counterweight: the seam still has its two stages")
+        XCTAssertEqual(StudioStage.allCases.count, 2, "counterweight: the workspace still has its two stages")
         try assertCatalogued(stage, "stage word")
+        // DAW shell S2 (2026-10-02): the bottom switcher's five words and spoken hints — the same file,
+        // the same rule. ("Stage", the retired seam's VoiceOver label, left `literalKeys` for "Views".)
+        let shell = ShellTab.allCases.flatMap { [$0.label, $0.spokenHint] }
+        XCTAssertEqual(ShellTab.allCases.count, 5, "counterweight: the switcher still has its five entries")
+        try assertCatalogued(shell, "switcher word")
+        XCTAssertNil(try catalogStrings()["Stage"], "the catalog still carries the retired seam's label `Stage` — an orphan")
     }
 
     // MARK: - claim 2 — END-TO-END: every head-transport word and hint is a catalog key with a German unit
@@ -1524,11 +1530,11 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         }
         // RUNTIME COUNTERWEIGHTS: the bundle's English statics are unchanged
         XCTAssertEqual(PerformSessionView.sectionTitle, "Scenes and tracks")
-        XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write on the Piece stage,"))
+        XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write in Arrange,"))
         try assertCatalogued(["Scenes and tracks", "Expanded", "Collapsed", "Save preset", "Rename preset", "Morph → ", "Morph toward a preset…",
                           "Always on — simulated demo → timbre", "Always on — body → timbre",
                           "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene.",
-                          "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar.",
+                          "Nothing to launch yet. Parts you write in Arrange, and the Echoel's generated music, appear here as scenes to launch on the bar.",
                           "The Echoel is playing. Stop it in the header to launch a scene — the piece then starts on the scene's bar.",
                           "Blend the current sound continuously toward any preset with the Morph control — for live transitions.",
                           "0 = current sound · 1 = the target preset. Every parameter glides between them.",

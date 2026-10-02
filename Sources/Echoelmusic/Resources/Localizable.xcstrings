@@ -553,18 +553,6 @@
         }
       }
     },
-    "Stage" : {
-      "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stage"
-          }
-        }
-      }
-    },
     "Stop" : {
       "comment" : "Chrome word (E4, 2026-09-30): stage seam, area row, head transport. Glossary: Stück · Spur · Teil · Szene.",
       "extractionState" : "manual",
@@ -3357,18 +3345,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show the picture"
-          }
-        }
-      }
-    },
-    "Shows its sound controls on the Instrument stage. Piece brings you back" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows its sound controls on the Instrument stage. Piece brings you back"
           }
         }
       }
@@ -10489,14 +10465,14 @@
         }
       }
     },
-    "Echoel opens on your piece — the header, then two words: Piece and Instrument — with its living picture as a small card above them. Piece shows your tracks and parts and walks you through making one. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
+    "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your media, Project saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
       "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echoel opens on your piece — the header, then two words: Piece and Instrument — with its living picture as a small card above them. Piece shows your tracks and parts and walks you through making one. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
+            "value" : "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your media, Project saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
           }
         }
       }
@@ -13411,18 +13387,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene."
-          }
-        }
-      }
-    },
-    "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar." : {
-      "comment" : "Perform plate empty state (2026-10-01): names the Piece stage where parts are made; the Compose area it named is gone. Glossary: Stück · Spur · Teil · Szene.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar."
           }
         }
       }
@@ -21783,30 +21747,6 @@
         }
       }
     },
-    "Shows the arrangement: the tracks and their parts" : {
-      "comment" : "Piece tab Arrange (B3): VoiceOver hint",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows the arrangement: the tracks and their parts"
-          }
-        }
-      }
-    },
-    "Shows every sounding track's level, pan, mute and solo in one list" : {
-      "comment" : "Piece tab Mix (B3): VoiceOver hint",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows every sounding track's level, pan, mute and solo in one list"
-          }
-        }
-      }
-    },
     "No track makes a sound yet. Add a track or write a part, and its strip appears here" : {
       "comment" : "Piece mixer (B3): empty state",
       "extractionState" : "manual",
@@ -21979,6 +21919,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adds a track, imports an audio or MIDI file, or starts a new MIDI part"
+          }
+        }
+      }
+    },
+    "Shows its sound controls in Instrument. Arrange brings you back" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows its sound controls in Instrument. Arrange brings you back"
+          }
+        }
+      }
+    },
+    "Nothing to launch yet. Parts you write in Arrange, and the Echoel's generated music, appear here as scenes to launch on the bar." : {
+      "comment" : "Perform plate empty state (DAW shell S2, 2026-10-02): names Arrange, the switcher entry where parts are made; the Piece stage word it named left the screen with the seam.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to launch yet. Parts you write in Arrange, and the Echoel's generated music, appear here as scenes to launch on the bar."
+          }
+        }
+      }
+    },
+    "Mixer" : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mixer"
+          }
+        }
+      }
+    },
+    "Browse" : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browse"
+          }
+        }
+      }
+    },
+    "Project" : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project"
+          }
+        }
+      }
+    },
+    "Views" : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Views"
+          }
+        }
+      }
+    },
+    "Your piece: its tracks, parts and scenes." : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your piece: its tracks, parts and scenes."
+          }
+        }
+      }
+    },
+    "Every sounding track's level, pan, mute and solo." : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every sounding track's level, pan, mute and solo."
+          }
+        }
+      }
+    },
+    "The media library and the photo and video that shape the visual." : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The media library and the photo and video that shape the visual."
+          }
+        }
+      }
+    },
+    "Save, open and export the piece." : {
+      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save, open and export the piece."
           }
         }
       }

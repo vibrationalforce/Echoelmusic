@@ -107,6 +107,13 @@ public enum StudioDefaultKeys {
     /// Guard: `TheArrangeStageIsTheFrontStageTests`.
     public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.piece)
 
+    /// DAW shell S2 (founder 2026-10-02, inbox E18) — the plate the PIECE stage shows
+    /// (`PieceView`: arrange · mixer · browse · project). ARRANGE on a fresh install: the
+    /// arrangement is the piece's home. ONE writer, the bottom switcher in `StageShell`; one
+    /// reader, `WorkstationView`. Shared by two views, hence H15-KEYSTORE.
+    /// Guard: `TheShellSwitchesAtTheBottomTests`.
+    public static let pieceView = StudioDefault(key: "studio.pieceView", value: PieceView.arrange)
+
     public static let autoMode = StudioDefault(key: "studio.autoMode", value: false)
 
     /// The selected tone system (microtonal); `"edo12"` = standard 12-TET, no retune. Promoted

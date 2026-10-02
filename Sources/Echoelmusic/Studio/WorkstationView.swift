@@ -230,11 +230,6 @@ struct WorkstationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// A9: `.compact` on an iPhone in landscape — the plate's two-column switch.
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    /// The user's chosen level for the chip strip — read here so the piece's Mix and Export tabs
-    /// appear at exactly the level the Instrument strip shows its song chips (`showsSongs`).
-    /// COLD: a tap changes it, never a tick.
-    @AppStorage(StudioDefaultKeys.skillLevel.key)
-    private var skillLevelRaw = StudioDefaultKeys.skillLevel.value.rawValue
 
     /// Audio Import V1 — picker + result, both LOCAL to this leaf on the founder's
     /// instruction. Neither is persisted, neither is read by any other surface, and neither
@@ -254,10 +249,17 @@ struct WorkstationView: View {
     /// Local and cold, like the two above — it changes on a tap.
     private enum ImportKind { case audio, midi }
     @State private var importKind: ImportKind = .audio
-    /// B3 (founder 2026-10-01): what the plate shows — the arrangement, or the whole-piece mixer
-    /// (`PieceMixerView`) in its place. View state only: a tab choice, not part of the song.
-    @State private var plate: PlateView = .arrange
-    enum PlateView { case arrange, mix }
+    /// DAW shell S2 (founder 2026-10-02, inbox E18): what the plate shows — the arrangement, the
+    /// whole-piece mixer (`PieceMixerView`), the browser (the media library and the photo/video
+    /// seeds) or the project (save, open, export). Written ONLY by the bottom switcher in
+    /// `StageShell`; read here. A view choice, not part of the song — but persisted, so the piece
+    /// reopens where it was left. COLD: a tap writes it, never a tick.
+    /// ⛔ `@State private var plate: PlateView` stood here (B3, Arrange · Mix tiles in this view's
+    /// own tab row). Two owners of "which plate" — the tiles here and the switcher there — would
+    /// disagree, so the tiles left with this key's arrival.
+    @AppStorage(StudioDefaultKeys.pieceView.key)
+    private var pieceViewRaw = StudioDefaultKeys.pieceView.value.rawValue
+    private var pieceView: PieceView { PieceView(rawValue: pieceViewRaw) ?? StudioDefaultKeys.pieceView.value }
 
     /// The managed copy a tuning analysis is owed for, or nil. It is the `.task(id:)` key,
     /// which is why it holds the URL rather than a flag: a SECOND import must supersede the
@@ -302,10 +304,18 @@ struct WorkstationView: View {
             // already exists below.
             // Its own leaf with no store reads; everything it shows is handed in from the cold
             // reads this body already makes (document, clip grid, `isPlaying`).
+            // DAW shell S2: the guide stays FIRST and draws itself on the Arrange plate only
+            // (`composeGuide`). Browse and Project are plates of their own; Arrange and Mixer share
+            // the song's branch below. The stack is not re-indented under the new `if` (see A3).
             composeGuide
+            if pieceView == .browse {
+                browsePlate
+            } else if pieceView == .project {
+                projectPlate
+            } else {
             if summary.isEmpty {
                 emptyState
-            } else if plate == .mix {
+            } else if pieceView == .mixer {
                 // B3 — the mixer stands INSTEAD of the arrangement and its track column, never
                 // beside them: a strip's Mute and the track header's Mute are one fact, so they
                 // are never on screen together (one control per fact on screen).
@@ -419,7 +429,9 @@ struct WorkstationView: View {
             // bar. Its own leaf, because launching reaches the player for members this file's
             // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
             // S2: it may START the song at a scene, through this file's own transport.
-            SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })
+            if pieceView == .arrange {
+                SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })
+            }
 
             // MARK: - The import door (Audio Import V1, founder 2026-09-22)
             //
@@ -466,34 +478,6 @@ struct WorkstationView: View {
                 newMIDIPartRow
                 if let note = importNote { importNoteLine(note) }
             }
-            // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
-            // to put one on the song again without Files, a second copy or a second clip slot.
-            // Its own leaf: it lists the directory detached and writes through
-            // `MediaPlacement`; this view reads none of its state.
-            // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` stays under ten direct children
-            // (nine since DMMW Phase 1 mounted `composeGuide` first, eight since A3 pinned
-            // `transportRow` under the scroll, fewer since slice 4 folded the five doors and the
-            // note line into one `if` — count them before adding, never trust this sentence):
-            // past ten, `ViewBuilder`
-            // resolves through the variadic pack (#936). `Group` is
-            // layout-transparent — both rows still sit in this stack at its spacing.
-            Group {
-                MediaBrowserView()
-                // MS3 (founder order 2026-09-27) — a photo's colour, brightness and contrast shape
-                // the live visual, with Undo. Its own leaf beside the library: it presents the
-                // system photo picker itself (no modifier here) and this view reads none of its state.
-                #if canImport(PhotosUI) && canImport(ImageIO)
-                PhotoSeedCard()
-                #endif
-                // MV2: the same for a short video — brightness, colour and picture change shape the
-                // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
-                #if canImport(PhotosUI) && canImport(AVFoundation)
-                VideoSeedCard()
-                #endif
-                // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
-                // without leaving the plate. The row owns no Studio state; it opens the Studio's
-                // existing Save alert and Open sheet through the chrome door (no new modal).
-                WorkstationProjectRow()
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -893,86 +877,91 @@ struct WorkstationView: View {
             .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
     }
 
-    /// A7 (founder 2026-10-01, the tablet mockup's tab row) — the piece's tabs, pinned above the
-    /// plate's scroll. EVERY TAB ACTS IN PLACE: Arrange and Mix (B3) switch THIS plate, Export
-    /// (B4) shares the whole song as a MIDI file through its own leaf, `SongExportTab` — a
-    /// `ShareLink`, so no presentation modifier joins this view. None posts the chrome door and
-    /// none turns the stage. Mix and Export follow the Instrument strip's `showsSongs` gate
-    /// (`chips(for:)`), so a beginner sees the same song tools here as there.
-    /// ⛔ SOUND, FX AND MASTER STOOD HERE as tiles that posted the chrome door and JUMPED to the
-    /// Instrument stage. Slice B (founder 2026-10-01: „Vermeide das es mehrfache Wege zu einem
-    /// Bereich gibt") removed them: each was a second door to a panel whose chip sits one seam tap
-    /// away, and a tile that leaves the plate does not belong in a row whose other tabs switch it.
-    /// Sound keeps its in-context door on the Echoel track (`TrackInspectorView.openDeviceButton`).
-    /// ⛔ So did the C5 domain row above this one (Music · Visual · Light, 44 pt): Music named
-    /// where you already are, Light was the header light monitor's door a second time (same post,
-    /// both on screen), Visual a second door to the Instrument's Visuals area. Re-add none of them
-    /// without removing its twin in the same commit.
-    /// (Until B4 Export was deliberately NOT a tab: with no song export, a tab with no destination
-    /// is a button that does nothing, #164/#227. Until B3, Arrange was a plain tile — with nothing
-    /// to switch to, a button would have opened what was already open.)
-    private var pieceTabs: some View {
-        let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
-        let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty
-        return VStack(alignment: .leading, spacing: 6) {
+    /// DAW shell S2 — the BROWSE plate: the media library and the two seeds that shape the
+    /// visual. Each is its own leaf with its own state; this view reads none of it.
+    /// ⛔ These three stood at the foot of the arrangement's scroll, under the project row, grouped
+    /// to keep the stack under ten children (#936). On their own plate they no longer push the
+    /// song down, and the browser is one tap from anywhere (the switcher), as in every DAW.
+    private var browsePlate: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
+            // to put one on the song again without Files, a second copy or a second clip slot.
+            // Its own leaf: it lists the directory detached and writes through
+            // `MediaPlacement`; this view reads none of its state.
+            MediaBrowserView()
+            // MS3 (founder order 2026-09-27) — a photo's colour, brightness and contrast shape
+            // the live visual, with Undo. Its own leaf beside the library: it presents the
+            // system photo picker itself (no modifier here) and this view reads none of its state.
+            #if canImport(PhotosUI) && canImport(ImageIO)
+            PhotoSeedCard()
+            #endif
+            // MV2: the same for a short video — brightness, colour and picture change shape the
+            // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
+            #if canImport(PhotosUI) && canImport(AVFoundation)
+            VideoSeedCard()
+            #endif
+        }
+    }
+
+    /// DAW shell S2 — the PROJECT plate: save and open (`WorkstationProjectRow`), and the piece
+    /// handed away as a MIDI file (`SongExportTab`, B4) or as audio (`PieceAudioExportTab`, UX
+    /// audit 10b). Every control here acts in place or through the chrome door the row already
+    /// used; nothing adds a presentation modifier (both export tiles are `ShareLink` leaves).
+    /// ⭐ AT EVERY LEVEL (E19 „Nur im Detail"): the two export tiles stood behind
+    /// `level.showsSongs` in the old tab row. A level hides FIELDS in the detail area, never a
+    /// whole way to get the piece out of the app.
+    private var projectPlate: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
+            // without leaving the plate. The row owns no Studio state; it opens the Studio's
+            // existing Save alert and Open sheet through the chrome door (no new modal).
+            WorkstationProjectRow()
             HStack(spacing: 6) {
-                // B3: Arrange and Mix switch THIS plate. The current one is the filled tile AND says
-                // selected to VoiceOver — never colour alone; tapping it again changes nothing, and
-                // that is honest: it is where you are.
-                Button {
-                    plate = .arrange
-                } label: {
-                    EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange",
-                                   prominent: plate == .arrange, expands: true)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Arrange")
-                .accessibilityHint("Shows the arrangement: the tracks and their parts")
-                .accessibilityAddTraits(plate == .arrange ? .isSelected : [])
-                if level.showsSongs {
-                    Button {
-                        plate = .mix
-                    } label: {
-                        EchoelIconTile(systemImage: "slider.vertical.3", title: "Mix",
-                                       prominent: plate == .mix, expands: true)
+                SongExportTab()
+                // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
+                PieceAudioExportTab()
+            }
+        }
+    }
+
+    /// The arrangement's toolbar, pinned above the plate's scroll on the ARRANGE plate once the
+    /// piece has a track: the one "Add" menu and the note line its actions write.
+    /// ⛔ DAW SHELL S2 (founder 2026-10-02, inbox E18): this was the piece's TAB ROW — Arrange ·
+    /// Mix · Export · WAV · Add (A7, B3, B4, slices 10b and 4). Arrange and Mix are entries of the
+    /// bottom switcher now (`StageShell.shellSwitcher`), Export and WAV live on the Project plate.
+    /// Two rows that both switch the plate would be two owners of one choice; the row keeps only
+    /// what belongs to the arrangement itself. EVERY CONTROL HERE STILL ACTS IN PLACE: it posts no
+    /// chrome door and never turns the stage.
+    /// (Before slice 4 the creation doors stood full width under the song; on the empty plate they
+    /// still do, named by `emptyState` — same predicate, so the menu and the doors never meet.)
+    private var pieceTabs: some View {
+        let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty
+        return Group {
+            if pieceView == .arrange && hasTrack {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        // UX audit slice 4: every way to add something, in one menu — once the piece
+                        // has a track. Before that the empty plate shows the five doors itself (same
+                        // predicate, `WorkstationSummary.isEmpty`), so the menu and the doors never
+                        // stand together. At every level: the doors it replaces stand at every level.
+                        addMenu
+                        Spacer(minLength: 0)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Mix")
-                    .accessibilityHint("Shows every sounding track's level, pan, mute and solo in one list")
-                    .accessibilityAddTraits(plate == .mix ? .isSelected : [])
+                    // Review of slice 4: the Add menu's outcome is said under the Add tile, not a
+                    // screen below it. Dismissible, because this row is pinned and a long import
+                    // note would otherwise hold its height until the next action.
+                    if let note = importNote {
+                        pinnedNoteLine(note)
+                    }
                 }
-                if level.showsSongs {
-                    SongExportTab()
-                    // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
-                    PieceAudioExportTab()
-                }
-                // UX audit slice 4: every way to add something, in one menu — once the piece has a
-                // track. Before that the empty plate shows the five doors itself (same predicate,
-                // `WorkstationSummary.isEmpty`), so the menu and the doors never stand together.
-                // Not behind `showsSongs`: the doors it replaces stand at every level.
-                if hasTrack {
-                    addMenu
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(EchoelTheme.bg)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(EchoelTheme.border).frame(height: 1)
                 }
             }
-            // Review of slice 4: the Add menu's outcome is said under the Add tile, not a screen
-            // below it. Same predicate as the doors' block in `body`, so exactly one of the two
-            // places shows the line. Dismissible, because this row is pinned and a long import
-            // note would otherwise hold its height until the next action.
-            if hasTrack, let note = importNote {
-                pinnedNoteLine(note)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(EchoelTheme.bg)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(EchoelTheme.border).frame(height: 1)
-        }
-        // B3: a level that hides the Mix tab must not leave the plate on a mixer it can no
-        // longer leave by the same tab — the plate falls back to the arrangement.
-        .onChange(of: level.showsSongs) { _, shows in
-            if !shows { plate = .arrange }
         }
     }
 
@@ -1016,7 +1005,7 @@ struct WorkstationView: View {
                     .accessibilityHint(MIDIImport.newPartHint)
             }
         } label: {
-            EchoelIconTile(systemImage: "plus", title: "Add", expands: true)
+            EchoelIconTile(systemImage: "plus", title: "Add")
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
@@ -1549,7 +1538,11 @@ struct WorkstationView: View {
                                                  songPlaying: player.isPlaying)
         let facts = ComposeGuide.facts(document: timeline.document, clips: clips,
                                        canPlay: songCanStart(), isPlaying: running)
-        return ComposeGuideCard(facts: facts, note: guideNote) { step in
+        // DAW shell S2: "how to make a piece" belongs to the arrangement; on the Mixer, Browse and
+        // Project plates the guide draws nothing. It stays the plate's first child either way.
+        return Group {
+        if pieceView == .arrange {
+        ComposeGuideCard(facts: facts, note: guideNote) { step in
             // Review of c672c2adf (LOW): a refusal from step 2 (a full clip grid) was written to
             // the note line far below the guide, so the tap looked like nothing. The guide shows
             // its own step's outcome in the card; the lower line is left to the rows.
@@ -1585,6 +1578,8 @@ struct WorkstationView: View {
             case .save:
                 NotificationCenter.default.post(name: .echoelChromeDoor, object: "save")
             }
+        }
+        }
         }
     }
 

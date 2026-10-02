@@ -408,7 +408,7 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             let members = try assertNoHotRead(in: Self.seam, of: type,
                                               receiver: Self.bioReceiver, hot: try hotProperties(), why: """
                 `\(type)` (slice 2a) sits between `SurfaceHost` and a Picker host — the studio \
-                on the Instrument stage, `WorkstationView` on the Piece stage. It reads ONE \
+                on the Instrument stage, `WorkstationView` on the Piece stage. It reads TWO \
                 `@AppStorage` written on a tap and nothing else; a ~10 Hz read here rebuilds \
                 everything beneath it, the 10.76.50 shape one level further up than last time.
                 """)

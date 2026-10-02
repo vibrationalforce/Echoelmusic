@@ -267,22 +267,23 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
         let workstation = SourceText.codeOnly(try text(Self.workstation))
         XCTAssertEqual(workstation.components(separatedBy: "SongExportTab()").count - 1, 1,
                        "exactly one export door on the piece")
-        let tabs = try member("private var pieceTabs: some View {", in: workstation)
-        // Slice B (2026-10-01) removed the Master tile this claim anchored on; Mix is now the tab
-        // before Export, so the order and the own-gate needles anchor on Mix — same law.
-        guard let door = tabs.range(of: "SongExportTab()"),
-              let mix = tabs.range(of: "plate = .mix"),
-              let gate = tabs.range(of: "if level.showsSongs {", options: .backwards,
-                                    range: tabs.startIndex..<door.lowerBound) else {
-            return XCTFail("ANCHOR MISSING: the export door, the Mix tab or a showsSongs gate (#454)")
+        // DAW shell S2 (founder 2026-10-02, E18/E19): the door moved from the piece's tab row to the
+        // Project plate, the switcher entry that hands the piece away — and it stands there at EVERY
+        // level: a level hides fields in the detail area, never a way to get the piece out.
+        let project = try member("private var projectPlate: some View {", in: workstation)
+        guard let row = project.range(of: "WorkstationProjectRow()"),
+              let door = project.range(of: "SongExportTab()") else {
+            return XCTFail("ANCHOR MISSING: the project row or the export door on the Project plate (#454)")
         }
-        XCTAssertLessThan(mix.lowerBound, door.lowerBound, "Export is the last tab, after Mix")
-        XCTAssertLessThan(mix.lowerBound, gate.lowerBound, """
-            the gate nearest the door is its OWN `showsSongs` gate — not the one Mix sits behind, \
-            which would put Export inside another tab's block
-            """)
-        XCTAssertFalse(tabs[gate.upperBound..<door.lowerBound].contains("}"),
-                       "the door sits directly inside its gate")
+        XCTAssertLessThan(row.lowerBound, door.lowerBound, "Save/Open first, then the ways the piece leaves the app")
+        for gate in ["showsSongs", "skillLevel", "SkillLevel"] {
+            XCTAssertFalse(project.contains(gate), """
+                the Project plate reads `\(gate)`. The founder decided levels act only in the detail \
+                area (E19 „Nur im Detail"); an export that disappears with the level is a door nobody finds.
+                """)
+        }
+        let tabs = try member("private var pieceTabs: some View {", in: workstation)
+        XCTAssertFalse(tabs.contains("SongExportTab()"), "the export door is not ALSO in the arrangement's toolbar")
     }
 
     func testTheExportAsksThePlayersRules() throws {

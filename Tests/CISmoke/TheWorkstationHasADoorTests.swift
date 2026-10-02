@@ -48,9 +48,11 @@
 // construct, and `WorkstationView` is `@Environment`-resolving SwiftUI behind
 // `#if canImport(SwiftUI)`. (⛔ Slice F's first draft booked one claim-B assertion as DRIVEN —
 // `StudioStage.allCases` containing `.piece` — but removing a case is a COMPILE error, so it could
-// never fail at runtime for its named reason (#367). It is dropped; claim B is a SCAN throughout.)
-// **That the seam renders, that its Piece tap reaches the arrangement, and that VoiceOver reads
-// the rows in order is a DEVICE PROBE and is OPEN.**
+// never fail at runtime for its named reason (#367). It is dropped. DAW shell S2 added two DRIVEN
+// set equalities over `ShellTab` — a `stage`/`pieceView` MAPPING change is no compile error, so
+// those can fail for their named reason; the rest of claim B is a SCAN.)
+// **That the switcher renders (the seam until S2), that its Arrange tap reaches the arrangement,
+// and that VoiceOver reads the rows in order is a DEVICE PROBE and is OPEN.**
 //
 // ⭐ THE SPLIT IS A DESIGN DECISION IN THE SOURCE, NOT LUCK. The summary was pulled out of
 // the view precisely so these seven claims could be behaviour rather than seven more scans —
@@ -361,7 +363,7 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         }
     }
 
-    // MARK: - B. SCAN — the stage seam is a door on BOTH stages (slice F)
+    // MARK: - B. SCAN — the bottom switcher is a door on EVERY view (slice F; S2 moved it from the seam)
 
     /// Slice F. ⛔ Until this slice the claim was `testTheChipLeadsToThePieceStage`: the plate
     /// routed `.workstation` to `workstationPanel`, which turned the stage and built no second
@@ -377,65 +379,89 @@ final class TheWorkstationHasADoorTests: XCTestCase {
     /// ⛔ Slice F's first draft called it `testTheSeamIsTheOneDoorToThePieceStage` and opened with
     /// a `StudioStage.allCases.contains(.piece)` booked as DRIVEN behaviour; removing a case is a
     /// compile error, so that assertion could never fail at runtime (#367). Both are gone.
-    func testTheSeamIsADoorOnBothStages() throws {
+    func testTheSwitcherIsADoorOnEveryView() throws {
         let seam = try code(at: Self.seam)
         XCTAssertEqual(seam.components(separatedBy: "WorkstationView()").count - 1, 1, """
             `StageShell.swift` constructs `WorkstationView()` \
             \(seam.components(separatedBy: "WorkstationView()").count - 1) times; exactly one, \
             on the Piece stage, is the design.
             """)
-        let row = try declarationBody(of: "private var stageSeam: some View {", in: Self.seam)
-        XCTAssertTrue(row.contains("ForEach(StudioStage.allCases)"), """
-            The seam no longer builds a button for EVERY stage — a stage left out of it has no \
-            door, now that the Workstation chip is gone.
+        // DAW shell S2 (founder 2026-10-02, E18): the seam above the stages became the switcher at
+        // the BOTTOM — five entries, four onto the piece (each with its plate), one onto the
+        // instrument. Every pin below is the seam's pin moved onto the switcher, none dropped.
+        // DRIVEN (a mapping change is no compile error, so these can fail for their named reason):
+        // every stage and every piece plate has an entry.
+        XCTAssertEqual(Set(ShellTab.allCases.map(\.stage)), Set(StudioStage.allCases), """
+            Some stage has no switcher entry — with the chip gone, that stage has no door.
             """)
-        let button = try declarationBody(of: "private func stageButton(_ candidate: StudioStage) -> some View {",
+        XCTAssertEqual(Set(ShellTab.allCases.compactMap(\.pieceView)), Set(PieceView.allCases), """
+            Some plate of the piece has no switcher entry — a plate nobody can reach.
+            """)
+        let row = try declarationBody(of: "private var shellSwitcher: some View {", in: Self.seam)
+        XCTAssertTrue(row.contains("ForEach(ShellTab.allCases)"), """
+            The switcher no longer builds a button for EVERY entry — an entry left out of it has \
+            no door, now that the Workstation chip and the seam are gone.
+            """)
+        let button = try declarationBody(of: "private func switcherButton(_ tab: ShellTab, isActive: Bool) -> some View {",
                                          in: Self.seam)
-        guard let open = button.range(of: "return Button {"),
+        guard let open = button.range(of: "Button {"),
               let close = button.range(of: "} label:", range: open.upperBound..<button.endIndex) else {
             throw AnchorMissing(reason: """
-                `stageButton`'s `return Button { … } label:` shape is gone, so its action cannot be \
+                `switcherButton`'s `Button { … } label:` shape is gone, so its action cannot be \
                 extracted and the branch scan below would pass VACUOUSLY (#926). Re-anchor.
                 """)
         }
         let action = String(button[open.upperBound..<close.lowerBound])
-        XCTAssertTrue(action.contains("stageRaw = candidate.rawValue"), """
-            The seam's button no longer writes the stage key (action reads: \
-            \(action.trimmingCharacters(in: .whitespacesAndNewlines))). The seam would then be a \
-            row of labels and the arrangement would have no door.
+        XCTAssertEqual(action.trimmingCharacters(in: .whitespacesAndNewlines), "select(tab)", """
+            The switcher's button does more than `select(tab)` (action reads: \
+            \(action.trimmingCharacters(in: .whitespacesAndNewlines))). One function writes the keys.
             """)
-        for branch in ["if ", "guard ", "switch ", " ? "] {
-            XCTAssertFalse(action.contains(branch), """
-                The seam's button action contains `\(branch.trimmingCharacters(in: .whitespaces))`, \
-                so the write is CONDITIONAL and some stage does not switch — with the chip gone, \
-                that stage has no door at all (read: \(action.trimmingCharacters(in: .whitespacesAndNewlines))).
+        let select = try declarationBody(of: "private func select(_ tab: ShellTab) {", in: Self.seam)
+        guard let write = select.range(of: "stageRaw = tab.stage.rawValue") else {
+            return XCTFail("""
+                `select(_:)` no longer writes the stage key. The switcher would then be a row of \
+                labels and the arrangement would have no door.
+                """)
+        }
+        let before = select[select.startIndex..<write.lowerBound]
+        XCTAssertEqual(before.filter { $0 == "{" }.count, before.filter { $0 == "}" }.count, """
+            The stage write in `select(_:)` sits inside a block — it is CONDITIONAL, so some entry \
+            does not switch the stage (read: \(select.trimmingCharacters(in: .whitespacesAndNewlines))).
+            """)
+        for exit in ["guard ", "return", "switch ", " ? "] {
+            XCTAssertFalse(before.contains(exit), """
+                `\(exit.trimmingCharacters(in: .whitespaces))` stands before the stage write in \
+                `select(_:)` — some entry could leave without switching the stage.
                 """)
         }
         let shell = try declarationBody(of: "var body: some View {", in: Self.seam)
-        guard let seamUse = shell.range(of: "stageSeam"), let stack = shell.range(of: "ZStack {") else {
+        guard let stack = shell.range(of: "ZStack {"),
+              let switcherUse = shell.range(of: "shellSwitcher", range: stack.upperBound..<shell.endIndex) else {
             throw AnchorMissing(reason: """
-                `StageShell.body` no longer places `stageSeam` and the `ZStack` of the two stages \
-                — re-anchor (#454) rather than letting the order check pass on nothing.
+                `StageShell.body` no longer places the `ZStack` of the two stages and then \
+                `shellSwitcher` — re-anchor (#454) rather than letting the order check pass on nothing.
                 """)
         }
-        guard seamUse.upperBound <= stack.lowerBound else {
-            XCTFail("the seam must sit ABOVE the two stages, outside the stack that hides one of them")
-            return
-        }
-        let lead = String(shell[shell.startIndex..<seamUse.lowerBound])
-        let between = String(shell[seamUse.upperBound..<stack.lowerBound])
+        let lead = String(shell[shell.startIndex..<stack.lowerBound])
+        let tail = String(shell[switcherUse.upperBound..<shell.endIndex])
         for branch in ["if ", "guard ", "switch ", " ? "] {
-            XCTAssertFalse(lead.contains(branch) || between.contains(branch), """
-                `\(branch.trimmingCharacters(in: .whitespaces))` stands around the seam in \
-                `StageShell.body` (before it: \(lead.trimmingCharacters(in: .whitespacesAndNewlines)) · \
-                after it: \(between.trimmingCharacters(in: .whitespacesAndNewlines))). The seam is the \
-                one way between the two stages, so it is mounted on BOTH, unconditionally.
+            XCTAssertFalse(lead.contains(branch), """
+                `\(branch.trimmingCharacters(in: .whitespaces))` stands before the stages and the \
+                switcher in `StageShell.body` (read: \(lead.trimmingCharacters(in: .whitespacesAndNewlines))). \
+                The switcher is the one way between the views, so it is mounted on ALL of them.
                 """)
         }
+        // The switcher is the stack's sibling, not inside it: the brace depth from the stack's
+        // opening to the switcher returns to zero (the ZStack closed before it).
+        let span = shell[stack.upperBound..<switcherUse.lowerBound]
+        XCTAssertEqual(span.filter { $0 == "{" }.count + 1, span.filter { $0 == "}" }.count, """
+            `shellSwitcher` sits INSIDE the `ZStack` that hides the instrument on the Piece stage — \
+            it must be the stack's sibling, below it, on every view.
+            """)
         for hide in [".opacity(", ".allowsHitTesting(", ".accessibilityHidden(", ".hidden()"] {
-            XCTAssertFalse(between.contains(hide), """
-                `\(hide)` sits on the seam in `StageShell.body` — one of the modifiers that hide the \
-                studio on the Piece stage. A seam hidden that way is not a door on both stages.
+            XCTAssertFalse(tail.contains(hide), """
+                `\(hide)` sits on the switcher in `StageShell.body` — one of the modifiers that hide \
+                the studio on the Piece stage. A switcher hidden that way is not a door on every view.
                 """)
         }
     }
@@ -476,13 +502,20 @@ final class TheWorkstationHasADoorTests: XCTestCase {
         for path in [Self.view, Self.summary] {
             var src = try code(at: path)
             if path == Self.view {
-                // A7 (7303c048a) reads the skill level through the ONE key the Instrument strip
-                // already reads — a reader of an existing root, not a new one. Exactly that one
-                // line is excused; a second `@AppStorage` of any key is still red below.
-                let level = "@AppStorage(StudioDefaultKeys.skillLevel.key)"
+                // DAW shell S2 (founder 2026-10-02, E18/E19): the surface reads WHICH plate the piece
+                // shows through the ONE key the bottom switcher writes (`StageShell`) — a reader of
+                // the existing `StudioDefaults` root, not a new one. (Until S2 the excused line was
+                // A7's skill-level reader, the tab row's songs gate; E19 moved levels into the detail
+                // area, so the surface reads no level at all.) Exactly that one line is excused; a
+                // second `@AppStorage` of any key is still red below.
+                XCTAssertFalse(src.contains("StudioDefaultKeys.skillLevel"), """
+                    \(path) reads the skill level again. Levels thin fields in the detail area only \
+                    (E19 „Nur im Detail"); a level gate on the surface hides a whole way into the piece.
+                    """)
+                let level = "@AppStorage(StudioDefaultKeys.pieceView.key)"
                 XCTAssertEqual(src.components(separatedBy: level).count - 1, 1, """
-                    \(path) reads the skill level through `\(level)` exactly once — the tabs' \
-                    gate. Zero means the exemption below is stale; two means a second reader.
+                    \(path) reads the piece's plate through `\(level)` exactly once. Zero means \
+                    the exemption below is stale; two means a second reader.
                     """)
                 src = src.replacingOccurrences(of: level, with: "")
             }

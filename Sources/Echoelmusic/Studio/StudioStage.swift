@@ -49,3 +49,88 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
+/// What the PIECE stage shows (DAW shell S2, founder 2026-10-02, inbox E18 „Ja, so bauen"): the
+/// arrangement, the mixer, the browser (the media library and the photo/video seeds) or the
+/// project (save, open, export). One persisted choice, written only by the bottom switcher
+/// (`StageShell.shellSwitcher`), read by `WorkspaceView`'s piece plate (`WorkstationView`).
+///
+/// ⭐ WHY A SECOND KEY AND NOT MORE CASES ON `StudioStage`. The stage decides what is MOUNTED on
+/// top — the instrument is always in the tree, the piece stands over it or does not. Four of the
+/// five switcher entries show the same mounted thing (the piece) with a different plate; folding
+/// them into `StudioStage` would make every stage reader (`showStage`, Safe Mode, the head's
+/// transport rule) learn four names for "the piece". So the stage keeps its two cases and this
+/// enum says which plate the piece shows; `ShellTab` is the pure projection of the pair.
+///
+/// Raw values are PERSISTED — rename a label, never a case.
+public enum PieceView: String, CaseIterable, Identifiable, Sendable {
+    case arrange, mixer, browse, project
+    public var id: String { rawValue }
+}
+
+/// The five entries of the bottom switcher (DAW shell S2): Arrange · Mixer · Instrument ·
+/// Browse · Project — the order the founder approved (E18). A pure projection of the two
+/// persisted keys: `stage` + `pieceView` say what a tap writes, `current(stage:piece:)` says
+/// which entry is lit. There is no third stored truth, so the switcher can never disagree with
+/// what is on screen.
+///
+/// ⭐ EVERY ENTRY AT EVERY LEVEL (E19 „Nur im Detail"): no entry hides behind `SkillLevel`. A
+/// view that disappears with the level is a door nobody finds; the level thins FIELDS inside a
+/// view, never the views.
+public enum ShellTab: String, CaseIterable, Identifiable, Sendable {
+    case arrange, mixer, instrument, browse, project
+    public var id: String { rawValue }
+
+    /// The stage a tap on this entry shows.
+    public var stage: StudioStage { self == .instrument ? .instrument : .piece }
+
+    /// The plate a tap on this entry shows on the piece, or nil for the instrument — which
+    /// leaves the piece's last plate untouched, so returning to the piece returns to it.
+    public var pieceView: PieceView? {
+        switch self {
+        case .arrange:    return .arrange
+        case .mixer:      return .mixer
+        case .instrument: return nil
+        case .browse:     return .browse
+        case .project:    return .project
+        }
+    }
+
+    /// The lit entry for the two persisted keys — the inverse of `stage` + `pieceView`.
+    public static func current(stage: StudioStage, piece: PieceView) -> ShellTab {
+        guard stage == .piece else { return .instrument }
+        switch piece {
+        case .arrange: return .arrange
+        case .mixer:   return .mixer
+        case .browse:  return .browse
+        case .project: return .project
+        }
+    }
+
+    /// The visible word — one word each, the DAW vocabulary (Ableton, FL Studio Mobile).
+    public var label: String {
+        switch self {
+        case .arrange:    return String(localized: "Arrange")
+        case .mixer:      return String(localized: "Mixer")
+        case .instrument: return String(localized: "Instrument")
+        case .browse:     return String(localized: "Browse")
+        case .project:    return String(localized: "Project")
+        }
+    }
+
+    /// Spoken (#482: a door names what it reaches).
+    public var spokenHint: String {
+        switch self {
+        case .arrange:
+            return String(localized: "Your piece: its tracks, parts and scenes.")
+        case .mixer:
+            return String(localized: "Every sounding track's level, pan, mute and solo.")
+        case .instrument:
+            return StudioStage.instrument.spokenHint
+        case .browse:
+            return String(localized: "The media library and the photo and video that shape the visual.")
+        case .project:
+            return String(localized: "Save, open and export the piece.")
+        }
+    }
+}

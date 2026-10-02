@@ -39,7 +39,7 @@ final class ThePieceHasAWavDoorTests: XCTestCase {
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let midiTab = "Sources/Echoelmusic/Studio/SongExportTab.swift"
 
-    // MARK: - Claim 1 — one door, in the tab row, behind the songs gate, after the MIDI export
+    // MARK: - Claim 1 — one door, on the Project plate, after the MIDI export (S2; before: the tab row's songs gate)
 
     func testTheDoorSitsBesideTheMIDIExport() throws {
         var mounts = 0
@@ -47,16 +47,20 @@ final class ThePieceHasAWavDoorTests: XCTestCase {
             mounts += try source(path).components(separatedBy: "PieceAudioExportTab()").count - 1
         }
         XCTAssertEqual(mounts, 1, "exactly one WAV door on the piece")
-        let tabs = try body(of: "private var pieceTabs: some View {", in: try source(Self.workstation))
-        guard let midi = tabs.range(of: "SongExportTab()"),
-              let wav = tabs.range(of: "PieceAudioExportTab()"),
-              let gate = tabs.range(of: "if level.showsSongs {", options: .backwards,
-                                    range: tabs.startIndex..<midi.lowerBound) else {
-            return XCTFail("ANCHOR MISSING: the MIDI door, the WAV door or their songs gate in `pieceTabs` (#454)")
+        // DAW shell S2 (founder 2026-10-02, E18/E19): both doors live on the Project plate, at every
+        // level — beside each other in one row, the WAV door after the MIDI one.
+        let workstation = try source(Self.workstation)
+        let project = try body(of: "private var projectPlate: some View {", in: workstation)
+        guard let midi = project.range(of: "SongExportTab()"),
+              let wav = project.range(of: "PieceAudioExportTab()"),
+              let row = project.range(of: "HStack(spacing: 6) {", options: .backwards,
+                                      range: project.startIndex..<midi.lowerBound) else {
+            return XCTFail("ANCHOR MISSING: the MIDI door, the WAV door or their row on the Project plate (#454)")
         }
         XCTAssertLessThan(midi.upperBound, wav.lowerBound, "WAV follows the MIDI export")
-        XCTAssertFalse(tabs[gate.upperBound..<wav.lowerBound].contains("}"),
-                       "the WAV door sits inside the same songs gate as the MIDI export")
+        XCTAssertFalse(project[row.upperBound..<wav.lowerBound].contains("}"),
+                       "the WAV door sits in the same row as the MIDI export")
+        XCTAssertFalse(project.contains("showsSongs"), "no level gate on the Project plate (E19)")
     }
 
     // MARK: - Claim 2 — it starts the song through the ONE start and asks the exporter

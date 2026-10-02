@@ -79,7 +79,9 @@ final class ThePieceHasAMixerTests: XCTestCase {
     func testTheMixerStandsInsteadOfTheArrangement() throws {
         let workstation = SourceText.codeOnly(try text(Self.workstation))
         let body = try member("var body: some View {", in: workstation)
-        guard let mixBranch = body.range(of: "} else if plate == .mix {"),
+        // DAW shell S2: the branch is chosen by the switcher's persisted piece view (`.mixer`), not
+        // by B3's in-view `plate` (its tiles left with the switcher's arrival).
+        guard let mixBranch = body.range(of: "} else if pieceView == .mixer {"),
               let mixer = body.range(of: "PieceMixerView(voiceCapacity: player.laneVoiceCapacity)"),
               let arrangeBranch = body.range(of: "} else {", range: mixBranch.upperBound..<body.endIndex),
               let canvas = body.range(of: "ArrangeCanvasView(") else {
@@ -93,7 +95,7 @@ final class ThePieceHasAMixerTests: XCTestCase {
         XCTAssertLessThan(arrangeBranch.lowerBound, canvas.lowerBound, "the canvas lives only in the arrangement branch")
 
         let constructions = try filesMatching { $0.contains("PieceMixerView(") }
-        XCTAssertEqual(constructions, [Self.workstation], "the mixer has exactly one door: the piece's Mix tab")
+        XCTAssertEqual(constructions, [Self.workstation], "the mixer has exactly one construction, on the piece's plate — its door is the switcher's Mixer (S2)")
 
         let code = SourceText.codeOnly(try text(Self.mixer))
         for modal in [".sheet(", ".fullScreenCover(", ".popover(", ".alert(", ".confirmationDialog("] {
@@ -124,8 +126,14 @@ final class ThePieceHasAMixerTests: XCTestCase {
         let data = Data(try text(Self.catalog).utf8)
         let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let strings = root?["strings"] as? [String: Any] ?? [:]
-        for key in ["Shows the arrangement: the tracks and their parts",
-                    "Shows every sounding track's level, pan, mute and solo in one list",
+        // DAW shell S2: the two tile hints left with the Arrange/Mix tiles; the switcher's entries speak
+        // for the same two views now, and the retired hints must not linger as orphans.
+        for retired in ["Shows the arrangement: the tracks and their parts",
+                        "Shows every sounding track's level, pan, mute and solo in one list"] {
+            XCTAssertNil(strings[retired], "the catalog still carries the retired tile hint `\(retired)`")
+        }
+        for key in [ShellTab.arrange.spokenHint,
+                    ShellTab.mixer.spokenHint,
                     "No track makes a sound yet. Add a track or write a part, and its strip appears here",
                     "1 track makes no sound and has no strip",
                     "tracks make no sound and have no strip"] {

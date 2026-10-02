@@ -637,7 +637,7 @@ struct TrackInspectorView: View {
     /// editor (patch, presets, tone). It posts the existing chrome door rather than reaching
     /// into the Studio's state: this view is a leaf of the arrangement and owns none of it.
     /// Since slice 2b the receiver also turns the Instrument STAGE (this leaf lives on the Piece
-    /// stage, where the studio is hidden); the way back is the seam's "Piece".
+    /// stage, where the studio is hidden); the way back is the switcher's "Arrange" (DAW shell S2).
     private var openDeviceButton: some View {
         Button {
             NotificationCenter.default.post(name: .echoelChromeDoor, object: "sound")
@@ -655,7 +655,7 @@ struct TrackInspectorView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open the Echoel instrument")
-        .accessibilityHint("Shows its sound controls on the Instrument stage. Piece brings you back")
+        .accessibilityHint("Shows its sound controls in Instrument. Arrange brings you back")
     }
 
     /// Phase 4 · slice 2 — the track's instrument, a NAMED choice (menu Picker, not a number).

@@ -72,6 +72,13 @@ import XCTest
 /// `3deb54e77`: the plate-absence needle and the studio-wide count (2, not 1) are red for their
 /// named reason — ONE finding (#486); the per-call New-piece count and every other assertion in
 /// claim 6 are green on both.
+/// ⭐ DAW SHELL S2 (founder 2026-10-02, inbox E18) — the seam „Piece | Instrument" above the stage
+/// became the switcher at the BOTTOM: Arrange · Mixer · Instrument · Browse · Project (`ShellTab`).
+/// The two stages and their keys are unchanged, so claims 1–8 hold as written. Claim 9 moves its
+/// pins onto the switcher and gains the words (DRIVEN: every entry has a hint, none says "Play",
+/// no two share a word); claim 10 now asks the first guide card to name all five entries IN THE
+/// SWITCHER'S ORDER — stricter than the two stage words it asked for, because a newcomer reads
+/// the bottom row, and "Piece" is no longer a word on it.
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -360,29 +367,52 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             """)
     }
 
-    // 10 — END-TO-END: the launch teaching names the seam by the words it shows. The first
+    // 10 — END-TO-END: the launch teaching names the switcher by the words it shows. The first
     // guide card is the first sentence a newcomer reads; since the piece is the front stage,
     // it has to say where the instrument's Play button went (#351: a guide that describes the
-    // previous screen).
-    func testTheGuidesFirstCardNamesBothStages() throws {
+    // previous screen). S2: the words are the switcher's five, in its order.
+    func testTheGuidesFirstCardNamesEverySwitcherEntry() throws {
         let first = try XCTUnwrap(LearnLibrary.guideEntries.first)
-        XCTAssertTrue(first.detail.contains("Piece and Instrument"), """
-            The first guide card no longer names the two stages. It greets a newcomer on the \
-            Piece stage and must say that the instrument — and its Play button — is one word away.
-            """)
-        for stage in StudioStage.allCases {
-            XCTAssertTrue(first.detail.contains(stage.label), """
-                The guide names a stage by a word the seam does not show: "\(stage.label)" is \
-                missing from the first card. Rename both in the same commit (#351).
-                """)
+        var cursor = first.detail.startIndex
+        for tab in ShellTab.allCases {
+            guard let hit = first.detail.range(of: tab.label, range: cursor..<first.detail.endIndex) else {
+                XCTFail("""
+                    The guide names a view by a word the switcher does not show, or out of its \
+                    order: "\(tab.label)" is missing from the first card after the entries before \
+                    it. Rename both in the same commit (#351).
+                    """)
+                return
+            }
+            cursor = hit.upperBound
         }
+        XCTAssertFalse(first.detail.contains("Piece and Instrument"), """
+            The first card still teaches the retired seam's two words — the bottom row shows \
+            five, and "Piece" is not one of them.
+            """)
+        XCTAssertTrue(first.detail.contains("Play button"), "it still says where the instrument's Play button is")
     }
 
-    // 9 — the seam is a real control: 44 pt, selected trait, spoken hint.
-    func testTheSeamIsATapTargetThatSpeaks() throws {
+    // 9 — the switcher is a real control: 44 pt, selected trait, a visible word and a spoken hint.
+    // S2 moved the seam's three pins onto the switcher's button and added the words, DRIVEN.
+    func testTheSwitcherIsATapTargetThatSpeaks() throws {
         let seam = try source(Self.seam)
-        XCTAssertTrue(seam.contains("minHeight: EchoelTheme.controlTapHeight"), "44 pt by NAME, never a literal (#364)")
-        XCTAssertTrue(seam.contains(".accessibilityAddTraits(isActive ? .isSelected : [])"), "VoiceOver hears which stage is showing")
-        XCTAssertTrue(seam.contains(".accessibilityHint(candidate.spokenHint)"), "the door names what it reaches (#482)")
+        let button = braceBody(of: "private func switcherButton(_ tab: ShellTab, isActive: Bool) -> some View {", in: seam)
+        XCTAssertFalse(button.isEmpty, "ANCHOR: `switcherButton` moved — re-anchor (#454)")
+        XCTAssertTrue(button.contains("minHeight: EchoelTheme.controlTapHeight"), "44 pt by NAME, never a literal (#364)")
+        XCTAssertTrue(button.contains(".accessibilityAddTraits(isActive ? .isSelected : [])"), "VoiceOver hears which view is showing")
+        XCTAssertTrue(button.contains(".accessibilityHint(tab.spokenHint)"), "the door names what it reaches (#482)")
+        XCTAssertTrue(button.contains("Text(tab.label)"), "every entry shows its WORD, never an icon alone (rule 3)")
+        XCTAssertTrue(button.contains("isActive ? EchoelTheme.accent : EchoelTheme.dim"),
+                      "the lit entry differs by colour AND by the trait above — never colour alone")
+        var words = Set<String>()
+        for tab in ShellTab.allCases {
+            XCTAssertFalse(tab.spokenHint.isEmpty, "\(tab.label) has no spoken hint (#482)")
+            XCTAssertFalse(tab.label.contains("Play"), """
+                "\(tab.label)" puts a second "Play" on the screen next to the transport's.
+                """)
+            XCTAssertTrue(words.insert(tab.label).inserted, "two switcher entries say \"\(tab.label)\"")
+        }
+        XCTAssertEqual(ShellTab.instrument.label, StudioStage.instrument.label,
+                       "the Instrument entry says the stage's own word — one word per thing")
     }
 }

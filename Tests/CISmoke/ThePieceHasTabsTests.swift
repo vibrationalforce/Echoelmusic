@@ -2,6 +2,15 @@
 // Echoel — the Piece stage carries a row of tabs above the arrangement: Arrange · Mix · Export
 // (Workstation redesign A7, founder 2026-10-01; slice B the same day).
 //
+// ⭐ DAW SHELL S2 (founder 2026-10-02, inbox E18/E19) — READ THIS BEFORE THE HISTORY BELOW. The
+// bottom switcher (Arrange · Mixer · Instrument · Browse · Project, `StageShell`) took over what
+// this row's tiles did: Arrange and Mix are switcher entries (the plate is the persisted
+// `pieceView` key, written ONLY by the switcher), and both exports moved to the Project plate at
+// every level (E19: levels act in the detail area only). What is left of the row is the ARRANGE
+// plate's toolbar — the Add menu and its note line, once the piece has a track. Claims 1 and 3
+// are rewritten as that decision, each needle moved to the new address or turned into the
+// absence of the retired twin; claim 2 is untouched. The paragraphs below are the row's history.
+//
 // WHY: the tablet mockup the founder pointed at („Das angehängte Bild gefällt mir auch") puts
 // the workstation's areas in one tab row above the arrangement. A7 built it WITHOUT a second copy
 // of any panel and WITHOUT a modal. Export was deliberately NOT a tab while no song export existed
@@ -77,57 +86,51 @@ final class ThePieceHasTabsTests: XCTestCase {
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let sourcesRoot = "Sources/Echoelmusic"
 
-    // MARK: 1 — the row is pinned above the plate, and every tab acts in place
+    // MARK: 1 — the row is pinned above the plate, and every control in it acts in place
 
     func testThePieceTabsArePinnedAboveThePlateAndActInPlace() throws {
         let code = SourceText.codeOnly(try text(Self.workstation))
         let body = try member("var body: some View {", in: code)
         XCTAssertTrue(body.contains(".safeAreaInset(edge: .top, spacing: 0) { pieceTabs }"),
-                      "the tabs are pinned above the scroll, like the transport below it (A3)")
+                      "the row is pinned above the scroll, like the transport below it (A3)")
+
+        // DAW shell S2 (founder 2026-10-02, E18): the plate choice has ONE owner — the persisted
+        // `pieceView` key the bottom switcher writes. This view reads it and never writes it.
+        XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.pieceView.key)"),
+                      "the plate is read through the ONE key (#416)")
+        XCTAssertFalse(code.contains("pieceViewRaw ="), """
+            WorkstationView writes the piece view. The bottom switcher (`StageShell`) is its one \
+            writer; a second writer here is the twin owner S2 removed with the Arrange/Mix tiles.
+            """)
+        for retired in ["@State private var plate", "enum PlateView", "plate = .arrange", "plate = .mix"] {
+            XCTAssertFalse(code.contains(retired), """
+                `\(retired)` is back in WorkstationView — the plate had a second owner (B3's tiles) \
+                until S2; the switcher is now the only control that changes it.
+                """)
+        }
 
         let tabs = try member("private var pieceTabs: some View {", in: code)
-        XCTAssertTrue(code.contains("@State private var plate: PlateView = .arrange"),
-                      "the plate opens on the arrangement — the mixer is one tap away, never the default")
-        guard let arrange = tabs.range(of: "plate = .arrange"),
-              let mix = tabs.range(of: "plate = .mix"),
-              let export = tabs.range(of: "SongExportTab()") else {
-            return XCTFail("ANCHOR MISSING: the two plate tabs or the export tab (#454)")
-        }
-        XCTAssertLessThan(arrange.lowerBound, mix.lowerBound, "Arrange is the first tab, Mix the second")
-        XCTAssertLessThan(mix.lowerBound, export.lowerBound, """
-            Export comes after Mix — the two that switch THIS plate sit together, ahead of the one \
-            that hands the piece away
+        XCTAssertTrue(tabs.contains("if pieceView == .arrange && hasTrack {"), """
+            the row stands on the ARRANGE plate once the piece has a track — the toolbar of the \
+            arrangement, never a second switcher on the other plates
             """)
-        for (view, word) in [(".arrange", "Arrange"), (".mix", "Mix")] {
-            XCTAssertTrue(tabs.contains("prominent: plate == \(view)"),
-                          "the \(word) tile is filled only while \(word) is the current plate")
-            XCTAssertTrue(tabs.contains(".accessibilityAddTraits(plate == \(view) ? .isSelected : [])"), """
-                VoiceOver hears which plate is the current one — never colour alone, and never \
-                `.isSelected` on both tabs at once
-                """)
-        }
-        XCTAssertFalse(tabs.contains(".accessibilityAddTraits(.isSelected)"),
-                       "an UNCONDITIONAL selected trait would call a tab current while the other plate shows")
-
-        for door in ["NotificationCenter", ".echoelChromeDoor", "showStage("] {
+        XCTAssertTrue(tabs.contains("addMenu"), "the row holds the one Add menu (slice 4)")
+        for door in ["NotificationCenter", ".echoelChromeDoor", "showStage(", "stageRaw", "pieceViewRaw"] {
             XCTAssertFalse(tabs.contains(door), """
-                the piece's tab row contains `\(door)`. Every tab here acts IN PLACE (slice B, \
-                founder 2026-10-01: one door per area): a tile that jumps to the Instrument stage \
-                is a second door to a panel whose chip is already one seam tap away. If a new tab \
-                genuinely needs another surface, remove its twin in the same commit and rewrite \
-                this claim to name both (#364).
+                the piece's tab row contains `\(door)`. Every control here acts IN PLACE (slice B, \
+                founder 2026-10-01: one door per area): switching the plate or the stage is the \
+                bottom switcher's job, and a tile that jumps elsewhere is a second door. If a new \
+                control genuinely needs another surface, remove its twin in the same commit and \
+                rewrite this claim to name both (#364).
                 """)
         }
-        guard let mixGate = tabs.range(of: "if level.showsSongs {"),
-              let mixTab = tabs.range(of: "plate = .mix") else {
-            return XCTFail("ANCHOR MISSING: the Mix tab's SkillLevel gate (#454)")
+        for twin in ["title: \"Arrange\"", "title: \"Mix\"", "SongExportTab()", "PieceAudioExportTab()"] {
+            XCTAssertFalse(tabs.contains(twin), """
+                `\(twin)` is back in the arrangement's toolbar. Arrange and Mixer are entries of the \
+                bottom switcher and the two exports live on the Project plate (S2) — a tile here \
+                would be a second door to each.
+                """)
         }
-        XCTAssertLessThan(mixGate.lowerBound, mixTab.lowerBound, """
-            Mix follows the strip's `showsSongs` gate — the same level that first shows a song's \
-            parts shows its mixer
-            """)
-        XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.skillLevel.key)"),
-                      "the level is read through the ONE key (#416)")
     }
 
     // MARK: 2 — the stage-jumping cases left with their tiles; the panels keep their own doors
@@ -184,9 +187,13 @@ final class ThePieceHasTabsTests: XCTestCase {
                 """)
         }
         XCTAssertTrue(code.contains("PieceMixerView(voiceCapacity: player.laneVoiceCapacity)"),
-                      "the Mix tab has its destination on this plate — the tab is not a dead button")
-        XCTAssertTrue(code.contains("SongExportTab()"),
-                      "the Export tab has its destination — the share sheet of its own `ShareLink` (B4)")
+                      "the switcher's Mixer has its destination on this plate — the entry is not a dead button")
+        let project = try member("private var projectPlate: some View {", in: code)
+        XCTAssertTrue(project.contains("SongExportTab()") && project.contains("PieceAudioExportTab()"),
+                      "the two exports have their destination on the Project plate — each its own `ShareLink` (B4, 10b)")
+        let browse = try member("private var browsePlate: some View {", in: code)
+        XCTAssertTrue(browse.contains("MediaBrowserView()"),
+                      "the switcher's Browse has its destination — the media library on its own plate")
         let tabs = try member("private var pieceTabs: some View {", in: code)
         for modal in [".sheet(", ".fullScreenCover(", ".popover(", ".alert("] {
             XCTAssertFalse(tabs.contains(modal), "the tabs act in place, never through a modal (black-screen law)")
@@ -195,11 +202,11 @@ final class ThePieceHasTabsTests: XCTestCase {
         XCTAssertTrue(tabs.contains("Rectangle().fill(EchoelTheme.border).frame(height: 1)"),
                       "a 1-px border separates it from the plate")
         XCTAssertFalse(tabs.contains(".shadow("), "no shadow layer (Uncodixfy)")
-        for word in ["Arrange", "Mix"] {
-            XCTAssertTrue(tabs.contains("title: \"\(word)\""), "the \(word) tab shows its word")
-            XCTAssertTrue(tabs.contains(".accessibilityLabel(\"\(word)\")"),
-                          "and says the same word to VoiceOver (Label in Name)")
-        }
+        // S2: the row's one tile is Add (the switcher's words are pinned in
+        // `TheShellSwitchesAtTheBottomTests`). Its word is shown AND spoken (Label in Name).
+        let add = try member("private var addMenu: some View {", in: code)
+        XCTAssertTrue(add.contains("title: \"Add\""), "the Add tile shows its word")
+        XCTAssertTrue(add.contains(".accessibilityLabel(\"Add\")"), "and says the same word to VoiceOver")
         for read in ["player.", "transport.", "metronome.", "cameraRPPG", "bus."] {
             XCTAssertFalse(tabs.contains(read), """
                 the piece's tab row reads `\(read)`. It is pinned in `WorkstationView.body`, an \

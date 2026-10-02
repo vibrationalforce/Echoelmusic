@@ -9,10 +9,11 @@
 // exception on purpose: its sentence names the doors by label, so there they stay visible.
 //
 // THE FIVE CLAIMS.
-// 1. The tab row mounts `addMenu` once, behind `if hasTrack {`, where `hasTrack` is
-//    `!WorkstationSummary(document: timeline.document).isEmpty` — the same predicate `body` uses
-//    for the empty plate (#416) — and AFTER the songs gate, not inside it: the doors it replaces
-//    stand at every skill level.
+// 1. The tab row mounts `addMenu` once, behind `if pieceView == .arrange && hasTrack {`, where
+//    `hasTrack` is `!WorkstationSummary(document: timeline.document).isEmpty` — the same predicate
+//    `body` uses for the empty plate (#416) — and behind no level gate: the doors it replaces
+//    stand at every skill level. (DAW shell S2, 2026-10-02: the row is now the Arrange plate's
+//    toolbar; the songs gate and the exports it held moved to the Project plate.)
 // 2. ONE BODY PER ACTION (#416): each menu item and its door call the same function
 //    (`addAudioTrack()`, `openImporter(.audio)`, `addMIDITrack()`, `openImporter(.midi)`,
 //    `newMIDIPart()`), the items keep the doors' words in the doors' order, and the transaction
@@ -69,7 +70,7 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
         ("newMIDIPartRow", "newMIDIPart()", "New MIDI Part"),
     ]
 
-    // MARK: - Claim 1 — one Add menu, in the tab row, behind the same empty predicate, every level
+    // MARK: - Claim 1 — one Add menu, in the Arrange plate's tab row, behind the same empty predicate, every level
 
     func testTheTabRowCarriesOneAddMenuOnceThePieceHasATrack() throws {
         let code = try source(Self.workstation)
@@ -78,20 +79,25 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
         let tabs = try body(of: "private var pieceTabs: some View {", in: code)
         XCTAssertTrue(tabs.contains("let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty"),
                       "the tab row's gate is the empty plate's predicate, negated (#416)")
-        guard let gate = tabs.range(of: "if hasTrack {"),
-              let mount = tabs.range(of: "addMenu", range: gate.upperBound..<tabs.endIndex),
-              let wav = tabs.range(of: "PieceAudioExportTab()") else {
-            return XCTFail("ANCHOR MISSING: the Add menu, its empty-piece gate or the WAV door in `pieceTabs` (#454)")
+        // DAW shell S2 (founder 2026-10-02, E18): the tab row is the ARRANGE plate's toolbar — the
+        // switcher at the bottom took the Arrange/Mix tiles, the Project plate took both exports.
+        // The gate is the empty predicate plus the plate, and nothing else: no level, no songs gate.
+        guard let gate = tabs.range(of: "if pieceView == .arrange && hasTrack {"),
+              let mount = tabs.range(of: "addMenu", range: gate.upperBound..<tabs.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the Add menu or its gate in `pieceTabs` (#454)")
         }
-        XCTAssertTrue(tabs[gate.upperBound..<mount.lowerBound].allSatisfy(\.isWhitespace),
-                      "the menu sits directly inside its gate — shown once the piece is not empty")
-        XCTAssertLessThan(wav.upperBound, gate.lowerBound, "Add is the last tile of the row")
-        let between = tabs[wav.upperBound..<gate.lowerBound]
-        XCTAssertTrue(between.contains("}"), """
-            the Add menu sits OUTSIDE the songs gate the exports share — the five doors it replaces \
-            stand at every skill level, so hiding Add at a lower level would leave a piece with tracks \
-            and no way to add another
+        let lead = SourceText.codeOnly(String(tabs[gate.upperBound..<mount.lowerBound]))
+        XCTAssertFalse(lead.contains("if ") || lead.contains("ForEach"), """
+            a second condition between the gate and the Add menu — Add is shown whenever the \
+            arrangement has a track, and only then
             """)
+        for gateWord in ["showsSongs", "skillLevel", "SkillLevel", "PieceAudioExportTab()", "SongExportTab()"] {
+            XCTAssertFalse(tabs.contains(gateWord), """
+                `\(gateWord)` in the tab row. The doors Add replaces stand at every skill level, so a \
+                level gate here would leave a piece with tracks and no way to add another; the exports \
+                live on the Project plate (E19)
+                """)
+        }
         XCTAssertTrue(code.contains("let summary = WorkstationSummary(document: timeline.document)"),
                       "`body` builds its summary from the same document — one predicate, `isEmpty` (#416)")
     }
@@ -183,7 +189,9 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
             screen below the Add tile that was tapped, so a refusal reads as a tap that did nothing
             """)
         let tabs = try body(of: "private var pieceTabs: some View {", in: code)
-        guard let pinned = tabs.range(of: "if hasTrack, let note = importNote {"),
+        // S2: the pinned note sits INSIDE the Add menu's gate, under the Add row — same predicate.
+        guard let gate = tabs.range(of: "if pieceView == .arrange && hasTrack {"),
+              let pinned = tabs.range(of: "if let note = importNote {", range: gate.upperBound..<tabs.endIndex),
               let line = tabs.range(of: "pinnedNoteLine(note)", range: pinned.upperBound..<tabs.endIndex) else {
             return XCTFail("the tab row does not say the Add menu's outcome under the Add tile")
         }
