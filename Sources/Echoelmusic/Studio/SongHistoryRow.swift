@@ -40,6 +40,12 @@
 //  label. At accessibility sizes the head stacks and the history has a line of its own, so the
 //  word comes back there: the switch is the SAME one `ProjectHeader` stacks on.
 //
+//  ⭐ ⌘Z AND ⇧⌘Z (UX audit 2026-10-02, slice 13): with a keyboard on an iPad, or on a Mac, the
+//  system keys reach the SAME two buttons — a shortcut on a disabled button does nothing, so
+//  the keys can never undo past the history. No `UndoManager` bridge: the store stays the one
+//  history, and a second registration would be a second owner of "what Undo means". This row
+//  is mounted once (`ProjectHeader`), so each key has exactly one owner.
+//
 
 import SwiftUI
 
@@ -57,10 +63,12 @@ struct SongHistoryRow: View {
         let words = dynamicTypeSize.isAccessibilitySize
         HStack(spacing: 6) {
             button(String(localized: "Undo"), "arrow.uturn.backward", enabled: canUndo, words: words,
+                   shortcut: KeyboardShortcut("z", modifiers: .command),
                    label: String(localized: "Undo the last change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.undo()
             }
             button(String(localized: "Redo"), "arrow.uturn.forward", enabled: canRedo, words: words,
+                   shortcut: KeyboardShortcut("z", modifiers: [.command, .shift]),
                    label: String(localized: "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file")) {
                 timeline.redo()
             }
@@ -69,7 +77,8 @@ struct SongHistoryRow: View {
         .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes")
     }
 
-    private func button(_ title: String, _ systemImage: String, enabled: Bool, words: Bool, label: String,
+    private func button(_ title: String, _ systemImage: String, enabled: Bool, words: Bool,
+                        shortcut: KeyboardShortcut, label: String,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 4) {
@@ -87,6 +96,7 @@ struct SongHistoryRow: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+        .keyboardShortcut(shortcut)
         .accessibilityLabel(label)
     }
 }
