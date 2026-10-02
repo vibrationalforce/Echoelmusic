@@ -80,6 +80,12 @@ public final class TimelineRegionPlayer {
     public private(set) var startedFromTick = 0
     /// Loop the whole song (rounded up to whole bars) when it reaches the end.
     public var loopEnabled = true
+    /// Whether the last take ended because the song reached its end with `loopEnabled` off —
+    /// written `true` in `transportStep`'s end branch and reset in `play`, nowhere else.
+    /// UX audit slice 10: the piece bounce (`LoopExporter.exportPiece`) asks this to tell a
+    /// FINISHED piece from one the user stopped half-way. Both read `isPlaying == false`; only
+    /// the first may be written out as the piece. Cold, and read by a poll, not a view.
+    @ObservationIgnored public private(set) var lastStopReachedSongEnd = false
 
     /// The tempo every `pattern?.tempo` read in this file falls back to when the engine is
     /// not attached. Named rather than repeated as `120` at eight sites (#416/#1439): the
@@ -648,6 +654,7 @@ public final class TimelineRegionPlayer {
         self.loopTicks = Self.loopTicks(for: document)
         let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)
         self.startedFromTick = startTick
+        self.lastStopReachedSongEnd = false
         // Clips/Scenes LOW-1 (modes census Q5): the shared PatternEngine may ALREADY be running
         // (the instrument playing). Then the next transport step is `currentStep`, not 0 — so
         // the song enters its start bar mid-bar, and every layer is loaded at the
@@ -817,6 +824,7 @@ public final class TimelineRegionPlayer {
                 newTick = cursor.advance(step: step)   // restart within bar 0
                 wrapped = true
             } else {
+                lastStopReachedSongEnd = true   // before `stop()`: the end, not a user Stop
                 stop()
                 return
             }

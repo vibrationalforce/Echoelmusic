@@ -336,10 +336,108 @@ public final class LoopExporter {
                                    loopSeconds: seconds, fromEnd: effectiveAgo, targetLUFS: targetLUFS)
     }
 
+    // MARK: - The whole piece (UX audit 2026-10-02, slice 10)
+
+    /// How a piece bounce ended. Only `.reachedEnd` is written out.
+    private enum PieceOutcome { case reachedEnd, stopped, cancelled, tooLong }
+
+    /// Seconds the capture keeps running after the piece reaches its end. `stop()` releases
+    /// every voice, so this is where release envelopes and reverb/delay tails decay INTO the
+    /// file instead of being cut at the last bar line. Longer than the loop tail above because
+    /// a piece ends on a release, a loop on a downbeat it repeats from.
+    private let pieceTailSeconds: Double = 2.0
+
+    /// The longest piece a bounce waits for — a backstop against a transport that never ends,
+    /// never the measure of the piece. The measure is the player reaching its own end.
+    private static let pieceCapSeconds: Double = 3_600
+
+    /// Render the whole piece to a `.wav` — "Piece (WAV)". Realtime, like `exportWav`: the
+    /// piece plays ONCE from bar 1 with the song loop switched off, the master is captured
+    /// through the same RetroCapture tap, and SingleExport writes the whole take (no bar trim)
+    /// LUFS-normalised to `targetLUFS`. What is captured is the master OUTPUT, so the live
+    /// instrument and the body voice are in it if they sound — the file is what was heard.
+    ///
+    /// `start` is the caller's door into the ONE song start (`WorkstationView.startSong`): this
+    /// class never calls `player.play(` itself, so the start rule keeps its single site.
+    ///
+    /// Only a piece that REACHED ITS END is written. A cancel, an outside Stop and the one-hour
+    /// backstop all discard the take — a half piece saved as "the piece" would be a lie with a
+    /// share button on it. Cancel and Stop return to `.idle` (a choice, not a failure); the
+    /// backstop and a piece with nothing to play are `.failed`, with the reason.
+    @discardableResult
+    public func exportPiece(engine: AudioEngine, beatPlayer: BeatPlayer,
+                            player: TimelineRegionPlayer, start: @MainActor () -> Void,
+                            targetLUFS: Float?) async -> URL? {
+        guard status != .capturing, status != .rendering else { return nil }
+
+        // 1. From silence: whatever plays now would otherwise open the file mid-phrase.
+        player.stop()
+        beatPlayer.pattern.stop()
+        cancelRequested = false
+        captureIsAbortable = true
+        status = .capturing
+        let wasLooping = player.loopEnabled
+        player.loopEnabled = false
+        defer { player.loopEnabled = wasLooping }
+        engine.retroCapture.startRecording(preRoll: 0)
+        start()
+        guard player.isPlaying else {
+            // The door asked `canPlay` first; reaching here means the piece changed under it.
+            captureIsAbortable = false
+            await abortCapture(engine: engine, beatPlayer: beatPlayer)
+            status = .failed(String(localized: "The piece has nothing to play"))
+            return nil
+        }
+
+        // 2. Wait for the piece to end, then for its tail — both cancellable.
+        var outcome = await waitForPieceEnd(player)
+        if outcome == .reachedEnd {
+            let tailDone = await waitForCapture(seconds: pieceTailSeconds)
+            if !tailDone { outcome = .cancelled }
+        }
+        captureIsAbortable = false
+        guard outcome == .reachedEnd else {
+            player.stop()
+            await abortCapture(engine: engine, beatPlayer: beatPlayer)
+            if outcome == .tooLong {
+                status = .failed(String(localized: "The piece is longer than one hour"))
+            }
+            return nil
+        }
+
+        // 3. Close the take (same guarded path as the loop) and write the whole of it.
+        guard let cafURL = await finishRecording(engine) else {
+            if case .failed = status {} else { status = .failed(String(localized: "Capture failed")) }
+            return nil
+        }
+        return await renderTrimmed(engine: engine, sourceURL: cafURL,
+                                   loopSeconds: nil, fromEnd: 0, targetLUFS: targetLUFS)
+    }
+
+    /// Poll until the piece stops, ~10×/s like `waitForCapture`. The player's own flag says
+    /// whether it stopped at the end; `isPlaying` alone cannot tell that from a user Stop.
+    private func waitForPieceEnd(_ player: TimelineRegionPlayer) async -> PieceOutcome {
+        var waited = 0.0
+        while player.isPlaying {
+            if cancelRequested { return .cancelled }
+            if waited >= Self.pieceCapSeconds { return .tooLong }
+            do {
+                try await Task.sleep(for: .seconds(Self.cancelPollSeconds))
+            } catch {
+                cancelRequested = true
+                return .cancelled
+            }
+            waited += Self.cancelPollSeconds
+        }
+        if cancelRequested { return .cancelled }
+        return player.lastStopReachedSongEnd ? .reachedEnd : .stopped
+    }
+
     /// Shared tail: configure SingleExport for the bar-aligned loop window
-    /// (trim + edge fades + LUFS on the window only) and run it.
+    /// (trim + edge fades + LUFS on the window only) and run it. `loopSeconds == nil` keeps
+    /// the WHOLE take — the piece path, which has no bar grid to cut back to.
     private func renderTrimmed(engine: AudioEngine, sourceURL: URL,
-                               loopSeconds: Double, fromEnd: Double, targetLUFS: Float?) async -> URL? {
+                               loopSeconds: Double?, fromEnd: Double, targetLUFS: Float?) async -> URL? {
         status = .rendering
         engine.singleExport.reset()
         engine.singleExport.outputFormat = .wav
