@@ -235,8 +235,12 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
                        "a local selection beside the owner is a second truth")
         XCTAssertEqual(code.components(separatedBy: "TrackInspectorView(").count - 1, 1)
         // WA4 path 6 moved Mute/Solo into the track HEADER, so the Workstation now reaches
-        // `TrackMix` — for exactly the header's five members and nothing the inspector owns
-        // (level, pan, name, removal stay behind the selected row).
+        // `TrackMix` — for exactly the header's members and nothing the inspector owns
+        // (level, pan, name, removal stay behind the selected row). Since 58106a0d2 the header's
+        // two taps run through `TrackMix.tapStep` (the one-Undo-step gesture around `flipMute` /
+        // `flipSolo`, pinned by `EveryHandMadeMixChangeIsOneUndoStepTests`) — a sixth HEADER
+        // member, not an inspector one. This set went red on that commit and stayed red outside
+        // the Run Tests window (#807) until the S4b grading found it; the set stays exact.
         var reached: Set<String> = []
         var cursor = code.startIndex
         while let hit = code.range(of: "TrackMix.", range: cursor..<code.endIndex) {
@@ -244,7 +248,7 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
             let member = code[hit.upperBound...].prefix { $0.isLetter || $0.isNumber || $0 == "_" }
             if !member.isEmpty { reached.insert(String(member)) }
         }
-        XCTAssertEqual(reached, ["controls", "flipMute", "flipSolo", "muteHint", "soloHint"],
+        XCTAssertEqual(reached, ["controls", "flipMute", "flipSolo", "muteHint", "soloHint", "tapStep"],
                        "the Workstation reaches TrackMix for \(reached.sorted()) — the header owns "
                        + "Mute/Solo only; level, pan, name and removal belong to the inspector")
         let inspectorConstructions = try filesMatching { code, _ in
