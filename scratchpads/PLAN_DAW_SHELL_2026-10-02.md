@@ -35,7 +35,7 @@ Antworten:
 | S5 ✅ | Mixer | Streifen + Master (Master-Streifen gebaut) | WorkstationView, MasterStripView |
 | S6 (a ✅) | Browse | Sounds (gebaut) · Medienbibliothek · Foto/Video-Saat; Import bleibt im Add-Menü, Moods im Instrument | WorkstationView, SoundBrowserView |
 | S7 (a ✅) | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
-| S8 (a ✅) | Querformat | Umschalter als senkrechte Leiste links (statt Segment), Detail als rechte Spalte (b offen) | StageShell, WorkstationView |
+| S8 (a ✅ b ✅) | Querformat | Umschalter als senkrechte Leiste links (statt Segment), Detail als rechte Spalte (A9); b: Add-Kachel ans Ende der Transportzeile statt eigener Zeile | StageShell, WorkstationView |
 | S9 (a ✅) | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
 | S10 | Modal-Konsolidierung | Instrument-Modals in den Hüllen-Slot | EchoelStudioView |
 
@@ -159,6 +159,24 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
 - **Aufgezeichnet, nicht geändert:** die `.leading`-Safe-Area-Ausdehnung wird von `SurfaceHost`s
   `.clipped()` abgeschnitten — kosmetisch, die Leiste bleibt erreichbar.
 - **Gerät offen:** iPhone SE quer bei der größten Textgröße (enger Fall), Wechsel hoch/quer.
+
+## S8b — Entscheidungen und Befunde (2026-10-02)
+
+- **Eine Zeile Höhe zurück im Querformat.** Zwischen Steuerleiste und Arrangement stand eine
+  angeheftete Zeile mit genau EINER Kachel („Add"), während die Transportzeile darunter Breite
+  übrig hatte. Quer steht die Kachel jetzt am Ende der Transportzeile (nach Play · Click · Record,
+  vor dem Pegel); hochkant ändert sich nichts.
+- **Eine Entscheidung, zwei Montagestellen.** `ArrangeAddPlacement.of(plate:hasTrack:compactHeight:)`
+  (rein, `nonisolated`) wird genau einmal gefragt, in `addPlacement` — mit dem Prädikat der leeren
+  Platte und derselben Größenklasse wie A9 und S8a. Jede Platzierung hat genau ein Tor; die
+  Hinweiszeile des Add-Menüs folgt der Kachel (quer unter der Transportzeile).
+- **Kalt.** `addPlacement` liest nichts Heißes — es wird in beiden angehefteten Leisten
+  ausgewertet, Vorfahren jedes Pickers auf der Platte.
+- **Wächter:** neu `TheAddTileEndsTheTransportInLandscapeTests` (Anspruch 1 end-to-end über alle
+  Platten × Spur × Größenklasse); `TheAddMenuHoldsTheCreationDoorsTests` und `ThePieceHasTabsTests`
+  im selben Commit neu verankert, nicht schwächer. 10 Quell- + 4 Funktions-Mutanten rot.
+- **Gerät offen:** quer mit spielendem Pegel — passt die Kachel (die Positionsanzeige weicht
+  zuerst)? Hinweiszeile unter der Transportzeile, Drehen zurück.
 
 ## S9a — Entscheidungen und Befunde (2026-10-02)
 

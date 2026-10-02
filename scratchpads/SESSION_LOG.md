@@ -41994,3 +41994,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **4414ad4cd** S9a Zeit-Zoom: Schrift-Pinch von `SurfaceHost` entfernt (`StudioZoom(step:)` als Wert — der Typ verbietet einen zweiten Schreiber); `ArrangeTimeZoom` als eigenes Blatt (zwei Wächter erlauben im Canvas-File genau ein `@GestureState`); Canvas in zwei Spalten. Neuer Wächter `ThePinchZoomsTheArrangementsTimeTests` (Vorwärts-Wächter, sieben Mutanten rot); Anspruch 3 von `TheArrangeCanvasNamesItsBarsTests` strenger neu verankert (sieben Mutanten rot).
 - **Lehre:** wer einen Ein-Spalten-Canvas in zwei Spalten teilt, muss die Zeilenhöhe in BEIDEN Spalten festnageln — vorher hielt die gemeinsame `HStack`-Zeile Name und Spur zusammen; jetzt tun es nur noch gleiche `spacing`, ein geteiltes `rulerHeight` und `rowHeight` auf beiden Seiten. Der Wächter pinnt alle drei.
 - Gates: S9a laufen. Review S9a läuft. Gerät: nichts geprüft (Inbox §2 „S8a", „S9a").
+
+### 2026-10-02 — DAW shell S8b
+
+- **Gates S9a-Reparatur:** Compile Check auf a8149f7e3 ✓ (CI/CD lief beim Push von S8b noch).
+- **4a457a7e7 S8b:** quer steht die Add-Kachel am Ende der Transportzeile statt in einer eigenen angehefteten Zeile; hochkant unverändert. Eine reine Entscheidung `ArrangeAddPlacement.of`, einmal gefragt in `addPlacement` (leere-Platte-Prädikat + `verticalSizeClass == .compact`, dieselbe Lesart wie A9/S8a), je Platzierung ein Tor; die Hinweiszeile folgt der Kachel. Nichts Heißes gelesen.
+- **Wächter:** neu `TheAddTileEndsTheTransportInLandscapeTests`; zwei Wächter im selben Commit neu verankert. Transkribiert; 14 Mutanten rot; Prüfer sauber, moved-needles-Treffer geöffnet (einer neu verankert, einer gehört zu `ProjectHeader`).
+- Gerät: nichts geprüft (Inbox §2 „S8b").
