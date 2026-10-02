@@ -254,8 +254,10 @@ final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
         for key in ["Undo the last change to the piece's parts, notes, automation, mix or a relinked file",
                     "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file"] {
             let entry = strings[key] as? [String: Any]
-            let de = ((entry?["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertNotNil(de?["value"] as? String, "`\(key)` has its German line")
+            let localizations = entry?["localizations"] as? [String: Any] ?? [:]
+            let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(en?["value"] as? String, key, "`\(key)` has its English line")
+            XCTAssertEqual(Set(localizations.keys), ["en"], "`\(key)`: the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

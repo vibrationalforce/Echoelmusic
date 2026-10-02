@@ -314,11 +314,12 @@ final class TheVisualIntensityIsACanonicalParameterTests: XCTestCase {
 
         let data = try Data(contentsOf: Self.repoRoot().appendingPathComponent(Self.catalog))
         let strings = (try JSONSerialization.jsonObject(with: data) as? [String: Any])?["strings"] as? [String: Any]
-        let de = (((strings?["Visual intensity"] as? [String: Any])?["localizations"] as? [String: Any])?["de"]
-                  as? [String: Any])?["stringUnit"] as? [String: Any]
-        XCTAssertEqual(de?["state"] as? String, "translated",
-                       "\"Visual intensity\" has no translated German unit; E4-105 draws descriptor "
-                       + "names through the catalog, so it would revert to English mid-screen.")
+        let localizations = (strings?["Visual intensity"] as? [String: Any])?["localizations"] as? [String: Any] ?? [:]
+        let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+        XCTAssertEqual(en?["state"] as? String, "translated",
+                       "\"Visual intensity\" has no translated English unit; E4-105 draws descriptor "
+                       + "names through the catalog, so the key must stay in it.")
+        XCTAssertEqual(Set(localizations.keys), ["en"], "\"Visual intensity\": the app speaks one language (founder 2026-10-02) — no second unit")
     }
 
     // MARK: - Helpers

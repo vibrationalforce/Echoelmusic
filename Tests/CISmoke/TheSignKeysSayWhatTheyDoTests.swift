@@ -55,7 +55,7 @@
 // to the non-generic `LocalizedStringKey` overload — the same binding the `decimalKey` comment
 // spells out. #267's rule is that an i18n commit which adds an UNTRANSLATED string is a
 // regression wearing the right label, so the guard requires both keys to exist in
-// `Localizable.xcstrings` with a German translation, not merely to be non-empty in English.
+// `Localizable.xcstrings` with their English unit (a German one until 2026-10-02, founder "Nur Englisch").
 //
 // ⚠️ WHAT THIS FILE CANNOT DO, first: nothing here renders. `EchoelNumberPad` is behind
 // `#if canImport(SwiftUI)` and `signKey` is `private`, so every UI claim is a SOURCE-TEXT SCAN.
@@ -194,10 +194,10 @@ final class TheSignKeysSayWhatTheyDoTests: XCTestCase {
             """)
     }
 
-    // MARK: - the catalog (regression on the de half)
+    // MARK: - the catalog (the en half; the de half was removed 2026-10-02, "Nur Englisch")
 
     /// #267: adding an untranslated user-facing string is a regression wearing the right label.
-    func testBothLabelsAreInTheCatalogWithGerman() throws {
+    func testBothLabelsAreInTheCatalog() throws {
         let json = try catalogJSON()
         guard let strings = json["strings"] as? [String: Any] else {
             return XCTFail("`Localizable.xcstrings` has no `strings` object")
@@ -210,15 +210,15 @@ final class TheSignKeysSayWhatTheyDoTests: XCTestCase {
             // at this nesting depth.
             let entry = strings[key] as? [String: Any]
             let localizations = entry?["localizations"] as? [String: Any]
-            let deLocalization = localizations?["de"] as? [String: Any]
-            let unit = deLocalization?["stringUnit"] as? [String: Any]
-            let german = unit?["value"] as? String
-            XCTAssertFalse(german?.isEmpty ?? true, """
-                "\(key)" has no German translation in `Localizable.xcstrings`. A bare literal
-                binds to the `LocalizedStringKey` overload, so an uncatalogued one ships as
-                English to a German VoiceOver user — the #267 rule that an i18n commit adding
-                an untranslated string is a regression wearing the right label (#488).
+            let enLocalization = localizations?["en"] as? [String: Any]
+            let unit = enLocalization?["stringUnit"] as? [String: Any]
+            let english = unit?["value"] as? String
+            XCTAssertEqual(english, key, """
+                "\(key)" has no English unit in `Localizable.xcstrings`. A bare literal binds to
+                the `LocalizedStringKey` overload, so the key must stay catalogued — the #267 rule
+                that an uncatalogued string is a regression wearing the right label (#488).
                 """)
+            XCTAssertEqual(Set((localizations ?? [:]).keys), ["en"], "\"\(key)\": the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

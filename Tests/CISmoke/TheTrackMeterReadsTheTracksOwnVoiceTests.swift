@@ -21,7 +21,7 @@
 // 4. SOURCE-TEXT: the leaf reads the cell inside its own paused-when-stopped `TimelineView`, takes
 //    its slot from the player's rule, opens no modal and names no hot engine state; the mixer
 //    mounts it once, inside the strip, and names neither the rack nor the cell.
-// 5. CATALOG: the three new sentences have German lines.
+// 5. CATALOG: the three new sentences are catalogued (German lines until 2026-10-02; English-only since).
 // 6. SOURCE-TEXT PREMISE: the app root injects the three `@Observable`s the leaf resolves. Before B5
 //    the mixer subtree needed only `TimelineStore`; an `@Environment(X.self)` with no injection
 //    traps at the first render, so the leaf's two new dependencies are pinned at their one injector.
@@ -204,29 +204,27 @@ final class TheTrackMeterReadsTheTracksOwnVoiceTests: XCTestCase {
 
     // MARK: 5 — catalog
 
-    func testTheMeterSpeaksGerman() throws {
+    func testTheMeterWordsAreCatalogued() throws {
         let data = try Data(contentsOf: repoRoot().appendingPathComponent(Self.catalog))
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let strings = root["strings"] as? [String: Any] else {
             XCTFail("the catalog is not the expected JSON shape")
             return
         }
-        let expected: [String: String] = [
-            "Track level": "Spurpegel",
-            "Peak of this track's sound after its fader, as a share of full scale. Moves while the piece plays.":
-                "Spitzenpegel des Klangs dieser Spur nach ihrem Regler, als Anteil der Vollaussteuerung. Bewegt sich, während das Stück spielt.",
-            "Not metered": "Ohne Pegelanzeige",
+        let expected = [
+            "Track level",
+            "Peak of this track's sound after its fader, as a share of full scale. Moves while the piece plays.",
+            "Not metered",
         ]
-        for (key, german) in expected {
+        for key in expected {
             guard let entry = strings[key] as? [String: Any],
                   let units = entry["localizations"] as? [String: Any],
-                  let de = (units["de"] as? [String: Any])?["stringUnit"] as? [String: Any],
                   let en = (units["en"] as? [String: Any])?["stringUnit"] as? [String: Any] else {
-                XCTFail("`\(key)` has no German and English line in the catalog")
+                XCTFail("`\(key)` has no English line in the catalog")
                 continue
             }
-            XCTAssertEqual(de["value"] as? String, german, "`\(key)` in German")
-            XCTAssertEqual(de["state"] as? String, "translated")
+            XCTAssertEqual(Set(units.keys), ["en"], "`\(key)`: the app speaks one language (founder 2026-10-02) — no second unit")
+            XCTAssertEqual(en["state"] as? String, "translated")
             XCTAssertEqual(en["value"] as? String, key, "the English line is the key")
             XCTAssertEqual(entry["extractionState"] as? String, "manual")
         }

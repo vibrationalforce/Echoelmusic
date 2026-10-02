@@ -20,7 +20,7 @@
 //    on (`SynthPatch.init(from:)` ends in `clampToBounds()`).
 // 5. Source: one write through `TrackMix.setSound`; a menu Picker with the hint, a 44-pt target,
 //    mounted once under `if controls.sound {`; the hint is the catalog key.
-// 6. The new words have German in the catalog.
+// 6. The new words are in the catalog (with German until 2026-10-02; English-only since).
 //
 // GRADING (§3). Against the parent this file does NOT COMPILE — `TrackMix.SoundChoice`,
 // `keptSound`, `soundChoice`, `setSound`, `soundHint` and `Controls.sound` are new — so no
@@ -247,28 +247,29 @@ final class TheTrackChoosesItsSoundTests: XCTestCase {
         XCTAssertEqual(code.components(separatedBy: "soundRow").count - 1, 2, "declared once, mounted once")
     }
 
-    // MARK: 6 — the new words speak German
+    // MARK: 6 — the new words are catalogued, in the app's one language (German until 2026-10-02)
 
-    func testTheNewWordsHaveGermanInTheCatalog() throws {
+    func testTheNewWordsAreInTheCatalog() throws {
         let data = try Data(contentsOf: repoURL(Self.catalogPath))
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let strings = root["strings"] as? [String: Any] else {
             XCTFail("ANCHOR MISSING: the catalog's `strings` table (#454)")
             throw AnchorMissing()
         }
-        func german(_ key: String) -> String? {
+        func english(_ key: String) -> String? {
             guard let entry = strings[key] as? [String: Any],
                   let localizations = entry["localizations"] as? [String: Any],
-                  let de = localizations["de"] as? [String: Any],
-                  let unit = de["stringUnit"] as? [String: Any],
+                  Set(localizations.keys) == ["en"],
+                  let en = localizations["en"] as? [String: Any],
+                  let unit = en["stringUnit"] as? [String: Any],
                   unit["state"] as? String == "translated" else { return nil }
             return unit["value"] as? String
         }
-        XCTAssertEqual(german("In this piece"), "In diesem Stück")
-        XCTAssertEqual(german(Self.hintKey).map { $0.contains("Klänge") }, true,
-                       "the German hint names the same menu section („Klänge“)")
+        XCTAssertEqual(english("In this piece"), "In this piece")
+        XCTAssertEqual(english(Self.hintKey).map { $0.contains("Sounds") }, true,
+                       "the hint names the same menu section („Sounds“)")
         for reused in ["Sound", "Default", "Sounds"] {
-            XCTAssertNotNil(german(reused), "`\(reused)` is a reused key and must keep its German unit")
+            XCTAssertEqual(english(reused), reused, "`\(reused)` is a reused key and must stay an English-only catalog key")
         }
     }
 

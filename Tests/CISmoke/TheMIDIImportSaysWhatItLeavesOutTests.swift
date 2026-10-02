@@ -24,7 +24,7 @@
 //    smuggled into data that something might play (`mpe` stays nil, no automation).
 // 4. SOURCE-TEXT SCAN: ONE walk — the import asks `parse(from:` once and `channelNotes(` never;
 //    `channelNotes` is the one-line projection. Proves where text sits, not what runs.
-// 5. CATALOG: the bend sentence has a translated German unit, `extractionState: manual`, a
+// 5. CATALOG: the bend sentence has a translated English-only unit (German until 2026-10-02), `extractionState: manual`, a
 //    comment. (The pedal sentence it shared this claim with is gone — B6b-1.)
 //
 // Grading (§0/§3 — no Swift toolchain). Claims 1–3 transcribed into a Python port of the
@@ -294,7 +294,7 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
 
     // MARK: 5 — catalog
 
-    func testTheBendSentenceSpeaksGerman() throws {
+    func testTheBendSentenceIsCatalogued() throws {
         var root = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let url = root.appendingPathComponent(Self.catalogPath)
@@ -305,16 +305,18 @@ final class TheMIDIImportSaysWhatItLeavesOutTests: XCTestCase {
         }
         for key in [Self.bendSentence] {
             guard let entry = strings[key] as? [String: Any] else {
-                XCTFail("`\(key)` has no catalog entry — it shows in English on a German phone")
+                XCTFail("`\(key)` has no catalog entry — the sentence left the catalog it is looked up in")
                 continue
             }
             XCTAssertEqual(entry["extractionState"] as? String, "manual")
             XCTAssertFalse(((entry["comment"] as? String) ?? "").isEmpty, "a translator needs the context")
-            let de = ((entry["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertEqual(de?["state"] as? String, "translated")
-            let value = (de?["value"] as? String) ?? ""
+            let localizations = entry["localizations"] as? [String: Any] ?? [:]
+            let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(en?["state"] as? String, "translated")
+            let value = (en?["value"] as? String) ?? ""
             XCTAssertTrue(value.hasPrefix(" "), "the leading space joins it to the sentence before")
-            XCTAssertNotEqual(value, key, "the German unit is not the English key")
+            XCTAssertEqual(value, key, "the English unit is the key")
+            XCTAssertEqual(Set(localizations.keys), ["en"], "the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

@@ -104,8 +104,10 @@ final class TheArrangementSitsBesideItsTrackInLandscapeTests: XCTestCase {
         let data = Data(try text(Self.catalog).utf8)
         let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let entry = (root?["strings"] as? [String: Any])?["Tap a track name to open it here"] as? [String: Any]
-        let de = ((entry?["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-        XCTAssertNotNil(de?["value"] as? String, "the hint has its German line")
+        let localizations = entry?["localizations"] as? [String: Any] ?? [:]
+        let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+        XCTAssertEqual(en?["value"] as? String, "Tap a track name to open it here", "the hint has its English line")
+        XCTAssertEqual(Set(localizations.keys), ["en"], "the app speaks one language (founder 2026-10-02) — no second unit")
     }
 
     // MARK: helpers

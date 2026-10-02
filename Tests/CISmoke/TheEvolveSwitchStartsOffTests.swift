@@ -11,7 +11,7 @@
 //   · the instrument reads that key and owns exactly one switch for it, with a caption
 //     that says what each position does;
 //   · the timer's verdict IS the switch — no hard `true` left in the function;
-//   · the three new chrome strings carry translated German units (E4 law).
+//   · the three new chrome strings are catalog keys in the app's one language (German units until 2026-10-02).
 //
 // ⚠️ LIMIT — SOURCE-TEXT SCAN. Nothing here plays a take or proves the recomposition is
 // audible or held on device; whether "off" FEELS like a held phrase is the founder's ear.
@@ -87,9 +87,9 @@ final class TheEvolveSwitchStartsOffTests: XCTestCase {
             """)
     }
 
-    // MARK: - claim 4 — the new chrome speaks German
+    // MARK: - claim 4 — the new chrome is in the catalog, in the app's one language (2026-10-02: was German)
 
-    func testTheSwitchAndItsCaptionSpeakGerman() throws {
+    func testTheSwitchAndItsCaptionAreCatalogued() throws {
         let url = try repoRoot().appendingPathComponent(Self.catalog)
         let data = try Data(contentsOf: url)
         guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -102,15 +102,16 @@ final class TheEvolveSwitchStartsOffTests: XCTestCase {
         for word in words {
             guard let entry = strings[word] as? [String: Any],
                   let localizations = entry["localizations"] as? [String: Any],
-                  let de = localizations["de"] as? [String: Any],
-                  let unit = de["stringUnit"] as? [String: Any],
+                  let en = localizations["en"] as? [String: Any],
+                  let unit = en["stringUnit"] as? [String: Any],
                   let state = unit["state"] as? String,
                   let value = unit["value"] as? String else {
-                XCTFail("\"\(word)\" has no German unit in Localizable.xcstrings — the catalog holds the German (#416)")
+                XCTFail("\"\(word)\" has no English unit in Localizable.xcstrings — the catalog holds the words (#416)")
                 continue
             }
             XCTAssertEqual(state, "translated", "\"\(word)\": a `new` unit ships nothing")
-            XCTAssertNotEqual(value, word, "\"\(word)\": the German unit repeats the English")
+            XCTAssertEqual(value, word, "\"\(word)\": the English unit is the key")
+            XCTAssertEqual(Set(localizations.keys), ["en"], "\"\(word)\": the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

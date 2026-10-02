@@ -27,7 +27,7 @@
 //    calls the store's sound writer; the store writes a track's sound in ONE place, so Undo and
 //    Redo go through `setLanePatch`.
 // 7. The head's Undo hint names a track's picked sound, says the Studio instrument's own sound is
-//    not covered (it is shaped in its Sound panel, outside this history), and has its German line.
+//    not covered (it is shaped in its Sound panel, outside this history), and is catalogued (with a German line until 2026-10-02).
 //
 // GRADING (Tests/CISmoke/CLAUDE.md §3). Against the parent this file does NOT COMPILE —
 // `TimelineStore.editLanePatch` is new — so no assertion has a verdict there: ONE absence (#486).
@@ -293,7 +293,7 @@ final class TheSoundChoiceIsOneUndoStepTests: XCTestCase {
         XCTAssertFalse(writer.contains("pushUndo"), "the store's writer records nothing itself")
     }
 
-    // MARK: 7 — the head's hint names the picked sound and excludes the instrument's own, in German too
+    // MARK: 7 — the head's hint names the picked sound and excludes the instrument's own, and is catalogued
 
     func testTheHistoryHintNamesThePickedSound() throws {
         let history = try code(Self.historyPath)
@@ -317,13 +317,11 @@ final class TheSoundChoiceIsOneUndoStepTests: XCTestCase {
         }
         XCTAssertEqual(entry["extractionState"] as? String, "manual")
         XCTAssertFalse((entry["comment"] as? String ?? "").isEmpty, "the entry says where it is read")
-        let de = ((entry["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-        XCTAssertEqual(de?["state"] as? String, "translated")
-        let german = de?["value"] as? String ?? ""
-        XCTAssertTrue(german.contains("Solo oder gewählten Klang einer Spur"),
-                      "the German hint names the sound with the Sound row's own word („Klang“)")
-        XCTAssertTrue(german.contains("nicht den eigenen Klang des Studio-Instruments"),
-                      "and says the instrument's own sound is not covered")
+        let localizations = entry["localizations"] as? [String: Any] ?? [:]
+        let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+        XCTAssertEqual(en?["state"] as? String, "translated")
+        XCTAssertEqual(en?["value"] as? String, hint, "the catalogued hint is the one the head draws")
+        XCTAssertEqual(Set(localizations.keys), ["en"], "the app speaks one language (founder 2026-10-02) — no second unit")
     }
 
     // MARK: - helpers

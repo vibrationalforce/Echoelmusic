@@ -231,32 +231,31 @@ final class TheRoutingHasOneDoorTests: XCTestCase {
             """)
 
         let strings = try catalogStrings()
-        // Checked BEFORE the German units below, whose loop `continue`s per missing key — so on a
+        // Checked BEFORE the catalog units below, whose loop `continue`s per missing key — so on a
         // tree without the new keys this absence still gets a verdict.
         XCTAssertNil(strings["Open Routing"], """
             the catalog still carries `Open Routing`, the key of the bio panel's Routing button that \
             slice G deleted. `StringCatalogIsHonestTests`' orphan check cannot see it — two comments \
-            in Sources still quote "Open Routing" — so a stale entry would ship a German string for \
+            in Sources still quote "Open Routing" — so a stale entry would ship a string for \
             a door that no longer exists.
             """)
 
         for key in [Self.doorLabel, Self.doorHint] {
             guard let entry = strings[key] as? [String: Any],
                   let localizations = entry["localizations"] as? [String: Any],
-                  let de = (localizations["de"] as? [String: Any])?["stringUnit"] as? [String: Any],
-                  let value = de["value"] as? String else {
+                  let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any],
+                  let value = en["value"] as? String else {
                 XCTFail("""
-                    `\(key)` has no German unit in Localizable.xcstrings — a German VoiceOver user \
-                    hears the one Routing door in English while the head around it speaks German.
+                    `\(key)` has no English unit in Localizable.xcstrings — the one Routing door's \
+                    words left the catalog they are looked up in.
                     """)
                 continue
             }
-            XCTAssertEqual(de["state"] as? String, "translated", "`\(key)`: a `new` unit ships nothing")
-            XCTAssertFalse(value.trimmingCharacters(in: .whitespaces).isEmpty, "`\(key)`: empty German")
-            XCTAssertNotEqual(value, key, "`\(key)`: the German unit is the English sentence")
+            XCTAssertEqual(en["state"] as? String, "translated", "`\(key)`: a `new` unit ships nothing")
+            XCTAssertEqual(value, key, "`\(key)`: the English unit is the key")
+            XCTAssertEqual(Set(localizations.keys), ["en"], "`\(key)`: the app speaks one language (founder 2026-10-02) — no second unit")
             XCTAssertTrue(value.contains("Routing"), """
-                `\(key)`'s German unit does not say "Routing" (\(value)) — the German door must name \
-                the same room the English one does.
+                `\(key)` does not say "Routing" (\(value)) — the door must name the room it opens.
                 """)
         }
     }

@@ -25,7 +25,7 @@
 //    inert while the song holds no note, and it reads the tempo through the player's
 //    `@ObservationIgnored` mirror, never the ~20 Hz gliding transport tempo (hot-state law).
 //    `SongMIDIExport` ASKS the player's rules and keeps no overlap rule of its own.
-// 4. SOURCE-TEXT SCAN — the door's four strings are in the catalog with their German line.
+// 4. SOURCE-TEXT SCAN — the door's four strings are in the catalog with their English line (German until 2026-10-02).
 //
 // GRADING (§0/§3, no Swift toolchain in a web session — transcribed in Python against both
 // trees): claims 1–2 are FORWARD guards — they drive `SongMIDIExport` and
@@ -306,27 +306,26 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
             """)
     }
 
-    // MARK: 4 — the door speaks German
+    // MARK: 4 — the door's strings are catalogued, in the app's one language (German until 2026-10-02)
 
-    func testTheExportDoorsStringsHaveTheirGermanLines() throws {
+    func testTheExportDoorsStringsAreCatalogued() throws {
         let data = try XCTUnwrap(text(Self.catalog).data(using: .utf8))
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let strings = try XCTUnwrap(root["strings"] as? [String: Any])
         let expected = [
-            "Export": "Export",
-            "Echoelmusic Piece": "Echoelmusic-Stück",
-            "Shares the piece as a MIDI file: every MIDI track with its notes, muted ones included. Level, pan and sound stay here":
-                "Teilt das Stück als MIDI-Datei: jede MIDI-Spur mit ihren Noten, stummgeschaltete eingeschlossen. Pegel, Panorama und Klang bleiben hier",
-            "Nothing to export yet. Write a part on a MIDI track, and the piece can be shared as a MIDI file":
-                "Noch nichts zu exportieren. Schreib einen Teil auf eine MIDI-Spur, dann lässt sich das Stück als MIDI-Datei teilen",
+            "Export",
+            "Echoelmusic Piece",
+            "Shares the piece as a MIDI file: every MIDI track with its notes, muted ones included. Level, pan and sound stay here",
+            "Nothing to export yet. Write a part on a MIDI track, and the piece can be shared as a MIDI file",
         ]
         let tab = try text(Self.tabFile)
-        for (key, german) in expected {
+        for key in expected {
             XCTAssertTrue(tab.contains("\"\(key)\""), "the door uses the catalog key `\(key)` verbatim")
             let entry = strings[key] as? [String: Any]
             let localizations = entry?["localizations"] as? [String: Any]
-            let de = (localizations?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertEqual(de?["value"] as? String, german, "`\(key)` has its German line")
+            let en = (localizations?["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(en?["value"] as? String, key, "`\(key)` has its English line")
+            XCTAssertEqual(Set((localizations ?? [:]).keys), ["en"], "`\(key)`: the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

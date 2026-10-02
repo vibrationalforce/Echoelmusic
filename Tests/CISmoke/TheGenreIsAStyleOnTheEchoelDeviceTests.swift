@@ -81,9 +81,10 @@ final class TheGenreIsAStyleOnTheEchoelDeviceTests: XCTestCase {
         XCTAssertFalse(instance.contains("fact(\"Genre\""), "two words for one thing on one surface (rule 1)")
 
         let strings = try catalogStrings()
-        XCTAssertEqual(german(of: "Style", in: strings), "Stil", "the row reads „Stil“ in German")
-        XCTAssertNotNil(german(of: "The style the Echoel instrument composes in. The piece keeps it", in: strings),
-                        "the row's hint has its German line")
+        XCTAssertEqual(english(of: "Style", in: strings), "Style", "the row's word is an English-only catalog key")
+        XCTAssertEqual(english(of: "The style the Echoel instrument composes in. The piece keeps it", in: strings),
+                       "The style the Echoel instrument composes in. The piece keeps it",
+                       "the row's hint is an English-only catalog key")
     }
 
     // MARK: 3 — counterweights: the funnel behind the door is intact
@@ -123,11 +124,15 @@ final class TheGenreIsAStyleOnTheEchoelDeviceTests: XCTestCase {
         return strings
     }
 
-    private func german(of key: String, in strings: [String: Any]) -> String? {
+    /// The `en` value of `key` — nil when the key is missing or the entry still carries a second
+    /// language. The app speaks one language since 2026-10-02 (founder: "Nur Englisch"); this helper
+    /// read the `de` unit until then.
+    private func english(of key: String, in strings: [String: Any]) -> String? {
         let entry = strings[key] as? [String: Any]
-        let localizations = entry?["localizations"] as? [String: Any]
-        let de = localizations?["de"] as? [String: Any]
-        let unit = de?["stringUnit"] as? [String: Any]
+        let localizations = entry?["localizations"] as? [String: Any] ?? [:]
+        guard Set(localizations.keys) == ["en"] else { return nil }
+        let en = localizations["en"] as? [String: Any]
+        let unit = en?["stringUnit"] as? [String: Any]
         return unit?["value"] as? String
     }
 

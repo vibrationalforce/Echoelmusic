@@ -224,9 +224,10 @@ final class TheTrackObjectsFollowThePieceAndHaveASwitchTests: XCTestCase {
         for literal in literals {
             let entry = strings[literal] as? [String: Any]
             let localizations = entry?["localizations"] as? [String: Any]
-            let de = (localizations?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertEqual(de?["state"] as? String, "translated", "`\(literal)` has no translated German unit")
-            XCTAssertNotEqual(de?["value"] as? String, literal, "`\(literal)` is 'translated' to itself")
+            let en = (localizations?["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(en?["state"] as? String, "translated", "`\(literal)` has no translated English unit")
+            XCTAssertEqual(en?["value"] as? String, literal, "`\(literal)`: the English unit is the key")
+            XCTAssertEqual(Set((localizations ?? [:]).keys), ["en"], "`\(literal)`: the app speaks one language (founder 2026-10-02) — no second unit")
         }
     }
 

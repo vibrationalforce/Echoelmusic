@@ -199,12 +199,10 @@ final class TheInspectorShowsOnePageOfThreeTests: XCTestCase {
                       "TrackPartsView keeps its own gate — the Part page relies on the same rule")
 
         let strings = try catalogStrings()
-        XCTAssertEqual(germanValue(of: "Track", in: strings), "Spur")
-        XCTAssertEqual(germanValue(of: "Part", in: strings), "Teil")
-        XCTAssertEqual(germanValue(of: "Device", in: strings), "Gerät")
-        XCTAssertNotNil(germanValue(of: "Inspector", in: strings))
-        XCTAssertNotNil(germanValue(of: "Shows this track, its parts or the device that plays it",
-                                    in: strings))
+        for key in ["Track", "Part", "Device", "Inspector",
+                    "Shows this track, its parts or the device that plays it"] {
+            XCTAssertEqual(englishValue(of: key, in: strings), key, "`\(key)` is an English-only catalog key")
+        }
     }
 
     // MARK: helpers
@@ -283,11 +281,15 @@ final class TheInspectorShowsOnePageOfThreeTests: XCTestCase {
         return strings
     }
 
-    private func germanValue(of key: String, in strings: [String: Any]) -> String? {
+    /// The `en` value of `key` — nil when the key is missing or the entry still carries a second
+    /// language. The app speaks one language since 2026-10-02 (founder: "Nur Englisch"); this helper
+    /// read the `de` unit until then.
+    private func englishValue(of key: String, in strings: [String: Any]) -> String? {
         let entry = strings[key] as? [String: Any]
-        let localizations = entry?["localizations"] as? [String: Any]
-        let de = localizations?["de"] as? [String: Any]
-        let unit = de?["stringUnit"] as? [String: Any]
+        let localizations = entry?["localizations"] as? [String: Any] ?? [:]
+        guard Set(localizations.keys) == ["en"] else { return nil }
+        let en = localizations["en"] as? [String: Any]
+        let unit = en?["stringUnit"] as? [String: Any]
         return unit?["value"] as? String
     }
 }

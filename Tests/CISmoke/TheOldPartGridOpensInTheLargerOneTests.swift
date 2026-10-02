@@ -233,10 +233,10 @@ final class TheOldPartGridOpensInTheLargerOneTests: XCTestCase {
         for key in ["The part grid is full — all ", " slots are in use."] {
             let entry = try XCTUnwrap(catalog[key] as? [String: Any], "ANCHOR MISSING: catalog key `\(key)`")
             let localizations = entry["localizations"] as? [String: Any]
-            let german = (localizations?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertEqual(german?["state"] as? String, "translated", "`\(key)` has no translated German")
-            XCTAssertFalse(((german?["value"] as? String) ?? "").trimmingCharacters(in: .whitespaces).isEmpty,
-                           "`\(key)` has an empty German value")
+            let english = (localizations?["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(english?["state"] as? String, "translated", "`\(key)` has no translated English unit")
+            XCTAssertEqual(english?["value"] as? String, key, "`\(key)`: the English unit is the key")
+            XCTAssertEqual(Set((localizations ?? [:]).keys), ["en"], "`\(key)`: the app speaks one language (founder 2026-10-02) — no second unit")
         }
         for retired in ["The part grid is full — all 8 slots are in use.", "The part slots are full — all 8 are in use."] {
             XCTAssertNil(catalog[retired], "the retired key `\(retired)` is still in the catalog")

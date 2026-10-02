@@ -71,7 +71,22 @@ final class StringCatalogIsHonestTests: XCTestCase {
     /// The languages this catalog commits to. Adding one here without filling it in fails
     /// `testEveryKeyCarriesEveryLanguage`, which is the intended direction: the list is a
     /// promise, and the test is what makes it one.
-    private static let languages: Set<String> = ["en", "de"]
+    ///
+    /// ⭐ ONE LANGUAGE since 2026-10-02 (founder: "Nur Englisch" — American English only). It
+    /// read `["en", "de"]` from E4 (2026-09-30) until then. Because the comparison below is an
+    /// EQUALITY, not a subset, a `de` unit that comes back is red here exactly as a missing `en`
+    /// unit is — the set is the one home of "which languages ship" (#416). A second language is a
+    /// founder decision; it starts here, in the same commit as its units.
+    private static let languages: Set<String> = ["en"]
+
+    /// Store-listing languages the APP deliberately does not speak — the recorded exception the
+    /// pairing claim below asks for ("a decision to record in `decisions.csv`, not a needle to
+    /// delete"). `de`: the German App Store page stays as marketing reach in the German storefront
+    /// while the app speaks English (decision 2026-10-02, founder inbox E4b). The App Store itself
+    /// lists the app's languages from the bundle, so the page cannot promise a German app.
+    /// ⚠️ Kept honest in both directions by `testTheListingOnlyLanguagesAreRealAndNotSpoken`: an
+    /// entry here with no listing behind it, or one the catalog DOES speak, is red.
+    private static let listingOnlyLanguages: Set<String> = ["de"]
 
     /// The five sentences CLAUDE.md lists under "SAFETY WARNINGS (must be in app)".
     ///
@@ -163,7 +178,7 @@ final class StringCatalogIsHonestTests: XCTestCase {
             """)
         for locale in locales {
             let language = String(locale.prefix(while: { $0 != "-" }))
-            XCTAssertTrue(Self.languages.contains(language), """
+            XCTAssertTrue(Self.languages.contains(language) || Self.listingOnlyLanguages.contains(language), """
                 The App Store listing ships a \(locale) page, but `Localizable.xcstrings` \
                 carries no "\(language)" — every string in the app, INCLUDING the five \
                 mandated safety warnings, would reach that user in English.
@@ -173,6 +188,22 @@ final class StringCatalogIsHonestTests: XCTestCase {
                 is a decision to record in `decisions.csv`, not a needle to delete.
                 """)
         }
+    }
+
+    /// The exception list above cannot rot into a blanket pass: every listing-only language must
+    /// have a store page today, and none may also be a catalog language (then it is spoken, and
+    /// belongs in `languages`).
+    func testTheListingOnlyLanguagesAreRealAndNotSpoken() throws {
+        let base = try repoRoot().appendingPathComponent("fastlane/metadata")
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: base.path)) ?? []
+        let listed = Set(names.map { name in String(name.prefix(while: { $0 != "-" })) })
+        XCTAssertFalse(listed.isEmpty, "`fastlane/metadata/` read as empty — the comparison saw nothing (#454)")
+        for language in Self.listingOnlyLanguages {
+            XCTAssertTrue(listed.contains(language),
+                          "`\(language)` is excused as listing-only, but no `\(language)-*` store page exists — drop it")
+        }
+        XCTAssertTrue(Self.listingOnlyLanguages.isDisjoint(with: Self.languages),
+                      "a language cannot be both spoken by the app and excused as listing-only")
     }
 
     /// Repo root, derived from this file's compile-time path (`Tests/CISmoke/…` → up two).

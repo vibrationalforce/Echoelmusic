@@ -1,4 +1,15 @@
-// TheChromeSpeaksGermanTests.swift
+// TheChromeSpeaksOneLanguageTests.swift
+// ⭐ INVERTED 2026-10-02 (founder: "Nur Englisch" — the app speaks American English only). This file
+// was `TheChromeSpeaksGermanTests` (decision E4, 2026-09-30) and every claim asked "does this word
+// have a German unit?". The German units are removed from `Localizable.xcstrings` (they stay in git
+// history, recoverable per key), and each claim now asks the inverse with the SAME reach: the word is
+// still a catalog key looked up through `String(localized:)` / a `LocalizedStringKey`, its `en` unit
+// is translated and equals the key, and the entry carries NO second language (`catalogued(_:in:)`).
+// Nothing was deleted or loosened: a word that leaves the catalog is red exactly as before, and a
+// `de` unit that comes back is now red too. The catalog infrastructure stays — a future second
+// language is a founder decision, and it starts by re-adding units, not by re-wiring the chrome.
+// The prose below is the E4 history and still says "German" where it describes how a claim was BUILT.
+//
 // Echoel — decision E4 of the interface audit (founder 2026-09-30, "Ja": the app speaks German,
 // chrome first, ~40 words): every word of the stage seam and the head transport has a German
 // unit in `Localizable.xcstrings`, and the code reaches the catalog for it. (The area row's ten
@@ -231,7 +242,7 @@ import XCTest
 import Foundation
 @testable import Echoelmusic
 
-final class TheChromeSpeaksGermanTests: XCTestCase {
+final class TheChromeSpeaksOneLanguageTests: XCTestCase {
 
     private static let chromeFiles = [
         "Sources/Echoelmusic/Studio/StudioStage.swift",
@@ -265,32 +276,36 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         return strings
     }
 
-    /// The German unit of `key`, or nil when the key or its `de` unit is missing.
-    private func german(_ key: String, in strings: [String: Any]) -> (state: String, value: String)? {
+    /// The ENGLISH unit of `key` — nil when the key is missing, its `en` unit is missing, or the
+    /// entry still carries ANY other language. Since 2026-10-02 (founder: "Nur Englisch") the app
+    /// speaks exactly one language, so a surviving `de` unit is as much a defect as a missing key:
+    /// it would ship a German line to a German phone in an English-only app.
+    private func catalogued(_ key: String, in strings: [String: Any]) -> (state: String, value: String)? {
         guard let entry = strings[key] as? [String: Any],
               let localizations = entry["localizations"] as? [String: Any],
-              let de = localizations["de"] as? [String: Any],
-              let unit = de["stringUnit"] as? [String: Any],
+              Set(localizations.keys) == ["en"],
+              let en = localizations["en"] as? [String: Any],
+              let unit = en["stringUnit"] as? [String: Any],
               let state = unit["state"] as? String,
               let value = unit["value"] as? String else { return nil }
         return (state, value)
     }
 
-    private func assertGerman(_ words: [String], _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
+    private func assertCatalogued(_ words: [String], _ what: String, file: StaticString = #filePath, line: UInt = #line) throws {
         let strings = try catalogStrings()
         XCTAssertFalse(words.isEmpty, "no \(what) to check — the enum lost its cases? (#454)", file: file, line: line)
         for word in words {
-            guard let de = german(word, in: strings) else {
+            guard let en = catalogued(word, in: strings) else {
                 XCTFail("""
-                    \(what) "\(word)" has no German unit in Localizable.xcstrings. A chrome word without \
-                    its `de` entry reverts to English for a German user while the words around it stay \
-                    German (StringCatalogIsHonestTests names why that is worse than all-English). Add the \
-                    key with a translated `de` unit — the catalog, never this file, holds the German (#416).
+                    \(what) "\(word)" is not an English-only key in Localizable.xcstrings — either the key \
+                    is missing (the chrome word left the catalog it is looked up in) or the entry still \
+                    carries a second language. The app speaks one language since 2026-10-02 \
+                    (StringCatalogIsHonestTests holds the set); the catalog, never this file, holds the words (#416).
                     """, file: file, line: line)
                 continue
             }
-            XCTAssertEqual(de.state, "translated", "\(what) \"\(word)\": a `new` unit ships nothing (xcstringstool skips it)", file: file, line: line)
-            XCTAssertFalse(de.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, "\(what) \"\(word)\": empty German", file: file, line: line)
+            XCTAssertEqual(en.state, "translated", "\(what) \"\(word)\": a `new` unit ships nothing (xcstringstool skips it)", file: file, line: line)
+            XCTAssertEqual(en.value, word, "\(what) \"\(word)\": the English unit is not the key it is looked up by", file: file, line: line)
         }
     }
 
@@ -304,15 +319,15 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     // MARK: - claim 1 — END-TO-END: every stage word is a catalog key with a German unit
 
-    func testEveryStageWordHasAGermanUnit() throws {
+    func testEveryStageWordIsCatalogued() throws {
         let stage = StudioStage.allCases.flatMap { [$0.label, $0.spokenHint] }
         XCTAssertEqual(StudioStage.allCases.count, 2, "counterweight: the seam still has its two stages")
-        try assertGerman(stage, "stage word")
+        try assertCatalogued(stage, "stage word")
     }
 
     // MARK: - claim 2 — END-TO-END: every head-transport word and hint is a catalog key with a German unit
 
-    func testEveryTransportWordHasAGermanUnit() throws {
+    func testEveryTransportWordIsCatalogued() throws {
         let statuses: [ProjectTransport.Status] = [.stopped, .paused, .playingInstrument, .playingSong, .recording]
         let plays: [ProjectTransport.PlayAction] = [.startSong, .startSongAndInstrument, .resumeInstrument, .unavailable]
         var words = statuses.map(ProjectTransport.statusWord)
@@ -328,7 +343,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // counterweight — the English words the sibling guard pins are unchanged in the English host
         XCTAssertEqual(ProjectTransport.statusWord(.playingSong), "Playing piece")
         XCTAssertEqual(ProjectTransport.buttonWord(running: true), "Stop")
-        try assertGerman(Array(Set(words)).sorted(), "transport word")
+        try assertCatalogued(Array(Set(words)).sorted(), "transport word")
     }
 
     // MARK: - claim 3 — SOURCE-TEXT: the chrome files return no plain literal
@@ -360,7 +375,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     // MARK: - claim 4 — the seven literal keys are translated AND still spelled as literals on screen
 
     func testTheLiteralChromeKeysAreTranslatedAndStillOnScreen() throws {
-        try assertGerman(Self.literalKeys, "literal chrome key")
+        try assertCatalogued(Self.literalKeys, "literal chrome key")
         // counterweight: SwiftUI can only find them if the literal is still written as `"…"`
         let root = try repoRoot().appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(atPath: root.path) else {
@@ -395,7 +410,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let ternary = "recording ? String(localized: \"Stop recording\") : String(localized: \"Record\")"
         XCTAssertEqual(record.components(separatedBy: ternary).count - 1, 2, "the drawn word and the spoken label of the Record button both go through the catalog")
         XCTAssertFalse(record.contains("recording ? \"Stop recording\" : \"Record\""), "the bare ternary yields a String, which Text() spells verbatim")
-        try assertGerman(["Undo", "Redo", "Record", "Stop recording", "Arm for recording",
+        try assertCatalogued(["Undo", "Redo", "Record", "Stop recording", "Arm for recording",
                           "Undo the last change to the piece's parts, notes, automation, mix or a relinked file",
                           "Redo the last undone change to the piece's parts, notes, automation, mix or a relinked file"],
                          "head history / record word")
@@ -403,13 +418,13 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     // MARK: - claim 7 — the pulse pill's word and the measurement screen's hint speak German (E4-3)
 
-    func testEveryPulseCueWordHasAGermanUnit() throws {
+    func testEveryPulseCueWordIsCatalogued() throws {
         let cues: [PulseCue] = [.cameraDenied, .locked, .coverLens, .tooBright, .holdStill, .pressGently,
                                 .finding, .noLight, .stalled(hasRhythmlessSignal: true), .stalled(hasRhythmlessSignal: false)]
         // counterweight — the English words the pill guards pin are unchanged in the English host
         XCTAssertEqual(PulseCue.noLight.shortLabel, "No light")
         XCTAssertEqual(PulseCue.stalled(hasRhythmlessSignal: true).shortLabel, "Unsteady")
-        try assertGerman(Array(Set(cues.flatMap { [$0.shortLabel, $0.fullHint] })).sorted(), "pulse cue word")
+        try assertCatalogued(Array(Set(cues.flatMap { [$0.shortLabel, $0.fullHint] })).sorted(), "pulse cue word")
         // SOURCE-TEXT — the two switches return no plain literal (a `? "…" : "…"` ternary included)
         let code = try codeOnly("Sources/Echoelmusic/Bio/PulseCue.swift")
         guard let start = code.range(of: "public var fullHint: String {"),
@@ -427,7 +442,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     // MARK: - claim 8 — the status ladders speak German: MIDI in/out, audio route, Apple Health (E4-4)
 
-    func testEveryLadderWordCaptionAndSpokenSentenceHasAGermanUnit() throws {
+    func testEveryLadderWordCaptionAndSpokenSentenceIsCatalogued() throws {
         var texts: [String] = []
         for r in MIDIInRung.allCases { texts += [r.word, r.caption, r.line(source: ""), r.spoken(source: "")] }
         for r in MIDIOutRung.allCases { texts += [r.word, r.caption, r.line(destinations: 0), r.line(destinations: 1), r.spoken(destinations: 0)] }
@@ -453,7 +468,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(AudioRouteRung.callMode.word, "Call mode")
         XCTAssertEqual(MIDIOutRung.on.line(destinations: 1), "On · source + 1 destination")
         XCTAssertTrue(HealthSourceRung.receiving.line.hasPrefix("Receiving · "))
-        try assertGerman(pieces.filter { $0.rangeOfCharacter(from: .letters) != nil }.sorted(), "ladder text")
+        try assertCatalogued(pieces.filter { $0.rangeOfCharacter(from: .letters) != nil }.sorted(), "ladder text")
         // SOURCE-TEXT — no plain literal with a letter outside `String(localized: "…")` in the three
         // ladder files; `" · "` (a separator) and `"\(destinations)"` (a number) are the only bare ones
         for rel in ["Sources/Echoelmusic/Studio/MIDIStatusWord.swift",
@@ -477,7 +492,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
 
     // MARK: - claim 9 — the Power row, the output tiles and the network word speak German (E4-5)
 
-    func testThePowerRowOutputTilesAndNetworkWordHaveGermanUnits() throws {
+    func testThePowerRowOutputTilesAndNetworkWordAreCatalogued() throws {
         var pieces = Set<String>()
         for r in PowerRung.allCases {
             pieces.insert(r.word)
@@ -500,11 +515,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(PowerRung.reduced.spoken(pressure: .thermal), "Power reduced, the phone is hot")
         XCTAssertEqual(VisualMonitorRung.externalScreen.word, "Screen")
         XCTAssertEqual(NetworkSendState.openIdle.label, "open, nothing sent")
-        try assertGerman(pieces.sorted(), "power / output / network text")
-        // the German tile words fit the tile as the English ones must (`OutputStatusWord.maxLength`)
+        try assertCatalogued(pieces.sorted(), "power / output / network text")
+        // the tile words fit the tile (`OutputStatusWord.maxLength`)
         let strings = try catalogStrings()
         for word in ["Screen", "Idle", "Off"] {
-            let de = try XCTUnwrap(german(word, in: strings)).value
+            let de = try XCTUnwrap(catalogued(word, in: strings)).value
             XCTAssertLessThanOrEqual(de.count, OutputStatusWord.maxLength, "`\(de)` does not fit the 38/54 pt tile")
         }
         // SOURCE-TEXT — no bare letter-literal outside `String(localized: "…")` in the two word files
@@ -581,7 +596,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 
-    func testEveryPanelTextOfTheReachableChromeFilesHasAGermanUnit() throws {
+    func testEveryPanelTextOfTheReachableChromeFilesIsCatalogued() throws {
         let strings = try catalogStrings()
         // E4-89: `.alert("…")`, `.navigationTitle("…")` and `.confirmationDialog("…")` titles are key sites too. The
         // walk did not list them, so five titles (three save alerts, "Open piece", "Recovery") shipped English while
@@ -600,16 +615,16 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                 if after.hasPrefix("+") { continue }                       // left half of a `+` seam, not a key
                 if Self.untranslatedPanelWords.contains(key) { continue }
                 sites += 1
-                if seen.insert(key).inserted, german(key, in: strings) == nil { missing.append(key) }
+                if seen.insert(key).inserted, catalogued(key, in: strings) == nil { missing.append(key) }
             }
         }
         XCTAssertGreaterThan(sites, 400, "the walk found \(sites) literal-key sites — it did not read the family")
         XCTAssertEqual(missing, [], """
-            \(missing.count) panel text(s) without a German unit in the catalog — add the `de` unit for each:
+            \(missing.count) panel text(s) not English-only in the catalog — add the key (en unit only) for each:
             \(missing.joined(separator: "\n"))
             """)
         // counterweight — a key with an interpolation is not a catalog key and is not demanded
-        XCTAssertNil(german("Playing over \\(outputs)", in: strings))
+        XCTAssertNil(catalogued("Playing over \\(outputs)", in: strings))
     }
 
     // MARK: - claim 11 (E4-9) — the instrument's label helpers take a key, not a String
@@ -647,7 +662,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let media = try codeOnly("Sources/Echoelmusic/Studio/MediaBrowserView.swift")
         XCTAssertFalse(media.contains("? \"Shown\" : \"Hidden\""), "a verbatim Shown/Hidden ternary is back in the media library")
         XCTAssertTrue(media.contains("String(localized: \"Shown\")"), "the media library's disclosure value is not localised")
-        try assertGerman(["Shows or hides the ", " controls", "Shown", "Hidden",
+        try assertCatalogued(["Shows or hides the ", " controls", "Shown", "Hidden",
                           "Look", "Voice", "Self-play", "Sound", "Weather"], "collapsible/weather header words")
         // E4-12 — the FX panel's stage header takes a key too; its thirteen titles reach the catalog
         let fx = try codeOnly("Sources/Echoelmusic/Studio/EchoelFXView.swift")
@@ -658,7 +673,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let fxHead = String(fx[fxDecl.lowerBound...].prefix(160))
         XCTAssertTrue(fxHead.contains("_ title: LocalizedStringKey,"),
                       "effectSection takes a String title again — its thirteen stage names would spell verbatim")
-        try assertGerman(["Filter", "Saturation", "Tape / VHS", "Bitcrush", "Reverb", "Stereo Width", "Delay",
+        try assertCatalogued(["Filter", "Saturation", "Tape / VHS", "Bitcrush", "Reverb", "Stereo Width", "Delay",
                           "Chorus", "Flanger", "Phaser", "Tremolo", "Compressor", "Limiter"], "FX stage titles")
         // E4-13 — the shared card draws title AND subtitle as keys; the panels' words (eight since slice F) reach the catalog
         let card = try codeOnly("Sources/Echoelmusic/Studio/EchoelPanel.swift")
@@ -670,7 +685,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                        "a verbatim `Text(String)` is back in EchoelPanel")
         // Slice F (2026-10-02) retired the Workstation plate: its title "Workstation" and subtitle "The arrangement is
         // the Piece stage" left this list together with their catalog keys (StringCatalogIsHonestTests' orphan rule).
-        try assertGerman(["Mix", "Tempo & variations", "Master", "Field", "Mood", "Sound & texture",
+        try assertCatalogued(["Mix", "Tempo & variations", "Master", "Field", "Mood", "Sound & texture",
                           "Effects", "Save & Export",
                           "Level per part", "Tap · metronome · haptic beat · ideas",
                           "Master level · EBU R128 loudness", "Character of the composition",
@@ -681,14 +696,14 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let grid = try codeOnly("Sources/Echoelmusic/Studio/MasterLoudnessGrid.swift")
         XCTAssertTrue(grid.contains("private func readout(_ label: LocalizedStringKey, _ value: String, _ unit: String, _ color: Color)"),
                       "readout takes a String label again — Short-term / Integrated / True peak / Range would spell verbatim")
-        try assertGerman(["Short-term", "Integrated", "True peak", "Range"], "loudness readout names")
+        try assertCatalogued(["Short-term", "Integrated", "True peak", "Range"], "loudness readout names")
         // E4-15 — the media cards' action label draws its title as a key; the three actions (+ Undo) reach the catalog
         // `mediaLabel`, not `media` — that name is already bound to the media library eleven lines up, and the
         // redeclaration did not compile (BfT 6561 red on 4d53fd149)
         let mediaLabel = try codeOnly("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
         XCTAssertTrue(mediaLabel.contains("Text(LocalizedStringKey(title))") && !mediaLabel.contains("Text(title)"),
                       "MediaActionLabel draws its title verbatim again — Choose Photo / Apply to Visuals / Choose Video would not translate")
-        try assertGerman(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
+        try assertCatalogued(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
         // E4-16 — the selected-part bar: titles as keys, every VoiceOver sentence localised at its caller
         let bar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(bar.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,"),
@@ -700,7 +715,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "Copy the selected part to right after it", "Remove the selected part. Undo brings it back"] {
             XCTAssertTrue(bar.contains("label: String(localized: \"\(label)\")"), "the button label `\(label)` is passed verbatim again")
         }
-        try assertGerman(["Earlier", "Later", "Trim start", "Trim end", "Split", "Copy", "Remove",
+        try assertCatalogued(["Earlier", "Later", "Trim start", "Trim end", "Split", "Copy", "Remove",
                           "Move the selected part one bar earlier", "Move the selected part one bar later",
                           "Copy the selected part to right after it", "Remove the selected part. Undo brings it back",
                           "The start cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays",
@@ -721,7 +736,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for word in ["sixteenth", "eighth", "quarter note"] {
             XCTAssertTrue(gridWords.contains("String(localized: \"\(word)\")"), "QuantizeGrid speaks `\(word)` verbatim again")
         }
-        try assertGerman(["Fit", "−1 step", "+1 step", "Quantize",
+        try assertCatalogued(["Fit", "−1 step", "+1 step", "Quantize",
                           "Lower", "Higher", "Deselect", "Show the octave below",
                           "Show the octave above", "Clear the note selection", "Move ", " down an octave",
                           " down a semitone", " up a semitone", " up an octave", " to the nearest notes of ",
@@ -746,7 +761,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(doors.contains("private func door(_ title: LocalizedStringKey, systemImage: String, object: String, enabled: Bool,")
                       && doors.contains("spoken: LocalizedStringKey, hint: LocalizedStringKey) -> some View {"),
                       "the Workstation's Save/Open door takes String words again — title, spoken name or hint would spell verbatim")
-        try assertGerman(["Previous guide card", "Next guide card", "Genre", "FX",
+        try assertCatalogued(["Previous guide card", "Next guide card", "Genre", "FX",
                           "Echoel plays ", ", FX character ", "Names the piece and saves it, with its tracks and parts", "Shows your saved pieces. Opening one replaces the piece here",
                           "Hide guide", "The Guide button in the head, the ⓘ, brings it back", "Guide", "Save",
                           "Open", "Save this piece", "Open a saved piece"],
@@ -762,7 +777,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for title in ["Modes", "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk", "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic"] {
             XCTAssertTrue(families.contains("return String(localized: \"\(title)\")"), "`Scale.Family.title` spells `\(title)` verbatim again")
         }
-        try assertGerman(["MIDI in", ", card ", " of ", "Modes",
+        try assertCatalogued(["MIDI in", ", card ", " of ", "Modes",
                           "Minor & Altered", "Pentatonic & Blues", "Symmetric", "European Folk",
                           "Maqām & Near East", "East & Southeast Asia", "Hindustani & Carnatic", "MIDI out"],
                          "routing label, guide counter and scale family words")
@@ -777,7 +792,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for title in shelfTitles {
             XCTAssertTrue(shelves.contains("return String(localized: \"\(title)\")"), "`Subcategory.title` spells `\(title)` verbatim again")
         }
-        try assertGerman(shelfTitles, "genre shelf headers")
+        try assertCatalogued(shelfTitles, "genre shelf headers")
         // E4-21 — the 57 scale display names go through String(localized:); the SHORT name (share filenames) does not
         let scaleNames = ["Major", "Minor", "Dorian", "Phrygian", "Lydian",
                           "Mixolydian", "Pentatonic Major", "Pentatonic Minor", "Harmonic Minor", "Chromatic",
@@ -796,7 +811,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertTrue(families.contains("return \"maj\"") && families.contains("return \"harm\""),
                       "`Scale.shortName` is no longer a plain literal — it is the key half of every share filename and must read the same on every device")
-        try assertGerman(scaleNames, "scale display names")
+        try assertCatalogued(scaleNames, "scale display names")
         // E4-22 — the icon tile draws its word as a key; the Record tile's state title and the spoken accidentals are keys
         let tile = try codeOnly("Sources/Echoelmusic/Studio/EchoelIconTile.swift")
         XCTAssertTrue(tile.contains("Text(LocalizedStringKey(title))") && !tile.contains("Text(title)"),
@@ -806,7 +821,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let notes = try codeOnly("Sources/Echoelmusic/Sequencer/NoteNaming.swift")
         XCTAssertTrue(notes.contains("with: String(localized: \" sharp\")") && notes.contains("with: String(localized: \" flat\")"),
                       "`spokenName` expands ♯/♭ to a verbatim English word again")
-        try assertGerman(["MIDI", "Open", "Live Colabo", "Learn", "Save", "Keep last", "Stop", "Recording", "Writing", "Record", " sharp", " flat"], "icon tile, record tile and accidental words")
+        try assertCatalogued(["MIDI", "Open", "Live Colabo", "Learn", "Save", "Keep last", "Stop", "Recording", "Writing", "Record", " sharp", " flat"], "icon tile, record tile and accidental words")
         // E4-23 — the Learn/guide cards (six guide + two safety entries), the six Learn headings and the bio
         // disclaimer are catalog keys: ONE `String(localized:)` literal per field, no `+` chain. The detail keys
         // are read back at RUNTIME (en unit == key in the simulator) so no 900-character literal lives here.
@@ -827,13 +842,13 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // (only `assertGerman` does), so Build for Testing 6565 was red on `cannot find 'strings' in scope`.
         let strings = try catalogStrings()
         for card in cards {
-            XCTAssertNotNil(german(card.title, in: strings), "no German unit for the Learn card title `\(card.title)`")
-            XCTAssertNotNil(german(card.summary, in: strings), "no German unit for the Learn card summary of `\(card.id)`")
+            XCTAssertNotNil(catalogued(card.title, in: strings), "no English-only catalog unit for the Learn card title `\(card.title)`")
+            XCTAssertNotNil(catalogued(card.summary, in: strings), "no English-only catalog unit for the Learn card summary of `\(card.id)`")
             if card.id != "safety.scope" {   // its detail is the disclaimer + a tail seam, pinned separately below
-                XCTAssertNotNil(german(card.detail, in: strings), "no German unit for the Learn card detail of `\(card.id)`")
+                XCTAssertNotNil(catalogued(card.detail, in: strings), "no English-only catalog unit for the Learn card detail of `\(card.id)`")
             }
         }
-        try assertGerman(["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope", "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.", " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced."], "Learn headings, disclaimer and scope tail")
+        try assertCatalogued(["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope", "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.", " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced."], "Learn headings, disclaimer and scope tail")
 
         // E4-24 — the Piece stage's counted sentences and the root chrome's position/file/piece readouts.
         // A count is a NUMBER next to a catalog NOUN per grammatical number (Spur/Spuren · Teil/Teile ·
@@ -870,7 +885,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // COUNTERWEIGHT: `Text("loop \(barInLoop + 1)/\(bars)")` stays verbatim on purpose — "Loop" is the
         // German word too, and `TheBarCountHasACarrierTests` pins that exact carrier (#490).
         XCTAssertTrue(rootChrome.contains("Text(\"loop \\(barInLoop + 1)/\\(bars)\")"), "the loop carrier moved — re-anchor TheBarCountHasACarrierTests first")
-        try assertGerman(["track", "tracks", "part", "parts", "bar", "bars", "Arrangement: ", "bars long",
+        try assertCatalogued(["track", "tracks", "part", "parts", "bar", "bars", "Arrangement: ", "bars long",
                           "part belongs", "parts belong", " to a track this piece no longer has.",
                           "parts belong to a track this piece no longer has", "automated parameter", "automated parameters",
                           " · measuring tempo…", " · turn Warp off to change its tempo", " · tempo not set — enter it to use Warp",
@@ -910,7 +925,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(SessionGrid.label(forTick: TimelineTime.ticksPerBar + 2 * TimelineTime.ticksPerBeat), "Bar 2 beat 3")
         XCTAssertEqual(TrackParts.lengthText(2 * TimelineTime.ticksPerBeat), "2 beats")
         XCTAssertEqual(SongAutomationEdit.countLabel(inSongPoints: 3, continuesPastEnd: true), "3 points, and 1 after the end of the piece")
-        try assertGerman(["Bar ", " beat ", " · to bar ", "1 bar", "bars", "1 beat", "beats", "1 point", "points",
+        try assertCatalogued(["Bar ", " beat ", " · to bar ", "1 bar", "bars", "1 beat", "beats", "1 point", "points",
                           ", and 1 after the end of the piece"], "bar/beat vocabulary of the model helpers")
 
         // E4-26 — the views that FRAME the composed bar words: the part bar's heading, the parts row's spoken
@@ -931,7 +946,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Text(\"Point at \\(", "accessibilityLabel(\"Remove the point at \\(", "accessibilityLabel(\"\\(title) automation: \\("] {
             XCTAssertFalse(curveEditor.contains(verbatim), "SongAutomationEditor interpolates a sentence again: `\(verbatim)`")
         }
-        try assertGerman(["Selected part · ", "Part at ", "Point at ", "Remove the point at ", " automation: "], "part bar, parts row and curve editor frames")
+        try assertCatalogued(["Selected part · ", "Part at ", "Point at ", "Remove the point at ", " automation: "], "part bar, parts row and curve editor frames")
 
         // E4-27 — the last bar-word producers: the transport's position readout (`WorkstationSummary.positionText`,
         // Bar n · Beat b), the arrange canvas's landing announcement, and the Session launch surface (scene/part
@@ -963,7 +978,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged (the position pins keep proving `Bar 1 · Beat 1`).
         XCTAssertEqual(WorkstationSummary.positionText(forTick: TimelineTime.ticksPerBar + TimelineTime.ticksPerBeat), "Bar 2 · Beat 2")
         XCTAssertEqual(SessionGrid.word(.playing), "Playing")
-        try assertGerman(["Bar ", " · Beat ", "Part at ", "Queued", "Playing", "Stopping", " later scenes are not shown.",
+        try assertCatalogued(["Bar ", " · Beat ", "Part at ", "Queued", "Playing", "Stopping", " later scenes are not shown.",
                           "Launch scene at ", "Not the current scene", ", part at ", "Not launched", "Stop ",
                           "Stop the launched part on "], "position readout, landing announcement and Session launch")
 
@@ -1002,7 +1017,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertFalse(pad.contains(verbatim), "EchoelNumberPad interpolates a key again: `\(verbatim)`")
         }
         XCTAssertEqual(AutomationStatusRow.Layer.clip.label, "Part")   // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged
-        try assertGerman(["no effect", "overridden", "off", "1 point", "points", " automation, ",
+        try assertCatalogued(["no effect", "overridden", "off", "1 point", "points", " automation, ",
                           "no effect, nothing is connected to this parameter", "overridden by a later layer", "switched off",
                           "Global", "Part", "Arrangement", "Range ", "Confirm ", "Default "], "automation strip, layer words and number pad")
 
@@ -1051,7 +1066,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged — the words the other guards pin still come out
         XCTAssertEqual(MediaBrowserView.usageText(.unused), "not in the piece")
         XCTAssertEqual(MediaBrowserView.noMatchText("snare"), "No file name contains \u{201C}snare\u{201D}.")
-        try assertGerman(["Relinked ", " to ", " files", "Relink ", " — expects ", "no part", "1 part", "No file name contains ",
+        try assertCatalogued(["Relinked ", " to ", " files", "Relink ", " — expects ", "no part", "1 part", "No file name contains ",
                           "Place ", "Stop preview", "Preview ", "Plays its first ", " seconds", "not in the piece",
                           "imported, not placed yet", "in 1 part", "in ", " parts", " — network target", "connections",
                           "connected", "not connected", "incompatible"], "media library and routing surface")
@@ -1105,7 +1120,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                        "the step row interpolates the title into one literal again")
         // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged
         XCTAssertTrue(ComposeGuide.notesOpenedNote.hasPrefix("The part's notes are open under the arrangement."))
-        try assertGerman(["Add a MIDI track", "Add a part", "Write notes", "Stop all playback", "Play the piece", "Save the piece",
+        try assertCatalogued(["Add a MIDI track", "Add a part", "Write notes", "Stop all playback", "Play the piece", "Save the piece",
                           "Your piece has its MIDI track.", "An instrument track for the notes of your piece.",
                           "Adds another empty four-bar part after the last one.", "An empty four-bar part on that track.",
                           "Opens the part's notes under the arrangement.", "Stops the piece, the instrument and the pulse reading.",
@@ -1168,7 +1183,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged
         XCTAssertEqual(BioMetric.heartRate.title, "Heart Rate")
         XCTAssertEqual(BioSoundMapping.all.first?.source, "Heart rate")
-        try assertGerman(["Heart Rate", "Heart-Rate Variability", "Coherence", "Breathing Rate", "breaths/min",
+        try assertCatalogued(["Heart Rate", "Heart-Rate Variability", "Coherence", "Breathing Rate", "breaths/min",
                           "How fast your heart is beating right now.", "Breaths per minute.", "read your pulse to see it move",
                           "demo values, not your body", "Simulated demo, ", " Currently ", " percent.", " shapes ",
                           "Heart rate", "Vibrato & tone brightness", "Heart-rate variability", "Overtone brightness",
@@ -1178,8 +1193,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                                  (.sdnn, "Standard deviation"), (.pnn50, "The percentage of consecutive"), (.coherence, "How much of your heart-rate"),
                                  (.breath, "Your breathing rate.")] {
             XCTAssertTrue(metric.detail.hasPrefix(prefix), "`BioMetric.\(metric.rawValue).detail` no longer begins as the catalog key does")
-            XCTAssertNotNil(german(metric.detail, in: strings), "no German unit for the detail of `\(metric.rawValue)`")
-            XCTAssertNotNil(german(metric.summary, in: strings), "no German unit for the summary of `\(metric.rawValue)`")
+            XCTAssertNotNil(catalogued(metric.detail, in: strings), "no English-only catalog unit for the detail of `\(metric.rawValue)`")
+            XCTAssertNotNil(catalogued(metric.summary, in: strings), "no English-only catalog unit for the summary of `\(metric.rawValue)`")
         }
 
         // E4-32 — the pulse pill's spoken value (HeaderMonitors.accessibilityText) and the Live Colabo peer row's
@@ -1212,7 +1227,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["\"Simulated demo, \" : \"\")", ") beats per minute\" : \"no pulse yet\"", ", coherence \\(coherence > 0"] {
             XCTAssertFalse(peer.contains(verbatim), "LiveColaboView interpolates the peer sentence verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["No pulse lock", "Simulated demo, ", " beats per minute, coherence ", " beats per minute",
+        try assertCatalogued(["No pulse lock", "Simulated demo, ", " beats per minute, coherence ", " beats per minute",
                           "no pulse yet", "not available", ", coherence "], "pulse pill and peer row")
 
         // E4-33 — the last two demo-prefix sentences: the always-on channel row (three return paths — unmeasured,
@@ -1245,7 +1260,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["contribution.synthetic ? \"Simulated demo, \"", ") to \\(contribution.targetName), not measured", ") moving \\(contribution.targetName), ", ".rounded())) percent\""] {
             XCTAssertFalse(fxRow.contains(verbatim), "EchoelFXView interpolates the contribution sentence verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Simulated demo, ", ", not measured, shaping ", " at the neutral value", " at ", " percent, shaping ",
+        try assertCatalogued(["Simulated demo, ", ", not measured, shaping ", " at the neutral value", " at ", " percent, shaping ",
                           " held at ", " percent, no longer arriving, still shaping ", " to ", " moving ", ", not measured", " percent"],
                          "always-on row and FX contribution row")
 
@@ -1280,7 +1295,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(AlwaysOnBioChannel.heartRate.name, "Heart rate")
         XCTAssertEqual(AlwaysOnBioChannel.coherence.shapes, "filter · brightness · harmonicity · noise")
         XCTAssertEqual(BioShapedParameter.vibrato.soundPanelRows, ["Vibrato depth", "Vibrato rate"])
-        try assertGerman(["Coherence", "HRV", "Heart rate", "Breath phase", "brightness", "harmonicity", "noise", "filter", "vibrato", "level",
+        try assertCatalogued(["Coherence", "HRV", "Heart rate", "Breath phase", "brightness", "harmonicity", "noise", "filter", "vibrato", "level",
                           "Brightness", "Harmonics", "Noise", "Cutoff", "Vibrato depth", "Vibrato rate"], "always-on channel names")
 
         // E4-35 — the FX route names: `FXModTarget.displayName` (thirteen targets, the Effects routing pickers and the
@@ -1311,7 +1326,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(FXModTarget.reverbMix.displayName, "Reverb Mix")
         XCTAssertEqual(FXModCarrier.bio(.heartRate).displayName, "Heart rate")
         XCTAssertEqual(ModSource.heartRate.displayName, "Heartbeat")
-        try assertGerman(["Filter Cutoff", "Filter Resonance", "Saturation Drive", "Chorus Mix", "Flanger Mix", "Phaser Mix", "Tremolo Depth",
+        try assertCatalogued(["Filter Cutoff", "Filter Resonance", "Saturation Drive", "Chorus Mix", "Flanger Mix", "Phaser Mix", "Tremolo Depth",
                           "Delay Mix", "Delay Feedback", "Reverb Mix", "Reverb Size", "Bitcrush Mix", "Stereo Width",
                           "LFO", "Heart rate", "HRV", "Breath rate", "Breath", "Coherence", "Motion", "Heartbeat"], "FX route names")
 
@@ -1334,9 +1349,9 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(PulseLadderStep.searching.word, "Searching")
         XCTAssertEqual(PulseLadderStep.lost.spoken, "Pulse lost — keep your finger still")
         for step in PulseLadderStep.allCases {
-            XCTAssertLessThanOrEqual(german(step.word, in: strings)?.value.count ?? 99, 12, "the German rung word for `\(step)` overflows the pill's value slot")
+            XCTAssertLessThanOrEqual(catalogued(step.word, in: strings)?.value.count ?? 99, 12, "the rung word for `\(step)` overflows the pill's value slot")
         }
-        try assertGerman(["Searching", "Almost", "Found", "Lost", "Searching for your pulse", "Almost there — keep your finger still",
+        try assertCatalogued(["Searching", "Almost", "Found", "Lost", "Searching for your pulse", "Almost there — keep your finger still",
                           "Pulse found", "Pulse lost — keep your finger still"], "pulse ladder")
 
         // E4-37 — the long sentences of AlwaysOnBioChannel: the demo subject (ONE spelling, now a computed key —
@@ -1379,7 +1394,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(BioShapedParameter.soundPanelSentence(synthetic: false).hasSuffix(" move around the values you set here. Open Bio to watch the four channels doing it."))
         XCTAssertEqual(BioPanelRowCopy.autoModeHint(for: nil), "Needs a running bio source before it can steer anything")
         XCTAssertTrue(BioPanelRowCopy.autoModeCaption(for: nil).hasPrefix("Needs a running bio source — choose one"))
-        try assertGerman(Array(Set(["the simulated demo source, not your body", "four channels from ", ", shape ", "four body channels shape ",
+        try assertCatalogued(Array(Set(["the simulated demo source, not your body", "four channels from ", ", shape ", "four body channels shape ",
                                     "Separately from these routes, ", "Four channels from ", "Four body channels shape ", "Your body", "your body", " and ",
                                     "The simulated demo source is not shaping any control on this panel right now.",
                                     "Your body is not shaping any control on this panel right now.",
@@ -1424,11 +1439,11 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["title: \"Sound\"", "xCaption: \"dark · bright\"", "title: \"Visual\"", "\\(title) mood pad", "percent across (\\(xCaption))", "named: \"More \\("] {
             XCTAssertFalse(pads.contains(verbatim), "MoodPads interpolates or spells a pad word verbatim again: `\(verbatim)`")
         }
-        // the actions split the caption on " · " — every German caption must keep exactly one
+        // the actions split the caption on " · " — every caption must keep exactly one
         for caption in ["dark · bright", "still · moving", "natural · spectrum", "calm · energy"] {
-            XCTAssertEqual(german(caption, in: strings)?.value.components(separatedBy: " · ").count, 2, "the German `\(caption)` must split into two words on ` · `")
+            XCTAssertEqual(catalogued(caption, in: strings)?.value.components(separatedBy: " · ").count, 2, "`\(caption)` must split into two words on ` · `")
         }
-        try assertGerman(["Pulse detected — you can let go & play", "Your body is driving the sound", "Body signal live, not driving yet", "No live body signal",
+        try assertCatalogued(["Pulse detected — you can let go & play", "Your body is driving the sound", "Body signal live, not driving yet", "No live body signal",
                           "No signal", "Reading…", "Cover camera", "Connecting…", "Sound", "Visual", "dark · bright", "still · moving",
                           "natural · spectrum", "calm · energy", " mood pad", " percent across (", " percent up (", "More ", "right", "left", "up", "down"],
                          "bio strip and mood pads")
@@ -1464,7 +1479,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS: the bundle's English output is unchanged
         XCTAssertEqual(FloatingVisualWindow.wavAccessibilityValue(recording: true, failed: false, droppedSeconds: 1.5), "Recording, 1.5 seconds lost")
         XCTAssertEqual(FloatingVisualWindow.WindowSize.fullscreen.label, "Fullscreen")
-        try assertGerman(["Small", "Medium", "Large", "Fullscreen", "Stop WAV audio recording", "Record lossless WAV audio", "Writing to disk failed",
+        try assertCatalogued(["Small", "Medium", "Large", "Fullscreen", "Stop WAV audio recording", "Record lossless WAV audio", "Writing to disk failed",
                           "Recording, ", " seconds lost", "Echoelmusic — drag to move the visual", "Hide note grid", "Show note grid", "Exit fullscreen",
                           "Resize visual", "Hide floating visual", "Show floating visual",
                           "Chooses how the twelve notes are spelled — international A B C, German A H C, solfège Do Re Mi, or Indian sargam Sa Re Ga"],
@@ -1510,7 +1525,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS: the bundle's English statics are unchanged
         XCTAssertEqual(PerformSessionView.sectionTitle, "Scenes and tracks")
         XCTAssertTrue(PerformSessionView.emptyNote.hasPrefix("Nothing to launch yet. Parts you write on the Piece stage,"))
-        try assertGerman(["Scenes and tracks", "Expanded", "Collapsed", "Save preset", "Rename preset", "Morph → ", "Morph toward a preset…",
+        try assertCatalogued(["Scenes and tracks", "Expanded", "Collapsed", "Save preset", "Rename preset", "Morph → ", "Morph toward a preset…",
                           "Always on — simulated demo → timbre", "Always on — body → timbre",
                           "Shows the piece's scenes to launch on the bar, and Mute and Solo for its tracks. While the Echoel plays on its own, stop it in the header to launch a scene.",
                           "Nothing to launch yet. Parts you write on the Piece stage, and the Echoel's generated music, appear here as scenes to launch on the bar.",
@@ -1556,7 +1571,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS: the bundle's English is unchanged (the photo guard pins the rest)
         XCTAssertEqual(PhotoSeedText.change("Hue", 0.5, 0.5), "Hue 0.50, unchanged")
         XCTAssertTrue(PhotoSeedText.unreadable.hasPrefix("This photo could not be read."))
-        try assertGerman(["This photo could not be read. Try another photo.", "Reading the photo…", "No main colour", "Main colour: hue ", ", unchanged",
+        try assertCatalogued(["This photo could not be read. Try another photo.", "Reading the photo…", "No main colour", "Main colour: hue ", ", unchanged",
                           "Intensity", "Detail", "Hue", "Saturation", "Brightness", "Contrast", ", look applied", "· look applied", "Photo to Visuals",
                           "Choose a photo; its colour, brightness and contrast can shape the visuals", "Choose photo",
                           "Opens your photos. Nothing is changed until you apply it.", "Applied:", "With this photo:",
@@ -1600,7 +1615,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         // RUNTIME COUNTERWEIGHTS beside the video guard's own: the bundle's English is unchanged
         XCTAssertEqual(VideoSeedText.cuts([1, 2, 3, 4, 5, 6, 7]), "7 cuts or flashes: 1.0 s, 2.0 s, 3.0 s, 4.0 s, 5.0 s and 2 more")
         XCTAssertTrue(VideoSeedText.unreadable.hasPrefix("This video could not be read. Videos up to "))
-        try assertGerman(["This video could not be read. Videos up to ", " minutes can be used; try another one.", "Reading the video…", "Length ", " fps",
+        try assertCatalogued(["This video could not be read. Videos up to ", " minutes can be used; try another one.", "Reading the video…", "Length ", " fps",
                           "No cuts or flashes", " more", "cut or flash", "cuts or flashes", "Length in bars: unknown", "About ", " of 4/4 at ",
                           "It has sound. The sound is not used yet.", "No sound.", "Motion", "Movement", "Video to Visuals",
                           "Choose a short video; its brightness, colour and movement can shape the visuals", "Choose video",
@@ -1635,7 +1650,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          ".accessibilityValue(expanded ? \"Expanded\" : \"Collapsed\")", ".accessibilityHint(expanded ? \"Hides the steps\" : \"Shows the steps\")"] {
             XCTAssertFalse(workstation.contains(verbatim), "WorkstationView spells a ternary of bare literals again: `\(verbatim)`")
         }
-        try assertGerman(["On", "Off", "Warp", "Warp · some", "On for some parts", "Stop the piece to change warp",
+        try assertCatalogued(["On", "Off", "Warp", "Warp · some", "On for some parts", "Stop the piece to change warp",
                           "Plays this track's parts at the piece's tempo instead of their recorded speed", "Stop the piece to change pitch",
                           "Moves every part on this track up or down without changing its tempo", "Stop", "Play", "Stop all playback",
                           "Tempo", "Set tempo", "Expanded", "Collapsed", "Hides the steps", "Shows the steps"],
@@ -1666,7 +1681,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")"] {
             XCTAssertFalse(clickLeaf.contains(verbatim), "WorkstationClickToggle speaks a bare On/Off again: `\(verbatim)`")
         }
-        try assertGerman(["On", "Off"], "On/Off siblings")
+        try assertCatalogued(["On", "Off"], "On/Off siblings")
 
         // E4-45 — the blocked-Apply sentence. `MediaLookUndo.applyBlockedReason` interpolated the compared identifier
         // (`"A \(medium) look is applied. …"`) — a String, read verbatim and naming "photo"/"video" in English. It is
@@ -1686,7 +1701,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["extension MediaLookUndo {"] {
             XCTAssertFalse(photoCardTail.contains(verbatim), "the spoken medium has a second home in the photo card again: `\(verbatim)`")
         }
-        try assertGerman(["A ", " look is applied. Undo it first to apply this one.", "photo", "video"], "blocked-Apply sentence")
+        try assertCatalogued(["A ", " look is applied. Undo it first to apply this one.", "photo", "video"], "blocked-Apply sentence")
 
         // E4-46 — EchoelStudioView's remaining ternaries and two interpolated spoken labels: the Explore/New button
         // (text + label), the variation row's spoken label (rank, match, playing — typed steps), the visual-window
@@ -1716,7 +1731,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "? \"Tap again for the default sound\" :"] {
             XCTAssertFalse(studioSites.contains(verbatim), "EchoelStudioView spells a ternary or interpolated label of bare literals again: `\(verbatim)`")
         }
-        try assertGerman(["Explore", "New", "Explore variations", "Explore new variations", "Variation ", ", playing", " percent match",
+        try assertCatalogued(["Explore", "New", "Explore variations", "Explore new variations", "Variation ", ", playing", " percent match",
                           "Hide visual window", "Show visual window", "Hide the floating visual window", "Show the floating visual window",
                           "Double tap to clear", "Double tap to apply", "in the slider, position ", "not in the slider",
                           "Double tap to remove from the slider", "Double tap to add to the slider", "Unfavorite", "Favorite",
@@ -1774,7 +1789,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["return \"Waiting for beats\"", "return \"Camera pulse is off.", "% of beats usable", "\\(d.pairs) beat pairs"] {
             XCTAssertFalse(poincareReadout.contains(verbatim), "AnalysisPoincareView speaks a bare literal again: `\(verbatim)`")
         }
-        try assertGerman(["No dominant tone", "Loudest tone ", " hertz", " hertz, ", ", in tune", " cents sharp", " cents flat",
+        try assertCatalogued(["No dominant tone", "Loudest tone ", " hertz", " hertz, ", ", in tune", " cents sharp", " cents flat",
                           "Silent", "Peak ", " decibels true peak",
                           "Wavefront field. Silent. Nothing is sounding, so no wave is leaving the centre.", " wavefronts are",
                           "One wavefront is", "Wavefront field. ", " spreading outward.", " spreading outward, the newest centred near ", " hertz.",
@@ -1807,7 +1822,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["? \"Unstar\" : \"Favorite\""] {
             XCTAssertFalse(fxFavourite.contains(verbatim), "EchoelFXView spells the favourite ternary with bare literals again: `\(verbatim)`")
         }
-        try assertGerman(["Stop", "Play from here", "Stop all playback", "Play the piece from the selected part",
+        try assertCatalogued(["Stop", "Play from here", "Stop all playback", "Play the piece from the selected part",
                           "Plays the arrangement from this part's bar on the shared transport.", "Preview", "Unstar", "Favorite"],
                          "Part bar, preview and favourite sites")
 
@@ -1831,7 +1846,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in [".accessibilityValue(soundResetArmed ? \"Armed\" : \"\")", "? \"Live chord, mapped by pitch\" :", "Music colour, \\(sounding ?"] {
             XCTAssertFalse(studioArmed.contains(verbatim), "EchoelStudioView spells a bare arm or an interpolated label again: `\(verbatim)`")
         }
-        try assertGerman(["Blackout ON", "Blackout", "Blackout active — turn the light back on", "Blackout — black out the light immediately",
+        try assertCatalogued(["Blackout ON", "Blackout", "Blackout active — turn the light back on", "Blackout — black out the light immediately",
                           "Armed", "Live chord, mapped by pitch", "Plays when the music is sounding", "Music colour, live", "Music colour, idle"],
                          "Blackout, Armed and Music-colour sites")
 
@@ -1854,7 +1869,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in [".accessibilityLabel(\"Bio source: \\(sourceText)\")"] {
             XCTAssertFalse(bioTag.contains(verbatim), "BioStripView interpolates the source into a literal again: `\(verbatim)`")
         }
-        try assertGerman(["Stop", "Go Live (nearby)", " wants to join you", "Bio source: "], "Live Colabo and bio-tag sites")
+        try assertCatalogued(["Stop", "Go Live (nearby)", " wants to join you", "Bio source: "], "Live Colabo and bio-tag sites")
 
         // E4-51 — EchoelStudioView's eight interpolated spoken labels and the rendered export-failure sentence: each was
         // one literal with a name or a note inside; now a catalog key seamed beside the value, the value verbatim.
@@ -1876,7 +1891,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          ".accessibilityLabel(\"Not opened. \\(openNote)\")", ".accessibilityLabel(\"Share \\(p.name)\")", ".accessibilityLabel(\"New name for \\(currentName)\")"] {
             XCTAssertFalse(studioSpoken.contains(verbatim), "EchoelStudioView interpolates a value into a spoken literal again: `\(verbatim)`")
         }
-        try assertGerman(["Export failed. ", ". Nothing was saved.", " play-surface sound", " visual preset — ", " look",
+        try assertCatalogued(["Export failed. ", ". Nothing was saved.", " play-surface sound", " visual preset — ", " look",
                           "Import failed. ", "Not opened. ", "Share ", "New name for "], "Studio spoken labels")
 
         // E4-52 — the VISIBLE interpolated lines (`Text("… \\(value) …")`, read as a format key the catalog cannot carry
@@ -1900,7 +1915,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Text(\"\\(invite.peerName) wants to join\")", "Text(\"Piece from \\(from)\")"] {
             XCTAssertFalse(colabLines.contains(verbatim), "LiveColaboView interpolates a value into a visible literal again: `\(verbatim)`")
         }
-        try assertGerman(["Undo delete of ", "Internal part slots are full (", ") — the instrument's music still plays and still exports.", "by ",
+        try assertCatalogued(["Undo delete of ", "Internal part slots are full (", ") — the instrument's music still plays and still exports.", "by ",
                           "Stamped on pieces you save, and used in piece and export file names. Shown to nearby devices while Live Colabo is on. Without a name they are stamped ",
                           " wants to join", "Piece from "], "visible interpolated lines")
 
@@ -1916,7 +1931,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["instrument \\u{2014} the tempo", "enabled \\u{2014} the body"] {
             XCTAssertFalse(routingCaptions.contains(verbatim), "PatchbayView spells the caption's dash as an escape again, so its key cannot match: `\(verbatim)`")
         }
-        try assertGerman(["No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach.",
+        try assertCatalogued(["No routes yet. A route lets one measured channel of your body move one parameter of the instrument — the tempo, or any sound parameter automation can reach.",
                           "Start",
                           "Two Echoelmusic devices on the same Wi-Fi find each other here. Go live, connect, and share your piece both ways — a starting point to jam from together.",
                           "Share this piece", "Nearby", "Searching…", "Invite", "Share my pulse (live)",
@@ -1942,7 +1957,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "Text(\"Saves the composed loop", "+ \"sound and FX character", "Text(\"Smaller buffers respond sooner and cost more CPU. iOS may refuse", "+ \"hardest on Bluetooth"] {
             XCTAssertFalse(studioCaptions.contains(verbatim), "EchoelStudioView builds a caption as a verbatim String again: `\(verbatim)`")
         }
-        try assertGerman(["Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one ",
+        try assertCatalogued(["Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one ",
                           " of the ", " offered)",
                           "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, ",
                           "sound and FX character, and the piece — its tracks and parts. ", "Your mixer levels and hand-dialled FX stay with the instrument.",
@@ -1997,7 +2012,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertFalse(narrationHint.contains(".accessibilityHint(\"Shows or hides the plain-language"),
                        "LiveNarrationDisclosure builds its hint from verbatim Strings again")
-        try assertGerman(["Recording could not be written to disk", "Invalid loop length", "Capture failed", "The capture buffer is empty", "Export failed",
+        try assertCatalogued(["Recording could not be written to disk", "Invalid loop length", "Capture failed", "The capture buffer is empty", "Export failed",
                           "Opens the nearby-devices sheet: find a device on the same ", "Wi-Fi and share your piece with it. The two devices are ", "not clock-synced.",
                           "Sounds the first of every N beats higher and louder — the ", "click's own accent, not the piece's meter",
                           "Pick a pad rhythm above to shape the chord. On Genre the style writes its own ", "articulation and these three do not run.",
@@ -2053,7 +2068,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["let span = \"\\(bars) \\(bars == 1 ? \"bar\" : \"bars\")\"", ": \"Imported “\\(landing.clip.name)”"] {
             XCTAssertFalse(audioNote.contains(verbatim), "AudioImport interpolates an English sentence again: `\(verbatim)`")
         }
-        try assertGerman(["Added ", ". It is selected in the track list.", "Added an empty ", "-bar part on ",
+        try assertCatalogued(["Added ", ". It is selected in the track list.", "Added an empty ", "-bar part on ",
                           ". Its notes are open under the arrangement",
                           " — once it has notes, it plays at the piece's tempo, with the instrument stopped.",
                           " cannot play a MIDI part, so it went on ", " Generate won't place its music over this part.",
@@ -2095,7 +2110,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["return \"No parts\"", "? \"Parts at \\(list), and \\(rest) more\""] {
             XCTAssertFalse(stripSpoken.contains(verbatim), "ArrangementStripView speaks a verbatim English line again: `\(verbatim)`")
         }
-        try assertGerman(["note", "notes", " of ", " shown", " selected", "Note grid: ", "No parts", "Parts at ", ", and ", " more",
+        try assertCatalogued(["note", "notes", " of ", " shown", " selected", "Note grid: ", "No parts", "Parts at ", ", and ", " more",
                           "1 sixteenth", "sixteenths", " · bar ", ", beat ", "Notes", "Notes · "],
                          "note grid, picked note, Notes switch and arrangement row")
 
@@ -2137,7 +2152,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "let signal = synthetic ? \" from the demo signal,\"", "return (synthetic ? \"EchoelAI (demo signal) — \" : \"EchoelAI — \")"] {
             XCTAssertFalse(narration.contains(verbatim), "BioMusicDirector narrates in a verbatim English literal again: `\(verbatim)`")
         }
-        try assertGerman(["What your body is doing to the sound", "What the simulated demo source is doing to the sound", "What is shaping the sound",
+        try assertCatalogued(["What your body is doing to the sound", "What the simulated demo source is doing to the sound", "What is shaping the sound",
                           "Live narration", "Simulated demo, live narration",
                           " BPM sets a calm ", " BPM sets a driving ", " BPM sets a flowing ", "heart rate ", " BPM tempo",
                           "tempo holds at ", " BPM; no pulse measured yet",
@@ -2186,7 +2201,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(keyMode.contains("let mode: String = isMinor ? String(localized: \"minor\") : String(localized: \"major\")"),
                       "TuningDetector lost the E4-59 seam on minor/major")
         XCTAssertFalse(keyMode.contains("isMinor ? \"minor\" : \"major\""), "TuningDetector spells minor/major verbatim again")
-        try assertGerman(["Not measured in the last ", " s", "Not measured yet", "Nothing late in the last ", "Nothing late so far",
+        try assertCatalogued(["Not measured in the last ", " s", "Not measured yet", "Nothing late in the last ", "Nothing late so far",
                           " late in ", " s · worst ", " ms behind", " · only ", " s of it measured", " · under 1 s of it measured",
                           "Timing only. A click while the audio is on time is not counted here.", "Measuring…", "Not measured",
                           " · measured before the stop", "Key unclear — little tonal centre", "Key ambiguous — two keys fit equally well",
@@ -2207,7 +2222,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "return \"Tempo ≈ \\(bpm) BPM (or \\(alternative)).\""] {
             XCTAssertFalse(tempoSentence.contains(verbatim), "AudioTempoAnalysis interpolates the tempo sentence again: `\(verbatim)`")
         }
-        try assertGerman(["Tempo unclear.", ", a ", "-bar loop (or ", " (or "], "detected tempo")
+        try assertCatalogued(["Tempo unclear.", ", a ", "-bar loop (or ", " (or "], "detected tempo")
 
         // E4-61 — the Workstation's three remaining caption/spoken producers: the transport caption
         // (WorkstationSummary.transportCaption), the track-removal note (TrackMix.removalNote) and the mix-meter spoken
@@ -2241,7 +2256,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["\"Left \\(percent(left)) percent, right \\(percent(right)) percent\""] {
             XCTAssertFalse(mixSpoken.contains(verbatim), "WorkstationMixMeter interpolates the spoken text again: `\(verbatim)`")
         }
-        try assertGerman(["Playing from bar ", " on the shared transport.", "Playing from the top on the shared transport.",
+        try assertCatalogued(["Playing from bar ", " on the shared transport.", "Playing from the top on the shared transport.",
                           "Plays the piece's parts from the top.", "Nothing to play yet.",
                           "Removes this empty track. Undo cannot bring the track, or parts it held earlier, back.",
                           "Remove its part first to remove this track.", "Remove its ", " parts first to remove this track.",
@@ -2277,7 +2292,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["rawValue == 1 ? \"1 bar\" : \"\\(rawValue) bars\""] {
             XCTAssertFalse(loopBarWord.contains(verbatim), "LoopBarLength.label interpolates the bar word again: `\(verbatim)`")
         }
-        try assertGerman(["Stop and discard this recording", "Recording loop…", "Writing .wav…", "Record ", " → send",
+        try assertCatalogued(["Stop and discard this recording", "Recording loop…", "Writing .wav…", "Record ", " → send",
                           "Sizes the piece and the instrument; the head follows the system size.",
                           "Default — follows the system text size. ", "Level ", " of ",
                           ". Pinching with two fingers moves it too. ",
@@ -2317,7 +2332,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["return \"a calm groove\"", "return \"something sparse\""] {
             XCTAssertFalse(mazeDensity.contains(verbatim), "densityWord returns a literal again: `\(verbatim)`")
         }
-        try assertGerman(["Adds an empty ",
+        try assertCatalogued(["Adds an empty ",
                           "-bar part to the selected MIDI track when it has a voice, otherwise to the first MIDI track, and selects it",
                           "Ideas from your pulse — tap to keep. Your body wants ", "Ideas from ", " — tap to keep. ", "The demo asks for ",
                           "No pulse was measured, so these are ranked against the engine's own target — tap to keep. They aim for ",
@@ -2354,7 +2369,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["accessibilityValue = \"Root \\(rootName), \\(key.degreesPerOctave) notes per octave, three octave rows, low at the bottom\""] {
             XCTAssertFalse(touchSpoken.contains(verbatim), "TouchInstrumentView interpolates the spoken terrain again: `\(verbatim)`")
         }
-        try assertGerman(["Strap", "Scanning…", "Searching for a Bluetooth heart-rate strap", "Connecting…", "Connecting to ",
+        try assertCatalogued(["Strap", "Scanning…", "Searching for a Bluetooth heart-rate strap", "Connecting…", "Connecting to ",
                           " connected — waiting for heart rate", "BT off",
                           "Bluetooth is off or access is denied — enable it in Settings", "No strap",
                           "No strap found — moisten the electrodes, refasten the strap, and pick Bluetooth again",
@@ -2398,7 +2413,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["return String(format: \"That file is %.1f s long", "return \"Stop the piece to relink a file.\""] {
             XCTAssertFalse(relinkReason.contains(verbatim), "MediaRelink spells a reason verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track.",
+        try assertCatalogued(["Recording from bar 1. Stop, or the piece's end, adds the recording as a new part over the track.",
                           "Plays the piece from bar 1 and records the armed tracks where you play. ",
                           "The recording plays instead of the parts under it; Undo brings them back.",
                           "Stop the music to record. Recording starts at bar 1.",
@@ -2453,7 +2468,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Button(\"Default \\(EchoelDecimalText"] {
             XCTAssertFalse(fieldDefault.contains(verbatim), "EchoelValueField interpolates the Default action again: `\(verbatim)`")
         }
-        try assertGerman(["From the next bar, loops every part listed at ", " and returns every other launched track to the piece",
+        try assertCatalogued(["From the next bar, loops every part listed at ", " and returns every other launched track to the piece",
                           "Starts the piece at the start of ", " and loops every part listed at ", "Look ", "Default "],
                          "scene hints, look name and the Default action")
 
@@ -2473,7 +2488,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "return \"Stop the piece to preview a file.\"", "?? \"the audio track\""] {
             XCTAssertFalse(libraryLines.contains(verbatim), "MediaBrowserView spells a line verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Reading the library…", "Couldn't read the media library.",
+        try assertCatalogued(["Reading the library…", "Couldn't read the media library.",
                           "No imported audio yet — Import Audio copies a file here.",
                           "Their parts stay in the piece. Relink offers the library's files once one is there.",
                           "Their parts stay in the piece. Relink points its parts at a library file of the same length.",
@@ -2506,7 +2521,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                        "MIDIImport spells the too-long failure verbatim again")
         XCTAssertFalse(noteRefusals.contains("case .missing: return \"This part's notes are missing"),
                        "ClipNoteEdit spells a refusal verbatim again")
-        try assertGerman(["Couldn't open that file.", "Couldn't copy that file into the app.",
+        try assertCatalogued(["Couldn't open that file.", "Couldn't copy that file into the app.",
                           "That file isn't audio this app can read.", "That audio has no usable sample rate or channels.",
                           "That audio has no playable length.", "This piece has no audio track — add an audio track first.",
                           "The part grid is full — all ", " slots are in use.", "Couldn't read that file.",
@@ -2541,7 +2556,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(fxCharacters.contains("return \"Auto (genre)\""), "GenreFX spells a character name verbatim again")
         XCTAssertFalse(skillLevels.contains("case .beginner: return \"Beginner\""), "SkillLevel spells a level verbatim again")
         XCTAssertFalse(cameraStates.contains("return \"Camera recovering…\""), "the camera spells a recovery word verbatim again")
-        try assertGerman(["Auto (genre)", "Clean (dry)", "Underwater", "Telephone", "Cassette", "Vinyl", "Dream", "Megaphone",
+        try assertCatalogued(["Auto (genre)", "Clean (dry)", "Underwater", "Telephone", "Cassette", "Vinyl", "Dream", "Megaphone",
                           "Blurry", "Room", "Hall", "Use the genre's own effect space", "No effects — a dry signal",
                           "Submerged: deep low-pass + watery chorus + tape wobble", "Narrow band-pass — old-phone / lo-fi vocal",
                           "Warm tape: gentle low-pass + wow & flutter", "Dusty record: softened highs, subtle width",
@@ -2577,7 +2592,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(storeNotes.contains("? \"That file isn't an Echoel piece.\""), "ProjectStore spells the refusal verbatim again")
         XCTAssertFalse(routeNotes.contains("return \"Bluetooth is in call mode: mono and band-limited — the music too. Echoel \""),
                        "AudioConfiguration spells the call-mode note verbatim again")
-        try assertGerman(["Looking for nearby Echoelmusic…", "Off", "Inviting ", "This piece can't be encoded — not shared",
+        try assertCatalogued(["Looking for nearby Echoelmusic…", "Off", "Inviting ", "This piece can't be encoded — not shared",
                           "No peers connected", " peer", " peers", "Shared with ", "Share failed", "Joining ", "Connected to ",
                           "Piece received from ", "The file was read, but could not be saved. Retry the pending save.",
                           "Couldn't read that file.", "That file isn't a readable Echoel piece — ", "That file isn't an Echoel piece.",
@@ -2602,7 +2617,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertFalse(loudnessTargets.contains("return \"No target\""), "LoudnessTarget spells a target verbatim again")
         XCTAssertFalse(weatherLines.contains("return \"Wind sets the image in motion.\""), "WeatherMood spells an explanation verbatim again")
-        try assertGerman(["No target", "Streaming (−14)", "Podcast (−16)", "Broadcast (−23)", "Cinema (−24)",
+        try assertCatalogued(["No target", "Streaming (−14)", "Podcast (−16)", "Broadcast (−23)", "Cinema (−24)",
                           "Same sky keeps the same harmonic skeleton each time you play.",
                           "Warm weather brightens the tone, cold darkens it.",
                           "Wind and storms make the music busier, calm keeps it still.",
@@ -2635,7 +2650,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                        "TrackInspectorView spells the no-voice line verbatim again")
         XCTAssertFalse(meterNames.contains("case .wavefront: return \"Wavefront field of the master output\""),
                        "VisualAnalysisMeter spells a meter name verbatim again")
-        try assertGerman(["Play with camera light", "Play with a Bluetooth strap — scans for one", "Play with the simulation",
+        try assertCatalogued(["Play with camera light", "Play with a Bluetooth strap — scans for one", "Play with the simulation",
                           "Play with Apple Health — your Watch, at its own pace", "Echoel instrument", "Audio file player",
                           "Bio curve — no sound", "No engine plays this track yet", "No voice — only the first ",
                           " extra MIDI tracks play", "No voice — extra MIDI tracks are off in this build",
@@ -2661,7 +2676,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "return \"Fewer notes than Density asks for, only on the beats, held long. Wide.\""] {
             XCTAssertFalse(studioNames.contains(verbatim), "EchoelStudioView spells a studio sentence verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Bio — pulse, HRV, coherence, source",
+        try assertCatalogued(["Bio — pulse, HRV, coherence, source",
                           "Tempo and variations — tap tempo, metronome, haptic beat, variation ideas",
                           "Sound and texture, plus the piece's scenes and tracks", "Mix — level per part", "Effects", "Master",
                           "Mood — character, and the weather that colours it",
@@ -2696,7 +2711,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "case .cadence:     return \"A chord move that ends or pauses a phrase.\""] {
             XCTAssertFalse(theoryPrimer.contains(verbatim), "MusicTheoryPrimer spells a primer line verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Interval", "Scale & Mode", "Chord", "Chord Progression", "Cadence", "Key", "Tempo", "Swing", "Dynamics",
+        try assertCatalogued(["Interval", "Scale & Mode", "Chord", "Chord Progression", "Cadence", "Key", "Tempo", "Swing", "Dynamics",
                           "The distance in pitch between two notes.", "The set of pitches a piece draws from.",
                           "Several notes sounding together.", "The order chords move through over time.",
                           "A chord move that ends or pauses a phrase.", "The home note and scale a piece centres on.",
@@ -2726,7 +2741,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "\\u{201C}Coherence\\u{201D} here"] {
             XCTAssertFalse(bodyScience.contains(verbatim), "BioScienceInfo spells a body-science line verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Resonance breathing (~6 breaths/min)", "Heart-rate variability & coherence", "The baroreflex loop",
+        try assertCatalogued(["Resonance breathing (~6 breaths/min)", "Heart-rate variability & coherence", "The baroreflex loop",
                           "What the research measures", "What this is — and is not",
                           "The pace where breath and heartbeat couple most.", "A smooth, single-peak heart rhythm you can watch.",
                           "The blood-pressure loop that links the two.", "What controlled studies actually reported.",
@@ -2751,7 +2766,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "deep violet. About 39 % of each octave"] {
             XCTAssertFalse(lightScience.contains(verbatim), "LightScienceInfo spells a light-science line verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Blue light & the body clock (~480 nm)", "Green light (~525 nm)", "Red & near-infrared (~620–850 nm)",
+        try assertCatalogued(["Blue light & the body clock (~480 nm)", "Green light (~525 nm)", "Red & near-infrared (~620–850 nm)",
                           "Colour & emotion", "What Echoelmusic’s light is — and is not",
                           "The wavelength your inner clock reads most.", "Where daytime vision is most sensitive.",
                           "The long-wave red end — and the band just past sight.", "Shared, learned colour associations.",
@@ -2779,7 +2794,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "EchoelValueField lost the E4-77 gesture seam")
         XCTAssertFalse(fieldGesture.contains("let gesture = \"Swipe up or down to adjust, or double-tap to type\""),
                        "EchoelValueField spells the gesture verbatim again")
-        try assertGerman([" The curve runs on to a point after the end of the piece.", "Tap the row to add a point in the piece.",
+        try assertCatalogued([" The curve runs on to a point after the end of the piece.", "Tap the row to add a point in the piece.",
                           "Tap the row to add the first point.",
                           "Tap a point to pick it. Press and hold a point, then slide to move it.",
                           "Swipe up or down to adjust, or double-tap to type"],
@@ -2812,7 +2827,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "EchoelStudioView lost the E4-78 accent seam")
         XCTAssertFalse(accentNotes.contains("return \"On Dynamic, Evolve moves the accent"),
                        "EchoelStudioView spells the Dynamic note verbatim again")
-        try assertGerman(["Plays the arrangement from the top on the shared transport.",
+        try assertCatalogued(["Plays the arrangement from the top on the shared transport.",
                           "Unavailable: this piece has no parts on a track that plays.", "Turns the click off.",
                           "Plays a steady click at the current tempo, on the piece's beats while it plays.",
                           "bar ", "bars ", "bio automation track", "no parts", "1 part", "parts", " to ", "muted", "soloed",
@@ -2846,7 +2861,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "(0–100 %) are sent as well"] {
             XCTAssertFalse(patchbayToggles.contains(verbatim), "PatchbayView spells a routing hint verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network.",
+        try assertCatalogued(["On. Any device on your local network can connect to this iPhone over MIDI, and this iPhone can send MIDI out over the network.",
                           "Off. No wireless MIDI in either direction.",
                           "Off. Every note is sent on channel 1.", "Off. Notes are sent without per-note expression.",
                           "Unavailable while MPE note layout is off, because per-note expression needs one channel per note.",
@@ -2887,7 +2902,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "                 ? \"Running — the picture already follows your body.\""] {
             XCTAssertFalse(studioToggles.contains(verbatim), "EchoelStudioView spells a studio sentence verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Stops this recording and discards it. Nothing is saved.", "Records one loop and exports a WAV to share",
+        try assertCatalogued(["Stops this recording and discards it. Nothing is saved.", "Records one loop and exports a WAV to share",
                           "Variations of the same groove — your body curates, you pick.", "Sky reading arrives at Start.", "Now: ",
                           "How often the click accents. This is the click's own bar only — it does not change the piece's meter",
                           "Routing", "Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master.",
@@ -2926,7 +2941,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(noteGridHints.contains(seam), "PartNoteEditor lost the E4-81 seam `\(seam)`")
         }
         XCTAssertFalse(noteGridHints.contains("                                : \"Shown, not edited\")"), "PartNoteEditor spells the grid hint verbatim again")
-        try assertGerman(["Silences this track and the Studio instrument. Start un-mutes it", "Silences this track",
+        try assertCatalogued(["Silences this track and the Studio instrument. Start un-mutes it", "Silences this track",
                           "Plays only the soloed tracks",
                           "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo",
                           "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.",
@@ -2955,7 +2970,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         let partBarHint = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(partBarHint.contains("hint: String(localized: \"Moves the part to start on this bar; its place within the bar is kept.\"),"),
                       "SelectedPartBar lost the E4-82 seam")
-        try assertGerman(["Hide the selected track's automation", "Show the selected track's automation", "Sets the picked point's value",
+        try assertCatalogued(["Hide the selected track's automation", "Show the selected track's automation", "Sets the picked point's value",
                           "Pick next point", "Pick previous point",
                           "Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below.",
                           "Global curves move these parameters while the transport runs.",
@@ -2979,7 +2994,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(colaboInvite.contains("                 : \"Joining lets them share pieces with you.\")"), "LiveColaboView spells the joining line verbatim again")
         let captionIdle = try codeOnly("Sources/Echoelmusic/Studio/StudioCaptionView.swift")
         XCTAssertTrue(captionIdle.contains("? String(localized: \"Every control shapes the music as it plays.\")"), "StudioCaptionView lost the E4-83 seam")
-        try assertGerman(["Closes this track's details",
+        try assertCatalogued(["Closes this track's details",
                           "Opens this track's details: its device, and its mixer and parts where it has them",
                           "the MIDI track", "the audio track",
                           "Joining lets them share pieces with you — and see your live pulse while sharing is on.",
@@ -3011,7 +3026,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(noteSchemes.contains(seam), "NoteNaming lost the E4-84 seam `\(seam)`")
         }
         XCTAssertFalse(noteSchemes.contains("        case .german:  return \"A H C (Deutsch)\""), "NoteNaming spells a scheme label verbatim again")
-        try assertGerman(["Live — body → sound", "Live — LFO → sound", "Live — simulated demo → sound",
+        try assertCatalogued(["Live — body → sound", "Live — LFO → sound", "Live — simulated demo → sound",
                           "Audio stopped and could not restart.",
                           "A B C (International)", "A H C (Deutsch)", "Do Re Mi (Solfège)", "Sa Re Ga (Sargam)"],
                          "FX Live headings, degraded fallback and note-name schemes")
@@ -3030,7 +3045,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(toneSystems.components(separatedBy: "name: String(localized: \"").count - 1, 15,
                        "TuningSystem.library carries 15 keyed names (4 equal temperaments + 4 just + 6 world + Bohlen–Pierce); re-derive if a system was added")
         XCTAssertFalse(toneSystems.contains("        .equal(12, id: \"edo12\", name: \"12-TET (standard)\"),"), "MicrotonalTuning spells a tone-system name verbatim again")
-        try assertGerman(["12-TET (standard)", "24-TET (quarter tones)", "19-TET", "31-TET",
+        try assertCatalogued(["12-TET (standard)", "24-TET (quarter tones)", "19-TET", "31-TET",
                           "Just Intonation — Major", "Just Intonation — Minor", "Pythagorean (diatonic)",
                           "1/4-comma Meantone (chromatic)", "Maqām Rāst (24-TET theoretic)", "Maqām Bayātī (24-TET theoretic)",
                           "Maqām Ḥijāz", "Gamelan Sléndro (≈5-EDO)", "Gamelan Pélog (representative)",
@@ -3060,7 +3075,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(seedLooks.contains(seam), "MediaSeedLook lost the E4-86 seam `\(seam)`")
         }
         XCTAssertFalse(seedLooks.contains("        return VisualPreset(id: \"\", name: \"From photo\","), "MediaSeedLook spells a seed preset name verbatim again")
-        try assertGerman(["soft, sparse, slow aura", "dreamy nostalgic vaporwave glow", "blossoming mid-density",
+        try assertCatalogued(["soft, sparse, slow aura", "dreamy nostalgic vaporwave glow", "blossoming mid-density",
                           "heartbeat-forward", "maximal — dense, fast, centrifugal",
                           "From photo", "From video",
                           "colour, brightness and contrast of a photo", "brightness, colour and picture change of a video"],
@@ -3092,7 +3107,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertEqual(routingConverters.components(separatedBy: "name: String(localized: \"").count - 1, 10,
                        "ConverterCatalog.default carries 10 keyed converter names; re-derive if a converter was added")
         XCTAssertFalse(routingConverters.contains("        SignalConverter(id: \"bio→cc\",       name: \"Bio → MIDI CC\","), "SignalRouting spells a converter name verbatim again")
-        try assertGerman(["Body (bio)", "Music", "MIDI In", "Heart strap (BLE)", "MIDI / MPE Out", "OSC Out",
+        try assertCatalogued(["Body (bio)", "Music", "MIDI In", "Heart strap (BLE)", "MIDI / MPE Out", "OSC Out",
                           "ADM-OSC (spatial)", "Art-Net (light)", "sACN (light)", "Audio master",
                           "Broadcast (RTMP)", "Broadcast (SRT)",
                           "Bio → MIDI CC", "Bio → Light", "Bio → Spatial object", "Bio → Macro",
@@ -3111,7 +3126,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
             XCTAssertTrue(tuningBanner.contains(seam), "TuningStatusBanner lost the E4-88 seam `\(seam)`")
         }
         XCTAssertFalse(tuningBanner.contains("        case (false, true):  return \"Non-standard concert pitch: A4 = "), "TuningStatusBanner interpolates its headline into one literal again")
-        try assertGerman(["Non-standard tuning: ", "Non-standard concert pitch: A4 = "], "tuning banner headline")
+        try assertCatalogued(["Non-standard tuning: ", "Non-standard concert pitch: A4 = "], "tuning banner headline")
 
         // E4-89 — modifier titles. `.alert("Save piece")`, `.alert("Save mood")`, `.alert("Save sound")`,
         // `.navigationTitle("Open piece")` (EchoelStudioView), `.navigationTitle("Recovery")` (SafeModeView) and
@@ -3127,7 +3142,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         let recoveryTitle = try codeOnly("Sources/Echoelmusic/Studio/SafeModeView.swift")
         XCTAssertTrue(recoveryTitle.contains(".navigationTitle(\"Recovery\")"), "SafeModeView lost the E4-89 site")
-        try assertGerman(["Save piece", "Save mood", "Save sound", "Open piece", "Recovery", "EchoelFX"],
+        try assertCatalogued(["Save piece", "Save mood", "Save sound", "Open piece", "Recovery", "EchoelFX"],
                          "modifier titles")
 
         // E4-90 — the arrange canvas speaks a track as name + hearing state (`ArrangeCanvas.spokenState`) and each
@@ -3147,7 +3162,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertFalse(headerPlace.contains("return \"\\(lane.name) · part at bar"), "the header's place line is one verbatim literal again")
         // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged.
         XCTAssertEqual(ArrangeCanvas.spokenState(.muted), ", muted")
-        try assertGerman([", muted", ", soloed", ", silent while another track is soloed", " · part at bar ", ", part at "],
+        try assertCatalogued([", muted", ", soloed", ", silent while another track is soloed", " · part at bar ", ", part at "],
                          "canvas hearing and place fragments")
 
         // E4-91 — the note editor's switch speaks its count as `.accessibilityValue(spokenCount)` and a stepped pick
@@ -3170,7 +3185,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["?.name ?? \"A track\""] {
             XCTAssertFalse(foreignTrack.contains(verbatim), "RecordTakeControls names an unnamed track verbatim again")
         }
-        try assertGerman([" at step ", ", selected", "A track", "note", "notes"], "note count, step pick and unnamed track")
+        try assertCatalogued([" at step ", ", selected", "A track", "note", "notes"], "note count, step pick and unnamed track")
 
         // E4-92 — `EchoelValueField.accessibleValue` spoke "<n> hertz / seconds / beats per minute" as interpolated
         // Strings, `BodyTempoField.followingSpoken` the same for the following tempo, and the touch surface (a UIKit
@@ -3201,7 +3216,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["accessibilityLabel = \"Field play surface\"", "accessibilityHint = \"Touch and slide"] {
             XCTAssertFalse(fieldSurface.contains(verbatim), "TouchInstrumentView sets a VoiceOver string verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Field play surface", "Touch and slide to play notes in the current key",
+        try assertCatalogued(["Field play surface", "Touch and slide to play notes in the current key",
                           " hertz", " seconds", " beats per minute"], "spoken units and the touch surface")
 
         // E4-93 — `EchoelValueField.hint` is a `String`, so a literal passed to it is NOT a catalog key and shipped
@@ -3228,7 +3243,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertTrue(TrackMix.instrumentHint.hasPrefix("The voice this track plays its parts with."),
                       "the instrument hint must still read its English source under the test locale")
-        try assertGerman(["The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI",
+        try assertCatalogued(["The voice this track plays its parts with. EchoelBass and EchoelBodyVibe each play one track at a time, the higher one in the list; another track that picks one plays EchoelSynth. A track on EchoelBodyVibe cannot be armed to record MIDI",
                           "1.00 unchanged, 0 silent. This is also the level the Studio instrument plays at; its Start lifts 0 back to 1.00",
                           "1.00 unchanged, 0 silent, 2.00 is +6 dB", "−1 left, 0 centre, 1 right",
                           "How far each bar of the loop may drift from the genre preset"], "value-field hints")
@@ -3260,7 +3275,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["mixSwitch(\"Mute\"", "mixSwitch(\"Solo\""] {
             XCTAssertFalse(plateSwitches.contains(verbatim), "PerformSessionView names a switch verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Mute", "Solo", " · bio curve", " · no parts", " · 1 part", "parts", " · no engine yet",
+        try assertCatalogued(["Mute", "Solo", " · bio curve", " · no parts", " · 1 part", "parts", " · no engine yet",
                           "MUTE", "SOLO", "ARM"], "track switches, row details and state tags")
 
         // E4-95 — four `static let` sentences of the instrument (`newPieceNote`, `newPieceRefusedNote`, `libraryRowHint`,
@@ -3287,7 +3302,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertTrue(EchoelStudioView.newPieceRefusedNote.contains("unchanged"),
                       "counterweight: the refused note still reads its English source under the test locale")
-        try assertGerman(["Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound.",
+        try assertCatalogued(["Starts an empty piece and shows the piece stage. A piece with parts or a composed loop is kept in Autosave first; tracks with no parts yet are not. The instrument keeps its sound.",
                           "Couldn't start a new piece. Your piece is unchanged.",
                           "Opens this piece in place of the one you have now.",
                           "Renames this piece. Its place in the list and its saved time stay.",
@@ -3308,7 +3323,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "+ \"not medical diagnosis; not while driving", "+ \"at 3 hertz.\""] {
             XCTAssertFalse(consent.contains(verbatim), "OnboardingView speaks the consent hint verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Confirms you have read the safety and privacy notice above: ",
+        try assertCatalogued(["Confirms you have read the safety and privacy notice above: ",
                           "for self-observation, not medical diagnosis; not while driving or under the influence; visuals capped at 3 hertz."],
                          "onboarding consent hint")
 
@@ -3326,7 +3341,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "case .sim:    return \"Simulation\""] {
             XCTAssertFalse(sourceShortNames.contains(verbatim), "BioSourceOption spells a short name verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["Camera light", "Bluetooth strap", "Simulation", "Apple Health"], "bio-source short names")
+        try assertCatalogued(["Camera light", "Bluetooth strap", "Simulation", "Apple Health"], "bio-source short names")
 
         // E4-98 — the floating window's VoiceOver rotor actions were `Button(corner.rawValue)`, a bare String, so the
         // StringProtocol overload shipped "Move to top left" etc. in every locale. The names keep their ONE definition as
@@ -3336,7 +3351,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                       "FloatingVisualWindow lost the E4-98 seam: the corner actions no longer look their name up")
         XCTAssertFalse(cornerActions.contains("Button(corner.rawValue) {"),
                        "FloatingVisualWindow speaks the corner actions verbatim again")
-        try assertGerman(FloatingVisualLayout.SnapCorner.allCases.map(\.rawValue), "floating-window corner actions")
+        try assertCatalogued(FloatingVisualLayout.SnapCorner.allCases.map(\.rawValue), "floating-window corner actions")
 
         // E4-99 — `PatchbayView.outputRow(_ name: String, …)` hands `name` to `NetworkOutputHeader`, which renders it with
         // `Text(name)` and speaks it with `.accessibilityLabel(name)` — both StringProtocol overloads. The two light rows now
@@ -3349,7 +3364,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["outputRow(\"sACN · Light\"", "outputRow(\"Art-Net · Light\""] {
             XCTAssertFalse(outputNames.contains(verbatim), "PatchbayView names a light output verbatim again: `\(verbatim)`")
         }
-        try assertGerman(["sACN · Light", "Art-Net · Light"], "routing light output names")
+        try assertCatalogued(["sACN · Light", "Art-Net · Light"], "routing light output names")
 
         // E4-100 — `menuChip` drew `Text(menu.label)`, a String, so the chips (nine since slice F) read English under German help text that
         // already names them in German (E4-69). The `label` switch keeps its bare literals on purpose:
@@ -3358,7 +3373,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(chipStrip.contains("Text(LocalizedStringKey(menu.label))"),
                       "EchoelStudioView lost the E4-100 seam: the chip strip draws its label as a String again")
         XCTAssertFalse(chipStrip.contains("Text(menu.label)"), "EchoelStudioView draws a chip label verbatim again")
-        try assertGerman(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"],
+        try assertCatalogued(["Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"],
                          "instrument chip labels")
         // Slice F — the Workstation chip, its plate and its spoken name are retired, and so are their catalog
         // entries: a German unit nobody looks up is the orphan StringCatalogIsHonestTests forbids, and keeping one
@@ -3371,8 +3386,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertNil(retiredStrings.keys.first(where: { $0.hasPrefix("Workstation — the arrangement") }),
                      "the catalog still carries the retired Workstation chip's spoken name")
-        XCTAssertNotNil(german("Adds FX, Mix, Tempo and Field.", in: retiredStrings),
-                        "counterweight: the Producer blurb that replaced the retired one is in the catalog with its German")
+        XCTAssertNotNil(catalogued("Adds FX, Mix, Tempo and Field.", in: retiredStrings),
+                        "counterweight: the Producer blurb that replaced the retired one is in the catalog with its English unit only")
 
         // E4-101 — `fieldMotionLabel` returned bare literals and the Motion picker drew them through `Text(String)`, so a
         // German field read "Rise"/"Pendulum"/"Hold" under a German "Bewegung" heading. The lookup sits in the helper;
@@ -3388,7 +3403,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "case .hold:     return \"Hold\""] {
             XCTAssertFalse(motionNames.contains(verbatim), "EchoelStudioView returns a motion name verbatim again: \(verbatim)")
         }
-        try assertGerman(["Rise", "Fall", "Pendulum", "Drift", "Hold", "Arp"], "field self-play motion names")
+        try assertCatalogued(["Rise", "Fall", "Pendulum", "Drift", "Hold", "Arp"], "field self-play motion names")
 
         // E4-102 — the meter picker drew `m.label` as a String, so the four segments read English beside the German
         // "Bild" button in the same header. `label` keeps its English values: TheMetersLiveInTheVisualWindowTests
@@ -3397,7 +3412,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         XCTAssertTrue(meterPicker.contains("Text(LocalizedStringKey(m.label))"),
                       "VisualAnalysisMeter lost the E4-102 seam: the meter picker draws its label as a String again")
         XCTAssertFalse(meterPicker.contains("Text(m.label)"), "VisualAnalysisMeter draws a meter label verbatim again")
-        try assertGerman(["Waves", "Spectrum", "Scope", "Pulse"], "visual window meter names")
+        try assertCatalogued(["Waves", "Spectrum", "Scope", "Pulse"], "visual window meter names")
 
         // E4-103 — `LoopExporter.tooLongMessage` built the "too long for the capture buffer" reason as one interpolated
         // String, so E4-55's `.failed(String(localized:))` sweep never saw it and the export row read English. The bar
@@ -3412,7 +3427,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["capture buffer — use Record instead", "capture buffer at this tempo"] {
             XCTAssertFalse(tooLongReason.contains(verbatim), "LoopExporter builds the too-long reason verbatim again: \(verbatim)")
         }
-        try assertGerman(["bars is longer than the 30 s capture buffer", " — use Record instead", " at this tempo — keep ",
+        try assertCatalogued(["bars is longer than the 30 s capture buffer", " — use Record instead", " at this tempo — keep ",
                           " or fewer, or use Record instead"], "exporter too-long reason")
 
         // E4-104 — the "Body → parameter" card draws `ModDestinationKey.displayName` as a plain String (its Add-route
@@ -3425,7 +3440,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["            return d.displayName\n"] {
             XCTAssertFalse(routeTargets.contains(verbatim), "ModDestinationKey returns the English descriptor name verbatim again")
         }
-        try assertGerman(["Warmth drive", "Envelope attack", "Envelope decay", "Envelope sustain", "Envelope release",
+        try assertCatalogued(["Warmth drive", "Envelope attack", "Envelope decay", "Envelope sustain", "Envelope release",
                           "Amplitude", "Harmonicity", "Noise level", "Vibrato depth", "Vibrato rate", "Brightness"],
                          "routing card parameter names")
 
@@ -3446,7 +3461,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                          "let title = descriptor?.displayName ?? base", "· \\(d.displayName)\"", "\\(d.displayName) · curve"] {
             XCTAssertFalse(automationNames.contains(verbatim), "an automation name is drawn verbatim again: \(verbatim)")
         }
-        try assertGerman(["Master Level", "Oscillator frequency", "Filter cutoff", "Look intensity", "Track", " · curve"],
+        try assertCatalogued(["Master Level", "Oscillator frequency", "Filter cutoff", "Look intensity", "Track", " · curve"],
                          "automation names")
 
         // E4-106 — the "Audio latency" segmented picker drew `mode.shortName` as a plain String, so the three tiers read
@@ -3459,7 +3474,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Text(mode.shortName).tag(Optional(mode))"] {
             XCTAssertFalse(latencyTiers.contains(verbatim), "the buffer-tier picker draws its names verbatim again")
         }
-        try assertGerman(["Ultra", "Low", "Normal"], "buffer tier names")
+        try assertCatalogued(["Ultra", "Low", "Normal"], "buffer tier names")
 
         // E4-107 — `AudioDegradedRow` renders `lastAudioError` verbatim, and the engine built all three failure
         // sentences as interpolated English. The fixed parts are catalog lookups now; the diag `reason`/`context`
@@ -3475,7 +3490,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["lastAudioError = \"Audio stopped (", "lastAudioError = \"Audio engine could not start"] {
             XCTAssertFalse(engineFailure.contains(verbatim), "an engine failure sentence is built verbatim again: \(verbatim)")
         }
-        try assertGerman(["Audio stopped (", ") and auto-recovery gave up.", "Audio engine could not start: ",
+        try assertCatalogued(["Audio stopped (", ") and auto-recovery gave up.", "Audio engine could not start: ",
                           ") and could not restart: "], "engine failure sentences")
 
         // E4-108 — `LiveColaboView` renders `colab.status` verbatim; every status line was a catalog lookup but
@@ -3487,7 +3502,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["status = \"\\(name) wants to join\""] {
             XCTAssertFalse(colabStatus.contains(verbatim), "the join status is built verbatim again")
         }
-        try assertGerman([" wants to join"], "Live Colabo join status")
+        try assertCatalogued([" wants to join"], "Live Colabo join status")
 
         // E4-109 — two `.accessibilityLabel("…")` literals were already keys, but their units were never written:
         // the scan that looked for them anchored `\b` before `.accessibilityLabel`, which cannot match after a
@@ -3501,7 +3516,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for seam in [".accessibilityLabel(\"Dismiss\")"] {
             XCTAssertTrue(incomingCard.contains(seam), "the incoming-piece card lost its E4-109 label key: \(seam)")
         }
-        try assertGerman(["Poincaré plot", "Dismiss"], "VoiceOver labels on modifier literals")
+        try assertCatalogued(["Poincaré plot", "Dismiss"], "VoiceOver labels on modifier literals")
 
         // E4-110 — the visual window's recording badge tells the performer the take broke ("WAV FAILED") or has a
         // hole ("WAV GAP 1.2s"). Both are words, not tokens: the first is a key and lacked its unit, the second was
@@ -3513,7 +3528,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Text(\"WAV GAP \\("] {
             XCTAssertFalse(wavBadge.contains(verbatim), "the gap badge is interpolated again")
         }
-        try assertGerman(["WAV FAILED", "WAV GAP "], "recording fault badges")
+        try assertCatalogued(["WAV FAILED", "WAV GAP "], "recording fault badges")
 
         // E4-111 — two `Text(String)` sites in the instrument: the mood menu shows `moodPresetName`, which starts
         // and resets to "Custom", and the master Tone picker drew `AutoMixChain.Preset.displayName` verbatim. The
@@ -3527,7 +3542,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["moodPresetName = \"Custom\"", "Text(p.displayName).tag(p.rawValue)"] {
             XCTAssertFalse(masterTone.contains(verbatim), "a mood or Tone name is drawn verbatim again: \(verbatim)")
         }
-        try assertGerman(["Custom"] + AutoMixChain.Preset.allCases.map(\.displayName), "mood default and Tone names")
+        try assertCatalogued(["Custom"] + AutoMixChain.Preset.allCases.map(\.displayName), "mood default and Tone names")
 
         // E4-112 — the Sound panel's two named timbre pickers drew `EchoelDDSP.SpectralShape` and `NoiseColor` raw
         // values verbatim. They look the names up at the render site now; the raw values stay the patch tokens.
@@ -3539,7 +3554,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for verbatim in ["Text(shape.rawValue)", "Text(colour.rawValue)"] {
             XCTAssertFalse(timbreNames.contains(verbatim), "a timbre name is drawn verbatim again: \(verbatim)")
         }
-        try assertGerman(EchoelDDSP.SpectralShape.allCases.map(\.rawValue)
+        try assertCatalogued(EchoelDDSP.SpectralShape.allCases.map(\.rawValue)
                          + EchoelDDSP.NoiseColor.allCases.map(\.rawValue), "spectral shape and noise colour names")
     }
 
@@ -3552,7 +3567,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
     /// label counts both arms), the instrument's `param`/`knob`/`moodKnob` pass-throughs and the FX
     /// panel's `field("…")` helper. The weather mixers reach the field through `param.label`, so
     /// those eight are driven on the enum itself.
-    func testEveryValueFieldLabelHasAGermanUnit() throws {
+    func testEveryValueFieldLabelIsCatalogued() throws {
         let root = try repoRoot()
         let strings = try catalogStrings()
         let field = try codeOnly("Sources/Echoelmusic/Studio/EchoelValueField.swift")
@@ -3576,7 +3591,7 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                     let key = String(code[r])
                     if key.isEmpty || key.contains("\\") || key.contains("%") { continue }
                     sites += 1
-                    if seen.insert(key).inserted, german(key, in: strings) == nil { missing.append(key) }
+                    if seen.insert(key).inserted, catalogued(key, in: strings) == nil { missing.append(key) }
                 }
             }
         }
@@ -3592,17 +3607,17 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         XCTAssertGreaterThan(sites, 120, "the walk found \(sites) value-field label sites — it did not read the tree")
         XCTAssertEqual(missing, [], """
-            \(missing.count) value-field label(s) without a German unit — add the `de` unit for each:
+            \(missing.count) value-field label(s) not English-only in the catalog — add the key (en unit only) for each:
             \(missing.joined(separator: "\n"))
             """)
         for p in WeatherMood.Param.allCases {
-            XCTAssertNotNil(german(p.label, in: strings), "weather mixer label \"\(p.label)\" has no German unit")
+            XCTAssertNotNil(catalogued(p.label, in: strings), "weather mixer label \"\(p.label)\" is not an English-only catalog key")
         }
     }
 
-    // MARK: - claim 5 — the German for "Piece" is the glossary's word, read from the glossary
+    // MARK: - claim 5 — the chrome's "Piece" is the glossary's word, read from the glossary
 
-    func testTheGermanPieceIsTheGlossaryWord() throws {
+    func testTheEnglishPieceIsTheGlossaryWord() throws {
         let glossary = try repoRoot().appendingPathComponent("docs/dev/GLOSSARY.md")
         guard let text = try? String(contentsOf: glossary, encoding: .utf8),
               let row = text.split(separator: "\n").first(where: { $0.hasPrefix("| piece |") }) else {
@@ -3610,13 +3625,14 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         }
         let cells = row.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }
         guard cells.count >= 2 else { throw XCTSkip("glossary row shape changed (#454)") }
-        let wort = cells[1]
+        let word = cells[0].lowercased()
+        XCTAssertEqual(word, "piece", "the glossary's first column is the English chrome word")
         let strings = try catalogStrings()
         for key in ["Piece", "Playing piece", "Unsaved piece", "Play the piece"] {
-            guard let de = german(key, in: strings) else { XCTFail("\"\(key)\" has no German unit"); continue }
-            XCTAssertTrue(de.value.contains(wort), """
-                the German for "\(key)" is "\(de.value)" and does not carry the glossary word "\(wort)" \
-                (docs/dev/GLOSSARY.md, row `piece`). One word per thing holds in German too.
+            guard let en = catalogued(key, in: strings) else { XCTFail("\"\(key)\" is not an English-only catalog key"); continue }
+            XCTAssertTrue(en.value.lowercased().contains(word), """
+                the chrome's "\(key)" reads "\(en.value)" and does not carry the glossary word "\(word)" \
+                (docs/dev/GLOSSARY.md, row `piece`). One word per thing.
                 """)
         }
     }

@@ -144,19 +144,18 @@ final class TheReadyPageNamesTheFirstActTests: XCTestCase {
         let page = try readyPageSlice()
         XCTAssertTrue(page.contains { $0.contains("Text(\"\(sentence)\")") }, """
             the Ready page's sentence no longer matches this test's copy of it. If the \
-            copy was reworded: update the catalog key, the German value, and this literal \
+            copy was reworded: update the catalog key and this literal \
             in the same commit — a `LocalizedStringKey` matches byte-exactly, so any \
             drift ships English to every non-English device.
             """)
         XCTAssertTrue(catalog.contains("\"\(sentence)\""), """
-            Localizable.xcstrings has no entry for the Ready-page sentence — the German \
-            onboarding page falls back to English for its ONE instruction line while \
-            everything around it is translated (the #618 regression, review W1).
+            Localizable.xcstrings has no entry for the Ready-page sentence — the key the \
+            page looks up left the catalog (the #618 regression, review W1).
             """)
-        XCTAssertTrue(catalog.contains("Drück Play zum Start"), """
-            the German value for the Ready-page sentence is gone from the catalog. \
-            Retranslate freely, but a de `stringUnit` must exist — an entry with only \
-            `en` is the same silent fallback the key-swap caused.
+        XCTAssertFalse(catalog.contains("Drück Play zum Start"), """
+            the German value for the Ready-page sentence is back in the catalog. The app \
+            speaks one language since 2026-10-02 (founder: "Nur Englisch"); a second \
+            language starts in `StringCatalogIsHonestTests.languages`, not here.
             """)
     }
 }

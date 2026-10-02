@@ -211,9 +211,11 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
         }
         XCTAssertEqual(entry["extractionState"] as? String, "manual")
         XCTAssertFalse((entry["comment"] as? String ?? "").isEmpty, "the entry says where it is read")
-        let de = ((entry["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-        XCTAssertEqual(de?["state"] as? String, "translated")
-        XCTAssertNotNil(de?["value"] as? String, "the hint has its German line")
+        let localizations = entry["localizations"] as? [String: Any] ?? [:]
+        let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+        XCTAssertEqual(en?["state"] as? String, "translated")
+        XCTAssertEqual(en?["value"] as? String, Self.hint, "the hint's English line is its key")
+        XCTAssertEqual(Set(localizations.keys), ["en"], "the app speaks one language (founder 2026-10-02) — no second unit")
     }
 
     // MARK: helpers

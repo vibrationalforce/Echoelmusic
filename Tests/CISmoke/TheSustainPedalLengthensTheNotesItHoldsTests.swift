@@ -403,7 +403,7 @@ final class TheSustainPedalLengthensTheNotesItHoldsTests: XCTestCase {
 
     // MARK: 12 — catalog
 
-    func testTheHeldSentencesSpeakGermanAndTheOldOneIsGone() throws {
+    func testTheHeldSentencesAreCataloguedAndTheOldOneIsGone() throws {
         var root = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let url = root.appendingPathComponent(Self.catalogPath)
@@ -414,16 +414,18 @@ final class TheSustainPedalLengthensTheNotesItHoldsTests: XCTestCase {
         }
         for key in [Self.oneHeld, Self.manyHeld] {
             guard let entry = strings[key] as? [String: Any] else {
-                XCTFail("`\(key)` has no catalog entry — it shows in English on a German phone")
+                XCTFail("`\(key)` has no catalog entry — the sentence left the catalog it is looked up in")
                 continue
             }
             XCTAssertEqual(entry["extractionState"] as? String, "manual")
             XCTAssertFalse(((entry["comment"] as? String) ?? "").isEmpty, "a translator needs the context")
-            let de = ((entry["localizations"] as? [String: Any])?["de"] as? [String: Any])?["stringUnit"] as? [String: Any]
-            XCTAssertEqual(de?["state"] as? String, "translated")
-            let value = (de?["value"] as? String) ?? ""
+            let localizations = entry["localizations"] as? [String: Any] ?? [:]
+            let en = (localizations["en"] as? [String: Any])?["stringUnit"] as? [String: Any]
+            XCTAssertEqual(en?["state"] as? String, "translated")
+            let value = (en?["value"] as? String) ?? ""
             XCTAssertTrue(value.hasPrefix(" "), "the leading space joins it to the number before")
-            XCTAssertNotEqual(value, key, "the German unit is not the English key")
+            XCTAssertEqual(value, key, "the English unit is the key")
+            XCTAssertEqual(Set(localizations.keys), ["en"], "the app speaks one language (founder 2026-10-02) — no second unit")
         }
         XCTAssertNil(strings[Self.retiredSentence],
                      "the B6b-0 sentence has no literal in Sources any more — left in the catalog it is an orphan")
