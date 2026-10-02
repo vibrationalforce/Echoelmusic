@@ -552,6 +552,10 @@ struct ArrangePartBlock: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: onSelect)
             .gesture(move)
+            // UX audit slice 13b: a light tick each time the preview snaps to another bar, so
+            // the hand feels the grid it lands on. Triggered by the SNAPPED landing, never the
+            // raw finger — one tick per bar, not one per frame — and by nothing it writes.
+            .sensoryFeedback(.selection, trigger: landing)
             .accessibilityElement()
             .accessibilityLabel(label)
             .accessibilityValue(name)
