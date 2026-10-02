@@ -267,7 +267,7 @@ public final class AudioEngine {
     /// LIVE true peak (dBTP) at the master output — the SAME measurement point and the same
     /// `outputTrimDb` as `…MaxDb` one line up, but the meter's decaying hold
     /// (`EchoelMeter.holdDecay`, 0.85 per block) instead of a session max-hold. The two are
-    /// deliberately both here: the Master panel asks "did it EVER clip" (max-hold), a scope
+    /// deliberately both here: the master strip asks "did it EVER clip" (max-hold), a scope
     /// asks "how loud is it RIGHT NOW" (decaying hold). A max-hold in a live readout sticks
     /// at the loudest moment of the session and never comes down — which reads as a frozen
     /// meter, the lying-control class.
@@ -1737,7 +1737,7 @@ public final class AudioEngine {
     /// are from whenever it was last open, and a scope opened after a loud passage would
     /// otherwise show a stale peak falling for ~2 s. Safe, because a closed gate means no
     /// reader's integration was running to lose; a gate that is already open is never reset
-    /// here, so opening the scope beside the Master panel keeps the panel's integration.
+    /// here, so opening the scope beside the master strip keeps the panel's integration.
     private func applyDetailedMeteringGate(_ open: Bool) {
         if open && !_detailedMetering.pointee { _resetMeters.pointee = true }
         _detailedMetering.pointee = open

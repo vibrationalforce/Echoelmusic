@@ -142,14 +142,14 @@ struct AnalysisScopeView: View {
 ///   · the clamp to 1.0 means everything above ≈ −6.5 dBFS renders as "0.0 dBFS" — a
 ///     readout that pins at zero while the mix gets louder.
 /// At a real −20 dBFS peak it read −13.5. And the comment beside it claimed comparability
-/// with the Master panel, which shows dBTP from a POST-chain, trim-corrected value. That is
+/// with the master strip, which shows dBTP from a POST-chain, trim-corrected value. That is
 /// #164/#227, the lying-control class, inside a commit whose whole thesis was "not a lying
 /// control" — which is the useful lesson: the claim in a header does not audit the code
 /// under it.
 ///
 /// The value now is `masterOutputTruePeakDb` — the meter's own decaying true-peak hold,
 /// measured on the audio thread over every block at the chain output and carrying
-/// `outputTrimDb`. Same measurement point and same unit as the Master panel's "True peak";
+/// `outputTrimDb`. Same measurement point and same unit as the master strip's "True peak";
 /// that one is the session MAX-hold ("did it ever clip"), this one falls back ("how loud
 /// right now"). Two different questions, deliberately both answered.
 @MainActor
@@ -177,7 +177,7 @@ private struct ScopePeakLabel: View {
             // S4a — the reader claims what it reads. The true peak is one of the GATED
             // meters, so without a claim this label read a frozen value unless the Master
             // panel happened to be open. It never calls `resetMastering()`: that would wipe
-            // the Master panel's integration while both are on screen.
+            // the master strip's integration while both are on screen.
             .onAppear { audioEngine.claimDetailedMetering(.scope) }
             .onDisappear { audioEngine.releaseDetailedMetering(.scope) }
     }

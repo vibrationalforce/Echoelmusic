@@ -161,7 +161,7 @@ final class TheWorkstationShowsTheMixLevelTests: XCTestCase {
     func testTheMasterPanelDrawsTheSameBar() throws {
         let grid = try source(Self.masterGrid)
         XCTAssertTrue(grid.contains("MixLevelBar(level: level)"),
-                      "the Master panel's level bars are drawn by the shared bar (#416)")
+                      "the master strip's level bars (MasterLoudnessGrid) are drawn by the shared bar (#416)")
         let engine = try source(Self.engine)
         XCTAssertTrue(engine.contains("var masterLevelR: Float"),
                       "the engine still publishes the right-channel mix level the leaf reads")

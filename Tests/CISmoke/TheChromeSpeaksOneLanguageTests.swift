@@ -694,7 +694,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         try assertCatalogued(["Mix", "Tempo & variations", "Master", "Field", "Mood", "Sound & texture",
                           "Effects", "Save & Export",
                           "Level per part", "Tap · metronome · haptic beat · ideas",
-                          "Master level · EBU R128 loudness", "Character of the composition",
+                          "Loudness target · tone · audio output", "Character of the composition",
                           "Shape the timbre — exact to 0.0001", "Production character",
                           "Set the loop length the Record tile uses · choose how much of the strip you see · see what can be kept · put your city in the name · the default sound"],
                          "panel titles and subtitles")

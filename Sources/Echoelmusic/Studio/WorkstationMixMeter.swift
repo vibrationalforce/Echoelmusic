@@ -101,7 +101,7 @@ struct WorkstationMixMeter: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Mix level")
         .accessibilityValue(MixLevelMeter.spokenText(left: left, right: right))
-        .accessibilityHint("Share of the meter, measured before the master chain. The Master panel shows the loudness of the output.")
+        .accessibilityHint("Share of the meter, measured before the master chain. The Mixer's master strip shows the loudness of the output.")
         .accessibilityAddTraits(.updatesFrequently)
     }
 }

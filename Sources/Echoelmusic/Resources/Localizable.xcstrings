@@ -3349,14 +3349,14 @@
         }
       }
     },
-    "Share of the meter, measured before the master chain. The Master panel shows the loudness of the output." : {
+    "Share of the meter, measured before the master chain. The Mixer's master strip shows the loudness of the output." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Share of the meter, measured before the master chain. The Master panel shows the loudness of the output."
+            "value" : "Share of the meter, measured before the master chain. The Mixer's master strip shows the loudness of the output."
           }
         }
       }
@@ -4393,14 +4393,14 @@
         }
       }
     },
-    "The Target above sets the auto-gain and the export; the numbers are the mix, not the delivered file." : {
+    "These numbers are the mix, not the delivered file. The loudness Target sets the auto-gain and the export." : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The Target above sets the auto-gain and the export; the numbers are the mix, not the delivered file."
+            "value" : "These numbers are the mix, not the delivered file. The loudness Target sets the auto-gain and the export."
           }
         }
       }
@@ -8185,14 +8185,14 @@
         }
       }
     },
-    "Master level · EBU R128 loudness" : {
+    "Loudness target · tone · audio output" : {
       "comment" : "Panel title/subtitle (E4-13, 2026-09-30): EchoelPanel draws both as catalog keys; the literals sit at `panel(\"…\", \"…\")` in EchoelStudioView.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Master level · EBU R128 loudness"
+            "value" : "Loudness target · tone · audio output"
           }
         }
       }

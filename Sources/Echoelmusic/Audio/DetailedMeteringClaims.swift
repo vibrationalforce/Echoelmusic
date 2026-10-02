@@ -18,8 +18,10 @@ import Foundation
 
 /// A surface that reads the expensive mastering meters while it is on screen.
 enum DetailedMeteringOwner: Hashable, CaseIterable, Sendable {
-    /// `MasterLoudnessGrid` — momentary/short-term/integrated LUFS, LRA, true-peak max.
-    case masterPanel
+    /// `MasterLoudnessGrid` — momentary/short-term/integrated LUFS, LRA, true-peak max. Named for
+    /// the READOUT, not for where it is mounted: it was `masterPanel` until DAW shell S5 moved the
+    /// grid from the Instrument's Master panel to the Mixer's master strip.
+    case masterReadout
     /// `ScopePeakLabel` — the live true peak under the oscilloscope.
     case scope
 }

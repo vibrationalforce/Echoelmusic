@@ -7,10 +7,12 @@
 // is WRITTEN, never that it renders well — device-verify stays open, landscape specifically.
 //
 // WHY ONLY TWO ROWS, when the sibling slices grid-wrapped whole panels: `masterPanel` is not a
-// parameter surface. Its other children are churn-isolating LEAVES (`MasterVolumeField`,
-// `MasterLoudnessGrid`, `AudioTimingRow` — each exists so a 60 Hz/automation write re-renders
-// only itself, never the menu-hosting studio body) or full-measure rows (a wrapping caption, the
-// release-all button). Sweeping any of those into a half-width cell is
+// parameter surface. Its other children are churn-isolating LEAVES (`AudioLatencyRow`,
+// `AudioRouteRow`, `AudioTimingRow` — each re-renders only itself, never the menu-hosting studio
+// body) or full-measure rows (the release-all button). ⭐ DAW SHELL S5 moved the two hottest leaves,
+// `MasterVolumeField` and `MasterLoudnessGrid`, and the wrapping caption with its Clear, to the
+// Mixer's master strip; claim 3 asserts their ABSENCE here, so they cannot come back as a second
+// door (`TheMixerEndsInTheMasterStripTests` pins them on the strip). Sweeping any of those into a half-width cell is
 // the regression `MoodPanelReflowsTests` claim 3 condemns — worse than never reflowing. The two
 // pickers are the panel's only pair of same-height parameter rows, so they are the whole slice.
 //
@@ -98,8 +100,7 @@ final class MasterPanelReflowsTests: XCTestCase {
     func testTheLeavesAndFullMeasureRowsStayOutsideTheGrid() throws {
         let body = try masterPanelBody()
         let ranges = gridRanges(in: body)
-        for fragment in ["MasterVolumeField()", "MasterLoudnessGrid()", "AudioTimingRow(",
-                         "AudioLatencyRow()", "AudioRouteRow(", "panicAllNotesOff()"] {
+        for fragment in ["AudioTimingRow(", "AudioLatencyRow()", "AudioRouteRow(", "panicAllNotesOff()"] {
             let hits = body.indices.filter { body[$0].contains(fragment) }
             guard !hits.isEmpty else {
                 XCTFail("`\(fragment)` is gone from `masterPanel`. If it moved on purpose, move "
@@ -120,6 +121,18 @@ final class MasterPanelReflowsTests: XCTestCase {
         // absence is asserted rather than its fragment dropped silently (the helper's NAME is
         // checked too, so a re-added `masterDoorButton("Routing", …)` is caught even if it
         // stops spelling the flag).
+        // ⭐ DAW SHELL S5 — the master's level moved to the Mixer's master strip, not copied: the
+        // volume field, the loudness grid and its Clear are ABSENT from this panel (one door).
+        for moved in ["MasterVolumeField()", "MasterLoudnessGrid()", "resetMastering("] {
+            let hits = body.filter { $0.contains(moved) }
+            XCTAssertTrue(hits.isEmpty, """
+            `masterPanel` mounts `\(moved)` again: \(hits.map { $0.trimmingCharacters(in: .whitespaces) })
+
+            DAW shell S5 (founder 2026-10-02, "DAW look mit allen Features") moved the master \
+            level, the loudness numbers and their Clear to the Mixer's master strip \
+            (`MasterStripView`). A second mount here is a second door to one fact.
+            """)
+        }
         for gone in ["showRouting", "masterDoorButton"] {
             let hits = body.filter { $0.contains(gone) }
             XCTAssertTrue(hits.isEmpty, """

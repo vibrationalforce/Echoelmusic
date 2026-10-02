@@ -77,6 +77,8 @@ final class TapTargetFloorTests: XCTestCase {
     private static let tempoField = "Sources/Echoelmusic/Studio/BodyTempoField.swift"
     private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    /// DAW shell S5: the loudness Clear moved WITH the meters it clears, to the Mixer's master strip.
+    private static let masterStrip = "Sources/Echoelmusic/Studio/MasterStripView.swift"
     /// #644 moved the narration disclosure out of `EchoelStudioView` into its own leaf, so its
     /// heading could name the driver the paragraph beneath it already names. The geometry moved
     /// with it, byte for byte — this scan follows it (§4).
@@ -424,11 +426,13 @@ final class TapTargetFloorTests: XCTestCase {
     /// (the #353 class). Both halves are asserted, because fixing one and losing the other is
     /// how this control ends up back where it started with a different defect.
     func testTheLoudnessResetClearsTheTapTargetFloor() throws {
-        let studio = try codeLines(Self.studio)
+        // DAW shell S5: the control lives on the Mixer's master strip now, beside the numbers it
+        // clears; the Instrument file no longer carries it at all (`TheMixerEndsInTheMasterStripTests`).
+        let studio = try codeLines(Self.masterStrip)
         let anchor = "audioEngine.resetMastering()"
         let hits = studio.indices.filter { studio[$0].contains(anchor) }
         XCTAssertEqual(hits.count, 1, """
-            `\(anchor)` is no longer unique in EchoelStudioView, so the window below may be \
+            `\(anchor)` is no longer unique in MasterStripView, so the window below may be \
             describing a different control than the one this test names. Re-anchor before \
             reading the assertions that follow as a pass or a fail.
             """)

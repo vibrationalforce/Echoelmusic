@@ -406,6 +406,12 @@ struct WorkstationView: View {
                 if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
                 if summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
             }
+            // DAW shell S5: the Mixer ends in its master — after the track strips, and OUTSIDE the
+            // empty-song branch above, because an empty song still plays the instrument and its
+            // master level must stay reachable. Its own file; this body reads nothing hot for it.
+            if pieceView == .mixer {
+                MasterStripView()
+            }
 
             // MARK: - The timeline transport (#1437, founder Phase 4)
             //

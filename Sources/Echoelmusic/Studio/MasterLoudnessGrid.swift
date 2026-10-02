@@ -151,8 +151,8 @@ import SwiftUI
 /// The master-volume parameter field in its OWN view so the read of
 /// `audioEngine.masterVolume` is confined here. That value is rewritten by the
 /// AutomationPlayer on every tick when a master-level automation lane plays; read inline
-/// in `masterPanel` it invalidated the whole studio body (and tore down any open
-/// Tonart/Genre `.menu` Picker — the "menus freeze while playing" report). Isolated, only
+/// in `masterPanel` (its home until DAW shell S5 moved it to `MasterStripView`) it
+/// invalidated the whole studio body (and tore down any open Tonart/Genre `.menu` Picker — the "menus freeze while playing" report). Isolated, only
 /// this field re-renders on an automation tick.
 @MainActor
 struct MasterVolumeField: View {
@@ -245,12 +245,12 @@ struct MasterLoudnessGrid: View {
         // contributor to the occasional crackle). The cheap RMS level bars above
         // stay live regardless — they read the always-on meter levels.
         .onAppear {
-            audioEngine.claimDetailedMetering(.masterPanel)
+            audioEngine.claimDetailedMetering(.masterReadout)
             // Fresh integration window each open (the meters were paused while hidden,
             // so the held integrated/true-peak-max would otherwise show stale numbers).
             audioEngine.resetMastering()
         }
-        .onDisappear { audioEngine.releaseDetailedMetering(.masterPanel) }
+        .onDisappear { audioEngine.releaseDetailedMetering(.masterReadout) }
     }
 
     /// One channel's level bar — fill proportional to level, turning warning near clip. Drawn by

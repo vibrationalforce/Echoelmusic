@@ -31,10 +31,10 @@ final class TheMasteringMetersRunWhileAnyReaderIsOnScreenTests: XCTestCase {
     func testASecondReaderLeavingDoesNotStopTheFirst() {
         var claims = DetailedMeteringClaims()
         XCTAssertFalse(claims.gateOpen, "the meters start OFF")
-        XCTAssertTrue(claims.claim(.masterPanel))
+        XCTAssertTrue(claims.claim(.masterReadout))
         XCTAssertTrue(claims.claim(.scope))
         XCTAssertTrue(claims.release(.scope), "the Master panel is still on screen")
-        XCTAssertFalse(claims.release(.masterPanel), "the last reader left — the meters stop")
+        XCTAssertFalse(claims.release(.masterReadout), "the last reader left — the meters stop")
     }
 
     /// 2. A repeated appear cannot unbalance the gate (the #299 lesson), and releasing an owner
@@ -45,7 +45,7 @@ final class TheMasteringMetersRunWhileAnyReaderIsOnScreenTests: XCTestCase {
         claims.claim(.scope)
         XCTAssertFalse(claims.release(.scope), "two appears are one claim, so one disappear ends it")
         XCTAssertFalse(claims.release(.scope))
-        XCTAssertFalse(claims.release(.masterPanel))
+        XCTAssertFalse(claims.release(.masterReadout))
         XCTAssertTrue(claims.owners.isEmpty)
     }
 

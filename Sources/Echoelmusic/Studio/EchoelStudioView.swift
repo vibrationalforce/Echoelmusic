@@ -4973,38 +4973,31 @@ struct EchoelStudioView: View {
         }
     }
 
-    // MARK: Panel — Master (master level + EBU R128 loudness)   // "output" struck, #316
+    // MARK: Panel — Master (delivery + audio output; the level and the loudness are the Mixer's master strip, S5)
 
-    /// The mastering readout — master volume plus the live EBU R128 loudness numbers
-    /// (short-term + gated-integrated LUFS, max true-peak in dBTP, loudness range in LU).
-    /// These are what producers and broadcasters master to. Reset clears the integration +
-    /// peak hold to start a fresh measurement.
+    /// The Instrument's Master panel — the master's DELIVERY and the audio system: the loudness
+    /// Target (auto-gain and export), the master Tone, the buffer tier, where the sound goes, the
+    /// render timing, and Release all notes.
     ///
-    /// ⛔ THIS SAID "loudness of the OUTPUT" until #316 (2026-08-01). It is measured at the
-    /// master chain's INPUT — before EQ, auto-gain, limiter and the −1 dB trim.
-    /// `MasterLoudnessGrid` now states that on screen and no longer colours the numbers
-    /// against the delivery target; its file header carries the reasoning. The Target picker
-    /// below is unaffected — it drives the auto-gain and the export, both of which are real.
+    /// ⭐ DAW SHELL S5 (founder 2026-10-02, "DAW look mit allen Features"): the master's LEVEL is no
+    /// longer here. `MasterVolumeField`, `MasterLoudnessGrid` and the loudness Clear moved to the
+    /// Mixer's master strip (`MasterStripView`), the last strip after the tracks it sums — moved, not
+    /// copied, so the master level has one door. The #316 history of the loudness readout travels
+    /// with the grid's own file header.
     private var masterPanel: some View {
-        // ⛔ The subtitle said "Output level · …" until #316. `MasterVolumeField` really is an
-        // output control (`masterMixer.outputVolume`), so the word was not wrong ABOUT IT —
-        // but it sat one line above a meter that does not measure the output, and a reader
-        // attaches a subtitle to whatever is under it. "Master level" is true of the control
-        // and makes no claim about the numbers.
-        panel("Master", "Master level · EBU R128 loudness", isExpanded: $showMaster) {
-            // Master volume lives in its own view (MasterVolumeField) so an automation
-            // lane rewriting audioEngine.masterVolume re-renders only that field, not the
-            // menu-hosting studio body. (Was the remaining take-time Picker-freeze source.)
-            MasterVolumeField()
-
+        // ⛔ The subtitle said "Output level · …" until #316 and "Master level · EBU R128 loudness"
+        // until S5. Both named things that now live on the Mixer's master strip; the panel says what
+        // it still holds.
+        panel("Master", "Loudness target · tone · audio output", isExpanded: $showMaster) {
             // #292 Slice 5: the two delivery choices are the panel's only pair of same-height
             // parameter rows, so they reflow to two columns on a wide layout. `spacing: 14`
             // matches `EchoelPanel`'s own content spacing because in ONE column the grid's
             // `VStack` REPLACES the host's rhythm (the `visualAdjustFields` lesson) — the
             // default (10) would silently tighten iPhone portrait, which does not reflow at
             // all. Everything else in this panel stays OUTSIDE the grid on purpose: the
-            // volume field and the loudness numbers are churn-isolating leaves, and the
-            // caption/button rows want the full measure (`MasterPanelReflowsTests`).
+            // audio-system rows are their own leaves and want the full measure, and the
+            // release button is full-width chrome (`MasterPanelReflowsTests`). (The volume field
+            // and the loudness numbers stood here too until S5 — they are the master strip now.)
             AdaptiveCardGrid(spacing: 14) {
                 labeledRow("Target") {
                     Picker("Target", selection: $loudnessTargetRaw) {
@@ -5039,55 +5032,6 @@ struct EchoelStudioView: View {
                     .accessibilityLabel("Master tonal character")
                     .accessibilityHint("Balanced, warm, bright or transparent — the EQ curve on the master bus")
                 }
-            }
-
-            // The live numbers live in their own view so the 60 Hz meter refresh
-            // re-renders only this small grid, not the whole studio body.
-            MasterLoudnessGrid()
-
-            // ⛔ THIS LINE USED TO READ "Streaming targets ≈ −14 LUFS integrated, true peak
-            // ≤ −1 dBTP." — and #316's first pass left it standing two lines under its own
-            // "measured before the master chain" caption. That is the removed verdict handed
-            // back to the reader as an instruction: take the number above, compare it to
-            // these figures yourself. Same claim, slower medium. It now says what the target
-            // actually governs (the auto-gain and the export), not what the numbers mean.
-            HStack {
-                Text("The Target above sets the auto-gain and the export; the numbers are the mix, not the delivered file.")
-                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 8)
-                // ⛔ #394 — THIS WAS A BARE TITLE BUTTON WITH NO FRAME AT ALL, i.e. a tap
-                // target the size of the word: ~35 × 15 pt at `EchoelTheme.font(12)`. That is
-                // under the HIG 44×44 floor AND under WCAG 2.5.8 (AA)'s 24×24 — the only
-                // control in this file's audited `Button("literal") { … }` set that failed
-                // both, and the same class as the clear-place ✕ that `TapTargetFloorTests`
-                // already pins. It sits hard against the panel's right edge behind a
-                // `Spacer`, so a thumb that lands ten points low hits nothing at all.
-                //
-                // The frame goes on the LABEL, not on the `Button`: for a title button the
-                // label's bounds are what gets hit-tested, so an outer `.frame` would grow the
-                // picture without growing the target. `contentShape` then makes the whole
-                // 44 pt-tall rectangle hittable rather than just the glyph run.
-                //
-                // `minHeight`, never `height`: the sentence to the left wraps and is already
-                // taller than 44 in most widths, so on a phone this changes no layout — it
-                // guarantees the floor exactly in the cases (wide screen, one-line text) where
-                // the row would otherwise collapse to the label's own height. A fixed height
-                // would also clip the label at large Dynamic Type sizes (the #353 class).
-                //
-                // `.buttonStyle(.plain)` is not a look change: `foregroundStyle` already
-                // overrode the accent tint, so this only stops the default style from
-                // re-asserting its own padding on top of the frame.
-                Button {
-                    audioEngine.resetMastering()
-                } label: {
-                    Text("Clear")
-                        .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Clear the integrated loudness and peak hold")
             }
 
             // #1331 — THE BUFFER TIER GOT ITS DOOR BACK. `StudioDefaultKeys.audioLatencyMode`
