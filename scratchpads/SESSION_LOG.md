@@ -41968,3 +41968,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Wächter:** neu `TheMixerEndsInTheMasterStripTests` (34/34 auf dem Baum transkribiert; auf dem Elternteil nicht kompilierbar — neues Symbol); umgezogen MasterPanelReflows (+3 Abwesenheiten), TapTargetFloor (Clear in neuer Datei), MasteringMeters (Umbenennung), ChromeSpeaksOneLanguage, WorkstationShowsTheMixLevel (Meldung). Prüfer sauber; moved-needles-Treffer geöffnet.
 - **Lehre:** eine Nadel auf `resetMastering()` trifft auch die DEKLARATION `func resetMastering()` — für „wer ruft" `.resetMastering()` mit Punkt nehmen.
 - Gates: Push nach dem Compile Check auf 7bcf13c37. Gerät: nichts geprüft (Inbox §2 „S5").
+- **ffe049c11** Review S5 (MED-1): der Satz im Mix-Panel „Master level lives in the Master panel" sagt jetzt „on the Mixer's master strip" (Katalog-Schlüssel mitgezogen); veraltete Kommentare und drei Wächter-Meldungen nachgezogen (LOW-1). Keine Zusicherung geändert. S5-Stapel gepusht, als main = 7bcf13c37 stand.
+
+## 2026-10-02 (Nacht) — DAW-Hülle S6a: Browse bietet die Klänge
+- **4dedb218d** `SoundBrowserView` oben auf der Browse-Platte: alle gespeicherten Klänge in Speicher-Reihenfolge, Stern = Favorit, Haken = Klang der geöffneten Spur. Ein Tipp schreibt über `TrackMix.setSound` in `editLanePatch` (ein Undo-Schritt) — dieselbe Naht wie die Sound-Zeile. Ziel = `TrackMix.controls(…).sound`. Browse-Hinweis nennt die Klänge (Schlüssel umbenannt). Beide neuen Dateien (S5/S6) in beiden Chrome-Listen.
+- **Wächter:** neu `TheBrowsePlateOffersTheSoundsTests` (Ziel-Regel end-to-end bikonditional gegen `TrackMix.controls`, Schreibnaht, Montage, Katalog). Transkribiert; Stripper TRAGEND (2 Urteile kippen roh). Prüfer sauber; needle-reachability meldet einen vorbestehenden Fund in `TheNoteGridSpeaksTheReadersNoteNamesTests:80` (nicht diese Scheibe, offen).
+- **Lehre:** der Wächter der Sound-Zeile begründet „Speicher-Reihenfolge" mit dem Hinweistext — eine zweite Liste derselben Klänge muss dieselbe Reihenfolge haben, sonst heißt „der erste Klang" auf zwei Platten zweierlei.
+- Gates: Push nach dem Compile Check auf ffe049c11. Gerät: nichts geprüft (Inbox §2 „S6").
+

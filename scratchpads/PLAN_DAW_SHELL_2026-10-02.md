@@ -33,7 +33,7 @@ Antworten:
 | S3 ✅ | Projektmenü | GEBAUT 2026-10-02: ≡ = Open · Save │ Live Colabo · Learn │ Guide; `quickDoorRow`, Save-Kachel und `WorkstationProjectRow` gelöscht. New bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing bei seiner einen Tür (Licht-Kachel) — je Bereich EINE Tür, darum nicht doppelt ins Menü | WorkspaceView, EchoelStudioView, WorkstationView |
 | S4 (a ✅ b ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
 | S5 ✅ | Mixer | Streifen + Master (Master-Streifen gebaut) | WorkstationView, MasterStripView |
-| S6 | Browse | Import · Medienbibliothek · Sounds/Moods · Foto/Video-Saat | WorkstationView, MediaBrowserView |
+| S6 (a ✅) | Browse | Sounds (gebaut) · Medienbibliothek · Foto/Video-Saat; Import bleibt im Add-Menü, Moods im Instrument | WorkstationView, SoundBrowserView |
 | S7 | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
 | S8 | Querformat | Umschalter als Segment in der Leiste, Detail als rechte Spalte | StageShell, WorkstationView |
 | S9 | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
@@ -117,3 +117,19 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   `masterLevel` dort verbietet und genau 2 `EchoelValueField(` pinnt.
 - `DetailedMeteringOwner.masterPanel` → `.masterReadout` (der Anspruchsteller ist das Raster, wo immer es hängt).
 - **Gerät offen:** Streifen unter den Spuren auf 375–440 pt, Regler hörbar, Zahlen laufen, Clear.
+
+## S6a — Entscheidungen und Befunde (2026-10-02)
+
+- **Browse beginnt mit „Sounds".** `SoundBrowserView` listet die gespeicherten Klänge; ein Tipp gibt der
+  geöffneten Synth-Spur den Klang über DIESELBE Naht wie die Sound-Zeile der Device-Seite
+  (`TrackMix.setSound` in `timeline.editLanePatch`) — ein Undo-Schritt, keine zweite Klang-Logik (#416).
+- **Ziel = die Regel der Sound-Zeile** (`TrackMix.controls(…).sound`): nur eine Poly-Rack-Spur. Echoel-Spur,
+  Sub, Körperstimme, Audio, Bio → Zeilen gedimmt, Hinweis „Open a synth track in Arrange …".
+- **Speicher-Reihenfolge, nicht Favoriten zuerst:** der Device-Hinweis sagt „Default plays the first of the
+  Sounds" — dieser erste Klang muss auf beiden Platten derselbe sein. Favoriten tragen einen Stern statt
+  nach vorn zu rücken; ein Tipp ruft kein `markUsed` (das Sound-Panel bleibt Besitzer der Zuletzt-Liste).
+- **Import und Moods bleiben, wo sie sind:** Import ist das Add-Menü (Arrange, eine Tür); Moods gehören
+  dem Instrument (`moodPanel`). Eine zweite Tür wäre gegen „eine Tür je Bereich".
+- **Review-Folge S5 (LOW-3):** `MasterStripView` und `SoundBrowserView` stehen jetzt in beiden Chrome-Listen.
+- **Gerät offen:** Liste auf 375 pt, Haken nach Tipp, Device-Seite zeigt denselben Klang, Undo im Kopf.
+
