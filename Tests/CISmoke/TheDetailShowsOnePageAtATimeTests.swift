@@ -25,6 +25,9 @@
 // 2. SOURCE-TEXT SCAN: the body draws one `Picker`, segmented, whose setter commits the name
 //    first; the Part/Notes/Automation segments exist only where their pages do; each page gate
 //    appears once and holds its rows, each row once.
+// 2c. SOURCE-TEXT SCAN (S4a review, MEDIUM): the note editor's four tool rows stand in a wrapping
+//     layout built from ideal widths, so in the 260-pt landscape column they wrap instead of
+//     truncating "Deselect" to "Des…". Whether it LOOKS right is a device check.
 // 2b. SOURCE-TEXT SCAN (S4b): the record arm and an audio track's Pitch are Track-page rows, an
 //    imported file's tempo is a Part-page row — built by the Workstation, placed by the detail,
 //    never left loose under it.
@@ -44,6 +47,7 @@
 //   Workstation body. Every red names the S4a absence, none another reason.
 // · S4b (parent 2bf2cba20): claim 2b and claim 2's `trackRows`/`partRows` rows are red there by
 //   ONE absence — the inspector takes no rows from its caller; every other claim is unchanged.
+// · S4a review (parent 0b05984fb): claim 2c is red there by ONE absence — no `NoteToolFlow`.
 // · This tree: every claim transcribed into Python and driven green.
 // · Stripper (`SourceText.codeOnly`): PROPHYLAKTISCH — 0 of the source verdicts flip between
 //   raw and stripped text on either tree.
@@ -309,6 +313,28 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
         let doc = TimelineDocument(lanes: [audio], regions: [])
         XCTAssertTrue(TrackMix.inspectorPages(of: audio.id, in: doc).contains(.part),
                       "an audio track offers the Part page its tempo rows sit on")
+    }
+
+    // MARK: 2c — SOURCE: the note tools wrap in the narrow detail column (S4a review, MEDIUM)
+
+    func testTheNoteToolsWrapInsteadOfTruncating() throws {
+        let notes = SourceText.codeOnly(try text(Self.notesPath))
+        XCTAssertTrue(notes.contains("private struct NoteToolFlow: Layout {"),
+                      "the wrapping layout the note tools stand in")
+        // The four tool rows (Transpose · key · Quantize/Duplicate · Lower/Higher/Delete/Deselect).
+        let tools = try member("private func selectionControls(", in: notes)
+        let controls = try member("private func controls(range:", in: notes)
+        XCTAssertEqual(occurrences("NoteToolFlow(spacing: 6) {", in: tools), 3,
+                       "Transpose, key and Quantize rows wrap")
+        XCTAssertEqual(occurrences("NoteToolFlow(spacing: 6) {", in: controls), 1,
+                       "the octave/Delete/Deselect row wraps")
+        XCTAssertFalse(tools.contains("HStack(spacing: 6) {") || controls.contains("HStack(spacing: 6) {"),
+                       "a tool row is a one-line HStack again — in the 260-pt landscape column it truncates")
+        // The layout measures IDEAL sizes. A row that could shrink would always "fit" and never
+        // wrap (the BioStripView lesson): no scale factor anywhere in the editor.
+        let flow = try member("private struct NoteToolFlow: Layout {", in: notes)
+        XCTAssertTrue(flow.contains("subviews[index].sizeThatFits(.unspecified)"), "rows are built from ideal widths")
+        XCTAssertFalse(notes.contains("minimumScaleFactor"), "a shrinking label would defeat the wrap")
     }
 
     // MARK: 3 — SOURCE: the choice is view state on the one owner

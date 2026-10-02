@@ -470,7 +470,7 @@ private struct PartNoteGrid: View {
         let length = region.lengthTicks
         return VStack(alignment: .leading, spacing: 6) {
             Text(scope.visible).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-            HStack(spacing: 6) {
+            NoteToolFlow(spacing: 6) {
                 Text("Transpose").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 button("−12", "", enabled: can(ClipNoteEdit.transposing(targets, by: -12, in: notes)),
                        label: String(localized: "Move ") + what + String(localized: " down an octave")) {
@@ -489,7 +489,7 @@ private struct PartNoteGrid: View {
                     transpose(targets, by: 12, region: region, range: range, heldCentre: heldCentre)
                 }
             }
-            HStack(spacing: 6) {
+            NoteToolFlow(spacing: 6) {
                 // M4: the key is the session's (`SessionContext`), named on the row so the
                 // buttons never act on a key the player cannot see.
                 Text(keyShown).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -518,7 +518,7 @@ private struct PartNoteGrid: View {
             }
             .pickerStyle(.segmented)
             .accessibilityHint("The grid Quantize snaps note starts to")
-            HStack(spacing: 6) {
+            NoteToolFlow(spacing: 6) {
                 button("Quantize", "square.grid.3x3",
                        enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,
                                                             lengthTicks: length, gridSteps: quantizeGrid.steps)),
@@ -546,7 +546,7 @@ private struct PartNoteGrid: View {
     private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
                           region: TimelineRegion) -> some View {
         let pickedCount = picked.count
-        return HStack(spacing: 6) {
+        return NoteToolFlow(spacing: 6) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
                    label: String(localized: "Show the octave below")) { octaveShift -= 1 }
             button("Higher", "chevron.up", enabled: range.upperBound < 127,
@@ -589,6 +589,64 @@ private struct PartNoteGrid: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .accessibilityLabel(label)
+    }
+}
+
+/// DAW shell S4a review (MEDIUM): the note tools WRAP instead of truncating. Since S4a the editor
+/// sits on the track's Notes page, which in landscape is the 260-pt detail column; four labelled
+/// buttons do not fit one line there, and an `HStack` of `lineLimit(1)` titles cut "Deselect" to
+/// "Des…". This lays the same children out in rows — as many as fit, then the next row — and is ONE
+/// row wherever they fit, so a phone in portrait looks as before. Order is the children's order, so
+/// VoiceOver reads them unchanged. Ideal sizes only: nothing is shrunk to make a row "fit".
+private struct NoteToolFlow: Layout {
+    var spacing: CGFloat = 6
+
+    private struct Line {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let laidOut = lines(for: subviews, width: proposal.width)
+        let width = laidOut.map(\.width).max() ?? 0
+        let height = laidOut.map(\.height).reduce(0, +) + spacing * CGFloat(max(laidOut.count - 1, 0))
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews,
+                       cache: inout ()) {
+        var y = bounds.minY
+        for line in lines(for: subviews, width: bounds.width) {
+            var x = bounds.minX
+            for index in line.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y + (line.height - size.height) / 2),
+                                      anchor: .topLeading, proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += line.height + spacing
+        }
+    }
+
+    /// Greedy rows. A width of nil (unconstrained) is one row; a child wider than the whole width
+    /// stands alone on its row rather than being dropped.
+    private func lines(for subviews: Subviews, width: CGFloat?) -> [Line] {
+        let limit = width ?? .infinity
+        var result: [Line] = []
+        var current = Line()
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            if !current.indices.isEmpty, current.width + spacing + size.width > limit {
+                result.append(current)
+                current = Line()
+            }
+            current.width = current.indices.isEmpty ? size.width : current.width + spacing + size.width
+            current.height = max(current.height, size.height)
+            current.indices.append(index)
+        }
+        if !current.indices.isEmpty { result.append(current) }
+        return result
     }
 }
 
