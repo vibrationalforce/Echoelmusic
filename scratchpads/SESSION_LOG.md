@@ -42001,3 +42001,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **4a457a7e7 S8b:** quer steht die Add-Kachel am Ende der Transportzeile statt in einer eigenen angehefteten Zeile; hochkant unverändert. Eine reine Entscheidung `ArrangeAddPlacement.of`, einmal gefragt in `addPlacement` (leere-Platte-Prädikat + `verticalSizeClass == .compact`, dieselbe Lesart wie A9/S8a), je Platzierung ein Tor; die Hinweiszeile folgt der Kachel. Nichts Heißes gelesen.
 - **Wächter:** neu `TheAddTileEndsTheTransportInLandscapeTests`; zwei Wächter im selben Commit neu verankert. Transkribiert; 14 Mutanten rot; Prüfer sauber, moved-needles-Treffer geöffnet (einer neu verankert, einer gehört zu `ProjectHeader`).
 - Gerät: nichts geprüft (Inbox §2 „S8b").
+
+### 2026-10-02 — DAW shell S9b (Notenraster-Zoom)
+
+- **a4717359b S9b:** das Notenraster hat drei Spaltenbreiten (`NoteGridZoom`, 11 · 22 · 44 pt), eine berechnete `stepWidth` für Raster, Linie, Velocity-Spur und Tipp-Treffer; Türen: Zoom out/in in der Werkzeugzeile, Pinch (einmal beim Loslassen), VoiceOver-Zoom; Anker hält den Schritt im Blick.
+- **Wächter:** neu `TheNoteGridZoomsItsTimeTests`; zwei neu verankert. Transkribiert; 11 Mutanten rot; Prüfer sauber (moved-needles: ein Treffer, `region: region)`, alle Stellen weiter erreicht).
+- **10639fad4:** S8b-Review LOW-5 (zwei veraltete Kommentare in WorkstationView); die übrigen fünf LOW im Plan festgehalten.
+- Gerät: nichts geprüft (Inbox §2 „S9b").
+

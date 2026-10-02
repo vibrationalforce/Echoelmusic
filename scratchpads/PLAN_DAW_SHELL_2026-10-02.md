@@ -36,7 +36,7 @@ Antworten:
 | S6 (a ✅) | Browse | Sounds (gebaut) · Medienbibliothek · Foto/Video-Saat; Import bleibt im Add-Menü, Moods im Instrument | WorkstationView, SoundBrowserView |
 | S7 (a ✅) | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
 | S8 (a ✅ b ✅) | Querformat | Umschalter als senkrechte Leiste links (statt Segment), Detail als rechte Spalte (A9); b: Add-Kachel ans Ende der Transportzeile statt eigener Zeile | StageShell, WorkstationView |
-| S9 (a ✅) | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
+| S9 (a ✅ b ✅) | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; b: Notenraster-Zoom (drei Spaltenbreiten); adjustable actions offen | ArrangeCanvasView, WorkspaceView, PartNoteEditor |
 | S10 | Modal-Konsolidierung | Instrument-Modals in den Hüllen-Slot | EchoelStudioView |
 
 Deploy nach 3–4 Scheiben (`.deploy/release` + --since im selben Commit).
@@ -177,6 +177,12 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   im selben Commit neu verankert, nicht schwächer. 10 Quell- + 4 Funktions-Mutanten rot.
 - **Gerät offen:** quer mit spielendem Pegel — passt die Kachel (die Positionsanzeige weicht
   zuerst)? Hinweiszeile unter der Transportzeile, Drehen zurück.
+- **Review (0 HOCH, 0 MITTEL, 6 NIEDRIG):** bestätigt — kein Doppel- oder Null-Mount, `@State`
+  überlebt die Drehung, nichts Heißes, alle Wächter lesen richtig. LOW-5 (zwei Kommentare sagten
+  noch „im angehefteten Tab-Reihe") repariert in 10639fad4. Angenommen bzw. Gerät offen: die
+  Kachel ist ~50 pt breit statt 44 (größer, nicht kleiner); bei Bedienungshilfen-Textgrößen kann
+  quer abgeschnitten werden; die Positionsanzeige weicht früher; die Zusammenfassung wird dreimal
+  gebaut (kalt, billig); VoiceOver erreicht „Add" quer erst nach Play · Click · Record.
 
 ## S9a — Entscheidungen und Befunde (2026-10-02)
 
@@ -203,3 +209,24 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   zeichnen pro Bild neu). LOWs: Postfach-Zeile E16 statt E18 an sieben Stellen, `TextSizeRow`-Doku,
   UX-Audit-Zeilen, Ahnen-Prüfung auf Deklarationen statt Dateien, `step =`-Nadel als Zuweisungs-
   Muster, ehrliche Benotung, kein Modifier auf dem Zoom.
+
+## S9b — Entscheidungen und Befunde (2026-10-02)
+
+- **Drei Spaltenbreiten statt fester 22 pt.** `NoteGridZoom` (rein, Foundation): 11 · 22 · 44 pt je
+  Sechzehntel, Start auf 22 (die M1-Breite — ein Teil öffnet wie bisher). Ein Teil von acht Takten
+  war fast 2 900 pt Scrollen; 44 pt ist eine Fingerkuppe.
+- **EINE Breite.** `PartNoteGrid` berechnet `stepWidth` aus der Stufe; Raster, Abspiellinie,
+  Velocity-Spur und Tipp-Treffer lesen sie — Note, Stiel und Linie können über einen Schritt nicht
+  uneinig sein.
+- **Drei Türen:** „Zoom out" / „Zoom in" in der vorhandenen Werkzeugzeile (an den Enden
+  ausgegraut), Zwei-Finger-Pinch, VoiceOver-Zoom-Aktion. Der Pinch wirkt EINMAL beim Loslassen
+  (`levelDelta(forPinch:)`, Totzone ~¼), kein neues `@GestureState` — der Noten-Zug bleibt der
+  einzige Fingerzustand.
+- **Der Schritt bleibt im Blick:** `anchoredOffset` hält die Songposition unter dem Anker (Mitte
+  bei Knöpfen, die Finger beim Pinch), geklammert auf das Scrollbare; Unbrauchbares → 0.
+- **Eine Ansicht, keine Bearbeitung:** nichts gespeichert, nichts im Undo.
+- **Wächter:** neu `TheNoteGridZoomsItsTimeTests`; zwei Wächter im selben Commit neu verankert.
+  11 Quell-Mutanten rot; Stripper tragend (1 Urteil kippt).
+- **Offen:** adjustable actions (S9-Rest).
+- **Gerät offen:** Mitte bleibt Mitte beim Zoomen; Noten-Zug, Rahmenauswahl und Velocity bei jeder
+  Breite auf dem richtigen Schritt.
