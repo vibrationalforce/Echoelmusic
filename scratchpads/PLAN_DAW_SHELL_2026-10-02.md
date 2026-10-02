@@ -31,7 +31,7 @@ Antworten:
 | S2 | Umschaltleiste | `PieceView` (arrange · mixer · browse · project, persistiert) + `StudioStage` bleibt; Leiste unten in `StageShell` ersetzt den Saum oben; Arrange/Mix-Kacheln in `pieceTabs` entfallen | StageShell, StudioStage, WorkstationView, StudioDefaultKeys |
 | S1 | Steuerleiste | EINE Leiste ersetzt topBar + CompositionHeaderStrip + ProjectHeader: ≡ · ⏮ · ▶/■ · ● · Anzeige-Blatt (Position · BPM+Schloss · Tonart) · Puls; Tonart/Stimmung/Tempo-Modus/Tap/Click in ein Blatt „Song" | WorkspaceView, ProjectHeader, neue DAWControlBar |
 | S3 ✅ | Projektmenü | GEBAUT 2026-10-02: ≡ = Open · Save │ Live Colabo · Learn │ Guide; `quickDoorRow`, Save-Kachel und `WorkstationProjectRow` gelöscht. New bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing bei seiner einen Tür (Licht-Kachel) — je Bereich EINE Tür, darum nicht doppelt ins Menü | WorkspaceView, EchoelStudioView, WorkstationView |
-| S4 (a ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
+| S4 (a ✅ b ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
 | S5 | Mixer | Streifen + Master | PieceMixerView |
 | S6 | Browse | Import · Medienbibliothek · Sounds/Moods · Foto/Video-Saat | WorkstationView, MediaBrowserView |
 | S7 | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
@@ -91,3 +91,14 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
 - **Gerät offen:** fünf Segmente in der 260-pt-Spalte im Querformat und auf 375 pt; „Write notes“
   springt auf die Notes-Seite.
 - **Nächste Scheibe S4b:** Detail-Kopf mit Spurfarbe, einklappbar; Arm/Tonhöhe/Teil-Tempo auf ihre Seiten.
+
+## S4b — Entscheidungen und Befunde (2026-10-02)
+
+- **Die Zeilen der offenen Spur gehören auf ihre Seiten:** Aufnahme-Schalter + Pitch → Track, Teil-Tempo → Part.
+  `TrackInspectorView` nimmt sie als zwei `@ViewBuilder`-Slots; gebaut im Workstation-Rumpf, weil sie dessen
+  Transport-/Messzustand lesen — keine neue Beobachtung, eine Konstruktionsstelle bleibt.
+- **Review-Reparaturen S4a:** Notes-Überschrift (VoiceOver einmal), Teile-Hinweis ohne „above",
+  `NoteToolFlow` für die 260-pt-Spalte. Der Detail-Kopf mit Spurfarbe (einklappbar) ist NICHT gebaut —
+  das Detail folgt der Auswahl schon und klappt mit ihr; ein zweiter Zu-Knopf wäre ein zweiter Zustand.
+- **Gerät offen:** Automationszeile im Querformat (Namensspalte + ~130-pt-Kurve), Segment-Wort „Automation".
+

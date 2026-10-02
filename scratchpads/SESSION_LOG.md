@@ -41951,3 +41951,13 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Wächter:** `TheDetailShowsOnePageAtATimeTests` (umbenannt, Matrix über Spur × Auswahl × Kapazität) + sechs umgezogene. Transkribiert: Baum 127 Prüfungen, 0 rot; auf HEAD nennt jedes Rot die S4a-Abwesenheit. dead/swift-escapes/foreign/count-pins sauber.
 - **Gefunden:** `spokenCount`-Nadel seit E4-91 rot auf korrektem Code (#807-Klasse) — neu verankert.
 - Gates: laufen. Gerät: nichts geprüft (Inbox §2 „S4a").
+- Gates S4a: Compile Check 3185 auf 104c288db success.
+
+## 2026-10-02 (Abend) — DAW-Hülle S4b + S4a-Review-Reparaturen
+- **2bf2cba20** `TheTrackInspectorShowsOnlyWiredControlsTests` Anspruch 5 kannte die Kopf-Naht `TrackMix.tapStep` nicht — seit 58106a0d2 rot auf korrektem Baum, unsichtbar unter #807. Menge nachgezogen.
+- **e3ceb554c S4b:** Aufnahme-Schalter (Rack-MIDI) und Pitch (Audio) stehen auf der Track-Seite, das Teil-Tempo importierter Dateien auf der Part-Seite. `TrackInspectorView` ist generisch über zwei `@ViewBuilder`-Slots, die Reads bleiben im Workstation-Rumpf (keine neue Beobachtung, kein Modal, eine Konstruktionsstelle). Wächter Anspruch 2b.
+- **0b05984fb** Review LOW: Notes-Überschrift sagt die Zahl nur einmal (`accessibilityLabel("Notes")`); Teile-Hinweis ohne „above" (im Querformat falsch) → „on the Selected part bar under the arrangement"; sechs veraltete Kommentare.
+- **9cc6eee61** Review MED: `NoteToolFlow` (Layout) bricht die vier Werkzeugzeilen des Noten-Editors in der 260-pt-Spalte um statt „Des…" abzuschneiden; ideale Breiten, kein Skalierungsfaktor. Wächter Anspruch 2c.
+- Offen als Gerätefrage: die Automationszeile behält ihre Namensspalte (Kurve ~130 pt im Querformat); „Automation" im Segment eventuell gekürzt.
+- Gates: S4b läuft; 0b05984fb + 9cc6eee61 lokal, Push nach dem Compile Check auf e3ceb554c. Gerät: nichts geprüft.
+
