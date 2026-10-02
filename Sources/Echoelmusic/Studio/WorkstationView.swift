@@ -485,10 +485,12 @@ struct WorkstationView: View {
             // them beside each other changes no sentence.
             // ⭐ UX audit 2026-10-02, slice 4: the five doors stand ONLY on the empty plate — the
             // one that names them (`emptyState`, same `summary.isEmpty`). Once the piece has a
-            // track they live in the tab row's "Add" menu (`addMenu`), which calls the same five
+            // track they live in the one "Add" menu (`addMenu`), which calls the same five
             // actions, so the song is no longer pushed down by five full-width buttons and the
-            // doors and the menu are never on screen together. The one note line follows the
-            // doors: here under them on the empty plate, under the Add tile in the pinned tab row
+            // doors and the menu are never on screen together. Since DAW shell S8b that menu has
+            // two mounts, decided once by `addPlacement`: the pinned toolbar above the plate in
+            // portrait, the end of the transport row in landscape. The one note line follows the
+            // tile: here under the doors on the empty plate, under whichever row holds the tile
             // once the piece has a track (review of slice 4 — a refusal written a screen below
             // the tile that was tapped reads as a tap that did nothing).
             if summary.isEmpty {
@@ -959,7 +961,9 @@ struct WorkstationView: View {
     }
 
     /// The arrangement's toolbar, pinned above the plate's scroll on the ARRANGE plate once the
-    /// piece has a track: the one "Add" menu and the note line its actions write.
+    /// piece has a track, in PORTRAIT: the one "Add" menu and the note line its actions write.
+    /// In landscape (DAW shell S8b) the row is not mounted — the tile ends the transport row and
+    /// its note line sits under that row instead; `addPlacement` is the one decision.
     /// ⛔ DAW SHELL S2 (founder 2026-10-02, inbox E18): this was the piece's TAB ROW — Arrange ·
     /// Mix · Export · WAV · Add (A7, B3, B4, slices 10b and 4). Arrange and Mix are entries of the
     /// bottom switcher now (`StageShell.shellSwitcher`), Export and WAV live on the Project plate.
