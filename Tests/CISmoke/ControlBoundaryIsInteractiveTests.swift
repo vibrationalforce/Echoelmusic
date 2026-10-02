@@ -10,7 +10,7 @@
 //   · the primary transport Play/Pause (`WorkspaceView`) — 44×48, the biggest and most-used
 //     control in the app. It renders in `EchoelStudioView.startControlRow` beside
 //     `startButton` and `PulseMonitorMiniLive`, and BOTH of those already used
-//     `borderStrong`. (⛔ The first version of this line, and the fix comment in
+//     `borderStrong` (`startButton` is deleted since DAW shell S7a; the head's Play is the start). (⛔ The first version of this line, and the fix comment in
 //     `WorkspaceView` itself, named the 30×32 "•••" as its neighbour. That control lived in
 //     `TransportBar`, two rows and a divider above — the adjacency was read off the FILE,
 //     not off the screen. Same defect as the grid this session attributed to the wrong panel
@@ -138,8 +138,8 @@ final class ControlBoundaryIsInteractiveTests: XCTestCase {
         XCTAssertTrue(offenders.isEmpty, """
             #367: the app's primary Play/Pause is outlined with the DECORATIVE token again. \
             `EchoelTheme.border` is 1.16:1 and its own doc says "Do not use it on anything \
-            tappable"; its two real on-screen neighbours in `startControlRow` — `startButton` \
-            and `PulseMonitorMiniLive` — both use `borderStrong`. Offending line(s): \
+            tappable"; its on-screen neighbour `PulseMonitorMiniLive` uses `borderStrong` (as did \
+            the plate's start ▶/■ until DAW shell S7a deleted it). Offending line(s): \
             \(offenders.map { $0.trimmingCharacters(in: .whitespaces) })
             """)
         // ⛔ THE ABSENCE ASSERT ALONE WAS THE ONLY VACUOUS TEST IN THIS FILE. Deleting the

@@ -79,13 +79,13 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
     }
 
     func testPlayMeansTheSongFirstThenAHeldSession() {
-        XCTAssertEqual(ProjectTransport.playAction(facts(startable: true)), .startSong,
+        XCTAssertEqual(ProjectTransport.playAction(facts(startable: true), instrumentInFront: false), .startSong,
                        "the canonical project is the arrangement")
         // Review of 09d35f56e, MED-1: while the instrument holds its music, the piece's start also
         // brings that music back (the ONE-Stop observer reads a clock start as `.resume`), so
         // the SAME start gets its own words — never "Play the piece" over a tap that plays two.
         // The words themselves follow rule 1 (`docs/dev/GLOSSARY.md`): piece, never song.
-        XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true)), .startSongAndInstrument,
+        XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true), instrumentInFront: false), .startSongAndInstrument,
                        "the canonical project is still the arrangement — the session only changes the words")
         XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSongAndInstrument),
                        "Play the piece and the instrument")
@@ -96,13 +96,37 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(ProjectTransport.buttonHint(running: true, play: .startSong), ProjectTransport.stopHint)
         XCTAssertEqual(WorkstationSummary.transportHint(playing: true, startable: true), ProjectTransport.stopHint,
                        "the Workstation's Stop is the same Stop, so it reads the same")
-        XCTAssertEqual(ProjectTransport.playAction(facts(session: true)), .resumeInstrument)
-        XCTAssertEqual(ProjectTransport.playAction(facts()), .unavailable)
+        XCTAssertEqual(ProjectTransport.playAction(facts(session: true), instrumentInFront: false), .resumeInstrument)
+        XCTAssertEqual(ProjectTransport.playAction(facts(), instrumentInFront: false), .unavailable)
         XCTAssertEqual(ProjectTransport.buttonLabel(running: true, play: .startSong), "Stop all playback",
                        "while anything runs the one button is Stop — for everything")
         XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSong), "Play the piece")
         XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .unavailable).hasPrefix("Unavailable:"),
                       "a dimmed control says what is missing")
+    }
+
+    /// DAW shell S7a (2026-10-02): with the INSTRUMENT in front, the head's one Play plays the
+    /// instrument — it starts the session when none runs and resumes a held one. It is never
+    /// dimmed there, because the plate's own ▶/■ is deleted (`OneStartControlTests`) and the head
+    /// is the only start left on that stage. The song is NOT started from there even when it
+    /// could be: what plays is what is in front. END-TO-END on the pure rule.
+    func testWithTheInstrumentInFrontPlayPlaysTheInstrument() {
+        XCTAssertEqual(ProjectTransport.playAction(facts(), instrumentInFront: true), .startInstrument,
+                       "no session and no song: Play starts the instrument instead of being dimmed")
+        XCTAssertEqual(ProjectTransport.playAction(facts(startable: true), instrumentInFront: true), .startInstrument,
+                       "a playable song does not take over the instrument's Play")
+        XCTAssertEqual(ProjectTransport.playAction(facts(session: true), instrumentInFront: true), .resumeInstrument,
+                       "a held session resumes — the pulse reading keeps running")
+        XCTAssertEqual(ProjectTransport.playAction(facts(session: true, startable: true), instrumentInFront: true),
+                       .resumeInstrument)
+        XCTAssertEqual(ProjectTransport.buttonWord(running: false), "Play",
+                       "counterweight: the drawn word is still Play")
+        XCTAssertFalse(ProjectTransport.buttonHint(running: false, play: .startInstrument).hasPrefix("Unavailable:"))
+        // Counterweight: off the Instrument stage the old rule stands untouched.
+        XCTAssertEqual(ProjectTransport.playAction(facts(), instrumentInFront: false), .unavailable)
+        XCTAssertTrue(StudioStage.instrument.playStartsTheInstrument)
+        XCTAssertFalse(StudioStage.piece.playStartsTheInstrument,
+                       "the Piece stage's Play plays the piece (`ThePieceStageHasOnePlayTests`)")
     }
 
     func testStopPicksTheRoadThatEndsEverything() {
@@ -164,7 +188,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         let startable = WorkstationView.songCanStart(player: player, timeline: song.timeline,
                                                      clipStore: song.clips)
         XCTAssertTrue(startable, "ANCHOR: the fixture song must be playable, or nothing below says anything")
-        XCTAssertEqual(ProjectTransport.playAction(liveFacts(transport, player, startable: startable)), .startSong)
+        XCTAssertEqual(ProjectTransport.playAction(liveFacts(transport, player, startable: startable), instrumentInFront: false), .startSong)
         XCTAssertEqual(ProjectTransport.status(liveFacts(transport, player, startable: startable)), .stopped)
 
         WorkstationView.startSong(player: player, timeline: song.timeline, clipStore: song.clips,
@@ -313,7 +337,9 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertFalse(header2.contains("minimumScaleFactor"), "large text grows the header, it does not shrink the text")
         XCTAssertTrue(header2.contains(".fixedSize(horizontal: false, vertical: true)\n        .frame(minHeight: 44)"),
                       "the bar grows with its text and never splits the screen with the area below")
-        XCTAssertTrue(header2.contains(".frame(minWidth: 44, minHeight: 44)"), "a 44 pt Play/Stop target")
+        // S7a: the floor is read from `EchoelTheme.controlTapHeight` (= 44, pinned by
+        // `OneChromeControlHeightTests`) since the head's Play inherited the plate's start.
+        XCTAssertTrue(header2.contains(".frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)"), "a 44 pt Play/Stop target")
         XCTAssertTrue(header2.contains("compact: true)"), "the header mounts the existing Record door, compact")
         XCTAssertTrue(header2.contains("AccessibilityNotification.Announcement(ProjectTransport.statusWord(new)).post()"),
                       "a status change is spoken")
@@ -326,7 +352,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         // END-TO-END: the drawn word is the spoken label's first word, in every state — so the
         // two can never disagree, and neither is a second copy of the other (#416).
         let plays: [ProjectTransport.PlayAction] = [.startSong, .startSongAndInstrument,
-                                                    .resumeInstrument, .unavailable]
+                                                    .resumeInstrument, .startInstrument, .unavailable]
         for running in [true, false] {
             let word = ProjectTransport.buttonWord(running: running)
             XCTAssertFalse(word.contains(" "), "one word, not a sentence: \"\(word)\"")

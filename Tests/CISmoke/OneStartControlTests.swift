@@ -23,6 +23,20 @@
 // WHAT THIS CANNOT PROVE: that the one remaining button is reachable, legible, or works — it
 // pins counts and the absence of the chrome wire, nothing about rendering.
 //
+// ⭐ DAW SHELL S7a (founder 2026-10-02, „Ja, so bauen" — one control bar on top): THE ONE START
+// MOVED TO THE HEAD. The Instrument stage had come to show two Plays one row apart — the head's
+// (`ProjectPlayStopButton`, a resume) and the plate's own ▶/■ (`EchoelStudioView.startButton`,
+// start/end the session) — the shape this file was written against, re-grown by a layout
+// change rather than by a new button. The plate's ▶/■ and its `toggleBiofeedback()` are
+// DELETED; the head's Play starts the instrument through ONE chrome door
+// (`ProjectTransport.startInstrument()` → "startInstrument" → `startBiofeedback()`). Every
+// claim below was re-pointed at the new site in the same commit and none was loosened: claim 1
+// now pins THREE things where it pinned one (the old toggle is gone, the door has one poster,
+// the receiver has one arm), and claim 6 asserts the words at RUNTIME instead of as a literal.
+// Grading against the parent (`55ef08e44`): claims 1 and 6 are red there by ANCHOR ABSENCE
+// (the door and `startInstrument` do not exist) — one absence, reported twice (#486); the
+// rest are counterweights, green on both trees.
+//
 // ⚠️ AN EARLIER VERSION OF THIS NOTE WAS WRONG, in the direction that made the guard look
 // stronger than it was. It said the uncovered paths were "the Bio panel's own 'start pulse'
 // row and the Siri/Shortcuts inbox", both "one level deeper than the front plate, which is
@@ -35,6 +49,7 @@ import Foundation   // FileManager/URL. XCTest re-exports it on Darwin, but ever
                     // this directory imports it explicitly and one line is cheaper than a
                     // red gate on a repo with no local toolchain.
 import XCTest
+@testable import Echoelmusic   // `ProjectTransport` (S7a: the ONE start's words are asserted at runtime)
 
 final class OneStartControlTests: XCTestCase {
 
@@ -67,17 +82,52 @@ final class OneStartControlTests: XCTestCase {
 
     /// ⛔ THE REGRESSION GUARD. Add a second control that starts the session and this goes red.
     ///
-    /// The front plate's Start/Stop button is the only invoker of `toggleBiofeedback()`. The
-    /// declaration itself is excluded — it is the definition, not a caller.
-    func testExactlyOneControlInvokesTheFrontPlateSessionToggle() throws {
-        let invokers = try sourceLines().filter {
-            $0.text.contains("toggleBiofeedback()") && !$0.text.contains("func toggleBiofeedback")
+    /// Since DAW shell S7a the ONE start is the head's Play, and it reaches the studio through ONE
+    /// door. Three things are pinned, because each alone could be satisfied by a second start:
+    ///   1. the plate's old Start-or-End, `toggleBiofeedback()`, is GONE — not merely uncalled
+    ///      (its only caller was the deleted `startButton`; a function with no caller is one line
+    ///      from a fourth Start that no count below would see);
+    ///   2. exactly ONE control asks for the start — one call of `ProjectTransport.startInstrument()`
+    ///      outside its declaration, and it is in `ProjectHeader.swift`;
+    ///   3. exactly ONE arm answers it — `case ProjectTransport.startInstrumentDoor:` in
+    ///      `EchoelStudioView.swift`, and that arm refuses while a session runs.
+    /// (⛔ Until S7a this method was `testExactlyOneControlInvokesTheFrontPlateSessionToggle` and
+    /// pinned only half 2 — the toggle's one caller. The name described a mechanism the code no
+    /// longer has (#374), so it is renamed with it.)
+    func testExactlyOneControlStartsTheInstrument() throws {
+        let lines = try sourceLines()
+        let toggle = lines.filter { $0.text.contains("toggleBiofeedback") }
+        XCTAssertTrue(toggle.isEmpty, """
+        `toggleBiofeedback` is back at \(toggle.map { "\($0.file):\($0.line)" }.joined(separator: ", ")). \
+        It was the plate ▶/■'s Start-or-End and went with it (DAW shell S7a): the start is the \
+        head's Play, the end is the ONE Stop. A second Start-or-End beside them is the \
+        two-Plays-on-one-screen confusion the founder asked away three times.
+        """)
+        let askers = lines.filter {
+            $0.text.contains("ProjectTransport.startInstrument()") && !$0.text.contains("func startInstrument")
         }
-        XCTAssertEqual(invokers.count, 1, """
-        Expected exactly ONE control to start/stop the session, found \(invokers.count): \
-        \(invokers.map { "\($0.file):\($0.line)" }.joined(separator: ", ")). The founder has \
-        asked three times for one Start button (2026-07-15, 2026-07-29, 2026-07-31). If a new \
-        control genuinely needs to begin a session, that is a founder decision, not a merge.
+        XCTAssertEqual(askers.count, 1, """
+        Expected exactly ONE control to ask for the instrument's start, found \(askers.count): \
+        \(askers.map { "\($0.file):\($0.line)" }.joined(separator: ", ")). The founder has asked \
+        three times for one Start button (2026-07-15, 2026-07-29, 2026-07-31). If a new control \
+        genuinely needs to begin a session, that is a founder decision, not a merge.
+        """)
+        XCTAssertEqual(askers.first?.file, "ProjectHeader.swift",
+                       "the one start is the head's Play (`ProjectPlayStopButton`), not a control elsewhere")
+        let arms = lines.filter { $0.text.contains("case ProjectTransport.startInstrumentDoor:") }
+        XCTAssertEqual(arms.count, 1, """
+        Expected exactly ONE receiver arm for the start door, found \(arms.count): \
+        \(arms.map { "\($0.file):\($0.line)" }.joined(separator: ", ")). Two arms would start the \
+        session twice from one tap.
+        """)
+        guard let arm = arms.first else { return }
+        XCTAssertEqual(arm.file, "EchoelStudioView.swift",
+                       "the start stays in the studio — the only owner of the session's state")
+        let next = lines.first { $0.file == arm.file && $0.line > arm.line }
+        XCTAssertEqual(next?.text.trimmingCharacters(in: .whitespaces), "if !running { startBiofeedback() }", """
+        the start door's arm no longer reads `if !running { startBiofeedback() }` on its first \
+        line. The refusal is the point: the head shows Play over a held session only as a RESUME, \
+        so a start that arrives while a session runs must not begin a second one.
         """)
     }
 
@@ -86,6 +136,12 @@ final class OneStartControlTests: XCTestCase {
     /// the name exists, re-adding a fourth start button is one line and leaves no trace in
     /// the view that starts it. Matched on the raw notification STRING, which no epitaph
     /// comment spells out — so this stays honest even where the symbol name is discussed.
+    ///
+    /// ⚠️ SINCE S7a A CHROME CONTROL DOES START THE SESSION AGAIN, and it did it the way this
+    /// guard's own message asked: the wire came back WITH its control, never ahead of it. It is
+    /// NOT this notification — it is the "startInstrument" arm of the existing `.echoelChromeDoor`,
+    /// with exactly one poster and one receiver, both pinned by
+    /// `testExactlyOneControlStartsTheInstrument`. This test keeps the old, unowned wire out.
     func testNoChromeNotificationCanStartTheSession() throws {
         let posts = try sourceLines().filter { $0.text.contains("echoel.toggleBio") }
         XCTAssertTrue(posts.isEmpty, """
@@ -101,7 +157,9 @@ final class OneStartControlTests: XCTestCase {
     /// way would sail past it. This counts the thing that actually begins a session.
     ///
     /// The inventory, all three deliberate:
-    ///   1. `toggleBiofeedback()`'s own body — the front plate's Start/Stop, i.e. THE button.
+    ///   1. the "startInstrument" door's arm — the head's ONE Play (DAW shell S7a). ⛔ Until S7a
+    ///      this was `toggleBiofeedback()`'s body, the plate's own ▶/■; the button and the toggle
+    ///      are deleted and the arm replaces them one for one, so the count is unchanged.
     ///   2. `handlePendingIntent()` — Siri/Shortcuts, no on-screen control at all.
     ///   3. `selectBioSource()` — the idle branch, reached through TWO doors since #616:
     ///      the header pill's long-press and `bioPanel`'s visible "Bio source" row (one
@@ -203,8 +261,9 @@ final class OneStartControlTests: XCTestCase {
     /// failure — "it moved, re-point the absence check" — instead of two lying ones.
     ///
     /// The ABSENCE check keeps its file scope, because `stop.fill` is CORRECT in the TWO other
-    /// places it appears: `LiveColaboView` (end the live session) and — since #307 —
-    /// `EchoelStudioView.startButton`, which really does end the bio session. Count them when
+    /// places it appears: `LiveColaboView` (end the live session) and — since S7a — the head's
+    /// ONE Play/Stop (`ProjectPlayStopButton`), whose Stop really does end the bio session (until
+    /// S7a that was `EchoelStudioView.startButton`, deleted). Count them when
     /// you edit this list; the first version said "elsewhere" and named two of three, the
     /// second said THREE the day #387 made it four, and #1304 took the two `VideoLibraryPanel`
     /// sites away with video capture — so this list has now been wrong in BOTH directions. ⛔ The count went stale
@@ -235,8 +294,8 @@ final class OneStartControlTests: XCTestCase {
         XCTAssertTrue(stops.isEmpty, """
         `stop.fill` is back in WorkspaceView.swift at \
         \(stops.map { "\($0.file):\($0.line)" }.joined(separator: ", ")). The only control that \
-        may claim "stop" on the instrument's front plate is `EchoelStudioView.startButton`, \
-        which actually ends the session. If a NEW control here genuinely stops something, give \
+        may claim "stop" beside it is the head's ONE Play/Stop (`ProjectPlayStopButton`), which \
+        actually ends the session. If a NEW control here genuinely stops something, give \
         it a label that says what it stops and re-point this guard rather than raising it.
         """)
         XCTAssertTrue(all.contains { $0.text.contains("Pause the music") }, """
@@ -280,40 +339,53 @@ final class OneStartControlTests: XCTestCase {
     /// The positive half: with no label left, the START is carried entirely by its glyph and
     /// its VoiceOver label. Both are asserted, because losing either leaves a control that
     /// cannot be found by one of the two ways people find controls.
+    ///
+    /// ⭐ RE-POINTED BY S7a, NOT LOOSENED. The one start is the head's `ProjectPlayStopButton`
+    /// now, so the glyph pair is asserted in `ProjectHeader.swift`, and the label — which the
+    /// head computes rather than spells (`ProjectTransport.buttonLabel`) — is asserted at RUNTIME,
+    /// which is stronger than the literal `Text("Play")` this used to match: a literal proves the
+    /// string exists somewhere in the file, the call proves what the Instrument stage's Play says.
+    /// And the plate is held to having NO second Play/Stop of its own — the S7a regression.
     func testTheOneStartStillPresentsItselfAsATransport() throws {
-        // Same anchor discipline the sibling guard above just learned: `play.fill` is NOT
-        // unique repo-wide (`OnboardingView` uses it truthfully; `PlaybackToggleButton`'s idle
-        // branch did too until rule 2 made it Pause-only on 2026-09-30, the head resumes now —
-        // `ThePlateHasOnePauseNotASecondPlayTests`), so this one genuinely needs its file scope — and therefore needs to
-        // say out loud where the control lives, or a move makes it pass on the wrong file.
-        // ⛔ The example named here was `VideoLibraryPanel`, deleted with video capture (#1304)
-        // — and `OnboardingView` was a THIRD truthful site this note had never named, so the
-        // conclusion ("not unique") was right for a reason wider than the one written down.
-        let plate = try sourceLines().filter { $0.file == "EchoelStudioView.swift" }
-        XCTAssertTrue(plate.contains { $0.text.contains("private var startButton") }, """
-        `startButton` is no longer declared in EchoelStudioView.swift — renamed, moved, or the \
-        file was renamed. The two assertions below are scoped to this file and would check the \
-        wrong thing (or nothing) without it. Re-point them in the same commit.
+        let all = try sourceLines()
+        let head = all.filter { $0.file == "ProjectHeader.swift" }
+        XCTAssertTrue(head.contains { $0.text.contains("struct ProjectPlayStopButton") }, """
+        `ProjectPlayStopButton` is no longer declared in ProjectHeader.swift — renamed, moved, or \
+        the file was renamed. The glyph assertion below is scoped to this file and would check \
+        the wrong thing (or nothing) without it. Re-point it in the same commit.
         """)
-        // ⛔ BOTH ASSERTIONS BELOW WERE WEAKER IN THEIR FIRST FORM, in opposite directions, and
-        // a reviewer caught both. The glyph one matched the bare token `"play.fill"` anywhere in
-        // a 5,300-line file — which a stray preview button would have satisfied. The label one
-        // required `accessibilityLabel` and `Play` on ONE PHYSICAL LINE, and the
-        // `.accessibilityHint` written three lines below it in the same commit is ALREADY
-        // wrapped across three lines: any formatter pass, or a maintainer matching that style,
-        // would have reddened the gate on a change with zero behavioural content. Both now match
-        // the exact EXPRESSION, which is what actually encodes the decision.
-        XCTAssertTrue(plate.contains { $0.text.contains("running ? \"stop.fill\" : \"play.fill\"") }, """
-        the front plate's primary control no longer switches between `play.fill` and `stop.fill`. \
-        Since #307 removed its text label, that glyph pair IS the start button — there is nothing \
-        else on the plate that says the instrument can be started, or that it is running.
+        // ⛔ The glyph check matched the bare token `"play.fill"` in its first form, which a stray
+        // preview button would have satisfied; it matches the exact EXPRESSION since #307.
+        XCTAssertTrue(head.contains { $0.text.contains("running ? \"stop.fill\" : \"play.fill\"") }, """
+        the one Play/Stop no longer switches between `play.fill` and `stop.fill`. That glyph pair \
+        IS the start — there is nothing else on the Instrument stage that says the instrument can \
+        be started, or that it is running.
         """)
-        XCTAssertTrue(plate.contains { $0.text.contains("Text(\"Play\")") }, """
-        the primary control lost its VoiceOver label `Text("Play")`. A glyph-only button with no \
-        label is unusable with VoiceOver, and #307 traded the visible label away on the explicit \
-        understanding that the accessibility one carries it. Matched on the literal rather than \
-        on `accessibilityLabel` + `Play` sharing a line, because the neighbouring hint is already \
-        wrapped and a reformat would otherwise fail this for nothing.
+        // RUNTIME: what the Instrument stage's Play says to VoiceOver, and its first word is the
+        // word it draws (`TheProjectHeaderRunsOneTransportTests` claim 10 holds that for every case).
+        XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startInstrument), "Play the instrument", """
+        the Instrument stage's Play lost its VoiceOver label. A glyph-and-word button whose spoken \
+        label does not say WHAT it plays is the guess #307 traded the visible sentence away against.
+        """)
+        XCTAssertEqual(ProjectTransport.buttonHint(running: false, play: .startInstrument),
+                       "Starts biofeedback; your body then composes and plays the music.",
+                       "the start's hint moved with it from the plate (S7a) and still says what begins")
+        XCTAssertEqual(ProjectTransport.playAction(
+            .init(clockRunning: false, songPlaying: false, recording: false,
+                  sessionRunning: false, songStartable: false), instrumentInFront: true), .startInstrument,
+            "with nothing running, the Instrument stage's Play starts the instrument — never dimmed")
+        // ABSENCE (the S7a regression): the plate carries no Play/Stop of its own any more.
+        let plate = all.filter { $0.file == "EchoelStudioView.swift" }
+        XCTAssertFalse(plate.contains { $0.text.contains("private var startButton") }, """
+        `startButton` is declared in EchoelStudioView.swift again. The plate's own ▶/■ went with \
+        DAW shell S7a: under the head's Play it made two Plays on one screen. The start is the \
+        head's; if the plate needs a control, it is not a second Play.
+        """)
+        let pairs = plate.filter { $0.text.contains("\"stop.fill\"") && $0.text.contains("\"play.fill\"") }
+        XCTAssertTrue(pairs.isEmpty, """
+        EchoelStudioView.swift draws a Play/Stop glyph pair again at \
+        \(pairs.map { "\($0.file):\($0.line)" }.joined(separator: ", ")) — a second transport under \
+        the head's ONE Play/Stop (DAW shell S7a).
         """)
     }
 

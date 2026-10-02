@@ -79,8 +79,11 @@ final class ThePlateHasOnePauseNotASecondPlayTests: XCTestCase {
     func testTheHeadResumesThePausedInstrument() {
         let paused = ProjectTransport.Facts(clockRunning: false, songPlaying: false, recording: false,
                                             sessionRunning: true, songStartable: false)
-        XCTAssertEqual(ProjectTransport.playAction(paused), .resumeInstrument,
+        XCTAssertEqual(ProjectTransport.playAction(paused, instrumentInFront: false), .resumeInstrument,
                        "a running instrument with a stopped clock must resolve to the head's resume — otherwise removing the plate's Play leaves no resume at all")
+        // S7a: and on the Instrument stage, where the head's Play plays what is in front, a held
+        // session resolves to the same resume — never to a second start.
+        XCTAssertEqual(ProjectTransport.playAction(paused, instrumentInFront: true), .resumeInstrument)
         XCTAssertEqual(ProjectTransport.status(paused), .paused)
         XCTAssertEqual(ProjectTransport.buttonWord(running: false), "Play")
         XCTAssertEqual(ProjectTransport.buttonWord(running: true), "Stop")

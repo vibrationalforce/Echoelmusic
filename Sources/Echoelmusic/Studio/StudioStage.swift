@@ -39,6 +39,15 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
     /// (`ThePieceStageHasOnePlayTests`).
     public var headCarriesTransport: Bool { self != .piece }
 
+    /// DAW shell S7a (founder 2026-10-02, „Ja, so bauen" — one control bar on top): whether the
+    /// ONE Play starts the INSTRUMENT on this stage. On the Instrument stage the instrument is what
+    /// is in front, so the head's Play plays it — the plate's own ▶ went with S7a, because two
+    /// Plays on one screen is the confusion the founder named three times
+    /// (`OneStartControlTests`). On the Piece stage the Play plays the piece. A separate name from
+    /// `headCarriesTransport`, though equal today: WHERE the transport sits and WHAT its Play
+    /// starts are two decisions, and a third stage would have to answer both.
+    public var playStartsTheInstrument: Bool { self == .instrument }
+
     /// Spoken (#482: a door names what it reaches).
     public var spokenHint: String {
         switch self {

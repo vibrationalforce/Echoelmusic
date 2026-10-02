@@ -76,14 +76,29 @@ enum ProjectTransport {
         case startSongAndInstrument
         /// A held bio session: the music comes back, the session never left.
         case resumeInstrument
+        /// DAW shell S7a (founder 2026-10-02, „Ja, so bauen" — one control bar on top): the
+        /// instrument from silence, while the Instrument stage is in front. Until S7a the plate
+        /// carried its own ▶ (`EchoelStudioView.startButton`) right under this one, so the
+        /// Instrument stage showed TWO Plays — the confusion the founder named three times
+        /// (`OneStartControlTests`). The head's Play is now the one start; the studio runs it
+        /// through its own `startBiofeedback()` (`startInstrumentDoor`), because only the studio
+        /// owns the session's state.
+        case startInstrument
         /// Nothing to play — the button is dimmed and says why.
         case unavailable
     }
 
-    /// The song first: the canonical project is the arrangement. A session held without music
-    /// falls back to resuming the instrument, so the header's Play is never dimmed while the
-    /// instrument's own ▶ would work.
-    static func playAction(_ facts: Facts) -> PlayAction {
+    /// WHAT IS IN FRONT DECIDES, and then the song first. On the Instrument stage the one Play
+    /// plays the instrument — it starts the session, or brings a held session's music back — and
+    /// is never dimmed, because the instrument can always start (S7a). On every other surface the
+    /// canonical project is the arrangement: the song, and a session held without music falls
+    /// back to resuming the instrument.
+    ///
+    /// ⚠️ `instrumentInFront` HAS NO DEFAULT (#431/#440/#443): a defaulted argument no call site
+    /// writes appears in no diff, and a Play that guessed the stage would start the wrong thing.
+    /// The caller asks `StudioStage.playStartsTheInstrument` — the one place the rule lives.
+    static func playAction(_ facts: Facts, instrumentInFront: Bool) -> PlayAction {
+        if instrumentInFront { return facts.sessionRunning ? .resumeInstrument : .startInstrument }
         if facts.songStartable { return facts.sessionRunning ? .startSongAndInstrument : .startSong }
         if facts.sessionRunning { return .resumeInstrument }
         return .unavailable
@@ -123,10 +138,25 @@ enum ProjectTransport {
         }
     }
 
-    /// Resume a held session's music — the same call the instrument's own ▶ makes.
+    /// Resume a held session's music. (⛔ "the same call the instrument's own ▶ makes" stood
+    /// here; that ▶ is gone with S7a, and this is the one resume.)
     @MainActor
     static func resumeInstrument(pattern: PatternEngine) {
         pattern.play(cause: .transportButton)
+    }
+
+    /// The chrome door the head's Play posts to start the instrument (S7a). ONE definition, read
+    /// by the poster below and by the studio's `.echoelChromeDoor` receiver (#416) — a spelling
+    /// on each side could drift apart and leave a Play that compiles and does nothing.
+    static let startInstrumentDoor = "startInstrument"
+
+    /// Start the instrument. It does not start anything itself: the studio owns the session
+    /// (camera, composer, bio source), so this asks it through the door the header monitors
+    /// already use, and the studio's arm runs its own `startBiofeedback()` — refusing when a
+    /// session already runs. No second start path, no state of its own.
+    @MainActor
+    static func startInstrument() {
+        NotificationCenter.default.post(name: .echoelChromeDoor, object: startInstrumentDoor)
     }
 
     // MARK: - Words
@@ -148,6 +178,7 @@ enum ProjectTransport {
         case .startSong:        return String(localized: "Play the piece")
         case .startSongAndInstrument: return String(localized: "Play the piece and the instrument")
         case .resumeInstrument: return String(localized: "Play the instrument")
+        case .startInstrument:  return String(localized: "Play the instrument")
         case .unavailable:      return String(localized: "Play")
         }
     }
@@ -171,6 +202,8 @@ enum ProjectTransport {
         case .startSongAndInstrument:
             return String(localized: "Plays the piece from the top. The instrument's held music comes back with it.")
         case .resumeInstrument: return String(localized: "Brings the music back. Your pulse reading keeps running.")
+        // The words the plate's own ▶ spoke until S7a, moved with the start they describe.
+        case .startInstrument:  return String(localized: "Starts biofeedback; your body then composes and plays the music.")
         case .unavailable:      return String(localized: "Unavailable: add a part with notes or audio, or start the instrument.")
         }
     }

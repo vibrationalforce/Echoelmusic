@@ -37,6 +37,12 @@
 // law is unchanged. The founder's 2026-07-31 drawing put the pill in this row when this plate
 // was the app's home; that is recorded here so the next reader does not "restore" it from #289.
 //
+// ⛔ AND ON 2026-10-02 THE THREE BECAME TWO (DAW shell S7a, founder „Ja, so bauen" — one control
+// bar on top): the ▶/■ (`startButton`) is DELETED, because under the head's Play it made two
+// Plays on one screen; the head's ONE Play starts the instrument now (`OneStartControlTests`).
+// Claim 2 is rewritten as that decision, again not weakened: line 1 holds ⏸ tempo+lock, and the
+// declaration MUST NOT build `startButton` — the same one-address shape as the pill above.
+//
 // ⚠️ WHAT THIS FILE CANNOT DO, said first. Every assertion is a SOURCE SCAN. SwiftUI layout
 // is not reachable from a unit test here, so "the row reads well on a 393 pt phone" and "the
 // chrome is shorter now" are device looks. What is proven is that the bar is gone, that both
@@ -91,7 +97,9 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
     /// and `TransportPositionView()` up into line 1 left every assertion green while "line 1 is
     /// bit-for-bit unchanged" — the single fact the slice rests on — was false and the pill was
     /// squeezed exactly as feared. Membership is now asserted PER LINE, in both directions.
-    func testTheFirstLineHoldsTheThreeTransportChildrenAndNotThePill() throws {
+    /// (⛔ `testTheFirstLineHoldsTheThreeTransportChildrenAndNotThePill` until S7a — the name
+    /// counted a child that is gone, #374.)
+    func testTheFirstLineHoldsThePauseAndTheTempoAndNotThePill() throws {
         let path = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
         let row = try declarationBody(of: "private var startControlRow: some View {", in: path)
         // ⛔ UNTIL #1092 THIS SCANNED `startControlRow` ITSELF for an inner `HStack(spacing: 8)`
@@ -101,8 +109,8 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
         // the count fell to zero: assertion red, then `firstInnerRow` threw. The scan follows
         // the declaration now; the property it defends is unchanged.
         XCTAssertTrue(row.contains("transportLine1"), """
-            `startControlRow` no longer builds `transportLine1` — line 1 (▶ ⏸ tempo+lock, \
-            analysis pill) has left the transport row. If it was deliberately restructured, \
+            `startControlRow` no longer builds `transportLine1` — line 1 (⏸ tempo+lock; \
+            the ▶ went to the head with S7a, the pill on 2026-09-30) has left the transport row. If it was deliberately restructured, \
             rewrite this file with the change rather than deleting it.
 
             Row scanned (comments blanked by SourceText.codeOnly):
@@ -126,8 +134,8 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(hstacks, 1, """
             `transportLine1` has \(hstacks) inner `HStack(spacing: 8)`, expected at least 1.
 
-            Zero means line 1 itself is gone — the four originals (▶ ⏸ tempo+lock, analysis \
-            pill) no longer share a row. That row is the instrument's transport; if it was \
+            Zero means line 1 itself is gone — what is left of the four originals (⏸ \
+            tempo+lock) no longer shares a row. That row is the instrument's transport; if it was \
             deliberately restructured, rewrite this file with the change rather than deleting it.
 
             Declaration scanned (comments blanked by SourceText.codeOnly):
@@ -140,18 +148,30 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
         // readers in the tree where one belongs. So line 1 is checked for the four NAMES it
         // spells, and the declaration for the two constructions those names resolve to.
         let lineOne = try firstInnerRow(of: line)
-        for child in ["startButton", "PlaybackToggleButton()", "tempo"] {
+        for child in ["PlaybackToggleButton()", "tempo"] {
             XCTAssertTrue(lineOne.contains(child), """
                 Line 1 of `transportLine1` no longer builds `\(child)`.
 
                 Line 1 is the transport row as it stood before #456 (wrapped by #1027, three \
-                children since the pill moved to the head on 2026-09-30). Its children staying \
+                children since the pill moved to the head on 2026-09-30, two since the ▶/■ went \
+                to the head's ONE Play with S7a). Its children staying \
                 on ONE row is what makes "nothing that exists today can be squeezed" a fact \
                 rather than a hope.
 
                 Line 1 scanned: \(lineOne)
                 """)
         }
+        // ⛔ The ▶/■ is the FIRST child no more (DAW shell S7a, 2026-10-02): the start is the
+        // head's ONE Play. A `startButton` back on this row is two Plays on the Instrument stage —
+        // the confusion `OneStartControlTests` exists for.
+        XCTAssertFalse(line.contains("startButton"), """
+            `transportLine1` builds `startButton` again. Since DAW shell S7a the instrument's start \
+            is the head's ONE Play (`ProjectPlayStopButton`, `.startInstrument`); a second ▶ here \
+            is two Plays one row apart. Rewrite this claim with the founder's decision if that \
+            changes — do not add it back.
+
+            Declaration scanned: \(line)
+            """)
         // ⛔ The pill is the FOURTH child no more (2026-09-30, head leaf 2). One address, #416:
         // a second mount here is a second ~10 Hz camera reader (10.76.50) and the same pulse
         // on screen twice. If the founder wants it back on this row, MOVE it and move this.
@@ -207,8 +227,8 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
         // NOT DROPPED. That type no longer exists — the founder asked for its two entries as
         // individual buttons — so the needle would have been vacuously true forever, which is
         // the #367 shape: a check that cannot fail for its stated reason. `EchoelIconTile(` is
-        // the STRONGER replacement: line 1 builds none today (▶ draws its own `Image`, and
-        // ⏸ / tempo / pill are all their own structs), so any action or door tile appearing
+        // the STRONGER replacement: line 1 builds none today (⏸ and tempo are their own structs;
+        // until S7a the ▶ drew its own `Image`), so any action or door tile appearing
         // there is exactly the "merge it all onto one line after all" change this test exists
         // to catch — and now it catches all seven of them instead of one.
         //

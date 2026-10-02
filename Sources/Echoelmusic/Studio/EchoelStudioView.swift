@@ -1208,9 +1208,10 @@ struct EchoelStudioView: View {
             AnyView(menuBar
                 // (The `.echoelToggleBio` receiver that stood here is gone with #234 — the
                 // header pill and the transport ▶ no longer start the session, so nothing
-                // posted it. `toggleBiofeedback()` is now reached only from the front
-                // plate's own "Create from Within" button and from the Siri/Shortcuts
-                // inbox, both of which call it directly.)
+                // posted it. The session starts from the head's ONE Play through the
+                // "startInstrument" chrome door below (DAW shell S7a — the plate's own ▶ and
+                // `toggleBiofeedback()` are gone), from the Siri/Shortcuts inbox, and from
+                // the bio-source picker's idle branch.)
                 // Header pill long-press → pick the bio input source (camera · BLE · sim).
                 .onReceive(NotificationCenter.default.publisher(for: .echoelSelectBioSource)) { note in
                     selectBioSource(note.object as? String)
@@ -1337,6 +1338,15 @@ struct EchoelStudioView: View {
                     // reference into the voices; the stage does not turn — the player asked for
                     // standard tuning, not for the instrument.
                     case "tuningStandard": resetTuningToStandard()
+                    // DAW SHELL S7a (founder 2026-10-02): the head's ONE Play starts the instrument
+                    // on the Instrument stage — its ONLY poster is `ProjectTransport.startInstrument()`,
+                    // and the name is ONE constant on both sides (#416). The start stays HERE because
+                    // only this view owns the session (camera, composer, bio source). It refuses
+                    // while a session runs, as the Siri path does: the head shows Play over a held
+                    // session only as a RESUME, so a start that raced a running session must not
+                    // begin a second one. No modal is raised, so no `panelSheetUp` refusal.
+                    case ProjectTransport.startInstrumentDoor:
+                        if !running { startBiofeedback() }
                     default: break
                     }
                 }
@@ -2115,7 +2125,9 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// LINE 1 of the transport: ▶/■ · ⏸ · tempo+lock — ONE row, three children.
+    /// LINE 1 of the transport: ⏸ · tempo+lock — ONE row, two children. (⛔ "▶/■ · ⏸ · tempo+lock
+    /// — three children" until DAW shell S7a: the ▶/■ moved to the head's ONE Play, see the
+    /// `startButton` tombstone below.)
     ///
     /// ⛔ UNTIL 2026-09-30 (interface audit, "ein Kopf, der spricht", head leaf 2) THE PULSE PILL
     /// WAS ITS FOURTH CHILD, and the row chose between one line and two with `ViewThatFits`
@@ -2125,15 +2137,17 @@ struct EchoelStudioView: View {
     /// `ViewThatFits` went with it: what remains has floors but no conditional extra. The
     /// founder's 2026-07-31 drawing that put the pill here ("Führe intelligent zusammen") was
     /// drawn when this plate was the app's home. The name `transportLine1` is kept — guards
-    /// anchor on it — and its count is three.
+    /// anchor on it — and its count is two since S7a.
     private var transportLine1: some View {
         let tempo = BodyTempoField(onLockChanged: {
             NotificationCenter.default.post(name: .echoelCompositionEdited, object: "tempoLock")
         }, compact: true)
-        return HStack(spacing: 8) { startButton; PlaybackToggleButton(); tempo }
+        return HStack(spacing: 8) { PlaybackToggleButton(); tempo }
     }
 
-    /// #289 → #307 — ONE control block, now a transport: ▶/■ · ⏸ · the analysis display.
+    /// #289 → #307 → S7a — ONE control block: ⏸ · tempo. (The ▶/■ went to the head's ONE Play
+    /// with DAW shell S7a, 2026-10-02, the analysis display to the head on 2026-09-30; the history
+    /// below is kept because it says why each of the three meanings stayed separate.)
     ///
     /// ⛔ This line read "pulse · Create from Within · playback ■" — the OLD order, naming the
     /// OLD label — while the paragraph #307 appended below it described the new one. The summary
@@ -2482,101 +2496,17 @@ struct EchoelStudioView: View {
     // What did not: a menu item carries no VoiceOver hint, so the door's spoken sentence is
     // gone with the tile — the menu's own hint names all four, and the sheet says the rest.
 
-    /// THE ONE START, and since #307 it is a TRANSPORT GLYPH rather than a sentence.
-    ///
-    /// Founder 2026-07-31, immediately after the #305 row fix: *"Create from within can also
-    /// weg, einfaches Menü mit Playbutton etc wie bei Ableton reicht."*
-    ///
-    /// ⛔ WHAT THAT OVERTURNS, stated plainly because the previous reasoning was good and is
-    /// now simply outranked. #234 kept THIS control out of three candidates precisely because
-    /// it was "labelled, unmissable, named after what the instrument does", and dropped the
-    /// pill's tap and the transport ▶ as starts on the grounds that a GLYPH cannot say what it
-    /// begins. That argument has not become wrong — it has been overruled by the person whose
-    /// instrument it is, twice in one day, in favour of a transport people already know. Do not
-    /// "restore" the label as a bug fix; if it comes back it comes back on a fresh founder ask.
-    ///
-    /// ⚠️ THE COST IS DISCOVERABILITY, AND IT IS PAID, NOT WAVED AWAY. A bare ▶ tells a
-    /// first-time user nothing about biofeedback. Three things carry that weight now, and all
-    /// three had to move in this same commit or the removal would leave a lie behind:
-    ///   · the VoiceOver label + hint below (the only description a blind user ever gets),
-    ///   · the Bio panel's opening line, which said *Press "Create from Within" to start* —
-    ///     an instruction naming a button that no longer exists,
-    ///   · `BioStripView`'s accessibility hint, which said the same thing.
-    /// `OneStartControlTests` now fails on any line that pairs "Press" with that phrase, so the
-    /// next rename cannot leave the instructions pointing at a ghost.
-    ///
-    /// The Ableton grammar this lands in: ▶ starts, ■ ends, and the ⏸ beside it drops only the
-    /// music. Three glyphs, three distinct meanings, no two of them claiming the same thing —
-    /// which is the #305 rule this row was just brought under, applied one step further.
-    private var startButton: some View {
-        Button { toggleBiofeedback() } label: {
-            // `stop.fill` is CORRECT here and is the only place on the front plate that may
-            // wear it: this control genuinely ends the session, camera included. The twin
-            // guard in `OneStartControlTests` bans it from `WorkspaceView.swift`, where the
-            // button beside this one only pauses.
-            Image(systemName: running ? "stop.fill" : "play.fill")
-                .font(EchoelTheme.font(22, .semibold))
-                .foregroundStyle(running ? EchoelTheme.text : .black)
-                // 64 pt wide is a CHOICE, not a fit: with the label gone there is no width
-                // pressure left in this row at all, so the number is set by what a primary
-                // transport target should feel like next to a 38 pt secondary — not by what
-                // is left over. The freed ~205 pt goes to the analysis display, which is what
-                // the founder asked for one message earlier ("etwas größere Anzeige für
-                // Analyse"): `PulseMonitorMiniLive` now takes the rest of the row.
-                //
-                // ⛔ THE WIDTH-BUDGET PARAGRAPH THAT STOOD HERE IS DELETED, NOT UPDATED. It
-                // computed how much room the sentence "Create from Within" had against the
-                // pulse pill, was wrong once in the alarming direction, was corrected, and was
-                // corrected AGAIN eight hours later when the pill grew. There is no sentence
-                // any more, so the arithmetic has no subject — keeping a "corrected" version
-                // of it would be the third edition of a calculation about something that does
-                // not exist. Height still comes from `FloatingVisualLayout` (see that file's
-                // control-band block) so the docked visual's lift and this control cannot
-                // drift apart; that dependency is real and CI-tested.
-                .frame(width: 64)
-                // ⛔ HEIGHT WAS `FloatingVisualLayout.startButtonHeight` (56) UNTIL #481.
-                // Founder 2026-08-07: *"die sollen immer gleichgroß sein. Orientiere dich an
-                // denen oben rechts."* The header tiles are 32 visible / 44 tap, so this is
-                // too, and the WIDTH stays 64 — a primary transport reads as primary by being
-                // wider than its 30–38 pt neighbours, which is exactly the distinction the
-                // "64 is a CHOICE, not a fit" paragraph above was making.
-                //
-                // ⚠️ `FloatingVisualLayout` IS DELIBERATELY NOT CHANGED WITH IT, and that is a
-                // decision rather than an oversight. `studioControlBandHeight` (= 56 + 4 + 10)
-                // is what `FloatingVisualWindow.defaultCenter` lifts the docked card by; since
-                // #288 moved this button to the TOP of the stack, that sum buys a bottom MARGIN
-                // and no longer clears anything. Feeding the new 32 into it would slide the
-                // docked visual up 24 pt on the founder's device in a commit about button size.
-                // Whether the card should drop those points is a look decision that belongs to
-                // the founder — it is filed, not taken here. The honest consequence is that the
-                // constant's NAME now overstates its job; that note lives at the declaration.
-                .frame(height: EchoelTheme.controlHeight)
-                // Website CI: primary action = off-white fill, black glyph (.btn-primary).
-                // Green is reserved for live bio signal, not chrome. Stop = neutral fill with
-                // a border, so the running state still reads as a raised control rather than
-                // dissolving into the plate.
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(running ? EchoelTheme.fill : EchoelTheme.text))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(running ? EchoelTheme.borderStrong : Color.clear, lineWidth: 1))
-                // The 44 pt tap frame sits AFTER background+overlay, exactly as the header
-                // tiles spell it — put it before them and the chip would be PAINTED 44 tall,
-                // i.e. the picture would grow instead of the hit area, which is the opposite
-                // of the #113 idiom. Vertical only: the row is 8 pt-spaced and horizontal
-                // growth would overlap the ⏸ beside it.
-                .frame(height: EchoelTheme.controlTapHeight)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        // Mandatory now that the label is gone — and deliberately NOT the same words as the
-        // pause button one place over, because the difference between them (this one takes
-        // the camera down with it, ~20 s to re-lock) is exactly what a VoiceOver user cannot
-        // see.
-        .accessibilityLabel(running ? Text("Stop") : Text("Play"))
-        .accessibilityHint(running
-            ? Text("Ends the instrument and the pulse reading. To drop only the music, use pause.")
-            : Text("Starts biofeedback; your body then composes and plays the music."))
-    }
+    // ⛔ `startButton` STOOD HERE — THE PLATE'S OWN ▶/■ (#307 → DAW shell S7a, founder 2026-10-02,
+    // „Ja, so bauen": one control bar on top). Since the head (`ProjectHeader`) carried a Play on
+    // the Instrument stage, this stage showed TWO Plays one row apart — the head's (resume) and
+    // this one (start/end the session): the confusion `OneStartControlTests` names, asked away
+    // three times. The head's ONE Play now starts the instrument (`ProjectTransport.PlayAction
+    // .startInstrument` → the "startInstrument" door below → `startBiofeedback()`), so the start
+    // moved rather than vanished, and its two words moved with it (label "Play the instrument",
+    // hint "Starts biofeedback; …"). What the move COSTS, stated rather than hidden: this button
+    // ended a PAUSED session in one tap; now the head reads Play over a held session (it
+    // resumes), so ending one is Play, then Stop. The pause beside it (`PlaybackToggleButton`)
+    // is unchanged and still keeps the pulse lock.
 
     /// The instrument says when it is not at standard tuning — and #325 is why this
     /// exists at all, doored on 2026-08-02 after sitting unpresented since 2026-07-09.
@@ -9968,9 +9898,9 @@ struct EchoelStudioView: View {
 
     // MARK: - Biofeedback lifecycle
 
-    private func toggleBiofeedback() {
-        if running { stopEverything(reason: "user-stop") } else { startBiofeedback() }
-    }
+    // ⛔ `toggleBiofeedback()` STOOD HERE — the plate ▶/■'s Start-or-End, its ONLY caller. It
+    // went with that button (DAW shell S7a); the start is the "startInstrument" door's arm, the
+    // end is the ONE Stop (`ProjectTransport.stop` → the ONE-Stop observer → `stopEverything`).
 
     /// Consume a Siri/Shortcuts request deposited by an App Intent, routing it to
     /// the same handlers the on-screen buttons use. Read-once, so it fires exactly

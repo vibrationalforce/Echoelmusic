@@ -335,7 +335,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
 
     func testEveryTransportWordIsCatalogued() throws {
         let statuses: [ProjectTransport.Status] = [.stopped, .paused, .playingInstrument, .playingSong, .recording]
-        let plays: [ProjectTransport.PlayAction] = [.startSong, .startSongAndInstrument, .resumeInstrument, .unavailable]
+        let plays: [ProjectTransport.PlayAction] = [.startSong, .startSongAndInstrument, .resumeInstrument,
+                                                   .startInstrument, .unavailable]
         var words = statuses.map(ProjectTransport.statusWord)
         for running in [false, true] {
             words.append(ProjectTransport.buttonWord(running: running))

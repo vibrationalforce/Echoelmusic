@@ -272,6 +272,13 @@ struct ProjectPlayStopButton: View {
     /// ⚠️ READ ONLY INSIDE TAP HANDLERS, never in `body` (see above).
     @Environment(BeatPlayer.self) private var beatPlayer
     @Environment(PianoRollModel.self) private var pianoRoll
+    /// S7a — which stage is in front decides what Play starts (`StudioStage.playStartsTheInstrument`).
+    /// Read through the ONE key (#416), the head's own; a SETTING written on a tap, never a tick, so
+    /// a cold read. Each mount derives it rather than being told: the head's mount stands only on
+    /// the Instrument stage and the Workstation's only on the Piece stage (`StageShell`), so a
+    /// passed-in flag could only ever restate this read — and could be passed wrong.
+    @AppStorage(StudioDefaultKeys.stage.key)
+    private var stageRaw = StudioDefaultKeys.stage.value.rawValue
 
     var body: some View {
         let facts = ProjectTransport.Facts(clockRunning: transport.isPlaying,
@@ -280,11 +287,14 @@ struct ProjectPlayStopButton: View {
                                            sessionRunning: bus.instrumentRunning,
                                            songStartable: WorkstationView.songCanStart(
                                                player: player, timeline: timeline, clipStore: clipStore))
-        playStopButton(running: ProjectTransport.isRunning(facts), play: ProjectTransport.playAction(facts))
+        let stage = StudioStage(rawValue: stageRaw) ?? StudioDefaultKeys.stage.value
+        playStopButton(running: ProjectTransport.isRunning(facts),
+                       play: ProjectTransport.playAction(facts, instrumentInFront: stage.playStartsTheInstrument))
     }
 
     /// The ONE Play / Stop. While anything runs it is Stop — for everything. Stopped, it plays
-    /// what the project can play: the song, or a held session's music. (Moved here from
+    /// what is in front: on the Instrument stage the instrument (its start, or a held session's
+    /// music — S7a), elsewhere the song, or a held session's music. (Moved here from
     /// `ProjectHeader` by A3b, unchanged — the type above says why.)
     ///
     /// It wears its WORD beside the glyph (`ProjectTransport.buttonWord`, interface audit
@@ -301,6 +311,7 @@ struct ProjectPlayStopButton: View {
                 switch play {
                 case .startSong, .startSongAndInstrument: startSong()
                 case .resumeInstrument: ProjectTransport.resumeInstrument(pattern: beatPlayer.pattern)
+                case .startInstrument:  ProjectTransport.startInstrument()
                 case .unavailable:      break
                 }
             }
@@ -315,7 +326,10 @@ struct ProjectPlayStopButton: View {
             .foregroundStyle(running ? EchoelTheme.onPrimary
                                      : (available ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, 12)
-            .frame(minWidth: 44, minHeight: 44)
+            // The tap floor, read from the ONE definition (#481) — since S7a this is the
+            // instrument's start too, the control `OneChromeControlHeightTests` pins in place of
+            // the plate's deleted ▶/■. Painted at the floor, the head's own grammar.
+            .frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)

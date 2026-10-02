@@ -5,7 +5,7 @@
 // circled: *"Die größe der Buttons anpassen, die sollen immer gleichgroß sein. Orientiere
 // dich an denen oben rechts."* Measured on the tree before the change:
 //
-//     startButton              64 × 56      EchoelStudioView
+//     startButton              64 × 56      EchoelStudioView   (deleted with DAW shell S7a)
 //     PlaybackToggleButton     44 × 48      WorkspaceView
 //     BodyTempoField (compact) 76 × 32 · lock 30 × 32
 //     TransportOverflowMenu    30 × 32      WorkspaceView
@@ -37,6 +37,14 @@
 // rather than passes — a silent green on an unscanned tree is the `continue-on-error` lie
 // the `doctor` skill exists to catch (#472: a `try` behind a directory-wide skip turned a
 // deletion into a green).
+//
+// ⭐ DAW SHELL S7a (2026-10-02): THE START ▶/■ IS DELETED FROM THE PLATE — the head's ONE Play
+// starts the instrument (`OneStartControlTests`). Its two claims here MOVED with it rather than
+// going: the size case now pins the head's Play reading the shared tap height (the head
+// spelled a literal 44 until this commit, so the move also put that control on the constant),
+// and the order claim asks of the head's Play what it asked of the plate's — that the whole
+// chip is the hit area, inside the label. Against the parent both are red by ANCHOR ABSENCE
+// (the head spelled `minHeight: 44`), one absence reported twice (#486).
 
 import Foundation
 import XCTest
@@ -72,6 +80,7 @@ final class OneChromeControlHeightTests: XCTestCase {
     private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let tempo    = "Sources/Echoelmusic/Studio/BodyTempoField.swift"
     private static let tile     = "Sources/Echoelmusic/Studio/EchoelIconTile.swift"
+    private static let header   = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
 
     // MARK: - The definition
 
@@ -106,8 +115,12 @@ final class OneChromeControlHeightTests: XCTestCase {
         let cases: [(file: String, anchor: String, what: String)] = [
             (Self.monitors,  ".frame(width: 54, height: EchoelTheme.controlHeight)",
              "the immersive header tile"),
-            (Self.studio,    ".frame(height: EchoelTheme.controlHeight)",
-             "the start ▶/■ button (was FloatingVisualLayout.startButtonHeight = 56)"),
+            // ⛔ `(Self.studio, ".frame(height: EchoelTheme.controlHeight)")` — the plate's start
+            // ▶/■ — stood here until DAW shell S7a deleted that button. The start is the head's
+            // ONE Play now, and it reads the shared TAP height: the head paints its chip at the
+            // floor (its grammar since 09d35f56e), where the plate painted 32 and tapped 44.
+            (Self.header,    ".frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)",
+             "the ONE Play/Stop in the head, the instrument's start since S7a (was the plate's ▶/■)"),
             // Rule 2/3 (2026-09-30): the pause carries its word, so BOTH sides are minima now
             // (the #262 shape, as the compact tempo readout below) — the shared constant is
             // still what it reads; that is the claim this row makes. ⛔ The first spelling,
@@ -176,31 +189,32 @@ final class OneChromeControlHeightTests: XCTestCase {
     /// in it. It sees that the modifier is spelled after the paint, which is the only part
     /// that regresses textually.
     func testTheTapFrameComesAfterThePaintOnBothTransportButtons() throws {
-        let studio = try codeLines(Self.studio)
-        guard let paint = studio.firstIndex(where: {
-            $0.contains("running ? EchoelTheme.fill : EchoelTheme.text")
+        // ⭐ S7a — THE START MOVED TO THE HEAD, and the head's grammar is the other one: its chip
+        // is PAINTED at the 44 pt floor (`minHeight: EchoelTheme.controlTapHeight`), so there is
+        // no paint-then-tap order to hold. What carries the #113 promise there is that the whole
+        // painted chip is the hit area: `.contentShape(Rectangle())` after the frame and INSIDE
+        // the label (before `.buttonStyle`), where a Button reads its hit shape. (⛔ Until S7a
+        // this half held the plate's `startButton` to "tap frame after its `.background`"; that
+        // button is deleted, see `OneStartControlTests`.)
+        let head = try codeLines(Self.header)
+        guard let frame = head.firstIndex(where: {
+            $0.contains(".frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)")
         }) else {
             return XCTFail("""
-                the start button's background line is gone from EchoelStudioView, so this \
-                test has nothing to order against. If the button was restyled, re-anchor \
-                here in the same commit rather than deleting the check.
+                the head's ONE Play/Stop lost `.frame(minWidth: 44, minHeight: \
+                EchoelTheme.controlTapHeight)`. It is the instrument's start since DAW shell S7a; \
+                below the 44 pt floor the app's primary control stops being reliably hittable \
+                while looking the same. If it was restyled, re-anchor here in the same commit.
                 """)
         }
-        guard let tap = studio.firstIndex(where: {
-            $0.contains(".frame(height: EchoelTheme.controlTapHeight)")
-        }) else {
-            return XCTFail("""
-                the start button lost its `.frame(height: EchoelTheme.controlTapHeight)`. \
-                Its visible chip is \(32) pt tall — 73 % of the HIG 44 pt floor — so without \
-                the tap frame the app's primary transport control is under the floor while \
-                looking identical.
-                """)
+        guard let shape = head[(frame + 1)...].firstIndex(where: { $0.contains(".contentShape(Rectangle())") }),
+              let style = head[(frame + 1)...].firstIndex(where: { $0.contains(".buttonStyle(.plain)") }) else {
+            return XCTFail("the head's Play/Stop has no `.contentShape(Rectangle())` or `.buttonStyle(.plain)` after its frame")
         }
-        XCTAssertGreaterThan(tap, paint, """
-            The start button's 44 pt tap frame moved ABOVE its `.background(...)`. That does \
-            not enlarge the hit area — it enlarges the PICTURE: the rounded rect is then \
-            painted 44 pt tall and the button stops matching the header tiles it was just \
-            made to match. Put the frame back after the background and the border.
+        XCTAssertLessThan(shape, style, """
+            The head's Play/Stop sets its `.contentShape(Rectangle())` OUTSIDE the label (after \
+            `.buttonStyle`). A Button's hit area is its label's content shape; outside, the \
+            transparent parts of the chip stop taking the tap and the 44 pt floor is only paint.
             """)
 
         let ws = try codeLines(Self.workspace)
