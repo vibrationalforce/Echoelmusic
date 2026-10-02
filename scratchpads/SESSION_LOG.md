@@ -41945,3 +41945,9 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Nachkontrolle S3 (drei Prüf-Agenten, 42 Wächter transkribiert):** keiner rutscht durch S3 ins Rot. Gefunden: `TheWorkstationHasADoorTests` Anspruch F war seit B3c (`e0e28f83a`) rot auf korrektem Baum — die Mute/Solo-Taps riefen `timeline.editLaneMix/commitLaneMix` direkt aus der Stück-Fläche. **58106a0d2** führt sie über die Naht `TrackMix.tapStep` (ein Tipp = ein Undo-Schritt; Agent-Trichter bleibt nackt). Mitgezogen und nicht gelockert: `EveryHandMadeMixChangeIsOneUndoStepTests` (Naht-Pins) und `TheMixerGestureIsOneUndoStepTests` (Zensur — die moved-needles NICHT fand, weil die Nadel ein Fragment in einer `filesMatching`-Closure ist). Gates grün (main = 58106a0d2).
 - **e0254a12a** Ort-Zeile in Save & Export nannte den gelöschten „Save button“ → „Save is in the logo menu at the top left.“
 - Lehre: ein rot liegender Wächter unter #807 (Job-Log = `tail -200`) überlebt beliebig viele grüne Merges — eine Scheibe, die ein Gesetz WIEDER anfasst (hier die Naht), muss die Nachbar-Wächter ganz transkribieren, nicht nur das Delta (Tests/CISmoke/CLAUDE.md §3).
+
+## 2026-10-02 (Abend) — DAW-Hülle S4a: Notes und Automation sind Seiten des einen Details
+- **104c288db** Inspektor = Track · Part · Notes · Automation · Device; `inspectorPage` ist der eine Besitzer, `notesOpen` abgeleitet; die zwei Editor-Mounts unter der Arbeitsfläche sind weg, die Hide/Show-Knöpfe auch. `TrackMix.detailPages` bietet jede Seite über das Gate ihres Editors an.
+- **Wächter:** `TheDetailShowsOnePageAtATimeTests` (umbenannt, Matrix über Spur × Auswahl × Kapazität) + sechs umgezogene. Transkribiert: Baum 127 Prüfungen, 0 rot; auf HEAD nennt jedes Rot die S4a-Abwesenheit. dead/swift-escapes/foreign/count-pins sauber.
+- **Gefunden:** `spokenCount`-Nadel seit E4-91 rot auf korrektem Code (#807-Klasse) — neu verankert.
+- Gates: laufen. Gerät: nichts geprüft (Inbox §2 „S4a").

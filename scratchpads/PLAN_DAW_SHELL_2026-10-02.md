@@ -31,7 +31,7 @@ Antworten:
 | S2 | Umschaltleiste | `PieceView` (arrange · mixer · browse · project, persistiert) + `StudioStage` bleibt; Leiste unten in `StageShell` ersetzt den Saum oben; Arrange/Mix-Kacheln in `pieceTabs` entfallen | StageShell, StudioStage, WorkstationView, StudioDefaultKeys |
 | S1 | Steuerleiste | EINE Leiste ersetzt topBar + CompositionHeaderStrip + ProjectHeader: ≡ · ⏮ · ▶/■ · ● · Anzeige-Blatt (Position · BPM+Schloss · Tonart) · Puls; Tonart/Stimmung/Tempo-Modus/Tap/Click in ein Blatt „Song" | WorkspaceView, ProjectHeader, neue DAWControlBar |
 | S3 ✅ | Projektmenü | GEBAUT 2026-10-02: ≡ = Open · Save │ Live Colabo · Learn │ Guide; `quickDoorRow`, Save-Kachel und `WorkstationProjectRow` gelöscht. New bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing bei seiner einen Tür (Licht-Kachel) — je Bereich EINE Tür, darum nicht doppelt ins Menü | WorkspaceView, EchoelStudioView, WorkstationView |
-| S4 | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
+| S4 (a ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
 | S5 | Mixer | Streifen + Master | PieceMixerView |
 | S6 | Browse | Import · Medienbibliothek · Sounds/Moods · Foto/Video-Saat | WorkstationView, MediaBrowserView |
 | S7 | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
@@ -70,3 +70,24 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
 - **Wächter umgezogen, nicht gelockert:** 14 Dateien in `Tests/CISmoke` (Türen, Schloss,
   Save-Gesetz, Tippfläche, Erstlauf-Satz, Guide, MIDI-Export-Reihenfolge u. a.); jeder pinnt die
   NEUE Form mit Abwesenheit der alten Tür PLUS Anwesenheit im Menü.
+
+## S4a — Entscheidungen und Befunde (2026-10-02)
+
+- **EIN Detailbereich, EIN Seitenbesitzer.** Notes und Automation sind Seiten des Inspektors
+  (Track · Part · Notes · Automation · Device), nicht mehr zwei aufklappbare Editoren unter der
+  Arbeitsfläche. Besitzer der Seite ist `WorkstationSelection.inspectorPage`; `notesOpen` ist nur
+  noch ABGELEITET (`inspectorPage == .notes`), damit „Write notes“ und der Kompositions-Leitfaden
+  ohne zweiten Zustand weiterlaufen.
+- **Jede Seite wird von ihrem eigenen Editor-Gate angeboten (#416):** Notes nur, wenn
+  `PartNoteEditor.editableRegion` einen MIDI-Teil auf einer nicht-Bio-Spur findet; Automation nur,
+  wenn `SongAutomationEditor` die Spur klingen lassen kann. `TrackMix.detailPages` ist die EINE
+  Liste; die Seite fällt über `shown(_:offered:)` auf Track zurück, wenn ihr Gate zufällt.
+- **Kein Auf/Zu-Knopf mehr in den Editoren** — die Seite IST das Öffnen. Vier Hide/Show-Schlüssel
+  aus dem Katalog entfernt, drei Sätze auf „on the track's Notes page“ umgeschrieben.
+- **Wächter:** `TheInspectorShowsOnePageOfThreeTests` → `TheDetailShowsOnePageAtATimeTests`
+  (#374, `git mv`), mit einer Matrix über Spur × Auswahl × Kapazität; sechs weitere umgezogen.
+  Nebenbei gefunden: die `spokenCount`-Nadel in `TheSelectedPartSaysItsEndAndItsNotesTests` war
+  seit E4-91 rot auf korrektem Code (#807) — auf die ausgelieferte Form neu verankert.
+- **Gerät offen:** fünf Segmente in der 260-pt-Spalte im Querformat und auf 375 pt; „Write notes“
+  springt auf die Notes-Seite.
+- **Nächste Scheibe S4b:** Detail-Kopf mit Spurfarbe, einklappbar; Arm/Tonhöhe/Teil-Tempo auf ihre Seiten.
