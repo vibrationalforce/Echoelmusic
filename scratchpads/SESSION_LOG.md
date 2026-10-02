@@ -42009,3 +42009,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **10639fad4:** S8b-Review LOW-5 (zwei veraltete Kommentare in WorkstationView); die übrigen fünf LOW im Plan festgehalten.
 - Gerät: nichts geprüft (Inbox §2 „S9b").
 
+
+### 2026-10-02 — Deploy 10.79.489 (DAW-Hülle S1–S9b) GELANDET
+- `a3ef7c53b` (`.deploy/release`): Notiz mit Posten 1–4, Prüfliste T1–T9, `founder-verify.py --since c80cbb672` (8 neue Bitten). Vorher gegen alle fünf Ansprüche von TheDeployNoteNamesRealDoorsTests transkribiert; foreign-needles 0.
+- Gates vor dem Bump: Compile Check ✓ + Auto-Merge → main = 77f29e2fa (⇒ BfT grün).
+- TestFlight-Lauf 37046666493 (Nr. 2614): Preflight · Compile Check · iOS · Summary = success.
+- Korrektur in der Notiz vor dem Commit: „Text size“ sitzt im Save/Export-Panel (`utilityRow`), nicht unter Project.
+- Gerät: nichts bestätigt — T1–T9 ist die Geräte-Session.
