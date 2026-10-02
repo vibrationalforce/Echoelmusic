@@ -10,9 +10,9 @@
 // `min(3 · RMS, 1)` with a decaying peak-hold: a meter-ballistics number, NOT a decibel level.
 // So it is spoken as a SHARE OF THE METER ("Left 30 percent"), never in dB — reading it as dBFS
 // would say about 9.5 dB too much and freeze at "0.0 dB" from ≈ −9.5 dBFS RMS on (the #347 lesson,
-// `AudioEngine.masterOutputTruePeakDb`'s doc). It is the same reading as the two bars in the Master
-// panel (`MasterLoudnessGrid`), drawn by the same bar (`MixLevelBar`, one threshold, #416). The
-// loudness of what leaves the device is the Master panel's R128 numbers; the hint says so.
+// `AudioEngine.masterOutputTruePeakDb`'s doc). It is the same reading as the two bars on the Mixer's
+// master strip (`MasterLoudnessGrid`), drawn by the same bar (`MixLevelBar`, one threshold, #416).
+// The loudness of what leaves the device is the strip's R128 numbers; the hint says so.
 //
 // ⚠️ WHY THIS IS ITS OWN FILE AND ITS OWN STRUCT. Both properties are rewritten by the 60 Hz meter
 // poll (`AudioEngine.startMeterPollTimer`). A read in `WorkstationView.body` would register the

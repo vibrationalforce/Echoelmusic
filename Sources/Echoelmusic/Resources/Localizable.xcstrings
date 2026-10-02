@@ -4033,14 +4033,14 @@
         }
       }
     },
-    "Master level lives in the Master panel — it is the sum of these, not one of them." : {
+    "Master level lives on the Mixer's master strip — it is the sum of these, not one of them." : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Master level lives in the Master panel — it is the sum of these, not one of them."
+            "value" : "Master level lives on the Mixer's master strip — it is the sum of these, not one of them."
           }
         }
       }

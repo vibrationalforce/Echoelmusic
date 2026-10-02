@@ -3693,7 +3693,7 @@ struct EchoelStudioView: View {
             }
 
             // WHAT IS DELIBERATELY NOT ON THIS BOARD, said out loud rather than left to be
-            // discovered: the MASTER (loudness, limiter, output) has its own panel because it
+            // discovered: the MASTER (level, loudness, Clear) ends the piece's Mixer as its master strip because it
             // is the sum of everything here, not another layer beside them. The bio voice
             // (breath → synth) is absent because it cannot be armed at all today — a strip
             // for it would be a control for silence (#277). Secondary MIDI lanes went with
@@ -3706,7 +3706,7 @@ struct EchoelStudioView: View {
             // where a sheet was mounted, not about what belongs on a mixer. #330's own
             // charter is "every audible layer on one board", and a board that omits the
             // performer's own voice fails it in exactly the way the founder named.
-            Text("Master level lives in the Master panel — it is the sum of these, not one of them.")
+            Text("Master level lives on the Mixer's master strip — it is the sum of these, not one of them.")
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

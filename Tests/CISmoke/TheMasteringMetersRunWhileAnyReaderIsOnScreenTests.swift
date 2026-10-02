@@ -33,7 +33,7 @@ final class TheMasteringMetersRunWhileAnyReaderIsOnScreenTests: XCTestCase {
         XCTAssertFalse(claims.gateOpen, "the meters start OFF")
         XCTAssertTrue(claims.claim(.masterReadout))
         XCTAssertTrue(claims.claim(.scope))
-        XCTAssertTrue(claims.release(.scope), "the Master panel is still on screen")
+        XCTAssertTrue(claims.release(.scope), "the master strip is still on screen")
         XCTAssertFalse(claims.release(.masterReadout), "the last reader left — the meters stop")
     }
 
@@ -62,7 +62,7 @@ final class TheMasteringMetersRunWhileAnyReaderIsOnScreenTests: XCTestCase {
     /// least the two known readers.
     func testEveryClaimIsReleasedBySameReader() throws {
         let claimers = try filesUnderSources(containing: "claimDetailedMetering(.")
-        XCTAssertGreaterThanOrEqual(claimers.count, 2, "the Master panel and the scope both claim")
+        XCTAssertGreaterThanOrEqual(claimers.count, 2, "the master strip and the scope both claim")
         for file in claimers {
             let code = SourceText.codeOnly(try rawText("\(Self.sourcesRoot)/\(file)"))
             for owner in DetailedMeteringOwner.allCases {
@@ -75,7 +75,7 @@ final class TheMasteringMetersRunWhileAnyReaderIsOnScreenTests: XCTestCase {
         }
     }
 
-    /// 5. The scope never resets the meters: that would wipe the Master panel's integration
+    /// 5. The scope never resets the meters: that would wipe the master strip's integration
     /// while both are on screen.
     func testTheScopeNeverResetsTheMastering() throws {
         let code = SourceText.codeOnly(try rawText(Self.scope))
