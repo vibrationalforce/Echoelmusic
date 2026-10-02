@@ -446,8 +446,10 @@ struct WorkstationView: View {
             // one that names them (`emptyState`, same `summary.isEmpty`). Once the piece has a
             // track they live in the tab row's "Add" menu (`addMenu`), which calls the same five
             // actions, so the song is no longer pushed down by five full-width buttons and the
-            // doors and the menu are never on screen together. The note line stays outside: a
-            // menu item writes to it too.
+            // doors and the menu are never on screen together. The one note line follows the
+            // doors: here under them on the empty plate, under the Add tile in the pinned tab row
+            // once the piece has a track (review of slice 4 — a refusal written a screen below
+            // the tile that was tapped reads as a tap that did nothing).
             if summary.isEmpty {
                 creationPair {
                     addTrackRow
@@ -462,15 +464,16 @@ struct WorkstationView: View {
                 // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
                 // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
                 newMIDIPartRow
+                if let note = importNote { importNoteLine(note) }
             }
-            if let note = importNote { importNoteLine(note) }
             // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
             // to put one on the song again without Files, a second copy or a second clip slot.
             // Its own leaf: it lists the directory detached and writes through
             // `MediaPlacement`; this view reads none of its state.
             // ⚠️ GROUPED WITH THE PROJECT ROW so this `VStack` stays under ten direct children
             // (nine since DMMW Phase 1 mounted `composeGuide` first, eight since A3 pinned
-            // `transportRow` under the scroll — TWO slots of headroom left):
+            // `transportRow` under the scroll, fewer since slice 4 folded the five doors and the
+            // note line into one `if` — count them before adding, never trust this sentence):
             // past ten, `ViewBuilder`
             // resolves through the variadic pack (#936). `Group` is
             // layout-transparent — both rows still sit in this stack at its spacing.
@@ -569,7 +572,7 @@ struct WorkstationView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
+            Text("Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -578,7 +581,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
+        .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
@@ -910,43 +913,53 @@ struct WorkstationView: View {
     /// to switch to, a button would have opened what was already open.)
     private var pieceTabs: some View {
         let level = SkillLevel(rawValue: skillLevelRaw) ?? StudioDefaultKeys.skillLevel.value
-        return HStack(spacing: 6) {
-            // B3: Arrange and Mix switch THIS plate. The current one is the filled tile AND says
-            // selected to VoiceOver — never colour alone; tapping it again changes nothing, and
-            // that is honest: it is where you are.
-            Button {
-                plate = .arrange
-            } label: {
-                EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange",
-                               prominent: plate == .arrange, expands: true)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Arrange")
-            .accessibilityHint("Shows the arrangement: the tracks and their parts")
-            .accessibilityAddTraits(plate == .arrange ? .isSelected : [])
-            if level.showsSongs {
+        let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                // B3: Arrange and Mix switch THIS plate. The current one is the filled tile AND says
+                // selected to VoiceOver — never colour alone; tapping it again changes nothing, and
+                // that is honest: it is where you are.
                 Button {
-                    plate = .mix
+                    plate = .arrange
                 } label: {
-                    EchoelIconTile(systemImage: "slider.vertical.3", title: "Mix",
-                                   prominent: plate == .mix, expands: true)
+                    EchoelIconTile(systemImage: "rectangle.split.3x1", title: "Arrange",
+                                   prominent: plate == .arrange, expands: true)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Mix")
-                .accessibilityHint("Shows every sounding track's level, pan, mute and solo in one list")
-                .accessibilityAddTraits(plate == .mix ? .isSelected : [])
+                .accessibilityLabel("Arrange")
+                .accessibilityHint("Shows the arrangement: the tracks and their parts")
+                .accessibilityAddTraits(plate == .arrange ? .isSelected : [])
+                if level.showsSongs {
+                    Button {
+                        plate = .mix
+                    } label: {
+                        EchoelIconTile(systemImage: "slider.vertical.3", title: "Mix",
+                                       prominent: plate == .mix, expands: true)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Mix")
+                    .accessibilityHint("Shows every sounding track's level, pan, mute and solo in one list")
+                    .accessibilityAddTraits(plate == .mix ? .isSelected : [])
+                }
+                if level.showsSongs {
+                    SongExportTab()
+                    // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
+                    PieceAudioExportTab()
+                }
+                // UX audit slice 4: every way to add something, in one menu — once the piece has a
+                // track. Before that the empty plate shows the five doors itself (same predicate,
+                // `WorkstationSummary.isEmpty`), so the menu and the doors never stand together.
+                // Not behind `showsSongs`: the doors it replaces stand at every level.
+                if hasTrack {
+                    addMenu
+                }
             }
-            if level.showsSongs {
-                SongExportTab()
-                // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
-                PieceAudioExportTab()
-            }
-            // UX audit slice 4: every way to add something, in one menu — once the piece has a
-            // track. Before that the empty plate shows the five doors itself (same predicate,
-            // `WorkstationSummary.isEmpty`), so the menu and the doors never stand together.
-            // Not behind `showsSongs`: the doors it replaces stand at every level.
-            if !WorkstationSummary(document: timeline.document).isEmpty {
-                addMenu
+            // Review of slice 4: the Add menu's outcome is said under the Add tile, not a screen
+            // below it. Same predicate as the doors' block in `body`, so exactly one of the two
+            // places shows the line. Dismissible, because this row is pinned and a long import
+            // note would otherwise hold its height until the next action.
+            if hasTrack, let note = importNote {
+                pinnedNoteLine(note)
             }
         }
         .padding(.horizontal, 10)
@@ -960,6 +973,26 @@ struct WorkstationView: View {
         // longer leave by the same tab — the plate falls back to the arrangement.
         .onChange(of: level.showsSongs) { _, shows in
             if !shows { plate = .arrange }
+        }
+    }
+
+    /// The note line where the Add menu sits: the same text as `importNoteLine`, plus a way to
+    /// clear it, since the pinned row keeps whatever height the note takes.
+    private func pinnedNoteLine(_ note: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            importNoteLine(note)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                importNote = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(EchoelTheme.font(12, .semibold))
+                    .foregroundStyle(EchoelTheme.dim)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
         }
     }
 
@@ -978,7 +1011,9 @@ struct WorkstationView: View {
             Section {
                 Button { addMIDITrack() } label: { Label("Add MIDI Track", systemImage: "plus") }
                 Button { openImporter(.midi) } label: { Label("Import MIDI", systemImage: "pianokeys") }
+                    .accessibilityLabel("Import MIDI file")
                 Button { newMIDIPart() } label: { Label("New MIDI Part", systemImage: "square.grid.3x3") }
+                    .accessibilityHint(MIDIImport.newPartHint)
             }
         } label: {
             EchoelIconTile(systemImage: "plus", title: "Add", expands: true)
@@ -1123,17 +1158,15 @@ struct WorkstationView: View {
     ///
     /// ⚠️ ALWAYS TAPPABLE, LIKE IMPORT AND UNLIKE PLAY. Play disables itself because the
     /// engine can answer "this would do nothing" BEFORE the tap; this action never can do
-    /// nothing — it always appends a track. Hiding it once a track exists would make a
-    /// SECOND audio track unreachable for no stated reason, which is a surface that lies by
-    /// omission rather than by label.
+    /// nothing — it always appends a track. Since slice 4 this button stands only on the empty
+    /// plate; once a track exists the SAME action is "Add Audio Track" in the Add menu, so a
+    /// second audio track stays one tap away (⛔ hiding it with no other way in would be a
+    /// surface that lies by omission).
     ///
-    /// ⚠️ NO RESULT LINE, DELIBERATELY — but it CLEARS one. The outcome is the plate itself:
-    /// the new track appears in the rows above within the same update, because `body` reads
-    /// `timeline.document`, and a sentence saying "added a track" under a plate that already
-    /// shows the track is a second truth about one event. The `importNote = nil` is the
-    /// opposite case and is not decoration: the note most likely on screen when this button
-    /// is tapped is "add an audio track first", and leaving that refusal standing underneath
-    /// the track it just asked for would read as the tap having failed.
+    /// ⚠️ ⛔ "NO RESULT LINE, DELIBERATELY" stood here: the new track appeared in the rows above.
+    /// From the Add menu it is appended BELOW, often off screen, so `addAudioTrack()` now selects
+    /// it and names it on the note line, as "Add MIDI Track" does. The `importNote = nil` first
+    /// still matters: the note most likely on screen is "add an audio track first".
     private var addTrackRow: some View {
         Button {
             addAudioTrack()
@@ -1176,8 +1209,10 @@ struct WorkstationView: View {
         }
     }
 
-    /// "Import Audio" — one button, no menu. The founder's instruction was a single action
-    /// inside the existing plate. ⛔ This said "no browser — the surface this phase was told
+    /// "Import Audio" — one button on the empty plate; once the piece has a track, the same
+    /// action is an item of the Add menu (UX audit slice 4, founder 2026-10-02: "Vermeide, dass
+    /// es unübersichtlich ist"). ⛔ "no menu" stood here from Audio Import V1, whose instruction
+    /// was a single action inside the existing plate — recorded in the founder inbox (E17). ⛔ This said "no browser — the surface this phase was told
     /// not to grow"; that was Audio Import V1's phase. The founder's Phase 3 order (2026-09-25)
     /// asks for the browser, and it is `MediaBrowserView`, a separate leaf below — this row
     /// still only picks a NEW file.
@@ -1431,9 +1466,16 @@ struct WorkstationView: View {
 
     /// "Add Audio Track" — the door's action and the Add menu's, one body (#416). The store is
     /// handed over, never messaged (claim F); `addTrackRow` says why the note is cleared.
+    /// Review of slice 4: from the Add menu the new track is appended below, often off screen,
+    /// so — like "Add MIDI Track" — it is selected and the note line names it. The sentence is
+    /// `MIDIImport.addedTrackNote`, which names no kind; one sentence for both doors (#416).
     private func addAudioTrack() {
         importNote = nil
         AudioImport.addAudioTrack(timeline: timeline)
+        if let added = timeline.document.lanes.last, added.kind == .audio, !added.isBio {
+            selection.selectTrack(added.id)
+            importNote = MIDIImport.addedTrackNote(laneName: added.name)
+        }
     }
 
     /// "Import Audio" / "Import MIDI" — open the ONE importer for a kind. The doors' action and

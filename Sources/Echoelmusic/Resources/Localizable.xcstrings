@@ -1909,14 +1909,14 @@
         }
       }
     },
-    "Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes." : {
+    "Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes."
+            "value" : "Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes."
           }
         }
       }
@@ -2845,14 +2845,14 @@
         }
       }
     },
-    "No tracks yet. Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes." : {
+    "No tracks yet. Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No tracks yet. Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes."
+            "value" : "No tracks yet. Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes."
           }
         }
       }
@@ -21959,6 +21959,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows this track, its parts or the device that plays it"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
+    },
+    "Adds a track, imports an audio or MIDI file, or starts a new MIDI part" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a track, imports an audio or MIDI file, or starts a new MIDI part"
           }
         }
       }

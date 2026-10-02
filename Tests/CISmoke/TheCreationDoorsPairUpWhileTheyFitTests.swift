@@ -73,13 +73,14 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
         guard sequence(["if summary.isEmpty {",
                         "creationPair {", "addTrackRow", "importRow", "}",
                         "creationPair {", "addMIDITrackRow", "importMIDIRow", "}",
-                        "newMIDIPartRow", "}",
-                        "if let note = importNote { importNoteLine(note) }"], in: code) != nil else {
+                        "newMIDIPartRow",
+                        "if let note = importNote { importNoteLine(note) }", "}"], in: code) != nil else {
             return XCTFail("""
                 the creation doors are no longer mounted as (Add Audio Track | Import Audio), \
                 (Add MIDI Track | Import MIDI), New MIDI Part — inside `if summary.isEmpty {`, the \
-                plate that names them (UX audit slice 4) — then the note line outside it, the order \
-                the empty plate's sentence walks through
+                plate that names them (UX audit slice 4) — with the note line last inside it, \
+                under the doors (review of slice 4: once the piece has a track the line moves to \
+                the pinned tab row, under the Add tile), the order the empty plate's sentence walks through
                 """)
         }
         let lines = code.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }

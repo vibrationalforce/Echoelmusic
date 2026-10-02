@@ -11,9 +11,12 @@
 // Both name real controls (that was #355's fix and it stays), but both are RECIPES: the reader
 // must hold "first … then …" in memory while looking for the first button. WCAG 3.3.8 and the
 // rule say: show the next action, let the next screen show the one after it. On the Workstation
-// the next actions ARE buttons on the same plate ("Add Audio Track", "Add MIDI Track") and each
-// new track brings its own Import button; on the instrument plate Play sits one band up. So the
-// text names the next action and stops.
+// the next actions ARE buttons on the same plate ("Add Audio Track", "Add MIDI Track"), and once a
+// track exists every import and new part is in the tab row's Add menu (UX audit slice 4); on the
+// instrument plate Play sits one band up. So the text names the next action and stops.
+// ⛔ Slice 4's first sentence said "After that, Add holds every import and new part" — the same
+// sequence as "then", and green here only because "after" was not a recipe word (review of
+// fe04ad196). It is one now, with its own scanner case.
 //
 // WHAT THIS GUARDS (SOURCE-TEXT SCAN — it proves the words, not that a user finds the button;
 // the device half is a founder look).
@@ -44,7 +47,7 @@ final class TheEmptyStateOffersTheNextStepNotARecipeTests: XCTestCase {
 
     /// The words a recipe is made of. Tokenised on non-letters, lower-cased, so "First" and
     /// "then," count and "thence" or "firstly" do not.
-    private static let recipeWords: Set<String> = ["first", "then"]
+    private static let recipeWords: Set<String> = ["first", "then", "after"]
 
     // MARK: 1 — the Workstation empty state names the doors and gives no recipe
 
@@ -109,6 +112,7 @@ final class TheEmptyStateOffersTheNextStepNotARecipeTests: XCTestCase {
         XCTAssertTrue(Self.isRecipe("Tap Add Audio Track, then Import Audio"))
         XCTAssertTrue(Self.isRecipe("Press Play first — then you can record the loop"))
         XCTAssertTrue(Self.isRecipe("First, add a track."), "capitalised and punctuated still counts")
+        XCTAssertTrue(Self.isRecipe("to begin. After that, Add holds every import"), "\"after that\" is \"then\" (slice 4 review)")
         XCTAssertFalse(Self.isRecipe("Add Audio Track or Add MIDI Track to begin."))
         XCTAssertFalse(Self.isRecipe("Play starts the music."))
         XCTAssertFalse(Self.isRecipe("Thence and firstly are other words"), "tokens, not substrings")
