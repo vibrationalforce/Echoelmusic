@@ -115,7 +115,10 @@ final class ThePieceHasTabsTests: XCTestCase {
         }
 
         let tabs = try member("private var pieceTabs: some View {", in: code)
-        XCTAssertTrue(tabs.contains("if pieceView == .arrange && hasTrack {"), """
+        // S8b: the gate is the one placement decision (`ArrangeAddPlacement.of`), which returns the
+        // toolbar only on the Arrange plate, with a track, in portrait — proven end to end in
+        // `TheAddTileEndsTheTransportInLandscapeTests`.
+        XCTAssertTrue(tabs.contains("if addPlacement == .toolbar {"), """
             the row stands on the ARRANGE plate once the piece has a track — the toolbar of the \
             arrangement, never a second switcher on the other plates
             """)

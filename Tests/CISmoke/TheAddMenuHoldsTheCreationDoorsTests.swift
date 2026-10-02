@@ -9,11 +9,14 @@
 // exception on purpose: its sentence names the doors by label, so there they stay visible.
 //
 // THE FIVE CLAIMS.
-// 1. The tab row mounts `addMenu` once, behind `if pieceView == .arrange && hasTrack {`, where
-//    `hasTrack` is `!WorkstationSummary(document: timeline.document).isEmpty` — the same predicate
-//    `body` uses for the empty plate (#416) — and behind no level gate: the doors it replaces
-//    stand at every skill level. (DAW shell S2, 2026-10-02: the row is now the Arrange plate's
-//    toolbar; the songs gate and the exports it held moved to the Project plate.)
+// 1. The tab row mounts `addMenu` behind `if addPlacement == .toolbar {`, where `addPlacement` asks
+//    `ArrangeAddPlacement.of` with `hasTrack` = `!WorkstationSummary(document: timeline.document).isEmpty`
+//    — the same predicate `body` uses for the empty plate (#416) — and behind no level gate: the
+//    doors it replaces stand at every skill level. (DAW shell S2, 2026-10-02: the row is now the
+//    Arrange plate's toolbar; the songs gate and the exports it held moved to the Project plate.
+//    S8b: in landscape the same tile ends the transport row instead — two mounts, one per
+//    placement, and the placement itself is proven end to end in
+//    `TheAddTileEndsTheTransportInLandscapeTests`.)
 // 2. ONE BODY PER ACTION (#416): each menu item and its door call the same function
 //    (`addAudioTrack()`, `openImporter(.audio)`, `addMIDITrack()`, `openImporter(.midi)`,
 //    `newMIDIPart()`), the items keep the doors' words in the doors' order, and the transaction
@@ -43,6 +46,12 @@
 // needle ("Add holds") was the recipe the review found, replaced by the absence of the old false
 // promise; claim 5 is new — against fe04ad196 it is red for its named reason (the note line sat
 // outside the doors' block, and nothing under the Add tile could say a thing).
+//
+// S8b RE-ANCHOR (DAW shell, 2026-10-02): claim 1's gate and count and claim 5's toolbar gate now
+// read `addPlacement` (two mounts, one per placement; a landscape note line under the transport
+// row). Against the tree before S8b both are red by ONE absence — `addPlacement` (#486). No
+// assertion was dropped: the level-gate scan now covers the placement too, and the "only then"
+// half moved to an end-to-end proof (`TheAddTileEndsTheTransportInLandscapeTests` claim 1).
 //
 // GRADING (#433, parent = the tree before this slice): claims 1 and 2 are FORWARD guards — the
 // parent has no `addMenu`, `addAudioTrack()` or `openImporter(` (measured: 0 occurrences of each in
@@ -75,14 +84,21 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
     func testTheTabRowCarriesOneAddMenuOnceThePieceHasATrack() throws {
         let code = try source(Self.workstation)
         let lines = code.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
-        XCTAssertEqual(lines.filter { $0 == "addMenu" }.count, 1, "the Add menu is mounted exactly once")
+        // S8b: two mounts — the toolbar (portrait) and the end of the transport row (landscape) —
+        // and `ArrangeAddPlacement.of` returns at most one placement, so never both on screen.
+        XCTAssertEqual(lines.filter { $0 == "addMenu" }.count, 2,
+                       "the Add menu is mounted exactly twice, once per placement (S8b)")
+        let placement = try body(of: "private var addPlacement: ArrangeAddPlacement? {", in: code)
+        XCTAssertTrue(placement.contains("let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty"),
+                      "the placement's gate is the empty plate's predicate, negated (#416)")
+        XCTAssertTrue(placement.contains("ArrangeAddPlacement.of(plate: pieceView, hasTrack: hasTrack,"),
+                      "the placement asks the one pure decision with the plate and that predicate")
         let tabs = try body(of: "private var pieceTabs: some View {", in: code)
-        XCTAssertTrue(tabs.contains("let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty"),
-                      "the tab row's gate is the empty plate's predicate, negated (#416)")
         // DAW shell S2 (founder 2026-10-02, E18): the tab row is the ARRANGE plate's toolbar — the
         // switcher at the bottom took the Arrange/Mix tiles, the Project plate took both exports.
-        // The gate is the empty predicate plus the plate, and nothing else: no level, no songs gate.
-        guard let gate = tabs.range(of: "if pieceView == .arrange && hasTrack {"),
+        // The gate is the placement (plate + empty predicate + size class), and nothing else: no
+        // level, no songs gate.
+        guard let gate = tabs.range(of: "if addPlacement == .toolbar {"),
               let mount = tabs.range(of: "addMenu", range: gate.upperBound..<tabs.endIndex) else {
             return XCTFail("ANCHOR MISSING: the Add menu or its gate in `pieceTabs` (#454)")
         }
@@ -92,7 +108,7 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
             arrangement has a track, and only then
             """)
         for gateWord in ["showsSongs", "skillLevel", "SkillLevel", "PieceAudioExportTab()", "SongExportTab()"] {
-            XCTAssertFalse(tabs.contains(gateWord), """
+            XCTAssertFalse(tabs.contains(gateWord) || placement.contains(gateWord), """
                 `\(gateWord)` in the tab row. The doors Add replaces stand at every skill level, so a \
                 level gate here would leave a piece with tracks and no way to add another; the exports \
                 live on the Project plate (E19)
@@ -190,12 +206,22 @@ final class TheAddMenuHoldsTheCreationDoorsTests: XCTestCase {
             """)
         let tabs = try body(of: "private var pieceTabs: some View {", in: code)
         // S2: the pinned note sits INSIDE the Add menu's gate, under the Add row — same predicate.
-        guard let gate = tabs.range(of: "if pieceView == .arrange && hasTrack {"),
+        guard let gate = tabs.range(of: "if addPlacement == .toolbar {"),
               let pinned = tabs.range(of: "if let note = importNote {", range: gate.upperBound..<tabs.endIndex),
               let line = tabs.range(of: "pinnedNoteLine(note)", range: pinned.upperBound..<tabs.endIndex) else {
             return XCTFail("the tab row does not say the Add menu's outcome under the Add tile")
         }
         XCTAssertTrue(tabs[pinned.upperBound..<line.lowerBound].allSatisfy(\.isWhitespace))
+        // S8b: in landscape the tile ends the transport row, and its note follows it there — the
+        // same line under the same tile, behind the same placement.
+        let row = try body(of: "private var transportRow: some View {", in: code)
+        guard let landscape = row.range(of: "if addPlacement == .transportBar, let note = importNote {"),
+              let landscapeLine = row.range(of: "pinnedNoteLine(note)", range: landscape.upperBound..<row.endIndex) else {
+            return XCTFail("in landscape the transport row does not say the Add menu's outcome under the Add tile (S8b)")
+        }
+        XCTAssertTrue(row[landscape.upperBound..<landscapeLine.lowerBound].allSatisfy(\.isWhitespace))
+        XCTAssertEqual(code.components(separatedBy: "pinnedNoteLine(note)").count - 1, 2,
+                       "two homes for the pinned note, one per placement — never both on screen")
         XCTAssertEqual(code.components(separatedBy: "importNoteLine(note)").count - 1, 2,
                        "two places, one predicate (`isEmpty` / `hasTrack`), never both on screen")
         let pinnedLine = try body(of: "private func pinnedNoteLine(_ note: String) -> some View {", in: code)

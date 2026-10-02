@@ -202,6 +202,29 @@ import SwiftUI
 import UniformTypeIdentifiers
 #endif
 
+/// DAW shell S8b — where the arrangement's one "Add" tile stands, decided ONCE.
+///
+/// In portrait it is the pinned toolbar above the plate (slice 4, S2). A phone on its side has
+/// about 390 pt of height, and that row cost about 56 of them on top of the control bar and the
+/// transport — so in landscape the tile stands at the end of the pinned transport bar instead,
+/// and the arrangement gets the row back. Width is what landscape has to spare.
+///
+/// ⭐ ONE PLACE AT A TIME, BY CONSTRUCTION: both mounts ask this one function, and it returns at
+/// most one placement, so the tile and its note line can never stand twice or nowhere while the
+/// arrangement has a track. nil = no tile: another plate, or an empty song, whose plate shows
+/// the five creation doors itself (same predicate, `WorkstationSummary.isEmpty`).
+enum ArrangeAddPlacement: Equatable, Sendable {
+    /// The pinned row above the plate (portrait).
+    case toolbar
+    /// The end of the pinned transport bar (landscape, `verticalSizeClass == .compact`).
+    case transportBar
+
+    nonisolated static func of(plate: PieceView, hasTrack: Bool, compactHeight: Bool) -> ArrangeAddPlacement? {
+        guard plate == .arrange, hasTrack else { return nil }
+        return compactHeight ? .transportBar : .toolbar
+    }
+}
+
 @MainActor
 struct WorkstationView: View {
 
@@ -946,9 +969,10 @@ struct WorkstationView: View {
     /// (Before slice 4 the creation doors stood full width under the song; on the empty plate they
     /// still do, named by `emptyState` — same predicate, so the menu and the doors never meet.)
     private var pieceTabs: some View {
-        let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty
-        return Group {
-            if pieceView == .arrange && hasTrack {
+        Group {
+            // S8b: the row stands only where the tile does — in portrait. In landscape the tile
+            // is at the end of the transport bar and this row, with its height, is gone.
+            if addPlacement == .toolbar {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         // UX audit slice 4: every way to add something, in one menu — once the piece
@@ -974,6 +998,15 @@ struct WorkstationView: View {
                 }
             }
         }
+    }
+
+    /// S8b — where the Add tile stands now: the one question both mounts ask
+    /// (`ArrangeAddPlacement.of`). `hasTrack` is the empty plate's predicate, negated (#416), and
+    /// the size class is a setting, not a signal — nothing here is hot.
+    private var addPlacement: ArrangeAddPlacement? {
+        let hasTrack = !WorkstationSummary(document: timeline.document).isEmpty
+        return ArrangeAddPlacement.of(plate: pieceView, hasTrack: hasTrack,
+                                      compactHeight: verticalSizeClass == .compact)
     }
 
     /// The note line where the Add menu sits: the same text as `importNoteLine`, plus a way to
@@ -1110,6 +1143,12 @@ struct WorkstationView: View {
                              startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },
                              stopSong: { player.stop() })
 
+            // DAW shell S8b — in landscape the Add tile ends the row instead of standing on a
+            // row of its own above the plate (`ArrangeAddPlacement`); the same one menu.
+            if addPlacement == .transportBar {
+                addMenu
+            }
+
             // Design slice 13 — the mix level while the piece plays (its own leaf: the level is
             // rewritten at 60 Hz, and this row names no engine), and design D1's position beside
             // it ONLY where the row has room. The head counts the same position on every stage
@@ -1142,6 +1181,11 @@ struct WorkstationView: View {
             // nothing when Record is ready, running or recording (its word says it).
             RecordTakeNote(playing: playing, startable: startable,
                            voiceCapacity: player.laneVoiceCapacity)
+            // S8b — the Add menu's outcome stays under the tile that was tapped: here, where the
+            // tile stands in landscape. Same line, same × (`pinnedNoteLine`).
+            if addPlacement == .transportBar, let note = importNote {
+                pinnedNoteLine(note)
+            }
         }
         .padding(.top, 2)
     }
