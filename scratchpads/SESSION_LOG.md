@@ -41924,3 +41924,13 @@ Founder: „Alles auf professionellstem Level. Du entscheidest."
 - Docs: `docs/dev/UX_AUDIT_2026-10-02.md` (14 Scheiben), Inbox E4 überholt, E4b + E15 neu.
 - Lehre: ein ungequoteter Heredoc mit Backticks führt Kommando-Ersetzung aus und frisst jeden Bezeichner — Markdown immer über `<<'EOF'` oder das Write-Werkzeug schreiben.
 - Gerät: nichts geprüft (ein deutsches iPhone zeigt jetzt Englisch).
+
+## 2026-10-02 (Nachmittag) — UX-Audit Scheiben 4 · 10 · 13 + Deploy 10.79.488
+Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Studio Mobile und Ableton … Wo bleiben die ganzen Features?" — Antwort Englisch-only bestätigt.
+- **13a ⌘Z f7b4ad680 · 13b Haptik-Tick a193f89fc** — Gates grün (main = a193f89fc).
+- **10a/10b Stück als WAV** 387e64bf6 + Review-Reparatur 24956b53f (Zustand auf `LoopExporter`, Abweisung bei laufender Aufnahme, `body(of:)`-Helfer suchte die Klammer NACH dem Kopf) — Gates grün (main = 24956b53f).
+- **4 „Add"-Menü** fe04ad196 + Review-Reparatur 5e5989e8e: fehlende Katalog-Schlüssel (H1, wäre ein roter Wächter gewesen), Hinweis-Zeile folgt den Türen (leere Platte ODER angeheftet unter der Reiterzeile mit ×), „Add Audio Track" wählt die neue Spur und sagt es. Gates grün (main = 5e5989e8e). Inbox E17: das Menü kehrt „ein Knopf, kein Menü" (2026-08-07) um — gebaut und umkehrbar, Empfehlung ja.
+- **11 (Mixer kompakt) ZURÜCKGESTELLT** mit Messung: ~3 Streifen bei 375 pt; eine feste Feldbreite wäre Ökosystem-Schuld; kommt als `ViewThatFits`-Alternative für iPad/Querformat.
+- **Deploy 10.79.488** c80cbb672 (TestFlight-Lauf 2613 / 36990713092).
+- Lehre: eine Hinweis-Zeile, die nur an EINER von zwei Türen-Stellen hängt, verschwindet in dem Moment, in dem ihre Tür wandert — ein Prädikat (`WorkstationSummary.isEmpty`) für Türen UND Hinweis.
+- Gerät: nichts geprüft. Offen: Scheiben 6 (Tempo-Schloss im Kopf), 8, 9, 12.
