@@ -41,3 +41,14 @@ Antworten:
 
 Deploy nach 3–4 Scheiben (`.deploy/release` + --since im selben Commit).
 Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
+
+## Befunde aus dem S2-Review (82b7a6a5a)
+
+- HIGH, repariert: `ThePieceHasTabsTests` verbot `pieceViewRaw =` und traf damit die eigene
+  Deklaration — jetzt genau EINE, ausgeschrieben.
+- MED, repariert: „New piece" bewegt nur die Bühne; die Leiste ist der EINE Schreiber der Ansicht.
+  Der Kompositions-Leitfaden zeichnet deshalb auf jeder Ansicht, solange das Stück keinen Teil hat.
+- LOW, Gerät offen: die angedockte Bildkarte parkt `margin + studioControlBandHeight` über dem
+  unteren Rand; seit S2 sitzt die Umschaltleiste darunter und hebt die Transportleiste um ~46 pt.
+  Das rechte Ende der Transportzeile kann unter der Karte liegen. In S1/S8 mit der Leistenhöhe
+  neu messen, nicht blind nachschieben (sieben Wächter lesen diese Größe).

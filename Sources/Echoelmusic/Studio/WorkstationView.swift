@@ -1539,9 +1539,13 @@ struct WorkstationView: View {
         let facts = ComposeGuide.facts(document: timeline.document, clips: clips,
                                        canPlay: songCanStart(), isPlaying: running)
         // DAW shell S2: "how to make a piece" belongs to the arrangement; on the Mixer, Browse and
-        // Project plates the guide draws nothing. It stays the plate's first child either way.
+        // Project plates the guide draws nothing — UNTIL the piece has no part. Then it draws on
+        // every plate: "New piece" and Open only move the stage, never the plate (the switcher is
+        // the plate's one writer), so a new piece begun from the Project plate would otherwise
+        // land there with no guide and no creation door (review of 82b7a6a5a, MED). It stays the
+        // plate's first child either way.
         return Group {
-        if pieceView == .arrange {
+        if pieceView == .arrange || !facts.hasPart {
         ComposeGuideCard(facts: facts, note: guideNote) { step in
             // Review of c672c2adf (LOW): a refusal from step 2 (a full clip grid) was written to
             // the note line far below the guide, so the tap looked like nothing. The guide shows

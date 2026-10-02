@@ -25,6 +25,8 @@
 //    is referenced by exactly two files — the switcher (writes on a tap) and the Workstation
 //    (reads); the switcher assigns its plate exactly twice (declaration + the one `select`) and
 //    nothing binds either `@AppStorage` with `$`, which would be a writer the count cannot see.
+//    Because the switcher is the ONE writer, "New piece" cannot move the plate — so the compose
+//    guide draws on every plate while the piece has no part (review of 82b7a6a5a, MED).
 // 3. SOURCE: the switcher is chrome, not a modal host and not a level gate — no presentation
 //    modifier in `StageShell` (black-screen law), no `SkillLevel`, the chrome's Dynamic Type cap,
 //    a solid surface with a 1-px border, no blur or material (Uncodixfy).
@@ -133,6 +135,18 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
         let workstation = SourceText.codeOnly(try source("Sources/Echoelmusic/Studio/WorkstationView.swift"))
         XCTAssertEqual(count("pieceViewRaw = ", in: workstation), 1,
                        "the Workstation READS the plate — its one `pieceViewRaw = ` is the declaration's default")
+
+        // The price of ONE writer (review of 82b7a6a5a, MED): "New piece" and Open move the STAGE,
+        // never the plate, so a piece begun from the Project plate lands there. The guide — the
+        // creation path — must therefore draw on every plate while the piece has no part, or that
+        // landing shows neither a guide nor a creation door.
+        let guide = try member("private var composeGuide: some View {", in: workstation)
+        XCTAssertTrue(guide.contains("if pieceView == .arrange || !facts.hasPart {"), """
+            the compose guide is gated to the Arrange plate alone again — a new piece begun from \
+            Project, Browse or Mixer then lands on a plate with no way to start it
+            """)
+        XCTAssertFalse(workstation.contains("pieceViewRaw = PieceView"),
+                       "the fix is the guide's gate, never a second writer of the plate")
     }
 
     // MARK: 3 — chrome, not a modal host and not a level gate

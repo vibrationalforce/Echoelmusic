@@ -96,9 +96,14 @@ final class ThePieceHasTabsTests: XCTestCase {
 
         // DAW shell S2 (founder 2026-10-02, E18): the plate choice has ONE owner — the persisted
         // `pieceView` key the bottom switcher writes. This view reads it and never writes it.
+        XCTAssertTrue(code.contains("private var pieceViewRaw = StudioDefaultKeys.pieceView.value.rawValue"),
+                      "the one `pieceViewRaw =` this view may hold is the key's declaration")
         XCTAssertTrue(code.contains("@AppStorage(StudioDefaultKeys.pieceView.key)"),
                       "the plate is read through the ONE key (#416)")
-        XCTAssertFalse(code.contains("pieceViewRaw ="), """
+        // Review of 82b7a6a5a (HIGH): `contains("pieceViewRaw =")` also matched the key's own
+        // declaration, so this claim was red on the tree that added it. The one permitted
+        // occurrence is the declaration, spelled out; any other is a write.
+        XCTAssertEqual(code.components(separatedBy: "pieceViewRaw =").count - 1, 1, """
             WorkstationView writes the piece view. The bottom switcher (`StageShell`) is its one \
             writer; a second writer here is the twin owner S2 removed with the Arrange/Mix tiles.
             """)
