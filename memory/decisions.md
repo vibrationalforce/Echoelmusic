@@ -4937,3 +4937,11 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Warum:** Founder-Freigabe „Ja, so bauen" (E18, DAW-Hülle). Vorher waren Live Colabo und Learn nur auf der verborgenen Instrument-Bühne erreichbar. Kehrt #492 bewusst um — das ≡ ist kein „•••", es ist das Logo mit Namen „Menu".
 - **Wie:** das Menü postet `.echoelChromeDoor`; der Empfänger in `EchoelStudioView` hebt die VORHANDENEN Blätter (Zähler unverändert), jeder Arm beginnt mit `guard !panelSheetUp`. #622 wird beim Tippen geprüft (`saveHasNothing`).
 - **Review:** 2026-11-01.
+
+### 2026-10-02 — DAW shell S7a: ein Play
+- **Entscheidung:** Auf der Instrument-Bühne spielt der Play des Kopfes, was vorn ist — ohne Sitzung startet er das Instrument, mit gehaltener Sitzung setzt er fort, nie ausgegraut. Das ▶/■ der Platte (`startButton`, `toggleBiofeedback()`) ist gelöscht. Stück-Bühne unverändert.
+- **Warum:** zwei Plays für eine Sache; Founder hat EINEN Start dreimal verlangt (2026-07-15, 07-29, 07-31) und die Hülle mit EINER Steuerleiste freigegeben (E18).
+- **Wie:** `StudioStage.playStartsTheInstrument`; Start über `.echoelChromeDoor` / `ProjectTransport.startInstrumentDoor` an `EchoelStudioView` (einziger Sitzungsbesitzer, verweigert während einer laufenden Sitzung).
+- **Kosten:** pausierte Sitzung beenden = Play, dann Stop.
+- **Review:** 2026-11-01.
+

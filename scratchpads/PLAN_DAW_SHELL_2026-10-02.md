@@ -34,7 +34,7 @@ Antworten:
 | S4 (a ✅ b ✅) | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
 | S5 ✅ | Mixer | Streifen + Master (Master-Streifen gebaut) | WorkstationView, MasterStripView |
 | S6 (a ✅) | Browse | Sounds (gebaut) · Medienbibliothek · Foto/Video-Saat; Import bleibt im Add-Menü, Moods im Instrument | WorkstationView, SoundBrowserView |
-| S7 | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
+| S7 (a ✅) | Instrument entrümpeln | eigene Transport-/Save-Zeilen weg, Chips als Reiter | EchoelStudioView |
 | S8 | Querformat | Umschalter als Segment in der Leiste, Detail als rechte Spalte | StageShell, WorkstationView |
 | S9 | Zeit-Zoom + Zugänglichkeit | Pinch → Zeitachse; Schrift in Settings; adjustable actions | ArrangeCanvasView, WorkspaceView |
 | S10 | Modal-Konsolidierung | Instrument-Modals in den Hüllen-Slot | EchoelStudioView |
@@ -132,4 +132,20 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   dem Instrument (`moodPanel`). Eine zweite Tür wäre gegen „eine Tür je Bereich".
 - **Review-Folge S5 (LOW-3):** `MasterStripView` und `SoundBrowserView` stehen jetzt in beiden Chrome-Listen.
 - **Gerät offen:** Liste auf 375 pt, Haken nach Tipp, Device-Seite zeigt denselben Klang, Undo im Kopf.
+
+## S7a — Entscheidungen und Befunde (2026-10-02)
+
+- **EIN Play.** Das ▶/■ der Instrument-Platte (`startButton`, `toggleBiofeedback()`) ist gelöscht.
+  Auf der Instrument-Bühne spielt der Play des Kopfes, was vorn ist: ohne Sitzung startet er das
+  Instrument (`PlayAction.startInstrument`), mit gehaltener Sitzung setzt er fort. Dort ist er nie
+  ausgegraut. Auf der Stück-Bühne gilt die alte Regel unverändert.
+- **Wie:** `StudioStage.playStartsTheInstrument` entscheidet; jede Montage liest die Bühne selbst
+  (`@AppStorage` desselben Schlüssels), die Montage-Strings bleiben. Der Start geht als
+  `.echoelChromeDoor` / `ProjectTransport.startInstrumentDoor` an den Empfänger in
+  `EchoelStudioView` — der einzige Besitzer der Sitzung; er verweigert, solange eine läuft.
+  Kein neuer Modal, keine heiße Lesung im Ahnen.
+- **Angenommene Kosten:** eine PAUSIERTE Sitzung beenden heißt jetzt Play, dann Stop (vorher ein
+  Tipp auf das ■ der Platte).
+- **Offen für S7b:** WAV-Aufnahme, Keep last und MIDI-Export brauchen ein Zuhause (Projekt-Platte /
+  Export); das Tempo-Feld soll in die Steuerleiste.
 
