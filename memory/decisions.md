@@ -4924,3 +4924,10 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Ausnahme, bewusst:** `fastlane/metadata/de-DE` bleibt als `listingOnlyLanguages` — eine Store-Seite ist Werbung, keine App-Sprache. Founder-Frage E4b.
 - **UX-Audit:** `docs/dev/UX_AUDIT_2026-10-02.md` — Urteil: die Maschine ist weitgehend da, das Bedienmodell zur Hälfte; Hauptursache Layout/Gesten (Chrome ~300–380 pt, Scroll-Liste statt Arrangement-Fläche, kein Zeit-Zoom). 14 Scheiben in Reihenfolge; Video = Bild-Spur (E12), Mac/Vision „Designed for iPhone“ = E15.
 - Review: 2026-11-01.
+
+### 2026-10-02 — DAW-Hülle freigegeben (Postfach E16, E18, E19)
+- **E18 „Ja, so bauen“:** EINE Steuerleiste oben, EINE feste Arbeitsfläche, ein Detailbereich, der der Auswahl folgt, und unten eine Umschaltleiste Arrange · Mixer · Instrument · Browse · Project. Ersetzt Kopfleiste, Kompositionsstreifen, Projektkopf und den Saum „Piece | Instrument“. Bauplan S1–S10: `scratchpads/PLAN_DAW_SHELL_2026-10-02.md`.
+- **E16 „Zeit zoomen“:** Pinch zoomt die Zeitachse; die Schriftgröße zieht in die Einstellungen (S9).
+- **E19 „Nur im Detail“:** alle Ansichten immer sichtbar; `SkillLevel` blendet nur Profi-Felder im Detailbereich aus.
+- Invarianten: Instrument und Visual-Fenster bleiben gemountet; höchstens EIN Hüllen-`.sheet(item:)`; heiße Werte nur in Blättern; Wächter ziehen mit und pinnen die neue Form.
+- Review: 2026-11-01.
