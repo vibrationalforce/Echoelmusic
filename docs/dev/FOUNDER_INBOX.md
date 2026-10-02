@@ -128,6 +128,9 @@ den Läufen, Gerät unbestätigt) — wird beim nächsten Deploy zu Familien geb
 - **Scheibe A** Instrument: nur noch EINE Chip-Zeile, die Bereichs-Zeile (Compose · Perform · Visuals · Library · Settings) ist weg. Findest du jede Platte über ihren Chip? Fehlt dir eine Tür?
 - **Scheibe C/E** Stück auf 375 pt, Deutsch, Standard-Textgröße: Transportleiste in EINER Zeile, Kopf in höchstens zwei, nichts abgeschnitten? Hilfe ⓘ: zeigt die Karte nur den aktuellen Schritt?
 - **Scheibe D** FX-Chip → „All parameters“ (und Routing, Live Colabo): Blatt auf halber Höhe, Instrument darüber spielbar; Open/Learn/Save ausgegraut, solange es offen ist; ganz hoch und zurück ziehen; nichts friert ein.
+- **H14** Stück → Transportleiste: liest sich der rote Punkt neben Stopp sofort als Aufnahme? Während der Aufnahme: ist „Aufnahme stoppen“ auf dem roten Feld gut lesbar?
+- **Scheibe F** Instrument: der Workstation-Chip ist weg. Kommst du über die Naht „Stück | Instrument“ oben IMMER zum Stück zurück, auf jeder Könnensstufe? Fehlt dir der Chip?
+- **Scheibe G** Routing hat nur noch EINE Tür: die Licht-Kachel im Kopf (VoiceOver: „Licht und Routing“). Findest du Routing ohne Hilfe? Im Bio- und Master-Panel steht kein Routing-Knopf mehr — vermisst du ihn? Bei offenem FX-Blatt tut ein Tipp auf die Kachel bewusst nichts — stört das? Vom Stück aus geöffnet: erscheint Routing (das Instrument liegt verborgen darunter)?
 
 ---
 
