@@ -930,6 +930,8 @@ struct WorkstationView: View {
             }
             if level.showsSongs {
                 SongExportTab()
+                // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
+                PieceAudioExportTab()
             }
         }
         .padding(.horizontal, 10)
