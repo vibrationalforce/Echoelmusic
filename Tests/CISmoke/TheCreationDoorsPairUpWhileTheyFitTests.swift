@@ -10,7 +10,10 @@
 // 1. SOURCE: `creationPair` offers the HORIZONTAL candidate first (`ViewThatFits` takes the
 //    first that fits) and a leading-aligned stack as the fallback, both at the doors' 8 pt.
 // 2. SOURCE: the mount order is unchanged — audio pair, MIDI pair, New MIDI Part, then the one
-//    note line — and every door is mounted exactly once.
+//    note line — and every door is mounted exactly once. Since UX audit slice 4 (2026-10-02) the
+//    five doors sit inside `if summary.isEmpty {` — the empty plate that names them — and the note
+//    line sits OUTSIDE it, because the tab row's Add menu (`TheAddMenuHoldsTheCreationDoorsTests`)
+//    writes to it too. The needle grew two tokens (the gate and its brace); nothing was dropped.
 // 3. COUNTERWEIGHT: the refusals and the empty plate name the doors by LABEL, never by position
 //    ("above", "below", "beside", …), so moving a door beside its partner changes no sentence.
 //    And no door scales its text down: `ViewThatFits` must see each label at its real width. (That
@@ -23,7 +26,8 @@
 // plus mutants (candidates swapped; Import Audio moved out of its pair; a door mounted twice).
 // NOT covered: whether the pair fits on a given phone and text size, and that nothing clips —
 // a device look.
-// NEEDS-FOUNDER-VERIFY: Workstation on the phone at the default text size → "Add Audio Track"
+// NEEDS-FOUNDER-VERIFY: Workstation on the phone, on a piece WITH NO TRACK (since slice 4 the
+// doors stand only there), at the default text size → "Add Audio Track"
 // and "Import Audio" side by side, "Add MIDI Track" and "Import MIDI" side by side, "New MIDI
 // Part" alone below; at the largest accessibility size every door stands on its own line again
 // with its whole label readable; and at one or two sizes in between, whether one pair stacking
@@ -66,13 +70,16 @@ final class TheCreationDoorsPairUpWhileTheyFitTests: XCTestCase {
 
     func testTheDoorsKeepTheirOrderAndAppearOnce() throws {
         let code = try source(Self.viewPath)
-        guard sequence(["creationPair {", "addTrackRow", "importRow", "}",
+        guard sequence(["if summary.isEmpty {",
+                        "creationPair {", "addTrackRow", "importRow", "}",
                         "creationPair {", "addMIDITrackRow", "importMIDIRow", "}",
-                        "newMIDIPartRow", "if let note = importNote { importNoteLine(note) }"], in: code) != nil else {
+                        "newMIDIPartRow", "}",
+                        "if let note = importNote { importNoteLine(note) }"], in: code) != nil else {
             return XCTFail("""
                 the creation doors are no longer mounted as (Add Audio Track | Import Audio), \
-                (Add MIDI Track | Import MIDI), New MIDI Part, then the note line — the order the \
-                empty plate's sentence walks through
+                (Add MIDI Track | Import MIDI), New MIDI Part — inside `if summary.isEmpty {`, the \
+                plate that names them (UX audit slice 4) — then the note line outside it, the order \
+                the empty plate's sentence walks through
                 """)
         }
         let lines = code.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }

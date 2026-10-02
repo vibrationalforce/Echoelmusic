@@ -208,9 +208,10 @@ final class ANewMIDIPartOpensTheNoteEditorTests: XCTestCase {
         XCTAssertEqual(view.components(separatedBy: "MIDIImport.addEmptyPart(").count - 1, 1,
                        "ONE call of the transaction in the view — the row and the guide share it")
         // Design slice 4 paired Import MIDI with Add MIDI Track (`creationPair`, one level
-        // deeper); New MIDI Part stays on its own line directly after that pair.
-        XCTAssertTrue(view.contains("                importMIDIRow\n            }\n")
-                        && view.contains("            newMIDIPartRow\n"),
+        // deeper); New MIDI Part stays on its own line directly after that pair. UX audit slice 4
+        // (2026-10-02) put all five doors inside `if summary.isEmpty {`, one level deeper again.
+        XCTAssertTrue(view.contains("                    importMIDIRow\n                }\n")
+                        && view.contains("                newMIDIPartRow\n"),
                       "the row must be mounted right after the Import MIDI pair")
 
         XCTAssertEqual(try filesUnderSources(containing: "MIDIImport.addEmptyPart("),

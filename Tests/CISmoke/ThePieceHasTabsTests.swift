@@ -6,8 +6,10 @@
 // the workstation's areas in one tab row above the arrangement. A7 built it WITHOUT a second copy
 // of any panel and WITHOUT a modal. Export was deliberately NOT a tab while no song export existed
 // — a tab with no destination is a button that does nothing (#164/#227). ⭐ B4 (2026-10-01) gave it
-// one: the LAST tab is `SongExportTab`, a `ShareLink` in its own leaf, behind its own `showsSongs`
-// gate (its behaviour and its door: `ThePieceExportsTheSongAsMIDITests`). It posts nothing, so the
+// one: `SongExportTab`, a `ShareLink` in its own leaf, behind its own `showsSongs` gate (its
+// behaviour and its door: `ThePieceExportsTheSongAsMIDITests`). UX audit 2026-10-02 added two tiles
+// after it: the WAV door in the same gate (slice 10b, `ThePieceHasAWavDoorTests`) and, last and at
+// every level, the Add menu (slice 4, `TheAddMenuHoldsTheCreationDoorsTests`) — both act in place. It posts nothing, so the
 // ban on an `"export"` POSTER below still holds — the share sheet is the destination.
 // ⭐ B3 (2026-10-01) made the plate TWO views — Arrange and Mix — so Arrange stopped being a
 // passive tile: it is the button that brings the arrangement back from the mixer. Each plate tab

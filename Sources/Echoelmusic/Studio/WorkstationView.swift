@@ -442,19 +442,27 @@ struct WorkstationView: View {
             // order, and stacks again at sizes where the pair does not fit. The refusals name
             // the doors by LABEL ("add an audio track first"), never by position, so moving
             // them beside each other changes no sentence.
-            creationPair {
-                addTrackRow
-                importRow
+            // ⭐ UX audit 2026-10-02, slice 4: the five doors stand ONLY on the empty plate — the
+            // one that names them (`emptyState`, same `summary.isEmpty`). Once the piece has a
+            // track they live in the tab row's "Add" menu (`addMenu`), which calls the same five
+            // actions, so the song is no longer pushed down by five full-width buttons and the
+            // doors and the menu are never on screen together. The note line stays outside: a
+            // menu item writes to it too.
+            if summary.isEmpty {
+                creationPair {
+                    addTrackRow
+                    importRow
+                }
+                // S2 — the MIDI pair, in the same order and for the same reason: the refusal
+                // "add a MIDI track first" names the door beside Import MIDI.
+                creationPair {
+                    addMIDITrackRow
+                    importMIDIRow
+                }
+                // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
+                // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
+                newMIDIPartRow
             }
-            // S2 — the MIDI pair, in the same order and for the same reason: the refusal
-            // "add a MIDI track first" names the door beside Import MIDI.
-            creationPair {
-                addMIDITrackRow
-                importMIDIRow
-            }
-            // Phase 3 / M1b — an EMPTY part for the note editor, so writing notes does not
-            // need a MIDI file. Same lane and refusals as Import MIDI (`MIDIImport`).
-            newMIDIPartRow
             if let note = importNote { importNoteLine(note) }
             // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
             // to put one on the song again without Files, a second copy or a second clip slot.
@@ -561,7 +569,7 @@ struct WorkstationView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No tracks yet")
                 .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            Text("Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
+            Text("Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -570,7 +578,7 @@ struct WorkstationView: View {
         // One spoken sentence rather than two fragments — VoiceOver would otherwise read the
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. Each new track brings its own Import button; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
+        .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. After that, Add holds every import and new part; a file becomes a part you can play, and a new MIDI part plays once it has notes.")
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {
@@ -933,6 +941,13 @@ struct WorkstationView: View {
                 // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
                 PieceAudioExportTab()
             }
+            // UX audit slice 4: every way to add something, in one menu — once the piece has a
+            // track. Before that the empty plate shows the five doors itself (same predicate,
+            // `WorkstationSummary.isEmpty`), so the menu and the doors never stand together.
+            // Not behind `showsSongs`: the doors it replaces stand at every level.
+            if !WorkstationSummary(document: timeline.document).isEmpty {
+                addMenu
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -946,6 +961,32 @@ struct WorkstationView: View {
         .onChange(of: level.showsSongs) { _, shows in
             if !shows { plate = .arrange }
         }
+    }
+
+    /// UX audit slice 4 — "Add": the five creation actions in one menu, so a piece with tracks
+    /// shows its song instead of five full-width buttons. Each item calls the SAME function as
+    /// its door on the empty plate (#416); the menu adds no action of its own, and its items keep
+    /// the doors' words, which the refusals name ("add an audio track first").
+    /// ⚠️ A `Menu`, not a modal: it adds nothing to a presentation chain (black-screen law), and
+    /// the importer it opens is the one `.fileImporter` this view already has.
+    private var addMenu: some View {
+        Menu {
+            Section {
+                Button { addAudioTrack() } label: { Label("Add Audio Track", systemImage: "plus") }
+                Button { openImporter(.audio) } label: { Label("Import Audio", systemImage: "square.and.arrow.down") }
+            }
+            Section {
+                Button { addMIDITrack() } label: { Label("Add MIDI Track", systemImage: "plus") }
+                Button { openImporter(.midi) } label: { Label("Import MIDI", systemImage: "pianokeys") }
+                Button { newMIDIPart() } label: { Label("New MIDI Part", systemImage: "square.grid.3x3") }
+            }
+        } label: {
+            EchoelIconTile(systemImage: "plus", title: "Add", expands: true)
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add")
+        .accessibilityHint("Adds a track, imports an audio or MIDI file, or starts a new MIDI part")
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border
@@ -1095,8 +1136,7 @@ struct WorkstationView: View {
     /// the track it just asked for would read as the tap having failed.
     private var addTrackRow: some View {
         Button {
-            importNote = nil
-            AudioImport.addAudioTrack(timeline: timeline)
+            addAudioTrack()
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
@@ -1151,10 +1191,7 @@ struct WorkstationView: View {
     /// happened in words (`AudioImport.Failure.userMessage`).
     private var importRow: some View {
         Button {
-            importNote = nil
-            tuningPending = nil
-            importKind = .audio
-            importPresented = true
+            openImporter(.audio)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "square.and.arrow.down")
@@ -1207,10 +1244,7 @@ struct WorkstationView: View {
     /// one says what happened (`MIDIImport.Failure.userMessage`).
     private var importMIDIRow: some View {
         Button {
-            importNote = nil
-            tuningPending = nil
-            importKind = .midi
-            importPresented = true
+            openImporter(.midi)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "pianokeys")
@@ -1393,6 +1427,22 @@ struct WorkstationView: View {
             clips: clipStore.filledClips,
             bpm: player.preflightTempo,
             resolveAudio: { player.audioLanes?.resolvedURL(forClipID: $0) })
+    }
+
+    /// "Add Audio Track" — the door's action and the Add menu's, one body (#416). The store is
+    /// handed over, never messaged (claim F); `addTrackRow` says why the note is cleared.
+    private func addAudioTrack() {
+        importNote = nil
+        AudioImport.addAudioTrack(timeline: timeline)
+    }
+
+    /// "Import Audio" / "Import MIDI" — open the ONE importer for a kind. The doors' action and
+    /// the Add menu's, one body (#416).
+    private func openImporter(_ kind: ImportKind) {
+        importNote = nil
+        tuningPending = nil
+        importKind = kind
+        importPresented = true
     }
 
     /// "Add MIDI Track" — the row's action and the guide's step 1, one body (#416).
