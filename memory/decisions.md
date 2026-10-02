@@ -4908,3 +4908,8 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Werkzeug-Blätter halbe Höhe + Sperre der anderen Blatt-Türen** (Scheibe D, 02658e892) — der lebende Hintergrund macht den Zwei-Modal-Hänger erreichbar, also kommen Standard und Sperre zusammen.
 - Transport eine Zeile (C), Kopf ≤ 2 Zeilen + Guide zeigt den aktuellen Schritt (E), Guide-Karte ≤ 96 pt.
 - Review: 2026-10-31. Offene Look-Fragen H13–H15 in `docs/dev/FOUNDER_INBOX.md`.
+
+### 2026-10-02 — H13–H15 entschieden (Founder: „Alles auf professionellstem Level. Du entscheidest.“)
+- **H13:** Undo/Redo im Stück-Kopf bleibt Symbol; das Wort lebt im VoiceOver und erscheint bei Accessibility-Textgrößen (`SongHistoryRow`). Review 2026-11-01.
+- **H14:** Aufnahme-Knopf in `EchoelTheme.recording` — roter Punkt bereit, rote Füllung aktiv, Amber raus (`881248ccf`, Wächter `TheRecordButtonWearsTheRecordingRedTests`). Geräteprobe offen. Review 2026-11-01.
+- **H15:** Field bleibt unterhalb „Producer“ türlos (gewählte Stufe, Standard Pro); die Stück-Reiterzeile ist auf allen Stufen gleich — keine zwei Wege. Review 2026-11-01.
