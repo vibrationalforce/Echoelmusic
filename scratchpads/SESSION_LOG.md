@@ -41984,4 +41984,6 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Wächter umgezogen (sieben Dateien):** OneStartControl (Ansprüche 1+6 neu gerichtet, auf dem Elternteil rot durch Anker-Abwesenheit), TransportBarIsDissolved, OneChromeControlHeight (Größe + Trefferfläche wandern zum Kopf-Play), ProjectHeaderRunsOneTransport (+ Instrument-Bühnen-Anspruch), ChromeSpeaksOneLanguage, PlateHasOnePause, ControlBoundary (Prosa). Prüfer sauber; moved-needles-Treffer geöffnet; needle-reachability: drei Funde in Dateien, die die Scheibe nicht berührt.
 - **Kosten:** pausierte Sitzung beenden = Play, dann Stop (decisions.csv).
 - Gates: laufen. Review läuft. Gerät: nichts geprüft (Inbox §2 „S7a").
+- **7b4883c83** S7a-Review (HIGH-1/2): zwei Wächter wären auf korrektem Baum rot gelaufen — `TheArrangeStageIsTheFrontStageTests` las „Play button" in der ersten Guide-Karte, `TheWorkstationPlaysTheTimelineTests` „minHeight: 44" im Bereich des Kopf-Plays. Beide Nadeln folgen der neuen Form. LOW: Prosa (`transportLine1` = zwei Kinder, Mess-Tabelle in `EchoelTheme`).
+- **Lehre:** `moved-needles.py` schlüsselt auf ganze ENTFERNTE Zeilen; beide Nadeln waren TEILSTRINGE von Zeilen, die S7a nur GEÄNDERT hat. Bei einer Textänderung (Kopie oder Modifier-Argument) zusätzlich das alte TEILSTÜCK über `Tests/CISmoke` greppen, nicht nur die alte Zeile.
 
