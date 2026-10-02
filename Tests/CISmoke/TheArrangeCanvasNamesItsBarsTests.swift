@@ -10,9 +10,11 @@
 //    song's end unnamed; degenerate geometry names nothing.
 // 2. SOURCE: `ArrangeBarRuler` is cold (no position, store, selection, clock or tap), hidden from
 //    VoiceOver, untappable, and its spacing scales with the text.
-// 3. SOURCE: the canvas mounts it once, above the lanes, behind an empty gutter of the lanes'
-//    own name width — so its numbers start where the blocks do. That the canvas as a whole stays
-//    cold is pinned ONCE, by `TheSongIsSeenOnOneScaleTests` (the ruler sits inside that slice).
+// 3. SOURCE: the canvas mounts it once, above the lanes, in the SAME zoomed column as the lanes
+//    (DAW shell S9a) — so its numbers stay on their bars at every zoom — while the names stand
+//    still in their own column, level with their lanes (one `rulerHeight`, one `rowHeight`).
+//    That the canvas as a whole stays cold is pinned ONCE, by `TheSongIsSeenOnOneScaleTests`
+//    (the ruler sits inside that slice); where the pinch lives, by `ThePinchZoomsTheArrangementsTimeTests`.
 //
 // Grading (§0, no Swift toolchain): `rulerMarks` and `ArrangeBarRuler` do not exist on the parent
 // (`82ee9350b`), so this file does not compile there — every claim was a FORWARD guard, one
@@ -21,6 +23,13 @@
 // division, a spilled last number); "bar 1 on a 10 pt lane" and the row-spacing, closing-brace
 // and trailing-modifier pins are COUNTERWEIGHTS (green there). Claim 1 transcribed into Python
 // and driven on the cases below; claims 2 and 3 transcribed against this tree with mutants.
+// S9a RE-PIN (parent `88058461d`): claim 3's two-row shape (an empty `nameWidth` gutter beside
+// the ruler, then name + lane per row) became two COLUMNS. The new sequence is red on the parent
+// by ANCHOR ABSENCE (`ArrangeTimeZoom`, `rulerHeight` — one absence, #486); it is STRICTER than
+// the one it replaces — it adds the column order, both stacks' spacing, the name's row height,
+// that nothing but the lanes follows the ruler, one scaled ruler height read twice, the ruler's
+// own frame and the lane's height. Transcribed against this tree with mutants (ruler padding,
+// a second ruler height, a dropped name height, the ruler moved out of the zoom: each red).
 // NOT covered: that the numbers line up with the blocks on glass and stay legible at the largest
 // text sizes — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation with an 8-bar song → the numbers 1…8 sit above the lanes, each
@@ -130,24 +139,52 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         let body = String(file[canvas.upperBound..<canvasEnd.lowerBound])
         // Token sequences with ONLY whitespace between them, so a re-indent is not a regression
         // and each token exists verbatim in the source.
-        guard let row = sequence(["HStack(spacing: Self.gutter) {",
-                                  "Color.clear.frame(width: Self.nameWidth, height: 1)",
-                                  "ArrangeBarRuler(songTicks: songTicks)", "}"], in: body),
-              // Design slice 5 moved the name into `nameGutter` (it now leads with a mute/solo
-              // symbol); the row still opens with the same spacing and that gutter.
-              let lanes = sequence(["ForEach(rows) { row in", "HStack(spacing: Self.gutter) {", "nameGutter(row)"],
-                                   in: body) else {
+        // DAW shell S9a: TWO COLUMNS in one sequence. The names stand still on the left — an
+        // empty cell of the ruler's height, then each name at the lane's height — and the ruler
+        // and the lanes share ONE zoomed column on the right, the ruler first. One sequence, so
+        // the two columns sit side by side with the same spacing and nothing between them.
+        guard sequence(["HStack(alignment: .top, spacing: Self.gutter) {",
+                                      "VStack(spacing: 4) {",
+                                      "Color.clear.frame(width: Self.nameWidth, height: rulerHeight)",
+                                      "ForEach(rows) { row in", "nameGutter(row)",
+                                      ".frame(height: Self.rowHeight)", "}", "}",
+                                      "ArrangeTimeZoom {", "VStack(spacing: 4) {",
+                                      "ArrangeBarRuler(songTicks: songTicks, height: rulerHeight)",
+                                      "ForEach(rows) { row in", "laneRow(row, selected: selected)", "}", "}"],
+                                     in: body) != nil else {
             return XCTFail("""
-                the ruler row is no longer `HStack(spacing: Self.gutter)` holding an empty \
-                `nameWidth` gutter and then the ruler — or the lane rows no longer open with the \
-                same spacing and their name — so the numbers no longer sit over their bars
+                the canvas is no longer a still name column (an empty `rulerHeight` cell, then \
+                each `nameGutter` at `rowHeight`) beside ONE `ArrangeTimeZoom` column that holds \
+                the ruler above the lanes, both stacked with spacing 4 — so a name can leave its \
+                lane, or a number its bar, when the time zooms
                 """)
         }
-        XCTAssertLessThan(row.lowerBound, lanes.lowerBound, "the ruler sits above the lanes")
-        // Review of 645b056c0, LOW-8: a modifier on the ruler ROW (a `.padding(.leading, …)` after
-        // its closing brace) shifts every number off its bar as surely as one inside it.
-        let after = body[row.upperBound...].drop { $0.isWhitespace }
-        XCTAssertFalse(after.hasPrefix("."), "the ruler row carries a modifier after its `}` — the numbers leave their bars")
+        // The ruler is followed by NOTHING but the lanes (the sequence allows only whitespace
+        // between them) — the review of 645b056c0, LOW-8, as a consequence of the shape: a
+        // `.padding(.leading, …)` on the ruler breaks the sequence and lands in the XCTFail above.
+        // Both columns stack the SAME heights: one scaled `rulerHeight`, declared once and read
+        // by both the empty cell and the ruler's frame; and every lane is `rowHeight` tall, as
+        // every name is.
+        XCTAssertEqual(body.components(separatedBy: "@ScaledMetric(relativeTo: .body) private var rulerHeight: CGFloat").count - 1, 1,
+                       "one ruler height on the canvas, scaled with the text")
+        XCTAssertEqual(body.components(separatedBy: "rulerHeight").count - 1, 3,
+                       "declared once, read by the empty cell and by the ruler — no third reader, no second value")
+        guard let rulerStart = file.range(of: "struct ArrangeBarRuler: View {"),
+              let rulerEnd = file.range(of: "struct ArrangePlayheadView: View {",
+                                        range: rulerStart.upperBound..<file.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `ArrangeBarRuler` before `ArrangePlayheadView` (#454)")
+        }
+        let ruler = String(file[rulerStart.upperBound..<rulerEnd.lowerBound])
+        XCTAssertTrue(ruler.contains("    let height: CGFloat\n"), "the ruler takes its height from the canvas")
+        XCTAssertTrue(ruler.contains(".frame(height: height)"), "and is exactly that tall")
+        XCTAssertFalse(ruler.contains("@ScaledMetric(relativeTo: .body) private var height"),
+                       "a second scaled height in the ruler could differ from the names' empty cell")
+        guard let lane = body.range(of: "private func laneRow("),
+              let laneEnd = body.range(of: "private func drop(", range: lane.upperBound..<body.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `laneRow` before `drop` (#454)")
+        }
+        XCTAssertEqual(body[lane.upperBound..<laneEnd.lowerBound].components(separatedBy: ".frame(height: Self.rowHeight)").count - 1, 1,
+                       "every lane is `rowHeight` tall, the height of the name beside it")
         guard let gutter = body.range(of: "private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {"),
               let gutterEnd = body.range(of: "private func laneRow(", range: gutter.upperBound..<body.endIndex) else {
             return XCTFail("ANCHOR MISSING: `nameGutter` before `laneRow` (#454)")

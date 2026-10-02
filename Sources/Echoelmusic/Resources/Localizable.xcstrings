@@ -16351,12 +16351,12 @@
         }
       }
     },
-    ". Pinching with two fingers moves it too. " : {
+    ". A pinch zooms the arrangement's time, not the text. " : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ". Pinching with two fingers moves it too. "
+            "value" : ". A pinch zooms the arrangement's time, not the text. "
           }
         }
       }

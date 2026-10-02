@@ -52,7 +52,7 @@ struct EchoelLogoMark: View {
             //
             // ⚠️ `fixedSize:` AND NOT `EchoelTheme.font(_:_:)`, which is the tempting one-liner.
             // That helper returns `relativeTo: .body`, i.e. it scales with Dynamic Type and with
-            // the app's pinch-to-zoom. This `Canvas` derives every coordinate from `s`, a hard
+            // the app's in-app text size. This `Canvas` derives every coordinate from `s`, a hard
             // ratio against the `.frame(width:height:)` the call site pins — so a
             // Dynamic-Type-relative glyph would grow while the box holding it stayed put, and
             // the `E` would overrun the waves at accessibility text sizes. The face lookup is

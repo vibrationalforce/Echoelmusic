@@ -65,9 +65,9 @@ public enum StudioDefaultKeys {
 
     /// The in-app text size (interface audit 2026-09-30, rule 12: "Textgröße als Knöpfe, nicht
     /// nur Kneifen"). An index into `StudioZoom.ladder` (`.large` … `.accessibility5`); `-1` =
-    /// follow the system text size. Written by the pinch (`StudioZoom`) AND by the three buttons
-    /// in Save & Export (`TextSizeRow`), read by the instrument root that applies it — two
-    /// writers, one key, hence H15-KEYSTORE. The key STRING is the pre-keystore literal on
+    /// follow the system text size. Written by the three buttons in Save & Export (`TextSizeRow`)
+    /// — the ONE writer since DAW shell S9a, when the pinch moved to the arrangement's time axis
+    /// (it wrote here too until then, hence H15-KEYSTORE) — and applied by `StudioZoom` at the root. The key STRING is the pre-keystore literal on
     /// purpose: a size a user pinched before this key moved here must survive the update.
     public static let zoomStep = StudioDefault(key: "ui.zoomStep", value: -1)
 

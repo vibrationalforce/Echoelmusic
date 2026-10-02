@@ -7,9 +7,12 @@
 // "follow the system". Its ONLY writer was a two-finger pinch — a gesture nothing on screen
 // announces, that a person with one hand, a tremor or a switch cannot make, and that the
 // founder's own audit line names as the defect. This slice adds the buttons and keeps ONE size:
-//   · `StudioDefaultKeys.zoomStep` — the key moves into the keystore because it now has two
+//   · `StudioDefaultKeys.zoomStep` — the key moves into the keystore because it then had two
 //     writers (pinch + buttons); its STRING stays the pre-keystore literal so a size a user
 //     pinched before this commit survives the update.
+//   ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): the pinch LEFT `StudioZoom` —
+//     it zooms the arrangement's time now — so the buttons are the ONE writer and `StudioZoom`
+//     takes the step as a value. Claim 4 pins that (it pinned "the pinch stays" until S9a).
 //   · `TextSizeRow` in Save & Export, beside the level picker: Smaller · Larger · Default, each
 //     symbol PLUS word (rule 3), 44 pt tall, dimmed where it cannot move (#164/#227). Smaller and
 //     Larger step from the rung IN EFFECT (`StudioZoom.systemIndex` while at `-1`), Default
@@ -21,8 +24,9 @@
 //
 // ⚠️ LIMIT — SOURCE-TEXT SCAN plus one keystore constant. `TextSizeRow` is file-private and
 // `StudioZoom` is internal only so the root can mount it, so nothing here taps a button; that
-// three 44 pt buttons fit a portrait phone at the top rung is a founder look. The chrome ceiling and the pinch scope are pinned by
-// `ChromeDynamicTypeTests`, not repeated here (#416) — claim 4 only checks the pinch survives.
+// three 44 pt buttons fit a portrait phone at the top rung is a founder look. The chrome ceiling is pinned by
+// `ChromeDynamicTypeTests`, not repeated here (#416). Where the pinch went is pinned by
+// `ThePinchZoomsTheArrangementsTimeTests`; claim 4 here only pins that it is GONE from `StudioZoom`.
 //
 // ⚠️ HONEST GRADING (#433/#464) — transcribed in Python against this tree and the parent
 // 27b8918e3 (no local toolchain): claims 1–3 RED on the parent for their named reasons (the
@@ -30,6 +34,11 @@
 // `"ui.zoomStep"` literal sat in the root); claim 4 GREEN on both — the counterweight (#343):
 // the pinch gesture and the nine-rung ladder are unchanged, so a slice that replaced the pinch
 // with the buttons instead of adding to it would turn it red.
+// S9a (parent 88058461d): claim 4's gesture, `let step` and no-`@Binding` assertions are RED on
+// the parent for their named reason (the pinch sat on `StudioZoom` and wrote a binding) — one
+// finding, the move (#486); the mount needle moved with the value (`$zoomStep` → `zoomStep`) and
+// is red there by the same move; the ladder and one-application-point assertions are
+// counterweights, green on both.
 // PART 2 (same day, parent 8b9bd76b1): claims 1, 3 and 4 RED on the parent — the studio file
 // held TWO readers of the key and the root none, `StudioZoom` was `private` so the
 // `\nstruct StudioZoom` slice was empty, and `SurfaceHost` carried no modifier; claim 2 GREEN on
@@ -51,7 +60,7 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
     func testTheTextSizeIsOneKeystoreKeyWithTheShippedString() throws {
         XCTAssertEqual(StudioDefaultKeys.zoomStep.key, "ui.zoomStep", """
             The text-size key string changed. It is the on-disk contract with every install that \
-            ever pinched: a new string silently resets their size to the system's.
+            ever set a size: a new string silently resets their size to the system's.
             """)
         XCTAssertEqual(StudioDefaultKeys.zoomStep.value, -1, "-1 = follow the system text size; a fresh install must not zoom")
 
@@ -127,12 +136,28 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
         XCTAssertFalse(zoom.contains("private static func systemIndex"), "the row needs `systemIndex`; a private one would not compile")
     }
 
-    // MARK: - claim 4 — counterweight: the pinch and the nine-rung ladder survive
+    // MARK: - claim 4 — the buttons are the ONE writer; the ladder and the one application point survive
 
-    func testThePinchAndTheLadderAreUnchanged() throws {
+    func testTheButtonsAreTheOneWriterAndTheLadderIsUnchanged() throws {
         let code = try source(Self.studio)
         let zoom = slice(code, from: "\nstruct StudioZoom: ViewModifier {", to: "\n}\n")
-        XCTAssertTrue(zoom.contains("MagnifyGesture(minimumScaleDelta: 0.05)"), "the pinch stays — the buttons are added beside it, never in place of it")
+        XCTAssertFalse(zoom.isEmpty, "ANCHOR MISSING: `struct StudioZoom: ViewModifier` (#454)")
+        // DAW shell S9a (founder 2026-10-02, E18 „Zeit zoomen"): the pinch zooms the arrangement's
+        // TIME. A gesture left on this modifier sits on the ancestor of the canvas and would resize
+        // the text under every time-zoom — one gesture, two meanings.
+        for gesture in ["MagnifyGesture", "MagnificationGesture", ".gesture(", ".simultaneousGesture(", ".highPriorityGesture("] {
+            XCTAssertFalse(zoom.contains(gesture), """
+                `StudioZoom` carries `\(gesture)` again. Since S9a it only APPLIES the stored step; the \
+                pinch belongs to the arrangement's time axis (`ArrangeTimeZoom`), and the text size is \
+                set by the three buttons in Save & Export.
+                """)
+        }
+        XCTAssertTrue(zoom.contains("    let step: Int\n"), """
+            `StudioZoom.step` is no longer a plain value. A binding here is a second writer waiting \
+            to happen — `TextSizeRow` is the one writer of the key (S9a).
+            """)
+        XCTAssertFalse(zoom.contains("@Binding"), "`StudioZoom` takes the step as a value — it never writes it")
+        XCTAssertFalse(zoom.contains("step ="), "`StudioZoom` assigns the step — only `TextSizeRow` writes the key")
         let ladder = slice(zoom, from: "static let ladder: [DynamicTypeSize] = [", to: "]")
         let rungs = ladder.components(separatedBy: ".").count - 1
         XCTAssertEqual(rungs, 9, "nine rungs, `.large` … `.accessibility5` — the caption reads its count from here")
@@ -140,15 +165,14 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
         // Part 2 (2026-09-30): the ONE application point is the root, on `SurfaceHost` — both stages.
         let workspace = try source(Self.workspace)
         let host = slice(workspace, from: "                SurfaceHost()", to: ".frame(maxWidth: .infinity, maxHeight: .infinity)")
-        XCTAssertTrue(host.contains(".modifier(StudioZoom(step: $zoomStep))"), """
+        XCTAssertTrue(host.contains(".modifier(StudioZoom(step: zoomStep))"), """
             `WorkspaceView` no longer mounts `StudioZoom` on `SurfaceHost`. That is the one application \
             point since part 2: the piece and the instrument share the size, the head keeps its ceiling.
             """)
         XCTAssertEqual(occurrences(of: ".modifier(StudioZoom(step:", in: workspace), 1, "one application point in the root")
         XCTAssertEqual(occurrences(of: ".modifier(StudioZoom(step:", in: code), 0, """
-            The instrument applies `StudioZoom` again. Two application points on one key attach two \
-            pinches to the same step and size the instrument twice — the scope is widened by MOVING \
-            the point, never by adding one.
+            The instrument applies `StudioZoom` again. Two application points on one key size the \
+            instrument twice — the scope is widened by MOVING the point, never by adding one.
             """)
         XCTAssertFalse(code.contains("private struct StudioZoom"), "`StudioZoom` must stay internal so the root can mount it")
     }

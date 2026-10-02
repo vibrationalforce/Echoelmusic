@@ -1396,7 +1396,7 @@ struct EchoelStudioView: View {
         // ⛔ The `StudioZoom` modifier stood here until rule 12 part 2 (2026-09-30) and made
         // the text size the INSTRUMENT's alone — the piece stage beside it followed the system
         // size. The one application point is now `WorkspaceView`, on `SurfaceHost`, which hosts
-        // both stages; a second application here would attach a second pinch to the same key.
+        // both stages; a second application here would size the instrument twice from one key.
         .background(EchoelTheme.bg)
         .onAppear {
             // #596 — arm the app-wide plug-in watcher from the ROOT, which always
@@ -3028,10 +3028,10 @@ struct EchoelStudioView: View {
                     // ⛔ AND THE FIRST DRAFT OF THIS BLOCK SAID "on top of which `StudioZoom`
                     // scales it again", WHICH IS FALSE AND UNDERSTATES THE REACH. `StudioZoom`
                     // does not multiply the system size — it OVERRIDES it, writing one rung of
-                    // its own ladder (`.large` … `.accessibility5`) downward. So the pinch
-                    // gesture alone takes this label to AX5 for a user who never opened Larger
-                    // Text, which makes the overflow reachable by ordinary in-app zooming
-                    // rather than only by an accessibility setting.
+                    // its own ladder (`.large` … `.accessibility5`) downward. So the in-app
+                    // Text size buttons alone take this label to AX5 for a user who never opened
+                    // Larger Text (a pinch did until DAW shell S9a), which makes the overflow
+                    // reachable by ordinary in-app sizing rather than only by a system setting.
                     //
                     // A 12 pt label therefore draws far taller than 26 pt at the top of that
                     // ladder, and a `.frame(height:)` does NOT clip:
@@ -12423,17 +12423,21 @@ private struct DiagReport: Identifiable {
     let text: String
 }
 
-/// Pinch-to-zoom for legibility over BOTH stages. Scales the interface by driving
-/// Dynamic Type (so the bundled Atkinson font, laid out `relativeTo: .body`, and the
-/// `@ScaledMetric` widths all grow together). `step < 0` means "follow the system
-/// text size"; the first pinch seeds an explicit level from the current system size,
-/// then it persists. Pinch is a 2-finger gesture, so it never blocks 1-finger scroll.
-/// Not private since rule 12 part 2: the ONE application point is `WorkspaceView`, on
-/// `SurfaceHost` (the piece and the instrument), while the head keeps its own ceiling.
+/// The in-app text size over BOTH stages. Scales the interface by driving Dynamic Type (so
+/// the bundled Atkinson font, laid out `relativeTo: .body`, and the `@ScaledMetric` widths all
+/// grow together). `step < 0` means "follow the system text size"; a step the user chose
+/// persists. Not private since rule 12 part 2: the ONE application point is `WorkspaceView`,
+/// on `SurfaceHost` (the piece and the instrument), while the head keeps its own ceiling.
+///
+/// ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): THE PINCH IS NOT HERE ANY
+/// MORE. It zooms the arrangement's TIME (`ArrangeTimeZoom` on the canvas) — one gesture, one
+/// meaning — and the text size is set by the three buttons in Save & Export (`TextSizeRow`),
+/// the one writer of `step`. A pinch on this modifier sat on the ancestor of the canvas and
+/// would have resized the text under every time-zoom.
 struct StudioZoom: ViewModifier {
-    @Binding var step: Int
-    @Environment(\.dynamicTypeSize) private var systemSize
-    @State private var pinchBase: Int?
+    /// A VALUE, not a binding: this modifier only applies the stored step. Taking a binding would
+    /// let a second writer creep back in on the ancestor of the canvas (S9a).
+    let step: Int
 
     static let ladder: [DynamicTypeSize] = [
         .large, .xLarge, .xxLarge, .xxxLarge,
@@ -12455,23 +12459,13 @@ struct StudioZoom: ViewModifier {
                 content   // follow the system text size until the user zooms
             }
         }
-        .gesture(
-            MagnifyGesture(minimumScaleDelta: 0.05)
-                .onChanged { v in
-                    if pinchBase == nil { pinchBase = step >= 0 ? step : Self.systemIndex(systemSize) }
-                    let base = pinchBase ?? 0
-                    // Each ~doubling of the pinch moves a couple of ladder steps.
-                    let delta = Int((log2(Swift.max(v.magnification, 0.2)) * 2.5).rounded())
-                    step = Swift.min(Swift.max(base + delta, 0), Self.ladder.count - 1)
-                }
-                .onEnded { _ in pinchBase = nil }
-        )
     }
 }
 
 /// Rule 12 (interface audit 2026-09-30, WCAG 1.4.4): the text size as BUTTONS, not only a
-/// pinch. The pinch (`StudioZoom`) and these three buttons write the SAME key
-/// (`StudioDefaultKeys.zoomStep`), so there is one text size whichever hand set it. A LEAF with
+/// pinch. ⭐ Since DAW shell S9a (founder 2026-10-02, E18 „Zeit zoomen") these three buttons
+/// are the ONE writer of `StudioDefaultKeys.zoomStep` — the pinch zooms the arrangement's time,
+/// and `StudioZoom` only applies the stored step. A LEAF with
 /// its own `@AppStorage`, like `WeatherMixRow`: a tap here costs the root nothing beyond the
 /// size change itself.
 ///
@@ -12542,7 +12536,7 @@ private struct TextSizeRow: View {
         }
         // E4-62: the rung and the ladder count are seamed between catalog keys (≤ 4 operands per step).
         let level: String = String(localized: "Level ") + "\(step + 1)" + String(localized: " of ") + "\(StudioZoom.ladder.count)"
-        return level + String(localized: ". Pinching with two fingers moves it too. ") + scope
+        return level + String(localized: ". A pinch zooms the arrangement's time, not the text. ") + scope
     }
 
     private func sizeButton(_ word: LocalizedStringKey, systemImage: String, spoken: LocalizedStringKey, hint: LocalizedStringKey,

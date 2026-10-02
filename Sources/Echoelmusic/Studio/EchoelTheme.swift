@@ -359,7 +359,7 @@ enum EchoelTheme {
     /// laid-out label; it is the wrong thing inside a fixed-ratio `Canvas` — see `faceName`.
     static func font(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         // `relativeTo: .body` makes the bundled custom font scale with Dynamic Type
-        // AND with the app's pinch-to-zoom (`.dynamicTypeSize(...)`), so the whole
+        // AND with the app's in-app text size (`.dynamicTypeSize(...)`), so the whole
         // interface grows for users who need larger text — accessibility-first.
         return .custom(faceName(weight), size: size, relativeTo: .body)
     }

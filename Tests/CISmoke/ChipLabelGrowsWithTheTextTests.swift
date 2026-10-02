@@ -6,8 +6,8 @@
 // with Dynamic Type — and `EchoelStudioView` is the ONE surface deliberately left unclamped
 // (`WorkspaceView` clamps only the chrome, to `.accessibility1`). `StudioZoom` OVERRIDES the
 // effective size from its own `.large … .accessibility5` ladder rather than multiplying the
-// system one, so the pinch gesture alone reaches the top rung for a user who never opened
-// Larger Text.
+// system one, so the in-app Text size buttons alone reach the top rung for a user who never
+// opened Larger Text (a pinch did until DAW shell S9a; it zooms the arrangement's time now).
 //
 // ⭐ THE CROSSOVER IS AX2, AND IT IS DERIVED RATHER THAN GUESSED — the first draft of this
 // header pinned "AX3", the second replaced it with "around AX2, unmeasured", and a reviewer
@@ -100,8 +100,8 @@ final class ChipLabelGrowsWithTheTextTests: XCTestCase {
             outside its own pill at the upper rungs, because a `.frame` does not clip and the \
             background/overlay size to the frame rather than to the text. The crossover is AX2 \
             — Atkinson Hyperlegible Bold's 1.24 em line box puts a 12 pt body-relative label at \
-            24.5 pt at AX1 and 28.9 pt at AX2 — and it is reachable by pinch alone, without \
-            ever opening Larger Text. Same fix as `EchoelValueField`'s `boxHeight`; the chrome \
+            24.5 pt at AX1 and 28.9 pt at AX2 — and it is reachable by the in-app Text size \
+            buttons alone, without ever opening Larger Text. Same fix as `EchoelValueField`'s `boxHeight`; the chrome \
             bars in `WorkspaceView` took the same defect but needed `fixedSize` alongside, \
             which this control does not (see the header).
             """)

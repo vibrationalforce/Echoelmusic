@@ -31,8 +31,10 @@
 //  History (classified, not restored): the cut `ArrangeTimelineView` (eb58e7a^) dragged a clip
 //  BODY with a `@GestureState` delta and previewed the snapped drop — INTERACTION IDEA PORTED.
 //  Its tick conversion (`TimelineDragMath.tickDelta`, still shipped) — ALGORITHM PORTED. Its
-//  zoom, snap menu, neighbour magnet, lane change and overlap trimming — NOT RESTORED: the
-//  canvas has one fixed scale, the part bar's one-bar step is the grid, precedence stays with
+//  zoom — RESTORED AS A TIME ZOOM in DAW shell S9a (`ArrangeTimeZoom`, its own file and leaf;
+//  the drag converts on the zoomed lane width, so a bar is still a bar). Its snap menu,
+//  neighbour magnet, lane change and overlap trimming — NOT RESTORED: the part bar's one-bar
+//  step is the grid, precedence stays with
 //  `TimelineScheduling.activeRegion` (#1440), and rows here are only the tracks with parts, so a
 //  vertical drop has no honest target yet. The long press is new, and deliberate: the canvas
 //  sits inside the Workstation's vertical scroll, and a bare drag on a part would steal it.
@@ -46,7 +48,8 @@
 //  ⭐ THE BAR RULER (modes census 2026-09-26, design slice 1). The lanes showed WHERE parts sit
 //  and nothing said at WHICH bar — the one number the part bar, the parts list and the
 //  position readout all speak in. A row of bar numbers now runs above the lanes, on the same
-//  scale as the blocks (`nameWidth + gutter` in, `laneWidth` wide). `ArrangeCanvas.rulerMarks`
+//  scale as the blocks — since S9a in the SAME zoomed column, so a pinch cannot move a number
+//  off its bar. `ArrangeCanvas.rulerMarks`
 //  thins the numbers by powers of two so a long song never overprints, and the minimum label
 //  spacing is a `@ScaledMetric`, so at large text sizes the numbers thin further instead of
 //  colliding. The ruler is COLD (it reads the song length, never the position) and hidden from
@@ -298,33 +301,46 @@ struct ArrangeCanvasView: View {
     /// Room for the track's hue band, its instrument symbol and a short name.
     static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
+    /// The bar ruler's height — ONE definition (S9a), read by the ruler and by the empty cell
+    /// over the names, so every name stays level with its lane at every text size.
+    @ScaledMetric(relativeTo: .body) private var rulerHeight: CGFloat = 14
 
     var body: some View {
         let selected = WorkstationSelection.resolvedRegion(selection.regionID,
                                                            track: selection.trackID, in: document)
-        VStack(spacing: 4) {
-            // The bar ruler — the gutter left empty so its numbers start where the lanes do.
-            HStack(spacing: Self.gutter) {
-                Color.clear.frame(width: Self.nameWidth, height: 1)
-                ArrangeBarRuler(songTicks: songTicks)
-            }
-            ForEach(rows) { row in
-                HStack(spacing: Self.gutter) {
-                    // A name gutter: one line, truncating, so every lane starts at the same x
-                    // and the rows line up bar for bar. The name AND its mute/solo symbol grow
-                    // with the type size inside a FIXED gutter width and lane height (`nameWidth`, `rowHeight`)
-                    // (review LOW-3), so at the largest sizes a silenced track's name shrinks to
-                    // a few letters — the row and every part still SAY name and state, and the
-                    // parts list in the track inspector is the large-type way in.
+        // ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): TWO COLUMNS. The names
+        // stand still on the left; the ruler, the lanes and the playhead share ONE zoomed width
+        // on the right (`ArrangeTimeZoom`), so a pinch spreads the bars and the numbers stay on
+        // them by construction. Both columns stack the same heights with the same spacing —
+        // the ruler's `rulerHeight`, then `rowHeight` per track — so each name sits beside its
+        // lane. VoiceOver reads the names first, then the lanes; every lane and every part says
+        // its track's name and state, so no lane is anonymous.
+        HStack(alignment: .top, spacing: Self.gutter) {
+            VStack(spacing: 4) {
+                // The ruler's row in this column is empty, so the names start where the lanes do.
+                Color.clear.frame(width: Self.nameWidth, height: rulerHeight)
+                ForEach(rows) { row in
+                    // A name gutter: one line, truncating, at the lane's height. The name AND
+                    // its mute/solo symbol grow with the type size inside a FIXED gutter width
+                    // and lane height (`nameWidth`, `rowHeight`) (review LOW-3), so at the
+                    // largest sizes a silenced track's name shrinks to a few letters — the row
+                    // and every part still SAY name and state, and the parts list in the track
+                    // inspector is the large-type way in.
                     nameGutter(row)
-                    laneRow(row, selected: selected)
+                        .frame(height: Self.rowHeight)
                 }
-                .frame(minHeight: Self.rowHeight)
             }
-        }
-        .overlay(alignment: .leading) {
-            ArrangePlayheadView(songTicks: songTicks)
-                .padding(.leading, Self.nameWidth + Self.gutter)
+            ArrangeTimeZoom {
+                VStack(spacing: 4) {
+                    ArrangeBarRuler(songTicks: songTicks, height: rulerHeight)
+                    ForEach(rows) { row in
+                        laneRow(row, selected: selected)
+                    }
+                }
+                .overlay(alignment: .leading) {
+                    ArrangePlayheadView(songTicks: songTicks)
+                }
+            }
         }
     }
 
@@ -443,10 +459,12 @@ struct ArrangeCanvasView: View {
 struct ArrangeBarRuler: View {
 
     let songTicks: Int
+    /// Handed in by the canvas, which owns the one scaled value (S9a): the empty cell over the
+    /// names reads the same number, so the names and the lanes stay level.
+    let height: CGFloat
 
     /// Scaled with the text, so a larger size thins the numbers rather than colliding them.
     @ScaledMetric(relativeTo: .body) private var labelSpacing: CGFloat = 28
-    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 14
 
     var body: some View {
         GeometryReader { geometry in
@@ -504,7 +522,8 @@ struct ArrangePlayheadView: View {
 
 /// One part on a lane: tap to select it; press, hold and slide to move it by whole bars.
 ///
-/// ⭐ THE ONLY FINGER-RATE STATE ON THE CANVAS. `dragPoints` is `@GestureState`, so it lives
+/// ⭐ THE ONLY FINGER-RATE STATE IN THIS FILE (the time zoom's pinch lives in its own leaf,
+/// `ArrangeTimeZoom`, since S9a). `dragPoints` is `@GestureState`, so it lives
 /// in this leaf alone (only this block redraws while it moves) and resets itself when the
 /// scroll view cancels the gesture — a plain `@State` delta stuck there and left the part
 /// drawn away from where it sits (the cut arrange view's #56 C2). Nothing is written until the

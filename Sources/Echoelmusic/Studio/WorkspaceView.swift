@@ -122,9 +122,10 @@ struct WorkspaceView: View {
     @AppStorage("visual.floating.visible") private var floatingVisualVisible = true
     /// Rule 12 part 2 (2026-09-30): the in-app text size, applied HERE on `SurfaceHost` so the
     /// piece and the instrument share one size (it lived inside `EchoelStudioView` and sized the
-    /// instrument alone). Two writers, one key — the pinch in `StudioZoom` and the Text size
-    /// buttons (`TextSizeRow`); the key lives in `StudioDefaultKeys` (H15-KEYSTORE). COLD state:
-    /// it changes on a pinch or a tap only, so this root rebuilds per step, never per frame.
+    /// instrument alone). ONE writer since DAW shell S9a — the Text size buttons (`TextSizeRow`);
+    /// the pinch zooms the arrangement's time now. The key lives in `StudioDefaultKeys`
+    /// (H15-KEYSTORE). COLD state: it changes on a tap only, so this root rebuilds per step,
+    /// never per frame.
     @AppStorage(StudioDefaultKeys.zoomStep.key) private var zoomStep = StudioDefaultKeys.zoomStep.value
     /// The guide's on/off (DAW shell S1b-1) — the ONE shared key, declared in Core (H15-KEYSTORE),
     /// read by `GuideOverlay` and flipped by the Guide toggle in the mark's ≡ menu (`topBar`).
@@ -182,8 +183,9 @@ struct WorkspaceView: View {
                 // deleting: `StudioZoom` is applied on `SurfaceHost` (rule 12 part 2,
                 // 2026-09-30; before that INSIDE `EchoelStudioView`, which mounts under it)
                 // — a SIBLING of this Group, not a descendant. `.dynamicTypeSize` only
-                // writes downward, so the two never met. The pinch zoom has never reached
-                // the chrome and still does not; neither change altered that either way.
+                // writes downward, so the two never met. The in-app text size (a pinch until
+                // DAW shell S9a, three buttons since) has never reached the chrome and still
+                // does not; neither change altered that either way.
                 //
                 // The heights below are now MINIMUMS, not fixed sizes, so the bars grow
                 // with the text instead of overflowing — which removes the reason the clamp
@@ -266,7 +268,7 @@ struct WorkspaceView: View {
                 SurfaceHost()
                     // Rule 12 part 2: the ONE application point of the text size — both stages,
                     // not the head (its `.accessibility1` ceiling sits on the Group above).
-                    .modifier(StudioZoom(step: $zoomStep))
+                    .modifier(StudioZoom(step: zoomStep))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             // ⛔ #1027 — A WIDTH CEILING STOOD HERE (#1025) AND IS REMOVED ON FOUNDER
@@ -497,7 +499,7 @@ struct WorkspaceView: View {
     /// ⭐ ONE THING GOT BETTER BY ACCIDENT AND IS WORTH NAMING, because the note on
     /// `TransportPositionView` recorded it as an unmeasured cost when it went the other way:
     /// down in `EchoelStudioView` the readout was UNCLAMPED (the chrome's `.accessibility1` cap
-    /// is on this Group, and `SurfaceHost` is its sibling) and inside `StudioZoom`'s pinch
+    /// is on this Group, and `SurfaceHost` is its sibling) and inside `StudioZoom`'s text-size
     /// scope. Back up here it is clamped again, next to a hard `44×4` capsule it has to live
     /// with. That is the outcome that note wanted; it is still a device look, not a proof.
     private var topBar: some View {
@@ -1141,7 +1143,7 @@ struct PlaybackToggleButton: View {
 /// ⭐ IT WENT DOWN INTO THE INSTRUMENT AND CAME BACK, AND THE ROUND TRIP FIXED A COST. The
 /// retracted note here recorded that `EchoelStudioView` left it UNCLAMPED — the chrome Group in
 /// `body` carries `.dynamicTypeSize(...DynamicTypeSize.accessibility1)` and `SurfaceHost` is its
-/// SIBLING, not a descendant — and inside `StudioZoom`'s pinch scope. Its labels are
+/// SIBLING, not a descendant — and inside `StudioZoom`'s text-size scope. Its labels are
 /// `EchoelTheme.font(14)`/`(10)`, which resolve `relativeTo: .body` and therefore DO scale, while
 /// the loop capsule beside them is a hard `44×4`; text that grows next to a bar that does not is
 /// the shape that overflows at AX4/AX5. Back in the header it is clamped again. That is the

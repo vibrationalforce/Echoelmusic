@@ -16,8 +16,8 @@
 // ⛔ THE FIRST VERSION OF THIS HEADER ALSO SAID the clamp capped the app's own pinch zoom.
 // FALSE: `StudioZoom` is applied on `SurfaceHost` in `WorkspaceView` (rule 12 part 2; before
 // that inside `EchoelStudioView`, which mounts under it) — a SIBLING of the clamped Group, not a
-// descendant — and `.dynamicTypeSize` only writes downward. The pinch zoom never reached the
-// chrome and still does not.
+// descendant — and `.dynamicTypeSize` only writes downward. The in-app text size never reached
+// the chrome and still does not (since DAW shell S9a it is set by buttons, not a pinch).
 //
 // The clamp existed for a real reason: the three bars were `.frame(height:)`, so bigger text
 // overflowed a box that could not grow. The fix removed the reason (heights are minimums now)

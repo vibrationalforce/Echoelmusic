@@ -18,7 +18,7 @@
 //   • VoiceOver: adjustable by swipe, speaks the real value + unit.
 //
 //  Everything scales with Dynamic Type / the app zoom (EchoelTheme.font relativeTo +
-//  the studio pinch-zoom). Website CI tokens only. Pure UI — no audio-thread work.
+//  the in-app text size). Website CI tokens only. Pure UI — no audio-thread work.
 //
 
 // `ScrubPrecision` sits OUTSIDE the SwiftUI guard deliberately: it is pure arithmetic

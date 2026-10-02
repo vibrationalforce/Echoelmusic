@@ -2288,13 +2288,13 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for seam in ["return String(localized: \"Record \") + loopBars.label + String(localized: \" → send\")",
                      "case .rendering: return String(localized: \"Writing .wav…\")",
                      "let level: String = String(localized: \"Level \") + \"\\(step + 1)\" + String(localized: \" of \") + \"\\(StudioZoom.ladder.count)\"",
-                     "return level + String(localized: \". Pinching with two fingers moves it too. \") + scope",
+                     "return level + String(localized: \". A pinch zooms the arrangement's time, not the text. \") + scope",
                      "let played: String = String(localized: \"Keep last \") + bars.label + String(localized: \" (just played)\")",
                      "return String(localized: \"Keep last: \") + keepable.label + String(localized: \" or fewer at this tempo\")"] {
             XCTAssertTrue(studioExport.contains(seam), "EchoelStudioView lost the E4-62 seam `\(seam)`")
         }
         for verbatim in ["return \"Record \\(loopBars.label) → send\"",
-                         "return \"Level \\(step + 1) of \\(StudioZoom.ladder.count). Pinching with two fingers moves it too. \" + scope",
+                         "return \"Level \\(step + 1) of \\(StudioZoom.ladder.count). A pinch zooms the arrangement's time, not the text. \" + scope",
                          "return hasComposed ? \"Keep last \\(bars.label) (just played)\"",
                          "return \"Keep last: \\(keepable.label) or fewer at this tempo\""] {
             XCTAssertFalse(studioExport.contains(verbatim), "EchoelStudioView interpolates a plate label again: `\(verbatim)`")
@@ -2310,7 +2310,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         try assertCatalogued(["Stop and discard this recording", "Recording loop…", "Writing .wav…", "Record ", " → send",
                           "Sizes the piece and the instrument; the head follows the system size.",
                           "Default — follows the system text size. ", "Level ", " of ",
-                          ". Pinching with two fingers moves it too. ",
+                          ". A pinch zooms the arrangement's time, not the text. ",
                           "Keep last ", " (just played)", " — once something has played",
                           "Keep last: unavailable — use the Record tile instead", "Keep last: ", " or fewer at this tempo",
                           "1 bar", "bars"], "plate labels and the bar-length label")
