@@ -162,7 +162,8 @@ final class TwoControlsShareALineOnlyWhileTheyFitTests: XCTestCase {
     /// conditional `Text("Demo")` tag as the one extra element that pushed it past the edge
     /// (#1027). Head leaf 2 of the interface audit moved the pill to `ProjectHeader`, so the
     /// row with the least slack is the header's (summary · pill · Undo Redo · ▶ Play · ● since
-    /// leaf 3) and this claim follows the pill. `transportLine1` is three children on one line
+    /// leaf 3) and this claim follows the pill. `transportLine1` is two children since DAW shell
+    /// S7a (⏸ · tempo; the plate's ▶ went to the head) on one line
     /// and must not build the pill (`TheTransportBarIsDissolvedTests` claim 2 owns that half).
     func testTheRowWithThePulsePillWrapsWhenItCannotFit() throws {
         let studio = try code(Self.studio)

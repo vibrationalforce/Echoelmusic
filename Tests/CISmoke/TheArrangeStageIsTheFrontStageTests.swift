@@ -389,7 +389,11 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
             The first card still teaches the retired seam's two words — the bottom row shows \
             five, and "Piece" is not one of them.
             """)
-        XCTAssertTrue(first.detail.contains("Play button"), "it still says where the instrument's Play button is")
+        // DAW shell S7a: the instrument has no Play of its own any more — the head's ONE Play
+        // starts it (`OneStartControlTests`), so the card says where THAT is. (⛔ The needle was
+        // "Play button" while the sentence read "press its Play button"; S7a reworded the copy
+        // and missed this guard — the review of 4daef6f69 caught it.)
+        XCTAssertTrue(first.detail.contains("press Play at the top"), "it still says where the instrument's Play is")
     }
 
     // 9 — the switcher is a real control: 44 pt, selected trait, a visible word and a spoken hint.

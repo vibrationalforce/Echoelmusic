@@ -1060,7 +1060,10 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             strand the user with a running transport and no way to stop it.
             """)
         XCTAssertTrue(button.contains(".disabled(!available)"), "an unavailable Play swallows tap and key alike")
-        XCTAssertTrue(button.contains("minHeight: 44"), """
+        // DAW shell S7a: the floor is read from `EchoelTheme.controlTapHeight` (pinned at 44 by
+        // `OneChromeControlHeightTests`) since this button inherited the plate's start; the old
+        // needle `minHeight: 44` stopped matching in this range (review of 4daef6f69).
+        XCTAssertTrue(button.contains("minHeight: EchoelTheme.controlTapHeight"), """
             The transport is a primary control and must carry the 44 pt HIG tap target the \
             chip strip already does (#113/#353b).
             """)

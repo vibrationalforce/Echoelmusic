@@ -246,7 +246,7 @@ enum EchoelTheme {
     // `radius` corners, `fill` behind, `borderStrong` around. Nothing else did. Measured on
     // the row the founder circled, before anything was changed:
     //
-    //     startButton              64 × 56      ← FloatingVisualLayout.startButtonHeight
+    //     startButton              64 × 56      ← FloatingVisualLayout.startButtonHeight (deleted, DAW shell S7a)
     //     PlaybackToggleButton     44 × 48      ← #307's Nachlese, "uniform-height like Ableton"
     //     BodyTempoField (compact) 76 × 32 · lock 30 × 32
     //     TransportOverflowMenu    30 × 32
