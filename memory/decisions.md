@@ -4945,3 +4945,10 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Kosten:** pausierte Sitzung beenden = Play, dann Stop.
 - **Review:** 2026-11-01.
 
+
+### 2026-10-02 — DAW shell S9a/S9b: Zeit zoomen, Schrift nicht
+- **Entscheidung:** Zwei Finger zoomen die ZEIT — auf der Arrange-Fläche (S9a, 1×–8×) und im Notenraster (S9b, drei Stufen 11/22/44 pt je Sechzehntel, Default = die M1-Breite). Im Raster zusätzlich „Zoom in“/„Zoom out“ als Knöpfe und `accessibilityZoomAction`. Die Schriftgröße hat KEINE Geste, nur ihre drei Knöpfe (`TextSizeRow`, im Save/Export-Panel).
+- **Warum:** Founder E16 „Zeit zoomen“. Eine Breite (`NoteGridZoom`) speist Raster, Abspiellinie und Velocity-Spur, damit sie nie über die Lage eines Schritts streiten. Der Anker (Mitte bzw. Finger) hält den betrachteten Takt im Bild.
+- **Grenzen (Gerät offen):** ruhende Finger vor dem Spreizen können den Halte-Edit des Rasters mitstarten (Undo nimmt ihn zurück); ein Schwenk während der Geste verschiebt den Anker.
+- **Kosten:** nicht persistiert, nicht auf Undo — ein anderer Part öffnet wieder in der Mitte.
+- **Review:** 2026-11-01.
