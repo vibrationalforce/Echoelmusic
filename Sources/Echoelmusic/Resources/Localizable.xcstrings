@@ -19545,6 +19545,46 @@
         }
       }
     },
+    "Zoom out" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom out"
+          }
+        }
+      }
+    },
+    "Zoom in" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom in"
+          }
+        }
+      }
+    },
+    "Shows more of the song at once." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows more of the song at once."
+          }
+        }
+      }
+    },
+    "Widens the bars around the middle of the view." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widens the bars around the middle of the view."
+          }
+        }
+      }
+    },
     "Larger" : {
       "localizations" : {
         "en" : {

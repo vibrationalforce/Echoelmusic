@@ -581,6 +581,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/SongPositionReadout.swift",
             "Sources/Echoelmusic/Studio/WorkstationClickToggle.swift",
             "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift",
+            "Sources/Echoelmusic/Studio/ArrangeTimeZoom.swift",
             "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
             "Sources/Echoelmusic/Studio/WorkstationMixMeter.swift",
             "Sources/Echoelmusic/Studio/GuideOverlay.swift",

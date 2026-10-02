@@ -174,3 +174,14 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   Teil nennt seine Spur); bei der größten Textgröße kann ein Name die 44-pt-Zeile leicht überragen.
 - **Offen (S9b):** Notenraster-Zoom (`PartNoteEditor`), adjustable actions.
 - **Gerät offen:** Pinch-Gefühl, Ein-Finger-Pan, Teil-Ziehen bei Zoom, Platten-Scroll bei Zoom.
+- **Review-Reparatur (13 Befunde, keiner HOCH):** MED-1 der Zoom wuchs vom linken Rand statt unter
+  den Fingern → die Scroll-Position folgt dem Pinch über das reine `ArrangeCanvas.anchoredOffset`
+  (der Song-Punkt unter dem Startpunkt der Finger bleibt stehen). MED-2 kein verschobener Rest nach
+  dem Herauszoomen → bei Zoom 1 ist der Versatz per Regel 0, `.scrollDisabled` ersetzt durch
+  `.scrollBounceBehavior(.basedOnSize)`. MED-6 ein Finger reicht → „Zoom out“ / „Zoom in“ unter den
+  Spuren (44 pt, Wort plus Symbol, an den Enden ausgegraut, ×2 um die Mitte); die VoiceOver-Aktion
+  bleibt, ist aber nicht mehr der einzige Weg. MED-3/LOW-4/LOW-5 als benannte Grenzen im Dateikopf
+  (Teil-Ziehen scrollt nicht mit; ein Pinch auf einem Teil kann dessen Halten starten; die Skizzen
+  zeichnen pro Bild neu). LOWs: Postfach-Zeile E16 statt E18 an sieben Stellen, `TextSizeRow`-Doku,
+  UX-Audit-Zeilen, Ahnen-Prüfung auf Deklarationen statt Dateien, `step =`-Nadel als Zuweisungs-
+  Muster, ehrliche Benotung, kein Modifier auf dem Zoom.

@@ -12429,7 +12429,7 @@ private struct DiagReport: Identifiable {
 /// persists. Not private since rule 12 part 2: the ONE application point is `WorkspaceView`,
 /// on `SurfaceHost` (the piece and the instrument), while the head keeps its own ceiling.
 ///
-/// ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): THE PINCH IS NOT HERE ANY
+/// ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E16 „Zeit zoomen"): THE PINCH IS NOT HERE ANY
 /// MORE. It zooms the arrangement's TIME (`ArrangeTimeZoom` on the canvas) — one gesture, one
 /// meaning — and the text size is set by the three buttons in Save & Export (`TextSizeRow`),
 /// the one writer of `step`. A pinch on this modifier sat on the ancestor of the canvas and
@@ -12462,8 +12462,8 @@ struct StudioZoom: ViewModifier {
     }
 }
 
-/// Rule 12 (interface audit 2026-09-30, WCAG 1.4.4): the text size as BUTTONS, not only a
-/// pinch. ⭐ Since DAW shell S9a (founder 2026-10-02, E18 „Zeit zoomen") these three buttons
+/// Rule 12 (interface audit 2026-09-30, WCAG 1.4.4): the text size as BUTTONS — until S9a beside
+/// a pinch, now alone. ⭐ Since DAW shell S9a (founder 2026-10-02, E16 „Zeit zoomen") these three buttons
 /// are the ONE writer of `StudioDefaultKeys.zoomStep` — the pinch zooms the arrangement's time,
 /// and `StudioZoom` only applies the stored step. A LEAF with
 /// its own `@AppStorage`, like `WeatherMixRow`: a tap here costs the root nothing beyond the

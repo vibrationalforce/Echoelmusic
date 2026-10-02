@@ -99,6 +99,8 @@ final class TheChromeTextMeetsTheElevenPointFloorTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelFXView.swift",
         "Sources/Echoelmusic/Studio/ImmersiveStageView.swift",
         "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift",
+        // DAW shell S9a review: the time zoom's two buttons, beside the canvas they zoom.
+        "Sources/Echoelmusic/Studio/ArrangeTimeZoom.swift",
         // Sixth family (same day): the last seven single sites — the Workstation's state tags,
         // the Session view's version, the note editor's octave labels (Canvas-drawn), the mood
         // pads' axis caption, the peer row's "Demo" chip, the narration disclosure's chevron,

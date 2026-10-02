@@ -129,9 +129,10 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
     func testTheCanvasMountsTheRulerAboveItsLanes() throws {
         let file = try source(Self.canvasPath)
         XCTAssertEqual(file.components(separatedBy: "ArrangeBarRuler(").count - 1, 1, "one ruler on the canvas")
-        // Review of d16d764b1, LOW-3: every search is bounded by the canvas struct, and the row's
-        // SPACING is pinned with its gutter — the lanes are `HStack(spacing: Self.gutter)` after
-        // a `nameWidth` name, so the ruler row must be the same or every number shifts.
+        // Review of d16d764b1, LOW-3: every search is bounded by the canvas struct. Since S9a the
+        // gutter is the spacing between the TWO COLUMNS (the still names, the zoomed time), and the
+        // ruler sits in the time column above the lanes, so a number cannot shift off its bar by a
+        // gutter mismatch any more — what keeps a name beside its lane is the shared heights below.
         guard let canvas = file.range(of: "struct ArrangeCanvasView: View {"),
               let canvasEnd = file.range(of: "struct ArrangeBarRuler: View {", range: canvas.upperBound..<file.endIndex) else {
             return XCTFail("ANCHOR MISSING: `ArrangeCanvasView` before `ArrangeBarRuler` (#454)")
@@ -190,11 +191,12 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `nameGutter` before `laneRow` (#454)")
         }
         // Review of 94395338f, LOW-5: the width must close the gutter's OUTER stack. On the `Text`
-        // alone, a symbol-led row would be 3 pt + the symbol wider than the ruler's gutter.
+        // alone, a symbol-led row would be 3 pt + the symbol wider than the names column's empty
+        // ruler cell (`nameWidth`), and the time column would start at a different x per row.
         let gutterBody = String(body[gutter.upperBound..<gutterEnd.lowerBound])
         XCTAssertNotNil(sequence([".lineLimit(1)", "}", ".frame(width: Self.nameWidth, alignment: .leading)"],
                                  in: gutterBody),
-                        "the gutter's whole stack — symbol and name — keeps the width the ruler's gutter copies")
+                        "the gutter's whole stack — symbol and name — keeps the width of the names column's empty ruler cell")
         XCTAssertEqual(gutterBody.components(separatedBy: "Self.nameWidth").count - 1, 1,
                        "one width in the gutter, on its outer stack")
     }

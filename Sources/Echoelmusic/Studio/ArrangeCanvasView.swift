@@ -308,7 +308,7 @@ struct ArrangeCanvasView: View {
     var body: some View {
         let selected = WorkstationSelection.resolvedRegion(selection.regionID,
                                                            track: selection.trackID, in: document)
-        // ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): TWO COLUMNS. The names
+        // ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E16 „Zeit zoomen"): TWO COLUMNS. The names
         // stand still on the left; the ruler, the lanes and the playhead share ONE zoomed width
         // on the right (`ArrangeTimeZoom`), so a pinch spreads the bars and the numbers stay on
         // them by construction. Both columns stack the same heights with the same spacing —

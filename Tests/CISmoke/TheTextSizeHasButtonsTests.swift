@@ -10,7 +10,7 @@
 //   · `StudioDefaultKeys.zoomStep` — the key moves into the keystore because it then had two
 //     writers (pinch + buttons); its STRING stays the pre-keystore literal so a size a user
 //     pinched before this commit survives the update.
-//   ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E18 „Zeit zoomen"): the pinch LEFT `StudioZoom` —
+//   ⭐ DAW SHELL S9a (founder 2026-10-02, inbox E16 „Zeit zoomen"): the pinch LEFT `StudioZoom` —
 //     it zooms the arrangement's time now — so the buttons are the ONE writer and `StudioZoom`
 //     takes the step as a value. Claim 4 pins that (it pinned "the pinch stays" until S9a).
 //   · `TextSizeRow` in Save & Export, beside the level picker: Smaller · Larger · Default, each
@@ -34,11 +34,13 @@
 // `"ui.zoomStep"` literal sat in the root); claim 4 GREEN on both — the counterweight (#343):
 // the pinch gesture and the nine-rung ladder are unchanged, so a slice that replaced the pinch
 // with the buttons instead of adding to it would turn it red.
-// S9a (parent 88058461d): claim 4's gesture, `let step` and no-`@Binding` assertions are RED on
-// the parent for their named reason (the pinch sat on `StudioZoom` and wrote a binding) — one
-// finding, the move (#486); the mount needle moved with the value (`$zoomStep` → `zoomStep`) and
-// is red there by the same move; the ladder and one-application-point assertions are
-// counterweights, green on both.
+// S9a (parent 88058461d): claim 4's gesture, `let step`, no-`@Binding` and no-assignment
+// assertions are RED on the parent for their named reason (the pinch sat on `StudioZoom` and
+// assigned `step = …` through a binding) — one finding, the move (#486); the mount needle moved
+// with the value (`$zoomStep` → `zoomStep`) and is red there by the same move; the ladder and
+// one-application-point assertions are counterweights, green on both. The S9a review narrowed
+// the no-assignment needle from `"step ="` to an assignment pattern that a comparison cannot
+// match — still red on the parent (it assigned), green here.
 // PART 2 (same day, parent 8b9bd76b1): claims 1, 3 and 4 RED on the parent — the studio file
 // held TWO readers of the key and the root none, `StudioZoom` was `private` so the
 // `\nstruct StudioZoom` slice was empty, and `SurfaceHost` carried no modifier; claim 2 GREEN on
@@ -142,7 +144,7 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
         let code = try source(Self.studio)
         let zoom = slice(code, from: "\nstruct StudioZoom: ViewModifier {", to: "\n}\n")
         XCTAssertFalse(zoom.isEmpty, "ANCHOR MISSING: `struct StudioZoom: ViewModifier` (#454)")
-        // DAW shell S9a (founder 2026-10-02, E18 „Zeit zoomen"): the pinch zooms the arrangement's
+        // DAW shell S9a (founder 2026-10-02, E16 „Zeit zoomen"): the pinch zooms the arrangement's
         // TIME. A gesture left on this modifier sits on the ancestor of the canvas and would resize
         // the text under every time-zoom — one gesture, two meanings.
         for gesture in ["MagnifyGesture", "MagnificationGesture", ".gesture(", ".simultaneousGesture(", ".highPriorityGesture("] {
@@ -157,7 +159,10 @@ final class TheTextSizeHasButtonsTests: XCTestCase {
             to happen — `TextSizeRow` is the one writer of the key (S9a).
             """)
         XCTAssertFalse(zoom.contains("@Binding"), "`StudioZoom` takes the step as a value — it never writes it")
-        XCTAssertFalse(zoom.contains("step ="), "`StudioZoom` assigns the step — only `TextSizeRow` writes the key")
+        // An ASSIGNMENT (`=`, `+=`, `-=`, …), never a comparison: the S9a needle was the bare
+        // `"step ="`, which a later `step == …` would have turned red on correct code (review LOW-11).
+        XCTAssertNil(zoom.range(of: #"\bstep\s*[-+*/]?=(?!=)"#, options: .regularExpression),
+                     "`StudioZoom` assigns the step — only `TextSizeRow` writes the key")
         let ladder = slice(zoom, from: "static let ladder: [DynamicTypeSize] = [", to: "]")
         let rungs = ladder.components(separatedBy: ".").count - 1
         XCTAssertEqual(rungs, 9, "nine rungs, `.large` … `.accessibility5` — the caption reads its count from here")
