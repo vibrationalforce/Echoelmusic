@@ -48,8 +48,13 @@
 // as active without colour, a tap on Instrument keeps the music playing — readings, not scans.
 // S8a GRADING: claim 4 is a SOURCE-TEXT scan, transcribed against both trees: on the parent
 // (6ba502435) eight of its nine assertions are red, and they are ONE finding — the rail does not
-// exist there (#486); the tap-height assertion and all of claim 3 are counterweights, green on both. DEVICE PROBE, open: rotate a phone — the five entries
-// stand in a column left of the stage, all reachable, and the floating card stays clear of them.
+// exist there (#486); the tap-height assertion and all of claim 3 are counterweights, green on both.
+// S8a REVIEW REPAIR: the fill assertion is a REGRESSION on 1fd73147f (the rail's surface stopped
+// under its last entry) and green after; the two placements are now read per branch, so swapping
+// the branch bodies is red (driven as a mutant: both go red, the other eight stay green).
+// DEVICE PROBE, open: rotate a phone — the five entries stand in a column left of the stage, the
+// column's surface and border run to the bottom, all entries are reachable (an SE at the rail's
+// xxxLarge cap is the tight case), and the floating card stays clear of them.
 
 import XCTest
 @testable import Echoelmusic
@@ -190,7 +195,7 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
         guard let stack = body.range(of: "ZStack {"), let bar = body.range(of: "shellSwitcher") else {
             XCTFail("ANCHOR MISSING: the stage `ZStack {` or `shellSwitcher` in the shell's body (#454)"); return
         }
-        XCTAssertLessThan(stack.lowerBound, bar.lowerBound, "the switcher sits BELOW the stage — at the bottom, under the thumb")
+        XCTAssertLessThan(stack.lowerBound, bar.lowerBound, "the switcher follows the stage in the body — in portrait it sits at the bottom, under the thumb")
     }
 
     // MARK: 4 — in landscape the switcher is a rail on the leading edge (S8a)
@@ -212,12 +217,14 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
             """)
 
         let layout = try member("private struct ShellLayout: Layout {", in: shell)
-        let place = layout
-        XCTAssertTrue(place.contains("let stage = subviews[0]") && place.contains("let switcher = subviews[1]"),
+        XCTAssertTrue(layout.contains("let stage = subviews[0]") && layout.contains("let switcher = subviews[1]"),
                       "the layout reads the body's order — the stage first, the switcher second")
-        XCTAssertTrue(place.contains("switcher.place(at: bounds.origin"),
+        // Each placement is read in ITS branch, so swapping the two branch bodies is red (review of S8a).
+        let railBranch = try member("if rail {", in: layout)
+        let barBranch = try member("} else {", in: layout)
+        XCTAssertTrue(railBranch.contains("switcher.place(at: bounds.origin"),
                       "in landscape the rail stands at the LEADING origin — the visual card docks bottom-trailing")
-        XCTAssertTrue(place.contains("switcher.place(at: CGPoint(x: bounds.minX, y: bounds.maxY - height)"),
+        XCTAssertTrue(barBranch.contains("switcher.place(at: CGPoint(x: bounds.minX, y: bounds.maxY - height)"),
                       "in portrait the switcher stays at the bottom, under the thumb")
 
         let switcher = try member("private var shellSwitcher: some View {", in: shell)
@@ -225,6 +232,16 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
                       "the rail's border is a 1-px column on its trailing side, not a shadow")
         XCTAssertTrue(switcher.contains("ignoresSafeArea(edges: rail ? .leading : .bottom)"),
                       "the rail's surface runs under the leading safe area, the bar's under the bottom one")
+        guard let fill = switcher.range(of: ".frame(maxHeight: rail ? .infinity : nil, alignment: .top)"),
+              let surface = switcher.range(of: ".background(EchoelTheme.surface") else {
+            XCTFail("""
+                ANCHOR MISSING: the rail's fill frame or its surface in `shellSwitcher` — the five \
+                entries alone are ~250 pt, so without a fill the surface and the trailing border \
+                stop under the last entry and the column below shows the page (review of S8a).
+                """); return
+        }
+        XCTAssertLessThan(fill.lowerBound, surface.lowerBound,
+                          "the fill comes BEFORE the surface, or the surface paints only the entries' height")
         let button = try member("private func switcherButton(_ tab: ShellTab, isActive: Bool) -> some View {", in: shell)
         XCTAssertTrue(button.contains("minHeight: EchoelTheme.controlTapHeight"),
                       "each entry keeps the 44-pt tap height in the rail too — the column must not squeeze them")

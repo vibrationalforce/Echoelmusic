@@ -119,6 +119,10 @@ struct StageShell: View {
                 switcherButton(tab, isActive: tab == current)
             }
         }
+        // The rail is a COLUMN, not a stack of five: it fills the height the layout proposes, so
+        // its surface and its trailing border run to the bottom edge (review of S8a, MED). In
+        // portrait `nil` leaves the bar at its natural height.
+        .frame(maxHeight: rail ? .infinity : nil, alignment: .top)
         .padding(.horizontal, 4)
         .padding(.top, 2)
         .background(EchoelTheme.surface.ignoresSafeArea(edges: rail ? .leading : .bottom))
@@ -129,6 +133,7 @@ struct StageShell: View {
                 Rectangle().fill(EchoelTheme.border).frame(height: 1)
             }
         }
+        // The rail's own cap: five entries must fit the ~270 pt a sideways phone leaves.
         .dynamicTypeSize(...(rail ? DynamicTypeSize.xxxLarge : DynamicTypeSize.accessibility5))
         // The chrome's Dynamic Type cap (the head's own): past it five words cannot share a row.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
