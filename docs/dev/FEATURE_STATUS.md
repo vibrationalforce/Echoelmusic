@@ -4,7 +4,7 @@
 > [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) (DMMW, seit 2026-09-24). Diese Seite sagt nur, was HEUTE
 > läuft. Fach 3 ist Historie: eine Streichung dort nahm eine Implementierung zurück, nicht die Fähigkeit.
 
-Stand: 2026-09-23 · v10.79.480 / Build 2600 · gemessen am Code, nicht aus dem Gedächtnis.
+Stand: 2026-10-02 · v10.79.487 / Build 2612 · gemessen am Code, nicht aus dem Gedächtnis. Seit 2026-10-02 spricht die App nur Englisch.
 
 **Wozu diese Datei.** `FEATURE_MATRIX.md` ist über Monate gewachsen und trägt viele datierte
 Schichten. Deshalb ist aus ihr kaum noch zu lesen, was HEUTE in der App steckt. Diese Seite hat genau
@@ -32,6 +32,9 @@ noch nicht am Gerät bestätigt.
 | Chip **Tempo** | Tap-Tempo, Metronom, Haptik-Beat, „Explore“ (6 Varianten, bewertet) | offen |
 | Chip **Field** | die spielbare Bildfläche; Visual-Feinregler | offen |
 | Bühne **Piece** (die Naht über dem Instrument; seit Scheibe F 2026-10-02 die einzige Tür — der Workstation-Chip ist entfernt) | Spur anlegen, Audio importieren, abspielen; Tonart, Stimmton und Tempo werden erkannt; Warp-Schalter; Tempo je Datei korrigieren (×2 · ÷2 · von Hand, S1); Tonhöhe je Audiospur (±24 Halbtöne, #165); MIDI-Spur anlegen + MIDI-Datei importieren (S2 — spielt im 16tel-Raster zum Song-Tempo, bei gestopptem Instrument) | **ja (Import + Play, 2026-09-23)**; Tempo-Korrektur, Tonhöhe und MIDI-Import offen |
+| Bühne **Piece** — Bearbeiten (Phase 3) | Noten-Editor je MIDI-Teil (`PartNoteEditor`) · Automations-Kurven je Parameter (`SongAutomationEditor`) · Teile verschieben/kopieren/trimmen auf der Arrangement-Fläche (`ArrangeCanvasView`, `SelectedPartBar`) · Spur-Inspektor (Gerät, Name, Pegel, Pan, Mute, Solo) · MIDI-Aufnahme in eine scharfgeschaltete Spur (`RecordTakeButton`, `TrackArmToggle`) · Medienbibliothek (`MediaBrowserView`) · Song-MIDI-Export (`SongExportTab`) · Foto und Video als Bild-Saat fürs Visual (`PhotoSeedCard`, `VideoSeedCard` — kein Videoschnitt) | offen |
+| Projektkopf | Undo/Redo für Song-Bearbeitungen (`SongHistoryRow`, ein Verlauf in `TimelineStore`) · ein Play/Stop/Record | offen |
+| Instrument, zweite Sicht **Perform** | Szenen starten: Teile und Szenen als Schalter (`PerformSessionView` → `SessionLaunchView`) | offen |
 | Chip **Save/Export** | Projekt speichern/öffnen, MIDI-Export, Loop-Länge, Klang zurücksetzen, Guide, Diagnose | offen |
 | Puls-Pille (Kopfzeile) | Bio-Panel: Puls, HRV, Kohärenz, Quellenwahl, „Body voice“, Apple-Health-Schreiben | offen |
 | Bio-Quellen | Kamera-Puls (Finger auf Linse), Apple Health (auch Watch), BLE-Brustgurt (0x180D), Demo | Kamera: ja |
@@ -79,7 +82,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Tonhöhe je einzelnem TEIL (statt je Spur) | je Spur läuft seit #165 | ein neues gespeichertes Feld je Teil |
 | Stretch-Modi außer „clean“ | Engine kann es | eine Auswahl je Teil |
 | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
-| Timeline-Automation | gespeicherte Kurven SPIELEN, aber keine Fläche kann eine zeichnen | Zeichenfläche (Workstation-Grenze!) |
 | „Follow pulse“-Tempo (`BioTempoDirector`) | fertig, aber ein Zwilling des lebenden Servos | Entscheidung, welcher gilt |
 | Raum-Render (7 Kerne: VBAP, Ambisonics, Binaural, Raumhall …) | Steuer-Hälfte (ADM-OSC) läuft | Audio-Anbindung |
 | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
@@ -119,6 +121,10 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 ---
 
 ## 4. NIE GEBAUT — Roadmap, keine Lücke
+
+**Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`): Song-**Audio**-Export
+(heute nur MIDI) · Zeit-Zoom auf der Arrangement-Fläche · eine Tür zum Sampler (`SamplerVoice` hat keinen Lader) ·
+Sends/Returns · Audio-Eingang (#1302, Inbox E10) · Plugin-Hosting (Inbox E11) · Video als Bild-Spur (Inbox E12).
 
 RTMP-Livestream · Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·
 Mac · Vision Pro. Video/KI-Video steht als Roadmap in `scratchpads/ROADMAP_VIDEO_AWB_AI_2026-09-23.md`.

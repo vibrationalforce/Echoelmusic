@@ -197,14 +197,14 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Project envelope (`Core/DMMWProject.swift`, `DMMWProjectImport.swift`) | IMPLEMENTED (M2) | Wraps the song roots; reader/importer exists |
 | Timebase (`Core/TempoMap.swift`) | IMPLEMENTED (M1) | EchoelCore target is founder-gated (#95) |
 | Canonical Session (`DMMWProject`) | **DECIDED (WA2)** · envelope + importer IMPLEMENTED (M2), 0 callers | Target ownership: `SESSION_OWNERSHIP_CENSUS.md` §O |
-| Session / Scenes (clip launch) | **IDEA** | No scene type exists in `Sources/` |
-| Automation | IMPLEMENTED (player); **no editor** | Two homes of `[AutomationLane]` (`automation` + `timeline`), see the roots plan §2.1 |
+| Session / Scenes (clip launch) | IMPLEMENTED (Phase 3 S1/S2) | `SessionLaunchView`, reached from the Instrument's second view „Perform“ (`PerformSessionView`) and the Workstation |
+| Automation | IMPLEMENTED (player + editor, Phase 3 A1–A5) | `SongAutomationEditor` on the Workstation writes through `TimelineStore.setSongAutomation`; the global `AutomationPlayer.lanes` layer still has no writer |
 | Parameters (`Core/EchoelParameterRegistry.swift`, `ParameterApplyRouter.swift`) | IMPLEMENTED · COMPILES | Eligibility split per invariant 8 |
 | Modulation matrix (`Core/ModulationEngine.swift`) | IMPLEMENTED · reachable (Routing → "Body → parameter") | Not device verified |
-| Undo / redo | **IDEA** | None anywhere (HISTORY_ARCHIVE D6) |
-| Note editing / piano roll | **IDEA** (view deleted #475; `PianoRollModel` kept) | Capability is scope (law §2) |
-| Recording / audio input | **IDEA** (implementation revoked #1302) | Engineering warnings stand; see law §2 |
-| Video | **IDEA** (implementation revoked #1304) | Integrate codecs; never rebuild them |
+| Undo / redo | IMPLEMENTED for song edits | One history in `TimelineStore`, buttons in `SongHistoryRow` (project header); no system ⌘Z yet (UX audit slice 13) |
+| Note editing | IMPLEMENTED (Phase 3 M1–M10) | `PartNoteEditor` per MIDI part on the Workstation; the old `PianoRollView` stays deleted (#475) |
+| Recording | MIDI recording IMPLEMENTED (R1: `RecordTakeButton` + `TrackArmToggle`); **audio input IDEA** (#1302 revoked, inbox E10) | Engineering warnings stand; see law §2 |
+| Video | Video as a visual seed IMPLEMENTED (`VideoSeedCard`); a picture-sync lane is **IDEA** (inbox E12) | Integrate codecs; never rebuild them |
 | Lighting (Art-Net, sACN unicast) | IMPLEMENTED · COMPILES | `look.intensity` goes through the canonical parameter path (P2 Proof #1) |
 | Spatial: ADM-OSC control out | IMPLEMENTED | Render cores exist but have no caller (CLAUDE.md register) |
 | XR / visionOS | **IDEA** | No target |

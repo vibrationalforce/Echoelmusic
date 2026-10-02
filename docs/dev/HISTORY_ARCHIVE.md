@@ -355,6 +355,7 @@ Bulk-deletion commits cited below:
 ### D4 · Automation editors
 - **Impl:** `AutomationLaneView` (01), `AutomationView` / `ClipAutomationView` (06-22 → 07-25), `TimelineAutomationRow` (07-17 → #473). `AutomationPlayer` **plays** persisted curves; nothing can draw one.
 - **Scope / Class:** YES / **REBUILD** (the player and the `TimelineAutomationRowMath` core are current)
+- **Rebuilt (Phase 3 A1–A5):** `Studio/SongAutomationEditor` on the Workstation draws one curve per parameter through `TimelineStore.setSongAutomation` (one undo step).
 
 ### D5 · Cue system / step sequencers
 - **Impl:** `ProCueSystem` (03-21 → 03-28), `VisualStepSequencer`, `EchoelSeqEngine`. `PatternEngine` is **CURRENT** as the transport clock.
@@ -364,6 +365,7 @@ Bulk-deletion commits cited below:
 - **Impl:** `UndoRedoManager` (2025-12 → `3dfd8cc0a`). **None exists today.**
 - **Scope / Class:** YES / **REBUILD**. It is a prerequisite for any editing slice.
 - **Next safe slice:** a command-log core for `TimelineStore` edits.
+- **Rebuilt:** one history in `TimelineStore`, with undo/redo buttons in `Studio/SongHistoryRow` on the project header. System ⌘Z is open (UX audit 2026-10-02, slice 13).
 
 ### D7 · Browser / sample browser / channel rack
 - **Impl:** `BrowserView` / `SampleBrowserView` (→ 07-27), `ChannelRackView` (→ 07-27).
@@ -686,7 +688,7 @@ it. Treat it as a dated snapshot (#818), not a pinned number.
 - **D3 · K-weighting coefficients are the 48 kHz set at every sample rate.** A documented approximation; the offset at 44.1 kHz has not been measured. → **REPAIRED by E3 (2026-09-24, `2e6b54d66`).** Measured before the repair: +1.13 dB at 20 Hz, +0.40 dB at 60 Hz, +0.33 dB at 1.5 kHz at 44.1 kHz. After: within 0.005 dB of the standard at 44.1 kHz; the export now takes peak and loudness in one 44.1 kHz decode.
 - **D4 · stale header claims in `EchoelDDSP.swift`.** "FIR noise"; "LF/HF → reverb".
 - **D5 · `SamplerVoice` has no loader.** No UI can load a sample into the rack slot.
-- **D6 · no undo** anywhere, while editing capabilities are in scope.
+- **D6 · no undo** anywhere, while editing capabilities are in scope. → **REPAIRED** for song edits (`TimelineStore` history, `SongHistoryRow`).
 
 ### Export-quality repair — readiness
 
