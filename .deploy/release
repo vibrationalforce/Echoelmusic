@@ -1,4 +1,4 @@
-build: v10.79.488 — Nur noch Englisch, ⌘Z, das ganze Stück als WAV, ein „Add“-Menü statt fünf Knöpfe
+build: v10.79.489 — Die DAW-Hülle: eine Steuerleiste, eine Fläche, unten Arrange · Mixer · Instrument · Browse · Project
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,67 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.489) ───────────────────────────────
+
+  ⭐ DER DAW-UMBAU, DEN DU FREIGEGEBEN HAST (E18 „Ja, so bauen“): oben eine Steuerleiste, EINE
+  Arbeitsfläche, das Detail folgt der Auswahl, unten der Umschalter Arrange · Mixer ·
+  Instrument · Browse · Project. Elf Code-Scheiben (S1–S9b) seit 10.79.488, jede mit eigenem
+  Wächter und eigenem Review. Auf dem Gerät ist NICHTS davon geprüft; dieser Build ist genau
+  dafür da. Die Fragen je Scheibe stehen auch im Postfach (docs/dev/FOUNDER_INBOX.md §2, S1–S9b).
+  Gates: Xcode Compile Check + Build for Testing grün auf 77f29e2fa (= main).
+
+  ── POSTEN 1: UNTEN DER UMSCHALTER, OBEN DAS MENÜ ──
+  · Unten fünf Wörter: Arrange · Mixer · Instrument · Browse · Project. Quer gehalten stehen
+    sie als senkrechte Leiste links.
+  · Das E-Logo oben links ist das Menü: Open · Save │ Live Colabo · Learn │ Guide.
+  · Die Song-Einstellungen (Tonart, Stimmung, Tempo-Modus …) liegen jetzt auf „Project“.
+
+  ── POSTEN 2: DETAIL FOLGT DER AUSWAHL ──
+  · Spur antippen → darunter (quer: rechts) bis zu fünf Seiten: Track · Part · Notes ·
+    Automation · Device. Noten- und Kurven-Editor sind Seiten, keine aufklappbaren Kästen mehr.
+  · Notes: „Zoom out“ / „Zoom in“ in der Werkzeugzeile, oder zwei Finger spreizen —
+    drei Spaltenbreiten, der Schritt in der Mitte bleibt in der Mitte.
+
+  ── POSTEN 3: MIXER MIT MASTER, BROWSE MIT KLÄNGEN ──
+  · Mixer: unter den Spur-Streifen ein „Master“-Kasten mit Lautstärke, Pegel, LUFS/True-Peak
+    und „Clear“.
+  · Browse: oben „Sounds“ (zugeklappt) — ein Tipp setzt den Klang der gewählten MIDI-Spur;
+    darunter die Medienbibliothek.
+
+  ── POSTEN 4: EIN PLAY, ZEIT ZOOMEN, QUER EINE ZEILE WENIGER ──
+  · Das Instrument hat kein eigenes ▶ mehr: „Play“ im Kopf startet es. Während es spielt hält
+    „Pause“ auf der Platte die Musik, „Play“ setzt fort, „Stop“ beendet alles.
+  · Arrange: zwei Finger spreizen = die Takte werden breiter (die Schrift NICHT — die hat
+    ihre Knöpfe im Save/Export-Chip des Instruments, Zeile „Text size“). „Zoom in“ / „Zoom out“ unter den Spuren tun dasselbe.
+  · Quer: „Add“ sitzt am Ende von Play · Click · Record statt in einer eigenen Zeile.
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück, unten die fünf Wörter.
+  T2  E-Logo → Menü: öffnet jeder Eintrag sein Blatt, auch vom Stück aus?
+  T3  Spur antippen: Track · Part · Notes · Automation · Device — passen alle auf 375 pt und
+      quer in die rechte Spalte? „Write notes“ springt auf „Notes“?
+  T4  Notes: „Zoom in“ ganz am Ende eines langen Teils — bleibt der Schritt stehen?
+      Zwei Finger erst ruhen lassen, dann spreizen — wird dabei eine Note verschoben?
+  T5  Mixer: „Master“-Kasten da, Zahlen bewegen sich beim Spielen, „Clear“ setzt zurück.
+  T6  Browse → Sounds → „Bright Lead“: Haken wandert, Device-Seite zeigt denselben Klang,
+      „Undo“ setzt zurück.
+  T7  Instrument: „Play“ im Kopf startet, „Pause“ hält, „Stop“ beendet.
+  T8  Quer: Leiste links, „Add“ am Ende der Transportzeile, Pegel passt beim Spielen daneben.
+  T9  Hängt oder stockt etwas: Instrument → Save/Export-Chip → „Diagnostics“ → Teilen.
+
+  Neu prüfbare Bitten (8):
+  Gedruckt: python3 scripts/founder-verify.py --since c80cbb672
+  OTHER 1 — quer, Arrange mit Spur: „Add“ am Ende von Play · Click · Record, keine eigene Zeile.
+  OTHER 2 — Rack-MIDI-Spur, Teil wählen: die Detail-Seiten lesen sich richtig.
+  OTHER 3 — Notes: Zoom in/out und Pinch, der Schritt bleibt im Blick.
+  OTHER 4 — Arrange, 8 Takte: Pinch über Takt 5, Takt 5 bleibt unter den Fingern.
+  OTHER 5 — zweite MIDI-Spur → „Automation“: drei Punkte zeichnen, ein Undo-Schritt.
+  OTHER 6 — Create a piece, Schritte 1–3: nach „Write notes“ zeigt das Detail die Noten.
+  UI 1 — Kopf: ein Tipp am Rand der Marke trifft (die Tippfläche folgt dem gezeichneten Rahmen).
+  AUDIO 1 — Browse → Sounds → „Bright Lead“ auf einer MIDI-Spur: man hört den neuen Klang.
+
+  Der Vorgänger ist 10.79.488 (Build 2613), davor 10.79.487.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.488) ───────────────────────────────
 
