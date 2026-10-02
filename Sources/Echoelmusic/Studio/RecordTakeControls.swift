@@ -84,8 +84,13 @@ struct RecordTakeButton: View {
             }
         } label: {
             HStack(spacing: 6) {
+                // H14 (2026-10-02): the DAW convention, so Record never reads as a second Stop —
+                // a red dot while ready, a red fill while recording. Red is the `recording`
+                // MEANING colour (`EchoelTheme`), not chrome; black on it reads ~5.5:1.
                 Image(systemName: recording ? "stop.circle.fill" : "record.circle")
                     .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(recording ? EchoelTheme.onPrimary
+                                               : (state == .ready ? EchoelTheme.recording : EchoelTheme.dim))
                 if !compact {
                     Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
                         .font(EchoelTheme.font(13, .semibold))
@@ -96,7 +101,7 @@ struct RecordTakeButton: View {
             .padding(.horizontal, compact ? 0 : 14)
             .frame(minWidth: 44, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .fill(recording ? EchoelTheme.warning : EchoelTheme.fill))
+                .fill(recording ? EchoelTheme.recording : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .strokeBorder(state == .ready ? EchoelTheme.border : Color.clear, lineWidth: 1))
             .contentShape(Rectangle())
