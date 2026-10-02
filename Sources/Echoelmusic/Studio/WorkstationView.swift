@@ -383,16 +383,20 @@ struct WorkstationView: View {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
                         // its own store reads — this view still sends `timeline` nothing but
                         // `document`.
-                        TrackInspectorView(laneID: row.id)
-                            .id(row.id)
-                        // Phase 3 / Recording R1 — record-arm, on a rack MIDI track only.
-                        TrackArmToggle(laneID: row.id)
-                        // An audio track's pitch and per-part tempo belong to its open head (A5) —
-                        // under a card that is gone they would dangle.
-                        if row.kind == .audio {
-                            pitchField(row)
-                            partTempoRows(laneID: row.id)
+                        // DAW shell S4b: the arm, an audio track's pitch and its files' tempo are
+                        // rows OF the open track's detail — Track page and Part page — instead of
+                        // three loose rows under it. Built here (they read this view's transport
+                        // and measuring state, exactly as before) and placed by the inspector.
+                        TrackInspectorView(laneID: row.id) {
+                            // Phase 3 / Recording R1 — record-arm, on a rack MIDI track only.
+                            TrackArmToggle(laneID: row.id)
+                            // An audio track's pitch belongs to its open head (A5) — under a card
+                            // that is gone it would dangle.
+                            if row.kind == .audio { pitchField(row) }
+                        } part: {
+                            if row.kind == .audio { partTempoRows(laneID: row.id) }
                         }
+                        .id(row.id)
                     }
                 }
                 }
@@ -786,7 +790,7 @@ struct WorkstationView: View {
                     : String(localized: "Moves every part on this track up or down without changing its tempo"),
                 standard: Double(TimelineLane.defaultTransposeSemitones))
             .disabled(playing)
-            .padding(.leading, 36).padding(.trailing, 10)
+            // S4b: no indent of its own — it sits inside the inspector's padding now.
         }
     }
 
@@ -1665,8 +1669,8 @@ private struct PartTempoRow: View {
             }
         }
         .disabled(lockedByWarp || measuring)
+        // S4b: on the Part page, inside the inspector's padding — no indent of its own.
         .padding(.vertical, 6)
-        .padding(.leading, 36).padding(.trailing, 10)
         .onChange(of: clip.nativeBPM) { _, _ in draft = nil }
     }
 

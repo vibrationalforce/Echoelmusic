@@ -25,6 +25,9 @@
 // 2. SOURCE-TEXT SCAN: the body draws one `Picker`, segmented, whose setter commits the name
 //    first; the Part/Notes/Automation segments exist only where their pages do; each page gate
 //    appears once and holds its rows, each row once.
+// 2b. SOURCE-TEXT SCAN (S4b): the record arm and an audio track's Pitch are Track-page rows, an
+//    imported file's tempo is a Part-page row — built by the Workstation, placed by the detail,
+//    never left loose under it.
 // 3. SOURCE-TEXT SCAN: the choice is view state on the ONE owner — one writer, no persistence,
 //    and `notesOpen` is read off the page, never stored beside it.
 // 4. COUNTERWEIGHTS (#343): no modal and no hot read in the detail; the name still commits on
@@ -39,6 +42,8 @@
 //   once (#486). Claim 2 is red there on the `detailPages` line, the two new segments and the two
 //   new page gates; claim 4 on the hint key and on the two editors still mounted in the
 //   Workstation body. Every red names the S4a absence, none another reason.
+// · S4b (parent 2bf2cba20): claim 2b and claim 2's `trackRows`/`partRows` rows are red there by
+//   ONE absence — the inspector takes no rows from its caller; every other claim is unchanged.
 // · This tree: every claim transcribed into Python and driven green.
 // · Stripper (`SourceText.codeOnly`): PROPHYLAKTISCH — 0 of the source verdicts flip between
 //   raw and stripped text on either tree.
@@ -48,7 +53,9 @@
 // "Write notes" in the compose guide opens the Notes page; type a new name, tap "Device" before
 // Return — the name is kept; open another track — the same page stays; open the bio track — two
 // segments, Track shown; in landscape the five words fit the 260-pt detail column at the largest
-// text size; a tap near the top or bottom edge of a segment still switches.
+// text size; a tap near the top or bottom edge of a segment still switches. S4b: the record arm
+// (rack MIDI track) and an audio track's Pitch sit on the Track page, an imported file's tempo on
+// the Part page — nothing hangs loose under the detail any more.
 
 import Foundation
 import XCTest
@@ -248,8 +255,8 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
                                      "instrumentRow(instruments)", "EchoelInstanceLine()",
                                      "echoelGenreRow", "echoelEffectRow", "effectRow"]),
             ("if page == .track {", ["TextField(\"Track name\"", "label: \"Level\"", "label: \"Pan\"",
-                                    "removeRow(removal)"]),
-            ("if page == .part {", ["TrackPartsView(laneID: laneID)"]),
+                                    "trackRows", "removeRow(removal)"]),
+            ("if page == .part {", ["TrackPartsView(laneID: laneID)", "partRows"]),
             ("if page == .notes {", ["PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"]),
             ("if page == .automation {",
              ["SongAutomationEditor(songTicks: ArrangementStrip.songTicks(WorkstationSummary(document: document)))"]),
@@ -262,6 +269,46 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
                 XCTAssertEqual(occurrences(row, in: body), 1, "\(row) is drawn once — on its page")
             }
         }
+    }
+
+    // MARK: 2b — SOURCE: the open track's own rows sit on its pages (S4b)
+
+    /// Until S4b the record arm, an audio track's Pitch and its files' tempo were three loose rows
+    /// UNDER the detail, visible whatever page was chosen. They are now rows of the detail: the
+    /// Workstation still builds them (they read its transport and measuring state) and hands them
+    /// to the inspector, which places the arm and Pitch on the Track page and the tempo rows on
+    /// the Part page. The risk is a row built but never placed, or placed on a page its track
+    /// never offers: Track exists on every track, and the tempo rows exist only on a non-bio
+    /// audio track, where `TrackParts.arrangeable` offers Part.
+    func testTheOpenTracksRowsSitOnItsPages() throws {
+        let inspector = SourceText.codeOnly(try text(Self.inspectorPath))
+        XCTAssertTrue(inspector.contains("struct TrackInspectorView<TrackRows: View, PartRows: View>: View {"))
+        XCTAssertTrue(inspector.contains("init(laneID: UUID, @ViewBuilder trackRows: () -> TrackRows, @ViewBuilder part partRows: () -> PartRows) {"))
+        XCTAssertTrue(inspector.contains("self.trackRows = trackRows()"))
+        XCTAssertTrue(inspector.contains("self.partRows = partRows()"))
+
+        let workstation = SourceText.codeOnly(try text(Self.workstationPath))
+        guard let open = workstation.range(of: "TrackInspectorView(laneID: row.id) {"),
+              let split = workstation.range(of: "} part: {", range: open.upperBound..<workstation.endIndex),
+              let close = workstation.range(of: ".id(row.id)", range: split.upperBound..<workstation.endIndex) else {
+            XCTFail("ANCHOR MISSING: the inspector's two row closures in the Workstation (#454)")
+            throw AnchorMissing()
+        }
+        let trackRows = String(workstation[open.upperBound..<split.lowerBound])
+        let partRows = String(workstation[split.upperBound..<close.lowerBound])
+        XCTAssertTrue(trackRows.contains("TrackArmToggle(laneID: row.id)"), "the record arm is a Track-page row")
+        XCTAssertTrue(trackRows.contains("if row.kind == .audio { pitchField(row) }"), "an audio track's Pitch is a Track-page row")
+        XCTAssertFalse(trackRows.contains("partTempoRows("), "a file's tempo is not a Track-page row")
+        XCTAssertTrue(partRows.contains("if row.kind == .audio { partTempoRows(laneID: row.id) }"),
+                      "each imported file's tempo is a Part-page row")
+        XCTAssertFalse(partRows.contains("TrackArmToggle("), "the arm is not a Part-page row")
+        XCTAssertFalse(partRows.contains("pitchField("), "Pitch is not a Part-page row")
+
+        // The Part page exists on every non-bio audio track — the only place the tempo rows exist.
+        let audio = TimelineLane(name: "Audio", kind: .audio)
+        let doc = TimelineDocument(lanes: [audio], regions: [])
+        XCTAssertTrue(TrackMix.inspectorPages(of: audio.id, in: doc).contains(.part),
+                      "an audio track offers the Part page its tempo rows sit on")
     }
 
     // MARK: 3 — SOURCE: the choice is view state on the one owner

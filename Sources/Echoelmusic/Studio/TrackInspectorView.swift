@@ -489,7 +489,7 @@ enum TrackMix {
 
 /// The selected track's inspector, shown under its row in the Workstation.
 @MainActor
-struct TrackInspectorView: View {
+struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
 
     @Environment(TimelineStore.self) private var timeline
     /// Read for `laneVoiceCapacity` only — a cold, unobserved number set once at start.
@@ -499,6 +499,19 @@ struct TrackInspectorView: View {
     /// B2a — read for the Sound row's menu only: cold, the stored sounds change on a save.
     @Environment(PatchStore.self) private var patchStore
     let laneID: UUID
+    /// DAW shell S4b — the open track's own rows that are not the inspector's to build: the
+    /// record arm and an audio track's Pitch on the Track page, an audio file's tempo on the
+    /// Part page. The Workstation builds them (they read its transport and its measuring state,
+    /// as before) and hands them in, so every control of the open track sits on ONE page of
+    /// ONE detail instead of dangling under it. Built once per Workstation body, like before.
+    private let trackRows: TrackRows
+    private let partRows: PartRows
+
+    init(laneID: UUID, @ViewBuilder trackRows: () -> TrackRows, @ViewBuilder part partRows: () -> PartRows) {
+        self.laneID = laneID
+        self.trackRows = trackRows()
+        self.partRows = partRows()
+    }
     /// The name being typed. Local and cold; committed on Return, on focus loss and on close.
     @State private var nameDraft = ""
     @FocusState private var nameFocused: Bool
@@ -649,6 +662,8 @@ struct TrackInspectorView: View {
                     }
                     // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
                     // one control per fact on screen, reachable without opening this inspector.
+                    // S4b — the record arm and an audio track's Pitch (each gated by itself).
+                    trackRows
                     if let removal = TrackMix.removal(of: laneID, in: document) {
                         removeRow(removal)
                     }
@@ -658,6 +673,8 @@ struct TrackInspectorView: View {
                     // WA4.3 — the track's parts: a row selects its part; the part bar under the
                     // arrangement acts on it. Its own leaf; the page exists only where it has rows.
                     TrackPartsView(laneID: laneID)
+                    // S4b — each imported file's tempo on an audio track (gated by itself).
+                    partRows
                 }
 
                 if page == .notes {

@@ -157,7 +157,7 @@ struct RecordTakeNote: View {
     }
 }
 
-/// Record-arm for the ONE open track, shown under its inspector. Offered on a rack MIDI track —
+/// Record-arm for the ONE open track, shown on its detail's Track page (S4b). Offered on a rack MIDI track —
 /// the tracks a MIDI take can land on and play back from — and on ANY track that is already armed,
 /// so a stale arm from an older document can always be switched off.
 @MainActor
@@ -187,7 +187,7 @@ struct TrackArmToggle: View {
             }
             .tint(EchoelTheme.accent)
             .disabled(recorder.isRecording)   // a take's targets are fixed when it starts
-            .padding(.horizontal, 10)
+            // S4b: on the Track page of the detail, inside the inspector's own padding.
         }
     }
 }
