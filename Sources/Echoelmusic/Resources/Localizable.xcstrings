@@ -11619,12 +11619,12 @@
         }
       }
     },
-    "Opens the part's notes under the arrangement." : {
+    "Opens the part's notes on its track's Notes page." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opens the part's notes under the arrangement."
+            "value" : "Opens the part's notes on its track's Notes page."
           }
         }
       }
@@ -11661,12 +11661,12 @@
         }
       }
     },
-    "The part's notes are open under the arrangement. Tap a cell to write a note." : {
+    "The part's notes are open on the track's Notes page. Tap a cell to write a note." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The part's notes are open under the arrangement. Tap a cell to write a note."
+            "value" : "The part's notes are open on the track's Notes page. Tap a cell to write a note."
           }
         }
       }
@@ -15251,12 +15251,12 @@
         }
       }
     },
-    ". Its notes are open under the arrangement" : {
+    ". Its notes are open on the track's Notes page" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ". Its notes are open under the arrangement"
+            "value" : ". Its notes are open on the track's Notes page"
           }
         }
       }
@@ -19691,26 +19691,6 @@
         }
       }
     },
-    "Hide the selected part's notes" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide the selected part's notes"
-          }
-        }
-      }
-    },
-    "Show the selected part's notes" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show the selected part's notes"
-          }
-        }
-      }
-    },
     "Use the actions to select the next or previous note; the controls below act on the selection. By touch: tap an empty cell to add a note, tap notes to select them; press and hold, then slide, to move, stretch or box-select" : {
       "localizations" : {
         "en" : {
@@ -19767,26 +19747,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search presets & tags"
-          }
-        }
-      }
-    },
-    "Hide the selected track's automation" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide the selected track's automation"
-          }
-        }
-      }
-    },
-    "Show the selected track's automation" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show the selected track's automation"
           }
         }
       }
@@ -21801,14 +21761,14 @@
         }
       }
     },
-    "Shows this track, its parts or the device that plays it" : {
+    "Shows this track, its parts, the selected part's notes, its automation or the device that plays it" : {
       "comment" : "Workstation redesign A8 (2026-10-01): VoiceOver hint of the open track's page control.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Shows this track, its parts or the device that plays it"
+            "value" : "Shows this track, its parts, the selected part's notes, its automation or the device that plays it"
           }
         }
       }

@@ -27,18 +27,20 @@ public final class WorkstationSelection {
 
     public private(set) var trackID: UUID?
     public private(set) var regionID: UUID?
-    /// DMMW Phase 2 · slice 1 — whether the selected part's note grid is open (the "Notes"
-    /// switch of `PartNoteEditor`). It was `@State` in the editor, so nothing else could open
-    /// it: "Write notes" selected a part and then said "Tap Notes" — a hidden step. Held here,
-    /// beside the ids it belongs to, so the compose guide and "New MIDI Part" open it too.
-    /// View state like the ids: cold (a tap), never persisted, kept across a change of part
-    /// (the editor's old behaviour — it stayed mounted, and so did its switch).
-    public private(set) var notesOpen = false
-    /// A8 — which page the open track's inspector shows (Track · Part · Device). View state like
-    /// the ids: cold (a tap), never persisted, and kept across a change of track — the inspector
-    /// is rebuilt per track (`.id(row.id)`), so `@State` there would forget it on every tap of
-    /// another header. A track without the chosen page shows Track (`TrackInspectorPage.shown`).
+    /// A8 — which page the open track's detail shows. DAW shell S4a (founder 2026-10-02, "ein
+    /// Detailbereich, der der Auswahl folgt") made it the ONE detail area: Track · Part · Notes ·
+    /// Automation · Device, one page at a time, where the note grid and the automation row used
+    /// to be two more switches of their own under the canvas. View state like the ids: cold (a
+    /// tap), never persisted, and kept across a change of track — the inspector is rebuilt per
+    /// track (`.id(row.id)`), so `@State` there would forget it on every tap of another header.
+    /// A track without the chosen page shows Track (`TrackInspectorPage.shown`).
     public private(set) var inspectorPage: TrackInspectorPage = .track
+    /// DMMW Phase 2 · slice 1 — whether the selected part's notes are open, so the compose
+    /// guide's "Write notes" and "New MIDI Part" can open them (before, "Tap Notes" was a hidden
+    /// step). Since S4a this is not a second switch beside the page: the Notes PAGE is the open
+    /// grid, so the flag is read off `inspectorPage` and there is one fact, not two that could
+    /// disagree. Kept across a change of part, as the old switch was.
+    public var notesOpen: Bool { inspectorPage == .notes }
 
     public init() {}
 
@@ -68,13 +70,18 @@ public final class WorkstationSelection {
         trackID = region.laneID
     }
 
-    /// Open or close the selected part's notes — the editor's switch, and the doors that
-    /// promise the notes ("Write notes", "New MIDI Part").
+    /// Open or close the selected part's notes — the doors that promise the notes ("Write
+    /// notes", "New MIDI Part"). Opening shows the Notes page; closing an open grid falls back
+    /// to Track, the page every track has. Closing while another page is shown leaves it alone.
     public func setNotesOpen(_ open: Bool) {
-        notesOpen = open
+        if open {
+            inspectorPage = .notes
+        } else if inspectorPage == .notes {
+            inspectorPage = .track
+        }
     }
 
-    /// A8 — the inspector's page control, the one writer of `inspectorPage`.
+    /// A8 — the detail's page control, the one writer of a chosen page.
     public func showInspectorPage(_ page: TrackInspectorPage) {
         inspectorPage = page
     }
@@ -100,10 +107,11 @@ public final class WorkstationSelection {
     }
 }
 
-/// A8 — the three pages of the open track's inspector. A plain value: the inspector asks
+/// A8 — the pages of the open track's detail; DAW shell S4a added Notes and Automation, which
+/// were switches of their own under the canvas until then. A plain value: the inspector asks
 /// `shown(_:offered:)` from its body, and a guard drives it without an actor.
 public enum TrackInspectorPage: Hashable, Sendable {
-    case track, part, device
+    case track, part, notes, automation, device
 
     /// The page actually drawn: the chosen one when this track has it, else Track — every
     /// track has a Track page (its name).

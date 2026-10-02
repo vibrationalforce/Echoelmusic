@@ -5,13 +5,15 @@
 // WHAT THIS PINS. The part bar read "Selected part · Bar 9 · 4 bars" — the END was left for the
 // musician to add up — and the note count existed only inside the grid's VoiceOver label, behind
 // a closed switch. Now the heading reads "… · to bar 12" and the switch reads "Notes · 32".
+// (DAW shell S4a: the switch is gone — the Notes page of the track's detail opens the grid, and
+// "Notes · 32" is that page's heading. The count and its spoken value are unchanged.)
 //
 // 1. END-TO-END BEHAVIOUR (`TrackParts.spanTitle`, pure): the end bar comes from the Workstation's
 //    one pair of bar rules; a part that stays inside one bar adds nothing.
 // 2. END-TO-END BEHAVIOUR (`ClipNoteEdit.noteCount` / `notesSwitchTitle`, pure over a real `Clip`
 //    and `TimelineRegion`): the count is the grid's own windowing — notes outside the part are
 //    not counted — and nil wherever the grid would not open a clip.
-// 3. SOURCE: the part bar shows `spanTitle`; the switch shows the count and speaks it as its
+// 3. SOURCE: the part bar shows `spanTitle`; the Notes heading shows the count and speaks it as its
 //    value. That the bar's body reads no clip is pinned ONCE, by
 //    `TheSelectedPartIsCutWhereItIsHeardTests` (#416) — the end bar needs none.
 //
@@ -23,7 +25,7 @@
 // below; claim 3 transcribed against this tree: green.
 // NOT covered: how the longer heading wraps at the largest text sizes — a device look.
 // NEEDS-FOUNDER-VERIFY: Workstation → select a 4-bar part at bar 9 → the bar reads "Selected part
-// · Bar 9 · 4 bars · to bar 12"; on a MIDI part the switch reads "Notes · N" with N the notes the
+// · Bar 9 · 4 bars · to bar 12"; on a MIDI part the Notes page reads "Notes · N" with N the notes the
 // grid then shows.
 
 import Foundation
@@ -78,7 +80,7 @@ final class TheSelectedPartSaysItsEndAndItsNotesTests: XCTestCase {
 
     // MARK: 3 — the two surfaces use them
 
-    func testTheBarAndTheSwitchShowThem() throws {
+    func testTheBarAndTheNotesHeadingShowThem() throws {
         let bar = try source(Self.partBar)
         XCTAssertTrue(bar.contains("let title = TrackParts.spanTitle(part)"), "the part bar's heading names the end bar")
         // E4-26: the heading's head is a catalog key; the claim (the bar SHOWS `spanTitle`) is unchanged.
@@ -93,10 +95,19 @@ final class TheSelectedPartSaysItsEndAndItsNotesTests: XCTestCase {
         XCTAssertTrue(switchView.contains("ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)"),
                       "the count is asked of the one windowing rule, on the part's own clip")
         XCTAssertTrue(switchView.contains("Text(ClipNoteEdit.notesSwitchTitle(count: count))"))
-        XCTAssertTrue(switchView.contains("let spokenCount: String = count.map { $0 == 1 ? \"1 note\" : \"\\($0) notes\" } ?? \"\""),
+        // ⛔ The spoken count was pinned here as `count.map { $0 == 1 ? "1 note" : … }` and E4-91
+        // (9ea54803a) moved the word into the catalog without moving this needle — the claim stood
+        // red and outside the Run Tests window (#807) until DAW shell S4a re-read the whole file.
+        // Pinned now in the shipped form: the count is the operand, the word a catalog key.
+        XCTAssertTrue(switchView.contains("let spokenCount: String = count.map { n in"),
                       "the spoken value is the count in words (review of 705f771fd, LOW-6: an empty value passed)")
+        XCTAssertTrue(switchView.contains("let word: String = n == 1 ? String(localized: \"note\") : String(localized: \"notes\")"))
+        XCTAssertTrue(switchView.contains("return \"\\(n) \" + word"), "the number is said, then its word")
+        XCTAssertTrue(switchView.contains("} ?? \"\""), "no part count, no spoken value")
         XCTAssertTrue(switchView.contains(".accessibilityValue(spokenCount)"), "VoiceOver hears the count too")
-        XCTAssertFalse(switchView.contains("setClipNotes"), "the switch counts, it never edits")
+        XCTAssertFalse(switchView.contains("setClipNotes"), "the heading counts, it never edits")
+        XCTAssertTrue(switchView.contains(".accessibilityAddTraits(.isHeader)"),
+                      "DAW shell S4a: no switch any more — the count is the Notes page's heading")
     }
 
     // MARK: helpers

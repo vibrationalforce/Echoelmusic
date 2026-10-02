@@ -175,7 +175,7 @@ enum ComposeGuide {
                                            : String(localized: "An instrument track for the notes of your piece.")
         case .part:  return state == .done ? String(localized: "Adds another empty four-bar part after the last one.")
                                            : String(localized: "An empty four-bar part on that track.")
-        case .notes: return String(localized: "Opens the part's notes under the arrangement.")
+        case .notes: return String(localized: "Opens the part's notes on its track's Notes page.")
         case .play:  return facts.isPlaying ? String(localized: "Stops the piece, the instrument and the pulse reading.")
                                             : String(localized: "Plays the piece from the top.")
         case .save:  return String(localized: "Names the piece and saves it. Open brings it back.")
@@ -185,7 +185,7 @@ enum ComposeGuide {
     /// What the card says after "Write notes": where the grid it just opened sits, because on a
     /// phone it is below the canvas and may be off screen.
     static var notesOpenedNote: String {
-        String(localized: "The part's notes are open under the arrangement. Tap a cell to write a note.")
+        String(localized: "The part's notes are open on the track's Notes page. Tap a cell to write a note.")
     }
 
     private static func waitingReason(_ step: Step, _ facts: Facts) -> String {

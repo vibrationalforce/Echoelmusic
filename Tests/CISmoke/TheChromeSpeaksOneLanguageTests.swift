@@ -1096,11 +1096,11 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      "String(localized: \"An instrument track for the notes of your piece.\")",
                      "String(localized: \"Adds another empty four-bar part after the last one.\")",
                      "String(localized: \"An empty four-bar part on that track.\")",
-                     "String(localized: \"Opens the part's notes under the arrangement.\")",
+                     "String(localized: \"Opens the part's notes on its track's Notes page.\")",
                      "String(localized: \"Stops the piece, the instrument and the pulse reading.\")",
                      "String(localized: \"Plays the piece from the top.\")",
                      "String(localized: \"Names the piece and saves it. Open brings it back.\")",
-                     "String(localized: \"The part's notes are open under the arrangement. Tap a cell to write a note.\")",
+                     "String(localized: \"The part's notes are open on the track's Notes page. Tap a cell to write a note.\")",
                      "String(localized: \"Add a MIDI track first.\")", "String(localized: \"Add a part first.\")",
                      "String(localized: \"Nothing in the piece can play yet — no part with notes is heard.\")",
                      "String(localized: \"Write notes into a part first.\")", "String(localized: \"Add a part with notes first.\")",
@@ -1130,13 +1130,13 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertFalse(composeCard.contains("Text(\"\\(step.rawValue). \\(ComposeGuide.title(step, facts))\")"),
                        "the step row interpolates the title into one literal again")
         // RUNTIME COUNTERWEIGHT: the bundle's English is unchanged
-        XCTAssertTrue(ComposeGuide.notesOpenedNote.hasPrefix("The part's notes are open under the arrangement."))
+        XCTAssertTrue(ComposeGuide.notesOpenedNote.hasPrefix("The part's notes are open on the track's Notes page."))
         try assertCatalogued(["Add a MIDI track", "Add a part", "Write notes", "Stop all playback", "Play the piece", "Save the piece",
                           "Your piece has its MIDI track.", "An instrument track for the notes of your piece.",
                           "Adds another empty four-bar part after the last one.", "An empty four-bar part on that track.",
-                          "Opens the part's notes under the arrangement.", "Stops the piece, the instrument and the pulse reading.",
+                          "Opens the part's notes on its track's Notes page.", "Stops the piece, the instrument and the pulse reading.",
                           "Plays the piece from the top.", "Names the piece and saves it. Open brings it back.",
-                          "The part's notes are open under the arrangement. Tap a cell to write a note.",
+                          "The part's notes are open on the track's Notes page. Tap a cell to write a note.",
                           "Add a MIDI track first.", "Add a part first.", "Nothing in the piece can play yet — no part with notes is heard.",
                           "Write notes into a part first.", "Add a part with notes first.", "playing", "done", "next step", "available",
                           "not yet available", "Step ", " of ", "Every step is available below.", "Next: ", "Create a piece. "], "Compose guide")
@@ -2081,7 +2081,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             XCTAssertFalse(audioNote.contains(verbatim), "AudioImport interpolates an English sentence again: `\(verbatim)`")
         }
         try assertCatalogued(["Added ", ". It is selected in the track list.", "Added an empty ", "-bar part on ",
-                          ". Its notes are open under the arrangement",
+                          ". Its notes are open on the track's Notes page",
                           " — once it has notes, it plays at the piece's tempo, with the instrument stopped.",
                           " cannot play a MIDI part, so it went on ", " Generate won't place its music over this part.",
                           "bar", "bars", "note", "notes", "Imported “", "” — ", " on ",
@@ -2947,8 +2947,11 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertFalse(launchHints.contains("                           : \"Loops this part on its track from the next bar\")"),
                        "SessionLaunchView spells the part hint verbatim again")
         let noteGridHints = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
-        for seam in [".accessibilityLabel(isOpen ? String(localized: \"Hide the selected part's notes\")",
-                     ": String(localized: \"Shown, not edited\")",
+        // DAW shell S4a: the editor's open/close switch is gone (the Notes page of the track's detail
+        // is the open grid), and with it the toggle-label pair E4-81 made into two keys. Its absence is
+        // pinned here; the count the heading speaks keeps its E4-91 seam below.
+        XCTAssertFalse(noteGridHints.contains("Hide the selected part's notes"), "the note editor grew a switch again")
+        for seam in [": String(localized: \"Shown, not edited\")",
                      ".accessibilityAction(named: \"Select next note\") {"] {
             XCTAssertTrue(noteGridHints.contains(seam), "PartNoteEditor lost the E4-81 seam `\(seam)`")
         }
@@ -2958,7 +2961,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo",
                           "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.",
                           "Already looping. Stop the track to hand it back to the piece", "Loops this part on its track from the next bar",
-                          "Hide the selected part's notes", "Show the selected part's notes", "Shown, not edited",
+                          "Shown, not edited",
                           "Select next note", "Select previous note", "Search presets & tags",
                           "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side."],
                          "inspector, launcher and note-editor hints")
@@ -2967,8 +2970,11 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         // automation strip's status pair and the part bar's start-bar hint. The curve canvas's `.accessibilityHint("…")`
         // and its two `.accessibilityAction(named:)` literals are LocalizedStringKey positions — units only.
         let automationHints = try codeOnly("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
-        for seam in [".accessibilityLabel(isOpen ? String(localized: \"Hide the selected track's automation\")",
-                     "hint: String(localized: \"Sets the picked point's value\"),",
+        // DAW shell S4a: the toggle and its label pair went — the Automation page of the track's
+        // detail is the open row. Its absence is pinned; the two other E4-82 seams stand.
+        XCTAssertFalse(automationHints.contains("Hide the selected track's automation"),
+                       "the automation editor grew a switch again")
+        for seam in ["hint: String(localized: \"Sets the picked point's value\"),",
                      ".accessibilityAction(named: \"Pick next point\") { onStep(1) }"] {
             XCTAssertTrue(automationHints.contains(seam), "SongAutomationEditor lost the E4-82 seam `\(seam)`")
         }
@@ -2982,7 +2988,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let partBarHint = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(partBarHint.contains("hint: String(localized: \"Moves the part to start on this bar; its place within the bar is kept.\"),"),
                       "SelectedPartBar lost the E4-82 seam")
-        try assertCatalogued(["Hide the selected track's automation", "Show the selected track's automation", "Sets the picked point's value",
+        try assertCatalogued(["Sets the picked point's value",
                           "Pick next point", "Pick previous point",
                           "Double-tap adds or picks the point in the middle of the piece. Use the actions to pick another point; its value and Remove follow below.",
                           "Global curves move these parameters while the transport runs.",
@@ -3177,7 +3183,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         try assertCatalogued([", muted", ", soloed", ", silent while another track is soloed", " · part at bar ", ", part at "],
                          "canvas hearing and place fragments")
 
-        // E4-91 — the note editor's switch speaks its count as `.accessibilityValue(spokenCount)` and a stepped pick
+        // E4-91 — the note editor's switch (since S4a its heading) speaks its count as `.accessibilityValue(spokenCount)` and a stepped pick
         // is announced as "<note> at step <n>, selected"; the record row names a track without a name "A track" in the
         // foreign-arm sentence. All three were String positions. The words are keys now (the count reuses the grid
         // label's "note"/"notes"); the note name and the numbers are operands.

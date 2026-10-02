@@ -13,7 +13,7 @@
 //    Echoel track and a track inside the capacity get none; with no rack at all, an extra track
 //    gets the "off in this build" line.
 // 2. SOURCE: the editor asks `TrackMix.role` (no second rule, #416) with the capacity the
-//    Workstation hands in, and reads no player itself — M1 bans `player.` in the editor, because
+//    track's detail hands in (since DAW shell S4a; the Workstation until then), and reads no player itself — M1 bans `player.` in the editor, because
 //    the player is the transport and the editor must stay a cold leaf.
 //
 // Grading (§0, no Swift toolchain in a web session): `TrackMix.role`, `MultiRollFanout.slot` and
@@ -24,7 +24,7 @@
 // cannot pass. Claim 2 is a scan of the same new call.
 // NOT covered: that the line is seen and read well on a device.
 // NEEDS-FOUNDER-VERIFY: Workstation → add MIDI tracks until there are six → select a part on the
-// sixth → under "Notes" it says the track has no voice; a part on the second track says nothing.
+// sixth → on its Notes page it says the track has no voice; a part on the second track says nothing.
 
 import Foundation
 import XCTest
@@ -33,7 +33,7 @@ import XCTest
 final class TheNoteEditorSaysWhenATrackHasNoVoiceTests: XCTestCase {
 
     private static let editorPath = "Sources/Echoelmusic/Studio/PartNoteEditor.swift"
-    private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let inspectorPath = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
 
     /// Six MIDI tracks: the first is the Echoel track, the other five want rack voices.
     private func song() -> (TimelineDocument, [UUID]) {
@@ -74,9 +74,10 @@ final class TheNoteEditorSaysWhenATrackHasNoVoiceTests: XCTestCase {
         XCTAssertTrue(editor.contains("voiceCapacity: voiceCapacity))"))
         XCTAssertTrue(editor.contains("let voiceCapacity: Int"), "a number handed in, required (#431)")
         XCTAssertFalse(editor.contains("player."), "the editor reads no transport (M1's ban, kept)")
-        let workstation = try source(Self.workstationPath)
-        XCTAssertTrue(workstation.contains("PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),
-                      "the Workstation hands in the capacity the rack was enabled with")
+        // DAW shell S4a: the editor is the Notes page of the track's detail, so the detail mounts it.
+        let inspector = try source(Self.inspectorPath)
+        XCTAssertTrue(inspector.contains("PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)"),
+                      "the track's detail hands in the capacity the rack was enabled with")
     }
 
     private func source(_ relativePath: String) throws -> String {

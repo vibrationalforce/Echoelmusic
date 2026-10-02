@@ -21,7 +21,8 @@
 //    path (`differsOnlyInAutomation`), checked before the chase flushes a single voice.
 // 5. SOURCE-TEXT SCAN: the editor writes only through the one writer and never the older
 //    per-point mutators (they record no Undo); the only finger-rate state is `@GestureState`;
-//    the editor reads no clock; the Workstation mounts it once.
+//    the editor reads no clock; it is mounted once — since DAW shell S4a on the Automation page
+//    of the track's detail (`TrackInspectorView`), no longer under the canvas behind a switch.
 // 6. END-TO-END BEHAVIOUR (review repair): a hold that travels less than the shared tap slop
 //    moves nothing; a move onto an occupied sixteenth replaces, never stacks; Remove drops only
 //    the emptied lane; removing a track takes its curves with it, and an Undo step that would
@@ -75,9 +76,9 @@
 // the song's own points alone read 0 at the end, playback reads 0.5. Counterweights: no point
 // past the end, and another parameter's lane, lend nothing.
 // NOT HERE — DEVICE PROBE, open.
-// NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → select it → "Automation" →
+// NEEDS-FOUNDER-VERIFY: Workstation → a second MIDI track (poly) → open it → the "Automation" page →
 // tap three points, hold one and slide it → Play: the track's brightness follows the curve;
-// Undo takes the last point edit back; the Echoel track shows no Automation switch.
+// Undo takes the last point edit back; the Echoel track's detail shows no Automation page.
 // A2: pick "Envelope attack", pick a point, type 0.5 → the field reads 0.500 s and the track's
 // attack is half a second. (After Stop a slot keeps the curve's last value, which cannot be heard:
 // the timeline note sink is the only caller of `noteOn(slot:`, and every load re-sends the lane's
@@ -97,6 +98,7 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
     private static let editorPath = "Sources/Echoelmusic/Studio/SongAutomationEditor.swift"
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let inspectorPath = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
     private static let brightness = "ddsp.osc.brightness"
 
     /// Echoel (the roll lane, first non-bio MIDI lane) + a poly rack track + an audio track.
@@ -522,9 +524,21 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         for clock in ["currentTick", "isPlaying", "masterLevel", "latestBio"] {
             XCTAssertFalse(editor.contains(clock), "the editor reads no clock or live signal (`\(clock)`)")
         }
+        // DAW shell S4a: the row is the Automation page of the track's detail — mounted there once,
+        // on the canvas's scale, and no longer a second time under the canvas.
         let workstation = try source(Self.workstationPath)
-        XCTAssertEqual(workstation.components(
-            separatedBy: "SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))").count - 1, 1)
+        XCTAssertFalse(workstation.contains("SongAutomationEditor("), "no second mount under the canvas")
+        let inspector = try source(Self.inspectorPath)
+        XCTAssertEqual(inspector.components(
+            separatedBy: "SongAutomationEditor(songTicks: ArrangementStrip.songTicks(WorkstationSummary(document: document)))")
+            .count - 1, 1, "one mount, on the canvas's song length")
+        guard let gate = inspector.range(of: "if page == .automation {"),
+              let mount = inspector.range(of: "SongAutomationEditor(songTicks:", range: gate.upperBound..<inspector.endIndex)
+        else {
+            return XCTFail("ANCHOR MISSING: the Automation page gate or the editor on it (#454)")
+        }
+        XCTAssertFalse(inspector[gate.upperBound..<mount.lowerBound].contains("}"),
+                       "the row is the Automation page's own content, directly inside its gate")
     }
 
     // MARK: helpers

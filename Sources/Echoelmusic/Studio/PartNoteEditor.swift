@@ -4,7 +4,8 @@
 //
 //  WHY THIS EXISTS. The Workstation could place, cut and move a MIDI part but not change a note
 //  in it — `PianoRollView` went with #475 and nothing replaced it. This is the note editor for
-//  the part selected on the Arrange canvas, inline under its part bar: see the part's notes,
+//  the part selected on the Arrange canvas — since DAW shell S4a the Notes page of the track's
+//  detail (`TrackInspectorView`), no longer a switch of its own under the part bar: see the part's notes,
 //  tap an empty cell to add one, tap notes to select them, delete the selection, and take any of
 //  it back with the Workstation's one Undo. Since M2: press and hold, then slide — on a note to
 //  move the selection, on its right edge to stretch it, on an empty cell to box-select (since M9 the box adds to the selection, like a tap). An edit is heard from the next step while the song
@@ -38,8 +39,8 @@
 //  without selecting anything. A PICKED note stays the bright ringed block and shows no
 //  velocity until it is deselected; the velocity row shows the number (review LOW-5).
 //
-//  Since M8: a part on a MIDI track past the rack's capacity says, under "Notes", that the track
-//  has no voice — its notes can be edited and are never heard. The inspector's line and rule.
+//  Since M8: a part on a MIDI track past the rack's capacity says, under its heading, that the
+//  track has no voice — its notes can be edited and are never heard. The inspector's line and rule.
 //
 //  Since B6a (workstation redesign 2026-10-01): a VELOCITY LANE under the grid, in the same
 //  horizontal scroll so each stem stays under its note's column (`PartVelocityLane`). It draws
@@ -67,28 +68,27 @@
 
 import SwiftUI
 
-/// The notes of the MIDI part selected on the Arrange canvas — a "Notes" switch, then the grid.
+/// The notes of the MIDI part selected on the Arrange canvas — the Notes page of the track's
+/// detail (DAW shell S4a): a heading with the count, then the grid.
 @MainActor
 struct PartNoteEditor: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
-    /// Design slice 2: the part's note count on the switch. Cold — the clip grid moves on a note
+    /// Design slice 2: the part's note count in the heading. Cold — the clip grid moves on a note
     /// edit or a composer take, never on a clock; the grid below already reads it.
     @Environment(ClipStore.self) private var clipStore
     /// M8: the rack's capacity (`TimelineRegionPlayer.laneVoiceCapacity`), handed in by the
-    /// Workstation — a number set once at start. The editor reads no transport itself.
+    /// detail — a number set once at start. The editor reads no transport itself.
     let voiceCapacity: Int
     var body: some View {
         let document = timeline.document
-        // Whether the grid is open — held by the selection owner since DMMW Phase 2, so "Write
-        // notes" and "New MIDI Part" can open it (view state, never persisted).
-        let isOpen = selection.notesOpen
-        if let regionID = WorkstationSelection.resolvedRegion(selection.regionID,
-                                                              track: selection.trackID, in: document),
-           let region = document.regions.first(where: { $0.id == regionID }),
-           let lane = document.lanes.first(where: { $0.id == region.laneID }),
-           lane.kind == .midi, !lane.isBio {
+        // S4a: no switch of its own any more — the Notes PAGE is the open grid, chosen on the
+        // detail's one page control (`WorkstationSelection.inspectorPage`), and the page is
+        // offered only where `editableRegion` finds a part (`TrackMix.detailPages`, #416).
+        if let region = Self.editableRegion(selection.regionID, track: selection.trackID, in: document),
+           let lane = document.lanes.first(where: { $0.id == region.laneID }) {
+            let regionID = region.id
             let count = ClipNoteEdit.noteCount(clip: clipStore.clip(id: region.clipID), region: region)
             // E4-91: the count is an operand, the word a key (reuses "note"/"notes" from the grid label).
             let spokenCount: String = count.map { n in
@@ -96,23 +96,11 @@ struct PartNoteEditor: View {
                 return "\(n) " + word
             } ?? ""
             VStack(alignment: .leading, spacing: 6) {
-                Button { selection.setNotesOpen(!isOpen) } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                            .font(EchoelTheme.font(11, .semibold))
-                        Text(ClipNoteEdit.notesSwitchTitle(count: count)).font(EchoelTheme.font(12, .semibold))
-                    }
+                Text(ClipNoteEdit.notesSwitchTitle(count: count))
+                    .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 8)
-                    .frame(minHeight: 44)
-                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                        .fill(EchoelTheme.fill))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isOpen ? String(localized: "Hide the selected part's notes")
-                                           : String(localized: "Show the selected part's notes"))
-                .accessibilityValue(spokenCount)
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityValue(spokenCount)
                 if let line = Self.noVoiceLine(TrackMix.role(of: lane.id, in: document,
                                                              voiceCapacity: voiceCapacity)) {
                     Text(line)
@@ -120,16 +108,26 @@ struct PartNoteEditor: View {
                         .foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                if isOpen {
-                    // Keyed by the part: another part starts with an empty selection and its
-                    // own octave, never with the last part's.
-                    NoteNamingReader { naming in
-                        PartNoteGrid(regionID: regionID, naming: naming)
-                    }
-                    .id(regionID)
+                // Keyed by the part: another part starts with an empty selection and its
+                // own octave, never with the last part's.
+                NoteNamingReader { naming in
+                    PartNoteGrid(regionID: regionID, naming: naming)
                 }
+                .id(regionID)
             }
         }
+    }
+
+    /// S4a — the part whose notes this page edits: the selected part, still on the selected
+    /// track, on a MIDI track that is not the bio curve. nil = no Notes page (the one rule the
+    /// detail's page list asks too, so the page is never an empty box).
+    nonisolated static func editableRegion(_ regionID: UUID?, track: UUID?,
+                                           in document: TimelineDocument) -> TimelineRegion? {
+        guard let id = WorkstationSelection.resolvedRegion(regionID, track: track, in: document),
+              let region = document.regions.first(where: { $0.id == id }),
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .midi, !lane.isBio else { return nil }
+        return region
     }
 
     /// M8: a track past the rack's capacity has no voice — its notes can be edited and are never

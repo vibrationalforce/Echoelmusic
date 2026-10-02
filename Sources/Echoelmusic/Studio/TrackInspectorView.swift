@@ -52,6 +52,11 @@
 //  (what plays the track · instrument · instance · style · effect). The choice lives on
 //  `WorkstationSelection` — view state, cold (a tap), kept across a change of track, never
 //  persisted. A track without the chosen page shows Track.
+//  ⭐ DAW shell S4a (founder 2026-10-02, the approved shell: "ein Detailbereich, der der Auswahl
+//  folgt") — this is now the track's ONE detail area. Notes (the selected part's grid,
+//  `PartNoteEditor`) and Automation (the track's curve, `SongAutomationEditor`) are two more
+//  pages of the same control instead of two switches of their own under the canvas, each
+//  offered only where it has something to edit (`TrackMix.detailPages`).
 //
 //  Cold reads only: `timeline.document` changes on an edit. No playhead, no meter, no bio.
 //
@@ -155,6 +160,25 @@ enum TrackMix {
     /// is never an empty box.
     nonisolated static func inspectorPages(of laneID: UUID, in document: TimelineDocument) -> [TrackInspectorPage] {
         TrackParts.arrangeable(laneID, in: document) ? [.track, .part, .device] : [.track, .device]
+    }
+
+    /// DAW shell S4a — the detail's pages for a track: the inspector's own (`inspectorPages`,
+    /// so Part keeps its one rule) with the two editors before Device, each only where it has
+    /// something to edit — Notes where the selected part is an editable MIDI part on THIS track
+    /// (`PartNoteEditor.editableRegion`), Automation where a curve on it would sound
+    /// (`SongAutomationEdit.sounds`). Both are the editors' own gates (#416), so a page is never
+    /// an empty box.
+    nonisolated static func detailPages(of laneID: UUID, selectedRegion: UUID?, in document: TimelineDocument,
+                                        voiceCapacity: Int) -> [TrackInspectorPage] {
+        var pages = inspectorPages(of: laneID, in: document).filter { $0 != .device }
+        if PartNoteEditor.editableRegion(selectedRegion, track: laneID, in: document) != nil {
+            pages.append(.notes)
+        }
+        if SongAutomationEdit.sounds(on: laneID, in: document, voiceCapacity: voiceCapacity) {
+            pages.append(.automation)
+        }
+        pages.append(.device)
+        return pages
     }
 
     nonisolated static func deviceName(_ role: Role) -> String {
@@ -486,11 +510,16 @@ struct TrackInspectorView: View {
                                             voiceCapacity: player.laneVoiceCapacity) {
             // A8 — the page this track's inspector draws: the one chosen on the selection owner,
             // or Track when this track has no such page (Part on a bio track).
-            let pages = TrackMix.inspectorPages(of: laneID, in: document)
+            // S4a: the detail's pages — the inspector's own plus Notes and Automation where they
+            // have something to edit. The selected part is read here (cold, a tap) so the Notes
+            // segment follows the selection.
+            let pages = TrackMix.detailPages(of: laneID, selectedRegion: selection.regionID, in: document,
+                                             voiceCapacity: player.laneVoiceCapacity)
             let page = TrackInspectorPage.shown(selection.inspectorPage, offered: pages)
             VStack(alignment: .leading, spacing: 8) {
-                // Segmented, not a `.menu`: no popover for a re-render to tear down. Three short
-                // words, meant to fit the 260-pt landscape column (A9) — a device check, not a fact.
+                // Segmented, not a `.menu`: no popover for a re-render to tear down. Up to five
+                // short words; whether five fit the 260-pt landscape column (A9) at a large text
+                // size is a device check, not a fact.
                 Picker("Inspector", selection: Binding<TrackInspectorPage>(
                     get: { page },
                     set: { picked in
@@ -502,12 +531,18 @@ struct TrackInspectorView: View {
                     if pages.contains(.part) {
                         Text("Part").tag(TrackInspectorPage.part)
                     }
+                    if pages.contains(.notes) {
+                        Text("Notes").tag(TrackInspectorPage.notes)
+                    }
+                    if pages.contains(.automation) {
+                        Text("Automation").tag(TrackInspectorPage.automation)
+                    }
                     Text("Device").tag(TrackInspectorPage.device)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(minHeight: 44)
-                .accessibilityHint("Shows this track, its parts or the device that plays it")
+                .accessibilityHint("Shows this track, its parts, the selected part's notes, its automation or the device that plays it")
 
                 if page == .device {
                     HStack(spacing: 8) {
@@ -623,6 +658,19 @@ struct TrackInspectorView: View {
                     // WA4.3 — the track's parts: a row selects its part; the part bar under the
                     // arrangement acts on it. Its own leaf; the page exists only where it has rows.
                     TrackPartsView(laneID: laneID)
+                }
+
+                if page == .notes {
+                    // S4a — the selected part's notes (Phase 3 / M1), the grid that sat under the
+                    // part bar behind a "Notes" switch. A leaf with its own store writes; the
+                    // rack's capacity (M8) is handed in as the number set once at start.
+                    PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)
+                }
+
+                if page == .automation {
+                    // S4a — the track's curve (Automation A1/A2), on the Arrange canvas's scale:
+                    // the same song length the canvas draws (`ArrangementStrip.songTicks`).
+                    SongAutomationEditor(songTicks: ArrangementStrip.songTicks(WorkstationSummary(document: document)))
                 }
             }
             .padding(.vertical, 8).padding(.horizontal, 10)

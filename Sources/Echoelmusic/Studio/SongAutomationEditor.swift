@@ -267,49 +267,30 @@ enum SongAutomationEdit {
     }
 }
 
-/// The selected track's automation — an "Automation" switch, then the row.
+/// The selected track's automation — the Automation page of the track's detail (DAW shell
+/// S4a): the row for one chosen parameter, with no switch of its own.
 @MainActor
 struct SongAutomationEditor: View {
 
-    /// The song's length on the Arrange canvas's scale, handed in by the Workstation.
+    /// The song's length on the Arrange canvas's scale, handed in by the detail.
     let songTicks: Int
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
     /// Read for `laneVoiceCapacity` only — a cold number set once at start.
     @Environment(TimelineRegionPlayer.self) private var player
-    /// View state: whether the row is open. Not part of the song, never persisted.
-    @State private var isOpen = false
 
     var body: some View {
         let document = timeline.document
+        // S4a: the detail offers this page only where the curve sounds (`TrackMix.detailPages`
+        // asks the same `sounds`, #416); the gate stays here too, so the row never draws silence.
         if let laneID = WorkstationSelection.resolvedTrack(selection.trackID, in: document),
            SongAutomationEdit.sounds(on: laneID, in: document,
                                      voiceCapacity: player.laneVoiceCapacity) {
-            VStack(alignment: .leading, spacing: 6) {
-                Button { isOpen.toggle() } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                            .font(EchoelTheme.font(11, .semibold))
-                        Text("Automation").font(EchoelTheme.font(12, .semibold))
-                    }
-                    .foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 8)
-                    .frame(minHeight: 44)
-                    .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                        .fill(EchoelTheme.fill))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isOpen ? String(localized: "Hide the selected track's automation")
-                                           : String(localized: "Show the selected track's automation"))
-                if isOpen {
-                    // Keyed by the track: another track starts with nothing picked and opens on
-                    // its own parameter.
-                    SongAutomationLane(laneID: laneID, songTicks: songTicks)
-                        .id(laneID)
-                }
-            }
+            // Keyed by the track: another track starts with nothing picked and opens on its own
+            // parameter.
+            SongAutomationLane(laneID: laneID, songTicks: songTicks)
+                .id(laneID)
         }
     }
 }

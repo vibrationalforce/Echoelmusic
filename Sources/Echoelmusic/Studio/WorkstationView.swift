@@ -61,8 +61,9 @@
 // that with one line. No audio meters, no buffer-rate state, no bio. That matters more than
 // it looks, and slice F re-states WHY, because the old reason was the chip: since slice 2b
 // this view is mounted by `ArrangeStage` on the Piece stage, not reached through the studio's
-// `dropdownContent`, and it HOSTS menus itself — `TrackInspectorView`, `MediaBrowserView` and
-// `SongAutomationEditor` are constructed only here, and they carry `.menu` pickers and a
+// `dropdownContent`, and it HOSTS menus itself — `TrackInspectorView` (and inside it, since DAW
+// shell S4a, `SongAutomationEditor`) and `MediaBrowserView` are constructed only under this
+// body, and they carry `.menu` pickers and a
 // `Menu` — so a high-frequency read added to this body would rebuild them at that rate and
 // tear down any open one. The law is in `.claude/skills/swiftui-render-safety/SKILL.md`; the
 // reason it applies HERE is that this body is the menu host's ancestor.
@@ -356,16 +357,11 @@ struct WorkstationView: View {
                     SelectedPartBar(playFrom: { startTimeline(fromTick: $0, launching: []) },
                                     songCanStart: { songCanStart() })
                         .padding(.horizontal, 10)
-                    // Phase 3 / M1 — the selected MIDI part's notes, behind its own "Notes"
-                    // switch. A leaf: it reads the clip grid, never the transport — the rack's
-                    // capacity (M8) is handed in as a number, set once at start.
-                    PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)
-                        .padding(.horizontal, 10)
-                    // Phase 3 / Automation A1 — the selected track's curve, behind its own
-                    // "Automation" switch, on the canvas's scale. A leaf with its own store
-                    // write; this view still sends `timeline` nothing but `document`.
-                    SongAutomationEditor(songTicks: ArrangementStrip.songTicks(summary))
-                        .padding(.horizontal, 10)
+                    // ⛔ The selected part's notes (Phase 3 / M1) and the track's curve
+                    // (Automation A1) stood HERE, each behind a switch of its own. DAW shell S4a
+                    // (founder 2026-10-02, the approved shell) made them the Notes and Automation
+                    // pages of the track's ONE detail area (`TrackInspectorView`, below or beside),
+                    // so a part's editors sit on the same page control as its track and device.
                   }
                   .frame(maxWidth: .infinity, alignment: .leading)
                 }

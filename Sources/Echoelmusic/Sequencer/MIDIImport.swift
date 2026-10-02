@@ -270,7 +270,7 @@ public enum MIDIImport {
                                      notOnSelected: String?) -> String {
         // E4-56: seams of catalog keys (≤ 4 operands per step); the counts and names are never literals.
         let landed: String = String(localized: "Added an empty ") + "\(emptyPartBars)" + String(localized: "-bar part on ") + laneName
-        var note: String = landed + String(localized: ". Its notes are open under the arrangement")
+        var note: String = landed + String(localized: ". Its notes are open on the track's Notes page")
             + String(localized: " — once it has notes, it plays at the piece's tempo, with the instrument stopped.")
         if let selected = notOnSelected {
             let moved: String = " " + selected + String(localized: " cannot play a MIDI part, so it went on ")

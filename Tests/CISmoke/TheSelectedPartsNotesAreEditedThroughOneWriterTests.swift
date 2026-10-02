@@ -16,7 +16,8 @@
 //    notes step whose clip is gone is skipped, not played as a dead Undo; Open clears it.
 // 3. SOURCE: `ClipStore.updateMelody` is called from the store alone; the editor writes through
 //    `setClipNotes` and nothing else, reads no transport, tempo or playhead, owns no persistence
-//    and no modal, and is mounted once, under the part bar.
+//    and no modal, and is mounted once — since DAW shell S4a on the Notes page of the track's
+//    detail (`TrackInspectorView`, `if page == .notes {`), no longer under the part bar.
 // 4. THE M1 REVIEW (independent ui-state review of 4781cbc0d, five findings, all repaired here):
 //    (1) a note edit changes the CLIP, not the document, so the structure chase never saw it and
 //    a part spanning the loop — every imported MIDI song — kept its Play-time notes until Stop:
@@ -50,6 +51,7 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
 
     private static let editorPath = "Sources/Echoelmusic/Studio/PartNoteEditor.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let inspectorPath = "Sources/Echoelmusic/Studio/TrackInspectorView.swift"
     private static let headerPath = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
     private static let storePath = "Sources/Echoelmusic/Core/TimelineStore.swift"
     private static let playerPath = "Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"
@@ -335,13 +337,19 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
 
         // M8: the mount hands in the rack's capacity (`TheNoteEditorSaysWhenATrackHasNoVoiceTests`).
         let mounts = try filesMatching { code, _ in code.contains("PartNoteEditor(voiceCapacity:") }
-        XCTAssertEqual(mounts, [Self.workstationPath], "one door, on the Workstation")
+        XCTAssertEqual(mounts, [Self.inspectorPath], "one door, on the track detail's Notes page (S4a)")
         let workstation = try source(Self.workstationPath)
-        guard let bar = workstation.range(of: "SelectedPartBar(playFrom:"),
-              let editorMount = workstation.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)") else {
-            return XCTFail("ANCHOR MISSING: the part bar or the editor (#454)")
+        XCTAssertTrue(workstation.contains("SelectedPartBar(playFrom:"), "the part bar keeps its own mount")
+        XCTAssertFalse(workstation.contains("PartNoteEditor("),
+                       "S4a: the grid is no longer a second door under the part bar")
+        let inspector = try source(Self.inspectorPath)
+        guard let gate = inspector.range(of: "if page == .notes {"),
+              let editorMount = inspector.range(of: "PartNoteEditor(voiceCapacity: player.laneVoiceCapacity)",
+                                                range: gate.upperBound..<inspector.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the Notes page gate or the editor on it (#454)")
         }
-        XCTAssertLessThan(bar.lowerBound, editorMount.lowerBound, "the editor sits under the part bar")
+        XCTAssertFalse(inspector[gate.upperBound..<editorMount.lowerBound].contains("}"),
+                       "the editor is the Notes page's own content, directly inside its gate")
         // ⛔ Until head leaf 3 (2026-09-30) this claim held the ONE Undo/Redo directly under the
         // editor (M6 had moved it above the canvas and was reverted: "the closest spot to the
         // edit"). The head holds it now, above BOTH stages — the Instrument stage writes the
