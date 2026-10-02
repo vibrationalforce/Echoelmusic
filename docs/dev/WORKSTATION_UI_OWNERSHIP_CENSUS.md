@@ -332,14 +332,14 @@ writers of something (§F14).
 | S08 | `bus.freshBio`, rPPG waveform/BPM/lock, Polar state | posts chrome door "bio", `.echoelSelectBioSource` | — | **10 Hz bio** (leaf) | — (the studio starts the sources) | contextMenu |
 | S09 | `ExternalStageBridge.isConnected`; bio/musical frames in a 20 Hz TimelineView while running | — (its button toggles S12) | — | **20 Hz** TimelineView (leaf) | — | — |
 | S10 | `SignalRouter.graph`, `bus.freshMusical` | posts "routing" | — | TimelineView ≤ flash rate (leaf) | — | — |
-| S11 | `guideVisible` | `guideVisible` | — (co-written by the ⓘ in `ProjectHeader`, head leaf 4 2026-09-30; before: the Export panel toggle) | — | — | overlay |
+| S11 | `guideVisible` | `guideVisible` | — (co-written by the Guide toggle in the logo's ≡ menu, DAW shell S1b-1 2026-10-02; before: the ⓘ in `ProjectHeader`, head leaf 4; before that the Export panel toggle) | — | — | overlay |
 | S12 | ~45 `@AppStorage` keys (visual, weather mix, touch, field arp, key/scale/genre/loudness), WeatherProvider, SessionContext | floating size/visible, visualStyle/StyleB/Blend (look scrub), touchShowGrid, `ExternalStageBridge.setSky` | — | MetalBioView per frame (renderer, not body); transport only inside closures | **renderer lifetime**; must stay mounted for the Field arp's CADisplayLink | `.sheet(item:)` ShareSheet (WAV) |
 | S13 | key/scale, touch settings, transport (inside a closure at touch time) | notes on the touch synth; MIDI out notes | touch-surface notes | touch rate | **synth noteOn/Off, MIDI out** | UIKit layer |
 | S14 | engine, exporter state | `audioEngine.retroCapture` start/stop, `singleExport` WAV | the visual-window WAV path (second export path beside S22) | — | **RetroCapture tap, export render** | ShareSheet via S12 |
 | S15 | `transport.position` (gated on visible) | — | — | playhead (leaf) | — | — |
 | S16 | output samples (20–30 Hz), `truePeak`, `cameraRPPG.rrWindowMs`, SessionContext, `noteNaming` | `visual.analysisMeter`; `claimDetailedMetering(.scope)` | `visual.analysisMeter` | **20–30 Hz** TimelineViews (leaves) | turns on R128 detail DSP on the engine | — |
 | S17 | output samples, master levels, `bus.usableBio` | — | — | Canvas/TimelineView (leaf) | — | — |
-| S18 | hint flags | `instrumentHintSeen`, `studio.guideVisible` (the head's ⓘ; rule 7 — no counter since 2026-09-30) | — | — | — | overlay |
+| S18 | hint flags | `instrumentHintSeen`, `studio.guideVisible` (the logo menu's Guide toggle since S1b-1; rule 7 — no counter since 2026-09-30) | — | — | — | overlay |
 | S19 | `ExternalStageBridge` (bus, governor, synth, sky), 13 visual keys + weather mix | — | — | renderer | renderer | — (non-interactive window) |
 | S20 | everything in the environment | `activeMenu`; hosts every panel | navigation state (`activeMenu`, not persisted) | none in body (guard `TheMenuHostReadsNoHotStateTests`) | through its methods: see S21, S25–S39 | 11 on the chain + 1 nested (§E) |
 | S21 | `running`, `hasComposed` | `running` → `bus.setInstrumentRunning`; `synth.bioModulationEnabled`; `generate`; `startEvolving`; `startBioSource` (camera/Polar/demo); weather fetch; `stopEverything` | **session run state** (`running` is view `@State`) | — | **generator, transport play/stop, bio publishers, voices panic** | — |

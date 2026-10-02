@@ -938,7 +938,7 @@ struct FloatingVisualWindow: View {
                 // discover by feel — the camera is on the BACK, nothing on screen implies
                 // it. A whisper on the fullscreen picture that teaches the two core
                 // gestures. Since the 2026-09-30 audit (rule 7: nothing disappears with
-                // time) it STAYS while the head's ⓘ guide is on and the lesson is not
+                // time) it STAYS while the Guide switch (the mark's ≡ menu, S1b-1) is on and the lesson is not
                 // learned (`startBioSource()` retires it) — no timer, no show cap; #604's
                 // return-until-learned law survives, its cap and its 4.5 s fade do not.
                 // Non-blocking (allowsHitTesting false — never steals the first
@@ -1466,11 +1466,11 @@ struct FloatingVisualWindow: View {
 /// until it is closed, and can be reopened" (WCAG 2.2.1) — retires both halves: NO
 /// timer, NO counter, NO cap, no `.task` at all.
 ///
-/// THE LAW NOW: the hint is on while the head's ⓘ guide switch (`guideVisible`, ON for
+/// THE LAW NOW: the hint is on while the Guide switch in the mark's ≡ menu (`guideVisible`, ON for
 /// new users, Kopf-4) is on AND the lesson is not yet LEARNED (`startBioSource()` writes
 /// `instrumentHintSeen` the moment the user starts a bio source — step 1 of this hint's
-/// own first sentence, the #604 arm that survives). Closing = the ⓘ in the head;
-/// reopening = the same ⓘ. Learning closes it for good, and the same two gestures stay
+/// own first sentence, the #604 arm that survives). Closing = that Guide switch;
+/// reopening = the same switch (it was the head's ⓘ until DAW shell S1b-1). Learning closes it for good, and the same two gestures stay
 /// readable in `GuideOverlay` behind the same switch — one help switch app-wide (rule
 /// 8), no new control, no touch stolen from the picture.
 ///
@@ -1489,7 +1489,7 @@ private struct InstrumentHintOverlay: View {
 
     var body: some View {
         // Rule 7 (interface audit 2026-09-30): a hint is a STATE, not an event. Two
-        // user-owned facts decide it — the head's ⓘ guide switch and the learned flag —
+        // user-owned facts decide it — the ≡ menu's Guide switch and the learned flag —
         // and nothing else: no clock, no counter, no cap. Both are cold `@AppStorage`
         // (written on a tap and on Start), so this leaf never rebuilds at rate.
         if guideVisible, !seen {

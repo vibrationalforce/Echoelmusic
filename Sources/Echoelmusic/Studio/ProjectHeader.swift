@@ -19,7 +19,8 @@
 // the Piece stage and this header reads the same stage key. One definition, so one word, one
 // spoken label, one resume of a held instrument, one Stop for everything and ONE space-bar key
 // follow it to whichever stage is in front. The compact Record leaves with it (the bar carries
-// the full one); the facts, the pill, Undo / Redo and ⓘ stay on both stages.
+// the full one); the facts, the pill and Undo / Redo stay on both stages (the guide switch lives
+// in the mark's ≡ menu since S1b-1).
 //
 // ⚠️ IT SITS IN THE ROOT (`WorkspaceView`), ABOVE EVERY MENU HOST, SO IT READS NOTHING HOT.
 // Every flag below changes on a start, a stop, an edit or a tap. The two hot values are each read
@@ -42,7 +43,7 @@
 // body, exactly as it did in the studio row — this header constructs it and reads nothing of it.
 // LAYOUT (founder 2026-10-01, "Viele Bereiche sind zu groß"): AT MOST TWO ROWS. One line while
 // every ideal width fits (`ViewThatFits`, the #1027 idiom), else two rows with fixed places — the
-// summary with the transport (Instrument stage) at its right, then the pill with Undo · Redo · ⓘ
+// summary with the transport (Instrument stage) at its right, then the pill with Undo · Redo
 // at its right; at accessibility sizes everything stacks. The pill is greedy (its trace flexes),
 // so on its row it takes what the tools leave, and on one line it yields to nothing that has a
 // floor.
@@ -56,13 +57,11 @@
 // presence: a fixed place the player can always find, on a stage that otherwise had none. It
 // reads two cold flags (`canUndo` / `canRedo`, flipped on an edit) in its own body.
 //
-// ⭐ AND THE ⓘ — THE GUIDE SWITCH (head leaf 4; the doc: "Hilfe an einem festen Ort (ⓘ im Kopf),
-// für neue Nutzer an"). It flips the shared `StudioDefaultKeys.guideVisible` key that
-// `GuideOverlay` (the top layer of `WorkspaceView`, above both stages) reads. Measured before
-// building: the guide's ONE switch was a Toggle in the instrument's Save & Export plate — the
-// hidden stage — and the key defaulted to OFF, so a fresh install had a launch teaching it could
-// neither see nor find. The switch MOVED here (one address) and the default is ON (the key, in
-// Core). The key is a SETTING, written on a tap — not hot state.
+// ⛔ THE ⓘ — THE GUIDE SWITCH (head leaf 4) — STOOD HERE AND MOVED TO THE MARK'S ≡ MENU (DAW
+// shell S1b-1, founder 2026-10-02, inbox E18: the control bar starts with ≡). It is still ONE
+// switch at ONE fixed place above both stages, still flipping the shared
+// `StudioDefaultKeys.guideVisible` key (default ON) that `GuideOverlay` reads — only the address
+// changed, and this header no longer reads the key at all. Its width went to the summary.
 
 import SwiftUI
 
@@ -82,10 +81,6 @@ struct ProjectHeader: View {
     @Environment(PianoRollModel.self) private var pianoRoll
     /// A SETTING, not a signal — it changes when the user changes the text size.
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    /// The guide's on/off (head leaf 4) — the ONE shared key, declared in Core (H15-KEYSTORE),
-    /// read by `GuideOverlay` and flipped by the ⓘ below. Written on a tap, never on a tick.
-    @AppStorage(StudioDefaultKeys.guideVisible.key)
-    private var guideVisible = StudioDefaultKeys.guideVisible.value
     /// A3b — which stage is in front, through the ONE key (#416). A SETTING written on a tap (the
     /// seam, a plate door, New piece, Safe Mode), never a tick, so reading it in `body` is cold.
     /// Read only: this header never turns the stage.
@@ -105,11 +100,10 @@ struct ProjectHeader: View {
         let name = ProjectTransport.projectName(projects.currentProjectName)
         let place = ProjectTransport.place(document: document, trackID: selection.trackID,
                                            regionID: selection.regionID)
-        // The facts flex, the pill flexes, the buttons have floors (Play · Record · ⓘ · Undo ·
-        // Redo on the Instrument stage; ⓘ · Undo · Redo on the Piece stage, A3b). One row while
-        // the ideal widths fit (an iPad); else TWO rows, and that is the LAST candidate, so a
-        // phone can never get a third: row 1 the summary with Play · Record, row 2 the pill with
-        // Undo · Redo · ⓘ. Every control keeps ONE place on both stages — on the Piece stage
+        // The facts flex, the pill flexes, the buttons have floors (Play · Record · Undo · Redo
+        // on the Instrument stage; Undo · Redo on the Piece stage, A3b). One row while the ideal
+        // widths fit (an iPad); else TWO rows, and that is the LAST candidate, so a phone can
+        // never get a third: row 1 the summary with Play · Record, row 2 the pill with Undo · Redo. Every control keeps ONE place on both stages — on the Piece stage
         // row 1 is the summary alone and has the whole width. At
         // accessibility sizes everything stacks so nothing is squeezed out and the transport
         // stays one tap away.
@@ -142,20 +136,21 @@ struct ProjectHeader: View {
                                  compact: true)
             }
         }
-        // Undo · Redo · ⓘ — on both stages, at the right of the pill in every phone shape.
-        let tools = HStack(spacing: 8) { history; guideButton }
+        // Undo · Redo (`history`) — on both stages, at the right of the pill in every phone
+        // shape. ⛔ `tools` (history + ⓘ) stood here; the ⓘ moved to the mark's ≡ menu (S1b-1),
+        // and a one-child wrapper would be structure kept for a test (the #528 rule).
         return Group {
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 6) {
                     summaryView; pulsePill; history
-                    HStack(spacing: 8) { transportPair; guideButton }
+                    HStack(spacing: 8) { transportPair }
                 }
             } else {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) { summaryView; transportPair; pulsePill; tools }
+                    HStack(spacing: 10) { summaryView; transportPair; pulsePill; history }
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 8) { summaryView; transportPair }
-                        HStack(spacing: 8) { pulsePill; tools }
+                        HStack(spacing: 8) { pulsePill; history }
                     }
                 }
             }
@@ -178,9 +173,9 @@ struct ProjectHeader: View {
     ///
     /// A4 (workstation redesign, founder 2026-10-01, the tablet mockup's display): position · tempo ·
     /// metre read as ONE counter line, in the order every DAW's transport display uses. The KEY of
-    /// that display is not repeated here: `CompositionHeaderStrip` shows it one row above, in the
-    /// same chrome group over both stages, as the control that sets it — a second copy here would
-    /// be a second statement of one fact (#416). The metre and the position are `fixedSize`, so it
+    /// that display is not repeated here: `CompositionHeaderStrip` shows it, as the control that
+    /// sets it, at the top of the Project plate (DAW shell S1a moved it out of the chrome) — a
+    /// second copy here would be a second statement of one fact (#416). The metre and the position are `fixedSize`, so it
     /// is the PLACE that yields when the row runs out of width, never a number.
     private func summary(name: String, place: String, status: ProjectTransport.Status) -> some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -227,33 +222,9 @@ struct ProjectHeader: View {
         #endif
     }
 
-    /// ⓘ — the guide switch (head leaf 4). Flips the shared key `GuideOverlay` reads; filled
-    /// while the cards are showing (the `M`/`S` switch grammar of the track rows). A glyph on
-    /// purpose: the audit doc names it "ⓘ im Kopf", and it is the one control here whose state
-    /// is visible elsewhere on the screen — the card itself. Spoken as label · value · hint.
-    private var guideButton: some View {
-        Button { guideVisible.toggle() } label: {
-            Image(systemName: "info.circle")
-                .font(EchoelTheme.font(15, .semibold))
-                .foregroundStyle(guideVisible ? EchoelTheme.onPrimary : EchoelTheme.text)
-                .frame(minWidth: 44, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(guideVisible ? EchoelTheme.text : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(guideVisible ? Color.clear : EchoelTheme.borderStrong,
-                                  lineWidth: 1))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Guide")
-        .accessibilityValue(guideVisible ? String(localized: "On") : String(localized: "Off"))
-        .accessibilityAddTraits(guideVisible ? .isSelected : [])
-        .accessibilityHint("Shows or hides the cards that walk you through playing and understanding the app")
-    }
-
     /// The head's Undo / Redo — the song's ONE history control (`SongHistoryRow`, head leaf 3),
-    /// constructed once: in `tools` with ⓘ, beside the pill, for every phone and wide shape; on
-    /// its own line in the accessibility stack. Its own leaf: it reads `canUndo` / `canRedo`
+    /// constructed once per shape: beside the pill in every phone and wide shape; on its own
+    /// line in the accessibility stack. Its own leaf: it reads `canUndo` / `canRedo`
     /// (cold, flipped on an edit) in ITS body; this header reads nothing of it.
     private var history: some View {
         SongHistoryRow()

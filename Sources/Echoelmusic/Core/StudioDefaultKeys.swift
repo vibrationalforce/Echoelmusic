@@ -44,12 +44,13 @@ public enum StudioDefaultKeys {
 
     /// #603 B1 — the founder's on/off guide ("an- und ausschaltbarer Guide der hilft die
     /// App zu bedienen und zu verstehen"). Read by TWO views — `WorkspaceView` mounts the
-    /// `GuideOverlay`, `ProjectHeader` hosts the ⓘ switch (head leaf 4, 2026-09-30; before:
-    /// the instrument's Save & Export panel) — hence H15-KEYSTORE.
+    /// `GuideOverlay`, and the logo's ≡ menu in its top bar hosts the Guide switch (DAW shell
+    /// S1b-1, 2026-10-02; head leaf 4's ⓘ in `ProjectHeader` until then; before that the
+    /// instrument's Save & Export panel) — hence H15-KEYSTORE.
     /// ⭐ ON for a fresh install — and for any install that never flipped it — since head leaf
     /// 4 (the audit doc: "Hilfe an einem festen Ort (ⓘ im Kopf), für neue Nutzer an"): the
-    /// home is the piece, the first card describes that very screen, and the ⓘ that hides the
-    /// cards is always in view. ⛔ OFF stood here, argued from "the instrument home ('app open
+    /// home is the piece, the first card describes that very screen, and the switch that hides
+    /// the cards is always in view (the ≡ menu sits above both stages). ⛔ OFF stood here, argued from "the instrument home ('app open
     /// → it lives')" — phase history since slice 1. `OnboardingView` still comes FIRST and
     /// ALONE (`EchoelmusicApp` shows it INSTEAD of the workspace), so no card overlaps it.
     public static let guideVisible = StudioDefault(key: "studio.guideVisible", value: true)
@@ -83,7 +84,7 @@ public enum StudioDefaultKeys {
     /// itself unlearned. The interface audit's rule 7 — nothing disappears with time; a
     /// hint stays until it is closed and can be reopened (WCAG 2.2.1) — forbids a display
     /// ceiling as much as a timer. The nag the cap guarded against is answered by the
-    /// head's ⓘ guide switch (`guideVisible`): the overlay shows only while that is on, so
+    /// Guide switch (`guideVisible`, the logo's ≡ menu): the overlay shows only while it is on, so
     /// the user closes it and reopens it with the ONE help switch the app has (rule 8).
     /// The old counter key may linger on disk in shipped installs; nothing reads it.
     public static let instrumentHintSeen = StudioDefault(key: "onboard.instrumentHintSeen", value: false)

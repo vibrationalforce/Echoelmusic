@@ -77,7 +77,7 @@ struct GuideOverlay: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Hide guide")
-                .accessibilityHint("The Guide button in the head, the ⓘ, brings it back")
+                .accessibilityHint("Guide, in the logo menu at the top left, brings it back")
             }
             Text(entry.summary)
                 .font(EchoelTheme.font(12))
@@ -109,7 +109,7 @@ struct GuideOverlay: View {
                 }
                 Spacer(minLength: 0)
                 if index >= count - 1 {
-                    Text("Done — the ⓘ in the head brings the cards back.")
+                    Text("Done — Guide in the logo menu brings the cards back.")
                         .font(EchoelTheme.font(11))
                         .foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)

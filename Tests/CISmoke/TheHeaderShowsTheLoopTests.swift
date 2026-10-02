@@ -32,7 +32,7 @@
 // is the whole disambiguation, and he has circled the block WITH the wordmark before.
 //
 // ⛔ EVERY EARLIER PLACEMENT MOVED WHOLE CHILDREN; THIS ONE CHANGED WHAT A CHILD IS. That is why
-// #528 ADDS `testTheMarkLeadsTheHeaderAndIsNotAControl` instead of adjusting the ordering methods
+// #528 ADDS the mark-leads method (since S1b-1 `testTheMarkLeadsTheHeaderAndOpensTheMenu`) instead of adjusting the ordering methods
 // again — measured against this tree, all three pre-existing methods stay GREEN, because the DOOR
 // (`openWebsite()`) never moved. The mark's position was therefore unwatched, and folding it back
 // into the button would have passed the entire bundle.
@@ -111,7 +111,7 @@
 // transcribing `SourceText.codeOnly` and driving every assertion in BOTH this file and
 // `ChromeDynamicTypeTests` against both trees. Unusually, it is worth stating what the numbers do
 // NOT mean before what they do:
-//   · **ONE** assertion here flips — the new `testTheMarkLeadsTheHeaderAndIsNotAControl` (parent:
+//   · **ONE** assertion here flips — the new mark-leads method, `testTheMarkLeadsTheHeaderAndOpensTheMenu` since S1b-1 (parent:
 //     mark at index 60, readout at 19). **FOUR** are counterweights, green on both sides.
 //   · ⚠️ AND "RED ON THE PARENT" DOES NOT MEAN THE PARENT WAS DEFECTIVE HERE, which is the
 //     difference between this slice and most of the chain. The parent is the layout the founder
@@ -285,7 +285,7 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
 
     // MARK: - 2b. "das E ganz nach links" — the 2026-08-12 arrow (#528)
 
-    /// The mark is the LEADING child, ahead of the loop readout, and it is decorative.
+    /// The mark is the LEADING child, ahead of the loop readout, and it is not the website door (since S1b-1 it labels the ≡ menu).
     ///
     /// ⭐ THE ASK. Founder, 2026-08-12, screenshot of v10.79.384 (2501): a circle drawn tightly
     /// around the `E` TILE — the wordmark "Echoelmusic" is visibly OUTSIDE it — and a red arc
@@ -311,7 +311,13 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
     /// (`openWebsite()`) is still between readout and tiles, the flank is still on its chain, and
     /// nothing live leaked in. So the mark's position was UNWATCHED, and folding it back into the
     /// button would have passed every guard in this bundle.
-    func testTheMarkLeadsTheHeaderAndIsNotAControl() throws {
+    ///
+    /// ⭐ DAW shell S1b-1 (2026-10-02, inbox E18): the mark became the LABEL of the ≡ menu that holds
+    /// the Guide switch. It is a control now — but not the website door, which stays on the
+    /// wordmark — so the method's old name ("…AndIsNotAControl") is retired (#374) and the claim
+    /// gains the menu: `Menu {` opens before the glyph, the Guide Toggle sits inside it, and the
+    /// menu speaks "Menu" while the glyph itself stays hidden.
+    func testTheMarkLeadsTheHeaderAndOpensTheMenu() throws {
         let bar = try topBar()
         guard let mark = bar.firstIndex(where: { $0.contains("EchoelLogoMark()") }) else {
             return XCTFail("""
@@ -346,8 +352,22 @@ final class TheHeaderShowsTheLoopTests: XCTestCase {
             """)
         XCTAssertTrue(bar.contains { $0.contains("accessibilityLabel(\"Echoelmusic \\(Self.versionString)\")") }, """
             The brand button's accessibility label changed or is gone. It is the ONE spoken \
-            announcement of the brand in this bar: the leading mark is `.accessibilityHidden`, \
-            so if this label goes, VoiceOver loses the brand and the website door entirely.
+            announcement of the brand in this bar: the leading glyph is `.accessibilityHidden` \
+            (its menu speaks "Menu"), so if this label goes, VoiceOver loses the brand and the \
+            website door entirely.
+            """)
+        // S1b-1 — the mark is the ≡ menu's label, and the menu holds the Guide switch.
+        guard let menu = bar.firstIndex(where: { $0.contains("Menu {") }) else {
+            return XCTFail("`topBar` builds no `Menu` — the mark lost its ≡ menu and the Guide switch its address")
+        }
+        XCTAssertLessThan(menu, mark, "the `Menu` opens after the mark (menu \(menu), mark \(mark)) — the glyph is not its label")
+        XCTAssertTrue(bar[menu..<mark].contains { $0.contains("Toggle(isOn: $guideVisible)") }, """
+            The ≡ menu no longer holds the Guide Toggle before its label — the guide's on/off has no \
+            address in the top bar.
+            """)
+        XCTAssertTrue(bar[mark...].prefix(10).contains { $0.contains(".accessibilityLabel(\"Menu\")") }, """
+            The mark's menu does not speak "Menu" — a control whose only content is a hidden glyph \
+            is silent to VoiceOver.
             """)
     }
 

@@ -317,7 +317,8 @@ final class ChromeDynamicTypeTests: XCTestCase {
         XCTAssertEqual(opens, 1, """
             `topBar` calls `openWebsite()` \(opens) time(s); exactly one is expected. Two means \
             the mark is a button again — the same door announced twice, and a 22×22 hit target \
-            below the 44 pt floor. The mark is decorative since #528; the door is the wordmark.
+            below the 44 pt floor. The mark has not been the website door since #528; since \
+            S1b-1 it labels the ≡ menu (Guide), and the website door is the wordmark.
             """)
         let hidden = bar.enumerated().filter { $0.element.contains("accessibilityHidden(true)") }
         XCTAssertEqual(hidden.count, 1, """

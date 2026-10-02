@@ -125,6 +125,11 @@ struct WorkspaceView: View {
     /// buttons (`TextSizeRow`); the key lives in `StudioDefaultKeys` (H15-KEYSTORE). COLD state:
     /// it changes on a pinch or a tap only, so this root rebuilds per step, never per frame.
     @AppStorage(StudioDefaultKeys.zoomStep.key) private var zoomStep = StudioDefaultKeys.zoomStep.value
+    /// The guide's on/off (DAW shell S1b-1) — the ONE shared key, declared in Core (H15-KEYSTORE),
+    /// read by `GuideOverlay` and flipped by the Guide toggle in the mark's ≡ menu (`topBar`).
+    /// Written on a tap, never on a tick — a setting, not hot state.
+    @AppStorage(StudioDefaultKeys.guideVisible.key)
+    private var guideVisible = StudioDefaultKeys.guideVisible.value
 
     #if canImport(MetalKit) && canImport(UIKit)
     /// The floating visual's snap size (SHARED key + default with FloatingVisualWindow;
@@ -314,8 +319,8 @@ struct WorkspaceView: View {
             // readable on the very screen it describes). Costs ZERO presentation
             // modifiers (the whole point; the chain below is at its pinned 14). The view
             // reads one low-frequency `@AppStorage` bool in ITS OWN body — constructing
-            // it here registers nothing (freeze rule 10.76.50). Switch: the ⓘ in
-            // `ProjectHeader` (head leaf 4; before: the Save & Export panel); content:
+            // it here registers nothing (freeze rule 10.76.50). Switch: the Guide toggle in
+            // the logo's ≡ menu (`topBar`, S1b-1; head leaf 4's ⓘ before); content:
             // `LearnLibrary.guideEntries`, the guard-pinned one source.
             GuideOverlay()
         }
@@ -512,18 +517,28 @@ struct WorkspaceView: View {
             // that leaves both asks true: the mark takes the leading edge, the wordmark keeps
             // the middle. Nothing here is inferred from taste — it is the smaller circle.
             //
-            // ⚠️ IT IS DECORATIVE NOW, AND THAT IS A NAMED COST, not an oversight. Inside the
-            // `Button`'s label the mark was part of one control and one VoiceOver stop; standing
-            // alone it would be a SECOND stop announcing "Echoelmusic" beside a button announcing
-            // "Echoelmusic <version>" (`EchoelLogoMark` carries its own `.accessibilityLabel`, so
-            // it is an element on its own — being a `Canvas` does not exempt it). Hence
-            // `.accessibilityHidden(true)`, the same workaround the pre-#384 split mark used and
-            // the reason `ChromeDynamicTypeTests` banned that modifier; that ban is now an
-            // exactly-one allowance, updated in this commit rather than deleted (#456).
-            // What is LOST: tapping the logo no longer opens the website. The door is unchanged
-            // and two children away on the wordmark — one action, one announcement, one control.
-            // Making it a second `Button` instead would restore the tap and buy back both
-            // problems, plus a 22×22 hit target under the 44 pt floor (#113).
+            // ⭐ DAW SHELL S1b-1 (founder 2026-10-02, inbox E18 „Ja, so bauen": the control bar
+            // starts with ≡): THE MARK IS THE PROJECT MENU. It holds the guide's ONE switch, which
+            // left the project header's ⓘ in the same commit (one door, one address); S3 adds the
+            // project doors to the same menu and takes their scattered twins away.
+            //
+            // ⚠️ THE GLYPH STAYS `.accessibilityHidden(true)` — the MENU is the element and speaks
+            // "Menu"; the mark inside its label would otherwise announce "Echoelmusic" a second
+            // time beside the wordmark button (`EchoelLogoMark` carries its own label, so it is an
+            // element on its own — being a `Canvas` does not exempt it). Still exactly one hidden
+            // element in this bar, still the mark's (`ChromeDynamicTypeTests`).
+            // ⚠️ THE WEBSITE STAYS ON THE WORDMARK — the menu does not open it, so tapping the logo
+            // still never opens a browser, and the wordmark keeps the one `openWebsite` call (one door).
+            //
+            // ⚠️ THE 44 PT TARGET COSTS NO WIDTH AND DOES NOT MOVE THE E. The label is the 26 pt
+            // mark in a 44 × 44 hit frame; the menu then takes `−(44 − 26) / 2 = −9` pt of
+            // horizontal padding, so the bar lays it out at the mark's 26 pt (the brand keeps its
+            // share on a 360 pt phone) and the glyph's centre stays at `pad + 26 / 2`, the centre
+            // `TheLogoHoldsItsPlaceTests` derives against the fullscreen handle. The hit frame
+            // overhangs 9 pt into the bar's padding on the left and 9 pt into the 8 pt gap on the
+            // right — 1 pt over the readout, which is a measurement, not a control. Hit-testing
+            // follows the drawn frame, not the padded layout box: NEEDS-FOUNDER-VERIFY on device
+            // that a tap at the mark's edge opens the menu.
             //
             // ⚠️ THE WIDTH BUDGET, and it is arithmetic rather than hope. #528 made it net zero:
             // the bar gained a 22 pt child and a fourth top-level gap (+30) while the brand block
@@ -544,13 +559,23 @@ struct WorkspaceView: View {
             // 1120 pt nav. The number itself is NOT pinned by a guard: a design size that a test
             // freezes is a test that reddens ordinary design work (#364).
             //
-            // ⚠️ NO TAP-TARGET FLOOR APPLIES and that is why growing it is cheap: the mark is
-            // decorative and `.accessibilityHidden(true)` (see above) — it is not a control, so
-            // #113's 44 pt does not bind. It also stays well under the tile cluster's 44 pt tap
-            // height, so the bar's own height is unchanged.
-            EchoelLogoMark()
-                .frame(width: 26, height: 26)
-                .accessibilityHidden(true)
+            // ⛔ "NO TAP-TARGET FLOOR APPLIES … the mark is decorative" stood here until S1b-1 made
+            // it the menu's label. #113's 44 pt now binds and is met by the hit frame below; the
+            // DRAWN size is still a look, unpinned (#364), and still under the tiles' 44 pt height.
+            Menu {
+                Toggle(isOn: $guideVisible) {
+                    Label("Guide", systemImage: "info.circle")
+                }
+            } label: {
+                EchoelLogoMark()
+                    .frame(width: 26, height: 26)
+                    .accessibilityHidden(true)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .padding(.horizontal, -9)
+            .accessibilityLabel("Menu")
+            .accessibilityHint("Guide and project options")
             // SECOND: the loop length + the playhead inside it — the founder's "die Anzeige für
             // die Loop Länge und der Balken" (#490), which lived in the MIDDLE until the #516
             // swap moved it to the leading edge and #528 put the mark to its left. It is still

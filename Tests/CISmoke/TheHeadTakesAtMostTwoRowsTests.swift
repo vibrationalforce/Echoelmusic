@@ -1,6 +1,6 @@
 // TheHeadTakesAtMostTwoRowsTests.swift
 // Echoel — the project head takes AT MOST TWO ROWS on a phone, with fixed places: the summary
-// with the transport (Instrument stage), then the pulse pill with Undo · Redo · ⓘ (founder
+// with the transport (Instrument stage), then the pulse pill with Undo · Redo (founder
 // 2026-10-01: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Bereiche sind zu groß
 // und füllen den Bildschirm aus. Vermeide slop.").
 //
@@ -11,13 +11,20 @@
 // rows, so a phone can never get a third, and two things that make two rows fit: the history as
 // glyphs (the compact Record's idiom), and ⓘ beside the history instead of beside the transport.
 //
+// ⭐ DAW SHELL S1b-1 (2026-10-02, inbox E18): the ⓘ LEFT THE HEAD — the guide switch is the Guide
+// toggle in the mark's ≡ menu (`WorkspaceView.topBar`, pinned by `TheGuideHasADoorTests`). Claims
+// 2–4 were rewritten in that commit to the new pieces, at least as strictly: every row is still
+// pinned EXACTLY, `tools` (history + ⓘ) is gone with nothing re-wrapping the history, and the head
+// now asserts it carries NO guide switch at all — a second one would be a second address.
+//
 // THE SIX CLAIMS:
 // 1. `ViewThatFits` in `ProjectHeader.body` has exactly TWO candidates, and the last is a
 //    `VStack` of exactly TWO rows (STRUCTURE — depth-0 lines of the brace-matched block).
-// 2. Row 1 is the summary with the transport, row 2 the pill with the tools; `tools` is the
-//    history with ⓘ; the transport group carries no ⓘ (so ⓘ stays on both stages, head leaf 4).
+// 2. Row 1 is the summary with the transport, row 2 the pill with the history; the head holds no
+//    `tools` wrapper and no guide switch (S1b-1); the transport group carries no history (so
+//    Undo · Redo stay on both stages).
 // 3. The one-line candidate carries the same four pieces — one place per control in every shape.
-// 4. The accessibility stack keeps every control, the transport with ⓘ on the last line.
+// 4. The accessibility stack keeps every control, the transport on the last line.
 // 5. The summary yields at the PLACE, never at a number: the status word has priority and the
 //    tempo readout cannot wrap (`.fixedSize()`).
 // 6. `SongHistoryRow` shows its word only at accessibility sizes, on the head's own switch, keeps
@@ -65,7 +72,7 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
         XCTAssertTrue(rows.allSatisfy { $0.hasPrefix("HStack(") }, "each of the two rows is one line of pieces: \(rows)")
     }
 
-    // MARK: 2 — fixed places: summary with transport, pill with Undo · Redo · ⓘ
+    // MARK: 2 — fixed places: summary with transport, pill with Undo · Redo
 
     func testEachRowHoldsItsTwoPieces() throws {
         let body = try member("var body: some View", in: try code(Self.header))
@@ -75,19 +82,28 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
         }
         let rows = topLevelLines(of: try lastCandidate(last, in: fits))
         XCTAssertEqual(rows, ["HStack(spacing: 8) { summaryView; transportPair }",
-                              "HStack(spacing: 8) { pulsePill; tools }"], """
+                              "HStack(spacing: 8) { pulsePill; history }"], """
             The phone rows moved. Row 1 is the summary with Play · Record (empty on the Piece \
             stage, so the place gets the whole width there); row 2 is the pulse pill with \
-            Undo · Redo · ⓘ. Every control keeps ONE place on both stages — the founder's „one \
+            Undo · Redo. Every control keeps ONE place on both stages — the founder's „one \
             way to an area" applied to the head itself.
             """)
-        XCTAssertEqual(body.components(separatedBy: "let tools = HStack(spacing: 8) { history; guideButton }").count - 1, 1,
-                       "`tools` is the history with ⓘ, defined once and spelled into each candidate")
+        // S1b-1: the ⓘ moved to the mark's ≡ menu. The head must not keep a second guide switch
+        // (two addresses for one setting) nor re-wrap the history in a one-child `tools` stack.
+        let head = try code(Self.header)
+        for gone in ["guideButton", "guideVisible", "let tools"] {
+            XCTAssertFalse(head.contains(gone), """
+                `ProjectHeader` carries `\(gone)` again. The guide's one switch is the Guide toggle \
+                in the mark's ≡ menu (DAW shell S1b-1); a second one here is a second address for \
+                one setting, and a `tools` wrapper around the history alone is structure kept for \
+                a test.
+                """)
+        }
         let pair = try member("let transportPair = Group", in: body)
         XCTAssertTrue(pair.contains("if carriesTransport {"), "the transport stays behind the stage gate (A3b)")
-        XCTAssertFalse(pair.contains("guideButton"), """
-            ⓘ is inside the transport group again — it would vanish with Play on the Piece stage \
-            (head leaf 4), and row 1 would carry three neighbours of the summary
+        XCTAssertFalse(pair.contains("history"), """
+            Undo · Redo are inside the transport group — they would vanish with Play on the Piece \
+            stage, and row 1 would carry three neighbours of the summary
             """)
     }
 
@@ -99,7 +115,7 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
         guard let first = topLevelLines(of: fits).first else {
             return XCTFail("ANCHOR MISSING: no `ViewThatFits` candidate (#454)")
         }
-        XCTAssertEqual(first, "HStack(spacing: 10) { summaryView; transportPair; pulsePill; tools }", """
+        XCTAssertEqual(first, "HStack(spacing: 10) { summaryView; transportPair; pulsePill; history }", """
             the one-line shape (a wide screen) no longer carries exactly the four pieces of the two \
             rows — a shape that drops one loses a control; one that adds a piece carries it twice
             """)
@@ -112,9 +128,9 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
         let stack = try member("if dynamicTypeSize.isAccessibilitySize", in: body)
         let column = try member("VStack(alignment: .leading, spacing: 6)", in: stack)
         XCTAssertEqual(topLevelLines(of: column),
-                       ["summaryView; pulsePill; history", "HStack(spacing: 8) { transportPair; guideButton }"], """
+                       ["summaryView; pulsePill; history", "HStack(spacing: 8) { transportPair }"], """
             the accessibility stack changed — at large text every piece keeps a line, the history \
-            with its words (claim 6), and Play · Record · ⓘ stay one tap away on the last line
+            with its words (claim 6), and Play · Record stay one tap away on the last line
             """)
     }
 
@@ -157,7 +173,7 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
               let word = button.range(of: "Text(title)", range: gate.upperBound..<button.endIndex) else {
             return XCTFail("""
                 `Text(title)` is not behind `if words {` in `SongHistoryRow.button(` — at the default \
-                size the worded pair does not fit the head's second row beside the pill and ⓘ
+                size the worded pair does not fit the head's second row beside the pill
                 """)
         }
         let between = button[gate.upperBound..<word.lowerBound]

@@ -20,7 +20,7 @@
 // without being touched", which was true of claim 1 alone and false of the file).
 // ⚠️ NOT OBSERVED (named limit, #602b): child ORDER in topBar. A new child inserted
 // BEFORE the mark shifts the real centre while every literal here is unchanged — partial
-// cover is `TheHeaderShowsTheLoopTests.testTheMarkLeadsTheHeaderAndIsNotAControl` (mark
+// cover is `TheHeaderShowsTheLoopTests.testTheMarkLeadsTheHeaderAndOpensTheMenu` (mark
 // before readout before brand), which does not forbid a new leading child. That residue
 // is the device probe's half.
 //

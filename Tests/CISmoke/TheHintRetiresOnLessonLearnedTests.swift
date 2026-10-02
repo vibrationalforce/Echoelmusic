@@ -10,12 +10,13 @@
 //   · 2026-09-30, rule 7 of the interface audit ("Nichts verschwindet mit der Zeit —
 //     Hinweise bleiben, bis man sie schließt, und lassen sich wieder öffnen"; measurable
 //     as "kein Timer an Hinweisen, keine Anzeige-Obergrenze", WCAG 2.2.1): the hint is a
-//     STATE. It is on while the head's ⓘ guide switch (`guideVisible`) is on AND the
+//     STATE. It is on while the Guide switch (`guideVisible`, the logo's ≡ menu since S1b-1) is on AND the
 //     lesson is not LEARNED. No `.task`, no sleep, no counter, no cap.
 // What survives from #604 and is still pinned here: the LEARNED arm — `startBioSource()`
 // writes `instrumentHintSeen`, because the user found Start, step 1 of the hint's own
 // first sentence. What is NEW and pinned here: the overlay reads the guide switch, so the
-// ONE help control the app has (rule 8, Kopf-4's ⓘ) both closes and reopens it.
+// ONE help control the app has (rule 8; Kopf-4's ⓘ, moved to the ≡ menu in S1b-1) both
+// closes and reopens it.
 //
 // ⚠️ LIMIT — SOURCE-TEXT SCAN. Nothing here renders the overlay or flips the switch on a
 // device. Copy truth stays owned by `FirstInstructionIsTrueTests` (#416 — this file does
@@ -43,7 +44,7 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
     private static let window = "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift"
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let keys = "Sources/Echoelmusic/Core/StudioDefaultKeys.swift"
-    private static let header = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
+    private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let guide = "Sources/Echoelmusic/Studio/GuideOverlay.swift"
 
     // MARK: - claim 1 — the two facts that decide the hint live in the keystore; the clock does not
@@ -57,7 +58,7 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
             hint to every user who already learned it.
             """)
         XCTAssertTrue(keys.contains("StudioDefault(key: \"studio.guideVisible\", value: true)"), """
-            The head's guide switch left the keystore (or is no longer ON for new users). \
+            The Guide switch's key left the keystore (or is no longer ON for new users). \
             The overlay follows this switch — it is the hint's close AND reopen control \
             (rule 7), and a fresh install must get the hint (rule 8: help on for new users).
             """)
@@ -66,7 +67,7 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
                 `\(retired)` is back in the keystore. A showing counter or a cap is a \
                 display ceiling on a hint — rule 7 of the 2026-09-30 interface audit \
                 ("keine Anzeige-Obergrenze", WCAG 2.2.1) removed both. The nag they \
-                guarded against is answered by the ⓘ guide switch, not by a count.
+                guarded against is answered by the Guide switch, not by a count.
                 """)
         }
     }
@@ -78,10 +79,10 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
         let overlay = slice(code, from: "private struct InstrumentHintOverlay: View {", to: "\n#endif")
         XCTAssertFalse(overlay.isEmpty, "`InstrumentHintOverlay` moved — re-anchor this scan")
         XCTAssertTrue(overlay.contains("@AppStorage(StudioDefaultKeys.guideVisible.key)"), """
-            The overlay no longer reads the head's guide switch. Without it the hint has \
+            The overlay no longer reads the Guide switch. Without it the hint has \
             no close control — `allowsHitTesting(false)` means it cannot be tapped away — \
             and rule 7 ("bleibt, bis man sie schließt, und lässt sich wieder öffnen") \
-            needs exactly one: the ⓘ in the head.
+            needs exactly one: the Guide switch in the logo's ≡ menu.
             """)
         XCTAssertTrue(overlay.contains("@AppStorage(StudioDefaultKeys.instrumentHintSeen.key)"), """
             The overlay no longer reads the LEARNED flag — the #604 arm is gone and a user \
@@ -129,16 +130,18 @@ final class TheHintRetiresOnLessonLearnedTests: XCTestCase {
     // MARK: - claim 4 (COUNTERWEIGHTS, #343) — the switch the hint follows is a real, reopenable control
 
     func testTheGuideSwitchIsTheOneCloserAndTheGuideCardSharesIt() throws {
-        let header = try source(Self.header)
-        XCTAssertTrue(header.contains("Button { guideVisible.toggle() }"), """
-            The head's ⓘ no longer toggles `guideVisible`. That toggle is the hint's close \
+        // S1b-1 (2026-10-02): the switch moved from the head's ⓘ Button into the logo's ≡ menu
+        // as a `Toggle`; the claim is unchanged — one reachable control flips the key.
+        let workspace = try source(Self.workspace)
+        XCTAssertTrue(workspace.contains("Toggle(isOn: $guideVisible)"), """
+            The ≡ menu no longer toggles `guideVisible`. That toggle is the hint's close \
             and reopen control (rule 7) — without it the overlay follows a switch nobody \
             can flip.
             """)
         let guide = try source(Self.guide)
         XCTAssertTrue(guide.contains("if guideVisible, !entries.isEmpty {"), """
             `GuideOverlay` no longer follows the same switch. The hint and the guide card \
-            must be ONE help surface behind ONE control (rule 8); if they diverge, the ⓘ \
+            must be ONE help surface behind ONE control (rule 8); if they diverge, the switch \
             starts meaning two things.
             """)
     }

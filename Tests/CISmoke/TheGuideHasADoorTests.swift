@@ -5,8 +5,9 @@
 //
 // WHAT THIS GUARDS. The guide is a NON-MODAL card overlay (`GuideOverlay`) mounted as
 // the top layer of `WorkspaceView`'s ZStack, toggled by the shared
-// `StudioDefaultKeys.guideVisible` key from the ⓘ in `ProjectHeader` (head leaf 4 of the
-// interface audit, 2026-09-30 — ⛔ before: a Toggle in the instrument's Save & Export
+// `StudioDefaultKeys.guideVisible` key from the Guide switch in the logo's ≡ menu in
+// `WorkspaceView`'s top bar (DAW shell S1b-1, 2026-10-02; from head leaf 4 of the interface
+// audit, 2026-09-30, until then: the ⓘ in `ProjectHeader` — ⛔ before that: a Toggle in the instrument's Save & Export
 // panel, i.e. on the stage a fresh install does NOT open on, with the key defaulting to
 // OFF: a launch teaching nobody could see or find), and rendering
 // `LearnLibrary.guideEntries` — the guard-pinned "Start Here" content — as its ONE source
@@ -28,7 +29,11 @@
 // head leaf 4 rewrote claim 1 as the DECISION (5 assertions: default ON, the head reads the
 // key, the ⓘ flips it and is named, it speaks its state, the studio holds no switch) — on
 // its parent c5eaf50a8 four of those are red by design and one by ONE absence. On the
-// original tree all 10 passed. Against the PARENT: ONE finding (#486) — neither
+// original tree all 10 passed. S1b-1 re-anchored claim 1 on the menu (6 assertions: default ON,
+// the workspace reads the key, the Toggle exists, sits in the Menu, is named "Guide", the head
+// holds no key; plus the studio and mount counterweights) — on its parent the Toggle, Menu and
+// Label needles are ONE absence (#486) and the header-empty assertion is red by design; the
+// keystore, studio and mount assertions are green on both. Against the ORIGINAL PARENT: ONE finding (#486) — neither
 // `GuideOverlay.swift`, the keystore entry, nor the toggle exists there; claim 2's file
 // read THROWS (anchor-missing, no verdicts) and claims 1/3/4's needles are absent
 // together. All 10 are FORWARD, born with this commit; ZERO regressions claimed, because
@@ -50,32 +55,47 @@ final class TheGuideHasADoorTests: XCTestCase {
     private static let header = "Sources/Echoelmusic/Studio/ProjectHeader.swift"
     private static let keys = "Sources/Echoelmusic/Core/StudioDefaultKeys.swift"
 
-    // MARK: - claim 1 — the door: key in the keystore (ON), the ⓘ in the head, mount in the root
+    // MARK: - claim 1 — the door: key in the keystore (ON), the switch in the ≡ menu, mount in the root
 
-    func testTheGuideHasAKeyASwitchInTheHeadAndAMount() throws {
+    func testTheGuideHasAKeyASwitchInTheMenuAndAMount() throws {
         let keys = try source(Self.keys)
         XCTAssertTrue(keys.contains("StudioDefault(key: \"studio.guideVisible\", value: true)"), """
             The guide's shared key left the keystore, or its default moved off `true`. \
             H15-KEYSTORE: two views read this key — re-typing it at a use site is the \
             fresh-install divergence class that shipped H15-LOOPBARS. ON is the audit's law \
             ("für neue Nutzer an", head leaf 4): the first card describes the very screen a \
-            fresh install opens on and the ⓘ that hides it is always in view. If the founder \
+            fresh install opens on and the switch that hides it is always in view. If the founder \
             flips it back, update this needle AND `StudioDefaultKeysTests` in the same commit.
             """)
-        let header = try source(Self.header)
-        XCTAssertTrue(header.contains("@AppStorage(StudioDefaultKeys.guideVisible.key)"), """
-            `ProjectHeader` no longer reads the shared guide key — either it re-types the \
-            string (H15 divergence) or the ⓘ lost its switch.
+        // DAW shell S1b-1 (2026-10-02, inbox E18): the switch MOVED from the head's ⓘ into the
+        // mark's ≡ menu in WorkspaceView's top bar. Same key, same default, one address — the
+        // claim is unchanged, only its anchors followed it, and the head is now pinned EMPTY.
+        let workspace = try source(Self.workspace)
+        XCTAssertTrue(workspace.contains("@AppStorage(StudioDefaultKeys.guideVisible.key)"), """
+            `WorkspaceView` no longer reads the shared guide key — either it re-types the \
+            string (H15 divergence) or the ≡ menu lost its switch.
             """)
-        XCTAssertTrue(header.contains("guideVisible.toggle()") && header.contains(".accessibilityLabel(\"Guide\")"), """
-            The ⓘ guide switch is gone from the head. The founder's ask is AN- UND \
+        let toggle = try XCTUnwrap(workspace.range(of: "Toggle(isOn: $guideVisible)"), """
+            The Guide switch is gone from the mark's ≡ menu. The founder's ask is AN- UND \
             AUSSCHALTBAR, and the audit put the switch at ONE fixed place above both stages: \
             an overlay nobody can switch on is a deleted feature, one nobody can switch OFF \
-            is an imposition; both need this button, named "Guide" for VoiceOver.
+            is an imposition.
             """)
-        // E4-44: both arms are catalog keys — the needle follows the spelling, the claim is unchanged.
-        XCTAssertTrue(header.contains(".accessibilityValue(guideVisible ? String(localized: \"On\") : String(localized: \"Off\"))"),
-                      "a stateful glyph speaks its state (the stateful-controls law)")
+        XCTAssertTrue(workspace[..<toggle.lowerBound].suffix(80).contains("Menu {"), """
+            The Guide switch is no longer the first item of the mark's `Menu` — it moved to a \
+            second address, or the ≡ menu lost it and some other Toggle on the key remains.
+            """)
+        XCTAssertTrue(workspace[toggle.upperBound...].prefix(200).contains("Label(\"Guide\""), """
+            The ≡ menu's switch is no longer named "Guide" — VoiceOver and the guide's own \
+            closing sentence ("Guide in the logo menu brings the cards back") name it so.
+            """)
+        // A `Toggle` speaks its own on/off state; the ⓘ needed an explicit value because it
+        // was a Button. The stateful-controls law is met by the control type, not a modifier.
+        let header = try source(Self.header)
+        XCTAssertFalse(header.contains("guideVisible"), """
+            `ProjectHeader` reads or flips the guide key again. S1b-1 moved the switch to the \
+            ≡ menu — a second switch in the head is a second address for one setting.
+            """)
         let studio = try source(Self.studio)
         XCTAssertFalse(studio.contains("Toggle(isOn: $guideVisible)") || studio.contains("StudioDefaultKeys.guideVisible"), """
             EchoelStudioView reads or flips the guide key again. Head leaf 4 MOVED the switch \
@@ -83,7 +103,6 @@ final class TheGuideHasADoorTests: XCTestCase {
             setting, and the exact shape (a switch a fresh install cannot find) this leaf \
             removed.
             """)
-        let workspace = try source(Self.workspace)
         XCTAssertTrue(workspace.contains("GuideOverlay()"), """
             `GuideOverlay()` is no longer mounted in WorkspaceView's ZStack. The toggle \
             then writes a key nothing reads — the guide is silently gone while its \

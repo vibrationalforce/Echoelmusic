@@ -2245,14 +2245,14 @@
         }
       }
     },
-    "Done — the ⓘ in the head brings the cards back." : {
+    "Done — Guide in the logo menu brings the cards back." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Done — the ⓘ in the head brings the cards back."
+            "value" : "Done — Guide in the logo menu brings the cards back."
           }
         }
       }
@@ -3349,18 +3349,6 @@
         }
       }
     },
-    "Shows or hides the cards that walk you through playing and understanding the app" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows or hides the cards that walk you through playing and understanding the app"
-          }
-        }
-      }
-    },
     "Shows or hides the floating visual window" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -3505,14 +3493,38 @@
         }
       }
     },
-    "The Guide button in the head, the ⓘ, brings it back" : {
+    "Menu" : {
+      "comment" : "DAW shell S1b-1 (2026-10-02, inbox E18): the mark's ≡ menu holds the guide switch; the guide's two sentences name its new address.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu"
+          }
+        }
+      }
+    },
+    "Guide and project options" : {
+      "comment" : "DAW shell S1b-1 (2026-10-02, inbox E18): the mark's ≡ menu holds the guide switch; the guide's two sentences name its new address.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guide and project options"
+          }
+        }
+      }
+    },
+    "Guide, in the logo menu at the top left, brings it back" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The Guide button in the head, the ⓘ, brings it back"
+            "value" : "Guide, in the logo menu at the top left, brings it back"
           }
         }
       }

@@ -364,13 +364,14 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
     // MARK: 11 — the ONE Undo/Redo is the head's (interface audit 2026-09-30, head leaf 3)
 
     /// The audit's law for the head: "Name · Abspielen / Stopp (mit Wort) · Aufnehmen · Tempo ·
-    /// Rückgängig · ⓘ Hilfe". `SongHistoryRow` is the song's ONE history control; under the
+    /// Rückgängig · ⓘ Hilfe" (the Hilfe switch lives in the ≡ menu since S1b-1). `SongHistoryRow` is the song's ONE history control; under the
     /// canvas it existed on the Piece stage only, while the Instrument stage writes the
     /// composer's part into the same history. SOURCE-TEXT: the head builds it once, spells it
     /// into every shape, and the Workstation builds none.
     /// ⛔ 2026-10-01 (founder, „zu groß"): the head lost its third shape and the history moved
-    /// into `tools` with ⓘ, which BOTH non-accessibility candidates spell — so `history` is
-    /// written twice in `body` (in `tools`, and in the accessibility stack), not four times.
+    /// into `tools` with ⓘ, spelled twice in `body`. ⛔ DAW shell S1b-1 (2026-10-02): the ⓘ
+    /// left for the mark's ≡ menu and `tools` went with it, so each of the THREE shapes (one
+    /// line, two rows, accessibility stack) now spells `history` itself — exactly three times.
     /// What the count proves is unchanged: every shape reaches the one control exactly once.
     /// The two-row structure itself is `TheHeadTakesAtMostTwoRowsTests`.
     func testTheHeadWearsTheOneUndoRedo() throws {
@@ -381,14 +382,14 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(header.components(separatedBy: "SongHistoryRow()").count - 1, 1,
                        "`SongHistoryRow()` is constructed once in the head — one history, one control")
         let shapes = try body(of: "var body: some View", in: header)
-        XCTAssertEqual(shapes.components(separatedBy: "history").count - 1, 2, """
-            `history` is not spelled exactly twice in `ProjectHeader.body` — once in `tools` \
-            (beside ⓘ, which the one-line row and the two-row form both spell) and once in the \
-            accessibility stack. Fewer: a shape lost Undo; more: a shape carries it twice.
+        XCTAssertEqual(shapes.components(separatedBy: "history").count - 1, 3, """
+            `history` is not spelled exactly three times in `ProjectHeader.body` — once per \
+            shape (the one-line row, the two-row form, the accessibility stack). Fewer: a shape \
+            lost Undo; more: a shape carries it twice.
             """)
-        XCTAssertEqual(shapes.components(separatedBy: "tools").count - 1, 3, """
-            `tools` is not spelled exactly three times in `ProjectHeader.body` — its definition, \
-            the one-line row and the two-row form. Without it a phone shape has no Undo.
+        XCTAssertEqual(shapes.components(separatedBy: "tools").count - 1, 0, """
+            `tools` is back in `ProjectHeader.body`. It grouped history with the ⓘ; the ⓘ moved \
+            to the ≡ menu in S1b-1, and a wrapper around one child is a second spelling of it.
             """)
         let workstation = try source(Self.workstation)
         XCTAssertFalse(workstation.contains("SongHistoryRow()"),

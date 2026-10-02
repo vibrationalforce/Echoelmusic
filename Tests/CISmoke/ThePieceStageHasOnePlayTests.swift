@@ -24,7 +24,7 @@
 //   lives, and the moved button's own lines. They prove where text sits, not that SwiftUI renders
 //   one button per stage.
 // · DEVICE PROBE, OPEN — NEEDS-FOUNDER-VERIFY: on the Piece stage the head shows no Play and no
-//   Record (name · status · position · tempo · pill · Undo · ⓘ only) and the bar's Play reads
+//   Record (name · status · position · tempo · pill · Undo only; the ⓘ moved to the ≡ menu in S1b-1) and the bar's Play reads
 //   "Play"/"Stop" with its word; flipping to Instrument brings Play + Record back to the head with
 //   no flicker of two; with a hardware keyboard, space plays/stops on BOTH stages; with an
 //   instrument session paused on the Instrument stage, switching to Piece and tapping the bar's
@@ -142,16 +142,24 @@ final class ThePieceStageHasOnePlayTests: XCTestCase {
         guard let gate = head.range(of: "if carriesTransport {"),
               let play = head.range(of: Self.headMount, range: gate.upperBound..<head.endIndex),
               let record = head.range(of: "RecordTakeButton(", range: play.upperBound..<head.endIndex),
-              let guide = head.range(of: "guideButton", range: record.upperBound..<head.endIndex) else {
-            return XCTFail("ANCHOR MISSING: `if carriesTransport {` → Play → Record → `guideButton` in `ProjectHeader` (#454)")
+              let groupEnd = head.range(of: "return Group {", range: record.upperBound..<head.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `if carriesTransport {` → Play → Record → `return Group {` in `ProjectHeader` (#454)")
         }
         let toRecord = head[gate.upperBound..<record.lowerBound]
         XCTAssertEqual(toRecord.filter { $0 == "{" }.count - toRecord.filter { $0 == "}" }.count, 0,
                        "Play and the compact Record both sit directly inside the stage gate")
-        let toGuide = head[gate.upperBound..<guide.lowerBound]
-        XCTAssertEqual(toGuide.filter { $0 == "{" }.count - toGuide.filter { $0 == "}" }.count, -1, """
-            ⓘ must sit AFTER the gate closes — the guide switch stays on both stages (head leaf 4). \
-            0 would hide it on the Piece stage with the transport.
+        // DAW shell S1b-1: the ⓘ that anchored this claim left the head for the mark's ≡ menu, so
+        // the claim moves to what it protected — the controls that must stay on BOTH stages. The
+        // gate's `Group` must close (if-close + Group-close = −2) before the shapes are built, so
+        // Undo · Redo (`history`) and the pill can never fall inside it.
+        let toShapes = head[gate.upperBound..<groupEnd.lowerBound]
+        XCTAssertEqual(toShapes.filter { $0 == "{" }.count - toShapes.filter { $0 == "}" }.count, -2, """
+            The stage gate and its `Group` no longer both close before the head's shapes are \
+            built — whatever the shapes hold would vanish with Play on the Piece stage.
+            """)
+        XCTAssertFalse(toShapes.contains("history") || toShapes.contains("pulsePill"), """
+            Undo · Redo or the pulse pill sit inside the transport gate — they would vanish with \
+            Play on the Piece stage.
             """)
         XCTAssertFalse(head.contains("playStopButton("),
                        "the head builds no inline Play of its own any more — the one button is `ProjectPlayStopButton`")

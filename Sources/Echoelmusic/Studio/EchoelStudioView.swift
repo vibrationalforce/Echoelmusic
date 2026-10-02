@@ -293,8 +293,8 @@ struct EchoelStudioView: View {
     // the body (flowFree); when on, the loop runs at exactly `lockedBPM`.
     @AppStorage(StudioDefaultKeys.lockBPM.key) private var lockBPM = StudioDefaultKeys.lockBPM.value
     // ⛔ `guideVisible` (#603 B1) was read here for the Save & Export plate's guide Toggle. Head
-    // leaf 4 of the interface audit (2026-09-30) moved the switch into `ProjectHeader` (the ⓘ,
-    // above both stages) — this plate is on the hidden stage; the studio reads the key no more.
+    // leaf 4 of the interface audit (2026-09-30) moved the switch into `ProjectHeader` (the ⓘ),
+    // and DAW shell S1b-1 into the logo's ≡ menu — above both stages; the studio reads it no more.
     /// #604 — the instrument hint's retire flag; `startBioSource()` writes it (lesson
     /// learned). The overlay in FloatingVisualWindow is the reader (H15-KEYSTORE).
     @AppStorage(StudioDefaultKeys.instrumentHintSeen.key) private var instrumentHintSeen = StudioDefaultKeys.instrumentHintSeen.value
@@ -9302,7 +9302,7 @@ struct EchoelStudioView: View {
 
             // ⛔ The guide Toggle (#603 B1, "an- und ausschaltbarer Guide") stood HERE, above the
             // recovery corner. Head leaf 4 of the interface audit (2026-09-30) moved the switch
-            // into `ProjectHeader` as the ⓘ — this plate lives on the Instrument stage, hidden
+            // into `ProjectHeader` as the ⓘ (since S1b-1: the logo's ≡ menu) — this plate is on the Instrument stage, hidden
             // beneath the piece a fresh install opens on, so the launch teaching had a switch
             // nobody could find. One switch, one address, above both stages.
 

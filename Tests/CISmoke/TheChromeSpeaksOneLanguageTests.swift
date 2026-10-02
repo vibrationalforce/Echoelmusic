@@ -769,7 +769,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                       "the Workstation's Save/Open door takes String words again — title, spoken name or hint would spell verbatim")
         try assertCatalogued(["Previous guide card", "Next guide card", "Genre", "FX",
                           "Echoel plays ", ", FX character ", "Names the piece and saves it, with its tracks and parts", "Shows your saved pieces. Opening one replaces the piece here",
-                          "Hide guide", "The Guide button in the head, the ⓘ, brings it back", "Guide", "Save",
+                          "Hide guide", "Guide, in the logo menu at the top left, brings it back", "Guide", "Save",
                           "Open", "Save this piece", "Open a saved piece"],
                          "guide arrow, instance line and door words")
         // E4-19 — the Routing MIDI status label, the guide's card counter, the Scale picker's family headers
@@ -1673,13 +1673,17 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")"] {
             XCTAssertFalse(mixSwitch.contains(verbatim), "PerformSessionView speaks a bare On/Off again: `\(verbatim)`")
         }
+        // DAW shell S1b-1 (2026-10-02): the head's Guide BUTTON is gone — the switch is a `Toggle` in the logo's
+        // ≡ menu, and a Toggle speaks its own state, so no On/Off seam exists to keep. What survives is the law
+        // this block was for: no verbatim On/Off for the guide, anywhere it now lives, and no stray head copy.
         let headerGuide = try codeOnly("Sources/Echoelmusic/Studio/ProjectHeader.swift")
-        for seam in [".accessibilityValue(guideVisible ? String(localized: \"On\") : String(localized: \"Off\"))"] {
-            XCTAssertTrue(headerGuide.contains(seam), "ProjectHeader lost the E4-44 seam `\(seam)`")
+        XCTAssertFalse(headerGuide.contains("guideVisible"), "ProjectHeader carries a guide switch again — S1b-1 moved it to the ≡ menu")
+        let menuGuide = try codeOnly("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        XCTAssertTrue(menuGuide.contains("Toggle(isOn: $guideVisible)"), "the logo's ≡ menu lost its Guide Toggle")
+        for verbatim in [".accessibilityValue(guideVisible ? \"On\" : \"Off\")", "guideVisible ? \"On\""] {
+            XCTAssertFalse(menuGuide.contains(verbatim), "WorkspaceView speaks a bare On/Off for the guide: `\(verbatim)`")
         }
-        for verbatim in [".accessibilityValue(guideVisible ? \"On\" : \"Off\")"] {
-            XCTAssertFalse(headerGuide.contains(verbatim), "ProjectHeader speaks a bare On/Off again: `\(verbatim)`")
-        }
+        try assertCatalogued(["Menu", "Guide and project options"], "the logo menu's VoiceOver name and hint")
         let clickLeaf = try codeOnly("Sources/Echoelmusic/Studio/WorkstationClickToggle.swift")
         for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"] {
             XCTAssertTrue(clickLeaf.contains(seam), "WorkstationClickToggle lost the E4-44 seam `\(seam)`")
