@@ -4913,3 +4913,8 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **H13:** Undo/Redo im Stück-Kopf bleibt Symbol; das Wort lebt im VoiceOver und erscheint bei Accessibility-Textgrößen (`SongHistoryRow`). Review 2026-11-01.
 - **H14:** Aufnahme-Knopf in `EchoelTheme.recording` — roter Punkt bereit, rote Füllung aktiv, Amber raus (`881248ccf`, Wächter `TheRecordButtonWearsTheRecordingRedTests`). Geräteprobe offen. Review 2026-11-01.
 - **H15:** Field bleibt unterhalb „Producer“ türlos (gewählte Stufe, Standard Pro); die Stück-Reiterzeile ist auf allen Stufen gleich — keine zwei Wege. Review 2026-11-01.
+
+### 2026-10-02 — F + G: eine Tür zum Stück, eine Tür zu Routing
+- **F (b6ec754a9):** Workstation-Chip entfernt. Die Bühnen-Naht „Stück | Instrument" ist die einzige Tür zum Arrangement. `TheDeployNoteNamesRealDoorsTests` liest seitdem nur den obersten Build-Abschnitt gegen die Chip-Leiste und das Archiv gegen Chip-Leiste ∪ `retiredLabels`.
+- **G (43bea0e8e):** Routing nur noch über die Licht-Kachel im Kopf („Light and Routing" / „Licht und Routing"); die Knöpfe im Bio- und Master-Panel sind gelöscht. Wächter `TheRoutingHasOneDoorTests`. Gerät offen: Auffindbarkeit hinter dem Licht-Symbol, verweigerter Tipp bei offenem FX-Blatt, Öffnen vom Stück aus.
+- Review: 2026-11-01.

@@ -41907,3 +41907,12 @@ Founder-Order: eine Tür je Bereich, kompakte Flächen, kein Slop, TestFlight.
 - Lehre: zwei parallel entworfene Scheiben (A, B) — B's neuer Wächter ankerte auf einem Symbol, das A löscht. Bei gestapelten Scheiben jeden NEUEN Wächter gegen den KOMBINIERTEN Baum transkribieren, nicht gegen den eigenen Eltern.
 - Inbox H13–H15 (Undo-Symbol, Stopp/Aufnahme stoppen, Field unter Producer). Nichts gerätegeprüft.
 - **Deploy 10.79.486 GELANDET** — TestFlight-Lauf 2611 (36935214681) auf 4218e00da: Preflight · Compile Check · iOS · „Verify build landed in App Store Connect" success. Gates davor: Compile Check + Build for Testing grün auf 02658e892 (main); Transkription aller 21 betroffenen Wächter gegen den kombinierten Baum: grün, keine Kompilier-Risiken. Gerät: offen (T1–T8).
+
+## 2026-10-02 — H13–H15 entschieden, F + G gebaut, Deploy 10.79.487 vorbereitet
+
+Founder: „Alles auf professionellstem Level. Du entscheidest."
+- **H14 881248ccf** Aufnahme-Rot (Punkt bereit, Füllung aktiv) — Gates grün, main = 881248ccf.
+- **F b6ec754a9** Workstation-Chip weg; Naht = eine Tür zum Stück. Kritik (5 MED, 6 LOW) eingearbeitet.
+- **G 43bea0e8e** Routing eine Tür (Licht-Kachel); zwei Knöpfe gelöscht; zehn Wächter neu verankert, neuer `TheRoutingHasOneDoorTests`. Auf dem kombinierten F+G-Baum transkribiert: alle Prüfer 0.
+- Inbox §2: drei Geräte-Bitten (H14, F, G). Deploy-Notiz 10.79.487 liegt bereit; Commit erst nach grünen G-Gates.
+- Lehre: ein `$S` ohne Definition im selben Befehl ließ `cat > $S/../x` auf stdin warten und legte `/h14msg.txt` im Wurzelverzeichnis an — `S` immer im selben Befehl setzen.
