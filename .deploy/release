@@ -1,4 +1,4 @@
-build: v10.79.487 — Eine Tür je Bereich, zweite Runde: Chip „Workstation" und zwei Routing-Knöpfe weg, Aufnahme in Rot
+build: v10.79.488 — Nur noch Englisch, ⌘Z, das ganze Stück als WAV, ein „Add“-Menü statt fünf Knöpfe
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,65 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.488) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-02 („Vermeide, dass es unübersichtlich ist … so gut designt
+  wie FL Studio Mobile und Ableton … Wo bleiben die ganzen Features?"). Fünf Code-Scheiben
+  seit 10.79.487, jede mit eigenem Wächter, dazu zwei Review-Reparaturen. Auf dem Gerät ist
+  NICHTS davon geprüft; dieser Build ist genau dafür da.
+  Gates: Xcode Compile Check + Build for Testing grün auf 5e5989e8e (= main).
+
+  ── POSTEN 1: DIE APP SPRICHT NUR NOCH AMERIKANISCHES ENGLISCH ──
+  · Deine Antwort „Nur Englisch". Jede Beschriftung, jeder Hinweis, jede VoiceOver-Ansage
+    ist Englisch — auch wenn das iPhone auf Deutsch steht. Die Bitten unten nennen deshalb
+    die englischen Wörter.
+
+  ── POSTEN 2: DAS GANZE STÜCK ALS WAV ──
+  · Stück → Reiterzeile: neben „Export" (MIDI) steht jetzt „WAV". Tippen spielt das Stück
+    EINMAL ab Takt 1 und nimmt alles auf, was du hörst — es dauert so lange wie das Stück.
+    Währenddessen heißt die Kachel „Stop" (verwirft die Aufnahme), am Ende „Share WAV".
+  · Änderst du das Stück, wird aus „Share WAV" wieder „WAV" — nie eine alte Fassung teilen.
+
+  ── POSTEN 3: EIN „ADD"-MENÜ STATT FÜNF KNÖPFEN ──
+  · Leeres Stück: die fünf Knöpfe (Add Audio Track · Import Audio · Add MIDI Track · Import
+    MIDI · New MIDI Part) stehen wie gewohnt da.
+  · Sobald eine Spur existiert, sind sie weg und liegen in der Kachel „Add" am Ende der
+    Reiterzeile — das Arrangement bekommt den Platz. Was ein Menüpunkt bewirkt oder warum er
+    nicht ging, steht direkt unter der Reiterzeile, mit × zum Wegtippen.
+  · ⚠️ Das kehrt eine frühere Anweisung von dir um („ein Knopf, kein Menü") — deshalb liegt
+    es als Frage E17 im Postfach (docs/dev/FOUNDER_INBOX.md). Ein Nein, und die Knöpfe
+    kommen zurück.
+
+  ── POSTEN 4: ⌘Z UND EIN SPÜRBARER TAKT ──
+  · Mit Tastatur (iPad/Mac): ⌘Z macht im Stück rückgängig, ⇧⌘Z wiederholt.
+  · Ein Teil, das du ziehst, tickt einmal leicht pro Takt, auf den es einrastet.
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück. Alles auf Englisch?
+  T2  Neues Stück: fünf Knöpfe unter „No tracks yet", KEINE „Add"-Kachel. „Add Audio Track"
+      tippen: die Knöpfe gehen, „Add" erscheint am Ende der Reiterzeile, darunter steht,
+      welche Spur angelegt wurde.
+  T3  „Add" → „Import Audio": Dateien öffnen sich, das Ergebnis steht unter der Reiterzeile;
+      × räumt die Zeile weg.
+  T4  Fünf Kacheln (Arrange · Mix · Export · WAV · Add) auf deinem iPhone: jedes Wort lesbar?
+  T5  „WAV": spielt ab Takt 1 und hört am Ende von selbst auf; „Share WAV" teilt eine Datei
+      mit dem Projektnamen; der Ausklang ist nicht abgeschnitten. Mitten drin „Stop": nichts
+      wird geteilt.
+  T6  Teil halten bis es sich hebt, langsam über drei Takte ziehen: drei leichte Ticks.
+  T7  Hängt oder stockt etwas: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  Neu prüfbare Bitten (6):
+  Gedruckt: python3 scripts/founder-verify.py --since 29f357674
+  UI 1 — Add-Menü: leeres Stück zeigt die fünf Knöpfe, danach „Add" am Ende der Reiterzeile.
+  UI 2 — die zwei Knopf-Paare stehen nur noch auf einem Stück ohne Spur nebeneinander.
+  UI 3 — die Kachel „WAV" neben „Export": Stop während der Aufnahme, dann „Share WAV".
+  UI 4 — iPad mit Tastatur (oder Mac): ⌘Z / ⇧⌘Z im Stück.
+  AUDIO 1 — Teil über drei Takte ziehen: drei leichte Ticks.
+  OTHER 1 — Stück als WAV: beginnt auf Takt 1, Ausklang nicht abgeschnitten, Länge des Songs.
+
+  Der Vorgänger ist 10.79.487 (Build 2612), davor 10.79.486.
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.487) ───────────────────────────────
