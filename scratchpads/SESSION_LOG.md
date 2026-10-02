@@ -41918,3 +41918,9 @@ Founder: „Alles auf professionellstem Level. Du entscheidest."
 - Lehre: ein `$S` ohne Definition im selben Befehl ließ `cat > $S/../x` auf stdin warten und legte `/h14msg.txt` im Wurzelverzeichnis an — `S` immer im selben Befehl setzen.
 - **Gates:** F b6ec754a9 — Compile Check ✓, Auto-Merge ✓ (main = b6ec754a9). G f6d758c95 — Compile Check ✓, Auto-Merge ✓ (main = f6d758c95).
 - **Deploy 10.79.487 GELANDET** — TestFlight-Lauf 2612 (36976721664) auf 29f357674: Preflight · iOS · Export & Upload · „Verify build landed in App Store Connect" success. Gerät: nichts geprüft; Prüfliste T1–T7 in `.deploy/release`, Bitten in Inbox §2.
+
+## 2026-10-02 — Nur Englisch + UX-Audit
+- **de56d0a79** Katalog nur Englisch (2011 `de`-Einheiten raus), `TheChromeSpeaksGermanTests` → `TheChromeSpeaksOneLanguageTests`, 19 weitere Wächter auf `en`-Lesung umgestellt, `listingOnlyLanguages = ["de"]` mit eigenem Ehrlichkeits-Test. Alle Prüfer 0.
+- Docs: `docs/dev/UX_AUDIT_2026-10-02.md` (14 Scheiben), Inbox E4 überholt, E4b + E15 neu.
+- Lehre: ein ungequoteter Heredoc mit Backticks führt Kommando-Ersetzung aus und frisst jeden Bezeichner — Markdown immer über `<<'EOF'` oder das Write-Werkzeug schreiben.
+- Gerät: nichts geprüft (ein deutsches iPhone zeigt jetzt Englisch).

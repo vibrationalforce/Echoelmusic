@@ -4918,3 +4918,9 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **F (b6ec754a9):** Workstation-Chip entfernt. Die Bühnen-Naht „Stück | Instrument" ist die einzige Tür zum Arrangement. `TheDeployNoteNamesRealDoorsTests` liest seitdem nur den obersten Build-Abschnitt gegen die Chip-Leiste und das Archiv gegen Chip-Leiste ∪ `retiredLabels`.
 - **G (43bea0e8e):** Routing nur noch über die Licht-Kachel im Kopf („Light and Routing" / „Licht und Routing"); die Knöpfe im Bio- und Master-Panel sind gelöscht. Wächter `TheRoutingHasOneDoorTests`. Gerät offen: Auffindbarkeit hinter dem Licht-Symbol, verweigerter Tipp bei offenem FX-Blatt, Öffnen vom Stück aus.
 - Review: 2026-11-01.
+
+### 2026-10-02 — Nur Englisch, plus UX-Audit gegen FL Studio Mobile / Ableton
+- **Entscheidung (Founder, AskUserQuestion „Nur Englisch (Empfohlen)“):** die App spricht amerikanisches Englisch. `Localizable.xcstrings` trägt je Schlüssel nur noch `en` (Wert = Schlüssel); `StringCatalogIsHonestTests.languages = ["en"]`. Commit de56d0a79.
+- **Ausnahme, bewusst:** `fastlane/metadata/de-DE` bleibt als `listingOnlyLanguages` — eine Store-Seite ist Werbung, keine App-Sprache. Founder-Frage E4b.
+- **UX-Audit:** `docs/dev/UX_AUDIT_2026-10-02.md` — Urteil: die Maschine ist weitgehend da, das Bedienmodell zur Hälfte; Hauptursache Layout/Gesten (Chrome ~300–380 pt, Scroll-Liste statt Arrangement-Fläche, kein Zeit-Zoom). 14 Scheiben in Reihenfolge; Video = Bild-Spur (E12), Mac/Vision „Designed for iPhone“ = E15.
+- Review: 2026-11-01.
