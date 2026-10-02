@@ -884,7 +884,7 @@ struct WorkstationView: View {
 
     /// DAW shell S2 — the BROWSE plate: the sounds (S6), the media library and the two seeds that
     /// shape the visual. Each is its own leaf with its own state; this view reads none of it.
-    /// ⛔ These three stood at the foot of the arrangement's scroll, under the project row, grouped
+    /// ⛔ The three after the sounds stood at the foot of the arrangement's scroll, under the project row, grouped
     /// to keep the stack under ten children (#936). On their own plate they no longer push the
     /// song down, and the browser is one tap from anywhere (the switcher), as in every DAW.
     private var browsePlate: some View {

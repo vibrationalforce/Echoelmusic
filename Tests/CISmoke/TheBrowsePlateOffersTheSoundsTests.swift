@@ -7,11 +7,16 @@
 // 1. END-TO-END BEHAVIOUR. The browser's target is the open track exactly when the Device page
 //    would show that track's Sound row (`TrackMix.controls(…).sound`): a poly rack track yes; the
 //    Echoel track, the sub-bass, the body voice, a bio curve, an audio track, a voiceless track,
-//    no selection and a removed track no.
+//    no selection and a removed track no. And the caption names the Echoel track exactly when the
+//    open track is the Echoel track (`rollLaneID`).
 // 2. SOURCE-TEXT SCAN. The tap writes through `TrackMix.setSound` inside
-//    `timeline.editLanePatch(id:)` (ONE Undo step), never the store's writer directly; store
-//    order (the Device hint's "first of the Sounds"); a 44-pt row that is disabled without a target;
-//    a header; no presentation modifier and no hot read.
+//    `timeline.editLanePatch(id:)` (ONE Undo step), never the store's writer directly; the Device
+//    menu's order — Default, the piece's copy, then the store (the Device hint's "first of the
+//    Sounds"); a 44-pt row that is disabled AND drawn dimmed without a target, whose hint then says
+//    why; a list that folds like the media library; no presentation modifier and no hot read.
+//    (Review of 4dedb218d: MED-1 the rows were not dimmed, MED-2 the open list pushed the media
+//    library screens down, LOW-1 no Default row, LOW-2 one hint for both states, LOW-3 the choice
+//    was asked once per row, LOW-5 the Echoel track got the wrong instruction.)
 // 3. SOURCE-TEXT SCAN. Mounted once, on the Browse plate.
 // 4. The new words are catalogued in the app's one language, and the Browse door's hint names
 //    the sounds (the renamed key is gone, so `StringCatalogIsHonestTests` has no orphan).
@@ -30,8 +35,9 @@
 // 375 pt, and whether the picked sound is heard on the track, is a DEVICE PROBE.
 // NEEDS-FOUNDER-VERIFY: Arrange → Add MIDI Track → select it → Browse → Sounds: tap Bright Lead
 // → the row shows a check; Arrange → Device page → Sound reads Bright Lead; Undo in the head →
-// back to Default. With the Echoel track selected, every row is dimmed and the caption says to
-// open a synth track.
+// back to Default (the Default row is checked again). With the Echoel track selected, every row is
+// drawn dimmed and the caption points to Sound in Instrument. Browse opens with Sounds folded, the
+// media library visible below it.
 
 import Foundation
 import XCTest
@@ -51,6 +57,10 @@ final class TheBrowsePlateOffersTheSoundsTests: XCTestCase {
         "Open a synth track in Arrange to give it one of these sounds.",
         "Gives the open synth track this sound. One Undo step",
         browseHint,
+        "In this piece: ",
+        "Lists the stored sounds. A tap on one gives it to the open synth track",
+        "The Echoel track plays the instrument's sound. Shape it with Sound in Instrument.",
+        "Unavailable: open a synth track in Arrange first",
     ]
 
     private static let keys = TimelineLane(name: "Keys", kind: .midi)
@@ -89,6 +99,14 @@ final class TheBrowsePlateOffersTheSoundsTests: XCTestCase {
                 XCTAssertEqual(row, browser, "\(lane.name) at capacity \(capacity): the browser and the Sound row disagree")
             }
         }
+
+        // LOW-5: the caption names the Echoel track exactly when the open track is the Echoel track.
+        for lane in lanes {
+            XCTAssertEqual(SoundBrowserView.opensTheEchoelTrack(lane.id, in: document), lane.id == document.rollLaneID,
+                           "\(lane.name): only the Echoel track is sent to Sound in Instrument")
+        }
+        XCTAssertFalse(SoundBrowserView.opensTheEchoelTrack(nil, in: document), "no open track is not the Echoel track")
+        XCTAssertFalse(SoundBrowserView.opensTheEchoelTrack(UUID(), in: document), "a removed track is not the Echoel track")
     }
 
     // MARK: 2 — the tap is the Sound row's write
@@ -99,23 +117,46 @@ final class TheBrowsePlateOffersTheSoundsTests: XCTestCase {
         XCTAssertTrue(code.contains("timeline.editLanePatch(id: target) {"),
                       "the pick runs inside the person's step — ONE Undo step (B2b)")
         let step = try member("timeline.editLanePatch(id: target) {", in: code)
-        XCTAssertTrue(step.contains("TrackMix.setSound(.library(patch.id), laneID: target,"),
-                      "the write inside the step is the funnel, with the tapped sound")
+        XCTAssertTrue(step.contains("TrackMix.setSound(pick, laneID: target,"),
+                      "the write inside the step is the funnel, with the tapped row's choice")
         XCTAssertFalse(code.contains(".setLanePatch("), "only `TrackMix.setSound` calls the store's sound writer")
         XCTAssertFalse(code.contains("markUsed("), "a tap records no use — the Sound panel ranks by use")
         XCTAssertTrue(code.contains("ForEach(patchStore.patches)"),
                       "store order — the Device hint's \"first of the Sounds\" is the same sound on both plates")
+        // LOW-1: the Device menu's order — Default, the piece's copy, then the store.
+        guard let standard = code.range(of: "pick: .standard"),
+              let kept = code.range(of: "pick: .kept"),
+              let store = code.range(of: "ForEach(patchStore.patches)") else {
+            XCTFail("ANCHOR MISSING: the three kinds of row (#454)")
+            throw AnchorMissing()
+        }
+        XCTAssertTrue(standard.lowerBound < kept.lowerBound && kept.lowerBound < store.lowerBound,
+                      "Default first, the piece's copy next, the stored sounds last — the Device menu's order")
+        XCTAssertTrue(code.contains("TrackMix.keptSound(of: target, in: timeline.document, library: patchStore.patches)"),
+                      "the piece's copy is offered by the Device row's own rule")
+        // LOW-3: the choice is asked once per body, never per row.
+        XCTAssertEqual(code.components(separatedBy: "TrackMix.soundChoice(").count - 1, 1, "one ask per body")
+        XCTAssertTrue(code.contains("let choice = target.map {"), "the ask sits in the body")
+        // MED-2: the list folds, like the media library beside it.
+        XCTAssertTrue(code.contains("@State private var isOpen = false"), "closed until opened")
+        XCTAssertTrue(code.contains("if isOpen {"), "the rows render only while open")
+        XCTAssertTrue(code.contains(".accessibilityValue(isOpen ? String(localized: \"Shown\") : String(localized: \"Hidden\"))"),
+                      "the fold's state is spoken as a value, as on the media library")
         XCTAssertFalse(code.contains("sortedPatches"), "a favorite is starred, not moved")
         XCTAssertTrue(code.contains("Self.target(selection.trackID, in: timeline.document,"),
                       "the body asks the one rule claim 1 drives")
 
-        let row = try member("private func row(_ patch: SynthPatch, target: UUID?) -> some View {", in: code)
+        let row = try member("private func row(_ name: String, pick: TrackMix.SoundChoice, favorite: Bool,", in: code)
         XCTAssertTrue(row.contains("minHeight: 44"), "a 44-pt target")
+        XCTAssertTrue(row.contains("let enabled = target != nil"), "ANCHOR: the row knows whether it can act")
+        XCTAssertTrue(row.contains(".foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)"),
+                      "MED-1: a row with no target is DRAWN dimmed — `.plain` does not dim a styled label")
+        XCTAssertTrue(row.contains("String(localized: \"Unavailable: open a synth track in Arrange first\")"),
+                      "LOW-2: a disabled row's hint says why, not what a tap would do")
         XCTAssertTrue(row.contains(".contentShape(Rectangle())"), "the whole row is the target")
         XCTAssertTrue(row.contains(".disabled(target == nil)"), "no pick without a track that takes one")
         XCTAssertTrue(row.contains(".accessibilityAddTraits(chosen ? .isSelected : [])"),
                       "the track's sound is said, not only drawn")
-        XCTAssertTrue(code.contains(".accessibilityAddTraits(.isHeader)"), "the section is a heading")
 
         for modal in [".sheet(", ".fullScreenCover(", ".popover(", ".alert(", ".confirmationDialog("] {
             XCTAssertFalse(code.contains(modal), "the rows act in place, never through a modal (black-screen law)")

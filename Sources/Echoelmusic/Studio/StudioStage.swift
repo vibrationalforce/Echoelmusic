@@ -51,7 +51,7 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// What the PIECE stage shows (DAW shell S2, founder 2026-10-02, inbox E18 „Ja, so bauen"): the
-/// arrangement, the mixer, the browser (the media library and the photo/video seeds) or the
+/// arrangement, the mixer, the browser (the sounds, the media library and the photo/video seeds) or the
 /// project (save, open, export). One persisted choice, written only by the bottom switcher
 /// (`StageShell.shellSwitcher`), read by `WorkspaceView`'s piece plate (`WorkstationView`).
 ///

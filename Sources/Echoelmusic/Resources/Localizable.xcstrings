@@ -5113,6 +5113,54 @@
         }
       }
     },
+    "In this piece: " : {
+      "comment" : "DAW shell S6 review repair (2026-10-02): the Browse plate's Sounds (SoundBrowserView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In this piece: "
+          }
+        }
+      }
+    },
+    "Lists the stored sounds. A tap on one gives it to the open synth track" : {
+      "comment" : "DAW shell S6 review repair (2026-10-02): the Browse plate's Sounds (SoundBrowserView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lists the stored sounds. A tap on one gives it to the open synth track"
+          }
+        }
+      }
+    },
+    "The Echoel track plays the instrument's sound. Shape it with Sound in Instrument." : {
+      "comment" : "DAW shell S6 review repair (2026-10-02): the Browse plate's Sounds (SoundBrowserView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Echoel track plays the instrument's sound. Shape it with Sound in Instrument."
+          }
+        }
+      }
+    },
+    "Unavailable: open a synth track in Arrange first" : {
+      "comment" : "DAW shell S6 review repair (2026-10-02): the Browse plate's Sounds (SoundBrowserView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable: open a synth track in Arrange first"
+          }
+        }
+      }
+    },
     "Open a synth track in Arrange to give it one of these sounds." : {
       "comment" : "DAW shell S6 (2026-10-02): the Browse plate's Sounds (SoundBrowserView) and the Browse stage hint.",
       "extractionState" : "manual",
@@ -10453,14 +10501,14 @@
         }
       }
     },
-    "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
+    "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
       "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
+            "value" : "Echoel opens on your piece — the header at the top, five words at the bottom: Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press its Play button and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
           }
         }
       }
