@@ -251,6 +251,13 @@ public final class LoopExporter {
         let calc = StudioCalculator(bpm: bpm)
         let seconds = calc.loopSeconds(bars: max(1, bars))
         guard seconds > 0 else { status = .failed(String(localized: "Invalid loop length")); return nil }
+        // The floating window's WAV button drives the SAME recorder. `startRecording` would
+        // no-op on it, and this take would then close — or abort and delete — the user's own
+        // recording as if it were the loop. Refuse instead, with the reason.
+        guard !engine.retroCapture.isRecording else {
+            status = .failed(String(localized: "Another recording is running"))
+            return nil
+        }
 
         // 1. Record live-only (NO 30 s pre-roll — C6) and play the loop from the top.
         cancelRequested = false
@@ -351,6 +358,20 @@ public final class LoopExporter {
     /// never the measure of the piece. The measure is the player reaching its own end.
     private static let pieceCapSeconds: Double = 3_600
 
+    /// Whether a piece bounce is in flight. Owned HERE, not by the door: the Piece stage is
+    /// unmounted when the user switches to the Instrument, and a door that held this in
+    /// `@State` came back unable to stop its own take and dropped the finished file.
+    public private(set) var pieceTakeInFlight = false
+
+    /// The last finished piece WAV, already named after the piece. The door clears it when
+    /// the piece changes, so "Share WAV" never offers an older piece.
+    public var lastPieceFile: URL?
+
+    /// Why the last piece bounce failed. Kept apart from `status` on purpose: `status` is what
+    /// the Instrument's loop-export button reads, and a piece failure written there was shown
+    /// under a Record button that never ran. A piece bounce always leaves `status` at `.idle`.
+    public private(set) var lastPieceFailure: String?
+
     /// Render the whole piece to a `.wav` — "Piece (WAV)". Realtime, like `exportWav`: the
     /// piece plays ONCE from bar 1 with the song loop switched off, the master is captured
     /// through the same RetroCapture tap, and SingleExport writes the whole take (no bar trim)
@@ -367,8 +388,18 @@ public final class LoopExporter {
     @discardableResult
     public func exportPiece(engine: AudioEngine, beatPlayer: BeatPlayer,
                             player: TimelineRegionPlayer, start: @MainActor () -> Void,
-                            targetLUFS: Float?) async -> URL? {
-        guard status != .capturing, status != .rendering else { return nil }
+                            fileName: String, targetLUFS: Float?) async -> URL? {
+        guard status != .capturing, status != .rendering, !pieceTakeInFlight else { return nil }
+        // The floating window's WAV take shares this recorder (see `exportWav`). For a piece
+        // the hole is worse — it would stay open for the whole song.
+        guard !engine.retroCapture.isRecording else {
+            lastPieceFailure = String(localized: "Another recording is running")
+            return nil
+        }
+        pieceTakeInFlight = true
+        lastPieceFile = nil
+        lastPieceFailure = nil
+        defer { endPieceAttempt() }
 
         // 1. From silence: whatever plays now would otherwise open the file mid-phrase.
         player.stop()
@@ -380,6 +411,13 @@ public final class LoopExporter {
         player.loopEnabled = false
         defer { player.loopEnabled = wasLooping }
         engine.retroCapture.startRecording(preRoll: 0)
+        guard engine.retroCapture.isRecording else {
+            // `startRecording` failed silently (format, file). Say so NOW, not after the
+            // whole piece has played for nothing.
+            captureIsAbortable = false
+            status = .failed(String(localized: "Capture failed"))
+            return nil
+        }
         start()
         guard player.isPlaying else {
             // The door asked `canPlay` first; reaching here means the piece changed under it.
@@ -396,6 +434,7 @@ public final class LoopExporter {
             if !tailDone { outcome = .cancelled }
         }
         captureIsAbortable = false
+        player.loopEnabled = wasLooping   // now, not after the render: a Play during "Writing" loops again
         guard outcome == .reachedEnd else {
             player.stop()
             await abortCapture(engine: engine, beatPlayer: beatPlayer)
@@ -410,8 +449,41 @@ public final class LoopExporter {
             if case .failed = status {} else { status = .failed(String(localized: "Capture failed")) }
             return nil
         }
-        return await renderTrimmed(engine: engine, sourceURL: cafURL,
-                                   loopSeconds: nil, fromEnd: 0, targetLUFS: targetLUFS)
+        guard let url = await renderTrimmed(engine: engine, sourceURL: cafURL,
+                                            loopSeconds: nil, fromEnd: 0, targetLUFS: targetLUFS) else {
+            return nil
+        }
+        let named = Self.named(url, fileName)
+        lastPieceFile = named
+        return named
+    }
+
+    /// Ends every piece attempt: the take is no longer in flight, a failure moves to
+    /// `lastPieceFailure`, and `status` goes back to `.idle` so the Instrument's button never
+    /// speaks for the piece.
+    private func endPieceAttempt() {
+        pieceTakeInFlight = false
+        if case .failed(let reason) = status { lastPieceFailure = reason }
+        status = .idle
+    }
+
+    /// The finished file renamed to "<piece> (piece).wav", so the share sheet offers the
+    /// piece's name — and a name that cannot be mistaken for the MIDI export of the same
+    /// piece. A MOVE inside the temporary directory, not a copy: an hour-long piece is about
+    /// a gigabyte. Falls back to the original file if the move fails.
+    private static func named(_ url: URL, _ name: String) -> URL {
+        let stem = name.components(separatedBy: CharacterSet(charactersIn: "/\\:*?\"<>|"))
+            .filter { !$0.isEmpty }.joined(separator: "-")
+        let dest = FileManager.default.temporaryDirectory
+            .appendingPathComponent((stem.isEmpty ? "Piece" : stem) + " (piece).wav")
+        guard dest != url else { return url }
+        do {
+            try? FileManager.default.removeItem(at: dest)
+            try FileManager.default.moveItem(at: url, to: dest)
+            return dest
+        } catch {
+            return url
+        }
     }
 
     /// Poll until the piece stops, ~10×/s like `waitForCapture`. The player's own flag says
@@ -472,10 +544,11 @@ public final class LoopExporter {
     /// THE DEFECT THIS EXISTS FOR. Both callers in `EchoelStudioView` ended with an
     /// unconditional `exporter.reset()` — correct in spirit (a finished attempt must never
     /// leave the button stuck on "Writing .wav…") but it also wiped `.failed`, in the same
-    /// synchronous turn, before SwiftUI could ever render it. This class writes `.failed` at
-    /// six places — the write failed, the loop is longer than the ring, the ring is empty,
+    /// synchronous turn, before SwiftUI could ever render it. This class wrote `.failed` at
+    /// six places then — the write failed, the loop is longer than the ring, the ring is empty,
     /// the render produced nothing, the loop length is invalid, the capture failed — and NOT
-    /// ONE of them could reach a user.
+    /// ONE of them could reach a user. (More have been added since; count them with
+    /// `grep -c "status = .failed(" LoopExporter.swift` rather than trusting a number here.)
     /// The button simply returned to "Record 8 bars → send" and the take was gone, which
     /// reads as "nothing happened" rather than "that did not work".
     ///

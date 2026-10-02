@@ -21,7 +21,9 @@
 //
 // ONE START, ONE EXPORTER: the song starts through `WorkstationView.startSong` (the one
 // `player.play(` site), and the capture belongs to the app's one `LoopExporter`, so this door and
-// the Instrument's loop export can never record at the same time — while one runs, the other is dim.
+// the Instrument's loop export can never record at the same time — while one runs, this tile is
+// dim, and the Instrument's Record tile offers only its Stop. The bounce state (in flight, the
+// finished file, the last failure) lives on the exporter too, so it survives a stage switch.
 
 import SwiftUI
 
@@ -36,18 +38,15 @@ struct PieceAudioExportTab: View {
     @Environment(ProjectStore.self) private var projects
     @AppStorage(StudioDefaultKeys.loudnessTarget.key) private var loudnessTargetRaw = StudioDefaultKeys.loudnessTarget.value
 
-    /// The last finished bounce. Dropped the moment the song changes — a file of the old piece
-    /// offered as "Share WAV" after an edit would be a stale export with a current-looking door.
-    @State private var bounced: URL?
-    /// Whether THIS tile started the export in flight. The exporter is shared with the
-    /// Instrument's loop export; only our own take may be stopped from here.
-    @State private var bouncing = false
-    /// The reason the last bounce from this tile failed, spoken by the tile until the next try.
-    @State private var failure: String?
+    /// Bounce state lives on the exporter, not here (review of slice 10): the Piece stage is
+    /// unmounted on a switch to the Instrument, and `@State` here came back unable to stop its
+    /// own take and dropped the finished file.
+    private var bouncing: Bool { exporter.pieceTakeInFlight }
+    private var failure: String? { exporter.lastPieceFailure }
 
     var body: some View {
         Group {
-            if let bounced {
+            if let bounced = exporter.lastPieceFile {
                 ShareLink(item: bounced) {
                     EchoelIconTile(systemImage: "square.and.arrow.up", title: "Share WAV", expands: true)
                 }
@@ -65,7 +64,12 @@ struct PieceAudioExportTab: View {
                 .accessibilityHint(hint(enabled: enabled))
             }
         }
-        .onChange(of: timeline.document) { _, _ in bounced = nil }
+        // A finished file never outlives what it was made from: an edit to the song, or a new
+        // loudness target, and the tile reads WAV again. (Tempo and the master chain are not
+        // watched here — reading them in this leaf would be a hot read; the tile says "Share
+        // WAV" for the take it made, and a new tap after such a change makes a new one.)
+        .onChange(of: timeline.document) { _, _ in exporter.lastPieceFile = nil }
+        .onChange(of: loudnessTargetRaw) { _, _ in exporter.lastPieceFile = nil }
     }
 
     // MARK: - State in words
@@ -111,41 +115,19 @@ struct PieceAudioExportTab: View {
             exporter.cancel()
             return
         }
-        bounced = nil
-        failure = nil
-        bouncing = true
         let name = SongExportTab.fileName(projects.currentProjectName)
         Task { @MainActor in
-            let url = await exporter.exportPiece(
+            // The exporter owns the outcome: the named file in `lastPieceFile`, a failure in
+            // `lastPieceFailure`, and `status` back at `.idle` either way.
+            await exporter.exportPiece(
                 engine: audioEngine, beatPlayer: beatPlayer, player: player,
                 start: {
                     WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,
                                               pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
                                               fromTick: 0, launching: [])
                 },
+                fileName: name,
                 targetLUFS: LoudnessTarget.resolvedLUFS(rawValue: loudnessTargetRaw))
-            if let url {
-                bounced = Self.renamed(url, to: name)
-            } else if case .failed(let reason) = exporter.status {
-                failure = reason
-            }
-            exporter.finishAttempt()   // keeps `.failed` readable (#216)
-            bouncing = false
-        }
-    }
-
-    /// A copy named after the piece, so the share sheet offers "<piece>.wav" rather than the
-    /// exporter's working name. Falls back to the original file if the copy fails.
-    static func renamed(_ url: URL, to name: String) -> URL {
-        let stem = name.components(separatedBy: CharacterSet(charactersIn: "/\\:*?\"<>|"))
-            .filter { !$0.isEmpty }.joined(separator: "-")
-        let dest = FileManager.default.temporaryDirectory.appendingPathComponent(stem + ".wav")
-        do {
-            try? FileManager.default.removeItem(at: dest)
-            try FileManager.default.copyItem(at: url, to: dest)
-            return dest
-        } catch {
-            return url
         }
     }
 }

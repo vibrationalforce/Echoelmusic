@@ -17,12 +17,18 @@
 // plays once from bar 1 and the tile reads Stop; at the end it reads Share WAV and shares a .wav
 // named after the project; edit a part → it reads WAV again.
 //
-// GRADING (#433, parent = the tree before this slice): claims 1–6 are FORWARD guards — the parent
-// has no `PieceAudioExportTab` (measured: 0 occurrences in `Sources/`), so they are red there by
-// one absence, reported six times (#486). Claim 7 is a COUNTERWEIGHT, green on both trees: the
-// MIDI door is still the one `SongExportTab()`, still a `ShareLink`. Stripper `SourceText.codeOnly`:
-// TRAGEND on claim 2 — the file's header names `player.play(` in prose (raw 1, stripped 0);
-// PROPHYLACTIC on the others (measured).
+// GRADING (#433, parent = the tree before this slice): claims 1–6 and 8 are FORWARD guards — the
+// parent has no `PieceAudioExportTab` (measured: 0 occurrences in `Sources/`), so they are red
+// there by one absence, reported seven times (#486). Claim 7 is a COUNTERWEIGHT, green on both
+// trees: the MIDI door is still the one `SongExportTab()`, still a `ShareLink`. Claims 6 and 8 were
+// rewritten by the review repair (state moved onto `LoopExporter`); against 387e64bf6 claim 6's
+// new needles and claim 8 are red — the regression they exist for. Stripper `SourceText.codeOnly`:
+// TRAGEND on claims 2 and 8 — the header names `player.play(` and `@State` in prose; PROPHYLACTIC
+// on the others (measured).
+// ⛔ The first version's `body(of:)` searched for the brace AFTER the head, so a head that ENDS in
+// `{` returned the first block inside the member, not the member — claim 3 was red on correct
+// code (found by the review, by running the helper on this tree). It now searches from the head's
+// start.
 
 import Foundation
 import XCTest
@@ -103,8 +109,11 @@ final class ThePieceHasAWavDoorTests: XCTestCase {
     // MARK: - Claim 6 — a finished file never outlives the song it was made from
 
     func testAStaleFileIsDropped() throws {
-        XCTAssertTrue(try source(Self.tab).contains(".onChange(of: timeline.document) { _, _ in bounced = nil }"),
+        let code = try source(Self.tab)
+        XCTAssertTrue(code.contains(".onChange(of: timeline.document) { _, _ in exporter.lastPieceFile = nil }"),
                       "an edit drops the finished file, so Share WAV never offers an older piece")
+        XCTAssertTrue(code.contains(".onChange(of: loudnessTargetRaw) { _, _ in exporter.lastPieceFile = nil }"),
+                      "so does a new loudness target — the file was normalised to the old one")
     }
 
     // MARK: - Claim 7 — COUNTERWEIGHT: the MIDI door is untouched
@@ -116,13 +125,26 @@ final class ThePieceHasAWavDoorTests: XCTestCase {
                        "still one MIDI door")
     }
 
+    // MARK: - Claim 8 — the bounce state is the exporter's, so it survives a stage switch
+
+    func testTheBounceStateLivesOnTheExporter() throws {
+        let code = try source(Self.tab)
+        XCTAssertFalse(code.contains("@State"), """
+            the Piece stage is unmounted on a switch to the Instrument; bounce state held in `@State` \
+            here came back unable to stop its own take and dropped the finished file (review of slice 10)
+            """)
+        XCTAssertTrue(code.contains("exporter.pieceTakeInFlight") && code.contains("exporter.lastPieceFile")
+                      && code.contains("exporter.lastPieceFailure"),
+                      "in flight, the finished file and the last failure are read from the exporter")
+    }
+
     // MARK: - Helpers
 
     private struct AnchorMissing: Error { let reason: String }
 
     private func body(of head: String, in code: String) throws -> String {
         guard let start = code.range(of: head),
-              let open = code.range(of: "{", range: start.upperBound..<code.endIndex) else {
+              let open = code.range(of: "{", range: start.lowerBound..<code.endIndex) else {
             throw AnchorMissing(reason: "`\(head)` is gone (#454)")
         }
         var depth = 0

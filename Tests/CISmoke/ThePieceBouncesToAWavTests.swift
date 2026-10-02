@@ -17,6 +17,11 @@
 // as WAV → it plays once from bar 1 and stops; the shared file starts on bar 1, ends with the last
 // release decaying (not cut), and has the length of the song. Stop it half-way → nothing is shared.
 //
+// ⛔ REVIEW REPAIR: `body(of:)` searched for the brace AFTER the head, so claim 3's head (which
+// ends in `{`) returned `guard isPlaying else { return }` — red on correct code. It now searches
+// from the head's start. Claim 7 was added with the repair: against 387e64bf6 it is red (the
+// floating window's WAV take could be closed or deleted as "the piece").
+//
 // GRADING (#433, parent = the tree before this slice): claims 1–4 are FORWARD guards — the parent
 // has no `exportPiece` and no `lastStopReachedSongEnd` (measured: 0 occurrences of either in
 // `Sources/`), so they are red there by the absence of one feature, reported four times (#486).
@@ -118,13 +123,33 @@ final class ThePieceBouncesToAWavTests: XCTestCase {
                       "only the bounce turns the loop off, and only for its take")
     }
 
+    // MARK: - Claim 7 — the bounce never takes over a recorder that is already recording
+
+    func testTheBounceNeverTakesOverARunningRecording() throws {
+        let body = try self.body(of: Self.exportHead, in: try source(Self.exporter))
+        guard let refuse = body.range(of: "guard !engine.retroCapture.isRecording else {"),
+              let open = body.range(of: "engine.retroCapture.startRecording(preRoll: 0)"),
+              let live = body.range(of: "guard engine.retroCapture.isRecording else {"),
+              let start = body.range(of: "\n        start()\n") else {
+            return XCTFail("ANCHOR MISSING: the busy-recorder refusal, the open, its live check or `start()` (#454)")
+        }
+        XCTAssertLessThan(refuse.lowerBound, open.lowerBound, """
+            the floating window's WAV take drives the same recorder — the bounce must refuse BEFORE \
+            opening it, or it closes (or deletes) that take as if it were the piece
+            """)
+        XCTAssertLessThan(open.upperBound, live.lowerBound, "the open is checked…")
+        XCTAssertLessThan(live.lowerBound, start.lowerBound, "…before the piece plays for nothing")
+        XCTAssertTrue(body.contains("defer { endPieceAttempt() }"),
+                      "every attempt ends through one place that returns `status` to idle")
+    }
+
     // MARK: - Helpers
 
     private struct AnchorMissing: Error { let reason: String }
 
     private func body(of head: String, in code: String) throws -> String {
         guard let start = code.range(of: head),
-              let open = code.range(of: "{", range: start.upperBound..<code.endIndex) else {
+              let open = code.range(of: "{", range: start.lowerBound..<code.endIndex) else {
             throw AnchorMissing(reason: "`\(head)` is gone (#454)")
         }
         var depth = 0
