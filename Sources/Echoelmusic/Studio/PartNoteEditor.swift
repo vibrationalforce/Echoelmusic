@@ -55,7 +55,9 @@
 //  started, and an assistive zoom action does the same. The canvas, the playhead line, the
 //  velocity lane and the tap all read the ONE width (`stepWidth`), so a note, its stem and the
 //  line never disagree. A view, not an edit: nothing is written, nothing is on Undo, another
-//  part opens at 22. No finger-rate state: nothing redraws while the fingers move.
+//  part opens at 22. No finger-rate state: nothing redraws while the fingers move. Limits, as
+//  in S9a: two fingers that rest before spreading may also start the canvas's hold (an edit can
+//  commit with the zoom — Undo takes it back), and a pan during the pinch moves its anchor.
 //
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
 //  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no

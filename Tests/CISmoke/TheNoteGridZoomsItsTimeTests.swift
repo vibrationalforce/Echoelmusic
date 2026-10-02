@@ -40,6 +40,11 @@
 // note is easy to tap; "Zoom out" shows the part at a glance; both grey out at their ends; a
 // two-finger spread on the grid steps once when the fingers lift, around where they were; a
 // note drag, a box-select and the velocity lane still land on the right step at every width.
+// Two cases the review of S9b named and only glass can settle: "Zoom in" near the END of a long
+// part — does the step stay put, or is the scroll cut to the old, narrower content? And two
+// fingers that rest ~0.3 s before spreading can also start the canvas's hold-and-drag, so an
+// edit may commit with the zoom (undoable; the S9a canvas has the same limit). A two-finger pan
+// during the pinch shifts its anchor by the pan (the release reads the end offset).
 
 import XCTest
 @testable import Echoelmusic
@@ -216,6 +221,13 @@ final class TheNoteGridZoomsItsTimeTests: XCTestCase {
             the pinch acts at release only. A `.updating` or `.onChanged` here is finger-rate work on \
             the WHOLE grid (it reads the stores) — the leaf law says finger-rate state lives in a leaf
             """)
+        // The whole gesture expression — up to the tool row that follows it — so a `.updating` or
+        // `.onChanged` chained AFTER the release closure is caught too (review of S9b, LOW-5).
+        let gestureExpression = afterPinch.components(separatedBy: "controls(range:").first ?? afterPinch
+        for fingerRate in [".onChanged", ".updating"] {
+            XCTAssertFalse(gestureExpression.contains(fingerRate),
+                           "the pinch carries `\(fingerRate)` — finger-rate work on the whole grid")
+        }
         XCTAssertTrue(afterPinch.contains("zoom(by: NoteGridZoom.levelDelta(forPinch: Double(value.magnification)),"),
                       "the pinch takes the pure dead-zoned step, through the one zoom step")
         XCTAssertTrue(afterPinch.contains("anchor: value.startAnchor.x * viewport.width)"),
