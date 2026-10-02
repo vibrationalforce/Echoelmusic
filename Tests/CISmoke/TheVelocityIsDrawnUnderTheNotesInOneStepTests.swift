@@ -203,7 +203,7 @@ final class TheVelocityIsDrawnUnderTheNotesInOneStepTests: XCTestCase {
         XCTAssertLessThan(canvas.lowerBound, mount.lowerBound,
                           "the lane rides in the grid's scroll view, UNDER the canvas, so a stem stays under its note's column")
         XCTAssertEqual(editor.components(separatedBy: "PartVelocityLane(").count - 1, 1, "mounted once")
-        XCTAssertTrue(editor.contains("stepWidth: Self.stepWidth, editable: editable,"),
+        XCTAssertTrue(editor.contains("stepWidth: stepWidth, editable: editable,"),
                       "the grid's own column width — one width for notes and stems")
         XCTAssertTrue(editor.contains("drawVelocities(drawn, region: region)"))
         // One target set for the lane AND the buttons (#416): the M3 rule, asked once.

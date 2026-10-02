@@ -49,6 +49,14 @@
 //  the lane's own leaf and is committed ONCE at release through `setClipNotes` — one Undo.
 //  VoiceOver keeps the Velocity row below; the lane is hidden from it.
 //
+//  Since DAW shell S9b: „Zoom out" / „Zoom in" in the tool row set how wide a sixteenth is drawn
+//  (`NoteGridZoom`: 11 · 22 · 44 pt; 22 is the M1 width), around the middle of the view; a
+//  two-finger pinch on the grid takes the same step ONCE, on release, around where the fingers
+//  started, and an assistive zoom action does the same. The canvas, the playhead line, the
+//  velocity lane and the tap all read the ONE width (`stepWidth`), so a note, its stem and the
+//  line never disagree. A view, not an edit: nothing is written, nothing is on Undo, another
+//  part opens at 22. No finger-rate state: nothing redraws while the fingers move.
+//
 //  ⚠️ WHAT IT DOES NOT DO, stated so the surface does not read as more: no scale LOCK — a tap
 //  or a drag may still place a note outside the key (the shading shows it; Fit repairs it), no
 //  auto-scroll while dragging (a move stays
@@ -165,7 +173,21 @@ private struct PartNoteGrid: View {
     /// next tap, like the octave shift), so it resets to sixteenths when the part changes.
     @State private var quantizeGrid: ClipNoteEdit.QuantizeGrid = .sixteenth
 
-    private static let stepWidth: CGFloat = 22
+    /// DAW shell S9b — how wide a sixteenth is drawn (`NoteGridZoom`). A view of the part, not
+    /// an edit: local to the open grid like the octave shift, never saved, never on Undo.
+    @State private var zoomLevel = NoteGridZoom.defaultLevel
+    @State private var position = ScrollPosition(x: 0)
+    /// What the grid's scroll view last reported. A reference SwiftUI does not observe: written
+    /// at scroll rate, read only by a zoom step, so scrolling rebuilds nothing here.
+    @State private var viewport = GridViewport()
+
+    private final class GridViewport {
+        var offset: CGFloat = 0
+        var width: CGFloat = 0
+    }
+
+    /// The ONE column width the canvas, the playhead line, the velocity lane and the tap read.
+    private var stepWidth: CGFloat { CGFloat(NoteGridZoom.stepWidth(atLevel: zoomLevel)) }
     private static let rowHeight: CGFloat = 14
 
     var body: some View {
@@ -197,7 +219,7 @@ private struct PartNoteGrid: View {
                     let targets = ClipNoteEdit.targets(selected: selected, onScreen: pickedOnScreen,
                                                        visible: visible)
                     let grid = NoteGridGesture.Grid(
-                        stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),
+                        stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
                     ScrollView(.horizontal, showsIndicators: true) {
                         // B6a: the velocity lane rides in the SAME scroll view, under the grid, so a
@@ -219,7 +241,7 @@ private struct PartNoteGrid: View {
                                 .overlay(alignment: .leading) {
                                     PartNotePlayheadView(partStartTick: region.startTick,
                                                          lengthTicks: region.lengthTicks,
-                                                         stepWidth: Self.stepWidth)
+                                                         stepWidth: stepWidth)
                                 }
                                 .accessibilityElement()
                                 .accessibilityLabel(ClipNoteEdit.gridLabel(shown: onScreen.count, total: visible.count,
@@ -237,17 +259,38 @@ private struct PartNoteGrid: View {
                                 .accessibilityAction(named: "Select previous note") {
                                     stepPick(-1, among: onScreen)
                                 }
+                                // S9b: an assistive zoom steps the columns like the two buttons.
+                                .accessibilityZoomAction { action in
+                                    zoom(by: action.direction == .zoomIn ? 1 : -1, steps: steps,
+                                         anchor: viewport.width / 2)
+                                }
                             if !onScreen.isEmpty {
                                 PartVelocityLane(notes: onScreen, targets: targets, steps: steps,
-                                                 stepWidth: Self.stepWidth, editable: editable,
+                                                 stepWidth: stepWidth, editable: editable,
                                                  onRelease: { drawn in
                                                      drawVelocities(drawn, region: region)
                                                  })
                             }
                         }
                     }
+                    // DAW shell S9b: where the grid is scrolled, so a zoom keeps the step in view.
+                    .scrollPosition($position)
+                    .onScrollGeometryChange(for: CGRect.self) { geo in
+                        CGRect(x: geo.contentOffset.x, y: 0, width: geo.containerSize.width, height: 0)
+                    } action: { _, now in
+                        viewport.offset = now.minX
+                        viewport.width = now.width
+                    }
+                    // Two fingers step the zoom once, on release, around where they started. No
+                    // finger-rate state: nothing redraws while the fingers move.
+                    .simultaneousGesture(
+                        MagnifyGesture().onEnded { value in
+                            zoom(by: NoteGridZoom.levelDelta(forPinch: Double(value.magnification)),
+                                 steps: steps, anchor: value.startAnchor.x * viewport.width)
+                        }
+                    )
                     controls(range: range, picked: pickedOnScreen, editable: editable,
-                             region: region)
+                             region: region, steps: steps)
                         .onAppear { if centre == nil { centre = heldCentre } }
                     if editable, !visible.isEmpty {
                         // Design slice 3: ONE picked note is said in words — the grid shows
@@ -311,7 +354,7 @@ private struct PartNoteGrid: View {
                      steps: Int, range: ClosedRange<Int>, editable: Bool) {
         let hit = RollHitTest.classify(x: Double(location.x), y: Double(location.y),
                                        notes: visible,
-                                       stepW: Double(Self.stepWidth), rowH: Double(Self.rowHeight),
+                                       stepW: Double(stepWidth), rowH: Double(Self.rowHeight),
                                        highPitch: range.upperBound, lowPitch: range.lowerBound,
                                        stepCount: steps, edgeSlop: 0)
         switch hit {
@@ -541,16 +584,42 @@ private struct PartNoteGrid: View {
         }
     }
 
+    /// DAW shell S9b — one Zoom button, one assistive zoom action or one released pinch: the
+    /// column width `delta` levels away, keeping the song position under `anchor` (points from
+    /// the visible left edge) where it is. A view change only — nothing is written, no Undo step.
+    private func zoom(by delta: Int, steps: Int, anchor: CGFloat) {
+        let next = NoteGridZoom.level(zoomLevel, steppedBy: delta)
+        guard next != zoomLevel else { return }
+        let offset = NoteGridZoom.anchoredOffset(Double(viewport.offset), anchor: Double(anchor),
+                                                 from: NoteGridZoom.stepWidth(atLevel: zoomLevel),
+                                                 to: NoteGridZoom.stepWidth(atLevel: next),
+                                                 steps: steps, viewWidth: Double(viewport.width))
+        zoomLevel = next
+        position.scrollTo(x: CGFloat(offset))
+    }
+
     // MARK: - Controls
 
     private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
-                          region: TimelineRegion) -> some View {
+                          region: TimelineRegion, steps: Int) -> some View {
         let pickedCount = picked.count
         return NoteToolFlow(spacing: 6) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
                    label: String(localized: "Show the octave below")) { octaveShift -= 1 }
             button("Higher", "chevron.up", enabled: range.upperBound < 127,
                    label: String(localized: "Show the octave above")) { octaveShift += 1 }
+            // DAW shell S9b: the time zoom of the grid, one step per tap, around the middle of
+            // the view — the pinch is a shortcut, never the only way (WCAG 2.5.1).
+            button("Zoom out", "minus.magnifyingglass",
+                   enabled: NoteGridZoom.level(zoomLevel, steppedBy: -1) != zoomLevel,
+                   label: String(localized: "Zoom out: more of the part at once")) {
+                zoom(by: -1, steps: steps, anchor: viewport.width / 2)
+            }
+            button("Zoom in", "plus.magnifyingglass",
+                   enabled: NoteGridZoom.level(zoomLevel, steppedBy: 1) != zoomLevel,
+                   label: String(localized: "Zoom in: wider steps, easier to tap")) {
+                zoom(by: 1, steps: steps, anchor: viewport.width / 2)
+            }
             if editable {
                 button("Delete", "trash", enabled: pickedCount > 0,
                        label: String(localized: "Delete ") + (pickedCount == 1 ? String(localized: "the selected note")

@@ -109,14 +109,14 @@ final class TheNoteGridShowsWhereTheSongIsTests: XCTestCase {
         let mount = String(code[overlay.upperBound..<a11y.lowerBound])
         XCTAssertTrue(mount.contains("PartNotePlayheadView(partStartTick: region.startTick,"))
         XCTAssertTrue(mount.contains("lengthTicks: region.lengthTicks,"))
-        XCTAssertTrue(mount.contains("stepWidth: Self.stepWidth)"), "the grid's own column width — one width for notes and line")
+        XCTAssertTrue(mount.contains("stepWidth: stepWidth)"), "the grid's own column width — one width for notes and line (since S9b the zoomed `stepWidth`, #416)")
         XCTAssertEqual(code.components(separatedBy: "PartNotePlayheadView(").count - 1, 1, "mounted once")
         for banned in ["currentTick", "player."] {
             XCTAssertFalse(code.contains(banned), "the note editor reads `\(banned)` — the position belongs to the leaf's own file")
         }
         XCTAssertTrue(code.contains("let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,"),
                       "counterweight: the canvas places a note at `startStep × stepW` — the unit the playhead uses")
-        XCTAssertTrue(code.contains("stepWidth: Double(Self.stepWidth), rowHeight: Double(Self.rowHeight),"),
+        XCTAssertTrue(code.contains("stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),"),
                       "counterweight: the canvas's grid is built from the same `stepWidth` the leaf is handed")
     }
 

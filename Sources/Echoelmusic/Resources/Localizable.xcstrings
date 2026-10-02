@@ -22024,6 +22024,26 @@
           }
         }
       }
+    },
+    "Zoom out: more of the part at once" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom out: more of the part at once"
+          }
+        }
+      }
+    },
+    "Zoom in: wider steps, easier to tap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom in: wider steps, easier to tap"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
