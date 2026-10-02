@@ -42,6 +42,16 @@
 // green on both: claim 4 whole (it drives store API B3b shipped — it pins the composition, it cannot
 // fail for the surfaces' sake), and inside claims 1–3 the "still through the funnel" needles, the
 // "store writers only inside `TrackMix`" census and the census floor.
+// TAP-SEAM RE-GRADE (2026-10-02): the header's and Perform's M/S now tap through `TrackMix.tapStep`,
+// which opens AND closes the gesture inside `TrackMix` — because the inline form sent `timeline` two
+// messages and turned `TheWorkstationHasADoorTests` claim F red on a correct tree from B3c on (only
+// `document` may be sent from that surface). Claim 2 re-pinned to the seam and STRENGTHENED: it also
+// pins the seam's body (open, then close, no writer inside) and forbids an inline `editLaneMix` in
+// either row. Claim 3: the wrap regex takes the seam's call shape (the alternative this file invites
+// for a helper), the close rule now applies to files that OPEN a gesture, and a new rule refuses a
+// mixer-writing file that neither opens nor taps through the seam. Claim 4 drives the shipped seam
+// instead of a re-typed copy. Transcribed on both trees: on the parent the new claim-2 needles and the
+// seam pins are FORWARD guards (red there, the seam does not exist); claims 3–5 green on both.
 // STRIPPER: `SourceText.codeOnly` is PROPHYLAKTISCH here — 0 of the scan verdicts flip raw vs.
 // stripped on either tree (measured over every `Sources/Echoelmusic` file for claim 3).
 // NOT covered: that the three surfaces FEEL like one gesture under a finger, that an Undo while the
@@ -109,11 +119,30 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
         let grid = try member("private func mixRow(_ row: MixRow) -> some View {", in: perform)
         for (name, body) in [("the track header", header), ("the Perform grid", grid)] {
             for flip in ["flipMute", "flipSolo"] {
-                XCTAssertTrue(body.contains("timeline.editLaneMix(id: row.id) { TrackMix.\(flip)(laneID: row.id, timeline: timeline) }"),
-                              "\(name): `\(flip)` runs inside the person's gesture")
+                XCTAssertTrue(body.contains("TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.\(flip)(laneID: row.id, timeline: timeline) }"),
+                              "\(name): `\(flip)` runs inside the person's tap gesture (`TrackMix.tapStep`)")
             }
-            XCTAssertEqual(body.components(separatedBy: "timeline.commitLaneMix(id: row.id)").count - 1, 2,
-                           "\(name): each of the two taps closes its gesture at once — one tap, one step")
+            XCTAssertEqual(body.components(separatedBy: "TrackMix.tapStep(").count - 1, 2,
+                           "\(name): each of the two taps is one gesture — one tap, one step")
+            // Since the seam (2026-10-02): the surface opens no gesture of its own any more, so a
+            // bare `editLaneMix` here would be a gesture `tapStep` does not close.
+            XCTAssertFalse(body.contains("editLaneMix("),
+                           "\(name): opens a gesture inline again — a tap goes through `TrackMix.tapStep`")
+        }
+        // The seam itself: it OPENS and CLOSES, in that order, and nothing else — so "one tap, one
+        // step" is a property of the helper the two surfaces share, pinned once here.
+        let inspector = SourceText.codeOnly(try text(Self.inspector))
+        let seam = try member("static func tapStep(laneID: UUID, timeline: TimelineStore, _ write: () -> Void) {", in: inspector)
+        let opening = try XCTUnwrap(seam.range(of: "timeline.editLaneMix(id: laneID, write)"),
+                                 "`tapStep` must run the write inside the store's gesture")
+        let closing = try XCTUnwrap(seam.range(of: "timeline.commitLaneMix(id: laneID)"),
+                                  "`tapStep` must close the gesture it opened")
+        XCTAssertLessThan(opening.lowerBound, closing.lowerBound, "`tapStep` closes the gesture AFTER the write, never before")
+        for writer in ["setLaneLevel", "setLanePan", "toggleMute", "toggleSolo", "flipMute", "flipSolo", "setLevel", "setPan"] {
+            XCTAssertFalse(seam.contains(writer + "("), """
+                `tapStep` writes `\(writer)` itself — it is a gesture around the caller's write, never a \
+                writer: the funnel stays bare for the agent (claim 3's executor rule).
+                """)
         }
     }
 
@@ -122,7 +151,7 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
     func testNoHandMadeMixWriteBypassesTheGesture() throws {
         let writer = try NSRegularExpression(pattern: "TrackMix\\.(setLevel|setPan|flipMute|flipSolo)\\(")
         let wrapped = try NSRegularExpression(
-            pattern: "(editLaneMix\\(id: [A-Za-z.]+\\)|tapped\\(lane\\.id\\)) \\{\\s*TrackMix\\.(setLevel|setPan|flipMute|flipSolo)\\(")
+            pattern: "(editLaneMix\\(id: [A-Za-z.]+\\)|tapped\\(lane\\.id\\)|TrackMix\\.tapStep\\(laneID: [A-Za-z.]+, timeline: timeline\\)) \\{\\s*TrackMix\\.(setLevel|setPan|flipMute|flipSolo)\\(")
         let all = try sources()
         var writers: [String] = []
         for (path, code) in all where path != Self.executor {
@@ -137,9 +166,16 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
                 A helper that does both (the piece mixer's `tapped(lane.id)`) is fine: add its call \
                 shape to `wrapped` here. Only the agent's executor writes bare — it keeps its own way back.
                 """)
-            XCTAssertTrue(code.contains("commitLaneMix("), """
+            // A file that OPENS a gesture must close one. `TrackMix.tapStep` opens and closes inside
+            // `TrackMix`, so a surface that only taps through it opens nothing here — and a file that
+            // writes ONLY through it still has to show the seam (the wrap count above already did).
+            XCTAssertTrue(!code.contains("editLaneMix(") || code.contains("commitLaneMix("), """
                 \(path) opens mixer gestures but never closes one — without `commitLaneMix(id:)` no step \
                 is recorded, and the open start leaks into the next gesture on that track.
+                """)
+            XCTAssertTrue(code.contains("editLaneMix(") || code.contains("TrackMix.tapStep("), """
+                \(path) writes the mixer but neither opens a gesture nor taps through `TrackMix.tapStep` — \
+                the wrap count above cannot have matched, so this is the bare write in another shape.
                 """)
         }
         // The funnel is the only door to the store's four mixer writers — a surface that called
@@ -175,14 +211,12 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
             timeline.editLaneMix(id: loop) { TrackMix.setLevel(sample, laneID: loop, timeline: timeline) }
         }
         timeline.commitLaneMix(id: loop)
-        // The track header's M on Keys.
-        timeline.editLaneMix(id: keys) { TrackMix.flipMute(laneID: keys, timeline: timeline) }
-        timeline.commitLaneMix(id: keys)
+        // The track header's M on Keys — through the shipped seam itself, not a re-typed copy.
+        TrackMix.tapStep(laneID: keys, timeline: timeline) { TrackMix.flipMute(laneID: keys, timeline: timeline) }
         // The agent lowers Keys — its bare path, no step.
         TrackMix.setLevel(0.875, laneID: keys, timeline: timeline)
-        // The Perform grid's Solo on Loop.
-        timeline.editLaneMix(id: loop) { TrackMix.flipSolo(laneID: loop, timeline: timeline) }
-        timeline.commitLaneMix(id: loop)
+        // The Perform grid's Solo on Loop — the same seam.
+        TrackMix.tapStep(laneID: loop, timeline: timeline) { TrackMix.flipSolo(laneID: loop, timeline: timeline) }
 
         timeline.undo()
         XCTAssertEqual(lane(Self.loopLane, in: timeline)?.isSoloed, false, "the newest step is the Perform tap")

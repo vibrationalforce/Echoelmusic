@@ -163,14 +163,13 @@ struct PerformSessionView: View {
                 .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step.
+            // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step
+                // (`TrackMix.tapStep` opens and closes it, so this view sends the store no message).
             mixSwitch(String(localized: "Mute"), track: row.name, on: row.isMuted, hint: TrackMix.muteHint(row.role)) {
-                timeline.editLaneMix(id: row.id) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
-                timeline.commitLaneMix(id: row.id)
+                TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
             }
             mixSwitch(String(localized: "Solo"), track: row.name, on: row.isSoloed, hint: TrackMix.soloHint(row.role)) {
-                timeline.editLaneMix(id: row.id) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
-                timeline.commitLaneMix(id: row.id)
+                TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
             }
         }
     }

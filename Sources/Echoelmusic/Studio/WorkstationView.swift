@@ -615,15 +615,14 @@ struct WorkstationView: View {
             // ⚠️ OUTSIDE the combined element, on purpose: `.combine` on the row swallowed the
             // tuning banner's recovery button once (#621) — a control inside a merged element
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
-            // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step.
+            // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step
+                // (`TrackMix.tapStep` opens and closes it, so this view sends the store no message).
             if let role = muteSoloRole {
                 headerSwitch("M", name: String(localized: "Mute"), on: row.isMuted, hint: TrackMix.muteHint(role)) {
-                    timeline.editLaneMix(id: row.id) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
-                    timeline.commitLaneMix(id: row.id)
+                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
                 }
                 headerSwitch("S", name: String(localized: "Solo"), on: row.isSoloed, hint: TrackMix.soloHint(role)) {
-                    timeline.editLaneMix(id: row.id) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
-                    timeline.commitLaneMix(id: row.id)
+                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
                 }
             }
             if row.kind == .audio { warpSwitch(laneID: row.id) }

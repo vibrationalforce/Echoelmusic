@@ -43,6 +43,11 @@
 // is overwritten with 0.25); no write count on a level
 // Undo (claim 3); a step inside `TrackMix.setLevel` (claim 2, "the agent's path records nothing").
 // Claim 4 transcribed against both trees: red on the parent by the same one absence.
+// TAP-SEAM RE-GRADE (2026-10-02, claim 4's recorder census only): the header and Perform taps moved
+// behind `TrackMix.tapStep`, so the census matcher also accepts that seam. Graded by transcription on
+// both trees: the set is the same four files on the parent (`.editLaneMix(` inline) and here (seam);
+// with the OLD matcher it would read [mixer, inspector] here — red on a correct tree, the reason for
+// this edit. No assertion is removed or loosened: the list stays an exact equality.
 // B3c RE-GRADE (2026-10-01, claim 4 only — claims 1–3 untouched): this file now COMPILES against its
 // parent. REGRESSIONS there: two — the recorder list (the parent records from the piece mixer alone)
 // and the hint (the parent still says "changed anywhere else"). COUNTERWEIGHTS, green on both: the
@@ -227,7 +232,10 @@ final class TheMixerGestureIsOneUndoStepTests: XCTestCase {
             XCTAssertTrue(strip.contains(writer), "the write inside the gesture is still the funnel: `\(writer)`")
         }
 
-        let recorders = try filesMatching { $0.contains(".editLaneMix(") }
+        // Since the tap seam (2026-10-02): the track header and the Perform grid record through
+        // `TrackMix.tapStep` — it opens and closes the gesture inside `TrackMix` — so a recorder is a
+        // file that opens a gesture OR taps through the seam. Same four surfaces, same strictness.
+        let recorders = try filesMatching { $0.contains(".editLaneMix(") || $0.contains("TrackMix.tapStep(") }
         XCTAssertEqual(recorders, [Self.perform, Self.mixer, Self.inspector, Self.workstation], """
             the surfaces whose edits enter the piece's Undo are the four a hand reaches (B3c). A new \
             recorder is welcome: add it here and check `SongHistoryRow`'s hint in the same commit, \

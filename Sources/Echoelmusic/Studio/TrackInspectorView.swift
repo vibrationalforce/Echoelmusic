@@ -431,6 +431,19 @@ enum TrackMix {
         timeline.toggleSolo(id: laneID)
     }
 
+    /// B3c — a person's TAP is one whole gesture: `write` runs inside the store's gesture and the
+    /// gesture closes at once, so one tap is ONE Undo step. This is the PERSON's door, kept apart
+    /// from the bare funnel above on purpose: the agent still writes `flipMute`/`setLevel` bare and
+    /// keeps its own way back (`EveryHandMadeMixChangeIsOneUndoStepTests`). It lives here rather than
+    /// inline in each surface so a surface that must send the store nothing but `document`
+    /// (`TheWorkstationHasADoorTests` claim F) does not have to open the gesture itself — that inline
+    /// form is what turned claim F red from B3c (`e0e28f83a`) until this helper.
+    @MainActor
+    static func tapStep(laneID: UUID, timeline: TimelineStore, _ write: () -> Void) {
+        timeline.editLaneMix(id: laneID, write)
+        timeline.commitLaneMix(id: laneID)
+    }
+
     /// Only an EMPTY, non-Echoel, non-bio track; the store refuses a lane with parts anyway.
     @MainActor
     static func removeTrack(laneID: UUID, timeline: TimelineStore) {
