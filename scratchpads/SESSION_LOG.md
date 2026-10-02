@@ -41916,3 +41916,5 @@ Founder: „Alles auf professionellstem Level. Du entscheidest."
 - **G 43bea0e8e** Routing eine Tür (Licht-Kachel); zwei Knöpfe gelöscht; zehn Wächter neu verankert, neuer `TheRoutingHasOneDoorTests`. Auf dem kombinierten F+G-Baum transkribiert: alle Prüfer 0.
 - Inbox §2: drei Geräte-Bitten (H14, F, G). Deploy-Notiz 10.79.487 liegt bereit; Commit erst nach grünen G-Gates.
 - Lehre: ein `$S` ohne Definition im selben Befehl ließ `cat > $S/../x` auf stdin warten und legte `/h14msg.txt` im Wurzelverzeichnis an — `S` immer im selben Befehl setzen.
+- **Gates:** F b6ec754a9 — Compile Check ✓, Auto-Merge ✓ (main = b6ec754a9). G f6d758c95 — Compile Check ✓, Auto-Merge ✓ (main = f6d758c95).
+- **Deploy 10.79.487 GELANDET** — TestFlight-Lauf 2612 (36976721664) auf 29f357674: Preflight · iOS · Export & Upload · „Verify build landed in App Store Connect" success. Gerät: nichts geprüft; Prüfliste T1–T7 in `.deploy/release`, Bitten in Inbox §2.
