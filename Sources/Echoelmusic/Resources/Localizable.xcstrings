@@ -3475,20 +3475,20 @@
         }
       }
     },
-    "EchoelLux light monitor" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+    "Light and Routing" : {
+      "comment" : "Slice G (2026-10-02): the head light tile's VoiceOver label — the tile shows the light output and is Routing's one door, so the label names both.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "EchoelLux-Lichtmonitor"
+            "value" : "Licht und Routing"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "EchoelLux light monitor"
+            "value" : "Light and Routing"
           }
         }
       }
@@ -4443,24 +4443,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens echoelmusic.com/privacy in your browser. Heart data stays on this device."
-          }
-        }
-      }
-    },
-    "Opens routing" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Öffnet das Routing"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens routing"
           }
         }
       }
@@ -6085,38 +6067,20 @@
         }
       }
     },
-    "Open Routing" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
+    "Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master." : {
+      "comment" : "Slice G (2026-10-02): the head light tile's hint — Routing's one door names what Routing holds.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open Routing"
+            "value" : "Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Routing öffnen"
-          }
-        }
-      }
-    },
-    "Opens MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master." : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Öffnet die MIDI-Kopplung, die MIDI-Out-Schalter, die OSC-, Art-Net-, sACN- und Raumklang-Ziele und den Licht-Master."
+            "value" : "Öffnet das Routing: MIDI-Kopplung, MIDI-Out-Schalter, OSC-, Art-Net-, sACN- und Raumklang-Ziele, Licht-Master."
           }
         }
       }
@@ -30223,22 +30187,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routing"
-          }
-        }
-      }
-    },
-    "OSC, immersive object, and lighting outputs" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OSC-, Immersiv-Objekt- und Licht-Ausgänge"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OSC, immersive object, and lighting outputs"
           }
         }
       }

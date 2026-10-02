@@ -32,10 +32,11 @@
 // about the strings. `.stalled` is the only cue that is (a) silent about its remedy AND (b) safe
 // to wrap AND (c) not already covered elsewhere:
 //   · **`.tooBright` fails (b).** A wrapping sentence in `statusBanner`'s reserved slot resizes
-//     that slot, and `bioPanel` stacks the explanatory line, "Open Routing" and the Health opt-in
-//     row beneath it — #382 exists for exactly that shove. `placementCue` is a pure computed
-//     property over live analyzer state, so it can flip as fast as frames arrive: wrapping it
-//     here is the #382 bug with a faster clock. The gap is REAL, NAMED and unrepaired — a sighted
+//     that slot, and `bioPanel` stacks the explanatory line, the body switches (and, until
+//     slice G, the „Open Routing" button) and the Health opt-in row beneath it — #382 exists
+//     for exactly that shove. `placementCue` is a pure computed property over live analyzer
+//     state, so it can flip as fast as frames arrive: wrapping it here is the #382 bug with a
+//     faster clock. The gap is REAL, NAMED and unrepaired — a sighted
 //     user staring at "Too bright" is still not told to press lighter. Closing it needs a fixed
 //     slot height or a latch, i.e. its own slice, and `testTooBrightAlsoWithholdsItsRemedy` keeps
 //     the fact on the record instead of letting the exclusion read as "nothing to see".

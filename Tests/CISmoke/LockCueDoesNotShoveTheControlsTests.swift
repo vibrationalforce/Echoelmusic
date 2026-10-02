@@ -14,7 +14,8 @@
 //
 // "Everything below" is not the strip alone. In `EchoelStudioView.bioPanel` this view is the
 // FIRST child of a `VStack`, followed by the explanatory sentence, the always-on sentence
-// (#542), the breath-coach strip, the breath-voice row, the "Open Routing" button and — inside
+// (#542), the breath-coach strip, the breath-voice row, the body switches (Auto mode, body only;
+// the "Open Routing" button sat after them until slice G deleted it, 2026-10-02) and — inside
 // `#if canImport(HealthKit)` — `HealthWriteOptInRow()`. The shove landed on them twice,
 // unannounced, at moments when the user is plausibly reaching for the button.
 //
@@ -71,7 +72,7 @@
 // opacity change inside a conditionally-reserved slot; it cannot prove anything about what the
 // panel looks like, and it cannot prove the reserved height is comfortable at AX5.
 // NEEDS-FOUNDER-VERIFY: Larger Text at AX3+, open Bio, let the pulse lock, and reach for
-// "Open Routing" while the green line appears and disappears. Does anything move? And does the
+// the "Body voice" switch while the green line appears and disappears. Does anything move? And does the
 // reserved blank row read as calm or as a hole?
 //
 // BOTH tests go red on the pre-fix source (`6e58d8e`), verified by re-deriving every assertion
@@ -116,7 +117,7 @@ final class LockCueDoesNotShoveTheControlsTests: XCTestCase {
             `statusBanner` is branching on `lockedCueVisible` again, which puts the \
             "Pulse detected" cue back INTO and OUT OF the layout. In `bioPanel` this view is \
             the first child of a `VStack`, so both flips move the sentence below it, the \
-            "Open Routing" button and (on any build with HealthKit) the Health opt-in row — \
+            body switches and (on any build with HealthKit) the Health opt-in row — \
             twice, at moments when the user has every reason to be reaching for one of them \
             (the lock, and the lift the cue itself invites). Since the banner scales with \
             Dynamic Type (#353d) that shove is 80–110 pt at AX3+, not the 26 pt it used to \

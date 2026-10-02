@@ -1264,6 +1264,11 @@ struct EchoelStudioView: View {
                     // refuses rather than drive a second modal true (the two-modals hang). C5's
                     // Light tab added the refusal; slice B removed that tab as the monitor's twin,
                     // and the refusal stays for the monitor.
+                    // ⭐ SLICE G (founder order 2026-10-01, one door per area): this arm is Routing's
+                    // ONE door. The bio panel's „Open Routing" and the master panel's „Routing"
+                    // button set `showRouting` directly and are deleted — the tile sits in the head
+                    // on both stages at every skill level; the Master chip shows only from Pro and
+                    // only on the Instrument stage. Guard: `TheRoutingHasOneDoorTests`.
                     case "routing":
                         if !showAllFX, !showLiveColabo { showRouting = true }
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
@@ -3349,8 +3354,9 @@ struct EchoelStudioView: View {
     /// pulse-pill dropdown (BLE-3 single owner); Watch via Health.
     /// #616 (GUI-Board Zeile 6, UX#4) — the bio-source chooser made VISIBLE. Until
     /// this row the ONLY chooser was the pulse pill's long-press context menu — the
-    /// least discoverable gesture we ship (the Routing button's ⛔ block below calls
-    /// it that), and hard to perform with a motor impairment (#234). Same entries,
+    /// least discoverable gesture we ship (the bio panel's Routing button said so in its ⛔
+    /// block until slice G deleted the button), and hard to perform with a motor impairment
+    /// (#234). Same entries,
     /// same honesty, ONE definition: `BioSourceOption` feeds both this row and the
     /// pill's menu; every entry routes to `selectBioSource` — idle it STARTS the
     /// music, running it hot-swaps the source (which is why the labels say
@@ -3383,8 +3389,8 @@ struct EchoelStudioView: View {
                 }
                 .foregroundStyle(EchoelTheme.text)
                 .padding(.horizontal, 12).frame(minHeight: 34)
-                // `borderStrong`, DIVERGING from the moodPresetBar Menu and the
-                // in-panel "Open Routing" button on purpose (#616b annotates what the
+                // `borderStrong`, DIVERGING from the moodPresetBar Menu (and, until slice G
+                // deleted it, the in-panel "Open Routing" button) on purpose (#616b annotates what the
                 // review called accident-shaped): this control DECIDES what feeds the
                 // instrument, and WCAG 1.4.11 wants 3:1 on non-text controls — the
                 // A11y#2 rollout direction is TOWARD borderStrong, not away from it.
@@ -3556,44 +3562,14 @@ struct EchoelStudioView: View {
             BodyOnlyRow(isOn: Binding(get: { bodyOnly }, set: { setBodyOnly($0) }),
                         instrumentRunning: running)
 
-            Button {
-                showRouting = true
-            } label: {
-                Label("Open Routing", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                    .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 12).frame(minHeight: 34)
-                    .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                        .strokeBorder(EchoelTheme.border, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            .disabled(panelSheetUp)
-            // ⛔ #355(c) — THIS LABEL SAID "Open Routing to connect a BLE heart-rate strap",
-            // AND ROUTING CANNOT CONNECT ONE. `PatchbayView` pairs Bluetooth MIDI, opens a
-            // network MIDI session, sets the OSC/ADM/Art-Net/sACN targets and holds the light
-            // master — there is no heart-rate pairing anywhere in it. The strap has exactly ONE
-            // owner, `startBioSource`, reached by touch-and-hold on the pulse display, which is
-            // what the sentence directly above this button already says.
-            //
-            // Why it mattered more than an ordinary wrong word: for a sighted user the button
-            // reads "Open Routing" and the false promise was invisible, but `accessibilityLabel`
-            // REPLACES the visible label, so for a VoiceOver user that sentence was the button's
-            // entire identity. The one reader who could not cross-check it was the only one
-            // being told.
-            //
-            // ⛔ AND THE FIRST CORRECTION NAMED TWO THINGS BY NAMES NOTHING CARRIES. Its hint
-            // ended "touch and hold the pulse display and pick the Bluetooth strap source" —
-            // but VoiceOver announces that tile as "Heart rate" (`HeaderMonitors`), and the menu
-            // entry reads "Play with a Bluetooth strap — scans for one"; the word "source"
-            // appears in neither. Writing a wrong destination into the fix for a wrong
-            // destination is this task's own defect, one level down. It also ran 221 characters
-            // against a ~57-character median across the app's ~70 hints, and VoiceOver speaks
-            // hints in FULL — while "Speak Hints" is user-suppressible, so the corrective half
-            // could be silently dropped anyway. The redirect is DELETED rather than reworded:
-            // the visible `Text` a few lines above already carries it, verbatim and correctly,
-            // and a VoiceOver user reaches that line immediately BEFORE this button. Saying it
-            // three times (Text, hint, comment) is not thoroughness.
-            .accessibilityLabel("Open Routing")
-            .accessibilityHint("Opens MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master.")
+            // ⛔ SLICE G — THE „Open Routing" BUTTON STOOD HERE and is deleted (founder order
+            // 2026-10-01, one door per area). It was one of three doors to the same sheet, and the
+            // one in the wrong room: Routing pairs MIDI and sets the network and light outputs —
+            // nothing in it is bio. Routing's one door is the head's light tile
+            // (`EchoelLuxMonitorMini`), on both stages at every skill level; its VoiceOver hint now
+            // carries what this button's said. The #355(c) lesson survives the button: Routing
+            // connects no heart-rate strap — the strap's one owner is `startBioSource`, reached by
+            // touch-and-hold on the pulse pill.
             // The Apple Health WRITE opt-in belongs here, with the bio data it writes.
             // Its only switch used to live in the Tools grid, which stopped rendering on
             // 2026-07-02 and was deleted 2026-07-26 — but the flag is PERSISTED
@@ -5231,35 +5207,13 @@ struct EchoelStudioView: View {
             .buttonStyle(.plain)
             .accessibilityHint("Immediately release every sounding note on every voice")
 
-            // Re-door (deep audit 2026-07-12): PatchbayView carries the OSC/ADM/Art-Net/sACN
-            // routes and lost its only trigger when the Tools grid left the body
-            // (2026-07-02). SLOT-REUSE: this sets the EXISTING dead `showRouting` sheet slot
-            // — no new modal in the chain. No close-first needed: the plate is not an
-            // overlay, so only the sheet is ever a presented layer.
-            // ⛔ #1302 — an "Audio input" button sat beside Routing (#1247, one day old) and
-            // is gone with the feature. Routing is now the panel's only door, so the `HStack`
-            // that paired them is gone too rather than left holding one child.
-            masterDoorButton("Routing", icon: "app.connected.to.app.below.fill",
-                             hint: "OSC, immersive object, and lighting outputs") {
-                showRouting = true
-            }
-            .disabled(panelSheetUp)
+            // ⛔ SLICE G — THE MASTER PANEL'S „Routing" DOOR AND ITS HELPER `masterDoorButton` STOOD
+            // HERE and are deleted (founder order 2026-10-01, one door per area). The door was the
+            // 2026-07-12 re-door after the Tools grid left; the head's light tile has opened the
+            // same sheet since that same day, on both stages and at every skill level, while the
+            // Master chip shows only from Pro and only on the Instrument stage. The helper had no
+            // other caller. Routing's one door: `EchoelLuxMonitorMini` → `"routing"`.
         }
-    }
-
-    /// Compact secondary door row used by the Master panel (Uncodixfy: solid
-    /// fill, 1 px border, ≤12 px radius, no decoration).
-    private func masterDoorButton(_ title: LocalizedStringKey, icon: String, hint: LocalizedStringKey,
-                                  action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: icon)
-                .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
-                .frame(maxWidth: .infinity).frame(minHeight: 34)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint(hint)
     }
 
     // MARK: - Audio timing readout (#408)

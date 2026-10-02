@@ -185,32 +185,69 @@ final class CopyNamesTheLiveControlTests: XCTestCase {
     /// The other half of (c): Routing must still SAY what it does, or the fix above degrades
     /// into an unlabelled button — a different accessibility defect, not an improvement.
     ///
-    /// ⚠️ ANCHORED ON THE BUTTON, not just on the file. The first version asserted only that
-    /// SOME hint in `EchoelStudioView.swift` mentions the light master, so moving it onto the
-    /// master panel's Routing door would have kept it green while this button went hint-less.
-    /// Pinning `"Open Routing"` and `"light master"` to the same file AND requiring the label
-    /// costs nothing and closes that.
+    /// ⚠️ ANCHORED ON THE DOOR, not just on a file. The first version asserted only that SOME
+    /// hint in `EchoelStudioView.swift` mentions the light master, so moving it onto the master
+    /// panel's Routing door would have kept it green while the bio panel's button went hint-less.
+    ///
+    /// ⭐ SLICE G (founder order 2026-10-01, one door per area) DELETED BOTH of those buttons;
+    /// Routing's one door is the head's light tile, `EchoelLuxMonitorMini` in `HeaderMonitors`.
+    /// The claim is rewritten at EQUAL OR GREATER strength, not relaxed: (1) the "light master"
+    /// hint must exist exactly once across ALL of `Sources/` (the old scope was one file, so a
+    /// copy elsewhere was invisible); (2) that one line must sit inside the tile's own body,
+    /// between its declaration and the next top-level `struct`; (3) the tile's LABEL names the
+    /// door ("Light and Routing") — VoiceOver users can switch hints off, so a label that named
+    /// only the light ("EchoelLux light monitor", before slice G's review) left Routing with no
+    /// discoverable name for exactly the reader the hint was for; (4) the bio panel's
+    /// `.accessibilityLabel("Open Routing")` must stay gone, so a fourth door cannot come back
+    /// with the old spelling while this guard stays green on the tile alone.
+    /// The method name is kept on purpose — the tile IS a button, and renaming a guard whose
+    /// subject still exists only costs the next reader a lookup (#374 renames when the old
+    /// name would be a false sentence; it is not one).
     func testTheRoutingButtonStillDescribesWhatIsInside() throws {
-        let studio = try sourceLines().filter { $0.file == "EchoelStudioView.swift" }
-        XCTAssertTrue(studio.contains { $0.text.contains(".accessibilityLabel(\"Open Routing\")") }, """
-        the bio panel's Routing button no longer carries `.accessibilityLabel("Open Routing")`.
-
-        It is deliberately identical to the visible `Label` — SwiftUI would derive the same \
-        string — so it looks redundant and is not: it is what stops the false "connect a BLE \
-        heart-rate strap" label from being re-added, and what the guard above matches on. If \
-        the button moved, move this with it; do not delete it as cleanup.
-        """)
-        let hints = studio.filter {
+        let all = try sourceLines()
+        let hints = all.filter {
             $0.text.contains("accessibilityHint") && $0.text.contains("light master")
         }
         XCTAssertEqual(hints.count, 1, """
-        the Routing button's accessibility hint (anchored on "light master") is gone or \
-        duplicated — found \(hints.count).
+        Routing's accessibility hint (anchored on "light master") is gone or duplicated across \
+        `Sources/` — found \(hints.count): \(hints.map { "\($0.file):\($0.line)" }).
 
-        `.accessibilityLabel("Open Routing")` alone tells a VoiceOver user the name of a door \
-        and nothing about the room. The hint is what carries MIDI, the network targets and the \
-        light master. Reword it freely; re-anchor this guard in the same commit — and keep it \
-        short: VoiceOver speaks hints in full, and the app's median is ~57 characters.
+        A label alone tells a VoiceOver user the name of a door and nothing about the room. The \
+        hint is what carries MIDI, the network targets and the light master. Reword it freely; \
+        re-anchor this guard in the same commit — and keep it short: VoiceOver speaks hints in \
+        full, and the app's median is ~57 characters.
+        """)
+        let monitors = all.filter { $0.file == "HeaderMonitors.swift" }
+        guard let tileStart = monitors.first(where: { $0.text.contains("struct EchoelLuxMonitorMini: View {") }) else {
+            return XCTFail("ANCHOR MISSING: `struct EchoelLuxMonitorMini: View {` in HeaderMonitors.swift — Routing's one door moved; re-anchor this guard (#454).")
+        }
+        // The tile's body ends where the next TOP-LEVEL type begins (column 0) — a brace count
+        // over raw lines would be fooled by braces inside the hint strings.
+        let tileEnd = monitors.first(where: {
+            $0.line > tileStart.line
+                && ($0.text.hasPrefix("struct ") || $0.text.hasPrefix("private struct "))
+        })?.line ?? Int.max
+        let inTile = hints.filter { $0.file == "HeaderMonitors.swift" && $0.line > tileStart.line && $0.line < tileEnd }
+        XCTAssertEqual(inTile.count, 1, """
+        the "light master" hint is not inside `EchoelLuxMonitorMini` (HeaderMonitors.swift, lines \
+        \(tileStart.line)..<\(tileEnd == Int.max ? -1 : tileEnd)). Since slice G that tile is Routing's ONE door \
+        (on both stages, at every skill level), so its hint is the only place a VoiceOver user \
+        learns what Routing holds.
+        """)
+        XCTAssertTrue(monitors.contains {
+            $0.line > tileStart.line && $0.line < tileEnd
+                && $0.text.contains(".accessibilityLabel(\"Light and Routing\")")
+        }, """
+        `EchoelLuxMonitorMini` lost `.accessibilityLabel("Light and Routing")`. The label is the \
+        door's identity — VoiceOver users can switch hints off, so a label that names only the \
+        light leaves Routing undiscoverable for them. Reword freely; keep "Routing" in it.
+        """)
+        let studio = all.filter { $0.file == "EchoelStudioView.swift" }
+        XCTAssertFalse(studio.contains { $0.text.contains(".accessibilityLabel(\"Open Routing\")") }, """
+        the bio panel's `.accessibilityLabel("Open Routing")` is back. Slice G deleted that \
+        button (founder order 2026-10-01, one door per area): Routing's one door is the head's \
+        light tile. A second door is `TheRoutingHasOneDoorTests`' finding; this line keeps the \
+        old spelling from returning while the tile alone keeps this method green.
         """)
     }
 

@@ -279,24 +279,34 @@ final class AutoModeStartsOffAndOwnsNoTempoTests: XCTestCase {
         let mounts = code.components(separatedBy: "AutoModeRow()").count - 1
         XCTAssertEqual(mounts, 1, """
             `AutoModeRow()` is mounted \(mounts) time(s); exactly one is expected — \
-            in `bioPanel`, between `BreathVoiceRow()` and the Routing button. Zero \
+            in `bioPanel`, between `BreathVoiceRow()` and the body-only switch. Zero \
             is the doorless machine; two means a second surface began steering \
             expectations without this guard being widened.
             """)
         // The mount sits in the bioPanel window: after the breath-voice row, before
-        // the Routing door (both anchors verified single-occurrence as CODE — the
-        // struct DECLARATION of BreathVoiceRow spells `: View`, not `()`).
+        // the body-only switch (both anchors verified single-occurrence as CODE — the
+        // struct DECLARATION of BreathVoiceRow spells `: View`, not `()`, and
+        // `BodyOnlyRow`'s spells `: View`, not `(isOn:`).
+        // ⛔ SLICE G (founder order 2026-10-01, one door per area) deleted the bio panel's
+        // „Open Routing" button, which was this window's END anchor (`showRouting = true`).
+        // The window is unchanged in meaning — both rows are body switches in `bioPanel`, and
+        // `BodyOnlyRow` sat directly above the deleted button — so the end anchor moved up one
+        // child rather than the window widening to whatever `showRouting` setter came next.
         if let breath = code.range(of: "BreathVoiceRow()"),
            let auto = code.range(of: "AutoModeRow()"),
-           let routing = code.range(of: "showRouting = true", range: breath.upperBound..<code.endIndex) {
-            XCTAssertTrue(breath.upperBound <= auto.lowerBound && auto.upperBound <= routing.lowerBound, """
+           let bodyOnly = code.range(of: "BodyOnlyRow(isOn:", range: breath.upperBound..<code.endIndex) {
+            XCTAssertTrue(breath.upperBound <= auto.lowerBound && auto.upperBound <= bodyOnly.lowerBound, """
                 `AutoModeRow()` is mounted outside the `bioPanel` window (between the \
-                breath-voice row and the Routing button). A door in another panel is \
+                breath-voice row and the body-only switch). A door in another panel is \
                 a different decision — re-judge the placement, then move this scan.
                 """)
         } else {
-            XCTFail("bioPanel anchors missing — BreathVoiceRow()/showRouting moved; re-anchor this scan (#454).")
+            XCTFail("ANCHOR MISSING: bioPanel anchors — BreathVoiceRow()/BodyOnlyRow(isOn: moved; re-anchor this scan (#454).")
         }
+        XCTAssertEqual(code.components(separatedBy: "BodyOnlyRow(isOn:").count - 1, 1, """
+            `BodyOnlyRow(isOn:` is no longer constructed exactly once — the window's end anchor \
+            is ambiguous or gone (#408). Re-anchor before trusting the placement check above.
+            """)
         // Caption honesty (#496): promise only channels a producer feeds today.
         let row = slice(code, from: "private struct AutoModeRow: View {", to: "\n}")
         XCTAssertFalse(row.isEmpty, "AutoModeRow slice empty — re-anchor (#454).")

@@ -173,7 +173,8 @@ struct PatchbayView: View {
     // MARK: - Network MIDI (#187: the inbound listener gets a switch, default OFF)
     /// The one control for Apple's RTP-MIDI session. It sits in Routing rather than
     /// anywhere in the instrument because it is a ROUTE, not a sound — and because
-    /// this surface is reachable (master panel → "Routing"), which is the whole point:
+    /// this surface is reachable (the head's light tile → Routing, its one door since slice G),
+    /// which is the whole point:
     /// until this shipped, the session was armed at launch on every install with no
     /// control anywhere. A capability with no switch is not a feature, and an inbound
     /// network listener with no switch is not a default anyone chose.
@@ -357,7 +358,7 @@ struct PatchbayView: View {
     /// the first line of `EchoelmusicApp`'s `register(ModDestinationKey.tempo)` handler, and this
     /// is the T1 source `.modulationRoute`. (⚠️ The OSC `bpm` cue is the MIRROR of this: applied
     /// ONLY under the lock. Two inbound tempo paths, opposite gates — do not „unify" them.)
-    /// NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Tempo,
+    /// NEEDS-FOUNDER-VERIFY: Licht-Kachel im Kopf → Routing → „Body → parameter" → Add route → Tempo,
     /// Quelle Coherence, Depth 1, BPM-Lock AUS: das Tempo muss der Kohärenz folgen (Log:
     /// `/echoelmusic/mod/seq.tempo` bei OSC an). Lock AN: das Tempo darf sich NICHT bewegen.
     /// App neu starten — die Route ist noch da.

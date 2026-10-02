@@ -102,7 +102,8 @@ struct BioStripView: View {
     ///
     /// ⭐ THE THIRD BRANCH RESERVES ITS SLOT INSTEAD OF APPEARING IN IT (#382), and the reason
     /// is that this view is the FIRST child of `EchoelStudioView.bioPanel`'s `VStack`. Below it
-    /// sit the explanatory sentence, the "Open Routing" button and `HealthWriteOptInRow()`. As
+    /// sit the explanatory sentence, the body switches and `HealthWriteOptInRow()` (the "Open
+    /// Routing" button sat among them until slice G). As
     /// an ordinary `else if lockedCueVisible`, the (then six-second) cue INSERTED itself and
     /// then REMOVED itself — two layout changes, unannounced, shoving two live controls at a
     /// moment when the user is plausibly reaching for one of them. Since rule 7 the cue is a
@@ -124,7 +125,7 @@ struct BioStripView: View {
     ///   1. The slot is inserted when the camera STARTS and removed when it STOPS. That is
     ///      still two shoves of the full banner height — the trade is that both are now
     ///      user-initiated, instead of arriving unannounced while the user reaches for
-    ///      "Open Routing". Better, not free.
+    ///      a body switch. Better, not free.
     ///   2. Branch 1 wins over branch 3 whenever `recoveryState.userHint != nil`, and the two
     ///      branches render DIFFERENT strings through the same wrapping `banner` — so a stall,
     ///      a thermal `.cooling` or an iOS `.interrupted` resizes the slot mid-measurement, by

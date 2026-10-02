@@ -10,7 +10,7 @@
 // parameter surface. Its other children are churn-isolating LEAVES (`MasterVolumeField`,
 // `MasterLoudnessGrid`, `AudioTimingRow` — each exists so a 60 Hz/automation write re-renders
 // only itself, never the menu-hosting studio body) or full-measure rows (a wrapping caption, the
-// release-all button, the two re-door buttons). Sweeping any of those into a half-width cell is
+// release-all button). Sweeping any of those into a half-width cell is
 // the regression `MoodPanelReflowsTests` claim 3 condemns — worse than never reflowing. The two
 // pickers are the panel's only pair of same-height parameter rows, so they are the whole slice.
 //
@@ -23,6 +23,12 @@
 //   2. Both delivery rows are INSIDE that grid.
 //   3. The leaves and full-measure rows stay OUTSIDE it (the likelier regression: the obvious
 //      tidy-up sweeps everything in).
+//      ⭐ SLICE G (founder order 2026-10-01, one door per area) deleted the panel's Routing door
+//      and its helper `masterDoorButton` — the head's light tile is Routing's one door. The
+//      fragment left this list together with the row; in its place claim 3 asserts the panel
+//      sets no `showRouting` and calls no `masterDoorButton`, so the door cannot come back
+//      without this file noticing. (The header's "two re-door buttons" was already one: #1302
+//      took the "Audio input" door.)
 //
 // HONEST GRADING (§3, against parent 7566479): claim 1 + claim 2 are red on the parent by ONE
 // anchor absence (`masterPanel` has no `AdaptiveCardGrid` there) — one finding, reported by
@@ -93,7 +99,7 @@ final class MasterPanelReflowsTests: XCTestCase {
         let body = try masterPanelBody()
         let ranges = gridRanges(in: body)
         for fragment in ["MasterVolumeField()", "MasterLoudnessGrid()", "AudioTimingRow(",
-                         "AudioLatencyRow()", "AudioRouteRow(", "panicAllNotesOff()", "masterDoorButton"] {
+                         "AudioLatencyRow()", "AudioRouteRow(", "panicAllNotesOff()"] {
             let hits = body.indices.filter { body[$0].contains(fragment) }
             guard !hits.isEmpty else {
                 XCTFail("`\(fragment)` is gone from `masterPanel`. If it moved on purpose, move "
@@ -108,6 +114,21 @@ final class MasterPanelReflowsTests: XCTestCase {
             The volume field and the loudness numbers are churn-isolating leaves (their whole \
             point is re-rendering alone), the timing row and the caption wrap, and the release/\
             door buttons are full-width chrome. All of them stay outside the reflow grid.
+            """)
+        }
+        // ⭐ SLICE G — the Routing door that stood in this list is deleted, not moved. Its
+        // absence is asserted rather than its fragment dropped silently (the helper's NAME is
+        // checked too, so a re-added `masterDoorButton("Routing", …)` is caught even if it
+        // stops spelling the flag).
+        for gone in ["showRouting", "masterDoorButton"] {
+            let hits = body.filter { $0.contains(gone) }
+            XCTAssertTrue(hits.isEmpty, """
+            `masterPanel` mentions `\(gone)` again: \(hits.map { $0.trimmingCharacters(in: .whitespaces) })
+
+            Slice G (founder order 2026-10-01, one door per area) deleted the master panel's \
+            Routing door: the head's light tile opens the same sheet on both stages at every \
+            skill level, the Master chip only from Pro and only on the Instrument stage. See \
+            `TheRoutingHasOneDoorTests`.
             """)
         }
     }

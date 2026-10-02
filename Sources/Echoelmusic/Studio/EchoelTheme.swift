@@ -75,7 +75,8 @@ enum EchoelTheme {
     /// ⛔ Clips stood here; its tile went with the video capture, #1304), the pulse monitor — which since #289 sits in the studio's control row, NOT in
     /// the header (the first version of this line said "beside them", inventing an adjacency
     /// from file order the way the paragraph below warns about) — the header overflow-menu
-    /// button, `masterDoorButton`, and, since #367, the primary transport Play/Pause
+    /// button (⛔ `masterDoorButton` stood here; slice G deleted it with the master panel's
+    /// Routing door), and, since #367, the primary transport Play/Pause
     /// (`WorkspaceView`, rendered in that same control row) and the tempo lock
     /// (`BodyTempoField`).
     /// NOT to panel-card outlines or dividers — see `border`. (This list is the contract: an

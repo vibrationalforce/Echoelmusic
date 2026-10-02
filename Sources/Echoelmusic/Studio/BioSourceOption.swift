@@ -10,8 +10,8 @@
 //     calls `selectBioSource` directly; same file, no notification needed).
 //  Before #616 the labels lived inline in the pill's menu and the ONLY chooser was
 //  the long-press — the least discoverable gesture we ship (the Routing button's
-//  own ⛔ block in `bioPanel` calls it that, and #234's a11y half already named
-//  the motor-impairment cost).
+//  ⛔ block in `bioPanel` called it that until slice G deleted the button, and
+//  #234's a11y half already named the motor-impairment cost).
 //
 //  ⚠️ THE LABELS SAY "Play with" ON PURPOSE (#234): every entry routes to
 //  `selectBioSource`, which hot-swaps the source while a take is live and STARTS

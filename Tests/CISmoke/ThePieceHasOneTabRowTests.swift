@@ -33,9 +33,10 @@
 //    `HeaderMonitors`, from `EchoelLuxMonitorMini` — and `WorkspaceView`'s head mounts that tile;
 //    the receiver still refuses while a medium-detent sheet is up, and the destination is real
 //    (the routing slot builds `PatchbayView`, whose `content` mounts `lichtSection`). ⚠️ ONE POSTER
-//    IS NOT ONE DOOR: the bio panel's „Open Routing" and the master panel's „Routing" set the same
-//    slot directly on the Instrument stage. What slice B removed is the second door ON THE PIECE
-//    STAGE, where the header tile is the only one. — OLD claim 3's routing half and destination
+//    WAS NOT ONE DOOR until slice G: the bio panel's „Open Routing" and the master panel's
+//    „Routing" set the same slot directly on the Instrument stage. Slice B removed the second door
+//    ON THE PIECE STAGE; slice G (2026-10-02) deleted those two, so the poster IS the one door now —
+//    pinned by `TheRoutingHasOneDoorTests`, not here. — OLD claim 3's routing half and destination
 //    needles MOVED here unchanged; the poster count is NEW.
 // 3. The Field panel keeps its Instrument doors and gains no piece twin: nothing posts `"field"`,
 //    the receiver has no `case "field":`
@@ -103,7 +104,8 @@ final class ThePieceHasOneTabRowTests: XCTestCase {
             `"routing"` is posted from \(posters). The header light tile is Routing's ONE \
             chrome-door poster and its only door on the Piece stage — it sits in the head on both \
             stages, so a second poster is the twin slice B removed (founder 2026-10-01, one door \
-            per area). The Instrument stage's two Routing buttons set the slot directly.
+            per area). Since slice G no button sets the slot directly either — the tile is the \
+            one door (`TheRoutingHasOneDoorTests`).
             """)
         let monitors = SourceText.codeOnly(try text(Self.monitors))
         let tile = try member("struct EchoelLuxMonitorMini: View {", in: monitors)

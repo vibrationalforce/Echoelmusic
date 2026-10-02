@@ -8,8 +8,9 @@
 // `placementCue` derives `.tooBright` from `analyzer.brightness`/`redChannel`, which move per
 // FRAME. Putting a WRAPPING sentence into `BioStripView`'s reserved slot on that signal would
 // resize the slot at the publisher's rate — the #382 shove with a faster clock, in a stack that
-// carries the explanatory line, "Open Routing" and the Health opt-in row underneath it. The
-// recorded remedy was "a fixed-height slot or a latch, i.e. its own slice". This is the latch.
+// carries the explanatory line, the body switches (the „Open Routing" button until slice G) and
+// the Health opt-in row underneath it. The recorded remedy was "a fixed-height slot or a latch,
+// i.e. its own slice". This is the latch.
 //
 // WHAT SHIPPED. `CameraRPPGBioPublisher` steps a `BioTrustLatch` (#566, reused rather than a
 // fifth private counter) over `placementCue == .tooBright` in the existing 10 Hz tick, and

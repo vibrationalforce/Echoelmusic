@@ -31,8 +31,26 @@
 // Slice-D tree: all green. Counterweights green on both: `.large` stays offered, the background
 // interaction cap, and the three `.echoelSheetPanel()` sites.
 // DEVICE PROBE, open: FX opens at half height with the instrument playable above it; with it up the
-// Open/Learn/Save/Live Colabo tiles and the Routing doors read disabled; dragging FX to full height
-// and back works; nothing freezes — readings, not scans.
+// Open/Learn/Save/Live Colabo tiles read disabled and a tap on the head's light tile (Routing's one
+// door since slice G) does nothing; dragging FX to full height and back works; nothing freezes —
+// readings, not scans.
+//
+// ⭐ SLICE G (founder order 2026-10-01, one door per area) MOVED CLAIM 3's FLOOR FROM 12 TO 10, and
+// the two are not lost doors: they are the bio panel's „Open Routing" and the master panel's
+// „Routing" button, both deleted, both `showRouting = true` setters. Routing's one door is the
+// receiver's `case "routing":` arm (the head's light tile), which carries the older refusal and is
+// still scanned here. The absence of the other two is pinned where it belongs —
+// `TheRoutingHasOneDoorTests` — not by a floor that cannot tell a deleted door from a moved anchor.
+// The single total floor is REPLACED by a floor PER SETTER, each at its measured count — strictly
+// stronger than the old "≥ 12 in total": a lost `showOpen` door used to hide behind a gained
+// setter elsewhere, and now cannot. Measured (code-only lines, first-matching setter per line):
+//   parent 3deb54e77 — showOpen 2 · showSaveDialog 2 · showLearn 1 · showLiveColabo 1 ·
+//                      showRouting 3 · showAllFX 1 · showSaveMoodAs 1 · showSavePatchAs 1 = 12
+//   slice-G tree     — identical except showRouting 1 = 10; none unlocked on either tree.
+// `showRouting`'s floor is 1, not 3, and that is the ONE number this slice lowers on purpose; its
+// CEILING (exactly one) is `TheRoutingHasOneDoorTests` claim 1. Graded by transcription: on the
+// parent every per-setter floor is met and the 12-total holds; on the slice-G tree every floor is
+// met with the minimum exactly — a COUNTERWEIGHT on both, a REGRESSION guard for any later loss.
 
 import XCTest
 
@@ -43,6 +61,13 @@ final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
     private static let setters = ["showOpen = true", "showSaveDialog = true", "showLearn = true",
                                   "showLiveColabo = true", "showRouting = true", "showAllFX = true",
                                   "showSaveMoodAs = true", "showSavePatchAs = true"]
+    /// The measured number of code lines setting each flag (slice G, 2026-10-02 — see the header).
+    /// A floor per setter, not one total: a lost door cannot hide behind a gained one.
+    private static let measuredSetterLines: [String: Int] = [
+        "showOpen = true": 2, "showSaveDialog = true": 2, "showLearn = true": 1,
+        "showLiveColabo = true": 1, "showRouting = true": 1, "showAllFX = true": 1,
+        "showSaveMoodAs = true": 1, "showSavePatchAs = true": 1,
+    ]
 
     // MARK: 1 — half height by default
 
@@ -81,9 +106,11 @@ final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
     func testEverySheetDoorIsLockedWhileAHalfHighSheetIsUp() throws {
         let lines = SourceText.codeOnly(try text(Self.studio)).components(separatedBy: "\n")
         var seen = 0
+        var perSetter: [String: Int] = [:]
         for (index, line) in lines.enumerated() {
             guard let setter = Self.setters.first(where: { line.contains($0) }) else { continue }
             seen += 1
+            perSetter[setter, default: 0] += 1
             if line.contains("if !showAllFX, !showLiveColabo") { continue }
             let above = lines[max(0, index - 3)..<index]
             if above.contains(where: { $0.contains("guard !panelSheetUp") }) { continue }
@@ -100,11 +127,22 @@ final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
                 for a notification arm) — a second modal over a presented sheet is the two-modals hang.
                 """)
         }
-        XCTAssertGreaterThanOrEqual(seen, 12, """
-            the scan saw \(seen) sheet/alert setters — fewer than the twelve measured when this was \
-            written means the anchors moved, not that the doors went (a scan that saw nothing is \
-            not a pass)
+        XCTAssertGreaterThanOrEqual(seen, 10, """
+            the scan saw \(seen) sheet/alert setters — fewer than the ten measured after slice G \
+            (twelve before it; slice G deleted two of Routing's three doors, see the header) means \
+            the anchors moved, not that the doors went (a scan that saw nothing is not a pass)
             """)
+        XCTAssertEqual(Set(Self.measuredSetterLines.keys), Set(Self.setters),
+                       "every scanned setter carries a measured floor, and every floor names a scanned setter")
+        for setter in Self.setters {
+            let floor = Self.measuredSetterLines[setter, default: 1]
+            XCTAssertGreaterThanOrEqual(perSetter[setter, default: 0], floor, """
+                the scan saw `\(setter)` on \(perSetter[setter, default: 0]) code line(s); \(floor) were \
+                measured after slice G. Fewer means a door went without its sheet or an anchor moved — \
+                both need this table edited in the same commit, never a floor quietly lowered. \
+                (Routing's one setter is the receiver's `case "routing":` arm.)
+                """)
+        }
     }
 
     // MARK: helpers

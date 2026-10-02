@@ -38,14 +38,17 @@
 // The camera/sim label needles and claim 5's remaining needles (context menu
 // presence, "Bio details…", the hold-hint, `selectBioSource(` definition) are
 // COUNTERWEIGHTS — green on both trees, and the point of the file.
-// Stripper (#453): TRAGEND, MEASURED — 2 of 14 source verdicts flip
-// raw-vs-stripped on this tree, and they are the CAMERA and BLE label needles
+// Stripper (#453): TRAGEND, MEASURED — 2 of 14 source verdicts flipped
+// raw-vs-stripped when this was written, the CAMERA and BLE label needles
 // (each quoted once in a comment: the pill's own doc block paraphrases the menu,
-// and the Routing button's ⛔ block cites the BLE entry verbatim; the stripper
-// blanks both, string literals survive). ⛔ The first draft of this paragraph
-// GUESSED the two flips as `enum BioSourceOption` and `.contextMenu` — both
-// measured 0. A stripper claim without the measurement is the exact retraction
-// class §2 documents three of; the numbers above are from the run.
+// and the Routing button's ⛔ block cited the BLE entry verbatim; the stripper
+// blanks both, string literals survive). ⚠️ Slice G (2026-10-02) deleted that
+// button and its ⛔ block, so on today's tree it is 1 of 14 — the CAMERA needle
+// (HeaderMonitors: raw 1, stripped 0); the BLE needle is raw 0 in both consumers.
+// ⛔ The first draft of this paragraph GUESSED the two flips as
+// `enum BioSourceOption` and `.contextMenu` — both measured 0. A stripper claim
+// without the measurement is the exact retraction class §2 documents three of;
+// the numbers above are from the run.
 //
 // ⛔ #1301 — THE FOURTH SOURCE IS GONE BY FOUNDER ORDER (2026-09-12). `face` left both
 // enums with the front-camera publisher, so the parser's literal set went back to

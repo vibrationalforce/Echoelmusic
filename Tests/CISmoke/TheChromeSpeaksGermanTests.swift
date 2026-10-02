@@ -2865,7 +2865,6 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         for seam in ["? String(localized: \"Stops this recording and discards it. Nothing is saved.\")",
                      "private var weatherLine: String {",
                      "Text(weatherLine)",
-                     "private func masterDoorButton(_ title: LocalizedStringKey, icon: String, hint: LocalizedStringKey,",
                      "touchPatchChip(name: String(localized: \"Same as music\"), selected: touchPatchID.isEmpty)",
                      "Text(text.isEmpty ? String(localized: \"No diagnostics recorded.\") : text)",
                      "private func sizeButton(_ word: LocalizedStringKey, systemImage: String, spoken: LocalizedStringKey, hint: LocalizedStringKey,",
@@ -2873,6 +2872,16 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
                      "? String(localized: \"Running — the picture already follows your body.\")"] {
             XCTAssertTrue(studioToggles.contains(seam), "EchoelStudioView lost the E4-80 seam `\(seam)`")
         }
+        // ⭐ SLICE G (2026-10-02): `masterDoorButton` was an E4-80 seam (its `title`/`hint` took a
+        // `LocalizedStringKey`); slice G deleted it with the master panel's Routing door. The seam
+        // is not dropped, it is INVERTED — the helper must stay gone — and Routing's one door, the
+        // head's light tile, carries the catalog key that the deleted hint carried (below, and the
+        // tile's line in `HeaderMonitors`).
+        XCTAssertFalse(studioToggles.contains("func masterDoorButton("),
+                       "EchoelStudioView declares `masterDoorButton` again — slice G deleted it with the master panel's Routing door")
+        let routingDoor = try codeOnly("Sources/Echoelmusic/Studio/HeaderMonitors.swift")
+        XCTAssertTrue(routingDoor.contains(".accessibilityHint(\"Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master.\")"),
+                      "HeaderMonitors lost the light tile's Routing hint — Routing's one door since slice G speaks it as a catalog key")
         for verbatim in ["                ? \"Stops this recording and discards it. Nothing is saved.\"",
                          "    private func sizeButton(_ word: String, systemImage: String, spoken: String, hint: String,",
                          "                 ? \"Running — the picture already follows your body.\""] {
@@ -2881,7 +2890,8 @@ final class TheChromeSpeaksGermanTests: XCTestCase {
         try assertGerman(["Stops this recording and discards it. Nothing is saved.", "Records one loop and exports a WAV to share",
                           "Variations of the same groove — your body curates, you pick.", "Sky reading arrives at Start.", "Now: ",
                           "How often the click accents. This is the click's own bar only — it does not change the piece's meter",
-                          "Routing", "OSC, immersive object, and lighting outputs", "Same as music", "No diagnostics recorded.",
+                          "Routing", "Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master.",
+                          "Same as music", "No diagnostics recorded.",
                           "Smaller", "Larger", "Default", "Smaller text", "One step smaller.", "Larger text", "One step larger.",
                           "Default text size", "Follows the system text size.",
                           "Keeps the last bars you just heard as a WAV loop, without replaying them",

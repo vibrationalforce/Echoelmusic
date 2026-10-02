@@ -200,8 +200,9 @@ public enum PulseCue: Equatable, Sendable {
     /// wrapping slot AND (c) not already covered elsewhere:
     ///   · **`.tooBright` fails (b).** `placementCue` is a pure computed property over live
     ///     analyzer state, so it can flip as fast as frames arrive; a wrapping sentence in a
-    ///     reserved slot RESIZES that slot, and `bioPanel` stacks the explanatory line, "Open
-    ///     Routing" and the Health opt-in row underneath it. Wrapping at the publisher's own
+    ///     reserved slot RESIZES that slot, and `bioPanel` stacks the explanatory line, the body
+    ///     switches and the Health opt-in row underneath it (the „Open Routing" button sat among
+    ///     them until slice G deleted it). Wrapping at the publisher's own
     ///     rate is worse than the bug #382 fixed. Registered as a real, NAMED, unrepaired gap
     ///     rather than pretended away: a sighted user staring at "Too bright" is not told to
     ///     press lighter. Fixing it needs a fixed-height slot or a latch, i.e. its own slice.

@@ -604,7 +604,13 @@ struct ImmersiveMonitorMini: View {
 /// compute (MusicMediaMap.dmxChannels) — and goes idle-grey when no light route
 /// is enabled. A LEAF: it reads the router + bus in its OWN body (freeze rule);
 /// the route flags only change on user edits, the live colour renders inside a
-/// 10 Hz TimelineView like the visual tile. Tap opens Routing (chrome door).
+/// 10 Hz TimelineView like the visual tile. Tap opens Routing (chrome door) — and since slice G
+/// (founder order 2026-10-01, one door per area) this tile is Routing's ONE door: it sits in the
+/// head on both stages at every skill level, so the output's status opens its own configuration.
+/// Its label therefore names BOTH halves — the light it shows and the Routing it opens — and its
+/// hint names what Routing holds (`TheRoutingHasOneDoorTests`). The label carries the door's
+/// identity on purpose: VoiceOver users can switch hints off, and a label that named only the light
+/// would leave Routing undiscoverable for exactly them.
 @MainActor
 struct EchoelLuxMonitorMini: View {
     @Environment(SignalRouter.self) private var router
@@ -668,9 +674,9 @@ struct EchoelLuxMonitorMini: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("EchoelLux light monitor")
+        .accessibilityLabel("Light and Routing")
         .accessibilityValue(rung.spoken)
-        .accessibilityHint("Opens routing")
+        .accessibilityHint("Opens Routing: MIDI pairing, the MIDI out switches, the OSC, Art-Net, sACN and spatial-audio targets, and the light master.")
     }
 
     /// The exact colour the DMX mapping sends: chord colour × the music dimmer
