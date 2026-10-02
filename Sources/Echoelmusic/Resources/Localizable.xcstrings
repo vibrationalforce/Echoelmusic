@@ -5101,6 +5101,54 @@
         }
       }
     },
+    "Tap a sound to give it to the open track: " : {
+      "comment" : "DAW shell S6 (2026-10-02): the Browse plate's Sounds (SoundBrowserView) and the Browse stage hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a sound to give it to the open track: "
+          }
+        }
+      }
+    },
+    "Open a synth track in Arrange to give it one of these sounds." : {
+      "comment" : "DAW shell S6 (2026-10-02): the Browse plate's Sounds (SoundBrowserView) and the Browse stage hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open a synth track in Arrange to give it one of these sounds."
+          }
+        }
+      }
+    },
+    "Gives the open synth track this sound. One Undo step" : {
+      "comment" : "DAW shell S6 (2026-10-02): the Browse plate's Sounds (SoundBrowserView) and the Browse stage hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gives the open synth track this sound. One Undo step"
+          }
+        }
+      }
+    },
+    "The sounds, the media library and the photo and video that shape the visual." : {
+      "comment" : "DAW shell S6 (2026-10-02): the Browse plate's Sounds (SoundBrowserView) and the Browse stage hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sounds, the media library and the photo and video that shape the visual."
+          }
+        }
+      }
+    },
     "Sounds" : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -21885,18 +21933,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Every sounding track's level, pan, mute and solo."
-          }
-        }
-      }
-    },
-    "The media library and the photo and video that shape the visual." : {
-      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Project.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The media library and the photo and video that shape the visual."
           }
         }
       }

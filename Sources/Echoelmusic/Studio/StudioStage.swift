@@ -128,7 +128,7 @@ public enum ShellTab: String, CaseIterable, Identifiable, Sendable {
         case .instrument:
             return StudioStage.instrument.spokenHint
         case .browse:
-            return String(localized: "The media library and the photo and video that shape the visual.")
+            return String(localized: "The sounds, the media library and the photo and video that shape the visual.")
         case .project:
             return String(localized: "Save, open and export the piece.")
         }

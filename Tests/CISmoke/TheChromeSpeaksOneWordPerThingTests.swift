@@ -168,6 +168,10 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/EchoelFXView.swift",
         "Sources/Echoelmusic/Studio/AutomationStatusStrip.swift",
         "Sources/Echoelmusic/Studio/BioMetricInfo.swift",
+        // DAW shell S5/S6 (2026-10-02): the Mixer's master strip and the Browse plate's sounds —
+        // new files on reachable plates join the ratchet in the commit that adds them.
+        "Sources/Echoelmusic/Studio/MasterStripView.swift",
+        "Sources/Echoelmusic/Studio/SoundBrowserView.swift",
         // Ratchet 15 (2026-09-30): beyond Studio — the sentences the model layer hands the
         // screen: the import refusals, the open-refusals, the placement status, the names a
         // recording and a nameless part or scene get, the automation layer label, the rack's
