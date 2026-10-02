@@ -763,14 +763,19 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertTrue(instance.contains("String(localized: \"Echoel plays \")") && instance.contains("String(localized: \", FX character \")"),
                       "the instance line's VoiceOver sentence lost its localised head or middle")
         XCTAssertFalse(instance.contains("accessibilityLabel(\"Echoel plays"), "the verbatim interpolated instance sentence is back")
-        let doors = try codeOnly("Sources/Echoelmusic/Studio/WorkstationView.swift")
-        XCTAssertTrue(doors.contains("private func door(_ title: LocalizedStringKey, systemImage: String, object: String, enabled: Bool,")
-                      && doors.contains("spoken: LocalizedStringKey, hint: LocalizedStringKey) -> some View {"),
-                      "the Workstation's Save/Open door takes String words again — title, spoken name or hint would spell verbatim")
+        // ⛔ DAW shell S3 (2026-10-02): the Workstation's Save/Open row and its `door(` helper are deleted — Save
+        // and Open are entries of the ≡ menu. The law moves with them: each entry is a `Label` whose title is a
+        // LITERAL (a catalogue key), never a `String` variable or `Label(verbatim:)`.
+        let doors = try codeOnly("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        for entry in ["Label(\"Open\", systemImage:", "Label(\"Save\", systemImage:", "Label(\"Live Colabo\", systemImage:",
+                      "Label(\"Learn\", systemImage:", "Label(\"Guide\", systemImage:"] {
+            XCTAssertTrue(doors.contains(entry), "the ≡ menu lost the keyed entry `\(entry)` — its word would no longer come from the catalogue")
+        }
+        XCTAssertFalse(doors.contains("Label(verbatim:"), "a ≡ menu entry spells its word verbatim")
         try assertCatalogued(["Previous guide card", "Next guide card", "Genre", "FX",
-                          "Echoel plays ", ", FX character ", "Names the piece and saves it, with its tracks and parts", "Shows your saved pieces. Opening one replaces the piece here",
+                          "Echoel plays ", ", FX character ",
                           "Hide guide", "Guide, in the logo menu at the top left, brings it back", "Guide", "Save",
-                          "Open", "Save this piece", "Open a saved piece"],
+                          "Open", "Live Colabo", "Learn"],
                          "guide arrow, instance line and door words")
         // E4-19 — the Routing MIDI status label, the guide's card counter, the Scale picker's family headers
         let routing = try codeOnly("Sources/Echoelmusic/Studio/PatchbayView.swift")
@@ -1683,7 +1688,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for verbatim in [".accessibilityValue(guideVisible ? \"On\" : \"Off\")", "guideVisible ? \"On\""] {
             XCTAssertFalse(menuGuide.contains(verbatim), "WorkspaceView speaks a bare On/Off for the guide: `\(verbatim)`")
         }
-        try assertCatalogued(["Menu", "Guide and project options"], "the logo menu's VoiceOver name and hint")
+        try assertCatalogued(["Menu", "Open, save, Live Colabo, Learn and the guide"], "the logo menu's VoiceOver name and hint")
         let clickLeaf = try codeOnly("Sources/Echoelmusic/Studio/WorkstationClickToggle.swift")
         for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"] {
             XCTAssertTrue(clickLeaf.contains(seam), "WorkstationClickToggle lost the E4-44 seam `\(seam)`")
@@ -1977,8 +1982,9 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         // E4-55 — the exporter's failure reasons were verbatim Strings handed to `.failed(_:)`; the Studio seamed its
         // suffix around them (E4-51) but the reason itself stayed English. The two Studio hints and the narration hint
         // were `+` chains of literals, and `padShapeCaption` built a `[String]` of them — none is a key. Every segment
-        // is a key now, joined by `+` (≤ 4 operands per step). The Live Colabo hint keeps "not clock-synced." as its
-        // own segment so TheNearbySessionPromisesNoClockTests still reads the refutation it exempts.
+        // is a key now, joined by `+` (≤ 4 operands per step). ⛔ The Live Colabo tile's three-segment hint stood in
+        // this list until DAW shell S3 deleted the tile; Live Colabo is a ≡ menu entry now, spoken by its `Label`
+        // title (pinned in the E4-18 block) — the verbatim ban below still names its old opening.
         let exporterReasons = try codeOnly("Sources/Echoelmusic/Audio/LoopExporter.swift")
         for seam in [".failed(String(localized: \"Recording could not be written to disk\"))",
                      ".failed(String(localized: \"Invalid loop length\"))",
@@ -1992,10 +1998,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             XCTAssertFalse(exporterReasons.contains(verbatim), "LoopExporter hands a verbatim reason to `.failed` again: `\(verbatim)`")
         }
         let studioHints = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
-        for seam in [".accessibilityHint(String(localized: \"Opens the nearby-devices sheet: find a device on the same \")",
-                     "+ String(localized: \"Wi-Fi and share your piece with it. The two devices are \")",
-                     "+ String(localized: \"not clock-synced.\"))",
-                     ".accessibilityHint(String(localized: \"Sounds the first of every N beats higher and louder — the \")",
+        for seam in [".accessibilityHint(String(localized: \"Sounds the first of every N beats higher and louder — the \")",
                      "+ String(localized: \"click's own accent, not the piece's meter\"))",
                      "return String(localized: \"Pick a pad rhythm above to shape the chord. On Genre the style writes its own \")",
                      "+ String(localized: \"articulation and these three do not run.\")",
@@ -2023,7 +2026,6 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertFalse(narrationHint.contains(".accessibilityHint(\"Shows or hides the plain-language"),
                        "LiveNarrationDisclosure builds its hint from verbatim Strings again")
         try assertCatalogued(["Recording could not be written to disk", "Invalid loop length", "Capture failed", "The capture buffer is empty", "Export failed",
-                          "Opens the nearby-devices sheet: find a device on the same ", "Wi-Fi and share your piece with it. The two devices are ", "not clock-synced.",
                           "Sounds the first of every N beats higher and louder — the ", "click's own accent, not the piece's meter",
                           "Pick a pad rhythm above to shape the chord. On Genre the style writes its own ", "articulation and these three do not run.",
                           "Chord length is scaled by the rhythm — short shapes stay short at 1.00.",

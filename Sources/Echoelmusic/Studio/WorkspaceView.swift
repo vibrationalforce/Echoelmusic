@@ -29,11 +29,12 @@ extension Notification.Name {
     /// `object` = the door name. (⛔ This listed "master" · "export" · "live" ·
     /// "learn" — the four the "•••" overflow posted, and NONE of them is a case
     /// any more: the first two became chips with #290, the last two became tiles
-    /// with #492. The live names are "video" · "routing" · "bio", all posted from
-    /// `HeaderMonitors`. An example list of dead strings is worse than none — it
-    /// invites a new poster for a case that no longer exists.) The studio listens
-    /// and opens its dropdown/sheet — same decoupling as the pulse button, the
-    /// chrome never reaches into studio state.
+    /// with #492. An example list of dead strings is worse than none — it invites
+    /// a new poster for a case that no longer exists.) The live set is the
+    /// receiver's `switch` in `EchoelStudioView`, and since DAW shell S3 the ≡ menu
+    /// above posts four of them (`postDoor`). The studio listens and opens its
+    /// dropdown/sheet — same decoupling as the pulse button, the chrome never
+    /// reaches into studio state.
     static let echoelChromeDoor = Notification.Name("echoel.chromeDoor")
     /// Header composition strip / transport tempo → studio (bottom-bar dissolve
     /// step 2b, 2026-07-17): a musical setting was edited BY THE USER in the
@@ -562,7 +563,37 @@ struct WorkspaceView: View {
             // ⛔ "NO TAP-TARGET FLOOR APPLIES … the mark is decorative" stood here until S1b-1 made
             // it the menu's label. #113's 44 pt now binds and is met by the hit frame below; the
             // DRAWN size is still a look, unpinned (#364), and still under the tiles' 44 pt height.
+            //
+            // ⭐ DAW SHELL S3 (founder 2026-10-02, inbox E18 „Ja, so bauen"): the ≡ menu is the
+            // project's ONE address for the doors that leave the piece in hand — Open (the sheet
+            // also holds New piece and Import), Save, Live Colabo and Learn — on both stages and
+            // at every level. Their tiles on the Instrument (`quickDoorRow`, the Save tile) and
+            // the Project plate's Save/Open row are deleted in the same commit: one door per
+            // area. Every item posts the chrome door the studio already receives, so the alert
+            // and the three sheets stay on the studio's existing chain — no presentation
+            // modifier here (black-screen law). Save is never greyed: the menu is built in this
+            // root body, and the facts that decide it (the composed notes, the song's parts)
+            // change at bar rate while a piece plays — reading them here is the 10.76.50 freeze.
+            // The #622 law (never an empty take under a real name) is asked at TAP time instead:
+            // the studio's `save` arm sets `saveHasNothing`, and the alert then says why nothing
+            // is saved and offers only OK.
             Menu {
+                Button { Self.postDoor("open") } label: {
+                    Label("Open", systemImage: "tray.and.arrow.up")
+                }
+                Button { Self.postDoor("save") } label: {
+                    Label("Save", systemImage: "tray.and.arrow.down")
+                }
+                Divider()
+                #if canImport(MultipeerConnectivity)
+                Button { Self.postDoor("live") } label: {
+                    Label("Live Colabo", systemImage: "dot.radiowaves.left.and.right")
+                }
+                #endif
+                Button { Self.postDoor("learn") } label: {
+                    Label("Learn", systemImage: "book")
+                }
+                Divider()
                 Toggle(isOn: $guideVisible) {
                     Label("Guide", systemImage: "info.circle")
                 }
@@ -575,7 +606,7 @@ struct WorkspaceView: View {
             }
             .padding(.horizontal, -9)
             .accessibilityLabel("Menu")
-            .accessibilityHint("Guide and project options")
+            .accessibilityHint("Open, save, Live Colabo, Learn and the guide")
             // SECOND: the loop length + the playhead inside it — the founder's "die Anzeige für
             // die Loop Länge und der Balken" (#490), which lived in the MIDDLE until the #516
             // swap moved it to the leading edge and #528 put the mark to its left. It is still
@@ -783,6 +814,12 @@ struct WorkspaceView: View {
     private func openWebsite() {
         guard let url = Self.websiteURL else { return }
         openURL(url)
+    }
+
+    /// DAW shell S3 — one ≡ item, one chrome door. The studio's receiver owns every flag these
+    /// raise; the root never reaches into studio state (the same decoupling as the pulse pill).
+    private static func postDoor(_ door: String) {
+        NotificationCenter.default.post(name: .echoelChromeDoor, object: door)
     }
 
     /// Short version + build, e.g. "v10.35.2 (1550)" — from the bundle, so it always

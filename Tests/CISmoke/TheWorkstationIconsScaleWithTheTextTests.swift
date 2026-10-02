@@ -18,6 +18,9 @@
 //    92 pt minimum per door; at AX4–AX5 that row outgrew a phone (review of 0c2e7b908, MEDIUM),
 //    so it sits in a `ViewThatFits` whose fallback STACKS the two doors.
 //
+// ⭐ DAW SHELL S3 (2026-10-02): claim 3's row is deleted (Save and Open are ≡ menu entries); the
+//    claim now pins the row ABSENT and the two menu entries present — red on f4b4f006d (the row
+//    exists there), green here.
 // Grading (§0, no Swift toolchain): transcribed against both trees — claim 1 red on the parent
 // (`e84bc229d`, seven `.system(size: 13, weight: .semibold)`), green here; claim 2 green on both;
 // claim 3 red on `0c2e7b908` (a bare `HStack`), green here — a regression pin for the review.
@@ -62,28 +65,25 @@ final class TheWorkstationIconsScaleWithTheTextTests: XCTestCase {
                       "`EchoelTheme.font` must stay the Dynamic-Type-scaling face, or the swap fixed nothing")
     }
 
+    /// ⛔ UNTIL DAW SHELL S3 (2026-10-02) THIS PINNED THE `ViewThatFits` OF `WorkstationProjectRow`:
+    /// two 92 pt Save/Open doors whose icons grow with the text outgrew a phone row at AX4–AX5, so
+    /// the fallback stacked them. S3 deleted the row — Save and Open are entries of the ≡ menu,
+    /// which the system lays out as one row per entry at every text size. The defect this claim
+    /// held shut can only come back as a NEW fixed-width door row on the plate, so that is what is
+    /// pinned now: no row, no `door(` helper, and the two words reachable as menu entries instead.
     func testTheSaveAndOpenDoorsStackWhenTheyNoLongerFit() throws {
         let code = try source(Self.workstation)
-        guard let start = code.range(of: "private struct WorkstationProjectRow: View {"),
-              let end = code.range(of: "private func door(", range: start.upperBound..<code.endIndex) else {
-            return XCTFail("ANCHOR MISSING: `WorkstationProjectRow` and its `door(` helper (#454)")
-        }
-        let body = String(code[start.upperBound..<end.lowerBound])
-        // Review of e1036b874 (LOW): both searches start at `fits`, independently — searching the
-        // stack from AFTER the row made the order assertion below true by construction.
-        guard let fits = body.range(of: "ViewThatFits(in: .horizontal) {"),
-              let row = body.range(of: "HStack(spacing: 8) {", range: fits.upperBound..<body.endIndex),
-              let stack = body.range(of: "VStack(alignment: .leading, spacing: 8) {", range: fits.upperBound..<body.endIndex) else {
-            return XCTFail("""
-                Save and Open no longer sit in a `ViewThatFits` whose first choice is the row and \
-                whose fallback is a stack. Their icons grow with the text now; at the largest sizes \
-                two 92 pt doors do not fit one phone row, and the words compress instead.
+        XCTAssertFalse(code.contains("struct WorkstationProjectRow"), """
+            the Piece stage builds its own Save/Open row again — a second door to each, next to \
+            the ≡ menu, and a fixed-width pair that outgrows a phone row at the largest text sizes
+            """)
+        XCTAssertFalse(code.contains("private func door("), "the deleted row's door helper is back on the plate")
+        let workspace = try source("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        for entry in ["Label(\"Save\", systemImage:", "Label(\"Open\", systemImage:"] {
+            XCTAssertEqual(workspace.components(separatedBy: entry).count - 1, 1, """
+                `\(entry)` is not built exactly once in the ≡ menu — the one place Save and Open \
+                live since S3, and a system menu row reflows at every text size
                 """)
-        }
-        XCTAssertLessThan(row.lowerBound, stack.lowerBound, "the row is the first choice, the stack the fallback")
-        for door in ["door(\"Save\"", "door(\"Open\""] {
-            XCTAssertEqual(body.components(separatedBy: door).count - 1, 1,
-                           "`\(door)` must be built exactly once — not missing, and not twice: build each door ONCE and place it in both layouts; two builds could drift apart")
         }
     }
 

@@ -164,7 +164,7 @@ It costs zero presentation modifiers, which is why it won (see the `StudioMenu` 
 - every sheet on the modal chain;
 - `PatchbayView` (reached from three places: the Master panel, the Bio panel and the header tile);
 - the external display;
-- the `quickDoorRow` tiles, which open sheets directly.
+- the ≡ menu entries in `WorkspaceView` (since DAW shell S3; until then the `quickDoorRow` tiles), which post a chrome door that the instrument's receiver turns into its existing sheets.
 
 **Temporary or historical patterns still in the shell:**
 - The chrome-door **string** protocol ("bio", "routing"; "video" survives only in a header comment).
@@ -244,7 +244,7 @@ constructed-but-unreferenced sections rather than view types: `moodPadsSection` 
 | S20 | EchoelStudioView host (chip strip + front plate) | ESV | root via SurfaceHost | WS (de facto shell) | DEV (fused) | no | yes | — | yes | **W2** |
 | S21 | Start button (`toggleBiofeedback`) | ESV `startControlRow` | top line | PERF | DEV + WS (starts session, generator, bio source, transport) | no | yes | bio | no | **W2** |
 | S22 | quickActionRow (Record · Keep last · MIDI · Save) | ESV | top line | WS | — | no | yes | — | no | MI-WS |
-| S23 | quickDoorRow (Open · Live Colabo · Learn) | ESV | top line | WS | — | no | yes | — | no | MI-WS |
+| S23 | ~~quickDoorRow (Open · Live Colabo · Learn)~~ — DELETED by DAW shell S3 (2026-10-02); the three doors are entries of the ≡ menu in `WorkspaceView.topBar`, above both stages | ESV | — | WS | — | no | yes | — | no | MI-WS |
 | S24 | BodyTempoField | `S/BodyTempoField.swift` | top line | WS (tempo) | DOM bio (Flow follows pulse) | no | yes | bio | no | **W2** |
 | S25 | soundPanel | ESV | chip Sound (default) | DEV | WS (tuning banner) | **yes** | no | sound | no | MI-DEV |
 | S26 | effectsPanel (FX character, delay sync) | ESV | chip FX | DEV | — | yes | no | sound | no | MI-DEV |
@@ -261,7 +261,7 @@ constructed-but-unreferenced sections rather than view types: `moodPadsSection` 
 | S37 | HealthWriteOptInRow | ESV (bioPanel) | bioPanel | DOM (bio consent) | — | no | no | bio | no | KEEP |
 | S38 | WorkstationView (`workstationPanel`) | `S/WorkstationView.swift` | chip Workstation | WS | — | no | yes | — | yes (young, #1436–#1440, F1) | **W2** |
 | S39 | utilityRow (Save & Export · loop length · place · artist · reset · diagnostics) | ESV | chip Save/Export | WS | DEV (loop length, sound reset) | no | yes | — | no | **W2** |
-| S40 | openSheet (+ JSON `.fileImporter`) | ESV | quickDoorRow "Open" | WS | — | no | yes | — | no | **W2** |
+| S40 | openSheet (+ JSON `.fileImporter`) | ESV | ≡ menu "Open" (S3) | WS | — | no | yes | — | no | **W2** |
 | S41 | "Save project" alert | ESV | quickActionRow "Save" | WS | — | no | yes | — | no | **W2** |
 | S42 | "Save sound" / "Save mood" alerts | ESV | soundPanel / moodPanel | DEV | — | yes | no | — | no | MI-DEV |
 | S43 | diagnosticsSheet | ESV | Export panel; auto after crash | WS | system | no | yes | — | no | KEEP |
@@ -270,8 +270,8 @@ constructed-but-unreferenced sections rather than view types: `moodPadsSection` 
 | S46 | PatchbayView `modulationSection` (Body → parameter) | `S/PatchbayView.swift` | inside S45 | DEV (bio modulation) | WS (tempo destination) | yes | partly | bio | no | **W2** |
 | S47 | PatchbayView `lichtSection` (grand master · blackout · DMX size) | `S/PatchbayView.swift` | inside S45 | DOM (light) | — | no | no | light | no | MI-DOM |
 | S48 | BluetoothMIDIPairingView | `S/PatchbayView.swift` | NavigationLink in S45 | WS | — | no | yes | — | no | KEEP |
-| S49 | LiveColaboView | `S/LiveColaboView.swift` | sheet from quickDoorRow | WS (collaboration) | PERF | no | yes | — | no | **W2** |
-| S50 | LearnView | `S/LearnView.swift` | sheet from quickDoorRow | WS (help/content) | — | no | yes | content | no | KEEP |
+| S49 | LiveColaboView | `S/LiveColaboView.swift` | sheet from the ≡ menu (S3) | WS (collaboration) | PERF | no | yes | — | no | **W2** |
+| S50 | LearnView | `S/LearnView.swift` | sheet from the ≡ menu (S3) | WS (help/content) | — | no | yes | content | no | KEEP |
 | S51 | AutomationStatusStrip | `S/AutomationStatusStrip.swift` | soundPanel | WS (automation) | — | no | yes | — | no | **W2** |
 | S52 | AudioDegradedRow | `S/AudioDegradedRow.swift` | top line | WS (engine status) | — | no | yes | — | no | KEEP |
 | S53 | LiveNarrationDisclosure + StudioCaptionView | `S/LiveNarrationDisclosure.swift`, `S/StudioCaptionView.swift` | Mood/Sound area | DEV (composer narration) | — | yes | no | music | no | KEEP |
@@ -491,14 +491,14 @@ above is the measurement.
 
 | # | Modifier | Content | Flag setter | Functionality should become persistent workstation space? |
 |---|---|---|---|---|
-| 1 | `.sheet(isPresented: $showOpen)` | openSheet (+ nested JSON `.fileImporter`) | quickDoorRow "Open" | **Yes**: a project browser is workstation space |
+| 1 | `.sheet(isPresented: $showOpen)` | openSheet (+ nested JSON `.fileImporter`) | ≡ menu "Open" (S3) | **Yes**: a project browser is workstation space |
 | 2 | `.sheet(item: $share)` | ShareSheet | export paths | no (system share is transient) |
 | 3 | `.sheet(item: $diagnostics)` | crash report | Export panel, post-crash | no |
 | 4 | `.sheet(isPresented: $showAllFX)` | EchoelFXView | effectsPanel | **Yes**: a device editor wants a persistent device view, not a modal |
 | 5 | `.sheet(isPresented: $showRouting)` | PatchbayView | 3 doors (Master, Bio, header tile) | **Yes**: routing/I-O is the most-doored modal; it is workstation space |
-| 6 | `.sheet(isPresented: $showLearn)` | LearnView | quickDoorRow | no (help) |
+| 6 | `.sheet(isPresented: $showLearn)` | LearnView | ≡ menu (S3) | no (help) |
 | 7 | `.fullScreenCover(isPresented: $showMeditation)` | MeditationView | **none**, setterless | free headroom (doctor C) |
-| 8 | `.sheet(isPresented: $showLiveColabo)` (Multipeer builds) | LiveColaboView | quickDoorRow | **Yes**: collaboration is session-level |
+| 8 | `.sheet(isPresented: $showLiveColabo)` (Multipeer builds) | LiveColaboView | ≡ menu (S3) | **Yes**: collaboration is session-level |
 | 9 | `.alert("Save project")` | name field | quickActionRow | **Yes**: part of a project surface |
 | 10 | `.alert("Save mood")` | name field | moodPanel | no (device preset save) |
 | 11 | `.alert("Save sound")` | name field | soundPanel | no (device preset save) |

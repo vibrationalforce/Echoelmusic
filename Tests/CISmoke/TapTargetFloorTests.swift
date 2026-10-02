@@ -95,6 +95,8 @@ final class TapTargetFloorTests: XCTestCase {
     /// `WorkspaceView`. #492 dissolved that menu on a founder ask; its two entries are
     /// separate tiles in `EchoelStudioView.quickDoorRow` now, so the half is two needles in a
     /// different file. Same property, same reason, more call sites to lose it from.
+    /// ⭐ DAW shell S3 (2026-10-02) moved them again, into the ≡ menu, where the system sizes
+    /// the entries — the floor now rests on the one control that opens the menu (see below).
     ///
     /// This asserts the enlargement is spelled in each file. It cannot assert the resulting
     /// rectangle — see the header — so read a failure as "someone removed the floor", which
@@ -128,20 +130,37 @@ final class TapTargetFloorTests: XCTestCase {
         // built from the shared tile, which is what holds them to the 44 pt floor (#113).
         // Retargeting rather than deleting is the #456 rule — a commit that removes a surface
         // moves the guards over that surface in the same breath.
+        // ⛔ DAW SHELL S3 (2026-10-02): the two door TILES are gone from `quickDoorRow` (the row
+        // is deleted) — Live Colabo and Learn are entries of the ≡ menu in WorkspaceView. A
+        // system menu row is laid out by the system at full row height, so the floor for the
+        // ENTRIES no longer depends on any modifier of ours; what still does is the ONE control
+        // that opens the menu, the ≡ mark. So the property moved with the doors: (a) the two
+        // glyphs are menu `Label`s, not hand-built buttons; (b) no second, hand-built door to
+        // either survives on the instrument; (c) the mark's label is held to 44 × 44 with a
+        // full-rectangle hit shape.
+        let workspace = try codeLines(Self.workspace)
         let studio = try codeLines(Self.studio)
-        // Anchored on the glyph argument only, NOT the full call: the call sites also pass
-        // `expands: true` so every tile in the row is one width, and a whole-call needle would
-        // go red on an unrelated width change.
         for door in ["dot.radiowaves.left.and.right", "book"] {
-            XCTAssertTrue(studio.contains { $0.contains("EchoelIconTile(systemImage: \"\(door)\"") }, """
-                The `\(door)` door tile no longer builds `EchoelIconTile`. That type's layout \
-                frame is the ONLY thing holding these two controls to the 44 pt floor — the \
-                `contentShape(Rectangle().inset(by: -6))` the old "•••" carried went with #482 \
-                and was never re-added. A bare `Image` under `.buttonStyle(.plain)` hit-tests \
-                its glyph run (~15–17 pt), which is under WCAG 2.5.8's 24 pt, let alone HIG's \
-                44. Restore the tile, or add an outset in the same commit; do not leave neither.
+            XCTAssertTrue(workspace.contains { $0.contains("systemImage: \"\(door)\")") && $0.contains("Label(") }, """
+                The `\(door)` door is no longer a `Label` entry of the ≡ menu. A system menu row \
+                is what holds it to the 44 pt floor since S3; a hand-built replacement needs its \
+                own floor (an `EchoelIconTile`, or an outset) in the same commit.
+                """)
+            XCTAssertFalse(studio.contains { $0.contains("systemImage: \"\(door)\"") }, """
+                The instrument builds a `\(door)` control again — a second door beside the ≡ \
+                menu's entry, and one whose 44 pt floor nothing here checks.
                 """)
         }
+        guard let mark = workspace.firstIndex(where: { $0.contains("EchoelLogoMark()") }) else {
+            return XCTFail("ANCHOR MISSING: the ≡ mark in WorkspaceView's top bar (#454)")
+        }
+        let label = workspace[mark..<min(mark + 6, workspace.endIndex)]
+        XCTAssertTrue(label.contains { $0.contains(".frame(width: 44, height: 44)") }
+                      && label.contains { $0.contains(".contentShape(Rectangle())") }, """
+            The ≡ mark lost its 44 × 44 frame or its full-rectangle hit shape. It is the one \
+            control that opens Open, Save, Live Colabo, Learn and Guide; a 26 pt glyph alone \
+            hit-tests its own run, under HIG's 44.
+            """)
 
         let lock = try codeLines(Self.tempoField)
         XCTAssertTrue(lock.contains { $0.contains(Self.outset6) }, """

@@ -37,6 +37,42 @@
         }
       }
     },
+    "Open, save, Live Colabo, Learn and the guide" : {
+      "comment" : "DAW shell S3 (2026-10-02, inbox E18): the ≡ menu's spoken hint — it holds Open, Save, Live Colabo, Learn and the Guide switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open, save, Live Colabo, Learn and the guide"
+          }
+        }
+      }
+    },
+    "Nothing to save yet. Press Play to compose a loop, or add a part to the piece, then save." : {
+      "comment" : "DAW shell S3 (2026-10-02): the Save alert's message when there is neither a composed loop nor a part of the user's own — the #622 gate, asked when Save is tapped in the ≡ menu.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to save yet. Press Play to compose a loop, or add a part to the piece, then save."
+          }
+        }
+      }
+    },
+    "OK" : {
+      "comment" : "DAW shell S3: the only button of the Save alert when there is nothing to save.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
     "Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW." : {
       "comment" : "Onboarding, page 3 body (#618: names Play, camera light, strap — the first act). Replaced the 'Breathe, lock a key…' key; its orphaned entry left with it (#618b).",
       "extractionState" : "manual",
@@ -3505,18 +3541,6 @@
         }
       }
     },
-    "Guide and project options" : {
-      "comment" : "DAW shell S1b-1 (2026-10-02, inbox E18): the mark's ≡ menu holds the guide switch; the guide's two sentences name its new address.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guide and project options"
-          }
-        }
-      }
-    },
     "Guide, in the logo menu at the top left, brings it back" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -3921,54 +3945,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key"
-          }
-        }
-      }
-    },
-    "Open a saved piece" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open a saved piece"
-          }
-        }
-      }
-    },
-    "Live Colabo — play together with a nearby device" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Colabo — play together with a nearby device"
-          }
-        }
-      }
-    },
-    "Learn and news" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Learn and news"
-          }
-        }
-      }
-    },
-    "Opens the body-science library and release notes" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens the body-science library and release notes"
           }
         }
       }
@@ -5457,30 +5433,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text size"
-          }
-        }
-      }
-    },
-    "Save this piece" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save this piece"
-          }
-        }
-      }
-    },
-    "Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name"
           }
         }
       }
@@ -9189,30 +9141,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : ", FX character "
-          }
-        }
-      }
-    },
-    "Names the piece and saves it, with its tracks and parts" : {
-      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Names the piece and saves it, with its tracks and parts"
-          }
-        }
-      }
-    },
-    "Shows your saved pieces. Opening one replaces the piece here" : {
-      "comment" : "Guide arrows, Echoel instance line and the Workstation's Save/Open doors (E4-18, 2026-09-30): helper parameters as keys; the instance's VoiceOver sentence as head + name + middle + name via String(localized:).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows your saved pieces. Opening one replaces the piece here"
           }
         }
       }
@@ -15129,36 +15057,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Export failed"
-          }
-        }
-      }
-    },
-    "Opens the nearby-devices sheet: find a device on the same " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens the nearby-devices sheet: find a device on the same "
-          }
-        }
-      }
-    },
-    "Wi-Fi and share your piece with it. The two devices are " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wi-Fi and share your piece with it. The two devices are "
-          }
-        }
-      }
-    },
-    "not clock-synced." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "not clock-synced."
           }
         }
       }

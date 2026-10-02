@@ -230,15 +230,15 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
     // MARK: - 3. both migrants have exactly one home
 
     /// ⛔ THE "•••" MOVED ONE DECLARATION DEEPER WITH #482, then CEASED TO EXIST WITH #492,
-    /// and this test moved with it both times, in the same commit each time. `startControlRow`
-    /// is three lines again: line 2 is `quickActionRow` (the take), line 3 is `quickDoorRow`
-    /// (the two sheets the overflow used to hold, now individual buttons on the founder's
-    /// third ask). That is still "inside the instrument, under the transport", which is what
-    /// the founder's arrow meant; what changed is that the tiles have their own names.
+    /// and this test moved with it both times, in the same commit each time. After #492
+    /// `startControlRow` had three lines — `quickActionRow` (the take) and `quickDoorRow` (the
+    /// two sheets the overflow used to hold, as tiles). DAW shell S3 (2026-10-02) moved those
+    /// doors into the ≡ menu of the approved control bar, so the row is gone and this test
+    /// now asserts its ABSENCE together with the menu's producer — one address per door.
     ///
     /// Asserting the rows SEPARATELY is deliberate: a single scan over `startControlRow` would
     /// see neither row's contents (both are member references), and widening the scan to the
-    /// whole file would let a migrant drift back into the chrome header while staying green.
+    /// whole file would let a migrant drift back while staying green.
     func testBothMigrantsAreMountedInTheStudioRow() throws {
         let path = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
         let row = try declarationBody(of: "private var startControlRow: some View {", in: path)
@@ -249,23 +249,33 @@ final class TheTransportBarIsDissolvedTests: XCTestCase {
             2026-08-07 ask — "alles … in eine Reihe unter dem Play etc zusammengefasst" — and \
             it carries the "•••" the first of his two arrows pointed at.
             """)
-        // ⛔ THIS ASSERTED `actions.contains("TransportOverflowMenu()")` UNTIL #492. The
-        // overflow the founder's first arrow pointed into this row is dissolved — its two
-        // entries are individual tiles in `quickDoorRow`, a THIRD line of the same stack. So
-        // the property to defend is unchanged ("those doors stay inside the instrument, under
-        // the transport, not back up in the chrome header") and the anchor moved one
-        // declaration over. `TheDoorsAreIndividualButtonsTests` owns the contents of that row;
-        // what belongs HERE is only that `startControlRow` still builds it.
-        let doors = try declarationBody(of: "private var quickDoorRow: some View {", in: path)
-        XCTAssertTrue(row.contains("quickDoorRow"), """
-            `startControlRow` no longer builds `quickDoorRow`. That row holds the two global \
-            doors the founder asked to see as individual buttons (#492); if they went back to \
-            the chrome header, or back into a menu, that is both #456 and #492 undone.
+        // ⛔ THIS ASSERTED `actions.contains("TransportOverflowMenu()")` UNTIL #492, and then
+        // that `startControlRow` built `quickDoorRow`, the third line holding the two sheet
+        // doors as tiles, until DAW SHELL S3 (founder 2026-10-02, inbox E18 „Ja, so bauen").
+        // The approved DAW shell gives the project ONE address for doors that leave the piece
+        // in hand — the ≡ menu leading the control bar, on BOTH stages — so the founder's newer
+        // decision moved them back up into the chrome, deliberately, as named menu entries
+        // rather than as the dissolved overflow. The property this half now defends is the
+        // one #416 asks of every migrant: ONE address. A copy of either door back on the
+        // Instrument's plate would be a second way to the same sheet.
+        // `TheDoorsAreIndividualButtonsTests` owns the menu's contents.
+        XCTAssertFalse(row.contains("quickDoorRow"), """
+            `startControlRow` builds a door row again. Since DAW shell S3 the two sheet doors \
+            (Live Colabo, Learn) and Open live in the ≡ menu — a row here is a second door to \
+            each sheet on the Instrument stage.
             """)
-        XCTAssertTrue(doors.contains("showLearn = true"), """
-            `quickDoorRow` no longer opens Learn. It is one of only two doors that are sheets \
-            rather than panels — there is no chip that can reach it, so this row is the only \
-            way in.
+        let actions = try declarationBody(of: "private var quickActionRow: some View {", in: path)
+        for setter in ["showLearn = true", "showLiveColabo = true", "showOpen = true"] {
+            XCTAssertFalse(row.contains(setter) || actions.contains(setter), """
+                The Instrument's start row sets `\(setter)` again — a second door next to the \
+                ≡ menu, which already reaches that sheet on both stages (DAW shell S3).
+                """)
+        }
+        let workspace = try declarationBody(of: "private var topBar: some View {",
+                                            in: "Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        XCTAssertTrue(workspace.contains("Self.postDoor(\"learn\")"), """
+            The ≡ menu no longer posts "learn". Learn is a sheet, not a panel — no chip reaches \
+            it — so the menu entry is the only way in.
             """)
         // ⛔ THE SECOND MIGRANT MIGRATED AGAIN (#490) and this assertion is INVERTED rather
         // than deleted. The founder's 2026-08-07 screenshot ran an arrow from the scribbled-out

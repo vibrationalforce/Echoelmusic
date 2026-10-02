@@ -41935,3 +41935,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Lehre: eine Hinweis-Zeile, die nur an EINER von zwei Türen-Stellen hängt, verschwindet in dem Moment, in dem ihre Tür wandert — ein Prädikat (`WorkstationSummary.isEmpty`) für Türen UND Hinweis.
 - Gerät: nichts geprüft. Offen: Scheiben 6 (Tempo-Schloss im Kopf), 8, 9, 12.
 - **Deploy 10.79.488 GELANDET** — TestFlight-Lauf 2613 (36990713092) auf c80cbb672: Preflight · Compile Check · iOS · Export & Upload · „Verify build landed in App Store Connect" success. Gerät: offen (T1–T7).
+
+## 2026-10-02 (Abend) — DAW-Hülle S3: das ≡-Menü ist das Projektmenü
+- **Gebaut:** Logo-Menü = Open · Save │ Live Colabo · Learn │ Guide, auf beiden Bühnen. Weg: `quickDoorRow`, `SaveSessionButton`, `WorkstationProjectRow` (+ ihre Katalog-Schlüssel). Menü postet `.echoelChromeDoor`, der Empfänger hebt die vorhandenen Blätter — keine neue Sheet-Zeile, `WorkspaceView` weiter ohne Präsentations-Modifier.
+- **#622 beim Tippen:** `saveHasNothing` → „Nothing to save yet …" + OK statt einer ausgegrauten Tür (kein Ahnen-Read).
+- **Wächter:** 14 Dateien umgezogen (neue Form + Abwesenheit der alten Tür), zwei Testmethoden umbenannt (#374). Transkribiert gegen f4b4f006d und den Baum; alle sieben Prüfer 0 (dead/moved/count-pins/swift-escapes/foreign).
+- **Lehren:** (1) ein „erstes Element des Menüs"-Fenster (80 Zeichen nach `Menu {`) wird falsch-rot, sobald das Menü wächst — die Entscheidung ist EINE Adresse, also klammergenau innerhalb des Menü-Blocks prüfen. (2) Der 3-Zeilen-Schlossblick von AHalfHighSheetLocks verbietet Kommentare/Mehrzeiler zwischen `guard !panelSheetUp` und dem Setter — Kommentare über die Wache, Zuweisungen in eine Zeile.
+- Gates: f4b4f006d in main (⇒ Compile Check + BfT grün). Gerät: nichts geprüft (Inbox §2 „S3").

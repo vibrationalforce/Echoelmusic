@@ -46,6 +46,24 @@
 // this file that writes `TransportOverflowMenu()` verbatim turns the negative scan red on
 // correct code. This repo writes down what it removed, so a negative scan meets its own
 // obituary sooner or later (#486, #488).
+//
+// ⭐ DAW SHELL S3 (founder 2026-10-02, inbox E18 — "Ja, so bauen"): the doors moved AGAIN, and
+// the #492 argument above is why this file moved with them instead of being deleted. The ask
+// was a DAW shell — one control bar on top, one canvas — and a DAW keeps Open, Save and its
+// collaboration/help doors in ONE project menu. So `quickDoorRow` is gone and the doors are
+// entries of the ≡ menu in `WorkspaceView`'s top bar, above BOTH stages (before S3 the row
+// existed only on the hidden Instrument stage, so the Piece a fresh install opens on had no
+// way into Learn or Live Colabo at all). The menu POSTS a chrome door
+// (`Self.postDoor`), the receiver in `EchoelStudioView` raises the SAME sheets — so the
+// black-screen chain is unchanged — and each arm refuses under `panelSheetUp` (two-modals law).
+// This is NOT #492's overflow coming back: that menu hid two doors behind a "•••" no one read
+// as a door; this menu IS the app's logo mark, labelled "Menu" and hinted with all five
+// entries, and it is the one place every DAW user looks for Open and Save.
+// Grading of the rewrite (transcribed in Python, both trees): on f4b4f006d THREE claims are red
+// by ONE absence (#486) — the menu's door buttons + poster, the spoken labels + hint, and the
+// receiver arms all name entries that do not exist there yet. FOUR are counterweights, green on
+// both: the menu is mounted in `topBar` (S1b-1 already built it), no overflow type, the action
+// row's equal widths, and both sheets still exist. On this tree all seven are green.
 
 import Foundation
 import XCTest
@@ -62,48 +80,65 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
 
-    // MARK: - 1. the ask itself: two buttons, not a menu
+    // MARK: - 1. the doors are individual entries of the ONE project menu (DAW shell S3)
 
-    /// The founder asked for the entries as individual buttons. A `Menu` inside this row would
-    /// satisfy "the tiles are here" while re-creating exactly what was asked to go away.
+    /// ⛔ THIS CLAIM SAID "two buttons, NOT a menu" FROM #492 TO DAW SHELL S3 (2026-10-02), and
+    /// the founder's newer decision outranks the older one rather than contradicting it. #492
+    /// dissolved a "•••" OVERFLOW — a menu whose only job was to hide what did not fit. S3 builds
+    /// the approved DAW shell (inbox E18 „Ja, so bauen"): a control bar whose leading ≡ is the
+    /// project's ONE address for the doors that leave the piece in hand, on both stages. That is
+    /// a named place with a grammar (Open · Save | Live Colabo · Learn | Guide), not an overflow,
+    /// and the overflow stays dead (claim 2).
+    ///
+    /// What survives #492 and is pinned at least as strictly: each door is its OWN `Button`
+    /// (no nested `Menu`, no combined control), both sheet doors have a producer — the reason
+    /// this file exists, because no chip can reach a sheet (#290) — and the producer reaches the
+    /// receiver through the chrome door the studio already owns.
     func testTheTwoDoorsAreIndividualButtons() throws {
-        let doors = try declarationBody(of: "private var quickDoorRow: some View {",
-                                        in: Self.studio)
-        XCTAssertTrue(doors.contains("showLiveColabo = true"), """
-            `quickDoorRow` no longer opens Live Colabo.
+        let menu = try projectMenu()
+        for door in ["live", "learn"] {
+            XCTAssertTrue(menu.contains("Button { Self.postDoor(\"\(door)\") }"), """
+                The ≡ menu no longer has its own `Button` for the "\(door)" door.
 
-            It is one of only two global doors that are sheets rather than panels, so no chip \
-            can reach it — this row is the only way in (#290).
-            """)
-        XCTAssertTrue(doors.contains("showLearn = true"), """
-            `quickDoorRow` no longer opens Learn. Same reason as Live Colabo: sheet, not panel, \
-            so there is no chip that reaches it.
-            """)
-        XCTAssertFalse(doors.contains("Menu {"), """
-            A `Menu` is back inside `quickDoorRow`.
+                Live Colabo and Learn are sheets, so no chip can reach them (#290); since DAW \
+                shell S3 this menu entry is the ONLY way in. Without it the sheet compiles, \
+                presents correctly, and is unreachable.
+                """)
+        }
+        XCTAssertFalse(menu.contains("Menu {"), """
+            A `Menu` is nested inside the ≡ menu.
 
-            The founder asked for these entries as INDIVIDUAL buttons \
-            (*"Das mit den drei Punkten als einzelnde Buttons anzeigen"*). Re-folding them into \
-            a menu satisfies the letter of "the doors are on the plate" against the whole point \
-            of the ask.
+            The founder's #492 ask (*"Das mit den drei Punkten als einzelnde Buttons anzeigen"*) \
+            still binds INSIDE the menu: every door is one tap from the ≡, never folded a \
+            second level down.
+            """)
+        let post = try declarationBody(of: "private static func postDoor(_ door: String) {",
+                                       in: Self.workspace)
+        XCTAssertTrue(post.contains("NotificationCenter.default.post(name: .echoelChromeDoor, object: door)"), """
+            `postDoor` no longer posts the `.echoelChromeDoor` notification with the door name.
+
+            The ≡ menu lives in the ROOT view and must never reach into studio state (the \
+            chrome/studio decoupling); the notification IS the wire. A helper that does \
+            anything else leaves every menu entry a lying control.
             """)
     }
 
-    /// The row has to be MOUNTED. A property nobody builds is the doorless-surface shape this
-    /// repo keeps paying for, and it would leave both sheets with no producer at all.
-    func testTheDoorRowIsMounted() throws {
-        let row = try declarationBody(of: "private var startControlRow: some View {",
-                                      in: Self.studio)
-        XCTAssertTrue(row.contains("quickDoorRow"), """
-            `startControlRow` no longer builds `quickDoorRow`.
+    /// The menu has to be MOUNTED in the bar. A menu nobody builds is the doorless-surface
+    /// shape this repo keeps paying for, and it would leave both sheets with no producer at all.
+    /// ⛔ Named `testTheDoorRowIsMounted` until S3 — the row is deleted and a name promising it
+    /// would send its reader looking for code that is gone on purpose (#374).
+    func testTheMenuIsMountedInTheTopBar() throws {
+        let bar = try declarationBody(of: "private var topBar: some View {", in: Self.workspace)
+        XCTAssertTrue(bar.contains("Menu {"), """
+            `WorkspaceView.topBar` no longer builds the ≡ menu.
 
             Both doors then have no producer whatsoever: they are sheets, so no chip reaches \
-            them, and #492 deleted the `.echoelChromeDoor` cases that used to. Live Colabo and \
-            Learn would compile, present correctly, and be unreachable.
+            them, and the Instrument's door tiles were deleted with DAW shell S3. Live Colabo \
+            and Learn would compile, present correctly, and be unreachable.
             """)
     }
 
-    // MARK: - 2. the menu is gone from the whole of Sources/
+    // MARK: - 2. the overflow is gone from the whole of Sources/
 
     /// Scoped to `Sources/` rather than to one file: the failure this catches is somebody
     /// re-introducing the overflow ANYWHERE, not moving it back to its old address.
@@ -125,83 +160,97 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
 
     // MARK: - 3. both doors speak
 
-    /// An icon-only control must say what it is (#489). Both labels are inherited from the menu
-    /// entries they replace — "Live Colabo" alone would not tell a first-time listener that it
-    /// is about playing WITH someone in the room.
+    /// An icon-only control must say what it is (#489). The tiles needed an
+    /// `accessibilityLabel` because their whole visible content was an SF Symbol; a menu entry
+    /// is a `Label` whose TITLE is the spoken name, so the requirement moves from the modifier
+    /// to the title. Pinned as the title-plus-glyph pair, so an entry that lost its words
+    /// (an `Image` alone) is red.
     ///
-    /// ⛔ THE LIVE COLABO LABEL WAS PINNED AS "play together nearby" UNTIL #1414 and moved to
-    /// "play together with a nearby device" together with its hint, which had promised "on one
-    /// tempo" for a capability that does not exist. **This pin is a SPELLING, and the file it
-    /// guards is copy** — the honest reading is that it holds the label PRESENT, not that this
-    /// wording is law. The claim that no nearby-collaboration copy may promise tempo or clock
-    /// sync lives in `TheNearbySessionPromisesNoClockTests`, which scans for the PROMISE rather
-    /// than for a phrase, so a future rewording moves this one literal and nothing else.
+    /// ⛔ The tile labels were pinned here until S3 ("Live Colabo — play together with a nearby
+    /// device", "Learn and news"). Their promise rule lives on unchanged where it always did:
+    /// `TheNearbySessionPromisesNoClockTests` scans the Live Colabo copy for a clock promise.
     func testBothDoorsSpeak() throws {
-        let doors = try declarationBody(of: "private var quickDoorRow: some View {",
-                                        in: Self.studio)
-        for (door, label) in [("Live Colabo", "Live Colabo — play together with a nearby device"),
-                              ("Learn", "Learn and news")] {
-            XCTAssertTrue(doors.contains(".accessibilityLabel(\"\(label)\")"), """
-                The \(door) tile lost its spoken label.
+        let menu = try projectMenu()
+        for (door, label) in [("Live Colabo",
+                               "Label(\"Live Colabo\", systemImage: \"dot.radiowaves.left.and.right\")"),
+                              ("Learn", "Label(\"Learn\", systemImage: \"book\")")] {
+            XCTAssertTrue(menu.contains(label), """
+                The \(door) entry of the ≡ menu lost its spoken title.
 
-                Its whole visible content is an SF Symbol, so without this modifier SwiftUI \
-                names the button after the glyph — VoiceOver would read "dot radiowaves left \
-                and right" or "book". An accessibility label is invisible with VoiceOver off, \
-                so no screenshot and no design pass will ever show this missing (#480).
+                A menu row that is only a glyph is named after the glyph by VoiceOver — \
+                "dot radiowaves left and right" or "book". The title is invisible as a \
+                defect with VoiceOver off, so no screenshot will ever show it missing (#480).
                 """)
         }
+        let bar = try declarationBody(of: "private var topBar: some View {", in: Self.workspace)
+        XCTAssertTrue(bar.contains(".accessibilityHint(\"Open, save, Live Colabo, Learn and the guide\")"), """
+            The ≡ menu's hint no longer names what is behind it.
+
+            The menu's own label is "Menu"; the hint is the one sentence that tells a \
+            VoiceOver user Live Colabo and Learn live here — the tiles that used to say it \
+            individually are gone.
+            """)
     }
 
     // MARK: - 4. the equal-width counterweight
 
-    /// ⭐ THIS IS THE ASSERTION THE FILE EXISTS FOR, and it guards a line that looks like
-    /// tidying. `expands` gives each flexible child of an `HStack` an equal share, so three
-    /// tiles alone would be a third wider than the four above them — in the row whose entire
-    /// brief is the founder's *"die sollen immer gleichgroß sein"* (#481/#482). The trailing
-    /// `Spacer(minLength: 0)` is a fourth flexible slot that draws nothing, so both lines are
-    /// four-up and all seven tiles are one width on every device.
-    ///
-    /// Deleting it is a one-character-looking change with a visible consequence, and nothing
-    /// else in the tree would notice.
+    /// ⭐ THIS GUARDED `quickDoorRow`'s trailing `Spacer(minLength: 0)` until S3 deleted the
+    /// row, and the LAW it carried survives on the one row left: the founder's *"die sollen
+    /// immer gleichgroß sein"* (#481/#482). Equal width comes from every tile being flexible —
+    /// `expands` gives each flexible child of an `HStack` an equal share — so a fixed-width tile
+    /// takes its share out of the equalisation and the row stops matching. Pinned on the two
+    /// inline tiles AND on `KeepLastLoopButton`, which builds its tile in its own body.
     func testTheEqualWidthCounterweightIsPresent() throws {
-        let doors = try declarationBody(of: "private var quickDoorRow: some View {",
-                                        in: Self.studio)
-        XCTAssertTrue(doors.contains("Spacer(minLength: 0)"), """
-            `quickDoorRow` lost its trailing `Spacer(minLength: 0)`.
+        let row = try declarationBody(of: "private var quickActionRow: some View {",
+                                      in: Self.studio)
+        XCTAssertEqual(row.components(separatedBy: "expands: true").count - 1, 2, """
+            `quickActionRow` no longer passes `expands: true` to exactly its two inline tiles \
+            (Record and MIDI).
 
-            That blank is a LAYOUT CONSTANT, not leftover scaffolding: without it this line \
-            spreads three `expands` tiles across the width four tiles occupy above, so line 3 \
-            renders a third wider than line 2 and the founder's "immer gleichgroß" breaks on \
-            the row it was asked for.
+            Equal width comes from every tile in the row being flexible. A fixed-width tile \
+            here takes its share out of the equalisation and the row stops being "gleichgroß".
             """)
-        XCTAssertEqual(doors.components(separatedBy: "expands: true").count - 1, 3, """
-            `quickDoorRow` no longer passes `expands: true` to exactly three tiles.
-
-            Equal width comes from every tile in BOTH lines being flexible. A fixed-width tile \
-            here takes its share out of the equalisation and the two lines stop matching.
+        XCTAssertTrue(row.contains("KeepLastLoopButton("), """
+            `quickActionRow` no longer builds `KeepLastLoopButton` — the third tile. Re-anchor \
+            this claim on the row's new third member; do not let the count above shrink alone.
+            """)
+        let keep = try declarationBody(of: "private struct KeepLastLoopButton: View {",
+                                       in: Self.studio)
+        XCTAssertTrue(keep.contains("expands: true"), """
+            `KeepLastLoopButton` builds its tile without `expands: true`, so it is the one \
+            fixed-width member of a row whose brief is equal width.
             """)
     }
 
-    // MARK: - 5. the notification cases went with their producer
+    // MARK: - 5. every door case has its producer
 
-    /// The receiver's own ⛔ block deleted four cases in #290 for precisely this reason: a
-    /// `case` whose only poster is gone compiles silently and reads like a live hook. The two
-    /// door tiles live in THIS view and own the `@State` they set, so a notification would have
-    /// been a message from the studio to itself.
-    ///
-    /// ⚠️ This is one of only TWO assertions here that fail on something the parent tree
-    /// actively CONTAINS (the other being the overflow scan); three of the remaining four trip
-    /// over `quickDoorRow` not existing yet, which is one absence reported three times.
-    func testTheDeadNotificationCasesAreGone() throws {
+    /// ⛔ UNTIL S3 THIS ASSERTED THAT `case "learn"` / `case "live"` WERE ABSENT — #492 deleted
+    /// them with their only poster, the "•••" overflow, on the receiver's own rule (#290): a
+    /// `case` whose only poster is gone compiles silently and reads like a live hook. S3 brings
+    /// both back TOGETHER with their poster, which is exactly what that rule's message asked
+    /// for ("re-add the case TOGETHER with the control, never ahead of it"). So the claim is
+    /// now the rule itself, stated positively and checked both ways: each case is present, it
+    /// raises its sheet, and the ≡ menu posts its name.
+    /// ⛔ Named `testTheDeadNotificationCasesAreGone` until S3, which brought the cases back
+    /// with their poster; the name now says what the claim checks (#374).
+    func testEveryReceiverArmHasItsMenuPoster() throws {
         let receiver = try switchBody(after: "publisher(for: .echoelChromeDoor)) { note in",
                                       in: Self.studio)
-        for dead in ["case \"learn\"", "case \"live\""] {
-            XCTAssertFalse(receiver.contains(dead), """
-                `\(dead)` is back in the `.echoelChromeDoor` receiver with no producer.
+        let menu = try projectMenu()
+        for (door, flag) in [("learn", "showLearn = true"), ("live", "showLiveColabo = true"),
+                             ("open", "showOpen = true"), ("save", "showSaveDialog = true")] {
+            let arm = try caseArm(door, in: receiver)
+            XCTAssertTrue(arm.contains(flag), """
+                The receiver's `case "\(door)":` no longer sets `\(flag)`.
 
-                The "•••" overflow was its only poster and #492 deleted it. If a future chrome \
-                control needs one of these back, re-add the case TOGETHER with the control, \
-                never ahead of it.
+                The ≡ menu posts "\(door)"; an arm that raises nothing turns that menu entry \
+                into a lying control.
+                """)
+            XCTAssertTrue(menu.contains("Self.postDoor(\"\(door)\")"), """
+                `case "\(door)":` is in the `.echoelChromeDoor` receiver but the ≡ menu no \
+                longer posts it — a case with no producer, the exact shape #290 and #492 \
+                deleted four times. Remove the case together with its control, or restore the \
+                entry.
                 """)
         }
         // ⛔ #1311 — THIS ANCHORED ON `case "video"` AND WENT RED WITH #1304. The founder
@@ -229,23 +278,52 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
 
     // MARK: - 6. counterweight: the doors themselves still open
 
-    /// Green on both sides of #492 on purpose. Two things could quietly undo this slice in the
-    /// tidy-up direction: removing the sheets along with the menu that used to open them, and
-    /// "consolidating" by adding a NEW presentation modifier. The first makes two features
-    /// unreachable; the second spends headroom the black-screen law (10.76.34) has none of.
-    /// This slice must leave the chain exactly as it found it — `ResetSoundClearsWhatTheLaunchLineReportsTests`
-    /// owns the count, this owns the two identities.
+    /// Green on both sides of #492 and of S3 on purpose. Two things could quietly undo either
+    /// slice in the tidy-up direction: removing the sheets along with the control that used to
+    /// open them, and "consolidating" by adding a NEW presentation modifier. The first makes two
+    /// features unreachable; the second spends headroom the black-screen law (10.76.34) has none
+    /// of. S3 moved who taps the sheets, not how many there are —
+    /// `ResetSoundClearsWhatTheLaunchLineReportsTests` owns the count, this owns the identities.
     func testBothSheetsStillExist() throws {
         let studio = try source(Self.studio)
         for flag in ["$showLearn", "$showLiveColabo"] {
             XCTAssertTrue(studio.contains(".sheet(isPresented: \(flag))"), """
                 The `\(flag)` sheet is gone.
 
-                Dissolving the overflow was about WHO TAPS the door, not about whether the door \
-                exists. Without this sheet the tile in `quickDoorRow` sets a flag nothing reads \
-                — a lying control, which is the class this repo has retracted twice (#435, #480).
+                Moving the doors into the ≡ menu was about WHO TAPS them, not about whether the \
+                door exists. Without this sheet the menu entry posts a door that raises a flag \
+                nothing reads — a lying control, which is the class this repo has retracted \
+                twice (#435, #480).
                 """)
         }
+    }
+
+    /// The brace-matched content of the ≡ menu, found inside `topBar` so another `Menu` in the
+    /// root file can never be the one scanned (#408).
+    private func projectMenu() throws -> String {
+        let bar = try declarationBody(of: "private var topBar: some View {", in: Self.workspace)
+        return try braceBody(after: "Menu {", in: bar, file: Self.workspace)
+    }
+
+    /// The text of one `case "<door>":` arm — from its label to the first following line that
+    /// opens another arm (`case …` or `default:`). This receiver's arms are flat statement
+    /// lists, so the next arm label is the end of this one.
+    private func caseArm(_ door: String, in receiver: String) throws -> String {
+        let label = "case \"\(door)\":"
+        guard let start = receiver.range(of: label) else {
+            throw DoorAnchorMissing(reason: """
+                `\(label)` not found in the `.echoelChromeDoor` receiver — the ≡ menu posts it, \
+                so the door is dead. Restore the arm or remove the menu entry.
+                """)
+        }
+        var arm: [Substring] = []
+        for line in receiver[start.upperBound...].split(separator: "\n",
+                                                         omittingEmptySubsequences: false) {
+            let t = line.drop(while: { $0 == " " })
+            if !arm.isEmpty, t.hasPrefix("case ") || t.hasPrefix("default:") { break }
+            arm.append(line)
+        }
+        return arm.joined(separator: "\n")
     }
 
     // MARK: - source access

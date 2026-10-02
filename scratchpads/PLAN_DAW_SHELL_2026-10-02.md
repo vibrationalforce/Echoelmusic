@@ -30,7 +30,7 @@ Antworten:
 |---|---|---|---|
 | S2 | Umschaltleiste | `PieceView` (arrange · mixer · browse · project, persistiert) + `StudioStage` bleibt; Leiste unten in `StageShell` ersetzt den Saum oben; Arrange/Mix-Kacheln in `pieceTabs` entfallen | StageShell, StudioStage, WorkstationView, StudioDefaultKeys |
 | S1 | Steuerleiste | EINE Leiste ersetzt topBar + CompositionHeaderStrip + ProjectHeader: ≡ · ⏮ · ▶/■ · ● · Anzeige-Blatt (Position · BPM+Schloss · Tonart) · Puls; Tonart/Stimmung/Tempo-Modus/Tap/Click in ein Blatt „Song" | WorkspaceView, ProjectHeader, neue DAWControlBar |
-| S3 | Projektmenü | ≡: New · Open · Save · Export (WAV/MIDI Stück, Loop-WAV) · Routing · Settings · Learn; verstreute Türen weg | WorkspaceView, WorkstationProjectRow |
+| S3 ✅ | Projektmenü | GEBAUT 2026-10-02: ≡ = Open · Save │ Live Colabo · Learn │ Guide; `quickDoorRow`, Save-Kachel und `WorkstationProjectRow` gelöscht. New bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing bei seiner einen Tür (Licht-Kachel) — je Bereich EINE Tür, darum nicht doppelt ins Menü | WorkspaceView, EchoelStudioView, WorkstationView |
 | S4 | Arbeitsfläche + Detail | feste Canvas, Detailbereich Track/Part/Notes/Automation/Device, Szenen als Canvas-Schalter | WorkstationView, ArrangeCanvasView |
 | S5 | Mixer | Streifen + Master | PieceMixerView |
 | S6 | Browse | Import · Medienbibliothek · Sounds/Moods · Foto/Video-Saat | WorkstationView, MediaBrowserView |
@@ -52,3 +52,21 @@ Gerät: nichts hiervon ist geräteverifiziert, bis der Founder es sieht.
   unteren Rand; seit S2 sitzt die Umschaltleiste darunter und hebt die Transportleiste um ~46 pt.
   Das rechte Ende der Transportzeile kann unter der Karte liegen. In S1/S8 mit der Leistenhöhe
   neu messen, nicht blind nachschieben (sieben Wächter lesen diese Größe).
+
+## S3 — Entscheidungen und Befunde (2026-10-02)
+
+- **Das Menü sendet, der Empfänger präsentiert.** `WorkspaceView` trägt weiter NULL
+  Präsentations-Modifier: jeder Eintrag postet `.echoelChromeDoor`, der vorhandene Empfänger in
+  `EchoelStudioView` hebt die VORHANDENEN Blätter. Keine neue Sheet-Zeile → Black-Screen-Kette
+  unverändert (Zähler gleich).
+- **Nie ausgegraut, beim Tippen geprüft.** Ein `.disabled` im Menü läse `panelSheetUp` oder
+  `hasComposed` im Ahnen-Rumpf. Stattdessen: jeder Arm beginnt mit `guard !panelSheetUp`, und das
+  #622-Gesetz (kein leeres Sichern unter echtem Namen) fragt Save beim Tippen über
+  `saveHasNothing` — die Abfrage zeigt dann „Nothing to save yet …“ mit nur „OK“.
+- **Nicht #492 zurück.** #492 löste ein „•••“-Overflow auf, das niemand als Tür las. Das ≡ ist
+  das Logo, heißt „Menu“, nennt alle fünf Einträge im Hinweis und ist der Ort, an dem jeder
+  DAW-Nutzer Open/Save sucht. Live Colabo und Learn waren vorher NUR auf der verborgenen
+  Instrument-Bühne erreichbar — vom Stück aus gar nicht.
+- **Wächter umgezogen, nicht gelockert:** 14 Dateien in `Tests/CISmoke` (Türen, Schloss,
+  Save-Gesetz, Tippfläche, Erstlauf-Satz, Guide, MIDI-Export-Reihenfolge u. a.); jeder pinnt die
+  NEUE Form mit Abwesenheit der alten Tür PLUS Anwesenheit im Menü.

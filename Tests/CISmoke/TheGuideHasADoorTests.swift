@@ -31,7 +31,9 @@
 // its parent c5eaf50a8 four of those are red by design and one by ONE absence. On the
 // original tree all 10 passed. S1b-1 re-anchored claim 1 on the menu (6 assertions: default ON,
 // the workspace reads the key, the Toggle exists, sits in the Menu, is named "Guide", the head
-// holds no key; plus the studio and mount counterweights) — on its parent the Toggle, Menu and
+// holds no key; plus the studio and mount counterweights). DAW shell S3 re-anchored "sits in the
+// Menu" from an 80-character window to the brace-matched Menu content block (the menu grew four
+// entries above the switch) — green on both f4b4f006d and S3, as the decision did not move — on its parent the Toggle, Menu and
 // Label needles are ONE absence (#486) and the header-empty assertion is red by design; the
 // keystore, studio and mount assertions are green on both. Against the ORIGINAL PARENT: ONE finding (#486) — neither
 // `GuideOverlay.swift`, the keystore entry, nor the toggle exists there; claim 2's file
@@ -81,9 +83,28 @@ final class TheGuideHasADoorTests: XCTestCase {
             an overlay nobody can switch on is a deleted feature, one nobody can switch OFF \
             is an imposition.
             """)
-        XCTAssertTrue(workspace[..<toggle.lowerBound].suffix(80).contains("Menu {"), """
-            The Guide switch is no longer the first item of the mark's `Menu` — it moved to a \
-            second address, or the ≡ menu lost it and some other Toggle on the key remains.
+        // DAW shell S3 (2026-10-02): the menu grew Open · Save | Live Colabo · Learn ABOVE the
+        // switch, so "first item" (an 80-character window after `Menu {`) became a false red.
+        // The decision was never the position — it is ONE address: the switch sits inside the
+        // brace-matched content block of the mark's `Menu`, ahead of its `} label: {`.
+        let menuOpen = try XCTUnwrap(workspace.range(of: "Menu {"), "ANCHOR MISSING: the mark's ≡ `Menu` (#454)")
+        var depth = 1
+        var menuEnd: String.Index?
+        var cursor = menuOpen.upperBound
+        while cursor < workspace.endIndex {
+            let ch = workspace[cursor]
+            if ch == "{" { depth += 1 }
+            if ch == "}" { depth -= 1; if depth == 0 { menuEnd = cursor; break } }
+            cursor = workspace.index(after: cursor)
+        }
+        let end = try XCTUnwrap(menuEnd, "the ≡ `Menu`'s content block does not close")
+        XCTAssertTrue(workspace[end...].hasPrefix("} label: {"), """
+            the first `Menu {` in WorkspaceView is no longer the mark's ≡ menu (its content block \
+            must close straight into `} label: {`) — re-anchor before trusting the next assertion
+            """)
+        XCTAssertTrue(toggle.lowerBound > menuOpen.upperBound && toggle.upperBound < end, """
+            The Guide switch is no longer inside the mark's ≡ `Menu` — it moved to a second \
+            address, or the ≡ menu lost it and some other Toggle on the key remains.
             """)
         XCTAssertTrue(workspace[toggle.upperBound...].prefix(200).contains("Label(\"Guide\""), """
             The ≡ menu's switch is no longer named "Guide" — VoiceOver and the guide's own \

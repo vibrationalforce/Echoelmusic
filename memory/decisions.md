@@ -4931,3 +4931,9 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **E19 „Nur im Detail“:** alle Ansichten immer sichtbar; `SkillLevel` blendet nur Profi-Felder im Detailbereich aus.
 - Invarianten: Instrument und Visual-Fenster bleiben gemountet; höchstens EIN Hüllen-`.sheet(item:)`; heiße Werte nur in Blättern; Wächter ziehen mit und pinnen die neue Form.
 - Review: 2026-11-01.
+
+### 2026-10-02 — DAW shell S3: das ≡-Menü ist das Projektmenü
+- **Entscheidung:** Open · Save │ Live Colabo · Learn │ Guide im Logo-Menü oben links, auf beiden Bühnen. Gelöscht: `quickDoorRow` (Instrument), Save-Kachel `SaveSessionButton`, `WorkstationProjectRow` (Projekt-Platte). New piece bleibt im Open-Blatt, Export auf der Projekt-Platte, Routing an seiner einen Tür.
+- **Warum:** Founder-Freigabe „Ja, so bauen" (E18, DAW-Hülle). Vorher waren Live Colabo und Learn nur auf der verborgenen Instrument-Bühne erreichbar. Kehrt #492 bewusst um — das ≡ ist kein „•••", es ist das Logo mit Namen „Menu".
+- **Wie:** das Menü postet `.echoelChromeDoor`; der Empfänger in `EchoelStudioView` hebt die VORHANDENEN Blätter (Zähler unverändert), jeder Arm beginnt mit `guard !panelSheetUp`. #622 wird beim Tippen geprüft (`saveHasNothing`).
+- **Review:** 2026-11-01.

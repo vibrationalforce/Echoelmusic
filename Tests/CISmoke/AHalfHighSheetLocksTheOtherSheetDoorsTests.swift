@@ -52,6 +52,21 @@
 // parent every per-setter floor is met and the 12-total holds; on the slice-G tree every floor is
 // met with the minimum exactly — a COUNTERWEIGHT on both, a REGRESSION guard for any later loss.
 
+//
+// ⭐ DAW SHELL S3 (founder 2026-10-02, inbox E18) MOVED THE FLOORS FOR `showOpen` AND
+// `showSaveDialog` FROM 2 TO 1, and again the two are not lost doors: they are the Instrument's
+// Open tile (`quickDoorRow`) and Save tile (`SaveSessionButton`), deleted because the ≡ menu is
+// now the ONE address for Open and Save on both stages. The setters that remain are the
+// receiver's "open" and "save" arms — and "learn" / "live" came BACK to the receiver as arms
+// (their tiles went too), so those two floors moved door, not count. Every arm carries a
+// `guard !panelSheetUp`, which is the refusal this claim reads. The menu's producers are pinned
+// where they belong — `TheDoorsAreIndividualButtonsTests` claim 5 (each arm has its menu entry)
+// and `TheInstrumentHasOneRowOfPlateDoorsTests` claim 4 (one Open) — not by a floor here.
+// Measured (same predicate as above): parent f4b4f006d — showOpen 2 · showSaveDialog 2 ·
+// showLearn 1 · showLiveColabo 1 · showRouting 1 · showAllFX 1 · showSaveMoodAs 1 ·
+// showSavePatchAs 1 = 10; S3 tree — showOpen 1 · showSaveDialog 1, the rest identical = 8; none
+// unlocked on either tree.
+
 import XCTest
 
 final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
@@ -61,10 +76,11 @@ final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
     private static let setters = ["showOpen = true", "showSaveDialog = true", "showLearn = true",
                                   "showLiveColabo = true", "showRouting = true", "showAllFX = true",
                                   "showSaveMoodAs = true", "showSavePatchAs = true"]
-    /// The measured number of code lines setting each flag (slice G, 2026-10-02 — see the header).
+    /// The measured number of code lines setting each flag (slice G, then DAW shell S3, 2026-10-02 —
+    /// see the header).
     /// A floor per setter, not one total: a lost door cannot hide behind a gained one.
     private static let measuredSetterLines: [String: Int] = [
-        "showOpen = true": 2, "showSaveDialog = true": 2, "showLearn = true": 1,
+        "showOpen = true": 1, "showSaveDialog = true": 1, "showLearn = true": 1,
         "showLiveColabo = true": 1, "showRouting = true": 1, "showAllFX = true": 1,
         "showSaveMoodAs = true": 1, "showSavePatchAs = true": 1,
     ]
@@ -127,10 +143,10 @@ final class AHalfHighSheetLocksTheOtherSheetDoorsTests: XCTestCase {
                 for a notification arm) — a second modal over a presented sheet is the two-modals hang.
                 """)
         }
-        XCTAssertGreaterThanOrEqual(seen, 10, """
-            the scan saw \(seen) sheet/alert setters — fewer than the ten measured after slice G \
-            (twelve before it; slice G deleted two of Routing's three doors, see the header) means \
-            the anchors moved, not that the doors went (a scan that saw nothing is not a pass)
+        XCTAssertGreaterThanOrEqual(seen, 8, """
+            the scan saw \(seen) sheet/alert setters — fewer than the eight measured after DAW \
+            shell S3 (ten after slice G, twelve before it; see the header) means the anchors \
+            moved, not that the doors went (a scan that saw nothing is not a pass)
             """)
         XCTAssertEqual(Set(Self.measuredSetterLines.keys), Set(Self.setters),
                        "every scanned setter carries a measured floor, and every floor names a scanned setter")

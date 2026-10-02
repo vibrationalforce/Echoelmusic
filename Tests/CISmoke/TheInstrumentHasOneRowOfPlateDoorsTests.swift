@@ -21,12 +21,16 @@
 // 3. The root body keeps its child count: the strip is wrapped as `AnyView(menuBar` directly
 //    after the start row (black-screen law — the deleted row sat INSIDE that AnyView for this
 //    reason, and removing it must not add a sibling).
-// 4. Open has one door per stage: `showOpen = true` is written exactly twice — the Instrument's
-//    Open tile (`quickDoorRow`) and the chrome door "open", which the Piece stage's Open tile
-//    posts — and the project sheet is presented from one slot. Both Open tiles are NEVER
-//    disabled: the sheet also holds "New piece" and Import, which an empty library needs most,
-//    and the deleted Library button was their only always-lit door. Without this half the
-//    deletion would shut both on a fresh install.
+// 4. Open has ONE door: `showOpen = true` is written exactly once — the chrome door "open", which
+//    the ≡ menu in `WorkspaceView.topBar` posts on both stages — and the project sheet is
+//    presented from one slot. The menu entry is NEVER disabled: the sheet also holds "New piece"
+//    and Import, which an empty library needs most, and the deleted Library button was their
+//    only always-lit door. Without this half the deletion would shut both on a fresh install.
+//    ⛔ Until DAW shell S3 (2026-10-02) this claim counted TWO writers — the Instrument's Open
+//    tile (`quickDoorRow`) and the chrome door posted by the Piece stage's Open tile. S3 moved
+//    both into the one menu, so the count went DOWN on purpose and every other needle got
+//    STRICTER: the Piece stage may no longer post "open" at all (a second door), and the menu's
+//    entry is pinned ungated.
 //
 // IT FORBIDS NOTHING LEGITIMATE (#364). A future main navigation is allowed; it arrives as a
 // REPLACEMENT for a door that exists, and edits claims 1 and 4 in the same commit with the
@@ -38,6 +42,9 @@
 // third `showOpen = true` in `selectArea`, and both Open tiles gated on a non-empty library);
 // claim 2 and claim 4's sheet needles are COUNTERWEIGHTS, green on both — the "nothing was
 // lost" half, which must stay green across the deletion.
+// S3 RE-GRADE (against f4b4f006d): claim 4's new needles are REGRESSIONS there — two writers, no
+// "open" entry in the ≡ menu (one absence, reported once), and the Piece stage still posting
+// "open"; the sheet needles stay COUNTERWEIGHTS. Claims 1–3 are untouched.
 // DEVICE PROBE, open: the Instrument shows the start row, then the chip strip, no row between;
 // Tempo, Sound, Field and Save/Export each open from their chip; Open opens the saved pieces
 // from the Instrument and from the Piece stage, and on a fresh install shows "No saved pieces
@@ -50,6 +57,7 @@ final class TheInstrumentHasOneRowOfPlateDoorsTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let areaFile = "Sources/Echoelmusic/Studio/StudioArea.swift"
 
     /// Fewest Swift files the `Sources/` walk must read for claim 1 to mean anything.
@@ -177,13 +185,11 @@ final class TheInstrumentHasOneRowOfPlateDoorsTests: XCTestCase {
 
     func testOpenHasOneDoorPerStage() throws {
         let code = SourceText.codeOnly(try text(Self.studio))
-        XCTAssertEqual(code.components(separatedBy: "showOpen = true").count - 1, 2, """
-            the project sheet is raised from a number of places other than two — the Instrument's \
-            Open tile and the chrome door "open" (posted by the Piece stage's Open tile). A third \
-            writer is a second door to the same sheet on one stage (the deleted Library button).
+        XCTAssertEqual(code.components(separatedBy: "showOpen = true").count - 1, 1, """
+            the project sheet is raised from a number of places other than one — the chrome door \
+            "open", which the ≡ menu posts on both stages (DAW shell S3). A second writer is a \
+            second door to the same sheet (the deleted Library button, the deleted Open tile).
             """)
-        let row = try member("private var quickDoorRow: some View {", in: code)
-        XCTAssertTrue(row.contains("showOpen = true"), "the Instrument's Open tile raises the sheet")
         guard let receiver = code.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
               let openArm = code.range(of: "case \"open\":", range: receiver.upperBound..<code.endIndex) else {
             return XCTFail("ANCHOR MISSING: the chrome door `case \"open\":` (#454)")
@@ -193,21 +199,29 @@ final class TheInstrumentHasOneRowOfPlateDoorsTests: XCTestCase {
         XCTAssertTrue(armTail[..<armEnd].contains("showOpen = true"), "the chrome door \"open\" raises the sheet")
         XCTAssertEqual(code.components(separatedBy: ".sheet(isPresented: $showOpen) { AnyView(openSheet) }").count - 1, 1,
                        "the saved pieces are presented from ONE slot")
-        XCTAssertFalse(row.contains("projects.projects.isEmpty"), """
-            the Instrument's Open tile is gated on a non-empty library again. The sheet also holds \
-            "New piece" and Import; with the Library button gone, a gate here shuts both on a \
-            fresh install.
-            """)
         let sheet = try member("private var openSheet: some View {", in: code)
         XCTAssertTrue(sheet.contains("newPieceRow"), "counterweight: the sheet still offers New piece — the reason Open is never shut")
         XCTAssertTrue(sheet.contains("projectImportPresented = true"), "counterweight: the sheet still offers Import")
 
-        let workstation = SourceText.codeOnly(try text(Self.workstation))
-        XCTAssertEqual(workstation.components(separatedBy: "object: \"open\", enabled: true").count - 1, 1, """
-            the Piece stage's Open tile posts the door "open" exactly once and is never disabled — \
-            the same reason as the Instrument's tile
+        let workspace = SourceText.codeOnly(try text(Self.workspace))
+        let bar = try member("private var topBar: some View {", in: workspace)
+        let menu = try member("Menu {", in: bar)
+        XCTAssertEqual(menu.components(separatedBy: "Button { Self.postDoor(\"open\") }").count - 1, 1, """
+            the ≡ menu does not hold exactly one Open entry. It is the ONE door to the project \
+            sheet on both stages since DAW shell S3.
             """)
-        XCTAssertFalse(workstation.contains("canOpen"), "the Piece stage's Open tile is gated again (`canOpen`)")
+        XCTAssertFalse(menu.contains(".disabled("), """
+            an entry of the ≡ menu is gated. Open must never be: the sheet also holds "New piece" \
+            and Import, which a fresh install needs most — and the menu is built in the ROOT body, \
+            where reading the library or the composed notes is the 10.76.50 freeze.
+            """)
+
+        let workstation = SourceText.codeOnly(try text(Self.workstation))
+        XCTAssertFalse(workstation.contains("object: \"open\""), """
+            the Piece stage posts the door "open" again — a second Open door on that stage, next \
+            to the ≡ menu that already reaches the same sheet (DAW shell S3: one door per area).
+            """)
+        XCTAssertFalse(workstation.contains("canOpen"), "the Piece stage's Open door is gated again (`canOpen`)")
     }
 
     // MARK: helpers

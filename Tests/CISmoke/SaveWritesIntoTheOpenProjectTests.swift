@@ -44,6 +44,8 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let storePath = "Sources/Echoelmusic/Core/ProjectStore.swift"
+    private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
+    private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
 
     private var writtenSubdirectories: [String] = []
 
@@ -139,7 +141,9 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
         guard let branch = actions.range(of: "if projects.currentProjectName != nil {"),
               let changes = actions.range(of: "Button(\"Save changes\") { saveIntoOpenProject() }"),
               let asNew = actions.range(of: "Button(\"Save as new\") { saveProject() }"),
-              let otherwise = actions.range(of: "} else {"),
+              // Searched AFTER "Save as new": since DAW shell S3 the actions open with the
+              // `saveHasNothing` branch, whose own `} else {` comes first in the closure.
+              let otherwise = actions.range(of: "} else {", range: asNew.upperBound..<actions.endIndex),
               let plain = actions.range(of: "Button(\"Save\") { saveProject() }") else {
             return XCTFail("ANCHOR MISSING: the Save alert's two branches (#454)")
         }
@@ -171,15 +175,27 @@ final class SaveWritesIntoTheOpenProjectTests: XCTestCase {
         XCTAssertTrue(code.contains("projects.save(withSession(currentProject()))"))
     }
 
+    /// ⛔ THIS COUNTED TWO prefill sites and two `showSaveDialog = true` until DAW shell S3
+    /// (2026-10-02): the "save" chrome door and the `SaveSessionButton` tile. S3 deleted the tile
+    /// and moved Save into the ≡ menu, so ONE prefilling writer is left — the door's arm — and
+    /// every producer reaches it: the menu entry and the compose guide's Save step. The count
+    /// went down on purpose; the producers are pinned below so the one writer cannot lose them.
     func testBothSaveDoorsPrefillTheOpenPiecesName() throws {
         let code = try source(Self.studio)
         let prefill = "saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)"
-        XCTAssertEqual(code.components(separatedBy: prefill).count - 1, 2, """
-            the Workstation's "save" door and SaveSessionButton both prefill the OPEN name — \
-            otherwise "Save changes" would rename the piece to a generated session name
+        XCTAssertEqual(code.components(separatedBy: prefill).count - 1, 1, """
+            the "save" door's arm is the one Save writer and prefills the OPEN name — otherwise \
+            "Save changes" would rename the piece to a generated session name; a second writer \
+            is a door that may skip the prefill
             """)
-        XCTAssertEqual(code.components(separatedBy: "showSaveDialog = true").count - 1, 2,
-                       "the two doors, and no third that skips the prefill")
+        XCTAssertEqual(code.components(separatedBy: "showSaveDialog = true").count - 1, 1,
+                       "the one door, and no second that skips the prefill")
+        let workspace = try source(Self.workspace)
+        XCTAssertEqual(workspace.components(separatedBy: "Button { Self.postDoor(\"save\") }").count - 1, 1,
+                       "the ≡ menu posts \"save\" once — the Save on both stages")
+        let workstation = try source(Self.workstation)
+        XCTAssertEqual(workstation.components(separatedBy: "NotificationCenter.default.post(name: .echoelChromeDoor, object: \"save\")").count - 1, 1,
+                       "the compose guide's Save step reaches the same prefilling door")
     }
 
     /// ⛔ Review of b884e7a52 (HIGH). `noteCurrent` skips the recovery slot, so opening the

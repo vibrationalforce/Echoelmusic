@@ -37,13 +37,17 @@
 // (claims 1 and 2 fail: the hint and the label), GREEN on this tree. Claims 3, 4, 5 and 6 are
 // COUNTERWEIGHTS and are green on both, which is the point of them (#343). NOT compile-verified:
 // a transcription does not run Swift's type checker.
+// DAW SHELL S3 (2026-10-02): the door moved from the Instrument's `quickDoorRow` tile into the ≡
+// menu, and claims 1 and 3 moved with it (`doorRowCode`). Against f4b4f006d both are red by ONE
+// anchor absence (no Live Colabo entry in the menu yet); on this tree claim 1 is green and claim
+// 3 finds the entry's `Label` title and the menu's hint. Claims 2, 4, 5, 6 are untouched.
 
 import Foundation
 import XCTest
 
 final class TheNearbySessionPromisesNoClockTests: XCTestCase {
 
-    private static let studio  = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
+    private static let workspace = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
     private static let sheet   = "Sources/Echoelmusic/Studio/LiveColaboView.swift"
     private static let session = "Sources/Echoelmusic/Sync/MultipeerSession.swift"
     private static let metal   = "Sources/Echoelmusic/Views/MetalBioView.swift"
@@ -69,19 +73,28 @@ final class TheNearbySessionPromisesNoClockTests: XCTestCase {
         return text
     }
 
-    /// The `quickDoorRow` declaration body, comments blanked.
+    /// The Live Colabo door's code, comments blanked: since DAW shell S3 (2026-10-02) that is
+    /// the ≡ menu in `WorkspaceView.topBar` — its content block plus the menu's own spoken
+    /// modifiers, up to the end of its `.accessibilityHint(` line. Until S3 it was the
+    /// `quickDoorRow` tile on the Instrument, which the menu replaced; the RULE moved with the
+    /// door, because a door that promises a clock is the same defect at any address.
     ///
-    /// ⚠️ The stripping is LOAD-BEARING here, not prophylactic: the retraction block this slice
-    /// wrote into that very declaration QUOTES the removed promise verbatim, so a raw scan
-    /// would match its own correction. That is #491 one file over.
+    /// ⚠️ The stripping was LOAD-BEARING at the old address: the retraction block #1414 wrote
+    /// into that declaration QUOTED the removed promise verbatim, so a raw scan would have
+    /// matched its own correction (#491). At the new address it is prophylactic — kept because
+    /// the next retraction will be written beside the door, as the last one was.
     private func doorRowCode() throws -> String {
-        let code = SourceText.codeOnly(try source(Self.studio))
-        guard let start = code.range(of: "private var quickDoorRow: some View {") else {
-            XCTFail("ANCHOR MISSING: no `quickDoorRow` declaration in \(Self.studio). The door "
-                    + "row moved or was renamed — re-anchor this walk (#454).")
+        let code = SourceText.codeOnly(try source(Self.workspace))
+        guard let bar = code.range(of: "private var topBar: some View {"),
+              let menu = code.range(of: "Menu {", range: bar.upperBound..<code.endIndex),
+              let hint = code.range(of: ".accessibilityHint(", range: menu.upperBound..<code.endIndex)
+        else {
+            XCTFail("ANCHOR MISSING: no ≡ menu with a spoken hint in `topBar` of \(Self.workspace). "
+                    + "The Live Colabo door moved or was renamed — re-anchor this walk (#454).")
             return ""
         }
-        return Self.bracedBody(of: code, from: start.lowerBound)
+        let lineEnd = code[hint.upperBound...].firstIndex(of: "\n") ?? code.endIndex
+        return String(code[menu.lowerBound..<lineEnd])
     }
 
     /// The `{ … }` body that opens at or after `start`, brace-matched.
@@ -143,10 +156,11 @@ final class TheNearbySessionPromisesNoClockTests: XCTestCase {
     // are satisfied by a door that says nothing at all, or by removing the feature.
     func testTheDoorStillSpeaksAndTheFeatureStillExists() throws {
         let doors = try doorRowCode()
-        for needle in [".accessibilityLabel(\"Live Colabo", ".accessibilityHint("] {
+        for needle in ["Label(\"Live Colabo\"", ".accessibilityHint("] {
             XCTAssertTrue(doors.contains(needle), """
-                The Live Colabo door no longer carries `\(needle)`. Its whole visible content is
-                an SF Symbol, so without these VoiceOver names the button after the glyph (#489).
+                The Live Colabo door no longer carries `\(needle)`. A menu entry is named by its
+                `Label` title, and the menu's hint is the one sentence that says what lives behind
+                the ≡ — without them VoiceOver names the entry after the glyph (#489).
                 Claim 1 of this file forbids a false promise in that copy; it must not be
                 satisfiable by having no copy.
                 """)

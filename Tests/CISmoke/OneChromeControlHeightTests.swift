@@ -309,8 +309,8 @@ final class OneChromeControlHeightTests: XCTestCase {
         // ⛔ THIS WAS `4` UNTIL #492 AND THE MOVE IS THE POINT, not a loosening. Dissolving
         // the "•••" into two door tiles made seven tiles, which do not fit one line on a
         // 360/375 pt phone (see `quickDoorRow`'s doc for the arithmetic) — so Open moved down
-        // with them. This row is Record · Keep last · Export MIDI · Save, and only two of
-        // those four build the tile here: Keep last builds its own inside `KeepLastLoopButton`
+        // with them. This row was Record · Keep last · Export MIDI · Save until S3 (now the
+        // first three), and only two of those build the tile here: Keep last builds its own inside `KeepLastLoopButton`
         // because it reads `pattern.tempo` in its own body, and — since WA4 Acceptance Test A —
         // Save builds its own inside `SaveSessionButton` because it reads the timeline document
         // in its own body (the same freeze law; ⛔ this was `3` until then).
@@ -319,8 +319,14 @@ final class OneChromeControlHeightTests: XCTestCase {
             Export MIDI). A different count means an action was added or removed \
             without this expectation moving with it.
             """)
-        XCTAssertEqual(row.filter { $0.contains("SaveSessionButton(hasComposed: hasComposed)") }.count, 1,
-                       "the Save tile is the `SaveSessionButton` leaf, mounted once in this row")
+        // ⛔ DAW shell S3 (2026-10-02): Save LEFT this row for the ≡ menu (one Save door, on both
+        // stages), and its `SaveSessionButton` leaf is deleted. The row is Record · Keep last ·
+        // Export MIDI; the two `EchoelIconTile(` above are Record and Export MIDI, unchanged.
+        XCTAssertFalse(row.contains { $0.contains("SaveSessionButton(") }, """
+            the Save tile is back in `quickActionRow` — a second Save door beside the ≡ menu's
+            """)
+        XCTAssertEqual(row.filter { $0.contains("KeepLastLoopButton(") }.count, 1,
+                       "Keep last builds its own tile in its leaf, mounted once in this row")
         // ⛔ THE FIRST VERSION BANNED FOUR MODIFIERS AND ITS OWN DOC NAMED THREE EDITS —
         // "wider / rounder / brighter". Only "rounder" was covered. `.frame(width:` (wider)
         // and `.font(`/`.foregroundStyle(` (brighter) passed every assertion while

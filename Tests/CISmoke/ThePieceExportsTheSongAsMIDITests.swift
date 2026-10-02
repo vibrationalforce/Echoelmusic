@@ -36,7 +36,9 @@
 // (#343). The review repair (transpose applied, `sounding`) is FORWARD as well: its claim-1 and
 // claim-2 expectations move from 38 to 26 on a track transposed −12, and claim 3's transpose
 // needle is red on the B4 commit for the reason its message gives — the export wrote the part's
-// pitch, not the sounding one. DEVICE PROBE, open: the share sheet opens from the tile, and the `.mid` opens in a DAW
+// pitch, not the sounding one. DAW shell S3 (2026-10-02): the plate-order anchor moved from the
+// deleted Save/Open row to the song's settings (`CompositionHeaderStrip`) — red on f4b4f006d only
+// through the new absence assertion (the row exists there), green here. DEVICE PROBE, open: the share sheet opens from the tile, and the `.mid` opens in a DAW
 // with one track per MIDI track, the right tempo and key — readings, not scans.
 
 import XCTest
@@ -271,11 +273,17 @@ final class ThePieceExportsTheSongAsMIDITests: XCTestCase {
         // Project plate, the switcher entry that hands the piece away — and it stands there at EVERY
         // level: a level hides fields in the detail area, never a way to get the piece out.
         let project = try member("private var projectPlate: some View {", in: workstation)
-        guard let row = project.range(of: "WorkstationProjectRow()"),
+        // DAW shell S3 (2026-10-02): Save/Open left the plate for the ≡ menu, so the song's own
+        // settings are what stands before the ways the piece leaves the app.
+        guard let settings = project.range(of: "CompositionHeaderStrip()"),
               let door = project.range(of: "SongExportTab()") else {
-            return XCTFail("ANCHOR MISSING: the project row or the export door on the Project plate (#454)")
+            return XCTFail("ANCHOR MISSING: the song's settings or the export door on the Project plate (#454)")
         }
-        XCTAssertLessThan(row.lowerBound, door.lowerBound, "Save/Open first, then the ways the piece leaves the app")
+        XCTAssertLessThan(settings.lowerBound, door.lowerBound, "the song's settings first, then the ways the piece leaves the app")
+        XCTAssertFalse(project.contains("WorkstationProjectRow()"), """
+            the Project plate builds its own Save/Open row again — since DAW shell S3 those two live \
+            once, in the ≡ menu, on both stages
+            """)
         for gate in ["showsSongs", "skillLevel", "SkillLevel"] {
             XCTAssertFalse(project.contains(gate), """
                 the Project plate reads `\(gate)`. The founder decided levels act only in the detail \

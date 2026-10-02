@@ -30,6 +30,11 @@
 // ⚠️ WHY A SOURCE SCAN: these are strings inside `private` members of views, `@testable import`
 // grants `internal` not `private`, and there is no simulator here. House pattern —
 // `OneStartControlTests`, `SaveDoorNamingTests`, `SoundPanelReflowsTests`.
+//
+// ⭐ DAW SHELL S3 (2026-10-02): the first-run placement's lower anchor moved from the deleted
+// `quickDoorRow` mount to `if let reason = exportFailure`, and the row's absence is pinned. On
+// f4b4f006d the new ordering is green too (the failure line already followed the sentence);
+// the absence assertion is red there by design — the row exists.
 
 import Foundation
 import XCTest
@@ -107,26 +112,33 @@ final class CopyNamesTheLiveControlTests: XCTestCase {
             tiles it explains.)
             """)
         }
-        // Placement (Scheibe 5): the sentence renders BETWEEN the action row and the door
-        // row — on the plate, not in a panel. All three anchors occur exactly once in the
-        // stripped studio source (the bare mount lines are unique; measured at write time
-        // and asserted here so the ordering cannot key on a second copy, #408/#610b).
+        // Placement (Scheibe 5): the sentence renders on the plate, directly under the action
+        // row, before the export-failure line. ⛔ Until DAW shell S3 (2026-10-02) the second
+        // anchor was the `quickDoorRow` mount BELOW the sentence; S3 moved Open · Live Colabo ·
+        // Learn into the ≡ menu and deleted that row, so the bracket closes on the next thing
+        // the plate renders instead — `if let reason = exportFailure`. All three anchors occur
+        // exactly once in the stripped studio source (#408/#610b), asserted here so the
+        // ordering cannot key on a second copy.
         let studio = try studioCode()
         let mount = "\n            quickActionRow\n"
-        let door = "\n            quickDoorRow\n"
+        let failure = "if let reason = exportFailure"
         let needle = "you can record the loop"
-        for (token, name) in [(mount, "quickActionRow mount"), (door, "quickDoorRow mount"), (needle, "first-run sentence")] {
+        for (token, name) in [(mount, "quickActionRow mount"), (failure, "export-failure line"), (needle, "first-run sentence")] {
             XCTAssertEqual(occurrences(of: token, in: studio), 1, """
             \(name) is no longer unique in EchoelStudioView's stripped source — the \
             placement ordering below keys on the first copy; re-anchor before trusting it.
             """)
         }
+        XCTAssertEqual(occurrences(of: "quickDoorRow", in: studio), 0, """
+            `quickDoorRow` is back in code. DAW shell S3 put its three doors in the ≡ menu; a \
+            second row of them is a second address for each.
+            """)
         let m = try XCTUnwrap(studio.range(of: mount))
         let s = try XCTUnwrap(studio.range(of: needle))
-        let d = try XCTUnwrap(studio.range(of: door))
-        XCTAssertTrue(m.lowerBound < s.lowerBound && s.lowerBound < d.lowerBound, """
-        The first-run sentence left the plate (it must sit between `quickActionRow` and \
-        `quickDoorRow`, next to the grey tiles it explains — Scheibe 5/UX#7). If a redesign \
+        let f = try XCTUnwrap(studio.range(of: failure))
+        XCTAssertTrue(m.lowerBound < s.lowerBound && s.lowerBound < f.lowerBound, """
+        The first-run sentence left the plate (it must sit between `quickActionRow` and the \
+        export-failure line, next to the grey tiles it explains — Scheibe 5/UX#7). If a redesign \
         moves it deliberately, move this ordering and the panel tombstone in the same commit.
         """)
     }

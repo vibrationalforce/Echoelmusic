@@ -685,6 +685,10 @@ struct EchoelStudioView: View {
     // Sheets / dialogs
     @State private var showOpen = false
     @State private var showSaveDialog = false
+    /// DAW shell S3: set by the "save" door at TAP time — true when there is neither a composed
+    /// take nor a song with the user's parts, so the Save alert says "Nothing to save yet"
+    /// instead of writing an empty take under a real name (#622). Cold: one write per tap.
+    @State private var saveHasNothing = false
     @State private var saveName = ""
     /// DMMW Phase 5 · slice 4 — the ONE library row being renamed in place (nil = none). Only the
     /// id lives here; the typed text is `LibraryRenameRow`'s own state, so keystrokes rebuild that
@@ -1253,6 +1257,8 @@ struct EchoelStudioView: View {
                     // live hook; that is the shape this file has been burned by more than
                     // once. The notification keeps its REAL producers below (the header
                     // monitor tiles), which is why it is not deleted outright.
+                    // (DAW shell S3 brought both back WITH a producer — the ≡ menu, see the
+                    // "learn"/"live" arms below — and deleted the tiles: the rule held.)
                     // Header output monitors (founder 2026-07-12): the EchoelLux tile opens
                     // the routing sheet (existing slot — slot reuse, no new modal).
                     // ⛔ `"video"` WENT WITH ITS PRODUCER AND ITS PANEL (#1304): the header
@@ -1301,13 +1307,31 @@ struct EchoelStudioView: View {
                     case "save":
                         // Refuses while a half-high panel sheet is up (`panelSheetUp`) — the same
                         // two-modals rule the "routing" door above keeps.
+                        // The #622 gate, asked at tap time (the ONE predicate the deleted Save
+                        // tile and the recovery slot share — `songHasUserParts`, never restated).
+                        // Read here, in a closure, never in `body` (freeze law). One line, so the
+                        // refusal stays within the three lines the sheet-lock scan reads.
                         guard !panelSheetUp else { break }
+                        saveHasNothing = !(hasComposed || SessionSaveOpen.songHasUserParts(timelineStore.document, clips: clipStore.filledClips))
                         saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
                         showSaveDialog = true
                     case "open":
                         guard !panelSheetUp else { break }
                         openNote = nil
                         showOpen = true
+                    // ⭐ DAW SHELL S3 (founder 2026-10-02, inbox E18): "learn" and "live" are back,
+                    // TOGETHER with their one producer — the ≡ menu in `WorkspaceView.topBar`
+                    // (`postDoor`) — which is the condition #492's tombstone above set. Their
+                    // tiles (`quickDoorRow`) are deleted in the same commit, so each sheet keeps
+                    // ONE door, now on both stages. The same two-modals refusal as "open".
+                    case "learn":
+                        guard !panelSheetUp else { break }
+                        showLearn = true
+                    #if canImport(MultipeerConnectivity)
+                    case "live":
+                        guard !panelSheetUp else { break }
+                        showLiveColabo = true
+                    #endif
                     // Slice 2c: the Piece stage's tuning banner (`PieceTuningStatus`) posts this.
                     // The reset stays here because only this view owns the calls that push a
                     // reference into the voices; the stage does not turn — the player asked for
@@ -1805,18 +1829,28 @@ struct EchoelStudioView: View {
         }
         #endif
         .alert("Save piece", isPresented: $showSaveDialog) {
-            TextField("Name", text: $saveName)
-            // DMMW Phase 5 · slice 2 — with a project open, Save writes INTO it (one row per
-            // piece, renamed if the name was edited) and "Save as new" is the deliberate copy.
-            // Nothing open (a New piece, a fresh launch): the one Save adds a row, as before.
-            // `currentProjectName` is cold — written on Save, Open, New piece and delete only.
-            if projects.currentProjectName != nil {
-                Button("Save changes") { saveIntoOpenProject() }
-                Button("Save as new") { saveProject() }
+            // ⭐ DAW SHELL S3 — THE #622 GATE MOVED FROM THE TILE INTO THE ALERT. The Save tile
+            // was greyed until there was something to save (a composed take, or a song with the
+            // USER's parts — never the composer's own). The ≡ menu cannot grey its entry: it is
+            // built in the root body, where reading the document is the 10.76.50 freeze. So the
+            // receiver decides at TAP time (`saveHasNothing`, cold `@State`) and the alert says
+            // so instead of saving an empty take under a real name. Same modifier, no new slot.
+            if saveHasNothing {
+                Button("OK", role: .cancel) {}
             } else {
-                Button("Save") { saveProject() }
+                TextField("Name", text: $saveName)
+                // DMMW Phase 5 · slice 2 — with a project open, Save writes INTO it (one row per
+                // piece, renamed if the name was edited) and "Save as new" is the deliberate copy.
+                // Nothing open (a New piece, a fresh launch): the one Save adds a row, as before.
+                // `currentProjectName` is cold — written on Save, Open, New piece and delete only.
+                if projects.currentProjectName != nil {
+                    Button("Save changes") { saveIntoOpenProject() }
+                    Button("Save as new") { saveProject() }
+                } else {
+                    Button("Save") { saveProject() }
+                }
+                Button("Cancel", role: .cancel) {}
             }
-            Button("Cancel", role: .cancel) {}
         } message: {
             // #495 — THE PROMISE HAD TO CATCH UP WITH THE SAVE. "the current sound, key, tempo
             // and generated loop" was written before `Project` carried either tuning axis or the
@@ -1854,9 +1888,13 @@ struct EchoelStudioView: View {
             // turns that guard red on correct code. The first draft of this edit split
             // "stay with / the instrument" and did exactly that — caught by measuring, not by
             // the reviewer. Both pinned runs must stay inside one literal each.
-            Text(String(localized: "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, ")
-                 + String(localized: "sound and FX character, and the piece — its tracks and parts. ")
-                 + String(localized: "Your mixer levels and hand-dialled FX stay with the instrument."))
+            if saveHasNothing {
+                Text("Nothing to save yet. Press Play to compose a loop, or add a part to the piece, then save.")
+            } else {
+                Text(String(localized: "Saves the composed loop, if there is one, with its genre, key, tuning, tempo, tempo mode (following or locked), mood, ")
+                     + String(localized: "sound and FX character, and the piece — its tracks and parts. ")
+                     + String(localized: "Your mixer levels and hand-dialled FX stay with the instrument."))
+            }
         }
         .alert("Save mood", isPresented: $showSaveMoodAs) {
             TextField("Name", text: $moodAsName)
@@ -2303,13 +2341,13 @@ struct EchoelStudioView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityLabel(String(localized: "Export failed. ") + reason + String(localized: ". Nothing was saved."))
             }
-            // LINE 3 — the doors (#492). See `quickDoorRow`. A THIRD line is back, four
-            // slices after #456 deleted one, and the honest accounting is that it costs the
-            // ~40 pt #490 handed the plate back (the ~32 pt line plus this `VStack`'s 8 pt
-            // gap). It is not a free re-add: it is the price of the founder's *"Das mit den
-            // drei Punkten als einzelnde Buttons anzeigen"*, and the arithmetic below says
-            // there is no one-line version of that ask to buy instead.
-            quickDoorRow
+            // ⛔ THE DOOR LINE IS GONE (DAW shell S3, founder 2026-10-02, inbox E18 „Ja, so
+            // bauen"). It held Open · Live Colabo · Learn (#492, the "•••" overflow dissolved
+            // into tiles); the approved design gives the project ONE address for doors that
+            // leave the take — the ≡ menu at the top left, on both stages — so the tiles went in
+            // the same commit, and the plate gets the ~40 pt line back (the ~32 pt line plus this
+            // `VStack`'s 8 pt gap). The sheets themselves are unchanged and still hang on this
+            // body; the receiver's "learn" / "live" / "open" arms raise them.
             // ⛔ LINE 3 IS GONE (#490, founder 2026-08-07). It held `TransportPositionView`
             // alone — the loop capsule plus `1.1.1 / loop 1/8` — because a ~100 pt monospaced
             // label plus six 44 pt targets does not fit a 375 pt phone (6×44 + 5×8 = 304 of 343
@@ -2334,7 +2372,8 @@ struct EchoelStudioView: View {
     /// scattered over a menu, a chip and a dropdown is now equal chips under the transport,
     /// all `EchoelIconTile` — the "selbe Button Format", literally one declaration.
     ///
-    /// Left to right: Record/abort · Keep last · Export MIDI · Save.
+    /// Left to right: Record/abort · Keep last · Export MIDI. (Save left this row for the ≡ menu
+    /// with DAW shell S3, 2026-10-02 — one Save door, on both stages.)
     ///
     /// ⛔ IT WAS SIX ON ONE LINE UNTIL #492, and the split is the founder's third ask on the
     /// same screenshot: *"Das mit den drei Punkten als einzelnde Buttons anzeigen."* Dissolving
@@ -2394,8 +2433,6 @@ struct EchoelStudioView: View {
     /// `projects.projects` is a store. The one tempo-derived value — whether "keep last" fits
     /// in the ring at the current BPM — is read inside `KeepLastLoopButton`'s OWN body, which
     /// is why that control has been a separate `struct` since it was written and stays one.
-    /// The Save action reads `beatPlayer.pattern.tempo` inside its CLOSURE, which registers no
-    /// observation at all.
     private var quickActionRow: some View {
         HStack(spacing: 8) {
             // ONE button, two jobs — start the take and abort it (founder 2026-07-28,
@@ -2431,131 +2468,19 @@ struct EchoelStudioView: View {
             .accessibilityLabel("Export MIDI for your DAW")
             .accessibilityHint("Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key")
 
-            // WA4 Acceptance Test A — a song the USER built (an imported part) is worth saving
-            // with no composed take. The leaf reads the song itself: the root body must not
-            // observe the timeline document (freeze law), exactly the `KeepLastLoopButton` shape.
-            SaveSessionButton(hasComposed: hasComposed) {
-                saveName = projects.currentProjectName ?? session.sessionName(bpm: beatPlayer.pattern.tempo)
-                showSaveDialog = true
-            }
-            .disabled(panelSheetUp)
-
+            // ⛔ The Save tile (`SaveSessionButton`, WA4 Acceptance Test A) stood here; DAW shell
+            // S3 moved Save into the ≡ menu, which posts "save" — the receiver's arm prefills the
+            // OPEN piece's name exactly as the tile did. This row keeps what acts on the take.
         }
     }
 
-    /// ⭐ THE DOORS — founder 2026-08-07, third of four asks on the v10.79.374 screenshot:
-    /// *"Das mit den drei Punkten als einzelnde Buttons anzeigen."* The "•••" overflow is
-    /// dissolved; its two entries are tiles now, in the same `EchoelIconTile` format as
-    /// everything else on this plate.
-    ///
-    /// Left to right: Open a saved piece · Live Colabo · Learn and news.
-    ///
-    /// ⚠️ WHY A SECOND LINE RATHER THAN ONE ROW OF SEVEN, and this is arithmetic, not taste.
-    /// Every tile carries a hard 44 pt minimum width (`EchoelTheme.controlTapHeight`, the
-    /// #113 floor), the row spaces at 8, and `startControlRow` is padded 16 on each side. So
-    /// seven tiles need `7×44 + 6×8 = 356` pt of usable width. A 393 pt phone offers 361 —
-    /// five to spare — but a 375 pt phone offers 343 and a 360 pt one (iPhone 12/13 mini, both
-    /// on iOS 18) offers 328. On the narrowest phone this app ships to, seven 44 pt targets in
-    /// one line overflow by 28 pt. There is no spacing that fixes it honestly: even at 4 pt
-    /// gaps the row still needs 332. The ask is answerable in two lines or not at all.
-    ///
-    /// ⚠️ THE TRAILING `Spacer(minLength: 0)` IS LOAD-BEARING, not tidying. `expands` gives
-    /// each flexible child of an `HStack` an equal share, so three tiles alone would be a
-    /// third wider than the four above them — in the row whose entire brief is *"die sollen
-    /// immer gleichgroß sein"* (#481/#482). A fourth flexible slot that draws nothing makes
-    /// both lines four-up, so all seven tiles are one width on every device, and the blank
-    /// lands at the END of the LAST line where it reads as a grid rather than as a hole.
-    ///
-    /// ⚠️ THE SPLIT IS "acts on this take" ABOVE, "leaves this take" HERE. Record · Keep last ·
-    /// Export MIDI · Save all stay in the take you are playing; Open loads a DIFFERENT one,
-    /// Live Colabo joins other people, Learn is news and docs. Save is above rather than below
-    /// on purpose — naming a take does not leave it.
-    ///
-    /// ⛔ THESE TWO ARE NOT CHIPS, AND THAT REASON SURVIVED THE MENU (#290). Live Colabo and
-    /// Learn are the only global doors that are NOT panels — they present full sheets
-    /// (`showLiveColabo`, `showLearn`). The chip strip's grammar is "this chip selects what the
-    /// plate shows", so a chip that opened a modal would be a lying tab. Buttons in the action
-    /// block have no such grammar to break. **No new `.sheet` is added by this slice**: both
-    /// sheets already hang on the body, so the presentation chain the black-screen law
-    /// (10.76.34) guards is untouched — this changes who taps them, not how many there are.
-    ///
-    /// ⚠️ AND THEY SET `@State` DIRECTLY INSTEAD OF POSTING `.echoelChromeDoor`, which the
-    /// menu did. That round trip was already same-view since #456 (the studio posted and
-    /// received), and with the menu gone the notification's `"live"`/`"learn"` cases would
-    /// have had NO producer at all — a `case` that compiles silently and reads like a live
-    /// hook, which is the exact shape the receiver's own ⛔ block deleted four of in #290. The
-    /// notification keeps its real producers (the header monitor tiles post `"video"`,
-    /// `"routing"`, `"bio"`); it just stops carrying a message from this view to itself.
-    ///
-    /// ⚠️ FREEZE LAW. Nothing here reads a high-frequency `@Observable`: `projects.projects`
-    /// is a store, and the two door flags are `@State` written from a closure, which registers
-    /// no observation at all.
-    private var quickDoorRow: some View {
-        HStack(spacing: 8) {
-            // Never disabled (2026-10-01): the sheet also holds "New piece" and Import, which an
-            // empty library needs most. The deleted area row's Library button was their only
-            // always-lit door; the sheet says "No saved pieces yet." in words when it is empty.
-            Button { openNote = nil; showOpen = true } label: {
-                EchoelIconTile(systemImage: "tray.and.arrow.up", title: "Open", expands: true)
-            }
-            .buttonStyle(.plain)
-            .disabled(panelSheetUp)
-            .accessibilityLabel("Open a saved piece")
-
-            #if canImport(MultipeerConnectivity)
-            Button { showLiveColabo = true } label: {
-                EchoelIconTile(systemImage: "dot.radiowaves.left.and.right", title: "Live Colabo", expands: true)
-            }
-            .buttonStyle(.plain)
-            .disabled(panelSheetUp)
-            // An icon-only control must say what it is (#489), and "Live Colabo" alone would
-            // not tell a first-time listener that it is about playing WITH someone in the room.
-            //
-            // ⛔ THE HINT PROMISED "play together on one tempo" UNTIL #1414, AND NOTHING IN THIS
-            // APP DOES THAT. `MultipeerSession` shares a Codable `Project` SNAPSHOT — style, key,
-            // a tempo VALUE, patch, notes — and, behind an opt-in toggle, streams each peer's own
-            // bio for a side-by-side readout. There is no shared transport and no clock sync: the
-            // publisher's own header says "Real-time tempo/phase lock (Ableton Link) is a
-            // separate, device-verified step", and Link is not linked at all — `Package.swift`
-            // carries an EMPTY `dependencies` array. Loading a shared session sets your BPM to
-            // theirs ONCE; from the next bar the two devices drift, because each one runs its
-            // own transport.
-            // ⚠️ The first draft of this note cited a `git grep` for the Link symbols as the
-            // proof and said it "returns nothing" — writing that sentence made it return ONE,
-            // itself. A note that quotes a grep ages faster than one that states a fact,
-            // because every comment ABOUT the thing corrupts its own evidence (the
-            // `EchoelModalBank` lesson, `memory/LEDGER_COUNTS.md` §W).
-            //
-            // ⭐ THE RULE THIS COST: spoken copy and visible copy must describe the SAME
-            // capability. The sheet's own paragraph was honest the whole time ("share your
-            // session both ways — a starting point to jam from together"); only the door
-            // over-promised, and the door is the half no sighted user can read (#480 — an
-            // accessibility string is invisible with VoiceOver off, so no screenshot and no
-            // design pass will ever show it). A false claim hides best where it is spoken.
-            .accessibilityLabel("Live Colabo — play together with a nearby device")
-            .accessibilityHint(String(localized: "Opens the nearby-devices sheet: find a device on the same ")
-                               + String(localized: "Wi-Fi and share your piece with it. The two devices are ")
-                               + String(localized: "not clock-synced."))
-            #endif
-
-            Button { showLearn = true } label: {
-                EchoelIconTile(systemImage: "book", title: "Learn", expands: true)
-            }
-            .buttonStyle(.plain)
-            .disabled(panelSheetUp)
-            .accessibilityLabel("Learn and news")
-            .accessibilityHint("Opens the body-science library and release notes")
-
-            // See the property's doc: this draws nothing and exists so all seven tiles are one
-            // width. Removing it widens this line's three by a third and breaks the founder's
-            // "immer gleichgroß" on the row it was asked for. (⚠️ ONE flexible blank, sized for
-            // the three tiles above it. On a platform without MultipeerConnectivity this line
-            // is two tiles and the widths diverge — stated rather than branched on, because
-            // every target this app ships to has the framework and an untestable `#else` is
-            // worse than a named limit.)
-            Spacer(minLength: 0)
-        }
-    }
+    // ⛔ `quickDoorRow` STOOD HERE (#492 → DAW shell S3, 2026-10-02). Open · Live Colabo ·
+    // Learn moved into the ≡ menu (`WorkspaceView.topBar`), which posts the chrome doors the
+    // receiver above raises — the sheets, their `.disabled(panelSheetUp)` lock (now a
+    // `guard !panelSheetUp` in each arm) and the Live Colabo copy rule
+    // (`TheNearbySessionPromisesNoClockTests`: the sheet promises no shared clock) all survive.
+    // What did not: a menu item carries no VoiceOver hint, so the door's spoken sentence is
+    // gone with the tile — the menu's own hint names all four, and the sheet says the rest.
 
     /// THE ONE START, and since #307 it is a TRANSPORT GLYPH rather than a sentence.
     ///
@@ -12763,17 +12688,12 @@ private struct TextSizeRow: View {
     }
 }
 
-/// The Save tile. WA4 Acceptance Test A (create → import → save → reopen): a song holding the
-/// USER's parts is worth a save even with no composed take — the Session carries it. Before,
-/// the tile was `hasComposed`-gated alone, so a player who only imported audio could not save
-/// the song they had built. The composer's own part does not count (it is re-made on the next
-/// Start), so an empty launch still has nothing to save — the #622 law (never an empty take
-/// under a real name) holds for the TAKE, and a song with user parts is not empty.
-///
-/// ⚠️ A SEPARATE `struct` FOR THE FREEZE LAW, like `KeepLastLoopButton`: it reads the timeline
-/// document and the clip grid in its OWN body. Inlined into `quickActionRow`, those reads would
-/// make `EchoelStudioView.body` — which hosts every `.menu` Picker — rebuild on every song edit
-/// and on every composer re-seed.
+// ⛔ `SaveSessionButton` (the Save tile, WA4 Acceptance Test A) STOOD HERE until DAW shell S3
+// (2026-10-02). Save is an entry of the ≡ menu now; the gate it carried — a composed take OR a
+// song with the user's parts (`SessionSaveOpen.songHasUserParts`), never the composer's own —
+// is asked by the "save" chrome door at tap time (`saveHasNothing`), because the menu lives in
+// the root body and must not read the document (freeze law).
+
 /// DMMW Phase 5 · slice 4 — renaming a library row in place. Its own `View` so the typed text is
 /// ITS state: keystrokes rebuild this leaf only, never `EchoelStudioView`'s body. No modal: it
 /// replaces the row inside the library sheet that is already presented. Save is disabled while
@@ -12825,24 +12745,6 @@ private struct LibraryRenameRow: View {
     static let saveHint = String(localized: "Renames this piece. Its place in the list and its saved time stay.")
 }
 
-private struct SaveSessionButton: View {
-    let hasComposed: Bool
-    let action: () -> Void
-    @Environment(TimelineStore.self) private var timeline
-    @Environment(ClipStore.self) private var clips
-
-    var body: some View {
-        let canSave = hasComposed
-            || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
-        Button(action: action) {
-            EchoelIconTile(systemImage: "tray.and.arrow.down", title: "Save", expands: true, enabled: canSave)
-        }
-        .buttonStyle(.plain)
-        .disabled(!canSave)
-        .accessibilityLabel("Save this piece")
-        .accessibilityHint("Names the piece and saves it, with its tracks and parts. The place row in Save & Export decides whether your city is in that name")
-    }
-}
 
 /// The RETROACTIVE loop door ("keep the last N bars you just heard").
 ///

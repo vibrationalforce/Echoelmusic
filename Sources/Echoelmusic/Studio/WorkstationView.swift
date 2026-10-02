@@ -903,10 +903,10 @@ struct WorkstationView: View {
         }
     }
 
-    /// DAW shell S2 — the PROJECT plate: save and open (`WorkstationProjectRow`), and the piece
-    /// handed away as a MIDI file (`SongExportTab`, B4) or as audio (`PieceAudioExportTab`, UX
-    /// audit 10b). Every control here acts in place or through the chrome door the row already
-    /// used; nothing adds a presentation modifier (both export tiles are `ShareLink` leaves).
+    /// DAW shell S2 — the PROJECT plate: the song's settings, and the piece handed away as a MIDI
+    /// file (`SongExportTab`, B4) or as audio (`PieceAudioExportTab`, UX audit 10b). Every
+    /// control here acts in place; nothing adds a presentation modifier (both export tiles are
+    /// `ShareLink` leaves). Save and Open left this plate with S3 — they are the ≡ menu's.
     /// ⭐ AT EVERY LEVEL (E19 „Nur im Detail"): the two export tiles stood behind
     /// `level.showsSongs` in the old tab row. A level hides FIELDS in the detail area, never a
     /// whole way to get the piece out of the app.
@@ -919,10 +919,6 @@ struct WorkstationView: View {
             // it adds no hot read here. Not clamped: the plate grows with the user's text size,
             // and the row scrolls sideways instead of overflowing.
             CompositionHeaderStrip()
-            // WA4 Acceptance Test A inside the workspace: create → import → SAVE → reopen
-            // without leaving the plate. The row owns no Studio state; it opens the Studio's
-            // existing Save alert and Open sheet through the chrome door (no new modal).
-            WorkstationProjectRow()
             HStack(spacing: 6) {
                 SongExportTab()
                 // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
@@ -1625,84 +1621,10 @@ struct WorkstationView: View {
 
 }
 
-/// WA4 Acceptance Test A inside the workspace — Save and Open for the song, on the plate where
-/// the song is built. Until this row both doors sat only on the instrument plate
-/// (`quickActionRow` / `quickDoorRow`), so the test's middle steps meant leaving the Workstation.
-///
-/// ⭐ IT OWNS NO STUDIO STATE, AND THAT DECIDES THE SHAPE. The Save alert (`showSaveDialog`) and
-/// the Open sheet (`showOpen`) are the Studio's, on its existing modal chain; this leaf posts the
-/// chrome door (`"save"` / `"open"`) and the Studio's receiver raises them — the
-/// `TrackInspectorView.openDeviceButton` shape. No new modal, so the black-screen budget is
-/// untouched, and the Save still goes through `saveProject()` → `withSession`, the ONE capture.
-///
-/// ⚠️ Enabled by the same FACTS as the Studio's tiles, not by the same VALUE: Save by a composed
-/// take or a song holding the user's parts (`SessionSaveOpen.songHasUserParts`, asked — the one
-/// predicate); Open ALWAYS — its sheet holds "New piece" and Import, which an empty library
-/// needs (2026-10-01: the Instrument's Library area button, their only always-lit door, is
-/// gone). The take half reads `pianoRoll.notes` because the
-/// Studio's `hasComposed` is view-private `@State`. The two can disagree for up to one bar right
-/// after a first Generate (the Studio arms `hasComposed` before the roll's next bar writes the
-/// notes) — the Workstation's Save lights one bar later, never earlier (review of dc55c2d6e).
-/// ⚠️ The reads sit in this leaf's own body, and `pianoRoll.notes` is written at every bar
-/// boundary while a multi-bar arrangement plays, so this row rebuilds at BAR rate. That is safe
-/// because it is its own leaf and hosts no `.menu` Picker; it must stay that way.
-private struct WorkstationProjectRow: View {
-    @Environment(TimelineStore.self) private var timeline
-    @Environment(ClipStore.self) private var clips
-    @Environment(PianoRollModel.self) private var pianoRoll
-
-    var body: some View {
-        let canSave = !pianoRoll.notes.isEmpty
-            || SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)
-        let save = door("Save", systemImage: "tray.and.arrow.down", object: "save", enabled: canSave,
-                        spoken: "Save this piece",
-                        hint: "Names the piece and saves it, with its tracks and parts")
-        let open = door("Open", systemImage: "tray.and.arrow.up", object: "open", enabled: true,
-                        spoken: "Open a saved piece",
-                        hint: "Shows your saved pieces. Opening one replaces the piece here")
-        // Side by side while they fit; stacked at the largest text sizes. Since the icons grow
-        // with the label (modes census UX D), two 92 pt-minimum doors no longer fit one phone
-        // row at AX4–AX5 — the words would compress instead (review of 0c2e7b908, MEDIUM).
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                save
-                open
-                Spacer(minLength: 0)
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                save
-                open
-            }
-        }
-        .padding(.horizontal, 10)
-    }
-
-    // E4-18 (2026-09-30): title, spoken name and hint are catalog KEYS — both doors pass literals,
-    // `Text`, `.accessibilityLabel` and `.accessibilityHint` all take the key directly.
-    private func door(_ title: LocalizedStringKey, systemImage: String, object: String, enabled: Bool,
-                      spoken: LocalizedStringKey, hint: LocalizedStringKey) -> some View {
-        Button {
-            NotificationCenter.default.post(name: .echoelChromeDoor, object: object)
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(EchoelTheme.font(13, .semibold))
-                Text(title).font(EchoelTheme.font(13, .semibold))
-            }
-            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, 14)
-            .frame(minWidth: 92, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .strokeBorder(EchoelTheme.border, lineWidth: 1))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
-        .accessibilityLabel(spoken)
-        .accessibilityHint(hint)
-    }
-}
+// ⛔ `WorkstationProjectRow` STOOD HERE (WA4 Acceptance Test A → DAW shell S3, 2026-10-02). Its
+// Save and Open posted the chrome doors the studio receives; the ≡ menu in `WorkspaceView.topBar`
+// posts the same two now, on both stages, so the plate's twin went in the same commit (one door
+// per area). The Project plate keeps the song's settings and the two export tiles.
 
 /// S1 — one imported file's own tempo: a number field, and ÷2 / ×2 on their own line.
 ///

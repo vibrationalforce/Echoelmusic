@@ -24,6 +24,12 @@
 //    the glossary word — and the Workstation row's `spoken:` says the same; "Save this session"
 //    was a third word for the saved work. The needles below follow (a guard rewritten as the
 //    decision, never weakened); `TheChromeSpeaksOneWordPerThingTests` scans the row's file.
+// ⭐ DAW SHELL S3 (2026-10-02, inbox E18): Save and Open moved into the ≡ menu on both stages.
+//    Claim 1 now pins the SAME predicate in the "save" door's arm (asked at tap time, so the
+//    root never reads the document) and the alert's "Nothing to save yet" branch; claim 4 pins
+//    the deleted row ABSENT and the menu's two entries, ungated, with no modifier of its own.
+//    Against f4b4f006d both are REGRESSIONS (the tile and the row still exist there; the arm has
+//    no gate); claims 2, 3 and 5 are untouched.
 // 5. SOURCE (review of c69af8995, MEDIUM): a row whose only content is its song cannot be
 //    shared — `sharedDocumentData` strips the Session, so it would arrive empty. The rule is
 //    driven end to end in `TheWorkstationJourneySurvivesSaveAndOpenTests` claim 3.
@@ -46,29 +52,57 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
     private static let studioPath = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let sessionPath = "Sources/Echoelmusic/Core/SessionSaveOpen.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let workspacePath = "Sources/Echoelmusic/Studio/WorkspaceView.swift"
 
     // MARK: 1 — the leaf asks the one predicate
 
+    /// ⛔ UNTIL DAW SHELL S3 (2026-10-02) THIS PINNED THE `SaveSessionButton` LEAF, which greyed
+    /// the Save tile on the predicate below. S3 moved Save into the ≡ menu, which cannot grey
+    /// its entry — it is built in the ROOT body, and reading the document there is the 10.76.50
+    /// freeze. So the SAME predicate is now asked by the "save" chrome door at TAP time, and the
+    /// alert answers "Nothing to save yet" instead of offering a Save on nothing (#622). Every
+    /// needle of the old claim has a stricter successor: the predicate is still the one shared
+    /// with the recovery slot (asked, not restated — #416), the Save BUTTONS are reachable only
+    /// in the not-empty branch, and the flag is cold `@State`.
     func testTheSaveTileIsEnabledByASongWithTheUsersParts() throws {
         let studio = try code(Self.studioPath)
-        guard let start = studio.range(of: "private struct SaveSessionButton: View {"),
-              let end = studio.range(of: "private struct KeepLastLoopButton: View {",
-                                     range: start.upperBound..<studio.endIndex) else {
-            return XCTFail("ANCHOR MISSING: the SaveSessionButton leaf (#454)")
+        XCTAssertFalse(studio.contains("struct SaveSessionButton"),
+                       "the Save tile is back beside the ≡ menu's Save — two doors to one alert (DAW shell S3)")
+        guard let receiverStart = studio.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
+              let saveArm = studio.range(of: "case \"save\":",
+                                         range: receiverStart.upperBound..<studio.endIndex),
+              let raise = studio.range(of: "showSaveDialog = true",
+                                       range: saveArm.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the chrome door's `case \"save\":` arm (#454)")
         }
-        let leaf = String(studio[start.upperBound..<end.lowerBound])
-        for needle in ["@Environment(TimelineStore.self) private var timeline",
-                       "@Environment(ClipStore.self) private var clips",
-                       "let canSave = hasComposed",
-                       "|| SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)",
-                       "enabled: canSave)", ".disabled(!canSave)",
-                       ".accessibilityLabel(\"Save this piece\")"] {
-            XCTAssertTrue(leaf.contains(needle), "the Save leaf lost `\(needle)`")
+        let arm = String(studio[saveArm.upperBound..<raise.lowerBound])
+        for needle in ["guard !panelSheetUp else { break }",
+                       "saveHasNothing = !(hasComposed",
+                       "|| SessionSaveOpen.songHasUserParts(timelineStore.document,",
+                       "clips: clipStore.filledClips))"] {
+            XCTAssertTrue(arm.contains(needle), """
+                the "save" door no longer asks `\(needle)` BEFORE it raises the alert — the #622 \
+                gate (never an empty take under a real name) has no other home since the Save \
+                tile went with DAW shell S3
+                """)
         }
-        XCTAssertEqual(studio.components(separatedBy: "SaveSessionButton(hasComposed: hasComposed)").count - 1, 1,
-                       "the leaf is mounted once — in the quick action row")
-        XCTAssertEqual(studio.components(separatedBy: ".accessibilityLabel(\"Save this piece\")").count - 1, 1,
-                       "one Save tile — a second, `hasComposed`-only copy beside the leaf would disagree with it")
+        XCTAssertTrue(studio.contains("@State private var saveHasNothing = false"),
+                      "the gate is cold `@State`, written once per tap — never a document read in `body`")
+        guard let alert = studio.range(of: ".alert(\"Save piece\", isPresented: $showSaveDialog) {"),
+              let empty = studio.range(of: "if saveHasNothing {", range: alert.upperBound..<studio.endIndex),
+              let ok = studio.range(of: "Button(\"OK\", role: .cancel) {}", range: empty.upperBound..<studio.endIndex),
+              let otherwise = studio.range(of: "} else {", range: ok.upperBound..<studio.endIndex),
+              let field = studio.range(of: "TextField(\"Name\", text: $saveName)", range: alert.upperBound..<studio.endIndex),
+              let firstSave = studio.range(of: "saveIntoOpenProject()", range: alert.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the Save alert's empty branch (#454)")
+        }
+        XCTAssertTrue(empty.upperBound <= ok.lowerBound && ok.upperBound <= otherwise.lowerBound
+                      && otherwise.upperBound <= field.lowerBound && field.upperBound <= firstSave.lowerBound, """
+            the Save alert offers a name field or a Save button while there is nothing to save — \
+            the empty branch must hold only OK, and every writer must sit in the `else`
+            """)
+        XCTAssertTrue(studio.contains("Text(\"Nothing to save yet. Press Play to compose a loop, or add a part to the piece, then save.\")"),
+                      "the empty alert says why nothing is saved and what makes something to save")
     }
 
     // MARK: 2 — the save carries the song and says so
@@ -98,29 +132,44 @@ final class TheSongAloneCanBeSavedTests: XCTestCase {
                       "songHasUserParts must still require a part whose clip is known and not the composer's")
     }
 
-    // MARK: 4 — the same two doors on the Workstation plate, through the chrome door
+    // MARK: 4 — one Save and one Open for both stages: the ≡ menu, through the chrome door
 
+    /// ⛔ UNTIL DAW SHELL S3 THIS PINNED `WorkstationProjectRow`, the Piece stage's own Save/Open
+    /// pair. S3 moved both into the ≡ menu, which leads the bar on BOTH stages — so the row is
+    /// pinned ABSENT and the menu is pinned in its place, with the row's two structural laws
+    /// carried over: it raises the Studio's OWN alert and sheet through the chrome door (no
+    /// presentation modifier of its own — the black-screen budget), and every door it posts has
+    /// a receiver case.
     func testTheWorkstationSavesAndOpensThroughTheStudiosOwnSlots() throws {
         let view = try code(Self.workstationPath)
-        guard let start = view.range(of: "private struct WorkstationProjectRow: View {"),
-              let end = view.range(of: "private struct PartTempoRow: View {",
-                                   range: start.upperBound..<view.endIndex) else {
-            return XCTFail("ANCHOR MISSING: the WorkstationProjectRow leaf (#454)")
+        XCTAssertFalse(view.contains("struct WorkstationProjectRow"),
+                       "the Piece stage's own Save/Open row is back beside the ≡ menu — a second door to each (DAW shell S3)")
+        XCTAssertFalse(view.contains("object: \"open\""),
+                       "the Piece stage posts \"open\" again — the ≡ menu is its one Open")
+
+        let workspace = try code(Self.workspacePath)
+        guard let bar = workspace.range(of: "private var topBar: some View {"),
+              let menu = workspace.range(of: "Menu {", range: bar.upperBound..<workspace.endIndex),
+              let logo = workspace.range(of: "EchoelLogoMark()", range: menu.upperBound..<workspace.endIndex),
+              // The MENU's own label, found backwards from the mark it draws — each entry is a
+              // `Button { … } label: {` too, so the first `} label: {` would cut at entry one.
+              let label = workspace.range(of: "} label: {", options: .backwards,
+                                          range: menu.upperBound..<logo.lowerBound) else {
+            return XCTFail("ANCHOR MISSING: the ≡ menu in `WorkspaceView.topBar` (#454)")
         }
-        let row = String(view[start.upperBound..<end.lowerBound])
-        for needle in ["let canSave = !pianoRoll.notes.isEmpty",
-                       "|| SessionSaveOpen.songHasUserParts(timeline.document, clips: clips.filledClips)",
-                       "object: \"save\", enabled: canSave", "object: \"open\", enabled: true",
-                       "NotificationCenter.default.post(name: .echoelChromeDoor, object: object)",
-                       ".disabled(!enabled)", ".frame(minWidth: 92, minHeight: 44)"] {
-            XCTAssertTrue(row.contains(needle), "the Workstation's Save/Open row lost `\(needle)`")
+        let items = String(workspace[menu.upperBound..<label.lowerBound])
+        for door in ["save", "open"] {
+            XCTAssertEqual(items.components(separatedBy: "Button { Self.postDoor(\"\(door)\") }").count - 1, 1,
+                           "the ≡ menu holds exactly one `\(door)` entry")
         }
+        XCTAssertFalse(items.contains(".disabled("), """
+            a ≡ menu entry is greyed. The menu is built in the root body, so a gate there reads \
+            the document at render rate (freeze law); the #622 gate lives in the "save" arm.
+            """)
         for modifier in [".sheet(", ".fullScreenCover(", ".alert(", ".confirmationDialog(", ".popover("] {
-            XCTAssertFalse(row.contains(modifier),
-                           "the row presents `\(modifier)` itself — it must raise the Studio's existing slot")
+            XCTAssertFalse(workspace.contains(modifier),
+                           "the root presents `\(modifier)` itself — the menu must raise the Studio's existing slot")
         }
-        XCTAssertEqual(view.components(separatedBy: "WorkstationProjectRow()").count - 1, 1,
-                       "the row is mounted once, on the plate")
 
         let studio = try code(Self.studioPath)
         guard let receiverStart = studio.range(of: "publisher(for: .echoelChromeDoor)) { note in"),
