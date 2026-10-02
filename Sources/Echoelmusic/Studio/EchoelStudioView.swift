@@ -9219,7 +9219,10 @@ struct EchoelStudioView: View {
             placeRow
             // The second of the two sentences a glyph cannot carry. It names the control it
             // feeds, so the connection survives the two now being on different surfaces.
-            Text("Included in the name the Save button writes.")
+            // DAW shell S3: Save moved into the logo's ≡ menu, and the deleted Save tile's
+            // VoiceOver hint (which named this row) has no successor — a menu item's hint is not
+            // reliably spoken — so this sentence carries the connection alone and says WHERE.
+            Text("Included in the name Save writes. Save is in the logo menu at the top left.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)

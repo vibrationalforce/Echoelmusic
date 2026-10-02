@@ -423,10 +423,12 @@ final class WeatherIsAMoodRubricTests: XCTestCase {
     ///
     /// ⚠️ WHAT THIS CANNOT SEE, unchanged from the old version: that the caption renders,
     /// that anyone reads it, or that the two surfaces read as connected on a device. It sees
-    /// that the connection is still WRITTEN somewhere a user can meet it. Save's own
-    /// `accessibilityHint` in `quickActionRow` names the place row from the other direction;
-    /// that half is deliberately not asserted here, because a guard over two files that can
-    /// each satisfy it alone is a guard that fails for the wrong reason.
+    /// that the connection is still WRITTEN somewhere a user can meet it. ⛔ Until DAW shell S3
+    /// (2026-10-02) Save's own `accessibilityHint` in `quickActionRow` named the place row from
+    /// the other direction; S3 moved Save into the logo's ≡ menu and that tile, hint and all, is
+    /// deleted — so the caption below `placeRow` now carries the connection ALONE and names
+    /// where Save is. That half was deliberately never asserted here, because a guard over two
+    /// files that can each satisfy it alone is a guard that fails for the wrong reason.
     func testThePlaceRowNamesTheControlItFeeds() throws {
         let source = try lines(Self.studio)
         let utility = code(try window(source,

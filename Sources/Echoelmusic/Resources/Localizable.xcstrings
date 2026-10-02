@@ -5233,14 +5233,14 @@
         }
       }
     },
-    "Included in the name the Save button writes." : {
+    "Included in the name Save writes. Save is in the logo menu at the top left." : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Included in the name the Save button writes."
+            "value" : "Included in the name Save writes. Save is in the logo menu at the top left."
           }
         }
       }
