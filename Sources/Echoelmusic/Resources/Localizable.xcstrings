@@ -877,6 +877,18 @@
         }
       }
     },
+    "The rear camera didn't start — pick another pulse source" : {
+      "comment" : "Bio strip banner (audit MP-1, 2026-10-03): the camera start failed for a reason other than access — no rear camera, or the session refused it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The rear camera didn't start — pick another pulse source"
+          }
+        }
+      }
+    },
     "No light" : {
       "comment" : "Pulse cue (E4-3, 2026-09-30): the head pill's short word and the measurement screen's full hint.",
       "extractionState" : "manual",

@@ -179,6 +179,11 @@ struct BioStripView: View {
             // suppression intent is unchanged; only the window it is measured on.
             banner(PulseCue.cameraDenied.fullHint,
                    color: EchoelTheme.warning, systemImage: "video.slash")
+        } else if cameraRPPG.cameraUnavailable, reading == nil {
+            // The start failed for a reason Settings cannot fix (no rear camera, or the session
+            // refused it). Same gate as the denied branch: once another source reads, say nothing.
+            banner(String(localized: "The rear camera didn't start — pick another pulse source"),
+                   color: EchoelTheme.warning, systemImage: "video.slash")
         } else if cameraRPPG.isRunning {
             // ⭐ TWO OCCUPANTS OF ONE RESERVED SLOT, and the ORDER inside this `ZStack` is not
             // cosmetic: the lock cue is FIRST so that everything `LockCueDoesNotShoveTheControls`
@@ -234,8 +239,12 @@ struct BioStripView: View {
     /// `.system(size: 11, weight: .medium)`, an ABSOLUTE size: a user at AX5 read it at 11 pt,
     /// the same 11 pt everyone else gets. Not "grows less than asked" — does not grow.
     ///
-    /// There are exactly FOUR things this helper ever renders, and they are worth naming
-    /// because the list is what tells a reader how much text has to fit:
+    /// ⛔ "exactly FOUR" stood here; the list below is the original four, and two more reach
+    /// this helper since: the camera-failed line (56 characters, its own branch above) and
+    /// `PulseCue.noLight.fullHint` through `cueWarrantsFullHintOnScreen` — at 121 characters
+    /// THAT is the ceiling now, not the 76 below. Measure against the longest, not the list.
+    /// The original four, worth naming because the list is what tells a reader how much text
+    /// has to fit:
     ///   · `recoveryState.userHint` — "Camera recovering…", "Device cooling down — pulse holds
     ///     for a moment", "Camera paused by iOS — waiting to resume";
     ///   · `PulseCue.cameraDenied.fullHint` — "Camera access is off — enable it in Settings to

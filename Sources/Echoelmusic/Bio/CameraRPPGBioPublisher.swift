@@ -122,6 +122,15 @@ public final class CameraRPPGBioPublisher {
     /// the strip said "Cover camera" forever and the header showed no cue at all.
     public private(set) var permissionDenied = false
 
+    /// The camera start FAILED for a reason other than access — no rear camera
+    /// (`CameraCaptureError.noCamera`), or the session refused its input or output
+    /// (`.configurationFailed`, e.g. another app holds the camera). Set and cleared on the same
+    /// two edges as `permissionDenied` (a failed start / a successful one), so it is
+    /// low-frequency and safe to read in a leaf. Without it the failure was a log line only:
+    /// `isRunning` went back to false and the strip said nothing, so a player kept placing a
+    /// finger on a lens that was never opened. Mutually exclusive with `permissionDenied`.
+    public private(set) var cameraUnavailable = false
+
     // Live status for the UI so the user can position correctly (rPPG is
     // position-sensitive). Updated ~3×/s while running.
     public private(set) var fingerDetected = false
@@ -1075,6 +1084,7 @@ public final class CameraRPPGBioPublisher {
                 // coaching finger placement that can never work (UX-1).
                 let status = AVCaptureDevice.authorizationStatus(for: .video)
                 permissionDenied = (status == .denied || status == .restricted)
+                cameraUnavailable = !permissionDenied
             }
             return
         }
@@ -1109,6 +1119,7 @@ public final class CameraRPPGBioPublisher {
         // The camera started — access is provably granted (also covers the
         // first-run flow where the user just tapped Allow on the system prompt).
         permissionDenied = false
+        cameraUnavailable = false
 
         capture.setTorch(true)
         analyzer.startPulseDetection()
