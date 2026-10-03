@@ -245,6 +245,8 @@ public final class OSCReceiver {
 
     @ObservationIgnored private var listener: NWListener?
     @ObservationIgnored private var connections: [NWConnection] = []
+    @ObservationIgnored private var lastCommand: OSCControlCommand?
+    @ObservationIgnored private var lastBreadcrumbAt: TimeInterval = 0
 
     private static let portKey = "net.osc.in.port"
     private static let allowKey = "net.osc.in.allow"
@@ -252,6 +254,14 @@ public final class OSCReceiver {
     /// of a `@MainActor` class, so a nonisolated reader — the guard's `XCTAssertEqual`
     /// autoclosure — broke `Build for Testing` (CLAUDE.md error table, SE-0434 row).
     nonisolated public static let defaultPort: UInt16 = 8001
+    /// UDP gives every new sender address its own `NWConnection`. Without a ceiling, datagrams
+    /// from many spoofed source ports grow `connections` without bound. At the ceiling the
+    /// OLDEST connection is dropped, so a fresh sender still gets through.
+    nonisolated public static let maxConnections = 16
+    /// A console that re-sends the same value at 60 Hz is not 60 cues. An identical command
+    /// inside this window is dropped — lossless, the state already holds it. A CHANGED value
+    /// always passes.
+    nonisolated public static let repeatWindow: TimeInterval = 0.1
 
     public init(port: UInt16 = OSCReceiver.defaultPort) {
         let d = UserDefaults.standard
@@ -306,6 +316,7 @@ public final class OSCReceiver {
         listener = nil
         for c in connections { c.cancel() }
         connections.removeAll()
+        lastCommand = nil
         isActive = false
         boundPort = 0
         EchoelCrashLog.breadcrumb("osc in: closed")
@@ -330,6 +341,9 @@ public final class OSCReceiver {
             refusedCount += 1
             connection.cancel()
             return
+        }
+        if connections.count >= Self.maxConnections {
+            connections.removeFirst().cancel()
         }
         connections.append(connection)
         connection.start(queue: .main)
@@ -378,9 +392,19 @@ public final class OSCReceiver {
             ignoredCount += 1
             return
         }
-        lastReceivedTimestamp = CFAbsoluteTimeGetCurrent()
-        lastCommandSummary = command.summary
-        EchoelCrashLog.breadcrumb("osc in: \(command.summary)")
+        let now = CFAbsoluteTimeGetCurrent()
+        if command == lastCommand, now - lastReceivedTimestamp < Self.repeatWindow { return }
+        let summary = command.summary
+        let changed = summary != lastCommandSummary
+        lastCommand = command
+        lastReceivedTimestamp = now
+        lastCommandSummary = summary
+        // The diag log is a file written with write(2): one line per CHANGE, at most ten a
+        // second, so a flooding sender cannot fill the disk or bury the lifecycle ladder.
+        if changed, now - lastBreadcrumbAt >= Self.repeatWindow {
+            lastBreadcrumbAt = now
+            EchoelCrashLog.breadcrumb("osc in: \(summary)")
+        }
         onCommand?(command)
     }
 }
