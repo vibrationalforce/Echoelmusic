@@ -42031,3 +42031,13 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Website c2168c290: HRV-Zeile (Apple Health = Apples SDNN), Gurt als „still being tested on devices“, terms „Version 1.0 is free“. Postfach: H16 Mindestalter, H17 Verkauf v1.1, F9–F13 (iPad, Dokumenttypen, Ableton Link, Push/iCloud-Entitlements, Store-Texte).
 - Pin `TheSelectedPartsNotesAreEditedThroughOneWriterTests` 11 → 14 im A11Y-1-Commit.
 - Gerät: nichts bestätigt. Prüfliste T1–T7 in `.deploy/release` (10.79.490).
+
+## 2026-10-03 (Nacht) — Broadcast S1 · Spatial S1 (ADM-OSC-Eingang) + Review-Reparatur
+- Auftrag: „Du entscheidest und integrierst meine Visionen von Live Set, binaural broadcast, Spatial Audio, immersive und multidimensional media“. Reihenfolge von mir gewählt: zuerst der Raum, dessen Steuerhälfte schon real ist; Broadcast hängt an HaishinKit (Founder-Edit an `project.yml`, Hook + Klassifizierer lehnen ab).
+- **Broadcast S1 ee163a910:** Stream-Key in die Keychain. Compile Check + Build for Testing grün. S2 (HaishinKit) BLOCKIERT, wartet auf den Founder.
+- **Spatial S1 6097629b6:** `/adm/obj/{n}/{azim,elev,dist,aed,x,y,z,xyz,gain}` auf dem OSC-Eingang (Port 8001, gleicher Schalter, gleiche Allowlist) → `SpatialSceneStore.apply`, Objekt n = n-te Nicht-Bio-Spur. Gates grün, main = 6097629b6.
+- **Review-Reparatur 766434c2f** (MED-3 + Status): einzelne kartesische Blätter hängen nicht mehr von der Reihenfolge ab (`CartesianHold`, /x dann /y = /y dann /x = −45°); ein bewegender Controller zählt im Status als Verkehr („moving tracks over ADM-OSC“). Wächter `TheSpatialControllerMovesTheTracksTests` Ansprüche 6/7. Compile Check grün; BfT läuft.
+- **MED-2 aa8b82582 (docs):** integrations/privacy/faq/overview nennen jetzt die ADM-OSC-Spurpositionen; kein Rendering behauptet; alle Nadeln gehalten.
+- **LOW-5 e919030a6:** `ignoredCount`/`refusedCount` unbeobachtet (Grapes schickt Breite/Mute/Name mit voller Rate); das Status-Blatt pollt im 0,5-s-Takt. Wächter `TheOSCInputIsBoundedTests` Anspruch 5.
+- Gemessen für S2: der einzige andere Positions-Schreiber ist `ImmersiveStageView` (türlos) — eine Besitz-Regel braucht es heute nicht; Glättung bewusst nicht in der App (Renderer glätten selbst, sie kostete Latenz).
+- Gerät: nichts bestätigt. Probe: Grapes → Port 8001, „Accept OSC control“ an, „Every track as its own object“ an.
