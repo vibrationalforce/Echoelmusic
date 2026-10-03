@@ -264,27 +264,22 @@ private struct PartNoteGrid: View {
                                 // Audit A11Y-1 (2026-10-03): stepping could PICK a note and the
                                 // buttons below transpose and quantize it, but adding a note, moving
                                 // it in time and changing its length were touch only. Each action is
-                                // ONE commit through the writer the gestures use, so ONE Undo.
-                                .accessibilityAction(named: "Add a note") {
-                                    addNoteByAction(after: pickedOnScreen, in: visible, centre: heldCentre,
-                                                    region: region, offset: offset, editable: editable)
-                                }
-                                .accessibilityAction(named: "Move earlier") {
-                                    nudgeByAction(pickedOnScreen, bySteps: -1, region: region,
-                                                  offset: offset, editable: editable)
-                                }
-                                .accessibilityAction(named: "Move later") {
-                                    nudgeByAction(pickedOnScreen, bySteps: 1, region: region,
-                                                  offset: offset, editable: editable)
-                                }
-                                .accessibilityAction(named: "Make longer") {
-                                    stretchByAction(pickedOnScreen, bySteps: 1, region: region,
-                                                    offset: offset, editable: editable)
-                                }
-                                .accessibilityAction(named: "Make shorter") {
-                                    stretchByAction(pickedOnScreen, bySteps: -1, region: region,
-                                                    offset: offset, editable: editable)
-                                }
+                                // ONE commit through the writer the gestures use, so ONE Undo. The
+                                // five sit in `NoteEditActions` — inline, they tipped this chain past
+                                // the type-checker's time limit (Compile Check on f28ee9019).
+                                .modifier(NoteEditActions(
+                                    add: {
+                                        addNoteByAction(after: pickedOnScreen, in: visible, centre: heldCentre,
+                                                        region: region, offset: offset, editable: editable)
+                                    },
+                                    nudge: { dStep in
+                                        nudgeByAction(pickedOnScreen, bySteps: dStep, region: region,
+                                                      offset: offset, editable: editable)
+                                    },
+                                    stretch: { dSteps in
+                                        stretchByAction(pickedOnScreen, bySteps: dSteps, region: region,
+                                                        offset: offset, editable: editable)
+                                    }))
                                 // S9b: an assistive zoom steps the columns like the two buttons.
                                 .accessibilityZoomAction { action in
                                     zoom(by: action.direction == .zoomIn ? 1 : -1, steps: steps,
@@ -741,6 +736,23 @@ private struct PartNoteGrid: View {
 /// "Des…". This lays the same children out in rows — as many as fit, then the next row — and is ONE
 /// row wherever they fit, so a phone in portrait looks as before. Order is the children's order, so
 /// VoiceOver reads them unchanged. Ideal sizes only: nothing is shrunk to make a row "fit".
+/// Audit A11Y-1: the grid's five edit actions for VoiceOver, as one modifier so the grid's
+/// chain stays short enough to type-check. Each closure is ONE commit through the writer.
+private struct NoteEditActions: ViewModifier {
+    let add: () -> Void
+    let nudge: (Int) -> Void
+    let stretch: (Int) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .accessibilityAction(named: "Add a note") { add() }
+            .accessibilityAction(named: "Move earlier") { nudge(-1) }
+            .accessibilityAction(named: "Move later") { nudge(1) }
+            .accessibilityAction(named: "Make longer") { stretch(1) }
+            .accessibilityAction(named: "Make shorter") { stretch(-1) }
+    }
+}
+
 private struct NoteToolFlow: Layout {
     var spacing: CGFloat = 6
 

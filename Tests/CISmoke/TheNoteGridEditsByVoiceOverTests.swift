@@ -37,17 +37,26 @@ final class TheNoteGridEditsByVoiceOverTests: XCTestCase {
               let zoom = code.range(of: ".accessibilityZoomAction") else {
             return XCTFail("ANCHOR MISSING: the grid's stepping action or its zoom action")
         }
+        // The five live in ONE modifier: inline they tipped the grid's chain past the
+        // type-checker's time limit (Compile Check on f28ee9019). The modifier is applied on the
+        // grid, between stepping and zoom — the element VoiceOver focuses.
         let between = String(code[stepping.upperBound..<zoom.lowerBound])
+        XCTAssertEqual(occurrences(of: ".modifier(NoteEditActions(", in: code), 1, "the modifier is applied once")
+        XCTAssertTrue(between.contains(".modifier(NoteEditActions("), "on the grid, between stepping and zoom")
+        XCTAssertTrue(between.contains("addNoteByAction(after: pickedOnScreen,"), "add acts on the grid's pick")
+        XCTAssertTrue(between.contains("nudgeByAction(pickedOnScreen, bySteps: dStep,"), "nudge acts on the grid's pick")
+        XCTAssertTrue(between.contains("stretchByAction(pickedOnScreen, bySteps: dSteps,"), "stretch acts on the grid's pick")
+        let actions = try functionBody("private struct NoteEditActions: ViewModifier {", in: code)
         for name in Self.actions {
             XCTAssertEqual(occurrences(of: ".accessibilityAction(named: \"\(name)\")", in: code), 1,
                            "`\(name)` is declared once")
-            XCTAssertTrue(between.contains(".accessibilityAction(named: \"\(name)\")"),
-                          "`\(name)` sits on the grid, between stepping and zoom — the element VoiceOver focuses")
+            XCTAssertTrue(actions.contains(".accessibilityAction(named: \"\(name)\")"),
+                          "`\(name)` is one of the grid's edit actions")
         }
-        XCTAssertTrue(between.contains("nudgeByAction(pickedOnScreen, bySteps: -1,"), "Move earlier is one step back")
-        XCTAssertTrue(between.contains("nudgeByAction(pickedOnScreen, bySteps: 1,"), "Move later is one step on")
-        XCTAssertTrue(between.contains("stretchByAction(pickedOnScreen, bySteps: 1,"), "Make longer is one step")
-        XCTAssertTrue(between.contains("stretchByAction(pickedOnScreen, bySteps: -1,"), "Make shorter is one step")
+        XCTAssertTrue(actions.contains("\"Move earlier\") { nudge(-1) }"), "Move earlier is one step back")
+        XCTAssertTrue(actions.contains("\"Move later\") { nudge(1) }"), "Move later is one step on")
+        XCTAssertTrue(actions.contains("\"Make longer\") { stretch(1) }"), "Make longer is one step")
+        XCTAssertTrue(actions.contains("\"Make shorter\") { stretch(-1) }"), "Make shorter is one step")
     }
 
     // MARK: - Claim 2 — each action is ONE commit through the one writer, via the gesture's pure op
