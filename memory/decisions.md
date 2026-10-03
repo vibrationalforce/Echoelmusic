@@ -4952,3 +4952,11 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Grenzen (Gerät offen):** ruhende Finger vor dem Spreizen können den Halte-Edit des Rasters mitstarten (Undo nimmt ihn zurück); ein Schwenk während der Geste verschiebt den Anker.
 - **Kosten:** nicht persistiert, nicht auf Undo — ein anderer Part öffnet wieder in der Mitte.
 - **Review:** 2026-11-01.
+
+### 2026-10-03 — Release-Passage, Stimm-Effekte, Farbton, Workstation-Grundarchitektur
+- **Auftrag (wörtlich):** „Mache die Passage und entscheide, wie wir das mit unserem Audio Input Autotune Harmonizer/Granulat Synthese Plugin machen. Farbton Übersetzung inbegriffen. Du entscheidest über Grundarchitektur der Workstation."
+- **D1 Release = Atemmuster** `BreathPattern.release` (4 ein / 8 aus, 5,0/min, ohne Halten, Ausatem-Hinweis „pff, shh or hum"), zweiter Knopf im `BreathCoachStrip`; gebaut R1 2ecd00a6a. Kein Mikrofon. Kein Heil-/Religions-Wortlaut in der App. R2: gehaltener Drone (117 Hz als Preset-Wert, ohne Behauptung), öffnet mit dem Ausatmen.
+- **D2 Stimm-Effekte = Geräte:** reine Kerne in `DSP/` → Geräte-Adapter (kanonische Parameter-Identität) → Spur-Insert + AUv3 `aumf`. Reihenfolge Dateien zuerst (V1 GrainCloud … V5 Harmonizer), dann V6 `aumf`-Target (project.yml, Founder) und zuletzt V7 Live-Eingang (Info.plist-Schlüssel im selben Commit wie ein `RecordRouteOwner`-Fall, Founder). Alter Graph wird NICHT zurückkopiert (#1302-Absturzfamilie ungelöst).
+- **D3 Farbton:** `Core/SpectralColor` bleibt die EINE Ton→Farbe-Sprache; jede neue Tonhöhenquelle speist sie. 117 Hz → ≈583 nm (gelb-orange). Keine Farbtherapie.
+- **D4 Workstation:** DMMWProject · ein Takt (PatternEngine) · Spur = Quelle → Geräte-Kette → Sends → Master · ModulationEngine · Ausgaben als Abonnenten · AudioEngine einziger Graph-Besitzer · UI = Projektion.
+- **Plan:** `scratchpads/PLAN_RELEASE_VOICE_COLOR_2026-10-03.md`. **Review:** 2026-11-02.

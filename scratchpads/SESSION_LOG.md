@@ -42016,3 +42016,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - TestFlight-Lauf 37046666493 (Nr. 2614): Preflight · Compile Check · iOS · Summary = success.
 - Korrektur in der Notiz vor dem Commit: „Text size“ sitzt im Save/Export-Panel (`utilityRow`), nicht unter Project.
 - Gerät: nichts bestätigt — T1–T9 ist die Geräte-Session.
+
+## 2026-10-03 — Release-Passage R1 + vier Architektur-Entscheidungen (Stimme · Farbton · Workstation)
+- Auftrag: „Mache die Passage und entscheide … Audio Input Autotune Harmonizer/Granulat … Farbton Übersetzung … Grundarchitektur der Workstation.“
+- **R1 gebaut 2ecd00a6a:** `BreathPattern.release` (4/8, 5,0/min, keine Halte-Phasen, `exhaleCue`), Knopf „Release“ im `BreathCoachStrip`, Hinweis ersetzt „Breathe out“ nur beim Ausatmen. Wächter: ThePacedRateMustBeReadable (5,0 lesbar, Zählung 4→5, Methode umbenannt), TheBreathingPracticeIsInTheMainView neuer Anspruch „jedes vom Streifen startbare Muster ist ohne Halten“. Checker: swift-escapes/dead-needles/foreign/moved sauber; needle-reachability 3 vorbestehende, keiner aus dieser Scheibe.
+- **Entscheidungen** (Plan `scratchpads/PLAN_RELEASE_VOICE_COLOR_2026-10-03.md`, decisions.csv + memory): D1 Release = Atemmuster; D2 Stimm-Effekte = Geräte, Kerne in `DSP/`, Dateien zuerst, Mikrofon zuletzt (V7, Info.plist founder); D3 `Core/SpectralColor` bleibt die EINE Farbsprache — die Farbton-Übersetzung existierte schon; D4 Workstation-Grundarchitektur.
+- Postfach: E10 Architektur entschieden, Freigabe Info.plist bleibt offen; E20 neu (`aumf`-Target, project.yml).
+- Gerät: nichts bestätigt.
