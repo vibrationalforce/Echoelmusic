@@ -35,6 +35,15 @@ import CoreMIDI
 @Observable
 public final class MIDIOutput {
 
+    /// The persisted unique IDs of the two virtual sources ("ECHO" for MIDI 1.0, "ECH2" for
+    /// the MIDI 2.0 twin). Stated ONCE because `MIDIInput.connectAllSources()` reads them
+    /// back: a virtual source is visible to every client in the process, including our own
+    /// input port, and an input subscribed to our own output feeds every generated note back
+    /// in as a performer note (and loops outright under MIDI Thru in a host).
+    nonisolated static let virtualSourceUniqueID: Int32 = 0x4543_484F   // "ECHO"
+    nonisolated static let virtualSource2UniqueID: Int32 = 0x4543_4832  // "ECH2"
+    nonisolated static let ownSourceUniqueIDs: [Int32] = [virtualSourceUniqueID, virtualSource2UniqueID]
+
     /// Master switch — off by default (most users record nothing; opt in from Sync).
     public var enabled = false {
         didSet {
@@ -275,7 +284,7 @@ public final class MIDIOutput {
         virtualSource = newSource
         // Persist a stable unique ID so the host re-binds to the same source across
         // launches instead of treating each run as a new device.
-        _ = MIDIObjectSetIntegerProperty(virtualSource, kMIDIPropertyUniqueID, 0x4543_484F) // "ECHO"
+        _ = MIDIObjectSetIntegerProperty(virtualSource, kMIDIPropertyUniqueID, Self.virtualSourceUniqueID)
         isReady = true
         if ump2Enabled { createUMP2Source() }
         if mpeEnabled { sendMPEConfiguration() }
@@ -722,7 +731,7 @@ public final class MIDIOutput {
             return
         }
         virtualSource2 = newSource
-        _ = MIDIObjectSetIntegerProperty(virtualSource2, kMIDIPropertyUniqueID, 0x4543_4832) // "ECH2"
+        _ = MIDIObjectSetIntegerProperty(virtualSource2, kMIDIPropertyUniqueID, Self.virtualSource2UniqueID)
         logOutcome("MIDI 2.0 source on ('Echoelmusic (MIDI 2.0)')")
     }
 

@@ -182,17 +182,34 @@ final class MIDIInput {
         #endif
     }
 
+    /// Connects every source EXCEPT Echoel's own virtual sources. Those are visible to this
+    /// port like any device, and listening to them turns every note `MIDIOutput` sends into a
+    /// performer note on the body voice — a feedback loop as soon as MIDI out is on.
     private func connectAllSources() {
         let sourceCount = MIDIGetNumberOfSources()
+        var connected = 0
+        var firstName: String?
         for i in 0..<sourceCount {
             let source = MIDIGetSource(i)
+            guard !Self.isOwnSource(source) else { continue }
             MIDIPortConnectSource(inputPort, source, nil)
+            connected += 1
+            if firstName == nil { firstName = getMIDIDeviceName(source) ?? "MIDI Device" }
         }
-        isConnected = sourceCount > 0
-        if let firstSource = (0..<sourceCount).first.map({ MIDIGetSource($0) }) {
-            deviceName = getMIDIDeviceName(firstSource) ?? "MIDI Device"
+        isConnected = connected > 0
+        if let firstName { deviceName = firstName }
+        log.log(.info, category: .system,
+                "MIDI: Connected to \(connected) of \(sourceCount) source(s) (own sources skipped)")
+    }
+
+    /// True only for a source whose unique ID is one `MIDIOutput` stamps on its own virtual
+    /// sources. A source whose ID cannot be read is NOT ours — it is connected, never dropped.
+    nonisolated static func isOwnSource(_ source: MIDIEndpointRef) -> Bool {
+        var uniqueID: MIDIUniqueID = 0
+        guard MIDIObjectGetIntegerProperty(source, kMIDIPropertyUniqueID, &uniqueID) == noErr else {
+            return false
         }
-        log.log(.info, category: .system, "MIDI: Connected to \(sourceCount) source(s)")
+        return MIDIOutput.ownSourceUniqueIDs.contains(uniqueID)
     }
 
     // MARK: - MIDI Event Processing
