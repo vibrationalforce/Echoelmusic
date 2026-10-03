@@ -41,8 +41,9 @@ public final class BroadcastPublisher {
 
     /// Ingest URL (e.g. rtmp://a.rtmp.youtube.com/live2 or srt://host:port).
     public var url: String { didSet { UserDefaults.standard.set(url, forKey: Self.urlKey) } }
-    /// Stream key (kept on-device only; never logged).
-    public var streamKey: String { didSet { UserDefaults.standard.set(streamKey, forKey: Self.keyKey) } }
+    /// Stream key (kept on-device only; never logged). Lives in the Keychain
+    /// (`StreamKeyStore.swift`), never in UserDefaults — it is a publishing credential.
+    public var streamKey: String { didSet { keyStore.write(streamKey) } }
     public var transport: Transport {
         didSet { UserDefaults.standard.set(transport.rawValue, forKey: Self.transportKey) }
     }
@@ -54,13 +55,21 @@ public final class BroadcastPublisher {
     public private(set) var statusMessage = ""
 
     private static let urlKey = "broadcast.url"
-    private static let keyKey = "broadcast.streamKey"
     private static let transportKey = "broadcast.transport"
 
-    public init() {
-        self.url = UserDefaults.standard.string(forKey: Self.urlKey) ?? ""
-        self.streamKey = UserDefaults.standard.string(forKey: Self.keyKey) ?? ""
-        self.transport = Transport(rawValue: UserDefaults.standard.string(forKey: Self.transportKey) ?? "rtmp") ?? .rtmp
+    @ObservationIgnored private let keyStore: StreamSecretStore
+
+    public convenience init() {
+        self.init(keyStore: KeychainStreamSecretStore(), defaults: .standard)
+    }
+
+    /// The seam a test drives: the key comes out of `keyStore`, and a copy an older build left
+    /// in `defaults` is moved there once (`StreamKeyMigration`).
+    init(keyStore: StreamSecretStore, defaults: UserDefaults) {
+        self.keyStore = keyStore
+        self.url = defaults.string(forKey: Self.urlKey) ?? ""
+        self.streamKey = StreamKeyMigration.loadMigrating(defaults: defaults, store: keyStore)
+        self.transport = Transport(rawValue: defaults.string(forKey: Self.transportKey) ?? "rtmp") ?? .rtmp
     }
 
     /// Whether the streaming engine is present in this build.
