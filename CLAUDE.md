@@ -798,7 +798,7 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                    (`OSCSender.musicMessages`, `BioEgressPolicy`).
 ```
 
-Plus ADM-OSC immersive object out via `ADMOSCSender`: `/adm/obj/{n}/*`.
+Plus ADM-OSC immersive object out via `ADMOSCSender`: `/adm/obj/{n}/*` — and IN on the OSC-in port since Spatial S1 (`ADMObjectInput`, object n = track n).
 UDP. Target: <5ms LAN.
 
 ---

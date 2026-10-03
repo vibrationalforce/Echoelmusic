@@ -1370,6 +1370,10 @@ struct EchoelmusicApp: App {
                         sacn?.blackout = on
                     }
                 }
+                // Spatial S1 — ADM-OSC object positions from a spatial controller move the
+                // piece's tracks in the ONE scene store; the outgoing ADM-OSC scene stream
+                // (Routing's "Every track as its own object") carries them on to the renderer.
+                oscIn.onObjectMove = { [weak spatialScene] move in spatialScene?.apply(move) }
                 #endif
                 modulationEngine.start(subscribing: bus)
                 // Non-essential I/O (BLE straps, external MIDI, OSC/ADM/Art-Net/sACN

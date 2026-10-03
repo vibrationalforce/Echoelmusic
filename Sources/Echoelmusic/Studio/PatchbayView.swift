@@ -447,8 +447,8 @@ struct PatchbayView: View {
             EchoelValueField(label: "Port", value: oscInPort, range: 1...65_535, unit: "", decimals: 0,
                              standard: Float(OSCReceiver.defaultPort))
             Text(oscInEnabled
-                 ? String(localized: "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control.")
-                 : String(localized: "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off."))
+                 ? String(localized: "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1, and for ADM-OSC object positions /adm/obj/{n}/aed · xyz · azim · elev · dist · x · y · z · gain, where n is the piece's track in order. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control.")
+                 : String(localized: "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout — and to let a spatial controller move each track over ADM-OSC (/adm/obj/{n}/…). Nothing else is accepted, and no socket is open while this is off."))
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }

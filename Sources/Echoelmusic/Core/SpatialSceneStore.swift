@@ -59,6 +59,16 @@ public final class SpatialSceneStore {
         scene.upsert(object)
     }
 
+    /// Spatial S1 — an external controller moved object `input.object` over ADM-OSC. The index
+    /// is 1-based into the scene ARRAY (the routing table the outgoing stream numbers too); an
+    /// index past the last track moves nothing. The move survives a `rebuild` like any other,
+    /// because a rebuild keeps an existing object as-is.
+    public func apply(_ input: ADMObjectInput) {
+        let index = input.object - 1
+        guard scene.objects.indices.contains(index) else { return }
+        scene.upsert(input.applied(to: scene.objects[index]))
+    }
+
     /// Set one track's apparent size / focus (0 = point source … 1 = enveloping).
     public func setExtent(laneID: UUID, _ extent: Float) {
         guard var object = scene.object(id: laneID.uuidString) else { return }

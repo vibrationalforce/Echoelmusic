@@ -10,6 +10,11 @@
 //  with a sender allowlist by IP, because an open UDP port on a festival Wi-Fi is a different
 //  consent from pointing an output somewhere (the `networkMIDI` argument, one protocol over).
 //
+//  Spatial S1 (founder 2026-10-03, "Live Set · Spatial Audio · immersive"): the same socket
+//  also accepts ADM-OSC object POSITIONS (`/adm/obj/{n}/…`, `ADMObjectInput`) so a spatial
+//  controller can move the piece's tracks. It shares the opt-in and the allowlist — one port,
+//  one consent — and takes its own dispatch, because a trajectory is a stream, not a cue.
+//
 //  ⛔ WHAT IS NOT ACCEPTED, stated where the socket lives:
 //    · no bio value — `/echoelmusic/bio/*` is an OUTPUT namespace; a heart rate arriving from
 //      the network would be a second, unmeasured body on the bus (#639's provenance flag exists
@@ -206,6 +211,130 @@ public enum OSCControlCommand: Equatable, Sendable {
     }
 }
 
+// MARK: - ADM-OSC object input (Spatial S1)
+
+/// One object move from an external spatial controller — Grapes, L-ISA, SPAT, a console's
+/// object panner — in the ADM-OSC v1.0 object namespace Echoel already SENDS (`SpatialSceneOSC`,
+/// `ADMOSCSender`). Same leaves, same sign convention (positive azimuth = left), same 1-based
+/// object index, so a rig that reads Echoel's objects can also write them.
+///
+/// THE OBJECT INDEX IS THE SCENE ARRAY. Object `n` is `SpatialSceneStore.scene.objects[n - 1]` —
+/// the piece's tracks in order, the same table the outgoing stream numbers. An index past the
+/// last track moves nothing (`SpatialSceneStore.apply`).
+///
+/// LENIENT RECEIVER, STRICT SENDER: a finite value outside its ADM range is CLAMPED here, in the
+/// Double, before any conversion (#1321 — bound, then convert). A non-finite value, a string, a
+/// bool, a wrong argument count or an unknown leaf is refused. The spec's packed forms (`/aed`,
+/// `/xyz`) are the ones a receiver must handle; the single leaves are accepted too because
+/// Echoel's own sender still emits them when only part of a position is measured.
+///
+/// What this does NOT do yet, stated where the type lives: no smoothing (a jittery controller
+/// moves the object as jittery as it sends), and no render — the object moves in the scene and
+/// in the outgoing ADM-OSC stream; nothing in the app's own audio is panned by it.
+public struct ADMObjectInput: Equatable, Sendable {
+
+    public enum Value: Equatable, Sendable {
+        case azimuth(Float)
+        case elevation(Float)
+        case distance(Float)
+        case polar(azimuth: Float, elevation: Float, distance: Float)
+        case x(Float)
+        case y(Float)
+        case z(Float)
+        case cartesian(x: Float, y: Float, z: Float)
+        case gain(Float)
+    }
+
+    /// 1-based ADM object index.
+    public let object: Int
+    public let value: Value
+
+    public static let prefix = "/adm/obj/"
+    /// The highest object index accepted — far above any piece's track count, low enough that a
+    /// hostile index is refused before it is ever looked up.
+    public static let maxObject = 128
+    /// Every leaf the receiver honours, in the spec table's order.
+    public static let leaves = ["azim", "elev", "dist", "aed", "x", "y", "z", "xyz", "gain"]
+
+    public init(object: Int, value: Value) {
+        self.object = object
+        self.value = value
+    }
+
+    public nonisolated static func parse(_ message: OSCDecoder.Message) -> ADMObjectInput? {
+        guard message.address.hasPrefix(prefix) else { return nil }
+        let parts = message.address.dropFirst(prefix.count)
+            .split(separator: "/", omittingEmptySubsequences: false)
+        // `Int(_:)` on a String returns nil on overflow — it does not trap.
+        guard parts.count == 2, let n = Int(parts[0]), (1...maxObject).contains(n) else { return nil }
+        var numbers: [Double] = []
+        for argument in message.arguments {
+            switch argument {
+            case .float(let f): numbers.append(Double(f))
+            case .int(let i):   numbers.append(Double(i))
+            case .string, .bool: return nil
+            }
+        }
+        guard numbers.allSatisfy({ $0.isFinite }) else { return nil }
+        func clamp(_ v: Double, _ lo: Double, _ hi: Double) -> Float { Float(Swift.min(Swift.max(v, lo), hi)) }
+        func one(_ lo: Double, _ hi: Double) -> Float? {
+            numbers.count == 1 ? clamp(numbers[0], lo, hi) : nil
+        }
+        let value: Value
+        switch parts[1] {
+        case "azim": guard let v = one(-180, 180) else { return nil }; value = .azimuth(v)
+        case "elev": guard let v = one(-90, 90) else { return nil }; value = .elevation(v)
+        case "dist": guard let v = one(0, 1) else { return nil }; value = .distance(v)
+        case "aed":
+            guard numbers.count == 3 else { return nil }
+            value = .polar(azimuth: clamp(numbers[0], -180, 180),
+                           elevation: clamp(numbers[1], -90, 90),
+                           distance: clamp(numbers[2], 0, 1))
+        case "x": guard let v = one(-1, 1) else { return nil }; value = .x(v)
+        case "y": guard let v = one(-1, 1) else { return nil }; value = .y(v)
+        case "z": guard let v = one(-1, 1) else { return nil }; value = .z(v)
+        case "xyz":
+            guard numbers.count == 3 else { return nil }
+            value = .cartesian(x: clamp(numbers[0], -1, 1), y: clamp(numbers[1], -1, 1), z: clamp(numbers[2], -1, 1))
+        case "gain": guard let v = one(0, 1) else { return nil }; value = .gain(v)
+        default: return nil
+        }
+        return ADMObjectInput(object: n, value: value)
+    }
+
+    /// Pure merge: the object with this move applied. A single leaf changes ONE component and
+    /// keeps the others — a Cartesian leaf goes through the object's current Cartesian position
+    /// (`SpatialPosition.cartesian`, the same derivation the sender uses) and back.
+    public func applied(to object: SpatialObject) -> SpatialObject {
+        var o = object
+        let p = o.position
+        let c = p.cartesian
+        switch value {
+        case .azimuth(let a):   o.position = SpatialPosition(azimuth: a, elevation: p.elevation, distance: p.distance)
+        case .elevation(let e): o.position = SpatialPosition(azimuth: p.azimuth, elevation: e, distance: p.distance)
+        case .distance(let d):  o.position = SpatialPosition(azimuth: p.azimuth, elevation: p.elevation, distance: d)
+        case .polar(let a, let e, let d): o.position = SpatialPosition(azimuth: a, elevation: e, distance: d)
+        case .x(let x): o.position = Self.position(x: x, y: c.y, z: c.z)
+        case .y(let y): o.position = Self.position(x: c.x, y: y, z: c.z)
+        case .z(let z): o.position = Self.position(x: c.x, y: c.y, z: z)
+        case .cartesian(let x, let y, let z): o.position = Self.position(x: x, y: y, z: z)
+        case .gain(let g): o.gain = g   // already clamped to 0…1 by `parse`
+        }
+        return o
+    }
+
+    /// The inverse of `SpatialPosition.cartesian` (x right, y front, z up; positive azimuth =
+    /// left). A point outside the unit sphere (a cube corner) lands on its surface: distance is
+    /// room-relative 0…1, and `SpatialPosition` clamps it.
+    public static func position(x: Float, y: Float, z: Float) -> SpatialPosition {
+        let d = (x * x + y * y + z * z).squareRoot()
+        guard d.isFinite, d > 1e-6 else { return SpatialPosition(azimuth: 0, elevation: 0, distance: 0) }
+        let azimuth = atan2f(-x, y) * 180 / .pi
+        let elevation = asinf(Swift.min(Swift.max(z / d, -1), 1)) * 180 / .pi
+        return SpatialPosition(azimuth: azimuth, elevation: elevation, distance: d)
+    }
+}
+
 #if canImport(Network)
 import Network
 #if canImport(Observation)
@@ -242,11 +371,21 @@ public final class OSCReceiver {
 
     /// The ONE dispatch, installed by `EchoelmusicApp` — the receiver knows no engine.
     @ObservationIgnored public var onCommand: ((OSCControlCommand) -> Void)?
+    /// Spatial S1 — the dispatch for ADM-OSC object moves, installed by `EchoelmusicApp`
+    /// (it writes `SpatialSceneStore.apply`). The receiver knows no scene either.
+    @ObservationIgnored public var onObjectMove: ((ADMObjectInput) -> Void)?
+    /// Object moves accepted since launch. NOT observed on purpose: a controller sends
+    /// trajectories at tens of messages per object per second, and an observed counter would
+    /// make every reader a high-rate observer (the 10.76.50 law).
+    @ObservationIgnored public private(set) var objectMovesAccepted = 0
 
     @ObservationIgnored private var listener: NWListener?
     @ObservationIgnored private var connections: [NWConnection] = []
     @ObservationIgnored private var lastCommand: OSCControlCommand?
     @ObservationIgnored private var lastBreadcrumbAt: TimeInterval = 0
+    @ObservationIgnored private var lastMove: ADMObjectInput?
+    @ObservationIgnored private var lastMoveAt: TimeInterval = 0
+    @ObservationIgnored private var objectsAnnounced = false
 
     private static let portKey = "net.osc.in.port"
     private static let allowKey = "net.osc.in.allow"
@@ -317,6 +456,8 @@ public final class OSCReceiver {
         for c in connections { c.cancel() }
         connections.removeAll()
         lastCommand = nil
+        lastMove = nil
+        objectsAnnounced = false
         isActive = false
         boundPort = 0
         EchoelCrashLog.breadcrumb("osc in: closed")
@@ -387,8 +528,18 @@ public final class OSCReceiver {
     }
 
     private func handle(datagram: Data) {
-        guard let message = OSCDecoder.decode(datagram),
-              let command = OSCControlCommand.parse(message) else {
+        guard let message = OSCDecoder.decode(datagram) else {
+            ignoredCount += 1
+            return
+        }
+        // Spatial S1 — the ADM-OSC object namespace is checked FIRST and leaves on its own
+        // path: it is a stream, not a cue, so it skips the cue's observed summary and its
+        // per-change diag line (a trajectory changes on every message).
+        if let move = ADMObjectInput.parse(message) {
+            accept(move: move)
+            return
+        }
+        guard let command = OSCControlCommand.parse(message) else {
             ignoredCount += 1
             return
         }
@@ -406,6 +557,23 @@ public final class OSCReceiver {
             EchoelCrashLog.breadcrumb("osc in: \(summary)")
         }
         onCommand?(command)
+    }
+
+    /// One object move. Identical repeats inside the window are dropped (lossless — the scene
+    /// already holds the value). ONE diag line per socket session, written BEFORE the first
+    /// dispatch (a ladder rung stands before its call), never one per move: a trajectory would
+    /// otherwise bury the lifecycle ladder a crash read depends on (SEC-1).
+    private func accept(move: ADMObjectInput) {
+        let now = CFAbsoluteTimeGetCurrent()
+        if move == lastMove, now - lastMoveAt < Self.repeatWindow { return }
+        lastMove = move
+        lastMoveAt = now
+        objectMovesAccepted &+= 1
+        if !objectsAnnounced {
+            objectsAnnounced = true
+            EchoelCrashLog.breadcrumb("osc in: adm object moves arriving")
+        }
+        onObjectMove?(move)
     }
 }
 #endif
