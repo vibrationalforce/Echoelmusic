@@ -363,10 +363,33 @@ extension PolarH10BioPublisher: CBCentralManagerDelegate {
             central.scanForPeripherals(withServices: [Self.hrServiceUUID])
             armScanWatchdog()
         case .poweredOff, .unauthorized, .unsupported, .resetting, .unknown:
+            releaseLinkLostWithTheRadio()
             state = .bluetoothUnavailable
         @unknown default:
+            releaseLinkLostWithTheRadio()
             state = .bluetoothUnavailable
         }
+    }
+
+    /// When the radio leaves `.poweredOn`, iOS invalidates every peripheral it handed out, and
+    /// `didDisconnectPeripheral` is not guaranteed to follow. The strap object kept here was then
+    /// the reason it could never come back: `handleDiscovered` refuses a find while
+    /// `peripheral != nil`, so after Bluetooth went off and on again the fresh scan saw the strap
+    /// and threw it away — "No strap" until the player stopped and restarted the source by hand.
+    /// Drop exactly what `stop()` drops for the link, and keep `isPublishing`: the user still
+    /// wants a signal, and `.poweredOn` re-scans on its own. No `cancelPeripheralConnection` —
+    /// there is no connection left to cancel on a radio that is off.
+    @MainActor
+    private func releaseLinkLostWithTheRadio() {
+        scanWatchdog?.cancel()
+        scanWatchdog = nil
+        publishTask?.cancel()
+        publishTask = nil
+        peripheral = nil
+        latestHR = 0
+        rrIntervals.removeAll()
+        beatGate = RRIntervalHygiene.Gate()
+        connectedDeviceName = ""
     }
 
     /// If nothing is discovered within the timeout, stop the scan and surface an
@@ -454,7 +477,13 @@ extension PolarH10BioPublisher: CBCentralManagerDelegate {
             } else {
                 // Stopped publisher: rest at .idle (review LOW-3 — .disconnected on a
                 // stopped session was invisible but impure; .idle is the honest rest).
-                self.state = self.isPublishing ? .disconnected : .idle
+                // A disconnect that trails a radio loss must not hide the reason: keep
+                // `.bluetoothUnavailable` rather than overwrite it with `.disconnected`.
+                if !self.isPublishing {
+                    self.state = .idle
+                } else if self.state != .bluetoothUnavailable {
+                    self.state = .disconnected
+                }
                 self.connectedDeviceName = ""
             }
         }
