@@ -261,6 +261,30 @@ private struct PartNoteGrid: View {
                                 .accessibilityAction(named: "Select previous note") {
                                     stepPick(-1, among: onScreen)
                                 }
+                                // Audit A11Y-1 (2026-10-03): stepping could PICK a note and the
+                                // buttons below transpose and quantize it, but adding a note, moving
+                                // it in time and changing its length were touch only. Each action is
+                                // ONE commit through the writer the gestures use, so ONE Undo.
+                                .accessibilityAction(named: "Add a note") {
+                                    addNoteByAction(after: pickedOnScreen, in: visible, centre: heldCentre,
+                                                    region: region, offset: offset, editable: editable)
+                                }
+                                .accessibilityAction(named: "Move earlier") {
+                                    nudgeByAction(pickedOnScreen, bySteps: -1, region: region,
+                                                  offset: offset, editable: editable)
+                                }
+                                .accessibilityAction(named: "Move later") {
+                                    nudgeByAction(pickedOnScreen, bySteps: 1, region: region,
+                                                  offset: offset, editable: editable)
+                                }
+                                .accessibilityAction(named: "Make longer") {
+                                    stretchByAction(pickedOnScreen, bySteps: 1, region: region,
+                                                    offset: offset, editable: editable)
+                                }
+                                .accessibilityAction(named: "Make shorter") {
+                                    stretchByAction(pickedOnScreen, bySteps: -1, region: region,
+                                                    offset: offset, editable: editable)
+                                }
                                 // S9b: an assistive zoom steps the columns like the two buttons.
                                 .accessibilityZoomAction { action in
                                     zoom(by: action.direction == .zoomIn ? 1 : -1, steps: steps,
@@ -350,6 +374,54 @@ private struct PartNoteGrid: View {
         let step = note.startStep + 1
         let named: String = TuningReference.noteName(forMIDINote: note.pitch) + String(localized: " at step ") + "\(step)"
         AccessibilityNotification.Announcement(named + String(localized: ", selected")).post()
+    }
+
+    /// Audit A11Y-1: VoiceOver's way to ADD a note. With one note picked, the new note takes its
+    /// pitch and starts where it ends; with none, it sits on the centre row at the part's first
+    /// step. The same pure op and the same writer as a tap on an empty cell — one commit, one Undo.
+    private func addNoteByAction(after pickedIDs: Set<UUID>, in visible: [Note], centre: Int,
+                                 region: TimelineRegion, offset: Int, editable: Bool) {
+        guard editable, let clip = clipStore.clip(id: region.clipID) else { return }
+        let anchor: Note? = pickedIDs.count == 1 ? visible.first(where: { pickedIDs.contains($0.id) }) : nil
+        let pitch = anchor?.pitch ?? centre
+        let step = anchor?.endStep ?? 0
+        guard let added = ClipNoteEdit.adding(pitch: pitch, step: step, to: clip.melody?.notes ?? [],
+                                              offsetTicks: offset, lengthTicks: region.lengthTicks),
+              timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) else { return }
+        picked = .single(added.id)
+        announceEdit(added.id, region: region, offset: offset, String(localized: ", added"))
+    }
+
+    /// Audit A11Y-1: the picked notes one step earlier or later — the drag's move without a pitch
+    /// change, through the same pure op, so the part's edges clamp it the same way.
+    private func nudgeByAction(_ ids: Set<UUID>, bySteps dStep: Int, region: TimelineRegion,
+                               offset: Int, editable: Bool) {
+        guard editable, let clip = clipStore.clip(id: region.clipID),
+              let moved = ClipNoteEdit.moving(ids, dPitch: 0, dStep: dStep, in: clip.melody?.notes ?? [],
+                                              offsetTicks: offset, lengthTicks: region.lengthTicks),
+              timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) else { return }
+        if ids.count == 1, let id = ids.first {
+            announceEdit(id, region: region, offset: offset, String(localized: ", moved"))
+        }
+    }
+
+    /// Audit A11Y-1: ONE picked note a step longer or shorter — the drag on its right edge.
+    private func stretchByAction(_ ids: Set<UUID>, bySteps dSteps: Int, region: TimelineRegion,
+                                 offset: Int, editable: Bool) {
+        guard editable, ids.count == 1, let id = ids.first, let clip = clipStore.clip(id: region.clipID),
+              let resized = ClipNoteEdit.resizing(id, bySteps: dSteps, in: clip.melody?.notes ?? [],
+                                                  offsetTicks: offset, lengthTicks: region.lengthTicks),
+              timeline.setClipNotes(clipID: region.clipID, resized, clips: clipStore) else { return }
+        announceEdit(id, region: region, offset: offset, String(localized: ", resized"))
+    }
+
+    /// Says where the edited note sits now, read back from the clip — VoiceOver does not re-read
+    /// a label that changed after a custom action (the `stepPick` reason).
+    private func announceEdit(_ id: UUID, region: TimelineRegion, offset: Int, _ suffix: String) {
+        guard let note = clipStore.clip(id: region.clipID)?.melody?.notes.first(where: { $0.id == id }) else { return }
+        let step = (note.startTick - Swift.max(0, offset)) / Note.ticksPerStep + 1
+        let named: String = TuningReference.noteName(forMIDINote: note.pitch) + String(localized: " at step ") + "\(step)"
+        AccessibilityNotification.Announcement(named + suffix).post()
     }
 
     private func tap(_ location: CGPoint, visible: [Note], region: TimelineRegion, offset: Int,

@@ -277,10 +277,13 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         // (`TheSelectionIsTransposedQuantizedAndDuplicatedInOneStepTests`) moved it to 8:
         // transpose, quantize, duplicate, velocity. M4 (`TheNotesMoveThroughTheSessionKeyTests`)
         // moved it to 10: fit to key, step in key. B6a (`TheVelocityIsDrawnUnderTheNotesInOneStepTests`)
-        // moved it to 11: the velocity lane's stroke.
-        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 11, """
+        // moved it to 11: the velocity lane's stroke. Audit A11Y-1 (`TheNoteGridEditsByVoiceOverTests`)
+        // moved it to 14: VoiceOver's add, nudge and stretch — the same pure ops as the tap and the
+        // drag, each one commit, so they are counted here rather than routed around the pin.
+        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 14, """
             create, delete, move, stretch, transpose, quantize, duplicate, velocity, fit to key, \
-            step in key, velocity stroke — each one commit through the one writer
+            step in key, velocity stroke, VoiceOver add, VoiceOver nudge, VoiceOver stretch — \
+            each one commit through the one writer
             """)
         for banned in ["updateMelody", "PianoRollModel", "pianoRoll", "currentTick", "player.",
                        "preflightTempo", "pattern.", "UserDefaults", "@AppStorage", ".sheet(",

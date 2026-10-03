@@ -19847,6 +19847,102 @@
         }
       }
     },
+    "Add a note" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a note"
+          }
+        }
+      }
+    },
+    "Move earlier" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move earlier"
+          }
+        }
+      }
+    },
+    "Move later" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move later"
+          }
+        }
+      }
+    },
+    "Make longer" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make longer"
+          }
+        }
+      }
+    },
+    "Make shorter" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make shorter"
+          }
+        }
+      }
+    },
+    ", added" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", added"
+          }
+        }
+      }
+    },
+    ", moved" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", moved"
+          }
+        }
+      }
+    },
+    ", resized" : {
+      "comment" : "Note editor VoiceOver (audit A11Y-1, 2026-10-03): a named grid action or the announcement after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", resized"
+          }
+        }
+      }
+    },
     "Select next note" : {
       "localizations" : {
         "en" : {
