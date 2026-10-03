@@ -397,10 +397,15 @@ public final class OSCReceiver {
     /// `CFAbsoluteTimeGetCurrent()` of the last ACCEPTED cue — the routing card's status line.
     public private(set) var lastReceivedTimestamp: TimeInterval = 0
     public private(set) var lastCommandSummary = ""
-    /// Datagrams that decoded but were not on the whitelist (or out of range).
-    public private(set) var ignoredCount = 0
-    /// Senders turned away by the allowlist.
-    public private(set) var refusedCount = 0
+    /// Datagrams that decoded but were not on the whitelist (or out of range). NOT observed:
+    /// a spatial controller streams leaves Echoel does not take (width, mute, name …) at its
+    /// full send rate, so this counter moves per datagram — an observed one would make every
+    /// reader a stream-rate observer (the 10.76.50 law). The status leaf POLLS it on its 0.5 s
+    /// `TimelineView` tick, exactly like `lastObjectMoveAt`.
+    @ObservationIgnored public private(set) var ignoredCount = 0
+    /// Senders turned away by the allowlist. NOT observed, for the same reason: a refused
+    /// sender floods at its own rate.
+    @ObservationIgnored public private(set) var refusedCount = 0
     public private(set) var lastError: String?
 
     /// The ONE dispatch, installed by `EchoelmusicApp` — the receiver knows no engine.

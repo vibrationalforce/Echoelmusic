@@ -83,6 +83,41 @@ final class TheOSCInputIsBoundedTests: XCTestCase {
                        "the unbounded per-cue breadcrumb is back (SEC-1)")
     }
 
+    /// Claim 5 — the two drop counters are NOT observed (review of Spatial S1, LOW-5). A spatial
+    /// controller streams ADM-OSC leaves Echoel does not take (width, mute, name …) at its full
+    /// send rate; each one lands in `ignoredCount`. Observed, that counter would make its reader
+    /// a stream-rate observer — the 10.76.50 law. SOURCE-TEXT SCAN.
+    ///
+    /// The counterweight is the half that keeps the display honest: the status leaf still reads
+    /// both counters, and it reads them INSIDE its `TimelineView(.periodic…)` closure, whose tick
+    /// re-evaluates the line without any observation. Lose the tick and the counts freeze.
+    ///
+    /// Grading on the parent tree: 2 REGRESSIONS (both declarations lack the attribute there);
+    /// the leaf assertions are COUNTERWEIGHTS, green on both trees.
+    func testTheDropCountersAreNotObserved() throws {
+        let src = SourceText.codeOnly(try text(Self.receiver))
+        for name in ["ignoredCount", "refusedCount"] {
+            XCTAssertTrue(src.contains("@ObservationIgnored public private(set) var \(name) = 0"),
+                          "\(name) is observed again — a controller's unknown leaves make every reader a stream-rate observer (LOW-5, 10.76.50)")
+        }
+        let leafFile = SourceText.codeOnly(try text("Sources/Echoelmusic/Studio/NetworkActivityDot.swift"))
+        guard let start = leafFile.range(of: "struct OSCInputStatusLine: View {") else {
+            XCTFail("ANCHOR MISSING: OSCInputStatusLine moved — re-anchor (#408)")
+            return
+        }
+        let rest = leafFile[start.upperBound...]
+        let body = rest.range(of: "\nstruct ").map { String(rest[..<$0.lowerBound]) } ?? String(rest)
+        guard let tick = body.range(of: "TimelineView(.periodic(from: .now, by: Self.tick))") else {
+            XCTFail("the status leaf lost its periodic tick — unobserved counters would freeze on screen (LOW-5)")
+            return
+        }
+        let afterTick = body[tick.upperBound...]
+        XCTAssertTrue(afterTick.contains("receiver.ignoredCount"),
+                      "the leaf no longer reads ignoredCount inside its tick (LOW-5)")
+        XCTAssertTrue(afterTick.contains("receiver.refusedCount"),
+                      "the leaf no longer reads refusedCount inside its tick (LOW-5)")
+    }
+
     private func text(_ relativePath: String) throws -> String {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
