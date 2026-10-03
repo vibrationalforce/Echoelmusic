@@ -257,7 +257,7 @@
             <!-- STANDALONE -->
             <section id="plugin">
                 <h2>Standalone instrument <span class="tag">NOT A PLUGIN</span></h2>
-                <p>Echoelmusic is a <strong>standalone iPhone instrument</strong>. It is also an Audio&nbsp;Unit (AUv3) instrument &mdash; confirmed loading and sounding in AUM on a device; other plugin hosts are untested. It does not host third-party AUv3 plugins: that half was built and then deliberately removed, because an instrument you play with your body is not a workstation, and a plugin surface is a second product with its own host-compatibility matrix. Neither is on the roadmap.</p>
+                <p>Echoelmusic is a <strong>standalone iPhone instrument</strong>. It is also an Audio&nbsp;Unit (AUv3) instrument &mdash; confirmed loading and sounding in AUM on a device; other plugin hosts are untested. It does not host third-party AUv3 plugins: that half was built and then deliberately removed, because a plugin surface is a second product with its own host-compatibility matrix. Neither is on the roadmap.</p>
                 <div class="data-row"><div class="k">Into a DAW</div><div class="v"><strong>WAV export</strong> today, plus live OSC / ADM-OSC and Art-Net / sACN output. A virtual CoreMIDI source exists but is created only once a MIDI route is enabled in the routing panel, and it speaks MIDI&nbsp;1.0. <strong>Standard MIDI File (.mid) export</strong> ships too, carrying tempo, 4/4 and the key signature. <strong>MPE out</strong> ships over that MIDI&nbsp;1.0 source <span class="tag">LIVE</span> &mdash; two switches in the routing panel, both off by default. MIDI&nbsp;2.0 out and .mid import are <span class="tag">ROADMAP</span>. See <a href="#formats">Formats &amp; I/O</a>.</div></div>
             </section>
 
@@ -347,7 +347,7 @@
                 <div class="data-row"><div class="k">EchoelSynth <span class="tag">LIVE</span></div><div class="v"><strong>EchoelDDSP</strong> is the one that sounds in the iPhone app. <strong>EchoelCellular</strong> sounds only in the <strong>EchoelBodyVibe AUv3 plug-in</strong>, as its texture voice <span class="tag">Plug-in only</span>; no voice in the app instantiates it. <strong>EchoelModalBank</strong> compiles and is unit-tested but nothing instantiates it anywhere, so it makes no sound at all <span class="tag">Not wired</span> &mdash; its only caller was the drum voice, removed in July&nbsp;2026.</div></div>
                 <div class="data-row"><div class="k">EchoelGen <span class="tag">LIVE</span></div><div class="v">Bio-driven generative composition — harmonic, melodic &amp; rhythmic loops in any key and BPM → .wav export</div></div>
                 <div class="data-row"><div class="k">EchoelFX <span class="tag">LIVE</span></div><div class="v">EchoelVDSPKit · EchoelSVFilter · EchoelLFO · AutoMixChain · EchoelReverb (algorithmic; the DDSP convolution reverb is compiled but disabled)</div></div>
-                <div class="data-row"><div class="k">EchoelMix <span class="tag">LIVE</span></div><div class="v">AudioEngine · AutoMixChain · SingleExport · RetroCapture. A console mixer is <strong>not planned</strong>; the multi-track recorder is built but flag-gated off with no door.</div></div>
+                <div class="data-row"><div class="k">EchoelMix <span class="tag">LIVE</span></div><div class="v">AudioEngine · AutoMixChain · SingleExport · RetroCapture. Per-track level, pan, mute and solo live in the Workstation&rsquo;s track inspector; the multi-track <em>audio</em> recorder was deleted with the audio input in September&nbsp;2026.</div></div>
                 <div class="data-row"><div class="k">EchoelMIDI <span class="tag">LIVE</span></div><div class="v">MIDIInput · MIDIBusPublisher → EngineBus.controllerEvents (notes, pitch bend, CC&nbsp;74 slide, press, air-CC). MPE <strong>zone</strong> handling on the way in <span class="tag">ROADMAP</span>.</div></div>
                 <div class="data-row"><div class="k">EchoelBio <span class="tag">LIVE</span></div><div class="v">EchoelBioEngine · BioSignalDeconvolver · BioEventGraph · HilbertSensorMapper · HealthKitBioPublisher (Watch / Oura via Health) · PolarH10BioPublisher (any BLE Heart Rate device) · CameraRPPGBioPublisher (finger-on-lens rPPG, live) · BioSimulator. ADM-OSC object output via <code>ADMOSCSender</code>.</div></div>
                 <div class="data-row"><div class="k">EchoelVis <span class="tag">LIVE</span></div><div class="v">MetalBioView — Metal bio-visual live today (HR&rarr;pulse &le;3&nbsp;Hz, tone&rarr;hue, breath&rarr;spread, coherence&rarr;sharpness). plus richer modes and chroma key <span class="tag">ROADMAP</span>.</div></div>
@@ -399,14 +399,12 @@
                             <li>iPad · Mac · Watch · TV · Vision</li>
                         </ul>
                         <h3>Deliberately cut</h3>
-                        <p>Built, shipped, and then removed in July&nbsp;2026 — not a backlog, a decision. Echoelmusic is an instrument; each of these was a second product to maintain.</p>
+                        <p>Built, shipped, and then removed in July&nbsp;2026 — not a backlog, a decision; each of these was a second product to maintain. (The arrangement timeline and the note editor were cut with them and have since come back as the Workstation; the AUv3 instrument came back in September&nbsp;2026.)</p>
                         <ul>
-                            <li>Arrangement timeline, clips, multi-track &amp; mixer</li>
                             <li>Drums, step sequencer, sampler</li>
-                            <li>Note editor (piano roll)</li>
                             <li>Video editing, ProRes, color grading</li>
                             <li>RTMP / live broadcast — scoped and cut, never built</li>
-                            <li>AUv3 — as a plugin and as a host</li>
+                            <li>Loading third-party plugins inside Echoelmusic</li>
                         </ul>
                     </div>
                 </div>
