@@ -1,6 +1,6 @@
 // TheMIDIInputIgnoresItsOwnSourcesTests.swift
 //
-// Echoel — audit 2026-10-03, slice hpp-1.
+// Echoel — audit 2026-10-03, slices hpp-1 and hpp-2 (claim 5).
 //
 // THE DEFECT. `MIDIOutput` publishes up to two virtual sources ("Echoelmusic" and
 // "Echoelmusic (MIDI 2.0)"). A virtual source is visible to EVERY CoreMIDI client, our own
@@ -77,6 +77,26 @@ final class TheMIDIInputIgnoresItsOwnSourcesTests: XCTestCase {
                       "the check no longer reads the unique ID (hpp-1)")
         XCTAssertTrue(body.contains("MIDIOutput.ownSourceUniqueIDs.contains("),
                       "the check no longer compares against the shared list (hpp-1)")
+    }
+
+    /// Claim 5 (slice hpp-2) — the notification pointer never leaves the callback. CoreMIDI
+    /// owns it only while the block runs; the old code passed it into a main-actor `Task`, which
+    /// dereferenced it later, after the memory could already be gone.
+    func testTheNotificationIsReadInsideTheCallback() throws {
+        let src = SourceText.codeOnly(try text(Self.input))
+        guard let block = src.range(of: "MIDIClientCreateWithBlock("),
+              let hop = src[block.upperBound...].range(of: "Task { @MainActor") else {
+            XCTFail("ANCHOR MISSING: the client notify block or its main-actor hop moved (#408)")
+            return
+        }
+        let beforeHop = String(src[block.upperBound..<hop.lowerBound])
+        XCTAssertTrue(beforeHop.contains("notification.pointee.messageID"),
+                      "the message ID is no longer read inside the callback (hpp-2)")
+        XCTAssertFalse(src.contains("UnsafePointer<MIDINotification>"),
+                       "a handler takes the notification pointer again — it escapes the callback (hpp-2)")
+        let afterHop = String(src[hop.lowerBound...].prefix(200))
+        XCTAssertFalse(afterHop.contains("notification"),
+                       "the main-actor task still touches the notification (hpp-2)")
     }
 
     #if canImport(CoreMIDI)

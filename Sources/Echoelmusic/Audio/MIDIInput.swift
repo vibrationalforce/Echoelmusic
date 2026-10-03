@@ -101,8 +101,11 @@ final class MIDIInput {
 
         // Create MIDI client
         let status = MIDIClientCreateWithBlock("Echoelmusic" as CFString, &midiClient) { [weak self] notification in
+            // The pointer is valid only while this callback runs, so the message is read HERE.
+            // Handing the pointer to a later main-actor task read freed memory.
+            let setupChanged = notification.pointee.messageID == .msgSetupChanged
             Task { @MainActor [weak self] in
-                self?.handleMIDINotification(notification)
+                self?.handleMIDINotification(setupChanged: setupChanged)
             }
         }
         guard status == noErr else {
@@ -295,13 +298,8 @@ final class MIDIInput {
 
     // MARK: - Notifications
 
-    private func handleMIDINotification(_ notification: UnsafePointer<MIDINotification>) {
-        switch notification.pointee.messageID {
-        case .msgSetupChanged:
-            connectAllSources()
-        default:
-            break
-        }
+    private func handleMIDINotification(setupChanged: Bool) {
+        if setupChanged { connectAllSources() }
     }
 
     // MARK: - Helpers
