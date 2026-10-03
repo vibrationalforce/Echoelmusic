@@ -66,13 +66,18 @@ public struct BreathPattern: Identifiable, Equatable, Sendable {
     public let segments: [BreathSegment]
     /// Honest, non-medical one-liner shown in the picker (technique + what it's for).
     public let evidence: String
+    /// Optional wording shown INSTEAD of "Breathe out" while the exhale runs — how to
+    /// breathe out, never what it does to the body. `nil` keeps the plain instruction.
+    public let exhaleCue: String?
 
     /// Builds a pattern, clamping every segment to its safe window. A segment that
     /// would clamp to zero is dropped (a pattern always keeps at least one segment).
-    public init(id: String, name: String, evidence: String, segments rawSegments: [BreathSegment]) {
+    public init(id: String, name: String, evidence: String, segments rawSegments: [BreathSegment],
+                exhaleCue: String? = nil) {
         self.id = id
         self.name = name
         self.evidence = evidence
+        self.exhaleCue = exhaleCue
         let clamped: [BreathSegment] = rawSegments.compactMap { seg in
             guard seg.seconds.isFinite, seg.seconds > 0 else { return nil }
             let cap: Double
@@ -260,12 +265,25 @@ public extension BreathPattern {
                    .init(kind: .exhale, seconds: 8)]
     )
 
+    /// Release — inhale 4, long exhale 8 (5/min), no holds. The exhale is voiced or
+    /// hissed ("pff", "shh", a hum); the voice stays the user's own — Echoel does not
+    /// listen (there is no microphone since #1302). Inside `RespirationEstimator`'s
+    /// reportable band, so the pace it guides can be read back. Founder 2026-10-03
+    /// ("Release … pffff sttt tönen"); the name and copy stay neutral on purpose —
+    /// no healing, release-of-anything or religious wording in the app.
+    static let release = BreathPattern(
+        id: "release", name: "Release",
+        evidence: "In 4, out 8 (5/min) on a pff, a shh or a hum. No holds. Watch HRV and coherence to see how you respond.",
+        segments: [.init(kind: .inhale, seconds: 4), .init(kind: .exhale, seconds: 8)],
+        exhaleCue: "Breathe out slowly — pff, shh or hum"
+    )
+
     /// All curated patterns, resonance first (the recommended default). These
     /// factory patterns are the SUPPORTED construction path — each is verified to
     /// chain continuously (no amplitude jump across segment boundaries or the wrap).
     /// Arbitrary caller-built segment lists are clamped for safety but not checked
     /// for continuity, so prefer these.
-    static let curated: [BreathPattern] = [resonance, coherent, box, relaxing478]
+    static let curated: [BreathPattern] = [resonance, coherent, release, box, relaxing478]
 
     /// Safety copy the UI MUST show — and require acknowledgement of — BEFORE any
     /// hold-based session (Box / 4-7-8). Resonance/Coherent (no holds) use the

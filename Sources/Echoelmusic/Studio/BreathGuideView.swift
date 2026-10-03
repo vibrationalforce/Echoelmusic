@@ -380,7 +380,7 @@ struct BreathCoachStrip: View {
             HStack(spacing: 12) {
                 breathCircle
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(pacer.isRunning ? pacer.instruction : "Coherent breathing")
+                    Text(pacer.isRunning ? runningInstruction : "Coherent breathing")
                         .font(EchoelTheme.font(13, .semibold))
                         .foregroundStyle(EchoelTheme.text)
                     // ⛔ BOTH CAPTIONS WERE REWRITTEN AFTER REVIEW, and the running one was the
@@ -415,6 +415,7 @@ struct BreathCoachStrip: View {
                 Spacer(minLength: 0)
                 startStop
             }
+            if !pacer.isRunning { releaseRow }
             // UNCONDITIONAL — see the header. Two of these four lines are DURING-session
             // instructions, one of them the only line naming an adverse event, and the fourth
             // is the CLAUDE.md-mandated self-observation disclaimer. Gating them on
@@ -492,6 +493,44 @@ struct BreathCoachStrip: View {
 
     /// UI-rate driver. Identical in shape to `BreathGuideView.driveTicks` on purpose: the
     /// pacer is pure and timer-free, so every host ticks it from its own loop.
+    /// The exhale cue replaces "Breathe out" only for a pattern that carries one
+    /// (`.release`); every other pattern keeps the plain instruction.
+    private var runningInstruction: String {
+        if pacer.phaseKind == .exhale, let cue = pacer.pattern.exhaleCue { return cue }
+        return pacer.instruction
+    }
+
+    /// The second way in, shown only while stopped so a running guide keeps ONE transport.
+    /// Like Start it forces a NO-HOLD pattern unconditionally: this strip carries no
+    /// hold-acknowledgement gate, so it may only ever start a pattern without holds
+    /// (`TheBreathingPracticeIsInTheMainViewTests` checks every assignment here).
+    private var releaseRow: some View {
+        HStack(spacing: 12) {
+            Text("Release: in 4, out 8 on a pff, a shh or a hum. About 5 breaths a minute.")
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            Button {
+                pacer.pattern = .release
+                pacer.reset()
+                pacer.start()
+            } label: {
+                Text("Release")
+                    .font(EchoelTheme.font(12, .semibold))
+                    .foregroundStyle(EchoelTheme.text)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                        .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Start release breathing")
+            .accessibilityHint("Paces 4 seconds in and 8 seconds out while this panel is open.")
+        }
+    }
+
     private func driveTicks() async {
         guard pacer.isRunning else { return }
         var last = Date()

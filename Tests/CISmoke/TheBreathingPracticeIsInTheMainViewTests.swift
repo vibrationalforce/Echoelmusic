@@ -218,6 +218,57 @@ final class TheBreathingPracticeIsInTheMainViewTests: XCTestCase {
         """)
     }
 
+    /// Added 2026-10-03 with the Release passage — the strip's SECOND way in.
+    ///
+    /// The strip has no hold-acknowledgement gate, so it may start ONLY no-hold patterns.
+    /// The claim above pins one assignment by its spelling; this one pins EVERY assignment by
+    /// its pattern, resolved through `BreathPattern.curated` and asked `hasHolds` at runtime.
+    /// Stands against: a third button that starts `.box` or `.relaxing478` from here — it
+    /// would compile, look identical, and skip the hold contraindications the guide shows.
+    /// RED on a strip with no assignment at all (the `isEmpty` floor), and red if `.release`
+    /// stops carrying the exhale cue the strip reads.
+    func testEveryPatternTheStripCanStartIsHoldFree() throws {
+        let strip = try block(startingAt: Self.stripAnchor, in: Self.guide)
+        XCTAssertFalse(strip.isEmpty, "could not extract `BreathCoachStrip` from \(Self.guide)")
+        let needle = "pacer.pattern = ."
+        var names: [String] = []
+        var rest = Substring(strip)
+        while let r = rest.range(of: needle) {
+            let tail = rest[r.upperBound...]
+            let name = String(tail.prefix { $0.isLetter || $0.isNumber })
+            names.append(name)
+            rest = tail
+        }
+        XCTAssertFalse(names.isEmpty, """
+        `BreathCoachStrip` assigns no pattern any more — the Start forcing pinned above is gone, \
+        so this scan would pass on nothing.
+        """)
+        XCTAssertTrue(names.contains("release"), """
+        `BreathCoachStrip` no longer starts `.release`. The Release passage (founder \
+        2026-10-03) has no other reachable door — `BreathGuideView` and `MeditationView` are \
+        both doorless.
+        """)
+        for name in names {
+            let pattern = try XCTUnwrap(BreathPattern.curated.first { $0.id == name }, """
+            `BreathCoachStrip` assigns `.\(name)`, which is not a curated pattern id — this \
+            scan resolves the static by its id, so a renamed static needs its id to match.
+            """)
+            XCTAssertFalse(pattern.hasHolds, """
+            `BreathCoachStrip` can start `.\(name)`, which HAS breath-holds. This strip shows \
+            only `BreathPacer.contraindications`, never `BreathPattern.holdContraindications`, \
+            and has no acknowledgement step — a hold pattern needs both, in the same commit.
+            """)
+        }
+        XCTAssertNotNil(BreathPattern.release.exhaleCue, """
+        `.release` lost its exhale cue — the passage is 4 in / 8 out ON a pff, a shh or a hum, \
+        and the cue is the only place the strip says so while it runs.
+        """)
+        XCTAssertTrue(strip.contains("pacer.pattern.exhaleCue"), """
+        `BreathCoachStrip` no longer reads `exhaleCue`, so the Release exhale shows the plain \
+        "Breathe out" and the passage loses the one instruction that makes it what it is.
+        """)
+    }
+
     /// RED (absence) on the pre-#486 tree.
     ///
     /// Stands against: "the strip is small, drop the four bullet lines" — and against the

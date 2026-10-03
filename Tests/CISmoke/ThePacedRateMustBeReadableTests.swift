@@ -1,8 +1,8 @@
 // ThePacedRateMustBeReadableTests.swift
 // Echoel — #435. The guard over a guide that paces a rate its own measurement cannot read.
 //
-// THE DEFECT. `BreathPattern.curated` paces four rates: resonance 6.0/min, coherent 6.0,
-// box (4-4-4-4) 3.75, 4-7-8 3.1579. `RespirationEstimator.reportableRange` is
+// THE DEFECT. `BreathPattern.curated` paced four rates: resonance 6.0/min, coherent 6.0,
+// box (4-4-4-4) 3.75, 4-7-8 3.1579 (a fifth, release 5.0, joined 2026-10-03 — inside the band). `RespirationEstimator.reportableRange` is
 // `[minRate / bandTolerance, maxRate * bandTolerance]` = `[3.7736, 31.8]`. Two of the four sit
 // BELOW its lower bound — so while the user follows Echoel's own breathing guide, Echoel's own
 // breath readout cannot show the rate it is asking for. `BreathGuideView` offers a "drive the
@@ -111,6 +111,7 @@ final class ThePacedRateMustBeReadableTests: XCTestCase {
         let expected: [(String, Double)] = [
             ("resonance", 6.0),          // 4 + 6
             ("coherent", 6.0),           // 5 + 5
+            ("release", 5.0),            // 4 + 8 — the long-exhale passage (2026-10-03)
             ("box", 3.75),               // 4 + 4 + 4 + 4 = 16 s
             ("relaxing478", 60.0 / 19.0) // 4 + 7 + 8 = 19 s
         ]
@@ -137,14 +138,16 @@ final class ThePacedRateMustBeReadableTests: XCTestCase {
     /// The `measurementNote` halves are entailed by the `pacedRateIsReportable` halves for as
     /// long as the note stays derived; they are kept for the day it stops being derived (see the
     /// file header). They are not claimed as independently failing checks today.
-    func testTwoOfTheFourPacedRatesAreOutsideWhatTheEstimatorCanReport() throws {
+    func testTwoOfTheFivePacedRatesAreOutsideWhatTheEstimatorCanReport() throws {
         let band = RespirationEstimator.reportableRange
 
-        for id in ["resonance", "coherent"] {
+        // `release` joins the readable side: 5.0/min sits inside the band, so the long-exhale
+        // passage can be read back — the reason its exhale is 8 s and not longer.
+        for id in ["resonance", "coherent", "release"] {
             let p = try pattern(id)
             XCTAssertTrue(p.pacedRateIsReportable, """
                 \(id) paces \(p.ratePerMinute)/min, which is now OUTSIDE the reportable band \
-                \(band). These two are the no-hold HRV patterns — the ones the product is \
+                \(band). These are the no-hold patterns — the ones the product is \
                 actually about. If the estimator can no longer read back the rate its own \
                 guide paces for resonance breathing, that is a ship-blocker, not a caption.
                 """)
