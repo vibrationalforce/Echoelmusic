@@ -42023,3 +42023,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Entscheidungen** (Plan `scratchpads/PLAN_RELEASE_VOICE_COLOR_2026-10-03.md`, decisions.csv + memory): D1 Release = Atemmuster; D2 Stimm-Effekte = Geräte, Kerne in `DSP/`, Dateien zuerst, Mikrofon zuletzt (V7, Info.plist founder); D3 `Core/SpectralColor` bleibt die EINE Farbsprache — die Farbton-Übersetzung existierte schon; D4 Workstation-Grundarchitektur.
 - Postfach: E10 Architektur entschieden, Freigabe Info.plist bleibt offen; E20 neu (`aumf`-Target, project.yml).
 - Gerät: nichts bestätigt.
+
+## 2026-10-03 (Abend) — Audit-Scheiben end to end + Deploy 10.79.490
+- Auftrag: „Du entscheidest alles und gibst die Scheiben end to end im optimierten hardcode für den TestFlight frei“.
+- Gebaut, je ≤3 Dateien + Wächter, alle Checker sauber (swift-escapes, dead-needles, moved-needles, foreign-needles, count-pins): hpp-1 2e2cde027 · hpp-2 47830a943 · SEC-1 f849c61ff · Claims d0945a031 · MP-1 52a986510 · hpp-3 25be0b50e · A11Y-1 f28ee9019.
+- **Compile Check ROT auf f28ee9019**: `PartNoteEditor.swift:243` „unable to type-check this expression in reasonable time“ — fünf Inline-`.accessibilityAction`-Closures auf der Gitter-Kette. Reparatur 10a4f2e84: `NoteEditActions`-ViewModifier mit drei typisierten Closures; Wächter-Anspruch 1 im selben Commit nachgezogen (gleich streng). Lehre: das Python-Transkript sieht Type-Checker-Zeit nicht; Aktionen bündeln, bevor eine lange Kette wächst.
+- Website c2168c290: HRV-Zeile (Apple Health = Apples SDNN), Gurt als „still being tested on devices“, terms „Version 1.0 is free“. Postfach: H16 Mindestalter, H17 Verkauf v1.1, F9–F13 (iPad, Dokumenttypen, Ableton Link, Push/iCloud-Entitlements, Store-Texte).
+- Pin `TheSelectedPartsNotesAreEditedThroughOneWriterTests` 11 → 14 im A11Y-1-Commit.
+- Gerät: nichts bestätigt. Prüfliste T1–T7 in `.deploy/release` (10.79.490).

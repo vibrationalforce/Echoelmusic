@@ -4960,3 +4960,9 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **D3 Farbton:** `Core/SpectralColor` bleibt die EINE Ton→Farbe-Sprache; jede neue Tonhöhenquelle speist sie. 117 Hz → ≈583 nm (gelb-orange). Keine Farbtherapie.
 - **D4 Workstation:** DMMWProject · ein Takt (PatternEngine) · Spur = Quelle → Geräte-Kette → Sends → Master · ModulationEngine · Ausgaben als Abonnenten · AudioEngine einziger Graph-Besitzer · UI = Projektion.
 - **Plan:** `scratchpads/PLAN_RELEASE_VOICE_COLOR_2026-10-03.md`. **Review:** 2026-11-02.
+
+### 2026-10-03 — Audit-Scheiben end to end, Deploy 10.79.490
+- **Auftrag (wörtlich):** „Du entscheidest alles und gibst die Scheiben end to end im optimierten hardcode für den TestFlight frei"
+- **Gebaut (je ≤3 Dateien + Wächter):** hpp-1 MIDI-Eingang ignoriert eigene Quellen (2e2cde027) · hpp-2 CoreMIDI-Meldung im Rückruf gelesen (47830a943) · SEC-1 OSC-Eingang begrenzt (f849c61ff) · MP-1 gescheiterter Kamera-Start sagt es (52a986510) · hpp-3 BLE-Gurt nach Bluetooth aus/an (25be0b50e) · A11Y-1 VoiceOver bearbeitet Noten (f28ee9019 + Compile-Reparatur 10a4f2e84: fünf Aktionen in EINEM ViewModifier, inline sprengten sie das Type-Check-Zeitlimit).
+- **Website:** HRV-Zeile, Gurt-Kennzeichnung, „free for a limited time" → „Version 1.0 is free" (c2168c290). Founder-Fragen: FOUNDER_INBOX H16/H17, F9–F13.
+- **Lehre:** eine lange SwiftUI-Modifier-Kette kann am Type-Checker scheitern, ohne dass ein Python-Transkript es sieht — Aktionen bündeln, bevor die Kette wächst. **Review:** 2026-11-02.
