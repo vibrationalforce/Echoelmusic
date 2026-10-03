@@ -4975,3 +4975,8 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
   Broadcast-S2. Dante/Atmos über externe ADM-OSC-Renderer, nie nachgebaut; kein Audio-Eingang.
 - **Warum:** Founder-Delegation; off-device beweisbar zuerst; Produktgesetz „integrieren".
 - **Plan:** `scratchpads/PLAN_SPATIAL_LIVE_2026-10-03.md` · **Review:** 2026-11-02
+
+### 2026-10-03 — Spatial S2 nach Messung umgeschnitten
+- **Entscheidung:** keine Glättung in der App und keine Besitz-Zeitsperre für den ADM-OSC-Eingang. S2 schrumpft auf LOW-5 (Drop-Zähler unbeobachtet, e919030a6); nächste Raum-Scheibe ist S3 (Binaural auf dem Gerät hinter einer Flagge).
+- **Warum:** `SpatialSceneStore.setPosition` hat genau einen Aufrufer, in der türlosen `ImmersiveStageView` — es gibt heute keinen zweiten Schreiber, den man schlichten müsste. Renderer (L-ISA, SPAT, Grapes) interpolieren selbst; Glättung in der App kostete Latenz.
+- **Review:** 2026-11-02.
