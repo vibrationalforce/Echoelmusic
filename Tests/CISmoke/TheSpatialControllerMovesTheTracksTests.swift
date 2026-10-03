@@ -14,6 +14,8 @@
 // · Claim 4 is a SOURCE-TEXT SCAN: the dispatch order in the receiver, the app wiring, and the
 //   hot-state counterweight (no ancestor body reads the scene).
 // · Claim 5 is a SOURCE-TEXT SCAN of the routing card's two sentences.
+// · Claim 6 is END-TO-END on the store (single Cartesian leaves, order, hold invalidation);
+//   claim 7 a SOURCE-TEXT SCAN of the status leaf (polled, unobserved move time).
 // · NOT COVERED, stated so nobody reads it as covered: a real datagram through the socket (the
 //   loopback path is `testALoopbackCueReachesTheDispatch`, a known flake, and is not repeated
 //   here); smoothing (there is none yet); any audible render (none — the scene is control plane).
@@ -30,6 +32,14 @@
 // algebra in claim 2 was driven in Python against `SpatialPosition.cartesian` before this file
 // was written (#442). Stripper `SourceText.codeOnly`: TRAGEND for claim 4 (the receiver's header
 // names `SpatialSceneStore` in prose).
+//
+// REVIEW REPAIR (claims 6–7, review of 6097629b6): claim 6 is END-TO-END on the real store —
+// its two order assertions and the invalidation assertion are REGRESSIONS against 6097629b6
+// (x-then-y lands at −37.99°; there was no hold to invalidate), transcribed in Python; its
+// revision assertion is a COUNTERWEIGHT (`upsert` already skipped an equal object). Claim 7 is a
+// SOURCE-TEXT SCAN, RED on 6097629b6 by anchor absence (`lastObjectMoveAt` did not exist) —
+// one finding (#486). Claim 4's repeat-window needle followed the rename `lastMoveAt` →
+// `lastObjectMoveAt` in the same commit (#456).
 
 import Foundation
 import XCTest
@@ -155,7 +165,7 @@ final class TheSpatialControllerMovesTheTracksTests: XCTestCase {
         XCTAssertLessThan(move.lowerBound, cue.lowerBound, "the object namespace must be tried before the cue whitelist")
         XCTAssertLessThan(crumb.lowerBound, dispatch.lowerBound, "a ladder rung stands before its call")
         XCTAssertFalse(receiver.contains("SpatialSceneStore"), "the socket must not know the scene — it hands the move to a closure")
-        XCTAssertTrue(receiver.contains("if move == lastMove, now - lastMoveAt < Self.repeatWindow { return }"),
+        XCTAssertTrue(receiver.contains("if move == lastMove, now - lastObjectMoveAt < Self.repeatWindow { return }"),
                       "identical repeats of a move are not dropped — a controller at 60 Hz floods the main actor")
 
         let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
@@ -176,12 +186,76 @@ final class TheSpatialControllerMovesTheTracksTests: XCTestCase {
     // MARK: - Claim 5 — the routing card says what the socket now accepts
 
     func testTheRoutingCardNamesTheObjectInput() throws {
-        let view = try String(contentsOf: try repoRoot().appendingPathComponent("Sources/Echoelmusic/Studio/PatchbayView.swift"),
-                              encoding: .utf8)
+        // Through the stripper (review of 6097629b6, LOW-7): a commented-out copy of a sentence
+        // must not keep this green. `codeOnly` keeps string literals, so the needles still match.
+        let view = try source("Sources/Echoelmusic/Studio/PatchbayView.swift")
         XCTAssertTrue(view.contains("and for ADM-OSC object positions /adm/obj/{n}/aed"),
                       "the ON sentence does not name the object input — the card would deny what the socket does")
         XCTAssertTrue(view.contains("and to let a spatial controller move each track over ADM-OSC (/adm/obj/{n}/…). Nothing else is accepted"),
                       "the OFF sentence still says nothing but the cues is accepted")
+    }
+
+    // MARK: - Claim 6 — single Cartesian leaves do not depend on arrival order (review of 6097629b6)
+
+    @MainActor
+    func testSingleCartesianLeavesLandWhereThePackedFormDoes() {
+        func fresh() -> (SpatialSceneStore, [TimelineLane]) {
+            let store = SpatialSceneStore()
+            let lanes = [TimelineLane(name: "Keys", kind: .midi)]
+            store.rebuild(from: lanes)
+            store.apply(ADMObjectInput(object: 1, value: .polar(azimuth: 0, elevation: 0, distance: 1)))
+            return (store, lanes)
+        }
+        let packed = ADMObjectInput.position(x: 0.8, y: 0.8, z: 0)
+        XCTAssertEqual(packed.azimuth, -45, accuracy: 1e-3)
+
+        let (xFirst, lanes) = fresh()
+        xFirst.apply(ADMObjectInput(object: 1, value: .x(0.8)))
+        xFirst.apply(ADMObjectInput(object: 1, value: .y(0.8)))
+        let (yFirst, yLanes) = fresh()
+        yFirst.apply(ADMObjectInput(object: 1, value: .y(0.8)))
+        yFirst.apply(ADMObjectInput(object: 1, value: .x(0.8)))
+        let a = xFirst.object(forLane: lanes[0].id)?.position.azimuth ?? .nan
+        let b = yFirst.object(forLane: yLanes[0].id)?.position.azimuth ?? .nan
+        // Without the hold, x-then-y lands at −37.99° (the projection of the first leaf is what
+        // the second merges into) — driven in Python before this claim was written (#442).
+        XCTAssertEqual(a, packed.azimuth, accuracy: 1e-3, "/x then /y must land where /xyz does")
+        XCTAssertEqual(b, packed.azimuth, accuracy: 1e-3, "/y then /x must land where /xyz does")
+
+        // A move from another path invalidates the hold: the next leaf merges into where the
+        // object IS, not into a cube point the controller sent before the Touch surface moved it.
+        xFirst.setPosition(laneID: lanes[0].id, SpatialPosition(azimuth: 30, elevation: 0, distance: 1))
+        xFirst.apply(ADMObjectInput(object: 1, value: .z(0.5)))
+        let after = xFirst.object(forLane: lanes[0].id)?.position
+        XCTAssertEqual(after?.azimuth ?? .nan, 30, accuracy: 1e-3,
+                       "a stale hold dragged the object back to −45° — it must be trusted only where it put the object")
+        XCTAssertEqual(after?.elevation ?? .nan, 26.565, accuracy: 1e-2)
+
+        // Counterweight: re-applying an unchanged position writes no new revision.
+        let revision = xFirst.scene.revision
+        xFirst.apply(ADMObjectInput(object: 1, value: .gain(xFirst.scene.objects[0].gain)))
+        XCTAssertEqual(xFirst.scene.revision, revision)
+    }
+
+    // MARK: - Claim 7 — SOURCE: a moving controller reads as traffic on the routing card
+
+    func testTheStatusLeafCountsObjectMovesAsTraffic() throws {
+        let receiver = try source("Sources/Echoelmusic/Sync/OSCReceiver.swift")
+        XCTAssertTrue(receiver.contains("@ObservationIgnored public private(set) var lastObjectMoveAt: TimeInterval = 0"),
+                      "the move time must stay UNOBSERVED — a trajectory would make every reader a stream-rate observer")
+        let leaf = try source("Sources/Echoelmusic/Studio/NetworkActivityDot.swift")
+        guard let start = leaf.range(of: "struct OSCInputStatusLine: View {"),
+              let end = leaf.range(of: "struct ", range: start.upperBound..<leaf.endIndex) else {
+            XCTFail("ANCHOR MISSING: OSCInputStatusLine moved — re-anchor (#408)")
+            return
+        }
+        let body = String(leaf[start.upperBound..<end.lowerBound])
+        XCTAssertTrue(body.contains("TimelineView(.periodic(from: .now, by: Self.tick))"),
+                      "the leaf must POLL on its own tick — the move time is not observed")
+        XCTAssertTrue(body.contains("let moved = receiver.lastObjectMoveAt"),
+                      "the status line ignores object moves and says 'nothing received' while tracks move")
+        XCTAssertTrue(body.contains("if fresh || movesFresh { Circle().fill(EchoelTheme.accent) }"),
+                      "the dot stays hollow while a controller moves the tracks")
     }
 
     // MARK: - Helpers

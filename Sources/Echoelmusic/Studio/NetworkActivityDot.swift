@@ -154,6 +154,9 @@ struct NetworkOutputHeader: View {
 /// above: `lastReceivedTimestamp` and the counters move per cue on an `@Observable`, and the
 /// routing card's body hosts text fields. Words, not "sending": this is the direction Echoel
 /// LISTENS in, and the honest states are off · open, nothing received · a cue just arrived.
+/// Spatial S1: ADM-OSC object moves are traffic too. Their time is NOT observed (a trajectory
+/// is a stream), so this leaf reads it on its own 0.5 s tick — without it, a controller moving
+/// every track read as "nothing received" (review of 6097629b6).
 @MainActor
 struct OSCInputStatusLine: View {
     let receiver: OSCReceiver
@@ -164,19 +167,25 @@ struct OSCInputStatusLine: View {
             let now = CFAbsoluteTimeGetCurrent()
             let fresh = receiver.lastReceivedTimestamp > 0
                 && now - receiver.lastReceivedTimestamp < NetworkSendState.freshnessWindow
+            let moved = receiver.lastObjectMoveAt
+            let movesFresh = moved > 0 && now - moved < NetworkSendState.freshnessWindow
             let line: String = {
                 if let error = receiver.lastError { return error }
                 guard receiver.isActive else { return "off" }
                 if fresh { return "cue: \(receiver.lastCommandSummary)" }
-                return receiver.lastReceivedTimestamp > 0
-                    ? "open on \(receiver.boundPort) · last: \(receiver.lastCommandSummary)"
+                if movesFresh { return "moving tracks over ADM-OSC" }
+                if receiver.lastReceivedTimestamp > 0 {
+                    return "open on \(receiver.boundPort) · last: \(receiver.lastCommandSummary)"
+                }
+                return moved > 0
+                    ? "open on \(receiver.boundPort) · last: ADM-OSC track positions"
                     : "open on \(receiver.boundPort) · nothing received"
                         + (receiver.ignoredCount > 0 ? " · \(receiver.ignoredCount) ignored" : "")
                         + (receiver.refusedCount > 0 ? " · \(receiver.refusedCount) refused" : "")
             }()
             HStack(spacing: 7) {
                 Group {
-                    if fresh { Circle().fill(EchoelTheme.accent) }
+                    if fresh || movesFresh { Circle().fill(EchoelTheme.accent) }
                     else if receiver.isActive { Circle().strokeBorder(EchoelTheme.accent, lineWidth: 2.5) }
                     else { Circle().strokeBorder(EchoelTheme.border, lineWidth: 1.5) }
                 }

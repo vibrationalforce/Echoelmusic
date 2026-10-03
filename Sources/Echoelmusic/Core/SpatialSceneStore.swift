@@ -63,11 +63,24 @@ public final class SpatialSceneStore {
     /// is 1-based into the scene ARRAY (the routing table the outgoing stream numbers too); an
     /// index past the last track moves nothing. The move survives a `rebuild` like any other,
     /// because a rebuild keeps an existing object as-is.
+    ///
+    /// Single Cartesian leaves merge through a per-object `CartesianHold`, so `/x` then `/y`
+    /// lands where `/y` then `/x` does. An unchanged result writes nothing: a controller cycling
+    /// through N objects never repeats the receiver's last move, so its static positions arrive
+    /// at the full send rate, and each would otherwise touch the observed `scene`.
     public func apply(_ input: ADMObjectInput) {
         let index = input.object - 1
         guard scene.objects.indices.contains(index) else { return }
-        scene.upsert(input.applied(to: scene.objects[index]))
+        let current = scene.objects[index]
+        let merged = input.applied(to: current, hold: cartesianHolds[current.id])
+        cartesianHolds[current.id] = merged.hold
+        guard merged.object != current else { return }
+        scene.upsert(merged.object)
     }
+
+    /// The unprojected cube point per object id (see `ADMObjectInput.CartesianHold`). Not
+    /// observed: it is input bookkeeping, never displayed.
+    @ObservationIgnored private var cartesianHolds: [String: ADMObjectInput.CartesianHold] = [:]
 
     /// Set one track's apparent size / focus (0 = point source … 1 = enveloping).
     public func setExtent(laneID: UUID, _ extent: Float) {

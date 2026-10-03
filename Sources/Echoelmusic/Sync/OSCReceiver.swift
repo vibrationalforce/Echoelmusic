@@ -302,25 +302,59 @@ public struct ADMObjectInput: Equatable, Sendable {
         return ADMObjectInput(object: n, value: value)
     }
 
+    /// The cube point a controller last sent for one object, and the position it produced.
+    ///
+    /// ADM-OSC Cartesian space is the cube [-1, 1]³; the scene is a sphere. Projecting each
+    /// single leaf onto the sphere and merging the NEXT leaf into the projection made the result
+    /// depend on arrival order (review of 6097629b6: front, then `/x 0.8`, `/y 0.8` landed at
+    /// −38° while `/y` then `/x` landed at −45°, the packed `/xyz 0.8 0.8 0` answer). The hold
+    /// keeps the UNPROJECTED point, so single leaves merge in the cube and only the result is
+    /// projected. It is trusted only while the object still sits where it put it (`produced`):
+    /// a polar leaf, the Touch surface or automation moving the object invalidates it.
+    public struct CartesianHold: Equatable, Sendable {
+        public var x: Float
+        public var y: Float
+        public var z: Float
+        public var produced: SpatialPosition
+    }
+
     /// Pure merge: the object with this move applied. A single leaf changes ONE component and
-    /// keeps the others — a Cartesian leaf goes through the object's current Cartesian position
-    /// (`SpatialPosition.cartesian`, the same derivation the sender uses) and back.
-    public func applied(to object: SpatialObject) -> SpatialObject {
+    /// keeps the others. A Cartesian leaf merges into the held cube point when it is still valid,
+    /// else into the object's current Cartesian position (`SpatialPosition.cartesian`, the same
+    /// derivation the sender uses). Returns the hold to keep for the next leaf.
+    public func applied(to object: SpatialObject,
+                        hold: CartesianHold?) -> (object: SpatialObject, hold: CartesianHold?) {
         var o = object
         let p = o.position
         let c = p.cartesian
+        let valid: CartesianHold? = hold?.produced == p ? hold : nil
+        var cube = (x: valid?.x ?? c.x, y: valid?.y ?? c.y, z: valid?.z ?? c.z)
         switch value {
         case .azimuth(let a):   o.position = SpatialPosition(azimuth: a, elevation: p.elevation, distance: p.distance)
         case .elevation(let e): o.position = SpatialPosition(azimuth: p.azimuth, elevation: e, distance: p.distance)
         case .distance(let d):  o.position = SpatialPosition(azimuth: p.azimuth, elevation: p.elevation, distance: d)
         case .polar(let a, let e, let d): o.position = SpatialPosition(azimuth: a, elevation: e, distance: d)
-        case .x(let x): o.position = Self.position(x: x, y: c.y, z: c.z)
-        case .y(let y): o.position = Self.position(x: c.x, y: y, z: c.z)
-        case .z(let z): o.position = Self.position(x: c.x, y: c.y, z: z)
-        case .cartesian(let x, let y, let z): o.position = Self.position(x: x, y: y, z: z)
-        case .gain(let g): o.gain = g   // already clamped to 0…1 by `parse`
+        case .gain(let g):
+            o.gain = g   // already clamped to 0…1 by `parse`
+            return (o, valid)
+        case .x(let x): cube.x = x
+        case .y(let y): cube.y = y
+        case .z(let z): cube.z = z
+        case .cartesian(let x, let y, let z): cube = (x, y, z)
         }
-        return o
+        switch value {
+        case .x, .y, .z, .cartesian:
+            let produced = Self.position(x: cube.x, y: cube.y, z: cube.z)
+            o.position = produced
+            return (o, CartesianHold(x: cube.x, y: cube.y, z: cube.z, produced: produced))
+        default:
+            return (o, nil)
+        }
+    }
+
+    /// The merge without a hold — each Cartesian leaf merges into the current projection.
+    public func applied(to object: SpatialObject) -> SpatialObject {
+        applied(to: object, hold: nil).object
     }
 
     /// The inverse of `SpatialPosition.cartesian` (x right, y front, z up; positive azimuth =
@@ -378,13 +412,17 @@ public final class OSCReceiver {
     /// trajectories at tens of messages per object per second, and an observed counter would
     /// make every reader a high-rate observer (the 10.76.50 law).
     @ObservationIgnored public private(set) var objectMovesAccepted = 0
+    /// `CFAbsoluteTimeGetCurrent()` of the last accepted object move — NOT observed, for the
+    /// same reason. The routing card's status leaf POLLS it on its own 0.5 s `TimelineView`
+    /// tick, so a moving controller reads as traffic instead of "nothing received" (review of
+    /// 6097629b6) without making the card a stream-rate observer.
+    @ObservationIgnored public private(set) var lastObjectMoveAt: TimeInterval = 0
 
     @ObservationIgnored private var listener: NWListener?
     @ObservationIgnored private var connections: [NWConnection] = []
     @ObservationIgnored private var lastCommand: OSCControlCommand?
     @ObservationIgnored private var lastBreadcrumbAt: TimeInterval = 0
     @ObservationIgnored private var lastMove: ADMObjectInput?
-    @ObservationIgnored private var lastMoveAt: TimeInterval = 0
     @ObservationIgnored private var objectsAnnounced = false
 
     private static let portKey = "net.osc.in.port"
@@ -565,9 +603,9 @@ public final class OSCReceiver {
     /// otherwise bury the lifecycle ladder a crash read depends on (SEC-1).
     private func accept(move: ADMObjectInput) {
         let now = CFAbsoluteTimeGetCurrent()
-        if move == lastMove, now - lastMoveAt < Self.repeatWindow { return }
+        if move == lastMove, now - lastObjectMoveAt < Self.repeatWindow { return }
         lastMove = move
-        lastMoveAt = now
+        lastObjectMoveAt = now
         objectMovesAccepted &+= 1
         if !objectsAnnounced {
             objectsAnnounced = true
