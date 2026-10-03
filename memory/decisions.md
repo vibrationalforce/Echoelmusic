@@ -4966,3 +4966,12 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Gebaut (je ≤3 Dateien + Wächter):** hpp-1 MIDI-Eingang ignoriert eigene Quellen (2e2cde027) · hpp-2 CoreMIDI-Meldung im Rückruf gelesen (47830a943) · SEC-1 OSC-Eingang begrenzt (f849c61ff) · MP-1 gescheiterter Kamera-Start sagt es (52a986510) · hpp-3 BLE-Gurt nach Bluetooth aus/an (25be0b50e) · A11Y-1 VoiceOver bearbeitet Noten (f28ee9019 + Compile-Reparatur 10a4f2e84: fünf Aktionen in EINEM ViewModifier, inline sprengten sie das Type-Check-Zeitlimit).
 - **Website:** HRV-Zeile, Gurt-Kennzeichnung, „free for a limited time" → „Version 1.0 is free" (c2168c290). Founder-Fragen: FOUNDER_INBOX H16/H17, F9–F13.
 - **Lehre:** eine lange SwiftUI-Modifier-Kette kann am Type-Checker scheitern, ohne dass ein Python-Transkript es sieht — Aktionen bündeln, bevor die Kette wächst. **Review:** 2026-11-02.
+
+### 2026-10-03 — Spatial-Reihenfolge (Live Set · Spatial · Binaural · Broadcast)
+- **Entscheidung:** EIN Raum-Modell (`SpatialSceneStore`, Objekt n = Spur n) trägt Eingang,
+  Render, Live-Set und Broadcast. Reihenfolge: S1 ADM-OSC-Eingang (gebaut, `6097629b6`) →
+  S2 Glättung/Besitz → S3 Binaural on device (`AVAudioEnvironmentNode`, hinter Flag,
+  gerätegeprüft) → S4 Raum-Schnappschuss je Perform-Szene → S5 Binaural-Broadcast nach
+  Broadcast-S2. Dante/Atmos über externe ADM-OSC-Renderer, nie nachgebaut; kein Audio-Eingang.
+- **Warum:** Founder-Delegation; off-device beweisbar zuerst; Produktgesetz „integrieren".
+- **Plan:** `scratchpads/PLAN_SPATIAL_LIVE_2026-10-03.md` · **Review:** 2026-11-02
