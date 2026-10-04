@@ -2923,7 +2923,7 @@ struct EchoelStudioView: View {
         // clock. Never do this per frame from a 30 fps source — that is the other law.
         .onChange(of: displayedMenu) { _, menu in
             Task { @MainActor in
-                withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo(menu.id, anchor: .center) }
+                withAnimation(EchoelTheme.motionStandard) { proxy.scrollTo(menu.id, anchor: .center) }
             }
         }
         // WA4-P2 — the `.onAppear` companion the note below asked for "if `activeMenu` ever

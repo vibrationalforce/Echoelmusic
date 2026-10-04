@@ -207,7 +207,7 @@ struct LiveColaboView: View {
     /// (decision 2026-06-20: measured, not claimed).
     private var bioSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Toggle(isOn: $shareBio.animation(.easeInOut(duration: 0.15))) {
+            Toggle(isOn: $shareBio.animation(EchoelTheme.motionQuick)) {
                 Text("Share my pulse (live)")
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
             }

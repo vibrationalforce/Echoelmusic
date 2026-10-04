@@ -296,6 +296,20 @@ enum EchoelTheme {
     /// How far a pressed control dims. Opacity only — the Uncodixfy law bans scale on tap.
     static let pressedOpacity: Double = 0.6
 
+    // MARK: Motion — two speeds (Restructure F2b, 2026-10-04)
+    //
+    // Measured before: seven UI transitions in five durations (0.12 · 0.15 · 0.18 · 0.22) and
+    // two curves; 0.22 sat outside the 100–200 ms law in CLAUDE.md. Opacity, colour and
+    // scroll only — never scale (Uncodixfy). The three `.linear(duration: 0.06)` sites in
+    // `BreathGuideView`/`MeditationView` are signal followers tracking the breath, not
+    // transitions, and keep their own rate. Computed, so no Animation is stored in a global.
+
+    /// Feedback on the control under the finger: a scrub, a switch.
+    static var motionQuick: Animation { .easeOut(duration: 0.12) }
+
+    /// Something comes, goes or moves into view: a window, a caption, a scroll.
+    static var motionStandard: Animation { .easeInOut(duration: 0.18) }
+
     // ⛔ #1027 — `readableContentWidth` STOOD HERE AND IS REMOVED ON FOUNDER ORDER
     // (2026-09-06): *"Mache das rückgängig du hast das falsche korrigiert. Ich will
     // adaptive Größe also Bildschirmgröße ausfüllend für alle Ansichten."*

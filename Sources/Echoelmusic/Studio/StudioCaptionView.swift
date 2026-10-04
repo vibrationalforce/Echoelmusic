@@ -70,7 +70,7 @@ struct StudioCaptionView: View {
              : caption.text)
             .font(EchoelTheme.font(11))
             .foregroundStyle(EchoelTheme.dim)
-            .animation(.easeInOut(duration: 0.18), value: caption.text)
+            .animation(EchoelTheme.motionStandard, value: caption.text)
     }
 }
 #endif

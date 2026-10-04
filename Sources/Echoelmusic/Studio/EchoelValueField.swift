@@ -933,7 +933,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                                  : (isEnabled ? EchoelTheme.borderStrong : EchoelTheme.border),
                           lineWidth: 1))
         // (The position indicator is layered above, as a `.background` — see `faderTrack`.)
-        .animation(.easeOut(duration: 0.12), value: scrubbing)
+        .animation(EchoelTheme.motionQuick, value: scrubbing)
         .sheet(isPresented: $showPad) {
             EchoelNumberPad(title: String(localized: String.LocalizationValue(label)), initial: Double(value), decimals: decimals,
                             unit: unit, range: Double(range.lowerBound)...Double(range.upperBound),

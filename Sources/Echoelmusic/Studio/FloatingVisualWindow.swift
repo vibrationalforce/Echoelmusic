@@ -1223,7 +1223,7 @@ struct FloatingVisualWindow: View {
             .buttonStyle(.plain)
             .accessibilityLabel(windowSize.isFullscreen ? String(localized: "Exit fullscreen") : String(localized: "Resize visual"))
             .accessibilityValue(windowSize.label)
-            Button { withAnimation(.easeInOut(duration: 0.15)) { isPresented = false } } label: {
+            Button { withAnimation(EchoelTheme.motionStandard) { isPresented = false } } label: {
                 Image(systemName: "xmark")
                     .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
@@ -1300,7 +1300,7 @@ struct FloatingVisualWindow: View {
             var tx = Transaction()
             tx.disablesAnimations = true
             withTransaction(tx) { sizeRaw = sizeWideEnoughForARunningTake(.small).rawValue }
-            withAnimation(.easeOut(duration: 0.22)) { resizeDip = false }
+            withAnimation(EchoelTheme.motionStandard) { resizeDip = false }
         }
     }
 
@@ -1335,7 +1335,7 @@ struct FloatingVisualWindow: View {
             withTransaction(tx) {
                 sizeRaw = sizeWideEnoughForARunningTake(windowSize.next).rawValue
             }
-            withAnimation(.easeOut(duration: 0.22)) { resizeDip = false }
+            withAnimation(EchoelTheme.motionStandard) { resizeDip = false }
         }
     }
 

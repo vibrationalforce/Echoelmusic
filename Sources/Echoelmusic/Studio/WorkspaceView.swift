@@ -759,7 +759,7 @@ struct WorkspaceView: View {
                 // live waveform stays in its own leaf.
                 #if canImport(AVFoundation)
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { floatingVisualVisible.toggle() }
+                    withAnimation(EchoelTheme.motionStandard) { floatingVisualVisible.toggle() }
                 } label: {
                     ImmersiveMonitorMini(active: cameraRPPG.isRunning)
                 }
