@@ -48,7 +48,7 @@ struct TrackSampleRow: View {
                     if !assets.isEmpty {
                         Section("Library") {
                             ForEach(assets) { asset in
-                                Text(asset.fileName).tag(String?.some(asset.url.path))
+                                Text(asset.displayName).tag(String?.some(asset.url.path))
                             }
                         }
                     }
