@@ -221,6 +221,21 @@ final class RetroCapture {
     /// gap gets a counter and a surface of its own.
     nonisolated(unsafe) private let droppedFrames: UnsafeMutablePointer<Int64>
 
+    /// Broadcast — "ring frame F was rendered at host time H, at rate R": four `UInt64` cells
+    /// `[sequence, frame, hostTicks, rateBits]`, written by the tap once per buffer, read by
+    /// `masterRingView()` from the broadcast pump.
+    ///
+    /// ⭐ A SEQUENCE LOCK, NOT A LOCK. The writer makes the sequence odd, writes the three
+    /// values, makes it even again — two fences, no lock, no allocation, no ObjC beyond the two
+    /// `AVAudioTime` getters the meter tap already pays. The READER retries when it sees an odd
+    /// or changed sequence, so a torn triple (frame from one buffer, host time from the next)
+    /// can never reach the stream's clock. The tap never waits for the reader.
+    ///
+    /// ⚠️ ADDED FOR THE STREAM, AND IT IS THE ONLY THING THE STREAM ADDS TO THIS FILE'S TAP.
+    /// The stream reads the SAME ring the recorder drains — it installs no tap of its own, so
+    /// the master output still has exactly one observer on `mainMixerNode`.
+    nonisolated(unsafe) private let masterAnchor: UnsafeMutablePointer<UInt64>
+
     /// Raised by the disk writer on the FIRST failed write, read by the 2 Hz waveform timer.
     ///
     /// A plain `Bool` cell, matching `isActive` next to it, because the traffic here is
@@ -273,6 +288,9 @@ final class RetroCapture {
 
         droppedFrames = .allocate(capacity: 1)
         droppedFrames.initialize(to: 0)
+
+        masterAnchor = .allocate(capacity: 4)
+        masterAnchor.initialize(repeating: 0, count: 4)
     }
 
     deinit {
@@ -297,6 +315,7 @@ final class RetroCapture {
         writeFailure.deallocate()
         drainFrame.deallocate()
         droppedFrames.deallocate()
+        masterAnchor.deallocate()
     }
 
     // MARK: - Tap installation
@@ -331,8 +350,9 @@ final class RetroCapture {
         let ringPtr  = ring
         let writePtr = ringWriteFrame
         let cap      = ringCapacity
+        let anchorPtr = masterAnchor
 
-        node.installTap(onBus: 0, bufferSize: 4096, format: format) { @Sendable buffer, _ in
+        node.installTap(onBus: 0, bufferSize: 4096, format: format) { @Sendable buffer, when in
             guard let channelData = buffer.floatChannelData else { return }
             let frameCount = Int(buffer.frameLength)
             let chCount    = Int(buffer.format.channelCount)
@@ -341,6 +361,21 @@ final class RetroCapture {
             // hottest loop in the app, and reading it through the accessor would also imply a
             // second consumer that does not exist. The acquire half belongs to the READERS.
             var frame      = Int(writePtr.pointee)
+
+            // Broadcast anchor (see `masterAnchor`): the host time of THIS buffer's first
+            // frame. Written before the samples so a reader that sees the new cursor below
+            // also sees an anchor at or before it. Skipped when CoreAudio gave no host time —
+            // the previous anchor stays valid, it only grows older.
+            if when.isHostTimeValid {
+                let seq = anchorPtr[0] &+ 1                      // odd: write in progress
+                anchorPtr[0] = seq
+                OSMemoryBarrier()
+                anchorPtr[1] = UInt64(bitPattern: Int64(frame))
+                anchorPtr[2] = when.hostTime
+                anchorPtr[3] = buffer.format.sampleRate.bitPattern
+                OSMemoryBarrier()
+                anchorPtr[0] = seq &+ 1                          // even: consistent again
+            }
 
             for f in 0..<frameCount {
                 let slot = (frame % cap) * 2
@@ -364,6 +399,53 @@ final class RetroCapture {
         waveformTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.updateWaveform() }
         }
+    }
+
+    // MARK: - Broadcast reader (the stream's view of the master output)
+
+    /// One consistent look at the ring for a LIVE reader: where the tap has written to, how big
+    /// the ring is, and the newest host-time anchor (nil until the first buffer with a host
+    /// time). Safe from any thread; never blocks the tap.
+    nonisolated func masterRingView() -> MasterRingView {
+        var anchor: BroadcastAudioAnchor?
+        for _ in 0..<4 {
+            let before = masterAnchor[0]
+            OSMemoryBarrier()
+            let f = Int64(bitPattern: masterAnchor[1])
+            let h = masterAnchor[2]
+            let r = Double(bitPattern: masterAnchor[3])
+            OSMemoryBarrier()
+            let after = masterAnchor[0]
+            if before == after, before & 1 == 0 {
+                if before != 0 { anchor = BroadcastAudioAnchor(frame: f, hostTicks: h, sampleRate: r) }
+                break
+            }
+        }
+        return MasterRingView(writeFrame: RetroRingCursor.load(ringWriteFrame),
+                              capacity: ringCapacity,
+                              anchor: anchor)
+    }
+
+    /// Copies `count` frames starting at ABSOLUTE ring frame `start` into two planar buffers.
+    /// Returns false — and the copy must be discarded — when the tap may have overwritten any
+    /// of those frames during the copy (the reader fell more than a ring behind), or when the
+    /// frames are not written yet. The check runs AFTER the copy: a frame the tap reached
+    /// while we read it is caught by the second cursor load, never by luck.
+    nonisolated func copyMasterFrames(from start: Int64, count: Int,
+                                      left: UnsafeMutablePointer<Float>,
+                                      right: UnsafeMutablePointer<Float>) -> Bool {
+        guard count > 0, start >= 0 else { return false }
+        let end = start + Int64(count)
+        let written = RetroRingCursor.load(ringWriteFrame)
+        guard end <= written, written - start <= Int64(ringCapacity) else { return false }
+        let cap = ringCapacity
+        for i in 0..<count {
+            let slot = Int((start + Int64(i)) % Int64(cap)) * 2
+            left[i] = ring[slot]
+            right[i] = ring[slot + 1]
+        }
+        let after = RetroRingCursor.load(ringWriteFrame)
+        return after - start <= Int64(cap)
     }
 
     // MARK: - Waveform

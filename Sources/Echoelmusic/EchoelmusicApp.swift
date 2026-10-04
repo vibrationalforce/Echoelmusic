@@ -594,11 +594,11 @@ struct EchoelmusicApp: App {
         // on EVERY unrelated Patchbay edit (mid-performance kill) and could start
         // it alongside the camera (the one real both-sources-at-once path). The
         // blehrs.in port remains a data-flow port; it no longer drives lifecycle.
-        // Broadcast comes online on demand: a route to rtmp.out / srt.out starts the
-        // stream (engine permitting), removing the last connection stops it.
-        let wantsBroadcast = g.hasEnabledRoute(toSink: "rtmp.out") || g.hasEnabledRoute(toSink: "srt.out")
-        broadcast.transport = g.hasEnabledRoute(toSink: "srt.out") ? .srt : .rtmp
-        if wantsBroadcast { broadcast.start() } else { broadcast.stop() }
+        // Broadcast B1 (2026-10-04): the stream has ONE lifecycle owner — the Go Live / Stop
+        // button in `BroadcastView` — for the BLE-3 reason above. A route to rtmp.out / srt.out
+        // used to start the stream and EVERY routing edit without one called `broadcast.stop()`,
+        // so an unrelated Patchbay change would have ended a live stream mid-performance. The
+        // rtmp.out / srt.out ports remain data-flow ports; they no longer drive lifecycle.
     }
 
     @ViewBuilder

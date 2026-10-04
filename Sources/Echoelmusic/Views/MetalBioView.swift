@@ -1793,6 +1793,14 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             buffer.makeRenderCommandEncoder(descriptor: pass)?.endEncoding()
         }
 
+        // Broadcast picture (`Stream/BroadcastVideoTap`): only while a stream is live, at most
+        // at the stream's frame rate, into the stream's OWN pixel buffer — the drawable above
+        // stays write-only (`framebufferOnly` is not touched; see the tombstone on
+        // `lastFramebufferOnly`). One lock read per frame when no stream is running.
+        if let spec = BroadcastVideoTap.shared.dueFrame(nowTicks: mach_absolute_time()) {
+            encodeBroadcastFrame(into: buffer, spec: spec)
+        }
+
         // SYNCHRONOUS present in the current CATransaction (presentsWithTransaction = true,
         // set in makeUIView). Commit the GPU work, block until it is SCHEDULED (fast — not
         // until completed), then present the drawable directly. This puts the Metal frame in
@@ -1802,6 +1810,51 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         buffer.commit()
         buffer.waitUntilScheduled()
         drawable.present()
+    }
+
+    // MARK: - Broadcast picture
+
+    /// Created on the first stream picture, kept for the renderer's life (a pixel-buffer pool
+    /// and a texture cache — both cheap once made, expensive per frame).
+    private var broadcastTarget: BroadcastFrameTarget?
+
+    /// Draws the current uniforms once more into a stream-sized pixel buffer. Same pipeline,
+    /// same shader, same uniforms — only `aspect` follows the stream's frame, so circles stay
+    /// circles at 16:9. Every exit either delivers the frame or abandons its slot.
+    private func encodeBroadcastFrame(into buffer: MTLCommandBuffer, spec: BroadcastVideoSpec) {
+        let tap = BroadcastVideoTap.shared
+        guard let pipeline, let device = commandQueue?.device else { tap.abandon(); return }
+        if broadcastTarget == nil { broadcastTarget = BroadcastFrameTarget(device: device) }
+        guard let made = broadcastTarget?.make(width: spec.width, height: spec.height,
+                                               pixelFormat: .bgra8Unorm_srgb) else {
+            tap.abandon(); return
+        }
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = made.texture
+        pass.colorAttachments[0].loadAction = .clear
+        pass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        pass.colorAttachments[0].storeAction = .store
+        guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else {
+            tap.abandon(); return
+        }
+        encoder.setRenderPipelineState(pipeline)
+        var u = uniforms
+        u.aspect = Float(spec.width) / Float(spec.height)
+        encoder.setVertexBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
+        encoder.setFragmentBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        encoder.endEncoding()
+        // Stamped at ENCODE time on the host clock — the clock the audio anchor uses.
+        let frame = BroadcastVideoFrame(pixelBuffer: made.pixelBuffer,
+                                        hostTicks: mach_absolute_time(),
+                                        metalTexture: made.cvTexture)
+        buffer.addCompletedHandler { completed in
+            if completed.status == .completed {
+                tap.deliver(frame)
+            } else {
+                tap.abandon()
+            }
+        }
     }
 
     // MARK: - Shader (Metal Shading Language, compiled at runtime)

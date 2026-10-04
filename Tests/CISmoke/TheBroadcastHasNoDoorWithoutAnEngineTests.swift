@@ -2,7 +2,9 @@
 // Echoel — modes census 2026-09-26 (Stream S1): streaming is absent, and the app must say so.
 //
 // WHAT THIS PINS. The founder asked about a Stream mode. Measured: nothing in this build can
-// stream — `BroadcastPublisher.engineAvailable` is `#if canImport(HaishinKit)`, HaishinKit is
+// stream — `BroadcastPublisher.engineAvailable` is `BroadcastEngineFactory.make() != nil`, i.e.
+// `#if canImport(RTMPHaishinKit)` since Broadcast B1 (2026-10-04; it read `canImport(HaishinKit)`
+// before — the premise is unchanged, only the product name moved), HaishinKit is
 // not a dependency (`Package.swift` `dependencies: []`), the RTMP/SRT transports are
 // `.roadmap`, and `BroadcastView` has no construction site. A door onto a dead endpoint is an
 // App Store 2.1 rejection and a promise the instrument cannot keep on stage.
