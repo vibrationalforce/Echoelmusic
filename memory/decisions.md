@@ -4997,3 +4997,8 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 **Warum:** Jeder Befund hat dieselbe Form: eine Tatsache hat mehrere Besitzer. Dazu schreibt Speichern Domänen, die Öffnen nie liest. Ein Neuschreiben verlöre die bewachten Gesetze; die Migration in Scheiben hält jedes Gate grün und jeden Schritt umkehrbar.
 
 **Review:** 2026-11-03
+
+### 2026-10-04 — A3 eingegrenzt: der Raum reist mit dem Stück, Modulation und Routing nicht
+- **Entscheidung:** `DMMWProject.spatial` (optional, verlustfrei dekodiert); Öffnen stellt die Raumszene NACH dem Song wieder her; `rebuild` behält den Raum. Modulationsmatrix und Signal-Routen bleiben App-Zustand. I1 (eine Steuerleiste) wartet auf eine Geräte-Runde. I4 hat keine Tür entfernt — keine ist ein reines Doppel.
+- **Warum:** Der Zensus (Z. 633/654) und `TheProjectEnvelopeImportsWithoutRestructuringTests` Anspruch 6 trennen Stück und App-Einstellung; Tonart/Tempo reisen schon über `Project`. Rund 20 Wächter halten bezahlte Gerätevereinbarungen über das Kopf-Layout fest.
+- **Commit:** `73deb73ba` · **Wächter:** `TheSpatialSceneTravelsWithThePieceTests` · **Review:** 2026-11-03.

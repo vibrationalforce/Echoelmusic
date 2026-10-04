@@ -50,8 +50,17 @@ durch alle WA-Phasen. Neue Fähigkeiten baut er nicht.
 - Die Geräte-Identität hat drei Formen (`com.echoelmusic.device.echoel` ·
   `echoel.instrument` · `echoel.bodyvibe`). `.assemble(` hat 0 Aufrufer.
 
-**Folge für den Nutzer:** Ein gespeichertes Projekt öffnet sich mit anderem Licht, anderem Raum,
-anderem Routing und anderer Modulation, als beim Speichern eingestellt waren. Für eine
+⛔ **Korrektur (A3, 2026-10-04): Routing und Modulation gehören NICHT ins Stück — absichtlich.**
+Der Ownership-Zensus (`docs/dev/SESSION_OWNERSHIP_CENSUS.md`, Z. 633 und 654) führt die
+Modulationsmatrix als App-Einstellung und Routing/Netz/Hardware außerhalb der Session; nur
+Raumpositionen und der kreative Licht-Zustand sind Session. Und
+`TheProjectEnvelopeImportsWithoutRestructuringTests` Anspruch 6 verbietet `ModulationMatrix`,
+`ModulationEngine` und `SignalRouter` im Umschlag: ein Projekt, das sie trüge, würde beim
+Öffnen fremder Stücke die eigenen Einstellungen des Nutzers ersetzen. Die Zeile oben zählte sie
+als Lücke; das war falsch. Echte Lücken sind Raum (geschlossen mit A3a) und Licht (siehe §6).
+
+**Folge für den Nutzer:** Ein gespeichertes Projekt öffnete sich mit anderem Raum (bis A3a) und
+anderem Licht, als beim Speichern eingestellt waren. Für eine
 Workstation ist das der schwerste Befund, weil man ihn nicht sieht: die Datei sieht vollständig
 aus.
 
@@ -104,7 +113,9 @@ Steuerung     SessionController (@MainActor @Observable) — EIN Besitzer für:
                          │
 Domäne        DMMWProject = DAS Dokument. Öffnen liest alles, was Speichern schreibt:
               timebase · musical · tracks/devices · timeline · media · automation ·
-              lighting · spatial · routing · modulation
+              lighting (kreativ) · spatial
+              ⛔ NICHT: routing · modulation — App-Einstellungen (Zensus Z. 633/654,
+              Envelope-Wächter Anspruch 6); siehe die Korrektur in §1B
                          │
 Engine        PatternEngine = die EINE Uhr · Transport = der EINE Tempo-Besitzer ·
               EngineBus (Bio/MIDI/Musical-Frames) · AudioEngine · Sync-Sender
@@ -200,8 +211,10 @@ Wird es mehr, steht der Grund im Commit-Text. Gates: Xcode Compile Check plus CI
   `Studio/` laufen über ihn, mit Ratsche auf 0.
 - **A2 Run-State, ein Besitzer:** `@State running` und `bus.instrumentRunning` werden
   Projektionen des Controllers.
-- **A3 Die Rundreise schließen, Domäne für Domäne:** `musical`/`timebase` zuerst (Tempo, Takt,
-  Tonart), dann Licht, Raum, Routing, Modulation. Der Rundreise-Wächter wächst je Domäne.
+- **A3 Die Rundreise schließen, Domäne für Domäne:** gemessen 2026-10-04: `musical` und
+  `timebase` reisen schon über die `Project`-Felder (Tonart, Skala, Tempo, Stil) — die Lücke war
+  der RAUM (A3a, gebaut). Licht hat heute EINEN kreativen Wert (`lookIntensity`, nur im Speicher)
+  und kommt später. Routing und Modulation reisen absichtlich NICHT mit (Korrektur in §1B).
 - **A4 Ein Tempo-Besitzer:** `Transport`, persistiert nur noch in `Project.bpm`; `lockedBPM`
   bleibt Migrationsquelle.
 - **A5 Save/Open aus der View** in den Controller (`SessionSaveOpen` bleibt der Serialisierer).
@@ -246,13 +259,18 @@ Alles Übrige ist durch „Du entscheidest“ (2026-10-03) und E18/E19 gedeckt u
 | F1 | gebaut — `ef49372bf`; Compile Check grün, Auto-Merge → main = `ef49372bf` (⇒ Build for Testing grün); Gerät offen |
 | F2a | gebaut — `704e0acfa` (Abstands-Skala `spaceXS…spaceXL`, F1-Dateien migriert, Ratsche 696) |
 | F2b | gebaut — zwei Bewegungs-Tokens, sieben Übergänge; F2a+F2b mit Auto-Merge → main = `6f1d71279` (⇒ Compile Check + Build for Testing grün); Gerät offen |
-| F3 | gepusht — `8613d84d6`: „spielt“ = grünes Label im `borderStrong`-Rahmen auf `fill`, nie eine Fläche (`TheRunningStateIsOneLookTests`); Gates laufen |
-| F4a | lokal — `a0a53ba98`: ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel, nie grün (`TheSwitchedOnStateIsMonochromeTests`; Ratsche 8 → 6) |
-| F4b | lokal — `39d77bf3b`: jeder Schalter und jede gewählte Kachel zeichnet ihre Kante mit `borderStrong` (`TheChosenTileDeclaresItsBoundaryTests`) |
-| F5a | lokal — `a585fa507`: das Wertfeld tickt an Standard und Rand (`.selection`), OK auf dem Ziffernblock bestätigt (`.success`) (`TheValueFieldTicksAtItsDetentsTests`) |
-| F5b | lokal — `75645cff9`: das EINE Play/Stop ist spürbar (`.start` / `.stop`) (`TheTransportIsFeltWhenItStartsAndStopsTests`) |
-| F6a | lokal — `360e6be0d`: ein Mix-Streifen hat keine eigene Fläche, die Karte ist das Panel (`TheMixStripHasNoSurfaceOfItsOwnTests`) |
-| F6b | lokal — `d4e7d1b9d`: Broadcast „live“ trägt das Aufnahme-Rot, nicht das Fehler-Rot (`TheLiveStateIsTheRecordingRedTests`) |
+| F3 | gebaut — `8613d84d6`: „spielt“ = grünes Label im `borderStrong`-Rahmen auf `fill`, nie eine Fläche (`TheRunningStateIsOneLookTests`); Compile Check + Build for Testing grün |
+| F4a | gebaut — `a0a53ba98`: ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel, nie grün (`TheSwitchedOnStateIsMonochromeTests`; Ratsche 8 → 6) |
+| F4b | gebaut — `39d77bf3b`: jeder Schalter und jede gewählte Kachel zeichnet ihre Kante mit `borderStrong` (`TheChosenTileDeclaresItsBoundaryTests`) |
+| F5a | gebaut — `a585fa507`: das Wertfeld tickt an Standard und Rand (`.selection`), OK auf dem Ziffernblock bestätigt (`.success`) (`TheValueFieldTicksAtItsDetentsTests`) |
+| F5b | gebaut — `75645cff9`: das EINE Play/Stop ist spürbar (`.start` / `.stop`) (`TheTransportIsFeltWhenItStartsAndStopsTests`) |
+| F6a | gebaut — `360e6be0d`: ein Mix-Streifen hat keine eigene Fläche, die Karte ist das Panel (`TheMixStripHasNoSurfaceOfItsOwnTests`) |
+| F6b | gebaut — `d4e7d1b9d`: Broadcast „live“ trägt das Aufnahme-Rot, nicht das Fehler-Rot (`TheLiveStateIsTheRecordingRedTests`) |
+| F3–F6b gesamt | Auto-Merge → main = `bc0922f61` (⇒ Compile Check + Build for Testing grün); Gerät offen |
+| I1 | zurückgestellt — die Steuerleiste verlegt Kopf und Projektkopf, und rund 20 Wächterdateien halten bezahlte Gerätevereinbarungen über genau dieses Layout fest (u. a. `TheLogoHoldsItsPlaceTests`: Logo deckungsgleich mit dem Griff des Vollbild-Visuals; der Kopf hat höchstens zwei Zeilen). Ohne Gerät würde die Scheibe diese Gesetze blind umschreiben. Braucht eine Geräte-Runde. |
+| I4 | gemessen, nichts entfernt — keine der drei Türen ist ein reines Doppel: „Mix“ zeigt ein anderes Modell als die Mixer-Bühne (das I3-Problem), „Master“ hat Zeilen, die es nur dort gibt, „Save/Export“ hält nur Einstellungen (das Etikett ist irreführend; die Umbenennung berührt rund 20 Wächter und die #272-Vorgeschichte und bleibt offen) |
+| A3a | gepusht — `73deb73ba`: die Raumszene reist mit dem Stück (`DMMWProject.spatial`, verlustfrei optional; Open stellt sie NACH dem Song wieder her; `rebuild` behält den Raum) (`TheSpatialSceneTravelsWithThePieceTests`); Gates laufen; Gerät offen: ADM-OSC-Positionen nach dem Wiederöffnen |
+| A1 | nicht gebaut — vorgezogen, als I1 zurückgestellt wurde, dann zugunsten von I4 und A3a nicht begonnen |
 
 F2 ist bewusst in zwei Commits geteilt (Abstand und Bewegung), damit jeder eine logische Änderung bleibt. Die Deckkraft-Tokens gab es schon (`dim`, `border`, `fill`, `pressedOpacity`); dafür war keine Scheibe nötig.
 

@@ -42041,3 +42041,12 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **LOW-5 e919030a6:** `ignoredCount`/`refusedCount` unbeobachtet (Grapes schickt Breite/Mute/Name mit voller Rate); das Status-Blatt pollt im 0,5-s-Takt. Wächter `TheOSCInputIsBoundedTests` Anspruch 5.
 - Gemessen für S2: der einzige andere Positions-Schreiber ist `ImmersiveStageView` (türlos) — eine Besitz-Regel braucht es heute nicht; Glättung bewusst nicht in der App (Renderer glätten selbst, sie kostete Latenz).
 - Gerät: nichts bestätigt. Probe: Grapes → Port 8001, „Accept OSC control“ an, „Every track as its own object“ an.
+
+## 2026-10-04 — Restrukturierung: Phase F in main, A3a gebaut
+
+- **F3–F6b** (spielt · Schalter monochrom · gewählte Kachel mit Kante · Haptik Wertfeld/Ziffernblock/Transport · keine Karte im Mix · Live = Aufnahme-Rot) per Auto-Merge in main = `bc0922f61` (⇒ Compile Check + Build for Testing grün). Gerät offen.
+- **I1 zurückgestellt:** ~20 Wächter halten Gerätevereinbarungen über das Kopf-Layout (`TheLogoHoldsItsPlaceTests`, zwei Kopfzeilen). Braucht eine Geräte-Runde.
+- **I4 gemessen:** keine der Türen Mix/Master/Save-Export ist ein reines Doppel; nichts entfernt. Das „Save/Export“-Etikett ist irreführend (nur Einstellungen); Umbenennung offen (#272, ~20 Wächter).
+- **A3a `73deb73ba`:** die Raumszene reist mit dem Stück. `DMMWProject.spatial`, `capturing(…, spatial:)`, `restoreSpatialScene` nach `restoreSong`, `SpatialSceneStore.restore`; `rebuild` behält jetzt den Raum. Wächter `TheSpatialSceneTravelsWithThePieceTests` (1–5 Verhalten, 6–7 Quelltext, rot auf dem Elternstand; 8 Gegengewicht). Benotet per Python-Abschrift; alle Prüfer grün. Gates laufen.
+- **Korrektur im Plan:** Modulation und Routing gehören NICHT ins Stück (Zensus, Envelope-Anspruch 6) — §1B/§2A/§3 nachgeführt.
+- **Weiter offen:** Licht-Zustand ins Stück (ein Wert heute), A1 `SessionController`, Broadcast S2 bleibt gesperrt (HaishinKit-Ablehnung).
