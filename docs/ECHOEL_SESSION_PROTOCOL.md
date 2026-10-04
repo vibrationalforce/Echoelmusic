@@ -196,6 +196,38 @@ and the ADM BWF writer read one answer. Source: `Sources/Echoelmusic/Core/Immers
 - Bump `version` only with an update of this section. Guard:
   `Tests/CISmoke/TheImmersiveMasterPlanFollowsTheRecordTests.swift`.
 
+### SpatialTrajectory (export, not a wire message)
+
+Not sent between peers either. It records WHERE one object of the immersive master was over
+the piece (ADR-007 §2, Spatial S-A2). Source: `Sources/Echoelmusic/Core/SpatialTrajectory.swift`.
+
+```json
+{
+  "objectID": "track-1",
+  "points": [
+    { "position": { "azimuth": 0, "distance": 1, "elevation": 0 }, "sampleTime": 0 },
+    { "position": { "azimuth": 90, "distance": 0.5, "elevation": 10 }, "sampleTime": 24000 }
+  ],
+  "sampleRate": 48000,
+  "version": 1
+}
+```
+
+- `sampleTime` is an integer sample index at `sampleRate` from the start of the master. Never
+  seconds, never a wall clock. Times strictly increase.
+- Recorded at 20 Hz. A held position is two points (its first and latest sample); linear
+  interpolation between the points reproduces every recorded sample.
+- Before export the path is thinned by time-faithful Ramer–Douglas–Peucker: every recorded
+  sample stays within ≤ 1° azimuth, ≤ 1° elevation and ≤ 0.01 distance of the thinned line,
+  each read at the sample's own time. Then points ON that line are inserted so no two
+  neighbours are further apart than the block limit.
+- Azimuth interpolates along the shorter arc (170° → −170° passes 180°).
+- CSV form (the S-A4 export folder): `sample_time,seconds,azimuth,elevation,distance`; seconds
+  carry nine decimals from integer arithmetic, the three values four.
+- JSON is written with sorted keys, so the same path gives the same bytes.
+- Bump `version` only with an update of this section. Guard:
+  `Tests/CISmoke/TheSpatialTrajectoryKeepsTheShapeWithinTheBoundTests.swift`.
+
 ## Versioning rules
 
 - **Major** (`v` in envelope, `version` in scene): breaking change — new

@@ -42082,3 +42082,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   - `ImmersiveMasterPlan` (rein) ist mit Wächter gebaut, aber nicht verdrahtet.
   - Gebaut in einem eigenen Worktree, damit der gesperrte E10-1/B2-Stand unberührt bleibt. Beide Patches lassen sich weiterhin auf HEAD anwenden (geprüft mit `git apply --cached`).
   - Der E10-1-Commit wurde erneut versucht: Diesmal lehnte der Auto-Modus-Klassifikator ab („[Auto-Mode Bypass]“), nicht der Hook.
+
+- **Stems-Korrektur + ADR-Kritik + S-A2 (2026-10-04):**
+  - `5f5d7c421` fix(copy): Der Primer versprach Stems, die App exportiert ein Stereo-WAV und eine MIDI-Datei. Satz, Katalog-Schlüssel und der festgenagelte Satz in `TheChromeSpeaksOneLanguageTests` wurden zusammen geändert.
+  - `9435ed986` test(guard): `TheAppPromisesNoStemsBeforeTheyShipTests`.
+  - `9b8fbf2d1` docs(adr): Nachträge K1–K8 (ADR-007) und K1–K5 (ADR-008). Gates: Compile Check ✓, Build for Testing ✓ (16:28Z), der Stems-Wächter kompiliert.
+  - S-A1 `27f5ddd5a` hat `main` erreicht (Auto-Merge ✓).
+  - `4497538e8` feat(spatial): S-A2 `SpatialTrajectory` plus Wächter mit neun Ansprüchen. Der Python-Nachbau mit Float32 ist grün. Gegen den eigenen ersten Entwurf ist er rot (Halt nicht geteilt), ebenso gegen eine Mutante, die an aufgenommenen Punkten schneidet (0,98° Drift), und gegen eine mit `Date()`.
+  - E10-1 und B2 bleiben gesperrt (Auto-Modus); beide Patches liegen in `scratchpads/`.

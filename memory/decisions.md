@@ -5040,3 +5040,19 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
   - Stand: gebaut, nicht verdrahtet.
 - **Nicht entschieden:** der Auto-Modus. Der Satz „Du entscheidest alles“ schaltet ihn nicht um, die E10-1/B2-Commits bleiben gesperrt. Der Hook lässt bewusst keine Selbstfreigabe zu.
 - **Review:** 2026-11-03.
+
+### 2026-10-04 — Stems-Versprechen entfernt · ADR-Kritik eingearbeitet · S-A2 gebaut
+
+- **Stems (`5f5d7c421`, Wächter `9435ed986`):** Der Musiktheorie-Primer versprach „stems drop into your DAW already in tune“. Die App schreibt aber ein Stereo-WAV und eine MIDI-Datei, Stems gibt es nicht.
+  - Der Satz nennt jetzt die zwei Exporte, die es gibt.
+  - `TheAppPromisesNoStemsBeforeTheyShipTests` verbietet das Wort in jedem für Nutzer lesbaren String und Katalog-Schlüssel. Kommentare und Bezeichner bleiben erlaubt.
+  - Der Wächter soll rot werden, sobald S-A3/S-A4 Stems wirklich liefern. Dann wird Anspruch 1 im selben Commit gelöscht.
+- **ADR-Kritik (`9b8fbf2d1`):** ADR-007 bekommt die Nachträge K1–K8, ADR-008 K1–K5. Überzogene Sätze sind gestrichen, nicht umgeschrieben.
+- **S-A2 (`4497538e8`):** `Core/SpatialTrajectory.swift` und `SpatialTrajectoryRecording`, rein, nur Foundation.
+  - Zeit ist ein ganzzahliger Sample-Index, nie Sekunden. Wie viele Stellen eine Datei bekommt, entscheidet der Schreiber.
+  - Ein Halt kostet zwei Punkte, exakt.
+  - Ausgedünnt wird mit zeittreuem RDP (jeder Punkt gegen die Linie zu seiner eigenen Zeit).
+  - Die Blocklänge wird NACH dem Ausdünnen durch Punkte auf der Linie erreicht. So bleibt die Fehlergrenze exakt, und auch ein Halt wird geteilt.
+  - Der erste Entwurf kehrte bei zwei Punkten vorzeitig zurück und teilte deshalb keinen Halt. Anspruch 6 ist gegen diesen Entwurf rot.
+  - Stand: gebaut, nicht verdrahtet. S-A3 zeichnet auf.
+- **Review:** 2026-11-03.
