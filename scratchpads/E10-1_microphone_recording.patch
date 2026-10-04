@@ -1,0 +1,2100 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 7affdbeab..b04d3698e 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -48,7 +48,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
+   ⛔ **MPE IN ist NICHT real, MPE OUT schon** (#548/#713): `MIDIBusPublisher` parst MPE-Verkehr, unterscheidet aber keine Zonen, und der Verbraucher `BioReactiveSynthVoice.apply(controller:)` liest `event.channel` nirgends. ⭐ **Alle DREI Dimensionen KLINGEN seit #942** (Bend seit jeher, Press #939 `expressionGain`, Slide #942 `renderCutoffScale`) — **und das ist trotzdem kein MPE IN**: ohne Zonen (RPN 6,6) gibt es keinen Member-Kanal zu unterscheiden. Wer weiterbaut (Zonen), fängt NICHT am Parser an: `controllerEvents` ist SPSC mit EINEM Verbraucher, und der ist monophon — Zonen ohne zweiten Verbraucher sind wirkungslos (`scratchpads/PLAN_MPE_ZONES_2026-09-01.md`). ⭐ **GESETZ, und es gilt über MIDI hinaus: eine Fähigkeits-Behauptung hat so viele Flächen, wie jemand aufzählt** — „alle geprüft" heißt nur „alle, die mir eingefallen sind"; das Erkennungszeichen ist, dass alle bisher geprüften dieselbe GATTUNG haben (#766/#768). Wächter: `Tests/CISmoke/TheMPEInputHasNoZonesTests.swift` — er pinnt den VERBRAUCHER, nicht diese Prosa (#491). Die gefundenen Flächen und die vier Rücknahmen dieser Zeile: `memory/LEDGER_COUNTS.md` §N. BioEventGraph → breath/motion onsets.
+   ⭐ **MODULATIONS-MATRIX — die Maschine läuft, und seit #1250 hat sie ihre Fläche.** `ModulationEngine` wird beim App-Start konstruiert, `start(subscribing: bus)` läuft, die 100-ms-Schleife tickt, `ModDestinationKey.tempo` ist registriert. ⭐ **seit #1250 (Founder 2026-09-11) hat die Matrix ihre Fläche:** Karte „Body → parameter" in der Routing-Fläche (`PatchbayView.modulationSection`) legt Routen an und persistiert sie — ⭐ **seit #1391 Tempo PLUS jeder automatisierbare Synth-Parameter**, als PROJEKTION von `PolySynthVoice.automatableBases` statt als Abschrift (#416). Registriert wird zur Laufzeit aus `ParameterApplyRouter.automatableDescriptors()` = Registry ∩ gebundener Setter, also kann kein Ziel angeboten werden, das nichts bewegt. ⚠️ Das Tempo behält seinen EIGENEN Handler (BPM-Lock · Oktav-Faltung · Glide, T1/T2) und `register` ERSETZT — ein tempo-förmiger Schlüssel in `automatableBases` überschriebe ihn still. Messen, nicht zitieren: `grep -n "static let all" Sources/Echoelmusic/Core/ModulationEngine.swift`. Wächter: `Tests/CISmoke/TheMatrixReachesEveryAutomatableParameterTests.swift`. ⚠️ Ein von einem älteren Build persistiertes Dokument zieht weiterhin am Tempo (`load()` gewinnt über die leere Default-Matrix) — genau die #527-Lage der Audio-Spuren, und deshalb nicht abklemmen. ⛔ **Diese Zeile behauptete vier Monate „ModulationEngine wired (bio→tempo)", während die Route fehlte** — dieselbe Über-Behauptung, die #496 auf dem FX-Panel zurücknehmen musste, eine Ebene höher. Provenienz: `memory/LEDGER_COUNTS.md` §AI.
+   **EchoelBeat ist TOT.** `BeatPlayer.attach(to:)` hängt nur noch `previewVoice` ein — kein Pad-Voice, kein `pattern.onStep`; es kann heute KEIN Drum-Klang entstehen. Der Abriss (#167) ist fertig: `DrumSynthVoice`, `LaneDrumKitVoice`, `DrumNoteMap`, `PhysicalVoiceRef.drums` und `LaneVoiceRack.kits`/`setDrumsInsert` sind als Dateien bzw. Member gelöscht. **Die Enum-Cases `LaneVoiceKind.drums` / `TrackInstrument.drums` BLEIBEN** — die Gründe stehen an den Cases selbst. ⛔ Die erste Fassung begründete das mit „persistierte rawValues" und war in BEIDEN Hälften falsch, in vier Quelldateien zugleich. **Lehre: ein „NICHT löschen"-Kommentar mit falscher Begründung ist schlimmer als keiner — die nächste Session kann ihn nicht widerlegen.** Herleitung: `memory/LEDGER_COUNTS.md` §AD.
+-- ⛔ **AUDIO-EINGANG: GELÖSCHT (#1302, Founder 2026-09-12, wörtlich „Face und Audio Input komplett entfernen"). Hier stand die Vokal-Ketten-Zeile; es gibt kein Mikrofon mehr.** Als DATEIEN weg: `MicrophoneManager`, `AudioInputManager`, `MonitorInsertAU`, `MonitorTapWindow`, `MultiTrackRecorder`, `FeedbackGuard` (mit `HowlDetector`), `AudioInputPickerView`, `PlugInInvitation`, `RoutePlugInWatcher`, `VoiceAnalyzer`, `VoiceCaptureController`, `VoiceCaptureEngine`, `VocoderCore`, `BrainwaveModulation`, `VoicePitchCorrector` — plus 38 Wächter und die Store-/Website-Zeilen. **DREI SACHEN BLEIBEN ABSICHTLICH, und wer sie für Reste hält, löscht Funktionierendes:** (1) die PATCH-Hälfte der Stimmfarbe (`SynthPatch.voiceProfileTaps`/`-Label`/`-Blend`, `PolySynthVoice.applyVoiceProfile`, `VoiceTimbreProfiler`) — ein von einem älteren Build gespeicherter Patch trägt sie und wendet sie an (#95/#527); der NAME sagt „Voice", die SACHE ist der Synth (#1293) · (2) `RecordRouteOwner` als LEERES Enum samt Refcount — #299: ein Zähler, den zwei Besitzer unbalancieren konnten, hielt das Telefon in `.playAndRecord` · (3) `RetroCapture`/`SingleExport`, die den EIGENEN Ausgang mitschneiden, nie ein Mikrofon. **Nach AUSSEN ist alles zurückgenommen**: `ContentPipeline/CLAIMS.md` §11 ist als ganzer Abschnitt ausgesetzt, `fastlane/metadata` und `docs/` tragen keine Stimm-Zeile mehr, `docs/_headers` schließt `microphone=()`. ⭐ **ERLEDIGT mit #1415** (Founder-Freigabe „E. correct verified stale permissions"): `NSMicrophoneUsageDescription` ist aus `Resources/iOS/Info.plist` ENTFERNT. Der Beleg ist strukturell, nicht nur ein `grep`: die EINZIGE Stelle, die die Sitzung auf `.playAndRecord` heben kann, ist `AudioConfiguration.claimRecordRoute(_ owner: RecordRouteOwner)`, und `RecordRouteOwner` ist ein LEERES Enum — der Parametertyp hat keinen Bewohner, die Funktion ist unaufrufbar, `recordingRouteNeeded` ist `private(set)` und kann nie wahr werden. ⚠️ **Wer einen Fall zu `RecordRouteOwner` hinzufügt, MUSS den plist-Schlüssel im selben Commit zurückholen** — iOS beendet die App beim Aktivieren einer Aufnahme-Kategorie ohne ihn. Genau das hält `EveryPermissionPromptHasACapabilityTests` (`retiredPrompts`) fest.
++- ⭐ **AUDIO-EINGANG: E10-1 (Founder 2026-10-04, „Mikrofonzugriff wird ausdrücklich aktiviert") — EIN Weg: AUFNAHME.** Audiospur scharf schalten (fragt die Erlaubnis), Record: `MicTakeRecorder` (`AVAudioRecorder`, AUSSERHALB des Wiedergabe-Graphen) schreibt nach `Media/Audio`; Stop oder das Stück-Ende legt die Aufnahme als Teil auf die Spur. Eine Spur zugleich, kein Mithören (Kopfhörer). Route-Besitzer `RecordRouteOwner.audioTrack`, beansprucht in `arm()` VOR dem Start (ein Kategoriewechsel startet die laufende Engine neu), freigegeben auf JEDEM Ausgang (#299); Wächter `AnAudioTrackRecordsTheMicrophoneTests`. ⚠️ **Wer den Fall `audioTrack` entfernt, nimmt `NSMicrophoneUsageDescription` im selben Commit mit — und umgekehrt** (iOS beendet die App sonst; `EveryPermissionPromptHasACapabilityTests`). ⛔ **Der #1302-Absturzpfad bleibt verboten:** kein `.inputNode`, kein Eingangs-Tap im Graphen; die #1302-Dateien (Vokalkette, Monitoring, Autotune) bleiben gelöscht. **BLEIBT ABSICHTLICH:** die PATCH-Hälfte der Stimmfarbe (`SynthPatch.voiceProfileTaps`/`-Label`/`-Blend`, `PolySynthVoice.applyVoiceProfile`, `VoiceTimbreProfiler`) — der NAME sagt „Voice", die SACHE ist der Synth (#1293) · `RetroCapture`/`SingleExport` schneiden den EIGENEN Ausgang mit. Sampling/Analyse einer Aufnahme: offen (E10-2, über den Datei-Pfad). Nach AUSSEN NICHT behauptet, bis G9 am Gerät steht (`ContentPipeline/CLAIMS.md` §11). Vorgeschichte #1302 → #1415: `memory/LEDGER_COUNTS.md` §AM.
+ - **LEBENSZYKLUS-LEITER im Absturz-Log (#859–#862b) — lesen, BEVOR man ein `echoel_diag.log` auswertet.** Jeder Eingriff in den Audio-Graphen schreibt eine Sprosse (beide `start`-Zweige, `stop`, `restartOrDegrade`, alle attach/detach, Interruption, Route-Verlust; ⛔ die `on N/5`/`off N/5`-Monitoring-Leiter ist mit dem Audio-Eingang gelöscht (#1302); seit #878 auch die drei Sitzungs-Kategoriewechsel in `AudioConfiguration` als `session: configure|raise|lower` — das sind ABSICHTLICH nicht alle 15 Session-Aufrufe der Datei). **GESETZ: eine Sprosse steht VOR ihrem Aufruf** — ein Zeuge HINTER dem Schritt sieht nichts; stirbt der Schritt, schweigt das Log, und Schweigen liest sich dann wie „Weg nicht genommen" statt „Weg mitten im Schritt gestorben". **Folge: Stille zwischen zwei Sprossen ist ein BEFUND.** `EchoelCrashLog.breadcrumb` (unbuffered `write(2)` in die exportierte Datei) wird VOR `os_log` geschrieben — `os_log` ist dort unsichtbar und nimmt ein Schloss. Wächter: `TheEngineLifecycleSpeaksInTheDiagLogTests` (Anzahl der Ansprüche: `grep -c "    func test"` — nicht hier zitieren, sie wuchs schon einmal am selben Tag). ⚠️ Der `isInputConnToConverter`-Auslöser hat nie einen Namen bekommen — er ist mit #1302 **gegenstandslos, nicht gelöst**: die Absturzfamilie saß am Eingangsknoten, den es nicht mehr gibt. Wer einen Eingang zurückbaut, erbt sie ungelöst. Die Leiter repariert keinen Absturz, sie macht das nächste Log aussagefähig.
+ - **Protected DSP triad (READ-ONLY, now implemented):** BioSignalDeconvolver (detrend·notch·validity), HilbertSensorMapper (1D→2D Hilbert curve), BioEventGraph (heartbeat/breath/motion detectors). Pure value types, SKILL.md contracts under `.claude/skills/`.
+ - **SDK:** iOS 18 deployment floor (Package.swift + project.yml + Resources/iOS/Info.plist synced). Xcode 26.2 in `testflight.yml`. App Group `group.com.echoelmusic`.
+@@ -325,7 +325,7 @@ Sources/Echoelmusic/
+   Audio/               ← AudioEngine, AudioConfiguration, MIDIInput,
+                           RetroCapture, AutoMixChain, SingleExport (KEEP)
+                        ← (MicrophoneManager/AudioInputManager/MonitorInsertAU/
+-                          MonitorTapWindow/MultiTrackRecorder GELÖSCHT #1302 — kein Mikrofon)
++                          MonitorTapWindow/MultiTrackRecorder GELÖSCHT #1302; das Mikrofon seit E10-1: `MicTakeRecorder`)
+   Sequencer/           ← PatternEngine (the TRANSPORT — tempo/play/stop/step clock),
+                           BeatPlayer (its holder + audition; the kit inside it no longer
+                           SOUNDS — attach(to:) hangs only previewVoice. ⛔ #167 ist am
+diff --git a/ContentPipeline/CLAIMS.md b/ContentPipeline/CLAIMS.md
+index b715f5573..553310e49 100644
+--- a/ContentPipeline/CLAIMS.md
++++ b/ContentPipeline/CLAIMS.md
+@@ -333,6 +333,8 @@ nicht existiert. **Die Unterscheidung darunter bleibt trotzdem stehen, weil sie
+ nach dem eine künftige Stimm-Fähigkeit beschrieben werden müsste** — und weil §11 sonst als
+ gelöst gelesen würde statt als ausgesetzt.
+ 
++⚠️ **2026-10-04, E10-1: eine Mikrofon-AUFNAHME ist zurück im Code** (Founder: „Mikrofonzugriff wird ausdrücklich aktiviert") — eine scharf geschaltete Audiospur nimmt bei Record auf, die Datei liegt in der Bibliothek auf dem Gerät, nichts wird gesendet. **Behauptbar ist das ERST, wenn G9 am Gerät bestanden ist**, und dann nur genau so: „nimmt eine Audiospur über das Mikrofon auf". Weiter NICHT behauptbar: Stimm-Effekte, Autotune, Harmonizer, Mithören mit Effekt, Mehrspur-Aufnahme, Klon/TTS — und die Messungs-Unterscheidung darunter gilt weiter für die Stimmfarbe.
++
+ Die Stimm-Fähigkeit war eine **MESSUNG, keine Aufnahme** — das ist die eine
+ Formulierung, an der hier alles hängt. `VoiceTimbreProfiler` misst eine
+ Spektral-Hüllkurve (**64 Zahlen**), das Audio selbst wird **nie gespeichert**;
+diff --git a/Resources/iOS/Info.plist b/Resources/iOS/Info.plist
+index 3d21687a6..2f0682b13 100644
+--- a/Resources/iOS/Info.plist
++++ b/Resources/iOS/Info.plist
+@@ -85,6 +85,8 @@
+ 	<string>Echoel reads heart rate and HRV to drive sound, image and light in real time. Health data stays on your device — it is never sent over the network, even when OSC or ADM output is on — and is never used for diagnosis.</string>
+ 	<key>NSHealthUpdateUsageDescription</key>
+ 	<string>If you turn on "Save to Apple Health", Echoel writes the heart rate and respiratory rate it measures (camera or Bluetooth sensor) to Apple Health. This is off by default and you can turn it off anytime.</string>
++	<key>NSMicrophoneUsageDescription</key>
++	<string>Echoel records from the microphone only while an audio track is armed and you press Record. The recording becomes a part in your piece and a file in your library on this device. Nothing is sent anywhere.</string>
+ 	<key>NSCameraUsageDescription</key>
+ 	<string>Echoelmusic uses the rear camera as an instrument input: it reads your pulse from a fingertip held on the lens, lit by the torch (photoplethysmography). No images are stored or transmitted.</string>
+ 	<key>NSBluetoothAlwaysUsageDescription</key>
+diff --git a/Sources/Echoelmusic/Audio/AudioConfiguration.swift b/Sources/Echoelmusic/Audio/AudioConfiguration.swift
+index 5e487c458..0f59cea7b 100644
+--- a/Sources/Echoelmusic/Audio/AudioConfiguration.swift
++++ b/Sources/Echoelmusic/Audio/AudioConfiguration.swift
+@@ -340,11 +340,11 @@ enum AudioConfiguration {
+     /// route on HFP — `routeCodec` below detects that case; we only guarantee
+     /// Echoel is never the cause.
+     /// `.mixWithOthers` keeps other apps audible even while we record.
+-    /// ⛔ #1346 — DIESE BITTE IST NICHT AUSFÜHRBAR, SEIT DER EINGANG WEG IST, und sie
++    /// ⛔ #1346 — DIESE BITTE WAR NICHT AUSFÜHRBAR, SOLANGE DER EINGANG WEG WAR (bis E10-1), und sie
+     /// stand vier Tage lang als erster Posten des AUDIO-Bereichs in
+     /// `scripts/founder-verify.py`. `recordOptions` gilt ausschließlich in
+     /// `.playAndRecord`, dorthin kommt die Sitzung ausschließlich über
+-    /// `upgradeToPlayAndRecord()` — und das hat seit #1302 **null**
++    /// `upgradeToPlayAndRecord()` — und das hatte von #1302 bis E10-1 **null**
+     /// Produktions-Aufrufer (`git grep -n "upgradeToPlayAndRecord()" -- Sources`
+     /// → nur die Deklaration; ebenso `claimRecordRoute(`/`releaseRecordRoute(`,
+     /// siehe `RecordRouteOwner` oben). Es gibt also weder einen
+@@ -368,9 +368,12 @@ enum AudioConfiguration {
+     /// Knoten kein Format hat) und ist nie in einem Build gelandet, den der Founder hielt
+     /// — die Analyse von #1269 ist damit geräte-bestätigt, nicht nur plausibel.
+     /// Herleitung: `scratchpads/HARNESS_LEDGER.md`, PLAYBOOK #1348.
+-    /// NEEDS-FOUNDER-VERIFY BLOCKED-BY-#1302: Bluetooth-Kopfhörer verbinden, spielen,
+-    /// Monitoring EINschalten — die Musik muss Stereo/voll bleiben und der
+-    /// Routen-Marker darf kein [HFP] zeigen. (Kein Simulator hat
++    /// ⭐ E10-1 (2026-10-04) — DIE BITTE IST WIEDER AUSFÜHRBAR, über die AUFNAHME statt über
++    /// das Monitoring (das bleibt gelöscht): `MicTakeRecorder` hebt die Sitzung beim Druck auf
++    /// Record auf `.playAndRecord`, und genau dort gelten diese Optionen.
++    /// NEEDS-FOUNDER-VERIFY G9: Bluetooth-Kopfhörer verbinden, Audiospur scharf, Record drücken —
++    /// die Musik muss Stereo/voll bleiben und der Routen-Marker darf kein [HFP] zeigen;
++    /// aufgenommen wird das iPhone-Mikrofon. (Kein Simulator hat
+     /// Bluetooth-Routing — nur am Gerät prüfbar.)
+     private static let recordOptions: AVAudioSession.CategoryOptions =
+         [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
+@@ -378,7 +381,8 @@ enum AudioConfiguration {
+ 
+     // MARK: - Who is holding the record route (#299)
+ 
+-    /// The three features that can put the SHARED session on `.playAndRecord`.
++    /// The features that can put the SHARED session on `.playAndRecord` — three until #1302,
++    /// none until E10-1, one since (`audioTrack`).
+     ///
+     /// ⭐ WHY A SET AND NOT A COUNTER, AND WHY IT EXISTS AT ALL. Before #299 the upgrade had
+     /// FIVE call sites across three features (`AudioEngine` 1, `MultiTrackRecorder` 1,
+@@ -404,11 +408,12 @@ enum AudioConfiguration {
+     /// `catch` claimed and never released, and a Set does nothing whatsoever about a MISSING
+     /// release. It leaks exactly like the refcount this argument rejects. The Set removes ONE
+     /// failure mode (double-release / double-claim); every claim still needs a release on
+-    /// every exit, and that is what `RecordRouteOwnershipTests` counts per file.
++    /// every exit, and that is what `AnAudioTrackRecordsTheMicrophoneTests` counts in the one claimant
++    /// (claim 2). (⛔ This line named a guard that never existed until E10-1 wrote the real one.)
+     /// ⛔ #1302 — ALL THREE CASES WENT WITH THE AUDIO INPUT (founder 2026-09-12):
+-    /// `inputMonitoring`, `microphoneManager`, `multiTrackRecorder`. Nothing in this build
+-    /// claims the record route, so the set is permanently empty and `claim`/`release` are
+-    /// reachable-but-unused.
++    /// `inputMonitoring`, `microphoneManager`, `multiTrackRecorder`. From then until E10-1
++    /// nothing claimed the record route, so the set was permanently empty and `claim`/`release`
++    /// were reachable-but-unused (the E10-1 note below says what changed).
+     ///
+     /// ⚠️ KEPT ON PURPOSE, not overlooked. The route MACHINERY is the answer to a real defect
+     /// (#299): a refcount that two owners could leave unbalanced held the phone in
+@@ -431,7 +436,18 @@ enum AudioConfiguration {
+     /// WRITTEN; the raw type used to supply it for free, so dropping `: String` silently took
+     /// it with it and the `Set` below stopped compiling — two errors left over from the eleven,
+     /// in the same cause. An empty enum satisfies it trivially.
+-    enum RecordRouteOwner: Hashable, CaseIterable, Sendable {}
++    ///
++    /// ⭐ E10-1 (founder 2026-10-04: „Audio-Eingang soll Aufnahme, Sampling und Analyse
++    /// ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert.") — the enum has ONE case
++    /// again. `audioTrack` belongs to `MicTakeRecorder` alone: it claims the route at the start
++    /// of a take and releases it on every exit of `start` and in `stop`. The plist's
++    /// `NSMicrophoneUsageDescription` came back in the SAME commit — iOS ends the app when a
++    /// record category is activated without it. The two notes above stay as they are: no raw
++    /// type is still right (a case's own name is the log token), and the explicit `Hashable`
++    /// still costs nothing.
++    enum RecordRouteOwner: Hashable, CaseIterable, Sendable {
++        case audioTrack
++    }
+ 
+     /// `nonisolated(unsafe)`, matching `isSessionConfigured` and `recordingRouteNeeded` above.
+     ///
+@@ -445,8 +461,9 @@ enum AudioConfiguration {
+     /// ⛔ #1336 — PAST TENSE SINCE #1302, and it read as present for four days. All seven went
+     /// with the audio input; the enum's own doc above is the ONE home of that fact (#416) and
+     /// was the only place #1302 updated. Measure, never quote:
+-    /// `git grep -n "claimRecordRoute(\|releaseRecordRoute(" -- Sources` — today the
+-    /// declarations and this prose, no call site.
++    /// `git grep -n "claimRecordRoute(\|releaseRecordRoute(" -- Sources` — until E10-1 the
++    /// declarations and this prose, no call site; since E10-1 `MicTakeRecorder` is the one
++    /// caller, and it is `@MainActor` like all seven were.
+     ///
+     /// The real reason is consistency of OWNERSHIP, not of compilation: the two flags above
+     /// genuinely ARE written from that non-isolated path (via `upgradeToPlayAndRecord`), and
+@@ -488,8 +505,8 @@ enum AudioConfiguration {
+     /// capture (`microphoneManager`) could run while input monitoring holds the route.
+     ///
+     /// ⛔ #1336 — "IT IS REACHABLE TODAY" STOOD HERE AND IS FALSE SINCE #1302. Both features
+-    /// named are deleted files; nothing claims the route, so two owners cannot co-exist and
+-    /// this breadcrumb cannot fire. The LINE stays for the reason the enum above stays: the day
++    /// named are deleted files; since E10-1 ONE owner (`audioTrack`) claims the route, so two
++    /// owners still cannot co-exist and the two-owner shape of this breadcrumb cannot fire. The LINE stays for the reason the enum above stays: the day
+     /// anything records again, one-owner-versus-two is the shape that localises the
+     /// `isInputConnToConverter` family, and a breadcrumb added back later would be added back
+     /// blind. ⚠️ A doc claiming present reachability is the expensive half — it invites the next
+@@ -523,8 +540,9 @@ enum AudioConfiguration {
+         // finding 3). The first draft read `recordRouteOwners.isEmpty` for the guard and then
+         // re-read the set inside the breadcrumb — two reads of `nonisolated(unsafe)` storage.
+         // Unreachable today — and MORE so than the parenthetical that stood here said. It read
+-        // "(every one of the seven claim/release sites is on a `@MainActor` type)"; since #1302
+-        // there are NO call sites at all (#1336). The verdict survives, its reason changed.
++        // "(every one of the seven claim/release sites is on a `@MainActor` type)"; from #1302 to
++        // E10-1 there were NO call sites at all (#1336), and since E10-1 the one caller,
++        // `MicTakeRecorder`, is `@MainActor` again. The verdict survives, its reason changed.
+         // The failure mode is still the one this file least tolerates: under a future
+         // non-isolated caller the printed holders could DISAGREE with the branch actually
+         // taken, so the log would LIE rather than crash. `Set` is a value type, so this
+@@ -545,9 +563,9 @@ enum AudioConfiguration {
+         // depend on a count.
+         //
+         // ⛔ #903 SAID "EIGHT OF THIRTEEN" AND BOTH NUMBERS WERE INVENTED; IT REPLACED THEM WITH
+-        // "14 HITS = 12 call sites … NINE are `try?`", AND #1336 FOUND THAT STALE TOO. Since
+-        // #1302 the grep it quoted returns THREE hits and ZERO call sites — the twelve went with
+-        // the audio input. **A correction ages exactly like the claim it corrected** (#1326):
++        // "14 HITS = 12 call sites … NINE are `try?`", AND #1336 FOUND THAT STALE TOO. From
++        // #1302 until E10-1 the grep it quoted returned THREE hits and ZERO call sites — the
++        // twelve went with the audio input (E10-1 added `MicTakeRecorder`'s; count, do not quote). **A correction ages exactly like the claim it corrected** (#1326):
+         // nothing re-checks a ⛔ note the way it re-checks an original sentence, and this one
+         // survived a founder deletion that removed its entire subject.
+         // ⭐ AND THE SHARPER RULE, which this file has now paid for twice: **a note that QUOTES
+@@ -639,7 +657,8 @@ enum AudioConfiguration {
+     /// only holds if a claim/release cycle EVER happens; grant once and never record, and
+     /// the whole app sat on `.playAndRecord` for the rest of the session. The grant-time
+     /// upgrade is deleted; permission is consent, not use. Zero bare production callers
+-    /// remain — `RecordRouteOwnershipTests` pins that at zero.)
++    /// remain — `TheDeviceChecklistOnlyAsksWhatExistsTests` claim 9 pins that at zero; the
++    /// name that stood here was a guard that never existed.)
+     static func upgradeToPlayAndRecord() throws {
+         #if os(macOS)
+         return
+@@ -743,7 +762,7 @@ enum AudioConfiguration {
+         // CHECKED, two configured, one refused.
+         // ⛔ #1336 — THAT SENTENCE BEGAN "Today:" AND IS THE THIRD CORRECTION IN THIS CHAIN TO
+         // GO STALE. All three claim sites are deleted (#1302); there is no "all three" left to
+-        // check anything. Kept in the past tense because the CONCLUSION below is about
++        // check anything (E10-1's one claimant, `MicTakeRecorder`, does not configure first). Kept in the past tense because the CONCLUSION below is about
+         // `upgradeToPlayAndRecord`, which is still here and still does not read this flag.
+         // `upgradeToPlayAndRecord` still does not read this flag at all,
+         // which is the part that made the stranding possible in the first place. So: configure
+diff --git a/Sources/Echoelmusic/Audio/MicTakeRecorder.swift b/Sources/Echoelmusic/Audio/MicTakeRecorder.swift
+new file mode 100644
+index 000000000..4e0bd4ee1
+--- /dev/null
++++ b/Sources/Echoelmusic/Audio/MicTakeRecorder.swift
+@@ -0,0 +1,202 @@
++// MicTakeRecorder.swift
++// Echoel — Restructure E10-1 (founder 2026-10-04: „Audio-Eingang soll Aufnahme, Sampling und
++// Analyse ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert.")
++//
++// The ONE microphone owner: records an armed audio track for the span of one take, into a
++// file in the media library (`Media/Audio`), and hands it to `RecordController`, which lands it
++// as a part through the existing take commit (`TakeRecorder.captureAudio`).
++//
++// ⭐ WHY `AVAudioRecorder` AND NOT THE ENGINE'S INPUT NODE. The audio input that #1302 deleted
++// tapped `AVAudioEngine.inputNode`, and its crash family (`isInputConnToConverter`, seven device
++// logs, never named) sat exactly there. `AVAudioRecorder` reads the session input on its own,
++// outside the playback graph — so the graph that makes the music gains no node, and the family
++// that took the old input down has nothing to attach to. The cost, stated: no live monitoring
++// and no effects on the input; the take is the raw microphone (headphones recommended).
++//
++// ⚠️ THE RECORD ROUTE IS CLAIMED HERE AND ONLY HERE (`RecordRouteOwner.audioTrack`), and every
++// exit that claimed it releases it — #299: an unbalanced claim held the phone in `.playAndRecord`
++// for the rest of the session. `AnAudioTrackRecordsTheMicrophoneTests` counts the pairs.
++// ⭐ IT IS CLAIMED WHEN RECORD IS PRESSED (`prepare`), BEFORE THE MUSIC STARTS. Raising the
++// category on a running engine makes iOS reconfigure it (`AudioEngine`'s configuration-change
++// watchdog restarts it); done on the first step of the take, that restart would land on bar 1 —
++// a dropout at the downbeat of the very recording. `start` claims again (a Set insert and a
++// skipped raise, both harmless) so a recorder used without `prepare` still holds the route.
++// `stop` releases whether or not a file was ever written, so an arm that never became a take
++// gives the route back too.
++// ⚠️ `NSMicrophoneUsageDescription` came back in the SAME commit as the owner case — iOS ends
++// the app when a record category is activated without it (`EveryPermissionPromptHasACapabilityTests`).
++//
++// Breadcrumbs stand BEFORE the step they announce (the ladder law, #859–#862b).
++//
++// NEEDS-FOUNDER-VERIFY: G9 — arm an audio track, Record, sing or play into the phone, Stop: the
++// recording is a new part on that track and a file in the library, and it plays back in time.
++
++#if canImport(AVFoundation)
++import AVFoundation
++import Foundation
++
++/// Whether the app may use the microphone, as the system reports it.
++enum MicAccess: Equatable, Sendable {
++    case granted, denied, undetermined
++
++    static var current: MicAccess {
++        #if os(iOS)
++        switch AVAudioApplication.shared.recordPermission {
++        case .granted: return .granted
++        case .denied: return .denied
++        default: return .undetermined
++        }
++        #else
++        return .denied
++        #endif
++    }
++
++    /// Asks once; the system shows its prompt only while the answer is undetermined.
++    static func request() async -> Bool {
++        #if os(iOS)
++        return await AVAudioApplication.requestRecordPermission()
++        #else
++        return false
++        #endif
++    }
++}
++
++@MainActor
++final class MicTakeRecorder: AudioTakeRecording {
++
++    private var recorder: AVAudioRecorder?
++    private var file: URL?
++    /// The record route is held by this recorder (claimed in `prepare` or `start`, given back in
++    /// `stop`). Only to keep a stop that had nothing to release from writing route breadcrumbs.
++    private var routeHeld = false
++    private(set) var lastFailure: String?
++
++    /// WAV, 24-bit, 48 kHz, mono: the library format every audio part already plays
++    /// (`AudioLanePlayer` reads it through `AVAudioFile`), lossless for sampling and analysis.
++    /// Computed, not stored: a `[String: Any]` is not `Sendable`, so a stored static would be a
++    /// shared mutable global to the Swift 6 checker (the #1402 shape).
++    static var settings: [String: Any] { [
++        AVFormatIDKey: kAudioFormatLinearPCM,
++        AVSampleRateKey: 48_000,
++        AVNumberOfChannelsKey: 1,
++        AVLinearPCMBitDepthKey: 24,
++        AVLinearPCMIsFloatKey: false,
++        AVLinearPCMIsBigEndianKey: false,
++    ] }
++
++    /// "Recording 2026-10-04 14.05.33" — readable in the library and on the part.
++    static func fileBase(at date: Date) -> String {
++        let format = DateFormatter()
++        format.locale = Locale(identifier: "en_US_POSIX")
++        format.dateFormat = "yyyy-MM-dd HH.mm.ss"
++        return "Recording " + format.string(from: date)
++    }
++
++    func prepare() -> Bool {
++        lastFailure = nil
++        guard MicAccess.current == .granted else {
++            EchoelCrashLog.breadcrumb("mic take: prepare REFUSED - no microphone permission")
++            lastFailure = String(localized: "Echoel may not use the microphone. Allow it in Settings, then record again.")
++            return false
++        }
++        guard !routeHeld else { return true }
++        EchoelCrashLog.breadcrumb("mic take: prepare 1/1 - claim route")
++        do {
++            try AudioConfiguration.claimRecordRoute(.audioTrack)
++            routeHeld = true
++            return true
++        } catch {
++            EchoelCrashLog.breadcrumb("mic take: prepare FAILED - route: \(error.localizedDescription)")
++            try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++            lastFailure = String(localized: "The microphone could not be opened. Close other apps that use it and record again.")
++            return false
++        }
++    }
++
++    func start() {
++        guard recorder == nil else { return }
++        lastFailure = nil
++        guard MicAccess.current == .granted else {
++            EchoelCrashLog.breadcrumb("mic take: start REFUSED - no microphone permission")
++            lastFailure = String(localized: "Echoel may not use the microphone. Allow it in Settings, then record again.")
++            return
++        }
++        guard let folder = MediaLibrary.directory("Media/Audio") else {
++            EchoelCrashLog.breadcrumb("mic take: start FAILED - no media folder")
++            lastFailure = String(localized: "The recording could not be saved: no space for media files.")
++            return
++        }
++        let name = MediaLibrary.uniqueName(base: Self.fileBase(at: Date()), ext: "wav", taken: { candidate in
++            FileManager.default.fileExists(atPath: folder.appendingPathComponent(candidate).path)
++        })
++        let url = folder.appendingPathComponent(name, isDirectory: false)
++
++        EchoelCrashLog.breadcrumb("mic take: start 1/3 - claim route")
++        do {
++            try AudioConfiguration.claimRecordRoute(.audioTrack)
++            routeHeld = true
++        } catch {
++            EchoelCrashLog.breadcrumb("mic take: start FAILED - route: \(error.localizedDescription)")
++            try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++            routeHeld = false
++            lastFailure = String(localized: "The microphone could not be opened. Close other apps that use it and record again.")
++            return
++        }
++        EchoelCrashLog.breadcrumb("mic take: start 2/3 - create recorder")
++        guard let made = try? AVAudioRecorder(url: url, settings: Self.settings) else {
++            EchoelCrashLog.breadcrumb("mic take: start FAILED - recorder could not be created")
++            try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++            routeHeld = false
++            lastFailure = String(localized: "The microphone could not be opened. Close other apps that use it and record again.")
++            return
++        }
++        EchoelCrashLog.breadcrumb("mic take: start 3/3 - record")
++        guard made.prepareToRecord(), made.record() else {
++            EchoelCrashLog.breadcrumb("mic take: start FAILED - record() refused")
++            made.stop()
++            try? FileManager.default.removeItem(at: url)
++            try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++            routeHeld = false
++            lastFailure = String(localized: "The microphone could not be opened. Close other apps that use it and record again.")
++            return
++        }
++        recorder = made
++        file = url
++    }
++
++    func stop() async -> (url: URL, seconds: Double)? {
++        guard let running = recorder, let url = file else {
++            // Armed but never recording (cancelled, or `start` failed after `prepare`): nothing
++            // to keep, and the route goes back.
++            if routeHeld {
++                EchoelCrashLog.breadcrumb("mic take: stop SKIPPED - nothing recording, release route")
++                try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++                routeHeld = false
++            }
++            return nil
++        }
++        recorder = nil
++        file = nil
++        EchoelCrashLog.breadcrumb("mic take: stop 1/2 - stop recorder")
++        running.stop()
++        EchoelCrashLog.breadcrumb("mic take: stop 2/2 - release route")
++        try? AudioConfiguration.releaseRecordRoute(.audioTrack)
++        routeHeld = false
++        // The length is the FILE's, not the recorder's clock: what lands is what was written.
++        guard let written = try? AVAudioFile(forReading: url),
++              written.fileFormat.sampleRate > 0
++        else {
++            try? FileManager.default.removeItem(at: url)
++            lastFailure = String(localized: "The microphone recorded nothing, so no audio part was added.")
++            return nil
++        }
++        let seconds = Double(written.length) / written.fileFormat.sampleRate
++        guard seconds.isFinite, seconds > 0.05 else {
++            try? FileManager.default.removeItem(at: url)
++            lastFailure = String(localized: "The microphone recorded nothing, so no audio part was added.")
++            return nil
++        }
++        return (url: url, seconds: seconds)
++    }
++}
++#endif
+diff --git a/Sources/Echoelmusic/Core/RecordController.swift b/Sources/Echoelmusic/Core/RecordController.swift
+index 03ebf2a39..ed5a00274 100644
+--- a/Sources/Echoelmusic/Core/RecordController.swift
++++ b/Sources/Echoelmusic/Core/RecordController.swift
+@@ -18,8 +18,22 @@ import Observation
+ /// `start()` never actually produced a file).
+ @MainActor
+ public protocol AudioTakeRecording: AnyObject {
++    /// Called when Record is pressed with an audio track armed, BEFORE the music starts (E10-1):
++    /// the recorder raises the shared session to its record route here, so the category change
++    /// and the engine restart it can cause land before bar 1, not on it. `false` = it cannot
++    /// record (no permission, the route refused); `lastFailure` then says why. A recorder that
++    /// needs no preparation keeps the default.
++    func prepare() -> Bool
+     func start()
+     func stop() async -> (url: URL, seconds: Double)?
++    /// Why the last take captured nothing, in words for the person recording (E10-1). nil when
++    /// it worked or the recorder cannot say.
++    var lastFailure: String? { get }
++}
++
++public extension AudioTakeRecording {
++    var lastFailure: String? { nil }
++    func prepare() -> Bool { true }
+ }
+ 
+ @MainActor
+@@ -34,6 +48,11 @@ public final class RecordController {
+     /// on the next `arm()`.
+     public private(set) var droppedTakes = 0
+ 
++    /// E10-1: the microphone leg of the last take captured nothing — said, never silent, because
++    /// a sung performance that vanishes is the loss CLIP-2 was written against. Cleared on the
++    /// next `arm()`.
++    public private(set) var audioTakeProblem: String?
++
+     @ObservationIgnored private var recorder = TakeRecorder()
+     @ObservationIgnored private weak var transport: Transport?
+     @ObservationIgnored private weak var timeline: TimelineStore?
+@@ -49,14 +68,18 @@ public final class RecordController {
+     @ObservationIgnored private var songEndTick: (@MainActor () -> Int?)?
+ 
+     /// Task #13 (PLAN_AUDIO_LANE_RECORDING_2026-07-21.md, S1): an injected mic
+-    /// recorder for real audio-lane capture. nil (the default, and the shipped
+-    /// wiring unless `FeatureFlags.audioLaneRecording` is on) keeps every branch
+-    /// below inert — behavior byte-identical to before this recorder existed.
++    /// recorder for real audio-lane capture. E10-1 (founder 2026-10-04): the app wires
++    /// `MicTakeRecorder` here on iOS. nil (tests, other platforms) keeps every audio
++    /// branch below inert.
+     @ObservationIgnored private weak var audioRecorder: (any AudioTakeRecording)?
+     /// The one audio lane `audioRecorder` is capturing for the in-flight take,
+     /// if any (today's recorder captures a single mic stream — the first armed
+     /// audio lane wins; see `RecordPlan.armedAudioLaneIDs`).
+     @ObservationIgnored private var recordingAudioLaneID: UUID?
++    /// E10-1: `arm()` prepared the microphone (the record route is up) and no take has started
++    /// yet. Whoever ends the arm without a take — `cancel`, a stop before the first step — hands
++    /// it back through `stop()`, so the route is never left raised (#299).
++    @ObservationIgnored private var audioPrepared = false
+ 
+     /// Carries the last measured breath rate across a camera dropout (#434). Lives for the
+     /// controller's lifetime rather than per take: a gap that straddles a take boundary is the
+@@ -107,12 +130,18 @@ public final class RecordController {
+         return (transport?.position.absoluteStep ?? 0) * TimelineTime.ticksPerTransportStep
+     }
+ 
+-    /// True when at least one lane is armed + recordable (Record button enablement).
++    /// True when at least one lane is armed + recordable (Record button enablement). E10-1: an
++    /// armed AUDIO track counts too, but only while a microphone recorder is wired — the same
++    /// condition under which `onStep` starts one. `RecordPlan.targets` stays the MIDI/bio set.
+     public func hasArmedTarget() -> Bool {
+         guard let timeline else { return false }
+-        return !RecordPlan.targets(in: timeline.document).isEmpty
++        if !RecordPlan.targets(in: timeline.document).isEmpty { return true }
++        return audioRecorder != nil && !RecordPlan.armedAudioLaneIDs(in: timeline.document).isEmpty
+     }
+ 
++    /// Whether a microphone recorder is wired at all (the arm door offers audio tracks only then).
++    public var canRecordAudio: Bool { audioRecorder != nil }
++
+     /// Arm record mode. Capture begins on the next transport step while the clock runs
+     /// (the UI starts the PatternEngine right after). No-op if nothing is armed.
+     public func arm() {
+@@ -121,9 +150,22 @@ public final class RecordController {
+         // transport that is ALREADY running, it would anchor wherever that earlier Play has got
+         // to — not bar 1 — and end one step later at the song end. Arm first, then start.
+         guard transport?.isPlaying != true else { return }
++        droppedTakes = 0
++        audioTakeProblem = nil
++        if let audioRecorder, let timeline, !audioPrepared,
++           !RecordPlan.armedAudioLaneIDs(in: timeline.document).isEmpty {
++            if audioRecorder.prepare() {
++                audioPrepared = true
++            } else {
++                // Said at the button, and the take goes ahead without the microphone when a MIDI
++                // or bio track is armed too — otherwise there is nothing left to record.
++                audioTakeProblem = audioRecorder.lastFailure
++                    ?? String(localized: "The microphone could not be opened. Close other apps that use it and record again.")
++                guard !RecordPlan.targets(in: timeline.document).isEmpty else { return }
++            }
++        }
+         armed = true
+         isRecording = true
+-        droppedTakes = 0
+     }
+ 
+     /// Cancel an armed/running take without committing anything.
+@@ -133,6 +175,21 @@ public final class RecordController {
+         isRecording = false
+         if let audioRecorder, recordingAudioLaneID != nil {
+             recordingAudioLaneID = nil
++            // A cancelled take is not kept: its file would be a recording nobody asked for.
++            Task {
++                if let dropped = await audioRecorder.stop() {
++                    try? FileManager.default.removeItem(at: dropped.url)
++                }
++            }
++        }
++        releasePreparedMicrophone()
++    }
++
++    /// Hands the record route back when `arm()` raised it and no take ever started (E10-1).
++    private func releasePreparedMicrophone() {
++        guard audioPrepared else { return }
++        audioPrepared = false
++        if let audioRecorder {
+             Task { _ = await audioRecorder.stop() }
+         }
+     }
+@@ -153,24 +210,26 @@ public final class RecordController {
+         guard armed else { return }
+         let tick = pos.absoluteStep * TimelineTime.ticksPerTransportStep
+         // R1: the song wraps HERE; the take ends at its end instead of running on past it.
+-        // The mic leg (unwired, #1302) keeps its own async stop path.
+-        if recorder.isRecording, recordingAudioLaneID == nil,
++        // E10-1: a take with a microphone leg ends here too, through the same finish as Stop —
++        // it used to be excluded, so a sung take ran on past the end of the piece.
++        if recorder.isRecording, pendingFinish == nil,
+            let end = songEndTick?(), end > 0, tick >= end {
+             armed = false
+             isRecording = false
+-            commit(recorder.finish(atTick: end), atTick: end)
++            finishTake(atTick: end)
+             return
+         }
+         lastTick = tick
+         if !recorder.isRecording {
+             guard let timeline else { return }
+             var targets = RecordPlan.targets(in: timeline.document)
+-            // S1 (flag-gated, task #13): an injected audio recorder plus an armed
+-            // .audioInput lane starts a real mic capture alongside any MIDI/bio
+-            // take. `captureImplemented`/`RecordPlan.targets` deliberately still
+-            // exclude .audioInput — the Record-button's honest gate is unchanged —
+-            // so with no audioRecorder wired (today's default) this is a no-op.
+-            if let audioRecorder, let audioLaneID = RecordPlan.armedAudioLaneIDs(in: timeline.document).first {
++            // S1 / E10-1: a microphone recorder that `arm()` prepared plus an armed
++            // .audioInput lane starts a real mic capture alongside any MIDI/bio take.
++            // `RecordPlan.targets` deliberately still excludes .audioInput — the audio leg
++            // has its own gate (`audioPrepared`), so with no recorder wired this is a no-op.
++            if audioPrepared, let audioRecorder,
++               let audioLaneID = RecordPlan.armedAudioLaneIDs(in: timeline.document).first {
++                audioPrepared = false
+                 targets.append((laneID: audioLaneID, source: .audioInput))
+                 recordingAudioLaneID = audioLaneID
+                 audioRecorder.start()
+@@ -215,10 +274,20 @@ public final class RecordController {
+         // synchronous branch, and `recorder.finish()` the take out from under the
+         // pending Task — silently dropping the mic file that's still being awaited.
+         guard pendingFinish == nil else { return }
+-        guard recorder.isRecording else { armed = false; isRecording = false; return }
++        guard recorder.isRecording else {
++            armed = false
++            isRecording = false
++            releasePreparedMicrophone()
++            return
++        }
+         armed = false
+         isRecording = false
+-        let stopTick = lastTick
++        finishTake(atTick: lastTick)
++    }
++
++    /// Ends the running take at `stopTick` — from Stop, or from the song's end (E10-1: one path
++    /// for both, so the microphone leg is finished the same way wherever the take ends).
++    private func finishTake(atTick stopTick: Int) {
+         if let audioRecorder, let laneID = recordingAudioLaneID {
+             recordingAudioLaneID = nil
+             // The mic file only finalizes after an async stop — commit waits for
+@@ -245,6 +314,9 @@ public final class RecordController {
+     func finishWithAudio(_ audioRecorder: any AudioTakeRecording, laneID: UUID, atTick tick: Int) async {
+         if let result = await audioRecorder.stop() {
+             recorder.captureAudio(laneID: laneID, mediaRef: result.url.path, durationSeconds: result.seconds)
++        } else {
++            audioTakeProblem = audioRecorder.lastFailure
++                ?? String(localized: "The microphone recorded nothing, so no audio part was added.")
+         }
+         commit(recorder.finish(atTick: tick), atTick: tick)
+     }
+diff --git a/Sources/Echoelmusic/EchoelmusicApp.swift b/Sources/Echoelmusic/EchoelmusicApp.swift
+index 108ca1a30..94999d064 100644
+--- a/Sources/Echoelmusic/EchoelmusicApp.swift
++++ b/Sources/Echoelmusic/EchoelmusicApp.swift
+@@ -154,6 +154,10 @@ struct EchoelmusicApp: App {
+     /// outlives any surface switch; never persisted.
+     @State private var workstationSelection = WorkstationSelection()
+     @State private var recordController = RecordController()
++    #if canImport(AVFoundation) && os(iOS)
++    /// E10-1 — the ONE microphone owner. Held here because `RecordController` keeps it `weak`.
++    @State private var micTakeRecorder = MicTakeRecorder()
++    #endif
+     /// The live immersive scene: every non-bio track is a positioned SpatialObject,
+     /// moved by the Immersive Stage Touch surface. Control-plane only (no audio thread).
+     @State private var spatialScene = SpatialSceneStore.workingCopy()
+@@ -1507,14 +1511,21 @@ struct EchoelmusicApp: App {
+                 // playing captures its input into a Clip + region on that lane. The tee
+                 // closures are no-ops unless a take is running (RecordController gates).
+                 // ⛔ #1302 — `audioRecorder:` took `FeatureFlags.audioLaneRecording ?
+-                // audioEngine.multiTrackRecorder : nil`. The recorder captured the MIC
+-                // (`engine.inputNode`) and went with the audio input by founder order; the
+-                // flag never resolved to true anyway (it is not registered), so this argument
+-                // was already nil in every shipped build. The parameter STAYS: `RecordController`
+-                // takes a narrow protocol, and MIDI-lane recording still uses this call.
++                // audioEngine.multiTrackRecorder : nil`. That recorder tapped the ENGINE's input
++                // node and went with the audio input by founder order.
++                // ⭐ E10-1 (founder 2026-10-04, „Mikrofonzugriff wird ausdrücklich aktiviert"):
++                // `MicTakeRecorder` records with `AVAudioRecorder`, OUTSIDE the playback graph, so
++                // the engine gains no input node. It claims the record route only while a take
++                // runs on an armed audio track.
++                #if canImport(AVFoundation) && os(iOS)
++                recordController.wire(transport: transport, timeline: timelineStore,
++                                      clips: clipStore, bus: bus,
++                                      audioRecorder: micTakeRecorder)
++                #else
+                 recordController.wire(transport: transport, timeline: timelineStore,
+                                       clips: clipStore, bus: bus,
+                                       audioRecorder: nil)
++                #endif
+                 // Phase 3 / Recording R1: a take ends where the song wraps.
+                 recordController.followSongEnd { [weak timelinePlayer] in timelinePlayer?.songEndTick }
+                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
+diff --git a/Sources/Echoelmusic/Resources/Localizable.xcstrings b/Sources/Echoelmusic/Resources/Localizable.xcstrings
+index 5865085b3..d36f201a7 100644
+--- a/Sources/Echoelmusic/Resources/Localizable.xcstrings
++++ b/Sources/Echoelmusic/Resources/Localizable.xcstrings
+@@ -16845,12 +16845,12 @@
+         }
+       }
+     },
+-    "Arm a MIDI track to record onto it." : {
++    "Arm a MIDI or audio track to record onto it." : {
+       "localizations" : {
+         "en" : {
+           "stringUnit" : {
+             "state" : "translated",
+-            "value" : "Arm a MIDI track to record onto it."
++            "value" : "Arm a MIDI or audio track to record onto it."
+           }
+         }
+       }
+@@ -22598,6 +22598,96 @@
+           }
+         }
+       }
++    },
++    "Echoel may not use the microphone. Allow it in Settings, then arm the track again." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Echoel may not use the microphone. Allow it in Settings, then arm the track again."
++          }
++        }
++      }
++    },
++    "Echoel may not use the microphone. Allow it in Settings, then record again." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Echoel may not use the microphone. Allow it in Settings, then record again."
++          }
++        }
++      }
++    },
++    "Open Settings" : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Open Settings"
++          }
++        }
++      }
++    },
++    "Opens Echoel's page in Settings, where microphone access is switched on" : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Opens Echoel's page in Settings, where microphone access is switched on"
++          }
++        }
++      }
++    },
++    "Record plays the piece from bar 1 and records the microphone onto this track. " : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Record plays the piece from bar 1 and records the microphone onto this track. "
++          }
++        }
++      }
++    },
++    "The microphone could not be opened. Close other apps that use it and record again." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "The microphone could not be opened. Close other apps that use it and record again."
++          }
++        }
++      }
++    },
++    "The microphone recorded nothing, so no audio part was added." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "The microphone recorded nothing, so no audio part was added."
++          }
++        }
++      }
++    },
++    "The recording could not be saved: no space for media files." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "The recording could not be saved: no space for media files."
++          }
++        }
++      }
++    },
++    "Use headphones, or the music records too." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Use headphones, or the music records too."
++          }
++        }
++      }
+     }
+   },
+   "version" : "1.0"
+diff --git a/Sources/Echoelmusic/Studio/RecordTakeControls.swift b/Sources/Echoelmusic/Studio/RecordTakeControls.swift
+index 6b8cd8d60..b5e9a3b0a 100644
+--- a/Sources/Echoelmusic/Studio/RecordTakeControls.swift
++++ b/Sources/Echoelmusic/Studio/RecordTakeControls.swift
+@@ -9,7 +9,11 @@
+ // and the ONLY one: `WorkstationView` must not name the controller (`TheWorkstationImportsAudioTests`).
+ //
+ // ⚠️ WHAT R1 IS NOT, so the surface does not read as more:
+-//   · MIDI only. There is no audio input (#1302); an audio track shows no Arm.
++//   · ⛔ "MIDI only. There is no audio input (#1302); an audio track shows no Arm." stood here.
++//     E10-1 (founder 2026-10-04, „Mikrofonzugriff wird ausdrücklich aktiviert"): an audio track
++//     arms too, and its take is the microphone (`MicTakeRecorder`), ONE audio track at a time —
++//     one microphone stream. Arming it asks for microphone access the first time; a refusal is
++//     said under the switch with a way to Settings. No monitoring: the take is the raw input.
+ //   · The take starts at bar 1: Record starts the song from the top through the Workstation's ONE
+ //     start, because the recorder counts steps from Play. It ENDS where the song ends (a wrap would
+ //     otherwise land notes past the song — `RecordController.followSongEnd`) or at Stop.
+@@ -38,6 +42,9 @@
+ // `RecordTake.current`, so the word and the sentence cannot come from two readings (#416).
+ 
+ import SwiftUI
++#if canImport(UIKit)
++import UIKit   // E10-1: UIApplication.openSettingsURLString for the microphone way back
++#endif
+ 
+ /// The Record button beside Play. Arms nothing itself — it records the tracks already armed.
+ @MainActor
+@@ -139,7 +146,8 @@ struct RecordTakeNote: View {
+                                        voiceCapacity: voiceCapacity)
+         let reason = RecordTake.shownReason(state, startable: startable, gridSize: clipStore.slots.count)
+         let dropped = recorder.droppedTakes
+-        if reason != nil || dropped > 0 {
++        let audioProblem = recorder.audioTakeProblem
++        if reason != nil || dropped > 0 || audioProblem != nil {
+             VStack(alignment: .leading, spacing: 2) {
+                 if let reason {
+                     Text(reason)
+@@ -152,44 +160,106 @@ struct RecordTakeNote: View {
+                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
+                         .fixedSize(horizontal: false, vertical: true)
+                 }
++                // E10-1: a microphone take that captured nothing is said, never silent.
++                if let audioProblem {
++                    Text(audioProblem)
++                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
++                        .fixedSize(horizontal: false, vertical: true)
++                }
+             }
+         }
+     }
+ }
+ 
+ /// Record-arm for the ONE open track, shown on its detail's Track page (S4b). Offered on a rack MIDI track —
+-/// the tracks a MIDI take can land on and play back from — and on ANY track that is already armed,
+-/// so a stale arm from an older document can always be switched off.
++/// the tracks a MIDI take can land on and play back from — on an audio track while a microphone
++/// recorder is wired (E10-1, one at a time), and on ANY track that is already armed, so a stale arm
++/// from an older document can always be switched off.
+ @MainActor
+ struct TrackArmToggle: View {
+     @Environment(TimelineStore.self) private var timeline
+     @Environment(RecordController.self) private var recorder
+     @Environment(TimelineRegionPlayer.self) private var player
++    @Environment(\.openURL) private var openURL
+ 
+     let laneID: UUID
+ 
++    /// E10-1: why an audio track did not arm (microphone access refused), said under the switch.
++    @State private var micNote: String?
++
+     var body: some View {
+         let document = timeline.document
+-        let armable = RecordTake.canArm(laneID, in: document, voiceCapacity: player.laneVoiceCapacity)
++        let audio = RecordTake.isAudioTrack(laneID, in: document)
++        let armable = audio
++            ? recorder.canRecordAudio && RecordTake.canArmAudio(laneID, in: document)
++            : RecordTake.canArm(laneID, in: document, voiceCapacity: player.laneVoiceCapacity)
+         if let lane = document.lanes.first(where: { $0.id == laneID }), armable || lane.isArmed {
+-            Toggle(isOn: Binding(get: { lane.isArmed },
+-                                 set: { on in
+-                                     // Arming only where a take can land; disarming always.
+-                                     guard on != lane.isArmed, armable || !on else { return }
+-                                     timeline.toggleArm(id: laneID)
+-                                 })) {
+-                VStack(alignment: .leading, spacing: 2) {
+-                    Text("Arm for recording").font(EchoelTheme.font(13))
+-                    Text(RecordTake.armSubtitle(armable: armable))
+-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
++            VStack(alignment: .leading, spacing: 6) {
++                Toggle(isOn: Binding(get: { lane.isArmed },
++                                     set: { on in
++                                         // Arming only where a take can land; disarming always.
++                                         guard on != lane.isArmed, armable || !on else { return }
++                                         if on && audio {
++                                             armWithMicrophone()
++                                         } else {
++                                             micNote = nil
++                                             timeline.toggleArm(id: laneID)
++                                         }
++                                     })) {
++                    VStack(alignment: .leading, spacing: 2) {
++                        Text("Arm for recording").font(EchoelTheme.font(13))
++                        Text(RecordTake.armSubtitle(armable: armable, audio: audio))
++                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
++                            .fixedSize(horizontal: false, vertical: true)
++                    }
++                }
++                .tint(EchoelTheme.accent)
++                .disabled(recorder.isRecording)   // a take's targets are fixed when it starts
++                if let micNote {
++                    Text(micNote)
++                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
+                         .fixedSize(horizontal: false, vertical: true)
++                    #if canImport(UIKit)
++                    Button {
++                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
++                    } label: {
++                        Text("Open Settings")
++                            .font(EchoelTheme.font(13, .semibold))
++                            .frame(minHeight: 44)
++                            .contentShape(Rectangle())
++                    }
++                    .buttonStyle(.plain)
++                    .foregroundStyle(EchoelTheme.text)
++                    .accessibilityHint("Opens Echoel's page in Settings, where microphone access is switched on")
++                    #endif
+                 }
+             }
+-            .tint(EchoelTheme.accent)
+-            .disabled(recorder.isRecording)   // a take's targets are fixed when it starts
+             // S4b: on the Track page of the detail, inside the inspector's own padding.
+         }
+     }
++
++    /// E10-1: the microphone is asked for at the moment the person arms an audio track — never at
++    /// launch, never while a take runs. Granted arms; refused says so and offers Settings.
++    private func armWithMicrophone() {
++        switch MicAccess.current {
++        case .granted:
++            micNote = nil
++            timeline.toggleArm(id: laneID)
++        case .denied:
++            micNote = RecordTake.micRefusedSentence
++        case .undetermined:
++            Task {
++                let granted = await MicAccess.request()
++                let armed = timeline.document.lanes.first(where: { $0.id == laneID })?.isArmed ?? true
++                if granted {
++                    micNote = nil
++                    if !armed { timeline.toggleArm(id: laneID) }
++                } else {
++                    micNote = RecordTake.micRefusedSentence
++                }
++            }
++        }
++    }
+ }
+ 
+ /// The door's decisions, pure.
+@@ -206,7 +276,9 @@ enum RecordTake {
+         var foreign: [String]
+     }
+ 
+-    nonisolated static func plan(in document: TimelineDocument, voiceCapacity: Int) -> Plan {
++    /// `recordsAudio`: a microphone recorder is wired (E10-1). Required, never defaulted (#431).
++    nonisolated static func plan(in document: TimelineDocument, voiceCapacity: Int,
++                                 recordsAudio: Bool) -> Plan {
+         var plan = Plan(armable: [], foreign: [])
+         for target in RecordPlan.targets(in: document) {
+             if canArm(target.laneID, in: document, voiceCapacity: voiceCapacity) {
+@@ -216,6 +288,20 @@ enum RecordTake {
+                 plan.foreign.append(name)
+             }
+         }
++        // E10-1: ONE microphone stream — the first armed audio track records; any other armed
++        // audio track would record nothing, so it blocks Record by name like any stale arm.
++        // Without a recorder, an armed audio track records nothing and stays out of the plan,
++        // as it always did (`RecordPlan.targets` never counted it).
++        if recordsAudio {
++            for (index, id) in RecordPlan.armedAudioLaneIDs(in: document).enumerated() {
++                if index == 0 {
++                    plan.armable.append(id)
++                } else {
++                    let name = document.lanes.first { $0.id == id }?.name ?? String(localized: "A track")
++                    plan.foreign.append(name)
++                }
++            }
++        }
+         return plan
+     }
+ 
+@@ -244,7 +330,7 @@ enum RecordTake {
+         case .stopFirst:
+             return String(localized: "Stop the music to record. Recording starts at bar 1.")
+         case .armFirst:
+-            return String(localized: "Arm a MIDI track to record onto it.")
++            return String(localized: "Arm a MIDI or audio track to record onto it.")
+         case .foreignArm(let name):
+             // E4-65: the quoted track name stays verbatim; the sentence after it is a catalog key.
+             return "\"\(name)\"" + String(localized: " is armed but cannot record here. Open it and switch Arm off first.")
+@@ -270,10 +356,21 @@ enum RecordTake {
+         }
+     }
+ 
+-    nonisolated static func armSubtitle(armable: Bool) -> String {
+-        let armed: String = String(localized: "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ")
++    nonisolated static func armSubtitle(armable: Bool, audio: Bool) -> String {
++        guard armable else {
++            return String(localized: "This track cannot record here. Switch Arm off so Record can run.")
++        }
++        if audio {
++            return String(localized: "Record plays the piece from bar 1 and records the microphone onto this track. ")
++                + String(localized: "Use headphones, or the music records too.")
++        }
++        return String(localized: "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ")
+             + String(localized: "Every armed track gets the same notes.")
+-        return armable ? armed : String(localized: "This track cannot record here. Switch Arm off so Record can run.")
++    }
++
++    /// E10-1: said under the switch when the system refuses the microphone.
++    nonisolated static var micRefusedSentence: String {
++        String(localized: "Echoel may not use the microphone. Allow it in Settings, then arm the track again.")
+     }
+ 
+     nonisolated static func droppedSentence(_ count: Int, gridSize: Int) -> String {
+@@ -285,6 +382,19 @@ enum RecordTake {
+ 
+     /// A rack MIDI track: its role is a lane synth (not the Echoel track, not bio, not audio, not
+     /// past the rack's capacity) and its record source is MIDI input.
++    /// E10-1: an audio track (not bio) whose record source is the microphone.
++    nonisolated static func isAudioTrack(_ laneID: UUID, in document: TimelineDocument) -> Bool {
++        guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return false }
++        return !lane.isBio && lane.kind == .audio && lane.recordSource == .audioInput
++    }
++
++    /// E10-1: an audio track arms while no OTHER audio track is armed — one microphone stream.
++    /// Whether a recorder is wired is the caller's half (`RecordController.canRecordAudio`).
++    nonisolated static func canArmAudio(_ laneID: UUID, in document: TimelineDocument) -> Bool {
++        guard isAudioTrack(laneID, in: document) else { return false }
++        return !document.lanes.contains { $0.id != laneID && $0.isArmed && $0.recordSource == .audioInput }
++    }
++
+     nonisolated static func canArm(_ laneID: UUID, in document: TimelineDocument,
+                                    voiceCapacity: Int) -> Bool {
+         guard let lane = document.lanes.first(where: { $0.id == laneID }),
+@@ -305,7 +415,8 @@ extension RecordTake {
+     static func current(recorder: RecordController, timeline: TimelineStore, clipStore: ClipStore,
+                         transport: Transport, playing: Bool, startable: Bool,
+                         voiceCapacity: Int) -> State {
+-        let takePlan = Self.plan(in: timeline.document, voiceCapacity: voiceCapacity)
++        let takePlan = Self.plan(in: timeline.document, voiceCapacity: voiceCapacity,
++                                 recordsAudio: recorder.canRecordAudio)
+         let freeSlots = clipStore.slots.filter { $0 == nil }.count
+         return Self.state(recording: recorder.isRecording,
+                           running: playing || transport.isPlaying,
+diff --git a/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift b/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift
+new file mode 100644
+index 000000000..ad45545aa
+--- /dev/null
++++ b/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift
+@@ -0,0 +1,256 @@
++// AnAudioTrackRecordsTheMicrophoneTests.swift
++// Restructure E10-1 (founder 2026-10-04: „Audio-Eingang soll Aufnahme, Sampling und Analyse
++// ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert.")
++//
++// The smallest complete path for the microphone: arm an audio track (the permission is asked at
++// the arm switch), press Record, and `MicTakeRecorder` records the take into `Media/Audio`; Stop
++// — or the piece's end — lands it as a part on that track through the existing take commit.
++//
++// WHAT KIND OF GREEN THIS IS (Tests/CISmoke/CLAUDE.md §1):
++//   · END-TO-END BEHAVIOUR (claim 5) — `RecordTake.canArmAudio` and `RecordTake.plan` are pure
++//     `nonisolated` value functions: one microphone stream, a second armed audio track blocks
++//     Record by name, and without a recorder an armed audio track stays out of the plan.
++//   · SOURCE-TEXT SCAN (claims 1–4, 6–8) — the recorder needs a device microphone and the arm
++//     switch is a `View`; neither can run here. What the scans pin is the #299 route law (every
++//     claim has a release on every exit), the plist pairing, the ONE place each permission call
++//     sits, the engine graph staying input-free, and the failure reaching the button.
++//   · DEVICE PROBE, OPEN — the prompt appears, a sung take lands and plays in time, a Bluetooth
++//     route stays stereo: G9 in `docs/dev/FOUNDER_INBOX.md`.
++//
++// HONEST GRADING against the parent (eaf8f7ca6, §3): the file does NOT compile there —
++// claim 5 calls `RecordTake.canArmAudio` and the three-argument `RecordTake.plan`, both created by
++// this commit — so no assertion has a verdict on the parent (ONE absence, #486). Every claim is a
++// FORWARD guard, transcribed in Python against the worktree. Mutants driven, each red for its
++// named reason: the plist key removed while the owner case stays (claim 1), one release dropped
++// from a `start` failure branch (claim 2), `prepare()` moved below `armed = true` (claim 3), a
++// second `MicAccess.request()` caller (claim 4), `.inputNode` in the recorder (claim 6), the
++// `audioTakeProblem` assignment removed from `finishWithAudio` (claim 7), the song-end branch
++// back on `recorder.finish(` directly (claim 8). COUNTERWEIGHTS (#343): claim 5's no-recorder
++// plan, claim 4's Settings door, claim 6's two `installTap` sites that tap the app's OWN output.
++//
++// `Tests/CISmoke` is the blocking bundle.
++
++import Foundation
++import XCTest
++@testable import Echoelmusic
++
++final class AnAudioTrackRecordsTheMicrophoneTests: XCTestCase {
++
++    private static let recorderFile = "Sources/Echoelmusic/Audio/MicTakeRecorder.swift"
++    private static let configuration = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
++    private static let controller = "Sources/Echoelmusic/Core/RecordController.swift"
++    private static let door = "Sources/Echoelmusic/Studio/RecordTakeControls.swift"
++    private static let plist = "Resources/iOS/Info.plist"
++
++    // MARK: 1 — the owner case and the permission string move together
++
++    /// iOS ends the app when a record category is activated without the usage string. The owner
++    /// case is what makes the route claimable at all, so the two are pinned as a pair.
++    func testTheRouteOwnerAndThePermissionStringArePresentTogether() throws {
++        let config = try code(Self.configuration)
++        let plist = try raw(Self.plist)
++        XCTAssertTrue(config.contains("case audioTrack"), "the microphone's route owner")
++        XCTAssertTrue(plist.contains("<key>NSMicrophoneUsageDescription</key>"), """
++            `RecordRouteOwner` has a case, so the route can be raised to `.playAndRecord`, but \
++            \(Self.plist) no longer carries NSMicrophoneUsageDescription — iOS terminates the app \
++            the first time a take starts. Restore the key in the SAME commit.
++            """)
++    }
++
++    // MARK: 2 — every claim of the route has a release on every exit (#299)
++
++    func testEveryClaimInTheRecorderIsReleasedOnEveryExit() throws {
++        let recorder = try code(Self.recorderFile)
++        let claim = "try AudioConfiguration.claimRecordRoute(.audioTrack)"
++        let release = "try? AudioConfiguration.releaseRecordRoute(.audioTrack)"
++
++        let start = try body(of: "func start()", in: recorder)
++        let afterClaim = try XCTUnwrap(start.range(of: claim), "start claims the route")
++        let tail = String(start[afterClaim.upperBound...])
++        XCTAssertEqual(count("return", in: tail), count(release, in: tail), """
++            `MicTakeRecorder.start` has an exit after the route claim that does not give the \
++            route back. #299: one unbalanced claim holds the phone in `.playAndRecord` for the \
++            rest of the session.
++            """)
++        XCTAssertEqual(count(release, in: tail), 3, "the three failure branches after the claim")
++
++        let prepare = try body(of: "func prepare() -> Bool", in: recorder)
++        XCTAssertEqual(count(claim, in: prepare), 1)
++        let caught = try XCTUnwrap(prepare.range(of: "} catch {"), "prepare's failure branch")
++        XCTAssertTrue(prepare[caught.upperBound...].contains(release), "a failed prepare releases")
++
++        let stop = try body(of: "func stop() async -> (url: URL, seconds: Double)?", in: recorder)
++        XCTAssertEqual(count(release, in: stop), 2, "stop releases whether or not it was recording")
++        XCTAssertEqual(count("routeHeld = false", in: stop), 2)
++        XCTAssertFalse(stop.contains(claim), "stop never claims")
++        XCTAssertEqual(count(claim, in: recorder), 2, "prepare and start are the only claims")
++    }
++
++    // MARK: 3 — the route is raised when Record is pressed, before the music starts
++
++    func testTheRouteIsPreparedAtArmBeforeTheTakeStarts() throws {
++        let controller = try code(Self.controller)
++        let arm = try body(of: "public func arm()", in: controller)
++        let prepare = try XCTUnwrap(arm.range(of: "audioRecorder.prepare()"), "arm prepares the microphone")
++        let armed = try XCTUnwrap(arm.range(of: "armed = true"), "arm arms")
++        XCTAssertLessThan(prepare.lowerBound, armed.lowerBound, """
++            The record route must be raised in `arm()`, before the transport starts: raising the \
++            category on a running engine restarts it, and that dropout would land on bar 1.
++            """)
++        let step = try body(of: "private func onStep(_ pos: TransportPosition)", in: controller)
++        XCTAssertTrue(step.contains("if audioPrepared, let audioRecorder,"),
++                      "the take starts the microphone only when arm prepared it")
++        XCTAssertEqual(count("releasePreparedMicrophone()", in: controller), 3,
++                       "the declaration plus cancel and the not-recording stop")
++        let cancel = try body(of: "public func cancel()", in: controller)
++        XCTAssertTrue(cancel.contains("releasePreparedMicrophone()"), "a cancelled arm gives the route back")
++        XCTAssertTrue(cancel.contains("try? FileManager.default.removeItem(at: dropped.url)"),
++                      "a cancelled take's file is not kept")
++    }
++
++    // MARK: 4 — the permission is asked in ONE place, and refusal has a way back
++
++    func testThePermissionIsAskedAtTheArmSwitchOnly() throws {
++        XCTAssertEqual(try filesUnderSources(containing: "MicAccess.request()"), ["Studio/RecordTakeControls.swift"])
++        XCTAssertEqual(try filesUnderSources(containing: "requestRecordPermission"), ["Audio/MicTakeRecorder.swift"])
++        XCTAssertEqual(try filesUnderSources(containing: "AVAudioRecorder("), ["Audio/MicTakeRecorder.swift"],
++                       "one microphone recorder")
++        let door = try code(Self.door)
++        XCTAssertTrue(door.contains("private func armWithMicrophone()"))
++        XCTAssertTrue(door.contains("UIApplication.openSettingsURLString"),
++                      "COUNTERWEIGHT: a refused permission offers the way to Settings")
++    }
++
++    // MARK: 5 — one microphone stream (END-TO-END)
++
++    func testOneAudioTrackRecordsAtATime() {
++        var first = TimelineLane(name: "Audio 1", kind: .audio)
++        var second = TimelineLane(name: "Audio 2", kind: .audio)
++        let keys = TimelineLane(name: "Keys", kind: .midi)
++        XCTAssertTrue(RecordTake.isAudioTrack(first.id, in: TimelineDocument(lanes: [first], regions: [])))
++        XCTAssertFalse(RecordTake.isAudioTrack(keys.id, in: TimelineDocument(lanes: [keys], regions: [])))
++
++        first.isArmed = true
++        var doc = TimelineDocument(lanes: [first, second, keys], regions: [])
++        XCTAssertTrue(RecordTake.canArmAudio(first.id, in: doc))
++        XCTAssertFalse(RecordTake.canArmAudio(second.id, in: doc), "a second track would record nothing")
++        XCTAssertFalse(RecordTake.canArmAudio(keys.id, in: doc), "a MIDI track is not a microphone track")
++
++        second.isArmed = true
++        doc = TimelineDocument(lanes: [first, second, keys], regions: [])
++        let plan = RecordTake.plan(in: doc, voiceCapacity: 4, recordsAudio: true)
++        XCTAssertEqual(plan.armable, [first.id])
++        XCTAssertEqual(plan.foreign, ["Audio 2"], "the second armed audio track blocks Record by name")
++
++        // COUNTERWEIGHT: without a recorder an armed audio track records nothing and stays out.
++        let none = RecordTake.plan(in: doc, voiceCapacity: 4, recordsAudio: false)
++        XCTAssertEqual(none.armable, [])
++        XCTAssertEqual(none.foreign, [])
++    }
++
++    // MARK: 6 — the playback graph gains no input node
++
++    func testTheEngineGraphStaysFreeOfAnInputNode() throws {
++        let recorder = try code(Self.recorderFile)
++        for engineInput in [".inputNode", "installTap(", "AVAudioEngine"] {
++            XCTAssertFalse(recorder.contains(engineInput), """
++                `MicTakeRecorder` reaches into the engine graph (`\(engineInput)`). The crash family \
++                that took the old audio input down sat at the engine's input node; this recorder \
++                stays outside the graph on purpose.
++                """)
++        }
++        XCTAssertEqual(try filesUnderSources(containing: ".inputNode"), [], "no engine input node anywhere")
++        XCTAssertEqual(try filesUnderSources(containing: "installTap(onBus:"),
++                       ["Audio/AudioEngine.swift", "Audio/RetroCapture.swift"],
++                       "COUNTERWEIGHT: the two taps that exist record the app's OWN output")
++    }
++
++    // MARK: 7 — a failed take is said at the button
++
++    func testAMicrophoneFailureReachesTheButton() throws {
++        let controller = try code(Self.controller)
++        let finish = try body(of: "func finishWithAudio(", in: controller)
++        XCTAssertTrue(finish.contains("audioTakeProblem = audioRecorder.lastFailure"),
++                      "a take without a recording says so")
++        XCTAssertTrue(try code(Self.door).contains("recorder.audioTakeProblem"),
++                      "the Record door shows the microphone's failure")
++        let recorder = try code(Self.recorderFile)
++        XCTAssertTrue(recorder.contains("guard seconds.isFinite, seconds > 0.05 else {"),
++                      "an empty recording is removed, not placed")
++    }
++
++    // MARK: 8 — Stop and the piece's end finish the take the same way
++
++    func testTheSongEndFinishesTheMicrophoneLegToo() throws {
++        let controller = try code(Self.controller)
++        let step = try body(of: "private func onStep(_ pos: TransportPosition)", in: controller)
++        XCTAssertTrue(step.contains("finishTake(atTick: end)"), """
++            The song-end stop no longer goes through `finishTake`. A take with a microphone leg \
++            would then commit without waiting for the file, or run on past the end of the piece.
++            """)
++        let stop = try body(of: "private func commitOnStop()", in: controller)
++        XCTAssertTrue(stop.contains("finishTake(atTick: lastTick)"))
++        XCTAssertEqual(count("recorder.finish(", in: controller), 2,
++                       "finishTake's MIDI-only branch and finishWithAudio — no third path")
++    }
++
++    // MARK: - helpers
++
++    private func repoRoot() -> URL {
++        var url = URL(fileURLWithPath: #filePath)
++        for _ in 0..<3 { url.deleteLastPathComponent() }
++        return url
++    }
++
++    private func raw(_ relative: String) throws -> String {
++        let file = repoRoot().appendingPathComponent(relative)
++        guard FileManager.default.fileExists(atPath: file.path) else {
++            throw XCTSkip("\(relative) not on disk — this run has no source tree")
++        }
++        return try String(contentsOf: file, encoding: .utf8)
++    }
++
++    private func code(_ relative: String) throws -> String {
++        SourceText.codeOnly(try raw(relative))
++    }
++
++    private func count(_ needle: String, in text: String) -> Int {
++        text.components(separatedBy: needle).count - 1
++    }
++
++    /// The brace-matched body of the FIRST declaration starting with `signature` (#408: no
++    /// fixed window — this repo writes long comment blocks, and `codeOnly` keeps them as lines).
++    private func body(of signature: String, in text: String) throws -> String {
++        let head = try XCTUnwrap(text.range(of: signature), "`\(signature)` not found")
++        let rest = text[head.upperBound...]
++        let open = try XCTUnwrap(rest.firstIndex(of: "{"), "`\(signature)` has no body")
++        var depth = 0
++        var index = open
++        while index < rest.endIndex {
++            switch rest[index] {
++            case "{": depth += 1
++            case "}":
++                depth -= 1
++                if depth == 0 { return String(rest[open...index]) }
++            default: break
++            }
++            index = rest.index(after: index)
++        }
++        XCTFail("`\(signature)` body is not closed")
++        return ""
++    }
++
++    private func filesUnderSources(containing needle: String) throws -> [String] {
++        let root = repoRoot().appendingPathComponent("Sources/Echoelmusic")
++        guard let walker = FileManager.default.enumerator(atPath: root.path) else {
++            throw XCTSkip("cannot enumerate Sources/Echoelmusic — refusing to report a green it did not earn")
++        }
++        var hits: [String] = []
++        for case let relative as String in walker where relative.hasSuffix(".swift") {
++            guard let text = try? String(contentsOf: root.appendingPathComponent(relative), encoding: .utf8)
++            else { continue }
++            if SourceText.codeOnly(text).contains(needle) { hits.append(relative) }
++        }
++        return hits.sorted()
++    }
++}
+diff --git a/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift b/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
+index a76c4a125..bc5f77a01 100644
+--- a/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
++++ b/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
+@@ -120,7 +120,16 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
+             (["CLLocationManager"], "Core/LocationNamer.swift"),
+         "NSLocalNetworkUsageDescription":
+             (["NWConnection", "MCNearbyServiceAdvertiser"],
+-             "Sync/OSCSender.swift, Sync/MultipeerSession.swift")
++             "Sync/OSCSender.swift, Sync/MultipeerSession.swift"),
++        // ⭐ BACK IN `table` SINCE E10-1 (founder 2026-10-04: „Mikrofonzugriff wird ausdrücklich
++        // aktiviert"). The row moved out of `retiredPrompts` in the SAME commit that restored the
++        // plist key and the capability — exactly the two-part change claim 4 exists to force.
++        // The needles keep the #1308 law below: symbols ONLY a microphone can reach. The prompt
++        // itself and the file recorder qualify; `AVAudioSession.sharedInstance()` still does NOT
++        // (every playback path calls it), and neither does `.inputNode` — the take recorder
++        // deliberately stays out of the engine graph, so that symbol is absent on purpose.
++        "NSMicrophoneUsageDescription":
++            (["AVAudioRecorder", "requestRecordPermission"], "Audio/MicTakeRecorder.swift")
+     ]
+ 
+     /// Keys whose capability has been REMOVED by a founder decision while the plist — which is
+@@ -137,6 +146,10 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
+     /// `PHPhotoLibrary`. Claim 4 asserts that symbol is absent from `Sources/`, so re-adding
+     /// video capture reds this file and forces the row back into `table` in the same commit.
+     ///
++    /// ⛔ NSMicrophoneUsageDescription LIVED HERE FROM #1308 TO E10-1 (2026-10-04), when the
++    /// founder brought recording back and the row returned to `table`. The history below stays
++    /// because its LAW is what chose the new needles.
++    ///
+     /// ⛔ NSMicrophoneUsageDescription MOVED HERE FROM `table` IN #1308, AND THE OLD ROW IS
+     /// WHY IT TOOK SO LONG. Its needle was `AVAudioSession.sharedInstance()` — which every
+     /// PLAYBACK path calls (16 occurrences across 5 files, all output-side), so claim 2 went
+@@ -151,7 +164,7 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
+     /// comment-stripped `Sources/`. `installTap(onBus:` is deliberately NOT among them: it has
+     /// three live call sites, and all three tap the app's OWN output (`RetroCapture`).
+     ///
+-    /// ⚠️ AND THE MACHINERY IS STILL THERE, WHICH IS WHY THE NEEDLES ARE SYMBOLS AND NOT
++    /// ⚠️ (Until E10-1.) AND THE MACHINERY IS STILL THERE, WHICH IS WHY THE NEEDLES ARE SYMBOLS AND NOT
+     /// `.playAndRecord`. `AudioConfiguration.upgradeToPlayAndRecord()` and `claimRecordRoute`
+     /// survive on purpose (#299), but `RecordRouteOwner` is an EMPTY enum, so `claimRecordRoute`
+     /// cannot even be called, and neither has a production caller. The session can never be
+@@ -171,9 +184,7 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
+     /// is the whole import LINE now (`SourceText.codeOnly` keeps line ends); `PHPhotoLibrary`
+     /// stays the symbol only library access can reach (the ⭐ law above, one module over).
+     private static let retiredPrompts: [String: [String]] = [
+-        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary", "import Photos\n"],
+-        "NSMicrophoneUsageDescription":
+-            ["requestRecordPermission", ".inputNode", "availableInputs", "AVAudioRecorder"]
++        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary", "import Photos\n"]
+     ]
+ 
+     // MARK: - claim 1 — the roster comes from the plist, not from this file
+diff --git a/Tests/CISmoke/TapTargetFloorTests.swift b/Tests/CISmoke/TapTargetFloorTests.swift
+index f61b1d13d..8310258a9 100644
+--- a/Tests/CISmoke/TapTargetFloorTests.swift
++++ b/Tests/CISmoke/TapTargetFloorTests.swift
+@@ -606,4 +606,25 @@ final class TapTargetFloorTests: XCTestCase {
+     // large Dynamic Type (#353), and the content shape because the frame otherwise grows
+     // layout without growing what is hit-tested. Whoever re-doors a microphone surface
+     // re-adds a case here in the SAME commit.
++
++    // MARK: - E10-1: the microphone Settings door (re-added with the surface, as asked above)
++
++    /// E10-1 (founder 2026-10-04: „Mikrofonzugriff wird ausdrücklich aktiviert") brought a
++    /// microphone surface back: when access is refused, the arm row offers "Open Settings".
++    /// It is the only way back from a refusal inside the app, so it must clear the floor.
++    func testTheMicSettingsDoorClearsTheFloor() throws {
++        let lines = try codeLines("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
++        let hits = lines.indices.filter { lines[$0].contains("Text(\"Open Settings\")") }
++        XCTAssertEqual(hits.count, 1, "the Settings door is no longer unique — re-anchor this case (#408).")
++        guard let start = hits.first else { return }
++        let window = lines[start..<min(start + 5, lines.count)]
++        XCTAssertTrue(window.contains { $0.contains(".frame(minHeight: 44)") }, """
++            the microphone Settings door lost `frame(minHeight: 44)` — a fixed height clips the \
++            label at large text (#353), and no minimum leaves it below the 44 pt floor.
++            """)
++        XCTAssertTrue(window.contains { $0.contains(".contentShape(Rectangle())") }, """
++            the microphone Settings door lost `contentShape(Rectangle())` — under `.plain` the \
++            frame grows the layout but the hit test stays the word's glyph run (#485).
++            """)
++    }
+ }
+diff --git a/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift b/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
+index 43fa83964..22aca6597 100644
+--- a/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
++++ b/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
+@@ -323,10 +323,10 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
+             `TakeRecorder` is now constructed by \
+             \(recorderBuilders.isEmpty ? "nothing" : recorderBuilders.joined(separator: ", ")). \
+             The RECORDER chain runs RecordController → TakeRecorder → AudioClipFactory. Since \
+-            Phase 3 / Recording R1 it has a door for MIDI takes (`RecordTakeControls.swift`), but \
+-            its AUDIO leg stays inert: `audioRecorder` is nil and there is no audio INPUT in this \
+-            app (#1302). Audio Import V1 deliberately did NOT re-door that leg; it added a \
+-            parallel producer that reads a file the user already owns.
++            Phase 3 / Recording R1 it has a door for MIDI takes (`RecordTakeControls.swift`), and \
++            since E10-1 its AUDIO leg records the microphone through `MicTakeRecorder` (outside \
++            the playback graph, one armed audio track at a time). Audio Import V1 is the parallel \
++            producer that reads a file the user already owns; neither replaces the other.
+             """)
+ 
+         // ⛔ A THIRD ASSERTION WAS DRAFTED HERE AND DELETED BEFORE IT SHIPPED, because it
+diff --git a/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift b/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
+index a4561e93c..c5ea109a8 100644
+--- a/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
++++ b/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
+@@ -2445,7 +2445,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
+                           "Plays the piece from bar 1 and records the armed tracks where you play. ",
+                           "The recording plays instead of the parts under it; Undo brings them back.",
+                           "Stop the music to record. Recording starts at bar 1.",
+-                          "Arm a MIDI track to record onto it.",
++                          "Arm a MIDI or audio track to record onto it.",
+                           " is armed but cannot record here. Open it and switch Arm off first.",
+                           "The part grid is full (",
+                           " parts). Remove a part to make room for the recording.",
+diff --git a/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift b/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
+index c9aa079fc..a99d7f9b6 100644
+--- a/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
++++ b/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
+@@ -188,10 +188,8 @@ final class TheClaimsFileHasNoExpiredPermissionTests: XCTestCase {
+         XCTAssertTrue(alive.isEmpty,
+             "An audio-input symbol is back in shipping code: \(alive.sorted()). That is not a "
+             + "defect — it means the input is being rebuilt. But the claims file currently says "
+-            + "those stages are unreachable, and the founder device ask in "
+-            + "`Audio/AudioConfiguration.swift` carries `BLOCKED-BY-#1302` (#1346). Both travel "
+-            + "with the return, in the same commit (#456): un-strike the rows the founder "
+-            + "approves, drop the BLOCKED mark, and pull §1 of "
+-            + "`scratchpads/FOUNDER_DEVICE_SESSION.md`.")
++            + "those stages are unreachable. E10-1 (2026-10-04) brought back RECORDING only "
++            + "(`MicTakeRecorder`), not these stages; if one of them returns, un-strike the rows "
++            + "the founder approves in the same commit (#456).")
+     }
+ }
+diff --git a/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift b/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
+index 9e430a57e..1bcb3e2aa 100644
+--- a/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
++++ b/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
+@@ -90,6 +90,11 @@
+ // · Claims 2–9 are **COUNTERWEIGHTS, green on both trees** (#343), and they are the point: the
+ //   repair must not have loosened the four needles that are still correct, nor the positive
+ //   AUv3 pin claim 2 added, nor the BLOCKED-mark machinery of claims 8/9.
++// · ⭐ E10-1 (founder 2026-10-04, microphone recording back): claim 8 now asserts the
++//   Bluetooth ask is OPEN and names Record (its old message asked for exactly this on a return);
++//   claim 9 keeps its scan, now argued as "only the owned claim raises the route"; claim 7
++//   struck the two microphone needles. Graded by transcription on the worktree: claim 8 is a
++//   FORWARD guard (red on the parent by design — the mark was there), 7 and 9 COUNTERWEIGHTS.
+ // · **NOT covered:** that the founder can actually perform the AUv3 probe. That is a device
+ //   question and stays open in `FOUNDER_DEVICE_SESSION.md` §2b (answered for AUM, #1386; open
+ //   for GarageBand).
+@@ -362,8 +367,10 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
+         "Vokal-Kette",     // #1302 — the whole chain; the ONE known positive on the parent
+         "Vocal chain",
+         "Monitoring",      // #1302 — no monitor path, no switch
+-        "Mikrofon",        // #1302
+-        "Microphone",      // #1302
++        // ⛔ "Mikrofon" / "Microphone" stood here (#1302) and are STRUCK with E10-1 (founder
++        // 2026-10-04, „Mikrofonzugriff wird ausdrücklich aktiviert"): recording from the
++        // microphone is back, so a heading may name it. Monitoring and the vocal chain stay
++        // removed, and their needles stay.
+         "Harmonizer",      // #1305
+         "Granular",        // #1305
+         "Autotune",        // #1302 (VoicePitchCorrector went with the input)
+@@ -398,8 +405,13 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
+             + "#1346 moved §1 there.")
+     }
+ 
+-    // 8 — the one ask #1302 stranded is marked BLOCKED, not deleted, and its machine stands.
+-    func testTheStrandedAskIsBlockedRatherThanDeleted() throws {
++    // 8 — the one ask #1302 stranded is OPEN again since E10-1, and its machine stands.
++    // ⭐ E10-1 changed this claim's premise, as its old message foresaw: recording raises the
++    // session to `.playAndRecord`, where `recordOptions` apply, so the Bluetooth ask can be
++    // performed again — through Record, not through monitoring (which stays deleted). Until
++    // E10-1 this asserted the `BLOCKED-BY-#1302` mark; a blocked ask that can be done hides a
++    // job from the founder's queue, which is the defect the mark existed to avoid.
++    func testTheBluetoothAskIsOpenAgainThroughRecording() throws {
+         let file = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
+         let code = try text(file)
+ 
+@@ -410,13 +422,13 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
+                     + "a finding, not a pass (§4).")
+             return
+         }
+-        XCTAssertTrue(line.contains("BLOCKED-BY-#1302"),
+-            "The Bluetooth/A2DP ask is back in the OPEN queue. It cannot be performed: "
+-            + "`recordOptions` applies only in `.playAndRecord`, and the only way in is "
+-            + "`upgradeToPlayAndRecord()`, which #1302 left without a production caller — so "
+-            + "there is no monitoring switch to turn on. If an audio input came back, remove "
+-            + "the mark deliberately and pull the ⛔ block above it plus §1 of "
+-            + "scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit (#456).")
++        XCTAssertFalse(line.contains("BLOCKED-BY-"),
++            "The Bluetooth/A2DP ask is BLOCKED again, but it can be performed: an armed audio "
++            + "track raises the session through `MicTakeRecorder` (E10-1). If recording went "
++            + "away again, block it deliberately and say so in the ⛔ block above it.")
++        XCTAssertTrue(line.contains("Record"),
++            "The Bluetooth ask no longer says how to reach the record route. Monitoring is "
++            + "deleted; Record on an armed audio track is the only way in (E10-1).")
+ 
+         // Counterweights (#343): BLOCKED means the door died, never that the machine did. If
+         // either of these goes, the honest move is to DELETE the ask, not to keep it blocked —
+@@ -428,8 +440,11 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
+             + "once a door returns.")
+     }
+ 
+-    // 9 — the stranded ask has NO caller anywhere, which is the fact claim 8 rests on.
+-    func testNothingRaisesTheRecordRouteAnyMore() {
++    // 9 — nothing raises the record route DIRECTLY: the one way in is the owned claim
++    // (`claimRecordRoute`, E10-1), never a bare `upgradeToPlayAndRecord()` — an ownerless raise
++    // has no releaser by construction (#825). Unchanged since #1302 as a scan; the premise it
++    // served moved to claim 8.
++    func testOnlyTheOwnedClaimRaisesTheRecordRoute() {
+         var callers: [String] = []
+         let base = root().appendingPathComponent("Sources")
+         guard let walker = FileManager.default.enumerator(atPath: base.path) else {
+@@ -447,12 +462,10 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
+             }
+         }
+         XCTAssertTrue(callers.isEmpty,
+-            "Something raises the record route again: \(callers.sorted()). That is not a "
+-            + "defect — it means an audio input is back. But then the Bluetooth ask in "
+-            + "AudioConfiguration.swift is performable again and must LOSE its "
+-            + "`BLOCKED-BY-#1302` mark, or the founder's queue hides a job he can now do. "
+-            + "#364: this guard does not forbid the return, it names the prose that travels "
+-            + "with it (claim 8's message lists the rest).")
++            "Something raises the record route WITHOUT an owner: \(callers.sorted()). Use "
++            + "`AudioConfiguration.claimRecordRoute(_:)` with a `RecordRouteOwner` case — a bare "
++            + "`upgradeToPlayAndRecord()` has no releaser and holds the phone in "
++            + "`.playAndRecord` for the rest of the session (#299/#825).")
+     }
+     // 10 — the struck list is SELF-CHECKING: a name on it must be absent from `Sources/`.
+     //
+diff --git a/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift b/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
+index cf998fc09..4f0389455 100644
+--- a/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
++++ b/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
+@@ -226,7 +226,7 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
+         echoel.isArmed = true
+         keys.isArmed = true
+         let doc = TimelineDocument(lanes: [echoel, keys], regions: [])
+-        let plan = RecordTake.plan(in: doc, voiceCapacity: 4)
++        let plan = RecordTake.plan(in: doc, voiceCapacity: 4, recordsAudio: false)
+         XCTAssertEqual(plan.armable, [keys.id])
+         XCTAssertEqual(plan.foreign, ["MIDI 1"])
+         XCTAssertEqual(RecordPlan.targets(in: doc).count, 2,
+@@ -241,7 +241,13 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
+         XCTAssertTrue(RecordTake.canArm(keys.id, in: doc, voiceCapacity: 4))
+         XCTAssertFalse(RecordTake.canArm(echoel.id, in: doc, voiceCapacity: 4),
+                        "the Echoel track is the instrument's own part")
+-        XCTAssertFalse(RecordTake.canArm(audio.id, in: doc, voiceCapacity: 4), "no audio input (#1302)")
++        // E10-1: an audio track no longer fails for lack of an input — it arms through its OWN
++        // rule (`canArmAudio`, the microphone), never through this MIDI rule. (The message here
++        // said "no audio input (#1302)" until the founder brought recording back.)
++        XCTAssertFalse(RecordTake.canArm(audio.id, in: doc, voiceCapacity: 4),
++                       "an audio track is not armed by the MIDI rule")
++        XCTAssertTrue(RecordTake.canArmAudio(audio.id, in: doc),
++                      "COUNTERWEIGHT: the audio track arms through the microphone rule")
+         XCTAssertFalse(RecordTake.canArm(keys.id, in: doc, voiceCapacity: 0),
+                        "a track without a rack voice could not play the take back")
+     }
+diff --git a/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift b/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift
+deleted file mode 100644
+index 47b8c80a7..000000000
+--- a/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift
++++ /dev/null
+@@ -1,141 +0,0 @@
+-// TheRecordRouteHasNoClaimantTests.swift
+-// Echoel — #1336. `AudioConfiguration`'s record-route machinery has had ZERO callers since
+-// #1302 removed the audio input. The enum's own doc says so and was the one place #1302
+-// updated; FIVE other prose sites in the SAME file went on describing a live call graph in the
+-// present tense — "it is reachable today: voice capture can run while input monitoring holds
+-// the route", "every one of the seven real claim/release sites lives in a `@MainActor` type",
+-// "nine of the twelve release call sites are `try?`", "Today: all three CHECK, two configure,
+-// one refuses".
+-//
+-// ⭐ THE FINDING IS #456, NOT A TYPO: a repair travels to EVERY home. #1302 edited the
+-// declaration it was deleting cases from and stopped there. One founder deletion, five
+-// sentences left standing, all of them in the file a session opens when it is debugging the
+-// A2DP→HFP degradation this whole file exists to prevent.
+-//
+-// ⭐ AND THE `try?` SENTENCE IS THE THIRD GENERATION OF ONE NUMBER. #902 argued from a count;
+-// #903 found both its figures invented and replaced them with a measured "14 hits = 12 call
+-// sites … nine are `try?`"; #1302 deleted all twelve and nobody re-read the ⛔ note. **A
+-// CORRECTION AGES EXACTLY LIKE THE CLAIM IT CORRECTED** (#1326) — nothing re-checks a ⛔ block
+-// the way it re-checks an original sentence. The repair keeps the ARGUMENT (which never needed
+-// a count) and ships the command instead of the output.
+-//
+-// ⚠️ THIS GUARD DOES NOT FORBID A NEW CLAIMANT (#364) — it is the OPPOSITE of a freeze. The day
+-// anything records again, claim 1 goes red, and its message is the instruction: the five prose
+-// sites in `AudioConfiguration.swift` move in that same commit. That is precisely the event
+-// that went unnoticed in reverse.
+-// ⚠️ AND IT DOES NOT ALLOW DELETING THE MACHINERY. Claim 2 pins the empty enum and both
+-// functions, because CLAUDE.md keeps them on purpose: the #299 defect was a refcount two owners
+-// could unbalance, holding the phone in `.playAndRecord` for the rest of the session. A tidy-up
+-// that removes "unused" code here re-opens it.
+-//
+-// ⚠️ HONEST GRADING (§0/§3). No local Swift toolchain — **8 assertions across three claims**
+-// (claim 1 = 3, claim 2 = 3, claim 3 = 2), transcribed in Python and driven against BOTH trees.
+-// On the parent (`c73ea92`): **2 red, and they are FORWARD guards, not regressions** — claim 3
+-// names prose THIS commit writes, so it could not have been red for any other reason. Booking
+-// them as regressions is the flattering direction (#433/#464). **The other 6 are COUNTERWEIGHTS**
+-// (#343), green on BOTH trees — and that is the honest shape of this slice: the CODE was correct
+-// all along, only its description was wrong, so there is nothing here for a code assertion to
+-// have caught. Claims 1 and 2 earn their place by what they catch NEXT, not by what they catch
+-// now: claim 1 is the tripwire for a returning claimant, claim 2 for a tidy-up deletion.
+-// LIMITS (§1): SOURCE-TEXT SCAN throughout. `AudioConfiguration` is a `@MainActor` enum of
+-// statics touching `AVAudioSession`; that the route actually stays down on a phone is a DEVICE
+-// PROBE and is NOT claimed here.
+-
+-import Foundation
+-import XCTest
+-
+-final class TheRecordRouteHasNoClaimantTests: XCTestCase {
+-
+-    private static let config = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
+-
+-    /// Claim 1 — no call site anywhere in `Sources/`. Counted as "occurrences minus
+-    /// declarations", so the declaring line cannot be mistaken for a caller (#408).
+-    func testNothingClaimsOrReleasesTheRecordRoute() throws {
+-        let code = try Self.allSourceCode()
+-        XCTAssertFalse(code.isEmpty, "ANCHOR MISSING: could not walk `Sources/` (#454).")
+-        for name in ["claimRecordRoute", "releaseRecordRoute"] {
+-            let all = Self.occurrences(of: name + "(", in: code)
+-            let declarations = Self.occurrences(of: "func " + name + "(", in: code)
+-            XCTAssertEqual(
+-                all - declarations, 0,
+-                "`\(name)` has a caller again. That is legal and probably good (#364) — but "
+-                + "FIVE prose blocks in `AudioConfiguration.swift` describe the record route "
+-                + "in the PAST tense on the strength of there being none, and they are marked "
+-                + "#1336. Move them in this same commit, and give the returning owner a case in "
+-                + "`RecordRouteOwner` rather than a counter (#299). Measure: "
+-                + "`git grep -n \"\(name)(\" -- Sources`.")
+-        }
+-    }
+-
+-    /// Claim 2 — counterweight: the machinery is kept, exactly as CLAUDE.md requires.
+-    /// Without this, claim 1 is green on a tree that DELETED the route handling outright —
+-    /// the tidy-up that re-opens #299.
+-    func testTheMachineryIsStillThere() throws {
+-        let code = SourceText.codeOnly(try Self.text(Self.config))
+-        XCTAssertTrue(code.contains("enum RecordRouteOwner: Hashable, CaseIterable, Sendable {}"),
+-                      "the owner enum is gone or has grown a case. It is deliberately EMPTY "
+-                      + "(#1302) and deliberately KEPT (#299): a Set of named owners is what "
+-                      + "makes a double claim and a double release both harmless, and an empty "
+-                      + "enum is what makes adding a case the obvious move later.")
+-        XCTAssertTrue(code.contains("static func claimRecordRoute("),
+-                      "`claimRecordRoute` was deleted as unused. Callerless is not dead (#527) "
+-                      + "— this is the answer to a shipped defect that cost a session of wrong "
+-                      + "Bluetooth routing.")
+-        XCTAssertTrue(code.contains("static func releaseRecordRoute("),
+-                      "`releaseRecordRoute` was deleted as unused — same argument.")
+-    }
+-
+-    /// Claim 3 — FORWARD guards (§3): the two sentences that were flatly false now read in the
+-    /// past tense. Read RAW, not through `codeOnly`: these are comments, and stripping them
+-    /// would make both assertions vacuous (#926).
+-    func testTheProseNoLongerClaimsALiveRoute() throws {
+-        let raw = try Self.text(Self.config)
+-        XCTAssertFalse(
+-            raw.contains("is reachable today: voice capture"),
+-            "`AudioConfiguration` claims the two-owner breadcrumb is reachable today. Both "
+-            + "features it names — `microphoneManager` and input monitoring — are deleted "
+-            + "files. A doc asserting present reachability invites the next session to debug a "
+-            + "race no build can produce. (Safe as a NEGATIVE scan: the #1336 retraction quotes "
+-            + "the struck phrase in CAPITALS, so this needle cannot match its own retraction — "
+-            + "the #491 trap.)")
+-        XCTAssertTrue(
+-            raw.contains("could run while input monitoring holds the route"),
+-            "the past-tense replacement is gone. The sentence is kept, not deleted: it records "
+-            + "WHY the breadcrumb exists, which is what a later recorder will need.")
+-    }
+-
+-    // MARK: - Helpers
+-
+-    private static func occurrences(of needle: String, in text: String) -> Int {
+-        guard !needle.isEmpty else { return 0 }
+-        var count = 0
+-        var i = text.startIndex
+-        while let r = text.range(of: needle, range: i..<text.endIndex) {
+-            count += 1
+-            i = r.upperBound
+-        }
+-        return count
+-    }
+-
+-    private static func allSourceCode() throws -> String {
+-        let sources = Self.root().appendingPathComponent("Sources")
+-        guard let walker = FileManager.default.enumerator(atPath: sources.path) else { return "" }
+-        var joined = ""
+-        for case let relative as String in walker where relative.hasSuffix(".swift") {
+-            if let body = try? String(contentsOf: sources.appendingPathComponent(relative),
+-                                      encoding: .utf8) {
+-                joined += SourceText.codeOnly(body) + "\n"
+-            }
+-        }
+-        return joined
+-    }
+-
+-    private static func root() -> URL {
+-        URL(fileURLWithPath: #filePath)
+-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+-    }
+-
+-    private static func text(_ relativePath: String) throws -> String {
+-        try String(contentsOf: root().appendingPathComponent(relativePath), encoding: .utf8)
+-    }
+-}
+diff --git a/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift b/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift
+new file mode 100644
+index 000000000..2e08f00e0
+--- /dev/null
++++ b/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift
+@@ -0,0 +1,152 @@
++// TheRecordRouteHasOneClaimantTests.swift
++// ⭐ E10-1 (founder 2026-10-04: „Audio-Eingang soll Aufnahme, Sampling und Analyse ermöglichen;
++// Mikrofonzugriff wird ausdrücklich aktiviert.") — RENAMED from TheRecordRouteHasNoClaimantTests
++// and claims 1–2 REWRITTEN, because the founder changed their premise: the record route has a
++// claimant again, `MicTakeRecorder`, under the one owner case `audioTrack`. Exactly what the
++// old claim-1 message asked for happened: a CASE in `RecordRouteOwner`, not a counter (#299),
++// and the #1336 prose moved in the same commit. The old name described an absence the code no
++// longer has (#374). What stays pinned: ONE claimant file, ONE owner case, every call names it,
++// the machinery is kept, and claim 3's prose facts (unchanged).
++// HONEST GRADING of the rewrite (§3): on the parent (eaf8f7ca6) claim 1 is red by design —
++// the claimant file does not exist there, so the caller set is EMPTY, not the one claimant —
++// and claim 2 is red by ANCHOR shape (the enum is `{}` there): ONE absence, the E10-1 slice
++// itself (#486). FORWARD guards, both. Claim 3 is a COUNTERWEIGHT, green on both trees.
++// Transcribed in Python against the worktree; mutants: a second caller file (claim 1), a call
++// naming no `.audioTrack` (claim 1), a second case (claim 2).
++//
++// ── History of this guard (#1336), kept because its lessons are not about the absence ──
++// Echoel — #1336. `AudioConfiguration`'s record-route machinery has had ZERO callers since
++// #1302 removed the audio input. The enum's own doc says so and was the one place #1302
++// updated; FIVE other prose sites in the SAME file went on describing a live call graph in the
++// present tense — "it is reachable today: voice capture can run while input monitoring holds
++// the route", "every one of the seven real claim/release sites lives in a `@MainActor` type",
++// "nine of the twelve release call sites are `try?`", "Today: all three CHECK, two configure,
++// one refuses".
++//
++// ⭐ THE FINDING IS #456, NOT A TYPO: a repair travels to EVERY home. #1302 edited the
++// declaration it was deleting cases from and stopped there. One founder deletion, five
++// sentences left standing, all of them in the file a session opens when it is debugging the
++// A2DP→HFP degradation this whole file exists to prevent.
++//
++// ⭐ AND THE `try?` SENTENCE IS THE THIRD GENERATION OF ONE NUMBER. #902 argued from a count;
++// #903 found both its figures invented and replaced them with a measured "14 hits = 12 call
++// sites … nine are `try?`"; #1302 deleted all twelve and nobody re-read the ⛔ note. **A
++// CORRECTION AGES EXACTLY LIKE THE CLAIM IT CORRECTED** (#1326) — nothing re-checks a ⛔ block
++// the way it re-checks an original sentence. The repair keeps the ARGUMENT (which never needed
++// a count) and ships the command instead of the output.
++//
++// ⚠️ THIS GUARD DOES NOT FORBID A NEW CLAIMANT (#364) — it is the OPPOSITE of a freeze. The day
++// anything records again, claim 1 goes red, and its message is the instruction: the five prose
++// sites in `AudioConfiguration.swift` move in that same commit. That is precisely the event
++// that went unnoticed in reverse.
++// ⚠️ AND IT DOES NOT ALLOW DELETING THE MACHINERY. Claim 2 pins the empty enum and both
++// functions, because CLAUDE.md keeps them on purpose: the #299 defect was a refcount two owners
++// could unbalance, holding the phone in `.playAndRecord` for the rest of the session. A tidy-up
++// that removes "unused" code here re-opens it.
++//
++// ⚠️ HONEST GRADING (§0/§3). No local Swift toolchain — **8 assertions across three claims**
++// (claim 1 = 3, claim 2 = 3, claim 3 = 2), transcribed in Python and driven against BOTH trees.
++// On the parent (`c73ea92`): **2 red, and they are FORWARD guards, not regressions** — claim 3
++// names prose THIS commit writes, so it could not have been red for any other reason. Booking
++// them as regressions is the flattering direction (#433/#464). **The other 6 are COUNTERWEIGHTS**
++// (#343), green on BOTH trees — and that is the honest shape of this slice: the CODE was correct
++// all along, only its description was wrong, so there is nothing here for a code assertion to
++// have caught. Claims 1 and 2 earn their place by what they catch NEXT, not by what they catch
++// now: claim 1 is the tripwire for a returning claimant, claim 2 for a tidy-up deletion.
++// LIMITS (§1): SOURCE-TEXT SCAN throughout. `AudioConfiguration` is a `@MainActor` enum of
++// statics touching `AVAudioSession`; that the route actually stays down on a phone is a DEVICE
++// PROBE and is NOT claimed here.
++
++import Foundation
++import XCTest
++
++final class TheRecordRouteHasOneClaimantTests: XCTestCase {
++
++    private static let config = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
++    private static let claimant = "Echoelmusic/Audio/MicTakeRecorder.swift"
++
++    /// Claim 1 — the route is claimed and released by ONE file, and every call names the one
++    /// owner. A second claimant is legal (#364), but it must arrive with its own case and its
++    /// own pairing, which is a decision this message makes visible instead of silent.
++    func testOnlyTheMicrophoneRecorderClaimsTheRecordRoute() throws {
++        let files = try Self.sourceFiles()
++        XCTAssertGreaterThan(files.count, 100, "ANCHOR MISSING: could not walk `Sources/` (#454, #926).")
++        var callers: [String] = []
++        for (rel, code) in files where !rel.hasSuffix("Audio/AudioConfiguration.swift") {
++            if code.contains("claimRecordRoute(") || code.contains("releaseRecordRoute(") {
++                callers.append(rel)
++            }
++        }
++        XCTAssertEqual(callers.sorted(), [Self.claimant],
++            "The record route has a different set of callers than `MicTakeRecorder` alone (E10-1). "
++            + "A new claimant needs its own `RecordRouteOwner` case, a release on every exit, and "
++            + "the prose in `AudioConfiguration.swift` and CLAUDE.md's audio-input paragraph moved "
++            + "in the same commit. Measure: `git grep -n \"claimRecordRoute(\\|releaseRecordRoute(\" -- Sources`.")
++        guard let code = files.first(where: { $0.0 == Self.claimant })?.1 else { return }
++        for name in ["claimRecordRoute(", "releaseRecordRoute("] {
++            let all = code.components(separatedBy: name).count - 1
++            let named = code.components(separatedBy: name + ".audioTrack)").count - 1
++            XCTAssertGreaterThan(all, 0, "`MicTakeRecorder` no longer calls `\(name)` at all.")
++            XCTAssertEqual(all, named, "a `\(name)` call in `MicTakeRecorder` names another owner than `.audioTrack`.")
++        }
++    }
++
++    /// Claim 2 — the machinery is kept, with exactly the one case E10-1 added. Without this,
++    /// claim 1 is green on a tree that deleted the route handling outright (#299).
++    func testTheMachineryHasExactlyTheOneCase() throws {
++        let code = SourceText.codeOnly(try Self.text(Self.config))
++        let anchor = "enum RecordRouteOwner: Hashable, CaseIterable, Sendable {"
++        let start = try XCTUnwrap(code.range(of: anchor), "ANCHOR MISSING: the owner enum (#408).")
++        let rest = code[start.upperBound...]
++        let end = try XCTUnwrap(rest.firstIndex(of: "}"), "ANCHOR MISSING: the owner enum's closing brace.")
++        let cases = rest[..<end].split(separator: "\n")
++            .map { $0.trimmingCharacters(in: .whitespaces) }
++            .filter { $0.hasPrefix("case ") }
++        XCTAssertEqual(cases, ["case audioTrack"],
++                       "the owner enum's cases changed. A case is a claimant — see claim 1's message.")
++        XCTAssertTrue(code.contains("static func claimRecordRoute("),
++                      "`claimRecordRoute` was deleted — the answer to #299 went with it.")
++        XCTAssertTrue(code.contains("static func releaseRecordRoute("),
++                      "`releaseRecordRoute` was deleted — same argument.")
++    }
++
++    /// Claim 3 — unchanged from #1336: the two sentences about the deleted two-owner shape stay
++    /// in the past tense. Read RAW, not through `codeOnly`: these are comments (#926).
++    func testTheProseNoLongerClaimsALiveRoute() throws {
++        let raw = try Self.text(Self.config)
++        XCTAssertFalse(
++            raw.contains("is reachable today: voice capture"),
++            "`AudioConfiguration` claims the two-owner breadcrumb is reachable today. Both "
++            + "features it names — `microphoneManager` and input monitoring — are deleted "
++            + "files; E10-1 brought back ONE owner, not two. (Safe as a NEGATIVE scan: the "
++            + "#1336 retraction quotes the struck phrase in CAPITALS — the #491 trap.)")
++        XCTAssertTrue(
++            raw.contains("could run while input monitoring holds the route"),
++            "the past-tense replacement is gone. The sentence is kept, not deleted: it records "
++            + "WHY the breadcrumb exists, which is what a second recorder will need.")
++    }
++
++    // MARK: - Helpers
++
++    private static func sourceFiles() throws -> [(String, String)] {
++        let sources = Self.root().appendingPathComponent("Sources")
++        guard let walker = FileManager.default.enumerator(atPath: sources.path) else { return [] }
++        var out: [(String, String)] = []
++        for case let relative as String in walker where relative.hasSuffix(".swift") {
++            if let body = try? String(contentsOf: sources.appendingPathComponent(relative),
++                                      encoding: .utf8) {
++                out.append((relative, SourceText.codeOnly(body)))
++            }
++        }
++        return out
++    }
++
++    private static func root() -> URL {
++        URL(fileURLWithPath: #filePath)
++            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
++    }
++
++    private static func text(_ relativePath: String) throws -> String {
++        try String(contentsOf: root().appendingPathComponent(relativePath), encoding: .utf8)
++    }
++}
+diff --git a/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift b/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
+index 370b58945..3fdbf0ba6 100644
+--- a/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
++++ b/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
+@@ -233,8 +233,9 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
+             must go back to saying so. If there is a SECOND caller, say what it is and why it \
+             is not a duplicate estimator — #C1 recorded that the value and the estimator \
+             already existed, and minting a parallel one is the mistake both were written to \
+-            prevent (#416). The producer must stay the FILE path: audio input is a founder \
+-            hold (#1302), so a microphone-shaped caller here is a regression, not a feature.
++            prevent (#416). The producer must stay the FILE path: even since E10-1 the \
++            microphone reaches the app only as a recorded FILE (`MicTakeRecorder`), so a live \
++            microphone-shaped caller here is a regression, not a feature — analyse the take's file.
+             """)
+     }
+ 
+diff --git a/Tests/CISmoke/TheTransportBarIsOneRowTests.swift b/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
+index 0e40aa4c9..f33907cfd 100644
+--- a/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
++++ b/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
+@@ -178,8 +178,23 @@ final class TheTransportBarIsOneRowTests: XCTestCase {
+         for modal in [".sheet(", ".fullScreenCover(", ".alert(", ".popover(", ".confirmationDialog("] {
+             XCTAssertFalse(note.contains(modal), "no modal on the bar (the black-screen law): `\(modal)`")
+         }
+-        XCTAssertEqual(door.components(separatedBy: "Button {").count - 1, 1,
+-                       "the door file builds ONE button — the note is a sentence, not a second control")
++        // E10-1 (founder 2026-10-04, microphone recording): the door FILE now builds two
++        // buttons, and the second is NOT on the bar — it is the "Open Settings" remedy under
++        // the arm switch (`TrackArmToggle`, the inspector), shown only after the microphone was
++        // refused. The premise this pin carried is unchanged and is now asserted per struct
++        // instead of per file: the transport door builds ONE button and the note builds none.
++        XCTAssertFalse(note.contains("Button"),
++                       "the note is a sentence, not a second control")
++        let recordButton = try member("struct RecordTakeButton: View {", in: door)
++        XCTAssertEqual(recordButton.components(separatedBy: "Button {").count - 1, 1,
++                       "the Record door builds ONE button")
++        let armSwitch = try member("struct TrackArmToggle: View {", in: door)
++        XCTAssertEqual(armSwitch.components(separatedBy: "Button {").count - 1, 1,
++                       "the arm switch builds exactly the microphone's Settings door")
++        XCTAssertEqual(door.components(separatedBy: "Button {").count - 1, 2, """
++            the door file builds TWO buttons — Record (the bar) and Open Settings (the arm \
++            switch, after a refusal). A third is a new control: name its home in this claim.
++            """)
+ 
+         let workstation = try code(Self.workstation)
+         XCTAssertEqual(workstation.components(separatedBy: "RecordTakeNote(").count - 1, 1, "one note on the plate")
+diff --git a/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift b/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
+index 794219f02..e39eb50da 100644
+--- a/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
++++ b/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
+@@ -155,13 +155,11 @@ final class RecordControllerAudioHookTests: XCTestCase {
+         }
+         timeline.toggleArm(id: audioLaneID)
+ 
+-        // An armed AUDIO lane alone cannot arm the controller: `.audioInput` is
+-        // deliberately NOT `captureImplemented` (TrackInstrument.swift:144), so
+-        // `RecordPlan.targets` comes back empty and `arm()` returns without setting
+-        // `armed` — the CLIP-2 silent-data-loss gate. Without a MIDI lane the take
+-        // never starts and this test would measure nothing. The MIDI lane records no
+-        // notes, so its empty take is dropped at commit and the audio-region assertion
+-        // below stays the load-bearing one.
++        // ⛔ This said an armed AUDIO lane alone cannot arm the controller. Since E10-1
++        // (founder 2026-10-04, microphone recording) it can, while a recorder is wired
++        // (`hasArmedTarget`). The MIDI lane stays because it is what this test was written
++        // with: it records no notes, so its empty take is dropped at commit and the
++        // audio-region assertion below stays the load-bearing one.
+         timeline.addLane(kind: .midi, name: "Synth \(UUID().uuidString)")
+         guard let midiLaneID = timeline.document.lanes.last?.id else {
+             return XCTFail("addLane did not append a lane")
+diff --git a/docs/_headers b/docs/_headers
+index 7e878cb91..7f6aaa84d 100644
+--- a/docs/_headers
++++ b/docs/_headers
+@@ -7,8 +7,9 @@
+   X-Content-Type-Options: nosniff
+   X-Frame-Options: DENY
+   Referrer-Policy: strict-origin-when-cross-origin
+-  # microphone=() since #1302: the marketing site never used it, and the app it describes
+-  # has no microphone feature at all. camera=() was already closed for the same reason.
++  # microphone=() since #1302: the marketing site never uses it. (The APP records the
++  # microphone onto an armed audio track since E10-1; that does not concern this site.)
++  # camera=() is closed for the same reason.
+   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=()
+   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+   X-DNS-Prefetch-Control: on
+diff --git a/docs/claims.html b/docs/claims.html
+index 16c7ed750..5562ccfea 100644
+--- a/docs/claims.html
++++ b/docs/claims.html
+@@ -135,11 +135,11 @@
+             <div class="platform-grid">
+                 <div class="platform-card" id="claim-5">
+                     <h3>No drums, sampler instrument, video editing, livestream or audio recorder</h3>
+-                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and no audio recorder &mdash; the app has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. It records MIDI, never sound.</p>
++                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
+                 </div>
+                 <div class="platform-card" id="claim-11">
+-                    <h3>No microphone: no voice recording, cloning, AI voice, text-to-speech or autotune</h3>
+-                    <p>The audio input path was removed entirely. Nothing in the app listens. There is no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind. What the app records is its own output.</p>
++                    <h3>No voice processing: no cloning, AI voice, text-to-speech or autotune</h3>
++                    <p>The old audio input path was removed entirely, and up to version 10.79.491 nothing in the app listens. From the next version on, the microphone records onto an audio track only while you record on a track you armed &mdash; plain recording, nothing else. There is no live monitoring, no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind.</p>
+                 </div>
+                 <div class="platform-card" id="claim-7">
+                     <h3>No subscription, no paywall, nothing to buy</h3>
+diff --git a/docs/dev/FEATURE_STATUS.md b/docs/dev/FEATURE_STATUS.md
+index 358adce71..dbbcd9074 100644
+--- a/docs/dev/FEATURE_STATUS.md
++++ b/docs/dev/FEATURE_STATUS.md
+@@ -22,8 +22,8 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
+ 
+ | Ebene | Stand | Beleg |
+ |---|---|---|
+-| **Ausgeliefert (TestFlight)** | **v10.79.490 · Build 2615** · Commit `4919d7001` · 2026-10-04 08:23 UTC | TestFlight-Lauf #2615 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37188777769, Conclusion `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder |
+-| **In `main`, noch in keinem Build** | `73deb73ba` — F1–F6b (eine Gestaltungssprache) und A3a (Raum reist mit dem Stück), siehe 1b | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
++| **Ausgeliefert (TestFlight)** | **v10.79.491 · Build 2616** · Commit `4d59d5db0` · 2026-10-04 | TestFlight-Lauf #2616 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37197436074, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.490 · Build 2615 · `4919d7001` |
++| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
+ | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
+ 
+ Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
+@@ -49,7 +49,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+ | Undo/Redo der Stück-Bearbeitung | Kopf (`SongHistoryRow`) · mit Tastatur ⌘Z / ⇧⌘Z | 2613 | offen |
+ | Startet auf dem Stück, Visual als Karte | frische Installation → Arrange | 2609 | offen |
+ 
+-### 1b. In `main`, aber in KEINEM ausgelieferten Build (kommt mit dem nächsten Bump)
++### 1b. Neu in Build 2616 (vorher nur in `main`)
+ 
+ | Fähigkeit | Was sich ändert | Commit | Gerät |
+ |---|---|---|---|
+@@ -59,7 +59,19 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+ | F4a/F4b Schalter und Auswahl | ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel; jede gewählte Kachel zeichnet ihre Kante | `a0a53ba98` · `39d77bf3b` | offen |
+ | F5a/F5b Haptik | das Wertfeld tickt an Standard und Rand, OK bestätigt; das eine Play/Stop ist spürbar | `a585fa507` · `75645cff9` | offen |
+ | F6a/F6b Mixer-Streifen und Live-Rot | ein Mix-Streifen hat keine eigene Fläche; Broadcast „live“ trägt das Aufnahme-Rot | `360e6be0d` · `d4e7d1b9d` | offen |
+-| A3a Raum reist mit dem Stück | Sichern schreibt die Raumszene (Spur-Positionen + Raum) in das Stück; Öffnen stellt sie NACH den Spuren wieder her; ältere Stücke bekommen die Standard-Positionen | `73deb73ba` | offen |
++| A3a Raum reist mit dem Stück | Sichern schreibt die Raumszene (Spur-Positionen + Raum) in das Stück; Öffnen stellt sie NACH den Spuren wieder her; ältere Stücke bekommen die Standard-Positionen | `73deb73ba` | offen (G1) |
++| P2 Licht-Look gehört dem Stück | **Project** → „Light look“; ein Undo-Schritt; ältere Stücke bekommen den Standard | `1f4ce07f3` | offen (G2) |
++| P3a Sichern ersetzt nichts | schlägt Sichern fehl, verweigern Open und „New piece“ mit einem Satz statt das Stück zu verlieren | `9e098c431` | offen (G3) |
++
++### 1b (Fortsetzung). In `main` oder auf dem Zweig, aber in KEINEM ausgelieferten Build
++
++| Fähigkeit | Nutzerweg | Commit | Gerät |
++|---|---|---|---|
++| S3a–S3d Kopfhörer-Raum | **Mixer** → „Headphone space“; je Audiospur **Track** → „Direction“; reist mit dem Stück und über einen Neustart | `4116a56e4`…`8a66ace41` | offen (G6) |
++| A1 Schritte 2–4 Sichern/Öffnen | ein Sichern, das das Lied nicht schreiben kann, behält das letzte und sagt es; die Arbeitskopie sagt, wenn erneutes Schreiben nicht hilft | `302703722` · `19e7fc883` · `71d2c5e9f` | offen (G3) |
++| E13-1 Sampler-Spur | MIDI-Spur → **Track** → „Instrument“ EchoelSampler → „Sample“ eine Bibliotheksdatei | `0e43c0893` · `861f78568` | offen (G7) |
++| E12-1 Video-Ton als Teil | **Browse** → „Video to Visuals“ → „Use Its Sound“; durch die eine Import-Tür, kein Bild gespeichert | `60516905b` · `eaf8f7ca6` | offen (G8) |
++| E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören | Zweig, Gates offen | offen (G9) |
+ 
+ ### 1c. Arrange — das Stück
+ 
+@@ -150,7 +162,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+ | Stream-Key in der Keychain (Broadcast S1) | gebaut, Build 2615 | eine Fläche — und die hängt an S2 (gesperrt, siehe 2a) |
+ | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
+ | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
+-| Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
++| Mehrspur-Aufnahme | Kette gebaut, flag-aus | mehr als EINE Mikrofon-Spur zugleich — E10-1 nimmt genau eine auf |
+ | EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo), kein Aufrufer | ein Sprachmodell als Planer + eine Fläche ohne neuen Modal |
+ 
+ ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
+@@ -176,7 +188,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
+ | Noten-Editor (Piano Roll) | 2026-07-26, #178/#475 | „Pianoroll soll raus“ |
+ | DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
+ | AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) |
+-| Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ |
++| Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ — die AUFNAHME ist mit E10-1 zurück (1b), Vocoder/Autotune nicht |
+ | Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen |
+ | Gesichts-/Körper-Tracking | 2026-09-12, #1301 | wie Audio-Eingang |
+ | Video-Aufnahme und -Schnitt | 2026-09-12, #1304 (Schnitt schon #121) | „Kein Video Capture“ |
+@@ -188,8 +200,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
+ 
+ **Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`; Song-WAV-Export und
+ Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine Tür zum Sampler bzw. Beats aus Samples
+-(`SamplerVoice` hat keinen Lader, Inbox E13) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
+-(#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
++(`SamplerVoice` hat keinen Lader, Inbox E13) · Sends/Returns · Sampling und Analyse einer Mikrofon-Aufnahme
++(Inbox E10; die Aufnahme selbst ist E10-1, siehe 1b) · AUv3-**Hosting** (Inbox E11 — das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
+ Video als musikalisches Material (Inbox E12) · ein hörbarer Raum im Kopfhörer (S3). Die Pläne dazu stehen in
+ `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
+ 
+diff --git a/docs/dev/FOUNDER_INBOX.md b/docs/dev/FOUNDER_INBOX.md
+index 4b99cc391..057862248 100644
+--- a/docs/dev/FOUNDER_INBOX.md
++++ b/docs/dev/FOUNDER_INBOX.md
+@@ -115,6 +115,7 @@ kein Test im Repo kann sie schließen.
+ | G6 | **Kopfhörer-Raum** (S3c + S3d — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Mixer" → oben „Headphone space" an. Ein Stück mit mindestens zwei Audiospuren abspielen (Workstation → „Import Audio", zwei Dateien). Eine Audiospur öffnen → Seite „Track" → „Direction" auf 90 tippen, die andere auf −90. Stück sichern, ein anderes öffnen, das erste wieder öffnen und erneut abspielen. Dann eine Spur auf 45 stellen, OHNE zu sichern die App ganz beenden (wegwischen) und neu starten. | Die erste Spur kommt von links, die zweite von rechts — auch beim Verstellen während der Wiedergabe; nach dem Wiederöffnen von denselben Orten und mit denselben Zahlen; nach dem Neustart steht die Spur wieder auf 45. Generierte Stimmen bleiben normal stereo. Schalter aus → alles wieder normal stereo, ab dem nächsten Start. | Ja · Nein + was · keine Kopfhörer |
+ | G7 | **Eine Spur spielt ein Sample** (E13-1 — erst im Build NACH 10.79.491) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
+ | G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — erst im Build NACH 10.79.491) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
++| G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
+ 
+ **Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
+ die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
+diff --git a/docs/press.html b/docs/press.html
+index 77d796d8b..f6b08d501 100644
+--- a/docs/press.html
++++ b/docs/press.html
+@@ -130,7 +130,7 @@
+                     <li>Open-standard stage I/O: OSC, ADM-OSC immersive objects, Art-Net and sACN lighting.</li>
+                     <li>Nearby session sharing between two iPhones (peer-to-peer, no server).</li>
+                 </ul>
+-                <p>Not in Echoelmusic today: video editing, audio recording (there is no microphone input), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
++                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
+             </div></div>
+         </div>
+ 
+diff --git a/docs/privacy.html b/docs/privacy.html
+index f2c3edd17..0713bc5f1 100644
+--- a/docs/privacy.html
++++ b/docs/privacy.html
+@@ -85,7 +85,7 @@
+     <main id="main" class="subpage">
+         <div class="subpage-hero">
+             <h1>Privacy Policy</h1>
+-            <p class="date">Updated: August 2026</p>
++            <p class="date">Updated: October 2026</p>
+         </div>
+ 
+         <div class="subpage-summary">
+@@ -125,7 +125,7 @@
+             <p>All data processing occurs locally on your device:</p>
+             <p><strong>Biometric Data:</strong> Heart rate variability (HRV), heart rate, and breathing patterns from Apple Watch or HealthKit are processed in real-time on your device to influence audio, visuals, and lighting. Individual readings are not stored, and none of this is transmitted by the app.</p>
+             <p><strong>Your performer signature:</strong> So that the same preset does not compose the same-sounding piece for everyone, Echoelmusic keeps one small summary on your device — coarse averages of your resting heart rate, variability, breathing rate and coherence, learned slowly while you play. It is used for a single purpose: to seed the music generator, so what the instrument creates carries your musical handwriting. It is never shown as a health reading, never used for advertising, never compared with other users, and never transmitted. It is stored in the app's own preferences, so it is included in an iCloud or encrypted local device backup of your phone. <strong>You can erase it at any time:</strong> open <em>Save &amp; Export</em> and tap <em>Default sound</em>, which clears it together with the instrument's other settings. Deleting the app also removes it.</p>
+-            <p><strong>Audio Input:</strong> <strong>Echoelmusic does not use the microphone.</strong> The audio-input path &mdash; live monitoring, voice timbre capture and mic recording &mdash; was removed on 2026-09-12. The app asks for no microphone permission and captures no audio from you; the only sound it records is its own output, at your request, for export.</p>
++            <p><strong>Audio Input:</strong> <strong>Up to version 10.79.491 Echoelmusic does not use the microphone</strong>; the earlier audio-input path was removed on 2026-09-12. <strong>From the next version on, the microphone is used for one thing only: recording onto an audio track you armed yourself.</strong> iOS asks for permission when you arm such a track. Recording runs only between your tap on Record and Stop (or the end of the piece). The recording is saved as a file in the app&rsquo;s own media library on your device, so it is included in an iCloud or encrypted local device backup of your phone; it is never uploaded, analyzed by a server, or shared by the app. You can delete it like any other file in the library, and you can revoke microphone access at any time in iOS Settings. There is no live monitoring, no voice processing and no recording in the background. Apart from that, the only sound the app records is its own output, at your request, for export.</p>
+             <p><strong>Camera (pulse / rPPG):</strong> When you start a camera pulse reading, the rear camera with the torch reads subtle color changes in your fingertip to estimate heart rate (photoplethysmography). Frames are analyzed in real time on-device and are never recorded, stored, or transmitted. There is no face tracking, AR, or video recording.</p>
+             <p id="location"><strong>Place and weather (optional, off by default):</strong> Echoel can put the name of a place into a piece's filename &mdash; for example <em>Echoel_2026-07-10_Hamburg_Am_72bpm</em> &mdash; and can let the current sky colour the composition. Both are driven by the SAME single setting, &ldquo;Place in piece name&rdquo;. Two places in the app can switch it on &mdash; that toggle, and a line in the weather row that says in words what it grants &mdash; and both are an explicit tap; nothing turns it on as a side effect. While it is off, no location is requested at all and neither feature runs. While it is on: iOS asks for while-using permission, Echoel takes <strong>one coarse, city-level fix</strong> per activation or launch &mdash; not a continuous track &mdash; and turns it into a city word. That word is transient: it is never written to storage on its own, so the only lasting traces are the switch itself and the name of a session you chose to save. Resolving the city uses Apple's geocoder and the weather uses Apple WeatherKit, so a coarse location goes to <strong>Apple</strong> for those lookups, exactly as it would for a Maps or Weather search, under Apple's privacy policy. It does not go to Echoel, and it is not shared with anyone else. Turning the switch off stops all of it.</p>
+             <p><strong>Sensors:</strong> Bluetooth heart-rate straps are read on-device to drive the instrument. This stays on your device unless you explicitly switch on local-network output (OSC / ADM-OSC / Art-Net / sACN / MIDI) or nearby session sharing — see those sections below for exactly which values then leave.</p>
+@@ -148,7 +148,7 @@
+             <h2>Camera & Sensors</h2>
+             <p>Echoelmusic requests camera and sensor permissions for the following features:</p>
+             <p><strong>Camera Access:</strong> Used only to estimate your pulse from a fingertip on the rear camera (rPPG). No photos or video are recorded, and nothing is uploaded. No face tracking or AR.</p>
+-            <p><strong>Microphone Access:</strong> Not requested. The audio-input path was removed on 2026-09-12, so there is no microphone feature to grant or deny.</p>
++            <p><strong>Microphone Access:</strong> Not requested up to version 10.79.491. From the next version on, requested only when you arm an audio track for recording, and used only while that recording runs (see <em>Audio Input</em> above). Denying it leaves everything else working; only recording onto an audio track is unavailable.</p>
+                         <p>You can deny or revoke these permissions at any time in iOS Settings. Denying permissions will disable related features but the app will continue to function.</p>
+         </section>
+ 
+diff --git a/docs/security.html b/docs/security.html
+index fe276d602..826b0c1a3 100644
+--- a/docs/security.html
++++ b/docs/security.html
+@@ -114,7 +114,7 @@
+             <h2>No Accounts, No Login</h2>
+             <ul>
+                 <li><strong>Nothing to sign into:</strong> Echoelmusic has no user accounts, no passwords, and stores no credentials &mdash; so there is nothing to authenticate or leak.</li>
+-                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. The microphone is not among them &mdash; the app does not use it.</li>
++                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Up to version 10.79.491 the microphone is not among them; from the next version on it is asked for only when you arm an audio track for recording.</li>
+             </ul>
+         </section>
+ 
+diff --git a/memory/LEDGER_COUNTS.md b/memory/LEDGER_COUNTS.md
+index fa986383b..2e8841c53 100644
+--- a/memory/LEDGER_COUNTS.md
++++ b/memory/LEDGER_COUNTS.md
+@@ -7624,3 +7624,9 @@ stehen verkürzt noch in CLAUDE.md; ihr Scope-Urteil ist durch das Founder-Geset
+   **One sentence: Echoel is a bio-reactive instrument — your body plays it, and its output is multidimensional (sound, image, light, space).** There is no second product and no acronym.
+   **"DMMW" is RETIRED** (unrepeatable, put a solo dev on DAW turf, infinite maintenance surface; the 2026-07-19 Council already logged "Fokusverlust seit DMMW"). `docs/dev/DMMW_ARCHITECTURE.md` is superseded — history only, do not plan from it. The multidimensional half survives as the instrument's **output stage** (one bus: `BioFrame` + `MusicalFrame` → visual · light/Art-Net+sACN · space/ADM-OSC · haptics), never as its own product. Adding a medium = adding a subscriber, never a new surface.
+   **THE BOUNDARY that decides every keep/cut — Editor ≠ Workstation:** is it about the sound being made *now* (KEEP: generative engine, Flow/Loop, **patch editor**, ~~**piano roll**~~ [der Grundsatz gilt, die Instanz nicht: der Founder hat den Noten-Editor am 2026-07-26 gestrichen, #178 nahm die Tür, #475 die 988-Zeilen-`struct` — als Beispiel für „Craft tool, kein DAW" bleibt er lesbar, als Bestandsangabe ist er falsch], genres, output stage, export) or about arranging material *over time* (CUT: timeline/arrangement/clips, multi-track & mixer, audio-file regions, video edit, AUv3 **host** [das TARGET ist seit #1385 zurück — nur das Hosten fremder Plugins bleibt gestrichen], RTMP, subscriptions)? **Craft tools are instrument controls, not DAW surfaces** — a synth you cannot tune is not an instrument. ⭐ **DIE CUT-LISTE HAT SEIT 2026-09-21 EINE BENANNTE AUSNAHME, und sie steht hier, weil DIESE Zeile entscheidet, ob eine Löschung sicher ist:** der Founder hat in zwei Schritten (#1436 „build the smallest read-only Workstation surface“, #1437 „Activate existing Timeline playback from the Workstation“) eine Workstation-Platte hinter dem gleichnamigen Chip freigegeben. **Sie ZEIGT die Spuren und Teile, die `TimelineStore` ohnehin besitzt, und sie STARTET sie — sie EDITIERT nichts** (kein Verschieben, Trimmen, Teilen, keine Automations-Aufnahme; ⛔ „kein Import" galt bis #141 am 2026-09-22 — der Founder legte Audio Import V1 auf genau diese Platte). Die CUT-Liste bleibt sonst wörtlich gültig; gestrichen bleibt die ARRANGIER-Fläche, nicht das Ansehen und Abspielen des Dokuments. Wer hier aufräumt, liest zuerst `Tests/CISmoke/TheWorkstationPlaysTheTimelineTests.swift`. (⚠ The parenthetical that stood here — *"Hard technical reason the piano roll stays: `PianoRollView` PUBLISHES `MusicalFrame`"* — was FALSE, and line 49 below already said so: the publish lives in `PianoRollModel`'s tick handler, installed once at app start, view or no view. It is corrected here too because THIS is the line a session reads when deciding whether a removal is safe, and as written it would have made one refuse the founder's 2026-07-26 removal on a technical ground that does not exist. **`PianoRollView` = the editor, removed. `PianoRollModel` = the note engine + `MusicalFrame` publisher, KEPT** — that one is genuinely load-bearing.)
++
++## AM — Der AUDIO-EINGANG-Absatz vor E10-1, aus CLAUDE.md ausgelagert 2026-10-04
++
++Der Founder hat am 2026-10-04 den Audio-Eingang zurückgeholt („Audio-Eingang soll Aufnahme, Sampling und Analyse ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert"). E10-1 baut den kleinsten Weg (`MicTakeRecorder`, Owner-Fall `audioTrack`, plist-Schlüssel im selben Commit). Der Absatz unten stand bis dahin in CLAUDE.md und ist hier WÖRTLICH erhalten — seine #1302-Liste der gelöschten Dateien und die #1415-Begründung sind Geschichte; das Gesetz daraus (Owner-Fall und plist-Schlüssel bewegen sich zusammen, kein Eingang im Wiedergabe-Graphen) steht weiter in CLAUDE.md.
++
++- ⛔ **AUDIO-EINGANG: GELÖSCHT (#1302, Founder 2026-09-12, wörtlich „Face und Audio Input komplett entfernen"). Hier stand die Vokal-Ketten-Zeile; es gibt kein Mikrofon mehr.** Als DATEIEN weg: `MicrophoneManager`, `AudioInputManager`, `MonitorInsertAU`, `MonitorTapWindow`, `MultiTrackRecorder`, `FeedbackGuard` (mit `HowlDetector`), `AudioInputPickerView`, `PlugInInvitation`, `RoutePlugInWatcher`, `VoiceAnalyzer`, `VoiceCaptureController`, `VoiceCaptureEngine`, `VocoderCore`, `BrainwaveModulation`, `VoicePitchCorrector` — plus 38 Wächter und die Store-/Website-Zeilen. **DREI SACHEN BLEIBEN ABSICHTLICH, und wer sie für Reste hält, löscht Funktionierendes:** (1) die PATCH-Hälfte der Stimmfarbe (`SynthPatch.voiceProfileTaps`/`-Label`/`-Blend`, `PolySynthVoice.applyVoiceProfile`, `VoiceTimbreProfiler`) — ein von einem älteren Build gespeicherter Patch trägt sie und wendet sie an (#95/#527); der NAME sagt „Voice", die SACHE ist der Synth (#1293) · (2) `RecordRouteOwner` als LEERES Enum samt Refcount — #299: ein Zähler, den zwei Besitzer unbalancieren konnten, hielt das Telefon in `.playAndRecord` · (3) `RetroCapture`/`SingleExport`, die den EIGENEN Ausgang mitschneiden, nie ein Mikrofon. **Nach AUSSEN ist alles zurückgenommen**: `ContentPipeline/CLAIMS.md` §11 ist als ganzer Abschnitt ausgesetzt, `fastlane/metadata` und `docs/` tragen keine Stimm-Zeile mehr, `docs/_headers` schließt `microphone=()`. ⭐ **ERLEDIGT mit #1415** (Founder-Freigabe „E. correct verified stale permissions"): `NSMicrophoneUsageDescription` ist aus `Resources/iOS/Info.plist` ENTFERNT. Der Beleg ist strukturell, nicht nur ein `grep`: die EINZIGE Stelle, die die Sitzung auf `.playAndRecord` heben kann, ist `AudioConfiguration.claimRecordRoute(_ owner: RecordRouteOwner)`, und `RecordRouteOwner` ist ein LEERES Enum — der Parametertyp hat keinen Bewohner, die Funktion ist unaufrufbar, `recordingRouteNeeded` ist `private(set)` und kann nie wahr werden. ⚠️ **Wer einen Fall zu `RecordRouteOwner` hinzufügt, MUSS den plist-Schlüssel im selben Commit zurückholen** — iOS beendet die App beim Aktivieren einer Aufnahme-Kategorie ohne ihn. Genau das hält `EveryPermissionPromptHasACapabilityTests` (`retiredPrompts`) fest.
