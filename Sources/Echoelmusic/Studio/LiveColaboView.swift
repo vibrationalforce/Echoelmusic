@@ -136,12 +136,13 @@ struct LiveColaboView: View {
             Label(colab.isLive ? String(localized: "Stop") : String(localized: "Go Live (nearby)"),
                   systemImage: colab.isLive ? "stop.fill" : "dot.radiowaves.left.and.right")
                 .font(EchoelTheme.font(15, .semibold))
-                .foregroundStyle(colab.isLive ? EchoelTheme.onPrimary : EchoelTheme.text)
+                .foregroundStyle(colab.isLive ? EchoelTheme.accent : EchoelTheme.text)
                 .frame(maxWidth: .infinity).frame(minHeight: 48)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(colab.isLive ? EchoelTheme.text : EchoelTheme.fill))
+                    .fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(EchoelTheme.border, lineWidth: colab.isLive ? 0 : 1))
+                    .strokeBorder(colab.isLive ? EchoelTheme.borderStrong : EchoelTheme.border,
+                                  lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

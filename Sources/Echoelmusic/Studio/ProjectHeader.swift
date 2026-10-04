@@ -323,18 +323,20 @@ struct ProjectPlayStopButton: View {
                     .font(EchoelTheme.font(13, .semibold))
                     .fixedSize()
             }
-            .foregroundStyle(running ? EchoelTheme.onPrimary
+            .foregroundStyle(running ? EchoelTheme.accent
                                      : (available ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, 12)
             // The tap floor, read from the ONE definition (#481) — since S7a this is the
             // instrument's start too, the control `OneChromeControlHeightTests` pins in place of
             // the plate's deleted ▶/■. Painted at the floor, the head's own grammar.
             .frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)
+            // "Plays" is the green label on the plain tile inside the strong frame — the look
+            // the plate's Pause already wears (`PlaybackToggleButton`). Never a green or white
+            // surface: the surface says nothing about the state, the label does.
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .fill(running ? EchoelTheme.text : EchoelTheme.fill))
+                .fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .strokeBorder(running || !available ? Color.clear : EchoelTheme.borderStrong,
-                              lineWidth: 1))
+                .strokeBorder(available ? EchoelTheme.borderStrong : Color.clear, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

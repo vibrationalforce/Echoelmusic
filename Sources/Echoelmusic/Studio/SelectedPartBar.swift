@@ -422,12 +422,16 @@ private struct PartPlayButton: View {
                     .font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                     .fixedSize()   // the title beside it wraps; the action's name never truncates
             }
-            .foregroundStyle(playing ? EchoelTheme.onPrimary
+            .foregroundStyle(playing ? EchoelTheme.accent
                                      : (startable ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, EchoelTheme.spaceS)
             .frame(minWidth: 44, minHeight: 44)
+            // A tool tile at rest; while the piece plays, the green label plus the strong
+            // frame — the one "plays" look (`ProjectHeader`, the plate's Pause).
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(playing ? EchoelTheme.text : EchoelTheme.fill))
+                .fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .strokeBorder(playing ? EchoelTheme.borderStrong : Color.clear, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

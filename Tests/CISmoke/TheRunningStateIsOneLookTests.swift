@@ -1,33 +1,37 @@
 // TheRunningStateIsOneLookTests.swift
-// Echoel — Restructure F3 (2026-10-04, `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md`).
+// Echoel — Restructure F3 (2026-10-04, `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §2C/§3).
 //
-// WHAT WAS WRONG. "Something is running" looked two ways. The scene and track tiles in
-// `SessionLaunchView` light up with the monochrome primary (off-white fill, black label), which
-// is the rule `EchoelTheme` writes beside `accent`: primary buttons fill with `.text`; the
-// bio-green is reserved for the body's live signal. Three other running buttons filled
-// bio-green instead — the head's Play/Stop, the part bar's "Play from here" and LiveColabo's
-// "Go Live". So the same state wore green in one place and white in the next, and the green
-// said "your body" on three controls that have nothing to do with it.
+// WHAT WAS WRONG. "Something is running" looked three ways. The head's Play/Stop, the part
+// bar's "Play from here" and LiveColabo's "Go Live" filled their whole surface bio-green; the
+// scene and track tiles in `SessionLaunchView` filled theirs off-white; the plate's Pause
+// (`PlaybackToggleButton`) kept a plain tile and turned only its label green inside the strong
+// frame. Three looks for one state, and the green surfaces spent the body's colour on controls
+// that have nothing to do with the body.
 //
-// `PrimaryFillIsMonochromeTests` did not see them, for two reasons: none of the three files is
-// on its list, and its scan reads `fill(EchoelTheme.accent)` on one line, while all three wrote
-// the colour inside a ternary.
+// `PrimaryFillIsMonochromeTests` did not see the green surfaces, for two reasons: none of the
+// three files is on its list, and its scan reads `fill(EchoelTheme.accent)` on one line, while
+// all three wrote the colour inside a ternary.
 //
-// THE REPAIR. All three now fill `.text` while running, with the `onPrimary` label they already
-// had. This is coherence, not contrast — black on green and black on off-white both clear
-// 4.5:1 (`PrimaryFillIsMonochromeTests` does that arithmetic).
+// THE REPAIR — the plan's one "plays": the label (symbol and word) turns green, the tile stays
+// `EchoelTheme.fill`, and a `borderStrong` frame holds it. That is the Pause's look, so it is
+// not invented here; the surface no longer says anything about the state. In the scene grid
+// "Queued" keeps its filled glyph and its word inside the QUIET frame (`border`): green means
+// sounding, and a queued part is not sounding yet.
+//
+// ⛔ The first local draft of this slice (a74b17f1a, never pushed) unified on the OFF-WHITE
+// fill instead — the primary-button look, which the plan reserves for the primary action, not
+// for a state. Caught against the plan's §2C before it left the machine.
 //
 // HONEST GRADING (Tests/CISmoke/CLAUDE.md §1/§3). SOURCE-TEXT SCAN over comment-stripped
-// `Sources/`, transcribed in Python against the parent `6f1d71279` and the worktree:
-//   · claim 1 — RED on the parent, a REGRESSION: one conditional accent fill in each of the
-//     three running buttons' files.
-//   · claim 2 — RED on the parent, a REGRESSION for the three buttons; the `SessionLaunchView`
-//     needle is a COUNTERWEIGHT (green on both — it is the look the others now match).
-//   · claim 3 — COUNTERWEIGHT, green on both: the black label is load-bearing now, because a
-//     `.text` label on a `.text` fill would be 1.00:1.
-//   · claim 4 — RED on the parent, a REGRESSION: 11 conditional accent fills against a ceiling
-//     of 8.
-// It does NOT prove the buttons look right; that is a device glance.
+// `Sources/`, transcribed in Python against the pushed parent `6f1d71279` and the worktree:
+//   · claim 1 — RED on the parent, a REGRESSION: a state-driven fill in all four files.
+//   · claim 2 — RED on the parent, a REGRESSION: no running label is green there.
+//   · claim 3 — RED on the parent, a REGRESSION: no running state carries the strong frame
+//     (the head's frame was even CLEARED while running).
+//   · claim 4 — COUNTERWEIGHT, green on both: the Pause wears the look the others now match;
+//     without it, claims 1–3 would describe a look nothing anchors.
+//   · claim 5 — RED on the parent, a REGRESSION: 11 state-driven green fills against 8.
+// It does NOT prove the buttons read well; that is a device glance.
 
 import Foundation
 import XCTest
@@ -36,10 +40,13 @@ final class TheRunningStateIsOneLookTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/"
 
-    /// `.fill(<condition> ? EchoelTheme.accent …` — a fill that turns bio-green by state.
+    /// `.fill(<condition> ? …` — a surface that changes with state.
+    private static let conditionalFill = #"\.fill\([^)\n]*\?"#
+
+    /// `.fill(<condition> ? EchoelTheme.accent …` — a surface that turns bio-green by state.
     private static let conditionalAccentFill = #"\.fill\([^)\n]*\?\s*EchoelTheme\.accent\b"#
 
-    /// The files whose buttons show a running process; `SessionLaunchView` is the reference.
+    /// The files whose buttons show a running process.
     private static let runningButtons = [
         "ProjectHeader.swift", "SelectedPartBar.swift", "LiveColaboView.swift", "SessionLaunchView.swift",
     ]
@@ -52,53 +59,68 @@ final class TheRunningStateIsOneLookTests: XCTestCase {
     /// LOWER it in the commit that removes one; never raise it.
     private static let ceiling = 8
 
-    /// 1 — no running button turns bio-green by state.
-    func testNoRunningButtonFillsBioGreen() throws {
-        let regex = try NSRegularExpression(pattern: Self.conditionalAccentFill)
+    /// 1 — no running button changes its SURFACE with its state: the tile is the tile.
+    func testNoRunningButtonChangesItsSurface() throws {
+        let regex = try NSRegularExpression(pattern: Self.conditionalFill)
         for file in Self.runningButtons {
             let code = try read(Self.studio + file)
             let hits = regex.numberOfMatches(in: code, range: NSRange(code.startIndex..., in: code))
             XCTAssertEqual(hits, 0, """
-                \(file) fills a button bio-green while something runs. Running is the \
-                monochrome primary (`EchoelTheme.text` fill, `onPrimary` label); the green is \
-                reserved for the body's signal (`EchoelTheme`, beside `accent`).
+                \(file) fills a surface by state. "Plays" is the green label inside the strong \
+                frame on the plain `EchoelTheme.fill` tile — never a green or off-white surface \
+                (plan §2C; the Pause in `PlaybackToggleButton` is the reference).
                 """)
         }
     }
 
-    /// 2 — each running button paints the monochrome primary, the look `SessionLaunchView`'s
-    /// tiles already had.
-    func testEveryRunningButtonFillsTheMonochromePrimary() throws {
-        let fills = [
-            ("ProjectHeader.swift", ".fill(running ? EchoelTheme.text : EchoelTheme.fill))"),
-            ("SelectedPartBar.swift", ".fill(playing ? EchoelTheme.text : EchoelTheme.fill))"),
-            ("LiveColaboView.swift", ".fill(colab.isLive ? EchoelTheme.text : EchoelTheme.fill))"),
-            ("SessionLaunchView.swift", ".fill(state == .playing ? EchoelTheme.text : EchoelTheme.fill))"),
-        ]
-        for (file, needle) in fills {
-            XCTAssertTrue(try read(Self.studio + file).contains(needle),
-                          "\(file) no longer fills its running state with `EchoelTheme.text`: `\(needle)`")
-        }
-    }
-
-    /// 3 — and each keeps the black label, without which an off-white fill is an invisible
-    /// button.
-    func testEveryRunningButtonKeepsTheBlackLabel() throws {
+    /// 2 — each running state turns its LABEL green.
+    func testEveryRunningLabelTurnsGreen() throws {
         let labels = [
-            ("ProjectHeader.swift", ".foregroundStyle(running ? EchoelTheme.onPrimary"),
-            ("SelectedPartBar.swift", ".foregroundStyle(playing ? EchoelTheme.onPrimary"),
-            ("LiveColaboView.swift", ".foregroundStyle(colab.isLive ? EchoelTheme.onPrimary"),
-            ("SessionLaunchView.swift", ".foregroundStyle(state == .playing ? EchoelTheme.onPrimary"),
+            ("ProjectHeader.swift", ".foregroundStyle(running ? EchoelTheme.accent"),
+            ("SelectedPartBar.swift", ".foregroundStyle(playing ? EchoelTheme.accent"),
+            ("LiveColaboView.swift", ".foregroundStyle(colab.isLive ? EchoelTheme.accent : EchoelTheme.text)"),
+            ("SessionLaunchView.swift", ".foregroundStyle(state == .playing ? EchoelTheme.accent"),
         ]
         for (file, needle) in labels {
+            XCTAssertTrue(try read(Self.studio + file).contains(needle),
+                          "\(file) no longer turns its running label green: `\(needle)`")
+        }
+    }
+
+    /// 3 — and each running state carries the strong frame, so the state is not colour alone.
+    func testEveryRunningStateCarriesTheStrongFrame() throws {
+        let frames = [
+            ("ProjectHeader.swift", ".strokeBorder(available ? EchoelTheme.borderStrong : Color.clear, lineWidth: 1))"),
+            ("SelectedPartBar.swift", ".strokeBorder(playing ? EchoelTheme.borderStrong : Color.clear, lineWidth: 1))"),
+            ("LiveColaboView.swift", ".strokeBorder(colab.isLive ? EchoelTheme.borderStrong : EchoelTheme.border,"),
+            ("SessionLaunchView.swift", ".strokeBorder(state == .playing ? EchoelTheme.borderStrong"),
+        ]
+        for (file, needle) in frames {
             XCTAssertTrue(try read(Self.studio + file).contains(needle), """
-                \(file) no longer labels its running state `onPrimary`: `\(needle)`. On a \
-                `.text` fill a `.text` label reads 1.00:1.
+                \(file) lost the strong frame of its running state: `\(needle)`. Without it the \
+                state is carried by colour alone.
                 """)
         }
     }
 
-    /// 4 — RATCHET: across `Sources/`, state-driven green fills only fall.
+    /// 4 — COUNTERWEIGHT: the reference. The plate's Pause shows only while the music plays,
+    /// and wears the look claims 1–3 hold the others to.
+    func testThePauseIsTheReferenceLook() throws {
+        let workspace = try read(Self.studio + "WorkspaceView.swift")
+        for needle in [
+            ".foregroundStyle(EchoelTheme.accent)",
+            ".background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))",
+            ".strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))",
+        ] {
+            XCTAssertTrue(workspace.contains(needle), """
+                The plate's Pause (`PlaybackToggleButton`) no longer carries `\(needle)`. It is \
+                the reference for the one "plays" look; if it changed on purpose, move claims \
+                1–3 with it in the same commit.
+                """)
+        }
+    }
+
+    /// 5 — RATCHET: across `Sources/`, state-driven green fills only fall.
     func testTheStateDrivenGreenFillsOnlyFall() throws {
         let regex = try NSRegularExpression(pattern: Self.conditionalAccentFill)
         var total = 0
@@ -110,7 +132,7 @@ final class TheRunningStateIsOneLookTests: XCTestCase {
         }
         XCTAssertLessThanOrEqual(total, Self.ceiling, """
             \(total) state-driven bio-green fills in Sources/, ceiling \(Self.ceiling). A new \
-            running or ON state takes the monochrome primary. Holders: \(holders.sorted()).
+            running state turns its label green inside the strong frame. Holders: \(holders.sorted()).
             """)
     }
 

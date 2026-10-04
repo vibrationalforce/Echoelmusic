@@ -372,15 +372,19 @@ struct SessionLaunchView: View {
                     Text(word).font(EchoelTheme.font(11, .semibold))
                 }
             }
-            .foregroundStyle(state == .playing ? EchoelTheme.onPrimary
+            .foregroundStyle(state == .playing ? EchoelTheme.accent
                                                : (playing ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            // Monochrome primary fill, never a green area behind a label (EchoelTheme).
+            // The one "plays" look: green label, strong frame, plain tile. "Queued" is the
+            // filled glyph and its word inside the quiet frame — not green, because green
+            // means it is sounding, and a queued part is not yet.
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(state == .playing ? EchoelTheme.text : EchoelTheme.fill))
+                .fill(EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .strokeBorder(state == .queued ? EchoelTheme.accent : Color.clear, lineWidth: 1))
+                .strokeBorder(state == .playing ? EchoelTheme.borderStrong
+                              : (state == .queued ? EchoelTheme.border : Color.clear),
+                              lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
