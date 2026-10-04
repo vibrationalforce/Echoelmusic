@@ -93,7 +93,9 @@ private final class FakeEngine: BroadcastEngine, @unchecked Sendable {
     var failNext: BroadcastEngineError?
     private(set) var receivedNames: [String] = []
     func start(url: String, streamName: String, settings: BroadcastEncodeSettings) async throws -> BroadcastMediaSink {
-        lock.lock(); receivedNames.append(streamName); let fail = failNext; lock.unlock()
+        // `withLock`, not lock()/unlock(): this is an async function, and Swift 6 marks the
+        // bare pair unavailable there (the B1 gate failure on 4f90e2c79).
+        let fail = lock.withLock { () -> BroadcastEngineError? in receivedNames.append(streamName); return failNext }
         if let fail { throw fail }
         return RecordingSink()
     }
