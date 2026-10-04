@@ -231,6 +231,21 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
             2026-10-04, H2): without it the render can load the pointer before the stores that \
             built the target and its rings are visible on arm64.
             """)
+
+        // The release side of the hand-over: the counter load must be followed by a fence before
+        // the retired target can be dropped (review M1) — otherwise the render's last ring writes
+        // need not be visible when the owner frees what they point into.
+        guard let release = code.range(of: "func releaseRetiredIfQuiescent()"),
+              let releaseEnd = code.range(of: "private func swapSlot(", range: release.upperBound..<code.endIndex) else {
+            return XCTFail("releaseRetiredIfQuiescent moved — re-anchor this guard")
+        }
+        let quiescence = String(code[release.upperBound..<releaseEnd.lowerBound])
+        guard let counterLoad = quiescence.range(of: "passCounter.pointee"),
+              let acquire = quiescence.range(of: "OSMemoryBarrier()", range: counterLoad.upperBound..<quiescence.endIndex),
+              let drop = quiescence.range(of: "retired = nil", range: counterLoad.upperBound..<quiescence.endIndex) else {
+            return XCTFail("the release path must load the pass counter, fence, and only then drop the retired target")
+        }
+        XCTAssertLessThan(acquire.lowerBound, drop.lowerBound, "counter load → fence → drop the retired target")
     }
 
     // MARK: 8 — an interleaved buffer is refused and counted, never written as one stem

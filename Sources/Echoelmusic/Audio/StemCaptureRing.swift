@@ -250,7 +250,7 @@ final class StemCaptureRing: @unchecked Sendable {
             destination.update(repeating: 0, count: silenced)
             lostCounter.pointee &+= Int64(silenced)
         }
-        readCursor.pointee = start + Int64(count)
+        readCursor.pointee = start &+ Int64(count)
         return Read(startSampleTime: start, frames: count, silencedFrames: silenced)
     }
 }
