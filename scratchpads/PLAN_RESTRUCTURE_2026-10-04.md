@@ -149,7 +149,7 @@ nur für Signal.
 |---|---|
 | Tokens | `EchoelTheme.Space` (4 · 8 · 12 · 16 · 24) · `Motion` (`quick` 0,12 s · `standard` 0,18 s, beide ease-out, nur Deckkraft und Farbe) · `Opacity` (`pressed` · `disabled`) |
 | Komponenten | **vier Tastenstufen** als `ButtonStyle`: Primary (Fläche `.text`) · Secondary (Rahmen) · Tool (Fläche `fill`, 44 pt) · Chip (eine Form) |
-| Zustände | **spielt** = grünes Symbol plus Rahmen `borderStrong`, nie eine grüne Fläche · **ausgewählt** = Rahmen `borderStrong` 1 pt plus `fill` · **nimmt auf** = `recording` · **gedrückt** = Deckkraft `pressed` |
+| Zustände | **spielt** = grünes Symbol plus Rahmen `borderStrong`, nie eine grüne Fläche · **an / gewählt** = invertiert monochrom (Fläche `.text`, Label `onPrimary`), wie Mute/Solo und die Chips · **Objekt ausgewählt** (Spur, Teil) = Rahmen 2 pt statt 1 pt (`TheSelectedTrackIsNotColourAloneTests`) — ⛔ hier stand „ausgewählt = Rahmen `borderStrong` 1 pt plus `fill`“: nicht baubar, weil jedes Bedienelement schon in Ruhe `borderStrong` trägt (`ControlBoundaryIsInteractiveTests`), der Rahmen also AN nicht von AUS trennt (F4a) · **nimmt auf** = `recording` · **gedrückt** = Deckkraft `pressed` |
 | Struktur | keine Karte in einer Karte; ein Panel hat eine Fläche |
 | Haptik | Auswahl-Tick am Rastpunkt von `EchoelValueField`, Bestätigung bei OK auf dem Zahlenfeld, Start und Stopp des Transports. Nie auf der Render-Bahn |
 | Bewegung | 0,12 bis 0,18 s, nur Deckkraft und Farbe, „Bewegung reduzieren“ wird respektiert |
@@ -170,8 +170,11 @@ Wird es mehr, steht der Grund im Commit-Text. Gates: Xcode Compile Check plus CI
   von F1. Eine Ratsche hält fest, dass die Zahl der Literale nur sinken darf.
 - **F3 Ein „spielt“.** `PlaybackToggleButton` wird die einzige Play-Taste. Die beiden grünen
   Flächen (`ProjectHeader` :334, `SelectedPartBar` :436) werden zu grünem Symbol plus Rahmen.
-- **F4 Ein „ausgewählt“, ein Chip-Stil.** `EchoelChipStyle`; die drei Chip-Varianten werden
-  zusammengeführt.
+- **F4 Ein „ausgewählt“, ein Chip-Stil.** Gemessen 2026-10-04: „ausgewählt“ hat nicht drei, sondern zwei
+  saubere Grammatiken (siehe §2C) plus zwei Ausreißer. **F4a** — Click und Warp zeigten AN als grüne Fläche;
+  sie nehmen jetzt die Mute/Solo-Form (`TheSwitchedOnStateIsMonochromeTests`, Ratsche 8 → 6).
+  **F4b** — die zwei baugleichen Wahl-Chips (Spielflächen-Klang, Visual-Preset) werden EINE Ansicht und
+  bekommen den Rahmen `borderStrong`; der Menü-Chip bleibt eine Navigationsform eigener Größe.
 - **F5 Haptik** an `EchoelValueField` (Rastpunkt) und `EchoelNumberPad` (OK), über den
   vorhandenen Haptik-Helfer aus Slice 13b.
 - **F6** Karte in Karte auflösen (Mix, Tempo & variations); Broadcast „live“ → `recording`.
