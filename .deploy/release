@@ -1,4 +1,4 @@
-build: v10.79.490 — Spuren im Raum über ADM-OSC, VoiceOver im Noteneditor, BLE-Gurt nach Bluetooth-Neustart, Release-Atmung
+build: v10.79.491 — Das Stück trägt seinen Raum und seinen Licht-Look, ein fehlgeschlagenes Sichern ersetzt nichts mehr
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,55 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.491) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-04 („Aktualisiere zuerst den Status und arbeite danach die
+  nächsten freigegebenen Umsetzungsschritte ab"). Drei Code-Scheiben seit 10.79.490 plus die
+  einheitliche Gestaltung F1–F6b, jede mit eigenem Wächter. Auf dem Gerät ist NICHTS davon
+  geprüft. Die kurze Prüfrunde G1–G5 steht im Postfach docs/dev/FOUNDER_INBOX.md §2 — je
+  Aufgabe Schritte, Erwartung und eine Antwort aus wenigen Wörtern.
+
+  ── POSTEN 1: DER RAUM REIST MIT DEM STÜCK (A3a) ──
+  · Sichern nimmt jetzt die Raumpositionen der Spuren mit. Ein anderes Stück öffnen und
+    zurück: die Spuren stehen wieder dort, wo du sie hattest. Ältere Stücke ohne gesicherten
+    Raum öffnen auf den Standardplätzen.
+  · Echoel rendert weiter keinen Raumklang selbst; die Positionen gehen über ADM-OSC hinaus.
+
+  ── POSTEN 2: DER LICHT-LOOK GEHÖRT DEM STÜCK (P2) ──
+  · Unten „Project" → neues Feld „Light look" (0 dunkel … 1 voll). Gespeichert mit dem Stück,
+    ein Zug ist ein Undo-Schritt. Eine angeschlossene Art-Net-/sACN-Lampe blendet weich auf
+    den neuen Wert. Ältere Stücke öffnen bei 1,00 — so wie das Licht vorher war.
+
+  ── POSTEN 3: SICHERN LÜGT NICHT MEHR (P3a) ──
+  · Steht oben „Save failed", ersetzen „Open" und „New piece" das Stück vorne nicht mehr:
+    sie sagen in einem Satz, warum, und „Retry save" löst es. Vorher wurde das neue Stück
+    sofort auf die Platte geschrieben, während das alte nur noch im Arbeitsspeicher lag.
+
+  ── POSTEN 4: EINE GESTALTUNGSSPRACHE (F1–F6b) ──
+  · Eingeschaltete Schalter sind die umgekehrte einfarbige Kachel, nicht grün; „Play" und
+    „Stop" sind spürbar (Haptik); ein Wertfeld tickt an seinem Standard und seinen Grenzen.
+
+  ── PRÜFLISTE (= G1–G5 im Postfach) ──
+  T1  G1 Raum: ADM-OSC-Controller auf Port 8001, „Accept OSC control" an, /adm/obj/1/azim 90,
+      sichern, anderes Stück öffnen, zurück → Spur 1 steht wieder bei 90°.
+  T2  G2 Licht-Look: Project → „Light look" 0,30, Undo, wieder 0,30, sichern; zweites Stück
+      mit 0,80; hin und her öffnen → jede Zahl (und die Lampe) folgt ihrem Stück.
+  T3  G3 Sichern: Open und New piece funktionieren wie bisher. Erscheint je „Save failed",
+      ersetzen sie nichts, bis „Retry save" geklappt hat.
+  T4  G4 Klang: drei Genres je zwei Minuten mit Puls — verschieden, professionell?
+  T5  G5 Stabilität: dreimal kalt starten, alle fünf Bereiche, Tonart-Menü während der Puls
+      läuft, Hintergrund und zurück. Hängt oder stockt etwas: Instrument → Save/Export-Chip →
+      „Diagnostics" → Teilen (das Diagnose-Log).
+
+  Neu prüfbare Bitten (2, davon 1 Bitte und ihr Wächter-Kopf):
+  Gedruckt: python3 scripts/founder-verify.py --since 4919d7001
+  · VISUAL — Studio/PieceLightLookField.swift:20: eine Art-Net-/sACN-Lampe dimmt, wenn das
+    Feld sinkt, und ein zweites Stück öffnet bei seinem eigenen Look (= T2 oben).
+  · VISUAL — CISmoke/ThePieceCarriesItsLightLookTests.swift:18: verweist auf dieselbe Bitte.
+
+  Der Vorgänger ist 10.79.490 (Build 2615), davor 10.79.489.
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.490) ───────────────────────────────

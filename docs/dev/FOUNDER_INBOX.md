@@ -98,20 +98,39 @@ verfallen sie mit der Sitzung):
 
 ## §2 · Geräte-Bitten für den nächsten Build — genau fünf Familien
 
-Alle Scheiben der Züge 1–4 sind **Gates-grün und Gerät-unbestätigt**. Statt 20 Einzelbitten
-fünf Familien; jede Zeile sagt, was zu tun und was zu sehen ist. Ja/Nein je Zeile reicht.
+**Gilt für 10.79.491** (Deploy 2026-10-04; Build-Nummer = Nummer des TestFlight-Laufs). Neu seit
+10.79.490: der Raum reist mit dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein
+fehlgeschlagenes Sichern ersetzt nichts mehr (P3a), und die einheitliche Gestaltung F1–F6b.
+Alles davon ist **Gates-grün und Gerät-unbestätigt**. Fünf Aufgaben, jede mit einer Antwort aus
+wenigen Wörtern. Klang (G4) und Stabilität (G5) bleiben offen, bis du sie am Gerät beobachtet hast —
+kein Test im Repo kann sie schließen.
 
-**Gilt für 10.79.484** (Deploy 2026-10-01, Stand c0674a718); **10.79.485** (Stand 093ec4849, Lauf 2610) trägt die Workstation-Scheiben bis B5 — ihre Bitten stehen in `.deploy/release` als T1–T8. Die Build-Notiz in
-`.deploy/release` führt dieselben Familien als T1–T10 mit Pfaden; zwei kommen dort neu dazu:
-Deutsch als Gerätesprache (T3) und der Schalter „Keep evolving" (T6).
-
-| # | Familie | Was tippen | Was sehen oder hören | Ja/Nein |
+| # | Aufgabe | Schritte | Erwartet | Antwort |
 |---|---|---|---|---|
-| G1 | **Das Stück ist das Zuhause** (Zug 1 + Bühnen-Naht) | App frisch installieren oder Daten löschen, starten. Dann „Instrument" → „Piece" → „Instrument" wechseln, während der Puls läuft | Öffnet auf dem Stück, Bild als kleine Karte; der Bühnenwechsel beendet weder Puls noch Musik | [ ] |
-| G2 | **Ein Kopf, der spricht und hört** (Zug 2) | Hardware-Tastatur (iPad/Mac): Leertaste am Kopf-Play; dann in ein Textfeld tippen und Leertaste drücken. Play → Pause-Chip auf der Instrument-Bühne → Kopf-Play | Statuswort neben dem Glyph wechselt; die Leertaste feuert NICHT, solange ein Textfeld den Fokus hat; Pause pausiert, der Kopf-Play setzt fort | [ ] |
-| G3 | **Status-Leiter in Worten** (Zug 3, sechs Pfade) | Master → „Audio route"; Routing → Netzwerk-Punkt; Puls mit abgedeckter/kalter Lampe; Quelle „Apple Health"; MIDI-Controller stecken; Gerät warm laufen lassen → Field „Power" | Jede Zeile trägt ein WORT neben dem Punkt: Off / Playing / Call mode · off / sending / open, nothing sent · „No light" mit Abhilfe · Off / Waiting / Receiving / Unavailable · No controller / Connected / Playing · Full / Reduced / Saving mit Ursache | [ ] |
-| G4 | **Eine Skala, ein Grün** (Zug 4) | Einstellungen → Bedienungshilfen → Textgröße AX5 und „Kontrast erhöhen" an; App öffnen, Workstation-Spur auswählen; Routing → Network-MIDI-Schalter ansehen | Symbole wachsen mit dem Text, nichts wird abgeschnitten; die gewählte Spur hat einen dickeren Rahmen, nicht nur eine andere Farbe; der ungetönte Schalter ist DASSELBE Grün wie der Akzent | [ ] |
-| G5 | **Zwei Körper** (H4, Zug 6 Vorstufe) | Zwei Telefone, eine Colabo-Session öffnen | Beide Peers erscheinen mit getrennten, stabilen Namen (#1435) | [ ] |
+| G1 | **Der Raum kommt mit dem Stück zurück** (A3a) | Braucht einen ADM-OSC-Controller im selben WLAN (z. B. TouchOSC oder SPAT auf dem Laptop). Licht-Kachel im Kopf → Routing → „Accept OSC control" an (Port 8001; Allowlist leer lassen oder die Controller-IP eintragen). Controller sendet `/adm/obj/1/azim 90`. Stück sichern. Ein anderes Stück öffnen. Das erste wieder öffnen. | Spur 1 steht wieder bei 90° (der Renderer zeigt es, sobald der ADM-OSC-Ausgang an ist); im anderen Stück stand sie auf ihrem Standardplatz. | Ja · Nein · kein Controller zur Hand |
+| G2 | **Der Licht-Look gehört dem Stück** (P2) | Unten „Project" → Feld „Light look" auf 0,30 ziehen. Kopf → Undo. Wieder 0,30, sichern. Neues Stück, dort 0,80, sichern. Zwischen beiden Stücken hin und her öffnen. | Die Zahl folgt jedem Stück; ein Undo nimmt den ganzen Zug zurück. Mit Art-Net- oder sACN-Lampe: sie dimmt weich (kein Sprung) und folgt jedem Stück. Ohne Lampe zählt nur die Zahl. | Ja · Nein · ohne Lampe geprüft |
+| G3 | **Sichern lügt nicht** (P3a) | Normalfall: Logo-Menü ≡ → Open → ein Stück wählen; dann ≡ → Open → „New piece"; dann wieder ein Stück öffnen — wie bisher. Nur falls je „Save failed" oben erscheint (z. B. bei vollem Speicher): jetzt ≡ → Open → ein Stück oder „New piece" tippen. | Normalfall unverändert, keine falsche Sperre. Bei „Save failed": der Satz „Couldn't open … Retry save first" steht beim Tippen, das Stück vorne bleibt unverändert; nach „Retry save" geht es. | Ja · Nein · „Save failed" nie gesehen |
+| G4 | **Klang** (Ship-Gate 1) | Drei Genres deiner Wahl, je zwei Minuten mit Puls (Kamera oder Gurt). | Jedes klingt nach sich selbst und professionell; nichts läuft auf denselben Klang zusammen. | Ja · Nein + welches Genre |
+| G5 | **Stabilität** (Ship-Gate 5) | Dreimal kalt starten. Alle fünf Bereiche unten antippen. Während der Puls läuft, das Tonart-Menü öffnen und wählen. App in den Hintergrund und zurück. | Kein schwarzer Bildschirm, kein Einfrieren, das Menü reagiert, Musik und Puls laufen nach der Rückkehr weiter. | Ja · Nein + was, wann |
+
+**Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
+die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
+(Haptik); ein Wertfeld tickt an seinem Standard und an seinen Grenzen. Fällt dir etwas davon
+negativ auf, reicht ein Satz.
+
+⚠️ **I1 wartet auf diese Antworten** (Plan §3, Founder 2026-10-04: „I1 startet erst mit den
+erforderlichen Nachweisen"). Unabhängige Arbeit geht weiter.
+
+**Ältere offene Bitten (10.79.484–490)** — die Familien und Einzelbitten unten bleiben gültig und
+offen; sie sind NICHT Teil dieser Runde, damit die Runde kurz bleibt.
+
+| # | Familie (10.79.484) | Was tippen | Was sehen oder hören | Ja/Nein |
+|---|---|---|---|---|
+| G1·484 | **Das Stück ist das Zuhause** (Zug 1 + Bühnen-Naht) | App frisch installieren oder Daten löschen, starten. Dann „Instrument" → „Piece" → „Instrument" wechseln, während der Puls läuft | Öffnet auf dem Stück, Bild als kleine Karte; der Bühnenwechsel beendet weder Puls noch Musik | [ ] |
+| G2·484 | **Ein Kopf, der spricht und hört** (Zug 2) | Hardware-Tastatur (iPad/Mac): Leertaste am Kopf-Play; dann in ein Textfeld tippen und Leertaste drücken. Play → Pause-Chip auf der Instrument-Bühne → Kopf-Play | Statuswort neben dem Glyph wechselt; die Leertaste feuert NICHT, solange ein Textfeld den Fokus hat; Pause pausiert, der Kopf-Play setzt fort | [ ] |
+| G3·484 | **Status-Leiter in Worten** (Zug 3, sechs Pfade) | Master → „Audio route"; Routing → Netzwerk-Punkt; Puls mit abgedeckter/kalter Lampe; Quelle „Apple Health"; MIDI-Controller stecken; Gerät warm laufen lassen → Field „Power" | Jede Zeile trägt ein WORT neben dem Punkt: Off / Playing / Call mode · off / sending / open, nothing sent · „No light" mit Abhilfe · Off / Waiting / Receiving / Unavailable · No controller / Connected / Playing · Full / Reduced / Saving mit Ursache | [ ] |
+| G4·484 | **Eine Skala, ein Grün** (Zug 4) | Einstellungen → Bedienungshilfen → Textgröße AX5 und „Kontrast erhöhen" an; App öffnen, Workstation-Spur auswählen; Routing → Network-MIDI-Schalter ansehen | Symbole wachsen mit dem Text, nichts wird abgeschnitten; die gewählte Spur hat einen dickeren Rahmen, nicht nur eine andere Farbe; der ungetönte Schalter ist DASSELBE Grün wie der Akzent | [ ] |
+| G5·484 | **Zwei Körper** (H4, Zug 6 Vorstufe) | Zwei Telefone, eine Colabo-Session öffnen | Beide Peers erscheinen mit getrennten, stabilen Namen (#1435) | [ ] |
 
 **Der Altbestand, gemessen, mit Befehl:** `python3 scripts/founder-verify.py` druckt heute
 **280 offene Bitten in 234 Dateien, 0 beantwortet** (AUDIO 78 · OTHER 76 · UI 50 · VISUAL 40 ·
