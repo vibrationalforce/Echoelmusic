@@ -178,7 +178,16 @@ final class TheHeadTakesAtMostTwoRowsTests: XCTestCase {
         }
         let between = button[gate.upperBound..<word.lowerBound]
         XCTAssertFalse(between.contains("}"), "the word is the first thing inside the gate, not a later sibling")
-        XCTAssertTrue(button.contains(".frame(minWidth: 44, minHeight: 44)"), "a glyph-only button keeps 44 pt both ways")
+        // Restructure F1 (2026-10-04): the 44 pt-both-ways frame moved into the ONE tool style, so
+        // the claim follows it there — the button must wear the style, and the style must floor
+        // BOTH axes at `controlTapHeight`, which must still be 44.
+        XCTAssertTrue(button.contains(".buttonStyle(EchoelToolButtonStyle("), "the history button wears the one tool style")
+        let theme = try code("Sources/Echoelmusic/Studio/EchoelTheme.swift")
+        let style = try member("struct EchoelToolButtonStyle: ButtonStyle", in: theme)
+        XCTAssertTrue(style.contains(".frame(minWidth: EchoelTheme.controlTapHeight, minHeight: EchoelTheme.controlTapHeight)"),
+                      "a glyph-only button keeps 44 pt both ways")
+        XCTAssertTrue(theme.contains("static let controlTapHeight: CGFloat = 44"),
+                      "the tool style's floor is the 44 pt HIG target")
         // COUNTERWEIGHT (#343): without the word on screen, the label is what VoiceOver says.
         XCTAssertTrue(button.contains(".accessibilityLabel(label)"), "the glyph-only button must still speak its full label")
         for title in ["button(String(localized: \"Undo\")", "button(String(localized: \"Redo\")"] {

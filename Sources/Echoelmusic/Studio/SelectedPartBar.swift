@@ -371,14 +371,8 @@ struct SelectedPartBar: View {
                         .fixedSize()
                 }
             }
-            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, 8)
-            .frame(minWidth: 44, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(EchoelTheme.fill))
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(EchoelToolButtonStyle())
         .disabled(!enabled)
         .accessibilityLabel(label)
     }

@@ -280,6 +280,9 @@ enum EchoelTheme {
     /// are 8 pt-spaced, so horizontal growth would overlap a neighbour.
     static let controlTapHeight: CGFloat = 44
 
+    /// How far a pressed control dims. Opacity only — the Uncodixfy law bans scale on tap.
+    static let pressedOpacity: Double = 0.6
+
     // ⛔ #1027 — `readableContentWidth` STOOD HERE AND IS REMOVED ON FOUNDER ORDER
     // (2026-09-06): *"Mache das rückgängig du hast das falsche korrigiert. Ich will
     // adaptive Größe also Bildschirmgröße ausfüllend für alle Ansichten."*
@@ -405,6 +408,39 @@ enum EchoelTheme {
                 padColumns:      regular ? 8  : (landscapePhone ? 8  : 4),
                 bodySpacing:     regular ? 22 : (landscapePhone ? 8  : 14)
             )
+        }
+    }
+}
+
+/// The ONE tool button: a small filled tap target that carries an icon, a word, or both — the
+/// note tools, the part bar, undo/redo. Restructure F1 (2026-10-04,
+/// `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md`): this look lived as three private `button(`
+/// copies (`SelectedPartBar`, `PartNoteEditor`, `SongHistoryRow`) that had already drifted —
+/// one had no 44 pt width floor. The caller keeps its label (icon size and words differ by
+/// place) and its `.disabled`; the style owns colour, padding, the 44 pt target, the fill and
+/// the pressed dim. Guard: `TheToolButtonIsOneStyleTests`.
+struct EchoelToolButtonStyle: ButtonStyle {
+    /// 8 around a word; an icon-only button passes 0 and is held square by the 44 pt floor.
+    var horizontalPadding: CGFloat = 8
+
+    func makeBody(configuration: Configuration) -> some View {
+        ToolBody(configuration: configuration, horizontalPadding: horizontalPadding)
+    }
+
+    private struct ToolBody: View {
+        let configuration: ButtonStyleConfiguration
+        let horizontalPadding: CGFloat
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .foregroundStyle(isEnabled ? EchoelTheme.text : EchoelTheme.dim)
+                .padding(.horizontal, horizontalPadding)
+                .frame(minWidth: EchoelTheme.controlTapHeight, minHeight: EchoelTheme.controlTapHeight)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .fill(EchoelTheme.fill))
+                .contentShape(Rectangle())
+                .opacity(configuration.isPressed ? EchoelTheme.pressedOpacity : 1)
         }
     }
 }

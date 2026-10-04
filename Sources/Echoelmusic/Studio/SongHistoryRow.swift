@@ -87,14 +87,8 @@ struct SongHistoryRow: View {
                     Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                 }
             }
-            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, words ? 8 : 0)
-            .frame(minWidth: 44, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(EchoelTheme.fill))
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(EchoelToolButtonStyle(horizontalPadding: words ? 8 : 0))
         .disabled(!enabled)
         .keyboardShortcut(shortcut)
         .accessibilityLabel(label)

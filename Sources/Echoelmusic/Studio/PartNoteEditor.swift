@@ -717,14 +717,8 @@ private struct PartNoteGrid: View {
                 }
                 Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
             }
-            .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-            .padding(.horizontal, 8)
-            .frame(minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(EchoelTheme.fill))
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(EchoelToolButtonStyle())
         .disabled(!enabled)
         .accessibilityLabel(label)
     }
