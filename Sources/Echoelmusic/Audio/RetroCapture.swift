@@ -236,6 +236,27 @@ final class RetroCapture {
     /// the master output still has exactly one observer on `mainMixerNode`.
     nonisolated(unsafe) private let masterAnchor: UnsafeMutablePointer<UInt64>
 
+    /// The END of the block the tap is ABOUT to write — stored, then fenced, BEFORE the first
+    /// slot is touched. `ringWriteFrame` says which frames are FINISHED; this says which slots
+    /// may be changing RIGHT NOW (audio-thread review 2026-10-04, finding H1, found on
+    /// `StemCaptureRing` and present here in the same shape).
+    ///
+    /// WHY THE CURSOR ALONE CANNOT DO IT. Writing frame `W+k` overwrites the slot of `W+k-cap`.
+    /// A live reader one ring behind copies that slot while the tap is mid-write, re-loads a
+    /// cursor that still says `W` — the tap has not published yet — and accepts the copy. The
+    /// second cursor load sees nothing, because there is nothing to see until the write ENDS.
+    /// So the reader validates against this claim instead, behind a fence that keeps its slot
+    /// loads ahead of the claim load (arm64 reorders load-load). Seqlock reasoning: tap
+    /// claim-store, fence, slot-stores; reader slot-loads, fence, claim-load.
+    ///
+    /// ⚠️ ONE READER USES IT TODAY: `copyMasterFrames` (the broadcast pump), the only reader
+    /// that VALIDATES after its copy at all. The disk drain, the pre-roll writer, `captureRecent`,
+    /// `snapshotPreRoll` and the waveform clamp to the newest ring BEFORE they read and do not
+    /// re-check AFTER; a lap during their copy is not detected. Registered, not fixed — a
+    /// separate slice per reader, because a validating drain has to decide what to do with a
+    /// chunk that is already on disk.
+    nonisolated(unsafe) private let ringClaimFrame: UnsafeMutablePointer<Int64>
+
     /// Raised by the disk writer on the FIRST failed write, read by the 2 Hz waveform timer.
     ///
     /// A plain `Bool` cell, matching `isActive` next to it, because the traffic here is
@@ -291,6 +312,9 @@ final class RetroCapture {
 
         masterAnchor = .allocate(capacity: 4)
         masterAnchor.initialize(repeating: 0, count: 4)
+
+        ringClaimFrame = .allocate(capacity: 1)
+        ringClaimFrame.initialize(to: 0)
     }
 
     deinit {
@@ -316,6 +340,7 @@ final class RetroCapture {
         drainFrame.deallocate()
         droppedFrames.deallocate()
         masterAnchor.deallocate()
+        ringClaimFrame.deallocate()
     }
 
     // MARK: - Tap installation
@@ -351,6 +376,7 @@ final class RetroCapture {
         let writePtr = ringWriteFrame
         let cap      = ringCapacity
         let anchorPtr = masterAnchor
+        let claimPtr  = ringClaimFrame
 
         node.installTap(onBus: 0, bufferSize: 4096, format: format) { @Sendable buffer, when in
             guard let channelData = buffer.floatChannelData else { return }
@@ -376,6 +402,11 @@ final class RetroCapture {
                 OSMemoryBarrier()
                 anchorPtr[0] = seq &+ 1                          // even: consistent again
             }
+
+            // CLAIM before the first slot is touched — see `ringClaimFrame`. Producer-owned,
+            // so a plain store; the fence after it is what orders it ahead of the slot stores.
+            claimPtr.pointee = Int64(frame &+ frameCount)
+            OSMemoryBarrier()
 
             for f in 0..<frameCount {
                 let slot = (frame % cap) * 2
@@ -429,8 +460,9 @@ final class RetroCapture {
     /// Copies `count` frames starting at ABSOLUTE ring frame `start` into two planar buffers.
     /// Returns false — and the copy must be discarded — when the tap may have overwritten any
     /// of those frames during the copy (the reader fell more than a ring behind), or when the
-    /// frames are not written yet. The check runs AFTER the copy: a frame the tap reached
-    /// while we read it is caught by the second cursor load, never by luck.
+    /// frames are not written yet. The check runs AFTER the copy, against the tap's CLAIM: a
+    /// frame the tap reached while we read it is caught even though the tap has not published
+    /// it yet (`ringClaimFrame`; a second cursor load could not see a write in progress).
     nonisolated func copyMasterFrames(from start: Int64, count: Int,
                                       left: UnsafeMutablePointer<Float>,
                                       right: UnsafeMutablePointer<Float>) -> Bool {
@@ -444,8 +476,10 @@ final class RetroCapture {
             left[i] = ring[slot]
             right[i] = ring[slot + 1]
         }
-        let after = RetroRingCursor.load(ringWriteFrame)
-        return after - start <= Int64(cap)
+        // The slot loads above must complete BEFORE the claim load (arm64 reorders load-load).
+        OSMemoryBarrier()
+        let claimed = ringClaimFrame.pointee
+        return claimed - start <= Int64(cap)
     }
 
     // MARK: - Waveform

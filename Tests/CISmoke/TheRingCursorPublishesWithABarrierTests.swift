@@ -26,7 +26,7 @@
 // `writeFailure` lift immediately before the `sync`, which can be a tick stale and is re-read
 // after it. A late latch, never a wrong file. That is argued at the declaration, not here.
 //
-// ⚠️ HONEST GRADING. No local Swift toolchain (§0). **Seven assertions across six claims**,
+// ⚠️ HONEST GRADING. No local Swift toolchain (§0). **Seven assertions across six claims** (claims 1–6; claim 7 is graded in its own paragraph above),
 // each transcribed in Python against today's tree and each needle re-derived by `grep` first,
 // comment-stripped. Claims 1–4 are REGRESSION CATCHES: before this commit claim 1 had nothing
 // to find, claim 3 found a raw store, and claim 4 found eight raw reads. Claims 5–6 are
@@ -34,6 +34,17 @@
 // flattering direction (#433/#464). What they buy is the day someone strips the spine's
 // barriers, or "tidies" the producer's own self-read into the accessor and puts a fence in the
 // hottest loop in the app for nothing.
+//
+// ⭐ CLAIM 7 (2026-10-04) — THE HALF A CURSOR CANNOT ORDER. An audio-thread review of the new
+// `StemCaptureRing` found that a reader validating with a SECOND cursor load cannot see a write
+// in PROGRESS: the tap overwrites the slot of `W+k-cap` before it publishes `W+n`, so the
+// broadcast reader's re-load still says `W` and accepts a torn copy. The same shape sat in
+// `copyMasterFrames` — whose doc promised the check caught it "never by luck". Claim 7 pins the
+// repair: the tap stores `ringClaimFrame` and fences BEFORE its first slot store; the reader
+// fences after its copy and validates against the claim. REGRESSION CATCH: on the parent tree
+// claim 7 finds no claim at all. Graded by a Python transcription of the scan against both trees
+// plus a mutant that moves the claim after the slot loop (red). No test can prove the ordering
+// holds at runtime — the same honesty as claims 1–4.
 
 import Foundation
 import XCTest
@@ -183,5 +194,42 @@ final class TheRingCursorPublishesWithABarrierTests: XCTestCase {
             hottest loop in the app to order a value against itself, and would imply a second
             consumer that does not exist. A "consistency" pass is exactly how that would happen.
             """)
+    }
+
+    // MARK: - claim 7 — the tap CLAIMS before it overwrites; the live reader validates the claim
+
+    func testTheTapClaimsBeforeItOverwritesAndTheLiveReaderValidatesTheClaim() throws {
+        let src = try code(Self.captureFile)
+        guard !src.isEmpty else { return }
+
+        guard let claim = src.range(of: "claimPtr.pointee = Int64(frame &+ frameCount)\n            OSMemoryBarrier()"),
+              let loop = src.range(of: "for f in 0..<frameCount {", range: claim.upperBound..<src.endIndex) else {
+            return XCTFail("""
+                The capture tap no longer stores its CLAIM and fences before the slot loop.
+
+                `ringWriteFrame` says which frames are FINISHED. A reader one ring behind copies a
+                slot the tap is overwriting right now, re-loads a cursor that still says the old
+                frame, and accepts the copy — a torn block on the live stream. The claim, stored
+                and fenced BEFORE the first slot store, is the only thing that reader can see
+                (audio-thread review 2026-10-04, H1).
+                """)
+        }
+        XCTAssertLessThan(claim.lowerBound, loop.lowerBound)
+
+        guard let reader = src.range(of: "nonisolated func copyMasterFrames(") else {
+            return XCTFail("ANCHOR MISSING: `copyMasterFrames` moved — re-anchor claim 7 (#454).")
+        }
+        let body = String(src[reader.lowerBound...].prefix(1_400))
+        XCTAssertTrue(body.contains("OSMemoryBarrier()\n        let claimed = ringClaimFrame.pointee"), """
+            `copyMasterFrames` no longer fences after its copy and reads the claim.
+
+            The fence keeps the slot loads ahead of the claim load — arm64 reorders load-load.
+            """)
+        XCTAssertTrue(body.contains("return claimed - start <= Int64(cap)"), """
+            `copyMasterFrames` validates against something other than the tap's claim. A second
+            load of `ringWriteFrame` cannot see a write in progress; that is the defect closed here.
+            """)
+        XCTAssertTrue(src.contains("ringClaimFrame.deallocate()"),
+                      "the claim cell is allocated in `init` and must be freed in `deinit`")
     }
 }
