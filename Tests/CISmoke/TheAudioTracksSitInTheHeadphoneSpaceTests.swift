@@ -21,7 +21,10 @@
 //  guard, transcribed in Python against the worktree before push; the needles of claims 1–4 and
 //  6 are absent on the parent (ONE absence, #486).
 //  COUNTERWEIGHTS (#343): claim 6 — with the switch off, both attach paths still reach the
-//  ordinary `attachPlayerNode` overloads, so every piece plays exactly as before S3c.
+//  ordinary `attachPlayerNode` overloads, so every piece plays exactly as before S3c; claim 7's
+//  tail — a refused space attach falls back to those same overloads.
+//  Claim 7 (review repair) is a FORWARD guard: `mayRewire`, `parkedSinceStop` and `inSpace` are
+//  created by the repair commit and are absent on `5cf8d02fe`.
 //
 //  `Tests/CISmoke` is the blocking bundle.
 
@@ -162,6 +165,31 @@ final class TheAudioTracksSitInTheHeadphoneSpaceTests: XCTestCase {
             """)
         XCTAssertTrue(sink.contains("engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat)"),
                       "the stereo attach of the warp chain is gone — the off path must stay unchanged")
+    }
+
+    // MARK: 7 — the rewire happens only on the prime that STARTS playback (review MED-1/MED-2)
+
+    func testTheRewireWaitsForThePrimeThatStartsPlayback() throws {
+        let sink = SourceText.codeOnly(try text(Self.sink))
+        XCTAssertTrue(sink.contains("if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace {"), """
+            The sink rewires without asking whether playback is starting. A wrap or a structure \
+            edit primes while the song plays, and a rewire there pauses the whole engine and \
+            stops a launched loop that is sounding.
+            """)
+        let player = "Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift"
+        let prime = try member("launchingInThisCall: Set<UUID>) {", in: player)   // the opening line of `prime`
+        try assertOrder(in: prime, ["let mayRewire = parkedSinceStop",
+                                    "parkedSinceStop = false",
+                                    "sink(for: laneID).setMayRewire(mayRewire)"],
+                        why: "only the first prime after a stop may rewire, and every sink is told before it preloads")
+        let stop = try member("public func stopAll() {", in: player)
+        try assertOrder(in: stop, ["sink.stop()", "parkedSinceStop = true"],
+                        why: "a transport stop re-arms the rewire for the next start")
+        // COUNTERWEIGHT: a refused space attach falls back to the stereo path, never to nothing.
+        XCTAssertTrue(sink.contains("if !inSpace { engine.attachPlayerNode(node, format: format) }"),
+                      "a node the space bus refused must still be attached in stereo")
+        XCTAssertTrue(sink.contains("if !inSpace { engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat) }"),
+                      "a warp chain the space bus refused must still be attached in stereo")
     }
 
     // MARK: - helpers

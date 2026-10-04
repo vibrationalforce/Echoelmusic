@@ -98,6 +98,12 @@ final class TimelineAudioSink: AudioRegionSink {
     private var wiredInSpace = false
     private var spaceBus: AVAudioMixerNode?
     private var spacePoint: HeadphoneSpace.Point?
+    /// S3c review: set by the coordinator before each prime's preloads — true only for the prime
+    /// that starts playback. True until first told, so a sink driven without a coordinator
+    /// behaves as before.
+    private var mayRewire = true
+
+    func setMayRewire(_ allowed: Bool) { mayRewire = allowed }
 
     func setSpacePosition(_ point: HeadphoneSpace.Point) {
         spacePoint = point
@@ -156,9 +162,10 @@ final class TimelineAudioSink: AudioRegionSink {
     /// PERF-01: the coordinator now preloads EVERY distinct URL a lane will
     /// play, so every needed format has its node before the song runs.
     func preload(url: URL, warped: Bool) {
-        // S3c: prime time is the one place the lane may change mode — the transport is parked
-        // or wrapping, so the attach pause lands where a region starts anyway.
-        if let engine, engine.headphoneSpaceEnabled != wiredInSpace {
+        // S3c: only the prime that STARTS playback may change mode (`mayRewire`, set by the
+        // coordinator). A wrap, a structure edit or a relocate primes while the song plays —
+        // a rewire there would pause the whole engine and stop a launched loop (review MED-1/2).
+        if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace {
             releaseNodes()
             wiredInSpace = engine.headphoneSpaceEnabled
         }
@@ -353,7 +360,8 @@ final class TimelineAudioSink: AudioRegionSink {
     }
 
     /// Detach every node this lane attached — players first, then the space bus they fed — and
-    /// forget their formats, so the next `ensureLoaded` attaches afresh in the current mode.
+    /// forget which node serves which file, so the next `ensureLoaded` attaches afresh in the
+    /// current mode. (`urlFormats` is kept: it records the FILES' formats, not the nodes'.)
     /// Rendered Beats windows survive: they are in the FILE's format, not the node's.
     private func releaseNodes() {
         stop()
@@ -417,11 +425,13 @@ final class TimelineAudioSink: AudioRegionSink {
         urlFormats[url] = format
         if let existing = nodes[key] { return existing }
         let node = AVAudioPlayerNode()
+        // S3c review LOW-2: a space attach that refuses falls back to the stereo path, so the
+        // node in `nodes` is always an ATTACHED one (a detach of a never-attached node raises).
+        var inSpace = false
         if let bus = spaceBusIfWired() {
-            engine.attachSpacePlayer(node, timePitch: nil, format: format, bus: bus)
-        } else {
-            engine.attachPlayerNode(node, format: format)
+            inSpace = engine.attachSpacePlayer(node, timePitch: nil, format: format, bus: bus)
         }
+        if !inSpace { engine.attachPlayerNode(node, format: format) }
         node.volume = gain
         node.pan = pan
         nodes[key] = node
@@ -441,12 +451,14 @@ final class TimelineAudioSink: AudioRegionSink {
         guard let engine, let file else { return nil }
         let player = AVAudioPlayerNode()
         let timePitch = AVAudioUnitTimePitch()
+        var inSpace = false
         if let bus = spaceBusIfWired() {
-            engine.attachSpacePlayer(player, timePitch: timePitch, format: file.processingFormat, bus: bus)
-        } else {
-            engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat)
+            inSpace = engine.attachSpacePlayer(player, timePitch: timePitch, format: file.processingFormat, bus: bus)
         }
+        if !inSpace { engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat) }
         player.volume = gain
+        // S3c review LOW-3: inside the mono space bus `pan` has no audible effect — the bus
+        // position places the track; the value is kept so the stereo path resumes it.
         player.pan = pan
         let chain = (player: player, timePitch: timePitch)
         warpChains[key] = chain

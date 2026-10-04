@@ -2218,13 +2218,15 @@ public final class AudioEngine {
     /// Attach a lane player into its space bus instead of `masterMixer` — optionally through
     /// the lane's time-pitch node (the warp/transpose chain). The bus converts rate and folds
     /// the file's channels to mono; the lane's detach uses the ordinary `detachPlayerNode`
-    /// overloads, which only disconnect and detach.
+    /// overloads, which only disconnect and detach. Returns false — attaching NOTHING — on an
+    /// invalid format; the caller then takes the stereo path (S3c review LOW-2).
+    @discardableResult
     func attachSpacePlayer(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch?,
-                           format: AVAudioFormat, bus: AVAudioMixerNode) {
+                           format: AVAudioFormat, bus: AVAudioMixerNode) -> Bool {
         logEngineLifecycle("graph: attach space player (engine running: \(masterEngine.isRunning))")
         guard format.sampleRate > 0, format.channelCount > 0 else {
             log.audio("Space player attach aborted — no valid format", level: .error)
-            return
+            return false
         }
         prepareGraph()
         let wasRunning = masterEngine.isRunning
@@ -2242,6 +2244,7 @@ public final class AudioEngine {
             restartOrDegrade(after: "space player attach")   // #611: never a log-only catch
         }
         log.audio("Space player attached (player → space bus)")
+        return true
     }
 
     // MARK: - Video audio capture (mux the mix into a visual recording)

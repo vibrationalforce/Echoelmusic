@@ -109,9 +109,14 @@ public protocol AudioRegionSink: AnyObject {
     func setTranspose(_ semitones: Int)
     /// Restructure S3b: this lane's place in the headphone space (`HeadphoneSpace`), metres in
     /// the listener's frame. Control plane, like `setPan` — never a render block. A sink that
-    /// renders no space ignores it, and so does today's device sink until S3c places its
-    /// nodes in an environment node. Default: no-op.
+    /// renders no space ignores it; `TimelineAudioSink` renders it while the Mixer's "Headphone
+    /// space" switch is on (S3c). Default: no-op.
     func setSpacePosition(_ point: HeadphoneSpace.Point)
+    /// S3c review MED-1/MED-2: whether the coming `preload`s may REWIRE the sink's output (move
+    /// it into or out of the headphone space). True only for the first prime after a transport
+    /// stop — every other prime runs while the song plays, where a rewire pauses the whole
+    /// engine and stops a lane that is sounding (a launched loop). Default: no-op.
+    func setMayRewire(_ allowed: Bool)
 }
 
 public extension AudioRegionSink {
@@ -122,6 +127,7 @@ public extension AudioRegionSink {
     func setPan(_ pan: Float) {}
     func setTranspose(_ semitones: Int) {}
     func setSpacePosition(_ point: HeadphoneSpace.Point) {}
+    func setMayRewire(_ allowed: Bool) {}
 }
 
 @MainActor
@@ -140,6 +146,10 @@ public final class AudioLanePlayer {
     private let resolveNativeBPM: (UUID) -> Double
 
     private var sinks: [UUID: AudioRegionSink] = [:]
+    /// S3c review: true from a transport stop (and at construction) until the next prime — the
+    /// one prime that starts playback. Every later prime (wrap, structure edit, relocate) runs
+    /// while the song plays.
+    private var parkedSinceStop = true
     /// H4 live mixer: the gain/pan last pushed to each lane's sink, so the per-step
     /// reconcile only touches the sink on a REAL edit. `appliedGain == 0` also means
     /// "silenced by mute/solo at (or since) the onset" — the unmute path uses it to
@@ -338,7 +348,10 @@ public final class AudioLanePlayer {
     /// started here and restarted from the top a moment later — the same file twice.
     public func prime(in doc: TimelineDocument, atTick tick: Int, bpm: Double,
                       launchingInThisCall: Set<UUID>) {
+        let mayRewire = parkedSinceStop
+        parkedSinceStop = false
         for laneID in doc.audioLaneIDs {
+            sink(for: laneID).setMayRewire(mayRewire)
             // Warm EVERY lane that has any content: open the files + attach nodes
             // now, while nothing is sounding — the attach pattern pauses the whole
             // engine, which must never happen mid-song at a late region's onset
@@ -410,6 +423,7 @@ public final class AudioLanePlayer {
     /// Stop every lane (transport stop / teardown).
     public func stopAll() {
         for sink in sinks.values { sink.stop() }
+        parkedSinceStop = true
     }
 
     // MARK: - Private
