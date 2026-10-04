@@ -505,6 +505,15 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
     /// via the timeline player's absolute playhead; wins over global loop + clip
     /// automation while the song plays.
     public var automation: [AutomationLane]
+    /// The piece's creative LIGHT LOOK (Restructure P2, founder 2026-10-04: "lookIntensity als
+    /// kreativen Zustand des Stücks"), 0…1 — the level `LightingStore` multiplies the generated
+    /// dimmer by. `nil` = this piece never set one: every song written before P2 decodes so, and
+    /// it plays at the identity (`LightingStore.defaultLookIntensity`), exactly as before.
+    /// Stored raw; `TimelineStore.setLightLook` sanitises on the way in and `lightLook` on the
+    /// way out, so a hand-edited file cannot carry a value the rig would show. It travels inside
+    /// `content.timeline` of a saved project, so Save, Open and a switch between two pieces
+    /// carry it with no envelope field of its own.
+    public var lightLookIntensity: Float?
 
     public init(lanes: [TimelineLane] = [], regions: [TimelineRegion] = [],
                 automation: [AutomationLane] = []) {
@@ -515,9 +524,12 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         self.lanes = lanes
         self.regions = regions
         self.automation = automation
+        self.lightLookIntensity = nil
     }
 
-    private enum CodingKeys: String, CodingKey { case schemaVersion, lanes, regions, automation }
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, lanes, regions, automation, lightLookIntensity
+    }
 
     /// Wrapper that decodes an element or yields nil on a malformed one, always
     /// consuming exactly one array slot so the unkeyed decode can't stall.
@@ -558,6 +570,9 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         lanes = Self.lossyArray(TimelineLane.self, in: c, forKey: .lanes)
         regions = Self.lossyArray(TimelineRegion.self, in: c, forKey: .regions)
         automation = Self.lossyArray(AutomationLane.self, in: c, forKey: .automation)
+        // Absent (every pre-P2 song) or malformed → nil, the identity. Never thrown: a bad look
+        // must not cost the song, the rule this decoder exists for.
+        lightLookIntensity = try? c.decodeIfPresent(Float.self, forKey: .lightLookIntensity)
     }
 
     /// EXPLICIT rather than synthesized, for one reason: the stamp written to disk must be
@@ -579,6 +594,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         try c.encode(lanes, forKey: .lanes)
         try c.encode(regions, forKey: .regions)
         try c.encode(automation, forKey: .automation)
+        try c.encodeIfPresent(lightLookIntensity, forKey: .lightLookIntensity)
     }
 
     public func regions(in laneID: UUID) -> [TimelineRegion] {

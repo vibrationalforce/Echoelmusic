@@ -173,12 +173,16 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // binding (the record moves with the relink and back with its Undo) — still one clip and
         // its source, still no lane and no mixer. Workstation redesign B2b added `.lanePatch` — ONE
         // track's sound from one pick, both sounds as values; the hint names the sound in the same commit.
+        // Restructure P2 added `.lightLook` — the PIECE's light look from one gesture on the Project
+        // plate, both stored values; still no lane, no name, no document; the hint names it in the
+        // same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
                                "case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)",
                                "case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)",
-                               "case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)"],
+                               "case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)",
+                               "case lightLook(before: Float?, after: Float?)"],
                        """
                        The history holds a step kind this list does not name. `SongHistoryRow`'s \
                        hint names every kind Undo reverts (since B3b: Mix gestures, and only those \

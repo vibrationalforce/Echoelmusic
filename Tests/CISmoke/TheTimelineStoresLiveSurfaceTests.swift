@@ -102,6 +102,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setBuiltinInstrument",
         // Workstation redesign B2a: the track's sound, reached through `TrackMix.setSound`.
         "setLanePatch",
+        // Restructure P2 (2026-10-04): the piece's light look, reached from
+        // `Studio/PieceLightLookField.swift` — one edit/commit pair, one Undo step per gesture.
+        "editLightLook", "commitLightLook",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

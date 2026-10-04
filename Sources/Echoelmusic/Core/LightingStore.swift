@@ -46,7 +46,15 @@
 //  `EchoelmusicApp` binds the router to `setLookIntensity`. Nothing flows back: this file names
 //  no descriptor, no registry, no modulation key and no persistence root, which is what keeps
 //  it a plain Foundation value type two protocol adapters can share.
-//  ⚠️ STILL ABSENT, DELIBERATELY: modulation, automation, persistence and a UI door — and
+//  ⭐ SINCE RESTRUCTURE P2 (2026-10-04) THE LOOK HAS A DOOR AND IS SAVED — but NOT here, and
+//  that keeps this paragraph's one-way rule intact. The PIECE owns it
+//  (`TimelineDocument.lightLookIntensity`, nil = never set = 1.0); the Project plate's
+//  `PieceLightLookField` edits it through `TimelineStore.editLightLook`/`commitLightLook` (one
+//  Undo step per gesture); `EchoelmusicApp` projects the document into this store through the
+//  canonical parameter (`applyReal` → the one bind → `setLookIntensity`) at launch and on every
+//  document change — an edit, an Undo, an Open, a switch between two pieces. This file still
+//  knows nothing about persistence; it only receives the value.
+//  ⚠️ STILL ABSENT, DELIBERATELY: modulation and automation — and
 //  since P2 Proof #1.1 that absence is STATED rather than arranged. The descriptor carries
 //  `automationEligible: false` and `modulationEligible: false`; `AutomationPlayer` dispatches
 //  through `ParameterApplyRouter.applyAutomation`, which asks, and the app's modulation loop
@@ -71,9 +79,10 @@
 //  unsmoothed sum of the sounding velocities, so it can step per sequencer tick. That path is
 //  bounded by the dimmer slew alone and is NOT covered here. ⚠️ Per NOMINAL tick, too: the
 //  late-timer residual `FlashGuard.senderLuminancePerSecond` documents applies unchanged.
-//  Nothing writes the look in this build, so every slew runs from 1 to 1 and every packet is
-//  byte-identical. Pinned by `TheLightLookMovesNoFasterThanTheFlashLawTests`; the curve, its
-//  door and the eligibility flip are the NEXT slice (C3b), together.
+//  Until Restructure P2 nothing wrote the look, so every slew ran from 1 to 1. Since P2 the
+//  piece's field writes it, and this slew is what turns a typed jump into a fade on the rig.
+//  Pinned by `TheLightLookMovesNoFasterThanTheFlashLawTests`; a song CURVE and the
+//  automation-eligibility flip are still the next slice (C3b), together.
 //
 
 import Foundation

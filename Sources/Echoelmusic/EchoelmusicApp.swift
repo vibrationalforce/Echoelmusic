@@ -1441,6 +1441,24 @@ struct EchoelmusicApp: App {
                 parameterRouter.bind(LightingParameterCatalog.lookIntensity) { [weak lighting] value in
                     lighting?.setLookIntensity(value)
                 }
+                // Restructure P2 — THE PIECE OWNS ITS LIGHT LOOK. `TimelineDocument.lightLookIntensity`
+                // is the stored creative state; this projects it into `LightingStore` THROUGH the
+                // canonical parameter (the bind above stays the one `setLookIntensity` call site), on
+                // launch and on every document change — an edit, an Undo, an Open, a switch between
+                // two pieces. A piece that never set one reads the identity (`TimelineStore.lightLook`).
+                // CHAINED, not assigned: `onDocumentChanged` is ONE slot (see `rebuildScene` above).
+                // The senders slew whatever lands here at the flash-law rate, so a jump between two
+                // pieces' looks ramps on the rig instead of stepping.
+                let projectLightLook = { [weak timelineStore, weak parameterRouter] in
+                    guard let look = timelineStore?.lightLook else { return }
+                    _ = parameterRouter?.applyReal(LightingParameterCatalog.lookIntensity, look)
+                }
+                projectLightLook()   // launch: the loaded piece has no persist() yet
+                let previousLookHook = timelineStore.onDocumentChanged
+                timelineStore.onDocumentChanged = {
+                    previousLookHook?()
+                    projectLightLook()
+                }
                 // Workstation redesign C1 — the first VISUAL parameter reaches its owner.
                 // `visual.creative.intensity` → `VisualCreativeState.setIntensity`, which clamps
                 // 0…1 and maps non-finite to the identity. The router never writes the user's

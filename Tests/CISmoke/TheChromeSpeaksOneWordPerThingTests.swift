@@ -172,6 +172,8 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         // new files on reachable plates join the ratchet in the commit that adds them.
         "Sources/Echoelmusic/Studio/MasterStripView.swift",
         "Sources/Echoelmusic/Studio/SoundBrowserView.swift",
+        // Restructure P2 (2026-10-04): the Project plate's light-look field.
+        "Sources/Echoelmusic/Studio/PieceLightLookField.swift",
         // Ratchet 15 (2026-09-30): beyond Studio — the sentences the model layer hands the
         // screen: the import refusals, the open-refusals, the placement status, the names a
         // recording and a nameless part or scene get, the automation layer label, the rack's

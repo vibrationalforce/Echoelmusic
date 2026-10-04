@@ -2209,14 +2209,50 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
-      "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
+      "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01; Restructure P2 2026-10-04 adds the piece's light look): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+          }
+        }
+      }
+    },
+    "Light look" : {
+      "comment" : "Project plate (Restructure P2, 2026-10-04): the label of the piece's light look — how bright the piece lets the connected light rig go. Saved with the piece. Glossary: Stück.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light look"
+          }
+        }
+      }
+    },
+    "How bright this piece lets the light rig go. 1 is full, 0 is dark." : {
+      "comment" : "Project plate (Restructure P2, 2026-10-04): VoiceOver hint of the Light look field. 1.00 = full brightness (the default), 0.00 = dark.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How bright this piece lets the light rig go. 1 is full, 0 is dark."
+          }
+        }
+      }
+    },
+    "Saved with the piece. A connected light rig fades to it." : {
+      "comment" : "Project plate (Restructure P2, 2026-10-04): caption under the Light look field — the value is part of the piece, and a connected Art-Net/sACN rig ramps to it at the flash-safe rate rather than jumping.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved with the piece. A connected light rig fades to it."
           }
         }
       }

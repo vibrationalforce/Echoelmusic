@@ -74,7 +74,7 @@ struct SongHistoryRow: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes")
+        .accessibilityHint("Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes")
     }
 
     private func button(_ title: String, _ systemImage: String, enabled: Bool, words: Bool,

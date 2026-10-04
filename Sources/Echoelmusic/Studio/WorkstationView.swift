@@ -953,6 +953,9 @@ struct WorkstationView: View {
             // it adds no hot read here. Not clamped: the plate grows with the user's text size,
             // and the row scrolls sideways instead of overflowing.
             CompositionHeaderStrip()
+            // Restructure P2 (2026-10-04): the piece's light look — saved WITH the piece, one Undo
+            // step per gesture. A cold leaf: the document changes on a gesture, never per frame.
+            PieceLightLookField()
             HStack(spacing: 6) {
                 SongExportTab()
                 // UX audit slice 10b: the whole piece as audio, beside the MIDI export.

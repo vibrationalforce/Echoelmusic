@@ -156,6 +156,7 @@ public final class TimelineStore {
         undoStack.removeAll()
         redoStack.removeAll()
         openMixEdits.removeAll()
+        openLightLookEdit = nil
         syncUndoFlags()
         persist()
         flushPendingSave()
@@ -228,6 +229,11 @@ public final class TimelineStore {
     ///     the pick, so an id could bring neither back. Undo puts the found sound back only while
     ///     the track still plays what the pick left; a sound written since keeps the later one.
     ///     Recorded by `editLanePatch(id:_:)`, once per pick.
+    ///   · `.lightLook` — the PIECE's light look (Restructure P2) from ONE person's gesture on the
+    ///     Project plate's "Light look" field: the stored value the gesture found and the one it
+    ///     left (`nil` = never set, the identity). Undo puts the found value back only while the
+    ///     piece still reads what the gesture left — the `.laneMix` rule for one field. Recorded by
+    ///     `commitLightLook()` once per gesture, never per drag sample.
     /// Deliberately NOT whole-document snapshots: lanes are not part of this history — the mixer
     /// enters only as `.laneMix`, a track's sound only as `.lanePatch` — so an undo can never
     /// silently revert a rename, an instrument assignment or a fader move made after the edit
@@ -249,6 +255,7 @@ public final class TimelineStore {
         case clipSource(clipID: UUID, mediaRef: String, nativeDurationSeconds: Double?, mediaAssetID: UUID?, record: MediaAssetStore.Rebinding?, clips: ClipStore)
         case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)
         case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)
+        case lightLook(before: Float?, after: Float?)
     }
 
     /// B3b — the four mixer fields of ONE track, the only ones a `.laneMix` step can move.
@@ -389,6 +396,13 @@ public final class TimelineStore {
                   lane.patch == after else { return nil }
             setLanePatch(laneID, patch: before)
             return HistoryStep.lanePatch(laneID: laneID, before: after, after: before)
+        case .lightLook(let before, let after):
+            // Restructure P2. A look written since (another gesture, an Open replaced the piece —
+            // which also clears this history) keeps the later value and the step is skipped.
+            guard document.lightLookIntensity == after, before != after else { return nil }
+            document.lightLookIntensity = before
+            persist()
+            return HistoryStep.lightLook(before: after, after: before)
         }
     }
 
@@ -966,6 +980,64 @@ public final class TimelineStore {
         let after = LaneMix(lane)
         guard after != edit.before else { return }
         pushUndo(.laneMix(laneID: id, before: edit.before, after: after))
+    }
+
+    // MARK: - Light look (Restructure P2) — the piece's creative light level, the person's path
+
+    /// The look this piece asks the rig for: the stored value, or the identity when the piece
+    /// never set one (every song saved before P2). Sanitised by the OWNER's one policy
+    /// (`LightingStore.sanitizedLookIntensity`) — never a second spelling of the clamp (#416).
+    /// The app projects this into `LightingStore` through the canonical parameter path on every
+    /// document change, so an Open, an Undo and a switch between two pieces all reach the rig.
+    public var lightLook: Float {
+        LightingStore.sanitizedLookIntensity(
+            document.lightLookIntensity ?? LightingStore.defaultLookIntensity)
+    }
+
+    /// Restructure P2 — write the piece's light look. Records NO step: the bare writer, as
+    /// `setLanePan` is for the mixer. Sanitised by the owner's policy; an unchanged value writes
+    /// nothing (no persist, no projection).
+    public func setLightLook(_ value: Float) {
+        let sane = LightingStore.sanitizedLookIntensity(value)
+        guard document.lightLookIntensity != sane else { return }
+        document.lightLookIntensity = sane
+        persist()
+    }
+
+    /// The person's look gesture in progress: the stored value it found, and the one its last write
+    /// left. Not observed, never persisted, cleared by an Open.
+    private struct OpenLightLookEdit {
+        let before: Float?
+        let after: Float?
+    }
+    @ObservationIgnored private var openLightLookEdit: OpenLightLookEdit?
+
+    /// Restructure P2 — ONE write of a person's gesture on the "Light look" field (once per drag
+    /// sample). The start is kept only while nothing else wrote the look in between, so the
+    /// gesture's Undo never takes back a change the person did not make (`editLaneMix`'s rule).
+    public func editLightLook(_ value: Float) {
+        let now = document.lightLookIntensity
+        let before: Float?
+        if let open = openLightLookEdit, open.after == now {
+            before = open.before
+        } else {
+            before = now
+        }
+        setLightLook(value)
+        openLightLookEdit = OpenLightLookEdit(before: before, after: document.lightLookIntensity)
+    }
+
+    /// Restructure P2 — end the gesture: ONE `.lightLook` step when the look the rig shows differs
+    /// from where the gesture began, none when it came back to it. Compared as SHOWN (`nil` reads
+    /// as the identity), so typing the default into a piece that never set one is no step.
+    public func commitLightLook() {
+        guard let edit = openLightLookEdit else { return }
+        openLightLookEdit = nil
+        let shown = { (v: Float?) in
+            LightingStore.sanitizedLookIntensity(v ?? LightingStore.defaultLookIntensity)
+        }
+        guard shown(document.lightLookIntensity) != shown(edit.before) else { return }
+        pushUndo(.lightLook(before: edit.before, after: document.lightLookIntensity))
     }
 
     // MARK: - Sound history (Workstation redesign B2b) — the person's path, never a bare writer's
