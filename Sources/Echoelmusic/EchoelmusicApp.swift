@@ -1240,6 +1240,15 @@ struct EchoelmusicApp: App {
                     resolveNativeBPM: { [weak clipStore] id in
                         clipStore?.clip(id: id)?.nativeBPM ?? 0
                     })
+                // Restructure S3b: each audio lane's place in the headphone space comes from
+                // the piece's OWN scene — the position ADM-OSC streams and the piece saves
+                // (A3a). One source for both outputs, so the rig and the headphones cannot
+                // disagree about where a track is. The device sink renders it from S3c on.
+                timelinePlayer.audioLanes?.spacePosition = { [weak spatialScene] laneID in
+                    guard let store = spatialScene,
+                          let object = store.object(forLane: laneID) else { return nil }
+                    return HeadphoneSpace.point(for: object.position, in: store.scene.room)
+                }
                 // #386: the body drives the FX on EVERY chain the character menu already
                 // configures, not just the composer's. Bound one chain, the take's filter
                 // and reverb breathed while the notes the performer played on the Field

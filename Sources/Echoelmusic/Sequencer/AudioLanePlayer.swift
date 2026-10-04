@@ -107,6 +107,11 @@ public protocol AudioRegionSink: AnyObject {
     /// Pitch (#165): this lane's pitch in whole semitones, applied at the NEXT `play` through
     /// the sink's time-pitch chain. `start` sets it right before every `play`. Default: no-op.
     func setTranspose(_ semitones: Int)
+    /// Restructure S3b: this lane's place in the headphone space (`HeadphoneSpace`), metres in
+    /// the listener's frame. Control plane, like `setPan` — never a render block. A sink that
+    /// renders no space ignores it, and so does today's device sink until S3c places its
+    /// nodes in an environment node. Default: no-op.
+    func setSpacePosition(_ point: HeadphoneSpace.Point)
 }
 
 public extension AudioRegionSink {
@@ -116,6 +121,7 @@ public extension AudioRegionSink {
     func setGain(_ gain: Float) {}
     func setPan(_ pan: Float) {}
     func setTranspose(_ semitones: Int) {}
+    func setSpacePosition(_ point: HeadphoneSpace.Point) {}
 }
 
 @MainActor
@@ -140,6 +146,15 @@ public final class AudioLanePlayer {
     /// know it must re-start the region (a stopped one-shot can't just re-gain).
     private var appliedGain: [UUID: Float] = [:]
     private var appliedPan: [UUID: Float] = [:]
+
+    /// Restructure S3b: where each lane sits in the headphone space. The app injects it from
+    /// the piece's spatial scene (`SpatialSceneStore` → `HeadphoneSpace.point`), so the
+    /// position a piece saves (A3a) is the position its lanes are handed. Pulled at the three
+    /// places a lane's pan is pushed — a region start and both live-mix reconciles — so an
+    /// ADM-OSC move lands within one transport step. nil, or nil for a lane ⇒ nothing is sent.
+    public var spacePosition: ((UUID) -> HeadphoneSpace.Point?)?
+    /// The point last handed to each lane's sink, so a still lane costs no call per step.
+    private var appliedSpace: [UUID: HeadphoneSpace.Point] = [:]
 
     // MARK: - Clip-Launch override (S1 of PLAN_AUDIO_CLIP_LAUNCH — audio-lane launch)
     //
@@ -280,6 +295,7 @@ public final class AudioLanePlayer {
             sinks[laneID] = nil
             appliedGain[laneID] = nil
             appliedPan[laneID] = nil
+            appliedSpace[laneID] = nil
             overrides[laneID] = nil   // a removed lane's launch dies with it
         }
         for laneID in doc.audioLaneIDs {
@@ -443,6 +459,7 @@ public final class AudioLanePlayer {
         let pan = clampedPan(in: doc, laneID: laneID)
         lane.setPan(pan)
         appliedPan[laneID] = pan
+        pushSpace(laneID, to: lane)   // S3b
     }
 
     /// H4 live-mixer reconcile for a lane sitting INSIDE an unchanged region (or a
@@ -477,6 +494,7 @@ public final class AudioLanePlayer {
             lane.setPan(pan)
             appliedPan[laneID] = pan
         }
+        pushSpace(laneID, to: lane)   // S3b
     }
 
     /// S1 Clip-Launch: drive one launched lane for the window `fromTick`→`toTick`.
@@ -525,6 +543,16 @@ public final class AudioLanePlayer {
             lane.setPan(pan)
             appliedPan[laneID] = pan
         }
+        pushSpace(laneID, to: lane)   // S3b
+    }
+
+    /// S3b: hand the lane's headphone-space point to its sink when it changed. A lane the
+    /// scene does not name, or no injected source at all, sends nothing — the sink keeps the
+    /// last point it was given rather than snapping to a guessed default.
+    private func pushSpace(_ laneID: UUID, to lane: AudioRegionSink) {
+        guard let point = spacePosition?(laneID), appliedSpace[laneID] != point else { return }
+        lane.setSpacePosition(point)
+        appliedSpace[laneID] = point
     }
 
     private func clampedPan(in doc: TimelineDocument, laneID: UUID) -> Float {
