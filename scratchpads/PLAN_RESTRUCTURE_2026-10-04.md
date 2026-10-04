@@ -244,7 +244,16 @@ Alles Übrige ist durch „Du entscheidest“ (2026-10-03) und E18/E19 gedeckt u
 | Scheibe | Stand |
 |---|---|
 | F1 | gebaut — `ef49372bf`; Compile Check grün, Auto-Merge → main = `ef49372bf` (⇒ Build for Testing grün); Gerät offen |
-| F2a | gepusht — `704e0acfa` (Abstands-Skala `spaceXS…spaceXL`, F1-Dateien migriert, Ratsche 696); Gates laufen |
-| F2b | lokal — `29ec3b6bc` (zwei Bewegungs-Tokens, sieben Übergänge); Push nach dem Compile Check von F2a |
+| F2a | gebaut — `704e0acfa` (Abstands-Skala `spaceXS…spaceXL`, F1-Dateien migriert, Ratsche 696) |
+| F2b | gebaut — zwei Bewegungs-Tokens, sieben Übergänge; F2a+F2b mit Auto-Merge → main = `6f1d71279` (⇒ Compile Check + Build for Testing grün); Gerät offen |
+| F3 | gepusht — `8613d84d6`: „spielt“ = grünes Label im `borderStrong`-Rahmen auf `fill`, nie eine Fläche (`TheRunningStateIsOneLookTests`); Gates laufen |
+| F4a | lokal — `a0a53ba98`: ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel, nie grün (`TheSwitchedOnStateIsMonochromeTests`; Ratsche 8 → 6) |
+| F4b | lokal — `39d77bf3b`: jeder Schalter und jede gewählte Kachel zeichnet ihre Kante mit `borderStrong` (`TheChosenTileDeclaresItsBoundaryTests`) |
+| F5a | lokal — `a585fa507`: das Wertfeld tickt an Standard und Rand (`.selection`), OK auf dem Ziffernblock bestätigt (`.success`) (`TheValueFieldTicksAtItsDetentsTests`) |
+| F5b | lokal — `75645cff9`: das EINE Play/Stop ist spürbar (`.start` / `.stop`) (`TheTransportIsFeltWhenItStartsAndStopsTests`) |
+| F6a | lokal — `360e6be0d`: ein Mix-Streifen hat keine eigene Fläche, die Karte ist das Panel (`TheMixStripHasNoSurfaceOfItsOwnTests`) |
+| F6b | lokal — `d4e7d1b9d`: Broadcast „live“ trägt das Aufnahme-Rot, nicht das Fehler-Rot (`TheLiveStateIsTheRecordingRedTests`) |
 
 F2 ist bewusst in zwei Commits geteilt (Abstand und Bewegung), damit jeder eine logische Änderung bleibt. Die Deckkraft-Tokens gab es schon (`dim`, `border`, `fill`, `pressedOpacity`); dafür war keine Scheibe nötig.
+
+Haptik (F5) sitzt nur an UI-Blättern, nie auf einem Render-Pfad; ob sie sich gut anfühlt, ist ein Geräte-Blick. F6 nimmt die Fälle, die §3 nennt: Karte in Karte in „Mix“ und „Tempo & variations“ (ein Helfer, fünf Streifen) und Broadcast „live“. Eine app-weite Suche nach weiteren Karten in Karten ist NICHT gelaufen.
