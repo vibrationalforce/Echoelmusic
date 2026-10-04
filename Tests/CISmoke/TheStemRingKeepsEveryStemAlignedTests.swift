@@ -6,7 +6,7 @@
 //  stem goes through; this guard pins those four promises on the ring itself.
 //
 //  WHAT THIS PINS, by kind (Tests/CISmoke/CLAUDE.md §1):
-//  · END-TO-END BEHAVIOUR (claims 1–7, 9–11) — the shipped ring, single-threaded: write as the
+//  · END-TO-END BEHAVIOUR (claims 1–7, 9–11, 14) — the shipped ring, single-threaded: write as the
 //    audio thread would, read as the writer thread would. Nothing is mocked.
 //  · SOURCE-TEXT SCAN (claims 8, 12) — the producer path allocates nothing, takes no lock, logs
 //    nothing, publishes its cursor only through `RetroRingCursor`, and CLAIMS before it fills;
@@ -28,7 +28,10 @@
 //  9–11 were transcribed in Python against the ring's arithmetic: claim 4 is red against a
 //  mutant that drops the overrun count, claim 2 against one that shifts instead of filling,
 //  claims 9–10 against one without the jump bound, claim 11 against one that wraps silently.
-//  Claim 12 is red against the pre-review ring (no claim cursor). Claim 13 has NO transcription —
+//  Claim 12 is red against the pre-review ring (no claim cursor). Claim 14 and claims 4/7 are red
+//  against the first two-run read: the transcription models each `update(from:count:)` as a
+//  bounded copy and the old read raises out-of-bounds at claim 4 (`samples[0..<576]`, cap 256) —
+//  the first transcription masked every index per frame and could not see it. Claim 13 has NO transcription —
 //  Python cannot reproduce arm64 reordering; its verdict is the CI run alone.
 //
 //  `Tests/CISmoke` is the blocking bundle.
@@ -350,6 +353,32 @@ final class TheStemRingKeepsEveryStemAlignedTests: XCTestCase {
             throw XCTSkip("\(relative) not on disk — this run has no source tree")
         }
         return try String(contentsOf: file, encoding: .utf8)
+    }
+
+    // MARK: 14 — a reader more than a ring behind never reads past the ring's memory
+
+    /// The first two-run read copied `count` frames out of a `capacityFrames` buffer, and `count`
+    /// is NOT bounded by the ring — a reader ten rings behind with a large `maxFrames` ran off the
+    /// allocation (audio-thread review 2026-10-04, second pass). Claims 4 and 7 already walked
+    /// into it; this one does it with a non-zero ring offset, several rings deep, so a repair that
+    /// only happens to fit 4 and 7 still fails here. Out-of-bounds is undefined behaviour, not a
+    /// clean red — which is why the assertion is on the CONTENT: a read that wanders off the
+    /// buffer cannot return exactly these zeros and exactly this newest ring.
+    func testAReaderFarBehindNeverReadsPastTheRing() {
+        let ring = StemCaptureRing(capacityFrames: 64, startSampleTime: 7)
+        let audio = ramp(1_000)
+        for block in 0..<10 {
+            write(ring, Array(audio[(block * 100)..<(block * 100 + 100)]), at: 7 + Int64(block * 100))
+        }
+        let (frames, result) = read(ring, max: 5_000)
+        XCTAssertEqual(result.frames, 1_000, "the stem keeps its full length")
+        XCTAssertEqual(result.silencedFrames, 936, "1 000 written into a 64-frame ring: 936 were overwritten")
+        XCTAssertEqual(ring.lostFrames, 936)
+        XCTAssertEqual(Array(frames[0..<936]), [Float](repeating: 0, count: 936), """
+            Frames older than one ring behind the publish cursor are gone before the copy starts. \
+            They must come out as zeros written WITHOUT touching the ring's memory.
+            """)
+        XCTAssertEqual(Array(frames[936..<1_000]), Array(audio[936..<1_000]), "the newest ring is intact")
     }
 }
 #endif

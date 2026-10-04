@@ -38,6 +38,9 @@ final class StemTapTarget: @unchecked Sendable {
 /// releases one; property access on the rings may still emit retain/release at `-Onone` — an
 /// atomic increment, not a lock, the same traffic `weakSelf.value` already costs every voice.
 ///
+/// ⚠️ LIFETIME: the tap point is owned by its voice and outlives the voice's source node; its
+/// `deinit` frees cells the render reads, so it must never run while a render block can call it.
+///
 /// ⚠️ ONE OWNER THREAD: `arm`, `disarm` and `releaseRetiredIfQuiescent` must be called from ONE
 /// thread (the capture session's — S-A3c). They are not safe against each other.
 ///
@@ -55,6 +58,7 @@ final class StemTapPoint: @unchecked Sendable {
     private let slot: UnsafeMutablePointer<UnsafeMutableRawPointer?>
     private let passCounter: UnsafeMutablePointer<UInt64>
     private let invalidTimeCounter: UnsafeMutablePointer<Int64>
+    private let interleavedCounter: UnsafeMutablePointer<Int64>
 
     /// Owner-thread only: the strong reference that keeps the armed target alive.
     private var armed: StemTapTarget?
@@ -69,16 +73,22 @@ final class StemTapPoint: @unchecked Sendable {
         passCounter.initialize(to: 0)
         invalidTimeCounter = .allocate(capacity: 1)
         invalidTimeCounter.initialize(to: 0)
+        interleavedCounter = .allocate(capacity: 1)
+        interleavedCounter.initialize(to: 0)
     }
 
     deinit {
         slot.deallocate()
         passCounter.deallocate()
         invalidTimeCounter.deallocate()
+        interleavedCounter.deallocate()
     }
 
     /// Blocks skipped because the engine gave no valid sample time. Non-zero = abort the take.
     var invalidTimeBlocks: Int64 { invalidTimeCounter.pointee }
+    /// Blocks refused because a buffer carried more than one channel (interleaved). The ring is
+    /// mono per channel; writing interleaved data would put L and R alternately into one stem.
+    var interleavedBlocks: Int64 { interleavedCounter.pointee }
     /// True while a target is armed.
     var isArmed: Bool { armed != nil }
     /// True while a swapped-out target is still held back from release.
@@ -99,6 +109,10 @@ final class StemTapPoint: @unchecked Sendable {
     }
 
     /// Disarms. Refused (false) while an earlier retired target is not yet quiescent.
+    ///
+    /// ⚠️ `true` does NOT mean the producer is finished: a render pass that loaded the slot before
+    /// the swap may still be writing its last block. The take ends — and the final drain may run
+    /// — only once `releaseRetiredIfQuiescent()` returns true with `hasRetiredTarget == false`.
     @discardableResult
     func disarm() -> Bool {
         guard releaseRetiredIfQuiescent() else { return false }
@@ -115,6 +129,7 @@ final class StemTapPoint: @unchecked Sendable {
         guard retired != nil else { return true }
         OSMemoryBarrier()
         let now = passCounter.pointee
+        OSMemoryBarrier()                       // acquire: the render's ring accesses happen-before the release
         // Even at the swap: the render was outside a pass, and any later pass loads the new slot.
         // Odd at the swap: the render was inside ONE pass; once the counter moved, it left it.
         guard retiredPass & 1 == 0 || now != retiredPass else { return false }
@@ -123,6 +138,7 @@ final class StemTapPoint: @unchecked Sendable {
     }
 
     private func swapSlot(to raw: UnsafeMutableRawPointer?, retiring previous: StemTapTarget?) {
+        OSMemoryBarrier()                       // release: the target's and its rings' init BEFORE the slot
         slot.pointee = raw
         OSMemoryBarrier()                       // the slot store BEFORE the pass load
         let pass = passCounter.pointee
@@ -158,6 +174,10 @@ final class StemTapPoint: @unchecked Sendable {
 
         let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
         guard buffers.count > 0, let first = buffers[0].mData else { return }
+        for index in 0..<min(buffers.count, 2) where buffers[index].mNumberChannels > 1 {
+            interleavedCounter.pointee &+= 1
+            return
+        }
         let firstFrames = Int(buffers[0].mDataByteSize) / MemoryLayout<Float>.size
         var frames = min(frameCount, firstFrames)
         let left = UnsafePointer(first.assumingMemoryBound(to: Float.self))

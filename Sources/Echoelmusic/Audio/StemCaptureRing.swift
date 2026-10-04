@@ -45,6 +45,14 @@ import Foundation
 /// The CALLER must also pass only a valid sample time (`AVAudioTime.isSampleTimeValid`, and never
 /// `Int64(Double)` of a non-finite value — that conversion traps before this type is reached).
 ///
+/// ⚠️ `lostFrames` IS AN UPPER BOUND, NOT AN EXACT COUNT. A gap longer than the ring minus the
+/// block is zero-filled only where it stays inside the ring; the rest the reader silences, and
+/// counts as lost even if it was silence. A render block's timeline is continuous, so a gap that
+/// long is itself a discontinuity in all but name — the exporter aborts on `discontinuities`,
+/// and reports `lostFrames` as "at most".
+///
+/// ⚠️ ONE PRODUCER PER RING. A ring armed on two tap points has two writers on an SPSC structure.
+///
 /// ⚠️ DIAGNOSTICS ARE PLAIN 64-BIT CELLS with one writer each (gap, overlap, discontinuity: the
 /// producer; lost: the consumer). An aligned 64-bit load does not tear on arm64, so the worst a
 /// cross-thread reader sees is a stale number; formally it is a race a sanitizer would name.
@@ -206,24 +214,38 @@ final class StemCaptureRing: @unchecked Sendable {
     /// Drains up to `maxFrames` frames into `destination`, oldest first. Frames the producer
     /// overwrote before or while they were read come out as zeros and are counted in
     /// `lostFrames`, so the slice is always exactly as long as the time it covers.
+    ///
+    /// ⛔ THE FIRST TWO-RUN VERSION OF THIS COPY READ PAST THE BUFFER (audio-thread review
+    /// 2026-10-04, second pass). `count` is NOT bounded by the ring — a reader more than a ring
+    /// behind drains more frames than the ring holds — so a copy of `count` frames from `samples`
+    /// ran off the allocation. Frames older than `written - capacity` are gone before the copy
+    /// starts; they are zero-filled WITHOUT touching `samples`, and only the at-most-one-ring
+    /// tail is copied. The claim check below still decides what of that tail is intact.
     func read(into destination: UnsafeMutablePointer<Float>, maxFrames: Int) -> Read {
         let start = readCursor.pointee
         guard maxFrames > 0 else { return Read(startSampleTime: start, frames: 0, silencedFrames: 0) }
         let written = RetroRingCursor.load(writeCursor)
-        let available = written - start
+        let available = written &- start
         guard available > 0 else { return Read(startSampleTime: start, frames: 0, silencedFrames: 0) }
+        let ring = Int64(capacityFrames)
         let count = Int(min(available, Int64(maxFrames)))
-        let first = Int(start & mask)
-        let head = min(count, capacityFrames - first)
-        destination.update(from: samples + first, count: head)
-        if head < count { (destination + head).update(from: samples, count: count - head) }
+        // Already overwritten before we start: never read from `samples` for these.
+        let gone = Int(min(Int64(count), max(0, (written &- ring) &- start)))
+        if gone > 0 { destination.update(repeating: 0, count: gone) }
+        let copyCount = count - gone                       // ≤ capacityFrames by construction
+        if copyCount > 0 {
+            let first = Int((start &+ Int64(gone)) & mask)
+            let head = min(copyCount, capacityFrames - first)
+            (destination + gone).update(from: samples + first, count: head)
+            if head < copyCount { (destination + gone + head).update(from: samples, count: copyCount - head) }
+        }
         // The slot loads above must complete BEFORE the claim load (arm64 reorders load-load).
         OSMemoryBarrier()
         let claimed = claimCursor.pointee
         // Every frame older than one ring behind the newest CLAIM may hold newer audio, including
-        // a write that has not published yet.
-        let oldestIntact = claimed - Int64(capacityFrames)
-        let silenced = Int(max(0, min(Int64(count), oldestIntact - start)))
+        // a write that has not published yet. `claimed ≥ written`, so this covers `gone` too.
+        let oldestIntact = claimed &- ring
+        let silenced = Int(max(0, min(Int64(count), oldestIntact &- start)))
         if silenced > 0 {
             destination.update(repeating: 0, count: silenced)
             lostCounter.pointee &+= Int64(silenced)
