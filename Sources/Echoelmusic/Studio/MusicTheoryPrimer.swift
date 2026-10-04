@@ -60,7 +60,7 @@ public enum MusicTheoryTopic: String, CaseIterable, Identifiable, Sendable {
         case .cadence:
             return String(localized: "The punctuation of harmony: a strong V→I lands like a full stop, while other cadences leave a phrase hanging. Echoelmusic resolves a loop with a turnaround cadence so it feels finished, not cut off.")
         case .key:
-            return String(localized: "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so stems drop into your DAW already in tune.")
+            return String(localized: "A piece's centre of gravity — its home note plus the scale around it (e.g. C minor). Everything is heard in relation to home. Echoelmusic locks the music to one key (with your concert pitch, default A440) so your WAV and MIDI exports drop into your DAW already in tune.")
         case .tempo:
             return String(localized: "Beats per minute. Slow tempos feel calm, fast ones energetic. In Echoelmusic tempo can follow your heart rate or be locked to an exact BPM for export.")
         case .swing:
