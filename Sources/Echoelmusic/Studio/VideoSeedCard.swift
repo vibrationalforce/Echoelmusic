@@ -189,7 +189,14 @@ struct VideoSeedCard: View {
             soundTask?.cancel()
             soundTask = nil
             discardSoundSource()
+            // E12-1 review MED: a cancelled export must not leave "Reading the sound…" behind.
+            soundNote = nil
             item = nil
+        }
+        .task {
+            // E12-1 review MED: copies a killed app left in the temporary folder. The card holds
+            // none when it appears, so every older one is an orphan.
+            await VideoSound.sweepLeftovers(createdBefore: Date())
         }
     }
 

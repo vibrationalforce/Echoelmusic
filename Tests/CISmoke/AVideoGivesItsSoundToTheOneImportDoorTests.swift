@@ -8,8 +8,10 @@
 // starts the same tempo and key analysis as a file from Files.
 //
 // WHAT KIND OF GREEN THIS IS (Tests/CISmoke/CLAUDE.md §1):
-//   · END-TO-END BEHAVIOUR (claims 1–2) — `VideoSound.soundFileBase` names the file, and
-//     `VideoSound.discard` removes exactly the folder `extract` makes and nothing else.
+//   · END-TO-END BEHAVIOUR (claims 1–2, 6) — `VideoSound.soundFileBase` names the file,
+//     `VideoSound.discard` removes exactly the folder `extract` makes and nothing else, and
+//     `VideoSound.sweepLeftovers` removes only the card's own old temporary files (review MED:
+//     `onDisappear` does not run when the app is killed, and a video copy can be gigabytes).
 //   · SOURCE-TEXT SCAN (claims 3–5) — the card and the Workstation are `View`s no test can render.
 //     Claim 3: there is still ONE import door (`AudioImport.perform` has one caller, and the card
 //     never names the importer). Claim 4: no picture is encoded (#1304). Claim 5: the card keeps
@@ -130,7 +132,47 @@ final class AVideoGivesItsSoundToTheOneImportDoorTests: XCTestCase {
         XCTAssertTrue(card.contains("VideoSound.discard(extracted)"), "the exported file is removed after the import copied it")
         XCTAssertTrue(card.contains(".disabled(soundTask != nil)"), "one export at a time")
         XCTAssertTrue(card.contains(".accessibilityLabel(\"Use its sound\")"))
+        // Review LOW: the count above stays green when the card-goes-away call moves elsewhere.
+        // (Pinned as code: the comment between the two lines is blanked by `codeOnly`.)
+        let gone = try XCTUnwrap(card.range(of: ".onDisappear {"), "the card's going-away handler")
+        let rest = card[gone.upperBound...]
+        let close = try XCTUnwrap(rest.range(of: "\n        }"), "the end of the going-away handler")
+        let goneBody = String(rest[..<close.lowerBound])
+        for step in ["soundTask?.cancel()", "discardSoundSource()", "soundNote = nil", "item = nil"] {
+            XCTAssertTrue(goneBody.contains(step), "the card going away no longer does `\(step)`")
+        }
+        XCTAssertTrue(card.contains("await VideoSound.sweepLeftovers(createdBefore: Date())"),
+                      "the card sweeps what a killed app left behind when it appears")
     }
+
+    #if canImport(AVFoundation)
+    // MARK: 6 — what a killed app left behind is swept, and nothing else
+
+    func testTheSweepRemovesOnlyOldVideoLeftovers() async throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("echoel-sweep-test-\(UUID().uuidString)",
+                                                               isDirectory: true)
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: dir) }
+        let keptVideo = dir.appendingPathComponent("echoel-video-\(UUID().uuidString).mov")
+        try Data([0]).write(to: keptVideo)
+        let export = dir.appendingPathComponent("echoel-video-sound-\(UUID().uuidString)", isDirectory: true)
+        try fm.createDirectory(at: export, withIntermediateDirectories: true)
+        let foreign = dir.appendingPathComponent("Kick.wav")
+        try Data([0]).write(to: foreign)
+
+        // COUNTERWEIGHT: a cutoff before the files were made removes nothing — a fresh pick survives.
+        let none = await VideoSound.sweepLeftovers(in: dir, createdBefore: .distantPast)
+        XCTAssertEqual(none, 0)
+        XCTAssertTrue(fm.fileExists(atPath: keptVideo.path), "a copy made after the cutoff is not an orphan")
+
+        let removed = await VideoSound.sweepLeftovers(in: dir, createdBefore: .distantFuture)
+        XCTAssertEqual(removed, 2, "the kept video copy and the interrupted export")
+        XCTAssertFalse(fm.fileExists(atPath: keptVideo.path))
+        XCTAssertFalse(fm.fileExists(atPath: export.path))
+        XCTAssertTrue(fm.fileExists(atPath: foreign.path), "a file that is not the card's is never swept")
+    }
+    #endif
 
     // MARK: - helpers
 

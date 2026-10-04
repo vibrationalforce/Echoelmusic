@@ -71,5 +71,29 @@ enum VideoSound {
         guard folder.lastPathComponent.hasPrefix("echoel-video-sound-") else { return }
         try? FileManager.default.removeItem(at: folder)
     }
+
+    /// Removes what a killed app left behind in `directory`: a kept video copy (`echoel-video-…`,
+    /// `PickedVideoFile`) or an interrupted export (`echoel-video-sound-…`). `onDisappear` does not
+    /// run when the app is killed, and a video copy can be gigabytes (E12-1 review, MED).
+    /// Only entries created BEFORE `cutoff` go: the video card calls this when it appears, and a
+    /// pick made in the same moment must not lose its fresh copy. Anything else in the folder
+    /// is left alone. Returns how many entries were removed. `async` and nonisolated like
+    /// `extract`, so the listing leaves the main actor without a detached task.
+    @discardableResult
+    static func sweepLeftovers(in directory: URL = FileManager.default.temporaryDirectory,
+                               createdBefore cutoff: Date) async -> Int {
+        let fm = FileManager.default
+        guard let entries = try? fm.contentsOfDirectory(at: directory,
+                                                        includingPropertiesForKeys: [.creationDateKey])
+        else { return 0 }
+        var removed = 0
+        for entry in entries where entry.lastPathComponent.hasPrefix("echoel-video-") {
+            guard let created = try? entry.resourceValues(forKeys: [.creationDateKey]).creationDate,
+                  created < cutoff
+            else { continue }
+            if (try? fm.removeItem(at: entry)) != nil { removed += 1 }
+        }
+        return removed
+    }
 }
 #endif

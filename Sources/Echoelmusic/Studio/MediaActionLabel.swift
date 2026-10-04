@@ -19,7 +19,7 @@ import SwiftUI
 
 struct MediaActionLabel: View {
     // E4-15 (2026-09-30): drawn as a catalog KEY below — `Text(String)` spelled the three media actions
-    // verbatim on a German phone. Stays `String` so the six `MediaActionLabel(title: "…")` sites and
+    // verbatim on a German phone. Stays `String` so the `MediaActionLabel(title: "…")` sites and
     // the guards that count them do not move.
     let title: String
     let systemImage: String
