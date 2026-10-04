@@ -291,6 +291,26 @@ enum ScrubPrecision {
                          upperBound: upperBound, decimals: decimals)) == onScreen
     }
 
+    /// Restructure F5a — the scrub's DETENTS: the row's default and its two range ends. A drag
+    /// that ARRIVES on one, or passes over the default between two events, gives one light tick,
+    /// so the hand feels the default the way a centre-detent knob does and feels the stop at an
+    /// edge. Pure so the blocking bundle can drive it; the view hands in the old and the new
+    /// stored value, both already on the grid.
+    ///
+    /// Crossing counts, not only landing: a fast drag moves several grid units per event and
+    /// would skip an exact landing on the default. LEAVING a detent is not a tick — only
+    /// arriving — so resting on the default and pulling away is silent. Non-finite input is
+    /// never a tick.
+    static func reachesDetent(from old: Double, to new: Double, standard: Double?,
+                              lowerBound: Double, upperBound: Double) -> Bool {
+        guard old.isFinite, new.isFinite, old != new else { return false }
+        if new == lowerBound || new == upperBound { return true }
+        guard let standard, standard.isFinite else { return false }
+        if new == standard { return true }
+        if old == standard { return false }
+        return (old < standard) != (new < standard)
+    }
+
     /// Advances a scrub in progress by one event's travel.
     ///
     /// ⛔ WHY A SCRUB NEEDS ITS OWN TARGET AT ALL (#376). The drag used to add each event's delta
@@ -515,6 +535,8 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
 
     /// Presents the shared numeric keypad (tap-to-type path).
     @State private var showPad = false
+    /// Counts keypad commits that MOVED the value — the trigger of the OK confirmation (F5a).
+    @State private var keypadCommits = 0
 
     // Drag state (incremental deltas, so the value never jumps mid-gesture).
     @State private var scrubbing = false
@@ -934,6 +956,19 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                           lineWidth: 1))
         // (The position indicator is layered above, as a `.background` — see `faderTrack`.)
         .animation(EchoelTheme.motionQuick, value: scrubbing)
+        // Restructure F5a — the field's two haptics, both on this leaf, neither on a render
+        // path. A DRAG ticks once when it reaches the row's default or a range end
+        // (`ScrubPrecision.reachesDetent`); a value moved by the keypad, VoiceOver or automation
+        // never ticks, because `scrubbing` is false for all three. The keypad's OK confirms with
+        // its own feedback, triggered from HERE because the pad dismisses in the same turn it
+        // commits — and only when the number moved, the #375 rule every other path follows.
+        .sensoryFeedback(.selection, trigger: Double(value)) { old, new in
+            scrubbing && ScrubPrecision.reachesDetent(from: old, to: new,
+                                                     standard: standard.map { Double($0) },
+                                                     lowerBound: Double(range.lowerBound),
+                                                     upperBound: Double(range.upperBound))
+        }
+        .sensoryFeedback(.success, trigger: keypadCommits)
         .sheet(isPresented: $showPad) {
             EchoelNumberPad(title: String(localized: String.LocalizationValue(label)), initial: Double(value), decimals: decimals,
                             unit: unit, range: Double(range.lowerBound)...Double(range.upperBound),
@@ -941,7 +976,7 @@ struct EchoelValueField<V: BinaryFloatingPoint>: View where V.Stride: BinaryFloa
                 // Same rule as the other two paths (#375): confirming the number that was already
                 // there is not an edit. Typing 440 into a concert pitch that reads 440 used to
                 // post `.echoelCompositionEdited`, which re-tunes every voice and recomposes.
-                if apply(newVal) { onChange(); onCommit() }
+                if apply(newVal) { onChange(); onCommit(); keypadCommits &+= 1 }
             }
             .presentationDetents([.height(440), .large])
             .presentationDragIndicator(.visible)
