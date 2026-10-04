@@ -600,7 +600,7 @@ index 03ebf2a39..ed5a00274 100644
          commit(recorder.finish(atTick: tick), atTick: tick)
      }
 diff --git a/Sources/Echoelmusic/EchoelmusicApp.swift b/Sources/Echoelmusic/EchoelmusicApp.swift
-index 108ca1a30..94999d064 100644
+index 74010faf4..839883e79 100644
 --- a/Sources/Echoelmusic/EchoelmusicApp.swift
 +++ b/Sources/Echoelmusic/EchoelmusicApp.swift
 @@ -154,6 +154,10 @@ struct EchoelmusicApp: App {
@@ -2028,7 +2028,7 @@ index 4b99cc391..057862248 100644
  **Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
  die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
 diff --git a/docs/press.html b/docs/press.html
-index 77d796d8b..f6b08d501 100644
+index 4d5117394..89b197f74 100644
 --- a/docs/press.html
 +++ b/docs/press.html
 @@ -130,7 +130,7 @@
@@ -2072,7 +2072,7 @@ index f2c3edd17..0713bc5f1 100644
          </section>
  
 diff --git a/docs/security.html b/docs/security.html
-index fe276d602..826b0c1a3 100644
+index 647aa2620..99eae1c8e 100644
 --- a/docs/security.html
 +++ b/docs/security.html
 @@ -114,7 +114,7 @@

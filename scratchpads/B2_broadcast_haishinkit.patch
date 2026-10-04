@@ -1,0 +1,1559 @@
+diff --git a/.claude/rules/engineering.md b/.claude/rules/engineering.md
+index 7e6d9d715..cf542bd94 100644
+--- a/.claude/rules/engineering.md
++++ b/.claude/rules/engineering.md
+@@ -10,7 +10,7 @@ for params) — where those are more specific, they win. This file adds the cros
+ - Respect existing project patterns, caching mechanisms, and architecture. Reuse what
+   exists (`EngineBus` is the one coupling spine) before adding.
+ - Do NOT refactor unrelated parts of the codebase, or introduce a new framework/library,
+-  without an explicit request. (Echoel ships ZERO external deps today — see CLAUDE.md.)
++  without an explicit request. (Echoel links exactly two external packages — HaishinKit + Logboard, RTMP only — see CLAUDE.md.)
+ - Match current code style, conventions, and design paradigms — read the surrounding file
+   first and write code that looks like it belongs.
+ 
+diff --git a/CLAUDE.md b/CLAUDE.md
+index b04d3698e..f4fdbc2d0 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -13,7 +13,7 @@ Bundles: `.app` (main, universal) · `.app.watchkitapp` · `.app.widgets` · `.a
+ **Echoel — Physical Computing · Biofeedback · Multimedial & Multidimensional.**
+ An immersive, iPhone-first instrument and production platform where the body — heart, breath — drives sound, image, light and immersive space in real time.
+ 
+-⛔ **Drei Wörter sind am 2026-07-31 gestrichen worden, weil sie keinen Produzenten haben** — aus dieser Zeile, aus „Built for" darunter und aus den beiden BRAND-Zeilen: **„motion"** (`ModulationMatrix.hasProducer` gibt für `.motion` hart `false` zurück; ALLE SECHS `BioSampleFrame`-Konstruktionsstellen in `Sources/` schreiben `motionEnergy: 0`, der letzte CoreMotion-Provider ging im 2026-06-19-Cleanup — `import CoreMotion` kommt nirgends mehr vor) · **„brain rhythm"** (`.eegBurst` hat in `Sources/` VIER Vorkommen — Enum-Case, ein Doc-Kommentar, eine OSC-Adresszuordnung, ein Consumer-`switch` — und **NULL Produzenten**; nichts konstruiert je ein solches Ereignis) · **„broadcast"** (`Package.swift` hat ein leeres `dependencies`-Array, HaishinKit nicht verlinkt; RTMP kann als Codepfad nicht existieren).
++⛔ **Drei Wörter sind am 2026-07-31 gestrichen worden, weil sie keinen Produzenten haben** — aus dieser Zeile, aus „Built for" darunter und aus den beiden BRAND-Zeilen: **„motion"** (`ModulationMatrix.hasProducer` gibt für `.motion` hart `false` zurück; ALLE SECHS `BioSampleFrame`-Konstruktionsstellen in `Sources/` schreiben `motionEnergy: 0`, der letzte CoreMotion-Provider ging im 2026-06-19-Cleanup — `import CoreMotion` kommt nirgends mehr vor) · **„brain rhythm"** (`.eegBurst` hat in `Sources/` VIER Vorkommen — Enum-Case, ein Doc-Kommentar, eine OSC-Adresszuordnung, ein Consumer-`switch` — und **NULL Produzenten**; nichts konstruiert je ein solches Ereignis) · **„broadcast"** (damals unverlinkt; seit B2 verlinkt, aber nur „kompiliert" — bleibt gestrichen bis zum Gerätebeleg).
+ 
+ ⛔ **Und die ERSTE Fassung dieser Streichung ließ die Zeile stehen, die eine Session zuallererst liest: die H1.** Sie behauptete „Bio · Audio · Video · Light · **Broadcast**" als Produktsäule, während der Absatz direkt darunter erklärte, warum Broadcast nicht existiert — die einzige überlebende Falschstelle saß in der Überschrift, und der Absatz nannte sich dabei selbst „die erste Zeile, die eine Session liest". Die H1 sagt jetzt **Space** (ADM-OSC ist real und verdrahtet). Lehre für die nächste Wahrheits-Runde: **die Überschrift ist Teil der Behauptung**; ein `git grep` nach dem gestrichenen Wort über die GANZE Datei gehört zum Streichen dazu, nicht nur das Bearbeiten der Absätze, an die man gerade denkt.
+ 
+@@ -25,7 +25,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
+ · **„Beat Maker (16-step × 8-track sequencer + sampler)"** — Drums, Pad-Stimmen, Sample-Import und die Sample-Bibliothek sind mit #166/#167 gelöscht; der Step-Grid überlebt nur als Takt-Clock.
+ · **„Multi-track Recorder (mic over beats)"** — **GELÖSCHT mit #1302** (Founder 2026-09-12, kein Mikrofon mehr): `MultiTrackRecorder` ist als DATEI weg; `git grep -n MultiTrackRecorder -- Sources` liefert nur noch Kommentare. `FeatureFlags.audioLaneRecording` existiert weiter und hat seit #1302 KEINEN Zweig (`EveryFlagSaysWhatItGatesTests`). ⛔ Bis #1326 stand hier eine KORREKTUR, die den Typ für lebend erklärte und dabei zwei Zeilennummern zitierte, die längst auf fremden Code zeigten — in der Zeile, die eine Sitzung ZUERST liest. **Lehre: eine KORREKTUR veraltet genauso wie das, was sie korrigierte** — und eine Zeilennummer einer lebenden Datei ist ein Datum, kein Sachverhalt (§E).
+ · **„Video Capture & Trim"** — **GANZ GESTRICHEN, #1304** (Founder 2026-09-12, wörtlich „Kein Video Capture"). Der SCHNITT war schon mit #121 Slice 3 weg; jetzt ist auch die AUFNAHME weg — Recorder, Muxer, Bibliothek, REC-Taste, Menüfall, Kopf-Kachel, acht Wächter und jede nutzersichtbare Zeile. ⚠️ **`Video/CameraCapture`, `CameraAnalyzer`, `RPPGConditioning` und `PulsePeriodEstimator` BLEIBEN** — das ist der rPPG-PULSPFAD, die Flaggschiff-Bio-Quelle; sie teilen nur das Verzeichnis. **Wer hier nach Verzeichnis aufräumt, löscht den Puls.**
+-· **„RTMP Live Stream"** — nie verlinkt (`BroadcastPublisher` ist ein Compile-Guard-Gerüst).
++· **„RTMP Live Stream"** — seit B2 (2026-10-04) gebaut + verlinkt (HaishinKit 2.2.5), Stufe nur „kompiliert"; nicht behaupten, bis Server + Empfänger am Gerät belegt sind (`CLAIMS.md` §5).
+ · **„Harmonizer", „Granularsynthese", „Autotune"** — GESTRICHEN 2026-09-12 (#1305, Founder wörtlich „Kein audioninout kein Autotune, Harmonizer, granularsynthese"). Autotune war schon mit #1302 weg (`VoicePitchCorrector` ging mit dem Audio-Eingang). ⚠️ **Die DATEI `Sequencer/MicrotonalTuning.swift` BLEIBT, und der TYP darin heißt `TuningSystem`** — die #1376-Falle, deshalb hier beide Namen: wer nach einem Typ `MicrotonalTuning` greppt, findet nichts und könnte das lebende Tonsystem für tot halten. Es ist das Tonsystem JEDER gestimmten Stimme, und das ist gemessen, nicht behauptet: `setTuningCents(` hat SIEBEN Aufrufstellen und erreicht `synth` · `touchSynth` · `leadSynth` · `bassSynth` · `subBass` · `bioVoice` · `laneVoiceRack` (das an voices/subs/bios weiterfächert). Es war nur zusätzlich das Autotune-Ziel.
+ · **„MPE"** bleibt aus dem I/O-Satz gestrichen, aber mit einer ANDEREN Begründung als früher: **MPE OUT ist real und schaltbar, MPE IN nicht** (#548/#713 — Details eine Ebene tiefer bei „Live pipeline"). Ein „MPE"-Satz im I/O-Set behauptete also die Hälfte, die fehlt.
+ ⛔ **Die Streich-Provenienz — die vollständigen Datei-Listen je Entfernung, die Founder-Zitate in ganzer Länge und die zwei Zeilennummern des #1326-Fehlers — liegt in `memory/LEDGER_COUNTS.md` §AI.** Diese Zeile ist die Identitäts-Zeile der Datei: sie muss der Wahrheit folgen, sonst plant die nächste Session aus ihr heraus Features, deren Fundament abgerissen ist.
+@@ -59,8 +59,8 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
+ - **✅ TESTFLIGHT PIPELINE: GREEN (verified 2026-05-30).** Prior "deploy blocker" note is resolved — `testflight.yml` runs #1404–#1407 on `main` all succeeded across every platform (iOS upload + Summary), preflight confirms App Store Connect secrets are present and valid. Dispatch + poll from the sandbox via `bash scripts/check-testflight.sh dispatch` (token in gitignored `.claude/settings.local.json`). Push the feature branch's newer work (bio synth / OSC / Polar) to TestFlight with a full `build_only=false` run once a branch verification run is green.
+ - **Latest batch (2026-07-12)** — the 07-12 changelog paragraph (A3 · A4 · L1 · P1 · B2 · B3 · B4 · B5 · W1 · EchoelAI N0–N4 · Body Science) is MOVED verbatim to `memory/LEDGER_COUNTS.md` §P (audit 2026-09-02; it was 3.7 KB of dated history in the always-loaded file). Two facts from it stay LAW here: (1) `FeatureFlags.echoelAI` has ZERO readers (`git grep -n "FeatureFlags.echoelAI" -- Sources` → one COMMENT hit) — nothing is behind it; `EchoelParameterRegistry` and `ParameterToolCore` are LIVE in `Core/`, off only for lack of a caller. Never rely on that flag as a guard. (2) **Healing/organ/tissue/wound theme = pre-Echoel (BLAB/Syng) legacy, never code here, stays a hard REJECT red line.**
+ - **Quality-Knöpfe — die Zeile, die eine Sitzung liest, BEVOR sie einen anfasst:** `AdaptiveQuality` + `ResourceGovernor` leiten aus Thermik/Batterie/gemessener FPS eine Stufe ab, und die treibt `MetalBioView`s DETAIL/Reduce-Motion — **nie die Bildrate** (`MetalBioView` pinnt `preferredFramesPerSecond = 60` statisch, `AdaptiveQuality.swift` sagt es selbst). Der EINE verdrahtete Verbraucher ist `bioHz` → `OSCSender` (`PollingRateCeiling`), und das ist eine **DECKE, kein Ziel**. `targetFPS` / `oscHz` / `allowSpectralDonuts` haben bewusst KEINEN Verbraucher. ⛔ Diese Zeile behauptete bis 2026-07-28 beide Hälften falsch herum — die gefährliche Sorte veraltet. Zwei datierte Changelog-Absätze (2026-06-18 Ship, 2026-06-23 Arbeit, 1.865 B) sind mit #1311 nach `memory/LEDGER_COUNTS.md` §X verschoben; dort stehen sie wörtlich.
+-- **Absent (not wired — do not claim as shipping):** RTMP/streaming (`BroadcastPublisher` is a compile-safe scaffold behind `#if canImport(HaishinKit)`; HaishinKit not integrated), Video (⛔ die CAPTURE ist mit #1304 ganz zurückgenommen, der SCHNITT ging mit #121 Slice 3 — siehe den ⛔-Absatz ganz oben), multitrack audio (gebaut, flag-gated AUS, türlos — #204; „absent" stimmt für den Nutzer, „nicht gebaut" nicht für den Entwickler). **EchoelStore** (`Core/EchoelStore.swift`) = kompiliert, aber UNERREICHBAR: `ProUnlockView` wird nie präsentiert, es ist heute nichts kaufbar. Das eine kompilierte Produkt ist die NICHT-VERBRAUCHBARE `com.echoelmusic.app.pro` (`ProGate.swift`) — **ÜBRIGGEBLIEBEN, nicht der Plan**: die Founder-Entscheidung vom 2026-07-10 (wörtlich in `WorkspaceView.swift` über `body`) hebt das Einmal-Pro auf — v1.0 kostenlos, v1.1 „Echoel Live" Jahres-Abo, v1.2 Per-Event-Gebühr. `ProUnlockView`/`EchoelStore`/`ProGate` bleiben zur UMWIDMUNG im Code: nicht löschen, vor v1.1 nicht präsentieren. **Push/CloudKit:** `aps-environment=production` + iCloud/CloudKit-Entitlements SIND deklariert und `AnnouncementCenter` EXISTIERT — hart AUS über `AnnouncementCenter.cloudKitConfigured = false` (null CloudKit-/Push-Aufrufe; Launch-Crash-Fix v10.79.148), sein Lern-Schalter ist versteckt, solange das Gate false ist. Vor dem Umlegen in v1.1: CloudKit-Schema „Announcement" ZUERST nach Production deployen. **Art-Net + sACN (unicast) sind live.** **BioModulation** = reiner getesteter Kern, **nicht verdrahtet**. ⛔ `VocoderCore`, `VocoderMapping`, `VoiceAnalyzer`/`VoiceFrame`, `FeedbackGuard` und `HowlDetector` standen hier und sind mit #1302 als DATEIEN gelöscht.
+-  **TÜRLOS** seit dem Tools-Grid-Removal (2026-07-02) und weiter türlos: MeditationView (Founder: bewusst so, Teil des Produktionsflusses) · BroadcastView (korrekt so, solange RTMP nicht verlinkt ist — eine Tür zu einem toten Backend wäre ein Halbfertig-Feature). **Aus derselben toten Kette bleibt nur `importMIDI()` übrig, ohne Importer** — der ging mit #W1: ein `.fileImporter` über der Workstation überschattet deren Import-Tür. **BETÜRT:** PatchbayView (Routing; seit Slice G EINE Tür: die Licht-Kachel im Kopf) · **WorkstationView** (#1436/#1437, seit 2b die Piece-Bühne; die EINZIGE Produktions-Aufrufstelle von `TimelineRegionPlayer.play(`). **ALS DATEI GELÖSCHT STATT BETÜRT:** `PatchEditorView` (#132 Slice 6 — der lebende Timbre-Editor ist und war `soundPanel` hinter dem Sound-Chip), `SampleBrowserView` (#167), `FileWaveformView`/`WaveformView`/`WaveformCache` (#132 Slice 5; der reine Kern `WaveformReducer` BLEIBT, jetzt test-only und mit Nachruf im eigenen Dateikopf), `AutomationView` (Datei existiert nicht). `SpectralDonutView` ist erreichbar — messen, nicht zitieren: `git grep -n SpectralDonutView\( -- Sources`. **BioVisualParams** (immersive flash-safe pulse) ist **verdrahtet**.
++- **Absent (not wired — do not claim as shipping):** RTMP/streaming (seit B2 verlinkt, Tür Routing → Broadcast; nur „kompiliert"), Video (⛔ die CAPTURE ist mit #1304 ganz zurückgenommen, der SCHNITT ging mit #121 Slice 3 — siehe den ⛔-Absatz ganz oben), multitrack audio (gebaut, flag-gated AUS, türlos — #204; „absent" stimmt für den Nutzer, „nicht gebaut" nicht für den Entwickler). **EchoelStore** (`Core/EchoelStore.swift`) = kompiliert, aber UNERREICHBAR: `ProUnlockView` wird nie präsentiert, es ist heute nichts kaufbar. Das eine kompilierte Produkt ist die NICHT-VERBRAUCHBARE `com.echoelmusic.app.pro` (`ProGate.swift`) — **ÜBRIGGEBLIEBEN, nicht der Plan**: die Founder-Entscheidung vom 2026-07-10 (wörtlich in `WorkspaceView.swift` über `body`) hebt das Einmal-Pro auf — v1.0 kostenlos, v1.1 „Echoel Live" Jahres-Abo, v1.2 Per-Event-Gebühr. `ProUnlockView`/`EchoelStore`/`ProGate` bleiben zur UMWIDMUNG im Code: nicht löschen, vor v1.1 nicht präsentieren. **Push/CloudKit:** `aps-environment=production` + iCloud/CloudKit-Entitlements SIND deklariert und `AnnouncementCenter` EXISTIERT — hart AUS über `AnnouncementCenter.cloudKitConfigured = false` (null CloudKit-/Push-Aufrufe; Launch-Crash-Fix v10.79.148), sein Lern-Schalter ist versteckt, solange das Gate false ist. Vor dem Umlegen in v1.1: CloudKit-Schema „Announcement" ZUERST nach Production deployen. **Art-Net + sACN (unicast) sind live.** **BioModulation** = reiner getesteter Kern, **nicht verdrahtet**. ⛔ `VocoderCore`, `VocoderMapping`, `VoiceAnalyzer`/`VoiceFrame`, `FeedbackGuard` und `HowlDetector` standen hier und sind mit #1302 als DATEIEN gelöscht.
++  **TÜRLOS** seit dem Tools-Grid-Removal (2026-07-02) und weiter türlos: MeditationView (Founder: bewusst so, Teil des Produktionsflusses). **Aus derselben toten Kette bleibt nur `importMIDI()` übrig, ohne Importer** — der ging mit #W1: ein `.fileImporter` über der Workstation überschattet deren Import-Tür. **BETÜRT:** BroadcastView (B2, Broadcast-Karte in Routing) · PatchbayView (Routing; seit Slice G EINE Tür: die Licht-Kachel im Kopf) · **WorkstationView** (#1436/#1437, seit 2b die Piece-Bühne; die EINZIGE Produktions-Aufrufstelle von `TimelineRegionPlayer.play(`). **ALS DATEI GELÖSCHT STATT BETÜRT:** `PatchEditorView` (#132 Slice 6 — der lebende Timbre-Editor ist und war `soundPanel` hinter dem Sound-Chip), `SampleBrowserView` (#167), `FileWaveformView`/`WaveformView`/`WaveformCache` (#132 Slice 5; der reine Kern `WaveformReducer` BLEIBT, jetzt test-only und mit Nachruf im eigenen Dateikopf), `AutomationView` (Datei existiert nicht). `SpectralDonutView` ist erreichbar — messen, nicht zitieren: `git grep -n SpectralDonutView\( -- Sources`. **BioVisualParams** (immersive flash-safe pulse) ist **verdrahtet**.
+   ⭐ **DREI GESETZE, die dieser Absatz teuer bezahlt hat:** (1) **unerreichbar ≠ wirkungslos** — „wirkungslos" lädt eine Sitzung ein, ein totes Bedienelement zu löschen; sie fände keins und stünde vor einem FUNKTIONIERENDEN hinter einer fehlenden Tür (#227/#1069) · (2) **Slot + Setzer beweist keine Erreichbarkeit** — „per direktem Code-Read verifiziert" heißt nur etwas, wenn die Kette bis zum RENDERNDEN Elternteil verfolgt wurde · (3) **vor dem Löschen eines UI-Blocks prüfen, welche Modelle er als EINZIGER schreibt** — ein Toggle mit persistiertem Flag hinterlässt eine unwiderrufliche Zustands-Leiche, keine Lücke. Die drei Opt-ins des toten Tools-Katalogs sind zurückgeholt: „Save to Apple Health" als `HealthWriteOptInRow` im Bio-Panel (ein persistiertes Gesundheits-Einverständnis MUSS einen erreichbaren Aus-Schalter haben), `midiOut.mpeEnabled` und `expressionEnabled` mit #713 als zwei Schalter im `midiOutSection` (EIN Besitzer: `MIDIOutput.applyOutputPreferences()`; der zweite ist deaktiviert, solange der erste aus ist, weil der Sendepfad `if mpeEnabled, expressionEnabled` liest). Wächter: `Tests/CISmoke/MIDIOutQualitySwitchesTests.swift`. **Nicht geräteverifiziert.**
+   ⭐ **Mehrere Präsentations-Slots hängen an Flags, die niemand setzen kann** = freier Kopfraum, statt einen 15. anzuhängen. **Die Liste wird gedruckt, nicht abgeschrieben: `python3 scripts/doctor.py --section C`** (Datei und Zeile je Flagge). ⚠️ **Diese Zeile bekommt bewusst KEINEN Wächter** — ein Negativ-Scan auf CLAUDE.md wäre die #364/#486/#491-Falle: die Datei zitiert zurückgenommene Behauptungen absichtlich und träfe ihre eigene Rücknahme. ⛔ **Die PROVENIENZ dieses Registers — die Tür-Geschichte #1024→#1247 (§T), die „Donuts"-Nachlese (§G), die Grabstein-Erzählungen zu SampleBrowser/FileWaveform und die #713-Baugeschichte — liegt in `memory/LEDGER_COUNTS.md` §AI.** Register: `docs/dev/FEATURE_STATUS.md` (heute, drei Fächer) · `docs/dev/FEATURE_MATRIX.md` (Provenienz).
+   ⛔ **DREI TÜRLOSE FLÄCHEN FEHLTEN IN DIESEM REGISTER (nachgetragen 2026-08-07, jede per Zählung der Instanziierungsstellen).** Das Register ist die Liste, aus der eine Sitzung ableitet, was sie noch aufmachen oder löschen darf — eine Lücke darin ist teurer als eine falsche Zahl, weil sie gar nicht erst als Frage auftaucht.
+@@ -93,7 +93,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
+   · **`ImmersiveStageView` (spatial stage) stays doorless — deliberately.** Ship-gate item 4 makes light/space "demonstrable, not required for v1" (#131c). Its only child, `ADMStreamStatusLine` (`NetworkActivityDot.swift`), is doorless one hop down — `git grep -n "ADMStreamStatusLine(" -- Sources | grep -v ': *//'` → 1, the stage; guard `TheStageStatusLineHasNoDoorTests`; re-door the parent, not the child (#1235).
+   · **Correction to a claim I made about the roll:** presenting it is NOT what publishes `MusicalFrame`. That publish is in `PianoRollModel`'s tick handler (`PianoRollView.swift`) on the shared sequencer tick, installed once at app start (`pianoRoll.start(...)` in `EchoelmusicApp`) — so the visual/light output stage is lit whether or not the roll is open. The door is load-bearing for EDITING, not for the spine.
+   · **NEEDS-FOUNDER-VERIFY:** launch (the +1 modifier vs the black-screen law). ⛔ Die zweite Hälfte — „and the roll's Stop, which cascades the ONE-Stop law … and ends the whole bio session" — ist **HINFÄLLIG**: dieser Knopf saß in der `PianoRollView`-`struct`, die #475 gelöscht hat. Ein Verify-Posten, der auf ein entferntes Bedienelement zeigt, kostet den Founder eine Geräteprobe, die nichts entscheiden kann. Der ÜBERLEBENDE Produzent des Playback-only-Stopps ist das Transport-■ in `WorkspaceView` (`pianoRoll.requestPlaybackOnlyStop()`, #179), und den pinnt `OneStartControlTests.testThePlaybackOnlyStopHasAReachableProducer` im blockierenden Bundle.
+-  Music theory is fully in-house. ⛔ **„The real remaining frontier is P3 Video" stand hier und ist mit #1304 gegenstandslos:** der Founder hat Video am 2026-09-12 ganz zurückgenommen („Kein Video Capture"), Recorder, Bibliothek und mp4-Export sind als Dateien gelöscht, der Schnitt war schon mit #121 Slice 3 weg. Es gibt keine Video-Grenze mehr zu erreichen — nur noch **P4 Broadcast**, und das ist unverlinkt. See `scratchpads/PLAN_REDOOR_CRAFT_TOOLS_2026-07-25.md`.
++  Music theory is fully in-house. ⛔ **„The real remaining frontier is P3 Video" stand hier und ist mit #1304 gegenstandslos:** der Founder hat Video am 2026-09-12 ganz zurückgenommen („Kein Video Capture"), Recorder, Bibliothek und mp4-Export sind als Dateien gelöscht, der Schnitt war schon mit #121 Slice 3 weg. Es gibt keine Video-Grenze mehr zu erreichen — nur noch **P4 Broadcast** — seit B2 verlinkt, am Gerät unbestätigt. See `scratchpads/PLAN_REDOOR_CRAFT_TOOLS_2026-07-25.md`.
+ - **Files:** Swift-Dateien unter `Sources/` — **MESSEN, nicht zitieren**: `git ls-files 'Sources/**/*.swift' | wc -l`. ⛔ Hier stand ein Literal samt seiner ganzen Zähl-Kette (983 B in der immer geladenen Datei); beides ist mit #818 **gelöscht statt nachgeführt**, weil die Zahl beim Schreiben schon ein Datum war und es wieder geworden ist: #813 legte EINE Datei an (`Core/CoherenceTrend.swift`) und niemand wurde rot. Die ZÄHL-KETTE — jeder frühere Stand, die Taxonomie ±0/+1/+2/−1 und jede ⛔-Rücknahme — steht in `memory/LEDGER_COUNTS.md` §B; **wer eine Zahl nachführt, führt sie DORT nach.** Ein Wächter pinnt POSITIV, dass hier der Befehl steht; ein Negativ-Scan auf die Abwesenheit der Zahl träfe diese Rücknahme selbst (#491)), **ZERO Metal files** — corrected 2026-07-25; the old "~212 Swift + 1 Metal (`Video/Shaders/ChromaKey.metal`)" was stale twice over: the count was long out of date and `ChromaKey.metal` was DELETED by Slice 3 (video-cut removal) together with its directory. `MetalBioView` compiles its shader inline at runtime, so the app ships no `.metal` source at all. | **Swift 100%** | top-level dirs under `Sources/Echoelmusic/`: `Audio Bio Core DSP EchoelAI Resources Sequencer Stream Studio Sync Tools Video Views`, plus the two loose top-level files `EchoelmusicApp.swift` and `MicrophoneManager.swift`. NOTE: the "four pillars" (EchoelTools/Works/Sync/Well) referenced by older vision docs were **never built as modules** — `EngineBus` is the one real coupling spine; `Views/` now holds only `MetalBioView` + `OnboardingView` (its long deprecated list is gone).
+ 
+ ---
+@@ -104,7 +104,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
+ 
+ An immersive multimedia instrument and production platform for **Installation · Event · Content · Cinema · Theater · Performance.** The body is the controller: heart and breath drive sound, image, light and immersive space in real time.
+ 
+-⛔ **Der Absatz, der hier stand, war die dichteste Falschstelle der ganzen Datei** — und er stand unter der Überschrift BRAND, also genau dort, wo eine Session Formulierungen für Store-Text, Website und Presse HOLT. Er lautete: *„Concrete capabilities span beat-making, multi-track recording, video capture/edit, RTMP live streaming, bio-reactive synthesis, generative visuals, and OSC/MIDI/MPE integration"*. Davon existieren heute: bio-reaktive Synthese, generative Visuals, OSC/MIDI. **Beat-making ist mit #166/#167 gelöscht · Video-EDIT mit #121 Slice 3 · RTMP war nie verlinkt · MPE hat keinen Schreiber · Multi-Track-Recording ist gebaut, aber flag-gated aus und türlos.** Fünf falsche Behauptungen in einem Satz, aus dem Marketing-Text entsteht — #184 hat genau solche zwölf aus dem App-Store-Text entfernt, wo eine falsche Behauptung eine 2.3-Ablehnung ist. **Die wahre Fassung ist die Zeile, die mit „Capabilities (all routed through one typed bus)" beginnt**; von dort zitieren, nicht von hier. Die Identität ist **das Instrument**, nicht ein Konkurrent, den es ersetzt.
++⛔ **Der Absatz, der hier stand, war die dichteste Falschstelle der ganzen Datei** — und er stand unter der Überschrift BRAND, also genau dort, wo eine Session Formulierungen für Store-Text, Website und Presse HOLT. Er lautete: *„Concrete capabilities span beat-making, multi-track recording, video capture/edit, RTMP live streaming, bio-reactive synthesis, generative visuals, and OSC/MIDI/MPE integration"*. Davon existieren heute: bio-reaktive Synthese, generative Visuals, OSC/MIDI. **Beat-making ist mit #166/#167 gelöscht · Video-EDIT mit #121 Slice 3 · RTMP war (bis B2) nie verlinkt · MPE hat keinen Schreiber · Multi-Track-Recording ist gebaut, aber flag-gated aus und türlos.** Fünf falsche Behauptungen in einem Satz, aus dem Marketing-Text entsteht — #184 hat genau solche zwölf aus dem App-Store-Text entfernt, wo eine falsche Behauptung eine 2.3-Ablehnung ist. **Die wahre Fassung ist die Zeile, die mit „Capabilities (all routed through one typed bus)" beginnt**; von dort zitieren, nicht von hier. Die Identität ist **das Instrument**, nicht ein Konkurrent, den es ersetzt.
+ 
+ **Biofeedback is core, not wellness.** Echoel treats physiology as a first-class, science-based modulation source (HRV resonance, peer-reviewed bio-signal processing). It is NOT a wellness, soundscape, or therapy product.
+ 
+@@ -271,12 +271,12 @@ resurrect it as fact.
+ 
+ ---
+ 
+-## TECH STACK — Zero Dependencies Today
++## TECH STACK — Two Dependencies (RTMP only)
+ 
+ | Layer | Framework |
+ |---|---|
+ | Apple (iPhone) | SwiftUI + AVFoundation + Accelerate + Metal + CoreMIDI + **Network** (OSC · ADM-OSC · Art-Net · sACN) + die Sensor-/Kollab-Quellen HealthKit · CoreBluetooth · CoreLocation · WeatherKit · MultipeerConnectivity, je hinter `canImport` |
+-| RTMP/RTMPS | HaishinKit = **PLANNED** dep for P4 Broadcast — NOT linked (`Package.swift` `dependencies: []`; `BroadcastPublisher` is a `#if canImport(HaishinKit)` scaffold) |
++| RTMP/RTMPS | HaishinKit 2.2.5 + Logboard 2.6.0 (BSD-3, exakt gepinnt) — seit B2 VERLINKT, Stufe „kompiliert" |
+ | Build | XcodeGen (`project.yml`) + Fastlane (TestFlight upload) + GitHub Actions |
+ | DSP | Swift (audio-thread-safe, lock-free SPSC queues) |
+ 
+@@ -343,8 +343,7 @@ Sources/Echoelmusic/
+                           `VideoMuxAlignment` sind gelöscht (Founder 2026-09-12), `CameraSession`/
+                           `ClipTrimmer` gab es nie. **Wer hier nach Verzeichnis löscht, löscht die
+                           Flaggschiff-Bio-Quelle.**
+-  Stream/              ← BroadcastPublisher ONLY — a `#if canImport(HaishinKit)` compile-guard
+-                          scaffold. HaishinKit is NOT a dependency; there is no RTMPPublisher
++  Stream/              ← BroadcastPublisher + RTMPBroadcastEngine (HaishinKit 2.2.5, B2)
+   Studio/              ← EchoelStudioView (root), EchoelFXView,
+                           EchoelTheme (as-built; the old StudioRoot/Beat/Record/Video/
+                           ShareTab plan was never built. SampleBrowserView + BrowserView
+@@ -568,7 +567,7 @@ Priority: Build errors → Test failures → Crash code → Task → Cleanup
+   rule was really "no JUCE licence fees" — C++ is permitted ONLY for a **free,
+   well-contained, Council-approved** library kept out of the Swift audio core
+   (e.g. Ableton Link / LinkKit, which is free). Default stays Swift; deps stay
+-  minimal (ZERO external deps shipped today; HaishinKit = the planned RTMP dep, not linked).
++  minimal (exactly two: HaishinKit + Logboard, RTMP only — B2).
+ - `///` for public API docs
+ 
+ ---
+@@ -680,7 +679,7 @@ Wächter: `Tests/CISmoke/TheAutoMergeWaitsForTheGatesTests.swift`. ⛔ Die Prove
+ 
+ - **`Echoel Full Test Suite (non-blocking)` beweist gar nichts** — es meldete am 2026-07-31 `success` auf `bc35248`, während beide echten Gates an 12 Compile-Fehlern scheiterten. Ursache und Reparatur: #208 (founder-gated, `.github/workflows/**` ist berichten-nicht-editieren).
+ 
+-> **No JUCE / no CMake / no C++.** Swift 100%, ZERO external dependencies today (`Package.swift` `dependencies: []`; HaishinKit = planned, compile-guarded only).
++> **No JUCE / no CMake / no C++.** Swift 100%; external deps = HaishinKit + Logboard only (B2, RTMP).
+ > The old CMake/JUCE/iPlug2 desktop scaffolding (`CMakeLists.txt`, `setup*.sh`,
+ > `build.yml`, `desktop_build.yml`, desktop build scripts) was removed 2026-06-19.
+ > Legacy/contradictory workflows also removed 2026-06-19: `android-build.yml`,
+diff --git a/ContentPipeline/CLAIMS.md b/ContentPipeline/CLAIMS.md
+index 553310e49..bce1b666e 100644
+--- a/ContentPipeline/CLAIMS.md
++++ b/ContentPipeline/CLAIMS.md
+@@ -18,8 +18,9 @@ daneben und veraltete schneller als der Inhalt — sie belegte nichts, was das D
+ nicht besser belegt.)
+ 
+ **Zwei Behauptungen dieser Datei sind maschinell gepinnt** (`Tests/CISmoke/ContentPipelineClaimsTests.swift`,
+-im blockierenden Bundle): „Null externe Abhängigkeiten" und — seit 2026-09-20 in der
+-UMGEKEHRTEN Richtung — „das AUv3-Target EXISTIERT". Beide sind Tatsachen über das Repo,
++im blockierenden Bundle): „genau DIESE zwei Fremdpakete, exakt gepinnt" (HaishinKit 2.2.5 +
++Logboard 2.6.0 — bis 2026-10-04 stand hier „Null externe Abhängigkeiten", seit Broadcast B2
++in der UMGEKEHRTEN Richtung) und — seit 2026-09-20 ebenfalls umgekehrt — „das AUv3-Target EXISTIERT". Beide sind Tatsachen über das Repo,
+ keine Formulierungen — wer sie ändert, färbt das Gate rot und muss diese Datei im selben
+ Commit mitziehen.
+ 
+@@ -78,7 +79,7 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
+ | **Universeller BLE-Herzgurt** (0x180D), z. B. Polar H10 | gebaut + verdrahtet, Geräte-Verify offen — **so kennzeichnen** |
+ | **Apple Health** als Pulsquelle | `HealthKitBioPublisher` |
+ | **Offene Standards, kein SDK-Lock-in** | OSC · ADM-OSC · MIDI · Art-Net/sACN · BLE HRS |
+-| **Null externe Abhängigkeiten**, alles on-device | `Package.swift: dependencies: []` UND `project.yml` ohne `packages:`-Block — beide, siehe Zaun-Absatz oben |
++| **Keine Analyse-, Werbe- oder Tracking-SDKs**, alles on-device; das einzige Fremdpaket ist der Stream-Transport | ⭐ Bis 2026-10-04 stand hier „Null externe Abhängigkeiten“ — mit Broadcast B2 (Founder-Freigabe) GESTRICHEN: verlinkt sind jetzt **HaishinKit 2.2.5** (Produkte `HaishinKit` + `RTMPHaishinKit`) und dessen Logger **Logboard 2.6.0**, beide BSD-3, exakt gepinnt in `Package.swift` UND `project.yml`, Lizenztext in `Resources/ThirdPartyNotices.txt`. Sie arbeiten NUR, wenn der Nutzer in Routing → Broadcast „Go Live“ drückt. ⛔ „Null Abhängigkeiten“, „no third-party code“, „zero dependencies“ in KEINER Kopie mehr schreiben. |
+ | **Barrierefrei spielbar**: Notennamen International/Deutsch/Solfège, VoiceOver auf der Spielfläche, Atkinson Hyperlegible | #232 C/E, `EchoelValueField` |
+ | ~~**Deine Stimme wird die Klangfarbe des Instruments**~~ | EchoelVoice #591–#593, #600 Take-Hälfte. ⛔ **GESTRICHEN 2026-09-12 (#1302) — DARF NICHT MEHR BEHAUPTET WERDEN.** Der Founder hat Audio-Input und Face komplett entfernt ("Face und Audio Input komplett entfernen"); `VoiceCaptureEngine`, `VoiceAnalyzer` und `VoiceTimbreProfiler`s Aufnahme-Weg sind als Dateien weg, es gibt keine Capture-Tür und kein Mikrofon mehr. **Was BLEIBT und NICHT behauptet werden darf, bis es wieder eine Tür hat:** die Patch-Hälfte (`SynthPatch.voiceProfileTaps/-Label/-Blend` und `PolySynthVoice.applyVoiceProfile`) ist absichtlich im Code — ein Patch, den ein älterer Build gespeichert hat, trägt weiter ein Profil und wendet es an (#95/#527). Gebaut ≠ erreichbar; eine Werbe-Behauptung darüber wäre die 2.3-Klasse. |
+ | ⛔ **GESTRICHEN 2026-09-06 (#1024) — „Tune to key" DARF NICHT MEHR BEHAUPTET WERDEN.** ⛔ Der Code lebte (`VoicePitchCorrector`, fest im Monitorpfad, bei AUS bypassed) — **seit #1302 ist die Datei gelöscht** (#1347); seine einzige Tür war schon vorher das Input-Sheet, und der Founder hat alle drei Mikrofon-Türen entfernt ("das mit dem Audio Input Monitoren klappt immer noch nicht also fliegt das raus"). Kein Nutzer kann die Stufe heute erreichen — eine Werbe-Behauptung darüber wäre die 2.3-Klasse. Im selben Commit aus `fastlane/metadata/{de-DE,en-US}/release_notes.txt` entfernt. ⛔ **DIESE ZEILE TRUG EINE AUSNAHME UND SIE IST MIT #1305 HINFÄLLIG:** sie lautete „Was BLEIBT und weiter behauptet werden darf: ‚Follow the key' — die Harmonizer-Stimmen des MUSIK-Pfads sind über das FX-Panel erreichbar und von #1024 nicht berührt." Der Founder hat den Harmonizer am 2026-09-12 ganz gestrichen („Kein … Autotune, Harmonizer, granularsynthese"); Stufe, Panel-Abschnitt, Toggle und Untertitel sind gelöscht. **Es gibt keinen MUSIK-Harmonizer mehr, über den eine Ausnahme laufen könnte.** ⛔ **DIESE ZEILE TRUG EINE BEDINGTE ERLAUBNIS UND SIE IST MIT #1302 HINFÄLLIG (#1347, 2026-09-16).** Sie lautete: *„#1247 (2026-09-11): die Master-Panel-Tür ‚Audio input' ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht."* Es gibt kein `setInputMonitoring` mehr, keine Tür und keinen Monitorpfad — gemessen in kommentar-gestrippten `Sources/`: `setInputMonitoring` · `showInput` · `AudioInputPickerView` · `VoicePitchCorrector` · `isInputMonitoring` je **0**. **Die Bedingung kann nie eintreten, also ist die Streichung ENDGÜLTIG, nicht aufgeschoben** — und genau das ist der Unterschied, den ein Texter liest. |
+@@ -185,8 +186,16 @@ richtiges Verbot** — wer sie prüft und kippen sieht, kippt das Verbot gleich
+ - **Gelöscht, existiert nicht mehr:** Drums/Beats (#166/#167 — `DrumSynthVoice`,
+   `LaneDrumKitVoice`, `DrumNoteMap` sind als Dateien weg), Sample-Import/Browser
+   (`SampleBrowserView` mit #167 gelöscht), Video-SCHNITT (#121 Slice 3).
+-- **Im Code, aber nicht verlinkt:** RTMP — `BroadcastPublisher` ist ein
+-  `#if canImport(HaishinKit)`-Gerüst, `Package.swift` hat `dependencies: []`.
++- **Gebaut und verlinkt, aber NICHT BEHAUPTBAR:** RTMP / RTMPS — seit Broadcast B2
++  (2026-10-04, Founder-Freigabe) ist HaishinKit 2.2.5 verlinkt, `RTMPBroadcastEngine` speist
++  Master-Mix + gerendertes Visual (keine Kamera, kein Mikrofon), die Tür ist Routing →
++  Broadcast. ⛔ Bis dahin stand hier „im Code, aber nicht verlinkt … `dependencies: []`“ —
++  das ist mit B2 FALSCH geworden. **Erreichte Stufe: nur „kompiliert“.** Die zwei Stufen,
++  die eine Behauptung bräuchten — „ein Server nimmt den Stream an“ und „ein Empfänger spielt
++  ihn ab“ — sind am Gerät NICHT gemessen. Bis beide mit Datum hier stehen: **kein
++  Livestream-Versprechen in Caption, Store-Text oder Presse**; die Website darf „gebaut, wird
++  getestet“ sagen (`WebsitePagesAreFindableAndHonestTests`). Öffentliches Senden beginnt nur
++  auf ausdrücklichen Start des Founders.
+ - **Gebaut und konstruiert, aber für den Nutzer TÜRLOS:** `SamplerVoice` (in `BeatPlayer`
+   und `LaneVoiceRack` angelegt) — es gibt eine Sampler-Stimme, nur keine Oberfläche, die dem
+   Nutzer Samples in die Hand gibt.
+@@ -278,9 +287,13 @@ Ein Preis in einer Caption ist keine Übertreibung, sondern eine **Falschangabe
+ App-Store-Sinn** (2.3 „Accurate Metadata") und enttäuscht jeden, der deshalb lädt.
+ *Erlaubt: „kostenlos". Nicht erlaubt: irgendein Preis, „Pro-Version", „Abo", „Trial".*
+ 
+-### 8. Tech-Stack-Behauptungen: „TCA", „RevenueCat", „SwiftData", „VideoToolbox", „HaishinKit"
+-`Package.swift` hat ein **leeres `dependencies`-Array** — Echoel hat heute NULL externe
+-Abhängigkeiten, und das steht oben in der ✅-Tabelle als eigene Behauptung.
++### 8. Tech-Stack-Behauptungen: „TCA", „RevenueCat", „SwiftData", „VideoToolbox", „SRT/WebRTC"
++`Package.swift` linkt seit Broadcast B2 (2026-10-04) **genau zwei** Fremdpakete —
++HaishinKit 2.2.5 und Logboard 2.6.0, nur für den RTMP-Stream. ⛔ Bis dahin stand hier „leeres
++`dependencies`-Array … NULL externe Abhängigkeiten“; das ist gestrichen, der Pin ist umgekehrt
++(`ContentPipelineClaimsTests`). HaishinKit ist damit aus der Verbotsliste in der Überschrift
++genommen — es zu NENNEN ist jetzt wahr; seine RTMP-Fähigkeit zu VERSPRECHEN bleibt nach §5
++verboten, bis das Gerät sie bestätigt.
+ Das klingt nach einem Entwickler-Detail, ist aber Marketing-Material, sobald ein
+ Text über Architektur, Investoren oder Stellen spricht — und es ist die Sorte
+ Behauptung, die man nicht mehr los wird, weil sie plausibel klingt.
+@@ -290,7 +303,10 @@ Drei verschiedene Wahrheiten, und die Unterscheidung ist der Punkt:
+   `@Observable`), RevenueCat, VideoToolbox. Null Vorkommen in `Sources/`.
+ - **Nur als Prosa erwähnt:** SwiftData — eine einzige Kommentarzeile in
+   `SessionRecorder.swift`, die erklärt, dass wir es NICHT benutzen.
+-- **Im Code, aber NICHT VERLINKT:** HaishinKit. ⛔ Die erste Fassung dieses Eintrags
++- **Verlinkt seit B2, aber ohne SRT/WebRTC:** HaishinKit 2.2.5 — nur die Produkte
++  `HaishinKit` + `RTMPHaishinKit`. SRT, WebRTC, MoQ sind NICHT verlinkt; `.srt` bleibt
++  `.roadmap`. ⛔ Der folgende Absatz ist die Vorgeschichte (bis 2026-10-04 wahr) und bleibt
++  als Begründung stehen: Die erste Fassung dieses Eintrags
+   schrieb „nicht im Code", und das ist mit einem `grep` widerlegbar:
+   `BroadcastPublisher.swift` enthält ein `import HaishinKit` hinter
+   `#if canImport(HaishinKit)`. Es ist ein Compile-Gerüst ohne Paket — die
+diff --git a/Package.swift b/Package.swift
+index b63b3b8e1..df4f282ae 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -64,13 +64,21 @@ let package = Package(
+             targets: ["Echoelmusic"]),
+     ],
+     dependencies: [
+-        // Add future dependencies here (e.g., for audio processing, ML, etc.)
++        // Broadcast B2 (founder release 2026-10-04). Mirrors `project.yml` `packages:` —
++        // the app is built from project.yml; this keeps `swift build` on the founder's Mac
++        // compiling the same `Sources/`. Exact pins, same reasons as there.
++        .package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5"),
++        .package(url: "https://github.com/shogo4405/Logboard.git", exact: "2.6.0"),
+     ],
+     targets: [
+         // Core Echoelmusic target - cross-platform code
+         .target(
+             name: "Echoelmusic",
+-            dependencies: [],
++            dependencies: [
++                .product(name: "HaishinKit", package: "HaishinKit.swift"),
++                .product(name: "RTMPHaishinKit", package: "HaishinKit.swift"),
++                .product(name: "Logboard", package: "Logboard"),
++            ],
+             // No `exclude:` — every path this used to list (Platforms/, VisionOS/,
+             // WatchOS/, tvOS/, Widgets/, LiveActivity/, AppClips/, Targets/) is gone from
+             // disk, so the list only told SwiftPM to skip directories that do not exist.
+diff --git a/README.md b/README.md
+index 521c48439..4ea35ba82 100644
+--- a/README.md
++++ b/README.md
+@@ -50,7 +50,7 @@ Network routing (OSC · ADM-OSC · Art-Net · sACN · MIDI out) is a patchbay re
+ 
+ `BioStripView` lives inside the Bio panel, not as an always-on strip. That is deliberate: a ~10 Hz reading in an always-mounted ancestor — `WorkspaceView` or any permanent header — rebuilds the whole view tree and tears down any open menu. See the freeze law in `CLAUDE.md`.
+ 
+-**Not shipping today** — RTMP / live streaming, video capture and editing, and a clips/arrangement editing surface. They are long-term scope under [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md) (streaming through a proven library, never a hand-rolled client), with no date and nothing in this build. History, not direction: the video editor and the clips/arrangement UI were built and removed as implementations in July 2026, video capture in September 2026; RTMP was never built — `BroadcastPublisher` is a compile-guarded scaffold and HaishinKit is not a dependency. What runs today: [`docs/dev/FEATURE_STATUS.md`](./docs/dev/FEATURE_STATUS.md).
++**Not shipping today** — video capture and editing, and a clips/arrangement editing surface. They are long-term scope under [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md), with no date and nothing in this build. History, not direction: the video editor and the clips/arrangement UI were built and removed as implementations in July 2026, video capture in September 2026. **RTMP / RTMPS streaming is built and being tested, not yet confirmed on a device** (October 2026, through HaishinKit — a proven library, never a hand-rolled client): Routing → Broadcast sends the master mix and the visual; nothing is sent until you press Go Live. What runs today: [`docs/dev/FEATURE_STATUS.md`](./docs/dev/FEATURE_STATUS.md).
+ 
+ ---
+ 
+@@ -72,7 +72,7 @@ Known gaps are tracked honestly in `CLAUDE.md` rather than implied here.
+ 
+ ## Build
+ 
+-Requires Xcode 26.2 and a recent macOS (CI runs `macos-26`). iPhone-only for v10 (other Apple platforms compile-clean but are not deliverables). Zero external dependencies.
++Requires Xcode 26.2 and a recent macOS (CI runs `macos-26`). iPhone-only for v10 (other Apple platforms compile-clean but are not deliverables). Two external dependencies, linked for RTMP streaming only: HaishinKit 2.2.5 and Logboard 2.6.0 (BSD-3, exact pins; notices in `Sources/Echoelmusic/Resources/ThirdPartyNotices.txt`). Streaming is built and being tested, not yet confirmed on a device.
+ 
+ **There is no `.xcodeproj` in the repository** — it is generated by [XcodeGen](https://github.com/yonaskolb/XcodeGen) from `project.yml`, so that step is not optional:
+ 
+@@ -131,7 +131,7 @@ Sources/Echoelmusic/
+   Views/         MetalBioView, OnboardingView
+   EchoelAI/      BrainBackend, FoundationModelsBrain, ParameterToolCore — three files,
+                  no production caller today (the echoelAI flag has zero readers); the parameter registry itself lives in Core/
+-  Stream/        BroadcastPublisher — a compile guard only; HaishinKit is not a dependency
++  Stream/        BroadcastSession + RTMPBroadcastEngine — RTMP/RTMPS via HaishinKit 2.2.5 (built, being tested)
+   Resources/     bundled assets
+   (plus the two loose files EchoelmusicApp.swift and MicrophoneManager.swift)
+ Sources/EchoelmusicWidgets/  WidgetKit extension, embedded in the app
+diff --git a/Sources/Echoelmusic/Resources/Localizable.xcstrings b/Sources/Echoelmusic/Resources/Localizable.xcstrings
+index d36f201a7..0f1d67509 100644
+--- a/Sources/Echoelmusic/Resources/Localizable.xcstrings
++++ b/Sources/Echoelmusic/Resources/Localizable.xcstrings
+@@ -5833,6 +5833,66 @@
+         }
+       }
+     },
++    "Broadcast" : {
++      "comment" : "Broadcast B2 (2026-10-04): the stream's one door, a card on the Routing surface (PatchbayView) that pushes the broadcast page.",
++      "extractionState" : "manual",
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Broadcast"
++          }
++        }
++      }
++    },
++    "Stream to a server" : {
++      "comment" : "Broadcast B2 (2026-10-04): the stream's one door, a card on the Routing surface (PatchbayView) that pushes the broadcast page.",
++      "extractionState" : "manual",
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Stream to a server"
++          }
++        }
++      }
++    },
++    "Send the master mix and the visual over RTMP or RTMPS. Nothing is sent until you press Go Live." : {
++      "comment" : "Broadcast B2 (2026-10-04): the stream's one door, a card on the Routing surface (PatchbayView) that pushes the broadcast page.",
++      "extractionState" : "manual",
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Send the master mix and the visual over RTMP or RTMPS. Nothing is sent until you press Go Live."
++          }
++        }
++      }
++    },
++    "Broadcast to a streaming server" : {
++      "comment" : "Broadcast B2 (2026-10-04): the stream's one door, a card on the Routing surface (PatchbayView) that pushes the broadcast page.",
++      "extractionState" : "manual",
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Broadcast to a streaming server"
++          }
++        }
++      }
++    },
++    "Opens the broadcast page. Nothing is sent until you press Go Live there." : {
++      "comment" : "Broadcast B2 (2026-10-04): the stream's one door, a card on the Routing surface (PatchbayView) that pushes the broadcast page.",
++      "extractionState" : "manual",
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Opens the broadcast page. Nothing is sent until you press Go Live there."
++          }
++        }
++      }
++    },
+     "Network MIDI" : {
+       "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
+       "extractionState" : "manual",
+diff --git a/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt b/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt
+new file mode 100644
+index 000000000..45ffc639d
+--- /dev/null
++++ b/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt
+@@ -0,0 +1,74 @@
++Echoelmusic — third-party notices
++
++Echoelmusic links two open-source libraries, used only for streaming to an RTMP / RTMPS
++server (Routing > Broadcast). Both are distributed under the BSD 3-Clause licence, whose
++text is reproduced below for each, as that licence requires.
++
++--------------------------------------------------------------------------------------------
++HaishinKit 2.2.5 — https://github.com/HaishinKit/HaishinKit.swift
++Products linked: HaishinKit, RTMPHaishinKit
++--------------------------------------------------------------------------------------------
++
++BSD 3-Clause License
++
++Copyright (c) 2015, shogo4405
++All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are met:
++
++1. Redistributions of source code must retain the above copyright notice, this
++   list of conditions and the following disclaimer.
++
++2. Redistributions in binary form must reproduce the above copyright notice,
++   this list of conditions and the following disclaimer in the documentation
++   and/or other materials provided with the distribution.
++
++3. Neither the name of the copyright holder nor the names of its
++   contributors may be used to endorse or promote products derived from
++   this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
++FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--------------------------------------------------------------------------------------------
++Logboard 2.6.0 — https://github.com/shogo4405/Logboard
++--------------------------------------------------------------------------------------------
++
++BSD 3-Clause License
++
++Copyright (c) 2017, shogo4405
++All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are met:
++
++1. Redistributions of source code must retain the above copyright notice, this
++   list of conditions and the following disclaimer.
++
++2. Redistributions in binary form must reproduce the above copyright notice,
++   this list of conditions and the following disclaimer in the documentation
++   and/or other materials provided with the distribution.
++
++3. Neither the name of the copyright holder nor the names of its
++   contributors may be used to endorse or promote products derived from
++   this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
++AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
++FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
++SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
++CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
++OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift b/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift
+new file mode 100644
+index 000000000..43e61ec6c
+--- /dev/null
++++ b/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift
+@@ -0,0 +1,288 @@
++//
++//  RTMPBroadcastEngine.swift
++//  Echoelmusic — Stream
++//
++//  The thin translation between `BroadcastEngine` (this repo's seam) and HaishinKit 2.2.5's
++//  RTMP products (`HaishinKit` + `RTMPHaishinKit`, BSD-3-Clause — acknowledged in
++//  `Resources/ThirdPartyNotices.txt`, which ships in the bundle). Everything above the wire — state, retries, the shared
++//  start time, the master pump, the picture tap — lives in the repo and is tested with a fake
++//  engine; this file only speaks the library's API. Compiled ONLY when the package is linked
++//  (`#if canImport(RTMPHaishinKit)`), so a build without it carries none of this.
++//
++//  ⭐ THE HANDOFF IS BOUNDED HERE. The pump calls `appendAudio` / `appendVideo` on its own queue
++//  and must never wait. Each call is one non-blocking `yield` into an `AsyncStream` whose buffer
++//  keeps the newest `audioQueueDepth` / `videoQueueDepth` items; a stalled network sheds the
++//  oldest item and counts it. ONE consumer task per track feeds the `RTMPStream` actor IN ORDER —
++//  a `Task` per buffer would not keep order, and RTMP timestamps must rise (the library drops a
++//  message whose time is not later than the last one).
++//
++//  ⭐ ONE CLOCK. Audio is handed over as `AVAudioTime(hostTime:)` and video as a presentation
++//  time on the host clock (`CMClockMakeHostTimeFromSystemUnits`). Both come from the same
++//  `mach_absolute_time` the pump stamped, and both tracks start at the shared `T0`
++//  (`BroadcastStartGate`), so the receiver sees them aligned from the first message.
++//
++//  ⚠️ THE STREAM KEY IS ONLY EVER THE PUBLISH NAME. It is passed to `RTMPStream.publish(_:)` and
++//  nowhere else; nothing here logs it, and the os_log lines below carry state words only.
++//  ⚠️ AND THE LIBRARY'S OWN LOG IS SILENCED, because it is not ours to vouch for: Logboard's
++//  default `ConsoleAppender` `print`s at `.info` and above, and `RTMPStream` logs every server
++//  command it does not handle at `.info` (2.2.5, `RTMPStream.swift:579`) — an `onFCPublish`
++//  answer echoes the publish name, i.e. the key. `.error` lines print `RTMPResponse`s, which can
++//  carry a status description naming the stream too. A level cannot reach below `.error`, so the
++//  appender is replaced with one that writes nothing, once, before any connection exists.
++//
++//  ⚠️ NO CAMERA, NO MICROPHONE. The library's capture mixer is not used — the stream is fed the
++//  master mix and the rendered visual directly, so the rPPG camera and the record route are
++//  untouched by streaming.
++//
++//  ⚠️ KNOWN LIMIT, stated rather than hidden: when the network stalls long enough for the audio
++//  handoff to shed a chunk, the encoder's sample timeline closes the gap, so the sound runs ahead
++//  of the picture by the shed amount for the rest of the stream. The drop is counted
++//  (`droppedAudioChunks`); it needs a stall of ~1 s before it can happen at all.
++//
++
++#if canImport(RTMPHaishinKit) && canImport(AVFoundation) && canImport(Metal) && canImport(CoreVideo)
++import AVFoundation
++import CoreMedia
++import CoreVideo
++import Foundation
++import HaishinKit
++import Logboard
++import os.log
++import RTMPHaishinKit
++
++/// One stream picture and the host time it plays at.
++struct RTMPVideoItem: Sendable {
++    let frame: BroadcastVideoFrame
++    let stampTicks: UInt64
++}
++
++/// The pump-facing sink: two bounded, non-blocking handoffs. Never touches the network.
++final class RTMPMediaSink: BroadcastMediaSink, @unchecked Sendable {
++
++    private let audio: AsyncStream<BroadcastAudioChunk>.Continuation
++    private let video: AsyncStream<RTMPVideoItem>.Continuation
++    private let lock = NSLock()
++    private var shedAudio = 0
++    private var shedVideo = 0
++
++    init(audio: AsyncStream<BroadcastAudioChunk>.Continuation,
++         video: AsyncStream<RTMPVideoItem>.Continuation) {
++        self.audio = audio
++        self.video = video
++    }
++
++    func appendAudio(_ chunk: BroadcastAudioChunk) {
++        if case .dropped = audio.yield(chunk) {
++            lock.withLock { shedAudio += 1 }
++        }
++    }
++
++    func appendVideo(_ frame: BroadcastVideoFrame, stampTicks: UInt64) {
++        if case .dropped = video.yield(RTMPVideoItem(frame: frame, stampTicks: stampTicks)) {
++            lock.withLock { shedVideo += 1 }
++        }
++    }
++
++    var droppedAudioChunks: Int { lock.withLock { shedAudio } }
++    var droppedVideoFrames: Int { lock.withLock { shedVideo } }
++
++    func finish() {
++        audio.finish()
++        video.finish()
++    }
++}
++
++/// Writes nothing. The library's messages may carry the stream key (see the file header).
++private struct SilentLogAppender: LBLoggerAppender {
++    func append(_ logboard: LBLogger, level: LBLogger.Level, message: [Any],
++                file: StaticString, function: StaticString, line: Int) {}
++    func append(_ logboard: LBLogger, level: LBLogger.Level, format: String, arguments: any CVarArg,
++                file: StaticString, function: StaticString, line: Int) {}
++}
++
++final class RTMPBroadcastEngine: BroadcastEngine, @unchecked Sendable {
++
++    private static let log = OSLog(subsystem: "com.echoelmusic", category: "broadcast")
++
++    /// ~1 s of master audio at 1024-frame chunks and 48 kHz.
++    static let audioQueueDepth = 48
++    /// A few pictures; a stalled encoder sheds pictures, never memory.
++    static let videoQueueDepth = 3
++
++    /// Replaces the library loggers' appender with a silent one; runs once per process.
++    private static let libraryLogSilenced: Void = {
++        LBLogger.with(kHaishinKitIdentifier).appender = SilentLogAppender()
++        LBLogger.with(kRTMPHaishinKitIdentifier).appender = SilentLogAppender()
++    }()
++
++    init() {
++        _ = Self.libraryLogSilenced
++    }
++
++    private let lock = NSLock()
++    private var connection: RTMPConnection?
++    private var stream: RTMPStream?
++    private var sink: RTMPMediaSink?
++    private var tasks: [Task<Void, Never>] = []
++    private var lostHandler: (@Sendable () -> Void)?
++    /// Bumped by every `start` and `stop`; a status event from an older connection is ignored.
++    private var generation = 0
++
++    func setConnectionLostHandler(_ handler: @escaping @Sendable () -> Void) {
++        lock.withLock { lostHandler = handler }
++    }
++
++    func start(url: String, streamName: String,
++               settings: BroadcastEncodeSettings) async throws -> BroadcastMediaSink {
++        await stop()
++        let token = lock.withLock { () -> Int in generation += 1; return generation }
++
++        let connection = RTMPConnection()
++        let stream = RTMPStream(connection: connection)
++        do {
++            try await stream.setAudioSettings(AudioCodecSettings(
++                bitRate: settings.audioBitRate,
++                downmix: false,
++                sampleRate: settings.audioSampleRate))
++            try await stream.setVideoSettings(VideoCodecSettings(
++                videoSize: CGSize(width: settings.video.width, height: settings.video.height),
++                bitRate: settings.videoBitRate,
++                maxKeyFrameIntervalDuration: Int32(settings.keyFrameIntervalSeconds),
++                expectedFrameRate: settings.video.framesPerSecond))
++        } catch {
++            os_log(.error, log: Self.log, "Broadcast encoder settings were refused")
++            throw BroadcastEngineError.connectFailed
++        }
++
++        // Subscribe BEFORE connecting: the library replaces its status continuation on every
++        // read of `status`, and a drop that happens before the read would otherwise be lost.
++        let statusEvents = await connection.status
++        let monitor = Task { [weak self] in
++            for await status in statusEvents {
++                switch status.code {
++                case RTMPConnection.Code.connectClosed.rawValue,
++                     RTMPConnection.Code.connectFailed.rawValue,
++                     RTMPConnection.Code.connectIdleTimeOut.rawValue,
++                     RTMPConnection.Code.connectAppshutdown.rawValue:
++                    self?.connectionDropped(token: token)
++                default:
++                    break
++                }
++            }
++        }
++
++        do {
++            _ = try await connection.connect(url)
++        } catch {
++            monitor.cancel()
++            try? await connection.close()
++            os_log(.info, log: Self.log, "Broadcast connect failed")
++            throw BroadcastEngineError.connectFailed
++        }
++        do {
++            _ = try await stream.publish(streamName)
++        } catch {
++            monitor.cancel()
++            try? await connection.close()
++            os_log(.info, log: Self.log, "Broadcast publish was refused")
++            throw BroadcastEngineError.publishRejected
++        }
++
++        let (audioStream, audioIn) = AsyncStream<BroadcastAudioChunk>.makeStream(
++            bufferingPolicy: .bufferingNewest(Self.audioQueueDepth))
++        let (videoStream, videoIn) = AsyncStream<RTMPVideoItem>.makeStream(
++            bufferingPolicy: .bufferingNewest(Self.videoQueueDepth))
++        let sink = RTMPMediaSink(audio: audioIn, video: videoIn)
++
++        let audioTask = Task {
++            for await chunk in audioStream {
++                nonisolated(unsafe) let buffer = chunk.buffer
++                nonisolated(unsafe) let when = AVAudioTime(hostTime: chunk.hostTicks)
++                await stream.append(buffer, when: when)
++            }
++        }
++        let videoTask = Task {
++            var format: CMVideoFormatDescription?
++            for await item in videoStream {
++                guard let sample = Self.sampleBuffer(for: item, format: &format) else { continue }
++                nonisolated(unsafe) let unsafeSample = sample
++                await stream.append(unsafeSample)
++            }
++        }
++
++        let stale = lock.withLock { () -> Bool in
++            guard token == generation else { return true }
++            self.connection = connection
++            self.stream = stream
++            self.sink = sink
++            self.tasks = [monitor, audioTask, videoTask]
++            return false
++        }
++        if stale {
++            // A `stop` arrived while connecting: tear down what was just opened.
++            sink.finish()
++            [monitor, audioTask, videoTask].forEach { $0.cancel() }
++            _ = try? await stream.close()
++            try? await connection.close()
++            throw BroadcastEngineError.connectFailed
++        }
++        os_log(.info, log: Self.log, "Broadcast publishing")
++        return sink
++    }
++
++    func stop() async {
++        let (connection, stream, sink, tasks) = lock.withLock {
++            generation += 1
++            let parts = (self.connection, self.stream, self.sink, self.tasks)
++            self.connection = nil
++            self.stream = nil
++            self.sink = nil
++            self.tasks = []
++            return parts
++        }
++        sink?.finish()
++        tasks.forEach { $0.cancel() }
++        if let stream { _ = try? await stream.close() }
++        if let connection { try? await connection.close() }
++    }
++
++    private func connectionDropped(token: Int) {
++        let handler: (@Sendable () -> Void)? = lock.withLock {
++            guard token == generation, connection != nil else { return nil }
++            return lostHandler
++        }
++        guard let handler else { return }
++        os_log(.info, log: Self.log, "Broadcast connection lost")
++        handler()
++    }
++
++    /// Wraps a rendered picture as an uncompressed sample buffer on the host clock. The format
++    /// description is reused while the picture size stays the same.
++    private static func sampleBuffer(for item: RTMPVideoItem,
++                                     format: inout CMVideoFormatDescription?) -> CMSampleBuffer? {
++        let pixelBuffer = item.frame.pixelBuffer
++        if let current = format,
++           !CMVideoFormatDescriptionMatchesImageBuffer(current, imageBuffer: pixelBuffer) {
++            format = nil
++        }
++        if format == nil {
++            var made: CMVideoFormatDescription?
++            guard CMVideoFormatDescriptionCreateForImageBuffer(
++                allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer,
++                formatDescriptionOut: &made) == noErr else { return nil }
++            format = made
++        }
++        guard let format else { return nil }
++        var timing = CMSampleTimingInfo(
++            duration: .invalid,
++            presentationTimeStamp: CMClockMakeHostTimeFromSystemUnits(item.stampTicks),
++            decodeTimeStamp: .invalid)
++        var sample: CMSampleBuffer?
++        guard CMSampleBufferCreateReadyWithImageBuffer(
++            allocator: kCFAllocatorDefault, imageBuffer: pixelBuffer,
++            formatDescription: format, sampleTiming: &timing,
++            sampleBufferOut: &sample) == noErr else { return nil }
++        return sample
++    }
++}
++#endif
+diff --git a/Sources/Echoelmusic/Studio/PatchbayView.swift b/Sources/Echoelmusic/Studio/PatchbayView.swift
+index 16a185251..06de96ec6 100644
+--- a/Sources/Echoelmusic/Studio/PatchbayView.swift
++++ b/Sources/Echoelmusic/Studio/PatchbayView.swift
+@@ -101,6 +101,13 @@ struct PatchbayView: View {
+                 // dead control in the dormant workspace path).
+                 if !embedded { bluetoothMIDISection }
+                 #endif
++                #if os(iOS) && canImport(AVFoundation) && canImport(Metal) && canImport(CoreVideo)
++                // Broadcast B2 — the stream's one door. A NavigationLink PUSH (no new modal on
++                // the black-screen chain), so like `bluetoothMIDISection` it needs the sheet's
++                // NavigationStack and is gated to !embedded. The door only OPENS the page: the
++                // stream's one lifecycle owner is its Go Live / Stop (BLE-3 law), never this card.
++                if !embedded { broadcastSection }
++                #endif
+                 #if os(iOS) && canImport(CoreMIDI)
+                 // Mounted unconditionally: it is a Toggle, not a NavigationLink push, so
+                 // unlike `bluetoothMIDISection` it needs no enclosing NavigationStack and
+@@ -169,6 +176,43 @@ struct PatchbayView: View {
+     }
+     #endif
+ 
++    #if os(iOS) && canImport(AVFoundation) && canImport(Metal) && canImport(CoreVideo)
++    // MARK: - Broadcast (B2: RTMP / RTMPS out — the master mix and the visual)
++    /// Same grammar as `bluetoothMIDISection`: a titled card with ONE push. It reads no
++    /// broadcast state in this body — the live status lives on the pushed page, so an open
++    /// stream cannot enrol this sheet as an observer (10.76.41/50 class).
++    private var broadcastSection: some View {
++        VStack(alignment: .leading, spacing: 8) {
++            Text("Broadcast").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
++            NavigationLink {
++                BroadcastView(embedded: true)
++                    .navigationTitle("Broadcast")
++                    .navigationBarTitleDisplayMode(.inline)
++            } label: {
++                HStack(spacing: 10) {
++                    Image(systemName: "dot.radiowaves.left.and.right").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.accent)
++                    VStack(alignment: .leading, spacing: 2) {
++                        Text("Stream to a server")
++                            .font(EchoelTheme.font(15, .semibold)).foregroundStyle(EchoelTheme.text)
++                        Text("Send the master mix and the visual over RTMP or RTMPS. Nothing is sent until you press Go Live.")
++                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
++                            .fixedSize(horizontal: false, vertical: true)
++                    }
++                    Spacer(minLength: 0)
++                    Image(systemName: "chevron.right").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
++                }
++                .padding(12)
++                .frame(maxWidth: .infinity, alignment: .leading)
++                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
++                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
++            }
++            .buttonStyle(.plain)
++            .accessibilityLabel("Broadcast to a streaming server")
++            .accessibilityHint("Opens the broadcast page. Nothing is sent until you press Go Live there.")
++        }
++    }
++    #endif
++
+     #if os(iOS) && canImport(CoreMIDI)
+     // MARK: - Network MIDI (#187: the inbound listener gets a switch, default OFF)
+     /// The one control for Apple's RTP-MIDI session. It sits in Routing rather than
+diff --git a/Tests/CISmoke/ContentPipelineClaimsTests.swift b/Tests/CISmoke/ContentPipelineClaimsTests.swift
+index 8ea1977b2..28630b235 100644
+--- a/Tests/CISmoke/ContentPipelineClaimsTests.swift
++++ b/Tests/CISmoke/ContentPipelineClaimsTests.swift
+@@ -11,7 +11,9 @@
+ //
+ //   · ✅ "Null externe Abhängigkeiten, alles on-device" — true only while `Package.swift`
+ //     declares no package dependency. The day someone adds one, a shipped marketing line
+-//     becomes false and no test in this repo would have said so.
++//     becomes false and no test in this repo would have said so. ⭐ THAT DAY WAS 2026-10-04
++//     (Broadcast B2, founder release): HaishinKit 2.2.5 + Logboard 2.6.0 are linked, the row
++//     is struck, and the pin is INVERTED — it now holds the EXACT pair of announced packages.
+ //   · ⛔ "AUv3-Plugin darf NICHT behauptet werden" — a PROHIBITION, and prohibitions rot in
+ //     the other direction. #191 recorded the founder's intent to ship Echoel AS an AUv3
+ //     later; on that day this entry stops being true and has to be rewritten rather than
+@@ -75,7 +77,7 @@ final class ContentPipelineClaimsTests: XCTestCase {
+             .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix(comment) }
+     }
+ 
+-    /// ✅-Tabelle, Zeile "Null externe Abhängigkeiten".
++    /// ✅-Tabelle, Zeile "Null externe Abhängigkeiten" — ⭐ INVERTED 2026-10-04 (Broadcast B2).
+     ///
+     /// ⛔ BOTH MANIFESTS, and the first version checked only one. `Package.swift` is NOT what
+     /// the shipped app is built from — CI runs `xcodebuild` over the XcodeGen project generated
+@@ -83,32 +85,66 @@ final class ContentPipelineClaimsTests: XCTestCase {
+     /// would ship in the archive while this test stayed green and the ✅ line stayed false.
+     /// A fence that covers half the ground is worse than none, because the header claims it
+     /// covers the ground.
+-    func testTheZeroDependenciesClaimIsStillTrue() throws {
++    ///
++    /// ⭐ WHAT IT HOLDS NOW. The founder released HaishinKit (with its RTMP products) on
++    /// 2026-10-04; it is the first external dependency the app links. The fence is not removed
++    /// — it narrows from "the empty set" to "exactly these two, exactly pinned", which is the
++    /// same fence one size wider: a THIRD package, a floating version (`from:`, `branch:`,
++    /// `majorVersion:`), or the pair drifting apart between the two manifests is red here, and
++    /// the instruction is the same as before — move `ContentPipeline/CLAIMS.md` in the commit.
++    /// And the claims file must no longer carry the struck ✅ row, or the very sentence this
++    /// guard was written for would survive the build that falsified it.
++    func testTheLinkedPackagesAreExactlyTheAnnouncedPins() throws {
+         let declared = try codeLines("Package.swift", comment: "//")
+             .filter { $0.contains(".package(") }
+-        XCTAssertTrue(declared.isEmpty, """
+-        Package.swift now declares a package dependency:
+-        \(declared.joined(separator: "\n"))
+-
+-        That may well be the right call — but `ContentPipeline/CLAIMS.md` lists "Null externe \
+-        Abhängigkeiten, alles on-device" as claimable, and §8 forbids naming any SDK we do not \
+-        ship. Update BOTH in this commit, or a caption keeps saying something the build no \
+-        longer does.
++            .map { $0.trimmingCharacters(in: .whitespaces) }
++        XCTAssertEqual(declared, Self.announcedSwiftPMPins, """
++        Package.swift declares a different set of package dependencies than the two the founder \
++        released on 2026-10-04 (HaishinKit 2.2.5, Logboard 2.6.0, exact pins). That may well be \
++        the right call — but `ContentPipeline/CLAIMS.md` names exactly these as the app's only \
++        third-party code, and §8 forbids naming any SDK we do not ship. Update BOTH in this \
++        commit, or a caption keeps saying something the build no longer does.
++        """)
++
++        // XcodeGen's block is a TOP-LEVEL `packages:` key. Read it from that line to the next
++        // top-level key; everything between is the manifest the SHIPPED app is built from.
++        let yml = try codeLines("project.yml", comment: "#")
++        guard let open = yml.firstIndex(where: { $0 == "packages:" }) else {
++            return XCTFail("project.yml has no top-level `packages:` block — the shipped app " +
++                           "would link no RTMP stack while Package.swift does")
++        }
++        let block = yml[(open + 1)...].prefix { $0.isEmpty || $0.hasPrefix(" ") }
++            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
++        XCTAssertEqual(block, Self.announcedXcodeGenBlock, """
++        project.yml's `packages:` block differs from the two exact pins the founder released. \
++        That is the manifest the SHIPPED app is built from, so whatever is there reaches the \
++        archive — update `ContentPipeline/CLAIMS.md` in this commit.
+         """)
+ 
+-        // XcodeGen's block is a TOP-LEVEL `packages:` key, so an exact trimmed match is both
+-        // precise and enough — a nested `packages:` under a target is `dependencies:` in
+-        // XcodeGen's schema, not this key.
+-        let xcodegen = try codeLines("project.yml", comment: "#")
+-            .filter { $0.trimmingCharacters(in: .whitespaces) == "packages:" }
+-        XCTAssertTrue(xcodegen.isEmpty, """
+-        project.yml declares a `packages:` block. That is the manifest the SHIPPED app is built \
+-        from, so the dependency reaches the archive even though `Package.swift` is still empty \
+-        — and "Null externe Abhängigkeiten" in CLAIMS.md becomes false. Same instruction: \
+-        update the claim in this commit.
++        let claims = try String(contentsOf: try repoRoot()
++            .appendingPathComponent("ContentPipeline/CLAIMS.md"), encoding: .utf8)
++        XCTAssertFalse(claims.contains("| **Null externe Abhängigkeiten**"), """
++        CLAIMS.md still lists "Null externe Abhängigkeiten" as claimable, while both manifests \
++        link HaishinKit and Logboard. Strike the row — the claim this guard was written for.
+         """)
++        // counterweight — the claims file names what IS linked, with the version.
++        XCTAssertTrue(claims.contains("HaishinKit 2.2.5"),
++                      "CLAIMS.md must name the linked HaishinKit release (§8)")
+     }
+ 
++    static let announcedSwiftPMPins = [
++        #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5"),"#,
++        #".package(url: "https://github.com/shogo4405/Logboard.git", exact: "2.6.0"),"#,
++    ]
++    static let announcedXcodeGenBlock = [
++        "HaishinKit:",
++        "url: https://github.com/HaishinKit/HaishinKit.swift.git",
++        "exactVersion: 2.2.5",
++        "Logboard:",
++        "url: https://github.com/shogo4405/Logboard.git",
++        "exactVersion: 2.6.0",
++    ]
++
+     /// ⛔-Liste, Punkt 1: kein AUv3-Target, kein AUv3-Hosting.
+     ///
+     /// ⛔ EVERY FAILURE MESSAGE HERE IS A `"""` LITERAL, AND THAT IS NOT A STYLE CHOICE. The
+diff --git a/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift b/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
+index 55a2e7803..7ca3700ca 100644
+--- a/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
++++ b/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
+@@ -4,11 +4,21 @@
+ // WHAT THIS PINS. The founder asked about a Stream mode. Measured: nothing in this build can
+ // stream — `BroadcastPublisher.engineAvailable` is `BroadcastEngineFactory.make() != nil`, i.e.
+ // `#if canImport(RTMPHaishinKit)` since Broadcast B1 (2026-10-04; it read `canImport(HaishinKit)`
+-// before — the premise is unchanged, only the product name moved), HaishinKit is
+-// not a dependency (`Package.swift` `dependencies: []`), the RTMP/SRT transports are
+-// `.roadmap`, and `BroadcastView` has no construction site. A door onto a dead endpoint is an
++// before — the premise is unchanged, only the product name moved), HaishinKit was
++// not a dependency then (`Package.swift` `dependencies: []`), the RTMP/SRT transports are
++// `.roadmap`, and `BroadcastView` had no construction site. A door onto a dead endpoint is an
+ // App Store 2.1 rejection and a promise the instrument cannot keep on stage.
+ //
++// ⭐ BROADCAST B2 (2026-10-04, founder release) LINKED THE ENGINE — HaishinKit 2.2.5 in both
++// manifests — and gave the page ONE door: the Broadcast card on the Routing surface
++// (`PatchbayView.broadcastSection`, a NavigationLink push, no new modal). Claims 1 and 2 now
++// SKIP in every build that carries the package, exactly as designed. Claim 3 is their
++// successor for the linked build: WITH an engine, the door exists and is the only one — a
++// second door (a chip, a sheet, the patchbay route) would make a second lifecycle owner, the
++// BLE-3 class. And the transports stay `.roadmap` even now: the patchbay route `rtmp.out` is a
++// pure dataflow edge that starts nothing; a `.live` there would offer a route that carries
++// nothing while the stream's real owner is the page's Go Live.
++//
+ // ⚠️ BOUND, NOT BANNED (#364). This guard does NOT forbid streaming. It binds the three facts
+ // together: WHILE the engine is absent, the stream transports stay `.roadmap` and the stream
+ // surface stays doorless. Link the engine (a founder decision — new dependency) and the
+@@ -73,6 +83,29 @@ final class TheBroadcastHasNoDoorWithoutAnEngineTests: XCTestCase {
+             """)
+     }
+ 
++    // MARK: 3 — with an engine, exactly one door, and the routes still start nothing
++
++    /// SOURCE-TEXT SCAN plus one PURE assertion. Precondition: an engine is linked (the B2
++    /// build); without one this claim skips, the mirror of claims 1–2.
++    func testWithAnEngineTheBroadcastPageHasExactlyOneDoor() throws {
++        guard BroadcastPublisher().engineAvailable else {
++            // PRECONDITION-SKIP: runtime engine state — claims 1–2 cover the engine-less build.
++            throw XCTSkip("no streaming engine linked — claims 1 and 2 hold the binding")
++        }
++        let sites = try sourcesContaining("BroadcastView(")
++        XCTAssertEqual(sites, ["Echoelmusic/Studio/PatchbayView.swift"], """
++            `BroadcastView(` is constructed in \(sites). The stream has ONE door — the Broadcast \
++            card in Routing — because its Go Live / Stop is the stream's one lifecycle owner; a \
++            second door is a second place a performer can believe the stream is controlled.
++            """)
++        for transport in Self.streamTransports {
++            XCTAssertEqual(transport.status, .roadmap, """
++                `\(transport)` reports `.live`. The patchbay route is a dataflow edge that starts \
++                nothing (BLE-3); the stream is started only by the page's Go Live.
++                """)
++        }
++    }
++
+     // MARK: helpers
+ 
+     private func repoRoot() -> URL {
+diff --git a/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift b/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
+index 128c72845..74b285693 100644
+--- a/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
++++ b/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
+@@ -154,25 +154,27 @@ final class TheManifestArgumentOrderIsTheCompilersTests: XCTestCase {
+         XCTAssertTrue(toolsMajor >= 6 || major <= highestCaseFor5x, message)
+     }
+ 
+-    /// The manifest still declares zero dependencies. CLAUDE.md states this as a product fact
+-    /// ("ZERO external deps shipped today"), the tech-stack table plans HaishinKit as the first
+-    /// one, and the App Store copy leans on it — so a dependency arriving unannounced should
+-    /// surface here rather than in a review.
+-    func testTheManifestStillShipsNoDependencies() throws {
++    /// ⭐ INVERTED 2026-10-04 (Broadcast B2). This claim held "the manifest still declares zero
++    /// dependencies" and said in its own message that a dependency "is allowed — but CLAUDE.md,
++    /// the tech-stack table and the store copy all say zero, and all three have to move with it".
++    /// The founder released HaishinKit (RTMP/RTMPS) on 2026-10-04 and all three moved in the
++    /// same commit. The fence stays, one size wider: the package-level `dependencies:` array
++    /// holds EXACTLY the two announced, exactly-pinned packages — a third one, or a floating
++    /// version, is red here and still has to move those three homes with it.
++    func testTheManifestShipsExactlyTheAnnouncedDependencies() throws {
+         let text = try manifest()
+         guard let open = text.range(of: "dependencies: [\n"),
+               let close = text.range(of: "],", range: open.upperBound..<text.endIndex) else {
+             return XCTFail("Could not isolate the package-level `dependencies:` array")
+         }
+         let body = text[open.upperBound..<close.lowerBound]
+-        let code = body.split(separator: "\n").filter { line in
+-            let t = line.trimmingCharacters(in: .whitespaces)
+-            return !t.isEmpty && !t.hasPrefix("//")
+-        }
+-        XCTAssertTrue(code.isEmpty,
+-                      "Package.swift declares a dependency. That is allowed — but CLAUDE.md, " +
+-                      "the tech-stack table and the store copy all say zero, and all three have " +
+-                      "to move with it. Found: \(code)")
++        let code = body.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
++            .filter { !$0.isEmpty && !$0.hasPrefix("//") }
++        XCTAssertEqual(code, ContentPipelineClaimsTests.announcedSwiftPMPins,
++                       "Package.swift declares a different dependency set than the founder " +
++                       "released (HaishinKit 2.2.5 + Logboard 2.6.0, exact). CLAUDE.md, the " +
++                       "tech-stack table and the store copy name exactly these — move them " +
++                       "with it. Found: \(code)")
+     }
+ 
+     // MARK: - Reading the manifest
+diff --git a/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift b/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
+index 4b5129560..829130172 100644
+--- a/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
++++ b/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
+@@ -142,7 +142,7 @@ final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
+             \(offenders.joined(separator: ", ")).
+ 
+             Video recording went with #1304 (founder 2026-09-12) and video editing with #121 \
+-            Slice 3; RTMP was never linked. On the App Store a false capability claim is a 2.3 \
++            Slice 3; RTMP is linked since B2 but unconfirmed on a device. On the App Store a false capability claim is a 2.3 \
+             rejection, and #184 already removed twelve of them from this text. Say what ships: \
+             `docs/architecture.html` has the wording the rest of the site follows.
+             """)
+diff --git a/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift b/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
+index 63b29df05..2ebe468e6 100644
+--- a/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
++++ b/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
+@@ -39,6 +39,12 @@
+ // claim 2's needles read on both sides — green on both trees.
+ // FILE-CONTENT SCAN (§1): it proves what the site SAYS. Whether a page renders, and whether
+ // the external display actually shows the picture, are device probes and stay open.
++//
++// ⭐ BROADCAST B2 (2026-10-04, founder release) INVERTED claims 2 and 3 — the streaming half
++// of the history moved from "never built" to "built, being tested". Graded by transcription
++// against the parent and this tree: claim 2 now has 3 assertions, claim 3 has 4 (two per page).
++// On the parent (the old docs) the inverted ones are red by design — FORWARD guards for this
++// slice, not regressions; the claim-1/claim-4 counterweights are untouched.
+ 
+ import Foundation
+ import XCTest
+@@ -74,26 +80,38 @@ final class TheSiteDoesNotSellADeletedFullscreenTests: XCTestCase {
+             + "`Package.swift` carries an empty `dependencies` array. The same page states the "
+             + "video dates correctly three answers below, so this sentence also contradicts "
+             + "its own page.")
+-        XCTAssertTrue(
++        // ⭐ INVERTED 2026-10-04 (Broadcast B2, founder release): "never built" was the true
++        // fourth history until HaishinKit was linked; it is now the false sentence, and the
++        // history moves on rather than being deleted — cut, then built, still unconfirmed.
++        XCTAssertFalse(
+             faq.contains("live streaming was <strong>never built</strong>"),
++            "faq.html still says live streaming was never built. Since Broadcast B2 it is built "
++            + "(HaishinKit 2.2.5, Routing → Broadcast) and only unconfirmed on a device.")
++        XCTAssertTrue(
++            faq.contains("live streaming was cut, then built in October&nbsp;2026 and is <strong>being tested</strong>"),
+             "the corrected sentence is gone. Three capabilities, three histories: the video "
+             + "editor July 2026, video recording September 2026, multitrack September 2026 "
+-            + "with the audio input — and streaming never at all.")
++            + "with the audio input — and streaming cut, then built in October 2026, unconfirmed.")
+     }
+ 
+     /// Claim 3 — counterweight, and the one `docs/CLAUDE.md` §5 exists for: the site's RTMP
+-    /// and video DENIALS stay. Two cycles (#158/#192) paid for them; claim 1 and 2 must never
++    /// and video CORRECTIONS stay. Two cycles (#158/#192) paid for them; claim 1 and 2 must never
+     /// be satisfiable by deleting the corrections instead of the claims.
++    /// ⭐ INVERTED 2026-10-04 (Broadcast B2): the correction these two pages carried was
++    /// "a compile-guarded scaffold", true until HaishinKit was linked. The correction is now the
++    /// UNCONFIRMED marker — the same two pages, the same job (no page may sell a stream nobody
++    /// has seen work), the opposite fact. Pinned on the pages, not on a phrase this guard owns.
+     func testTheDenialsSurvive() throws {
+-        XCTAssertTrue(try Self.text("docs/architecture.html").contains("compile-guarded scaffold"),
+-                      "architecture.html no longer explains that the broadcast publisher is a "
+-                      + "compile-guarded scaffold. That sentence IS the correction — removing "
+-                      + "it reopens the claim it retracts (docs/CLAUDE.md §5).")
+-        XCTAssertTrue(try Self.text("docs/tools.html").contains("compile-guarded scaffold"),
+-                      "tools.html no longer carries the RTMP denial (docs/CLAUDE.md §5). It is "
+-                      + "pinned HERE rather than in faq.html on purpose: faq.html's copy of that "
+-                      + "phrase is written by THIS commit, so pinning it there would be a guard "
+-                      + "watching its own slice instead of the work two earlier cycles paid for.")
++        for page in ["docs/architecture.html", "docs/tools.html"] {
++            let html = try Self.text(page)
++            XCTAssertFalse(html.contains("compile-guarded scaffold"),
++                           "\(page) still calls the broadcast publisher a compile-guarded "
++                           + "scaffold. Since Broadcast B2 it is linked; say it is being tested.")
++            XCTAssertTrue(html.contains("RTMP") && html.contains("being tested"),
++                          "\(page) no longer carries the RTMP correction (docs/CLAUDE.md §5): "
++                          + "RTMP is built and being tested, not confirmed. Removing the sentence "
++                          + "instead of keeping it honest reopens the gap it closed.")
++        }
+     }
+ 
+     /// Claim 4 — support.html sends the reader to a control that exists. Before #1331 there
+diff --git a/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift b/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
+index 5e321d35f..d15954bd1 100644
+--- a/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
++++ b/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
+@@ -332,7 +332,9 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
+     ///
+     /// ⚠️ WHY THESE WORDS AND NOT MORE (#364). Every needle names a capability that provably does
+     /// not exist: the AUv3 target was deleted (#121 Slice 2), RTMP was never linked
+-    /// (`Package.swift` has no dependencies), the drum engine and step grid went with #166/#167,
++    /// (`Package.swift` had no dependencies — ⭐ since Broadcast B2, 2026-10-04, HaishinKit IS
++    /// linked, but no device run has shown a server accepting or a receiver playing, so the
++    /// word stays banned from the listing until that is measured), the drum engine and step grid went with #166/#167,
+     /// the note editor with #475, video EDIT with #121 Slice 3, video RECORDING with #1304, and
+     /// multitrack is built but flag-gated off and doorless. Deliberately NOT banned, and each
+     /// for a measured reason:
+@@ -351,7 +353,7 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
+     func testNoRemovedCapabilityIsSoldAgain() throws {
+         let removed = [
+             "auv3", "audio unit",                                   // target deleted 2026-07-24
+-            "rtmp", "live stream", "livestream", "broadcast", "srt", // never linked
++            "rtmp", "live stream", "livestream", "broadcast", "srt", // linked since B2, unconfirmed on a device — not listed
+             "multitrack", "multi-track", "mehrspur",                 // built, flag-gated off, doorless
+             "beat maker", "beatmaker", "drum machine", "drumcomputer",
+             "step sequencer", "step-sequencer", "schrittsequenzer",  // #166/#167
+diff --git a/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift b/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
+index 9784bfbb6..30ba83bb9 100644
+--- a/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
++++ b/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
+@@ -1283,28 +1283,57 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
+             """)
+     }
+ 
+-    func testNothingClaimsRTMPWasEverBuilt() throws {
++    /// ⭐ INVERTED 2026-10-04 (Broadcast B2, founder release: "HaishinKit einschließlich der
++    /// RTMP/RTMPS-Produkte"). Everything above was true until this commit and is kept as the
++    /// history of WHY the site's RTMP sentences are policed at all. The guard is not deleted —
++    /// a prohibition that was true and no longer is gets INVERTED (the AUv3 pin, #1385):
++    /// HaishinKit 2.2.5 is now linked, the stream has a door (Routing → Broadcast), and the
++    /// app has only reached the first of three levels — it COMPILES. "Server accepts" and
++    /// "receiver plays" are device facts nobody has measured yet. So:
++    /// 1. the manifest pins exactly the announced release (a different RTMP stack, or a
++    ///    floating version, turns this red and sends the reader to the site first);
++    /// 2. every RTMP mention carries an "unconfirmed" marker — the site may say the stream is
++    ///    built, never that it works;
++    /// 3. no page may still say it was never built or is a scaffold — the old disclaimer is
++    ///    now the false sentence.
++    /// When a device run confirms a server accepted and a receiver played, claim 2's markers
++    /// are what moves, in the same commit as `ContentPipeline/CLAIMS.md` §5.
++    func testEveryRTMPMentionSaysItIsBuiltButUnconfirmed() throws {
+         let manifest = try String(
+             contentsOf: try repoRoot().appendingPathComponent("Package.swift"), encoding: .utf8)
+-        XCTAssertTrue(manifest.contains("dependencies: []"), """
+-            `Package.swift` no longer declares an empty dependency list. If HaishinKit (or any \
+-            RTMP stack) was actually linked, this whole test is describing a build that no \
+-            longer exists — reword the site FIRST, then delete or invert this guard.
++        XCTAssertTrue(manifest.contains(
++            #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5")"#), """
++            `Package.swift` no longer pins HaishinKit at exactly 2.2.5. The site describes \
++            that build — reword the site FIRST, then move this pin.
+             """)
+ 
+-        let markers = ["never built", "scoped and cut", "scaffold", "not linked", "never linked"]
++        let markers = ["not yet confirmed", "being tested", "not claimed until"]
+         let offenders = try mentionsWithoutMarker("RTMP", markers: markers,
+                                                   back: 260, forward: 200)
+         XCTAssertTrue(offenders.isEmpty, """
+             \(offenders.count) mention(s) of RTMP on the site are not near any of \(markers): \
+-            \(offenders.prefix(3).joined(separator: " | ")). RTMP was never built — say "scoped \
+-            and cut, never built", not "built and removed" (that was the VIDEO EDITOR, #121 \
+-            Slice 3). See `ContentPipeline/CLAIMS.md` before rewording.
++            \(offenders.prefix(3).joined(separator: " | ")). RTMP streaming is built and \
++            compiles, but no device run has shown a server accepting it and a receiver playing \
++            it. Say it is being tested — see `ContentPipeline/CLAIMS.md` §5 before rewording.
++            """)
++
++        let stale = ["rtmp was never built", "rtmp streaming was scoped and cut",
++                     "rtmp / rtmps was scoped and cut", "rtmp was scoped and cut",
++                     "compile-guarded scaffold", "rtmp/rtmps broadcast is <strong>not planned"]
++        var still: [String] = []
++        for page in try pages() {
++            let flat = page.html.lowercased()
++            for phrase in stale where flat.contains(phrase) { still.append("\(page.name): \"\(phrase)\"") }
++        }
++        XCTAssertTrue(still.isEmpty, """
++            \(still.count) page(s) still say RTMP was never built or is a scaffold: \
++            \(still.joined(separator: " | ")). Since Broadcast B2 that disclaimer is the false \
++            sentence — HaishinKit is linked and the stream has a door.
+             """)
+     }
+ 
+     /// Ableton Link is a roadmap item with ZERO code: `git grep -E "AbletonLink|LinkKit|ABLLink"`
+-    /// over `Sources/` returns nothing, and `Package.swift` links nothing. Eight of the ten
++    /// over `Sources/` returns nothing, and `Package.swift` links no Link SDK. Eight of the ten
+     /// phrased site mentions already said "roadmap"/"planned"; the two that did not were a bare
+     /// `<li>Ableton Link</li>` and an ideas-page list — both technically under a heading that
+     /// qualified them, but too far away for any window a guard can justify, so both were given
+@@ -1335,7 +1364,7 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
+         XCTAssertTrue(offenders.isEmpty, """
+             \(offenders.count) mention(s) of Ableton Link are not marked as unshipped: \
+             \(offenders.prefix(3).joined(separator: " | ")). Nothing in `Sources/` imports \
+-            LinkKit and `Package.swift` links nothing; Link is a roadmap item (#111).
++            LinkKit and `Package.swift` links no Link SDK; Link is a roadmap item (#111).
+             """)
+     }
+ 
+diff --git a/docs/architecture.html b/docs/architecture.html
+index 525aee6ec..a45f8670e 100644
+--- a/docs/architecture.html
++++ b/docs/architecture.html
+@@ -267,7 +267,7 @@
+                 <p>A Metal bio-visual ships today: <code>MetalBioView</code> renders a full-screen pulse where heart rate drives the pulse (capped &le;3&nbsp;Hz for WCAG flash safety), the sounding tone drives the hue, breath the spread and coherence the sharpness of the pattern, honouring Reduce Motion. The wider vision &mdash; a 120&nbsp;fps renderer with richer modes &mdash; is in active development, not in the app today. <strong>Recording the visual is not part of Echoelmusic</strong>: it was built and removed in September&nbsp;2026.</p>
+                 <div class="data-row"><div class="k">Visual modes (planned)</div><div class="v"><strong>Cymatics</strong> (Chladni standing waves), <strong>Mandala</strong> (radial symmetry), <strong>Particles</strong> (procedural), <strong>Waveform</strong>, <strong>Spectral</strong> bars. <span class="tag">ROADMAP</span></div></div>
+                 <div class="data-row"><div class="k">Chroma key (planned)</div><div class="v">A 6-pass GPU pipeline: HSV key extraction → Sobel edge → despill → feather → light-wrap → premultiplied composite, with preview overlays. <span class="tag">ROADMAP</span></div></div>
+-                <div class="data-row"><div class="k">Further roadmap</div><div class="v">Hilbert-map display, flow field, kaleidoscope, nebula, generative &amp; AR worlds. <span class="tag">ROADMAP</span> &mdash; video recording, NLE editing, ProRes, multi-cam, color grading and RTMP streaming are <strong>not planned</strong> (the video editor was built and removed in July&nbsp;2026, video recording in September&nbsp;2026; RTMP was never built).</div></div>
++                <div class="data-row"><div class="k">Further roadmap</div><div class="v">Hilbert-map display, flow field, kaleidoscope, nebula, generative &amp; AR worlds. <span class="tag">ROADMAP</span> &mdash; video recording, NLE editing, ProRes, multi-cam and color grading are <strong>not planned</strong> (the video editor was built and removed in July&nbsp;2026, video recording in September&nbsp;2026). RTMP streaming is a separate matter: built and being tested &mdash; see the Lighting / streaming row.</div></div>
+             </section>
+ 
+             <!-- STUDIO UI -->
+@@ -300,7 +300,7 @@
+                 <div class="data-row"><div class="k">MIDI</div><div class="v">MIDI&nbsp;2.0-ready input (notes, pitch bend, CC&nbsp;74 slide, press, air-CC) <span class="tag">LIVE</span>; virtual MIDI&nbsp;1.0 source once a MIDI route is enabled <span class="tag">LIVE</span>. Standard MIDI File (.mid) <strong>export</strong> <span class="tag">LIVE</span> &mdash; melody, tempo, 4/4 and key signature, bar-aligned so the clip drops straight onto a DAW grid. <strong>MPE out</strong> <span class="tag">LIVE</span> &mdash; the zone is announced, notes are spread over member channels 2&ndash;16, and each carries all three per-note dimensions: Glide (14-bit pitch bend), Slide (CC&nbsp;74) and Press (channel pressure). Two switches in the routing panel, both off by default. MPE <strong>input</strong> zone handling, MIDI&nbsp;2.0 out and .mid <strong>import</strong> <span class="tag">ROADMAP</span>.</div></div>
+                 <div class="data-row"><div class="k">Video</div><div class="v"><strong>Not part of Echoelmusic.</strong> MP4 recording of the immersive visual shipped until September&nbsp;2026 and was removed; ProRes, multi-cam, LUT grading and any editor were never planned. The take is exported as audio (WAV) or as a MIDI file.</div></div>
+                 <div class="data-row"><div class="k">Visuals &amp; mapping</div><div class="v">Metal bio-visual <span class="tag">LIVE</span>; external display over USB-C/HDMI or AirPlay <span class="tag">LIVE</span>; 120&nbsp;fps richer modes + 6-pass chroma key, projection mapping (warp/edge-blend), multi-screen, NDI/Syphon <span class="tag">ROADMAP</span>.</div></div>
+-                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast is <strong>not planned</strong> — <code>BroadcastPublisher</code> is a compile-guarded scaffold and HaishinKit is not linked.</div></div>
++                <div class="data-row"><div class="k">Lighting / streaming</div><div class="v">Art-Net (UDP 6454) + sACN / E1.31 (unicast, UDP 5568) <span class="tag">LIVE</span>; DMX-512 and HomeKit <span class="tag">ROADMAP</span>. RTMP/RTMPS broadcast is built and <strong>being tested</strong>: <code>BroadcastPublisher</code> sends the master mix and the rendered visual through HaishinKit&nbsp;2.2.5 (BSD-3) &mdash; no camera, no microphone. It is not claimed until a server has accepted the stream and a receiver has played it on a device.</div></div>
+             </section>
+ 
+             <!-- CONCURRENCY -->
+@@ -351,7 +351,7 @@
+                 <div class="data-row"><div class="k">EchoelMIDI <span class="tag">LIVE</span></div><div class="v">MIDIInput · MIDIBusPublisher → EngineBus.controllerEvents (notes, pitch bend, CC&nbsp;74 slide, press, air-CC). MPE <strong>zone</strong> handling on the way in <span class="tag">ROADMAP</span>.</div></div>
+                 <div class="data-row"><div class="k">EchoelBio <span class="tag">LIVE</span></div><div class="v">EchoelBioEngine · BioSignalDeconvolver · BioEventGraph · HilbertSensorMapper · HealthKitBioPublisher (Watch / Oura via Health) · PolarH10BioPublisher (any BLE Heart Rate device) · CameraRPPGBioPublisher (finger-on-lens rPPG, live) · BioSimulator. ADM-OSC object output via <code>ADMOSCSender</code>.</div></div>
+                 <div class="data-row"><div class="k">EchoelVis <span class="tag">LIVE</span></div><div class="v">MetalBioView — Metal bio-visual live today (HR&rarr;pulse &le;3&nbsp;Hz, tone&rarr;hue, breath&rarr;spread, coherence&rarr;sharpness). plus richer modes and chroma key <span class="tag">ROADMAP</span>.</div></div>
+-                <div class="data-row"><div class="k">EchoelVid <span class="tag">CUT</span></div><div class="v">Video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; RTMP was never built. Nothing of it remains — the visual is rendered live, never captured.</div></div>
++                <div class="data-row"><div class="k">EchoelVid <span class="tag">CUT</span></div><div class="v">Video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026. Nothing of it remains — the visual is rendered live and never recorded to a file. (RTMP streaming is separate: built and being tested, see Lighting / streaming.)</div></div>
+                 <div class="data-row"><div class="k">EchoelNet <span class="tag">LIVE</span></div><div class="v">OSCSender (EchoelSync) — Ableton Link roadmap</div></div>
+                 <div class="data-row"><div class="k">EchoelLux <span class="tag">LIVE</span></div><div class="v">ArtNetSender · SACNSender — native Art-Net (UDP 6454) and sACN / E1.31 (unicast) lighting live today, flash-safe. DMX-512 · HomeKit · fixture profiles · cue lists <span class="tag">ROADMAP</span>.</div></div>
+                 <div class="data-row"><div class="k">EchoelStage <span class="tag">LIVE</span></div><div class="v">External displays: a connected screen (USB-C / HDMI cable or AirPlay) becomes the visual&rsquo;s own stage while the phone stays the playing surface (<code>ExternalDisplayScene</code>, a second scene, not mirroring). Projection mapping (warp, edge-blend) <span class="tag">ROADMAP</span>.</div></div>
+@@ -396,6 +396,7 @@
+                             <li>EchoelStage — projection mapping (warp / edge-blend); external displays ship today</li>
+                             <li>EchoelAI — on-device CoreML / stems</li>
+                             <li>Ableton Link — planned, not linked today</li>
++                            <li>RTMP / RTMPS live broadcast — built and being tested; not claimed until a server and a receiver have been shown working on a device</li>
+                             <li>iPad · Mac · Watch · TV · Vision</li>
+                         </ul>
+                         <h3>Deliberately cut</h3>
+@@ -403,8 +404,7 @@
+                         <ul>
+                             <li>Drums, step sequencer, sampler</li>
+                             <li>Video editing, ProRes, color grading</li>
+-                            <li>RTMP / live broadcast — scoped and cut, never built</li>
+-                            <li>Loading third-party plugins inside Echoelmusic</li>
++                                                        <li>Loading third-party plugins inside Echoelmusic</li>
+                         </ul>
+                     </div>
+                 </div>
+diff --git a/docs/brainstorming.html b/docs/brainstorming.html
+index 610b29336..67471bd73 100644
+--- a/docs/brainstorming.html
++++ b/docs/brainstorming.html
+@@ -147,7 +147,7 @@
+                     <div class="capability"><h3>Siri &amp; Shortcuts</h3><p>Start a session, stop, or keep the last loop by voice or automation.</p></div>
+                     <div class="capability"><h3>Private &amp; accessible</h3><p>Everything on-device &mdash; no account, no ads, no tracking. Designed accessibility-first (VoiceOver, large legible readouts, 3&nbsp;Hz flash cap). For music and self-observation, not medical diagnosis.</p></div>
+                 </div>
+-                <p class="tool-overview" style="margin-top:16px;color:var(--dim);"><em>Deliberately not in Echoelmusic:</em> drums and a step sequencer, a sampler, audio recording, video editing, live RTMP streaming, and AUv3 plugin HOSTING. Most of these were built and then removed in July&nbsp;2026 (the arrangement timeline and note editor were too, and have come back as the Workstation) — RTMP is the exception: it was scoped and cut, never built. This is an instrument, and each of them was a second product to maintain. <em>Not yet shipping:</em> the standalone Apple&nbsp;Watch app, App&nbsp;Clip, and the on-device&nbsp;AI / audio-analysis ideas listed below. The AUv3 plugin is the other exception, in the opposite direction: it was built, removed, and brought back in September&nbsp;2026.</p>
++                <p class="tool-overview" style="margin-top:16px;color:var(--dim);"><em>Deliberately not in Echoelmusic:</em> drums and a step sequencer, a sampler, audio recording, video editing, and AUv3 plugin HOSTING. Most of these were built and then removed in July&nbsp;2026 (the arrangement timeline and note editor were too, and have come back as the Workstation) — and live RTMP streaming, once scoped and cut, has since been built and is being tested; it is not claimed until a device run shows a server accepting it. This is an instrument, and each of them was a second product to maintain. <em>Not yet shipping:</em> the standalone Apple&nbsp;Watch app, App&nbsp;Clip, and the on-device&nbsp;AI / audio-analysis ideas listed below. The AUv3 plugin is the other exception, in the opposite direction: it was built, removed, and brought back in September&nbsp;2026.</p>
+             </div>
+             <hr class="tool-divider">
+ 
+diff --git a/docs/claims.html b/docs/claims.html
+index 5562ccfea..1e6f27663 100644
+--- a/docs/claims.html
++++ b/docs/claims.html
+@@ -134,8 +134,8 @@
+             <h2>Features that are gone, or were never there</h2>
+             <div class="platform-grid">
+                 <div class="platform-card" id="claim-5">
+-                    <h3>No drums, sampler instrument, video editing, livestream or audio recorder</h3>
+-                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
++                    <h3>No drums, sampler instrument, video editing or audio recorder; livestream not yet confirmed</h3>
++                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming you can rely on yet (RTMP streaming is built and being tested &mdash; not yet confirmed on a device), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
+                 </div>
+                 <div class="platform-card" id="claim-11">
+                     <h3>No voice processing: no cloning, AI voice, text-to-speech or autotune</h3>
+@@ -170,8 +170,8 @@
+             <h2>What it is built on</h2>
+             <div class="platform-grid">
+                 <div class="platform-card" id="claim-8">
+-                    <h3>Zero external dependencies &mdash; so also zero of the usual suspects</h3>
+-                    <p>Echoelmusic ships with no third-party packages at all. That means no Composable Architecture, no RevenueCat, no SwiftData, no VideoToolbox and no HaishinKit &mdash; several of which have been attributed to it. It is Swift, SwiftUI, and Apple frameworks, plus open standards on the wire: OSC, ADM-OSC, Art-Net, sACN and MIDI.</p>
++                    <h3>Two third-party packages, for streaming only &mdash; and none of the usual suspects</h3>
++                    <p>Until October&nbsp;2026 Echoelmusic shipped with no third-party packages at all. It now links exactly two, both BSD-3 and both used only when you start a stream: HaishinKit&nbsp;2.2.5 (RTMP / RTMPS) and its logger Logboard&nbsp;2.6.0. Streaming itself is built and being tested &mdash; not yet confirmed on a device. There is still no Composable Architecture, no RevenueCat, no SwiftData, no VideoToolbox, no SRT or WebRTC stack, and no analytics, advertising or tracking SDK. Everything else is Swift, SwiftUI and Apple frameworks, plus open standards on the wire: OSC, ADM-OSC, Art-Net, sACN and MIDI.</p>
+                 </div>
+             </div>
+         </section>
+diff --git a/docs/dev/FEATURE_STATUS.md b/docs/dev/FEATURE_STATUS.md
+index dbbcd9074..c82983db2 100644
+--- a/docs/dev/FEATURE_STATUS.md
++++ b/docs/dev/FEATURE_STATUS.md
+@@ -23,7 +23,7 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
+ | Ebene | Stand | Beleg |
+ |---|---|---|
+ | **Ausgeliefert (TestFlight)** | **v10.79.491 · Build 2616** · Commit `4d59d5db0` · 2026-10-04 | TestFlight-Lauf #2616 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37197436074, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.490 · Build 2615 · `4919d7001` |
+-| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
++| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 und RTMP-Livestream B2 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
+ | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
+ 
+ Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
+@@ -72,6 +72,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+ | E13-1 Sampler-Spur | MIDI-Spur → **Track** → „Instrument“ EchoelSampler → „Sample“ eine Bibliotheksdatei | `0e43c0893` · `861f78568` | offen (G7) |
+ | E12-1 Video-Ton als Teil | **Browse** → „Video to Visuals“ → „Use Its Sound“; durch die eine Import-Tür, kein Bild gespeichert | `60516905b` · `eaf8f7ca6` | offen (G8) |
+ | E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören | Zweig, Gates offen | offen (G9) |
++| B2 RTMP-Livestream | Routing → Karte „Broadcast“ → Server-URL und Stream-Key (Key in der Keychain) → Go Live; gesendet werden der Master-Mix nach der letzten Stufe und das gerenderte Visual, keine Kamera, kein Mikrofon. HaishinKit 2.2.5 + Logboard 2.6.0 verlinkt. Erreichte Stufe: **kompiliert** — „Server nimmt an“ und „Empfänger spielt ab“ sind ungemessen | Zweig, Gates offen | offen (G10) |
+ 
+ ### 1c. Arrange — das Stück
+ 
+@@ -138,7 +139,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+ | `ImmersiveStageView` | Raumkarte: jede Spur als Punkt im Raum, ADM-OSC-Status | Ship-Gate 4: Raum „demonstrierbar, nicht Pflicht“ | ein Chip oder Routing-Knopf |
+ | `SessionView` | geführte Session mit Atemtakt | Founder 2026-07-06: „keine Atemübung“ | nur mit neuer Founder-Entscheidung |
+ | `ProUnlockView` | Kauf-Seite (StoreKit) | Preismodell v1.1 (Jahres-Abo) steht aus | erst mit v1.1 |
+-| `BroadcastView` | RTMP-Livestream | HaishinKit ist nicht verlinkt; eine Tür führte ins Leere. ⛔ **Broadcast S2 ist gesperrt:** das Einbinden von HaishinKit 2.2.5 als Swift-Paket in `project.yml` (für Build und TestFlight-Lauf) wurde am 2026-10-04 von der automatischen Sicherheitsprüfung zweimal abgelehnt („Untrusted Code Integration“). Kein Umweg; freischalten kann nur der Founder (Berechtigungsregel, interaktive Zustimmung oder selbst einbinden) | erst mit neuer Abhängigkeit, und erst nach Freigabe |
+ 
+ ### 2b. Versteckt, eine Ebene tiefer (der Wächter sieht sie NICHT)
+ 
+@@ -159,7 +159,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+ | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
+ | „Follow pulse“-Tempo (`BioTempoDirector`) | fertig, aber ein Zwilling des lebenden Servos | Entscheidung, welcher gilt |
+ | Raum-Render (7 Kerne: VBAP, Ambisonics, Binaural, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft; im Kopfhörer ist nichts räumlich | Audio-Anbindung — der kleinste hörbare Weg ist S3 (binauraler Kopfhörer-Ausgang), Plan in `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7 |
+-| Stream-Key in der Keychain (Broadcast S1) | gebaut, Build 2615 | eine Fläche — und die hängt an S2 (gesperrt, siehe 2a) |
+ | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
+ | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
+ | Mehrspur-Aufnahme | Kette gebaut, flag-aus | mehr als EINE Mikrofon-Spur zugleich — E10-1 nimmt genau eine auf |
+@@ -205,7 +204,7 @@ Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine
+ Video als musikalisches Material (Inbox E12) · ein hörbarer Raum im Kopfhörer (S3). Die Pläne dazu stehen in
+ `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
+ 
+-RTMP-Livestream · Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·
++Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·
+ Mac · Vision Pro. Video/KI-Video steht als Roadmap in `scratchpads/ROADMAP_VIDEO_AWB_AI_2026-09-23.md`.
+ 
+ ---
+diff --git a/docs/dev/FOUNDER_INBOX.md b/docs/dev/FOUNDER_INBOX.md
+index 057862248..d7bdd148c 100644
+--- a/docs/dev/FOUNDER_INBOX.md
++++ b/docs/dev/FOUNDER_INBOX.md
+@@ -116,6 +116,7 @@ kein Test im Repo kann sie schließen.
+ | G7 | **Eine Spur spielt ein Sample** (E13-1 — erst im Build NACH 10.79.491) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
+ | G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — erst im Build NACH 10.79.491) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
+ | G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
++| G10 | **Der Stream erreicht einen Server und einen Empfänger** (B2 — erst im Build NACH 10.79.491; ⚠️ öffentliches Senden NUR auf deinen ausdrücklichen Start) | Einen eigenen, privaten Test-Empfänger nehmen (z. B. einen RTMP-Server im Heimnetz oder einen „unlisted“-Kanal), NICHT einen öffentlichen Kanal. Licht-Kachel im Kopf → Routing → ganz unten Karte „Broadcast“ → URL und Stream-Key eintragen → Go Live. Ein Stück spielen, das Visual-Fenster offen lassen. Nach einer Minute WLAN kurz aus- und wieder einschalten. Stop. | Drei Stufen getrennt beantworten: (1) der Server nimmt den Stream an (Status „live“), (2) der Empfänger spielt Ton UND Bild, beide synchron, (3) nach dem WLAN-Aus verbindet er neu oder sagt in Worten, dass er abgebrochen hat. Der Key erscheint nirgends im Klartext. | Stufe 1 ja/nein · Stufe 2 ja/nein · Stufe 3 ja/nein + was |
+ 
+ **Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
+ die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
+@@ -201,7 +202,7 @@ offen liegt, steht hier EINMAL. Jede Zeile hat einen fertigen Patch oder eine Ei
+ | F11 | **Ableton Link** (Audit IO-11) — neue Abhängigkeit (LinkKit, frei, C++) | `Package.swift` + `project.yml`, vorher The Council | CLAUDE.md erlaubt C++ nur für eine freie, Council-geprüfte Bibliothek | [ ] offen |
+ | F12 | **Entitlements für Push und iCloud ohne Nutzer** (Audit SEC-5) — `aps-environment` und CloudKit sind deklariert, `AnnouncementCenter.cloudKitConfigured = false` | `Echoelmusic.entitlements` / `project.yml` | bis v1.1 entfernen, danach das Provisioning-Profil neu erzeugen | [ ] offen |
+ | F13 | **Store-Texte** (Audit MKT-2/MKT-4/shop-5) | `fastlane/metadata/**` | Workstation, AUv3, OSC-Eingang und MIDI-2.0-Ausgang nur mit den Einschränkungen aus `ContentPipeline/CLAIMS.md` bewerben; den BLE-Gurt als „am Gerät noch nicht geprüft“ kennzeichnen; im de-DE-Eintrag „Oberfläche auf Englisch“. Die Website ist seit 2026-10-03 entsprechend korrigiert | [ ] offen |
+-| F14 | **Broadcast S2 ist gesperrt — und zwar von der automatischen Sicherheitsprüfung dieser Sitzungen, nicht vom Repo.** Abgelehnt wurde am 2026-10-04 genau dieser Schritt, zweimal: HaishinKit 2.2.5 als Swift-Paket in `project.yml` aufnehmen (Paket-Eintrag + Produkt-Abhängigkeit am App-Target), um RTMP für Build und TestFlight zu verlinken. Begründung der Prüfung: „Untrusted Code Integration“. Was dafür schon steht: Stream-Key in der Keychain (Broadcast S1, Build 2615), `BroadcastPublisher` hinter `#if canImport(HaishinKit)`, `BroadcastView` türlos. TestFlight-Lauf 37188777769 (v10.79.490, ohne HaishinKit) ist davon unberührt | `project.yml` + Abhängigkeit | Nur der Founder kann es freigeben: das Paket selbst einbinden, oder in einer Sitzung ausdrücklich zustimmen bzw. eine Berechtigungsregel setzen. Bis dahin baut keine Sitzung einen Umweg (kein Vendoring, kein Kopieren des Quelltexts) | [ ] offen |
++| F14 | **Broadcast S2 ist gesperrt — und zwar von der automatischen Sicherheitsprüfung dieser Sitzungen, nicht vom Repo.** Abgelehnt wurde am 2026-10-04 genau dieser Schritt, zweimal: HaishinKit 2.2.5 als Swift-Paket in `project.yml` aufnehmen (Paket-Eintrag + Produkt-Abhängigkeit am App-Target), um RTMP für Build und TestFlight zu verlinken. Begründung der Prüfung: „Untrusted Code Integration“. Was dafür schon steht: Stream-Key in der Keychain (Broadcast S1, Build 2615), `BroadcastPublisher` hinter `#if canImport(HaishinKit)`, `BroadcastView` türlos. TestFlight-Lauf 37188777769 (v10.79.490, ohne HaishinKit) ist davon unberührt | `project.yml` + Abhängigkeit | Nur der Founder kann es freigeben: das Paket selbst einbinden, oder in einer Sitzung ausdrücklich zustimmen bzw. eine Berechtigungsregel setzen. Bis dahin baut keine Sitzung einen Umweg (kein Vendoring, kein Kopieren des Quelltexts) | [x] beantwortet 2026-10-04: Founder-Freigabe „BROADCAST AUSFÜHREN“ (HaishinKit inkl. RTMP/RTMPS-Produkte, `Package.swift`, `project.yml`, eng begrenzt Info.plist/CI). Umgesetzt als B2 — Pakete exakt gepinnt, Commit über den Freigabe-Dialog im Default-Modus, nicht über einen Umweg |
+ 
+ ---
+ 
+diff --git a/docs/faq.html b/docs/faq.html
+index f74252c61..93e4605d8 100644
+--- a/docs/faq.html
++++ b/docs/faq.html
+@@ -41,7 +41,7 @@
+     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+     <link rel="canonical" href="https://echoelmusic.com/faq.html">
+     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"FAQ","item":"https://echoelmusic.com/faq.html"}]}</script>
+-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Echoelmusic?","acceptedAnswer":{"@type":"Answer","text":"Echoelmusic is a bio-reactive generative music instrument that transforms your biometric signals (heart rate, HRV, breathing) into harmonic, melodic and rhythmic loops in real time, which you export as .wav or as a MIDI file (.mid) for your DAW. GPU bio-reactive visuals, Art-Net/sACN lighting output and a Workstation that arranges parts on tracks (note editor, .mid and audio import) ship today; video editing, audio recording and live broadcast are not part of it today. Coming to iPhone first, with iPad, Mac, Apple Watch, Apple TV and Vision Pro planned."}},{"@type":"Question","name":"Which features are available at launch?","acceptedAnswer":{"@type":"Answer","text":"At launch Echoelmusic is a bio-reactive music instrument: bio-reactive synthesis, generative composition of harmonic, melodic and rhythmic loops in any key and BPM, GPU/Metal bio-reactive visuals (flash-safe, in a movable floating window on the phone, full-screen on a connected display), Art-Net and sACN lighting output, export to .wav or .mid for Ableton, Logic and FL Studio, a Workstation that arranges parts on tracks with a note editor and .mid and audio import, MIDI input from an external controller plus MIDI note output to your rig, biometrics (HRV, heart rate, breath via HealthKit, Bluetooth straps like Polar H10, and camera rPPG), OSC and ADM-OSC sync, and coherence / self-observation. DMX-512 interfaces, projection mapping, on-device AI, spatial audio and Ableton Link are on the roadmap, not in the app today; video editing, audio recording and live streaming are not in the app today. See the Architecture page for exact current status."}},{"@type":"Question","name":"What makes it bio-reactive?","acceptedAnswer":{"@type":"Answer","text":"EchoelBio captures your biometrics — HRV, heart rate, breath, and coherence — and feeds them to the sound engine in real time. Your heart rate influences tempo, brightness and vibrato; coherence is the strongest single driver — brightness, filter cutoff, harmonic content, level and noise; HRV shifts brightness and overtone spread; breathing shapes the amplitude envelope."}},{"@type":"Question","name":"What are the EchoelTools?","acceptedAnswer":{"@type":"Answer","text":"Shipping today: EchoelSynth (bio-reactive synthesis), EchoelGen (generative composition), EchoelFX (effects), EchoelMIDI (MIDI 2.0-ready input), EchoelBio (biometrics), EchoelNet (OSC/ADM-OSC), EchoelVis (GPU bio-reactive visuals), EchoelLux (Art-Net + sACN lighting). Live as well: EchoelStage external-display output (USB-C/HDMI or AirPlay). On the roadmap: projection mapping and EchoelAI (on-device intelligence). Cut: EchoelMix (console/multitrack) and EchoelVid (video editing and video recording) — both were built and removed."}},{"@type":"Question","name":"Do I need special hardware?","acceptedAnswer":{"@type":"Answer","text":"For basic use, just your iPhone. Bio-reactive features work with the iPhone camera pulse (rPPG), an Apple Watch via Apple Health, or a Bluetooth heart-rate strap such as Polar H10 (any standard BLE heart-rate device works). Lighting rigs connect over Art-Net/sACN on your network; DMX-512 interfaces and smart-home lighting are on the roadmap."}},{"@type":"Question","name":"Which platforms are supported?","acceptedAnswer":{"@type":"Answer","text":"iOS 18 on iPhone at launch. iPad, Mac, Apple Watch, Apple TV and Vision Pro are planned; Android, Web PWA, Windows and Linux may follow later."}},{"@type":"Question","name":"What synthesis engines are included?","acceptedAnswer":{"@type":"Answer","text":"All synthesis is unified inside EchoelSynth — one tool with three voices: a DDSP harmonic-plus-noise core, a polyphonic pad/lead, and a dedicated sub-bass. Your biometrics compose harmonic and melodic material — pads, chords, leads and bass, with no drum layer and no sampler — rendered to .wav or exported as a MIDI file (.mid)."}},{"@type":"Question","name":"How many effects are there?","acceptedAnswer":{"@type":"Answer","text":"All effects are unified inside EchoelFX — one tool with a full range of effect types: filter, saturation, tape, bitcrush, chorus, flanger, phaser, tremolo, delay, reverb, stereo widener, compressor and limiter — all bio-modulatable. Zero external dependencies. Modelled analog compressors (VCA, Opto, FET, VariMu) are on the roadmap, not in the app."}},{"@type":"Question","name":"What visual modes are available?","acceptedAnswer":{"@type":"Answer","text":"GPU/Metal bio-reactive visuals ship today: four generative looks (Rings, Water, Aurora, Depth) driven live by heart rate, coherence and breath, and the picture is playable — touching it turns your fingers into notes quantized to the take's key and scale — in a movable floating window on the phone, or full-screen on a connected display (EchoelStage) for projection, flash-capped under 3 Hz and honouring Reduce Motion. Richer generative and AR worlds are the wider vision. Video recording, and video editing (NLE, ProRes, color grading), are not part of Echoelmusic — the editor was built and removed in July 2026, recording in September 2026."}},{"@type":"Question","name":"Can I control lights and lasers?","acceptedAnswer":{"@type":"Answer","text":"Yes — Art-Net and sACN (E1.31) lighting output ship today: your heartbeat can drive a stage or venue rig natively over open standards, no vendor SDK, with flash safety built in. Echoelmusic also speaks OSC and ADM-OSC live for TouchDesigner or Resolume. External displays ship today (EchoelStage: USB-C/HDMI or AirPlay). DMX-512 interfaces, smart-home lighting and projection mapping are on the roadmap."}},{"@type":"Question","name":"What AI features does Echoelmusic have?","acceptedAnswer":{"@type":"Answer","text":"On-device AI is on the roadmap, not in the app today. The vision for EchoelAI is entirely on-device via CoreML — AI stem separation to isolate vocals, bass and instruments, with no cloud and full privacy. In active development."}},{"@type":"Question","name":"Can I collaborate with others?","acceptedAnswer":{"@type":"Answer","text":"Yes — EchoelNet provides one-way OSC (Open Sound Control) output to DAWs, VJ software and custom applications, plus a virtual MIDI source (MIDI 1.0) that appears once you enable a MIDI route in the routing panel, with MPE output over it behind two routing switches. OSC control input ships too: a whitelist of /echoelmusic/ctrl/ cues (tempo while locked, key, scale, genre, visual look, blackout) plus ADM-OSC track positions (/adm/obj/n/) from a spatial controller, off by default. A full bidirectional OSC session and Ableton Link tempo sync are on the roadmap."}},{"@type":"Question","name":"Who owns what I create?","acceptedAnswer":{"@type":"Answer","text":"You do. 100%. Everything you create with Echoelmusic belongs entirely to you. No royalty claims, no usage restrictions."}},{"@type":"Question","name":"How much does Echoelmusic cost?","acceptedAnswer":{"@type":"Answer","text":"Version 1.0 is free in full — the whole instrument, no ads, no tracking, no account. Later versions may add optional paid tiers aimed at live and professional use."}},{"@type":"Question","name":"Is this a medical device?","acceptedAnswer":{"@type":"Answer","text":"No. Echoelmusic is a creative tool, not a medical device. Biofeedback features are for creative and self-observation purposes only."}},{"@type":"Question","name":"Is my data safe?","acceptedAnswer":{"@type":"Answer","text":"All biometric data is processed locally on your device. No accounts, no analytics, no tracking or advertising SDKs. Your device's own on-device Data Protection encrypts local storage."}},{"@type":"Question","name":"Is Echoelmusic accessible?","acceptedAnswer":{"@type":"Answer","text":"We build with accessibility in mind. Today the app provides VoiceOver labels on the primary controls, reduced-motion support, a dark high-contrast interface, and a 3 Hz visual-flash safety cap (WCAG epilepsy guidance). WCAG 2.2 AA is our target as the app grows; broader accessibility modes, color-vision options and more languages are planned, not in the app today. The app currently ships in English."}}]}</script>
++    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Echoelmusic?","acceptedAnswer":{"@type":"Answer","text":"Echoelmusic is a bio-reactive generative music instrument that transforms your biometric signals (heart rate, HRV, breathing) into harmonic, melodic and rhythmic loops in real time, which you export as .wav or as a MIDI file (.mid) for your DAW. GPU bio-reactive visuals, Art-Net/sACN lighting output and a Workstation that arranges parts on tracks (note editor, .mid and audio import) ship today; video editing and audio recording are not part of it today, and live broadcast is built and being tested. Coming to iPhone first, with iPad, Mac, Apple Watch, Apple TV and Vision Pro planned."}},{"@type":"Question","name":"Which features are available at launch?","acceptedAnswer":{"@type":"Answer","text":"At launch Echoelmusic is a bio-reactive music instrument: bio-reactive synthesis, generative composition of harmonic, melodic and rhythmic loops in any key and BPM, GPU/Metal bio-reactive visuals (flash-safe, in a movable floating window on the phone, full-screen on a connected display), Art-Net and sACN lighting output, export to .wav or .mid for Ableton, Logic and FL Studio, a Workstation that arranges parts on tracks with a note editor and .mid and audio import, MIDI input from an external controller plus MIDI note output to your rig, biometrics (HRV, heart rate, breath via HealthKit, Bluetooth straps like Polar H10, and camera rPPG), OSC and ADM-OSC sync, and coherence / self-observation. DMX-512 interfaces, projection mapping, on-device AI, spatial audio and Ableton Link are on the roadmap, not in the app today; video editing and audio recording are not in the app today, and live streaming is built and being tested. See the Architecture page for exact current status."}},{"@type":"Question","name":"What makes it bio-reactive?","acceptedAnswer":{"@type":"Answer","text":"EchoelBio captures your biometrics — HRV, heart rate, breath, and coherence — and feeds them to the sound engine in real time. Your heart rate influences tempo, brightness and vibrato; coherence is the strongest single driver — brightness, filter cutoff, harmonic content, level and noise; HRV shifts brightness and overtone spread; breathing shapes the amplitude envelope."}},{"@type":"Question","name":"What are the EchoelTools?","acceptedAnswer":{"@type":"Answer","text":"Shipping today: EchoelSynth (bio-reactive synthesis), EchoelGen (generative composition), EchoelFX (effects), EchoelMIDI (MIDI 2.0-ready input), EchoelBio (biometrics), EchoelNet (OSC/ADM-OSC), EchoelVis (GPU bio-reactive visuals), EchoelLux (Art-Net + sACN lighting). Live as well: EchoelStage external-display output (USB-C/HDMI or AirPlay). On the roadmap: projection mapping and EchoelAI (on-device intelligence). Cut: EchoelMix (console/multitrack) and EchoelVid (video editing and video recording) — both were built and removed."}},{"@type":"Question","name":"Do I need special hardware?","acceptedAnswer":{"@type":"Answer","text":"For basic use, just your iPhone. Bio-reactive features work with the iPhone camera pulse (rPPG), an Apple Watch via Apple Health, or a Bluetooth heart-rate strap such as Polar H10 (any standard BLE heart-rate device works). Lighting rigs connect over Art-Net/sACN on your network; DMX-512 interfaces and smart-home lighting are on the roadmap."}},{"@type":"Question","name":"Which platforms are supported?","acceptedAnswer":{"@type":"Answer","text":"iOS 18 on iPhone at launch. iPad, Mac, Apple Watch, Apple TV and Vision Pro are planned; Android, Web PWA, Windows and Linux may follow later."}},{"@type":"Question","name":"What synthesis engines are included?","acceptedAnswer":{"@type":"Answer","text":"All synthesis is unified inside EchoelSynth — one tool with three voices: a DDSP harmonic-plus-noise core, a polyphonic pad/lead, and a dedicated sub-bass. Your biometrics compose harmonic and melodic material — pads, chords, leads and bass, with no drum layer and no sampler — rendered to .wav or exported as a MIDI file (.mid)."}},{"@type":"Question","name":"How many effects are there?","acceptedAnswer":{"@type":"Answer","text":"All effects are unified inside EchoelFX — one tool with a full range of effect types: filter, saturation, tape, bitcrush, chorus, flanger, phaser, tremolo, delay, reverb, stereo widener, compressor and limiter — all bio-modulatable. No third-party DSP code. Modelled analog compressors (VCA, Opto, FET, VariMu) are on the roadmap, not in the app."}},{"@type":"Question","name":"What visual modes are available?","acceptedAnswer":{"@type":"Answer","text":"GPU/Metal bio-reactive visuals ship today: four generative looks (Rings, Water, Aurora, Depth) driven live by heart rate, coherence and breath, and the picture is playable — touching it turns your fingers into notes quantized to the take's key and scale — in a movable floating window on the phone, or full-screen on a connected display (EchoelStage) for projection, flash-capped under 3 Hz and honouring Reduce Motion. Richer generative and AR worlds are the wider vision. Video recording, and video editing (NLE, ProRes, color grading), are not part of Echoelmusic — the editor was built and removed in July 2026, recording in September 2026."}},{"@type":"Question","name":"Can I control lights and lasers?","acceptedAnswer":{"@type":"Answer","text":"Yes — Art-Net and sACN (E1.31) lighting output ship today: your heartbeat can drive a stage or venue rig natively over open standards, no vendor SDK, with flash safety built in. Echoelmusic also speaks OSC and ADM-OSC live for TouchDesigner or Resolume. External displays ship today (EchoelStage: USB-C/HDMI or AirPlay). DMX-512 interfaces, smart-home lighting and projection mapping are on the roadmap."}},{"@type":"Question","name":"What AI features does Echoelmusic have?","acceptedAnswer":{"@type":"Answer","text":"On-device AI is on the roadmap, not in the app today. The vision for EchoelAI is entirely on-device via CoreML — AI stem separation to isolate vocals, bass and instruments, with no cloud and full privacy. In active development."}},{"@type":"Question","name":"Can I collaborate with others?","acceptedAnswer":{"@type":"Answer","text":"Yes — EchoelNet provides one-way OSC (Open Sound Control) output to DAWs, VJ software and custom applications, plus a virtual MIDI source (MIDI 1.0) that appears once you enable a MIDI route in the routing panel, with MPE output over it behind two routing switches. OSC control input ships too: a whitelist of /echoelmusic/ctrl/ cues (tempo while locked, key, scale, genre, visual look, blackout) plus ADM-OSC track positions (/adm/obj/n/) from a spatial controller, off by default. A full bidirectional OSC session and Ableton Link tempo sync are on the roadmap."}},{"@type":"Question","name":"Who owns what I create?","acceptedAnswer":{"@type":"Answer","text":"You do. 100%. Everything you create with Echoelmusic belongs entirely to you. No royalty claims, no usage restrictions."}},{"@type":"Question","name":"How much does Echoelmusic cost?","acceptedAnswer":{"@type":"Answer","text":"Version 1.0 is free in full — the whole instrument, no ads, no tracking, no account. Later versions may add optional paid tiers aimed at live and professional use."}},{"@type":"Question","name":"Is this a medical device?","acceptedAnswer":{"@type":"Answer","text":"No. Echoelmusic is a creative tool, not a medical device. Biofeedback features are for creative and self-observation purposes only."}},{"@type":"Question","name":"Is my data safe?","acceptedAnswer":{"@type":"Answer","text":"All biometric data is processed locally on your device. No accounts, no analytics, no tracking or advertising SDKs. Your device's own on-device Data Protection encrypts local storage."}},{"@type":"Question","name":"Is Echoelmusic accessible?","acceptedAnswer":{"@type":"Answer","text":"We build with accessibility in mind. Today the app provides VoiceOver labels on the primary controls, reduced-motion support, a dark high-contrast interface, and a 3 Hz visual-flash safety cap (WCAG epilepsy guidance). WCAG 2.2 AA is our target as the app grows; broader accessibility modes, color-vision options and more languages are planned, not in the app today. The app currently ships in English."}}]}</script>
+     <link rel="stylesheet" href="shared.css?v=10.23.3">
+     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+@@ -91,11 +91,11 @@
+             <h2>General</h2>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">What is Echoelmusic?</div>
+-                <div class="faq-answer">Echoelmusic is a bio-reactive generative music instrument that transforms your biometric signals (heart rate, HRV, breathing) into harmonic, melodic and rhythmic loops in real time, which you export as .wav or as a MIDI file (.mid) for your DAW. GPU bio-reactive visuals, Art-Net/sACN lighting output and a Workstation that arranges parts on tracks (note editor, .mid and audio import) ship today; video editing, audio recording and live broadcast are not part of it today. Coming to iPhone first, with iPad, Mac, Apple Watch, Apple TV and Vision Pro planned.</div>
++                <div class="faq-answer">Echoelmusic is a bio-reactive generative music instrument that transforms your biometric signals (heart rate, HRV, breathing) into harmonic, melodic and rhythmic loops in real time, which you export as .wav or as a MIDI file (.mid) for your DAW. GPU bio-reactive visuals, Art-Net/sACN lighting output and a Workstation that arranges parts on tracks (note editor, .mid and audio import) ship today; video editing and audio recording are not part of it today, and live broadcast is built and being tested. Coming to iPhone first, with iPad, Mac, Apple Watch, Apple TV and Vision Pro planned.</div>
+             </div>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">Which features are available at launch?</div>
+-                <div class="faq-answer">At launch Echoelmusic is a bio-reactive <strong>music</strong> instrument: bio-reactive synthesis (EchoelSynth), generative composition of harmonic, melodic and rhythmic loops in any key and BPM (EchoelGen), GPU/Metal bio-reactive visuals in a movable floating window, or full-screen on a connected display (EchoelVis, flash-safe), Art-Net and sACN lighting output (EchoelLux), export to .wav or .mid for Ableton, Logic and FL Studio, a <strong>Workstation</strong> that arranges parts on tracks with a note editor and .mid and audio import (new, still being tested on devices), MIDI&nbsp;2.0-ready input from an external controller (EchoelMIDI), biometrics (EchoelBio &mdash; HRV, heart rate, breath via HealthKit, Bluetooth straps like Polar&nbsp;H10, and camera rPPG with a live control display), OSC and ADM-OSC sync (EchoelNet), and coherence / self-observation. DMX-512 interfaces, projection mapping, on-device AI, spatial audio and Ableton&nbsp;Link are on the roadmap, not in the app today. Video editing, multitrack audio recording and live streaming are <strong>not in the app today</strong>. Three different histories, not one: the video editor was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; multitrack audio recording was removed in September&nbsp;2026 with the audio input; live streaming was <strong>never built</strong> &mdash; the publisher is a compile-guarded scaffold and its library was never linked. The <a href="architecture.html">Architecture</a> page lists exact current status.</div>
++                <div class="faq-answer">At launch Echoelmusic is a bio-reactive <strong>music</strong> instrument: bio-reactive synthesis (EchoelSynth), generative composition of harmonic, melodic and rhythmic loops in any key and BPM (EchoelGen), GPU/Metal bio-reactive visuals in a movable floating window, or full-screen on a connected display (EchoelVis, flash-safe), Art-Net and sACN lighting output (EchoelLux), export to .wav or .mid for Ableton, Logic and FL Studio, a <strong>Workstation</strong> that arranges parts on tracks with a note editor and .mid and audio import (new, still being tested on devices), MIDI&nbsp;2.0-ready input from an external controller (EchoelMIDI), biometrics (EchoelBio &mdash; HRV, heart rate, breath via HealthKit, Bluetooth straps like Polar&nbsp;H10, and camera rPPG with a live control display), OSC and ADM-OSC sync (EchoelNet), and coherence / self-observation. DMX-512 interfaces, projection mapping, on-device AI, spatial audio and Ableton&nbsp;Link are on the roadmap, not in the app today. Video editing and multitrack audio recording are <strong>not in the app today</strong>, and live streaming is not yet confirmed on a device. Three different histories, not one: the video editor was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; multitrack audio recording was removed in September&nbsp;2026 with the audio input; live streaming was cut, then built in October&nbsp;2026 and is <strong>being tested</strong> &mdash; not yet confirmed on a device. The <a href="architecture.html">Architecture</a> page lists exact current status.</div>
+             </div>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">What makes it "bio-reactive"?</div>
+@@ -111,7 +111,7 @@
+             </div>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">What are the EchoelTools?</div>
+-                <div class="faq-answer">Echoelmusic's engines are organized into <strong>unified tools</strong>. Some ship today; the rest are the wider vision, in active development:<ul><li><strong>EchoelSynth</strong> — Bio-reactive synthesis: a DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass</li><li><strong>EchoelGen</strong> — Generative composition: harmonic, melodic &amp; rhythmic loops in any key and BPM</li><li><strong>EchoelFX</strong> — Filter, saturation, tape, bitcrush, chorus/flanger/phaser/tremolo, delay, reverb, widener, compressor, limiter (modelled analog compressors <span class="tag">Planned</span>)</li><li><strong>EchoelMIDI</strong> — MIDI 2.0-ready input (notes, pitch bend, Slide CC&nbsp;74, Press/channel pressure); virtual MIDI 1.0 out behind a routing switch, and MPE <em>output</em> behind two more. MPE <em>input</em> zones and Audio&rarr;MIDI <span class="tag">Planned</span></li><li><strong>EchoelBio</strong> — HRV, heart rate, breath &amp; LF/HF analysis (HealthKit, Bluetooth straps, camera rPPG)</li><li><strong>EchoelNet</strong> — OSC &amp; ADM-OSC immersive object output</li><li><strong>EchoelVis</strong> — GPU/Metal bio-reactive visuals: four generative looks, flash-safe, floating window on the phone, or full-screen on a connected display — and playable: touch it and your fingers become in-key notes</li><li><strong>EchoelLux</strong> — Art-Net + sACN lighting output over open standards (DMX-512 interfaces &amp; smart home <span class="tag">Planned</span>)</li><li><strong>EchoelMix</strong> <span class="tag">Cut</span> — a console mixer and multi-track recorder would make this a workstation; LUFS-aware mastering on export stays</li><li><strong>EchoelVid</strong> <span class="tag">Cut</span> — video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; RTMP was never built</li><li><strong>EchoelStage</strong> <span class="tag">Live</span> — External-display output ships today (USB-C/HDMI or AirPlay); projection mapping <span class="tag">Planned</span></li><li><strong>EchoelAI</strong> <span class="tag">Planned</span> — On-device CoreML intelligence &amp; AI stem separation</li></ul>Every tool talks to every other tool in real time.</div>
++                <div class="faq-answer">Echoelmusic's engines are organized into <strong>unified tools</strong>. Some ship today; the rest are the wider vision, in active development:<ul><li><strong>EchoelSynth</strong> — Bio-reactive synthesis: a DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass</li><li><strong>EchoelGen</strong> — Generative composition: harmonic, melodic &amp; rhythmic loops in any key and BPM</li><li><strong>EchoelFX</strong> — Filter, saturation, tape, bitcrush, chorus/flanger/phaser/tremolo, delay, reverb, widener, compressor, limiter (modelled analog compressors <span class="tag">Planned</span>)</li><li><strong>EchoelMIDI</strong> — MIDI 2.0-ready input (notes, pitch bend, Slide CC&nbsp;74, Press/channel pressure); virtual MIDI 1.0 out behind a routing switch, and MPE <em>output</em> behind two more. MPE <em>input</em> zones and Audio&rarr;MIDI <span class="tag">Planned</span></li><li><strong>EchoelBio</strong> — HRV, heart rate, breath &amp; LF/HF analysis (HealthKit, Bluetooth straps, camera rPPG)</li><li><strong>EchoelNet</strong> — OSC &amp; ADM-OSC immersive object output</li><li><strong>EchoelVis</strong> — GPU/Metal bio-reactive visuals: four generative looks, flash-safe, floating window on the phone, or full-screen on a connected display — and playable: touch it and your fingers become in-key notes</li><li><strong>EchoelLux</strong> — Art-Net + sACN lighting output over open standards (DMX-512 interfaces &amp; smart home <span class="tag">Planned</span>)</li><li><strong>EchoelMix</strong> <span class="tag">Cut</span> — a console mixer and multi-track recorder would make this a workstation; LUFS-aware mastering on export stays</li><li><strong>EchoelVid</strong> <span class="tag">Cut</span> — video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; RTMP streaming is built and being tested, not yet confirmed on a device</li><li><strong>EchoelStage</strong> <span class="tag">Live</span> — External-display output ships today (USB-C/HDMI or AirPlay); projection mapping <span class="tag">Planned</span></li><li><strong>EchoelAI</strong> <span class="tag">Planned</span> — On-device CoreML intelligence &amp; AI stem separation</li></ul>Every tool talks to every other tool in real time.</div>
+             </div>
+         </div>
+ 
+@@ -143,7 +143,7 @@
+             <h2>Effects &amp; DSP</h2>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">How many effects are there?</div>
+-                <div class="faq-answer">All effects are unified inside <strong>EchoelFX</strong> — one bio-reactive chain, built natively with zero external dependencies. Shipping today: <strong>reverb, tape-style delay, chorus, flanger, phaser, tremolo, saturation, bitcrush, stereo widener and filter</strong>, plus LoFi characters (Underwater, Telephone, Cassette, Vinyl, Dream, Megaphone) and a mastering stage (EQ &rarr; compressor &rarr; limiter with true-peak trim). Body signals can modulate FX parameters live. Every effect is a real DSP algorithm — nothing is a placeholder.</div>
++                <div class="faq-answer">All effects are unified inside <strong>EchoelFX</strong> — one bio-reactive chain, built natively with no third-party DSP code. Shipping today: <strong>reverb, tape-style delay, chorus, flanger, phaser, tremolo, saturation, bitcrush, stereo widener and filter</strong>, plus LoFi characters (Underwater, Telephone, Cassette, Vinyl, Dream, Megaphone) and a mastering stage (EQ &rarr; compressor &rarr; limiter with true-peak trim). Body signals can modulate FX parameters live. Every effect is a real DSP algorithm — nothing is a placeholder.</div>
+             </div>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">What analog-inspired processing is included?</div>
+@@ -203,7 +203,7 @@
+             </div>
+             <div class="faq-item">
+                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">Can I stream live?</div>
+-                <div class="faq-answer"><strong>Live streaming (RTMP) is not planned.</strong> It was scoped and cut &mdash; a broadcast stack is a second product. Today you create and export. For immersive and stage work, Echoelmusic already speaks open standards live — OSC, ADM-OSC (immersive audio objects), Art-Net and sACN (stage lighting) — so a performer's body can drive a TouchDesigner / Resolume / lighting rig in real time.</div>
++                <div class="faq-answer"><strong>Live streaming (RTMP / RTMPS) is built and being tested.</strong> Routing&nbsp;&rarr; Broadcast sends the master mix and the rendered visual to a streaming server you name; the stream key is kept in the Keychain, and no camera or microphone is used. It is not claimed until a server has accepted the stream and a receiver has played it on a device &mdash; until then, treat it as unconfirmed. For immersive and stage work, Echoelmusic already speaks open standards live — OSC, ADM-OSC (immersive audio objects), Art-Net and sACN (stage lighting) — so a performer's body can drive a TouchDesigner / Resolume / lighting rig in real time.</div>
+             </div>
+         </div>
+ 
+diff --git a/docs/index.html b/docs/index.html
+index 554b62ca3..67f5f8a19 100644
+--- a/docs/index.html
++++ b/docs/index.html
+@@ -101,7 +101,7 @@
+           "operatingSystem": "iOS 18.0",
+           "description": "Bio-reactive generative music instrument via physical computing and biofeedback. Your heartbeat, breath, HRV and coherence compose harmonic, melodic and rhythmic loops in any key and BPM, exported to .wav or as a MIDI file (.mid) for your DAW. Ships today: bio-reactive synthesis, generative composition, GPU bio-reactive visuals (flash-safe), Art-Net and sACN lighting output, MIDI note input and output, OSC, ADM-OSC. Also new, and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Video editing, audio recording and live broadcast are not part of it today.",
+           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/PreOrder"},
+-          "featureList": "Bio-reactive synthesis (heart rate, HRV, breath, coherence drive the sound), Generative composition of harmonic, melodic and rhythmic loops in any key and BPM, GPU/Metal bio-reactive visuals (four generative looks, flash-safe under 3 Hz), Art-Net and sACN lighting output, Export to .wav or .mid for Ableton, Logic and FL Studio, MIDI file export of the generated take, MIDI 2.0-ready input, Biometrics via HealthKit, Bluetooth heart-rate straps (Polar H10) and camera rPPG, OSC and ADM-OSC, Coherence and self-observation. MPE note output. Roadmap: MPE input zones, DMX-512 interfaces, Ableton Link, on-device AI. Not in the app today: video editing, audio recording, live streaming, AUv3 plugin hosting."
++          "featureList": "Bio-reactive synthesis (heart rate, HRV, breath, coherence drive the sound), Generative composition of harmonic, melodic and rhythmic loops in any key and BPM, GPU/Metal bio-reactive visuals (four generative looks, flash-safe under 3 Hz), Art-Net and sACN lighting output, Export to .wav or .mid for Ableton, Logic and FL Studio, MIDI file export of the generated take, MIDI 2.0-ready input, Biometrics via HealthKit, Bluetooth heart-rate straps (Polar H10) and camera rPPG, OSC and ADM-OSC, Coherence and self-observation. MPE note output. Roadmap: MPE input zones, DMX-512 interfaces, Ableton Link, on-device AI. Not in the app today: video editing, audio recording, AUv3 plugin hosting. Built and being tested: live streaming."
+         }
+       ]
+     }
+@@ -883,7 +883,7 @@
+                 <div class="persona-card">
+                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                     <h3>Filmmakers &amp; Artists</h3>
+-                    <p>Generative art from biology, driven live on device — projected, sent over Art-Net/sACN, or streamed as OSC to TouchDesigner or Resolume. Video recording and video editing were both built and removed in 2026; live streaming was never built.</p>
++                    <p>Generative art from biology, driven live on device — projected, sent over Art-Net/sACN, or streamed as OSC to TouchDesigner or Resolume. Video recording and video editing were both built and removed in 2026; live streaming is built and being tested.</p>
+                 </div>
+                 <div class="persona-card">
+                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+diff --git a/docs/integrations.html b/docs/integrations.html
+index 824ae518f..e985cb1bc 100644
+--- a/docs/integrations.html
++++ b/docs/integrations.html
+@@ -181,10 +181,10 @@
+              nothing: two `<h2>`s back to back, so a screen-reader user navigating by heading
+              landed on "What is not here" and found the next heading. The paragraph below is
+              the content that was written for it (motion, EEG, live streaming = the three
+-             things this page denies); the heading is moved to it rather than the copy being
++             things this page does not offer; streaming is built since Broadcast B2 but unconfirmed); the heading is moved to it rather than the copy being
+              rewritten. -->
+         <h2>What is not here</h2>
+-        <p>Motion and EEG addresses exist in the sender and are never sent. Live streaming was never built. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
++        <p>Motion and EEG addresses exist in the sender and are never sent. Live streaming (Routing&nbsp;&rarr; Broadcast) is built and being tested, and not described here until a device has confirmed it. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
+ 
+         <div class="contact-box">
+             <h3>Integrating Echoel into a rig?</h3>
+diff --git a/docs/overview.html b/docs/overview.html
+index f36607850..0f8b06cc5 100644
+--- a/docs/overview.html
++++ b/docs/overview.html
+@@ -165,7 +165,7 @@
+                     <div class="engine-item"><h3>EchoelNet</h3><p>OSC (EchoelSync) and ADM-OSC immersive object output, live today.</p></div>
+                     <div class="engine-item"><h3>EchoelMix <span class="tag">Cut</span></h3><p>The console and the multi-track audio recorder were removed. LUFS-aware mastering on export stays, and per-track level, pan, mute and solo now live in the Workstation.</p></div>
+                     <div class="engine-item"><h3>EchoelVis</h3><p>Metal GPU bio-visual live today — heartbeat drives the pulse, the sounding tone the hue (pitch transposed into the visible spectrum), breath the spread and coherence the sharpness &mdash; and the picture is playable: touch it and your fingers become notes, quantized to the take&rsquo;s key. Particles, Hilbert map, generative &amp; AR worlds are <span class="tag">Planned</span>.</p></div>
+-                    <div class="engine-item"><h3>EchoelVid <span class="tag">Cut</span></h3><p>Video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026; RTMP streaming was scoped and cut, never built. Nothing of it remains &mdash; the immersive visual is rendered live, never captured.</p></div>
++                    <div class="engine-item"><h3>EchoelVid <span class="tag">Cut</span></h3><p>Video editing was built and removed in July&nbsp;2026 and video recording in September&nbsp;2026. Nothing of it remains &mdash; the immersive visual is rendered live and never recorded to a file. RTMP streaming is separate: built and being tested, see Streaming.</p></div>
+                     <div class="engine-item"><h3>EchoelLux</h3><p>Native Art-Net and sACN lighting live today, flash-safe by design. DMX-512, HomeKit smart lighting and a cue system are <span class="tag">Planned</span>.</p></div>
+                     <div class="engine-item"><h3>EchoelStage <span class="tag">Live</span></h3><p>External displays ship today: a connected screen (USB-C / HDMI or AirPlay) shows the visual as its own stage while the phone stays the instrument. Projection mapping and multi-screen output are <span class="tag">Planned</span>.</p></div>
+                     <div class="engine-item"><h3>EchoelAI <span class="tag">Planned</span></h3><p>On-device CoreML, stem separation. Private, fast, no cloud.</p></div>
+@@ -243,7 +243,7 @@
+                 <div class="data-row"><div class="k">Visuals &amp; mapping</div><div class="v">At launch: Metal GPU bio-visual (heart rate to pulse, sounding tone to hue, breath to spread, coherence to sharpness), flash-safe. Also at launch: external-display output (USB-C / HDMI or AirPlay &mdash; the visual takes the connected screen as its own stage). Planned: richer 120&nbsp;fps modes, chroma key, projection mapping (warp + edge-blend), multi-screen, NDI &amp; Syphon video-out.</div></div>
+                 <div class="data-row"><div class="k">Lighting</div><div class="v">At launch: native Art-Net (UDP 6454) and sACN / E1.31 unicast, zero-dependency, with flash safety. Planned: DMX-512 over USB, HomeKit smart lighting, fixture profiles &amp; cue lists.</div></div>
+                 <div class="data-row"><div class="k">Networking &amp; sync</div><div class="v">At launch: OSC&nbsp;1.0 over UDP (EchoelSync) — 9 continuous bio addresses (heart rate, HRV, RMSSD, SDNN, pNN50, breath rate, breath phase, coherence, plus a real-body/demo provenance flag) and 4 discrete event addresses, default localhost:8000. OSC control input: a whitelist of /echoelmusic/ctrl/ cues plus ADM-OSC track positions, off by default. Planned: Ableton&nbsp;Link tempo/phase sync, a bidirectional OSC session.</div></div>
+-                <div class="data-row"><div class="k">Streaming</div><div class="v"><strong>Not planned.</strong> RTMP / RTMPS was scoped and cut &mdash; a broadcast stack is a second product. Echoelmusic goes out live over OSC, ADM-OSC, Art-Net and sACN instead.</div></div>
++                <div class="data-row"><div class="k">Streaming</div><div class="v"><strong>Built, being tested.</strong> RTMP / RTMPS sends the master mix and the rendered visual through HaishinKit&nbsp;2.2.5 (Routing&nbsp;&rarr; Broadcast). It is not claimed until a server has accepted the stream and a receiver has played it on a device. Echoelmusic also goes out live over OSC, ADM-OSC, Art-Net and sACN.</div></div>
+             </section>
+ 
+             <!-- PRIVACY -->
+diff --git a/docs/press.html b/docs/press.html
+index 89b197f74..98755751d 100644
+--- a/docs/press.html
++++ b/docs/press.html
+@@ -130,7 +130,7 @@
+                     <li>Open-standard stage I/O: OSC, ADM-OSC immersive objects, Art-Net and sACN lighting.</li>
+                     <li>Nearby session sharing between two iPhones (peer-to-peer, no server).</li>
+                 </ul>
+-                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
++                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026. Live broadcast over RTMP / RTMPS is built and being tested &mdash; not yet confirmed on a device, so not claimed. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
+             </div></div>
+         </div>
+ 
+diff --git a/docs/tools.html b/docs/tools.html
+index 18a1ec916..9bf62f0d4 100644
+--- a/docs/tools.html
++++ b/docs/tools.html
+@@ -173,7 +173,7 @@
+                 </div>
+                 <p class="tool-overview">Pick a genre and a key; your body composes in-key material and you shape it live in the patch editor &mdash; there is no note grid to draw in, on purpose. Forty-one curated genres across 57 scales — ten on the ambient/meditative shelf (Self-Observation, Deep Ambient, Drift, Contemplation, Vaporwave, Sci-Fi, Still Drone, Ambient Pulse, Glacial Field, Slow Bloom), thirteen techno, house and trance (Dub Techno, Acid Techno, Deep House, Deep Tech, Dark Minimal, Psy Prog House, Tech House, Minimal Techno, Detroit Techno, Uplifting Trance, Industrial Techno, Afro House, Dark Psy), plus Classical, Black Metal, Modal Jazz, Soul Ballad, Boom Bap, Electro Funk, Roots Reggae, Celtic Air, Andalusian Cadence, Nordic Fiddle, Balkan Modal, Gospel Choir, Lo-Fi Hip-Hop, Dub Echo, Slowed Goth Pop, Cumbia, Tango Marcato and Andean Highland &mdash; all harmonic layers, the starting basis for a professional production. Lock to a BPM for the studio, or stay sync-free for ambient self-observation.</p>
+                 <div class="capability-list">
+-                    <div class="capability"><h3>Synthesis engines</h3><p>A DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass &mdash; vDSP-accelerated, zero external dependencies. Design and save your own patches.</p></div>
++                    <div class="capability"><h3>Synthesis engines</h3><p>A DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass &mdash; vDSP-accelerated, no third-party DSP code. Design and save your own patches.</p></div>
+                     <div class="capability"><h3>Studio precision</h3><p>BPM and concert pitch (Kammerton, freely settable 380.00–500.00 Hz) to two decimals. Tempo-synced effects and LFOs in ms &middot; Hz &middot; samples, with dotted and triplet.</p></div>
+                     <div class="capability"><h3>Effect characters</h3><p>One-tap production colors &mdash; Underwater, Telephone, Cassette, Vinyl, Dream, Megaphone &mdash; or each genre&rsquo;s own signature space (dub delay, vapor chorus, psy roll). Clean resets to dry.</p></div>
+                     <div class="capability"><h3>Loops</h3><p>Cut to 1, 2, 4, 8, 16, 32 or 64 bars, sample-accurate. Tight grid or humanized &mdash; you decide.</p></div>
+@@ -234,7 +234,7 @@
+                     <h2>On the Roadmap <span class="tag">Planned</span></h2>
+                     <p class="tagline">Honest about what isn&rsquo;t here yet.</p>
+                 </div>
+-                <p class="tool-overview">Echoel&rsquo;s focus is sound and data &mdash; and today that already includes GPU bio-reactive <strong>visuals</strong> and <strong>Art-Net / sACN lighting output</strong>. DMX-512 interfaces, projection mapping and on-device AI are part of the wider vision but are <strong>not in the app today</strong> &mdash; stage output already ships: connect a screen over USB-C / HDMI or AirPlay and the visual takes it as its own stage while the phone stays the instrument &mdash; they arrive only when they meet the same on-device, no-lock-in bar. Video editing and live streaming (RTMP) are <strong>not planned at all</strong>: video editing was built and removed in July&nbsp;2026, and RTMP was never built &mdash; the publisher is a compile-guarded scaffold and HaishinKit is not a dependency.</p>
++                <p class="tool-overview">Echoel&rsquo;s focus is sound and data &mdash; and today that already includes GPU bio-reactive <strong>visuals</strong> and <strong>Art-Net / sACN lighting output</strong>. DMX-512 interfaces, projection mapping and on-device AI are part of the wider vision but are <strong>not in the app today</strong> &mdash; stage output already ships: connect a screen over USB-C / HDMI or AirPlay and the visual takes it as its own stage while the phone stays the instrument &mdash; they arrive only when they meet the same on-device, no-lock-in bar. Video editing is <strong>not planned at all</strong>: it was built and removed in July&nbsp;2026. Live streaming (RTMP) is built and <strong>being tested</strong> &mdash; the publisher runs on HaishinKit&nbsp;2.2.5, and it is not claimed until a server has accepted it and a receiver has played it on a device.</p>
+             </div>
+         </div>
+ 
+diff --git a/project.yml b/project.yml
+index e41e906ac..3442bd18b 100644
+--- a/project.yml
++++ b/project.yml
+@@ -66,6 +66,32 @@ settings:
+       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+       SWIFT_COMPILATION_MODE: "wholemodule"
+ 
++# =============================================================================
++# PACKAGES
++# =============================================================================
++# Broadcast B2 (founder release 2026-10-04, "HaishinKit einschließlich der RTMP/RTMPS-
++# Produkte", for this file and Package.swift). The FIRST external dependency this app links:
++# zero-deps was the default, not a law, and the product law says integrate, never rebuild,
++# specialist infrastructure such as an RTMP muxer and an H.264/AAC encoder pipeline.
++# · Pinned EXACTLY, not `from:` — a broadcast stack is not something to upgrade by surprise.
++#   2.2.5 is the release whose API `Stream/RTMPBroadcastEngine.swift` was written against.
++# · Licences: HaishinKit and Logboard are both BSD-3-Clause; acknowledged in
++#   `Sources/Echoelmusic/Resources/Acknowledgements.md`.
++# · Logboard is listed EXPLICITLY although HaishinKit already depends on it: the adapter
++#   imports it to silence the library's console log (it can print the stream key), and an
++#   import should name a dependency the project declares, not one it inherits. The URL is
++#   spelled exactly as in HaishinKit's own manifest so SwiftPM sees one identity, and 2.6.0
++#   sits inside HaishinKit's `2.6.0..<2.7.0` range.
++# · Only the HaishinKit and RTMPHaishinKit products are linked. SRT, MoQ and WebRTC (and the
++#   libsrt / libdatachannel binaries behind them) are NOT, so no SRT claim follows from this.
++packages:
++  HaishinKit:
++    url: https://github.com/HaishinKit/HaishinKit.swift.git
++    exactVersion: 2.2.5
++  Logboard:
++    url: https://github.com/shogo4405/Logboard.git
++    exactVersion: 2.6.0
++
+ # =============================================================================
+ # TARGETS
+ # =============================================================================
+@@ -230,6 +256,12 @@ targets:
+       # that path is the proven one in this project (build 1543+ ships the widget).
+       # No new App Store Connect record: an .appex ships INSIDE the host app.
+       - target: EchoelmusicAUv3
++      # Broadcast B2 — the RTMP engine behind `BroadcastEngineFactory`. Packages section above.
++      - package: HaishinKit
++        product: HaishinKit
++      - package: HaishinKit
++        product: RTMPHaishinKit
++      - package: Logboard
+     entitlements:
+       path: Echoelmusic.entitlements
+ 
+diff --git a/scratchpads/PLAN_BROADCAST_2026-10-04.md b/scratchpads/PLAN_BROADCAST_2026-10-04.md
+new file mode 100644
+index 000000000..77d04f6b3
+--- /dev/null
++++ b/scratchpads/PLAN_BROADCAST_2026-10-04.md
+@@ -0,0 +1,52 @@
++# Broadcast — RTMP / RTMPS (B1 · B2), Stand 2026-10-04
++
++Founder-Freigabe 2026-10-04 („BROADCAST AUSFÜHREN — KONKRETE FOUNDER-FREIGABE“): HaishinKit
++einschließlich der RTMP/RTMPS-Produkte, `Package.swift`, `project.yml` und Auflösungsdateien,
++eng begrenzt Info.plist/CI, Broadcast-Code, UI, Tests und Doku. Öffentliches Senden beginnt
++erst auf den ausdrücklichen Start des Founders.
++
++## Was gebaut ist
++
++| Scheibe | Inhalt | Stand |
++|---|---|---|
++| S1 | Stream-Key in der Keychain (`StreamKeyStore`) | Build 2615 |
++| B1 | Pipeline ohne Netz: `BroadcastMasterPump` (Master-Ring → 1024-Frame-Chunks), `BroadcastVideoTap` (gerendertes Visual, 1280 × 720 @ 30), `BroadcastTimebase` + `BroadcastStartGate` (ein T0 für Ton und Bild), `BroadcastSession` (Zustände, Wiederverbinden), Wächter mit Fake-Engine `TheBroadcastSendsTheMasterAndThePictureTogetherTests` | `main` = a17bce178 |
++| B2 | HaishinKit 2.2.5 (`HaishinKit` + `RTMPHaishinKit`) + Logboard 2.6.0, exakt gepinnt in `Package.swift` UND `project.yml`; `RTMPBroadcastEngine` (Adapter); Tür = Karte „Broadcast“ in Routing (NavigationLink-Push, kein neues Modal); `ThirdPartyNotices.txt` im Bundle | Zweig, Commit über den Freigabe-Dialog |
++
++## Pipeline
++
++Master-Mix NACH der letzten Stufe (der Ring, den auch `RetroCapture` liest) → Pump auf eigener
++Queue → `RTMPMediaSink.appendAudio` (ein nicht blockierendes `yield` in einen `AsyncStream`,
++Puffer 48 Chunks ≈ 1 s, ältester fällt bei Stau, gezählt) → EIN Verbraucher-Task je Spur →
++`RTMPStream.append`. Bild: der Visual-Renderer → `appendVideo` (Puffer 3 Bilder) →
++`CMSampleBuffer` auf der Host-Uhr. Beide Zeitstempel kommen aus demselben `mach_absolute_time`
++ab dem gemeinsamen T0. **Der Echtzeit-Audio-Callback wird nie berührt** — gelesen wird der
++Ring, nicht der Render-Thread. Keine Kamera (der rPPG-Pfad bleibt allein Besitzer), kein
++Mikrofon (die Aufnahme-Route bleibt E10-1).
++
++Logboards Konsolen-Appender ist stumm geschaltet, bevor eine Verbindung existiert: HaishinKit
++loggt unbehandelte Server-Antworten auf `.info`, und eine `onFCPublish`-Antwort wiederholt den
++Publish-Namen — also den Stream-Key.
++
++## Stufen — nie vermischen
++
++1. **kompiliert** — `Xcode Compile Check` + CI/CD `Build for Testing` auf dem B2-Commit.
++2. **Server nimmt an** — ein RTMP-Server bestätigt `publish` (Status „live“). Nur am Gerät.
++3. **Empfänger spielt ab** — Ton und Bild, synchron, auf einem zweiten Gerät. Nur am Gerät.
++
++Heute erreichbar ist in dieser Umgebung nur Stufe 1: kein Simulator, kein lokaler
++RTMP-Empfänger. Geräte-Bitte: `docs/dev/FOUNDER_INBOX.md` §2 G10. Bis Stufe 2 und 3 mit Datum
++stehen: kein Livestream-Versprechen in Store, Caption oder Presse (`ContentPipeline/CLAIMS.md`
++§5); die Website sagt „gebaut, wird getestet“.
++
++## Bekannte Grenzen (gesagt, nicht versteckt)
++
++- Stau ≥ ~1 s wirft Audio-Chunks ab; danach läuft der Ton dem Bild um die abgeworfene Menge
++  voraus (gezählt in `droppedAudioChunks`).
++- `.rtmp`/`.srt` im Patchbay bleiben `.roadmap`: die Route ist ein Datenfluss-Rand, der nichts
++  startet; der einzige Lebenszyklus-Besitzer ist Go Live / Stop der Seite (BLE-3).
++- SRT, WebRTC, NDI: nicht verlinkt.
++- Ein In-App-Lizenzbildschirm fehlt noch; der BSD-3-Text liegt als Datei im Bundle
++  (Folgescheibe).
++- `fastlane/metadata` erwähnt keinen Livestream und soll es bis Stufe 3 nicht tun —
++  founder-gated, nur berichtet.
