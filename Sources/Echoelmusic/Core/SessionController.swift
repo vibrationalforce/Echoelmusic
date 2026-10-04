@@ -20,9 +20,13 @@
 //  a replacing step: the step is refused, nothing is replaced, and the refusal says why in
 //  words — next to the row the player tapped.
 //
-//  ⚠️ SCOPE, stated so nobody reads more into it: this is step 1 of A1 — the save gate. Play and
-//  stop still run through `ProjectTransport` and the Studio's own functions; moving their
-//  ownership here is the next step (`scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §3 A1).
+//  ⚠️ SCOPE, stated so nobody reads more into it: this type owns the OPEN/SAVE half (step 1 the
+//  replacement gate, step 2 the song that cannot be saved, step 3 `WorkingCopyStatusView`). The
+//  PLAY/STOP half already has one owner and stays there — `ProjectTransport` derives the run state
+//  from the canonical flags and routes the ONE Stop and the head's resume. Step 4 FENCED it instead
+//  of moving it: `TheClockIsStartedAndStoppedAtNamedPlacesTests` lists every direct start/stop of
+//  the clock, so a second play/stop truth cannot appear unannounced. Moving it here would rename
+//  seven guarded call sites without changing a behaviour.
 //  ⚠️ LIMIT: while a save stays pending (storage full), Open and New piece stay refused. That
 //  is deliberate — the alternative is the silent loss this type exists to stop — and the way
 //  out is the one the banner already offers: free storage, then "Retry save".
