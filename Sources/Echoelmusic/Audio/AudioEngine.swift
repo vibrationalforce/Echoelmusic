@@ -13,29 +13,14 @@ public final class AudioEngine {
     // MARK: - Observed Properties
 
     var isRunning: Bool = false
-    // ⛔ `var spatialAudioEnabled: Bool = false` STOOD HERE AND WAS DELETED (#756). Measured
-    // across `Sources/` AND `Tests/`: exactly ONE occurrence, its own declaration. No reader,
-    // no writer, not persisted, no UserDefaults key, and no spatial code anywhere else in this
-    // file. It was not a switch that had lost its UI — it was a switch that never had one.
-    //
-    // ⚠️ DELETED RATHER THAN REGISTERED, and the difference matters here. The doorless
-    // surfaces this repo deliberately keeps (`ImmersiveStageView`, `BroadcastView`,
-    // `AudioLanePlayer`) are kept because something PERSISTED can still reach them, so cutting
-    // them turns "obviously absent" into "silently mute". Nothing persists this flag, so there
-    // is nothing to keep alive — what it did instead was MISDIRECT: Echoel really does have a
-    // spatial output, and it is nowhere near this class. It is `Sync/ADMOSCSender` streaming
-    // `/adm/obj/{n}/*` over the network — object POSITIONS, not a rendered binaural mix (⛔
-    // "with `DSP/BinauralPanner` for the cues" stood here and is false, #1379: that core has
-    // zero production callers, as do `VBAPPanner` and `AmbisonicsEncode`); the stage
-    // surface is `Studio/ImmersiveStageView`, doorless on purpose (ship-gate 4 makes
-    // light/space "demonstrable, not required for v1"). A plausible-looking hook on the audio
-    // engine invites the next session to wire in-engine spatial audio that duplicates a
-    // capability the app already ships somewhere else.
-    //
-    // ⚠️ NO GUARD PINS ITS ABSENCE, deliberately (#364). A test forbidding the name would
-    // forbid someone genuinely building in-engine spatial audio one day — which is legitimate
-    // work. This comment is the record; if the property comes back it should come back with a
-    // reader, a writer and a door, and this block should go with it.
+    // ⭐ IN-ENGINE SPATIAL AUDIO CAME BACK WITH S3c (2026-10-04), as `headphoneSpaceEnabled` in
+    // the "Headphone space" section further down — with a reader (`TimelineAudioSink`), a writer
+    // and a door (the Mixer stage's switch). ⛔ `var spatialAudioEnabled` stood here with none of
+    // the three and was deleted (#756); its tombstone asked that a returning flag bring all three
+    // and that the tombstone go with it. Both are done. What it said about the rest stays true:
+    // `VBAPPanner`, `AmbisonicsEncode` and `DSP/BinauralPanner` have no production caller — S3c
+    // renders through Apple's `AVAudioEnvironmentNode` HRTF, not those cores — and
+    // `Sync/ADMOSCSender` keeps streaming the same scene's object POSITIONS to an external rig.
     //
     // ⛔ AND `var inputMonitoringEnabled: Bool = false` STOOD ON THE VERY NEXT LINE AND IS
     // ALSO DELETED (#866) — a second tombstone in the same block on purpose, because until
@@ -2155,6 +2140,108 @@ public final class AudioEngine {
         masterEngine.detach(node)
         masterEngine.detach(timePitch)
         log.audio("Warpable clip player detached from master engine")
+    }
+
+    // MARK: - Headphone space (Restructure S3c)
+
+    /// S3c — audio tracks render through Apple's HRTF at their place in the piece's scene
+    /// (`HeadphoneSpace.point`), for headphones. Read by `TimelineAudioSink` when it attaches a
+    /// lane's nodes — i.e. at the next prime (Play, a relocate, a loop wrap), never mid-region,
+    /// because moving a node pauses the engine. The writer is the Mixer stage's
+    /// "Headphone space" switch (`PieceMixerView`). Persisted under ONE key (`StudioDefaultKeys`).
+    /// ⚠️ Only AUDIO tracks move: the generated voices (synth, bass, body voice) stay in the
+    /// stereo mix, and the door says so.
+    var headphoneSpaceEnabled: Bool =
+        UserDefaults.standard.object(forKey: StudioDefaultKeys.headphoneSpace.key) as? Bool
+            ?? StudioDefaultKeys.headphoneSpace.value {
+        didSet { UserDefaults.standard.set(headphoneSpaceEnabled, forKey: StudioDefaultKeys.headphoneSpace.key) }
+    }
+
+    /// The ONE environment node every space bus feeds. Attached on the first bus and never
+    /// detached — without inputs it renders silence, and keeping it avoids a second pause.
+    @ObservationIgnored private var spaceEnvironment: AVAudioEnvironmentNode?
+
+    /// Attach one lane's space bus: a MONO mixer (the environment node spatialises mono inputs
+    /// only) feeding the shared environment node, which feeds `masterMixer` in stereo. The lane
+    /// sets `position` on the returned bus; HRTF rendering is set here, once. Same
+    /// pause → attach → connect → restart pattern as the player attaches above. Returns nil when
+    /// the graph has no valid rate (the lane then plays in the stereo mix, as before S3c).
+    func attachSpaceBus() -> AVAudioMixerNode? {
+        logEngineLifecycle("graph: attach space bus (engine running: \(masterEngine.isRunning))")
+        prepareGraph()
+        let rate = masterMixer.outputFormat(forBus: 0).sampleRate
+        guard rate > 0,
+              let mono = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 1),
+              let stereo = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2) else {
+            log.audio("Space bus attach aborted — no valid format", level: .error)
+            return nil
+        }
+        let wasRunning = masterEngine.isRunning
+        if wasRunning { masterEngine.pause() }
+        let environment: AVAudioEnvironmentNode
+        if let existing = spaceEnvironment {
+            environment = existing
+        } else {
+            environment = AVAudioEnvironmentNode()
+            environment.outputType = .headphones
+            // Gentle distance: a source at the room's edge stays clearly audible. The listener
+            // sits at the origin facing −z, the convention `HeadphoneSpace` maps into.
+            environment.distanceAttenuationParameters.distanceAttenuationModel = .inverse
+            environment.distanceAttenuationParameters.referenceDistance = 1
+            environment.distanceAttenuationParameters.rolloffFactor = 0.5
+            masterEngine.attach(environment)
+            masterEngine.connect(environment, to: masterMixer, format: stereo)
+            spaceEnvironment = environment
+        }
+        let bus = AVAudioMixerNode()
+        masterEngine.attach(bus)
+        masterEngine.connect(bus, to: environment, fromBus: 0,
+                             toBus: environment.nextAvailableInputBus, format: mono)
+        bus.renderingAlgorithm = .HRTFHQ
+        if wasRunning {
+            armTimingInstrument()
+            restartOrDegrade(after: "space bus attach")   // #611: never a log-only catch
+        }
+        log.audio("Space bus attached (mono → HRTF environment → masterMixer)")
+        return bus
+    }
+
+    /// Detach one lane's space bus. The lane detaches its players FIRST, so nothing still
+    /// feeds the bus. Like the player detaches: disconnect + detach, no pause.
+    func detachSpaceBus(_ bus: AVAudioMixerNode) {
+        logEngineLifecycle("graph: detach space bus (engine running: \(masterEngine.isRunning))")
+        masterEngine.disconnectNodeOutput(bus)
+        masterEngine.detach(bus)
+        log.audio("Space bus detached")
+    }
+
+    /// Attach a lane player into its space bus instead of `masterMixer` — optionally through
+    /// the lane's time-pitch node (the warp/transpose chain). The bus converts rate and folds
+    /// the file's channels to mono; the lane's detach uses the ordinary `detachPlayerNode`
+    /// overloads, which only disconnect and detach.
+    func attachSpacePlayer(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch?,
+                           format: AVAudioFormat, bus: AVAudioMixerNode) {
+        logEngineLifecycle("graph: attach space player (engine running: \(masterEngine.isRunning))")
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            log.audio("Space player attach aborted — no valid format", level: .error)
+            return
+        }
+        prepareGraph()
+        let wasRunning = masterEngine.isRunning
+        if wasRunning { masterEngine.pause() }
+        masterEngine.attach(node)
+        if let timePitch {
+            masterEngine.attach(timePitch)
+            masterEngine.connect(node, to: timePitch, format: format)
+            masterEngine.connect(timePitch, to: bus, format: format)
+        } else {
+            masterEngine.connect(node, to: bus, format: format)
+        }
+        if wasRunning {
+            armTimingInstrument()
+            restartOrDegrade(after: "space player attach")   // #611: never a log-only catch
+        }
+        log.audio("Space player attached (player → space bus)")
     }
 
     // MARK: - Video audio capture (mux the mix into a visual recording)

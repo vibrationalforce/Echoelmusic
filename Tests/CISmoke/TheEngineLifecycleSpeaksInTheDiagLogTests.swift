@@ -340,6 +340,13 @@ final class TheEngineLifecycleSpeaksInTheDiagLogTests: XCTestCase {
              "logEngineLifecycle(\"graph: attach player node + time-pitch"),
             ("func detachPlayerNode(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch) {",
              "logEngineLifecycle(\"graph: detach player node + time-pitch"),
+            // S3c — the headphone space's three graph edits speak like their siblings.
+            ("func attachSpaceBus() -> AVAudioMixerNode? {",
+             "logEngineLifecycle(\"graph: attach space bus"),
+            ("func detachSpaceBus(_ bus: AVAudioMixerNode) {",
+             "logEngineLifecycle(\"graph: detach space bus"),
+            ("func attachSpacePlayer(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch?,",
+             "logEngineLifecycle(\"graph: attach space player"),
         ] {
             XCTAssertEqual(occurrences(of: fn, in: code), 1,
                            "`\(fn)` is no longer unique — re-anchor this claim (#408, §4).")

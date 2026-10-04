@@ -22212,6 +22212,54 @@
           }
         }
       }
+    },
+    "Headphone space" : {
+      "comment" : "Restructure S3c: the Headphone space switch at the head of the Mixer stage.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headphone space"
+          }
+        }
+      }
+    },
+    "Places the audio tracks around you on headphones, from the next start of playback" : {
+      "comment" : "Restructure S3c: the Headphone space switch at the head of the Mixer stage.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places the audio tracks around you on headphones, from the next start of playback"
+          }
+        }
+      }
+    },
+    "On: audio tracks sit at their place in the piece's space. Use headphones. Generated voices stay in the stereo mix. A change applies when playback starts." : {
+      "comment" : "Restructure S3c: the Headphone space switch at the head of the Mixer stage.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On: audio tracks sit at their place in the piece's space. Use headphones. Generated voices stay in the stereo mix. A change applies when playback starts."
+          }
+        }
+      }
+    },
+    "Off: every track plays in the stereo mix." : {
+      "comment" : "Restructure S3c: the Headphone space switch at the head of the Mixer stage.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off: every track plays in the stereo mix."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

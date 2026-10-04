@@ -29,11 +29,16 @@
 // gesture's fields only). The agent's `TrackMix.setLevel` stays outside that history; since B3c the
 // inspector, the track header and the Perform grid wrap their writes the same way
 // (`EveryHandMadeMixChangeIsOneUndoStepTests`).
+// ⭐ S3c — THE "Headphone space" SWITCH SITS AT THE HEAD OF THE MIXER: the one writer of
+// `AudioEngine.headphoneSpaceEnabled`. It is an app setting, not a step in the piece's undo — the
+// positions it renders ARE the piece's (its saved scene); the switch only says whether the
+// headphones hear them. Its sentence names both limits: audio tracks only, from the next start.
 
 import SwiftUI
 
 struct PieceMixerView: View {
     @Environment(TimelineStore.self) private var timeline
+    @Environment(AudioEngine.self) private var audioEngine
 
     /// `TimelineRegionPlayer.laneVoiceCapacity` — required, never defaulted (#431): the strip set
     /// depends on which MIDI tracks have a voice, and a forgotten call site must not assume one.
@@ -48,6 +53,7 @@ struct PieceMixerView: View {
         }
         let silent = document.lanes.count - strips.count
         VStack(alignment: .leading, spacing: 8) {
+            headphoneSpaceRow
             if strips.isEmpty {
                 Text("No track makes a sound yet. Add a track or write a part, and its strip appears here")
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.dim)
@@ -64,6 +70,31 @@ struct PieceMixerView: View {
         }
         .padding(.horizontal, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// S3c — the switch that puts the audio tracks at their place in the piece's space on
+    /// headphones. A cold read: a finger flips it, nothing writes it at audio rate.
+    private var headphoneSpaceRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: Binding(get: { audioEngine.headphoneSpaceEnabled },
+                                 set: { audioEngine.headphoneSpaceEnabled = $0 })) {
+                Text("Headphone space")
+                    .font(EchoelTheme.font(13, .semibold))
+                    .foregroundStyle(EchoelTheme.text)
+            }
+            .toggleStyle(.switch)
+            .tint(EchoelTheme.accent)
+            .frame(minHeight: 44)
+            .accessibilityHint("Places the audio tracks around you on headphones, from the next start of playback")
+            Text(audioEngine.headphoneSpaceEnabled
+                 ? String(localized: "On: audio tracks sit at their place in the piece's space. Use headphones. Generated voices stay in the stereo mix. A change applies when playback starts.")
+                 : String(localized: "Off: every track plays in the stereo mix."))
+                .font(EchoelTheme.font(11))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(8)
+        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
     /// One sounding track and the controls its engine honours (`TrackMix.controls`).

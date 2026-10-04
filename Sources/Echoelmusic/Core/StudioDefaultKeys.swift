@@ -650,4 +650,11 @@ public enum StudioDefaultKeys {
     /// is here for the KEY-STRING discipline and the founder-gated default, not because two
     /// views share it.
     public static let audioLatencyMode = StudioDefault(key: "audio.latencyMode", value: "normal")
+
+    /// Restructure S3c — audio tracks render at their place in the piece's scene through Apple's
+    /// HRTF, for headphones. OFF by default: a binaural cue played over a speaker is a filter, not
+    /// a place, and a fresh install cannot know what the player listens on. Read by ONE owner
+    /// (`AudioEngine.headphoneSpaceEnabled`); the writer is the Mixer stage's "Headphone space"
+    /// switch (`PieceMixerView`).
+    public static let headphoneSpace = StudioDefault(key: "audio.headphoneSpace", value: false)
 }

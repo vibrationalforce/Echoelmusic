@@ -11,9 +11,10 @@
 //  · SOURCE-TEXT SCAN (claim 5) — the app wiring reads the point from the piece's OWN scene
 //    (`SpatialSceneStore.object(forLane:)` + `scene.room`). `EchoelmusicApp` runs at launch
 //    and cannot be instantiated here.
-//  · DEVICE PROBE, OPEN AND NOT YET POSSIBLE — that the track is HEARD at that place. The
-//    device sink ignores the point until S3c places its nodes in an environment node; this
-//    guard pins the hand-over only.
+//  · DEVICE PROBE, OPEN — that the track is HEARD at that place. Since S3c the device sink
+//    renders the point while the Mixer's "Headphone space" switch is on (pinned by
+//    `TheAudioTracksSitInTheHeadphoneSpaceTests`); this guard pins the hand-over only. The
+//    ear test is G6 in `docs/dev/FOUNDER_INBOX.md`.
 //
 //  GRADING against the parent tree (#433/#464): the file does NOT compile there — it names
 //  `AudioRegionSink.setSpacePosition` and `AudioLanePlayer.spacePosition`, created by this

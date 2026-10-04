@@ -103,9 +103,14 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // the expected set is the three pause-before-mutate attaches plus the stranded-engine
         // restore. This is the REMOVED half of the message's own instruction, and it moved in
         // the same commit as the code — which is the whole point of a count pin.
-        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 4, """
-            The helper's call-site count changed (expected 4: source-node attach, clip-player \
-            attach, warpable-player attach, and the stranded-engine restore). If you ADDED a \
+        // ⭐ S3c (2026-10-04) — RAISED 4 → 6, the ADDED half of the same instruction: the
+        // headphone space attaches a lane's space bus and its players with the same
+        // pause → mutate → restart shape, and both restarts go through the helper. Claim 4
+        // moves by the same two.
+        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 6, """
+            The helper's call-site count changed (expected 6: source-node attach, clip-player \
+            attach, warpable-player attach, space-bus attach, space-player attach, and the \
+            stranded-engine restore). If you ADDED a \
             pause/mutate/restart site, route it through \
             `restartOrDegrade` and raise this count in the same commit. If you REMOVED one, \
             lower it. A site that restarts on its own re-opens the #611 silence.
@@ -139,9 +144,11 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // one this message itself describes, a new pause-before-mutate site — claim 3 MUST
         // move too, and a reader obeying the old wording literally raises this to 4, leaves
         // claim 3 at 5 and ships a red. Decoupling them was as wrong as equating them.
-        XCTAssertEqual(occurrences(of: "if wasRunning { masterEngine.pause() }", in: code), 3, """
-            The pause-before-mutate site count changed (expected 3: source-node attach, \
-            clip-player attach, warpable-player attach). This is the premise that makes \
+        // ⭐ S3c — RAISED 3 → 5 with claim 3: the space-bus and space-player attaches pause too.
+        XCTAssertEqual(occurrences(of: "if wasRunning { masterEngine.pause() }", in: code), 5, """
+            The pause-before-mutate site count changed (expected 5: source-node attach, \
+            clip-player attach, warpable-player attach, space-bus attach, space-player \
+            attach). This is the premise that makes \
             `restartOrDegrade` load-bearing. If a site was added or removed, update this \
             count and make sure any NEW site's restart goes through the helper. These two \
             counts differ by ONE: a new pause-before-mutate site raises BOTH; a helper \

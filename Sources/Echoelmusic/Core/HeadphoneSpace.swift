@@ -15,11 +15,11 @@
 //  Foundation-only and pure: S3b converts `Point` to `AVAudio3DPoint` at the one place that
 //  sets a player node's position, on the control plane, never in a render block.
 //
-//  ⚠️ SCOPE: this is preparation. S3b hands the point to each audio lane's sink
-//  (`AudioRegionSink.setSpacePosition`); S3c places it in an environment node, S3d is the door.
-//  The plan and the device proof are in `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7.6.
-//  Until S3c ships, no headphone output renders a position — do not cite this file as a
-//  working binaural output.
+//  ⚠️ SCOPE: S3b hands the point to each audio lane's sink (`AudioRegionSink.setSpacePosition`);
+//  since S3c `TimelineAudioSink` sets it on a mono HRTF bus feeding `AudioEngine`'s environment
+//  node — but ONLY while the Mixer's "Headphone space" switch is on (default OFF), and only for
+//  AUDIO tracks; the generated voices stay in the stereo mix. Hearing it is a device probe
+//  (G6 in `docs/dev/FOUNDER_INBOX.md`), still open. Plan: `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7.6.
 //
 //  Public because the point crosses the public `AudioRegionSink` protocol.
 //

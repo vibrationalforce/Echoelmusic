@@ -47,6 +47,11 @@
 // because it plays on the plain node. The chain's own delay is not compensated.
 // Honest limits (documented, later cycles): per-clip fades from the audio
 // editor are not consumed on the timeline yet (audit A5).
+// Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
+// node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
+// at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
+// time only — `preload` rebuilds the lane's nodes when it changed, because moving a node
+// pauses the engine. The lane's pan has no effect inside the space: its position replaces it.
 
 #if canImport(AVFoundation)
 import AVFoundation
@@ -87,6 +92,21 @@ final class TimelineAudioSink: AudioRegionSink {
     private var pan: Float = 0
     /// #165: this lane's pitch in whole semitones, set by `AudioLanePlayer.start` before `play`.
     private var transposeSemitones = 0
+    /// S3c: the mode the attached nodes were built for, the lane's space bus (only while that
+    /// mode is on), and the last point the coordinator handed over — kept so a bus attached
+    /// LATER (first preload, a rebuild) starts at the lane's place, not at the listener.
+    private var wiredInSpace = false
+    private var spaceBus: AVAudioMixerNode?
+    private var spacePoint: HeadphoneSpace.Point?
+
+    func setSpacePosition(_ point: HeadphoneSpace.Point) {
+        spacePoint = point
+        if let spaceBus { place(spaceBus, at: point) }
+    }
+
+    private func place(_ bus: AVAudioMixerNode, at point: HeadphoneSpace.Point) {
+        bus.position = AVAudio3DPoint(x: point.x, y: point.y, z: point.z)
+    }
 
     func setTranspose(_ semitones: Int) {
         transposeSemitones = AudioTranspose.clamped(semitones)
@@ -136,6 +156,12 @@ final class TimelineAudioSink: AudioRegionSink {
     /// PERF-01: the coordinator now preloads EVERY distinct URL a lane will
     /// play, so every needed format has its node before the song runs.
     func preload(url: URL, warped: Bool) {
+        // S3c: prime time is the one place the lane may change mode — the transport is parked
+        // or wrapping, so the attach pause lands where a region starts anyway.
+        if let engine, engine.headphoneSpaceEnabled != wiredInSpace {
+            releaseNodes()
+            wiredInSpace = engine.headphoneSpaceEnabled
+        }
         if let key = knownURLs[url], nodes[key] != nil,
            !warped || warpChains[key] != nil { return }   // wrap re-prime: no-op
         guard ensureLoaded(url) != nil else { return }
@@ -319,20 +345,44 @@ final class TimelineAudioSink: AudioRegionSink {
     /// Release every engine node (lane removed). Detach mutates the graph without
     /// pausing (disconnect+detach only) — permitted for removal.
     func detach() {
+        releaseNodes()
+        beatsBuffers.removeAll()
+        beatsInFlight.removeAll()
+        urlFormats.removeAll()
+        file = nil
+    }
+
+    /// Detach every node this lane attached — players first, then the space bus they fed — and
+    /// forget their formats, so the next `ensureLoaded` attaches afresh in the current mode.
+    /// Rendered Beats windows survive: they are in the FILE's format, not the node's.
+    private func releaseNodes() {
         stop()
         if let engine {
             for node in nodes.values { engine.detachPlayerNode(node) }
             for chain in warpChains.values {
                 engine.detachPlayerNode(chain.player, timePitch: chain.timePitch)
             }
+            if let spaceBus { engine.detachSpaceBus(spaceBus) }
         }
         nodes.removeAll()
         warpChains.removeAll()
         knownURLs.removeAll()
-        beatsBuffers.removeAll()
-        beatsInFlight.removeAll()
-        urlFormats.removeAll()
-        file = nil
+        spaceBus = nil
+    }
+
+    /// S3c: the lane's space bus, attached on first need and placed at the last point handed
+    /// over. nil outside the space, or when the engine has no valid rate — the lane then plays
+    /// in the stereo mix, as before S3c, rather than not at all.
+    // NEEDS-FOUNDER-VERIFY (S3c, G6): headphones on, Mixer → "Headphone space" on, a piece with
+    // two audio tracks — they sound from different places, and from the same places after the
+    // piece is reopened. The distance roll-off (reference 1 m, rolloff 0.5) is an estimate.
+    private func spaceBusIfWired() -> AVAudioMixerNode? {
+        guard wiredInSpace, let engine else { return nil }
+        if let spaceBus { return spaceBus }
+        guard let bus = engine.attachSpaceBus() else { return nil }
+        if let spacePoint { place(bus, at: spacePoint) }
+        spaceBus = bus
+        return bus
     }
 
     /// Open `url` if it isn't the loaded file, and return the ATTACHED node for
@@ -367,7 +417,11 @@ final class TimelineAudioSink: AudioRegionSink {
         urlFormats[url] = format
         if let existing = nodes[key] { return existing }
         let node = AVAudioPlayerNode()
-        engine.attachPlayerNode(node, format: format)
+        if let bus = spaceBusIfWired() {
+            engine.attachSpacePlayer(node, timePitch: nil, format: format, bus: bus)
+        } else {
+            engine.attachPlayerNode(node, format: format)
+        }
         node.volume = gain
         node.pan = pan
         nodes[key] = node
@@ -387,7 +441,11 @@ final class TimelineAudioSink: AudioRegionSink {
         guard let engine, let file else { return nil }
         let player = AVAudioPlayerNode()
         let timePitch = AVAudioUnitTimePitch()
-        engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat)
+        if let bus = spaceBusIfWired() {
+            engine.attachSpacePlayer(player, timePitch: timePitch, format: file.processingFormat, bus: bus)
+        } else {
+            engine.attachPlayerNode(player, through: timePitch, format: file.processingFormat)
+        }
         player.volume = gain
         player.pan = pan
         let chain = (player: player, timePitch: timePitch)
