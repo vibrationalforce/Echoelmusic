@@ -17,6 +17,9 @@
 // wrong comment in this repo, because it cannot be falsified by re-measuring a number.
 // The `Bool` is unchanged and a caller may still escalate; the store no longer depends
 // on one doing so.
+// ⭐ Since Restructure A1 step 3 (2026-10-04) two callers DO read it: `TimelineStore` and
+// `ClipStore` record the outcome, and `WorkingCopyStatusView` shows a failed working copy.
+// The "ZERO" counts here and below are the #514 measurement, kept as history.
 
 import Foundation
 

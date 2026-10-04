@@ -7,6 +7,9 @@
 // `Sources/` there are **12** `store.save(…)` call sites and **ZERO** look at the `Bool`
 // (ten rely on `@discardableResult`, two write `_ =` explicitly). The delegation was to
 // nobody, and the sentence made an unchosen silence read as a decision somebody had made.
+// ⭐ That count is the #514 measurement, kept as history: since Restructure A1 step 3
+// (2026-10-04) `TimelineStore` and `ClipStore` read the `Bool` and raise
+// `WorkingCopyStatusView` (`AWorkingCopyThatCannotBeWrittenSaysSoTests`).
 //
 // ⭐ WHY IT IS WORSE THAN THE READ CASE rather than merely symmetrical. A failed read falls
 // back to an empty document, which the user SEES immediately. A failed write leaves the

@@ -22381,18 +22381,6 @@
         }
       }
     },
-    "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes. Write again, or free some storage." : {
-      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes. Write again, or free some storage."
-          }
-        }
-      }
-    },
     "Write again" : {
       "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
       "extractionState" : "manual",
@@ -22497,6 +22485,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth."
+          }
+        }
+      }
+    },
+    "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes." : {
+      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes."
+          }
+        }
+      }
+    },
+    "Writing again did not help. Undo your last change, since one of its values may not be storable, or free some storage. Then write again." : {
+      "comment" : "Working-copy notice, after a retry that failed: the two ways out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing again did not help. Undo your last change, since one of its values may not be storable, or free some storage. Then write again."
           }
         }
       }
