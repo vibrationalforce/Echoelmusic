@@ -20,9 +20,16 @@
 // ⚠️ WHAT IS NOT HERE, AND WHY — so nobody reads it as forgotten:
 // · Recording a video with the camera: #1304 removed video capture (founder 2026-09-12) and the
 //   rear camera is the pulse source. Import only.
-// · The video's SOUND as a beat or sampler source: not built. The integration point is named in
-//   `scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §3.4 (AVAssetReader → `Media/Audio` →
-//   `AudioImport.commit`); the card says in words whether the file has sound, and claims no more.
+// · ⭐ The video's SOUND is no longer in this list (E12-1, founder 2026-10-04: „Beats aus Samples
+//   und Video als musikalisches Material gehören bereits zum DMMW-Ziel"). "Use Its Sound" exports the
+//   sound track (`VideoSound`) and hands the file to the Workstation's ONE import door
+//   (`useSound`, owned by `WorkstationView`), so it lands as a part on the first audio track and in
+//   the library, with the same tempo and key analysis as a file from Files. ⛔ It used to say "not
+//   built" here and "The sound is not used yet." on screen. What is STILL not here: the sound is
+//   not cut to the picture's length, and it is not a sampler source by itself — a Sampler track
+//   picks it from the library like any other file (E13-1, `TrackSampleRow`).
+//   ⚠️ The copy of a video WITH sound is kept until its sound is used, a newer video is picked, or
+//   the card goes away (`discardSoundSource`); every other copy is removed right after the read.
 // · Trimming the clip and placing it in the song: the bar count is shown, the arrangement slice
 //   (MS4/MV3) does the placing. Nothing here claims it.
 
@@ -33,9 +40,12 @@ import CoreTransferable
 import UniformTypeIdentifiers
 
 /// A picked video, copied out of the picker's short-lived file so it outlives the callback.
-/// The copy lives in the temporary directory and is removed after the read.
+/// The copy lives in the temporary directory and is removed after the read — or, for a video with
+/// sound, once its sound is used or the card lets it go (E12-1).
 struct PickedVideoFile: Transferable {
     let url: URL
+    /// The picked file's own name without its extension — the sound file is named after it.
+    let name: String
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(importedContentType: .movie) { received in
@@ -44,9 +54,17 @@ struct PickedVideoFile: Transferable {
                 .appendingPathComponent("echoel-video-\(UUID().uuidString)")
                 .appendingPathExtension(ext)
             try FileManager.default.copyItem(at: received.file, to: copy)
-            return PickedVideoFile(url: copy)
+            return PickedVideoFile(url: copy, name: received.file.deletingPathExtension().lastPathComponent)
         }
     }
+}
+
+/// What the Workstation's import answered for a video's sound (E12-1): whether it landed, and the
+/// sentence the import door wrote — shown on the card, because the card is not where the
+/// Workstation's own note line sits.
+struct VideoSoundLanding: Equatable {
+    let placed: Bool
+    let note: String
 }
 
 /// The words the card shows, pure so the blocking bundle can drive them.
@@ -93,10 +111,30 @@ enum VideoSeedText {
         return head + String(localized: " of 4/4 at ") + "\(Int(bpm.rounded()))" + " BPM"
     }
 
-    /// Whether the file carries sound — and that it is not used yet.
-    static func sound(_ hasAudio: Bool) -> String {
-        hasAudio ? String(localized: "It has sound. The sound is not used yet.") : String(localized: "No sound.")
+    /// What the card can do with the video's sound right now (E12-1).
+    enum SoundState: Equatable {
+        /// The video has no sound track.
+        case none
+        /// It has sound and the card still holds the video: "Use Its Sound" is offered.
+        case usable
+        /// Its sound was placed in the piece from this card.
+        case placed
+        /// It has sound, but the card let the video go (it was hidden): pick it again.
+        case released
     }
+
+    /// The sound line, one sentence per state — never a promise the card cannot keep.
+    static func sound(_ state: SoundState) -> String {
+        switch state {
+        case .none:     return String(localized: "No sound.")
+        case .usable:   return String(localized: "It has sound. Use Its Sound places it as a part on the first audio track.")
+        case .placed:   return String(localized: "Its sound is in the piece and in your library.")
+        case .released: return String(localized: "It has sound. Choose the video again to use it.")
+        }
+    }
+
+    static var extractingSound: String { String(localized: "Reading the sound…") }
+    static var soundUnreadable: String { String(localized: "This video's sound could not be read.") }
 
     /// The four lines of "now → with this video", named as the Visual panel names its fields.
     static func changes(from before: VisualLookSnapshot, to after: VisualLookSnapshot) -> [String] {
@@ -120,6 +158,10 @@ struct VideoSeedCard: View {
     /// Read ONLY in `load`, never in `body` — the tempo glides at ~20 Hz.
     @Environment(BeatPlayer.self) private var beatPlayer
 
+    /// E12-1 — the Workstation's import door, handed in by the view that owns it. The card never
+    /// names `AudioImport`: one door means one caller of the transaction.
+    let useSound: @MainActor (URL) -> VideoSoundLanding
+
     @State private var isOpen = false
     @State private var item: PhotosPickerItem?
     @State private var phase: Phase = .empty
@@ -127,6 +169,11 @@ struct VideoSeedCard: View {
     @State private var appliedHere = false
     @State private var loadTask: Task<Void, Never>?
     @State private var appliedCount = 0
+    /// E12-1 — the copy of a video with sound, kept so "Use Its Sound" can read it.
+    @State private var soundSource: PickedVideoFile?
+    @State private var soundPlaced = false
+    @State private var soundNote: String?
+    @State private var soundTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -137,6 +184,12 @@ struct VideoSeedCard: View {
         .onDisappear {
             loadTask?.cancel()
             MediaLookUndo.shared.showVideo(nil)
+            // E12-1: a hidden card holds no video on disk. Clearing the selection lets the same
+            // video be picked again, which is what the "released" sound line asks for.
+            soundTask?.cancel()
+            soundTask = nil
+            discardSoundSource()
+            item = nil
         }
     }
 
@@ -244,7 +297,7 @@ struct VideoSeedCard: View {
             Text(String(localized: "Brightness") + " " + PhotoSeedText.percent(seed.brightness))
             let hueLine: String = String(localized: "Main colour: hue ") + "\(Int((seed.hue * 360).rounded()) % 360)" + "°"
             Text(seed.hasDominantColour ? hueLine : String(localized: "No main colour"))
-            Text(VideoSeedText.sound(read.hasAudioTrack))
+            Text(VideoSeedText.sound(soundState(read)))
         }
         .font(EchoelTheme.font(13))
         .foregroundStyle(EchoelTheme.text)
@@ -280,6 +333,67 @@ struct VideoSeedCard: View {
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        if soundState(read) == .usable { soundButton }
+        if let soundNote {
+            Text(soundNote)
+                .font(EchoelTheme.font(13))
+                .foregroundStyle(EchoelTheme.text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// The sound line's state for the video on screen.
+    private func soundState(_ read: VideoSeedReader.Read) -> VideoSeedText.SoundState {
+        guard read.hasAudioTrack else { return .none }
+        if soundPlaced { return .placed }
+        return soundSource == nil ? .released : .usable
+    }
+
+    private var soundButton: some View {
+        Button {
+            useItsSound()
+        } label: {
+            MediaActionLabel(title: "Use Its Sound", systemImage: "waveform")
+        }
+        .buttonStyle(.plain)
+        .disabled(soundTask != nil)
+        .accessibilityLabel("Use its sound")
+        .accessibilityHint("Places the video's sound as a part on the first audio track and adds it to your library")
+    }
+
+    /// E12-1 — export the kept video's sound, hand the file to the Workstation's import, remove
+    /// the export. The export runs in THIS task (`VideoSound.extract` is nonisolated async, so it
+    /// leaves the main actor); the import is the Workstation's, on the main actor, as from Files.
+    private func useItsSound() {
+        guard let source = soundSource, soundTask == nil else { return }
+        soundNote = VideoSeedText.extractingSound
+        let base = VideoSound.soundFileBase(videoName: source.name)
+        soundTask = Task {
+            let extracted = await VideoSound.extract(from: source.url, named: base)
+            if Task.isCancelled {
+                if let extracted { VideoSound.discard(extracted) }
+                return
+            }
+            guard let extracted else {
+                soundNote = VideoSeedText.soundUnreadable
+                soundTask = nil
+                return
+            }
+            let landing = useSound(extracted)
+            VideoSound.discard(extracted)
+            soundNote = landing.note
+            if landing.placed {
+                soundPlaced = true
+                discardSoundSource()
+            }
+            soundTask = nil
+        }
+    }
+
+    /// Removes the kept video copy, if any.
+    private func discardSoundSource() {
+        if let source = soundSource { try? FileManager.default.removeItem(at: source.url) }
+        soundSource = nil
     }
 
     private func applyButton(_ read: VideoSeedReader.Read, bpm: Double, undo: MediaLookUndo) -> some View {
@@ -320,16 +434,32 @@ struct VideoSeedCard: View {
         appliedHere = false
         phase = .reading
         MediaLookUndo.shared.showVideo(nil)
+        // E12-1: the older video's sound goes with it. A running export of it is cancelled and
+        // removes its own file.
+        soundTask?.cancel()
+        soundTask = nil
+        discardSoundSource()
+        soundPlaced = false
+        soundNote = nil
         let bpm = beatPlayer.pattern.tempo
         loadTask = Task {
             var read: VideoSeedReader.Read?
+            var kept: PickedVideoFile?
             if let file = try? await picked.loadTransferable(type: PickedVideoFile.self) {
                 read = await VideoSeedReader.read(url: file.url)
-                try? FileManager.default.removeItem(at: file.url)
+                // E12-1: a video with sound keeps its copy for "Use Its Sound"; every other copy
+                // goes now. No suspension between this check and the one below, so a kept copy
+                // is never one a newer pick cancelled.
+                if read?.hasAudioTrack == true, !Task.isCancelled {
+                    kept = file
+                } else {
+                    try? FileManager.default.removeItem(at: file.url)
+                }
             }
             guard !Task.isCancelled else { return }
             if let read {
                 phase = .ready(read, VisualLookSnapshot.read(from: .standard), bpm: bpm)
+                soundSource = kept
                 // Offered to the agent only while the card is OPEN: a read that finishes after the
                 // person collapsed the card must not re-publish a picture nobody sees (review
                 // repair 2e). Opening the card again offers it (`header`).

@@ -931,8 +931,10 @@ struct WorkstationView: View {
             #endif
             // MV2: the same for a short video — brightness, colour and picture change shape the
             // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
+            // E12-1: its sound lands through THIS view's import (`useVideoSound`), so there is
+            // still one import door.
             #if canImport(PhotosUI) && canImport(AVFoundation)
-            VideoSeedCard()
+            VideoSeedCard(useSound: useVideoSound)
             #endif
         }
     }
@@ -1434,42 +1436,63 @@ struct WorkstationView: View {
             importNote = AudioImport.Failure.pickerFailed.userMessage
         case .success(let urls):
             guard let url = urls.first else { return }
-            #if canImport(AVFoundation)
-            // `preflightTempo` is the tempo the Play predicate already judges this song at —
-            // `@ObservationIgnored`, mirrored from `PatternEngine`, and read in a tap handler
-            // rather than in `body`. The placement needs a tempo to turn the file's measured
-            // seconds into whole bars; it does NOT estimate the file's own tempo (decision 7).
-            switch AudioImport.perform(pickedURL: url,
-                                       clipStore: clipStore,
-                                       timeline: timeline,
-                                       assets: mediaAssets,
-                                       bpm: player.preflightTempo) {
-            case .success(let landing):
-                let laneName = timeline.document.lanes
-                    .first { $0.id == landing.laneID }?.name ?? String(localized: "the audio track")
-                importNote = AudioImport.successNote(landing, laneName: laneName)
-                learnContentDigest(of: landing)
-                // ⚠️ THE URL COMES FROM THE TRANSACTION, NOT FROM A SECOND LOOKUP. A first
-                // draft asked `MediaLibrary.resolveRef(landing.clip.mediaRef)` here, which
-                // `TheWorkstationImportsAudioTests` forbids — and the guard was right on the
-                // merits, not only on the spelling: `resolveRef` runs up to five
-                // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
-                // held the managed copy, so it reports it.
-                // MA2 — a reused clip that already knows its tempo is not analysed again: the
-                // never-clobber adoption would refuse the result anyway, and meanwhile its
-                // tempo row would read "measuring…" and lock (review of 7b691faf8).
-                if !(landing.reusedLibraryFile && landing.clip.nativeBPM > 0) {
-                    tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
-                    measuringClip = landing.clip.id
-                }
-            case .failure(let failure):
-                importNote = failure.userMessage
-            }
-            #else
-            importNote = AudioImport.Failure.unreadableAudio.userMessage
-            #endif
+            importAudioFile(url)
         }
     }
+
+    /// One audio file through the one import door — a file from Files, or (E12-1) the sound of a
+    /// video the video card exported. Writes `importNote` either way and answers whether the
+    /// file landed, so the card can say so where the person is looking.
+    @discardableResult
+    private func importAudioFile(_ url: URL) -> Bool {
+        #if canImport(AVFoundation)
+        // `preflightTempo` is the tempo the Play predicate already judges this song at —
+        // `@ObservationIgnored`, mirrored from `PatternEngine`, and read in a tap handler
+        // rather than in `body`. The placement needs a tempo to turn the file's measured
+        // seconds into whole bars; it does NOT estimate the file's own tempo (decision 7).
+        switch AudioImport.perform(pickedURL: url,
+                                   clipStore: clipStore,
+                                   timeline: timeline,
+                                   assets: mediaAssets,
+                                   bpm: player.preflightTempo) {
+        case .success(let landing):
+            let laneName = timeline.document.lanes
+                .first { $0.id == landing.laneID }?.name ?? String(localized: "the audio track")
+            importNote = AudioImport.successNote(landing, laneName: laneName)
+            learnContentDigest(of: landing)
+            // ⚠️ THE URL COMES FROM THE TRANSACTION, NOT FROM A SECOND LOOKUP. A first
+            // draft asked `MediaLibrary.resolveRef(landing.clip.mediaRef)` here, which
+            // `TheWorkstationImportsAudioTests` forbids — and the guard was right on the
+            // merits, not only on the spelling: `resolveRef` runs up to five
+            // `fileExists` probes, and this is the MAIN ACTOR. `AudioImport` already
+            // held the managed copy, so it reports it.
+            // MA2 — a reused clip that already knows its tempo is not analysed again: the
+            // never-clobber adoption would refuse the result anyway, and meanwhile its
+            // tempo row would read "measuring…" and lock (review of 7b691faf8).
+            if !(landing.reusedLibraryFile && landing.clip.nativeBPM > 0) {
+                tuningPending = AnalysisRequest(url: landing.managedURL, clipID: landing.clip.id)
+                measuringClip = landing.clip.id
+            }
+            return true
+        case .failure(let failure):
+            importNote = failure.userMessage
+            return false
+        }
+        #else
+        importNote = AudioImport.Failure.unreadableAudio.userMessage
+        return false
+        #endif
+    }
+
+    #if canImport(PhotosUI) && canImport(AVFoundation)
+    /// E12-1 — the video card's "Use Its Sound". The card exported the sound to a temporary file;
+    /// it lands exactly as a file from Files does (same placement, library copy, tempo and key
+    /// analysis), and the card shows the same sentence this view's note line would.
+    private func useVideoSound(_ file: URL) -> VideoSoundLanding {
+        let placed = importAudioFile(file)
+        return VideoSoundLanding(placed: placed, note: importNote ?? "")
+    }
+    #endif
 
     #if canImport(AVFoundation)
     /// MA4.4 — the content evidence of a record THIS landing created: its SHA-256, streamed in

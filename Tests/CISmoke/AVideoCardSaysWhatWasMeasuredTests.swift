@@ -15,6 +15,12 @@
 // red for its named reason: the tempo read moved into `body` (claim 2), a detached read that a new
 // pick cannot cancel (claim 2), the temporary copy never removed (claim 2), a second mount
 // (claim 3), a sound claim beyond "not used yet" (claim 1).
+//
+// E12-1 (founder 2026-10-04) changed claim 1's sound line and claims 2–3's counts ON PURPOSE: the
+// founder made video sound musical material, so "not used yet" is no longer the truth to pin. The
+// new state words are pinned instead, the action count is 3 → 4 ("Use Its Sound"), and the mount
+// passes the Workstation's import (`VideoSeedCard(useSound: useVideoSound)`). What the sound path
+// itself must keep — one import door, no picture encoded — is `AVideoGivesItsSoundToTheOneImportDoorTests`.
 
 import Foundation
 import XCTest
@@ -47,9 +53,18 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
                        "8 s at 120 BPM is four 2-second bars, and the text says at which tempo")
         XCTAssertEqual(VideoSeedText.bars(seed(duration: 1), bpm: 120), "About 1 bar of 4/4 at 120 BPM")
         XCTAssertEqual(VideoSeedText.bars(seed(), bpm: .nan), "Length in bars: unknown")
-        XCTAssertEqual(VideoSeedText.sound(true), "It has sound. The sound is not used yet.",
-                       "the sound is reported, never offered — the beat source is not built")
-        XCTAssertEqual(VideoSeedText.sound(false), "No sound.")
+        // E12-1 (founder 2026-10-04: video is musical material): the sound line follows what the
+        // card can DO with the sound now. ⛔ It said "The sound is not used yet." while the beat
+        // source was not built; that premise is gone with "Use Its Sound", so the words moved.
+        XCTAssertEqual(VideoSeedText.sound(.none), "No sound.")
+        XCTAssertEqual(VideoSeedText.sound(.usable),
+                       "It has sound. Use Its Sound places it as a part on the first audio track.",
+                       "the offer names the button and where the sound lands")
+        XCTAssertEqual(VideoSeedText.sound(.placed), "Its sound is in the piece and in your library.")
+        XCTAssertEqual(VideoSeedText.sound(.released), "It has sound. Choose the video again to use it.",
+                       "a card that let the video go says how to get it back, never offers a dead button")
+        XCTAssertFalse(VideoSeedText.sound(.usable).lowercased().contains("beat"),
+                       "COUNTERWEIGHT: the sound is a part on an audio track, not a beat — nothing slices it")
         XCTAssertTrue(VideoSeedText.unreadable.contains("10 minutes"),
                       "the limit is named from `VideoSeedAnalysis.maxDurationSeconds`, not restated")
         XCTAssertFalse(VideoSeedText.unreadable.lowercased().contains("error"))
@@ -93,7 +108,8 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
                                     "every action — the picker included — carries a spoken name")
         XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the header)")
         // Same shared face as the photo card — see APhotoIsReadSmallAndOffTheStageTests claim 3.
-        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 3)
+        // E12-1: Choose · Apply · Undo · Use Its Sound.
+        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 4)
         XCTAssertFalse(card.contains("func actionLabel("), "the isolated helper is the compile error")
         XCTAssertTrue(try code("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
             .contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the actions)")
@@ -103,7 +119,8 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
 
     func testTheWorkstationMountsTheVideoCardOnce() throws {
         let workstation = try code("Sources/Echoelmusic/Studio/WorkstationView.swift")
-        XCTAssertEqual(workstation.components(separatedBy: "VideoSeedCard()").count - 1, 1)
+        XCTAssertEqual(workstation.components(separatedBy: "VideoSeedCard(useSound: useVideoSound)").count - 1, 1)
+        XCTAssertEqual(workstation.components(separatedBy: "VideoSeedCard(").count - 1, 1, "one mount")
         XCTAssertEqual(workstation.components(separatedBy: "PhotoSeedCard()").count - 1, 1)
         for owned in ["PhotosPicker", "MediaLookUndo", "VideoSeedReader"] {
             XCTAssertFalse(workstation.contains(owned), "the Workstation reaches into the card's `\(owned)`")

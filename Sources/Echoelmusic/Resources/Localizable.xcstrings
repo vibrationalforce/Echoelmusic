@@ -13983,22 +13983,108 @@
         }
       }
     },
-    "It has sound. The sound is not used yet." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "It has sound. The sound is not used yet."
-          }
-        }
-      }
-    },
     "No sound." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No sound."
+          }
+        }
+      }
+    },
+    "It has sound. Use Its Sound places it as a part on the first audio track." : {
+      "comment" : "Video card sound line: the video has sound and the card offers to place it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It has sound. Use Its Sound places it as a part on the first audio track."
+          }
+        }
+      }
+    },
+    "Its sound is in the piece and in your library." : {
+      "comment" : "Video card sound line: the video's sound was placed from this card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Its sound is in the piece and in your library."
+          }
+        }
+      }
+    },
+    "It has sound. Choose the video again to use it." : {
+      "comment" : "Video card sound line: the card let the video go; picking it again brings the offer back.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It has sound. Choose the video again to use it."
+          }
+        }
+      }
+    },
+    "Reading the sound…" : {
+      "comment" : "Video card: the video's sound track is being exported.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the sound…"
+          }
+        }
+      }
+    },
+    "This video's sound could not be read." : {
+      "comment" : "Video card: exporting the video's sound track failed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This video's sound could not be read."
+          }
+        }
+      }
+    },
+    "Use Its Sound" : {
+      "comment" : "Video card button: place the video's sound as a part on the first audio track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Its Sound"
+          }
+        }
+      }
+    },
+    "Use its sound" : {
+      "comment" : "Video card button, spoken label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use its sound"
+          }
+        }
+      }
+    },
+    "Places the video's sound as a part on the first audio track and adds it to your library" : {
+      "comment" : "Video card button hint for Use Its Sound.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places the video's sound as a part on the first audio track and adds it to your library"
           }
         }
       }
