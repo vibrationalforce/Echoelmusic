@@ -22284,6 +22284,90 @@
           }
         }
       }
+    },
+    "Space" : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space"
+          }
+        }
+      }
+    },
+    "Direction" : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direction"
+          }
+        }
+      }
+    },
+    "Distance" : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        }
+      }
+    },
+    "0 in front, 90 left, −90 right, 180 behind" : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 in front, 90 left, −90 right, 180 behind"
+          }
+        }
+      }
+    },
+    "0 at your head, 1 at the edge of the room" : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 at your head, 1 at the edge of the room"
+          }
+        }
+      }
+    },
+    "Heard on headphones while Headphone space is on, and sent to an ADM-OSC rig." : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heard on headphones while Headphone space is on, and sent to an ADM-OSC rig."
+          }
+        }
+      }
+    },
+    "Sent to an ADM-OSC rig. On headphones a generated voice stays in the stereo mix." : {
+      "comment" : "Restructure S3d: the track's place in the piece's space, on the Track page of the inspector.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent to an ADM-OSC rig. On headphones a generated voice stays in the stereo mix."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -106,4 +106,16 @@ public final class SpatialSceneStore {
     public func object(forLane laneID: UUID) -> SpatialObject? {
         scene.object(id: laneID.uuidString)
     }
+
+    /// Restructure S3d — the place `rebuild` gives this lane when the scene does not know it yet:
+    /// the same `ImmersiveObjectDefaults` inputs (instrument, index and count among the object
+    /// lanes), so the inspector's "Default" and a fresh rebuild can never disagree (#416).
+    /// nil for a lane that is not an object (a bio lane, or one not in `lanes`).
+    public static func defaultPosition(forLane laneID: UUID, in lanes: [TimelineLane]) -> SpatialPosition? {
+        let objectLanes = Self.objectLanes(lanes)
+        guard let index = objectLanes.firstIndex(where: { $0.id == laneID }) else { return nil }
+        return ImmersiveObjectDefaults.defaultPosition(
+            for: objectLanes[index].builtinInstrument ?? .polySynth,
+            laneIndex: index, laneCount: objectLanes.count)
+    }
 }

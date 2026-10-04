@@ -660,6 +660,11 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                             standard: Double(TimelineLane.defaultPan),
                             onCommit: { timeline.commitLaneMix(id: laneID) })
                     }
+                    // Restructure S3d — the track's place in the piece's space (its own leaf: the
+                    // scene can move at a controller's rate). Bio tracks are no object and get none.
+                    if !lane.isBio {
+                        TrackSpaceRows(laneID: laneID, isAudio: lane.kind == .audio)
+                    }
                     // WA4 path 6 — Mute and Solo moved to the track HEADER (`WorkstationView.laneRow`):
                     // one control per fact on screen, reachable without opening this inspector.
                     // S4b — the record arm and an audio track's Pitch (each gated by itself).

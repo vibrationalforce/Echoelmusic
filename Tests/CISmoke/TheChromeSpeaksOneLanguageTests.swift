@@ -603,6 +603,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/LearnView.swift",
             "Sources/Echoelmusic/Studio/MasterStripView.swift",
             "Sources/Echoelmusic/Studio/SoundBrowserView.swift",
+            "Sources/Echoelmusic/Studio/TrackSpaceRows.swift",
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 
