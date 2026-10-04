@@ -165,6 +165,37 @@ Sizes in meters (1…200 wall, 1…60 height), `decayTime` seconds (0.1…30),
   which object is `/adm/obj/1`. Additive optional field (a legacy sender omits it →
   receiver applies add/remove/change only, the pre-order behavior); no major bump.
 
+### ImmersiveMasterPlan (export, not a wire message)
+
+Not sent between peers — it is the file-side companion of the scene (ADR-007, Spatial S-A1).
+It says which channel of an immersive master is what, so the stem capture, the export folder
+and the ADM BWF writer read one answer. Source: `Sources/Echoelmusic/Core/ImmersiveMasterPlan.swift`.
+
+```json
+{
+  "version": 1,
+  "programmeName": "Night piece",
+  "channels": [
+    { "trackIndex": 1, "role": { "bed": { "channel": "M+030" } }, "name": "Generated voices M+030" },
+    { "trackIndex": 2, "role": { "bed": { "channel": "M-030" } }, "name": "Generated voices M-030" },
+    { "trackIndex": 3, "role": { "object": {} }, "name": "Drums loop",
+      "laneID": "…", "position": { "azimuth": 90, "elevation": 20, "distance": 0.5 } }
+  ]
+}
+```
+
+- `trackIndex` is the BW64 `chna` order, contiguous from 1. The bed comes first, then one
+  object per **audio** track in song order. Bio lanes and MIDI lanes are never objects.
+- `role` is `object`, `bed` (a BS.2051 label; v1 knows `M+030` and `M-030`, the 0+2+0 pack
+  `AP_00010002`) or `lfe` (not emitted in v1).
+- A bed channel carries no `laneID` and no `position`.
+- The format is 48 kHz / 24-bit PCM, ADM declared as `ITU-R_BS.2076-2`.
+- The plan is a pure function of the piece (no clock, no random): the same piece encodes to
+  the same bytes with sorted keys.
+- `programmeName` is never empty and never `Atmos_Master` (ADR-007 F-E).
+- Bump `version` only with an update of this section. Guard:
+  `Tests/CISmoke/TheImmersiveMasterPlanFollowsTheRecordTests.swift`.
+
 ## Versioning rules
 
 - **Major** (`v` in envelope, `version` in scene): breaking change — new

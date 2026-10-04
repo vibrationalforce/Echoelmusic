@@ -1,6 +1,6 @@
 # ADR-007 — Immersive-Master-Format
 
-- **Status:** **Proposed** — wartet auf Gate R (Founder beantwortet F-A … F-E unten). Kein Code vor der Antwort.
+- **Status:** **Accepted** (2026-10-04) für F-A … F-D. Der Founder hat am 2026-10-04 alle Entscheidungen übertragen („Du machst und entscheidest alles“); entschieden wurde jeweils nach der Empfehlung der Tabelle unten. **F-E bleibt offen**: Es betrifft Außenkommunikation und wird erst mit einem Dolby-Profil relevant.
 - **Datum:** 2026-10-04
 - **Kontext:** Founder-Prompt „SPATIAL MIX SOVEREIGNTY v1.0“, Phase R. Belege: `docs/research/SPATIAL_MIX_RESEARCH.md` (R1–R4, R6, L3). CLAUDE.md überstimmt diesen Text bei jedem Konflikt.
 - **Nummer:** 007, weil ADR-001…006 in `docs/SPATIAL_EXPANSION_AUDIT.md` §3/§6.8 vergeben sind.
@@ -65,7 +65,19 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
   - Generierte Stimmen sind nur ein Stereo-Bett, nicht positionierbar.
   - Das Dolby-Profil verlangt für ein „Atmos_Master“ Bedingungen, die wir v1 nicht erfüllen: unter anderem `audioProgrammeName == "Atmos_Master"`, laut Drittquellen kartesische Objekte, und eigene Bett-Kanalformate.
 
-## Fragen an den Founder (Gate R)
+## Entscheidung zu Gate R (2026-10-04)
+
+| # | Entschieden | Folge |
+|---|---|---|
+| F-A | **Generisches ITU/EBU-ADM zuerst.** Ein Dolby-Profil-Schalter kommt erst nach einem Studio-Ingest | `programmeName` ist nie `Atmos_Master` (`ImmersiveMasterPlan.sanitizedProgrammeName`) |
+| F-B | **Generierte Stimmen als Stereo-Bett** `AP_00010002` | `ImmersiveMasterPlan` stellt das Bett vor die Objekte |
+| F-C | **48 kHz / 24 bit** für den Immersive-Master, der Stereo-Export bleibt 44,1 kHz | Konstanten im Plan, gepinnt |
+| F-D | **Zuerst der Ordner** (S-A1 … S-A4), ADM BWF danach (S-A5) | S-A1 ist gebaut |
+| F-E | **offen.** Keine Anfrage an Jurist oder Dolby ohne Founder | — |
+
+S-A1 (`Core/ImmersiveMasterPlan.swift`, Wächter `TheImmersiveMasterPlanFollowsTheRecordTests`): gebaut, nicht verdrahtet, nicht am Gerät.
+
+## Fragen an den Founder (Gate R) — die ursprüngliche Vorlage
 
 | # | Frage | Empfehlung | Warum es deine Entscheidung ist |
 |---|---|---|---|

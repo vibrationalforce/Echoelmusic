@@ -1,6 +1,6 @@
 # ADR-008 — Stem-Capture-Strategie: Echtzeit-Mitschnitt vs. deterministische Offline-Neuberechnung
 
-- **Status:** **Proposed** — wartet auf Gate R (Founder beantwortet G-A … G-D). Kein Code vor der Antwort.
+- **Status:** **Accepted** (2026-10-04) für G-A … G-C, nach der Empfehlung der Tabelle unten. Der Founder hat alle Entscheidungen übertragen („Du machst und entscheidest alles“). **G-D bleibt offen**, weil es Gerätezeit des Founders ist. S-A3 beginnt erst, wenn S-A1 und S-A2 grün sind.
 - **Datum:** 2026-10-04
 - **Kontext:** Founder-Prompt „SPATIAL MIX SOVEREIGNTY v1.0“, L2 R5 / L5 S-A3. Belege: `docs/research/SPATIAL_MIX_RESEARCH.md` §5. CLAUDE.md überstimmt.
 
@@ -77,7 +77,14 @@ Jede der folgenden Ursachen allein bricht die Bit-Gleichheit:
   - Speicherbedarf auf der Platte: 16 Stems sind ≈ 8,3 GB/h.
   - **Laut Apple ist ein Tap-Block keine Echtzeit-Garantie.** Ob ein langsamer Schreiber Puffer verliert, ist offen. Der Ring muss das messen und melden, nie still verlieren.
 
-## Fragen an den Founder (Gate R)
+## Entscheidung zu Gate R (2026-10-04)
+
+- **G-A:** (A) Echtzeit-Mitschnitt ist der einzige Weg für v1. (B) wird erst nach W2 neu bewertet.
+- **G-B:** Stems **mit** Spur-Effekten, **ohne** Master-Kette, Limiter und HRTF.
+- **G-C:** Jede generierte Stimme wird ein eigener Stem. Für den ADM-Master v1 werden sie zum Stereo-Bett summiert (ADR-007 F-B).
+- **G-D:** offen (Gerät und Stück wählt der Founder).
+
+## Fragen an den Founder (Gate R) — die ursprüngliche Vorlage
 
 | # | Frage | Empfehlung | Warum es deine Entscheidung ist |
 |---|---|---|---|

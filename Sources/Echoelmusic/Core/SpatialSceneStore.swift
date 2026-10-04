@@ -81,7 +81,7 @@ public final class SpatialSceneStore {
 
     /// The lanes that become immersive objects: real (non-bio) tracks. Bio lanes drive
     /// modulation, not placement, so they are never objects.
-    private static func objectLanes(_ lanes: [TimelineLane]) -> [TimelineLane] {
+    nonisolated private static func objectLanes(_ lanes: [TimelineLane]) -> [TimelineLane] {
         lanes.filter { !$0.isBio }
     }
 
@@ -170,7 +170,9 @@ public final class SpatialSceneStore {
     /// the same `ImmersiveObjectDefaults` inputs (instrument, index and count among the object
     /// lanes), so the inspector's "Default" and a fresh rebuild can never disagree (#416).
     /// nil for a lane that is not an object (a bio lane, or one not in `lanes`).
-    public static func defaultPosition(forLane laneID: UUID, in lanes: [TimelineLane]) -> SpatialPosition? {
+    /// `nonisolated` (S-A1): a pure function of its arguments, so the pure `ImmersiveMasterPlan`
+    /// asks the SAME rule instead of copying it.
+    nonisolated public static func defaultPosition(forLane laneID: UUID, in lanes: [TimelineLane]) -> SpatialPosition? {
         let objectLanes = Self.objectLanes(lanes)
         guard let index = objectLanes.firstIndex(where: { $0.id == laneID }) else { return nil }
         return ImmersiveObjectDefaults.defaultPosition(

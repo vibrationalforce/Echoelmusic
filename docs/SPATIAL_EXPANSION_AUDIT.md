@@ -304,8 +304,8 @@ CI-/project.yml-Risiko hängt.
 
 ### 7.3 Stufenleiter S-A0…S-A8 — Stand
 
-**S-A0 erledigt (dieses Gate).** S-A1 (`ImmersiveMasterPlan` + `ChannelRole`, rein) beginnt **erst nach den Founder-Antworten** auf ADR-007 F-A…F-E und ADR-008 G-A…G-D. Nach L5 kommen S-A1 und S-A2 vor S-A3. Sollte W2 (sample-genauer Sequencer) vorgezogen werden, wird ADR-008 neu bewertet.
+**S-A0 erledigt.** Gate R ist am 2026-10-04 entschieden: Der Founder hat alle Entscheidungen übertragen, F-A…F-D und G-A…G-C stehen nach Empfehlung, F-E und G-D bleiben beim Founder (ADR-007/008). **S-A1 ist gebaut:** `Core/ImmersiveMasterPlan.swift` (`ChannelRole`, `BS2051Channel`, rein, nur Foundation), Wächter `TheImmersiveMasterPlanFollowsTheRecordTests`, Protokoll-Abschnitt in `docs/ECHOEL_SESSION_PROTOCOL.md`. Nichts in der App konstruiert den Plan bisher; das übernehmen S-A3 und S-A4. Nach L5 kommen S-A1 und S-A2 vor S-A3. Sollte W2 (sample-genauer Sequencer) vorgezogen werden, wird ADR-008 neu bewertet.
 
 ### 7.4 Ehrlichkeit
 
-Nichts aus §7 wird nach außen behauptet. Stufen: gebaut 0 · verdrahtet 0 · Gerät 0 · Studio 0. Der erlaubte Satz steht in ADR-007 Punkt 9. „Dolby Atmos“ und „Apple Spatial Audio ready“ erscheinen nirgends als Produktaussage.
+Nichts aus §7 wird nach außen behauptet. Stufen: gebaut 1 (S-A1, der Plan) · verdrahtet 0 · Gerät 0 · Studio 0. Der erlaubte Satz steht in ADR-007 Punkt 9. „Dolby Atmos“ und „Apple Spatial Audio ready“ erscheinen nirgends als Produktaussage.
