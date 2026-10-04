@@ -139,7 +139,7 @@ struct LiveColaboView: View {
                 .foregroundStyle(colab.isLive ? EchoelTheme.onPrimary : EchoelTheme.text)
                 .frame(maxWidth: .infinity).frame(minHeight: 48)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(colab.isLive ? EchoelTheme.accent : EchoelTheme.fill))
+                    .fill(colab.isLive ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.border, lineWidth: colab.isLive ? 0 : 1))
         }

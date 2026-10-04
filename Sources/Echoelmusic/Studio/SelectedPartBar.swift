@@ -427,7 +427,7 @@ private struct PartPlayButton: View {
             .padding(.horizontal, EchoelTheme.spaceS)
             .frame(minWidth: 44, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .fill(playing ? EchoelTheme.accent : EchoelTheme.fill))
+                .fill(playing ? EchoelTheme.text : EchoelTheme.fill))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

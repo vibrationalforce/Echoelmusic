@@ -331,7 +331,7 @@ struct ProjectPlayStopButton: View {
             // the plate's deleted ▶/■. Painted at the floor, the head's own grammar.
             .frame(minWidth: 44, minHeight: EchoelTheme.controlTapHeight)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .fill(running ? EchoelTheme.accent : EchoelTheme.fill))
+                .fill(running ? EchoelTheme.text : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .strokeBorder(running || !available ? Color.clear : EchoelTheme.borderStrong,
                               lineWidth: 1))
