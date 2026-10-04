@@ -266,3 +266,46 @@ CI-/project.yml-Risiko hängt.
 - ADR-006 **Automerge vs. eigener LWW-CRDT** (Layer 5; Zero-Dep-Politik
   spricht für minimalen eigenen LWW — im ADR entscheiden, nicht implizit).
 - ADR-001/002/003 aus §3 unverändert gültig.
+
+---
+
+## 7. Immersive Master — Phase R des Prompts „SPATIAL MIX SOVEREIGNTY v1.0“ (2026-10-04)
+
+**Kein Code geändert. Dieser Abschnitt ist zusammen mit drei Dateien das Gate R:**
+- `docs/research/SPATIAL_MIX_RESEARCH.md` — Belegtabelle zu R1–R6, Kompatibilitätsmatrix, Re-Audit L3, offene Fragen F1–F12
+- `docs/adr/007-immersive-master-format.md` — ADM BWF als Master, Ordner aus Stems und JSON als Vorstufe, Founder-Fragen F-A…F-E
+- `docs/adr/008-stem-capture-strategy.md` — Echtzeit-Mitschnitt in einem Durchgang, Offline-Neuberechnung heute abgelehnt, Founder-Fragen G-A…G-D
+
+### 7.1 Was sich gegenüber §1–§6 verschoben hat
+
+- **Der Kopfhörerweg ist räumlich**, nur nicht über `BinauralPanner`. Seit S3c gilt:
+  - Audiospuren laufen über einen Mono-HRTF-Bus mit `AVAudioEnvironmentNode` und `.HRTFHQ`.
+  - Der Schalter steht standardmäßig auf AUS, Gerätetest G6 steht noch aus.
+  - Damit ist **ADR-001 praktisch entschieden**: Renderer A ist der Environment-Node. PHASE scheidet aus, weil es eine eigene Engine ist und sich laut Apple-Doku nicht in den Master abzweigen lässt.
+  - `BinauralPanner` bleibt unverdrahtet.
+  - Eine echte HRIR-Faltung bleibt der einzige Weg zu einem **exportierbaren**, definierten Binaural-Render. Dafür kämen SADIE II (Apache-2.0) als Asset in Frage, ARI wegen ShareAlike nicht.
+- **Der Mehrkanal-Gate A aus §6.5 ist für den Export nicht nötig.** Ein ADM-Master braucht kein `EchoelRender`-Target, sondern einen Datei-Writer.
+  - EAR (BSD-3-Clause-Clear) übernimmt außerhalb der App die Rolle des BS.2127-Referenz-Renderers.
+  - Eine eigene 4+7+0-Vorschau würde mehr verlangen als VBAP: Triplet, QuadRegion, VirtualNgon und virtuelle Lautsprecher (EAR `point_source.py`). `Sync/VBAPPanner` ist 2-D.
+- **Die Prompt-Grundannahme „zero dependencies“ gilt seit B2 so nicht mehr.** Es gibt jetzt HaishinKit und Logboard, beide nur für RTMP. Für dieses Vorhaben bleibt es trotzdem bei null neuen Abhängigkeiten.
+- **Namenskollision:** Die Kanalrolle, die der Prompt vorschlägt, kann nicht `SpatialRole` heißen. Dieser Name gehört schon der Kollaborations-Berechtigung (`Core/SpatialScene.swift:153`). Vorschlag: `ChannelRole`.
+
+### 7.2 Re-Audit der Founder-Liste — Kurzfassung (Langfassung: Research §7)
+
+| # | Urteil |
+|---|---|
+| 1 Stereo-Bounce mit Limiter/Trim/LUFS | bestätigt — Echtzeit-Mitschnitt, 44,1 kHz, abschaltbare Normalisierung; „Headphone space“ backt Binaural ein |
+| 2 kein Stem-Export, Kette flag-off | **teilweise** — keine Stems ja; die Flagge hat gar keinen Zweig mehr (#1302) |
+| 3 Positionen nur live per OSC | bestätigt |
+| 4 nur Objekte, kein Bett/LFE | bestätigt |
+| 5 kein LTC/MTC | bestätigt — dazu kein Song Position Pointer |
+| 6 ADM-OSC NEEDS-FOUNDER-VERIFY | bestätigt — neu: Nuendo empfängt nur kartesisch, die App sendet nur polar (`sceneDialect` hat keinen Schreiber) |
+| 7 Kopfhörer nicht räumlich | **widerlegt seit S3c** (Audiospuren; generierte Stimmen bleiben Stereo) |
+
+### 7.3 Stufenleiter S-A0…S-A8 — Stand
+
+**S-A0 erledigt (dieses Gate).** S-A1 (`ImmersiveMasterPlan` + `ChannelRole`, rein) beginnt **erst nach den Founder-Antworten** auf ADR-007 F-A…F-E und ADR-008 G-A…G-D. Nach L5 kommen S-A1 und S-A2 vor S-A3. Sollte W2 (sample-genauer Sequencer) vorgezogen werden, wird ADR-008 neu bewertet.
+
+### 7.4 Ehrlichkeit
+
+Nichts aus §7 wird nach außen behauptet. Stufen: gebaut 0 · verdrahtet 0 · Gerät 0 · Studio 0. Der erlaubte Satz steht in ADR-007 Punkt 9. „Dolby Atmos“ und „Apple Spatial Audio ready“ erscheinen nirgends als Produktaussage.
