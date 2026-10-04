@@ -357,6 +357,12 @@ struct ProjectPlayStopButton: View {
         .keyboardShortcut(.space, modifiers: [])
         .accessibilityLabel(ProjectTransport.buttonLabel(running: running, play: play))
         .accessibilityHint(ProjectTransport.buttonHint(running: running, play: play))
+        // Restructure F5b — the transport's start and stop reach the hand: `.start` when it
+        // begins to run, `.stop` when it ends, whatever ended it (this tap, the space bar, the
+        // end of the song). Keyed on the derived `running`, which changes on a gesture or at a
+        // song's end, never per tick. One mount stands per stage (`headCarriesTransport` and
+        // `StageShell`), so a change is felt once, not twice.
+        .sensoryFeedback(trigger: running) { _, isRunning in isRunning ? SensoryFeedback.start : SensoryFeedback.stop }
     }
 
     private func startSong() {
