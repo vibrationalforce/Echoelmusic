@@ -42076,3 +42076,9 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   - Zwei Recherche-Läufe mit Gegenprüfung. ITU-, EBU-, Dolby- und Apple-Seiten waren gesperrt, belegt wurde über Referenz-Implementierungen.
   - Gate R wartet auf F-A…F-E und G-A…G-D.
 - **Befund:** `CLAUDE.md` nennt `WeatherProvider` gelöscht, die Datei existiert aber (`Core/WeatherProvider.swift`). Gemeldet, nicht geändert, weil `CLAUDE.md` gerade die E10-Änderung trägt.
+
+- **Gate R + S-A1 `27f5ddd5a` (2026-10-04):**
+  - Der Founder hat alle Entscheidungen übertragen; F-A…F-D und G-A…G-C wurden nach Empfehlung angenommen, F-E und G-D bleiben offen.
+  - `ImmersiveMasterPlan` (rein) ist mit Wächter gebaut, aber nicht verdrahtet.
+  - Gebaut in einem eigenen Worktree, damit der gesperrte E10-1/B2-Stand unberührt bleibt. Beide Patches lassen sich weiterhin auf HEAD anwenden (geprüft mit `git apply --cached`).
+  - Der E10-1-Commit wurde erneut versucht: Diesmal lehnte der Auto-Modus-Klassifikator ab („[Auto-Mode Bypass]“), nicht der Hook.

@@ -5020,3 +5020,23 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
   - S3c hat Behauptung 7 der Lückenliste widerlegt: Der Kopfhörer ist für Audiospuren räumlich.
   - Die Kanalrolle heißt `ChannelRole`, weil `SpatialRole` schon belegt ist.
 - **DSGVO:** Es gibt nur einen technischen Entwurf (`docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md`). Juristische Prüfung ist Pflicht, bevor daraus ein Rechtstext entsteht.
+
+### 2026-10-04 — Gate R entschieden (Founder: „Du machst und entscheidest alles“) · S-A1 gebaut
+
+- **Entscheidung:** ADR-007 F-A…F-D und ADR-008 G-A…G-C wurden nach der jeweils schon notierten Empfehlung angenommen.
+  - Zuerst generisches ITU/EBU-ADM.
+  - Die generierten Stimmen kommen als Stereo-Bett `AP_00010002`.
+  - Format 48 kHz / 24 bit.
+  - Der Export-Ordner kommt vor dem BW64.
+  - Mitschnitt in einem Echtzeit-Durchgang.
+  - Stems mit Spur-Effekten, aber ohne Master-Kette.
+  - Jede Stimme wird ein eigener Stem.
+- **Offen beim Founder:**
+  - F-E: Jurist oder Dolby wegen `Atmos_Master`.
+  - G-D: Gerät und Stück für den Ausrichtungstest.
+- **S-A1 (`27f5ddd5a`):** `Core/ImmersiveMasterPlan.swift` mit `ChannelRole` und `BS2051Channel`, nur Foundation, deterministisch.
+  - `SpatialSceneStore.defaultPosition` ist jetzt `nonisolated`, damit der Plan dieselbe Regel fragt, statt sie zu kopieren.
+  - Wächter: `TheImmersiveMasterPlanFollowsTheRecordTests`.
+  - Stand: gebaut, nicht verdrahtet.
+- **Nicht entschieden:** der Auto-Modus. Der Satz „Du entscheidest alles“ schaltet ihn nicht um, die E10-1/B2-Commits bleiben gesperrt. Der Hook lässt bewusst keine Selbstfreigabe zu.
+- **Review:** 2026-11-03.
