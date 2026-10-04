@@ -31,7 +31,8 @@
 //    body voice's record source are counterweights (green on both trees).
 //
 // ⛔ HONEST LIMITS. Not undoable (the store's lane dials never were). The Echoel track keeps
-// its instrument. The sampler is not offered (it needs a sample first). With
+// its instrument. The sampler is offered since E13-1, and ONLY because the Sample row now gives it a
+// sound — that condition is pinned, not dropped (`ASamplerTrackPlaysAFileFromTheLibraryTests`). With
 // `FeatureFlags.voiceKindRouting` off the rack has no sub or body unit and every choice plays
 // the synth. Whether EchoelBass and EchoelBodyVibe SOUND right on a track is a device probe.
 // NEEDS-FOUNDER-VERIFY: Workstation → Add MIDI Track → select it → Instrument: EchoelBass →
@@ -72,7 +73,7 @@ final class TheTrackChoosesItsInstrumentTests: XCTestCase {
             guard let role = TrackMix.role(of: lane.id, in: document, voiceCapacity: capacity) else { return [] }
             return TrackMix.instrumentChoices(role)
         }
-        XCTAssertEqual(choices(Self.lead, 4), [.polySynth, .subBass, .bioVoice],
+        XCTAssertEqual(choices(Self.lead, 4), [.polySynth, .subBass, .bioVoice, .sampler],
                        "a rack track offers exactly the kinds the rack binds on a secondary slot")
         // Counterweights (#343): nowhere else.
         XCTAssertEqual(choices(Self.keys, 4), [], "never the Echoel track — it would swap the instrument's voice")
@@ -80,8 +81,12 @@ final class TheTrackChoosesItsInstrumentTests: XCTestCase {
         XCTAssertEqual(choices(Self.body, 4), [], "a bio curve makes no sound")
         XCTAssertEqual(choices(Self.loop, 4), [], "an audio track plays its file")
         XCTAssertEqual(choices(Self.look, 4), [], "a visual track plays nothing")
-        XCTAssertFalse(TrackMix.instrumentChoices(.laneSynth(.poly)).contains(.sampler),
-                       "the sampler needs a sample before it sounds — this row assigns none")
+        // E13-1 (founder 2026-10-04, „Beats aus Samples"): the premise of the old assertion — "this
+        // row assigns none" — is gone, because `TrackSampleRow` assigns one. The LAW survives and is
+        // stricter in its new home: the Sampler may be offered only while the inspector mounts the
+        // Sample row for it (`ASamplerTrackPlaysAFileFromTheLibraryTests` claims 3–4).
+        XCTAssertTrue(TrackMix.instrumentChoices(.laneSynth(.poly)).contains(.sampler),
+                      "the sampler is offered together with the row that gives it a sample")
     }
 
     func testTheCurrentValueIsTheLanesOrTheSynth() {
@@ -90,10 +95,10 @@ final class TheTrackChoosesItsInstrumentTests: XCTestCase {
                        "a lane without an instrument plays EchoelSynth (`voiceKind ?? .poly`)")
         XCTAssertEqual(TrackMix.currentInstrument(of: Self.old.id, in: document), .drums)
         let legacy = TrackMix.instrumentMenu(.laneSynth(.poly), current: .drums)
-        XCTAssertEqual(legacy, [.drums, .polySynth, .subBass, .bioVoice],
+        XCTAssertEqual(legacy, [.drums, .polySynth, .subBass, .bioVoice, .sampler],
                        "a legacy choice is shown as the current value, never offered anew")
         XCTAssertEqual(TrackMix.instrumentMenu(.laneSynth(.subBass), current: .subBass),
-                       [.polySynth, .subBass, .bioVoice])
+                       [.polySynth, .subBass, .bioVoice, .sampler])
         XCTAssertEqual(TrackMix.instrumentMenu(.echoelInstrument, current: .drums), [],
                        "no row where there is no choice, whatever the lane holds")
     }

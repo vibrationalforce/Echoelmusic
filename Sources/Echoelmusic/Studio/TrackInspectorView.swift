@@ -300,7 +300,9 @@ enum TrackMix {
     /// EchoelSampler) is kept as the current value by the row, never offered anew.
     nonisolated static func instrumentChoices(_ role: Role) -> [TrackInstrument] {
         guard case .laneSynth = role else { return [] }
-        return [.polySynth, .subBass, .bioVoice]
+        // E13-1: the Sampler is offered because the Sample row below it gives it a sound
+        // (`TrackSampleRow`, mounted only while the track plays the Sampler).
+        return [.polySynth, .subBass, .bioVoice, .sampler]
     }
 
     /// What the row shows as chosen: the lane's instrument, or EchoelSynth — the voice a lane
@@ -579,6 +581,10 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                         controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
                     if !instruments.isEmpty {
                         instrumentRow(instruments)
+                    }
+                    // E13-1 — the Sampler's sound: a file from the media library (own leaf).
+                    if TrackMix.currentInstrument(of: laneID, in: document) == .sampler {
+                        TrackSampleRow(laneID: laneID)
                     }
                     // B2a — which stored sound this POLY rack track's voice plays (no row elsewhere).
                     if controls.sound {

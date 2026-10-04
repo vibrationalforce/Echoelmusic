@@ -234,6 +234,9 @@ public final class TimelineStore {
     ///     left (`nil` = never set, the identity). Undo puts the found value back only while the
     ///     piece still reads what the gesture left — the `.laneMix` rule for one field. Recorded by
     ///     `commitLightLook()` once per gesture, never per drag sample.
+    ///   · `.laneSample` — ONE track's sample from ONE pick in the inspector's Sample row
+    ///     (Restructure E13-1): the path the pick found and the one it left (`nil` = no sample).
+    ///     The `.lanePatch` rule for one field. Recorded by `editLaneSample(id:_:)`, once per pick.
     /// Deliberately NOT whole-document snapshots: lanes are not part of this history — the mixer
     /// enters only as `.laneMix`, a track's sound only as `.lanePatch` — so an undo can never
     /// silently revert a rename, an instrument assignment or a fader move made after the edit
@@ -256,6 +259,7 @@ public final class TimelineStore {
         case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)
         case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)
         case lightLook(before: Float?, after: Float?)
+        case laneSample(laneID: UUID, before: String?, after: String?)
     }
 
     /// B3b — the four mixer fields of ONE track, the only ones a `.laneMix` step can move.
@@ -403,6 +407,14 @@ public final class TimelineStore {
             document.lightLookIntensity = before
             persist()
             return HistoryStep.lightLook(before: after, after: before)
+        case .laneSample(let laneID, let before, let after):
+            // Restructure E13-1 — the `.lanePatch` rule for the track's sample: a track removed
+            // since takes nothing back, a sample written since keeps the later one, and the write
+            // goes through the field's one writer so the region player re-loads it as a pick does.
+            guard let lane = document.lanes.first(where: { $0.id == laneID }),
+                  lane.samplePath == after else { return nil }
+            setLaneSample(laneID, path: before)
+            return HistoryStep.laneSample(laneID: laneID, before: after, after: before)
         }
     }
 
@@ -1163,6 +1175,19 @@ public final class TimelineStore {
     /// change is STRUCTURAL (content identity, like patch/instrument), so the
     /// playing region player pulls it in via refreshStructure → prime →
     /// slotSampleSink, never through the mixer merge.
+    /// Restructure E13-1 — ONE person's pick in the inspector's Sample row is ONE Undo step
+    /// (`.laneSample`), the `editLanePatch` shape: `write` is the `setLaneSample` call, and a pick
+    /// of what the track already plays records nothing. `setLaneSample` alone records nothing.
+    public func editLaneSample(id: UUID, _ write: () -> Void) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let before = document.lanes[i].samplePath
+        write()
+        guard let j = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let after = document.lanes[j].samplePath
+        guard after != before else { return }
+        pushUndo(.laneSample(laneID: id, before: before, after: after))
+    }
+
     public func setLaneSample(_ laneID: UUID, path: String?) {
         guard let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
         document.lanes[i].samplePath = path

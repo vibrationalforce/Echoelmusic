@@ -22416,6 +22416,90 @@
           }
         }
       }
+    },
+    "Sample" : {
+      "comment" : "Inspector row label: the audio file a Sampler track plays.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sample"
+          }
+        }
+      }
+    },
+    "No sample" : {
+      "comment" : "Sample row menu entry: the track has no sample.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sample"
+          }
+        }
+      }
+    },
+    "Library" : {
+      "comment" : "Sample row menu section: audio files in the media library.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library"
+          }
+        }
+      }
+    },
+    "The audio file this track's notes play" : {
+      "comment" : "VoiceOver hint of the Sample row.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The audio file this track's notes play"
+          }
+        }
+      }
+    },
+    "Your library has no audio yet. Use Import Audio in the Add menu on Arrange, then pick the file here." : {
+      "comment" : "Sample row note when the media library holds no audio.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your library has no audio yet. Use Import Audio in the Add menu on Arrange, then pick the file here."
+          }
+        }
+      }
+    },
+    "This track makes no sound until it has a sample." : {
+      "comment" : "Sample row note when the Sampler track has no sample yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track makes no sound until it has a sample."
+          }
+        }
+      }
+    },
+    "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth." : {
+      "comment" : "Sample row note: the sampler's limits.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
