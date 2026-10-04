@@ -1,4 +1,4 @@
-build: v10.79.489 — Die DAW-Hülle: eine Steuerleiste, eine Fläche, unten Arrange · Mixer · Instrument · Browse · Project
+build: v10.79.490 — Spuren im Raum über ADM-OSC, VoiceOver im Noteneditor, BLE-Gurt nach Bluetooth-Neustart, Release-Atmung
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,80 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.490) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-03 („Du entscheidest alles und gibst die Scheiben end to end …
+  für den TestFlight frei“) nach dem Architektur-, Sicherheits- und Barrierefreiheits-Audit.
+  Sieben Code-Scheiben seit 10.79.489 plus der Raum-Eingang (Spatial S1, Posten 4) aus deinem
+  Auftrag „Live Set, binaural broadcast, Spatial Audio …“, jede mit eigenem Wächter. Auf dem Gerät ist NICHTS
+  davon geprüft; dieser Build ist genau dafür da. Die Fragen, die nur du beantworten kannst
+  (Mindestalter, iPad, Dateitypen, Ableton Link, Push/iCloud, Store-Texte), stehen im
+  Postfach docs/dev/FOUNDER_INBOX.md als H16, H17 und F9–F13.
+
+  ── POSTEN 1: DER NOTENEDITOR GEHT MIT VOICEOVER ──
+  · Notes-Seite, VoiceOver an, auf das Notengitter: „Select next note“ / „Select previous
+    note“ wählen eine Note. Neu in derselben Aktionsliste: „Add a note“, „Move earlier“,
+    „Move later“, „Make longer“, „Make shorter“. Jede Aktion ist ein Undo-Schritt, und
+    VoiceOver sagt danach, wo die Note jetzt liegt („C4 at step 5, moved“).
+
+  ── POSTEN 2: PULS UND GURT ──
+  · Startet die Rückkamera aus einem anderen Grund als der Kamera-Erlaubnis nicht (keine
+    Rückkamera, oder die Kamera-Sitzung lehnt Ein- oder Ausgang ab), steht im Bio-Panel jetzt „The rear camera didn't start — pick
+    another pulse source“ statt nichts.
+  · Der Bluetooth-Gurt verbindet sich wieder, wenn Bluetooth aus- und wieder eingeschaltet
+    wird. Vorher blieb er bis zum Neustart der App weg.
+  · Release-Atmung: Puls-Pille → Bio-Panel → Atem-Führung, Knopf „Release“ neben „Start“:
+    4 s ein, 8 s aus, während des Ausatmens „Breathe out slowly — pff, shh or hum“.
+    Kein Mikrofon — die Stimme bleibt deine.
+
+  ── POSTEN 3: MIDI UND OSC ──
+  · MIDI-Eingang hört Echoels eigene MIDI-Ausgänge nicht mehr. Mit MIDI-Out an kamen die
+    erzeugten Noten vorher als „gespielte“ Noten zurück; mit MIDI-Thru im Host wurde daraus
+    eine Schleife.
+  · Ein- und Ausstecken von MIDI-Geräten liest die Meldung jetzt im CoreMIDI-Rückruf selbst
+    (vorher wurde ein Zeiger nach dem Rückruf gelesen — mögliches Absturzrisiko).
+  · OSC-Steuereingang (falls eingeschaltet): höchstens 16 Sender gleichzeitig, identische
+    Wiederholungen innerhalb von 0,1 s fallen weg, das Diagnose-Log bekommt höchstens zehn
+    Zeilen pro Sekunde.
+
+  ── POSTEN 4: EIN RAUM-CONTROLLER BEWEGT DEINE SPUREN ──
+  · Licht-Kachel im Kopf → Routing → „Accept OSC control“ an. Auf demselben Port (8001)
+    nimmt Echoel jetzt auch ADM-OSC-Positionen an: /adm/obj/n/azim · elev · dist · aed ·
+    x · y · z · xyz · gain bewegt Spur n (ab 1 gezählt, Bio-Spuren nicht mitgezählt).
+  · Mit „Every track as its own object (ADM-OSC)“ an folgt der ausgehende ADM-OSC-Strom
+    der Bewegung — Grapes, L-ISA, SPAT oder die FletcherMachine sehen dieselbe Szene.
+  · Bewegt der Controller Spuren, sagt die Status-Zeile „moving tracks over ADM-OSC“.
+  · Echoel rendert keinen Raumklang selbst; Positionen kommen ungeglättet an, der Renderer
+    glättet. Der Stream-Key für das spätere Streaming liegt jetzt in der Keychain (nicht
+    sichtbar, kein Streaming in diesem Build).
+
+  ── PRÜFLISTE ──
+  T1  Kaltstart: kein Black Screen, öffnet auf dem Stück.
+  T2  VoiceOver, Notes-Seite: „Add a note“ legt eine Note an, „Move later“ schiebt sie,
+      „Make longer“ verlängert sie, jedes Mal eine Ansage; ein Undo nimmt genau einen Schritt
+      zurück. Auf einem gesperrten Teil tun die Aktionen nichts.
+  T3  Normaler Kamera-Puls: die neue Zeile darf im Bio-Panel NICHT erscheinen. Den
+      Fehlerfall selbst kennt kein sicherer Handgriff; tritt er auf, Diagnose-Log teilen.
+  T4  Gurt verbunden → Kontrollzentrum: Bluetooth aus, 5 s warten, an → kommt der Puls ohne
+      App-Neustart zurück?
+  T5  „Release“ im Bio-Panel: 4/8 fühlt sich richtig an, der Ausatem-Hinweis ist lesbar,
+      der Knopf passt auf 375 pt.
+  T6  MIDI-Out an + ein Host mit MIDI-Thru (z. B. AUM): keine Rückkopplung, keine doppelten
+      Noten. MIDI-Keyboard ein- und ausstecken: kein Absturz, Name stimmt.
+  T7  Grapes (oder jeder ADM-OSC-Controller) auf die IP des iPhones, Port 8001; in Routing
+      „Accept OSC control“ und „Every track as its own object (ADM-OSC)“ an. Objekt 1
+      ziehen → Spur 1 wandert im Renderer mit, die Status-Zeile sagt „moving tracks over
+      ADM-OSC“. Während der Controller sendet: Tonart-Menü öffnen — es darf nicht zuklappen.
+  T8  Hängt oder stockt etwas: Instrument → Save/Export-Chip → „Diagnostics“ → Teilen
+      (das Diagnose-Log).
+
+  Neu prüfbare Bitten (1):
+  Gedruckt: python3 scripts/founder-verify.py --since a3ef7c53b
+  · UI — TheSpatialControllerMovesTheTracksTests.swift:22: ein ADM-OSC-Sender im echten
+    Netz bewegt die Spuren (= T7 oben).
+
+  Der Vorgänger ist 10.79.489 (Build 2614), davor 10.79.488.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.489) ───────────────────────────────
 
