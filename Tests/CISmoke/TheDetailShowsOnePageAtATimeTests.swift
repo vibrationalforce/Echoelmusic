@@ -324,11 +324,13 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
         // The four tool rows (Transpose · key · Quantize/Duplicate · Lower/Higher/Delete/Deselect).
         let tools = try member("private func selectionControls(", in: notes)
         let controls = try member("private func controls(range:", in: notes)
-        XCTAssertEqual(occurrences("NoteToolFlow(spacing: 6) {", in: tools), 3,
+        XCTAssertEqual(occurrences("NoteToolFlow(spacing: EchoelTheme.spaceS) {", in: tools), 3,
                        "Transpose, key and Quantize rows wrap")
-        XCTAssertEqual(occurrences("NoteToolFlow(spacing: 6) {", in: controls), 1,
+        XCTAssertEqual(occurrences("NoteToolFlow(spacing: EchoelTheme.spaceS) {", in: controls), 1,
                        "the octave/Delete/Deselect row wraps")
-        XCTAssertFalse(tools.contains("HStack(spacing: 6) {") || controls.contains("HStack(spacing: 6) {"),
+        // Any `HStack(` — not one spacing spelling: F2 moved the rows onto `EchoelTheme.spaceS`,
+        // and a needle naming the old literal would have passed for every one-line row since.
+        XCTAssertFalse(tools.contains("HStack(") || controls.contains("HStack("),
                        "a tool row is a one-line HStack again — in the 260-pt landscape column it truncates")
         // The layout measures IDEAL sizes. A row that could shrink would always "fit" and never
         // wrap (the BioStripView lesson): no scale factor anywhere in the editor.

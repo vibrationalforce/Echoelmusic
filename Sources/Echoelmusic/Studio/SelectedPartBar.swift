@@ -224,8 +224,8 @@ struct SelectedPartBar: View {
                                                                 in: document) } ?? false
             let trims = Trims(start: PartTrim.startTrim(part, in: document),
                               endLength: PartTrim.endTrim(part, in: document))
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
+                HStack(spacing: EchoelTheme.spaceS) {
                     Text(String(localized: "Selected part · ") + title)
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                     Spacer(minLength: 8)
@@ -241,7 +241,7 @@ struct SelectedPartBar: View {
                               trims: trims, showsTitles: true)
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
                               trims: trims, showsTitles: false)
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                         moveRow(part, showsTitles: false)
                         editRow(part, regionID: regionID, cut: cut, splittable: splittable,
                                 trims: trims, showsTitles: false)
@@ -265,7 +265,7 @@ struct SelectedPartBar: View {
 
     private func actionRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
                            trims: Trims, showsTitles: Bool) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: EchoelTheme.spaceS) {
             moveRow(part, showsTitles: showsTitles)
             editRow(part, regionID: regionID, cut: cut, splittable: splittable, trims: trims,
                     showsTitles: showsTitles)
@@ -274,7 +274,7 @@ struct SelectedPartBar: View {
 
     private func moveRow(_ part: TrackParts.Part, showsTitles: Bool) -> some View {
         let earlier = TrackParts.earlierStart(part)
-        return HStack(spacing: 6) {
+        return HStack(spacing: EchoelTheme.spaceS) {
             button("Earlier", "chevron.left", enabled: earlier != nil, showsTitle: showsTitles,
                    label: String(localized: "Move the selected part one bar earlier")) {
                 if let tick = earlier { TrackParts.move(part, toStartTick: tick, timeline: timeline) }
@@ -288,7 +288,7 @@ struct SelectedPartBar: View {
 
     private func editRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
                          trims: Trims, showsTitles: Bool) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: EchoelTheme.spaceS) {
             button("Trim start", "arrow.right.to.line", enabled: trims.start != nil,
                    showsTitle: showsTitles, label: trimStartLabel(trims.start)) {
                 if let tick = trims.start { trimStart(regionID, to: tick) }
@@ -364,7 +364,7 @@ struct SelectedPartBar: View {
     private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,
                         label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: EchoelTheme.spaceXS) {
                 Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
                 if showsTitle {
                     Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
@@ -415,7 +415,7 @@ private struct PartPlayButton: View {
                 playFrom(startTick)
             }
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: EchoelTheme.spaceXS) {
                 Image(systemName: playing ? "stop.fill" : "play.fill")
                     .font(EchoelTheme.font(11, .semibold))
                 Text(playing ? String(localized: "Stop") : String(localized: "Play from here"))
@@ -424,7 +424,7 @@ private struct PartPlayButton: View {
             }
             .foregroundStyle(playing ? EchoelTheme.onPrimary
                                      : (startable ? EchoelTheme.text : EchoelTheme.dim))
-            .padding(.horizontal, 8)
+            .padding(.horizontal, EchoelTheme.spaceS)
             .frame(minWidth: 44, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .fill(playing ? EchoelTheme.accent : EchoelTheme.fill))

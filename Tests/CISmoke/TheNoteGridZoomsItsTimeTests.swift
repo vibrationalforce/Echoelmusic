@@ -201,7 +201,7 @@ final class TheNoteGridZoomsItsTimeTests: XCTestCase {
         let grid = try member("private struct PartNoteGrid: View {", in: code)
         // The tail of `controls(range:picked:editable:region:steps:)`'s signature — unique in the file (#408).
         let controls = try member("region: TimelineRegion, steps: Int) -> some View {", in: grid)
-        let flow = try member("NoteToolFlow(spacing: 6) {", in: controls)
+        let flow = try member("NoteToolFlow(spacing: EchoelTheme.spaceS) {", in: controls)
         for (word, delta, symbol) in [("Zoom out", "-1", "minus.magnifyingglass"), ("Zoom in", "1", "plus.magnifyingglass")] {
             guard let button = flow.range(of: "button(\"\(word)\", \"\(symbol)\",") else {
                 XCTFail("`\(word)` is not a button in the note tool row — the zoom needs a one-finger way (WCAG 2.5.1)")

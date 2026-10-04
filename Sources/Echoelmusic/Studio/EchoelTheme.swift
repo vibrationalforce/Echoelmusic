@@ -237,6 +237,19 @@ enum EchoelTheme {
     static let radius:      CGFloat = 8
     static let radiusLarge: CGFloat = 12
 
+    // MARK: Spacing — one 4-pt scale (Restructure F2, 2026-10-04)
+    //
+    // Measured before this scale existed: `spacing:` took FOURTEEN different literals across
+    // `Sources/` (8 ×122, 6 ×97, 10 ×54, 4 ×45, …), so two neighbouring rows rarely shared a
+    // rhythm. New and touched code takes a step from here; 6 becomes 8 and 10 becomes 8 or 12
+    // where a file migrates. `TheSpacingSitsOnTheScaleTests` holds the migrated files at zero
+    // literals and counts the rest down, never up.
+    static let spaceXS: CGFloat = 4
+    static let spaceS:  CGFloat = 8
+    static let spaceM:  CGFloat = 12
+    static let spaceL:  CGFloat = 16
+    static let spaceXL: CGFloat = 24
+
     // MARK: - One chrome-control size (#481)
     //
     // ⭐ FOUNDER 2026-08-07, two screenshots, the transport row circled: *"Die größe der
@@ -421,7 +434,7 @@ enum EchoelTheme {
 /// the pressed dim. Guard: `TheToolButtonIsOneStyleTests`.
 struct EchoelToolButtonStyle: ButtonStyle {
     /// 8 around a word; an icon-only button passes 0 and is held square by the 44 pt floor.
-    var horizontalPadding: CGFloat = 8
+    var horizontalPadding: CGFloat = EchoelTheme.spaceS
 
     func makeBody(configuration: Configuration) -> some View {
         ToolBody(configuration: configuration, horizontalPadding: horizontalPadding)

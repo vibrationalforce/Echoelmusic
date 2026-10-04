@@ -105,7 +105,7 @@ struct PartNoteEditor: View {
                 let word: String = n == 1 ? String(localized: "note") : String(localized: "notes")
                 return "\(n) " + word
             } ?? ""
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                 Text(ClipNoteEdit.notesSwitchTitle(count: count))
                     .font(EchoelTheme.font(12, .semibold))
                     .foregroundStyle(EchoelTheme.text)
@@ -197,7 +197,7 @@ private struct PartNoteGrid: View {
         if let region = document.regions.first(where: { $0.id == regionID }) {
             let clip = clipStore.clip(id: region.clipID)
             let refusal = ClipNoteEdit.refusal(clip: clip, region: region)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                 if let clip, clip.kind == .midi, let offset = ClipNoteEdit.windowOffset(of: region) {
                     let visible = ClipNoteEdit.visibleNotes(clip.melody?.notes ?? [],
                                                             offsetTicks: offset,
@@ -226,7 +226,7 @@ private struct PartNoteGrid: View {
                     ScrollView(.horizontal, showsIndicators: true) {
                         // B6a: the velocity lane rides in the SAME scroll view, under the grid, so a
                         // stem stays under its note's column while the part scrolls.
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
                             PartNoteCanvas(visible: visible, steps: steps, grid: grid, naming: naming,
                                            picked: picked.ids, editable: editable,
                                            keyClasses: Set(session.key.pitchClasses),
@@ -580,9 +580,9 @@ private struct PartNoteGrid: View {
         // enabled button that silently does nothing). Cold inputs — the clip and the selection.
         func can(_ edit: [Note]?) -> Bool { edit != nil }
         let length = region.lengthTicks
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             Text(scope.visible).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-            NoteToolFlow(spacing: 6) {
+            NoteToolFlow(spacing: EchoelTheme.spaceS) {
                 Text("Transpose").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 button("−12", "", enabled: can(ClipNoteEdit.transposing(targets, by: -12, in: notes)),
                        label: String(localized: "Move ") + what + String(localized: " down an octave")) {
@@ -601,7 +601,7 @@ private struct PartNoteGrid: View {
                     transpose(targets, by: 12, region: region, range: range, heldCentre: heldCentre)
                 }
             }
-            NoteToolFlow(spacing: 6) {
+            NoteToolFlow(spacing: EchoelTheme.spaceS) {
                 // M4: the key is the session's (`SessionContext`), named on the row so the
                 // buttons never act on a key the player cannot see.
                 Text(keyShown).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -630,7 +630,7 @@ private struct PartNoteGrid: View {
             }
             .pickerStyle(.segmented)
             .accessibilityHint("The grid Quantize snaps note starts to")
-            NoteToolFlow(spacing: 6) {
+            NoteToolFlow(spacing: EchoelTheme.spaceS) {
                 button("Quantize", "square.grid.3x3",
                        enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,
                                                             lengthTicks: length, gridSteps: quantizeGrid.steps)),
@@ -672,7 +672,7 @@ private struct PartNoteGrid: View {
     private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
                           region: TimelineRegion, steps: Int) -> some View {
         let pickedCount = picked.count
-        return NoteToolFlow(spacing: 6) {
+        return NoteToolFlow(spacing: EchoelTheme.spaceS) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
                    label: String(localized: "Show the octave below")) { octaveShift -= 1 }
             button("Higher", "chevron.up", enabled: range.upperBound < 127,
@@ -711,7 +711,7 @@ private struct PartNoteGrid: View {
     private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, label: String,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: EchoelTheme.spaceXS) {
                 if !systemImage.isEmpty {
                     Image(systemName: systemImage).font(EchoelTheme.font(11, .semibold))
                 }

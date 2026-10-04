@@ -61,7 +61,7 @@ struct SongHistoryRow: View {
         let canUndo = timeline.canUndo
         let canRedo = timeline.canRedo
         let words = dynamicTypeSize.isAccessibilitySize
-        HStack(spacing: 6) {
+        HStack(spacing: EchoelTheme.spaceS) {
             button(String(localized: "Undo"), "arrow.uturn.backward", enabled: canUndo, words: words,
                    shortcut: KeyboardShortcut("z", modifiers: .command),
                    label: String(localized: "Undo the last change to the piece's parts, notes, automation, mix or a relinked file")) {
@@ -81,14 +81,14 @@ struct SongHistoryRow: View {
                         shortcut: KeyboardShortcut, label: String,
                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: EchoelTheme.spaceXS) {
                 Image(systemName: systemImage).font(EchoelTheme.font(13, .semibold))
                 if words {
                     Text(title).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                 }
             }
         }
-        .buttonStyle(EchoelToolButtonStyle(horizontalPadding: words ? 8 : 0))
+        .buttonStyle(EchoelToolButtonStyle(horizontalPadding: words ? EchoelTheme.spaceS : 0))
         .disabled(!enabled)
         .keyboardShortcut(shortcut)
         .accessibilityLabel(label)
