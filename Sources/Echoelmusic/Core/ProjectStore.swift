@@ -26,6 +26,13 @@ public final class ProjectStore {
     /// only by `noteCurrent`, `clearCurrent` and `delete` — the one owner stays the store.
     @ObservationIgnored public private(set) var currentProjectID: UUID?
 
+    /// Restructure A1, step 2 — set when the last Save wrote the take but could NOT write the
+    /// song (`SessionSaveOpen.Capture.songSaved == false`), cleared by the next Save that
+    /// does. Shown by `ProjectSaveStatusView` beside `saveError`. Not a pending write: the row
+    /// reached the disk, carrying the song of the save before — so Open is not blocked by it
+    /// (a song that cannot encode would otherwise lock the player out of every other piece).
+    public private(set) var songNotSavedNote: String?
+
     @ObservationIgnored private var pendingProjects: [Project]?
     @ObservationIgnored private let writeProjects: ([Project]) -> Bool
     public var hasPendingSave: Bool { saveError != nil }
@@ -116,6 +123,12 @@ public final class ProjectStore {
 
     public func project(id: UUID) -> Project? {
         projects.first { $0.id == id }
+    }
+
+    /// Record whether the Save about to be written carries its song. ONE writer of
+    /// `songNotSavedNote`; the Studio's capture calls it with `Capture.songSaved`.
+    public func noteSongCapture(saved: Bool) {
+        songNotSavedNote = saved ? nil : String(localized: "The take was saved, but not the song: one of its values is not a number. The last saved song was kept. Undo the last change and save again.")
     }
 
     /// Recovery must also see snapshots retained after a failed disk write.

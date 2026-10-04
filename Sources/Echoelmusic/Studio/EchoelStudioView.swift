@@ -11849,8 +11849,11 @@ struct EchoelStudioView: View {
     /// the recovery slot go through here; Live Colabo and the shared document do NOT (a take
     /// that travels carries no song — `Project.sharedDocumentData`). The engine's configured
     /// rate stands in for the render rate the Session's timebase records.
+    ///
+    /// A1 step 2: a song that cannot be encoded no longer leaves the row without one — the row
+    /// keeps the song it was last saved with, and the Save says so (`noteSongCapture`).
     private func withSession(_ take: Project) -> Project {
-        SessionSaveOpen.capturing(take, timeline: timelineStore.document,
+        let capture = SessionSaveOpen.capturing(take, timeline: timelineStore.document,
                                   clipSlots: clipStore.slots,
                                   songForm: arrangementStore.arrangement,
                                   // ⚠️ EMPTY ON PURPOSE, and it is a gap, not a fact about the
@@ -11861,7 +11864,10 @@ struct EchoelStudioView: View {
                                   // carries them.
                                   playerAutomation: [],
                                   sampleRate: audioEngine.sampleRate,
-                                  spatial: spatialScene.scene)
+                                  spatial: spatialScene.scene,
+                                  keepingSongOf: projects.recoveryProject(id: take.id))
+        projects.noteSongCapture(saved: capture.songSaved)
+        return capture.project
     }
 
     /// WA4-S3 — "open this project" from the library: the take AND the song it was saved

@@ -24,6 +24,21 @@ struct ProjectSaveStatusView: View {
             .background(EchoelTheme.surface)
             .accessibilityElement(children: .contain)
         }
+        // A1 step 2 — the song half of a Save that reached the disk without it.
+        if let note = projects.songNotSavedNote {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Song not saved", systemImage: "exclamationmark.triangle")
+                    .font(EchoelTheme.font(15, .semibold))
+                Text(note)
+                    .font(EchoelTheme.font(13))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(EchoelTheme.text)
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(EchoelTheme.surface)
+            .accessibilityElement(children: .combine)
+        }
     }
 }
 #endif

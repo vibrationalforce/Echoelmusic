@@ -67,10 +67,42 @@ public enum SessionSaveOpen {
                 playerAutomation: playerAutomation, sampleRate: sampleRate, spatial: spatial)
     }
 
+    /// Restructure A1, step 2 — what a Save captured, and whether the SONG made it into the row.
+    public struct Capture {
+        /// The row to write. Carries the song just captured — or, when that failed, the song
+        /// `previous` was saved with, so a failed capture never REPLACES a saved song by none.
+        public let project: Project
+        /// False = the song could not be encoded (a non-finite value, #512). The take still
+        /// saves; the caller must SAY that the song did not (`ProjectStore.noteSongCapture`).
+        public let songSaved: Bool
+    }
+
+    /// The Studio's Save and recovery slot call THIS form (A1 step 2, founder 2026-10-04: „ein
+    /// fehlgeschlagenes Sichern darf keinen stillen Projektverlust verursachen"). Before it, a
+    /// song that failed to encode left the row with NO Session, so "Save changes" over a saved
+    /// piece silently dropped its song — reopening it gave an empty song, and nothing said so.
+    /// Now the row keeps the song `previous` (the row being overwritten) was saved with, and
+    /// `songSaved` tells the caller to show it. `previous` nil (a brand-new row) keeps nothing,
+    /// because there is nothing older to keep — the visible note is then the whole protection.
+    public static func capturing(_ take: Project, timeline: TimelineDocument, clipSlots: [Clip?],
+                                 songForm: Arrangement, playerAutomation: [AutomationLane],
+                                 sampleRate: Double, spatial: SpatialScene,
+                                 keepingSongOf previous: Project?) -> Capture {
+        let saved = capture(take, timeline: timeline, clipSlots: clipSlots, songForm: songForm,
+                            playerAutomation: playerAutomation, sampleRate: sampleRate, spatial: spatial)
+        if saved.sessionEnvelope != nil { return Capture(project: saved, songSaved: true) }
+        var kept = saved
+        kept.setSessionEnvelope(previous?.sessionEnvelope)
+        return Capture(project: kept, songSaved: false)
+    }
+
     private static func capture(_ take: Project, timeline: TimelineDocument, clipSlots: [Clip?],
                                 songForm: Arrangement, playerAutomation: [AutomationLane],
                                 sampleRate: Double, spatial: SpatialScene?) -> Project {
         var saved = take
+        // A take may arrive carrying an envelope; a failed attach must not pass THAT off as
+        // this song (the outcome form reads `sessionEnvelope != nil` as "the song was saved").
+        saved.setSessionEnvelope(nil)
         var session = DMMWProjectImport.envelope(project: take, timeline: timeline,
                                                  clipSlots: clipSlots, songForm: songForm,
                                                  playerAutomation: playerAutomation,

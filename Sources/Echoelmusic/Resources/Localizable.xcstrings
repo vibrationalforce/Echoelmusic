@@ -22260,6 +22260,30 @@
           }
         }
       }
+    },
+    "Song not saved" : {
+      "comment" : "Restructure A1 step 2: a Save that reached the disk without its song (ProjectSaveStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Song not saved"
+          }
+        }
+      }
+    },
+    "The take was saved, but not the song: one of its values is not a number. The last saved song was kept. Undo the last change and save again." : {
+      "comment" : "Restructure A1 step 2: a Save that reached the disk without its song (ProjectSaveStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The take was saved, but not the song: one of its values is not a number. The last saved song was kept. Undo the last change and save again."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
