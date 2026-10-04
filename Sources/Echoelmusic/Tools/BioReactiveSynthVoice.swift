@@ -50,6 +50,17 @@ public final class BioReactiveSynthVoice {
     @ObservationIgnored
     nonisolated public let fxChain: EchoelFXChain
 
+    /// Spatial S-A3b-2 (ADR-008 §2): this voice's stem seam. The render block hands every block it
+    /// has just written — silent ones included — to `capture` at the block's engine sample time.
+    /// Nothing is captured until a capture session arms a target (S-A3c); unarmed it costs two
+    /// fences and a counter per block.
+    /// ⚠️ PRE-FADER (K2, decided 2026-10-04): the tap sits INSIDE the node, so the node's mixer
+    /// `volume`, `pan` and mute — applied downstream by the mixer — are NOT in the stem; the
+    /// voice's own patch gain is. The exporter applies level and mute (S-A3c); pan is the
+    /// object's position, which an object stem must not carry baked in.
+    /// The render closure captures the tap STRONGLY, so the tap outlives every render call.
+    nonisolated let stemTap = StemTapPoint()
+
     @ObservationIgnored
     public lazy var sourceNode: AVAudioSourceNode = makeSourceNode()
 
@@ -938,12 +949,15 @@ public final class BioReactiveSynthVoice {
         // the synth (Float-atomic params) and the scratch buffer
         // (audio-thread-only after first render).
         nonisolated(unsafe) let weakSelf = WeakBox(self)
-        let renderBlock: AVAudioSourceNodeRenderBlock = { _, _, frameCount, audioBufferList in
+        let tap = stemTap
+        let renderBlock: AVAudioSourceNodeRenderBlock = { _, timestamp, frameCount, audioBufferList in
             guard let voice = weakSelf.value else {
                 BioReactiveSynthVoice.silence(audioBufferList: audioBufferList, frameCount: Int(frameCount))
+                tap.capture(audioBufferList, frameCount: Int(frameCount), timestamp: timestamp)
                 return noErr
             }
             voice.renderOnAudioThread(frameCount: Int(frameCount), audioBufferList: audioBufferList)
+            tap.capture(audioBufferList, frameCount: Int(frameCount), timestamp: timestamp)
             return noErr
         }
         // A constant sample rate always yields a valid format; if the OS ever

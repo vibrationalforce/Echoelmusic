@@ -10,12 +10,16 @@
 //  · END-TO-END BEHAVIOUR (claims 1–6) — the shipped tap point and ring, single-threaded,
 //    through the same `AudioBufferList` + `AudioTimeStamp` seam an `AVAudioSourceNode` hands
 //    its render block. Nothing is mocked.
-//  · SOURCE-TEXT SCAN (claim 7) — the capture path allocates nothing and brackets every pass;
-//    the owner stores the slot, fences, then reads the pass counter.
+//  · SOURCE-TEXT SCAN (claims 7, 9) — the capture path allocates nothing and brackets every
+//    pass; the owner fences, stores the slot, fences, then reads the pass counter (claim 7); the
+//    three generated voices call the tap after they wrote, on both render exits (claim 9, S-A3b-2).
+//  · END-TO-END BEHAVIOUR also claims 8 (interleaved refusal) and 10 (a voice's tap starts
+//    unarmed).
 //  · NOT PINNED, and said so: a render pass that overlaps an owner swap. A unit test cannot hold
 //    a render thread inside a pass; that half is the fence review written into the type's doc
-//    comment. Nor that any voice calls `capture` — none does yet (S-A3b-2), and nothing arms it
-//    (S-A3c). Built: yes · wired: no · device: no.
+//    comment. Nor that anything ARMS a voice's tap — nothing does yet (S-A3c), so the voices
+//    call `capture` and it returns at the empty slot. Built: yes · wired: render seam only ·
+//    device: no.
 //
 //  GRADING (#433/#464): the file does NOT compile on the parent tree — `StemTapPoint` is created
 //  by this commit (ONE absence, #486). Claims 1–6 were transcribed in Python against the tap
@@ -23,7 +27,11 @@
 //  claim 4 against one that guesses a time for an invalid stamp, claim 6 against one that drops
 //  the retired target at once. Claim 7 is red against a mutant that loads the slot before it
 //  bumps the pass counter, and against one whose owner reads the counter before it stores
-//  the slot.
+//  the slot, and (since the review repair) against one that stores the slot before the release
+//  fence. Claim 8 is red against the pre-repair capture (it wrote interleaved data). Claim 9 is
+//  red on the pre-S-A3b-2 voices (no tap) and against mutants that capture before the voice
+//  writes, on one exit only, or through `weakSelf`. Claim 10 cannot be red on any tree where it
+//  compiles; it pins the default.
 //
 //  `Tests/CISmoke` is the blocking bundle.
 
@@ -39,7 +47,7 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
 
     /// Runs one capture through a real `AudioBufferList` with one buffer per channel.
     private func capture(_ tap: StemTapPoint, _ channels: [[Float]],
-                         at sampleTime: Double, valid: Bool = true) {
+                         at sampleTime: Double, valid: Bool = true, channelsPerBuffer: UInt32 = 1) {
         let frames = channels.first?.count ?? 0
         let abl = AudioBufferList.allocate(maximumBuffers: channels.count)
         var storage: [UnsafeMutablePointer<Float>] = []
@@ -47,7 +55,7 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
             let data = UnsafeMutablePointer<Float>.allocate(capacity: max(frames, 1))
             data.initialize(from: channel, count: frames)
             storage.append(data)
-            abl[i] = AudioBuffer(mNumberChannels: 1,
+            abl[i] = AudioBuffer(mNumberChannels: channelsPerBuffer,
                                  mDataByteSize: UInt32(frames * MemoryLayout<Float>.size),
                                  mData: UnsafeMutableRawPointer(data))
         }
@@ -212,11 +220,77 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
         // would satisfy the "pass load after the fence" needle for an owner that never reads it.
         let owner = String(code[swap.lowerBound..<begin.lowerBound])
         guard let store = owner.range(of: "slot.pointee = raw"),
+              let releaseFence = owner.range(of: "OSMemoryBarrier()"),
               let ownerFence = owner.range(of: "OSMemoryBarrier()", range: store.upperBound..<owner.endIndex),
               let passLoad = owner.range(of: "passCounter.pointee", range: store.upperBound..<owner.endIndex) else {
             return XCTFail("the owner must store the slot, fence, and only then read the pass counter")
         }
         XCTAssertLessThan(ownerFence.lowerBound, passLoad.lowerBound, "slot store → fence → pass load")
+        XCTAssertLessThan(releaseFence.lowerBound, store.lowerBound, """
+            The owner must fence BEFORE it publishes the target pointer (audio-thread review \
+            2026-10-04, H2): without it the render can load the pointer before the stores that \
+            built the target and its rings are visible on arm64.
+            """)
+    }
+
+    // MARK: 8 — an interleaved buffer is refused and counted, never written as one stem
+
+    func testAnInterleavedBufferIsRefusedAndCounted() {
+        let tap = StemTapPoint()
+        let ring = StemCaptureRing(capacityFrames: 256, startSampleTime: 0)
+        XCTAssertTrue(tap.arm(StemTapTarget(left: ring, right: nil)))
+        capture(tap, [ramp(64)], at: 0, channelsPerBuffer: 2)
+        XCTAssertEqual(tap.interleavedBlocks, 1, "an interleaved block is counted — the exporter aborts on it")
+        XCTAssertEqual(drain(ring).1.frames, 0, """
+            A two-channel buffer holds L and R alternately. Writing it into one ring puts both \
+            channels into one stem at the wrong rate — the ring must not see it at all.
+            """)
+        capture(tap, [ramp(64)], at: 0)
+        XCTAssertEqual(drain(ring).0, ramp(64), "a non-interleaved block right after still lands")
+    }
+
+    // MARK: 9 — every generated voice hands its finished block to its tap, silent blocks too
+
+    /// S-A3b-2: the three generated voices. The tap call must come AFTER the voice wrote the
+    /// buffer (otherwise the stem is the PREVIOUS block's leftovers), on BOTH exits of the render
+    /// block (a voice released mid-take still writes silence, never a gap), with the block's own
+    /// timestamp, and through a local `tap` the closure owns — never through `weakSelf`, which
+    /// would make the stem vanish the moment the voice does.
+    func testEveryGeneratedVoiceHandsItsBlockToTheTap() throws {
+        for file in ["Sources/Echoelmusic/Tools/PolySynthVoice.swift",
+                     "Sources/Echoelmusic/Tools/SubBassVoice.swift",
+                     "Sources/Echoelmusic/Tools/BioReactiveSynthVoice.swift"] {
+            let code = SourceText.codeOnly(try text(file))
+            XCTAssertTrue(code.contains("nonisolated let stemTap = StemTapPoint()"), "\(file): the voice owns a tap point")
+            guard let make = code.range(of: "private func makeSourceNode()"),
+                  let end = code.range(of: "AVAudioSourceNode(format:", range: make.upperBound..<code.endIndex) else {
+                XCTFail("\(file): makeSourceNode moved — re-anchor this guard"); continue
+            }
+            let body = String(code[make.upperBound..<end.lowerBound])
+            XCTAssertTrue(body.contains("let tap = stemTap"), "\(file): the closure captures the tap, not the voice")
+            XCTAssertTrue(body.contains("{ _, timestamp, frameCount, audioBufferList in"),
+                          "\(file): the render block reads the engine's timestamp")
+            let call = "tap.capture(audioBufferList, frameCount: Int(frameCount), timestamp: timestamp)"
+            XCTAssertEqual(body.components(separatedBy: call).count - 1, 2,
+                           "\(file): both exits of the render block capture — the live one and the silent one")
+            for writer in [".silence(audioBufferList:", "renderOnAudioThread(frameCount:"] {
+                guard let w = body.range(of: writer),
+                      let c = body.range(of: call, range: w.upperBound..<body.endIndex) else {
+                    XCTFail("\(file): `\(writer)` is not followed by the capture"); continue
+                }
+                XCTAssertLessThan(w.lowerBound, c.lowerBound, "\(file): the voice writes, THEN the tap copies")
+            }
+        }
+    }
+
+    // MARK: 10 — a voice's tap starts unarmed: nothing is captured until a session arms it
+
+    @MainActor
+    func testAVoiceTapStartsUnarmed() {
+        let voice = BioReactiveSynthVoice()
+        XCTAssertFalse(voice.stemTap.isArmed, "no capture session, no capture — the default costs nothing")
+        XCTAssertFalse(voice.stemTap.hasRetiredTarget)
+        XCTAssertEqual(voice.stemTap.invalidTimeBlocks, 0)
     }
 
     private func text(_ relative: String) throws -> String {
