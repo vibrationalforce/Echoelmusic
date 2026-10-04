@@ -237,4 +237,8 @@ Alles Übrige ist durch „Du entscheidest“ (2026-10-03) und E18/E19 gedeckt u
 
 | Scheibe | Stand |
 |---|---|
-| F1 | in Arbeit |
+| F1 | gebaut — `ef49372bf`; Compile Check grün, Auto-Merge → main = `ef49372bf` (⇒ Build for Testing grün); Gerät offen |
+| F2a | gepusht — `704e0acfa` (Abstands-Skala `spaceXS…spaceXL`, F1-Dateien migriert, Ratsche 696); Gates laufen |
+| F2b | lokal — `29ec3b6bc` (zwei Bewegungs-Tokens, sieben Übergänge); Push nach dem Compile Check von F2a |
+
+F2 ist bewusst in zwei Commits geteilt (Abstand und Bewegung), damit jeder eine logische Änderung bleibt. Die Deckkraft-Tokens gab es schon (`dim`, `border`, `fill`, `pressedOpacity`); dafür war keine Scheibe nötig.
