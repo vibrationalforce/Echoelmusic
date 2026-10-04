@@ -22188,6 +22188,30 @@
           }
         }
       }
+    },
+    "Couldn't open. The piece in front isn't saved yet, so nothing was replaced. Retry save first." : {
+      "comment" : "Library (Restructure A1, 2026-10-04): an Open was refused because the piece in front could not be saved — replacing it would lose its last copy on disk. 'Retry save' is the banner button above the stages.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't open. The piece in front isn't saved yet, so nothing was replaced. Retry save first."
+          }
+        }
+      }
+    },
+    "Couldn't start a new piece. The piece in front isn't saved yet, so nothing was replaced. Retry save first." : {
+      "comment" : "Library (Restructure A1, 2026-10-04): New piece was refused because the piece in front could not be saved — replacing it would lose its last copy on disk. 'Retry save' is the banner button above the stages.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't start a new piece. The piece in front isn't saved yet, so nothing was replaced. Retry save first."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

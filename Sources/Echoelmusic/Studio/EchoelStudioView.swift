@@ -9744,6 +9744,13 @@ struct EchoelStudioView: View {
     /// instrument's own take, genre and sound stay.
     private func startNewPiece() {
         autosaveTake()
+        // Restructure A1 step 1 — the empty song is written through to disk at once; with the
+        // rescue still pending that would replace the piece's last copy on disk (`SessionController`).
+        if let refusal = SessionController.replacementRefusal(.newPiece, hasPendingSave: projects.hasPendingSave) {
+            openNote = refusal
+            EchoelCrashLog.breadcrumb("New piece refused: a save is pending")
+            return
+        }
         openNote = nil
         guard SessionSaveOpen.startEmptySong(timeline: timelineStore, clips: clipStore,
                                              player: timelinePlayer) else {
@@ -11877,6 +11884,8 @@ struct EchoelStudioView: View {
         // the rescue inside `open(p)` still records the song being replaced.
         timelinePlayer.stop()
         open(p)
+        // `open(_:)` refused (a save is pending): it changed nothing, so the song stays too.
+        guard !projects.hasPendingSave else { return }
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
         // A3a: AFTER the song — installing it rebuilt the scene from defaults, and the saved
@@ -12040,6 +12049,14 @@ struct EchoelStudioView: View {
     /// take and replaces only its Session (review H1 of `2eb3cb84d`).
     private func open(_ p: Project) {
         if p.id != Project.autosaveSlotID { autosaveTake() }
+        // Restructure A1 step 1 — a rescue that did not reach the disk must not be followed by a
+        // replacement: everything below overwrites the take, and `openFromLibrary` then writes the
+        // new song through to disk. Refuse BEFORE the first overwrite, in words (`SessionController`).
+        if let refusal = SessionController.replacementRefusal(.open, hasPendingSave: projects.hasPendingSave) {
+            openNote = refusal
+            EchoelCrashLog.breadcrumb("Open refused: a save is pending")
+            return
+        }
         // DMMW Phase 1 · slice 3 — the persistent project header names what was opened.
         // ⛔ Review of b884e7a52 (HIGH): `noteCurrent` SKIPS the recovery slot, so opening the
         // Autosave row used to leave the PREVIOUS row as the open project — and since Phase 5 ·
