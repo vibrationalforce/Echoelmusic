@@ -24,7 +24,8 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
    - Die Objektbewegung kommt aus der zeitgestempelten Trajektorie (S-A2). Sie wird mit 20 Hz auf der Sample-Uhr aufgezeichnet und dann ausgedünnt: zeit-treues RDP mit ≤ 1° Winkelfehler, ≤ 0,01 Distanzfehler und einer Höchstlänge pro Block.
    - Die Blöcke liegen lückenlos. `jumpPosition=1` steht **nur im ersten** Block, alle weiteren tragen den Default 0.
    - Zeiten werden dezimal mit 9 Stellen geschrieben, nie in der `S`-Form. Gain ist linear, `importance` und `profileList` fallen weg.
-   - Format: **48 kHz / 24 bit PCM.** Die Engine läuft bereits mit 48 kHz. Der Stereo-Export bleibt unverändert bei 44,1 kHz.
+   - Format: **48 kHz / 24 bit PCM.** Der Stereo-Export bleibt unverändert bei 44,1 kHz.
+   - ⛔ Hier stand „Die Engine läuft bereits mit 48 kHz“. Das stimmt nur für die BITTE: `AudioConfiguration` fragt 48 kHz an und protokolliert die gewährte Rate (`session: rate asked … granted …`). Die Route kann 44,1 kHz gewähren. Der Master prüft deshalb die gewährte Rate und rechnet um oder bricht mit einer Meldung ab; er nimmt 48 kHz nie an (Kritik 2026-10-04).
 3. **Kein Limiter, keine Normalisierung und kein Trim auf Stems oder Objekten.** Lautheit wird **gemessen und berichtet**, nie erzwungen: in einer eigenen `loudness.json` (S-A6) oder als Information.
    - Unser True Peak ist eine Catmull-Rom-Schätzung und nicht BS.1770-normgerecht. Er wird deshalb **nicht als BS.1770-Wert** in eine Datei geschrieben, bis der FIR-Meter existiert.
 4. **Zwischenstufe vor dem BW64 (S-A4):** ein Exportordner mit Stems und Trajektorien. Er besteht aus `manifest.json`, `stems/NN_<track>.wav` (alle gleich lang, sample-genau, vor dem Master), `trajectories/NN_<track>.json`/`.csv` und `README.txt`.
@@ -50,10 +51,12 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
 
 ## Begründung
 
-- **ADM BWF ist das einzige offene Format, das alle drei Ziele zugleich bedient.** Logic öffnet es, Nuendo und Reaper öffnen es (jeweils LIKELY); Apple verlangt es als Lieferform (LIKELY); EAR rendert es als BS.2127-Referenz (VERIFIED).
+- **ADM BWF ist das einzige offene Format, das alle drei Ziele zugleich bedient.** Logic öffnet es, Nuendo und Reaper öffnen es (jeweils LIKELY); EAR rendert es als BS.2127-Referenz (VERIFIED).
 - IAMF verliert heute über das Referenzwerkzeug die Objekte. HOA verliert die Objekt-Identität grundsätzlich.
 - **Ein eigener Writer ist klein:** drei Chunks mit belegtem Byte-Layout plus deterministisches XML. Ein C++-Paket wäre die erste nicht-RTMP-Abhängigkeit, und dafür fehlt jeder Grund.
 - **Objekte nur für Audiospuren** ist kein Verzicht, sondern die Wahrheit des Codes. Nur Audiospuren haben heute eine Szenenposition (S3). Mit E10-1 kommen echte Mono-Quellen dazu, die Mikrofon-Takes, und das sind ideale Objekte.
+
+- ⛔ Hier stand zusätzlich „Apple verlangt es als Lieferform (LIKELY)“. Das Argument spricht gegen uns, nicht für uns: Apple verlangt das **Dolby-Atmos-Master-ADM-Profil**, und ein generisches ADM ist das nicht. Die generische Datei ist eine **Studio-Übergabe, keine Plattform-Lieferung** (Kritik 2026-10-04).
 
 ## Konsequenzen
 
@@ -76,6 +79,23 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
 | F-E | **offen.** Keine Anfrage an Jurist oder Dolby ohne Founder | — |
 
 S-A1 (`Core/ImmersiveMasterPlan.swift`, Wächter `TheImmersiveMasterPlanFollowsTheRecordTests`): gebaut, nicht verdrahtet, nicht am Gerät.
+
+## Nachträge aus der Vollständigkeits-Kritik (2026-10-04)
+
+Der zweite Recherche-Lauf (R1–R6, L3) hat die Entscheidungen F-A … F-D nicht umgestoßen. Er hat aber Widersprüche gefunden, die **vor S-A5** (ADM-Writer) entschieden sein müssen. Keiner davon betrifft S-A1 oder S-A2.
+
+| # | Befund | Folge |
+|---|---|---|
+| K1 | Polare Koordinaten schließen die Datei vom Dolby-Profil aus (dort ist `cartesian=1` Pflicht, MediaInfo meldet polar als Fehler) | Für die generische Studio-Datei richtig. Ein späterer Dolby-Serializer rechnet über die EBU-Umrechnung kartesisch; `ImmersiveMasterPlan` bleibt dafür offen |
+| K2 | Drei Bett-Vokabulare: BS.2094 `AP_00010002`, Dolby RoomCentric `RC_*`, BS.2051 4+7+0 | v1 bleibt beim BS.2094-Bett. Das Dolby-Bett ist Sache des Dolby-Serializers |
+| K3 | Drei unvereinbare `jumpPosition`-Rezepte (unseres, Dolby mit `interpolationLength` 0,005208 auf jedem Block, EBU-Emission entfernt es) | **Offen für S-A5.** Vorschlag: lückenlose Blöcke ≥ 5 ms, Dauer als Differenz der GERUNDETEN Zeiten, `jumpPosition` nur im ersten Block |
+| K4 | Keine Objekt-Obergrenze gewählt (Dolby 118, Tech 3392 Stufe 2 = 64, IAMF 18 je Mix inklusive Bett) | **Offen für S-A5.** Vorschlag: Warnung über 18, harte Grenze 64 |
+| K5 | Zeitgenauigkeit: 9 Stellen (hier) gegen 5 Stellen auf einem dezimal exakten 10-ms-Raster | **Offen für S-A5.** S-A2 speichert Zeiten deshalb als **ganze Samples**, nie als Dezimalzahl; die Schreibweise entscheidet erst der Writer |
+| K6 | `ITU-R_BS.2076-2` ist deklariert, aber niemand hat geprüft, ob EAR 2.1.0 ein so markiertes Dokument annimmt (EAR kennt die -1-Kette) | Vor S-A5 eine exportierte Datei durch EAR `ear-utils` und MediaInfo schicken; bis dahin ist die Konstante in S-A1 eine Annahme |
+| K7 | ADM-Objekt n = Spur-Reihenfolge; Umsortieren nummeriert um | Der Writer leitet `AO_`/`ATU_`-IDs aus der **Spur-UUID** ab, nicht aus der Position. `ImmersiveMasterPlan.Channel.laneID` trägt sie schon |
+| K8 | Ob BS.2088-2 für Dateien unter 4 GB die äußere Kennung `BW64` verlangt oder `RIFF` genügt (libbw64 schreibt `RIFF`), ist ungelesen | Gleicher Orakel-Lauf wie K6, zusätzlich Logic „Create Project from ADM BWF“ auf dem Mac des Founders |
+
+**Orakel-Lauf, Eigentümer und Zeitpunkt:** nach S-A5, eine exportierte Datei durch EAR `ear-utils`, MediaInfo und einen Logic-Import. Ohne diesen Lauf steht nirgends mehr als „ADM BWF (ITU-R BS.2076 / BS.2088)“, und auch das erst nach dem Lauf.
 
 ## Fragen an den Founder (Gate R) — die ursprüngliche Vorlage
 

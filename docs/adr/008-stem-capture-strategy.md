@@ -41,6 +41,7 @@ Jede der folgenden Ursachen allein bricht die Bit-Gleichheit:
 
 1. **Eine Engine, eine Uhr.** Alle Stems laufen in der bestehenden Master-Engine mit, eine zweite gibt es nicht.
    - Innerhalb einer Engine teilen alle Knoten einen Sample-Zeitstrahl, also gibt es keine Drift (LIKELY, Research §5).
+   - ⚠️ Ob Taps an **verschiedenen** Knoten sample-genau zueinander liegen, ist **UNVERIFIED** (Apple dokumentiert nichts, eine Forumsfrage blieb unbeantwortet; Kritik 2026-10-04). Der Tap-Weg für Audiospuren (Punkt 3) gilt deshalb erst nach einem Impuls-Ausrichtungstest am Gerät.
    - Ausgerichtet wird über `AVAudioTime.sampleTime`, **nie** über Chunk-Grenzen. Die Tap-Puffergröße ist nicht garantiert.
 2. **Generierte Stimmen** (`PolySynthVoice`, `SubBassVoice`, `BioReactiveSynthVoice`): Sie werden **im eigenen Render-Block** mitgeschnitten. Jede Stimme rendert schon in eigene Scratch-Puffer.
    - Neu ist eine Kopie in einen **vorallokierten lock-freien SPSC-Ring** pro Stimme.
@@ -76,6 +77,20 @@ Jede der folgenden Ursachen allein bricht die Bit-Gleichheit:
   - Ein Export dauert so lange wie das Stück. Das ist schon heute so, denn „Piece (WAV)“ spielt das Stück einmal ab.
   - Speicherbedarf auf der Platte: 16 Stems sind ≈ 8,3 GB/h.
   - **Laut Apple ist ein Tap-Block keine Echtzeit-Garantie.** Ob ein langsamer Schreiber Puffer verliert, ist offen. Der Ring muss das messen und melden, nie still verlieren.
+
+## Nachträge aus der Vollständigkeits-Kritik (2026-10-04)
+
+G-A … G-C bleiben. Vor S-A3 sind fünf Punkte zu klären:
+
+| # | Befund | Folge für S-A3 |
+|---|---|---|
+| K1 | Audiospuren sind Dateien plus `TimelineDocument`. Ihre Stems lassen sich **offline und deterministisch** nachrechnen | Bevorzugter Weg für Audiospur-Stems; der Tap pro Spur bleibt Rückfall, abhängig vom Gerätetest oben. Für die generierten Stimmen bleibt der Mitschnitt im Render-Block |
+| K2 | Eine Kopie im Render-Block der Stimme liegt **vor** Pegel, Pan und Mute des `masterMixer`-Eingangs (die Regler aus dem Spur-Inspektor) | S-A3 entscheidet ausdrücklich, ob ein Stem diese Regler trägt. Vorschlag: Pegel und Mute ja, Pan nein (die Position kommt aus der Trajektorie) |
+| K3 | Mit eingeschaltetem „Headphone space“ ist der „Stereo“-Mitschnitt **binaural** | Der Immersive-Export schaltet den Kopfhörer-Raum für den Durchgang ab oder verweigert den Export, solange er an ist. Nie still binaural als Stereo-Master ausliefern |
+| K4 | Ob der RetroCapture-Tap auf `mainMixerNode` vor oder nach dem −1-dB-Trim liegt, ist ungemessen | Vor S-A3 messen; es bestimmt den Bezugspegel des Stereo-Masters |
+| K5 | Option (B) bleibt für heutige Takes für immer verschlossen, wenn nichts mitgeschrieben wird | Billige Versicherung: ab S-A3 je Take die aufgelösten `BioComposer.Input` je `generate()`, Seeds, Salze und ein ~1-Hz-Bio-Log mitspeichern |
+
+Ring-Überlauf, Unterbrechung und Routenwechsel mitten im Export brechen laut ab, nie still.
 
 ## Entscheidung zu Gate R (2026-10-04)
 
