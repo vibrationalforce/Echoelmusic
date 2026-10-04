@@ -189,6 +189,9 @@ struct EchoelStudioView: View {
     /// Open stops the timeline player before the song is replaced.
     @Environment(TimelineRegionPlayer.self) private var timelinePlayer
     @Environment(ArrangementStore.self) private var arrangementStore
+    /// Restructure A3a — the piece's spatial scene. Read ONLY inside `withSession` and
+    /// `openFromLibrary`, never in `body`: an ADM-OSC controller moves objects at its send rate.
+    @Environment(SpatialSceneStore.self) private var spatialScene
     // The one shared transport. Read ONLY via `.onChange(of: transport.isPlaying)` (a
     // LOW-frequency flag — flips on play/stop, never 10 Hz) so the global transport bar's
     // Stop can end the whole bio session; NOT read in `body` (freeze rule).
@@ -11850,7 +11853,8 @@ struct EchoelStudioView: View {
                                   // stay an app root until a capture seam outside `body`'s host
                                   // carries them.
                                   playerAutomation: [],
-                                  sampleRate: audioEngine.sampleRate)
+                                  sampleRate: audioEngine.sampleRate,
+                                  spatial: spatialScene.scene)
     }
 
     /// WA4-S3 — "open this project" from the library: the take AND the song it was saved
@@ -11875,6 +11879,10 @@ struct EchoelStudioView: View {
         open(p)
         SessionSaveOpen.restoreSong(of: p, timeline: timelineStore, clips: clipStore,
                                     player: timelinePlayer)
+        // A3a: AFTER the song — installing it rebuilt the scene from defaults, and the saved
+        // positions are keyed by the lanes that are now in place.
+        SessionSaveOpen.restoreSpatialScene(of: p, into: spatialScene,
+                                            lanes: timelineStore.document.lanes)
         // The GENRE goes the other way (EF2 review, MED-1): the take's notes, scale and timbre are
         // `open(p)`'s, and a recovery row can pair that take with a song from another moment — so
         // the take's genre is written INTO the song instead of the song's being adopted over it.

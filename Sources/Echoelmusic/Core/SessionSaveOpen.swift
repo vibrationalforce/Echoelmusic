@@ -28,6 +28,11 @@
 //    song; the review of `2eb3cb84d` measured the import door and it does.)
 //  · A Session this build cannot open — newer, damaged, or with a clip grid LARGER than this build's —
 //    REFUSES the whole Open before anything changes, and says why. Never half an open.
+//  · The SPATIAL SCENE travels with the piece (Restructure A3a, 2026-10-04): Save captures it,
+//    Open puts it back after the song is installed (`restoreSpatialScene`). Its keys are the
+//    document's lane ids, so it is the piece's state, not the app's (the session census puts
+//    spatial positions in the Session). The modulation matrix and the signal routes stay APP
+//    roots on purpose — `TheProjectEnvelopeImportsWithoutRestructuringTests` claim 6.
 //  · Song form is CAPTURED and not yet restored (its store has no replace API; it is the legacy
 //    root the timeline superseded). The player's automation lanes are NOT captured by the
 //    Studio's Save today — that view may not hold the player (the freeze law) — so they stay an
@@ -48,12 +53,30 @@ public enum SessionSaveOpen {
     public static func capturing(_ take: Project, timeline: TimelineDocument, clipSlots: [Clip?],
                                  songForm: Arrangement, playerAutomation: [AutomationLane],
                                  sampleRate: Double) -> Project {
+        capture(take, timeline: timeline, clipSlots: clipSlots, songForm: songForm,
+                playerAutomation: playerAutomation, sampleRate: sampleRate, spatial: nil)
+    }
+
+    /// Restructure A3a — the same capture, plus the piece's spatial scene. The Studio's Save
+    /// calls THIS form (`TheSpatialSceneTravelsWithThePieceTests` holds every `Sources/` call
+    /// site to it); the form above stays for a caller that holds no scene, and writes none.
+    public static func capturing(_ take: Project, timeline: TimelineDocument, clipSlots: [Clip?],
+                                 songForm: Arrangement, playerAutomation: [AutomationLane],
+                                 sampleRate: Double, spatial: SpatialScene) -> Project {
+        capture(take, timeline: timeline, clipSlots: clipSlots, songForm: songForm,
+                playerAutomation: playerAutomation, sampleRate: sampleRate, spatial: spatial)
+    }
+
+    private static func capture(_ take: Project, timeline: TimelineDocument, clipSlots: [Clip?],
+                                songForm: Arrangement, playerAutomation: [AutomationLane],
+                                sampleRate: Double, spatial: SpatialScene?) -> Project {
         var saved = take
-        let session = DMMWProjectImport.envelope(project: take, timeline: timeline,
+        var session = DMMWProjectImport.envelope(project: take, timeline: timeline,
                                                  clipSlots: clipSlots, songForm: songForm,
                                                  playerAutomation: playerAutomation,
                                                  ppq: Note.ticksPerQuarter,
                                                  sampleRate: sampleRate)
+        session.spatial = spatial
         saved.attachSession(session)
         return saved
     }
@@ -110,6 +133,19 @@ public enum SessionSaveOpen {
         guard clips.replaceSlots(song.slots) else { return false }
         timeline.replaceDocument(song.document)
         return true
+    }
+
+    /// Restructure A3a — put back the spatial scene `project` was saved with. A project saved
+    /// before A3a, or a scene this build could not read, carries none: the scene the song
+    /// install already rebuilt from defaults stays, which is what opening always did. Call it
+    /// AFTER `restoreSong` — installing the song rebuilds the scene, and a scene restored first
+    /// would be fitted to the previous piece's lanes.
+    @MainActor
+    public static func restoreSpatialScene(of project: Project, into store: SpatialSceneStore,
+                                           lanes: [TimelineLane]) {
+        guard case .restorable(let session) = project.readSession(),
+              let scene = session.spatial else { return }
+        store.restore(scene, lanes: lanes)
     }
 
     /// The song a project saved before Sessions opens into, and the song "New piece" starts —

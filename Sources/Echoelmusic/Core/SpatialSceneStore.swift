@@ -37,7 +37,9 @@ public final class SpatialSceneStore {
     public func rebuild(from lanes: [TimelineLane]) {
         let objectLanes = Self.objectLanes(lanes)
         let count = objectLanes.count
-        var next = SpatialScene()
+        // The room is the scene's, not the lanes': a rebuild carries it over (A3a — before it,
+        // every rebuild reset it to the default, which a restored piece would have lost at once).
+        var next = SpatialScene(room: scene.room)
         for (index, lane) in objectLanes.enumerated() {
             let id = lane.id.uuidString
             if let existing = scene.object(id: id) {
@@ -50,6 +52,17 @@ public final class SpatialSceneStore {
         }
         // Only replace when something actually changed (avoids needless revision churn).
         if next.objects != scene.objects { scene = next }
+    }
+
+    /// Restructure A3a — install the scene a saved piece carries, then fit it to `lanes`. The
+    /// fit is the ordinary `rebuild`, so the rule stays ONE rule (#416): a saved object whose
+    /// lane is still in the piece keeps its position; a lane the scene does not know gets its
+    /// default; an object whose lane is gone drops. Open calls this AFTER the song is installed,
+    /// because installing the song already rebuilt the scene from defaults.
+    public func restore(_ saved: SpatialScene, lanes: [TimelineLane]) {
+        scene = saved
+        cartesianHolds = [:]   // a hold belongs to the scene it was merged into
+        rebuild(from: lanes)
     }
 
     /// Move one track's object (the Touch surface / recorded automation drives this).

@@ -60,6 +60,15 @@ public struct DMMWProject: Codable, Sendable, Equatable {
     public var content: Content
     public var sound: Sound
     public var legacy: Legacy
+    /// Restructure A3a (2026-10-04): the spatial scene — one object per sounding track, keyed
+    /// by the lane's UUID, plus the room. It is the PIECE's creative state (the session census
+    /// puts spatial positions inside the Session, `docs/dev/SESSION_OWNERSHIP_CENSUS.md`), and
+    /// it can only mean something here: the keys are this document's lane ids, so a scene left
+    /// in the app's memory pointed at nothing once another piece opened, and opening fell back
+    /// to the per-instrument defaults.
+    /// Optional on purpose: an envelope written before A3a carries none, and `nil` means
+    /// "rebuild from the tracks", which is what opening always did.
+    public var spatial: SpatialScene?
 
     public init(envelopeVersion: Int = DMMWProject.currentEnvelopeVersion,
                 meta: Meta, timebase: Timebase, musical: Musical,
@@ -190,5 +199,8 @@ public struct DMMWProject: Codable, Sendable, Equatable {
             content: try c.decode(Content.self, forKey: .content),
             sound: try c.decode(Sound.self, forKey: .sound),
             legacy: try c.decode(Legacy.self, forKey: .legacy))
+        // A3a: lossy on purpose — a scene this build cannot read must not take the song down
+        // with it. The song opens and the tracks get their default positions.
+        self.spatial = (try? c.decodeIfPresent(SpatialScene.self, forKey: .spatial)) ?? nil
     }
 }
