@@ -3703,6 +3703,12 @@ struct EchoelStudioView: View {
     /// from the per-drum-channel strips it used to sit beside; those are gone (no drums), so
     /// this is now simply the mixer's one strip style.
     /// Pure layout over existing bindings; reads only low-frequency stores → render-safe.
+    ///
+    /// Restructure F6a — NO SURFACE OF ITS OWN. Every caller sits inside a `panel(…)`, which is
+    /// already a card (`EchoelPanel`); a filled, bordered strip inside it was a card in a card
+    /// (plan §3, "ein Panel hat eine Fläche"). The strip is now a titled group under a 1-pt rule
+    /// in the decorative `border` token: the rule separates the groups, the panel stays the one
+    /// surface. The name keeps "Card" because two guards and the string-catalog scan cite it.
     @ViewBuilder
     private func mixStripCard<Content: View>(_ title: LocalizedStringKey,
                                              @ViewBuilder _ content: () -> Content) -> some View {
@@ -3712,10 +3718,10 @@ struct EchoelStudioView: View {
                 .foregroundStyle(EchoelTheme.text)
             content()
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
+        .padding(.top, 10)
+        .overlay(alignment: .top) {
+            Rectangle().fill(EchoelTheme.border).frame(height: 1)
+        }
     }
 
     // ⛔ #1302 — THE WHOLE MICROPHONE SURFACE IS GONE (founder 2026-09-12, "OK Face und
