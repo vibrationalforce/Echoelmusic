@@ -42109,3 +42109,21 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
     - Ungültige Sample-Zeit wird gezählt, nie geraten.
     - Wächter mit 7 Ansprüchen. Transkription grün; Mutanten rot, darunter eine Besitzer-Mutante, die erst nach der Begrenzung des Scans traf.
   - Stufen: gebaut 4 (Plan, Bahn, Ring, Tap-Punkt) · verdrahtet 0 · Gerät 0 · Studio 0.
+
+- **Zweite Audio-Thread-Prüfung · S-A3b-2 Stimmen-Naht (2026-10-04):**
+  - Die Prüfung von `935be1fd8`/`9ac0dff08`/`c5c92ffe8` fand zwei HIGH-Befunde:
+    - H1: `StemCaptureRing.read` las hinter das Pufferende, wenn der Leser mehr als einen Ring zurücklag. `count` war nicht durch die Kapazität begrenzt; die Wächter-Ansprüche 4 und 7 lösen genau das aus.
+    - H2: `StemTapPoint.swapSlot` veröffentlichte den Ziel-Zeiger ohne Release-Zaun davor.
+  - **Warum die Transkription H1 übersah:** Sie modellierte die Kopie frameweise mit Maske, kein Index konnte den Ring verlassen. Neu modelliert sie jede `update(from:count:)` als begrenzte Kopie. Die alte Fassung wirft OOB bei Anspruch 4 (`samples[0..<576]`, cap 256). **Lehre: Speicherkopien genau so nachbauen, wie sie geschrieben sind.**
+  - `a594273bd` Reparatur:
+    - Überschriebene Frames werden genullt, ohne `samples` zu berühren; kopiert wird nur der Rest von höchstens einem Ring.
+    - Leser-Arithmetik wraps (L2).
+    - Release-Zaun vor dem Slot (H2), Acquire-Zaun nach dem Zähler (M1).
+    - Doku: disarm ≠ Produzent fertig (M2); `lostFrames` ist eine Obergrenze (L1).
+    - Interleaved-Puffer werden abgewiesen und gezählt (L3).
+    - Neuer Anspruch 14: Leser zehn Ringe zurück, Versatz ≠ 0.
+  - `6d60ba946` S-A3b-2: Die drei generierten Stimmen rufen `tap.capture` nach dem Schreiben, auf beiden Ausgängen, mit der Engine-Zeitmarke. Die Schließung hält den Tap stark, damit ist L5 durch Besitz beantwortet.
+  - **K2 entschieden: der Stem ist pre-fader.** Mixer-Lautstärke, Pan und Mute sind nicht im Stem. Pegel und Mute wendet der Exporter an (S-A3c); Pan ist die Objektposition.
+  - Wächter-Ansprüche 7–10 (Release-Zaun, Interleaved, Stimmen-Scan, Default unarmiert). Mutanten rot.
+  - Unabhängige Audio-Thread-Prüfung beider Commits läuft vor dem Push.
+  - Stufen: gebaut 5 · verdrahtet 0 (nichts armiert) · Gerät 0 · Studio 0.
