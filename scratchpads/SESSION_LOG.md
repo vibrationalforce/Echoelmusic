@@ -42050,3 +42050,16 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **A3a `73deb73ba`:** die Raumszene reist mit dem Stück. `DMMWProject.spatial`, `capturing(…, spatial:)`, `restoreSpatialScene` nach `restoreSong`, `SpatialSceneStore.restore`; `rebuild` behält jetzt den Raum. Wächter `TheSpatialSceneTravelsWithThePieceTests` (1–5 Verhalten, 6–7 Quelltext, rot auf dem Elternstand; 8 Gegengewicht). Benotet per Python-Abschrift; alle Prüfer grün. Gates laufen.
 - **Korrektur im Plan:** Modulation und Routing gehören NICHT ins Stück (Zensus, Envelope-Anspruch 6) — §1B/§2A/§3 nachgeführt.
 - **Weiter offen:** Licht-Zustand ins Stück (ein Wert heute), A1 `SessionController`, Broadcast S2 bleibt gesperrt (HaishinKit-Ablehnung).
+
+## 2026-10-04 (Fortsetzung) — Founder-Auftrag 1–7: Status, Licht-Look, A1, G1–G6, Pläne, S3
+
+- **P1** `2dd606752`: `FEATURE_STATUS.md` auf v10.79.490 / Build 2615 (Implementierung · erreichbarer Weg · Gerät getrennt).
+- **P2** `1f4ce07f3`: Licht-Look-Stärke reist mit dem Stück, ein Undo-Schritt je Geste. In main.
+- **A1 Schritt 1** `9e098c431`: Öffnen/Neues Stück verweigern bei ausstehendem Bibliotheks-Schreiben. In main, Teil von **10.79.491 (Build 2616, gelandet)**.
+- **G1–G5 → G6** in `docs/dev/FOUNDER_INBOX.md`; G6 (Kopfhörer-Raum) erst ab dem Build NACH 10.79.491.
+- **P5** `451525662`: Pläne E13/E12/E10/E11/E21/S3; Broadcast-Sperre F14 dokumentiert (HaishinKit abgelehnt, kein weiterer Schritt).
+- **S3a–c** `4116a56e4` · `7ce82e730` · `5cf8d02fe` + Review-Reparatur `e5bf9a67d` (Umverdrahten nur beim Start, Stereo-Rückfall). Compile Check e5bf grün.
+- **A1 Schritt 2** `302703722`: nicht kodierbarer Song behält den letzten Song + „Song not saved“.
+- **S3d** `146e1d271` (gepusht, Gates laufen): Richtung/Entfernung je Spur im Track-Inspektor; `ATrackIsPlacedFromItsInspectorTests`.
+- **A1 Schritt 3** `19e7fc883` (lokal, Push nach dem S3d-Compile-Check): Arbeitskopie-Schreibfehler sichtbar („Changes not stored“ + „Write again“); `AWorkingCopyThatCannotBeWrittenSaysSoTests`.
+- **Offen:** G1–G6 am Gerät; Klang und Stabilität bleiben offen bis zu echten Beobachtungen; A1 Play/Stop-Besitz über `SessionController`; E13/E12/E10/E11 nach Plan.
