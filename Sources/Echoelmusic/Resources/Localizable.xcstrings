@@ -22368,6 +22368,54 @@
           }
         }
       }
+    },
+    "Changes not stored" : {
+      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes not stored"
+          }
+        }
+      }
+    },
+    "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes. Write again, or free some storage." : {
+      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your latest changes to the piece could not be written to this iPhone's storage. They are still open here, but would be lost if the app closes. Write again, or free some storage."
+          }
+        }
+      }
+    },
+    "Write again" : {
+      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write again"
+          }
+        }
+      }
+    },
+    "Writes the open piece to this iPhone's storage again" : {
+      "comment" : "Restructure A1 step 3: the working copy of the piece could not be written to storage (WorkingCopyStatusView).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes the open piece to this iPhone's storage again"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

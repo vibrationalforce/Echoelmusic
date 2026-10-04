@@ -1526,6 +1526,18 @@ public final class TimelineStore {
     /// never the on-disk file.
     @ObservationIgnored var saveDebounceInterval: Duration = .milliseconds(250)
 
+    /// Restructure A1, step 3 — true while the LAST write of the working song did not reach
+    /// the disk (encode or file error; `AppGroupStore.save` logs which). Before this the
+    /// outcome was discarded, so a song that could not be written looked saved until the app
+    /// closed and the next launch loaded the older file. Written only when the outcome
+    /// CHANGES, so the one leaf that reads it (`WorkingCopyStatusView`) stays cold. The next
+    /// successful write — any edit, or "Write again" — clears it.
+    public private(set) var workingCopyNotWritten = false
+
+    private func recordWrite(_ written: Bool) {
+        if workingCopyNotWritten == written { workingCopyNotWritten = !written }
+    }
+
     private func persist() {
         onDocumentChanged?()
         saveGeneration += 1
@@ -1535,15 +1547,19 @@ public final class TimelineStore {
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: interval)
             guard let self, self.saveGeneration == generation else { return }
-            _ = self.store.save(snapshot, name: Self.fileName)
+            self.recordWrite(self.store.save(snapshot, name: Self.fileName))
         }
     }
 
     /// Cancels any pending debounced write and saves the current document to disk
     /// immediately. Call before the app might be suspended/killed (background
     /// transition) so a debounced-but-not-yet-fired edit is never lost.
-    public func flushPendingSave() {
+    /// Returns whether the write reached the disk (A1 step 3 — also `workingCopyNotWritten`).
+    @discardableResult
+    public func flushPendingSave() -> Bool {
         saveGeneration += 1
-        _ = store.save(document, name: Self.fileName)
+        let written = store.save(document, name: Self.fileName)
+        recordWrite(written)
+        return written
     }
 }

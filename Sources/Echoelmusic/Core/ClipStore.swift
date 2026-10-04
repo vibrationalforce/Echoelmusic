@@ -265,7 +265,21 @@ public final class ClipStore {
         persist()
     }
 
+    /// Restructure A1, step 3 — true while the LAST write of the clip grid did not reach the
+    /// disk. The outcome used to be dropped, so a failed write looked saved until relaunch.
+    /// Written only when the outcome changes (cold for its one reader, `WorkingCopyStatusView`);
+    /// the next successful write clears it.
+    public private(set) var gridNotWritten = false
+
+    /// "Write again" — writes the current grid once more. Returns whether it reached the disk.
+    @discardableResult
+    public func retryWrite() -> Bool {
+        persist()
+        return !gridNotWritten
+    }
+
     private func persist() {
-        store.save(Self.storedGrid(slots), name: Self.fileName)
+        let written = store.save(Self.storedGrid(slots), name: Self.fileName)
+        if gridNotWritten == written { gridNotWritten = !written }
     }
 }
