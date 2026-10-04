@@ -85,10 +85,14 @@ struct BroadcastView: View {
                 } label: {
                     Text(broadcast.isLive ? "Stop" : "Go Live")
                         .font(EchoelTheme.font(15, .semibold))
-                        .foregroundStyle(broadcast.isLive ? EchoelTheme.onPrimary : .black)
+                        .foregroundStyle(EchoelTheme.onPrimary)
                         .frame(maxWidth: .infinity).frame(minHeight: 48)
+                        // Restructure F6b: "live" is the RECORDING red, never `danger` — the two
+                        // tokens share a value today and are kept apart on purpose (EchoelTheme:
+                        // an error-red retune must not repaint a live/recording indicator). The
+                        // same grammar as the take's record button (`RecordTakeControls`).
                         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                            .fill(broadcast.isLive ? EchoelTheme.danger : EchoelTheme.text))
+                            .fill(broadcast.isLive ? EchoelTheme.recording : EchoelTheme.text))
                 }
                 .buttonStyle(.plain)
                 .disabled(!broadcast.isConfigured)
