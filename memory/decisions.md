@@ -4980,3 +4980,20 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **Entscheidung:** keine Glättung in der App und keine Besitz-Zeitsperre für den ADM-OSC-Eingang. S2 schrumpft auf LOW-5 (Drop-Zähler unbeobachtet, e919030a6); nächste Raum-Scheibe ist S3 (Binaural auf dem Gerät hinter einer Flagge).
 - **Warum:** `SpatialSceneStore.setPosition` hat genau einen Aufrufer, in der türlosen `ImmersiveStageView` — es gibt heute keinen zweiten Schreiber, den man schlichten müsste. Renderer (L-ISA, SPAT, Grapes) interpolieren selbst; Glättung in der App kostete Latenz.
 - **Review:** 2026-11-02.
+
+### 2026-10-04 — Restrukturierung: ein Besitzer je Tatsache, eine Tür je Fähigkeit, eine Sprache
+
+**Auftrag (Founder, wörtlich):** „Das gesamte produkt restrukturieren. Die gesamte architekur der DMMW und das feeling soll überarbeitet werden. Vermeide slop.“
+
+**Entscheidung:** Erst gemessen (vier Audits nur mit Lesezugriff), dann ein Zielbild in drei Schichten:
+1. **Architektur.** `SessionController` besitzt Laufzustand, Start/Stopp, Speichern/Öffnen und Undo. `DMMWProject` wird zur echten Rundreise. `Transport` ist der eine Tempo-Besitzer. `AppGraph` ersetzt die Verdrahtung im App-Struct.
+2. **Informationsarchitektur.** Eine Tür je Fähigkeit innerhalb der freigegebenen DAW-Hülle (E18). Das Instrument ist die Geräteseite der Echoel-Spur.
+3. **Gefühl.** Tokens für Abstand, Bewegung und Deckkraft; vier Tastenstufen als `ButtonStyle`; je eine Darstellung für spielt, ausgewählt und nimmt auf; keine Karte in einer Karte; Haptik an den Wertfeldern.
+
+**Reihenfolge:** F → I, A dazwischen verschränkt.
+**Plan:** `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md`
+**Founder-Frage:** nur E21 (toter Code).
+
+**Warum:** Jeder Befund hat dieselbe Form: eine Tatsache hat mehrere Besitzer. Dazu schreibt Speichern Domänen, die Öffnen nie liest. Ein Neuschreiben verlöre die bewachten Gesetze; die Migration in Scheiben hält jedes Gate grün und jeden Schritt umkehrbar.
+
+**Review:** 2026-11-03
