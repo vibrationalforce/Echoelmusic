@@ -42063,3 +42063,16 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **S3d** `146e1d271` (gepusht, Gates laufen): Richtung/Entfernung je Spur im Track-Inspektor; `ATrackIsPlacedFromItsInspectorTests`.
 - **A1 Schritt 3** `19e7fc883` (lokal, Push nach dem S3d-Compile-Check): Arbeitskopie-Schreibfehler sichtbar („Changes not stored“ + „Write again“); `AWorkingCopyThatCannotBeWrittenSaysSoTests`.
 - **Offen:** G1–G6 am Gerät; Klang und Stabilität bleiben offen bis zu echten Beobachtungen; A1 Play/Stop-Besitz über `SessionController`; E13/E12/E10/E11 nach Plan.
+
+## 2026-10-04 (Abend) — Broadcast B2 vorbereitet, Spatial Phase R geliefert
+
+- **B2 (HaishinKit 2.2.5 + Logboard 2.6.0, exakt gepinnt):**
+  - Gebaut: `RTMPBroadcastEngine`, Tür über eine NavigationLink in `PatchbayView.broadcastSection`, `ThirdPartyNotices.txt`, Plan `scratchpads/PLAN_BROADCAST_2026-10-04.md`, Doku (README, CLAIMS, FEATURE_STATUS, Website).
+  - Per Abschrift grün.
+  - **Commit gesperrt:** Der Hook verweigert `project.yml` im Auto-Modus. Wörtliche Meldung: „Denied because the session runs in auto mode, where an "ask" did not hold. Release: the founder edits it himself, or runs this step in default mode.“
+- **E10-1 (Mikrofon → Audiospur):** fertig und als `e10.index` vorbereitet, auf 1094b0ac3 nachgezogen. Gesperrt durch `Resources/iOS/Info.plist`, selber Grund.
+- **Spatial Phase R `1094b0ac3` (docs-only):**
+  - `docs/research/SPATIAL_MIX_RESEARCH.md`, ADR-007, ADR-008, Audit §7, DSGVO-Entwurf.
+  - Zwei Recherche-Läufe mit Gegenprüfung. ITU-, EBU-, Dolby- und Apple-Seiten waren gesperrt, belegt wurde über Referenz-Implementierungen.
+  - Gate R wartet auf F-A…F-E und G-A…G-D.
+- **Befund:** `CLAUDE.md` nennt `WeatherProvider` gelöscht, die Datei existiert aber (`Core/WeatherProvider.swift`). Gemeldet, nicht geändert, weil `CLAUDE.md` gerade die E10-Änderung trägt.

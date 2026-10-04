@@ -5008,3 +5008,15 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - **S3 (a–d):** Audiospuren laufen hinter dem Mixer-Schalter „Headphone space“ durch einen `AVAudioEnvironmentNode` (HRTFHQ); generierte Stimmen bleiben stereo; umverdrahtet wird nur beim ersten Start nach einem Stopp; Richtung/Entfernung je Spur im Track-Inspektor (eigenes Blatt, „Default“ = Platz des Rebuilds, kein Undo der Szene).
 - **P2:** die Licht-Look-Stärke reist mit dem Stück, ein Undo-Schritt je Geste, ältere Projekte bekommen den Standard.
 - **Commits:** `1f4ce07f3` · `9e098c431` · `302703722` · `19e7fc883` · `4116a56e4`…`146e1d271`. **Gerät:** G3, G6. **Review:** 2026-11-03.
+
+### 2026-10-04 — Broadcast B2 freigegeben, Commit am Session-Modus gesperrt · Spatial Phase R als Vorschlag
+
+- **B2:** Der Founder hat HaishinKit für RTMP/RTMPS ausdrücklich freigegeben.
+  - Code, Tür, Tests und Doku sind vorbereitet und per Abschrift grün: Pins 2.2.5/2.6.0 exakt, Master + Visual → begrenzte Übergabe → `RTMPStream`, Tür über Routing → Broadcast.
+  - Der Commit scheitert am Hook. `project.yml` und `Info.plist` (E10-1) sind founder-gated, und die Sitzung läuft im Auto-Modus. Das wurde nicht umgangen.
+  - Freigabeweg: Sitzung auf Default umstellen, dann den Dialog bestätigen.
+  - Stufe danach nur „kompiliert“. Server und Empfänger sind Geräteaufgaben.
+- **Spatial Phase R:** ADR-007 (ADM BWF, eigener Writer) und ADR-008 (Echtzeit-Mitschnitt in einem Durchgang) sind VORSCHLÄGE. Gate R wartet auf die Founder-Antworten.
+  - S3c hat Behauptung 7 der Lückenliste widerlegt: Der Kopfhörer ist für Audiospuren räumlich.
+  - Die Kanalrolle heißt `ChannelRole`, weil `SpatialRole` schon belegt ist.
+- **DSGVO:** Es gibt nur einen technischen Entwurf (`docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md`). Juristische Prüfung ist Pflicht, bevor daraus ein Rechtstext entsteht.
