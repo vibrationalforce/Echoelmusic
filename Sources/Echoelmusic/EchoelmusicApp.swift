@@ -156,7 +156,7 @@ struct EchoelmusicApp: App {
     @State private var recordController = RecordController()
     /// The live immersive scene: every non-bio track is a positioned SpatialObject,
     /// moved by the Immersive Stage Touch surface. Control-plane only (no audio thread).
-    @State private var spatialScene = SpatialSceneStore()
+    @State private var spatialScene = SpatialSceneStore.workingCopy()
     /// The creative lighting state Echoelmusic owns above Art-Net and sACN (founder decision
     /// 2026-09-22). ⚠️ Deliberately NOT injected into the environment: nothing renders it yet,
     /// and an `.environment` line with no reader is a door to a surface that does not exist.
@@ -1666,6 +1666,7 @@ struct EchoelmusicApp: App {
                     // could still be sleeping when the app suspends — flush it now so a
                     // backgrounded/terminated app never loses the last un-flushed edit.
                     timelineStore.flushPendingSave()
+                    spatialScene.flushPendingSave()   // S3d review: the scene's working copy, same reason
                     // Guideline 2.5.4: the `audio` background mode may keep the session
                     // alive ONLY while something audible (or a recording) needs it. An
                     // idle engine would render silence forever — the classic "plays

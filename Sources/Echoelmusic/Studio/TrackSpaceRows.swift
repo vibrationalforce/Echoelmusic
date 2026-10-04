@@ -3,8 +3,11 @@ import SwiftUI
 
 /// Restructure S3d — the open track's place in the piece's space: a direction and a distance,
 /// written through `SpatialSceneStore.setPosition`, the one writer the Stage drag and an
-/// external ADM-OSC controller already use. The scene travels with the piece (A3a), so a place
-/// set here comes back when the piece reopens; while the Mixer's "Headphone space" is on, an
+/// external ADM-OSC controller already use. The scene travels with a SAVED piece (A3a) and has
+/// its own working copy (`SpatialSceneStore.workingCopy()`), so a place set here comes back when
+/// the piece reopens and after a relaunch. ⛔ Until the S3d review only the first half was true:
+/// the scene lived in memory, and a relaunch put every track back at its default unless the
+/// piece had been saved and opened again. While the Mixer's "Headphone space" is on, an
 /// AUDIO track is heard there (S3c — the coordinator hands the point over on its next step).
 ///
 /// ⚠️ ITS OWN LEAF, ON PURPOSE (10.76.41/50 law): `SpatialSceneStore.scene` also moves at an
