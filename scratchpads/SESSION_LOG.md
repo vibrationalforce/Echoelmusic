@@ -42090,3 +42090,22 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   - S-A1 `27f5ddd5a` hat `main` erreicht (Auto-Merge ✓).
   - `4497538e8` feat(spatial): S-A2 `SpatialTrajectory` plus Wächter mit neun Ansprüchen. Der Python-Nachbau mit Float32 ist grün. Gegen den eigenen ersten Entwurf ist er rot (Halt nicht geteilt), ebenso gegen eine Mutante, die an aufgenommenen Punkten schneidet (0,98° Drift), und gegen eine mit `Date()`.
   - E10-1 und B2 bleiben gesperrt (Auto-Modus); beide Patches liegen in `scratchpads/`.
+
+- **S-A3a · Review-Reparatur · RetroCapture-Claim · S-A3b-1 (2026-10-04):**
+  - S-A2 `4497538e8` ist in `main`: Compile Check ✓, Build for Testing ✓, Auto-Merge ✓.
+  - `091fe2fbf` S-A3a: `StemCaptureRing` (Ring auf der Sample-Uhr; Lücke = Stille; Überlappung behält den ersten Schreibvorgang; Verlust wird gezählt). Wächter mit 8 Ansprüchen.
+  - Audio-Thread-Review fand H1: Ein Leser genau einen Ring zurück sah das Überschreiben nicht, solange `writeCursor` noch nicht veröffentlicht war. Dazu kamen M1–M3: Rückwärtssprung, Riesensprung und Int64-Überlauf trappten auf dem Audio-Thread oder gingen still verloren.
+  - `935be1fd8` Reparatur:
+    - Claim-Cursor (Seqlock-Reihenfolge).
+    - Diskontinuitätszähler für Sprünge über einen Ring.
+    - `…ReportingOverflow`.
+    - Kapazitätsdeckel `1 << 22`.
+    - Wächter auf 13 Ansprüche erweitert.
+    - Transkription grün, Mutanten rot (shift / nocount / nojump / wrap). Anspruch 13 (zwei Threads) urteilt nur in CI.
+  - `9ac0dff08` RetroCapture: Dasselbe H1-Fenster steckte in `copyMasterFrames`, dem Leser des Broadcast-Pumpwerks. Dessen Doku versprach „never by luck“. Lösung: `ringClaimFrame` im Tap; der Leser validiert gegen den Claim hinter einem Zaun. Die übrigen Leser (Drain, Pre-Roll, captureRecent, snapshot, Waveform) prüfen nach dem Kopieren nicht nach. Das ist am Feld vermerkt und nicht behoben (je eigene Scheibe).
+  - `c5c92ffe8` S-A3b-1: `StemTapPoint` ist die Übergabe vom Render-Block an den Stem-Ring.
+    - Render-Seite: Pass-Zähler, Zaun, Slot-Ladung.
+    - Besitzer-Seite: Slot speichern, Zaun, Zähler lesen. Ein ausgetauschtes Ziel bleibt zurückgehalten, bis es ruhig ist.
+    - Ungültige Sample-Zeit wird gezählt, nie geraten.
+    - Wächter mit 7 Ansprüchen. Transkription grün; Mutanten rot, darunter eine Besitzer-Mutante, die erst nach der Begrenzung des Scans traf.
+  - Stufen: gebaut 4 (Plan, Bahn, Ring, Tap-Punkt) · verdrahtet 0 · Gerät 0 · Studio 0.
