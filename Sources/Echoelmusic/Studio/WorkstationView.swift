@@ -776,8 +776,9 @@ struct WorkstationView: View {
                                         : (playing ? EchoelTheme.dim : EchoelTheme.text))
                     .padding(.horizontal, 10)
                     .frame(minWidth: 44, minHeight: 44)
+                    // ON = the inverted monochrome tile Mute and Solo wear beside it.
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                        .fill(on ? EchoelTheme.accent : EchoelTheme.fill))
+                        .fill(on ? EchoelTheme.text : EchoelTheme.fill))
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                         .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
                     .contentShape(Rectangle())

@@ -30,7 +30,8 @@
 //     (the head's frame was even CLEARED while running).
 //   · claim 4 — COUNTERWEIGHT, green on both: the Pause wears the look the others now match;
 //     without it, claims 1–3 would describe a look nothing anchors.
-//   · claim 5 — RED on the parent, a REGRESSION: 11 state-driven green fills against 8.
+//   · claim 5 — RED on the parent, a REGRESSION: 11 state-driven green fills against the
+//     ceiling (8 at F3; F4a lowered it to 6).
 // It does NOT prove the buttons read well; that is a device glance.
 
 import Foundation
@@ -51,13 +52,12 @@ final class TheRunningStateIsOneLookTests: XCTestCase {
         "ProjectHeader.swift", "SelectedPartBar.swift", "LiveColaboView.swift", "SessionLaunchView.swift",
     ]
 
-    /// Measured 2026-10-04 on the F3 tree. What is left, and why it may stay or must go:
-    /// two loop-progress capsules (`FloatingVisualWindow`, `WorkspaceView`) are a signal bar,
-    /// which the rule allows; the Warp switch (`WorkstationView`) and the click switch
-    /// (`WorkstationClickToggle`) are the ON state of a toggle, which F4's one chip style
-    /// takes; `BioSourceView` (2), `ImmersiveStageView` and `SessionView` are doorless.
+    /// Measured 2026-10-04 on the F4a tree (8 on F3; F4a moved the Warp and click switches to
+    /// the inverted monochrome ON, `TheSwitchedOnStateIsMonochromeTests`). What is left: two
+    /// loop-progress capsules (`FloatingVisualWindow`, `WorkspaceView`) are a signal bar, which
+    /// the rule allows; `BioSourceView` (2), `ImmersiveStageView` and `SessionView` are doorless.
     /// LOWER it in the commit that removes one; never raise it.
-    private static let ceiling = 8
+    private static let ceiling = 6
 
     /// 1 — no running button changes its SURFACE with its state: the tile is the tile.
     func testNoRunningButtonChangesItsSurface() throws {

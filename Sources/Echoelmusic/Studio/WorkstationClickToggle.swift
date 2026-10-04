@@ -40,13 +40,15 @@ struct WorkstationClickToggle: View {
             // Never truncated to "Cl…" on a narrow phone at large text: the position readout
             // beside it can shrink (`minimumScaleFactor`), a one-word label cannot (review LOW-2).
             .fixedSize()
-            // The armCard idiom of the Play beside it: accent + onPrimary while it is ON,
-            // fill + border while it is off. Never dimmed — the click is always available.
+            // ON is the inverted monochrome tile — `.text` fill, `onPrimary` label — the look
+            // every switch in the Workstation wears (Mute, Solo, Warp). Never a green surface:
+            // green is the body's signal and a sounding part (F3), and the click is neither.
+            // Fill + border while off. Never dimmed — the click is always available.
             .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
             .padding(.horizontal, 14)
             .frame(minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .fill(on ? EchoelTheme.accent : EchoelTheme.fill))
+                .fill(on ? EchoelTheme.text : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
             .contentShape(Rectangle())
