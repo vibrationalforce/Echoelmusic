@@ -50,7 +50,7 @@ struct WorkstationClickToggle: View {
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .fill(on ? EchoelTheme.text : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
+                .strokeBorder(on ? Color.clear : EchoelTheme.borderStrong, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

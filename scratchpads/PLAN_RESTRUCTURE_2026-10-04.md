@@ -173,8 +173,11 @@ Wird es mehr, steht der Grund im Commit-Text. Gates: Xcode Compile Check plus CI
 - **F4 Ein „ausgewählt“, ein Chip-Stil.** Gemessen 2026-10-04: „ausgewählt“ hat nicht drei, sondern zwei
   saubere Grammatiken (siehe §2C) plus zwei Ausreißer. **F4a** — Click und Warp zeigten AN als grüne Fläche;
   sie nehmen jetzt die Mute/Solo-Form (`TheSwitchedOnStateIsMonochromeTests`, Ratsche 8 → 6).
-  **F4b** — die zwei baugleichen Wahl-Chips (Spielflächen-Klang, Visual-Preset) werden EINE Ansicht und
-  bekommen den Rahmen `borderStrong`; der Menü-Chip bleibt eine Navigationsform eigener Größe.
+  **F4b** — gemessen: elf invertierte Kacheln in `Sources/`, neun davon mit dem unsichtbaren `border`
+  (1,16:1) im AUS-Zustand. Alle neun nehmen `borderStrong` (`TheChosenTileDeclaresItsBoundaryTests`).
+  Ein Zusammenlegen der Chip-Ansichten bleibt aus: ihre Abstände (11/12) und Höhen sind je durch
+  Wächter begründet (`TapTargetFloorTests`, `ThePresetChipMeetsTheInPanelFloorTests`), und die Gemeinsamkeit,
+  die zählte — Füllung, Label, Rand —, ist jetzt eine.
 - **F5 Haptik** an `EchoelValueField` (Rastpunkt) und `EchoelNumberPad` (OK), über den
   vorhandenen Haptik-Helfer aus Slice 13b.
 - **F6** Karte in Karte auflösen (Mix, Tempo & variations); Broadcast „live“ → `recording`.

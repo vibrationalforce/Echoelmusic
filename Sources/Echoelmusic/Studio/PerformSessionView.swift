@@ -187,7 +187,7 @@ struct PerformSessionView: View {
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                     .fill(on ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                    .strokeBorder(on ? Color.clear : EchoelTheme.border, lineWidth: 1))
+                    .strokeBorder(on ? Color.clear : EchoelTheme.borderStrong, lineWidth: 1))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

@@ -5320,7 +5320,7 @@ struct EchoelStudioView: View {
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .fill(floatingVisualVisible ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
             }
             .accessibilityLabel(floatingVisualVisible ? String(localized: "Hide the floating visual window") : String(localized: "Show the floating visual window"))
             // #747 — THE DOOR TO THE FULLSCREEN FIELD (open task #270, closed here). Everything
@@ -6022,7 +6022,7 @@ struct EchoelStudioView: View {
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .fill(selected ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(name + String(localized: " play-surface sound"))
@@ -6106,7 +6106,7 @@ struct EchoelStudioView: View {
                                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .fill(selected ? EchoelTheme.text : EchoelTheme.fill))
                                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
                         }
                         .accessibilityLabel(preset.name + String(localized: " visual preset — ") + preset.blurb)
                         .accessibilityAddTraits(selected ? [.isSelected] : [])
@@ -6270,7 +6270,7 @@ struct EchoelStudioView: View {
                             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                 .fill(on ? EchoelTheme.text : EchoelTheme.fill))
                             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                                .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(look.name + String(localized: " look"))
