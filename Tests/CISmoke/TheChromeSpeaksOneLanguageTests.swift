@@ -1615,7 +1615,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      "return head + String(localized: \" of 4/4 at \") + \"\\(Int(bpm.rounded()))\" + \" BPM\"",
                      // E12-1 (founder 2026-10-04): the two-key ternary became four states — the sound is used now.
                      "case .none:     return String(localized: \"No sound.\")",
-                     "case .usable:   return String(localized: \"It has sound. Use Its Sound places it as a part on the first audio track.\")",
+                     "case .usable:   return String(localized: \"It has sound. Use Its Sound places the selected range on the first audio track.\")",
                      "case .placed:   return String(localized: \"Its sound is in the piece and in your library.\")",
                      "case .released: return String(localized: \"It has sound. Choose the video again to use it.\")",
                      "static var extractingSound: String { String(localized: \"Reading the sound…\") }",
@@ -1641,10 +1641,10 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertTrue(VideoSeedText.unreadable.hasPrefix("This video could not be read. Videos up to "))
         try assertCatalogued(["This video could not be read. Videos up to ", " minutes can be used; try another one.", "Reading the video…", "Length ", " fps",
                           "No cuts or flashes", " more", "cut or flash", "cuts or flashes", "Length in bars: unknown", "About ", " of 4/4 at ",
-                          "No sound.", "It has sound. Use Its Sound places it as a part on the first audio track.",
+                          "No sound.", "It has sound. Use Its Sound places the selected range on the first audio track.",
                           "Its sound is in the piece and in your library.", "It has sound. Choose the video again to use it.",
                           "Reading the sound…", "This video's sound could not be read.", "Use Its Sound", "Use its sound",
-                          "Places the video's sound as a part on the first audio track and adds it to your library", "Motion", "Movement", "Video to Visuals",
+                          "Places the selected sound range on the first audio track and adds it to your library", "Motion", "Movement", "Video to Visuals",
                           "Choose a short video; its brightness, colour and movement can shape the visuals", "Choose video",
                           "Opens your videos. Nothing is changed until you apply it.", "With this video:",
                           "Movement is how much the picture changes; it sets how fast the visual moves.",

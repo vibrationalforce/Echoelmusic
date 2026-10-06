@@ -20,6 +20,22 @@
 
 import Foundation
 
+/// An audio excerpt on the source video's timeline. Invalid input is refused, never
+/// silently widened to the whole recording. The source file remains unchanged.
+struct VideoSoundRange: Equatable, Sendable {
+    let startSeconds: Double
+    let endSeconds: Double
+
+    init?(startSeconds: Double, endSeconds: Double, durationSeconds: Double) {
+        guard durationSeconds.isFinite, durationSeconds > 0,
+              startSeconds.isFinite, endSeconds.isFinite,
+              startSeconds >= 0, endSeconds > startSeconds,
+              endSeconds <= durationSeconds else { return nil }
+        self.startSeconds = startSeconds
+        self.endSeconds = endSeconds
+    }
+}
+
 #if canImport(AVFoundation)
 import AVFoundation
 
@@ -37,12 +53,27 @@ enum VideoSound {
     /// Exports the sound track of `video` as `<base>.m4a` into a new temporary folder.
     /// nil when the video has no sound track, the export fails, or the task was cancelled —
     /// in every nil case nothing is left on disk.
-    static func extract(from video: URL, named base: String) async -> URL? {
+    /// `selection` uses source seconds. nil retains the existing whole-sound import.
+    static func extract(from video: URL, named base: String,
+                        selection: VideoSoundRange? = nil) async -> URL? {
         let asset = AVURLAsset(url: video)
         guard let tracks = try? await asset.loadTracks(withMediaType: .audio), !tracks.isEmpty,
               !Task.isCancelled,
               let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A)
         else { return nil }
+        if let selection {
+            guard let duration = try? await asset.load(.duration), !Task.isCancelled,
+                  VideoSoundRange(startSeconds: selection.startSeconds,
+                                  endSeconds: selection.endSeconds,
+                                  durationSeconds: duration.seconds) != nil else { return nil }
+            let start = CMTime(seconds: selection.startSeconds, preferredTimescale: 1_000_000)
+            // Rounding to our time scale must not put an end at the file boundary past it.
+            let end = CMTimeMinimum(duration, CMTime(seconds: selection.endSeconds,
+                                                     preferredTimescale: 1_000_000))
+            let range = CMTimeRange(start: start, end: end)
+            guard range.isValid, range.duration.isNumeric, range.duration.value > 0 else { return nil }
+            session.timeRange = range
+        }
         let folder = FileManager.default.temporaryDirectory
             .appendingPathComponent("echoel-video-sound-\(UUID().uuidString)", isDirectory: true)
         do {

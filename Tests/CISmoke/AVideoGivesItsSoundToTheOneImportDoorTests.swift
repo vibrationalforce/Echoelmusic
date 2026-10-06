@@ -130,7 +130,8 @@ final class AVideoGivesItsSoundToTheOneImportDoorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(card.components(separatedBy: "discardSoundSource()").count - 1, 4,
                                     "the declaration plus three calls: a new pick, the card going away and a placed sound each let the copy go")
         XCTAssertTrue(card.contains("VideoSound.discard(extracted)"), "the exported file is removed after the import copied it")
-        XCTAssertTrue(card.contains(".disabled(soundTask != nil)"), "one export at a time")
+        XCTAssertTrue(card.contains(".disabled(soundTask != nil || selectedSoundRange == nil)"),
+                      "one export at a time, and an invalid selection cannot start one")
         XCTAssertTrue(card.contains(".accessibilityLabel(\"Use its sound\")"))
         // Review LOW: the count above stays green when the card-goes-away call moves elsewhere.
         // (Pinned as code: the comment between the two lines is blanked by `codeOnly`.)

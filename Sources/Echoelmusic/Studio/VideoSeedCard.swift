@@ -25,8 +25,8 @@
 //   sound track (`VideoSound`) and hands the file to the Workstation's ONE import door
 //   (`useSound`, owned by `WorkstationView`), so it lands as a part on the first audio track and in
 //   the library, with the same tempo and key analysis as a file from Files. ⛔ It used to say "not
-//   built" here and "The sound is not used yet." on screen. What is STILL not here: the sound is
-//   not cut to the picture's length, and it is not a sampler source by itself — a Sampler track
+//   built" here and "The sound is not used yet." on screen. The sound's source start/end can now
+//   be selected before importing. It is not a sampler source by itself — a Sampler track
 //   picks it from the library like any other file (E13-1, `TrackSampleRow`).
 //   ⚠️ The copy of a video WITH sound is kept until its sound is used, a newer video is picked, or
 //   the card goes away (`discardSoundSource`); every other copy is removed right after the read.
@@ -127,7 +127,7 @@ enum VideoSeedText {
     static func sound(_ state: SoundState) -> String {
         switch state {
         case .none:     return String(localized: "No sound.")
-        case .usable:   return String(localized: "It has sound. Use Its Sound places it as a part on the first audio track.")
+        case .usable:   return String(localized: "It has sound. Use Its Sound places the selected range on the first audio track.")
         case .placed:   return String(localized: "Its sound is in the piece and in your library.")
         case .released: return String(localized: "It has sound. Choose the video again to use it.")
         }
@@ -174,6 +174,8 @@ struct VideoSeedCard: View {
     @State private var soundPlaced = false
     @State private var soundNote: String?
     @State private var soundTask: Task<Void, Never>?
+    @State private var soundStartSeconds = 0.0
+    @State private var soundEndSeconds = 0.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -340,6 +342,7 @@ struct VideoSeedCard: View {
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        if soundState(read) == .usable { soundRangeControls(read) }
         if soundState(read) == .usable { soundButton }
         if let soundNote {
             Text(soundNote)
@@ -356,6 +359,36 @@ struct VideoSeedCard: View {
         return soundSource == nil ? .released : .usable
     }
 
+    private var selectedSoundRange: VideoSoundRange? {
+        guard let seed = shownSeed else { return nil }
+        return VideoSoundRange(startSeconds: soundStartSeconds, endSeconds: soundEndSeconds,
+                               durationSeconds: seed.durationSeconds)
+    }
+
+    private func soundRangeControls(_ read: VideoSeedReader.Read) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            EchoelValueField(label: "Sound starts at", value: $soundStartSeconds,
+                            range: 0...read.seed.durationSeconds, unit: "s", decimals: 3,
+                            hint: String(localized: "Choose where the sound starts in the video."),
+                            standard: 0)
+            EchoelValueField(label: "Sound ends at", value: $soundEndSeconds,
+                            range: 0...read.seed.durationSeconds, unit: "s", decimals: 3,
+                            hint: String(localized: "Choose where the sound ends in the video."),
+                            standard: read.seed.durationSeconds)
+            Text("Only this sound range is imported. The video and visual analysis stay unchanged.")
+                .font(EchoelTheme.font(12))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+            if selectedSoundRange == nil {
+                Text("Choose an end after the start.")
+                    .font(EchoelTheme.font(13))
+                    .foregroundStyle(EchoelTheme.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .disabled(soundTask != nil)
+    }
+
     private var soundButton: some View {
         Button {
             useItsSound()
@@ -363,20 +396,21 @@ struct VideoSeedCard: View {
             MediaActionLabel(title: "Use Its Sound", systemImage: "waveform")
         }
         .buttonStyle(.plain)
-        .disabled(soundTask != nil)
+        .disabled(soundTask != nil || selectedSoundRange == nil)
         .accessibilityLabel("Use its sound")
-        .accessibilityHint("Places the video's sound as a part on the first audio track and adds it to your library")
+        .accessibilityHint("Places the selected sound range on the first audio track and adds it to your library")
     }
 
     /// E12-1 — export the kept video's sound, hand the file to the Workstation's import, remove
     /// the export. The export runs in THIS task (`VideoSound.extract` is nonisolated async, so it
     /// leaves the main actor); the import is the Workstation's, on the main actor, as from Files.
     private func useItsSound() {
-        guard let source = soundSource, soundTask == nil else { return }
+        guard let source = soundSource, soundTask == nil,
+              let selection = selectedSoundRange else { return }
         soundNote = VideoSeedText.extractingSound
         let base = VideoSound.soundFileBase(videoName: source.name)
         soundTask = Task {
-            let extracted = await VideoSound.extract(from: source.url, named: base)
+            let extracted = await VideoSound.extract(from: source.url, named: base, selection: selection)
             if Task.isCancelled {
                 if let extracted { VideoSound.discard(extracted) }
                 return
@@ -465,6 +499,8 @@ struct VideoSeedCard: View {
             }
             guard !Task.isCancelled else { return }
             if let read {
+                soundStartSeconds = 0
+                soundEndSeconds = read.seed.durationSeconds
                 phase = .ready(read, VisualLookSnapshot.read(from: .standard), bpm: bpm)
                 soundSource = kept
                 // Offered to the agent only while the card is OPEN: a read that finishes after the

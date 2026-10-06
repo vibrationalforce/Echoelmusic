@@ -58,7 +58,7 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
         // source was not built; that premise is gone with "Use Its Sound", so the words moved.
         XCTAssertEqual(VideoSeedText.sound(.none), "No sound.")
         XCTAssertEqual(VideoSeedText.sound(.usable),
-                       "It has sound. Use Its Sound places it as a part on the first audio track.",
+                       "It has sound. Use Its Sound places the selected range on the first audio track.",
                        "the offer names the button and where the sound lands")
         XCTAssertEqual(VideoSeedText.sound(.placed), "Its sound is in the piece and in your library.")
         XCTAssertEqual(VideoSeedText.sound(.released), "It has sound. Choose the video again to use it.",
