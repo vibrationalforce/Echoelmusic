@@ -23,6 +23,7 @@ struct BreathGuideView: View {
     @Environment(EngineBus.self) private var bus
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Once the user acknowledges the hold-safety card, don't re-prompt this session.
     @State private var acknowledgedHolds = false
@@ -52,18 +53,26 @@ struct BreathGuideView: View {
         }
         .task(id: pacer.isRunning) { await driveTicks() }
         .onDisappear { pacer.stop() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { pacer.stop() }
+        }
         .sheet(isPresented: $showHoldWarning) { holdWarningSheet }
     }
 
     // MARK: Tick driver (UI-rate; not the audio/pattern clock)
 
     private func driveTicks() async {
-        guard pacer.isRunning else { return }
-        var last = Date()
+        guard pacer.isRunning, scenePhase == .active else { return }
+        let clock = ContinuousClock()
+        var last = clock.now
         while !Task.isCancelled && pacer.isRunning {
-            try? await Task.sleep(for: .milliseconds(33))
-            let now = Date()
-            pacer.tick(now.timeIntervalSince(last))
+            do { try await clock.sleep(for: .milliseconds(33)) }
+            catch { return }
+            // An old, cancelled driver must not advance a newly started guide.
+            guard !Task.isCancelled, pacer.isRunning, scenePhase == .active else { return }
+            let now = clock.now
+            let elapsed = last.duration(to: now).components
+            pacer.tick(Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18)
             last = now
         }
     }
@@ -374,6 +383,7 @@ struct BreathCoachStrip: View {
 
     @Environment(BreathPacer.self) private var pacer
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -434,6 +444,9 @@ struct BreathCoachStrip: View {
         }
         .task(id: pacer.isRunning) { await driveTicks() }
         .onDisappear { pacer.stop() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { pacer.stop() }
+        }
     }
 
     // MARK: Transport
@@ -491,8 +504,6 @@ struct BreathCoachStrip: View {
         .accessibilityHint("Paces about six breaths a minute while this panel is open.")
     }
 
-    /// UI-rate driver. Identical in shape to `BreathGuideView.driveTicks` on purpose: the
-    /// pacer is pure and timer-free, so every host ticks it from its own loop.
     /// The exhale cue replaces "Breathe out" only for a pattern that carries one
     /// (`.release`); every other pattern keeps the plain instruction.
     private var runningInstruction: String {
@@ -531,13 +542,19 @@ struct BreathCoachStrip: View {
         }
     }
 
+    /// Monotonic UI timing, independent of calendar-clock changes. Inactive scenes stop
+    /// the guide; returning to the app requires a deliberate Start, never a catch-up cue.
     private func driveTicks() async {
-        guard pacer.isRunning else { return }
-        var last = Date()
+        guard pacer.isRunning, scenePhase == .active else { return }
+        let clock = ContinuousClock()
+        var last = clock.now
         while !Task.isCancelled && pacer.isRunning {
-            try? await Task.sleep(for: .milliseconds(33))
-            let now = Date()
-            pacer.tick(now.timeIntervalSince(last))
+            do { try await clock.sleep(for: .milliseconds(33)) }
+            catch { return }
+            guard !Task.isCancelled, pacer.isRunning, scenePhase == .active else { return }
+            let now = clock.now
+            let elapsed = last.duration(to: now).components
+            pacer.tick(Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18)
             last = now
         }
     }
