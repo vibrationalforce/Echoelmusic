@@ -366,7 +366,7 @@ struct VideoSeedCard: View {
     }
 
     private func soundRangeControls(_ read: VideoSeedReader.Read) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             EchoelValueField(label: "Sound starts at", value: $soundStartSeconds,
                             range: 0...read.seed.durationSeconds, unit: "s", decimals: 3,
                             hint: String(localized: "Choose where the sound starts in the video."),
