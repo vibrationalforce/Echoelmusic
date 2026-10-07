@@ -1,4 +1,4 @@
-build: v10.79.491 — Das Stück trägt seinen Raum und seinen Licht-Look, ein fehlgeschlagenes Sichern ersetzt nichts mehr
+build: v10.79.492 — Kopfhörer-Raum, Sampler auf einer Spur, der Ton eines Videos
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,59 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.492) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-07 („TestFlight deploy"). Gebaut wird der zuletzt durch beide
+  Gates gelaufene Stand (Xcode Compile Check + Build for Testing grün auf 2ef716273; seitdem
+  nur Notizen). NICHT drin: die Mikrofon-Aufnahme E10-1, die akustische Laufzeitmessung J0
+  und Broadcast B2 — deshalb steht dazu hier auch keine Prüfbitte. Auf dem Gerät ist NICHTS
+  von dem Folgenden geprüft.
+
+  ── POSTEN 1: KOPFHÖRER-RAUM (S3c/S3d) ──
+  · Unten „Mixer" → neuer Schalter „Headphone space", Standard AUS. Eingeschaltet klingen
+    Audiospuren mit Kopfhörern von ihrem Platz im Raum; die erzeugten Stimmen bleiben
+    stereo. Wirkt beim nächsten Start der Wiedergabe.
+  · Im Spur-Inspector: „Direction" (°) und „Distance" (0–1) plus „Default". Die Plätze
+    überleben jetzt einen Neustart der App.
+
+  ── POSTEN 2: SAMPLER AUF EINER SPUR (E13-1) ──
+  · Spur-Inspector → Instrument „EchoelSampler" → neue Zeile „Sample": eine Datei aus der
+    Bibliothek spielt die MIDI-Teile dieser Spur. Ein Griff ist ein Undo-Schritt.
+
+  ── POSTEN 3: DER TON EINES VIDEOS (E12-1) ──
+  · Unten „Browse" → Video-Karte → „Use Its Sound": der Ton des Videos landet als Teil auf
+    der ersten Audiospur, über dieselbe Import-Tür wie „Import Audio".
+
+  ── POSTEN 4: WORTE UND SICHERN ──
+  · Der fünfte Bereich unten heißt jetzt „Piece" statt „Project".
+  · Schlägt Sichern oder das Arbeitskopie-Schreiben fehl, sagt ein Hinweis es („Changes not
+    stored" mit „Write again"); ein nicht kodierbares Stück ersetzt das gesicherte nicht.
+
+  ── PRÜFLISTE ──
+  T1  G6 Raum: Kopfhörer auf, zwei Audiospuren (Add Audio Track + Import Audio), Mixer →
+      „Headphone space" an, Spur 2 im Inspector auf Direction 90 → klingt sie von rechts?
+      App schließen, wieder öffnen → gleicher Platz?
+  T2  G7 Sampler: eine Datei importieren, eine Spur auf „EchoelSampler", Sample wählen, einen
+      MIDI-Teil spielen → klingt das Sample? Nach Wiederöffnen des Stücks auch?
+  T3  E12 Video-Ton: Browse → Video-Karte → „Use Its Sound" → ein Teil auf der Audiospur.
+  T4  Stabilität: dreimal kalt starten, alle fünf Bereiche. Hängt etwas: Instrument →
+      Save/Export-Chip → „Diagnostics" → Teilen (das Diagnose-Log).
+  (J1 braucht zwei Telefone in einer Live-Colabo-Sitzung — nur, wenn du zwei zur Hand hast.)
+
+  Neu prüfbare Bitten (6 Zeilen, 4 Prüfungen):
+  Gedruckt: python3 scripts/founder-verify.py --since 4d59d5db0
+  · SYNC  — Stream/BroadcastTimebase.swift:18: Ein-Stunden-Stream gegen einen Empfänger.
+    ⛔ NICHT in diesem Build prüfbar: HaishinKit ist nicht verlinkt, die Broadcast-Fläche hat
+    keine Tür. Nicht fragen, bis B2 ausgeliefert ist.
+  · SYNC  — Sync/LinkProbe.swift:28: zwei Telefone, Live Colabo, `link:`-Zeilen im Log (J1).
+  · UI    — Studio/TrackSampleRow.swift:19: G7 (= T2).
+  · UI    — Studio/TrackSpaceRows.swift:21: G6, die Spur klingt dort, wo sie steht (= T1).
+  · AUDIO — Sequencer/TimelineAudioSink.swift:384: G6 mit „Headphone space" (= T1).
+  · OTHER — CISmoke/TheLinkProbeMeasuresARoundTripNotHeardLatencyTests.swift:16: dieselbe
+    J1-Bitte wie LinkProbe.
+
+  Der Vorgänger ist 10.79.491 (Build 2616), davor 10.79.490.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.491) ───────────────────────────────
 
