@@ -42127,3 +42127,13 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   - Wächter-Ansprüche 7–10 (Release-Zaun, Interleaved, Stimmen-Scan, Default unarmiert). Mutanten rot.
   - Unabhängige Audio-Thread-Prüfung beider Commits läuft vor dem Push.
   - Stufen: gebaut 5 · verdrahtet 0 (nichts armiert) · Gerät 0 · Studio 0.
+
+
+## 2026-10-07 — Live zusammen musizieren: J0 begonnen; S-A3c-2a nach Review
+
+- Founder-Auftrag 10:53: erste Priorität LIVE ZUSAMMEN MUSIZIEREN (J0–J4), Browser-W0 nachgeordnet.
+- `3f50a7ab3` S-A3c-2a `StemCaptureSession` mit den Review-Befunden: Tap-Claims (eine Sitzung je Tap), doppelte Taps und Datei-Namens-Kollisionen vor jedem I/O abgewiesen, Bool-Rückgaben von arm/disarm ausgewertet, EIN Abbau für stop/abort/deinit (gibt nie einen Ring unter einem Render frei, löscht Dateien eines Takes ohne Ergebnis), Owner-Vertrag = exklusiver serieller Kontext. Wächter 10 Ansprüche, Mutanten rot. Compile Check 37599489715 ✓. Gebaut ja, verdrahtet nein.
+- `a9506cb11` Audit §: S-A3c-1/2a eingetragen.
+- J0-Inventar (gemessen): kein Audio-Eingang auf diesem Zweig (kein `inputNode`, kein Recorder, `RecordRouteOwner` ohne Fälle; E10-1 liegt uncommittet, Klassifikator). Ausgang: 512 Frames Default, `latencySnapshot()` = Untergrenze buf+out(+in), angezeigt in `AudioRouteRow`, im Diag-Log bei Start/Rekonfiguration. Netz: Multipeer ohne Zeitmessung. Nebenbefund: `AudioEngine.swift:740` nennt einen Wächter `TheMeasuredLatencyReachesTheDiagLogTests`, den es nicht gibt.
+- `8605d7928` J0/J1 Netz-Rundlauf: `Sync/LinkProbe.swift` + `MultipeerSession` (Echo im Transport-Callback, `.unreliable`, p50/p95/p99/max + Verlust je Peer ins Diag-Log, beschriftet „not heard latency"). Wächter `TheLinkProbeMeasuresARoundTripNotHeardLatencyTests` (6). Gerät: NEEDS-FOUNDER-VERIFY, zwei Telefone.
+- FOUNDER_INBOX J0: Eingang mit Eigenmonitoring im Graphen — Empfehlung: zuerst Kalibrier-Rundlauf in getrennter, kurzlebiger Engine.
