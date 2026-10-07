@@ -78,7 +78,7 @@ public enum PieceView: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// The five entries of the bottom switcher (DAW shell S2): Arrange · Mixer · Instrument ·
-/// Browse · Project — the order the founder approved (E18). A pure projection of the two
+/// Browse · Piece — the order the founder approved (E18; the fifth word since H18). A pure projection of the two
 /// persisted keys: `stage` + `pieceView` say what a tap writes, `current(stage:piece:)` says
 /// which entry is lit. There is no third stored truth, so the switcher can never disagree with
 /// what is on screen.
@@ -123,7 +123,7 @@ public enum ShellTab: String, CaseIterable, Identifiable, Sendable {
         case .mixer:      return String(localized: "Mixer")
         case .instrument: return String(localized: "Instrument")
         case .browse:     return String(localized: "Browse")
-        case .project:    return String(localized: "Project")
+        case .project:    return String(localized: "Piece")
         }
     }
 

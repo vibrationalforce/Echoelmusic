@@ -276,7 +276,7 @@ final class PerformIsASecondViewOfTheSameSessionTests: XCTestCase {
 
     func testTheWordsNameThePieceStageAndTheScenes() {
         // DAW shell S2 (2026-10-02): parts are made in ARRANGE, the bottom switcher's first entry —
-        // "Piece" is no longer a word on screen, so the note names the switcher's word instead.
+        // "Piece" names the plate since H18, not where parts are made, so the note names the switcher's word instead.
         XCTAssertEqual(ShellTab.arrange.label, "Arrange", "ANCHOR: the note names this label")
         XCTAssertTrue(PerformSessionView.emptyNote.contains("in " + ShellTab.arrange.label),
                       "the empty Perform grid names the view where parts are made, by the switcher's own word")

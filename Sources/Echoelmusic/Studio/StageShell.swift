@@ -38,7 +38,7 @@ import SwiftUI
 //
 // ⭐ DAW SHELL S2 (founder 2026-10-02, inbox E18 „Ja, so bauen"): the seam ABOVE the stage is
 // gone; the switcher at the BOTTOM (`shellSwitcher`) holds five entries — Arrange · Mixer ·
-// Instrument · Browse · Project. Four of them show the piece with a different plate
+// Instrument · Browse · Piece. Four of them show the piece with a different plate
 // (`PieceView`, its own persisted key) and one the instrument; `ShellTab` projects the two keys,
 // so nothing here stores a third truth. Everything below about the stage still holds.
 //
@@ -99,7 +99,7 @@ struct StageShell: View {
     }
 
     /// DAW shell S2 (founder 2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer ·
-    /// Instrument · Browse · Project, every entry at every level (E19). Each entry is an icon AND
+    /// Instrument · Browse · Piece, every entry at every level (E19). Each entry is an icon AND
     /// its word, at least the 44-pt tap height by NAME (`EchoelTheme.controlTapHeight`), the
     /// current one in the accent colour and `.isSelected` to VoiceOver — never colour alone. A named choice, not a number, so no
     /// `EchoelValueField`. Solid surface with a 1-px top border (Uncodixfy: no blur, no glass).

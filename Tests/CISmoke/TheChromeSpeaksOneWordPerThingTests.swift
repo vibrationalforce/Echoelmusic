@@ -130,6 +130,9 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
         "Sources/Echoelmusic/Studio/WorkspaceView.swift",
         "Sources/Echoelmusic/Studio/StageShell.swift",
+        // H18 (founder 2026-10-07, "Piece"): the bottom switcher's five words live here, in
+        // `ShellTab.label` — the fifth said "Project" until this commit.
+        "Sources/Echoelmusic/Studio/StudioStage.swift",
         "Sources/Echoelmusic/Studio/GuideOverlay.swift",
         "Sources/Echoelmusic/Studio/WorkstationSummary.swift",
         "Sources/Echoelmusic/Studio/SongHistoryRow.swift",

@@ -3,7 +3,7 @@
 // (Workstation redesign A7, founder 2026-10-01; slice B the same day).
 //
 // ⭐ DAW SHELL S2 (founder 2026-10-02, inbox E18/E19) — READ THIS BEFORE THE HISTORY BELOW. The
-// bottom switcher (Arrange · Mixer · Instrument · Browse · Project, `StageShell`) took over what
+// bottom switcher (Arrange · Mixer · Instrument · Browse · Piece, `StageShell`) took over what
 // this row's tiles did: Arrange and Mix are switcher entries (the plate is the persisted
 // `pieceView` key, written ONLY by the switcher), and both exports moved to the Project plate at
 // every level (E19: levels act in the detail area only). What is left of the row is the ARRANGE

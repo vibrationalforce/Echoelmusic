@@ -1,5 +1,5 @@
 // TheShellSwitchesAtTheBottomTests.swift
-// Echoel — the DAW shell's bottom switcher: Arrange · Mixer · Instrument · Browse · Project, five
+// Echoel — the DAW shell's bottom switcher: Arrange · Mixer · Instrument · Browse · Piece, five
 // words in one row at the bottom of the screen (DAW shell S2, founder 2026-10-02, inbox E18
 // „Ja, so bauen", E19 „Nur im Detail").
 //
@@ -68,10 +68,10 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
     func testTheSwitcherProjectsTheStageAndThePlate() {
         XCTAssertEqual(ShellTab.allCases, [.arrange, .mixer, .instrument, .browse, .project], """
             The switcher's order is the DAW reading order the founder approved (E18): Arrange · \
-            Mixer · Instrument · Browse · Project. A reorder moves a word under every thumb that \
+            Mixer · Instrument · Browse · Piece (H18 renamed "Project", 2026-10-07). A reorder moves a word under every thumb that \
             learned it — decide it, then change this line.
             """)
-        XCTAssertEqual(ShellTab.allCases.map(\.label), ["Arrange", "Mixer", "Instrument", "Browse", "Project"],
+        XCTAssertEqual(ShellTab.allCases.map(\.label), ["Arrange", "Mixer", "Instrument", "Browse", "Piece"],
                        "the switcher's words — the guide's first card and the hints name them (#351)")
         XCTAssertEqual(PieceView.allCases, [.arrange, .mixer, .browse, .project],
                        "the piece's four plates; a fifth is a new area and needs its switcher entry in the same commit")
@@ -152,13 +152,13 @@ final class TheShellSwitchesAtTheBottomTests: XCTestCase {
                        "the Workstation READS the plate — its one `pieceViewRaw = ` is the declaration's default")
 
         // The price of ONE writer (review of 82b7a6a5a, MED): "New piece" and Open move the STAGE,
-        // never the plate, so a piece begun from the Project plate lands there. The guide — the
+        // never the plate, so a piece begun from the Piece plate lands there. The guide — the
         // creation path — must therefore draw on every plate while the piece has no part, or that
         // landing shows neither a guide nor a creation door.
         let guide = try member("private var composeGuide: some View {", in: workstation)
         XCTAssertTrue(guide.contains("if pieceView == .arrange || !facts.hasPart {"), """
             the compose guide is gated to the Arrange plate alone again — a new piece begun from \
-            Project, Browse or Mixer then lands on a plate with no way to start it
+            Piece, Browse or Mixer then lands on a plate with no way to start it
             """)
         XCTAssertFalse(workstation.contains("pieceViewRaw = PieceView"),
                        "the fix is the guide's gate, never a second writer of the plate")

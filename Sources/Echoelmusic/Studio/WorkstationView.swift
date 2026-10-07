@@ -329,7 +329,7 @@ struct WorkstationView: View {
             // Its own leaf with no store reads; everything it shows is handed in from the cold
             // reads this body already makes (document, clip grid, `isPlaying`).
             // DAW shell S2: the guide stays FIRST and draws itself on the Arrange plate only
-            // (`composeGuide`). Browse and Project are plates of their own; Arrange and Mixer share
+            // (`composeGuide`). Browse and Piece are plates of their own; Arrange and Mixer share
             // the song's branch below. The stack is not re-indented under the new `if` (see A3).
             composeGuide
             if pieceView == .browse {

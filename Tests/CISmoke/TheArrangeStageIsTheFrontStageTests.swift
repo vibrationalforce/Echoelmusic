@@ -73,12 +73,12 @@ import XCTest
 /// named reason — ONE finding (#486); the per-call New-piece count and every other assertion in
 /// claim 6 are green on both.
 /// ⭐ DAW SHELL S2 (founder 2026-10-02, inbox E18) — the seam „Piece | Instrument" above the stage
-/// became the switcher at the BOTTOM: Arrange · Mixer · Instrument · Browse · Project (`ShellTab`).
+/// became the switcher at the BOTTOM: Arrange · Mixer · Instrument · Browse · Piece (`ShellTab`).
 /// The two stages and their keys are unchanged, so claims 1–8 hold as written. Claim 9 moves its
 /// pins onto the switcher and gains the words (DRIVEN: every entry has a hint, none says "Play",
 /// no two share a word); claim 10 now asks the first guide card to name all five entries IN THE
 /// SWITCHER'S ORDER — stricter than the two stage words it asked for, because a newcomer reads
-/// the bottom row, and "Piece" is no longer a word on it.
+/// the bottom row (whose fifth word is "Piece" again since H18 — the PLATE, not the retired seam).
 final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
 
     private static let seam = "Sources/Echoelmusic/Studio/StageShell.swift"
@@ -387,7 +387,7 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         }
         XCTAssertFalse(first.detail.contains("Piece and Instrument"), """
             The first card still teaches the retired seam's two words — the bottom row shows \
-            five, and "Piece" is not one of them.
+            five, and "Piece and Instrument" is the retired seam, not the row.
             """)
         // DAW shell S7a: the instrument has no Play of its own any more — the head's ONE Play
         // starts it (`OneStartControlTests`), so the card says where THAT is. (⛔ The needle was

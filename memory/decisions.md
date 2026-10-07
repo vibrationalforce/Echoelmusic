@@ -5062,3 +5062,12 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
 - Eine getrennte Engine ist KEIN Isolationsbeweis (Session prozessweit) — der Geräte-Läufer besitzt die Route explizit und gibt sie im `defer` zurück.
 - Grenze: schmale Lautsprecher/Mikro-Kette → `noPeak`; nächster Detektor-Schritt (geweißte Korrelation) erst nach einem Gerätelauf.
 - Review: 2026-11-06.
+
+### 2026-10-07 — H18: die fünfte Platte heißt „Piece“
+
+**Entscheidung (Founder, AskUserQuestion):** „Piece“ statt „Project“ auf der Umschaltleiste.
+Lernkarte (`LearnLibrary`) und Katalog ziehen in derselben Scheibe mit; `Studio/StudioStage.swift`
+steht seitdem in der Chrome-Ratsche, damit das Wort nicht über `ShellTab.label` zurückkommt.
+Der Enum-Fall bleibt `.project` — ein Persistenz-Schlüssel, nie sichtbar.
+**Warum:** zwei Founder-Wörter widersprachen sich (E18 nennt „Project“, das Glossar streicht es);
+der Chrome-Wächter war deshalb seit 82b7a6a5a rot. **Review:** 2026-11-06.
