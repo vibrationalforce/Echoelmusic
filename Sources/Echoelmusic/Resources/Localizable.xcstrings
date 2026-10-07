@@ -10537,14 +10537,14 @@
         }
       }
     },
-    "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
+    "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the piece's key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault." : {
       "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the song's key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
+            "value" : "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Project — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Project sets the piece's key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault."
           }
         }
       }
@@ -22347,14 +22347,14 @@
         }
       }
     },
-    "Song not saved" : {
+    "Arrangement not saved" : {
       "comment" : "Restructure A1 step 2: a Save that reached the disk without its song (ProjectSaveStatusView).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Song not saved"
+            "value" : "Arrangement not saved"
           }
         }
       }

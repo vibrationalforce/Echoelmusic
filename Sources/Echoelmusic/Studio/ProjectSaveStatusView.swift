@@ -27,7 +27,7 @@ struct ProjectSaveStatusView: View {
         // A1 step 2 — the song half of a Save that reached the disk without it.
         if let note = projects.songNotSavedNote {
             VStack(alignment: .leading, spacing: 6) {
-                Label("Song not saved", systemImage: "exclamationmark.triangle")
+                Label("Arrangement not saved", systemImage: "exclamationmark.triangle")
                     .font(EchoelTheme.font(15, .semibold))
                 Text(note)
                     .font(EchoelTheme.font(13))

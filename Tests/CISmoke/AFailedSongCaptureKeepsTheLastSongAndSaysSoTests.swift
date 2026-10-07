@@ -137,7 +137,7 @@ final class AFailedSongCaptureKeepsTheLastSongAndSaysSoTests: XCTestCase {
 
     func testTheBannerShowsTheNote() throws {
         let code = SourceText.codeOnly(try text(Self.banner))
-        for needle in ["if let note = projects.songNotSavedNote", "Label(\"Song not saved\"", "Text(note)"] {
+        for needle in ["if let note = projects.songNotSavedNote", "Label(\"Arrangement not saved\"", "Text(note)"] {
             XCTAssertTrue(code.contains(needle), "`ProjectSaveStatusView` lost `\(needle)` — the note would never reach the screen")
         }
     }
