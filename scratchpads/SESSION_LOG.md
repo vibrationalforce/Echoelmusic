@@ -42137,3 +42137,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - J0-Inventar (gemessen): kein Audio-Eingang auf diesem Zweig (kein `inputNode`, kein Recorder, `RecordRouteOwner` ohne Fälle; E10-1 liegt uncommittet, Klassifikator). Ausgang: 512 Frames Default, `latencySnapshot()` = Untergrenze buf+out(+in), angezeigt in `AudioRouteRow`, im Diag-Log bei Start/Rekonfiguration. Netz: Multipeer ohne Zeitmessung. Nebenbefund: `AudioEngine.swift:740` nennt einen Wächter `TheMeasuredLatencyReachesTheDiagLogTests`, den es nicht gibt.
 - `8605d7928` J0/J1 Netz-Rundlauf: `Sync/LinkProbe.swift` + `MultipeerSession` (Echo im Transport-Callback, `.unreliable`, p50/p95/p99/max + Verlust je Peer ins Diag-Log, beschriftet „not heard latency"). Wächter `TheLinkProbeMeasuresARoundTripNotHeardLatencyTests` (6). Gerät: NEEDS-FOUNDER-VERIFY, zwei Telefone.
 - FOUNDER_INBOX J0: Eingang mit Eigenmonitoring im Graphen — Empfehlung: zuerst Kalibrier-Rundlauf in getrennter, kurzlebiger Engine.
+
+## 2026-10-07b — J0: Testlage repariert, Kalibrierkern gebaut
+
+- Testreparaturen gepusht: `6df2f7425` Spacing · `9cd57f946` + `bc4fc5205` Stems (Reverse-DNS-Ausnahme, Gegenprobe bleibt rot) · `3b6381857` + `fedcc00e3` Chrome. `bc4fc5205`: Compile 37631459725 ✓, BfT 37631459543 ✓, Auto-Merge ✓. Run Tests: laufend.
+- `7ee4c223d` FOUNDER_INBOX H18 („Project" vs. Glossar „piece") — letzter Chrome-Rot bleibt bis zur Antwort.
+- `3efc32d97` J0-Kalibrierkern (Foundation-only, unverdrahtet) + Wächter (6). dsp-reviewer-Befunde eingearbeitet (Erst-Ankunft, stiller Boden, 10-ms-Boden, Rate an der Messreihe, Port-Typ-Allowlist). Transkription: 15 Szenarien, 10 Mutanten. Grenze: schmale Kette → noPeak (sichere Richtung).
+- Blockade unverändert: 52 E10-1/B2-Dateien im Haupt-Worktree uncommittet (Klassifikator 2026-10-04); nicht umgangen.

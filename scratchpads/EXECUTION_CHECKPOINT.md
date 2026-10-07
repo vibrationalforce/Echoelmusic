@@ -582,3 +582,36 @@ Flakes oben getrennt, keine unklare Produktregression. Deploy über den bestehen
 `testflight.yml` per `workflow_dispatch` (ios, `build_only=false`); `.deploy/release` bleibt
 unberührt (Auftrag), MARKETING_VERSION bleibt daher `10.79.483`, die Build-Nummer ist die
 run_number des Workflows. Beleg der Landung = Notice-Zeile `state=VALID` im Verify-Schritt.
+
+## J0_2026-10-07b — Testlage, Kalibrierkern, Blockade
+
+**WIP-Zuordnung (rein lesend, nichts verworfen):** Haupt-Worktree `/home/user/Echoelmusic` auf
+`feature/media-seed-2026-09-27` @ `bd822db90`, 52 uncommittete Dateien = E10-1 (Mikrofon-Aufnahme,
+`MicTakeRecorder`, Plist-Schlüssel, Arm-Tür) + B2 (HaishinKit-Verlinkung, `project.yml`,
+`Package.swift`, RTMP-Adapter) + Doku. Bereiche: Tests/CISmoke 19 · docs 14 · Sources 7 · Rest je 1.
+Gearbeitet wurde ausschließlich im Worktree `scratchpad/wt_fix` auf dem Zielzweig.
+
+**Blockade (unverändert):** der Commit der 52 Dateien wurde am 2026-10-04 vom Auto-Modus-Klassifikator
+abgelehnt („[Auto-Mode Bypass]"). Nicht wiederholt, nicht umgangen. Freigabeweg: der Founder committet
+selbst, oder gibt den Commit außerhalb des Auto-Modus frei — eine Garantie, dass das trägt, gibt es nicht.
+
+**Testlage, korrigiert und belegt:**
+- Spacing `6df2f7425` (11 Literale → Theme-Tokens, Ratsche 696) · Stems `9cd57f946` + `bc4fc5205`
+  (Ausnahme braucht eine Reverse-DNS-Wurzel; echtes falsches Versprechen bleibt rot, Gegenprobe im Anspruch 2)
+  · Chrome `3b6381857` + `fedcc00e3` („arrangement"). Rest von Chrome = H18 („Project" gegen Glossar
+  „piece", `Studio/LearnLibrary.swift:75`) → FOUNDER_INBOX, Test bleibt bis zur Antwort ROT.
+- `bc4fc5205`: Compile Check 37631459725 ✓ (Versuch 1) · Build for Testing 37631459543 ✓ (Job 112826922999)
+  · Auto-Merge 37631459780 ✓. Run Tests: zum Zeitpunkt dieses Eintrags noch laufend.
+- xcresult: nicht erreichbar (Proxy 403) — Lücke, kein Befund.
+
+**J0-Kalibrierkern `3efc32d97`:** `Audio/LoopbackCalibration.swift` (Foundation, KEIN Audio-API) +
+Wächter `TheLoopbackCalibrationRejectsWhatItCannotMeasureTests` (6 Ansprüche). Stufen:
+implementiert ja · verdrahtet NEIN · ausgeführt nur als Python-Transkription (15 Szenarien, 10 Mutanten
+erkannt) · Gerät nein. Bekannte Grenze: schmale Lautsprecher/Mikro-Kette (simuliert 800 Hz–6 kHz,
+4. Ordnung) → `noPeak`-Absage; ein bandbegrenzter Reiz hilft nicht (Nebenkeulen → Erst-Ankunfts-Regel).
+
+**Nächster J0-Schritt:** Geräte-Läufer (eigene Scheibe) — braucht zuerst die Mikrofon-Freigabe
+(FOUNDER_INBOX J0) und die E10-1-WIP im Zweig. ⚠️ Eine getrennte Engine ist KEIN Beweis für Isolation:
+`AVAudioSession` ist prozessweit, Kategorie- und Routenwechsel treffen auch den Hauptgraphen
+(`RecordRouteOwner`, #299). Der Läufer stoppt den Hauptgraphen, beansprucht die Route, misst, und gibt
+alles in einem `defer` zurück; ein Routenwechsel während der Messung verwirft den Lauf.

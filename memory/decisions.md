@@ -5056,3 +5056,9 @@ Founder: „Vermeide das es mehrfache Wege zu einem Bereich gibt … Viele Berei
   - Der erste Entwurf kehrte bei zwei Punkten vorzeitig zurück und teilte deshalb keinen Halt. Anspruch 6 ist gegen diesen Entwurf rot.
   - Stand: gebaut, nicht verdrahtet. S-A3 zeichnet auf.
 - **Review:** 2026-11-03.
+
+### 2026-10-07 — J0 Kalibrierkern: eine Verzögerung oder eine benannte Absage
+- `3efc32d97`: `Audio/LoopbackCalibration.swift` rechnet nur auf Arrays (kein Audio-API, unverdrahtet). Bericht trennt reported / acousticRoundTrip (inkl. Luftweg) / netRTT / heard=UNMEASURED; nie ein Einweg-Wert.
+- Eine getrennte Engine ist KEIN Isolationsbeweis (Session prozessweit) — der Geräte-Läufer besitzt die Route explizit und gibt sie im `defer` zurück.
+- Grenze: schmale Lautsprecher/Mikro-Kette → `noPeak`; nächster Detektor-Schritt (geweißte Korrelation) erst nach einem Gerätelauf.
+- Review: 2026-11-06.
