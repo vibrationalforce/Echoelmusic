@@ -42146,3 +42146,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Blockade unverändert: 52 E10-1/B2-Dateien im Haupt-Worktree uncommittet (Klassifikator 2026-10-04); nicht umgangen.
 - H18 vom Founder entschieden („Piece“) → `2ef716273`: Compile ✓, BfT ✓, Run Tests #396-Form mit 0 Fehlern im Fenster, Chrome-/Umschalt-/Front-Bühnen-Wächter beobachtet bestanden. Auto-Merge auf `3efc32d97` und `2ef716273` abgewiesen (#310), main = `bc4fc5205`.
 - `3efc32d97` Run Tests: einziger Fehler war der H18-Treffer; der Kalibrier-Wächter lag außerhalb des Log-Fensters (Ausführung unbelegt).
+
+## 2026-10-07c — J0: E10-1 freigabefertig gemacht (kein Code)
+
+- 52 offene Dateien zugeordnet (23 E10 · 22 B2 · 7 gemeinsam · 0 ungeklärt), exakt über einen Temp-Index belegt; nichts verworfen, Sicherungen im Scratchpad.
+- E10-1-Minimalsatz = der seit `eebfef0bf` geparkte Patch (30 Dateien); auf `f908f88f9` ohne B2 anwendbar; Transkription: CLAUDE.md 149 172 B, Chrome 0, Katalog 0 Waisen.
+- Ablehnungs-Protokoll: Hook (7 E10-Ereignisse 2026-10-04) + Klassifikator ([Auto-Mode Bypass] 16:04:50). Hook heute per Selbstprobe belegt, Klassifikator historisch.
+- Parallel: Auto-Merge #310 = ein maskierter leerer API-Poll nach 300 s Karenz; Kalibrier-Suite auf `2ef716273` nicht beobachtbar (xcresult hinter Proxy-403).
+- Freigabeschritt (Founder, außerhalb Auto-Modus): `git apply --index` des Patches + `git commit -F scratchpads/E10-1_commit_message.txt`.

@@ -1,0 +1,39 @@
+feat(record): E10-1 — an armed audio track records the microphone
+
+Founder 2026-10-04: "Audio-Eingang soll Aufnahme, Sampling und Analyse
+ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert." This is the
+smallest complete path, recording only.
+
+The arm switch on an audio track asks for microphone permission (the one
+MicAccess.request() call site). Record starts MicTakeRecorder, an
+AVAudioRecorder that sits OUTSIDE the playback graph and writes to
+Media/Audio. Stop, or reaching the end of the piece, commits the take as
+a part on that track through the existing take commit. One track records
+at a time and there is no monitoring (use headphones).
+
+Why it is shaped this way:
+- The #1302 crash path stays forbidden. Nothing here touches .inputNode
+  or installs an input tap in the engine graph. Claim 6 pins this, and
+  the only two installTap sites tap the app's own output.
+- The route owner RecordRouteOwner.audioTrack is claimed in arm() before
+  the recorder starts, because a category change restarts a running
+  engine. It is released on every exit (#299). Claim 2 pins this; the
+  old "no claimant" guard is inverted into
+  TheRecordRouteHasOneClaimantTests, not deleted.
+- NSMicrophoneUsageDescription comes back in the same commit as the owner
+  case. iOS terminates an app that asks without the key.
+  EveryPermissionPromptHasACapabilityTests pins the pairing.
+- A failure is shown at the Record button (audioTakeProblem), not only
+  logged.
+
+Claims stay below what ships. The site, CLAIMS.md and privacy pages say
+recording arrives with the next version and is being tested. Nothing
+is claimed outward until G9 (FOUNDER_INBOX) is confirmed on a device.
+
+Founder-gated file: Resources/iOS/Info.plist, one key, under the
+2026-10-04 release. Grading: source-text scans and one end-to-end pure
+claim, transcribed against both trees. No Swift toolchain here, so the
+gates decide whether it compiles. Device: not verified (G9).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01U4u4Pb5YGELES24z1A2hij
