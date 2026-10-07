@@ -12,6 +12,18 @@
 // this guard is meant to turn red — delete claim 1 in the same commit that adds the export,
 // and say so in the commit body. It does not forbid the word in comments, identifiers
 // (`SessionNaming.stem`, a file-name stem) or the website; only in text a user can read.
+//
+// ⭐ 2026-10-07 — THE MATCHER BROKE ITS OWN RULE ONCE, and this is the repair. 3f50a7ab3 added
+// `StemCaptureSession` (built, not wired) with two literals: the GCD queue label
+// `"com.echoelmusic.stem-capture"` and the file-name fallback `"Stem"`. Claim 1 went red on
+// both. The first is an IDENTIFIER that happens to sit in quotes — `.` and `-` are word
+// boundaries, so `\bstem\b` matched inside it — and the paragraph above already says
+// identifiers are allowed. The second is a FILE NAME a user would see the day stems ship, so
+// it was the honest hit and the source changed instead ("Track", the glossary's word for one
+// row). What changed here is ONE literal SHAPE, never a file: a literal whose WHOLE content is
+// a lowercase reverse-DNS identifier (`a.b.c`, three or more dot-separated parts, no spaces)
+// is not text. Claim 2 pins both sides — the identifier passes, and every sentence, button
+// title and two-part file name with the word is still caught.
 
 import XCTest
 
@@ -33,6 +45,12 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
         try? NSRegularExpression(pattern: #"\\\([^)]*\)"#, options: [])
     }
 
+    /// A literal whose whole content is a lowercase reverse-DNS identifier
+    /// (`"com.echoelmusic.stem-capture"`): a queue label, a subsystem, a bundle id — never prose.
+    private static var reverseDNS: NSRegularExpression? {
+        try? NSRegularExpression(pattern: #"^"[a-z][a-z0-9]*(?:\.[a-z0-9][a-z0-9-]*){2,}"$"#, options: [])
+    }
+
     private var root: URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -45,6 +63,16 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
         let prose = interpolation.stringByReplacingMatches(
             in: text, range: NSRange(text.startIndex..., in: text), withTemplate: " ")
         return word.firstMatch(in: prose, range: NSRange(prose.startIndex..., in: prose)) != nil
+    }
+
+    private func isIdentifier(_ literal: String) -> Bool {
+        guard let dns = Self.reverseDNS else { return false }
+        return dns.firstMatch(in: literal, range: NSRange(literal.startIndex..., in: literal)) != nil
+    }
+
+    /// A literal a user could read that names stems: the word, outside an identifier.
+    private func promisesStems(_ literal: String) -> Bool {
+        !isIdentifier(literal) && mentionsStems(literal)
     }
 
     /// Every string literal the compiler sees in `text`, comments already blanked.
@@ -90,7 +118,7 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
             let code = SourceText.codeOnly(try String(contentsOf: file, encoding: .utf8))
             for literal in literals(in: code) {
                 literalCount += 1
-                if mentionsStems(literal) {
+                if promisesStems(literal) {
                     offenders.append("\(file.lastPathComponent): \(literal.prefix(120))")
                 }
             }
@@ -119,6 +147,15 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
         XCTAssertFalse(mentionsStems("a stemmed glass"), "`stemmed` is not `stem`")
         XCTAssertFalse(mentionsStems(#""\(stem).wav""#), "an interpolated variable is code, not a promise")
         XCTAssertEqual(literals(in: #"let a = "one stems"; let b = 2"#), [#""one stems""#])
+
+        // The identifier shape — and only it — is not text (2026-10-07, see the header).
+        XCTAssertFalse(promisesStems(#""com.echoelmusic.stem-capture""#), "a reverse-DNS queue label is an identifier")
+        XCTAssertTrue(promisesStems(#""Export stems""#), "a button title is text")
+        XCTAssertTrue(promisesStems(#""Stem""#), "a one-word file name a user sees is text")
+        XCTAssertTrue(promisesStems(#""stems.wav""#), "two dot parts are a file name, not an identifier")
+        XCTAssertTrue(promisesStems(#""com.echoelmusic.Export stems""#), "a space makes it prose")
+        XCTAssertTrue(promisesStems(#""Your stems drop into com.echoelmusic.export""#), "an identifier INSIDE a sentence does not excuse the sentence")
+        XCTAssertTrue(promisesStems("\"\"\"\nso stems drop in\n\"\"\"") , "a multi-line literal is text")
     }
 
     // MARK: - Claim 3: the replacement line names exports that exist

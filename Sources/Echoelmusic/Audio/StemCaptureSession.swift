@@ -349,11 +349,14 @@ final class StemCaptureSession: @unchecked Sendable {
         claimed = []
     }
 
-    /// A stem name as a file name: path and reserved characters become dashes.
+    /// A stem name as a file name: path and reserved characters become dashes. An empty result
+    /// falls back to "Track" — the glossary's word for one row, and a name a user may read in
+    /// Files. (It said "Stem" until 2026-10-07, which `TheAppPromisesNoStemsBeforeTheyShipTests`
+    /// rightly caught: no stem export ships yet.)
     static func fileSafe(_ name: String) -> String {
         let cleaned = name.components(separatedBy: CharacterSet(charactersIn: "/\\:*?\"<>|"))
             .filter { !$0.isEmpty }.joined(separator: "-")
-        return cleaned.isEmpty ? "Stem" : cleaned
+        return cleaned.isEmpty ? "Track" : cleaned
     }
 }
 #endif

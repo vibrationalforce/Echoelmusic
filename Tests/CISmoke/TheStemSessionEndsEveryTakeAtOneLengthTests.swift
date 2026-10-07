@@ -229,7 +229,7 @@ final class TheStemSessionEndsEveryTakeAtOneLengthTests: XCTestCase {
             XCTAssertEqual($0 as? StemCaptureSession.SessionError, .noSources)
         }
         XCTAssertEqual(StemCaptureSession.fileSafe("a/b:c"), "a-b-c")
-        XCTAssertEqual(StemCaptureSession.fileSafe("//"), "Stem")
+        XCTAssertEqual(StemCaptureSession.fileSafe("//"), "Track")
     }
 
     // MARK: 8 — one tap twice, or one tap in two live takes, is refused: a tap has ONE owner
