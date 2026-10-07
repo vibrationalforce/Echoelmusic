@@ -60,6 +60,11 @@ SCEN = {
  "bft-failed": ([[1,runs(OKC,"completed")]], [[1,jobs("failure")]], "success/failure"),
  "api-down-for-good": ([[1,"FAIL"]], [[1,"FAIL"]], "timeout/timeout"),
  "jobs-down-for-good": ([[1,runs(OKC,"completed")]], [[1,"FAIL"]], "success/timeout"),
+ "gate-vanishes-after-grace": ([[1,runs(("in_progress",None),"in_progress")],[12,runs(None,None)],[13,runs(OKC,"completed")]],
+                               [[1,jobs(None)],[12,jobs("success")]], "success/success"),
+ "compile-cancelled": ([[1,runs(("completed","cancelled"),"completed")]], [[1,jobs("success")]], "cancelled/success"),
+ "compile-queued-forever": ([[1,runs(("queued",None),"completed")]], [[1,jobs("success")]], "timeout/success"),
+ "ci-completed-zero-jobs": ([[1,runs(OKC,"completed")]], [[1,{"jobs":[]}]], "success/never-ran"),
 }
 def run(script, name, r, j):
     d=tempfile.mkdtemp()

@@ -42154,3 +42154,11 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Ablehnungs-Protokoll: Hook (7 E10-Ereignisse 2026-10-04) + Klassifikator ([Auto-Mode Bypass] 16:04:50). Hook heute per Selbstprobe belegt, Klassifikator historisch.
 - Parallel: Auto-Merge #310 = ein maskierter leerer API-Poll nach 300 s Karenz; Kalibrier-Suite auf `2ef716273` nicht beobachtbar (xcresult hinter Proxy-403).
 - Freigabeschritt (Founder, außerhalb Auto-Modus): `git apply --index` des Patches + `git commit -F scratchpads/E10-1_commit_message.txt`.
+
+## 2026-10-07d — Integration I1–I3 + TestFlight 10.79.492
+
+- Founder-Freigabe 2026-10-07 (Auto-Merge #310 · E10-1 · J0) + „TestFlight deploy".
+- **TestFlight 10.79.492** = `62d0f9489` (nur `.deploy/release`), Quellen identisch mit `2ef716273` (Compile ✓, BfT ✓, Run Tests #396-Form, Namen unbelegt). Lauf 37655969254 (#2617). Push erst nach 7× HTTP 500 durchgegangen. NICHT drin: E10-1, J0, B2.
+- **I1 #310:** Workflow-Fix + 13 Szenarien als `6685327b0` lokal committet (Sim 13/13, alt 7 falsch; Reviewer A: keine Defekte, Hinweis: ein reiner Workflow-Push löst selbst kein Gate aus). Der Hook hat den Commit NICHT geprüft (liest den Index des Sitzungs-cwd, nicht des Worktrees) → nicht gepusht, `hold/auto-merge-310`. Founder einmal informiert. Harness (13 Szenarien) jetzt als `scratchpads/AUTO_MERGE_310_sim.py`.
+- **I2 E10-1:** Reviewer B: keine Swift-Fehler; CI-Sperre `check-infoplist.sh` (Schlüssel nicht in `required_keys`) + Record-startet-ohne-Aufnahme → `scratchpads/E10-1_review_fixes.patch` (Hygiene-Check auf dem Merge-Baum PASSED). Offen: Downgrade-Retry (-50, #1022), Unterbrechung still, Timing/Latenz (G9). Blockiert durch Info.plist-Schutz im Auto-Modus.
+- **I3 J0:** Entwurf `scratchpads/J0_ACOUSTIC_PROBE_DESIGN_2026-10-07.md` (Reviewer C); blockiert durch E10-1 + Info.plist-Text + Bezugsfrage.

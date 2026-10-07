@@ -3,6 +3,13 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
+CURRENT (2026-10-07d): branch tip 62d0f9489 (= TestFlight 10.79.492 bump, run 37655969254 #2617) on
+  a4c5da609; Sources identical to 2ef716273 (Compile Check 37639346127 ✓, BfT job 112854348658 ✓, Run Tests
+  exit 65 #396 shape, failing names unseen). main = bc4fc5205 (auto-merge #310 rejects).
+  HELD, not pushed: hold/auto-merge-310 = 6685327b0 (workflow fix; hook did not see it — founder informed).
+  BLOCKED on Info.plist (auto mode denies): E10-1 (+ scratchpads/E10-1_review_fixes.patch), then J0
+  (scratchpads/J0_ACOUSTIC_PROBE_DESIGN_2026-10-07.md). Uncommitted 52 E10/B2 files in main checkout: untouched.
+HISTORY BELOW (older state, superseded by the block above):
 CURRENT_HEAD: 7e6aea965 on claude/echoelmusic-review-optimize-u5jjpd (PUSHED code/gate SHA; subsequent docs commits
   may advance the branch tip). Codex applied the prepared, founder-authorized case-20 manifest patch through the connected
   GitHub tools; Claude's local checkout was not inspected and must incorporate the remote commit before its next push.
