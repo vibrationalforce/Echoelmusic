@@ -128,7 +128,7 @@ public final class ProjectStore {
     /// Record whether the Save about to be written carries its song. ONE writer of
     /// `songNotSavedNote`; the Studio's capture calls it with `Capture.songSaved`.
     public func noteSongCapture(saved: Bool) {
-        songNotSavedNote = saved ? nil : String(localized: "The take was saved, but not the song: one of its values is not a number. The last saved song was kept. Undo the last change and save again.")
+        songNotSavedNote = saved ? nil : String(localized: "The piece was saved, but not its arrangement: one of its values is not a number. The last saved arrangement was kept. Undo the last change and save again.")
     }
 
     /// Recovery must also see snapshots retained after a failed disk write.

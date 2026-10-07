@@ -112,8 +112,8 @@ final class AFailedSongCaptureKeepsTheLastSongAndSaysSoTests: XCTestCase {
         XCTAssertNil(store.songNotSavedNote, "a fresh store reports nothing")
         store.noteSongCapture(saved: false)
         let note = store.songNotSavedNote ?? ""
-        XCTAssertTrue(note.contains("not the song"), "the note must say the SONG was not saved: \(note)")
-        XCTAssertTrue(note.contains("last saved song was kept"), "and what was kept instead: \(note)")
+        XCTAssertTrue(note.contains("not its arrangement"), "the note must say the ARRANGEMENT was not saved, in the heading's word: \(note)")
+        XCTAssertTrue(note.contains("last saved arrangement was kept"), "and what was kept instead: \(note)")
         XCTAssertFalse(store.hasPendingSave, """
             The note must not block Open: the row reached the disk, and a song that cannot encode \
             would otherwise lock the player out of every other piece.
