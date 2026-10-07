@@ -630,3 +630,7 @@ Offen: Ausführungsbeleg des Kalibrier-Wächters (xcresult nicht erreichbar, Pro
 ### J0_2026-10-07c — E10-1 freigabefertig
 
 Dokument: `scratchpads/E10-1_RELEASE_PREP_2026-10-07.md`. Die 52 Haupt-Checkout-Dateien = `bd822db90` + E10-Patch + B2-Patch exakt (leerer Diff gegen einen Temp-Index): 23 nur E10 · 22 nur B2 · 7 gemeinsam · 0 ungeklärt. Kleinster vollständiger E10-1-Satz = `scratchpads/E10-1_microphone_recording.patch` (30 Dateien, eine gesperrt: Info.plist), wendet auf `f908f88f9` ohne B2 sauber an. Commit-Nachricht: `scratchpads/E10-1_commit_message.txt`. Sperre: Hook-Konfiguration heute belegt (Selbstprobe 58/58, `deny` bei `auto`), Klassifikator-Ablehnung nur historisch (2026-10-04 16:04:50, [Auto-Mode Bypass]). Freigabe = Founder wendet den Patch außerhalb des Auto-Modus an und committet; kein neuer Versuch aus dieser Sitzung.
+
+### J0_2026-10-07d — #310 Reparatur vorbereitet (nicht angewandt)
+
+`scratchpads/AUTO_MERGE_310_proposed.patch` (founder-gesperrter Workflow, nur Vorschlag; `git apply --check` auf `b7dcd3ff3` sauber, YAML parst). Zwei Änderungen im Poll-Schritt: (1) ein fehlgeschlagener oder formloser `runs`-Abruf ist ein Lesefehler — erneut nach 30 s, nie ein leeres Ergebnis; stderr wird nicht mehr verworfen, der nächste Fehler nennt seinen Grund. (2) Ein einmal GESEHENES Gate kann nie mehr „never-ran“ werden (`compile_seen`, `ci_seen`). Die 45-min-Frist und „Abwesenheit = Ablehnung“ bleiben unverändert. Freigabe: der Founder wendet den Patch selbst an (Default-Modus oder Mac). Unbelegt bis zum ersten Lauf danach.

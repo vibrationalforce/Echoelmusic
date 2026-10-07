@@ -1,0 +1,59 @@
+--- a/.github/workflows/auto-merge-claude.yml
++++ b/.github/workflows/auto-merge-claude.yml
+@@ -155,11 +155,27 @@
+           GRACE=300
+           compile=""
+           testbuild=""
++          # Once a gate has been SEEN it can never become "never-ran": a later
++          # empty or failed API answer is a read error, not a verdict (#310).
++          compile_seen=""
++          ci_seen=""
+ 
+           while :; do
+             elapsed=$(( $(date +%s) - START ))
+-            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null \
+-                   || echo '{"workflow_runs":[]}')
++            # A failed call is NOT an empty list. Before #310 the failure was
++            # replaced by '{"workflow_runs":[]}', and past GRACE that one bad
++            # answer refused a merge whose gates were running and later green.
++            if ! runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100") \
++               || ! printf '%s' "$runs" | jq -e '.workflow_runs | type == "array"' >/dev/null; then
++              echo "  t+${elapsed}s  runs API unreadable, retrying"
++              if [ "$(date +%s)" -ge "$DEADLINE" ]; then
++                compile="${compile:-timeout}"
++                testbuild="${testbuild:-timeout}"
++                break
++              fi
++              sleep 30
++              continue
++            fi
+ 
+             # --- gate 1: `Xcode Compile Check`, read by CONCLUSION. It builds
+             # Sources/ alone and its conclusion is honest, unlike the pipeline's.
+@@ -171,7 +187,8 @@
+                 | .conclusion // empty')
+               seen=$(printf '%s' "$runs" | jq -r '
+                 [.workflow_runs[] | select(.name == "Xcode Compile Check")] | length')
+-              if [ -z "$compile" ] && [ "$seen" = "0" ] && [ "$elapsed" -gt "$GRACE" ]; then
++              if [ "$seen" != "0" ]; then compile_seen=1; fi
++              if [ -z "$compile" ] && [ -z "$compile_seen" ] && [ "$elapsed" -gt "$GRACE" ]; then
+                 compile="never-ran"
+               fi
+             fi
+@@ -188,6 +205,7 @@
+                 [.workflow_runs[] | select(.name == "Echoelmusic CI/CD Pipeline")]
+                 | sort_by(.run_started_at) | last | .status // empty')
+               if [ -n "$ci" ]; then
++                ci_seen=1
+                 jobs=$(gh api "repos/$REPO/actions/runs/$ci/jobs?per_page=100" 2>/dev/null \
+                        || echo '{"jobs":[]}')
+                 testbuild=$(printf '%s' "$jobs" | jq -r '
+@@ -201,7 +219,7 @@
+                 if [ -z "$testbuild" ] && [ "$ci_status" = "completed" ]; then
+                   testbuild="never-ran"
+                 fi
+-              elif [ "$elapsed" -gt "$GRACE" ]; then
++              elif [ -z "$ci_seen" ] && [ "$elapsed" -gt "$GRACE" ]; then
+                 testbuild="never-ran"
+               fi
+             fi
