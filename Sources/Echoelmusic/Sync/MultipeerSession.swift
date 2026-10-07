@@ -113,6 +113,18 @@ public final class MultipeerSession: NSObject {
     /// the source of the `senderName` every payload carries.
     @ObservationIgnored private let identity: PeerIdentity
 
+    // MARK: - Link round trip (live-jam J0/J1, `LinkProbe.swift`)
+
+    /// How often a probe goes out while a peer is connected. Ten bytes each way.
+    static let probeInterval: TimeInterval = 0.5
+    /// One diag-log summary line per peer every this many probes (~10 s at the interval above).
+    static let probeLogEvery: UInt32 = 20
+    /// `PeerIdentity.stableID` → this link's round trips. MainActor-only and deliberately NOT
+    /// observed: it changes twice a second, and its reader is the diag log, not a view body.
+    @ObservationIgnored private var linkMeters: [String: LinkLatencyMeter] = [:]
+    @ObservationIgnored private var probeTask: Task<Void, Never>?
+    @ObservationIgnored private var nextProbeID: UInt32 = 0
+
     public override init() {
         // @MainActor init, so UIDevice (MainActor API) is directly accessible.
         #if canImport(UIKit)
@@ -166,6 +178,8 @@ public final class MultipeerSession: NSObject {
         peerIDs.removeAll()
         connectedPeers.removeAll()
         peerReadings.removeAll()
+        stopProbing()
+        linkMeters.removeAll()
         status = String(localized: "Off")
     }
 
@@ -330,12 +344,75 @@ public final class MultipeerSession: NSObject {
             }
             discovered.removeAll { $0.id == peer.stableID }
             status = String(localized: "Connected to ") + peer.displayName
+            if linkMeters[peer.stableID] == nil { linkMeters[peer.stableID] = LinkLatencyMeter() }
+            startProbing()
         } else {
             connectedPeers.removeAll { $0.stableID == peer.stableID }
             peerReadings[peer.stableID] = nil
+            if let meter = linkMeters.removeValue(forKey: peer.stableID), meter.sent > 0 {
+                EchoelCrashLog.breadcrumb(meter.summary().logLine(peer: Self.logKey(peer.stableID)) + " — peer left")
+            }
+            if connectedPeers.isEmpty { stopProbing() }
             if connectedPeers.isEmpty && isLive { status = String(localized: "Looking for nearby Echoelmusic…") }
         }
     }
+
+    // MARK: - Link probes (MainActor)
+
+    /// What the round-trip meter can say about one connected peer so far; nil for a peer that
+    /// is not connected. The diag-log line is built from the same summary.
+    func linkSummary(forPeer stableID: String) -> LinkLatencySummary? {
+        linkMeters[stableID]?.summary()
+    }
+
+    private func startProbing() {
+        guard probeTask == nil else { return }
+        probeTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.sendProbe()
+                try? await Task.sleep(nanoseconds: UInt64(Self.probeInterval * 1_000_000_000))
+            }
+        }
+    }
+
+    private func stopProbing() {
+        probeTask?.cancel()
+        probeTask = nil
+    }
+
+    /// One ping to every connected peer. The send time is taken on THIS side's monotonic clock
+    /// and kept here per id; a send that throws stays outstanding and is written off as lost,
+    /// which is what it is.
+    private func sendProbe() {
+        let peers = mcSession.connectedPeers
+        guard !peers.isEmpty else { return }
+        nextProbeID &+= 1
+        let id = nextProbeID
+        let now = ProcessInfo.processInfo.systemUptime
+        let keys = peers.map { PeerIdentity.resolve(transportName: $0.displayName).stableID }
+        for key in keys {
+            var meter = linkMeters[key] ?? LinkLatencyMeter()
+            meter.expire(now: now)
+            meter.didSend(id: id, at: now)
+            linkMeters[key] = meter
+        }
+        try? mcSession.send(LinkProbeFrame.encode(.ping, id: id), toPeers: peers, with: .unreliable)
+        guard id % Self.probeLogEvery == 0 else { return }
+        for key in keys {
+            guard let summary = linkMeters[key]?.summary() else { continue }
+            EchoelCrashLog.breadcrumb(summary.logLine(peer: Self.logKey(key)))
+        }
+    }
+
+    private func handleEcho(id: UInt32, at time: TimeInterval, from transportName: String) {
+        let key = PeerIdentity.resolve(transportName: transportName).stableID
+        linkMeters[key]?.didEcho(id: id, at: time)
+    }
+
+    /// A peer as the diag log names it: a short prefix of the stable key — never the device
+    /// name, which is personal and does not belong in a file the user shares for support.
+    private static func logKey(_ stableID: String) -> String { String(stableID.prefix(6)) }
 
     /// - Parameter peerName: the AUTHENTICATED `MCPeerID.displayName` the transport
     ///   handed us alongside the bytes — NOT the `senderName` field inside them.
@@ -388,6 +465,23 @@ extension MultipeerSession: MCSessionDelegate {
     }
 
     public nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        // A link probe is answered HERE, on the transport's callback, before any main-actor hop:
+        // the round trip must measure the link, not how busy this phone's UI is. The arrival
+        // of an echo is stamped here for the same reason (`LinkProbe.swift`).
+        if let probe = LinkProbeFrame.decode(data) {
+            switch probe.kind {
+            case .ping:
+                if let reply = LinkProbeFrame.echo(of: data) {
+                    try? session.send(reply, toPeers: [peerID], with: .unreliable)
+                }
+            case .echo:
+                let arrived = ProcessInfo.processInfo.systemUptime
+                let id = probe.id
+                let name = peerID.displayName
+                Task { @MainActor [weak self] in self?.handleEcho(id: id, at: arrived, from: name) }
+            }
+            return
+        }
         // The peer here is AUTHENTICATED by the transport — carry it through instead
         // of trusting the name inside the bytes (#517).
         let name = peerID.displayName
