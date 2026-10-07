@@ -615,3 +615,14 @@ erkannt) · Gerät nein. Bekannte Grenze: schmale Lautsprecher/Mikro-Kette (simu
 `AVAudioSession` ist prozessweit, Kategorie- und Routenwechsel treffen auch den Hauptgraphen
 (`RecordRouteOwner`, #299). Der Läufer stoppt den Hauptgraphen, beansprucht die Route, misst, und gibt
 alles in einem `defer` zurück; ein Routenwechsel während der Messung verwirft den Lauf.
+
+### J0_2026-10-07b — Nachtrag Gates + H18
+
+| SHA | Compile Check | Build for Testing (Schritt 9) | Run Tests (Schritt 11) | Auto-Merge |
+|---|---|---|---|---|
+| `bc4fc5205` | ✓ 37631459725 | ✓ Job 112826922999 | rot: nur `TheChromeSpeaksOneWordPerThingTests.testTheChromeSpeaksNoStruckWord` (H18) | ✓ → main |
+| `3efc32d97` | ✓ 37634735320 | ✓ Job 112838304758 | rot: dieselbe EINE H18-Ausnahme, 161 sichtbar bestanden; Kalibrier-Wächter NICHT im Fenster (Lücke 1985 s) — Ausführung unbelegt | ✗ 37634735362 (#310 „never-ran“, founder-gesperrt) |
+| `2ef716273` (H18) | ✓ 37639346127 | ✓ Job 112854348658 | #396-Form (exit 65), 162 bestanden / 0 Fehler im Fenster; Chrome-Wächter 4/4, Umschaltleiste 4/4, Front-Bühne 10/10 BEOBACHTET bestanden; Kalibrier-Wächter nicht im Fenster | ✗ 37639346289 (#310) |
+
+H18 vom Founder beantwortet: „Piece“. Umgesetzt in `2ef716273` (Leiste, Lernkarte, Katalog, Chrome-Ratsche + `StudioStage.swift`, CLAUDE.md-Zeile). Unabhängiger Review: 0 HIGH/MED, LOWs im selben Commit behoben. main bleibt `bc4fc5205`, weil Auto-Merge an #310 scheitert.
+Offen: Ausführungsbeleg des Kalibrier-Wächters (xcresult nicht erreichbar, Proxy 403); Eingangsseite J0 (Mikrofon-Freigabe = E10-1-WIP, blockiert); Gerät.

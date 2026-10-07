@@ -42144,3 +42144,5 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - `7ee4c223d` FOUNDER_INBOX H18 („Project" vs. Glossar „piece") — letzter Chrome-Rot bleibt bis zur Antwort.
 - `3efc32d97` J0-Kalibrierkern (Foundation-only, unverdrahtet) + Wächter (6). dsp-reviewer-Befunde eingearbeitet (Erst-Ankunft, stiller Boden, 10-ms-Boden, Rate an der Messreihe, Port-Typ-Allowlist). Transkription: 15 Szenarien, 10 Mutanten. Grenze: schmale Kette → noPeak (sichere Richtung).
 - Blockade unverändert: 52 E10-1/B2-Dateien im Haupt-Worktree uncommittet (Klassifikator 2026-10-04); nicht umgangen.
+- H18 vom Founder entschieden („Piece“) → `2ef716273`: Compile ✓, BfT ✓, Run Tests #396-Form mit 0 Fehlern im Fenster, Chrome-/Umschalt-/Front-Bühnen-Wächter beobachtet bestanden. Auto-Merge auf `3efc32d97` und `2ef716273` abgewiesen (#310), main = `bc4fc5205`.
+- `3efc32d97` Run Tests: einziger Fehler war der H18-Treffer; der Kalibrier-Wächter lag außerhalb des Log-Fensters (Ausführung unbelegt).
