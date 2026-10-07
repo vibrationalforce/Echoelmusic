@@ -47,8 +47,11 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
 
     /// A literal whose whole content is a lowercase reverse-DNS identifier
     /// (`"com.echoelmusic.stem-capture"`): a queue label, a subsystem, a bundle id — never prose.
+    /// The first part must be a reverse-DNS ROOT: without it, any lowercase dotted literal with
+    /// three parts passed as an "identifier", and `"echoel.stems.zip"` — a file name a user
+    /// sees — would have escaped (review of 9cd57f946).
     private static var reverseDNS: NSRegularExpression? {
-        try? NSRegularExpression(pattern: #"^"[a-z][a-z0-9]*(?:\.[a-z0-9][a-z0-9-]*){2,}"$"#, options: [])
+        try? NSRegularExpression(pattern: #"^"(?:com|org|net|io|app)\.[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+"$"#, options: [])
     }
 
     private var root: URL {
@@ -153,6 +156,8 @@ final class TheAppPromisesNoStemsBeforeTheyShipTests: XCTestCase {
         XCTAssertTrue(promisesStems(#""Export stems""#), "a button title is text")
         XCTAssertTrue(promisesStems(#""Stem""#), "a one-word file name a user sees is text")
         XCTAssertTrue(promisesStems(#""stems.wav""#), "two dot parts are a file name, not an identifier")
+        XCTAssertTrue(promisesStems(#""echoel.stems.zip""#), "three dot parts without a reverse-DNS root are a file name")
+        XCTAssertTrue(promisesStems(#""stems.v2.zip""#), "so is a versioned one")
         XCTAssertTrue(promisesStems(#""com.echoelmusic.Export stems""#), "a space makes it prose")
         XCTAssertTrue(promisesStems(#""Your stems drop into com.echoelmusic.export""#), "an identifier INSIDE a sentence does not excuse the sentence")
         XCTAssertTrue(promisesStems("\"\"\"\nso stems drop in\n\"\"\"") , "a multi-line literal is text")
