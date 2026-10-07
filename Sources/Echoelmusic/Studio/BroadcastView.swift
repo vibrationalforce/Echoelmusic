@@ -130,7 +130,7 @@ struct BroadcastView: View {
                 // `hasEnabledRoute(fromSource:)` has no production caller (BLE-3 lesson,
                 // SignalRouter.swift), so connecting a route starts nothing.
             }
-            .padding(16)
+            .padding(EchoelTheme.spaceL)
         }
         .background(EchoelTheme.bg)
         .onAppear {
@@ -150,7 +150,7 @@ struct BroadcastView: View {
     }
 
     private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
             Text(label).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             TextField(placeholder, text: text)
                 .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)
@@ -165,7 +165,7 @@ struct BroadcastView: View {
     }
 
     private func secureField(_ label: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
             Text(label).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
             SecureField("•••••••••••", text: text)
                 .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)

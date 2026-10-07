@@ -52,7 +52,7 @@ struct PieceMixerView: View {
             return Strip(lane: lane, controls: controls)
         }
         let silent = document.lanes.count - strips.count
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
             headphoneSpaceRow
             if strips.isEmpty {
                 Text("No track makes a sound yet. Add a track or write a part, and its strip appears here")
@@ -75,7 +75,7 @@ struct PieceMixerView: View {
     /// S3c — the switch that puts the audio tracks at their place in the piece's space on
     /// headphones. A cold read: a finger flips it, nothing writes it at audio rate.
     private var headphoneSpaceRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
             Toggle(isOn: Binding(get: { audioEngine.headphoneSpaceEnabled },
                                  set: { audioEngine.headphoneSpaceEnabled = $0 })) {
                 Text("Headphone space")
@@ -93,7 +93,7 @@ struct PieceMixerView: View {
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(8)
+        .padding(EchoelTheme.spaceS)
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
@@ -117,7 +117,7 @@ struct PieceMixerView: View {
         let hue = EchoelTheme.TrackHue.of(kind: lane.kind, instrument: lane.builtinInstrument, isBio: lane.isBio)
         let level = Double(lane.level)
         return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+            HStack(spacing: EchoelTheme.spaceS) {
                 RoundedRectangle(cornerRadius: 1.5)
                     .fill(hue.color)
                     .frame(width: 3)
@@ -179,7 +179,7 @@ struct PieceMixerView: View {
                     onCommit: { timeline.commitLaneMix(id: lane.id) })
             }
         }
-        .padding(8)
+        .padding(EchoelTheme.spaceS)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
         // A list of strips says "Level" once per track — VoiceOver enters each strip under the

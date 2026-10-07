@@ -27,7 +27,7 @@ struct PieceLightLookField: View {
     @Environment(TimelineStore.self) private var timeline
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
             EchoelValueField(
                 label: "Light look",
                 value: Binding(

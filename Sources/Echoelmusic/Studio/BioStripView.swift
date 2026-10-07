@@ -690,7 +690,7 @@ struct BioStripView: View {
     /// only fix lives in the system Settings — one tap takes the user there.
     private var openSettingsButton: some View {
         Button { openAppSettings() } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: EchoelTheme.spaceXS) {
                 Image(systemName: "video.slash").font(EchoelTheme.font(11))
                 Text("Enable camera")
             }

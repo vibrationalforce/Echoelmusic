@@ -28,7 +28,7 @@ struct TrackSampleRow: View {
     var body: some View {
         let current = timeline.document.lanes.first(where: { $0.id == laneID })?.samplePath
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+            HStack(spacing: EchoelTheme.spaceS) {
                 Text("Sample")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .accessibilityHidden(true)   // the Picker speaks the label once
