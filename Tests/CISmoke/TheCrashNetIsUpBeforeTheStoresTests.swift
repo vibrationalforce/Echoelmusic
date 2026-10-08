@@ -45,7 +45,11 @@
 // stored initial values in declaration order is the language's rule, not something this file
 // can observe. And the net adds the LOG and the COUNT, not recovery — Safe Mode constructs the
 // same defaults, so a constructor crash still repeats (SH-11). DEVICE PROBE, open: a launch
-// whose log's first line is the `launch:` line and whose second is the `LaunchGuard:` verdict.
+// whose log opens with the `launch v` line (`EchoelCrashLog.launchLinePrefix`) and reaches the
+// `LaunchGuard:` verdict before `init a: audio core`. After a run that ended badly `begin()`
+// writes its `retain…` lines between the two, so "the second line" holds only after a clean run.
+// No breadcrumb marks the stored defaults themselves: a log that stops between the verdict and
+// `init a:` died in one of them, the `register(defaults:)` calls or the `APP INIT` line.
 
 import Foundation
 import XCTest
