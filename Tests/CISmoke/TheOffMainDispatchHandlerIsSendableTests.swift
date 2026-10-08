@@ -49,14 +49,27 @@
 // LAUNCH once Health access was granted — so anyone who ever allowed Apple Health would trap
 // on the first result of every launch. Same token; the three `process…Samples` callees are
 // already `nonisolated`. The `updateHandler` ASSIGNMENTS carry it too (they run on the same
-// queue), but they are not an argument, get no entry check, and this file does not pin them.
+// queue). This file does not pin them. ⛔ Its first wording said they "get no entry check"; that is
+// UNMEASURED. SE-0423 documents the check for a closure passed as a call ARGUMENT, and whether
+// the setter of an imported block PROPERTY is treated the same way was never compiled here.
+//
+// THE FIFTH SITE (GMMW P0-1, 2026-10-08). `HapticEngine` (`@MainActor`) assigns two closure
+// literals to `CHHapticEngine.resetHandler` and `.stoppedHandler`. CoreHaptics calls both on its
+// own queue: the reset after the haptic server restarts, the stop after the idle shutdown the same
+// method enables. Unlike the four sites above, these are ASSIGNMENTS, so whether they trapped is
+// the open question one paragraph up. It is not answered here. They are pinned anyway, for two
+// reasons that hold whatever the compiler does with an assignment. The handlers run off the main
+// queue, and an explicit `@Sendable` closure is non-isolated by construction. The repair is the
+// MIDIInput shape: `{ @Sendable [weak self] in Task { @MainActor [weak self] in … } }`.
 //
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
 // `MIDI…CreateWithBlock(`/`MIDI…CreateWithProtocol(` call (CoreMIDI picks the thread, never the
 // caller), and — in a file that imports HealthKit — every closure literal trailing an
-// `HK…Query(` initializer or a `.save(` call (HealthKit's background queue) is spelled
+// `HK…Query(` initializer or a `.save(` call (HealthKit's background queue), and — in a file that
+// imports CoreHaptics — every closure literal ASSIGNED to `.resetHandler`/`.stoppedHandler`
+// (CoreHaptics' own queue) is spelled
 // `@Sendable`. Handlers on `.main` may stay isolated
 // (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
 // class are exempt: a closure formed in a non-isolated class inherits nothing.
@@ -74,7 +87,9 @@
 // closure after the call's balanced argument list (one level of nested parentheses); a block
 // passed by name, or as a labelled argument inside the parentheses, is not; the HealthKit needle
 // reads the same trailing shape and only in a file that imports HealthKit (`.save(` is a common
-// name). Four imported-block API families are pinned, not the class of all of them: a fifth with
+// name). The CoreHaptics needle reads only the two handler ASSIGNMENTS
+// (`.resetHandler = {`/`.stoppedHandler = {`) and only in a file that imports CoreHaptics. Five
+// imported-block API families are pinned, not the class of all of them: a sixth with
 // the same shape is a new needle, not a comment. The `@MainActor`
 // needle accepts only attributes and modifiers between it and `class`, so `Task { @MainActor in`
 // never counts as a class.
@@ -128,6 +143,14 @@
 // `Bio/HealthKitWriter.swift`; GREEN after the fix. Claim 3's three HealthKit fixtures green on
 // both; claim 8 (the two files inside the domain) red on the parent for its named reason, green
 // after. Claims 2, 4, 6 and 7 unchanged.
+// FIFTH MEASUREMENT (the CoreHaptics needle), transcribed against the parent `74a4433` and the
+// worktree with `SourceText.codeOnly` ported. Claim 1 is RED on the parent for its NAMED reason,
+// a REGRESSION: exactly two violations, `Studio/HapticEngine.swift` `.resetHandler` and
+// `.stoppedHandler`, both unmarked. It is GREEN after the fix. Claim 3's three CoreHaptics
+// fixtures are a pure needle and green on both trees. Claim 9 is red on the parent for its named
+// reason (both assignments found, neither `@Sendable`) and green after. Claims 2 and 4–8 are
+// unchanged. No other file imports CoreHaptics. The rule's verdict on an assignment is a SPELLING
+// verdict: whether the parent's closures trapped on a device is not known (the ⛔ note above).
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -150,6 +173,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let midiIn = "Sources/Echoelmusic/Audio/MIDIInput.swift"
     private static let bioEngine = "Sources/Echoelmusic/Bio/EchoelBioEngine.swift"
     private static let healthWriter = "Sources/Echoelmusic/Bio/HealthKitWriter.swift"
+    private static let hapticEngine = "Sources/Echoelmusic/Studio/HapticEngine.swift"
     private static let mainQueueOwners = [
         "Sources/Echoelmusic/Sequencer/PatternEngine.swift",
         "Sources/Echoelmusic/Audio/MIDIOutput.swift",
@@ -202,6 +226,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
 
     /// HealthKit calls query results handlers and save completions on a background queue.
     private static let healthKitQueue = "<HealthKit's background queue>"
+
+    /// A closure literal ASSIGNED to a `CHHapticEngine` handler property, read only in a file that
+    /// imports CoreHaptics: group 1 the property name, group 2 the `@Sendable` attribute when the
+    /// closure opens with it.
+    private static let coreHapticsHandler = #"\.(resetHandler|stoppedHandler)\s*=\s*\{\s*(@Sendable)?"#
+
+    /// CoreHaptics calls its reset and stopped handlers on its own queue, never `.main`.
+    private static let coreHapticsQueue = "<CoreHaptics' own queue>"
 
     private static let defaultQueue = "<no queue: — a global queue>"
     private static let unknownQueue = "<no DispatchSource.make…Source( above it>"
@@ -258,6 +290,15 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
                                         api: ns.substring(with: m.range(at: 1))))
             }
         }
+        // CoreHaptics handlers: assignments, read only where CoreHaptics is imported.
+        if code.contains("import CoreHaptics") {
+            for m in try NSRegularExpression(pattern: Self.coreHapticsHandler).matches(in: code, range: all) {
+                let sendable = m.range(at: 2).location != NSNotFound
+                let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+                handlers.append(Handler(line: line, queue: Self.coreHapticsQueue, sendable: sendable,
+                                        api: ns.substring(with: m.range(at: 1))))
+            }
+        }
         // CoreMIDI blocks: the thread is CoreMIDI's, never the caller's.
         for m in try NSRegularExpression(pattern: Self.coreMIDIBlock).matches(in: code, range: all) {
             let sendable = m.range(at: 2).location != NSNotFound
@@ -287,13 +328,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         }
         XCTAssertEqual(violations, [], """
             A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
-            block or a HealthKit handler inside a `@MainActor` class, on a queue other than \
+            block, a HealthKit handler or a CoreHaptics handler inside a `@MainActor` class, on a \
+            queue other than \
             `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
             context, a non-`@Sendable` closure inherits MainActor isolation and the imported block type gets a dynamic isolation check at its \
             ENTRY — on the worker that check traps (`dispatch_assert_queue` → SIGTRAP) before the \
             body runs (build 2613, RetroCapture:604; the export's pull loop, SingleExport; builds \
             1769/1777, PatternEngine; the MIDI receive block, MIDIInput; the HealthKit query \
-            handlers, EchoelBioEngine). Spell the closure `{ @Sendable … }`, box what it \
+            handlers, EchoelBioEngine; the haptic reset/stopped handlers, HapticEngine). Spell the closure `{ @Sendable … }`, box what it \
             mutates (`ExportRenderCounters`), keep the callee `nonisolated` — or put the work on \
             `.main`.
             """)
@@ -473,6 +515,39 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             without `import HealthKit` a `.save(…) {` is somebody else's API — the needle must not \
             read it (#364)
             """)
+
+        // The fifth API family — CoreHaptics handler ASSIGNMENTS, read only where it is imported.
+        let hapticIsolated = """
+            import CoreHaptics
+            @MainActor
+            public final class Haptics {
+                func start() {
+                    let e = try CHHapticEngine()
+                    e.resetHandler = { [weak self] in
+                        Task { @MainActor in self?.restart() }
+                    }
+                    e.stoppedHandler = { [weak self] _ in
+                        Task { @MainActor in self?.markStopped() }
+                    }
+                }
+            }
+            """
+        let haptic = try scan(hapticIsolated)
+        XCTAssertEqual(haptic.handlers.map(\.api), ["resetHandler", "stoppedHandler"],
+                       "both handler assignments must be seen (handlers: \(haptic.handlers))")
+        XCTAssertEqual(haptic.violations.count, 2, "the HapticEngine shape must be two violations (#367)")
+
+        let hapticSendable = hapticIsolated
+            .replacingOccurrences(of: "e.resetHandler = { [weak self] in", with: "e.resetHandler = { @Sendable [weak self] in")
+            .replacingOccurrences(of: "e.stoppedHandler = { [weak self] _ in", with: "e.stoppedHandler = { @Sendable [weak self] _ in")
+        XCTAssertEqual(try scan(hapticSendable).violations.count, 0,
+                       "`@Sendable` is the repair for a CoreHaptics handler too; it must satisfy the rule")
+
+        let notCoreHaptics = hapticIsolated.replacingOccurrences(of: "import CoreHaptics\n", with: "")
+        XCTAssertEqual(try scan(notCoreHaptics).handlers.count, 0, """
+            without `import CoreHaptics` a `.resetHandler = {` is somebody else's property — the \
+            needle must not read it (#364)
+            """)
     }
 
     /// 4 — the two exemptions are exercised by real owners, not vacuous.
@@ -602,6 +677,32 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(saves.allSatisfy(\.sendable), """
             the Health write's completion is no longer `@Sendable` — every opted-in write would trap \
             when HealthKit answers on its background queue.
+            """)
+    }
+
+    /// 9 — the fifth site (the CoreHaptics handlers) is inside the rule's domain and repaired
+    /// (else claim 1 could go green by the needle ceasing to match the file).
+    func testTheHapticHandlersAreInsideTheRulesDomain() throws {
+        let code = try read(Self.hapticEngine)
+        let v = try scan(code)
+        XCTAssertTrue(v.isMainActorClass, """
+            HapticEngine is no longer matched as a `@MainActor` class — re-derive whether its \
+            reset/stopped handlers still need `@Sendable` before trusting claim 1.
+            """)
+        let haptic = v.handlers.filter { $0.queue == Self.coreHapticsQueue }
+        XCTAssertEqual(haptic.map(\.api), ["resetHandler", "stoppedHandler"], """
+            HapticEngine's two CoreHaptics handler assignments are not both seen \
+            (handlers: \(v.handlers.map { ($0.api, $0.line) })). If one moved behind a stored \
+            closure, the needle no longer reaches it — re-anchor first.
+            """)
+        XCTAssertTrue(haptic.allSatisfy(\.sendable), """
+            a haptic handler is no longer `@Sendable` — CoreHaptics calls it on its own queue after \
+            the idle shutdown (`isAutoShutdownEnabled`) or a server reset, and an unmarked closure \
+            formed in this `@MainActor` class inherits MainActor isolation.
+            """)
+        XCTAssertTrue(code.contains("isAutoShutdownEnabled = true"), """
+            the idle shutdown is off — then the stopped handler fires only on a real stop. The \
+            pin still holds, but this claim's message names the wrong trigger; re-derive it.
             """)
     }
 

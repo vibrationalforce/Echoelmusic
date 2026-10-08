@@ -61,11 +61,17 @@ public final class HapticEngine {
             let created = try CHHapticEngine()
             created.playsHapticsOnly = true            // not an audio source → lower latency
             created.isAutoShutdownEnabled = true        // idle-shutdown, restarted on demand
-            created.resetHandler = { [weak self] in
-                Task { @MainActor in try? self?.engine?.start() }
+            // CoreHaptics calls both handlers on its own queue, never main: the reset after the
+            // haptic server restarts, the stop after the idle shutdown above. This class is
+            // `@MainActor`, so an unmarked closure formed here would inherit MainActor isolation
+            // (the 2613 shape). `@Sendable` makes it non-isolated by construction; it captures
+            // only `self`, weakly (a `@MainActor` class is Sendable), and hops to the actor
+            // explicitly. Guard: `TheOffMainDispatchHandlerIsSendableTests` claims 1, 3 and 9.
+            created.resetHandler = { @Sendable [weak self] in
+                Task { @MainActor [weak self] in try? self?.engine?.start() }
             }
-            created.stoppedHandler = { [weak self] _ in
-                Task { @MainActor in self?.isRunning = false }
+            created.stoppedHandler = { @Sendable [weak self] _ in
+                Task { @MainActor [weak self] in self?.isRunning = false }
             }
             try created.start()
             engine = created
