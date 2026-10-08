@@ -142,7 +142,13 @@ public final class TimelineRegionPlayer {
     /// Where the playing song ends — it wraps (or stops) at this tick. nil while stopped and
     /// for a song without a length. Read by `RecordController` so a take ends where the song
     /// does, instead of counting past it (Phase 3 / Recording R1).
-    public var songEndTick: Int? { isPlaying && loopTicks > 0 ? loopTicks : nil }
+    /// GMMW AE-12a: while a cycle loops, the song wraps at the CYCLE's end, so a take ends there —
+    /// the same `wrapTick` the wrap in `transportStep` asks.
+    public var songEndTick: Int? {
+        guard isPlaying else { return nil }
+        let end = Self.wrapTick(lastTick: lastTick, loopTicks: loopTicks, cycle: playingCycle)
+        return end > 0 ? end : nil
+    }
     @ObservationIgnored private var lastTick = 0
 
     @ObservationIgnored private weak var pattern: PatternEngine?
@@ -384,6 +390,29 @@ public final class TimelineRegionPlayer {
         guard end > 0 else { return 0 }
         let bars = (end + TimelineTime.ticksPerBar - 1) / TimelineTime.ticksPerBar
         return max(1, bars) * TimelineTime.ticksPerBar
+    }
+
+    /// GMMW AE-12a — the bars the playing song cycles: the document's cycle window while the
+    /// loop is on, nil otherwise (with the loop off the song plays through and stops at its end,
+    /// as before). Read on every step, so a cycle set while the piece plays takes the next wrap.
+    private var playingCycle: Range<Int>? {
+        loopEnabled ? doc.cycle?.window(loopTicks: loopTicks) : nil
+    }
+
+    /// GMMW AE-12a — the tick the playing song next wraps at: the cycle's end while the playhead
+    /// is before it, else the song's end (0 = no bound). A playhead past the cycle (Play started
+    /// after it, or a locate there) plays on to the song's end, wraps to bar 1 and meets the cycle
+    /// again. `songEndTick` asks it, so a take ends where `cycleWraps` sends the playhead back. Pure.
+    nonisolated static func wrapTick(lastTick: Int, loopTicks: Int, cycle: Range<Int>?) -> Int {
+        if let cycle, lastTick < cycle.upperBound { return cycle.upperBound }
+        return loopTicks
+    }
+
+    /// GMMW AE-12a — whether the step that moved the playhead from `lastTick` to `newTick` crosses
+    /// the cycle's end, so the transport goes back to the cycle's first bar. Pure.
+    nonisolated static func cycleWraps(lastTick: Int, newTick: Int, cycle: Range<Int>?) -> Bool {
+        guard let cycle, lastTick < cycle.upperBound else { return false }
+        return newTick >= cycle.upperBound
     }
 
     // MARK: - Transport
@@ -775,22 +804,33 @@ public final class TimelineRegionPlayer {
         let nextStep = Self.nextTransportStep(isPlaying: pattern?.isPlaying == true,
                                               currentStep: pattern?.currentStep ?? 0)
         let anchor = Self.relocateAnchorTick(targetBarTick: target, nextPatternStep: nextStep)
-        pianoRoll?.allNotesOff()   // hard locate: cut the primary roll's ringing notes
+        cursor = TimelinePlaybackCursor(startBar: target / TimelineTime.ticksPerBar)
+        cutAndPrime(atTick: anchor, step: nextStep)   // M7: mid-bar is not a bar line
+        log.log(.info, category: .audio, "timeline: relocate to tick \(anchor)")
+    }
+
+    /// The hard cut every JUMP of the playing song shares — a locate (`relocate`) and, since
+    /// GMMW AE-12a, the cycle's wrap back to its first bar. ONE recipe (#416): sounding voices
+    /// are released (a jump must not smear old-position sustains into the new bar), launches die
+    /// (their boundaries reference the old position), and every layer re-primes at `tick` and
+    /// `step` through the paths `play` uses. The caller has already placed the cursor so its next
+    /// advance lands on `tick`'s bar; `lastTick` becomes `tick`, so the step's window is empty and
+    /// nothing fires twice.
+    private func cutAndPrime(atTick tick: Int, step: Int) {
+        pianoRoll?.allNotesOff()   // hard cut: the primary roll's ringing notes
         flushPumps()               // offs through current bindings (H5b), slots released
         if !launch.isIdle { launchGeneration &+= 1 }   // the launch UI must see the cut
-        launch.removeAll()         // P0 policy: a locate is a hard cut — launches do not
+        launch.removeAll()         // P0 policy: a jump is a hard cut — launches do not
                                    // survive it (their boundaries reference the old
                                    // position); the arrangement re-primes below.
-        audioLanes?.clearAllLaunchOverrides()   // S2: audio override dies with the locate; prime re-arms below
-        cursor = TimelinePlaybackCursor(startBar: target / TimelineTime.ticksPerBar)
-        lastTick = anchor
-        currentTick = anchor
+        audioLanes?.clearAllLaunchOverrides()   // S2: audio override dies with the jump; prime re-arms below
+        lastTick = tick
+        currentTick = tick
         loadedRegionID = nil       // force a fresh region decision at the target
-        loadRollRegion(at: anchor, step: nextStep)   // M7: mid-bar is not a bar line
-        pianoRoll?.setTimelineAutomationTick(anchor)
-        primeSecondaryLanes(at: anchor)
-        audioLanes?.prime(in: doc, atTick: anchor, bpm: pattern?.tempo ?? Self.fallbackTempo)
-        log.log(.info, category: .audio, "timeline: relocate to tick \(anchor)")
+        loadRollRegion(at: tick, step: step)
+        pianoRoll?.setTimelineAutomationTick(tick)
+        primeSecondaryLanes(at: tick)
+        audioLanes?.prime(in: doc, atTick: tick, bpm: pattern?.tempo ?? Self.fallbackTempo)
     }
 
     /// The phase-consistent tick a relocate must anchor at: the target bar's
@@ -838,8 +878,8 @@ public final class TimelineRegionPlayer {
     }
 
     /// Fed every transport step (0…15) by the host. Advances the absolute position,
-    /// loops at the song's whole-bar end (or stops), and (re)loads the roll lane's
-    /// clip on each region onset.
+    /// loops at the cycle's end (AE-12a) or the song's whole-bar end (or stops), and
+    /// (re)loads the roll lane's clip on each region onset.
     public func transportStep(_ step: Int) {
         guard isPlaying else { return }
         // H4: pull live mixer state (mute/solo/level/pan) into the playback snapshot
@@ -855,7 +895,16 @@ public final class TimelineRegionPlayer {
         let structureChase = refreshStructure()
         var newTick = cursor.advance(step: step)
         var wrapped = false
-        if loopTicks > 0, newTick >= loopTicks {
+        let cycle = playingCycle
+        if Self.cycleWraps(lastTick: lastTick, newTick: newTick, cycle: cycle), let cycle {
+            // GMMW AE-12a: the cycle's end — back to its first bar, a hard cut like a locate. The
+            // song wrap's softer path would leave a part that spans the cycle playing on past it
+            // (`.unchanged` at both ends), where a cycle must start that part's bar again.
+            cursor = TimelinePlaybackCursor(startBar: cycle.lowerBound / TimelineTime.ticksPerBar)
+            newTick = cursor.advance(step: step)
+            cutAndPrime(atTick: newTick, step: step)
+            log.log(.info, category: .audio, "timeline: cycle back to tick \(newTick)")
+        } else if loopTicks > 0, newTick >= loopTicks {
             if loopEnabled {
                 cursor = TimelinePlaybackCursor()
                 newTick = cursor.advance(step: step)   // restart within bar 0
@@ -1222,6 +1271,10 @@ public final class TimelineRegionPlayer {
     /// re-driven by `chaseStructure` at the tick this step sounds, from the value returned.
     private func refreshStructure() -> StructureChase? {
         guard let fresh = liveDocument?() else { return nil }
+        // GMMW AE-12a: a cycle set or cleared while the piece plays is taken at once — no voice is
+        // touched, the wrap reads it on this step. Before the gate: `structurallyEqual` leaves the
+        // cycle out, because it changes where the song wraps, not what sounds at a tick.
+        if doc.cycle != fresh.cycle { doc.cycle = fresh.cycle }
         guard !TimelineDocument.structurallyEqual(doc, fresh) else { return nil }
         // Phase 3 / Automation A1: an AUTOMATION-only edit is not a relocation. The lanes go to
         // `AutomationPlayer` (read from the next `applyStep`); no voice is flushed, no roll

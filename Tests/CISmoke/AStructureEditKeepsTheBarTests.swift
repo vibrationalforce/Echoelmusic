@@ -212,9 +212,14 @@ final class AStructureEditKeepsTheBarTests: XCTestCase {
         }
         XCTAssertTrue(adoption.contains("flushPumps()"), "the chase still releases through the OLD bindings first (H5b)")
 
+        // GMMW AE-12a: the locate's cut is the recipe a cycle wrap shares (`cutAndPrime`), so the
+        // anchor and step travel through it to the roll.
         let relocate = try body(of: "public func relocate(toTick tick: Int) {", in: player)
-        XCTAssertTrue(relocate.contains("loadRollRegion(at: anchor, step: nextStep)"),
+        XCTAssertTrue(relocate.contains("cutAndPrime(atTick: anchor, step: nextStep)"),
                       "a playhead drop mid-bar tells the roll's plan the step the next transport step carries")
+        let cut = try body(of: "private func cutAndPrime(atTick tick: Int, step: Int) {", in: player)
+        XCTAssertTrue(cut.contains("loadRollRegion(at: tick, step: step)"),
+                      "the shared cut loads the roll at the tick and step it was handed")
         XCTAssertTrue(player.contains("private func loadRollRegion(at tick: Int, step: Int) {"),
                       "the step is required — a literal 0 at a new call site is the defect this pins")
         XCTAssertFalse(player.contains("loadRollRegion(at: lastTick"), "no load at the previous step's tick")

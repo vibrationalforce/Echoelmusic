@@ -497,6 +497,32 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// GMMW AE-12a (founder 2026-10-08, "Orientiere dich an den Bigplayern") — a cycle range: the
+/// bars a DAW loops while its cycle is on. Two raw song-absolute ticks; the transport never reads
+/// them directly, only `window(loopTicks:)`.
+public struct TimelineCycle: Codable, Sendable, Equatable {
+    public var startTick: Int
+    public var endTick: Int
+
+    public init(startTick: Int, endTick: Int) {
+        self.startTick = startTick
+        self.endTick = endTick
+    }
+
+    /// The whole bars the transport loops in a song `loopTicks` long: both edges floored to a
+    /// bar line, the end clamped to the song, at least one bar. nil when nothing is left — and
+    /// when the window is the WHOLE song, because that is the song loop itself, which keeps its
+    /// own wrap. Pure; any `Int` is safe here, a negative edge reads as bar 1.
+    public func window(loopTicks: Int) -> Range<Int>? {
+        let bar = TimelineTime.ticksPerBar
+        guard loopTicks > 0 else { return nil }
+        let start = (Swift.max(0, startTick) / bar) * bar
+        let end = Swift.min((Swift.max(0, endTick) / bar) * bar, loopTicks)
+        guard end - start >= bar, !(start == 0 && end == loopTicks) else { return nil }
+        return start..<end
+    }
+}
+
 /// The whole timeline document: ordered lanes + their regions.
 public struct TimelineDocument: Codable, Sendable, Equatable {
 
@@ -553,6 +579,13 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
     /// `content.timeline` of a saved project, so Save, Open and a switch between two pieces
     /// carry it with no envelope field of its own.
     public var lightLookIntensity: Float?
+    /// GMMW AE-12a — the piece's CYCLE: the bars the transport loops while the loop is on, the
+    /// way a DAW's cycle region does. `nil` = no cycle, the whole song loops, exactly as before:
+    /// every song written before AE-12a decodes so. Stored raw; what plays is
+    /// `TimelineCycle.window(loopTicks:)`, so a hand-edited file or a song that has since got
+    /// shorter cannot send the transport somewhere the ruler does not show. Playback view state,
+    /// not sound: `structurallyEqual` leaves it out, and the player adopts it on its own.
+    public var cycle: TimelineCycle?
 
     public init(lanes: [TimelineLane] = [], regions: [TimelineRegion] = [],
                 automation: [AutomationLane] = []) {
@@ -564,10 +597,11 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         self.regions = regions
         self.automation = automation
         self.lightLookIntensity = nil
+        self.cycle = nil
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, lanes, regions, automation, lightLookIntensity
+        case schemaVersion, lanes, regions, automation, lightLookIntensity, cycle
     }
 
     /// Wrapper that decodes an element or yields nil on a malformed one, always
@@ -612,6 +646,8 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         // Absent (every pre-P2 song) or malformed → nil, the identity. Never thrown: a bad look
         // must not cost the song, the rule this decoder exists for.
         lightLookIntensity = try? c.decodeIfPresent(Float.self, forKey: .lightLookIntensity)
+        // AE-12a: absent (every older song) or malformed → nil, no cycle. Never thrown, same rule.
+        cycle = try? c.decodeIfPresent(TimelineCycle.self, forKey: .cycle)
     }
 
     /// EXPLICIT rather than synthesized, for one reason: the stamp written to disk must be
@@ -634,6 +670,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         try c.encode(regions, forKey: .regions)
         try c.encode(automation, forKey: .automation)
         try c.encodeIfPresent(lightLookIntensity, forKey: .lightLookIntensity)
+        try c.encodeIfPresent(cycle, forKey: .cycle)   // AE-12a: no cycle writes no key
     }
 
     public func regions(in laneID: UUID) -> [TimelineRegion] {

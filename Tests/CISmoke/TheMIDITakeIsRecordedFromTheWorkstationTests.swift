@@ -274,8 +274,11 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
         XCTAssertTrue(doorCode.contains("running: playing || transport.isPlaying"),
                       "the door reads the shared transport, not only the region player (HIGH-1)")
         // The song end the recorder follows IS the tick the player wraps at: one stored value.
+        // GMMW AE-12a: while a cycle loops that tick is the cycle's end — `wrapTick` names both
+        // (`TheSongCyclesWhereTheRulerSaysTests` drives it).
         let player = try code("Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift")
-        XCTAssertTrue(player.contains("public var songEndTick: Int? { isPlaying && loopTicks > 0 ? loopTicks : nil }"))
+        XCTAssertTrue(player.contains("let end = Self.wrapTick(lastTick: lastTick, loopTicks: loopTicks, cycle: playingCycle)"),
+                      "the take ends where the song wraps — the cycle's end or the song's")
         XCTAssertTrue(player.contains("if loopTicks > 0, newTick >= loopTicks {"),
                       "the wrap compares against the same loopTicks")
         let app = try code("Sources/Echoelmusic/EchoelmusicApp.swift")
