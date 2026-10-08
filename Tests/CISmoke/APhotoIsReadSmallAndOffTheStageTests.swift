@@ -117,7 +117,9 @@ final class APhotoIsReadSmallAndOffTheStageTests: XCTestCase {
 
         let before = VisualLookSnapshot(intensity: 1, detail: 40, motion: 1, spread: 1, hue: 0, saturation: 1.05,
                                         presetID: "vapor")
-        let lines = PhotoSeedText.changes(from: before, to: before.applying(seed(hue: 0.5, coloured: true)))
+        // Where Detail can show (VV-2); the three-line case is `ThePhotoSeedClaimsOnlyWhatShowsTests`.
+        let lines = PhotoSeedText.changes(from: before, to: before.applying(seed(hue: 0.5, coloured: true)),
+                                          detailShows: true)
         XCTAssertEqual(lines.count, 4)
         for name in ["Intensity", "Detail", "Hue", "Saturation"] {
             XCTAssertEqual(lines.filter { $0.hasPrefix(name + " ") }.count, 1, "one line names `\(name)`")

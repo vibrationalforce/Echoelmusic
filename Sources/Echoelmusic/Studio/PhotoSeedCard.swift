@@ -9,11 +9,14 @@
 //
 // ⭐ A LEAF, LIKE `MediaBrowserView`. Every piece of state lives here; the Workstation mounts it
 // and reads none of it. It reads no hot value: the visual keys are read once when a photo is
-// ready (to show "now → with this photo"), never in `body`.
+// ready (to show "now → with this photo"), never in `body`. Two COLD keys are read in `body` (GMMW
+// VV-2): the slider's looks and the donut switch, set by a person in the Field panel — they decide
+// whether the Detail line and the word "contrast" are promised (`ThePhotoSeedClaimsOnlyWhatShowsTests`).
 //
 // ⭐ SIMPLE BY DEFAULT. Closed it is one labelled button. Open it is one photo, four plain
-// readouts, one Apply and one Undo — every action has a text label, every colour has words
-// beside it, every readout is one VoiceOver element with a value.
+// readouts, three or four "→" lines (Detail only where it can show), one Apply and one Undo —
+// every action has a text label, every colour has words beside it, every readout is one
+// VoiceOver element with a value.
 //
 // ⚠️ WHAT IS NOT HERE, AND WHY — so nobody reads it as forgotten:
 // · Taking a photo with the camera: `NSCameraUsageDescription` describes only the pulse reading
@@ -75,12 +78,40 @@ enum PhotoSeedText {
         return head + " → " + to
     }
 
-    /// The four lines of "now → with this photo", named as the Visual panel names its fields.
-    static func changes(from before: VisualLookSnapshot, to after: VisualLookSnapshot) -> [String] {
-        [change(String(localized: "Intensity"), before.intensity, after.intensity),
-         change(String(localized: "Detail"), before.detail, after.detail, digits: 0),
-         change(String(localized: "Hue"), before.hue, after.hue),
-         change(String(localized: "Saturation"), before.saturation, after.saturation)]
+    /// GMMW VV-2 — whether the Detail a photo's contrast writes can SHOW. The donut renderer draws
+    /// `visual.detail` as its band count; the Metal field reads it through Rings only. So it shows
+    /// while donuts are the picture or Rings is one of the slider's looks — `LookBlendMap`'s mirror,
+    /// not a second copy of it (#416). Both inputs are stored values a person sets, read cold.
+    static func detailShows(sliderLooks raw: String, donuts: Bool) -> Bool {
+        donuts || LookBlendMap.sequenceReachesDetail(LookBlendMap.sequence(from: raw))
+    }
+
+    /// The lines of "now → with this photo", named as the Visual panel names its fields. Detail
+    /// only when it can show (VV-2): the photo still WRITES it — add Rings later and it shows, and
+    /// Undo takes it back with the rest — but the card does not promise a change nobody can see.
+    static func changes(from before: VisualLookSnapshot, to after: VisualLookSnapshot,
+                        detailShows: Bool) -> [String] {
+        var lines: [String] = [change(String(localized: "Intensity"), before.intensity, after.intensity)]
+        if detailShows {
+            lines.append(change(String(localized: "Detail"), before.detail, after.detail, digits: 0))
+        }
+        lines.append(change(String(localized: "Hue"), before.hue, after.hue))
+        lines.append(change(String(localized: "Saturation"), before.saturation, after.saturation))
+        return lines
+    }
+
+    /// The header's spoken hint. Contrast is named only while its one target, Detail, can show.
+    static func chooseHint(detailShows: Bool) -> String {
+        detailShows
+            ? String(localized: "Choose a photo; its colour, brightness and contrast can shape the visuals")
+            : String(localized: "Choose a photo; its colour and brightness can shape the visuals")
+    }
+
+    /// Apply's spoken hint while nothing blocks it.
+    static func applyHint(detailShows: Bool) -> String {
+        detailShows
+            ? String(localized: "Sets the visuals' intensity, detail, hue and saturation from the photo")
+            : String(localized: "Sets the visuals' intensity, hue and saturation from the photo")
     }
 }
 
@@ -102,6 +133,15 @@ struct PhotoSeedCard: View {
     @State private var appliedHere = false
     @State private var loadTask: Task<Void, Never>?
     @State private var appliedCount = 0
+    /// VV-2: the two cold values that decide whether Detail can show — set by a person in the
+    /// Field panel, never by a clock. Same keys and defaults as the Studio's own reads.
+    @AppStorage(LookBlendMap.storageKey)
+    private var sliderLooksRaw = LookBlendMap.string(from: LookBlendMap.defaultSequence)
+    @AppStorage(StudioDefaultKeys.visualSpectralDonuts.key)
+    private var spectralDonuts = StudioDefaultKeys.visualSpectralDonuts.value
+    private var detailShows: Bool {
+        PhotoSeedText.detailShows(sliderLooks: sliderLooksRaw, donuts: spectralDonuts)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -149,7 +189,7 @@ struct PhotoSeedCard: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Photo to Visuals")
         .accessibilityValue(disclosureValue(undo))
-        .accessibilityHint("Choose a photo; its colour, brightness and contrast can shape the visuals")
+        .accessibilityHint(PhotoSeedText.chooseHint(detailShows: detailShows))
     }
 
     // E4-41: the spoken state and the spoken Undo texts were interpolated or concatenated literals —
@@ -242,7 +282,7 @@ struct PhotoSeedCard: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(isLive ? String(localized: "Applied:") : String(localized: "With this photo:"))
                 .font(EchoelTheme.font(13, .semibold))
-            ForEach(PhotoSeedText.changes(from: before, to: after), id: \.self) { line in
+            ForEach(PhotoSeedText.changes(from: before, to: after, detailShows: detailShows), id: \.self) { line in
                 Text(line)
             }
             Text("Hue rotates the visual's own colours; it does not paint them the photo's colour.")
@@ -280,7 +320,7 @@ struct PhotoSeedCard: View {
         .buttonStyle(.plain)
         .disabled(undo.pending != nil)
         .accessibilityLabel("Apply to visuals")
-        .accessibilityHint(undo.applyBlockedReason ?? String(localized: "Sets the visuals' intensity, detail, hue and saturation from the photo"))
+        .accessibilityHint(undo.applyBlockedReason ?? PhotoSeedText.applyHint(detailShows: detailShows))
     }
 
     private func undoButton(_ undo: MediaLookUndo) -> some View {

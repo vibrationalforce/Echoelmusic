@@ -127,6 +127,14 @@ enum LookBlendMap {
             + (rendersAsRings(styleB) ? bWeight : 0)
     }
 
+    /// GMMW VV-2 — whether Detail can reach the Metal field ANYWHERE along this slider sequence,
+    /// i.e. whether a person can drag the look slider onto Rings at all. `detailReach` answers
+    /// for the CURRENT position (the Field panel's caption); this answers for the reachable set,
+    /// which is the question for a card that sets Detail before anyone drags. Same mirror.
+    static func sequenceReachesDetail(_ sequence: [Int]) -> Bool {
+        sequence.contains(where: rendersAsRings)
+    }
+
     /// Display name for a style index (falls back gracefully for an unknown index).
     static func name(for index: Int) -> String {
         library.first { $0.index == index }?.name ?? (String(localized: "Look ") + "\(index)")

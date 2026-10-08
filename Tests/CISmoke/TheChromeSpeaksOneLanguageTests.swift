@@ -1588,7 +1588,13 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      "let medium: String = undo.medium.isEmpty ? String(localized: \"photo\") : undo.spokenMedium",
                      "Text(String(localized: \"Brightness\") + \" \" + PhotoSeedText.percent(seed.brightness))",
                      "Text(isLive ? String(localized: \"Applied:\") : String(localized: \"With this photo:\"))",
-                     "?? String(localized: \"Sets the visuals' intensity, detail, hue and saturation from the photo\")"] {
+                     // GMMW VV-2: both hints are `PhotoSeedText` functions now — the full and the Detail-less key each.
+                     ".accessibilityHint(undo.applyBlockedReason ?? PhotoSeedText.applyHint(detailShows: detailShows))",
+                     "? String(localized: \"Sets the visuals' intensity, detail, hue and saturation from the photo\")",
+                     ": String(localized: \"Sets the visuals' intensity, hue and saturation from the photo\")",
+                     ".accessibilityHint(PhotoSeedText.chooseHint(detailShows: detailShows))",
+                     "? String(localized: \"Choose a photo; its colour, brightness and contrast can shape the visuals\")",
+                     ": String(localized: \"Choose a photo; its colour and brightness can shape the visuals\")"] {
             // (E4-45 moved the `spokenMedium` body — `medium == Self.videoMedium ? …` — into MediaLookUndo; the E4-45 block pins it there.)
             XCTAssertTrue(photoCard.contains(seam), "PhotoSeedCard lost the E4-41 seam `\(seam)`")
         }
@@ -1603,6 +1609,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         try assertCatalogued(["This photo could not be read. Try another photo.", "Reading the photo…", "No main colour", "Main colour: hue ", ", unchanged",
                           "Intensity", "Detail", "Hue", "Saturation", "Brightness", "Contrast", ", look applied", "· look applied", "Photo to Visuals",
                           "Choose a photo; its colour, brightness and contrast can shape the visuals", "Choose photo",
+                          "Choose a photo; its colour and brightness can shape the visuals",
+                          "Sets the visuals' intensity, hue and saturation from the photo",
                           "Opens your photos. Nothing is changed until you apply it.", "Applied:", "With this photo:",
                           "Hue rotates the visual's own colours; it does not paint them the photo's colour.", "Apply to visuals",
                           "Sets the visuals' intensity, detail, hue and saturation from the photo", "Undo ", " look", "photo", "video",

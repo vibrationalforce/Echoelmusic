@@ -37,6 +37,18 @@
         }
       }
     },
+    "Choose a photo; its colour and brightness can shape the visuals" : {
+      "comment" : "Photo card (GMMW VV-2, 2026-10-08): the header's spoken hint while Detail cannot show (no Rings look in the slider, donuts off) — contrast only reaches Detail, so it is not named.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a photo; its colour and brightness can shape the visuals"
+          }
+        }
+      }
+    },
     "Compose here" : {
       "comment" : "GA-1 Compose here (rack track Device page): switch label.",
       "extractionState" : "manual",
@@ -285,6 +297,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routing group"
+          }
+        }
+      }
+    },
+    "Sets the visuals' intensity, hue and saturation from the photo" : {
+      "comment" : "Photo card (GMMW VV-2, 2026-10-08): Apply's spoken hint while Detail cannot show (no Rings look in the slider, donuts off).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets the visuals' intensity, hue and saturation from the photo"
           }
         }
       }
