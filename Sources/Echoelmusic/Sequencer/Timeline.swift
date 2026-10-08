@@ -310,7 +310,7 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// right; Join refuses a seam that carries a fade (`abuts`). MIDI parts ignore both.
     /// Legacy regions decode as 0. Played since W4b: `AudioLanePlayer` hands the part's
     /// `AudioRegionPlayback.fadePlan` to its sink, which bakes the two ramps into the scheduled
-    /// audio (a faded Beats part plays its Clean chain until the Beats render carries them).
+    /// audio (a Beats part's pre-render carries them too; until it is ready, its Clean chain).
     public var fadeInTicks: Int
     public var fadeOutTicks: Int
 

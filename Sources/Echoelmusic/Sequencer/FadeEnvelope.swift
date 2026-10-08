@@ -85,6 +85,22 @@ public struct PartFadePlan: Equatable, Sendable {
                           fadeIn: fadeIn, fadeOut: fadeOut)
     }
 
+    /// Multiply `channels` by this part's fades, where frame `i` is the file's moment
+    /// `fromSeconds + i × mediaSecondsPerFrame` — `rate / sampleRate` for a stretched rendering
+    /// that plays at rate 1 (the Beats pre-render). Frames at unity are left untouched; a
+    /// degenerate position or step changes nothing.
+    public func bake(into channels: inout [[Float]], fromSeconds: Double, mediaSecondsPerFrame step: Double) {
+        guard fromSeconds.isFinite, step.isFinite, step > 0 else { return }
+        let frames = channels.map(\.count).max() ?? 0
+        for frame in 0..<frames {
+            let level = Float(gain(atMediaSeconds: fromSeconds + Double(frame) * step))
+            guard level < 1 else { continue }
+            for channel in channels.indices where frame < channels[channel].count {
+                channels[channel][frame] *= level
+            }
+        }
+    }
+
     /// The frames `startFrame ..< startFrame + frameCount` cut at the two fade edges: `head`
     /// (inside the fade-in), `middle` (unity, played straight from the file) and `tail` (inside
     /// the fade-out). Contiguous and in order — together exactly the input, every edge an

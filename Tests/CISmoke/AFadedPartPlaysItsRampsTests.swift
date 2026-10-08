@@ -18,18 +18,20 @@
 //    the fade-out, a file that ends early); degenerate input gives nothing.
 // 3. END-TO-END — the ramps start silent, end silent, and meet the middle without a step: no
 //    frame-to-frame jump anywhere in the part exceeds one ramp step.
-// 4. END-TO-END — the real coordinator hands each part ITS plan right before `play`, and a part
-//    without fades gets nil.
-// 5. SOURCE-TEXT SCAN — the sink takes the plan once per `play` before any exit, a faded part
-//    skips the unfaded Beats buffer, the faded path reads a FRESH handle and starts the node only
-//    after the first piece is scheduled, a short read falls back to the file, and the plain path
-//    is still there for every part without fades.
+// 4. END-TO-END — the real coordinator hands each part ITS plan right before `play`, a part
+//    without fades gets nil, and a Beats part's pre-render gets the very same plan.
+// 5. SOURCE-TEXT SCAN — the sink takes the plan once per `play` before any exit, the Beats cache
+//    is keyed by the fades and the render bakes them, the faded path reads a FRESH handle and
+//    starts the node only after the first piece is scheduled, a short read falls back to the
+//    file, and the plain path is still there for every part without fades.
+// 6. END-TO-END — `PartFadePlan.bake` multiplies a stretched rendering frame by frame by the
+//    ramp at the file moment each output frame stands for, and touches nothing at unity.
 //
 // GRADING (§0/§3, no Swift toolchain in a web session): the file names `PartFadePlan`,
-// `fadePlan` and `setFades`, which this commit creates, so it does NOT COMPILE against the parent
+// `fadePlan`, `setFades` and `bake`, which W4b and W4b2 create, so it does NOT COMPILE against the parent
 // — no assertion has a verdict there (one absence, #486). Claims 1–3 transcribed in Python against
-// the work tree's arithmetic; claim 4 re-derived by hand from `AudioLanePlayer.start`; claim 5 is
-// a forward guard. That a fade SOUNDS smooth, starts on time and leaves no click at the piece
+// the work tree's arithmetic, claim 6 too; claim 4 re-derived by hand from `AudioLanePlayer`'s
+// prime and start; claim 5 is a forward guard. That a fade SOUNDS smooth, starts on time and leaves no click at the piece
 // joins is a DEVICE PROBE and open.
 
 import XCTest
@@ -172,6 +174,7 @@ final class AFadedPartPlaysItsRampsTests: XCTestCase {
     // MARK: 4 — the coordinator hands each part its own plan right before it plays
 
     private enum Event: Equatable {
+        case beats(PartFadePlan?)
         case fades(PartFadePlan?)
         case play(from: Double)
     }
@@ -183,6 +186,8 @@ final class AFadedPartPlaysItsRampsTests: XCTestCase {
                   stretch: StretchPlan) { events.append(.play(from: fromSeconds)) }
         func stop() {}
         func setFades(_ plan: PartFadePlan?) { events.append(.fades(plan)) }
+        func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double,
+                          fades: PartFadePlan?) { events.append(.beats(fades)) }
     }
 
     private func primed(_ region: TimelineRegion, lane: TimelineLane, atTick tick: Int) -> [Event] {
@@ -214,6 +219,19 @@ final class AFadedPartPlaysItsRampsTests: XCTestCase {
         let plain = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: 4 * Self.bar)
         XCTAssertEqual(primed(plain, lane: lane, atTick: 0), [.fades(nil), .play(from: 0)],
                        "a part without fades is told so — no plan can linger from the part before")
+
+        // W4b2: a Beats part's pre-render is handed the SAME plan `start` hands the sink, so the
+        // rendering prime asks for is the one play looks up.
+        let beats = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: 4 * Self.bar,
+                                   warpEnabled: true, stretchMode: .beats,
+                                   fadeInTicks: Self.bar, fadeOutTicks: Self.bar)
+        let rate = StretchPlan.resolve(mode: .beats, warpEnabled: true, nativeBPM: 100, projectBPM: 120,
+                                       capabilities: StretchMode.timelineCapabilities).rate
+        XCTAssertNotEqual(rate, 1, "the premise: a warped Beats part at 100 → 120 bpm is pre-rendered")
+        let plan = AudioRegionPlayback.fadePlan(for: beats, bpm: 120, stretchRate: rate)
+        XCTAssertNotNil(plan)
+        XCTAssertEqual(primed(beats, lane: lane, atTick: 0), [.beats(plan), .fades(plan), .play(from: 0)],
+                       "the render and the play must carry one plan — two would miss the cache forever")
     }
 
     // MARK: 5 — the sink: once per play, Beats skipped, fresh handle, play after the first piece
@@ -226,8 +244,19 @@ final class AFadedPartPlaysItsRampsTests: XCTestCase {
                         why: "the plan is taken before the first exit, so it can never reach a later part")
         let beats = try XCTUnwrap(play.range(of: "stretch.mode == .beats"), "ANCHOR MISSING: the Beats shortcut")
         let open = try XCTUnwrap(play.range(of: "{", range: beats.upperBound..<play.endIndex))
-        XCTAssertTrue(play[beats.lowerBound..<open.lowerBound].contains("fades == nil"),
-                      "a faded part must not take the Beats buffer — it is the whole part, rendered unfaded")
+        XCTAssertTrue(play[beats.lowerBound..<open.lowerBound].contains("fades: fades)]"),
+                      "the Beats lookup must be keyed by the part's fades — or a faded part plays an unfaded rendering")
+        let prepare = try XCTUnwrap(Self.body(after: "func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double,", in: sink),
+                                    "ANCHOR MISSING: `TimelineAudioSink.prepareBeats`")
+        assertOrder(in: prepare, ["BeatsKey(url: url, rate: rate, fromSeconds: fromSeconds, fades: fades)",
+                                  "WSOLAStretcher().stretchMultichannel(",
+                                  "fades.bake(into: &rendered, fromSeconds: fromSeconds,",
+                                  "mediaSecondsPerFrame: rate / sampleRate)",
+                                  "storeBeats(key: key,"],
+                    why: "the render is keyed by the fades and bakes them into its output before it is stored")
+        let key = try XCTUnwrap(Self.body(after: "private struct BeatsKey: Hashable", in: sink), "ANCHOR MISSING: `BeatsKey`")
+        XCTAssertTrue(key.contains("let fadeInMilli: Int") && key.contains("let fadeOutMilli: Int"),
+                      "a fade edit must resolve a different cache entry")
         assertOrder(in: play, ["guard node.engine?.isRunning == true else { return }", "stop()",
                                "playFaded(fades, url: url, file: file, on: node,",
                                    "node.scheduleSegment(file, startingFrame: startFrame, frameCount: frames, at: nil)",
@@ -257,6 +286,40 @@ final class AFadedPartPlaysItsRampsTests: XCTestCase {
         assertOrder(in: start, ["lane.setFades(AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: plan.rate))",
                                     "lane.play(url: url,"],
                         why: "every part is told its fades — or nil — right before it plays")
+    }
+
+    // MARK: 6 — the Beats rendering is multiplied by the ramp at the moment each frame stands for
+
+    func testTheBakeMultipliesEachFrameByItsRamp() throws {
+        // A 1 s part at file second 2, fades of 0.25 s each, rendered at rate 2 and 16 frames per
+        // second: output frame i stands for the file's moment 2 + i × 2 / 16.
+        let plan = try XCTUnwrap(PartFadePlan(partStart: 2, duration: 1, fadeIn: 0.25, fadeOut: 0.25))
+        let step = 2.0 / 16.0
+        var channels: [[Float]] = [Array(repeating: 1, count: 10), Array(repeating: 2, count: 5)]
+        plan.bake(into: &channels, fromSeconds: 2, mediaSecondsPerFrame: step)
+        for (index, channel) in channels.enumerated() {
+            for (frame, value) in channel.enumerated() {
+                let unbaked: Float = index == 0 ? 1 : 2
+                let want = unbaked * Float(plan.gain(atMediaSeconds: 2 + Double(frame) * step))
+                XCTAssertEqual(value, want, accuracy: 1e-6, "channel \(index), frame \(frame)")
+            }
+        }
+        XCTAssertEqual(channels[0][0], 0, "the rendering starts silent")
+        XCTAssertEqual(channels[0][1], 0.5, accuracy: 1e-6, "halfway up the fade-in")
+        XCTAssertEqual(channels[0][4], 1, "unity in the middle — untouched")
+        XCTAssertEqual(channels[0][7], 0.5, accuracy: 1e-6, "halfway down the fade-out")
+        XCTAssertEqual(channels[0][8], 0, "silent at the part's end")
+        XCTAssertEqual(channels[1].count, 5, "a shorter channel keeps its length")
+        XCTAssertEqual(channels[1][1], 1, accuracy: 1e-6, "every channel gets the same ramp")
+
+        var untouched: [[Float]] = [[0.5, 0.5, 0.5]]
+        let degenerate: [Double] = [0, -1, .nan, .infinity]
+        for bad in degenerate {
+            plan.bake(into: &untouched, fromSeconds: 2, mediaSecondsPerFrame: bad)
+            XCTAssertEqual(untouched, [[0.5, 0.5, 0.5]], "step \(bad) must change nothing")
+        }
+        plan.bake(into: &untouched, fromSeconds: .nan, mediaSecondsPerFrame: step)
+        XCTAssertEqual(untouched, [[0.5, 0.5, 0.5]], "a non-finite start must change nothing")
     }
 
     // MARK: helpers

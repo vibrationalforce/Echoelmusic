@@ -99,6 +99,11 @@ public protocol AudioRegionSink: AnyObject {
     /// Called at prime time (transport parked). Default: no-op — a sink without
     /// an offline renderer plays the region through its Clean chain instead.
     func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double)
+    /// Audio editor W4b: the same pre-render with the part's fades baked into it (`fades`, nil =
+    /// none), so a faded Beats part keeps its transient-locked buffer. Default: forwards to the
+    /// four-argument form above — a sink that cannot bake renders the part unfaded.
+    func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double,
+                      fades: PartFadePlan?)
     /// Live mixer (H4): set this lane's output gain WITHOUT re-scheduling — a
     /// mid-region level/solo edit must be heard now. Default: no-op.
     func setGain(_ gain: Float)
@@ -128,6 +133,10 @@ public extension AudioRegionSink {
     func preload(url: URL, warped: Bool) {}
     func detach() {}
     func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double) {}
+    func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double,
+                      fades: PartFadePlan?) {
+        prepareBeats(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds, rate: rate)
+    }
     func setGain(_ gain: Float) {}
     func setPan(_ pan: Float) {}
     func setTranspose(_ semitones: Int) {}
@@ -405,10 +414,14 @@ public final class AudioLanePlayer {
                 if plan.mode == .beats, plan.rate != 1.0, !pitched {
                     let mediaLength = TimelineTime.seconds(
                         fromTicks: region.lengthTicks, bpm: bpm) * plan.rate
+                    // W4b: the part's fades go into the render, from the same plan `start` hands
+                    // the sink — so prime and play agree on which rendering the part wants.
                     sink(for: laneID).prepareBeats(url: url,
                                                    fromSeconds: region.contentOffsetSeconds,
                                                    lengthSeconds: mediaLength,
-                                                   rate: plan.rate)
+                                                   rate: plan.rate,
+                                                   fades: AudioRegionPlayback.fadePlan(
+                                                       for: region, bpm: bpm, stretchRate: plan.rate))
                 }
             }
             // S3: a LAUNCHED lane keeps its override — the arrangement re-prime (song-

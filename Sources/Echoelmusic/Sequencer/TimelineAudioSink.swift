@@ -48,10 +48,10 @@
 // Fades (audio editor W4b — closes audit A5 for the timeline): a part's fade-in/out arrive as a
 // `PartFadePlan` through `setFades` right before `play`. The frames inside a fade are read from a
 // fresh handle, multiplied by the ramp and scheduled as short buffers; the frames between play
-// straight from the file, all back to back on one node (`playFaded`). Honest limits: a part with
-// fades skips its pre-rendered Beats buffer and plays the Clean chain until that render carries
-// the ramp; the read happens on the main actor (the first faded piece is kept short so the part
-// starts on time, the rest is read while it sounds).
+// straight from the file, all back to back on one node (`playFaded`). A Beats part bakes the
+// ramps into its pre-render instead (off the main actor; its cache key carries the fades). Honest
+// limit: the plain path's read happens on the main actor — the first faded piece is kept short so
+// the part starts on time, and the rest is read while it sounds.
 // Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
 // node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
 // at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
@@ -144,10 +144,16 @@ final class TimelineAudioSink: AudioRegionSink {
         /// window instead of ping-ponging one entry every loop wrap).
         let rateMilli: Int
         let fromMilli: Int
-        init(url: URL, rate: Double, fromSeconds: Double) {
+        /// Audio editor W4b: the fades baked into the rendering (media seconds, 1/1000; 0 =
+        /// none). A fade edit is a different rendering, so it resolves a different entry.
+        let fadeInMilli: Int
+        let fadeOutMilli: Int
+        init(url: URL, rate: Double, fromSeconds: Double, fades: PartFadePlan?) {
             self.url = url
             self.rateMilli = Int((rate * 1000).rounded())
             self.fromMilli = Int((fromSeconds * 1000).rounded())
+            self.fadeInMilli = Int(((fades?.fadeIn ?? 0) * 1000).rounded())
+            self.fadeOutMilli = Int(((fades?.fadeOut ?? 0) * 1000).rounded())
         }
     }
     /// Rendered windows: the OUTPUT buffer (already stretched, plays at rate 1 on
@@ -204,9 +210,10 @@ final class TimelineAudioSink: AudioRegionSink {
     /// lands must not re-read + re-render the same window).
     private var beatsInFlight: Set<BeatsKey> = []
 
-    func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double) {
+    func prepareBeats(url: URL, fromSeconds: Double, lengthSeconds: Double, rate: Double,
+                      fades: PartFadePlan?) {
         guard rate.isFinite, rate > 0, rate != 1.0, lengthSeconds > 0 else { return }
-        let key = BeatsKey(url: url, rate: rate, fromSeconds: fromSeconds)
+        let key = BeatsKey(url: url, rate: rate, fromSeconds: fromSeconds, fades: fades)
         // Idempotent per WINDOW: same start AND same length (code-review HIGH 2 —
         // a region lengthened after prime must re-render, or its cached tail
         // would exhaust into silence forever). In-flight windows are not re-spawned.
@@ -223,8 +230,10 @@ final class TimelineAudioSink: AudioRegionSink {
             // prime also fires at loop wrap / relocate-while-playing, where a
             // synchronous main-actor decode would delay the transport step.
             var inputs: [[Float]] = []
+            var sampleRate = 0.0
             if let f = try? AVAudioFile(forReading: url) {
                 let sr = f.processingFormat.sampleRate
+                sampleRate = sr
                 let startFrame = AVAudioFramePosition((max(0, fromSeconds) * sr).rounded())
                 if sr > 0, startFrame < f.length {
                     let frames = AVAudioFrameCount(min(Double(f.length - startFrame),
@@ -243,9 +252,15 @@ final class TimelineAudioSink: AudioRegionSink {
                     }
                 }
             }
-            let rendered = inputs.isEmpty
+            var rendered = inputs.isEmpty
                 ? []
                 : WSOLAStretcher().stretchMultichannel(inputs, rate: Float(rate))
+            // W4b: the part's fades, baked into the OUTPUT — it plays at rate 1, so output frame
+            // i is the file's moment fromSeconds + i × rate / sampleRate. Off the main actor.
+            if let fades, sampleRate > 0 {
+                fades.bake(into: &rendered, fromSeconds: fromSeconds,
+                           mediaSecondsPerFrame: rate / sampleRate)
+            }
             await self?.storeBeats(key: key, lengthSeconds: lengthSeconds, channels: rendered)
         }
     }
@@ -284,6 +299,11 @@ final class TimelineAudioSink: AudioRegionSink {
         for k in beatsBuffers.keys where k.url == key.url && k.rateMilli != key.rateMilli {
             beatsBuffers[k] = nil
         }
+        // W4b: likewise a fade edit — the same window at the same rate with other ramps is stale.
+        for k in beatsBuffers.keys where k.url == key.url && k.rateMilli == key.rateMilli
+            && k.fromMilli == key.fromMilli && k != key {
+            beatsBuffers[k] = nil
+        }
         beatsBuffers[key] = (lengthSeconds: lengthSeconds, buffer: out)
     }
 
@@ -299,10 +319,11 @@ final class TimelineAudioSink: AudioRegionSink {
         // exact prepared window qualifies (onset entry, |Δ| < 1 ms) — a mid-region
         // entry (seek / unmute restart) falls through to the Clean chain below
         // (honest; the next onset is transient-locked again).
-        // W4b: a part WITH fades skips the buffer — it is the whole part, rendered unfaded — and
-        // plays its Clean chain below, fades and all, until the Beats render carries the ramp.
-        if stretch.rate != 1.0, stretch.mode == .beats, transposeSemitones == 0, fades == nil,
-           let entry = beatsBuffers[BeatsKey(url: url, rate: stretch.rate, fromSeconds: fromSeconds)],
+        // W4b: the key carries the part's fades, so a faded part finds only a rendering with
+        // THOSE ramps baked in; until it is ready the part plays its Clean chain, fades and all.
+        if stretch.rate != 1.0, stretch.mode == .beats, transposeSemitones == 0,
+           let entry = beatsBuffers[BeatsKey(url: url, rate: stretch.rate, fromSeconds: fromSeconds,
+                                             fades: fades)],
            abs(entry.lengthSeconds - lengthSeconds) < 0.001,
            plainNode.engine?.isRunning == true {
             stop()
