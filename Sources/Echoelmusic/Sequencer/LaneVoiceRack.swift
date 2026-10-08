@@ -16,8 +16,8 @@
 // S2-W2-3 (dissolution, "Spur = Instrument"): the rack is now a FACADE over a
 // heterogeneous pool — behind FeatureFlags.voiceKindRouting (registration-ON
 // since 2026-07-17; dev-OFF override stays the rollback lever) it also
-// carries 1 dedicated lane SubBassVoice + 1 lane
-// SamplerVoice one-shot unit (S2-W3), and the pure
+// carries 1 dedicated lane SubBassVoice + one lane SamplerVoice one-shot unit PER
+// SLOT (S2-W3; one per slot since GMMW GA-4 — `capacity` units), and the pure
 // KindVoiceAllocator binds each rank slot's KIND to a physical voice. Rank slots
 // stay the authoritative contract everywhere else; only the routing INSIDE this
 // class changes meaning. Flag OFF ⇒ zero kind units ⇒ the allocator resolves every
@@ -171,13 +171,18 @@ public final class LaneVoiceRack {
             let sub = SubBassVoice()
             sub.attach(to: audioEngine)
             subs = [sub]
-            // S2-W3: one lane sampler one-shot unit. SamplerVoice has no
+            // S2-W3: the lane sampler one-shot units. SamplerVoice has no
             // attach(to:) of its own — its sourceNode goes through the SAME
             // AudioEngine door BeatPlayer uses (pause→attach→connect→restart),
             // still strictly before audioEngine.start().
-            let sampler = SamplerVoice()
-            audioEngine.attachSourceNode(sampler.sourceNode)
-            samplers = [sampler]
+            // GMMW GA-4: ONE UNIT PER SLOT (`capacity`), so every track in the rack can be a
+            // Sampler with its own file. With one unit a second Sampler track fell back to
+            // EchoelSynth (`KindVoiceAllocator` exhausts kind units in rank order). A unit
+            // costs nothing until a file is loaded — its buffer is installed at load, from the
+            // main actor (`SamplerVoice.loadSample`), never in render — and an idle unit
+            // renders silence. CPU and memory on device: G7 (NEEDS-FOUNDER-VERIFY).
+            samplers = (0..<capacity).map { _ in SamplerVoice() }
+            for sampler in samplers { audioEngine.attachSourceNode(sampler.sourceNode) }
             // BodyVibe B1: one lane bio unit — its OWN BioReactiveSynthVoice
             // instance (fresh EchoelDDSP + fresh source node), attached exactly
             // like the global voice but NEVER subscribed to the bus (see `bios`
@@ -230,7 +235,7 @@ public final class LaneVoiceRack {
     public func setInsert(_ fx: TrackFX) {
         for v in voices { v.setInsert(fx) }
         // Deliberately poly-only: the subs belong to the .bass BUS insert, fanned in
-        // S2-W2-5 via setBassInsert. The sampler unit has its own per-channel insert
+        // S2-W2-5 via setBassInsert. Each sampler unit has its own per-channel insert
         // (configureInsertFX), un-fanned in slice 1 — no bus claims it yet.
         // (`setDrumsInsert` was the third of these and went with #167; it had no production
         // caller even before the kit did, so nothing lost a path.)

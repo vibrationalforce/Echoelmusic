@@ -23331,14 +23331,14 @@
         }
       }
     },
-    "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth." : {
+    "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down." : {
       "comment" : "Sample row note: the sampler's limits.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth."
+            "value" : "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down."
           }
         }
       }

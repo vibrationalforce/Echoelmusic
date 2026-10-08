@@ -14,8 +14,9 @@ import SwiftUI
 ///
 /// ⚠️ ITS OWN LEAF, ON PURPOSE: the library listing is disk I/O, so it runs DETACHED in `.task`
 /// (the `MediaBrowserView` pattern), never in a `body`.
-/// ⚠️ LIMITS stated where they are met: `SamplerVoice` plays the first ~2 s of a file, and the rack
-/// holds ONE sampler unit, so a second Sampler track plays EchoelSynth (`KindVoiceAllocator`).
+/// ⚠️ LIMIT stated where it is met: `SamplerVoice` plays the first ~2 s of a file. ⛔ "the rack holds
+/// ONE sampler unit, so a second Sampler track plays EchoelSynth" stood here — since GMMW GA-4 the
+/// rack holds one unit per slot, so every rack track can play its own file.
 /// NEEDS-FOUNDER-VERIFY: G7 — a sample picked here sounds on a MIDI part, and again after reopening.
 @MainActor
 struct TrackSampleRow: View {
@@ -79,7 +80,7 @@ struct TrackSampleRow: View {
         if !hasSample {
             return String(localized: "This track makes no sound until it has a sample.")
         }
-        return String(localized: "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down. One track plays EchoelSampler at a time; another plays EchoelSynth.")
+        return String(localized: "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down.")
     }
 }
 #endif
