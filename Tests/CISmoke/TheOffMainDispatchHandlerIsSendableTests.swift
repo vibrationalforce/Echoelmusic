@@ -19,19 +19,36 @@
 // `MemoryPressureHandler.setupDispatchSource`; `PatternEngine` met the same trap in builds 1769/1777
 // and moved its timers to `.main`. Plus one rung before `drain.resume()`.
 //
+// THE SECOND SITE (same day, found by reading the same export flow ONE PHASE further). After the
+// recorder stops, `SingleExport.renderWithGain` pulls the take through
+// `AVAssetWriterInput.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export"))`
+// — a non-`@Sendable` closure formed in a `@MainActor` method, capturing two mutable counters,
+// passed to an imported block type. Same inference, same entry check, same worker: it would trap
+// before the first buffer is read, minutes into the export the 2613 fix had just let begin. The
+// repair is the same token plus what `@Sendable` demands of the captures: the counters move into
+// ONE `@unchecked Sendable` box (`ExportRenderCounters`), the three AVFoundation objects become
+// `nonisolated(unsafe)` locals, and the inner `finishWriting { continuation.resume() }` closure is
+// now formed in a non-isolated context, so it inherits nothing either.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
-// whose source was made on a queue other than `.main` is spelled `@Sendable`. Handlers on `.main`
-// may stay isolated (`MainActor.assumeIsolated` inside is the correct pattern there). Files without
-// a `@MainActor` class are exempt: a closure formed in a non-isolated class inherits nothing.
+// whose source was made on a queue other than `.main`, and every `requestMediaDataWhenReady(on:)`
+// block whose queue is not `.main`, is spelled `@Sendable`. Handlers on `.main` may stay isolated
+// (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
+// class are exempt: a closure formed in a non-isolated class inherits nothing.
 //
 // LIMITS (Tests/CISmoke/CLAUDE.md §1). SOURCE-TEXT SCAN over comment-stripped `Sources/`: it proves
 // a spelling, never that the device does not trap. File-granular: it cannot see whether a handler
 // is formed in a `nonisolated` method of a `@MainActor` class (there `@Sendable` is a no-op and still
-// the honest spelling). A handler is paired with the NEAREST PRECEDING `DispatchSource.make…Source(`
-// in the same file; a source created in another file, or a handler passed as a stored closure
-// (`setEventHandler(handler: x)`), is not seen. A source made with no `queue:` runs on a global
-// queue and counts as off-main. The `@MainActor` needle accepts only attributes and modifiers
-// between it and `class`, so `Task { @MainActor in` never counts as a class.
+// the honest spelling). A `setEventHandler` is paired with the NEAREST PRECEDING
+// `DispatchSource.make…Source(` in the same file; a source created in another file, or a handler
+// passed as a stored closure (`setEventHandler(handler: x)`), is not seen. A source made with no
+// `queue:` runs on a global queue and counts as off-main. The media-ready block names its queue in
+// its own `on:` argument, so it needs no pairing; a queue held in a variable (`on: exportQueue`)
+// counts as off-main unless it is literally `.main`/`DispatchQueue.main`, and a block passed as a
+// stored closure (`using: block`) is not seen. Two imported-block APIs are pinned, not the class of
+// all of them: a third API with the same shape is a new needle, not a comment. The `@MainActor`
+// needle accepts only attributes and modifiers between it and `class`, so `Task { @MainActor in`
+// never counts as a class.
 //
 // HONEST GRADING (§3). Transcribed in Python against the parent `209d79f` and the worktree, with
 // `SourceText.codeOnly` ported line for line:
@@ -52,9 +69,25 @@
 // Stripper measured PROPHYLAKTISCH: raw vs stripped verdicts identical on every file that carries
 // a handler or a source (0 flips) — kept because `PatternEngine`'s doc block names the construct in
 // prose and a future comment could otherwise count.
+// SECOND MEASUREMENT (the media-ready needle), transcribed against the parent `3738258` and the
+// worktree, 464 files, 9 carrier files, 0 stripper flips on both:
+//   · claim 1 — RED on the parent for its NAMED reason, a REGRESSION: exactly one violation,
+//     `Audio/SingleExport.swift:398` (`requestMediaDataWhenReady` on
+//     `DispatchQueue(label: "com.echoelmusic.export")`, not `@Sendable`); GREEN after the fix.
+//     Claims 2, 4 and 5 unchanged, green on both.
+//   · claim 3's four media fixtures — pure needle, green on both: the queue is read from the
+//     `on:` argument verbatim; the isolated shape is one violation, `@Sendable` and `.main` are
+//     none, a `DispatchQueue.global(qos:)` call is seen and is one.
+//   · claim 6 — COUNTERWEIGHT after the fix, RED on the parent for TWO reasons that are not the
+//     same kind: the site is found and not `@Sendable` (regression-shaped) and the counters box is
+//     absent (ANCHOR ABSENCE). The `@MainActor` class, the one media block, its own label queue and
+//     `nonisolated static func applyGain(` are green on both.
 // NEEDS-FOUNDER-VERIFY: Arrange → Export → WAV auf dem Gerät bis zum Teilen-Blatt durchlaufen lassen,
 // und im nächsten `echoel_diag.log` die Zeile „retro: recording armed“ VOR dem Play sehen — nur das
 // Telefon beweist die Aufnahme, nur das 2613-dSYM beweist, dass Frame 7/8 diese Closure waren.
+// Dieselbe Geräteprobe entscheidet auch die zweite Stelle: läuft der Export nach dem Stop bis zum
+// Teilen-Blatt durch, hat der Pull-Block nicht getrappt — vorher konnte diese Phase auf keinem
+// Swift-6-Build je enden.
 
 import Foundation
 import XCTest
@@ -62,6 +95,7 @@ import XCTest
 final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
 
     private static let retro = "Sources/Echoelmusic/Audio/RetroCapture.swift"
+    private static let export = "Sources/Echoelmusic/Audio/SingleExport.swift"
     private static let mainQueueOwners = [
         "Sources/Echoelmusic/Sequencer/PatternEngine.swift",
         "Sources/Echoelmusic/Audio/MIDIOutput.swift",
@@ -89,10 +123,17 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     /// group 1 is the `@Sendable` attribute when the closure opens with it.
     private static let handler = #"setEventHandler\s*(?:\([^)]*\)\s*)?\{\s*(@Sendable)?"#
 
+    /// A `requestMediaDataWhenReady(on: <queue>) {` closure literal — AVFoundation calls it on
+    /// that queue. Group 1 is the queue expression: a call with its own parentheses
+    /// (`DispatchQueue(label: "…")`, `DispatchQueue.global(qos: .utility)`) or a bare name
+    /// (`.main`, `exportQueue`); group 2 the `@Sendable` attribute when the closure opens with it.
+    private static let mediaReady =
+        #"requestMediaDataWhenReady\(\s*on:\s*(\w+(?:\.\w+)*\([^)]*\)|[^)]+)\)\s*\{\s*(@Sendable)?"#
+
     private static let defaultQueue = "<no queue: — a global queue>"
     private static let unknownQueue = "<no DispatchSource.make…Source( above it>"
 
-    private struct Handler { let line: Int; let queue: String; let sendable: Bool }
+    private struct Handler { let line: Int; let queue: String; let sendable: Bool; let api: String }
 
     private struct Verdict {
         let isMainActorClass: Bool
@@ -126,7 +167,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             let queue = sources.last { $0.offset < m.range.location }?.queue ?? Self.unknownQueue
             let sendable = m.range(at: 1).location != NSNotFound
             let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
-            handlers.append(Handler(line: line, queue: queue, sendable: sendable))
+            handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "setEventHandler"))
+        }
+        // The media-ready block names its queue in its own argument list — no pairing needed.
+        for m in try NSRegularExpression(pattern: Self.mediaReady).matches(in: code, range: all) {
+            let queue = ns.substring(with: m.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+            let sendable = m.range(at: 2).location != NSNotFound
+            let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+            handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "requestMediaDataWhenReady"))
         }
 
         let violations = isMainActorClass
@@ -145,17 +193,18 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         var violations: [String] = []
         for (path, code) in try swiftSources() {
             for h in try scan(code).violations {
-                violations.append("\(path):\(h.line) on queue `\(h.queue)`")
+                violations.append("\(path):\(h.line) \(h.api) on queue `\(h.queue)`")
             }
         }
         XCTAssertEqual(violations, [], """
-            A `DispatchSource` handler inside a `@MainActor` class on a queue other than `.main` is \
-            not spelled `@Sendable`: \(violations). Formed in a `@MainActor` context, a non-`@Sendable` \
-            closure inherits MainActor isolation and the imported block type gets a dynamic isolation \
-            check at its ENTRY — on the worker that check traps (`dispatch_assert_queue` → SIGTRAP) \
-            before the body runs (build 2613, RetroCapture:604; builds 1769/1777, PatternEngine). \
-            Spell it `setEventHandler { @Sendable … }` and keep the callee `nonisolated` — or put \
-            the timer on `.main`.
+            A `DispatchSource` handler or a `requestMediaDataWhenReady(on:)` block inside a \
+            `@MainActor` class, on a queue other than `.main`, is not spelled `@Sendable`: \
+            \(violations). Formed in a `@MainActor` context, a non-`@Sendable` closure inherits \
+            MainActor isolation and the imported block type gets a dynamic isolation check at its \
+            ENTRY — on the worker that check traps (`dispatch_assert_queue` → SIGTRAP) before the \
+            body runs (build 2613, RetroCapture:604; the export's pull loop, SingleExport; builds \
+            1769/1777, PatternEngine). Spell the closure `{ @Sendable … }`, box what it mutates \
+            (`ExportRenderCounters`), keep the callee `nonisolated` — or put the work on `.main`.
             """)
     }
 
@@ -227,6 +276,37 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             a closure formed in a non-isolated class inherits no isolation; the rule must not reach \
             it (#364) — CameraCapture is this shape
             """)
+
+        // The second API, same triple.
+        let mediaIsolated = """
+            @MainActor @Observable
+            final class Exporter {
+                func render() {
+                    input.requestMediaDataWhenReady(on: DispatchQueue(label: "x.export")) {
+                        while input.isReadyForMoreMediaData { pull() }
+                    }
+                }
+            }
+            """
+        let media = try scan(mediaIsolated)
+        XCTAssertEqual(media.handlers.map(\.queue), ["DispatchQueue(label: \"x.export\")"],
+                       "the queue is read from the `on:` argument itself (handlers: \(media.handlers))")
+        XCTAssertEqual(media.violations.count, 1, "the SingleExport shape must be a violation (#367)")
+
+        let mediaSendable = mediaIsolated
+            .replacingOccurrences(of: "\"x.export\")) {", with: "\"x.export\")) { @Sendable in")
+        XCTAssertEqual(try scan(mediaSendable).violations.count, 0,
+                       "`@Sendable` is the repair for this API too; it must satisfy the rule")
+
+        let mediaMain = mediaIsolated
+            .replacingOccurrences(of: "on: DispatchQueue(label: \"x.export\")", with: "on: .main")
+        XCTAssertEqual(try scan(mediaMain).violations.count, 0,
+                       "a `.main` media-ready block may stay isolated (#364)")
+
+        let mediaGlobal = mediaIsolated
+            .replacingOccurrences(of: "on: DispatchQueue(label: \"x.export\")", with: "on: DispatchQueue.global(qos: .utility)")
+        XCTAssertEqual(try scan(mediaGlobal).violations.count, 1,
+                       "a global queue is off-main; a call with its own parentheses must still be seen")
     }
 
     /// 4 — the two exemptions are exercised by real owners, not vacuous.
@@ -268,6 +348,38 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         }
         XCTAssertLessThan(rungRange.lowerBound, resumeRange.lowerBound, """
             the rung stands BEFORE its call: a witness behind the step sees nothing when the step dies
+            """)
+    }
+
+    /// 6 — the second site (the export's pull loop) is inside the rule's domain, and the state the
+    /// block mutates is boxed (else claim 1 could go green by the needle ceasing to match the file).
+    func testTheMediaReadyBlockSiteIsInsideTheRulesDomain() throws {
+        let code = try read(Self.export)
+        let v = try scan(code)
+        XCTAssertTrue(v.isMainActorClass, """
+            SingleExport is no longer matched as a `@MainActor` class — the rule no longer reaches \
+            it; re-derive whether the pull block still needs `@Sendable` before trusting claim 1.
+            """)
+        let media = v.handlers.filter { $0.api == "requestMediaDataWhenReady" }
+        XCTAssertEqual(media.count, 1, """
+            SingleExport has \(media.count) media-ready blocks; this claim pins exactly one, the \
+            render pull loop (handlers: \(v.handlers.map { ($0.api, $0.queue) }))
+            """)
+        XCTAssertTrue(media.allSatisfy { $0.queue.hasPrefix("DispatchQueue(label:") }, """
+            the pull loop left its own serial queue (queues: \(media.map(\.queue))). On `.main` the \
+            export would encode minutes of audio on the main thread.
+            """)
+        XCTAssertTrue(media.allSatisfy(\.sendable), """
+            the export's pull block is no longer `@Sendable` — the 2613 trap class at the ENTRY of \
+            the render phase, minutes into an export the user waited for.
+            """)
+        XCTAssertTrue(code.contains("final class ExportRenderCounters: @unchecked Sendable"), """
+            the counters box is gone. A `@Sendable` block cannot mutate captured `var`s; the two \
+            counters live in ONE `@unchecked Sendable` box because the block runs on one serial queue.
+            """)
+        XCTAssertTrue(code.contains("nonisolated static func applyGain("), """
+            `applyGain` is no longer `nonisolated` — the `@Sendable` block calls it off the actor \
+            (the compiler says so too; this names the reason).
             """)
     }
 

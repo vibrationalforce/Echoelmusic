@@ -382,7 +382,18 @@ final class SingleExport {
         let readerRate = Double(Self.exportSampleRate)
         let totalFrames = Int(durationSeconds * readerRate)
         let fadeFrames = edgeFadeSeconds > 0 ? Int(edgeFadeSeconds * readerRate) : 0
-        var framesWritten = 0
+        // ⛔ THE BLOCK BELOW IS `@Sendable` ON PURPOSE — the 2613/2618 trap class, found while
+        // fixing `RetroCapture`: a non-`@Sendable` closure formed in this `@MainActor` method
+        // inherits MainActor isolation, and the imported block type gets a dynamic isolation
+        // check at its ENTRY. AVFoundation calls it on `com.echoelmusic.export`, so the check
+        // would trap before the first buffer is read — minutes into an export the user has
+        // waited for, after the recorder's own trap was fixed. `@Sendable` needs every capture
+        // to be Sendable: the two counters live in ONE `@unchecked Sendable` box
+        // (`ExportRenderCounters`; the block runs on ONE serial queue, so this is not a race),
+        // and the three AVFoundation objects are `nonisolated(unsafe)` locals — the
+        // `MemoryPressureHandler.setupDispatchSource` spelling. Guard:
+        // `TheOffMainDispatchHandlerIsSendableTests` (claim 1 reads this API too).
+        //
         // ONE main-actor hop per PERCENT, not per sample buffer (#1335). The pull loop
         // below is OFFLINE — `expectsMediaDataInRealTime = false`, so it runs as fast as
         // the encoder accepts data and a few minutes of audio arrive as thousands of
@@ -390,21 +401,24 @@ final class SingleExport {
         // shape CLAUDE.md names: a flood of tiny main-actor submissions starves the
         // SwiftUI executor, and an open `.menu` Picker stops responding while it runs.
         // A progress bar cannot show more than 100 steps, so every submission past the
-        // hundredth carried no information. Captured like `framesWritten` above — the
-        // block runs on ONE serial queue, so this is not a race.
-        var lastProgressPercent = -1
+        // hundredth carried no information. `lastProgressPercent` lives in the box with
+        // `framesWritten` — same queue, same argument.
+        let counters = ExportRenderCounters()
+        nonisolated(unsafe) let writerInputRef = writerInput
+        nonisolated(unsafe) let readerOutputRef = readerOutput
+        nonisolated(unsafe) let writerRef = writer
 
         await withCheckedContinuation { continuation in
-            writerInput.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) {
-                while writerInput.isReadyForMoreMediaData {
-                    guard let sampleBuffer = readerOutput.copyNextSampleBuffer() else {
-                        writerInput.markAsFinished()
-                        writer.finishWriting { continuation.resume() }
+            writerInputRef.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) { @Sendable in
+                while writerInputRef.isReadyForMoreMediaData {
+                    guard let sampleBuffer = readerOutputRef.copyNextSampleBuffer() else {
+                        writerInputRef.markAsFinished()
+                        writerRef.finishWriting { continuation.resume() }
                         return
                     }
 
                     let bufferFrames = CMSampleBufferGetNumSamples(sampleBuffer)
-                    let bufferStartFrame = framesWritten
+                    let bufferStartFrame = counters.framesWritten
 
                     // Apply gain in-place on the PCM data
                     if let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) {
@@ -450,7 +464,7 @@ final class SingleExport {
                             offset += lengthAtOffset
                         } while offset < totalLength
                     }
-                    framesWritten = bufferStartFrame + bufferFrames
+                    counters.framesWritten = bufferStartFrame + bufferFrames
 
                     // Update progress (relative to the trimmed window when set)
                     let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
@@ -463,8 +477,8 @@ final class SingleExport {
                     // the test host without an assertion message (#1174). NaN maps to 0 here.
                     let shown = progress.clamped(to: 0...0.99)
                     let percent = Int(shown * 100)
-                    if percent != lastProgressPercent {
-                        lastProgressPercent = percent
+                    if percent != counters.lastProgressPercent {
+                        counters.lastProgressPercent = percent
                         Task { @MainActor [weak self] in
                             if case .exporting = self?.exportState {
                                 self?.exportState = .exporting(progress: shown)
@@ -472,7 +486,7 @@ final class SingleExport {
                         }
                     }
 
-                    writerInput.append(sampleBuffer)
+                    writerInputRef.append(sampleBuffer)
                 }
             }
         }
@@ -562,6 +576,16 @@ final class SingleExport {
 // +0.05 LU off. It is NOT a claim of full EBU R128 conformance — no true-peak and no LRA enter
 // the export decision, and nothing here was run against the full EBU test-vector set.
 // Guards: `TheExportNormalisesByIntegratedLoudnessTests`, `TheLoudnessMeterIsSampleRateCorrectTests`.
+
+/// The two counters the export's pull block mutates. A file-scope class so it carries NO
+/// actor isolation (a type declared inside a `@MainActor` method would be read as isolated
+/// by a future reader even where the compiler does not isolate it); `@unchecked Sendable`
+/// because the block that touches it runs on exactly one serial queue
+/// (`com.echoelmusic.export`) — see `SingleExport.renderWithGain`.
+private final class ExportRenderCounters: @unchecked Sendable {
+    var framesWritten = 0
+    var lastProgressPercent = -1
+}
 
 /// Integrated programme loudness (LUFS) of an interleaved-stereo stream, measured by the app's
 /// one BS.1770 meter at `sampleRate`. Offline, owned by a single measurement pass; not for a
