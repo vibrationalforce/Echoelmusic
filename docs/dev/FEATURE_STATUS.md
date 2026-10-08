@@ -149,6 +149,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Raum-Render (7 Kerne: VBAP, Ambisonics, Binaural, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft; im Kopfhörer ist nichts räumlich | Audio-Anbindung — der kleinste hörbare Weg ist S3 (binauraler Kopfhörer-Ausgang), Plan in `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7 |
 | Stream-Key in der Keychain (Broadcast S1) | gebaut, Build 2615 | eine Fläche — und die hängt an S2 (gesperrt, siehe 2a) |
 | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
+| Echoel Grain (`GrainCloud`, GMMW GA-9) | reiner DSP-Kern: Körner aus einem geladenen Puffer (Position · Länge · Dichte · Streuung · Tonhöhe · Breite), portiert aus der mit dem Mikrofon entfernten Granular-Stufe; kein Aufrufer | GA-10: als Insert auf einer Audiospur, aus der Datei gespeist |
 | Onset-Slicer (`SampleSlicer`, GMMW GA-6) | reiner Kern: schneidet ein Sample an seinen Treffern, mit der Onset-Regel der Tempo-Erkennung; kein Aufrufer | GA-7 (Founder-Gate): wo die Schnittpunkte liegen und was ein Schnitt spielt |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
