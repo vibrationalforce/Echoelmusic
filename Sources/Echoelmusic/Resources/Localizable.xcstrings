@@ -73,6 +73,30 @@
         }
       }
     },
+    "Normalize" : {
+      "comment" : "Button title (audio editor W9, 2026-10-08): sets the selected audio part's level so its loudest sample reaches full scale.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalize"
+          }
+        }
+      }
+    },
+    "Normalize the selected part: its loudest moment reaches full scale, at most 6 dB louder" : {
+      "comment" : "VoiceOver label of the Normalize button on the part bar (audio editor W9): what it does and its +6 dB ceiling.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalize the selected part: its loudest moment reaches full scale, at most 6 dB louder"
+          }
+        }
+      }
+    },
     "Part level" : {
       "comment" : "Value-field label (audio editor W2, 2026-10-08): the selected audio part's own level on the part bar.",
       "extractionState" : "manual",

@@ -16,6 +16,8 @@
 // 3. SOURCE-TEXT SCAN — the bar mounts the field only behind `PartGain.gain`, once; the leaf drags
 //    a DRAFT and writes once on release through `setRegionGain`, clears the draft when the stored
 //    level moves, reads in decibels by the track header's own rule, and uses no raw slider.
+//    The leaf writes the level in exactly TWO places: the release, and since W9 Normalize
+//    (`TheNormalizedPartReachesFullScaleTests` pins that one behind its off-main read).
 // 4. SOURCE-TEXT SCAN (census) — the part bar is the one caller of `setRegionGain` in `Sources/`.
 //
 // GRADING (§0/§3, no Swift toolchain in a web session): the file names `PartGain`, which this
@@ -131,7 +133,10 @@ final class AnAudioPartHasItsOwnLevelTests: XCTestCase {
         let commitBody = String(field[commit.upperBound...])
         XCTAssertTrue(commitBody.contains("timeline.setRegionGain(id: regionID, Float(value))"),
                       "the release writes through the store's one region-gain writer")
-        XCTAssertEqual(field.components(separatedBy: "setRegionGain(").count - 1, 1, "one write, on release")
+        XCTAssertEqual(field.components(separatedBy: "setRegionGain(").count - 1, 2, """
+            the leaf writes the part's level in exactly two places — the release of the drag, and \
+            Normalize (W9). A third write in the leaf is a third gesture, and it needs its own claim.
+            """)
         for banned in ["Slider(", "Stepper("] {
             XCTAssertFalse(field.contains(banned), "the leaf contains `\(banned)` — one control (`EchoelValueField`)")
         }

@@ -52,6 +52,14 @@
 //  store's own `abuts` rule (CLIP-6) — so a re-levelled half rejoins only once the levels match.
 //  Its off label names the split, not the level: that sentence is not widened here.
 //
+//  ⭐ W9 — NORMALIZE, under the level. One tap sets the part's level so its loudest sample in
+//  the stretch it plays reaches full scale (0 dBFS), held to the field's 0…2 — a file quieter
+//  than −6 dBFS comes up only +6 dB, and the label says so. It reads the file detached (the
+//  canvas's own `WaveformSketch.overview`), finds the peak over the buckets the canvas draws
+//  (`WaveformSketch.peak`, one overlap rule) and writes once through `setRegionGain`: one undo
+//  step, nothing for a silent or unreadable part. ⚠️ The peak is the FILE's; a stretched part
+//  (warp or tape) can peak a little differently once rendered — a device listen, not a claim.
+//
 
 import SwiftUI
 
@@ -136,6 +144,22 @@ enum PartGain {
               let lane = document.lanes.first(where: { $0.id == region.laneID }),
               lane.kind == .audio, !lane.isBio else { return nil }
         return region.gain
+    }
+
+    /// W9 — what Normalize aims the part's loudest sample at: full scale (0 dBFS), the classic
+    /// DAW default.
+    static let normalizeTarget: Float = 1
+
+    /// The level that brings a part whose loudest sample is `peak` to `normalizeTarget`, held to
+    /// `range` — a file quieter than −6 dBFS comes up only +6 dB, the store's own ceiling, and a
+    /// peak so small its reciprocal overflows gets that ceiling too. nil for silence or a
+    /// non-finite peak: no level makes nothing loud, so Normalize writes nothing.
+    nonisolated static func normalizedGain(forPeak peak: Float) -> Float? {
+        guard peak.isFinite, peak > 0 else { return nil }
+        let wanted = normalizeTarget / peak
+        let top = Float(range.upperBound)
+        guard wanted.isFinite else { return top }
+        return Swift.min(top, Swift.max(Float(range.lowerBound), wanted))
     }
 }
 
@@ -576,22 +600,39 @@ private struct PartGainField: View {
     /// The part's stored gain — cold, per render.
     let gain: Float
     @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    @Environment(TimelineRegionPlayer.self) private var player
     @State private var draft: Double? = nil
+    /// True while Normalize reads the file — the button is off, so a second tap cannot start a
+    /// second read of the same file.
+    @State private var normalizing = false
 
     var body: some View {
-        HStack(spacing: EchoelTheme.spaceS) {
-            EchoelValueField(label: "Part level",
-                             value: Binding(get: { shownGain }, set: { draft = $0 }),
-                             range: PartGain.range,
-                             decimals: 2,
-                             hint: String(localized: "This part's own level, on top of its track's level. 1.00 plays the file as it is."),
-                             standard: 1,
-                             onCommit: { commitGain() })
-            Text(TrackMix.decibelText(shownGain))
-                .font(EchoelTheme.font(11).monospacedDigit())
-                .foregroundStyle(EchoelTheme.dim)
-                .accessibilityLabel("Part level in decibels")
-                .accessibilityValue(TrackMix.decibelText(shownGain))
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
+            HStack(spacing: EchoelTheme.spaceS) {
+                EchoelValueField(label: "Part level",
+                                 value: Binding(get: { shownGain }, set: { draft = $0 }),
+                                 range: PartGain.range,
+                                 decimals: 2,
+                                 hint: String(localized: "This part's own level, on top of its track's level. 1.00 plays the file as it is."),
+                                 standard: 1,
+                                 onCommit: { commitGain() })
+                Text(TrackMix.decibelText(shownGain))
+                    .font(EchoelTheme.font(11).monospacedDigit())
+                    .foregroundStyle(EchoelTheme.dim)
+                    .accessibilityLabel("Part level in decibels")
+                    .accessibilityValue(TrackMix.decibelText(shownGain))
+            }
+            // W9: on its own line, so the field keeps the row's width at every type size.
+            Button { normalize() } label: {
+                HStack(spacing: EchoelTheme.spaceXS) {
+                    Image(systemName: "waveform").font(EchoelTheme.font(11, .semibold))
+                    Text("Normalize").font(EchoelTheme.font(11, .semibold)).lineLimit(1).fixedSize()
+                }
+            }
+            .buttonStyle(EchoelToolButtonStyle())
+            .disabled(normalizing)
+            .accessibilityLabel("Normalize the selected part: its loudest moment reaches full scale, at most 6 dB louder")
         }
         .onChange(of: gain) { _, _ in draft = nil }
     }
@@ -604,5 +645,33 @@ private struct PartGainField: View {
         guard let value = draft else { return }
         draft = nil
         timeline.setRegionGain(id: regionID, Float(value))
+    }
+
+    /// W9 — Normalize. The part's stretch of the file is the canvas's own (`ArrangeCanvas
+    /// .audioWindow`, the player's position and stretch rate), read here at the tap — never in
+    /// `body` — with the cold tempo the canvas draws by. The file is read detached, off the main
+    /// actor (it opens a whole file); the peak and the level are pure (`WaveformSketch.peak`,
+    /// `PartGain.normalizedGain`); the write is ONE `setRegionGain` — one undo step, a no-op when
+    /// the part is already there. A file that does not read, a stretch outside the file, or a
+    /// silent part writes nothing.
+    private func normalize() {
+        guard !normalizing,
+              let region = timeline.document.regions.first(where: { $0.id == regionID }),
+              let window = ArrangeCanvas.audioWindow(for: region, clip: clipStore.clip(id: region.clipID),
+                                                     bpm: player.preflightTempo) else { return }
+        normalizing = true
+        let ref = window.mediaRef
+        Task {
+            let overview = await Task.detached(priority: .userInitiated) {
+                WaveformSketch.overview(ofRef: ref)
+            }.value
+            normalizing = false
+            guard let overview,
+                  let peak = WaveformSketch.peak(overview, fromSeconds: window.fromSeconds,
+                                                 lengthSeconds: window.lengthSeconds),
+                  let level = PartGain.normalizedGain(forPeak: peak) else { return }
+            draft = nil
+            timeline.setRegionGain(id: regionID, level)
+        }
     }
 }

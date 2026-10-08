@@ -24,14 +24,18 @@
 //
 // ⚠️ NEVER ON THE AUDIO THREAD, NEVER ON THE MAIN ACTOR. `overview(ofRef:)` opens and reads a
 // whole file. It is a plain `enum` with no global actor, spelled `nonisolated` anyway so the
-// fact survives a future default isolation, and its ONE caller runs it inside `Task.detached`
-// with the cancellation forwarded. It checks `Task.isCancelled` per chunk: a part scrolled
+// fact survives a future default isolation, and both its callers (the canvas leaf, and since
+// W9 the part bar's Normalize) run it inside `Task.detached`; the canvas forwards cancellation. It checks `Task.isCancelled` per chunk: a part scrolled
 // away stops reading within one chunk.
 //
 // ⚠️ IT ASKS THE PLAYER'S RESOLVER (#1439). The file is found by `MediaLibrary.resolveRef` —
 // the function the app's injected `resolveURL:` closure calls for `AudioLanePlayer` — so a
 // part draws a waveform exactly when its file resolves for playback. It is called directly,
 // off the main actor, because the player's own wrapper is main-actor state.
+//
+// ⭐ W9 — NORMALIZE READS THE SAME BUCKETS. `peak` finds the part's loudest sample through
+// `overlap`, the one rule `window` draws by, so the level Normalize sets answers the wave the
+// person sees. Its caller is the part bar, and it reads the file the same way: detached, once.
 //
 // ⚠️ BOUNDED. At most `maxBuckets` buckets per file (~100 per second for files up to a few
 // minutes, coarser for longer ones), at most `maxColumns` per draw, and a file that would need
@@ -102,24 +106,56 @@ enum WaveformSketch {
         let total = Swift.min(columns, maxColumns)
         let level = gain.isFinite ? Swift.max(0, gain) : 1
         let step = lengthSeconds / Double(total)
-        let limit = Double(count)
         var out: [WaveformBucket] = []
         out.reserveCapacity(total)
         for column in 0..<total {
             let start = (fromSeconds + Double(column) * step) / perBucket
             let end = (fromSeconds + Double(column + 1) * step) / perBucket
             // Wholly before the file's start or past its end: silence, never a borrowed bucket.
-            guard end > 0, start < limit else { out.append(silent); continue }
-            let first = Int(start.clamped(to: 0...limit).rounded(.down))
-            let last = Swift.min(count, Swift.max(first + 1, Int(end.clamped(to: 0...limit).rounded(.up))))
-            guard first < last,
-                  let joined = WaveformReducer.downsample(Array(overview.buckets[first..<last]),
-                                                          factor: last - first).first else {
+            guard let span = overlap(start: start, end: end, count: count),
+                  let joined = WaveformReducer.downsample(Array(overview.buckets[span]),
+                                                          factor: span.count).first else {
                 out.append(silent); continue
             }
             out.append(drawable(joined, level: level))
         }
         return out
+    }
+
+    /// The buckets a stretch from `start` to `end` (in BUCKET units) overlaps — nil when it lies
+    /// wholly before the file's start or past its end. A stretch narrower than a bucket takes
+    /// the bucket it falls in. The ONE overlap rule of `window` and `peak` (#416): the level
+    /// Normalize sets is read off exactly the buckets the canvas draws.
+    nonisolated static func overlap(start: Double, end: Double, count: Int) -> Range<Int>? {
+        let limit = Double(count)
+        guard count > 0, start.isFinite, end.isFinite, end > 0, start < limit else { return nil }
+        let first = Int(start.clamped(to: 0...limit).rounded(.down))
+        let last = Swift.min(count, Swift.max(first + 1, Int(end.clamped(to: 0...limit).rounded(.up))))
+        return first < last ? first..<last : nil
+    }
+
+    /// The loudest sample magnitude in the part's stretch of the file — `lengthSeconds` from
+    /// `fromSeconds` — with the part's own level NOT applied: Normalize asks what the FILE does
+    /// there. A bucket's extremes are exact sample extremes (`WaveformReducer.reduce` keeps the
+    /// min and the max, and `foldStereo` the louder channel), so the only error is the two edge
+    /// buckets reaching a few milliseconds past the part: the peak can read high, never low, and
+    /// a level set from it errs quieter, never into a clip. nil for a stretch outside the file,
+    /// degenerate input, or a non-finite bucket.
+    nonisolated static func peak(_ overview: Overview, fromSeconds: Double, lengthSeconds: Double) -> Float? {
+        let perBucket = overview.secondsPerBucket
+        guard perBucket.isFinite, perBucket > 0, fromSeconds.isFinite, lengthSeconds.isFinite,
+              lengthSeconds > 0,
+              let span = overlap(start: fromSeconds / perBucket,
+                                 end: (fromSeconds + lengthSeconds) / perBucket,
+                                 count: overview.buckets.count) else { return nil }
+        var loudest: Float = 0
+        for bucket in overview.buckets[span] {
+            // Each extreme is checked BEFORE the max: `Swift.max(0, NaN)` is 0, so a NaN in the
+            // second argument would read as silence and pass a check on the result.
+            guard bucket.min.isFinite, bucket.max.isFinite else { return nil }
+            loudest = Swift.max(loudest, Swift.max(abs(bucket.min), abs(bucket.max)))
+        }
+        return loudest
     }
 
     /// One column made safe to draw: scaled by the part's level, clamped to ±1 (RMS to 0…1),

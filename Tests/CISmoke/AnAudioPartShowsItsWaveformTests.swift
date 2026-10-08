@@ -22,8 +22,9 @@
 //    as silence then level, a stereo file folds to its louder channel, an unreadable or missing
 //    file reads as nothing, and a CANCELLED read returns nothing.
 // 5. SOURCE-TEXT SCAN — the leaf reads off the main actor, forwards cancellation, and drops a
-//    read that lands after it was cancelled; it is the ONE caller of the read; it takes no
-//    touches, reads no hot state and adds no presentation modifier.
+//    read that lands after it was cancelled; it takes no touches, reads no hot state and adds
+//    no presentation modifier. The read has exactly TWO callers — this leaf and, since W9, the
+//    part bar's Normalize (`TheNormalizedPartReachesFullScaleTests` pins that one detached).
 // 6. SOURCE-TEXT SCAN — the canvas hands each block its window from the same one read of the
 //    clip grid; the block draws it between the note sketch and the name tag; the Workstation
 //    hands the tempo in COLD.
@@ -55,6 +56,7 @@ final class AnAudioPartShowsItsWaveformTests: XCTestCase {
 
     private static let leaf = "Sources/Echoelmusic/Studio/AudioPartWaveform.swift"
     private static let sketch = "Sources/Echoelmusic/Sequencer/WaveformSketch.swift"
+    private static let partBar = "Sources/Echoelmusic/Studio/SelectedPartBar.swift"
     private static let canvas = "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift"
     private static let workstation = "Sources/Echoelmusic/Studio/WorkstationView.swift"
     private static let lanePlayer = "Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift"
@@ -294,10 +296,11 @@ final class AnAudioPartShowsItsWaveformTests: XCTestCase {
                 """)
         }
         let readers = try sourceFiles { $0.contains("WaveformSketch.overview(") }
-        XCTAssertEqual(readers, [Self.leaf], """
-            `WaveformSketch.overview(` is called from \(readers). It opens and reads a whole file; its \
-            ONE caller runs it detached with the cancellation forwarded. A second caller on the main \
-            actor would stall the canvas for the length of the file.
+        XCTAssertEqual(readers, [Self.leaf, Self.partBar], """
+            `WaveformSketch.overview(` is called from \(readers). It opens and reads a whole file; \
+            its two callers — this leaf and the part bar's Normalize (W9) — each run it inside \
+            `Task.detached`. A caller on the main actor would stall the canvas for the length of \
+            the file: pin a new one detached, in its own guard, before adding it here.
             """)
         let sketch = try code(Self.sketch)
         XCTAssertTrue(sketch.contains("nonisolated static func overview(ofRef ref: String) -> Overview? {"))
