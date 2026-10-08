@@ -49,6 +49,20 @@
 // It is load-bearing nonetheless: the handler's own comment spells `__dispatch_queue_get_label(nil)`
 // verbatim, so without the stripper claim 1 would stay green after the CALL was removed and the
 // comment kept.
+// SH-3 (GMMW, 2026-10-08) — claim 6: a stack overflow on the main thread could not write its marker
+// (the handler ran on the overflowed stack and faulted again — build 2037's black screen left no
+// `CRASH` line). `begin()` now arms an alternate signal stack BEFORE `installHandlers()`, SIGSEGV
+// and SIGBUS (only those) are flagged `SA_ONSTACK` on the action `signal` installed, and every
+// `echoel…` global the handler and its marker helper read is warmed above the first install — the
+// set is DERIVED from the handler's text, so a new unwarmed global goes red. Graded against the
+// parent `01e65a6` in Python (`SourceText.codeOnly` ported): REGRESSION, red there at its FIRST
+// anchor — no arming call — and the method returns there. Its other halves, driven past that
+// return, are red on the parent too: no `SA_ONSTACK`, and none of the twelve globals warmed (one
+// absence of a warming block, #486). Mutants red: arming after the install; the flag on
+// every fatal signal; a thirteenth global read in the handler and not warmed; the name buffer's
+// warm line removed. NOT covered: that the kernel accepts the stack (the `crash net:` line says it
+// on the device) and that an overflow on a NON-main thread is logged (it is not: the stack is
+// per thread).
 // NEEDS-FOUNDER-VERIFY: Beim nächsten Absturz, der auf einer Hintergrund-Warteschlange passiert,
 // steht in Save/Export → Diagnostics unter der `CRASH SIG…`-Zeile eine Zeile `crash queue: …` mit
 // einem `com.echoelmusic.…`-Namen — nur das Gerät zeigt, dass der Lese-Aufruf dort einen Namen
@@ -171,6 +185,91 @@ final class TheCrashLogNamesTheQueueTests: XCTestCase {
             the queue label is written AFTER the backtrace. `backtrace_symbols_fd` is the riskiest \
             call in the handler; a fault inside it must not lose the one line that names the queue.
             """)
+    }
+
+    /// 6 — SH-3: an overflowed main thread can still write its marker. The alternate stack is
+    /// armed BEFORE the handlers; exactly SIGSEGV and SIGBUS run on it, flagged after `signal`
+    /// installed them; and every global the handler reads is warmed above the first install.
+    func testAStackOverflowCanStillWriteItsMarker() throws {
+        let code = try read(Self.crashLog)
+        guard let arm = code.range(of: "installAlternateSignalStack()"),
+              let install = code.range(of: "installHandlers()") else {
+            return XCTFail("ANCHOR MISSING: `installAlternateSignalStack()` or `installHandlers()` (#454)")
+        }
+        XCTAssertLessThan(arm.lowerBound, install.lowerBound, """
+            `begin()` must arm the alternate signal stack before it installs the handlers — an \
+            overflow on the main thread has no stack left to run a handler on (build 2037).
+            """)
+        let armBody = try body(of: "private static func installAlternateSignalStack() -> Bool", in: code)
+        XCTAssertTrue(armBody.contains("sigaltstack(&stack, nil)") && armBody.contains("echoelAltStack"),
+                      "the arming function no longer hands `echoelAltStack` to `sigaltstack`")
+        XCTAssertEqual(code.components(separatedBy: "SA_ONSTACK").count - 1, 1,
+                       "one place flags a signal for the alternate stack")
+        let loop = try body(of: "for sig in [SIGSEGV, SIGBUS] {", in: code)
+        XCTAssertTrue(loop.contains("action.sa_flags |= SA_ONSTACK"), """
+            the alternate stack is for SIGSEGV and SIGBUS only — an overflow arrives as one of them, \
+            and SIGTRAP keeps its own stack so its backtrace still walks the trapping frames.
+            """)
+        guard let handlerEnd = code.range(of: Self.handlerClose),
+              let flag = code.range(of: "action.sa_flags |= SA_ONSTACK") else {
+            return XCTFail("ANCHOR MISSING: the handler's end or the SA_ONSTACK flag (#454)")
+        }
+        XCTAssertLessThan(handlerEnd.lowerBound, flag.lowerBound,
+                          "the flag is added to the action `signal` installed, so it must come after the install")
+
+        // Every global the handler (and the marker helper it calls) reads, derived from the text —
+        // a NEW global added to the handler without being warmed goes red here.
+        let span = try handlerSpan(in: code)
+        let helper = try body(of: "private func echoelCrashMarker(for sig: Int32) -> [UInt8]", in: code)
+        let globals = Self.handlerGlobals(in: String(span) + "\n" + helper)
+        XCTAssertGreaterThanOrEqual(globals.count, 10, "the scan found the handler's globals (#367): \(globals)")
+        let installs = try body(of: "private static func installHandlers()", in: code)
+        guard let firstInstall = installs.range(of: Self.handlerOpen) else {
+            return XCTFail("ANCHOR MISSING: the handler is no longer installed inside `installHandlers` (#454)")
+        }
+        let warming = installs[..<firstInstall.lowerBound]
+        for name in globals.sorted() {
+            XCTAssertTrue(warming.contains(name), """
+                `\(name)` is read inside the signal handler but not warmed above the first install. A \
+                Swift global is lazy; its first read runs `swift_once` and may allocate — inside a \
+                handler that is the lock and the malloc a crash may already hold.
+                """)
+        }
+        XCTAssertTrue(warming.contains("warmedHandlerBytes = warmed"), "the warmed reads are stored, so they are kept")
+    }
+
+    /// The `echoel…` globals a span of code names, once each.
+    private static func handlerGlobals(in text: String) -> Set<String> {
+        guard let pattern = try? NSRegularExpression(pattern: "echoel[A-Z][A-Za-z]*") else { return [] }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        var names = Set<String>()
+        for match in pattern.matches(in: text, range: range) {
+            if let found = Range(match.range, in: text) { names.insert(String(text[found])) }
+        }
+        return names
+    }
+
+    /// The text between the braces that open after `head`, brace-matched (#408/#454).
+    private func body(of head: String, in text: String) throws -> String {
+        guard let start = text.range(of: head),
+              let open = text[start.lowerBound...].firstIndex(of: "{") else {
+            XCTFail("ANCHOR MISSING: `\(head)` (#454)")
+            throw AnchorMissing(name: head)
+        }
+        var depth = 1
+        var index = text.index(after: open)
+        while index < text.endIndex {
+            switch text[index] {
+            case "{": depth += 1
+            case "}":
+                depth -= 1
+                if depth == 0 { return String(text[text.index(after: open)..<index]) }
+            default: break
+            }
+            index = text.index(after: index)
+        }
+        XCTFail("UNBALANCED: `\(head)` never closes (#454)")
+        throw AnchorMissing(name: head)
     }
 
     /// 5 — the triage skill tells the next reader what the two lines mean.

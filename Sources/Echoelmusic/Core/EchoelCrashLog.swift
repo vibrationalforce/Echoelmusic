@@ -61,6 +61,17 @@ private let echoelThreadPrefix: [UInt8] = Array("crash thread/queue: ".utf8)
 private let echoelQueuePrefix: [UInt8] = Array("crash queue: ".utf8)
 private let echoelNewlineByte: [UInt8] = [0x0a]
 
+/// GMMW SH-3 — the stack the fatal-signal handler runs on after a STACK OVERFLOW. A thread
+/// that overflowed has no stack left, so a handler on that stack faults again and the process
+/// dies without writing a byte: the build-2037 black screen (unbounded recursion at first render)
+/// left no `CRASH` line for exactly this reason. 128 KiB is Darwin's `SIGSTKSZ`, enough for the
+/// marker writes and `backtrace_symbols_fd`. Allocated once at launch, never freed.
+/// ⚠️ An alternate stack belongs to ONE thread — the one that calls `sigaltstack`, which is the
+/// thread running `begin()`, the main thread. An overflow on any other thread still dies unlogged.
+private let echoelAltStackBytes = 131_072
+private nonisolated(unsafe) let echoelAltStack =
+    UnsafeMutableRawPointer.allocate(byteCount: echoelAltStackBytes, alignment: 16)
+
 /// Allocation-free: pick the pre-encoded marker for a received signal.
 private func echoelCrashMarker(for sig: Int32) -> [UInt8] {
     switch sig {
@@ -87,6 +98,10 @@ enum EchoelCrashLog {
 
     nonisolated(unsafe) private static var fd: Int32 = -1
 
+    /// SH-3 — the bytes of every global the signal handler reads, summed when `installHandlers`
+    /// warms them. Stored so the reads are kept; nothing else reads it.
+    nonisolated(unsafe) private static var warmedHandlerBytes = 0
+
     private static var fileURL: URL {
         let dir = (try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask,
                                                 appropriateFor: nil, create: true))
@@ -100,6 +115,9 @@ enum EchoelCrashLog {
         let url = fileURL
         previousSession = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         fd = open(url.path, O_CREAT | O_TRUNC | O_WRONLY, 0o644)
+        // SH-3: the alternate stack BEFORE the handlers, so no fault after the first install
+        // can find SIGSEGV/SIGBUS flagged for a stack that is not there yet.
+        let alternateStackArmed = installAlternateSignalStack()
         installHandlers()
         // Name the build in the first line: every pasted diag log identifies its
         // version (triage step 1 — "is the fix you're verifying IN this build?"),
@@ -108,6 +126,11 @@ enum EchoelCrashLog {
         let v = info?["CFBundleShortVersionString"] as? String ?? "?"
         let b = info?["CFBundleVersion"] as? String ?? "?"
         breadcrumb(launchLinePrefix + "\(v) (\(b))")
+        // SH-3: after the version line, which stays first. Lower case on purpose: the word in
+        // capitals is the crash marker `looksLikeUnseenCrash` searches for.
+        breadcrumb(alternateStackArmed
+                   ? "crash net: alternate signal stack armed (SIGSEGV/SIGBUS, this thread)"
+                   : "crash net: alternate signal stack refused - an overflow dies unlogged")
         // #916: KEEP the run that just ended, if it ended badly. `previousSession` is the
         // only copy of a crashed run and it lives for exactly ONE launch — the `O_TRUNC`
         // above has already thrown the file away, and the next launch throws this copy away
@@ -593,7 +616,28 @@ enum EchoelCrashLog {
         return lastScenePhase(in: log) != backgroundPhase
     }
 
+    /// SH-3 — gives the calling thread the alternate signal stack (`echoelAltStack`). Returns
+    /// whether the kernel took it; on a refusal SIGSEGV/SIGBUS still run, on the faulting stack.
+    private static func installAlternateSignalStack() -> Bool {
+        var stack = stack_t()
+        stack.ss_sp = echoelAltStack
+        stack.ss_size = numericCast(echoelAltStackBytes)
+        stack.ss_flags = 0
+        return sigaltstack(&stack, nil) == 0
+    }
+
     private static func installHandlers() {
+        // SH-3: WARM every global the signal handler reads, here, before the first install. A
+        // Swift global is lazy — its first read runs `swift_once` and, for these, an allocation —
+        // so a first read INSIDE the handler would take the very lock and malloc the handler is
+        // written to avoid, on a crash that may have happened inside malloc.
+        let handlerBytes: [[UInt8]] = [echoelCrashMarker, echoelCrashSEGV, echoelCrashBUS, echoelCrashTRAP,
+                                       echoelCrashILL, echoelCrashABRT, echoelCrashFPE,
+                                       echoelThreadPrefix, echoelQueuePrefix, echoelNewlineByte]
+        var warmed: Int = handlerBytes.reduce(0) { $0 + $1.count }
+        warmed += echoelBacktraceBuffer.count
+        echoelThreadNameBuf[0] = 0
+        warmedHandlerBytes = warmed
         // ObjC / NSException path (no allocation constraints here).
         NSSetUncaughtExceptionHandler { exception in
             EchoelCrashLog.breadcrumb("CRASH exception: \(exception.name.rawValue): \(exception.reason ?? "")")
@@ -644,6 +688,16 @@ enum EchoelCrashLog {
                 signal(received, SIG_DFL)
                 raise(received)
             }
+        }
+        // SH-3: SIGSEGV and SIGBUS run on the alternate stack — an overflow arrives as one of
+        // them. ONLY those two: SIGTRAP and the rest keep the thread's own stack, so their
+        // backtrace walks the frames that trapped exactly as before. The action `signal` just
+        // installed is read back and given the one flag, so the handler keeps ONE spelling.
+        for sig in [SIGSEGV, SIGBUS] {
+            var action = sigaction()
+            guard sigaction(sig, nil, &action) == 0 else { continue }
+            action.sa_flags |= SA_ONSTACK
+            _ = sigaction(sig, &action, nil)
         }
     }
 }
