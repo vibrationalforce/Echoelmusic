@@ -111,7 +111,11 @@ final class AnAudioPartHasItsOwnLevelTests: XCTestCase {
         XCTAssertLessThan(gate.lowerBound, mount.lowerBound, "the field appears only for a part that has a level")
         XCTAssertEqual(code.components(separatedBy: "PartGainField(").count - 1, 1, "mounted once")
 
-        let field = String(code[leaf.upperBound...])
+        // The leaf's OWN struct, to its column-0 close (#408): its siblings' slices read to the end
+        // of the file and one of them went red on a later leaf (`TheWarpedPartChoosesItsStretchTests`,
+        // 845319d → GMMW AE-10c). Every later part-bar field would otherwise sit inside this one.
+        let afterLeaf = code[leaf.upperBound...]
+        let field = String(afterLeaf[..<(afterLeaf.range(of: "\n}\n")?.lowerBound ?? afterLeaf.endIndex)])
         guard let call = field.range(of: "EchoelValueField(label: \"Part level\","),
               let commit = field.range(of: "private func commitGain() {") else {
             return XCTFail("the leaf no longer offers \"Part level\" or no longer commits through `commitGain`")

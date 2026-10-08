@@ -973,7 +973,9 @@ private struct PartFadeFields: View {
 /// .pitchField`): a part's first pitch needs the time-pitch chain, which `AudioLanePlayer.prime`
 /// attaches only while nothing sounds, because a mid-song attach pauses the whole engine (review
 /// HIGH 2). `player.isPlaying` flips on a start or a stop, never per step, and is read here, in
-/// the leaf's own body, not in the bar's.
+/// the leaf's own body, not in the bar's — and again in `commitPitch`. ⚠️ Undo/Redo stays live
+/// while playing, so a part's pitch CAN still change mid-song; the player then keeps the part
+/// on its plain node until the next Play rather than attach a chain (`TimelineAudioSink.play`).
 ///
 /// The number is the PART's own; the engine plays track + part held to the same range
 /// (`AudioTranspose.semitones(for:in:)`), so a part can cancel or extend its track's pitch.
@@ -1011,6 +1013,10 @@ private struct PartPitchField: View {
     private func commitPitch() {
         guard let value = draft else { return }
         draft = nil
+        // AE-10 review (LOW): a drag recognised before `.disabled` took hold, or the keypad
+        // confirmed after playback began, still ends here — the rule is the field's, not the
+        // gesture's, so it is re-asked at the write.
+        guard !player.isPlaying else { return }
         timeline.setRegionTranspose(id: regionID, AudioTranspose.semitones(fromField: value))
     }
 }

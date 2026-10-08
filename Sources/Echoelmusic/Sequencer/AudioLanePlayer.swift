@@ -384,12 +384,18 @@ public final class AudioLanePlayer {
             // its warp chain NOW, at prime time, never mid-song (review HIGH 2).
             // #165 + AE-10b: a part whose pitch (track + part, `AudioTranspose.semitones(for:in:)`)
             // is not 0 plays through the same chain — asked PER PART, the question `start` asks.
+            // AE-10 review (MED): a PITCH-ONLY need asks for the chain only in the prime that
+            // STARTS playback (`mayRewire`). An Undo/Redo can change a part's pitch while the
+            // piece plays, and this prime (a structure edit) would otherwise attach a chain
+            // mid-song — the whole-engine pause of review HIGH 2. The sink plays such a part on
+            // its plain node until the next Play (`TimelineAudioSink.play`).
             var need: [URL: Bool] = [:]
             var order: [URL] = []
             for region in laneRegions {
                 guard let url = self.resolveURL(region.clipID) else { continue }
                 let pitched = AudioTranspose.semitones(for: region, in: doc) != 0
-                let warped = (region.warpEnabled && resolveNativeBPM(region.clipID) > 0) || pitched
+                let warped = (region.warpEnabled && resolveNativeBPM(region.clipID) > 0)
+                    || (pitched && mayRewire)
                 if let existing = need[url] {
                     need[url] = existing || warped
                 } else {

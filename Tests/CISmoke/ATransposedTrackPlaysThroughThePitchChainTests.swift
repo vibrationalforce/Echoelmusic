@@ -31,6 +31,11 @@
 // Claims 1–10 are unchanged and stay green: every part they build is at pitch 0, where the sum
 // IS the track's pitch. Stripper `SourceText.codeOnly` for claim 13: PROPHYLAKTISCH — 0 of its
 // 6 verdicts (3 needles × 2 trees) flip between raw and stripped text.
+// AE-10 review fix: claim 14 (END-TO-END, spy) and claim 15 (SOURCE, inside claim 8's method)
+// are REGRESSION guards against `c8069e1`, where a prime while playing asked `warped: true` for
+// a pitch-only part and `play` attached a missing chain unconditionally — the mid-song attach
+// an Undo could reach. Transcribed: the spy order by hand off `prime`/`start`; both needles
+// absent on `c8069e1`, present here.
 
 import Foundation
 import XCTest
@@ -229,6 +234,47 @@ final class ATransposedTrackPlaysThroughThePitchChainTests: XCTestCase {
                       "the sink must be handed the part's sum right before it plays")
     }
 
+    /// 14. AE-10 review (MED): a pitch ALONE asks for the chain only in the prime that STARTS
+    /// playback. A re-prime while the piece plays (a structure edit — an Undo that pitched a part)
+    /// must not ask, because attaching a chain then pauses the whole engine (review HIGH 2); the
+    /// sink plays the part unpitched until the next Play (claim 15). Counterweights: a WARPED
+    /// part still asks on every prime (its lazy attach is unchanged), and after a stop the next
+    /// start asks again.
+    func testOnlyTheStartingPrimeAsksForAPitchOnlyChain() {
+        func reprimed(part: Int, warped: Bool) -> (start: [Event], playing: [Event], restart: [Event]) {
+            let lane = TimelineLane(name: "Audio 1", kind: .audio)
+            let clipID = UUID()
+            let region = TimelineRegion(laneID: lane.id, clipID: clipID, startTick: 0,
+                                        lengthTicks: 4 * Self.bar, warpEnabled: warped,
+                                        transposeSemitones: part)
+            let doc = TimelineDocument(lanes: [lane], regions: [region])
+            let spy = Spy()
+            let url = URL(fileURLWithPath: "/tmp/loop.wav")
+            let player = AudioLanePlayer(makeSink: { spy },
+                                         resolveURL: { $0 == clipID ? url : nil },
+                                         resolveNativeBPM: { _ in 100 })
+            player.prime(in: doc, atTick: 0, bpm: 120)
+            let start = spy.events
+            spy.events = []
+            player.prime(in: doc, atTick: 0, bpm: 120)   // a structure edit while playing
+            let playing = spy.events
+            spy.events = []
+            player.stopAll()
+            player.prime(in: doc, atTick: 0, bpm: 120)   // the next Play
+            return (start, playing, spy.events)
+        }
+        let pitched = reprimed(part: 5, warped: false)
+        XCTAssertEqual(pitched.start, [.preload(warped: true), .transpose(5), .play],
+                       "the starting prime attaches the chain for a pitched part")
+        XCTAssertEqual(pitched.playing, [.preload(warped: false), .transpose(5), .play],
+                       "a prime while playing must not ask for a pitch-only chain — a mid-song attach pauses the engine")
+        XCTAssertEqual(pitched.restart, [.preload(warped: true), .transpose(5), .play],
+                       "after a stop the next start asks again")
+        let warpOnly = reprimed(part: 0, warped: true)
+        XCTAssertEqual(warpOnly.playing.first, .preload(warped: true),
+                       "a WARPED part keeps asking on every prime — this rule is about pitch alone")
+    }
+
     // MARK: - Source scans
 
     /// 8. The device sink decides the route through `AudioTranspose`, and the Beats shortcut
@@ -236,6 +282,14 @@ final class ATransposedTrackPlaysThroughThePitchChainTests: XCTestCase {
     func testTheSinkRoutesThroughTheDecision() throws {
         let sink = try code("Sources/Echoelmusic/Sequencer/TimelineAudioSink.swift")
         XCTAssertTrue(sink.contains("AudioTranspose.needsTimePitchChain("))
+        // 15. AE-10 review (MED): `play` never ATTACHES a chain needed only for a pitch — it uses
+        // one the starting prime attached, else the plain node — while a warped plan keeps its
+        // lazy attach. The coordinator half is claim 14.
+        XCTAssertTrue(sink.contains("let chain = stretch.rate != 1.0 ? ensureWarpChain(for: key) : warpChains[key] {"),
+                      "a pitch-only part reached mid-song would attach a chain and pause the engine")
+        let player = try code("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
+        XCTAssertTrue(player.contains("|| (pitched && mayRewire)"),
+                      "prime asks for a pitch-only chain only when it starts playback")
         XCTAssertTrue(sink.contains("AudioTranspose.nodePitchCents("))
         let beats = try XCTUnwrap(sink.range(of: "stretch.mode == .beats"),
                                   "ANCHOR MISSING: the Beats shortcut")

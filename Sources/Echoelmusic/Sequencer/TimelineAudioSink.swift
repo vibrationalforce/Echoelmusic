@@ -335,9 +335,15 @@ final class TimelineAudioSink: AudioRegionSink {
         // Slice B: rate ≠ 1.0 renders through the warp chain (rate 1.0 tape ≡
         // clean by design — tapePitchCents(1) = 0 — so the plain path is honest).
         // Unwarped playback stays on the plain node: bit-identical to pre-Slice-B.
+        // AE-10 review (MED): a chain needed ONLY for a pitch (rate 1) is never ATTACHED here —
+        // an attach pauses the whole engine, and mid-song (an Undo that pitched a part while the
+        // piece plays) that is an audible dropout. The starting prime attaches it
+        // (`AudioLanePlayer.prime`); without one the part plays on the plain node, unpitched,
+        // until the next Play — the Beats fallback's honesty. A WARPED plan keeps its lazy attach.
         let node: AVAudioPlayerNode
         if AudioTranspose.needsTimePitchChain(plan: stretch, semitones: transposeSemitones),
-           let key = knownURLs[url], let chain = ensureWarpChain(for: key) {
+           let key = knownURLs[url],
+           let chain = stretch.rate != 1.0 ? ensureWarpChain(for: key) : warpChains[key] {
             chain.timePitch.rate = Float(stretch.rate)
             chain.timePitch.pitch = AudioTranspose.nodePitchCents(plan: stretch,
                                                                   semitones: transposeSemitones)

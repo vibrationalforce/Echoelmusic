@@ -27,6 +27,9 @@
 //  ⚠️ CHANGES ONLY WHILE STOPPED. Turning pitch on for the first time needs the chain attached
 //  at PRIME time; attaching mid-song pauses the whole engine (`AudioLanePlayer.prime`, review
 //  HIGH 2). The Workstation disables the field while the song plays — the Warp switch's rule.
+//  A PART's pitch can still change mid-song through Undo/Redo; then nothing attaches a chain
+//  until the next Play (`AudioLanePlayer.prime` asks for a pitch-only chain only when it starts
+//  playback, `TimelineAudioSink.play` never attaches one) and the part plays unpitched meanwhile.
 //
 //  ⚠️ NOT PROMISED: sample-tight timing. The time-pitch node adds processing delay that the
 //  plain node does not, and nothing compensates it — the situation a warped part is in today.

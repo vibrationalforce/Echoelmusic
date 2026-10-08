@@ -248,7 +248,10 @@ final class TheNormalizedPartReachesFullScaleTests: XCTestCase {
                 """)
         }
 
-        let work = String(code[action.upperBound...])
+        // To the leaf's column-0 close, not the end of the file (#408) — a later part-bar field
+        // that wrote a part's gain would otherwise count as a second Normalize write.
+        let afterAction = code[action.upperBound...]
+        let work = String(afterAction[..<(afterAction.range(of: "\n}\n")?.lowerBound ?? afterAction.endIndex)])
         let steps = ["guard !normalizing,",
                      "ArrangeCanvas.audioWindow(for: region, clip: clipStore.clip(id: region.clipID),",
                      "bpm: player.preflightTempo)",

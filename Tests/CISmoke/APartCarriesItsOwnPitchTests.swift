@@ -175,6 +175,12 @@ final class APartCarriesItsOwnPitchTests: XCTestCase {
         XCTAssertTrue(commit.contains("timeline.setRegionTranspose(id: regionID, AudioTranspose.semitones(fromField: value))"),
                       "the release writes through the store's one writer and the field's one conversion")
         XCTAssertTrue(commit.contains("draft = nil"), "a commit clears its draft")
+        // AE-10 review (LOW): the playing rule is re-asked at the write — a drag recognised before
+        // `.disabled` took hold, or the keypad confirmed after Play, still reaches `commitPitch`.
+        let recheck = try XCTUnwrap(commit.range(of: "guard !player.isPlaying else { return }"),
+                                    "the commit no longer re-asks whether the piece plays")
+        let write = try XCTUnwrap(commit.range(of: "timeline.setRegionTranspose("))
+        XCTAssertLessThan(recheck.lowerBound, write.lowerBound, "the check comes before the write")
         let render = try XCTUnwrap(bracedBody(after: "var body: some View {", in: leaf), "ANCHOR MISSING: the leaf's body")
         XCTAssertFalse(render.contains("setRegionTranspose("), "the drag never writes — only the commit does")
         for needle in ["let playing = player.isPlaying", ".disabled(playing)", "range: AudioTranspose.fieldRange",
