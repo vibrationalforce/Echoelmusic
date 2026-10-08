@@ -62,6 +62,15 @@
 // queue, and an explicit `@Sendable` closure is non-isolated by construction. The repair is the
 // MIDIInput shape: `{ @Sendable [weak self] in Task { @MainActor [weak self] in … } }`.
 //
+// THE SIXTH SITE (GMMW P0-2, same day). `MetalBioRenderer.encodeBroadcastFrame` hands
+// `MTLCommandBuffer.addCompletedHandler` a closure literal. Metal calls it on its own completion
+// thread. The renderer is not spelled `@MainActor`. It conforms to `MTKViewDelegate`, and whether
+// the SDK isolates that protocol (and so the renderer) is not readable here. So the file-scoped
+// rule above cannot decide it, and claim 10 pins it OWNER-INDEPENDENTLY: every Metal command-buffer
+// handler literal in `Sources/` is spelled `@Sendable`. It is LATENT today. The handler runs only
+// while a broadcast stream is live, and HaishinKit is not linked. It is pinned before a frame tap
+// can revive it.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
@@ -151,6 +160,11 @@
 // reason (both assignments found, neither `@Sendable`) and green after. Claims 2 and 4–8 are
 // unchanged. No other file imports CoreHaptics. The rule's verdict on an assignment is a SPELLING
 // verdict: whether the parent's closures trapped on a device is not known (the ⛔ note above).
+// SIXTH MEASUREMENT (the Metal needle, claim 10), transcribed against the parent `6c499e0` and the
+// worktree. Claim 10 is RED on the parent for its NAMED reason, a REGRESSION: exactly one unmarked
+// handler, `Views/MetalBioView.swift` `addCompletedHandler`. It is GREEN after the fix. Its two
+// fixture rows are green on both trees. Claims 1–9 are unchanged: the file declares no
+// `@MainActor` class, so claim 1 never saw this site.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -174,6 +188,11 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let bioEngine = "Sources/Echoelmusic/Bio/EchoelBioEngine.swift"
     private static let healthWriter = "Sources/Echoelmusic/Bio/HealthKitWriter.swift"
     private static let hapticEngine = "Sources/Echoelmusic/Studio/HapticEngine.swift"
+    private static let metalView = "Sources/Echoelmusic/Views/MetalBioView.swift"
+
+    /// A closure literal handed to `MTLCommandBuffer.addCompletedHandler`/`addScheduledHandler`:
+    /// group 1 the API, group 2 the `@Sendable` attribute when the closure opens with it.
+    private static let metalHandler = #"\.(addCompletedHandler|addScheduledHandler)\s*\{\s*(@Sendable)?"#
     private static let mainQueueOwners = [
         "Sources/Echoelmusic/Sequencer/PatternEngine.swift",
         "Sources/Echoelmusic/Audio/MIDIOutput.swift",
@@ -703,6 +722,40 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(code.contains("isAutoShutdownEnabled = true"), """
             the idle shutdown is off — then the stopped handler fires only on a real stop. The \
             pin still holds, but this claim's message names the wrong trigger; re-derive it.
+            """)
+    }
+
+    /// 10 — every Metal command-buffer handler literal in `Sources/` is `@Sendable`, whatever its
+    /// owner's isolation: Metal calls it on its own thread, and the owner's isolation can come from
+    /// an SDK protocol (`MTKViewDelegate`) this scan cannot read.
+    func testEveryMetalCommandBufferHandlerIsSpelledSendable() throws {
+        let needle = try NSRegularExpression(pattern: Self.metalHandler)
+        func unmarked(_ code: String) -> [Int] {
+            let ns = code as NSString
+            return needle.matches(in: code, range: NSRange(location: 0, length: ns.length))
+                .filter { $0.range(at: 2).location == NSNotFound }
+                .map { ns.substring(to: $0.range.location).components(separatedBy: "\n").count }
+        }
+        let fixture = "buffer.addCompletedHandler { done in\n    tap.deliver(frame)\n}"
+        XCTAssertEqual(unmarked(fixture).count, 1, "an unmarked completion handler must be seen (#367)")
+        XCTAssertEqual(unmarked(fixture.replacingOccurrences(of: "{ done in", with: "{ @Sendable done in")).count, 0,
+                       "`@Sendable` is the repair; it must satisfy the needle")
+        var sites = 0
+        var violations: [String] = []
+        for (path, code) in try swiftSources() {
+            let ns = code as NSString
+            sites += needle.numberOfMatches(in: code, range: NSRange(location: 0, length: ns.length))
+            violations += unmarked(code).map { "\(path):\($0)" }
+        }
+        XCTAssertGreaterThanOrEqual(sites, 1, """
+            no Metal command-buffer handler literal in Sources/ — the broadcast frame tap in \
+            `\(Self.metalView)` moved behind a name; re-anchor before trusting this claim
+            """)
+        XCTAssertEqual(violations, [], """
+            a Metal command-buffer handler is not spelled `@Sendable`: \(violations). Metal calls it \
+            on its own completion thread; if its owner is MainActor-isolated (spelled, or inferred \
+            from an SDK protocol), an unmarked closure inherits that isolation and its entry check \
+            traps there — the 2613 shape.
             """)
     }
 

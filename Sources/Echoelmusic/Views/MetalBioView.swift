@@ -1848,7 +1848,11 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         let frame = BroadcastVideoFrame(pixelBuffer: made.pixelBuffer,
                                         hostTicks: mach_absolute_time(),
                                         metalTexture: made.cvTexture)
-        buffer.addCompletedHandler { completed in
+        // Metal calls this on its own completion thread, never main. `@Sendable` keeps the
+        // closure non-isolated whatever isolation the renderer infers from `MTKViewDelegate`
+        // (an SDK annotation not readable here). Both captures (`tap`, `frame`) are
+        // `@unchecked Sendable`. Guard: `TheOffMainDispatchHandlerIsSendableTests` claim 10.
+        buffer.addCompletedHandler { @Sendable completed in
             if completed.status == .completed {
                 tap.deliver(frame)
             } else {
