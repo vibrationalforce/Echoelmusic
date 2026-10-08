@@ -41,6 +41,17 @@
 //  `player.play(` caller) and `songCanStart` its one `canPlay` question, both handed in. The
 //  button reads `player.isPlaying` in its OWN body (twice per take), never in this bar's.
 //
+//  ⭐ W2 — AN AUDIO PART HAS ITS OWN LEVEL (audio editor, founder 2026-10-08: "Die klassische DAW
+//  Audio Editing View fehlt mir noch."). `TimelineRegion.gain` was played by `AudioLanePlayer`
+//  (the part's gain rides on its track's) and exported with it, but nothing could set it:
+//  `TimelineStore.setRegionGain` had no caller. `PartGainField` sets it — offered ONLY for a part
+//  on an audio track, because the MIDI player never reads a region's gain and a control that moves
+//  nothing is a lie (#164). It writes once, on release, through `setRegionGain`: one undo step
+//  per change, never one per drag step. The waveform on the canvas (W1) is drawn at the part's
+//  gain, so the change is seen as well as heard. Join refuses two halves of different level — the
+//  store's own `abuts` rule (CLIP-6) — so a re-levelled half rejoins only once the levels match.
+//  Its off label names the split, not the level: that sentence is not widened here.
+//
 
 import SwiftUI
 
@@ -107,6 +118,24 @@ enum PartSplit {
             if before != now { return false }
         }
         return true
+    }
+}
+
+/// The pure half of the part's own level (audio editor W2).
+enum PartGain {
+
+    /// The range the field offers — the store's own clamp (`TimelineStore.setRegionGain` and
+    /// `TimelineRegion`'s initialiser both clamp to 0…2), so the field never offers a value the
+    /// store would quietly change. `AnAudioPartHasItsOwnLevelTests` drives the store at both ends.
+    static let range: ClosedRange<Double> = 0...2
+
+    /// The part's own gain when it sits on an AUDIO track — the one kind whose player reads it —
+    /// else nil, and the bar offers no level. A part that is gone has none either.
+    nonisolated static func gain(of regionID: UUID, in document: TimelineDocument) -> Float? {
+        guard let region = document.regions.first(where: { $0.id == regionID }),
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .audio, !lane.isBio else { return nil }
+        return region.gain
     }
 }
 
@@ -239,6 +268,10 @@ struct SelectedPartBar: View {
                                    songCanStart: songCanStart)
                 }
                 PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
+                // W2: an audio part's own level, on top of its track's — nil for any other part.
+                if let gain = PartGain.gain(of: regionID, in: document) {
+                    PartGainField(regionID: regionID, gain: gain)
+                }
                 // Eight labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -520,5 +553,56 @@ private struct PartStartField: View {
         if let tick = TrackParts.startTick(forBar: bar, keeping: part) {
             TrackParts.move(part, toStartTick: tick, timeline: timeline)
         }
+    }
+}
+
+/// Audio editor W2 — the selected audio part's own level, on top of its track's level.
+///
+/// ⚠️ THE LEVEL IS WRITTEN ON COMMIT, NOT PER DRAG STEP — the `PartStartField` pattern above. A
+/// vertical-fader drag passes through a hundred values on the way; writing each would put a
+/// hundred undo steps on the song and re-render the canvas per step. The drag edits a draft; the
+/// release writes once through `TimelineStore.setRegionGain` (a no-op when unchanged), and the
+/// playing engine hears it within a step (`AudioLanePlayer`'s live mix reconcile reads it).
+///
+/// ⚠️ THE DRAFT IS CLEARED WHENEVER THE STORED LEVEL CHANGES — an undo, a redo, another surface —
+/// so the field never keeps showing a level the part no longer has.
+///
+/// The number is the linear gain the model stores (1.00 = the file as it is; a dimensionless value
+/// shows as a raw decimal, the UI law), with the decibel reading beside it by the track header's
+/// own rule (`TrackMix.decibelText`, #416).
+@MainActor
+private struct PartGainField: View {
+    let regionID: UUID
+    /// The part's stored gain — cold, per render.
+    let gain: Float
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        HStack(spacing: EchoelTheme.spaceS) {
+            EchoelValueField(label: "Part level",
+                             value: Binding(get: { shownGain }, set: { draft = $0 }),
+                             range: PartGain.range,
+                             decimals: 2,
+                             hint: String(localized: "This part's own level, on top of its track's level. 1.00 plays the file as it is."),
+                             standard: 1,
+                             onCommit: { commitGain() })
+            Text(TrackMix.decibelText(shownGain))
+                .font(EchoelTheme.font(11).monospacedDigit())
+                .foregroundStyle(EchoelTheme.dim)
+                .accessibilityLabel("Part level in decibels")
+                .accessibilityValue(TrackMix.decibelText(shownGain))
+        }
+        .onChange(of: gain) { _, _ in draft = nil }
+    }
+
+    private var shownGain: Double {
+        draft ?? Double(gain)
+    }
+
+    private func commitGain() {
+        guard let value = draft else { return }
+        draft = nil
+        timeline.setRegionGain(id: regionID, Float(value))
     }
 }

@@ -73,6 +73,18 @@
         }
       }
     },
+    "Part level" : {
+      "comment" : "Value-field label (audio editor W2, 2026-10-08): the selected audio part's own level on the part bar.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part level"
+          }
+        }
+      }
+    },
     "Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW." : {
       "comment" : "Onboarding, page 3 body (#618: names Play, camera light, strap — the first act). Replaced the 'Breathe, lock a key…' key; its orphaned entry left with it (#618b).",
       "extractionState" : "manual",
@@ -3069,6 +3081,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parameter"
+          }
+        }
+      }
+    },
+    "Part level in decibels" : {
+      "comment" : "Spoken label of the part bar's decibel reading beside \"Part level\" (audio editor W2, 2026-10-08).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part level in decibels"
           }
         }
       }
@@ -13729,6 +13753,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A channel with no reading hands the engine a neutral 0.50 on purpose, so the instrument keeps playing its patch instead of jumping to the bottom of the scale. A channel marked held is the last measurement: the engine still has it, the signal has stopped arriving."
+          }
+        }
+      }
+    },
+    "This part's own level, on top of its track's level. 1.00 plays the file as it is." : {
+      "comment" : "VoiceOver hint of the part bar's \"Part level\" field (audio editor W2, 2026-10-08).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This part's own level, on top of its track's level. 1.00 plays the file as it is."
           }
         }
       }
