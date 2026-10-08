@@ -11071,6 +11071,36 @@
         }
       }
     },
+    "Join next" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join next"
+          }
+        }
+      }
+    },
+    "Join the selected part with the part that starts where it ends, as before a split; one undo step" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join the selected part with the part that starts where it ends, as before a split; one undo step"
+          }
+        }
+      }
+    },
+    "Join is off here: no part starts where this one ends, or the next part is not the other half of a split" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join is off here: no part starts where this one ends, or the next part is not the other half of a split"
+          }
+        }
+      }
+    },
     "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp." : {
       "localizations" : {
         "en" : {

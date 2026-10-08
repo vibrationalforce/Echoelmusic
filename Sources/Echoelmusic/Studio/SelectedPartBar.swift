@@ -200,8 +200,11 @@ struct SelectedPartBar: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
-    /// ⚠️ READ ONLY INSIDE THE SPLIT AND TRIM-START HANDLERS — `preflightTempo` is `@ObservationIgnored` and
-    /// the clip grid is not this bar's to observe.
+    /// ⚠️ READ ONLY INSIDE THE SPLIT, TRIM-START AND JOIN HANDLERS — plus ONE read in the body for Join's
+    /// enabled state: `preflightTempo` is `@ObservationIgnored`, so that read registers nothing and may go
+    /// stale, which is immaterial there (only a legacy part without a tick twin depends on the tempo at
+    /// all — `TimelineRegion.abuts` — and the handler re-reads before the store writes). The clip grid is
+    /// not this bar's to observe: `clipStore.clip(id:)` stays inside the handlers.
     @Environment(TimelineRegionPlayer.self) private var player
     @Environment(ClipStore.self) private var clipStore
 
@@ -224,6 +227,9 @@ struct SelectedPartBar: View {
                                                                 in: document) } ?? false
             let trims = Trims(start: PartTrim.startTrim(part, in: document),
                               endLength: PartTrim.endTrim(part, in: document))
+            // Join is the inverse of Split: the store's own `abuts` decides (same lane, same clip, media
+            // contiguous, same gain/warp), so a lit button here is one the store will act on.
+            let joinable = timeline.canMergeRegionWithNext(id: regionID, bpm: player.preflightTempo)
             VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
                 HStack(spacing: EchoelTheme.spaceS) {
                     Text(String(localized: "Selected part · ") + title)
@@ -233,18 +239,18 @@ struct SelectedPartBar: View {
                                    songCanStart: songCanStart)
                 }
                 PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
-                // Seven labelled buttons do not fit a phone at every type size (review
+                // Eight labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
                 ViewThatFits(in: .horizontal) {
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                              trims: trims, showsTitles: true)
+                              joinable: joinable, trims: trims, showsTitles: true)
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                              trims: trims, showsTitles: false)
+                              joinable: joinable, trims: trims, showsTitles: false)
                     VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
                         moveRow(part, showsTitles: false)
                         editRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                                trims: trims, showsTitles: false)
+                                joinable: joinable, trims: trims, showsTitles: false)
                     }
                 }
                 // Review of 75d27e615 (LOW): a refused Split said why only to VoiceOver — a
@@ -264,11 +270,11 @@ struct SelectedPartBar: View {
     }
 
     private func actionRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
-                           trims: Trims, showsTitles: Bool) -> some View {
+                           joinable: Bool, trims: Trims, showsTitles: Bool) -> some View {
         HStack(spacing: EchoelTheme.spaceS) {
             moveRow(part, showsTitles: showsTitles)
-            editRow(part, regionID: regionID, cut: cut, splittable: splittable, trims: trims,
-                    showsTitles: showsTitles)
+            editRow(part, regionID: regionID, cut: cut, splittable: splittable, joinable: joinable,
+                    trims: trims, showsTitles: showsTitles)
         }
     }
 
@@ -287,7 +293,7 @@ struct SelectedPartBar: View {
     }
 
     private func editRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
-                         trims: Trims, showsTitles: Bool) -> some View {
+                         joinable: Bool, trims: Trims, showsTitles: Bool) -> some View {
         HStack(spacing: EchoelTheme.spaceS) {
             button("Trim start", "arrow.right.to.line", enabled: trims.start != nil,
                    showsTitle: showsTitles, label: trimStartLabel(trims.start)) {
@@ -302,6 +308,10 @@ struct SelectedPartBar: View {
             button("Split", "scissors", enabled: splittable, showsTitle: showsTitles,
                    label: splitLabel(cut: cut, splittable: splittable)) {
                 if splittable, let cut { split(regionID, at: cut) }
+            }
+            button("Join next", "arrow.triangle.merge", enabled: joinable, showsTitle: showsTitles,
+                   label: joinLabel(joinable)) {
+                if joinable { join(regionID) }
             }
             button("Copy", "plus.square.on.square", enabled: true, showsTitle: showsTitles,
                    label: String(localized: "Copy the selected part to right after it")) {
@@ -334,6 +344,25 @@ struct SelectedPartBar: View {
             return String(localized: "Splitting here would change which overlapping part plays")
         }
         return String(localized: "Split the selected part at ") + SessionGrid.label(forTick: cut)
+    }
+
+    private func joinLabel(_ joinable: Bool) -> String {
+        joinable
+            ? String(localized: "Join the selected part with the part that starts where it ends, as before a split; one undo step")
+            : String(localized: "Join is off here: no part starts where this one ends, or the next part is not the other half of a split")
+    }
+
+    /// Join is the inverse of Split and asks the same tempo (`PartSplit.mediaBPM`, #416). The store
+    /// re-checks `abuts` with it before writing, so a part whose other half was trimmed or mixed
+    /// differently is refused there — never joined lossily here. One history step (`snapshotForUndo`).
+    private func join(_ regionID: UUID) {
+        guard let region = timeline.document.regions.first(where: { $0.id == regionID }),
+              let bpm = PartSplit.mediaBPM(for: region, clip: clipStore.clip(id: region.clipID),
+                                           projectBPM: player.preflightTempo) else {
+            log.log(.info, category: .audio, "Join refused: no usable song tempo")
+            return
+        }
+        timeline.mergeRegionWithNext(id: regionID, bpm: bpm)
     }
 
     private func split(_ regionID: UUID, at tick: Int) {
