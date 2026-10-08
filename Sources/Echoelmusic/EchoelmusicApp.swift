@@ -1597,6 +1597,9 @@ struct EchoelmusicApp: App {
 
                 log.log(.info, category: .system, "STARTUP [4/4] Core ready — instrument live")
                 EchoelCrashLog.breadcrumb("startup 4/4: core ready — instrument live")
+                // SH-9 — from here on a utility-queue watch writes a `main:` line when the main
+                // queue stops answering, while it lasts (a watchdog kill leaves no other trace).
+                MainThreadWatchdog.shared.start()
 
                 // SH-1 (GMMW, 2026-10-08) — THE CONFIRM NO LONGER HAPPENS HERE. It stood at this
                 // line, after the risky graph build and engine start but BEFORE the deferred
@@ -1728,6 +1731,8 @@ struct EchoelmusicApp: App {
                     // shut (deliberate stop wins) while MIDI out still deserves its
                     // retry; the call is a guarded no-op in every healthy state.
                     midiOut.rearmIfDead()
+                    // SH-9 — the watch runs again; a no-op until `startup 4/4` armed it.
+                    MainThreadWatchdog.shared.resume()
                 case .background:
                     wasBackgrounded = true
                     // SH-1 — the launch survived into its first background: confirm it now, so a
@@ -1736,6 +1741,8 @@ struct EchoelmusicApp: App {
                     // was already 0 there before SH-1). A no-op once confirmed, and in Safe Mode or
                     // onboarding, where this handler is not attached.
                     confirmSteadyLaunch(trigger: "first background")
+                    // SH-9 — a suspended process would read as one long stall.
+                    MainThreadWatchdog.shared.pause(reason: "background")
                     // App-Group-Puls-Brücke (2026-07-17): bioFeedback deliberately
                     // KEEPS publishing in the background — the bridge's headline
                     // scenario is the HOST (GarageBand/AUM) in the foreground with
