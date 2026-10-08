@@ -498,6 +498,7 @@ struct SelectedPartBar: View {
                     Text(String(localized: "Selected part · ") + title)
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
                     Spacer(minLength: 8)
+                    focusButton
                     PartPlayButton(startTick: part.startTick, playFrom: playFrom,
                                    songCanStart: songCanStart)
                 }
@@ -546,6 +547,22 @@ struct SelectedPartBar: View {
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
             }
+        }
+    }
+
+    /// GMMW AE-3b — Focus: the selected part's editors take the Arrange plate
+    /// (`WorkstationSelection.editorFocused`, AE-3a), and back. A button, not a double-tap: a
+    /// double-tap would delay every single tap that selects a part. The ONE writer of focus — it
+    /// stays in reach in focus, because the part bar is what focus keeps. The selection ends focus
+    /// with the track.
+    private var focusButton: some View {
+        let focused = selection.editorFocused
+        return button(focused ? "Show all" : "Focus",
+                      focused ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
+                      enabled: true, showsTitle: true,
+                      label: focused ? String(localized: "Show the whole arrangement again")
+                                     : String(localized: "Show only the selected part and its track's editors")) {
+            selection.setEditorFocused(!selection.editorFocused)
         }
     }
 

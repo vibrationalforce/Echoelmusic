@@ -217,6 +217,54 @@
         }
       }
     },
+    "Focus" : {
+      "comment" : "Title of the part bar's Focus button (GMMW AE-3b, 2026-10-08): the selected part's editors take the Arrange plate.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus"
+          }
+        }
+      }
+    },
+    "Show all" : {
+      "comment" : "Title of the part bar's Focus button while focus is on (GMMW AE-3b): the whole arrangement comes back.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show all"
+          }
+        }
+      }
+    },
+    "Show only the selected part and its track's editors" : {
+      "comment" : "VoiceOver label of the part bar's Focus button (GMMW AE-3b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show only the selected part and its track's editors"
+          }
+        }
+      }
+    },
+    "Show the whole arrangement again" : {
+      "comment" : "VoiceOver label of the part bar's Focus button while focus is on (GMMW AE-3b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the whole arrangement again"
+          }
+        }
+      }
+    },
     "At playhead" : {
       "comment" : "Title of the part bar's second Split button (GMMW AE-9, 2026-10-08): it cuts the selected part where the playhead is — the ruler's line while stopped, the step sounding now while playing.",
       "extractionState" : "manual",

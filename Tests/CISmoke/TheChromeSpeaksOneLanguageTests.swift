@@ -723,7 +723,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         // E4-16 — the selected-part bar: titles as keys, every VoiceOver sentence localised at its caller
         let bar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(bar.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,"),
-                      "the selected-part bar's button takes a String title again — its nine titles would spell verbatim")
+                      "the selected-part bar's button takes a String title again — its titles would spell verbatim")
         for head in ["Trim the selected part so it starts at ", "Trim the selected part so it ends at ", "Split the selected part at ",
                      "Split the selected part at the playhead, "] {
             XCTAssertTrue(bar.contains("String(localized: \"\(head)\")"), "the sentence `\(head)…` is spelled verbatim again — its head is a key, the bar label is appended")
@@ -743,7 +743,10 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           // GMMW AE-9 — the second Split, at the playhead
                           "At playhead", "Split the selected part at the playhead, ",
                           "The playhead is not inside this part. Tap the ruler above the tracks to move it",
-                          "No bar line falls inside this part. Use Split, or cut while the piece plays"],
+                          "No bar line falls inside this part. Use Split, or cut while the piece plays",
+                          // GMMW AE-3b — Focus
+                          "Focus", "Show all", "Show only the selected part and its track's editors",
+                          "Show the whole arrangement again"],
                          "selected-part bar words")
         // E4-17 — the note editor: titles as keys; every VoiceOver sentence head + spoken scope + tail; the grid words
         let editor = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")

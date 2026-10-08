@@ -17,20 +17,22 @@
 //    importer) and gains none; in focus the canvas, the guide, the song line, the other tracks,
 //    the side-by-side column and the scene launcher step aside, while the part bar, the open
 //    track's head and detail and the pinned transport stay. The flag is never persisted.
-// 4. SOURCE (FORWARD to AE-3b): no production writer yet — the part bar's Focus button arrives
-//    next and will be the only one; this claim is flipped in that commit (#364).
+// 4. SOURCE (AE-3b): the part bar's Focus button is the ONE production writer — it toggles the
+//    flag as it is at the tap, wears the bar's own tool button, and sits in the heading row,
+//    which focus keeps on screen (the way out is never hidden by the thing it undoes).
 //
 // Grading (§0/§3, no Swift toolchain). `editorFocused`, `setEditorFocused` and `focusShown` do
-// not exist on the parent (`c96d884`), so this file does not compile there — one absence (#486),
-// every claim a FORWARD guard. Claims 1–2 transcribed into Python (the selection's state machine
+// not exist on `c96d884`, so this file does not compile there — one absence (#486), every claim a
+// FORWARD guard. Claim 4 was "no writer yet" in AE-3a (`3781017`) and is flipped by AE-3b; on
+// `3781017` its new form is red for exactly that reason (no `focusButton`) — a FORWARD guard. Claims 1–2 transcribed into Python (the selection's state machine
 // and the pure predicate); claim 3's scans driven against both trees — its counterweights (one
 // importer, one canvas, one inspector, the pinned transport, no `UserDefaults`/`Codable` in the
 // owner) are green on both.
 // NOT covered: that the focused plate reads well on glass, that VoiceOver finds its way out, and
 // that rotating with focus on keeps the chosen detail page — device probes.
-// NEEDS-FOUNDER-VERIFY (after AE-3b's button): select a part, tap Focus → the canvas, the guide and
+// NEEDS-FOUNDER-VERIFY: select a part, tap Focus → the canvas, the guide and
 // the other tracks go; the part bar, the track's head and its detail fill the screen, the transport
-// stays at the bottom. Tap Focus again, pick another track, or switch to Mixer → the full plate.
+// stays at the bottom; the button now reads "Show all". Tap it, or switch to Mixer → the full plate.
 
 import Foundation
 import XCTest
@@ -168,9 +170,9 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
                       "the transport stays pinned in focus")
     }
 
-    // MARK: 4 — no writer yet (FORWARD to AE-3b)
+    // MARK: 4 — the part bar's Focus button is the ONE writer (AE-3b)
 
-    func testTheFlagHasNoProductionWriterYet() throws {
+    func testThePartBarsFocusButtonIsTheOnlyWriter() throws {
         let root = repoRoot().appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(atPath: root.path) else {
             return XCTFail("cannot enumerate Sources/Echoelmusic — a scan that saw nothing is not a pass")
@@ -184,10 +186,23 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
             if SourceText.codeOnly(text).contains(".setEditorFocused(") { writers.append(relative) }
         }
         XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
-        XCTAssertEqual(writers, [], """
-            focus has a production writer — AE-3b adds the part bar's Focus button as the ONLY one; \
-            flip this claim to name it in that commit
-            """)
+        XCTAssertEqual(writers, ["Studio/SelectedPartBar.swift"], "one door turns focus on and off: the part bar's")
+
+        let bar = try source("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        XCTAssertEqual(bar.components(separatedBy: ".setEditorFocused(").count - 1, 1, "…and it writes once")
+        let button = try member("private var focusButton: some View {", in: bar)
+        XCTAssertTrue(button.contains("selection.setEditorFocused(!selection.editorFocused)"),
+                      "the button toggles the flag as it is at the tap")
+        XCTAssertTrue(button.contains("return button(focused ? \"Show all\" : \"Focus\","),
+                      "it wears the bar's own tool button and says what a tap will do")
+        guard let header = bar.range(of: "Text(String(localized: \"Selected part · \") + title)"),
+              let mount = bar.range(of: "focusButton\n"),
+              let play = bar.range(of: "PartPlayButton(startTick: part.startTick, playFrom: playFrom,") else {
+            return XCTFail("ANCHOR MISSING: the part bar's heading, its Focus mount or its Play (#454)")
+        }
+        XCTAssertTrue(header.upperBound < mount.lowerBound && mount.upperBound <= play.lowerBound,
+                      "Focus sits in the heading row, before Play — the row focus keeps on screen")
+        XCTAssertEqual(bar.components(separatedBy: "focusButton\n").count - 1, 1, "mounted once")
     }
 
     // MARK: helpers
