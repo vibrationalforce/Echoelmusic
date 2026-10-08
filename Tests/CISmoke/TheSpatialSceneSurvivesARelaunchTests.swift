@@ -27,6 +27,16 @@
 //  rebuild (a working copy never leaks into another piece) and claim 2 (a plain `init()` reads
 //  and writes no disk, so every other test of the store stays in memory).
 //
+//  CLAIM 5 (2026-10-08, the GMMW crash-class lens): a place READ BACK is clamped like a place
+//  set in code. END-TO-END on the shipped value type: decode `{"azimuth":720,"elevation":-200,
+//  "distance":3}` and expect the clamped (180, -90, 1); counterweight: an in-range place
+//  round-trips unchanged and keeps its three keys. GRADING (transcribed by reading the
+//  synthesized decoder against the new one): RED on the parent for its named reason — the
+//  synthesized decoder assigned the stored lets directly, so the three values came back as
+//  written; the counterweight is green on both. The lens's first reading ("a persisted NaN
+//  reaches AVAudio3DPoint") is REFUTED and stated here so it is not re-derived: JSON has no NaN
+//  and the default decoding strategy throws on one.
+//
 //  `Tests/CISmoke` is the blocking bundle.
 
 import Foundation
@@ -111,6 +121,27 @@ final class TheSpatialSceneSurvivesARelaunchTests: XCTestCase {
             The write is no longer debounced to one pending task. An ADM-OSC controller moves \
             objects at its full send rate; a main-actor task per move starves the UI (10.76.48).
             """)
+    }
+
+    // MARK: 5 — a place read back is clamped like a place set in code
+
+    func testADecodedPlaceIsClampedLikeAConstructedOne() throws {
+        let wild = Data(#"{"azimuth":720,"elevation":-200,"distance":3}"#.utf8)
+        let decoded = try JSONDecoder().decode(SpatialPosition.self, from: wild)
+        XCTAssertEqual(decoded, SpatialPosition(azimuth: 720, elevation: -200, distance: 3),
+                       "decoding must go through the clamping init, like every other construction")
+        XCTAssertEqual(decoded.azimuth, 180)
+        XCTAssertEqual(decoded.elevation, -90)
+        XCTAssertEqual(decoded.distance, 1)
+
+        // COUNTERWEIGHT: an in-range place round-trips unchanged, under the same three keys.
+        let place = SpatialPosition(azimuth: -45, elevation: 10, distance: 0.5)
+        let encoded = try JSONEncoder().encode(place)
+        XCTAssertEqual(try JSONDecoder().decode(SpatialPosition.self, from: encoded), place)
+        let object = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] ?? [:]
+        let keys: Set<String> = Set(object.keys)
+        XCTAssertEqual(keys, ["azimuth", "elevation", "distance"],
+                       "the encoded keys are the stored names — a saved scene from an older build must still decode")
     }
 
     // MARK: - helpers

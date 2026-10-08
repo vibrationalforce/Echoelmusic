@@ -44,6 +44,19 @@ public struct SpatialPosition: Codable, Sendable, Equatable, Hashable {
         self.distance  = distance.isFinite  ? min(max(distance, 0), 1)     : 0
     }
 
+    /// Decoding goes through the clamping init, so a scene read back from disk or from a peer
+    /// keeps the promise in this type's doc. ⛔ Until 2026-10-08 the SYNTHESIZED decoder assigned
+    /// the three stored lets directly: JSON cannot deliver a NaN here (the default
+    /// `nonConformingFloatDecodingStrategy` throws), but it delivered 720° or a distance of 3
+    /// without complaint, straight past the clamp every other construction goes through.
+    /// Encoding stays synthesized — the keys are the property names either way.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(azimuth: try c.decode(Float.self, forKey: .azimuth),
+                  elevation: try c.decode(Float.self, forKey: .elevation),
+                  distance: try c.decode(Float.self, forKey: .distance))
+    }
+
     public static let front = SpatialPosition(azimuth: 0, elevation: 0, distance: 1)
 
     /// Derived ADM cartesian (x right, y front, z up), unit-scaled by distance.
