@@ -15,6 +15,15 @@
 //     click mid-phrase). Now: the window is snapped back to the last downbeat via
 //     PatternEngine.lastBarStartAt.
 //   • Both paths add a ~4 ms edge micro-fade against residual seam ticks.
+//
+// ⭐ GMMW SH-5 (2026-10-08) — THE TAKE SPEAKS IN THE DIAG LOG. Every entry point walks the
+// `take` ladder: `take 1/2` stands before the recording opens (or the ring is copied),
+// `take 2/2` before it closes, and an unnumbered `take OK` / `SKIPPED` / `FAILED` / `REFUSED`
+// says how it ended — so silence after a rung is the call that rung stands before. The
+// retroactive path has no recording to close: it writes `take 1/2` and then its outcome, the
+// `start` ladder's shape. The WAV writer that follows walks its own `export` ladder
+// (`SingleExport.export`). The 2613/2618 logs ended at `transport play` with nothing after.
+// Guard: `TheExportSpeaksInTheDiagLogTests`.
 
 import Foundation
 
@@ -245,16 +254,24 @@ public final class LoopExporter {
     /// exact bar-aligned loop. Returns the file URL on success.
     @discardableResult
     public func exportWav(engine: AudioEngine, beatPlayer: BeatPlayer, bars: Int, targetLUFS: Float?) async -> URL? {
-        guard status != .capturing, status != .rendering else { return nil }
+        guard status != .capturing, status != .rendering else {
+            EchoelCrashLog.breadcrumb("take REFUSED: loop — an export is already running")
+            return nil
+        }
 
         let bpm = beatPlayer.pattern.tempo
         let calc = StudioCalculator(bpm: bpm)
         let seconds = calc.loopSeconds(bars: max(1, bars))
-        guard seconds > 0 else { status = .failed(String(localized: "Invalid loop length")); return nil }
+        guard seconds > 0 else {
+            EchoelCrashLog.breadcrumb("take REFUSED: loop — invalid length")
+            status = .failed(String(localized: "Invalid loop length"))
+            return nil
+        }
         // The floating window's WAV button drives the SAME recorder. `startRecording` would
         // no-op on it, and this take would then close — or abort and delete — the user's own
         // recording as if it were the loop. Refuse instead, with the reason.
         guard !engine.retroCapture.isRecording else {
+            EchoelCrashLog.breadcrumb("take REFUSED: loop — another recording is running")
             status = .failed(String(localized: "Another recording is running"))
             return nil
         }
@@ -264,6 +281,7 @@ public final class LoopExporter {
         captureIsAbortable = true
         status = .capturing
         beatPlayer.pattern.stop()
+        EchoelCrashLog.breadcrumb("take 1/2: loop — start recording, \(bars) bars")
         engine.retroCapture.startRecording(preRoll: 0)
         beatPlayer.pattern.play(cause: .loopExport)
 
@@ -276,6 +294,7 @@ public final class LoopExporter {
         captureIsAbortable = false      // past the abortable phase either way
         if !completed {
             await abortCapture(engine: engine, beatPlayer: beatPlayer)
+            EchoelCrashLog.breadcrumb("take SKIPPED: loop — cancelled, nothing kept")
             return nil
         }
 
@@ -286,6 +305,7 @@ public final class LoopExporter {
 
         // Same guarded path as the abort — this site had the identical hang, reachable
         // whenever `startRecording` failed silently, only after the whole take had elapsed.
+        EchoelCrashLog.breadcrumb("take 2/2: loop — close the recording")
         let cafURL = await finishRecording(engine)
         guard let cafURL else {
             // `finishRecording` may already have set a SPECIFIC reason (the tap stopped
@@ -293,8 +313,10 @@ public final class LoopExporter {
             // failed" tells the user nothing they can act on, "could not be written to
             // disk" tells them to free space.
             if case .failed = status {} else { status = .failed(String(localized: "Capture failed")) }
+            EchoelCrashLog.breadcrumb("take FAILED: loop — no recording to close or it did not reach disk")
             return nil
         }
+        EchoelCrashLog.breadcrumb("take OK — loop recording closed")
 
         // 3. Trim to the exact bar-aligned loop, normalise ONLY that window, write .wav.
         return await renderTrimmed(engine: engine, sourceURL: cafURL,
@@ -307,17 +329,25 @@ public final class LoopExporter {
     /// Returns the file URL on success.
     @discardableResult
     public func exportRecentLoop(engine: AudioEngine, beatPlayer: BeatPlayer, bars: Int, targetLUFS: Float?) async -> URL? {
-        guard status != .capturing, status != .rendering else { return nil }
+        guard status != .capturing, status != .rendering else {
+            EchoelCrashLog.breadcrumb("take REFUSED: recent — an export is already running")
+            return nil
+        }
 
         let bpm = beatPlayer.pattern.tempo
         let calc = StudioCalculator(bpm: bpm)
         let seconds = calc.loopSeconds(bars: max(1, bars))
-        guard seconds > 0 else { status = .failed(String(localized: "Invalid loop length")); return nil }
+        guard seconds > 0 else {
+            EchoelCrashLog.breadcrumb("take REFUSED: recent — invalid length")
+            status = .failed(String(localized: "Invalid loop length"))
+            return nil
+        }
         guard Self.canKeepLast(bars: bars, bpm: bpm) else {
             // The ring only holds ~30 s of history — an honest limit beats a
             // silently truncated, unloopable file. Since #200 the UI asks the SAME
             // function before enabling the button, so this guard is the backstop
             // (tempo can drift between render and tap), not the first line of defence.
+            EchoelCrashLog.breadcrumb("take REFUSED: recent — longer than the ring holds")
             status = .failed(Self.tooLongMessage(bars: bars, bpm: bpm))
             return nil
         }
@@ -331,12 +361,15 @@ public final class LoopExporter {
             : 0
         let window = min(seconds + ago, Self.retroRingSeconds)
         let effectiveAgo = max(0, window - seconds)
+        EchoelCrashLog.breadcrumb("take 1/2: recent — copy the ring, \(bars) bars")
         guard let cafURL = engine.retroCapture.captureRecent(seconds: window) else {
             // Wording deliberately not "Nothing to capture yet": it is rendered as
             // "<reason>. Nothing was saved." and read "Nothing … nothing".
             status = .failed(String(localized: "The capture buffer is empty"))
+            EchoelCrashLog.breadcrumb("take FAILED: recent — the ring is empty")
             return nil
         }
+        EchoelCrashLog.breadcrumb("take OK — recent ring copied")
 
         // 2. Trim to the exact bar-aligned loop + normalise (same path as planned).
         return await renderTrimmed(engine: engine, sourceURL: cafURL,
@@ -389,10 +422,14 @@ public final class LoopExporter {
     public func exportPiece(engine: AudioEngine, beatPlayer: BeatPlayer,
                             player: TimelineRegionPlayer, start: @MainActor () -> Void,
                             fileName: String, targetLUFS: Float?) async -> URL? {
-        guard status != .capturing, status != .rendering, !pieceTakeInFlight else { return nil }
+        guard status != .capturing, status != .rendering, !pieceTakeInFlight else {
+            EchoelCrashLog.breadcrumb("take REFUSED: piece — an export is already running")
+            return nil
+        }
         // The floating window's WAV take shares this recorder (see `exportWav`). For a piece
         // the hole is worse — it would stay open for the whole song.
         guard !engine.retroCapture.isRecording else {
+            EchoelCrashLog.breadcrumb("take REFUSED: piece — another recording is running")
             lastPieceFailure = String(localized: "Another recording is running")
             return nil
         }
@@ -410,12 +447,14 @@ public final class LoopExporter {
         let wasLooping = player.loopEnabled
         player.loopEnabled = false
         defer { player.loopEnabled = wasLooping }
+        EchoelCrashLog.breadcrumb("take 1/2: piece — start recording")
         engine.retroCapture.startRecording(preRoll: 0)
         guard engine.retroCapture.isRecording else {
             // `startRecording` failed silently (format, file). Say so NOW, not after the
             // whole piece has played for nothing.
             captureIsAbortable = false
             status = .failed(String(localized: "Capture failed"))
+            EchoelCrashLog.breadcrumb("take FAILED: piece — the recording did not open")
             return nil
         }
         start()
@@ -424,6 +463,7 @@ public final class LoopExporter {
             captureIsAbortable = false
             await abortCapture(engine: engine, beatPlayer: beatPlayer)
             status = .failed(String(localized: "The piece has nothing to play"))
+            EchoelCrashLog.breadcrumb("take FAILED: piece — nothing to play")
             return nil
         }
 
@@ -438,17 +478,27 @@ public final class LoopExporter {
         guard outcome == .reachedEnd else {
             player.stop()
             await abortCapture(engine: engine, beatPlayer: beatPlayer)
+            let ending: String
             if outcome == .tooLong {
                 status = .failed(String(localized: "The piece is longer than one hour"))
+                ending = "take FAILED: piece — longer than one hour"
+            } else if outcome == .stopped {
+                ending = "take SKIPPED: piece — stopped before its end"
+            } else {
+                ending = "take SKIPPED: piece — cancelled"
             }
+            EchoelCrashLog.breadcrumb(ending)
             return nil
         }
 
         // 3. Close the take (same guarded path as the loop) and write the whole of it.
+        EchoelCrashLog.breadcrumb("take 2/2: piece — close the recording")
         guard let cafURL = await finishRecording(engine) else {
             if case .failed = status {} else { status = .failed(String(localized: "Capture failed")) }
+            EchoelCrashLog.breadcrumb("take FAILED: piece — no recording to close or it did not reach disk")
             return nil
         }
+        EchoelCrashLog.breadcrumb("take OK — piece recording closed")
         guard let url = await renderTrimmed(engine: engine, sourceURL: cafURL,
                                             loopSeconds: nil, fromEnd: 0, targetLUFS: targetLUFS) else {
             return nil

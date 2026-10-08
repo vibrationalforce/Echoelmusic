@@ -1348,13 +1348,26 @@ struct FloatingVisualWindow: View {
         if wavRecording {
             wavRecording = false
             wavRecordStart = nil
+            // GMMW SH-5: the live take walks the same `take` ladder as the studio exports.
+            // `stopRecording` never calls back when nothing is recording, so say so here
+            // rather than leave `take 2/2` unanswered in the log.
+            guard audioEngine.retroCapture.isRecording else {
+                EchoelCrashLog.breadcrumb("take FAILED: live — the recording never opened")
+                return
+            }
+            EchoelCrashLog.breadcrumb("take 2/2: live — close the recording")
             audioEngine.retroCapture.stopRecording { url in
+                EchoelCrashLog.breadcrumb("take OK — live recording closed")
                 Task { @MainActor in await exportWav(from: url) }
             }
         } else {
             // A studio export (LoopExporter) also drives RetroCapture's live file; if one is
             // mid-capture, don't start a second (it would no-op in RetroCapture anyway).
-            guard !audioEngine.retroCapture.isRecording else { return }
+            guard !audioEngine.retroCapture.isRecording else {
+                EchoelCrashLog.breadcrumb("take REFUSED: live — another recording is running")
+                return
+            }
+            EchoelCrashLog.breadcrumb("take 1/2: live — start recording")
             audioEngine.retroCapture.startRecording(preRoll: 0)   // live from NOW, arbitrary length
             wavRecording = true
             wavRecordStart = Date()

@@ -13,6 +13,13 @@ import Observation
 ///   exporter.targetLUFS = -14        // or nil to skip normalisation entirely
 ///   await exporter.export(sourceURL: cafURL)
 ///   let url = exporter.exportState.exportedURL
+///
+/// ⭐ GMMW SH-5 (2026-10-08): every export walks the `export` ladder in the diag log — `1/4`
+/// read the take, `2/4` measure loudness, `3/4` render, `4/4` finish the file (written on the
+/// export queue, before `markAsFinished`) — and ends with `export OK` or `export FAILED:`.
+/// Every caller passes through here, so every entry point walks from 1/4. `export OK` is a
+/// success word, so `scripts/diag-ladder.py` reads a run that stops after `4/4` without it as
+/// a death inside the finish. Guard: `TheExportSpeaksInTheDiagLogTests`.
 @MainActor @Observable
 final class SingleExport {
 
@@ -194,13 +201,18 @@ final class SingleExport {
     }
 
     func export(sourceURL: URL) async {
-        guard exportState == .idle else { return }
+        guard exportState == .idle else {
+            EchoelCrashLog.breadcrumb("export REFUSED: the writer is not idle")
+            return
+        }
         exportState = .analyzing
         log.log(.info, category: .audio, "SingleExport: analyzing \(sourceURL.lastPathComponent)")
 
         do {
+            EchoelCrashLog.breadcrumb("export 1/4: read the take — \(sourceURL.lastPathComponent)")
             let outputURL = try makeOutputURL(sourceURL: sourceURL)
             let timeRange = try await resolveTrimRange(sourceURL: sourceURL)
+            EchoelCrashLog.breadcrumb("export 2/4: measure loudness")
             let levels = try await measureExportLevels(sourceURL: sourceURL, timeRange: timeRange)
             let requestedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.integratedLUFS)
             let safeGain = Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)
@@ -210,12 +222,16 @@ final class SingleExport {
             let gainText = "gain \(String(format: "%.1f", safeGain))dB (requested \(String(format: "%.1f", requestedGain))dB)"
             log.log(.info, category: .audio, "SingleExport: integrated \(loudnessText), \(gainText) → \(outputFormat.label)")
 
+            EchoelCrashLog.breadcrumb(
+                "export 3/4: render \(outputFormat.fileExtension), gain \(String(format: "%.1f", safeGain)) dB")
             try await renderWithGain(sourceURL: sourceURL, outputURL: outputURL,
                                      gainDB: safeGain, timeRange: timeRange)
             exportState = .done(outputURL)
+            EchoelCrashLog.breadcrumb("export OK — \(outputURL.lastPathComponent)")
             log.log(.info, category: .audio, "SingleExport complete → \(outputURL.lastPathComponent)")
         } catch {
             exportState = .error(error.localizedDescription)
+            EchoelCrashLog.breadcrumb("export FAILED: \(error.localizedDescription)")
             log.log(.error, category: .audio, "SingleExport failed: \(error.localizedDescription)")
         }
     }
@@ -412,6 +428,7 @@ final class SingleExport {
             writerInputRef.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) { @Sendable in
                 while writerInputRef.isReadyForMoreMediaData {
                     guard let sampleBuffer = readerOutputRef.copyNextSampleBuffer() else {
+                        EchoelCrashLog.breadcrumb("export 4/4: finish the file — \(counters.framesWritten) frames")
                         writerInputRef.markAsFinished()
                         writerRef.finishWriting { continuation.resume() }
                         return
