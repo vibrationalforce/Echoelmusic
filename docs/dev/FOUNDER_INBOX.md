@@ -182,6 +182,8 @@ den Läufen, Gerät unbestätigt) — wird beim nächsten Deploy zu Familien geb
 
 ## §3 · Founder-gated Befunde — berichten, nicht editieren
 
+- **2026-10-08 Sicherheits-Audit:** acht Entfernen-Befunde sind umgesetzt, sechs Festziehen-Punkte auch; **neun Punkte sind deine** (Workflow-Pins per Commit-SHA, XcodeGen-Prüfsumme, Trigger von `community-triage.yml`, Fastfile-Zertifikatslogik, PAT widerrufen + Secret Scanning, Drive-Datei privat, gstack-Konfiguration auf dem Mac, `_headers`-Prüfung, Info.plist-Kommentar). Liste mit Datei:Zeile: `docs/dev/SECURITY_AUDIT_2026-10-08.md`.
+
 Drei Pfade darf keine Sitzung ändern (`.claude/rules/context.md` §3, Hook seit 2026-09-28):
 `.github/workflows/**`, `project.yml`, `Resources/iOS/Info.plist` (`.deploy/release` ist seit
 2026-10-01 frei, „Nur Deploy frei“). Dazu Dinge, die nur das Apple-Konto des Founders kann. Was dort
