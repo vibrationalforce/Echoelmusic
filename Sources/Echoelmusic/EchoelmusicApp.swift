@@ -50,6 +50,19 @@ private func scenePhaseName(_ phase: ScenePhase) -> String {
 @main
 struct EchoelmusicApp: App {
 
+    /// ⭐ SH-2 (GMMW, 2026-10-08) — THE CRASH NET IS UP BEFORE THE FIRST STORE. This must stay
+    /// the FIRST stored property of this type. Swift evaluates stored-property initial values
+    /// in declaration order, before any statement of `init()`, so every `@State … = X()`
+    /// default below — stores among them, some of which decode from disk — used to run with
+    /// the diag log closed and the launch counter unmoved: a constructor crash there wrote
+    /// nothing and never raised the counter Safe Mode reads. Declared first, its initializer
+    /// opens the log, installs the signal handlers and counts the launch before any of them.
+    /// The value is always `true` and nothing reads it; the property exists for its ORDER.
+    /// ⚠️ LIMIT: this adds the log and the count, not recovery — Safe Mode constructs the same
+    /// defaults, so a constructor crash still repeats (that is SH-11). Guard:
+    /// `TheCrashNetIsUpBeforeTheStoresTests`.
+    private let crashNetRaised: Bool = EchoelmusicApp.raiseCrashNet()
+
     @State private var audioEngine: AudioEngine
     @State private var store: EchoelStore
     @State private var beatPlayer: BeatPlayer
@@ -309,7 +322,10 @@ struct EchoelmusicApp: App {
     /// confirms only once `LaunchGuard.inactiveConfirmFloorSeconds` have passed since then.
     @State private var deferredStartsIssuedAt: ContinuousClock.Instant?
 
-    init() {
+    /// SH-2 — the crash net, raised by `crashNetRaised`, the first stored property, so it runs
+    /// before every stored default and before `init()`. Called from that one initializer and
+    /// nowhere else: a second call would truncate the diag log and count the launch twice.
+    private static func raiseCrashNet() -> Bool {
         EchoelCrashLog.begin()   // diagnostics first: capture any crash from here on
         // Self-healing crash-loop guard: record this launch. If the previous one(s)
         // crashed before becoming healthy, `body` boots into Safe Mode instead of
@@ -337,6 +353,13 @@ struct EchoelmusicApp: App {
             EchoelCrashLog.breadcrumb(
                 "LaunchGuard: normal launch — unconfirmed streak \(LaunchGuard.unconfirmedCount)")
         }
+        return true
+    }
+
+    init() {
+        // SH-2 — `EchoelCrashLog.begin()` and `LaunchGuard.beginLaunch()` stood here as this
+        // initializer's first two statements, AFTER every stored default had already run. They
+        // now run from `crashNetRaised`, the first stored property (see `raiseCrashNet()`).
         log.log(.info, category: .system, "APP INIT [start] — constructing engines (no audio I/O here)")
         // ⭐ #580 — REGISTERED FLAG DEFAULTS MUST EXIST BEFORE ANY VIEW CAN READ THEM, AND
         // UNTIL NOW THEY DID NOT. These three lived in the startup `.task` below. That is

@@ -186,10 +186,11 @@ enum AudioConfiguration {
         // UNNUMBERED line, which is the honest half of the same law: announcing a step that
         // did not happen is a lie; announcing that it was skipped is not.
         //
-        // ⭐ Measured, not assumed: `EchoelCrashLog.begin()` is the FIRST statement of the
-        // app's `init()`, and `prepareGraph()` (the launch caller of this function) runs
-        // post-UI from the startup task — so the four launch rungs are always after the
-        // sink is open. `breadcrumb` is a silent no-op while the fd is closed, so an
+        // ⭐ Measured, not assumed: `EchoelCrashLog.begin()` runs from the app's FIRST stored
+        // property, before every stored default and before `init()` (SH-2; until 2026-10-08 it
+        // was the first statement of `init()`), and `prepareGraph()` (the launch caller of
+        // this function) runs post-UI from the startup task — so the four launch rungs are
+        // always after the sink is open. `breadcrumb` is a silent no-op while the fd is closed, so an
         // inverted order would delete them with nothing going red.
         EchoelCrashLog.breadcrumb(
             "session: configure 1/4 — setCategory("
@@ -751,8 +752,8 @@ enum AudioConfiguration {
         // lowering" → this returns in silence → the session stays on `.playAndRecord` with
         // NOBODY holding it. That is the founder-visible A2DP→HFP degradation plus the
         // silence — the same defect one guard below. And it said the log sink was "moot"
-        // here, which is simply unrelated: the sink is opened by `EchoelCrashLog.begin()` in
-        // the app's `init()`, long before any of this.
+        // here, which is simply unrelated: the sink is opened by `EchoelCrashLog.begin()` from
+        // the app's first stored property (SH-2), long before any of this.
         guard isSessionConfigured else {
             // ⚠️ #907 REVIEW — THE WORDING SAYS "left as-is" BECAUSE THIS ONE IS NOT A NO-OP.
             // The two category guards below/above really do find nothing to do. This one can

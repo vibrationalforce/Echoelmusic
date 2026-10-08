@@ -12,7 +12,8 @@
 //  no allocation games, no risky types — so the guard itself can never be the
 //  thing that crashes. Mechanism:
 //
-//    • `beginLaunch()`  (called first thing in app init) increments a persisted
+//    • `beginLaunch()`  (called from the app's FIRST stored property, before every
+//      stored default and before `init()` — SH-2) increments a persisted
 //      "unconfirmed launches" counter and flushes it synchronously.
 //    • `confirmHealthy()` (called once the studio has stayed in the foreground for
 //      `steadyConfirmSeconds` after its deferred starts, or at its first background)
@@ -60,7 +61,8 @@ enum LaunchGuard {
 
     /// Record that a launch has started. Increments the unconfirmed-launch counter,
     /// flushes it to disk immediately (a crash moments later must not lose it), and
-    /// freezes the Safe-Mode decision for this process. Call FIRST in app init.
+    /// freezes the Safe-Mode decision for this process. Called from the app's FIRST stored
+    /// property (`EchoelmusicApp.raiseCrashNet()`, SH-2), before every stored default.
     static func beginLaunch() {
         let d = UserDefaults.standard
         let next = d.integer(forKey: countKey) + 1
