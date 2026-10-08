@@ -7,9 +7,10 @@
 //  strip a few points tall, cut to the stretch the part plays. Every DAW's audio editor shows
 //  the WHOLE file with the part's window marked on it, so a person can see what the part leaves
 //  out before and after, where the hits are, and where the song is in the file. This is that
-//  view, on the selected track's Part page, above the part list. READ-ONLY in this slice: the
-//  edge, fade and slip handles are AE-4b, AE-5 and AE-6, and each will call the pure rules that
-//  already exist (`PartTrim`, `FadeEnvelope`) rather than a lookalike.
+//  view, on the selected track's Part page, above the part list. It was read-only in AE-2. Since
+//  AE-4b its two window edges are handles (`AudioPartEdgeHandles`, below) that ask the trim
+//  rules that already exist (`PartTrim`) rather than a lookalike; the fade, gain and slip
+//  handles are AE-5 and AE-6.
 //
 //  ⭐ NO NEW TRUTH (#416). The part's window is `ArrangeCanvas.audioWindow` — the player's own
 //  file position and stretch rate, the stretch the canvas block draws. The file is read by
@@ -58,6 +59,10 @@ enum AudioPartEditor {
         let name: String
         /// The file's length measured at import, or nil for a clip from before that measurement.
         let fileSeconds: Double?
+        /// The tempo the part's MEDIA elapses at (`PartSplit.mediaBPM`): the song tempo for an
+        /// unwarped part, divided by the stretch rate for a warped one. A tick of the part is this
+        /// many seconds of the file, so an edge handle converts a slide to ticks at this tempo.
+        let mediaBPM: Double?
     }
 
     /// How far the file read has got.
@@ -85,7 +90,8 @@ enum AudioPartEditor {
         guard let window = ArrangeCanvas.audioWindow(for: region, clip: clip, bpm: bpm) else { return nil }
         let measured = clip?.nativeDurationSeconds.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
         return Subject(regionID: region.id, partStartTick: region.startTick, lengthTicks: region.lengthTicks,
-                       window: window, name: ArrangeCanvas.partName(clip), fileSeconds: measured)
+                       window: window, name: ArrangeCanvas.partName(clip), fileSeconds: measured,
+                       mediaBPM: PartSplit.mediaBPM(for: region, clip: clip, projectBPM: bpm))
     }
 
     /// The file's length to draw against: the measured one, else the overview's own once read
@@ -148,6 +154,198 @@ enum AudioPartEditor {
         guard value.isFinite else { return "–" }
         return value.formatted(.number.precision(.fractionLength(2)))
     }
+
+    // MARK: AE-4b — the two edges a hold-and-slide moves
+
+    /// Which edge of the part a handle moves.
+    enum Edge: Equatable, Sendable {
+        case start
+        case end
+    }
+
+    /// A slide in progress: which edge, and how far the finger has gone, in points.
+    struct EdgeDrag: Equatable, Sendable {
+        let edge: Edge
+        let points: Double
+    }
+
+    /// What a released slide writes: ONE store call, the one each edge already has.
+    enum EdgeEdit: Equatable, Sendable {
+        /// `TimelineStore.trimRegionStart(id:toTick:bpm:)` — the start moves, the file under it
+        /// stays where it was in the song.
+        case start(tick: Int)
+        /// `TimelineStore.resizeRegion(id:lengthTicks:)` — the end moves.
+        case end(lengthTicks: Int)
+    }
+
+    /// The smallest touch area a handle has: the platform's 44-pt target.
+    nonisolated static let handleHitPoints: Double = 44
+
+    /// The zoom `PartTrim.snapUnit` reads, for an editor that draws a whole file of
+    /// `fileSeconds` over `widthPoints`: how many touch targets one bar spans. A beat is a quarter
+    /// of a bar and a transport step a quarter of a beat, so the rule's two thresholds (4 and 16)
+    /// pick the finest grid whose cell is at least one target wide — a handle never snaps to a
+    /// line a finger cannot tell from its neighbour. nil for unusable input.
+    nonisolated static func snapZoom(widthPoints: Double, fileSeconds: Double, mediaBPM: Double) -> Double? {
+        guard widthPoints.isFinite, widthPoints > 0, fileSeconds.isFinite, fileSeconds > 0,
+              mediaBPM.isFinite, mediaBPM > 0 else { return nil }
+        let barSeconds = TimelineTime.seconds(fromTicks: TimelineTime.ticksPerBar, bpm: mediaBPM)
+        let zoom = widthPoints / fileSeconds * barSeconds / handleHitPoints
+        return zoom.isFinite && zoom > 0 ? zoom : nil
+    }
+
+    /// The song tick an edge sits at after a slide, before the snap: the edge's own tick plus the
+    /// file seconds the slide covers on a pane that draws the whole file, at the tempo the part's
+    /// media elapses at. nil for unusable input.
+    nonisolated static func draggedTick(from edgeTick: Int, dragPoints: Double, widthPoints: Double,
+                                        fileSeconds: Double, mediaBPM: Double) -> Int? {
+        guard dragPoints.isFinite, widthPoints.isFinite, widthPoints > 0, fileSeconds.isFinite,
+              fileSeconds > 0, mediaBPM.isFinite, mediaBPM > 0 else { return nil }
+        let seconds = dragPoints / widthPoints * fileSeconds
+        let (tick, overflow) = edgeTick.addingReportingOverflow(TimelineTime.ticks(fromSeconds: seconds, bpm: mediaBPM))
+        return overflow ? nil : tick
+    }
+
+    /// The edit a slide of `dragPoints` on edge `edge` makes, or nil when it makes none. This is
+    /// the ONE function the handle asks — for its preview while the finger moves and for the
+    /// write on release — so the edge lands where its preview sat.
+    ///
+    /// The grid is `PartTrim.snapUnit` at this pane's `snapZoom`; nothing else picks a grid. Then,
+    /// per direction, the rule that already exists:
+    /// · INWARD (either edge) — the snapped tick, kept inside the part, must pass
+    ///   `PartTrim.onlyLetsGo`, the rule the part bar's Trim buttons ask. Refused otherwise.
+    /// · OUTWARD START — the snapped tick is held at the first grid line at or after the file's
+    ///   start (`TimelineRegion.trimmedStart`'s own floor, asked with tick 0), and must pass
+    ///   `PartTrim.keepsWhoPlays`. ⚠️ Refused otherwise, NOT walked back: moving a start changes
+    ///   which overlapping part starts later, and a tie goes to the later placement, so a start one
+    ///   bar back can take a bar from a neighbour while a start two bars back passes under it.
+    ///   Legality is not monotone in the distance, and a search would land somewhere the finger
+    ///   never pointed.
+    /// · OUTWARD END — the farthest grid line up to the snapped tick that passes BOTH
+    ///   `PartTrim.keepsWhoPlays` and `PartTrim.endFitsMedia`, found by halving. That search is
+    ///   sound because the start does not move: who wins a newly covered tick does not depend on
+    ///   how far the end goes, and a longer part only reaches further into its file, so a legal
+    ///   end stays legal when it is pulled back. What the search finds in practice is the file's
+    ///   end. A neighbour never makes it stop short: a part that starts LATER keeps playing over
+    ///   the extended end (the later start wins), and a part that started EARLIER and still plays
+    ///   past this end would lose its bars to the very first grid line, so that slide is refused.
+    nonisolated static func edgeEdit(_ edge: Edge, dragPoints: Double, widthPoints: Double,
+                                     region: TimelineRegion, in document: TimelineDocument,
+                                     fileSeconds: Double, mediaBPM: Double) -> EdgeEdit? {
+        guard document.regions.contains(where: { $0.id == region.id }), region.lengthTicks > 0,
+              let zoom = snapZoom(widthPoints: widthPoints, fileSeconds: fileSeconds, mediaBPM: mediaBPM),
+              let proposed = draggedTick(from: edge == .start ? region.startTick : region.endTick,
+                                         dragPoints: dragPoints, widthPoints: widthPoints,
+                                         fileSeconds: fileSeconds, mediaBPM: mediaBPM),
+              // A tick past the tick domain's ceiling is a corrupt part, not an edge to snap.
+              Double(proposed).magnitude <= TimelineTime.tickMagnitudeCeiling else { return nil }
+        let unit = PartTrim.snapUnit(zoom: zoom)
+        guard unit > 0 else { return nil }
+        let snapped = Int((Double(proposed) / Double(unit)).rounded()) * unit
+        let start = region.startTick
+        let end = region.endTick
+        switch edge {
+        case .start:
+            if snapped > start {
+                // Inward: the start may not reach the end — the last grid line before it at most.
+                let tick = Swift.min(snapped, floorGrid(end - 1, unit))
+                guard tick > start,
+                      let trimmed = region.trimmedStart(toTick: tick, bpm: mediaBPM), trimmed.startTick == tick,
+                      PartTrim.onlyLetsGo(trimmed, replacing: region.id, in: document) else { return nil }
+                return .start(tick: tick)
+            }
+            // Outward: no further back than the file's start, on the grid.
+            let floor = region.trimmedStart(toTick: 0, bpm: mediaBPM)?.startTick ?? start
+            let tick = Swift.max(snapped, ceilGrid(floor, unit))
+            guard tick < start,
+                  let extended = region.trimmedStart(toTick: tick, bpm: mediaBPM), extended.startTick == tick,
+                  PartTrim.keepsWhoPlays(extending: extended, replacing: region.id, in: document) else { return nil }
+            return .start(tick: tick)
+        case .end:
+            if snapped < end {
+                // Inward: the end may not reach the start — the first grid line after it at least.
+                let tick = Swift.max(snapped, floorGrid(start, unit) + unit)
+                guard tick < end else { return nil }
+                var cut = region
+                cut.lengthTicks = tick - start
+                guard PartTrim.onlyLetsGo(cut, replacing: region.id, in: document) else { return nil }
+                return .end(lengthTicks: cut.lengthTicks)
+            }
+            // Outward: the grid lines after the end, up to the snapped tick; the farthest legal one.
+            let nearest = floorGrid(end, unit) + unit
+            guard snapped >= nearest else { return nil }
+            let count = (snapped - nearest) / unit + 1
+            func extended(_ index: Int) -> TimelineRegion {
+                var longer = region
+                longer.lengthTicks = nearest + index * unit - start
+                return longer
+            }
+            func legal(_ index: Int) -> Bool {
+                let longer = extended(index)
+                return PartTrim.keepsWhoPlays(extending: longer, replacing: region.id, in: document)
+                    && PartTrim.endFitsMedia(longer, mediaSeconds: fileSeconds, mediaBPM: mediaBPM)
+            }
+            guard legal(0) else { return nil }
+            var low = 0            // legal
+            var high = count - 1   // the farthest candidate
+            while low < high {
+                let middle = (low + high + 1) / 2
+                if legal(middle) { low = middle } else { high = middle - 1 }
+            }
+            return .end(lengthTicks: extended(low).lengthTicks)
+        }
+    }
+
+    /// The grid line at or before `tick` (floor division, so a negative tick rounds down too).
+    private nonisolated static func floorGrid(_ tick: Int, _ unit: Int) -> Int {
+        let quotient = tick / unit
+        return (tick % unit != 0 && tick < 0 ? quotient - 1 : quotient) * unit
+    }
+
+    /// The grid line at or after `tick`.
+    private nonisolated static func ceilGrid(_ tick: Int, _ unit: Int) -> Int {
+        let line = floorGrid(tick, unit)
+        return line == tick ? line : line + unit
+    }
+
+    /// Where an edit leaves its edge on the file, 0…1 — the preview line's place. A start edit
+    /// keeps the file under the song where it was, so the new start sits as many file seconds
+    /// before or after the window's start as the edge moved ticks, at the media tempo.
+    nonisolated static func edgeFraction(_ edit: EdgeEdit, region: TimelineRegion,
+                                         window: ArrangeCanvas.AudioWindow, fileSeconds: Double,
+                                         mediaBPM: Double) -> Double? {
+        guard fileSeconds.isFinite, fileSeconds > 0, mediaBPM.isFinite, mediaBPM > 0,
+              window.fromSeconds.isFinite else { return nil }
+        let ticks: Int
+        switch edit {
+        case .start(let tick): ticks = tick - region.startTick
+        case .end(let lengthTicks): ticks = lengthTicks
+        }
+        let fraction = (window.fromSeconds + TimelineTime.seconds(fromTicks: ticks, bpm: mediaBPM)) / fileSeconds
+        return fraction.isFinite ? fraction.clamped(to: 0...1) : nil
+    }
+
+    /// The two handles' touch areas on a pane `width` wide, as x ranges: each `handleHitPoints`
+    /// wide and centred on its edge where there is room; pushed apart when the window is narrower
+    /// than a target, so the two never share a point; and kept inside the pane, whose clip would
+    /// otherwise cut a handle at the file's first or last second. nil for a pane narrower than
+    /// two targets or unusable input.
+    nonisolated static func handleFrames(startX: Double, endX: Double,
+                                         width: Double) -> (start: ClosedRange<Double>, end: ClosedRange<Double>)? {
+        let hit = handleHitPoints
+        guard startX.isFinite, endX.isFinite, width.isFinite, width >= 2 * hit, startX <= endX else { return nil }
+        var startLeft = startX - hit / 2
+        var endLeft = endX - hit / 2
+        if startLeft + hit > endLeft {
+            let middle = (startX + endX) / 2
+            startLeft = middle - hit
+            endLeft = middle
+        }
+        startLeft = Swift.max(startLeft, 0)
+        endLeft = Swift.min(Swift.max(endLeft, startLeft + hit), width - hit)
+        startLeft = Swift.min(startLeft, endLeft - hit)
+        return (startLeft...(startLeft + hit), endLeft...(endLeft + hit))
+    }
 }
 
 /// The audio part editor: the selected audio part's whole file, its window bright and the rest
@@ -170,7 +368,7 @@ struct AudioPartEditorView: View {
            let subject = AudioPartEditor.subject(for: region, clip: clipStore.clip(id: region.clipID),
                                                  bpm: player.preflightTempo) {
             // The track's own hue, as its blocks on the canvas draw it.
-            AudioPartEditorPane(subject: subject,
+            AudioPartEditorPane(subject: subject, region: region, document: document,
                                 tint: EchoelTheme.TrackHue.of(kind: lane.kind, instrument: lane.builtinInstrument,
                                                               isBio: lane.isBio).color)
         }
@@ -182,6 +380,10 @@ struct AudioPartEditorView: View {
 private struct AudioPartEditorPane: View {
 
     let subject: AudioPartEditor.Subject
+    /// The part and the arrangement it sits in — handed to the edge handles alone, which ask the
+    /// trim rules of both (AE-4b).
+    let region: TimelineRegion
+    let document: TimelineDocument
     let tint: Color
 
     @State private var load: AudioPartEditor.Load = .reading
@@ -202,6 +404,10 @@ private struct AudioPartEditorPane: View {
                 AudioPartFileWave(subject: subject, load: load, fileSeconds: total, tint: tint)
                 if let total {
                     AudioPartPlayheadView(subject: subject, fileSeconds: total)
+                }
+                if let total, let mediaBPM = subject.mediaBPM, case .ready = load {
+                    AudioPartEdgeHandles(subject: subject, region: region, document: document,
+                                         fileSeconds: total, mediaBPM: mediaBPM)
                 }
             }
             .frame(minHeight: 72)
@@ -298,6 +504,125 @@ private struct AudioPartFileWave: View {
     private static let hairline: CGFloat = 0.5
     /// The file outside the part's window: present, but plainly not what the part plays.
     private static let dimOpacity: Double = 0.25
+}
+
+/// The window's two edge handles (AE-4b). Hold, then slide: the edge follows the finger on the
+/// grid `PartTrim.snapUnit` picks for this file's scale, a line shows where it will land, and
+/// releasing writes ONCE — `trimRegionStart` for the start, `resizeRegion` for the end, each one
+/// Undo step. The preview and the write ask the same `AudioPartEditor.edgeEdit`, so the edge lands
+/// where its line sat; a slide the rules refuse shows the finger's place in the dim hue and
+/// writes nothing.
+///
+/// ⭐ THE FINGER-RATE STATE LIVES HERE. `drag` is `@GestureState` — it resets itself when the
+/// slide ends or a scroll takes it over — and only this leaf redraws while the finger moves; the
+/// pane, its wave and the Part page above it do not. Nothing here reads the song position.
+/// Hidden from VoiceOver like the rest of the pane: the part bar's Trim buttons are the
+/// accessible way to move an edge, on the same rules.
+private struct AudioPartEdgeHandles: View {
+
+    @Environment(TimelineStore.self) private var timeline
+
+    let subject: AudioPartEditor.Subject
+    let region: TimelineRegion
+    let document: TimelineDocument
+    let fileSeconds: Double
+    let mediaBPM: Double
+
+    @GestureState private var drag: AudioPartEditor.EdgeDrag? = nil
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = Double(geometry.size.width)
+            let height = geometry.size.height
+            if let span = AudioPartEditor.span(of: subject.window, fileSeconds: fileSeconds),
+               let frames = AudioPartEditor.handleFrames(startX: span.lowerBound * width,
+                                                        endX: span.upperBound * width, width: width) {
+                ZStack(alignment: .topLeading) {
+                    handle(.start, frame: frames.start, width: width, height: height)
+                    handle(.end, frame: frames.end, width: width, height: height)
+                    if let drag {
+                        preview(drag, span: span, width: width, height: height)
+                    }
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    /// One handle: a touch area a full target wide and as tall as the wave, with a short grip
+    /// on the edge itself so the person can see there is something to hold.
+    private func handle(_ edge: AudioPartEditor.Edge, frame: ClosedRange<Double>,
+                        width: Double, height: CGFloat) -> some View {
+        let hit = CGFloat(frame.upperBound - frame.lowerBound)
+        return ZStack {
+            Color.clear
+            RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                .fill(EchoelTheme.borderStrong)
+                .frame(width: Self.gripWidth, height: Swift.min(Self.gripHeight, height))
+        }
+        .frame(width: hit, height: height)
+        .contentShape(Rectangle())
+        .offset(x: CGFloat(frame.lowerBound))
+        .gesture(slide(edge, width: width))
+    }
+
+    /// Where the edge will land — or, when the rules refuse, where the finger is.
+    @ViewBuilder
+    private func preview(_ drag: AudioPartEditor.EdgeDrag, span: ClosedRange<Double>,
+                         width: Double, height: CGFloat) -> some View {
+        if let landing = edit(drag.edge, points: drag.points, width: width),
+           let fraction = AudioPartEditor.edgeFraction(landing, region: region, window: subject.window,
+                                                       fileSeconds: fileSeconds, mediaBPM: mediaBPM) {
+            Rectangle()
+                .fill(EchoelTheme.accent)
+                .frame(width: Self.landingWidth, height: height)
+                .offset(x: CGFloat(fraction * width) - Self.landingWidth / 2)
+                .allowsHitTesting(false)
+        } else {
+            let edgeX = (drag.edge == .start ? span.lowerBound : span.upperBound) * width
+            Rectangle()
+                .fill(EchoelTheme.dim)
+                .frame(width: Self.refusedWidth, height: height)
+                .offset(x: CGFloat((edgeX + drag.points).clamped(to: 0...width)))
+                .allowsHitTesting(false)
+        }
+    }
+
+    /// Hold first, then slide — so a swipe that starts on the wave still scrolls the page (the
+    /// Arrange canvas's hold-and-slide, the same 0.3 s). Nothing is written until release.
+    private func slide(_ edge: AudioPartEditor.Edge, width: Double) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.3)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($drag) { value, state, _ in
+                if case .second(true, let slide?) = value {
+                    state = AudioPartEditor.EdgeDrag(edge: edge, points: Double(slide.translation.width))
+                }
+            }
+            .onEnded { value in
+                guard case .second(true, let slide?) = value,
+                      let change = edit(edge, points: Double(slide.translation.width), width: width) else { return }
+                switch change {
+                case .start(let tick):
+                    timeline.trimRegionStart(id: region.id, toTick: tick, bpm: mediaBPM)
+                case .end(let lengthTicks):
+                    timeline.resizeRegion(id: region.id, lengthTicks: lengthTicks)
+                }
+            }
+    }
+
+    /// The one question both the preview and the release ask.
+    private func edit(_ edge: AudioPartEditor.Edge, points: Double, width: Double) -> AudioPartEditor.EdgeEdit? {
+        AudioPartEditor.edgeEdit(edge, dragPoints: points, widthPoints: width, region: region, in: document,
+                                 fileSeconds: fileSeconds, mediaBPM: mediaBPM)
+    }
+
+    /// The grip drawn on each edge: thin, and short enough to leave the wave readable.
+    private static let gripWidth: CGFloat = 4
+    private static let gripHeight: CGFloat = 24
+    /// The landing line, as wide as the playhead's accent plus one point so the two read apart.
+    private static let landingWidth: CGFloat = 2
+    /// The refused slide's line: the finger's place, quiet.
+    private static let refusedWidth: CGFloat = 1
 }
 
 /// The song position on the file. The ONLY reader of `currentTick` in this file: it self-drives

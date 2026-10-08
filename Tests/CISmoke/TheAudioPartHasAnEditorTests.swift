@@ -4,7 +4,8 @@
 //
 // WHAT THIS GUARDS. `AudioPartEditorView` mounts on the selected track's Part page, above the
 // part list, and draws the selected AUDIO part's whole file: the stretch the part plays bright,
-// the rest dimmed, the song's position as a line. It is read-only in this slice.
+// the rest dimmed, the song's position as a line. It was read-only in AE-2; AE-4b's edge handles
+// are pinned in `ThePartEdgeMovesOnTheGridItCanPlayTests`.
 //
 // THE CLAIMS.
 //   1–5. END-TO-END BEHAVIOUR over the pure half (`AudioPartEditor`), on shipped value types:

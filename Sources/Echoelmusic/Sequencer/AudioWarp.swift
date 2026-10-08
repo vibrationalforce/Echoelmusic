@@ -30,9 +30,10 @@
 // song tempo, the useful property: a warped 4-bar loop spans 4 bars at any tempo, including
 // a flow tempo that follows the body. Outside that range the rate is clamped and the span
 // follows the clamped rate instead.
-// ⚠️ ONLY A WHOLE-FILE PART IS RESIZED (content offset 0). Nothing in this build can trim a
-// part, but an older build's editor could, and a trimmed window is an authored length this
-// switch must not overwrite: it keeps its length and changes only its rate.
+// ⚠️ ONLY A WHOLE-FILE PART IS RESIZED (content offset 0). A part can be trimmed — by the part
+// bar's Trim buttons, by the audio editor's edge handles (GMMW AE-4b), or by an older build's
+// editor — and a trimmed window is an authored length this switch must not overwrite: it keeps
+// its length and changes only its rate.
 //
 // ⛔ WHAT IT DOES NOT DO. It never touches the session tempo, never moves a part, never
 // writes a clip, and never changes `stretchMode` — choosing between the algorithms is a
