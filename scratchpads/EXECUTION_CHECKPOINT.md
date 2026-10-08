@@ -3,6 +3,15 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
+CURRENT (2026-10-08e): TestFlight 10.79.493 = Build 2618 LANDED — run 37720389441: Preflight · Compile Check · iOS
+  (Archive, Export & Upload, 'Verify build landed in App Store Connect') · Summary all success, 02:57–03:09Z. Branch tip
+  a7ba877 (bump c145e74 + log). Run Tests on 5877811 (job 113124015073): #396 shape, exit 65, 161 passing / 0 failures /
+  0 skips IN THE tail-200 WINDOW (1818 s gap); the ratchet `TheSpacingSitsOnTheScaleTests` (all 3) and the J1 guard (all 5)
+  passed in the window; the S8 guard is not in the window (#445, compiled by Build for Testing). Nothing red anywhere.
+  WAITING ON THE FOUNDER: Standard mode (or Weg B) for P3 #310 → P1 E10-1 → P2 B2, then bumps 10.79.494 / 10.79.495,
+  then docs truth-up #6 (FEATURE_STATUS row 25 and FOUNDER_INBOX §2 still say 10.79.492/2617 inside P1 — on purpose,
+  the patch must keep applying). No self check-in armed: no external state left to poll. main = bc4fc5205.
+HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-08d): branch tip = c145e74 = bump 10.79.493 (J1 link row + Join next), PUSHED 02:57Z; TestFlight run
   37720389441 (#2618) queued — read its conclusion + Summary. Gate basis 5877811: Compile Check 37719540528 success,
   CI/CD 37719540511 Build for Testing success; its Run Tests (job 113124015073) still running — read the window for the
@@ -10,7 +19,6 @@ CURRENT (2026-10-08d): branch tip = c145e74 = bump 10.79.493 (J1 link row + Join
   passed, S8 guard not in the window (#445). New tool: `python3 scripts/doctor.py --section E` (spacing ratchet, 4981632).
   Landing kit unchanged, re-verified on the bump tip; next bumps are 10.79.494 (E10-1) and 10.79.495 (B2) — runbook
   updated. Still BLOCKED by auto mode for the three gated commits. main = bc4fc5205.
-HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-08c): branch tip = 5877811 (fix: the J1 row's gap is `EchoelTheme.spaceXS`; the parent sat exactly on the
   spacing ratchet's ceiling 696 and 0ecd593 pushed it to 697 — `TheSpacingSitsOnTheScaleTests.testTheLiteralGapsOnlyFall`
   was the ONE named failure on 7bd36a4's Run Tests, job 113111796643; the five J1 claims passed in the window). Gates on
