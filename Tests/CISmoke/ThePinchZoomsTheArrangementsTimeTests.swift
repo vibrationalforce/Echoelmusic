@@ -274,7 +274,20 @@ final class ThePinchZoomsTheArrangementsTimeTests: XCTestCase {
         }
         XCTAssertEqual(occurrencesInSources(of: "static let zoomRange"), 1, "one zoom range (#416)")
         XCTAssertEqual(occurrencesInSources(of: "static func zoomed("), 1, "one zoom rule (#416)")
-        XCTAssertEqual(occurrencesInSources(of: "static func anchoredOffset("), 1, "one anchor rule (#416)")
+        // ⚠️ TWO anchor rules since DAW shell S9b: `NoteGridZoom.anchoredOffset` keeps the note
+        // grid's step under the fingers, in COLUMN widths over a content that may be narrower
+        // than the view, where this one works in zoom factors over a content never narrower.
+        // The formula is the same and the units are not, so they are a declared TWIN (its header
+        // says so, `TheNoteGridZoomsItsTimeTests` drives it), not a silent copy. This count did
+        // not move with S9b and stood red on a correct tree until 2026-10-08 (invisible in the
+        // `tail -200` job log). It now pins the arrangement's ONE rule and the twin's ONE, so a
+        // THIRD spelling still goes red. ⭐ Open: one shared pure core for both (GMMW cleanup).
+        XCTAssertEqual(occurrencesInSources(of: "static func anchoredOffset("), 2,
+                       "one anchor rule for the arrangement and its declared note-grid twin (#416)")
+        XCTAssertEqual(occurrencesInSources(of: "static func anchoredOffset(_ offset: CGFloat"), 1,
+                       "the arrangement's anchor rule is declared once (#416)")
+        XCTAssertEqual(occurrencesInSources(of: "static func anchoredOffset(_ offset: Double"), 1,
+                       "the note grid's twin is declared once (#416)")
     }
 
     // MARK: 3 — the canvas zooms the time and keeps the names

@@ -174,10 +174,43 @@ final class TheSpatialControllerMovesTheTracksTests: XCTestCase {
 
         // Counterweight (the 10.76.50 law): a trajectory rewrites the scene at the sender's rate,
         // so no ancestor of a menu host may read it in a body.
+        // ⚠️ ONE READ IS LEGAL, AND IT IS NOT IN A BODY: `EchoelStudioView.withSession(_:)` hands
+        // the scene to `SessionSaveOpen.capturing` when a Save or the recovery slot runs — an
+        // action, which registers no observation. The file-wide ban below predates that read
+        // (it sits at the shallow graft 4d59d5d) and was red on a correct tree until 2026-10-08,
+        // invisible in the `tail -200` job log. The capture is now cut out, brace-matched, and
+        // the ban holds for everything else. LIMIT: a source scan cannot prove `withSession` is
+        // never called from `body`; its callers today are the Save actions and `autosaveTake`.
         for path in ["Sources/Echoelmusic/EchoelmusicApp.swift",
                      "Sources/Echoelmusic/Studio/WorkspaceView.swift",
                      "Sources/Echoelmusic/Studio/EchoelStudioView.swift"] {
-            let text = try source(path)
+            var text = try source(path)
+            if path.hasSuffix("EchoelStudioView.swift") {
+                guard let head = text.range(of: "private func withSession(_ take: Project) -> Project {") else {
+                    XCTFail("ANCHOR MISSING: `withSession(_:)` moved in \(path) — re-anchor (#408)")
+                    continue
+                }
+                var depth = 0
+                var close: String.Index?
+                var i = text.index(before: head.upperBound)   // the opening brace
+                while i < text.endIndex {
+                    if text[i] == "{" {
+                        depth += 1
+                    } else if text[i] == "}" {
+                        depth -= 1
+                        if depth == 0 { close = i; break }
+                    }
+                    i = text.index(after: i)
+                }
+                guard let end = close else {
+                    XCTFail("`withSession(_:)` has no closing brace in \(path)")
+                    continue
+                }
+                let capture = text[head.upperBound..<end]
+                XCTAssertEqual(capture.components(separatedBy: "spatial: spatialScene.scene,").count - 1, 1,
+                               "the save capture no longer hands the scene over once — the Session would lose its space")
+                text.removeSubrange(head.lowerBound...end)
+            }
             XCTAssertFalse(text.contains("spatialScene.scene") || text.contains("spatial.scene"),
                            "\(path) reads the live scene — a controller would rebuild it at its send rate")
         }

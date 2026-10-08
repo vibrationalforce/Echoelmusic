@@ -119,17 +119,27 @@ final class TheLightReachesMoreThanOneLampTests: XCTestCase {
     /// driven end-to-end by `TheLightShowStatePersistsTests` claim 1, which constructs both
     /// senders with the keys cleared. Keep the pair: a declaration of 1 with a decode default
     /// of, say, 4 would leave this claim green while a fresh install fanned four lamps.
+    ///
+    /// ⚠️ The ninth value-field family (2026-09-30) moved both literals onto `ArtNetSender`'s
+    /// two owner constants, and this claim kept asking for the literal spelling: red on a
+    /// correct tree until 2026-10-08, invisible in the `tail -200` job log. It now asks the
+    /// owner for the VALUE and each sender for the reference, so the two halves cannot part.
     func testBothSendersDefaultToASingleFixture() throws {
+        let owner = try source(Self.artNet)
+        XCTAssertTrue(owner.contains("static let defaultFixtureCount: Int = 1"), """
+            \(Self.artNet) does not default to ONE fixture. Any other default changes what a \
+            stranger's rig does on first open, which is the one thing a light output may \
+            never do — and it would make this whole slice a behaviour change rather than \
+            an addition.
+            """)
+        XCTAssertTrue(owner.contains("static let defaultFixtureSpacing: Int = 0"),
+                      "\(Self.artNet) does not default to back-to-back spacing")
         for file in [Self.artNet, Self.sacn] {
             let text = try source(file)
-            XCTAssertTrue(text.contains("public var fixtureCount: Int = 1"), """
-                \(file) does not default to ONE fixture. Any other default changes what a \
-                stranger's rig does on first open, which is the one thing a light output may \
-                never do — and it would make this whole slice a behaviour change rather than \
-                an addition.
-                """)
-            XCTAssertTrue(text.contains("public var fixtureSpacing: Int = 0"),
-                          "\(file) does not default to back-to-back spacing")
+            XCTAssertTrue(text.contains("public var fixtureCount: Int = ArtNetSender.defaultFixtureCount"),
+                          "\(file) does not start from the owner's ONE fixture")
+            XCTAssertTrue(text.contains("public var fixtureSpacing: Int = ArtNetSender.defaultFixtureSpacing"),
+                          "\(file) does not start from the owner's back-to-back spacing")
         }
     }
 

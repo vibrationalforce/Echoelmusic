@@ -1044,7 +1044,11 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
         }
         let empty = String(door[start.upperBound..<end.lowerBound])
 
-        for label in ["Add Audio Track", "Import Audio"] {
+        // ⚠️ The second label was "Import Audio" until the sentence named "Add MIDI Track" (S2),
+        // and this list did not move: red on a correct tree from before the shallow graft
+        // (4d59d5d) until 2026-10-08. An import needs an audio track to land on, so on an empty
+        // plate the two creators are the honest first step; the sentence names them both.
+        for label in ["Add Audio Track", "Add MIDI Track"] {
             XCTAssertTrue(empty.contains(label) && door.contains("Text(\"\(label)\")"), """
                 The empty Workstation no longer names "\(label)", or no button on the plate is \
                 labelled that any more. The empty state is the one sentence a new user reads \

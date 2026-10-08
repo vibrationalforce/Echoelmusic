@@ -68,7 +68,7 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
     /// each is declared exactly once in all of `Sources/`, so a hit can only be this store's.
     /// Claim 1 keeps that precondition true; do not add a name without re-checking it.
     private static let liveSurface = [
-        "addRegion", "ensureComposerRegion", "flushPendingSave",
+        "addRegion", "ensureComposerRegion",
         // #C1: the Workstation's warp switch, reached through `AudioWarp.setWarp`.
         "setRegionWarp",
         // #165: the Workstation's Pitch field, reached through `AudioTranspose.setPitch`.
@@ -120,9 +120,17 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
     /// deleted, because a silent shrink from ten to three reads like six capabilities died —
     /// they did not; the EVIDENCE died. Claim 4 pins that each is still unprovable, so the day
     /// one becomes unambiguous the bundle says so instead of leaving it unmeasured forever.
+    ///
+    /// ⚠️ `flushPendingSave` joined them on 2026-10-08. `SpatialSceneStore` declares the same name
+    /// since the S3d review (8a66ace, 2026-10-04), so claim 1 stood red on a correct tree from
+    /// that commit until the re-grade found it (invisible in the `tail -200` job log). Its
+    /// external caller is still proven, receiver-qualified, where a scan CAN attribute it:
+    /// `AWorkingCopyThatCannotBeWrittenSaysSoTests` pins `timeline.flushPendingSave()` in
+    /// `WorkingCopyStatusView`.
     private static let unprovable = [
         "persist", "snapshotForUndo", "undo", "redo",
         "healRollSlotAudibility", "unsilenceRollSlot", "healRollSlotNamingCause",
+        "flushPendingSave",
     ]
 
     // MARK: - The live surface

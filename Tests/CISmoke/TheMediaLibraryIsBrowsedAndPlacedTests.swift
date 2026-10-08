@@ -98,6 +98,7 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let browserPath = "Sources/Echoelmusic/Studio/MediaBrowserView.swift"
     private static let workstationPath = "Sources/Echoelmusic/Studio/WorkstationView.swift"
+    private static let sampleRowPath = "Sources/Echoelmusic/Studio/TrackSampleRow.swift"
     private static let placementPath = "Sources/Echoelmusic/Sequencer/MediaPlacement.swift"
     private static let relinkPath = "Sources/Echoelmusic/Sequencer/MediaRelink.swift"
 
@@ -409,9 +410,23 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         XCTAssertFalse(workstation.contains("MediaLibrary."),
                        "the root still touches no file (TheWorkstationImportsAudioTests claim 16)")
 
+        // ⚠️ TWO qualified callers since sampler E13-1 (0e43c08, 2026-10-04): the track's Sample
+        // row lists the same library for its menu. This list did not move with it and stood red on
+        // a correct tree until 2026-10-08 (invisible in the `tail -200` job log). The rule it
+        // protects is unchanged — every listing hops off the main actor — so the second caller is
+        // held to it too.
         XCTAssertEqual(try filesUnderSources(containing: "MediaLibrary.listAudio("),
-                       ["Studio/MediaBrowserView.swift"],
-                       "the one QUALIFIED caller, detached (MA2's `existingAudio` reaches it inside MediaLibrary, on the import path)")
+                       ["Studio/MediaBrowserView.swift", "Studio/TrackSampleRow.swift"],
+                       "the QUALIFIED callers, each detached (MA2's `existingAudio` reaches it inside MediaLibrary, on the import path)")
+        let sampleRow = try source(Self.sampleRowPath)
+        let sampleHop = try XCTUnwrap(sampleRow.range(of: "await Task.detached(priority: .utility) { MediaLibrary.listAudio() }.value"),
+                                      "the Sample row lists the library on the main actor — a long library would stall the inspector")
+        let sampleCheck = try XCTUnwrap(sampleRow.range(of: "guard !Task.isCancelled else { return }",
+                                                        range: sampleHop.upperBound..<sampleRow.endIndex))
+        let sampleWrite = try XCTUnwrap(sampleRow.range(of: "assets = result ?? []",
+                                                        range: sampleHop.upperBound..<sampleRow.endIndex))
+        XCTAssertLessThan(sampleCheck.lowerBound, sampleWrite.lowerBound,
+                          "the Sample row's superseded listing must not overwrite a newer one")
         XCTAssertEqual(try filesUnderSources(containing: "MediaPlacement.perform("),
                        ["Studio/MediaBrowserView.swift"], "one door for placing a library file")
     }
