@@ -6,9 +6,11 @@
 //  semitones, tempo unchanged. Decided here, applied by `AudioLanePlayer` + `TimelineAudioSink`,
 //  written through `TimelineStore.setLaneTranspose` — the `AudioWarp` seam shape.
 //
-//  ⭐ PER TRACK, NOT PER PART. It reuses the persisted `TimelineLane.transposeSemitones` and its
-//  one writer, so no schema changes; the Warp switch is per track for the same reason. A
-//  per-part pitch would need a new persisted `TimelineRegion` field and is not built.
+//  ⭐ PER TRACK, NOT PER PART — FOR NOW. It reuses the persisted `TimelineLane.transposeSemitones`
+//  and its one writer; the Warp switch is per track for the same reason. Since GMMW AE-10a the
+//  per-part field EXISTS (`TimelineRegion.transposeSemitones`, held to `semitoneRange` by
+//  `clamped`, written by `TimelineStore.setRegionTranspose`), but nothing plays it yet: the
+//  player adds it to the track's pitch in AE-10b, and the part bar sets it in AE-10c.
 //
 //  ⭐ THE NODE IS THE ONE THAT ALREADY EXISTS. `TimelineAudioSink` routes a warped part through
 //  player → `AVAudioUnitTimePitch` → master. A transposed part now takes the same chain, with

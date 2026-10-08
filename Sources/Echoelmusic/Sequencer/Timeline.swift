@@ -313,11 +313,21 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// audio (a Beats part's pre-render carries them too; until it is ready, its Clean chain).
     public var fadeInTicks: Int
     public var fadeOutTicks: Int
+    /// GMMW AE-10a: this PART's own pitch, in whole semitones, held to the audio path's range
+    /// (`AudioTranspose.semitoneRange`, ±24 — the time-pitch node's, stated once). A property of
+    /// the PLACEMENT, like `gain`: the same file can sit at +0 here and +7 there. Split, trim and
+    /// duplicate carry it; Join refuses a mismatch (`abuts`). Legacy regions decode as 0.
+    /// ⚠️ STORED, NOT YET HEARD: the audio player still plays the TRACK's pitch alone. The sum
+    /// (track + part) reaches the player in AE-10b, and the part bar's field in AE-10c — until
+    /// then nothing in the app sets this away from 0 (`TimelineStore.setRegionTranspose` has no
+    /// caller), so no song can carry a pitch it does not play.
+    public var transposeSemitones: Int
 
     public init(id: UUID = UUID(), laneID: UUID, clipID: UUID,
                 startTick: Int, lengthTicks: Int, contentOffsetSeconds: Double = 0,
                 contentOffsetTicks: Int = 0, gain: Float = 1, warpEnabled: Bool = false,
-                stretchMode: StretchMode = .clean, fadeInTicks: Int = 0, fadeOutTicks: Int = 0) {
+                stretchMode: StretchMode = .clean, fadeInTicks: Int = 0, fadeOutTicks: Int = 0,
+                transposeSemitones: Int = 0) {
         self.id = id
         self.laneID = laneID
         self.clipID = clipID
@@ -330,11 +340,13 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         self.stretchMode = stretchMode
         self.fadeInTicks = max(0, fadeInTicks)
         self.fadeOutTicks = max(0, fadeOutTicks)
+        self.transposeSemitones = AudioTranspose.clamped(transposeSemitones)
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, laneID, clipID, startTick, lengthTicks, contentOffsetSeconds
         case contentOffsetTicks, gain, warpEnabled, stretchMode, fadeInTicks, fadeOutTicks
+        case transposeSemitones
     }
 
     public init(from decoder: Decoder) throws {
@@ -364,6 +376,9 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         // Legacy regions (pre-W4a) carry no fades — hard edges, bit-identical playback.
         fadeInTicks = max(0, (try? c.decode(Int.self, forKey: .fadeInTicks)) ?? 0)
         fadeOutTicks = max(0, (try? c.decode(Int.self, forKey: .fadeOutTicks)) ?? 0)
+        // Legacy regions (pre-AE-10a) carry no part pitch — the track's pitch alone, as before.
+        // A value past the audio path's range (a newer build, a hand edit) opens held to it.
+        transposeSemitones = AudioTranspose.clamped((try? c.decode(Int.self, forKey: .transposeSemitones)) ?? 0)
     }
 
     public var endTick: Int { startTick + lengthTicks }
@@ -445,7 +460,9 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
               stretchMode == other.stretchMode,
               // W4a: a fade AT THE SEAM would vanish inside the joined part — refuse instead.
               // A clean split leaves both seam fades at 0, so it always rejoins.
-              fadeOutTicks == 0, other.fadeInTicks == 0
+              fadeOutTicks == 0, other.fadeInTicks == 0,
+              // AE-10a: halves at different pitches would join at one of them — refuse, like gain.
+              transposeSemitones == other.transposeSemitones
         else { return false }
         // Prefer the tempo-invariant tick twin (M1b) when present: a clean split
         // keeps `second.contentOffsetTicks == first.contentOffsetTicks + first.lengthTicks`

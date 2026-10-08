@@ -24,7 +24,8 @@
 //      key, never an unknown enum case).
 //   4. END-TO-END BEHAVIOUR — a part written before the late fields existed opens with their
 //      defaults; an unknown stretch mode opens as Clean; an unknown extra key is ignored; a
-//      negative fade opens as a hard edge.
+//      negative fade opens as a hard edge; a part pitch past the audio path's range opens held
+//      to it (GMMW AE-10a — claim 1's fixture carries the pitch too).
 //
 // ⚠️ HONEST GRADING (#433), transcribed against the parent `6481aa7` and the worktree: this is a
 // GUARD-ONLY slice — `Sources/` does not change. Every assertion is a COUNTERWEIGHT, green on
@@ -59,7 +60,7 @@ final class ARegionSurvivesAFieldItDoesNotKnowTests: XCTestCase {
                                   startTick: 960, lengthTicks: 1_920,
                                   contentOffsetSeconds: 1.25, contentOffsetTicks: 480,
                                   gain: 0.5, warpEnabled: true, stretchMode: other,
-                                  fadeInTicks: 120, fadeOutTicks: 240)
+                                  fadeInTicks: 120, fadeOutTicks: 240, transposeSemitones: 3)
         let data = try JSONEncoder().encode(part)
         let back = try JSONDecoder().decode(TimelineRegion.self, from: data)
         XCTAssertEqual(back, part, """
@@ -152,12 +153,15 @@ final class ARegionSurvivesAFieldItDoesNotKnowTests: XCTestCase {
         let foreign = """
             {"id":"\(id.uuidString)","laneID":"\(lane.uuidString)","clipID":"\(clip.uuidString)",\
             "startTick":0,"lengthTicks":960,"stretchMode":"a-mode-from-a-newer-build",\
-            "aFieldFromANewerBuild":42,"fadeInTicks":-5,"fadeOutTicks":-1}
+            "aFieldFromANewerBuild":42,"fadeInTicks":-5,"fadeOutTicks":-1,"transposeSemitones":99}
             """
         let opened = try JSONDecoder().decode(TimelineRegion.self, from: Data(foreign.utf8))
         XCTAssertEqual(opened.stretchMode, .clean, "an unknown stretch mode opens as Clean, not as a lost song")
         XCTAssertEqual(opened.fadeInTicks, 0, "a negative fade opens as a hard edge")
         XCTAssertEqual(opened.fadeOutTicks, 0, "a negative fade opens as a hard edge")
+        XCTAssertEqual(opened.transposeSemitones, AudioTranspose.semitoneRange.upperBound,
+                       "a part pitch past the audio path's range opens held to it (AE-10a)")
+        XCTAssertEqual(part.transposeSemitones, 0, "a part saved before AE-10a opens at the track's pitch alone")
         XCTAssertEqual(opened.lengthTicks, 960, "the known fields of a foreign part still open")
     }
 
