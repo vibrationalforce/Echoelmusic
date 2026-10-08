@@ -714,9 +714,9 @@ public final class TimelineStore {
 
     /// GMMW AE-10a: a part's own pitch, in whole semitones — ONE undo step, a no-op for an unknown
     /// part or an unchanged value. Held to the audio path's range (`AudioTranspose.clamped`, the
-    /// one rule), so the store never keeps a pitch the player would quietly change. ⚠️ Not yet
-    /// heard and not yet called: the player sums it with the track's pitch in AE-10b, the part
-    /// bar's field calls this in AE-10c.
+    /// one rule), so the store never keeps a pitch the player would quietly change. The player
+    /// sums it with the track's pitch since AE-10b. ⚠️ Not yet called: the part bar's field
+    /// calls this in AE-10c.
     public func setRegionTranspose(id: UUID, _ semitones: Int) {
         guard let i = document.regions.firstIndex(where: { $0.id == id }) else { return }
         let next = AudioTranspose.clamped(semitones)

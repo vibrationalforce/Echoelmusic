@@ -317,10 +317,9 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// (`AudioTranspose.semitoneRange`, ±24 — the time-pitch node's, stated once). A property of
     /// the PLACEMENT, like `gain`: the same file can sit at +0 here and +7 there. Split, trim and
     /// duplicate carry it; Join refuses a mismatch (`abuts`). Legacy regions decode as 0.
-    /// ⚠️ STORED, NOT YET HEARD: the audio player still plays the TRACK's pitch alone. The sum
-    /// (track + part) reaches the player in AE-10b, and the part bar's field in AE-10c — until
-    /// then nothing in the app sets this away from 0 (`TimelineStore.setRegionTranspose` has no
-    /// caller), so no song can carry a pitch it does not play.
+    /// Since AE-10b the audio player plays track + part (`AudioTranspose.semitones(for:in:)`, the
+    /// one place they meet). ⚠️ Nothing in the app sets it away from 0 until the part bar's field
+    /// (AE-10c) — `TimelineStore.setRegionTranspose` has no caller yet.
     public var transposeSemitones: Int
 
     public init(id: UUID = UUID(), laneID: UUID, clipID: UUID,

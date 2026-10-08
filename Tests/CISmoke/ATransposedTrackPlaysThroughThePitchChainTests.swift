@@ -20,6 +20,17 @@
 // COUNTERWEIGHTS (#343): claim 1 (untransposed, unwarped playback keeps the plain node), the
 // transpose-0 halves of claims 6 and 7 (today's warp and Beats gates are unchanged), and claim
 // 5's MIDI and bio lanes (the audio path never reads their transpose).
+//
+// ⭐ GMMW AE-10b (2026-10-08) — A PART'S PITCH IS PLAYED AS TRACK + PART. Claims 11–12 are
+// END-TO-END over `AudioTranspose.semitones(for:in:)` and the spy coordinator; claim 13 is a
+// SOURCE-TEXT SCAN that the player asks that one function, at every place it decides a pitch.
+// Grading against the parent `220d641`: `semitones(for:in:)` does not exist there, so the
+// file does not compile and no assertion has a verdict (one absence, #486); transcribed in
+// Python instead — 11 and 12 are FORWARD, 13 is a REGRESSION guard in its absence half (the
+// parent's prime and start ask the TRACK alone, three sites) and FORWARD in its presence half.
+// Claims 1–10 are unchanged and stay green: every part they build is at pitch 0, where the sum
+// IS the track's pitch. Stripper `SourceText.codeOnly` for claim 13: PROPHYLAKTISCH — 0 of its
+// 6 verdicts (3 needles × 2 trees) flip between raw and stripped text.
 
 import Foundation
 import XCTest
@@ -119,14 +130,14 @@ final class ATransposedTrackPlaysThroughThePitchChainTests: XCTestCase {
         func setTranspose(_ semitones: Int) { events.append(.transpose(semitones)) }
     }
 
-    private func primed(transpose: Int, mode: StretchMode = .clean,
+    private func primed(transpose: Int, part: Int = 0, mode: StretchMode = .clean,
                         warped: Bool = false) -> [Event] {
         var lane = TimelineLane(name: "Audio 1", kind: .audio)
         lane.transposeSemitones = transpose
         let clipID = UUID()
         let region = TimelineRegion(laneID: lane.id, clipID: clipID, startTick: 0,
                                     lengthTicks: 4 * Self.bar, warpEnabled: warped,
-                                    stretchMode: mode)
+                                    stretchMode: mode, transposeSemitones: part)
         let doc = TimelineDocument(lanes: [lane], regions: [region])
         let spy = Spy()
         let url = URL(fileURLWithPath: "/tmp/loop.wav")
@@ -150,6 +161,72 @@ final class ATransposedTrackPlaysThroughThePitchChainTests: XCTestCase {
     func testATransposedBeatsPartIsNotPreRendered() {
         XCTAssertFalse(primed(transpose: 3, mode: .beats, warped: true).contains(.beats))
         XCTAssertEqual(primed(transpose: 0, mode: .beats, warped: true).filter { $0 == .beats }.count, 1)
+    }
+
+    // MARK: - AE-10b: a part's pitch is played as track + part
+
+    /// 11. The sink is handed the SUM, and prime attaches the chain for it. Counterweights: a
+    /// part that cancels its track sums to 0 and keeps today's plain path and Beats buffer.
+    func testThePartsPitchIsPlayedOnTopOfTheTracks() {
+        XCTAssertEqual(primed(transpose: 5, part: 2), [.preload(warped: true), .transpose(7), .play])
+        XCTAssertEqual(primed(transpose: 0, part: 3), [.preload(warped: true), .transpose(3), .play],
+                       "a part's own pitch alone must attach the chain at prime time, never mid-song")
+        XCTAssertEqual(primed(transpose: 5, part: -5), [.preload(warped: false), .transpose(0), .play],
+                       "a part that cancels its track plays on the plain node, bit-identical to no pitch")
+        XCTAssertFalse(primed(transpose: 0, part: 3, mode: .beats, warped: true).contains(.beats),
+                       "a part-pitched Beats part must not take the un-pitched buffer")
+        XCTAssertEqual(primed(transpose: 5, part: -5, mode: .beats, warped: true)
+                        .filter { $0 == .beats }.count, 1,
+                       "a Beats part whose pitches cancel keeps its pre-rendered buffer")
+    }
+
+    /// 12. The one place the two meet: the track half as its field shows it, the sum held to
+    /// the range, a hand-set extreme cannot overflow, and a MIDI or bio track plays no pitch.
+    func testTheSumIsTheTracksShownPitchPlusThePartsHeldToTheRange() {
+        let top = AudioTranspose.semitoneRange.upperBound
+        var legacy = TimelineLane(name: "Audio 2", kind: .audio)
+        legacy.transposeSemitones = top + 16
+        var audio = TimelineLane(name: "Audio 1", kind: .audio)
+        audio.transposeSemitones = top - 4
+        var midi = TimelineLane(name: "Keys", kind: .midi)
+        midi.transposeSemitones = 7
+        var bio = TimelineLane(name: "Body", kind: .audio, isBio: true)
+        bio.transposeSemitones = 7
+        let doc = TimelineDocument(lanes: [legacy, audio, midi, bio])
+        func part(on lane: TimelineLane, _ semitones: Int) -> TimelineRegion {
+            TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: Self.bar,
+                           transposeSemitones: semitones)
+        }
+        XCTAssertEqual(AudioTranspose.semitones(for: part(on: legacy, -10), in: doc), top - 10,
+                       "a legacy track above the range counts as the pitch its field shows")
+        XCTAssertEqual(AudioTranspose.semitones(for: part(on: audio, 10), in: doc), top,
+                       "the sum is held to the range the node can play")
+        XCTAssertEqual(AudioTranspose.semitones(for: part(on: audio, 0), in: doc),
+                       AudioTranspose.semitones(laneID: audio.id, in: doc),
+                       "a part at 0 plays exactly its track's pitch — today's behaviour")
+        var extreme = part(on: audio, 0)
+        extreme.transposeSemitones = Int.max
+        XCTAssertEqual(AudioTranspose.semitones(for: extreme, in: doc), top, "a hand-set Int.max cannot overflow the sum")
+        XCTAssertEqual(AudioTranspose.semitones(for: part(on: midi, 5), in: doc), 0)
+        XCTAssertEqual(AudioTranspose.semitones(for: part(on: bio, 5), in: doc), 0)
+        let stray = TimelineRegion(laneID: UUID(), clipID: UUID(), startTick: 0, lengthTicks: Self.bar,
+                                   transposeSemitones: 5)
+        XCTAssertEqual(AudioTranspose.semitones(for: stray, in: doc), 0, "a part without a track plays no pitch")
+    }
+
+    /// 13. The player asks the one function wherever it decides a pitch — the chain to attach,
+    /// the Beats bypass, and what the sink plays — and no longer asks the track alone. A second
+    /// spelling there would let prime and start disagree about a part, which is a mid-song
+    /// attach (review HIGH 2) or an unpitched Beats buffer.
+    func testThePlayerAsksTheOneSumEverywhere() throws {
+        let player = try code("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
+        XCTAssertEqual(player.components(separatedBy: "AudioTranspose.semitones(for: region, in: doc)").count - 1, 3,
+                       "prime's chain question, prime's Beats bypass and start's setTranspose each ask the sum")
+        XCTAssertFalse(player.contains("semitones(laneID:"),
+                       "the player asks the TRACK's pitch alone again — a part's own pitch would go unheard")
+        let start = try XCTUnwrap(body(of: "private func start(", in: player), "ANCHOR MISSING: start")
+        XCTAssertTrue(start.contains("lane.setTranspose(AudioTranspose.semitones(for: region, in: doc))"),
+                      "the sink must be handed the part's sum right before it plays")
     }
 
     // MARK: - Source scans

@@ -382,12 +382,13 @@ public final class AudioLanePlayer {
             // Slice B: OR-merge the warp need per URL — if ANY region plays this
             // file warped (and its native tempo is known), the sink must attach
             // its warp chain NOW, at prime time, never mid-song (review HIGH 2).
-            // #165: a transposed lane plays EVERY part through the same chain.
-            let pitched = AudioTranspose.semitones(laneID: laneID, in: doc) != 0
+            // #165 + AE-10b: a part whose pitch (track + part, `AudioTranspose.semitones(for:in:)`)
+            // is not 0 plays through the same chain — asked PER PART, the question `start` asks.
             var need: [URL: Bool] = [:]
             var order: [URL] = []
             for region in laneRegions {
                 guard let url = self.resolveURL(region.clipID) else { continue }
+                let pitched = AudioTranspose.semitones(for: region, in: doc) != 0
                 let warped = (region.warpEnabled && resolveNativeBPM(region.clipID) > 0) || pitched
                 if let existing = need[url] {
                     need[url] = existing || warped
@@ -410,8 +411,10 @@ public final class AudioLanePlayer {
                                                projectBPM: bpm,
                                                capabilities: StretchMode.timelineCapabilities)
                 // #165: a transposed Beats region plays through the pitch chain instead —
-                // the pre-rendered buffer runs on the plain node and cannot be pitched.
-                if plan.mode == .beats, plan.rate != 1.0, !pitched {
+                // the pre-rendered buffer runs on the plain node and cannot be pitched. AE-10b:
+                // "transposed" is THIS part's sum, the value `start` hands the sink.
+                if plan.mode == .beats, plan.rate != 1.0,
+                   AudioTranspose.semitones(for: region, in: doc) == 0 {
                     let mediaLength = TimelineTime.seconds(
                         fromTicks: region.lengthTicks, bpm: bpm) * plan.rate
                     // W4b: the part's fades go into the render, from the same plan `start` hands
@@ -484,7 +487,7 @@ public final class AudioLanePlayer {
         let length = TimelineTime.seconds(fromTicks: region.endTick - tick, bpm: bpm)
             * plan.rate
         let lane = sink(for: laneID)
-        lane.setTranspose(AudioTranspose.semitones(laneID: laneID, in: doc))   // #165
+        lane.setTranspose(AudioTranspose.semitones(for: region, in: doc))   // #165 + AE-10b
         // Audio editor W4b: the part's fades, in the same media time as `from` and `length`.
         lane.setFades(AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: plan.rate))
         lane.play(url: url, fromSeconds: from,

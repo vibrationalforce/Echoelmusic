@@ -285,7 +285,7 @@ final class TheValueFieldOffersItsDefaultTests: XCTestCase {
         XCTAssertEqual(occurrences(of: "transposeSemitones: Int = TimelineLane.defaultTransposeSemitones", in: lane), 1, "`TimelineLane.init` takes its pitch default from the owner")
         XCTAssertEqual(occurrences(of: "forKey: .transposeSemitones) ?? TimelineLane.defaultTransposeSemitones", in: lane), 1, "the decode fallback reads the owner")
         let transpose = try source("Sources/Echoelmusic/Sequencer/AudioTranspose.swift")
-        XCTAssertEqual(occurrences(of: "else { return TimelineLane.defaultTransposeSemitones }", in: transpose), 1, "`AudioTranspose.semitones(laneID:in:)` answers \"no such lane\" with the owner's default")
+        XCTAssertEqual(occurrences(of: "else { return TimelineLane.defaultTransposeSemitones }", in: transpose), 2, "`AudioTranspose.semitones(laneID:in:)` and, since GMMW AE-10b, `semitones(for:in:)` (a part's track + part sum) each answer \"no such audio track\" with the owner's default")
         let workstation = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
         XCTAssertEqual(occurrences(of: "standard: Double(TimelineLane.defaultTransposeSemitones)", in: workstation), 1, "the \"Pitch\" row passes the lane's default once")
 

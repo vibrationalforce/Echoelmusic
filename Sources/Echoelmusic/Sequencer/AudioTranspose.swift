@@ -6,11 +6,13 @@
 //  semitones, tempo unchanged. Decided here, applied by `AudioLanePlayer` + `TimelineAudioSink`,
 //  written through `TimelineStore.setLaneTranspose` — the `AudioWarp` seam shape.
 //
-//  ⭐ PER TRACK, NOT PER PART — FOR NOW. It reuses the persisted `TimelineLane.transposeSemitones`
-//  and its one writer; the Warp switch is per track for the same reason. Since GMMW AE-10a the
-//  per-part field EXISTS (`TimelineRegion.transposeSemitones`, held to `semitoneRange` by
-//  `clamped`, written by `TimelineStore.setRegionTranspose`), but nothing plays it yet: the
-//  player adds it to the track's pitch in AE-10b, and the part bar sets it in AE-10c.
+//  ⭐ PER TRACK AND PER PART. The track's pitch is the persisted `TimelineLane.transposeSemitones`
+//  and its one writer (the Warp switch is per track for the same reason). Since GMMW AE-10a a part
+//  carries its own (`TimelineRegion.transposeSemitones`, written by
+//  `TimelineStore.setRegionTranspose`), and since AE-10b the engine plays the SUM —
+//  `semitones(for:in:)` below is the one place the two meet, held to `semitoneRange`. The part
+//  bar's field that sets a part's pitch is AE-10c; until then every part is at 0 and the sum IS
+//  the track's pitch, so playback is unchanged.
 //
 //  ⭐ THE NODE IS THE ONE THAT ALREADY EXISTS. `TimelineAudioSink` routes a warped part through
 //  player → `AVAudioUnitTimePitch` → master. A transposed part now takes the same chain, with
@@ -68,6 +70,20 @@ public enum AudioTranspose {
         guard let lane = document.lanes.first(where: { $0.id == laneID }),
               lane.kind == .audio, !lane.isBio else { return TimelineLane.defaultTransposeSemitones }
         return clamped(lane.transposeSemitones)
+    }
+
+    /// GMMW AE-10b: the pitch the ENGINE plays for this PART — its track's pitch as the engine
+    /// plays it (above) plus the part's own, held to the range. The ONE place the two meet:
+    /// `AudioLanePlayer.prime` (which chain to attach, whether a Beats buffer can serve) and
+    /// `start` (what the sink plays) both ask it, so they cannot disagree about a part. The track
+    /// half is clamped FIRST because that is the pitch the track's field shows; a legacy +40
+    /// track with a −10 part plays +14, the sum of what the two fields read. Both halves are
+    /// clamped before the `+`, so a hand-set `Int.max` cannot overflow it. A part on a MIDI or
+    /// bio track plays no audio pitch.
+    public static func semitones(for region: TimelineRegion, in document: TimelineDocument) -> Int {
+        guard let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .audio, !lane.isBio else { return TimelineLane.defaultTransposeSemitones }
+        return clamped(clamped(lane.transposeSemitones) + clamped(region.transposeSemitones))
     }
 
     /// True when a part must play through the time-pitch chain instead of the plain node.
