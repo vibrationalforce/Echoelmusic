@@ -55,7 +55,11 @@ struct SafeModeView: View {
                         .font(EchoelTheme.font(22, .semibold))
                         .foregroundStyle(EchoelTheme.text)
 
-                    Text("The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched.")
+                    // GMMW SH-8: "Your pieces and settings are untouched" stood here and was false
+                    // in one place — the recovery writes the Instrument stage (EchoelmusicApp, the
+                    // `.onAppear` of this screen), so the copy names that one setting and the way
+                    // back. Pieces really are untouched: Safe Mode never opens a store.
+                    Text("The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces are untouched. One setting changed: the studio now opens on Instrument, in case the stage you were on caused the problem. Piece is one tap away at the bottom.")
                         .font(EchoelTheme.font(13))
                         .foregroundStyle(EchoelTheme.dim)
                         .fixedSize(horizontal: false, vertical: true)

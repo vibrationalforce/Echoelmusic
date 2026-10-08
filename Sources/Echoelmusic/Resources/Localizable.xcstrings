@@ -4345,14 +4345,14 @@
         }
       }
     },
-    "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched." : {
+    "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces are untouched. One setting changed: the studio now opens on Instrument, in case the stage you were on caused the problem. Piece is one tap away at the bottom." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces and settings are untouched."
+            "value" : "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces are untouched. One setting changed: the studio now opens on Instrument, in case the stage you were on caused the problem. Piece is one tap away at the bottom."
           }
         }
       }

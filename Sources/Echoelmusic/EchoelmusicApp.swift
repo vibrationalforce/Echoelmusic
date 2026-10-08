@@ -520,6 +520,10 @@ struct EchoelmusicApp: App {
                     // piece — so the recovery writes the instrument instead of forgetting.
                     // (The plate memory this used to point at Sound, `reopensWorkstation`, went
                     // with slice 2b: the instrument's launch plate is Sound by itself now.)
+                    // GMMW SH-8: this is the ONE setting Safe Mode changes, so it says so — which
+                    // stage it leaves — before it writes; the screen above names it too.
+                    let leftStage = UserDefaults.standard.string(forKey: StudioDefaultKeys.stage.key) ?? "unset"
+                    EchoelCrashLog.breadcrumb("safe-start: stage \(leftStage) -> \(StudioStage.instrument.rawValue)")
                     UserDefaults.standard.set(StudioStage.instrument.rawValue, forKey: StudioDefaultKeys.stage.key)
                 }
             } else if hasCompletedOnboarding {

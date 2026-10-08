@@ -420,6 +420,83 @@ final class LaunchGuardSmokeTests: XCTestCase {
         XCTAssertLessThan(LaunchGuard.inactiveConfirmFloorSeconds, LaunchGuard.steadyConfirmSeconds)
     }
 
+    /// ⭐ SH-8 (GMMW, 2026-10-08) — SAFE MODE SAYS WHICH SETTING IT CHANGED. The recovery
+    /// screen read "Your pieces and settings are untouched" while its own `.onAppear` wrote the
+    /// Instrument stage — one setting, changed on purpose (a Piece stage that crashed at render
+    /// must not be where Continue lands; `TheArrangeStageIsTheFrontStageTests` claim 7 pins the
+    /// write). Now the screen names that setting and the way back, and the exported log names
+    /// the stage it left, BEFORE the write (#859) — a crash log of the next launch could not
+    /// otherwise tell a user who chose Instrument from one Safe Mode moved there.
+    ///
+    /// (a) and (b) are SOURCE-TEXT SCANS of `EchoelmusicApp.swift` and `SafeModeView.swift`;
+    /// (b)'s two stage words are read END-TO-END from `StudioStage.label`, so the copy says the
+    /// words the switcher shows. The catalog half is not restated here:
+    /// `TheChromeSpeaksOneLanguageTests` already requires every `SafeModeView` key to be in the
+    /// catalog (#416). DEVICE PROBE, open: the line in an exported log after a real Safe-Mode
+    /// launch, and the longer copy at a large Dynamic Type size.
+    ///
+    /// Grading (#433), transcribed against the parent `2476c2b` and the worktree: (a) is red
+    /// there by ANCHOR ABSENCE — no `safe-start:` line exists (one finding); (b) is a REGRESSION
+    /// — the parent's copy says "settings are untouched" and names no stage (all four of its
+    /// checks are red there, the "pieces" premise too: it was one sentence with the settings).
+    /// Counterweights, green on both: the stage write is there once, after Safe Mode's reset.
+    /// MUTANTS, each red for its reason: the line removed, moved after the write, or without
+    /// its read → (a); a statement between line and write → (a); the old copy → (b); the copy
+    /// naming the stage in another word → (b).
+    func testSafeModeSaysWhichSettingItChanged() throws {
+        let app = SourceText.codeOnly(try appSource())
+        let write = "UserDefaults.standard.set(StudioStage.instrument.rawValue, forKey: StudioDefaultKeys.stage.key)"
+        guard let stageWrite = app.range(of: write) else {
+            return XCTFail("ANCHOR MISSING: Safe Mode's stage write moved — re-anchor (#408)")
+        }
+        XCTAssertEqual(app.components(separatedBy: write).count - 1, 1, "premise: one stage write, Safe Mode's")
+        let before = app[app.startIndex..<stageWrite.lowerBound]
+        guard let reset = before.range(of: "LaunchGuard.reset()", options: .backwards) else {
+            return XCTFail("premise: the stage write no longer follows Safe Mode's `LaunchGuard.reset()` — re-anchor (#408)")
+        }
+
+        // (a) The line names the stage it LEAVES and the one it writes, between the reset and the write.
+        guard let read = before.range(of: "let leftStage = UserDefaults.standard.string(forKey: StudioDefaultKeys.stage.key)",
+                                      options: .backwards),
+              let line = before.range(of: "EchoelCrashLog.breadcrumb(\"safe-start: stage \\(leftStage) -> \\(StudioStage.instrument.rawValue)\")",
+                                      options: .backwards) else {
+            return XCTFail("""
+                Safe Mode moves the stage without a line in the exported log. Write \
+                `safe-start: stage <left> -> instrument` BEFORE the write (#859), naming the stage \
+                read from the key — a crash log cannot otherwise say who chose the Instrument stage.
+                """)
+        }
+        XCTAssertLessThan(reset.lowerBound, read.lowerBound, "the line belongs to Safe Mode's branch, after its reset")
+        XCTAssertLessThan(read.lowerBound, line.lowerBound, "the stage being left is read before the line names it")
+        let gap = app[line.upperBound..<stageWrite.lowerBound]
+        XCTAssertTrue(gap.allSatisfy(\.isWhitespace), "the line stands directly before the write it announces (#859)")
+
+        // (b) The screen names the one setting it changed and the way back.
+        let view = SourceText.codeOnly(try safeModeViewSource())
+        XCTAssertFalse(view.contains("settings are untouched"), """
+            The recovery screen says the settings are untouched while Safe Mode writes the \
+            Instrument stage. Name the one setting it changed (SH-8).
+            """)
+        XCTAssertTrue(view.contains("Your pieces are untouched."), "premise: what IS untouched is still said")
+        XCTAssertTrue(view.contains("One setting changed: the studio now opens on \(StudioStage.instrument.label)"), """
+            The recovery screen no longer names the stage Safe Mode writes, in the word the \
+            switcher shows (`StudioStage.instrument.label`).
+            """)
+        XCTAssertTrue(view.contains("\(StudioStage.piece.label) is one tap away"), """
+            The recovery screen no longer says how to get back to the \(StudioStage.piece.label) \
+            stage, in the word the switcher shows.
+            """)
+    }
+
+    private func safeModeViewSource() throws -> String {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        guard FileManager.default.fileExists(atPath: root.appendingPathComponent("Sources").path)
+        else { throw XCTSkip("source tree not present under \(root.path)") }
+        return try String(contentsOf: root
+            .appendingPathComponent("Sources/Echoelmusic/Studio/SafeModeView.swift"), encoding: .utf8)
+    }
+
     private func appSource() throws -> String {
         let here = URL(fileURLWithPath: #filePath)
         let root = here.deletingLastPathComponent().deletingLastPathComponent()

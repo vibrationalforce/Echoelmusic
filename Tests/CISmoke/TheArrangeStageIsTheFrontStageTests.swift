@@ -355,7 +355,8 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
         XCTAssertEqual(Set(readers), ["StageShell.swift", "EchoelStudioView.swift", "EchoelmusicApp.swift", "ProjectHeader.swift"], """
             The stage key is referenced by \(readers.sorted()). Four files are the design: the \
             seam (reads and writes on a tap), the studio (reads, and writes through `showStage` \
-            on the user actions claim 6 lists), Safe Mode (writes the instrument once) and the \
+            on the user actions claim 6 lists), Safe Mode (reads the stage it leaves for its diag \
+            line, SH-8, then writes the instrument once) and the \
             head (reads only, A3b — it drops its Play/Record on the Piece stage). A fifth is a \
             new writer or a new reader — name it here with its reason.
             """)
