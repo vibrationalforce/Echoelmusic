@@ -255,6 +255,8 @@ enum PartFades {
 /// grid step INWARD — never outward. A trim only takes material away, so the name promises
 /// exactly what happens; lengthening a part past its media would be a different act with a
 /// different answer per media kind (silence for audio, a loop for MIDI) and stays out.
+/// ⚠️ That holds for the bar's two BUTTONS. Since AE-4a the enum also carries the outward rules
+/// the audio editor's edge handles will ask (snap, precedence, media end) — see its last MARK.
 enum PartTrim {
 
     /// The new start for "Trim start": the first song-grid bar line after the part's start, else
@@ -332,6 +334,66 @@ enum PartTrim {
         trimmed.lengthTicks = tick - region.startTick
         guard onlyLetsGo(trimmed, replacing: part.id, in: document) else { return nil }
         return trimmed.lengthTicks
+    }
+
+    // MARK: AE-4a — the rules an edge handle moves by (GMMW, 2026-10-08)
+    //
+    // The bar's two buttons above only take material away. The audio editor's edge handles
+    // (AE-4b) also move an edge OUTWARD, and `onlyLetsGo` refuses any tick a part gains by
+    // construction, so the outward move gets its own rule here — beside the inward one, asked of
+    // the same precedence (#1440) — plus the grid a handle snaps to and the media bound. No
+    // control calls these yet; AE-4b is their first caller.
+
+    /// The grid an edge handle snaps to at a time zoom: a bar while bars are small on screen
+    /// (zoom below 4), a beat below 16, then one transport step. Never finer than a step: the
+    /// transport starts and stops a part only on a step. An unusable zoom snaps to the bar.
+    nonisolated static func snapUnit(zoom: Double) -> Int {
+        guard zoom.isFinite, zoom >= 4 else { return TimelineTime.ticksPerBar }
+        return zoom < 16 ? TimelineTime.ticksPerBeat : TimelineTime.ticksPerTransportStep
+    }
+
+    /// Whether replacing `regionID` with `extended` — an edge moved OUTWARD — changes who plays
+    /// only on ticks the part newly covers where NOTHING played before. Moving the start earlier
+    /// can lose an overlap the part used to win (`activeRegion` gives it to the later start), and
+    /// moving either edge over another part can take bars that part plays: both are refused. An
+    /// outward move fills silence; it never takes a bar from another part or gives one away.
+    nonisolated static func keepsWhoPlays(extending extended: TimelineRegion, replacing regionID: UUID,
+                                          in document: TimelineDocument) -> Bool {
+        guard let index = document.regions.firstIndex(where: { $0.id == regionID }) else {
+            return false
+        }
+        let original = document.regions[index]
+        var after = document
+        after.regions[index] = extended
+        let lane = extended.laneID
+        let ticks = Set(TimelineScheduling.candidateSampleTicks(in: document, laneID: lane))
+            .union(TimelineScheduling.candidateSampleTicks(in: after, laneID: lane))
+        for sample in ticks {
+            let before = TimelineScheduling.activeRegion(in: document, laneID: lane, at: sample)?.id
+            let now = TimelineScheduling.activeRegion(in: after, laneID: lane, at: sample)?.id
+            if before == now { continue }
+            let newlyCovered = sample >= extended.startTick && sample < extended.endTick
+                && !(sample >= original.startTick && sample < original.endTick)
+            if before == nil, now == regionID, newlyCovered { continue }
+            return false
+        }
+        return true
+    }
+
+    /// Whether an audio part still ends inside its file: its media offset plus its length, at the
+    /// tempo its media elapses at (`PartSplit.mediaBPM` for a warped part), reaches no further
+    /// than `mediaSeconds`. An outward end past the file would play silence and draw a wave that
+    /// is not there; it is refused. Unusable inputs refuse. The start edge needs no twin:
+    /// `TimelineRegion.trimmedStart` already bottoms out at the media start.
+    nonisolated static func endFitsMedia(_ region: TimelineRegion, mediaSeconds: Double,
+                                         mediaBPM: Double) -> Bool {
+        guard mediaSeconds.isFinite, mediaSeconds > 0, mediaBPM.isFinite, mediaBPM > 0,
+              region.contentOffsetSeconds.isFinite else { return false }
+        let reach = region.contentOffsetSeconds
+            + TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: mediaBPM)
+        // One microsecond of slack: a part cut exactly at the file's end must not be refused for
+        // the rounding of a tick→seconds conversion.
+        return reach <= mediaSeconds + 1e-6
     }
 }
 
