@@ -42,7 +42,7 @@ in eigenen Worten, und es gilt für alle.
 | `founder-verify.py --selftest` | Immer. Ohne `--selftest` druckt es die Geräte-Prüfliste; **mit `--since <sha>` nur das, was seit einem Deploy neu beantwortbar ist** — diese Form gehört in JEDE Build-Notiz. |
 | `genre-prebatch.py --selftest` | Immer. Ohne Flagge rechnet es eine Genre-Scheibe vor; **`--patch "<Name>"` beantwortet jede Frage über einen Patch-NACHBARN** und druckt seine eigene Abdeckung (#1350). |
 
-## B — DIE DREI MIT DEM ENGEN AUSLÖSER (zwei davon standen nirgends)
+## B — DIE MIT DEM ENGEN AUSLÖSER (zwei davon standen nirgends)
 
 Sie gehören nicht in den Acht-Satz — sie sind nicht bei jedem Commit sinnvoll. Sie haben
 einen ENGEREN Auslöser, und ohne die dritte Spalte ist ein enger Auslöser unsichtbar.
@@ -53,6 +53,7 @@ der Vollständigkeit halber. `window-margins.py` und `doorless-state.py` standen
 |---|---|
 | `needle-reachability.py` | **Sobald ein neuer Wächter eine RUNTIME-Nadel schreibt** (`SomeType.f(x).contains("lit")`). Eine SCAN-Nadel prüft man beim Schreiben per `grep`; eine Runtime-Nadel kann niemand ohne Compiler prüfen — #808 blieb so zwei Monate rot. |
 | `window-margins.py` | **Sobald ein ⛔-Block über eine bereits geprüfte Stelle geschrieben wird.** Ein Fenster `…prefix(N)` zählt auch die Leerzeichen gestrippter Kommentare mit; Prosa über der Zusicherung schiebt die Nadel aus dem Fenster und macht einen Wächter auf KORREKTEM Code rot. |
+| `isolation-inventory.py` | **Sobald eine Closure an ein Framework geht, das sie auf eigener Queue ruft** (Handler, Completion, Tap, Render-Block, `.sink`, `addObserver`), oder ein Typ `@MainActor` wird. Listet jede solche Closure aus einem isolierten Kontext mit Urteil; `TRAPS-ON-WORKER` ist die Build-2613-SIGTRAP-Klasse. `--selftest` nach jedem Anfassen (die acht historischen Fix-Commits). Auch als `doctor.py --section F`. |
 | `doorless-state.py` | **Nach einer Löschung, und beim Suchen nach einem Knopf ohne Schalter.** Non-private `var` mit Default, auf einem lebenden Pfad gelesen, nirgends geschrieben. ⚠️ Ein Treffer ist eine FRAGE — eine DSP-Konstante ohne Schreiber ist richtig so. |
 
 ## C — GATE-LESER: wenn CI rot ist oder man ihr nicht glaubt
@@ -61,7 +62,7 @@ der Vollständigkeit halber. `window-margins.py` und `doorless-state.py` standen
 |---|---|
 | `gh-run-status.py <datei>` | Wenn ein `mcp__github__actions_*`-Dump ins Token-Limit läuft und in eine Datei geschrieben wurde. Eine Zeile je Lauf. ⚠️ Für den bloßen Status eines Laufs ist die UNAUTHENTIFIZIERTE `api.github.com`-Route billiger — öffentliches Repo, kein Token. |
 | `gh-test-verdict.py <datei>` | Wenn ein Job-Log gelesen werden muss. Druckt Build-Verdikt plus fehlgeschlagene UND übersprungene Tests namentlich (ein Skip ist kein Pass, #806). **Erst die `WINDOW`-Zeile lesen, bevor man ein Grün zitiert** (#807). |
-| `doctor.py --section A\|B\|C\|D` | Bevor man „die Gates sind grün" als Beleg nimmt, und nach jeder Feature-Löschung. **Sektionsweise fahren** — der Gesamtlauf ist schon einmal im 2-Minuten-Timeout stumm gestorben. Exit 2 heißt INSTRUMENT UNAVAILABLE, also KEINE Aussage über das Repo. |
+| `doctor.py --section A\|B\|C\|D\|E\|F` | Bevor man „die Gates sind grün" als Beleg nimmt, und nach jeder Feature-Löschung. **Sektionsweise fahren** — der Gesamtlauf ist schon einmal im 2-Minuten-Timeout stumm gestorben. Exit 2 heißt INSTRUMENT UNAVAILABLE, also KEINE Aussage über das Repo. |
 
 ## D — DEPLOY UND PROJEKT: founder-nah, selten, nie blind
 

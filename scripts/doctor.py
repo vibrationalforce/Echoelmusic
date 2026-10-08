@@ -21,7 +21,7 @@ Design rules, taken from the flutter/brew/npm doctor family and from what actual
     real tool for the reachability checks (C), but it needs SourceKit and a full build.
   · Honest about its own blind spots — see `--help` and the LIMITS block at the end of a run.
 
-Usage:  python3 scripts/doctor.py [--section A|B|C|D|E] [--quiet]
+Usage:  python3 scripts/doctor.py [--section A|B|C|D|E|F] [--quiet]
 Exit:   0 = no CRITICAL findings, 1 = at least one CRITICAL.
 """
 
@@ -67,7 +67,7 @@ def read(path: Path) -> str:
 
 
 def _interpolation_end(line: str, at: int) -> int:
-    """Index just past the `)` that closes an interpolation whose `(` is at `at`.
+    r"""Index just past the `)` that closes an interpolation whose `(` is at `at`.
 
     Returns `len(line)` when the span does not close on this line — the span is then treated
     as running to end of line, which keeps the walk in literal state instead of guessing.
@@ -2185,9 +2185,60 @@ def section_e() -> Section:
     return sec
 
 
+def section_f() -> Section:
+    """F — ISOLATION: which closures formed on the main actor does a framework call elsewhere?
+
+    Build 2613 died with SIGTRAP on a background queue: a closure written in a `@MainActor`
+    type, not `@Sendable`, inherited main-actor isolation (SE-0423), and the framework that
+    called it on its own queue hit the runtime check. Eight commits closed that class one site
+    at a time, each after a crash or a reading. This section runs `scripts/isolation-inventory.py`
+    (one definition, #416) so the next site is found by a list.
+
+    CRITICAL = a TRAPS-ON-WORKER site: a family that calls on its own thread, closure unmarked.
+    INFO     = NEEDS-SDK-READING: the verdict depends on an SDK annotation not readable here.
+    Its limits are the inventory's own (docstring there): name-based "is this API ours", no
+    data-flow through stored closures, recall proven on the eight historic sites (`--selftest`).
+    """
+    sec = Section("F", "ISOLATION — does a framework call a main-actor closure on its own queue?")
+    import importlib.util
+    path = ROOT / "scripts" / "isolation-inventory.py"
+    spec = importlib.util.spec_from_file_location("isolation_inventory", path)
+    if spec is None or spec.loader is None:
+        raise InstrumentUnavailable(f"{rel(path)} could not be loaded")
+    inv = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(inv)
+    try:
+        sites, counts = inv.scan(None)
+    except (subprocess.CalledProcessError, OSError) as exc:
+        raise InstrumentUnavailable(f"isolation inventory could not read Sources/: {exc}")
+    if counts["closures"] == 0:
+        raise InstrumentUnavailable("the isolation inventory found no closure literal at all — "
+                                    "a parser that matches nothing is a finding, not a pass")
+    for site in sites:
+        if site["verdict"] == "TRAPS-ON-WORKER":
+            sec.findings.append(Finding(
+                CRITICAL, f"An unmarked closure reaches {site['thread']}",
+                [f"{site['file']}:{site['line']}  [{site['owner']}]", f"api: …{site['api']}",
+                 site["note"]],
+                "Spell the closure `{ @Sendable [weak self] … in` and hop back with "
+                "`Task { @MainActor [weak self] in … }` (the MIDIInput precedent), then extend "
+                "`TheOffMainDispatchHandlerIsSendableTests` with the family."))
+    needs = [s for s in sites if s["verdict"] == "NEEDS-SDK-READING"]
+    if needs:
+        sec.findings.append(Finding(
+            INFO, f"{len(needs)} closure(s) whose thread depends on an SDK annotation not read here",
+            [f"{s['file']}:{s['line']}  {s['note'] or s['api']}" for s in needs],
+            "Not a defect until a Mac reads the header. Spelling the closure `@Sendable` makes "
+            "the question moot and costs one token; `python3 scripts/isolation-inventory.py` "
+            "prints each site in full."))
+    sec.clean_note = (f"{counts['isolated']} closures formed in an isolated context; none reaches "
+                      "a framework queue unmarked, none waits on an SDK reading.")
+    return sec
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--section", choices=list("ABCDE"), help="run only one section")
+    ap.add_argument("--section", choices=list("ABCDEF"), help="run only one section")
     ap.add_argument("--quiet", action="store_true", help="print findings only, no clean sections")
     ap.add_argument("--selftest", action="store_true",
                     # ⛔ THIS STRING USED TO OPEN "check THREE rules" AND IT WENT STALE THE
@@ -2203,8 +2254,9 @@ def main() -> int:
         return (selftest_negated_needle() | selftest_absence_loop_header()
                 | selftest_comment_is_not_a_call() | selftest_debug_branch_is_not_a_door())
 
-    runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d, "E": section_e}
-    keys = [args.section] if args.section else list("ABCDE")
+    runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d, "E": section_e,
+               "F": section_f}
+    keys = [args.section] if args.section else list("ABCDEF")
 
     criticals = 0
     print("Echoel doctor — are the instruments telling the truth?\n")

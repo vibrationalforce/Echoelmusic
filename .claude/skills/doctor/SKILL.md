@@ -46,6 +46,7 @@ Wenn die Frage „ist dieser Code richtig?" lautet, ist das hier das falsche Wer
 python3 scripts/doctor.py --section A  # nur die Gates (unter 1 s)
 python3 scripts/doctor.py --section C  # Türen — LANGSAM, siehe unten
 python3 scripts/doctor.py --section E  # Ratchets — VOR dem Push jeder UI-Zeile (unter 2 s)
+python3 scripts/doctor.py --section F  # Isolation — nach jeder Closure an ein Framework (~5 s)
 python3 scripts/doctor.py --quiet      # alles, nur Befunde — Timeout setzen, siehe unten
 ```
 
@@ -191,6 +192,24 @@ Schritt von `EchoelTheme.spaceXS … spaceXL` nehmen, nie die Decke heben. Grün
 heißt: das nächste Literal irgendwo in `Sources/` ist rot. ⛔ Die erste Messung des Vorfalls
 zählte ohne Kommentar-Stripper und las 716 statt 696 — Kommentare tragen literal-förmige
 Abstände; eine Zahl ohne den Stripper ist eine ANDERE Zahl, keine Näherung.
+
+### F — ISOLATION: ruft ein Framework eine Main-Actor-Closure auf seiner eigenen Queue?
+Fährt `scripts/isolation-inventory.py` (EINE Definition, #416). Gelistet wird jede Closure,
+die in einem isolierten Kontext entsteht (`@MainActor`-Typ oder -Funktion, `actor`, `View`,
+UIKit-Unterklasse) und an etwas geht, das NICHT in diesem Repo deklariert ist. CRITICAL =
+`TRAPS-ON-WORKER`: eine Familie, die auf eigener Queue ruft, und die Closure ist nicht
+`@Sendable`. INFO = `NEEDS-SDK-READING`: das Urteil hängt an einer SDK-Annotation, die hier
+niemand lesen kann — als Hypothese gedruckt, nie als Urteil.
+
+**Warum es existiert:** Build 2613 starb mit SIGTRAP auf einer Hintergrund-Queue (SE-0423:
+eine unmarkierte Closure erbt die Main-Actor-Isolation, und die Laufzeitprüfung schlägt zu).
+Acht Commits haben die Klasse Stelle für Stelle geschlossen, jede nach einem Absturz oder einer
+Lektüre. `--selftest` des Skripts findet alle acht auf ihrem Eltern-Commit und keine danach.
+
+**Deine Aufgabe:** Nach jeder neuen Closure an Dispatch, AVFAudio, CoreMIDI, HealthKit, Metal,
+CloudKit, CoreHaptics, Network, Combine oder NotificationCenter `--section F` laufen lassen.
+Ein CRITICAL heißt: `{ @Sendable [weak self] … in` plus `Task { @MainActor [weak self] in … }`
+und die Familie in `TheOffMainDispatchHandlerIsSendableTests` nachziehen.
 
 ## Wann laufen lassen
 
