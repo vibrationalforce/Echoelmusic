@@ -4,24 +4,9 @@
       "type": "http",
       "url": "https://mcp.perplexity.com/mcp"
     },
-    "supabase": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@supabase/mcp"],
-      "env": {
-        "SUPABASE_URL": "${SUPABASE_URL}",
-        "SUPABASE_API_KEY": "${SUPABASE_API_KEY}"
-      }
-    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
-    },
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"],
-      "env": {}
     },
     "firecrawl": {
       "type": "http",
@@ -30,39 +15,23 @@
         "Authorization": "Bearer ${FIRECRAWL_API_KEY}"
       }
     },
-    "next-devtools": {
+    "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
-    },
-    "tailwindcss": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "tailwindcss-mcp-server"]
-    },
-    "vibekanban": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "mcp-vibekanban"]
-    },
-    "gsd-memory": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "gsd-memory"]
-    },
-    "xcode-build": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/xcode-build-mcp@latest"],
-      "disabled": true,
-      "_comment": "Enable on macOS with Xcode. Provides direct build, test, simulator access."
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83"
+      ],
+      "env": {}
     },
     "ios-simulator": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "ios-simulator-mcp@latest"],
-      "disabled": true,
-      "_comment": "Enable on macOS. Launch simulators, take screenshots, capture logs."
+      "args": [
+        "-y",
+        "ios-simulator-mcp@2.1.0"
+      ],
+      "_comment": "Pinned to an exact version (audit 2026-10-08). Bump deliberately, never @latest."
     }
   }
 }
