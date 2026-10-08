@@ -1,4 +1,4 @@
-build: v10.79.494 — Der WAV-Export stürzt nicht mehr ab (2613-Fix), eine Sprosse vor der Schreib-Uhr
+build: v10.79.495 — Export-Absturz an der zweiten Stelle repariert, das Diagnose-Log nennt die Warteschlange
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,49 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.495) ───────────────────────────────
+
+  ⭐ DER EXPORT-ABSTURZ IST JETZT AN BEIDEN STELLEN REPARIERT — 10.79.494 hatte nur die erste.
+  Gebaut wird der zuletzt durch beide Gates gelaufene Stand (Xcode Compile Check 37765837738 +
+  Build for Testing Job 113276397518 grün auf 2e627b5). NICHT drin — sie warten auf deine Freigabe im
+  Standard-Modus (scratchpads/FOUNDER_LANDING_2026-10-08.md): die Mikrofon-Aufnahme E10-1,
+  Broadcast B2 und die Auto-Merge-Reparatur #310. Auf dem Gerät ist NICHTS von dem Folgenden geprüft.
+
+  ── POSTEN 1: DIE ZWEITE STELLE DES EXPORT-ABSTURZES ──
+  · 10.79.494 nahm der Schreib-Uhr des Mitschnitts das falsche Etikett „nur Hauptfaden" (deine Logs
+    2613 und 2618). Beim Weiterlesen desselben Export-Wegs fand sich EINE Phase später dieselbe
+    Falle: nachdem der Mitschnitt gestoppt ist, rechnet der Export die Datei (Pegel, Fades, Format)
+    auf einer zweiten Hintergrund-Warteschlange — und auch diese Closure trug das Etikett. Auf
+    10.79.494 wäre der Export also NACH dem Abspielen abgestürzt statt davor; auf keinem Swift-6-
+    Build konnte diese Phase je zu Ende laufen. Repariert mit demselben Wort (`@Sendable`) plus
+    einer kleinen Box für die zwei Zähler, die die Closure mitführt. Was der Export rechnet, ist
+    unverändert; der Fortschrittsbalken meldet sich weiter einmal pro Prozent.
+  · Nur das Gerät beweist den Weg bis zum Teilen-Blatt.
+
+  ── POSTEN 2: DAS DIAGNOSE-LOG NENNT BEIM ABSTURZ DIE WARTESCHLANGE ──
+  · Deine beiden Logs hatten unter der CRASH-Zeile KEINE „crash thread/queue:"-Zeile — die
+    Hintergrund-Arbeiter von iOS tragen keinen Thread-Namen. Jetzt steht dort zusätzlich
+    „crash queue: com.echoelmusic.…", der Name der Warteschlange, auf der es passiert ist. Das hätte
+    die 2613-Suche (23 Agenten, 2,3 Stunden) auf eine Zeile verkürzt. Allokationsfrei im Signal-
+    Handler, vor dem Stack-Trace geschrieben.
+
+  ── PRÜFLISTE ──
+  T1  Arrange → „Export" → „WAV" → warten, bis das Teilen-Blatt erscheint → Datei teilen. Danach
+      Instrument → Save/Export-Chip → „Diagnostics": „retro: recording armed" steht VOR
+      „transport play (timelineRegion)", und KEINE CRASH-Zeile folgt.
+  T2  Der Loop-Export (Instrument → die Kachel „Record" in der Zeile unter dem Transport) — die Tür aus deinem 2618-Log — genauso bis zum Teilen-Blatt.
+  T3  Dasselbe mit laufendem Puls (Finger auf der Kamera): der Export darf die Messung nicht
+      stören, die Puls-Pille läuft weiter.
+  T4  Stabilität: dreimal kalt starten, alle fünf Bereiche. Stürzt etwas ab: Instrument →
+      Save/Export-Chip → „Diagnostics" → Teilen — unter der CRASH-Zeile steht jetzt „crash queue: …".
+
+  Neu prüfbare Bitten (1 Zeile):
+  Gedruckt: python3 scripts/founder-verify.py --since 67e8eab
+  · OTHER — CISmoke/TheCrashLogNamesTheQueueTests.swift:52: die Zeile „crash queue: …" beim nächsten
+    Absturz auf einer Hintergrund-Warteschlange (= T4).
+
+  Der Vorgänger ist 10.79.494 (Build 2619), davor 10.79.493 (Build 2618).
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.494) ───────────────────────────────
 
