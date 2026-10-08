@@ -20,6 +20,17 @@
 // ⭐ Since Restructure A1 step 3 (2026-10-04) two callers DO read it: `TimelineStore` and
 // `ClipStore` record the outcome, and `WorkingCopyStatusView` shows a failed working copy.
 // The "ZERO" counts here and below are the #514 measurement, kept as history.
+//
+// ⭐ GMMW SH-4 (2026-10-08) — AN UNREADABLE FILE IS KEPT BEFORE IT CAN BE OVERWRITTEN. A read
+// that cannot use a present file returns nil (or an array with holes), the caller falls back
+// to an empty or shorter document, and its NEXT save writes that back over the file: the
+// bytes that might still be repaired are gone with no copy anywhere. So before such a read
+// returns, the bytes go to `<name>.json.unreadable-<ms>` beside the file — at most
+// `unreadableCopiesKept` per name, newest first, an identical copy never twice — and the diag
+// log gets one `store:` line. The name does NOT end in `.json`, so nothing that lists the
+// store's documents reads a kept copy as a live one. Nothing restores a copy yet; it is kept
+// so a support session or a later recovery door has something to restore FROM.
+// Guard: `AnUnreadableStoreKeepsItsBytesTests`.
 
 import Foundation
 
@@ -82,6 +93,7 @@ public struct AppGroupStore: Sendable {
         } catch {
             log.log(.error, category: .system,
                     "AppGroupStore: \(name).json present but failed to decode as \(T.self) — \(error)")
+            keepUnreadable(data, name: name, reason: "does not decode")
             return nil
         }
     }
@@ -133,7 +145,18 @@ public struct AppGroupStore: Sendable {
         guard let data = try? Data(contentsOf: url) else { return nil } // absent = normal
         // Both failure modes (partly-corrupt, not-an-array) are logged inside
         // `decodeLossyArray` under this label — no second log line here.
-        return decodeLossyArray(type, from: data, label: "AppGroupStore: \(name).json")
+        guard let values = decodeLossyArray(type, from: data, label: "AppGroupStore: \(name).json") else {
+            keepUnreadable(data, name: name, reason: "not an array")
+            return nil
+        }
+        // A HOLE is an element that did not decode. An explicit `null` in an optional grid
+        // (`ClipStore`'s empty slots) decodes as a VALUE and is not one, so a well-formed grid
+        // keeps nothing. The next save writes the array back without its holes — the bounded
+        // loss `decodeLossyArray` names — so the bytes are kept now, while they still exist.
+        if values.contains(where: { $0 == nil }) {
+            keepUnreadable(data, name: name, reason: "elements dropped")
+        }
+        return values
     }
 
     /// Encode and atomically write `value` under `name`. Returns success.
@@ -221,5 +244,66 @@ public struct AppGroupStore: Sendable {
     public func delete(name: String) {
         guard let url = fileURL(name) else { return }
         try? FileManager.default.removeItem(at: url)
+    }
+
+    // MARK: - Keeping what could not be read (GMMW SH-4)
+
+    /// How many unreadable copies of one file are kept. Three: the newest is the one a person
+    /// most likely wants, the older two cover a file that broke again after a repair.
+    static let unreadableCopiesKept = 3
+
+    /// The kept copies of `name`, newest first. `internal` — the guard reads it, and a later
+    /// recovery door would start from it.
+    func unreadableCopies(of name: String) -> [URL] {
+        keptCopies(of: name).map { $0.url }
+    }
+
+    /// Every file in the store's directory that is a kept copy of `name`, with its stamp,
+    /// newest first. A name with the prefix and no readable stamp is not ours to sort or prune.
+    private func keptCopies(of name: String) -> [(stamp: Int64, url: URL)] {
+        guard let directory = fileURL(name)?.deletingLastPathComponent(),
+              let entries = try? FileManager.default.contentsOfDirectory(
+                at: directory, includingPropertiesForKeys: nil) else { return [] }
+        let prefix = "\(name).json.unreadable-"
+        let stamped: [(stamp: Int64, url: URL)] = entries.compactMap { url in
+            let file = url.lastPathComponent
+            guard file.hasPrefix(prefix), let stamp = Int64(file.dropFirst(prefix.count)) else { return nil }
+            return (stamp, url)
+        }
+        return stamped.sorted { $0.stamp > $1.stamp }
+    }
+
+    /// Copies `data` — the bytes of `name` that a read could not use — beside the file before the
+    /// read returns, and says so in the diag log. Best-effort: a failed copy is logged and the
+    /// read goes on exactly as before.
+    private func keepUnreadable(_ data: Data, name: String, reason: String) {
+        guard let url = fileURL(name) else { return }
+        let existing = keptCopies(of: name)
+        // A launch that meets the same broken file again adds nothing: the bytes are kept.
+        if existing.contains(where: { (try? Data(contentsOf: $0.url)) == data }) {
+            EchoelCrashLog.breadcrumb("store: \(name).json unreadable (\(reason)) - already kept")
+            return
+        }
+        // One past the newest, so a clock that stepped back cannot sort a new copy behind an old
+        // one and get it pruned first. The stamp is read from a FILE NAME, so `+ 1` is spelled
+        // with its overflow: a name ending in Int64.max must not be able to trap the launch.
+        let now = Int64((Date().timeIntervalSince1970 * 1000).rounded(.down))
+        let afterNewest = (existing.first?.stamp ?? 0).addingReportingOverflow(1)
+        let stamp = afterNewest.overflow ? now : Swift.max(now, afterNewest.partialValue)
+        let copy = url.deletingLastPathComponent()
+            .appendingPathComponent("\(name).json.unreadable-\(stamp)", isDirectory: false)
+        do {
+            try data.write(to: copy, options: [.atomic, .completeFileProtection])
+        } catch {
+            log.log(.error, category: .system,
+                    "AppGroupStore: \(name).json unreadable and its copy failed to WRITE — \(error)")
+            EchoelCrashLog.breadcrumb("store: \(name).json unreadable (\(reason)) - copy failed")
+            return
+        }
+        for old in keptCopies(of: name).dropFirst(Self.unreadableCopiesKept) {
+            try? FileManager.default.removeItem(at: old.url)
+        }
+        EchoelCrashLog.breadcrumb(
+            "store: \(name).json unreadable (\(reason)) - kept \(data.count) bytes as \(copy.lastPathComponent)")
     }
 }
