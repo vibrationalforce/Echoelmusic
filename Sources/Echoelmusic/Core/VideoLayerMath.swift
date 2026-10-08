@@ -26,9 +26,11 @@ public enum VideoLayerMath {
     public static let greenWeight = 0.7152
     public static let blueWeight = 0.0722
 
-    /// Region blocks per side handed to the flash limiter (a 4 × 4 grid, each a sixteenth of the
-    /// picture — about the smallest area WCAG counts on a phone held at reading distance).
-    public static let flashBlocksPerSide = 4
+    /// Cells per side handed to the flash limiter (an 8 × 8 grid). The limiter reads them through
+    /// overlapping 2 × 2 and 4 × 4 windows, so its smallest window is a sixteenth of the picture —
+    /// about the smallest area WCAG counts on a phone held at reading distance — and it can sit at
+    /// any half-window offset (review of VV-4: fixed 4 × 4 blocks diluted a flash on a corner).
+    public static let flashCellsPerSide = 8
 
     /// The relative luminance of an sRGB colour whose components are 0…1. Non-finite components
     /// read as 0 and every component is clamped first, so the answer is always 0…1.
@@ -44,11 +46,13 @@ public enum VideoLayerMath {
     }
 
     /// The mean of each `blocks × blocks` block of a row-major `side × side` grid, row-major.
-    /// nil when the grid is not `side × side`, when `side` does not divide into `blocks`, or when a
-    /// value is non-finite — the limiter then gets no frame rather than a wrong one.
+    /// nil when the grid is not `side × side` (a side too large to square counts as that, it does
+    /// not trap), when `side` does not divide into `blocks`, or when a value is non-finite — the
+    /// limiter then gets no frame rather than a wrong one.
     public static func regionMeans(_ grid: [Double], side: Int, blocks: Int) -> [Double]? {
-        guard side > 0, blocks > 0, side % blocks == 0, grid.count == side * side,
-              grid.allSatisfy({ $0.isFinite }) else { return nil }
+        guard side > 0, blocks > 0, side % blocks == 0 else { return nil }
+        let (cellCount, overflow) = side.multipliedReportingOverflow(by: side)
+        guard !overflow, grid.count == cellCount, grid.allSatisfy({ $0.isFinite }) else { return nil }
         let span = side / blocks
         let cellsPerBlock = Double(span * span)
         var means: [Double] = []
