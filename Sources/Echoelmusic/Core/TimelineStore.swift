@@ -250,6 +250,11 @@ public final class TimelineStore {
     ///   · `.cycle` — the PIECE's cycle (GMMW AE-12b) from ONE tap of the transport's Cycle
     ///     button: the cycle the tap found and the one it left (`nil` = none). The `.lightLook`
     ///     rule for one field. Recorded by `setCycle(_:)`, once per tap.
+    ///   · `.keptTake` — ONE kept take (GMMW GA-2a): the song's parts AND the one clip slot the
+    ///     take filled, together, so Undo removes the part and frees the slot in the same step
+    ///     (a `.regions` step alone would leave the copied clip filling a slot for good). `clip`
+    ///     is what the slot must hold after the step (`nil` = empty); the step refuses while the
+    ///     slot holds anything else. Recorded by `keepComposerTake(regionID:clips:)`, once per tap.
     /// Deliberately NOT whole-document snapshots: lanes are not part of this history — the mixer
     /// enters only as `.laneMix`, a track's sound only as `.lanePatch` — so an undo can never
     /// silently revert a rename, an instrument assignment or a fader move made after the edit
@@ -274,6 +279,7 @@ public final class TimelineStore {
         case lightLook(before: Float?, after: Float?)
         case laneSample(laneID: UUID, before: String?, after: String?)
         case cycle(before: TimelineCycle?, after: TimelineCycle?)
+        case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)
     }
 
     /// B3b — the four mixer fields of ONE track, the only ones a `.laneMix` step can move.
@@ -436,6 +442,28 @@ public final class TimelineStore {
             document.cycle = before
             persist()
             return HistoryStep.cycle(before: after, after: before)
+        case .keptTake(let slot, let keptID, let clip, let regions, let clips):
+            // GMMW GA-2a — the slot must hold exactly what the step expects: the kept take when
+            // Undo frees it, nothing when Redo fills it again. Anything else was written since
+            // (an import into a freed slot), and then the step changes nothing.
+            guard clips.slots.indices.contains(slot) else { return nil }
+            let held = clips.slots[slot]
+            if clip == nil {
+                guard let held, held.id == keptID else { return nil }
+                let inverse = HistoryStep.keptTake(slot: slot, keptID: keptID, clip: held,
+                                                   regions: document.regions, clips: clips)
+                restoreRegions(regions)
+                clips.clear(at: slot)
+                persist()
+                return inverse
+            }
+            guard held == nil, let clip else { return nil }
+            let inverse = HistoryStep.keptTake(slot: slot, keptID: keptID, clip: nil,
+                                               regions: document.regions, clips: clips)
+            clips.setClip(at: slot, clip)
+            restoreRegions(regions)
+            persist()
+            return inverse
         }
     }
 
@@ -1348,9 +1376,10 @@ public final class TimelineStore {
     ///   the audio/video import paths).
     /// - An ORPHANED composer clip (composer-owned, no region anywhere plays it —
     ///   its part was removed, undone, or moved past the window) is REUSED rather
-    ///   than a new one minted. Nothing clears a slot (`ClipStore.clear(at:)` has
-    ///   no caller), so without this every remove→Start cycle spent one of the
-    ///   grid's slots for good until the grid refused every import. Reused by id,
+    ///   than a new one minted. Only the Undo of a kept take clears a slot (GMMW
+    ///   GA-2a, and only the slot that take filled), so without this every
+    ///   remove→Start cycle spent one of the grid's slots for good until the grid
+    ///   refused every import. Reused by id,
     ///   not replaced: an Undo that brings the old part back still finds its clip.
     @discardableResult
     public func ensureComposerRegion(for laneID: UUID, clipStore: ClipStore,
@@ -1443,6 +1472,59 @@ public final class TimelineStore {
         log.log(.info, category: .audio,
                 "ensureUserMidiRegion: created 'MIDI · \(lane.name)' (slot \(slot), \(max(1, loopBars)) bars)")
         return region
+    }
+
+    /// GMMW GA-2a — "Keep take": copy what the composer wrote into a part the person owns. The
+    /// composer rewrites its own clip on every Evolve (`ClipStore.updateComposerMelody`, gated on
+    /// `composerOwned`), and the note editor refuses that clip (`ClipNoteEdit.acceptsEdits`) — so a
+    /// take the person liked could neither be kept nor edited. This copies the composer part's
+    /// clip into a NEW user-owned clip (`composerOwned: false`: generate/evolve can never rewrite
+    /// it, the note editor takes it) in the first free slot, and places it as a new part on the
+    /// same track, from the first bar line at or after the track's last part — the composer's own
+    /// part is not touched and keeps evolving.
+    ///
+    /// - ONE undo step (`.keptTake`) that removes the new part AND frees the slot; Redo puts both
+    ///   back. A `.regions` step alone would leave the copy filling a slot for good.
+    /// - Full clip grid ⇒ nil, nothing written (the never-clobber law: no user clip is displaced).
+    /// - Not a composer MIDI part ⇒ nil, nothing written.
+    /// Returns the new part.
+    @discardableResult
+    public func keepComposerTake(regionID: UUID, clips: ClipStore) -> TimelineRegion? {
+        guard let source = document.regions.first(where: { $0.id == regionID }),
+              let lane = document.lanes.first(where: { $0.id == source.laneID }),
+              let taken = clips.clip(id: source.clipID),
+              taken.kind == .midi, taken.composerOwned else { return nil }
+        guard let slot = clips.firstEmptySlotIndex else {
+            log.log(.warning, category: .audio,
+                    "keepComposerTake: clip grid full (\(ClipStore.slotCount) slots) — nothing kept for lane \(lane.name)")
+            return nil
+        }
+        let kept = Clip(name: "Kept · \(lane.name)", colorIndex: slot, kind: .midi,
+                        melody: MelodyClip(notes: taken.melody?.notes ?? []),
+                        nativeBPM: taken.nativeBPM, automation: taken.automation,
+                        composerOwned: false)
+        var part = source.duplicated(atStartTick: Self.keptTakeStart(after: source, in: document))
+        part.clipID = kept.id
+        let before = document.regions
+        clips.setClip(at: slot, kept)
+        document.regions.append(part)
+        persist()
+        pushUndo(.keptTake(slot: slot, keptID: kept.id, clip: nil, regions: before, clips: clips))
+        log.log(.info, category: .audio,
+                "keepComposerTake: kept '\(taken.name)' as '\(kept.name)' (slot \(slot)) at tick \(part.startTick)")
+        return part
+    }
+
+    /// Where a kept take lands: the first bar line at or after the end of the track's last part,
+    /// so it never covers a part and always starts on a downbeat. Pure.
+    nonisolated static func keptTakeStart(after source: TimelineRegion, in document: TimelineDocument,
+                                          ticksPerBar: Int = TimelineTime.ticksPerBar) -> Int {
+        let bar = Swift.max(1, ticksPerBar)
+        let laneEnd = document.regions
+            .filter { $0.laneID == source.laneID }
+            .map(\.endTick)
+            .reduce(source.endTick, Swift.max)
+        return ((Swift.max(0, laneEnd) + bar - 1) / bar) * bar
     }
 
     public func toggleMute(id: UUID) {
