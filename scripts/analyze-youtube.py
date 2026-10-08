@@ -14,9 +14,10 @@ Usage:
 Output: a Markdown brief on stdout, and (unless --no-save) saved to
     scratchpads/inspiration/youtube-<id>.md
 
-Runtime deps (auto-detected; install on demand):
-    pip3 install youtube-transcript-api       # transcript (required)
-    pip3 install yt-dlp                        # richer metadata (optional; oEmbed fallback)
+Runtime deps (auto-detected): youtube-transcript-api (transcript, required) and yt-dlp
+(richer metadata, optional; oEmbed fallback). Install them ONLY as the hashed pipeline set
+(security audit 2026-10-08, T9 — never a bare, unpinned `pip install`):
+    python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt
 
 NETWORK: needs outbound access to youtube.com. Some sandboxes (incl. Claude-on-the-web
 with a restrictive network policy) BLOCK youtube.com at the proxy — you'll see a 403 /
@@ -200,7 +201,8 @@ def main() -> int:
     try:
         transcript = fetch_transcript(video_id, args.lang)
     except ImportError:
-        transcript_err = "youtube-transcript-api not installed (pip3 install youtube-transcript-api)"
+        transcript_err = ("youtube-transcript-api not installed (python3 -m pip install "
+                          "--require-hashes -r scripts/requirements-pipeline.txt)")
     except Exception as e:  # noqa: BLE001
         transcript_err = f"{type(e).__name__}: {e}"
         if _is_network_block(e):

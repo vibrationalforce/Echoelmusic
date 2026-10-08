@@ -63,8 +63,12 @@ screenshot intake already in `memory/inspiration_intake.md`.
    is the `doctor` skill's law applied to this tool.
 
    - Optional deps, both auto-detected, both only useful once the network allows YouTube:
-     `pip3 install youtube-transcript-api` (cheap transcript, no media download) and
-     `pip3 install yt-dlp` (description/date/views + auto-subs as the transcript fallback).
+     youtube-transcript-api (cheap transcript, no media download) and yt-dlp
+     (description/date/views + auto-subs as the transcript fallback). Install them ONLY as the
+     hashed pipeline set, from the repo root:
+     `python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt`
+     (security audit 2026-10-08, T9; never a bare `pip install`). Installing is a one-time
+     founder decision per environment; the founder uploading the file is the default path.
 
 2. **Fallbacks when you get exit 3** — in this order, and say WHICH one you used:
    - **(a) Ask for the file.** The founder uploads the video; run `video-watch` on the

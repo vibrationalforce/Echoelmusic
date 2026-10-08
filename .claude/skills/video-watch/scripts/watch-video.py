@@ -18,7 +18,9 @@ Output: a manifest on stdout — metadata, then one "FRAME <path>" line per fram
 (the agent Reads those paths as images), plus "SUBS <path>" when subtitles exist.
 
 Deps: ffmpeg/ffprobe (apt-get update && apt-get install -y ffmpeg),
-      yt-dlp for URLs (pip3 install yt-dlp).
+      yt-dlp for URLs — from the repo root, the hashed pipeline set
+      (python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt;
+      security audit 2026-10-08 T9: never a bare, unpinned `pip install`).
 Network: URL downloads need the proxy to allow the video host. If blocked you get
 a clean error — fall back to asking the founder to upload the video file directly
 (the local path always works).
@@ -40,6 +42,10 @@ URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 def die(msg: str, code: int = 1):
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+# The ONE install for pipeline Python tools: pinned versions, every file hash-checked (T9).
+HASHED_INSTALL = "python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt (repo root)"
 
 
 def need(tool: str, hint: str):
@@ -69,7 +75,7 @@ def probe(path: str) -> dict:
 
 def download(url: str, out_dir: str, max_height: int) -> tuple[str, dict, str | None]:
     """yt-dlp: video (capped height, mp4 preferred) + auto-subs + metadata."""
-    need("yt-dlp", "pip3 install yt-dlp")
+    need("yt-dlp", HASHED_INSTALL)
     tmpl = os.path.join(out_dir, "video.%(ext)s")
     cmd = ["yt-dlp", "--no-playlist", "--restrict-filenames",
            "-f", f"bv*[height<={max_height}]+ba/b[height<={max_height}]/b",

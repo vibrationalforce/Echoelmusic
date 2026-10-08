@@ -28,7 +28,10 @@ needs no network at all.
    ```
    - Deps auto-checked with install hints: ffmpeg (`apt-get update && apt-get
      install -y ffmpeg` — plain `install` alone can 404 on stale indexes) and,
-     for URLs, yt-dlp (`pip3 install yt-dlp`).
+     for URLs, yt-dlp — ONLY as the hashed pipeline set, from the repo root:
+     `python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt`
+     (security audit 2026-10-08, T9: pinned versions, every file hash-checked; never a bare
+     `pip install`). Installing is a one-time founder decision per environment.
    - Output dir defaults to a temp dir; pass `--out` to choose (use the session
      scratchpad). **Never write frames into the repo.**
 

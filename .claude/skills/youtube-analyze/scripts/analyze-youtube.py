@@ -69,6 +69,11 @@ BLOCK_MARKERS = (
 )
 
 
+
+# The ONE install for pipeline Python tools: pinned versions, every file hash-checked
+# (security audit 2026-10-08, T9 — never a bare, unpinned `pip install`).
+HASHED_INSTALL = "python3 -m pip install --require-hashes -r scripts/requirements-pipeline.txt (repo root)"
+
 def video_id(raw: str) -> str | None:
     raw = raw.strip()
     for p in PATTERNS:
@@ -99,7 +104,7 @@ def fetch_oembed(vid: str) -> tuple[dict, str | None]:
 def fetch_ytdlp(vid: str) -> tuple[dict, str | None]:
     """Full metadata via yt-dlp, no download. Returns (data, error)."""
     if shutil.which("yt-dlp") is None:
-        return {}, "yt-dlp not installed (pip3 install yt-dlp)"
+        return {}, f"yt-dlp not installed ({HASHED_INSTALL})"
     cmd = ["yt-dlp", "--no-warnings", "--skip-download", "--no-playlist",
            "--print", "%(title)s\t%(uploader)s\t%(duration)s\t%(upload_date)s"
                       "\t%(view_count)s\t%(webpage_url)s",
@@ -150,7 +155,7 @@ def fetch_transcript(vid: str) -> tuple[list[dict], str | None]:
             # Not a network problem — fall through and let yt-dlp try.
             first = api_err
     else_err = locals().get("first", "youtube-transcript-api not installed "
-                                     "(pip3 install youtube-transcript-api)")
+                                     f"({HASHED_INSTALL})")
 
     if shutil.which("yt-dlp") is None:
         return [], else_err

@@ -14,10 +14,11 @@ that names a tool the environment does not have does not fail loudly — it read
 nothing to see", which is the doctor-Section-B defect this repo already pays for elsewhere.
 
 One line fixes it, and the binary is a wheel payload, so nothing is compiled and nothing but
-PyPI is contacted:
+PyPI is contacted. It installs the HASHED pipeline set (security audit 2026-10-08, T9: pinned
+versions, every file hash-checked; never a bare `pip install`), from the repo root:
 
 ```bash
-python3 -m pip install --quiet imageio-ffmpeg
+python3 -m pip install --quiet --require-hashes -r scripts/requirements-pipeline.txt
 FF=$(python3 -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())")
 ```
 
