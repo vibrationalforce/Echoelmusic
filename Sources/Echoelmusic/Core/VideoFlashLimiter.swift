@@ -7,41 +7,58 @@
 // either. This type watches the frames that are actually SHOWN and caps the layer's gain.
 //
 // ⭐ WHAT IT WATCHES. The caller hands a grid of CELL luminances (`VideoLayerMath.regionMeans`,
-// 8 × 8 by `VideoLayerMath.flashCellsPerSide`). The limiter reads them through WINDOWS: every
-// 2 × 2 and 4 × 4 square of cells at half its own stride (so they overlap), plus the whole frame.
-// A WCAG flash counts when the flashing area within any one 10° field is large enough, and a 10°
-// field can sit anywhere on the picture — on a block corner, across two blocks — so fixed blocks
-// are not enough (review of VV-4: a flash centred on a corner was diluted four times; two
-// neighbouring blocks taking turns were never added up). The whole-frame window also carries a
-// small picture (the floating card), where the 10° field is larger than the layer.
+// 8 × 8 by `VideoLayerMath.flashCellsPerSide`). Every channel below is a hysteresis on one signal,
+// and the cap engages when any one of them holds `engageTransitions` (5) inside one second:
+// · WINDOWS on the footage: every 2 × 2 and 4 × 4 square of cells at half its own stride (so they
+//   overlap) and the whole frame, at a quarter of the WCAG step. A WCAG flash counts when the
+//   flashing area within any one 10° field is large enough, and that field can sit anywhere — on a
+//   block corner, across two blocks (review of VV-4: fixed blocks diluted a corner flash four times
+//   and never added up two neighbours taking turns). The whole frame also carries a small picture
+//   (the floating card), where the 10° field is larger than the layer.
+// · CELLS on the footage, each at the whole step. A window adds its cells up, so cells swinging
+//   AGAINST each other cancel in it — a checkerboard or one-cell stripes reversing at 10 Hz never
+//   moved a single window (second review of VV-4). A cell alone cannot cancel.
+// · CELLS as SHOWN — the gain the layer has now times the cell — at the whole step: the viewer's own
+//   count. The gain moves too, and only these channels see what that does: the climb back is a rise
+//   of its own, and it turns footage that keeps falling (one movement to every footage channel) into
+//   a fall, a rise and a fall on the screen (second review: six transitions in a second, which no
+//   lowered count on the footage could catch — the first draft of this fix had one and still showed
+//   six).
 //
 // ⭐ WHAT IT GUARANTEES, and the arithmetic behind it (WCAG 2.3.1, the numbers are `FlashGuard`'s):
-// · A TRANSITION is a window's mean luminance moving `transitionThreshold` against its last
-//   extreme (hysteresis, so a slow fade is one transition, not many). Before a window's first
-//   transition it tracks its own lowest and highest value, so a strobe that starts mid-swing
-//   counts from its first full swing. Two opposing transitions are a flash.
-// · The threshold is the WCAG step over the share of a window a counted flash covers
-//   (`regionCoverage`). A flash of the WCAG step that covers a quarter of some 2 × 2 window moves
-//   it by at least that much, and a rectangle at least one cell wide and tall has such a window at
-//   any offset (along each side some window takes in a whole cell's length of it).
-// · When any one window holds `engageTransitions` (5) transitions inside one second, the gain
-//   drops to `engagedGain` (0.05) on that frame. While engaged, no pixel the layer adds can move
-//   by 0.05, which is half the WCAG step — so nothing it shows can be a flash at all.
-// · Before it engages at most four transitions have passed, and the gain drop is ONE edge: five
-//   transitions, two and a half flashes, in any second. Under the three WCAG allows.
-// · While the gain is below 1 (engaged, or climbing back) it engages at one transition fewer, so
-//   the climb's own rise plus a strobe that resumes during it still stays at five.
-// · It climbs back only after `holdSeconds` with no window over the count, at `releasePerSecond`,
-//   stepped through `FlashGuard.maxDelta` so a stall cannot turn the climb into one jump. A source
-//   that goes on strobing never releases it.
+// · A TRANSITION is a channel's signal moving its step against its last extreme (hysteresis, so a
+//   slow fade is one transition, not many); before its first, against its own lowest and highest, so
+//   a strobe that starts mid-swing counts from its first full swing. Two opposing ones are a flash.
+//   Every step carries `roundingAllowance`, so a move of exactly the step counts. A direction whose
+//   last transition is a whole second old is forgotten, its extreme kept as the reference: a step off
+//   a level settled long ago is a change of its own, not the rest of a rise that ended before the
+//   counting window (second review: such a step started a strobe uncounted, and six showed).
+// · When any channel holds five transitions inside one second, the gain drops to `engagedGain`
+//   (0.05) on that frame. While engaged no pixel the layer adds can move by 0.05, half the WCAG
+//   step — nothing it shows can be a flash at all.
+// · A flash covering any rectangle at least two cells wide and tall covers some cell completely, and
+//   that cell's shown channel counts what is shown there — with the gain of the frame before, so at
+//   most one climb step behind. So at most five transitions show in any second, two and a half
+//   flashes, under the three WCAG allows — the cap's own edge included. That is the argument; the
+//   transcription measured it too, at five, over the review's inputs and random and directed ones.
+//   A smaller flash is counted on the footage only (a quarter of a 2 × 2 window at a quarter step:
+//   over-counted, the safe side), not on the shown signal.
+// · It climbs back only after `holdSeconds` with no channel at the count, at `releasePerSecond`,
+//   stepped through `FlashGuard.maxDelta` and only on a frame that advanced its clock, so neither a
+//   stall nor a repeated frame turns the climb into a jump. A source that goes on strobing never
+//   releases it; a slower flash after a strobe does (the first version held a 1.9 Hz flash at 0.05
+//   for good, because it engaged at four while the gain was below 1).
 //
 // ⭐ IT KEEPS ITS OWN CLOCK. Each frame advances it by the source's elapsed time, clamped to
-// `shortestFrameSeconds…longestFrameSeconds`; a time that does not increase — a seek or a loop on
-// a media clock, a duplicate, NaN — advances it by the shortest frame. So a frame is never dropped
-// from counting and the gain is never reset: a loop back into a strobe is counted as it plays
-// (review of VV-4: the first version ignored such frames and played the second pass at full gain).
-// Pass the DISPLAY clock when there is one; the clamp is what makes any other clock safe, in the
-// direction of counting too much.
+// `shortestFrameSeconds…longestFrameSeconds`. A REPEATED time advances it by nothing — a 24 fps clip
+// on a 120 Hz display passes each media time five times, and the first version's 1/240 s for each
+// repeat ran its clock 40 % fast, so a 2.6 Hz flash read as under the count and played uncapped
+// (second review). A time that goes BACK — a seek or a loop on a media clock — or NaN advances it by
+// the shortest frame: a frame is never dropped from counting and the gain is never reset, so a loop
+// back into a strobe is counted as it plays.
+// ⚠️ PASS THE DISPLAY CLOCK. A media clock is read at rate 1: at a faster playback rate every
+// frequency looks slower by that rate and the limiter counts too little. The door (VV-6) inherits
+// this as a requirement, not a preference.
 //
 // ⚠️ WHAT IT IS NOT, so nobody reads more into it:
 // · It caps the LAYER, not the screen. The generated field under it has its own budget
@@ -50,13 +67,18 @@
 //   leave room for its own edge. So legal footage flashing between about 2 and 3 Hz (beat lighting
 //   at 120–180 BPM) is dimmed, and a pulse near 2 Hz can be, depending on frame timing and on how
 //   unevenly it swings. That is the safe side; a steady flash at 1.9 Hz is never touched.
+// · The windows' quarter step dims some LEGAL footage on the same side: a whole-picture flicker of
+//   a quarter step or more at 2.5 Hz and faster (measured: 0.02 untouched, 0.025 capped), a
+//   high-contrast edge shaken by a fraction of a cell, a textured pan of about half a picture width a
+//   second. A single edge panning across is one transition per cell at any speed and is never
+//   touched.
 // · It ignores WCAG's dark-state exemption (two states both above 0.80 are not a flash): counting
 //   them too is the safe direction, and a cap on a bright shimmer costs little.
-// · It sees cell MEANS, not shapes: a flash spread thinner than a quarter of every window — a line
-//   an eighth of a cell wide, a scatter of specks — counts only once its share of some window
-//   reaches the threshold, where WCAG would count its area.
+// · It sees cell MEANS, not shapes: a pattern with a period of two cells set half a cell off the
+//   grid keeps every cell mean flat while it reverses, and the grid cannot see it at all; a line an
+//   eighth of a cell wide counts only once its share of some window reaches the quarter step.
 // · A grid finer than `maxCellsPerSide` is read through the whole-frame window only.
-// · A new grid layout restarts every window but the whole frame; the gain is kept.
+// · A new grid layout restarts every channel but the whole frame; the gain is kept.
 //
 // Pure value type, Foundation only. One instance per playing layer; not on the audio thread.
 // Guard: `UserFootageCannotStrobeTests`.
@@ -71,9 +93,13 @@ public struct VideoFlashLimiter: Sendable {
     /// A window's move against its last extreme that counts as a transition: the WCAG step over
     /// the share of the window a counted flash covers.
     public static let transitionThreshold = FlashGuard.luminanceDeltaThreshold * regionCoverage
-    /// Transitions inside one window of time, in any one window of the picture, that engage the
-    /// cap. One fewer than the two-per-flash a WCAG-limit second holds, so the edge the cap
-    /// itself makes still fits.
+    /// A cell's move that counts as a transition, on the footage and as shown: the whole WCAG step.
+    public static let cellTransitionThreshold = FlashGuard.luminanceDeltaThreshold
+    /// Taken off every step so a move of exactly the step counts: `0.4 - 0.3` is a hair under the
+    /// step in binary floating point, and the first version missed such a flash on some levels.
+    public static let roundingAllowance = 1e-9
+    /// Transitions inside one window of time, in any one channel, that engage the cap. One fewer
+    /// than the two-per-flash a WCAG-limit second holds, so the edge the cap itself makes still fits.
     public static let engageTransitions = Int(2 * FlashGuard.maxFlashHz) - 1
     /// The window transitions are counted in, in seconds.
     public static let windowSeconds = 1.0
@@ -92,8 +118,9 @@ public struct VideoFlashLimiter: Sendable {
     /// The gain to apply to the layer now, `engagedGain`…1.
     public private(set) var gain: Double = 1
 
-    /// One window's hysteresis and the times of its last `engageTransitions` transitions.
+    /// One signal's hysteresis and the times of its last `engageTransitions` transitions.
     private struct Channel: Sendable {
+        let threshold: Double
         var seeded = false
         var extreme = 0.0
         var lowest = 0.0
@@ -102,9 +129,21 @@ public struct VideoFlashLimiter: Sendable {
         var times = [Double](repeating: -Double.infinity, count: VideoFlashLimiter.engageTransitions)
         var next = 0
 
-        /// Whether `value` completes a transition (hysteresis against the extreme since the last
-        /// one; before the first, against the lowest and highest seen).
-        mutating func registers(_ value: Double) -> Bool {
+        init(step: Double) {
+            threshold = step * (1 - VideoFlashLimiter.roundingAllowance)
+        }
+
+        /// Whether `value`, seen at `now`, completes a transition (hysteresis against the extreme
+        /// since the last one; before the first, against the lowest and highest seen). A direction
+        /// whose last transition is a whole counting window old is forgotten, its extreme kept as
+        /// the reference — so a step off a level settled long ago is a change of its own.
+        mutating func registers(_ value: Double, at now: Double) -> Bool {
+            let last = times[(next + VideoFlashLimiter.engageTransitions - 1) % VideoFlashLimiter.engageTransitions]
+            if direction != 0, last <= now - VideoFlashLimiter.windowSeconds {
+                direction = 0
+                lowest = extreme
+                highest = extreme
+            }
             guard seeded else {
                 seeded = true
                 extreme = value
@@ -112,7 +151,6 @@ public struct VideoFlashLimiter: Sendable {
                 highest = value
                 return false
             }
-            let threshold = VideoFlashLimiter.transitionThreshold
             switch direction {
             case 1:
                 if value > extreme { extreme = value; return false }
@@ -146,7 +184,9 @@ public struct VideoFlashLimiter: Sendable {
     private var side = 0
     private var windowCells: [[Int]] = []
     private var channels: [Channel] = []
-    private var wholeFrame = Channel()
+    private var cellChannels: [Channel] = []
+    private var shownChannels: [Channel] = []
+    private var wholeFrame = Channel(step: VideoFlashLimiter.transitionThreshold)
     private var started = false
     private var lastSourceTime: Double?
     private var clock = 0.0
@@ -156,7 +196,7 @@ public struct VideoFlashLimiter: Sendable {
 
     /// Feeds one shown frame — `cells` are its cell luminances, 0…1, row-major in a
     /// `cellsPerSide × cellsPerSide` grid — and returns the gain. A grid of the wrong size changes
-    /// nothing; a non-finite cell leaves out the windows it belongs to.
+    /// nothing; a non-finite cell leaves out its own two channels and the windows it belongs to.
     @discardableResult
     public mutating func step(time: Double, cells: [Double], cellsPerSide: Int) -> Double {
         guard cellsPerSide > 0 else { return gain }
@@ -166,7 +206,6 @@ public struct VideoFlashLimiter: Sendable {
         if cellsPerSide != side { layOut(cellsPerSide) }
 
         let windowStart = clock - Self.windowSeconds
-        let needed = gain < 1 ? Self.engageTransitions - 1 : Self.engageTransitions
         var busiest = 0
 
         var frameSum = 0.0
@@ -176,7 +215,7 @@ public struct VideoFlashLimiter: Sendable {
             finiteCells += 1
         }
         if finiteCells > 0 {
-            if wholeFrame.registers(frameSum / Double(finiteCells)) { wholeFrame.mark(clock) }
+            if wholeFrame.registers(frameSum / Double(finiteCells), at: clock) { wholeFrame.mark(clock) }
             busiest = Swift.max(busiest, wholeFrame.count(after: windowStart))
         }
         for index in channels.indices {
@@ -188,19 +227,29 @@ public struct VideoFlashLimiter: Sendable {
                 windowSum += Swift.min(1, Swift.max(0, value))
             }
             guard usable else { continue }
-            if channels[index].registers(windowSum / Double(windowCells[index].count)) {
+            if channels[index].registers(windowSum / Double(windowCells[index].count), at: clock) {
                 channels[index].mark(clock)
             }
             busiest = Swift.max(busiest, channels[index].count(after: windowStart))
         }
+        for cell in cellChannels.indices {
+            let value = cells[cell]
+            guard value.isFinite else { continue }
+            let level = Swift.min(1, Swift.max(0, value))
+            if cellChannels[cell].registers(level, at: clock) { cellChannels[cell].mark(clock) }
+            // What this cell shows with the gain the layer has now — before this frame decides.
+            if shownChannels[cell].registers(gain * level, at: clock) { shownChannels[cell].mark(clock) }
+            busiest = Swift.max(busiest, cellChannels[cell].count(after: windowStart),
+                                shownChannels[cell].count(after: windowStart))
+        }
 
-        if busiest >= needed {
+        if busiest >= Self.engageTransitions {
             gain = Self.engagedGain
             quietSince = nil
         } else {
             let since = quietSince ?? clock
             quietSince = since
-            if clock - since >= Self.holdSeconds, gain < 1 {
+            if clock - since >= Self.holdSeconds, gain < 1, dt > 0 {
                 gain = Swift.min(1, gain + FlashGuard.maxDelta(perSecond: Self.releasePerSecond, dt: dt))
             }
         }
@@ -215,15 +264,19 @@ public struct VideoFlashLimiter: Sendable {
             return 0
         }
         var dt = Self.shortestFrameSeconds
-        if time.isFinite, let last = lastSourceTime, time > last {
-            dt = Swift.min(Swift.max(time - last, Self.shortestFrameSeconds), Self.longestFrameSeconds)
+        if time.isFinite, let last = lastSourceTime {
+            if time > last {
+                dt = Swift.min(Swift.max(time - last, Self.shortestFrameSeconds), Self.longestFrameSeconds)
+            } else if time == last {
+                dt = 0
+            }
         }
         if time.isFinite { lastSourceTime = time }
         clock += dt
         return dt
     }
 
-    /// Builds the overlapping windows for a new grid. The whole-frame window is kept.
+    /// Builds the overlapping windows and the cell channels for a new grid. The whole frame is kept.
     private mutating func layOut(_ cellsPerSide: Int) {
         side = cellsPerSide
         var windows: [[Int]] = []
@@ -245,6 +298,9 @@ public struct VideoFlashLimiter: Sendable {
             size *= 2
         }
         windowCells = windows
-        channels = Array(repeating: Channel(), count: windows.count)
+        channels = Array(repeating: Channel(step: Self.transitionThreshold), count: windows.count)
+        let cellCount = cellsPerSide <= Self.maxCellsPerSide ? cellsPerSide * cellsPerSide : 0
+        cellChannels = Array(repeating: Channel(step: Self.cellTransitionThreshold), count: cellCount)
+        shownChannels = cellChannels
     }
 }
