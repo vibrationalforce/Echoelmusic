@@ -5138,3 +5138,34 @@ Erzeuger bleibt aus dem Text, denn neuronales Audio und Video-Generierung sind o
 Abhängigkeit nicht machbar (Teil B12).
 
 **Review:** 2026-11-07.
+
+### 2026-10-08 — Audio-Editor: Lineal, Schnitt an der Abspielposition, Raster folgt dem Zoom
+
+**Entscheidung (Sitzung, unter „Entscheide du alles"):** sechs Editor-Regeln aus AE-7 … AE-11, je
+eine Zeile in `decisions.csv`.
+- **AE-5/AE-6 warten auf die Geräteprobe von AE-4b** (Kanten-Griffe). Bis dahin läuft der Plan
+  AE-7 → AE-9 → AE-10 → AE-11 weiter.
+- **Teil-Tonhöhe = Spur + Teil**, geklemmt auf ±24 Halbtöne. Eine Tonhöhe, die erst während der
+  Wiedergabe gesetzt wird (Undo/Redo), klingt erst ab dem nächsten Play — mitten im Stück wird nie
+  eine Time-Pitch-Kette eingehängt. Ein Einhängen pausiert die ganze Engine (Review HIGH 2).
+- **Das Lineal setzt, wo das EINE Play startet** (`cueTick`, auf den Takt gerundet, gefaltet wie
+  `play`). Während der Wiedergabe springt es sofort dorthin. Record und der WAV-Export bleiben bei
+  Takt 1. Der Startpunkt wird nicht gespeichert und bei Öffnen/Neu zurückgesetzt. **Gesperrt,
+  solange eine Aufnahme, ein Export oder ein Loop-Mitschnitt läuft** — ein Sprung schriebe Noten an
+  die falschen Takte oder schnitte die Datei.
+- **MIDI-Clock: kein Start, wenn das Stück nach Takt 1 beginnt.** 0xFA heißt „Takt 1", und Echoel
+  sendet keinen Song Position Pointer. Ein angeschlossenes Gerät liefe sonst still N−1 Takte
+  daneben. SPP ist eine spätere, eigene Scheibe.
+- **„At playhead" ist ein zweiter Split** auf der Part-Leiste. Gestoppt schneidet er an der Linie im
+  Lineal (dieselbe Faltung), während der Wiedergabe am gerade klingenden Schritt. `currentTick` wird
+  nur im Tap gelesen. Es ist derselbe Handler und dieselbe `keepsWhoPlays`-Sperre wie beim ersten
+  Split.
+- **Zoom bleibt 1…8; das Raster folgt der Taktbreite auf dem Schirm** (`PartTrim.snapUnit`, die
+  Regel des Audio-Editors): Takt → Schlag ab vier Fingerbreiten pro Takt → Schritt ab sechzehn.
+
+**Warum:** Der Founder will „die klassische DAW Audio Editing View" und „vermeide Abstürze". Über
+etwa 8× wird eine gezeichnete Spur auf einem 3×-iPhone breiter als die ~16384-px-Ebenengrenze und
+kann leer bleiben. Feineres Editieren kommt deshalb über die Rasterregel, nicht über eine breitere
+Leinwand. Ein breiterer Zoom braucht zuerst gekacheltes Zeichnen.
+
+**Review:** 2026-11-07.
