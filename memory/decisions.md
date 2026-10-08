@@ -5107,3 +5107,34 @@ Taste, die nie leuchtet. Wächter `TheSelectedPartJoinsThroughOneUndoStepTests` 
 damit Auswahl und Verb zusammen kommen. Das Tempo-Gesetz der Datei (kein `preflightTempo` im Rumpf)
 wurde um EINEN begründeten Rumpf-Read erweitert (ignoriertes Feld, Staleness unerheblich, Handler liest
 neu). **Review:** 2026-11-07.
+
+### 2026-10-08 — GMMW-Plan: eine Hülle, eine Schublade; Abstürze zuerst
+
+**Entscheidung (Sitzung, unter „Entscheide du alles"):** Der Auftrag vom 2026-10-08 wird als Programm
+gebaut, nicht als Umbau der Navigation. Plan: `scratchpads/PLAN_GMMW_2026-10-08.md`.
+- **Woher der Plan kommt:** ein Ultracode-Workflow, Gewinner-Entwurf „One Shell, One Drawer" mit
+  Teilen aus „DAW-first" und „Grow-Keep-Shape".
+- **Zwölf Zeilen in `decisions.csv`**, drei davon nach der Kritik geändert:
+  - **GMMW = Generatoren-Ebene ist nur VORGESCHLAGEN.** Der Founder hat GMMW nie definiert; Status
+    `open`, gefragt als GM1.
+  - **Self-healing hat keine Abhängigkeiten.** SH-1 kommt direkt nach dem Absturz-Sweep. Die
+    Behauptung „nach EchoelAI, wie verlangt" ist gestrichen, weil sie nicht verlangt war.
+  - **W5 entfällt.** W5 waren Trimm-Griffe auf der Arrange-Leinwand. Getrimmt wird auf der EINEN
+    Editor-Welle der Part-Seite (AE-4b); `ArrangeCanvasView` behält sein Gesetz von genau einem
+    `@GestureState`.
+- **Reihenfolge:**
+  1. P0-Sweep der SE-0423-Stellen (`HapticEngine` zuerst);
+  2. SH-1, danach SH-2 mit The Council;
+  3. Audio-Editor AE-0 → AE-4a → AE-2 → AE-4b …;
+  4. P1-Konsolidierung;
+  5. dann GA, VV und AI.
+- **Gesetz jeder Scheibe:** höchstens drei Dateien einschließlich Wächter.
+- **Founder-Fragen:** GM1–GM16 in `docs/dev/FOUNDER_INBOX.md` §1. Der Buchstabe G ist dort
+  durch die Geräte-Bitten belegt.
+
+**Warum:** Der Auftrag beginnt mit „vermeide Abstürze". Builds 2613 und 2618 sind an genau dieser
+Isolations-Form gestorben, und HapticEngine:64/67 ist die letzte LIVE-Stelle. Jede Zusage ohne
+Erzeuger bleibt aus dem Text, denn neuronales Audio und Video-Generierung sind ohne Modell und ohne
+Abhängigkeit nicht machbar (Teil B12).
+
+**Review:** 2026-11-07.

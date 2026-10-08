@@ -223,7 +223,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 |---|---|---|
 | **PHASE 1 — Foundation & truth** | the shipping instrument; product law R1–R3; export quality E1–E3; Workstation chip with import/play | CLOSED as a phase (items carry their own statuses above) |
 | **PHASE 2 — WORKSTATION ARCHITECTURE** | WA1 → WA2 → WA3 → WA4 (§7) | **CURRENT** — WA1 and WA2 COMPLETE; WA3 APPROVED (WA3.1 CLOSED, WA3.2 IMPLEMENTED, slice 2 IMPLEMENTED); WA4 IMPLEMENTED 2026-09-25 (items 1–9; Arm absent by design then — added later by Phase 3 / Recording R1, MIDI only) — compile gates QUEUED for everything after `5bdcd2b`, device journey owed (§2c) |
-| PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2 |
+| PHASE 3 — Domain recovery | recording/input, note editing, automation editing, undo, video, broadcast, hosting, etc., each through the recovery principle (law §5) into the WA2 owners | PLANNED — order decided by the Founder after WA2. **GMMW feed (2026-10-08):** `scratchpads/PLAN_GMMW_2026-10-08.md`; its order (Part A2) was set by the session under the founder's delegation, and the founder questions are GM1–GM16 in `FOUNDER_INBOX.md` |
 
 **Phase 2 is architecture, not UI construction.** No workstation UI is built until WA1–WA3 are
 done. WA4 is the first front.
@@ -678,3 +678,6 @@ general.
   - 2026-09-25 — Codex forensic override applied: Operational Session S1–S3, one selection
     owner, Arrange canvas + leaf playhead, selected-part bar with warped-split fix IMPLEMENTED
     (commits in §7 WA4). Device verification owed; Acceptance Test A's audible half open.
+  - 2026-10-08 — GMMW plan written (`scratchpads/PLAN_GMMW_2026-10-08.md`): P0 crash sweep → SH-1 →
+    audio editor AE-series (W1–W4c shipped; AE-1 = W4c `845319d`) → P1 consolidation → GA → VV → AI.
+    "GMMW = Generators tier" stays PROPOSED until the founder answers GM1. No status in §5 changes.
