@@ -22895,14 +22895,14 @@
         }
       }
     },
-    "Save, open and export the piece." : {
-      "comment" : "DAW shell S2 (2026-10-02, inbox E18): the bottom switcher — Arrange · Mixer · Instrument · Browse · Piece (H18, 2026-10-07).",
+    "The piece's key, scale, tuning, note names and tempo mode, its light look, and its export as MIDI or audio." : {
+      "comment" : "The Piece entry's spoken hint in the bottom switcher (GMMW P1-4, 2026-10-08): what the Piece plate holds — Save and Open are the ≡ menu's since S3.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Save, open and export the piece."
+            "value" : "The piece's key, scale, tuning, note names and tempo mode, its light look, and its export as MIDI or audio."
           }
         }
       }

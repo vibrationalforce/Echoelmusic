@@ -61,7 +61,7 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
 
 /// What the PIECE stage shows (DAW shell S2, founder 2026-10-02, inbox E18 „Ja, so bauen"): the
 /// arrangement, the mixer, the browser (the sounds, the media library and the photo/video seeds) or the
-/// project (save, open, export). One persisted choice, written only by the bottom switcher
+/// project (the song's settings, its light look, export — Save and Open are the ≡ menu's since S3). One persisted choice, written only by the bottom switcher
 /// (`StageShell.shellSwitcher`), read by `WorkspaceView`'s piece plate (`WorkstationView`).
 ///
 /// ⭐ WHY A SECOND KEY AND NOT MORE CASES ON `StudioStage`. The stage decides what is MOUNTED on
@@ -139,7 +139,8 @@ public enum ShellTab: String, CaseIterable, Identifiable, Sendable {
         case .browse:
             return String(localized: "The sounds, the media library and the photo and video that shape the visual.")
         case .project:
-            return String(localized: "Save, open and export the piece.")
+            // GMMW P1-4: what the plate holds. Save and Open left it with S3 — they are the ≡ menu's.
+            return String(localized: "The piece's key, scale, tuning, note names and tempo mode, its light look, and its export as MIDI or audio.")
         }
     }
 }
