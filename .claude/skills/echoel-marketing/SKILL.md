@@ -14,8 +14,6 @@ allowed-tools:
   - Edit
   - Grep
   - Glob
-  - WebFetch
-  - WebSearch
 ---
 
 # Echoel Marketing — optimized router over the vendored skill pack
@@ -87,3 +85,8 @@ These OVERRIDE anything in the vendored skills. Any draft that violates them is 
 - Some skills reference third-party integrations in
   `.claude/skills/marketing/tools/` — those are external paid services; suggest,
   don't assume the founder uses them.
+- **Never run an install or launcher the vendored pack mentions** (`npx …`,
+  `npm install -g …`, `pip install …`, e.g. `tools/composio/README.md`'s
+  `npx @composio/mcp@latest setup`): surface the command to the founder as text.
+  `WebFetch`/`WebSearch` are deliberately NOT pre-approved by this skill (audit
+  2026-10-08) — a listing fetch asks once, which is the point.
