@@ -21,7 +21,7 @@ Design rules, taken from the flutter/brew/npm doctor family and from what actual
     real tool for the reachability checks (C), but it needs SourceKit and a full build.
   · Honest about its own blind spots — see `--help` and the LIMITS block at the end of a run.
 
-Usage:  python3 scripts/doctor.py [--section A|B|C|D] [--quiet]
+Usage:  python3 scripts/doctor.py [--section A|B|C|D|E] [--quiet]
 Exit:   0 = no CRITICAL findings, 1 = at least one CRITICAL.
 """
 
@@ -2070,9 +2070,124 @@ def selftest_debug_branch_is_not_a_door() -> int:
     return 1 if bad else 0
 
 
+def _sources_changed_recently() -> tuple[list[str], str]:
+    """Paths under Sources/ touched by the working tree or by HEAD itself — the usual culprits
+    when a ratchet is over its ceiling. Returns (paths, note); the note is non-empty when git
+    could not answer, so the caller prints the gap instead of an empty list (the `tracked()`
+    lesson: blindness must be loud)."""
+    paths: set[str] = set()
+    notes: list[str] = []
+    for args in (["diff", "--name-only", "HEAD", "--", "Sources"],
+                 ["diff", "--name-only", "HEAD~1", "HEAD", "--", "Sources"]):
+        try:
+            out = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError) as exc:
+            notes.append(f"git {' '.join(args)} could not run: {exc}")
+            continue
+        if out.returncode != 0:
+            notes.append(f"git {' '.join(args)} exited {out.returncode}: {out.stderr.strip()[:120]}")
+            continue
+        paths.update(line.strip() for line in out.stdout.splitlines() if line.strip())
+    return sorted(paths), "; ".join(notes)
+
+
+def section_e() -> Section:
+    """E — RATCHETS: the counts a guard caps may only fall; is the tree still under the cap?
+
+    Exists because of 2026-10-08, 0ecd593: a one-line UI leaf (`VStack(spacing: 2)`) pushed the
+    literal-gap count from 696 to 697 against a ceiling of 696, and the ONLY place that said so
+    was `Run Tests` twenty-five minutes after the push — the guard sits exactly on its ceiling,
+    so every new literal is red. This section reads the SAME ceiling, the SAME regex and the
+    SAME migrated list from the guard file (one definition, #416) and prints the count BEFORE
+    the push, with the lines that most likely moved it.
+
+    ⛔ THE FIRST MEASUREMENT OF THAT INCIDENT WAS WRONG BY TWENTY: a raw `re.findall` over the
+    files read 716 where the guard counts 696, because comments and doc lines hold literal-shaped
+    gaps too. The guard strips comments first (`SourceText.codeOnly`); this section strips with
+    the doctor's own `_code_only`, verified equal on two trees (697/697 and 696/696, zero files
+    differing). A count without the stripper is a different number, not an approximation.
+    """
+    sec = Section("E", "RATCHETS — is the tree still under the ceilings its guards pin?")
+    guard_rel = "Tests/CISmoke/TheSpacingSitsOnTheScaleTests.swift"
+    guard = read(ROOT / guard_rel)
+    ceiling_m = re.search(r"private static let ceiling = (\d+)", guard)
+    regex_m = re.search(r'private static let literalGap =\s*#"(.*?)"#', guard, re.S)
+    migrated_m = re.search(r"private static let migrated = \[(.*?)\]", guard, re.S)
+    missing = [name for name, m in (("ceiling", ceiling_m), ("literalGap", regex_m), ("migrated", migrated_m)) if not m]
+    if missing:
+        sec.findings.append(Finding(
+            CRITICAL, "The spacing ratchet could not be read — its anchors moved",
+            [f"{guard_rel}: missing {', '.join(missing)}"],
+            "This section mirrors the guard's `ceiling`, `literalGap` and `migrated` declarations; "
+            "if the guard was renamed or reshaped, point the three anchors here at the new text in "
+            "the same commit. A doctor that cannot see a ratchet must not print green (#454)."))
+        return sec
+    ceiling = int(ceiling_m.group(1))
+    try:
+        literal = re.compile(regex_m.group(1))
+    except re.error as exc:
+        sec.findings.append(Finding(CRITICAL, "The guard's literal-gap regex does not compile under Python",
+                                    [f"{guard_rel}: {regex_m.group(1)!r} — {exc}"],
+                                    "Keep the pattern in the ICU/Python common subset, or teach this section the dialect difference."))
+        return sec
+    migrated = re.findall(r'"(Sources/[^"]+)"', migrated_m.group(1))
+
+    files = sorted(set(tracked("Sources/**/*.swift")) | set(tracked("Sources/*.swift")))
+    per_file: dict[str, int] = {}
+    lines_by_file: dict[str, list[str]] = {}
+    for f in files:
+        rel = str(f.relative_to(ROOT)) if f.is_absolute() else str(f)
+        code = _code_only(read(ROOT / rel))
+        hits: list[str] = []
+        for i, line in enumerate(code.splitlines(), 1):
+            for _ in literal.finditer(line):
+                hits.append(f"{rel}:{i}  {line.strip()[:110]}")
+        if hits:
+            per_file[rel] = len(hits)
+            lines_by_file[rel] = hits
+    total = sum(per_file.values())
+    if len(files) <= 100:
+        raise InstrumentUnavailable(f"the Sources/ walk found only {len(files)} Swift files — the ratchet cannot be trusted")
+
+    for rel in migrated:
+        if per_file.get(rel):
+            sec.findings.append(Finding(
+                CRITICAL, f"{per_file[rel]} literal gap(s) in a file that migrated to the spacing scale",
+                lines_by_file[rel][:12],
+                f"{guard_rel} claim 1 is red on this tree. Take the step from `EchoelTheme.spaceXS` … "
+                "`spaceXL`; a migrated file carries no numeric `spacing:`/`.padding(` amount."))
+
+    if total > ceiling:
+        top = sorted(per_file.items(), key=lambda kv: -kv[1])[:5]
+        changed, note = _sources_changed_recently()
+        evidence = [f"{total} literal gaps in Sources/ against ceiling {ceiling} (+{total - ceiling})",
+                    "largest holders: " + ", ".join(f"{p} ({n})" for p, n in top)]
+        culprits = [line for rel in changed for line in lines_by_file.get(rel, [])]
+        if culprits:
+            evidence.append("literal gaps in files touched by the working tree or HEAD (the likely new ones):")
+            evidence.extend(culprits[:20])
+        elif note:
+            evidence.append(f"changed-file hint unavailable — {note}")
+        else:
+            evidence.append("no Sources/ file is touched by the working tree or HEAD; the overshoot is older than this commit")
+        sec.findings.append(Finding(
+            CRITICAL, "The spacing ratchet is over its ceiling — Run Tests will name it",
+            evidence,
+            f"{guard_rel} claim 2 (`testTheLiteralGapsOnlyFall`) is red. A new row takes its gap from "
+            "`EchoelTheme.spaceXS` … `spaceXL`; never raise the ceiling. Measured BEFORE the push this "
+            "costs seconds, after it a 25-minute test job (2026-10-08, 0ecd593)."))
+
+    if not sec.findings:
+        headroom = ceiling - total
+        warn = " — ZERO headroom: the next literal gap anywhere in Sources/ is red." if headroom == 0 else ""
+        sec.clean_note = (f"{total} literal gaps in Sources/, ceiling {ceiling}, headroom {headroom}{warn} "
+                          f"Migrated files clean: {len(migrated)}.")
+    return sec
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--section", choices=list("ABCD"), help="run only one section")
+    ap.add_argument("--section", choices=list("ABCDE"), help="run only one section")
     ap.add_argument("--quiet", action="store_true", help="print findings only, no clean sections")
     ap.add_argument("--selftest", action="store_true",
                     # ⛔ THIS STRING USED TO OPEN "check THREE rules" AND IT WENT STALE THE
@@ -2088,8 +2203,8 @@ def main() -> int:
         return (selftest_negated_needle() | selftest_absence_loop_header()
                 | selftest_comment_is_not_a_call() | selftest_debug_branch_is_not_a_door())
 
-    runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d}
-    keys = [args.section] if args.section else list("ABCD")
+    runners = {"A": section_a, "B": section_b, "C": section_c, "D": section_d, "E": section_e}
+    keys = [args.section] if args.section else list("ABCDE")
 
     criticals = 0
     print("Echoel doctor — are the instruments telling the truth?\n")

@@ -45,6 +45,7 @@ Wenn die Frage „ist dieser Code richtig?" lautet, ist das hier das falsche Wer
 ```bash
 python3 scripts/doctor.py --section A  # nur die Gates (unter 1 s)
 python3 scripts/doctor.py --section C  # Türen — LANGSAM, siehe unten
+python3 scripts/doctor.py --section E  # Ratchets — VOR dem Push jeder UI-Zeile (unter 2 s)
 python3 scripts/doctor.py --quiet      # alles, nur Befunde — Timeout setzen, siehe unten
 ```
 
@@ -172,6 +173,24 @@ mehr, und der zitierte Selbst-Hinweis („keep the two in sync or delete one") i
 Commit los geworden, weil er die Entdopplung ausdrücklich erlaubt hatte. Eine veraltete
 Anweisung in DIESEM Werkzeug ist teurer als anderswo — es ist das, was eine Sitzung laufen
 lässt, BEVOR sie einer Zahl glaubt (#708).
+
+### E — RATCHETS: steht der Baum noch unter den Decken, die seine Wächter pinnen?
+Liest aus `Tests/CISmoke/TheSpacingSitsOnTheScaleTests.swift` dieselbe Decke, dasselbe
+Literal-Muster und dieselbe Liste migrierter Dateien (EINE Definition, #416), zählt die
+`spacing:`/`.padding(`-Zahlen-Literale über das kommentar-gestrippte `Sources/` und druckt
+Zahl, Decke und Spielraum. Über der Decke: CRITICAL mit den fünf größten Haltern und den
+Literal-Zeilen der Dateien, die Arbeitsbaum oder HEAD gerade angefasst haben — das sind die
+wahrscheinlich neuen.
+
+**Warum es existiert:** 2026-10-08 (`0ecd593`) schob EINE Blatt-Ansicht (`VStack(spacing: 2)`)
+die Zahl von 696 auf 697 gegen die Decke 696; der Ratchet steht EXAKT auf seiner Decke, also ist
+jedes neue Literal rot — und das stand nur in `Run Tests`, 25 Minuten nach dem Push.
+
+**Deine Aufgabe:** Vor dem Push jeder UI-Zeile `--section E` laufen lassen. Rot heißt: den
+Schritt von `EchoelTheme.spaceXS … spaceXL` nehmen, nie die Decke heben. Grün mit Spielraum 0
+heißt: das nächste Literal irgendwo in `Sources/` ist rot. ⛔ Die erste Messung des Vorfalls
+zählte ohne Kommentar-Stripper und las 716 statt 696 — Kommentare tragen literal-förmige
+Abstände; eine Zahl ohne den Stripper ist eine ANDERE Zahl, keine Näherung.
 
 ## Wann laufen lassen
 
