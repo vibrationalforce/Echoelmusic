@@ -122,7 +122,7 @@ LOW — Run-time tooling without pins in the signing job: ci.yml:58 / pr-check.y
 
 LOW — GitHub-owned actions by major tag (`actions/checkout@v4`, `actions/cache@v4`, `actions/upload-artifact@v4`, `actions/github-script@v7` at auto-merge-claude.yml:297 / trigger-testflight.yml:28 with `contents: write` + `actions: write`, pages actions at pages.yml:40-61). Lower risk than third-party tags, same argument. CHANGE: SHA-pin together with the third-party ones; the `.github/dependabot.yml` `github-actions` entry keeps them current.
 
-### T15 — OFFEN — nächste Scheibe (`/ship` prüft `git status --porcelain` vor dem Commit)
+### T15 — ERLEDIGT 2026-10-08 (`.claude/commands/ship.md` Step 5c: `git status --porcelain` vor dem ersten `git add`, Stopp bei unverfolgten Dateien und Pfaden außerhalb der Versand-Wurzeln, Staging nur namentlich)
 
 LOW — .claude/commands/ship.md:5 "User says `/ship` → DO IT. Non-interactive", :15-18 "Never stop for: Uncommitted changes (always include) … Commit message approval (auto-commit)", :164 `git push -u origin $(git branch --show-current)`: with `git add/commit/push` pre-approved, a stray file in the worktree (pasted log with a token, a downloaded clip) is published in one step. CHANGE: before the commit step print `git status --porcelain` and stop if untracked files or paths outside `Sources/ Tests/ docs/ memory/ scratchpads/ .claude/ ContentPipeline/` would be included; never `git add -A`.
 

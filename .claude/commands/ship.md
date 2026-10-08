@@ -11,9 +11,10 @@ User says `/ship` → DO IT. Non-interactive except for blockers.
 - Pre-landing review ASK items needing judgment
 - iOS 26 SDK validation failure (BLOCKER)
 - Audio thread safety violations (CRITICAL)
+- An untracked file, or a changed path outside the shipping roots (Step 5c)
 
 **Never stop for:**
-- Uncommitted changes (always include)
+- Uncommitted changes INSIDE the shipping roots (stage them by name — Step 5c)
 - CHANGELOG content (auto-generate)
 - Commit message approval (auto-commit)
 
@@ -142,6 +143,29 @@ On Linux/web: Note "Performance verification requires device testing" and contin
 - Service + test → same commit
 - Each commit independently valid (no broken imports)
 - Conventional prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`, `perf:`
+
+### 5c: Stray-file check — BEFORE the first `git add` (security audit 2026-10-08, T15)
+
+`/ship` runs without asking and `git add`/`commit`/`push` are pre-approved, so one stray file
+in the worktree — a pasted log with a token, a downloaded clip, a crash report with a device
+ID — would be published in one step. Print the tree's state and look at it:
+
+```bash
+git status --porcelain=v1
+# STOP on any untracked file — it was never reviewed:
+git status --porcelain=v1 | grep '^??'
+# STOP on any changed path outside the shipping roots (rename lines are read at their target):
+git status --porcelain=v1 | cut -c4- | sed 's/.* -> //; s/^"//' \
+  | grep -vE '^(Sources|Tests|docs|memory|scratchpads|\.claude|ContentPipeline)/'
+```
+
+Both `grep`s must print NOTHING. Anything they print is a STOP: name the file to the user and
+leave it out of the commit — do not delete it, do not ignore it silently.
+
+- **Stage by name** (`git add <path> …`), group by group as in 5a. **Never** `git add -A`,
+  `git add .` or `git commit -a` — each sweeps in exactly the file this step exists to catch.
+- `.deploy/release` is deliberately NOT a shipping root: ANY touch of it uploads a TestFlight
+  build (#1151). A deploy bump is its own decision, never a passenger of `/ship`.
 
 ---
 
