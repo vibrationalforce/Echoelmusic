@@ -52,7 +52,7 @@ final class ThePartDragTicksOnEachBarTests: XCTestCase {
     func testTheLandingIsTheSnappedDropTick() throws {
         let block = try partBlock()
         XCTAssertTrue(block.contains("let landing = ArrangeCanvas.dropTick(startTick: startTick, dragPoints: dragPoints,"),
-                      "`landing` is whole-bar snapped by `dropTick` — the trigger only changes once per bar")
+                      "`landing` is grid-snapped by `dropTick` (a bar, or a beat or step once zoomed — AE-11) — the trigger only changes once per cell")
     }
 
     // MARK: - Claim 3 — COUNTERWEIGHT: still one finger-rate state in the file

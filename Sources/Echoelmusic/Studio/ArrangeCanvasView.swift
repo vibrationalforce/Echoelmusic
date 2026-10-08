@@ -21,8 +21,9 @@
 //  read of the position in this canvas or in the Workstation would make every ancestor a hot
 //  reader and tear down an open `.menu` Picker (10.76.41/50).
 //
-//  ⭐ DRAG-TO-MOVE (WA4 path D). Press and hold a part, then slide it: it follows the finger in
-//  whole bars and lands where its preview sits. The preview is GESTURE-LOCAL — `@GestureState`
+//  ⭐ DRAG-TO-MOVE (WA4 path D). Press and hold a part, then slide it: it follows the finger on
+//  the grid the screen can show (whole bars; beats, then steps, once the time is zoomed wide
+//  enough — GMMW AE-11) and lands where its preview sits. The preview is GESTURE-LOCAL — `@GestureState`
 //  in `ArrangePartBlock`, so only the dragged block redraws at finger rate and a drag the
 //  surrounding scroll view cancels springs back by itself — and the release is ONE bounded
 //  commit through `TrackParts.move`, the same store call as the part bar's Earlier/Later, i.e.
@@ -32,9 +33,10 @@
 //  BODY with a `@GestureState` delta and previewed the snapped drop — INTERACTION IDEA PORTED.
 //  Its tick conversion (`TimelineDragMath.tickDelta`, still shipped) — ALGORITHM PORTED. Its
 //  zoom — RESTORED AS A TIME ZOOM in DAW shell S9a (`ArrangeTimeZoom`, its own file and leaf;
-//  the drag converts on the zoomed lane width, so a bar is still a bar). Its snap menu,
-//  neighbour magnet, lane change and overlap trimming — NOT RESTORED: the part bar's one-bar
-//  step is the grid, precedence stays with
+//  the drag converts on the zoomed lane width, so a bar is still a bar). Its snap menu — PORTED AS
+//  A RULE, NOT A MENU (GMMW AE-11): the grid follows the zoom through `PartTrim.snapUnit`, the
+//  audio editor's own rule, so a cell is never narrower than a fingertip. Its neighbour magnet,
+//  lane change and overlap trimming — NOT RESTORED: precedence stays with
 //  `TimelineScheduling.activeRegion` (#1440), and rows here are only the tracks with parts, so a
 //  vertical drop has no honest target yet. The long press is new, and deliberate: the canvas
 //  sits inside the Workstation's vertical scroll, and a bare drag on a part would steal it.
@@ -181,15 +183,34 @@ enum ArrangeCanvas {
     }
 
     /// Where a part dragged `dragPoints` across a lane `laneWidth` wide lands: its start moved by
-    /// WHOLE BARS — the part bar's step, so an off-grid part keeps its offset and a small wobble
-    /// is no move — never before the song's top. Degenerate geometry is no move.
+    /// WHOLE GRID CELLS — so an off-grid part keeps its offset and a wobble under half a cell is
+    /// no move — never before the song's top. Degenerate geometry is no move.
+    ///
+    /// ⭐ GMMW AE-11 — THE CELL FOLLOWS THE ZOOM: a bar while a bar is narrow on screen, a beat
+    /// once a beat is a fingertip wide, a transport step once a step is. Asked of
+    /// `PartTrim.snapUnit` — the audio editor's edge handles snap by the same rule (#416) — at
+    /// `snapZoom`, how many touch targets a bar spans here. Never finer than a step: the
+    /// transport starts a part only on a step.
     nonisolated static func dropTick(startTick: Int, dragPoints: CGFloat, laneWidth: CGFloat,
                                      songTicks: Int) -> Int {
         guard songTicks > 0, laneWidth.isFinite, laneWidth > 0 else { return startTick }
         let pointsPerBeat = laneWidth * CGFloat(TimelineTime.ticksPerBeat) / CGFloat(songTicks)
         let ticks = TimelineDragMath.tickDelta(fromPoints: dragPoints, ppb: pointsPerBeat)
-        let bars = Int((Double(ticks) / Double(TimelineTime.ticksPerBar)).rounded())
-        return Swift.max(0, startTick + bars * TimelineTime.ticksPerBar)
+        let unit = PartTrim.snapUnit(zoom: snapZoom(laneWidth: laneWidth, songTicks: songTicks))
+        guard unit > 0 else { return startTick }
+        let cells = Int((Double(ticks) / Double(unit)).rounded())
+        return Swift.max(0, startTick + cells * unit)
+    }
+
+    /// GMMW AE-11 — the zoom `PartTrim.snapUnit` reads on the canvas: how many touch targets
+    /// (`AudioPartEditor.handleHitPoints`) one bar spans on a lane `laneWidth` wide — the same
+    /// measure the audio editor's `snapZoom` takes, so a grid cell is never narrower than a
+    /// fingertip. 0 for degenerate geometry, which `snapUnit` reads as "bars".
+    nonisolated static func snapZoom(laneWidth: CGFloat, songTicks: Int) -> Double {
+        guard songTicks > 0, laneWidth.isFinite, laneWidth > 0 else { return 0 }
+        let pointsPerBar = Double(laneWidth) * Double(TimelineTime.ticksPerBar) / Double(songTicks)
+        let zoom = pointsPerBar / AudioPartEditor.handleHitPoints
+        return zoom.isFinite && zoom > 0 ? zoom : 0
     }
 
     /// How far, in points, a part drawn at `startTick` is shown shifted when it will land at
@@ -646,9 +667,10 @@ struct ArrangePartBlock: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: onSelect)
             .gesture(move)
-            // UX audit slice 13b: a light tick each time the preview snaps to another bar, so
-            // the hand feels the grid it lands on. Triggered by the SNAPPED landing, never the
-            // raw finger — one tick per bar, not one per frame — and by nothing it writes.
+            // UX audit slice 13b: a light tick each time the preview snaps to another grid cell
+            // (a bar, or a beat or step once zoomed — AE-11), so the hand feels the grid it lands
+            // on. Triggered by the SNAPPED landing, never the raw finger — one tick per cell, not
+            // one per frame — and by nothing it writes.
             .sensoryFeedback(.selection, trigger: landing)
             .accessibilityElement()
             .accessibilityLabel(label)

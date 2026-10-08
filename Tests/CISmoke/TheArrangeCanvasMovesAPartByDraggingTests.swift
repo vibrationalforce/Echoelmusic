@@ -20,6 +20,14 @@
 //    where it started.
 // 4. SOURCE: hold first, then slide (`LongPressGesture … .sequenced(before: DragGesture`), so a
 //    swipe that starts on a part still scrolls the Workstation.
+// 5. END-TO-END (pure) + SOURCE, GMMW AE-11: the grid cell follows the zoom — a bar while a bar
+//    is under four fingertips wide, a beat from four, a transport step from sixteen
+//    (`ArrangeCanvas.snapZoom` = points per bar / `AudioPartEditor.handleHitPoints`, read by
+//    `PartTrim.snapUnit`, the audio editor's own rule, #416). Claim 1's 40-pt bars stay a bar
+//    grid, so every number above still holds. Grading: `snapZoom` does not exist on the parent
+//    (`558abd9`), so this file does not compile there — one absence (#486); claim 5 is a
+//    FORWARD guard, transcribed into Python with the numbers below (each lane width is exact in
+//    binary).
 //
 // Grading (§0, no Swift toolchain in a web session): claim 1 transcribed into Python
 // (`TimelineDragMath.tickDelta`'s rounding, then whole-bar rounding) with the numbers below;
@@ -156,6 +164,56 @@ final class TheArrangeCanvasMovesAPartByDraggingTests: XCTestCase {
                       "the drag starts only after the hold — a bare drag on a part steals the page scroll")
         XCTAssertEqual(file.components(separatedBy: "DragGesture(").count - 1, 1,
                        "one drag gesture on the canvas")
+    }
+
+    // MARK: 5 — the grid follows the zoom (GMMW AE-11)
+
+    func testTheGridCellFollowsTheZoom() throws {
+        let start = 2 * Self.bar
+        func drop(_ points: CGFloat, width: CGFloat, from tick: Int? = nil) -> Int {
+            ArrangeCanvas.dropTick(startTick: tick ?? start, dragPoints: points,
+                                   laneWidth: width, songTicks: Self.song)
+        }
+        // 8 bars on 1408 pt: 176 pt per bar = four 44-pt targets → beats (44 pt each).
+        let beats: CGFloat = 1408
+        XCTAssertEqual(ArrangeCanvas.snapZoom(laneWidth: beats, songTicks: Self.song), 4,
+                       "ANCHOR: a bar spans exactly four fingertips here")
+        XCTAssertEqual(drop(21, width: beats), start, "under half a beat is a wobble")
+        XCTAssertEqual(drop(23, width: beats), start + Self.beat, "just over half a beat is one beat")
+        XCTAssertEqual(drop(-23, width: beats), start - Self.beat)
+        XCTAssertEqual(drop(44, width: beats, from: Self.bar + 7), Self.bar + 7 + Self.beat,
+                       "an off-grid part still keeps its offset — it moves by whole cells")
+        // 1407 pt: just under four fingertips per bar → still the bar grid.
+        XCTAssertEqual(drop(23, width: 1407), start, "a bar a hair under four fingertips keeps the bar grid")
+        // 8 bars on 5632 pt: 704 pt per bar = sixteen targets → steps (44 pt each).
+        let steps: CGFloat = 5632
+        XCTAssertEqual(ArrangeCanvas.snapZoom(laneWidth: steps, songTicks: Self.song), 16)
+        XCTAssertEqual(drop(21, width: steps), start, "under half a step is a wobble")
+        XCTAssertEqual(drop(23, width: steps), start + TimelineTime.ticksPerTransportStep,
+                       "just over half a step is one step")
+        // 1 000 000 pt: a step is 7 812.5 pt; a 4 000-pt slide is 61 ticks, just over half a step.
+        XCTAssertEqual(drop(4_000, width: 1_000_000), start + TimelineTime.ticksPerTransportStep,
+                       "never finer than a step, however wide — a finer grid would land 61 ticks on, off every step")
+        for (w, songTicks) in [(CGFloat(0), Self.song), (CGFloat.nan, Self.song), (Self.width, 0)] {
+            XCTAssertEqual(ArrangeCanvas.snapZoom(laneWidth: w, songTicks: songTicks), 0,
+                           "degenerate geometry (width \(w), song \(songTicks)) reads as the bar grid")
+        }
+        XCTAssertEqual(PartTrim.snapUnit(zoom: ArrangeCanvas.snapZoom(laneWidth: Self.width, songTicks: Self.song)),
+                       Self.bar, "claim 1's 40-pt bars are a bar grid — its numbers are unchanged")
+
+        // ONE rule (#416): the drop asks the editor's grid, and keeps no whole-bar rounding of its own.
+        let file = try source(Self.canvasPath)
+        guard let head = file.range(of: "nonisolated static func dropTick("),
+              let open = file.range(of: "{", range: head.upperBound..<file.endIndex),
+              let next = file.range(of: "nonisolated static func snapZoom(", range: open.upperBound..<file.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `dropTick` followed by `snapZoom` (#454)")
+        }
+        let body = String(file[open.upperBound..<next.lowerBound])
+        XCTAssertTrue(body.contains("let unit = PartTrim.snapUnit(zoom: snapZoom(laneWidth: laneWidth, songTicks: songTicks))"),
+                      "the drop's grid is the audio editor's `snapUnit` at the canvas's zoom")
+        XCTAssertFalse(body.contains("ticksPerBar"), "no second, whole-bar grid inside the drop")
+        XCTAssertTrue(file.contains("let zoom = pointsPerBar / AudioPartEditor.handleHitPoints"),
+                      "the canvas measures its zoom in the editor's fingertip, not a second constant")
     }
 
     // MARK: helpers
