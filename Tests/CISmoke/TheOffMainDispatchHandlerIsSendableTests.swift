@@ -71,6 +71,13 @@
 // while a broadcast stream is live, and HaishinKit is not linked. It is pinned before a frame tap
 // can revive it.
 //
+// THE SEVENTH SITE (GMMW P0-3, same day). `AnnouncementCenter` (`@MainActor`) wraps two CloudKit
+// calls in its own continuations, `db.save(subscription) { … }` and
+// `db.delete(withSubscriptionID:) { … }`. These are static methods of a `@MainActor` class, so
+// they are isolated too, and CloudKit answers on its own queue. DORMANT today:
+// `AnnouncementCenter.cloudKitConfigured` is `false`, so neither call runs. The repair is the same
+// token. Both closures capture only the continuation.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
@@ -165,6 +172,11 @@
 // handler, `Views/MetalBioView.swift` `addCompletedHandler`. It is GREEN after the fix. Its two
 // fixture rows are green on both trees. Claims 1–9 are unchanged: the file declares no
 // `@MainActor` class, so claim 1 never saw this site.
+// SEVENTH MEASUREMENT (the CloudKit needle), transcribed against the parent `e24db42` and the
+// worktree. Claim 1 is RED on the parent for its NAMED reason, a REGRESSION: exactly two
+// violations, `Sync/AnnouncementCenter.swift` `.save` and `.delete`. It is GREEN after the fix.
+// Claim 3's three CloudKit fixtures are green on both trees. Claim 11 is red on the parent for its
+// named reason and green after. Claims 2 and 4–10 are unchanged.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -189,6 +201,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let healthWriter = "Sources/Echoelmusic/Bio/HealthKitWriter.swift"
     private static let hapticEngine = "Sources/Echoelmusic/Studio/HapticEngine.swift"
     private static let metalView = "Sources/Echoelmusic/Views/MetalBioView.swift"
+    private static let announcements = "Sources/Echoelmusic/Sync/AnnouncementCenter.swift"
 
     /// A closure literal handed to `MTLCommandBuffer.addCompletedHandler`/`addScheduledHandler`:
     /// group 1 the API, group 2 the `@Sendable` attribute when the closure opens with it.
@@ -251,6 +264,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     /// closure opens with it.
     private static let coreHapticsHandler = #"\.(resetHandler|stoppedHandler)\s*=\s*\{\s*(@Sendable)?"#
 
+    /// A closure literal TRAILING a `.save(` or `.delete(` call, read only in a file that imports
+    /// CloudKit; same balanced-argument shape as the CoreMIDI needle.
+    private static let cloudKitBlock =
+        #"(\.save|\.delete)\((?:[^(){}]|\([^()]*\))*\)\s*\{\s*(@Sendable)?"#
+
+    /// CloudKit calls its completion handlers on its own queue.
+    private static let cloudKitQueue = "<CloudKit's own queue>"
+
     /// CoreHaptics calls its reset and stopped handlers on its own queue, never `.main`.
     private static let coreHapticsQueue = "<CoreHaptics' own queue>"
 
@@ -309,6 +330,15 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
                                         api: ns.substring(with: m.range(at: 1))))
             }
         }
+        // CloudKit completions: only where CloudKit is imported — `.save(`/`.delete(` are common names.
+        if code.contains("import CloudKit") {
+            for m in try NSRegularExpression(pattern: Self.cloudKitBlock).matches(in: code, range: all) {
+                let sendable = m.range(at: 2).location != NSNotFound
+                let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+                handlers.append(Handler(line: line, queue: Self.cloudKitQueue, sendable: sendable,
+                                        api: ns.substring(with: m.range(at: 1))))
+            }
+        }
         // CoreHaptics handlers: assignments, read only where CoreHaptics is imported.
         if code.contains("import CoreHaptics") {
             for m in try NSRegularExpression(pattern: Self.coreHapticsHandler).matches(in: code, range: all) {
@@ -347,7 +377,8 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         }
         XCTAssertEqual(violations, [], """
             A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
-            block, a HealthKit handler or a CoreHaptics handler inside a `@MainActor` class, on a \
+            block, a HealthKit handler, a CloudKit completion or a CoreHaptics handler inside a \
+            `@MainActor` class, on a \
             queue other than \
             `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
             context, a non-`@Sendable` closure inherits MainActor isolation and the imported block type gets a dynamic isolation check at its \
@@ -562,6 +593,37 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertEqual(try scan(hapticSendable).violations.count, 0,
                        "`@Sendable` is the repair for a CoreHaptics handler too; it must satisfy the rule")
 
+        // The CloudKit family — read only where CloudKit is imported.
+        let cloudIsolated = """
+            import CloudKit
+            @MainActor
+            public final class Center {
+                private static func save(_ s: CKSubscription, to db: CKDatabase) async throws {
+                    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                        db.save(s) { saved, error in cont.resume() }
+                    }
+                }
+                private static func drop(_ id: CKSubscription.ID, from db: CKDatabase) async throws {
+                    try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                        db.delete(withSubscriptionID: id) { deleted, error in cont.resume() }
+                    }
+                }
+            }
+            """
+        let cloud = try scan(cloudIsolated)
+        XCTAssertEqual(cloud.handlers.map(\.api), [".save", ".delete"],
+                       "both CloudKit completions must be seen (handlers: \(cloud.handlers))")
+        XCTAssertEqual(cloud.violations.count, 2, "the AnnouncementCenter shape must be two violations (#367)")
+        let cloudSendable = cloudIsolated
+            .replacingOccurrences(of: "{ saved, error in", with: "{ @Sendable saved, error in")
+            .replacingOccurrences(of: "{ deleted, error in", with: "{ @Sendable deleted, error in")
+        XCTAssertEqual(try scan(cloudSendable).violations.count, 0,
+                       "`@Sendable` is the repair for a CloudKit completion too; it must satisfy the rule")
+        XCTAssertEqual(try scan(cloudIsolated.replacingOccurrences(of: "import CloudKit\n", with: "")).handlers.count, 0, """
+            without `import CloudKit` a `.save(…) {` is somebody else's API — the needle must not \
+            read it (#364)
+            """)
+
         let notCoreHaptics = hapticIsolated.replacingOccurrences(of: "import CoreHaptics\n", with: "")
         XCTAssertEqual(try scan(notCoreHaptics).handlers.count, 0, """
             without `import CoreHaptics` a `.resetHandler = {` is somebody else's property — the \
@@ -722,6 +784,25 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(code.contains("isAutoShutdownEnabled = true"), """
             the idle shutdown is off — then the stopped handler fires only on a real stop. The \
             pin still holds, but this claim's message names the wrong trigger; re-derive it.
+            """)
+    }
+
+    /// 11 — the seventh site (the CloudKit completions) is inside the rule's domain and repaired.
+    func testTheCloudKitCompletionsAreInsideTheRulesDomain() throws {
+        let code = try read(Self.announcements)
+        let v = try scan(code)
+        XCTAssertTrue(v.isMainActorClass, """
+            AnnouncementCenter is no longer matched as a `@MainActor` class — re-derive whether its \
+            CloudKit completions still need `@Sendable` before trusting claim 1.
+            """)
+        let cloud = v.handlers.filter { $0.queue == Self.cloudKitQueue }
+        XCTAssertEqual(cloud.map(\.api), [".save", ".delete"], """
+            AnnouncementCenter's two CloudKit completions are not both seen \
+            (handlers: \(v.handlers.map { ($0.api, $0.line) })) — re-anchor before trusting claim 1.
+            """)
+        XCTAssertTrue(cloud.allSatisfy(\.sendable), """
+            a CloudKit completion is no longer `@Sendable` — dormant while `cloudKitConfigured` is \
+            false, a trap on CloudKit's queue the day v1.1 turns it on.
             """)
     }
 

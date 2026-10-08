@@ -187,7 +187,11 @@ public final class AnnouncementCenter {
     private static func saveSubscription(_ subscription: CKSubscription,
                                          to db: CKDatabase) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            db.save(subscription) { saved, error in
+            // `@Sendable`: CloudKit answers on its own queue, and this class is `@MainActor` —
+            // an unmarked closure here would inherit that isolation (the 2613 shape). It
+            // captures only the continuation, which is Sendable. Guard:
+            // `TheOffMainDispatchHandlerIsSendableTests` claims 1 and 11.
+            db.save(subscription) { @Sendable saved, error in
                 if let error {
                     cont.resume(throwing: error)
                 } else if saved != nil {
@@ -203,7 +207,7 @@ public final class AnnouncementCenter {
     private static func deleteSubscription(id: CKSubscription.ID,
                                            from db: CKDatabase) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            db.delete(withSubscriptionID: id) { deleted, error in
+            db.delete(withSubscriptionID: id) { @Sendable deleted, error in
                 if let error {
                     cont.resume(throwing: error)
                 } else if deleted != nil {
