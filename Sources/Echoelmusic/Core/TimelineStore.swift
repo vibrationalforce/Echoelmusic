@@ -57,6 +57,10 @@
 //        bootstrapIfNeeded · setAudioRegionWindow · setLaneOctave · setLaneSample.
 //        ⭐ Workstation redesign B2a gave `setLanePatch` its caller (`TrackMix.setSound`, the
 //        inspector's Sound row; it was tested and caller-less) — it leaves the caller-less set.
+//        ⭐ The part bar (`Studio/SelectedPartBar.swift`) gave `splitRegion`, then S8
+//        `mergeRegionWithNext` + `canMergeRegionWithNext`, then audio editor W2 `setRegionGain`
+//        (the part's level, and since W9 its Normalize) their callers. All leave the
+//        caller-less set; `TheTimelineStoresLiveSurfaceTests` pins them since 2026-10-08.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS

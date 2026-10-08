@@ -105,6 +105,11 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // Restructure P2 (2026-10-04): the piece's light look, reached from
         // `Studio/PieceLightLookField.swift` — one edit/commit pair, one Undo step per gesture.
         "editLightLook", "commitLightLook",
+        // The part bar (`Studio/SelectedPartBar.swift`): WA4 path 5's Trim (`resizeRegion`), its
+        // Split (`splitRegion`), S8's Join (`mergeRegionWithNext` + its `canMerge…` question)
+        // and audio editor W2/W9's part level and Normalize (`setRegionGain`). Each reached its
+        // caller without joining this list; added 2026-10-08, each unique in `Sources/`.
+        "resizeRegion", "splitRegion", "mergeRegionWithNext", "canMergeRegionWithNext", "setRegionGain",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than
