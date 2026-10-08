@@ -116,6 +116,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setRegionFades",
         // GMMW AE-10c: the part bar's Part pitch field.
         "setRegionTranspose",
+        // GMMW GA-2b: the part bar's Edit a copy (`PartEditCopyButton`).
+        "keepComposerTake",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

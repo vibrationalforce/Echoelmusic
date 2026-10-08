@@ -11394,16 +11394,19 @@ struct EchoelStudioView: View {
 
     /// Founder v287/v288 "Es wird kein midi Clip erzeugt": mirror the just-composed
     /// loop into the PRIMARY roll lane's composer-OWNED clip, so the generated take
-    /// shows as a visible + editable MIDI clip on the Arrange timeline. The primary
-    /// roll lane = the FIRST non-bio MIDI lane (same ownership rule as
+    /// shows as a visible MIDI part on the Arrange timeline — shown, not edited: the
+    /// note editor refuses a composer clip (`ClipNoteEdit.acceptsEdits`), and "Edit a
+    /// copy" on the part bar copies it into a part the person owns (GMMW GA-2). The
+    /// primary roll lane = the FIRST non-bio MIDI lane (same ownership rule as
     /// `TimelineDocument.rollSlotGain` / `rollLaneID`).
     ///
     /// OWNERSHIP DECISION (Council-Skeptic): `composerOwned == true`. Generate CREATES
-    /// the clip and the user may edit it (the H11 clip editor writes via
-    /// `updateMelody`, which is ownership-agnostic), but every Evolve is allowed to
-    /// FORTSCHREIBEN it — exactly the founder's model "Generate erzeugt, Evolve
-    /// entwickelt weiter". A user-captured/imported clip on the lane stays untouched:
-    /// `updateComposerMelody` refuses any non-composer clip (the never-clobber law).
+    /// the clip and every Evolve is allowed to FORTSCHREIBEN it — exactly the founder's
+    /// model "Generate erzeugt, Evolve entwickelt weiter". ⛔ "the user may edit it"
+    /// stood here; the note editor refuses this clip, because the next Evolve would
+    /// overwrite the edit (GMMW GA-2 corrected it). A user-captured/imported clip on the
+    /// lane stays untouched: `updateComposerMelody` refuses any non-composer clip (the
+    /// never-clobber law).
     ///
     /// - `createIfNeeded` (the user's OWN Generate, `startTransport == true`) lazily
     ///   creates the clip+region ONCE via `ensureComposerRegion` (idempotent — repeat

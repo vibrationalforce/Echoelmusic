@@ -88,6 +88,11 @@
 //  drawn. Playing, it is the transport step sounding now. Same handler as Split (the media tempo,
 //  one store call = one undo step), same `keepsWhoPlays` refusal, asked again at the tap.
 //
+//  ⭐ GMMW GA-2b — EDIT A COPY, for a composer part only. The note editor shows a composer part
+//  and does not edit it (evolve rewrites it); `PartEditCopyButton` copies its notes into a part
+//  the person owns (`TimelineStore.keepComposerTake`, one undo step that also frees the slot)
+//  and opens that part's notes. It asks the editor's own refusal rule, in its own leaf.
+//
 
 import SwiftUI
 
@@ -528,6 +533,10 @@ struct SelectedPartBar: View {
                 if let pitch = PartPitch.semitones(of: regionID, in: document) {
                     PartPitchField(regionID: regionID, semitones: pitch)
                 }
+                // GA-2b: a composer part's notes are shown, not edited — this copies them into a
+                // part of the person's own. The leaf decides whether it shows: it reads the clip
+                // grid, which this body never does.
+                PartEditCopyButton(regionID: regionID)
                 // Nine labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -968,6 +977,59 @@ private struct PartGainField: View {
             draft = nil
             timeline.setRegionGain(id: regionID, level)
         }
+    }
+}
+
+/// GMMW GA-2b — "Edit a copy": the door to `TimelineStore.keepComposerTake` (GA-2a).
+///
+/// The composer rewrites its own part on every Evolve, so the note editor shows that part and
+/// does not edit it (`ClipNoteEdit.Refusal.composerOwned`). This button is offered on EXACTLY
+/// those parts — it asks the note editor's own refusal rule (#416), so it shows where the
+/// editor says "shown, not edited" and nowhere else. One tap copies the notes into a part the
+/// person owns, after the track's last part, and opens that part's notes: one undo step, which
+/// also frees the copy's slot. The composer's part keeps evolving.
+///
+/// ⚠️ A full part grid turns it off with a sentence; nothing is displaced (the never-clobber law).
+/// Cold reads only: the clip grid moves on a note edit or a composer take (~25–45 s), never on a
+/// clock — and it is read HERE, in the leaf, never in the bar's body.
+@MainActor
+private struct PartEditCopyButton: View {
+    let regionID: UUID
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    @Environment(WorkstationSelection.self) private var selection
+
+    var body: some View {
+        if let region = timeline.document.regions.first(where: { $0.id == regionID }),
+           ClipNoteEdit.refusal(clip: clipStore.clip(id: region.clipID), region: region) == .composerOwned {
+            let room = clipStore.firstEmptySlotIndex != nil
+            Button { editCopy() } label: {
+                HStack(spacing: EchoelTheme.spaceXS) {
+                    Image(systemName: "square.and.pencil").font(EchoelTheme.font(11, .semibold))
+                    Text("Edit a copy").font(EchoelTheme.font(11, .semibold)).lineLimit(1).fixedSize()
+                }
+            }
+            .buttonStyle(EchoelToolButtonStyle())
+            .disabled(!room)
+            .accessibilityLabel(room
+                ? String(localized: "Copy the composer's notes into a part of your own after the last part on this track, and open its notes. The composer's part keeps evolving. One undo step.")
+                : String(localized: "Edit a copy is off: the part grid is full."))
+            if !room {
+                Text("Edit a copy is off: the part grid is full.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// The one write is the store's verb; the selection then moves to the copy and opens its
+    /// notes — the page a person asking to edit lands on.
+    private func editCopy() {
+        guard let copy = timeline.keepComposerTake(regionID: regionID, clips: clipStore) else { return }
+        selection.selectRegion(copy.id, in: timeline.document)
+        selection.setNotesOpen(true)
+        AccessibilityNotification.Announcement(
+            String(localized: "A copy of the composer's part is selected; its notes can be edited")).post()
     }
 }
 

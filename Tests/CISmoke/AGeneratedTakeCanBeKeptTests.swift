@@ -19,12 +19,25 @@
 //    Undo (an import) makes the Redo change nothing.
 // 4. END-TO-END refusals write nothing and record no step: a user part, an unknown part, a full grid.
 // 5. SOURCE: one `.keptTake` step is recorded, by the verb.
+// GA-2b — THE DOOR ("Edit a copy" on the part bar, `PartEditCopyButton`):
+// 6. END-TO-END: the button's rule (the note editor's own refusal, `.composerOwned`) and the verb
+//    agree — where it shows, the verb keeps; on a user part and an audio part it neither shows nor
+//    keeps.
+// 7. SOURCE: the bar mounts the leaf once; the leaf decides on that refusal rule, writes the timeline
+//    ONLY through `keepComposerTake` (the one call in `Sources/`), then selects the copy and opens its
+//    notes; it reads no player or transport. COUNTERWEIGHT: the bar's own body still reads no clip grid.
 //
-// Grading (§0, no Swift toolchain): on the parent (`854a621`) this file does NOT COMPILE — it names
-// `keepComposerTake` and `keptTakeStart`, which this commit creates — so no assertion has a verdict
-// there; every claim is a FORWARD guard. The verb, its step and the placement were transcribed into
-// Python and driven through the same sequences.
-// NOT covered here: a door. The button is GA-2b; until then nothing in the app calls the verb.
+// Grading (§0, no Swift toolchain): claims 1–5 (GA-2a, `c7d9704`) do NOT COMPILE on its parent
+// (`854a621`) — they name `keepComposerTake` and `keptTakeStart` — so no assertion has a verdict there;
+// they are FORWARD guards, transcribed into Python and driven through the same sequences. Against
+// `c7d9704`, the parent of GA-2b: claim 6 is a COUNTERWEIGHT (green on both — it pins the agreement the
+// door relies on); claim 7 is red there as ONE anchor absence (`PartEditCopyButton` does not exist,
+// #486) plus one REGRESSION for its named reason (the verb has no caller). Claim 7 was transcribed and
+// driven against both trees.
+// NOT covered: how the button reads at large type sizes, whether VoiceOver speaks the announcement,
+// and the copy opening on the Notes page — device probes. NEEDS-FOUNDER-VERIFY: select the composer's
+// part on Arrange → "Edit a copy" → a new part after the last one on that track, its notes open and
+// editable; the composer's part keeps evolving; Undo removes the copy.
 
 import Foundation
 import XCTest
@@ -160,6 +173,80 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
         XCTAssertLessThan(verb.lowerBound, push.lowerBound, "the step is pushed inside the verb, after its declaration")
     }
 
+    // MARK: 6 — the door's rule and the verb agree
+
+    func testTheButtonShowsExactlyWhereTheVerbKeeps() throws {
+        try withStores { timeline, clips, composed, composerRegion in
+            let lane = try XCTUnwrap(timeline.document.lanes.first)
+            let userClip = Clip(name: "GA-2b user", kind: .midi, melody: MelodyClip(notes: []))
+            let audioClip = Clip(name: "GA-2b audio", kind: .audio, mediaRef: "ga2b.wav")
+            clips.setClip(at: 2, userClip)
+            clips.setClip(at: 3, audioClip)
+            let userPart = TimelineRegion(laneID: lane.id, clipID: userClip.id, startTick: 8 * Self.bar, lengthTicks: Self.bar)
+            let audioPart = TimelineRegion(laneID: lane.id, clipID: audioClip.id, startTick: 12 * Self.bar, lengthTicks: Self.bar)
+            timeline.replaceDocument(TimelineDocument(lanes: timeline.document.lanes,
+                                                      regions: timeline.document.regions + [userPart, audioPart]))
+
+            XCTAssertNotEqual(ClipNoteEdit.refusal(clip: userClip, region: userPart), .composerOwned,
+                              "a user part: the editor takes it, so no button")
+            XCTAssertNil(timeline.keepComposerTake(regionID: userPart.id, clips: clips), "…and the verb keeps nothing")
+            XCTAssertNotEqual(ClipNoteEdit.refusal(clip: audioClip, region: audioPart), .composerOwned,
+                              "an audio part: no notes, so no button")
+            XCTAssertNil(timeline.keepComposerTake(regionID: audioPart.id, clips: clips), "…and the verb keeps nothing")
+            XCTAssertEqual(ClipNoteEdit.refusal(clip: composed, region: composerRegion), .composerOwned,
+                           "the composer's part: the editor refuses it for being the composer's, so the button shows")
+            XCTAssertNotNil(timeline.keepComposerTake(regionID: composerRegion.id, clips: clips),
+                            "…and where the button shows, the verb keeps")
+        }
+    }
+
+    // MARK: 7 — the door: one leaf, one write
+
+    func testTheEditACopyButtonCallsOnlyTheVerb() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let text = try String(contentsOf: root.appendingPathComponent("Sources/Echoelmusic/Studio/SelectedPartBar.swift"),
+                              encoding: .utf8)
+        let code = SourceText.codeOnly(text)
+        let bar = try member("struct SelectedPartBar: View {", in: code)
+        let barBody = try member("var body: some View {", in: bar)
+        XCTAssertEqual(barBody.components(separatedBy: "PartEditCopyButton(regionID: regionID)").count - 1, 1,
+                       "the part bar mounts the Edit a copy leaf once")
+        XCTAssertFalse(barBody.contains("clipStore."),
+                       "COUNTERWEIGHT: the bar's body reads no clip grid — the leaf does, in its own body")
+
+        let leaf = try member("private struct PartEditCopyButton: View {", in: code)
+        XCTAssertTrue(leaf.contains("ClipNoteEdit.refusal(clip: clipStore.clip(id: region.clipID), region: region) == .composerOwned"),
+                      "it shows exactly where the note editor refuses a part for being the composer's (#416)")
+        XCTAssertEqual(leaf.components(separatedBy: "timeline.keepComposerTake(regionID: regionID, clips: clipStore)").count - 1, 1,
+                       "its one write is the store's verb")
+        let timelineUses = leaf.components(separatedBy: "timeline.").dropFirst()
+        XCTAssertFalse(timelineUses.isEmpty, "ANCHOR: the leaf reads the timeline")
+        for use in timelineUses {
+            XCTAssertTrue(use.hasPrefix("document") || use.hasPrefix("keepComposerTake("),
+                          "the leaf touches the timeline with `\(use.prefix(30))` — only the document and the verb (one undo step)")
+        }
+        XCTAssertTrue(leaf.contains("selection.selectRegion(copy.id"), "the copy is selected")
+        XCTAssertTrue(leaf.contains("selection.setNotesOpen(true)"), "…and its notes open")
+        for hot in ["player.", "transport.", "TimelineRegionPlayer", "Transport.self"] {
+            XCTAssertFalse(leaf.contains(hot), "`\(hot)` in the Edit a copy leaf — it reads nothing that moves with the song")
+        }
+
+        var calls = 0
+        let sources = root.appendingPathComponent("Sources/Echoelmusic")
+        guard let walker = FileManager.default.enumerator(atPath: sources.path) else {
+            return XCTFail("cannot enumerate Sources/Echoelmusic — a scan that saw nothing is not a pass")
+        }
+        var seen = 0
+        for case let relative as String in walker where relative.hasSuffix(".swift") {
+            seen += 1
+            guard let file = try? String(contentsOf: sources.appendingPathComponent(relative), encoding: .utf8) else { continue }
+            calls += SourceText.codeOnly(file).components(separatedBy: ".keepComposerTake(").count - 1
+        }
+        XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
+        XCTAssertEqual(calls, 1, "one door keeps a take: the part bar's Edit a copy")
+    }
+
     // MARK: rig
 
     private func withStores(_ body: (TimelineStore, ClipStore, Clip, TimelineRegion) throws -> Void) throws {
@@ -181,5 +268,30 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [lane], regions: [region]))
         XCTAssertFalse(timeline.canUndo, "fixture premise: a fresh history")
         try body(timeline, clips, composed, region)
+    }
+
+    private struct AnchorMissing: Error { let reason: String }
+
+    /// The text inside the braces that open at the first `{` from `head` on (#408 — never a window).
+    private func member(_ head: String, in text: String) throws -> String {
+        guard let start = text.range(of: head),
+              let open = text[start.lowerBound...].firstIndex(of: "{") else {
+            XCTFail("ANCHOR MISSING: `\(head)` (#454)")
+            throw AnchorMissing(reason: head)
+        }
+        var depth = 1
+        var index = text.index(after: open)
+        while index < text.endIndex {
+            switch text[index] {
+            case "{": depth += 1
+            case "}":
+                depth -= 1
+                if depth == 0 { return String(text[text.index(after: open)..<index]) }
+            default: break
+            }
+            index = text.index(after: index)
+        }
+        XCTFail("UNBALANCED: `\(head)` never closes (#454)")
+        throw AnchorMissing(reason: head)
     }
 }
