@@ -1747,7 +1747,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
 
         // E4-46 — EchoelStudioView's remaining ternaries and two interpolated spoken labels: the Explore/New button
         // (text + label), the variation row's spoken label (rank, match, playing — typed steps), the visual-window
-        // button (text + label), the visual-preset hint, the look chip's spoken value (position) and hint, the two
+        // button (text + label — ⛔ removed with GMMW P1-3, its seams and keys left with it; the bare-literal ban
+        // below stays so it cannot come back that way), the visual-preset hint, the look chip's spoken value (position) and hint, the two
         // favourite menu labels, and the „Default sound“ pair. Each arm or seam is a catalog key.
         let studioSites = try codeOnly("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         for seam in ["Text(mazeBoard == nil ? String(localized: \"Explore\") : String(localized: \"New\"))",
@@ -1756,8 +1757,6 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      "let playingSuffix: String = isOn ? String(localized: \", playing\") : \"\"",
                      "let variationLabel: String = variationHead + \"\\(pct)\" + String(localized: \" percent match\") + playingSuffix",
                      ".accessibilityLabel(variationLabel)",
-                     "Text(floatingVisualVisible ? String(localized: \"Hide visual window\") : String(localized: \"Show visual window\"))",
-                     ".accessibilityLabel(floatingVisualVisible ? String(localized: \"Hide the floating visual window\") : String(localized: \"Show the floating visual window\"))",
                      ".accessibilityHint(selected ? String(localized: \"Double tap to clear\") : String(localized: \"Double tap to apply\"))",
                      "let positionText: String = String(localized: \"in the slider, position \") + \"\\((pos ?? 0) + 1)\"",
                      "let sliderValue: String = on ? positionText : String(localized: \"not in the slider\")",
@@ -1774,7 +1773,6 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             XCTAssertFalse(studioSites.contains(verbatim), "EchoelStudioView spells a ternary or interpolated label of bare literals again: `\(verbatim)`")
         }
         try assertCatalogued(["Explore", "New", "Explore variations", "Explore new variations", "Variation ", ", playing", " percent match",
-                          "Hide visual window", "Show visual window", "Hide the floating visual window", "Show the floating visual window",
                           "Double tap to clear", "Double tap to apply", "in the slider, position ", "not in the slider",
                           "Double tap to remove from the slider", "Double tap to add to the slider", "Unfavorite", "Favorite",
                           "Tap again for the default sound", "Default sound"],

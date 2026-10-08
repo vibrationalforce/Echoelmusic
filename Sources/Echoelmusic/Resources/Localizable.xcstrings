@@ -14979,46 +14979,6 @@
         }
       }
     },
-    "Hide visual window" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide visual window"
-          }
-        }
-      }
-    },
-    "Show visual window" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show visual window"
-          }
-        }
-      }
-    },
-    "Hide the floating visual window" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide the floating visual window"
-          }
-        }
-      }
-    },
-    "Show the floating visual window" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show the floating visual window"
-          }
-        }
-      }
-    },
     "Double tap to clear" : {
       "localizations" : {
         "en" : {

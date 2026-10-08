@@ -5315,23 +5315,11 @@ struct EchoelStudioView: View {
         // part", "Production character"). A window you can already see, drag and resize
         // does not need a sentence telling you that you can drag and resize it.
         panel("Field", isExpanded: $showVisualSettings) {
-            Button {
-                floatingVisualVisible.toggle()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: floatingVisualVisible ? "eye.slash" : "eye")
-                    Text(floatingVisualVisible ? String(localized: "Hide visual window") : String(localized: "Show visual window"))
-                        .font(EchoelTheme.font(13))
-                    Spacer(minLength: 0)
-                }
-                .foregroundStyle(floatingVisualVisible ? EchoelTheme.onPrimary : EchoelTheme.text)
-                .padding(.horizontal, 12).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .fill(floatingVisualVisible ? EchoelTheme.text : EchoelTheme.fill))
-                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                    .strokeBorder(EchoelTheme.borderStrong, lineWidth: 1))
-            }
-            .accessibilityLabel(floatingVisualVisible ? String(localized: "Hide the floating visual window") : String(localized: "Show the floating visual window"))
+            // ⛔ GMMW P1-3 (founder 2026-10-08, „vermeide Unübersichtlichkeit"): a "Show/Hide visual
+            // window" button stood here. It wrote the same flag as the head's monitor tile
+            // (`WorkspaceView`, `floatingVisualVisible.toggle()`), which is on screen on both stages
+            // at every level — two doors to one fact. The tile is the one show/hide door; this
+            // panel keeps what only it offers: Full screen.
             // #747 — THE DOOR TO THE FULLSCREEN FIELD (open task #270, closed here). Everything
             // behind `.fullScreenCover(isPresented: $showVisual)` was already built and polished
             // — the fullscreen `MetalBioView`, the VJ overlay, `SpectralDonutView`, record, close
@@ -5342,9 +5330,10 @@ struct EchoelStudioView: View {
             // ⚠️ A VISIBLE BUTTON, NOT A GESTURE, and the cover's own top bar is why: it cites
             // WCAG 2.2 against gating controls behind a hidden gesture. A long-press on the
             // header monitor would have been cheaper and would have repeated the defect this
-            // code already names. It sits HERE, next to the window toggle, because that is where
-            // a player already goes to decide how the field is shown — not a second door to the
-            // same thing (#290): the floating window and the fullscreen field are two surfaces.
+            // code already names. It sits HERE because that is where a player already goes to
+            // decide how the field is shown (the window toggle that stood beside it left with
+            // GMMW P1-3 — the head's monitor tile is the one show/hide door) — not a second door
+            // to the same thing (#290): the floating window and the fullscreen field are two surfaces.
             //
             // ⛔ TWO SENTENCES HERE EXPIRED WITH #1067, and both were load-bearing arguments
             // rather than trivia, so they are corrected rather than dropped.
