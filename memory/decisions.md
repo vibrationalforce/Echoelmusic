@@ -5085,3 +5085,25 @@ keinen Versionsbereich erfüllen kann. Die drei Wächter, die die Manifest-Zeile
 das ist das erste Paket, das Netzwerk-Code in die App trägt. Gleiche Bytes wie vorher, eine Angriffsfläche
 weniger. **Upgrade-Regel:** den Hash aus dem neuen Tag ableiten, nie von Hand editieren.
 **Landet mit:** `scratchpads/LANDING_P2_B2_broadcast.patch` (founder-gated, `project.yml`). **Review:** 2026-11-07.
+
+### 2026-10-08 — J1-Zeile: der Tick ist der Read, nicht die Beobachtung
+
+**Entscheidung (Sitzung):** Der Netz-Rundlauf (`LinkProbe`) wird in Live Colabo je verbundenem Peer als
+eigene Blatt-Ansicht `PeerLinkRow` gezeigt — unter einem 1-Hz-`TimelineView`-Tick, während
+`MultipeerSession.linkMeters` `@ObservationIgnored` BLEIBT. Text aus `LinkLatencySummary.rowText(_:)`:
+„Link: 12 ms median · 21 ms p95 · lost 1/40 — network round trip, not heard latency"; ohne Messung
+„measuring…", nie „0 ms". **Warum:** der Zähler bewegt sich 2× pro Sekunde; eine beobachtete Lesung würde
+jeden lesenden Rumpf mit 2 Hz neu bauen (10.76.41/50). Der Tick liest ein ignoriertes Feld und
+invalidiert nur das Blatt. Das Wort „latency" steht nur als „not heard latency" (Wächter
+`TheLinkRoundTripRowSaysNetworkNotHeardTests`). **Review:** 2026-11-07.
+
+### 2026-10-08 — „Join next" ja, „Combine selected" nein (noch)
+
+**Entscheidung (Sitzung, Planer-Scheibe S8):** `TimelineStore.mergeRegionWithNext` bekommt seine Tür
+auf der Teile-Leiste („Join next"); enabled = `canMergeRegionWithNext(id:, bpm: player.preflightTempo)`,
+Handler mit `PartSplit.mediaBPM` wie Split, ein Undo-Schritt. **`combineRegions` bleibt türlos**, weil
+`WorkstationSelection` genau EIN Teil hält — ein Combine über einer Auswahl, die es nicht gibt, wäre eine
+Taste, die nie leuchtet. Wächter `TheSelectedPartJoinsThroughOneUndoStepTests` Anspruch 5 nennt das,
+damit Auswahl und Verb zusammen kommen. Das Tempo-Gesetz der Datei (kein `preflightTempo` im Rumpf)
+wurde um EINEN begründeten Rumpf-Read erweitert (ignoriertes Feld, Staleness unerheblich, Handler liest
+neu). **Review:** 2026-11-07.
