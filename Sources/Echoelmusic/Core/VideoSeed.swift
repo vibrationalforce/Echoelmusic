@@ -17,13 +17,22 @@
 // each is caught there.
 //
 // ⚠️ WHAT THE NUMBERS ARE, AND ARE NOT.
-// · `motionEnergy`: the mean change of the luma thumbnail between two samples, per second of
-//   video, over `fullScaleChangePerSecond` and clamped to 0…1. It is picture change: a camera pan
-//   and a moving subject read alike. It is not a motion vector or object tracking.
+// · `motionEnergy`: the mean change of the luma thumbnail between two CLOSE samples (at most
+//   `motionPairMaxSeconds` apart), per second of video, over `fullScaleChangePerSecond` and clamped
+//   to 0…1. It is picture change: a camera pan and a moving subject read alike. It is not a motion
+//   vector or object tracking.
+//   ⭐ GMMW VV-1a: ONLY CLOSE PAIRS. Change between two frames saturates once they are far apart —
+//   seconds apart, any moving footage looks like a different picture — so a rate taken over the
+//   12.5 s gaps of a 600 s clip read near 0.24 for footage a 6 s clip of the same scene read at 0.39.
+//   The motion is now measured where it is linear, and a reader supplies close pairs (VV-1b). With
+//   no close pair at all (a sparse reader), the mean over every neighbour is the fallback — and it
+//   is length-dependent, which is why VV-1b exists. Guard: `TheVideoMotionDoesNotDependOnLengthTests`.
 // · `transientTimes`: the sample times where the picture changed much more than it usually does —
 //   more than the median change plus `transientMADs` × the median absolute deviation, and above
 //   `transientFloor`, at least `transientSpacing` seconds apart. They are CUTS and FLASHES in the
-//   picture, not beats in its sound.
+//   picture, not beats in its sound. ⭐ The close and the far neighbours are judged each against
+//   THEIR OWN usual change (VV-1a): mixed, a paired reading put the median between the two kinds
+//   and every far pair of moving footage read as a cut.
 // · Nothing here reads the video's AUDIO. Offering it as a beat or sampler source is its own
 //   slice (`scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §3.4).
 
@@ -108,6 +117,9 @@ public enum VideoSeedAnalysis {
     public static let transientFloor = 0.12
     /// Two transients are at least this far apart, in seconds.
     public static let transientSpacing = 0.25
+    /// Two neighbouring samples at most this far apart, in seconds, are a CLOSE pair: their change
+    /// measures motion. Farther pairs are kept for cut detection only (VV-1a).
+    public static let motionPairMaxSeconds = 0.3
 
     /// The seed of a sampled video, or nil when the input cannot be what it claims (see the
     /// file header). nil is the safe fallback: nothing is applied.
@@ -139,7 +151,9 @@ public enum VideoSeedAnalysis {
         // Change between neighbouring samples, as a share of the luma range.
         var changes: [Double] = []
         changes.reserveCapacity(samples.count - 1)
-        var ratePerSecond = 0.0
+        var closeRate = 0.0
+        var closePairs = 0
+        var everyRate = 0.0
         for i in 1..<samples.count {
             var total = 0
             for c in 0..<cells {
@@ -147,9 +161,15 @@ public enum VideoSeedAnalysis {
             }
             let change = Double(total) / Double(cells * 255)
             changes.append(change)
-            ratePerSecond += change / (samples[i].time - samples[i - 1].time)
+            let gap = samples[i].time - samples[i - 1].time
+            everyRate += change / gap
+            if gap <= motionPairMaxSeconds {
+                closeRate += change / gap
+                closePairs += 1
+            }
         }
-        let motion = Swift.min(1, (ratePerSecond / Double(changes.count)) / fullScaleChangePerSecond)
+        let meanRate = closePairs > 0 ? closeRate / Double(closePairs) : everyRate / Double(changes.count)
+        let motion = Swift.min(1, meanRate / fullScaleChangePerSecond)
 
         return VideoSeed(version: VideoSeed.formatVersion, durationSeconds: durationSeconds,
                          frameRate: frameRate, brightness: lumaSum / n,
@@ -159,18 +179,30 @@ public enum VideoSeedAnalysis {
                          sampledFrames: samples.count)
     }
 
-    /// The sample times where the change stands out from the clip's own usual change.
+    /// The sample times where the change stands out from the clip's own usual change — close and
+    /// far neighbours each against their own (VV-1a; one kind alone is today's single rule).
     static func transients(changes: [Double], samples: [VideoFrameSample]) -> [Double] {
-        let median = Self.median(changes)
-        let mad = Self.median(changes.map { abs($0 - median) })
-        let threshold = Swift.max(transientFloor, median + transientMADs * mad)
+        let close = changes.indices.filter { samples[$0 + 1].time - samples[$0].time <= motionPairMaxSeconds }
+        let far = changes.indices.filter { samples[$0 + 1].time - samples[$0].time > motionPairMaxSeconds }
+        let candidates = (standingOut(close, in: changes) + standingOut(far, in: changes)).sorted()
         var times: [Double] = []
-        for (i, change) in changes.enumerated() where change > threshold {
+        for i in candidates {
             let t = samples[i + 1].time
             if let last = times.last, t - last < transientSpacing { continue }
             times.append(t)
         }
         return times
+    }
+
+    /// The members of `group` whose change exceeds the group's median plus `transientMADs` × its
+    /// median absolute deviation, and `transientFloor`.
+    static func standingOut(_ group: [Int], in changes: [Double]) -> [Int] {
+        guard !group.isEmpty else { return [] }
+        let values = group.map { changes[$0] }
+        let median = Self.median(values)
+        let mad = Self.median(values.map { abs($0 - median) })
+        let threshold = Swift.max(transientFloor, median + transientMADs * mad)
+        return group.filter { changes[$0] > threshold }
     }
 
     static func median(_ values: [Double]) -> Double {
