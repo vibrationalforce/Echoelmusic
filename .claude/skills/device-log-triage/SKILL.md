@@ -26,6 +26,13 @@ turns that raw text into a routed fix.
 - [ ] For an `echoel_diag.log` (no stack): read the last lines before the gap/stop —
       the last successful stage tells you where it died (launch stages, "camera
       started", "polyVoice.noteOn", "stopEverything").
+- [ ] After a `CRASH SIG…` marker, two lines name WHERE it died: `crash thread/queue:`
+      is the pthread name (main thread, CoreMIDI, any named thread — EMPTY on a libdispatch
+      worker, so builds 2613/2618 wrote none) and `crash queue:` is the current dispatch
+      queue's label (since 10.79.495; the one line a worker-thread trap writes). A
+      `dispatch_assert_queue` SIGTRAP on a worker = an inferred-`@MainActor` closure trapping
+      at ENTRY on that queue — the body is innocent; the rule is in
+      `TheOffMainDispatchHandlerIsSendableTests`.
 
 ## Route to the fix (Echoel signatures)
 

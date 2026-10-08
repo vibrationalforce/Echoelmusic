@@ -34,14 +34,26 @@ private let echoelCrashFPE: [UInt8]  = Array("CRASH SIGFPE (arithmetic) — see 
 private nonisolated(unsafe) var echoelBacktraceBuffer =
     [UnsafeMutableRawPointer?](repeating: nil, count: 64)
 
-/// Pre-allocated buffer + markers for capturing the crashing thread/queue name.
-/// libdispatch names its worker threads after the queue label, so this pins
-/// WHICH queue a MainActor-isolation trap (dispatch_assert_queue) fired on.
+/// Pre-allocated buffer + markers for capturing the crashing thread's pthread name.
 /// All async-signal-safe: pthread_getname_np fills a fixed buffer, write() emits
 /// the pre-encoded prefix/newline. No allocation.
+///
+/// ⛔ THIS LINE IS SILENT ON EVERY DISPATCH WORKER — the doc that stood here said
+/// "libdispatch names its worker threads after the queue label", and it does NOT:
+/// a worker thread has no pthread name, so builds 2613 and 2618 (SIGTRAP in
+/// `dispatch_assert_queue` on a worker) wrote no `crash thread/queue:` line at all,
+/// and the QUEUE — the one datum that names the trapping closure's home — cost a
+/// 23-agent triage to recover. The queue line below is the repair; this one stays
+/// for threads that DO carry a name (the main thread, CoreMIDI, a named pthread).
 private nonisolated(unsafe) let echoelThreadNameBuf =
     UnsafeMutablePointer<CChar>.allocate(capacity: 80)
 private let echoelThreadPrefix: [UInt8] = Array("crash thread/queue: ".utf8)
+/// The CURRENT DISPATCH QUEUE's label, read with `dispatch_queue_get_label(NULL)`
+/// (`DISPATCH_CURRENT_QUEUE_LABEL`): a thread-local read that returns the queue's own
+/// label pointer — no allocation, no lock — and the empty string on a thread that is
+/// not running a queue. On a worker draining `writeQueue` it says
+/// `com.echoelmusic.retrocapture.disk`, which is exactly what 2613 needed.
+private let echoelQueuePrefix: [UInt8] = Array("crash queue: ".utf8)
 private let echoelNewlineByte: [UInt8] = [0x0a]
 
 /// Allocation-free: pick the pre-encoded marker for a received signal.
@@ -590,14 +602,31 @@ enum EchoelCrashLog {
                 echoelCrashMarker(for: received).withUnsafeBufferPointer {
                     if let base = $0.baseAddress { _ = write(EchoelCrashLog.fd, base, $0.count) }
                 }
-                // Crashing thread/queue name (pins which queue a MainActor-isolation
-                // trap fired on). Async-signal-safe: fixed buffer + raw writes.
+                // Crashing thread's pthread name — present on the main thread and on
+                // named threads, ABSENT on every libdispatch worker (see the buffer's doc).
+                // Async-signal-safe: fixed buffer + raw writes.
                 if pthread_getname_np(pthread_self(), echoelThreadNameBuf, 80) == 0,
                    strlen(echoelThreadNameBuf) > 0 {
                     echoelThreadPrefix.withUnsafeBufferPointer {
                         if let b = $0.baseAddress { _ = write(EchoelCrashLog.fd, b, $0.count) }
                     }
                     _ = write(EchoelCrashLog.fd, echoelThreadNameBuf, strlen(echoelThreadNameBuf))
+                    echoelNewlineByte.withUnsafeBufferPointer {
+                        if let b = $0.baseAddress { _ = write(EchoelCrashLog.fd, b, 1) }
+                    }
+                }
+                // The CURRENT QUEUE's label — the line a worker-thread trap actually needs
+                // (2613/2618: `dispatch_assert_queue` on a worker, pthread name empty, queue
+                // unknown). `__dispatch_queue_get_label(nil)` is the Swift spelling of
+                // `dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL)`: a thread-local
+                // read returning the queue's own label pointer, "" off any queue. No
+                // allocation, no lock; written only when non-empty.
+                let queueLabel = __dispatch_queue_get_label(nil)
+                if strlen(queueLabel) > 0 {
+                    echoelQueuePrefix.withUnsafeBufferPointer {
+                        if let b = $0.baseAddress { _ = write(EchoelCrashLog.fd, b, $0.count) }
+                    }
+                    _ = write(EchoelCrashLog.fd, queueLabel, strlen(queueLabel))
                     echoelNewlineByte.withUnsafeBufferPointer {
                         if let b = $0.baseAddress { _ = write(EchoelCrashLog.fd, b, 1) }
                     }
