@@ -194,8 +194,13 @@ public final class AudioClipPlayer {
         // completion also fires — un-guarded it could land AFTER a newer play
         // and clear isPlaying while audio sounds (Stop button dead). The async
         // Beats render window widens exactly this race.
+        // `@Sendable` (GMMW P0-4): AVFAudio calls the completion on its own thread, and this
+        // class is `@MainActor` — unmarked, the closure would inherit that isolation (the 2613
+        // shape). It captures `self` weakly, the Sendable region and a UInt64. This executor has
+        // no caller today (the CLAUDE.md register); the spelling is for whoever revives it.
+        // Guard: `TheOffMainDispatchHandlerIsSendableTests` claims 1 and 12.
         let scheduledGeneration = playGeneration
-        node.scheduleBuffer(buffer, at: nil, options: options, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+        node.scheduleBuffer(buffer, at: nil, options: options, completionCallbackType: .dataPlayedBack) { @Sendable [weak self] _ in
             guard let self else { return }
             if !region.loop {
                 Task { @MainActor in
@@ -240,7 +245,7 @@ public final class AudioClipPlayer {
         let options: AVAudioPlayerNodeBufferOptions = region.loop ? [.loops, .interrupts] : [.interrupts]
         // Same generation guard as the direct path (see play()).
         let scheduledGeneration = playGeneration
-        node.scheduleBuffer(buffer, at: nil, options: options, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+        node.scheduleBuffer(buffer, at: nil, options: options, completionCallbackType: .dataPlayedBack) { @Sendable [weak self] _ in
             guard let self else { return }
             if !region.loop {
                 Task { @MainActor in

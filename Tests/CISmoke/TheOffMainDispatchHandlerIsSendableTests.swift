@@ -78,6 +78,12 @@
 // `AnnouncementCenter.cloudKitConfigured` is `false`, so neither call runs. The repair is the same
 // token. Both closures capture only the continuation.
 //
+// THE EIGHTH SITE (GMMW P0-4, same day). `AudioClipPlayer` (`@MainActor`) hands
+// `AVAudioPlayerNode.scheduleBuffer(…completionCallbackType:)` two trailing completion closures.
+// AVFAudio calls them on its own thread. It is DEAD today: the executor has no production caller
+// (the CLAUDE.md register of unwired cores). The repair is the same token, so a revival does not
+// bring the trap back with it.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
@@ -177,6 +183,12 @@
 // violations, `Sync/AnnouncementCenter.swift` `.save` and `.delete`. It is GREEN after the fix.
 // Claim 3's three CloudKit fixtures are green on both trees. Claim 11 is red on the parent for its
 // named reason and green after. Claims 2 and 4–10 are unchanged.
+// EIGHTH MEASUREMENT (the AVAudioPlayerNode needle), transcribed against the parent `8fb5c79` and
+// the worktree. Claim 1 is RED on the parent for its NAMED reason, a REGRESSION: exactly two
+// violations, both `Sequencer/AudioClipPlayer.swift` `scheduleBuffer`. It is GREEN after the fix.
+// No other file hands a schedule call a trailing closure: TimelineAudioSink's calls take none, and
+// AudioEngine passes `completionHandler: nil`. Claim 3's two fixtures and claim 12 are as
+// expected. Claims 2 and 4–11 are unchanged.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -202,6 +214,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let hapticEngine = "Sources/Echoelmusic/Studio/HapticEngine.swift"
     private static let metalView = "Sources/Echoelmusic/Views/MetalBioView.swift"
     private static let announcements = "Sources/Echoelmusic/Sync/AnnouncementCenter.swift"
+    private static let clipPlayer = "Sources/Echoelmusic/Sequencer/AudioClipPlayer.swift"
 
     /// A closure literal handed to `MTLCommandBuffer.addCompletedHandler`/`addScheduledHandler`:
     /// group 1 the API, group 2 the `@Sendable` attribute when the closure opens with it.
@@ -269,6 +282,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let cloudKitBlock =
         #"(\.save|\.delete)\((?:[^(){}]|\([^()]*\))*\)\s*\{\s*(@Sendable)?"#
 
+    /// A closure literal TRAILING an `AVAudioPlayerNode` `scheduleBuffer(`/`scheduleSegment(`/
+    /// `scheduleFile(` call; same balanced-argument shape as the CoreMIDI needle.
+    private static let playerNodeBlock =
+        #"(schedule(?:Buffer|Segment|File))\((?:[^(){}]|\([^()]*\))*\)\s*\{\s*(@Sendable)?"#
+
+    /// AVFAudio calls a scheduled buffer's or segment's completion on its own thread.
+    private static let playerNodeThread = "<AVFAudio's completion thread>"
+
     /// CloudKit calls its completion handlers on its own queue.
     private static let cloudKitQueue = "<CloudKit's own queue>"
 
@@ -330,6 +351,13 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
                                         api: ns.substring(with: m.range(at: 1))))
             }
         }
+        // AVAudioPlayerNode schedule completions: the thread is AVFAudio's, never the caller's.
+        for m in try NSRegularExpression(pattern: Self.playerNodeBlock).matches(in: code, range: all) {
+            let sendable = m.range(at: 2).location != NSNotFound
+            let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+            handlers.append(Handler(line: line, queue: Self.playerNodeThread, sendable: sendable,
+                                    api: ns.substring(with: m.range(at: 1))))
+        }
         // CloudKit completions: only where CloudKit is imported — `.save(`/`.delete(` are common names.
         if code.contains("import CloudKit") {
             for m in try NSRegularExpression(pattern: Self.cloudKitBlock).matches(in: code, range: all) {
@@ -377,7 +405,8 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         }
         XCTAssertEqual(violations, [], """
             A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
-            block, a HealthKit handler, a CloudKit completion or a CoreHaptics handler inside a \
+            block, a HealthKit handler, a CloudKit completion, a player-node schedule completion \
+            or a CoreHaptics handler inside a \
             `@MainActor` class, on a \
             queue other than \
             `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
@@ -624,6 +653,28 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             read it (#364)
             """)
 
+        // The AVAudioPlayerNode family — a trailing completion after a multi-argument schedule call.
+        let nodeIsolated = """
+            @MainActor
+            public final class Player {
+                func play() {
+                    node.scheduleBuffer(buffer, at: nil, options: options, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+                        Task { @MainActor in self?.done() }
+                    }
+                    node.scheduleSegment(file, startingFrame: 0, frameCount: n, at: nil)
+                    node.play()
+                }
+            }
+            """
+        let nodeScan = try scan(nodeIsolated)
+        XCTAssertEqual(nodeScan.handlers.map(\.api), ["scheduleBuffer"], """
+            the trailing completion must be seen and a closure-less schedule call must not be \
+            (TimelineAudioSink is that shape, #364) — handlers: \(nodeScan.handlers)
+            """)
+        XCTAssertEqual(nodeScan.violations.count, 1, "the AudioClipPlayer shape must be a violation (#367)")
+        XCTAssertEqual(try scan(nodeIsolated.replacingOccurrences(of: "{ [weak self] _ in", with: "{ @Sendable [weak self] _ in")).violations.count, 0,
+                       "`@Sendable` is the repair for a schedule completion too; it must satisfy the rule")
+
         let notCoreHaptics = hapticIsolated.replacingOccurrences(of: "import CoreHaptics\n", with: "")
         XCTAssertEqual(try scan(notCoreHaptics).handlers.count, 0, """
             without `import CoreHaptics` a `.resetHandler = {` is somebody else's property — the \
@@ -784,6 +835,25 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(code.contains("isAutoShutdownEnabled = true"), """
             the idle shutdown is off — then the stopped handler fires only on a real stop. The \
             pin still holds, but this claim's message names the wrong trigger; re-derive it.
+            """)
+    }
+
+    /// 12 — the eighth site (the dead executor's schedule completions) is inside the rule's
+    /// domain and repaired.
+    func testTheClipPlayerCompletionsAreInsideTheRulesDomain() throws {
+        let v = try scan(try read(Self.clipPlayer))
+        XCTAssertTrue(v.isMainActorClass, """
+            AudioClipPlayer is no longer matched as a `@MainActor` class — re-derive whether its \
+            schedule completions still need `@Sendable` before trusting claim 1.
+            """)
+        let node = v.handlers.filter { $0.queue == Self.playerNodeThread }
+        XCTAssertEqual(node.map(\.api), ["scheduleBuffer", "scheduleBuffer"], """
+            AudioClipPlayer's two schedule completions are not both seen \
+            (handlers: \(v.handlers.map { ($0.api, $0.line) })) — re-anchor before trusting claim 1.
+            """)
+        XCTAssertTrue(node.allSatisfy(\.sendable), """
+            a schedule completion in AudioClipPlayer is no longer `@Sendable` — the executor has no \
+            caller today, and the day it gets one the completion traps on AVFAudio's thread.
             """)
     }
 
