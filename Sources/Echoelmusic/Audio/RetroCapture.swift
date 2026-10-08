@@ -599,11 +599,25 @@ final class RetroCapture {
             // losing a frame; a faster tick would only buy shorter file-flush latency at the
             // price of more, smaller writes. Deliberately NOT a `Timer`: a `Timer` runs on a
             // run loop, and this handler must run on `writeQueue` and nowhere else.
+            //
+            // ⛔ `@Sendable` IS LOAD-BEARING — build 2613 (v10.79.488) trapped ~200 ms after the
+            // whole-piece WAV export armed this timer: SIGTRAP in `dispatch_assert_queue` on a
+            // libdispatch worker, two frames below app code. A closure formed inside a
+            // `@MainActor` class that is NOT `@Sendable` inherits MainActor isolation, and the
+            // imported block type gets a dynamic isolation check at the closure's ENTRY — on
+            // `writeQueue`'s worker that check asks "main queue?" and traps BEFORE
+            // `drainToDisk()` is ever reached. The body was always innocent (`drainToDisk` is
+            // `nonisolated`); the closure's inferred isolation was the defect. Same repair as
+            // `MemoryPressureHandler.setupDispatchSource`, same trap `PatternEngine` met in
+            // builds 1769/1777. Guard: `TheOffMainDispatchHandlerIsSendableTests`.
             let drain = DispatchSource.makeTimerSource(queue: writeQueue)
             drain.schedule(deadline: .now() + .milliseconds(200), repeating: .milliseconds(200))
-            drain.setEventHandler { [weak self] in self?.drainToDisk() }
+            drain.setEventHandler { @Sendable [weak self] in self?.drainToDisk() }
             drainTimer?.cancel()
             drainTimer = drain
+            // A rung BEFORE its call (CLAUDE.md, Lebenszyklus-Leiter): the 2613 log went silent
+            // between "midiout: port already open" and the trap because this file wrote nothing.
+            EchoelCrashLog.breadcrumb("retro: recording armed (pre-roll \(preRoll) s) — drain on writeQueue")
             drain.resume()
 
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
