@@ -9,6 +9,29 @@ import SwiftUI
 // soon), and the note explains which edges move bytes today. Binds to SignalRouter
 // (persisted). See docs/dev/DMMW_ARCHITECTURE.md + Core/SignalRouting.swift.
 
+/// GMMW P1-1 — Routing's three groups (founder 2026-10-08: „vermeide Unübersichtlichkeit"). Nine
+/// cards stacked in one scroll became one group at a time behind a segmented row. The sheet's ONE
+/// door is the head's light tile (`TheRoutingHasOneDoorTests`), so Light comes first and every
+/// opening lands there. Connections holds the network outputs, the OSC input, MIDI and the
+/// routing graph; Body holds the modulation matrix's routes.
+enum RoutingGroup: String, CaseIterable, Identifiable {
+    case light, connections, body
+
+    /// Where the sheet opens — the subject of its one door.
+    static let opening = RoutingGroup.light
+
+    var id: String { rawValue }
+
+    /// The segment's word.
+    var title: String {
+        switch self {
+        case .light: return String(localized: "Light")
+        case .connections: return String(localized: "Connections")
+        case .body: return String(localized: "Body")
+        }
+    }
+}
+
 @MainActor
 struct PatchbayView: View {
 
@@ -85,49 +108,81 @@ struct PatchbayView: View {
         }
     }
 
+    /// GMMW P1-1 — which group the sheet shows. Not persisted: every opening comes through the
+    /// light tile, so it lands on Light (`RoutingGroup.opening`).
+    @State private var group = RoutingGroup.opening
+
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                headerBar
-                #if canImport(Network)
-                networkOutSection
-                lichtSection
-                // #1255 — the one inbound socket, beside the outputs it answers.
-                oscInSection
-                #endif
-                #if os(iOS) && canImport(CoreAudioKit)
-                // The NavigationLink push needs the enclosing NavigationStack, which only
-                // exists on the sheet (non-embedded) path — so gate it to !embedded (no
-                // dead control in the dormant workspace path).
-                if !embedded { bluetoothMIDISection }
-                #endif
-                #if os(iOS) && canImport(CoreMIDI)
-                // Mounted unconditionally: it is a Toggle, not a NavigationLink push, so
-                // unlike `bluetoothMIDISection` it needs no enclosing NavigationStack and
-                // is correct on the embedded path too. Defensive rather than a live fix —
-                // `PatchbayView(embedded:)` has no caller today — but a control that only
-                // works on one of two hosts is exactly how a door goes missing again.
-                // Zug 3 (2026-09-30): the cable's two status lines come BEFORE its switches — what
-                // is happening, and beneath it what can be changed. A leaf on its own clock (see
-                // the struct at the end of this file).
-                MIDIStatusRow()
-                networkMIDISection
-                midiOutSection
-                #endif
-                // #1250 — Body → parameter. The founder's "Verknüpfung mit der Routing Matrix":
-                // the ONE place a modulation route is authored. Mounted unconditionally (a
-                // Toggle/Picker card, no NavigationLink), before the transport source cards.
-                modulationSection
-                ForEach(router.graph.sources) { src in
-                    sourceCard(src)
+                groupPicker
+                // GMMW P1-1 (founder 2026-10-08, „vermeide Unübersichtlichkeit"): ONE group at a
+                // time instead of nine cards in one scroll. Every card stays mounted HERE, behind
+                // its group's `if`, so each is still one tap from the sheet's top.
+                if group == .light {
+                    #if canImport(Network)
+                    lichtSection
+                    Text("Where the light is sent — the node's address and universe for Art-Net or sACN — is set under Connections.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                    #endif
                 }
-                Text("Tap a destination to route a source to it. Compatible types connect directly or via a converter (e.g. pitch→colour, bio→MIDI CC). Light and spatial follow the music live today; other edges are authored here as their adapters come online.")
-                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                    .fixedSize(horizontal: false, vertical: true)
+                // #1250 — Body → parameter. The founder's "Verknüpfung mit der Routing Matrix":
+                // the ONE place a modulation route is authored. A Toggle/Picker card, no
+                // NavigationLink, so it is correct on both hosts.
+                if group == .body {
+                    modulationSection
+                }
+                if group == .connections {
+                    headerBar
+                    #if canImport(Network)
+                    networkOutSection
+                    // #1255 — the one inbound socket, beside the outputs it answers.
+                    oscInSection
+                    #endif
+                    #if os(iOS) && canImport(CoreAudioKit)
+                    // The NavigationLink push needs the enclosing NavigationStack, which only
+                    // exists on the sheet (non-embedded) path — so gate it to !embedded (no
+                    // dead control in the dormant workspace path).
+                    if !embedded { bluetoothMIDISection }
+                    #endif
+                    #if os(iOS) && canImport(CoreMIDI)
+                    // Mounted unconditionally: it is a Toggle, not a NavigationLink push, so
+                    // unlike `bluetoothMIDISection` it needs no enclosing NavigationStack and
+                    // is correct on the embedded path too. Defensive rather than a live fix —
+                    // `PatchbayView(embedded:)` has no caller today — but a control that only
+                    // works on one of two hosts is exactly how a door goes missing again.
+                    // Zug 3 (2026-09-30): the cable's two status lines come BEFORE its switches — what
+                    // is happening, and beneath it what can be changed. A leaf on its own clock (see
+                    // the struct at the end of this file).
+                    MIDIStatusRow()
+                    networkMIDISection
+                    midiOutSection
+                    #endif
+                    ForEach(router.graph.sources) { src in
+                        sourceCard(src)
+                    }
+                    Text("Tap a destination to route a source to it. Compatible types connect directly or via a converter (e.g. pitch→colour, bio→MIDI CC). Light and spatial follow the music live today; other edges are authored here as their adapters come online.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(16)
         }
         .background(EchoelTheme.bg)
+    }
+
+    /// GMMW P1-1 — the three groups, one segmented row at the top of the sheet. A `@State` read
+    /// only: it changes on a tap, never on a tick.
+    private var groupPicker: some View {
+        Picker("Routing group", selection: $group) {
+            ForEach(RoutingGroup.allCases) { option in
+                Text(option.title).tag(option)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityHint(String(localized: "Shows one part of Routing: the light, the network and MIDI connections, or the body's routes to parameters."))
     }
 
     #if os(iOS) && canImport(CoreAudioKit)

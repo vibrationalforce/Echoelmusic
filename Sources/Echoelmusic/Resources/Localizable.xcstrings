@@ -1,6 +1,30 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Body" : {
+      "comment" : "Routing segment (GMMW P1-1, 2026-10-08): the body's routes to instrument parameters (the modulation matrix).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body"
+          }
+        }
+      }
+    },
+    "Connections" : {
+      "comment" : "Routing segment (GMMW P1-1, 2026-10-08): the network outputs, the OSC input, MIDI and the routing graph.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connections"
+          }
+        }
+      }
+    },
     "Decimal separator" : {
       "comment" : "VoiceOver label for the decimal key on the Echoel number pad. Its visible glyph is the reader's own separator, which VoiceOver announces as a punctuation name or, for U+066B, often not at all.",
       "extractionState" : "manual",
@@ -93,6 +117,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Normalize the selected part: its loudest moment reaches full scale, at most 6 dB louder"
+          }
+        }
+      }
+    },
+    "Routing group" : {
+      "comment" : "Accessibility label of Routing's segmented row (GMMW P1-1): which group of the sheet is shown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routing group"
+          }
+        }
+      }
+    },
+    "Shows one part of Routing: the light, the network and MIDI connections, or the body's routes to parameters." : {
+      "comment" : "Accessibility hint of Routing's segmented row (GMMW P1-1).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows one part of Routing: the light, the network and MIDI connections, or the body's routes to parameters."
           }
         }
       }
@@ -693,6 +741,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visuals are capped at a safe 3 Hz flash rate."
+          }
+        }
+      }
+    },
+    "Where the light is sent — the node's address and universe for Art-Net or sACN — is set under Connections." : {
+      "comment" : "Note under Routing's Light card (GMMW P1-1): the node address lives on the Connections segment.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where the light is sent — the node's address and universe for Art-Net or sACN — is set under Connections."
           }
         }
       }
