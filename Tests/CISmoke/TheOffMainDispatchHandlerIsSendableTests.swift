@@ -84,6 +84,15 @@
 // (the CLAUDE.md register of unwired cores). The repair is the same token, so a revival does not
 // bring the trap back with it.
 //
+// THE NINTH SITE (GMMW P0-7, same day) is the first one a LIST found, not a crash or a reading:
+// `scripts/isolation-inventory.py` (P0-5) printed it as NEEDS-SDK-READING. `AudioEngine`
+// (`@MainActor`) registers `NotificationCenter.addObserver(forName:
+// .AVAudioEngineConfigurationChange, object:, queue: nil)` with a trailing closure. `queue: nil`
+// delivers on the POSTING thread, and AVFAudio posts this from its own, on every Bluetooth
+// headset connect, sample-rate switch or media-services rebuild. Whether the SDK marks the
+// `using:` block Sendable is not readable here. The repair makes that question moot: the same
+// token, and the closure already captured only `self`, weakly, and hopped with a `Task`.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
@@ -91,7 +100,8 @@
 // caller), and — in a file that imports HealthKit — every closure literal trailing an
 // `HK…Query(` initializer or a `.save(` call (HealthKit's background queue), and — in a file that
 // imports CoreHaptics — every closure literal ASSIGNED to `.resetHandler`/`.stoppedHandler`
-// (CoreHaptics' own queue) is spelled
+// (CoreHaptics' own queue), and every closure literal trailing `addObserver(forName:…)` whose
+// `queue:` is not main (`nil` is the posting thread) is spelled
 // `@Sendable`. Handlers on `.main` may stay isolated
 // (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
 // class are exempt: a closure formed in a non-isolated class inherits nothing.
@@ -110,9 +120,11 @@
 // passed by name, or as a labelled argument inside the parentheses, is not; the HealthKit needle
 // reads the same trailing shape and only in a file that imports HealthKit (`.save(` is a common
 // name). The CoreHaptics needle reads only the two handler ASSIGNMENTS
-// (`.resetHandler = {`/`.stoppedHandler = {`) and only in a file that imports CoreHaptics. Five
-// imported-block API families are pinned, not the class of all of them: a sixth with
-// the same shape is a new needle, not a comment. The `@MainActor`
+// (`.resetHandler = {`/`.stoppedHandler = {`) and only in a file that imports CoreHaptics. The
+// observer needle reads only the TRAILING form; `addObserver(…, using: { … })` is not seen. The
+// families `scan` reads are pinned, not the class of all of them: a new family with the same
+// shape is a new needle, not a comment. The class-wide LIST is `scripts/isolation-inventory.py`
+// (`doctor.py --section F`), which reads every isolated closure handed to an imported API. The `@MainActor`
 // needle accepts only attributes and modifiers between it and `class`, so `Task { @MainActor in`
 // never counts as a class.
 //
@@ -189,6 +201,14 @@
 // No other file hands a schedule call a trailing closure: TimelineAudioSink's calls take none, and
 // AudioEngine passes `completionHandler: nil`. Claim 3's two fixtures and claim 12 are as
 // expected. Claims 2 and 4–11 are unchanged.
+// NINTH MEASUREMENT (the NotificationCenter needle), transcribed against the parent `245141e` and
+// the worktree. Claim 1 is RED on the parent for its NAMED reason, a REGRESSION: exactly one
+// violation, `Audio/AudioEngine.swift` `addObserver` with `queue: nil`. It is GREEN after the fix.
+// The needle sees 14 observers in four files. ResourceGovernor's four use `queue: .main` and
+// AudioConfiguration's three are `.main` too. CameraCapture's six use `queue: nil` but the file
+// declares no `@MainActor` class, so they are exempt. Claim 3's observer fixtures are green on
+// both trees. Claim 13 is red on the parent for its named reason and green after. Claims 2 and
+// 4–12 are unchanged. Stripper PROPHYLAKTISCH: 0 flips over 18 carrier files.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -215,6 +235,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let metalView = "Sources/Echoelmusic/Views/MetalBioView.swift"
     private static let announcements = "Sources/Echoelmusic/Sync/AnnouncementCenter.swift"
     private static let clipPlayer = "Sources/Echoelmusic/Sequencer/AudioClipPlayer.swift"
+    private static let audioEngine = "Sources/Echoelmusic/Audio/AudioEngine.swift"
 
     /// A closure literal handed to `MTLCommandBuffer.addCompletedHandler`/`addScheduledHandler`:
     /// group 1 the API, group 2 the `@Sendable` attribute when the closure opens with it.
@@ -290,6 +311,16 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     /// AVFAudio calls a scheduled buffer's or segment's completion on its own thread.
     private static let playerNodeThread = "<AVFAudio's completion thread>"
 
+    /// A closure literal TRAILING `addObserver(forName:object:queue:)`: group 1 the argument text
+    /// (its `queue:` is read with `queueArg`), group 2 the `@Sendable` attribute when the closure
+    /// opens with it. Same balanced-argument shape as the CoreMIDI needle, so
+    /// `object: AVAudioSession.sharedInstance()` is one nested level and still matches.
+    private static let notificationObserver =
+        #"addObserver\(\s*forName:((?:[^(){}]|\([^()]*\))*)\)\s*\{\s*(@Sendable)?"#
+
+    /// `queue: nil` hands the block to the POSTING thread — whichever thread posted it.
+    private static let postingThread = "<the posting thread (queue: nil)>"
+
     /// CloudKit calls its completion handlers on its own queue.
     private static let cloudKitQueue = "<CloudKit's own queue>"
 
@@ -309,7 +340,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     }
 
     private static func isMain(_ queue: String) -> Bool {
-        queue == ".main" || queue == "DispatchQueue.main"
+        queue == ".main" || queue == "DispatchQueue.main" || queue == "OperationQueue.main"
     }
 
     private func scan(_ code: String) throws -> Verdict {
@@ -376,6 +407,17 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
                                         api: ns.substring(with: m.range(at: 1))))
             }
         }
+        // NotificationCenter observers: the queue is the `queue:` argument; `nil` = the poster's thread.
+        let queueRegex2 = try NSRegularExpression(pattern: Self.queueArg)
+        for m in try NSRegularExpression(pattern: Self.notificationObserver).matches(in: code, range: all) {
+            let args = ns.substring(with: m.range(at: 1)) as NSString
+            let found = queueRegex2.firstMatch(in: args as String, range: NSRange(location: 0, length: args.length))
+                .map { args.substring(with: $0.range(at: 1)) } ?? "nil"
+            let queue = found == "nil" ? Self.postingThread : found
+            let sendable = m.range(at: 2).location != NSNotFound
+            let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+            handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "addObserver"))
+        }
         // CoreMIDI blocks: the thread is CoreMIDI's, never the caller's.
         for m in try NSRegularExpression(pattern: Self.coreMIDIBlock).matches(in: code, range: all) {
             let sendable = m.range(at: 2).location != NSNotFound
@@ -405,8 +447,8 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         }
         XCTAssertEqual(violations, [], """
             A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
-            block, a HealthKit handler, a CloudKit completion, a player-node schedule completion \
-            or a CoreHaptics handler inside a \
+            block, a HealthKit handler, a CloudKit completion, a player-node schedule completion, \
+            a NotificationCenter observer or a CoreHaptics handler inside a \
             `@MainActor` class, on a \
             queue other than \
             `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
@@ -675,6 +717,36 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertEqual(try scan(nodeIsolated.replacingOccurrences(of: "{ [weak self] _ in", with: "{ @Sendable [weak self] _ in")).violations.count, 0,
                        "`@Sendable` is the repair for a schedule completion too; it must satisfy the rule")
 
+        // The NotificationCenter family — `queue: nil` is the poster's thread, `.main` is main.
+        let observerIsolated = """
+            @MainActor
+            final class Engine {
+                func watch() {
+                    token = NotificationCenter.default.addObserver(
+                        forName: .AVAudioEngineConfigurationChange,
+                        object: AVAudioSession.sharedInstance(),
+                        queue: nil
+                    ) { [weak self] _ in
+                        Task { @MainActor [weak self] in self?.recover() }
+                    }
+                    other = nc.addObserver(forName: .thermal, object: nil, queue: .main) { [weak self] _ in
+                        self?.tick()
+                    }
+                }
+            }
+            """
+        let observerScan = try scan(observerIsolated)
+        XCTAssertEqual(observerScan.handlers.map(\.queue), [Self.postingThread, ".main"], """
+            both observers must be seen, and `queue: nil` must read as the poster's thread — \
+            handlers: \(observerScan.handlers)
+            """)
+        XCTAssertEqual(observerScan.violations.count, 1, """
+            the `queue: nil` observer is the AudioEngine shape and must be a violation (#367); \
+            the `.main` one may stay isolated (#364)
+            """)
+        XCTAssertEqual(try scan(observerIsolated.replacingOccurrences(of: "{ [weak self] _ in", with: "{ @Sendable [weak self] _ in")).violations.count, 0,
+                       "`@Sendable` is the repair for a `queue: nil` observer too; it must satisfy the rule")
+
         let notCoreHaptics = hapticIsolated.replacingOccurrences(of: "import CoreHaptics\n", with: "")
         XCTAssertEqual(try scan(notCoreHaptics).handlers.count, 0, """
             without `import CoreHaptics` a `.resetHandler = {` is somebody else's property — the \
@@ -854,6 +926,27 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(node.allSatisfy(\.sendable), """
             a schedule completion in AudioClipPlayer is no longer `@Sendable` — the executor has no \
             caller today, and the day it gets one the completion traps on AVFAudio's thread.
+            """)
+    }
+
+    /// 13 — the ninth site (the engine's configuration-change observer) is inside the rule's
+    /// domain and repaired. It is the first site found by `scripts/isolation-inventory.py`.
+    func testTheConfigurationObserverIsInsideTheRulesDomain() throws {
+        let v = try scan(try read(Self.audioEngine))
+        XCTAssertTrue(v.isMainActorClass, """
+            AudioEngine is no longer matched as a `@MainActor` class — re-derive whether its \
+            configuration-change observer still needs `@Sendable` before trusting claim 1.
+            """)
+        let posting = v.handlers.filter { $0.api == "addObserver" && $0.queue == Self.postingThread }
+        XCTAssertEqual(posting.count, 1, """
+            AudioEngine's one `queue: nil` observer (`.AVAudioEngineConfigurationChange`) is not \
+            seen exactly once (handlers: \(v.handlers.map { ($0.api, $0.queue, $0.line) })) — \
+            re-anchor before trusting claim 1.
+            """)
+        XCTAssertTrue(posting.allSatisfy(\.sendable), """
+            AudioEngine's configuration-change observer is no longer `@Sendable`. With `queue: nil` \
+            it runs on the thread that posted it, and AVFAudio posts it from its own — on every \
+            headset connect or disconnect.
             """)
     }
 

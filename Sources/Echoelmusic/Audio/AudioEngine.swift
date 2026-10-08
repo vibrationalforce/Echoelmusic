@@ -691,11 +691,17 @@ public final class AudioEngine {
     /// `recoverEngine`. Registered once (prepareGraph is idempotent).
     private func registerConfigurationChangeWatchdog() {
         guard configChangeObserver == nil else { return }
+        // `queue: nil` delivers on the POSTING thread, and AVFAudio posts this from its own. This
+        // class is `@MainActor`, so an unmarked closure would inherit main-actor isolation and,
+        // unless the SDK marks `using:` Sendable (not readable here), trap at its entry there —
+        // the build-2613 class, on every headset connect. `@Sendable` makes it non-isolated
+        // whatever the header says; it captures only `self`, weakly, and hops explicitly.
+        // Found by `scripts/isolation-inventory.py`. Guard: `TheOffMainDispatchHandlerIsSendableTests`.
         configChangeObserver = NotificationCenter.default.addObserver(
             forName: .AVAudioEngineConfigurationChange,
             object: masterEngine,
             queue: nil
-        ) { [weak self] _ in
+        ) { @Sendable [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 // #653 — an engine reconfigure is the only event that changes the granted
