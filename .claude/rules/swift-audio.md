@@ -3,7 +3,14 @@
 ## Swift 6 Strict Concurrency
 - `@MainActor` on ALL `@Observable` view models
 - `nonisolated(unsafe)` for audio thread parameters
-- `@Sendable` closures where required
+- `@Sendable` closures where required — and ALWAYS on a closure literal that a framework
+  calls off the main queue, when it is formed inside a `@MainActor` type. Without it the
+  closure inherits MainActor isolation; passed as an argument to a module that is not
+  concurrency-checked (Dispatch, AVFoundation, CoreMIDI, HealthKit …) it gets an isolation
+  check at its ENTRY, and on a worker that check traps (`dispatch_assert_queue` → SIGTRAP)
+  before the body runs. Builds 2613/2618 died this way; a `nonisolated` callee does not help.
+  An SDK block marked `NS_SWIFT_SENDABLE` (NotificationCenter's) is already safe — check the
+  header, not the habit. Guard: `TheOffMainDispatchHandlerIsSendableTests` (four API families).
 - No `self` before `super.init()`
 - `Task { @MainActor in }` for async UI updates from non-isolated context
 
