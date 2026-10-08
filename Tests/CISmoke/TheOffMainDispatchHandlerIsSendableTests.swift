@@ -93,6 +93,13 @@
 // `using:` block Sendable is not readable here. The repair makes that question moot: the same
 // token, and the closure already captured only `self`, weakly, and hopped with a `Task`.
 //
+// THE TENTH SITE (GMMW P0-8, same day), also from the list. `MemoryPressureHandler`
+// (`@MainActor`) subscribes `NotificationCenter.default.publisher(for:
+// UIApplication.didReceiveMemoryWarningNotification).sink { … }`. Combine is not
+// concurrency-annotated, and a sink runs on the thread that POSTED the notification. UIKit posts
+// this one on main today, so it is LATENT. The repair is the same token, and the inner `Task` now
+// re-captures `self` weakly (the MIDIInput shape).
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
@@ -101,7 +108,8 @@
 // `HK…Query(` initializer or a `.save(` call (HealthKit's background queue), and — in a file that
 // imports CoreHaptics — every closure literal ASSIGNED to `.resetHandler`/`.stoppedHandler`
 // (CoreHaptics' own queue), and every closure literal trailing `addObserver(forName:…)` whose
-// `queue:` is not main (`nil` is the posting thread) is spelled
+// `queue:` is not main (`nil` is the posting thread), and every closure given to `.sink` straight
+// after `publisher(for:)` (the posting thread too) is spelled
 // `@Sendable`. Handlers on `.main` may stay isolated
 // (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
 // class are exempt: a closure formed in a non-isolated class inherits nothing.
@@ -209,6 +217,13 @@
 // declares no `@MainActor` class, so they are exempt. Claim 3's observer fixtures are green on
 // both trees. Claim 13 is red on the parent for its named reason and green after. Claims 2 and
 // 4–12 are unchanged. Stripper PROPHYLAKTISCH: 0 flips over 18 carrier files.
+// TENTH MEASUREMENT (the notification-sink needle), transcribed against the parent `d7fb983` and
+// the worktree. Claim 1 is RED on the parent for its NAMED reason, a REGRESSION: exactly one
+// violation, `Core/MemoryPressureHandler.swift` `sink`. It is GREEN after the fix. No other file
+// sinks straight on a notification publisher; the SwiftUI `.onReceive(publisher(for:))` sites are
+// a different shape and are not read. Claim 3's sink fixtures are green on both trees. Claim 14
+// is red on the parent for its named reason and green after. Claims 2 and 4–13 are unchanged.
+// Stripper PROPHYLAKTISCH: 0 flips over 18 carrier files.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -236,6 +251,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let announcements = "Sources/Echoelmusic/Sync/AnnouncementCenter.swift"
     private static let clipPlayer = "Sources/Echoelmusic/Sequencer/AudioClipPlayer.swift"
     private static let audioEngine = "Sources/Echoelmusic/Audio/AudioEngine.swift"
+    private static let memoryPressure = "Sources/Echoelmusic/Core/MemoryPressureHandler.swift"
 
     /// A closure literal handed to `MTLCommandBuffer.addCompletedHandler`/`addScheduledHandler`:
     /// group 1 the API, group 2 the `@Sendable` attribute when the closure opens with it.
@@ -320,6 +336,12 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
 
     /// `queue: nil` hands the block to the POSTING thread — whichever thread posted it.
     private static let postingThread = "<the posting thread (queue: nil)>"
+
+    /// A closure literal given to `.sink` DIRECTLY after `publisher(for: …)`: Combine delivers it
+    /// on the posting thread. Group 1 the `@Sendable` attribute when the closure opens with it.
+    /// A `.receive(on:)` or any other operator in between is not this shape and is not read.
+    private static let notificationSink =
+        #"publisher\(\s*for:(?:[^(){}]|\([^()]*\))*\)\s*\.sink\s*\{\s*(@Sendable)?"#
 
     /// CloudKit calls its completion handlers on its own queue.
     private static let cloudKitQueue = "<CloudKit's own queue>"
@@ -418,6 +440,12 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
             handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "addObserver"))
         }
+        // A Combine sink straight on a notification publisher: the poster's thread, like `queue: nil`.
+        for m in try NSRegularExpression(pattern: Self.notificationSink).matches(in: code, range: all) {
+            let sendable = m.range(at: 1).location != NSNotFound
+            let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+            handlers.append(Handler(line: line, queue: Self.postingThread, sendable: sendable, api: "sink"))
+        }
         // CoreMIDI blocks: the thread is CoreMIDI's, never the caller's.
         for m in try NSRegularExpression(pattern: Self.coreMIDIBlock).matches(in: code, range: all) {
             let sendable = m.range(at: 2).location != NSNotFound
@@ -448,7 +476,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertEqual(violations, [], """
             A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
             block, a HealthKit handler, a CloudKit completion, a player-node schedule completion, \
-            a NotificationCenter observer or a CoreHaptics handler inside a \
+            a NotificationCenter observer or sink, or a CoreHaptics handler inside a \
             `@MainActor` class, on a \
             queue other than \
             `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
@@ -747,6 +775,33 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertEqual(try scan(observerIsolated.replacingOccurrences(of: "{ [weak self] _ in", with: "{ @Sendable [weak self] _ in")).violations.count, 0,
                        "`@Sendable` is the repair for a `queue: nil` observer too; it must satisfy the rule")
 
+        // The Combine family — a sink straight on a notification publisher runs on the poster's
+        // thread; the same chain moved to main with `.receive(on:)` is not this shape.
+        let sinkIsolated = """
+            @MainActor
+            final class Handler {
+                func watch() {
+                    NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
+                        .sink { [weak self] _ in
+                            Task { @MainActor [weak self] in self?.release() }
+                        }
+                        .store(in: &bag)
+                    NotificationCenter.default.publisher(for: .routeChange)
+                        .receive(on: DispatchQueue.main)
+                        .sink { [weak self] _ in self?.refresh() }
+                        .store(in: &bag)
+                }
+            }
+            """
+        let sinkScan = try scan(sinkIsolated)
+        XCTAssertEqual(sinkScan.handlers.map(\.api), ["sink"], """
+            the direct sink must be seen and the `.receive(on:)` chain must not be (#364) — \
+            handlers: \(sinkScan.handlers)
+            """)
+        XCTAssertEqual(sinkScan.violations.count, 1, "the MemoryPressureHandler shape must be a violation (#367)")
+        XCTAssertEqual(try scan(sinkIsolated.replacingOccurrences(of: ".sink { [weak self] _ in\n", with: ".sink { @Sendable [weak self] _ in\n")).violations.count, 0,
+                       "`@Sendable` is the repair for a notification sink too; it must satisfy the rule")
+
         let notCoreHaptics = hapticIsolated.replacingOccurrences(of: "import CoreHaptics\n", with: "")
         XCTAssertEqual(try scan(notCoreHaptics).handlers.count, 0, """
             without `import CoreHaptics` a `.resetHandler = {` is somebody else's property — the \
@@ -947,6 +1002,26 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             AudioEngine's configuration-change observer is no longer `@Sendable`. With `queue: nil` \
             it runs on the thread that posted it, and AVFAudio posts it from its own — on every \
             headset connect or disconnect.
+            """)
+    }
+
+    /// 14 — the tenth site (the memory-warning sink) is inside the rule's domain and repaired.
+    func testTheMemoryWarningSinkIsInsideTheRulesDomain() throws {
+        let v = try scan(try read(Self.memoryPressure))
+        XCTAssertTrue(v.isMainActorClass, """
+            MemoryPressureHandler is no longer matched as a `@MainActor` class — re-derive whether \
+            its memory-warning sink still needs `@Sendable` before trusting claim 1.
+            """)
+        let sinks = v.handlers.filter { $0.api == "sink" }
+        XCTAssertEqual(sinks.count, 1, """
+            MemoryPressureHandler's memory-warning sink is not seen exactly once \
+            (handlers: \(v.handlers.map { ($0.api, $0.queue, $0.line) })) — re-anchor before \
+            trusting claim 1.
+            """)
+        XCTAssertTrue(sinks.allSatisfy(\.sendable), """
+            MemoryPressureHandler's memory-warning sink is no longer `@Sendable`. Combine runs it \
+            on the thread that posted the notification; UIKit posts this one on main today, and \
+            the closure must not depend on that.
             """)
     }
 

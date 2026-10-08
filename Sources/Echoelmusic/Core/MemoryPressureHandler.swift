@@ -194,9 +194,15 @@ public final class MemoryPressureHandler {
 
     private func setupMemoryWarningObserver() {
         #if canImport(UIKit) && !os(watchOS)
+        // A `.sink` runs on the thread that POSTED the notification, and Combine is not
+        // concurrency-annotated, so an unmarked closure formed in this `@MainActor` class would
+        // carry an entry check that traps off main (the build-2613 class). UIKit posts the
+        // memory warning on main today; `@Sendable` makes the closure safe on any thread, and the
+        // `Task` re-captures `self` weakly (the MIDIInput shape). Found by
+        // `scripts/isolation-inventory.py`. Guard: `TheOffMainDispatchHandlerIsSendableTests`.
         NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
-            .sink { [weak self] _ in
-                Task { @MainActor in
+            .sink { @Sendable [weak self] _ in
+                Task { @MainActor [weak self] in
                     self?.handleMemoryWarning()
                 }
             }
