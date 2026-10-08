@@ -5977,14 +5977,14 @@
         }
       }
     },
-    "Allowed sender IPs, comma-separated (empty = any)" : {
+    "Allowed sender IPs, comma-separated (empty = this device only)" : {
       "comment" : "Panel text (E4-8, 2026-09-30): SwiftUI literal keys of the Routing surface (PatchbayView) and the effects panel (EchoelFXView) — localised by content, no Sources change.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allowed sender IPs, comma-separated (empty = any)"
+            "value" : "Allowed sender IPs, comma-separated (empty = this device only)"
           }
         }
       }

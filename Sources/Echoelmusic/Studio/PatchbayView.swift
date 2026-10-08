@@ -433,7 +433,7 @@ struct PatchbayView: View {
                 ? String(localized: "On. One UDP port is open for the control cues listed below, from the senders you allow.")
                 : String(localized: "Off. No socket is open; Echoel sends only."))
             OSCInputStatusLine(receiver: oscIn)
-            TextField("Allowed sender IPs, comma-separated (empty = any)", text: oscInAllowedHosts)
+            TextField("Allowed sender IPs, comma-separated (empty = this device only)", text: oscInAllowedHosts)
                 .textFieldStyle(.plain)
                 .font(EchoelTheme.font(13).monospacedDigit())
                 .padding(.horizontal, 10).frame(minHeight: 34)

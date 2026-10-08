@@ -20,6 +20,24 @@
 // unproven until a job log shows its name (#445/#807). Stripper: PROPHYLAKTISCH (0 of 9 scan
 // verdicts flip). The decoder algebra (padding, big-endian float) was driven in Python
 // against `OSCSender.encode`'s bytes before this file was written (#442).
+//
+// ⛔ T18 (security audit 2026-10-08) FLIPPED ONE ASSERTION OF CLAIM 4 ON PURPOSE. It said an
+// EMPTY allowlist admits a network sender (`192.168.1.9`, list ""), i.e. switching OSC input on
+// opened the port to every machine on the Wi-Fi. Empty now means THIS DEVICE ONLY: loopback is
+// always admitted (`127.0.0.1`, `::1`, `localhost`), a network sender only when listed, and an
+// IPv4 sender reported as IPv4-mapped IPv6 (`::ffff:192.168.1.9`) matches its IPv4 entry. Claim
+// 7 pins the listener's parameters — no cellular interface. Claim 8 still sends from 127.0.0.1
+// with the default empty list and still expects the cue: loopback is the one sender an empty
+// list admits, so the runtime claim is UNCHANGED, not weakened. GRADING (§0, transcribed in
+// Python against the parent `4491a89` and this tree): claim 4 has 11 `isAllowed` rows — on the
+// parent 6 RED (the empty-list network sender, loopback beside a list ×3, both mapped rows),
+// here 11 green. ⚠️ One of the six is a guess: the mapped-beside-its-entry row is red on the
+// parent only if Network prints a mapped address in hex (`::ffff:c0a8:109`, Python's form); if
+// it prints the dotted tail it was green there, so "5 or 6". Claim 7's two new needles RED on
+// the parent (`.udp`, no prohibition), green here; the stripper flips none. Claim 8's sender
+// (`127.0.0.1`, or `::ffff:127.0.0.1` from a dual-stack socket) is admitted on both. The IPv6
+// rows rest on Network's own `isLoopback`/`isIPv4Mapped`/`asIPv4`, which a transcription cannot
+// run — they are proven when a Run Tests window shows this file's names (#445/#807).
 
 import Foundation
 import XCTest
@@ -95,9 +113,23 @@ final class TheOSCControlInputIsAWhitelistTests: XCTestCase {
         XCTAssertFalse(StudioDefaultKeys.oscInEnabled.value, "a fresh install must open no port (#1255)")
         #if canImport(Network)
         XCTAssertEqual(OSCReceiver.defaultPort, 8001, "the hub and the FAQ name 8001")
-        XCTAssertTrue(OSCReceiver.isAllowed(endpoint: .hostPort(host: "192.168.1.9", port: 8001), allowedHosts: ""))
+        // T18 — an EMPTY list is THIS DEVICE ONLY: a network sender is refused until listed.
+        XCTAssertFalse(OSCReceiver.isAllowed(endpoint: .hostPort(host: "192.168.1.9", port: 8001), allowedHosts: ""),
+                       "an empty allowlist must not admit a network sender (T18)")
         XCTAssertTrue(OSCReceiver.isAllowed(endpoint: .hostPort(host: "192.168.1.9", port: 8001), allowedHosts: "10.0.0.2, 192.168.1.9"))
         XCTAssertFalse(OSCReceiver.isAllowed(endpoint: .hostPort(host: "192.168.1.9", port: 8001), allowedHosts: "10.0.0.2"))
+        // This device is always admitted — with or without a list.
+        for local in ["127.0.0.1", "::1", "localhost"] {
+            XCTAssertTrue(OSCReceiver.isAllowed(endpoint: .hostPort(host: NWEndpoint.Host(local), port: 8001), allowedHosts: ""),
+                          "\(local) is this device and must be admitted on an empty list (T18)")
+            XCTAssertTrue(OSCReceiver.isAllowed(endpoint: .hostPort(host: NWEndpoint.Host(local), port: 8001), allowedHosts: "10.0.0.2"),
+                          "\(local) is this device and must be admitted beside a list (T18)")
+        }
+        // A dual-stack socket reports an IPv4 sender as IPv4-mapped IPv6; it matches its IPv4 entry.
+        XCTAssertTrue(OSCReceiver.isAllowed(endpoint: .hostPort(host: "::ffff:192.168.1.9", port: 8001), allowedHosts: "192.168.1.9"),
+                      "an IPv4-mapped sender must match its IPv4 entry (T18)")
+        XCTAssertFalse(OSCReceiver.isAllowed(endpoint: .hostPort(host: "::ffff:192.168.1.9", port: 8001), allowedHosts: ""),
+                       "an IPv4-mapped network sender is still a network sender (T18)")
         #endif
     }
 
@@ -141,7 +173,10 @@ final class TheOSCControlInputIsAWhitelistTests: XCTestCase {
         for forbidden in ["EngineBus", "latestBio", "startBiofeedback", "toggleBiofeedback", "BioSampleFrame("] {
             XCTAssertFalse(receiver.contains(forbidden), "OSCReceiver now names `\(forbidden)` — a cue socket must stay a cue socket (#1255)")
         }
-        XCTAssertTrue(receiver.contains("NWListener(using: .udp, on: nwPort)"))
+        XCTAssertTrue(receiver.contains("NWListener(using: parameters, on: nwPort)"),
+                      "the listener must be built from the parameters that exclude cellular (T18)")
+        XCTAssertTrue(receiver.contains("parameters.prohibitedInterfaceTypes = [.cellular]"),
+                      "the cue socket must never listen on a cellular interface (T18)")
         XCTAssertTrue(receiver.contains("guard Self.isAllowed(endpoint: connection.endpoint, allowedHosts: allowedHosts) else {"),
                       "the allowlist must be applied before a byte is decoded (#1255)")
     }

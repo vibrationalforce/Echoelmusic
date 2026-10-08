@@ -134,7 +134,7 @@ LOW — memory/people.md:37-43 (`Asset: Free access to Panasonic high-end server
 
 LOW — docs/_headers:15 is Cloudflare-Pages syntax but the live deploy is GitHub Pages (`actions/deploy-pages@v4`, pages.yml:61), which does not read `_headers`, so the strict CSP/HSTS/Permissions-Policy are probably not served. CHANGE: on your Mac run `curl -sI https://echoelmusic.com | grep -i content-security`; if absent, add the headers as a Cloudflare Transform Rule or move hosting to Cloudflare Pages (wrangler.toml already describes it); otherwise the file is documentation, not protection.
 
-### T18 — OFFEN — nächste Scheibe (leere OSC-Allowlist = verweigern statt „jeder Host“; Wächter dazu)
+### T18 — ERLEDIGT 2026-10-08 (leere OSC-Allowlist = nur dieses Gerät; Mobilfunk ausgeschlossen; IPv4-mapped-Absender vergleichen als IPv4; Feldtext, Katalog, `docs/integrations.html`, `docs/privacy.html` und `TheOSCControlInputIsAWhitelistTests` Anspruch 4 + 7 nachgezogen)
 
 LOW — Sources/Echoelmusic/Sync/OSCReceiver.swift:560 `guard !entries.isEmpty else { return true }` makes the empty default allowlist mean "any host", and :474 `NWListener(using: .udp, on: nwPort)` binds every interface; with `net.osc.in.enabled` (off by default, StudioDefaultKeys.swift:555) turned on, any reachable host can change key/scale/genre/visual style, blackout the lights (EchoelmusicApp.swift:1358-1380) and set tempo while BPM is locked. CHANGE: treat an empty allowlist as deny (or refuse to enable the toggle until one entry exists), build the listener with `NWParameters.udp` + `prohibitedInterfaceTypes = [.cellular]`, and keep the PatchbayView.swift:436 placeholder text in step.
 

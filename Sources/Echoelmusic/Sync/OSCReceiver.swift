@@ -142,9 +142,9 @@ public enum OSCControlCommand: Equatable, Sendable {
     /// ONE LINE BEFORE their range test, and `Int(_:)` TRAPS in Swift for anything past
     /// `Int.max` — a finite `1e30` passes `isFinite` and kills the app. `bpm` had no upper bound
     /// at all and handed the unbounded value to `summary`, which converts on every accepted cue.
-    /// The value comes off the wire as `Float(bitPattern:)` of four raw bytes from ANY sender on
-    /// the network when the allowlist is empty (the documented default), so this was one
-    /// datagram from a remote kill mid-performance.
+    /// The value comes off the wire as `Float(bitPattern:)` of four raw bytes, and until T18
+    /// (2026-10-08) from ANY sender on the network while the allowlist was empty (then the
+    /// documented default), so this was one datagram from a remote kill mid-performance.
     ///
     /// ⭐ THE SHAPE OF THE FIX IS THE LESSON: **bound in the DOUBLE, then convert.** A range test
     /// after a lossy conversion is not a range test — the conversion is where the program dies.
@@ -386,7 +386,8 @@ public final class OSCReceiver {
         didSet { Self.persist(port: port, allowedHosts: allowedHosts); if isActive { stop(); start() } }
     }
 
-    /// Comma-separated sender IPs. EMPTY = any sender on the network the OS delivers from.
+    /// Comma-separated sender IPs that may send from the NETWORK. EMPTY = this device only
+    /// (T18, 2026-10-08) — see `isAllowed`.
     public var allowedHosts: String {
         didSet { Self.persist(port: port, allowedHosts: allowedHosts) }
     }
@@ -469,9 +470,14 @@ public final class OSCReceiver {
     public func start() {
         guard !isActive else { return }
         let nwPort: NWEndpoint.Port = port == 0 ? .any : (NWEndpoint.Port(rawValue: port) ?? .any)
+        // T18 (security audit 2026-10-08) — never on a cellular interface. A cue socket belongs
+        // to the venue network the operator chose; a carrier IPv6 address can be globally
+        // routable, and the allowlist is the only other wall in front of the decoder.
+        let parameters = NWParameters.udp
+        parameters.prohibitedInterfaceTypes = [.cellular]
         let newListener: NWListener
         do {
-            newListener = try NWListener(using: .udp, on: nwPort)
+            newListener = try NWListener(using: parameters, on: nwPort)
         } catch {
             lastError = "OSC in: cannot listen on \(port) — \(error.localizedDescription)"
             EchoelCrashLog.breadcrumb("osc in: listen failed on \(port)")
@@ -552,20 +558,43 @@ public final class OSCReceiver {
         }
     }
 
-    /// Empty allowlist = any sender. Otherwise the remote host's textual address must equal an
-    /// entry (an IPv6 scope suffix such as `%en0` is ignored).
+    /// THIS DEVICE (loopback) is always allowed, and an EMPTY list means THIS DEVICE ONLY: a
+    /// sender on the network gets in only by being listed.
+    ///
+    /// ⛔ T18 (security audit 2026-10-08): until then an empty list meant "any sender", and
+    /// empty was the default — switching OSC input on opened the port to every machine on a
+    /// festival Wi-Fi, the opposite of the consent the switch's own hint describes ("from the
+    /// senders you allow"). The Routing field now says "empty = this device only", and a
+    /// refused network sender shows up as "N refused" in the status line, so the operator sees
+    /// why a console is not heard.
+    ///
+    /// A listed entry must equal the sender's textual address. An IPv6 scope suffix (`%en0`) is
+    /// ignored, and an IPv4 sender that a dual-stack socket reports as IPv4-mapped IPv6
+    /// (`::ffff:192.168.1.9`) is compared in its IPv4 form — without that, a correctly typed
+    /// IPv4 entry could never match such a sender.
     nonisolated static func isAllowed(endpoint: NWEndpoint, allowedHosts: String) -> Bool {
-        let entries = allowedHosts.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        guard !entries.isEmpty else { return true }
         guard case .hostPort(let host, _) = endpoint else { return false }
         let raw: String
         switch host {
-        case .ipv4(let a):    raw = "\(a)"
-        case .ipv6(let a):    raw = "\(a)"
-        case .name(let n, _): raw = n
-        @unknown default:     raw = "\(host)"
+        case .ipv4(let a):
+            if a.isLoopback { return true }
+            raw = "\(a)"
+        case .ipv6(let a):
+            if a.isLoopback { return true }
+            if a.isIPv4Mapped, let v4 = a.asIPv4 {
+                if v4.isLoopback { return true }
+                raw = "\(v4)"
+            } else {
+                raw = "\(a)"
+            }
+        case .name(let n, _):
+            if n.lowercased() == "localhost" { return true }
+            raw = n
+        @unknown default:
+            raw = "\(host)"
         }
+        let entries = allowedHosts.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let name = raw.split(separator: "%").first.map(String.init) ?? raw
         return entries.contains(name)
     }

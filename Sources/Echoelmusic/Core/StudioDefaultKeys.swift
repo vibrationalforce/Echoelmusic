@@ -545,10 +545,12 @@ public enum StudioDefaultKeys {
     /// **OSC control input — OFF by default (#1255, Grand Council 2026-09-10 step 4).** When on,
     /// `OSCReceiver` opens ONE UDP port (its own persisted `net.osc.in.port`, default 8001) and
     /// accepts the whitelist `/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}` from
-    /// senders the operator may restrict by IP. Same consent class as `networkMIDI` above: a thing
+    /// this device only until the operator lists sender IPs (T18, 2026-10-08), and never over a
+    /// cellular interface. Same consent class as `networkMIDI` above: a thing
     /// that ACCEPTS, not a thing you point somewhere. No bio value, no play/stop, no bundle is
     /// accepted; `bpm` only while the BPM is locked. ONE reader: `OSCReceiver.applyPreference()`.
-    /// NEEDS-FOUNDER-VERIFY: Routing → "Accept OSC control" on; from TouchOSC/TouchDesigner send
+    /// NEEDS-FOUNDER-VERIFY: Routing → "Accept OSC control" on and the sending machine's IP typed
+    /// into "Allowed sender IPs" (unlisted, it is counted as refused); from TouchOSC/TouchDesigner send
     /// `/echoelmusic/ctrl/key 7` — the header key reads G and the take recomposes; with the BPM
     /// locked send `/echoelmusic/ctrl/bpm 96` — the field shows 96 and the log says
     /// `tempoSource=remoteControl`; switch off — the port closes.
