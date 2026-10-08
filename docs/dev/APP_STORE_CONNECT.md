@@ -13,7 +13,7 @@ table here. Update this file whenever a target or identifier changes.
 | Apple App ID (ASC) | **6757957358** |
 | SKU | **Simsalabimbam** |
 | Bundle prefix | `com.echoelmusic` |
-| Marketing version | `10.0.0` (`project.yml` → `MARKETING_VERSION`) |
+| Marketing version | follows line 1 of `.deploy/release` — `testflight.yml` rewrites `project.yml`'s `MARKETING_VERSION` from the first `vX.Y.Z` in that file on every run (measure: `head -1 .deploy/release`; shipped 2026-10-07: 10.79.492, build 2617). The literal in `project.yml` is a stale placeholder that never reaches a build |
 | Build number | `${BUILD_NUMBER:=1}` (`CURRENT_PROJECT_VERSION`) |
 | Team ID | via `APPLE_TEAM_ID` GitHub Actions secret (not committed) |
 | App category | `public.app-category.music` |
