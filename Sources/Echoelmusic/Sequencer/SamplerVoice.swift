@@ -116,6 +116,16 @@ public final class SamplerVoice: @unchecked Sendable {
         sourceURL = url
     }
 
+    /// Main thread. Drops the loaded sample: an EMPTY buffer goes over the same handshake, the
+    /// unit renders silence until the next load, and a later load of the same file is not
+    /// skipped as already loaded. Nothing loaded: a no-op (no install, no allocation).
+    public func unload() {
+        guard isLoaded || sourceURL != nil else { return }
+        renderState.installBuffer([])
+        isLoaded = false
+        sourceURL = nil
+    }
+
     /// Down-mixes + sample-rate-converts a PCM buffer to mono float32 at
     /// `targetRate`, returning the raw samples. Uses `AVAudioConverter`, which
     /// handles both channel down-mix and resampling. Main thread, load-time only.

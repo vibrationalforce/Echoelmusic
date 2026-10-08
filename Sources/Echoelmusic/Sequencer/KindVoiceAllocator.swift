@@ -27,6 +27,13 @@
 // Laws (tested): deterministic (no Date/UUID/random), first-RANK-wins on
 // contention (input order irrelevant), poly fallback on kind exhaustion,
 // zero units ⇒ all-poly (the flag-OFF shape, bit-identical to today).
+// ⭐ GMMW GA-4 review: a SAMPLER slot binds its OWN unit, `.sampler(slot)` — index == slot,
+// the poly convention — whenever that unit exists (the rack attaches one per slot). Handed
+// out by rank, the units MOVED: a region gap flips one slot to poly, the next Sampler slot
+// took its unit mid-song, was cut, inherited the other track's level, could play the other
+// track's file, and reloaded files on the main queue at every downbeat. A slot with no unit
+// of its own (only with fewer units than slots) borrows the lowest unowned one, by rank —
+// the one place a sampler binding can still move. Guard: `ASamplerTrackPlaysAFileFromTheLibraryTests`.
 // Foundation-only, no engine, no state.
 
 import Foundation
@@ -68,18 +75,23 @@ public enum KindVoiceAllocator {
                                 samplerUnits: Int,
                                 bioUnits: Int = 0) -> [Int: PhysicalVoiceRef] {
         var out: [Int: PhysicalVoiceRef] = [:]
+        var seen = Set<Int>()
         var nextSub = 0
-        var nextSampler = 0
         var nextBio = 0
+        var ownedSamplers = Set<Int>()
+        var borrowers: [Int] = []
         for entry in ordered.sorted(by: { $0.slot < $1.slot }) {
-            guard out[entry.slot] == nil else { continue }   // duplicate slot: first wins
+            guard seen.insert(entry.slot).inserted else { continue }   // duplicate slot: first wins
             switch entry.kind {
             case .subBass where nextSub < subUnits:
                 out[entry.slot] = .subBass(nextSub)
                 nextSub += 1
-            case .sampler where nextSampler < samplerUnits:
-                out[entry.slot] = .sampler(nextSampler)
-                nextSampler += 1
+            case .sampler where entry.slot >= 0 && entry.slot < samplerUnits:
+                // Its own unit: nothing another slot does can move it (header).
+                out[entry.slot] = .sampler(entry.slot)
+                ownedSamplers.insert(entry.slot)
+            case .sampler where samplerUnits > 0:
+                borrowers.append(entry.slot)   // resolved below, once every owner is known
             case .bioVoice where nextBio < bioUnits:
                 out[entry.slot] = .bio(nextBio)
                 nextBio += 1
@@ -88,6 +100,18 @@ public enum KindVoiceAllocator {
                 // rank). Never silence. `.drums` now ALWAYS lands here — see the
                 // header: the kind outlives its voice on purpose.
                 out[entry.slot] = .poly(entry.slot)
+            }
+        }
+        // A slot past the last unit borrows the lowest unit no Sampler slot owns, in rank order;
+        // with every unit taken it is poly, never silence.
+        var nextFree = 0
+        for slot in borrowers {
+            while nextFree < samplerUnits && ownedSamplers.contains(nextFree) { nextFree += 1 }
+            if nextFree < samplerUnits {
+                out[slot] = .sampler(nextFree)
+                nextFree += 1
+            } else {
+                out[slot] = .poly(slot)
             }
         }
         return out

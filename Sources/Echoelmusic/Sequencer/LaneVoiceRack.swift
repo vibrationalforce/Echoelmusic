@@ -92,6 +92,10 @@ public final class LaneVoiceRack {
     /// not per unit, so rebinding loads the newly bound lane's own sample into
     /// the sampler unit (the sample follows the lane, like transpose).
     @ObservationIgnored private var sampleURLBySlot: [Int: URL] = [:]
+    /// The fader each slot's lane last asked for (setGain). A sampler unit keeps its LEVEL while
+    /// its slot sits on poly through a region gap, so a fader move in the gap (a solo, a mute)
+    /// would reach the unit only at the next mixer edit — rebindAll re-applies it instead.
+    @ObservationIgnored private var gainBySlot: [Int: Float] = [:]
     /// BodyVibe B1: the RAW (pre-transpose) pitch currently gating each bio-bound
     /// slot's mono voice. Mono last-note-wins: only the CURRENT note's off may
     /// close the envelope — a stale off from an overlap must not cut the newer
@@ -177,10 +181,12 @@ public final class LaneVoiceRack {
             // still strictly before audioEngine.start().
             // GMMW GA-4: ONE UNIT PER SLOT (`capacity`), so every track in the rack can be a
             // Sampler with its own file. With one unit a second Sampler track fell back to
-            // EchoelSynth (`KindVoiceAllocator` exhausts kind units in rank order). A unit
-            // costs nothing until a file is loaded — its buffer is installed at load, from the
-            // main actor (`SamplerVoice.loadSample`), never in render — and an idle unit
-            // renders silence. CPU and memory on device: G7 (NEEDS-FOUNDER-VERIFY).
+            // EchoelSynth. Each Sampler slot binds its OWN unit (`KindVoiceAllocator`, index ==
+            // slot), so a gap on one track never moves another onto a different unit. Buffers
+            // are installed at load, from the main actor (`SamplerVoice.loadSample`), never in
+            // render. An idle unit is cheap, not free: its source node renders a silent block
+            // every IO cycle and the mixer sums it (and resamples it off 48 kHz). CPU and
+            // memory on device: G7 (NEEDS-FOUNDER-VERIFY).
             samplers = (0..<capacity).map { _ in SamplerVoice() }
             for sampler in samplers { audioEngine.attachSourceNode(sampler.sourceNode) }
             // BodyVibe B1: one lane bio unit — its OWN BioReactiveSynthVoice
@@ -363,15 +369,24 @@ public final class LaneVoiceRack {
                 if case .bio = old { bioHeldPitchBySlot[slot] = nil }
             }
         }
+        let previous = bindings
         bindings = fresh
         // The sampler units carry per-LANE buffers: after a binding change, load
         // each sampler-bound slot's remembered sample into its unit (setSample may
         // have run while the slot was poly-fallback / bound elsewhere). Sorted for
-        // deterministic order; loadSampleIfNeeded skips an already-loaded URL.
+        // deterministic order; loadSampleIfNeeded skips an already-loaded URL — and since
+        // GA-4's review a slot owns its unit, so a gap and its return reload nothing.
+        // A slot whose lane has no sample EMPTIES its unit: the buffer may be another
+        // lane's that held this slot earlier, and "no sample yet" must stay silent.
         for slot in bindings.keys.sorted() {
-            if case .sampler(let i) = bindings[slot], samplers.indices.contains(i),
-               let url = sampleURLBySlot[slot] {
+            guard case .sampler(let i) = bindings[slot], samplers.indices.contains(i) else { continue }
+            if let url = sampleURLBySlot[slot] {
                 loadSampleIfNeeded(url, intoSampler: i)
+            } else {
+                samplers[i].unload()
+            }
+            if previous[slot] != bindings[slot], let gain = gainBySlot[slot] {
+                samplers[i].configureShape(level: Self.samplerLevel(gain), attackMs: 0, lengthMs: 0)
             }
         }
     }
@@ -545,6 +560,7 @@ public final class LaneVoiceRack {
     /// (1 = unity; the voices clamp internally); non-finite
     /// fails SILENT (0) per app convention.
     public func setGain(slot: Int, _ gain: Float) {
+        gainBySlot[slot] = gain
         switch binding(forSlot: slot) {
         case .poly:
             voice(slot: slot)?.setGain(gain)
@@ -557,13 +573,16 @@ public final class LaneVoiceRack {
             // lane-fader contract 0…2, non-finite fails silent per app
             // convention). attackMs/lengthMs stay at their defaults (0 = no
             // fade-in, full sample) — the lane path never reshapes the hit.
-            samplers[i].configureShape(
-                level: Swift.max(0, Swift.min(2, gain.isFinite ? gain : 0)),
-                attackMs: 0, lengthMs: 0)
+            samplers[i].configureShape(level: Self.samplerLevel(gain), attackMs: 0, lengthMs: 0)
         case .bio(let i):
             guard bios.indices.contains(i) else { return }
             bios[i].setGain(gain)   // encapsulated: clamps 0…2 at the mixer stage
         }
+    }
+
+    /// The lane-fader contract on a sampler unit's level: 0…2, non-finite fails silent.
+    private static func samplerLevel(_ gain: Float) -> Float {
+        Swift.max(0, Swift.min(2, gain.isFinite ? gain : 0))
     }
 
     /// Lane pan per bound kind. The mono sub stays un-panned (pro-audio
@@ -588,14 +607,17 @@ public final class LaneVoiceRack {
     /// into the CURRENTLY bound sampler unit (rebindAll re-loads on any later
     /// binding change, so the sample follows the lane). A load failure logs and
     /// keeps the unit's previous buffer sounding — never a crash, no force-unwrap.
-    /// nil clears the memo; the unit keeps its buffer until another lane's sample
-    /// replaces it (an unbound buffer can't sound — fire() routes by binding).
+    /// nil clears the memo and, on a sampler-bound slot, EMPTIES the unit (GA-4 review): a
+    /// Sampler track with no sample is silent, never the file another lane left in its unit.
     public func setSample(slot: Int, url: URL?) {
         guard attached, slot >= 0, slot < voices.count else { return }
         sampleURLBySlot[slot] = url
-        guard let url, case .sampler(let i) = binding(forSlot: slot),
-              samplers.indices.contains(i) else { return }
-        loadSampleIfNeeded(url, intoSampler: i)
+        guard case .sampler(let i) = binding(forSlot: slot), samplers.indices.contains(i) else { return }
+        if let url {
+            loadSampleIfNeeded(url, intoSampler: i)
+        } else {
+            samplers[i].unload()
+        }
     }
 
     /// BodyVibe B1: forward the bus's latest bio snapshot into every lane bio
