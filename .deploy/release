@@ -1,4 +1,4 @@
-build: v10.79.493 — Netz-Rundlauf in Live Colabo, „Join next" auf der Teile-Leiste
+build: v10.79.494 — Der WAV-Export stürzt nicht mehr ab (2613-Fix), eine Sprosse vor der Schreib-Uhr
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,47 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.494) ───────────────────────────────
+
+  ⭐ DER ABSTURZ AUS DEINEN ZWEI DIAGNOSE-LOGS (Build 2613, 02.10.; Build 2618, 08.10. — beide
+  SIGTRAP beim Export) IST GEFUNDEN UND REPARIERT. Gebaut wird der zuletzt durch beide Gates gelaufene Stand (Xcode Compile Check
+  37760447412 + Build for Testing Job 113255725248 grün auf f74e2ed). NICHT drin — sie warten auf
+  deine Freigabe im Standard-Modus (scratchpads/FOUNDER_LANDING_2026-10-08.md): die
+  Mikrofon-Aufnahme E10-1, Broadcast B2 und die Auto-Merge-Reparatur #310. Auf dem Gerät ist
+  NICHTS von dem Folgenden geprüft.
+
+  ── POSTEN 1: DER WAV-EXPORT STÜRZT NICHT MEHR AB (2613) ──
+  · Was passiert war: Arrange → „Export" → „WAV" startet den Mitschnitt des eigenen Ausgangs.
+    Dessen Schreib-Uhr tickt alle 200 ms auf einer Hintergrund-Warteschlange — und ihre
+    Closure trug, weil sie in einer Hauptfaden-Klasse geschrieben steht, unsichtbar das
+    Etikett „nur Hauptfaden". Beim ersten Tick prüfte Swift 6 das Etikett, es stimmte nicht:
+    Trap, 200 ms nach dem Play. Der Rumpf war immer unschuldig; EIN Wort an der Closure
+    (`@Sendable`) nimmt das Etikett weg. Das Datei-Schreiben bleibt im Hintergrund, der Takt
+    ist unverändert. Gefunden mit 23 Agenten (16 Kandidaten, 8 gegengeprüft, 1 übrig) —
+    und von deinem zweiten Log BESTÄTIGT: Build 2618 (08.10., 09:46 UTC) stürzte identisch,
+    diesmal über den Loop-Export („transport play (loopExport)"). Beide Türen rufen denselben
+    Mitschnitt; 2618 enthielt den Fix noch nicht (er ging 13 Minuten später auf den Zweig).
+  · Neu im Diagnose-Log: „retro: recording armed (pre-roll N s) — drain on writeQueue" steht
+    jetzt, BEVOR die Uhr tickt. In 2613 lagen zwischen „midiout: port already open" und dem
+    Trap 200 ms Stille — der Recorder schrieb keine einzige Zeile.
+  · Nur das Gerät beweist den Export; nur das 2613-dSYM beweist, dass genau diese Closure
+    Frame 7/8 war (`atos`-Befehl in docs/dev/FOUNDER_INBOX.md, Zeile G9).
+
+  ── PRÜFLISTE ──
+  T1  Arrange → „Export" → „WAV" → bis zum Teilen-Blatt → Datei teilen. Danach Instrument →
+      Save/Export-Chip → „Diagnostics": die Zeile „retro: recording armed" steht VOR
+      „transport play (timelineRegion)".
+  T2  Dasselbe mit laufendem Puls (Finger auf der Kamera): der Export darf die Messung nicht
+      stören, die Puls-Pille läuft weiter.
+  T3  Stabilität: dreimal kalt starten, alle fünf Bereiche. Hängt etwas: Instrument →
+      Save/Export-Chip → „Diagnostics" → Teilen (das Diagnose-Log).
+
+  Neu prüfbare Bitten (1 Zeile, 1 Prüfung):
+  Gedruckt: python3 scripts/founder-verify.py --since c145e74
+  · OTHER — CISmoke/TheOffMainDispatchHandlerIsSendableTests.swift:55: der WAV-Export am Gerät (= T1).
+
+  Der Vorgänger ist 10.79.493 (Build 2618), davor 10.79.492.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.493) ───────────────────────────────
 
