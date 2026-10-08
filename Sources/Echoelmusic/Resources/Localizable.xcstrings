@@ -205,6 +205,30 @@
         }
       }
     },
+    "Part pitch" : {
+      "comment" : "Value-field label (GMMW AE-10c, 2026-10-08): the selected audio part's own pitch on the part bar, in semitones, on top of its track's pitch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part pitch"
+          }
+        }
+      }
+    },
+    "Moves this part up or down on top of its track's pitch, without changing its tempo" : {
+      "comment" : "VoiceOver hint of the part bar's \"Part pitch\" field while the piece is stopped (GMMW AE-10c, 2026-10-08). While it plays the field says \"Stop the piece to change pitch\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves this part up or down on top of its track's pitch, without changing its tempo"
+          }
+        }
+      }
+    },
     "Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW." : {
       "comment" : "Onboarding, page 3 body (#618: names Play, camera light, strap — the first act). Replaced the 'Breathe, lock a key…' key; its orphaned entry left with it (#618b).",
       "extractionState" : "manual",

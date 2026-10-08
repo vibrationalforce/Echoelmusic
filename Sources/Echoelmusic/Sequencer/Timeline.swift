@@ -318,8 +318,8 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// the PLACEMENT, like `gain`: the same file can sit at +0 here and +7 there. Split, trim and
     /// duplicate carry it; Join refuses a mismatch (`abuts`). Legacy regions decode as 0.
     /// Since AE-10b the audio player plays track + part (`AudioTranspose.semitones(for:in:)`, the
-    /// one place they meet). ⚠️ Nothing in the app sets it away from 0 until the part bar's field
-    /// (AE-10c) — `TimelineStore.setRegionTranspose` has no caller yet.
+    /// one place they meet); since AE-10c the part bar's "Part pitch" field sets it, through
+    /// `TimelineStore.setRegionTranspose`.
     public var transposeSemitones: Int
 
     public init(id: UUID = UUID(), laneID: UUID, clipID: UUID,

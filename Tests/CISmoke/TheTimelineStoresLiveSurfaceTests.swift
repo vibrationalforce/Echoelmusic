@@ -114,6 +114,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setRegionStretchMode",
         // Audio editor W4c: the part bar's Fade in / Fade out fields.
         "setRegionFades",
+        // GMMW AE-10c: the part bar's Part pitch field.
+        "setRegionTranspose",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

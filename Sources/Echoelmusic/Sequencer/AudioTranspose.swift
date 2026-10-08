@@ -11,8 +11,8 @@
 //  carries its own (`TimelineRegion.transposeSemitones`, written by
 //  `TimelineStore.setRegionTranspose`), and since AE-10b the engine plays the SUM —
 //  `semitones(for:in:)` below is the one place the two meet, held to `semitoneRange`. The part
-//  bar's field that sets a part's pitch is AE-10c; until then every part is at 0 and the sum IS
-//  the track's pitch, so playback is unchanged.
+//  bar's "Part pitch" field sets a part's own (AE-10c); a part at 0 plays its track's pitch alone,
+//  exactly as before.
 //
 //  ⭐ THE NODE IS THE ONE THAT ALREADY EXISTS. `TimelineAudioSink` routes a warped part through
 //  player → `AVAudioUnitTimePitch` → master. A transposed part now takes the same chain, with

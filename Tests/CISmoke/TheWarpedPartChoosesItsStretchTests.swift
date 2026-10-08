@@ -151,7 +151,11 @@ final class TheWarpedPartChoosesItsStretchTests: XCTestCase {
         XCTAssertLessThan(gate.lowerBound, mount.lowerBound, "the choice appears only for a warped audio part")
         XCTAssertEqual(code.components(separatedBy: "PartStretchPicker(").count - 1, 1, "mounted once")
 
-        let picker = String(code[leaf.upperBound...])
+        // The leaf's OWN struct, to its column-0 close — not to the end of the file. The open slice
+        // read every leaf declared after the picker, so W4c's fade fields (`EchoelValueField(`) made
+        // the ban below red on a correct tree from 845319d until GMMW AE-10c (#408).
+        let afterLeaf = code[leaf.upperBound...]
+        let picker = String(afterLeaf[..<(afterLeaf.range(of: "\n}\n")?.lowerBound ?? afterLeaf.endIndex)])
         for needle in ["selection: Binding(get: { mode },",
                        "set: { timeline.setRegionStretchMode(id: regionID, $0) })) {",
                        "ForEach(PartStretch.choices, id: \\.self) { choice in",

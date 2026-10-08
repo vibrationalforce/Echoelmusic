@@ -249,7 +249,10 @@ final class ThePartBarSetsTheFadesItPlaysTests: XCTestCase {
         XCTAssertLessThan(gate.lowerBound, mount.lowerBound, "the fields appear only for a part that can fade")
         XCTAssertEqual(code.components(separatedBy: "PartFadeFields(").count - 1, 1, "mounted once")
 
-        let fields = String(code[leaf.upperBound...])
+        // The leaf's OWN struct, to its column-0 close: AE-10c's `PartPitchField` follows it and
+        // reads `player.` on purpose, which the open slice would have read as this leaf's (#408).
+        let afterLeaf = code[leaf.upperBound...]
+        let fields = String(afterLeaf[..<(afterLeaf.range(of: "\n}\n")?.lowerBound ?? afterLeaf.endIndex)])
         guard let first = fields.range(of: "EchoelValueField(label: \"Fade in\","),
               let second = fields.range(of: "EchoelValueField(label: \"Fade out\",", range: first.upperBound..<fields.endIndex),
               let shown = fields.range(of: "private var shownIn: Double {", range: second.upperBound..<fields.endIndex),

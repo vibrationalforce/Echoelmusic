@@ -75,6 +75,12 @@
 //  store ("in wins", `FadeEnvelope`). A release writes once through `setRegionFades`: one undo
 //  step. The canvas draws the ramps over the waveform (`ArrangeCanvas.AudioWindow.fadeLevel`).
 //
+//  ⭐ GMMW AE-10c — PART PITCH, for a part on an audio track. The part keeps its own pitch (AE-10a)
+//  and the player plays track + part (AE-10b, `AudioTranspose.semitones(for:in:)`); this field is
+//  the door. Whole semitones over the audio path's range, written once on release through
+//  `setRegionTranspose`: one undo step. Off while the piece plays, the track Pitch field's rule —
+//  a first pitch needs the time-pitch chain, attached only at prime time.
+//
 
 import SwiftUI
 
@@ -248,6 +254,22 @@ enum PartFades {
     /// What the fade-out field offers: up to what the fade-in leaves — exactly the store's rule.
     nonisolated static func outRange(_ lengths: Lengths) -> ClosedRange<Double> {
         0...beats(fromTicks: Swift.max(0, lengths.lengthTicks - lengths.fadeInTicks))
+    }
+}
+
+/// The pure half of the part's own pitch (GMMW AE-10c).
+enum PartPitch {
+
+    /// The part's own pitch when it sits on an AUDIO track — the one kind whose player plays it
+    /// (`AudioTranspose.semitones(for:in:)` adds it to the track's) — else nil, and the bar offers
+    /// no pitch: a MIDI part's notes are moved in the note editor, and a control that moves
+    /// nothing is a lie (#164). A part that is gone has none either. Held to the audio path's
+    /// range, so the field shows what the store keeps.
+    nonisolated static func semitones(of regionID: UUID, in document: TimelineDocument) -> Int? {
+        guard let region = document.regions.first(where: { $0.id == regionID }),
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .audio, !lane.isBio else { return nil }
+        return AudioTranspose.clamped(region.transposeSemitones)
     }
 }
 
@@ -453,6 +475,10 @@ struct SelectedPartBar: View {
                 // W4c: an audio part's fade-in and fade-out — nil for any other part.
                 if let fades = PartFades.lengths(of: regionID, in: document) {
                     PartFadeFields(regionID: regionID, lengths: fades)
+                }
+                // AE-10c: an audio part's own pitch, on top of its track's — nil for any other part.
+                if let pitch = PartPitch.semitones(of: regionID, in: document) {
+                    PartPitchField(regionID: regionID, semitones: pitch)
                 }
                 // Eight labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
@@ -933,5 +959,58 @@ private struct PartFadeFields: View {
         draftOut = nil
         timeline.setRegionFades(id: regionID, fadeInTicks: lengths.fadeInTicks,
                                 fadeOutTicks: PartFades.ticks(fromBeats: value))
+    }
+}
+
+/// GMMW AE-10c — the selected audio part's own pitch, in whole semitones, on top of its track's.
+///
+/// ⚠️ WRITTEN ON COMMIT, NOT PER DRAG STEP — the `PartGainField` pattern. The drag edits a draft;
+/// the release writes once through `TimelineStore.setRegionTranspose` (a no-op when unchanged):
+/// one undo step per gesture. The draft is cleared whenever the stored pitch changes (an undo, a
+/// redo, another surface), so the field never shows a pitch the part no longer has.
+///
+/// ⚠️ OFF WHILE THE PIECE PLAYS — the track Pitch field's rule and reason (`WorkstationView
+/// .pitchField`): a part's first pitch needs the time-pitch chain, which `AudioLanePlayer.prime`
+/// attaches only while nothing sounds, because a mid-song attach pauses the whole engine (review
+/// HIGH 2). `player.isPlaying` flips on a start or a stop, never per step, and is read here, in
+/// the leaf's own body, not in the bar's.
+///
+/// The number is the PART's own; the engine plays track + part held to the same range
+/// (`AudioTranspose.semitones(for:in:)`), so a part can cancel or extend its track's pitch.
+/// NEEDS-FOUNDER-VERIFY: on a track at Pitch 0, select one audio part, set Part pitch +7 while stopped and play — that part alone sounds a fifth higher at the same tempo; set the track's Pitch to −7 and play — that part sounds as recorded and the others a fifth lower; one Undo puts the part back.
+@MainActor
+private struct PartPitchField: View {
+    let regionID: UUID
+    /// The part's stored pitch — cold, per render.
+    let semitones: Int
+    @Environment(TimelineStore.self) private var timeline
+    /// Cold: `isPlaying` flips on a start or a stop, never per step.
+    @Environment(TimelineRegionPlayer.self) private var player
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        let playing = player.isPlaying
+        EchoelValueField(label: "Part pitch",
+                         value: Binding(get: { shownPitch }, set: { draft = $0 }),
+                         range: AudioTranspose.fieldRange,
+                         unit: "semitones",
+                         decimals: 0,
+                         hint: playing
+                             ? String(localized: "Stop the piece to change pitch")
+                             : String(localized: "Moves this part up or down on top of its track's pitch, without changing its tempo"),
+                         standard: 0,
+                         onCommit: { commitPitch() })
+            .disabled(playing)
+            .onChange(of: semitones) { _, _ in draft = nil }
+    }
+
+    private var shownPitch: Double {
+        draft ?? Double(semitones)
+    }
+
+    private func commitPitch() {
+        guard let value = draft else { return }
+        draft = nil
+        timeline.setRegionTranspose(id: regionID, AudioTranspose.semitones(fromField: value))
     }
 }

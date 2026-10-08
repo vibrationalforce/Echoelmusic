@@ -17,14 +17,25 @@
 //    EXACTLY, and Join refuses halves at different pitches (they would join at one of them).
 // 3. END-TO-END on the real store — one set is ONE undo step; an unchanged, unknown or
 //    clamped-to-unchanged value records nothing; a value past the range is stored at its edge.
+// 4. END-TO-END — the part bar offers a pitch only for a part on an AUDIO track (the one kind
+//    whose player plays it), shown held to the range; MIDI, bio and a gone part get none (#164).
+// 5. SOURCE-TEXT SCAN (AE-10c) — the bar mounts the field under that question; the leaf writes
+//    once, on commit, through the store's one writer and the field's one conversion; it is off
+//    while the piece plays and reads `isPlaying` in its own body; the draft follows the store.
 // The decoder half (a legacy part opens at 0, a foreign value opens held to the range, a round
 // trip keeps it) is `ARegionSurvivesAFieldItDoesNotKnowTests` claims 1 and 4, not repeated here.
+// The player half (track + part) is `ATransposedTrackPlaysThroughThePitchChainTests` 11–13.
 //
 // GRADING (§0/§3, no Swift toolchain in a web session): the file names `transposeSemitones` on a
 // REGION and `setRegionTranspose`, which this commit creates, so it does NOT COMPILE against the
 // parent — no assertion has a verdict there (one absence, #486). All three claims are FORWARD
 // guards, transcribed in Python against the work tree's arithmetic. Whether a part's pitch
 // SOUNDS right is AE-10b's device probe and open.
+// Claims 4–5 (AE-10c) are FORWARD too — `PartPitch` and `PartPitchField` are created by that
+// commit; claim 5's 14 verdicts were driven in Python: all green on the worktree, all red on its
+// parent `3cd569f` by anchor absence (one absence, #486). Stripper `SourceText.codeOnly`:
+// PROPHYLAKTISCH — 0 of the 14 flip between raw and stripped text on either tree.
+// Whether the field reads well, and the probe in its doc, are device questions.
 
 import XCTest
 import Foundation
@@ -120,5 +131,95 @@ final class APartCarriesItsOwnPitchTests: XCTestCase {
         timeline.undo()
         XCTAssertEqual(stored(), 0, "a value that clamps to the stored one recorded no second step")
         XCTAssertFalse(timeline.canUndo)
+    }
+
+    // MARK: 4 — the bar offers a pitch only where the player plays one
+
+    func testOnlyAPartOnAnAudioTrackIsOfferedAPitch() {
+        let top = AudioTranspose.semitoneRange.upperBound
+        let audio = TimelineLane(name: "Loop", kind: .audio)
+        let midi = TimelineLane(name: "Keys", kind: .midi)
+        let bio = TimelineLane(name: "Body", kind: .audio, isBio: true)
+        let pitched = TimelineRegion(laneID: audio.id, clipID: UUID(), startTick: 0, lengthTicks: 960,
+                                     transposeSemitones: -3)
+        var wild = TimelineRegion(laneID: audio.id, clipID: UUID(), startTick: 960, lengthTicks: 960)
+        wild.transposeSemitones = Int.max
+        let keys = TimelineRegion(laneID: midi.id, clipID: UUID(), startTick: 0, lengthTicks: 960,
+                                  transposeSemitones: 5)
+        let body = TimelineRegion(laneID: bio.id, clipID: UUID(), startTick: 0, lengthTicks: 960,
+                                  transposeSemitones: 5)
+        let doc = TimelineDocument(lanes: [audio, midi, bio], regions: [pitched, wild, keys, body])
+        XCTAssertEqual(PartPitch.semitones(of: pitched.id, in: doc), -3, "an audio part shows its own pitch")
+        XCTAssertEqual(PartPitch.semitones(of: wild.id, in: doc), top, "and shows it held to what the store keeps")
+        XCTAssertNil(PartPitch.semitones(of: keys.id, in: doc), "a MIDI part's pitch is moved in the note editor — no field (#164)")
+        XCTAssertNil(PartPitch.semitones(of: body.id, in: doc), "a bio track plays no audio pitch — no field")
+        XCTAssertNil(PartPitch.semitones(of: UUID(), in: doc), "a part that is gone has no field")
+    }
+
+    // MARK: 5 — the field: mounted under that question, one write on commit, off while playing
+
+    func testTheFieldWritesOnceOnCommitAndIsOffWhilePlaying() throws {
+        let bar = try source("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
+        XCTAssertEqual(occurrences(of: "PartPitchField(regionID: regionID, semitones: pitch)", in: bar), 1,
+                       "the bar mounts the field once")
+        let mount = try XCTUnwrap(bar.range(of: "if let pitch = PartPitch.semitones(of: regionID, in: document) {"),
+                                  "ANCHOR MISSING: the bar no longer asks `PartPitch.semitones(of:in:)` before the field")
+        let field = try XCTUnwrap(bar.range(of: "PartPitchField(regionID: regionID, semitones: pitch)"))
+        XCTAssertLessThan(mount.lowerBound, field.lowerBound, "the field sits under the audio-only question")
+        XCTAssertEqual(occurrences(of: "setRegionTranspose(", in: bar), 1, "one write site in the bar")
+
+        let leaf = try XCTUnwrap(bracedBody(after: "private struct PartPitchField: View {", in: bar),
+                                 "ANCHOR MISSING: PartPitchField")
+        let commit = try XCTUnwrap(bracedBody(after: "private func commitPitch() {", in: leaf),
+                                   "ANCHOR MISSING: commitPitch")
+        XCTAssertTrue(commit.contains("timeline.setRegionTranspose(id: regionID, AudioTranspose.semitones(fromField: value))"),
+                      "the release writes through the store's one writer and the field's one conversion")
+        XCTAssertTrue(commit.contains("draft = nil"), "a commit clears its draft")
+        let render = try XCTUnwrap(bracedBody(after: "var body: some View {", in: leaf), "ANCHOR MISSING: the leaf's body")
+        XCTAssertFalse(render.contains("setRegionTranspose("), "the drag never writes — only the commit does")
+        for needle in ["let playing = player.isPlaying", ".disabled(playing)", "range: AudioTranspose.fieldRange",
+                       "decimals: 0", "onCommit: { commitPitch() }", ".onChange(of: semitones) { _, _ in draft = nil }"] {
+            XCTAssertTrue(render.contains(needle), "PartPitchField lost `\(needle)`")
+        }
+        for banned in ["Slider(", "Stepper("] {
+            XCTAssertFalse(leaf.contains(banned), "a numeric parameter is an `EchoelValueField`, never a raw `\(banned)`")
+        }
+    }
+
+    // MARK: - Source helpers
+
+    private func source(_ relativePath: String) throws -> String {
+        var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        for _ in 0..<8 {
+            if FileManager.default.fileExists(atPath: dir.appendingPathComponent("Package.swift").path) { break }
+            dir = dir.deletingLastPathComponent()
+        }
+        let url = dir.appendingPathComponent(relativePath)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("source tree not present under \(dir.path)")
+        }
+        return SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+    }
+
+    private func occurrences(of needle: String, in text: String) -> Int {
+        text.components(separatedBy: needle).count - 1
+    }
+
+    /// The brace-matched body that opens at the end of `head` (which must end in `{`), or nil.
+    private func bracedBody(after head: String, in text: String) -> String? {
+        guard head.hasSuffix("{"), let start = text.range(of: head) else { return nil }
+        var depth = 1
+        var index = start.upperBound
+        while index < text.endIndex {
+            switch text[index] {
+            case "{": depth += 1
+            case "}":
+                depth -= 1
+                if depth == 0 { return String(text[start.upperBound..<index]) }
+            default: break
+            }
+            index = text.index(after: index)
+        }
+        return nil
     }
 }

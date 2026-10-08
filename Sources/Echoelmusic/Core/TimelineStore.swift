@@ -65,8 +65,8 @@
 //        Stretch picker) and pinned beside them. Audio editor W4a added `setRegionFades`
 //        without a caller on purpose; W4c gave it one (the part bar's Fade in / Fade out
 //        fields), so it leaves the caller-less set and is pinned beside them.
-//        GMMW AE-10a added `setRegionTranspose` the same way — caller-less until AE-10c gives
-//        it the part bar's Pitch field, and only then pinned beside them.
+//        GMMW AE-10a added `setRegionTranspose` the same way; AE-10c gave it its caller (the
+//        part bar's Part pitch field), so it leaves the caller-less set and is pinned beside them.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
@@ -715,8 +715,8 @@ public final class TimelineStore {
     /// GMMW AE-10a: a part's own pitch, in whole semitones — ONE undo step, a no-op for an unknown
     /// part or an unchanged value. Held to the audio path's range (`AudioTranspose.clamped`, the
     /// one rule), so the store never keeps a pitch the player would quietly change. The player
-    /// sums it with the track's pitch since AE-10b. ⚠️ Not yet called: the part bar's field
-    /// calls this in AE-10c.
+    /// sums it with the track's pitch (AE-10b); the part bar's "Part pitch" field calls it
+    /// (AE-10c).
     public func setRegionTranspose(id: UUID, _ semitones: Int) {
         guard let i = document.regions.firstIndex(where: { $0.id == id }) else { return }
         let next = AudioTranspose.clamped(semitones)
