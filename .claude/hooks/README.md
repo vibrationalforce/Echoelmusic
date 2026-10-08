@@ -148,6 +148,6 @@ wichtigsten Punkte:
 
 ## Nebenbefund, nicht Teil dieses Auftrags
 
-Der Block `safety` in `.claude/settings.json` ist ein eigener Schlüssel. Claude Code **setzt ihn
+Der Block `safety` in `.claude/settings.json` ist ein eigener Schlüssel. Claude Code **setzt ihn ⭐ Seit 2026-10-08 ist der `safety`-Block aus `.claude/settings.json` GELÖSCHT (Audit): was er zu sperren vorgab, steht jetzt als echte `permissions.deny`-Liste (force-push, `reset --hard`, `clean -f`, `checkout -- .`), und `python3 -c` sowie das breite `git checkout:*`/`git branch:*` sind aus `permissions.allow` heraus.
 nicht durch**: Ein `echo`, das dort genannte Muster enthielt, lief im Test ungehindert. Er ist
 Doku, keine Sperre. Er bleibt unverändert, weil das eine Entscheidung für dich ist.
