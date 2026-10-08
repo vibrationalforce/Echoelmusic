@@ -18,7 +18,7 @@ Key contributors, collaborators, and contacts.
 ## External Contacts
 
 ### Roman — Pyko / Adamson (adamson.ai)
-- **Met:** 2026-06-06 (in person, via Michael)
+- **Met:** 2026-06 (in person)
 - **Org:** Adamson Systems Engineering — maker of the **FletcherMachine** (object-based
   immersive/spatial audio rendering processor; Stage Unit 3U + Traveller; up to 128×128 I/O).
 - **Why it matters:** FletcherMachine speaks **ADM-OSC** (open Audio-Definition-Model-over-OSC
@@ -35,11 +35,9 @@ Key contributors, collaborators, and contacts.
 
 ### Johannes Bollmann ("Bolle")
 - **Context:** Event-venue (Veranstaltungsort) & trade-fair (Messe) sales; writes for *Amazonas* magazine.
-- **Asset:** Free access to Panasonic high-end servers/projection gear (normally ~€30,000) —
-  hardware muscle for immersive installations / EchoelStage demos.
-- **Opportunity:** Venue + Messe distribution channel and projection hardware for immersive shows.
+- **Opportunity:** Venue + Messe distribution channel; projection hardware for immersive shows (details outside git).
 
 ### Felix Deufel — Grapes GmbH
-- **Context:** Old friend of Echoel; immersive-media pioneer. Grapes' immersive work is "already everywhere."
+- **Context:** Immersive-media pioneer; Grapes' immersive work is "already everywhere."
 - **Relevance:** Immersive media-production network; potential collaboration / reference site for the
   immersive-multidimensional (EchoelStage) direction.
