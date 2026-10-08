@@ -57,7 +57,9 @@ import Foundation
 /// producer; lost: the consumer). An aligned 64-bit load does not tear on arm64, so the worst a
 /// cross-thread reader sees is a stale number; formally it is a race a sanitizer would name.
 ///
-/// Built: yes. Wired: NO — nothing writes a stem yet (S-A3b/c will). Device: no.
+/// Built: yes. Wired: NO — a ring is written only through an ARMED `StemTapPoint`, and nothing arms
+/// one yet (S-A3c-2b will; the voices' taps are in place since S-A3b-2 and fall through unarmed).
+/// Device: no.
 final class StemCaptureRing: @unchecked Sendable {
 
     /// One drained slice. `startSampleTime` is the engine sample time of `destination[0]`.

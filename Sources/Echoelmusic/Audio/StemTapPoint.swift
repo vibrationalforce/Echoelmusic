@@ -50,7 +50,11 @@ final class StemTapTarget: @unchecked Sendable {
 /// count to abort on (ADR-008: discontinuities break loudly). `Int64(Double)` traps on NaN, so
 /// the range check comes first.
 ///
-/// Built: yes. Wired: NO — no voice calls `capture` yet (S-A3b-2) and nothing arms it (S-A3c).
+/// Built: yes. Wired: HALF — the three generated voices (`PolySynthVoice`, `SubBassVoice`,
+/// `BioReactiveSynthVoice`, each `nonisolated let stemTap`) call `capture` on every render block
+/// since S-A3b-2, but nothing ARMS a tap yet, so every call falls through the empty slot. The
+/// arming session is S-A3c-2b (`StemCaptureSession.start` is its one caller of `arm`, itself
+/// unconstructed). ⛔ "no voice calls `capture` yet" stood here after S-A3b-2 had landed.
 /// Device: no — whether an `AVAudioSourceNode` timestamp shares a sample timeline with a tap's
 /// `when.sampleTime` is UNVERIFIED (ADR-008 §1); the impulse test at G-D answers it.
 final class StemTapPoint: @unchecked Sendable {
