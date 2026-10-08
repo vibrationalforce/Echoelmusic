@@ -688,6 +688,15 @@ Founder-Prüfung von `a3d5d5622`: die Jobs-Abfrage ersetzte einen Fehlschlag wei
 
 | SHA | Compile Check | Build for Testing | Run Tests | Bump |
 |---|---|---|---|---|
-| `f74e2ed` (bebdfa8 Fix + f74e2ed Inbox) | 37760447412 | Job 113255725248 (Lauf 37760447391) | lief beim Eintrag noch (Job 113255725248, Start 10:07Z); Fenster wird nachgelesen — Nachtrag folgt |  → 10.79.494, TestFlight 2619 |
+| `f74e2ed` (bebdfa8 Fix + f74e2ed Inbox) | 37760447412 | Job 113255725248 (Lauf 37760447391) | #396-Form: Schritt rot, 0 benannte Fehler/0 Skips im Fenster, 161 passed, 1706 s Loch (Job 113255725248) |  → 10.79.494, TestFlight 2619 |
 
 Ursache `RetroCapture.swift:604` (off-main DispatchSource-Handler in `@MainActor`-Klasse, inferierte Isolation, Eintrittsprüfung trappt auf dem Worker), Fix `@Sendable` + Sprosse, Wächter `TheOffMainDispatchHandlerIsSendableTests`. Offen: Gerät (Inbox G9), dSYM-`atos`, `SingleExport.swift:398` (gleiche Form, eigene Scheibe), Queue-Label im Crash-Handler.
+
+### J0_2026-10-08h — Export-Absturz Stelle 2 + „crash queue:“, Bump 10.79.495
+
+| SHA | Compile Check | Build for Testing | Run Tests | Bump |
+|---|---|---|---|---|
+| `39dc05e` (SingleExport `@Sendable` + Box) | 37764998904 | Job 113270671068 (Lauf 37764998947) | #396-Form, 0 benannte Fehler/0 Skips im Fenster, 162 passed, 1374 s Loch; der SingleExport-Wächter im Fenster nicht sichtbar (#445) | — |
+| `2e627b5` (EchoelCrashLog `crash queue:`) | 37765837738 | Job 113276397518 (Lauf 37765837767) | #396-Form, 0 benannte Fehler/0 Skips, 161 passed, 1659 s Loch; alle fünf TheCrashLogNamesTheQueueTests-Ansprüche als passed im Fenster | 634ed82 → 10.79.495, TestFlight 2620 (Lauf 37787737046, läuft beim Eintrag) |
+
+TestFlight 10.79.494 = Build 2619 gelandet (Lauf 37761789816). Offen: Gerät (Inbox G9 — jetzt mit der Warnung, dass 10.79.494 nach dem Abspielen stürzt), dSYM-`atos`, GMMW-Workflow `wf_6e1ba90b-6ca` (läuft), Founder-Freigabe P1–P4.
