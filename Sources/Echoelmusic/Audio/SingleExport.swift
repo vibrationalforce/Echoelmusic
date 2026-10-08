@@ -382,7 +382,12 @@ final class SingleExport {
         writer.add(writerInput)
 
         guard reader.startReading() else { throw ExportError.cannotReadSource }
-        writer.startWriting()
+        // A writer that cannot start (no room, a bad path) is `.failed`, and `startSession` on it
+        // raises — so the start is checked before the session, never after (SH-5b).
+        guard writer.startWriting() else {
+            reader.cancelReading()
+            throw ExportError.cannotWriteOutput
+        }
         // With a trim window the reader delivers buffers stamped at their ORIGINAL
         // source times — the session must start at the window start or every
         // sample would be offset (silence at the head, tail cut off).
@@ -419,18 +424,44 @@ final class SingleExport {
         // A progress bar cannot show more than 100 steps, so every submission past the
         // hundredth carried no information. `lastProgressPercent` lives in the box with
         // `framesWritten` — same queue, same argument.
+        //
+        // ⭐ EVERY WAY OUT RESUMES THE CONTINUATION EXACTLY ONCE (SH-5b). The pull loop used to end
+        // in one place — the reader running dry — and to resume without asking how it went: a
+        // reader that FAILED mid-file also returns nil, so a truncated file was reported done; a
+        // writer that failed left `isReadyForMoreMediaData` false, the block was never called
+        // again, and the export sat at `.rendering` for good. Now: a failed reader cancels the
+        // writer (which deletes the partial file) and throws; a refused `append` or a failed
+        // writer does the same; the finish asks the writer's status before it resumes. `ended`
+        // (in the counters box, same serial queue) makes a late call a no-op, so nothing resumes
+        // twice — a second resume is a trap. The errors are built here, outside the block.
         let counters = ExportRenderCounters()
         nonisolated(unsafe) let writerInputRef = writerInput
         nonisolated(unsafe) let readerOutputRef = readerOutput
         nonisolated(unsafe) let writerRef = writer
+        nonisolated(unsafe) let readerRef = reader
+        let readFailure: any Error = ExportError.sourceStoppedReading
+        let writeFailure: any Error = ExportError.cannotWriteOutput
 
-        await withCheckedContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             writerInputRef.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) { @Sendable in
+                guard !counters.ended else { return }
                 while writerInputRef.isReadyForMoreMediaData {
                     guard let sampleBuffer = readerOutputRef.copyNextSampleBuffer() else {
+                        counters.ended = true
+                        guard readerRef.status != .failed else {
+                            writerRef.cancelWriting()
+                            continuation.resume(throwing: readFailure)
+                            return
+                        }
                         EchoelCrashLog.breadcrumb("export 4/4: finish the file — \(counters.framesWritten) frames")
                         writerInputRef.markAsFinished()
-                        writerRef.finishWriting { continuation.resume() }
+                        writerRef.finishWriting {
+                            if writerRef.status == .completed {
+                                continuation.resume()
+                            } else {
+                                continuation.resume(throwing: writeFailure)
+                            }
+                        }
                         return
                     }
 
@@ -503,7 +534,18 @@ final class SingleExport {
                         }
                     }
 
-                    writerInputRef.append(sampleBuffer)
+                    guard writerInputRef.append(sampleBuffer) else {
+                        counters.ended = true
+                        readerRef.cancelReading()
+                        writerRef.cancelWriting()
+                        continuation.resume(throwing: writeFailure)
+                        return
+                    }
+                }
+                if writerRef.status == .failed {
+                    counters.ended = true
+                    readerRef.cancelReading()
+                    continuation.resume(throwing: writeFailure)
                 }
             }
         }
@@ -554,11 +596,14 @@ final class SingleExport {
 
     enum ExportError: LocalizedError {
         case noAudioTrack, cannotReadSource, emptyAudio, noDocumentsDirectory
+        case sourceStoppedReading, cannotWriteOutput
 
         var errorDescription: String? {
             switch self {
             case .noAudioTrack:    return "No audio track found in recording"
             case .cannotReadSource: return "Cannot read source recording"
+            case .sourceStoppedReading: return "The recording stopped reading partway, nothing was kept"
+            case .cannotWriteOutput: return "Cannot write the export file"
             case .emptyAudio:      return "Recording appears to be silent"
             case .noDocumentsDirectory: return "Cannot locate the documents directory"
             }
@@ -602,6 +647,8 @@ final class SingleExport {
 private final class ExportRenderCounters: @unchecked Sendable {
     var framesWritten = 0
     var lastProgressPercent = -1
+    /// Set on the way out of the pull loop, before the continuation resumes (SH-5b).
+    var ended = false
 }
 
 /// Integrated programme loudness (LUFS) of an interleaved-stereo stream, measured by the app's
