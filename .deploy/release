@@ -1,4 +1,4 @@
-build: v10.79.492 — Kopfhörer-Raum, Sampler auf einer Spur, der Ton eines Videos
+build: v10.79.493 — Netz-Rundlauf in Live Colabo, „Join next" auf der Teile-Leiste
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,46 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.493) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-07 („Gesamte DMMW Vision TestFlight deploy ready machen").
+  Gebaut wird der zuletzt durch beide Gates gelaufene Stand (Xcode Compile Check + Build for
+  Testing grün auf 5877811; seit 4cb70eb51 kam nur der Abstands-Fix der Link-Zeile dazu). NICHT drin — sie warten auf deine Freigabe im Standard-Modus
+  (scratchpads/FOUNDER_LANDING_2026-10-08.md): die Mikrofon-Aufnahme E10-1, Broadcast B2 und
+  die Auto-Merge-Reparatur #310. Auf dem Gerät ist NICHTS von dem Folgenden geprüft.
+
+  ── POSTEN 1: DER NETZ-RUNDLAUF STEHT IN LIVE COLABO (J1) ──
+  · Logo-Menü ≡ → „Live Colabo": unter jedem verbundenen Telefon eine Zeile wie
+    „Link: 12 ms median · 21 ms p95 · lost 1/40 — network round trip, not heard latency".
+    Vor der ersten Messung steht „measuring…", nie „0 ms". Die Zahl ist der Hin-und-Rück-Weg
+    des Netzes, NICHT das, was man hört (kein Puffer, kein Codec, kein Ausgang ist drin).
+    Der Abstand unter dem Namen ist der Skalen-Schritt (4 pt): das 2-pt-Literal hatte der
+    Abstands-Wächter rot gemeldet, Fix 5877811 — ein Blick, keine Prüfung.
+
+  ── POSTEN 2: „JOIN NEXT" AUF DER TEILE-LEISTE (S8) ──
+  · Unten „Arrange" → ein Teil antippen → in der Leiste neben „Split" die Taste „Join next":
+    sie macht einen Split verlustfrei rückgängig, zu EINEM Teil, ein Undo-Schritt. Sie leuchtet
+    nur, wenn das nächste Teil wirklich die andere Hälfte ist (gleiche Spur, gleicher Clip,
+    nicht beschnitten, gleicher Pegel). „Combine" für mehrere markierte Teile gibt es nicht —
+    es gibt keine Mehrfach-Auswahl.
+
+  ── PRÜFLISTE ──
+  T1  J1 Rundlauf (nur mit zwei Telefonen): beide in Live Colabo verbinden → unter dem Namen
+      erscheint binnen Sekunden eine Link-Zeile mit Millisekunden; in den Nachbarraum gehen →
+      p95 steigt vor dem Median.
+  T2  Join next: ein Teil mit „Split" teilen, die linke Hälfte antippen → „Join next" leuchtet →
+      tippen → wieder EIN Teil; Kopf → Undo → wieder zwei. Dann die rechte Hälfte mit
+      „Trim start" beschneiden und mit „Earlier" zurückschieben → „Join next" bleibt dunkel.
+  T3  Stabilität: dreimal kalt starten, alle fünf Bereiche. Hängt etwas: Instrument →
+      Save/Export-Chip → „Diagnostics" → Teilen (das Diagnose-Log).
+
+  Neu prüfbare Bitten (2 Zeilen, 1 Prüfung):
+  Gedruckt: python3 scripts/founder-verify.py --since 62d0f94
+  · UI    — Studio/LiveColaboView.swift:177: zwei Telefone, Live Colabo, die Link-Zeile (J1, = T1).
+  · UI    — CISmoke/TheLinkRoundTripRowSaysNetworkNotHeardTests.swift:18: dieselbe J1-Bitte.
+
+  Der Vorgänger ist 10.79.492 (Build 2617), davor 10.79.491.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.492) ───────────────────────────────
 
@@ -492,7 +532,7 @@ notes: |
 
   Der Vorgänger ist 10.79.484 (Build 2609), davor 10.79.483.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.484) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.484) ──────────────────────────────
 
   ⭐ DER STÜCK-BUILD (Founder 2026-10-01: „alles sammeln und sichern … TestFlight deploy
   starten"). Alles seit 10.79.483 (Build 2603) — 494 Commits. Die App öffnet jetzt auf dem
@@ -590,7 +630,7 @@ notes: |
 
   Der Vorgänger ist 10.79.483 (Build 2603), davor 10.79.482.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.483) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.483) ──────────────────────────────
 
   ⭐ DER WORKSTATION-BUILD (Founder 2026-09-27: „Du hast Alleinunterhalter Kontrolle … mache
   TestFlight"). Alles seit 10.79.482 (Build 2602) — die Workstation wird ein Ort zum Arbeiten,
@@ -656,7 +696,7 @@ notes: |
 
   Der Vorgänger ist 10.79.482 (Build 2602), davor 10.79.481.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.482) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.482) ──────────────────────────────
 
   ⭐ RELEASE CANDIDATE (Founder-Freigabe 2026-09-25: „Yes, deploy the RC"). Stand = main
   979383e1a. KEIN neues Bedienelement in der App — der Build bündelt 57 feat/fix-Commits
@@ -718,7 +758,7 @@ notes: |
 
   Der Vorgänger ist 10.79.481 (Build 2601), davor 10.79.480.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.481) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.481) ──────────────────────────────
 
   ⭐ DER „ALLE AUFGABEN"-BUILD (Founder 2026-09-23, „Great all tasks"). Vier Posten, alle
   auf der Workstation oder im Visual-Fenster. Nichts davon kann ein Gate hören oder sehen;
@@ -782,7 +822,7 @@ notes: |
 
   Der Vorgänger ist 10.79.480 (Build 2600), davor 10.79.479.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.480) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.480) ──────────────────────────────
 
   ⭐ EINE REPARATUR, gemeldet vom Founder am Gerät (Build 2599): auf der Workstation tat
   „Import Audio" GAR NICHTS — keine Dateiauswahl, auch nicht beim zweiten Tippen — und
@@ -821,7 +861,7 @@ notes: |
 
   Der Vorgänger ist 10.79.479 (Build 2599), davor 10.79.478.
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.479) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.479) ──────────────────────────────
 
   ⭐ DER AUDIO-BUILD. Seit dem letzten Deploy (cd15e0652) sind 47 Commits gelaufen.
   Was du am Gerät zum ERSTEN MAL tun kannst, ist eine zusammenhängende Kette auf der
@@ -919,7 +959,7 @@ notes: |
 
   Der Vorgänger ist 10.79.478 (und davor 10.79.477).
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.478) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.478) ──────────────────────────────
 
   ⭐ DIESER BUILD EXISTIERT FÜR EINE GERÄTE-SITZUNG, nicht für ein Feature. Seit dem
   letzten Deploy (0e8f282fe) sind 58 Commits gelaufen, davon 38 in `Sources/` oder
@@ -1019,7 +1059,7 @@ notes: |
 
   Der Vorgänger ist 10.79.477 (und davor 10.79.476).
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.477) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.477) ──────────────────────────────
 
   ⭐ DAS IST DER VARIATIONS-BUILD, und im Gegensatz zum Vorgänger fasst er fast nur
   das Instrument an: sechs Commits seit dem letzten Deploy, davon drei in `Sources/`.
@@ -1133,7 +1173,7 @@ notes: |
   (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
   stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.476) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.476) ──────────────────────────────
 
   ⭐ DAS IST DER ZUGÄNGLICHKEITS-BUILD, und er ist ungewöhnlich einseitig: seit dem
   letzten Deploy sind 19 Commits gelaufen, GENAU EINER fasst `Sources/` an. Die
@@ -1240,7 +1280,7 @@ notes: |
   (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
   stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.475) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.475) ──────────────────────────────
 
   ⭐ DAS IST DER PLATTFORM-BUILD. Seit dem letzten Deploy sind 17 Commits gelaufen,
   NEUN davon fassen `Sources/` an. Am Instrument selbst ändert sich fast nichts — was
@@ -1427,7 +1467,7 @@ notes: |
   (Die Abschnitte NOT ASKS, BLOCKED, HOW TO RETIRE und LIMITS sind unverändert und
   stehen ausgeschrieben in der Notiz zu 10.79.473 weiter unten.)
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.474) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.474) ──────────────────────────────
 
   ⭐ DAS IST DER MUSIKALITÄTS-BUILD. Seit dem letzten Deploy sind 26 Commits gelaufen,
   ZEHN davon fassen `Sources/` an — und alle zehn betreffen genau eine Frage: wie der
@@ -1554,7 +1594,7 @@ notes: |
      CISmoke/ThePadStaysClearOfTheBassTests.swift:30
         gehört dem Founder (NEEDS-FOUNDER-VERIFY steht am Code, nicht hier). Er kann auch nicht zählen, wie oft `Voice…
 
-  ── WAS IN DIESEM BUILD NEU IST (v10.79.473) ──────────────────────────────
+  ── WAS IN DIESEM BUILD NEU IST (10.79.473) ──────────────────────────────
 
   ⭐ DAS IST DER GENRE-BUILD. Seit dem letzten Deploy sind 76 Commits gelaufen;
   das Meiste davon siehst Du an EINER Stelle: im Genre-Menü.
