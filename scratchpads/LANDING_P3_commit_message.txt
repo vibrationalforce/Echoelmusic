@@ -1,0 +1,29 @@
+fix(ci): auto-merge retries an unreadable API answer instead of reading it as "never-ran" (#310)
+
+The poll step "Wait for the gates that decide whether main compiles"
+replaced a failed `gh api` call with an empty list ('{"workflow_runs":[]}'
+and '{"jobs":[]}'). Past the 300 s grace period that one bad answer read
+as "the gate never ran" and refused the merge: four of five code pushes
+on one day were refused while their gates were running and later green
+(FOUNDER_INBOX F2).
+
+Two changes, both inside that step:
+- A failed or shapeless answer from the runs API or the jobs API is a
+  read error: log it, sleep 30 s, poll again. Only the deadline turns it
+  into "timeout". Absence still refuses the merge — it just has to be a
+  real absence, not a dropped HTTP call.
+- A gate that was SEEN once (compile_seen, ci_seen) can never become
+  "never-ran" later.
+
+Checked with scratchpads/AUTO_MERGE_310_sim.py against this file: the
+four scenarios (gate vanishes after grace, compile cancelled, compile
+queued forever, CI completed with zero jobs) give the intended verdicts.
+A held local commit with a wider 13-scenario simulation did not survive
+the container restart of 2026-10-08; this is the tracked patch.
+
+Founder-gated file: .github/workflows/auto-merge-claude.yml. A
+workflow-only push starts no gate by itself; the next code push
+exercises it.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DYazx7MBNokUFLwQRpfgpM

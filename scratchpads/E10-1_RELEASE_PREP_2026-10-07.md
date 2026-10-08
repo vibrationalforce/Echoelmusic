@@ -95,6 +95,10 @@ Klassifikator-Ablehnungen: [Untrusted Code Integration] 2026-10-03 21:08:10 und 
 
 ## 4. Offiziell unterstützter Freigabeschritt (genau einer, nur E10-1)
 
+> ⛔ **ERSETZT am 2026-10-08** durch `scratchpads/FOUNDER_LANDING_2026-10-08.md` (drei Patches:
+> #310 · E10-1 mit Review-Korrekturen · B2). Die hier genannten Dateien `E10-1_microphone_recording.patch`
+> und `E10-1_commit_message.txt` sind gelöscht; der Weg unten gilt nicht mehr und bleibt als Protokoll.
+
 Der Hook nennt zwei Wege; beide sind Founder-Handlungen. **Kein Modus wird hier als garantierte
 Lösung versprochen** — der Hook sagt „ask“ im Default-Modus, und die Bestätigung trifft der Founder.
 

@@ -1,5 +1,5 @@
 diff --git a/CLAUDE.md b/CLAUDE.md
-index 7affdbeab..b04d3698e 100644
+index 09aeb27..f8ebf64 100644
 --- a/CLAUDE.md
 +++ b/CLAUDE.md
 @@ -48,7 +48,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
@@ -21,7 +21,7 @@ index 7affdbeab..b04d3698e 100644
                            BeatPlayer (its holder + audition; the kit inside it no longer
                            SOUNDS — attach(to:) hangs only previewVoice. ⛔ #167 ist am
 diff --git a/ContentPipeline/CLAIMS.md b/ContentPipeline/CLAIMS.md
-index b715f5573..553310e49 100644
+index b715f55..553310e 100644
 --- a/ContentPipeline/CLAIMS.md
 +++ b/ContentPipeline/CLAIMS.md
 @@ -333,6 +333,8 @@ nicht existiert. **Die Unterscheidung darunter bleibt trotzdem stehen, weil sie
@@ -34,7 +34,7 @@ index b715f5573..553310e49 100644
  Formulierung, an der hier alles hängt. `VoiceTimbreProfiler` misst eine
  Spektral-Hüllkurve (**64 Zahlen**), das Audio selbst wird **nie gespeichert**;
 diff --git a/Resources/iOS/Info.plist b/Resources/iOS/Info.plist
-index 3d21687a6..2f0682b13 100644
+index 3d21687..2f0682b 100644
 --- a/Resources/iOS/Info.plist
 +++ b/Resources/iOS/Info.plist
 @@ -85,6 +85,8 @@
@@ -47,7 +47,7 @@ index 3d21687a6..2f0682b13 100644
  	<string>Echoelmusic uses the rear camera as an instrument input: it reads your pulse from a fingertip held on the lens, lit by the torch (photoplethysmography). No images are stored or transmitted.</string>
  	<key>NSBluetoothAlwaysUsageDescription</key>
 diff --git a/Sources/Echoelmusic/Audio/AudioConfiguration.swift b/Sources/Echoelmusic/Audio/AudioConfiguration.swift
-index 5e487c458..0f59cea7b 100644
+index 5e487c4..0f59cea 100644
 --- a/Sources/Echoelmusic/Audio/AudioConfiguration.swift
 +++ b/Sources/Echoelmusic/Audio/AudioConfiguration.swift
 @@ -340,11 +340,11 @@ enum AudioConfiguration {
@@ -196,10 +196,10 @@ index 5e487c458..0f59cea7b 100644
          // which is the part that made the stranding possible in the first place. So: configure
 diff --git a/Sources/Echoelmusic/Audio/MicTakeRecorder.swift b/Sources/Echoelmusic/Audio/MicTakeRecorder.swift
 new file mode 100644
-index 000000000..4e0bd4ee1
+index 0000000..c4d0f4a
 --- /dev/null
 +++ b/Sources/Echoelmusic/Audio/MicTakeRecorder.swift
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,217 @@
 +// MicTakeRecorder.swift
 +// Echoel — Restructure E10-1 (founder 2026-10-04: „Audio-Eingang soll Aufnahme, Sampling und
 +// Analyse ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert.")
@@ -294,11 +294,26 @@ index 000000000..4e0bd4ee1
 +        return "Recording " + format.string(from: date)
 +    }
 +
++    /// The sentence shown when the system will not let a take start — nil when it will.
++    /// `.undetermined` is not `.denied`: iOS has never asked, so there is no Settings row to
++    /// send anyone to yet. Re-arming the track is the one place that asks (`RecordTakeControls`),
++    /// and the sentence says so instead of pointing at a switch that does not exist.
++    private static func accessRefusal(_ access: MicAccess) -> String? {
++        switch access {
++        case .granted:
++            return nil
++        case .denied:
++            return String(localized: "Echoel may not use the microphone. Allow it in Settings, then record again.")
++        case .undetermined:
++            return String(localized: "Switch Arm off and on again to allow the microphone.")
++        }
++    }
++
 +    func prepare() -> Bool {
 +        lastFailure = nil
-+        guard MicAccess.current == .granted else {
++        if let refusal = Self.accessRefusal(MicAccess.current) {
 +            EchoelCrashLog.breadcrumb("mic take: prepare REFUSED - no microphone permission")
-+            lastFailure = String(localized: "Echoel may not use the microphone. Allow it in Settings, then record again.")
++            lastFailure = refusal
 +            return false
 +        }
 +        guard !routeHeld else { return true }
@@ -318,9 +333,9 @@ index 000000000..4e0bd4ee1
 +    func start() {
 +        guard recorder == nil else { return }
 +        lastFailure = nil
-+        guard MicAccess.current == .granted else {
++        if let refusal = Self.accessRefusal(MicAccess.current) {
 +            EchoelCrashLog.breadcrumb("mic take: start REFUSED - no microphone permission")
-+            lastFailure = String(localized: "Echoel may not use the microphone. Allow it in Settings, then record again.")
++            lastFailure = refusal
 +            return
 +        }
 +        guard let folder = MediaLibrary.directory("Media/Audio") else {
@@ -403,7 +418,7 @@ index 000000000..4e0bd4ee1
 +}
 +#endif
 diff --git a/Sources/Echoelmusic/Core/RecordController.swift b/Sources/Echoelmusic/Core/RecordController.swift
-index 03ebf2a39..ed5a00274 100644
+index 03ebf2a..ed5a002 100644
 --- a/Sources/Echoelmusic/Core/RecordController.swift
 +++ b/Sources/Echoelmusic/Core/RecordController.swift
 @@ -18,8 +18,22 @@ import Observation
@@ -600,7 +615,7 @@ index 03ebf2a39..ed5a00274 100644
          commit(recorder.finish(atTick: tick), atTick: tick)
      }
 diff --git a/Sources/Echoelmusic/EchoelmusicApp.swift b/Sources/Echoelmusic/EchoelmusicApp.swift
-index 74010faf4..839883e79 100644
+index 74010fa..839883e 100644
 --- a/Sources/Echoelmusic/EchoelmusicApp.swift
 +++ b/Sources/Echoelmusic/EchoelmusicApp.swift
 @@ -154,6 +154,10 @@ struct EchoelmusicApp: App {
@@ -642,10 +657,27 @@ index 74010faf4..839883e79 100644
                  recordController.followSongEnd { [weak timelinePlayer] in timelinePlayer?.songEndTick }
                  midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
 diff --git a/Sources/Echoelmusic/Resources/Localizable.xcstrings b/Sources/Echoelmusic/Resources/Localizable.xcstrings
-index 5865085b3..d36f201a7 100644
+index d86a2be..919d14d 100644
 --- a/Sources/Echoelmusic/Resources/Localizable.xcstrings
 +++ b/Sources/Echoelmusic/Resources/Localizable.xcstrings
-@@ -16845,12 +16845,12 @@
+@@ -1,6 +1,16 @@
+ {
+   "sourceLanguage" : "en",
+   "strings" : {
++    "Switch Arm off and on again to allow the microphone." : {
++      "localizations" : {
++        "en" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Switch Arm off and on again to allow the microphone."
++          }
++        }
++      }
++    },
+     "Decimal separator" : {
+       "comment" : "VoiceOver label for the decimal key on the Echoel number pad. Its visible glyph is the reader's own separator, which VoiceOver announces as a punctuation name or, for U+066B, often not at all.",
+       "extractionState" : "manual",
+@@ -16845,12 +16855,12 @@
          }
        }
      },
@@ -660,7 +692,7 @@ index 5865085b3..d36f201a7 100644
            }
          }
        }
-@@ -22598,6 +22598,96 @@
+@@ -22586,6 +22596,96 @@
            }
          }
        }
@@ -758,7 +790,7 @@ index 5865085b3..d36f201a7 100644
    },
    "version" : "1.0"
 diff --git a/Sources/Echoelmusic/Studio/RecordTakeControls.swift b/Sources/Echoelmusic/Studio/RecordTakeControls.swift
-index 6b8cd8d60..b5e9a3b0a 100644
+index 6b8cd8d..247c111 100644
 --- a/Sources/Echoelmusic/Studio/RecordTakeControls.swift
 +++ b/Sources/Echoelmusic/Studio/RecordTakeControls.swift
 @@ -9,7 +9,11 @@
@@ -784,7 +816,17 @@ index 6b8cd8d60..b5e9a3b0a 100644
  
  /// The Record button beside Play. Arms nothing itself — it records the tracks already armed.
  @MainActor
-@@ -139,7 +146,8 @@ struct RecordTakeNote: View {
+@@ -76,6 +83,9 @@ struct RecordTakeButton: View {
+                 stopSong()
+             case .ready:
+                 recorder.arm()
++                // E10-1: an audio take whose microphone was refused (permission revoked, mic
++                // held by another app) arms nothing — do not start the song as if it recorded.
++                guard recorder.isRecording else { break }
+                 // A refused start (the player's own guard) must not leave an armed recorder
+                 // that the NEXT start from any surface would record into.
+                 if !startSong() { recorder.cancel() }
+@@ -139,7 +149,8 @@ struct RecordTakeNote: View {
                                         voiceCapacity: voiceCapacity)
          let reason = RecordTake.shownReason(state, startable: startable, gridSize: clipStore.slots.count)
          let dropped = recorder.droppedTakes
@@ -794,7 +836,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
              VStack(alignment: .leading, spacing: 2) {
                  if let reason {
                      Text(reason)
-@@ -152,44 +160,106 @@ struct RecordTakeNote: View {
+@@ -152,44 +163,106 @@ struct RecordTakeNote: View {
                          .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.warning)
                          .fixedSize(horizontal: false, vertical: true)
                  }
@@ -916,7 +958,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
  }
  
  /// The door's decisions, pure.
-@@ -206,7 +276,9 @@ enum RecordTake {
+@@ -206,7 +279,9 @@ enum RecordTake {
          var foreign: [String]
      }
  
@@ -927,7 +969,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
          var plan = Plan(armable: [], foreign: [])
          for target in RecordPlan.targets(in: document) {
              if canArm(target.laneID, in: document, voiceCapacity: voiceCapacity) {
-@@ -216,6 +288,20 @@ enum RecordTake {
+@@ -216,6 +291,20 @@ enum RecordTake {
                  plan.foreign.append(name)
              }
          }
@@ -948,7 +990,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
          return plan
      }
  
-@@ -244,7 +330,7 @@ enum RecordTake {
+@@ -244,7 +333,7 @@ enum RecordTake {
          case .stopFirst:
              return String(localized: "Stop the music to record. Recording starts at bar 1.")
          case .armFirst:
@@ -957,7 +999,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
          case .foreignArm(let name):
              // E4-65: the quoted track name stays verbatim; the sentence after it is a catalog key.
              return "\"\(name)\"" + String(localized: " is armed but cannot record here. Open it and switch Arm off first.")
-@@ -270,10 +356,21 @@ enum RecordTake {
+@@ -270,10 +359,21 @@ enum RecordTake {
          }
      }
  
@@ -982,7 +1024,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
      }
  
      nonisolated static func droppedSentence(_ count: Int, gridSize: Int) -> String {
-@@ -285,6 +382,19 @@ enum RecordTake {
+@@ -285,6 +385,19 @@ enum RecordTake {
  
      /// A rack MIDI track: its role is a lane synth (not the Echoel track, not bio, not audio, not
      /// past the rack's capacity) and its record source is MIDI input.
@@ -1002,7 +1044,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
      nonisolated static func canArm(_ laneID: UUID, in document: TimelineDocument,
                                     voiceCapacity: Int) -> Bool {
          guard let lane = document.lanes.first(where: { $0.id == laneID }),
-@@ -305,7 +415,8 @@ extension RecordTake {
+@@ -305,7 +418,8 @@ extension RecordTake {
      static func current(recorder: RecordController, timeline: TimelineStore, clipStore: ClipStore,
                          transport: Transport, playing: Bool, startable: Bool,
                          voiceCapacity: Int) -> State {
@@ -1014,7 +1056,7 @@ index 6b8cd8d60..b5e9a3b0a 100644
                            running: playing || transport.isPlaying,
 diff --git a/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift b/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift
 new file mode 100644
-index 000000000..ad45545aa
+index 0000000..ad45545
 --- /dev/null
 +++ b/Tests/CISmoke/AnAudioTrackRecordsTheMicrophoneTests.swift
 @@ -0,0 +1,256 @@
@@ -1275,7 +1317,7 @@ index 000000000..ad45545aa
 +    }
 +}
 diff --git a/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift b/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
-index a76c4a125..bc5f77a01 100644
+index a76c4a1..bc5f77a 100644
 --- a/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
 +++ b/Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift
 @@ -120,7 +120,16 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
@@ -1328,7 +1370,7 @@ index a76c4a125..bc5f77a01 100644
  
      // MARK: - claim 1 — the roster comes from the plist, not from this file
 diff --git a/Tests/CISmoke/TapTargetFloorTests.swift b/Tests/CISmoke/TapTargetFloorTests.swift
-index f61b1d13d..8310258a9 100644
+index f61b1d1..8310258 100644
 --- a/Tests/CISmoke/TapTargetFloorTests.swift
 +++ b/Tests/CISmoke/TapTargetFloorTests.swift
 @@ -606,4 +606,25 @@ final class TapTargetFloorTests: XCTestCase {
@@ -1358,7 +1400,7 @@ index f61b1d13d..8310258a9 100644
 +    }
  }
 diff --git a/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift b/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
-index 43fa83964..22aca6597 100644
+index 43fa839..22aca65 100644
 --- a/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
 +++ b/Tests/CISmoke/TheAudioLaneProducerIsTheImportDoorTests.swift
 @@ -323,10 +323,10 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
@@ -1377,7 +1419,7 @@ index 43fa83964..22aca6597 100644
  
          // ⛔ A THIRD ASSERTION WAS DRAFTED HERE AND DELETED BEFORE IT SHIPPED, because it
 diff --git a/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift b/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
-index a4561e93c..c5ea109a8 100644
+index ade0e6e..f5cd9d1 100644
 --- a/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
 +++ b/Tests/CISmoke/TheChromeSpeaksOneLanguageTests.swift
 @@ -2445,7 +2445,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
@@ -1390,7 +1432,7 @@ index a4561e93c..c5ea109a8 100644
                            "The part grid is full (",
                            " parts). Remove a part to make room for the recording.",
 diff --git a/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift b/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
-index c9aa079fc..a99d7f9b6 100644
+index c9aa079..a99d7f9 100644
 --- a/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
 +++ b/Tests/CISmoke/TheClaimsFileHasNoExpiredPermissionTests.swift
 @@ -188,10 +188,8 @@ final class TheClaimsFileHasNoExpiredPermissionTests: XCTestCase {
@@ -1408,7 +1450,7 @@ index c9aa079fc..a99d7f9b6 100644
      }
  }
 diff --git a/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift b/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
-index 9e430a57e..1bcb3e2aa 100644
+index 9e430a5..1bcb3e2 100644
 --- a/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
 +++ b/Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift
 @@ -90,6 +90,11 @@
@@ -1505,7 +1547,7 @@ index 9e430a57e..1bcb3e2aa 100644
      // 10 — the struck list is SELF-CHECKING: a name on it must be absent from `Sources/`.
      //
 diff --git a/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift b/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
-index cf998fc09..4f0389455 100644
+index cf998fc..4f03894 100644
 --- a/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
 +++ b/Tests/CISmoke/TheMIDITakeIsRecordedFromTheWorkstationTests.swift
 @@ -226,7 +226,7 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
@@ -1534,7 +1576,7 @@ index cf998fc09..4f0389455 100644
      }
 diff --git a/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift b/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift
 deleted file mode 100644
-index 47b8c80a7..000000000
+index 47b8c80..0000000
 --- a/Tests/CISmoke/TheRecordRouteHasNoClaimantTests.swift
 +++ /dev/null
 @@ -1,141 +0,0 @@
@@ -1681,7 +1723,7 @@ index 47b8c80a7..000000000
 -}
 diff --git a/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift b/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift
 new file mode 100644
-index 000000000..2e08f00e0
+index 0000000..2e08f00
 --- /dev/null
 +++ b/Tests/CISmoke/TheRecordRouteHasOneClaimantTests.swift
 @@ -0,0 +1,152 @@
@@ -1838,7 +1880,7 @@ index 000000000..2e08f00e0
 +    }
 +}
 diff --git a/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift b/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
-index 370b58945..3fdbf0ba6 100644
+index 370b589..3fdbf0b 100644
 --- a/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
 +++ b/Tests/CISmoke/TheToneSystemIsNamedByItsTypeTests.swift
 @@ -233,8 +233,9 @@ final class TheToneSystemIsNamedByItsTypeTests: XCTestCase {
@@ -1854,7 +1896,7 @@ index 370b58945..3fdbf0ba6 100644
      }
  
 diff --git a/Tests/CISmoke/TheTransportBarIsOneRowTests.swift b/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
-index 0e40aa4c9..f33907cfd 100644
+index 0e40aa4..f33907c 100644
 --- a/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
 +++ b/Tests/CISmoke/TheTransportBarIsOneRowTests.swift
 @@ -178,8 +178,23 @@ final class TheTransportBarIsOneRowTests: XCTestCase {
@@ -1884,7 +1926,7 @@ index 0e40aa4c9..f33907cfd 100644
          let workstation = try code(Self.workstation)
          XCTAssertEqual(workstation.components(separatedBy: "RecordTakeNote(").count - 1, 1, "one note on the plate")
 diff --git a/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift b/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
-index 794219f02..e39eb50da 100644
+index 794219f..e39eb50 100644
 --- a/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
 +++ b/Tests/EchoelmusicTests/RecordControllerAudioHookTests.swift
 @@ -155,13 +155,11 @@ final class RecordControllerAudioHookTests: XCTestCase {
@@ -1907,7 +1949,7 @@ index 794219f02..e39eb50da 100644
          guard let midiLaneID = timeline.document.lanes.last?.id else {
              return XCTFail("addLane did not append a lane")
 diff --git a/docs/_headers b/docs/_headers
-index 7e878cb91..7f6aaa84d 100644
+index 7e878cb..7f6aaa8 100644
 --- a/docs/_headers
 +++ b/docs/_headers
 @@ -7,8 +7,9 @@
@@ -1923,7 +1965,7 @@ index 7e878cb91..7f6aaa84d 100644
    Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
    X-DNS-Prefetch-Control: on
 diff --git a/docs/claims.html b/docs/claims.html
-index 16c7ed750..5562ccfea 100644
+index 16c7ed7..1e644e5 100644
 --- a/docs/claims.html
 +++ b/docs/claims.html
 @@ -135,11 +135,11 @@
@@ -1931,18 +1973,18 @@ index 16c7ed750..5562ccfea 100644
                  <div class="platform-card" id="claim-5">
                      <h3>No drums, sampler instrument, video editing, livestream or audio recorder</h3>
 -                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and no audio recorder &mdash; the app has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. It records MIDI, never sound.</p>
-+                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
++                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.492, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
                  </div>
                  <div class="platform-card" id="claim-11">
 -                    <h3>No microphone: no voice recording, cloning, AI voice, text-to-speech or autotune</h3>
 -                    <p>The audio input path was removed entirely. Nothing in the app listens. There is no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind. What the app records is its own output.</p>
 +                    <h3>No voice processing: no cloning, AI voice, text-to-speech or autotune</h3>
-+                    <p>The old audio input path was removed entirely, and up to version 10.79.491 nothing in the app listens. From the next version on, the microphone records onto an audio track only while you record on a track you armed &mdash; plain recording, nothing else. There is no live monitoring, no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind.</p>
++                    <p>The old audio input path was removed entirely, and up to version 10.79.492 nothing in the app listens. From the next version on, the microphone records onto an audio track only while you record on a track you armed &mdash; plain recording, nothing else. There is no live monitoring, no pitch correction on your voice, no harmoniser, no vocoder, no voice model of any kind.</p>
                  </div>
                  <div class="platform-card" id="claim-7">
                      <h3>No subscription, no paywall, nothing to buy</h3>
 diff --git a/docs/dev/FEATURE_STATUS.md b/docs/dev/FEATURE_STATUS.md
-index 358adce71..dbbcd9074 100644
+index 358adce..fdbf12a 100644
 --- a/docs/dev/FEATURE_STATUS.md
 +++ b/docs/dev/FEATURE_STATUS.md
 @@ -22,8 +22,8 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
@@ -1951,12 +1993,21 @@ index 358adce71..dbbcd9074 100644
  |---|---|---|
 -| **Ausgeliefert (TestFlight)** | **v10.79.490 · Build 2615** · Commit `4919d7001` · 2026-10-04 08:23 UTC | TestFlight-Lauf #2615 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37188777769, Conclusion `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder |
 -| **In `main`, noch in keinem Build** | `73deb73ba` — F1–F6b (eine Gestaltungssprache) und A3a (Raum reist mit dem Stück), siehe 1b | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
-+| **Ausgeliefert (TestFlight)** | **v10.79.491 · Build 2616** · Commit `4d59d5db0` · 2026-10-04 | TestFlight-Lauf #2616 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37197436074, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.490 · Build 2615 · `4919d7001` |
-+| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
++| **Ausgeliefert (TestFlight)** | **v10.79.492 · Build 2617** · Commit `62d0f9489` · 2026-10-07 | TestFlight-Lauf #2617 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37655969254, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.491 · Build 2616 · `4d59d5db0` |
++| **In `main`, noch in keinem Build** | nichts — `main` (`bc4fc52`) ist Vorfahr des Build-Commits `62d0f9489`. **Auf dem Zweig, in keinem Build:** Mikrofon-Aufnahme E10-1; siehe 1b (Zweig) | `git merge-base --is-ancestor origin/main 62d0f9489` · Auto-Merge wartet auf die Gates des Zweigs |
  | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
  
  Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
-@@ -49,7 +49,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+@@ -42,14 +42,14 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+ 
+ | Fähigkeit | Nutzerweg | Build | Gerät |
+ |---|---|---|---|
+-| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Project**; quer eine Leiste links | 2614 | offen |
++| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Piece** (bis 2616 hieß das fünfte Wort „Project“, H18); quer eine Leiste links | 2614 · 2617 | offen |
+ | Projekt-Menü | E-Logo oben links → **Open · Save │ Live Colabo · Learn │ Guide** | 2614 | offen |
+ | EIN Transport | Kopf: **Play / Stop / Record**; im Instrument hält „Pause“ auf der Platte, „Play“ setzt fort | 2614 | offen |
+-| Song-Einstellungen | **Project** → Tonart, Stimmung, Tempo-Modus | 2614 | offen |
++| Song-Einstellungen | **Piece** → Tonart, Stimmung, Tempo-Modus | 2614 | offen |
  | Undo/Redo der Stück-Bearbeitung | Kopf (`SongHistoryRow`) · mit Tastatur ⌘Z / ⇧⌘Z | 2613 | offen |
  | Startet auf dem Stück, Visual als Karte | frische Installation → Arrange | 2609 | offen |
  
@@ -1965,28 +2016,34 @@ index 358adce71..dbbcd9074 100644
  
  | Fähigkeit | Was sich ändert | Commit | Gerät |
  |---|---|---|---|
-@@ -59,7 +59,19 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+@@ -59,7 +59,25 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
  | F4a/F4b Schalter und Auswahl | ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel; jede gewählte Kachel zeichnet ihre Kante | `a0a53ba98` · `39d77bf3b` | offen |
  | F5a/F5b Haptik | das Wertfeld tickt an Standard und Rand, OK bestätigt; das eine Play/Stop ist spürbar | `a585fa507` · `75645cff9` | offen |
  | F6a/F6b Mixer-Streifen und Live-Rot | ein Mix-Streifen hat keine eigene Fläche; Broadcast „live“ trägt das Aufnahme-Rot | `360e6be0d` · `d4e7d1b9d` | offen |
 -| A3a Raum reist mit dem Stück | Sichern schreibt die Raumszene (Spur-Positionen + Raum) in das Stück; Öffnen stellt sie NACH den Spuren wieder her; ältere Stücke bekommen die Standard-Positionen | `73deb73ba` | offen |
 +| A3a Raum reist mit dem Stück | Sichern schreibt die Raumszene (Spur-Positionen + Raum) in das Stück; Öffnen stellt sie NACH den Spuren wieder her; ältere Stücke bekommen die Standard-Positionen | `73deb73ba` | offen (G1) |
-+| P2 Licht-Look gehört dem Stück | **Project** → „Light look“; ein Undo-Schritt; ältere Stücke bekommen den Standard | `1f4ce07f3` | offen (G2) |
++| P2 Licht-Look gehört dem Stück | **Piece** → „Light look“; ein Undo-Schritt; ältere Stücke bekommen den Standard | `1f4ce07f3` | offen (G2) |
 +| P3a Sichern ersetzt nichts | schlägt Sichern fehl, verweigern Open und „New piece“ mit einem Satz statt das Stück zu verlieren | `9e098c431` | offen (G3) |
 +
-+### 1b (Fortsetzung). In `main` oder auf dem Zweig, aber in KEINEM ausgelieferten Build
++### 1b (Fortsetzung). Neu in Build 2617 (vorher nur in `main`)
 +
 +| Fähigkeit | Nutzerweg | Commit | Gerät |
 +|---|---|---|---|
++| H18 das fünfte Wort | der Umschalter unten sagt **Piece**, wie das Glossar das Stück nennt | `2ef716273` | offen |
 +| S3a–S3d Kopfhörer-Raum | **Mixer** → „Headphone space“; je Audiospur **Track** → „Direction“; reist mit dem Stück und über einen Neustart | `4116a56e4`…`8a66ace41` | offen (G6) |
 +| A1 Schritte 2–4 Sichern/Öffnen | ein Sichern, das das Lied nicht schreiben kann, behält das letzte und sagt es; die Arbeitskopie sagt, wenn erneutes Schreiben nicht hilft | `302703722` · `19e7fc883` · `71d2c5e9f` | offen (G3) |
 +| E13-1 Sampler-Spur | MIDI-Spur → **Track** → „Instrument“ EchoelSampler → „Sample“ eine Bibliotheksdatei | `0e43c0893` · `861f78568` | offen (G7) |
 +| E12-1 Video-Ton als Teil | **Browse** → „Video to Visuals“ → „Use Its Sound“; durch die eine Import-Tür, kein Bild gespeichert | `60516905b` · `eaf8f7ca6` | offen (G8) |
-+| E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören | Zweig, Gates offen | offen (G9) |
++
++### 1b (Zweig). Auf dem Zweig, in KEINEM ausgelieferten Build
++
++| Fähigkeit | Nutzerweg | Commit | Gerät |
++|---|---|---|---|
++| E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören; Löschen einer einzelnen Aufnahme in der App gibt es noch nicht | Zweig, Gates offen | offen (G9) |
  
  ### 1c. Arrange — das Stück
  
-@@ -150,7 +162,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+@@ -150,7 +168,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
  | Stream-Key in der Keychain (Broadcast S1) | gebaut, Build 2615 | eine Fläche — und die hängt an S2 (gesperrt, siehe 2a) |
  | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
  | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
@@ -1995,7 +2052,7 @@ index 358adce71..dbbcd9074 100644
  | EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo), kein Aufrufer | ein Sprachmodell als Planer + eine Fläche ohne neuen Modal |
  
  ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
-@@ -176,7 +188,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
+@@ -176,7 +194,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
  | Noten-Editor (Piano Roll) | 2026-07-26, #178/#475 | „Pianoroll soll raus“ |
  | DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
  | AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) |
@@ -2004,7 +2061,7 @@ index 358adce71..dbbcd9074 100644
  | Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen |
  | Gesichts-/Körper-Tracking | 2026-09-12, #1301 | wie Audio-Eingang |
  | Video-Aufnahme und -Schnitt | 2026-09-12, #1304 (Schnitt schon #121) | „Kein Video Capture“ |
-@@ -188,8 +200,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
+@@ -188,8 +206,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
  
  **Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`; Song-WAV-Export und
  Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine Tür zum Sampler bzw. Beats aus Samples
@@ -2016,19 +2073,40 @@ index 358adce71..dbbcd9074 100644
  `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
  
 diff --git a/docs/dev/FOUNDER_INBOX.md b/docs/dev/FOUNDER_INBOX.md
-index 4b99cc391..057862248 100644
+index f240778..2fd85ea 100644
 --- a/docs/dev/FOUNDER_INBOX.md
 +++ b/docs/dev/FOUNDER_INBOX.md
-@@ -115,6 +115,7 @@ kein Test im Repo kann sie schließen.
- | G6 | **Kopfhörer-Raum** (S3c + S3d — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Mixer" → oben „Headphone space" an. Ein Stück mit mindestens zwei Audiospuren abspielen (Workstation → „Import Audio", zwei Dateien). Eine Audiospur öffnen → Seite „Track" → „Direction" auf 90 tippen, die andere auf −90. Stück sichern, ein anderes öffnen, das erste wieder öffnen und erneut abspielen. Dann eine Spur auf 45 stellen, OHNE zu sichern die App ganz beenden (wegwischen) und neu starten. | Die erste Spur kommt von links, die zweite von rechts — auch beim Verstellen während der Wiedergabe; nach dem Wiederöffnen von denselben Orten und mit denselben Zahlen; nach dem Neustart steht die Spur wieder auf 45. Generierte Stimmen bleiben normal stereo. Schalter aus → alles wieder normal stereo, ab dem nächsten Start. | Ja · Nein + was · keine Kopfhörer |
- | G7 | **Eine Spur spielt ein Sample** (E13-1 — erst im Build NACH 10.79.491) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
- | G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — erst im Build NACH 10.79.491) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
-+| G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
+@@ -100,9 +100,11 @@ verfallen sie mit der Sitzung):
+ 
+ ## §2 · Geräte-Bitten für den nächsten Build — genau fünf Familien
+ 
+-**Gilt für 10.79.491** (Deploy 2026-10-04; Build-Nummer = Nummer des TestFlight-Laufs). Neu seit
+-10.79.490: der Raum reist mit dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein
+-fehlgeschlagenes Sichern ersetzt nichts mehr (P3a), und die einheitliche Gestaltung F1–F6b.
++**Gilt für 10.79.492** (Deploy 2026-10-07, Build 2617; Build-Nummer = Nummer des TestFlight-Laufs). Neu seit
++10.79.491: Kopfhörer-Raum (S3a–S3d), Sampler-Spur (E13-1), der Ton eines Videos (E12-1), Sichern/Öffnen A1
++Schritte 2–4, das fünfte Wort unten heißt „Piece" (H18). Aus 10.79.491 weiter unbestätigt: der Raum reist mit
++dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein fehlgeschlagenes Sichern ersetzt nichts mehr (P3a),
++die einheitliche Gestaltung F1–F6b.
+ Alles davon ist **Gates-grün und Gerät-unbestätigt**. Fünf Aufgaben, jede mit einer Antwort aus
+ wenigen Wörtern. Klang (G4) und Stabilität (G5) bleiben offen, bis du sie am Gerät beobachtet hast —
+ kein Test im Repo kann sie schließen.
+@@ -114,9 +116,10 @@ kein Test im Repo kann sie schließen.
+ | G3 | **Sichern lügt nicht** (P3a) | Normalfall: Logo-Menü ≡ → Open → ein Stück wählen; dann ≡ → Open → „New piece"; dann wieder ein Stück öffnen — wie bisher. Nur falls je „Save failed" oben erscheint (z. B. bei vollem Speicher): jetzt ≡ → Open → ein Stück oder „New piece" tippen. | Normalfall unverändert, keine falsche Sperre. Bei „Save failed": der Satz „Couldn't open … Retry save first" steht beim Tippen, das Stück vorne bleibt unverändert; nach „Retry save" geht es. | Ja · Nein · „Save failed" nie gesehen |
+ | G4 | **Klang** (Ship-Gate 1) | Drei Genres deiner Wahl, je zwei Minuten mit Puls (Kamera oder Gurt). | Jedes klingt nach sich selbst und professionell; nichts läuft auf denselben Klang zusammen. | Ja · Nein + welches Genre |
+ | G5 | **Stabilität** (Ship-Gate 5) | Dreimal kalt starten. Alle fünf Bereiche unten antippen. Während der Puls läuft, das Tonart-Menü öffnen und wählen. App in den Hintergrund und zurück. | Kein schwarzer Bildschirm, kein Einfrieren, das Menü reagiert, Musik und Puls laufen nach der Rückkehr weiter. | Ja · Nein + was, wann |
+-| G6 | **Kopfhörer-Raum** (S3c + S3d — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Mixer" → oben „Headphone space" an. Ein Stück mit mindestens zwei Audiospuren abspielen (Workstation → „Import Audio", zwei Dateien). Eine Audiospur öffnen → Seite „Track" → „Direction" auf 90 tippen, die andere auf −90. Stück sichern, ein anderes öffnen, das erste wieder öffnen und erneut abspielen. Dann eine Spur auf 45 stellen, OHNE zu sichern die App ganz beenden (wegwischen) und neu starten. | Die erste Spur kommt von links, die zweite von rechts — auch beim Verstellen während der Wiedergabe; nach dem Wiederöffnen von denselben Orten und mit denselben Zahlen; nach dem Neustart steht die Spur wieder auf 45. Generierte Stimmen bleiben normal stereo. Schalter aus → alles wieder normal stereo, ab dem nächsten Start. | Ja · Nein + was · keine Kopfhörer |
+-| G7 | **Eine Spur spielt ein Sample** (E13-1 — erst im Build NACH 10.79.491) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
+-| G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — erst im Build NACH 10.79.491) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
++| G6 | **Kopfhörer-Raum** (S3c + S3d — seit 10.79.492) | Kopfhörer auf. Unten „Mixer" → oben „Headphone space" an. Ein Stück mit mindestens zwei Audiospuren abspielen (Workstation → „Import Audio", zwei Dateien). Eine Audiospur öffnen → Seite „Track" → „Direction" auf 90 tippen, die andere auf −90. Stück sichern, ein anderes öffnen, das erste wieder öffnen und erneut abspielen. Dann eine Spur auf 45 stellen, OHNE zu sichern die App ganz beenden (wegwischen) und neu starten. | Die erste Spur kommt von links, die zweite von rechts — auch beim Verstellen während der Wiedergabe; nach dem Wiederöffnen von denselben Orten und mit denselben Zahlen; nach dem Neustart steht die Spur wieder auf 45. Generierte Stimmen bleiben normal stereo. Schalter aus → alles wieder normal stereo, ab dem nächsten Start. | Ja · Nein + was · keine Kopfhörer |
++| G7 | **Eine Spur spielt ein Sample** (E13-1 — seit 10.79.492) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
++| G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — seit 10.79.492) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
++| G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.492) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
  
  **Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
  die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
 diff --git a/docs/press.html b/docs/press.html
-index 4d5117394..89b197f74 100644
+index 4d51173..e30a5cf 100644
 --- a/docs/press.html
 +++ b/docs/press.html
 @@ -130,7 +130,7 @@
@@ -2036,12 +2114,12 @@ index 4d5117394..89b197f74 100644
                      <li>Nearby session sharing between two iPhones (peer-to-peer, no server).</li>
                  </ul>
 -                <p>Not in Echoelmusic today: video editing, audio recording (there is no microphone input), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
-+                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
++                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.492 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
              </div></div>
          </div>
  
 diff --git a/docs/privacy.html b/docs/privacy.html
-index f2c3edd17..0713bc5f1 100644
+index f2c3edd..d3a1c0f 100644
 --- a/docs/privacy.html
 +++ b/docs/privacy.html
 @@ -85,7 +85,7 @@
@@ -2058,7 +2136,7 @@ index f2c3edd17..0713bc5f1 100644
              <p><strong>Biometric Data:</strong> Heart rate variability (HRV), heart rate, and breathing patterns from Apple Watch or HealthKit are processed in real-time on your device to influence audio, visuals, and lighting. Individual readings are not stored, and none of this is transmitted by the app.</p>
              <p><strong>Your performer signature:</strong> So that the same preset does not compose the same-sounding piece for everyone, Echoelmusic keeps one small summary on your device — coarse averages of your resting heart rate, variability, breathing rate and coherence, learned slowly while you play. It is used for a single purpose: to seed the music generator, so what the instrument creates carries your musical handwriting. It is never shown as a health reading, never used for advertising, never compared with other users, and never transmitted. It is stored in the app's own preferences, so it is included in an iCloud or encrypted local device backup of your phone. <strong>You can erase it at any time:</strong> open <em>Save &amp; Export</em> and tap <em>Default sound</em>, which clears it together with the instrument's other settings. Deleting the app also removes it.</p>
 -            <p><strong>Audio Input:</strong> <strong>Echoelmusic does not use the microphone.</strong> The audio-input path &mdash; live monitoring, voice timbre capture and mic recording &mdash; was removed on 2026-09-12. The app asks for no microphone permission and captures no audio from you; the only sound it records is its own output, at your request, for export.</p>
-+            <p><strong>Audio Input:</strong> <strong>Up to version 10.79.491 Echoelmusic does not use the microphone</strong>; the earlier audio-input path was removed on 2026-09-12. <strong>From the next version on, the microphone is used for one thing only: recording onto an audio track you armed yourself.</strong> iOS asks for permission when you arm such a track. Recording runs only between your tap on Record and Stop (or the end of the piece). The recording is saved as a file in the app&rsquo;s own media library on your device, so it is included in an iCloud or encrypted local device backup of your phone; it is never uploaded, analyzed by a server, or shared by the app. You can delete it like any other file in the library, and you can revoke microphone access at any time in iOS Settings. There is no live monitoring, no voice processing and no recording in the background. Apart from that, the only sound the app records is its own output, at your request, for export.</p>
++            <p><strong>Audio Input:</strong> <strong>Up to version 10.79.492 Echoelmusic does not use the microphone</strong>; the earlier audio-input path was removed on 2026-09-12. <strong>From the next version on, the microphone is used for one thing only: recording onto an audio track you armed yourself.</strong> iOS asks for permission when you arm such a track. Recording runs only between your tap on Record and Stop (or the end of the piece). The recording is saved as a file in the app&rsquo;s own media library on your device, so it is included in an iCloud or encrypted local device backup of your phone; it is never uploaded, analyzed by a server, or shared by the app. Deleting the app deletes it; a way to delete a single recording inside the app is not there yet. You can revoke microphone access at any time in iOS Settings. There is no live monitoring and no voice processing. If you leave the app while a recording runs, it may continue until Stop or the end of the piece; nothing ever starts recording on its own. Apart from that, the only sound the app records is its own output, at your request, for export.</p>
              <p><strong>Camera (pulse / rPPG):</strong> When you start a camera pulse reading, the rear camera with the torch reads subtle color changes in your fingertip to estimate heart rate (photoplethysmography). Frames are analyzed in real time on-device and are never recorded, stored, or transmitted. There is no face tracking, AR, or video recording.</p>
              <p id="location"><strong>Place and weather (optional, off by default):</strong> Echoel can put the name of a place into a piece's filename &mdash; for example <em>Echoel_2026-07-10_Hamburg_Am_72bpm</em> &mdash; and can let the current sky colour the composition. Both are driven by the SAME single setting, &ldquo;Place in piece name&rdquo;. Two places in the app can switch it on &mdash; that toggle, and a line in the weather row that says in words what it grants &mdash; and both are an explicit tap; nothing turns it on as a side effect. While it is off, no location is requested at all and neither feature runs. While it is on: iOS asks for while-using permission, Echoel takes <strong>one coarse, city-level fix</strong> per activation or launch &mdash; not a continuous track &mdash; and turns it into a city word. That word is transient: it is never written to storage on its own, so the only lasting traces are the switch itself and the name of a session you chose to save. Resolving the city uses Apple's geocoder and the weather uses Apple WeatherKit, so a coarse location goes to <strong>Apple</strong> for those lookups, exactly as it would for a Maps or Weather search, under Apple's privacy policy. It does not go to Echoel, and it is not shared with anyone else. Turning the switch off stops all of it.</p>
              <p><strong>Sensors:</strong> Bluetooth heart-rate straps are read on-device to drive the instrument. This stays on your device unless you explicitly switch on local-network output (OSC / ADM-OSC / Art-Net / sACN / MIDI) or nearby session sharing — see those sections below for exactly which values then leave.</p>
@@ -2067,12 +2145,12 @@ index f2c3edd17..0713bc5f1 100644
              <p>Echoelmusic requests camera and sensor permissions for the following features:</p>
              <p><strong>Camera Access:</strong> Used only to estimate your pulse from a fingertip on the rear camera (rPPG). No photos or video are recorded, and nothing is uploaded. No face tracking or AR.</p>
 -            <p><strong>Microphone Access:</strong> Not requested. The audio-input path was removed on 2026-09-12, so there is no microphone feature to grant or deny.</p>
-+            <p><strong>Microphone Access:</strong> Not requested up to version 10.79.491. From the next version on, requested only when you arm an audio track for recording, and used only while that recording runs (see <em>Audio Input</em> above). Denying it leaves everything else working; only recording onto an audio track is unavailable.</p>
++            <p><strong>Microphone Access:</strong> Not requested up to version 10.79.492. From the next version on, requested only when you arm an audio track for recording, and used only while that recording runs (see <em>Audio Input</em> above). Denying it leaves everything else working; only recording onto an audio track is unavailable.</p>
                          <p>You can deny or revoke these permissions at any time in iOS Settings. Denying permissions will disable related features but the app will continue to function.</p>
          </section>
  
 diff --git a/docs/security.html b/docs/security.html
-index 647aa2620..99eae1c8e 100644
+index 647aa26..f644b2b 100644
 --- a/docs/security.html
 +++ b/docs/security.html
 @@ -114,7 +114,7 @@
@@ -2080,12 +2158,12 @@ index 647aa2620..99eae1c8e 100644
              <ul>
                  <li><strong>Nothing to sign into:</strong> Echoelmusic has no user accounts, no passwords, and stores no credentials &mdash; so there is nothing to authenticate or leak.</li>
 -                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. The microphone is not among them &mdash; the app does not use it.</li>
-+                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Up to version 10.79.491 the microphone is not among them; from the next version on it is asked for only when you arm an audio track for recording.</li>
++                <li><strong>You hold the keys:</strong> Access to HealthKit and the camera is gated entirely by the iOS permission prompts you grant, and can be revoked any time in Settings. Up to version 10.79.492 the microphone is not among them; from the next version on it is asked for only when you arm an audio track for recording.</li>
              </ul>
          </section>
  
 diff --git a/memory/LEDGER_COUNTS.md b/memory/LEDGER_COUNTS.md
-index fa986383b..2e8841c53 100644
+index fa98638..2e8841c 100644
 --- a/memory/LEDGER_COUNTS.md
 +++ b/memory/LEDGER_COUNTS.md
 @@ -7624,3 +7624,9 @@ stehen verkürzt noch in CLAUDE.md; ihr Scope-Urteil ist durch das Founder-Geset
@@ -2098,3 +2176,28 @@ index fa986383b..2e8841c53 100644
 +Der Founder hat am 2026-10-04 den Audio-Eingang zurückgeholt („Audio-Eingang soll Aufnahme, Sampling und Analyse ermöglichen; Mikrofonzugriff wird ausdrücklich aktiviert"). E10-1 baut den kleinsten Weg (`MicTakeRecorder`, Owner-Fall `audioTrack`, plist-Schlüssel im selben Commit). Der Absatz unten stand bis dahin in CLAUDE.md und ist hier WÖRTLICH erhalten — seine #1302-Liste der gelöschten Dateien und die #1415-Begründung sind Geschichte; das Gesetz daraus (Owner-Fall und plist-Schlüssel bewegen sich zusammen, kein Eingang im Wiedergabe-Graphen) steht weiter in CLAUDE.md.
 +
 +- ⛔ **AUDIO-EINGANG: GELÖSCHT (#1302, Founder 2026-09-12, wörtlich „Face und Audio Input komplett entfernen"). Hier stand die Vokal-Ketten-Zeile; es gibt kein Mikrofon mehr.** Als DATEIEN weg: `MicrophoneManager`, `AudioInputManager`, `MonitorInsertAU`, `MonitorTapWindow`, `MultiTrackRecorder`, `FeedbackGuard` (mit `HowlDetector`), `AudioInputPickerView`, `PlugInInvitation`, `RoutePlugInWatcher`, `VoiceAnalyzer`, `VoiceCaptureController`, `VoiceCaptureEngine`, `VocoderCore`, `BrainwaveModulation`, `VoicePitchCorrector` — plus 38 Wächter und die Store-/Website-Zeilen. **DREI SACHEN BLEIBEN ABSICHTLICH, und wer sie für Reste hält, löscht Funktionierendes:** (1) die PATCH-Hälfte der Stimmfarbe (`SynthPatch.voiceProfileTaps`/`-Label`/`-Blend`, `PolySynthVoice.applyVoiceProfile`, `VoiceTimbreProfiler`) — ein von einem älteren Build gespeicherter Patch trägt sie und wendet sie an (#95/#527); der NAME sagt „Voice", die SACHE ist der Synth (#1293) · (2) `RecordRouteOwner` als LEERES Enum samt Refcount — #299: ein Zähler, den zwei Besitzer unbalancieren konnten, hielt das Telefon in `.playAndRecord` · (3) `RetroCapture`/`SingleExport`, die den EIGENEN Ausgang mitschneiden, nie ein Mikrofon. **Nach AUSSEN ist alles zurückgenommen**: `ContentPipeline/CLAIMS.md` §11 ist als ganzer Abschnitt ausgesetzt, `fastlane/metadata` und `docs/` tragen keine Stimm-Zeile mehr, `docs/_headers` schließt `microphone=()`. ⭐ **ERLEDIGT mit #1415** (Founder-Freigabe „E. correct verified stale permissions"): `NSMicrophoneUsageDescription` ist aus `Resources/iOS/Info.plist` ENTFERNT. Der Beleg ist strukturell, nicht nur ein `grep`: die EINZIGE Stelle, die die Sitzung auf `.playAndRecord` heben kann, ist `AudioConfiguration.claimRecordRoute(_ owner: RecordRouteOwner)`, und `RecordRouteOwner` ist ein LEERES Enum — der Parametertyp hat keinen Bewohner, die Funktion ist unaufrufbar, `recordingRouteNeeded` ist `private(set)` und kann nie wahr werden. ⚠️ **Wer einen Fall zu `RecordRouteOwner` hinzufügt, MUSS den plist-Schlüssel im selben Commit zurückholen** — iOS beendet die App beim Aktivieren einer Aufnahme-Kategorie ohne ihn. Genau das hält `EveryPermissionPromptHasACapabilityTests` (`retiredPrompts`) fest.
+diff --git a/scripts/check-infoplist.sh b/scripts/check-infoplist.sh
+index 439743c..dd6fffb 100755
+--- a/scripts/check-infoplist.sh
++++ b/scripts/check-infoplist.sh
+@@ -60,14 +60,18 @@ required_keys=(
+   NSLocalNetworkUsageDescription
+   NSBluetoothAlwaysUsageDescription
+   NSBluetoothPeripheralUsageDescription
++  NSMicrophoneUsageDescription
+ )
+ # ⭐ `orphan_keys` IS GONE (#1415). It held NSMicrophoneUsageDescription and
+ # NSPhotoLibraryAddUsageDescription while the founder had not yet released the repair; he
+-# released it ("E. correct verified stale permissions"), both keys are out of the plist, and an
++# released it ("E. correct verified stale permissions"), both keys left the plist, and an
+ # exemption list that outlives its exemption is how a settled debt gets read as open.
++# ⭐ E10-1 (founder 2026-10-04/10-07) brought NSMicrophoneUsageDescription BACK, together with
++# its capability (`MicTakeRecorder`), so it is now in `required_keys` above — the conscious
++# decision this check asks for. NSPhotoLibraryAddUsageDescription stays out.
+ #
+ # ⚠️ The reverse check (1b) now does the right thing WITHOUT a list: if either key ever comes
+-# back it will not be in `required_keys`, so the loop FAILS and asks for a conscious decision.
++# back without a decision it will not be in `required_keys`, so the loop FAILS and asks for a conscious decision.
+ # That is the correct direction — re-adding a usage string is only half of a two-part change,
+ # and the other half (the code) is what `EveryPermissionPromptHasACapabilityTests.retiredPrompts`
+ # pins. One home for the decision (#416); this file only refuses to let it happen silently.

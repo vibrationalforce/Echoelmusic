@@ -5071,3 +5071,17 @@ steht seitdem in der Chrome-Ratsche, damit das Wort nicht über `ShellTab.label`
 Der Enum-Fall bleibt `.project` — ein Persistenz-Schlüssel, nie sichtbar.
 **Warum:** zwei Founder-Wörter widersprachen sich (E18 nennt „Project“, das Glossar streicht es);
 der Chrome-Wächter war deshalb seit 82b7a6a5a rot. **Review:** 2026-11-06.
+
+### 2026-10-08 — B2-Pin: HaishinKit auf den Commit, nicht auf das Tag
+
+**Entscheidung (Sitzung, unter „Entscheide du alles" + „hacksicher"):** `Package.swift` und `project.yml`
+pinnen HaishinKit per `revision:` auf `dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd`, den Commit hinter dem
+Tag 2.2.5 (aus einem schreibgeschützten Klon mit `git rev-parse 2.2.5^{commit}` abgeleitet). Logboard
+bleibt `exactVersion: 2.6.0`, weil HaishinKits Manifest eine 2.6.x-VERSION verlangt und eine Revision
+keinen Versionsbereich erfüllen kann. Die drei Wächter, die die Manifest-Zeilen pinnen
+(`ContentPipelineClaimsTests`, `TheManifestArgumentOrderIsTheCompilersTests`,
+`WebsitePagesAreFindableAndHonestTests`), tragen das neue Literal; CLAIMS.md nennt weiter „HaishinKit 2.2.5".
+**Warum:** ein Tag kann von jedem mit Push-Recht im Upstream verschoben werden, ein Commit-Hash nicht — und
+das ist das erste Paket, das Netzwerk-Code in die App trägt. Gleiche Bytes wie vorher, eine Angriffsfläche
+weniger. **Upgrade-Regel:** den Hash aus dem neuen Tag ableiten, nie von Hand editieren.
+**Landet mit:** `scratchpads/LANDING_P2_B2_broadcast.patch` (founder-gated, `project.yml`). **Review:** 2026-11-07.

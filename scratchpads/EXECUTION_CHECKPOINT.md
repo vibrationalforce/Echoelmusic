@@ -3,13 +3,21 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
+CURRENT (2026-10-08): branch tip = 4db2629 + this kit commit (scratchpads only; no code since 62d0f9489 =
+  TestFlight 10.79.492, run 37655969254 #2617). main = bc4fc5205 (ancestor of the build). NOTHING to bump.
+  LANDING KIT ready for the founder: scratchpads/FOUNDER_LANDING_2026-10-08.md — P3 #310 (workflow) → P1 E10-1
+  (+review fixes, .undetermined wording, 10.79.492 literals, privacy truth) → P2 B2 (HaishinKit pinned to commit
+  dc880cb5 of tag 2.2.5, Logboard exact 2.6.0). Verified: all three apply on a fresh 4db2629 tree, result == source
+  tree; transcribed guards green. BLOCKED only by auto mode (hook) — founder: Standard mode or Terminal (Weg A/B).
+  The held hold/auto-merge-310 = 6685327b0 (13-scenario sim) did NOT survive the container restart; P3 = tracked
+  patch with the 4-scenario sim. After landing: bump 10.79.493 (E10-1) and 10.79.494 (B2), F2 answered, J0 next.
+HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-07d): branch tip 62d0f9489 (= TestFlight 10.79.492 bump, run 37655969254 #2617) on
   a4c5da609; Sources identical to 2ef716273 (Compile Check 37639346127 ✓, BfT job 112854348658 ✓, Run Tests
   exit 65 #396 shape, failing names unseen). main = bc4fc5205 (auto-merge #310 rejects).
   HELD, not pushed: hold/auto-merge-310 = 6685327b0 (workflow fix; hook did not see it — founder informed).
   BLOCKED on Info.plist (auto mode denies): E10-1 (+ scratchpads/E10-1_review_fixes.patch), then J0
   (scratchpads/J0_ACOUSTIC_PROBE_DESIGN_2026-10-07.md). Uncommitted 52 E10/B2 files in main checkout: untouched.
-HISTORY BELOW (older state, superseded by the block above):
 CURRENT_HEAD: 7e6aea965 on claude/echoelmusic-review-optimize-u5jjpd (PUSHED code/gate SHA; subsequent docs commits
   may advance the branch tip). Codex applied the prepared, founder-authorized case-20 manifest patch through the connected
   GitHub tools; Claude's local checkout was not inspected and must incorporate the remote commit before its next push.

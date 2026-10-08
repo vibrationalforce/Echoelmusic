@@ -1,0 +1,47 @@
+feat(broadcast): B2 — HaishinKit linked, the RTMP/RTMPS stream has a door
+
+Founder 2026-10-04 ("BROADCAST AUSFÜHREN — KONKRETE FOUNDER-FREIGABE"):
+HaishinKit including the RTMP/RTMPS products, Package.swift and
+project.yml. This is the first external dependency the app links. Zero
+dependencies was the default, not a law, and the product law says
+integrate specialist infrastructure — an RTMP muxer, an H.264/AAC encode
+pipeline — never rebuild it.
+
+What lands:
+- Package.swift and project.yml link HaishinKit (products HaishinKit +
+  RTMPHaishinKit) and Logboard. HaishinKit is pinned to the COMMIT behind
+  tag 2.2.5, dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd: a tag can be
+  re-pointed upstream, a commit hash cannot, and this is the first
+  package that carries network code into the app. Logboard stays exactly
+  2.6.0 because HaishinKit's own manifest asks for a 2.6.x VERSION range.
+  SRT, MoQ and WebRTC products, and the libsrt / libdatachannel binaries
+  behind them, are not linked. Both licences (BSD-3) ship in
+  Resources/ThirdPartyNotices.txt.
+- Stream/RTMPBroadcastEngine.swift is the adapter behind the B1 seam:
+  the master mix after the final chain (the ring RetroCapture reads) and
+  the rendered visual go through bounded AsyncStreams into RTMPStream on
+  one host-clock T0. The realtime audio callback is never touched. No
+  camera (rPPG keeps it), no microphone (E10-1 keeps the record route).
+- Logboard's console appender is replaced by a silent one before any
+  connection exists: HaishinKit logs unhandled server answers at .info,
+  and an onFCPublish answer repeats the publish name — the stream key.
+- Door: the Broadcast card in Routing (PatchbayView) opens the page; Go
+  Live / Stop is the one lifecycle owner; the patchbay routes start
+  nothing.
+
+Claim level is "compiles", nothing more. The site, CLAIMS.md §5 and
+FEATURE_STATUS say built and being tested; "a server accepts" and "a
+receiver plays" are device facts (FOUNDER_INBOX G10). Guards: both
+manifests must carry exactly these two pins
+(ContentPipelineClaimsTests, TheManifestArgumentOrderIsTheCompilersTests,
+WebsitePagesAreFindableAndHonestTests); every RTMP sentence on the site
+carries an unconfirmed marker; with an engine the broadcast page has
+exactly one door. Decision logged in decisions.csv (2026-10-04 release,
+2026-10-08 pin shape).
+
+Founder-gated file: project.yml, under the 2026-10-04 release. No Swift
+toolchain here; the gates decide whether it compiles. Device: not
+verified (G10).
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DYazx7MBNokUFLwQRpfgpM

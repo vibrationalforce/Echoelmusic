@@ -26,6 +26,26 @@ Why it is shaped this way:
 - A failure is shown at the Record button (audioTakeProblem), not only
   logged.
 
+Folded in from the two reviews (2026-10-07, 2026-10-08) so that one apply
+leaves the gates green:
+- Record with nothing recording: RecordTakeControls breaks out when the
+  recorder is not recording, instead of starting a take that is not
+  there.
+- scripts/check-infoplist.sh lists NSMicrophoneUsageDescription among the
+  required keys; the Xcode Compile Check's plist hygiene step (check 1b)
+  would otherwise go red on the key this commit adds.
+- An unasked microphone is not a denied one. MicTakeRecorder answers
+  .undetermined with "Switch Arm off and on again to allow the
+  microphone." — re-arming is the one place that asks — instead of
+  sending the person to a Settings row that does not exist yet. The
+  sentence is in the string catalog.
+- The site's version literals read 10.79.492, the build that shipped on
+  2026-10-07 still without a microphone. privacy.html says what is true:
+  a single recording cannot be deleted inside the app yet, and a running
+  recording may continue when the app is left; nothing starts on its own.
+- FEATURE_STATUS.md and FOUNDER_INBOX §2 read build 2617 as shipped and
+  this slice as "on the branch, in no build".
+
 Claims stay below what ships. The site, CLAIMS.md and privacy pages say
 recording arrives with the next version and is being tested. Nothing
 is claimed outward until G9 (FOUNDER_INBOX) is confirmed on a device.
@@ -35,5 +55,5 @@ Founder-gated file: Resources/iOS/Info.plist, one key, under the
 claim, transcribed against both trees. No Swift toolchain here, so the
 gates decide whether it compiles. Device: not verified (G9).
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01U4u4Pb5YGELES24z1A2hij
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DYazx7MBNokUFLwQRpfgpM

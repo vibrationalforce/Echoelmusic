@@ -1,5 +1,5 @@
 diff --git a/.claude/rules/engineering.md b/.claude/rules/engineering.md
-index 7e6d9d715..cf542bd94 100644
+index 7e6d9d7..cf542bd 100644
 --- a/.claude/rules/engineering.md
 +++ b/.claude/rules/engineering.md
 @@ -10,7 +10,7 @@ for params) — where those are more specific, they win. This file adds the cros
@@ -12,7 +12,7 @@ index 7e6d9d715..cf542bd94 100644
    first and write code that looks like it belongs.
  
 diff --git a/CLAUDE.md b/CLAUDE.md
-index b04d3698e..f4fdbc2d0 100644
+index f8ebf64..fed42d6 100644
 --- a/CLAUDE.md
 +++ b/CLAUDE.md
 @@ -13,7 +13,7 @@ Bundles: `.app` (main, universal) · `.app.watchkitapp` · `.app.widgets` · `.a
@@ -73,7 +73,7 @@ index b04d3698e..f4fdbc2d0 100644
  |---|---|
  | Apple (iPhone) | SwiftUI + AVFoundation + Accelerate + Metal + CoreMIDI + **Network** (OSC · ADM-OSC · Art-Net · sACN) + die Sensor-/Kollab-Quellen HealthKit · CoreBluetooth · CoreLocation · WeatherKit · MultipeerConnectivity, je hinter `canImport` |
 -| RTMP/RTMPS | HaishinKit = **PLANNED** dep for P4 Broadcast — NOT linked (`Package.swift` `dependencies: []`; `BroadcastPublisher` is a `#if canImport(HaishinKit)` scaffold) |
-+| RTMP/RTMPS | HaishinKit 2.2.5 + Logboard 2.6.0 (BSD-3, exakt gepinnt) — seit B2 VERLINKT, Stufe „kompiliert" |
++| RTMP/RTMPS | HaishinKit 2.2.5 + Logboard 2.6.0 (BSD-3; HaishinKit auf den Commit dc880cb5 hinter dem Tag gepinnt, Logboard exakt) — seit B2 VERLINKT, Stufe „kompiliert" |
  | Build | XcodeGen (`project.yml`) + Fastlane (TestFlight upload) + GitHub Actions |
  | DSP | Swift (audio-thread-safe, lock-free SPSC queues) |
  
@@ -106,7 +106,7 @@ index b04d3698e..f4fdbc2d0 100644
  > `build.yml`, `desktop_build.yml`, desktop build scripts) was removed 2026-06-19.
  > Legacy/contradictory workflows also removed 2026-06-19: `android-build.yml`,
 diff --git a/ContentPipeline/CLAIMS.md b/ContentPipeline/CLAIMS.md
-index 553310e49..bce1b666e 100644
+index 553310e..e37add4 100644
 --- a/ContentPipeline/CLAIMS.md
 +++ b/ContentPipeline/CLAIMS.md
 @@ -18,8 +18,9 @@ daneben und veraltete schneller als der Inhalt — sie belegte nichts, was das D
@@ -115,8 +115,8 @@ index 553310e49..bce1b666e 100644
  **Zwei Behauptungen dieser Datei sind maschinell gepinnt** (`Tests/CISmoke/ContentPipelineClaimsTests.swift`,
 -im blockierenden Bundle): „Null externe Abhängigkeiten" und — seit 2026-09-20 in der
 -UMGEKEHRTEN Richtung — „das AUv3-Target EXISTIERT". Beide sind Tatsachen über das Repo,
-+im blockierenden Bundle): „genau DIESE zwei Fremdpakete, exakt gepinnt" (HaishinKit 2.2.5 +
-+Logboard 2.6.0 — bis 2026-10-04 stand hier „Null externe Abhängigkeiten", seit Broadcast B2
++im blockierenden Bundle): „genau DIESE zwei Fremdpakete, gepinnt" (HaishinKit 2.2.5 auf den Commit `dc880cb5` hinter dem Tag,
++Logboard 2.6.0 exakt — bis 2026-10-04 stand hier „Null externe Abhängigkeiten", seit Broadcast B2
 +in der UMGEKEHRTEN Richtung) und — seit 2026-09-20 ebenfalls umgekehrt — „das AUv3-Target EXISTIERT". Beide sind Tatsachen über das Repo,
  keine Formulierungen — wer sie ändert, färbt das Gate rot und muss diese Datei im selben
  Commit mitziehen.
@@ -126,7 +126,7 @@ index 553310e49..bce1b666e 100644
  | **Apple Health** als Pulsquelle | `HealthKitBioPublisher` |
  | **Offene Standards, kein SDK-Lock-in** | OSC · ADM-OSC · MIDI · Art-Net/sACN · BLE HRS |
 -| **Null externe Abhängigkeiten**, alles on-device | `Package.swift: dependencies: []` UND `project.yml` ohne `packages:`-Block — beide, siehe Zaun-Absatz oben |
-+| **Keine Analyse-, Werbe- oder Tracking-SDKs**, alles on-device; das einzige Fremdpaket ist der Stream-Transport | ⭐ Bis 2026-10-04 stand hier „Null externe Abhängigkeiten“ — mit Broadcast B2 (Founder-Freigabe) GESTRICHEN: verlinkt sind jetzt **HaishinKit 2.2.5** (Produkte `HaishinKit` + `RTMPHaishinKit`) und dessen Logger **Logboard 2.6.0**, beide BSD-3, exakt gepinnt in `Package.swift` UND `project.yml`, Lizenztext in `Resources/ThirdPartyNotices.txt`. Sie arbeiten NUR, wenn der Nutzer in Routing → Broadcast „Go Live“ drückt. ⛔ „Null Abhängigkeiten“, „no third-party code“, „zero dependencies“ in KEINER Kopie mehr schreiben. |
++| **Keine Analyse-, Werbe- oder Tracking-SDKs**, alles on-device; das einzige Fremdpaket ist der Stream-Transport | ⭐ Bis 2026-10-04 stand hier „Null externe Abhängigkeiten“ — mit Broadcast B2 (Founder-Freigabe) GESTRICHEN: verlinkt sind jetzt **HaishinKit 2.2.5** (Produkte `HaishinKit` + `RTMPHaishinKit`) und dessen Logger **Logboard 2.6.0**, beide BSD-3, gepinnt in `Package.swift` UND `project.yml` — HaishinKit auf den COMMIT `dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd` hinter dem Tag 2.2.5 (ein Tag lässt sich verschieben, ein Commit nicht), Logboard exakt 2.6.0 (HaishinKit verlangt eine 2.6.x-VERSION) —, Lizenztext in `Resources/ThirdPartyNotices.txt`. Sie arbeiten NUR, wenn der Nutzer in Routing → Broadcast „Go Live“ drückt. ⛔ „Null Abhängigkeiten“, „no third-party code“, „zero dependencies“ in KEINER Kopie mehr schreiben. |
  | **Barrierefrei spielbar**: Notennamen International/Deutsch/Solfège, VoiceOver auf der Spielfläche, Atkinson Hyperlegible | #232 C/E, `EchoelValueField` |
  | ~~**Deine Stimme wird die Klangfarbe des Instruments**~~ | EchoelVoice #591–#593, #600 Take-Hälfte. ⛔ **GESTRICHEN 2026-09-12 (#1302) — DARF NICHT MEHR BEHAUPTET WERDEN.** Der Founder hat Audio-Input und Face komplett entfernt ("Face und Audio Input komplett entfernen"); `VoiceCaptureEngine`, `VoiceAnalyzer` und `VoiceTimbreProfiler`s Aufnahme-Weg sind als Dateien weg, es gibt keine Capture-Tür und kein Mikrofon mehr. **Was BLEIBT und NICHT behauptet werden darf, bis es wieder eine Tür hat:** die Patch-Hälfte (`SynthPatch.voiceProfileTaps/-Label/-Blend` und `PolySynthVoice.applyVoiceProfile`) ist absichtlich im Code — ein Patch, den ein älterer Build gespeichert hat, trägt weiter ein Profil und wendet es an (#95/#527). Gebaut ≠ erreichbar; eine Werbe-Behauptung darüber wäre die 2.3-Klasse. |
  | ⛔ **GESTRICHEN 2026-09-06 (#1024) — „Tune to key" DARF NICHT MEHR BEHAUPTET WERDEN.** ⛔ Der Code lebte (`VoicePitchCorrector`, fest im Monitorpfad, bei AUS bypassed) — **seit #1302 ist die Datei gelöscht** (#1347); seine einzige Tür war schon vorher das Input-Sheet, und der Founder hat alle drei Mikrofon-Türen entfernt ("das mit dem Audio Input Monitoren klappt immer noch nicht also fliegt das raus"). Kein Nutzer kann die Stufe heute erreichen — eine Werbe-Behauptung darüber wäre die 2.3-Klasse. Im selben Commit aus `fastlane/metadata/{de-DE,en-US}/release_notes.txt` entfernt. ⛔ **DIESE ZEILE TRUG EINE AUSNAHME UND SIE IST MIT #1305 HINFÄLLIG:** sie lautete „Was BLEIBT und weiter behauptet werden darf: ‚Follow the key' — die Harmonizer-Stimmen des MUSIK-Pfads sind über das FX-Panel erreichbar und von #1024 nicht berührt." Der Founder hat den Harmonizer am 2026-09-12 ganz gestrichen („Kein … Autotune, Harmonizer, granularsynthese"); Stufe, Panel-Abschnitt, Toggle und Untertitel sind gelöscht. **Es gibt keinen MUSIK-Harmonizer mehr, über den eine Ausnahme laufen könnte.** ⛔ **DIESE ZEILE TRUG EINE BEDINGTE ERLAUBNIS UND SIE IST MIT #1302 HINFÄLLIG (#1347, 2026-09-16).** Sie lautete: *„#1247 (2026-09-11): die Master-Panel-Tür ‚Audio input' ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht."* Es gibt kein `setInputMonitoring` mehr, keine Tür und keinen Monitorpfad — gemessen in kommentar-gestrippten `Sources/`: `setInputMonitoring` · `showInput` · `AudioInputPickerView` · `VoicePitchCorrector` · `isInputMonitoring` je **0**. **Die Bedingung kann nie eintreten, also ist die Streichung ENDGÜLTIG, nicht aufgeschoben** — und genau das ist der Unterschied, den ein Texter liest. |
@@ -179,18 +179,21 @@ index 553310e49..bce1b666e 100644
    `BroadcastPublisher.swift` enthält ein `import HaishinKit` hinter
    `#if canImport(HaishinKit)`. Es ist ein Compile-Gerüst ohne Paket — die
 diff --git a/Package.swift b/Package.swift
-index b63b3b8e1..df4f282ae 100644
+index b63b3b8..4980b45 100644
 --- a/Package.swift
 +++ b/Package.swift
-@@ -64,13 +64,21 @@ let package = Package(
+@@ -64,13 +64,24 @@ let package = Package(
              targets: ["Echoelmusic"]),
      ],
      dependencies: [
 -        // Add future dependencies here (e.g., for audio processing, ML, etc.)
 +        // Broadcast B2 (founder release 2026-10-04). Mirrors `project.yml` `packages:` —
 +        // the app is built from project.yml; this keeps `swift build` on the founder's Mac
-+        // compiling the same `Sources/`. Exact pins, same reasons as there.
-+        .package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5"),
++        // compiling the same `Sources/`. HaishinKit is pinned to the COMMIT behind tag 2.2.5 —
++        // a tag can be re-pointed upstream, a commit hash cannot, and this is the first package
++        // that carries network code into the app. Logboard stays an exact VERSION, because
++        // HaishinKit's own manifest asks for 2.6.x and a revision cannot satisfy a version range.
++        .package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", revision: "dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd"),
 +        .package(url: "https://github.com/shogo4405/Logboard.git", exact: "2.6.0"),
      ],
      targets: [
@@ -207,7 +210,7 @@ index b63b3b8e1..df4f282ae 100644
              // WatchOS/, tvOS/, Widgets/, LiveActivity/, AppClips/, Targets/) is gone from
              // disk, so the list only told SwiftPM to skip directories that do not exist.
 diff --git a/README.md b/README.md
-index 521c48439..4ea35ba82 100644
+index 521c484..bd24304 100644
 --- a/README.md
 +++ b/README.md
 @@ -50,7 +50,7 @@ Network routing (OSC · ADM-OSC · Art-Net · sACN · MIDI out) is a patchbay re
@@ -224,7 +227,7 @@ index 521c48439..4ea35ba82 100644
  ## Build
  
 -Requires Xcode 26.2 and a recent macOS (CI runs `macos-26`). iPhone-only for v10 (other Apple platforms compile-clean but are not deliverables). Zero external dependencies.
-+Requires Xcode 26.2 and a recent macOS (CI runs `macos-26`). iPhone-only for v10 (other Apple platforms compile-clean but are not deliverables). Two external dependencies, linked for RTMP streaming only: HaishinKit 2.2.5 and Logboard 2.6.0 (BSD-3, exact pins; notices in `Sources/Echoelmusic/Resources/ThirdPartyNotices.txt`). Streaming is built and being tested, not yet confirmed on a device.
++Requires Xcode 26.2 and a recent macOS (CI runs `macos-26`). iPhone-only for v10 (other Apple platforms compile-clean but are not deliverables). Two external dependencies, linked for RTMP streaming only: HaishinKit 2.2.5 and Logboard 2.6.0 (BSD-3; HaishinKit pinned to the commit behind tag 2.2.5, Logboard to exactly 2.6.0; notices in `Sources/Echoelmusic/Resources/ThirdPartyNotices.txt`). Streaming is built and being tested, not yet confirmed on a device.
  
  **There is no `.xcodeproj` in the repository** — it is generated by [XcodeGen](https://github.com/yonaskolb/XcodeGen) from `project.yml`, so that step is not optional:
  
@@ -238,10 +241,10 @@ index 521c48439..4ea35ba82 100644
    (plus the two loose files EchoelmusicApp.swift and MicrophoneManager.swift)
  Sources/EchoelmusicWidgets/  WidgetKit extension, embedded in the app
 diff --git a/Sources/Echoelmusic/Resources/Localizable.xcstrings b/Sources/Echoelmusic/Resources/Localizable.xcstrings
-index d36f201a7..0f1d67509 100644
+index 919d14d..081763a 100644
 --- a/Sources/Echoelmusic/Resources/Localizable.xcstrings
 +++ b/Sources/Echoelmusic/Resources/Localizable.xcstrings
-@@ -5833,6 +5833,66 @@
+@@ -5843,6 +5843,66 @@
          }
        }
      },
@@ -310,10 +313,10 @@ index d36f201a7..0f1d67509 100644
        "extractionState" : "manual",
 diff --git a/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt b/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt
 new file mode 100644
-index 000000000..45ffc639d
+index 0000000..81f893c
 --- /dev/null
 +++ b/Sources/Echoelmusic/Resources/ThirdPartyNotices.txt
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,75 @@
 +Echoelmusic — third-party notices
 +
 +Echoelmusic links two open-source libraries, used only for streaming to an RTMP / RTMPS
@@ -323,6 +326,7 @@ index 000000000..45ffc639d
 +--------------------------------------------------------------------------------------------
 +HaishinKit 2.2.5 — https://github.com/HaishinKit/HaishinKit.swift
 +Products linked: HaishinKit, RTMPHaishinKit
++Pinned to commit dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd (the commit tag 2.2.5 points to)
 +--------------------------------------------------------------------------------------------
 +
 +BSD 3-Clause License
@@ -390,7 +394,7 @@ index 000000000..45ffc639d
 +OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 diff --git a/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift b/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift
 new file mode 100644
-index 000000000..43e61ec6c
+index 0000000..43e61ec
 --- /dev/null
 +++ b/Sources/Echoelmusic/Stream/RTMPBroadcastEngine.swift
 @@ -0,0 +1,288 @@
@@ -683,7 +687,7 @@ index 000000000..43e61ec6c
 +}
 +#endif
 diff --git a/Sources/Echoelmusic/Studio/PatchbayView.swift b/Sources/Echoelmusic/Studio/PatchbayView.swift
-index 16a185251..06de96ec6 100644
+index 16a1852..06de96e 100644
 --- a/Sources/Echoelmusic/Studio/PatchbayView.swift
 +++ b/Sources/Echoelmusic/Studio/PatchbayView.swift
 @@ -101,6 +101,13 @@ struct PatchbayView: View {
@@ -745,7 +749,7 @@ index 16a185251..06de96ec6 100644
      // MARK: - Network MIDI (#187: the inbound listener gets a switch, default OFF)
      /// The one control for Apple's RTP-MIDI session. It sits in Routing rather than
 diff --git a/Tests/CISmoke/ContentPipelineClaimsTests.swift b/Tests/CISmoke/ContentPipelineClaimsTests.swift
-index 8ea1977b2..28630b235 100644
+index 8ea1977..08c2478 100644
 --- a/Tests/CISmoke/ContentPipelineClaimsTests.swift
 +++ b/Tests/CISmoke/ContentPipelineClaimsTests.swift
 @@ -11,7 +11,9 @@
@@ -776,7 +780,7 @@ index 8ea1977b2..28630b235 100644
 +    ///
 +    /// ⭐ WHAT IT HOLDS NOW. The founder released HaishinKit (with its RTMP products) on
 +    /// 2026-10-04; it is the first external dependency the app links. The fence is not removed
-+    /// — it narrows from "the empty set" to "exactly these two, exactly pinned", which is the
++    /// — it narrows from "the empty set" to "exactly these two, pinned", which is the
 +    /// same fence one size wider: a THIRD package, a floating version (`from:`, `branch:`,
 +    /// `majorVersion:`), or the pair drifting apart between the two manifests is red here, and
 +    /// the instruction is the same as before — move `ContentPipeline/CLAIMS.md` in the commit.
@@ -796,7 +800,7 @@ index 8ea1977b2..28630b235 100644
 +            .map { $0.trimmingCharacters(in: .whitespaces) }
 +        XCTAssertEqual(declared, Self.announcedSwiftPMPins, """
 +        Package.swift declares a different set of package dependencies than the two the founder \
-+        released on 2026-10-04 (HaishinKit 2.2.5, Logboard 2.6.0, exact pins). That may well be \
++        released on 2026-10-04 (HaishinKit at the commit behind tag 2.2.5, Logboard exactly 2.6.0). That may well be \
 +        the right call — but `ContentPipeline/CLAIMS.md` names exactly these as the app's only \
 +        third-party code, and §8 forbids naming any SDK we do not ship. Update BOTH in this \
 +        commit, or a caption keeps saying something the build no longer does.
@@ -812,7 +816,7 @@ index 8ea1977b2..28630b235 100644
 +        let block = yml[(open + 1)...].prefix { $0.isEmpty || $0.hasPrefix(" ") }
 +            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
 +        XCTAssertEqual(block, Self.announcedXcodeGenBlock, """
-+        project.yml's `packages:` block differs from the two exact pins the founder released. \
++        project.yml's `packages:` block differs from the two pins the founder released (HaishinKit by commit, Logboard by exact version). \
 +        That is the manifest the SHIPPED app is built from, so whatever is there reaches the \
 +        archive — update `ContentPipeline/CLAIMS.md` in this commit.
          """)
@@ -839,13 +843,13 @@ index 8ea1977b2..28630b235 100644
      }
  
 +    static let announcedSwiftPMPins = [
-+        #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5"),"#,
++        #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", revision: "dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd"),"#,
 +        #".package(url: "https://github.com/shogo4405/Logboard.git", exact: "2.6.0"),"#,
 +    ]
 +    static let announcedXcodeGenBlock = [
 +        "HaishinKit:",
 +        "url: https://github.com/HaishinKit/HaishinKit.swift.git",
-+        "exactVersion: 2.2.5",
++        "revision: dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd",
 +        "Logboard:",
 +        "url: https://github.com/shogo4405/Logboard.git",
 +        "exactVersion: 2.6.0",
@@ -855,7 +859,7 @@ index 8ea1977b2..28630b235 100644
      ///
      /// ⛔ EVERY FAILURE MESSAGE HERE IS A `"""` LITERAL, AND THAT IS NOT A STYLE CHOICE. The
 diff --git a/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift b/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
-index 55a2e7803..7ca3700ca 100644
+index 55a2e78..7ca3700 100644
 --- a/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
 +++ b/Tests/CISmoke/TheBroadcastHasNoDoorWithoutAnEngineTests.swift
 @@ -4,11 +4,21 @@
@@ -914,7 +918,7 @@ index 55a2e7803..7ca3700ca 100644
  
      private func repoRoot() -> URL {
 diff --git a/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift b/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
-index 128c72845..74b285693 100644
+index 128c728..3334cda 100644
 --- a/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
 +++ b/Tests/CISmoke/TheManifestArgumentOrderIsTheCompilersTests.swift
 @@ -154,25 +154,27 @@ final class TheManifestArgumentOrderIsTheCompilersTests: XCTestCase {
@@ -931,7 +935,7 @@ index 128c72845..74b285693 100644
 +    /// the tech-stack table and the store copy all say zero, and all three have to move with it".
 +    /// The founder released HaishinKit (RTMP/RTMPS) on 2026-10-04 and all three moved in the
 +    /// same commit. The fence stays, one size wider: the package-level `dependencies:` array
-+    /// holds EXACTLY the two announced, exactly-pinned packages — a third one, or a floating
++    /// holds EXACTLY the two announced, pinned packages — a third one, or a floating
 +    /// version, is red here and still has to move those three homes with it.
 +    func testTheManifestShipsExactlyTheAnnouncedDependencies() throws {
          let text = try manifest()
@@ -952,14 +956,14 @@ index 128c72845..74b285693 100644
 +            .filter { !$0.isEmpty && !$0.hasPrefix("//") }
 +        XCTAssertEqual(code, ContentPipelineClaimsTests.announcedSwiftPMPins,
 +                       "Package.swift declares a different dependency set than the founder " +
-+                       "released (HaishinKit 2.2.5 + Logboard 2.6.0, exact). CLAUDE.md, the " +
++                       "released (HaishinKit at the 2.2.5 commit + Logboard 2.6.0 exact). CLAUDE.md, the " +
 +                       "tech-stack table and the store copy name exactly these — move them " +
 +                       "with it. Found: \(code)")
      }
  
      // MARK: - Reading the manifest
 diff --git a/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift b/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
-index 4b5129560..829130172 100644
+index 4b51295..8291301 100644
 --- a/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
 +++ b/Tests/CISmoke/TheShareReadyClipIsNotSoldAnywhereTests.swift
 @@ -142,7 +142,7 @@ final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
@@ -972,7 +976,7 @@ index 4b5129560..829130172 100644
              `docs/architecture.html` has the wording the rest of the site follows.
              """)
 diff --git a/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift b/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
-index 63b29df05..2ebe468e6 100644
+index 63b29df..2ebe468 100644
 --- a/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
 +++ b/Tests/CISmoke/TheSiteDoesNotSellADeletedFullscreenTests.swift
 @@ -39,6 +39,12 @@
@@ -1040,7 +1044,7 @@ index 63b29df05..2ebe468e6 100644
  
      /// Claim 4 — support.html sends the reader to a control that exists. Before #1331 there
 diff --git a/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift b/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
-index 5e321d35f..d15954bd1 100644
+index 5e321d3..d15954b 100644
 --- a/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
 +++ b/Tests/CISmoke/TheStoreTextClaimsOnlyWhatShipsTests.swift
 @@ -332,7 +332,9 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
@@ -1064,7 +1068,7 @@ index 5e321d35f..d15954bd1 100644
              "beat maker", "beatmaker", "drum machine", "drumcomputer",
              "step sequencer", "step-sequencer", "schrittsequenzer",  // #166/#167
 diff --git a/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift b/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
-index 9784bfbb6..30ba83bb9 100644
+index 9784bfb..d343b17 100644
 --- a/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
 +++ b/Tests/CISmoke/WebsitePagesAreFindableAndHonestTests.swift
 @@ -1283,28 +1283,57 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
@@ -1095,8 +1099,8 @@ index 9784bfbb6..30ba83bb9 100644
 -            RTMP stack) was actually linked, this whole test is describing a build that no \
 -            longer exists — reword the site FIRST, then delete or invert this guard.
 +        XCTAssertTrue(manifest.contains(
-+            #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", exact: "2.2.5")"#), """
-+            `Package.swift` no longer pins HaishinKit at exactly 2.2.5. The site describes \
++            #".package(url: "https://github.com/HaishinKit/HaishinKit.swift.git", revision: "dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd")"#), """
++            `Package.swift` no longer pins HaishinKit at the commit behind tag 2.2.5. The site describes \
 +            that build — reword the site FIRST, then move this pin.
              """)
  
@@ -1144,8 +1148,17 @@ index 9784bfbb6..30ba83bb9 100644
              """)
      }
  
+diff --git a/decisions.csv b/decisions.csv
+index 4e3939c..5d6b72b 100644
+--- a/decisions.csv
++++ b/decisions.csv
+@@ -1226,3 +1226,4 @@ date,decision,reasoning,expected_outcome,review_date,status
+ 2026-10-07,"Live-jam J0 (founder first priority 2026-10-07): the first measured leg is the NETWORK round trip between two phones (Sync/LinkProbe.swift, 10-byte binary probe over MultipeerConnectivity .unreliable, echoed on the transport callback, nearest-rank p50/p95/p99/max + loss in the diag log, labelled 'not heard latency'). The input/self-monitoring leg is NOT built: this branch has no audio input, and in-graph monitoring is the #1302 crash family; recommended first step is a calibration loopback in a separate short-lived engine, logged as FOUNDER_INBOX J0.","Measure before tuning; the only leg measurable without reopening a paid crash decision is the network. A binary frame keeps older builds silent instead of showing 'Piece received' twice a second.","Two-phone session produces link: lines with real RTT percentiles; input-side decision comes back from the founder before any graph change.",2026-11-06,ACTIVE
+ 2026-10-07,"J0 calibration core (3efc32d97): the loopback latency measurement is a pure Foundation core that names a delay or a named refusal (clipped, rate mismatch, short/silent floor, no peak, edge, far or earlier-in-guard reflection, low SNR, too few or inconsistent repeats); the report keeps reported / acoustic round trip (incl. air path) / network RTT / heard=UNMEASURED apart and never prints a one-way figure. Not wired; the device runner is a separate slice after the microphone decision.","A wrong latency number is worse than none; four different quantities were about to be quoted under one word. A separate engine is no isolation proof (the audio session is process-wide), so the runner must own the route explicitly.","A device run returns either an acoustic round trip with spread <= 0.5 ms or a named refusal; a narrow speaker chain may refuse (noPeak) and then decides the next detector step (whitened correlation).",2026-11-06,ACTIVE
+ 2026-10-07,"H18 answered by the founder (""Piece""): the fifth word of the bottom switcher is Piece, not Project; the learn card and the string catalog move in the same slice and Studio/StudioStage.swift joins the chrome ratchet","E18 (2026-10-02) named the bar with Project while the glossary (2026-09-30) strikes project; TheChromeSpeaksOneWordPerThingTests was red on it since 82b7a6a5a. The plate carries key, tempo, save/open/export of the piece, so the glossary word fits; the enum case stays .project because it is a persistence key, never shown","TheChromeSpeaksOneWordPerThingTests and TheShellSwitchesAtTheBottomTests green on the next Run Tests; one word for one thing across head, plate and learn card",2026-11-06,ACTIVE
++2026-10-08,B2 pin shape: HaishinKit is pinned to the COMMIT behind tag 2.2.5 (dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd) in Package.swift (revision:) and project.yml (revision:); Logboard stays exactVersion 2.6.0.,"Founder standard 2026-10-07 ('strenger hacksicherer malware freier'): a tag can be re-pointed by anyone with push rights upstream, a commit hash cannot, and this is the first package that carries network code into the app. Logboard cannot take a revision because HaishinKit's own manifest asks for a 2.6.x version range. Tag-to-commit re-derived from a read-only clone (git rev-parse 2.2.5^{commit}), not copied from a web page.","Both manifests resolve the same bytes as before. The three guards that pin the manifest lines (ContentPipelineClaimsTests, TheManifestArgumentOrderIsTheCompilersTests, WebsitePagesAreFindableAndHonestTests) carry the new literal. An upgrade means re-deriving the hash from the new tag, never editing it by hand.",2026-11-07,ACTIVE
 diff --git a/docs/architecture.html b/docs/architecture.html
-index 525aee6ec..a45f8670e 100644
+index 525aee6..a45f867 100644
 --- a/docs/architecture.html
 +++ b/docs/architecture.html
 @@ -267,7 +267,7 @@
@@ -1194,7 +1207,7 @@ index 525aee6ec..a45f8670e 100644
                      </div>
                  </div>
 diff --git a/docs/brainstorming.html b/docs/brainstorming.html
-index 610b29336..67471bd73 100644
+index 610b293..67471bd 100644
 --- a/docs/brainstorming.html
 +++ b/docs/brainstorming.html
 @@ -147,7 +147,7 @@
@@ -1207,7 +1220,7 @@ index 610b29336..67471bd73 100644
              <hr class="tool-divider">
  
 diff --git a/docs/claims.html b/docs/claims.html
-index 5562ccfea..1e6f27663 100644
+index 1e644e5..7514832 100644
 --- a/docs/claims.html
 +++ b/docs/claims.html
 @@ -134,8 +134,8 @@
@@ -1215,9 +1228,9 @@ index 5562ccfea..1e6f27663 100644
              <div class="platform-grid">
                  <div class="platform-card" id="claim-5">
 -                    <h3>No drums, sampler instrument, video editing, livestream or audio recorder</h3>
--                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
+-                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming (RTMP was scoped and cut &mdash; never built), and, up to version 10.79.492, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
 +                    <h3>No drums, sampler instrument, video editing or audio recorder; livestream not yet confirmed</h3>
-+                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming you can rely on yet (RTMP streaming is built and being tested &mdash; not yet confirmed on a device), and, up to version 10.79.491, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
++                    <p>All of these were either removed deliberately or never wired up. There is no drum machine, no sampler instrument, no video capture or editing, no livestreaming you can rely on yet (RTMP streaming is built and being tested &mdash; not yet confirmed on a device), and, up to version 10.79.492, no audio recorder &mdash; that build has no microphone input. What the Workstation does have is new and still being tested on devices: it arranges parts on tracks, imports .mid and audio files, edits MIDI notes and records MIDI takes from a controller. From the next version on it can also record the microphone onto one audio track you armed yourself; that is still being tested on devices and is not claimed until it is confirmed there.</p>
                  </div>
                  <div class="platform-card" id="claim-11">
                      <h3>No voice processing: no cloning, AI voice, text-to-speech or autotune</h3>
@@ -1233,27 +1246,27 @@ index 5562ccfea..1e6f27663 100644
              </div>
          </section>
 diff --git a/docs/dev/FEATURE_STATUS.md b/docs/dev/FEATURE_STATUS.md
-index dbbcd9074..c82983db2 100644
+index fdbf12a..6919cb7 100644
 --- a/docs/dev/FEATURE_STATUS.md
 +++ b/docs/dev/FEATURE_STATUS.md
 @@ -23,7 +23,7 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
  | Ebene | Stand | Beleg |
  |---|---|---|
- | **Ausgeliefert (TestFlight)** | **v10.79.491 · Build 2616** · Commit `4d59d5db0` · 2026-10-04 | TestFlight-Lauf #2616 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37197436074, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.490 · Build 2615 · `4919d7001` |
--| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
-+| **In `main`, noch in keinem Build** | `eaf8f7ca6` — Kopfhörer-Raum S3a–S3d, Sichern/Öffnen A1 Schritte 2–4, Sampler-Spur E13-1, Video-Ton E12-1; siehe 1b (Fortsetzung). Auf dem Zweig dazu: Mikrofon-Aufnahme E10-1 und RTMP-Livestream B2 | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
+ | **Ausgeliefert (TestFlight)** | **v10.79.492 · Build 2617** · Commit `62d0f9489` · 2026-10-07 | TestFlight-Lauf #2617 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37655969254, alle Jobs `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder. Vorher: v10.79.491 · Build 2616 · `4d59d5db0` |
+-| **In `main`, noch in keinem Build** | nichts — `main` (`bc4fc52`) ist Vorfahr des Build-Commits `62d0f9489`. **Auf dem Zweig, in keinem Build:** Mikrofon-Aufnahme E10-1; siehe 1b (Zweig) | `git merge-base --is-ancestor origin/main 62d0f9489` · Auto-Merge wartet auf die Gates des Zweigs |
++| **In `main`, noch in keinem Build** | nichts — `main` (`bc4fc52`) ist Vorfahr des Build-Commits `62d0f9489`. **Auf dem Zweig, in keinem Build:** Mikrofon-Aufnahme E10-1 und RTMP-Livestream B2; siehe 1b (Zweig) | `git merge-base --is-ancestor origin/main 62d0f9489` · Auto-Merge wartet auf die Gates des Zweigs |
  | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
  
  Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
-@@ -72,6 +72,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
- | E13-1 Sampler-Spur | MIDI-Spur → **Track** → „Instrument“ EchoelSampler → „Sample“ eine Bibliotheksdatei | `0e43c0893` · `861f78568` | offen (G7) |
- | E12-1 Video-Ton als Teil | **Browse** → „Video to Visuals“ → „Use Its Sound“; durch die eine Import-Tür, kein Bild gespeichert | `60516905b` · `eaf8f7ca6` | offen (G8) |
- | E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören | Zweig, Gates offen | offen (G9) |
+@@ -78,6 +78,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
+ | Fähigkeit | Nutzerweg | Commit | Gerät |
+ |---|---|---|---|
+ | E10-1 Mikrofon-Aufnahme | Audiospur scharf schalten (fragt die Erlaubnis) → Record → Stop; die Aufnahme wird ein Teil und eine Datei in der Bibliothek. Eine Spur zugleich, kein Mithören; Löschen einer einzelnen Aufnahme in der App gibt es noch nicht | Zweig, Gates offen | offen (G9) |
 +| B2 RTMP-Livestream | Routing → Karte „Broadcast“ → Server-URL und Stream-Key (Key in der Keychain) → Go Live; gesendet werden der Master-Mix nach der letzten Stufe und das gerenderte Visual, keine Kamera, kein Mikrofon. HaishinKit 2.2.5 + Logboard 2.6.0 verlinkt. Erreichte Stufe: **kompiliert** — „Server nimmt an“ und „Empfänger spielt ab“ sind ungemessen | Zweig, Gates offen | offen (G10) |
  
  ### 1c. Arrange — das Stück
  
-@@ -138,7 +139,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+@@ -144,7 +145,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
  | `ImmersiveStageView` | Raumkarte: jede Spur als Punkt im Raum, ADM-OSC-Status | Ship-Gate 4: Raum „demonstrierbar, nicht Pflicht“ | ein Chip oder Routing-Knopf |
  | `SessionView` | geführte Session mit Atemtakt | Founder 2026-07-06: „keine Atemübung“ | nur mit neuer Founder-Entscheidung |
  | `ProUnlockView` | Kauf-Seite (StoreKit) | Preismodell v1.1 (Jahres-Abo) steht aus | erst mit v1.1 |
@@ -1261,7 +1274,7 @@ index dbbcd9074..c82983db2 100644
  
  ### 2b. Versteckt, eine Ebene tiefer (der Wächter sieht sie NICHT)
  
-@@ -159,7 +159,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
+@@ -165,7 +165,6 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed
  | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
  | „Follow pulse“-Tempo (`BioTempoDirector`) | fertig, aber ein Zwilling des lebenden Servos | Entscheidung, welcher gilt |
  | Raum-Render (7 Kerne: VBAP, Ambisonics, Binaural, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft; im Kopfhörer ist nichts räumlich | Audio-Anbindung — der kleinste hörbare Weg ist S3 (binauraler Kopfhörer-Ausgang), Plan in `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7 |
@@ -1269,7 +1282,7 @@ index dbbcd9074..c82983db2 100644
  | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
  | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
  | Mehrspur-Aufnahme | Kette gebaut, flag-aus | mehr als EINE Mikrofon-Spur zugleich — E10-1 nimmt genau eine auf |
-@@ -205,7 +204,7 @@ Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine
+@@ -211,7 +210,7 @@ Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine
  Video als musikalisches Material (Inbox E12) · ein hörbarer Raum im Kopfhörer (S3). Die Pläne dazu stehen in
  `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
  
@@ -1279,28 +1292,28 @@ index dbbcd9074..c82983db2 100644
  
  ---
 diff --git a/docs/dev/FOUNDER_INBOX.md b/docs/dev/FOUNDER_INBOX.md
-index 057862248..d7bdd148c 100644
+index 2fd85ea..2df3de3 100644
 --- a/docs/dev/FOUNDER_INBOX.md
 +++ b/docs/dev/FOUNDER_INBOX.md
-@@ -116,6 +116,7 @@ kein Test im Repo kann sie schließen.
- | G7 | **Eine Spur spielt ein Sample** (E13-1 — erst im Build NACH 10.79.491) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
- | G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — erst im Build NACH 10.79.491) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
- | G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.491) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
+@@ -120,6 +120,7 @@ kein Test im Repo kann sie schließen.
+ | G7 | **Eine Spur spielt ein Sample** (E13-1 — seit 10.79.492) | Unten „Arrange" → „Add" → „Import Audio", einen kurzen Klang wählen (z. B. eine Kick). „Add" → „Add MIDI Track". Die neue Spur öffnen → Seite „Track" → „Instrument" auf EchoelSampler → darunter „Sample" die importierte Datei. „Add" → „Import MIDI" (eine Datei mit Noten) oder „New MIDI Part" und im Noten-Editor Noten setzen. Abspielen. Dann „Sample" wechseln, Undo tippen. Stück sichern, ein anderes öffnen, das erste wieder öffnen und abspielen. | Jede Note spielt den Klang; das mittlere C so, wie er aufgenommen ist, höhere Noten höher. Undo gibt das vorige Sample zurück. Nach dem Wiederöffnen spielt dieselbe Datei. Gespielt werden die ersten ~2 Sekunden der Datei. | Ja · Nein + was |
+ | G8 | **Der Ton eines Videos wird ein Teil** (E12-1 — seit 10.79.492) | Unten „Browse" → Karte „Video to Visuals" öffnen → „Choose Video", ein kurzes Video MIT Ton wählen. Unter den Messwerten steht „It has sound. Use Its Sound …" → „Use Its Sound" tippen. Dann unten „Arrange" → abspielen. Unten „Browse" → in der Medienbibliothek nachsehen. Danach ein Video OHNE Ton wählen. | Nach kurzem „Reading the sound…" steht unter der Karte dieselbe Zeile wie nach „Import Audio" („Imported …"); der Ton liegt als Teil auf der ersten Audiospur, spielt zum Stück, und die Bibliothek führt „<Videoname> sound". Die Karte sagt danach „Its sound is in the piece and in your library.", der Knopf ist weg. Ein Video ohne Ton zeigt „No sound." und keinen Knopf. Das Bild wird NICHT gespeichert. VoiceOver liest „Use its sound". | Ja · Nein + was
+ | G9 | **Das Mikrofon nimmt auf eine Audiospur auf** (E10-1 — erst im Build NACH 10.79.492) | Kopfhörer auf. Unten „Arrange" → „Add" → „Add Audio Track". Beim Scharf-Schalten dieser Spur fragt iOS nach dem Mikrofon → erlauben. Ein Stück mit mindestens einem Teil (sonst kann Record nicht laufen). Record tippen, 10 Sekunden singen oder klatschen, Stop. Abspielen. Unten „Browse" → Medienbibliothek. Dann: in den iOS-Einstellungen das Mikrofon für Echoel ausschalten, die Spur aus- und wieder einschalten. Mit Bluetooth-Kopfhörern: dieselbe Aufnahme noch einmal. | Die Aufnahme liegt als neues Teil ab Takt 1 auf der Spur, spielt im Takt, und die Bibliothek führt „Recording …". Bei verweigertem Mikrofon steht unter der Spur ein Satz und „Open Settings" führt zu Echoels Einstellungsseite. Mit Bluetooth bleibt die Musik voll und stereo (kein Telefon-Klang); aufgenommen wird das iPhone-Mikrofon. | Ja · Nein + was · kein Bluetooth zur Hand |
 +| G10 | **Der Stream erreicht einen Server und einen Empfänger** (B2 — erst im Build NACH 10.79.491; ⚠️ öffentliches Senden NUR auf deinen ausdrücklichen Start) | Einen eigenen, privaten Test-Empfänger nehmen (z. B. einen RTMP-Server im Heimnetz oder einen „unlisted“-Kanal), NICHT einen öffentlichen Kanal. Licht-Kachel im Kopf → Routing → ganz unten Karte „Broadcast“ → URL und Stream-Key eintragen → Go Live. Ein Stück spielen, das Visual-Fenster offen lassen. Nach einer Minute WLAN kurz aus- und wieder einschalten. Stop. | Drei Stufen getrennt beantworten: (1) der Server nimmt den Stream an (Status „live“), (2) der Empfänger spielt Ton UND Bild, beide synchron, (3) nach dem WLAN-Aus verbindet er neu oder sagt in Worten, dass er abgebrochen hat. Der Key erscheint nirgends im Klartext. | Stufe 1 ja/nein · Stufe 2 ja/nein · Stufe 3 ja/nein + was |
  
  **Nebenbei, ohne eigenen Haken** (F1–F6b, rein gestalterisch): ein eingeschalteter Schalter ist
  die umgekehrte einfarbige Kachel, nie grün; „Play" und „Stop" sind beim Start und Stopp spürbar
-@@ -201,7 +202,7 @@ offen liegt, steht hier EINMAL. Jede Zeile hat einen fertigen Patch oder eine Ei
+@@ -205,7 +206,7 @@ offen liegt, steht hier EINMAL. Jede Zeile hat einen fertigen Patch oder eine Ei
  | F11 | **Ableton Link** (Audit IO-11) — neue Abhängigkeit (LinkKit, frei, C++) | `Package.swift` + `project.yml`, vorher The Council | CLAUDE.md erlaubt C++ nur für eine freie, Council-geprüfte Bibliothek | [ ] offen |
  | F12 | **Entitlements für Push und iCloud ohne Nutzer** (Audit SEC-5) — `aps-environment` und CloudKit sind deklariert, `AnnouncementCenter.cloudKitConfigured = false` | `Echoelmusic.entitlements` / `project.yml` | bis v1.1 entfernen, danach das Provisioning-Profil neu erzeugen | [ ] offen |
  | F13 | **Store-Texte** (Audit MKT-2/MKT-4/shop-5) | `fastlane/metadata/**` | Workstation, AUv3, OSC-Eingang und MIDI-2.0-Ausgang nur mit den Einschränkungen aus `ContentPipeline/CLAIMS.md` bewerben; den BLE-Gurt als „am Gerät noch nicht geprüft“ kennzeichnen; im de-DE-Eintrag „Oberfläche auf Englisch“. Die Website ist seit 2026-10-03 entsprechend korrigiert | [ ] offen |
 -| F14 | **Broadcast S2 ist gesperrt — und zwar von der automatischen Sicherheitsprüfung dieser Sitzungen, nicht vom Repo.** Abgelehnt wurde am 2026-10-04 genau dieser Schritt, zweimal: HaishinKit 2.2.5 als Swift-Paket in `project.yml` aufnehmen (Paket-Eintrag + Produkt-Abhängigkeit am App-Target), um RTMP für Build und TestFlight zu verlinken. Begründung der Prüfung: „Untrusted Code Integration“. Was dafür schon steht: Stream-Key in der Keychain (Broadcast S1, Build 2615), `BroadcastPublisher` hinter `#if canImport(HaishinKit)`, `BroadcastView` türlos. TestFlight-Lauf 37188777769 (v10.79.490, ohne HaishinKit) ist davon unberührt | `project.yml` + Abhängigkeit | Nur der Founder kann es freigeben: das Paket selbst einbinden, oder in einer Sitzung ausdrücklich zustimmen bzw. eine Berechtigungsregel setzen. Bis dahin baut keine Sitzung einen Umweg (kein Vendoring, kein Kopieren des Quelltexts) | [ ] offen |
-+| F14 | **Broadcast S2 ist gesperrt — und zwar von der automatischen Sicherheitsprüfung dieser Sitzungen, nicht vom Repo.** Abgelehnt wurde am 2026-10-04 genau dieser Schritt, zweimal: HaishinKit 2.2.5 als Swift-Paket in `project.yml` aufnehmen (Paket-Eintrag + Produkt-Abhängigkeit am App-Target), um RTMP für Build und TestFlight zu verlinken. Begründung der Prüfung: „Untrusted Code Integration“. Was dafür schon steht: Stream-Key in der Keychain (Broadcast S1, Build 2615), `BroadcastPublisher` hinter `#if canImport(HaishinKit)`, `BroadcastView` türlos. TestFlight-Lauf 37188777769 (v10.79.490, ohne HaishinKit) ist davon unberührt | `project.yml` + Abhängigkeit | Nur der Founder kann es freigeben: das Paket selbst einbinden, oder in einer Sitzung ausdrücklich zustimmen bzw. eine Berechtigungsregel setzen. Bis dahin baut keine Sitzung einen Umweg (kein Vendoring, kein Kopieren des Quelltexts) | [x] beantwortet 2026-10-04: Founder-Freigabe „BROADCAST AUSFÜHREN“ (HaishinKit inkl. RTMP/RTMPS-Produkte, `Package.swift`, `project.yml`, eng begrenzt Info.plist/CI). Umgesetzt als B2 — Pakete exakt gepinnt, Commit über den Freigabe-Dialog im Default-Modus, nicht über einen Umweg |
++| F14 | **Broadcast S2 ist gesperrt — und zwar von der automatischen Sicherheitsprüfung dieser Sitzungen, nicht vom Repo.** Abgelehnt wurde am 2026-10-04 genau dieser Schritt, zweimal: HaishinKit 2.2.5 als Swift-Paket in `project.yml` aufnehmen (Paket-Eintrag + Produkt-Abhängigkeit am App-Target), um RTMP für Build und TestFlight zu verlinken. Begründung der Prüfung: „Untrusted Code Integration“. Was dafür schon steht: Stream-Key in der Keychain (Broadcast S1, Build 2615), `BroadcastPublisher` hinter `#if canImport(HaishinKit)`, `BroadcastView` türlos. TestFlight-Lauf 37188777769 (v10.79.490, ohne HaishinKit) ist davon unberührt | `project.yml` + Abhängigkeit | Nur der Founder kann es freigeben: das Paket selbst einbinden, oder in einer Sitzung ausdrücklich zustimmen bzw. eine Berechtigungsregel setzen. Bis dahin baut keine Sitzung einen Umweg (kein Vendoring, kein Kopieren des Quelltexts) | [x] beantwortet 2026-10-04: Founder-Freigabe „BROADCAST AUSFÜHREN“ (HaishinKit inkl. RTMP/RTMPS-Produkte, `Package.swift`, `project.yml`, eng begrenzt Info.plist/CI). Umgesetzt als B2 — Pakete gepinnt (HaishinKit auf den Commit dc880cb5 hinter dem Tag 2.2.5, Logboard exakt 2.6.0), Commit über den Freigabe-Dialog im Default-Modus, nicht über einen Umweg |
  
  ---
  
 diff --git a/docs/faq.html b/docs/faq.html
-index f74252c61..93e4605d8 100644
+index f74252c..93e4605 100644
 --- a/docs/faq.html
 +++ b/docs/faq.html
 @@ -41,7 +41,7 @@
@@ -1354,7 +1367,7 @@ index f74252c61..93e4605d8 100644
          </div>
  
 diff --git a/docs/index.html b/docs/index.html
-index 554b62ca3..67f5f8a19 100644
+index 554b62c..67f5f8a 100644
 --- a/docs/index.html
 +++ b/docs/index.html
 @@ -101,7 +101,7 @@
@@ -1376,7 +1389,7 @@ index 554b62ca3..67f5f8a19 100644
                  <div class="persona-card">
                      <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
 diff --git a/docs/integrations.html b/docs/integrations.html
-index 824ae518f..e985cb1bc 100644
+index 824ae51..e985cb1 100644
 --- a/docs/integrations.html
 +++ b/docs/integrations.html
 @@ -181,10 +181,10 @@
@@ -1393,7 +1406,7 @@ index 824ae518f..e985cb1bc 100644
          <div class="contact-box">
              <h3>Integrating Echoel into a rig?</h3>
 diff --git a/docs/overview.html b/docs/overview.html
-index f36607850..0f8b06cc5 100644
+index f366078..0f8b06c 100644
 --- a/docs/overview.html
 +++ b/docs/overview.html
 @@ -165,7 +165,7 @@
@@ -1415,20 +1428,20 @@ index f36607850..0f8b06cc5 100644
  
              <!-- PRIVACY -->
 diff --git a/docs/press.html b/docs/press.html
-index 89b197f74..98755751d 100644
+index e30a5cf..d95800b 100644
 --- a/docs/press.html
 +++ b/docs/press.html
 @@ -130,7 +130,7 @@
                      <li>Open-standard stage I/O: OSC, ADM-OSC immersive objects, Art-Net and sACN lighting.</li>
                      <li>Nearby session sharing between two iPhones (peer-to-peer, no server).</li>
                  </ul>
--                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
-+                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.491 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026. Live broadcast over RTMP / RTMPS is built and being tested &mdash; not yet confirmed on a device, so not claimed. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
+-                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.492 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), live broadcast, and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026; live broadcast was never built. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
++                <p>Not in Echoelmusic today: video editing, audio recording (version 10.79.492 has no microphone input; recording onto an audio track arrives with the next version and is still being tested on devices), and Audio&nbsp;Unit (AUv3) plugin hosting. Video editing was built and then removed in July&nbsp;2026. Live broadcast over RTMP / RTMPS is built and being tested &mdash; not yet confirmed on a device, so not claimed. New and still being tested on devices: a Workstation that arranges parts on tracks, with a note editor and .mid and audio import. Status is always mirrored honestly on the <a href="architecture.html">Architecture</a> page.</p>
              </div></div>
          </div>
  
 diff --git a/docs/tools.html b/docs/tools.html
-index 18a1ec916..9bf62f0d4 100644
+index 18a1ec9..9bf62f0 100644
 --- a/docs/tools.html
 +++ b/docs/tools.html
 @@ -173,7 +173,7 @@
@@ -1450,10 +1463,10 @@ index 18a1ec916..9bf62f0d4 100644
          </div>
  
 diff --git a/project.yml b/project.yml
-index e41e906ac..3442bd18b 100644
+index e41e906..76982c8 100644
 --- a/project.yml
 +++ b/project.yml
-@@ -66,6 +66,32 @@ settings:
+@@ -66,6 +66,37 @@ settings:
        DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
        SWIFT_COMPILATION_MODE: "wholemodule"
  
@@ -1464,10 +1477,15 @@ index e41e906ac..3442bd18b 100644
 +# Produkte", for this file and Package.swift). The FIRST external dependency this app links:
 +# zero-deps was the default, not a law, and the product law says integrate, never rebuild,
 +# specialist infrastructure such as an RTMP muxer and an H.264/AAC encoder pipeline.
-+# · Pinned EXACTLY, not `from:` — a broadcast stack is not something to upgrade by surprise.
-+#   2.2.5 is the release whose API `Stream/RTMPBroadcastEngine.swift` was written against.
++# · Pinned, not `from:` — a broadcast stack is not something to upgrade by surprise. HaishinKit
++#   is pinned to the COMMIT behind tag 2.2.5 (`revision:`): a tag can be re-pointed upstream, a
++#   commit hash cannot, and this is the first package that carries network code into the app.
++#   2.2.5 is the release whose API `Stream/RTMPBroadcastEngine.swift` was written against. To
++#   upgrade, re-derive the hash from the new tag (`git rev-parse <tag>^{commit}` in a clone),
++#   never edit it by hand. Logboard stays `exactVersion:` because HaishinKit's manifest asks
++#   for a 2.6.x VERSION and a revision cannot satisfy a version range.
 +# · Licences: HaishinKit and Logboard are both BSD-3-Clause; acknowledged in
-+#   `Sources/Echoelmusic/Resources/Acknowledgements.md`.
++#   `Sources/Echoelmusic/Resources/ThirdPartyNotices.txt`.
 +# · Logboard is listed EXPLICITLY although HaishinKit already depends on it: the adapter
 +#   imports it to silence the library's console log (it can print the stream key), and an
 +#   import should name a dependency the project declares, not one it inherits. The URL is
@@ -1478,7 +1496,7 @@ index e41e906ac..3442bd18b 100644
 +packages:
 +  HaishinKit:
 +    url: https://github.com/HaishinKit/HaishinKit.swift.git
-+    exactVersion: 2.2.5
++    revision: dc880cb540b8feeb98f64e8b7dcfaaf320b6b2bd
 +  Logboard:
 +    url: https://github.com/shogo4405/Logboard.git
 +    exactVersion: 2.6.0
@@ -1486,7 +1504,7 @@ index e41e906ac..3442bd18b 100644
  # =============================================================================
  # TARGETS
  # =============================================================================
-@@ -230,6 +256,12 @@ targets:
+@@ -230,6 +261,12 @@ targets:
        # that path is the proven one in this project (build 1543+ ships the widget).
        # No new App Store Connect record: an .appex ships INSIDE the host app.
        - target: EchoelmusicAUv3
@@ -1501,7 +1519,7 @@ index e41e906ac..3442bd18b 100644
  
 diff --git a/scratchpads/PLAN_BROADCAST_2026-10-04.md b/scratchpads/PLAN_BROADCAST_2026-10-04.md
 new file mode 100644
-index 000000000..77d04f6b3
+index 0000000..0cd20c5
 --- /dev/null
 +++ b/scratchpads/PLAN_BROADCAST_2026-10-04.md
 @@ -0,0 +1,52 @@
@@ -1518,7 +1536,7 @@ index 000000000..77d04f6b3
 +|---|---|---|
 +| S1 | Stream-Key in der Keychain (`StreamKeyStore`) | Build 2615 |
 +| B1 | Pipeline ohne Netz: `BroadcastMasterPump` (Master-Ring → 1024-Frame-Chunks), `BroadcastVideoTap` (gerendertes Visual, 1280 × 720 @ 30), `BroadcastTimebase` + `BroadcastStartGate` (ein T0 für Ton und Bild), `BroadcastSession` (Zustände, Wiederverbinden), Wächter mit Fake-Engine `TheBroadcastSendsTheMasterAndThePictureTogetherTests` | `main` = a17bce178 |
-+| B2 | HaishinKit 2.2.5 (`HaishinKit` + `RTMPHaishinKit`) + Logboard 2.6.0, exakt gepinnt in `Package.swift` UND `project.yml`; `RTMPBroadcastEngine` (Adapter); Tür = Karte „Broadcast“ in Routing (NavigationLink-Push, kein neues Modal); `ThirdPartyNotices.txt` im Bundle | Zweig, Commit über den Freigabe-Dialog |
++| B2 | HaishinKit 2.2.5 (`HaishinKit` + `RTMPHaishinKit`) + Logboard 2.6.0, gepinnt in `Package.swift` UND `project.yml` (HaishinKit auf den Commit dc880cb5 hinter dem Tag — ein Tag lässt sich verschieben, ein Commit nicht; Logboard exakt, weil HaishinKit eine 2.6.x-Version verlangt); `RTMPBroadcastEngine` (Adapter); Tür = Karte „Broadcast“ in Routing (NavigationLink-Push, kein neues Modal); `ThirdPartyNotices.txt` im Bundle | Zweig, Commit über den Freigabe-Dialog |
 +
 +## Pipeline
 +
