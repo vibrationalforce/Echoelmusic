@@ -16,6 +16,9 @@
 //  · Low-frequency by construction — it changes on a tap. Never a playhead, never a meter:
 //    reading it from any body is cold (the 10.76.41/50 freeze law).
 //  · Medium-neutral: it holds ids of a track and a part, not of an audio channel or a clip.
+//  · GMMW AE-3a — FOCUS is view state of the same kind: whether the selected part's editors
+//    take the stage. Runtime only, never persisted; a change of track or a clear ends it, and
+//    whether it SHOWS is resolved on read (`focusShown`), like the ids.
 //
 
 import Foundation
@@ -41,6 +44,14 @@ public final class WorkstationSelection {
     /// grid, so the flag is read off `inspectorPage` and there is one fact, not two that could
     /// disagree. Kept across a change of part, as the old switch was.
     public var notesOpen: Bool { inspectorPage == .notes }
+    /// GMMW AE-3a (founder 2026-10-08, "Die klassische DAW Audio Editing View fehlt mir noch") —
+    /// whether the selected part's editors take the stage: the Arrange plate then draws only the
+    /// part bar, the open track's head and its detail over the pinned transport. A phone in
+    /// portrait has no room for a real editor under the canvas and the chrome bands. A LAYOUT
+    /// flag, never a modal: it changes what the plate draws, nothing is presented. Cold (a tap),
+    /// never persisted. Ends with the track: `clear`, `toggleTrack`, `selectTrack` and a
+    /// `selectRegion` on another track turn it off.
+    public private(set) var editorFocused = false
 
     public init() {}
 
@@ -52,6 +63,7 @@ public final class WorkstationSelection {
         } else {
             trackID = id
             regionID = nil
+            editorFocused = false
         }
     }
 
@@ -61,11 +73,13 @@ public final class WorkstationSelection {
         guard trackID != id else { return }
         trackID = id
         regionID = nil
+        editorFocused = false
     }
 
     /// Select a part — and, with it, the track it sits on. Unknown ids select nothing.
     public func selectRegion(_ id: UUID, in document: TimelineDocument) {
         guard let region = document.regions.first(where: { $0.id == id }) else { return }
+        if region.laneID != trackID { editorFocused = false }
         regionID = region.id
         trackID = region.laneID
     }
@@ -86,9 +100,27 @@ public final class WorkstationSelection {
         inspectorPage = page
     }
 
+    /// AE-3a — focus on or off. Whether it SHOWS is `focusShown`, asked on read.
+    public func setEditorFocused(_ focused: Bool) {
+        editorFocused = focused
+    }
+
     public func clear() {
         trackID = nil
         regionID = nil
+        editorFocused = false
+    }
+
+    /// AE-3a — whether the Arrange plate draws in focus: the flag is on, the plate is Arrange,
+    /// and the selected part still resolves on its track, which the part bar can arrange (a bio
+    /// curve has no part bar). Resolved on read: a plate change, an Undo that removes the part or
+    /// an Open simply stop showing it — nothing is pruned in a body. Back on Arrange with the same
+    /// part, the focus shows again, the way a DAW keeps an editor open.
+    public nonisolated static func focusShown(_ flag: Bool, onArrange: Bool, region: UUID?, track: UUID?,
+                                              in document: TimelineDocument) -> Bool {
+        guard flag, onArrange, let track,
+              resolvedRegion(region, track: track, in: document) != nil else { return false }
+        return TrackParts.arrangeable(track, in: document)
     }
 
     /// The selected track, if it still exists in `document`.

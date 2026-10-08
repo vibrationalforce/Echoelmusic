@@ -313,6 +313,8 @@ struct WorkstationView: View {
 
     var body: some View {
         let summary = WorkstationSummary(document: timeline.document)
+        // GMMW AE-3a — focus: the selected part's editors take the stage (cold, resolved on read).
+        let focused = editorFocusShown
         // Workstation redesign A3 (founder 2026-10-01, the tablet mockup): the plate scrolls, the
         // transport does NOT. It used to sit in the middle of this stack, so a song longer than
         // the screen scrolled its own Play out of reach. The scroll moved IN here from
@@ -346,7 +348,7 @@ struct WorkstationView: View {
                 songLine(summary)
                 PieceMixerView(voiceCapacity: player.laneVoiceCapacity)
             } else {
-                songLine(summary)
+                if !focused { songLine(summary) }
                 // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
                 // a part selected by tapping it. Handed the document this body already read;
                 // the canvas observes the selection and the clip grid (its note sketches, design
@@ -363,17 +365,20 @@ struct WorkstationView: View {
                 // for the transport readout. Only with a drawn canvas: a song with no parts has
                 // nothing to sit beside. ⚠️ Size class is an environment value, not hot state.
                 // (The plan's third column — the visual — is the floating card over the plate.)
-                let sideBySide = verticalSizeClass == .compact && !arrangeRows.isEmpty
+                let sideBySide = verticalSizeClass == .compact && !arrangeRows.isEmpty && !focused
                 let columns = sideBySide
                     ? AnyLayout(HStackLayout(alignment: .top, spacing: 10))
                     : AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
                 columns {
                 if !arrangeRows.isEmpty {
                   VStack(alignment: .leading, spacing: 10) {
+                    // AE-3a: in focus the canvas steps aside; the part bar stays — it holds the way out.
+                    if !focused {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       bpm: player.preflightTempo,
                                       songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
+                    }
                     // WA4 path 5 — the actions for the part selected on the canvas. Its own
                     // leaf: it reads the song tempo and the clip only inside Split.
                     // M10: Play from the selected part, one tap above its notes — started
@@ -402,6 +407,8 @@ struct WorkstationView: View {
                 VStack(alignment: .leading, spacing: 10) {
                 if sideBySide && open == nil { trackColumnHint }
                 ForEach(summary.lanes) { row in
+                    // AE-3a: in focus only the open track stays — its head and its detail.
+                    if !focused || open == row.id {
                     if ArrangeCanvas.listsCard(row.id, open: open, canvasRows: arrangeRows) { laneRow(row) }
                     if open == row.id {
                         // The mixer and device facts of the ONE open track. Its own leaf, with
@@ -422,13 +429,14 @@ struct WorkstationView: View {
                         }
                         .id(row.id)
                     }
+                    }
                 }
                 }
                 .frame(minWidth: sideBySide ? 260 : 0, maxWidth: sideBySide ? 360 : CGFloat.infinity,
                        alignment: .leading)
                 }
-                if summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
-                if summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
+                if !focused && summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
+                if !focused && summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
             }
             // DAW shell S5: the Mixer ends in its master — after the track strips, and OUTSIDE the
             // empty-song branch above, because an empty song still plays the instrument and its
@@ -459,7 +467,7 @@ struct WorkstationView: View {
             // bar. Its own leaf, because launching reaches the player for members this file's
             // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
             // S2: it may START the song at a scene, through this file's own transport.
-            if pieceView == .arrange {
+            if pieceView == .arrange && !focused {
                 SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })
             }
 
@@ -1631,7 +1639,9 @@ struct WorkstationView: View {
         // the plate's one writer), so a new piece begun from the Project plate would otherwise
         // land there with no guide and no creation door (review of 82b7a6a5a, MED). It stays the
         // plate's first child either way.
+        // GMMW AE-3a: in focus the plate is the part's editors alone — the guide steps aside.
         return Group {
+        if !editorFocusShown {
         if pieceView == .arrange || !facts.hasPart {
         ComposeGuideCard(facts: facts, note: guideNote) { step in
             // Review of c672c2adf (LOW): a refusal from step 2 (a full clip grid) was written to
@@ -1672,6 +1682,17 @@ struct WorkstationView: View {
         }
         }
         }
+        }
+    }
+
+    /// GMMW AE-3a — whether the Arrange plate draws in FOCUS: the part bar, the open track's head
+    /// and its detail, over the pinned transport — nothing else. Asked off the ONE selection owner
+    /// and resolved on read (`WorkstationSelection.focusShown`), so another plate, a deselect or an
+    /// Undo that removes the part simply stop showing it. Cold reads only (a tap, an edit).
+    private var editorFocusShown: Bool {
+        WorkstationSelection.focusShown(selection.editorFocused, onArrange: pieceView == .arrange,
+                                        region: selection.regionID, track: selection.trackID,
+                                        in: timeline.document)
     }
 
     /// Start the arrangement on the ONE transport. Everything this hands over is already
