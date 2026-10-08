@@ -61,6 +61,18 @@ enum RulerLocate {
         return bar * perBar
     }
 
+    /// GMMW AE-12b — where the cycle's band sits on the ruler, as fractions of the lane: the window
+    /// the player loops (`TimelineCycle.window`), on the ruler's own scale (`songTicks`). nil = no
+    /// cycle plays, or a scale that cannot place it. Pure.
+    nonisolated static func cycleBand(_ cycle: TimelineCycle?, loopTicks: Int,
+                                      songTicks: Int) -> (start: Double, width: Double)? {
+        guard songTicks > 0, let window = cycle?.window(loopTicks: loopTicks) else { return nil }
+        let start = Double(window.lowerBound) / Double(songTicks)
+        let end = Swift.min(Double(window.upperBound) / Double(songTicks), 1)
+        guard start < 1, end > start else { return nil }
+        return (start, end - start)
+    }
+
     /// One VoiceOver step from the bar Play starts on: a bar later or earlier, never before the
     /// top or past the last bar. nil = no step (already at that edge, or no piece).
     nonisolated static func steppedBarTick(from tick: Int, later: Bool, songTicks: Int) -> Int? {
@@ -100,6 +112,16 @@ struct ArrangeRulerLocator: View {
         GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .bottomLeading) {
+                // GMMW AE-12b: the piece's cycle, a muted band under the numbers — the bars Play
+                // loops. Read off the document handed in (cold), through the window the player plays.
+                if let band = RulerLocate.cycleBand(document.cycle,
+                                                    loopTicks: TimelineRegionPlayer.loopTicks(for: document),
+                                                    songTicks: songTicks) {
+                    Rectangle()
+                        .fill(EchoelTheme.fill)
+                        .frame(width: width * band.width, height: height)
+                        .offset(x: width * band.start)
+                }
                 ArrangeBarRuler(songTicks: songTicks, height: numbersHeight)
                 if let fraction = ArrangeCanvas.playheadFraction(tick: start, songTicks: songTicks) {
                     // Where Play starts. Accent, the colour of the playhead it becomes; 2 pt so it

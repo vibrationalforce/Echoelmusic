@@ -247,6 +247,9 @@ public final class TimelineStore {
     ///   · `.laneSample` — ONE track's sample from ONE pick in the inspector's Sample row
     ///     (Restructure E13-1): the path the pick found and the one it left (`nil` = no sample).
     ///     The `.lanePatch` rule for one field. Recorded by `editLaneSample(id:_:)`, once per pick.
+    ///   · `.cycle` — the PIECE's cycle (GMMW AE-12b) from ONE tap of the transport's Cycle
+    ///     button: the cycle the tap found and the one it left (`nil` = none). The `.lightLook`
+    ///     rule for one field. Recorded by `setCycle(_:)`, once per tap.
     /// Deliberately NOT whole-document snapshots: lanes are not part of this history — the mixer
     /// enters only as `.laneMix`, a track's sound only as `.lanePatch` — so an undo can never
     /// silently revert a rename, an instrument assignment or a fader move made after the edit
@@ -270,6 +273,7 @@ public final class TimelineStore {
         case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)
         case lightLook(before: Float?, after: Float?)
         case laneSample(laneID: UUID, before: String?, after: String?)
+        case cycle(before: TimelineCycle?, after: TimelineCycle?)
     }
 
     /// B3b — the four mixer fields of ONE track, the only ones a `.laneMix` step can move.
@@ -425,6 +429,13 @@ public final class TimelineStore {
                   lane.samplePath == after else { return nil }
             setLaneSample(laneID, path: before)
             return HistoryStep.laneSample(laneID: laneID, before: after, after: before)
+        case .cycle(let before, let after):
+            // GMMW AE-12b — the `.lightLook` rule: a cycle written since keeps the later one. The
+            // playing song takes the restored cycle on its next step (`refreshStructure`).
+            guard document.cycle == after, before != after else { return nil }
+            document.cycle = before
+            persist()
+            return HistoryStep.cycle(before: after, after: before)
         }
     }
 
@@ -1066,6 +1077,18 @@ public final class TimelineStore {
     public var lightLook: Float {
         LightingStore.sanitizedLookIntensity(
             document.lightLookIntensity ?? LightingStore.defaultLookIntensity)
+    }
+
+    /// GMMW AE-12b — the piece's cycle: the bars the transport loops (`TimelineCycle`), or none.
+    /// ONE writer, ONE `.cycle` step per call; a write that changes nothing records nothing. The
+    /// playing song takes it on its next step without touching a voice
+    /// (`TimelineRegionPlayer.refreshStructure`).
+    public func setCycle(_ cycle: TimelineCycle?) {
+        let before = document.cycle
+        guard before != cycle else { return }
+        document.cycle = cycle
+        persist()
+        pushUndo(.cycle(before: before, after: cycle))
     }
 
     /// Restructure P2 — write the piece's light look. Records NO step: the bare writer, as

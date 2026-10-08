@@ -1160,6 +1160,10 @@ struct WorkstationView: View {
             // view names no voice, and the leaf reads only the cold on/off.
             WorkstationClickToggle()
 
+            // GMMW AE-12b — the Cycle: the piece loops a range of its bars, or the whole piece.
+            // Its own leaf, beside Click: this row names neither the store's cycle nor the cue.
+            WorkstationCycleToggle()
+
             // Phase 3 / Recording R1 — the MIDI take, started through THIS row's one start
             // (from the top) and stopped by the same Stop. A leaf in its own file: this view
             // names neither the recorder nor its controller. Slice C: in the row, not under it,

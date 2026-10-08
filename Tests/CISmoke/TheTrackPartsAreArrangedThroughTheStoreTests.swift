@@ -179,7 +179,10 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // sample file from one pick in the inspector's Sample row, both paths as values — and did
         // NOT move this list, so the claim stood red from that commit until 2026-10-08 (found by
         // the re-grade, invisible in the `tail -200` job log, `Tests/CISmoke/CLAUDE.md` §5). The
-        // hint's "picked sound" covers it: a Sampler track's sound IS its sample.
+        // hint's "picked sound" covers it: a Sampler track's sound IS its sample. GMMW AE-12b
+        // (2026-10-08) added `.cycle` — the PIECE's cycle from one tap of the transport's Cycle
+        // button, both stored values; no lane, no name, no document — and the hint names "cycle"
+        // in the same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
@@ -187,7 +190,8 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                                "case laneMix(laneID: UUID, before: LaneMix, after: LaneMix)",
                                "case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)",
                                "case lightLook(before: Float?, after: Float?)",
-                               "case laneSample(laneID: UUID, before: String?, after: String?)"],
+                               "case laneSample(laneID: UUID, before: String?, after: String?)",
+                               "case cycle(before: TimelineCycle?, after: TimelineCycle?)"],
                        """
                        The history holds a step kind this list does not name. `SongHistoryRow`'s \
                        hint names every kind Undo reverts (since B3b: Mix gestures, and only those \

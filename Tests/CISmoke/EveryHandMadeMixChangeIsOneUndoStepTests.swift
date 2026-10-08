@@ -79,7 +79,7 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
     private static let catalog = "Sources/Echoelmusic/Resources/Localizable.xcstrings"
 
     /// The hint `SongHistoryRow` speaks — the one catalog key this slice rewords.
-    private static let hint = "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+    private static let hint = "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and cycle, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
 
     private static let bar = TimelineTime.ticksPerBar
     private static let clip = UUID()

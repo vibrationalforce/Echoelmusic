@@ -253,6 +253,78 @@
         }
       }
     },
+    "Cycle" : {
+      "comment" : "Accessibility label of the Workstation transport's Cycle button (GMMW AE-12b, 2026-10-08): the piece loops a range of its bars.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cycle"
+          }
+        }
+      }
+    },
+    "Locked while a recording runs." : {
+      "comment" : "Hint of the Cycle button while a MIDI take records (GMMW AE-12b): a cycle set mid-take could end the take.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locked while a recording runs."
+          }
+        }
+      }
+    },
+    "Turns the cycle off, so the whole piece loops again." : {
+      "comment" : "Hint of the Cycle button while a cycle plays (GMMW AE-12b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turns the cycle off, so the whole piece loops again."
+          }
+        }
+      }
+    },
+    "Nothing to cycle: the whole piece already loops." : {
+      "comment" : "Hint of the disabled Cycle button (GMMW AE-12b): a one-bar piece, or a selected part spanning the whole piece.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to cycle: the whole piece already loops."
+          }
+        }
+      }
+    },
+    "Loops the selected part's bars." : {
+      "comment" : "Hint of the Cycle button with a part selected (GMMW AE-12b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loops the selected part's bars."
+          }
+        }
+      }
+    },
+    "Loops four bars from where Play starts." : {
+      "comment" : "Hint of the Cycle button with no part selected (GMMW AE-12b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loops four bars from where Play starts."
+          }
+        }
+      }
+    },
     "Show all" : {
       "comment" : "Title of the part bar's Focus button while focus is on (GMMW AE-3b): the whole arrangement comes back.",
       "extractionState" : "manual",
@@ -2521,14 +2593,14 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
-      "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01; Restructure P2 2026-10-04 adds the piece's light look): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and cycle, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
+      "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01; Restructure P2 2026-10-04 adds the piece's light look; GMMW AE-12b 2026-10-08 its cycle): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look and cycle, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
           }
         }
       }
