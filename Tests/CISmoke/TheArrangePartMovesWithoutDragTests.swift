@@ -56,7 +56,10 @@ final class TheArrangePartMovesWithoutDragTests: XCTestCase {
             "Move one bar later" sits inside the `if startTick > 0` gate — a part at bar 1 would \
             then offer no move at all. Only "earlier" is gated.
             """)
-        for banned in ["TrackParts.", "timeline", "selection", "ticksPerBar"] {
+        // ⛔ RE-ANCHORED (2026-10-08): "selection" matched the haptic's `.sensoryFeedback(.selection,`
+        // (UX slice 13b) and kept this assertion red on every tree since; the ban means the
+        // selection OWNER — see `TheArrangeCanvasMovesAPartByDraggingTests` claim 2.
+        for banned in ["TrackParts.", "timeline", "selection.", "WorkstationSelection", "ticksPerBar"] {
             XCTAssertFalse(block.contains(banned), """
                 `ArrangePartBlock` contains `\(banned)`. The leaf names the move; the canvas \
                 decides where it lands and commits it.

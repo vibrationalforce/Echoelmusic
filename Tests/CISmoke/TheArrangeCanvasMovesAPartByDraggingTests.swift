@@ -106,8 +106,13 @@ final class TheArrangeCanvasMovesAPartByDraggingTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: the gesture's `.onEnded` (#454)")
         }
         XCTAssertTrue(block[ended.upperBound...].contains("onDrop("), "`onDrop` is called from the release")
-        for banned in ["TimelineStore", "timeline", "selection", "currentTick", "player",
-                       "TimelineView(", "Timer"] {
+        // ⛔ RE-ANCHORED (2026-10-08): this list banned the bare word "selection", and since UX
+        // slice 13b the block carries `.sensoryFeedback(.selection, trigger: landing)` — the
+        // HAPTIC's style, pinned by `ThePartDragTicksOnEachBarTests`. Two guards demanded
+        // opposite things, so this assertion was red on every tree since the haptic landed. The
+        // ban means the selection OWNER: its member access and its type.
+        for banned in ["TimelineStore", "timeline", "selection.", "WorkstationSelection", "currentTick",
+                       "player", "TimelineView(", "Timer"] {
             XCTAssertFalse(block.contains(banned), """
                 `ArrangePartBlock` contains `\(banned)`. The leaf draws a part and reports a \
                 release; the store, the selection and every clock stay out of it.
