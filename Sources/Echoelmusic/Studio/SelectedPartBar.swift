@@ -167,14 +167,24 @@ enum PartSplit {
         return snapped
     }
 
-    /// Whether any transport step falls strictly inside `part` — exactly when SOME playhead
-    /// position gives `playheadCut` a cut. While the piece plays, the button is lit on this
-    /// alone; where the playhead is gets read at the tap.
-    nonisolated static func hasStepInside(_ part: TrackParts.Part) -> Bool {
-        let step = TimelineTime.ticksPerTransportStep
-        guard step > 0, part.lengthTicks > 1 else { return false }
-        let first = (Swift.max(0, part.startTick) / step + 1) * step
+    /// Whether a line of a grid `unit` ticks wide falls strictly inside `part`. With the
+    /// transport step it says whether ANY playhead can cut the part (playing: the step sounding
+    /// now); with the bar, whether the ruler's line can (stopped: `locate` puts the line on a
+    /// bar) — AE-9 review, MED-1: one rule for both, so neither label can point at a ruler tap
+    /// that could never help.
+    nonisolated static func hasLineInside(_ part: TrackParts.Part, every unit: Int) -> Bool {
+        guard unit > 0, part.lengthTicks > 1 else { return false }
+        let first = (Swift.max(0, part.startTick) / unit + 1) * unit
         return first < part.startTick + part.lengthTicks
+    }
+
+    /// Where the playhead is, for "Split at playhead": playing, the step sounding now; stopped,
+    /// the ruler's line — the bar Play starts from, through the ONE fold (AE-7) that draws the
+    /// line, so the cut lands where the line is drawn (AE-9 review, MED-4: one composition, asked
+    /// by the button's lit state and by its tap alike).
+    nonisolated static func playheadTick(playing: Bool, currentTick: Int, cueTick: Int,
+                                         in document: TimelineDocument) -> Int {
+        playing ? currentTick : TimelineRegionPlayer.playStartTick(forCue: cueTick, in: document)
     }
 }
 
@@ -516,10 +526,17 @@ struct SelectedPartBar: View {
                               joinable: joinable, trims: trims, showsTitles: true)
                     actionRow(part, regionID: regionID, cut: cut, splittable: splittable,
                               joinable: joinable, trims: trims, showsTitles: false)
+                    // AE-9 review (MED-3): seven icons plus their gaps are 356 pt — wider than a
+                    // 375-pt phone leaves the bar (339). The last candidate puts "At playhead" up
+                    // with the move pair: three icons over six, the widest row 304 pt.
                     VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
-                        moveRow(part, showsTitles: false)
+                        HStack(spacing: EchoelTheme.spaceS) {
+                            moveRow(part, showsTitles: false)
+                            playheadSplit(part, regionID: regionID, showsTitles: false)
+                        }
                         editRow(part, regionID: regionID, cut: cut, splittable: splittable,
-                                joinable: joinable, trims: trims, showsTitles: false)
+                                joinable: joinable, trims: trims, showsTitles: false,
+                                withPlayheadSplit: false)
                     }
                 }
                 // Review of 75d27e615 (LOW): a refused Split said why only to VoiceOver — a
@@ -543,7 +560,7 @@ struct SelectedPartBar: View {
         HStack(spacing: EchoelTheme.spaceS) {
             moveRow(part, showsTitles: showsTitles)
             editRow(part, regionID: regionID, cut: cut, splittable: splittable, joinable: joinable,
-                    trims: trims, showsTitles: showsTitles)
+                    trims: trims, showsTitles: showsTitles, withPlayheadSplit: true)
         }
     }
 
@@ -562,7 +579,8 @@ struct SelectedPartBar: View {
     }
 
     private func editRow(_ part: TrackParts.Part, regionID: UUID, cut: Int?, splittable: Bool,
-                         joinable: Bool, trims: Trims, showsTitles: Bool) -> some View {
+                         joinable: Bool, trims: Trims, showsTitles: Bool,
+                         withPlayheadSplit: Bool) -> some View {
         HStack(spacing: EchoelTheme.spaceS) {
             button("Trim start", "arrow.right.to.line", enabled: trims.start != nil,
                    showsTitle: showsTitles, label: trimStartLabel(trims.start)) {
@@ -578,12 +596,10 @@ struct SelectedPartBar: View {
                    label: splitLabel(cut: cut, splittable: splittable)) {
                 if splittable, let cut { split(regionID, at: cut) }
             }
-            // GMMW AE-9 — the second Split: where the playhead is. The leaf reads the player;
-            // the cut goes through THIS bar's `split` (media tempo, one undo step).
-            PartSplitAtPlayhead(part: part, regionID: regionID,
-                                split: { split($0, at: $1) }) { enabled, label, action in
-                button("At playhead", "scissors.circle", enabled: enabled, showsTitle: showsTitles,
-                       label: label, action: action)
+            // GMMW AE-9 — the second Split, beside the first (the narrowest layout moves it up
+            // to the move pair instead).
+            if withPlayheadSplit {
+                playheadSplit(part, regionID: regionID, showsTitles: showsTitles)
             }
             button("Join next", "arrow.triangle.merge", enabled: joinable, showsTitle: showsTitles,
                    label: joinLabel(joinable)) {
@@ -597,6 +613,16 @@ struct SelectedPartBar: View {
                    label: String(localized: "Remove the selected part. Undo brings it back")) {
                 TrackParts.remove(part, timeline: timeline)
             }
+        }
+    }
+
+    /// GMMW AE-9 — the second Split: where the playhead is. The leaf reads the player; the cut
+    /// goes through THIS bar's `split` (media tempo, one undo step) and wears its button.
+    private func playheadSplit(_ part: TrackParts.Part, regionID: UUID, showsTitles: Bool) -> some View {
+        PartSplitAtPlayhead(part: part, regionID: regionID,
+                            split: { split($0, at: $1) }) { enabled, label, action in
+            button("At playhead", "scissors.circle", enabled: enabled, showsTitle: showsTitles,
+                   label: label, action: action)
         }
     }
 
@@ -1060,17 +1086,18 @@ private struct PartPitchField: View {
 /// fehlt mir noch. Orientiere dich an den Bigplayern"). A leaf, so the player's state stays in
 /// its own body.
 ///
-/// ⚠️ WHERE THE PLAYHEAD IS. Stopped, it is the ruler's line: the bar Play starts from, through
-/// `TimelineRegionPlayer.playStartTick(forCue:in:)` — the ONE fold the line, the Play hint and
-/// `play` ask (AE-7) — so the cut lands exactly where the line is drawn. Playing, it is the step
+/// ⚠️ WHERE THE PLAYHEAD IS (`PartSplit.playheadTick`). Stopped, it is the ruler's line: the bar
+/// Play starts from, through the ONE fold the line, the Play hint and `play` ask (AE-7) — so the
+/// cut lands exactly where the line is drawn, and only on a bar. Playing, it is the step
 /// sounding now, `currentTick`.
 ///
-/// ⚠️ `currentTick` IS READ ONLY INSIDE THE TAP. It is `@ObservationIgnored` (~8 Hz while
-/// playing): a body read would subscribe nothing and go stale, and the freeze law keeps every
-/// position out of every body anyway (10.76.41/50). So while playing the button is lit whenever
-/// the part has a step inside it (`PartSplit.hasStepInside`) and the tap decides; with the
-/// playhead outside the part the tap cuts nothing and says so in the log, and the label says
-/// so beforehand. The body reads `isPlaying` and `cueTick` — both cold (a start, a stop, a tap).
+/// ⚠️ `currentTick` IS READ ONLY INSIDE THIS LEAF'S OWN CLOCK. It is `@ObservationIgnored`
+/// (~8 Hz while playing), so a plain body read would subscribe nothing and go stale. While the
+/// piece plays the leaf drives itself on a `TimelineView`, paused while stopped — the
+/// `ArrangePlayheadView` pattern (10.76.41/50): only this button redraws, no ancestor reads the
+/// position. AE-9 review, MED-2: the first version lit the button whenever the part had any step
+/// inside it and let the tap decide, so a lit button could do nothing; the lit state is now the
+/// tap's own answer, a step at a time.
 ///
 /// The cut goes through the bar's own `split` (the media tempo, one store call = one undo step),
 /// after the same `keepsWhoPlays` the first Split asks — asked again at the tap, against the
@@ -1087,26 +1114,33 @@ private struct PartSplitAtPlayhead<Content: View>: View {
     /// The bar's own button, so this one looks and speaks like its neighbours (#416).
     let content: (_ enabled: Bool, _ label: String, _ action: @escaping () -> Void) -> Content
 
+    /// How often the lit state follows the moving playhead: a transport step is 125 ms at 120 BPM.
+    /// Computed, not stored: a generic type cannot hold a static stored property.
+    private static var playingRefresh: TimeInterval { 1.0 / 8.0 }
+
     var body: some View {
         let document = timeline.document
         let playing = player.isPlaying
-        // Stopped only: the ruler's line, cold. Playing, nothing here knows where the playhead is.
-        let cut: Int? = playing ? nil
-            : PartSplit.playheadCut(for: part,
-                                    atTick: TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document))
-        let enabled: Bool = playing
-            ? PartSplit.hasStepInside(part)
-            : (cut.map { PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0, in: document) } ?? false)
-        content(enabled, label(playing: playing, cut: cut, enabled: enabled), { splitAtPlayhead() })
+        let cueTick = player.cueTick
+        TimelineView(.animation(minimumInterval: Self.playingRefresh, paused: !playing)) { _ in
+            let head = PartSplit.playheadTick(playing: playing, currentTick: player.currentTick,
+                                              cueTick: cueTick, in: document)
+            let cut = PartSplit.playheadCut(for: part, atTick: head)
+            let enabled = cut.map { PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0, in: document) } ?? false
+            content(enabled, label(playing: playing, cut: cut, enabled: enabled), { splitAtPlayhead() })
+        }
     }
 
     private func label(playing: Bool, cut: Int?, enabled: Bool) -> String {
-        guard PartSplit.hasStepInside(part) else { return String(localized: "This part is too short to split") }
-        if playing {
-            return String(localized: "Split the selected part where the piece plays now; nothing happens while the playhead is outside it")
+        // Stopped the line sits on a bar, so a part with no bar line inside it can never be cut
+        // from the ruler — say what does work instead (review MED-1).
+        let unit = playing ? TimelineTime.ticksPerTransportStep : TimelineTime.ticksPerBar
+        guard PartSplit.hasLineInside(part, every: unit) else {
+            return playing ? String(localized: "This part is too short to split")
+                           : String(localized: "No bar line falls inside this part. Use Split, or cut while the piece plays")
         }
         guard let cut else {
-            return String(localized: "The playhead is outside this part. Tap the ruler above the tracks to move it")
+            return String(localized: "The playhead is not inside this part. Tap the ruler above the tracks to move it")
         }
         guard enabled else { return String(localized: "Splitting here would change which overlapping part plays") }
         return String(localized: "Split the selected part at the playhead, ") + SessionGrid.label(forTick: cut)
@@ -1114,11 +1148,9 @@ private struct PartSplitAtPlayhead<Content: View>: View {
 
     private func splitAtPlayhead() {
         let document = timeline.document
-        // The position, read HERE and nowhere else: playing, the step sounding now; stopped, the
-        // ruler's line.
-        let head = player.isPlaying
-            ? player.currentTick
-            : TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)
+        // The position, read again HERE: the lit state may be a step behind the transport.
+        let head = PartSplit.playheadTick(playing: player.isPlaying, currentTick: player.currentTick,
+                                          cueTick: player.cueTick, in: document)
         guard let cut = PartSplit.playheadCut(for: part, atTick: head),
               PartSplit.keepsWhoPlays(regionID: regionID, atTick: cut, in: document) else {
             log.log(.info, category: .audio, "Split at playhead refused: the playhead is outside the part, or the cut would change which overlapping part plays")

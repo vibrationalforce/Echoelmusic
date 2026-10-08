@@ -230,7 +230,7 @@
       }
     },
     "Split the selected part at the playhead, " : {
-      "comment" : "Seam head of the VoiceOver label of the part bar's 'At playhead' button while stopped (GMMW AE-9): followed by the bar, e.g. \"Bar 5\".",
+      "comment" : "Seam head of the VoiceOver label of the part bar's 'At playhead' button (GMMW AE-9): followed by where the cut lands, e.g. \"Bar 5\".",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -241,26 +241,26 @@
         }
       }
     },
-    "Split the selected part where the piece plays now; nothing happens while the playhead is outside it" : {
-      "comment" : "VoiceOver label of the part bar's 'At playhead' button while the piece plays (GMMW AE-9): the position is read at the tap.",
+    "The playhead is not inside this part. Tap the ruler above the tracks to move it" : {
+      "comment" : "VoiceOver label of the part bar's 'At playhead' button while the playhead (the ruler's line, or the step playing now) is outside the selected part (GMMW AE-9 review).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Split the selected part where the piece plays now; nothing happens while the playhead is outside it"
+            "value" : "The playhead is not inside this part. Tap the ruler above the tracks to move it"
           }
         }
       }
     },
-    "The playhead is outside this part. Tap the ruler above the tracks to move it" : {
-      "comment" : "VoiceOver label of the part bar's 'At playhead' button while stopped with the ruler's line outside the selected part (GMMW AE-9).",
+    "No bar line falls inside this part. Use Split, or cut while the piece plays" : {
+      "comment" : "VoiceOver label of the part bar's 'At playhead' button while stopped on a part with no bar line inside it: the ruler's line always sits on a bar, so it can never cut there (GMMW AE-9 review, MED-1).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The playhead is outside this part. Tap the ruler above the tracks to move it"
+            "value" : "No bar line falls inside this part. Use Split, or cut while the piece plays"
           }
         }
       }
