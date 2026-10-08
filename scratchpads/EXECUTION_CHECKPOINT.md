@@ -3,8 +3,9 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
-CURRENT (2026-10-08): branch tip = 4db2629 + this kit commit (scratchpads only; no code since 62d0f9489 =
-  TestFlight 10.79.492, run 37655969254 #2617). main = bc4fc5205 (ancestor of the build). NOTHING to bump.
+CURRENT (2026-10-08b): branch tip = 4cb70eb (kit 4251d7b → J1 row 0ecd593 → stem headers 6798528 → ASC docs 7bd36a4
+  → Join next 4cb70eb). Code since TestFlight 10.79.492 (62d0f9489): J1 row + Join next ⇒ a bump is LEGITIMATE once
+  the gates on 4cb70eb are green (Compile Check conclusion · CI/CD step Build for Testing). main = bc4fc5205.
   LANDING KIT ready for the founder: scratchpads/FOUNDER_LANDING_2026-10-08.md — P3 #310 (workflow) → P1 E10-1
   (+review fixes, .undetermined wording, 10.79.492 literals, privacy truth) → P2 B2 (HaishinKit pinned to commit
   dc880cb5 of tag 2.2.5, Logboard exact 2.6.0). Verified: all three apply on a fresh 4db2629 tree, result == source
