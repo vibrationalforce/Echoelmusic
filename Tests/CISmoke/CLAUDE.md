@@ -348,6 +348,15 @@ flattering direction of §3. What it does support: a NEW slow-type-check warn on
 expression is worth reading rather than tolerating, which #933d already asks for on hygiene
 grounds alone.
 
+⛔ **AND A FOURTH MEMBER: A STORED PROPERTY THAT SHADOWS AN XCTest MEMBER (GMMW SH-4, `05fc449`).**
+`AnUnreadableStoreKeepsItsBytesTests` declared `private let name = "kept-probe"` on its
+`XCTestCase` subclass. XCTest already has a `name` (`XCTActivity.h`), so every bare `name` in the
+file was `ambiguous use of 'name'` — 21 errors, one root cause, `** TEST BUILD FAILED **`, and the
+whole blocking bundle stopped for four pushes. Every checker was clean, for the reason above: they
+read needles as data. A LOCAL `let name` inside a test method is fine (locals shadow); the defect
+is a stored property at class scope. **Do not give a guard class a stored `name`, `description`
+or `testRun`** — call it what it is (`probe`).
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:

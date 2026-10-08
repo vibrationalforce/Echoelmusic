@@ -57,7 +57,7 @@ private struct Tiny: Codable, Equatable {
 
 final class AnUnreadableStoreKeepsItsBytesTests: XCTestCase {
 
-    private let name = "kept-probe"
+    private let probe = "kept-probe"
 
     /// One throwaway container per test (the UUID: a simulator container is reused between
     /// local runs, `AutosaveSlotTests`).
@@ -84,70 +84,70 @@ final class AnUnreadableStoreKeepsItsBytesTests: XCTestCase {
 
     func testAFileThatDoesNotDecodeIsKeptBeforeTheNextSaveOverwritesIt() throws {
         let store = throwawayStore()
-        defer { erase(store, [name]) }
+        defer { erase(store, [probe]) }
         let broken = bytes("{\"label\":\"half a song\",\"value\":")
-        XCTAssertTrue(store.saveRawForTests(broken, name: name), "precondition: the raw write")
+        XCTAssertTrue(store.saveRawForTests(broken, name: probe), "precondition: the raw write")
 
-        XCTAssertNil(store.load(Tiny.self, name: name), "the read still gives up — that contract is unchanged")
-        XCTAssertEqual(kept(store, name), [broken], """
+        XCTAssertNil(store.load(Tiny.self, name: probe), "the read still gives up — that contract is unchanged")
+        XCTAssertEqual(kept(store, probe), [broken], """
             the bytes the read could not use must be kept BEFORE it returns — the caller's next \
             save is about to write its fallback over the file
             """)
 
         // What every caller does next: save the fallback. The kept copy must outlive it.
         let fallback = Tiny(label: "fallback", value: 0)
-        XCTAssertTrue(store.save(fallback, name: name))
-        XCTAssertEqual(store.load(Tiny.self, name: name), fallback,
+        XCTAssertTrue(store.save(fallback, name: probe))
+        XCTAssertEqual(store.load(Tiny.self, name: probe), fallback,
                        "precondition: the document really was overwritten")
-        XCTAssertEqual(kept(store, name), [broken], "the overwrite must not touch the kept copy")
+        XCTAssertEqual(kept(store, probe), [broken], "the overwrite must not touch the kept copy")
     }
 
     // MARK: - 2. A library that drops elements keeps them first
 
     func testALibraryThatDropsElementsKeepsThemBeforeTheCompactingSave() throws {
         let store = throwawayStore()
-        defer { erase(store, [name]) }
+        defer { erase(store, [probe]) }
         let partly = bytes("[{\"label\":\"a\",\"value\":1},42,{\"label\":\"c\"}]")
-        XCTAssertTrue(store.saveRawForTests(partly, name: name))
+        XCTAssertTrue(store.saveRawForTests(partly, name: probe))
 
-        let values = try XCTUnwrap(store.loadLossyArray(Tiny.self, name: name))
+        let values = try XCTUnwrap(store.loadLossyArray(Tiny.self, name: probe))
         XCTAssertEqual(values.count, 3, "precondition: every slot accounted for, holes included")
         let survivors = values.compactMap { $0 }
         XCTAssertEqual(survivors, [Tiny(label: "a", value: 1)], "precondition: two elements are holes")
-        XCTAssertEqual(kept(store, name), [partly], """
+        XCTAssertEqual(kept(store, probe), [partly], """
             two elements did not decode, and the next save writes the array back WITHOUT them — \
             the bounded loss is only bounded if the bytes are kept now
             """)
 
-        XCTAssertTrue(store.save(survivors, name: name))
-        XCTAssertEqual(kept(store, name), [partly], "the compacting save must not touch the kept copy")
+        XCTAssertTrue(store.save(survivors, name: probe))
+        XCTAssertEqual(kept(store, probe), [partly], "the compacting save must not touch the kept copy")
     }
 
     // MARK: - 3. A library that is not an array at all is kept too
 
     func testALibraryThatIsNotAnArrayIsKept() {
         let store = throwawayStore()
-        defer { erase(store, [name]) }
+        defer { erase(store, [probe]) }
         let object = bytes("{\"label\":\"a\",\"value\":1}")
-        XCTAssertTrue(store.saveRawForTests(object, name: name))
+        XCTAssertTrue(store.saveRawForTests(object, name: probe))
 
-        XCTAssertNil(store.loadLossyArray(Tiny.self, name: name), "precondition: unreadable as a library")
-        XCTAssertEqual(kept(store, name), [object], "the whole file is about to become an empty library")
+        XCTAssertNil(store.loadLossyArray(Tiny.self, name: probe), "precondition: unreadable as a library")
+        XCTAssertEqual(kept(store, probe), [object], "the whole file is about to become an empty library")
     }
 
     // MARK: - 4. COUNTERWEIGHT — a read that loses nothing keeps nothing
 
     func testAReadThatLosesNothingKeepsNothing() throws {
         let store = throwawayStore()
-        defer { erase(store, [name, "grid", "library", "absent"]) }
+        defer { erase(store, [probe, "grid", "library", "absent"]) }
 
         XCTAssertNil(store.load(Tiny.self, name: "absent"))
         XCTAssertNil(store.loadLossyArray(Tiny.self, name: "absent"))
         XCTAssertTrue(store.unreadableCopies(of: "absent").isEmpty, "an absent file is 'nothing saved yet', not a loss")
 
-        XCTAssertTrue(store.save(Tiny(label: "ok", value: 1), name: name))
-        XCTAssertEqual(store.load(Tiny.self, name: name), Tiny(label: "ok", value: 1))
-        XCTAssertTrue(store.unreadableCopies(of: name).isEmpty, "a clean read must not copy")
+        XCTAssertTrue(store.save(Tiny(label: "ok", value: 1), name: probe))
+        XCTAssertEqual(store.load(Tiny.self, name: probe), Tiny(label: "ok", value: 1))
+        XCTAssertTrue(store.unreadableCopies(of: probe).isEmpty, "a clean read must not copy")
 
         XCTAssertTrue(store.save([Tiny(label: "a", value: 1), Tiny(label: "b", value: 2)], name: "library"))
         XCTAssertEqual(try XCTUnwrap(store.loadLossyArray(Tiny.self, name: "library")).count, 2)
@@ -167,57 +167,57 @@ final class AnUnreadableStoreKeepsItsBytesTests: XCTestCase {
 
     func testTheSameBytesAreKeptOnceAndOnlyTheNewestStay() throws {
         let store = throwawayStore()
-        defer { erase(store, [name]) }
+        defer { erase(store, [probe]) }
         let cap = AppGroupStore.unreadableCopiesKept
         XCTAssertGreaterThan(cap, 0, "a cap of zero keeps nothing — that is this slice undone")
 
         let first = bytes("{\"label\":\"broken\",\"value\":")
-        XCTAssertTrue(store.saveRawForTests(first, name: name))
-        for _ in 0..<3 { XCTAssertNil(store.load(Tiny.self, name: name)) }
-        XCTAssertEqual(kept(store, name), [first], """
+        XCTAssertTrue(store.saveRawForTests(first, name: probe))
+        for _ in 0..<3 { XCTAssertNil(store.load(Tiny.self, name: probe)) }
+        XCTAssertEqual(kept(store, probe), [first], """
             every launch meets the same broken file again — one copy, not one per launch
             """)
 
         let later: [Data] = (1...(cap + 1)).map { bytes("{\"label\":\"broken \($0)\",\"value\":") }
         for broken in later {
-            XCTAssertTrue(store.saveRawForTests(broken, name: name))
-            XCTAssertNil(store.load(Tiny.self, name: name))
+            XCTAssertTrue(store.saveRawForTests(broken, name: probe))
+            XCTAssertNil(store.load(Tiny.self, name: probe))
         }
         let newestFirst: [Data?] = ([first] + later).reversed().prefix(cap).map { Optional($0) }
-        XCTAssertEqual(kept(store, name), newestFirst, """
+        XCTAssertEqual(kept(store, probe), newestFirst, """
             the container must hold the NEWEST \(cap) copies, newest first — no copy is unbounded, \
             and the one a person most likely wants is never the one pruned
             """)
 
         // A byte string that is already among the kept ones adds nothing and moves nothing.
         let alreadyKept = try XCTUnwrap(later.last)
-        XCTAssertTrue(store.saveRawForTests(alreadyKept, name: name))
-        XCTAssertNil(store.load(Tiny.self, name: name))
-        XCTAssertEqual(kept(store, name), newestFirst)
+        XCTAssertTrue(store.saveRawForTests(alreadyKept, name: probe))
+        XCTAssertNil(store.load(Tiny.self, name: probe))
+        XCTAssertEqual(kept(store, probe), newestFirst)
     }
 
     // MARK: - 6. A kept copy sits beside its file and cannot pass for a live document
 
     func testAKeptCopyCannotPassForALiveDocument() throws {
         let store = throwawayStore()
-        let neighbour = "\(name)-2"
-        defer { erase(store, [name, neighbour]) }
-        XCTAssertTrue(store.saveRawForTests(bytes("not json"), name: name))
-        XCTAssertNil(store.load(Tiny.self, name: name))
+        let neighbour = "\(probe)-2"
+        defer { erase(store, [probe, neighbour]) }
+        XCTAssertTrue(store.saveRawForTests(bytes("not json"), name: probe))
+        XCTAssertNil(store.load(Tiny.self, name: probe))
         XCTAssertTrue(store.saveRawForTests(bytes("also not json"), name: neighbour))
         XCTAssertNil(store.load(Tiny.self, name: neighbour))
 
-        let copy = try XCTUnwrap(store.unreadableCopies(of: name).first, "precondition: a copy exists")
-        XCTAssertEqual(store.unreadableCopies(of: name).count, 1, """
+        let copy = try XCTUnwrap(store.unreadableCopies(of: probe).first, "precondition: a copy exists")
+        XCTAssertEqual(store.unreadableCopies(of: probe).count, 1, """
             another document's copies must not be listed as this one's — a recovery door would \
             offer the wrong song
             """)
-        XCTAssertTrue(copy.lastPathComponent.hasPrefix("\(name).json"), "the copy is named after its file")
+        XCTAssertTrue(copy.lastPathComponent.hasPrefix("\(probe).json"), "the copy is named after its file")
         XCTAssertFalse(copy.lastPathComponent.hasSuffix(".json"), """
             a copy ending in `.json` is a file any listing of the store's documents reads as a \
             live one — the unreadable bytes would come back as a document
             """)
-        let beside = copy.deletingLastPathComponent().appendingPathComponent("\(name).json")
+        let beside = copy.deletingLastPathComponent().appendingPathComponent("\(probe).json")
         XCTAssertTrue(FileManager.default.fileExists(atPath: beside.path), "the copy sits beside the file it keeps")
     }
 
