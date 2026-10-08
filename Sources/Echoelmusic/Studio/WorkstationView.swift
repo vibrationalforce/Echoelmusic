@@ -305,6 +305,10 @@ struct WorkstationView: View {
     /// Separate from `tuningPending` because that key stays set after the task ends.
     @State private var measuringClip: UUID?
 
+    /// GMMW P1-2 — which shelf the Browse plate shows (`BrowseShelf`). VIEW state, not persisted:
+    /// the plate opens on the sounds. Cold — a tap writes it, never a tick.
+    @State private var browseShelf = BrowseShelf.opening
+
     /// WA4 — the ONE owner of what is selected (`WorkstationSelection`, built once by the app).
     /// VIEW state, never song state: not part of the piece, never persisted. Cold — it changes
     /// on a tap. ⛔ `@State selectedTrack` stood here (WA4.1); a second surface that wanted
@@ -932,28 +936,51 @@ struct WorkstationView: View {
     /// song down, and the browser is one tap from anywhere (the switcher), as in every DAW.
     private var browsePlate: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // DAW shell S6 — the stored sounds, in store order; a tap gives the open synth
-            // track that sound through the Device page's own seam (one Undo step). Its own leaf.
-            SoundBrowserView()
-            // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
-            // to put one on the song again without Files, a second copy or a second clip slot.
-            // Its own leaf: it lists the directory detached and writes through
-            // `MediaPlacement`; this view reads none of its state.
-            MediaBrowserView()
-            // MS3 (founder order 2026-09-27) — a photo's colour, brightness and contrast shape
-            // the live visual, with Undo. Its own leaf beside the library: it presents the
-            // system photo picker itself (no modifier here) and this view reads none of its state.
-            #if canImport(PhotosUI) && canImport(ImageIO)
-            PhotoSeedCard()
-            #endif
-            // MV2: the same for a short video — brightness, colour and picture change shape the
-            // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
-            // E12-1: its sound lands through THIS view's import (`useVideoSound`), so there is
-            // still one import door.
-            #if canImport(PhotosUI) && canImport(AVFoundation)
-            VideoSeedCard(useSound: useVideoSound)
-            #endif
+            browseShelfPicker
+            // GMMW P1-2 — ONE shelf at a time. Every card stays mounted HERE, behind its shelf's
+            // `if`. A card that leaves cleans up as it does when the plate is left: each one's
+            // `.onDisappear` cancels its read and releases what it held.
+            if browseShelf == .sounds {
+                // DAW shell S6 — the stored sounds, in store order; a tap gives the open synth
+                // track that sound through the Device page's own seam (one Undo step). Its own leaf.
+                SoundBrowserView()
+            }
+            if browseShelf == .media {
+                // Phase 3 / MA1 — the media library: the audio files already imported, and "Place"
+                // to put one on the song again without Files, a second copy or a second clip slot.
+                // Its own leaf: it lists the directory detached and writes through
+                // `MediaPlacement`; this view reads none of its state.
+                MediaBrowserView()
+            }
+            if browseShelf == .visuals {
+                // MS3 (founder order 2026-09-27) — a photo's colour, brightness and contrast shape
+                // the live visual, with Undo. Its own leaf beside the library: it presents the
+                // system photo picker itself (no modifier here) and this view reads none of its state.
+                #if canImport(PhotosUI) && canImport(ImageIO)
+                PhotoSeedCard()
+                #endif
+                // MV2: the same for a short video — brightness, colour and picture change shape the
+                // visual, and its length is read in bars. Its own leaf; one shared Undo with the photo.
+                // E12-1: its sound lands through THIS view's import (`useVideoSound`), so there is
+                // still one import door.
+                #if canImport(PhotosUI) && canImport(AVFoundation)
+                VideoSeedCard(useSound: useVideoSound)
+                #endif
+            }
         }
+    }
+
+    /// GMMW P1-2 — the Browse plate's segmented row. A `@State` read only: it changes on a tap,
+    /// never on a tick.
+    private var browseShelfPicker: some View {
+        Picker("Browse shelf", selection: $browseShelf) {
+            ForEach(BrowseShelf.allCases) { shelf in
+                Text(shelf.title).tag(shelf)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityHint(String(localized: "Shows one shelf: the stored sounds, the imported audio files, or the photo and video that shape the visual."))
     }
 
     /// DAW shell S2 — the PROJECT plate: the song's settings, and the piece handed away as a MIDI

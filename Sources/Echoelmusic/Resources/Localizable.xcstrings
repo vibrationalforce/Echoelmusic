@@ -13,6 +13,18 @@
         }
       }
     },
+    "Browse shelf" : {
+      "comment" : "Accessibility label of the Browse plate's segmented row (GMMW P1-2): which shelf is shown.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browse shelf"
+          }
+        }
+      }
+    },
     "Connections" : {
       "comment" : "Routing segment (GMMW P1-1, 2026-10-08): the network outputs, the OSC input, MIDI and the routing graph.",
       "extractionState" : "manual",
@@ -57,6 +69,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make positive"
+          }
+        }
+      }
+    },
+    "Media" : {
+      "comment" : "Browse plate segment (GMMW P1-2, 2026-10-08): the media library — the audio files already imported.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media"
           }
         }
       }
@@ -141,6 +165,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows one part of Routing: the light, the network and MIDI connections, or the body's routes to parameters."
+          }
+        }
+      }
+    },
+    "Shows one shelf: the stored sounds, the imported audio files, or the photo and video that shape the visual." : {
+      "comment" : "Accessibility hint of the Browse plate's segmented row (GMMW P1-2).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows one shelf: the stored sounds, the imported audio files, or the photo and video that shape the visual."
           }
         }
       }
@@ -729,6 +765,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This release is the bio-reactive instrument — with living visuals, stage light and immersive output built in."
+          }
+        }
+      }
+    },
+    "Visuals" : {
+      "comment" : "Browse plate segment (GMMW P1-2, 2026-10-08): the photo and video cards that shape the visual.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visuals"
           }
         }
       }

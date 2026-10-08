@@ -143,3 +143,27 @@ public enum ShellTab: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
+/// GMMW P1-2 — the Browse plate's three shelves (founder 2026-10-08: „vermeide
+/// Unübersichtlichkeit", „Orientiere dich an den Bigplayern"). Every DAW browser asks for the
+/// category first and then lists it; the plate stacked the sounds, the media library and the two
+/// cards that shape the visual in one scroll. One shelf at a time, behind a segmented row; the
+/// words are the cards' own headings ("Sounds", "Media Library", "… to Visuals").
+/// View state, not persisted: the plate opens on the sounds.
+enum BrowseShelf: String, CaseIterable, Identifiable, Sendable {
+    case sounds, media, visuals
+
+    /// The shelf the plate shows first.
+    static let opening = BrowseShelf.sounds
+
+    var id: String { rawValue }
+
+    /// The segment's word.
+    var title: String {
+        switch self {
+        case .sounds: return String(localized: "Sounds")
+        case .media: return String(localized: "Media")
+        case .visuals: return String(localized: "Visuals")
+        }
+    }
+}
