@@ -7,7 +7,7 @@
 //
 // ⭐ WHY IT IS A FLOOD AND NOT A TRICKLE, which is the half a reader has to check before
 // believing the finding: the pull loop sets `expectsMediaDataInRealTime = false` and drains
-// `copyNextSampleBuffer()` in a `while writerInput.isReadyForMoreMediaData` loop. It is an
+// `copyNextSampleBuffer()` in a `while writerInputRef.isReadyForMoreMediaData` loop. It is an
 // OFFLINE export — it runs as fast as the encoder accepts data, not at 1× playback. A few
 // minutes of 44.1 kHz audio is thousands of buffers, delivered within seconds. The 10.76.48
 // precedent was ~30 submissions/second from a camera; this is faster.
@@ -47,6 +47,21 @@
 // AVFoundation method no test bundle can drive. Claim 3 is END-TO-END on a Foundation-only
 // value type. That the export still shows smooth progress on a phone is a DEVICE PROBE and is
 // NOT claimed here.
+//
+// ⛔ RE-ANCHORED 2026-10-08 — THIS GUARD WAS RED FOR TWO COMMITS ON A CORRECT TREE, AND NOTHING
+// SAID SO. `39dc05e` made the export's pull block `@Sendable` (the 2613 SIGTRAP class): the
+// writer input is now read through `nonisolated(unsafe) let writerInputRef`, and the throttle's
+// state moved into the `ExportRenderCounters` box (`counters.lastProgressPercent`). Behaviour
+// did not change — the hop is still inside the per-percent gate, the drain loop is still the
+// drain loop — but three needles here named the OLD spellings, so claim 1 fell into its
+// anchor-missing `XCTFail` and claim 2's drain-loop assertion went red. The Run Tests window
+// (`tail -200`) could not show either; `scripts/dead-needles.py` found claim 1's gate needle
+// while T18 was being checked. GRADING (§0, transcribed against `596c025` and this tree): on
+// `596c025` 2 red (claim 1's anchor guard, claim 2's drain loop), 2 unreached behind the guard's
+// return; here all green, including the new uniqueness pin on the slice's end anchor (#408 —
+// a second `append` above the gate would cut the slice in the wrong place). Claim 1 now holds 4
+// assertions, the file 10. ⭐ LESSON for the next rename inside a guarded function: run
+// `python3 scripts/moved-needles.py` BEFORE the commit — it diffs exactly the removed lines.
 
 import Foundation
 import XCTest
@@ -68,8 +83,8 @@ final class TheExportProgressHopsOncePerPercentTests: XCTestCase {
     /// them cannot break it.
     func testTheHopIsInsideTheThrottle() throws {
         let code = SourceText.codeOnly(try Self.text(Self.export))
-        guard let gate = code.range(of: "if percent != lastProgressPercent {"),
-              let end = code.range(of: "writerInput.append(sampleBuffer)") else {
+        guard let gate = code.range(of: "if percent != counters.lastProgressPercent {"),
+              let end = code.range(of: "writerInputRef.append(sampleBuffer)") else {
             return XCTFail(
                 "ANCHOR MISSING (#454): `SingleExport` has no per-percent gate around its "
                 + "progress update. On the parent this is the finding itself — the hop ran "
@@ -77,6 +92,9 @@ final class TheExportProgressHopsOncePerPercentTests: XCTestCase {
                 + "say in the same commit what now keeps thousands of main-actor submissions "
                 + "off the SwiftUI executor during an offline export.")
         }
+        XCTAssertEqual(Self.occurrences(of: "writerInputRef.append(sampleBuffer)", in: code), 1,
+                       "the slice's end anchor is no longer unique — the slice below could end "
+                       + "at the wrong `append` (#408).")
         XCTAssertLessThan(gate.lowerBound, end.lowerBound,
                           "the gate no longer precedes the end of the per-buffer block — the "
                           + "slice below would read the wrong region.")
@@ -101,7 +119,7 @@ final class TheExportProgressHopsOncePerPercentTests: XCTestCase {
                       "the export is no longer declared offline. That is the premise the whole "
                       + "finding rests on: at 1× playback a per-buffer hop would be a trickle, "
                       + "and the throttle would be over-engineering rather than a fix.")
-        XCTAssertTrue(code.contains("while writerInput.isReadyForMoreMediaData"),
+        XCTAssertTrue(code.contains("while writerInputRef.isReadyForMoreMediaData"),
                       "the drain loop is gone — the other half of the same premise.")
     }
 
