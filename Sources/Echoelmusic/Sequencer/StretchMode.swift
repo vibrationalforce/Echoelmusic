@@ -56,6 +56,9 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     /// stays `true` ON PURPOSE for exactly that reason: regions persist `stretchMode`, so a
     /// flip is a document question, not a tidy-up. A beats-stretch FEATURE still needs a
     /// producer for audio regions; the stretcher itself is already reachable.
+    /// ⭐ Both producers exist now: audio regions since Audio Import V1, and the `.beats` MODE
+    /// on a part since audio editor W3 (2026-10-08) — the part bar's Stretch picker, through
+    /// `TimelineStore.setRegionStretchMode`, offered only on a warped part.
     ///
     /// ⭐ LAW: when a claim has TWO carriers, measure them SEPARATELY. A needle spelled with a
     /// name neither carrier bears returns the same nothing for both, and the retraction is

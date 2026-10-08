@@ -110,6 +110,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // and audio editor W2/W9's part level and Normalize (`setRegionGain`). Each reached its
         // caller without joining this list; added 2026-10-08, each unique in `Sources/`.
         "resizeRegion", "splitRegion", "mergeRegionWithNext", "canMergeRegionWithNext", "setRegionGain",
+        // Audio editor W3: the part bar's Stretch picker.
+        "setRegionStretchMode",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

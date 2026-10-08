@@ -97,6 +97,54 @@
         }
       }
     },
+    "Stretch" : {
+      "comment" : "Row label (audio editor W3, 2026-10-08): the selected warped audio part's stretch-mode picker on the part bar.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stretch"
+          }
+        }
+      }
+    },
+    "Clean" : {
+      "comment" : "Stretch mode name (StretchMode.displayName): pitch kept while the part follows the song tempo. Shown in the part bar's Stretch picker.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean"
+          }
+        }
+      }
+    },
+    "Beats" : {
+      "comment" : "Stretch mode name (StretchMode.displayName): transient-locked stretch for drums and loops. Shown in the part bar's Stretch picker.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beats"
+          }
+        }
+      }
+    },
+    "How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start." : {
+      "comment" : "VoiceOver hint of the part bar's Stretch picker (audio editor W3): what each mode does and when Beats is heard.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start."
+          }
+        }
+      }
+    },
     "Part level" : {
       "comment" : "Value-field label (audio editor W2, 2026-10-08): the selected audio part's own level on the part bar.",
       "extractionState" : "manual",

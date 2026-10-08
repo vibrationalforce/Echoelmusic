@@ -35,8 +35,10 @@
 // switch must not overwrite: it keeps its length and changes only its rate.
 //
 // ⛔ WHAT IT DOES NOT DO. It never touches the session tempo, never moves a part, never
-// writes a clip, and never changes `stretchMode` — the timeline default (`.clean`) is the
-// only algorithm a user reaches, and choosing between them is a later, separate power.
+// writes a clip, and never changes `stretchMode` — choosing between the algorithms is a
+// separate power. ⭐ Since audio editor W3 (2026-10-08) that power exists, per part: the part
+// bar's Stretch picker writes `TimelineStore.setRegionStretchMode`. This switch still leaves
+// the mode alone, so turning warp off and on keeps the part's chosen algorithm.
 
 import Foundation
 

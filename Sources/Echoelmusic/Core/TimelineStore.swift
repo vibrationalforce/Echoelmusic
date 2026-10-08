@@ -61,6 +61,8 @@
 //        `mergeRegionWithNext` + `canMergeRegionWithNext`, then audio editor W2 `setRegionGain`
 //        (the part's level, and since W9 its Normalize) their callers. All leave the
 //        caller-less set; `TheTimelineStoresLiveSurfaceTests` pins them since 2026-10-08.
+//        Audio editor W3 added `setRegionStretchMode`, born with its caller (the part bar's
+//        Stretch picker) and pinned beside them.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
@@ -688,6 +690,21 @@ public final class TimelineStore {
         guard document.regions[i].gain != g else { return }
         snapshotForUndo()
         document.regions[i].gain = g
+        persist()
+    }
+
+    /// Audio editor W3: the stretch algorithm a part plays through while it follows the song's
+    /// tempo — the missing writer of `TimelineRegion.stretchMode` (every region stayed on the
+    /// `.clean` default). ONE undo step; a no-op for an unknown part or an unchanged mode. Only a
+    /// mode the TIMELINE executes is stored (`StretchMode.timelineCapabilities`, implemented): a
+    /// part never carries a mode its player would quietly replace with Clean. The rate does not
+    /// depend on the mode (`StretchPlan.resolve`), so the part's length is untouched.
+    public func setRegionStretchMode(id: UUID, _ mode: StretchMode) {
+        guard StretchMode.timelineCapabilities.contains(mode), mode.isImplemented,
+              let i = document.regions.firstIndex(where: { $0.id == id }),
+              document.regions[i].stretchMode != mode else { return }
+        snapshotForUndo()
+        document.regions[i].stretchMode = mode
         persist()
     }
 

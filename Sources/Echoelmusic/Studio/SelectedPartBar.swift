@@ -60,6 +60,13 @@
 //  step, nothing for a silent or unreadable part. ⚠️ The peak is the FILE's; a stretched part
 //  (warp or tape) can peak a little differently once rendered — a device listen, not a claim.
 //
+//  ⭐ W3 — STRETCH, for a WARPED audio part only. A segmented choice of the modes the timeline
+//  plays (`StretchMode.timelineCapabilities`, projected, never retyped): Clean keeps pitch,
+//  Tape lets pitch follow speed, Beats keeps hits sharp. One pick is one undo step through
+//  `setRegionStretchMode`. An unwarped part plays at rate 1, where all modes sound alike, so it
+//  gets no choice. During play Clean and Tape are heard at once; Beats from the part's next
+//  start (it is rendered in the background, and a part entered mid-way plays Clean).
+//
 
 import SwiftUI
 
@@ -160,6 +167,28 @@ enum PartGain {
         let top = Float(range.upperBound)
         guard wanted.isFinite else { return top }
         return Swift.min(top, Swift.max(Float(range.lowerBound), wanted))
+    }
+}
+
+/// The pure half of the part's stretch choice (audio editor W3).
+enum PartStretch {
+
+    /// The modes the bar offers: the timeline's own executable set, in the enum's order — a
+    /// PROJECTION of `StretchMode.timelineCapabilities` (#416), never a list typed here, so the
+    /// bar can never offer a mode the store refuses or the player replaces with Clean.
+    static var choices: [StretchMode] {
+        StretchMode.allCases.filter { StretchMode.timelineCapabilities.contains($0) && $0.isImplemented }
+    }
+
+    /// The part's stretch mode when the choice can be HEARD — a warped part on a non-bio audio
+    /// track (only a part with a known native tempo can warp, `AudioWarp`) — else nil, and the
+    /// bar offers no choice. An unwarped part plays at rate 1, where every mode sounds the
+    /// same: a choice there would move nothing (#164).
+    nonisolated static func mode(of regionID: UUID, in document: TimelineDocument) -> StretchMode? {
+        guard let region = document.regions.first(where: { $0.id == regionID }), region.warpEnabled,
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .audio, !lane.isBio else { return nil }
+        return region.stretchMode
     }
 }
 
@@ -295,6 +324,10 @@ struct SelectedPartBar: View {
                 // W2: an audio part's own level, on top of its track's — nil for any other part.
                 if let gain = PartGain.gain(of: regionID, in: document) {
                     PartGainField(regionID: regionID, gain: gain)
+                }
+                // W3: how a warped audio part keeps the song's tempo — nil for any other part.
+                if let stretch = PartStretch.mode(of: regionID, in: document) {
+                    PartStretchPicker(regionID: regionID, mode: stretch)
                 }
                 // Eight labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
@@ -672,6 +705,39 @@ private struct PartGainField: View {
                   let level = PartGain.normalizedGain(forPeak: peak) else { return }
             draft = nil
             timeline.setRegionGain(id: regionID, level)
+        }
+    }
+}
+
+/// Audio editor W3 — how the selected WARPED audio part keeps the song's tempo.
+///
+/// A named choice is a `Picker` (the UI law's word is "NUMERIC"), segmented, offering exactly
+/// the modes the timeline plays (`PartStretch.choices`). One pick is one write through
+/// `TimelineStore.setRegionStretchMode`: one undo step. ⚠️ WHEN IT IS HEARD: the edit is
+/// structural, so during play the lane re-primes at the current position — Clean and Tape are
+/// heard at once; Beats is rendered in the background (`TimelineAudioSink.prepareBeats`) and
+/// the part plays Clean until its next start, the player's own honest fallback. The hint says
+/// so. The label sits BESIDE the picker: a row label, not a section heading.
+@MainActor
+private struct PartStretchPicker: View {
+    let regionID: UUID
+    /// The part's stored mode — cold, per render.
+    let mode: StretchMode
+    @Environment(TimelineStore.self) private var timeline
+
+    var body: some View {
+        HStack(spacing: EchoelTheme.spaceS) {
+            Text("Stretch")
+                .font(EchoelTheme.font(11, .semibold))
+                .foregroundStyle(EchoelTheme.dim)
+            Picker("Stretch", selection: Binding(get: { mode },
+                                                 set: { timeline.setRegionStretchMode(id: regionID, $0) })) {
+                ForEach(PartStretch.choices, id: \.self) { choice in
+                    Text(LocalizedStringKey(choice.displayName)).tag(choice)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityHint("How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start.")
         }
     }
 }
