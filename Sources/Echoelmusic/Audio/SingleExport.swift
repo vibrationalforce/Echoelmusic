@@ -430,10 +430,23 @@ final class SingleExport {
         // reader that FAILED mid-file also returns nil, so a truncated file was reported done; a
         // writer that failed left `isReadyForMoreMediaData` false, the block was never called
         // again, and the export sat at `.rendering` for good. Now: a failed reader cancels the
-        // writer (which deletes the partial file) and throws; a refused `append` or a failed
-        // writer does the same; the finish asks the writer's status before it resumes. `ended`
-        // (in the counters box, same serial queue) makes a late call a no-op, so nothing resumes
-        // twice — a second resume is a trap. The errors are built here, outside the block.
+        // writer and throws; a refused `append` or a failed writer throws; the finish asks the
+        // writer's status first — before `markAsFinished` and again in its completion. `ended`
+        // (in the counters box, same serial queue) is set before every resume and read first by
+        // every handler, so a late call is a no-op and nothing resumes twice — a second resume is
+        // a trap. Each exit inside the loop ends in `return`. The errors are built here, outside
+        // the block.
+        //
+        // ⭐ A WRITER CAN FAIL WHILE NO BLOCK IS RUNNING (review of SH-5b). The pull loop is
+        // offline: it appends until back-pressure and returns, and the writer encodes and writes
+        // to disk in between — where a full disk most likely hits. A failed writer never reports
+        // ready again, so the block is never called again, and the check at the end of the loop
+        // never runs. A timer on the SAME serial queue (`watchdog`) asks the writer's
+        // status while the export waits; same queue, so `ended` still has one owner.
+        //
+        // ⚠️ `cancelWriting` deletes the partial file only while the writer is still writing; on a
+        // writer that already failed it does nothing. So the file is removed after the throw, in
+        // the `catch` below — one place for every exit.
         let counters = ExportRenderCounters()
         nonisolated(unsafe) let writerInputRef = writerInput
         nonisolated(unsafe) let readerOutputRef = readerOutput
@@ -442,112 +455,138 @@ final class SingleExport {
         let readFailure: any Error = ExportError.sourceStoppedReading
         let writeFailure: any Error = ExportError.cannotWriteOutput
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            writerInputRef.requestMediaDataWhenReady(on: DispatchQueue(label: "com.echoelmusic.export")) { @Sendable in
-                guard !counters.ended else { return }
-                while writerInputRef.isReadyForMoreMediaData {
-                    guard let sampleBuffer = readerOutputRef.copyNextSampleBuffer() else {
-                        counters.ended = true
-                        guard readerRef.status != .failed else {
-                            writerRef.cancelWriting()
-                            continuation.resume(throwing: readFailure)
-                            return
-                        }
-                        EchoelCrashLog.breadcrumb("export 4/4: finish the file — \(counters.framesWritten) frames")
-                        writerInputRef.markAsFinished()
-                        writerRef.finishWriting {
-                            if writerRef.status == .completed {
-                                continuation.resume()
-                            } else {
-                                continuation.resume(throwing: writeFailure)
-                            }
-                        }
-                        return
-                    }
+        let exportQueue = DispatchQueue(label: "com.echoelmusic.export")
+        let watchdog = DispatchSource.makeTimerSource(queue: exportQueue)
+        // Twice a second: a failed writer is noticed within half a second, and the timer costs
+        // nothing next to the encode it waits on.
+        let watchInterval = DispatchTimeInterval.milliseconds(500)
+        defer { watchdog.cancel() }
 
-                    let bufferFrames = CMSampleBufferGetNumSamples(sampleBuffer)
-                    let bufferStartFrame = counters.framesWritten
-
-                    // Apply gain in-place on the PCM data
-                    if let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) {
-                        // Walk segments by offset — applying gain to totalLength/4 from
-                        // a single pointer would be an out-of-bounds WRITE on a
-                        // segmented block. Loops once for the usual single-segment buffer.
-                        var offset = 0
-                        var totalLength = 0
-                        var segmentStartFloat = 0
-                        repeat {
-                            var lengthAtOffset = 0
-                            var dataPointer: UnsafeMutablePointer<Int8>?
-                            CMBlockBufferGetDataPointer(blockBuffer, atOffset: offset,
-                                                        lengthAtOffsetOut: &lengthAtOffset,
-                                                        totalLengthOut: &totalLength,
-                                                        dataPointerOut: &dataPointer)
-                            guard let ptr = dataPointer, lengthAtOffset >= 4 else { break }
-                            let n = lengthAtOffset / 4
-                            let floatPtr = UnsafeMutableRawPointer(ptr).bindMemory(to: Float.self, capacity: n)
-                            SingleExport.applyGain(floatPtr, count: n, linearGain: linearGain)
-
-                            // Edge fades — interleaved stereo: float i belongs to
-                            // frame (bufferStartFrame + (segmentStartFloat + i) / 2).
-                            if fadeFrames > 0 {
-                                let segStartFrame = bufferStartFrame + segmentStartFloat / 2
-                                let segEndFrame = bufferStartFrame + (segmentStartFloat + n) / 2
-                                if segStartFrame < fadeFrames || segEndFrame > totalFrames - fadeFrames {
-                                    for i in 0..<n {
-                                        let frame = bufferStartFrame + (segmentStartFloat + i) / 2
-                                        var g: Float = 1
-                                        if frame < fadeFrames {
-                                            g = Float(frame) / Float(fadeFrames)
-                                        }
-                                        let fromEnd = totalFrames - 1 - frame
-                                        if fromEnd < fadeFrames {
-                                            g = Swift.min(g, Float(Swift.max(fromEnd, 0)) / Float(fadeFrames))
-                                        }
-                                        if g < 1 { floatPtr[i] *= g }
-                                    }
-                                }
-                            }
-                            segmentStartFloat += n
-                            offset += lengthAtOffset
-                        } while offset < totalLength
-                    }
-                    counters.framesWritten = bufferStartFrame + bufferFrames
-
-                    // Update progress (relative to the trimmed window when set)
-                    let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
-                    let progress = durationSeconds > 0
-                        ? Float((pts - windowStartSeconds) / durationSeconds) : 0
-                    // `clamped(to:)` and NOT `min(max(…))`: an invalid PTS makes `progress`
-                    // NaN, and `Swift.max(NaN, 0)` returns NaN (the argument-order law in
-                    // CLAUDE.md). The old spelling let that NaN reach the progress bar —
-                    // cosmetic there, but `Int(NaN * 100)` one line down is a TRAP that kills
-                    // the test host without an assertion message (#1174). NaN maps to 0 here.
-                    let shown = progress.clamped(to: 0...0.99)
-                    let percent = Int(shown * 100)
-                    if percent != counters.lastProgressPercent {
-                        counters.lastProgressPercent = percent
-                        Task { @MainActor [weak self] in
-                            if case .exporting = self?.exportState {
-                                self?.exportState = .exporting(progress: shown)
-                            }
-                        }
-                    }
-
-                    guard writerInputRef.append(sampleBuffer) else {
-                        counters.ended = true
-                        readerRef.cancelReading()
-                        writerRef.cancelWriting()
-                        continuation.resume(throwing: writeFailure)
-                        return
-                    }
-                }
-                if writerRef.status == .failed {
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                watchdog.schedule(deadline: .now() + watchInterval, repeating: watchInterval)
+                watchdog.setEventHandler { @Sendable in
+                    guard !counters.ended, writerRef.status == .failed else { return }
                     counters.ended = true
                     readerRef.cancelReading()
                     continuation.resume(throwing: writeFailure)
                 }
+                watchdog.resume()
+                writerInputRef.requestMediaDataWhenReady(on: exportQueue) { @Sendable in
+                    guard !counters.ended else { return }
+                    while writerInputRef.isReadyForMoreMediaData {
+                        guard let sampleBuffer = readerOutputRef.copyNextSampleBuffer() else {
+                            counters.ended = true
+                            guard readerRef.status != .failed else {
+                                writerRef.cancelWriting()
+                                continuation.resume(throwing: readFailure)
+                                return
+                            }
+                            guard writerRef.status == .writing else {
+                                continuation.resume(throwing: writeFailure)
+                                return
+                            }
+                            EchoelCrashLog.breadcrumb("export 4/4: finish the file — \(counters.framesWritten) frames")
+                            writerInputRef.markAsFinished()
+                            writerRef.finishWriting {
+                                if writerRef.status == .completed {
+                                    continuation.resume()
+                                } else {
+                                    continuation.resume(throwing: writeFailure)
+                                }
+                            }
+                            return
+                        }
+
+                        let bufferFrames = CMSampleBufferGetNumSamples(sampleBuffer)
+                        let bufferStartFrame = counters.framesWritten
+
+                        // Apply gain in-place on the PCM data
+                        if let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) {
+                            // Walk segments by offset — applying gain to totalLength/4 from
+                            // a single pointer would be an out-of-bounds WRITE on a
+                            // segmented block. Loops once for the usual single-segment buffer.
+                            var offset = 0
+                            var totalLength = 0
+                            var segmentStartFloat = 0
+                            repeat {
+                                var lengthAtOffset = 0
+                                var dataPointer: UnsafeMutablePointer<Int8>?
+                                CMBlockBufferGetDataPointer(blockBuffer, atOffset: offset,
+                                                            lengthAtOffsetOut: &lengthAtOffset,
+                                                            totalLengthOut: &totalLength,
+                                                            dataPointerOut: &dataPointer)
+                                guard let ptr = dataPointer, lengthAtOffset >= 4 else { break }
+                                let n = lengthAtOffset / 4
+                                let floatPtr = UnsafeMutableRawPointer(ptr).bindMemory(to: Float.self, capacity: n)
+                                SingleExport.applyGain(floatPtr, count: n, linearGain: linearGain)
+
+                                // Edge fades — interleaved stereo: float i belongs to
+                                // frame (bufferStartFrame + (segmentStartFloat + i) / 2).
+                                if fadeFrames > 0 {
+                                    let segStartFrame = bufferStartFrame + segmentStartFloat / 2
+                                    let segEndFrame = bufferStartFrame + (segmentStartFloat + n) / 2
+                                    if segStartFrame < fadeFrames || segEndFrame > totalFrames - fadeFrames {
+                                        for i in 0..<n {
+                                            let frame = bufferStartFrame + (segmentStartFloat + i) / 2
+                                            var g: Float = 1
+                                            if frame < fadeFrames {
+                                                g = Float(frame) / Float(fadeFrames)
+                                            }
+                                            let fromEnd = totalFrames - 1 - frame
+                                            if fromEnd < fadeFrames {
+                                                g = Swift.min(g, Float(Swift.max(fromEnd, 0)) / Float(fadeFrames))
+                                            }
+                                            if g < 1 { floatPtr[i] *= g }
+                                        }
+                                    }
+                                }
+                                segmentStartFloat += n
+                                offset += lengthAtOffset
+                            } while offset < totalLength
+                        }
+                        counters.framesWritten = bufferStartFrame + bufferFrames
+
+                        // Update progress (relative to the trimmed window when set)
+                        let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+                        let progress = durationSeconds > 0
+                            ? Float((pts - windowStartSeconds) / durationSeconds) : 0
+                        // `clamped(to:)` and NOT `min(max(…))`: an invalid PTS makes `progress`
+                        // NaN, and `Swift.max(NaN, 0)` returns NaN (the argument-order law in
+                        // CLAUDE.md). The old spelling let that NaN reach the progress bar —
+                        // cosmetic there, but `Int(NaN * 100)` one line down is a TRAP that kills
+                        // the test host without an assertion message (#1174). NaN maps to 0 here.
+                        let shown = progress.clamped(to: 0...0.99)
+                        let percent = Int(shown * 100)
+                        if percent != counters.lastProgressPercent {
+                            counters.lastProgressPercent = percent
+                            Task { @MainActor [weak self] in
+                                if case .exporting = self?.exportState {
+                                    self?.exportState = .exporting(progress: shown)
+                                }
+                            }
+                        }
+
+                        guard writerInputRef.append(sampleBuffer) else {
+                            counters.ended = true
+                            readerRef.cancelReading()
+                            writerRef.cancelWriting()
+                            continuation.resume(throwing: writeFailure)
+                            return
+                        }
+                    }
+                    if !counters.ended, writerRef.status == .failed {
+                        counters.ended = true
+                        readerRef.cancelReading()
+                        continuation.resume(throwing: writeFailure)
+                    }
+                }
             }
+        } catch {
+            // Every exit that threw left a file that is not the export (see above); a missing file
+            // is fine — `cancelWriting` already removed it on the failed-read path.
+            try? FileManager.default.removeItem(at: outputURL)
+            throw error
         }
     }
 

@@ -9,21 +9,39 @@
 //   is never called again, and the export sat at `.rendering` for good — the hang.
 // The finish also resumed without asking the writer how it went.
 //
+// ⭐ THE REVIEW OF b22b17d FOUND THE HANG ONLY HALF CLOSED, and this file did not see it. The check
+// for a failed writer ran only inside a call of the pull block, at the end of its loop — but the
+// export is offline, the writer encodes between calls, and a writer that fails THEN never reports
+// ready again, so the block that would have checked is never called. Now a timer on the same serial
+// queue asks while the export waits (claim 5). The review also found: the exactly-once property
+// rested on `return`s no claim pinned (a mutant dropping one stayed green and would resume twice);
+// the finish called `markAsFinished` without asking whether the writer was still writing; and
+// `cancelWriting` does nothing on a writer that already failed, so a partial file stayed in
+// Exports — it is now removed in one `catch` (claim 6).
+//
 // WHAT IT PINS (Tests/CISmoke/CLAUDE.md §1) — all SOURCE-TEXT SCANS: `renderWithGain` is a
 // private `async` method that needs a real asset and a real writer, which no bundle drives. Each
 // way out is read in its own brace-matched block (#408):
 // 1. The start is checked before the session opens.
 // 2. A failed reader, a refused append and a failed writer each set `ended`, stop the other side
-//    and resume by THROWING; the reader's failure is told apart from its end before the finish.
+//    and resume by THROWING; the reader's failure is told apart from its end before the finish,
+//    and so is a writer that stopped writing. Every exit inside the loop ends in `return`, and
+//    the check after the loop asks `ended` first — the exactly-once property, not only the exits.
 // 3. The finish asks the writer's status before it resumes, and a writer that did not complete
 //    throws.
 // 4. A late call is a no-op (`guard !counters.ended`), the continuation is a THROWING one, and
-//    there are exactly five resume sites — a sixth way out needs its own branch here (#364: the
-//    number may move, with that branch).
+//    there are exactly seven resume sites — an eighth way out needs its own branch here (#364:
+//    the number may move, with that branch).
+// 5. A writer that fails while no pull is running still ends the export: a timer on the pull's
+//    own serial queue, armed before the first pull, cancelled on every way out of the method,
+//    whose handler asks `ended` first.
+// 6. A failed export leaves no partial file: one `catch` around the wait removes the output and
+//    rethrows.
 // DEVICE PROBE, open: that a full disk or a file pulled away mid-export now shows the error on the
 // export sheet instead of a spinner.
 //
-// HONEST GRADING (§3). The file names nothing new — it compiles on its parent (`b2f4f6e`). There,
+// HONEST GRADING (§3), first version (claims 1–4). The file named nothing new — it compiled on its
+// parent (`b2f4f6e`). There,
 // all four claims are red, each by ANCHOR ABSENCE (the thrown `RenderExitAnchorMissing`) — and here
 // the anchor IS the missing check: no `guard writer.startWriting()` (claim 1), no `ended` in the nil
 // branch (claim 2), no status read in the finish (claim 3), no late-call guard (claim 4). Four
@@ -32,6 +50,14 @@
 // MUTANTS, each red for its named reason: the start check removed → 1; `ended` dropped from the
 // append branch → 2; the reader's status read after the finish → 2; the finish resuming
 // unconditionally → 3 (and the count, 4); a sixth `continuation.resume(` → 4.
+// SECOND VERSION (review fix), against its parent `1d72892`: claim 2 is red there by ANCHOR ABSENCE
+// (the post-loop check does not ask `ended`, and there is no writer check before the finish);
+// claim 4 is a REGRESSION by its count (five, not seven); claims 5 and 6 are red by ANCHOR ABSENCE
+// — no timer, no `catch` — one finding each, the hang and the partial file. Claims 1 and 3 are
+// COUNTERWEIGHTS, green on both. MUTANTS, each red for its named reason: the `return` after the
+// refused append's resume dropped → 2; the post-loop check without `!counters.ended` → 2; the timer
+// on a second queue → 5; the timer armed after the pull starts → 5; the handler without the `ended`
+// read → 5; the `defer` cancel removed → 5; the removal dropped from the `catch` → 6.
 
 import Foundation
 import XCTest
@@ -86,13 +112,32 @@ final class AFailedExportEndsInsteadOfHangingTests: XCTestCase {
             XCTAssertTrue(refused.contains(step), "a refused append: `\(step)` — without it the block is never called again")
         }
 
-        let failedWriter = try block(after: "if writerRef.status == .failed {", in: render)
+        let notWriting = try block(after: "guard writerRef.status == .writing else {", in: dry)
+        let writerAsked = try anchor("writerRef.status == .writing", in: dry)
+        XCTAssertLessThan(status.lowerBound, writerAsked.lowerBound, "the reader is asked first, then the writer")
+        XCTAssertLessThan(writerAsked.lowerBound, finish.lowerBound, """
+            a writer that stopped writing is not finished — `markAsFinished` and `finishWriting` \
+            belong to a writer that is still writing
+            """)
+        XCTAssertTrue(notWriting.contains("continuation.resume(throwing:"), "a writer that stopped writing ends the export with an error")
+
+        let failedWriter = try block(after: "if !counters.ended, writerRef.status == .failed {", in: render)
         for step in ["counters.ended = true", "readerRef.cancelReading()", "continuation.resume(throwing:"] {
             XCTAssertTrue(failedWriter.contains(step), "a writer that failed between buffers: `\(step)`")
         }
         let loop = try anchor("while writerInputRef.isReadyForMoreMediaData", in: render)
-        let afterLoop = try anchor("if writerRef.status == .failed {", in: render)
+        let afterLoop = try anchor("if !counters.ended, writerRef.status == .failed {", in: render)
         XCTAssertLessThan(loop.lowerBound, afterLoop.lowerBound, "the writer's status is read when the loop stops")
+
+        // Exactly once is the `return`s, not only the exits: without one, the loop goes on and the
+        // check after it can resume a second time — a trap (review of b22b17d, a driven mutant).
+        for (exit, body) in [("a failed read", failedRead), ("a writer that stopped writing", notWriting),
+                             ("a refused append", refused)] {
+            XCTAssertTrue(body.filter { !$0.isWhitespace }.hasSuffix("return}"), """
+                \(exit) does not end in `return` — the loop would run on after the continuation \
+                resumed, and the check after the loop could resume it again
+                """)
+        }
     }
 
     // MARK: 3 — the finish asks how it went
@@ -118,11 +163,60 @@ final class AFailedExportEndsInsteadOfHangingTests: XCTestCase {
             """)
         XCTAssertTrue(render.contains("withCheckedThrowingContinuation"), "the continuation can carry a failure")
         XCTAssertFalse(render.contains("withCheckedContinuation {"), "no non-throwing continuation is left")
-        XCTAssertEqual(occurrences(of: "continuation.resume(", in: render), 5, """
-            five resume sites: a failed read, a finish that completed, a finish that did not, a \
-            refused append, a writer that failed between buffers. If you add a way out, give it \
-            `ended` and a branch in claim 2, then move this number.
+        XCTAssertEqual(occurrences(of: "continuation.resume(", in: render), 7, """
+            seven resume sites: a failed read, a writer that stopped writing before the finish, a \
+            finish that completed, a finish that did not, a refused append, a writer that failed \
+            between buffers, and the timer that finds a writer failed while no pull runs. If you \
+            add a way out, give it `ended` and a branch in claim 2 or 5, then move this number.
             """)
+    }
+
+    // MARK: 5 — a writer that fails between pulls still ends the export
+
+    func testAWriterThatFailsBetweenPullsStillEndsTheExport() throws {
+        let render = try renderBody()
+        let queue = try anchor("let exportQueue = DispatchQueue(label: \"com.echoelmusic.export\")", in: render)
+        let timer = try anchor("DispatchSource.makeTimerSource(queue: exportQueue)", in: render)
+        let cancel = try anchor("defer { watchdog.cancel() }", in: render)
+        let wait = try anchor("withCheckedThrowingContinuation", in: render)
+        let armed = try anchor("watchdog.resume()", in: render)
+        let pull = try anchor("requestMediaDataWhenReady(on: exportQueue)", in: render)
+        XCTAssertLessThan(queue.lowerBound, timer.lowerBound, "premise: the queue is made before the timer")
+        XCTAssertEqual(occurrences(of: "DispatchQueue(label:", in: render), 1, """
+            the timer and the pull run on ONE serial queue — `ended` is unsynchronised and safe \
+            only because a single queue touches it
+            """)
+        XCTAssertLessThan(cancel.lowerBound, wait.lowerBound, "the timer is cancelled on every way out of the method")
+        XCTAssertLessThan(armed.lowerBound, pull.lowerBound, """
+            the timer is armed before the first pull — a writer can fail before the block is ever \
+            called
+            """)
+        let handler = try block(after: "watchdog.setEventHandler {", in: render)
+        let asked = try anchor("guard !counters.ended, writerRef.status == .failed else { return }", in: handler)
+        XCTAssertEqual(handler[handler.startIndex..<asked.lowerBound].filter { !$0.isWhitespace }, "{@Sendablein", """
+            the timer's handler must OPEN by asking `ended` — it fires twice a second for the whole \
+            export, also after every other way out
+            """)
+        for step in ["counters.ended = true", "readerRef.cancelReading()", "continuation.resume(throwing:"] {
+            XCTAssertTrue(handler.contains(step), "a writer the timer finds failed: `\(step)`")
+        }
+    }
+
+    // MARK: 6 — a failed export leaves no partial file
+
+    func testAFailedExportLeavesNoPartialFile() throws {
+        let render = try renderBody()
+        let wait = try anchor("withCheckedThrowingContinuation", in: render)
+        let caught = try anchor("catch {", in: render)
+        XCTAssertLessThan(wait.lowerBound, caught.lowerBound, "the `catch` is the one around the wait")
+        let cleanup = try block(after: "catch {", in: render)
+        let removal = try anchor("try? FileManager.default.removeItem(at: outputURL)", in: cleanup)
+        let rethrow = try anchor("throw error", in: cleanup)
+        XCTAssertLessThan(removal.lowerBound, rethrow.lowerBound, """
+            a failed export removes its output before it reports the failure — `cancelWriting` \
+            does nothing on a writer that already failed, so nothing else would
+            """)
+        XCTAssertEqual(occurrences(of: "catch {", in: render), 1, "one place for every exit's cleanup")
     }
 
     // MARK: - Helpers
@@ -133,7 +227,10 @@ final class AFailedExportEndsInsteadOfHangingTests: XCTestCase {
 
     private func anchor(_ needle: String, in text: String) throws -> Range<String.Index> {
         guard let hit = text.range(of: needle) else {
-            throw RenderExitAnchorMissing(reason: "`\(needle)` is not in the scanned block — re-anchor (#454)")
+            throw RenderExitAnchorMissing(reason: """
+                `\(needle)` is not in the scanned block. Here the anchor is usually the CHECK itself: \
+                restore it — or re-anchor if it only moved (#454)
+                """)
         }
         return hit
     }

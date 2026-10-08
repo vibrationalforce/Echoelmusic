@@ -865,9 +865,16 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             SingleExport has \(media.count) media-ready blocks; this claim pins exactly one, the \
             render pull loop (handlers: \(v.handlers.map { ($0.api, $0.queue) }))
             """)
-        XCTAssertTrue(media.allSatisfy { $0.queue.hasPrefix("DispatchQueue(label:") }, """
-            the pull loop left its own serial queue (queues: \(media.map(\.queue))). On `.main` the \
-            export would encode minutes of audio on the main thread.
+        // SH-5b review: the pull's queue is a NAMED local since a timer shares it, so a bare name
+        // is resolved through its one `let` in the file before the check.
+        let pullQueues = media.map { handler -> String in
+            guard !handler.queue.hasPrefix("DispatchQueue(label:"),
+                  let declared = code.range(of: "let \(handler.queue) = ") else { return handler.queue }
+            return String(code[declared.upperBound...].prefix { $0 != "\n" })
+        }
+        XCTAssertTrue(pullQueues.allSatisfy { $0.hasPrefix("DispatchQueue(label:") }, """
+            the pull loop left its own serial queue (queues: \(pullQueues)). On `.main` the export \
+            would encode minutes of audio on the main thread.
             """)
         XCTAssertTrue(media.allSatisfy(\.sendable), """
             the export's pull block is no longer `@Sendable` — the 2613 trap class at the ENTRY of \
