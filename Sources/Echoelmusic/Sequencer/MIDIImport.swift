@@ -184,7 +184,8 @@ public enum MIDIImport {
     /// that a MIDI FILE had made, so on a fresh install it had nothing to edit.
     ///
     /// ⭐ AN ORPHANED EMPTY USER CLIP IS REUSED, for the reason `ensureComposerRegion` reuses its
-    /// own: nothing clears a slot, and an Undo removes the region but leaves the clip, so every
+    /// own: only the Undo of a kept take clears a slot (GMMW GA-2a — the slot that take filled),
+    /// and an Undo of anything else removes the region but leaves the clip, so every
     /// New → Undo would otherwise spend a slot for good. Only a user-owned MIDI
     /// clip that NO region plays and that carries NOTHING qualifies — `Clip.isEmpty` (no notes,
     /// no drum steps) and no automation: an older build's drum pattern or bio-take automation

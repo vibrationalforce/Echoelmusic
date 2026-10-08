@@ -36,7 +36,7 @@ enum ClipNoteEdit {
             case .missing: return String(localized: "This part's notes are missing from the part grid.")
             case .notMIDI: return String(localized: "This is an audio part — it has no notes to edit.")
             case .composerOwned:
-                return String(localized: "The composer rewrites this part as it evolves, so its notes are shown, not edited.")
+                return String(localized: "The composer rewrites this part as it evolves, so its notes are shown, not edited. Edit a copy, on the part bar, makes one you can edit.")
             case .legacyOffset:
                 return String(localized: "This part was saved by an older build; its notes cannot be shown or edited here.")
             }
@@ -44,11 +44,15 @@ enum ClipNoteEdit {
     }
 
     /// Whether `clip` may be edited through `region`, or why not.
+    /// ⚠️ ORDER (GMMW GA-2b): the legacy window is asked BEFORE ownership, so `.composerOwned`
+    /// means exactly "a copy of this part would be editable" — a copy keeps its part's window, and
+    /// a legacy window would hand the copy the same refusal. The part bar's "Edit a copy" and
+    /// `TimelineStore.keepComposerTake` both ask for `.composerOwned` and nothing else (#416).
     nonisolated static func refusal(clip: Clip?, region: TimelineRegion) -> Refusal? {
         guard let clip else { return .missing }
         guard clip.kind == .midi else { return .notMIDI }
-        guard !clip.composerOwned else { return .composerOwned }
         guard windowOffset(of: region) != nil else { return .legacyOffset }
+        guard !clip.composerOwned else { return .composerOwned }
         return nil
     }
 

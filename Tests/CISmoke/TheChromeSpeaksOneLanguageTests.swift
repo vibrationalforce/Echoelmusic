@@ -2550,7 +2550,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             XCTAssertTrue(midiFailures.contains(seam), "MIDIImport lost the E4-68 seam `\(seam)`")
         }
         for seam in ["case .missing: return String(localized: \"This part's notes are missing from the part grid.\")",
-                     "return String(localized: \"The composer rewrites this part as it evolves, so its notes are shown, not edited.\")"] {
+                     "return String(localized: \"The composer rewrites this part as it evolves, so its notes are shown, not edited. Edit a copy, on the part bar, makes one you can edit.\")"] {
             XCTAssertTrue(noteRefusals.contains(seam), "ClipNoteEdit lost the E4-68 seam `\(seam)`")
         }
         XCTAssertFalse(importFailures.contains("return \"Couldn't open that file.\""), "AudioImport spells a failure verbatim again")
@@ -2568,7 +2568,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           "That MIDI file is too long — a part holds up to ", " bars and ", " notes.",
                           "This piece has no MIDI track — add a MIDI track first.",
                           "This part's notes are missing from the part grid.", "This is an audio part — it has no notes to edit.",
-                          "The composer rewrites this part as it evolves, so its notes are shown, not edited.",
+                          "The composer rewrites this part as it evolves, so its notes are shown, not edited. Edit a copy, on the part bar, makes one you can edit.",
                           "This part was saved by an older build; its notes cannot be shown or edited here."],
                          "import failures and note-editor refusals")
 

@@ -18,8 +18,9 @@ public final class ClipStore {
     /// file or Session is PADDED at the end on read (`migratedGrid`), never re-seated — a region
     /// names its clip by id, the index only says where the clip sits. It is a BOUND, not the voice
     /// budget (that is per track, `LaneVoiceRack`): the grid rides whole in the Session envelope,
-    /// is rewritten on every clip edit, and no production path clears a cell (`clear(at:)` has no
-    /// caller) — so the ceiling moved, it did not go away. `nonisolated` so the import failures
+    /// is rewritten on every clip edit, and ONE path clears a cell — the Undo of a kept take
+    /// (GMMW GA-2a, `TimelineStore`'s `.keptTake` step), and only the cell that take filled — so
+    /// the ceiling moved, it did not go away. `nonisolated` so the import failures
     /// (nonisolated enums) can say the number (#416).
     public nonisolated static let slotCount = 64
 
@@ -36,9 +37,11 @@ public final class ClipStore {
     }
 
     /// The grid as `persist` WRITES it: trailing empty cells past `legacySlotCount` are left off,
-    /// never a filled one. Cells fill lowest-first and nothing clears one, so while at most eight
-    /// clips exist the file is exactly the eight-cell file every earlier build reads — a rollback
-    /// keeps them. Past eight, an earlier build still discards the file and its next clip write
+    /// never a filled one. Cells fill lowest-first and only the Undo of a kept take clears one (the
+    /// cell that take filled, GMMW GA-2a), so while at most eight clips exist the file is almost
+    /// always the eight-cell file every earlier build reads — a rollback keeps them. ⚠️ An Undo that
+    /// frees a LOW cell after later fills can leave a clip past the eighth cell with eight or fewer
+    /// in all; a rollback then meets the cost below. Past eight, an earlier build still discards the file and its next clip write
     /// replaces it; that cost is real and is the founder's (FOUNDER_INBOX), not hidden here.
     nonisolated static func storedGrid(_ slots: [Clip?]) -> [Clip?] {
         let lastFilled = slots.lastIndex(where: { $0 != nil }) ?? -1

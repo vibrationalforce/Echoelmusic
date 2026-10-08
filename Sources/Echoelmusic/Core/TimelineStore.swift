@@ -264,7 +264,8 @@ public final class TimelineStore {
     /// silently revert a rename, an instrument assignment or a fader move made after the edit
     /// (reviewer-caught cross-contamination). A notes step cannot touch a part, a parts step
     /// cannot touch a note or a fader, a mixer step cannot touch a part or a sound, a sound step
-    /// touches nothing but its track's sound — the kinds do not overlap.
+    /// touches nothing but its track's sound — the kinds do not overlap, with ONE stated exception:
+    /// `.keptTake` moves the parts AND one clip slot, because a kept take is both.
     /// ⚠️ `setLaneLevel` / `setLanePan` / `toggleMute` / `toggleSolo` alone record NOTHING: the
     /// agent writes levels through them (via `TrackMix.setLevel`) and keeps its own way back
     /// (`TheAgentActsThroughTheButtonsPathsTests` claim 2). Only a write wrapped in
@@ -456,12 +457,23 @@ public final class TimelineStore {
                 guard let held, held.id == keptID else { return nil }
                 let inverse = HistoryStep.keptTake(slot: slot, keptID: keptID, clip: held,
                                                    regions: document.regions, clips: clips)
+                // POINTER FIRST, CLIP SECOND — the reverse of the import's order, because this
+                // REMOVES. `ClipStore.clear` writes at once while `persist()` waits out the
+                // debounce, so the part's removal is written through BEFORE the slot empties: a
+                // kill in between leaves an unused clip in a slot, never a part naming a missing one.
                 restoreRegions(regions)
-                clips.clear(at: slot)
                 persist()
+                flushPendingSave()
+                clips.clear(at: slot)
                 return inverse
             }
-            guard held == nil, let clip else { return nil }
+            // Only Redo carries a clip (Keep and every inverse of a Redo carry nil). A refused Redo
+            // drops what is stacked above it too: a later step may name the part this one would
+            // have brought back, and applying it would place a part whose clip is gone.
+            guard held == nil, let clip else {
+                redoStack.removeAll()
+                return nil
+            }
             let inverse = HistoryStep.keptTake(slot: slot, keptID: keptID, clip: nil,
                                                regions: document.regions, clips: clips)
             clips.setClip(at: slot, clip)
@@ -1499,20 +1511,23 @@ public final class TimelineStore {
     /// - ONE undo step (`.keptTake`) that removes the new part AND frees the slot; Redo puts both
     ///   back. A `.regions` step alone would leave the copy filling a slot for good.
     /// - Full clip grid ⇒ nil, nothing written (the never-clobber law: no user clip is displaced).
-    /// - Not a composer MIDI part ⇒ nil, nothing written.
+    /// - Not a composer MIDI part, or one saved before tick offsets (a copy could not be edited
+    ///   either) ⇒ nil, nothing written.
     /// Returns the new part.
     @discardableResult
     public func keepComposerTake(regionID: UUID, clips: ClipStore) -> TimelineRegion? {
+        // The part bar's rule, asked here too (#416): `.composerOwned` is a composer MIDI part
+        // whose window a copy can edit (`ClipNoteEdit.refusal`'s order says why).
         guard let source = document.regions.first(where: { $0.id == regionID }),
               let lane = document.lanes.first(where: { $0.id == source.laneID }),
               let taken = clips.clip(id: source.clipID),
-              taken.kind == .midi, taken.composerOwned else { return nil }
+              ClipNoteEdit.refusal(clip: taken, region: source) == .composerOwned else { return nil }
         guard let slot = clips.firstEmptySlotIndex else {
             log.log(.warning, category: .audio,
                     "keepComposerTake: clip grid full (\(ClipStore.slotCount) slots) — nothing kept for lane \(lane.name)")
             return nil
         }
-        let kept = Clip(name: "Kept · \(lane.name)", colorIndex: slot, kind: .midi,
+        let kept = Clip(name: "Copy · \(lane.name)", colorIndex: slot, kind: .midi,
                         melody: MelodyClip(notes: taken.melody?.notes ?? []),
                         nativeBPM: taken.nativeBPM, automation: taken.automation,
                         composerOwned: false)

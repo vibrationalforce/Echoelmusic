@@ -1014,6 +1014,9 @@ private struct PartEditCopyButton: View {
             .accessibilityLabel(room
                 ? String(localized: "Copy the composer's notes into a part of your own after the last part on this track, and open its notes. The composer's part keeps evolving. One undo step.")
                 : String(localized: "Edit a copy is off: the part grid is full."))
+            // WCAG 2.5.3: the long spoken name does not hold the visible words, so Voice Control
+            // gets them as an input label (the Focus button's rule above).
+            .accessibilityInputLabels([String(localized: "Edit a copy")])
             if !room {
                 Text("Edit a copy is off: the part grid is full.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)

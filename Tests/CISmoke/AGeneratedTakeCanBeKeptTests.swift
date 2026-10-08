@@ -18,11 +18,13 @@
 //    would leave the copy filling a slot for good); Redo puts both back; a slot refilled after the
 //    Undo (an import) makes the Redo change nothing.
 // 4. END-TO-END refusals write nothing and record no step: a user part, an unknown part, a full grid.
-// 5. SOURCE: one `.keptTake` step is recorded, by the verb.
+// 5. SOURCE: one `.keptTake` step is recorded, by the verb. Its Undo writes the part's removal through
+//    (`flushPendingSave`) BEFORE it empties the slot — a kill in between must never leave a part naming
+//    a missing clip; and a refused Redo clears the redo stack above it (review M1/L1).
 // GA-2b — THE DOOR ("Edit a copy" on the part bar, `PartEditCopyButton`):
 // 6. END-TO-END: the button's rule (the note editor's own refusal, `.composerOwned`) and the verb
-//    agree — where it shows, the verb keeps; on a user part and an audio part it neither shows nor
-//    keeps.
+//    agree — where it shows, the verb keeps; on a user part, an audio part and a composer part saved
+//    before tick offsets (a copy of it could not be edited either) it neither shows nor keeps.
 // 7. SOURCE: the bar mounts the leaf once; the leaf decides on that refusal rule, writes the timeline
 //    ONLY through `keepComposerTake` (the one call in `Sources/`), then selects the copy and opens its
 //    notes; it reads no player or transport. COUNTERWEIGHT: the bar's own body still reads no clip grid.
@@ -31,9 +33,11 @@
 // (`854a621`) — they name `keepComposerTake` and `keptTakeStart` — so no assertion has a verdict there;
 // they are FORWARD guards, transcribed into Python and driven through the same sequences. Against
 // `c7d9704`, the parent of GA-2b: claim 6 is a COUNTERWEIGHT (green on both — it pins the agreement the
-// door relies on); claim 7 is red there as ONE anchor absence (`PartEditCopyButton` does not exist,
+// door relies on — its legacy-window case is a REGRESSION against both parents, where the refusal asked
+// ownership first and the verb kept a copy the editor then refused); claim 7 is red there as ONE anchor absence (`PartEditCopyButton` does not exist,
 // #486) plus one REGRESSION for its named reason (the verb has no caller). Claim 7 was transcribed and
-// driven against both trees.
+// driven against both trees. The review additions (claim 5's write order and redo clearing, claim 6's
+// legacy case) are REGRESSIONS against `437520e` for their named reasons, transcribed and driven.
 // NOT covered: how the button reads at large type sizes, whether VoiceOver speaks the announcement,
 // and the copy opening on the Notes page — device probes. NEEDS-FOUNDER-VERIFY: select the composer's
 // part on Arrange → "Edit a copy" → a new part after the last one on that track, its notes open and
@@ -171,6 +175,25 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: the verb or its step (#454)")
         }
         XCTAssertLessThan(verb.lowerBound, push.lowerBound, "the step is pushed inside the verb, after its declaration")
+
+        // A `case` has no braces of its own: the step runs from its pattern to `undo()`, the
+        // declaration after the switch (`.keptTake` is its last case).
+        guard let head = code.range(of: "case .keptTake(let slot, let keptID, let clip, let regions, let clips):"),
+              let end = code.range(of: "public func undo() {", range: head.upperBound..<code.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the `.keptTake` case or `undo()` after it (#454)")
+        }
+        let step = code[head.upperBound..<end.lowerBound]
+        guard let flush = step.range(of: "flushPendingSave()"),
+              let clear = step.range(of: "clips.clear(at: slot)") else {
+            return XCTFail("ANCHOR MISSING: the Undo's write-through or its slot clear (#454)")
+        }
+        XCTAssertLessThan(flush.lowerBound, clear.lowerBound, """
+            the Undo of a kept take empties the slot before the part's removal reaches the disk — \
+            `ClipStore.clear` writes at once and `persist()` waits, so a kill in between leaves a part \
+            naming a missing clip. Write the parts through first (`replaceDocument`'s own order).
+            """)
+        XCTAssertTrue(step.contains("redoStack.removeAll()"),
+                      "a refused Redo of a kept take leaves later steps that may name its part")
     }
 
     // MARK: 6 — the door's rule and the verb agree
@@ -184,8 +207,10 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
             clips.setClip(at: 3, audioClip)
             let userPart = TimelineRegion(laneID: lane.id, clipID: userClip.id, startTick: 8 * Self.bar, lengthTicks: Self.bar)
             let audioPart = TimelineRegion(laneID: lane.id, clipID: audioClip.id, startTick: 12 * Self.bar, lengthTicks: Self.bar)
+            let legacyPart = TimelineRegion(laneID: lane.id, clipID: composed.id, startTick: 16 * Self.bar,
+                                            lengthTicks: Self.bar, contentOffsetSeconds: 1.5)
             timeline.replaceDocument(TimelineDocument(lanes: timeline.document.lanes,
-                                                      regions: timeline.document.regions + [userPart, audioPart]))
+                                                      regions: timeline.document.regions + [userPart, audioPart, legacyPart]))
 
             XCTAssertNotEqual(ClipNoteEdit.refusal(clip: userClip, region: userPart), .composerOwned,
                               "a user part: the editor takes it, so no button")
@@ -195,6 +220,11 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
             XCTAssertNil(timeline.keepComposerTake(regionID: audioPart.id, clips: clips), "…and the verb keeps nothing")
             XCTAssertEqual(ClipNoteEdit.refusal(clip: composed, region: composerRegion), .composerOwned,
                            "the composer's part: the editor refuses it for being the composer's, so the button shows")
+            XCTAssertNil(ClipNoteEdit.windowOffset(of: legacyPart), "fixture premise: a seconds-only window")
+            XCTAssertNotEqual(ClipNoteEdit.refusal(clip: composed, region: legacyPart), .composerOwned,
+                              "a composer part saved before tick offsets: a copy could not be edited, so no button")
+            XCTAssertNil(timeline.keepComposerTake(regionID: legacyPart.id, clips: clips),
+                         "…and the verb keeps nothing — it would place a copy the note editor refuses")
             XCTAssertNotNil(timeline.keepComposerTake(regionID: composerRegion.id, clips: clips),
                             "…and where the button shows, the verb keeps")
         }
@@ -228,6 +258,8 @@ final class AGeneratedTakeCanBeKeptTests: XCTestCase {
         }
         XCTAssertTrue(leaf.contains("selection.selectRegion(copy.id"), "the copy is selected")
         XCTAssertTrue(leaf.contains("selection.setNotesOpen(true)"), "…and its notes open")
+        XCTAssertTrue(leaf.contains(".accessibilityInputLabels([String(localized: \"Edit a copy\")])"),
+                      "Voice Control can say the visible words — the spoken name does not hold them (WCAG 2.5.3)")
         for hot in ["player.", "transport.", "TimelineRegionPlayer", "Transport.self"] {
             XCTAssertFalse(leaf.contains(hot), "`\(hot)` in the Edit a copy leaf — it reads nothing that moves with the song")
         }

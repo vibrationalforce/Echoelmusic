@@ -1068,9 +1068,13 @@ struct EchoelStudioView: View {
     // the only session that ever filled that texture was the face publisher, which is
     // removed, so the keys, the row and the renderer pass all go together rather than
     // leaving a dial over an image nothing can produce.
-    /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
-    /// monitor button and the window's own close button, so the Visual panel can toggle it
-    /// directly (founder: everything user-optimized; don't make the header the only way in).
+    /// The floating visual window's show/hide state. Its ONE show/hide door is the head's monitor
+    /// tile (`WorkspaceView`, GMMW P1-3); the window's own close button hides it and Full screen
+    /// shows it. ⛔ "so the Visual panel can toggle it directly (founder: everything
+    /// user-optimized; don't make the header the only way in)" stood here and is SUPERSEDED by
+    /// the founder's later rule — one way to each place (2026-10-01 „Vermeide das es mehrfache
+    /// Wege zu einem Bereich gibt", 2026-10-08 „vermeide Unübersichtlichkeit"); the head tile is
+    /// on screen on both stages at every level. Pinned by `TheVisualWindowHasOneShowHideDoorTests`.
     @AppStorage(StudioDefaultKeys.floatingVisualVisible.key) private var floatingVisualVisible = StudioDefaultKeys.floatingVisualVisible.value
     /// The floating window's SIZE. Written by "Full screen" (#1067) through `UserDefaults` in
     /// `openFullscreenVisual()`; READ here since #1069, because the keep-awake rule needs to
@@ -11011,12 +11015,14 @@ struct EchoelStudioView: View {
         // through generate(), so evolve ticks refresh the lane takes too.
         applyLaneOverrides(input: input)
         // FOUNDER v287/v288 "Es wird kein midi Clip erzeugt": make the generated take a
-        // VISIBLE, editable MIDI clip on the PRIMARY roll lane's timeline. Purely
+        // VISIBLE MIDI part on the PRIMARY roll lane's timeline. Purely
         // ADDITIVE — the live-loop path above (pattern.play + pianoRoll.loadArrangement)
         // is untouched and still drives the sound; this only MIRRORS the same finished
         // bars into a composer-OWNED clip+region so a tile shows on the Arrange
-        // timeline, the clip is editable, and every Evolve keeps rewriting it (ownership
-        // = composerOwned, so a re-seed may fortschreiben the take but never a user clip).
+        // timeline, its notes are shown (not edited — the note editor refuses a composer
+        // clip; "Edit a copy" on the part bar makes one the person owns, GMMW GA-2), and
+        // every Evolve keeps rewriting it (ownership = composerOwned, so a re-seed may
+        // fortschreiben the take but never a user clip).
         // `startTransport` is the user's OWN Generate — only that creates the clip once;
         // background evolve re-seeds only feed the existing one (no duplicate, no undo spam).
         syncPrimaryRollClip(bars: bars, createIfNeeded: startTransport)
@@ -13082,7 +13088,7 @@ private struct BodyOnlyRow: View {
                 : String(localized: "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds."))
             Text(instrumentRunning
                  ? String(localized: "Running — the picture already follows your body.")
-                 : String(localized: "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top."))
+                 : String(localized: "Pulse and breath drive the picture without any sound. Tap the picture tile at the top to watch; Play adds the music on top."))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

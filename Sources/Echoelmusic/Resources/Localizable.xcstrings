@@ -18219,12 +18219,12 @@
         }
       }
     },
-    "The composer rewrites this part as it evolves, so its notes are shown, not edited." : {
+    "The composer rewrites this part as it evolves, so its notes are shown, not edited. Edit a copy, on the part bar, makes one you can edit." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The composer rewrites this part as it evolves, so its notes are shown, not edited."
+            "value" : "The composer rewrites this part as it evolves, so its notes are shown, not edited. Edit a copy, on the part bar, makes one you can edit."
           }
         }
       }
@@ -20639,12 +20639,12 @@
         }
       }
     },
-    "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top." : {
+    "Pulse and breath drive the picture without any sound. Tap the picture tile at the top to watch; Play adds the music on top." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top."
+            "value" : "Pulse and breath drive the picture without any sound. Tap the picture tile at the top to watch; Play adds the music on top."
           }
         }
       }

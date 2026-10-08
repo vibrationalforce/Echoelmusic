@@ -3,8 +3,9 @@
 //
 // WHAT THIS PINS. `TimelineStore.ensureComposerRegion` minted a NEW composer clip whenever the
 // Echoel track had no composer part inside the loop window. Since WA4.3/WA4.4 a user can remove
-// that part, Undo its creation, or move it Later — and nothing clears a slot
-// (`ClipStore.clear(at:)` has no production caller). Every remove → Start cycle therefore spent
+// that part, Undo its creation, or move it Later — and nothing clears a slot it fills (since GMMW
+// GA-2a `ClipStore.clear(at:)` has ONE production caller, the Undo of a kept take, and it frees only
+// the slot that take filled). Every remove → Start cycle therefore spent
 // one of the eight slots for good, until the full grid refused every import. The store now
 // reuses an ORPHANED composer clip — composer-owned, played by no region — by id.
 //
@@ -79,7 +80,7 @@ final class TheComposerReusesItsOrphanedClipTests: XCTestCase {
             XCTAssertTrue(timeline.ensureComposerRegion(for: lane.id, clipStore: clips, loopBars: 4))
             XCTAssertEqual(clips.filledClips.count, 1, """
                 cycle \(cycle): removing the composer part and starting again grew the clip grid. \
-                Nothing clears a slot, so this fills all eight and then refuses every import.
+                Nothing clears a composer slot, so this fills all eight and then refuses every import.
                 """)
             XCTAssertEqual(timeline.document.regions(in: lane.id).map(\.clipID), [first.clipID],
                            "the new part plays the orphaned clip, reused by id")
