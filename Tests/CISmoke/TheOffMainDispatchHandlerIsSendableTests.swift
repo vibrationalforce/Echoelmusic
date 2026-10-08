@@ -30,9 +30,21 @@
 // `nonisolated(unsafe)` locals, and the inner `finishWriting { continuation.resume() }` closure is
 // now formed in a non-isolated context, so it inherits nothing either.
 //
+// THE THIRD SITE (same day, found by the crash-class audit lens, confirmed against the compiler).
+// `MIDIInput` is a `@MainActor` class built at app launch; `setupMIDI()` hands CoreMIDI two
+// closure literals — the client's notify block and the input port's receive block — neither
+// `@Sendable`. Swift's CSApply marks a closure argument for dynamic isolation checking whenever
+// its callee comes from a module that is not concurrency-checked, and CoreMIDI is a C module.
+// CoreMIDI calls the receive block on its own high-priority thread, so the first note, clock
+// tick or CC from ANY connected source (a keyboard, a network session, another app's virtual
+// port) would trap at the closure's entry, before the `nonisolated` parser runs. The repair is
+// the same token on both blocks; they capture only `self`, weakly.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
-// whose source was made on a queue other than `.main`, and every `requestMediaDataWhenReady(on:)`
-// block whose queue is not `.main`, is spelled `@Sendable`. Handlers on `.main` may stay isolated
+// whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
+// block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
+// `MIDI…CreateWithBlock(`/`MIDI…CreateWithProtocol(` call (CoreMIDI picks the thread, never the
+// caller) is spelled `@Sendable`. Handlers on `.main` may stay isolated
 // (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
 // class are exempt: a closure formed in a non-isolated class inherits nothing.
 //
@@ -45,8 +57,11 @@
 // `queue:` runs on a global queue and counts as off-main. The media-ready block names its queue in
 // its own `on:` argument, so it needs no pairing; a queue held in a variable (`on: exportQueue`)
 // counts as off-main unless it is literally `.main`/`DispatchQueue.main`, and a block passed as a
-// stored closure (`using: block`) is not seen. Two imported-block APIs are pinned, not the class of
-// all of them: a third API with the same shape is a new needle, not a comment. The `@MainActor`
+// stored closure (`using: block`) is not seen. A CoreMIDI block is seen only as a TRAILING
+// closure after the call's balanced argument list (one level of nested parentheses); a block
+// passed by name, or as a labelled argument inside the parentheses, is not. Three imported-block
+// API families are pinned, not the class of all of them: a fourth with the same shape is a new
+// needle, not a comment. The `@MainActor`
 // needle accepts only attributes and modifiers between it and `class`, so `Task { @MainActor in`
 // never counts as a class.
 //
@@ -82,12 +97,28 @@
 //     same kind: the site is found and not `@Sendable` (regression-shaped) and the counters box is
 //     absent (ANCHOR ABSENCE). The `@MainActor` class, the one media block, its own label queue and
 //     `nonisolated static func applyGain(` are green on both.
+// THIRD MEASUREMENT (the CoreMIDI needle), transcribed against the parent `f059867` and the
+// worktree with `SourceText.codeOnly` ported:
+//   · claim 1 — RED on the parent for its NAMED reason, a REGRESSION: exactly two violations,
+//     `Audio/MIDIInput.swift` (`MIDIClientCreateWithBlock` and `MIDIInputPortCreateWithProtocol`,
+//     neither `@Sendable`); GREEN after the fix. No other file carries a CoreMIDI trailing closure.
+//   · claim 4 — unchanged, green on both: `MIDIOutput`'s four CoreMIDI create calls take no
+//     closure (`nil` or none), so the needle yields no handler there.
+//   · claim 3's three CoreMIDI fixtures — pure needle, green on both.
+//   · claim 7 — COUNTERWEIGHT after the fix, RED on the parent for its named reason (the two
+//     blocks are found and not `@Sendable`); the `@MainActor` class, the two blocks and the
+//     `nonisolated` parser are green on both.
+// What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
+// `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
+// explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
 // NEEDS-FOUNDER-VERIFY: Arrange → Export → WAV auf dem Gerät bis zum Teilen-Blatt durchlaufen lassen,
 // und im nächsten `echoel_diag.log` die Zeile „retro: recording armed“ VOR dem Play sehen — nur das
 // Telefon beweist die Aufnahme, nur das 2613-dSYM beweist, dass Frame 7/8 diese Closure waren.
 // Dieselbe Geräteprobe entscheidet auch die zweite Stelle: läuft der Export nach dem Stop bis zum
 // Teilen-Blatt durch, hat der Pull-Block nicht getrappt — vorher konnte diese Phase auf keinem
-// Swift-6-Build je enden.
+// Swift-6-Build je enden. Die dritte Stelle: ein MIDI-Keyboard (USB, Bluetooth oder die
+// Netzwerk-Session) anschließen und eine Taste drücken — die App läuft weiter, die Performer-
+// Stimme klingt, und im `echoel_diag.log` steht danach kein `crash queue:`.
 
 import Foundation
 import XCTest
@@ -96,6 +127,7 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
 
     private static let retro = "Sources/Echoelmusic/Audio/RetroCapture.swift"
     private static let export = "Sources/Echoelmusic/Audio/SingleExport.swift"
+    private static let midiIn = "Sources/Echoelmusic/Audio/MIDIInput.swift"
     private static let mainQueueOwners = [
         "Sources/Echoelmusic/Sequencer/PatternEngine.swift",
         "Sources/Echoelmusic/Audio/MIDIOutput.swift",
@@ -129,6 +161,17 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     /// (`.main`, `exportQueue`); group 2 the `@Sendable` attribute when the closure opens with it.
     private static let mediaReady =
         #"requestMediaDataWhenReady\(\s*on:\s*(\w+(?:\.\w+)*\([^)]*\)|[^)]+)\)\s*\{\s*(@Sendable)?"#
+
+    /// A closure literal TRAILING a CoreMIDI `MIDI…CreateWithBlock(`/`MIDI…CreateWithProtocol(`
+    /// call: group 1 the API name, the argument list balanced to one nested level, group 2 the
+    /// `@Sendable` attribute when the closure opens with it. A call whose last argument is `nil`
+    /// and that is followed by a statement has no `{` after its `)` and is not a handler.
+    private static let coreMIDIBlock =
+        #"(MIDI\w+CreateWith(?:Block|Protocol))\((?:[^(){}]|\([^()]*\))*\)\s*\{\s*(@Sendable)?"#
+
+    /// CoreMIDI chooses the thread a block runs on (the receive block: its own high-priority
+    /// thread), so no CoreMIDI block counts as `.main`.
+    private static let coreMIDIThread = "<CoreMIDI's own thread>"
 
     private static let defaultQueue = "<no queue: — a global queue>"
     private static let unknownQueue = "<no DispatchSource.make…Source( above it>"
@@ -176,6 +219,13 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
             handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "requestMediaDataWhenReady"))
         }
+        // CoreMIDI blocks: the thread is CoreMIDI's, never the caller's.
+        for m in try NSRegularExpression(pattern: Self.coreMIDIBlock).matches(in: code, range: all) {
+            let sendable = m.range(at: 2).location != NSNotFound
+            let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+            handlers.append(Handler(line: line, queue: Self.coreMIDIThread, sendable: sendable,
+                                    api: ns.substring(with: m.range(at: 1))))
+        }
 
         let violations = isMainActorClass
             ? handlers.filter { !Self.isMain($0.queue) && !$0.sendable }
@@ -197,14 +247,16 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             }
         }
         XCTAssertEqual(violations, [], """
-            A `DispatchSource` handler or a `requestMediaDataWhenReady(on:)` block inside a \
-            `@MainActor` class, on a queue other than `.main`, is not spelled `@Sendable`: \
+            A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block or a CoreMIDI \
+            block inside a `@MainActor` class, on a queue other than `.main`, is not spelled \
+            `@Sendable`: \
             \(violations). Formed in a `@MainActor` context, a non-`@Sendable` closure inherits \
             MainActor isolation and the imported block type gets a dynamic isolation check at its \
             ENTRY — on the worker that check traps (`dispatch_assert_queue` → SIGTRAP) before the \
             body runs (build 2613, RetroCapture:604; the export's pull loop, SingleExport; builds \
-            1769/1777, PatternEngine). Spell the closure `{ @Sendable … }`, box what it mutates \
-            (`ExportRenderCounters`), keep the callee `nonisolated` — or put the work on `.main`.
+            1769/1777, PatternEngine; the MIDI receive block, MIDIInput). Spell the closure \
+            `{ @Sendable … }`, box what it mutates (`ExportRenderCounters`), keep the callee \
+            `nonisolated` — or put the work on `.main`.
             """)
     }
 
@@ -307,6 +359,46 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             .replacingOccurrences(of: "on: DispatchQueue(label: \"x.export\")", with: "on: DispatchQueue.global(qos: .utility)")
         XCTAssertEqual(try scan(mediaGlobal).violations.count, 1,
                        "a global queue is off-main; a call with its own parentheses must still be seen")
+
+        // The third API family, same triple — CoreMIDI picks the thread.
+        let midiIsolated = """
+            @MainActor @Observable
+            final class Input {
+                func setup() {
+                    let s = MIDIInputPortCreateWithProtocol(
+                        client,
+                        "In" as CFString,
+                        ._2_0,
+                        &port
+                    ) { [weak self] list, _ in
+                        self?.parse(list)
+                    }
+                }
+            }
+            """
+        let midi = try scan(midiIsolated)
+        XCTAssertEqual(midi.handlers.map(\.api), ["MIDIInputPortCreateWithProtocol"],
+                       "a trailing receive block after a multi-line argument list must be seen (handlers: \(midi.handlers))")
+        XCTAssertEqual(midi.violations.count, 1, "the MIDIInput shape must be a violation (#367)")
+
+        let midiSendable = midiIsolated
+            .replacingOccurrences(of: ") { [weak self] list, _ in", with: ") { @Sendable [weak self] list, _ in")
+        XCTAssertEqual(try scan(midiSendable).violations.count, 0,
+                       "`@Sendable` is the repair for a CoreMIDI block too; it must satisfy the rule")
+
+        let midiNoBlock = """
+            @MainActor @Observable
+            final class Output {
+                func setup() {
+                    let s = MIDIClientCreateWithBlock("Out" as CFString, &client, nil)
+                    guard s == noErr else { return }
+                }
+            }
+            """
+        XCTAssertEqual(try scan(midiNoBlock).handlers.count, 0, """
+            a CoreMIDI create call with no trailing closure is not a handler — the next statement's \
+            `{` must not be read as one (MIDIOutput is this shape, #364)
+            """)
     }
 
     /// 4 — the two exemptions are exercised by real owners, not vacuous.
@@ -380,6 +472,30 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(code.contains("nonisolated static func applyGain("), """
             `applyGain` is no longer `nonisolated` — the `@Sendable` block calls it off the actor \
             (the compiler says so too; this names the reason).
+            """)
+    }
+
+    /// 7 — the third site (the MIDI blocks) is inside the rule's domain and repaired (else claim 1
+    /// could go green by the needle ceasing to match the file).
+    func testTheCoreMIDIBlocksAreInsideTheRulesDomain() throws {
+        let code = try read(Self.midiIn)
+        let v = try scan(code)
+        XCTAssertTrue(v.isMainActorClass, """
+            MIDIInput is no longer matched as a `@MainActor` class — the rule no longer reaches it; \
+            re-derive whether its CoreMIDI blocks still need `@Sendable` before trusting claim 1.
+            """)
+        let midi = v.handlers.filter { $0.queue == Self.coreMIDIThread }
+        XCTAssertEqual(Set(midi.map(\.api)), ["MIDIClientCreateWithBlock", "MIDIInputPortCreateWithProtocol"], """
+            MIDIInput's two CoreMIDI blocks are not both seen (handlers: \(v.handlers.map { ($0.api, $0.line) })). \
+            If one moved behind a stored closure, the needle no longer reaches it — re-anchor first.
+            """)
+        XCTAssertTrue(midi.allSatisfy(\.sendable), """
+            a MIDI block is no longer `@Sendable` — the first note, clock tick or CC from any \
+            connected source traps at the closure's entry on CoreMIDI's thread.
+            """)
+        XCTAssertTrue(code.contains("private nonisolated func handleMIDIEvents("), """
+            `handleMIDIEvents` is no longer `nonisolated` — the `@Sendable` receive block calls it \
+            off the actor (the compiler says so too; this names the reason).
             """)
     }
 

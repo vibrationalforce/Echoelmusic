@@ -99,8 +99,19 @@ final class MIDIInput {
         // flipped. It does not depend on the client or the port. (#187, review 11a2076.)
         Self.applyNetworkSessionPreference()
 
+        // ⛔ BOTH BLOCKS BELOW ARE `@Sendable` ON PURPOSE — the build-2613 trap class (2026-10-08).
+        // This class is `@MainActor`, so a closure literal formed here without `@Sendable`
+        // inherits MainActor isolation, and a closure passed to a C module (CoreMIDI is not
+        // concurrency-checked) gets a dynamic isolation check at its ENTRY. CoreMIDI calls the
+        // receive block on its own high-priority thread: the check asks "main queue?",
+        // `dispatch_assert_queue` fails → SIGTRAP before `handleMIDIEvents` (already
+        // `nonisolated`) runs — on the first note, clock tick or CC from any connected source.
+        // The notify block is delivered on the run loop that created the client (main, today);
+        // it is marked too, so its safety does not hang on where `init` happens to run. Both
+        // capture only `self` weakly (a `@MainActor` class is Sendable) and hop to the actor
+        // explicitly. Guard: `TheOffMainDispatchHandlerIsSendableTests` claims 1, 3 and 7.
         // Create MIDI client
-        let status = MIDIClientCreateWithBlock("Echoelmusic" as CFString, &midiClient) { [weak self] notification in
+        let status = MIDIClientCreateWithBlock("Echoelmusic" as CFString, &midiClient) { @Sendable [weak self] notification in
             // The pointer is valid only while this callback runs, so the message is read HERE.
             // Handing the pointer to a later main-actor task read freed memory.
             let setupChanged = notification.pointee.messageID == .msgSetupChanged
@@ -119,7 +130,7 @@ final class MIDIInput {
             "Echoelmusic Input" as CFString,
             ._2_0,  // MIDI 2.0 protocol (backwards compatible with 1.0)
             &inputPort
-        ) { [weak self] eventList, _ in
+        ) { @Sendable [weak self] eventList, _ in
             self?.handleMIDIEvents(eventList)
         }
 
