@@ -22,6 +22,10 @@
 //    close pairs, ascending, inside the clip, within the 48-frame budget. COUNTERWEIGHTS: a short
 //    clip keeps the even grid bit for bit, and a 2 fps clip is read evenly (its pairs could not be
 //    close, and mixed with the gaps between them every pair read as a cut — 23 in the port).
+// 6. A cut INSIDE a close pair (found by the review of VV-4) is a transient and not motion: a still
+//    600 s clip cut at 312.55 s reads 0 with the cut at 312.6 s; moving footage cut to another
+//    scene of the same drift reads within 5 % of the algebra; and a clip with no close pair leaves
+//    its cut out of the every-pair fallback too.
 //
 // THE ALGEBRA (#442). A pixel of the pattern is 128 + 100·sin θ, and the pattern moves by
 // δ = 2π · speed · dt between two frames. For a small δ the change is 100 · |cos θ| · δ, and the
@@ -42,6 +46,12 @@
 // file does not compile on that commit's parent (`06ee283`) — claims 1–4 were graded at `c1bc3dd`
 // above; claim 5 is a FORWARD guard, transcribed (the grid and the analysis) and driven: 0.392 at
 // 6 s, 0.401 at 600 s, no cut; the even reading at 600 s that it replaces read 0.239.
+// Claim 6 (review of VV-4) compiles on its parent (`d944d2a`; it names nothing new) and is a
+// REGRESSION there, transcribed with Swift's `.rounded()` and driven on both rules: the still clip
+// read 0.719 (one pair's 88/255 over 0.1 s, averaged over the 24 close pairs), the moving one clamped at
+// 1 (2.55× the algebra), the sparse one (24 frames 25 s apart, cut at 300 s) 0.0030 — 0 / 0.401 / 0
+// after. Claims 1–5 read the same numbers on both rules bit for bit (nothing in them stands out, so
+// nothing is left out). MUTANT: leaving the cut in the every-pair fallback → the sparse assertion.
 // NOT covered: decoding — that the generator returns the frame each time asks for is pinned by
 // `AVideoShapesTheVisualFromBoundedFramesTests` (zero tolerance), not here.
 
@@ -165,6 +175,35 @@ final class TheVideoMotionDoesNotDependOnLengthTests: XCTestCase {
                        "COUNTERWEIGHT: at 2 fps no pair can be close, so the clip is read evenly")
     }
     #endif
+
+    // MARK: 6 — a cut inside a close pair is a cut, not motion
+
+    func testACutInsideACloseNeighbourPairIsNotMotion() throws {
+        let cut = 312.55
+        let still: (Double) -> [UInt8] = { time in
+            [UInt8](repeating: time < cut ? 128 : 40, count: Self.side * Self.side)
+        }
+        let stillReading = try seed(Self.paired(duration: 600, luma: still), duration: 600)
+        XCTAssertEqual(stillReading.transientTimes.count, 1, "the cut is found")
+        XCTAssertEqual(stillReading.transientTimes.first ?? 0, 312.5 + 0.1, accuracy: 1e-9,
+                       "at the second frame of pair 12, the one after the cut")
+        XCTAssertEqual(stillReading.motionEnergy, 0, "nothing moved — one changed picture inside a pair is not motion")
+
+        let scenes: (Double) -> [UInt8] = { time in
+            time < cut ? Self.movingLuma(at: time) : Self.movingLuma(at: time + 10)
+        }
+        let moving = try seed(Self.paired(duration: 600, luma: scenes), duration: 600)
+        XCTAssertEqual(moving.motionEnergy, Self.algebraic, accuracy: Self.algebraic * 0.05,
+                       "the drift is still the motion when one pair holds a cut to another scene")
+        XCTAssertEqual(moving.transientTimes.count, 1, "and the cut is still found")
+
+        let sparse = (0..<24).map { i -> VideoFrameSample in
+            let time = 600 * (Double(i) + 0.5) / 24
+            return Self.sample(time, [UInt8](repeating: time < 300 ? 128 : 40, count: Self.side * Self.side))
+        }
+        XCTAssertEqual(try seed(sparse, duration: 600).motionEnergy, 0,
+                       "no close pair: the every-pair fallback leaves the cut out too")
+    }
 
     // MARK: 4 — counterweights: today's readings keep their numbers
 

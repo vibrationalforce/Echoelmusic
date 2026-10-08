@@ -27,6 +27,9 @@
 //   The motion is now measured where it is linear, and a reader supplies close pairs (VV-1b). With
 //   no close pair at all (a sparse reader), the mean over every neighbour is the fallback — and it
 //   is length-dependent, which is why VV-1b exists. Guard: `TheVideoMotionDoesNotDependOnLengthTests`.
+//   ⭐ A PAIR THE TRANSIENT RULE FLAGS IS NOT MOTION (review of VV-4): a cut that falls INSIDE a
+//   close pair changes the whole picture in a tenth of a second, and one such pair read a still
+//   600 s clip at 0.72 motion. The mean leaves out every pair `standingOut` flags in its group.
 // · `transientTimes`: the sample times where the picture changed much more than it usually does —
 //   more than the median change plus `transientMADs` × the median absolute deviation, and above
 //   `transientFloor`, at least `transientSpacing` seconds apart. They are CUTS and FLASHES in the
@@ -151,25 +154,14 @@ public enum VideoSeedAnalysis {
         // Change between neighbouring samples, as a share of the luma range.
         var changes: [Double] = []
         changes.reserveCapacity(samples.count - 1)
-        var closeRate = 0.0
-        var closePairs = 0
-        var everyRate = 0.0
         for i in 1..<samples.count {
             var total = 0
             for c in 0..<cells {
                 total += abs(Int(samples[i].luma[c]) - Int(samples[i - 1].luma[c]))
             }
-            let change = Double(total) / Double(cells * 255)
-            changes.append(change)
-            let gap = samples[i].time - samples[i - 1].time
-            everyRate += change / gap
-            if gap <= motionPairMaxSeconds {
-                closeRate += change / gap
-                closePairs += 1
-            }
+            changes.append(Double(total) / Double(cells * 255))
         }
-        let meanRate = closePairs > 0 ? closeRate / Double(closePairs) : everyRate / Double(changes.count)
-        let motion = Swift.min(1, meanRate / fullScaleChangePerSecond)
+        let motion = Swift.min(1, motionRate(changes: changes, samples: samples) / fullScaleChangePerSecond)
 
         return VideoSeed(version: VideoSeed.formatVersion, durationSeconds: durationSeconds,
                          frameRate: frameRate, brightness: lumaSum / n,
@@ -177,6 +169,22 @@ public enum VideoSeedAnalysis {
                          motionEnergy: motion,
                          transientTimes: transients(changes: changes, samples: samples),
                          sampledFrames: samples.count)
+    }
+
+    /// The mean change per second over the close pairs — over every pair when there is no close
+    /// one — leaving out the pairs the transient rule reads as a cut or a flash. A pair can only
+    /// stand out above its group's median, so at least half of a group is always counted.
+    static func motionRate(changes: [Double], samples: [VideoFrameSample]) -> Double {
+        let close = changes.indices.filter { samples[$0 + 1].time - samples[$0].time <= motionPairMaxSeconds }
+        let group = close.isEmpty ? Array(changes.indices) : close
+        let cuts = Set(standingOut(group, in: changes))
+        var rate = 0.0
+        var counted = 0
+        for i in group where !cuts.contains(i) {
+            rate += changes[i] / (samples[i + 1].time - samples[i].time)
+            counted += 1
+        }
+        return counted > 0 ? rate / Double(counted) : 0
     }
 
     /// The sample times where the change stands out from the clip's own usual change — close and

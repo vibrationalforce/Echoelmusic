@@ -17,6 +17,11 @@
 // mutants driven, each red for its named reason: the spacing rule removed (claim 3), the
 // transient floor removed (claim 2, the flicker), the backwards-time check removed (claim 5), the
 // plausibility order check removed (claim 6), `bars` allowed to reach 0 (claim 7).
+// ⚠️ Claim 3's motion line FLIPPED with the review of VV-4 (2026-10-08): it asserted that the hard
+// cut reads as motion > 0, which was the defect — every pair of that clip is close (0.25 s), the cut
+// pair was the only change, and it read 1.0 motion. A pair the transient rule flags is now left out
+// of the motion mean, so the clip reads 0; on the parent the new line is red (1.0), the old one
+// would be red here. The fade beside it keeps motion > 0 on both (nothing in it stands out).
 
 import Foundation
 import XCTest
@@ -77,7 +82,10 @@ final class AVideoIsMeasuredNotGuessedTests: XCTestCase {
         let seed = try XCTUnwrap(VideoSeedAnalysis.analyze(samples: clip(20) { $0 < 8 ? 0 : 255 },
                                                            durationSeconds: 5, frameRate: 30))
         XCTAssertEqual(seed.transientTimes, [2.0], "the cut lands on the first white sample, 8 × 0.25 s")
-        XCTAssertGreaterThan(seed.motionEnergy, 0)
+        XCTAssertEqual(seed.motionEnergy, 0, """
+            a cut between two still pictures is a transient, not motion (review of VV-4 — this line \
+            asserted motion > 0 until then; `TheVideoMotionDoesNotDependOnLengthTests` claim 6 owns why)
+            """)
     }
 
     func testASlowFadeIsChangeWithoutATransient() throws {
