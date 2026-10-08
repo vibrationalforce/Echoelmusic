@@ -4,18 +4,19 @@
 // RMS (the inner "body" layer). Never draw raw PCM. Pure Foundation —
 // Linux-CI-testable.
 //
-// ⛔ TEST-ONLY SINCE 2026-07-28 (#132 Slice 5). This header used to end "the
-// AVAudioFile reader + disk cache build on this" — both were deleted that day
-// (`Audio/WaveformCache.swift`, `Studio/WaveformView.swift`), so `WaveformReducer`
-// and `WaveformBucket` now have ZERO consumers in `Sources/`; the only reference
-// left in the repo is `Tests/EchoelmusicTests/WaveformReducerTests.swift`.
+// ⭐ LIVE AGAIN SINCE AUDIO EDITOR W1 (2026-10-08). Its consumer is
+// `Sequencer/WaveformSketch`: the overview of a media file is folded with
+// `foldStereo`, bucketed with `reduce`, and each display column of an audio part on
+// the Arrange canvas is the `downsample` join of the buckets it overlaps — so this
+// file is the ONE reduction rule the canvas draws by (#416).
 //
-// KEPT ON PURPOSE, not overlooked: it is a pure, tested, dependency-free core, and
-// the sampler/file waveform browser that would consume it again is still on the map
-// (`docs/dev/VISION_REALITY_2026-07.md`). Deleting it is a separate decision from
-// deleting the DAW view stack, and this note exists so the next pass finds a parked
-// core rather than an orphan with no explanation — which is exactly what made the
-// deleted `FileWaveformView` a defect instead of a parked feature.
+// ⛔ History, kept because it is why the core survived: it was TEST-ONLY from
+// 2026-07-28 (#132 Slice 5), when the reader, the disk cache and the view that drew
+// it (`Audio/WaveformCache.swift`, `Studio/WaveformView.swift`) were deleted. It was
+// kept on purpose as a pure, tested, dependency-free core — a parked core rather than
+// an orphan, which is exactly what made the deleted `FileWaveformView` a defect
+// instead of a parked feature. W1 ported the idea, not that code: no disk cache, one
+// in-memory overview per part, read off the main actor.
 
 import Foundation
 

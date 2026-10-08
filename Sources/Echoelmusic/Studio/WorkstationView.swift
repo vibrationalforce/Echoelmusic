@@ -371,6 +371,7 @@ struct WorkstationView: View {
                 if !arrangeRows.isEmpty {
                   VStack(alignment: .leading, spacing: 10) {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
+                                      bpm: player.preflightTempo,
                                       songTicks: ArrangementStrip.songTicks(summary))
                         .padding(.horizontal, 10)
                     // WA4 path 5 — the actions for the part selected on the canvas. Its own

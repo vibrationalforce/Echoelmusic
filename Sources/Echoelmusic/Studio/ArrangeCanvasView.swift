@@ -74,7 +74,18 @@
 //  editor's own `ClipNoteEdit.visibleNotes`, so a trimmed part shows only what it sounds. The
 //  canvas reads the clip grid (cold: an edit, an import, an evolve) and hands each block its
 //  marks; the block draws them under its border, they travel with a drag, take no touches and
-//  say nothing. An audio part stays plain — its waveform is not read here.
+//  say nothing.
+//
+//  ⭐ AN AUDIO PART SHOWS ITS WAVEFORM (audio editor W1, founder 2026-10-08: "Die klassische DAW
+//  Audio Editing View fehlt mir noch."). An audio part was a plain bar until now. The lane hands
+//  each audio part its window (`ArrangeCanvas.audioWindow`: the player's own media position,
+//  length and stretch rate, plus the part's gain), and `AudioPartWaveform` draws that stretch of
+//  the file — min/max and RMS per column, the pro reduction (`WaveformSketch`). The file is read
+//  ONCE per part, off the main actor, and never by this file: the block stays a leaf with one
+//  state (the drag). What is drawn is what the part plays — a trimmed part shows its own
+//  stretch, a quieter part a smaller wave. The tempo arrives cold (`bpm`), so a glide never
+//  re-renders the canvas. ⚠️ COST: each audio part reads its whole file once when it appears,
+//  even when two parts share a file — measure on a device before adding a cache.
 //
 
 import SwiftUI
@@ -266,6 +277,36 @@ enum ArrangeCanvas {
                             height: span > 0 ? Double(high - note.pitch) / span : 0.5)
         }
     }
+
+    /// The stretch of its file an audio part plays (audio editor W1): which file, from where,
+    /// for how long, at what level. The waveform leaf draws exactly this window.
+    struct AudioWindow: Equatable, Sendable {
+        let mediaRef: String
+        let fromSeconds: Double
+        let lengthSeconds: Double
+        let gain: Float
+    }
+
+    /// An audio part's window at `bpm`, by the player's own two calls (#416): the media position
+    /// at the part's first tick (`AudioRegionPlayback.filePositionSeconds`) and its length in
+    /// song time times the region's `StretchPlan` rate — what `AudioLanePlayer.start` hands the
+    /// sink at the part's onset. nil for a MIDI part, a part without a clip or a file, and a
+    /// tempo that is not a tempo; the block then stays plain.
+    nonisolated static func audioWindow(for region: TimelineRegion, clip: Clip?,
+                                        bpm: Double) -> AudioWindow? {
+        guard let clip, clip.kind == .audio,
+              let ref = clip.mediaRef, !ref.isEmpty,
+              bpm.isFinite, bpm > 0, region.lengthTicks > 0 else { return nil }
+        let plan = StretchPlan.resolve(mode: region.stretchMode, warpEnabled: region.warpEnabled,
+                                       nativeBPM: clip.nativeBPM, projectBPM: bpm,
+                                       capabilities: StretchMode.timelineCapabilities)
+        guard let from = AudioRegionPlayback.filePositionSeconds(for: region, atTick: region.startTick,
+                                                                 bpm: bpm, stretchRate: plan.rate) else {
+            return nil
+        }
+        let length = TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: bpm) * plan.rate
+        return AudioWindow(mediaRef: ref, fromSeconds: from, lengthSeconds: length, gain: region.gain)
+    }
 }
 
 /// Every track's parts on one scale, each part tappable to select it.
@@ -292,6 +333,11 @@ struct ArrangeCanvasView: View {
 
     let rows: [WorkstationSummary.LaneRow]
     let document: TimelineDocument
+    /// The song tempo an audio part's waveform window is taken at (W1) — handed in COLD by the
+    /// Workstation (`preflightTempo`, `@ObservationIgnored`), so a tempo glide never re-renders
+    /// the canvas; the window follows on the next render. A warped part's window does not
+    /// depend on it at all (its rate cancels the tempo).
+    let bpm: Double
     let songTicks: Int
 
     /// Tall enough to hit with a finger and to read a part's sketch at a glance (A1, founder
@@ -400,6 +446,9 @@ struct ArrangeCanvasView: View {
                                                                 uniquingKeysWith: { first, _ in first })
         let sketches = clips.mapValues { ArrangeCanvas.noteMarks(for: $0.0, clip: $0.1) }
         let names = clips.mapValues { ArrangeCanvas.partName($0.1) }
+        // W1: the same one read of the clip grid gives each AUDIO part the stretch of its file
+        // it plays; a MIDI part gets nil and keeps its note sketch.
+        let waves = clips.compactMapValues { ArrangeCanvas.audioWindow(for: $0.0, clip: $0.1, bpm: bpm) }
         return GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .leading) {
@@ -412,6 +461,7 @@ struct ArrangeCanvasView: View {
                                      laneWidth: width, songTicks: songTicks,
                                      label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
+                                     audio: waves[block.id],
                                      name: names[block.id] ?? "",
                                      tint: tint,
                                      onSelect: { selection.selectRegion(block.id, in: document) },
@@ -538,6 +588,8 @@ struct ArrangePartBlock: View {
     let label: String
     /// The part's notes, sketched small (design slice 11) — empty for an audio part.
     let noteMarks: [ArrangeCanvas.NoteMark]
+    /// An audio part's stretch of its file (W1), drawn as its waveform — nil for a MIDI part.
+    let audio: ArrangeCanvas.AudioWindow?
     /// Its clip's name (A1b), shown top-left inside the block; empty = no tag.
     let name: String
     /// Its track's hue (A1): the part wears the colour of the track it sits on.
@@ -558,6 +610,7 @@ struct ArrangePartBlock: View {
         RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .fill(tint.opacity(Self.tintOpacity))
             .overlay { noteSketch }
+            .overlay { audioSketch }
             .overlay(alignment: .topLeading) { nameTag }
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                 .strokeBorder(isSelected || moving ? EchoelTheme.accent : tint.opacity(Self.edgeOpacity),
@@ -638,6 +691,19 @@ struct ArrangePartBlock: View {
     /// the selection ring (`accent`, 2 pt) stays the loudest edge on the lane.
     private static let tintOpacity: Double = 0.30
     private static let edgeOpacity: Double = 0.70
+
+    /// An audio part's waveform (W1), under the name tag and the selection ring like the note
+    /// sketch. The reading and its state live in `AudioPartWaveform`, never here: this leaf
+    /// keeps exactly one piece of state, the drag.
+    @ViewBuilder private var audioSketch: some View {
+        if let audio {
+            // No horizontal inset, on purpose: the wave spans the block edge to edge so a hit
+            // sits on the same scale as the ruler and the playhead above it.
+            AudioPartWaveform(window: audio, tint: tint)
+                .padding(.vertical, EchoelTheme.spaceXS)
+                .padding(.top, name.isEmpty ? 0 : Self.nameRoom)
+        }
+    }
 
     /// Hold first, then slide — so a swipe that starts on a part still scrolls the Workstation.
     private var move: some Gesture {
