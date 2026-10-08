@@ -133,14 +133,14 @@
         }
       }
     },
-    "How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start." : {
+    "How this part keeps the piece's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start." : {
       "comment" : "VoiceOver hint of the part bar's Stretch picker (audio editor W3): what each mode does and when Beats is heard.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start."
+            "value" : "How this part keeps the piece's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start."
           }
         }
       }
@@ -169,26 +169,26 @@
         }
       }
     },
-    "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves." : {
+    "How long the part rises from silence at its start. The two fades share the part; each can use what the other leaves." : {
       "comment" : "VoiceOver hint of the part bar's \"Fade in\" field (audio editor W4c, 2026-10-08).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves."
+            "value" : "How long the part rises from silence at its start. The two fades share the part; each can use what the other leaves."
           }
         }
       }
     },
-    "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves." : {
+    "How long the part falls to silence at its end. The two fades share the part; each can use what the other leaves." : {
       "comment" : "VoiceOver hint of the part bar's \"Fade out\" field (audio editor W4c, 2026-10-08).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves."
+            "value" : "How long the part falls to silence at its end. The two fades share the part; each can use what the other leaves."
           }
         }
       }

@@ -339,8 +339,8 @@ final class ThePartBarSetsTheFadesItPlaysTests: XCTestCase {
         let strings = json?["strings"] as? [String: Any] ?? [:]
         XCTAssertGreaterThan(strings.count, 100, "the catalog read as \(strings.count) keys — the wrong file")
         let keys = ["Fade in", "Fade out",
-                    "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves.",
-                    "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves."]
+                    "How long the part rises from silence at its start. The two fades share the part; each can use what the other leaves.",
+                    "How long the part falls to silence at its end. The two fades share the part; each can use what the other leaves."]
         for key in keys {
             let entry = strings[key] as? [String: Any]
             let english = ((entry?["localizations"] as? [String: Any])?["en"] as? [String: Any])?["stringUnit"] as? [String: Any]

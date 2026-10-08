@@ -384,7 +384,7 @@ struct SelectedPartBar: View {
                 if let gain = PartGain.gain(of: regionID, in: document) {
                     PartGainField(regionID: regionID, gain: gain)
                 }
-                // W3: how a warped audio part keeps the song's tempo — nil for any other part.
+                // W3: how a warped audio part keeps the piece's tempo — nil for any other part.
                 if let stretch = PartStretch.mode(of: regionID, in: document) {
                     PartStretchPicker(regionID: regionID, mode: stretch)
                 }
@@ -772,7 +772,7 @@ private struct PartGainField: View {
     }
 }
 
-/// Audio editor W3 — how the selected WARPED audio part keeps the song's tempo.
+/// Audio editor W3 — how the selected WARPED audio part keeps the piece's tempo.
 ///
 /// A named choice is a `Picker` (the UI law's word is "NUMERIC"), segmented, offering exactly
 /// the modes the timeline plays (`PartStretch.choices`). One pick is one write through
@@ -800,7 +800,7 @@ private struct PartStretchPicker: View {
                 }
             }
             .pickerStyle(.segmented)
-            .accessibilityHint("How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start.")
+            .accessibilityHint("How this part keeps the piece's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start.")
         }
     }
 }
@@ -833,7 +833,7 @@ private struct PartFadeFields: View {
                              range: PartFades.inRange(lengths),
                              unit: "beats",
                              decimals: 2,
-                             hint: String(localized: "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves."),
+                             hint: String(localized: "How long the part rises from silence at its start. The two fades share the part; each can use what the other leaves."),
                              standard: 0,
                              onCommit: { commitIn() })
             EchoelValueField(label: "Fade out",
@@ -841,7 +841,7 @@ private struct PartFadeFields: View {
                              range: PartFades.outRange(lengths),
                              unit: "beats",
                              decimals: 2,
-                             hint: String(localized: "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves."),
+                             hint: String(localized: "How long the part falls to silence at its end. The two fades share the part; each can use what the other leaves."),
                              standard: 0,
                              onCommit: { commitOut() })
         }
