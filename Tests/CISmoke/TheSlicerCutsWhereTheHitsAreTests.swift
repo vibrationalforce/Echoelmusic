@@ -17,12 +17,31 @@
 //    the points are sorted and unique, and two hits 5 ms apart are one cut.
 // 5. SOURCE: the slicer reads onsets through `TempoOnsetEnvelope` and computes no energy or log of
 //    its own (one onset rule), and imports Foundation only.
+// 6–9. END-TO-END, the GA-6 review (dsp-reviewer, every input below is one it reported failing):
+//    6. close hits are decided strongest-first over FRAMES, not greedily among peaks — a rising
+//       roll 0.3 / 0.6 / 1.0 at 45 ms keeps its first and last hit; at 44.1 kHz two hits 52 ms apart
+//       are two cuts; COUNTERWEIGHTS: of two equal hits 30 ms apart the earlier is the cut, of two
+//       unequal ones the stronger.
+//    7. five ms of digital silence before a loop does not lift the floor over its hits — a chord
+//       pad with four soft noise hits is cut at all four, with and without the lead-in.
+//    8. the attack is read in the rise, not the level — a click over a DC offset is cut exactly
+//       there, and a snare 51 ms after a kick's body is its own cut.
+//    9. a tonal attack (100 Hz, 10 ms ramp) is cut within 2 ms of where it starts, not a cycle late.
 //
 // Grading (§0, no Swift toolchain): the file does NOT compile on its parent (`6ac95c9`) — it names
 // `SampleSlicer`, created by this commit — so no assertion has a verdict there (ONE absence, #486);
 // claims 1–4 are FORWARD guards. They were transcribed into Python (a line-by-line port of
 // `TempoOnsetEnvelope` and the slicer, Float rounding kept where Swift rounds) and every expectation
 // below was driven through it: all green. Claim 5 was grepped against the worktree.
+// The review fix, graded against ITS parent (`367c8c5`): the file compiles there. REGRESSIONS, red
+// there for their named reason: claim 6's roll ([0, 14320]) and 44.1 kHz pair ([0, 11000]); claim 7
+// with the lead-in ([0]) and without it (cuts 240 / 182 / … frames early); claim 8's DC click
+// (23760) and kick + snare ([0, 24011]); claim 9 (252 frames late). COUNTERWEIGHTS, green on both:
+// claim 6's tie and strength pair, claims 1–5. MUTATIONS driven in the port, each caught by the
+// claim that names it: no minimum gap (6, 7), no cap (7), no step-back (9), the level instead of
+// the rise (7, 8, 9), the greedy peak gap (6, 7). NOT caught by any claim, said rather than hidden:
+// narrowing the window to the hit's own hop changes no verdict here (it moves a hit that starts
+// late in a hop 10 frames later), and `relativeFloor` is not pinned on its own.
 // NOT covered: how the cuts fall on real loops and phrases — the floors are chosen on synthetic
 // material. NEEDS-FOUNDER-VERIFY once GA-7 gives the slicer a caller.
 
@@ -120,6 +139,116 @@ final class TheSlicerCutsWhereTheHitsAreTests: XCTestCase {
         flam[24_240] = 1   // 5 ms later
         XCTAssertEqual(SampleSlicer.slicePoints(samples: flam, sampleRate: Self.rate), [0, 24_000],
                        "two hits closer than the minimum gap are one cut")
+    }
+
+    // MARK: 6 — close hits: strongest first, over frames
+
+    func testCloseHitsAreDecidedStrongestFirst() {
+        var roll = [Float](repeating: 0, count: 48_000)
+        roll[10_000] = 0.3
+        roll[12_160] = 0.6
+        roll[14_320] = 1
+        XCTAssertEqual(SampleSlicer.slicePoints(samples: roll, sampleRate: Self.rate), [0, 10_000, 14_320],
+                       "a rising roll keeps every hit that is a minimum gap from a stronger one")
+
+        var pair = [Float](repeating: 0, count: 44_100)
+        pair[11_000] = 1
+        pair[13_300] = 1   // 52 ms at 44.1 kHz
+        XCTAssertEqual(SampleSlicer.slicePoints(samples: pair, sampleRate: 44_100), [0, 11_000, 13_300],
+                       "the minimum gap is 50 ms in frames, not a whole number of hops")
+
+        var tie = [Float](repeating: 0, count: 48_000)
+        tie[24_000] = 1
+        tie[25_440] = 1    // 30 ms
+        XCTAssertEqual(SampleSlicer.slicePoints(samples: tie, sampleRate: Self.rate), [0, 24_000],
+                       "COUNTERWEIGHT: two equal hits closer than the gap — the earlier is the cut")
+        tie[24_000] = 0.5
+        XCTAssertEqual(SampleSlicer.slicePoints(samples: tie, sampleRate: Self.rate), [0, 25_440],
+                       "COUNTERWEIGHT: two unequal ones — the stronger is the cut")
+    }
+
+    // MARK: 7 — a lead-in of silence does not lift the floor
+
+    func testALeadInOfSilenceDoesNotHideTheHits() throws {
+        for lead in [0, 240] {
+            let (samples, hits) = Self.padWithSoftHits(lead: lead)
+            let points = try XCTUnwrap(SampleSlicer.slicePoints(samples: samples, sampleRate: Self.rate))
+            XCTAssertEqual(points.count, hits.count + 1, "lead-in \(lead): one cut per hit — \(points)")
+            for (cut, hit) in zip(points.dropFirst(), hits) {
+                XCTAssertLessThanOrEqual(abs(cut - hit), Self.tolerance, "lead-in \(lead): a hit at \(hit) was cut at \(cut)")
+            }
+        }
+    }
+
+    // MARK: 8 — the attack is read in the rise, not the level
+
+    func testTheAttackIsFoundOverMaterialThatHoldsALevel() throws {
+        var offset = [Float](repeating: 0.3, count: 48_000)
+        offset[24_100] = 1
+        XCTAssertEqual(SampleSlicer.slicePoints(samples: offset, sampleRate: Self.rate), [0, 24_100],
+                       "a DC offset is a level, not an attack")
+
+        var kit = [Double](repeating: 0, count: 72_000)
+        for k in 0..<48_000 {
+            let body: Double = 0.9 * Foundation.exp(-Double(k) / 9_600)
+            kit[24_000 + k] += body * Foundation.sin(2 * Double.pi * 70 * Double(k) / Self.rate)
+        }
+        let snare = 26_450   // 51 ms after the kick
+        var noise = LCG(seed: 4_242)
+        for k in 0..<4_800 { kit[snare + k] += 0.6 * noise.next() * Foundation.exp(-Double(k) / 1_200) }
+        let points = try XCTUnwrap(SampleSlicer.slicePoints(samples: kit.map { Float($0) }, sampleRate: Self.rate))
+        XCTAssertEqual(points.count, 3, "the kick and the snare are two cuts: \(points)")
+        if points.count == 3 {
+            XCTAssertLessThanOrEqual(abs(points[1] - 24_000), Self.tolerance, "the kick at \(points[1])")
+            XCTAssertLessThanOrEqual(abs(points[2] - snare), Self.tolerance, "the snare at \(points[2])")
+        }
+    }
+
+    // MARK: 9 — a tonal attack is cut where it starts
+
+    func testATonalAttackIsCutWhereItStarts() throws {
+        var samples = [Float](repeating: 0, count: 72_000)
+        let ramp = 480   // 10 ms
+        for k in 0..<30_000 {
+            let attack: Double = Swift.min(1, Double(k) / Double(ramp))
+            let envelope: Double = attack * Foundation.exp(-Double(Swift.max(0, k - ramp)) / 9_600)
+            samples[24_000 + k] = Float(0.9 * envelope * Foundation.sin(2 * Double.pi * 100 * Double(k) / Self.rate))
+        }
+        let points = try XCTUnwrap(SampleSlicer.slicePoints(samples: samples, sampleRate: Self.rate))
+        XCTAssertEqual(points.count, 2, "\(points)")
+        let late = (points.last ?? 0) - 24_000
+        XCTAssertTrue((0...96).contains(late), "a 100 Hz attack was cut \(late) frames after it starts — not within 2 ms")
+    }
+
+    // MARK: - fixtures
+
+    /// The tests' noise: the same 31-bit LCG as claim 1's bursts, seeded per fixture.
+    private struct LCG {
+        var state: UInt64
+        init(seed: UInt64) { state = seed }
+        mutating func next() -> Double {
+            state = (state &* 1_103_515_245 &+ 12_345) % (1 << 31)
+            return Double(state) / Double(1 << 31) * 2 - 1
+        }
+    }
+
+    /// A three-note pad (220 · 277.2 · 329.6 Hz) for two seconds after `lead` zero frames, with a
+    /// soft decaying noise hit (peak 0.2, 25 ms) every half second from 0.25 s in.
+    private static func padWithSoftHits(lead: Int) -> (samples: [Float], hits: [Int]) {
+        var mix = [Double](repeating: 0, count: lead + 96_000)
+        for i in 0..<96_000 {
+            let t: Double = Double(i) / rate
+            let root: Double = Foundation.sin(2 * Double.pi * 220 * t)
+            let third: Double = 0.6 * Foundation.sin(2 * Double.pi * 277.2 * t)
+            let fifth: Double = 0.5 * Foundation.sin(2 * Double.pi * 329.6 * t)
+            mix[lead + i] = 0.25 * (root + third + fifth)
+        }
+        let hits: [Int] = (0..<4).map { lead + 12_000 + 24_000 * $0 }
+        var noise = LCG(seed: 777)
+        for hit in hits {
+            for k in 0..<4_800 { mix[hit + k] += 0.2 * noise.next() * Foundation.exp(-Double(k) / 1_200) }
+        }
+        return (mix.map { Float($0) }, hits)
     }
 
     // MARK: 5 — one onset rule
