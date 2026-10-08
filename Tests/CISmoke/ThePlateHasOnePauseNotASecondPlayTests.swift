@@ -87,7 +87,7 @@ final class ThePlateHasOnePauseNotASecondPlayTests: XCTestCase {
         XCTAssertEqual(ProjectTransport.status(paused), .paused)
         XCTAssertEqual(ProjectTransport.buttonWord(running: false), "Play")
         XCTAssertEqual(ProjectTransport.buttonWord(running: true), "Stop")
-        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .resumeInstrument).contains("pulse reading keeps running"),
+        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .resumeInstrument, fromTick: 0).contains("pulse reading keeps running"),
                       "the head's resume hint must say the pulse reading survives — that is the promise the plate's Pause makes")
     }
 

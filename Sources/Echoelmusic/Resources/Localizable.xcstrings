@@ -205,6 +205,30 @@
         }
       }
     },
+    "Play from" : {
+      "comment" : "VoiceOver label of the Arrange canvas's bar ruler (GMMW AE-7, 2026-10-08). Its value is the bar Play starts from, e.g. \"Bar 3\"; swiping up or down moves it a bar.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play from"
+          }
+        }
+      }
+    },
+    "Sets the bar Play starts from. While the piece plays, it moves there at once." : {
+      "comment" : "VoiceOver hint of the Arrange canvas's bar ruler (GMMW AE-7, 2026-10-08).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets the bar Play starts from. While the piece plays, it moves there at once."
+          }
+        }
+      }
+    },
     "Part pitch" : {
       "comment" : "Value-field label (GMMW AE-10c, 2026-10-08): the selected audio part's own pitch on the part bar, in semitones, on top of its track's pitch.",
       "extractionState" : "manual",
@@ -16555,6 +16579,30 @@
         }
       }
     },
+    "Plays the piece from bar " : {
+      "comment" : "Seam head of the Play button's VoiceOver hint when the bar ruler moved the start (GMMW AE-7, 2026-10-08): followed by the bar number, then \" on the shared transport.\" or \". The instrument's held music comes back with it.\"",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the piece from bar "
+          }
+        }
+      }
+    },
+    ". The instrument's held music comes back with it." : {
+      "comment" : "Seam tail of the Play button's VoiceOver hint when Play also brings back the instrument's held music and starts after bar 1 (GMMW AE-7, 2026-10-08). Preceded by \"Plays the piece from bar \" and the bar number.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ". The instrument's held music comes back with it."
+          }
+        }
+      }
+    },
     " on the shared transport." : {
       "localizations" : {
         "en" : {
@@ -20199,12 +20247,12 @@
         }
       }
     },
-    "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top." : {
+    "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top."
+            "value" : "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged."
           }
         }
       }

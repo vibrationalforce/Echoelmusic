@@ -89,11 +89,11 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
                        "the canonical project is still the arrangement — the session only changes the words")
         XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSongAndInstrument),
                        "Play the piece and the instrument")
-        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .startSongAndInstrument)
+        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .startSongAndInstrument, fromTick: 0)
                         .contains("music comes back"), "the hint says the held music returns with the song")
         // MED-2: the one Stop ends the pulse reading, and its hint says so on EVERY surface.
         XCTAssertTrue(ProjectTransport.stopHint.contains("pulse reading ends"))
-        XCTAssertEqual(ProjectTransport.buttonHint(running: true, play: .startSong), ProjectTransport.stopHint)
+        XCTAssertEqual(ProjectTransport.buttonHint(running: true, play: .startSong, fromTick: 0), ProjectTransport.stopHint)
         XCTAssertEqual(WorkstationSummary.transportHint(playing: true, startable: true), ProjectTransport.stopHint,
                        "the Workstation's Stop is the same Stop, so it reads the same")
         XCTAssertEqual(ProjectTransport.playAction(facts(session: true), instrumentInFront: false), .resumeInstrument)
@@ -101,7 +101,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         XCTAssertEqual(ProjectTransport.buttonLabel(running: true, play: .startSong), "Stop all playback",
                        "while anything runs the one button is Stop — for everything")
         XCTAssertEqual(ProjectTransport.buttonLabel(running: false, play: .startSong), "Play the piece")
-        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .unavailable).hasPrefix("Unavailable:"),
+        XCTAssertTrue(ProjectTransport.buttonHint(running: false, play: .unavailable, fromTick: 0).hasPrefix("Unavailable:"),
                       "a dimmed control says what is missing")
     }
 
@@ -121,7 +121,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
                        .resumeInstrument)
         XCTAssertEqual(ProjectTransport.buttonWord(running: false), "Play",
                        "counterweight: the drawn word is still Play")
-        XCTAssertFalse(ProjectTransport.buttonHint(running: false, play: .startInstrument).hasPrefix("Unavailable:"))
+        XCTAssertFalse(ProjectTransport.buttonHint(running: false, play: .startInstrument, fromTick: 0).hasPrefix("Unavailable:"))
         // Counterweight: off the Instrument stage the old rule stands untouched.
         XCTAssertEqual(ProjectTransport.playAction(facts(), instrumentInFront: false), .unavailable)
         XCTAssertTrue(StudioStage.instrument.playStartsTheInstrument)

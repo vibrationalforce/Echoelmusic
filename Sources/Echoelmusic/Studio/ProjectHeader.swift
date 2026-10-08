@@ -356,7 +356,11 @@ struct ProjectPlayStopButton: View {
         // space in the piece-name field types a space and does not start playback.
         .keyboardShortcut(.space, modifiers: [])
         .accessibilityLabel(ProjectTransport.buttonLabel(running: running, play: play))
-        .accessibilityHint(ProjectTransport.buttonHint(running: running, play: play))
+        // GMMW AE-7: the hint names the bar THIS Play starts on — the cue, folded the way `play`
+        // folds it. Both are cold (a tap, an edit), so the reads stay in this body.
+        .accessibilityHint(ProjectTransport.buttonHint(running: running, play: play,
+                                                       fromTick: TimelineRegionPlayer.playStartTick(
+                                                           forCue: player.cueTick, in: timeline.document)))
         // Restructure F5b — the transport's start and stop reach the hand: `.start` when it
         // begins to run, `.stop` when it ends, whatever ended it (this tap, the space bar, the
         // end of the song). Keyed on the derived `running`, which changes on a gesture or at a
@@ -365,10 +369,12 @@ struct ProjectPlayStopButton: View {
         .sensoryFeedback(trigger: running) { _, isRunning in isRunning ? SensoryFeedback.start : SensoryFeedback.stop }
     }
 
+    /// GMMW AE-7: Play starts where the bar ruler was tapped (`cueTick`, 0 = the top). Record
+    /// beside it does not — its own start stays at bar 1, which its words say.
     private func startSong() {
         WorkstationView.startSong(player: player, timeline: timeline, clipStore: clipStore,
                                   pattern: beatPlayer.pattern, pianoRoll: pianoRoll,
-                                  fromTick: 0, launching: [])
+                                  fromTick: player.cueTick, launching: [])
     }
 
     private func stopAll() {
@@ -405,10 +411,11 @@ private struct ProjectTempoReadout: View {
 /// paused while the piece is stopped. It is a REDRAW, not a clock: it reads the one player's
 /// position and schedules nothing.
 ///
-/// ⚠️ STOPPED IT READS "1.1.1", AND THAT IS A FACT, NOT A PLACEHOLDER: both Plays that start the
-/// whole piece — this header's and the plate's — start from the top (`fromTick: 0`). The part
-/// bar's Play starts at a part; while that plays, THIS counter is where its bar shows (design
-/// slice C took the plate's "Playing from bar …" line away). Stopped, the head does not guess it.
+/// ⚠️ STOPPED IT READS WHERE PLAY WILL START, AND THAT IS A FACT, NOT A GUESS: the ONE Play starts
+/// on the bar the ruler chose (GMMW AE-7, `cueTick`), folded the way `play` folds it — "1.1.1"
+/// until a bar is tapped. ⛔ It read "1.1.1" whatever the cue until AE-7, when every Play started
+/// from the top. The part bar's Play starts at a part; while that plays, THIS counter is where
+/// its bar shows (design slice C took the plate's "Playing from bar …" line away).
 /// ⚠️ IT KEEPS ONE WIDTH. It never disappears (a counter that came only while playing would
 /// re-flow the head on every Play), and a hidden three-digit template reserves the width of bar
 /// 100, so reaching bar 10 or bar 100 mid-play cannot widen the summary and make the row's
@@ -424,11 +431,16 @@ private struct ProjectTempoReadout: View {
 @MainActor
 private struct ProjectPositionReadout: View {
     @Environment(TimelineRegionPlayer.self) private var player
+    /// Only to fold the cue the way `play` does (cold: an edit or an Open).
+    @Environment(TimelineStore.self) private var timeline
 
     var body: some View {
         let playing = player.isPlaying
+        // Read OUTSIDE the clock, in this body: the cue is observed and cold (a tap), so a change
+        // re-renders this leaf even while the `TimelineView` is paused.
+        let stoppedAt = TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: timeline.document)
         TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !playing)) { _ in
-            let tick = playing ? player.currentTick : 0
+            let tick = playing ? player.currentTick : stoppedAt
             ZStack(alignment: .leading) {
                 Text(verbatim: "888.4.4")
                     .hidden()

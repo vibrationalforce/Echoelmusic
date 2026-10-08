@@ -12,7 +12,10 @@
 //    VoiceOver, untappable, and its spacing scales with the text.
 // 3. SOURCE: the canvas mounts it once, above the lanes, in the SAME zoomed column as the lanes
 //    (DAW shell S9a) — so its numbers stay on their bars at every zoom — while the names stand
-//    still in their own column, level with their lanes (one `rulerHeight`, one `rowHeight`).
+//    still in their own column, level with their lanes (one `rulerRowHeight`, one `rowHeight`).
+//    Since GMMW AE-7 the canvas mounts the ruler ROW, `ArrangeRulerLocator`, which wraps the
+//    numbers and owns the tap; the NUMBERS view stays exactly as claim 2 pins it. What the tap
+//    does is pinned by `ThePlayStartsWhereTheRulerSaysTests`.
 //    That the canvas as a whole stays cold is pinned ONCE, by `TheSongIsSeenOnOneScaleTests`
 //    (the ruler sits inside that slice); where the pinch lives, by `ThePinchZoomsTheArrangementsTimeTests`.
 //
@@ -43,6 +46,7 @@ import XCTest
 final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
 
     private static let canvasPath = "Sources/Echoelmusic/Studio/ArrangeCanvasView.swift"
+    private static let locatorPath = "Sources/Echoelmusic/Studio/ArrangeRulerLocator.swift"
     private static let bar = TimelineTime.ticksPerBar
 
     // MARK: 1 — which bars are named, pure
@@ -116,7 +120,8 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
                       "the spacing grows with the text, so large sizes thin the numbers instead of colliding them")
         XCTAssertTrue(ruler.contains(".accessibilityHidden(true)"),
                       "every part already speaks its bar; bare numbers between the rows are noise to VoiceOver")
-        XCTAssertTrue(ruler.contains(".allowsHitTesting(false)"), "a tap on the ruler reaches nothing")
+        XCTAssertTrue(ruler.contains(".allowsHitTesting(false)"),
+                      "the numbers take no touch — the ruler ROW around them does (`ArrangeRulerLocator`, GMMW AE-7)")
         for banned in ["currentTick", "player", "timeline", "selection", "TimelineView(", "Button(",
                        "onTapGesture", "@State"] {
             XCTAssertFalse(ruler.contains(banned),
@@ -128,7 +133,13 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
 
     func testTheCanvasMountsTheRulerAboveItsLanes() throws {
         let file = try source(Self.canvasPath)
-        XCTAssertEqual(file.components(separatedBy: "ArrangeBarRuler(").count - 1, 1, "one ruler on the canvas")
+        // GMMW AE-7: the numbers are built ONCE, inside the ruler row; the canvas builds the row.
+        let locator = try source(Self.locatorPath)
+        XCTAssertEqual(file.components(separatedBy: "ArrangeBarRuler(").count - 1, 0,
+                       "the canvas no longer builds the numbers itself — the ruler row does")
+        XCTAssertEqual(locator.components(separatedBy: "ArrangeBarRuler(songTicks: songTicks, height: height)").count - 1, 1,
+                       "one set of numbers, inside the ruler row, at the row's own height")
+        XCTAssertEqual(file.components(separatedBy: "ArrangeRulerLocator(").count - 1, 1, "one ruler row on the canvas")
         // Review of d16d764b1, LOW-3: every search is bounded by the canvas struct. Since S9a the
         // gutter is the spacing between the TWO COLUMNS (the still names, the zoomed time), and the
         // ruler sits in the time column above the lanes, so a number cannot shift off its bar by a
@@ -146,15 +157,15 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         // the two columns sit side by side with the same spacing and nothing between them.
         guard sequence(["HStack(alignment: .top, spacing: Self.gutter) {",
                                       "VStack(spacing: 4) {",
-                                      "Color.clear.frame(width: Self.nameWidth, height: rulerHeight)",
+                                      "Color.clear.frame(width: Self.nameWidth, height: rulerRowHeight)",
                                       "ForEach(rows) { row in", "nameGutter(row)",
                                       ".frame(height: Self.rowHeight)", "}", "}",
                                       "ArrangeTimeZoom {", "VStack(spacing: 4) {",
-                                      "ArrangeBarRuler(songTicks: songTicks, height: rulerHeight)",
+                                      "ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight)",
                                       "ForEach(rows) { row in", "laneRow(row, selected: selected)", "}", "}"],
                                      in: body) != nil else {
             return XCTFail("""
-                the canvas is no longer a still name column (an empty `rulerHeight` cell, then \
+                the canvas is no longer a still name column (an empty `rulerRowHeight` cell, then \
                 each `nameGutter` at `rowHeight`) beside ONE `ArrangeTimeZoom` column that holds \
                 the ruler above the lanes, both stacked with spacing 4 — so a name can leave its \
                 lane, or a number its bar, when the time zooms
@@ -163,13 +174,18 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         // The ruler is followed by NOTHING but the lanes (the sequence allows only whitespace
         // between them) — the review of 645b056c0, LOW-8, as a consequence of the shape: a
         // `.padding(.leading, …)` on the ruler breaks the sequence and lands in the XCTFail above.
-        // Both columns stack the SAME heights: one scaled `rulerHeight`, declared once and read
-        // by both the empty cell and the ruler's frame; and every lane is `rowHeight` tall, as
-        // every name is.
+        // Both columns stack the SAME heights: one ruler ROW height, declared once and read by
+        // both the empty cell and the ruler row; and every lane is `rowHeight` tall, as every name
+        // is. GMMW AE-7: the row is the scaled numbers' height, but never under the tap floor —
+        // the ruler is a control now.
         XCTAssertEqual(body.components(separatedBy: "@ScaledMetric(relativeTo: .body) private var rulerHeight: CGFloat").count - 1, 1,
-                       "one ruler height on the canvas, scaled with the text")
-        XCTAssertEqual(body.components(separatedBy: "rulerHeight").count - 1, 3,
-                       "declared once, read by the empty cell and by the ruler — no third reader, no second value")
+                       "one numbers height on the canvas, scaled with the text")
+        XCTAssertEqual(body.components(separatedBy: "rulerHeight").count - 1, 2,
+                       "the numbers' height is declared once and read only by the row height")
+        XCTAssertEqual(body.components(separatedBy: "private var rulerRowHeight: CGFloat { Swift.max(rulerHeight, EchoelTheme.controlTapHeight) }").count - 1, 1,
+                       "the ruler row is a tap target: never shorter than the tap floor (#481)")
+        XCTAssertEqual(body.components(separatedBy: "rulerRowHeight").count - 1, 3,
+                       "declared once, read by the empty cell and by the ruler row — no third reader, no second value")
         guard let rulerStart = file.range(of: "struct ArrangeBarRuler: View {"),
               let rulerEnd = file.range(of: "struct ArrangePlayheadView: View {",
                                         range: rulerStart.upperBound..<file.endIndex) else {

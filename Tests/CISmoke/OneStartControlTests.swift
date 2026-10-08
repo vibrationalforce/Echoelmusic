@@ -367,7 +367,7 @@ final class OneStartControlTests: XCTestCase {
         the Instrument stage's Play lost its VoiceOver label. A glyph-and-word button whose spoken \
         label does not say WHAT it plays is the guess #307 traded the visible sentence away against.
         """)
-        XCTAssertEqual(ProjectTransport.buttonHint(running: false, play: .startInstrument),
+        XCTAssertEqual(ProjectTransport.buttonHint(running: false, play: .startInstrument, fromTick: 0),
                        "Starts biofeedback; your body then composes and plays the music.",
                        "the start's hint moved with it from the plate (S7a) and still says what begins")
         XCTAssertEqual(ProjectTransport.playAction(

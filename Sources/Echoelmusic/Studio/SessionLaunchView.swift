@@ -271,7 +271,7 @@ struct SessionLaunchView: View {
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
                      ? String(localized: "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar.")
-                     : String(localized: "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top."))
+                     : String(localized: "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
 

@@ -195,12 +195,23 @@ enum ProjectTransport {
         running ? String(localized: "Stop") : String(localized: "Play")
     }
 
-    static func buttonHint(running: Bool, play: PlayAction) -> String {
+    /// `fromTick` is the bar Play starts on — `TimelineRegionPlayer.playStartTick(forCue:in:)`,
+    /// the fold `play` applies (GMMW AE-7). REQUIRED (#431): a defaulted 0 would keep saying
+    /// "from the top" over a Play that starts where the ruler was tapped. The bar is named by
+    /// the one bar-number rule; bar 1 keeps the whole-sentence keys it always had.
+    static func buttonHint(running: Bool, play: PlayAction, fromTick: Int) -> String {
         if running { return stopHint }
+        let bar = WorkstationSummary.barNumber(forTick: fromTick)
+        // E4-61: the bar number is seamed between catalog keys, in typed steps (≤ 4 operands).
+        let fromBar: String = String(localized: "Plays the piece from bar ") + "\(bar)"
         switch play {
-        case .startSong:        return String(localized: "Plays the piece from the top on the shared transport.")
+        case .startSong:
+            let cued: String = fromBar + String(localized: " on the shared transport.")
+            return bar > 1 ? cued : String(localized: "Plays the piece from the top on the shared transport.")
         case .startSongAndInstrument:
-            return String(localized: "Plays the piece from the top. The instrument's held music comes back with it.")
+            let cued: String = fromBar + String(localized: ". The instrument's held music comes back with it.")
+            return bar > 1 ? cued
+                           : String(localized: "Plays the piece from the top. The instrument's held music comes back with it.")
         case .resumeInstrument: return String(localized: "Brings the music back. Your pulse reading keeps running.")
         // The words the plate's own ▶ spoke until S7a, moved with the start they describe.
         case .startInstrument:  return String(localized: "Starts biofeedback; your body then composes and plays the music.")

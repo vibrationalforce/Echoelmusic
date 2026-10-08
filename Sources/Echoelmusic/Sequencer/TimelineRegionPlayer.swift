@@ -78,6 +78,16 @@ public final class TimelineRegionPlayer {
     /// start) it named the bar of an older take. One owner, every door. Cold — it changes once
     /// per `play`, never per step.
     public private(set) var startedFromTick = 0
+    /// Where the ONE Play starts the piece (GMMW AE-7) — a song-absolute tick on a bar line,
+    /// 0 = the top. Written by `locate(toTick:)` (the bar ruler) and put back to 0 by
+    /// `resetCue()` (a new piece replaced this one); read by `ProjectPlayStopButton` as its
+    /// `fromTick`. Cold: it changes on a tap, never per step, so a view may read it in its body.
+    /// Not persisted — a relaunched app plays from the top.
+    /// ⚠️ It is the REQUEST. Where Play really starts is `playStartTick(forCue:in:)`, the fold
+    /// `play` applies, so a cue past the end of a piece that has since got shorter names the bar
+    /// the transport takes, not the bar that was tapped. Record and the WAV bounce do not read
+    /// it: both start at bar 1 and say so.
+    public private(set) var cueTick = 0
     /// Loop the whole song (rounded up to whole bars) when it reaches the end.
     public var loopEnabled = true
     /// Whether the last take ended because the song reached its end with `loopEnabled` off —
@@ -652,7 +662,7 @@ public final class TimelineRegionPlayer {
         self.pianoRoll = pianoRoll
         self.rollLane = document.rollLaneID
         self.loopTicks = Self.loopTicks(for: document)
-        let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)
+        let startTick = Self.playStartTick(forCue: fromTick, in: document)
         self.startedFromTick = startTick
         self.lastStopReachedSongEnd = false
         // Clips/Scenes LOW-1 (modes census Q5): the shared PatternEngine may ALREADY be running
@@ -712,6 +722,32 @@ public final class TimelineRegionPlayer {
         return t
     }
 
+    /// The bar `play(document:…fromTick:)` really starts on for a requested tick: `barStartTick`
+    /// over THIS document's loop length. ONE definition (#416, GMMW AE-7): `play` folds through
+    /// it, and every surface that NAMES the start (the Play hint, the ruler's marker) asks it, so
+    /// the bar a surface shows and the bar the transport takes cannot disagree.
+    nonisolated static func playStartTick(forCue tick: Int, in document: TimelineDocument) -> Int {
+        barStartTick(for: tick, loopTicks: loopTicks(for: document))
+    }
+
+    /// The bar ruler's tap (GMMW AE-7): from now on Play starts on the bar containing `tick`, and
+    /// while the piece plays it moves there at once, through `relocate` — this is that method's
+    /// ONE production caller. Floored to the bar, because the transport starts on bars (`play`).
+    /// ONE call per tap or VoiceOver step, never per drag frame (`relocate` says why).
+    /// A tap on the bar already chosen writes nothing while stopped: no observer wakes for it.
+    public func locate(toTick tick: Int) {
+        let bar = (max(0, tick) / TimelineTime.ticksPerBar) * TimelineTime.ticksPerBar
+        if cueTick != bar { cueTick = bar }
+        if isPlaying { relocate(toTick: bar) }
+    }
+
+    /// Play from the top again — the whole piece was replaced (Open, New piece:
+    /// `SessionSaveOpen.restoreSong` / `startEmptySong`, right after their `stop()`). A bar tapped
+    /// on the previous piece names nothing in this one.
+    public func resetCue() {
+        if cueTick != 0 { cueTick = 0 }
+    }
+
     /// CLIP-5: jump the PLAYING session to the bar containing `tick` (playhead
     /// drag-drop). A locate is a hard cut — sounding voices are released (a jump
     /// must not smear old-position sustains into the new bar), then every layer
@@ -723,9 +759,10 @@ public final class TimelineRegionPlayer {
     /// downbeat anchor lagged audio behind MIDI by up to 15/16 bar until the
     /// next onset) — the recipe the loop wrap (newTick) follows; since M7 a structural
     /// edit's voice half (`chaseStructure`) follows it too, at the tick this step sounds.
-    /// Bar-granular target (see play(fromTick:)). ⚠️ No production caller today — the
-    /// Workstation may not call it (`TheWorkstationPlaysTheTimelineTests`), so its M7
-    /// mid-bar step fix is latent until a door exists.
+    /// Bar-granular target (see play(fromTick:)). ⭐ ONE production caller since GMMW AE-7:
+    /// `locate(toTick:)`, the bar ruler's tap. The Workstation still may not call it
+    /// (`TheWorkstationPlaysTheTimelineTests`); a second door goes through `locate` too, so the
+    /// cue and the position never name two different bars.
     /// No-op while stopped — the parked playhead is picked up by play(fromTick:).
     /// NEVER call this per drag frame — drag END only (a continuous scrub through
     /// this path is a relocate storm; HARNESS_LEDGER 2026-07-16).

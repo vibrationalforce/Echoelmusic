@@ -52,9 +52,12 @@
 //  off its bar. `ArrangeCanvas.rulerMarks`
 //  thins the numbers by powers of two so a long song never overprints, and the minimum label
 //  spacing is a `@ScaledMetric`, so at large text sizes the numbers thin further instead of
-//  colliding. The ruler is COLD (it reads the song length, never the position) and hidden from
-//  VoiceOver: every part already speaks its bar (`SessionGrid.label`), and a list of bare
+//  colliding. The NUMBERS are COLD (they read the song length, never the position) and hidden
+//  from VoiceOver: every part already speaks its bar (`SessionGrid.label`), and a list of bare
 //  numbers would be noise between the rows.
+//  ⭐ GMMW AE-7: the ruler ROW is a control. `ArrangeRulerLocator` wraps the numbers: a tap picks
+//  the bar Play starts from (and, while playing, moves the piece there), a line marks it, and
+//  VoiceOver hears ONE adjustable "Play from" element. The numbers view itself is unchanged.
 //
 //  ⭐ WHAT IS SILENT IS SEEN (modes census 2026-09-26, design slice 5). A muted track, and every
 //  track another track's solo silences, looked exactly like a playing one — the canvas is where
@@ -362,9 +365,12 @@ struct ArrangeCanvasView: View {
     /// Room for the track's hue band, its instrument symbol and a short name.
     static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
-    /// The bar ruler's height — ONE definition (S9a), read by the ruler and by the empty cell
-    /// over the names, so every name stays level with its lane at every text size.
+    /// The bar numbers' height, scaled with the text (S9a).
     @ScaledMetric(relativeTo: .body) private var rulerHeight: CGFloat = 14
+    /// The ruler ROW — ONE definition, read by the ruler and by the empty cell over the names, so
+    /// every name stays level with its lane at every text size. Since GMMW AE-7 the ruler is a
+    /// tap target (`ArrangeRulerLocator`), so the row is never shorter than one.
+    private var rulerRowHeight: CGFloat { Swift.max(rulerHeight, EchoelTheme.controlTapHeight) }
 
     var body: some View {
         let selected = WorkstationSelection.resolvedRegion(selection.regionID,
@@ -379,7 +385,7 @@ struct ArrangeCanvasView: View {
         HStack(alignment: .top, spacing: Self.gutter) {
             VStack(spacing: 4) {
                 // The ruler's row in this column is empty, so the names start where the lanes do.
-                Color.clear.frame(width: Self.nameWidth, height: rulerHeight)
+                Color.clear.frame(width: Self.nameWidth, height: rulerRowHeight)
                 ForEach(rows) { row in
                     // A name gutter: one line, truncating, at the lane's height. The name AND
                     // its mute/solo symbol grow with the type size inside a FIXED gutter width
@@ -393,7 +399,7 @@ struct ArrangeCanvasView: View {
             }
             ArrangeTimeZoom {
                 VStack(spacing: 4) {
-                    ArrangeBarRuler(songTicks: songTicks, height: rulerHeight)
+                    ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight)
                     ForEach(rows) { row in
                         laneRow(row, selected: selected)
                     }

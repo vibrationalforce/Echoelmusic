@@ -194,7 +194,10 @@ final class TheSongPositionIsReadAsANumberTests: XCTestCase {
         let player = try source(Self.player)
         guard let head = player.range(of: "public func play("),
               let set = player.range(of: "self.startedFromTick = startTick", range: head.upperBound..<player.endIndex),
-              let floor = player.range(of: "let startTick = Self.barStartTick(for: fromTick, loopTicks: loopTicks)",
+              // GMMW AE-7: `play` floors through `playStartTick`, the ONE fold the Play hint and the
+              // ruler's marker also ask; that it is `barStartTick` is pinned by
+              // `ThePlayStartsWhereTheRulerSaysTests`.
+              let floor = player.range(of: "let startTick = Self.playStartTick(forCue: fromTick, in: document)",
                                        range: head.upperBound..<player.endIndex) else {
             return XCTFail("ANCHOR MISSING: `play` recording `startedFromTick` (#454)")
         }

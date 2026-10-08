@@ -342,7 +342,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             words.append(ProjectTransport.buttonWord(running: running))
             for play in plays {
                 words.append(ProjectTransport.buttonLabel(running: running, play: play))
-                words.append(ProjectTransport.buttonHint(running: running, play: play))
+                words.append(ProjectTransport.buttonHint(running: running, play: play, fromTick: 0))
             }
         }
         words += [ProjectTransport.stopHint, ProjectTransport.instrumentRunningCaption,
@@ -2955,7 +2955,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         }
         XCTAssertFalse(inspectorHints.contains("            : \"Silences this track\""), "TrackInspectorView spells the mute hint verbatim again")
         let launchHints = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
-        for seam in [": String(localized: \"Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.\")",
+        for seam in [": String(localized: \"Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged.\")",
                      "? String(localized: \"Already looping. Stop the track to hand it back to the piece\")",
                      ": String(localized: \"Loops this part on its track from the next bar\")"] {
             XCTAssertTrue(launchHints.contains(seam), "SessionLaunchView lost the E4-81 seam `\(seam)`")
@@ -2975,7 +2975,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         try assertCatalogued(["Silences this track and the Studio instrument. Start un-mutes it", "Silences this track",
                           "Plays only the soloed tracks",
                           "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo",
-                          "Launch a scene to start the piece at its bar and loop it, or press Play for the piece from the top.",
+                          "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged.",
                           "Already looping. Stop the track to hand it back to the piece", "Loops this part on its track from the next bar",
                           "Shown, not edited",
                           "Select next note", "Select previous note", "Search presets & tags",

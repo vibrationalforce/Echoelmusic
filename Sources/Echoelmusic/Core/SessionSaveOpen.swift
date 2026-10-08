@@ -164,6 +164,7 @@ public enum SessionSaveOpen {
         player.stop()
         guard clips.replaceSlots(song.slots) else { return false }
         timeline.replaceDocument(song.document)
+        player.resetCue()   // GMMW AE-7: a bar tapped on the old piece names nothing here
         return true
     }
 
@@ -204,6 +205,7 @@ public enum SessionSaveOpen {
         player.stop()
         guard clips.replaceSlots(song.slots) else { return false }
         timeline.replaceDocument(song.document)
+        player.resetCue()   // GMMW AE-7: a bar tapped on the old piece names nothing here
         return true
     }
 

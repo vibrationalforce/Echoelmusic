@@ -112,7 +112,8 @@ final class TheHeadCountsThePieceInBarsBeatsAndSixteenthsTests: XCTestCase {
             the position belongs in `ProjectPositionReadout` only (the 10.76.41/50 freeze law).
             """)
         guard let clock = leaf.range(of: "TimelineView("),
-              let read = leaf.range(of: "let tick = playing ? player.currentTick : 0") else {
+              // GMMW AE-7: stopped, the counter shows where the ONE Play will start (the cue, folded).
+              let read = leaf.range(of: "let tick = playing ? player.currentTick : stoppedAt") else {
             return XCTFail("ANCHOR MISSING: the leaf's clock or its one read (#454)")
         }
         XCTAssertLessThan(clock.lowerBound, read.lowerBound, """
