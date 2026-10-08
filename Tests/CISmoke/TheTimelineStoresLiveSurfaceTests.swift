@@ -112,6 +112,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "resizeRegion", "splitRegion", "mergeRegionWithNext", "canMergeRegionWithNext", "setRegionGain",
         // Audio editor W3: the part bar's Stretch picker.
         "setRegionStretchMode",
+        // Audio editor W4c: the part bar's Fade in / Fade out fields.
+        "setRegionFades",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

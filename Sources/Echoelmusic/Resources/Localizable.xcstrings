@@ -145,6 +145,54 @@
         }
       }
     },
+    "Fade in" : {
+      "comment" : "Value-field label (audio editor W4c, 2026-10-08): the selected audio part's fade-in length, in beats, on the part bar.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade in"
+          }
+        }
+      }
+    },
+    "Fade out" : {
+      "comment" : "Value-field label (audio editor W4c, 2026-10-08): the selected audio part's fade-out length, in beats, on the part bar.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade out"
+          }
+        }
+      }
+    },
+    "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves." : {
+      "comment" : "VoiceOver hint of the part bar's \"Fade in\" field (audio editor W4c, 2026-10-08).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves."
+          }
+        }
+      }
+    },
+    "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves." : {
+      "comment" : "VoiceOver hint of the part bar's \"Fade out\" field (audio editor W4c, 2026-10-08).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves."
+          }
+        }
+      }
+    },
     "Part level" : {
       "comment" : "Value-field label (audio editor W2, 2026-10-08): the selected audio part's own level on the part bar.",
       "extractionState" : "manual",

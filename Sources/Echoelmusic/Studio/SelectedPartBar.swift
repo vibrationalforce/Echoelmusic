@@ -67,6 +67,14 @@
 //  gets no choice. During play Clean and Tape are heard at once; Beats from the part's next
 //  start (it is rendered in the background, and a part entered mid-way plays Clean).
 //
+//  ⭐ W4c — FADE IN / FADE OUT, for a part on an audio track. The part keeps its fades in ticks
+//  (W4a) and the player plays them (W4b); these two fields are the door. They speak BEATS, the
+//  unit the part stores, so a fade keeps its musical length when the tempo moves and the field
+//  needs no tempo at all. The two fades share the part: each field offers only what the other
+//  leaves (`PartFades.inRange` / `outRange`), so neither can quietly shorten the other in the
+//  store ("in wins", `FadeEnvelope`). A release writes once through `setRegionFades`: one undo
+//  step. The canvas draws the ramps over the waveform (`ArrangeCanvas.AudioWindow.fadeLevel`).
+//
 
 import SwiftUI
 
@@ -189,6 +197,57 @@ enum PartStretch {
               let lane = document.lanes.first(where: { $0.id == region.laneID }),
               lane.kind == .audio, !lane.isBio else { return nil }
         return region.stretchMode
+    }
+}
+
+/// The pure half of the part's fades (audio editor W4c).
+enum PartFades {
+
+    /// A part's fades as they play — `FadeEnvelope.effective` over its stored ticks, so a part
+    /// whose stored lengths do not fit (an older or hand-edited document) shows what is HEARD —
+    /// and its length, all in ticks.
+    struct Lengths: Equatable {
+        let fadeInTicks: Int
+        let fadeOutTicks: Int
+        let lengthTicks: Int
+    }
+
+    /// The fades of `regionID` when it sits on an AUDIO track — the one kind whose player fades
+    /// it (`AudioLanePlayer`) — else nil, and the bar offers no fade. The MIDI player never reads
+    /// a part's fades; a field there would move nothing (#164).
+    nonisolated static func lengths(of regionID: UUID, in document: TimelineDocument) -> Lengths? {
+        guard let region = document.regions.first(where: { $0.id == regionID }), region.lengthTicks > 0,
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              lane.kind == .audio, !lane.isBio else { return nil }
+        let fades = FadeEnvelope.effective(fadeIn: Double(region.fadeInTicks),
+                                           fadeOut: Double(region.fadeOutTicks),
+                                           duration: Double(region.lengthTicks))
+        return Lengths(fadeInTicks: Int(fades.fadeIn), fadeOutTicks: Int(fades.fadeOut),
+                       lengthTicks: region.lengthTicks)
+    }
+
+    /// Ticks as beats, the fields' unit.
+    nonisolated static func beats(fromTicks ticks: Int) -> Double {
+        Double(ticks) / Double(TimelineTime.ticksPerBeat)
+    }
+
+    /// A field's beats as whole ticks — what the store keeps. A non-finite or non-positive value
+    /// is no fade; a value past every tick holds at the largest one instead of trapping.
+    nonisolated static func ticks(fromBeats beats: Double) -> Int {
+        guard beats.isFinite, beats > 0 else { return 0 }
+        let ticks = (beats * Double(TimelineTime.ticksPerBeat)).rounded()
+        return ticks >= Double(Int.max) ? Int.max : Int(ticks)
+    }
+
+    /// What the fade-in field offers: up to what the fade-out leaves, so a fade-in never
+    /// shortens the fade-out in the store.
+    nonisolated static func inRange(_ lengths: Lengths) -> ClosedRange<Double> {
+        0...beats(fromTicks: Swift.max(0, lengths.lengthTicks - lengths.fadeOutTicks))
+    }
+
+    /// What the fade-out field offers: up to what the fade-in leaves — exactly the store's rule.
+    nonisolated static func outRange(_ lengths: Lengths) -> ClosedRange<Double> {
+        0...beats(fromTicks: Swift.max(0, lengths.lengthTicks - lengths.fadeInTicks))
     }
 }
 
@@ -328,6 +387,10 @@ struct SelectedPartBar: View {
                 // W3: how a warped audio part keeps the song's tempo — nil for any other part.
                 if let stretch = PartStretch.mode(of: regionID, in: document) {
                     PartStretchPicker(regionID: regionID, mode: stretch)
+                }
+                // W4c: an audio part's fade-in and fade-out — nil for any other part.
+                if let fades = PartFades.lengths(of: regionID, in: document) {
+                    PartFadeFields(regionID: regionID, lengths: fades)
                 }
                 // Eight labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
@@ -739,5 +802,74 @@ private struct PartStretchPicker: View {
             .pickerStyle(.segmented)
             .accessibilityHint("How this part keeps the song's tempo: Clean keeps its pitch, Tape lets the pitch follow the speed, Beats keeps drum hits sharp and is heard from the part's next start.")
         }
+    }
+}
+
+/// Audio editor W4c — the selected audio part's fade-in and fade-out, in beats.
+///
+/// ⚠️ EACH FADE IS WRITTEN ON COMMIT, NOT PER DRAG STEP — the `PartGainField` pattern. The drag
+/// edits a draft; the release writes once through `TimelineStore.setRegionFades` (a no-op when
+/// unchanged): one undo step per gesture. The other fade is written back as it stands, and the
+/// field's range keeps the pair inside the part, so the store keeps both as typed.
+///
+/// ⚠️ BOTH DRAFTS ARE CLEARED WHENEVER THE STORED FADES OR THE PART'S LENGTH CHANGE — an undo, a
+/// trim, a split — so a field never keeps showing a fade the part no longer has.
+///
+/// The unit is the part's own (beats, stored as ticks): a fade lasts its beats at any tempo, the
+/// player's rule (`AudioRegionPlayback.fadePlan`). How a fade sounds is a device listen.
+@MainActor
+private struct PartFadeFields: View {
+    let regionID: UUID
+    /// The part's fades as they play, and its length — cold, per render.
+    let lengths: PartFades.Lengths
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draftIn: Double? = nil
+    @State private var draftOut: Double? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceS) {
+            EchoelValueField(label: "Fade in",
+                             value: Binding(get: { shownIn }, set: { draftIn = $0 }),
+                             range: PartFades.inRange(lengths),
+                             unit: "beats",
+                             decimals: 2,
+                             hint: String(localized: "How long the part rises from silence at its start. The two fades share the part; each can take what the other leaves."),
+                             standard: 0,
+                             onCommit: { commitIn() })
+            EchoelValueField(label: "Fade out",
+                             value: Binding(get: { shownOut }, set: { draftOut = $0 }),
+                             range: PartFades.outRange(lengths),
+                             unit: "beats",
+                             decimals: 2,
+                             hint: String(localized: "How long the part falls to silence at its end. The two fades share the part; each can take what the other leaves."),
+                             standard: 0,
+                             onCommit: { commitOut() })
+        }
+        .onChange(of: lengths) { _, _ in
+            draftIn = nil
+            draftOut = nil
+        }
+    }
+
+    private var shownIn: Double {
+        draftIn ?? PartFades.beats(fromTicks: lengths.fadeInTicks)
+    }
+
+    private var shownOut: Double {
+        draftOut ?? PartFades.beats(fromTicks: lengths.fadeOutTicks)
+    }
+
+    private func commitIn() {
+        guard let value = draftIn else { return }
+        draftIn = nil
+        timeline.setRegionFades(id: regionID, fadeInTicks: PartFades.ticks(fromBeats: value),
+                                fadeOutTicks: lengths.fadeOutTicks)
+    }
+
+    private func commitOut() {
+        guard let value = draftOut else { return }
+        draftOut = nil
+        timeline.setRegionFades(id: regionID, fadeInTicks: lengths.fadeInTicks,
+                                fadeOutTicks: PartFades.ticks(fromBeats: value))
     }
 }

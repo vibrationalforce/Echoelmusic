@@ -62,9 +62,9 @@
 //        (the part's level, and since W9 its Normalize) their callers. All leave the
 //        caller-less set; `TheTimelineStoresLiveSurfaceTests` pins them since 2026-10-08.
 //        Audio editor W3 added `setRegionStretchMode`, born with its caller (the part bar's
-//        Stretch picker) and pinned beside them. ⚠️ Audio editor W4a added `setRegionFades`
-//        WITHOUT a caller on purpose: the player reads the fades from W4b, and the part bar's
-//        fade fields (W4c) are its door — until then it sits in the caller-less set.
+//        Stretch picker) and pinned beside them. Audio editor W4a added `setRegionFades`
+//        without a caller on purpose; W4c gave it one (the part bar's Fade in / Fade out
+//        fields), so it leaves the caller-less set and is pinned beside them.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS

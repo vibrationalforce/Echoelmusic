@@ -155,7 +155,8 @@ final class AnAudioPartShowsItsWaveformTests: XCTestCase {
         let part = TimelineRegion(laneID: UUID(), clipID: clip.id, startTick: 3 * bar, lengthTicks: bar,
                                   contentOffsetSeconds: 1.5, gain: 0.5)
         XCTAssertEqual(ArrangeCanvas.audioWindow(for: part, clip: clip, bpm: 120),
-                       ArrangeCanvas.AudioWindow(mediaRef: "loop.wav", fromSeconds: 1.5, lengthSeconds: 2, gain: 0.5),
+                       ArrangeCanvas.AudioWindow(mediaRef: "loop.wav", fromSeconds: 1.5, lengthSeconds: 2, gain: 0.5,
+                                                 fadeIn: 0, fadeOut: 0),
                        "a part at bar 4 starts at ITS OWN offset into the file and runs one bar at 120 — 2 s")
 
         let warpedClip = Clip(name: "Loop", kind: .audio, mediaRef: "loop.wav", nativeBPM: 60)

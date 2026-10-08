@@ -285,6 +285,16 @@ enum ArrangeCanvas {
         let fromSeconds: Double
         let lengthSeconds: Double
         let gain: Float
+        /// W4c: the part's fade-in and fade-out as they play, each a fraction of the part (0…1)
+        /// — tempo-free, because a fade is kept in ticks like the part's length.
+        let fadeIn: Double
+        let fadeOut: Double
+
+        /// The level the part's fades leave at `fraction` (0…1) of its length — the one fade
+        /// rule, asked (`FadeEnvelope`, #416). 1 everywhere for a part without fades.
+        func fadeLevel(atFraction fraction: Double) -> Double {
+            FadeEnvelope.gain(atElapsed: fraction, duration: 1, fadeIn: fadeIn, fadeOut: fadeOut)
+        }
     }
 
     /// An audio part's window at `bpm`, by the player's own two calls (#416): the media position
@@ -305,7 +315,12 @@ enum ArrangeCanvas {
             return nil
         }
         let length = TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: bpm) * plan.rate
-        return AudioWindow(mediaRef: ref, fromSeconds: from, lengthSeconds: length, gain: region.gain)
+        // W4c: the fades as the player plays them, as fractions of the part's own ticks.
+        let ticks = Double(region.lengthTicks)
+        let fades = FadeEnvelope.effective(fadeIn: Double(region.fadeInTicks),
+                                           fadeOut: Double(region.fadeOutTicks), duration: ticks)
+        return AudioWindow(mediaRef: ref, fromSeconds: from, lengthSeconds: length, gain: region.gain,
+                           fadeIn: fades.fadeIn / ticks, fadeOut: fades.fadeOut / ticks)
     }
 }
 

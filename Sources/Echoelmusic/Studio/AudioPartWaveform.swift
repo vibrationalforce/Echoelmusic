@@ -19,6 +19,11 @@
 //  ⚠️ IT TAKES NO TOUCHES AND SAYS NOTHING. A tap or a hold on the wave reaches the block —
 //  select and drag stay whole — and the block speaks for the part.
 //
+//  ⭐ W4c — THE FADES ARE DRAWN AS THEY ARE HEARD. Each column is scaled by the part's fade level
+//  at its middle (`AudioWindow.fadeLevel`, the player's own rule), and a hairline traces each
+//  ramp from silence to full — so a fade reads on the wave, and a part with none is unchanged.
+//  The ramps are drawn even while the file is still being read.
+//
 
 import SwiftUI
 
@@ -37,6 +42,7 @@ struct AudioPartWaveform: View {
         let window = self.window
         let tint = self.tint
         Canvas { context, size in
+            Self.drawRamps(window, in: &context, size: size, tint: tint)
             guard let overview else { return }
             let columns = WaveformSketch.window(overview, fromSeconds: window.fromSeconds,
                                                 lengthSeconds: window.lengthSeconds,
@@ -49,11 +55,13 @@ struct AudioPartWaveform: View {
             var bodies = Path()
             for (index, column) in columns.enumerated() {
                 let x = CGFloat(index) * width
-                let top = mid - CGFloat(column.max) * mid
-                let bottom = mid - CGFloat(column.min) * mid
+                // W4c: the column at the level its fades leave it, measured at its middle.
+                let level = CGFloat(window.fadeLevel(atFraction: (Double(index) + 0.5) / Double(columns.count)))
+                let top = mid - CGFloat(column.max) * level * mid
+                let bottom = mid - CGFloat(column.min) * level * mid
                 // At least a hairline, so silence reads as a flat line rather than a gap.
                 peaks.addRect(CGRect(x: x, y: top, width: width, height: Swift.max(Self.hairline, bottom - top)))
-                let rms = CGFloat(column.rms) * mid
+                let rms = CGFloat(column.rms) * level * mid
                 bodies.addRect(CGRect(x: x, y: mid - rms, width: width, height: rms * 2))
             }
             // Peaks behind, the RMS body in front: the extremes stay visible, the energy reads.
@@ -80,8 +88,28 @@ struct AudioPartWaveform: View {
         }
     }
 
+    /// W4c — each fade as a straight line from silence at the part's edge to full height where
+    /// the fade ends: the shape the ear hears, drawn over the wave. Nothing for a part without
+    /// fades or a block too small to hold a line.
+    private nonisolated static func drawRamps(_ window: ArrangeCanvas.AudioWindow, in context: inout GraphicsContext,
+                                              size: CGSize, tint: Color) {
+        guard size.width > 0, size.height > 0, window.fadeIn > 0 || window.fadeOut > 0 else { return }
+        var ramps = Path()
+        if window.fadeIn > 0 {
+            ramps.move(to: CGPoint(x: 0, y: size.height))
+            ramps.addLine(to: CGPoint(x: CGFloat(window.fadeIn) * size.width, y: 0))
+        }
+        if window.fadeOut > 0 {
+            ramps.move(to: CGPoint(x: (1 - CGFloat(window.fadeOut)) * size.width, y: 0))
+            ramps.addLine(to: CGPoint(x: size.width, y: size.height))
+        }
+        context.stroke(ramps, with: .color(tint), lineWidth: Self.rampWidth)
+    }
+
     /// The thinnest a column is drawn — silence is a line, not nothing.
     private static let hairline: CGFloat = 0.5
+    /// A fade ramp is a hairline in the track's hue: it marks the shape without hiding the wave.
+    private nonisolated static let rampWidth: CGFloat = 1
     /// The peak layer is the track's hue, softened, so the RMS body in full hue reads over it.
     private static let peakOpacity: Double = 0.55
 }
