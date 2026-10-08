@@ -34,8 +34,9 @@ P3 `14252cb52c74cd1c`.
 4. Danach kannst du wieder auf Auto stellen.
 
 Ablauf in Weg A: Patch 1 + 2 → Push → Gates (`Xcode Compile Check` grün, CI/CD-Schritt
-`Build for Testing` grün) → Bump **10.79.493** (Mikrofon) → Patch 3 → Push → Gates → Bump
-**10.79.494** (Livestream). Zwei Builds, damit ein Gerätebefund klar einem der beiden gehört.
+`Build for Testing` grün) → Bump **10.79.494** (Mikrofon) → Patch 3 → Push → Gates → Bump
+**10.79.495** (Livestream). Zwei Builds, damit ein Gerätebefund klar einem der beiden gehört.
+(10.79.493 ist seit 2026-10-08 02:57Z vergeben: J1-Link-Zeile + „Join next“, TestFlight-Lauf 37720389441 — deshalb rücken die beiden Nummern um eins. Die Build-Literale in Patch 1 nennen noch 10.79.492/Build 2617; das zieht der Docs-Truth-up NACH dem Landen auf den dann aktuellen Build.)
 
 ## Weg B — selbst im Terminal am Mac
 
@@ -59,7 +60,7 @@ git push origin claude/echoelmusic-review-optimize-u5jjpd
 ```
 
 Wenn `git apply` etwas ablehnt: **nichts erzwingen**, mir den Fehlertext schicken. Nach dem Push
-lese ich die Gates und mache einen Bump (**10.79.493** mit beidem) — oder zwei, wenn du „zwei Builds"
+lese ich die Gates und mache einen Bump (**10.79.494** mit beidem) — oder zwei, wenn du „zwei Builds"
 sagst.
 
 ## Was ich NICHT tue

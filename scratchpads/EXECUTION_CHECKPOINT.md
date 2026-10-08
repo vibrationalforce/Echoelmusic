@@ -3,6 +3,14 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
+CURRENT (2026-10-08d): branch tip = c145e74 = bump 10.79.493 (J1 link row + Join next), PUSHED 02:57Z; TestFlight run
+  37720389441 (#2618) queued — read its conclusion + Summary. Gate basis 5877811: Compile Check 37719540528 success,
+  CI/CD 37719540511 Build for Testing success; its Run Tests (job 113124015073) still running — read the window for the
+  record (ratchet 696/696 by transcription and doctor E). 4cb70eb's Run Tests: the ONE red was the ratchet, J1 claims
+  passed, S8 guard not in the window (#445). New tool: `python3 scripts/doctor.py --section E` (spacing ratchet, 4981632).
+  Landing kit unchanged, re-verified on the bump tip; next bumps are 10.79.494 (E10-1) and 10.79.495 (B2) — runbook
+  updated. Still BLOCKED by auto mode for the three gated commits. main = bc4fc5205.
+HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-08c): branch tip = 5877811 (fix: the J1 row's gap is `EchoelTheme.spaceXS`; the parent sat exactly on the
   spacing ratchet's ceiling 696 and 0ecd593 pushed it to 697 — `TheSpacingSitsOnTheScaleTests.testTheLiteralGapsOnlyFall`
   was the ONE named failure on 7bd36a4's Run Tests, job 113111796643; the five J1 claims passed in the window). Gates on
@@ -11,7 +19,6 @@ CURRENT (2026-10-08c): branch tip = 5877811 (fix: the J1 row's gap is `EchoelThe
   release guards transcribed GREEN); cherry-pick after the gates, swap the gate sha 4cb70eb51 -> 5877811 in the note, amend,
   push. 4cb70eb's own Run Tests (job 113116821668) will show the same single red — S8 added no literal. main = bc4fc5205.
   Landing kit unchanged and re-verified on 5877811 (P3, P1 singly; P3->P1->P2 stacked). Still BLOCKED by auto mode.
-HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-08b): branch tip = 4cb70eb (kit 4251d7b → J1 row 0ecd593 → stem headers 6798528 → ASC docs 7bd36a4
   → Join next 4cb70eb). Code since TestFlight 10.79.492 (62d0f9489): J1 row + Join next ⇒ a bump is LEGITIMATE once
   the gates on 4cb70eb are green (Compile Check conclusion · CI/CD step Build for Testing). main = bc4fc5205.
