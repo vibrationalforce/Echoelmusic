@@ -40,11 +40,24 @@
 // port) would trap at the closure's entry, before the `nonisolated` parser runs. The repair is
 // the same token on both blocks; they capture only `self`, weakly.
 //
+// THE FOURTH SITE (same hour, same lens). `EchoelBioEngine` (`@MainActor`) builds three
+// `HKAnchoredObjectQuery`s with trailing results handlers, and `HealthKitWriter` (`@MainActor`)
+// passes `store.save(samples) { _, _ in }`. The iOS 18 SDK header gives the query's results
+// handler no `NS_SWIFT_SENDABLE` (measured on the header; `HKHealthStore`'s authorization
+// completions do carry it, `saveObjects:withCompletion:` does not), HealthKit calls both on a
+// background queue, and `HealthKitBioPublisher.startIfAlreadyAuthorized` starts the queries at
+// LAUNCH once Health access was granted — so anyone who ever allowed Apple Health would trap
+// on the first result of every launch. Same token; the three `process…Samples` callees are
+// already `nonisolated`. The `updateHandler` ASSIGNMENTS carry it too (they run on the same
+// queue), but they are not an argument, get no entry check, and this file does not pin them.
+//
 // THE RULE THIS FILE PINS. In a file that declares a `@MainActor` class, every `setEventHandler`
 // whose source was made on a queue other than `.main`, every `requestMediaDataWhenReady(on:)`
 // block whose queue is not `.main`, and every closure literal trailing a CoreMIDI
 // `MIDI…CreateWithBlock(`/`MIDI…CreateWithProtocol(` call (CoreMIDI picks the thread, never the
-// caller) is spelled `@Sendable`. Handlers on `.main` may stay isolated
+// caller), and — in a file that imports HealthKit — every closure literal trailing an
+// `HK…Query(` initializer or a `.save(` call (HealthKit's background queue) is spelled
+// `@Sendable`. Handlers on `.main` may stay isolated
 // (`MainActor.assumeIsolated` inside is the correct pattern there). Files without a `@MainActor`
 // class are exempt: a closure formed in a non-isolated class inherits nothing.
 //
@@ -59,9 +72,10 @@
 // counts as off-main unless it is literally `.main`/`DispatchQueue.main`, and a block passed as a
 // stored closure (`using: block`) is not seen. A CoreMIDI block is seen only as a TRAILING
 // closure after the call's balanced argument list (one level of nested parentheses); a block
-// passed by name, or as a labelled argument inside the parentheses, is not. Three imported-block
-// API families are pinned, not the class of all of them: a fourth with the same shape is a new
-// needle, not a comment. The `@MainActor`
+// passed by name, or as a labelled argument inside the parentheses, is not; the HealthKit needle
+// reads the same trailing shape and only in a file that imports HealthKit (`.save(` is a common
+// name). Four imported-block API families are pinned, not the class of all of them: a fifth with
+// the same shape is a new needle, not a comment. The `@MainActor`
 // needle accepts only attributes and modifiers between it and `class`, so `Task { @MainActor in`
 // never counts as a class.
 //
@@ -108,6 +122,12 @@
 //   · claim 7 — COUNTERWEIGHT after the fix, RED on the parent for its named reason (the two
 //     blocks are found and not `@Sendable`); the `@MainActor` class, the two blocks and the
 //     `nonisolated` parser are green on both.
+// FOURTH MEASUREMENT (the HealthKit needle), transcribed against the parent `bba1030` and the
+// worktree: claim 1 RED on the parent for its NAMED reason — exactly four violations, the three
+// `HKAnchoredObjectQuery(` handlers in `Bio/EchoelBioEngine.swift` and the `.save(` completion in
+// `Bio/HealthKitWriter.swift`; GREEN after the fix. Claim 3's three HealthKit fixtures green on
+// both; claim 8 (the two files inside the domain) red on the parent for its named reason, green
+// after. Claims 2, 4, 6 and 7 unchanged.
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
@@ -128,6 +148,8 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     private static let retro = "Sources/Echoelmusic/Audio/RetroCapture.swift"
     private static let export = "Sources/Echoelmusic/Audio/SingleExport.swift"
     private static let midiIn = "Sources/Echoelmusic/Audio/MIDIInput.swift"
+    private static let bioEngine = "Sources/Echoelmusic/Bio/EchoelBioEngine.swift"
+    private static let healthWriter = "Sources/Echoelmusic/Bio/HealthKitWriter.swift"
     private static let mainQueueOwners = [
         "Sources/Echoelmusic/Sequencer/PatternEngine.swift",
         "Sources/Echoelmusic/Audio/MIDIOutput.swift",
@@ -172,6 +194,14 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
     /// CoreMIDI chooses the thread a block runs on (the receive block: its own high-priority
     /// thread), so no CoreMIDI block counts as `.main`.
     private static let coreMIDIThread = "<CoreMIDI's own thread>"
+
+    /// A closure literal TRAILING an `HK…Query(` initializer or a `.save(` call, read only in a
+    /// file that imports HealthKit; same balanced-argument shape as the CoreMIDI needle.
+    private static let healthKitBlock =
+        #"(HK\w+Query|\.save)\((?:[^(){}]|\([^()]*\))*\)\s*\{\s*(@Sendable)?"#
+
+    /// HealthKit calls query results handlers and save completions on a background queue.
+    private static let healthKitQueue = "<HealthKit's background queue>"
 
     private static let defaultQueue = "<no queue: — a global queue>"
     private static let unknownQueue = "<no DispatchSource.make…Source( above it>"
@@ -219,6 +249,15 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
             handlers.append(Handler(line: line, queue: queue, sendable: sendable, api: "requestMediaDataWhenReady"))
         }
+        // HealthKit blocks: only where HealthKit is imported — `.save(` is a common name.
+        if code.contains("import HealthKit") {
+            for m in try NSRegularExpression(pattern: Self.healthKitBlock).matches(in: code, range: all) {
+                let sendable = m.range(at: 2).location != NSNotFound
+                let line = ns.substring(to: m.range.location).components(separatedBy: "\n").count
+                handlers.append(Handler(line: line, queue: Self.healthKitQueue, sendable: sendable,
+                                        api: ns.substring(with: m.range(at: 1))))
+            }
+        }
         // CoreMIDI blocks: the thread is CoreMIDI's, never the caller's.
         for m in try NSRegularExpression(pattern: Self.coreMIDIBlock).matches(in: code, range: all) {
             let sendable = m.range(at: 2).location != NSNotFound
@@ -247,16 +286,16 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             }
         }
         XCTAssertEqual(violations, [], """
-            A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block or a CoreMIDI \
-            block inside a `@MainActor` class, on a queue other than `.main`, is not spelled \
-            `@Sendable`: \
-            \(violations). Formed in a `@MainActor` context, a non-`@Sendable` closure inherits \
-            MainActor isolation and the imported block type gets a dynamic isolation check at its \
+            A `DispatchSource` handler, a `requestMediaDataWhenReady(on:)` block, a CoreMIDI \
+            block or a HealthKit handler inside a `@MainActor` class, on a queue other than \
+            `.main`, is not spelled `@Sendable`: \(violations). Formed in a `@MainActor` \
+            context, a non-`@Sendable` closure inherits MainActor isolation and the imported block type gets a dynamic isolation check at its \
             ENTRY — on the worker that check traps (`dispatch_assert_queue` → SIGTRAP) before the \
             body runs (build 2613, RetroCapture:604; the export's pull loop, SingleExport; builds \
-            1769/1777, PatternEngine; the MIDI receive block, MIDIInput). Spell the closure \
-            `{ @Sendable … }`, box what it mutates (`ExportRenderCounters`), keep the callee \
-            `nonisolated` — or put the work on `.main`.
+            1769/1777, PatternEngine; the MIDI receive block, MIDIInput; the HealthKit query \
+            handlers, EchoelBioEngine). Spell the closure `{ @Sendable … }`, box what it \
+            mutates (`ExportRenderCounters`), keep the callee `nonisolated` — or put the work on \
+            `.main`.
             """)
     }
 
@@ -399,6 +438,41 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
             a CoreMIDI create call with no trailing closure is not a handler — the next statement's \
             `{` must not be read as one (MIDIOutput is this shape, #364)
             """)
+
+        // The fourth API family — HealthKit, read only where HealthKit is imported.
+        let healthIsolated = """
+            import HealthKit
+            @MainActor @Observable
+            final class Engine {
+                func start(store: HKHealthStore) {
+                    let q = HKAnchoredObjectQuery(
+                        type: hrType,
+                        predicate: predicate,
+                        anchor: nil,
+                        limit: HKObjectQueryNoLimit
+                    ) { [weak self] _, samples, _, _, _ in
+                        self?.process(samples)
+                    }
+                    store.save(samples) { _, _ in }
+                }
+            }
+            """
+        let health = try scan(healthIsolated)
+        XCTAssertEqual(health.handlers.map(\.api), ["HKAnchoredObjectQuery", ".save"],
+                       "both HealthKit trailing closures must be seen (handlers: \(health.handlers))")
+        XCTAssertEqual(health.violations.count, 2, "the EchoelBioEngine + HealthKitWriter shapes must be violations (#367)")
+
+        let healthSendable = healthIsolated
+            .replacingOccurrences(of: ") { [weak self] _, samples, _, _, _ in", with: ") { @Sendable [weak self] _, samples, _, _, _ in")
+            .replacingOccurrences(of: "store.save(samples) { _, _ in }", with: "store.save(samples) { @Sendable _, _ in }")
+        XCTAssertEqual(try scan(healthSendable).violations.count, 0,
+                       "`@Sendable` is the repair for a HealthKit handler too; it must satisfy the rule")
+
+        let notHealthKit = healthIsolated.replacingOccurrences(of: "import HealthKit\n", with: "")
+        XCTAssertEqual(try scan(notHealthKit).handlers.count, 0, """
+            without `import HealthKit` a `.save(…) {` is somebody else's API — the needle must not \
+            read it (#364)
+            """)
     }
 
     /// 4 — the two exemptions are exercised by real owners, not vacuous.
@@ -496,6 +570,38 @@ final class TheOffMainDispatchHandlerIsSendableTests: XCTestCase {
         XCTAssertTrue(code.contains("private nonisolated func handleMIDIEvents("), """
             `handleMIDIEvents` is no longer `nonisolated` — the `@Sendable` receive block calls it \
             off the actor (the compiler says so too; this names the reason).
+            """)
+    }
+
+    /// 8 — the fourth site (the HealthKit handlers) is inside the rule's domain and repaired (else
+    /// claim 1 could go green by the needle ceasing to match the files).
+    func testTheHealthKitHandlersAreInsideTheRulesDomain() throws {
+        let engine = try read(Self.bioEngine)
+        let e = try scan(engine)
+        XCTAssertTrue(e.isMainActorClass, """
+            EchoelBioEngine is no longer matched as a `@MainActor` class — re-derive whether its \
+            query handlers still need `@Sendable` before trusting claim 1.
+            """)
+        let queries = e.handlers.filter { $0.api == "HKAnchoredObjectQuery" }
+        XCTAssertEqual(queries.count, 3, """
+            EchoelBioEngine has \(queries.count) `HKAnchoredObjectQuery(` trailing handlers; this \
+            claim pins the three (heart rate, HRV, breath) — re-anchor if one moved behind a name.
+            """)
+        XCTAssertTrue(queries.allSatisfy(\.sendable), """
+            a HealthKit query handler is no longer `@Sendable` — anyone who allowed Apple Health \
+            traps on the first result of every launch (`startIfAlreadyAuthorized`).
+            """)
+        XCTAssertTrue(engine.contains("private nonisolated func processHeartRateSamples("), """
+            `processHeartRateSamples` is no longer `nonisolated` — the `@Sendable` handler calls it \
+            off the actor (the compiler says so too; this names the reason).
+            """)
+        let writer = try scan(try read(Self.healthWriter))
+        XCTAssertTrue(writer.isMainActorClass, "HealthKitWriter is no longer matched as a `@MainActor` class")
+        let saves = writer.handlers.filter { $0.api == ".save" }
+        XCTAssertEqual(saves.count, 1, "HealthKitWriter's one save completion is not seen (handlers: \(writer.handlers.map(\.api)))")
+        XCTAssertTrue(saves.allSatisfy(\.sendable), """
+            the Health write's completion is no longer `@Sendable` — every opted-in write would trap \
+            when HealthKit answers on its background queue.
             """)
     }
 

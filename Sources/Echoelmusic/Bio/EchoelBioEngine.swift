@@ -315,6 +315,18 @@ public final class EchoelBioEngine {
 
     // MARK: - HealthKit Queries
 
+    // ⛔ EVERY QUERY HANDLER BELOW IS `@Sendable` ON PURPOSE — the build-2613 trap class
+    // (2026-10-08). This class is `@MainActor`; a closure literal formed here without `@Sendable`
+    // inherits MainActor isolation, and one passed as an ARGUMENT to a framework that is not
+    // concurrency-checked (HealthKit; `HKAnchoredObjectQuery`'s results handler carries no
+    // `NS_SWIFT_SENDABLE` in the iOS 18 SDK) gets a dynamic isolation check at its entry.
+    // HealthKit calls the handler on a background queue → `dispatch_assert_queue` → SIGTRAP on
+    // the first result. Because `HealthKitBioPublisher.startIfAlreadyAuthorized` starts these
+    // queries at launch once Health access was granted, that was a crash on EVERY launch for
+    // anyone who ever allowed it. The `updateHandler` assignments get no entry check (not an
+    // argument) but run on the same queue, so they carry the same spelling. The three
+    // `process…Samples` callees are `nonisolated`; the handlers capture only `self`, weakly.
+    // Guard: `TheOffMainDispatchHandlerIsSendableTests` claims 1, 3 and 8.
     private func startHeartRateQuery(healthStore: HKHealthStore) {
         guard let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return }
 
@@ -334,11 +346,11 @@ public final class EchoelBioEngine {
             predicate: predicate,
             anchor: nil,
             limit: HKObjectQueryNoLimit
-        ) { [weak self] _, samples, _, _, _ in
+        ) { @Sendable [weak self] _, samples, _, _, _ in
             self?.processHeartRateSamples(samples)
         }
 
-        heartRateQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
+        heartRateQuery?.updateHandler = { @Sendable [weak self] _, samples, _, _, _ in
             self?.processHeartRateSamples(samples)
         }
 
@@ -361,11 +373,11 @@ public final class EchoelBioEngine {
             predicate: predicate,
             anchor: nil,
             limit: HKObjectQueryNoLimit
-        ) { [weak self] _, samples, _, _, _ in
+        ) { @Sendable [weak self] _, samples, _, _, _ in
             self?.processHRVSamples(samples)
         }
 
-        hrvQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
+        hrvQuery?.updateHandler = { @Sendable [weak self] _, samples, _, _, _ in
             self?.processHRVSamples(samples)
         }
 
@@ -388,11 +400,11 @@ public final class EchoelBioEngine {
             predicate: predicate,
             anchor: nil,
             limit: HKObjectQueryNoLimit
-        ) { [weak self] _, samples, _, _, _ in
+        ) { @Sendable [weak self] _, samples, _, _, _ in
             self?.processBreathRateSamples(samples)
         }
 
-        breathRateQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
+        breathRateQuery?.updateHandler = { @Sendable [weak self] _, samples, _, _, _ in
             self?.processBreathRateSamples(samples)
         }
 

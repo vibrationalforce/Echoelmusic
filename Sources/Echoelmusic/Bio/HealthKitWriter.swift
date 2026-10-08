@@ -112,7 +112,11 @@ public final class HealthKitWriter {
         }
         guard !samples.isEmpty else { return }
         // Best-effort, fire-and-forget (a failed write must never disrupt the app).
-        store.save(samples) { _, _ in }
+        // `@Sendable` on purpose (the 2613 trap class): HealthKit calls this completion on a
+        // background queue, and an empty closure formed in this `@MainActor` class would still
+        // inherit MainActor isolation and trap at its entry check. Guard:
+        // `TheOffMainDispatchHandlerIsSendableTests` claim 8.
+        store.save(samples) { @Sendable _, _ in }
     }
 }
 #endif
