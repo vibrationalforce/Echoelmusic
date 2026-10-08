@@ -74,6 +74,20 @@ enum TrackParts {
         part.startTick + stepTicks
     }
 
+    /// The finer non-drag move (GMMW AE-11 review): one beat — the grid a zoomed drag lands on.
+    /// Relative, like the bar step, so an off-grid part keeps its offset.
+    static let nudgeTicks = TimelineTime.ticksPerBeat
+
+    /// Where "one beat earlier" lands, or nil when the part already starts at the song's top.
+    nonisolated static func earlierNudge(_ part: Part) -> Int? {
+        guard part.startTick > 0 else { return nil }
+        return Swift.max(0, part.startTick - nudgeTicks)
+    }
+
+    nonisolated static func laterNudge(_ part: Part) -> Int {
+        part.startTick + nudgeTicks
+    }
+
     /// The highest bar a typed start may name at all — an overflow clamp for the tick
     /// arithmetic below, far past any song. The field's REACH is `startBarRange`, not this.
     static let maxStartBar = 9_999

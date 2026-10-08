@@ -2,13 +2,15 @@
 // Echoel — WA4 path D: press, hold and slide a part on the Arrange canvas to move it.
 //
 // WHAT THIS PINS. The part bar moved a part one bar per tap; the canvas could only select.
-// A part now follows the finger in whole bars and lands where its preview sits. The risks are
+// A part now follows the finger cell by cell — whole bars by default, beats or steps once zoomed
+// (claim 5, GMMW AE-11) — and lands where its preview sits. The risks are
 // the ones the cut arrange view paid for: a preview that disagrees with the commit (the part
 // "jumps" on release), a finger-rate state that churns more than the dragged block, a delta
 // that sticks when the scroll view cancels the drag (#56 C2), a commit per frame instead of
 // one per release, and a drag that steals the Workstation's vertical scroll.
 //
-// 1. END-TO-END (pure): `ArrangeCanvas.dropTick` moves by WHOLE BARS relative to the start —
+// 1. END-TO-END (pure): `ArrangeCanvas.dropTick` moves by WHOLE BARS on a lane where a bar is
+//    narrower than four fingertips (the 320-pt lanes below) relative to the start —
 //    under half a bar is no move, just over is one bar, an off-grid part keeps its offset,
 //    nothing lands before the song's top, degenerate geometry is no move — and
 //    `offsetPoints` previews exactly that landing on the scale the blocks are placed on.
@@ -25,7 +27,7 @@
 //    (`ArrangeCanvas.snapZoom` = points per bar / `AudioPartEditor.handleHitPoints`, read by
 //    `PartTrim.snapUnit`, the audio editor's own rule, #416). Claim 1's 40-pt bars stay a bar
 //    grid, so every number above still holds. Grading: `snapZoom` does not exist on the parent
-//    (`558abd9`), so this file does not compile there — one absence (#486); claim 5 is a
+//    (`13d8200`), so this file does not compile there — one absence (#486); claim 5 is a
 //    FORWARD guard, transcribed into Python with the numbers below (each lane width is exact in
 //    binary).
 //
@@ -55,7 +57,7 @@ final class TheArrangeCanvasMovesAPartByDraggingTests: XCTestCase {
     private static let song = 8 * TimelineTime.ticksPerBar
     private static let width: CGFloat = 320
 
-    // MARK: 1 — whole bars, relative, clamped, and previewed where it lands
+    // MARK: 1 — whole bars on a narrow lane, relative, clamped, and previewed where it lands
 
     func testADragMovesByWholeBarsAndThePreviewIsTheLanding() {
         let start = 2 * Self.bar

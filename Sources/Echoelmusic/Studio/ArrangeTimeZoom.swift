@@ -43,8 +43,9 @@
 //  frame, as it does for any width change.
 //
 //  DEVICE PROBE, open: the bars spread under the fingers; one finger pans along the song while
-//  the names stay put; the two buttons step the zoom; a part's hold-and-slide still moves it by
-//  whole bars at every zoom; the plate's vertical scroll still works with the canvas zoomed.
+//  the names stay put; the two buttons step the zoom; a part's hold-and-slide moves it on the
+//  grid the zoom can show (bars, then beats, then steps — GMMW AE-11); the plate's vertical
+//  scroll still works with the canvas zoomed.
 //
 
 import SwiftUI

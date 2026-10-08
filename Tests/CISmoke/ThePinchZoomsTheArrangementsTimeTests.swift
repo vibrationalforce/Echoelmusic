@@ -48,7 +48,8 @@
 // magnify gesture on a sibling declaration in `StageShell.swift` stays green, on purpose.
 // NOT covered (DEVICE PROBE): that the bars spread under the fingers on glass, that one finger then
 // pans along the song while the names stay put, that the buttons step the zoom around the middle,
-// that a part's hold-and-slide still moves it by whole bars at every zoom (and only as far as the
+// that a part's hold-and-slide moves it on the grid the zoom can show — bars, then beats, then
+// steps (GMMW AE-11; `TheArrangeCanvasMovesAPartByDraggingTests` claim 5) — (and only as far as the
 // visible bars — a stated limit in the leaf's header), that VoiceOver offers the zoom action on the
 // scroll view at all, and that the plate's vertical scroll still works with the canvas zoomed.
 // NEEDS-FOUNDER-VERIFY: Arrange with an 8-bar song → spread two fingers over bar 5: bar 5 stays

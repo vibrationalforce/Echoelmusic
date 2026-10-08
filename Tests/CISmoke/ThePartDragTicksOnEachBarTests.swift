@@ -1,8 +1,9 @@
 // ThePartDragTicksOnEachBarTests.swift
 // Echoel — UX audit 2026-10-02, slice 13b: a part being dragged on the arrange canvas gives one
-// light haptic tick each time its preview snaps to another bar.
+// light haptic tick each time its preview snaps to another grid cell — a bar at the default zoom,
+// a beat or a step once zoomed (GMMW AE-11; the file keeps its name, which is the default case).
 //
-// WHAT IT GUARDS. The drag moves a part by whole bars (`ArrangeCanvas.dropTick`), but the hand had
+// WHAT IT GUARDS. The drag moves a part cell by cell (`ArrangeCanvas.dropTick`), but the hand had
 // nothing to feel: the snap was visible only. `ArrangePartBlock` now carries
 // `.sensoryFeedback(.selection, trigger: landing)`, where `landing` is the SNAPPED drop tick the
 // preview already draws. The trigger is the point of this file: a trigger on the raw finger
@@ -11,7 +12,8 @@
 // KIND (per this directory's §1): SOURCE-TEXT SCAN. It proves where the modifier sits and what
 // triggers it — never that the phone's Taptic Engine plays it, or how it feels. That is a device
 // probe. NEEDS-FOUNDER-VERIFY: Piece → hold a part until it lifts → slide slowly across three
-// bars: three light ticks, one per bar; a small wobble inside a bar gives none.
+// bars: three light ticks, one per bar; a small wobble inside a bar gives none. Zoom in fully on a
+// short song and slide again: one tick per beat (or step), never a buzz.
 //
 // GRADING (#433, parent = the tree before this slice): claim 1 is a FORWARD guard — the parent
 // has ZERO `sensoryFeedback` in `ArrangeCanvasView.swift` (measured), so it is red there by

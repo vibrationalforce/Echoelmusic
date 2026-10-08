@@ -45,7 +45,16 @@
 //  be performed with VoiceOver or Switch Control, so each block carries two named actions —
 //  "Move one bar earlier" / "Move one bar later" — that land through `drop`, i.e. the SAME
 //  `TrackParts.move` commit and the part bar's own `earlierStart`/`laterStart` step (#416: no
-//  tick maths here). "Earlier" is offered only where a bar earlier exists.
+//  tick maths here). "Earlier" is offered only where a bar earlier exists. Since the AE-11
+//  review the same pair exists per BEAT ("Move one beat earlier" / "… later", through `nudge`
+//  and `TrackParts.earlierNudge`/`laterNudge`): a zoomed drag lands on beats, and the non-drag
+//  path must reach what the drag reaches (WCAG 2.5.7).
+//  ⚠️ KNOWN LIMITS (AE-11 review): a transport STEP is reachable by drag only — no step actions,
+//  so the rotor is not buried under six moves per part. And the grid a phone can show is small:
+//  beats need 176 pt per bar and steps 704 pt (`PartTrim.snapUnit` at 4 and 16 fingertips of
+//  44 pt), so at the 8× zoom ceiling a lane L pt wide drags on beats for songs up to 8·L/176
+//  bars and on steps up to 8·L/704 — about 10 and 2 bars on a 375-pt phone (lane ≈ 240 pt,
+//  ESTIMATED: the screen minus gutters and the 96-pt names). Longer songs drag in bars.
 //
 //  ⭐ THE BAR RULER (modes census 2026-09-26, design slice 1). The lanes showed WHERE parts sit
 //  and nothing said at WHICH bar — the one number the part bar, the parts list and the
@@ -509,6 +518,7 @@ struct ArrangeCanvasView: View {
                                      tint: tint,
                                      onSelect: { selection.selectRegion(block.id, in: document) },
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
+                                     onNudge: { later in nudge(block.id, onLane: row.id, later: later) },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
                 }
             }
@@ -541,6 +551,18 @@ struct ArrangeCanvasView: View {
         guard let part = TrackParts.parts(onLane: laneID, in: document)
                 .first(where: { $0.id == regionID }) else { return }
         let target: Int? = later ? TrackParts.laterStart(part) : TrackParts.earlierStart(part)
+        guard let target else { return }
+        drop(regionID, onLane: laneID, from: part.startTick, to: target)
+        AccessibilityNotification.Announcement(String(localized: "Part at ") + SessionGrid.label(forTick: target)).post()
+    }
+
+    /// The finer twin (GMMW AE-11 review, WCAG 2.5.7): a zoomed drag lands on beats, so the
+    /// non-drag path offers a beat too. It asks `TrackParts` for the target, lands through
+    /// `drop` and announces the landing, exactly as `step` does.
+    private func nudge(_ regionID: UUID, onLane laneID: UUID, later: Bool) {
+        guard let part = TrackParts.parts(onLane: laneID, in: document)
+                .first(where: { $0.id == regionID }) else { return }
+        let target: Int? = later ? TrackParts.laterNudge(part) : TrackParts.earlierNudge(part)
         guard let target else { return }
         drop(regionID, onLane: laneID, from: part.startTick, to: target)
         AccessibilityNotification.Announcement(String(localized: "Part at ") + SessionGrid.label(forTick: target)).post()
@@ -613,7 +635,8 @@ struct ArrangePlayheadView: View {
     }
 }
 
-/// One part on a lane: tap to select it; press, hold and slide to move it by whole bars.
+/// One part on a lane: tap to select it; press, hold and slide to move it on the grid the
+/// screen can show (a bar, or a beat or step once zoomed — AE-11).
 ///
 /// ⭐ THE ONLY FINGER-RATE STATE IN THIS FILE (the time zoom's pinch lives in its own leaf,
 /// `ArrangeTimeZoom`, since S9a). `dragPoints` is `@GestureState`, so it lives
@@ -639,6 +662,8 @@ struct ArrangePartBlock: View {
     let tint: Color
     let onSelect: () -> Void
     let onDrop: (Int) -> Void
+    /// The finer twin (true = one beat later) — the grid a zoomed drag lands on (AE-11 review).
+    let onNudge: (Bool) -> Void
     /// The drag's non-drag twin (true = one bar later) — see the file header.
     let onStep: (Bool) -> Void
 
@@ -683,6 +708,10 @@ struct ArrangePartBlock: View {
                     Button("Move one bar earlier") { onStep(false) }
                 }
                 Button("Move one bar later") { onStep(true) }
+                if startTick > 0 {
+                    Button("Move one beat earlier") { onNudge(false) }
+                }
+                Button("Move one beat later") { onNudge(true) }
             }
     }
 

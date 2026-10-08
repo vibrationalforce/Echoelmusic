@@ -3049,6 +3049,30 @@
         }
       }
     },
+    "Move one beat earlier" : {
+      "comment" : "VoiceOver action on a part of the Arrange canvas (GMMW AE-11 review, 2026-10-08): moves the part by one beat — the finer twin of the drag, which lands on beats once zoomed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move one beat earlier"
+          }
+        }
+      }
+    },
+    "Move one beat later" : {
+      "comment" : "VoiceOver action on a part of the Arrange canvas (GMMW AE-11 review, 2026-10-08): moves the part by one beat — the finer twin of the drag, which lands on beats once zoomed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move one beat later"
+          }
+        }
+      }
+    },
     "Name" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
