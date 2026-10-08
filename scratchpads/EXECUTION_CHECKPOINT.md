@@ -3,6 +3,15 @@
 Rules: `memory/preferences.md` § "Orchestrator hardening". This file is NOT a roadmap — product order
 lives in `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` and the canonical PLAN_* files. Overwrite, don't append.
 
+CURRENT (2026-10-08c): branch tip = 5877811 (fix: the J1 row's gap is `EchoelTheme.spaceXS`; the parent sat exactly on the
+  spacing ratchet's ceiling 696 and 0ecd593 pushed it to 697 — `TheSpacingSitsOnTheScaleTests.testTheLiteralGapsOnlyFall`
+  was the ONE named failure on 7bd36a4's Run Tests, job 113111796643; the five J1 claims passed in the window). Gates on
+  5877811: pending (Compile Check conclusion · CI/CD step Build for Testing · Run Tests window must not name the ratchet).
+  HELD: bump 10.79.493 = b82219f on local branch `bump-hold` (note + `--since 62d0f94` list + de-prefixed archive headers,
+  release guards transcribed GREEN); cherry-pick after the gates, swap the gate sha 4cb70eb51 -> 5877811 in the note, amend,
+  push. 4cb70eb's own Run Tests (job 113116821668) will show the same single red — S8 added no literal. main = bc4fc5205.
+  Landing kit unchanged and re-verified on 5877811 (P3, P1 singly; P3->P1->P2 stacked). Still BLOCKED by auto mode.
+HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-08b): branch tip = 4cb70eb (kit 4251d7b → J1 row 0ecd593 → stem headers 6798528 → ASC docs 7bd36a4
   → Join next 4cb70eb). Code since TestFlight 10.79.492 (62d0f9489): J1 row + Join next ⇒ a bump is LEGITIMATE once
   the gates on 4cb70eb are green (Compile Check conclusion · CI/CD step Build for Testing). main = bc4fc5205.
@@ -12,7 +21,6 @@ CURRENT (2026-10-08b): branch tip = 4cb70eb (kit 4251d7b → J1 row 0ecd593 → 
   tree; transcribed guards green. BLOCKED only by auto mode (hook) — founder: Standard mode or Terminal (Weg A/B).
   The held hold/auto-merge-310 = 6685327b0 (13-scenario sim) did NOT survive the container restart; P3 = tracked
   patch with the 4-scenario sim. After landing: bump 10.79.493 (E10-1) and 10.79.494 (B2), F2 answered, J0 next.
-HISTORY BELOW (older state, superseded by the block above):
 CURRENT (2026-10-07d): branch tip 62d0f9489 (= TestFlight 10.79.492 bump, run 37655969254 #2617) on
   a4c5da609; Sources identical to 2ef716273 (Compile Check 37639346127 ✓, BfT job 112854348658 ✓, Run Tests
   exit 65 #396 shape, failing names unseen). main = bc4fc5205 (auto-merge #310 rejects).
