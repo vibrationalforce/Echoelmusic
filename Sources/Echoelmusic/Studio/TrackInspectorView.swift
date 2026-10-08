@@ -590,6 +590,11 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                     if controls.sound {
                         soundRow
                     }
+                    // GMMW GA-1 — this rack track composes too, in its own style (own leaf: it reads
+                    // the part grid, which this body never does).
+                    if TrackCompose.offered(controls.role) {
+                        TrackComposeRows(laneID: laneID)
+                    }
                     // What this Echoel is set to — genre and FX character, read-only, from the
                     // instrument's own keys (`EchoelInstanceLine`; the inspector owns no persistence).
                     if controls.role == .echoelInstrument {

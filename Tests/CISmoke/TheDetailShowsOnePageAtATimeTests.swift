@@ -257,7 +257,9 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
         let pages: [(gate: String, rows: [String])] = [
             ("if page == .device {", ["TrackMix.deviceName(controls.role)", "openDeviceButton",
                                      "instrumentRow(instruments)", "EchoelInstanceLine()",
-                                     "echoelGenreRow", "echoelEffectRow", "effectRow"]),
+                                     "echoelGenreRow", "echoelEffectRow", "effectRow",
+                                     // GMMW GA-1 — the rack track's Compose here rows.
+                                     "TrackComposeRows(laneID: laneID)"]),
             ("if page == .track {", ["TextField(\"Track name\"", "label: \"Level\"", "label: \"Pan\"",
                                     "trackRows", "removeRow(removal)"]),
             ("if page == .part {", ["TrackPartsView(laneID: laneID)", "partRows"]),

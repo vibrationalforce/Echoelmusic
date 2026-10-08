@@ -118,6 +118,9 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setRegionTranspose",
         // GMMW GA-2b: the part bar's Edit a copy (`PartEditCopyButton`).
         "keepComposerTake",
+        // GMMW GA-1: a rack track's Compose here rows (`Studio/TrackComposeRows.swift`) — its
+        // Style menu and New variation. `setLaneMood` stays caller-less on purpose (no mood row).
+        "setLaneGenreOverride", "setLaneVariationSeed",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

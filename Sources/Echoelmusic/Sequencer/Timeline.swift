@@ -238,12 +238,14 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         // `MoodStorage.swift` states that second mechanism itself; this decoder did not act
         // on it.
         //
-        // ⚠️ HONEST SEVERITY, and it is LOWER than `kind`'s: `setLaneGenreOverride` and
-        // `setLaneMood` (`TimelineStore`) have ZERO production callers, and the synthesized
-        // encoder omits a nil Optional — so NO document on disk today can carry either key.
-        // Reaching the throw needs two future steps (re-door the surface, then change the
-        // type), not one. Wrapped now because the cost is a keyword and the alternative is
-        // remembering.
+        // ⚠️ HONEST SEVERITY — and since GMMW GA-1 it is HIGHER for `genreOverride`: the
+        // Compose here Style menu (`Studio/TrackComposeRows.swift`) calls
+        // `setLaneGenreOverride`, so a document on disk CAN carry that key now, and a retired
+        // `MusicStyle` case would reach this line in one step (change the type), not two. The
+        // `try?` below is what keeps that from dropping the whole lane. `setLaneMood` still has
+        // ZERO production callers and the synthesized encoder omits a nil Optional, so no
+        // document carries `mood` yet. Wrapped from #543 on, because the cost is a keyword and
+        // the alternative is remembering.
         genreOverride = try? c.decode(MusicStyle.self, forKey: .genreOverride)
         mood = try? c.decode(MoodProfile.self, forKey: .mood)
         variationSeed = try c.decodeIfPresent(UInt64.self, forKey: .variationSeed)

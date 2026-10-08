@@ -67,6 +67,10 @@
 //        fields), so it leaves the caller-less set and is pinned beside them.
 //        GMMW AE-10a added `setRegionTranspose` the same way; AE-10c gave it its caller (the
 //        part bar's Part pitch field), so it leaves the caller-less set and is pinned beside them.
+//        GMMW GA-2a added `keepComposerTake`; GA-2b gave it its caller (the part bar's Edit a
+//        copy). GA-1 gave `setLaneGenreOverride` and `setLaneVariationSeed` theirs (a rack
+//        track's Compose here rows, `Studio/TrackComposeRows.swift`); `setLaneMood` stays
+//        caller-less on purpose (no mood row). All three are pinned beside them.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
@@ -1389,10 +1393,8 @@ public final class TimelineStore {
               lane.kind == .midi, !lane.isBio else { return false }
         let windowTicks = max(1, loopBars) * max(1, ticksPerBar)
         // Already provided for → done (idempotent).
-        if document.regions(in: laneID).contains(where: { region in
-            region.startTick < windowTicks
-                && (clipStore.clip(id: region.clipID)?.composerOwned ?? false)
-        }) {
+        if Self.hasComposerPart(onLane: laneID, in: document, clips: clipStore.filledClips,
+                                windowTicks: windowTicks) {
             return true
         }
         let name = "Composed · \(lane.name)"
@@ -1419,6 +1421,17 @@ public final class TimelineStore {
         log.log(.info, category: .audio,
                 "ensureComposerRegion: created 'Composed · \(lane.name)' (slot \(slot), \(max(1, loopBars)) bars)")
         return true
+    }
+
+    /// Whether `laneID` already has a composer part inside the loop window: a region starting in
+    /// [0, `windowTicks`) whose clip is composer-owned. The question `ensureComposerRegion` asks
+    /// first, and the one "Compose here" shows as on (GMMW GA-1) — one rule (#416).
+    nonisolated static func hasComposerPart(onLane laneID: UUID, in document: TimelineDocument,
+                                            clips: [Clip], windowTicks: Int) -> Bool {
+        let composerClipIDs = Set(clips.filter { $0.composerOwned }.map(\.id))
+        return document.regions(in: laneID).contains { region in
+            region.startTick < windowTicks && composerClipIDs.contains(region.clipID)
+        }
     }
 
     /// A composer-owned clip that no region in `document` plays — reusable by

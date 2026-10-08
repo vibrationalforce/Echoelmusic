@@ -16,10 +16,14 @@
 // and not a live defect. No edit in the tree today can trigger the throw. `kind` is the only
 // one whose key is on disk at all — `TimelineStore` seeds `kind: .midi` and `kind: .audio` into
 // every default document — and nothing constructs a `.video` or `.visual` LANE, so those two
-// are precisely the dead cases a future cleanup would delete. `genreOverride` and `mood` cannot
-// be on disk today: their setters have zero production callers and the synthesized encoder
-// omits a nil Optional. This is a latent hazard plus a self-contradicting comment. Overstating
-// it is how the next session mis-ranks the real ones.
+// are precisely the dead cases a future cleanup would delete. `mood` cannot be on disk today:
+// its setter has zero production callers and the synthesized encoder omits a nil Optional.
+// ⚠️ `genreOverride` CAN, since GMMW GA-1 (2026-10-08): the Compose here Style menu
+// (`Studio/TrackComposeRows.swift`) calls `setLaneGenreOverride`, exactly as claim 6 below
+// asked to be told — so for that key the hazard is LIVE and DEFENDED (the `try?` this file pins),
+// one step (a retired genre case) from the throw instead of two. This is a hazard plus a
+// self-contradicting comment, repaired. Overstating it is how the next session mis-ranks the
+// real ones.
 //
 // ⭐ THE RULE, NOT AN EXEMPTION LIST. The scan below does not enumerate "these four fields must
 // be wrapped" — that list would need maintaining and would silently miss field five. It reads
@@ -43,9 +47,9 @@
 //     something (#343): the lane array must still be decoded LOSSILY (a defended field inside a
 //     strictly-decoded array buys nothing), the sibling `Clip.init(from:)` must still use the
 //     same form for the same type, `MoodProfile` must still be a struct of non-optional
-//     properties (the premise for `mood`), and the two setters must still have no production
-//     caller (the premise for the severity claim above — if one gains a caller, the honest
-//     severity RISES and this file says so).
+//     properties (the premise for `mood`), and the mood setter must still have no production
+//     caller while the style setter has exactly one door (the premise for the severity claim
+//     above — GA-1 gave the style setter its caller, the severity rose, and this file says so).
 //
 // ⚠️ `SourceText.codeOnly` is LOAD-BEARING here — MEASURED (#453 asks for the count; three
 // slices in a row asserted it without measuring and had to retract, and the first draft of THIS
@@ -172,23 +176,30 @@ final class ALaneSurvivesAFieldItDoesNotKnowTests: XCTestCase {
     }
 
     /// THE SEVERITY PREMISE, and it is the counterweight that keeps this file honest rather
-    /// than alarmist. `genreOverride` and `mood` cannot be on any user's disk today because
-    /// nothing can set them. The day one gains a production caller, the hazard becomes real —
-    /// and this assertion goes red to say so.
-    func testThePerLaneSettersStillHaveNoProductionCaller() throws {
+    /// than alarmist. `mood` cannot be on any user's disk today because nothing can set it. The
+    /// day its setter gains a production caller, that hazard becomes real — and this assertion
+    /// goes red to say so. ⭐ The style setter crossed that line with GMMW GA-1 (2026-10-08): its
+    /// one door is the Compose here Style menu, pinned here so a SECOND writer is seen too.
+    func testTheMoodSetterHasNoCallerAndTheStyleSetterHasOneDoor() throws {
         let src = try source(Self.store)
         for setter in ["setLaneMood", "setLaneGenreOverride"] {
             XCTAssertTrue(src.contains("func \(setter)"), """
                 `\(setter)` is gone from `TimelineStore`. This file's honest-severity note \
-                reasons from its existence AND its uselessness; re-check both.
+                reasons from its existence; re-check it.
                 """)
         }
-        let callers = try productionCallers(of: ["setLaneMood(", "setLaneGenreOverride("])
-        XCTAssertTrue(callers.isEmpty, """
-            \(callers.joined(separator: ", ")) now calls a per-lane mood/genre setter. That is \
-            not a failure — it means the feature got a door. But it also means those keys can \
-            now reach a user's disk, so the "cannot be on disk today" half of this file's \
-            severity note is retired: say so there, and in the commit that adds the caller.
+        let moodCallers = try productionCallers(of: ["setLaneMood("])
+        XCTAssertTrue(moodCallers.isEmpty, """
+            \(moodCallers.joined(separator: ", ")) now calls the per-lane mood setter. That is \
+            not a failure — it means the feature got a door. But it also means `mood` can now \
+            reach a user's disk, so the "cannot be on disk today" half of this file's severity \
+            note is retired: say so there, in `Timeline.swift`, and in the commit that adds it.
+            """)
+        let styleCallers = try productionCallers(of: ["setLaneGenreOverride("])
+        XCTAssertEqual(styleCallers, ["Echoelmusic/Studio/TrackComposeRows.swift"], """
+            The per-lane style setter's writers are \(styleCallers). GMMW GA-1 gave it ONE door, \
+            the Compose here Style menu; a second writer is a second place that can put a \
+            genre key on disk — name it in the severity note of `Timeline.swift` and here.
             """)
     }
 

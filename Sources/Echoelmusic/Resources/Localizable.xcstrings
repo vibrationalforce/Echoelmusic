@@ -37,6 +37,42 @@
         }
       }
     },
+    "Compose here" : {
+      "comment" : "GA-1 Compose here (rack track Device page): switch label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose here"
+          }
+        }
+      }
+    },
+    "Compose here is off: the part grid is full." : {
+      "comment" : "GA-1 Compose here (rack track Device page): refusal sentence — every part slot is in use.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose here is off: the part grid is full."
+          }
+        }
+      }
+    },
+    "Compose here is off: this track has a part of your own in the loop, and the composer's part would play over it." : {
+      "comment" : "GA-1 Compose here (rack track Device page): refusal sentence — a user part starts inside the loop.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose here is off: this track has a part of your own in the loop, and the composer's part would play over it."
+          }
+        }
+      }
+    },
     "Connections" : {
       "comment" : "Routing segment (GMMW P1-1, 2026-10-08): the network outputs, the OSC input, MIDI and the routing graph.",
       "extractionState" : "manual",
@@ -97,6 +133,30 @@
         }
       }
     },
+    "Follow the piece" : {
+      "comment" : "GA-1 Compose here (rack track Device page): style menu entry: use the instrument's style.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow the piece"
+          }
+        }
+      }
+    },
+    "Its notes arrive the next time the instrument composes. Off keeps the composer's part as it is." : {
+      "comment" : "GA-1 Compose here (rack track Device page): note under the rows while composing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Its notes arrive the next time the instrument composes. Off keeps the composer's part as it is."
+          }
+        }
+      }
+    },
     "Make negative" : {
       "comment" : "VoiceOver label for the − key on the Echoel number pad. It sets the SIGN of the value being entered and never changes the magnitude; without this label SwiftUI names the button after its SF Symbol (\"minus\"), i.e. the word for the arithmetic the key does not do.",
       "extractionState" : "manual",
@@ -129,6 +189,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Media"
+          }
+        }
+      }
+    },
+    "New variation" : {
+      "comment" : "GA-1 Compose here (rack track Device page): button that rolls a new variation for this track.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New variation"
+          }
+        }
+      }
+    },
+    "New variation: this track composes a different line the next time the instrument composes; its style stays" : {
+      "comment" : "GA-1 Compose here (rack track Device page): spoken label of New variation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New variation: this track composes a different line the next time the instrument composes; its style stays"
           }
         }
       }
@@ -369,6 +453,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Only the selected part and its editors are shown"
+          }
+        }
+      }
+    },
+    "The instrument also composes this track, in its own style, from the same body. Its notes arrive the next time the instrument composes: on Start, and as it evolves." : {
+      "comment" : "GA-1 Compose here (rack track Device page): switch hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The instrument also composes this track, in its own style, from the same body. Its notes arrive the next time the instrument composes: on Start, and as it evolves."
+          }
+        }
+      }
+    },
+    "The style this track composes in. Follow the piece uses the instrument's style" : {
+      "comment" : "GA-1 Compose here (rack track Device page): style menu hint.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The style this track composes in. Follow the piece uses the instrument's style"
           }
         }
       }
