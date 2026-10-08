@@ -223,10 +223,26 @@ final class TheSelectedPartIsCutWhereItIsHeardTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: the bar's body and its Split handler (#454)")
         }
         let body = String(file[bodyStart.upperBound..<splitStart.lowerBound])
-        for banned in ["preflightTempo", "clipStore", "currentTick", "player."] {
-            XCTAssertFalse(body.contains(banned),
-                           "the bar's body reads `\(banned)` — tempo and clip belong inside the Split handler")
+        // ⛔ RE-ANCHORED (2026-10-08). The bans below read `body`, which runs from `var body` to the
+        // Split handler — and S8 (4cb70eb, "Join next") put the `join` HANDLER in that span, with its
+        // `clipStore.clip(id:)` and `player.preflightTempo`, plus ONE documented body read of
+        // `preflightTempo` for Join's enabled state (`@ObservationIgnored`, so it subscribes nothing;
+        // the env comment says so). The claim stayed red on a correct tree from that commit on, and
+        // the job log's `tail -200` window never showed it (#807). The bans now read the RENDERED
+        // body only — `var body` up to `private struct Trims {` — and the one tempo read is pinned
+        // by name rather than banned.
+        guard let trimsStart = file.range(of: "private struct Trims {", range: bodyStart.upperBound..<file.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `private struct Trims {` after the bar's body (#454)")
         }
+        let rendered = String(file[bodyStart.upperBound..<trimsStart.lowerBound])
+        for banned in ["clipStore", "currentTick"] {
+            XCTAssertFalse(rendered.contains(banned),
+                           "the bar's body reads `\(banned)` — the clip belongs inside the Split, Trim and Join handlers")
+        }
+        XCTAssertEqual(rendered.components(separatedBy: "player.").count - 1, 1,
+                       "ONE read of the player in the body: Join's enabled state")
+        XCTAssertTrue(rendered.contains("let joinable = timeline.canMergeRegionWithNext(id: regionID, bpm: player.preflightTempo)"),
+                      "and that read is `preflightTempo`, which is `@ObservationIgnored` — it subscribes the body to nothing")
         for write in ["TrackParts.move(part, toStartTick:", "TrackParts.duplicate(part, timeline: timeline)",
                       "TrackParts.remove(part, timeline: timeline)"] {
             XCTAssertTrue(body.contains(write), "the bar writes through the store's API: `\(write)`")
