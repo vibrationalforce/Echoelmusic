@@ -1,0 +1,44 @@
+diff --git a/.claude/hooks/protect-founder-gated.py b/.claude/hooks/protect-founder-gated.py
+index f9a5878..0cdcbd5 100644
+--- a/.claude/hooks/protect-founder-gated.py
++++ b/.claude/hooks/protect-founder-gated.py
+@@ -33,6 +33,7 @@ set to release itself. A headless `claude -p` has no one to answer, so "ask" blo
+ 
+ PROTECTED (founder-gated, CLAUDE.md "DO NOT" + .claude/rules/context.md §3):
+   .github/workflows/**   project.yml   Resources/iOS/Info.plist
++  .claude/hooks/**   (P4, founder-landed: the gate guards its own file)
+   .claude/settings.json   .mcp.json   (since 2026-10-08, audit: the permission grants and the
+   servers started at session start are configuration the agent must not change in a plain diff)
+   (.deploy/release was the fourth until the founder released it on 2026-10-01 — "Nur Deploy
+@@ -47,7 +48,7 @@ import subprocess
+ import sys
+ 
+ PROTECTED_FILES = ("project.yml", "Resources/iOS/Info.plist", ".claude/settings.json", ".mcp.json")
+-PROTECTED_DIRS = (".github/workflows/",)
++PROTECTED_DIRS = (".github/workflows/", ".claude/hooks/")
+ 
+ LIMITS = """\
+ - Rule 1 reads TEXT. A path built at runtime (base64, string concatenation, a helper
+@@ -58,9 +59,9 @@ LIMITS = """\
+   `open('project.yml','w')` inside a string (editing this hook's own selftest).
+ - Rule 2 fires at `git commit` only. `git merge`, `cherry-pick`, `revert` and `am` create
+   commits without it, and `git push` is not inspected.
+-- The hook itself (`.claude/hooks/`) is NOT protected: a hook that gates its own file could
+-  not be committed by the agent at all, so that gate is the founder's (a small patch in the
+-  landing kit). `.claude/settings.json` and `.mcp.json` ARE protected since 2026-10-08.
++- The hook itself (`.claude/hooks/`) IS protected since the founder landed P4 (2026-10-08):
++  the agent can propose a hook change only as a patch the founder commits. `.claude/settings.json`
++  and `.mcp.json` are protected since the same day.
+ - Only Claude's own tool calls pass through here. CI, the founder's editor and the
+   founder's own terminal are untouched.
+ - Measured with Claude Code 2.1.283 in `default` and `auto` only. `bypassPermissions`
+@@ -409,7 +410,8 @@ def selftest():
+         ("printf x > .claude/settings.json", [], [], True, "redirect onto the settings file (protected since 2026-10-08)"),
+         ("sed -i 's/latest/1.0.0/' .mcp.json", [], [], True, "sed -i on .mcp.json"),
+         ("git commit -m x", [".mcp.json"], [], True, "commit with .mcp.json staged"),
+-        ("git commit -m x", [".claude/hooks/protect-founder-gated.py"], [], False, "commit of the hook itself is not gated"),
++        ("git commit -m x", [".claude/hooks/protect-founder-gated.py"], [], True, "commit of the hook itself is gated (P4)"),
++        ("sed -i 's/a/b/' .claude/hooks/protect-founder-gated.py", [], [], True, "sed -i on the hook (P4)"),
+         ("git restore --staged .github/workflows/ci.yml", [], [], False, "unstaging touches the index only"),
+         ("git reset -q -- Resources/iOS/Info.plist", [], [], False, "reset of a path unstages"),
+         ("git restore --staged --worktree project.yml", [], [], True, "--worktree writes the file"),

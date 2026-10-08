@@ -102,3 +102,13 @@ Ersetzt `E10-1_RELEASE_PREP_2026-10-07.md` §4 (ein Patch, nur E10-1). Die alten
 `E10-1_microphone_recording.patch`, `E10-1_review_fixes.patch`, `E10-1_commit_message.txt`,
 `B2_broadcast_haishinkit.patch` und `AUTO_MERGE_310_proposed.patch` sind in diesem Paket
 aufgegangen und gelöscht; ihre Geschichte steht in Git.
+
+## Patch 4 (nachgereicht 2026-10-08, aus dem Sicherheits-Audit): der Hook schützt seine eigene Datei
+
+Kleinster Patch des Kits: `scratchpads/LANDING_P4_hook_self_protection.patch` nimmt `.claude/hooks/` in den Schutz des Hooks auf. Genau deshalb kann ich ihn nicht selbst committen — ein Hook, der sein eigenes Gate hat, lässt den Assistenten diese Datei nie wieder anfassen, nur noch vorschlagen. Reihenfolge egal (unabhängig von P1–P3), aber **vor** P4 müssen keine anderen Patches liegen. Selbsttest im gepatchten Baum: alle Fälle halten.
+
+```bash
+git apply --index scratchpads/LANDING_P4_hook_self_protection.patch && git commit -F scratchpads/LANDING_P4_commit_message.txt
+```
+
+Danach: `python3 .claude/hooks/protect-founder-gated.py --selftest` muss „hold“ sagen. Weg A (Standard-Modus) gilt für P4 genauso: „Standard ist an, leg los.“

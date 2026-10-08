@@ -1,0 +1,12 @@
+chore(hook): the gate guards its own file — `.claude/hooks/` is founder-gated
+
+Audit 2026-10-08 (T4): the agent could edit the hook that decides what the
+agent may commit, in a plain diff. With `.claude/hooks/` in PROTECTED_DIRS
+the agent can only PROPOSE a hook change as a patch the founder commits —
+which is why this very commit is a founder landing (P4): a hook that gates
+its own file cannot be committed by the agent at all. Two selftest cases
+flip/appear (commit with the hook staged → ask; sed -i on the hook → ask);
+all cases hold.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DYazx7MBNokUFLwQRpfgpM
