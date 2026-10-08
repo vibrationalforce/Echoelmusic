@@ -26,6 +26,11 @@
 //    600 s clip cut at 312.55 s reads 0 with the cut at 312.6 s; moving footage cut to another
 //    scene of the same drift reads within 5 % of the algebra; and a clip with no close pair leaves
 //    its cut out of the every-pair fallback too.
+// 7. A BURST of motion is motion (second review of VV-4): a 6 s clip read evenly that pans for its
+//    last second, and a 60 s clip read as close pairs that pans from 20 s to 27.5 s, each read the
+//    motion with nothing left out — their fast pairs stand out (premise: at least three transients
+//    in the burst) but three in a row of the motion group are not a cut. COUNTERWEIGHTS: a
+//    one-sample flash (two pairs in a row) and a burst of only two pairs both read 0.
 //
 // THE ALGEBRA (#442). A pixel of the pattern is 128 + 100·sin θ, and the pattern moves by
 // δ = 2π · speed · dt between two frames. For a small δ the change is 100 · |cos θ| · δ, and the
@@ -52,6 +57,12 @@
 // 1 (2.55× the algebra), the sparse one (24 frames 25 s apart, cut at 300 s) 0.0030 — 0 / 0.401 / 0
 // after. Claims 1–5 read the same numbers on both rules bit for bit (nothing in them stands out, so
 // nothing is left out). MUTANT: leaving the cut in the every-pair fallback → the sparse assertion.
+// Claim 7 (second review) compiles on its parent (`4f92c7e`; it names nothing new). Transcribed and
+// driven: the even burst reads 0.5831 (the parent, leaving every flagged pair out, 0.0974), the
+// paired burst 0.7759 (parent 0); the flash and the two-pair burst 0 on both — COUNTERWEIGHTS.
+// Claims 1–6 read the same numbers on both rules bit for bit. MUTANTS: runs counted in the SAMPLE
+// list's order instead of the group's (the review's own proposal) → the paired burst (0); a run of
+// one → the flash and the two-pair burst; a run of three → both bursts.
 // NOT covered: decoding — that the generator returns the frame each time asks for is pinned by
 // `AVideoShapesTheVisualFromBoundedFramesTests` (zero tolerance), not here.
 
@@ -69,11 +80,21 @@ final class TheVideoMotionDoesNotDependOnLengthTests: XCTestCase {
 
     /// A 16 × 16 luma pattern drifting sideways at `speed` cycles per second.
     private static func movingLuma(at time: Double) -> [UInt8] {
+        driftingLuma(at: time, cyclesPerSecond: speed)
+    }
+
+    /// The same pattern, still until `start`, drifting at `cyclesPerSecond` until `end`, still after.
+    private static func burstLuma(at time: Double, from start: Double, to end: Double,
+                                  cyclesPerSecond: Double) -> [UInt8] {
+        driftingLuma(at: Swift.min(Swift.max(time, start), end) - start, cyclesPerSecond: cyclesPerSecond)
+    }
+
+    private static func driftingLuma(at time: Double, cyclesPerSecond: Double) -> [UInt8] {
         var luma: [UInt8] = []
         luma.reserveCapacity(side * side)
         for y in 0..<side {
             for x in 0..<side {
-                let phase = 2 * Double.pi * (Double(x) / Double(side) + speed * time) + Double(y) * 0.3
+                let phase = 2 * Double.pi * (Double(x) / Double(side) + cyclesPerSecond * time) + Double(y) * 0.3
                 let value: Double = (128 + 100 * Foundation.sin(phase)).rounded()
                 luma.append(UInt8(Swift.min(255, Swift.max(0, value))))
             }
@@ -97,6 +118,24 @@ final class TheVideoMotionDoesNotDependOnLengthTests: XCTestCase {
             samples.append(sample(second, luma(second)))
         }
         return samples
+    }
+
+    /// The motion with NOTHING left out: the mean change per second over the close pairs (every pair
+    /// when none is close), over `fullScaleChangePerSecond`, clamped — what the clip reads when no
+    /// pair is taken for a cut.
+    private static func everyPairMotion(_ samples: [VideoFrameSample]) -> Double {
+        var close: [Double] = []
+        var all: [Double] = []
+        for i in 1..<samples.count {
+            var total = 0
+            for c in 0..<(side * side) { total += abs(Int(samples[i].luma[c]) - Int(samples[i - 1].luma[c])) }
+            let gap = samples[i].time - samples[i - 1].time
+            let rate = Double(total) / Double(side * side * 255) / gap
+            all.append(rate)
+            if gap <= VideoSeedAnalysis.motionPairMaxSeconds { close.append(rate) }
+        }
+        let group = close.isEmpty ? all : close
+        return Swift.min(1, group.reduce(0, +) / Double(group.count) / VideoSeedAnalysis.fullScaleChangePerSecond)
     }
 
     private func seed(_ samples: [VideoFrameSample], duration: Double) throws -> VideoSeed {
@@ -203,6 +242,52 @@ final class TheVideoMotionDoesNotDependOnLengthTests: XCTestCase {
         }
         XCTAssertEqual(try seed(sparse, duration: 600).motionEnergy, 0,
                        "no close pair: the every-pair fallback leaves the cut out too")
+    }
+
+    // MARK: 7 — a burst of motion is motion; a flash is not
+
+    func testABurstOfMotionIsMotionAndAFlashIsNot() throws {
+        // A 6 s clip read evenly (24 samples), still for 5 s, then panning at 0.5 cycles/s.
+        let even = (0..<24).map { k -> VideoFrameSample in
+            let time = 6 * (Double(k) + 0.5) / 24
+            return Self.sample(time, Self.burstLuma(at: time, from: 5, to: 6, cyclesPerSecond: 0.5))
+        }
+        let evenReading = try seed(even, duration: 6)
+        XCTAssertGreaterThanOrEqual(evenReading.transientTimes.filter { $0 > 5 }.count, 3, """
+            premise: the burst's fast pairs stand out above the still median — the reason they were \
+            once all left out as cuts
+            """)
+        XCTAssertEqual(evenReading.motionEnergy, Self.everyPairMotion(even), accuracy: 1e-9, """
+            a one-second pan in a 6 s clip is motion — three fast pairs in a row are not a cut \
+            (leaving them out read 0.10)
+            """)
+
+        // A 60 s clip read as 24 close pairs, still except a pan at 0.8 cycles/s from 20 s to 27.5 s:
+        // three close pairs a far pair apart in the samples, three in a row in the motion group.
+        let paired = Self.paired(duration: 60) { time in
+            Self.burstLuma(at: time, from: 20, to: 27.5, cyclesPerSecond: 0.8)
+        }
+        let pairedReading = try seed(paired, duration: 60)
+        XCTAssertGreaterThanOrEqual(pairedReading.transientTimes.filter { $0 > 20 && $0 < 30 }.count, 3,
+                                    "premise: the burst's pairs stand out")
+        XCTAssertEqual(pairedReading.motionEnergy, Self.everyPairMotion(paired), accuracy: 1e-9, """
+            a pan sampled by three close pairs of a long clip is motion — "in a row" is the group's \
+            order, not the sample list's (leaving them out read 0)
+            """)
+
+        // COUNTERWEIGHTS: a one-sample flash stands out in two pairs in a row (on, then off), and a
+        // burst of only two pairs looks the same — both stay out of the motion.
+        let flash = (0..<30).map { k in
+            Self.sample(0.1 * Double(k), [UInt8](repeating: k == 10 ? 255 : 0, count: Self.side * Self.side))
+        }
+        XCTAssertEqual(try seed(flash, duration: 3).motionEnergy, 0, "a one-sample flash is not motion")
+        let twoPairs = (0..<24).map { k -> VideoFrameSample in
+            let time = 6 * (Double(k) + 0.5) / 24
+            return Self.sample(time, Self.burstLuma(at: time, from: 5.5, to: 6, cyclesPerSecond: 1))
+        }
+        XCTAssertEqual(try seed(twoPairs, duration: 6).motionEnergy, 0, """
+            the limit, stated in VideoSeed's header: a burst of two pairs in a row reads as a flash
+            """)
     }
 
     // MARK: 4 — counterweights: today's readings keep their numbers

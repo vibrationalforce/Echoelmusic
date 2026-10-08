@@ -27,9 +27,17 @@
 //   The motion is now measured where it is linear, and a reader supplies close pairs (VV-1b). With
 //   no close pair at all (a sparse reader), the mean over every neighbour is the fallback — and it
 //   is length-dependent, which is why VV-1b exists. Guard: `TheVideoMotionDoesNotDependOnLengthTests`.
-//   ⭐ A PAIR THE TRANSIENT RULE FLAGS IS NOT MOTION (review of VV-4): a cut that falls INSIDE a
-//   close pair changes the whole picture in a tenth of a second, and one such pair read a still
-//   600 s clip at 0.72 motion. The mean leaves out every pair `standingOut` flags in its group.
+//   ⭐ A CUT OR A FLASH IS NOT MOTION (review of VV-4): a cut that falls INSIDE a close pair changes
+//   the whole picture in a tenth of a second, and one such pair read a still 600 s clip at 0.72
+//   motion. The mean leaves out a run of at most `maxTransientRun` pairs IN A ROW of its group that
+//   `standingOut` flags — a cut stands out in one pair, a one-frame flash in two.
+//   ⭐ A BURST OF MOTION IS MOTION (second review): leaving out EVERY flagged pair read a 6 s clip
+//   that pans fast for its last second at 0.10, and a 60 s clip panning for 7.5 s at 0 — the fast
+//   pairs stood out above a still median and went as "cuts". A longer run counts. "In a row" is in
+//   the group's own order, so the 24 close pairs of a long clip, a far pair apart in the sample
+//   list, still make a run. ⚠️ The limit, on the same reasoning: a burst of only two pairs in a row
+//   reads as a flash and is left out, and the transient list still reports a burst's fast pairs —
+//   at these sample spacings a montage of cuts and a fast pan look the same.
 // · `transientTimes`: the sample times where the picture changed much more than it usually does —
 //   more than the median change plus `transientMADs` × the median absolute deviation, and above
 //   `transientFloor`, at least `transientSpacing` seconds apart. They are CUTS and FLASHES in the
@@ -123,6 +131,10 @@ public enum VideoSeedAnalysis {
     /// Two neighbouring samples at most this far apart, in seconds, are a CLOSE pair: their change
     /// measures motion. Farther pairs are kept for cut detection only (VV-1a).
     public static let motionPairMaxSeconds = 0.3
+    /// The most flagged pairs in a row of the motion group left out of the motion as a cut or a
+    /// flash: a cut stands out in one pair, a one-frame flash in two (on, then off). A longer run is
+    /// a burst of real motion and counts.
+    public static let maxTransientRun = 2
 
     /// The seed of a sampled video, or nil when the input cannot be what it claims (see the
     /// file header). nil is the safe fallback: nothing is applied.
@@ -172,12 +184,25 @@ public enum VideoSeedAnalysis {
     }
 
     /// The mean change per second over the close pairs — over every pair when there is no close
-    /// one — leaving out the pairs the transient rule reads as a cut or a flash. A pair can only
-    /// stand out above its group's median, so at least half of a group is always counted.
+    /// one — leaving out the pairs the transient rule reads as a cut or a flash: a run of at most
+    /// `maxTransientRun` flagged pairs in a row of that group. A longer run is a burst of motion and
+    /// counts. A pair can only stand out above its group's median, so at least half of a group is
+    /// always counted.
     static func motionRate(changes: [Double], samples: [VideoFrameSample]) -> Double {
         let close = changes.indices.filter { samples[$0 + 1].time - samples[$0].time <= motionPairMaxSeconds }
         let group = close.isEmpty ? Array(changes.indices) : close
-        let cuts = Set(standingOut(group, in: changes))
+        let flagged = Set(standingOut(group, in: changes))
+        var cuts = Set<Int>()
+        var run: [Int] = []
+        for member in group {
+            if flagged.contains(member) {
+                run.append(member)
+                continue
+            }
+            if run.count <= maxTransientRun { cuts.formUnion(run) }
+            run.removeAll()
+        }
+        if run.count <= maxTransientRun { cuts.formUnion(run) }
         var rate = 0.0
         var counted = 0
         for i in group where !cuts.contains(i) {
