@@ -1432,7 +1432,15 @@ struct EchoelmusicApp: App {
                         d.set(raw, forKey: StudioDefaultKeys.genre.key)
                         NotificationCenter.default.post(name: .echoelCompositionEdited, object: "genre")
                     case .visualStyle(let look):
-                        d.set(look, forKey: StudioDefaultKeys.visualStyle.key)
+                        // Only a look the player's slider offers — a retired index has no flash
+                        // budget, and Scope runs over 3 Hz (`LookBlendMap.remoteLook`).
+                        let offered = d.string(forKey: LookBlendMap.storageKey)
+                            ?? LookBlendMap.string(from: LookBlendMap.defaultSequence)
+                        guard let safe = LookBlendMap.remoteLook(look, sliderLooksRaw: offered) else {
+                            EchoelCrashLog.breadcrumb("osc in: visualStyle \(look) refused - not a look the slider offers")
+                            return
+                        }
+                        d.set(safe, forKey: StudioDefaultKeys.visualStyle.key)
                     case .blackout(let on):
                         artNet?.blackout = on
                         sacn?.blackout = on

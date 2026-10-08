@@ -156,6 +156,20 @@ enum LookBlendMap {
         return out.isEmpty ? defaultSequence : out
     }
 
+    /// The look a REMOTE controller may set — `requested` when the player's own slider offers
+    /// it (read through the slider's parser, so the launch snap's rule), otherwise nil.
+    ///
+    /// ⛔ WHY THIS EXISTS (review of GMMW VV-4, 2026-10-08): `/echoelmusic/ctrl/visualStyle`
+    /// accepts 0…9 on the wire, and the dispatch wrote whatever arrived into the look key.
+    /// Three of those indices are retired looks with no `FlashGuard.fieldBudgets` row, and
+    /// 8 Scope derives to 3.90 Hz — over the 3 Hz law — while `blendPhaseDamping` cannot damp
+    /// a look it has no row for. The launch snap in `EchoelStudioView` removed such an index
+    /// only at the NEXT launch, so a configured controller could put Scope on the largest
+    /// screen present for the rest of a performance. The door now refuses it instead.
+    static func remoteLook(_ requested: Int, sliderLooksRaw: String) -> Int? {
+        sequence(from: sliderLooksRaw).contains(requested) ? requested : nil
+    }
+
     /// Serialize a sequence back to the compact storage string.
     static func string(from sequence: [Int]) -> String {
         sequence.map(String.init).joined(separator: ",")
