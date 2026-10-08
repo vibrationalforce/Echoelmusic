@@ -82,6 +82,23 @@ struct LinkLatencySummary: Equatable, Sendable {
         return "link: peer=\(peer) rtt p50=\(ms(p50)) p95=\(ms(p95)) p99=\(ms(p99)) max=\(ms(max)) ms"
             + " n=\(samples) lost=\(lost)/\(sent) (network round trip, not heard latency)"
     }
+
+    /// The Live Colabo row (J1), read by a person. Same facts as `logLine`, same qualifier:
+    /// this is the NETWORK round trip, not what anyone hears. Whole milliseconds. An
+    /// unmeasured tail prints as "—", never as 0, and no median at all prints "measuring…" —
+    /// a row that said "0 ms" would be the over-claim the log line was written to avoid.
+    /// Takes the optional so the view has ONE call and no second spelling of the empty case.
+    static func rowText(_ summary: LinkLatencySummary?) -> String {
+        let qualifier = String(localized: " — network round trip, not heard latency")
+        guard let summary, let p50 = summary.p50 else {
+            return String(localized: "Link: measuring…") + qualifier
+        }
+        let median: String = String(format: "%.0f", p50) + String(localized: " ms median")
+        let tail: String = summary.p95.map { String(format: "%.0f", $0) + String(localized: " ms p95") }
+            ?? String(localized: "p95 —")
+        let loss: String = String(localized: "lost ") + "\(summary.lost)/\(summary.sent)"
+        return String(localized: "Link: ") + [median, tail, loss].joined(separator: " · ") + qualifier
+    }
 }
 
 /// Round-trip bookkeeping for ONE peer. A value type with no clock of its own: every call

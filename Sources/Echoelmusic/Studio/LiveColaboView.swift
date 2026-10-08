@@ -167,10 +167,17 @@ struct LiveColaboView: View {
             // name — which is the default on iOS 16+ without the user-assigned-device-name
             // entitlement, and this app declares none.
             ForEach(colab.connectedPeers, id: \.stableID) { peer in
-                HStack(spacing: 8) {
-                    Image(systemName: "person.fill.checkmark").foregroundStyle(EchoelTheme.accent)
-                    Text(peer.displayName).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-                    Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.fill.checkmark").foregroundStyle(EchoelTheme.accent)
+                        Text(peer.displayName).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+                        Spacer()
+                    }
+                    // J1: the link's round trip, in its OWN leaf — the meter is not observed, the
+                    // leaf ticks (see `PeerLinkRow`). NEEDS-FOUNDER-VERIFY (J1): two phones in one
+                    // Live Colabo session — within a few seconds of "Connected" the line shows a
+                    // median in ms, and walking into the next room moves the p95 before the median.
+                    PeerLinkRow(stableID: peer.stableID)
                 }
                 .padding(.vertical, 6).padding(.horizontal, 10)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
@@ -395,6 +402,35 @@ private struct PeerBioRows: View {
                         // through as-is including `nil` (an older build that cannot say).
                         synthetic: live?.synthetic)
             }
+        }
+    }
+}
+
+/// One connected peer's link round trip (J1) — reads `colab.linkSummary(forPeer:)` in ITS
+/// body only, on a 1 Hz tick.
+///
+/// ⚠️ THE TICK IS THE READ, NOT A REFRESH. `MultipeerSession.linkMeters` is
+/// `@ObservationIgnored` on purpose: it moves twice a second, and an observed read of it in
+/// any body would rebuild that body at 2 Hz (the 10.76.41/50 law). So no change in the meter
+/// invalidates anything, this leaf included — without the tick the row would show the
+/// summary of its first evaluation forever, which is the #503 freeze in another coat. 1 Hz
+/// against a 0.5 s probe interval: the percentiles are over a 256-sample window, so a redraw
+/// per two probes loses nothing a person could read.
+///
+/// The sentence names what the number IS (`LinkLatencySummary.rowText`): the NETWORK round
+/// trip, never the heard latency — the founder's ≤ 10 / ≤ 20 ms targets are measured at the
+/// ear, and this row is one leg of that budget, not the budget.
+@MainActor
+private struct PeerLinkRow: View {
+    @Environment(MultipeerSession.self) private var colab
+    let stableID: String
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            Text(verbatim: LinkLatencySummary.rowText(colab.linkSummary(forPeer: stableID)))
+                .font(EchoelTheme.font(11).monospacedDigit())
+                .foregroundStyle(EchoelTheme.dim)
+                .lineLimit(2)
         }
     }
 }

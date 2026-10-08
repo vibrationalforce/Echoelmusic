@@ -11001,6 +11001,76 @@
         }
       }
     },
+    " — network round trip, not heard latency" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " — network round trip, not heard latency"
+          }
+        }
+      }
+    },
+    "Link: measuring…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link: measuring…"
+          }
+        }
+      }
+    },
+    " ms median" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " ms median"
+          }
+        }
+      }
+    },
+    " ms p95" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " ms p95"
+          }
+        }
+      }
+    },
+    "p95 —" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p95 —"
+          }
+        }
+      }
+    },
+    "lost " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lost "
+          }
+        }
+      }
+    },
+    "Link: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link: "
+          }
+        }
+      }
+    },
     "Not set. Starts at the piece tempo; enter the file's own tempo to enable Warp." : {
       "localizations" : {
         "en" : {
