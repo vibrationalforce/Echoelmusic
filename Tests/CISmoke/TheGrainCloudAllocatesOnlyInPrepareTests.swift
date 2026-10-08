@@ -7,17 +7,22 @@
 // WHAT IT PINS (Tests/CISmoke/CLAUDE.md §1):
 // 1. END-TO-END: with no source, or an empty one, `process` WRITES silence (over a buffer prefilled
 //    with garbage, so "wrote nothing" cannot pass for "wrote zeros"); a silent source renders silence.
-// 2. END-TO-END: density is not a volume control. At density 0.5 the overlap is exactly 2, Hann at a
-//    uniform hop sums to 1 (COLA), and every steady-state sample of a 0.5 DC source sits at
-//    0.5 × √0.5 (the centre pan gain) within 1 %. At every density the output stays under the
-//    algebraic bound A · (overlap + 1) · norm — at most ⌈overlap⌉ grains overlap, each ≤ A.
-// 3. END-TO-END: NaN/∞ in the source are silence, NaN/∞ parameters fall back to their defaults and
-//    the cloud still sounds; a +24 st, 500 ms grain on a source shorter than one grain is shortened,
-//    not run off the buffer; the pool never exceeds `maxGrains`; a non-finite or absurd rate is 48 kHz.
+// 2. END-TO-END: from density 0.5 up, density is not a volume control. At overlap 2 and 3
+//    (density 0.5 and 5/6) Hann at a uniform hop is exactly flat (COLA), and every steady-state
+//    sample of a 0.5 DC source sits at 0.5 × √0.5 (the centre pan gain) within 1 %; at density 1
+//    the steady MEAN holds within 0.5 % (its ripple is ±1.6 %). At every density the output stays
+//    under the algebraic bound A · (overlap + 1) · norm. And the first grain sounds within 2 ms.
+// 3. END-TO-END: a source with NaN/∞ renders BIT-IDENTICALLY to the same source with zeros there
+//    (`prepare` cleans it — the per-frame output sanitiser alone would also give finite output, by
+//    silencing whole frames, so "finite" could not tell the two apart); NaN/∞ parameters fall back
+//    to their defaults and the cloud still sounds; a +24 st, 500 ms grain on a 3000-frame source is
+//    shortened AND spawned at its own hop, so the cloud holds the level within 1 %; a two-frame
+//    source is silent; a non-finite or absurd rate is 48 kHz.
 // 4. END-TO-END: the same seed and source render the same output, `reset()` renders what a fresh cloud
 //    does, another seed renders something else. The window is 0 at both ends and outside 0…1.
-// 5. SOURCE: `process`, `spawn` and `read` contain no allocating or blocking token; `prepare` is
-//    where the source buffer is allocated; the file imports Foundation only.
+// 5. SOURCE: `process`, `spawn`, `read`, `window`, `bounded`, `mixed` and `next01` contain no
+//    allocating or blocking token; `prepare` is where the source buffer is allocated; the file
+//    imports Foundation only.
 //
 // Grading (§0, no Swift toolchain): the file does NOT compile on its parent (`f09b9b6`) — it names
 // `GrainCloud`, created by this commit — so no assertion has a verdict there (ONE absence, #486);
@@ -25,6 +30,13 @@
 // rounding kept on the accumulator, the window and the sums) and every expectation was driven
 // through it; the 1 % and the bound were MEASURED there (density 0.5: min = max = 0.35355; density
 // 1: 0.34785 … 0.35915 under a bound of 1.2857), not chosen. Claim 5 was grepped against the worktree.
+// The review fix (audio-thread-reviewer, GA-9), graded against ITS parent (`a3f965f`) in the same
+// port: the file compiles there. REGRESSIONS for their named reason: the first grain (1921 frames
+// late), the shortened cloud's level (95 % silence there). The tightened checks — density 5/6 flat,
+// density 1's mean, dirty == clean — are green on both trees, and that is their point: each was
+// driven against the MUTATION it names (no normalisation: +50 % at 5/6, ×1.75 mean at 1; no
+// cleaning in `prepare`: whole frames zeroed, so the two renders differ). The old pool assertion is
+// gone: `activeGrainCount` walks exactly `maxGrains` slots, so it could not fail.
 // NOT covered: how it SOUNDS, CPU on device — GA-10 and a device probe.
 
 import Foundation
@@ -63,7 +75,7 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
         let silent = GrainCloud(sampleRate: Self.rate)
         silent.prepare(source: [Float](repeating: 0, count: 48_000))
         let quiet = render(silent, frames: 48_000)
-        XCTAssertEqual((quiet.left + quiet.right).map(abs).max(), 0, "a silent source renders silence")
+        XCTAssertEqual((quiet.left + quiet.right).map(\.magnitude).max(), 0, "a silent source renders silence")
     }
 
     // MARK: 2 — density is not a volume control
@@ -71,7 +83,8 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
     func testTheCloudHoldsTheSourceLevel() {
         let amplitude: Float = 0.5
         let centreGain = Float(0.5).squareRoot()
-        for density: Float in [0, 0.5, 1] {
+        let fiveSixths: Float = 5.0 / 6.0   // overlap 3
+        for density: Float in [0, 0.5, fiveSixths, 1] {
             let cloud = GrainCloud(sampleRate: Self.rate)
             cloud.prepare(source: [Float](repeating: amplitude, count: 96_000))
             cloud.position = 0.5
@@ -81,13 +94,22 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
             let overlap = 0.5 + 3 * density
             let norm = 1 / Swift.max(1, overlap * 0.5)
             let bound = amplitude * (overlap + 1) * norm
-            let peak = (out.left + out.right).map(abs).max() ?? 0
+            let peak = (out.left + out.right).map(\.magnitude).max() ?? 0
             XCTAssertLessThanOrEqual(peak, bound, "density \(density): \(peak) over the bound \(bound)")
-            if density == 0.5 {
-                let target = amplitude * centreGain
-                let worst = out.left[4_800...].map { abs($0 - target) }.max() ?? .infinity
+            let target = amplitude * centreGain
+            let steady = out.left[4_800...]
+            if density == 0.5 || density == fiveSixths {
+                let worst = steady.map { abs($0 - target) }.max() ?? .infinity
                 XCTAssertLessThanOrEqual(worst, target * 0.01,
-                                         "overlap 2 is COLA: every steady sample holds the source level")
+                                         "overlap \(overlap) is COLA: every steady sample holds the source level")
+            }
+            if density == 1 {
+                let mean = steady.reduce(0, +) / Float(steady.count)
+                XCTAssertEqual(mean, target, accuracy: target * 0.005, "density 1 keeps the source's mean level")
+            }
+            if density == 0.5 {
+                let first = out.left.firstIndex { $0 != 0 } ?? out.left.count
+                XCTAssertLessThanOrEqual(first, 96, "the first grain sounds within 2 ms, not one hop later")
             }
         }
     }
@@ -101,10 +123,17 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
         for frame in [100, 2_000, 30_000] { source[frame] = .nan }
         source[500] = .infinity
 
+        var cleaned = source
+        for frame in [100, 500, 2_000, 30_000] { cleaned[frame] = 0 }
         let dirty = GrainCloud(sampleRate: Self.rate)
         dirty.prepare(source: source)
+        let clean = GrainCloud(sampleRate: Self.rate)
+        clean.prepare(source: cleaned)
         let a = render(dirty, frames: 48_000)
-        XCTAssertTrue((a.left + a.right).allSatisfy(\.isFinite), "NaN and ∞ in the source are silence")
+        let b0 = render(clean, frames: 48_000)
+        XCTAssertTrue((a.left + a.right).allSatisfy(\.isFinite))
+        XCTAssertEqual(a.left, b0.left, "NaN and ∞ in the source play as the zeros prepare made of them")
+        XCTAssertEqual(a.right, b0.right)
 
         let wild = GrainCloud(sampleRate: Self.rate)
         wild.prepare(source: source)
@@ -116,24 +145,25 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
         wild.stereoSpread = .nan
         let b = render(wild, frames: 48_000)
         XCTAssertTrue((b.left + b.right).allSatisfy(\.isFinite))
-        XCTAssertGreaterThan((b.left + b.right).map(abs).max() ?? 0, 0, "non-finite parameters fall back; the cloud still sounds")
+        XCTAssertGreaterThan((b.left + b.right).map(\.magnitude).max() ?? 0, 0, "non-finite parameters fall back; the cloud still sounds")
 
         let short = GrainCloud(sampleRate: Self.rate)
         short.prepare(source: [Float](repeating: 0.4, count: 3_000))
         short.pitchSemitones = 24
         short.grainMilliseconds = 500
+        short.position = 0.5
+        short.stereoSpread = 0
         let c = render(short, frames: 48_000)
         XCTAssertTrue((c.left + c.right).allSatisfy(\.isFinite), "a grain longer than the source at +24 st is shortened")
-        XCTAssertGreaterThan((c.left + c.right).map(abs).max() ?? 0, 0)
+        let level = Float(0.4) * Float(0.5).squareRoot()
+        let worst = c.left[4_800...].map { abs($0 - level) }.max() ?? .infinity
+        XCTAssertLessThanOrEqual(worst, level * 0.01,
+                                 "shortened grains are spawned at their own hop: the cloud holds the level, not 95 % silence")
 
-        let dense = GrainCloud(sampleRate: Self.rate)
-        dense.prepare(source: source)
-        dense.density = 1
-        dense.grainMilliseconds = 10
-        for _ in 0..<4_800 {
-            _ = render(dense, frames: 1)
-            XCTAssertLessThanOrEqual(dense.activeGrainCount, GrainCloud.maxGrains)
-        }
+        let tiny = GrainCloud(sampleRate: Self.rate)
+        tiny.prepare(source: [0.4, 0.4])
+        XCTAssertEqual((render(tiny, frames: 4_800).left).map(\.magnitude).max(), 0,
+                       "COUNTERWEIGHT: a source too short for a two-frame grain is silent, and says so in the doc")
 
         for bad: Float in [.nan, .infinity, 0, -1, 1e12] {
             XCTAssertEqual(GrainCloud(sampleRate: bad).sampleRate, 48_000, "rate \(bad)")
@@ -174,11 +204,16 @@ final class TheGrainCloudAllocatesOnlyInPrepareTests: XCTestCase {
         let text = try String(contentsOf: root.appendingPathComponent("Sources/Echoelmusic/DSP/GrainCloud.swift"),
                               encoding: .utf8)
         let code = SourceText.codeOnly(text)
+        // Tokens, not prefixes of member names: `.map(` does not match the pure `.mapped(` helper,
+        // `.filter(` not a `filterL` stage (GA-9 review, #364).
         let banned = ["append(", "Array(", "[Float](", "[Grain](", ".allocate(", "String(", "\\(",
-                      "DispatchQueue", "Task", "os_log", "print(", "NSLock", ".map", ".filter",
-                      ".reduce", "firstIndex", "log."]
-        for head in ["public func process(left:", "private func spawn(lengthSamples:",
-                     "private static func read(_ src:"] {
+                      "DispatchQueue", "DispatchSemaphore", "os_unfair_lock", "Task", "os_log", "NSLog",
+                      "print(", "NSLock", ".map(", ".map {", ".filter(", ".filter {", ".compactMap",
+                      ".flatMap", ".reduce", "firstIndex", "log."]
+        for head in ["public func process(left:", "private func spawn(length:",
+                     "private static func read(_ src:", "public static func window(_ position01:",
+                     "private static func bounded(_ value:", "private static func mixed(_ seed:",
+                     "private func next01()"] {
             let body = try member(head, in: code)
             for token in banned {
                 XCTAssertFalse(body.contains(token), "`\(token)` in `\(head)` — the render path must not allocate or block")
