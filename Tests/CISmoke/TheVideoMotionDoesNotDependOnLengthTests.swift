@@ -17,6 +17,11 @@
 // 4. COUNTERWEIGHTS (#343): a clip read at an even 0.25 s keeps its exact motion (every pair is
 //    close — today's readings), and a clip with no close pair at all falls back to every pair,
 //    exactly as before, rather than reading zero.
+// 5. END-TO-END over the READER'S GRID (VV-1b): the times `VideoSeedReader.sampleTimes` asks for,
+//    fed with the same drifting pattern, read the same motion at 6 s and 600 s; a long clip is 24
+//    close pairs, ascending, inside the clip, within the 48-frame budget. COUNTERWEIGHTS: a short
+//    clip keeps the even grid bit for bit, and a 2 fps clip is read evenly (its pairs could not be
+//    close, and mixed with the gaps between them every pair read as a cut — 23 in the port).
 //
 // THE ALGEBRA (#442). A pixel of the pattern is 128 + 100·sin θ, and the pattern moves by
 // δ = 2π · speed · dt between two frames. For a small δ the change is 100 · |cos θ| · δ, and the
@@ -33,8 +38,12 @@
 //   motion (0.0015 — the cut leaked into the motion).
 // · COUNTERWEIGHTS, green on both: claim 1 at 6 s and 60 s, claim 2 at 6 s, claim 3's cut
 //   (312.5 s on both rules), all of claim 4.
-// NOT covered: what the READER hands over. Today it samples evenly, so a clip longer than about
-// 14 s has no close pair and takes the length-dependent fallback — VV-1b changes the reader.
+// Claim 5 (VV-1b) names `VideoSeedReader.sampleTimes`, created by its commit, so from then on the
+// file does not compile on that commit's parent (`06ee283`) — claims 1–4 were graded at `c1bc3dd`
+// above; claim 5 is a FORWARD guard, transcribed (the grid and the analysis) and driven: 0.392 at
+// 6 s, 0.401 at 600 s, no cut; the even reading at 600 s that it replaces read 0.239.
+// NOT covered: decoding — that the generator returns the frame each time asks for is pinned by
+// `AVideoShapesTheVisualFromBoundedFramesTests` (zero tolerance), not here.
 
 import Foundation
 import XCTest
@@ -120,6 +129,42 @@ final class TheVideoMotionDoesNotDependOnLengthTests: XCTestCase {
         XCTAssertEqual(reading.transientTimes, [312.5], "the first frame after the cut, between pairs 12 and 13")
         XCTAssertEqual(reading.motionEnergy, 0, "nothing moved — a cut is a transient, not motion")
     }
+
+    // MARK: 5 — VV-1b: the reader's own grid
+
+    #if canImport(AVFoundation) && canImport(CoreGraphics)
+    func testTheReadersGridReadsTheSameMotionAtAnyLength() throws {
+        var motions: [Double] = []
+        for duration: Double in [6, 600] {
+            let times = VideoSeedReader.sampleTimes(seconds: duration, frameRate: 30)
+            XCTAssertLessThanOrEqual(times.count, VideoSeedReader.sampleCount, "the frame budget is unchanged")
+            XCTAssertTrue(zip(times, times.dropFirst()).allSatisfy { $0 < $1 }, "ascending")
+            XCTAssertTrue((times.first ?? 0) > 0 && (times.last ?? .infinity) <= duration, "inside the clip")
+            let reading = try seed(times.map { Self.sample($0, Self.movingLuma(at: $0)) }, duration: duration)
+            XCTAssertEqual(reading.motionEnergy, Self.algebraic, accuracy: Self.algebraic * 0.05,
+                           "\(duration) s through the reader's grid")
+            XCTAssertEqual(reading.transientTimes, [], "one moving shot, no cut")
+            motions.append(reading.motionEnergy)
+        }
+        let short = try XCTUnwrap(motions.first)
+        let long = try XCTUnwrap(motions.last)
+        XCTAssertEqual(long / short, 1, accuracy: 0.05, "the reader no longer turns length into motion")
+
+        let paired = VideoSeedReader.sampleTimes(seconds: 600, frameRate: 30)
+        XCTAssertEqual(paired.count, VideoSeedReader.sampleCount)
+        for first in stride(from: 0, to: paired.count - 1, by: 2) {
+            XCTAssertLessThanOrEqual(paired[first + 1] - paired[first], VideoSeedAnalysis.motionPairMaxSeconds,
+                                     "pair \(first / 2) is close")
+        }
+
+        let evenShort: [Double] = (0..<32).map { 8 * (Double($0) + 0.5) / 32 }
+        XCTAssertEqual(VideoSeedReader.sampleTimes(seconds: 8, frameRate: 30), evenShort,
+                       "COUNTERWEIGHT: a short clip is read on the grid it always had")
+        let evenSlow: [Double] = (0..<48).map { 600 * (Double($0) + 0.5) / 48 }
+        XCTAssertEqual(VideoSeedReader.sampleTimes(seconds: 600, frameRate: 2), evenSlow,
+                       "COUNTERWEIGHT: at 2 fps no pair can be close, so the clip is read evenly")
+    }
+    #endif
 
     // MARK: 4 — counterweights: today's readings keep their numbers
 

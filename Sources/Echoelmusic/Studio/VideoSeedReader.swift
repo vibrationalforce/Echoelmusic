@@ -9,6 +9,14 @@
 // `sampleCount` frames are read, however long the clip is, and a clip longer than
 // `VideoSeedAnalysis.maxDurationSeconds` is refused before any frame is decoded.
 //
+// ⭐ CLOSE PAIRS ON A LONG CLIP (GMMW VV-1b). The core measures motion only between frames at most
+// `VideoSeedAnalysis.motionPairMaxSeconds` apart (VV-1a): change between frames seconds apart
+// saturates, and read evenly a 600 s clip read 0.24 for footage a 6 s clip of it read at 0.39. A
+// clip short enough to be read evenly that close still is; a longer one is read as half as many
+// PAIRS, `pairGapSeconds` (at least one frame) apart, spread over the clip — the same 48 frames.
+// Cuts are still found between pairs; inside moving footage a cut between two pairs can hide in
+// the pairs' own change, which an even reading of a long clip could not tell apart either.
+//
 // ⭐ CANCELLABLE. `read(url:)` is async and checks `Task.isCancelled` before every frame; a newer
 // pick cancels an older read, which then returns nil and decodes nothing more.
 //
@@ -31,6 +39,38 @@ enum VideoSeedReader {
     static let samplesPerSecond = 4.0
     /// The longest side a frame is decoded at.
     static let maxFrameSide = 512
+    /// The two frames of a pair on a long clip are this far apart — or one frame, when that is
+    /// longer — inside `VideoSeedAnalysis.motionPairMaxSeconds`, so their change measures motion.
+    static let pairGapSeconds = 0.1
+
+    /// When to read frames: ascending, inside the clip, at most `sampleCount`. Even at
+    /// `samplesPerSecond` while that spacing is close; past it, `count / 2` pairs (header). A clip
+    /// whose frames are farther apart than close (under about 3.3 fps) is read evenly as before:
+    /// its pairs could not be close, and mixed with the far gaps between them every pair would
+    /// read as a cut. Its motion takes the length-dependent fallback (VV-1a) — said, not hidden.
+    static func sampleTimes(seconds: Double, frameRate: Double) -> [Double] {
+        guard seconds.isFinite, seconds > 0 else { return [] }
+        let count = Swift.min(sampleCount, Swift.max(2, Int((seconds * samplesPerSecond).rounded())))
+        let frame = frameRate.isFinite && frameRate > 0 ? 1 / frameRate : pairGapSeconds
+        guard seconds / Double(count) > VideoSeedAnalysis.motionPairMaxSeconds,
+              frame <= VideoSeedAnalysis.motionPairMaxSeconds else {
+            // The middle of each of `count` equal slices: strictly increasing, inside the clip.
+            return (0..<count).map { seconds * (Double($0) + 0.5) / Double(count) }
+        }
+        let pairs = Swift.max(1, count / 2)
+        let slice = seconds / Double(pairs)
+        // At least one frame apart (0.1 s at 5 fps would read one frame twice), at most half a
+        // slice, so a pair never reaches the next one.
+        let gap = Swift.min(Swift.max(pairGapSeconds, frame), slice / 2)
+        var times: [Double] = []
+        times.reserveCapacity(pairs * 2)
+        for i in 0..<pairs {
+            let first = seconds * (Double(i) + 0.5) / Double(pairs)
+            times.append(first)
+            times.append(Swift.min(first + gap, seconds))
+        }
+        return times
+    }
 
     /// A read video: its seed, one representative frame, and whether it carries sound.
     /// `CGImage` is immutable once made, so handing it to the main actor shares nothing mutable.
@@ -66,17 +106,15 @@ enum VideoSeedReader {
         generator.requestedTimeToleranceBefore = .zero
         generator.requestedTimeToleranceAfter = .zero
 
-        let count = Swift.min(sampleCount, Swift.max(2, Int((seconds * samplesPerSecond).rounded())))
+        let times = sampleTimes(seconds: seconds, frameRate: frameRate)
         var samples: [VideoFrameSample] = []
-        samples.reserveCapacity(count)
+        samples.reserveCapacity(times.count)
         var proxy: CGImage?
-        for i in 0..<count {
+        for (i, time) in times.enumerated() {
             if Task.isCancelled { return nil }
-            // The middle of each of `count` equal slices: strictly increasing, inside the clip.
-            let time = seconds * (Double(i) + 0.5) / Double(count)
             guard let frame = try? await generator.image(at: CMTime(seconds: time, preferredTimescale: 600)).image,
                   let summary = summarize(frame, at: time) else { continue }
-            if proxy == nil || i == count / 2 { proxy = frame }
+            if proxy == nil || i == times.count / 2 { proxy = frame }
             samples.append(summary)
         }
         guard let proxy,
