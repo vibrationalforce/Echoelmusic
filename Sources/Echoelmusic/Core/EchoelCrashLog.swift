@@ -16,12 +16,17 @@ import Darwin
 /// Pre-encoded markers so the signal handler does NOT allocate (malloc may be
 /// locked mid-crash). Built once at load. One per fatal signal so the surfaced
 /// log distinguishes a bad-memory-access/heap fault (SIGSEGV/SIGBUS) from a
-/// Swift runtime trap (SIGTRAP/SIGILL — precondition/force-unwrap/overflow) or
-/// an abort (SIGABRT) — the single most useful datum for diagnosing the cause.
+/// Swift runtime trap (SIGTRAP/SIGILL — precondition/force-unwrap/overflow, or a
+/// Swift 6 isolation check that failed in `dispatch_assert_queue`) or an abort
+/// (SIGABRT) — the single most useful datum for diagnosing the cause.
+/// ⛔ The SIGTRAP line named only the first three until 2026-10-08, and BOTH device
+/// logs of that week were the fourth kind (builds 2613/2618: an inferred-`@MainActor`
+/// closure entered on a libdispatch worker). A label that names one cause reads as a
+/// verdict; this one names the two families and lets the `crash queue:` line decide.
 private let echoelCrashMarker: [UInt8] = Array("CRASH (signal caught) — see breadcrumbs above\n".utf8)
 private let echoelCrashSEGV: [UInt8] = Array("CRASH SIGSEGV (bad memory access / heap) — see breadcrumbs above\n".utf8)
 private let echoelCrashBUS: [UInt8]  = Array("CRASH SIGBUS (bad memory access) — see breadcrumbs above\n".utf8)
-private let echoelCrashTRAP: [UInt8] = Array("CRASH SIGTRAP (Swift trap: precondition/force-unwrap/overflow) — see breadcrumbs above\n".utf8)
+private let echoelCrashTRAP: [UInt8] = Array("CRASH SIGTRAP (Swift trap: precondition/force-unwrap/overflow, or an isolation check off the main queue) — see breadcrumbs above\n".utf8)
 private let echoelCrashILL: [UInt8]  = Array("CRASH SIGILL (illegal instruction / Swift trap) — see breadcrumbs above\n".utf8)
 private let echoelCrashABRT: [UInt8] = Array("CRASH SIGABRT (abort) — see breadcrumbs above\n".utf8)
 private let echoelCrashFPE: [UInt8]  = Array("CRASH SIGFPE (arithmetic) — see breadcrumbs above\n".utf8)
