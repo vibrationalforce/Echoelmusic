@@ -681,6 +681,10 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                 }
 
                 if page == .part {
+                    // GMMW AE-2 — the selected AUDIO part's whole file, its window marked, above
+                    // the part list. Its own leaf: it draws nothing for a MIDI part, no selection
+                    // or a part on another track, and reads the song position only in its playhead.
+                    AudioPartEditorView(laneID: laneID)
                     // WA4.3 — the track's parts: a row selects its part; the part bar under the
                     // arrangement acts on it. Its own leaf; the page exists only where it has rows.
                     TrackPartsView(laneID: laneID)
