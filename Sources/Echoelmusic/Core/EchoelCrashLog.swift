@@ -131,6 +131,13 @@ enum EchoelCrashLog {
         breadcrumb(alternateStackArmed
                    ? "crash net: alternate signal stack armed (SIGSEGV/SIGBUS, this thread)"
                    : "crash net: alternate signal stack refused - an overflow dies unlogged")
+        // SH-7: which binary wrote this log, and where it was loaded — read HERE, never in the
+        // signal handler, so a backtrace's absolute addresses become offsets `atos` can resolve
+        // against the dSYM with this UUID. Then, if the run before this one died, its crash in
+        // one line, so a run of logs can be compared without reading each backtrace.
+        breadcrumb(imageLine(executable: Bundle.main.executableURL?.lastPathComponent ?? "?",
+                             image: loadedImage()))
+        if let signature = crashSignature(in: previousSession) { breadcrumb(signature) }
         // #916: KEEP the run that just ended, if it ended badly. `previousSession` is the
         // only copy of a crashed run and it lives for exactly ONE launch — the `O_TRUNC`
         // above has already thrown the file away, and the next launch throws this copy away
@@ -614,6 +621,179 @@ enum EchoelCrashLog {
         if log.contains(crashMarker) { return true }
         guard log.contains(startTappedMarker) else { return false }
         return lastScenePhase(in: log) != backgroundPhase
+    }
+
+    // MARK: - SH-7: the binary that wrote the log, and the last crash in one line
+
+    /// The identity of a loaded Mach-O image: the UUID its dSYM is matched by, and the `__TEXT`
+    /// address the linker gave it. With the address the image was actually loaded at, every
+    /// absolute frame address in a backtrace becomes an offset `atos` can resolve.
+    struct ImageIdentity: Equatable, Sendable {
+        let uuid: UUID
+        let textVMAddress: UInt64
+    }
+
+    static let imageLinePrefix = "image "
+    static let crashSignaturePrefix = "previous run ended: "
+    /// How many of the crashed run's own frames the signature names (innermost first).
+    static let signatureFrameCount = 4
+    /// The longest last-line quote the signature carries, in characters.
+    static let signatureQuoteLimit = 96
+
+    /// Reads the identity out of a 64-bit Mach-O header and its load commands. Pure: it reads
+    /// only the bytes it is given, and returns nil for anything that is not a well-formed 64-bit
+    /// header carrying both an `LC_UUID` and a `__TEXT` segment inside the buffer.
+    static func imageIdentity(machHeader bytes: UnsafeRawBufferPointer) -> ImageIdentity? {
+        let headerSize = 32                       // mach_header_64
+        guard bytes.count >= headerSize,
+              bytes.loadUnaligned(fromByteOffset: 0, as: UInt32.self) == 0xfeed_facf else { return nil }
+        let commandCount = Int(bytes.loadUnaligned(fromByteOffset: 16, as: UInt32.self))
+        var offset = headerSize
+        var uuid: UUID?
+        var text: UInt64?
+        for _ in 0..<commandCount {
+            guard offset + 8 <= bytes.count else { return nil }
+            let command = bytes.loadUnaligned(fromByteOffset: offset, as: UInt32.self)
+            let size = Int(bytes.loadUnaligned(fromByteOffset: offset + 4, as: UInt32.self))
+            guard size >= 8, size <= bytes.count - offset else { return nil }
+            if command == 0x1b, size >= 24 {      // LC_UUID
+                var raw: uuid_t = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                withUnsafeMutableBytes(of: &raw) { destination in
+                    destination.copyMemory(from: UnsafeRawBufferPointer(rebasing: bytes[(offset + 8)..<(offset + 24)]))
+                }
+                uuid = UUID(uuid: raw)
+            } else if command == 0x19, size >= 72 {   // LC_SEGMENT_64: segname at +8, vmaddr at +24
+                let name = Array(bytes[(offset + 8)..<(offset + 24)].prefix { $0 != 0 })
+                if name == Array("__TEXT".utf8) {
+                    text = bytes.loadUnaligned(fromByteOffset: offset + 24, as: UInt64.self)
+                }
+            }
+            offset += size
+        }
+        guard let uuid, let text else { return nil }
+        return ImageIdentity(uuid: uuid, textVMAddress: text)
+    }
+
+    /// This binary's identity and load address, read from its own mapped header
+    /// (`#dsohandle`). The header bounds the read: `sizeofcmds` says how far the load commands
+    /// run, and they are mapped with the image.
+    static func loadedImage() -> (identity: ImageIdentity, loadAddress: UInt64)? {
+        let header = #dsohandle
+        guard header.loadUnaligned(as: UInt32.self) == 0xfeed_facf else { return nil }
+        let commandBytes = Int(header.loadUnaligned(fromByteOffset: 20, as: UInt32.self))
+        let mapped = UnsafeRawBufferPointer(start: header, count: 32 + commandBytes)
+        guard let identity = imageIdentity(machHeader: mapped) else { return nil }
+        return (identity, UInt64(UInt(bitPattern: header)))
+    }
+
+    /// The line `begin()` writes after the crash-net line: the executable's name as the
+    /// backtrace prints it, its UUID, the linker's `__TEXT` address, where it was loaded, and the
+    /// slide between them. An unreadable header says so instead of guessing.
+    static func imageLine(executable: String, image: (identity: ImageIdentity, loadAddress: UInt64)?) -> String {
+        guard let image else {
+            return imageLinePrefix + executable + " unreadable - frame offsets cannot be resolved"
+        }
+        let slide = image.loadAddress &- image.identity.textVMAddress
+        return imageLinePrefix + executable
+            + " uuid=" + image.identity.uuid.uuidString
+            + " text=0x" + String(image.identity.textVMAddress, radix: 16)
+            + " load=0x" + String(image.loadAddress, radix: 16)
+            + " slide=0x" + String(slide, radix: 16)
+    }
+
+    /// The crash of a previous run in ONE line, or nil when that run carries no crash marker:
+    /// what killed it (the signal, or the exception's name), the queue and thread the handler
+    /// named, the innermost frames of the app's own binary as offsets from where it was loaded,
+    /// the last line the run wrote before it died, and the build and UUID that wrote it.
+    ///
+    /// Pure, and run at the NEXT launch — nothing here touches the signal handler. Offsets come
+    /// from the run's own `image` line (absolute address minus load address); a log without one
+    /// falls back to the stripped form `<image> + <n>`, where `n` already counts from the image.
+    ///
+    /// ⚠️ THE LINE GOES INTO THE CURRENT RUN'S LOG, so it must not read as any of the markers the
+    /// next launch searches for: a quoted `CRASH` would report a crash this run never had, a
+    /// quoted scene transition would become this run's last phase, a quoted confirm would settle
+    /// a counter this run never settled. `neutralized` lowers each marker and breaks the arrow.
+    static func crashSignature(in log: String) -> String? {
+        let lines = log.split(separator: "\n", omittingEmptySubsequences: false).map { untimed(String($0)) }
+        guard let markerIndex = lines.firstIndex(where: { $0.message.hasPrefix(crashMarker) }) else { return nil }
+
+        var parts: [String] = []
+        let marker = lines[markerIndex].message.dropFirst(crashMarker.count).trimmingCharacters(in: .whitespaces)
+        if marker.hasPrefix("SIG") {
+            parts.append(String(marker.prefix { !$0.isWhitespace }))
+        } else if marker.hasPrefix("exception:") {
+            let name = marker.dropFirst("exception:".count).trimmingCharacters(in: .whitespaces)
+            parts.append("exception " + String(name.prefix { $0 != ":" && !$0.isWhitespace }))
+        } else {
+            parts.append("signal")
+        }
+
+        let after = lines[(markerIndex + 1)...].map { $0.message }
+        if let queue = after.first(where: { $0.hasPrefix("crash queue: ") }) {
+            parts.append("queue " + queue.dropFirst("crash queue: ".count))
+        }
+        if let thread = after.first(where: { $0.hasPrefix("crash thread/queue: ") }) {
+            parts.append("thread " + thread.dropFirst("crash thread/queue: ".count))
+        }
+
+        let image = lines[..<markerIndex].first { $0.message.hasPrefix(imageLinePrefix) }?.message
+        let fields = image.map { $0.dropFirst(imageLinePrefix.count).split(separator: " ").map(String.init) } ?? []
+        let appName = fields.first
+        let load = fields.first { $0.hasPrefix("load=0x") }.flatMap { UInt64($0.dropFirst("load=0x".count), radix: 16) }
+        var offsets: [String] = []
+        for line in after where offsets.count < signatureFrameCount {
+            guard let frame = backtraceFrame(line) else { continue }
+            if let appName, frame.image == appName, let load, frame.address >= load {
+                offsets.append("+0x" + String(frame.address - load, radix: 16))
+            } else if frame.symbol == frame.image, appName == nil || frame.image == appName {
+                offsets.append("+0x" + String(frame.plus, radix: 16))
+            }
+        }
+        parts.append(offsets.isEmpty ? "no app frames" : "app " + offsets.joined(separator: " "))
+
+        if let last = lines[..<markerIndex].last(where: { $0.timed && !$0.message.hasPrefix(crashMarker) }) {
+            let quote = last.message.count > signatureQuoteLimit
+                ? String(last.message.prefix(signatureQuoteLimit)) + "…" : last.message
+            parts.append("last \"" + quote + "\"")
+        }
+        if let launch = lines[..<markerIndex].first(where: { $0.message.hasPrefix(launchLinePrefix) }) {
+            parts.append("v" + launch.message.dropFirst(launchLinePrefix.count))
+        }
+        if let uuid = fields.first(where: { $0.hasPrefix("uuid=") }) {
+            parts.append("uuid " + uuid.dropFirst("uuid=".count).prefix(8))
+        }
+        return neutralized(crashSignaturePrefix + parts.joined(separator: " · "))
+    }
+
+    /// A log line split into its breadcrumb timestamp (`1234.567  `) and its message. Lines the
+    /// signal handler writes carry no timestamp — and a backtrace line starts with a frame
+    /// NUMBER and two spaces too, so a timestamp is only one that carries its decimal point.
+    private static func untimed(_ line: String) -> (message: String, timed: Bool) {
+        guard let gap = line.range(of: "  ") else { return (line, false) }
+        let stamp = line[..<gap.lowerBound]
+        guard stamp.contains("."), stamp.allSatisfy({ $0.isNumber || $0 == "." }) else { return (line, false) }
+        return (String(line[gap.upperBound...]), true)
+    }
+
+    /// One `backtrace_symbols` line — `<n> <image> 0x<address> <symbol> + <n>` — or nil.
+    private static func backtraceFrame(_ line: String) -> (image: String, address: UInt64, symbol: String, plus: UInt64)? {
+        let fields = line.split(separator: " ", omittingEmptySubsequences: true)
+        guard fields.count >= 6, Int(fields[0]) != nil, fields[2].hasPrefix("0x"),
+              let address = UInt64(fields[2].dropFirst(2), radix: 16),
+              fields[fields.count - 2] == "+", let plus = UInt64(fields[fields.count - 1]) else { return nil }
+        return (String(fields[1]), address, fields[3..<(fields.count - 2)].joined(separator: " "), plus)
+    }
+
+    /// The text with every marker the next launch searches for lowered, and the scene arrow
+    /// broken, so a quoted line cannot be read as this run's own (see `crashSignature`).
+    static func neutralized(_ text: String) -> String {
+        var out = text
+        for marker in [crashMarker, startTappedMarker, confirmedHealthyMarker, recoveryScreenClearedMarker,
+                       rearmMarker, rearmNotNeededMarker] {
+            out = out.replacingOccurrences(of: marker, with: marker.lowercased())
+        }
+        return out.replacingOccurrences(of: sceneArrow, with: "->")
     }
 
     /// SH-3 — gives the calling thread the alternate signal stack (`echoelAltStack`). Returns
