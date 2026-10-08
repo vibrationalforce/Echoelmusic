@@ -141,6 +141,14 @@ manifest.json
 .env.local
 *.secret
 credentials.json
+.env.*
+*.pem
+*.key
+*.jks
+
+# Written by vendored tooling into the project root (gstack browse logs; Codex skill links) — never tracked
+.gstack/
+.agents/
 
 # Local metrics tracking (pi-autoresearch style)
 metrics.jsonl
