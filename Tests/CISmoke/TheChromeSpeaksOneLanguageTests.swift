@@ -724,7 +724,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let bar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(bar.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,"),
                       "the selected-part bar's button takes a String title again — its seven words would spell verbatim")
-        for head in ["Trim the selected part so it starts at ", "Trim the selected part so it ends at ", "Split the selected part at "] {
+        for head in ["Trim the selected part so it starts at ", "Trim the selected part so it ends at ", "Split the selected part at ",
+                     "Split the selected part at the playhead, "] {
             XCTAssertTrue(bar.contains("String(localized: \"\(head)\")"), "the sentence `\(head)…` is spelled verbatim again — its head is a key, the bar label is appended")
         }
         for label in ["Move the selected part one bar earlier", "Move the selected part one bar later",
@@ -738,7 +739,11 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           "Trim the selected part so it starts at ",
                           "The end cannot be trimmed: no grid line inside the part, or it would change which overlapping part plays",
                           "Trim the selected part so it ends at ", "This part is too short to split",
-                          "Splitting here would change which overlapping part plays", "Split the selected part at "],
+                          "Splitting here would change which overlapping part plays", "Split the selected part at ",
+                          // GMMW AE-9 — the second Split, at the playhead
+                          "At playhead", "Split the selected part at the playhead, ",
+                          "Split the selected part where the piece plays now; nothing happens while the playhead is outside it",
+                          "The playhead is outside this part. Tap the ruler above the tracks to move it"],
                          "selected-part bar words")
         // E4-17 — the note editor: titles as keys; every VoiceOver sentence head + spoken scope + tail; the grid words
         let editor = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")

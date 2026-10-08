@@ -81,6 +81,13 @@
 //  `setRegionTranspose`: one undo step. Off while the piece plays, the track Pitch field's rule —
 //  a first pitch needs the time-pitch chain, attached only at prime time.
 //
+//  ⭐ GMMW AE-9 — SPLIT AT THE PLAYHEAD, the second Split and the DAW's most common cut. The
+//  first Split cuts where the bar computes (the part's middle); this one cuts where the playhead
+//  is (`PartSplitAtPlayhead`). Stopped, the playhead is the ruler's line — the bar Play starts
+//  from, through the ONE fold every surface asks (AE-7) — so the cut lands where the line is
+//  drawn. Playing, it is the transport step sounding now. Same handler as Split (the media tempo,
+//  one store call = one undo step), same `keepsWhoPlays` refusal, asked again at the tap.
+//
 
 import SwiftUI
 
@@ -147,6 +154,27 @@ enum PartSplit {
             if before != now { return false }
         }
         return true
+    }
+
+    /// GMMW AE-9 — the cut "Split at playhead" makes: the transport step the playhead is on
+    /// (floored to `ticksPerTransportStep`, the finest step the transport plays), when it falls
+    /// strictly inside `part`; nil otherwise — a cut on the part's own edge cuts nothing.
+    nonisolated static func playheadCut(for part: TrackParts.Part, atTick tick: Int) -> Int? {
+        let step = TimelineTime.ticksPerTransportStep
+        guard step > 0, part.lengthTicks > 1 else { return nil }
+        let snapped = (Swift.max(0, tick) / step) * step
+        guard snapped > part.startTick, snapped < part.startTick + part.lengthTicks else { return nil }
+        return snapped
+    }
+
+    /// Whether any transport step falls strictly inside `part` — exactly when SOME playhead
+    /// position gives `playheadCut` a cut. While the piece plays, the button is lit on this
+    /// alone; where the playhead is gets read at the tap.
+    nonisolated static func hasStepInside(_ part: TrackParts.Part) -> Bool {
+        let step = TimelineTime.ticksPerTransportStep
+        guard step > 0, part.lengthTicks > 1 else { return false }
+        let first = (Swift.max(0, part.startTick) / step + 1) * step
+        return first < part.startTick + part.lengthTicks
     }
 }
 
@@ -480,7 +508,7 @@ struct SelectedPartBar: View {
                 if let pitch = PartPitch.semitones(of: regionID, in: document) {
                     PartPitchField(regionID: regionID, semitones: pitch)
                 }
-                // Eight labelled buttons do not fit a phone at every type size (review
+                // Nine labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
                 ViewThatFits(in: .horizontal) {
@@ -549,6 +577,13 @@ struct SelectedPartBar: View {
             button("Split", "scissors", enabled: splittable, showsTitle: showsTitles,
                    label: splitLabel(cut: cut, splittable: splittable)) {
                 if splittable, let cut { split(regionID, at: cut) }
+            }
+            // GMMW AE-9 — the second Split: where the playhead is. The leaf reads the player;
+            // the cut goes through THIS bar's `split` (media tempo, one undo step).
+            PartSplitAtPlayhead(part: part, regionID: regionID,
+                                split: { split($0, at: $1) }) { enabled, label, action in
+                button("At playhead", "scissors.circle", enabled: enabled, showsTitle: showsTitles,
+                       label: label, action: action)
             }
             button("Join next", "arrow.triangle.merge", enabled: joinable, showsTitle: showsTitles,
                    label: joinLabel(joinable)) {
@@ -1018,5 +1053,77 @@ private struct PartPitchField: View {
         // gesture's, so it is re-asked at the write.
         guard !player.isPlaying else { return }
         timeline.setRegionTranspose(id: regionID, AudioTranspose.semitones(fromField: value))
+    }
+}
+
+/// GMMW AE-9 — Split at the playhead (founder 2026-10-08: "Die klassische DAW Audio Editing View
+/// fehlt mir noch. Orientiere dich an den Bigplayern"). A leaf, so the player's state stays in
+/// its own body.
+///
+/// ⚠️ WHERE THE PLAYHEAD IS. Stopped, it is the ruler's line: the bar Play starts from, through
+/// `TimelineRegionPlayer.playStartTick(forCue:in:)` — the ONE fold the line, the Play hint and
+/// `play` ask (AE-7) — so the cut lands exactly where the line is drawn. Playing, it is the step
+/// sounding now, `currentTick`.
+///
+/// ⚠️ `currentTick` IS READ ONLY INSIDE THE TAP. It is `@ObservationIgnored` (~8 Hz while
+/// playing): a body read would subscribe nothing and go stale, and the freeze law keeps every
+/// position out of every body anyway (10.76.41/50). So while playing the button is lit whenever
+/// the part has a step inside it (`PartSplit.hasStepInside`) and the tap decides; with the
+/// playhead outside the part the tap cuts nothing and says so in the log, and the label says
+/// so beforehand. The body reads `isPlaying` and `cueTick` — both cold (a start, a stop, a tap).
+///
+/// The cut goes through the bar's own `split` (the media tempo, one store call = one undo step),
+/// after the same `keepsWhoPlays` the first Split asks — asked again at the tap, against the
+/// document as it is then.
+@MainActor
+private struct PartSplitAtPlayhead<Content: View>: View {
+    @Environment(TimelineRegionPlayer.self) private var player
+    @Environment(TimelineStore.self) private var timeline
+
+    let part: TrackParts.Part
+    let regionID: UUID
+    /// The bar's own Split handler (media tempo, one undo step) — required (#431).
+    let split: (UUID, Int) -> Void
+    /// The bar's own button, so this one looks and speaks like its neighbours (#416).
+    let content: (_ enabled: Bool, _ label: String, _ action: @escaping () -> Void) -> Content
+
+    var body: some View {
+        let document = timeline.document
+        let playing = player.isPlaying
+        // Stopped only: the ruler's line, cold. Playing, nothing here knows where the playhead is.
+        let cut: Int? = playing ? nil
+            : PartSplit.playheadCut(for: part,
+                                    atTick: TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document))
+        let enabled: Bool = playing
+            ? PartSplit.hasStepInside(part)
+            : (cut.map { PartSplit.keepsWhoPlays(regionID: regionID, atTick: $0, in: document) } ?? false)
+        content(enabled, label(playing: playing, cut: cut, enabled: enabled), { splitAtPlayhead() })
+    }
+
+    private func label(playing: Bool, cut: Int?, enabled: Bool) -> String {
+        guard PartSplit.hasStepInside(part) else { return String(localized: "This part is too short to split") }
+        if playing {
+            return String(localized: "Split the selected part where the piece plays now; nothing happens while the playhead is outside it")
+        }
+        guard let cut else {
+            return String(localized: "The playhead is outside this part. Tap the ruler above the tracks to move it")
+        }
+        guard enabled else { return String(localized: "Splitting here would change which overlapping part plays") }
+        return String(localized: "Split the selected part at the playhead, ") + SessionGrid.label(forTick: cut)
+    }
+
+    private func splitAtPlayhead() {
+        let document = timeline.document
+        // The position, read HERE and nowhere else: playing, the step sounding now; stopped, the
+        // ruler's line.
+        let head = player.isPlaying
+            ? player.currentTick
+            : TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)
+        guard let cut = PartSplit.playheadCut(for: part, atTick: head),
+              PartSplit.keepsWhoPlays(regionID: regionID, atTick: cut, in: document) else {
+            log.log(.info, category: .audio, "Split at playhead refused: the playhead is outside the part, or the cut would change which overlapping part plays")
+            return
+        }
+        split(regionID, cut)
     }
 }

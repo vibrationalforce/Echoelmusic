@@ -217,6 +217,54 @@
         }
       }
     },
+    "At playhead" : {
+      "comment" : "Title of the part bar's second Split button (GMMW AE-9, 2026-10-08): it cuts the selected part where the playhead is — the ruler's line while stopped, the step sounding now while playing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At playhead"
+          }
+        }
+      }
+    },
+    "Split the selected part at the playhead, " : {
+      "comment" : "Seam head of the VoiceOver label of the part bar's 'At playhead' button while stopped (GMMW AE-9): followed by the bar, e.g. \"Bar 5\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split the selected part at the playhead, "
+          }
+        }
+      }
+    },
+    "Split the selected part where the piece plays now; nothing happens while the playhead is outside it" : {
+      "comment" : "VoiceOver label of the part bar's 'At playhead' button while the piece plays (GMMW AE-9): the position is read at the tap.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split the selected part where the piece plays now; nothing happens while the playhead is outside it"
+          }
+        }
+      }
+    },
+    "The playhead is outside this part. Tap the ruler above the tracks to move it" : {
+      "comment" : "VoiceOver label of the part bar's 'At playhead' button while stopped with the ruler's line outside the selected part (GMMW AE-9).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The playhead is outside this part. Tap the ruler above the tracks to move it"
+          }
+        }
+      }
+    },
     "Play from" : {
       "comment" : "VoiceOver label of the Arrange canvas's bar ruler (GMMW AE-7, 2026-10-08). Its value is the bar Play starts from, e.g. \"Bar 3\"; swiping up or down moves it a bar.",
       "extractionState" : "manual",
