@@ -33,6 +33,8 @@ set to release itself. A headless `claude -p` has no one to answer, so "ask" blo
 
 PROTECTED (founder-gated, CLAUDE.md "DO NOT" + .claude/rules/context.md §3):
   .github/workflows/**   project.yml   Resources/iOS/Info.plist
+  .claude/settings.json   .mcp.json   (since 2026-10-08, audit: the permission grants and the
+  servers started at session start are configuration the agent must not change in a plain diff)
   (.deploy/release was the fourth until the founder released it on 2026-10-01 — "Nur Deploy
   frei": the agent bumps the version and ships TestFlight itself.)
 
@@ -44,7 +46,7 @@ import re
 import subprocess
 import sys
 
-PROTECTED_FILES = ("project.yml", "Resources/iOS/Info.plist")
+PROTECTED_FILES = ("project.yml", "Resources/iOS/Info.plist", ".claude/settings.json", ".mcp.json")
 PROTECTED_DIRS = (".github/workflows/",)
 
 LIMITS = """\
@@ -56,8 +58,9 @@ LIMITS = """\
   `open('project.yml','w')` inside a string (editing this hook's own selftest).
 - Rule 2 fires at `git commit` only. `git merge`, `cherry-pick`, `revert` and `am` create
   commits without it, and `git push` is not inspected.
-- The hook and `.claude/settings.json` are NOT protected themselves (scope = the three
-  paths). An agent could edit them; that shows up in the diff and in the commit.
+- The hook itself (`.claude/hooks/`) is NOT protected: a hook that gates its own file could
+  not be committed by the agent at all, so that gate is the founder's (a small patch in the
+  landing kit). `.claude/settings.json` and `.mcp.json` ARE protected since 2026-10-08.
 - Only Claude's own tool calls pass through here. CI, the founder's editor and the
   founder's own terminal are untouched.
 - Measured with Claude Code 2.1.283 in `default` and `auto` only. `bypassPermissions`
@@ -402,6 +405,11 @@ def selftest():
         ("python3 - <<'EOF'\np = 'Resources/iOS/Info.plist'\ns = open(p, encoding='utf-8').read()\nopen(p, 'w', encoding='utf-8').write(s)\nEOF",
          [], [], True, "python writes through a variable"),
         ("git checkout main -- project.yml", [], [], True, "git checkout path"),
+        ("cat .claude/settings.json", [], [], False, "read of the settings file"),
+        ("printf x > .claude/settings.json", [], [], True, "redirect onto the settings file (protected since 2026-10-08)"),
+        ("sed -i 's/latest/1.0.0/' .mcp.json", [], [], True, "sed -i on .mcp.json"),
+        ("git commit -m x", [".mcp.json"], [], True, "commit with .mcp.json staged"),
+        ("git commit -m x", [".claude/hooks/protect-founder-gated.py"], [], False, "commit of the hook itself is not gated"),
         ("git restore --staged .github/workflows/ci.yml", [], [], False, "unstaging touches the index only"),
         ("git reset -q -- Resources/iOS/Info.plist", [], [], False, "reset of a path unstages"),
         ("git restore --staged --worktree project.yml", [], [], True, "--worktree writes the file"),
