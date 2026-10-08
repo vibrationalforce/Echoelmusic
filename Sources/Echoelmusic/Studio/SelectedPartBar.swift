@@ -256,7 +256,7 @@ enum PartFades {
 /// exactly what happens; lengthening a part past its media would be a different act with a
 /// different answer per media kind (silence for audio, a loop for MIDI) and stays out.
 /// ⚠️ That holds for the bar's two BUTTONS. Since AE-4a the enum also carries the outward rules
-/// the audio editor's edge handles will ask (snap, precedence, media end) — see its last MARK.
+/// the audio editor's edge handles ask since AE-4b (snap, precedence, media end) — see its last MARK.
 enum PartTrim {
 
     /// The new start for "Trim start": the first song-grid bar line after the part's start, else
@@ -341,8 +341,8 @@ enum PartTrim {
     // The bar's two buttons above only take material away. The audio editor's edge handles
     // (AE-4b) also move an edge OUTWARD, and `onlyLetsGo` refuses any tick a part gains by
     // construction, so the outward move gets its own rule here — beside the inward one, asked of
-    // the same precedence (#1440) — plus the grid a handle snaps to and the media bound. No
-    // control calls these yet; AE-4b is their first caller.
+    // the same precedence (#1440) — plus the grid a handle snaps to and the media bound. Their
+    // caller is `AudioPartEditor.edgeEdit` (AE-4b), which the editor's edge handles ask.
 
     /// The grid an edge handle snaps to at a time zoom: a bar while bars are small on screen
     /// (zoom below 4), a beat below 16, then one transport step. Never finer than a step: the

@@ -25,15 +25,18 @@
 // 4. END-TO-END — the grid a handle snaps to is `snapUnit` at the editor's own scale
 //    (`AudioPartEditor.snapZoom`: touch targets per bar on a pane that draws the whole file), and
 //    a slide converts to ticks at the tempo the part's media elapses at.
-// 5. END-TO-END — `AudioPartEditor.edgeEdit`, the ONE function preview and release both ask:
-//    inward edges stay inside the part and pass `onlyLetsGo`; an outward start bottoms out on the
+// 5. END-TO-END — `AudioPartEditor.edgeEdit`, the ONE function preview and release both ask: the
+//    direction is the finger's, never the snap's (no slide = no edit, off-grid edges included), and
+//    the slide starts where the edge is DRAWN (`drawnEdgeTick`: an end past its file is drawn at
+//    the file's end); inward edges stay inside the part and pass `onlyLetsGo`; an outward start bottoms out on the
 //    first grid line inside the file and is REFUSED (not walked back) when it would take a bar —
 //    including the tie case that makes start legality non-monotone; an outward end stops at the
 //    file's end and is refused over an earlier part that still plays.
 // 6. END-TO-END — the preview line's place on the file, and the handles' 44-pt touch areas.
 // 7. SOURCE-TEXT SCAN — one write per gesture: `trimRegionStart` and `resizeRegion` once each in
 //    the file, both inside `.onEnded`, none while the finger moves; one `@GestureState`; hold
-//    first (0.3 s, the canvas's); the grid comes from `snapUnit` alone.
+//    first (0.3 s, the canvas's); the grid comes from `snapUnit` alone; the media tempo is read
+//    fresh from the player's cold tempo, once per release, for the question and the write.
 // 8. SOURCE-TEXT SCAN — the stale "nothing in this build can trim a part" is gone from
 //    `AudioWarp.swift`.
 //
@@ -44,9 +47,9 @@
 // written (`activeRegion`, `candidateSampleTicks`, `trimmedStart`, `onlyLetsGo`, `keepsWhoPlays`,
 // `endFitsMedia`) before it was typed here (#442). Claims 4–7 are FORWARD (one absence, #486); claim
 // 8 is a REGRESSION guard (red on the parent by transcription: the sentence is there). Stripper
-// for 7: TRAGEND, 3 of 18 verdicts flip — the file's prose names `trimRegionStart(`,
+// for 7: TRAGEND, 3 of its verdicts flip — the file's prose names `trimRegionStart(`,
 // `resizeRegion(` and `@GestureState` too, so the raw counts read 2, 2 and 2 against code-only
-// 1, 1 and 1. Claim 8 reads the RAW file on purpose: the defect it guards is prose. All 18 claim-7
+// 1, 1 and 1. Claim 8 reads the RAW file on purpose: the defect it guards is prose. Every claim-7
 // verdicts and both claim-8 verdicts were driven in Python on the worktree (green) and the parent
 // (anchor absent for 7; claim 8 red). What a hold-and-slide FEELS like on a phone — whether the page's
 // scroll yields to the hold, whether 44 pt is enough at the file's first second — is a DEVICE
@@ -274,6 +277,33 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
         XCTAssertNil(edit(.start, 0, a2, [a2]))
         XCTAssertNil(edit(.end, 0, a2, [a2]))
         XCTAssertNil(edit(.end, 88, a, [a2]), "a part that is not in the arrangement is not edited")
+
+        // THE DIRECTION IS THE FINGER'S (review M1). An edge between two grid lines — a part cut on
+        // a beat, here bar 2 + 1 beat to bar 3 + 1 beat on the bar grid — must not round to the
+        // line BEHIND the finger: no slide writes nothing, a small slide out never trims, a small
+        // slide in never extends. A slide that does reach a line moves onto it, in its direction.
+        let offGrid = region(2 * Self.bar + Self.beat, Self.bar, offsetSeconds: 4)
+        XCTAssertNil(edit(.start, 0, offGrid, [offGrid]), "no slide, no edit — even off the grid")
+        XCTAssertNil(edit(.end, 0, offGrid, [offGrid]))
+        XCTAssertNil(edit(.end, 5, offGrid, [offGrid]), "a small slide OUT never shortens the part")
+        XCTAssertNil(edit(.start, 5, offGrid, [offGrid]), "a small slide IN never moves the start out")
+        XCTAssertEqual(edit(.start, -5, offGrid, [offGrid]), .start(tick: 2 * Self.bar),
+                       "a slide out lands on the bar line behind the start — outward, as the finger went")
+        XCTAssertEqual(edit(.end, -5, offGrid, [offGrid]), .end(lengthTicks: 3 * Self.beat),
+                       "a slide in lands on the bar line before the end — inward, as the finger went")
+
+        // THE SLIDE STARTS WHERE THE EDGE IS DRAWN (review L1). An imported part is sized to whole
+        // bars that cover its file, so it can end past the file: five bars (10 s) on an 8-s file.
+        // Its end is drawn at the file's end (bar 4), and the slide is measured from there — one
+        // second in lands on bar 4, the file's end. Measured from the part's end (bar 5) the same
+        // slide would round back to bar 5 and do nothing.
+        let overhang = region(0, 5 * Self.bar)
+        XCTAssertEqual(AudioPartEditor.drawnEdgeTick(.end, region: overhang, fileSeconds: 8, mediaBPM: 120), 4 * Self.bar)
+        XCTAssertEqual(AudioPartEditor.drawnEdgeTick(.start, region: overhang, fileSeconds: 8, mediaBPM: 120), 0)
+        XCTAssertEqual(AudioPartEditor.drawnEdgeTick(.end, region: a, fileSeconds: 8, mediaBPM: 120), a.endTick,
+                       "an end inside its file is drawn where it is")
+        XCTAssertEqual(edit(.end, -44, overhang, [overhang]), .end(lengthTicks: 4 * Self.bar))
+        XCTAssertNil(edit(.end, 88, overhang, [overhang]), "a part already past its file's end cannot grow")
     }
 
     // MARK: 6 — the preview's place and the touch areas (AE-4b)
@@ -299,13 +329,18 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
             return [pair.start, pair.end]
         }
         // Apart: each centred on its edge.
-        XCTAssertEqual(try frames(44, 132, 352), [22...66, 110...154])
+        let apart: [ClosedRange<Double>] = [22...66, 110...154]
+        XCTAssertEqual(try frames(44, 132, 352), apart)
         // Narrower than a target: pushed apart around the middle, touching, never sharing a point.
-        XCTAssertEqual(try frames(100, 110, 352), [61...105, 105...149])
+        let narrow: [ClosedRange<Double>] = [61...105, 105...149]
+        XCTAssertEqual(try frames(100, 110, 352), narrow)
         // At the file's first and last second: kept inside the pane, whose clip would cut them.
-        XCTAssertEqual(try frames(0, 10, 352), [0...44, 44...88])
-        XCTAssertEqual(try frames(350, 352, 352), [264...308, 308...352])
-        for pair in [(44.0, 132.0), (100, 110), (0, 10), (350, 352), (0, 352), (176, 176)] {
+        let first: [ClosedRange<Double>] = [0...44, 44...88]
+        XCTAssertEqual(try frames(0, 10, 352), first)
+        let last: [ClosedRange<Double>] = [264...308, 308...352]
+        XCTAssertEqual(try frames(350, 352, 352), last)
+        let pairs: [(Double, Double)] = [(44, 132), (100, 110), (0, 10), (350, 352), (0, 352), (176, 176)]
+        for pair in pairs {
             let both = try frames(pair.0, pair.1, 352)
             for range in both {
                 XCTAssertEqual(range.upperBound - range.lowerBound, hit, accuracy: 1e-9, "every handle is a full target")
@@ -331,7 +366,7 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
               let moving = Self.bracedBody(after: ".updating($drag) {", in: handles) else {
             return XCTFail("ANCHOR MISSING: `AudioPartEdgeHandles`, its `.onEnded` or its `.updating` (#408)")
         }
-        for write in ["timeline.trimRegionStart(id: region.id, toTick: tick, bpm: mediaBPM)",
+        for write in ["timeline.trimRegionStart(id: region.id, toTick: tick, bpm: bpm)",
                       "timeline.resizeRegion(id: region.id, lengthTicks: lengthTicks)"] {
             XCTAssertTrue(ended.contains(write), "the release writes `\(write)` — and only the release")
         }
@@ -339,27 +374,43 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
             The slide touches the store while the finger moves. A write per frame is a write per \
             Undo step per frame; the edge is written once, on release.
             """)
-        XCTAssertTrue(handles.contains("LongPressGesture(minimumDuration: 0.3)\n            .sequenced(before: DragGesture(minimumDistance: 0))"),
-                      "hold first (the canvas's 0.3 s), so a swipe on the wave still scrolls the page")
+        guard let hold = handles.range(of: "LongPressGesture(minimumDuration: 0.3)"),
+              let then = handles.range(of: ".sequenced(before: DragGesture(minimumDistance: 0))") else {
+            return XCTFail("the handles no longer hold first (the canvas's 0.3 s), so a swipe on the wave would not scroll the page")
+        }
+        XCTAssertLessThan(hold.lowerBound, then.lowerBound, "the hold comes before the slide")
+        // The tempo is read when it is used (review M2): `preflightTempo` follows the pulse without
+        // redrawing, so a tempo carried from the last draw can be minutes old at release.
+        XCTAssertTrue(handles.contains("PartSplit.mediaBPM(for: region, clip: clip, projectBPM: player.preflightTempo)"),
+                      "the handles ask the media tempo fresh, from the player's cold tempo")
+        // COMPUTED, so a stored twin of the same name cannot exist beside it (it would not compile).
+        XCTAssertTrue(handles.contains("private var mediaBPM: Double? {"), """
+            The handles' media tempo is no longer computed at each read. A stored one is the tempo \
+            of the pane's last draw, and `trimRegionStart` converts the moved ticks into file \
+            seconds at it.
+            """)
+        XCTAssertTrue(ended.contains("let bpm = mediaBPM"), "one tempo read for the release's question and its write")
         // The preview and the release ask the same question.
-        guard let ask = Self.bracedBody(after: "private func edit(_ edge: AudioPartEditor.Edge, points: Double, width: Double) -> AudioPartEditor.EdgeEdit? {", in: handles) else {
+        guard let ask = Self.bracedBody(after: "bpm: Double) -> AudioPartEditor.EdgeEdit? {", in: handles) else {
             return XCTFail("ANCHOR MISSING: the handles' one question (#408)")
         }
         XCTAssertTrue(ask.contains("AudioPartEditor.edgeEdit("))
         XCTAssertEqual(Self.occurrences(of: "AudioPartEditor.edgeEdit(", in: code), 1, "asked in one place")
-        XCTAssertTrue(ended.contains("edit(edge, points: Double(slide.translation.width), width: width)"))
-        XCTAssertTrue(handles.contains("if let landing = edit(drag.edge, points: drag.points, width: width)"))
+        XCTAssertTrue(ended.contains("edit(edge, points: Double(slide.translation.width), width: width, bpm: bpm)"))
+        XCTAssertTrue(handles.contains("let landing = edit(drag.edge, points: drag.points, width: width, bpm: bpm)"))
         // The grid is `snapUnit`'s and the rules are `PartTrim`'s — nothing here picks its own.
         guard let rule = Self.bracedBody(after: "fileSeconds: Double, mediaBPM: Double) -> EdgeEdit? {", in: code) else {
             return XCTFail("ANCHOR MISSING: `AudioPartEditor.edgeEdit` (#408)")
         }
         for asked in ["PartTrim.snapUnit(zoom: zoom)", "PartTrim.onlyLetsGo(", "PartTrim.keepsWhoPlays(",
-                      "PartTrim.endFitsMedia(", "region.trimmedStart(toTick: 0, bpm: mediaBPM)"] {
+                      "PartTrim.endFitsMedia(", "region.trimmedStart(toTick: 0, bpm: mediaBPM)",
+                      "guard dragPoints != 0", "let outward = (edge == .start) == (dragPoints < 0)",
+                      "drawnEdgeTick(edge, region: region, fileSeconds: fileSeconds,"] {
             XCTAssertTrue(rule.contains(asked), "the edge rule no longer asks `\(asked)`")
         }
         for grid in ["ticksPerBeat", "ticksPerTransportStep"] {
-            XCTAssertFalse(code.contains(grid), """
-                The editor names `\(grid)` — a second grid. The handle snaps to `PartTrim.snapUnit` \
+            XCTAssertFalse(rule.contains(grid), """
+                The edge rule names `\(grid)` — a second grid. A handle snaps to `PartTrim.snapUnit` \
                 and nothing else (#416).
                 """)
         }
