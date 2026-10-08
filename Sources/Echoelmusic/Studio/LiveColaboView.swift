@@ -167,7 +167,7 @@ struct LiveColaboView: View {
             // name — which is the default on iOS 16+ without the user-assigned-device-name
             // entitlement, and this app declares none.
             ForEach(colab.connectedPeers, id: \.stableID) { peer in
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
                     HStack(spacing: 8) {
                         Image(systemName: "person.fill.checkmark").foregroundStyle(EchoelTheme.accent)
                         Text(peer.displayName).font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
