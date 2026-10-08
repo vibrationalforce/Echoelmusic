@@ -107,6 +107,11 @@ public protocol AudioRegionSink: AnyObject {
     /// Pitch (#165): this lane's pitch in whole semitones, applied at the NEXT `play` through
     /// the sink's time-pitch chain. `start` sets it right before every `play`. Default: no-op.
     func setTranspose(_ semitones: Int)
+    /// Audio editor W4b: the fades of the part the NEXT `play` starts, in media time (nil = hard
+    /// edges). `start` sets it right before every `play`; the sink uses it for that one `play`
+    /// only, so it can never leak into a later one. Default: no-op — a sink without it plays
+    /// every part with hard edges.
+    func setFades(_ plan: PartFadePlan?)
     /// Restructure S3b: this lane's place in the headphone space (`HeadphoneSpace`), metres in
     /// the listener's frame. Control plane, like `setPan` — never a render block. A sink that
     /// renders no space ignores it; `TimelineAudioSink` renders it while the Mixer's "Headphone
@@ -126,6 +131,7 @@ public extension AudioRegionSink {
     func setGain(_ gain: Float) {}
     func setPan(_ pan: Float) {}
     func setTranspose(_ semitones: Int) {}
+    func setFades(_ plan: PartFadePlan?) {}
     func setSpacePosition(_ point: HeadphoneSpace.Point) {}
     func setMayRewire(_ allowed: Bool) {}
 }
@@ -466,6 +472,8 @@ public final class AudioLanePlayer {
             * plan.rate
         let lane = sink(for: laneID)
         lane.setTranspose(AudioTranspose.semitones(laneID: laneID, in: doc))   // #165
+        // Audio editor W4b: the part's fades, in the same media time as `from` and `length`.
+        lane.setFades(AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: plan.rate))
         lane.play(url: url, fromSeconds: from,
                   lengthSeconds: max(0, length), gain: gain, stretch: plan)
         // H4: audio lanes take the lane's stereo position too (B2 gave TimelineLane

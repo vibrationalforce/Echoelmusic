@@ -80,6 +80,21 @@ public enum AudioRegionPlayback {
         return TempoMatch.stretchRate(nativeBPM: clipNativeBPM, masterBPM: projectBPM)
     }
 
+    /// Audio editor W4b: the part's fades in MEDIA time — where it starts in its file
+    /// (`contentOffsetSeconds`), how long it runs there (its length at `bpm` × the stretch rate),
+    /// and the fade lengths scaled the same way, so a fade lasts its ticks in SONG time whatever
+    /// the warp (the time-pitch unit plays media `rate`× as fast). nil when the part has no fade
+    /// that plays, or the tempo cannot map — the lane player then takes its plain path.
+    public static func fadePlan(for region: TimelineRegion, bpm: Double,
+                                stretchRate: Double) -> PartFadePlan? {
+        guard bpm.isFinite, bpm > 0, region.fadeInTicks > 0 || region.fadeOutTicks > 0 else { return nil }
+        let rate = sanitizedRate(stretchRate)
+        func media(_ ticks: Int) -> Double { TimelineTime.seconds(fromTicks: ticks, bpm: bpm) * rate }
+        return PartFadePlan(partStart: max(0, region.contentOffsetSeconds),
+                            duration: media(region.lengthTicks),
+                            fadeIn: media(region.fadeInTicks), fadeOut: media(region.fadeOutTicks))
+    }
+
     /// A degenerate rate (≤ 0, NaN, ∞) must never corrupt the media mapping —
     /// treat it as unwarped. Callers pass `effectiveStretchRate(...)`, which is
     /// already clamped; this guard is defense in depth for direct calls.

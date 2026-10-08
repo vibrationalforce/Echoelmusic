@@ -45,8 +45,13 @@
 // Pitch (#165): a TRANSPOSED lane also plays through that chain, the transpose added to
 // the node's `pitch` (`AudioTranspose`); the Beats buffer is bypassed while transposed,
 // because it plays on the plain node. The chain's own delay is not compensated.
-// Honest limits (documented, later cycles): per-clip fades from the audio
-// editor are not consumed on the timeline yet (audit A5).
+// Fades (audio editor W4b — closes audit A5 for the timeline): a part's fade-in/out arrive as a
+// `PartFadePlan` through `setFades` right before `play`. The frames inside a fade are read from a
+// fresh handle, multiplied by the ramp and scheduled as short buffers; the frames between play
+// straight from the file, all back to back on one node (`playFaded`). Honest limits: a part with
+// fades skips its pre-rendered Beats buffer and plays the Clean chain until that render carries
+// the ramp; the read happens on the main actor (the first faded piece is kept short so the part
+// starts on time, the rest is read while it sounds).
 // Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
 // node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
 // at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
@@ -116,6 +121,17 @@ final class TimelineAudioSink: AudioRegionSink {
 
     func setTranspose(_ semitones: Int) {
         transposeSemitones = AudioTranspose.clamped(semitones)
+    }
+
+    /// Audio editor W4b: the fades of the part the next `play` starts. `play` takes it and
+    /// clears it, so a plan belongs to exactly one part and can never reach a later `play`.
+    private var pendingFades: PartFadePlan?
+    /// The most a FADED first piece may be before `play()`: its read delays the part's start,
+    /// so a longer fade is split and the rest is read while this much already sounds.
+    private static let firstFadedChunkSeconds = 0.25
+
+    func setFades(_ plan: PartFadePlan?) {
+        pendingFades = plan
     }
 
     // MARK: Beats-Executor (prime-time offline WSOLA per region)
@@ -273,6 +289,9 @@ final class TimelineAudioSink: AudioRegionSink {
 
     func play(url: URL, fromSeconds: Double, lengthSeconds: Double, gain: Float,
               stretch: StretchPlan) {
+        // W4b: this part's fades, taken now so no exit below can leave them for the next part.
+        let fades = pendingFades
+        pendingFades = nil
         guard lengthSeconds > 0 else { stop(); return }
         guard let plainNode = ensureLoaded(url), let file else { return }
         // Beats-Executor: a prepared region onset schedules the READY stretched
@@ -280,7 +299,9 @@ final class TimelineAudioSink: AudioRegionSink {
         // exact prepared window qualifies (onset entry, |Δ| < 1 ms) — a mid-region
         // entry (seek / unmute restart) falls through to the Clean chain below
         // (honest; the next onset is transient-locked again).
-        if stretch.rate != 1.0, stretch.mode == .beats, transposeSemitones == 0,
+        // W4b: a part WITH fades skips the buffer — it is the whole part, rendered unfaded — and
+        // plays its Clean chain below, fades and all, until the Beats render carries the ramp.
+        if stretch.rate != 1.0, stretch.mode == .beats, transposeSemitones == 0, fades == nil,
            let entry = beatsBuffers[BeatsKey(url: url, rate: stretch.rate, fromSeconds: fromSeconds)],
            abs(entry.lengthSeconds - lengthSeconds) < 0.001,
            plainNode.engine?.isRunning == true {
@@ -317,9 +338,74 @@ final class TimelineAudioSink: AudioRegionSink {
         // the next region onset re-drives the lane once the engine is back.
         guard node.engine?.isRunning == true else { return }
         stop()   // one region per lane: silence every node before the new segment
+        if let fades, playFaded(fades, url: url, file: file, on: node, startFrame: startFrame,
+                                frames: frames, sampleRate: sampleRate, gain: gain) { return }
         node.scheduleSegment(file, startingFrame: startFrame, frameCount: frames, at: nil)
         setGain(gain)
         node.play()
+    }
+
+    /// Audio editor W4b: play the part's stretch of `file` with its fades. `PartFadePlan.pieces`
+    /// cuts the frames at the two fade edges; a faded piece is read from a FRESH handle (the node
+    /// streams the shared `file` on its own thread), multiplied by the ramp and scheduled as a
+    /// buffer, and the middle plays straight from the file. Every piece goes on ONE node, back to
+    /// back, so they play gapless and in order. Only the first piece is scheduled before `play()`
+    /// — a faded one cut to `firstFadedChunkSeconds` — so a long fade-in never delays the part's
+    /// start by its whole read; the rest is read while that first piece sounds.
+    /// Returns false, having scheduled NOTHING, when the fresh handle cannot be opened or reads
+    /// another format: the caller then plays the part unfaded — never silent.
+    private func playFaded(_ fades: PartFadePlan, url: URL, file: AVAudioFile,
+                           on node: AVAudioPlayerNode, startFrame: AVAudioFramePosition,
+                           frames: AVAudioFrameCount, sampleRate: Double, gain: Float) -> Bool {
+        guard let reader = try? AVAudioFile(forReading: url),
+              reader.processingFormat.isEqual(file.processingFormat) else { return false }
+        let cut = fades.pieces(startFrame: startFrame, frameCount: Int64(frames), sampleRate: sampleRate)
+        var queue: [(frames: Range<Int64>, faded: Bool)] = []
+        if let head = cut.head { queue.append((head, true)) }
+        if let middle = cut.middle { queue.append((middle, false)) }
+        if let tail = cut.tail { queue.append((tail, true)) }
+        guard let first = queue.first else { return false }
+        let chunk = Int64((Self.firstFadedChunkSeconds * sampleRate).rounded())
+        if first.faded, chunk > 0, Int64(first.frames.count) > chunk {
+            let cutAt = first.frames.lowerBound + chunk
+            queue[0] = (first.frames.lowerBound..<cutAt, true)
+            queue.insert((cutAt..<first.frames.upperBound, true), at: 1)
+        }
+        for (index, piece) in queue.enumerated() {
+            if piece.faded, let buffer = baked(piece.frames, from: reader, plan: fades, sampleRate: sampleRate) {
+                node.scheduleBuffer(buffer, at: nil)
+            } else {
+                // The middle — or a faded piece whose read failed: an unfaded edge, never a hole.
+                node.scheduleSegment(file, startingFrame: piece.frames.lowerBound,
+                                     frameCount: AVAudioFrameCount(piece.frames.count), at: nil)
+            }
+            if index == 0 {
+                setGain(gain)
+                node.play()
+            }
+        }
+        return true
+    }
+
+    /// `frames` of `reader`, each multiplied by the part's fade at its own moment in the file —
+    /// a fresh buffer the node owns from here on (never one it already holds). nil when the
+    /// buffer cannot be made or the read comes back short: the caller then schedules those
+    /// frames from the file, so the timing stays exact.
+    private func baked(_ frames: Range<Int64>, from reader: AVAudioFile, plan: PartFadePlan,
+                       sampleRate: Double) -> AVAudioPCMBuffer? {
+        let count = AVAudioFrameCount(frames.count)
+        guard count > 0, !reader.processingFormat.isInterleaved,
+              let buffer = AVAudioPCMBuffer(pcmFormat: reader.processingFormat, frameCapacity: count)
+        else { return nil }
+        reader.framePosition = frames.lowerBound
+        guard (try? reader.read(into: buffer, frameCount: count)) != nil,
+              buffer.frameLength == count, let data = buffer.floatChannelData else { return nil }
+        let channels = Int(buffer.format.channelCount)
+        for i in 0..<Int(count) {
+            let level = Float(plan.gain(atMediaSeconds: Double(frames.lowerBound + Int64(i)) / sampleRate))
+            for channel in 0..<channels { data[channel][i] *= level }
+        }
+        return buffer
     }
 
     func stop() {

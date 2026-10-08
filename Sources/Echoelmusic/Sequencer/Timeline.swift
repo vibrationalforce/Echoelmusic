@@ -308,7 +308,9 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// Stored ≥ 0; how much of each plays inside the part is `FadeEnvelope.effective`, the one
     /// rule ("in wins"). Split keeps the fade-in on the left piece and the fade-out on the
     /// right; Join refuses a seam that carries a fade (`abuts`). MIDI parts ignore both.
-    /// Legacy regions decode as 0. ⚠️ Not played yet: no player reads them before W4b.
+    /// Legacy regions decode as 0. Played since W4b: `AudioLanePlayer` hands the part's
+    /// `AudioRegionPlayback.fadePlan` to its sink, which bakes the two ramps into the scheduled
+    /// audio (a faded Beats part plays its Clean chain until the Beats render carries them).
     public var fadeInTicks: Int
     public var fadeOutTicks: Int
 

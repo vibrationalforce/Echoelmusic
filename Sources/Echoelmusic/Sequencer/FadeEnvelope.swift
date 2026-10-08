@@ -52,3 +52,59 @@ enum FadeEnvelope {
         return Swift.min(value, limit)
     }
 }
+
+/// Audio editor W4b: one part's fades in MEDIA time — where the part starts in its file, how long
+/// it runs there, and the two fade lengths as they play in that same time. The lane player cuts
+/// the stretch of the file it schedules at the two fade edges: the ends are read, multiplied by
+/// the ramp and scheduled as short buffers, the middle plays straight from the file. Built by
+/// `AudioRegionPlayback.fadePlan`; pure, so the cut and the ramp are driven without a device.
+public struct PartFadePlan: Equatable, Sendable {
+    /// Where the part starts in its file, in seconds (`contentOffsetSeconds`).
+    public let partStart: Double
+    /// How long the part runs in its file, in seconds (its song length × the stretch rate).
+    public let duration: Double
+    /// The fade lengths as they play inside `duration` — already `FadeEnvelope.effective`.
+    public let fadeIn: Double
+    public let fadeOut: Double
+
+    /// nil when no fade plays — no length survives the rule — or the mapping is degenerate.
+    /// The player then takes its plain path, unchanged.
+    public init?(partStart: Double, duration: Double, fadeIn: Double, fadeOut: Double) {
+        guard partStart.isFinite, duration.isFinite, duration > 0 else { return nil }
+        let fades = FadeEnvelope.effective(fadeIn: fadeIn, fadeOut: fadeOut, duration: duration)
+        guard fades.fadeIn > 0 || fades.fadeOut > 0 else { return nil }
+        self.partStart = partStart
+        self.duration = duration
+        self.fadeIn = fades.fadeIn
+        self.fadeOut = fades.fadeOut
+    }
+
+    /// The level 0…1 of the file's moment `seconds` inside this part — the one rule, asked.
+    public func gain(atMediaSeconds seconds: Double) -> Double {
+        FadeEnvelope.gain(atElapsed: seconds - partStart, duration: duration,
+                          fadeIn: fadeIn, fadeOut: fadeOut)
+    }
+
+    /// The frames `startFrame ..< startFrame + frameCount` cut at the two fade edges: `head`
+    /// (inside the fade-in), `middle` (unity, played straight from the file) and `tail` (inside
+    /// the fade-out). Contiguous and in order — together exactly the input, every edge an
+    /// integer frame, so no frame is dropped or played twice. An empty piece is nil, and a part
+    /// without a fade-in (or fade-out) never yields a head (or tail).
+    public func pieces(startFrame: Int64, frameCount: Int64, sampleRate: Double)
+        -> (head: Range<Int64>?, middle: Range<Int64>?, tail: Range<Int64>?) {
+        guard startFrame >= 0, frameCount > 0, startFrame <= Int64.max - frameCount,
+              sampleRate.isFinite, sampleRate > 0 else { return (nil, nil, nil) }
+        let start = startFrame, end = startFrame + frameCount
+        /// A media time as a frame edge, held inside the scheduled frames before it becomes an
+        /// integer, so no conversion can overflow.
+        func edge(_ seconds: Double, lowest: Int64) -> Int64 {
+            let frame = (seconds * sampleRate).rounded()
+            guard frame.isFinite else { return lowest }
+            return Int64(Swift.min(Swift.max(frame, Double(lowest)), Double(end)))
+        }
+        let fadeInEnd = fadeIn > 0 ? edge(partStart + fadeIn, lowest: start) : start
+        let fadeOutStart = fadeOut > 0 ? edge(partStart + duration - fadeOut, lowest: fadeInEnd) : end
+        func piece(_ from: Int64, _ to: Int64) -> Range<Int64>? { from < to ? from..<to : nil }
+        return (piece(start, fadeInEnd), piece(fadeInEnd, fadeOutStart), piece(fadeOutStart, end))
+    }
+}
