@@ -300,6 +300,14 @@ struct EchoelmusicApp: App {
     /// .background, consumed by the .active branch to restart the (possibly stopped)
     /// audio engine + bio loop exactly once per return to foreground.
     @State private var wasBackgrounded = false
+    /// SH-1 — set at `startup 4/4`, consumed by `confirmSteadyLaunch(trigger:)`: the studio
+    /// launch is confirmed healthy ONCE, by whichever comes first of the steady timer after
+    /// the deferred starts and the first `.background`. Never set in Safe Mode or onboarding,
+    /// where the startup task does not run, so a background there confirms nothing.
+    @State private var steadyConfirmPending = false
+    /// SH-1 review — when the startup task issued its deferred starts. An `.inactive` scene
+    /// confirms only once `LaunchGuard.inactiveConfirmFloorSeconds` have passed since then.
+    @State private var deferredStartsIssuedAt: ContinuousClock.Instant?
 
     init() {
         EchoelCrashLog.begin()   // diagnostics first: capture any crash from here on
@@ -510,7 +518,8 @@ struct EchoelmusicApp: App {
                         // measures: the launch reached a UI instead of a black screen.
                         // It does NOT blind the guard against the risky startup (graph
                         // build · voice attach · engine start) — that can only run once
-                        // `mainContent` is built, and that path confirms itself at 4/4.
+                        // `mainContent` is built, and that path confirms itself once its deferred
+                        // starts have settled (SH-1: `confirmSteadyLaunch`).
                         // The Safe-Mode branch above clears its counter from its own
                         // `.onAppear` too, but the reasoning is NOT the same and review
                         // was right to say so: there, nothing else will ever confirm and
@@ -545,6 +554,21 @@ struct EchoelmusicApp: App {
                     }
             }
         }
+    }
+
+    /// SH-1 — the ONE studio confirm writer. The steady timer after the deferred starts and the
+    /// first `.background` both land here, and only the first of them confirms
+    /// (`steadyConfirmPending`). The line stands BEFORE the act (#859/#915) and keeps the
+    /// `(studio)` spelling, disjoint from onboarding's, that `unconfirmedRunToAttach` and the
+    /// export read; the trigger rides after the streak.
+    @MainActor
+    private func confirmSteadyLaunch(trigger: String) {
+        guard steadyConfirmPending else { return }
+        steadyConfirmPending = false
+        EchoelCrashLog.breadcrumb(
+            EchoelCrashLog.confirmedHealthyMarker + " (studio) — streak "
+            + "\(LaunchGuard.unconfirmedCount) — \(trigger)")
+        LaunchGuard.confirmHealthy()
     }
 
     /// Bring outputs online/offline to match the Patchbay (see also `scenePhaseName`
@@ -1527,25 +1551,19 @@ struct EchoelmusicApp: App {
                 log.log(.info, category: .system, "STARTUP [4/4] Core ready — instrument live")
                 EchoelCrashLog.breadcrumb("startup 4/4: core ready — instrument live")
 
-                // Self-healing: confirm this launch healthy NOW that the UI rendered and
-                // the whole risky startup (graph build · voice attach · engine start —
-                // the build-1363 crash zone) completed without crashing. A crash anywhere
-                // BEFORE this point leaves LaunchGuard's counter raised → the next launch
-                // boots into Safe Mode. Confirming at end-of-startup (was a 4 s wall-clock
-                // sleep) shrinks the false-escalation window to the sub-second startup
-                // duration — so quitting the app fast (e.g. to read the diagnostics log)
-                // no longer risks a spurious Safe Mode on the next launch.
-                // #915 — MOVED IN FRONT OF ITS STEP. The line stood AFTER the call since
-                // the ladder went in, and the rung law (#859) is not decoration here: a line
-                // written after a step is lost exactly when that step is the one that dies.
-                // `confirmHealthy()` is a synchronous `UserDefaults` write, so the odds are
-                // small — but the whole point of the ladder is that "small" is not a reason
-                // to leave a witness behind the thing it witnesses. Found by the guard added
-                // in the same commit, which is what a guard is for.
-                EchoelCrashLog.breadcrumb(
-                    EchoelCrashLog.confirmedHealthyMarker + " (studio) — streak "
-                    + "\(LaunchGuard.unconfirmedCount)")
-                LaunchGuard.confirmHealthy()
+                // SH-1 (GMMW, 2026-10-08) — THE CONFIRM NO LONGER HAPPENS HERE. It stood at this
+                // line, after the risky graph build and engine start but BEFORE the deferred
+                // starts below — and 39ba753 fixed a HealthKit handler that trapped on every
+                // Health-enabled launch a moment after this point. That crash never raised the
+                // counter, so it looped every launch and Safe Mode never engaged. The launch now
+                // counts as healthy once the studio stays in the foreground for
+                // `LaunchGuard.steadyConfirmSeconds` after those starts, or at its first
+                // `.background` (leaving the app to read the diag log counts as survival, which
+                // keeps the reason the old 4 s sleep was replaced). `.inactive` confirms only after
+                // `LaunchGuard.inactiveConfirmFloorSeconds`: the app switcher fires it and a kill
+                // from there never reaches `.background`, but so does a system alert at launch. The
+                // writer is `confirmSteadyLaunch(trigger:)`.
+                steadyConfirmPending = true
 
                 // ── BEST-EFFORT, NON-BLOCKING ────────────────────────────────
                 // These await (HealthKit permission dialog, StoreKit network) and
@@ -1575,6 +1593,19 @@ struct EchoelmusicApp: App {
                 // only acts when the user has the toggle ON (default OFF).
                 locationNamer.attach(session: sessionContext)
                 #endif
+                // SH-1 — every start above is issued; a crash in any of them before the timer
+                // ends (or before the first background) leaves the counter raised, so the next
+                // launch boots into Safe Mode instead of looping. Before the sleep (#859), so a
+                // log that ends here reads as "died while the launch was settling".
+                EchoelCrashLog.breadcrumb("startup: deferred starts issued — steady confirm in "
+                    + "\(LaunchGuard.steadyConfirmSeconds) s or at the first background")
+                deferredStartsIssuedAt = ContinuousClock.now
+                try? await Task.sleep(for: .seconds(LaunchGuard.steadyConfirmSeconds))
+                guard !Task.isCancelled else {
+                    EchoelCrashLog.breadcrumb("startup: steady confirm skipped — the startup task was cancelled")
+                    return
+                }
+                confirmSteadyLaunch(trigger: "steady \(LaunchGuard.steadyConfirmSeconds) s")
             }
             #if canImport(HealthKit)
             // UX-3: the deferred HealthKit ask fires at the FIRST user-initiated bio
@@ -1652,6 +1683,12 @@ struct EchoelmusicApp: App {
                     midiOut.rearmIfDead()
                 case .background:
                     wasBackgrounded = true
+                    // SH-1 — the launch survived into its first background: confirm it now, so a
+                    // quick look at another app is never counted as a crash. FIRST in the branch, so
+                    // a crash in the teardown below is not counted as a launch crash (the counter
+                    // was already 0 there before SH-1). A no-op once confirmed, and in Safe Mode or
+                    // onboarding, where this handler is not attached.
+                    confirmSteadyLaunch(trigger: "first background")
                     // App-Group-Puls-Brücke (2026-07-17): bioFeedback deliberately
                     // KEEPS publishing in the background — the bridge's headline
                     // scenario is the HOST (GarageBand/AUM) in the foreground with
@@ -1727,7 +1764,14 @@ struct EchoelmusicApp: App {
                         EchoelCrashLog.breadcrumb("scene: audio continues")
                     }
                 case .inactive:
-                    break
+                    // SH-1 review — the app switcher makes the app `.inactive`, and a kill from there
+                    // never delivers `.background`. Once the deferred starts have run for the floor,
+                    // that counts as survival too. Before the floor it does not: a system alert at
+                    // launch fires `.inactive` while a deferred start may still be about to trap.
+                    if let issued = deferredStartsIssuedAt,
+                       ContinuousClock.now - issued >= .seconds(LaunchGuard.inactiveConfirmFloorSeconds) {
+                        confirmSteadyLaunch(trigger: "inactive after the floor")
+                    }
                 @unknown default:
                     break
                 }

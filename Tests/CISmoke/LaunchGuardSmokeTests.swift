@@ -119,7 +119,7 @@ final class LaunchGuardSmokeTests: XCTestCase {
         LaunchGuard.resetForTesting()
         LaunchGuard.beginLaunch()
         LaunchGuard.armForRiskyStartup()
-        LaunchGuard.confirmHealthy()        // a healthy studio launch, confirmed at 4/4
+        LaunchGuard.confirmHealthy()        // a healthy studio launch, confirmed once it settled (SH-1)
         LaunchGuard.beginLaunch()
         XCTAssertFalse(LaunchGuard.isSafeMode, "a confirmed launch still leaves a clean slate")
     }
@@ -291,6 +291,133 @@ final class LaunchGuardSmokeTests: XCTestCase {
                 this whole family of scans.
                 """)
         }
+    }
+
+    /// ⭐ SH-1 (GMMW, 2026-10-08) — THE STUDIO LAUNCH IS CONFIRMED HEALTHY ONLY AFTER ITS
+    /// DEFERRED STARTS. The confirm used to stand at `startup 4/4`, before the HealthKit start;
+    /// 39ba753 fixed a HealthKit handler that trapped on every Health-enabled launch a moment
+    /// later, so that crash looped every launch and never raised the counter Safe Mode reads.
+    /// Now the flag is set at 4/4, the deferred starts are issued, and the ONE writer confirms
+    /// after `LaunchGuard.steadyConfirmSeconds`, at the first `.background`, or at `.inactive` once
+    /// `LaunchGuard.inactiveConfirmFloorSeconds` have passed (the review's finding: the app
+    /// switcher fires `.inactive` and a kill from there never reaches `.background`, so a
+    /// kill-and-relaunch inside the window counted as a crash). Never `.inactive` before the
+    /// floor: a system alert at launch fires it too.
+    ///
+    /// Grading (#433), transcribed against the parent `da5e108` and the worktree: (a) is a
+    /// REGRESSION — on the parent `LaunchGuard.confirmHealthy()` stands between the 4/4 rung and
+    /// the HealthKit start. (b)–(e) are FORWARD: they name the flag, the writer, the sleep and the
+    /// constant, and this FILE does not compile against the parent's `Sources/` at all
+    /// (`steadyConfirmSeconds` is new), so no assertion here has a verdict there. Stripper
+    /// `SourceText.codeOnly`: the 4/4 comment now says what moved, so it is load-bearing for (a).
+    /// LIMIT: a source scan and two constants; nothing renders a scene or waits ten seconds. A
+    /// switcher kill inside the floor still raises the counter, and a crash after a quick
+    /// home-swipe confirmed the launch goes uncounted — both are the window's stated trade.
+    func testTheStudioLaunchIsConfirmedOnlyAfterItsDeferredStarts() throws {
+        let app = SourceText.codeOnly(try appSource())
+        guard let rung = app.range(of: "EchoelCrashLog.breadcrumb(\"startup 4/4: core ready — instrument live\")"),
+              let health = app.range(of: "healthBio.startIfAlreadyAuthorized(publishing: bus)",
+                                      range: rung.upperBound..<app.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the `startup 4/4` rung or the HealthKit start moved — re-anchor (#408)")
+        }
+
+        // (a) Nothing between the 4/4 rung and the HealthKit start confirms the launch.
+        let early = app[rung.upperBound..<health.lowerBound]
+        XCTAssertFalse(early.contains("LaunchGuard.confirmHealthy()") || early.contains("confirmSteadyLaunch("), """
+            The studio launch is confirmed healthy BEFORE its deferred starts again. A crash in \
+            the HealthKit start (39ba753's class) then never raises the counter, loops every \
+            launch, and Safe Mode never engages. Confirm after the starts (SH-1).
+            """)
+
+        // (b) The order: flag at 4/4, every deferred start issued, the owner's window, the
+        // cancellation check, then the one writer.
+        guard let pending = app.range(of: "steadyConfirmPending = true", range: rung.upperBound..<health.lowerBound),
+              let writer = app.range(of: "healthWriter.start(reading: bus)", range: health.upperBound..<app.endIndex),
+              let place = app.range(of: "locationNamer.attach(session: sessionContext)", range: writer.upperBound..<app.endIndex),
+              let sleep = app.range(of: "try? await Task.sleep(for: .seconds(LaunchGuard.steadyConfirmSeconds))",
+                                    range: place.upperBound..<app.endIndex),
+              let cancelled = app.range(of: "guard !Task.isCancelled else {", range: sleep.upperBound..<app.endIndex),
+              let timer = app.range(of: "confirmSteadyLaunch(trigger: \"steady ", range: cancelled.upperBound..<app.endIndex) else {
+            return XCTFail("""
+                The steady confirm's order is gone: 4/4 sets the flag, then HealthKit, the Health \
+                writer and the place token start, then the startup task sleeps for \
+                `LaunchGuard.steadyConfirmSeconds`, checks cancellation and confirms (SH-1).
+                """)
+        }
+        XCTAssertLessThan(pending.lowerBound, timer.lowerBound)
+
+        // (c) The ONE studio writer: guarded by the flag, consumed once, its line before the act
+        // (#859), in the `(studio)` spelling the export reads.
+        guard let helper = app.range(of: "private func confirmSteadyLaunch(trigger: String) {") else {
+            return XCTFail("ANCHOR MISSING: `confirmSteadyLaunch(trigger:)` (#408)")
+        }
+        var depth = 0
+        var close: String.Index?
+        var i = app.index(before: helper.upperBound)   // the opening brace
+        while i < app.endIndex {
+            if app[i] == "{" {
+                depth += 1
+            } else if app[i] == "}" {
+                depth -= 1
+                if depth == 0 { close = i; break }
+            }
+            i = app.index(after: i)
+        }
+        guard let end = close else { return XCTFail("`confirmSteadyLaunch` has no closing brace") }
+        let body = String(app[helper.upperBound..<end])
+        guard let gate = body.range(of: "guard steadyConfirmPending else { return }"),
+              let consume = body.range(of: "steadyConfirmPending = false"),
+              let crumb = body.range(of: "EchoelCrashLog.confirmedHealthyMarker + \" (studio) — streak \""),
+              let act = body.range(of: "LaunchGuard.confirmHealthy()") else {
+            return XCTFail("`confirmSteadyLaunch` lost its flag, its consume, its `(studio)` line or its confirm")
+        }
+        XCTAssertLessThan(gate.lowerBound, consume.lowerBound, "the flag is read before it is consumed")
+        XCTAssertLessThan(consume.lowerBound, act.lowerBound, "consumed before the act, so a second trigger confirms nothing")
+        XCTAssertLessThan(crumb.lowerBound, act.lowerBound, "a mutator announces BEFORE it acts (#859)")
+        XCTAssertEqual(app.components(separatedBy: "LaunchGuard.confirmHealthy()").count - 1, 2,
+                       "two confirm calls: onboarding's `.onAppear` and this writer — a third is a path that skips the wait")
+        XCTAssertEqual(app.components(separatedBy: "confirmSteadyLaunch(trigger: \"").count - 1, 3,
+                       "three triggers: the steady timer, the first background, `.inactive` after the floor")
+
+        // (d) The first `.background` confirms, FIRST in its branch; `.inactive` only after the floor.
+        guard let background = app.range(of: "wasBackgrounded = true"),
+              let inactive = app.range(of: "case .inactive:", range: background.upperBound..<app.endIndex),
+              let unknown = app.range(of: "@unknown default:", range: inactive.upperBound..<app.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the scene-phase `.background` / `.inactive` branches (#408)")
+        }
+        let backgroundBranch = String(app[background.upperBound..<inactive.lowerBound])
+        guard let leave = backgroundBranch.range(of: "confirmSteadyLaunch(trigger: \"first background\")") else {
+            return XCTFail("""
+                Leaving the app no longer confirms the launch. A user who looks at another app within \
+                the steady window would then count as a crash, and two such launches open Safe Mode.
+                """)
+        }
+        if let teardown = backgroundBranch.range(of: "flushPendingSave()") {
+            XCTAssertLessThan(leave.lowerBound, teardown.lowerBound,
+                              "the background confirm comes before the teardown, so a teardown crash is not a launch crash")
+        }
+        let inactiveBranch = String(app[inactive.upperBound..<unknown.lowerBound])
+        guard let floor = inactiveBranch.range(of: "LaunchGuard.inactiveConfirmFloorSeconds"),
+              let issued = inactiveBranch.range(of: "if let issued = deferredStartsIssuedAt,"),
+              let late = inactiveBranch.range(of: "confirmSteadyLaunch(trigger: \"inactive after the floor\")") else {
+            return XCTFail("""
+                `.inactive` confirms without the floor, or not at all. Without the floor a system \
+                alert at launch confirms before a deferred start can trap; without the confirm a \
+                kill from the app switcher counts as a crash (SH-1 review).
+                """)
+        }
+        XCTAssertLessThan(issued.lowerBound, late.lowerBound, "the floor is checked before the confirm")
+        XCTAssertLessThan(floor.lowerBound, late.lowerBound, "the floor is checked before the confirm")
+        XCTAssertEqual(inactiveBranch.components(separatedBy: "confirmSteadyLaunch(").count - 1, 1,
+                       "one confirm in `.inactive`, behind the floor")
+
+        // (e) END-TO-END on the constants: the steady window is long enough for the deferred
+        // starts' first callbacks and short enough that a normal session confirms long before
+        // anyone quits; the inactive floor is a real floor and sits inside the window.
+        XCTAssertGreaterThanOrEqual(LaunchGuard.steadyConfirmSeconds, 5)
+        XCTAssertLessThanOrEqual(LaunchGuard.steadyConfirmSeconds, 30)
+        XCTAssertGreaterThanOrEqual(LaunchGuard.inactiveConfirmFloorSeconds, 1)
+        XCTAssertLessThan(LaunchGuard.inactiveConfirmFloorSeconds, LaunchGuard.steadyConfirmSeconds)
     }
 
     private func appSource() throws -> String {

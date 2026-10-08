@@ -14,8 +14,9 @@
 //
 //    • `beginLaunch()`  (called first thing in app init) increments a persisted
 //      "unconfirmed launches" counter and flushes it synchronously.
-//    • `confirmHealthy()` (called a few seconds after the main UI appears) resets
-//      the counter to 0 — proof this launch rendered and survived.
+//    • `confirmHealthy()` (called once the studio has stayed in the foreground for
+//      `steadyConfirmSeconds` after its deferred starts, or at its first background)
+//      resets the counter to 0 — proof this launch rendered and survived.
 //    • A launch that crashes before `confirmHealthy()` leaves the counter raised,
 //      so the next `beginLaunch()` pushes it past the threshold → Safe Mode.
 //
@@ -35,6 +36,23 @@ enum LaunchGuard {
     /// healthy. 2 = after a single crash the very next launch is protected, so the
     /// user never sees a second black screen. Safe Mode is trivially exitable.
     private static let safeModeThreshold = 2
+
+    /// SH-1 (GMMW, 2026-10-08) — how long the studio must stay in the foreground AFTER its
+    /// deferred starts (HealthKit, StoreKit, place token) before the launch counts as healthy.
+    /// The first `.background` confirms sooner. ⛔ The confirm used to run at `startup 4/4`,
+    /// BEFORE those starts: 39ba753 fixed a HealthKit handler that trapped on every
+    /// Health-enabled launch moments later, and that crash never raised the counter, so Safe
+    /// Mode could not engage. Ten seconds covers the first callbacks of every deferred start;
+    /// it is a floor for "the launch settled", not a measurement of any one of them.
+    static let steadyConfirmSeconds = 10
+
+    /// SH-1 review — how long after the deferred starts an `.inactive` scene also confirms. The
+    /// app switcher makes the app `.inactive`, and a kill from there never delivers `.background`,
+    /// so without this a kill-and-relaunch inside the steady window counted as a crash, and two in
+    /// a row opened Safe Mode. A system alert at launch fires `.inactive` too, which is why there
+    /// is a floor: the first callbacks of a deferred start (the 39ba753 trap fired within moments)
+    /// land well inside it.
+    static let inactiveConfirmFloorSeconds = 3
 
     /// Decided ONCE per process in `beginLaunch()` and cached, so reading it later
     /// (after the counter has been reset by `confirmHealthy()`) stays stable.
@@ -68,9 +86,10 @@ enum LaunchGuard {
     static var unconfirmedCount: Int { UserDefaults.standard.integer(forKey: countKey) }
 
     /// Mark the app healthy: the main UI rendered and survived. Resets the counter
-    /// so the *next* launch starts clean. Call a few seconds after the root view
-    /// appears (a crash during initial render fires before this, leaving the count
-    /// raised — exactly what escalates to Safe Mode).
+    /// so the *next* launch starts clean. The studio calls it `steadyConfirmSeconds` after
+    /// its deferred starts, or at its first background (a crash during render or in a
+    /// deferred start fires before this, leaving the count raised — exactly what escalates
+    /// to Safe Mode). Onboarding calls it when its screen appears.
     static func confirmHealthy() {
         let d = UserDefaults.standard
         guard d.integer(forKey: countKey) != 0 else { return }
