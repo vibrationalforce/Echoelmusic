@@ -62,7 +62,9 @@
 //        (the part's level, and since W9 its Normalize) their callers. All leave the
 //        caller-less set; `TheTimelineStoresLiveSurfaceTests` pins them since 2026-10-08.
 //        Audio editor W3 added `setRegionStretchMode`, born with its caller (the part bar's
-//        Stretch picker) and pinned beside them.
+//        Stretch picker) and pinned beside them. ⚠️ Audio editor W4a added `setRegionFades`
+//        WITHOUT a caller on purpose: the player reads the fades from W4b, and the part bar's
+//        fade fields (W4c) are its door — until then it sits in the caller-less set.
 //        Re-derive the count, do not patch digits.
 //   ·  8 used only inside this file — the previous six (automationLaneIndex,
 //        canCombineRegions, migrate, resolveOverlaps, restoreRegions, syncUndoFlags) PLUS
@@ -708,6 +710,26 @@ public final class TimelineStore {
         persist()
     }
 
+    /// Audio editor W4a: a part's fade-in and fade-out, in ticks — ONE undo step for both, a
+    /// no-op for an unknown part or unchanged lengths. Stored as they will play: each held to
+    /// the part's length and the fade-out to what the fade-in leaves (`FadeEnvelope.effective`,
+    /// the one rule), so a stored fade is never a length the part cannot sound. A later
+    /// shorter part is still safe: the player applies the same rule to whatever is stored.
+    public func setRegionFades(id: UUID, fadeInTicks: Int, fadeOutTicks: Int) {
+        guard let i = document.regions.firstIndex(where: { $0.id == id }) else { return }
+        let fades = FadeEnvelope.effective(fadeIn: Double(fadeInTicks),
+                                           fadeOut: Double(fadeOutTicks),
+                                           duration: Double(document.regions[i].lengthTicks))
+        // Exact: both are whole numbers no larger than the part's own length in ticks.
+        let fadeIn = Int(fades.fadeIn), fadeOut = Int(fades.fadeOut)
+        guard document.regions[i].fadeInTicks != fadeIn
+                || document.regions[i].fadeOutTicks != fadeOut else { return }
+        snapshotForUndo()
+        document.regions[i].fadeInTicks = fadeIn
+        document.regions[i].fadeOutTicks = fadeOut
+        persist()
+    }
+
     /// #C1: turn warping on or off for a set of placed parts, each with the length it spans in
     /// its new state — ONE undo step for the whole set, and a no-op when nothing changes. The
     /// decision (which parts, which length) is `AudioWarp.changes`, pure and driven by the
@@ -864,6 +886,9 @@ public final class TimelineStore {
         snapshotForUndo()
         var combined = earliest
         combined.lengthTicks = endMax - earliest.startTick
+        // W4a: the combined part ends where the latest-ending one did, so it keeps THAT part's
+        // fade-out — `earliest`'s own would otherwise land at the new end.
+        combined.fadeOutTicks = selected.last(where: { $0.endTick == endMax })?.fadeOutTicks ?? 0
         document.regions.removeAll { ids.contains($0.id) }
         document.regions.append(combined)
         persist()

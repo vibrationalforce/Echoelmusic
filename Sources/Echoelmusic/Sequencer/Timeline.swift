@@ -303,11 +303,19 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     /// Applied on the timeline since Stretch Slice B: `AudioLanePlayer` resolves the
     /// region's `StretchPlan` and the lane sink renders it (warp chain for rate ≠ 1).
     public var stretchMode: StretchMode
+    /// Audio editor W4a: this part's fade-in and fade-out, in TICKS — the domain of the part's
+    /// own length, so a fade keeps its share of the part when the tempo moves. 0 = a hard edge.
+    /// Stored ≥ 0; how much of each plays inside the part is `FadeEnvelope.effective`, the one
+    /// rule ("in wins"). Split keeps the fade-in on the left piece and the fade-out on the
+    /// right; Join refuses a seam that carries a fade (`abuts`). MIDI parts ignore both.
+    /// Legacy regions decode as 0. ⚠️ Not played yet: no player reads them before W4b.
+    public var fadeInTicks: Int
+    public var fadeOutTicks: Int
 
     public init(id: UUID = UUID(), laneID: UUID, clipID: UUID,
                 startTick: Int, lengthTicks: Int, contentOffsetSeconds: Double = 0,
                 contentOffsetTicks: Int = 0, gain: Float = 1, warpEnabled: Bool = false,
-                stretchMode: StretchMode = .clean) {
+                stretchMode: StretchMode = .clean, fadeInTicks: Int = 0, fadeOutTicks: Int = 0) {
         self.id = id
         self.laneID = laneID
         self.clipID = clipID
@@ -318,11 +326,13 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         self.gain = Swift.min(2, Swift.max(0, gain.isFinite ? gain : 1))
         self.warpEnabled = warpEnabled
         self.stretchMode = stretchMode
+        self.fadeInTicks = max(0, fadeInTicks)
+        self.fadeOutTicks = max(0, fadeOutTicks)
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, laneID, clipID, startTick, lengthTicks, contentOffsetSeconds
-        case contentOffsetTicks, gain, warpEnabled, stretchMode
+        case contentOffsetTicks, gain, warpEnabled, stretchMode, fadeInTicks, fadeOutTicks
     }
 
     public init(from decoder: Decoder) throws {
@@ -349,6 +359,9 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         warpEnabled = (try? c.decode(Bool.self, forKey: .warpEnabled)) ?? false
         // Legacy regions (pre stretch-engine) carry no mode — Clean (Apple spectral).
         stretchMode = (try? c.decode(StretchMode.self, forKey: .stretchMode)) ?? .clean
+        // Legacy regions (pre-W4a) carry no fades — hard edges, bit-identical playback.
+        fadeInTicks = max(0, (try? c.decode(Int.self, forKey: .fadeInTicks)) ?? 0)
+        fadeOutTicks = max(0, (try? c.decode(Int.self, forKey: .fadeOutTicks)) ?? 0)
     }
 
     public var endTick: Int { startTick + lengthTicks }
@@ -363,10 +376,14 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         guard tick > startTick, tick < endTick else { return nil }
         var first = self
         first.lengthTicks = tick - startTick
+        // W4a: the cut is a hard edge on both sides — the fade-in stays on the left piece, the
+        // fade-out on the right. That is what keeps Join (`abuts`) the lossless inverse.
+        first.fadeOutTicks = 0
         var second = self
         second.id = UUID()
         second.startTick = tick
         second.lengthTicks = endTick - tick
+        second.fadeInTicks = 0
         second.contentOffsetSeconds = contentOffsetSeconds
             + TimelineTime.seconds(fromTicks: tick - startTick, bpm: bpm)
         // Tick twin, maintained in the tick domain directly — exact at any tempo.
@@ -423,7 +440,10 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         // timelines — joining them would silently pick one state.
         guard laneID == other.laneID, clipID == other.clipID, endTick == other.startTick,
               gain == other.gain, warpEnabled == other.warpEnabled,
-              stretchMode == other.stretchMode
+              stretchMode == other.stretchMode,
+              // W4a: a fade AT THE SEAM would vanish inside the joined part — refuse instead.
+              // A clean split leaves both seam fades at 0, so it always rejoins.
+              fadeOutTicks == 0, other.fadeInTicks == 0
         else { return false }
         // Prefer the tempo-invariant tick twin (M1b) when present: a clean split
         // keeps `second.contentOffsetTicks == first.contentOffsetTicks + first.lengthTicks`
@@ -443,6 +463,7 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     public func merged(with other: TimelineRegion) -> TimelineRegion {
         var r = self
         r.lengthTicks = other.endTick - startTick
+        r.fadeOutTicks = other.fadeOutTicks   // W4a: the joined part ends where `other` did
         return r
     }
 

@@ -138,19 +138,11 @@ public struct AudioClipRegion: Codable, Sendable, Equatable {
     /// between. If the two fades would overlap (their sum exceeds the duration),
     /// the fade-in keeps its full length and the fade-out fills the remainder,
     /// so the multiplier always stays within [0,1]. Out-of-range elapsed clamps.
+    /// Audio editor W4a: the rule itself lives in `FadeEnvelope` now (#416) — a timeline part
+    /// fades by the same arithmetic, so it is stated once and asked from both.
     public func fadeMultiplier(atElapsed elapsed: Double) -> Float {
-        let dur = durationSeconds
-        guard dur > 0 else { return 1 }
-        let t = Swift.min(dur, Swift.max(0, elapsed.isFinite ? elapsed : 0))
-        let fin = Swift.min(fadeInSeconds, dur)
-        let fout = Swift.min(fadeOutSeconds, dur - fin)   // in wins if they'd overlap
-        var g = 1.0
-        if fin > 0, t < fin { g = t / fin }               // 0→1
-        if fout > 0 {
-            let outStart = dur - fout
-            if t > outStart { g = Swift.min(g, (dur - t) / fout) }   // 1→0
-        }
-        return Float(Swift.min(1, Swift.max(0, g)))
+        Float(FadeEnvelope.gain(atElapsed: elapsed, duration: durationSeconds,
+                                fadeIn: fadeInSeconds, fadeOut: fadeOutSeconds))
     }
 
     // MARK: Frame conversion (for AVAudioFile / scheduleSegment)
