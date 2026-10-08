@@ -683,3 +683,11 @@ Dokument: `scratchpads/E10-1_RELEASE_PREP_2026-10-07.md`. Die 52 Haupt-Checkout-
 ### J0_2026-10-07e — #310-Patch nachgebessert: auch die Jobs-Abfrage
 
 Founder-Prüfung von `a3d5d5622`: die Jobs-Abfrage ersetzte einen Fehlschlag weiter durch `{"jobs":[]}`, und bei abgeschlossener CI wurde daraus sofort `never-ran`. Reproduziert und behoben: Jobs-Abruf mit derselben Regel wie der Runs-Abruf (Fehler oder Antwort ohne `jobs`-Array = Lesefehler, protokolliert, nach 30 s erneut, bis zur bestehenden Frist). Beleg statt „erst der nächste echte Lauf“: `python3 -I scratchpads/AUTO_MERGE_310_sim.py <orig.yml> <neu.yml>` fährt den Poll-Schritt mit simulierten API-Antworten (Fake-Uhr, `bash -e` wie der Runner), neun Fälle. Heutiger Workflow 6/9 falsch, `a3d5d5622`-Fassung 3/9 falsch (genau die Jobs-Fälle), neue Fassung 9/9 — darunter weiter ABLEHNUNG bei abgeschlossener, vollständig gelesener CI ohne Build-for-Testing-Schritt, bei fehlendem Compile Check und bei dauerhaftem API-Ausfall (`timeout` nach 45 min). Unbelegt bleibt nur, was eine Simulation nicht sieht: echte API-Formen außerhalb der Fälle, Paginierung > 100 Jobs.
+
+### J0_2026-10-08g — 2613-SIGTRAP repariert, Bump 10.79.494
+
+| SHA | Compile Check | Build for Testing | Run Tests | Bump |
+|---|---|---|---|---|
+| `f74e2ed` (bebdfa8 Fix + f74e2ed Inbox) | 37760447412 | Job 113255725248 (Lauf 37760447391) | lief beim Eintrag noch (Job 113255725248, Start 10:07Z); Fenster wird nachgelesen — Nachtrag folgt |  → 10.79.494, TestFlight 2619 |
+
+Ursache `RetroCapture.swift:604` (off-main DispatchSource-Handler in `@MainActor`-Klasse, inferierte Isolation, Eintrittsprüfung trappt auf dem Worker), Fix `@Sendable` + Sprosse, Wächter `TheOffMainDispatchHandlerIsSendableTests`. Offen: Gerät (Inbox G9), dSYM-`atos`, `SingleExport.swift:398` (gleiche Form, eigene Scheibe), Queue-Label im Crash-Handler.
