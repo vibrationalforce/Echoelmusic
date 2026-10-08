@@ -268,8 +268,20 @@ public final class ResourceGovernor {
     }
 
     /// Re-read the device and recompute (called on every relevant notification).
+    ///
+    /// GMMW SH-6: a thermal step or a Low Power Mode switch writes one diag-log line, and only
+    /// when it CHANGED — the battery notifications land here too, once per percent, and say
+    /// nothing. The line comes before the recompute, so a tier change it causes reads after it.
     public func refresh() {
+        let thermalBefore = thermal
+        let lowPowerBefore = lowPower
         readDeviceState()
+        if thermal != thermalBefore {
+            EchoelCrashLog.breadcrumb("governor: thermal \(thermalBefore) -> \(thermal)")
+        }
+        if lowPower != lowPowerBefore {
+            EchoelCrashLog.breadcrumb("governor: low power \(lowPower ? "on" : "off")")
+        }
         recompute()
     }
 
@@ -389,6 +401,11 @@ public final class ResourceGovernor {
         // a second caller — the class of drift this whole slice exists to end.
         PollingRateCeiling.setBioHz(next.bioHz)
         guard next != settings else { return }
+        // GMMW SH-6: a TIER change writes one diag-log line (a detail-only change does not) —
+        // before the os_log below, which the exported log cannot see.
+        if next.tier != settings.tier {
+            EchoelCrashLog.breadcrumb("governor: tier \(settings.tier) -> \(next.tier), cause \(cause)")
+        }
         settings = next
         // `fps ref`, not `fps target`: nothing reassigns MTKView.preferredFramesPerSecond
         // (see the knob table above). Logged because it is the value the FPS-feedback

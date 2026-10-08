@@ -317,6 +317,14 @@ public final class MemoryPressureHandler {
         // Sekunden nach jedem Start auf jedem Geraet (#1201).
         currentLevel = level
         pressureEventCount += 1
+        // GMMW SH-6: one diag-log line per pressure EVENT, before anything is released. A jetsam
+        // kill leaves no trace in the process, so the last `memory:` line — the level, this
+        // process's own headroom (`os_proc_available_memory`, never the #1201 subtraction) and
+        // how many events came before — is the only thing that tells a pressure death from a
+        // crash. Written here and nowhere periodic: the 5 s poll stays silent.
+        let headroomMB = getMemoryStats().available / 1_048_576
+        EchoelCrashLog.breadcrumb(
+            "memory: \(level.description.lowercased()) pressure, headroom \(headroomMB) MB, event \(pressureEventCount)")
         log.warning("MemoryPressureHandler: Handling \(level.description) pressure")
 
         // Clean up dead references
