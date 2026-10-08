@@ -373,12 +373,20 @@ struct WorkstationView: View {
                 if !arrangeRows.isEmpty {
                   VStack(alignment: .leading, spacing: 10) {
                     // AE-3a: in focus the canvas steps aside; the part bar stays — it holds the way out.
+                    // One inset for the canvas and, in focus, the ruler that stands in its place.
+                    Group {
                     if !focused {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       bpm: player.preflightTempo,
                                       songTicks: ArrangementStrip.songTicks(summary))
-                        .padding(.horizontal, 10)
+                    } else {
+                        // AE-3 review (MED-1): the ruler stays — the one control that moves a
+                        // stopped playhead, which "At playhead" tells the player to tap.
+                        ArrangeFocusRuler(document: timeline.document,
+                                          songTicks: ArrangementStrip.songTicks(summary))
                     }
+                    }
+                    .padding(.horizontal, 10)
                     // WA4 path 5 — the actions for the part selected on the canvas. Its own
                     // leaf: it reads the song tempo and the clip only inside Split.
                     // M10: Play from the selected part, one tap above its notes — started
@@ -1689,10 +1697,13 @@ struct WorkstationView: View {
     /// and its detail, over the pinned transport — nothing else. Asked off the ONE selection owner
     /// and resolved on read (`WorkstationSelection.focusShown`), so another plate, a deselect or an
     /// Undo that removes the part simply stop showing it. Cold reads only (a tap, an edit).
+    /// The flag is asked FIRST (AE-3 review, LOW-7): with focus off the plate never reads the part
+    /// id, so a tap on a part rebuilds the part bar, not the whole plate.
     private var editorFocusShown: Bool {
-        WorkstationSelection.focusShown(selection.editorFocused, onArrange: pieceView == .arrange,
-                                        region: selection.regionID, track: selection.trackID,
-                                        in: timeline.document)
+        selection.editorFocused
+            && WorkstationSelection.focusShown(true, onArrange: pieceView == .arrange,
+                                               region: selection.regionID, track: selection.trackID,
+                                               in: timeline.document)
     }
 
     /// Start the arrangement on the ONE transport. Everything this hands over is already

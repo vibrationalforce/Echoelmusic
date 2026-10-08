@@ -8,7 +8,8 @@
 // WHAT THIS PINS.
 // 1. END-TO-END on the real owner (`WorkstationSelection`): focus is off by default, survives a
 //    page change and another part on the same track, and ends with the track — `clear`,
-//    `toggleTrack`, `selectTrack` and a `selectRegion` on another track turn it off.
+//    `toggleTrack`, `selectTrack` and a `selectRegion` on another track turn it off — and, since
+//    the AE-3 review (MED-2), a `selectRegion` after the focused part is gone.
 // 2. END-TO-END (pure): `WorkstationSelection.focusShown` is true only with the flag on, on the
 //    Arrange plate, for a part that still resolves on its track, on a track the part bar can
 //    arrange. A plate change, an Undo that removes the part, a bio curve: no focus. Resolved on
@@ -16,10 +17,14 @@
 // 3. SOURCE: it is LAYOUT, not a modal. The Workstation keeps its one presentation modifier (the
 //    importer) and gains none; in focus the canvas, the guide, the song line, the other tracks,
 //    the side-by-side column and the scene launcher step aside, while the part bar, the open
-//    track's head and detail and the pinned transport stay. The flag is never persisted.
+//    track's head and detail and the pinned transport stay — and, since the AE-3 review (MED-1),
+//    the ruler, alone (`ArrangeFocusRuler`): the one control that moves a stopped playhead. The
+//    plate asks the flag before it reads the part id (LOW-7). The flag is never persisted.
 // 4. SOURCE (AE-3b): the part bar's Focus button is the ONE production writer — it toggles the
 //    flag as it is at the tap, wears the bar's own tool button, and sits in the heading row,
-//    which focus keeps on screen (the way out is never hidden by the thing it undoes).
+//    which focus keeps on screen (the way out is never hidden by the thing it undoes). Since the
+//    AE-3 review: the heading falls back under the title at a large type size (MED-3), Voice
+//    Control answers to the button's word (LOW-9), and the change is announced (LOW-10).
 //
 // Grading (§0/§3, no Swift toolchain). `editorFocused`, `setEditorFocused` and `focusShown` do
 // not exist on `c96d884`, so this file does not compile there — one absence (#486), every claim a
@@ -27,12 +32,16 @@
 // `3781017` its new form is red for exactly that reason (no `focusButton`) — a FORWARD guard. Claims 1–2 transcribed into Python (the selection's state machine
 // and the pure predicate); claim 3's scans driven against both trees — its counterweights (one
 // importer, one canvas, one inspector, the pinned transport, no `UserDefaults`/`Codable` in the
-// owner) are green on both.
+// owner) are green on both. The AE-3 review commit adds, per claim: 1's removed-part case
+// (REGRESSION on `5a45436` — the flag stayed on), 3's focus ruler and flag-first scans (red there by
+// ANCHOR ABSENCE, one absence), 4's fallback, input label and announcement (FORWARD).
 // NOT covered: that the focused plate reads well on glass, that VoiceOver finds its way out, and
 // that rotating with focus on keeps the chosen detail page — device probes.
 // NEEDS-FOUNDER-VERIFY: select a part, tap Focus → the canvas, the guide and
-// the other tracks go; the part bar, the track's head and its detail fill the screen, the transport
-// stays at the bottom; the button now reads "Show all". Tap it, or switch to Mixer → the full plate.
+// the other tracks go; the ruler, the part bar, the track's head and its detail fill the screen, the
+// transport stays at the bottom; the button now reads "Show all". Tap the ruler → Play's line moves.
+// Tap Show all, or switch to Mixer → the full plate. At the largest text size the two buttons sit
+// under the title, nothing clipped.
 
 import Foundation
 import XCTest
@@ -102,6 +111,16 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
         selection.setEditorFocused(false)
         XCTAssertFalse(selection.editorFocused, "and the switch turns it off")
         XCTAssertEqual(selection.regionID, Self.partA1.id, "…leaving the part selected")
+
+        // AE-3 review (MED-2): the focused part was removed (or undone); a tap on another part of
+        // the same track must not turn the stage back on unasked.
+        selection.selectRegion(Self.partA1.id, in: Self.document)
+        selection.setEditorFocused(true)
+        let removed = TimelineDocument(lanes: [Self.laneA, Self.laneB, Self.bioLane],
+                                       regions: [Self.partA2, Self.partB, Self.bioPart])
+        selection.selectRegion(Self.partA2.id, in: removed)
+        XCTAssertFalse(selection.editorFocused, "the part focus was on is gone — the next tap starts unfocused")
+        XCTAssertEqual(selection.regionID, Self.partA2.id, "…and still selects the tapped part")
     }
 
     // MARK: 2 — whether focus shows is resolved on read (pure)
@@ -139,8 +158,15 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
         }
         XCTAssertEqual(view.components(separatedBy: ".fileImporter(").count - 1, 1,
                        "COUNTERWEIGHT: the one importer is still the only presentation modifier")
-        XCTAssertTrue(view.contains("WorkstationSelection.focusShown(selection.editorFocused, onArrange: pieceView == .arrange,"),
-                      "the plate asks the ONE predicate, resolved on read")
+        let shownGate = try member("private var editorFocusShown: Bool {", in: view)
+        guard let flag = shownGate.range(of: "selection.editorFocused"),
+              let predicate = shownGate.range(of: "&& WorkstationSelection.focusShown(true, onArrange: pieceView == .arrange,"),
+              let part = shownGate.range(of: "region: selection.regionID") else {
+            return XCTFail("ANCHOR MISSING: the plate's flag-first focus gate (#454)")
+        }
+        XCTAssertTrue(flag.upperBound <= predicate.lowerBound && predicate.upperBound <= part.lowerBound, """
+            the plate asks the ONE predicate, resolved on read — and asks the flag first, so with             focus off a part tap never makes the whole plate read the part id (review LOW-7)
+            """)
 
         let body = try member("var body: some View {", in: view)
         XCTAssertTrue(body.contains("let focused = editorFocusShown"))
@@ -150,6 +176,18 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
         let canvasGate = try block(after: "if !focused {\n", in: body)
         XCTAssertTrue(canvasGate.contains("ArrangeCanvasView("), "the canvas steps aside")
         XCTAssertFalse(canvasGate.contains("SelectedPartBar("), "the part bar STAYS — it holds the way out")
+        guard let gateStart = body.range(of: "if !focused {\n"),
+              let otherwise = body.range(of: "} else {", range: gateStart.upperBound..<body.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the canvas gate's else (#454)")
+        }
+        let rulerGate = try block(after: "} else {", in: String(body[otherwise.lowerBound...]))
+        XCTAssertTrue(rulerGate.contains("ArrangeFocusRuler("), "in focus the ruler stays — the canvas's else (review MED-1)")
+        XCTAssertFalse(rulerGate.contains("SelectedPartBar("), "…alone: the part bar is outside the gate")
+        XCTAssertEqual(view.components(separatedBy: "ArrangeFocusRuler(").count - 1, 1, "one focus ruler")
+        let ruler = try source("Sources/Echoelmusic/Studio/ArrangeRulerLocator.swift")
+        let focusRuler = try member("struct ArrangeFocusRuler: View {", in: ruler)
+        XCTAssertTrue(focusRuler.contains("ArrangeRulerLocator(document: document, songTicks: songTicks,"),
+                      "it IS the canvas's ruler row — the same tap, line and VoiceOver control, not a second ruler")
         let laneGate = try block(after: "if !focused || open == row.id {", in: body)
         XCTAssertTrue(laneGate.contains("TrackInspectorView(laneID: row.id)") && laneGate.contains("laneRow(row)"),
                       "the open track keeps its head and its detail; the others step aside")
@@ -195,6 +233,12 @@ final class TheEditorFocusIsLayoutNotAModalTests: XCTestCase {
                       "the button toggles the flag as it is at the tap")
         XCTAssertTrue(button.contains("return button(focused ? \"Show all\" : \"Focus\","),
                       "it wears the bar's own tool button and says what a tap will do")
+        XCTAssertTrue(button.contains(".accessibilityInputLabels([focused ? String(localized: \"Show all\") : String(localized: \"Focus\")])"),
+                      "Voice Control answers to the word on the button (WCAG 2.5.3, review LOW-9)")
+        XCTAssertTrue(button.contains("AccessibilityNotification.Announcement(selection.editorFocused"),
+                      "the plate's change is announced (review LOW-10)")
+        XCTAssertTrue(bar.contains("headingButtons(part, stacked: true)"),
+                      "the heading has a fallback under the title at a large type size (review MED-3)")
         guard let header = bar.range(of: "Text(String(localized: \"Selected part · \") + title)"),
               let mount = bar.range(of: "focusButton\n"),
               let play = bar.range(of: "PartPlayButton(startTick: part.startTick, playFrom: playFrom,") else {

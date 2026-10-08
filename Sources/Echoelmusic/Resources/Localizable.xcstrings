@@ -229,6 +229,30 @@
         }
       }
     },
+    "Only the selected part and its editors are shown" : {
+      "comment" : "VoiceOver announcement when the part bar's Focus button turns focus on (GMMW AE-3 review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the selected part and its editors are shown"
+          }
+        }
+      }
+    },
+    "The whole arrangement is shown again" : {
+      "comment" : "VoiceOver announcement when the part bar's Show all button turns focus off (GMMW AE-3 review).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The whole arrangement is shown again"
+          }
+        }
+      }
+    },
     "Show all" : {
       "comment" : "Title of the part bar's Focus button while focus is on (GMMW AE-3b): the whole arrangement comes back.",
       "extractionState" : "manual",

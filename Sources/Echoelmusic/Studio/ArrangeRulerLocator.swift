@@ -143,3 +143,21 @@ struct ArrangeRulerLocator: View {
         }
     }
 }
+
+/// GMMW AE-3 review (MED-1) — the ruler alone, for focus. Focus takes the canvas off the plate,
+/// and with it the one control that moves a stopped playhead; this keeps the same row (the tap,
+/// the line where Play starts, the VoiceOver control) over the whole piece at one zoom. Not a
+/// second ruler: it IS `ArrangeRulerLocator`, sized the way the canvas sizes it — the numbers
+/// scale with the text, the row never drops below the tap floor.
+struct ArrangeFocusRuler: View {
+    let document: TimelineDocument
+    let songTicks: Int
+    /// The canvas's `rulerHeight`, same base and same scaling.
+    @ScaledMetric(relativeTo: .body) private var numbersHeight: CGFloat = 14
+
+    var body: some View {
+        ArrangeRulerLocator(document: document, songTicks: songTicks,
+                            height: Swift.max(numbersHeight, EchoelTheme.controlTapHeight),
+                            numbersHeight: numbersHeight)
+    }
+}

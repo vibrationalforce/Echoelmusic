@@ -494,13 +494,22 @@ struct SelectedPartBar: View {
             // contiguous, same gain/warp), so a lit button here is one the store will act on.
             let joinable = timeline.canMergeRegionWithNext(id: regionID, bpm: player.preflightTempo)
             VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
-                HStack(spacing: EchoelTheme.spaceS) {
-                    Text(String(localized: "Selected part · ") + title)
-                        .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                    Spacer(minLength: 8)
-                    focusButton
-                    PartPlayButton(startTick: part.startTick, playFrom: playFrom,
-                                   songCanStart: songCanStart)
+                // AE-3 review (MED-3): the title beside its buttons while they fit; at a large type
+                // size or in a narrow column the buttons drop under the title, then under each other.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: EchoelTheme.spaceS) {
+                        headingTitle(title)
+                        Spacer(minLength: 8)
+                        headingButtons(part, stacked: false)
+                    }
+                    VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
+                        headingTitle(title)
+                        headingButtons(part, stacked: false)
+                    }
+                    VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
+                        headingTitle(title)
+                        headingButtons(part, stacked: true)
+                    }
                 }
                 PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
                 // W2: an audio part's own level, on top of its track's — nil for any other part.
@@ -550,6 +559,23 @@ struct SelectedPartBar: View {
         }
     }
 
+    private func headingTitle(_ title: String) -> some View {
+        Text(String(localized: "Selected part · ") + title)
+            .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+    }
+
+    /// Focus and Play, side by side or (`stacked`) one under the other.
+    private func headingButtons(_ part: TrackParts.Part, stacked: Bool) -> some View {
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: EchoelTheme.spaceXS))
+            : AnyLayout(HStackLayout(spacing: EchoelTheme.spaceS))
+        return layout {
+            focusButton
+            PartPlayButton(startTick: part.startTick, playFrom: playFrom,
+                           songCanStart: songCanStart)
+        }
+    }
+
     /// GMMW AE-3b — Focus: the selected part's editors take the Arrange plate
     /// (`WorkstationSelection.editorFocused`, AE-3a), and back. A button, not a double-tap: a
     /// double-tap would delay every single tap that selects a part. The ONE writer of focus — it
@@ -563,7 +589,14 @@ struct SelectedPartBar: View {
                       label: focused ? String(localized: "Show the whole arrangement again")
                                      : String(localized: "Show only the selected part and its track's editors")) {
             selection.setEditorFocused(!selection.editorFocused)
+            // AE-3 review (LOW-10): about ten elements leave or come back — say so.
+            AccessibilityNotification.Announcement(selection.editorFocused
+                ? String(localized: "Only the selected part and its editors are shown")
+                : String(localized: "The whole arrangement is shown again")).post()
         }
+        // AE-3 review (LOW-9, WCAG 2.5.3): the spoken name is a sentence; Voice Control also
+        // answers to the word on the button.
+        .accessibilityInputLabels([focused ? String(localized: "Show all") : String(localized: "Focus")])
     }
 
     /// The two edges a trim may move, resolved once per render (nil = unavailable).

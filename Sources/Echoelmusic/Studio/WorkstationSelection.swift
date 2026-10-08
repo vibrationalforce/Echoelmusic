@@ -77,9 +77,14 @@ public final class WorkstationSelection {
     }
 
     /// Select a part — and, with it, the track it sits on. Unknown ids select nothing.
+    /// Focus ends with a change of track — and when the part it was on is gone (AE-3 review,
+    /// MED-2): removed or undone, the plate stopped showing focus, so a tap on another part of the
+    /// same track must not turn the stage back on without being asked.
     public func selectRegion(_ id: UUID, in document: TimelineDocument) {
         guard let region = document.regions.first(where: { $0.id == id }) else { return }
-        if region.laneID != trackID { editorFocused = false }
+        if region.laneID != trackID || Self.resolvedRegion(regionID, track: trackID, in: document) == nil {
+            editorFocused = false
+        }
         regionID = region.id
         trackID = region.laneID
     }
