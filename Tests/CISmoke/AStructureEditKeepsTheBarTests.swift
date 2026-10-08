@@ -34,9 +34,11 @@
 // on a bar line; claim 2 is red on the parent by ANCHOR ABSENCE (one absence, #486).
 // NOT covered: that it is HEARD in time on a device, and a relocate mid-bar under a running
 // pattern (the rig's pattern never advances, so its next step is 0) — the scan carries that.
-// ⚠️ The relocate half is LATENT: `relocate(toTick:)` has no production caller, and the
-// Workstation may not call it (`TheWorkstationPlaysTheTimelineTests`). There is no playhead drop
-// to try on a device, so it is not on the verify list (M7 review, MED-1).
+// ⭐ The relocate half is LIVE since GMMW AE-7: a tap on the Arrange ruler while the piece plays
+// calls `locate(toTick:)`, whose one production call is `relocate` (`ThePlayStartsWhereTheRulerSaysTests`).
+// It lands on a bar line, never mid-bar.
+// NEEDS-FOUNDER-VERIFY: Workstation → a MIDI part on two tracks → Play → while it plays, tap bar 3
+// on the ruler → both tracks jump to bar 3 together, the pattern's step and the roll in time.
 // NEEDS-FOUNDER-VERIFY: Workstation → a MIDI part two bars or longer on the first track, a second
 // MIDI track with its own part → Play → while it loops, drag the first part's end one bar longer
 // (or move another part) → both tracks keep their bars in order and together.

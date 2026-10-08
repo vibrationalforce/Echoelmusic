@@ -20,6 +20,10 @@
 //    row; the ruler row reads no position; the ONE Play passes the cue, its hint and the head's
 //    stopped counter the fold; Record and the WAV bounce keep bar 1; Open and New piece reset
 //    the cue.
+// 6. SOURCE (AE-7 review): the ruler waits while a take records, a bounce runs or a capture
+//    runs — both doors check the same lock; VoiceOver's double-tap does nothing (a default
+//    action), so it cannot jump to the middle of the piece; the whole row takes the tap; and
+//    a Play that starts past bar 1 sends no MIDI Start, because Start means bar 1.
 //
 // Grading (§0/§3, no Swift toolchain, parent `ae3e5b1`): `RulerLocate`, `playStartTick`,
 // `locate`, `resetCue`, `cueTick` and the hint's `fromTick:` do not exist there, so this file
@@ -243,7 +247,7 @@ final class ThePlayStartsWhereTheRulerSaysTests: XCTestCase {
                                     in: player) else {
             return XCTFail("ANCHOR MISSING: `playStartTick` (#454)")
         }
-        XCTAssertTrue(fold.contains("barStartTick(for: tick, loopTicks: loopTicks(for: document))"),
+        XCTAssertTrue(fold.contains("Self.barStartTick(for: tick, loopTicks: Self.loopTicks(for: document))"),
                       "the fold is `barStartTick` over the document's loop length")
     }
 
@@ -299,10 +303,61 @@ final class ThePlayStartsWhereTheRulerSaysTests: XCTestCase {
 
     func testANewPieceForgetsTheOldCue() throws {
         let open = try source(Self.openPath)
-        let reset = "        timeline.replaceDocument(song.document)\n        player.resetCue()"
-        XCTAssertEqual(open.components(separatedBy: reset).count - 1, 2,
+        // Whitespace-tolerant: the reset must be the very next statement after the replace,
+        // however the lines are indented (#408 — no fixed window).
+        let lines = open.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        let pairs = zip(lines, lines.dropFirst()).filter {
+            $0.0 == "timeline.replaceDocument(song.document)" && $0.1 == "player.resetCue()"
+        }
+        XCTAssertEqual(pairs.count, 2,
                        "Open and New piece both reset the cue right after the piece is replaced")
         XCTAssertEqual(open.components(separatedBy: "player.resetCue()").count - 1, 2)
+    }
+
+    // MARK: 6 — the review's locks (source)
+
+    func testTheRulerWaitsForATakeOrABounce() throws {
+        let locator = try source(Self.locatorPath)
+        guard let row = bracedBody(after: "struct ArrangeRulerLocator: View {", in: locator) else {
+            return XCTFail("ANCHOR MISSING: `ArrangeRulerLocator` (#454)")
+        }
+        XCTAssertTrue(row.contains("let locked = recorder.isRecording || exporter.pieceTakeInFlight || exporter.status == .capturing"), """
+            the ruler must know when the piece is being written down — a take counts its ticks \
+            forward from the transport, a bounce or a capture records the output; a jump there \
+            writes the wrong bars or bakes a cut into the file.
+            """)
+        XCTAssertEqual(row.components(separatedBy: "guard !locked").count - 1, 2,
+                       "BOTH doors check the lock — the tap and the VoiceOver step")
+        XCTAssertEqual(row.components(separatedBy: "player.locate(toTick: tick)").count - 1, 2,
+                       "counterweight: the two doors are still the only two calls")
+        XCTAssertTrue(row.contains("String(localized: \"Locked while a recording or an audio bounce runs.\")"),
+                      "VoiceOver hears why the ruler does nothing")
+        XCTAssertTrue(row.contains(".accessibilityAction { }"), """
+            VoiceOver's double-tap must not fire the located tap at the element's middle — the \
+            default action does nothing; a swipe moves the bar.
+            """)
+        XCTAssertTrue(row.contains(".contentShape(Rectangle())"), "the whole row takes the tap, not only the drawn lines")
+        XCTAssertFalse(row.contains("sensoryFeedback"), """
+            no haptic on the cue: it fired on Open's reset and stayed silent on a same-bar jump.
+            """)
+    }
+
+    func testAPlayPastBarOneSendsNoMIDIStart() throws {
+        let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
+        guard let start = app.range(of: "transport.addPlaySubscriber(\"midi.clock\")"),
+              let skip = app.range(of: "if let song = timelinePlayer, song.isPlaying, song.startedFromTick > 0 {",
+                                   range: start.upperBound..<app.endIndex),
+              let clock = app.range(of: "midiOut.startClock(bpm: transport.tempo,",
+                                    range: start.upperBound..<app.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the midi.clock play subscriber, its skip, or its startClock (#454)")
+        }
+        XCTAssertLessThan(skip.lowerBound, clock.lowerBound, """
+            the skip must come BEFORE the clock starts — MIDI Start (0xFA) means bar 1 and Echoel \
+            sends no Song Position Pointer, so a Play from bar 5 would pull a slaved device to bar 1.
+            """)
+        let between = String(app[skip.upperBound..<clock.lowerBound])
+        XCTAssertTrue(between.contains("return"), "the skip returns before any clock is sent")
     }
 
     // MARK: helpers

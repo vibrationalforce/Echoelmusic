@@ -24,7 +24,19 @@
 //  the same `locate`.
 //
 //  ⚠️ THE ROW IS A TAP TARGET, so it is at least `EchoelTheme.controlTapHeight` tall — the canvas
-//  hands in that height and gives the names column the same empty cell (`rulerRowHeight`).
+//  hands in that height and gives the names column the same empty cell (`rulerRowHeight`). The
+//  numbers keep their own scaled height (`numbersHeight`) at the row's foot, so the tick lines do
+//  not stretch to the tap floor.
+//
+//  ⛔ LOCKED WHILE THE PIECE IS BEING WRITTEN DOWN (AE-7 review, HIGH-1 + MED-2). A MIDI take
+//  counts its ticks from the transport, which only counts forward (`RecordController`: "nothing
+//  seeks the transport") — a jump mid-take would write the notes heard at bar 2 at bar 7. A piece
+//  bounce or a loop capture records the output — a jump would bake a cut into the file. So while
+//  a take records, a bounce runs or a capture runs, the row neither moves the piece nor the cue,
+//  and VoiceOver hears why.
+//
+//  ⚠️ NO HAPTIC (review LOW-7): a trigger on `cueTick` also fired when Open reset it, and stayed
+//  silent on a same-bar tap that did jump. The line moving is the feedback.
 //
 //  NEEDS-FOUNDER-VERIFY (device): stopped, tap bar 3 on the ruler → a line marks bar 3; Play
 //  starts there and its VoiceOver hint names bar 3. Playing, tap bar 5 → the piece moves to bar 5
@@ -68,6 +80,10 @@ enum RulerLocate {
 struct ArrangeRulerLocator: View {
 
     @Environment(TimelineRegionPlayer.self) private var player
+    /// Only `isRecording` — cold (Record, Stop, the piece's end).
+    @Environment(RecordController.self) private var recorder
+    /// Only `pieceTakeInFlight` and whether a capture runs — cold (a bounce's start and end).
+    @Environment(LoopExporter.self) private var exporter
 
     /// Handed in by the canvas (cold: an edit or an Open) — only to fold the cue the way `play`
     /// folds it (`TimelineRegionPlayer.playStartTick`), so the line marks the bar Play takes.
@@ -75,13 +91,16 @@ struct ArrangeRulerLocator: View {
     let songTicks: Int
     /// The row's height, owned by the canvas (`rulerRowHeight`) so the names stay level.
     let height: CGFloat
+    /// The numbers' own scaled height (`rulerHeight`), drawn at the row's foot.
+    let numbersHeight: CGFloat
 
     var body: some View {
         let start = TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)
+        let locked = recorder.isRecording || exporter.pieceTakeInFlight || exporter.status == .capturing
         GeometryReader { geometry in
             let width = geometry.size.width
-            ZStack(alignment: .topLeading) {
-                ArrangeBarRuler(songTicks: songTicks, height: height)
+            ZStack(alignment: .bottomLeading) {
+                ArrangeBarRuler(songTicks: songTicks, height: numbersHeight)
                 if let fraction = ArrangeCanvas.playheadFraction(tick: start, songTicks: songTicks) {
                     // Where Play starts. Accent, the colour of the playhead it becomes; 2 pt so it
                     // reads as a marker beside the 1-pt bar lines.
@@ -93,18 +112,25 @@ struct ArrangeRulerLocator: View {
             }
             .contentShape(Rectangle())
             .onTapGesture(coordinateSpace: .local) { location in
-                guard let tick = RulerLocate.barTick(atX: location.x, laneWidth: width,
+                guard !locked,
+                      let tick = RulerLocate.barTick(atX: location.x, laneWidth: width,
                                                      songTicks: songTicks) else { return }
                 player.locate(toTick: tick)
             }
         }
         .frame(height: height)
-        .sensoryFeedback(.selection, trigger: player.cueTick)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(String(localized: "Play from"))
         .accessibilityValue(SessionGrid.label(forTick: start))
-        .accessibilityHint(String(localized: "Sets the bar Play starts from. While the piece plays, it moves there at once."))
+        .accessibilityHint(locked
+            ? String(localized: "Locked while a recording or an audio bounce runs.")
+            : String(localized: "Sets the bar Play starts from. While the piece plays, it moves there at once."))
+        // AE-7 review (MED-4): VoiceOver's double-tap would otherwise fire the located tap at the
+        // element's activation point — the middle of the zoomed piece — and jump there. The
+        // default action does nothing; a swipe up or down is the VoiceOver way to move the bar.
+        .accessibilityAction { }
         .accessibilityAdjustableAction { direction in
+            guard !locked else { return }
             let later: Bool
             switch direction {
             case .increment: later = true

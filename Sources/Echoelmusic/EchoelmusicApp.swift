@@ -933,8 +933,20 @@ struct EchoelmusicApp: App {
                 // and the body moves the tempo continuously while STOPPED too — a start
                 // there would emit MIDI Start with no transport running. `setClockTempo`
                 // therefore no-ops unless the clock is already sending.
-                transport.addPlaySubscriber("midi.clock") { [weak midiOut, weak transport] in
+                transport.addPlaySubscriber("midi.clock") { [weak midiOut, weak transport, weak timelinePlayer] in
                     guard let midiOut, let transport else { return }
+                    // GMMW AE-7 review (MED-3): Start (0xFA) means "go to bar 1", and Echoel sends
+                    // no Song Position Pointer. A piece started past bar 1 — at the ruler's bar, a
+                    // part, a scene — would put every slaved DAW N−1 bars behind for the whole take:
+                    // the "worse than no clock, and silently so" case `applyRouting` records. So no
+                    // clock then, said in the log. `play` writes `startedFromTick` and `isPlaying`
+                    // BEFORE it starts the pattern, so both are current on this edge; a stale
+                    // `startedFromTick` from an earlier take is masked by `isPlaying`.
+                    if let song = timelinePlayer, song.isPlaying, song.startedFromTick > 0 {
+                        log.log(.info, category: .midi,
+                                "midi clock: no Start — the piece starts at bar \(WorkstationSummary.barNumber(forTick: song.startedFromTick)), and Start means bar 1 (no SPP)")
+                        return
+                    }
                     // ONE STEP LATER, not now. This callback runs on the play EDGE, but
                     // `PatternEngine` sounds step 0 one 16th afterwards — so Start (0xFA)
                     // has to wait exactly that long or every slaved DAW sits a 16th ahead

@@ -399,7 +399,8 @@ struct ArrangeCanvasView: View {
             }
             ArrangeTimeZoom {
                 VStack(spacing: 4) {
-                    ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight)
+                    ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight,
+                                        numbersHeight: rulerHeight)
                     ForEach(rows) { row in
                         laneRow(row, selected: selected)
                     }

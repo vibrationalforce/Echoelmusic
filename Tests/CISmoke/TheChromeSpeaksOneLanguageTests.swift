@@ -347,6 +347,9 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         }
         words += [ProjectTransport.stopHint, ProjectTransport.instrumentRunningCaption,
                   ProjectTransport.unsavedName, ProjectTransport.projectName(nil), ProjectTransport.projectName("  ")]
+        // GMMW AE-7: past bar 1 the hint is seamed around the bar number — each piece is a key.
+        words += ["Plays the piece from bar ", " on the shared transport.",
+                  ". The instrument's held music comes back with it."]
         // counterweight — the English words the sibling guard pins are unchanged in the English host
         XCTAssertEqual(ProjectTransport.statusWord(.playingSong), "Playing piece")
         XCTAssertEqual(ProjectTransport.buttonWord(running: true), "Stop")

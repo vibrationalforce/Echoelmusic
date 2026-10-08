@@ -308,7 +308,8 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
 
         let workstation = try source(Self.workstationPath)
         XCTAssertTrue(workstation.contains("SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })"))
-        XCTAssertTrue(workstation.contains("startTimeline(fromTick: 0, launching: [])"), "Play is still the song from the top")
+        XCTAssertTrue(workstation.contains("startTimeline(fromTick: 0, launching: [])"),
+                      "the MIDI take and the guide's Play still start the song from the top (the ONE Play starts at the ruler's bar since GMMW AE-7)")
         let start2 = try body(of: "private func startTimeline(fromTick: Int, launching: [UUID])", in: workstation)
         XCTAssertTrue(start2.contains("fromTick: fromTick"))
         XCTAssertTrue(start2.contains("launching: launching"))

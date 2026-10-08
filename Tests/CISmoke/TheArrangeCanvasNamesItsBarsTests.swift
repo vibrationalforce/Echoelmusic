@@ -13,9 +13,10 @@
 // 3. SOURCE: the canvas mounts it once, above the lanes, in the SAME zoomed column as the lanes
 //    (DAW shell S9a) — so its numbers stay on their bars at every zoom — while the names stand
 //    still in their own column, level with their lanes (one `rulerRowHeight`, one `rowHeight`).
-//    Since GMMW AE-7 the canvas mounts the ruler ROW, `ArrangeRulerLocator`, which wraps the
-//    numbers and owns the tap; the NUMBERS view stays exactly as claim 2 pins it. What the tap
-//    does is pinned by `ThePlayStartsWhereTheRulerSaysTests`.
+//    Since GMMW AE-7 the canvas mounts the ruler ROW, `ArrangeRulerLocator` (its own file),
+//    which wraps the numbers and owns the tap; the NUMBERS view stays exactly as claim 2 pins it,
+//    drawn at its own scaled height at the foot of the taller tap row. What the tap does is
+//    pinned by `ThePlayStartsWhereTheRulerSaysTests`.
 //    That the canvas as a whole stays cold is pinned ONCE, by `TheSongIsSeenOnOneScaleTests`
 //    (the ruler sits inside that slice); where the pinch lives, by `ThePinchZoomsTheArrangementsTimeTests`.
 //
@@ -137,8 +138,8 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         let locator = try source(Self.locatorPath)
         XCTAssertEqual(file.components(separatedBy: "ArrangeBarRuler(").count - 1, 0,
                        "the canvas no longer builds the numbers itself — the ruler row does")
-        XCTAssertEqual(locator.components(separatedBy: "ArrangeBarRuler(songTicks: songTicks, height: height)").count - 1, 1,
-                       "one set of numbers, inside the ruler row, at the row's own height")
+        XCTAssertEqual(locator.components(separatedBy: "ArrangeBarRuler(songTicks: songTicks, height: numbersHeight)").count - 1, 1,
+                       "one set of numbers, inside the ruler row, at the numbers' own scaled height (AE-7 review)")
         XCTAssertEqual(file.components(separatedBy: "ArrangeRulerLocator(").count - 1, 1, "one ruler row on the canvas")
         // Review of d16d764b1, LOW-3: every search is bounded by the canvas struct. Since S9a the
         // gutter is the spacing between the TWO COLUMNS (the still names, the zoomed time), and the
@@ -161,7 +162,8 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
                                       "ForEach(rows) { row in", "nameGutter(row)",
                                       ".frame(height: Self.rowHeight)", "}", "}",
                                       "ArrangeTimeZoom {", "VStack(spacing: 4) {",
-                                      "ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight)",
+                                      "ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight,",
+                                      "numbersHeight: rulerHeight)",
                                       "ForEach(rows) { row in", "laneRow(row, selected: selected)", "}", "}"],
                                      in: body) != nil else {
             return XCTFail("""
@@ -180,8 +182,8 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         // the ruler is a control now.
         XCTAssertEqual(body.components(separatedBy: "@ScaledMetric(relativeTo: .body) private var rulerHeight: CGFloat").count - 1, 1,
                        "one numbers height on the canvas, scaled with the text")
-        XCTAssertEqual(body.components(separatedBy: "rulerHeight").count - 1, 2,
-                       "the numbers' height is declared once and read only by the row height")
+        XCTAssertEqual(body.components(separatedBy: "rulerHeight").count - 1, 3,
+                       "the numbers' height is declared once and read by the row height and by the ruler row's numbers — nothing else")
         XCTAssertEqual(body.components(separatedBy: "private var rulerRowHeight: CGFloat { Swift.max(rulerHeight, EchoelTheme.controlTapHeight) }").count - 1, 1,
                        "the ruler row is a tap target: never shorter than the tap floor (#481)")
         XCTAssertEqual(body.components(separatedBy: "rulerRowHeight").count - 1, 3,

@@ -727,7 +727,7 @@ public final class TimelineRegionPlayer {
     /// it, and every surface that NAMES the start (the Play hint, the ruler's marker) asks it, so
     /// the bar a surface shows and the bar the transport takes cannot disagree.
     nonisolated static func playStartTick(forCue tick: Int, in document: TimelineDocument) -> Int {
-        barStartTick(for: tick, loopTicks: loopTicks(for: document))
+        Self.barStartTick(for: tick, loopTicks: Self.loopTicks(for: document))
     }
 
     /// The bar ruler's tap (GMMW AE-7): from now on Play starts on the bar containing `tick`, and

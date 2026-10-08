@@ -205,6 +205,18 @@
         }
       }
     },
+    "Locked while a recording or an audio bounce runs." : {
+      "comment" : "VoiceOver hint of the Arrange canvas's bar ruler while a MIDI take records, a WAV bounce runs or a loop capture runs (GMMW AE-7 review, 2026-10-08): the ruler then moves neither the piece nor the bar Play starts from.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locked while a recording or an audio bounce runs."
+          }
+        }
+      }
+    },
     "Play from" : {
       "comment" : "VoiceOver label of the Arrange canvas's bar ruler (GMMW AE-7, 2026-10-08). Its value is the bar Play starts from, e.g. \"Bar 3\"; swiping up or down moves it a bar.",
       "extractionState" : "manual",
