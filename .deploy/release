@@ -1,4 +1,4 @@
-build: v10.79.495 — Export-Absturz an der zweiten Stelle repariert, das Diagnose-Log nennt die Warteschlange
+build: v10.79.496 — Audio-Editor wie in einer DAW, Siri spricht mit Echoel, zehn Stabilitäts-Scheiben
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,65 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.496) ───────────────────────────────
+
+  ⭐ DER GRÖSSTE BUILD SEIT LANGEM: 83 Code-Commits seit 10.79.495 (Plan GMMW, dein Auftrag vom
+  2026-10-08 „Die klassische DAW Audio Editing View fehlt mir noch“). Gebaut wird `4348621` —
+  der Stand, auf dem `main` steht, also Xcode Compile Check UND Build for Testing grün. Danach
+  kamen nur Notizen. Weiter NICHT drin (warten auf deine Freigabe im Standard-Modus): E10-1, B2,
+  #310. Auf dem Gerät ist NICHTS von dem Folgenden geprüft.
+
+  ── POSTEN 1: DER AUDIO-EDITOR (Arrange-Fläche → Audio-Part antippen → Part-Seite) ──
+  · Wellenform auf jedem Audio-Part; eigener Pegel je Part, „Normalize“, Stretch-Art (Clean ·
+    Tape · Beats), Fade-in/-out — gespielt, nicht nur gezeichnet.
+  · Part-Seite zeigt die GANZE Datei: Kanten halten und schieben (Trim), das Fenster halten und
+    schieben (Slip — die Datei wandert, der Part bleibt), Pegelstreifen über der Welle (Fade-Ecken
+    und Pegellinie mit dem Finger). Je ein Undo-Schritt.
+  · Eigene Tonhöhe je Part (zur Spur addiert). „At playhead“ schneidet am Abspielpunkt.
+  · Lineal: tippen setzt, wo Play startet; im Stand halten + schieben = hören, was unter dem
+    Finger liegt (kein Start, kein Sprung). Cycle-Knopf loopt die Takte des gewählten Parts.
+  · Focus gibt dem gewählten Part die ganze Arrange-Fläche. Das Raster beim Ziehen folgt dem Zoom.
+
+  ── POSTEN 2: SIRI UND KURZBEFEHLE STEUERN ECHOEL ──
+  · „Change the track level in Echoelmusic“ (fragt nach dB), „Copy the selected part in
+    Echoelmusic“, „Undo the last change in Echoelmusic“. Das Ergebnis steht oben als Zeile mit
+    „Undo Echoel's last change“. Siri gewährt nichts; eine Anfrage, die älter als 2 Minuten ist,
+    wird verworfen und die Zeile sagt das. Die Auswahl wird nicht gespeichert — nach einem
+    Kaltstart lehnen die beiden Auswahl-Befehle sichtbar ab.
+
+  ── POSTEN 3: STABILITÄT (die Absturzklasse von 2613/2618 an weiteren Stellen) ──
+  · `@Sendable` an CoreMIDI, HealthKit, CoreHaptics, Metal, Speicherwarnung, Audio-Konfiguration,
+    CloudKit (ruht) — dieselbe Falle wie der Export-Absturz.
+  · Das Absturz-Netz steht vor dem ersten Speicher; ein Start zählt erst nach den verzögerten
+    Starts als gesund; ein Stapelüberlauf schreibt noch seine Marke; eine unlesbare Datei behält
+    ihre Bytes; ein kaputter Export endet mit Fehler statt zu hängen; Safe Mode sagt, welche
+    Einstellung er geändert hat.
+  · Das Diagnose-Log nennt Speicherdruck, Hitze, Stromsparmodus, die Binärdatei, eine Zeile
+    Selbstcheck nach dem Start, und ein Wächter sieht von außen, wenn der Hauptfaden hängt.
+    Das Log holst du über den Save/Export-Chip → „Diagnostics“ → Teilen.
+
+  ── POSTEN 4: KOMPONIEREN, SAMPLER, BILD ──
+  · „Compose here“ auf der Device-Seite einer Rack-Spur: die Spur spielt in ihrem eigenen Stil.
+    Ein generierter Part kann behalten („Keep take“) oder als Kopie bearbeitet werden.
+  · Jede Rack-Spur kann ein Sampler mit eigener Datei sein. (Slicer und Grain-Kern sind gebaut,
+    haben aber noch KEINE Tür.)
+  · Eigenes Video im Visual kann nicht stroboskopieren (ein Blitz-Begrenzer je Bildzelle).
+  · Routing zeigt eine Gruppe auf einmal (Light · Connections · Body), Browse ein Regal (Sounds ·
+    Media · Visuals); das Visual-Fenster hat EINE Ein/Aus-Tür (die Kachel im Kopf).
+  · OSC-Eingang: eine leere Erlaubt-Liste lässt nur dieses Gerät zu, nie Mobilfunk.
+
+  ── WAS DU PRÜFEN KANNST (23 neue Bitten, gedruckt mit
+     python3 scripts/founder-verify.py --since 634ed82) ──
+  · Audio-Editor: Kanten, Slip und Pegelstreifen — gewinnt das Halten gegen das Seiten-Scrollen?
+    Lineal-Scrub schnell: Körner oder Klicken? Part-Tonhöhe +7 im Stand, dann Play.
+  · Lineal: Takt 3 antippen → Play startet dort; während Play Takt 3 antippen → springt sauber.
+    „At playhead“ schneidet genau dort. Cycle über Takt 3–4 → Band und Schleife.
+  · Siri: die drei Sätze oben, einmal mit offener App + gewählter Spur, einmal gesperrt, einmal
+    ohne Auswahl.
+  · Compose here auf einer MIDI-Spur; Keep take / Edit a copy auf einem Composer-Part.
+  · Routing / Browse / Visual-Kachel: findest du, was du suchst?
+  · OSC: „Accept OSC control“ an, IP des Senders eintragen → kommt die Steuerung an?
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.495) ───────────────────────────────
 
