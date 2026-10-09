@@ -91,6 +91,10 @@ public final class AudioEngine {
     /// Called on the MainActor (the route observer runs on the main queue).
     @ObservationIgnored var onOutputDeviceLost: (() -> Void)?
 
+    /// SH-10 — fired once after a self-heal RECOVERED (the engine runs again), with the reason
+    /// its diag line names. The app writes its `self-check:` line here. Called on the MainActor.
+    @ObservationIgnored var onSelfHealRecovered: ((String) -> Void)?
+
     /// WHY a stop happened, not merely THAT one did.
     ///
     /// ⛔ THE BUG THIS EXISTS TO FIX (device log 2475, v10.79.358, founder: *"Ich hab keinen
@@ -841,6 +845,7 @@ public final class AudioEngine {
                 self.degraded = false
                 self.lastAudioError = nil
                 self.logEngineLifecycle("self-heal recovered (\(reason))")
+                self.onSelfHealRecovered?(reason)
             } else {
                 // start() failed (it sets degraded/lastAudioError); try again until cap.
                 self.recoverEngine(reason: reason)

@@ -118,6 +118,10 @@ public final class MemoryPressureHandler {
     /// `os_proc_available_memory()`. The one figure here that means what its name says.
     public private(set) var availableMemoryBytes: Int = 0
 
+    /// The same headroom, read NOW. `availableMemoryBytes` is the 5 s poll's copy and still 0
+    /// before its first tick; the SH-10 `self-check:` line runs three seconds after launch.
+    public func currentHeadroomBytes() -> Int { getMemoryStats().available }
+
     // MARK: - Configuration
 
     /// ⚠️ SINCE #1201 THESE DECIDE NOTHING. They describe a percentage of a total this type

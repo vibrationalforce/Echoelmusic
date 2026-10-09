@@ -598,6 +598,47 @@ struct EchoelmusicApp: App {
         LaunchGuard.confirmHealthy()
     }
 
+    /// SH-10 — what the app came up with, in ONE `self-check:` line: once,
+    /// `SelfCheckLine.launchDelaySeconds` after the deferred starts, and once after each engine
+    /// self-heal that recovered. Never periodic; every fact is a plain read, none can trap.
+    @MainActor
+    private func writeSelfCheck(trigger: String) {
+        var bio: [String] = []
+        #if canImport(AVFoundation)
+        if cameraRPPG.isRunning { bio.append("camera") }
+        #endif
+        #if canImport(CoreBluetooth)
+        if polarH10.isPublishing { bio.append("strap") }
+        #endif
+        #if canImport(HealthKit)
+        if healthBio.isPublishing { bio.append("health") }
+        #endif
+        if demoSource.isRunning { bio.append("demo") }
+        var outputs: [String] = []
+        #if canImport(Network)
+        if osc.isActive { outputs.append("osc") }
+        if admOSC.isActive { outputs.append("adm") }
+        if artNet.isActive { outputs.append("artnet") }
+        if sacn.isActive { outputs.append("sacn") }
+        if oscIn.isActive { outputs.append("osc-in") }
+        #endif
+        if midiOut.enabled { outputs.append("midi") }
+        let info = ProcessInfo.processInfo
+        let facts = SelfCheckFacts(trigger: trigger,
+                                   engineRunning: audioEngine.isRunning,
+                                   engineDegraded: audioEngine.degraded,
+                                   sampleRate: audioEngine.sampleRate,
+                                   bodyVoiceArmed: bioVoice.isArmed,
+                                   bioSources: bio,
+                                   safeMode: LaunchGuard.isSafeMode,
+                                   streak: LaunchGuard.unconfirmedCount,
+                                   headroomBytes: MemoryPressureHandler.shared.currentHeadroomBytes(),
+                                   thermal: SelfCheckLine.thermalName(info.thermalState),
+                                   lowPower: info.isLowPowerModeEnabled,
+                                   outputs: outputs)
+        EchoelCrashLog.breadcrumb(SelfCheckLine.format(facts))
+    }
+
     /// Bring outputs online/offline to match the Patchbay (see also `scenePhaseName`
     /// at file scope, used by the lifecycle breadcrumb). An enabled route to an
     /// output's port starts its sender (idempotent — each `start` guards `isActive`);
@@ -1650,6 +1691,16 @@ struct EchoelmusicApp: App {
                 EchoelCrashLog.breadcrumb("startup: deferred starts issued — steady confirm in "
                     + "\(LaunchGuard.steadyConfirmSeconds) s or at the first background")
                 deferredStartsIssuedAt = ContinuousClock.now
+                // SH-10 — one `self-check:` line a few seconds from now, and one after every
+                // engine self-heal that recovers. Its own task, so the steady confirm's timing
+                // above is untouched.
+                audioEngine.onSelfHealRecovered = { reason in
+                    writeSelfCheck(trigger: "self-heal (\(reason))")
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(SelfCheckLine.launchDelaySeconds))
+                    writeSelfCheck(trigger: "launch")
+                }
                 try? await Task.sleep(for: .seconds(LaunchGuard.steadyConfirmSeconds))
                 guard !Task.isCancelled else {
                     EchoelCrashLog.breadcrumb("startup: steady confirm skipped — the startup task was cancelled")
