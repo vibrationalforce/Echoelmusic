@@ -949,3 +949,8 @@ Genre ist nicht mehr die Kopf-Bedienung (→ „Stil“ am Echoel-Gerät) und di
 Plan mit fünf Audits und Reihenfolge A1–A9 · B1–B6 · C1–C5: `scratchpads/PLAN_WORKSTATION_REDESIGN_2026-10-01.md`.
 iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund).
 
+
+### 2026-10-09 — ChatGPT/Astra: „Von ‚Ich höre etwas‘ zu ‚Das habe ich gestaltet‘“
+- Quelle: Founder-Prompt (Claude-Auftrag), Modell sah das Repo nicht. [verified 5/6]
+- Gemessen: `BioComposer.liveliness` (Dichte) + Mood-Regler „Liveliness“ ✓ · „Edit a copy“/Keep (GA-2a/b) ✓ · `TimelineStore.undo/redo` ✓ · Demo-Quelle ✓ · `BreathGuideView` nur in türloser `BioSourceView` ✓ · Vorher/Jetzt-Vergleich ✗ (neu).
+- Verdikt ADOPT-PRODUCT, EINE Scheibe: Einstieg A (hören → Bewegung → vergleichen → behalten) aus vorhandenen Teilen, plus A/B-Vergleich. Rest (Anfang·Entwicklung·Ende, Handschrift, Körper-Zuordnung) WATCH bis Einstieg A am Gerät getestet ist. Drei Founder-Fragen offen.
