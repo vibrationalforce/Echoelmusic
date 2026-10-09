@@ -53,8 +53,11 @@
 //        ⭐ WA4 path 5 gave `resizeRegion` its caller (the part bar's Trim,
 //        `Studio/SelectedPartBar.swift`), and DMMW Phase 4 · slice 2 gave
 //        `setBuiltinInstrument` its caller (`TrackMix.setInstrument`, the inspector's
-//        Instrument row) plus a test. Of the untested nine, FOUR remain with neither:
+//        Instrument row) plus a test. Of the untested nine, FOUR remained with neither:
 //        bootstrapIfNeeded · setAudioRegionWindow · setLaneOctave · setLaneSample.
+//        ⭐ GMMW AE-6 gave `setAudioRegionWindow` its caller (the audio part editor's slip,
+//        `Studio/AudioPartSlip.swift`) and a test, and took away its defaulted `gain`; it
+//        leaves both sets and is pinned beside the others. THREE remain with neither.
 //        ⭐ Workstation redesign B2a gave `setLanePatch` its caller (`TrackMix.setSound`, the
 //        inspector's Sound row; it was tested and caller-less) — it leaves the caller-less set.
 //        ⭐ The part bar (`Studio/SelectedPartBar.swift`) gave `splitRegion`, then S8
@@ -95,7 +98,8 @@
 // first production caller, `AudioImport.addAudioTrack`). **9** have
 // neither a caller nor a TEST (bootstrapIfNeeded · renameLane · resizeRegion ·
 // setAudioRegionWindow · setBuiltinInstrument · setLaneOctave · setLaneSample · toggleMute ·
-// toggleSolo). The other 33 are exercised by the non-blocking suite. A count belongs to
+// toggleSolo — a dated list: resizeRegion, setBuiltinInstrument and setAudioRegionWindow have
+// left it since, see the ⭐ lines above). The other 33 are exercised by the non-blocking suite. A count belongs to
 // exactly ONE operation; "9" was right about a different question than the one being asked.
 // Re-derive both rather than trusting these: they are dates, not facts.
 //
@@ -830,8 +834,12 @@ public final class TimelineStore {
     /// the region's own gain (CLIP-6, clamped 0…2). The region's song position
     /// (startTick) stays — trimming the media never moves the clip in the song.
     /// No-op when nothing changed (no undo spam).
+    /// ⚠️ `gain` has NO default (GMMW AE-6): it is written every time, so a caller that left it
+    /// out reset the part to unity — and a defaulted argument no call site writes appears in no
+    /// diff (#431/#440). Pass the region's own gain. The one caller is the audio part editor's
+    /// slip (`AudioPartSlip.apply`), which reads it from the store as it writes.
     public func setAudioRegionWindow(id: UUID, contentOffsetSeconds: Double,
-                                     lengthTicks: Int, bpm: Double, gain: Float = 1) {
+                                     lengthTicks: Int, bpm: Double, gain: Float) {
         guard let i = document.regions.firstIndex(where: { $0.id == id }) else { return }
         let offset = max(0, contentOffsetSeconds)
         let length = max(1, lengthTicks)

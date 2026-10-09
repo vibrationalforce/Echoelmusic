@@ -121,6 +121,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         // GMMW GA-1: a rack track's Compose here rows (`Studio/TrackComposeRows.swift`) — its
         // Style menu and New variation. `setLaneMood` stays caller-less on purpose (no mood row).
         "setLaneGenreOverride", "setLaneVariationSeed",
+        // GMMW AE-6: the audio part editor's slip (`Studio/AudioPartSlip.swift`).
+        "setAudioRegionWindow",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than

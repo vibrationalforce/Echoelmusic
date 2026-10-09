@@ -651,8 +651,10 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// document, so the input is not under this file's control.
     ///
     /// ⚠️ LATENT ON THE LIVE PATH, AND THE HONEST VERSION IS THE MIXED ONE. Measured:
-    /// `TimelineStore.setAudioRegionWindow` (the caller that does NOT guard `isFinite`) has
-    /// ZERO production callers — the audio-lane door went with #121 Slice 4 (#527). The two
+    /// `TimelineStore.setAudioRegionWindow` (the caller that does NOT guard `isFinite`) had
+    /// ZERO production callers — the audio-lane door went with #121 Slice 4 (#527); since GMMW
+    /// AE-6 its one caller is the slip, which hands it an offset `AudioPartSlip.offset` already
+    /// proved finite and inside the file. The other two
     /// LIVE callers reach it through `RegionNoteWindow.offsetTicks`, which guards
     /// `contentOffsetSeconds.isFinite` itself. What was NOT closed on the live path is
     /// `bpm`: no caller checks it, and `+inf` passed the old guard.

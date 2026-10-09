@@ -9,8 +9,9 @@
 //  out before and after, where the hits are, and where the song is in the file. This is that
 //  view, on the selected track's Part page, above the part list. It was read-only in AE-2. Since
 //  AE-4b its two window edges are handles (`AudioPartEdgeHandles`, below) that ask the trim
-//  rules that already exist (`PartTrim`) rather than a lookalike; the fade, gain and slip
-//  handles are AE-5 and AE-6.
+//  rules that already exist (`PartTrim`) rather than a lookalike. Since AE-6 the window's
+//  body slips the file under the part (`AudioPartSlip`, its own file — it is the one that reads
+//  whether the song plays); the fade and gain handles are AE-5.
 //
 //  ⭐ NO NEW TRUTH (#416). The part's window is `ArrangeCanvas.audioWindow` — the player's own
 //  file position and stretch rate, the stretch the canvas block draws. The file is read by
@@ -406,6 +407,10 @@ struct AudioPartEditorView: View {
 /// alone (`.task(id:)`), and a gain or fade edit redraws without re-reading.
 private struct AudioPartEditorPane: View {
 
+    /// Handed to the slip's VoiceOver step only; nothing in this body reads either.
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(TimelineRegionPlayer.self) private var player
+
     let subject: AudioPartEditor.Subject
     /// The part and the arrangement it sits in — handed to the edge handles alone, which ask the
     /// trim rules of both (AE-4b).
@@ -420,34 +425,57 @@ private struct AudioPartEditorPane: View {
         let load = self.load
         let total = AudioPartEditor.fileSeconds(subject, load: load)
         let summary = AudioPartEditor.summary(subject, load: load)
+        let slip = slipFileSeconds(total, load: load)
         VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
-            Text(subject.name.isEmpty ? String(localized: "Audio part") : subject.name)
-                .font(EchoelTheme.font(12, .semibold))
-                .foregroundStyle(EchoelTheme.text)
-                .lineLimit(1)
-            Text(summary)
-                .font(EchoelTheme.font(11).monospacedDigit())
-                .foregroundStyle(EchoelTheme.dim)
-            ZStack(alignment: .leading) {
-                AudioPartFileWave(subject: subject, load: load, fileSeconds: total, tint: tint)
-                if let total {
-                    AudioPartPlayheadView(subject: subject, fileSeconds: total)
+            VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
+                Text(subject.name.isEmpty ? String(localized: "Audio part") : subject.name)
+                    .font(EchoelTheme.font(12, .semibold))
+                    .foregroundStyle(EchoelTheme.text)
+                    .lineLimit(1)
+                Text(summary)
+                    .font(EchoelTheme.font(11).monospacedDigit())
+                    .foregroundStyle(EchoelTheme.dim)
+                ZStack(alignment: .leading) {
+                    AudioPartFileWave(subject: subject, load: load, fileSeconds: total, tint: tint)
+                    if let total {
+                        AudioPartPlayheadView(subject: subject, fileSeconds: total)
+                    }
+                    if let total, subject.mediaBPM != nil, case .ready = load {
+                        AudioPartEdgeHandles(subject: subject, region: region, document: document, clip: clip,
+                                             fileSeconds: total)
+                    }
                 }
-                if let total, subject.mediaBPM != nil, case .ready = load {
-                    AudioPartEdgeHandles(subject: subject, region: region, document: document, clip: clip,
-                                         fileSeconds: total)
+                .frame(minHeight: 72)
+                .background(EchoelTheme.surface)
+                .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(String(localized: "Audio part editor") + ", "
+                                + (subject.name.isEmpty ? String(localized: "Audio part") : subject.name))
+            .accessibilityValue(summary)
+            // The slip's VoiceOver door (AE-6): a swipe up or down is one beat later or earlier in the
+            // file. The buttons below are OUTSIDE this one element on purpose — inside it they were in
+            // no accessibility tree, so Voice Control, Switch Control and a keyboard could not reach them.
+            .accessibilityHint(slip == nil ? "" : String(localized: "Swipe up to play from one beat later in the file, down for one beat earlier."))
+            .accessibilityAdjustableAction { direction in
+                guard let slip else { return }
+                switch direction {
+                case .increment:
+                    AudioPartSlip.applyStep(1, regionID: region.id, clip: clip, fileSeconds: slip,
+                                            timeline: timeline, player: player)
+                case .decrement:
+                    AudioPartSlip.applyStep(-1, regionID: region.id, clip: clip, fileSeconds: slip,
+                                            timeline: timeline, player: player)
+                @unknown default:
+                    break
                 }
             }
-            .frame(minHeight: 72)
-            .background(EchoelTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall))
-            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                .strokeBorder(EchoelTheme.border, lineWidth: 1))
+            if let slip {
+                AudioPartSlipButtons(region: region, clip: clip, fileSeconds: slip)
+            }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "Audio part editor") + ", "
-                            + (subject.name.isEmpty ? String(localized: "Audio part") : subject.name))
-        .accessibilityValue(summary)
         .task(id: subject.window.mediaRef) {
             let ref = subject.window.mediaRef
             self.load = .reading
@@ -466,6 +494,13 @@ private struct AudioPartEditorPane: View {
             guard !Task.isCancelled else { return }
             self.load = read
         }
+    }
+
+    /// The file length a slip moves against — set exactly where the edge handles are mounted:
+    /// a known length, a part whose media has a tempo, and a wave on screen.
+    private func slipFileSeconds(_ total: Double?, load: AudioPartEditor.Load) -> Double? {
+        guard let total, subject.mediaBPM != nil, case .ready = load else { return nil }
+        return total
     }
 }
 
@@ -582,6 +617,11 @@ private struct AudioPartEdgeHandles: View {
                let frames = AudioPartEditor.handleFrames(startX: span.lowerBound * width,
                                                         endX: span.upperBound * width, width: width) {
                 ZStack(alignment: .topLeading) {
+                    // AE-6: the window's body between the two handles slips the file.
+                    if frames.start.upperBound < frames.end.lowerBound {
+                        AudioPartSlipArea(region: region, clip: clip, fileSeconds: fileSeconds, paneWidth: width,
+                                          touch: frames.start.upperBound...frames.end.lowerBound, height: height)
+                    }
                     handle(.start, frame: frames.start, width: width, height: height)
                     handle(.end, frame: frames.end, width: width, height: height)
                     if let drag {
