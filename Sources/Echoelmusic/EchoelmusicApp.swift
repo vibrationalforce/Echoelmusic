@@ -1748,6 +1748,11 @@ struct EchoelmusicApp: App {
                                                    to: scenePhaseName(newPhase)))
                 switch newPhase {
                 case .active:
+                    // SH-9 — the watch runs again, FIRST in the branch (SH-9b, review of daf2475):
+                    // iOS's watchdog kills a main thread that stalls in a scene transition, and the
+                    // audio session and engine start below are exactly that. A no-op until
+                    // `startup 4/4` armed it.
+                    MainThreadWatchdog.shared.resume()
                     // Resume must survive BOTH transition orders — iOS can deliver
                     // .background → .active directly OR .background → .inactive →
                     // .active (then oldPhase is .inactive and an == .background gate
@@ -1782,8 +1787,6 @@ struct EchoelmusicApp: App {
                     // shut (deliberate stop wins) while MIDI out still deserves its
                     // retry; the call is a guarded no-op in every healthy state.
                     midiOut.rearmIfDead()
-                    // SH-9 — the watch runs again; a no-op until `startup 4/4` armed it.
-                    MainThreadWatchdog.shared.resume()
                 case .background:
                     wasBackgrounded = true
                     // SH-1 — the launch survived into its first background: confirm it now, so a
@@ -1792,8 +1795,6 @@ struct EchoelmusicApp: App {
                     // was already 0 there before SH-1). A no-op once confirmed, and in Safe Mode or
                     // onboarding, where this handler is not attached.
                     confirmSteadyLaunch(trigger: "first background")
-                    // SH-9 — a suspended process would read as one long stall.
-                    MainThreadWatchdog.shared.pause(reason: "background")
                     // App-Group-Puls-Brücke (2026-07-17): bioFeedback deliberately
                     // KEEPS publishing in the background — the bridge's headline
                     // scenario is the HOST (GarageBand/AUM) in the foreground with
@@ -1868,6 +1869,10 @@ struct EchoelmusicApp: App {
                         log.log(.info, category: .system, "App backgrounded — audio continues")
                         EchoelCrashLog.breadcrumb("scene: audio continues")
                     }
+                    // SH-9 — LAST in the branch (SH-9b): the two flushes and the engine stop above
+                    // are watched too — a hang there is the kill iOS deals in a transition. It stops
+                    // here because a suspended process would read as one long stall.
+                    MainThreadWatchdog.shared.pause(reason: "background")
                 case .inactive:
                     // SH-1 review — the app switcher makes the app `.inactive`, and a kill from there
                     // never delivers `.background`. Once the deferred starts have run for the floor,

@@ -24,9 +24,18 @@
 // 6. Durations read as whole milliseconds below a second and tenths above it.
 // 7. The owner is not `@MainActor`, holds nothing observable, and every closure it hands to
 //    Dispatch is spelled `@Sendable` (the build-2613 trap); the timer runs on a utility queue.
-// 8. The app starts it once, after `startup 4/4`; pauses it in the `.background` branch, after
-//    the launch confirm; resumes it in the `.active` branch; nothing else calls it.
+// 8. The app starts it once, after `startup 4/4`; resumes it FIRST in the `.active` branch and
+//    pauses it LAST in the `.background` branch (SH-9b — iOS kills a stall in a transition, so
+//    the transitions are watched); nothing else calls it.
 // 9. No line it can write reads as a crash marker or as a scene transition to the next launch.
+// SH-9b (the concurrency review of daf2475), END-TO-END on the ledger except where marked:
+// 10. A stall line the WATCH caused (its own queue ran late; the main queue answered in time) is
+//     taken back on the answer and leaves the count.
+// 11. A pause says what was open: a stall no answer has ended, and the window so far.
+// 12. Two finite times whose difference overflows do not hang the doubling (it would never end).
+// 13. A crash signature does not quote the watch's summary as the run's last line (END-TO-END on
+//     `EchoelCrashLog.crashSignature`); and SOURCE: the pause writes its lines before it cancels,
+//     a pause before `start()` holds the watch, and the ping goes out before the lines are written.
 //
 // HONEST GRADING (§3). The file names a new type — it does not compile on its parent
 // (`ff2064b`), so every claim is FORWARD: no assertion here has a verdict there, and the source
@@ -39,6 +48,15 @@
 // rounded milliseconds → 6; `@MainActor` on the class → 7; one `.async {` without `@Sendable`
 // → 7; the pause outside the `.background` branch → 8; a second `start()` → 8; "CRASH" in a line
 // → 9; "scene: " in a line → 9.
+// SH-9b GRADING. Claims 10–13 drive members this commit adds (`close`, `isSummaryLine`), so
+// against `ece664c` they do not compile: FORWARD. Claim 8's two new ordering assertions are
+// REGRESSIONS in kind (red there: resume sat after `rearmIfDead`, pause before the flushes).
+// Claims 1–7 and 9 are COUNTERWEIGHTS — the reshaped summary must print the same bytes. MUTANTS,
+// each red for its named reason: the late-watch branch dropped → 10; the count not taken back →
+// 10; `close` without the open-stall line → 11; the `isFinite` guard dropped → 12 (a hang, caught
+// in the transcription by an iteration bound); the summary filter dropped → 13; the cancel before
+// the lines → 13; the `paused` check dropped → 13; the lines before the ping → 13; resume back
+// after `rearmIfDead` → 8; pause back before the flushes → 8.
 
 import Foundation
 import XCTest
@@ -214,10 +232,24 @@ final class TheMainThreadIsWatchedTests: XCTestCase {
         }
         let activeBranch = String(app[active.upperBound..<background.lowerBound])
         let backgroundBranch = String(app[background.upperBound..<inactive.lowerBound])
-        XCTAssertTrue(activeBranch.contains("MainThreadWatchdog.shared.resume()"), "the `.active` branch resumes it")
+        let resume = try anchor("MainThreadWatchdog.shared.resume()", in: activeBranch)
+        let resumeGate = try anchor("audioEngine.shouldResumeOnForeground(", in: activeBranch)
+        XCTAssertLessThan(resume.lowerBound, resumeGate.lowerBound, """
+            The watch resumes AFTER the audio session and engine come back. iOS's watchdog kills a \
+            main thread that stalls in a scene transition — that is the stretch the watch exists \
+            for, so it resumes first (SH-9b).
+            """)
         let confirm = try anchor("confirmSteadyLaunch(trigger: \"first background\")", in: backgroundBranch)
         let pause = try anchor("MainThreadWatchdog.shared.pause(reason: \"background\")", in: backgroundBranch)
         XCTAssertLessThan(confirm.lowerBound, pause.lowerBound, "the launch confirm stays FIRST in the branch (SH-1)")
+        for teardown in ["timelineStore.flushPendingSave()", "audioEngine.stop(reason: .idleBackground)",
+                         "EchoelCrashLog.breadcrumb(\"scene: audio continues\")"] {
+            let step = try anchor(teardown, in: backgroundBranch)
+            XCTAssertLessThan(step.lowerBound, pause.lowerBound, """
+                The watch pauses before `\(teardown)`. The flushes and the engine stop are where a \
+                backgrounding app hangs, so the pause is the LAST statement of the branch (SH-9b).
+                """)
+        }
 
         let sources = try sourceFiles()
         XCTAssertGreaterThan(sources.count, 100, "precondition: the source tree was walked")
@@ -252,7 +284,121 @@ final class TheMainThreadIsWatchedTests: XCTestCase {
         for line in lines { XCTAssertTrue(line.hasPrefix(Ledger.linePrefix), "`\(line)` carries the `main: ` prefix") }
     }
 
+    // MARK: 10 — a stall the watch caused is taken back
+
+    func testAStallTheWatchCausedIsTakenBackOnTheAnswer() {
+        var ledger = Ledger(startedAt: 0)
+        guard let id = ledger.tick(at: 0.25).ping else { return XCTFail("the first tick sends a ping") }
+        XCTAssertEqual(ledger.tick(at: 1.25).lines, ["main: stalled — no answer for 1.0 s"],
+                       "a tick that ran late sees a wait of a second and says so")
+        XCTAssertEqual(ledger.answer(id, at: 0.55),
+                       ["main: recovered — answered after 300 ms (the watch ran late, not the main thread)"], """
+            The main queue answered 300 ms after the ping — the stall line was the watch's own queue \
+            running late (thermal pressure, Low Power Mode). The answer says so.
+            """)
+        XCTAssertEqual(ledger.tick(at: 30).lines, ["main: 30 s — answered 1, worst 300 ms, stalls 0"],
+                       "…and the window does not count it as a stall")
+
+        // COUNTERWEIGHT (#343): a real stall, answered late, still counts.
+        var real = Ledger(startedAt: 0)
+        guard let first = real.tick(at: 0.25).ping else { return XCTFail("the first tick sends a ping") }
+        _ = real.tick(at: 1.25)
+        XCTAssertEqual(real.answer(first, at: 1.375), ["main: recovered — answered after 1.1 s"])
+        XCTAssertEqual(real.tick(at: 30).lines, ["main: 30 s — answered 1, worst 1.1 s, stalls 1"])
+    }
+
+    // MARK: 11 — a pause says what was open
+
+    func testAPauseSaysWhatWasStillOpen() {
+        var stalled = Ledger(startedAt: 0)
+        _ = stalled.tick(at: 0.25)
+        _ = stalled.tick(at: 1.25)
+        XCTAssertEqual(stalled.close(at: 3.25), [
+            "main: still stalled at the pause — no answer for 3.0 s",
+            "main: 3 s — answered 0, worst 3.0 s, stalls 1",
+        ], "a stall still going on when the app leaves the foreground is not left looking finished")
+
+        var quiet = Ledger(startedAt: 0)
+        for k in 1...48 {
+            if let id = quiet.tick(at: tickTime(k)).ping { _ = quiet.answer(id, at: tickTime(k) + 0.009) }
+        }
+        XCTAssertEqual(quiet.close(at: 12), ["main: 12 s — answered 48, worst 9 ms, stalls 0"],
+                       "the window so far, so a quiet log shows the watch was alive up to the pause")
+        XCTAssertEqual(quiet.close(at: .nan), [], "a non-finite clock writes nothing")
+    }
+
+    // MARK: 12 — an overflowing wait cannot hang the doubling
+
+    func testAnOverflowingWaitDoesNotHangTheWatch() {
+        var ledger = Ledger(startedAt: 0)
+        XCTAssertNotNil(ledger.tick(at: -1.7e308).ping)
+        // 1.7e308 − (−1.7e308) is +∞: a rung that doubled to +∞ would stay ≤ the wait forever.
+        XCTAssertEqual(ledger.tick(at: 1.7e308).lines, ["main: 30 s — answered 0, worst ?, stalls 0"],
+                       "an infinite wait writes no stall line and the tick returns")
+        // A window whose length overflows to +∞ is clamped before it becomes an `Int` (a trap).
+        let far = Ledger(startedAt: -1.7e308)
+        XCTAssertEqual(far.close(at: 1.7e308), ["main: 1000000000 s — answered 0, worst 0 ms, stalls 0"],
+                       "the window length is clamped before it becomes an Int")
+    }
+
+    // MARK: 13 — the summary is not a crash's last word, and the impure half's order
+
+    func testACrashSignatureSkipsTheSummaryAndThePauseWritesBeforeItCancels() throws {
+        let summary = "main: 30 s — answered 119, worst 5 ms, stalls 0"
+        XCTAssertTrue(Ledger.isSummaryLine(summary))
+        XCTAssertTrue(Ledger.isSummaryLine("main: 3 s — answered 0, worst 3.0 s, stalls 1"))
+        XCTAssertFalse(Ledger.isSummaryLine("main: stalled — no answer for 1.0 s"), "a stall line is the informative one")
+        XCTAssertFalse(Ledger.isSummaryLine("main: recovered — answered after 9.3 s"))
+        let log = "1.000  launch v1.0 (1)\n2.000  main: stalled — no answer for 1.0 s\n3.000  "
+            + summary + "\nCRASH SIGSEGV — see breadcrumbs above\n"
+        let signature = try XCTUnwrap(EchoelCrashLog.crashSignature(in: log))
+        XCTAssertTrue(signature.contains("last \"main: stalled — no answer for 1.0 s\""), """
+            The crash signature quotes the watch's 30-s summary as the run's last line. In a quiet \
+            session it is often the newest, and it says only that the watch was alive — got `\(signature)`.
+            """)
+
+        let code = try source(Self.watchdog)
+        let pause = try member("func pause(reason: String) {", in: code)
+        let closeLines = try anchor("close(at: Self.now())", in: pause)
+        let off = try anchor("watch off — ", in: pause)
+        let cancel = try anchor("timer.cancel()", in: pause)
+        XCTAssertLessThan(closeLines.lowerBound, off.lowerBound, "what was open, then the rung")
+        XCTAssertLessThan(off.lowerBound, cancel.lowerBound, "a rung stands BEFORE its step (the diag-ladder law)")
+        let remembered = try anchor("self.paused = true", in: pause)
+        let timerGuard = try anchor("guard let timer = self.timer else { return }", in: pause)
+        XCTAssertLessThan(remembered.lowerBound, timerGuard.lowerBound,
+                          "a pause before `start()` is remembered even though no timer runs yet")
+        XCTAssertTrue(try member("func start() {", in: code).contains("guard !self.paused else {"),
+                      "a launch already in the background does not run the watch")
+        XCTAssertTrue(try member("func resume() {", in: code).contains("self.paused = false"))
+        let tick = try member("private func tick() {", in: code)
+        let send = try anchor("if let id = ping { send(id) }", in: tick)
+        let write = try anchor("for line in lines { EchoelCrashLog.breadcrumb(line) }", in: tick)
+        XCTAssertLessThan(send.lowerBound, write.lowerBound, "a blocked diag write is not charged to the main thread")
+    }
+
     // MARK: - Helpers
+
+    /// The text inside the braces that open at the first `{` from `head` on (#408 — never a window).
+    private func member(_ head: String, in text: String) throws -> String {
+        guard let start = text.range(of: head),
+              let open = text[start.lowerBound...].firstIndex(of: "{") else {
+            throw WatchAnchorMissing(reason: "`\(head)` is not in the scanned text — re-anchor (#454)")
+        }
+        var depth = 0
+        var index = open
+        while index < text.endIndex {
+            switch text[index] {
+            case "{": depth += 1
+            case "}":
+                depth -= 1
+                if depth == 0 { return String(text[text.index(after: open)..<index]) }
+            default: break
+            }
+            index = text.index(after: index)
+        }
+        throw WatchAnchorMissing(reason: "`\(head)` never closes — re-anchor (#408)")
+    }
 
     private func occurrences(of needle: String, in text: String) -> Int {
         text.components(separatedBy: needle).count - 1

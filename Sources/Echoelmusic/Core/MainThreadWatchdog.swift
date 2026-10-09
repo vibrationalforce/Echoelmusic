@@ -16,9 +16,13 @@
 //   main: still stalled — no answer for 2.0 s       (again at 4, 8, 16 … s: doubling, bounded)
 //   main: recovered — answered after 9.3 s
 //   main: 30 s — answered 119, worst 14 ms, stalls 0
+//   main: 12 s — answered 47, worst 9 ms, stalls 0     (the window so far, at a pause)
 //   main: watch off — background
 // A stall shorter than one tick can only be seen on its answer; it still counts and writes ONE
-// line (`… (not seen while it lasted)`), so the stall count never misses one.
+// line (`… (not seen while it lasted)`), so the stall count never misses one. A stall line the
+// WATCH caused — its own queue ran late (thermal pressure, Low Power Mode) while the main queue
+// had answered in time — is taken back on the answer (`… (the watch ran late, not the main
+// thread)`) and leaves the count. A pause during a stall says the stall was still open.
 //
 // ⚠️ SCOPE, stated so a quiet log is not read as more than it is. It catches EXECUTOR FLOODS and
 // long main-thread work — anything that keeps a block queued on the main queue from running
@@ -36,8 +40,14 @@
 // trap: a closure formed on the main actor and called on a worker traps at its entry).
 //
 // LIFECYCLE. `start()` at `startup 4/4` (the studio only — Safe Mode and onboarding never reach
-// it), `pause(reason:)` on `.background` (a suspended process would read as one long stall),
-// `resume()` on `.active` (a no-op unless `start()` ran). Guard: `TheMainThreadIsWatchedTests`.
+// it), `resume()` FIRST in `.active` and `pause(reason:)` LAST in `.background` (SH-9b, review of
+// daf2475): iOS's watchdog kills a main thread that stalls in a scene transition, so the audio
+// session coming back and the teardown going out are watched; the pause still lands before
+// suspension, which would read as one long stall. `resume()` is a no-op unless `start()` ran, and
+// a pause that arrives BEFORE `start()` (a launch already in the background) holds the watch until
+// the next `resume()`. Volume: one summary per 30 s plus log₂ lines per stall; a pathological run
+// of 1-s stalls writes about two lines a second, which shortens the history the retained crash
+// tail covers and is accepted. Guard: `TheMainThreadIsWatchedTests`.
 
 import Foundation
 
@@ -52,6 +62,8 @@ struct MainThreadLatencyLedger: Sendable, Equatable {
     /// One summary line per window, so a quiet log still shows the watch was alive.
     static let summarySeconds = 30.0
     static let linePrefix = "main: "
+    /// What every summary line carries after its window length (`main: 30 s — answered …`).
+    static let summaryMarker = " s — answered "
 
     private var outstandingID: Int?
     private var outstandingSentAt = 0.0
@@ -75,7 +87,9 @@ struct MainThreadLatencyLedger: Sendable, Equatable {
         var lines: [String] = []
         if outstandingID != nil {
             let waited = Swift.max(0, now - outstandingSentAt)
-            if waited >= nextStallLine {
+            // Two finite times can still differ by more than a Double holds; an infinite wait
+            // would keep the doubling below from ever ending (SH-9b).
+            if waited.isFinite, waited >= nextStallLine {
                 if stalled {
                     lines.append(Self.linePrefix + "still stalled — no answer for \(Self.duration(waited))")
                 } else {
@@ -90,10 +104,7 @@ struct MainThreadLatencyLedger: Sendable, Equatable {
             }
         }
         if now - windowStart >= Self.summarySeconds {
-            var worst = worstLagInWindow
-            if outstandingID != nil { worst = Swift.max(worst, now - outstandingSentAt) }
-            lines.append(Self.linePrefix + "\(Int(Self.summarySeconds)) s — answered \(answeredInWindow), "
-                         + "worst \(Self.duration(worst)), stalls \(stallsInWindow)")
+            lines.append(summaryLine(at: now, seconds: Int(Self.summarySeconds)))
             windowStart = now
             answeredInWindow = 0
             worstLagInWindow = 0
@@ -117,12 +128,51 @@ struct MainThreadLatencyLedger: Sendable, Equatable {
         let wasStalled = stalled
         stalled = false
         nextStallLine = Self.stallSeconds
+        if wasStalled, lag < Self.stallSeconds {
+            // The main queue answered in time; the TICK that wrote the stall line ran late, its
+            // own queue starved. The line was the watch's lateness, so it leaves the count. One
+            // ping at a time: if an earlier window counted it, this one has counted nothing since
+            // and stays at 0.
+            stallsInWindow = Swift.max(0, stallsInWindow - 1)
+            return [Self.linePrefix
+                    + "recovered — answered after \(Self.duration(lag)) (the watch ran late, not the main thread)"]
+        }
         if wasStalled {
             return [Self.linePrefix + "recovered — answered after \(Self.duration(lag))"]
         }
         guard lag >= Self.stallSeconds else { return [] }
         stallsInWindow += 1
         return [Self.linePrefix + "recovered — answered after \(Self.duration(lag)) (not seen while it lasted)"]
+    }
+
+    /// The watch is paused at `now`: what was still open, so a log that goes quiet in the
+    /// background says where it stood — a stall no answer has ended yet, and the window so far.
+    /// An answer that arrives after the pause belongs to no ledger.
+    func close(at now: Double) -> [String] {
+        guard now.isFinite else { return [] }
+        var lines: [String] = []
+        if outstandingID != nil, stalled {
+            let waited = Swift.max(0, now - outstandingSentAt)
+            lines.append(Self.linePrefix + "still stalled at the pause — no answer for \(Self.duration(waited))")
+        }
+        // Clamped before the `Int(…)`: two finite times can differ by more than an Int holds.
+        let elapsed = (now - windowStart).clamped(to: 0...1_000_000_000)
+        lines.append(summaryLine(at: now, seconds: Int(elapsed.rounded())))
+        return lines
+    }
+
+    /// Whether a diag-log message is one of the watch's summary lines — the line a crash
+    /// signature must not quote as the run's last word (it says nothing about the crash).
+    static func isSummaryLine(_ message: String) -> Bool {
+        message.hasPrefix(linePrefix) && message.contains(summaryMarker)
+    }
+
+    /// The window so far as one line, its worst lag counting a ping that is still unanswered.
+    private func summaryLine(at now: Double, seconds: Int) -> String {
+        var worst = worstLagInWindow
+        if outstandingID != nil { worst = Swift.max(worst, now - outstandingSentAt) }
+        return Self.linePrefix + "\(seconds)" + Self.summaryMarker + "\(answeredInWindow), "
+            + "worst \(Self.duration(worst)), stalls \(stallsInWindow)"
     }
 
     /// Whole milliseconds below a second, tenths of a second from there on.
@@ -144,6 +194,9 @@ final class MainThreadWatchdog: @unchecked Sendable {
     private var timer: DispatchSourceTimer?
     private var ledger: MainThreadLatencyLedger?
     private var armed = false
+    /// Set by `pause`, cleared by `resume`: a pause that lands before `start()` (a launch already in
+    /// the background) keeps the watch from running until the app is in front again.
+    private var paused = false
     /// Bumped by every `run`: an answer to a ping sent before a pause belongs to no ledger.
     private var generation = 0
 
@@ -153,6 +206,11 @@ final class MainThreadWatchdog: @unchecked Sendable {
     func start() {
         queue.async { @Sendable in
             self.armed = true
+            guard !self.paused else {
+                EchoelCrashLog.breadcrumb(MainThreadLatencyLedger.linePrefix
+                    + "watch armed — the app is in the background, it runs on the next foreground")
+                return
+            }
             self.run(reason: "launch")
         }
     }
@@ -160,17 +218,21 @@ final class MainThreadWatchdog: @unchecked Sendable {
     /// Stop the timer (an answer still in flight is ignored). The watch stays armed.
     func pause(reason: String) {
         queue.async { @Sendable in
+            self.paused = true
             guard let timer = self.timer else { return }
+            // The lines stand BEFORE the step (the diag-ladder law): what was open, then the rung.
+            for line in self.ledger?.close(at: Self.now()) ?? [] { EchoelCrashLog.breadcrumb(line) }
+            EchoelCrashLog.breadcrumb(MainThreadLatencyLedger.linePrefix + "watch off — \(reason)")
             timer.cancel()
             self.timer = nil
             self.ledger = nil
-            EchoelCrashLog.breadcrumb(MainThreadLatencyLedger.linePrefix + "watch off — \(reason)")
         }
     }
 
     /// Run again after a pause — only if `start()` armed the watch.
     func resume() {
         queue.async { @Sendable in
+            self.paused = false
             guard self.armed else { return }
             self.run(reason: "foreground")
         }
@@ -198,8 +260,13 @@ final class MainThreadWatchdog: @unchecked Sendable {
         guard var current = ledger else { return }
         let (ping, lines) = current.tick(at: Self.now())
         ledger = current
+        // The ping goes out BEFORE the lines are written: the ledger timed it already, and a diag
+        // write that blocks must not be charged to the main thread (SH-9b).
+        if let id = ping { send(id) }
         for line in lines { EchoelCrashLog.breadcrumb(line) }
-        guard let id = ping else { return }
+    }
+
+    private func send(_ id: Int) {
         let sentIn = generation
         DispatchQueue.main.async { @Sendable in
             let answeredAt = Self.now()

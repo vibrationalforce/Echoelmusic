@@ -704,7 +704,9 @@ enum EchoelCrashLog {
     /// The crash of a previous run in ONE line, or nil when that run carries no crash marker:
     /// what killed it (the signal, or the exception's name), the queue and thread the handler
     /// named, the innermost frames of the app's own binary as offsets from where it was loaded,
-    /// the last line the run wrote before it died, and the build and UUID that wrote it.
+    /// the last line the run wrote before it died, and the build and UUID that wrote it. The
+    /// main-thread watch's 30-s summary is passed over for that last line (SH-9b): in a quiet
+    /// session it is often the newest, and it says only that the watch was alive.
     ///
     /// Pure, and run at the NEXT launch — nothing here touches the signal handler. Offsets come
     /// from the run's own `image` line (absolute address minus load address); a log without one
@@ -752,7 +754,9 @@ enum EchoelCrashLog {
         }
         parts.append(offsets.isEmpty ? "no app frames" : "app " + offsets.joined(separator: " "))
 
-        if let last = lines[..<markerIndex].last(where: { $0.timed && !$0.message.hasPrefix(crashMarker) }) {
+        if let last = lines[..<markerIndex].last(where: {
+            $0.timed && !$0.message.hasPrefix(crashMarker) && !MainThreadLatencyLedger.isSummaryLine($0.message)
+        }) {
             let quote = last.message.count > signatureQuoteLimit
                 ? String(last.message.prefix(signatureQuoteLimit)) + "…" : last.message
             parts.append("last \"" + quote + "\"")
