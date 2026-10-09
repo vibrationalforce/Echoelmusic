@@ -5169,3 +5169,9 @@ kann leer bleiben. Feineres Editieren kommt deshalb über die Rasterregel, nicht
 Leinwand. Ein breiterer Zoom braucht zuerst gekacheltes Zeichnen.
 
 **Review:** 2026-11-07.
+
+### 2026-10-09 — EchoelAI: die erste Tür ist Siri/Kurzbefehle, getypt, ein Schreibtisch
+- **Entscheidung:** drei GETYPTE App Intents (Spurpegel ±dB, gewählten Part kopieren, Echoels letzte Änderung zurücknehmen) legen `EchoelProposedAction`-Daten in einen App-Group-Schlüssel; `EchoelAgentDesk` besitzt den EINEN `EchoelCommandExecutor` (`EchoelmusicApp.bindAgentDesk`) und plant über `EchoelPlanning.plan` mit `EchoelPostedPlanner`.
+- **Warum:** läuft auf iOS 18 ohne Modell; kein Stichwort-Matcher; derselbe Parser und dieselbe Einwilligungsprüfung wie ein künftiges Modell (AI-3 = nur ein weiterer Planer); eine Anfrage gewährt keine Einwilligung; jede Änderung sichtbar mit Undo (`AgentReportBanner`, Statuszeile in der Wurzel, kein Modal).
+- **Offen (AI-1b):** Warteschlange im Postfach, Siri-Dialog bei Ablehnung, Banner-Texte im String-Katalog. „EchoelAI“-Benennung in Siri bleibt founder-gated (AI-8).
+- **Review:** 2026-11-08 · Commits `0c164c5`, `4348621`.

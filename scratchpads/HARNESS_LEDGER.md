@@ -4428,3 +4428,9 @@ are green, the refusal is the poll's, not the commit's. Repair is founder-gated 
 error ≠ empty; consecutive empties or a second source before refusing; absence = pending once a
 run was ever seen. Until then main lags until the next CODE push re-triggers the merge — an
 empty commit to kick it is forbidden. decisions.csv row 1044.
+
+## PLAYBOOK (2026-10-09, AI-1 `0c164c5`/`4348621`): an App Intent is a caller you do not schedule
+- `openAppWhenRun` intents run IN the app process, possibly AFTER `.active` fired — a mailbox read only on activation waits for the NEXT return. Have the intent call the consumer itself, AND keep the startup/foreground reads; whichever comes first takes it (read-once).
+- A consumer with a busy flag must LOOP after each run (and after any other run path, e.g. an Undo button), or a request that arrived mid-run waits silently.
+- The test host IS the app: a guard must never read or clear an App-Group key the app reads at launch. Give the consumer a pure seam (`handle(_:)`) and let only the shared instance touch the store (`self === Self.shared`).
+- A glossary-struck word hides inside a VERB ("Takes back" contains "take"); transcribe the chrome guard over new copy before committing.
