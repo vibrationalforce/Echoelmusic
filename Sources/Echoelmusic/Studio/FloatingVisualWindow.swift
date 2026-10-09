@@ -15,7 +15,8 @@ import SwiftUI
 // graph). Only ONE `MetalBioView` renders app-wide at a time (GPU rule): this window is
 // the single Metal path at the WorkspaceView root.
 
-/// A finished MP4 clip to share (Identifiable so `.sheet(item:)` can present it).
+/// A finished WAV take to share (Identifiable so `.sheet(item:)` can present it). It held an MP4
+/// until #1304 removed video capture; the one producer left is the WAV export below.
 private struct RecordedClip: Identifiable {
     let id = UUID()
     let url: URL
@@ -1393,15 +1394,15 @@ struct FloatingVisualWindow: View {
         }
     }
 
-    /// Give the recorded clip a fitting name — same convention as the WAV export:
-    /// `Echoel_<date>_<Key>_<bpm>_A440_<Genre>.mp4` (key + tempo + tuning + genre). Copies
+    /// Give the exported take a fitting name — same convention as the Studio's WAV export:
+    /// `Echoel_<date>_<Key>_<bpm>_A440_<Genre>.wav` (key + tempo + tuning + genre). Copies
     /// to a temp file with that name for the share sheet; falls back to the original on
     /// failure so a recording is never lost.
     private func renamedForShare(_ url: URL) -> URL {
         let raw = "\(session.sessionName(bpm: transport.tempo))_\(genre.displayName)"
         let safe = raw.components(separatedBy: CharacterSet(charactersIn: "/\\:*?\"<>| "))
             .filter { !$0.isEmpty }.joined(separator: "-")
-        let ext = url.pathExtension.isEmpty ? "mp4" : url.pathExtension
+        let ext = url.pathExtension.isEmpty ? "wav" : url.pathExtension
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent("\(safe).\(ext)")
         do {
             try? FileManager.default.removeItem(at: dest)

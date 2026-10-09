@@ -44,8 +44,8 @@
 //   picture, not beats in its sound. ⭐ The close and the far neighbours are judged each against
 //   THEIR OWN usual change (VV-1a): mixed, a paired reading put the median between the two kinds
 //   and every far pair of moving footage read as a cut.
-// · Nothing here reads the video's AUDIO. Offering it as a beat or sampler source is its own
-//   slice (`scratchpads/PLAN_MEDIA_SEED_2026-09-27.md` §3.4).
+// · Nothing here reads the video's AUDIO. That is `Sequencer/VideoSound` (E12-1, shipped): it
+//   exports the sound track, and its caller hands that file to the one audio import door.
 
 import Foundation
 
