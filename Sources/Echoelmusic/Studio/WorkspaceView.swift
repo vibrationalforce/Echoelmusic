@@ -260,6 +260,9 @@ struct WorkspaceView: View {
                 ProjectSaveStatusView()
                 // A1 step 3 — the working copy that could not be written says so (own leaf).
                 WorkingCopyStatusView()
+                // GMMW AI-2 — what Echoel did for a Siri/Shortcuts request, with its Undo (own leaf;
+                // it reads the desk's notice in its own body, the root reads nothing of it).
+                AgentReportBanner()
                 // (The standalone Tempo row is gone — the tempo control moved UP into
                 //  the transport bar next to Play, founder 2026-07-15 "Das soll da oben
                 //  hin". Its vertical band is reclaimed for the timeline.)

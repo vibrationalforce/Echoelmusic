@@ -639,6 +639,21 @@ struct EchoelmusicApp: App {
         EchoelCrashLog.breadcrumb(SelfCheckLine.format(facts))
     }
 
+    /// GMMW AI-1 — the ONE agent executor, bound once, after the core is live. It owns no state of
+    /// its own: it reads and writes through the owners every button uses (`TimelineStore`, the
+    /// Workstation selection, `MediaLookUndo.shared`, the visual look in `UserDefaults.standard`),
+    /// and asks the rack's voice capacity rather than assuming it (#431). `EchoelAgentDesk.bind`
+    /// keeps only the first executor; this guard keeps the construction from repeating at all.
+    @MainActor
+    private func bindAgentDesk() {
+        guard !EchoelAgentDesk.shared.isBound else { return }
+        let player = timelinePlayer
+        EchoelAgentDesk.shared.bind(EchoelCommandExecutor(
+            timeline: timelineStore, selection: workstationSelection,
+            voiceCapacity: { player.laneVoiceCapacity },
+            mediaLooks: .shared, visualDefaults: .standard))
+    }
+
     /// Bring outputs online/offline to match the Patchbay (see also `scenePhaseName`
     /// at file scope, used by the lifecycle breadcrumb). An enabled route to an
     /// output's port starts its sender (idempotent — each `start` guards `isActive`);
@@ -1701,6 +1716,10 @@ struct EchoelmusicApp: App {
                     try? await Task.sleep(for: .seconds(SelfCheckLine.launchDelaySeconds))
                     writeSelfCheck(trigger: "launch")
                 }
+                // GMMW AI-1 — the agent's executor is bound now, and a Siri/Shortcuts request that
+                // opened the app (posted before this point) runs. Before this, a request waits.
+                bindAgentDesk()
+                Task { @MainActor in await EchoelAgentDesk.shared.runPending(now: Date()) }
                 try? await Task.sleep(for: .seconds(LaunchGuard.steadyConfirmSeconds))
                 guard !Task.isCancelled else {
                     EchoelCrashLog.breadcrumb("startup: steady confirm skipped — the startup task was cancelled")
@@ -1787,6 +1806,9 @@ struct EchoelmusicApp: App {
                     // shut (deliberate stop wins) while MIDI out still deserves its
                     // retry; the call is a guarded no-op in every healthy state.
                     midiOut.rearmIfDead()
+                    // GMMW AI-1 — a Siri/Shortcuts request waiting in the agent's mailbox runs now.
+                    // A no-op until the startup above bound the executor; it takes the request then.
+                    Task { @MainActor in await EchoelAgentDesk.shared.runPending(now: Date()) }
                 case .background:
                     wasBackgrounded = true
                     // SH-1 — the launch survived into its first background: confirm it now, so a

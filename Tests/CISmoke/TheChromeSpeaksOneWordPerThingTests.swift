@@ -183,6 +183,10 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/AudioPartSlip.swift",
         // GMMW AE-5 (2026-10-09): the level strip's readout above the editor wave.
         "Sources/Echoelmusic/Studio/AudioPartLevelStrip.swift",
+        // GMMW AI-1/AI-2 (2026-10-09): what Echoel says after a Siri/Shortcuts request — the
+        // notice row in the root and the desk's two drop sentences.
+        "Sources/Echoelmusic/Studio/AgentReportBanner.swift",
+        "Sources/Echoelmusic/EchoelAI/EchoelAgentDesk.swift",
         // Ratchet 15 (2026-09-30): beyond Studio — the sentences the model layer hands the
         // screen: the import refusals, the open-refusals, the placement status, the names a
         // recording and a nameless part or scene get, the automation layer label, the rack's
