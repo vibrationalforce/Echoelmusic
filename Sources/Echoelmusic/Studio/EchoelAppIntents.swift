@@ -78,11 +78,15 @@ struct KeepLastLoopIntent: AppIntent {
 // and runs it through the same paths the buttons use (`EchoelAgentDesk`). The outcome — done,
 // refused, too old — shows in the app's notice row with an Undo (`AgentReportBanner`).
 // ⚠️ An intent grants nothing: no consent is written here, and a command that needs one is refused.
+// ⚠️ `perform()` is `@MainActor`, so the post and the desk's read-then-clear of the same key never
+// interleave (the desk's `take` is on the main actor too).
 // ⚠️ The intent asks the desk to run the request at once, because with `openAppWhenRun` it runs in
 // the app's own process, possibly after the app became active — the mailbox alone would then wait
 // for the NEXT activation. Before the app's startup bound the executor, the call is a no-op and the
 // startup takes the request instead.
-// NEEDS-FOUNDER-VERIFY (device, AI-1): with a track selected, say "Change the track level in
+// ⚠️ The selection is not saved across launches, so on a COLD launch both selection intents refuse
+// ("select a track first") — visibly, and correctly.
+// NEEDS-FOUNDER-VERIFY (device, AI-1): with the app already open and a track selected, say "Change the track level in
 // Echoelmusic" → Siri asks for the decibels → the app opens, the track moves, and the notice row
 // says what changed with an Undo that takes it back. "Copy the selected part in Echoelmusic" → one
 // copy. With nothing selected → the notice says to select one. A locked phone unlocked within two
@@ -99,6 +103,7 @@ struct ChangeSelectedTrackLevelIntent: AppIntent {
                description: "Negative makes the track quieter, positive makes it louder.")
     var decibels: Double
 
+    @MainActor
     func perform() async throws -> some IntentResult {
         EchoelAgentInbox.post(
             request: "Change the selected track's level by \(decibels) dB",
@@ -118,6 +123,7 @@ struct CopySelectedPartIntent: AppIntent {
         "Copies the selected part to right after itself on the same track. Echoel can undo it.")
     static let openAppWhenRun: Bool = true
 
+    @MainActor
     func perform() async throws -> some IntentResult {
         EchoelAgentInbox.post(
             request: "Copy the selected part",
@@ -136,6 +142,7 @@ struct UndoEchoelChangeIntent: AppIntent {
         "Undoes the last change Echoel made for you. A value you changed yourself since is kept.")
     static let openAppWhenRun: Bool = true
 
+    @MainActor
     func perform() async throws -> some IntentResult {
         EchoelAgentInbox.post(
             request: "Undo Echoel's last change",

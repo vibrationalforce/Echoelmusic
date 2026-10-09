@@ -231,9 +231,16 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         XCTAssertEqual(occurrences(of: "bindAgentDesk()", in: app), 2, "declared once, called once")
         XCTAssertEqual(occurrences(of: "EchoelAgentDesk.shared.runPending(now: Date())", in: app), 2,
                        "two triggers in the app: after startup binds, and on every return to the foreground")
-        guard let bind = app.range(of: "                bindAgentDesk()"),
-              let firstRun = app.range(of: "EchoelAgentDesk.shared.runPending(now: Date())") else {
-            return XCTFail("ANCHOR MISSING: the startup bind or the first run (#408)")
+        // The call is searched AFTER the core-ready line, so neither an indent nor the declaration (which
+        // sits above it in the file) can satisfy it: a call moved before the core is live finds nothing.
+        guard let ready = app.range(of: "EchoelCrashLog.breadcrumb(\"startup 4/4: core ready — instrument live\")") else {
+            return XCTFail("ANCHOR MISSING: the core-ready line (#408)")
+        }
+        guard let bind = app.range(of: "bindAgentDesk()", range: ready.upperBound..<app.endIndex) else {
+            return XCTFail("the executor is bound after the core is live — no `bindAgentDesk()` call follows that line")
+        }
+        guard let firstRun = app.range(of: "EchoelAgentDesk.shared.runPending(now: Date())") else {
+            return XCTFail("ANCHOR MISSING: the first run (#408)")
         }
         XCTAssertLessThan(bind.lowerBound, firstRun.lowerBound, "the startup binds BEFORE it runs the mailbox")
         guard let handler = app.range(of: ".onChange(of: scenePhase)"),
@@ -244,9 +251,6 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         XCTAssertTrue(String(app[active.upperBound..<background.lowerBound])
                         .contains("EchoelAgentDesk.shared.runPending(now: Date())"),
                       "a request waiting while the app was away runs when it returns")
-        XCTAssertTrue(app.range(of: "EchoelCrashLog.breadcrumb(\"startup 4/4: core ready — instrument live\")")
-                        .map { $0.lowerBound < bind.lowerBound } ?? false,
-                      "the executor is bound after the core is live")
     }
 
     // MARK: 6 — the notice is its own leaf

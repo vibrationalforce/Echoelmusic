@@ -67,7 +67,11 @@ enum EchoelAgentInbox {
 
     private static var defaults: UserDefaults? { UserDefaults(suiteName: AppGroupStore.appGroupID) }
 
-    /// Posts one request. A request posted while another waits replaces it — the latest ask wins.
+    /// Posts one request. A request posted while another still WAITS replaces it — the latest ask wins.
+    /// ⚠️ That replacement is the one drop without a notice, and it is named here rather than hidden: it
+    /// needs two posts before any take, i.e. a multi-action Shortcut on a cold launch, before startup
+    /// binds the desk (otherwise each intent's own `runPending` takes its request first). A queue in the
+    /// mailbox is the repair (GMMW AI-1b).
     static func post(request: String, actions: [EchoelProposedAction], now: Date) {
         let posted = EchoelPostedRequest(requestID: UUID(), request: request, actions: actions, postedAt: now)
         guard let data = try? JSONEncoder().encode(posted) else { return }
@@ -136,8 +140,8 @@ struct EchoelAgentNotice: Equatable, Sendable {
 @Observable
 final class EchoelAgentDesk {
 
-    /// The one desk. The app binds its executor once (`EchoelmusicApp.runAgentRequests`); the banner
-    /// reads `notice` in its own leaf.
+    /// The one desk. The app binds its executor once (`EchoelmusicApp.bindAgentDesk`); the banner
+    /// reads `notice` in its own leaf. Only this desk reads the App-Group mailbox (`runPending`).
     static let shared = EchoelAgentDesk()
 
     /// The one executor. Nil until the app's startup binds it; a request waits in the mailbox until then.
@@ -155,12 +159,17 @@ final class EchoelAgentDesk {
         self.executor = executor
     }
 
-    /// Takes the waiting request, if any, and runs it. Without an executor the request stays in the
-    /// mailbox for the next call.
+    /// Takes the waiting request, if any, and runs it — and again after each run, because a request
+    /// that arrived while one was running found the desk busy and returned without it. Without an
+    /// executor the request stays in the mailbox for the next call. Only the app's desk (`shared`)
+    /// reads the mailbox: a test's own desk must never take the running host app's request.
     func runPending(now: Date) async {
-        guard executor != nil, !isWorking else { return }
-        guard let taken = EchoelAgentInbox.take(now: now) else { return }
-        await handle(taken)
+        guard self === Self.shared else { return }
+        var clock = now
+        while executor != nil, !isWorking, let taken = EchoelAgentInbox.take(now: clock) {
+            await handle(taken)
+            clock = Date()
+        }
     }
 
     /// What a taken request does: a request runs, a stale or unreadable one is dropped with a notice.
@@ -195,6 +204,8 @@ final class EchoelAgentDesk {
         guard let executor, !isWorking else { return }
         let undo = EchoelProposedAction(command: EchoelCommandID.undoAgentChange.rawValue, arguments: [:])
         await run(requestID: UUID(), request: "Undo Echoel's last change", actions: [undo], on: executor)
+        // A request that arrived while the Undo ran found the desk busy — take it now, not at the next return.
+        await runPending(now: Date())
     }
 
     /// Hides the notice. Changes nothing in the piece.
