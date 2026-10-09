@@ -181,6 +181,8 @@ final class TheChromeSpeaksOneWordPerThingTests: XCTestCase {
         "Sources/Echoelmusic/Studio/AudioPartEditorView.swift",
         // GMMW AE-6 (2026-10-09): the editor's slip buttons and their caption.
         "Sources/Echoelmusic/Studio/AudioPartSlip.swift",
+        // GMMW AE-5 (2026-10-09): the level strip's readout above the editor wave.
+        "Sources/Echoelmusic/Studio/AudioPartLevelStrip.swift",
         // Ratchet 15 (2026-09-30): beyond Studio — the sentences the model layer hands the
         // screen: the import refusals, the open-refusals, the placement status, the names a
         // recording and a nameless part or scene get, the automation layer label, the rack's

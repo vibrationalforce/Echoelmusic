@@ -10,8 +10,9 @@
 //  view, on the selected track's Part page, above the part list. It was read-only in AE-2. Since
 //  AE-4b its two window edges are handles (`AudioPartEdgeHandles`, below) that ask the trim
 //  rules that already exist (`PartTrim`) rather than a lookalike. Since AE-6 the window's
-//  body slips the file under the part (`AudioPartSlip`, its own file — it is the one that reads
-//  whether the song plays); the fade and gain handles are AE-5.
+//  body slips the file under the part (`AudioPartSlip`, its own file, which holds the slip's
+//  finger state); and since AE-5 a strip above the wave carries the part's fade corners and level
+//  line (`AudioPartLevelStrip`, its own file for the same reason).
 //
 //  ⭐ NO NEW TRUTH (#416). The part's window is `ArrangeCanvas.audioWindow` — the player's own
 //  file position and stretch rate, the stretch the canvas block draws. The file is read by
@@ -115,6 +116,21 @@ enum AudioPartEditor {
         let end = (window.fromSeconds + window.lengthSeconds) / fileSeconds
         guard end > 0, start < 1 else { return nil }
         return start.clamped(to: 0...1)...end.clamped(to: 0...1)
+    }
+
+    /// The part's window on a pane `width` wide, UNCUT: where it starts and where it would end if
+    /// the file ran on — past the pane's right edge when the part outlasts its file, which an
+    /// unwarped import usually does (it is sized to whole bars). A tick of the part is a fixed
+    /// distance on THIS scale, the one the player keeps; the cut `span` above is the picture of
+    /// what the file holds. Anything that turns ticks into points — the fades on the wave, the
+    /// level strip — measures here, or a fade drawn and dragged sits where the player does not put
+    /// it (AE-5 review S1). nil for degenerate input.
+    nonisolated static func partXs(of window: ArrangeCanvas.AudioWindow, fileSeconds: Double,
+                                   width: Double) -> (start: Double, end: Double)? {
+        guard fileSeconds.isFinite, fileSeconds > 0, width.isFinite, width > 0, window.fromSeconds.isFinite,
+              window.lengthSeconds.isFinite, window.lengthSeconds > 0 else { return nil }
+        let perSecond = width / fileSeconds
+        return (window.fromSeconds * perSecond, (window.fromSeconds + window.lengthSeconds) * perSecond)
     }
 
     /// Where the song is on the file, 0…1, or nil when the song is not inside the part (before
@@ -435,6 +451,16 @@ private struct AudioPartEditorPane: View {
                 Text(summary)
                     .font(EchoelTheme.font(11).monospacedDigit())
                     .foregroundStyle(EchoelTheme.dim)
+                // AE-5: the part's level envelope — fade corners and the level line — directly above
+                // the wave it shapes, the same width, written through the part bar's own calls.
+                // Mounted once the file's length is known, not once its wave is read (AE-5 review): a
+                // measured clip shows it at once, so the wave below does not jump down when it lands.
+                if let total,
+                   let fades = PartFades.lengths(of: region.id, in: document),
+                   let level = PartGain.gain(of: region.id, in: document) {
+                    AudioPartLevelStrip(subject: subject, regionID: region.id, lengths: fades, level: level,
+                                        fileSeconds: total)
+                }
                 ZStack(alignment: .leading) {
                     AudioPartFileWave(subject: subject, load: load, fileSeconds: total, tint: tint)
                     if let total {
@@ -526,6 +552,9 @@ private struct AudioPartFileWave: View {
                                                 gain: window.gain)
             guard !columns.isEmpty else { return }
             let span = AudioPartEditor.span(of: window, fileSeconds: total)
+            // The fades are measured on the UNCUT part (AE-5 review S1): a part that outlasts its
+            // file fades where the player fades it, not squeezed into the file's last seconds.
+            let part = AudioPartEditor.partXs(of: window, fileSeconds: total, width: 1)
             let mid = size.height / 2
             let width = size.width / CGFloat(columns.count)
             var inside = Path()
@@ -535,11 +564,10 @@ private struct AudioPartFileWave: View {
                 let x = CGFloat(index) * width
                 var level: CGFloat = 1
                 var bright = false
-                if let span, span.contains(centre), span.upperBound > span.lowerBound {
+                if let span, span.contains(centre), let part {
                     bright = true
                     // The level the part's fades leave at this point of the part (`FadeEnvelope`).
-                    level = CGFloat(window.fadeLevel(atFraction: (centre - span.lowerBound)
-                                                     / (span.upperBound - span.lowerBound)))
+                    level = CGFloat(window.fadeLevel(atFraction: (centre - part.start) / (part.end - part.start)))
                 }
                 let top = mid - CGFloat(column.max) * level * mid
                 let bottom = mid - CGFloat(column.min) * level * mid
