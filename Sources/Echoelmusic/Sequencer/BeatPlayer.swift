@@ -135,15 +135,15 @@ public final class BeatPlayer {
     /// H13/A2: the offset-aware REGION audition sink. An AVAudioPlayerNode that
     /// STREAMS a segment of the file (scheduleSegment) — unlike `previewVoice`
     /// (SamplerVoice: ~2 s buffer cap, always from frame 0). Lazily created on the first
-    /// region audition: the caller's plan law (`AudioRegionPlayback.auditionWindow`)
-    /// only permits auditioning while the transport is STOPPED, so the one-time
-    /// attach pause is inaudible by construction.
+    /// audition: the callers' refusal (`MediaBrowserView.previewRefusal`) only permits
+    /// auditioning while the piece and the loop are STOPPED, so the one-time attach
+    /// pause is inaudible by construction.
     @ObservationIgnored private var auditionSink: TimelineAudioSink?
 
-    /// Audition a REGION window: play `url` from `fromSeconds` for
-    /// `lengthSeconds` (the region's own content — pro-DAW tap behavior).
-    /// Callers derive the window via `AudioRegionPlayback.auditionWindow`,
-    /// which refuses while the transport plays (double-sound hazard).
+    /// Audition a stretch of a file: play `url` from `fromSeconds` for `lengthSeconds`.
+    /// Both callers ask `MediaBrowserView.previewRefusal` first — the Media Library's Preview
+    /// and the ruler's scrub (GMMW AE-8) — which refuses while the piece or the loop plays
+    /// (double-sound hazard) and while the engine is off.
     public func audition(url: URL, fromSeconds: Double, lengthSeconds: Double) {
         guard let engine = audioEngine else { return }
         let scoped = url.startAccessingSecurityScopedResource()

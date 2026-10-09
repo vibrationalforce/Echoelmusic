@@ -696,9 +696,14 @@ final class TheMediaLibraryIsBrowsedAndPlacedTests: XCTestCase {
         let refusal = try XCTUnwrap(start.range(of: "Self.previewRefusal("))
         let play = try XCTUnwrap(start.range(of: "beatPlayer.audition(url: asset.url, fromSeconds: 0, lengthSeconds: Self.previewSeconds)"))
         XCTAssertLessThan(refusal.lowerBound, play.lowerBound, "the refusal is asked before anything sounds")
-        XCTAssertEqual(try filesUnderSources(containing: ".audition(url:"), ["Studio/MediaBrowserView.swift"],
-                       "the browser's Preview is the audition path's one caller")
-        XCTAssertEqual(try filesUnderSources(containing: ".stopAudition()"), ["Studio/MediaBrowserView.swift"])
+        // GMMW AE-8: the ruler's scrub is the audition path's second caller, and it asks the same
+        // refusal before every grain (`TheRulerAuditionsOnlyWhileStoppedTests`). A third caller
+        // joins this list and asks it too.
+        XCTAssertEqual(try filesUnderSources(containing: ".audition(url:"),
+                       ["Studio/ArrangeRulerLocator.swift", "Studio/MediaBrowserView.swift"],
+                       "the browser's Preview and the ruler's scrub are the audition path's callers")
+        XCTAssertEqual(try filesUnderSources(containing: ".stopAudition()"),
+                       ["Studio/ArrangeRulerLocator.swift", "Studio/MediaBrowserView.swift"])
         let toggle = try body(of: "private var toggleRow: some View", in: browser)
         XCTAssertTrue(toggle.contains("stopPreview()"), "closing the list ends a preview")
         XCTAssertTrue(browser.contains(".onDisappear { stopPreview() }"), "leaving the Workstation ends it")
