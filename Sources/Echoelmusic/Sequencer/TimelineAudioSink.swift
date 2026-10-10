@@ -53,14 +53,15 @@
 // limit: the plain path's read happens on the main actor — the first faded piece is kept short so
 // the part starts on time, and the rest is read while it sounds.
 // Grain (GMMW GA-10c): a part on a track with an enabled grain insert is rendered ONCE at prime
-// time, off the main actor (`GrainBake` over the part's window, mono-summed, its fades baked in),
-// and its onset schedules that READY buffer on the plain node — the Beats pattern. Not ready yet,
-// entered mid-part (a seek, an unmute), stretched or pitched: the part plays exactly as before.
-// Honest limits: the dry half is the file's MONO sum while the insert is on (mix 0 never gets
-// here — `grainToPlay` answers nil, so it plays the file itself); a mono file hears the cloud's
-// L+R sum; a part longer than `grainMaxPartFrames` plays dry; one render runs per lane at a time;
-// and a part sounding at Play, or edited while the piece plays, is dry until the next prime has
-// its rendering ready (GA-10d must request one on the edit path).
+// time, off the main actor (`GrainBake` over the part's window, its fades baked in), and its onset
+// schedules that READY buffer on the plain node — the Beats pattern. Not ready yet, entered
+// mid-part (a seek, an unmute), stretched or pitched: the part plays exactly as before.
+// GA-10d: each dry channel keeps its side (a stereo part keeps its image); the cloud reads the
+// channels' mean. An edit while the piece plays requests a rendering at once (`prepareGrains` on
+// the mixer refresh); the rest wait in a short per-lane queue, newest request per part winning.
+// Honest limits: a mono file hears the cloud's L+R sum; a part longer than `grainMaxPartFrames`
+// plays dry; one render runs per lane at a time; and a part already sounding when its rendering
+// lands stays dry until its next onset (mix 0 never gets here — `grainToPlay` answers nil).
 // Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
 // node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
 // at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
