@@ -3105,7 +3105,8 @@ struct EchoelStudioView: View {
     ///   content and leave a void below it.
     ///
     /// METADATA (black-screen law): NO presentation modifier is added, removed or moved —
-    /// the body's count stays at 14 (8 sheet + 2 cover + 3 alert + 1 fileImporter; counted
+    /// the body's count is unchanged (live: `python3 scripts/doctor.py --section D`, #818; the
+    /// census below is a DATED record, not today's figure: 14 = 8 sheet + 2 cover + 3 alert + 1 fileImporter; counted
     /// again 2026-07-28, and TWO modifiers are deliberately NOT in it — they sit INSIDE
     /// another modifier's content, not on the body chain: ⛔ ONE OF THE TWO WAS
     /// `.sheet(item: $visualShare)` inside the `showVisual` fullScreenCover, and BOTH WENT WITH
@@ -12998,7 +12999,8 @@ private struct BreathVoiceRow: View {
 
 /// #608 Scheibe 1 — the Auto-mode door („optionaler Automodus … sanft intervenieren").
 /// A plain Toggle in `bioPanel`, the #603 `guideVisible` shape: ZERO presentation
-/// modifiers, reached through `dropdownContent`, chain census untouched (14/16).
+/// modifiers, reached through `dropdownContent`, chain census untouched (measure it with
+/// `python3 scripts/doctor.py --section D`; a count written here is a date, #818).
 ///
 /// ⚠️ A LEAF struct for the 10.76.41/50 reason `BreathVoiceRow` states above: it reads
 /// `bus.usableBio()` (~1 Hz) so only this row churns, never the Picker-hosting root.

@@ -8,7 +8,8 @@ import SwiftUI
 // App zu bedienen und zu verstehen"), as a NON-MODAL card overlay.
 //
 // WHY AN OVERLAY AND NOT A SHEET. `EchoelStudioView.body`'s presentation chain is pinned
-// at 14 modifiers (file-wide 16) and growing it is the 10.76.34 black-screen SIGSEGV.
+// by `ResetSoundClearsWhatTheLaunchLineReportsTests` (live count: `python3 scripts/doctor.py
+// --section D`, never a number here, #818) and growing it is the 10.76.34 black-screen SIGSEGV.
 // `WorkspaceView`'s ZStack already hosts exactly this shape — `FloatingVisualWindow` is a
 // non-modal sibling toggled by an `@AppStorage` flag — so the guide mounts there as a
 // third layer and costs ZERO presentation modifiers.
