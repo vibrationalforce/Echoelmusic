@@ -271,6 +271,28 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
     /// is precisely this repo's habit: when a capability is removed, a long ⛔ block naming the
     /// deleted symbol is written in its place. A raw scan would then read the obituary as proof
     /// of life (#762). Any needle whose only occurrence is prose is that failure, already begun.
+    // MARK: - claim 5 — GMMW VV-11: the share sheet cannot reach the retired photo prompt
+
+    /// While `NSPhotoLibraryAddUsageDescription` is retired, the one share sheet the app builds
+    /// itself must exclude `.saveToCameraRoll`: iOS terminates the app when "Save Video" runs
+    /// without the key, and a movie handed to the sheet would offer exactly that row.
+    /// SOURCE-TEXT SCAN. ⚠️ It does not prove the row is hidden on a device — that is a probe.
+    func testTheShareSheetNeverOffersSavingToPhotosWithoutTheKey() throws {
+        guard try !usageKeys().contains("NSPhotoLibraryAddUsageDescription") else { return }
+        let sources = try swiftSources()
+        guard let sheet = sources["Echoelmusic/Studio/ShareSheet.swift"] else {
+            throw PermissionAnchorMissing(reason: "Studio/ShareSheet.swift moved — re-anchor claim 5")
+        }
+        XCTAssertTrue(sheet.contains("static let excludedActivities: [UIActivity.ActivityType] = [.saveToCameraRoll]"),
+                      "the sheet's exclusion list names .saveToCameraRoll")
+        XCTAssertTrue(sheet.contains("sheet.excludedActivityTypes = Self.excludedActivities"),
+                      "and the controller it builds applies that list")
+        // Only this file builds the system sheet; a second one would need the same exclusion.
+        let builders = sources.filter { $0.value.contains("UIActivityViewController(") }.keys.sorted()
+        XCTAssertEqual(builders, ["Echoelmusic/Studio/ShareSheet.swift"],
+                       "a second UIActivityViewController must exclude .saveToCameraRoll too: \(builders)")
+    }
+
     func testTheStripperIsNotDecoration() throws {
         let stripped = try swiftSources()
         let raw = try swiftSources(strip: false)
