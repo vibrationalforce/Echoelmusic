@@ -22,6 +22,12 @@
 //      presentation modifier; the instrument's sheet chain does not know it.
 //   7. COUNTERWEIGHT: the four commands the intents name are reversible edits that need no consent,
 //      so the empty consent set every plan carries is enough — and only for them.
+//   8. AI-1b (pure + `handle`): requests posted before any take QUEUE, oldest first — a second post
+//      no longer replaces the first; an older build's single stored request is a queue of one; past
+//      `maxQueued` the new post is refused and later reported (`.overflowed`) with a notice; several
+//      requests run in one drain show one notice with each sentence, and a refusal is never hidden by
+//      a later "Done". GRADING: forward — `enqueued`/`dequeued`/`.overflowed`/`combined` are created
+//      by the same commit, so nothing here compiles against the parent (#486).
 //
 // ⚠️ HONEST GRADING (#433). Claims 1–3 drive `EchoelAgentInbox`, `EchoelAgentDesk` and
 // `EchoelPostedRequest`, which this same commit creates, so this file does NOT compile against the
@@ -77,6 +83,70 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         XCTAssertEqual(EchoelAgentInbox.decide(data, now: posted.postedAt.addingTimeInterval(-(limit + 1))), .expired,
                        "a clock set back must not turn an old request into a fresh one")
         XCTAssertEqual(EchoelAgentInbox.decide(Data("not a request".utf8), now: posted.postedAt), .unreadable)
+    }
+
+    // MARK: 8 — AI-1b: requests posted before any take queue up, oldest first; none is replaced
+
+    func testQueuedRequestsRunInTheOrderAskedAndNoneIsSilentlyReplaced() throws {
+        let first = Data("first".utf8), second = Data("second".utf8)
+        let one = try XCTUnwrap(EchoelAgentInbox.enqueued(first, onto: nil), "an empty mailbox takes a request")
+        let two = try XCTUnwrap(EchoelAgentInbox.enqueued(second, onto: one))
+        XCTAssertEqual(two, [first, second], "a second post waits BEHIND the first — it no longer replaces it")
+        let taken = EchoelAgentInbox.dequeued(two)
+        XCTAssertEqual(taken.first, first, "the oldest request is taken first")
+        XCTAssertEqual(taken.rest, [second], "and the newer one stays for the next take")
+        XCTAssertFalse(taken.unreadable)
+
+        // A request an older build posted (the mailbox held ONE `Data`) is a queue of one.
+        let legacy = EchoelAgentInbox.dequeued(first)
+        XCTAssertEqual(legacy.first, first)
+        XCTAssertEqual(legacy.rest, [])
+        XCTAssertEqual(EchoelAgentInbox.enqueued(second, onto: first), [first, second])
+        // A stored value that is no queue at all is reported unreadable, and a post replaces it.
+        XCTAssertTrue(EchoelAgentInbox.dequeued("not a queue").unreadable)
+        XCTAssertEqual(EchoelAgentInbox.enqueued(first, onto: "not a queue"), [first])
+        XCTAssertNil(EchoelAgentInbox.dequeued(nil).first)
+
+        // A full queue keeps what it holds and refuses the new post — the caller counts it as not run.
+        let full = Array(repeating: first, count: EchoelAgentInbox.maxQueued)
+        XCTAssertGreaterThan(EchoelAgentInbox.maxQueued, 1, "a queue of one is the old replace-the-first mailbox")
+        XCTAssertNil(EchoelAgentInbox.enqueued(second, onto: full), "past the cap the new post is not stored")
+        XCTAssertEqual(EchoelAgentInbox.enqueued(second, onto: Array(full.dropLast())),
+                       Array(full.dropLast()) + [second], "one under the cap still takes it")
+    }
+
+    func testRequestsAFullQueueDidNotStoreAreReported() async throws {
+        let (timeline, _, desk, original) = rig()
+        defer { timeline.replaceDocument(original) }
+        let before = timeline.document
+        await desk.handle(.overflowed(3))
+        let notice = try XCTUnwrap(desk.notice, "requests that were not run are shown, never dropped silently")
+        XCTAssertEqual(notice.state, .failed(EchoelAgentDesk.overflowMessage(3)))
+        XCTAssertTrue(notice.message.contains("3 more requests"), "the notice says how many: \(notice.message)")
+        XCTAssertTrue(EchoelAgentDesk.overflowMessage(1).contains("1 more request "), "and speaks of one as one")
+        XCTAssertEqual(timeline.document, before, "and nothing in the piece changed")
+    }
+
+    func testSeveralRequestsRunInOneGoSayEachAndARefusalIsNeverHidden() throws {
+        let refused = EchoelAgentNotice(requestID: UUID(), state: .failed("Nothing is selected."),
+                                        message: "Nothing is selected.", canUndo: false)
+        let done = EchoelAgentNotice(requestID: UUID(), state: .done, message: "Loop: 0.0 dB → −3.0 dB.",
+                                     canUndo: true)
+        let both = try XCTUnwrap(EchoelAgentNotice.combined([refused, done]))
+        XCTAssertEqual(both.message, "Nothing is selected. Loop: 0.0 dB → −3.0 dB.", "each request's sentence, in order")
+        guard case .failed = both.state else {
+            return XCTFail("a later Done must not hide an earlier refusal: \(both.state)")
+        }
+        XCTAssertTrue(both.canUndo, "Undo follows the last request — the agent's last change")
+        XCTAssertEqual(both.requestID, done.requestID)
+        let twoDone = try XCTUnwrap(EchoelAgentNotice.combined([done, done]))
+        XCTAssertEqual(twoDone.state, .done)
+        XCTAssertEqual(EchoelAgentNotice.combined([done]), done, "one notice stays as it is")
+        XCTAssertNil(EchoelAgentNotice.combined([]))
+        // The desk's drain is what combines them (source scan: one place, after the loop).
+        let desk = try source(Self.deskPath)
+        XCTAssertTrue(desk.contains("if drained.count > 1 { notice = EchoelAgentNotice.combined(drained) }"),
+                      "runPending combines the notices of the requests it ran in one go")
     }
 
     // MARK: 2 — a request runs through the one executor, and its Undo through the same desk

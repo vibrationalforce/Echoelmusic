@@ -24,7 +24,8 @@
 // ⭐ THE MAILBOX IS READ ONCE, AND A STALE REQUEST IS DROPPED, NOT RUN. An intent may run before the
 // app's startup has bound the executor (a cold launch), so it posts to an App-Group key and the app
 // takes it when it can: right away from the intent (in this process), after startup binds, and on
-// every return to the foreground. Whichever comes first takes it; the others find nothing. A request
+// every return to the foreground. Whichever comes first takes it; the others find nothing. Requests
+// posted before any take wait in a short queue and run in the order asked (AI-1b). A request
 // older than `EchoelAgentInbox.maxAgeSeconds` when it is taken would act on a selection the person
 // has long stopped looking at — it is dropped and the notice says so.
 //
@@ -48,13 +49,25 @@ struct EchoelPostedRequest: Codable, Equatable, Sendable {
     let postedAt: Date
 }
 
-/// The App-Group mailbox between an intent and the app. One request at a time, read once.
+/// The App-Group mailbox between an intent and the app. A short queue, oldest first, each request
+/// read once.
+///
+/// GMMW AI-1b: until now the mailbox held ONE request and a second post replaced the first — the one
+/// drop without a notice. It happens when two posts land before any take: a multi-action Shortcut on
+/// a cold launch, before startup binds the desk. Now the posts queue up to `maxQueued` and run in the
+/// order they were asked; past that, the newer ones are counted, not stored, and the desk says how
+/// many were not run (`Taken.overflowed`). Each request still expires on its own clock.
 enum EchoelAgentInbox {
     static let key = "pendingAgentRequest"
+    /// How many requests past `maxQueued` were not stored, until the desk reports them.
+    static let overflowKey = "pendingAgentRequestOverflow"
     /// A request taken later than this after it was posted is dropped. An intent opens the app, so
     /// the normal gap is a second or two; minutes mean the app was not opened for it (a locked phone,
     /// a dismissed prompt) and the selection it would act on is no longer the one in view.
     static let maxAgeSeconds: TimeInterval = 120
+    /// The longest queue. A Shortcut that chains more Echoel actions than this before the app has
+    /// started is not a case worth storing a backlog for — it is reported instead.
+    static let maxQueued = 8
 
     /// What `take` found.
     enum Taken: Equatable, Sendable {
@@ -63,26 +76,63 @@ enum EchoelAgentInbox {
         case expired
         /// Present but not decodable (another build's format) — dropped, and the notice says so.
         case unreadable
+        /// This many requests arrived while the queue was full and were not run — the notice says so.
+        case overflowed(Int)
     }
 
     private static var defaults: UserDefaults? { UserDefaults(suiteName: AppGroupStore.appGroupID) }
 
-    /// Posts one request. A request posted while another still WAITS replaces it — the latest ask wins.
-    /// ⚠️ That replacement is the one drop without a notice, and it is named here rather than hidden: it
-    /// needs two posts before any take, i.e. a multi-action Shortcut on a cold launch, before startup
-    /// binds the desk (otherwise each intent's own `runPending` takes its request first). A queue in the
-    /// mailbox is the repair (GMMW AI-1b).
+    /// Posts one request to the end of the queue. A full queue keeps what it holds — the requests run
+    /// in the order they were asked — and counts the new one as not run.
     static func post(request: String, actions: [EchoelProposedAction], now: Date) {
         let posted = EchoelPostedRequest(requestID: UUID(), request: request, actions: actions, postedAt: now)
-        guard let data = try? JSONEncoder().encode(posted) else { return }
-        defaults?.set(data, forKey: key)
+        guard let store = defaults, let data = try? JSONEncoder().encode(posted) else { return }
+        guard let queue = enqueued(data, onto: store.object(forKey: key)) else {
+            store.set(store.integer(forKey: overflowKey) + 1, forKey: overflowKey)
+            return
+        }
+        store.set(queue, forKey: key)
     }
 
-    /// Reads and clears the waiting request, so it is taken exactly once.
+    /// Takes the oldest waiting request and leaves the rest, so each is taken exactly once. When the
+    /// queue is empty, the count of requests a full queue did not store is reported once.
     static func take(now: Date) -> Taken? {
-        guard let store = defaults, let data = store.data(forKey: key) else { return nil }
-        store.removeObject(forKey: key)
-        return decide(data, now: now)
+        guard let store = defaults else { return nil }
+        if let stored = store.object(forKey: key) {
+            let next = dequeued(stored)
+            if next.rest.isEmpty { store.removeObject(forKey: key) } else { store.set(next.rest, forKey: key) }
+            if let data = next.first { return decide(data, now: now) }
+            if next.unreadable { return .unreadable }
+            // An empty list: nothing waited — fall through to the count of requests not stored.
+        }
+        let notRun = store.integer(forKey: overflowKey)
+        guard notRun > 0 else { return nil }
+        store.removeObject(forKey: overflowKey)
+        return .overflowed(notRun)
+    }
+
+    /// The pure half of `post`: the queue with `data` at its end, or nil when it is full. What is
+    /// stored but not a queue (a value no build of Echoel writes) is replaced, not kept.
+    static func enqueued(_ data: Data, onto stored: Any?) -> [Data]? {
+        let queue = dequeued(stored).all
+        guard queue.count < maxQueued else { return nil }
+        return queue + [data]
+    }
+
+    /// The pure half of `take`: the oldest entry, what stays, and whether what was stored could not
+    /// be read as a queue at all. A single `Data` is a request an older build posted (the mailbox held
+    /// one), and it is taken like a queue of one.
+    static func dequeued(_ stored: Any?) -> (first: Data?, rest: [Data], all: [Data], unreadable: Bool) {
+        guard let stored else { return (nil, [], [], false) }
+        let all: [Data]
+        if let one = stored as? Data {
+            all = [one]
+        } else if let list = stored as? [Data] {
+            all = list
+        } else {
+            return (nil, [], [], true)
+        }
+        return (all.first, Array(all.dropFirst()), all, false)
     }
 
     /// The pure half of `take`: what the stored bytes mean at `now`.
@@ -115,6 +165,19 @@ struct EchoelAgentNotice: Equatable, Sendable {
     let state: EchoelAgentState
     let message: String
     let canUndo: Bool
+
+    /// AI-1b: the notices of several requests run in one go, as one. Each says its own sentence, in
+    /// the order they ran; a refusal anywhere makes the whole notice a failure, so a later "Done" can
+    /// never hide it. Undo follows the last — it takes back the agent's last change, whichever ran.
+    static func combined(_ notices: [EchoelAgentNotice]) -> EchoelAgentNotice? {
+        guard let last = notices.last else { return nil }
+        guard notices.count > 1 else { return last }
+        let message = notices.map(\.message).filter { !$0.isEmpty }.joined(separator: " ")
+        let failed = notices.contains { if case .failed = $0.state { return true } else { return false } }
+        let asks = notices.contains { if case .needsAnswer = $0.state { return true } else { return false } }
+        let state: EchoelAgentState = failed ? .failed(message) : asks ? .needsAnswer(message) : last.state
+        return EchoelAgentNotice(requestID: last.requestID, state: state, message: message, canUndo: last.canUndo)
+    }
 
     /// The notice for a finished request. Done steps say what they did; anything else says why not.
     static func from(_ report: EchoelExecutionReport, canUndo: Bool) -> EchoelAgentNotice {
@@ -166,10 +229,14 @@ final class EchoelAgentDesk {
     func runPending(now: Date) async {
         guard self === Self.shared else { return }
         var clock = now
+        var drained: [EchoelAgentNotice] = []
         while executor != nil, !isWorking, let taken = EchoelAgentInbox.take(now: clock) {
             await handle(taken)
+            if let notice { drained.append(notice) }
             clock = Date()
         }
+        // AI-1b: several queued requests ran in one go — one notice that says each, not the last alone.
+        if drained.count > 1 { notice = EchoelAgentNotice.combined(drained) }
     }
 
     /// What a taken request does: a request runs, a stale or unreadable one is dropped with a notice.
@@ -184,6 +251,8 @@ final class EchoelAgentDesk {
             dropped(Self.expiredMessage, on: executor)
         case .unreadable:
             dropped(Self.unreadableMessage, on: executor)
+        case .overflowed(let count):
+            dropped(Self.overflowMessage(count), on: executor)
         }
     }
 
@@ -191,6 +260,12 @@ final class EchoelAgentDesk {
         "The request from Siri or Shortcuts waited too long, so nothing was changed. Please ask again."
     static let unreadableMessage =
         "The request from Siri or Shortcuts could not be read, so nothing was changed."
+
+    static func overflowMessage(_ count: Int) -> String {
+        let requests = count == 1 ? "1 more request" : "\(count) more requests"
+        return "\(requests) from Siri or Shortcuts arrived while \(EchoelAgentInbox.maxQueued) were "
+            + "already waiting, so \(count == 1 ? "it was" : "they were") not run."
+    }
 
     /// A request that was taken and not run still gets a notice — a silent drop reads as "done".
     private func dropped(_ message: String, on executor: EchoelCommandExecutor) {
