@@ -7,6 +7,7 @@
 //   2. An available model's answer becomes a Done notice; the prompt carries the piece's facts
 //      between markers (`EchoelStateText`, bio-free), and the piece is unchanged.
 //   3. A refusal and an overflow each say what happened; nothing is changed.
+//   4. A tap before the app bound the desk says so instead of doing nothing, and asks no model.
 //
 // ⚠️ THE LIMIT. A real answer from the model is NEEDS-FOUNDER-VERIFY (family 5): an Apple
 // Intelligence iPhone on iOS 26. The door (exactly one construction, from a Button) is pinned in
@@ -82,5 +83,16 @@ final class TheAgentDescribesThePieceTests: XCTestCase {
         XCTAssertEqual(desk.notice?.message, EchoelAgentDesk.describeFailure(EchoelAIError.contextOverflow))
         XCTAssertNotEqual(EchoelAgentDesk.describeFailure(EchoelAIError.refused),
                           EchoelAgentDesk.describeFailure(EchoelAIError.contextOverflow))
+    }
+
+    func testATapBeforeStartupFinishedSaysSo() async {
+        let desk = EchoelAgentDesk()
+        let brain = StandIn(available: true, result: .success("unused"))
+        await desk.describePiece(with: brain)
+        XCTAssertEqual(desk.notice?.state, .failed(EchoelAgentDesk.stillStartingMessage),
+                       "an unbound desk says the app is still starting — a silent tap reads as done")
+        XCTAssertEqual(desk.notice?.canUndo, false)
+        XCTAssertTrue(brain.prompts.isEmpty, "no model is asked before the desk is bound")
+        XCTAssertFalse(desk.isWorking)
     }
 }

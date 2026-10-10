@@ -215,7 +215,14 @@ final class EchoelAgentDesk {
     /// handed in by the one tap that asks (`AgentReportBanner.describePiece`), so a test can hand in
     /// its own; nothing here constructs one.
     func describePiece(with brain: any BrainBackend) async {
-        guard executor != nil, !isWorking else { return }
+        // Busy: the running request's notice is already on screen and stays the one truth.
+        guard !isWorking else { return }
+        // Not bound yet (the app is still starting): a tap that did nothing would read as "done".
+        guard executor != nil else {
+            notice = EchoelAgentNotice(requestID: UUID(), state: .failed(Self.stillStartingMessage),
+                                       message: Self.stillStartingMessage, canUndo: false)
+            return
+        }
         await describe(with: brain)
         // A Siri request that arrived while the model answered found the desk busy — take it now (`undoLast`).
         await runPending(now: Date())
@@ -254,6 +261,7 @@ final class EchoelAgentDesk {
     /// The longest answer the notice shows; the model's own budget is far larger (`PromptBudget`).
     nonisolated static let describeLimit = 600
     nonisolated static let noAnswerMessage = "The on-device model did not answer. Nothing was changed."
+    nonisolated static let stillStartingMessage = "Echoel is still starting. Please try again in a moment."
 
     /// The facts are DATA inside the prompt: a track name is the person's text, never an instruction.
     nonisolated static func describePrompt(facts: String) -> String {
