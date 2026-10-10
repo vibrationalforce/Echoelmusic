@@ -6,15 +6,18 @@
 // 1. END-TO-END — `GrainSettings.trackSeed` is never 0 (0 means "none chosen"), stable for a
 //    track, and different between two tracks.
 // 2. END-TO-END over a REAL `TimelineStore` — `setLaneGrain` places a grain on an AUDIO track
-//    with the track's own seed when none is chosen, keeps the track's seed on a later edit, keeps
+//    with the track's own seed when none is chosen (a stored 0 counts as none), keeps the track's
+//    seed on a later edit, keeps
 //    an explicitly chosen seed, writes nothing when nothing changes, removes only the grain (an
 //    unknown insert stays), and refuses a MIDI track, the bio track and an unknown lane.
 // 3. END-TO-END — the real coordinator with a spy sink: `prepareGrains` asks a primed lane for
 //    the rendering its part now needs, and starts, stops or plays NOTHING; a lane that was never
 //    primed is not asked (it renders at its own prime).
 // 4. SOURCE-TEXT SCAN — the mixer merge asks for the renderings only on a real change; the sink
-//    queues a request made while another renders (one entry per part window), starts the next
-//    when a rendering lands, and drops the queue with the lane.
+//    queues a request made while another renders (one entry per part window, the NEWEST wins even
+//    when it is already rendered or in flight), never opens a file on this path (review MED 1:
+//    `ensureLoaded` mid-song could attach a node or stop the playing part), starts the next when
+//    a rendering lands, and drops the queue with the lane.
 //
 // GRADING (§0/§3): the file names `setLaneGrain`, `trackSeed` and `prepareGrains`, which this
 // commit creates, so it does NOT COMPILE against the parent — no assertion has a verdict there
@@ -67,9 +70,11 @@ final class TheGrainWriterGivesEachTrackItsOwnPatternTests: XCTestCase {
         let audio = TimelineLane(name: "Audio 1", kind: .audio,
                                  deviceChain: DeviceChain(inserts: [Self.unknownInsert]))
         let other = TimelineLane(name: "Audio 2", kind: .audio)
+        let legacy = TimelineLane(name: "Audio 3", kind: .audio,
+                                  deviceChain: DeviceChain(inserts: [.grain(Self.grain())]))
         let midi = TimelineLane(name: "Keys", kind: .midi)
         let bio = TimelineLane(name: "Body", kind: .audio, isBio: true)
-        timeline.replaceDocument(TimelineDocument(lanes: [audio, other, midi, bio], regions: []))
+        timeline.replaceDocument(TimelineDocument(lanes: [audio, other, legacy, midi, bio], regions: []))
         func chain(_ id: UUID) -> DeviceChain? {
             timeline.document.lanes.first(where: { $0.id == id })?.deviceChain
         }
@@ -92,6 +97,11 @@ final class TheGrainWriterGivesEachTrackItsOwnPatternTests: XCTestCase {
         timeline.setLaneGrain(other.id, settings: Self.grain(position: 0.1))
         XCTAssertEqual(chain(other.id)?.soundingGrain?.seed, 42, "and survives a later edit")
         XCTAssertNotEqual(chain(audio.id)?.soundingGrain?.seed, chain(other.id)?.soundingGrain?.seed)
+
+        XCTAssertEqual(chain(legacy.id)?.soundingGrain?.seed, 0, "the premise: a grain stored without a seed")
+        timeline.setLaneGrain(legacy.id, settings: Self.grain(position: 0.2))
+        XCTAssertEqual(chain(legacy.id)?.soundingGrain?.seed, GrainSettings.trackSeed(legacy.id),
+                       "a stored 0 is 'none chosen' too — the track takes its own pattern, not a shared one")
 
         timeline.setLaneGrain(audio.id, settings: nil)
         XCTAssertNil(chain(audio.id)?.soundingGrain, "nil removes the grain")
@@ -166,11 +176,18 @@ final class TheGrainWriterGivesEachTrackItsOwnPatternTests: XCTestCase {
         let sink = try source(Self.sinkPath)
         let prepare = try XCTUnwrap(Self.body(after: "func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,",
                                               in: sink), "ANCHOR MISSING: `TimelineAudioSink.prepareGrain`")
-        assertOrder(in: prepare, ["guard grainInFlight.isEmpty else {",
+        assertOrder(in: prepare, ["if grainBuffers[key] != nil || grainFailed.contains(key) || grainInFlight.contains(key) {",
+                                  "grainQueued[window] = nil",
+                                  "guard grainInFlight.isEmpty else {",
                                   "grainQueued.count < Self.grainQueueCap",
                                   "grainQueued[window] = GrainRequest(",
                                   "Task.detached(priority: .userInitiated)"],
                     why: "a request made while another renders waits, one per part window, capped")
+        XCTAssertFalse(prepare.contains("ensureLoaded("),
+                       "the edit path and the queue run mid-song: opening a file there can attach a node or stop the playing part")
+        assertOrder(in: prepare, ["guard knownURLs[url] != nil, let format = urlFormats[url] else { return }",
+                                  "Task.detached(priority: .userInitiated)"],
+                    why: "a file prime could not open gets no rendering, and is not marked failed")
         let store = try XCTUnwrap(Self.body(after: "private func storeGrain(key: GrainKey, channels: [[Float]])", in: sink),
                                   "ANCHOR MISSING: `storeGrain`")
         assertOrder(in: store, ["grainInFlight.remove(key)", "defer { startNextQueuedGrain() }"],

@@ -179,7 +179,7 @@ final class TimelineAudioSink: AudioRegionSink {
     /// GA-10d: what was asked for while a rendering was in flight, ONE entry per part window — a
     /// later request for the same window replaces the earlier (a knob drag keeps only its last
     /// value), and a lane with several parts keeps each. Started one at a time as each rendering
-    /// lands, so nothing asked for is silently dropped. Capped; cleared with the lane.
+    /// lands. Capped (a window past the cap waits for the next prime); cleared with the lane.
     private struct GrainWindow: Hashable {
         let url: URL
         let fromMilli: Int
@@ -207,22 +207,29 @@ final class TimelineAudioSink: AudioRegionSink {
         guard fromSeconds.isFinite, lengthSeconds.isFinite, lengthSeconds > 0 else { return }
         let key = GrainKey(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds,
                            settings: settings, fades: fades)
-        if grainBuffers[key] != nil || grainFailed.contains(key) { return }
+        let window = GrainWindow(url: url, fromMilli: key.fromMilli, lengthMilli: key.lengthMilli)
+        // GA-10d review: the NEWEST request for a window wins, also when it is one already rendered,
+        // failed or in flight — an older value left waiting would render after it and evict it.
+        if grainBuffers[key] != nil || grainFailed.contains(key) || grainInFlight.contains(key) {
+            grainQueued[window] = nil
+            return
+        }
         // ONE render per lane at a time: each holds several part-length arrays, and prime asks for
-        // every part at once. The rest wait in `grainQueued` and start as each one lands.
+        // every part at once. The rest wait in `grainQueued` and start as each one lands; past the
+        // cap a new window is not kept, and the next prime asks for it again.
         guard grainInFlight.isEmpty else {
-            let window = GrainWindow(url: url, fromMilli: key.fromMilli, lengthMilli: key.lengthMilli)
-            guard !grainInFlight.contains(key),
-                  grainQueued[window] != nil || grainQueued.count < Self.grainQueueCap else { return }
+            guard grainQueued[window] != nil || grainQueued.count < Self.grainQueueCap else { return }
             grainQueued[window] = GrainRequest(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds,
                                                settings: settings, fades: fades)
             return
         }
-        // Prime's `preload` has warmed every file of the lane; open one here only if it has not.
-        if knownURLs[url] == nil || urlFormats[url] == nil {
-            guard ensureLoaded(url) != nil else { return }
-        }
-        guard let format = urlFormats[url], format.channelCount == 1 || format.channelCount == 2 else {
+        // GA-10d review: NEVER open a file here. Prime's `preload` has warmed every file of the lane
+        // before it asks; this is also the EDIT path (`prepareGrains`) and the queue, mid-song, where
+        // `ensureLoaded` could attach a node (the engine pause) or, on an unreadable file, `stop()`
+        // the part that is playing. A file prime could not open simply gets no rendering (not marked
+        // failed: a later prime may open it).
+        guard knownURLs[url] != nil, let format = urlFormats[url] else { return }
+        guard format.channelCount == 1 || format.channelCount == 2 else {
             grainFailed.insert(key)   // a layout the rendering cannot be built in
             return
         }

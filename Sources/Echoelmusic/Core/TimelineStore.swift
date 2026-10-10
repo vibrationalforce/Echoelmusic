@@ -1274,8 +1274,10 @@ public final class TimelineStore {
         let current = document.lanes[i].deviceChain ?? DeviceChain(inserts: [])
         var chosen = settings
         if var s = chosen, s.seed == 0 {
-            s.seed = current.inserts.first(where: { $0.typeID == DeviceInsert.grainTypeID })?
-                .grainSettings?.seed ?? GrainSettings.trackSeed(laneID)
+            // A stored 0 is "none chosen" too (review): it takes the track's own, not a shared one.
+            let kept = current.inserts.first(where: { $0.typeID == DeviceInsert.grainTypeID })?
+                .grainSettings?.seed ?? 0
+            s.seed = kept != 0 ? kept : GrainSettings.trackSeed(laneID)
             chosen = s
         }
         let next = current.settingGrain(chosen)
