@@ -84,6 +84,9 @@ struct KeepLastLoopIntent: AppIntent {
 // the app's own process, possibly after the app became active — the mailbox alone would then wait
 // for the NEXT activation. Before the app's startup bound the executor, the call is a no-op and the
 // startup takes the request instead.
+// ⚠️ AI-1b: each intent ANSWERS with its own request's outcome (`ProvidesDialog`) — what changed, or
+// why nothing did — so a refusal is heard, not only shown. A request the desk has not run yet (the
+// app is still starting) answers that it waits; the notice row says the rest.
 // ⚠️ The selection is not saved across launches, so on a COLD launch both selection intents refuse
 // ("select a track first") — visibly, and correctly.
 // NEEDS-FOUNDER-VERIFY (device, AI-1): with the app already open and a track selected, say "Change the track level in
@@ -104,15 +107,15 @@ struct ChangeSelectedTrackLevelIntent: AppIntent {
     var decibels: Double
 
     @MainActor
-    func perform() async throws -> some IntentResult {
-        EchoelAgentInbox.post(
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let requestID = EchoelAgentInbox.post(
             request: "Change the selected track's level by \(decibels) dB",
             actions: [EchoelProposedAction(command: EchoelCommandID.setTrackLevel.rawValue,
                                            arguments: ["track": "selected", "decibels": String(decibels),
                                                        "mode": "relative"])],
             now: Date())
         await EchoelAgentDesk.shared.runPending(now: Date())
-        return .result()
+        return .result(dialog: "\(EchoelAgentDesk.shared.spokenOutcome(of: requestID))")
     }
 }
 
@@ -124,14 +127,14 @@ struct CopySelectedPartIntent: AppIntent {
     static let openAppWhenRun: Bool = true
 
     @MainActor
-    func perform() async throws -> some IntentResult {
-        EchoelAgentInbox.post(
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let requestID = EchoelAgentInbox.post(
             request: "Copy the selected part",
             actions: [EchoelProposedAction(command: EchoelCommandID.duplicatePart.rawValue,
                                            arguments: ["part": "selected"])],
             now: Date())
         await EchoelAgentDesk.shared.runPending(now: Date())
-        return .result()
+        return .result(dialog: "\(EchoelAgentDesk.shared.spokenOutcome(of: requestID))")
     }
 }
 
@@ -149,14 +152,14 @@ struct KeepSelectedPartIntent: AppIntent {
     static let openAppWhenRun: Bool = true
 
     @MainActor
-    func perform() async throws -> some IntentResult {
-        EchoelAgentInbox.post(
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let requestID = EchoelAgentInbox.post(
             request: "Keep the selected part as my own copy",
             actions: [EchoelProposedAction(command: EchoelCommandID.keepTake.rawValue,
                                            arguments: ["part": "selected"])],
             now: Date())
         await EchoelAgentDesk.shared.runPending(now: Date())
-        return .result()
+        return .result(dialog: "\(EchoelAgentDesk.shared.spokenOutcome(of: requestID))")
     }
 }
 
@@ -168,13 +171,13 @@ struct UndoEchoelChangeIntent: AppIntent {
     static let openAppWhenRun: Bool = true
 
     @MainActor
-    func perform() async throws -> some IntentResult {
-        EchoelAgentInbox.post(
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let requestID = EchoelAgentInbox.post(
             request: "Undo Echoel's last change",
             actions: [EchoelProposedAction(command: EchoelCommandID.undoAgentChange.rawValue, arguments: [:])],
             now: Date())
         await EchoelAgentDesk.shared.runPending(now: Date())
-        return .result()
+        return .result(dialog: "\(EchoelAgentDesk.shared.spokenOutcome(of: requestID))")
     }
 }
 

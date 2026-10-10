@@ -28,6 +28,9 @@
 //      requests run in one drain show one notice with each sentence, and a refusal is never hidden by
 //      a later "Done". GRADING: forward — `enqueued`/`dequeued`/`.overflowed`/`combined` are created
 //      by the same commit, so nothing here compiles against the parent (#486).
+//   9. AI-1b (`handle` + SOURCE-TEXT SCAN): each agent intent answers Siri with ITS OWN request's
+//      outcome (`spokenOutcome(of:)`) — a refusal is heard; before the desk ran it, or for another
+//      request's notice, it says it waits. Forward (`spokenOutcome` is new).
 //
 // ⚠️ HONEST GRADING (#433). Claims 1–3 drive `EchoelAgentInbox`, `EchoelAgentDesk` and
 // `EchoelPostedRequest`, which this same commit creates, so this file does NOT compile against the
@@ -147,6 +150,29 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         let desk = try source(Self.deskPath)
         XCTAssertTrue(desk.contains("if drained.count > 1 { notice = EchoelAgentNotice.combined(drained) }"),
                       "runPending combines the notices of the requests it ran in one go")
+    }
+
+    func testSiriAnswersWithThisRequestsOwnOutcome() async throws {
+        let (timeline, _, desk, original) = rig()
+        defer { timeline.replaceDocument(original) }
+        let asked = UUID()
+        XCTAssertEqual(desk.spokenOutcome(of: asked), EchoelAgentDesk.waitingSentence,
+                       "before the desk ran it, Siri says it waits — never another request's answer")
+        // Nothing is selected, so the request is refused — and the refusal is what Siri says.
+        await desk.handle(.request(EchoelPostedRequest(
+            requestID: asked, request: "Copy the selected part",
+            actions: [EchoelProposedAction(command: EchoelCommandID.duplicatePart.rawValue, arguments: ["part": "selected"])],
+            postedAt: Date())))
+        let notice = try XCTUnwrap(desk.notice)
+        XCTAssertEqual(notice.requestID, asked)
+        guard case .failed = notice.state else { return XCTFail("nothing selected must refuse: \(notice.state)") }
+        XCTAssertFalse(notice.message.isEmpty)
+        XCTAssertEqual(desk.spokenOutcome(of: asked), notice.message, "the refusal is heard, not only shown")
+        XCTAssertEqual(desk.spokenOutcome(of: UUID()), EchoelAgentDesk.waitingSentence,
+                       "another request's notice is never read out as this one's answer")
+        let intents = try source(Self.intentsPath)
+        XCTAssertEqual(occurrences(of: "return .result(dialog: \"\\(EchoelAgentDesk.shared.spokenOutcome(of: requestID))\")",
+                                   in: intents), 4, "each of the four agent intents answers with its own outcome")
     }
 
     // MARK: 2 — a request runs through the one executor, and its Undo through the same desk

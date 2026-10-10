@@ -83,15 +83,18 @@ enum EchoelAgentInbox {
     private static var defaults: UserDefaults? { UserDefaults(suiteName: AppGroupStore.appGroupID) }
 
     /// Posts one request to the end of the queue. A full queue keeps what it holds — the requests run
-    /// in the order they were asked — and counts the new one as not run.
-    static func post(request: String, actions: [EchoelProposedAction], now: Date) {
+    /// in the order they were asked — and counts the new one as not run. Returns the request's id,
+    /// so the intent can say this request's outcome (`EchoelAgentDesk.spokenOutcome(of:)`).
+    @discardableResult
+    static func post(request: String, actions: [EchoelProposedAction], now: Date) -> UUID {
         let posted = EchoelPostedRequest(requestID: UUID(), request: request, actions: actions, postedAt: now)
-        guard let store = defaults, let data = try? JSONEncoder().encode(posted) else { return }
+        guard let store = defaults, let data = try? JSONEncoder().encode(posted) else { return posted.requestID }
         guard let queue = enqueued(data, onto: store.object(forKey: key)) else {
             store.set(store.integer(forKey: overflowKey) + 1, forKey: overflowKey)
-            return
+            return posted.requestID
         }
         store.set(queue, forKey: key)
+        return posted.requestID
     }
 
     /// Takes the oldest waiting request and leaves the rest, so each is taken exactly once. When the
@@ -357,6 +360,19 @@ final class EchoelAgentDesk {
         case .toolFailed?, .unknown?, nil: return noAnswerMessage
         }
     }
+
+    /// AI-1b — what Siri says back for one request: its notice when it has finished — what changed,
+    /// or why nothing did — and otherwise that it waits. Only the notice for THIS request counts; a
+    /// notice of another request (a describe, an earlier ask) is never read out as this one's answer.
+    func spokenOutcome(of requestID: UUID) -> String {
+        guard let notice, notice.requestID == requestID, notice.state != .running else {
+            return Self.waitingSentence
+        }
+        return notice.message.isEmpty ? notice.state.title : notice.message
+    }
+
+    nonisolated static let waitingSentence =
+        "Echoel has your request and shows what it did in the app."
 
     /// Hides the notice. Changes nothing in the piece.
     func dismiss() {
