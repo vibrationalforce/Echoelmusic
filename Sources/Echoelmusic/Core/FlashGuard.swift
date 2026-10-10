@@ -416,6 +416,90 @@ public enum FlashGuard {
         return maxFlashHz / union
     }
 
+    // MARK: - The N-layer flash budget (GMMW VV-16)
+
+    /// One field layer in a stack: the shader style it draws and how much of the mix it
+    /// holds. `weight` is relative — the stack normalises it — so (1, 1, 2) and
+    /// (0.25, 0.25, 0.5) are the same stack.
+    public struct FieldLayer: Sendable, Equatable {
+        public let styleIndex: Int
+        public let weight: Double
+
+        public init(styleIndex: Int, weight: Double) {
+            self.styleIndex = styleIndex
+            self.weight = weight
+        }
+    }
+
+    /// The worst-case flash count one pixel sees when `layers` are mixed additively, before
+    /// any damping — `blendPhaseDamping`'s union, generalised from two looks to N.
+    ///
+    /// WHY IT EXISTS. `blendPhaseDamping` is the law gate for the A↔B slider and only knows
+    /// two looks. An abstract-visual compositor stacks more than two, and every one of them
+    /// puts its oscillation into the same pixel. This is the gate such a compositor must ask
+    /// BEFORE it ships; nothing renders a stack today, so this has no production caller yet.
+    ///
+    /// THE MODEL is the two-look model, unchanged, and it reduces to it exactly:
+    ///   · each layer's share is `s = weight / Σ weight`;
+    ///   · the FASTEST layer counts in full, whatever its share (the two-look formula's
+    ///     `max(hzA, hzB)` term does the same: it counts the faster look even at the end of
+    ///     the slider where it is invisible — the safe direction);
+    ///   · every other layer adds `hz · 2·min(s, 1 − s)`. For two layers `s` is `t` or
+    ///     `1 − t`, both give `2·min(t, 1 − t)`, so `[(A, 1 − t), (B, t)]` gives
+    ///     `blendPhaseDamping`'s union. `EveryLayerStackHasAFlashBudgetTests` checks that
+    ///     for every pair of library looks.
+    ///
+    /// ⚠️ FAILS CLOSED, deliberately unlike `blendPhaseDamping`'s non-finite `blend` (which
+    /// returns "no damping"). A non-finite or negative weight, or a stack whose weights sum
+    /// to zero, counts EVERY layer in full: a stack nobody can read is treated as the worst
+    /// stack, never as a calm one. An unknown style costs `maxFlashHz`, as everywhere in this
+    /// file (`fieldBudget(forStyle:)`). An empty stack is 0 Hz.
+    public static func layerUnionHz(_ layers: [FieldLayer]) -> Double {
+        guard !layers.isEmpty else { return 0 }
+        let rates = layers.map { fieldBudget(forStyle: $0.styleIndex)?.effectiveHz ?? maxFlashHz }
+        guard rates.allSatisfy({ $0.isFinite }) else { return .infinity }
+        guard let fastest = rates.max() else { return 0 }
+
+        let readable = layers.allSatisfy { $0.weight.isFinite && $0.weight >= 0 }
+        let total = readable ? layers.reduce(0) { $0 + $1.weight } : 0
+        let shares: [Double]? = (readable && total > 0 && total.isFinite)
+            ? layers.map { $0.weight / total }
+            : nil
+        let coexistence: [Double] = rates.indices.map { index in
+            guard let shares else { return 1 }
+            return 2 * Swift.min(shares[index], 1 - shares[index])
+        }
+
+        // ⚠️ WHICH layer counts in full is NOT "the first fastest one". When several layers
+        // tie on the fastest rate (the same look stacked twice), picking by position made the
+        // bound depend on array ORDER — four Rings weighted (1,1,1,5) gave 5.625 Hz and
+        // (5,1,1,1) gave 4.375 Hz for the same picture. Among the tied layers, the one with
+        // the SMALLEST coexistence counts in full: that leaves the larger weights in the sum,
+        // so the union is the largest any ordering could give — the safe direction.
+        let tied = rates.indices.filter { rates[$0] == fastest }
+        guard let loudest = tied.min(by: { coexistence[$0] < coexistence[$1] }) else { return 0 }
+
+        var union = rates[loudest]
+        for index in rates.indices where index != loudest {
+            union += coexistence[index] * rates[index]
+        }
+        return union
+    }
+
+    /// How much the FIELD phase rate must be slowed so a stack of `layers` stays at or under
+    /// the WCAG ceiling — `blendPhaseDamping` for N layers. 1.0 = no change, and it is the
+    /// literal 1 whenever the union is not ABOVE the ceiling (the same `>` that keeps a single
+    /// look bit-identical there).
+    ///
+    /// ⚠️ A non-finite union (a budget row that is not finite) returns 1, mirroring
+    /// `blendPhaseDamping` — a factor of 0 would freeze the picture, which reads as a hung
+    /// renderer. Every shipped row is finite; `EveryLookHasAFlashBudgetTests` holds that.
+    public static func layerPhaseDamping(_ layers: [FieldLayer]) -> Double {
+        let union = layerUnionHz(layers)
+        guard union.isFinite, union > maxFlashHz, union > 0 else { return 1 }
+        return maxFlashHz / union
+    }
+
     /// The budget for a style index, or `nil` for one that has none.
     ///
     /// ⚠️ `nil` MEANS "UNKNOWN", NOT "FREE". A caller that cannot find a row must assume the
