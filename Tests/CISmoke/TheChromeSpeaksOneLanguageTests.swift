@@ -610,6 +610,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/WorkingCopyStatusView.swift",
             "Sources/Echoelmusic/Studio/TrackSampleRow.swift",
             "Sources/Echoelmusic/Studio/TrackGrainRows.swift",
+            "Sources/Echoelmusic/Studio/AgentReportBanner.swift",   // GMMW AI-1b: the agent's report row
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 

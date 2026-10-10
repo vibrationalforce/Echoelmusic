@@ -49,6 +49,18 @@
         }
       }
     },
+    "Close" : {
+      "comment" : "GMMW AI-1b (2026-10-10): the agent's report banner (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
     "Compose here" : {
       "comment" : "GA-1 Compose here (rack track Device page): switch label.",
       "extractionState" : "manual",
@@ -153,6 +165,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Follow the piece"
+          }
+        }
+      }
+    },
+    "Hides this notice. Changes nothing in the piece." : {
+      "comment" : "GMMW AI-1b (2026-10-10): the agent's report banner (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hides this notice. Changes nothing in the piece."
           }
         }
       }
@@ -945,6 +969,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This release is the bio-reactive instrument — with living visuals, stage light and immersive output built in."
+          }
+        }
+      }
+    },
+    "Undo Echoel's last change" : {
+      "comment" : "GMMW AI-1b (2026-10-10): the agent's report banner (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo Echoel's last change"
+          }
+        }
+      }
+    },
+    "Undoes only what Echoel changed for you. A value you changed since is kept." : {
+      "comment" : "GMMW AI-1b (2026-10-10): the agent's report banner (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undoes only what Echoel changed for you. A value you changed since is kept."
           }
         }
       }
