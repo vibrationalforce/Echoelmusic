@@ -21,7 +21,7 @@
 // absence, #486); every claim is a FORWARD guard. Counterweights: claim 1's three nil cases,
 // claim 2's grainless track. Claims 1–2 re-derived by hand from `prime`/`start`; claim 3 by `grep`.
 // What the grain SOUNDS like, that it starts on time and what the render costs on a phone are a
-// DEVICE PROBE and open — and no writer places a grain insert yet (GA-10d), so no song changes.
+// DEVICE PROBE and open. The writer is `TimelineStore.setLaneGrain` (GA-10d).
 
 import XCTest
 import Foundation
@@ -151,7 +151,7 @@ final class TheGrainInsertPlaysOnItsAudioTrackTests: XCTestCase {
                     why: "only the exact rendering plays, unstretched and unpitched, and the plain path stays")
         let prepare = try XCTUnwrap(Self.body(after: "func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,",
                                               in: sink), "ANCHOR MISSING: `TimelineAudioSink.prepareGrain`")
-        assertOrder(in: prepare, ["guard grainInFlight.isEmpty else { return }",
+        assertOrder(in: prepare, ["guard grainInFlight.isEmpty else {",
                                   "format.channelCount == 1 || format.channelCount == 2",
                                   "Task.detached(priority: .userInitiated)",
                                   "Self.renderGrain(url: url, fromSeconds: fromSeconds,",

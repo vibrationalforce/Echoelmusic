@@ -448,19 +448,7 @@ public final class AudioLanePlayer {
             }
             // GA-10c: a part on a track with a grain insert renders its grain NOW, off the main
             // actor, so its onset plays a ready buffer — the same window and fades `start` asks for.
-            for region in laneRegions {
-                guard let grain = Self.grainToPlay(for: region, in: doc, nativeBPM: resolveNativeBPM(region.clipID),
-                                                   bpm: bpm),
-                      let url = self.resolveURL(region.clipID) else { continue }
-                sink(for: laneID).prepareGrain(
-                    url: url,
-                    fromSeconds: AudioRegionPlayback.filePositionSeconds(for: region, atTick: region.startTick,
-                                                                         bpm: bpm, stretchRate: 1)
-                        ?? region.contentOffsetSeconds,
-                    lengthSeconds: TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: bpm),
-                    settings: grain,
-                    fades: AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: 1))
-            }
+            prepareGrains(laneID: laneID, regions: laneRegions, in: doc, bpm: bpm)
             // S3: a LAUNCHED lane keeps its override — the arrangement re-prime (song-
             // loop wrap / structure edit) must NOT clobber it with an arrangement
             // region (the MIDI `primeSecondaryLanes` guards the same way). The files
@@ -634,6 +622,35 @@ public final class AudioLanePlayer {
         // Non-finite → centre, the rule `MultiRollFanout.pan(forSlot:)` and both sinks take:
         // `min(1, NaN)` is 1, so the bare clamp played a NaN lane hard right (overnight P8).
         return max(-1, min(1, p.isFinite ? p : 0))
+    }
+
+    /// GMMW GA-10d: ask every audio lane's sink for the renderings its parts' grains need, WITHOUT
+    /// starting or stopping anything — the edit path. A grain edit is a mixer-like value
+    /// (`TimelineDocument.mergeMixer`), so it never re-primes; without this the part would play
+    /// dry until the next Play. The sink is idempotent (a ready or in-flight rendering is not
+    /// asked for twice), so calling this on every mixer change is a few lookups.
+    public func prepareGrains(in doc: TimelineDocument, bpm: Double) {
+        for laneID in doc.audioLaneIDs where sinks[laneID] != nil {
+            prepareGrains(laneID: laneID, regions: doc.regions.filter { $0.laneID == laneID }, in: doc, bpm: bpm)
+        }
+    }
+
+    /// One lane's renderings — the window and fades `start` will ask the sink for (#416: prime and
+    /// the edit path share this, so neither can ask for a rendering the other would miss).
+    private func prepareGrains(laneID: UUID, regions: [TimelineRegion], in doc: TimelineDocument, bpm: Double) {
+        for region in regions {
+            guard let grain = Self.grainToPlay(for: region, in: doc, nativeBPM: resolveNativeBPM(region.clipID),
+                                               bpm: bpm),
+                  let url = self.resolveURL(region.clipID) else { continue }
+            sink(for: laneID).prepareGrain(
+                url: url,
+                fromSeconds: AudioRegionPlayback.filePositionSeconds(for: region, atTick: region.startTick,
+                                                                     bpm: bpm, stretchRate: 1)
+                    ?? region.contentOffsetSeconds,
+                lengthSeconds: TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: bpm),
+                settings: grain,
+                fades: AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: 1))
+        }
     }
 
     /// GMMW GA-10c: the grain a part sounds — its track's `soundingGrain` — or nil. ONE answer for

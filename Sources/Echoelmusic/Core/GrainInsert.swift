@@ -39,12 +39,24 @@ public struct GrainSettings: Codable, Sendable, Equatable {
     /// 0 = only the dry part, 1 = only the cloud.
     public var mix: Float = 1
     /// The grain pattern. Two tracks with equal settings and equal seeds play the same pattern
-    /// (`GrainCloud` header). ⚠️ Nothing here assigns one: `DeviceInsert.grain` and `settingGrain`
-    /// store the seed they are handed, default 0. The writer that first places a grain on a track
-    /// (GA-10d, the UI) chooses a per-track seed — until then every grain shares one pattern.
+    /// (`GrainCloud` header). `DeviceInsert.grain` and `settingGrain` store the seed they are
+    /// handed; the store's writer (`TimelineStore.setLaneGrain`) gives a track its own
+    /// (`trackSeed`) the first time a grain is placed on it.
     public var seed: UInt64 = 0
 
     public init() {}
+
+    /// A track's own grain pattern, from its id: stable for the track, different between tracks,
+    /// never 0 (0 means "none chosen" to the writer, `TimelineStore.setLaneGrain`).
+    public static func trackSeed(_ laneID: UUID) -> UInt64 {
+        var seed: UInt64 = 0
+        withUnsafeBytes(of: laneID.uuid) { bytes in
+            for (index, byte) in bytes.enumerated() {
+                seed ^= UInt64(byte) << UInt64((index % 8) * 8)
+            }
+        }
+        return seed == 0 ? 1 : seed
+    }
 
     /// Ranges, stated once for the model — the kernel's own, plus `mix`. ⚠️ `GrainCloud` clamps
     /// the same six again on every use (`DSP/` cannot read a `Core/` type), so a drift between the

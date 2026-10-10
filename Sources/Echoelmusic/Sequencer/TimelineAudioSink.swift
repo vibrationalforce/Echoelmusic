@@ -176,6 +176,24 @@ final class TimelineAudioSink: AudioRegionSink {
     /// Renderings that cannot be made (unreadable, past the file's end, too long, a layout the
     /// node cannot take): not retried at every loop wrap. Cleared with the lane.
     private var grainFailed: Set<GrainKey> = []
+    /// GA-10d: what was asked for while a rendering was in flight, ONE entry per part window — a
+    /// later request for the same window replaces the earlier (a knob drag keeps only its last
+    /// value), and a lane with several parts keeps each. Started one at a time as each rendering
+    /// lands, so nothing asked for is silently dropped. Capped; cleared with the lane.
+    private struct GrainWindow: Hashable {
+        let url: URL
+        let fromMilli: Int
+        let lengthMilli: Int
+    }
+    private struct GrainRequest {
+        let url: URL
+        let fromSeconds: Double
+        let lengthSeconds: Double
+        let settings: GrainSettings
+        let fades: PartFadePlan?
+    }
+    private var grainQueued: [GrainWindow: GrainRequest] = [:]
+    private static let grainQueueCap = 16
     /// The longest part rendered, in frames — the Beats cap, asked rather than restated (~31 s at
     /// 48 kHz). A render's working set peaks near five arrays of this length off the main actor
     /// (≈ 30 MB); a longer part plays dry.
@@ -191,8 +209,15 @@ final class TimelineAudioSink: AudioRegionSink {
                            settings: settings, fades: fades)
         if grainBuffers[key] != nil || grainFailed.contains(key) { return }
         // ONE render per lane at a time: each holds several part-length arrays, and prime asks for
-        // every part at once. The next prime asks again for whatever is still missing.
-        guard grainInFlight.isEmpty else { return }
+        // every part at once. The rest wait in `grainQueued` and start as each one lands.
+        guard grainInFlight.isEmpty else {
+            let window = GrainWindow(url: url, fromMilli: key.fromMilli, lengthMilli: key.lengthMilli)
+            guard !grainInFlight.contains(key),
+                  grainQueued[window] != nil || grainQueued.count < Self.grainQueueCap else { return }
+            grainQueued[window] = GrainRequest(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds,
+                                               settings: settings, fades: fades)
+            return
+        }
         // Prime's `preload` has warmed every file of the lane; open one here only if it has not.
         if knownURLs[url] == nil || urlFormats[url] == nil {
             guard ensureLoaded(url) != nil else { return }
@@ -253,6 +278,8 @@ final class TimelineAudioSink: AudioRegionSink {
     /// failed off-main): nothing is stored and the part plays dry.
     private func storeGrain(key: GrainKey, channels: [[Float]]) {
         grainInFlight.remove(key)
+        // Whatever this rendering's outcome, the next request that waited for it starts.
+        defer { startNextQueuedGrain() }
         guard knownURLs[key.url] != nil, let fmt = urlFormats[key.url],
               channels.count == 2, let left = channels.first, !left.isEmpty,
               channels[1].count == left.count,
@@ -291,6 +318,16 @@ final class TimelineAudioSink: AudioRegionSink {
             grainBuffers[k] = nil
         }
         grainBuffers[key] = out
+    }
+
+    /// GA-10d: start the waiting requests until one is really rendering — a request that is
+    /// already ready, failed or unloadable returns at once, and the next is tried.
+    private func startNextQueuedGrain() {
+        while grainInFlight.isEmpty, let (window, request) = grainQueued.first {
+            grainQueued[window] = nil
+            prepareGrain(url: request.url, fromSeconds: request.fromSeconds,
+                         lengthSeconds: request.lengthSeconds, settings: request.settings, fades: request.fades)
+        }
     }
 
     // MARK: Beats-Executor (prime-time offline WSOLA per region)
@@ -646,6 +683,7 @@ final class TimelineAudioSink: AudioRegionSink {
         grainBuffers.removeAll()
         grainInFlight.removeAll()
         grainFailed.removeAll()
+        grainQueued.removeAll()
         urlFormats.removeAll()
         file = nil
     }

@@ -1235,6 +1235,9 @@ public final class TimelineRegionPlayer {
     private func refreshMixer() {
         guard let fresh = liveDocument?() else { return }
         guard doc.mergeMixer(from: fresh) else { return }
+        // GA-10d: a grain edit is a mixer value — ask for its rendering now, or the part plays
+        // dry until the next Play. Idempotent per rendering; nothing starts or stops here.
+        audioLanes?.prepareGrains(in: doc, bpm: pattern?.tempo ?? Self.fallbackTempo)
         if let lane = rollLane, let live = doc.lanes.first(where: { $0.id == lane }) {
             rollTransposeSink?(live.transposeSemitones)
             rollDetuneSink?(live.detuneCents)

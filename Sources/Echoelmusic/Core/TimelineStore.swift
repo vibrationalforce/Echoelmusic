@@ -1259,6 +1259,31 @@ public final class TimelineStore {
         persist()
     }
 
+    /// GMMW GA-10d — THE one writer of a track's grain insert (`DeviceChain.settingGrain`): set
+    /// it (or, with nil, remove it) on an AUDIO track — the only kind that plays one
+    /// (`AudioLanePlayer.grainToPlay`); any other lane is refused. Inserts of every other type are
+    /// kept, a chain left empty is stored as none. The SEED: settings that carry none (0) keep the
+    /// track's current grain seed, or — the first time a grain is placed — take the track's own
+    /// (`GrainSettings.trackSeed`), so two tracks never share one pattern by default. State only,
+    /// like `setLaneEffect`: not part of the undo history, and a live edit reaches the player
+    /// through the mixer merge, which asks for the new rendering (`prepareGrains`). No-op when
+    /// nothing changes.
+    public func setLaneGrain(_ laneID: UUID, settings: GrainSettings?) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == laneID }),
+              document.lanes[i].kind == .audio, !document.lanes[i].isBio else { return }
+        let current = document.lanes[i].deviceChain ?? DeviceChain(inserts: [])
+        var chosen = settings
+        if var s = chosen, s.seed == 0 {
+            s.seed = current.inserts.first(where: { $0.typeID == DeviceInsert.grainTypeID })?
+                .grainSettings?.seed ?? GrainSettings.trackSeed(laneID)
+            chosen = s
+        }
+        let next = current.settingGrain(chosen)
+        guard next != document.lanes[i].deviceChain else { return }
+        document.lanes[i].deviceChain = next
+        persist()
+    }
+
     /// Phase 3 / EF1 — THE one writer of the Echoel instance: set the FX character of the Echoel
     /// on the track it plays (`rollLaneID`). The instrument's `@AppStorage` key is its working
     /// copy, adopted from here (`EchoelStudioView.adoptEchoelFXFromSong`) — never a second owner.
