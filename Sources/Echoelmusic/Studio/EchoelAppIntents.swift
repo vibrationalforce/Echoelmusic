@@ -135,6 +135,31 @@ struct CopySelectedPartIntent: AppIntent {
     }
 }
 
+/// GMMW AI-6b — the part bar's "Edit a copy", said instead of tapped: the selected composer part
+/// becomes the person's own copy, which no longer changes by itself. One undo step.
+/// ⚠️ The spoken words avoid "take" — the glossary struck it (`TheChromeSpeaksOneWordPerThingTests`) —
+/// and "save", which would sound like the whole piece was saved.
+/// NEEDS-FOUNDER-VERIFY (device, AI-6b): select a composer part, say "Edit a copy of this part in
+/// Echoelmusic" → a copy appears after the last part on that track and the notice row offers Undo;
+/// with your own part selected the notice says only a composer part can be kept.
+struct KeepSelectedPartIntent: AppIntent {
+    static let title: LocalizedStringResource = "Edit a Copy of the Part"
+    static let description = IntentDescription(
+        "Makes the selected composer part your own copy, which no longer changes by itself. Echoel can undo it.")
+    static let openAppWhenRun: Bool = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        EchoelAgentInbox.post(
+            request: "Keep the selected part as my own copy",
+            actions: [EchoelProposedAction(command: EchoelCommandID.keepTake.rawValue,
+                                           arguments: ["part": "selected"])],
+            now: Date())
+        await EchoelAgentDesk.shared.runPending(now: Date())
+        return .result()
+    }
+}
+
 /// Undo the last change Echoel made for a request — only where nobody changed it since.
 struct UndoEchoelChangeIntent: AppIntent {
     static let title: LocalizedStringResource = "Undo Echoel's Last Change"
@@ -198,6 +223,15 @@ struct EchoelAppShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Copy Selected Part",
             systemImageName: "plus.square.on.square")
+        AppShortcut(
+            intent: KeepSelectedPartIntent(),
+            phrases: [
+                "Edit a copy of this part in \(.applicationName)",
+                "Keep the selected part in \(.applicationName)",
+                "Make this part my own in \(.applicationName)"
+            ],
+            shortTitle: "Edit a Copy",
+            systemImageName: "square.and.pencil")
         AppShortcut(
             intent: UndoEchoelChangeIntent(),
             phrases: [

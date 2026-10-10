@@ -20,7 +20,7 @@
 //   6. SOURCE-TEXT SCAN (the 10.76.41/50 law and the sheet ceiling): the notice is its own leaf in
 //      the root's column — the root mounts it once and reads nothing of the desk; the leaf carries no
 //      presentation modifier; the instrument's sheet chain does not know it.
-//   7. COUNTERWEIGHT: the three commands the intents name are reversible edits that need no consent,
+//   7. COUNTERWEIGHT: the four commands the intents name are reversible edits that need no consent,
 //      so the empty consent set every plan carries is enough — and only for them.
 //
 // ⚠️ HONEST GRADING (#433). Claims 1–3 drive `EchoelAgentInbox`, `EchoelAgentDesk` and
@@ -210,11 +210,11 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
                 plan, its consents and its execution belong to the app's one desk.
                 """)
         }
-        XCTAssertEqual(occurrences(of: "EchoelAgentInbox.post(", in: intents), 3, "three typed intents post")
-        XCTAssertEqual(occurrences(of: "await EchoelAgentDesk.shared.runPending(now: Date())", in: intents), 3,
+        XCTAssertEqual(occurrences(of: "EchoelAgentInbox.post(", in: intents), 4, "four typed intents post (AI-6b added Edit a Copy)")
+        XCTAssertEqual(occurrences(of: "await EchoelAgentDesk.shared.runPending(now: Date())", in: intents), 4,
                        "each asks the desk to run it at once — the app may already be active")
         for id in ["EchoelCommandID.setTrackLevel.rawValue", "EchoelCommandID.duplicatePart.rawValue",
-                   "EchoelCommandID.undoAgentChange.rawValue"] {
+                   "EchoelCommandID.undoAgentChange.rawValue", "EchoelCommandID.keepTake.rawValue"] {
             XCTAssertEqual(occurrences(of: id, in: intents), 1, "`\(id)`: each intent names a REGISTERED command by its id")
         }
 
@@ -274,10 +274,10 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         }
     }
 
-    // MARK: 7 — the three commands need no consent
+    // MARK: 7 — the four commands need no consent
 
     func testTheIntentsNameOnlyReversibleEdits() {
-        for id in [EchoelCommandID.setTrackLevel, .duplicatePart, .undoAgentChange] {
+        for id in [EchoelCommandID.setTrackLevel, .duplicatePart, .undoAgentChange, .keepTake] {
             XCTAssertEqual(EchoelCommandRegistry.spec(id).permission, .reversibleEdit, """
                 `\(id.rawValue)` is no longer a reversible edit. Every plan from an intent carries the \
                 EMPTY consent set; a command that needs a consent would be refused there by design, and \
