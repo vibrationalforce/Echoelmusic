@@ -14,12 +14,16 @@ This script closes that gap without a compiler, by asking one question:
 
     does the literal occur in the source of the function the needle calls?
 
-TWO BLIND SPOTS ARE HANDLED, AND THEY ARE NOT HYPOTHETICAL — the first version of this
+THREE BLIND SPOTS ARE HANDLED (the third since CL-7), AND THEY ARE NOT HYPOTHETICAL — the first version of this
 script reported exactly two findings and BOTH were these:
 
   1. CONCATENATION SEAM. `autoModeCaption` spells "... when your " + "body is clearly
      settled", so "your body" exists only after the `+` runs. Adjacent literals are joined
      before searching.
+  3. INTERPOLATION (CL-7). `"(" + "\\(n)" + " parts)"` produces "(8 parts)" only at run time.
+     An interpolation is a WILDCARD for 1+ characters without whitespace, and at least half of
+     the needle must be real literal text — so a number or a name can fill it, a phrase cannot.
+     The catalog seam `String(localized: "…") + "…"` is joined like a plain one.
   2. HELPER HOP. `breathVoiceHint` builds its sentence through `subject(synthetic:)`, whose
      real-body branch IS the literal. Called functions are resolved ONE level deep.
 
@@ -28,8 +32,7 @@ It said "every miss it cannot see is a FALSE GREEN, never a false alarm" — whi
 like the safe direction and is simply wrong, as this file's own selftest then proved. The
 mechanism is the opposite of what that sentence assumed:
 
-  · INCOMPLETE resolution produces FALSE ALARMS. Two hops, interpolation (`"\\(x) body"`),
-    a string assembled from an array — the literal is missing from what this script can
+  · INCOMPLETE resolution produces FALSE ALARMS. Two hops, a string assembled from an array — the literal is missing from what this script can
     reach, so it reports a needle that works perfectly. Case 5 of the selftest pins exactly
     this and is EXPECTED to report.
   · OVER-BROAD resolution produces FALSE GREENS. A literal that sits in a comment, in a
@@ -60,8 +63,13 @@ NEEDLE = re.compile(
     r'XCTAssertTrue\(\s*([A-Z]\w*)\.(\w+)\((?:[^()]|\([^()]*\))*\)\s*'
     r'(?:\n\s*)?\.contains\("([^"\\]{4,})"\)')
 
-# `"abc" + "def"` and its line-wrapped form — the concatenation seam.
-SEAM = re.compile(r'"\s*\+\s*"')
+# `"abc" + "def"` and its line-wrapped form — the concatenation seam. CL-7: also the catalog
+# seam, `String(localized: "abc") + "def"` and `"abc" + String(localized: "def")`, which is how
+# every catalogued sentence with a number in it is spelled.
+SEAM = re.compile(r'"\)?\s*\+\s*(?:String\(localized:\s*)?"')
+
+# CL-7: an interpolation inside a literal, `\(x)`, becomes ONE wildcard character.
+WILDCARD = "\x00"
 
 CALL = re.compile(r'\b([a-z]\w*)\s*\(')
 
@@ -95,6 +103,31 @@ def index_functions(root):
     return out
 
 
+def _wildcard_interpolations(text):
+    """Every `\\( … )` span (parentheses balanced) becomes `WILDCARD`."""
+    out, inner, i = [], [], 0
+    while i < len(text):
+        if text.startswith("\\(", i):
+            depth, j = 0, i + 1
+            while j < len(text):
+                if text[j] == "(":
+                    depth += 1
+                elif text[j] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            out.append(WILDCARD)
+            # The span's own text stays reachable, set apart at the end: a literal nested in it
+            # (`\\(n == 1 ? "it was" : "they were")`) is still one the function can produce.
+            inner.append(text[i + 2:j])
+            i = j + 1
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out) + "\n" + "\n".join(inner)
+
+
 def reachable_text(name, funcs):
     """Every literal the function could produce: its own body, seams joined, one hop deep."""
     parts = list(funcs.get(name, []))
@@ -102,7 +135,42 @@ def reachable_text(name, funcs):
         for callee in set(CALL.findall(body)):
             if callee != name and callee in funcs:
                 parts.extend(funcs[callee])
-    return SEAM.sub("", "\n".join(parts))
+    return SEAM.sub("", _wildcard_interpolations("\n".join(parts)))
+
+
+def can_match(literal, text):
+    """Is `literal` a substring of some value `text` can take?
+
+    A `WILDCARD` (an interpolation) stands for a run of 1+ characters WITHOUT whitespace — a
+    number, a name, a note — and at least half of the needle must come from real literal
+    text. Both limits keep the new FALSE GREENS small: without them an interpolation could
+    swallow any whole needle (`"\\(x) state"` would "produce" "your body"), and the
+    #808 needle would read as reachable again.
+    """
+    if WILDCARD not in text:
+        return literal in text
+    n = len(literal)
+    for start in range(len(text)):
+        # state: (needle index, literal chars matched, inside a wildcard run)
+        states = {(0, 0, False)}
+        j = start
+        while states and j < len(text):
+            c, nxt = text[j], set()
+            for k, lit, _ in states:
+                if c == WILDCARD:
+                    # consume 1..m non-space characters of the needle
+                    m = k
+                    while m < n and not literal[m].isspace():
+                        m += 1
+                        nxt.add((m, lit, True))
+                elif k < n and literal[k] == c:
+                    nxt.add((k + 1, lit + 1, False))
+            for k, lit, _ in nxt:
+                if k == n and 2 * lit >= n:
+                    return True
+            states = {s for s in nxt if s[0] < n}
+            j += 1
+    return False
 
 
 def scan(bundle, funcs):
@@ -113,7 +181,7 @@ def scan(bundle, funcs):
             _type, method, literal = m.groups()
             if method not in funcs:
                 continue  # a test-local helper: out of scope, not a finding
-            if literal not in reachable_text(method, funcs):
+            if not can_match(literal, reachable_text(method, funcs)):
                 findings.append(
                     (path.name, text[:m.start()].count("\n") + 1, method, literal))
     return findings
@@ -153,10 +221,23 @@ def selftest():
          'func mid() -> String { return leaf() }\n'
          'func hint() -> String { return mid() }',
          "hint", "your body", True),
+        # CL-7 — the two false alarms the live scan carried on 2026-10-10, as fixtures.
+        ("CL-7 — an interpolated number between catalog seams",
+         'func caption() -> String { return String(localized: "The grid is full (") + "\\(n)" '
+         '+ String(localized: " parts). Remove one.") }',
+         "caption", "(8 parts)", False),
+        ("CL-7 — two interpolations in one sentence",
+         'func line() -> String { let place: String = String(localized: " · bar ") + "\\(bar)" '
+         '+ String(localized: ", beat ") + "\\(beat)"; return place }',
+         "line", "bar 9, beat 2", False),
+        # CL-7 — and the wildcard cannot swallow a needle: #808's miss still reports through it.
+        ("CL-7 — an interpolation does not produce a whole phrase",
+         'func hint() -> String { return "toward \\(who) measured body state" }',
+         "hint", "your body", True),
     ]
     bad = 0
     for label, src, method, literal, want_finding in cases:
-        got = literal not in reachable_text(method, index(src))
+        got = not can_match(literal, reachable_text(method, index(src)))
         ok = got == want_finding
         bad += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FAIL'}  reports={got!s:<5} want={want_finding!s:<5}  {label}")
