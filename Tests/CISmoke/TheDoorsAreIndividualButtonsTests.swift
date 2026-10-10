@@ -183,7 +183,7 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
                 """)
         }
         let bar = try declarationBody(of: "private var topBar: some View {", in: Self.workspace)
-        XCTAssertTrue(bar.contains(".accessibilityHint(\"Open, save, Live Colabo, Learn and the guide\")"), """
+        XCTAssertTrue(bar.contains(".accessibilityHint(\"Open, save, Live Colabo, Learn, describe this piece and the guide\")"), """
             The ≡ menu's hint no longer names what is behind it.
 
             The menu's own label is "Menu"; the hint is the one sentence that tells a \

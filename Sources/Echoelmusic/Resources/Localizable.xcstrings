@@ -229,14 +229,14 @@
         }
       }
     },
-    "Open, save, Live Colabo, Learn and the guide" : {
+    "Open, save, Live Colabo, Learn, describe this piece and the guide" : {
       "comment" : "DAW shell S3 (2026-10-02, inbox E18): the ≡ menu's spoken hint — it holds Open, Save, Live Colabo, Learn and the Guide switch.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open, save, Live Colabo, Learn and the guide"
+            "value" : "Open, save, Live Colabo, Learn, describe this piece and the guide"
           }
         }
       }

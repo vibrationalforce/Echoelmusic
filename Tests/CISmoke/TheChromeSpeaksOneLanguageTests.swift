@@ -1723,7 +1723,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for verbatim in [".accessibilityValue(guideVisible ? \"On\" : \"Off\")", "guideVisible ? \"On\""] {
             XCTAssertFalse(menuGuide.contains(verbatim), "WorkspaceView speaks a bare On/Off for the guide: `\(verbatim)`")
         }
-        try assertCatalogued(["Menu", "Open, save, Live Colabo, Learn and the guide"], "the logo menu's VoiceOver name and hint")
+        try assertCatalogued(["Menu", "Open, save, Live Colabo, Learn, describe this piece and the guide"], "the logo menu's VoiceOver name and hint")
         let clickLeaf = try codeOnly("Sources/Echoelmusic/Studio/WorkstationClickToggle.swift")
         for seam in [".accessibilityValue(on ? String(localized: \"On\") : String(localized: \"Off\"))"] {
             XCTAssertTrue(clickLeaf.contains(seam), "WorkstationClickToggle lost the E4-44 seam `\(seam)`")

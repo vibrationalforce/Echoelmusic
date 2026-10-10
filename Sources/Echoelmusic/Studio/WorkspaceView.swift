@@ -617,7 +617,7 @@ struct WorkspaceView: View {
             }
             .padding(.horizontal, -9)
             .accessibilityLabel("Menu")
-            .accessibilityHint("Open, save, Live Colabo, Learn and the guide")
+            .accessibilityHint("Open, save, Live Colabo, Learn, describe this piece and the guide")
             // SECOND: the loop length + the playhead inside it — the founder's "die Anzeige für
             // die Loop Länge und der Balken" (#490), which lived in the MIDDLE until the #516
             // swap moved it to the leading edge and #528 put the mark to its left. It is still
