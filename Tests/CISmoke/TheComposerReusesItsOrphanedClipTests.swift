@@ -4,8 +4,8 @@
 // WHAT THIS PINS. `TimelineStore.ensureComposerRegion` minted a NEW composer clip whenever the
 // Echoel track had no composer part inside the loop window. Since WA4.3/WA4.4 a user can remove
 // that part, Undo its creation, or move it Later — and nothing clears a slot it fills (since GMMW
-// GA-2a `ClipStore.clear(at:)` has ONE production caller, the Undo of a kept take, and it frees only
-// the slot that take filled). Every remove → Start cycle therefore spent
+// GA-2a `ClipStore.clear(at:)` is called only to take back a kept take — the `.keptTake` Undo and,
+// since AI-6a, `releaseKeptTake` — and it frees only the slot that take filled). Every remove → Start cycle therefore spent
 // one of the eight slots for good, until the full grid refused every import. The store now
 // reuses an ORPHANED composer clip — composer-owned, played by no region — by id.
 //

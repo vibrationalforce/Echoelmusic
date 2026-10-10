@@ -280,7 +280,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             let from = medium.isEmpty ? "a photo or video" : "a \(medium)"
             return "The visuals still use the look of \(from). Undo that first."
         case .notAComposerPart:
-            return "That part is not the composer's, so there is nothing to keep — it is already yours to edit."
+            return "Only a composer part can be kept as a copy, and this one is not."
         case .partGridFull:
             return "The part grid is full, so I could not keep a copy. Remove a part you no longer need."
         }

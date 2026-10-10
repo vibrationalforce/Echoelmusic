@@ -69,6 +69,12 @@ final class TheAgentKeepsATakeTests: XCTestCase {
             guard case .done = undo.steps.first?.outcome else { return XCTFail("undo runs: \(undo)") }
             XCTAssertEqual(timeline.document.regions.map(\.id), [region.id], "the kept part is gone")
             XCTAssertNil(clips.clip(id: kept.clipID), "and its slot is free again — no orphaned notes")
+
+            // Review SHOULD 1: the take-back is ONE song step, so the song's Undo afterwards brings
+            // the part AND its notes back together — never a part whose notes are gone.
+            timeline.undo()
+            XCTAssertTrue(timeline.document.regions.contains { $0.id == kept.id })
+            XCTAssertNotNil(clips.clip(id: kept.clipID), "the part comes back with its notes")
         }
     }
 

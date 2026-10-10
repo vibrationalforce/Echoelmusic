@@ -1551,6 +1551,24 @@ public final class TimelineStore {
         return part
     }
 
+    /// GMMW AI-6a — take back ONE kept take outside the song's Undo (the agent's Undo). It is the
+    /// `.keptTake` Undo's own order (pointer first, clip second — a kill in between leaves an
+    /// unused clip, never a part naming a missing one) and it records ONE step that brings back
+    /// both, so the song's Undo afterwards never restores a part whose notes are gone. Returns
+    /// false and changes nothing unless the part is there and the slot still holds `keptID`.
+    @discardableResult
+    public func releaseKeptTake(regionID: UUID, keptID: UUID, slot: Int, clips: ClipStore) -> Bool {
+        guard clips.slots.indices.contains(slot), let held = clips.slots[slot], held.id == keptID,
+              document.regions.contains(where: { $0.id == regionID }) else { return false }
+        let before = document.regions
+        document.regions.removeAll { $0.id == regionID }
+        persist()
+        _ = flushPendingSave()
+        clips.clear(at: slot)
+        pushUndo(.keptTake(slot: slot, keptID: keptID, clip: held, regions: before, clips: clips))
+        return true
+    }
+
     /// Where a kept take lands: the first bar line at or after the end of the track's last part,
     /// so it never covers a part and always starts on a downbeat. Pure.
     nonisolated static func keptTakeStart(after source: TimelineRegion, in document: TimelineDocument,

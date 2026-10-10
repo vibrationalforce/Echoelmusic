@@ -647,8 +647,9 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let members = Set(regex.matches(in: executor, range: range).compactMap { match in
             Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
         })
-        // AI-6a: `keepComposerTake` is the part bar's "Edit a copy" writer — the one store verb allowed.
-        XCTAssertEqual(members, ["document", "documentGeneration", "keepComposerTake", "laneLevelWrites"],
+        // AI-6a: `keepComposerTake` (the part bar's "Edit a copy") and `releaseKeptTake` (its take-back,
+        // the `.keptTake` Undo's own order) are the two store verbs allowed.
+        XCTAssertEqual(members, ["document", "documentGeneration", "keepComposerTake", "laneLevelWrites", "releaseKeptTake"],
                        "the executor touches the store beyond reading its document, its generation and the level write count")
         // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
         let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")

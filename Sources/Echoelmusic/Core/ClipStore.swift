@@ -18,8 +18,9 @@ public final class ClipStore {
     /// file or Session is PADDED at the end on read (`migratedGrid`), never re-seated — a region
     /// names its clip by id, the index only says where the clip sits. It is a BOUND, not the voice
     /// budget (that is per track, `LaneVoiceRack`): the grid rides whole in the Session envelope,
-    /// is rewritten on every clip edit, and ONE path clears a cell — the Undo of a kept take
-    /// (GMMW GA-2a, `TimelineStore`'s `.keptTake` step), and only the cell that take filled — so
+    /// is rewritten on every clip edit, and ONE kind of write clears a cell — taking back a kept
+    /// take (GMMW GA-2a, `TimelineStore`'s `.keptTake` step, and AI-6a's `releaseKeptTake` for the
+    /// agent's Undo, same order), and only the cell that take filled — so
     /// the ceiling moved, it did not go away. `nonisolated` so the import failures
     /// (nonisolated enums) can say the number (#416).
     public nonisolated static let slotCount = 64
@@ -37,7 +38,7 @@ public final class ClipStore {
     }
 
     /// The grid as `persist` WRITES it: trailing empty cells past `legacySlotCount` are left off,
-    /// never a filled one. Cells fill lowest-first and only the Undo of a kept take clears one (the
+    /// never a filled one. Cells fill lowest-first and only taking back a kept take clears one (the
     /// cell that take filled, GMMW GA-2a), so while at most eight clips exist the file is almost
     /// always the eight-cell file every earlier build reads — a rollback keeps them. ⚠️ An Undo that
     /// frees a LOW cell after later fills can leave a clip past the eighth cell with eight or fewer

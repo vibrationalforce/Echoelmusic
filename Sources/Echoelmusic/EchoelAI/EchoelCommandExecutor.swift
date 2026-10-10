@@ -414,8 +414,10 @@ final class EchoelCommandExecutor {
         case .success(let region): source = region
         case .failure(let error): return .failed(error)
         }
-        guard ClipNoteEdit.refusal(clip: clips.clip(id: source.clipID), region: source) == .composerOwned else {
-            return .failed(.notAComposerPart)
+        switch ClipNoteEdit.refusal(clip: clips.clip(id: source.clipID), region: source) {
+        case .composerOwned: break
+        case .missing: return .failed(.targetGone("part's notes"))
+        case .notMIDI, .legacyOffset, nil: return .failed(.notAComposerPart)
         }
         guard clips.firstEmptySlotIndex != nil else { return .failed(.partGridFull) }
         guard let kept = timeline.keepComposerTake(regionID: source.id, clips: clips) else {
@@ -530,21 +532,16 @@ final class EchoelCommandExecutor {
                 }
             case .removeKept(let copy, let slot):
                 guard let live = timeline.document.regions.first(where: { $0.id == copy.id }) else {
-                    alreadyUndone += 1   // the song's Undo takes back the part and its slot together
+                    // Gone already: the song's Undo of the keep, or a person removed the part.
+                    alreadyUndone += 1
                     continue
                 }
-                guard live == copy, clips.slots.indices.contains(slot),
-                      clips.slots[slot]?.id == copy.clipID else {
+                guard live == copy,
+                      timeline.releaseKeptTake(regionID: copy.id, keptID: copy.clipID, slot: slot, clips: clips),
+                      !timeline.document.regions.contains(where: { $0.id == copy.id }) else {
                     kept.append("The kept part")
                     continue
                 }
-                TrackParts.remove(TrackParts.Part(id: copy.id, startTick: copy.startTick,
-                                                  lengthTicks: copy.lengthTicks), timeline: timeline)
-                guard !timeline.document.regions.contains(where: { $0.id == copy.id }) else {
-                    kept.append("The kept part")
-                    continue
-                }
-                clips.clear(at: slot)
                 restored += 1
             case .mediaLook(let application, let generation):
                 // Not the pending look any more — a card's Undo took it back, and anything applied
