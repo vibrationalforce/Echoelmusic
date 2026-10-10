@@ -17,7 +17,8 @@ enum TrackGrain {
     }
 
     /// On places the default grain (the writer gives it the track's own seed); Off removes it,
-    /// settings included — the track then plays exactly as before.
+    /// settings included (no undo, like the track's Effect — the hint says so) — the track then
+    /// plays exactly as before.
     static func setOn(_ on: Bool, laneID: UUID, timeline: TimelineStore) {
         guard on != (current(laneID, in: timeline.document) != nil) else { return }
         timeline.setLaneGrain(laneID, settings: on ? GrainSettings() : nil)
@@ -30,6 +31,17 @@ enum TrackGrain {
         guard var settings = current(laneID, in: timeline.document) else { return }
         change(&settings)
         timeline.setLaneGrain(laneID, settings: settings.sanitized)
+    }
+
+    /// UI review (MED): whether a part on this track plays WITHOUT the grain although the grain is
+    /// on — a pitched part (track Pitch plus part pitch, `AudioTranspose`) or a warped one. Both
+    /// stay off the plain node the rendering plays on (`AudioLanePlayer.grainToPlay`). A warped
+    /// part whose file tempo is unknown actually plays unstretched; the note may then be cautious.
+    static func hasPartWithoutGrain(_ laneID: UUID, in document: TimelineDocument) -> Bool {
+        document.regions.contains { region in
+            region.laneID == laneID
+                && (region.warpEnabled || AudioTranspose.semitones(for: region, in: document) != 0)
+        }
     }
 
     /// A model range as the field's range — asked of `GrainSettings.Limits`, never restated.
@@ -97,6 +109,12 @@ struct TrackGrainRows: View {
                     .font(EchoelTheme.font(11))
                     .foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
+                if TrackGrain.hasPartWithoutGrain(laneID, in: timeline.document) {
+                    Text("A pitched or warped part on this track plays without the grain.")
+                        .font(EchoelTheme.font(11))
+                        .foregroundStyle(EchoelTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

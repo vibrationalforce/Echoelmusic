@@ -3,8 +3,9 @@
 //
 // ⭐ OFF UNTIL CHOSEN. No chain carries a grain insert unless a writer put one there, and a chain
 // without one answers `soundingGrain == nil` — so every song written before GA-10 plays exactly as
-// before. GA-10b bakes the sound off the render thread and GA-10c plays it; this slice decides
-// nothing about audio and has no caller in the app yet.
+// before. GA-10b bakes the sound off the render thread, GA-10c plays it, and GA-10d writes it
+// (`TimelineStore.setLaneGrain`, from an audio track's Grain rows). This file decides nothing
+// about audio.
 //
 // ⭐ THE SAME LAWS AS THE CHARACTER INSERT (`DeviceChain.swift` header), because a second set of
 // rules for a second insert type would be a second truth:

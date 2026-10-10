@@ -12,6 +12,8 @@
 // 3. SOURCE-TEXT SCAN — the Device page mounts the leaf behind `TrackGrain.offered`; the leaf
 //    draws seven `EchoelValueField` rows through one helper, no `Slider`/`Stepper`, no modal, and
 //    reads nothing but the document; its seven labels are English-only catalog keys.
+// 1b. END-TO-END — `TrackGrain.hasPartWithoutGrain` names a pitched (part or track) or warped part
+//    of THIS track, so the page can say the grain is not heard there (UI review MED).
 //
 // GRADING (§0/§3): the file names `TrackGrain`, which this commit creates, so it does NOT
 // COMPILE against the parent — no assertion has a verdict there (one absence, #486); every claim
@@ -81,6 +83,34 @@ final class AnAudioTrackOffersTheGrainOnItsDevicePageTests: XCTestCase {
         TrackGrain.setOn(true, laneID: midi.id, timeline: timeline)
         XCTAssertNil(timeline.document.lanes.first(where: { $0.id == midi.id })?.deviceChain,
                      "the writer refuses a track the rows are not offered on")
+    }
+
+    // MARK: 1b — the rows say when a part plays without the grain (UI review MED)
+
+    func testThePageSaysWhenAPitchedOrWarpedPartPlaysDry() {
+        let lane = TimelineLane(name: "Audio 1", kind: .audio)
+        let neighbour = TimelineLane(name: "Audio 2", kind: .audio)
+        let plain = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: TimelineTime.ticksPerBar)
+        XCTAssertFalse(TrackGrain.hasPartWithoutGrain(lane.id, in: TimelineDocument(lanes: [lane], regions: [plain])),
+                       "COUNTERWEIGHT: a plain part sounds the grain, so no note")
+        var pitched = plain
+        pitched.transposeSemitones = 2
+        XCTAssertTrue(TrackGrain.hasPartWithoutGrain(lane.id, in: TimelineDocument(lanes: [lane], regions: [pitched])))
+        var warped = plain
+        warped.warpEnabled = true
+        XCTAssertTrue(TrackGrain.hasPartWithoutGrain(lane.id, in: TimelineDocument(lanes: [lane], regions: [warped])))
+        var trackPitched = lane
+        trackPitched.transposeSemitones = 3
+        XCTAssertTrue(TrackGrain.hasPartWithoutGrain(lane.id, in: TimelineDocument(lanes: [trackPitched], regions: [plain])),
+                      "the track's own Pitch counts too — the same sum the player asks")
+        let elsewhere = TimelineRegion(laneID: neighbour.id, clipID: UUID(), startTick: 0,
+                                       lengthTicks: TimelineTime.ticksPerBar, warpEnabled: true)
+        XCTAssertFalse(TrackGrain.hasPartWithoutGrain(lane.id, in: TimelineDocument(lanes: [lane, neighbour],
+                                                                                    regions: [plain, elsewhere])),
+                       "COUNTERWEIGHT: another track's part is not this track's")
+        let leaf = (try? source(Self.leafPath)) ?? ""
+        XCTAssertTrue(leaf.contains("if TrackGrain.hasPartWithoutGrain(laneID, in: timeline.document) {"),
+                      "the leaf shows the note behind the same question")
     }
 
     // MARK: 2 — the ranges are the model's

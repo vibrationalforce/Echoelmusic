@@ -23568,6 +23568,18 @@
           }
         }
       }
+    },
+    "A pitched or warped part on this track plays without the grain." : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pitched or warped part on this track plays without the grain."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
