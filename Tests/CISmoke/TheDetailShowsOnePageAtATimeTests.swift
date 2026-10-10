@@ -259,7 +259,9 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
                                      "instrumentRow(instruments)", "EchoelInstanceLine()",
                                      "echoelGenreRow", "echoelEffectRow", "effectRow",
                                      // GMMW GA-1 — the rack track's Compose here rows.
-                                     "TrackComposeRows(laneID: laneID)"]),
+                                     "TrackComposeRows(laneID: laneID)",
+                                     // GMMW GA-10d2 — an audio track's Grain rows.
+                                     "TrackGrainRows(laneID: laneID)"]),
             ("if page == .track {", ["TextField(\"Track name\"", "label: \"Level\"", "label: \"Pan\"",
                                     "trackRows", "removeRow(removal)"]),
             ("if page == .part {", ["TrackPartsView(laneID: laneID)", "partRows"]),

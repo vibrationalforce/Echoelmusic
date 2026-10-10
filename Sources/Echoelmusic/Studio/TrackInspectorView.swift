@@ -611,6 +611,11 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                             effectRow
                         }
                     }
+                    // GMMW GA-10d2 — Echoel Grain on an audio track, the only kind that plays it
+                    // (own leaf: cold document reads, one writer, no modal).
+                    if TrackGrain.offered(laneID, in: document) {
+                        TrackGrainRows(laneID: laneID)
+                    }
                 }
 
                 if page == .track {

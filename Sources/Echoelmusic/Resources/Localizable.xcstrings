@@ -23424,6 +23424,150 @@
           }
         }
       }
+    },
+    "0 keeps every grain centred, 1 scatters them left and right" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 keeps every grain centred, 1 scatters them left and right"
+          }
+        }
+      }
+    },
+    "0 plays only the part, 1 only the grains" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 plays only the part, 1 only the grains"
+          }
+        }
+      }
+    },
+    "0 reads from the start of the part, 1 from its end" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 reads from the start of the part, 1 from its end"
+          }
+        }
+      }
+    },
+    "A change is heard from a part's next start. Until its new sound is ready, a part plays without the grain." : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A change is heard from a part's next start. Until its new sound is ready, a part plays without the grain."
+          }
+        }
+      }
+    },
+    "Each grain's pitch, in semitones" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each grain's pitch, in semitones"
+          }
+        }
+      }
+    },
+    "Grain" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grain"
+          }
+        }
+      }
+    },
+    "Grain length" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grain length"
+          }
+        }
+      }
+    },
+    "How far around the position a grain may start" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How far around the position a grain may start"
+          }
+        }
+      }
+    },
+    "How long each grain lasts" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How long each grain lasts"
+          }
+        }
+      }
+    },
+    "How many grains overlap" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many grains overlap"
+          }
+        }
+      }
+    },
+    "Scatters short grains of this track's audio. Off removes the grain and its settings" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scatters short grains of this track's audio. Off removes the grain and its settings"
+          }
+        }
+      }
+    },
+    "Spray" : {
+      "comment" : "GMMW GA-10d2 (2026-10-10): Echoel Grain rows on an audio track's Device page (TrackGrainRows).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spray"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

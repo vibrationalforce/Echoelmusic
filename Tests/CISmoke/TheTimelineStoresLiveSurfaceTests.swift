@@ -123,6 +123,8 @@ final class TheTimelineStoresLiveSurfaceTests: XCTestCase {
         "setLaneGenreOverride", "setLaneVariationSeed",
         // GMMW AE-6: the audio part editor's slip (`Studio/AudioPartSlip.swift`).
         "setAudioRegionWindow",
+        // GMMW GA-10d2: an audio track's Grain rows (`Studio/TrackGrainRows.swift`, `TrackGrain`).
+        "setLaneGrain",
     ]
 
     /// The six this file used to assert and could not prove (#1441). Kept BY NAME rather than
