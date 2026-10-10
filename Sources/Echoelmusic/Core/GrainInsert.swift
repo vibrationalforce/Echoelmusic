@@ -39,7 +39,9 @@ public struct GrainSettings: Codable, Sendable, Equatable {
     /// 0 = only the dry part, 1 = only the cloud.
     public var mix: Float = 1
     /// The grain pattern. Two tracks with equal settings and equal seeds play the same pattern
-    /// (`GrainCloud` header), so a new insert takes its own.
+    /// (`GrainCloud` header). ⚠️ Nothing here assigns one: `DeviceInsert.grain` and `settingGrain`
+    /// store the seed they are handed, default 0. The writer that first places a grain on a track
+    /// (GA-10d, the UI) chooses a per-track seed — until then every grain shares one pattern.
     public var seed: UInt64 = 0
 
     public init() {}
