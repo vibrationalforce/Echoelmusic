@@ -954,3 +954,9 @@ iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund)
 - Quelle: Founder-Prompt (Claude-Auftrag), Modell sah das Repo nicht. [verified 5/6]
 - Gemessen: `BioComposer.liveliness` (Dichte) + Mood-Regler „Liveliness“ ✓ · „Edit a copy“/Keep (GA-2a/b) ✓ · `TimelineStore.undo/redo` ✓ · Demo-Quelle ✓ · `BreathGuideView` nur in türloser `BioSourceView` ✓ · Vorher/Jetzt-Vergleich ✗ (neu).
 - Verdikt ADOPT-PRODUCT, EINE Scheibe: Einstieg A (hören → Bewegung → vergleichen → behalten) aus vorhandenen Teilen, plus A/B-Vergleich. Rest (Anfang·Entwicklung·Ende, Handschrift, Körper-Zuordnung) WATCH bis Einstieg A am Gerät getestet ist. Drei Founder-Fragen offen.
+
+### 2026-10-10 — ChatGPT/Astra: Siri-Sätze für „take.keep" und „Vorher/Jetzt"-Vergleich
+- Quelle: Claude-Auftrag (`reports/Auftrag Astra – Siri-Sätze und Vorher-Jetzt.md`), Modell sah das Repo nicht. Säuberung leer. [verified 3/6]
+- Widerlegt: Sprechname ist „Echoelmusic", nicht „Echoel" · „take" ist im Glossar gestrichen · kein deutscher Katalog, also keine deutschen Siri-Sätze.
+- Bestätigt: „Save" meiden · der Vergleich braucht einen festgehaltenen Vorher-Stand, den es nicht gibt · Abhören ohne Undo-Schritt.
+- Verdikt: Sätze ADOPT-PRODUCT, neu formuliert nach dem Knopf „Edit a copy" (AI-6b, 921419dde). Deutsch WATCH (Lokalisierung #232). Vergleich WATCH bis GM17. Die vorhandenen Fehlertexte bleiben, weil sie sagen, was zu tun ist.
