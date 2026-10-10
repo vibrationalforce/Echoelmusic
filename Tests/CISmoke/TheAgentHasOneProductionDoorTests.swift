@@ -163,7 +163,8 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         let notice = try XCTUnwrap(desk.notice, "requests that were not run are shown, never dropped silently")
         XCTAssertEqual(notice.state, .failed(EchoelAgentDesk.overflowMessage(3)))
         XCTAssertTrue(notice.message.contains("3 more requests"), "the notice says how many: \(notice.message)")
-        XCTAssertTrue(EchoelAgentDesk.overflowMessage(1).contains("1 more request "), "and speaks of one as one")
+        XCTAssertTrue(EchoelAgentDesk.overflowMessage(1).contains("it was"), "and speaks of one as one")
+        XCTAssertFalse(EchoelAgentDesk.overflowMessage(1).contains("requests"), "one request is not \"requests\"")
         XCTAssertEqual(timeline.document, before, "and nothing in the piece changed")
     }
 
