@@ -123,7 +123,7 @@ final class TheAgentStartsATrackComposerTests: XCTestCase {
     // MARK: 3 — never over the person's own part
 
     func testAPartOfThePersonsOwnInTheLoopIsRefused() async throws {
-        try await rig { timeline, clips, executor, _, track in
+        await rig { timeline, clips, executor, _, track in
             let own = Clip(name: "AI-6c own", kind: .midi, melody: MelodyClip(notes: [Note(pitch: 60, startStep: 0)]))
             clips.setClip(at: 1, own)
             let ownPart = TimelineRegion(laneID: track.id, clipID: own.id, startTick: 0,
@@ -141,7 +141,7 @@ final class TheAgentStartsATrackComposerTests: XCTestCase {
     // MARK: 4 — already on
 
     func testATrackThatAlreadyComposesJournalsNothing() async throws {
-        try await rig { timeline, clips, executor, _, track in
+        await rig { timeline, clips, executor, _, track in
             XCTAssertNil(TrackCompose.turnOn(track.id, timeline: timeline, clips: clips,
                                              loopBars: Self.loopBars, seed: 42), "the person turned it on")
             let before = timeline.document
@@ -170,7 +170,7 @@ final class TheAgentStartsATrackComposerTests: XCTestCase {
     // MARK: 8 — turned back on by a person after the song's Undo: theirs
 
     func testAComposerTurnedBackOnByAPersonIsKept() async throws {
-        try await rig { timeline, clips, executor, _, track in
+        await rig { timeline, clips, executor, _, track in
             _ = await executor.execute(plan([.composeHere(track: .id(track.id))], on: executor))
             let seed = timeline.document.lanes.first { $0.id == track.id }?.variationSeed
             timeline.undo()   // the song's Undo takes the agent's part back
@@ -223,7 +223,7 @@ final class TheAgentStartsATrackComposerTests: XCTestCase {
         XCTAssertEqual(parse([:]), .failure(.invalidArgument("that track")))
         XCTAssertEqual(EchoelCommandRegistry.spec(.composeHere).permission, .reversibleEdit)
 
-        try await rig { timeline, _, executor, _, _ in
+        await rig { timeline, _, executor, _, _ in
             let before = timeline.document
             let report = await executor.execute(plan([.composeHere(track: .selected)], on: executor))
             XCTAssertEqual(report.refusal, .nothingSelected("track"), "refused before any step")
