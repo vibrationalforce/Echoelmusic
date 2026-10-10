@@ -36,10 +36,11 @@ import Foundation
 /// `reset` only while NO render callback can reach this instance: `prepare` frees the old buffer
 /// on the spot (a render reading it then reads freed memory — a crash, not a glitch) and `reset`
 /// rewrites the grains the render is walking. This type has no adopt/retire handshake of its own
-/// and cannot have one (`DSP/` reaches for no queue type, and the AUv3 compiles `DSP/` alone). So
-/// GA-10 changes the source LIVE by building a NEW cloud on the main thread and handing the
-/// instance over through its own SPSC queue, with a retire path back to main — `deinit` frees the
-/// buffer and must never run on the render thread. (⛔ The first wording said "the way
+/// and cannot have one (`DSP/` reaches for no queue type, and the AUv3 compiles `DSP/` alone). That
+/// is why GA-10 does not run it live: `Sequencer/GrainBake` builds a cloud, renders a part once off
+/// the render thread and drops it. A future LIVE insert would have to build a NEW cloud on the main
+/// thread and hand it over through its own SPSC queue, with a retire path back to main — `deinit`
+/// frees the buffer and must never run on the render thread. (⛔ The first wording said "the way
 /// `SamplerVoice` hands a sample over", which this API cannot do.) The six parameters are plain
 /// control-plane reads, sanitised on every use.
 /// ⚠️ For GA-10, measured: with `stereoSpread` 0 each channel sits at −3 dB (equal-power centre),

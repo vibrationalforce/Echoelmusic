@@ -15,13 +15,22 @@
 // · **level-matched against Off**: the cloud pans each grain at equal POWER (L² + R² = 1, −3 dB per
 //   channel at the centre), while the dry part sits on both channels at full level (L² + R² = 2).
 //   The wet signal is raised by √2 so the two carry the same power — otherwise turning the mix up
-//   would read as "the effect is quieter".
+//   would read as "the effect is quieter". The crossfade is equal-POWER too (cos/sin): dry and
+//   cloud read different places in the file, so they add as uncorrelated signals, and a linear
+//   crossfade would dip 3 dB at mix 0.5;
+// · **the part's length is the part's**: past the end of the dry part the bake is silent, as Off
+//   is — the cloud does not keep sounding over a stretch where the part has no audio.
 //
 // ⚠️ THE LIMITS, stated so GA-10c does not rediscover them:
 // · the SOURCE is the first `GrainCloud.maxSourceSeconds` of the file — `position` 0…1 spans that,
 //   not the whole of a longer file;
-// · the OUTPUT is capped at `maxSeconds`; a longer part returns nil and the caller plays it DRY —
-//   never silent. The cap is memory, not taste: two Float channels of this many seconds.
+// · the OUTPUT is capped at `maxFrames` (120 s at 48 kHz) — in FRAMES, so a higher rate buys a
+//   shorter part, never more memory; a longer part returns nil and the caller plays it DRY, never
+//   silent. Working set at the cap: three Float arrays of `maxFrames` (≈ 69 MB) plus the cloud's
+//   own source copy (≤ 30 s);
+// · the match holds for CENTRED grains at density ≥ 0.5: a hard-panned grain is +3 dB on its side
+//   (a full-scale source can reach ≈ 1.41 — no clipping inside a Float buffer, but the player
+//   should know), and below density 0.5 the cloud thins (`GrainCloud` header);
 // · it ALLOCATES (the cloud, the source copy, the two output arrays) and runs for as long as the
 //   part is long. Never on the render thread, never on the main actor for a long part.
 
@@ -29,8 +38,8 @@ import Foundation
 
 enum GrainBake {
 
-    /// The longest part baked, in seconds. 120 s × 48 kHz × 2 channels × 4 B ≈ 46 MB.
-    static let maxSeconds: Double = 120
+    /// The longest part baked, in frames: 120 s at 48 kHz, whatever the rate (header).
+    static let maxFrames = 5_760_000
 
     /// A baked part: two channels of equal length.
     struct Buffer: Equatable, Sendable {
@@ -43,13 +52,13 @@ enum GrainBake {
     static let wetLevelMatch: Float = Float(2).squareRoot()
 
     /// `frameCount` frames of the part with `settings` applied: the dry part — `source[i]` on both
-    /// channels at frame i, silence past its end — crossfaded with the cloud by `mix`.
+    /// channels at frame i — crossfaded with the cloud by `mix`, and silence past the dry part's end.
     /// Nil when there is nothing to bake (no frames, a bad rate) or the part is longer than
-    /// `maxSeconds`; the caller then plays the part unchanged.
+    /// `maxFrames`; the caller then plays the part unchanged.
     static func render(source: [Float], sampleRate: Double, frameCount: Int,
                        settings: GrainSettings) -> Buffer? {
         guard frameCount > 0, sampleRate.isFinite, sampleRate >= 1, sampleRate <= 768_000,
-              Double(frameCount) <= maxSeconds * sampleRate else { return nil }
+              frameCount <= maxFrames else { return nil }
         let s = settings.sanitized
         var left = [Float](repeating: 0, count: frameCount)
         let dryCount = Swift.min(frameCount, source.count)
@@ -77,16 +86,22 @@ enum GrainBake {
             }
         }
 
-        let dryGain = 1 - s.mix
-        let wetGain = s.mix * wetLevelMatch
-        var right = left
-        for i in 0..<frameCount {
+        // Equal-power crossfade (header); mix 1 is the cloud alone, not a cosine's rounding of it.
+        let angle = s.mix * Float.pi / 2
+        let dryGain: Float = s.mix >= 1 ? 0 : cosf(angle)
+        let wetGain = sinf(angle) * wetLevelMatch
+        // Written into the wet arrays in place: no fourth array of the part's length.
+        for i in 0..<dryCount {
             let dry = left[i]
             let outL = dry * dryGain + wetL[i] * wetGain
             let outR = dry * dryGain + wetR[i] * wetGain
-            left[i] = outL.isFinite ? outL : 0
-            right[i] = outR.isFinite ? outR : 0
+            wetL[i] = outL.isFinite ? outL : 0
+            wetR[i] = outR.isFinite ? outR : 0
         }
-        return Buffer(left: left, right: right)
+        for i in dryCount..<frameCount {
+            wetL[i] = 0
+            wetR[i] = 0
+        }
+        return Buffer(left: wetL, right: wetR)
     }
 }

@@ -2,7 +2,7 @@
 // Echoel — GMMW GA-9 ("Echoel Grain kernel"). `DSP/GrainCloud` reads short raised-cosine grains from a
 // source buffer — position · size · density · spray · pitch · spread — ported from `EchoelGranular`
 // (#1305 took it with the microphone; `docs/dev/HISTORY_ARCHIVE.md` B5: "PORT ALGORITHM — the source
-// must become a buffer"). No caller yet: GA-10 renders it as an insert on an audio track.
+// must become a buffer"). Its one caller is `Sequencer/GrainBake` (GA-10b), which renders a part once.
 //
 // WHAT IT PINS (Tests/CISmoke/CLAUDE.md §1):
 // 1. END-TO-END: with no source, or an empty one, `process` WRITES silence (over a buffer prefilled

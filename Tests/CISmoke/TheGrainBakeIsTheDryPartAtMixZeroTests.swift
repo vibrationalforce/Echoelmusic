@@ -8,12 +8,13 @@
 // 3. THE SEED PINS THE BAKE — equal inputs give equal buffers; another seed another pattern.
 // 4. LEVEL-MATCHED AGAINST OFF — a steady source through a centred, fully wet cloud comes out at
 //    the dry level (the √2 power match), and the bake refuses what it cannot hold (no frames, a bad
-//    rate, a part longer than `maxSeconds`) so the caller plays the part dry.
+//    rate, a part longer than `maxFrames` at ANY rate) so the caller plays the part dry.
+// 5. THE BAKE ENDS WHERE THE PART ENDS — silence past the dry part's end, sound before it.
 //
 // END-TO-END BEHAVIOUR over the shipped function; no source-text scan.
 // HONEST GRADING (§3): the file does NOT compile against the parent — `GrainBake` is new — so no
 // assertion has a verdict there; every claim is a FORWARD guard (one absence, #486). Counterweights:
-// claim 3's "another seed differs", claim 4's nil cases. Graded by a Python transcription of
+// claim 3's "another seed differs", claim 4's nil cases, claim 5's "sounds inside the part". Graded by a Python transcription of
 // `GrainCloud.process` + `GrainBake.render` (claim 4 measured 0.49999… in the steady region).
 //
 // ⚠️ THE LIMIT. Nothing plays a bake yet — GA-10c schedules it in `TimelineAudioSink`. How it
@@ -127,8 +128,20 @@ final class TheGrainBakeIsTheDryPartAtMixZeroTests: XCTestCase {
         XCTAssertNil(GrainBake.render(source: source, sampleRate: Self.rate, frameCount: 0, settings: centred))
         XCTAssertNil(GrainBake.render(source: source, sampleRate: .nan, frameCount: 100, settings: centred))
         XCTAssertNil(GrainBake.render(source: source, sampleRate: 0, frameCount: 100, settings: centred))
-        let tooLong = Int(GrainBake.maxSeconds * Self.rate) + 1
-        XCTAssertNil(GrainBake.render(source: source, sampleRate: Self.rate, frameCount: tooLong,
+        XCTAssertNil(GrainBake.render(source: source, sampleRate: Self.rate, frameCount: GrainBake.maxFrames + 1,
                                       settings: centred), "longer than the cap: the caller plays it dry")
+        XCTAssertNil(GrainBake.render(source: source, sampleRate: 192_000, frameCount: GrainBake.maxFrames + 1,
+                                      settings: centred), "the cap is frames: a higher rate buys no memory")
+    }
+
+    // MARK: 5
+
+    func testTheBakeEndsWhereThePartEnds() throws {
+        // A source shorter than the part: past its end Off is silent, and so is the bake.
+        let source = noise(12_000)
+        let baked = try XCTUnwrap(GrainBake.render(source: source, sampleRate: Self.rate,
+                                                   frameCount: 20_000, settings: settings(mix: 1)))
+        XCTAssertTrue(baked.left[12_000...].allSatisfy { $0 == 0 } && baked.right[12_000...].allSatisfy { $0 == 0 })
+        XCTAssertTrue(baked.left[..<12_000].contains { $0 != 0 }, "COUNTERWEIGHT: the cloud sounds inside the part")
     }
 }
