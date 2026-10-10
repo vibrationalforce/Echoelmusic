@@ -1,5 +1,11 @@
 # Vision ↔ Realität — Echoelmusic (Stand 2026-07-10, v10.79.144)
 
+> ⛔ **SUPERSEDED — a dated snapshot (2026-07-10), not today's state.** Product scope is
+> [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) (since 2026-09-24); what ships today is
+> [`FEATURE_STATUS.md`](FEATURE_STATUS.md). Rows below were true for that build and several are
+> no longer: the AUv3 instrument is back since #1385, the microphone input and video capture
+> were removed (#1302, #1304). Read a row here as history; check the code before citing it.
+
 **Für den Founder: was ist JETZT real, was ist gebaut-aber-unsichtbar, was ist
 zugesagt, was ist ehrlich fern.** Jede Zeile in genau EINER Stufe; ✅-Zeilen
 tragen Datei-Belege. Quellen: Code (die Wahrheit), FEATURE_MATRIX, vision.md,
