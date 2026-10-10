@@ -1,8 +1,9 @@
 import Foundation
 
 /// GMMW GA-9 — Echoel Grain: a cloud of short windowed grains read from a SOURCE BUFFER (a file's
-/// samples), each at its own place, length, pan and pitch. The kernel only: no door, no device, no
-/// caller yet — GA-10 renders it as an insert on an audio track, fed by the managed file.
+/// samples), each at its own place, length, pan and pitch. The kernel only: no door, no device. Its
+/// one caller is `Sequencer/GrainBake` (GA-10b), which renders a part's grain once, off the render
+/// thread; GA-10c plays that bake as an insert on an audio track.
 ///
 /// ⭐ PORTED, NOT INVENTED. `EchoelGranular` (2026-08-21 → #1305) ran the same scheduler over a ring of
 /// the MICROPHONE and went with the audio input (`docs/dev/HISTORY_ARCHIVE.md` B5: "PORT ALGORITHM —
