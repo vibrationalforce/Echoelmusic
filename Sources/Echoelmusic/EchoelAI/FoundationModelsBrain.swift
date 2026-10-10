@@ -8,11 +8,11 @@
 // keeps building. On any other path `isAvailable` is false and `respond`
 // throws `.unavailable`; nothing crashes, nothing links.
 //
-// Error mapping note: the exact `LanguageModelSession.GenerationError` case
-// signatures are device-SDK territory we cannot compile against locally, so
-// the mapping below goes through the error's description (guardrail →
-// `.guardrailRejected`, rest → `.unknown`). Tighten to typed cases in the
-// first device-verified cycle.
+// Error mapping (GMMW AI-3): by TYPE, never by text — guardrail violation →
+// `.refused`, exceeded context window → `.contextOverflow`, anything else →
+// `.unknown(<error type name>)`. The payload never carries the error's
+// description or the prompt: both can echo user text into a log.
+// Availability is asked of `OnDeviceModelGate.status`, the one reader.
 
 import Foundation
 #if canImport(FoundationModels)
@@ -27,33 +27,30 @@ public struct FoundationModelsBrain: BrainBackend {
 
     public var isAvailable: Bool {
         get async {
-            #if canImport(FoundationModels)
-            if #available(iOS 26.0, macOS 26.0, *) {
-                if case .available = SystemLanguageModel.default.availability {
-                    return true
-                }
-            }
-            #endif
-            return false
+            OnDeviceModelGate.status == .available
         }
     }
 
     public func respond(to prompt: String) async throws -> String {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, macOS 26.0, *) {
-            guard case .available = SystemLanguageModel.default.availability else {
+            guard OnDeviceModelGate.status == .available else {
                 throw EchoelAIError.unavailable
             }
             do {
                 let session = LanguageModelSession()
                 let response = try await session.respond(to: prompt)
                 return response.content
-            } catch {
-                let description = String(describing: error)
-                if description.localizedCaseInsensitiveContains("guardrail") {
+            } catch let generation as LanguageModelSession.GenerationError {
+                if case .guardrailViolation = generation {
                     throw EchoelAIError.refused   // safety layer said no
                 }
-                throw EchoelAIError.unknown(description)
+                if case .exceededContextWindowSize = generation {
+                    throw EchoelAIError.contextOverflow
+                }
+                throw EchoelAIError.unknown(String(reflecting: type(of: generation)))
+            } catch {
+                throw EchoelAIError.unknown(String(reflecting: type(of: error)))
             }
         }
         #endif
