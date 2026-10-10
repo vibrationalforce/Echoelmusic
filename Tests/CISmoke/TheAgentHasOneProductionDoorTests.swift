@@ -91,7 +91,7 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         // the app's own domain untouched.
         let looks = UserDefaults(suiteName: "echoel.tests.agentProductionDoor") ?? UserDefaults()
         let desk = EchoelAgentDesk()
-        desk.bind(EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 },
+        desk.bind(EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: selection, voiceCapacity: { 4 },
                                         mediaLooks: MediaLookUndo(), visualDefaults: looks))
         return (timeline, selection, desk, original)
     }

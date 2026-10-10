@@ -40,6 +40,8 @@ enum EchoelCommandID: String, CaseIterable, Sendable, Codable {
     case undoAgentChange = "agent.undoLast"
     /// Give the visuals the look of the photo or video that is open on its card — the card's Apply.
     case applyMediaLook = "media.applyLook"
+    /// Keep a composer part as a part the person owns — the part bar's "Edit a copy" (GMMW AI-6a).
+    case keepTake = "take.keep"
 }
 
 /// Which card a media command means. "This photo" is the one the photo card has read and shows.
@@ -69,6 +71,7 @@ enum EchoelCommand: Equatable, Sendable {
     case duplicatePart(part: EchoelTarget)
     case undoAgentChange
     case applyMediaLook(medium: EchoelMedium)
+    case keepTake(part: EchoelTarget)
 
     var id: EchoelCommandID {
         switch self {
@@ -77,6 +80,7 @@ enum EchoelCommand: Equatable, Sendable {
         case .duplicatePart: return .duplicatePart
         case .undoAgentChange: return .undoAgentChange
         case .applyMediaLook: return .applyMediaLook
+        case .keepTake: return .keepTake
         }
     }
 }
@@ -175,6 +179,16 @@ enum EchoelCommandRegistry {
                 effect: "Sets the visual look from the colours (and for a video, the motion) the card "
                     + "measured — through the card's own Apply path.",
                 undo: .agentJournal, permission: .reversibleEdit)
+        case .keepTake:
+            return EchoelCommandSpec(
+                id: id, summary: "Keep a composer part as your own",
+                parameters: ["part: selected | part id"],
+                preconditions: ["the part exists — the selected one, or one named by its id",
+                                "the composer writes it (a part you own is already yours)",
+                                "the part grid has a free slot"],
+                effect: "Copies the composer's notes into a new part you own, after the track's last "
+                    + "part — the part bar's Edit a copy. The composer's part keeps changing.",
+                undo: .agentJournal, permission: .reversibleEdit)
         }
     }
 
@@ -208,6 +222,8 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case modelFailed
     case nothingShown(EchoelMedium)
     case lookStillApplied(String)
+    case notAComposerPart
+    case partGridFull
 
     /// What the person reads. Plain, specific, never "error".
     var message: String {
@@ -263,6 +279,10 @@ enum EchoelCommandError: Error, Equatable, Sendable {
         case .lookStillApplied(let medium):
             let from = medium.isEmpty ? "a photo or video" : "a \(medium)"
             return "The visuals still use the look of \(from). Undo that first."
+        case .notAComposerPart:
+            return "That part is not the composer's, so there is nothing to keep — it is already yours to edit."
+        case .partGridFull:
+            return "The part grid is full, so I could not keep a copy. Remove a part you no longer need."
         }
     }
 }
@@ -353,6 +373,8 @@ enum EchoelCommandParser {
                 return .failure(.invalidArgument("the medium — photo or video"))
             }
             return .success(.applyMediaLook(medium: medium))
+        case .keepTake:
+            return target(proposal.arguments["part"], naming: "that part").map { EchoelCommand.keepTake(part: $0) }
         case .setTrackLevel:
             let track: EchoelTarget
             switch target(proposal.arguments["track"], naming: "that track") {
@@ -377,7 +399,7 @@ enum EchoelCommandParser {
     static func argumentKeys(_ id: EchoelCommandID) -> Set<String> {
         switch id {
         case .describeState, .undoAgentChange: return []
-        case .duplicatePart: return ["part"]
+        case .duplicatePart, .keepTake: return ["part"]
         case .setTrackLevel: return ["track", "decibels", "mode"]
         case .applyMediaLook: return ["medium"]
         }

@@ -54,7 +54,7 @@ final class TheLevelRequestSeparatesNumberGridAndWriteTests: XCTestCase {
         let selection = WorkstationSelection()
         selection.toggleTrack(Self.keysLane.id)
         let looks = UserDefaults(suiteName: "echoel.tests.levelThreeQuestions") ?? UserDefaults()
-        let executor = EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 },
+        let executor = EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: selection, voiceCapacity: { 4 },
                                              mediaLooks: MediaLookUndo(), visualDefaults: looks)
         return (timeline, executor, original)
     }

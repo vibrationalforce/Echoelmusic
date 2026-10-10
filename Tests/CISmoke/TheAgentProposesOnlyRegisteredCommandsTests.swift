@@ -30,7 +30,7 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
     func testEveryCommandIsSpecifiedAndNoneIsIrreversible() {
         XCTAssertEqual(EchoelCommandID.allCases.map(\.rawValue),
                        ["project.describeState", "track.setLevel", "part.duplicateAfter", "agent.undoLast",
-                        "media.applyLook"],
+                        "media.applyLook", "take.keep"],
                        "ids are a contract with every planner and transcript — renaming one breaks them")
         for spec in EchoelCommandRegistry.all {
             XCTAssertFalse(spec.summary.isEmpty)
@@ -51,6 +51,7 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
         XCTAssertEqual(EchoelCommandRegistry.spec(.duplicatePart).undo, .agentJournal)
         XCTAssertEqual(EchoelCommandRegistry.spec(.undoAgentChange).undo, .isTheUndo)
         XCTAssertEqual(EchoelCommandRegistry.spec(.applyMediaLook).undo, .agentJournal)
+        XCTAssertEqual(EchoelCommandRegistry.spec(.keepTake).undo, .agentJournal)
     }
 
     // MARK: 2 — a proposal becomes a command only when it is registered and well-formed

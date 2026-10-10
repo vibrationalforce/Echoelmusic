@@ -649,7 +649,7 @@ struct EchoelmusicApp: App {
         guard !EchoelAgentDesk.shared.isBound else { return }
         let player = timelinePlayer
         EchoelAgentDesk.shared.bind(EchoelCommandExecutor(
-            timeline: timelineStore, selection: workstationSelection,
+            timeline: timelineStore, clips: clipStore, selection: workstationSelection,
             voiceCapacity: { player.laneVoiceCapacity },
             mediaLooks: .shared, visualDefaults: .standard))
     }

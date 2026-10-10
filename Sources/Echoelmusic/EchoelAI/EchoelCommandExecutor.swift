@@ -71,9 +71,13 @@ final class EchoelCommandExecutor {
         /// The look and the owner's `generation` right after it was recorded — an equal look
         /// applied again by hand is a different generation, and is the person's (review MED-2).
         case mediaLook(MediaSeedApplication, generation: Int)
+        /// A kept take is a part AND the grid slot holding its notes (GA-2a); Undo frees both.
+        case removeKept(TimelineRegion, slot: Int)
     }
 
     private let timeline: TimelineStore
+    /// The part grid — where a kept take's notes live (`TimelineStore.keepComposerTake`).
+    private let clips: ClipStore
     private let selection: WorkstationSelection
     /// `TimelineRegionPlayer.laneVoiceCapacity` — asked, never assumed (#431: which lanes have a
     /// level depends on it, exactly as it does for the inspector).
@@ -96,10 +100,12 @@ final class EchoelCommandExecutor {
     private(set) var runningRequest: UUID?
     private var cancelRequested = false
 
-    init(timeline: TimelineStore, selection: WorkstationSelection, voiceCapacity: @escaping () -> Int,
+    init(timeline: TimelineStore, clips: ClipStore, selection: WorkstationSelection,
+         voiceCapacity: @escaping () -> Int,
          mediaLooks: MediaLookUndo, visualDefaults: UserDefaults,
          betweenSteps: @escaping @MainActor () async -> Void = { await Task.yield() }) {
         self.timeline = timeline
+        self.clips = clips
         self.selection = selection
         self.voiceCapacity = voiceCapacity
         self.mediaLooks = mediaLooks
@@ -227,9 +233,10 @@ final class EchoelCommandExecutor {
             switch command {
             case .setTrackLevel(.selected, _) where plan.basis.track == nil:
                 return .nothingSelected("track")
-            case .duplicatePart(.selected) where plan.basis.part == nil:
+            case .duplicatePart(.selected) where plan.basis.part == nil,
+                 .keepTake(.selected) where plan.basis.part == nil:
                 return .nothingSelected("part")
-            case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook:
+            case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake:
                 continue
             }
         }
@@ -247,7 +254,10 @@ final class EchoelCommandExecutor {
         case .duplicatePart(.selected):
             guard let id = basis.part?.id else { return command }
             return .duplicatePart(part: .id(id))
-        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook:
+        case .keepTake(.selected):
+            guard let id = basis.part?.id else { return command }
+            return .keepTake(part: .id(id))
+        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake:
             return command
         }
     }
@@ -273,6 +283,8 @@ final class EchoelCommandExecutor {
             return undoLast(&group)
         case .applyMediaLook(let medium):
             return applyLook(medium, seen: basis.media, into: &group)
+        case .keepTake(let target):
+            return keep(target, into: &group)
         }
     }
 
@@ -394,6 +406,29 @@ final class EchoelCommandExecutor {
         return .done("Copied the part to \(TrackParts.title(placed)).")
     }
 
+    /// The part bar's "Edit a copy", through the store's one verb (#416): its refusals are asked
+    /// first so each gets its own sentence; the store asks the same rule again before it writes.
+    private func keep(_ target: EchoelTarget, into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+        let source: TimelineRegion
+        switch part(target, in: timeline.document) {
+        case .success(let region): source = region
+        case .failure(let error): return .failed(error)
+        }
+        guard ClipNoteEdit.refusal(clip: clips.clip(id: source.clipID), region: source) == .composerOwned else {
+            return .failed(.notAComposerPart)
+        }
+        guard clips.firstEmptySlotIndex != nil else { return .failed(.partGridFull) }
+        guard let kept = timeline.keepComposerTake(regionID: source.id, clips: clips) else {
+            return .failed(.verificationFailed("no copy appeared"))
+        }
+        guard let slot = clips.slots.firstIndex(where: { $0?.id == kept.clipID }) else {
+            return .failed(.verificationFailed("the copy's notes are not in the part grid"))
+        }
+        group.append(.removeKept(kept, slot: slot))
+        let placed = TrackParts.Part(id: kept.id, startTick: kept.startTick, lengthTicks: kept.lengthTicks)
+        return .done("Kept a copy of the composer's part at \(TrackParts.title(placed)).")
+    }
+
     /// "This photo" is the one the card showed when the plan was made. A card that has since
     /// read another one, or none, is a changed project — never a different photo applied.
     private func applyLook(_ medium: EchoelMedium, seen: EchoelProjectSnapshot.Media,
@@ -493,6 +528,24 @@ final class EchoelCommandExecutor {
                 } else {
                     restored += 1
                 }
+            case .removeKept(let copy, let slot):
+                guard let live = timeline.document.regions.first(where: { $0.id == copy.id }) else {
+                    alreadyUndone += 1   // the song's Undo takes back the part and its slot together
+                    continue
+                }
+                guard live == copy, clips.slots.indices.contains(slot),
+                      clips.slots[slot]?.id == copy.clipID else {
+                    kept.append("The kept part")
+                    continue
+                }
+                TrackParts.remove(TrackParts.Part(id: copy.id, startTick: copy.startTick,
+                                                  lengthTicks: copy.lengthTicks), timeline: timeline)
+                guard !timeline.document.regions.contains(where: { $0.id == copy.id }) else {
+                    kept.append("The kept part")
+                    continue
+                }
+                clips.clear(at: slot)
+                restored += 1
             case .mediaLook(let application, let generation):
                 // Not the pending look any more — a card's Undo took it back, and anything applied
                 // since, even an equal look, is the person's.

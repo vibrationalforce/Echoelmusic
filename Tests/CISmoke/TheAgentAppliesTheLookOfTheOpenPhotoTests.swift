@@ -68,7 +68,7 @@ final class TheAgentAppliesTheLookOfTheOpenPhotoTests: XCTestCase {
         let defaults = try suite()
         let owner = MediaLookUndo()
         let timeline = TimelineStore()
-        let executor = EchoelCommandExecutor(timeline: timeline, selection: WorkstationSelection(),
+        let executor = EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: WorkstationSelection(),
                                              voiceCapacity: { 4 }, mediaLooks: owner, visualDefaults: defaults)
         return (timeline, executor, owner, defaults)
     }

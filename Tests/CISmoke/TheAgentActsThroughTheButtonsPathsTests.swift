@@ -99,7 +99,7 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         // No claim here applies a media look, so the defaults are never written; a fixed suite name
         // always resolves, and the fallback is never the app's own domain being touched.
         let looks = UserDefaults(suiteName: "echoel.tests.agentButtonsPaths") ?? UserDefaults()
-        let executor = EchoelCommandExecutor(timeline: timeline, selection: selection, voiceCapacity: { 4 },
+        let executor = EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: selection, voiceCapacity: { 4 },
                                              mediaLooks: MediaLookUndo(), visualDefaults: looks,
                                              betweenSteps: { [weak self] in
                                                  if let gap = self?.betweenSteps { await gap() } else { await Task.yield() }
@@ -618,7 +618,8 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let executor = try code("Sources/Echoelmusic/EchoelAI/EchoelCommandExecutor.swift")
         let commands = try code("Sources/Echoelmusic/EchoelAI/EchoelCommand.swift")
         for writer in ["TrackMix.setLevel(", "TrackParts.duplicate(", "TrackParts.remove(",
-                       "mediaLooks.apply(photo:", "mediaLooks.apply(video:", "mediaLooks.undo(on:"] {
+                       "mediaLooks.apply(photo:", "mediaLooks.apply(video:", "mediaLooks.undo(on:",
+                       "timeline.keepComposerTake("] {
             XCTAssertTrue(executor.contains(writer), "the executor writes through `\(writer)`, the buttons' path")
         }
         for direct in ["setLaneLevel(", "duplicateRegion(", "removeRegion(", "replaceDocument(", "timeline.undo(",
@@ -646,7 +647,8 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         let members = Set(regex.matches(in: executor, range: range).compactMap { match in
             Range(match.range(at: 1), in: executor).map { String(executor[$0]) }
         })
-        XCTAssertEqual(members, ["document", "documentGeneration", "laneLevelWrites"],
+        // AI-6a: `keepComposerTake` is the part bar's "Edit a copy" writer — the one store verb allowed.
+        XCTAssertEqual(members, ["document", "documentGeneration", "keepComposerTake", "laneLevelWrites"],
                        "the executor touches the store beyond reading its document, its generation and the level write count")
         // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
         let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
