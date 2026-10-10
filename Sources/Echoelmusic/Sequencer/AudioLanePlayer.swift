@@ -127,6 +127,16 @@ public protocol AudioRegionSink: AnyObject {
     /// stop — every other prime runs while the song plays, where a rewire pauses the whole
     /// engine and stops a lane that is sounding (a launched loop). Default: no-op.
     func setMayRewire(_ allowed: Bool)
+    /// GMMW GA-10c: render the part's Echoel Grain (`GrainBake`) OFF the main actor, once, so its
+    /// onset schedules a READY buffer. `fromSeconds`/`lengthSeconds` are the part's whole media
+    /// window, `fades` its plan (baked into the rendering, like a Beats part). Called at prime
+    /// time for a part `AudioLanePlayer.grainToPlay` answers for. Default: no-op — a sink
+    /// without it plays the part dry.
+    func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
+                      settings: GrainSettings, fades: PartFadePlan?)
+    /// GA-10c: the grain the NEXT `play` sounds (nil = none), set by `start` right before every
+    /// `play` and used for that one `play` only, like `setFades`. Default: no-op.
+    func setGrain(_ settings: GrainSettings?)
 }
 
 public extension AudioRegionSink {
@@ -143,6 +153,9 @@ public extension AudioRegionSink {
     func setFades(_ plan: PartFadePlan?) {}
     func setSpacePosition(_ point: HeadphoneSpace.Point) {}
     func setMayRewire(_ allowed: Bool) {}
+    func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
+                      settings: GrainSettings, fades: PartFadePlan?) {}
+    func setGrain(_ settings: GrainSettings?) {}
 }
 
 @MainActor
@@ -433,6 +446,21 @@ public final class AudioLanePlayer {
                                                        for: region, bpm: bpm, stretchRate: plan.rate))
                 }
             }
+            // GA-10c: a part on a track with a grain insert renders its grain NOW, off the main
+            // actor, so its onset plays a ready buffer — the same window and fades `start` asks for.
+            for region in laneRegions {
+                guard let grain = Self.grainToPlay(for: region, in: doc, nativeBPM: resolveNativeBPM(region.clipID),
+                                                   bpm: bpm),
+                      let url = self.resolveURL(region.clipID) else { continue }
+                sink(for: laneID).prepareGrain(
+                    url: url,
+                    fromSeconds: AudioRegionPlayback.filePositionSeconds(for: region, atTick: region.startTick,
+                                                                         bpm: bpm, stretchRate: 1)
+                        ?? region.contentOffsetSeconds,
+                    lengthSeconds: TimelineTime.seconds(fromTicks: region.lengthTicks, bpm: bpm),
+                    settings: grain,
+                    fades: AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: 1))
+            }
             // S3: a LAUNCHED lane keeps its override — the arrangement re-prime (song-
             // loop wrap / structure edit) must NOT clobber it with an arrangement
             // region (the MIDI `primeSecondaryLanes` guards the same way). The files
@@ -496,6 +524,8 @@ public final class AudioLanePlayer {
         lane.setTranspose(AudioTranspose.semitones(for: region, in: doc))   // #165 + AE-10b
         // Audio editor W4b: the part's fades, in the same media time as `from` and `length`.
         lane.setFades(AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: plan.rate))
+        // GA-10c: the grain this part sounds, or nil — set before EVERY play, so none lingers.
+        lane.setGrain(Self.grainToPlay(for: region, in: doc, nativeBPM: resolveNativeBPM(region.clipID), bpm: bpm))
         lane.play(url: url, fromSeconds: from,
                   lengthSeconds: max(0, length), gain: gain, stretch: plan)
         // H4: audio lanes take the lane's stereo position too (B2 gave TimelineLane
@@ -604,6 +634,23 @@ public final class AudioLanePlayer {
         // Non-finite → centre, the rule `MultiRollFanout.pan(forSlot:)` and both sinks take:
         // `min(1, NaN)` is 1, so the bare clamp played a NaN lane hard right (overnight P8).
         return max(-1, min(1, p.isFinite ? p : 0))
+    }
+
+    /// GMMW GA-10c: the grain a part sounds — its track's `soundingGrain` — or nil. ONE answer for
+    /// prime (which renders it) and `start` (which asks the sink to play it), so the two can never
+    /// disagree about which rendering a part wants (#416). Nil, so the part plays exactly as
+    /// before, when the track has no enabled grain insert, or the part is STRETCHED (rate ≠ 1) or
+    /// PITCHED: the rendering is made from the file at rate 1 and plays on the plain node, which
+    /// can neither stretch nor pitch it — the Beats rule, for the same reason.
+    static func grainToPlay(for region: TimelineRegion, in doc: TimelineDocument,
+                            nativeBPM: Double, bpm: Double) -> GrainSettings? {
+        guard let grain = doc.lanes.first(where: { $0.id == region.laneID })?.deviceChain?.soundingGrain
+        else { return nil }
+        let plan = StretchPlan.resolve(mode: region.stretchMode, warpEnabled: region.warpEnabled,
+                                       nativeBPM: nativeBPM, projectBPM: bpm,
+                                       capabilities: StretchMode.timelineCapabilities)
+        guard plan.rate == 1.0, AudioTranspose.semitones(for: region, in: doc) == 0 else { return nil }
+        return grain
     }
 
     private func sink(for laneID: UUID) -> AudioRegionSink {

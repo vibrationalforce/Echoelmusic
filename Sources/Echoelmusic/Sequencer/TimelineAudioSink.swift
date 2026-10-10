@@ -52,6 +52,12 @@
 // ramps into its pre-render instead (off the main actor; its cache key carries the fades). Honest
 // limit: the plain path's read happens on the main actor — the first faded piece is kept short so
 // the part starts on time, and the rest is read while it sounds.
+// Grain (GMMW GA-10c): a part on a track with an enabled grain insert is rendered ONCE at prime
+// time, off the main actor (`GrainBake` over the part's window, mono-summed, its fades baked in),
+// and its onset schedules that READY buffer on the plain node — the Beats pattern. Not ready yet,
+// entered mid-part (a seek, an unmute), stretched or pitched: the part plays exactly as before.
+// Honest limits: the dry half is the file's MONO sum while the insert is on, a mono file hears the
+// cloud's L+R sum, and each lane holds at most `grainFrameBudget` frames of renderings.
 // Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
 // node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
 // at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
@@ -132,6 +138,126 @@ final class TimelineAudioSink: AudioRegionSink {
 
     func setFades(_ plan: PartFadePlan?) {
         pendingFades = plan
+    }
+
+    // MARK: Grain (GMMW GA-10c — prime-time offline bake per part)
+
+    /// GA-10c: the grain the next `play` sounds; taken and cleared by that `play`, like the fades.
+    private var pendingGrain: GrainSettings?
+
+    func setGrain(_ settings: GrainSettings?) {
+        pendingGrain = settings
+    }
+
+    /// One rendering: the part's window (start + length, 1/1000 s), the settings as their stored
+    /// bytes (sorted-key JSON, so equal settings are one key) and the fades baked into it.
+    private struct GrainKey: Hashable {
+        let url: URL
+        let fromMilli: Int
+        let lengthMilli: Int
+        let settings: Data
+        let fadeInMilli: Int
+        let fadeOutMilli: Int
+        init(url: URL, fromSeconds: Double, lengthSeconds: Double, settings: GrainSettings,
+             fades: PartFadePlan?) {
+            self.url = url
+            self.fromMilli = Int((fromSeconds * 1000).rounded())
+            self.lengthMilli = Int((lengthSeconds * 1000).rounded())
+            self.settings = DeviceInsert.grainBlob(settings.sanitized)
+            self.fadeInMilli = Int(((fades?.fadeIn ?? 0) * 1000).rounded())
+            self.fadeOutMilli = Int(((fades?.fadeOut ?? 0) * 1000).rounded())
+        }
+    }
+    private var grainBuffers: [GrainKey: AVAudioPCMBuffer] = [:]
+    private var grainInFlight: Set<GrainKey> = []
+    /// The most frames of grain renderings one lane keeps — one `GrainBake.maxFrames` part
+    /// (≈ 46 MB stereo at the cap). A new rendering evicts the others until it fits; an evicted
+    /// part plays dry until the next prime renders it again.
+    private static let grainFrameBudget = GrainBake.maxFrames
+
+    func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
+                      settings: GrainSettings, fades: PartFadePlan?) {
+        guard fromSeconds.isFinite, lengthSeconds.isFinite, lengthSeconds > 0 else { return }
+        let key = GrainKey(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds,
+                           settings: settings, fades: fades)
+        if grainBuffers[key] != nil || grainInFlight.contains(key) { return }
+        // Attach the plain node and capture the CONNECTION format now (the Beats V1/V2 rule).
+        guard ensureLoaded(url) != nil else { return }
+        grainInFlight.insert(key)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            // A FRESH handle, read and rendered off the main actor (the Beats V3 rule).
+            var channels: [[Float]] = []
+            if let f = try? AVAudioFile(forReading: url) {
+                let sr = f.processingFormat.sampleRate
+                let startFrame = AVAudioFramePosition((max(0, fromSeconds) * sr).rounded())
+                let partFrames = Int((lengthSeconds * sr).rounded())
+                if sr > 0, startFrame < f.length, partFrames > 0, partFrames <= GrainBake.maxFrames {
+                    let frames = AVAudioFrameCount(min(Double(f.length - startFrame), Double(partFrames)))
+                    if frames > 0,
+                       let raw = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: frames) {
+                        f.framePosition = startFrame
+                        if (try? f.read(into: raw, frameCount: frames)) != nil,
+                           let data = raw.floatChannelData, raw.format.channelCount > 0 {
+                            let n = Int(raw.frameLength)
+                            let count = Int(raw.format.channelCount)
+                            var mono = [Float](repeating: 0, count: n)
+                            let scale = 1 / Float(count)
+                            for c in 0..<count {
+                                for i in 0..<n { mono[i] += data[c][i] * scale }
+                            }
+                            if let baked = GrainBake.render(source: mono, sampleRate: sr,
+                                                            frameCount: partFrames, settings: settings) {
+                                channels = [baked.left, baked.right]
+                                fades?.bake(into: &channels, fromSeconds: fromSeconds,
+                                            mediaSecondsPerFrame: 1 / sr)
+                            }
+                        }
+                    }
+                }
+            }
+            await self?.storeGrain(key: key, channels: channels)
+        }
+    }
+
+    /// The rendering as a buffer in the URL's NODE-CONNECTION format: stereo as it is, a mono
+    /// connection as the L+R mean. Any other layout, or an empty rendering (read / cap / rate
+    /// failed off-main): nothing is stored and the part plays dry.
+    private func storeGrain(key: GrainKey, channels: [[Float]]) {
+        grainInFlight.remove(key)
+        guard knownURLs[key.url] != nil, let fmt = urlFormats[key.url],
+              channels.count == 2, let left = channels.first, !left.isEmpty,
+              channels[1].count == left.count,
+              fmt.channelCount == 1 || fmt.channelCount == 2,
+              let out = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: AVAudioFrameCount(left.count)),
+              let dst = out.floatChannelData else {
+            log.log(.info, category: .audio, "Grain rendering unavailable (read/cap/format) — part plays dry")
+            return
+        }
+        let right = channels[1]
+        if fmt.channelCount == 1 {
+            for i in 0..<left.count { dst[0][i] = (left[i] + right[i]) * 0.5 }
+        } else {
+            left.withUnsafeBufferPointer { src in
+                if let s = src.baseAddress { dst[0].update(from: s, count: left.count) }
+            }
+            right.withUnsafeBufferPointer { src in
+                if let s = src.baseAddress { dst[1].update(from: s, count: right.count) }
+            }
+        }
+        out.frameLength = AVAudioFrameCount(left.count)
+        // `out` is still local: no node can be reading it (the Beats fill-time rule).
+        AudioOutputGuard.sweepNonFinite(out)
+        // The same part with other settings or fades is stale; then keep the lane in budget.
+        for k in grainBuffers.keys where k.url == key.url && k.fromMilli == key.fromMilli
+            && k.lengthMilli == key.lengthMilli && k != key {
+            grainBuffers[k] = nil
+        }
+        var held = grainBuffers.values.reduce(0) { $0 + Int($1.frameLength) }
+        for k in grainBuffers.keys where held + left.count > Self.grainFrameBudget {
+            held -= Int(grainBuffers[k]?.frameLength ?? 0)
+            grainBuffers[k] = nil
+        }
+        grainBuffers[key] = out
     }
 
     // MARK: Beats-Executor (prime-time offline WSOLA per region)
@@ -312,6 +438,8 @@ final class TimelineAudioSink: AudioRegionSink {
         // W4b: this part's fades, taken now so no exit below can leave them for the next part.
         let fades = pendingFades
         pendingFades = nil
+        let grain = pendingGrain   // GA-10c: likewise, once per play
+        pendingGrain = nil
         guard lengthSeconds > 0 else { stop(); return }
         guard let plainNode = ensureLoaded(url), let file else { return }
         // Beats-Executor: a prepared region onset schedules the READY stretched
@@ -328,6 +456,19 @@ final class TimelineAudioSink: AudioRegionSink {
            plainNode.engine?.isRunning == true {
             stop()
             plainNode.scheduleBuffer(entry.buffer, at: nil)
+            setGain(gain)
+            plainNode.play()
+            return
+        }
+        // GA-10c: a part with a grain plays its READY rendering on the plain node — only at its
+        // onset (the exact window prime rendered, fades included), only unstretched and unpitched.
+        // Anything else — not ready, a mid-part entry — falls through and plays dry, never silent.
+        if let grain, stretch.rate == 1.0, transposeSemitones == 0,
+           let buffer = grainBuffers[GrainKey(url: url, fromSeconds: fromSeconds,
+                                              lengthSeconds: lengthSeconds, settings: grain, fades: fades)],
+           plainNode.engine?.isRunning == true {
+            stop()
+            plainNode.scheduleBuffer(buffer, at: nil)
             setGain(gain)
             plainNode.play()
             return
@@ -468,6 +609,8 @@ final class TimelineAudioSink: AudioRegionSink {
         releaseNodes()
         beatsBuffers.removeAll()
         beatsInFlight.removeAll()
+        grainBuffers.removeAll()
+        grainInFlight.removeAll()
         urlFormats.removeAll()
         file = nil
     }

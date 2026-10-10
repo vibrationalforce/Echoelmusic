@@ -22,11 +22,13 @@
 // (`DeviceInsert.character`), nor re-stamped in place: choosing an effect replaces its state AND
 // its version, so a later build never finds v1 bytes under a v2 label.
 //
-// ⚠️ DC1 SOUNDS ONE INSERT, AND SAYS SO. A rack voice has ONE `EchoelFXChain`, so the first
-// ENABLED insert of a KNOWN type is what plays (`soundingCharacter`); the inspector writes at most
-// one. An array that could hold three while one sounds would be a claim — so the type answers
-// the question "what plays", and the writer keeps the array to what plays plus what it cannot
-// read.
+// ⚠️ EACH TRACK KIND SOUNDS ONE INSERT TYPE, AND SAYS SO. A rack voice has ONE `EchoelFXChain`,
+// so on a ROLL lane the first ENABLED character insert is what plays (`soundingCharacter`,
+// `MultiRollFanout`); on an AUDIO lane the first enabled GRAIN insert is (`soundingGrain`, GMMW
+// GA-10c — rendered once per part and played by `TimelineAudioSink`). No lane today sounds both,
+// so their ORDER in `inserts` decides nothing yet; a lane kind that ever plays two must honour it
+// (the array is "in signal order") rather than fix one position silently. The writers keep at
+// most one of each — an array that could hold three while one sounds would be a claim.
 //
 // ⚠️ INTERIM HOME. The contract's final home is the `EchoelCore` target, which is founder-gated
 // (#95, `project.yml`). Until then it lives in `Core/`, like `MediaAsset`.
@@ -116,7 +118,8 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
     public var isEnabled: Bool
     public var stateBlob: Data
 
-    /// The one insert type this build plays: a named effect character on the track's voice chain.
+    /// The insert type a ROLL lane plays: a named effect character on the track's voice chain.
+    /// (An audio lane plays the grain insert, `grainTypeID` — GMMW GA-10c.)
     public static let characterTypeID = "com.echoelmusic.device.fx.character"
     /// The state format this build writes and reads for a character insert: the raw value, UTF-8.
     public static let characterTypeVersion = 1

@@ -225,8 +225,8 @@ final class ATransposedTrackPlaysThroughThePitchChainTests: XCTestCase {
     /// attach (review HIGH 2) or an unpitched Beats buffer.
     func testThePlayerAsksTheOneSumEverywhere() throws {
         let player = try code("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
-        XCTAssertEqual(player.components(separatedBy: "AudioTranspose.semitones(for: region, in: doc)").count - 1, 3,
-                       "prime's chain question, prime's Beats bypass and start's setTranspose each ask the sum")
+        XCTAssertEqual(player.components(separatedBy: "AudioTranspose.semitones(for: region, in: doc)").count - 1, 4,
+                       "prime's chain question, prime's Beats bypass, start's setTranspose and the grain's pitch bypass (GA-10c, `grainToPlay`) each ask the sum")
         XCTAssertFalse(player.contains("semitones(laneID:"),
                        "the player asks the TRACK's pitch alone again — a part's own pitch would go unheard")
         let start = try XCTUnwrap(body(of: "private func start(", in: player), "ANCHOR MISSING: start")
