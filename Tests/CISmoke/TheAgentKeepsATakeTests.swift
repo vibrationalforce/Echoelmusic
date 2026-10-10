@@ -45,7 +45,7 @@ final class TheAgentKeepsATakeTests: XCTestCase {
         timeline.replaceDocument(TimelineDocument(lanes: [lane], regions: [region]))
         let looks = UserDefaults(suiteName: "echoel.tests.agentKeepsATake") ?? UserDefaults()
         let executor = EchoelCommandExecutor(timeline: timeline, clips: clips, selection: WorkstationSelection(),
-                                             voiceCapacity: { 4 }, mediaLooks: MediaLookUndo(),
+                                             voiceCapacity: { 4 }, loopBars: { 4 }, mediaLooks: MediaLookUndo(),
                                              visualDefaults: looks)
         try await body(timeline, clips, executor, region)
     }

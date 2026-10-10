@@ -99,7 +99,7 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         // No claim here applies a media look, so the defaults are never written; a fixed suite name
         // always resolves, and the fallback is never the app's own domain being touched.
         let looks = UserDefaults(suiteName: "echoel.tests.agentButtonsPaths") ?? UserDefaults()
-        let executor = EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: selection, voiceCapacity: { 4 },
+        let executor = EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: selection, voiceCapacity: { 4 }, loopBars: { 4 },
                                              mediaLooks: MediaLookUndo(), visualDefaults: looks,
                                              betweenSteps: { [weak self] in
                                                  if let gap = self?.betweenSteps { await gap() } else { await Task.yield() }

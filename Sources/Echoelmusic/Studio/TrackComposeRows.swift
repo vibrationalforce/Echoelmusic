@@ -111,6 +111,24 @@ enum TrackCompose {
         timeline.setLaneVariationSeed(laneID, seed: nil)
     }
 
+    /// "New variation", and the agent's take-back of one (GMMW AI-6c): the lane's own variation
+    /// seed, nil = follow the piece. The one writer both reach (#416).
+    @MainActor
+    static func setVariation(_ laneID: UUID, seed: UInt64?, timeline: TimelineStore) {
+        timeline.setLaneVariationSeed(laneID, seed: seed)
+    }
+
+    /// The instrument's loop length in bars, read the way the rows' `@AppStorage` reads it — for a
+    /// caller with no view (the agent, GMMW AI-6c). One key, one fallback (#416).
+    nonisolated static func loopBars(in defaults: UserDefaults) -> Int {
+        let key = StudioDefaultKeys.loopBars.key
+        guard defaults.object(forKey: key) != nil,
+              let length = LoopBarLength(rawValue: defaults.integer(forKey: key)) else {
+            return StudioDefaultKeys.loopBars.value.rawValue
+        }
+        return length.rawValue
+    }
+
     /// A fresh detail seed. Random in the UI on purpose; the engine stays deterministic because
     /// the rolled value is stored and replayed (`setLaneVariationSeed`'s own contract).
     nonisolated static func freshSeed() -> UInt64 {
@@ -160,7 +178,7 @@ struct TrackComposeRows: View {
             if composing {
                 TrackComposeStylePicker(laneID: laneID)
                 Button {
-                    timeline.setLaneVariationSeed(laneID, seed: TrackCompose.freshSeed())
+                    TrackCompose.setVariation(laneID, seed: TrackCompose.freshSeed(), timeline: timeline)
                 } label: {
                     HStack(spacing: EchoelTheme.spaceXS) {
                         Image(systemName: "dice").font(EchoelTheme.font(11, .semibold))

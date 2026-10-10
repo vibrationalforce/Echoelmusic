@@ -42,6 +42,9 @@ enum EchoelCommandID: String, CaseIterable, Sendable, Codable {
     case applyMediaLook = "media.applyLook"
     /// Keep a composer part as a part the person owns — the part bar's "Edit a copy" (GMMW AI-6a).
     case keepTake = "take.keep"
+    /// Let the instrument's composer write a part on a rack track — the Device page's "Compose
+    /// here" (GMMW AI-6c).
+    case composeHere = "track.composeHere"
 }
 
 /// Which card a media command means. "This photo" is the one the photo card has read and shows.
@@ -72,6 +75,7 @@ enum EchoelCommand: Equatable, Sendable {
     case undoAgentChange
     case applyMediaLook(medium: EchoelMedium)
     case keepTake(part: EchoelTarget)
+    case composeHere(track: EchoelTarget)
 
     var id: EchoelCommandID {
         switch self {
@@ -81,6 +85,7 @@ enum EchoelCommand: Equatable, Sendable {
         case .undoAgentChange: return .undoAgentChange
         case .applyMediaLook: return .applyMediaLook
         case .keepTake: return .keepTake
+        case .composeHere: return .composeHere
         }
     }
 }
@@ -189,6 +194,17 @@ enum EchoelCommandRegistry {
                 effect: "Copies the composer's notes into a new part you own, after the track's last "
                     + "part — the part bar's Edit a copy. The composer's part keeps changing.",
                 undo: .agentJournal, permission: .reversibleEdit)
+        case .composeHere:
+            return EchoelCommandSpec(
+                id: id, summary: "Let the composer write a part on a track",
+                parameters: ["track: selected | track id"],
+                preconditions: ["the track exists — the selected one, or one named by its id",
+                                "a rack voice plays it (not the Echoel track, audio, bio or video)",
+                                "no part of your own starts inside the loop",
+                                "the part grid has a free slot, unless the composer has one to reuse"],
+                effect: "Places a composer part in the loop and gives the track a variation of its own "
+                    + "— the Device page's Compose here. The notes arrive with the next take.",
+                undo: .agentJournal, permission: .reversibleEdit)
         }
     }
 
@@ -224,6 +240,10 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case lookStillApplied(String)
     case notAComposerPart
     case partGridFull
+    /// GMMW AI-6c: the track has no rack voice to play what the composer writes (the device named).
+    case cannotCompose(String)
+    /// GMMW AI-6c: a part of the person's own starts inside the loop.
+    case wouldCoverOwnPart
 
     /// What the person reads. Plain, specific, never "error".
     var message: String {
@@ -282,7 +302,11 @@ enum EchoelCommandError: Error, Equatable, Sendable {
         case .notAComposerPart:
             return "Only a composer part can be kept as a copy, and this one is not."
         case .partGridFull:
-            return "The part grid is full, so I could not keep a copy. Remove a part you no longer need."
+            return "The part grid is full, so I did nothing. Remove a part you no longer need."
+        case .cannotCompose(let device):
+            return "The composer cannot write on this track (\(device)). Pick a MIDI track a rack voice plays."
+        case .wouldCoverOwnPart:
+            return "This track has a part of your own in the loop, and the composer's part would play over it, so I did nothing."
         }
     }
 }
@@ -375,6 +399,8 @@ enum EchoelCommandParser {
             return .success(.applyMediaLook(medium: medium))
         case .keepTake:
             return target(proposal.arguments["part"], naming: "that part").map { EchoelCommand.keepTake(part: $0) }
+        case .composeHere:
+            return target(proposal.arguments["track"], naming: "that track").map { EchoelCommand.composeHere(track: $0) }
         case .setTrackLevel:
             let track: EchoelTarget
             switch target(proposal.arguments["track"], naming: "that track") {
@@ -402,6 +428,7 @@ enum EchoelCommandParser {
         case .duplicatePart, .keepTake: return ["part"]
         case .setTrackLevel: return ["track", "decibels", "mode"]
         case .applyMediaLook: return ["medium"]
+        case .composeHere: return ["track"]
         }
     }
 

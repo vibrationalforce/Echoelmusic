@@ -125,7 +125,7 @@ final class TheMediaLookUndoComparesOnTheDisplayGridTests: XCTestCase {
         let original = VisualLookSnapshot.read(from: defaults)
         let owner = MediaLookUndo()
         let executor = EchoelCommandExecutor(timeline: TimelineStore(), clips: ClipStore(), selection: WorkstationSelection(),
-                                             voiceCapacity: { 4 }, mediaLooks: owner, visualDefaults: defaults)
+                                             voiceCapacity: { 4 }, loopBars: { 4 }, mediaLooks: owner, visualDefaults: defaults)
         func plan(_ steps: [EchoelCommand]) -> EchoelActionPlan {
             EchoelActionPlan(requestID: UUID(), steps: steps, basis: executor.snapshot(), consents: [])
         }

@@ -43,7 +43,7 @@ final class TheAgentDescribesThePieceTests: XCTestCase {
         let looks = UserDefaults(suiteName: "echoel.tests.agentDescribes") ?? UserDefaults()
         let desk = EchoelAgentDesk()
         desk.bind(EchoelCommandExecutor(timeline: timeline, clips: ClipStore(), selection: WorkstationSelection(),
-                                        voiceCapacity: { 4 }, mediaLooks: MediaLookUndo(), visualDefaults: looks))
+                                        voiceCapacity: { 4 }, loopBars: { 4 }, mediaLooks: MediaLookUndo(), visualDefaults: looks))
         return (timeline, desk, original)
     }
 

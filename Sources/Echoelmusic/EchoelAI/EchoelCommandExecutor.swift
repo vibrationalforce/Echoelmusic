@@ -73,6 +73,11 @@ final class EchoelCommandExecutor {
         case mediaLook(MediaSeedApplication, generation: Int)
         /// A kept take is a part AND the grid slot holding its notes (GA-2a); Undo frees both.
         case removeKept(TimelineRegion, slot: Int)
+        /// "Compose here" (AI-6c): the composer part it placed (nil when one was already there) and
+        /// the variation seed before and after (equal when the track already carried a choice).
+        /// The clip stays in its slot on Undo, as on the song's Undo — `ensureComposerRegion`
+        /// reuses an orphaned composer clip next time.
+        case composeOff(laneID: UUID, part: TimelineRegion?, seedBefore: UInt64?, seedAfter: UInt64?)
     }
 
     private let timeline: TimelineStore
@@ -82,6 +87,9 @@ final class EchoelCommandExecutor {
     /// `TimelineRegionPlayer.laneVoiceCapacity` — asked, never assumed (#431: which lanes have a
     /// level depends on it, exactly as it does for the inspector).
     private let voiceCapacity: () -> Int
+    /// The instrument's loop length in bars — the one the "Compose here" rows read. Asked, never
+    /// assumed (#431); the app hands in the rows' own key (`TrackCompose.loopBars(in:)`).
+    private let loopBars: () -> Int
     /// The one owner of a media look — `MediaLookUndo.shared` in the app, a fresh one in a test.
     private let mediaLooks: MediaLookUndo
     /// Where the visual look lives. Handed to `mediaLooks`, and read back only to confirm.
@@ -101,13 +109,14 @@ final class EchoelCommandExecutor {
     private var cancelRequested = false
 
     init(timeline: TimelineStore, clips: ClipStore, selection: WorkstationSelection,
-         voiceCapacity: @escaping () -> Int,
+         voiceCapacity: @escaping () -> Int, loopBars: @escaping () -> Int,
          mediaLooks: MediaLookUndo, visualDefaults: UserDefaults,
          betweenSteps: @escaping @MainActor () async -> Void = { await Task.yield() }) {
         self.timeline = timeline
         self.clips = clips
         self.selection = selection
         self.voiceCapacity = voiceCapacity
+        self.loopBars = loopBars
         self.mediaLooks = mediaLooks
         self.visualDefaults = visualDefaults
         self.betweenSteps = betweenSteps
@@ -236,7 +245,10 @@ final class EchoelCommandExecutor {
             case .duplicatePart(.selected) where plan.basis.part == nil,
                  .keepTake(.selected) where plan.basis.part == nil:
                 return .nothingSelected("part")
-            case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake:
+            case .composeHere(.selected) where plan.basis.track == nil:
+                return .nothingSelected("track")
+            case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
+                 .composeHere:
                 continue
             }
         }
@@ -257,7 +269,11 @@ final class EchoelCommandExecutor {
         case .keepTake(.selected):
             guard let id = basis.part?.id else { return command }
             return .keepTake(part: .id(id))
-        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake:
+        case .composeHere(.selected):
+            guard let id = basis.track?.id else { return command }
+            return .composeHere(track: .id(id))
+        case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
+             .composeHere:
             return command
         }
     }
@@ -285,6 +301,8 @@ final class EchoelCommandExecutor {
             return applyLook(medium, seen: basis.media, into: &group)
         case .keepTake(let target):
             return keep(target, into: &group)
+        case .composeHere(let target):
+            return composeHere(target, into: &group)
         }
     }
 
@@ -431,6 +449,80 @@ final class EchoelCommandExecutor {
         return .done("Kept a copy of the composer's part at \(TrackParts.title(placed)).")
     }
 
+    /// The Device page's "Compose here", through its own pure half (`TrackCompose`, #416): the
+    /// offer rule, the own-part rule and `turnOn` — the loop length the rows read (`loopBars`). Success is the rows' own "on" (`isComposing`), read back after the write.
+    private func composeHere(_ target: EchoelTarget, into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+        let document = timeline.document
+        let laneID: UUID
+        switch track(target, in: document) {
+        case .success(let id): laneID = id
+        case .failure(let error): return .failed(error)
+        }
+        guard let lane = document.lanes.first(where: { $0.id == laneID }),
+              let controls = TrackMix.controls(of: laneID, in: document, voiceCapacity: voiceCapacity()) else {
+            return .failed(.targetGone("track"))
+        }
+        guard TrackCompose.offered(controls.role) else {
+            return .failed(.cannotCompose(TrackMix.deviceName(controls.role)))
+        }
+        let loopBars = self.loopBars()
+        if TrackCompose.isComposing(laneID, in: document, clips: clips.filledClips, loopBars: loopBars) {
+            return .done("The composer already writes on \(lane.name).")
+        }
+        let known = Set(document.regions.map(\.id))
+        let seedBefore = lane.variationSeed
+        switch TrackCompose.turnOn(laneID, timeline: timeline, clips: clips, loopBars: loopBars,
+                                   seed: TrackCompose.freshSeed()) {
+        case .ownPart?: return .failed(.wouldCoverOwnPart)
+        case .gridFull?: return .failed(.partGridFull)
+        case nil: break
+        }
+        let added = timeline.document.regions.filter { !known.contains($0.id) }
+        let seedAfter = timeline.document.lanes.first(where: { $0.id == laneID })?.variationSeed
+        if !added.isEmpty || seedAfter != seedBefore {
+            group.append(.composeOff(laneID: laneID, part: added.first, seedBefore: seedBefore, seedAfter: seedAfter))
+        }
+        guard added.count <= 1 else { return .failed(.verificationFailed("more than one part appeared")) }
+        guard TrackCompose.isComposing(laneID, in: timeline.document, clips: clips.filledClips,
+                                       loopBars: loopBars) else {
+            return .failed(.verificationFailed("\(lane.name) does not read as composing"))
+        }
+        return .done("The composer now writes a part on \(lane.name). Its notes arrive with the next take.")
+    }
+
+    private enum ComposeUndo {
+        case restored
+        case alreadyUndone
+        case kept(String)
+    }
+
+    /// Takes back one "Compose here" — the part ONLY while it reads as placed (the part bar's
+    /// Remove, one song step), the variation ONLY while it still reads the agent's seed (the rows'
+    /// own setter). If a person changed either half since, nothing of it is taken back.
+    private func undoCompose(laneID: UUID, part: TimelineRegion?, seedBefore: UInt64?,
+                             seedAfter: UInt64?) -> ComposeUndo {
+        let document = timeline.document
+        guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return .kept("A removed track") }
+        let livePart = part.flatMap { placed in document.regions.first { $0.id == placed.id } }
+        if let part, let livePart, livePart != part { return .kept("The composer's part on \(lane.name)") }
+        let seedWritten = seedBefore != seedAfter
+        if seedWritten, lane.variationSeed != seedAfter { return .kept("The variation of \(lane.name)") }
+        var undid = false
+        if let part, livePart != nil {
+            TrackParts.remove(TrackParts.Part(id: part.id, startTick: part.startTick,
+                                              lengthTicks: part.lengthTicks), timeline: timeline)
+            if timeline.document.regions.contains(where: { $0.id == part.id }) {
+                return .kept("The composer's part on \(lane.name)")
+            }
+            undid = true
+        }
+        if seedWritten {
+            TrackCompose.setVariation(laneID, seed: seedBefore, timeline: timeline)
+            undid = true
+        }
+        return undid ? .restored : .alreadyUndone
+    }
+
     /// "This photo" is the one the card showed when the plan was made. A card that has since
     /// read another one, or none, is a changed project — never a different photo applied.
     private func applyLook(_ medium: EchoelMedium, seen: EchoelProjectSnapshot.Media,
@@ -543,6 +635,12 @@ final class EchoelCommandExecutor {
                     continue
                 }
                 restored += 1
+            case .composeOff(let laneID, let part, let seedBefore, let seedAfter):
+                switch undoCompose(laneID: laneID, part: part, seedBefore: seedBefore, seedAfter: seedAfter) {
+                case .restored: restored += 1
+                case .alreadyUndone: alreadyUndone += 1
+                case .kept(let what): kept.append(what)
+                }
             case .mediaLook(let application, let generation):
                 // Not the pending look any more — a card's Undo took it back, and anything applied
                 // since, even an equal look, is the person's.

@@ -651,6 +651,7 @@ struct EchoelmusicApp: App {
         EchoelAgentDesk.shared.bind(EchoelCommandExecutor(
             timeline: timelineStore, clips: clipStore, selection: workstationSelection,
             voiceCapacity: { player.laneVoiceCapacity },
+            loopBars: { TrackCompose.loopBars(in: .standard) },
             mediaLooks: .shared, visualDefaults: .standard))
     }
 
