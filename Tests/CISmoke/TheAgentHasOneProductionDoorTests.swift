@@ -26,7 +26,9 @@
 //      no longer replaces the first; an older build's single stored request is a queue of one; past
 //      `maxQueued` the new post is refused and later reported (`.overflowed`) with a notice; several
 //      requests run in one drain show one notice with each sentence, and a refusal is never hidden by
-//      a later "Done". GRADING: forward — `enqueued`/`dequeued`/`.overflowed`/`combined` are created
+//      a later "Done", and that notice says its one Undo takes back only the last. The STORE half
+//      (`post`/`take` with a throwaway `UserDefaults` suite, never the App-Group key) is driven
+//      too, so reverting `post` to replace-the-first goes red (review of 9d75ea6). GRADING: forward — `enqueued`/`dequeued`/`.overflowed`/`combined` are created
 //      by the same commit, so nothing here compiles against the parent (#486).
 //   9. AI-1b (`handle` + SOURCE-TEXT SCAN): each agent intent answers Siri with ITS OWN request's
 //      outcome (`spokenOutcome(of:)`) — a refusal is heard; before the desk ran it, or for another
@@ -118,6 +120,41 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
                        Array(full.dropLast()) + [second], "one under the cap still takes it")
     }
 
+    /// The store half, driven on a throwaway suite (never the App-Group key the host app reads): a
+    /// second post waits behind the first, `take` leaves the rest, and a full queue's extra posts are
+    /// reported once, after the stored ones.
+    func testTheStoreQueuesInOrderAndReportsWhatAFullQueueRefused() throws {
+        let suite = "echoel.tests.agentMailboxQueue"
+        let store = try XCTUnwrap(UserDefaults(suiteName: suite))
+        store.removePersistentDomain(forName: suite)
+        defer { store.removePersistentDomain(forName: suite) }
+        let now = Date()
+        let first = EchoelAgentInbox.post(request: "first", actions: [], now: now, in: store)
+        let second = EchoelAgentInbox.post(request: "second", actions: [], now: now, in: store)
+        guard case .request(let a)? = EchoelAgentInbox.take(now: now, in: store) else {
+            return XCTFail("the first post must be taken first")
+        }
+        XCTAssertEqual(a.requestID, first, "oldest first — the second post did not replace the first")
+        guard case .request(let b)? = EchoelAgentInbox.take(now: now, in: store) else {
+            return XCTFail("the second post must still be there after the first was taken")
+        }
+        XCTAssertEqual(b.requestID, second)
+        XCTAssertNil(EchoelAgentInbox.take(now: now, in: store), "taken exactly once each")
+
+        for i in 0..<(EchoelAgentInbox.maxQueued + 2) {
+            EchoelAgentInbox.post(request: "ask \(i)", actions: [], now: now, in: store)
+        }
+        for i in 0..<EchoelAgentInbox.maxQueued {
+            guard case .request(let r)? = EchoelAgentInbox.take(now: now, in: store) else {
+                return XCTFail("stored request \(i) of \(EchoelAgentInbox.maxQueued) is missing")
+            }
+            XCTAssertEqual(r.request, "ask \(i)", "the queue holds its cap, in the order asked")
+        }
+        XCTAssertEqual(EchoelAgentInbox.take(now: now, in: store), EchoelAgentInbox.Taken.overflowed(2),
+                       "the posts a full queue refused are reported, never dropped silently")
+        XCTAssertNil(EchoelAgentInbox.take(now: now, in: store), "and reported once")
+    }
+
     func testRequestsAFullQueueDidNotStoreAreReported() async throws {
         let (timeline, _, desk, original) = rig()
         defer { timeline.replaceDocument(original) }
@@ -136,7 +173,8 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         let done = EchoelAgentNotice(requestID: UUID(), state: .done, message: "Loop: 0.0 dB → −3.0 dB.",
                                      canUndo: true)
         let both = try XCTUnwrap(EchoelAgentNotice.combined([refused, done]))
-        XCTAssertEqual(both.message, "Nothing is selected. Loop: 0.0 dB → −3.0 dB.", "each request's sentence, in order")
+        XCTAssertEqual(both.message, "Nothing is selected. Loop: 0.0 dB → −3.0 dB. " + EchoelAgentNotice.undoesTheLastSentence,
+                       "each request's sentence, in order — and the one Undo says it takes back only the last")
         guard case .failed = both.state else {
             return XCTFail("a later Done must not hide an earlier refusal: \(both.state)")
         }

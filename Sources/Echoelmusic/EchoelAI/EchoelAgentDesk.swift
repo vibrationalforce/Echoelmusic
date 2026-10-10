@@ -87,6 +87,13 @@ enum EchoelAgentInbox {
     /// so the intent can say this request's outcome (`EchoelAgentDesk.spokenOutcome(of:)`).
     @discardableResult
     static func post(request: String, actions: [EchoelProposedAction], now: Date) -> UUID {
+        post(request: request, actions: actions, now: now, in: defaults)
+    }
+
+    /// `post` against a given store — the App-Group one in the app, a throwaway suite in a test
+    /// (the running host app reads the real key, so a test must never write it).
+    @discardableResult
+    static func post(request: String, actions: [EchoelProposedAction], now: Date, in defaults: UserDefaults?) -> UUID {
         let posted = EchoelPostedRequest(requestID: UUID(), request: request, actions: actions, postedAt: now)
         guard let store = defaults, let data = try? JSONEncoder().encode(posted) else { return posted.requestID }
         guard let queue = enqueued(data, onto: store.object(forKey: key)) else {
@@ -100,6 +107,11 @@ enum EchoelAgentInbox {
     /// Takes the oldest waiting request and leaves the rest, so each is taken exactly once. When the
     /// queue is empty, the count of requests a full queue did not store is reported once.
     static func take(now: Date) -> Taken? {
+        take(now: now, in: defaults)
+    }
+
+    /// `take` against a given store (see `post(…in:)`).
+    static func take(now: Date, in defaults: UserDefaults?) -> Taken? {
         guard let store = defaults else { return nil }
         if let stored = store.object(forKey: key) {
             let next = dequeued(stored)
@@ -175,12 +187,16 @@ struct EchoelAgentNotice: Equatable, Sendable {
     static func combined(_ notices: [EchoelAgentNotice]) -> EchoelAgentNotice? {
         guard let last = notices.last else { return nil }
         guard notices.count > 1 else { return last }
-        let message = notices.map(\.message).filter { !$0.isEmpty }.joined(separator: " ")
+        var message = notices.map(\.message).filter { !$0.isEmpty }.joined(separator: " ")
+        // The Undo below takes back ONE change — say so, or the banner reads as if it undid them all.
+        if last.canUndo { message += " " + undoesTheLastSentence }
         let failed = notices.contains { if case .failed = $0.state { return true } else { return false } }
         let asks = notices.contains { if case .needsAnswer = $0.state { return true } else { return false } }
         let state: EchoelAgentState = failed ? .failed(message) : asks ? .needsAnswer(message) : last.state
         return EchoelAgentNotice(requestID: last.requestID, state: state, message: message, canUndo: last.canUndo)
     }
+
+    static let undoesTheLastSentence = "Undo takes back only the last of these."
 
     /// The notice for a finished request. Done steps say what they did; anything else says why not.
     static func from(_ report: EchoelExecutionReport, canUndo: Bool) -> EchoelAgentNotice {
