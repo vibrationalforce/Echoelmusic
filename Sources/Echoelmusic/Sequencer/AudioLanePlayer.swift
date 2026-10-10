@@ -639,13 +639,14 @@ public final class AudioLanePlayer {
     /// GMMW GA-10c: the grain a part sounds — its track's `soundingGrain` — or nil. ONE answer for
     /// prime (which renders it) and `start` (which asks the sink to play it), so the two can never
     /// disagree about which rendering a part wants (#416). Nil, so the part plays exactly as
-    /// before, when the track has no enabled grain insert, or the part is STRETCHED (rate ≠ 1) or
-    /// PITCHED: the rendering is made from the file at rate 1 and plays on the plain node, which
-    /// can neither stretch nor pitch it — the Beats rule, for the same reason.
+    /// before, when the track has no enabled grain insert, its mix is 0 (the file itself is the
+    /// dry part, bit for bit — a rendering would be its mono sum), or the part is STRETCHED
+    /// (rate ≠ 1) or PITCHED: the rendering is made from the file at rate 1 and plays on the plain
+    /// node, which can neither stretch nor pitch it — the Beats rule, for the same reason.
     static func grainToPlay(for region: TimelineRegion, in doc: TimelineDocument,
                             nativeBPM: Double, bpm: Double) -> GrainSettings? {
-        guard let grain = doc.lanes.first(where: { $0.id == region.laneID })?.deviceChain?.soundingGrain
-        else { return nil }
+        guard let grain = doc.lanes.first(where: { $0.id == region.laneID })?.deviceChain?.soundingGrain,
+              grain.mix > 0 else { return nil }
         let plan = StretchPlan.resolve(mode: region.stretchMode, warpEnabled: region.warpEnabled,
                                        nativeBPM: nativeBPM, projectBPM: bpm,
                                        capabilities: StretchMode.timelineCapabilities)

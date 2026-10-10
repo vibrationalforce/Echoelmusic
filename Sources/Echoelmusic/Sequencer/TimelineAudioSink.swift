@@ -56,8 +56,11 @@
 // time, off the main actor (`GrainBake` over the part's window, mono-summed, its fades baked in),
 // and its onset schedules that READY buffer on the plain node — the Beats pattern. Not ready yet,
 // entered mid-part (a seek, an unmute), stretched or pitched: the part plays exactly as before.
-// Honest limits: the dry half is the file's MONO sum while the insert is on, a mono file hears the
-// cloud's L+R sum, and each lane holds at most `grainFrameBudget` frames of renderings.
+// Honest limits: the dry half is the file's MONO sum while the insert is on (mix 0 never gets
+// here — `grainToPlay` answers nil, so it plays the file itself); a mono file hears the cloud's
+// L+R sum; a part longer than `grainMaxPartFrames` plays dry; one render runs per lane at a time;
+// and a part sounding at Play, or edited while the piece plays, is dry until the next prime has
+// its rendering ready (GA-10d must request one on the edit path).
 // Headphone space (Restructure S3c): while `AudioEngine.headphoneSpaceEnabled` is on, every
 // node of this lane plays into ONE mono space bus that Apple's HRTF environment node places
 // at the lane's point (`setSpacePosition`, from the piece's scene). The mode is read at PRIME
@@ -170,53 +173,79 @@ final class TimelineAudioSink: AudioRegionSink {
     }
     private var grainBuffers: [GrainKey: AVAudioPCMBuffer] = [:]
     private var grainInFlight: Set<GrainKey> = []
-    /// The most frames of grain renderings one lane keeps — one `GrainBake.maxFrames` part
-    /// (≈ 46 MB stereo at the cap). A new rendering evicts the others until it fits; an evicted
-    /// part plays dry until the next prime renders it again.
-    private static let grainFrameBudget = GrainBake.maxFrames
+    /// Renderings that cannot be made (unreadable, past the file's end, too long, a layout the
+    /// node cannot take): not retried at every loop wrap. Cleared with the lane.
+    private var grainFailed: Set<GrainKey> = []
+    /// The longest part rendered, in frames — the Beats cap, asked rather than restated (~31 s at
+    /// 48 kHz). A render's working set peaks near five arrays of this length off the main actor
+    /// (≈ 30 MB); a longer part plays dry.
+    nonisolated static let grainMaxPartFrames = beatsMaxOutputFrames
+    /// The most frames of renderings one lane keeps: two parts at the cap (≈ 24 MB stereo). A new
+    /// rendering evicts others until it fits; an evicted part plays dry until a prime renders it.
+    private static let grainFrameBudget = 2 * grainMaxPartFrames
 
     func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
                       settings: GrainSettings, fades: PartFadePlan?) {
         guard fromSeconds.isFinite, lengthSeconds.isFinite, lengthSeconds > 0 else { return }
         let key = GrainKey(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds,
                            settings: settings, fades: fades)
-        if grainBuffers[key] != nil || grainInFlight.contains(key) { return }
-        // Attach the plain node and capture the CONNECTION format now (the Beats V1/V2 rule).
-        guard ensureLoaded(url) != nil else { return }
+        if grainBuffers[key] != nil || grainFailed.contains(key) { return }
+        // ONE render per lane at a time: each holds several part-length arrays, and prime asks for
+        // every part at once. The next prime asks again for whatever is still missing.
+        guard grainInFlight.isEmpty else { return }
+        // Prime's `preload` has warmed every file of the lane; open one here only if it has not.
+        if knownURLs[url] == nil || urlFormats[url] == nil {
+            guard ensureLoaded(url) != nil else { return }
+        }
+        guard let format = urlFormats[url], format.channelCount == 1 || format.channelCount == 2 else {
+            grainFailed.insert(key)   // a layout the rendering cannot be built in
+            return
+        }
         grainInFlight.insert(key)
         Task.detached(priority: .userInitiated) { [weak self] in
-            // A FRESH handle, read and rendered off the main actor (the Beats V3 rule).
+            // Read + render in a helper, so the file's PCM and the mono sum are freed before the
+            // fades are baked — and `channels` is the only owner, so the bake copies nothing.
             var channels: [[Float]] = []
-            if let f = try? AVAudioFile(forReading: url) {
-                let sr = f.processingFormat.sampleRate
-                let startFrame = AVAudioFramePosition((max(0, fromSeconds) * sr).rounded())
-                let partFrames = Int((lengthSeconds * sr).rounded())
-                if sr > 0, startFrame < f.length, partFrames > 0, partFrames <= GrainBake.maxFrames {
-                    let frames = AVAudioFrameCount(min(Double(f.length - startFrame), Double(partFrames)))
-                    if frames > 0,
-                       let raw = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: frames) {
-                        f.framePosition = startFrame
-                        if (try? f.read(into: raw, frameCount: frames)) != nil,
-                           let data = raw.floatChannelData, raw.format.channelCount > 0 {
-                            let n = Int(raw.frameLength)
-                            let count = Int(raw.format.channelCount)
-                            var mono = [Float](repeating: 0, count: n)
-                            let scale = 1 / Float(count)
-                            for c in 0..<count {
-                                for i in 0..<n { mono[i] += data[c][i] * scale }
-                            }
-                            if let baked = GrainBake.render(source: mono, sampleRate: sr,
-                                                            frameCount: partFrames, settings: settings) {
-                                channels = [baked.left, baked.right]
-                                fades?.bake(into: &channels, fromSeconds: fromSeconds,
-                                            mediaSecondsPerFrame: 1 / sr)
-                            }
-                        }
-                    }
-                }
+            var sampleRate = 0.0
+            if let rendered = Self.renderGrain(url: url, fromSeconds: fromSeconds,
+                                               lengthSeconds: lengthSeconds, settings: settings) {
+                channels = rendered.channels
+                sampleRate = rendered.sampleRate
+            }
+            if sampleRate > 0 {
+                fades?.bake(into: &channels, fromSeconds: fromSeconds, mediaSecondsPerFrame: 1 / sampleRate)
             }
             await self?.storeGrain(key: key, channels: channels)
         }
+    }
+
+    /// Off the main actor: the part's window of `url`, read on a FRESH handle (the Beats V3
+    /// rule), summed to mono and rendered by `GrainBake` — or nil (unreadable, past the end,
+    /// longer than `grainMaxPartFrames`).
+    private nonisolated static func renderGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
+                                                settings: GrainSettings) -> (channels: [[Float]], sampleRate: Double)? {
+        guard let f = try? AVAudioFile(forReading: url) else { return nil }
+        let sr = f.processingFormat.sampleRate
+        guard sr > 0 else { return nil }
+        let startFrame = AVAudioFramePosition((max(0, fromSeconds) * sr).rounded())
+        let partFrames = Int((lengthSeconds * sr).rounded())
+        guard startFrame < f.length, partFrames > 0, partFrames <= grainMaxPartFrames else { return nil }
+        let frames = AVAudioFrameCount(min(Double(f.length - startFrame), Double(partFrames)))
+        guard frames > 0,
+              let raw = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: frames) else { return nil }
+        f.framePosition = startFrame
+        guard (try? f.read(into: raw, frameCount: frames)) != nil,
+              let data = raw.floatChannelData, raw.format.channelCount > 0 else { return nil }
+        let n = Int(raw.frameLength)
+        let count = Int(raw.format.channelCount)
+        var mono = [Float](repeating: 0, count: n)
+        let scale = 1 / Float(count)
+        for c in 0..<count {
+            for i in 0..<n { mono[i] += data[c][i] * scale }
+        }
+        guard let baked = GrainBake.render(source: mono, sampleRate: sr, frameCount: partFrames,
+                                           settings: settings) else { return nil }
+        return ([baked.left, baked.right], sr)
     }
 
     /// The rendering as a buffer in the URL's NODE-CONNECTION format: stereo as it is, a mono
@@ -230,7 +259,11 @@ final class TimelineAudioSink: AudioRegionSink {
               fmt.channelCount == 1 || fmt.channelCount == 2,
               let out = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: AVAudioFrameCount(left.count)),
               let dst = out.floatChannelData else {
-            log.log(.info, category: .audio, "Grain rendering unavailable (read/cap/format) — part plays dry")
+            // A detached lane (no known file) is not a failure; anything else is, until detach.
+            if knownURLs[key.url] != nil {
+                grainFailed.insert(key)
+                log.log(.info, category: .audio, "Grain rendering unavailable (read/cap/format) — part plays dry")
+            }
             return
         }
         let right = channels[1]
@@ -464,6 +497,7 @@ final class TimelineAudioSink: AudioRegionSink {
         // onset (the exact window prime rendered, fades included), only unstretched and unpitched.
         // Anything else — not ready, a mid-part entry — falls through and plays dry, never silent.
         if let grain, stretch.rate == 1.0, transposeSemitones == 0,
+           fromSeconds.isFinite, lengthSeconds.isFinite,
            let buffer = grainBuffers[GrainKey(url: url, fromSeconds: fromSeconds,
                                               lengthSeconds: lengthSeconds, settings: grain, fades: fades)],
            plainNode.engine?.isRunning == true {
@@ -611,6 +645,7 @@ final class TimelineAudioSink: AudioRegionSink {
         beatsInFlight.removeAll()
         grainBuffers.removeAll()
         grainInFlight.removeAll()
+        grainFailed.removeAll()
         urlFormats.removeAll()
         file = nil
     }
@@ -677,6 +712,7 @@ final class TimelineAudioSink: AudioRegionSink {
         // app's import/record flow mints new URLs, so this is belt-and-braces.
         if let old = urlFormats[url], !old.isEqual(format) {
             for k in beatsBuffers.keys where k.url == url { beatsBuffers[k] = nil }
+            for k in grainBuffers.keys where k.url == url { grainBuffers[k] = nil }   // GA-10c, same reason
         }
         urlFormats[url] = format
         if let existing = nodes[key] { return existing }

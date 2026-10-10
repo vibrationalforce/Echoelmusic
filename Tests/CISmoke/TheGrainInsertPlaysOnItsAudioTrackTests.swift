@@ -6,8 +6,8 @@
 //
 // THE CLAIMS, AND WHICH KIND EACH IS (Tests/CISmoke/CLAUDE.md §1):
 // 1. END-TO-END — `AudioLanePlayer.grainToPlay` is the track's `soundingGrain` for an unstretched,
-//    unpitched part, and nil without an enabled grain insert, for a stretched part and for a
-//    pitched one (the rendering plays on the plain node, which can do neither).
+//    unpitched part, and nil without an enabled grain insert, at mix 0, for a stretched part and
+//    for a pitched one (the rendering plays on the plain node, which can do neither).
 // 2. END-TO-END — the real coordinator, driven with a spy sink: a grain track's part is rendered
 //    at prime with its whole window and fades, and handed its grain right before `play`; a track
 //    without one is told nil before every `play` and nothing is rendered (Off is untouched).
@@ -71,6 +71,14 @@ final class TheGrainInsertPlaysOnItsAudioTrackTests: XCTestCase {
         XCTAssertNil(AudioLanePlayer.grainToPlay(for: warped, in: TimelineDocument(lanes: [lane], regions: [warped]),
                                                  nativeBPM: 100, bpm: 120),
                      "COUNTERWEIGHT: a stretched part plays as before — the rendering is made at rate 1")
+
+        var dry = Self.grain()
+        dry.mix = 0
+        let dryLane = Self.grainLane(dry)
+        let dryPart = TimelineRegion(laneID: dryLane.id, clipID: UUID(), startTick: 0, lengthTicks: Self.bar)
+        XCTAssertNil(AudioLanePlayer.grainToPlay(for: dryPart, in: TimelineDocument(lanes: [dryLane], regions: [dryPart]),
+                                                 nativeBPM: 0, bpm: 120),
+                     "mix 0 plays the file itself, bit for bit — a rendering would be its mono sum")
 
         var pitched = part
         pitched.transposeSemitones = 3
@@ -143,19 +151,26 @@ final class TheGrainInsertPlaysOnItsAudioTrackTests: XCTestCase {
                     why: "only the exact rendering plays, unstretched and unpitched, and the plain path stays")
         let prepare = try XCTUnwrap(Self.body(after: "func prepareGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,",
                                               in: sink), "ANCHOR MISSING: `TimelineAudioSink.prepareGrain`")
-        assertOrder(in: prepare, ["guard ensureLoaded(url) != nil else { return }",
+        assertOrder(in: prepare, ["guard grainInFlight.isEmpty else { return }",
+                                  "format.channelCount == 1 || format.channelCount == 2",
                                   "Task.detached(priority: .userInitiated)",
-                                  "AVAudioFile(forReading: url)",
-                                  "GrainBake.render(source: mono, sampleRate: sr,",
+                                  "Self.renderGrain(url: url, fromSeconds: fromSeconds,",
                                   "fades?.bake(into: &channels, fromSeconds: fromSeconds,",
                                   "storeGrain(key: key, channels: channels)"],
-                    why: "the rendering is read and made off the main actor, fades baked in, then stored")
+                    why: "one render per lane, only for a layout the node takes, made off the main actor, fades baked in, then stored")
+        let render = try XCTUnwrap(Self.body(after: "private nonisolated static func renderGrain(", in: sink),
+                                   "ANCHOR MISSING: `renderGrain`")
+        assertOrder(in: render, ["AVAudioFile(forReading: url)",
+                                 "partFrames <= grainMaxPartFrames",
+                                 "GrainBake.render(source: mono, sampleRate: sr,"],
+                    why: "a FRESH handle, a capped part, then the bake — a longer part plays dry")
         let store = try XCTUnwrap(Self.body(after: "private func storeGrain(key: GrainKey, channels: [[Float]])", in: sink),
                                   "ANCHOR MISSING: `storeGrain`")
         assertOrder(in: store, ["AudioOutputGuard.sweepNonFinite(out)", "grainBuffers[key] = out"],
                     why: "a non-finite sample is swept while the buffer is still local, never after a node holds it")
         let detach = try XCTUnwrap(Self.body(after: "func detach()", in: sink), "ANCHOR MISSING: `detach`")
-        XCTAssertTrue(detach.contains("grainBuffers.removeAll()") && detach.contains("grainInFlight.removeAll()"),
+        XCTAssertTrue(detach.contains("grainBuffers.removeAll()") && detach.contains("grainInFlight.removeAll()")
+                      && detach.contains("grainFailed.removeAll()"),
                       "a removed lane must drop its renderings")
     }
 
