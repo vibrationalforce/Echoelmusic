@@ -487,7 +487,7 @@ final class EchoelCommandExecutor {
                                        loopBars: loopBars) else {
             return .failed(.verificationFailed("\(lane.name) does not read as composing"))
         }
-        return .done("The composer now writes a part on \(lane.name). Its notes arrive with the next take.")
+        return .done("The composer now writes a part on \(lane.name). Its notes arrive the next time the instrument composes.")
     }
 
     private enum ComposeUndo {
@@ -505,6 +505,12 @@ final class EchoelCommandExecutor {
         guard let lane = document.lanes.first(where: { $0.id == laneID }) else { return .kept("A removed track") }
         let livePart = part.flatMap { placed in document.regions.first { $0.id == placed.id } }
         if let part, let livePart, livePart != part { return .kept("The composer's part on \(lane.name)") }
+        // The agent's part is gone and the track composes again: a person turned it back on (the
+        // composer reuses its clip under a new part), so the variation is theirs now (review LOW).
+        if part != nil, livePart == nil,
+           TrackCompose.isComposing(laneID, in: document, clips: clips.filledClips, loopBars: loopBars()) {
+            return .kept("The composer on \(lane.name)")
+        }
         let seedWritten = seedBefore != seedAfter
         if seedWritten, lane.variationSeed != seedAfter { return .kept("The variation of \(lane.name)") }
         var undid = false

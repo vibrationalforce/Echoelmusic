@@ -203,7 +203,7 @@ enum EchoelCommandRegistry {
                                 "no part of your own starts inside the loop",
                                 "the part grid has a free slot, unless the composer has one to reuse"],
                 effect: "Places a composer part in the loop and gives the track a variation of its own "
-                    + "— the Device page's Compose here. The notes arrive with the next take.",
+                    + "— the Device page's Compose here. Its notes arrive the next time the instrument composes.",
                 undo: .agentJournal, permission: .reversibleEdit)
         }
     }

@@ -16,13 +16,15 @@
 //   5. A variation a person rolled since is kept on Undo — and so is the part.
 //   6. PARSER: `track.composeHere` takes exactly `track`; "the selected track" with none selected
 //      is refused before any step runs.
+//   8. Review LOW: after the song's Undo took the agent's part, a person turned it back on —
+//      the agent's Undo keeps the variation that part now composes with.
 //   7. The loop length is asked, not assumed (#431): the app hands the executor the rows' own key
 //      (`TrackCompose.loopBars(in:)`), which falls back to the rows' default and reads a stored
 //      length back — on a private suite, never the app's own defaults.
 //
 // GRADING (Tests/CISmoke/CLAUDE.md §3): the file names `EchoelCommand.composeHere`,
 // `TrackCompose.loopBars(in:)` and two new errors, all created by this commit, so it does NOT
-// compile against the parent and no assertion has a verdict there. All seven claims are FORWARD
+// compile against the parent and no assertion has a verdict there. All eight claims are FORWARD
 // guards, hand-transcribed against the executor before the push.
 //
 // ⚠️ THE LIMIT. No intent posts `track.composeHere` yet — a Siri phrase is its own slice. Until
@@ -162,6 +164,23 @@ final class TheAgentStartsATrackComposerTests: XCTestCase {
             XCTAssertEqual(timeline.document.lanes.first { $0.id == track.id }?.variationSeed, 7,
                            "the person's variation stays")
             XCTAssertTrue(timeline.document.regions.contains { $0.id == part.id }, "and so does the part")
+        }
+    }
+
+    // MARK: 8 — turned back on by a person after the song's Undo: theirs
+
+    func testAComposerTurnedBackOnByAPersonIsKept() async throws {
+        try await rig { timeline, clips, executor, _, track in
+            _ = await executor.execute(plan([.composeHere(track: .id(track.id))], on: executor))
+            let seed = timeline.document.lanes.first { $0.id == track.id }?.variationSeed
+            timeline.undo()   // the song's Undo takes the agent's part back
+            XCTAssertNil(TrackCompose.turnOn(track.id, timeline: timeline, clips: clips,
+                                             loopBars: Self.loopBars, seed: 42), "the person turns it on again")
+            let undo = await executor.execute(plan([.undoAgentChange], on: executor))
+            XCTAssertEqual(undo.steps.first?.outcome, .failed(.changedSince("The composer on \(track.name)")))
+            XCTAssertEqual(timeline.document.lanes.first { $0.id == track.id }?.variationSeed, seed,
+                           "the variation the person's part composes with stays")
+            XCTAssertTrue(composing(track, timeline, clips), "and the rows still read on")
         }
     }
 
