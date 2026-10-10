@@ -56,6 +56,13 @@ struct AgentReportBanner: View {
         }
     }
 
+    /// GMMW AI-4 — the ONE place the on-device model is constructed for a person: the ≡ menu's
+    /// "Describe this piece" Button calls this, and only that tap does. The answer lands in this
+    /// banner as a notice; no modal, nothing in the piece changes.
+    static func describePiece() {
+        Task { await EchoelAgentDesk.shared.describePiece(with: FoundationModelsBrain()) }
+    }
+
     /// "Echoel: Done", "Echoel: Failed" … — whose notice it is, then the state's own word.
     static func title(_ state: EchoelAgentState) -> String {
         "Echoel: \(state.title)"

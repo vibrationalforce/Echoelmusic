@@ -10,8 +10,8 @@
 //      cases — guardrail → `.refused`, context window → `.contextOverflow`.
 //   3. BEHAVIOUR: every `OnDeviceModelStatus` has a non-empty sentence without the word "AI"
 //      (that copy is founder-gated, AI-8), and `isOnDeviceLLMAvailable` agrees with `status`.
-//   4. SOURCE-TEXT SCAN: no production `FoundationModelsBrain(` yet — AI-4 adds exactly one, from a
-//      tap, and lifts this claim in the same commit.
+//   4. SOURCE-TEXT SCAN (lifted by AI-4): exactly one production `FoundationModelsBrain(`, in
+//      `AgentReportBanner.describePiece`, whose only caller is the ≡ menu's Button.
 //
 // ⚠️ THE LIMIT. The runtime VALUE of `status` is not asserted: on iOS 26 simulators it follows the
 // CI host Mac's Apple Intelligence state (`BioMusicDirectorTests` skips for the same reason). The
@@ -55,12 +55,21 @@ final class TheOnDeviceModelHasOneGateTests: XCTestCase {
         XCTAssertEqual(OnDeviceModelGate.isOnDeviceLLMAvailable, OnDeviceModelGate.status == .available)
     }
 
-    func testTheBrainHasNoProductionConstructionYet() throws {
-        let hits = try Self.codeFiles().filter {
+    /// AI-4 lifted claim 4: exactly ONE production construction, in the banner's `describePiece`,
+    /// and the only caller of that is a Button in the ≡ menu.
+    func testTheBrainIsConstructedOnlyByTheDescribeTap() throws {
+        let files = try Self.codeFiles()
+        let hits = files.filter {
             $0.code.contains("FoundationModelsBrain(") && !$0.path.hasSuffix("EchoelAI/FoundationModelsBrain.swift")
         }
-        XCTAssertEqual(hits.map(\.path), [],
-                       "AI-4 adds exactly one construction, from a tap — lift this claim in that commit.")
+        XCTAssertEqual(hits.map(\.path), ["Sources/Echoelmusic/Studio/AgentReportBanner.swift"])
+        let banner = try XCTUnwrap(hits.first?.code)
+        XCTAssertEqual(banner.components(separatedBy: "FoundationModelsBrain(").count - 1, 1)
+        XCTAssertTrue(banner.contains("Task { await EchoelAgentDesk.shared.describePiece(with: FoundationModelsBrain()) }"))
+        let callers = files.filter { $0.code.contains("AgentReportBanner.describePiece()") }
+        XCTAssertEqual(callers.map(\.path), ["Sources/Echoelmusic/Studio/WorkspaceView.swift"])
+        let root = try XCTUnwrap(callers.first?.code)
+        XCTAssertTrue(root.contains("Button { AgentReportBanner.describePiece() }"), "only a tap asks the model")
     }
 
     // MARK: - helpers

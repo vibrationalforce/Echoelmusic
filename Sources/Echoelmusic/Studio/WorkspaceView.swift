@@ -600,6 +600,10 @@ struct WorkspaceView: View {
                 Button { Self.postDoor("learn") } label: {
                     Label("Learn", systemImage: "book")
                 }
+                // GMMW AI-4 — read-only: the on-device model describes the piece in the banner.
+                Button { AgentReportBanner.describePiece() } label: {
+                    Label("Describe this piece", systemImage: "text.bubble")
+                }
                 Divider()
                 Toggle(isOn: $guideVisible) {
                     Label("Guide", systemImage: "info.circle")
