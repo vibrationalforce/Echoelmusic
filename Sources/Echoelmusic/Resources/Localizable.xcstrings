@@ -8413,6 +8413,18 @@
         }
       }
     },
+    "Set file tempo" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set file tempo"
+          }
+        }
+      }
+    },
     "Set tempo" : {
       "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
       "extractionState" : "manual",
@@ -11875,6 +11887,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : ", beat "
+          }
+        }
+      }
+    },
+    "File tempo" : {
+      "comment" : "Value-field label (E4-10, 2026-09-30): EchoelValueField draws `label` as a catalog key; the row captions of every parameter app-wide, plus the weather mixer labels.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File tempo"
           }
         }
       }

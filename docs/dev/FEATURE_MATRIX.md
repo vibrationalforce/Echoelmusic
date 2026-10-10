@@ -33,8 +33,8 @@ acceptance line.
 >
 > ⛔ **DIESER GANZE BLOCK IST ZURÜCKGENOMMEN — nicht veraltet, sondern GEGENSTANDSLOS (#1343, 2026-09-16).**
 > Er beschreibt „ONE tracks-centric, bio-reactive DAW“ und hängt einen B-Nummern-Rückstand daran
-> (B03 · B07 · B08 · B11 · B13–B16 · B18–B20 · B23–B26 · B29 · B30). **Die Workstation-Hälfte ist
-> vom Founder gestrichen** — `PRODUCT_DEFINITION.md`s GRENZE (Editor ≠ Workstation) schneidet
+> (B03 · B07 · B08 · B11 · B13–B16 · B18–B20 · B23–B26 · B29 · B30). **Die Workstation-Hälfte war
+> vom Founder gestrichen** (⛔ Phasen-Historie: seit dem Produktgesetz 2026-09-24 ist `WorkstationView` wieder die Startbühne — korrigiert 2026-10-10) — `PRODUCT_DEFINITION.md`s GRENZE (Editor ≠ Workstation) schneidet
 > Timeline/Arrangement/Clips, Mehrspur + Mixer, Audio-Regionen, Video-Schnitt, AUv3 und RTMP
 > ausdrücklich weg, und `#121` Slice 2–4, `#166`/`#167`, `#1302` und `#1304` haben das ausgeführt.
 > ⭐ **2026-09-24:** diese Streichung ist PHASEN-Historie — seit `FOUNDER_PRODUCT_LAW.md` ist die DMMW
@@ -110,7 +110,7 @@ acceptance line.
 >   confined to the leaf (render-safe); layout-only, revertible.
 > - **Timeline playback (REACHABLE since #1437, 2026-09-21)** — `Sequencer/TimelineRegionPlayer.swift`
 >   rides the transport and plays the roll lane's **MIDI** regions (drums went with #166/#167).
->   ⭐ Its door is the **Workstation chip** (`Studio/WorkstationView.swift`, founder Phase 3+4):
+>   ⭐ Its door is the **Piece stage** of `StageShell` (the home; ⛔ "Workstation chip" stood here, corrected 2026-10-10) (`Studio/WorkstationView.swift`, founder Phase 3+4):
 >   Play/Stop over the document `TimelineStore` already owns. Additive — the Generate+Play
 >   instrument is untouched, and `TimelineRegionPlayer.canPlay(_:clips:bpm:resolveAudio:)` (the engine's own
 >   guard, asked by the control with the same arguments) keeps the button unavailable unless a
@@ -275,14 +275,16 @@ acceptance line.
 
 > ⛔ **CORRECTION 2026-07-27 — most of this section describes features the founder
 > REMOVED. Read the banner before any line below it.**
-> - **Drums / step sequencer / sampler: GONE** (#166 "keine Drums" 2026-07-26, full
+> - **Drums / step sequencer: GONE; sampler: BACK per track (GMMW GA-4, `LaneVoiceRack.samplers`, door `TrackSampleRow`; corrected 2026-10-10)** (#166 "keine Drums" 2026-07-26, full
 >   teardown #167). The `BeatPlayer` / `SamplerVoice` / sample-library / velocity /
 >   swing / humanization bullets below are HISTORY, not status.
 > - **Piano roll: GONE as a surface** (#178, 2026-07-26) **and gone as code** (#475,
 >   2026-08-07). `PianoRollModel` survives as the note engine and `MusicalFrame`
 >   publisher; the `PianoRollView` struct was doorless and unmounted, and has now been
 >   deleted outright (987 lines). The FILE `Studio/PianoRollView.swift` remains — it is
->   where the model lives. There is no note editor in the app.
+>   where the model lives. ⛔ "There is no note editor in the app" stood here — wrong since
+>   Phase 3 / M1: `PartNoteEditor` edits a part's notes (track detail → Notes, `TrackInspectorView`).
+>   Only the piano-roll SURFACE is gone (corrected 2026-10-10).
 > - **Clips + Arrange timeline: GONE** (#121 Slice 4 — `ClipView` 807dc0d,
 >   `ArrangeTimelineView` eb58e7a). The model retires in Slice 5 (#132).
 > - **Genres: 16** — `MusicStyle.offered.count`. The enum holds 33 cases

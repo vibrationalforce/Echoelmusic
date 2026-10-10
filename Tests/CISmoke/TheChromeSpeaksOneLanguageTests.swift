@@ -1684,7 +1684,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      ".accessibilityValue(warpValue)",
                      "? String(localized: \"Stop the piece to change warp\")",
                      "? String(localized: \"Stop the piece to change pitch\")",
-                     "EchoelValueField(label: known ? String(localized: \"Tempo\") : String(localized: \"Set tempo\"),",
+                     "EchoelValueField(label: known ? String(localized: \"File tempo\") : String(localized: \"Set file tempo\"),",
                      ".accessibilityValue(expanded ? String(localized: \"Expanded\") : String(localized: \"Collapsed\"))",
                      ".accessibilityHint(expanded ? String(localized: \"Hides the steps\") : String(localized: \"Shows the steps\"))"] {
             XCTAssertTrue(workstation.contains(seam), "WorkstationView lost the E4-43 seam `\(seam)`")
@@ -1692,14 +1692,14 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for verbatim in [".accessibilityValue(on ? \"On\" : \"Off\")", "Text(state == .mixed ? \"Warp · some\" : \"Warp\")",
                          "\"On for some parts\" : \"Off\"", "                ? \"Stop the piece to change warp\"",
                          "                    ? \"Stop the piece to change pitch\"", "Text(running ? \"Stop\" : \"Play\")",
-                         ".accessibilityLabel(running ? \"Stop all playback\" : \"Play timeline\")", "label: known ? \"Tempo\" : \"Set tempo\",",
+                         ".accessibilityLabel(running ? \"Stop all playback\" : \"Play timeline\")", "label: known ? \"File tempo\" : \"Set file tempo\",",
                          ".accessibilityValue(expanded ? \"Expanded\" : \"Collapsed\")", ".accessibilityHint(expanded ? \"Hides the steps\" : \"Shows the steps\")"] {
             XCTAssertFalse(workstation.contains(verbatim), "WorkstationView spells a ternary of bare literals again: `\(verbatim)`")
         }
         try assertCatalogued(["On", "Off", "Warp", "Warp · some", "On for some parts", "Stop the piece to change warp",
                           "Plays this track's parts at the piece's tempo instead of their recorded speed", "Stop the piece to change pitch",
                           "Moves every part on this track up or down without changing its tempo", "Stop", "Play", "Stop all playback",
-                          "Tempo", "Set tempo", "Expanded", "Collapsed", "Hides the steps", "Shows the steps"],
+                          "File tempo", "Set file tempo", "Expanded", "Collapsed", "Hides the steps", "Shows the steps"],
                          "Workstation ternaries")
 
         // E4-44 — the three On/Off siblings of the E4-43 header switch: the Perform mix switch, the project header's

@@ -174,8 +174,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 
 | Was | Wann / Nummer | Founder-Grund |
 |---|---|---|
-| Drums / Beat-Maker / Sampler-Kit | 2026-07-26, #166/#167 | Fokus aufs Instrument |
-| Noten-Editor (Piano Roll) | 2026-07-26, #178/#475 | „Pianoroll soll raus“ |
+| Drums / Beat-Maker / Sampler-**Kit** | 2026-07-26, #166/#167 | Fokus aufs Instrument — ⭐ 2026-10-10: ein **Sampler je Spur** ist zurück (GMMW GA-4: `LaneVoiceRack.samplers` + `loadSampleIfNeeded`, Tür `TrackSampleRow` im Spur-Detail); gestrichen bleiben Drum-Kit und Beat-Maker |
+| Noten-**Fläche** Piano Roll | 2026-07-26, #178/#475 | „Pianoroll soll raus“ — ⭐ 2026-10-10: Noten werden wieder bearbeitet, im `PartNoteEditor` (Spur-Detail → Seite „Notes“, `TrackInspectorView`); Composer-Parts erst nach „Edit a copy“ |
 | DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
 | AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) |
 | Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ |
@@ -189,8 +189,8 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 ## 4. NIE GEBAUT — Roadmap, keine Lücke
 
 **Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`; Song-WAV-Export und
-Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): eine Tür zum Sampler bzw. Beats aus Samples
-(`SamplerVoice` hat keinen Lader, Inbox E13) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
+Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): Beats aus Samples (⛔ „eine Tür zum Sampler … `SamplerVoice` hat keinen Lader“ stand hier — seit GA-4 hat jede Spur
+einen Sampler mit Lader und Tür `TrackSampleRow`; korrigiert 2026-10-10) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
 (#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
 Video als musikalisches Material (Inbox E12) · ein hörbarer Raum im Kopfhörer (S3). Die Pläne dazu stehen in
 `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.

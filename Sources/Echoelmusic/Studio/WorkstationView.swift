@@ -1795,11 +1795,15 @@ private struct PartTempoRow: View {
 
     var body: some View {
         let known = clip.nativeBPM > 0
+        // GWWM tempo clarity (founder 2026-10-10, build 2621 recording: "zwei Tempoanzeigen ohne
+        // klare Zuordnung"): this field is the FILE's own tempo, not the piece's. The head shows
+        // the piece tempo (`ProjectTempoReadout`, spoken "Piece tempo"); a bare "Tempo … BPM" here
+        // read as a second, conflicting piece tempo beside it.
         VStack(alignment: .leading, spacing: 4) {
             Text(caption(known: known))
                 .font(EchoelTheme.font(11))
                 .foregroundStyle(EchoelTheme.dim)
-            EchoelValueField(label: known ? String(localized: "Tempo") : String(localized: "Set tempo"),
+            EchoelValueField(label: known ? String(localized: "File tempo") : String(localized: "Set file tempo"),
                              value: Binding(get: { shownValue }, set: { draft = $0 }),
                              range: AudioTempoCorrection.bounds,
                              unit: "BPM",

@@ -397,7 +397,8 @@ private struct ProjectTempoReadout: View {
             .foregroundStyle(EchoelTheme.text)
             // A number never wraps or yields (the summary's law, beside the counter and the metre).
             .fixedSize()
-            .accessibilityLabel("\(bpm) BPM")
+            // Spoken as the PIECE tempo: the Part page has a file tempo of its own (GWWM tempo clarity).
+            .accessibilityLabel("Piece tempo, \(bpm) BPM")
     }
 }
 
