@@ -215,6 +215,13 @@ final class EchoelAgentDesk {
     /// handed in by the one tap that asks (`AgentReportBanner.describePiece`), so a test can hand in
     /// its own; nothing here constructs one.
     func describePiece(with brain: any BrainBackend) async {
+        guard executor != nil, !isWorking else { return }
+        await describe(with: brain)
+        // A Siri request that arrived while the model answered found the desk busy — take it now (`undoLast`).
+        await runPending(now: Date())
+    }
+
+    private func describe(with brain: any BrainBackend) async {
         guard let executor, !isWorking else { return }
         isWorking = true
         defer { isWorking = false }
