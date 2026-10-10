@@ -10,6 +10,8 @@
 //
 // THE LAWS THIS FILE KEEPS, each pinned by `TheGrainBakeIsTheDryPartAtMixZeroTests`:
 // · **mix 0 is the dry part, bit for bit** — no arithmetic touches a dry sample on that path;
+// · **a stereo part keeps its image** (GA-10d): each dry channel stays on its own side; only the
+//   cloud reads the channels' mean;
 // · **silence in → silence out**, and every output sample is finite;
 // · **the seed pins the result** — equal inputs bake equal buffers, another seed another pattern;
 // · **level-matched against Off**: the cloud pans each grain at equal POWER (L² + R² = 1, −3 dB per
@@ -26,8 +28,8 @@
 //   not the whole of a longer file;
 // · the OUTPUT is capped at `maxFrames` (120 s at 48 kHz) — in FRAMES, so a higher rate buys a
 //   shorter part, never more memory; a longer part returns nil and the caller plays it DRY, never
-//   silent. Working set at the cap: three Float arrays of `maxFrames` (≈ 69 MB) plus the cloud's
-//   own source copy (≤ 30 s);
+//   silent. Working set at the cap: four Float arrays of `maxFrames` (≈ 92 MB) plus the cloud's
+//   own source copy (≤ 30 s) — the second dry channel is the GA-10d cost of a stereo image;
 // · the match holds for CENTRED grains at density ≥ 0.5: a hard-panned grain is +3 dB on its side
 //   (a full-scale source can reach ≈ 1.41 — no clipping inside a Float buffer, but the player
 //   should know), and below density 0.5 the cloud thins (`GrainCloud` header);
@@ -51,23 +53,39 @@ enum GrainBake {
     /// Power match between the equal-power cloud and the dry part on both channels (header).
     static let wetLevelMatch: Float = Float(2).squareRoot()
 
-    /// `frameCount` frames of the part with `settings` applied: the dry part — `source[i]` on both
-    /// channels at frame i — crossfaded with the cloud by `mix`, and silence past the dry part's end.
-    /// Nil when there is nothing to bake (no frames, a bad rate) or the part is longer than
-    /// `maxFrames`; the caller then plays the part unchanged.
+    /// `frameCount` frames of a MONO part with `settings` applied — the stereo bake with the same
+    /// samples on both sides (the dry part sits on both channels, as Off plays a mono file).
     static func render(source: [Float], sampleRate: Double, frameCount: Int,
+                       settings: GrainSettings) -> Buffer? {
+        render(left: source, right: source, sampleRate: sampleRate, frameCount: frameCount, settings: settings)
+    }
+
+    /// `frameCount` frames of the part with `settings` applied: the dry part — `left[i]`/`right[i]`
+    /// at frame i, each on its OWN channel (GA-10d: a stereo file keeps its image under the grain)
+    /// — crossfaded with the cloud by `mix`, and silence past the dry part's end. The cloud reads
+    /// the mean of the two channels (`GrainCloud` takes one source). Nil when there is nothing to
+    /// bake (no frames, a bad rate) or the part is longer than `maxFrames`; the caller then plays
+    /// the part unchanged.
+    static func render(left source: [Float], right sourceRight: [Float], sampleRate: Double, frameCount: Int,
                        settings: GrainSettings) -> Buffer? {
         guard frameCount > 0, sampleRate.isFinite, sampleRate >= 1, sampleRate <= 768_000,
               frameCount <= maxFrames else { return nil }
         let s = settings.sanitized
+        let dryCount = Swift.min(frameCount, source.count, sourceRight.count)
         var left = [Float](repeating: 0, count: frameCount)
-        let dryCount = Swift.min(frameCount, source.count)
         for i in 0..<dryCount {
             let x = source[i]
             left[i] = x.isFinite ? x : 0
         }
+        var right = left
+        if sourceRight != source {
+            for i in 0..<dryCount {
+                let x = sourceRight[i]
+                right[i] = x.isFinite ? x : 0
+            }
+        }
         // mix 0: the dry part, untouched — no multiply, so it is the same bits.
-        guard s.mix > 0 else { return Buffer(left: left, right: left) }
+        guard s.mix > 0 else { return Buffer(left: left, right: right) }
 
         let cloud = GrainCloud(sampleRate: Float(sampleRate), seed: s.seed)
         cloud.position = s.position
@@ -76,7 +94,15 @@ enum GrainBake {
         cloud.spraySeconds = s.spraySeconds
         cloud.pitchSemitones = s.pitchSemitones
         cloud.stereoSpread = s.stereoSpread
-        cloud.prepare(source: source)
+        if sourceRight == source {
+            cloud.prepare(source: source)
+        } else {
+            // The mean, scoped so it is freed before the part-length wet arrays exist.
+            let count = Swift.min(source.count, sourceRight.count)
+            var mono = [Float](repeating: 0, count: count)
+            for i in 0..<count { mono[i] = (source[i] + sourceRight[i]) * 0.5 }
+            cloud.prepare(source: mono)
+        }
         var wetL = [Float](repeating: 0, count: frameCount)
         var wetR = [Float](repeating: 0, count: frameCount)
         wetL.withUnsafeMutableBufferPointer { l in
@@ -90,11 +116,10 @@ enum GrainBake {
         let angle = s.mix * Float.pi / 2
         let dryGain: Float = s.mix >= 1 ? 0 : cosf(angle)
         let wetGain = sinf(angle) * wetLevelMatch
-        // Written into the wet arrays in place: no fourth array of the part's length.
+        // Written into the wet arrays in place: no further array of the part's length.
         for i in 0..<dryCount {
-            let dry = left[i]
-            let outL = dry * dryGain + wetL[i] * wetGain
-            let outR = dry * dryGain + wetR[i] * wetGain
+            let outL = left[i] * dryGain + wetL[i] * wetGain
+            let outR = right[i] * dryGain + wetR[i] * wetGain
             wetL[i] = outL.isFinite ? outL : 0
             wetR[i] = outR.isFinite ? outR : 0
         }

@@ -158,12 +158,15 @@ final class TheGrainInsertPlaysOnItsAudioTrackTests: XCTestCase {
                                   "fades?.bake(into: &channels, fromSeconds: fromSeconds,",
                                   "storeGrain(key: key, channels: channels)"],
                     why: "one render per lane, only for a layout the node takes, made off the main actor, fades baked in, then stored")
+        let read = try XCTUnwrap(Self.body(after: "private nonisolated static func readGrainWindow(", in: sink),
+                                 "ANCHOR MISSING: `readGrainWindow`")
+        assertOrder(in: read, ["AVAudioFile(forReading: url)", "partFrames <= grainMaxPartFrames"],
+                    why: "a FRESH handle and a capped part — a longer part plays dry")
         let render = try XCTUnwrap(Self.body(after: "private nonisolated static func renderGrain(", in: sink),
                                    "ANCHOR MISSING: `renderGrain`")
-        assertOrder(in: render, ["AVAudioFile(forReading: url)",
-                                 "partFrames <= grainMaxPartFrames",
-                                 "GrainBake.render(source: mono, sampleRate: sr,"],
-                    why: "a FRESH handle, a capped part, then the bake — a longer part plays dry")
+        assertOrder(in: render, ["readGrainWindow(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds)",
+                                 "GrainBake.render(left: window.left, right: window.right,"],
+                    why: "the window is read (its PCM freed) before the bake, each dry channel on its own side")
         let store = try XCTUnwrap(Self.body(after: "private func storeGrain(key: GrainKey, channels: [[Float]])", in: sink),
                                   "ANCHOR MISSING: `storeGrain`")
         assertOrder(in: store, ["AudioOutputGuard.sweepNonFinite(out)", "grainBuffers[key] = out"],

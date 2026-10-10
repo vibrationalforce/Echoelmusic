@@ -10,6 +10,8 @@
 //    the dry level (the √2 power match), and the bake refuses what it cannot hold (no frames, a bad
 //    rate, a part longer than `maxFrames` at ANY rate) so the caller plays the part dry.
 // 5. THE BAKE ENDS WHERE THE PART ENDS — silence past the dry part's end, sound before it.
+// 6. (GA-10d) A STEREO PART KEEPS ITS IMAGE — each dry channel bit for bit at mix 0, on its own
+//    side above it; a mono part bakes exactly as before. Graded by transcription of the new path.
 //
 // END-TO-END BEHAVIOUR over the shipped function; no source-text scan.
 // HONEST GRADING (§3): the file does NOT compile against the parent — `GrainBake` is new — so no
@@ -143,5 +145,36 @@ final class TheGrainBakeIsTheDryPartAtMixZeroTests: XCTestCase {
                                                    frameCount: 20_000, settings: settings(mix: 1)))
         XCTAssertTrue(baked.left[12_000...].allSatisfy { $0 == 0 } && baked.right[12_000...].allSatisfy { $0 == 0 })
         XCTAssertTrue(baked.left[..<12_000].contains { $0 != 0 }, "COUNTERWEIGHT: the cloud sounds inside the part")
+    }
+
+    // MARK: 6 (GA-10d) — a stereo part keeps its image
+
+    func testAStereoPartKeepsEachDryChannelOnItsOwnSide() throws {
+        let left = noise(9_000, seed: 3)
+        let right = noise(9_000, seed: 4)
+        let dry = try XCTUnwrap(GrainBake.render(left: left, right: right, sampleRate: Self.rate,
+                                                 frameCount: 9_000, settings: settings(mix: 0)))
+        XCTAssertEqual(dry.left, left, "mix 0: the left channel, bit for bit")
+        XCTAssertEqual(dry.right, right, "mix 0: the right channel, bit for bit")
+
+        let mono = noise(24_000)
+        XCTAssertEqual(GrainBake.render(left: mono, right: mono, sampleRate: Self.rate, frameCount: 24_000,
+                                        settings: settings(mix: 0.6)),
+                       GrainBake.render(source: mono, sampleRate: Self.rate, frameCount: 24_000,
+                                        settings: settings(mix: 0.6)),
+                       "COUNTERWEIGHT: a mono part bakes exactly as before")
+
+        // Only the left side carries signal and the grains sit centred: the cloud is equal on both
+        // sides, so left − right is the dry left alone, scaled by the crossfade's dry gain.
+        var centred = settings(mix: 0.3)
+        centred.stereoSpread = 0
+        let silent = [Float](repeating: 0, count: 24_000)
+        let image = try XCTUnwrap(GrainBake.render(left: mono, right: silent, sampleRate: Self.rate,
+                                                   frameCount: 24_000, settings: centred))
+        let dryGain = cosf(0.3 * Float.pi / 2)
+        for i in stride(from: 0, to: 24_000, by: 1_201) {
+            XCTAssertEqual(image.left[i] - image.right[i], mono[i] * dryGain, accuracy: 1e-4,
+                           "the dry left stays on the left at \(i) — not folded to the middle")
+        }
     }
 }

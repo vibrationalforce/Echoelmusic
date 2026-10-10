@@ -252,10 +252,22 @@ final class TimelineAudioSink: AudioRegionSink {
     }
 
     /// Off the main actor: the part's window of `url`, read on a FRESH handle (the Beats V3
-    /// rule), summed to mono and rendered by `GrainBake` — or nil (unreadable, past the end,
-    /// longer than `grainMaxPartFrames`).
+    /// rule), and rendered by `GrainBake` with each dry channel on its own side (GA-10d: a stereo
+    /// file keeps its image; a mono file plays its one channel on both) — or nil (unreadable, past
+    /// the end, longer than `grainMaxPartFrames`).
     private nonisolated static func renderGrain(url: URL, fromSeconds: Double, lengthSeconds: Double,
                                                 settings: GrainSettings) -> (channels: [[Float]], sampleRate: Double)? {
+        // The file's PCM lives only inside `readGrainWindow`, so it is freed before the bake.
+        guard let window = readGrainWindow(url: url, fromSeconds: fromSeconds, lengthSeconds: lengthSeconds),
+              let baked = GrainBake.render(left: window.left, right: window.right, sampleRate: window.sampleRate,
+                                           frameCount: window.partFrames, settings: settings) else { return nil }
+        return ([baked.left, baked.right], window.sampleRate)
+    }
+
+    /// The part's window as one array per side (a mono file's one channel as both — the same
+    /// array, nothing copied), with the part's length in frames.
+    private nonisolated static func readGrainWindow(url: URL, fromSeconds: Double, lengthSeconds: Double)
+        -> (left: [Float], right: [Float], sampleRate: Double, partFrames: Int)? {
         guard let f = try? AVAudioFile(forReading: url) else { return nil }
         let sr = f.processingFormat.sampleRate
         guard sr > 0 else { return nil }
@@ -269,15 +281,9 @@ final class TimelineAudioSink: AudioRegionSink {
         guard (try? f.read(into: raw, frameCount: frames)) != nil,
               let data = raw.floatChannelData, raw.format.channelCount > 0 else { return nil }
         let n = Int(raw.frameLength)
-        let count = Int(raw.format.channelCount)
-        var mono = [Float](repeating: 0, count: n)
-        let scale = 1 / Float(count)
-        for c in 0..<count {
-            for i in 0..<n { mono[i] += data[c][i] * scale }
-        }
-        guard let baked = GrainBake.render(source: mono, sampleRate: sr, frameCount: partFrames,
-                                           settings: settings) else { return nil }
-        return ([baked.left, baked.right], sr)
+        let left = Array(UnsafeBufferPointer(start: data[0], count: n))
+        let right = raw.format.channelCount > 1 ? Array(UnsafeBufferPointer(start: data[1], count: n)) : left
+        return (left, right, sr, partFrames)
     }
 
     /// The rendering as a buffer in the URL's NODE-CONNECTION format: stereo as it is, a mono
