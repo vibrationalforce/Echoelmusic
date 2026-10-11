@@ -48,7 +48,8 @@
 //     calls); the helper-call count is the same anchor absence as claim 2; the two
 //     one-call-in-the-app counts and the whole-`Sources/` `begin()` count are COUNTERWEIGHTS,
 //     green on both trees.
-//   · claims 4 and 5 (SH-2b, parent `5bc17bc`): each is red on that parent for its named reason
+//   · claims 4 and 5 (SH-2b, parent `a4df15c`, whose Sources/ and Tests/ equal `5bc17bc`): each
+//     is red on that parent for its named reason
 //     — the context call and the rung are this slice's additions, so this is a line PINNED, not
 //     a regression caught. The anchors they share with claims 2 and 3 (the helper, the two
 //     verdict literals, `init() {`, `APP INIT [start]`) exist on both trees, so neither red is
@@ -68,12 +69,23 @@
 // same defaults, so a constructor crash still repeats (SH-11). DEVICE PROBE, open: a launch
 // whose log opens with the `launch v` line (`EchoelCrashLog.launchLinePrefix`) and reaches the
 // `LaunchGuard:` verdict before `init a: audio core`. After a run that ended badly `begin()`
-// writes its `retain…` lines between the two, so "the second line" holds only after a clean run.
-// Since SH-2b a clean run reads: launch · LaunchGuard verdict · `launch context:` ·
-// `app: stored defaults done` · `init a: audio core`. A log that ends after the context line
-// died in a stored default; one that ends after the rung died in the `register(defaults:)`
-// calls or the `APP INIT` line. Whether the fields are READABLE on the device (the two sysctls,
-// `ActivePrewarm`) is part of that probe — the format pins `-` for a refusal, not a value.
+// writes its `retain…` lines before the verdict, so the ORDER below holds only after a clean run
+// (no ordinals here — SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
+// Since SH-2b a clean run reads: `launch v` · `crash net:` · `image` · the one LaunchGuard
+// verdict · `launch context:` · `app: stored defaults done` · `init a: audio core`. A log that
+// ends after the context line died in a stored default; one that ends after the rung died in
+// the `register(defaults:)` calls or the `APP INIT` line. Whether the fields are READABLE on the
+// device (the two sysctls, `ActivePrewarm`) is part of that probe — the format pins `-` for a
+// refusal, not a value.
+// ⛔ The first push of SH-2b (`f2a8be28f`) handed claim 5's `head` — a `Substring` — to
+// `occurrences(of:in:)`, which takes a `String`: `Build for Testing` red, the whole blocking
+// bundle uncompiled for one commit — so on `f2a8be28f` NO claim in this file, 1–3 included, had
+// a compiled verdict; the grading above is the TRANSCRIPTION's, and the first compiled verdict
+// is the `Build for Testing` of the follow-up that fixed the one token (§0: a guard you have not
+// driven, you have not graded — and a guard that did not build, nobody drove). The Python
+// transcription could not see it (§4 fifth shape: checkers read needles as data); the compile
+// gate did. Claim 3 binds the same slice and only calls `contains`, which is why the
+// pre-existing claim never tripped.
 
 import Foundation
 import XCTest
@@ -239,7 +251,7 @@ final class TheCrashNetIsUpBeforeTheStoresTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `init()` or its `APP INIT [start]` line (#408)")
         }
         let head = app[initHead.upperBound..<firstLine.lowerBound]
-        XCTAssertEqual(Self.occurrences(of: Self.defaultsDoneRung, in: head), 1, """
+        XCTAssertEqual(Self.occurrences(of: Self.defaultsDoneRung, in: String(head)), 1, """
             The head of `init()` must write `\(Self.defaultsDoneRung)` once, before the `APP INIT` \
             log line. Swift runs every stored default before `init()`'s first statement, so this \
             rung is the only thing that separates "died in a store's constructor" from "died in \

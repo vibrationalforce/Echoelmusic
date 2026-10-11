@@ -740,9 +740,10 @@ enum EchoelCrashLog {
         let now = Date().timeIntervalSince1970
         let boot = bootTime()
         let started = processStartTime()
-        var availableMB: Int?
         #if os(iOS)
-        availableMB = Int(os_proc_available_memory()) / (1024 * 1024)
+        let availableMB: Int? = Int(os_proc_available_memory()) / (1024 * 1024)
+        #else
+        let availableMB: Int? = nil   // `os_proc_available_memory` is iOS-family only
         #endif
         return launchContextLine(
             prewarm: info.environment["ActivePrewarm"] == "1",

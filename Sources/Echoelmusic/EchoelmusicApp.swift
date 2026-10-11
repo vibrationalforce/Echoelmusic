@@ -357,8 +357,9 @@ struct EchoelmusicApp: App {
         // prewarm, boot time, process age, available memory, thermal state, Low Power Mode.
         // Build 2621 wrote the verdict above and then nothing, and the log could not say whether
         // iOS had prewarmed the process, the phone had just rebooted or memory was already
-        // short. Written AFTER the verdict so the two #915 lines keep their place as the second
-        // and third things a clean run writes (the device probe in the SH-2 guard reads them so).
+        // short. Written AFTER the verdict so the #915 verdict line keeps its place directly before
+        // this one — a clean run reads launch · crash net · image · verdict · context (no ordinals
+        // here: SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
         EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())
         return true
     }

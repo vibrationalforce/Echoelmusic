@@ -25,8 +25,9 @@
 //      this guard cannot force either way, and the format already says what `-` means.
 //
 // ⚠️ HONEST GRADING (#433). FORWARD: this file calls `EchoelCrashLog.launchContextLine`, which
-// does not exist on the parent `5bc17bc`, so it DOES NOT COMPILE there — no assertion has a
-// verdict on the parent (§3), and it needs `@testable import Echoelmusic` (#1337). Transcribed in
+// does not exist on the parent `a4df15c` (Sources/ and Tests/ equal to `5bc17bc`), so it DOES
+// NOT COMPILE there — no assertion has a verdict on the parent (§3), and it needs
+// `@testable import Echoelmusic` (#1337). Transcribed in
 // Python against the worktree: the formatter is re-implemented and the two literals of claims 1–2
 // are produced by it; the marker set of claim 3 is read from `EchoelCrashLog.swift`. Claim 4's
 // field values are not predicted — only their shape is.
