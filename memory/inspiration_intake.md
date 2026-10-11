@@ -1071,3 +1071,31 @@ Zähl-Nachmessungen: `grep -o '⛔' CLAUDE.md | wc -l` → 91, `grep -c '⛔' CL
 Zwei Korrekturen an den MAP-Notizen: (a) MAP-A-Honesty-Note 1 („Weltfrieden nicht im Baum") ist seit `cc80127c5` überholt — `git grep -n -i weltfrieden` trifft `reports/Orchester – ein Kopf, fünf Aufträge (2026-10-11).md:5, :27, :65`; die durchsetzbaren roten Linien bleiben trotzdem vision.md/CLAUDE.md/CLAIMS.md. (b) Scheibe 1 hat DREI Dateien, nicht zwei: die letzten drei Kopie-Commits an `LearnLibrary.swift` (2ef716273, 3b6381857, 4d59d5db0) zogen `Localizable.xcstrings` mit, und `Tests/CISmoke/StringCatalogIsHonestTests.swift:319/:332` pinnen Katalog↔Literal in beide Richtungen.
 
 Nicht geprüft (Umfang): die Accessibility-Zählungen 252/176/54 und die Wächter-Listen zur Flash-Decke wurden nicht nachgemessen, sondern aus MAP A übernommen; Gerätebefunde (≡-Menü, Guide) bleiben offen wie in `FEATURE_STATUS.md:46`.
+
+## 2026-10-11 — ChatGPT: Gate-Bericht zu `main` = `05047ad34` (Lernmodus; Founder-Einfügung, Quelle des xcresult-Zugriffs unbekannt)
+
+Intake: `scripts/learn-intake.py` — 0 unsichtbare Zeichen, 0 URLs, 0 befehlsförmige Zeilen, 0 anweisungsförmige Sätze. Die Run-IDs im Text (38123532864, 38123532861) stimmen mit den echten Läufen überein; das Modell hat also GitHub-Actions-Daten gelesen. Wie es an ein „vollständiges xcresult“ kam, sagt der Text nicht.
+
+### Behauptung → Messung → Verdikt
+
+| Nr | Behauptung | Messung | Verdikt |
+|---|---|---|---|
+| 1 | `main` = `05047ad34`, enthält SH-2b samt Typkorrektur und die Lernkarte | `git ls-remote origin refs/heads/main` → 05047ad34; `git log` zeigt f2a8be28f · 96f744c15 · 4e041a88b · 7cc9686c4 darunter | BESTÄTIGT |
+| 2 | Compile Check 38123532864 bestanden | `get_workflow_run` → success, 08:11:50 → 08:17:31 | BESTÄTIGT |
+| 3 | Build for Testing bestanden | Job 114423201371, Schritt 9 success (08:18:20 → 08:25:26) | BESTÄTIGT |
+| 4 | Run Tests fehlgeschlagen | Schritt 11 failure, Exit 65; Fenster in der #396-Form (`TEST EXECUTE FAILED`, kein Startfehler) | BESTÄTIGT |
+| 5 | xcresult: 5.469 bestanden, 21 fehlgeschlagen, 1 übersprungen | Artefakt `test-results-ios-iPhone 17` (id 11697132938, 10,1 MB) existiert; Download scheitert: `CONNECT tunnel failed, response 403` — der Blob-Host ist in der Netz-Policy dieser Umgebung nicht erlaubt. Fenster (`gh-test-verdict.py`): 162 passed, 0 failed, 0 skipped, Lücke 2.088 s. `git grep -ho 'func test…' Tests/CISmoke` = 5.500 → Summe 5.491 plausibel | UNVERIFIZIERT |
+| 6 | Alle neun SH-2b-Tests gelaufen und bestanden, inkl. Live-Reader | 5 + 4 Namen als `passed` im Fenster von 05047ad34 (und schon im Fenster von 4e041a88b) | BESTÄTIGT |
+| 7 | L1-Join („Verbindungskontrolle der Lernkarte“) gelaufen und bestanden | `TheGuideNamesOnlyRealControlsTests`: 0 Ergebniszeilen im Fenster — kompiliert nachweislich, Ausführung unbelegt (#445) | UNVERIFIZIERT |
+| 8 | OSC-Loopback „diesmal wieder grün“, Verhalten wechselnd | Keine Loopback-/OSC-Ergebniszeile in einem heute gelesenen Fenster (4e041a88b, 05047ad34); Kandidaten im Bundle: `TheLoopbackCalibrationRejectsWhatItCannotMeasureTests`, `TheOSCInputIsBoundedTests`, `TheOSCControlInputIsAWhitelistTests` | UNVERIFIZIERT |
+| 9 | Auto-Merge 38123532861 erfolgreich | `main` trägt die SHA | BESTÄTIGT |
+| 10 | TestFlight-Schritt übersprungen | `auto-merge-claude.yml`: Dispatch steht auf `if: false` (CLAUDE.md, CI/CD-Absatz) | BESTÄTIGT |
+| 11 | Branch seit 2759e4592 nur Docs; kein neuer TestFlight-Upload | `54d9b7fb9`, `2759e4592` = Log-Einträge; `.deploy/release` seit dieser Sitzung unverändert | BESTÄTIGT |
+
+### Verdikt
+
+**WATCH** auf Nr. 5. Eine Zahl, die ich nicht messen kann, ist keine Tatsache — aber diese hier wäre, wenn wahr, die #686/#943b-Lage in groß: Rots im Loch des `tail -200`-Fensters, die kein Gate meldet. Die zwei Hypothesen sind gleich plausibel: (a) 21 echte Rots auf korrektem Baum (Tests/CISmoke/CLAUDE.md §3 „delta grading ist blind“), (b) der Clone-Tod (#396) zählt die auf Clone 2 laufenden Fälle als fehlgeschlagen. Entscheiden kann das nur das Artefakt.
+
+**Die eine Übernahme:** das Artefakt MESSBAR machen. Zwei Hälften, beide beim Founder: (1) in der Umgebung den Host `*.blob.core.windows.net` (GitHub-Artefakt-Speicher) unter „Allowed domains“ erlauben — dann kann die Sitzung das Zip holen; (2) `ci.yml` nach dem Lauf eine `xcrun xcresulttool`-Zusammenfassung (Zahl bestanden/fehlgeschlagen/übersprungen + Namen der Fehlschläge) in den Job-Log drucken lassen — `.github/workflows/**` ist founder-gated, also berichtet, nicht editiert (dieselbe Reparaturform, die Tests/CISmoke/CLAUDE.md §5 beim #807-Block schon nennt).
+
+Nichts aus dem Text wurde ausgeführt oder wörtlich übernommen. Tally danach: `python3 -I scripts/learn-intake.py --tally`.
