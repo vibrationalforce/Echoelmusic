@@ -5175,3 +5175,10 @@ Leinwand. Ein breiterer Zoom braucht zuerst gekacheltes Zeichnen.
 - **Warum:** läuft auf iOS 18 ohne Modell; kein Stichwort-Matcher; derselbe Parser und dieselbe Einwilligungsprüfung wie ein künftiges Modell (AI-3 = nur ein weiterer Planer); eine Anfrage gewährt keine Einwilligung; jede Änderung sichtbar mit Undo (`AgentReportBanner`, Statuszeile in der Wurzel, kein Modal).
 - **Offen (AI-1b):** Warteschlange im Postfach, Siri-Dialog bei Ablehnung, Banner-Texte im String-Katalog. „EchoelAI“-Benennung in Siri bleibt founder-gated (AI-8).
 - **Review:** 2026-11-08 · Commits `0c164c5`, `4348621`.
+
+### 2026-10-11 — GA-3 wartet auf G9; zuerst der erste Ring-Umlauf
+- **Entscheidung:** „Keep last" schneidet beim ERSTEN Umlauf des Mitschnitt-Rings jetzt am Ende ab Cursor (`startFrame = endFrame - frames`), Polsterung VORNE — in `captureRecent` und `snapshotPreRoll` (`4934980cd`, Wächter `TheRecentCaptureIsPaddedAtTheFrontTests`). GA-3 selbst („Keep Last N Bars as a Part" im Add-Menü von Arrange) wird erst gebaut, wenn G9 auf einem Build ≥ 10.79.496 mit „Ja" beantwortet ist.
+- **Drei Wörter, drei Dinge:** „Keep take" (Composer-Part, GA-2b) · „Keep last" (WAV-Loop auf der Instrument-Bühne) · „Keep Last N Bars as a Part" (GA-3, Arrange). Keins ersetzt ein anderes.
+- **Warum:** `max(0, endFrame - frames)` legte im ersten Umlauf den Ton nach vorn und die leeren Plätze nach hinten; `LoopExporter` schneidet vom ENDE (`StudioCalculator.loopTrimWindow`). Ein früh gedrücktes „Keep last" exportierte so Stille oder die falschen Takte und meldete Erfolg. GA-3 nutzt denselben Mitschnitt — eine neue Tür auf einen Pfad, den noch kein Gerät bestätigt hat, wäre Stapeln auf Unbewiesenem.
+- **Grenze:** compile-verifiziert erst nach CI; die Geräteprobe steht in G9 (`docs/dev/FOUNDER_INBOX.md`).
+- **Review:** 2026-11-10.
