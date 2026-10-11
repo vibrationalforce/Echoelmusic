@@ -985,3 +985,89 @@ iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund)
 - REJECT: Upload-Pfad bauen (neuer Netzwerkweg für Gesundheitsdaten) · pauschal „einplanen oder löschen“ (#527-Falle) · das Angebot, Issues anzulegen (Schreiben auf GitHub gehört dem Founder).
 - Muster Mistral/Vibe: wohlwollend und meist richtig, wo es Code las; übernimmt veraltete README-Zeilen als Befund. Als Prüfer mit Ausschnitten brauchbar (siehe Brief `briefs_2026-10-11/Mistral.txt`), nicht als Leser der GitHub-Seite.
 - Nebenbei: der Gemini-„Baustellen“-Text vom 2026-10-10 wurde am 2026-10-11 ERNEUT eingefügt — keine neue Zeile (Regel 4: einmal loggen); das Urteil [verified 0/6] REJECT bleibt.
+
+### 2026-10-11 — Founder: „World UNITY“ — Werte-Statement durch den Vision-Gate (`wf_7ab06b71-143`)
+
+## Founder-Worte 2026-10-11 — „World UNITY" (gelesen durch den Vision-Gate; Stand `5bc17bc6b`)
+
+> „World UNITY Friedensabkommen über sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das dringenst. Wir starten mit Airbus bei den Tauchfliegen und enden mit Echoelmusic als neue Musikschule, die Vegane Musikbetriebene Brötchen backt."
+> — Echoel (Michael Terbuyken), 2026-10-11, wörtlich.
+
+Lesart: das sind WERTE dafür, WIE Echoel gebaut und gehandelt wird, plus EINE Richtung („Echoelmusic als neue Musikschule" = Musik durch den Körper lernen). Airbus/Tauchfliegen und vegane Brötchen sind Stimme des Founders, keine Spezifikation — kein Code-Gegenstück, keines gesucht.
+
+### Was davon schon Code ist (nachgemessen, kommentar-bereinigt)
+- **Transparenz:** MIT-Lizenz (`LICENSE:1`); Privacy-Seite „runs no servers and receives nothing" (`docs/privacy.html:116`); Store-Text „no accounts, no ads, no tracking" (`fastlane/metadata/en-US/description.txt:45`); kein HTTP-Client in der App: `git grep -n 'URLSession\|URLRequest' -- Sources | grep -v ': *//' | wc -l` → 0.
+- **Kein Lock-in / kein BigPlayer:** `Package.swift:66-73` `dependencies: []`; offene Protokolle `Sync/OSCSender.swift:92`, `Sync/ADMOSCSender.swift:60`, `Sync/ArtNetSender.swift:33`, `Sync/SACNSender.swift:35`, `Audio/MIDIOutput.swift:36`; offene Formate `Audio/SingleExport.swift:29` (`wav, aac`), MIDI-Export-Tür `Studio/EchoelStudioView.swift:2481`.
+- **Sanfter Handel:** v1.0 kostenlos, keine Kauf-UI — `Studio/WorkspaceView.swift:156-163` (Founder 2026-07-10); `git grep -n 'ProUnlockView(' -- Sources | grep -v ': *//'` → 0 Produktionsaufrufer.
+- **Gesundheitsdaten bleiben im Gerät:** `Core/BioEgressPolicy.swift:8-12` (HealthKit-Frames erreichen keinen Netzsender), `:117-118` klinische HRV-Details OPT-IN, default aus.
+- **Alle werden involviert:** `Studio/LearnLibrary.swift:128-137` Karte „For every body" (hören · sehen · fühlen); `Core/FlashGuard.swift:45` `maxFlashHz = 3.0`; Simulationsquelle `Studio/BioSourceOption.swift:58`; 252 `accessibilityLabel(`-Stellen (`git grep -n 'accessibilityLabel(' -- Sources | grep -v ': *//' | wc -l`).
+- **Ressourcen schonen (die einzige „Ökologie" im Code):** `Core/AdaptiveQuality.swift:3-16`, `Core/ResourceGovernor.swift:3-14` — Akku/Thermik steuern Detailstufe und Poll-Rate. Kein CO₂-/Footprint-Konto existiert (`git grep -n -i 'carbon\|co2\|footprint' -- Sources docs/*.html | grep -v ': *//'` → nur ein Fehltreffer).
+- **Musikschule, der Keim:** `Studio/LearnLibrary.swift:1-6` („the single index behind the ‚app as a school' idea"), sechs Sektionen `:16`, Tür `Studio/WorkspaceView.swift:600` → `Studio/EchoelStudioView.swift:1337` → `.sheet` `:1814`; Start-Tour `Studio/GuideOverlay.swift:43` aus derselben Quelle; Compose-Walk `Studio/ComposeGuide.swift:33`; Theorie-Primer `Studio/MusicTheoryPrimer.swift:16`.
+
+### Was davon Haltung ist (Praxis, kein Feature, in Copy nur als „so arbeiten wir")
+Transparenz · fairer Handel · kein Monopol/Lock-in · alle inbegriffen · **„lernen zu verzeihen" = Korrektur ohne Schuld** — das Repo praktiziert es wörtlich: 91 ⛔-Vermerke auf 77 Zeilen allein in `CLAUDE.md` (`grep -o '⛔' CLAUDE.md | wc -l` / `grep -c '⛔' CLAUDE.md`), die falsche Behauptung bleibt neben ihrer Korrektur stehen; Sackgassen im `scratchpads/HARNESS_LEDGER.md`, Supersessions in `decisions.csv`. Das ist eine Arbeitskultur, kein Nutzer-Feature und keine Produktaussage.
+
+### Was davon NIE Kopie wird (Wirkungen)
+Frieden, Weltfrieden, Einheit, Verzeihen, Heilung als WIRKUNG des Produkts — in Store-Text, Website, In-App-Kopie und Content. Gründe sind hart, nicht geschmacklich: Prinzip 3 oben („Show the number, never promise the benefit"), BANNED-Liste (`memory/vision.md:122-124`), `CLAUDE.md` BRAND („NOT a wellness, soundscape, or therapy product"), `ContentPipeline/CLAIMS.md:153-155` §2, App-Store 2.3 (#184) und die FDA-General-Wellness-Linie (`memory/vision.md:118-120`). Der Master-Prompt des Founders vom 2026-10-07 („Weltfrieden, Heilung oder Therapie als Wirkung" verboten) ist seit `cc80127c5` im Baum zitiert: `reports/Orchester – ein Kopf, fünf Aufträge (2026-10-11).md:5, :27, :65`. „Vegan" und „Regenwald" sind keine Produkteigenschaften der App — es gibt keine eigene Lieferkette; der ehrliche Satz lautet „akku- und wärmebewusst gebaut; keine Footprint-Aussage".
+
+### Richtung Musikschule (Tiering)
+- **ADOPT → PRODUCT (Tier 1, jetzt): „From pulse to piece"** — siebte Start-Here-Karte in `LearnLibrary.guideEntries`, die den Körperpfad in Lern-Reihenfolge erzählt und nur ausgelieferte Bedienelemente wörtlich nennt (Play → Finger auf Rückkamera → Tempo-Feld unter „Tempo & variations", Flow folgt dem Puls / Lock für festen BPM → „Key"/„Scale" auf der Piece-Platte → fünf Schritte der Arrange-Karte → Export „MIDI"). Kopie-only, reversibel, erbt `TheGuideNamesOnlyRealControlsTests` und `testTheGuideMakesNoHealingClaim`. Die strukturelle Lücke, die sie schließt: heute erklärt die Guide-Seite den Puls auf der Instrument-Bühne, der Compose-Walk beginnt bei „Add a MIDI track" auf der Arrange-Bühne, und nichts verbindet beides als EINEN Weg.
+- **WATCH (nächste, nach Founder-Blick auf Scheibe 1): „Your piece, right now"** — in `LearnView.entryDetail` (eigenes Blatt, `Studio/LearnView.swift:151`) unter `music.key`/`music.scale`/`music.tempo` eine Zeile mit Tonart, Skala und BPM des laufenden Stücks aus `SessionContext` (`Core/SessionContext.swift:141/146/196`, 8 bestehende `@Environment`-Leser) und `BeatPlayer` (13 Leser); nur im Detail-Blatt lesen, nie in `list` (`:41`) — Tempo glidet bis ~20 Hz. Neuer Wächter nötig; erst nach Scheibe 1.
+- **WATCH / Founder-Frage:** Lektionen, Fortschritt, Übungen, Lehrer/Schüler-Rollen — Curriculum existiert nicht; jede Fläche dafür läuft über `docs/dev/FOUNDER_PRODUCT_LAW.md` und die WA-Reihenfolge des Master-Plans (WA3 zuerst). Deutsch als Unterrichtssprache ist eine vom Founder zurückgenommene Entscheidung (`docs/dev/FOUNDER_INBOX.md:53`, E4 „Nur Englisch") — kein Slice, nur eine Frage.
+- **Öffentlich bleibt „Musikschule" UNBEHAUPTET** — richtig so: ein Satz über die In-App-Learn-Bibliothek wäre wahr, ein „Kurs"/„Schule"-Versprechen nicht (`grep -ic learn docs/claims.html` → 0, `ContentPipeline/CLAIMS.md` hat keine Learn-Zeile).
+
+#### Die Haltung in Worten (Entwurf; Manifest-Text, NIE Produktkopie)
+
+HALTUNG (so wird Echoel gebaut und gehandelt — keine Wirkungsversprechen)
+Echoel ist ein Instrument, bei dem Herzschlag und Atem Klang, Bild, Licht und Raum mitspielen. Wir bauen es offen und nachprüfbar: der ganze Code liegt unter MIT-Lizenz öffentlich, jede Zahl im Repo steht neben dem Befehl, der sie misst, und ein Fehler wird nicht gelöscht, sondern datiert stehen gelassen und korrigiert (⛔-Vermerke) — Korrektur ohne Schuldzuweisung ist unsere Arbeitsweise.
+Wir binden niemanden: null fremde Bibliotheken, alle Ausgänge sprechen offene Standards (OSC, ADM-OSC, Art-Net, sACN, MIDI), Export in offene Formate (MIDI, WAV, AAC), keine Konten, keine Server, keine Werbung, kein Tracking; Puls- und Atemwerte bleiben auf dem Gerät, Gesundheitsdaten verlassen das Telefon nie.
+v1.0 ist vollständig kostenlos und es gibt nichts zu kaufen; eine spätere Einnahme wird offen und kündbar angekündigt, nie über dunkle Muster.
+Alle sollen mitspielen können: hören, sehen oder fühlen — jeder Kanal ist ein eigener Zugang, VoiceOver und Systemschriftgröße werden bedient, Blitzlicht ist auf 3 Hz begrenzt, und eine Simulation spielt auch ohne Sensor.
+Biofeedback ist hier eine gemessene Steuerquelle, kein Wellness-, Meditations- oder Therapieprodukt. Wir zeigen die Zahl und versprechen keinen Nutzen: keine Heilung, keine Diagnose, kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung, kein Versprechen. Als wahr gilt nur, was im Code steht und gemessen ist.
+
+#### Die eine Scheibe
+
+EMPFOHLENE SCHEIBE: „From pulse to piece" — eine siebte Start-Here-Karte (Größe S, Kopie-only, 3 Dateien, kein neuer Typ, null Präsentations-Modifier, kein Hot-State).
+
+Was: `LearnEntry(id: "guide.pulseToPiece", section: .guide, …)` in `LearnLibrary.guideEntries`, direkt NACH `guide.pulse` (`Sources/Echoelmusic/Studio/LearnLibrary.swift:123-127`) und VOR `guide.access` (`:129`). Text in Lern-Reihenfolge, nur ausgelieferte Bedienelemente wörtlich: Press Play → a fingertip on the back camera (the pulse pill shows the lock) → the tempo field under „Tempo & variations" (Flow follows your pulse; lock it for a fixed BPM — `BodyTempoField.swift:342` „Tempo, locked") → „Key" and „Scale" on the Piece plate (`WorkspaceView.swift:1305/1314`) → the five steps on Arrange's guide card (`ComposeGuide.swift:33`: Add a MIDI track · Add a part · Write notes · Play · Save) → Export „MIDI" into your DAW (`EchoelStudioView.swift:2481`). Jede Feld-Kopie als eigenes `String(localized:)`-Literal, typografische Anführungszeichen (E4-23), keine Wirkungs- oder Lernerfolgs-Behauptung („you will learn…" ist verboten; „this is the path" ist erlaubt).
+
+Dateien (3):
+1. `Sources/Echoelmusic/Studio/LearnLibrary.swift` — +1 Eintrag.
+2. `Tests/EchoelmusicTests/LearnLibraryTests.swift:11` — `guideEntries.count` 6 → 7 (Kommentar „#589 — hand-written" mitziehen).
+3. `Sources/Echoelmusic/Resources/Localizable.xcstrings` — die neuen Schlüssel (Titel · Summary · Detail) als `en`-Einheiten; gemessen: alle drei letzten Kopie-Commits an `LearnLibrary.swift` (2ef716273, 3b6381857, 4d59d5db0) zogen den Katalog mit, und `StringCatalogIsHonestTests` pinnt `testEveryKeyStillExistsAsALiteralInSources` (:332) und `testTheEnglishUnitEqualsTheKey` (:319) — ohne Katalog-Zeile wird ein Wächter rot.
+
+Wächter, die schon greifen (kein neuer nötig): `Tests/CISmoke/TheGuideNamesOnlyRealControlsTests.swift` (jeder zitierte Bedienname muss im UI-Quelltext existieren; `testTheGuideMakesNoHealingClaim` :87 verbietet Heil-Vokabular), `TheShareReadyClipIsNotSoldAnywhereTests` (Scan auf zurückgenommene Fähigkeiten über diese Datei), der Chrome-Wort-Wächter (kein „project/session/song"). `GuideOverlay` (`Studio/GuideOverlay.swift:43`) blättert die Karte automatisch mit — die Start-Tour gewinnt die eine Karte, die den Weg geht.
+
+Council: trivial-reversibel (Kopie), stillschweigend; einziger Einwand (Skeptic): die Karte bleibt Prosa und KANN den Schritt nicht ausführen — bewusst so, weil ein Körper-Schritt im `ComposeGuide` den founder-zitierten Fünf-Schritte-Walk ändern würde (Founder-Frage, nicht freie Scheibe). Verifikation: CI-kompiliert (Xcode Compile Check + CI/CD „Build for Testing"); Geräteblick auf ≡ → Guide bleibt offen (`docs/dev/FEATURE_STATUS.md:46` „offen", `FOUNDER_INBOX.md:203` S1b-1) — dort KEINE neue Zeile, die Karte reitet auf der bestehenden Bitte mit.
+
+Nachfolger (WATCH, nicht jetzt): „Your piece, right now" — Live-Zeile mit Tonart/Skala/BPM im Theorie-Detailblatt (`LearnView.swift:151` `entryDetail`, nie in `list` :41), eigener CISmoke-Wächter, erst nach Founder-Blick auf Scheibe 1.
+
+#### Rote Linien, die daraus folgen
+
+DARF NICHT PASSIEREN:
+1. „Weltfrieden", „Frieden", „Einheit/UNITY", „Verzeihen", „Heilung" als WIRKUNG in Store-Text (`fastlane/metadata`), Website (`docs/*.html`), In-App-Kopie (`Sources/`), Content (`ContentPipeline/`) — App-Store 2.3, FDA-General-Wellness-Linie, `memory/vision.md:118-124`, `CLAUDE.md` BRAND, `ContentPipeline/CLAIMS.md:153-155`. Erlaubt ist nur Haltung („so bauen und handeln wir") und Founder-Stimme in einem Manifest außerhalb der Produktflächen.
+2. Kein Handels-/Marktplatz-/Trade-Feature, kein Shop, kein „Friedensabkommen"-Flow, keine Spenden- oder Fair-Trade-Mechanik in der App — v1.0 ist kostenlos und zeigt keine Kauf-UI (`WorkspaceView.swift:156-163`); `ProUnlockView`/`EchoelStore`/`ProGate` werden NICHT präsentiert und NICHT gelöscht (Umwidmung v1.1).
+3. Nichts Esoterisches: keine Heilfrequenzen, Solfeggio, Chakren, Entrainment-„Wirkung", keine Wellness-/Meditations-/Therapie-Positionierung — auch nicht als „Musikschule für Achtsamkeit".
+4. Keine Öko-/Vegan-/Regenwald-Behauptung über die App („vegan", „CO₂-neutral", „nachhaltig") — es gibt keine Lieferkette und kein Footprint-Konto im Code (`git grep -i 'carbon\|co2\|footprint' -- Sources docs/*.html` → nur ein Fehltreffer). Ehrlich bleibt nur „akku- und wärmebewusst" (`Core/AdaptiveQuality.swift:3-16`).
+5. Kein öffentliches „Musikschule"/„Kurs"/„Lehrplan"-Versprechen auf Website, Store oder Content, solange nur die In-App-Learn-Bibliothek existiert; keine Learn-Zeile in `CLAIMS.md` ohne Founder-Freigabe.
+6. Keine strukturelle Scheibe an der Schule ohne Gate: kein Körper-Schritt im `ComposeGuide` (founder-zitierter Fünf-Schritte-Walk), kein GM17-Vorher/Jetzt (Founder-blockiert, `FOUNDER_INBOX.md:112`), keine Wiederherstellung der deutschen Katalog-Einheiten (E4 „Nur Englisch", `:53`), kein Re-Dooring von `BreathGuideView` (Founder-Frage; Elternteil betüren, nie das Kind), keine neue Fläche außerhalb der WA-Reihenfolge des Master-Plans.
+7. Keine Live-Bio- oder Tempo-Lesung in `LearnView.list`/`body` oder in einem Vorfahren des Menü-Wirts (10.76.41/50-Freeze-Gesetz) — eine Live-Zeile gehört ausschließlich ins Detail-Blatt.
+8. Kein neues Framework, keine Abhängigkeit, kein Server, kein Konto — die „kein Lock-in"-Haltung ist nur wahr, solange `Package.swift:73` `dependencies: []` bleibt.
+
+#### Prüfprotokoll des Richters
+
+Nur-Lese-Prüfung (git grep / sed / ls / git log / git show --stat), keine Datei angefasst. Stand: HEAD ist `5bc17bc6b`, NICHT `7536984c9` wie in der Aufgabe — zwei Docs-Commits dazwischen (`cc80127c5` Orchester-Kopf, `5bc17bc6b` Inbox LR5/LR3); kein `Sources/`-Unterschied für die geprüften Stellen.
+
+Stichproben (alle HALTEN, nichts gestrichen):
+1. `Sources/Echoelmusic/Studio/LearnLibrary.swift:1-6` („app as a school"), `:16` (sechs Sektionen), `:123-127` guide.pulse, `:128-137` guide.access mit In-Code-⛔ (#1018) — bestätigt.
+2. `Sources/Echoelmusic/Studio/EchoelStudioView.swift:1337` `showLearn = true`, `:1814` `.sheet(isPresented: $showLearn) { AnyView(LearnView()) }`, `:2481` `Button { exportMIDI() }` — bestätigt.
+3. `Sources/Echoelmusic/Studio/WorkspaceView.swift:156-163` (v1.0 frei, keine Kauf-UI), `:600` Tür „learn", `:608` Toggle guideVisible, `:1305/:1314` Picker „Key"/„Scale" — bestätigt.
+4. `Package.swift:66-73` `dependencies: []`; `git grep -n 'URLSession\|URLRequest' -- Sources | grep -v ': *//' | wc -l` → 0 — bestätigt.
+5. `Tests/EchoelmusicTests/LearnLibraryTests.swift:11` `guideEntries.count == 6`; `Sources/Echoelmusic/Studio/ComposeGuide.swift:33` fünf Fälle; `Sources/Echoelmusic/Studio/BodyTempoField.swift:342` „Tempo, locked" — bestätigt.
+6. `Sources/Echoelmusic/Core/SessionContext.swift:141/146/196` keyScale/a4Hz/key; `Sources/Echoelmusic/Core/BioEgressPolicy.swift:8-12, :117-118`; `memory/vision.md:118-136`; `ContentPipeline/CLAIMS.md:153-155`; `docs/dev/FOUNDER_INBOX.md:53` (E4), `:112` (GM17), `:203` (S1b-1); `Sources/Echoelmusic/Studio/MusicTheoryPrimer.swift:16, :73-75`; `Sources/Echoelmusic/Studio/LearnView.swift:41/151/162`; `Sources/Echoelmusic/Studio/GuideOverlay.swift:43` — alle bestätigt. Wächter-Dateien `TheGuideNamesOnlyRealControlsTests`, `TheGuideHasADoorTests`, `TheShareReadyClipIsNotSoldAnywhereTests` existieren.
+
+Zähl-Nachmessungen: `grep -o '⛔' CLAUDE.md | wc -l` → 91, `grep -c '⛔' CLAUDE.md` → 77 (beide wie in MAP A). `Environment(SessionContext.self)` → 8, `Environment(BeatPlayer.self)` → 13 Leser in `Sources/` (kommentar-bereinigt). „Tempo & variations" existiert als Katalog-Schlüssel (`Localizable.xcstrings:9052`).
+
+Zwei Korrekturen an den MAP-Notizen: (a) MAP-A-Honesty-Note 1 („Weltfrieden nicht im Baum") ist seit `cc80127c5` überholt — `git grep -n -i weltfrieden` trifft `reports/Orchester – ein Kopf, fünf Aufträge (2026-10-11).md:5, :27, :65`; die durchsetzbaren roten Linien bleiben trotzdem vision.md/CLAUDE.md/CLAIMS.md. (b) Scheibe 1 hat DREI Dateien, nicht zwei: die letzten drei Kopie-Commits an `LearnLibrary.swift` (2ef716273, 3b6381857, 4d59d5db0) zogen `Localizable.xcstrings` mit, und `Tests/CISmoke/StringCatalogIsHonestTests.swift:319/:332` pinnen Katalog↔Literal in beide Richtungen.
+
+Nicht geprüft (Umfang): die Accessibility-Zählungen 252/176/54 und die Wächter-Listen zur Flash-Decke wurden nicht nachgemessen, sondern aus MAP A übernommen; Gerätebefunde (≡-Menü, Guide) bleiben offen wie in `FEATURE_STATUS.md:46`.

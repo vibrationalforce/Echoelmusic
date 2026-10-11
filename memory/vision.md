@@ -140,6 +140,22 @@ if the website disagrees, the code wins.**
    bus. Anti-pattern: breadth-first oscillation (history shows 5 oscillations, 0 breadth).
 7. **Audio-thread sanctity.** No malloc/locks/GCD in the render path.
 8. **Honesty over cheerleading.** Green CI ≠ works on device.
+9. **Haltung, nicht Wirkung (Founder 2026-10-11).** Wörtlich: *„World UNITY Friedensabkommen über
+   sanften und lächelnden Handel. Alles werden involviert und lernen zu verzeihen. Oberstes Gebot
+   Transparenz und Volkswirtschaftliche Ökonomie wie sie alle gerne hätten. Vermeide BigPlayer
+   Monopolistische Einseitigkeit ohne Regenwälder, Tiere und Menschen zu zerteilen. Vermeide das
+   dringenst. Wir starten mit Airbus bei den Tauchfliegen und enden mit Echoelmusic als neue
+   Musikschule, die Vegane Musikbetriebene Brötchen backt.“* Gelesen durch den Vision-Gate
+   (`wf_7ab06b71-143`, Stand `5bc17bc6b`): WERTE dafür, WIE gebaut und gehandelt wird — Transparenz
+   (MIT, keine Server, kein Tracking, jede Zahl neben ihrem Befehl), kein Lock-in (`dependencies: []`,
+   offene Protokolle und Formate), sanfter Handel (v1.0 kostenlos, keine Kauf-UI), alle inbegriffen
+   (hören · sehen · fühlen, 3-Hz-Decke, Simulation ohne Sensor), „verzeihen“ = Korrektur ohne Schuld
+   (die ⛔-Vermerke) — plus EINE Richtung: Musik durch den Körper lernen (`LearnLibrary`; Tier-1-Scheibe
+   „From pulse to piece“). ⛔ NIE als WIRKUNG in Kopie: Frieden, Einheit, Verzeihen, Heilung (Prinzip 3,
+   BANNED, CLAIMS §2, App-Store 2.3, der Master-Prompt des Founders vom 2026-10-07). Keine Öko-/Vegan-
+   Behauptung über die App (keine Lieferkette; ehrlich ist „akku- und wärmebewusst“). Vollständige
+   Lesung, Haltungs-Text, Scheibe und rote Linien: `memory/inspiration_intake.md`, Abschnitt
+   „2026-10-11 — Founder: „World UNITY““.
 
 ---
 
