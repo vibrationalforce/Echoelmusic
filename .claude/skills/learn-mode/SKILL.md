@@ -89,6 +89,27 @@ diskutiert wird.
 - Kein Wettbewerb um Lob: ein Feedback, das alles gut findet, hat nichts gemessen und lehrt
   nichts — es wird als „kein Befund" geloggt, nicht als Bestätigung.
 
+## Was RAUSGEHT — wenn der Founder ein fremdes Modell brieft (2026-10-11)
+
+Die vier Regeln oben regeln, was HEREINKOMMT. Gebrieft wird aber auch: ein Modell ohne
+Repo-Zugriff fragt nach `find`, `Package.swift`, `git status`. Das Repo ist öffentlich, also
+ist die sicherste Antwort die URL plus Auszüge aus GETRACKTEN Dateien.
+
+- **Geht:** die Repo-URL; Inhalt getrackter Dateien (`Package.swift`, `project.yml`, `README.md`,
+  die Info.plists); `git ls-files` statt `find`; `git status --short --untracked-files=no`;
+  `git log --oneline -5 origin/main` (zeigt keine ungepushten lokalen Commits).
+- **Geht NIE:** `.claude/settings.local.json` (GitHub-Token) · `echoel_diag.log` /
+  `echoel_diag_last_crash.log` (Puls, Atem — Gesundheitsdaten, Art. 9 DSGVO) · App-Store-Connect-
+  Schlüssel (`AuthKey_*.p8`), `.env`, Fastlane-Zugänge · Tester-Feedback, Support-Mails, Geräte-Logs
+  echter Nutzer (Regel L01 in `docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md`: nur mit Vertrag zur
+  Auftragsverarbeitung und ohne Training) · die rohe Ausgabe von `find` im eigenen Ordner (sie nennt
+  auch ungetrackte private Dateinamen) · das generierte `project.pbxproj` (nicht getrackt).
+- Wo ein Anbieter speichert und ob er trainiert, kann keine Sitzung vom Repo aus prüfen — das
+  sagt die Sitzung dem Founder, statt es zu behaupten.
+- Rolle des fremden Modells: PRÜFER, nie Bauer (`docs/dev/ECHOELMUSIC_MASTER_PLAN.md` §12).
+  Eine gute Bitte ist klein und belegpflichtig: „höchstens 8 Punkte, jeder mit Datei und Zeile,
+  sicher oder vermutet, kein Code".
+
 ## Wächter
 
 `Tests/CISmoke/TheLearnModeTreatsFeedbackAsDataTests.swift` pinnt die vier Regeln als Text,
