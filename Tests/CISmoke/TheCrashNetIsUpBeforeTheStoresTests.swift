@@ -231,7 +231,7 @@ final class TheCrashNetIsUpBeforeTheStoresTests: XCTestCase {
                 """)
         }
         XCTAssertGreaterThan(context.lowerBound, safe.upperBound,
-                             "the launch context line must follow the Safe-Mode verdict — the verdict is the second line a clean run writes (#915)")
+                             "the launch context line must follow the Safe-Mode verdict — a triager reads what the net DECIDED before what the process KNEW, and a counted position is not pinned here on purpose (#915, #818)")
         XCTAssertGreaterThan(context.lowerBound, normal.upperBound,
                              "the launch context line must follow the normal-launch verdict (#915)")
         XCTAssertLessThan(context.lowerBound, done.lowerBound,

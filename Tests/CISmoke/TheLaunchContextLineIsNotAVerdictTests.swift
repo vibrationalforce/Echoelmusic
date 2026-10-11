@@ -56,8 +56,8 @@ final class TheLaunchContextLineIsNotAVerdictTests: XCTestCase {
     func testAnUnreadableFieldPrintsAsADashInAFixedOrder() {
         XCTAssertEqual(empty, "launch context: prewarm=- boot=- up=- age=- avail=- thermal=- lowpower=-", """
             The all-nil launch context line changed. `-` is "not readable here" and the field order \
-            is what a triager learns to read; a changed spelling here changes every pasted log's \
-            fifth line (SH-2b).
+            is what a triager learns to read; a changed spelling here changes the context line of \
+            every pasted log (SH-2b).
             """)
         XCTAssertTrue(empty.hasPrefix(EchoelCrashLog.launchContextPrefix),
                       "the line must start with `launchContextPrefix` — one spelling for writer and reader (#416)")
