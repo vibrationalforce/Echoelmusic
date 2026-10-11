@@ -6,6 +6,18 @@
   Gilt zusammen mit `docs/SPATIAL_EXPANSION_AUDIT.md` §6 und CLAUDE.md
   (überstimmt bei Konflikt). JUCE bleibt rejected. Zero-Dependency-Politik gilt.
 
+> **⚠️ Nachgeprüft 2026-10-11 — das Review-Datum (2026-10-01) ist überschritten, und drei Stellen stimmen nicht mehr.**
+> Die Entscheidung selbst bleibt: v1 nur Apple, Protokoll-Clients als erster Nicht-Apple-Schritt. Der lebende
+> Plattform-Text ist `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` §10.
+> 1. **Es gibt KEIN Linux-`swift build`-Gate.** `.github/workflows/quick-test.yml` sagt im Kopf, die App kompiliert
+>    auf Linux nicht und der Job sei deshalb entfernt; `Package.swift` sagt, kein CI-Gate fährt SwiftPM. In `ci.yml`
+>    laufen auf Linux nur Security-Scan und Notify. Pfad (a) unten hat also keinen laufenden Wächter.
+> 2. **Der Import-Bann-Grep (P4, Stufe 1) wurde nie angehängt.** Ein solcher Job läge in `.github/workflows/**`
+>    und ist founder-gated, zusammen mit dem EchoelCore-Target (#95, `docs/dev/FOUNDER_INBOX.md` F7).
+> 3. **`MotionEngine` und `import CoreMotion` gibt es nicht mehr** (0 Treffer in `Sources/`, kommentarbereinigt).
+>
+> Gefunden beim Messen eines fremden Monorepo-Vorschlags (Lernmodus, `inspiration.csv` 2026-10-11).
+
 ## Entscheidung
 
 **v1 shippt ausschließlich Apple.** Portabilität wird JETZT nur über zwei

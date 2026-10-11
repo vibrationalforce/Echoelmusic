@@ -581,7 +581,16 @@ settles which path really fires.
 
 - **Apple, in release order:** iOS (iPhone ships today), then iPadOS, macOS and visionOS. Each
   platform's prerequisites are in the platform table in `CLAUDE.md`. The iPad needs a bio
-  source that works there, plus the reflow work.
+  source that works there, plus the reflow work. The order AMONG the next platforms is open:
+  GM16 in `docs/dev/FOUNDER_INBOX.md` recommends Mac and Vision first as "Designed for iPhone" (E15).
+- **watchOS** is in scope (founder 2026-07-31: "auch … Waerables") and is the only non-iPhone
+  platform with a compiled target, not embedded (F8). Watch → phone already works through
+  HealthKit; phone → watch needs a transport (`scratchpads/PLAN_WATCH_2026-09-13.md`). ⛔ This
+  list left the Watch out until 2026-10-11.
+- **tvOS** falls under the founder's "gesamte Apple Ökosystem" but has no target, no order and
+  no ruling; if it comes, it is an output surface (a venue display), ordered inside GM16.
+- **The cross-platform decision record** is `docs/adr/004-cross-platform-strategy.md`; read its
+  2026-10-11 banner first — it claims a Linux build gate that does not exist.
 - **Later:** Windows, Linux, Android, OpenXR.
 - **The shared, platform-neutral core should increasingly own:**
   - Session semantics;
