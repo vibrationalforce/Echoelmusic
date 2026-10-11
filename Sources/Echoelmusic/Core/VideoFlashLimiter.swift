@@ -77,6 +77,9 @@
 // · It sees cell MEANS, not shapes: a pattern with a period of two cells set half a cell off the
 //   grid keeps every cell mean flat while it reverses, and the grid cannot see it at all; a line an
 //   eighth of a cell wide counts only once its share of some window reaches the quarter step.
+// · It trusts the cells it is handed. `VideoLayerSlot` (VV-5b) estimates each from 2 × 2 point
+//   samples half a cell apart, not the true mean: a flash smaller than about half a cell can fall
+//   between the points, and a fine texture can alias either way.
 // · A grid finer than `maxCellsPerSide` is read through the whole-frame window only.
 // · A new grid layout restarts every channel but the whole frame; the gain is kept.
 //

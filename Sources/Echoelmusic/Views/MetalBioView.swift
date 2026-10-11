@@ -249,18 +249,20 @@ private struct BioUniforms {
     var footTy: Float = 0
 }
 
-/// VV-5a (GMMW) — one decoded footage frame offered to the renderer. VV-5b's video layer slot
-/// produces it; in VV-5a nothing does, so `MetalBioRenderer.footageSource` is nil and every
-/// footage path in the renderer returns before touching a uniform.
+/// VV-5a (GMMW) — one decoded footage frame offered to the renderer. `VideoLayerSlot` (VV-5b)
+/// produces it, and every renderer's `footageSource` IS that slot (set in `makeUIView`). Until
+/// something attaches a video output (VV-6 or VV-8) its pull returns nil, and every footage path in
+/// the renderer returns before touching a uniform.
 struct FootageFrame {
     let pixelBuffer: CVPixelBuffer
     /// Changes exactly when the picture does; never 0 (0 is the renderer's "no footage").
     let sequence: UInt64
     /// Normalized viewport -> normalized image, both top-left origin, for the aspect passed in.
     let viewportToImage: CGAffineTransform
-    /// The layer gain as SHOWN: the user's dial x `VideoFlashLimiter.gain`, computed by the
-    /// source once per media frame. The renderer clamps it and never eases it — an eased gain
-    /// would delay the limiter's cut by the time constant, which is exactly a strobe passing.
+    /// The layer gain as SHOWN: the user's dial x `VideoFlashLimiter.gain`. The source eases the
+    /// dial and counts the limiter once per draw, on what that draw shows. The renderer clamps the
+    /// product and never eases it — an eased gain would delay the limiter's cut by the time
+    /// constant, which is exactly a strobe passing.
     let opacity: Float
 }
 
@@ -268,6 +270,9 @@ struct FootageFrame {
 /// the layer on THAT frame, so the K5a frozen-last-frame defect cannot recur.
 protocol FootageFrameSource: AnyObject {
     func pullFootageFrame(viewportAspect: Float) -> FootageFrame?
+    /// The renderer could not show the frame it just pulled (no texture pair, a map it will not
+    /// use). The source treats it like a pull that showed nothing: the next frame fades in.
+    func footageDropped()
 }
 
 /// VV-5a — keeps a bound footage pair alive until the GPU has FINISHED the command buffer that
@@ -563,6 +568,14 @@ struct MetalBioView: UIViewRepresentable {
             context.coordinator.configure(device: device)
         }
         view.delegate = context.coordinator
+        // VV-5b (GMMW) — the ONE writer of `footageSource`, so every mount (floating window,
+        // external stage) pulls from the same process-wide slot, the only caller of the video
+        // output. HERE, not in `configure(device:)`: its #1196 cache-hit return skips everything
+        // after it once a pipeline is cached. Not in a body either: the slot is not observable,
+        // and a static reference subscribes nothing. With no output attached the pull is a nil.
+        #if canImport(AVFoundation)
+        context.coordinator.footageSource = VideoLayerSlot.shared
+        #endif
         view.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         // B9b (founder "immer noch grau", 2026-07-13): the shader computes LINEAR
         // sRGB (CIE XYZ → linear, see wavelengthToRGB) and encodes NOTHING — with a
@@ -1126,28 +1139,36 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     }
 
     /// VV-5a — the ONE footage call in `draw(in:)`. Returns the sequence of the pair bound this
-    /// frame, 0 = none; the #1244 skip compares it. No source (VV-5a's only state): one weak load,
-    /// one return — no allocation, no uniform write, and sequence 0 equals the encoded 0, so the
-    /// skip and the picture are exactly the pre-VV-5a ones.
+    /// frame, 0 = none; the #1244 skip compares it. No output attached (the only state until VV-6 or
+    /// VV-8): one weak load, one lock, a nil — no allocation, no uniform write, and sequence 0 equals
+    /// the encoded 0, so the skip and the picture are exactly the pre-VV-5a ones. A frame pulled and
+    /// then NOT shown is reported back (`footageDropped`), so the layer fades in when it returns.
     private func refreshFootage() -> UInt64 {
         guard !footageTierBlocked, let source = footageSource,
               let frame = source.pullFootageFrame(viewportAspect: uniforms.aspect) else {
-            if footagePair != nil { retireFootage() }
+            if footagePair != nil {
+                retireFootage()
+                // VV-5b — the tier hid a layer that was up; the slot fades it back in from 0.
+                if footageTierBlocked { footageSource?.footageDropped() }
+            }
             return 0
         }
         let t = frame.viewportToImage
         guard t.a.isFinite, t.b.isFinite, t.c.isFinite, t.d.isFinite,
               t.tx.isFinite, t.ty.isFinite else {
-            retireFootage(); return 0
+            retireFootage(); source.footageDropped(); return 0
         }
         if footagePair == nil || frame.sequence != footageSequence {
             guard frame.sequence != 0, let cache = footageTextureCache(),
                   let made = Self.makeFootagePair(from: frame.pixelBuffer, cache: cache) else {
-                retireFootage(); return 0
+                retireFootage(); source.footageDropped(); return 0
             }
             footagePair = made.pair
             footageSequence = frame.sequence
             uniforms.footVideoRange = made.videoRange ? 1 : 0
+            // VV-5b — a new frame can now arrive every draw; let the cache let go of textures no
+            // pair holds any more (an in-flight pair keeps its own `FootageHold`, see `draw`).
+            CVMetalTextureCacheFlush(cache, 0)
         }
         uniforms.footA = Float(t.a); uniforms.footB = Float(t.b)
         uniforms.footC = Float(t.c); uniforms.footD = Float(t.d)
@@ -2046,8 +2067,12 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         var u = uniforms
         u.aspect = Float(spec.width) / Float(spec.height)
         // VV-5a — the footage affine in `uniforms` was fitted to the VIEW's aspect; drawn at the
-        // stream's aspect it would stretch the picture. Until VV-5b derives a stream-aspect affine
-        // from the same pure function, the stream carries the field without the footage layer.
+        // stream's aspect it would stretch the picture. VV-5b DECIDED to keep it off: the pure
+        // function exists (`VideoLayerSlot.viewportToImage`, any aspect), but this path has no
+        // engine (no RTMP library is linked), so no gate and no device could see the result. The
+        // slice that links an engine derives the stream's affine from the geometry of the frame
+        // bound THIS draw — never a second pull, which could take a newer buffer than the one on
+        // screen and count a picture nobody sees — and replaces claim 7 of `TheRendererSkipsAnUnchangedFrameTests` with it.
         u.footPresent = 0
         encoder.setVertexBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
         encoder.setFragmentBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
@@ -3106,10 +3131,12 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // VV-5a - FOOTAGE LAYER, sampled ONLY behind footPresent (1x1 placeholders otherwise).
         // uv is +y UP here; the image is top-left, so flip once, then the CPU's viewport->image
         // affine (orientation, aspect-fit and any mirror live there, testable on the CPU).
-        // Outside 0..1 is letterbox: the field alone. BT.709 (the output settings convert every
-        // source to it, see VV-5b); video range expands luma AND chroma. The sRGB curve is undone
-        // because everything above is linear and the drawable encodes on write (B9b) - the same
-        // curve VideoLayerMath.relativeLuminance measures, so the limiter counts what is shown.
+        // Outside 0..1 is letterbox: the field alone. BT.709 (VV-5b asks the output for narrow,
+        // non-wide colour; what a 601 or HDR clip arrives as is a device probe, and the slot's
+        // first-frame breadcrumb names its tags); video range expands luma AND chroma. The sRGB
+        // curve is undone because everything above is linear and the drawable encodes on write
+        // (B9b) - the same curve VideoLayerMath.relativeLuminance measures, so the limiter
+        // counts what is shown.
         // SCREEN, never above 1: the ripple's screen blend below needs outCol <= 1, and the
         // footage's shown swing is at most footOpacity x its own swing - the limiter's bound.
         if (u.footPresent > 0.5 && u.footOpacity > 0.001) {

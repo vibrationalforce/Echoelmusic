@@ -43,8 +43,9 @@
 // which is the flattering direction §3 names. Claims 1 and 3 — counterweights, green on both.
 // Claim 4 is behaviour on an UNCHANGED helper and was not transcribed (no toolchain); this edit
 // does not touch it. KIND (§1): claims 1–3 and 5–7 are SOURCE-TEXT SCANS; claim 4 is behaviour.
-// Whether a bound pair ever renders is a DEVICE PROBE, and in VV-5a nothing produces one
-// (`footageSource` has no writer yet — VV-5b).
+// Whether a bound pair ever renders is a DEVICE PROBE. Since VV-5b `footageSource` has its one
+// writer (`makeUIView` → `VideoLayerSlot.shared`), but nothing attaches a video output yet (VV-6),
+// so no pair is produced — `TheVideoFrameIsPulledOnTheDrawTests` claim 16 pins that.
 
 import Foundation
 import XCTest
