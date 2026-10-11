@@ -24,6 +24,18 @@
 //      `LaunchGuard.beginLaunch()` in the app, one call of `raiseCrashNet()`, none of them at
 //      the head of `init()`, and no other file under `Sources/` calls `EchoelCrashLog.begin()`
 //      (a second call would truncate the log the first one opened).
+//   4. (SH-2b, 2026-10-11) After BOTH verdict lines, `raiseCrashNet()` writes the launch
+//      context line — `EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())`, exactly
+//      once in the app, before `return true`. Build 2621 wrote the verdict and then nothing, and
+//      no line said whether iOS had prewarmed the process, the phone had just rebooted or memory
+//      was short. The line's FORMAT is pinned end-to-end in
+//      `TheLaunchContextLineIsNotAVerdictTests`; this claim pins its PLACE.
+//   5. (SH-2b) The FIRST statement of `init()` is `EchoelCrashLog.breadcrumb("app: stored
+//      defaults done")` — one writer of that text in the app, inside the head window of claim 3
+//      (between `    init() {` and the `APP INIT [start]` line). Swift runs every stored default
+//      before it, so a log that reaches this rung did not die in a store's constructor, and one
+//      that ends at the verdict or the context line did — the two the 2621 log could not tell
+//      apart.
 //
 // ⚠️ HONEST GRADING (#433), transcribed in Python against the parent `4ba2eb1` and the
 // worktree. This file names no `Sources/` symbol, so it compiles against both trees.
@@ -36,6 +48,15 @@
 //     calls); the helper-call count is the same anchor absence as claim 2; the two
 //     one-call-in-the-app counts and the whole-`Sources/` `begin()` count are COUNTERWEIGHTS,
 //     green on both trees.
+//   · claims 4 and 5 (SH-2b, parent `5bc17bc`): each is red on that parent for its named reason
+//     — the context call and the rung are this slice's additions, so this is a line PINNED, not
+//     a regression caught. The anchors they share with claims 2 and 3 (the helper, the two
+//     verdict literals, `init() {`, `APP INIT [start]`) exist on both trees, so neither red is
+//     an anchor absence. Claim 3's head-window check stays green on both trees with the rung in
+//     the window — it asks for the two net calls, not for emptiness. Stripper: TRAGEND for
+//     claim 5's first-statement check — 1 of the 16 verdicts of claims 4–5 over the two trees
+//     flips on a raw read, because the SH-2b comment stands between `init() {` and the rung and
+//     only the stripper blanks it; PROPHYLAKTISCH for the other seven verdicts (0 flips).
 // Stripper `SourceText.codeOnly`: TRAGEND for claim 3 — 5 of its 12 verdicts over the two
 // trees flip on a raw read, because `init()`'s own SH-2 comment names both calls and two other
 // files under `Sources/` name `EchoelCrashLog.begin()` in prose. PROPHYLAKTISCH for claims 1
@@ -48,8 +69,11 @@
 // whose log opens with the `launch v` line (`EchoelCrashLog.launchLinePrefix`) and reaches the
 // `LaunchGuard:` verdict before `init a: audio core`. After a run that ended badly `begin()`
 // writes its `retain…` lines between the two, so "the second line" holds only after a clean run.
-// No breadcrumb marks the stored defaults themselves: a log that stops between the verdict and
-// `init a:` died in one of them, the `register(defaults:)` calls or the `APP INIT` line.
+// Since SH-2b a clean run reads: launch · LaunchGuard verdict · `launch context:` ·
+// `app: stored defaults done` · `init a: audio core`. A log that ends after the context line
+// died in a stored default; one that ends after the rung died in the `register(defaults:)`
+// calls or the `APP INIT` line. Whether the fields are READABLE on the device (the two sysctls,
+// `ActivePrewarm`) is part of that probe — the format pins `-` for a refusal, not a value.
 
 import Foundation
 import XCTest
@@ -173,6 +197,72 @@ final class TheCrashNetIsUpBeforeTheStoresTests: XCTestCase {
             app's crash net: every call truncates the diag log and reinstalls the signal handlers.
             """)
     }
+
+    // MARK: 4 — after the verdict, the net says what the process knew about itself (SH-2b)
+
+    func testTheNetSaysWhatTheProcessKnewAfterTheVerdict() throws {
+        let app = try source(Self.appPath)
+        guard let body = Self.bracedBody(after: Self.helperHead, in: app) else {
+            return XCTFail("ANCHOR MISSING: `\(Self.helperHead)` or its closing brace (#408)")
+        }
+        guard let safe = body.range(of: "\"LaunchGuard: SAFE MODE"),
+              let normal = body.range(of: "\"LaunchGuard: normal launch"),
+              let done = body.range(of: "return true") else {
+            return XCTFail("ANCHOR MISSING: the two verdict literals or `return true` in `raiseCrashNet()` (#408)")
+        }
+        guard let context = body.range(of: Self.contextCall) else {
+            return XCTFail("""
+                `raiseCrashNet()` no longer writes `\(Self.contextCall)`. Build 2621 wrote the \
+                LaunchGuard verdict and then nothing; without this line the next such log cannot \
+                say whether iOS prewarmed the process, the phone had just rebooted or memory was \
+                short (SH-2b).
+                """)
+        }
+        XCTAssertGreaterThan(context.lowerBound, safe.upperBound,
+                             "the launch context line must follow the Safe-Mode verdict — the verdict is the second line a clean run writes (#915)")
+        XCTAssertGreaterThan(context.lowerBound, normal.upperBound,
+                             "the launch context line must follow the normal-launch verdict (#915)")
+        XCTAssertLessThan(context.lowerBound, done.lowerBound,
+                          "the launch context line must be written before `raiseCrashNet()` returns")
+        XCTAssertEqual(Self.occurrences(of: "launchContextLine(", in: app), 1, """
+            `EchoelmusicApp` must read the launch context exactly once, from the crash net — a \
+            second reading elsewhere would describe a later moment under the same label.
+            """)
+    }
+
+    // MARK: 5 — the first thing `init()` says is that the stored defaults are done (SH-2b)
+
+    func testInitSaysFirstThatTheStoredDefaultsAreDone() throws {
+        let app = try source(Self.appPath)
+        guard let initHead = app.range(of: "    init() {"),
+              let firstLine = app.range(of: "\"APP INIT [start]", range: initHead.upperBound..<app.endIndex) else {
+            return XCTFail("ANCHOR MISSING: `init()` or its `APP INIT [start]` line (#408)")
+        }
+        let head = app[initHead.upperBound..<firstLine.lowerBound]
+        XCTAssertEqual(Self.occurrences(of: Self.defaultsDoneRung, in: head), 1, """
+            The head of `init()` must write `\(Self.defaultsDoneRung)` once, before the `APP INIT` \
+            log line. Swift runs every stored default before `init()`'s first statement, so this \
+            rung is the only thing that separates "died in a store's constructor" from "died in \
+            `init()`" in a log that stops early — the two the build-2621 log could not tell apart \
+            (SH-2b).
+            """)
+        XCTAssertEqual(Self.occurrences(of: "\"app: stored defaults done\"", in: app), 1,
+                       "one writer of the stored-defaults rung in the app — a second would make the log lie about the order")
+
+        // The rung is the FIRST statement: nothing but whitespace stands between `init() {` and
+        // it (comments are already blanked by `SourceText.codeOnly`, which keeps line count).
+        guard let rung = head.range(of: Self.defaultsDoneRung) else { return }
+        let before = head[head.startIndex..<rung.lowerBound]
+        XCTAssertTrue(before.allSatisfy { $0 == " " || $0 == "\n" }, """
+            A statement runs before the stored-defaults rung in `init()`: \
+            `\(before.trimmingCharacters(in: .whitespacesAndNewlines))`. The rung stands BEFORE \
+            its step (the lifecycle-ladder law) — if that statement dies, the log must still show \
+            that the defaults had finished (SH-2b).
+            """)
+    }
+
+    private static let contextCall = "EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())"
+    private static let defaultsDoneRung = "EchoelCrashLog.breadcrumb(\"app: stored defaults done\")"
 
     // MARK: - Pure scan helpers (driven on the real file and on the fixtures)
 

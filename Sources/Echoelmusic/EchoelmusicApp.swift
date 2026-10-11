@@ -353,10 +353,24 @@ struct EchoelmusicApp: App {
             EchoelCrashLog.breadcrumb(
                 "LaunchGuard: normal launch — unconfirmed streak \(LaunchGuard.unconfirmedCount)")
         }
+        // SH-2b — what the process knew about itself before the first stored default runs:
+        // prewarm, boot time, process age, available memory, thermal state, Low Power Mode.
+        // Build 2621 wrote the verdict above and then nothing, and the log could not say whether
+        // iOS had prewarmed the process, the phone had just rebooted or memory was already
+        // short. Written AFTER the verdict so the two #915 lines keep their place as the second
+        // and third things a clean run writes (the device probe in the SH-2 guard reads them so).
+        EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())
         return true
     }
 
     init() {
+        // SH-2b — the first thing `init()` says is that every stored default has run: Swift
+        // evaluates them all before this statement, so a log that reaches this rung did not die
+        // in a store's constructor, and a log that ends at the LaunchGuard verdict or the launch
+        // context line did. Build 2621 died in exactly that window and the log could not tell
+        // the two apart. A rung stands BEFORE its step (the lifecycle-ladder law) — this one
+        // stands before the first statement of `init()`, which is the step the defaults precede.
+        EchoelCrashLog.breadcrumb("app: stored defaults done")
         // SH-2 — `EchoelCrashLog.begin()` and `LaunchGuard.beginLaunch()` stood here as this
         // initializer's first two statements, AFTER every stored default had already run. They
         // now run from `crashNetRaised`, the first stored property (see `raiseCrashNet()`).

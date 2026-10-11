@@ -701,6 +701,90 @@ enum EchoelCrashLog {
             + " slide=0x" + String(slide, radix: 16)
     }
 
+    // MARK: - SH-2b: what the process knew about itself before the stored defaults ran
+
+    /// SH-2b — the line `raiseCrashNet()` writes right after the LaunchGuard verdict. Build 2621
+    /// (2026-10-10 10:58 UTC) wrote four lines and stopped without a crash marker, somewhere
+    /// between that verdict and `init a: audio core` — and the log could not say whether iOS
+    /// had prewarmed the process, whether the phone had just rebooted, how long the process had
+    /// already lived, or how much memory it had. Each field is one of those questions, asked at
+    /// the only moment they can still be asked about THIS run. `-` means "not readable here",
+    /// never a value. Lower-case throughout and free of every marker `looksLikeUnseenCrash` and
+    /// `unconfirmedRunToAttach` search for, so the line cannot be mistaken for a verdict.
+    static let launchContextPrefix = "launch context: "
+
+    /// Pure: formats the readings; `nil` prints as `-`. The reader below supplies them.
+    static func launchContextLine(prewarm: Bool?, bootEpoch: Int?, uptimeSeconds: Int?,
+                                  processAgeMs: Int?, availableMB: Int?, thermal: String?,
+                                  lowPower: Bool?) -> String {
+        func flag(_ value: Bool?) -> String { value.map { $0 ? "1" : "0" } ?? "-" }
+        func number(_ value: Int?, _ unit: String) -> String { value.map { String($0) + unit } ?? "-" }
+        return launchContextPrefix
+            + "prewarm=" + flag(prewarm)
+            + " boot=" + number(bootEpoch, "")
+            + " up=" + number(uptimeSeconds, "s")
+            + " age=" + number(processAgeMs, "ms")
+            + " avail=" + number(availableMB, "mb")
+            + " thermal=" + (thermal ?? "-")
+            + " lowpower=" + flag(lowPower)
+    }
+
+    /// The same line read from the live process. `ActivePrewarm` is the environment flag iOS
+    /// sets on a prewarmed launch; boot time and this process's start time are two `sysctl`s
+    /// (`KERN_BOOTTIME`, `KERN_PROC_PID`); available memory is `os_proc_available_memory`
+    /// (iOS only — the reader `MemoryPressureHandler` already uses); thermal state and Low Power
+    /// Mode come from `ProcessInfo`. No actor, no closure handed to a framework, no I/O beyond
+    /// the two sysctls: this runs inside the first stored property's initializer.
+    static func launchContextLine() -> String {
+        let info = ProcessInfo.processInfo
+        let now = Date().timeIntervalSince1970
+        let boot = bootTime()
+        let started = processStartTime()
+        var availableMB: Int?
+        #if os(iOS)
+        availableMB = Int(os_proc_available_memory()) / (1024 * 1024)
+        #endif
+        return launchContextLine(
+            prewarm: info.environment["ActivePrewarm"] == "1",
+            bootEpoch: boot.map { Int($0) },
+            uptimeSeconds: boot.map { Int(now - $0) },
+            processAgeMs: started.map { Int((now - $0) * 1000) },
+            availableMB: availableMB,
+            thermal: SelfCheckLine.thermalName(info.thermalState),
+            lowPower: info.isLowPowerModeEnabled)
+    }
+
+    /// Seconds since 1970 at which the kernel booted, or nil when the sysctl refuses. The same
+    /// value across two launches means no reboot happened between them.
+    private static func bootTime() -> TimeInterval? {
+        #if canImport(Darwin)
+        var mib: [Int32] = [CTL_KERN, KERN_BOOTTIME]
+        var value = timeval()
+        var size = MemoryLayout<timeval>.stride
+        guard sysctl(&mib, UInt32(mib.count), &value, &size, nil, 0) == 0, value.tv_sec > 0 else { return nil }
+        return TimeInterval(value.tv_sec) + TimeInterval(value.tv_usec) / 1_000_000
+        #else
+        return nil
+        #endif
+    }
+
+    /// Seconds since 1970 at which THIS process started, or nil when the sysctl refuses. A large
+    /// age at the first stored property means the process existed long before the app ran —
+    /// a prewarm that `ActivePrewarm` did not flag, or a resume after suspension.
+    private static func processStartTime() -> TimeInterval? {
+        #if canImport(Darwin)
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+        var proc = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        guard sysctl(&mib, UInt32(mib.count), &proc, &size, nil, 0) == 0, size > 0 else { return nil }
+        let start = proc.kp_proc.p_un.__p_starttime
+        guard start.tv_sec > 0 else { return nil }
+        return TimeInterval(start.tv_sec) + TimeInterval(start.tv_usec) / 1_000_000
+        #else
+        return nil
+        #endif
+    }
+
     /// The crash of a previous run in ONE line, or nil when that run carries no crash marker:
     /// what killed it (the signal, or the exception's name), the queue and thread the handler
     /// named, the innermost frames of the app's own binary as offsets from where it was loaded,
