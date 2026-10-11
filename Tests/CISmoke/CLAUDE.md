@@ -357,6 +357,26 @@ read needles as data. A LOCAL `let name` inside a test method is fine (locals sh
 is a stored property at class scope. **Do not give a guard class a stored `name`, `description`
 or `testRun`** — call it what it is (`probe`).
 
+⛔ **AND A FIFTH MEMBER: A `Substring` HANDED TO A `String` PARAMETER (GMMW SH-2b, `f2a8be28f` →
+`4e041a88b`).** `TheCrashNetIsUpBeforeTheStoresTests` claim 5 sliced `init()`'s head out of the
+app source — `app[a..<b]` is a `Substring` — and passed it to the file's own
+`occurrences(of:in text: String)`: `cannot convert value of type 'Substring' to expected argument
+type 'String'`, ONE error, `** TEST BUILD FAILED **`, the whole blocking bundle uncompiled for two
+commits (`f2a8be28f`, `96f744c15`). Every checker was clean and the Python transcription green on
+both trees, for the reason above: the slice is a needle's RECEIVER, and the checkers read
+receivers as data too. Claim 3 of the same file binds the identical slice and only calls
+`contains`, which `Substring` has — the shape hid beside a working twin. `Xcode Compile Check` was
+green both times (it builds `Sources/` alone, §5b); only `Build for Testing` saw it, and the
+review workflow caught it by READING the Swift, after the push. **A slice of a `String` is a
+`Substring` until you write `String(…)` — wrap it at the hand-over, or declare the helper over
+`StringProtocol`.** Cheap check before pushing a guard that slices: list its slices
+(`grep -nE '\[[A-Za-z]+\.(upper|lower)Bound' <file>`) and read what each one is handed to.
+⚠️ The habit existed at ONE site before it was a law: `EveryReachableRowStatesItsGridTests`
+wraps both of its slices in `String(…)` and says why in place ("no compiler in this session …
+a build error here costs a whole CI round-trip", 2026-10-04). A precaution written into one
+guard's comment reaches the next guard's author only by luck; this paragraph is where it reaches
+them on purpose.
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
