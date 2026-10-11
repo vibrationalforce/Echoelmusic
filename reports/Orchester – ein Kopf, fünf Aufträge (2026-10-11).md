@@ -314,7 +314,7 @@ RÜCKWEG: was du mit jeder Antwort machst (du kopierst nur, du entscheidest den 
 - Kein Modell bekommt je Diagnose-Logs, Puls- oder Atemwerte, Nutzer- oder Testerdaten, Tokens, App-Store-Schlüssel oder .claude/settings.local.json.
 - Store-Text, Info.plist und Workflows ändert niemand ohne dich.
 
-7. Danach zeigt `python3 -I scripts/learn-intake.py --tally`, welches Modell die nächste Messstunde verdient. Bisher gemessen: ChatGPT/Astra 8/12, DeepSeek 7/20, „unbekannt“ (wohl Gemini) 0/6. Grok und Mistral sind noch ungemessen. Die Spuren sind also eine Arbeitsverteilung, keine Rangliste.
+7. Danach zeigt `python3 -I scripts/learn-intake.py --tally`, welches Modell die nächste Messstunde verdient. Bisher gemessen (Stand beim Schreiben am Vormittag; die aktuelle Bilanz steht in §6): ChatGPT/Astra 8/12, DeepSeek 7/20, „unbekannt“ (wohl Gemini) 0/6. Grok und Mistral sind noch ungemessen. Die Spuren sind also eine Arbeitsverteilung, keine Rangliste.
 
 ## 5. Prüfprotokoll des Richters
 

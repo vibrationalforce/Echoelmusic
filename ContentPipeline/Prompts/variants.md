@@ -1,8 +1,10 @@
 # Prompt — Skript-Varianten erzeugen
 
 Vorlage für den Auftrag an einen Agenten. Der erste Absatz ist nicht schmückend: ohne
-ihn erfindet ein Modell zuverlässig einen AUv3-Claim und eine Meditations-Zielgruppe,
+ihn erfindet ein Modell zuverlässig einen Plugin-WIRT und eine Meditations-Zielgruppe,
 weil das die statistisch naheliegende Bio-Musik-App ist. Echoel ist sie nicht.
+(⛔ Bis 2026-10-11 verneinte dieser Absatz den AUv3-Status ganz — richtig seit #1385/#1386:
+Echoel IST ein AUv3-Instrument und HOSTET keines; `CLAIMS.md` §a/§b, zwei Hälften.)
 
 ---
 
@@ -10,8 +12,9 @@ weil das die statistisch naheliegende Bio-Musik-App ist. Echoel ist sie nicht.
 Lies ZUERST ContentPipeline/CLAIMS.md, dann ContentPipeline/Scripts/template_short_form.md.
 
 CLAIMS.md ist bindend. Behaupte nichts, was dort nicht unter ✅ steht. Insbesondere:
-Echoel ist KEIN AUv3-Plugin und kann keine Plugins laden (Target am 2026-07-24
-entfernt); es ist KEIN Wellness-/Meditations-/Schlaf-/Fokus-Produkt (harte Markenregel,
+Echoel IST ein AUv3-Instrument (Target `EchoelmusicAUv3`, lädt in AUM, am Gerät gemessen
+2026-09-20, #1386) und HOSTET selbst KEINE fremden Plugins — kein Wirt, das Hosting bleibt
+gestrichen (CLAIMS.md, die zwei Hälften a/b); es ist KEIN Wellness-/Meditations-/Schlaf-/Fokus-Produkt (harte Markenregel,
 und die App selbst sagt "Selbstbeobachtung, nicht medizinische Diagnose"); die Apple
 Watch ZEIGT Werte an, sie misst sie nicht für die App; es gibt keinen App-Store-Link,
 nur TestFlight.
