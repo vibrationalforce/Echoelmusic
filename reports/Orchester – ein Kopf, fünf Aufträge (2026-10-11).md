@@ -381,3 +381,116 @@ OFFEN UND GEHÖRT DEM FOUNDER
 - Ob Astra dasselbe Produkt ist wie ChatGPT, ist nicht gemessen.
 - fastlane/**, Info.plist und die Workflows bleiben founder-gated: Claude Code berichtet nur und editiert nicht.
 - Keine Datei im Repo wurde geändert, und keine Scratch-Datei wurde geschrieben.
+
+
+## 6. Jetzt — die Verteilung nach SH-2b (Stand 2026-10-11, `main` = `05047ad34`)
+
+Der Report oben ist am Stand `0205769fc` gepinnt. Seit dem Schreiben ist SH-2b auf `main`
+(`f2a8be28f` → Typkorrektur `4e041a88b` → Ordinal-Säuberung `7cc9686c4` → `05047ad34`). Gemessen,
+was das für die fünf Aufträge heißt (`git diff --stat 0205769fc 05047ad34 -- <alle in §3 zitierten
+Dateien>`): von den Dateien, die die FÜNF externen Aufträge öffnen, hat sich genau EINE bewegt —
+`Sources/Echoelmusic/EchoelmusicApp.swift`, +15 Zeilen, im ChatGPT-Auftrag. Alle Zeilenangaben für
+Gemini, Grok, Mistral und DeepSeek stimmen am Kopf-Stand weiter; ChatGPT bekommt den Nachtrag unten.
+(`Core/EchoelCrashLog.swift` +85 ist SH-2b selbst und steht nur in der Claude-Code-Liste.)
+
+### Wem jetzt was — die Reihenfolge
+
+| Modell | Auftrag (§3) | Wann | Kopf-Stand |
+|---|---|---|---|
+| **Gemini** | Store-Text gegen `CLAIMS.md` | **jetzt**, neuer Chat — Gemini hat keinen offenen Auftrag | `0205769fc` (seine Dateien unverändert) |
+| **Codex/Astra** | **Gegenprüfung SH-2b** — der Auftrag unten, eigener Chat | **jetzt** — der erste Auftrag für diesen Platz; eine FERTIGE Scheibe liegt vor | **`05047ad34`** — im Kopf Stand und URL ersetzen, der Auftrag sagt es selbst |
+| ChatGPT | „Der stille Start" + Nachtrag unten | erst, wenn die Antwort zum Agentenpfad vom 11.10. bei Claude Code ist | `0205769fc` + Nachtrag |
+| Mistral | Rot-Blitz nach WCAG | erst nach der YCbCr-Antwort vom 11.10. | `0205769fc` |
+| DeepSeek | Grain-Kern | erst nach der Ringpuffer-Antwort vom 11.10. | `0205769fc` |
+| Grok | Video-Uhr | erst nach der OSC-Antwort vom 11.10. | `0205769fc` |
+| Claude Code | Empfänger, einziger Schreiber | laufend | — |
+
+Zwei Regeln, die die Reihenfolge erzwingen: **ein offener Auftrag je Modell** (eine zweite Frage im
+selben Chat vermischt zwei Antworten, und der Rückweg in §4 misst je Antwort), und **die vier
+offenen Antworten vom 11.10. kommen ZUERST zurück zu Claude Code** — sie werden nachgemessen und
+geloggt, bevor derselbe Platz einen neuen Auftrag bekommt.
+
+### Der Auftrag für Codex/Astra (Kopf §2 davor, mit Stand und URL auf `05047ad34`)
+
+```text
+AUFTRAG FÜR CODEX/ASTRA: Die Startkontext-Zeile. Tut der Code, was sein Kommentar verspricht? (Stand 05047ad34)
+EIGENER Chat, nie der ChatGPT-Planungs-Chat. Der Kopf aus Abschnitt 2 steht direkt VOR diesem Text; für diesen Auftrag gilt dort überall Stand 05047ad34 (voll 05047ad34fd56b22c3d9b96d2186a0cbaef5438f), auch in deiner Stand-Zeile. Dateien öffnest du so: https://github.com/vibrationalforce/Echoelmusic/blob/05047ad34fd56b22c3d9b96d2186a0cbaef5438f/<Pfad>#L<von>-L<bis>
+
+Deine Spur: Gegenprüfung einer FERTIGEN Scheibe. Den Fall finden, in dem der Code bei einem konkreten Eingabewert etwas anderes tut, als Kommentar, Dateikopf oder Wächter-Fehlermeldung versprechen.
+Nicht deine Spur: Plan, Lösung, Code, Patches, Testdesign; der Lebenszyklus-Auftrag an ChatGPT (ob ein Start fälschlich als Absturz zählt); ob die Felder auf dem Telefon lesbar sind (offene Gerätefrage) — dazu höchstens offene Fragen, keine Befunde; andere Dateien als die unten genannten.
+
+WORUM ES GEHT (nur in Worten, es gibt kein Log für dich)
+- Ein Start auf einem Testgerät schrieb vier Zeilen ins Diagnose-Protokoll, zuletzt das LaunchGuard-Urteil, und endete ohne Absturz-Marker, bevor „init a: audio core“ kam.
+- Seit dieser Scheibe schreibt die App direkt nach dem Urteil EINE Zeile „launch context:“ mit sieben Feldern (prewarm, boot, up, age, avail, thermal, lowpower) aus dem Initialisierer der ERSTEN gespeicherten Eigenschaft des App-Structs; init() sagt danach als Erstes „app: stored defaults done“.
+- Versprochen wird: die Zeile ist Kontext, nie ein Urteil (kleingeschrieben, frei von jedem Marker, den der nächste Start sucht); „-“ heißt „hier nicht lesbar“, nie ein Wert; eine sysctl-Verweigerung ergibt „-“; ein Log, das die Rung erreicht, starb nicht in einem Store-Konstruktor (Datenspeicher-Klassen); ein Log, das am Urteil oder an der Kontextzeile endet, schon.
+- Zwei Wächter (neun Methoden) pinnen Format und Platz der Zeile. Sie prüfen den reinen Formatierer und einen Scan des Quelltexts, nicht, was die Leser auf einem Gerät zurückgeben. Was den Testbau angeht: er steht in der CI; was die Felder am Gerät lesen, kann kein Test entscheiden.
+
+ÖFFNE
+- Sources/Echoelmusic/Core/EchoelCrashLog.swift
+  - Z. 704–730: Kommentar, Präfix (Z. 714), reiner Formatierer mit den zwei Helfern (Z. 720–721)
+  - Z. 732–756: der Live-Leser; Z. 758–770: bootTime(); Z. 772–787: processStartTime()
+  - Z. 198–204: breadcrumb() — Zeitstempel und die Bedingung, unter der eine Zeile stumm bleibt
+  - Z. 529–531, 546–547, 556, 564–565, 578: die Marker-Konstanten; Z. 445–451, 469–480, 590–598, 620–624, 879–886: ihre Leser
+- Sources/Echoelmusic/Core/SelfCheckLine.swift Z. 91–99: thermalName
+- Sources/Echoelmusic/Core/MemoryPressureHandler.swift Z. 117–123 und Z. 287–296: die zweite Lesart von os_proc_available_memory
+- Sources/Echoelmusic/EchoelmusicApp.swift Z. 53–64 (die erste gespeicherte Eigenschaft), Z. 325–365 (raiseCrashNet; Urteil Z. 348–355, Kontextzeile Z. 363), Z. 367–378 (Kopf von init()), Z. 429 („init a“)
+- Tests/CISmoke/TheLaunchContextLineIsNotAVerdictTests.swift Z. 1–38 (Kopf: was der Wächter NICHT beweist), Z. 56–64, 68–73, 77–94, 98–124 (die vier Ansprüche)
+- Tests/CISmoke/TheCrashNetIsUpBeforeTheStoresTests.swift Z. 27–38 und Z. 66–79 (was die Reihenfolge der Zeilen bedeuten soll), Z. 215–243 und Z. 247–274 (Ansprüche 4 und 5)
+
+FRAGEN
+1. Für jedes der sieben Felder: welcher Rückgabewert des jeweiligen Lesers (Umgebungsvariable, sysctl, os_proc_available_memory, ProcessInfo) wird im Live-Leser Z. 738–756 zu „-“, welcher zu einer Zahl oder Flagge? Nenne je Feld den Eingabewert und halte das Ergebnis gegen Z. 711–712 und Z. 716 sowie gegen den Wächter-Kopf Z. 16–25 und Z. 113–117.
+2. up= und age= (Z. 751–752) und der Zeitstempel jeder Zeile (Z. 201) rechnen mit der Wanduhr, boot= und die Prozess-Startzeit kommen aus dem Kernel. Welches Vorzeichen und welche Rundung bekommen die beiden Felder, wenn iOS die Uhr zwischen Boot bzw. Prozessstart und Lesen stellt (erster Start nach Neustart, Netzzeit, Zeitzone), und bleibt das Ergebnis vom Zeichen „-“ unterscheidbar (Z. 720–721; Wächter Z. 118–123)? Gilt Z. 758–759 („gleicher Wert = kein Neustart“) auch umgekehrt?
+3. Zwischen Urteil (Z. 348–355) und Kontextzeile (Z. 363) laufen die Leser aus Z. 738–787. Was bedeutet ein Log, das am Urteil endet, nach dem Kommentar Z. 368–373 und nach dem Wächter Z. 74–77 — und welche Enden lässt der Code an dieser Stelle tatsächlich zu?
+4. Z. 712–713 verspricht Freiheit von jedem Marker, den looksLikeUnseenCrash und unconfirmedRunToAttach suchen. Vergleiche die Liste, die der Wächter prüft (Tests Z. 78–80), mit den Konstanten und Lesern oben: Ist sie vollständig, und kann ein möglicher Wert aus thermalName (Z. 91–99) oder eine Zahl eine der Konstanten oder die Bedingungen in Z. 590–598 treffen?
+5. Welche Rückgaben von os_proc_available_memory (Z. 744) und der beiden sysctl-Aufrufe (Z. 765, Z. 780–782) fängt der Code ab, welche nicht — und deckt sich das mit „nil when the sysctl refuses“ (Z. 758, Z. 772) und mit der Lesart in MemoryPressureHandler Z. 287–296? Was iOS auf dem Gerät für die eigene PID oder ohne Speicher-Limit zurückgibt, kannst du nur als offene Frage stellen.
+
+Nur für dich: Zu jedem Befund der konkrete Eingabewert, die Kommentarzeile, die etwas anderes verspricht, und die Codezeile, an der es abweicht. Ein Fall, den der Code richtig behandelt, zählt nicht als Zeile — sag es kurz. Was nur iOS auf dem Gerät entscheiden kann (Sandbox, Umgebungsvariable, Prewarm-Phase), schreibst du als offene Frage mit „ANNAHME:“ davor, nie als Befund. Was du aus Apple-Dokumentation weißt, nenne so. Kein Code, kein Fix, keine Bitte um das Log oder ein Geräteprotokoll.
+Antworte nur in der Tabelle aus dem Kopf.
+```
+
+### Nachtrag zum ChatGPT-Auftrag „Der stille Start" (an die Nachricht aus §3 anhängen)
+
+```text
+Nachtrag zum ChatGPT-Auftrag „Der stille Start“ (gepinnt 0205769fc): „prewarm kommt nirgends vor“ war dort wahr (git grep -c -i prewarm 0205769fc -- Sources Tests: kein Treffer) — seit f2a8be28f (kompilierbar seit 4e041a88b, beide in 05047ad34) liest raiseCrashNet() ActivePrewarm NACH dem Urteil (EchoelmusicApp.swift Z. 363 → EchoelCrashLog.swift Z. 749 am Stand 05047ad34; init() liegt jetzt bei Z. 367, „init a“ bei Z. 429, +15 gegenüber dem Kopf); die Fragen 1–3 bleiben offen, Frage 4 („vor beginLaunch()“) auch, weil die neue Zeile DANACH steht.
+```
+
+### Prüfprotokoll zu §6 (derselbe Richter-Ablauf wie §5)
+
+- Zwei Entwürfe mit verschiedener Linse (A: Code gegen Kommentar, je ein Eingabewert · B: iOS-Realität
+  am Gerät), ein Richter. Noten A: Ehrlichkeit 9 · Sicherheit 9 · Präzision 9 · Nutzbarkeit 8; B: 9 · 8 · 8 · 6.
+  Der Final ist A mit zwei Fragen aus B (sysctl-/Speicher-Rückgaben, „unbekannt → Wort oder -").
+- 25 Zitatprüfungen gegen `05047ad34`: 24 stimmen. Die EINE Falschstelle stand in MEINER Aufgabenstellung
+  an die Entwürfe („seit 4e041a88b liest raiseCrashNet() ActivePrewarm") — `git log -S ActivePrewarm`
+  nennt `f2a8be28f` als einführenden Commit, `4e041a88b` ist der Compile-Fix. Im Nachtrag oben steht
+  die richtige Form. Jede Zeilenangabe des Finals ist zusätzlich hier nachgeschlagen (`git show
+  05047ad34:<Pfad> | sed -n`): Präfix 714, Helfer 720–721, Live-Leser 738–756, `ActivePrewarm` 749,
+  bootTime 758–770, processStartTime 772–787, breadcrumb 198–204, Marker 529–578, Leser 445/469/590/
+  620/879, erste gespeicherte Eigenschaft 53–64, Urteil 348–355, Kontextzeile 363, init() 367, „init a"
+  429; Wächter: Ansprüche 4/5 bei 215–243 und 247–274, Format-Wächter 56–64 · 68–73 · 77–94 · 98–124.
+- Verworfen, mit Grund: B-Frage 1 (Prewarm-Phase, „baut SwiftUI das Struct") und B-Frage 5 erster Teil —
+  Lebenszyklus-Fragen, das ist die ChatGPT-Spur; B-ÖFFNE `Info.plist` Hintergrundmodi — Umfang größer
+  als die Scheibe; A-Formulierung „offene Gerätefrage G10" — G10 in `FOUNDER_INBOX.md` nennt die Felder
+  nicht; A-Fragen 4/5 waren lenkend („fehlt eine", „was kann es tatsächlich bedeuten") und sind neutral
+  gestellt; A-Fragen 2 und 3 zu einer verschmolzen, damit Platz für B blieb.
+- **Was der Auftrag bewusst NICHT behauptet, obwohl es gemessen ist:** dass alle neun SH-2b-Methoden
+  auf CI liefen und bestanden. Das steht im SESSION_LOG (`2759e4592`: Run-Tests-Job 114421830155 auf
+  `4e041a88b`, alle neun Namen im Fenster bestanden) — der Richter konnte es nicht nachmessen (Job-Logs
+  liefern dieser Umgebung 403, Conclusion ist wegen #396 immer `failure`), also sagt der Auftrag nur „der
+  Testbau steht in der CI". Ein Prüfer bekommt keine Behauptung, die er nicht selbst prüfen kann.
+- Kein Log-Inhalt, kein Gesundheitswert, kein Token im Auftrag; der stille Start ist nur strukturell
+  beschrieben („vier Zeilen … zuletzt das Urteil"). Kein Auftrag verlangt Bauen, Ausführen oder Code.
+
+### Lernmodus-Bilanz nach dieser Runde (`python3 -I scripts/learn-intake.py --tally`)
+
+chatgpt-astra 16/23 bestätigt (3 Zeilen) · mistral 13/21 · deepseek 7/20 · unknown 0/6. Die jüngste
+ChatGPT-Zeile ist der Gate-Bericht zu `05047ad34` (8/11 bestätigt, WATCH): seine Zahl „21 fehlgeschlagen,
+1 übersprungen" ist nur aus dem CI-Artefakt `test-results-ios-iPhone 17` entscheidbar, und dessen Host
+(`*.blob.core.windows.net`) ist für diese Umgebung gesperrt — **Founder-Posten:** den Host unter „Allowed
+domains" der Cloud-Umgebung freigeben, dann wird die Zahl gemessen statt geglaubt.
+
+### Offen und gehört dem Founder (zusätzlich zu §5)
+
+- Ob der Codex/Astra-Platz dasselbe Produkt ist wie der ChatGPT-Planungs-Chat, bleibt ungemessen — der
+  Auftrag verlangt deshalb den EIGENEN Chat.
+- G10 (Gerät, Build 2621 vs. 2622+) entscheidet, ob die sieben Felder auf dem Telefon lesen; kein Prüfer
+  und kein Test kann das ersetzen.
