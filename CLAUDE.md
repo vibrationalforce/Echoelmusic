@@ -680,7 +680,7 @@ Wächter: `Tests/CISmoke/TheAutoMergeWaitsForTheGatesTests.swift`. ⛔ Die Prove
 
 - **`Echoel Full Test Suite (non-blocking)` beweist gar nichts** — es meldete am 2026-07-31 `success` auf `bc35248`, während beide echten Gates an 12 Compile-Fehlern scheiterten. Ursache und Reparatur: #208 (founder-gated, `.github/workflows/**` ist berichten-nicht-editieren).
 
-> **No JUCE / no CMake / no C++.** Swift 100%, ZERO external dependencies today (`Package.swift` `dependencies: []`; HaishinKit = planned, compile-guarded only).
+> **No JUCE / no CMake; C++ only per CODE STYLE.** Swift 100%, ZERO external dependencies today (`Package.swift` `dependencies: []`; HaishinKit planned, not linked).
 > The old CMake/JUCE/iPlug2 desktop scaffolding (`CMakeLists.txt`, `setup*.sh`,
 > `build.yml`, `desktop_build.yml`, desktop build scripts) was removed 2026-06-19.
 > Legacy/contradictory workflows also removed 2026-06-19: `android-build.yml`,
