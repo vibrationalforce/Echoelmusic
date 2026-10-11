@@ -227,7 +227,7 @@
 // What the transcription cannot show: whether the iOS SDK annotates `MIDIReceiveBlock` as
 // `@Sendable` (then the old spelling was already safe and `@Sendable` is a no-op). Either way the
 // explicit spelling is correct; only a device with a MIDI source proves the trap is gone.
-// NEEDS-FOUNDER-VERIFY: Arrange → Export → WAV auf dem Gerät bis zum Teilen-Blatt durchlaufen lassen,
+// NEEDS-FOUNDER-VERIFY: Piece → Kachel „WAV“ auf dem Gerät bis zum Teilen-Blatt durchlaufen lassen,
 // und im nächsten `echoel_diag.log` die Zeile „retro: recording armed“ VOR dem Play sehen — nur das
 // Telefon beweist die Aufnahme, nur das 2613-dSYM beweist, dass Frame 7/8 diese Closure waren.
 // Dieselbe Geräteprobe entscheidet auch die zweite Stelle: läuft der Export nach dem Stop bis zum
