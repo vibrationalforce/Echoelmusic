@@ -21,7 +21,7 @@ What it does have, structurally, is **biofeedback as a first-class modulation so
 - **Bio is input.** Heart rate, HRV (RMSSD normalized), breath rate + phase, and coherence (HRV spectrum) are published as `BioSampleFrame` onto `EngineBus`. Sources: HealthKit, camera rPPG (on-device), any BLE chest strap speaking standard Heart Rate Service (0x180D), plus a simulation you can pick by hand when you have no sensor.
 - **MIDI is input here.** CoreMIDI notes, per-channel pitch bend, CC 74 and CC 21–31 (air controllers) arrive as `ControllerEvent`. Those events reach ONE monophonic performer voice, and all three of MPE's continuous dimensions now move it — pitch bend, Press (channel pressure, #939) and Slide (CC 74, #942). It is still **not MPE input**: master/member disambiguation and RPN 6,6 zone detection are absent, so there is no member channel to tell apart, and it is ONE monophonic voice. See the header of `Sync/MIDIBusPublisher.swift`. This bullet is about the BUS: MIDI note OUT and MIDI file export exist and are listed under the output stage below. Outbound expression (pitch bend, CC 74, channel pressure) is gated behind `mpeEnabled`/`expressionEnabled`, and since #713 both flags are written by `MIDIOutput.applyOutputPreferences()`, which reads the two persisted keys the routing panel's "MPE note layout" and "Per-note expression" switches set. Both default OFF, so a fresh install is note-only MIDI 1.0 — but **MPE out is reachable and real**: the zone is announced, notes are spread over member channels 2–16, and each carries Glide, Slide (CC 74) and Press. The *input* half is the one that is not MPE: the dimensions arrive and sound, the ZONE does not.
 - **DSP, visuals, lighting and network out are subscribers.** Anything reading from the bus can be bio- or controller-modulated without point-to-point coupling.
-- **Science-only.** No "healing frequencies", no chakras, no Solfeggio mythology. Mappings reference peer-reviewed sources (Lehrer/Vaschillo HRV resonance frequency, Polar H10 validation, DELLY / Tracy bio-signal processing). Data is for self-observation, not medical diagnosis.
+- **Science-only.** No "healing frequencies", no chakras, no Solfeggio mythology. The resonance-breathing guidance cites Lehrer/Vaschillo (HRV resonance frequency); coherence follows the HRV-spectrum definition. Claims of further validation studies are not made here until a source (author, year, DOI) is in the repo. Data is for self-observation, not medical diagnosis.
 
 ---
 
@@ -86,7 +86,7 @@ swift build                                              # SPM library only
 
 `swift test` builds `Tests/EchoelmusicTests`, which is the large exploratory suite and is *not* what gates a merge — no workflow runs it under SwiftPM, and it is allowed to be red. The blocking bundle is `Tests/CISmoke`, built and run by the `Echoelmusic CI/CD Pipeline` workflow through the Xcode scheme.
 
-TestFlight runs from `.github/workflows/testflight.yml`, two ways:
+TestFlight runs from `.github/workflows/testflight.yml`, three ways:
 
 ```bash
 # Explicit dispatch
@@ -94,6 +94,9 @@ gh workflow run testflight.yml -f platform=ios -f build_only=false
 
 # Or tokenless: bumping `.deploy/release` on any branch triggers an iOS deploy.
 # Ordinary code pushes never deploy — only an explicit bump of that file.
+
+# Or by ref: a push to the `deploy` / `deploy-dryrun` branch or a `deploy-*` tag
+# dispatches the same workflow (`.github/workflows/deploy-on-tag.yml`).
 ```
 
 ---
@@ -129,11 +132,17 @@ Sources/Echoelmusic/
                  EchoelFXView,
                  TouchInstrumentView, FloatingVisualWindow, PatchbayView, EchoelTheme
   Views/         MetalBioView, OnboardingView
-  EchoelAI/      BrainBackend, FoundationModelsBrain, ParameterToolCore — three files,
-                 no production caller today (the echoelAI flag has zero readers); the parameter registry itself lives in Core/
-  Stream/        BroadcastPublisher — a compile guard only; HaishinKit is not a dependency
+  EchoelAI/      six files. LIVE path since 2026-10-09: Siri / Shortcuts (EchoelAppIntents) →
+                 EchoelAgentDesk → EchoelCommandExecutor (typed commands, one undo), plus the
+                 "Describe this piece" banner (AgentReportBanner → FoundationModelsBrain, iOS 26
+                 with an on-device model). Still caller-less: ParameterToolCore; the echoelAI
+                 flag has zero readers. Not device-verified yet. The parameter registry lives in Core/
+  Stream/        seven files — the broadcast pipeline (BroadcastPublisher lifecycle owner,
+                 master + picture pump, session rules, StreamKeyStore in the Keychain). NO engine
+                 is linked (HaishinKit is not a dependency) and BroadcastView has no door, so
+                 nothing streams
   Resources/     bundled assets
-  (plus the two loose files EchoelmusicApp.swift and MicrophoneManager.swift)
+  (plus the one loose file EchoelmusicApp.swift)
 Sources/EchoelmusicWidgets/  WidgetKit extension, embedded in the app
 Sources/EchoelmusicWatch/    watchOS app — present but NOT embedded (dependency off in project.yml)
 Tests/CISmoke/               the blocking gate bundle

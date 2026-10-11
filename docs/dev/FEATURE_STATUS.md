@@ -153,7 +153,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Onset-Slicer (`SampleSlicer`, GMMW GA-6) | reiner Kern: schneidet ein Sample an seinen Treffern, mit der Onset-Regel der Tempo-Erkennung; kein Aufrufer | GA-7 (Founder-Gate): wo die Schnittpunkte liegen und was ein Schnitt spielt |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
-| EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo), kein Aufrufer | ein Sprachmodell als Planer + eine Fläche ohne neuen Modal |
+| EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo); **Aufrufer seit AI-1/AI-2 (2026-10-09):** Siri / Kurzbefehle (`EchoelAppIntents`) → `EchoelAgentDesk`, Bericht + Undo im `AgentReportBanner`; Gerät offen | ein Sprachmodell als Planer (AI-5, Founder-Gate GM10); weiterhin ohne Aufrufer: `ParameterToolCore` |
 
 ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
 `showControl`, `avObjects`, `performerTracking`, `liveCollab`, `headTracking`, `echoelAI`). Hinter
