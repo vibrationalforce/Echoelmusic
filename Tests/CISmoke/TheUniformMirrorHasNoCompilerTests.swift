@@ -11,7 +11,8 @@
 //
 // The failure mode is the nastiest kind: insert or remove ONE field on one side and every
 // uniform after it shifts by four bytes. `coherence` is read as `breath`, `breath` as
-// `aspect`, and so on down 98 fields. Nothing crashes and nothing fails to build — the
+// `aspect`, and so on down about a hundred fields (run the parser, do not quote a count — it
+// moved 98 → 99 → 108 between #1119 and VV-5a). Nothing crashes and nothing fails to build — the
 // picture simply renders wrongly, with the cause a thousand lines from the symptom.
 //
 // #1119 found the first live reason to care: `hr` is uploaded, sanitised and eased every
@@ -37,6 +38,17 @@
 //     needle of that shape then matches the comment instead of the code — the
 //     `EchoelModalBank` trap: writing about a thing falsifies the grep that measures it.
 //     Anchoring on the THIRD field, which the comment elides, is what fixes it.
+//
+// ⭐ VV-5a (GMMW) appended nine footage floats on both sides and added claims 4 and 5. Claim 4
+// is the MSL half of claim 2's premise (until now only the Swift side was checked for `Float`):
+// it reads the TYPE of every declaration in the block, not a list of banned words — a banned-word
+// regex (`\bu?int\w*`) was drafted and would have been red on a correct tree, because a field is
+// called `intensity`. Claim 5 pins the footage gate: every `u.foot…` the shader reads is a Swift
+// field, and the two plane samples sit behind the one gate. GRADING (§3), transcribed (§0)
+// against the parent (`500491409`) and this tree: claims 1–3 counterweights (99 = 99 there,
+// 108 = 108 here); claim 4 a counterweight (all `float` on both); claim 5 FORWARD — on the
+// parent the gate does not exist, one anchor absence (#486). All SOURCE-TEXT SCANS (§1); whether
+// the GPU reads the bytes as declared is a device question no scan answers.
 
 import Foundation
 import XCTest
@@ -84,7 +96,7 @@ final class TheUniformMirrorHasNoCompilerTests: XCTestCase {
         let s = try source()
         let swift = swiftFields(s), metal = metalFields(s)
         XCTAssertGreaterThan(swift.count, 90, """
-            Only \(swift.count) Swift uniform fields were parsed. There are ~98. Either the \
+            Only \(swift.count) Swift uniform fields were parsed. There are about a hundred. Either the \
             struct shrank dramatically or — far more likely — the needle stopped matching: \
             `private struct BioUniforms {` was renamed, or the field regex became \
             line-anchored and is now missing the lines that declare three fields at once. \
@@ -122,6 +134,93 @@ final class TheUniformMirrorHasNoCompilerTests: XCTestCase {
                 """)
             break
         }
+    }
+
+    // MARK: - 4 · Nothing but `float` on the METAL side — the other half of claim 2's premise
+
+    func testTheMetalSideDeclaresNothingButScalarFloats() throws {
+        let s = try source()
+        guard let open = s.range(of: "struct Uniforms { float time; float hr; float coherence;"),
+              let close = s.range(of: "};", range: open.lowerBound ..< s.endIndex) else {
+            return XCTFail("the MSL `Uniforms` block was not found — see claim 3")
+        }
+        let block = String(s[open.lowerBound ..< close.lowerBound])
+        let declarations = matches(in: block, pattern: #"([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*;"#, groups: 2)
+        XCTAssertEqual(declarations.count, metalFields(s).count, """
+            The MSL block holds \(declarations.count) declarations but only \(metalFields(s).count) \
+            `float` fields. Something in it is not a plain `float` — a `float3`, `half`, `int` or \
+            `packed_…` member brings its own size and alignment, and claim 1's name-for-name \
+            comparison stops proving the layout.
+            """)
+        for declaration in declarations where declaration[0] != "float" {
+            XCTFail("""
+                MSL uniform `\(declaration[1])` is a `\(declaration[0])`. Swift uploads \
+                `MemoryLayout<BioUniforms>.stride` bytes of scalar `Float`s; a vector or a narrower \
+                type on the Metal side shifts every field after it. Mirror the type exactly on both \
+                sides and rewrite claims 2 and 4 to check alignment, or keep it `float`.
+                """)
+        }
+    }
+
+    // MARK: - 5 · The footage gate reads twin fields, and only it samples (VV-5a)
+
+    func testTheFootageGateReadsTwinFieldsAndOnlyItSamples() throws {
+        let s = try source()
+        let swift = Set(swiftFields(s).map(\.name))
+        let read = Set(matches(in: s, pattern: #"\bu\.(foot\w+)"#, groups: 1).map { $0[0] })
+        XCTAssertGreaterThanOrEqual(read.count, 2, """
+            The shader reads \(read.count) `u.foot…` field(s). The footage layer needs at least \
+            the presence and the opacity; fewer means the scan matched nothing and every \
+            assertion below would be vacuous (#926).
+            """)
+        XCTAssertTrue(read.isSubset(of: swift), """
+            The shader reads \(read.subtracting(swift).sorted()) from `u`, which `BioUniforms` does \
+            not declare. The MSL would not compile, or worse, reads a neighbour's bytes.
+            """)
+        let gate = "if (u.footPresent > 0.5 && u.footOpacity > 0.001) {"
+        XCTAssertEqual(s.components(separatedBy: gate).count - 1, 1,
+                       "expected exactly one footage gate in the shader (VV-5a)")
+        guard let gateAt = s.range(of: gate),
+              let ripple = s.range(of: "outCol += rippleLight(uv, u)"),
+              let luma = s.range(of: "footY.sample("),
+              let chroma = s.range(of: "footCbCr.sample("),
+              let firstClamp = s.range(of: "outCol = clamp(outCol, 0.0, 1.0);") else {
+            return XCTFail("the footage gate, its two samples, the ripple line or the field clamp is gone — re-anchor (VV-5a)")
+        }
+        XCTAssertEqual(s.components(separatedBy: "footY.sample(").count - 1, 1, "the luma plane is sampled more than once (VV-5a)")
+        XCTAssertEqual(s.components(separatedBy: "footCbCr.sample(").count - 1, 1, "the chroma plane is sampled more than once (VV-5a)")
+        // CONTAINMENT, brace-matched from the gate's own `{` — not "between the gate and the
+        // ripple line", which a sample placed after the gate's `}` would also satisfy (review).
+        guard let gated = Self.braceBody(in: s, openingAt: s.index(before: gateAt.upperBound)) else {
+            return XCTFail("the footage gate's block does not close — re-anchor (VV-5a)")
+        }
+        XCTAssertTrue(gated.contains("footY.sample(") && gated.contains("footCbCr.sample("), """
+            A footage plane is sampled outside the gate's block. With no pair bound the slots hold \
+            1x1 placeholders that must never be read (VV-5a).
+            """)
+        XCTAssertTrue(luma.upperBound < ripple.lowerBound && chroma.upperBound < ripple.lowerBound
+                      && gateAt.upperBound < ripple.lowerBound, """
+            The footage layer now composites after the touch ripples. The ripple's screen blend \
+            needs the composite under it to be finished and <= 1 (VV-5a).
+            """)
+        XCTAssertTrue(firstClamp.upperBound < gateAt.lowerBound,
+                      "the footage layer now composites before the field's own clamp — its screen blend needs outCol <= 1 (VV-5a)")
+    }
+
+    /// The text from the `{` at `open` through its matching `}`; nil when it never closes.
+    private static func braceBody(in text: String, openingAt open: String.Index) -> String? {
+        guard text[open] == "{" else { return nil }
+        var depth = 0
+        var index = open
+        while index < text.endIndex {
+            if text[index] == "{" { depth += 1 }
+            if text[index] == "}" {
+                depth -= 1
+                if depth == 0 { return String(text[open ... index]) }
+            }
+            index = text.index(after: index)
+        }
+        return nil
     }
 
     // MARK: - 2 · Nothing but Float — the premise claim 1 rests on

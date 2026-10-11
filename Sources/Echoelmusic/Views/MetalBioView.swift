@@ -39,9 +39,10 @@
 import SwiftUI
 import MetalKit
 import simd
+import CoreVideo   // VV-5a (GMMW) — `CVMetalTextureCache` for the footage layer
 
 /// Bio uniforms handed to the fragment shader. Layout must match `Uniforms` in the
-/// MSL source below (6 contiguous floats).
+/// MSL source below (scalar `Float` fields only, appended at the tail).
 private struct BioUniforms {
     var time: Float = 0
     /// Heart rate in BPM, sanitised to 40…200 and eased with tau 1.2 s.
@@ -229,6 +230,57 @@ private struct BioUniforms {
     // the byte-layout law above BECAUSE they were the TAIL: nothing sits after them to shift.
     // The Metal mirror in this file lost the same fields in the same commit, and
     // `TheUniformMirrorHasNoCompilerTests` (#1119) is what proves the two still match.
+    //
+    // VV-5a (GMMW) — FOOTAGE LAYER, appended at the TAIL (the byte-layout law at `fieldPhase`).
+    // `footPresent` is 1 only while a real Y/CbCr pair is bound at fragment slots 0/1; 1x1
+    // placeholders are bound otherwise and the shader never samples them. `footOpacity` is the
+    // layer gain AS SHOWN (dial x flash-limiter gain, never eased here). `footVideoRange` is
+    // read from the buffer's own format. `footA`..`footTy` map the normalized viewport to the
+    // normalized image, top-left origin; outside 0..1 is letterbox. Identity defaults: with no
+    // footage source these bytes never change, so the #1244 skip decides exactly as before.
+    var footPresent: Float = 0
+    var footOpacity: Float = 0
+    var footVideoRange: Float = 0
+    var footA: Float = 1
+    var footB: Float = 0
+    var footC: Float = 0
+    var footD: Float = 1
+    var footTx: Float = 0
+    var footTy: Float = 0
+}
+
+/// VV-5a (GMMW) — one decoded footage frame offered to the renderer. VV-5b's video layer slot
+/// produces it; in VV-5a nothing does, so `MetalBioRenderer.footageSource` is nil and every
+/// footage path in the renderer returns before touching a uniform.
+struct FootageFrame {
+    let pixelBuffer: CVPixelBuffer
+    /// Changes exactly when the picture does; never 0 (0 is the renderer's "no footage").
+    let sequence: UInt64
+    /// Normalized viewport -> normalized image, both top-left origin, for the aspect passed in.
+    let viewportToImage: CGAffineTransform
+    /// The layer gain as SHOWN: the user's dial x `VideoFlashLimiter.gain`, computed by the
+    /// source once per media frame. The renderer clamps it and never eases it — an eased gain
+    /// would delay the limiter's cut by the time constant, which is exactly a strobe passing.
+    let opacity: Float
+}
+
+/// Pulled synchronously from `draw(in:)` on the main thread. nil = no picture: the renderer drops
+/// the layer on THAT frame, so the K5a frozen-last-frame defect cannot recur.
+protocol FootageFrameSource: AnyObject {
+    func pullFootageFrame(viewportAspect: Float) -> FootageFrame?
+}
+
+/// VV-5a — keeps a bound footage pair alive until the GPU has FINISHED the command buffer that
+/// samples it. A `CVMetalTexture` is the client's promise that the source's pool will not recycle
+/// the buffer underneath the read; `waitUntilScheduled` is not "completed". Same shape as
+/// `BroadcastVideoFrame.metalTexture`: the hold rides into a `@Sendable` completion handler.
+private final class FootageHold: @unchecked Sendable {
+    let y: CVMetalTexture
+    let cbcr: CVMetalTexture
+    init(y: CVMetalTexture, cbcr: CVMetalTexture) {
+        self.y = y
+        self.cbcr = cbcr
+    }
 }
 
 /// The touch surface's water-drop events for the Metal renderer (structural rebuild
@@ -638,6 +690,26 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// image stays on the layer. See the skip in `draw(in:)` for why this is not a pause.
     private var lastEncodedUniforms = BioUniforms()
     private var hasEncodedOnce = false
+    // VV-5a — FOOTAGE LAYER. Two 1x1 placeholders are bound whenever no pair is (the fragment
+    // declares texture(0)/(1), and Metal leaves an unbound declared slot undefined). The cache is
+    // made lazily on the first real frame, so a renderer with no source allocates nothing per frame.
+    private struct FootagePair {
+        let y: CVMetalTexture, cbcr: CVMetalTexture
+        let yTexture: MTLTexture, cbcrTexture: MTLTexture
+    }
+    private var placeholderY: MTLTexture?
+    private var placeholderCbCr: MTLTexture?
+    private var footageCache: CVMetalTextureCache?
+    private var footageCacheFailed = false
+    /// The bound pair. Its lifetime past this frame is not counted in ticks: each command buffer
+    /// that samples it carries a `FootageHold` into its completion handler (see `draw(in:)`).
+    private var footagePair: FootagePair?
+    private var footageSequence: UInt64 = 0
+    private var lastEncodedFootageSequence: UInt64 = 0
+    /// Written in the governor block of `draw`: true at tier `.low` and below.
+    private var footageTierBlocked = false
+    weak var footageSource: (any FootageFrameSource)?
+    private var footageSlotsBindable: Bool { placeholderY != nil && placeholderCbCr != nil }
     /// #1245 — the resolution lever as last applied, so a change re-allocates the drawable on
     /// its own frame instead of waiting out the settle window (see the size code in `draw`).
     private var lastRenderScale: CGFloat = 1
@@ -861,6 +933,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
 
     func configure(device: MTLDevice) {
         commandQueue = device.makeCommandQueue()
+        // VV-5a — per renderer, BEFORE the #1196 early return below (it skips everything after it
+        // on every mount but the first). Y 0 / CbCr 128 = black, neutral chroma; never sampled.
+        placeholderY = Self.makeFootagePlaceholder(device: device, format: .r8Unorm, bytes: [0])
+        placeholderCbCr = Self.makeFootagePlaceholder(device: device, format: .rg8Unorm, bytes: [128, 128])
+        if !footageSlotsBindable {
+            EchoelCrashLog.breadcrumb("visual: footage placeholder FAILED — flat pulse only")
+        }
         // #1196: reuse the already-compiled pipeline when one exists for THIS device.
         // The identity test is `===` on the device, not a bool: `MTLCreateSystemDefaultDevice()`
         // returns the same object today, and a cached pipeline is only valid for the device
@@ -985,6 +1064,115 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             smoothedPulseTarget = target.pulseHz
             hasTarget = true
         }
+    }
+
+    private static func makeFootagePlaceholder(device: MTLDevice, format: MTLPixelFormat,
+                                               bytes: [UInt8]) -> MTLTexture? {
+        let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: 1, height: 1,
+                                                            mipmapped: false)
+        desc.usage = .shaderRead
+        guard let texture = device.makeTexture(descriptor: desc) else { return nil }
+        bytes.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return }
+            texture.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0,
+                            withBytes: base, bytesPerRow: bytes.count)
+        }
+        return texture
+    }
+
+    /// Y (r8Unorm) and CbCr (rg8Unorm) IOSurface views of a bi-planar 4:2:0 buffer — no copy.
+    /// Any other format -> nil: no layer, no guess. Both `MTLTexture`s are resolved here, so a
+    /// bound pair is never half a pair.
+    private static func makeFootagePair(from buffer: CVPixelBuffer, cache: CVMetalTextureCache)
+        -> (pair: FootagePair, videoRange: Bool)? {
+        let videoRange: Bool
+        switch CVPixelBufferGetPixelFormatType(buffer) {
+        case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange: videoRange = false
+        case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: videoRange = true
+        default: return nil
+        }
+        guard CVPixelBufferGetPlaneCount(buffer) == 2,
+              let y = footagePlane(0, of: buffer, format: .r8Unorm, cache: cache),
+              let cbcr = footagePlane(1, of: buffer, format: .rg8Unorm, cache: cache),
+              let yTexture = CVMetalTextureGetTexture(y),
+              let cbcrTexture = CVMetalTextureGetTexture(cbcr) else { return nil }
+        return (FootagePair(y: y, cbcr: cbcr, yTexture: yTexture, cbcrTexture: cbcrTexture), videoRange)
+    }
+
+    private static func footagePlane(_ index: Int, of buffer: CVPixelBuffer, format: MTLPixelFormat,
+                                     cache: CVMetalTextureCache) -> CVMetalTexture? {
+        let width = CVPixelBufferGetWidthOfPlane(buffer, index)
+        let height = CVPixelBufferGetHeightOfPlane(buffer, index)
+        guard width > 0, height > 0 else { return nil }
+        var texture: CVMetalTexture?
+        let status = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, buffer, nil,
+                                                               format, width, height, index, &texture)
+        guard status == kCVReturnSuccess else { return nil }
+        return texture
+    }
+
+    private func footageTextureCache() -> CVMetalTextureCache? {
+        if let footageCache { return footageCache }
+        guard !footageCacheFailed, let device = commandQueue?.device else { return nil }
+        var created: CVMetalTextureCache?
+        let status = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &created)
+        guard status == kCVReturnSuccess, let cache = created else {
+            footageCacheFailed = true
+            EchoelCrashLog.breadcrumb("visual: footage texture cache FAILED — no footage layer")
+            return nil
+        }
+        footageCache = cache
+        return cache
+    }
+
+    /// VV-5a — the ONE footage call in `draw(in:)`. Returns the sequence of the pair bound this
+    /// frame, 0 = none; the #1244 skip compares it. No source (VV-5a's only state): one weak load,
+    /// one return — no allocation, no uniform write, and sequence 0 equals the encoded 0, so the
+    /// skip and the picture are exactly the pre-VV-5a ones.
+    private func refreshFootage() -> UInt64 {
+        guard !footageTierBlocked, let source = footageSource,
+              let frame = source.pullFootageFrame(viewportAspect: uniforms.aspect) else {
+            if footagePair != nil { retireFootage() }
+            return 0
+        }
+        let t = frame.viewportToImage
+        guard t.a.isFinite, t.b.isFinite, t.c.isFinite, t.d.isFinite,
+              t.tx.isFinite, t.ty.isFinite else {
+            retireFootage(); return 0
+        }
+        if footagePair == nil || frame.sequence != footageSequence {
+            guard frame.sequence != 0, let cache = footageTextureCache(),
+                  let made = Self.makeFootagePair(from: frame.pixelBuffer, cache: cache) else {
+                retireFootage(); return 0
+            }
+            footagePair = made.pair
+            footageSequence = frame.sequence
+            uniforms.footVideoRange = made.videoRange ? 1 : 0
+        }
+        uniforms.footA = Float(t.a); uniforms.footB = Float(t.b)
+        uniforms.footC = Float(t.c); uniforms.footD = Float(t.d)
+        uniforms.footTx = Float(t.tx); uniforms.footTy = Float(t.ty)
+        uniforms.footOpacity = frame.opacity.clamped(to: 0...1)   // NaN-safe (FloatingPointClamp)
+        uniforms.footPresent = 1
+        return footageSequence
+    }
+
+    /// Back to the exact default bytes — the picture is the field alone on THIS frame. A command
+    /// buffer still in flight keeps its own `FootageHold`, so dropping the pair here is safe.
+    private func retireFootage() {
+        footagePair = nil
+        footageSequence = 0
+        uniforms.footPresent = 0; uniforms.footOpacity = 0; uniforms.footVideoRange = 0
+        uniforms.footA = 1; uniforms.footB = 0; uniforms.footC = 0; uniforms.footD = 1
+        uniforms.footTx = 0; uniforms.footTy = 0
+        if let footageCache { CVMetalTextureCacheFlush(footageCache, 0) }
+    }
+
+    /// Both slots, on every draw that uses the pipeline: the pair while one exists, placeholders
+    /// otherwise. Called at BOTH encode sites — the pipeline is shared.
+    private func bindFootage(on encoder: MTLRenderCommandEncoder) {
+        encoder.setFragmentTexture(footagePair?.yTexture ?? placeholderY, index: 0)
+        encoder.setFragmentTexture(footagePair?.cbcrTexture ?? placeholderCbCr, index: 1)
     }
 
     /// Exponential glide of `a` toward `b` over time-constant `tau` (seconds) for the
@@ -1116,6 +1304,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // the display's frame rate. `recordFrame` feedback (further down) now drives
             // DETAIL, not FPS, so a device that can't hold 60 sheds detail smoothly.
             let q = governor?.settings
+            // VV-5a: the footage layer stands down at `.low` and below (thermal `.serious`, Low
+            // Power, battery < 20 %, or a frame rate held under 75 % of the tier's target) — two
+            // full-drawable plane samples per pixel are its cost.
+            footageTierBlocked = (q?.tier ?? .balanced) <= .low
             let detailScale = q?.visualDetailScale ?? 1
             let effectiveReduceMotion = lookReduceMotionAccessibility || (q?.reduceMotion ?? false)
             let bio = bus?.freshBio()
@@ -1734,11 +1926,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
 
         // Keep `time` as a free-running clock for the secondary motion in the shader.
         uniforms.time = reduceMotion ? 0 : Float(nowT - startTime)
+        let footageSequenceThisFrame = refreshFootage()
 
         // #1244 (visual audit V2) — SKIP THE GPU PASS WHEN THE PICTURE CANNOT HAVE CHANGED.
-        // The shader reads `uniforms` and nothing else (`setVertexBytes`/`setFragmentBytes`
-        // are the whole input — ⛔ #1301 removed the two camera textures that were the second
-        // term of this test), so byte-identical uniforms mean a byte-identical image, and
+        // The shader reads `uniforms` and — since VV-5a — the two footage slots, whose identity
+        // is the footage sequence of the bound pair (0 = placeholders, which are never sampled;
+        // #1301 had removed the camera pair that was the first such term). Byte-identical
+        // uniforms AND the same footage sequence mean a byte-identical image, and
         // returning before the drawable is acquired
         // leaves the last presented frame on the layer. When does that happen? Never while
         // motion runs (`time` advances every frame). Under Reduce Motion — the accessibility
@@ -1754,11 +1948,11 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // `dt` stays honest, and the first change to any uniform encodes on the very next tick.
         // Until #1304 this was held off while a take or a still wanted the drawable — a
         // recorder needs a rendered texture on its frame, identical or not. No reader of the
-        // texture survives, so the skip is unconditional. The comparison is over the struct's
+        // texture survives, so no capture term gates the skip. The comparison is over the struct's
         // bytes (NaN-tolerant; the uniforms are sanitized upstream anyway).
         // NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no
         // black, no flicker) and resume the moment a finger touches the visual?
-        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncodedUniforms) {
+        if hasEncodedOnce, footageSequenceThisFrame == lastEncodedFootageSequence, Self.bytesEqual(uniforms, lastEncodedUniforms) {
             return
         }
 
@@ -1773,13 +1967,15 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // held until a uniform moved. "Encoded" means a command buffer exists for it.
         lastEncodedUniforms = uniforms
         hasEncodedOnce = true
+        lastEncodedFootageSequence = footageSequenceThisFrame
 
-        if let pipeline,
+        if let pipeline, footageSlotsBindable,
            let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
             encoder.setRenderPipelineState(pipeline)
             var u = uniforms
             encoder.setVertexBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
             encoder.setFragmentBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
+            bindFootage(on: encoder)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -1791,6 +1987,15 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             pass.colorAttachments[0].clearColor =
                 MTLClearColor(red: beat * 0.4, green: beat * 0.2, blue: beat, alpha: 1)
             buffer.makeRenderCommandEncoder(descriptor: pass)?.endEncoding()
+        }
+
+        // VV-5a — the bound footage pair lives until the GPU has FINISHED this buffer, not for a
+        // counted number of ticks: `waitUntilScheduled` below is not "completed", and the drawable
+        // acquire is the only throttle. Registered before `commit`; the broadcast encode below
+        // shares this buffer and so this hold. No pair (VV-5a's only state): nothing is allocated.
+        if let pair = footagePair {
+            let hold = FootageHold(y: pair.y, cbcr: pair.cbcr)
+            buffer.addCompletedHandler { @Sendable _ in withExtendedLifetime(hold) {} }
         }
 
         // Broadcast picture (`Stream/BroadcastVideoTap`): only while a stream is live, at most
@@ -1823,7 +2028,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// circles at 16:9. Every exit either delivers the frame or abandons its slot.
     private func encodeBroadcastFrame(into buffer: MTLCommandBuffer, spec: BroadcastVideoSpec) {
         let tap = BroadcastVideoTap.shared
-        guard let pipeline, let device = commandQueue?.device else { tap.abandon(); return }
+        guard let pipeline, footageSlotsBindable, let device = commandQueue?.device else { tap.abandon(); return }
         if broadcastTarget == nil { broadcastTarget = BroadcastFrameTarget(device: device) }
         guard let made = broadcastTarget?.make(width: spec.width, height: spec.height,
                                                pixelFormat: .bgra8Unorm_srgb) else {
@@ -1840,8 +2045,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         encoder.setRenderPipelineState(pipeline)
         var u = uniforms
         u.aspect = Float(spec.width) / Float(spec.height)
+        // VV-5a — the footage affine in `uniforms` was fitted to the VIEW's aspect; drawn at the
+        // stream's aspect it would stretch the picture. Until VV-5b derives a stream-aspect affine
+        // from the same pure function, the stream carries the field without the footage layer.
+        u.footPresent = 0
         encoder.setVertexBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
         encoder.setFragmentBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
+        bindFootage(on: encoder)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         // Stamped at ENCODE time on the host clock — the clock the audio anchor uses.
@@ -1886,7 +2096,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                       float rp5x; float rp5y; float rp5p; float rp5a; float rp5r; float rp5g; float rp5b;
                       float textureAmt; float glitterAmt; float structureAmt;
                       float dishK; float dishStrength; float dishHex;
-                      float fieldPhase; };
+                      float fieldPhase;
+                      float footPresent; float footOpacity; float footVideoRange;
+                      float footA; float footB; float footC; float footD; float footTx; float footTy; };
 
     // TOUCH RIPPLES — the water feedback drawn IN the field's own pipeline
     // (structural rebuild 2026-07-09; the old CAShapeLayer sandwich over the Metal
@@ -2617,7 +2829,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     }
 
     fragment float4 echoel_bio_fragment(VOut in [[stage_in]],
-                                        constant Uniforms& u [[buffer(0)]]) {
+                                        constant Uniforms& u [[buffer(0)]],
+                                        texture2d<float> footY [[texture(0)]],
+                                        texture2d<float> footCbCr [[texture(1)]]) {
         // Aspect-correct radial distance (for the rings + every style's framing).
         float2 uv = in.uv;
         uv.x *= u.aspect;
@@ -2889,6 +3103,32 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // it silently. An additive term inserted before a screen blend must restore the
         // bound it consumed.
         outCol = clamp(outCol, 0.0, 1.0);
+        // VV-5a - FOOTAGE LAYER, sampled ONLY behind footPresent (1x1 placeholders otherwise).
+        // uv is +y UP here; the image is top-left, so flip once, then the CPU's viewport->image
+        // affine (orientation, aspect-fit and any mirror live there, testable on the CPU).
+        // Outside 0..1 is letterbox: the field alone. BT.709 (the output settings convert every
+        // source to it, see VV-5b); video range expands luma AND chroma. The sRGB curve is undone
+        // because everything above is linear and the drawable encodes on write (B9b) - the same
+        // curve VideoLayerMath.relativeLuminance measures, so the limiter counts what is shown.
+        // SCREEN, never above 1: the ripple's screen blend below needs outCol <= 1, and the
+        // footage's shown swing is at most footOpacity x its own swing - the limiter's bound.
+        if (u.footPresent > 0.5 && u.footOpacity > 0.001) {
+            constexpr sampler footS(address::clamp_to_edge, filter::linear);
+            float2 fv = float2(in.uv.x, 1.0 - in.uv.y);
+            float2 iuv = float2(u.footA * fv.x + u.footC * fv.y + u.footTx,
+                                u.footB * fv.x + u.footD * fv.y + u.footTy);
+            float inside = step(0.0, iuv.x) * step(iuv.x, 1.0) * step(0.0, iuv.y) * step(iuv.y, 1.0);
+            float vr = u.footVideoRange;
+            float luma = clamp((footY.sample(footS, iuv).r - vr * (16.0 / 255.0))
+                               * mix(1.0, 255.0 / 219.0, vr), 0.0, 1.0);
+            float2 ch = (footCbCr.sample(footS, iuv).rg - 128.0 / 255.0) * mix(1.0, 255.0 / 224.0, vr);
+            float3 rgb = clamp(float3(luma + 1.5748 * ch.y,
+                                      luma - 0.1873 * ch.x - 0.4681 * ch.y,
+                                      luma + 1.8556 * ch.x), 0.0, 1.0);
+            float3 lin = select(pow((rgb + 0.055) / 1.055, float3(2.4)), rgb / 12.92,
+                                rgb <= float3(0.04045));
+            outCol = mix(outCol, lin + outCol * (1.0 - lin), clamp(u.footOpacity, 0.0, 1.0) * inside);
+        }
         // Touch-ripple light over the graded field (played water = light ON the
         // water, frame-locked to it — no second compositor). SCREEN blend, not raw
         // add: over an already-bright field a raw add clipped to pure white patches

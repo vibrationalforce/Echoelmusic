@@ -7,7 +7,7 @@
 // look. The claims here are the joints a later edit can silently break:
 //   · the CPU solves `FaradayDish` for the EASED tone and eases only the STRENGTH (the
 //     luminance-bearing quantity) — a snapped strength would step a full-screen luminance;
-//   · the three results cross to the GPU as the LAST three floats of BOTH uniform structs, in
+//   · the three results cross to the GPU as three ADJACENT floats of BOTH uniform structs, in
 //     the same order — a layout mismatch renders garbage, not an error, and no gate sees it;
 //   · slot 2 dispatches to `fieldDish` with those three uniforms;
 //   · the field's only phase-bearing term is `sin(phase * 0.4)` — the flash budget (0.4,
@@ -90,11 +90,11 @@ final class TheWaterDishIsLitLikeTheExperimentTests: XCTestCase {
             """)
     }
 
-    // MARK: - 2 · The three uniforms are the tail of BOTH structs, in the same order
+    // MARK: - 2 · The three uniforms sit together in BOTH structs, in the same order
 
-    func testTheDishUniformsAreTheTailOfBothStructsInTheSameOrder() throws {
+    func testTheDishUniformsSitTogetherInTheSameOrderInBothStructs() throws {
         let r = try raw()
-        // Swift side: the three `var`s follow `structureAmt` and nothing follows them but `}`.
+        // Swift side: the three `var`s follow each other, then `fieldPhase`.
         guard let swiftStruct = r.range(of: "private struct BioUniforms {"),
               let swiftEnd = r.range(of: "\n}\n", range: swiftStruct.upperBound ..< r.endIndex)
         else { return XCTFail("BioUniforms struct not found") }
@@ -107,17 +107,24 @@ final class TheWaterDishIsLitLikeTheExperimentTests: XCTestCase {
         // APPENDED after `dishHex` on both sides in the same commit, so the layout stayed
         // correct and this pin — whose whole job is to notice a layout change — was red on a
         // correct tree. That is the failure mode #367 names: red for a reason the message does
-        // not describe. The pairing with the MSL tail below is unchanged and is still the claim.
-        XCTAssertEqual(Array(swiftVars.suffix(4)), ["dishK", "dishStrength", "dishHex", "fieldPhase"], """
-            the Swift `BioUniforms` no longer ends with dishK · dishStrength · dishHex · \
-            fieldPhase, in that order; found \(swiftVars.suffix(4)). The MSL struct is pinned to \
-            the same tail below — move both or the GPU reads the wrong floats.
+        // not describe. The pairing with the MSL run below is unchanged and is still the claim.
+        // ⭐ VV-5a (GMMW) appended AGAIN (nine footage floats) — so this claim now pins ADJACENCY,
+        // not the tail, and the next append cannot turn it red on a correct tree. POSITION is
+        // `TheUniformMirrorHasNoCompilerTests`' job: it compares both structs name for name.
+        // GRADING (§3): a counterweight — green on the parent (`500491409`) and on this tree.
+        guard let k = swiftVars.firstIndex(of: "dishK"), k + 4 <= swiftVars.count else {
+            return XCTFail("`dishK` is gone from `BioUniforms` — re-anchor this claim")
+        }
+        XCTAssertEqual(Array(swiftVars[k ..< k + 4]), ["dishK", "dishStrength", "dishHex", "fieldPhase"], """
+            the Swift `BioUniforms` no longer holds dishK · dishStrength · dishHex · fieldPhase \
+            together, in that order; found \(Array(swiftVars[k ..< k + 4])). The MSL struct is \
+            pinned to the same run below — move both or the GPU reads the wrong floats.
             """)
-        // MSL side: the same three names close the `Uniforms` struct.
-        XCTAssertTrue(r.contains("float dishK; float dishStrength; float dishHex;\n                      float fieldPhase; };"), """
-            the MSL `Uniforms` no longer ends with `dishK; dishStrength; dishHex; fieldPhase; };`. \
-            Metal has no layout check against `MemoryLayout<BioUniforms>.stride` — a mismatch \
-            here silently renders garbage on device.
+        // MSL side: the same names, in the same run.
+        XCTAssertTrue(r.contains("float dishK; float dishStrength; float dishHex;\n                      float fieldPhase;"), """
+            the MSL `Uniforms` no longer holds `dishK; dishStrength; dishHex;` followed by \
+            `fieldPhase;`. Metal has no layout check against `MemoryLayout<BioUniforms>.stride` \
+            — a mismatch here silently renders garbage on device.
             """)
     }
 
