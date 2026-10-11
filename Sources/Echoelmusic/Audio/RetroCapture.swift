@@ -848,7 +848,11 @@ final class RetroCapture {
         // asserting one in the same breath as a length contract is the error worth naming.
         let frames  = min(Int(Double(seconds) * captureSampleRate), ringCapacity)
         let endFrame = Int(RetroRingCursor.load(ringWriteFrame))
-        let startFrame = max(0, endFrame - frames)
+        // GA-3 step 0: the window ENDS at the cursor even on the ring's first lap, so a short
+        // ring is padded at the FRONT as the contract above says. `max(0, …)` here put the
+        // audio first and the unwritten slots last. A negative index is below `boundary`
+        // (never negative), so it is skipped before it can reach `%`.
+        let startFrame = endFrame - frames
         let boundary = Int(rateBoundaryFrame)
         var out = [Float](repeating: 0, count: frames * 2)
 
@@ -943,7 +947,15 @@ final class RetroCapture {
             let file = try AVAudioFile(forWriting: url, settings: format.settings,
                                        commonFormat: .pcmFormatFloat32, interleaved: false)
             let endFrame = Int(RetroRingCursor.load(ringWriteFrame))
-            let startFrame = max(0, endFrame - frames)
+            // ⛔ GA-3 step 0 (2026-10-11): this was `max(0, endFrame - frames)`. On the ring's
+            // FIRST lap (the first `seconds` after this capture was created) that started the
+            // file at frame 0, so the audio came FIRST and the never-written slots LAST — while
+            // `LoopExporter` cuts the loop from the END (`StudioCalculator.loopTrimWindow`).
+            // "Keep last" pressed early therefore exported silence or the wrong bars. The
+            // window now ends at the cursor; frames before 0 are below `boundary` and become
+            // the explicit zeros of the guard below, so the file is padded at the FRONT and a
+            // negative index never reaches `%`.
+            let startFrame = endFrame - frames
             let boundary = Int(rateBoundaryFrame)
             let chunkSize = 8192
             var written = 0
