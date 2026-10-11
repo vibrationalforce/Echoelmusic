@@ -960,3 +960,10 @@ iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund)
 - Widerlegt: Sprechname ist „Echoelmusic", nicht „Echoel" · „take" ist im Glossar gestrichen · kein deutscher Katalog, also keine deutschen Siri-Sätze.
 - Bestätigt: „Save" meiden · der Vergleich braucht einen festgehaltenen Vorher-Stand, den es nicht gibt · Abhören ohne Undo-Schritt.
 - Verdikt: Sätze ADOPT-PRODUCT, neu formuliert nach dem Knopf „Edit a copy" (AI-6b, 921419dde). Deutsch WATCH (Lokalisierung #232). Vergleich WATCH bis GM17. Die vorhandenen Fehlertexte bleiben, weil sie sagen, was zu tun ist.
+
+### 2026-10-10 — Unbekanntes Modell (wohl Gemini): „Baustellen im Repo“ + KI-Panel
+- Quelle: Founder-Einfügung, Modell sah das Repo nicht und nennt sich nirgends. Säuberung: ein Variationsselektor (Emoji), sonst leer. [verified 0/6]
+- Muster: keine Behauptung stimmt so, wie sie dasteht, aber fünf von sechs nennen ein echtes Thema mit veraltetem Weg — es erinnert sich an BLAB-Altmaterial, es erfindet nicht. Mein erstes Urteil („alles erfunden“) war zu hart; drei Prüfer haben es korrigiert.
+- Echt und schon in Arbeit: offener ADM-BWF-Immersive-Master mit Trajektorien (ADR-007, S-A), Grapes über ADM-OSC, Binaural über Apples HRTF (Tür „Headphone space“, Gerät offen), Self-Healing als SH-Spur. Falsch: Live-Python-Brücke, Dolby-Etikett, Dante bauen, autonome Code-Reparatur, Vagus-Modulation als Funktion.
+- Nebenfund und einzige Folge: zwei Website-Seiten nannten „Dolby Atmos“ gegen ADR-007 §9 — korrigiert; F-E steht jetzt als H19 in `docs/dev/FOUNDER_INBOX.md`. Nichts aus dem Text geht in Code.
+- Regel für Fremdmodelle: nur Prüfer-Sitz (MASTER_PLAN §12), nie Bauer; nie Diagnose-Log (Puls), Schlüssel oder private Daten weitergeben.
