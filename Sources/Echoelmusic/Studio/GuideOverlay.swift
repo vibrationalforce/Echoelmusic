@@ -38,8 +38,9 @@ struct GuideOverlay: View {
     /// player who closes the guide mid-tour and reopens it resumes where they were.
     @State private var page = 0
 
-    /// The one content source (#416). Computed, not cached: six value-type entries,
-    /// built only while the guide is actually open.
+    /// The one content source (#416). Computed, not cached: the guide's value-type entries
+    /// (`LearnLibrary.guideEntries` — count them THERE; a number here read "six" from
+    /// 2026-10-04 until L1 made it seven, #818), built only while the guide is actually open.
     private var entries: [LearnEntry] { LearnLibrary.entries(for: .guide) }
 
     var body: some View {
