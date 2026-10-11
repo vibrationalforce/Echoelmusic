@@ -399,6 +399,7 @@ Gemini, Grok, Mistral und DeepSeek stimmen am Kopf-Stand weiter; ChatGPT bekommt
 |---|---|---|---|
 | **Gemini** | Store-Text gegen `CLAIMS.md` | **jetzt**, neuer Chat — Gemini hat keinen offenen Auftrag | `0205769fc` (seine Dateien unverändert) |
 | **Codex/Astra** | **Gegenprüfung SH-2b** — der Auftrag unten, eigener Chat | **jetzt** — der erste Auftrag für diesen Platz; eine FERTIGE Scheibe liegt vor | **`05047ad34`** — im Kopf Stand und URL ersetzen, der Auftrag sagt es selbst |
+| **Meta AI** | **Erstnutzer-Lesart** — der Auftrag in §7, eigener Chat | **jetzt** — neu im Spiel, kein offener Auftrag, keine Vorgeschichte | **`05047ad34`** — wie bei Astra; Link-Zugriff ungewiss, §7 sagt, was dann |
 | ChatGPT | „Der stille Start" + Nachtrag unten | erst, wenn die Antwort zum Agentenpfad vom 11.10. bei Claude Code ist | `0205769fc` + Nachtrag |
 | Mistral | Rot-Blitz nach WCAG | erst nach der YCbCr-Antwort vom 11.10. | `0205769fc` |
 | DeepSeek | Grain-Kern | erst nach der Ringpuffer-Antwort vom 11.10. | `0205769fc` |
@@ -494,3 +495,93 @@ domains" der Cloud-Umgebung freigeben, dann wird die Zahl gemessen statt geglaub
   Auftrag verlangt deshalb den EIGENEN Chat.
 - G10 (Gerät, Build 2621 vs. 2622+) entscheidet, ob die sieben Felder auf dem Telefon lesen; kein Prüfer
   und kein Test kann das ersetzen.
+
+
+## 7. Meta AI — der siebte Platz: die Erstnutzer-Lesart (2026-10-11, Stand `05047ad34`)
+
+Founder: „Meta AI ist auch im Game." Ein siebtes Modell bekommt nach §1 eine EIGENE Spur, die mit
+keiner der sechs vergebenen überlappt. Frei war die Lesart, die kein Test und kein anderes Modell
+abdeckt: **jeden Satz, den ein Mensch beim ersten Start liest, gegen das Bedienelement und den
+Codepfad dahinter halten.** Nicht Text gegen Text (Gemini), nicht Code gegen Kommentar (Astra),
+nicht Design (Grok), nicht Norm (Mistral), nicht Index (DeepSeek), nicht Lebenszyklus (ChatGPT).
+Die Wächter pinnen, dass jeder genannte Griff EXISTIERT (`TheGuideNamesOnlyRealControlsTests`,
+sieben Tests) — ob ein Satz TUT, was er sagt, auf der Bühne, auf der der Nutzer gerade steht,
+kann kein Quelltext-Scan entscheiden. Das ist die Frage. (Der Dateititel zählt die erste Runde;
+er bleibt, weil Log und Inbox auf ihn zeigen.)
+
+**Was an Meta AI anders ist, und was daraus folgt:** keine gemessene Vorgeschichte im Tally, und
+ob es GitHub-Links öffnen kann, ist nicht bekannt. Darum ist der Auftrag auf **321 Zeilen in
+zwanzig getrackten Quelldateien** geschnitten (die Entwürfe wollten je über 800). Antwortet es
+„Kann die Dateien nicht öffnen.", fügst du die ÖFFNE-Bereiche selbst ein, in der Reihenfolge der
+Liste: zuerst die Sätze (102 Zeilen), dann die Knöpfe (219). Alles davon liegt unter `Sources/`
+und ist nach `.claude/skills/learn-mode/SKILL.md` „Was RAUSGEHT" freigegeben. **Ob Meta deine
+Eingaben speichert oder zum Training nutzt, lässt sich vom Repo aus nicht prüfen** — also nichts
+Privates in diesen Chat, nur Kopf §2 (Stand und URL auf `05047ad34`) und dieser Auftrag.
+
+### Der Auftrag für Meta AI (Kopf §2 davor, mit Stand und URL auf `05047ad34`)
+
+```text
+AUFTRAG FÜR META AI: Der erste Start — tut jeder Satz, was der Knopf dahinter tut? (Stand 05047ad34)
+EIGENER Chat, neu. Der Kopf aus Abschnitt 2 steht direkt VOR diesem Text; für diesen Auftrag gilt dort überall Stand 05047ad34 (voll 05047ad34fd56b22c3d9b96d2186a0cbaef5438f), auch in deiner Stand-Zeile. Dateien öffnest du so: https://github.com/vibrationalforce/Echoelmusic/blob/05047ad34fd56b22c3d9b96d2186a0cbaef5438f/<Pfad>#L<von>-L<bis> — kannst du sie nicht öffnen, antworte nur „Kann die Dateien nicht öffnen.“ und hör auf; die Stellen unten sind klein genug, um sie dir einfügen zu lassen.
+
+Deine Spur: die ERSTNUTZER-LESART. Du installierst die App zum ersten Mal, liest jeden Satz, der dir gezeigt wird, und tust genau das, was er sagt. Gesucht ist der Satz, der etwas anderes verspricht, als das genannte Bedienelement tut; der eine Reihenfolge nennt, die die Fläche nicht hat; oder ein Wort, das du als Erstnutzer anders liest als der Entwickler.
+Nicht deine Spur: ob ein genannter Knopf EXISTIERT (das pinnen Tests, je Karte und je Griff); Text gegen Text; Code gegen Kommentar; Design; Normen; Grenzfälle; Lebenszyklus und Abstürze; Store-Text und Website; der Hinweis im Vollbild-Bild (eigener Wächter); Lösungen, Umformulierungen, Code. Andere Dateien als die unten genannten nur als offene Frage.
+
+WORUM ES GEHT (nur in Worten)
+- Eine frische Installation zeigt drei Seiten (Willkommen · „The wider vision“ · „Ready“ mit Sicherheitsbox, Schalter „I understand“ und „Start“). Danach öffnet die App auf dem Stück: eine Kopfzeile mit EINEM Play-Knopf und einer Puls-Pille, fünf Wörter unten, ein kleines Bild-Fenster, und obenauf eine Karte „Guide“, die sieben Lern-Einträge einzeln zeigt, Pfeil für Pfeil. Dieselben sieben stehen als erster Abschnitt „Start Here“ in der Learn-Fläche (≡-Menü oben links → Learn), zwei Sicherheits-Einträge als letzter.
+- Die Karten nennen Bedienelemente in Anführungszeichen, Orte („under“, „in the Bio panel“, „On Instrument“, „On Piece“) und Reihenfolgen („Start the music first — then …“; „in order: Play, a fingertip, a key — then Arrange and export“). Ein Test beweist, dass jeder genannte Name im Quelltext der Oberfläche vorkommt. Kein Test beweist, dass der Satz TUT, was er sagt — auf der Bühne, auf der der Nutzer gerade steht, in dem Moment, in dem er ihn liest.
+
+ÖFFNE ZUERST — die Sätze (102 Zeilen)
+- Sources/Echoelmusic/Views/OnboardingView.swift Z. 81–86, 116–122, 168, 185–189, 202–203, 226–227, 263
+- Sources/Echoelmusic/Studio/LearnLibrary.swift Z. 16–27 (Abschnitte), 71–86, 114, 116–127, 134–143, 148 (die sieben Karten), 219–230 (Sicherheit) · Sources/Echoelmusic/Studio/BioMetricInfo.swift Z. 78 (der Satz, den Z. 229 einbaut)
+- Sources/Echoelmusic/Studio/GuideOverlay.swift Z. 46, 102–113 (wie die Karten erscheinen und enden)
+DANN — die Knöpfe und Codepfade hinter den Sätzen (219 Zeilen)
+- Tür und Start-Bühne: Sources/Echoelmusic/EchoelmusicApp.swift Z. 271, 544–547 · Sources/Echoelmusic/Core/StudioDefaultKeys.swift Z. 56, 109 · Sources/Echoelmusic/Studio/StudioStage.swift Z. 40, 49, 122–126
+- Der EINE Play: Sources/Echoelmusic/Studio/ProjectTransport.swift Z. 100–105, 176–183, 215–218 · Sources/Echoelmusic/Studio/ProjectHeader.swift Z. 290–292, 306–316, 343 · Sources/Echoelmusic/Studio/WorkstationView.swift Z. 1184 · Sources/Echoelmusic/Studio/EchoelStudioView.swift Z. 1355–1356, 9987–9995, 10228–10245
+- Quelle, Pille, Licht, Gurt, Uhr, Meldung: EchoelStudioView.swift Z. 3232–3245, 3275 · Sources/Echoelmusic/Studio/HeaderMonitors.swift Z. 426–428, 435–441 · Sources/Echoelmusic/Studio/BioSourceOption.swift Z. 71–74, 92–95 · Sources/Echoelmusic/Video/CameraCapture.swift Z. 175, 242, 253 · Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift Z. 5–9, 41–44 · Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift Z. 48 · Sources/Echoelmusic/Studio/BioStripView.swift Z. 187–197
+- Die genannten Orte: EchoelStudioView.swift Z. 2149–2152, 2481–2490, 3415, 3859–3866, 4815–4816, 12982–12984 · WorkstationView.swift Z. 1001–1009, 1304, 1313 · Sources/Echoelmusic/Studio/SongExportTab.swift Z. 76–85 · Sources/Echoelmusic/Studio/WorkspaceView.swift Z. 600–610
+- Bild, Licht, 3 Hz: Sources/Echoelmusic/Studio/TouchInstrumentView.swift Z. 158–168 · EchoelmusicApp.swift Z. 684–690 · Sources/Echoelmusic/Core/SignalRouting.swift Z. 405–407 · Sources/Echoelmusic/Core/SignalRouter.swift Z. 99 · Sources/Echoelmusic/Core/FlashGuard.swift Z. 45 · Sources/Echoelmusic/Core/VideoFlashLimiter.swift Z. 3–4
+
+FRAGEN
+1. „Press Play to start“ (Onboarding Z. 168), „press Play at the top“ (Karte 1, Z. 75), „After you press Play“ und „The order matters“ (Karte 5, Z. 125–126), „On Instrument, press Play“ (Karte 6, Z. 138): Auf welcher Bühne steht der Erstnutzer, wenn er jeden dieser Sätze liest, welchen Play findet er dort, was tut genau dieser Play mit dem Stück, das eine frische Installation enthält — und welche Schritte, Bühnenwechsel oder Systemdialoge liegen zwischen dem Satz und dem Codepfad, der die Kamera startet?
+2. „a fingertip on the camera light, or a Bluetooth strap“ (Z. 168) und Karte 5 (Z. 126: „the back camera and flash“, „tells you when you can let go“, „choose it from the pulse pill's source menu“, „An Apple Watch works via Health, a few seconds behind“): Welche Handlung setzt jede Hälfte voraus, die der Satz nicht nennt? Wo erscheint die Auskunft, dass man loslassen kann, und was muss der Nutzer geöffnet haben, um sie in dem Moment zu sehen, in dem der Finger auf der Linse liegt? Wie öffnet man das „source menu“ der Pille, und stimmt die Zeitangabe zur Uhr mit dem Code überein?
+3. Jeder Satz, der einen ORT nennt — „“Body voice” in the Bio panel“ (Z. 81), „“Haptic beat (feel)” under “Tempo & variations”“ (Z. 120), „Under “Tempo & variations” the tempo field“ (Z. 138), „the “MIDI” tile among the quick actions“ (Z. 138), „On Piece, choose “Key” and “Scale”“ (Z. 138), „Piece … saves, opens and exports“ (Z. 75): Sitzt das Bedienelement dort, wo der Satz es hinstellt, auf welcher Bühne, und unter welcher Bedingung ist es drückbar?
+4. „exported to your DAW“ (Z. 86), „Export to your DAW.“ (Z. 168), „exports the notes for your DAW“ (Z. 138): Welche Türen exportieren was, und was muss ein Erstnutzer getan haben, bevor die erste davon reagiert? Deckt sich das mit der Reihenfolge, die Karte 6 nennt?
+5. Wörter mit zwei Lesarten: „key“ (Z. 75, 81, 114, 137–138), „every touch lands in key, so there is no wrong place“ (Z. 114), „built in“ (Z. 122) mit den drei Zeilen Z. 116–118, „Arrange“ (Z. 138), „Visuals are capped at a safe 3 Hz flash rate“ (Z. 189) neben „Four limits“ (Z. 222–223) und den fünf Zeilen Z. 185–189: Welche Lesart nimmt ein Erstnutzer, welche löst der Code ein — und wo liest er jede der fünf Sicherheitszeilen nach „Start“ wieder?
+
+Nur für dich: Ein Befund ist ein SATZ mit seiner Zeile, das BEDIENELEMENT oder die CODEZEILE, die etwas anderes tut, und was der Nutzer stattdessen erlebt. Ein Satz, der tut, was er sagt, zählt nicht als Zeile — sag es kurz. Was nur das Gerät entscheidet (ob der Puls „within seconds“ einrastet, wie eine Karte auf einem Telefon liest, ob und wann ein Berechtigungsdialog erscheint, wie sich der Haptik-Schlag anfühlt), schreibst du als offene Frage mit „ANNAHME:“ davor, nie als Befund. Kein Code, kein Fix, keine neue Formulierung für die App, keine Bitte um Logs, Screenshots, Geräteprotokolle oder Gesundheitsdaten.
+Antworte nur in der Tabelle aus dem Kopf.
+```
+
+### Prüfprotokoll zu §7 (derselbe Richter-Ablauf wie §5 und §6, `wf_9f408e92-e05`)
+
+- Zwei Entwürfe mit verschiedener Linse (A: Onboarding und Guide-Karte, der erste Bildschirm und der
+  erste Knopf · B: die sieben Start-Here-Karten Satz für Satz), ein Richter. Noten (Ehrlichkeit ·
+  Sicherheit · Präzision · Nutzbarkeit) A: 8 · 9 · 7 · 4; B: 7 · 9 · 7 · 5. Der Final nimmt die Fragen
+  beider Linsen und streicht, was beide gemein hatten: zu viel Lesestoff und je eine Stelle, die dem
+  Modell die Antwort vorsagt.
+- 48 Zitatprüfungen gegen `05047ad34`: 46 stimmen, eine Entwurfs-Prämisse falsch („Start the music /
+  Touch the image" stünde nur in `Localizable.xcstrings" — gemessen trägt `FloatingVisualWindow.swift`
+  die Strings im Code; die Folgerung blieb richtig), eine Angabe meiner Aufgabenstellung eng
+  geschnitten (der Start-Knopf spannt Z. 226–265, nicht 239–262). Dazu von mir selbst nachgeschlagen
+  (`git show 05047ad34:<Pfad> | sed -n`): rund dreißig Anker aus allen zwanzig Dateien, alle treffen.
+- Bewusst gestrichen, mit Grund: Entwickler-Kommentare, die den Befund ausschreiben (die Gurt-Lücke im
+  Onboarding-Kommentar, die Reihenfolge Klang-vor-Kamera in `EchoelStudioView`, „has no reset path" in
+  `LearnLibrary`) — sie stehen nicht in ÖFFNE, damit das Modell liest statt abschreibt; die Hälfte einer
+  Frage, die Text gegen Text war (Gemini-Spur); Fragen, die Kandidaten aufzählten (lenkend); ÖFFNE-Punkte
+  außerhalb des ersten Starts (Routing/Blackout, Visual-Fenster-Tasten, Reduce Motion).
+- Zwei Nebenbefunde FÜR CLAUDE CODE, keine Meta-Spur: (1) `GuideOverlay.swift` Z. 41 sagte „six
+  value-type entries", `guideEntries` hält seit L1 sieben — **korrigiert in `f5aa7ec26`** (Kommentar nennt
+  jetzt die Quelle statt einer Zahl, #818; Sources-Commit, Gates laufen); (2) der Testkopf von
+  `TheGuideNamesOnlyRealControlsTests` nennt `HapticController.beat()`, im Code heißt der Schlag
+  `BioHaptics.beat(isDownbeat:)` (`Studio/BioHaptics.swift`) — Prosa im Test, kein Fehlschlag;
+  bleibt als Zeile hier, bis der nächste Eingriff in diese Datei sie mitzieht.
+- Kein Log-Inhalt, kein Gesundheitswert, kein Token, kein Code im Auftrag; er verlangt nichts zum
+  Ausführen oder Installieren.
+
+### Reihenfolge mit sieben Plätzen
+
+Die Tabelle in §6 trägt jetzt die Meta-AI-Zeile. Unverändert gilt: **jetzt** Gemini, Codex/Astra und
+Meta AI (je ein neuer Chat); **danach** ChatGPT, Mistral, DeepSeek und Grok, jedes erst, wenn seine
+offene Antwort vom 11.10. bei Claude Code war. Jede Antwort geht vollständig zurück und wird vor
+jeder Übernahme nachgemessen (§4).
