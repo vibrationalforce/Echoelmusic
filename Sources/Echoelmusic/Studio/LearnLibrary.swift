@@ -125,6 +125,18 @@ public enum LearnLibrary {
                 summary: String(localized: "Start the music first — then a finger on the back camera."),
                 detail: String(localized: "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing.")
             ),
+            // L1 (2026-10-11, founder: „Echoelmusic als neue Musikschule“) — the ONE path from the
+            // body to a finished piece, in learning order. Until this card the guide explained the
+            // pulse on the Instrument stage and the compose walk started at "Add a MIDI track" on
+            // Arrange, and nothing joined the two. Prose only: it names shipped controls verbatim
+            // (every quoted name is joined to its UI source by `TheGuideNamesOnlyRealControlsTests`)
+            // and promises no outcome — "this is the path", never "you will learn".
+            LearnEntry(
+                id: "guide.pulseToPiece", section: .guide,
+                title: String(localized: "From pulse to piece"),
+                summary: String(localized: "One path, in order: Play, a fingertip, a key — then Arrange and export."),
+                detail: String(localized: "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Instrument, the “MIDI” tile among the quick actions exports the notes for your DAW. This is the path; each card above is one stop on it.")
+            ),
             LearnEntry(
                 id: "guide.access", section: .guide,
                 title: String(localized: "For every body"),

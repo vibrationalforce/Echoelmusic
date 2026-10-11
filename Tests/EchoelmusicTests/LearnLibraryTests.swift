@@ -8,7 +8,7 @@ import XCTest
 final class LearnLibraryTests: XCTestCase {
 
     func testSectionsCoverEverySource() {
-        XCTAssertEqual(LearnLibrary.guideEntries.count, 6)   // #589 — hand-written, like safety
+        XCTAssertEqual(LearnLibrary.guideEntries.count, 7)   // #589 — hand-written, like safety; L1 (2026-10-11) added the path card
         XCTAssertEqual(LearnLibrary.bodyEntries.count, BioMetric.allCases.count)
         XCTAssertEqual(LearnLibrary.bodyScienceEntries.count, BioScienceTopic.allCases.count)
         XCTAssertEqual(LearnLibrary.musicEntries.count, MusicTheoryTopic.allCases.count)
@@ -19,7 +19,7 @@ final class LearnLibraryTests: XCTestCase {
     func testAllIsSectionOrderedAndComplete() {
         let all = LearnLibrary.all
         XCTAssertEqual(all.count,
-                       6 + BioMetric.allCases.count + BioScienceTopic.allCases.count
+                       7 + BioMetric.allCases.count + BioScienceTopic.allCases.count
                        + MusicTheoryTopic.allCases.count
                        + LightScienceTopic.allCases.count + 2)
         // #589: the Guide opens the library — the way IN before the reference material

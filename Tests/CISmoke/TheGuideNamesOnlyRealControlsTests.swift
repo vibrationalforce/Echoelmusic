@@ -20,10 +20,16 @@
 //   · spürbar — "Haptic beat (feel)" (`hapticsRow`, `HapticController.beat()` per quarter-note,
 //     LIVE since #552) inside the "Tempo & variations" panel; the sub-bass "feel it" line.
 //
-// ⚠️ HONEST LIMITS. 6 tests, 13 assertion statements (`grep -c`; two loop). Tests 1–4 are
-// END-TO-END over the shipped `LearnLibrary` values. Tests 5–6 are SOURCE-TEXT joins. What no
-// test here can prove: that the guide READS as easy immersion — that is the founder's device
-// probe (open Learn, first section, all three senses in under a minute). NEEDS-FOUNDER-VERIFY.
+// ⚠️ HONEST LIMITS. 7 tests since L1 (count the assertions with `grep -c XCTAssert`, not from
+// here — the first draft of this line went stale within a month). Tests 1–4 are END-TO-END over
+// the shipped `LearnLibrary` values. Tests 5–7 are SOURCE-TEXT joins. What no test here can
+// prove: that the guide READS as easy immersion — that is the founder's device probe (open
+// Learn, first section, all three senses in under a minute). NEEDS-FOUNDER-VERIFY.
+// ⭐ L1 (2026-10-11, parent `f2a8be2`): test 7 joins the path card's nine quoted controls to
+// their renderers. GRADING: red on the parent by ONE anchor absence — the card
+// `guide.pulseToPiece` did not exist there (#486) — while all nine UI-side needles are green on
+// both trees (the controls pre-exist; the card is the new half). Stripper on the three source
+// scans: PROPHYLAKTISCH — 0 of 9 needles flip raw vs. stripped on either tree (transcribed).
 //
 // ⭐ GRADING (§3). This file names `LearnSection.guide`/`guideEntries`, created by this same
 // commit — it does NOT COMPILE against the parent; no assertion has a verdict there
@@ -121,6 +127,39 @@ final class TheGuideNamesOnlyRealControlsTests: XCTestCase {
         XCTAssertTrue(window.contains("TouchInstrumentView(key:"),
                       "\"Touch it to play notes\" is a guide claim; the play surface must "
                       + "still mount on the picture.")
+    }
+
+    /// L1 (2026-10-11) — the path card "From pulse to piece" quotes nine controls across three
+    /// surfaces, and each is joined here to the source that renders it: the two Picker titles on
+    /// the Piece plate, the five compose-guide step labels on Arrange, the panel and the export
+    /// tile on Instrument. Both halves are pinned: the card must still QUOTE the name (so a
+    /// reworded card drops its join in the same commit, #456), and the UI must still RENDER it.
+    func testThePathCardNamesOnlyRealControls() throws {
+        let card = try XCTUnwrap(LearnLibrary.guideEntries.first { $0.id == "guide.pulseToPiece" },
+                                 "the path card left the guide — remove this join with it, in the same commit")
+        let piece = try source("Sources/Echoelmusic/Studio/WorkspaceView.swift")
+        let arrange = try source("Sources/Echoelmusic/Studio/ComposeGuide.swift")
+        let studio = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        let joins: [(quoted: String, needle: String, code: String, host: String)] = [
+            ("Key", "Picker(\"Key\"", piece, "WorkspaceView"),
+            ("Scale", "Picker(\"Scale\"", piece, "WorkspaceView"),
+            ("Add a MIDI track", "String(localized: \"Add a MIDI track\")", arrange, "ComposeGuide"),
+            ("Add a part", "String(localized: \"Add a part\")", arrange, "ComposeGuide"),
+            ("Write notes", "String(localized: \"Write notes\")", arrange, "ComposeGuide"),
+            ("Play the piece", "String(localized: \"Play the piece\")", arrange, "ComposeGuide"),
+            ("Save the piece", "String(localized: \"Save the piece\")", arrange, "ComposeGuide"),
+            ("Tempo & variations", "panel(\"Tempo & variations\"", studio, "EchoelStudioView"),
+            ("MIDI", "title: \"MIDI\"", studio, "EchoelStudioView"),
+        ]
+        for join in joins {
+            XCTAssertTrue(card.detail.contains("“" + join.quoted + "”"),
+                          "the path card no longer quotes “\(join.quoted)” — drop its join here in the same commit (#456)")
+            XCTAssertTrue(join.code.contains(join.needle), """
+            The path card names “\(join.quoted)”, which \(join.host) no longer renders as `\(join.needle)`. \
+            Rename the control and the card in the SAME commit — a guide pointing at a missing control \
+            is the #351 defect returned.
+            """)
+        }
     }
 
     // MARK: - source access (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

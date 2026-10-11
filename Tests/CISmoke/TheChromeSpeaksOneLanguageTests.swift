@@ -853,13 +853,14 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         XCTAssertTrue(notes.contains("with: String(localized: \" sharp\")") && notes.contains("with: String(localized: \" flat\")"),
                       "`spokenName` expands ♯/♭ to a verbatim English word again")
         try assertCatalogued(["MIDI", "Open", "Live Colabo", "Learn", "Save", "Keep last", "Stop", "Recording", "Writing", "Record", " sharp", " flat"], "icon tile, record tile and accidental words")
-        // E4-23 — the Learn/guide cards (six guide + two safety entries), the six Learn headings and the bio
-        // disclaimer are catalog keys: ONE `String(localized:)` literal per field, no `+` chain. The detail keys
-        // are read back at RUNTIME (en unit == key in the simulator) so no 900-character literal lives here.
+        // E4-23 — the Learn/guide cards (seven guide + two safety entries since L1, 2026-10-11), the six Learn
+        // headings and the bio disclaimer are catalog keys: ONE `String(localized:)` literal per field, no `+`
+        // chain. The detail keys are read back at RUNTIME (en unit == key in the simulator) so no 900-character
+        // literal lives here.
         let learn = try codeOnly("Sources/Echoelmusic/Studio/LearnLibrary.swift")
-        XCTAssertEqual(learn.components(separatedBy: "title: String(localized: \"").count - 1, 8, "a Learn card title is a verbatim String again")
-        XCTAssertEqual(learn.components(separatedBy: "summary: String(localized: \"").count - 1, 8, "a Learn card summary is a verbatim String again")
-        XCTAssertEqual(learn.components(separatedBy: "detail: String(localized: \"").count - 1, 7, "a Learn card detail is a verbatim String or a `+` chain again")
+        XCTAssertEqual(learn.components(separatedBy: "title: String(localized: \"").count - 1, 9, "a Learn card title is a verbatim String again")
+        XCTAssertEqual(learn.components(separatedBy: "summary: String(localized: \"").count - 1, 9, "a Learn card summary is a verbatim String again")
+        XCTAssertEqual(learn.components(separatedBy: "detail: String(localized: \"").count - 1, 8, "a Learn card detail is a verbatim String or a `+` chain again")
         XCTAssertTrue(learn.contains("detail: BioMetric.disclaimer + String(localized: \" Bio readings are most accurate"), "the scope card lost its localised tail seam")
         XCTAssertFalse(learn.contains("\"\n                    + \""), "a Learn card detail is a `+` chain again — a seam splits the catalog key")
         for heading in ["Start Here", "Your Body", "Body Science", "Music Theory", "Light & Colour", "Safety & Scope"] {
@@ -868,7 +869,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let metricInfo = try codeOnly("Sources/Echoelmusic/Studio/BioMetricInfo.swift")
         XCTAssertTrue(metricInfo.contains("public static let disclaimer = String(localized: \"For music and self-observation only"), "`BioMetric.disclaimer` is a verbatim String again")
         let cards = LearnLibrary.guideEntries + LearnLibrary.safetyEntries
-        XCTAssertEqual(cards.count, 8, "the guide + safety card set changed size — re-derive this block")
+        XCTAssertEqual(cards.count, 9, "the guide + safety card set changed size — re-derive this block")
         // ⛔ 8cbbda285 read `strings` here without declaring it — claim 11 never loads the catalog itself
         // (only `assertGerman` does), so Build for Testing 6565 was red on `cannot find 'strings' in scope`.
         let strings = try catalogStrings()
