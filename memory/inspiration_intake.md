@@ -967,3 +967,9 @@ iPad als Instrumenten-Fläche bleibt founder-gated (`project.yml`, Sensor-Grund)
 - Echt und schon in Arbeit: offener ADM-BWF-Immersive-Master mit Trajektorien (ADR-007, S-A), Grapes über ADM-OSC, Binaural über Apples HRTF (Tür „Headphone space“, Gerät offen), Self-Healing als SH-Spur. Falsch: Live-Python-Brücke, Dolby-Etikett, Dante bauen, autonome Code-Reparatur, Vagus-Modulation als Funktion.
 - Nebenfund und einzige Folge: zwei Website-Seiten nannten „Dolby Atmos“ gegen ADR-007 §9 — korrigiert; F-E steht jetzt als H19 in `docs/dev/FOUNDER_INBOX.md`. Nichts aus dem Text geht in Code.
 - Regel für Fremdmodelle: nur Prüfer-Sitz (MASTER_PLAN §12), nie Bauer; nie Diagnose-Log (Puls), Schlüssel oder private Daten weitergeben.
+
+### 2026-10-11 — DeepSeek: Monorepo „Apple first für alle Plattformen“ + „Issue #1 Water Reminder“
+- Quelle: Founder-Chat, DeepSeek sah das Repo nicht. Säuberung beider Texte leer. Gebrieft wurde DeepSeek danach mit öffentlichen Repo-Fakten und einer kleinen Prüf-Aufgabe (Plattform-Reihenfolge, ≤ 8 belegte Punkte, kein Code).
+- Monorepo [verified 5/12]: fast alles schon da (Architektur, EINE Roadmap, CI, Swift-Kern); Ordnerumbau abgelehnt. Die Messung fand aber vier echte veraltete Stellen bei uns (Plattform-Zeiger, ADR-004-Linux-Gate, fehlende Watch im Plan, „3 SPSC topics“) — umgesetzt, plus die neue Lernmodus-Regel „Was RAUSGEHT“.
+- Wasser-Erinnerung [verified 2/8]: als Echoel-Funktion REJECT (kein Wellness, kein Ton außer Musik, Bühnenrisiko); der Code tut nicht, was seine Kriterien sagen. Die Fürsorge-Absicht ist echt; der Weg dafür ist Erinnerungen-App + Fokus, ganz ohne Code.
+- Muster DeepSeek: warm und hilfsbereit, aber ohne Repo rät es den Stack und schreibt sofort Code. Gut nutzbar als Prüfer mit enger, belegpflichtiger Bitte; nie als Bauer.
