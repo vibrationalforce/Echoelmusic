@@ -1,5 +1,11 @@
 # Multiplatform Linking — iPhone-First, Inclusively Connected
 
+> **⛔ SUPERSEDED (2026-10-11).** The live cross-platform text is `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` §10, with
+> `docs/adr/004-cross-platform-strategy.md` as the decision record. This 2026-05-30 plan still claims things that are gone or
+> were never real: video capture (withdrawn #1304), RTMP (never linked), MPE input (no zones, #548), a `bioFrames` bus topic
+> (deleted 2026-09-24), and an AUv3 running in Logic and Cubasis (only AUM is device-measured). Kept for its history; do not
+> plan from it.
+
 **Authority:** Owner direction 2026-05-30 — *"iPhone First. Alle Plattformen sollen creativ
 und inclusiv sinnvoll miteinander verknüpft werden."*
 
