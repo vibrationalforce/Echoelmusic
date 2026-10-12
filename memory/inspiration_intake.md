@@ -1178,3 +1178,12 @@ liefert eine Rate ohne Host-Zeit · `VideoLayerSlot.pullFootageFrame` fragt `ite
 (`RetroCapture.masterRingView`). Verdikt WATCH→PLAN: Vorbedingung für den VideoLanePlayer, kein Code
 jetzt (`attachVideoOutput` hat 0 Aufrufer). Säuberung: nur die gemessene Zusammenfassung lag vor, der
 Rohtext wurde nicht durch `learn-intake.py` geschickt — keine Formulierung daraus übernommen.
+
+## 2026-10-12 — DeepSeek: Echoel Grain, Pegel- und Index-Rechnung (Orchester-Auftrag, Stand `0205769fc`) — [verified 3/4]
+
+Code eingebettet. Bestätigt: Normierung 1 · 2/3 · 4/7 · zu kurze Quelle wird Stille · kein Lesen
+außerhalb des Puffers. Alle drei stehen schon im Dateikopf von `DSP/GrainCloud.swift` (GA-9-Messung) —
+kein neues Wissen. **Widerlegt:** „Pegel fällt bei vollem Pool" — das Spawnen ist deterministisch,
+aktiv sind höchstens 4 Körner bei `maxGrains = 8`. DeepSeek übersah außerdem den dokumentierten Abfall
+unter density 0,5 (bis −12 dB bei 0). Verdikt: kein Befund, nichts zu bauen. Säuberung: der Text kam
+als Tabelle ohne Anweisungen; keine Formulierung übernommen.
