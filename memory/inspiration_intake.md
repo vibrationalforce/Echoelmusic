@@ -1187,3 +1187,18 @@ kein neues Wissen. **Widerlegt:** „Pegel fällt bei vollem Pool" — das Spawn
 aktiv sind höchstens 4 Körner bei `maxGrains = 8`. DeepSeek übersah außerdem den dokumentierten Abfall
 unter density 0,5 (bis −12 dB bei 0). Verdikt: kein Befund, nichts zu bauen. Säuberung: der Text kam
 als Tabelle ohne Anweisungen; keine Formulierung übernommen.
+
+## 2026-10-12 — Orchester Runde 2: ChatGPT [verified 3/8] · Grok [verified 7/8] (Stand `05047ad34`, Code eingebettet)
+
+**ChatGPT (stiller Start):** Am Code bestätigt: ein einziger unbestätigter Lauf genügt, damit der nächste
+Start im Sicherheitsmodus landet (Schwelle 2, keine Anlass-Prüfung). Die Einschränkung zum Wegwischen
+stimmt ebenfalls: `confirmHealthy` feuert beim ersten Hintergrundwechsel. Die Kontextzeile steht hinter
+Zählung und Urteil. Fünf Punkte sind Apple-Verhalten (Prewarm, Watchdog, Jetsam, BLE-Restore,
+ActivePrewarm-Lebensdauer), als Doku ausgewiesen, im Repo nicht messbar. WATCH: die SH-2b-Zeile liefert
+beim nächsten Fall den Beleg, ob ein Absturz vorlag.
+**Grok (Erstnutzer-Lesart):** Der stärkste Befund der Runde: das Onboarding sagt „Press Play to start",
+die App öffnet aber auf Piece, wo Play ohne Teil mit Inhalt `.unavailable` ist und nicht das Instrument
+startet. Dazu Karte 5 ohne Bühnenangabe, Quellenmenü nur per Langdruck, Loslassen-Hinweis nur im
+Bio-Panel, Karte 6 schickt arrangierte Noten zur Instrument-MIDI-Kachel. Karte 1 nennt die Bühne sehr
+wohl (Teilbefund). ADOPT→PRODUCT: eine Copy-Scheibe, Founder-Freigabe nötig (nutzersichtbarer Text).
+DeepSeek schickte dieselbe Grain-Antwort ein zweites Mal — nicht doppelt geloggt.
