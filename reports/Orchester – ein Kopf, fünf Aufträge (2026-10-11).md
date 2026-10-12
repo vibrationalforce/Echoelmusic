@@ -585,3 +585,16 @@ Die Tabelle in §6 trägt jetzt die Meta-AI-Zeile. Unverändert gilt: **jetzt** 
 Meta AI (je ein neuer Chat); **danach** ChatGPT, Mistral, DeepSeek und Grok, jedes erst, wenn seine
 offene Antwort vom 11.10. bei Claude Code war. Jede Antwort geht vollständig zurück und wird vor
 jeder Übernahme nachgemessen (§4).
+
+## 8. Founder-Entscheid 2026-10-12: nur noch Mistral, Grok und DeepSeek
+
+Gemeldet vom Founder: Meta AI, Gemini und ChatGPT/Codex können die GitHub-Links nicht öffnen.
+Entscheid: das Orchester arbeitet nur noch mit **Mistral, Grok und DeepSeek**. Ihre drei Aufträge
+(`reports/Orchester-Prompts_2026-10-12/05_Mistral.txt`, `06_DeepSeek.txt`, `07_Grok.txt`) gehen
+**sofort** raus; die Sperre „erst nach der Antwort vom 11.10." entfällt. Kommt eine alte Antwort
+doch noch, wird sie trotzdem gemessen und geloggt.
+
+Die drei verwaisten Aufträge: **Store-Text gegen CLAIMS** (Gemini) ist reiner Textvergleich und
+übernimmt Claude Code selbst. **Gegenprüfung SH-2b** (Astra) und **Erstnutzer-Lesart** (Meta AI)
+brauchen einen Prüfer, der nicht gebaut hat; sie gehen an das Modell der drei, dessen erste Antwort
+am besten gemessen hat, nach dessen Rückkehr.
