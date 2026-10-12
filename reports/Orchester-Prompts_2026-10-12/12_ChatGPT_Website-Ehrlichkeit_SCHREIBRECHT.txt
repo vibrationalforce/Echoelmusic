@@ -1,0 +1,83 @@
+Du arbeitest diesmal als ZULIEFERER für Echoel (Michael Terbuyken, Studio Hamburg): Du schreibst in einen eigenen Vorschlags-Branch, der nie gemergt wird. Ins eigentliche Repo schreibt weiterhin nur Claude Code — nachdem er deinen Vorschlag nachgemessen hat. Mehrere KIs helfen mit, jede mit genau einer Spur; keine arbeitet gegen eine andere.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+
+DIESMAL MIT SCHREIBRECHT — die Spielregeln (jede ist Pflicht; ein Verstoß beendet den Auftrag)
+Du hast per Connector Schreibzugriff auf github.com/vibrationalforce/Echoelmusic. Du darfst GENAU EINEN Branch anlegen und nur dorthin schreiben:
+  Branch: orchester/chatgpt/website-claims
+  Basis:  Commit 3a47150c5 (voll 3a47150c5be679116edf0432350b548c9ff0ed31) — leg den Branch GENAU von diesem Commit an, nicht von main und nicht vom neuesten Stand eines anderen Zweigs.
+Was dein Branch ist: ein VORSCHLAG. Er wird nie gemergt. Claude Code liest deinen Diff Zeile für Zeile, misst jede Behauptung nach und schreibt, was stimmt, selbst in seinen eigenen Zweig. Danach wird dein Branch gelöscht.
+
+VERBOTEN (ohne Ausnahme, auch nicht „zum Testen“):
+- Pushen auf irgendeinen anderen Branch — vor allem main, develop, deploy, deploy-dryrun, alles unter claude/ (wird AUTOMATISCH nach main gemergt) und feature/.
+- Tags anlegen (deploy-* löst einen App-Store-Build aus), Force-Push, Rebase fremder Commits, Branches löschen.
+- Diese Pfade auch nur anzufassen: .github/ (Workflows sehen die Repo-Geheimnisse) · .deploy/ (eine Änderung an .deploy/release lädt auf JEDEM Branch einen TestFlight-Build hoch) · project.yml · Package.swift · Package.resolved · Resources/iOS/Info.plist · alle *.entitlements · CLAUDE.md · .claude/ · memory/ · decisions.csv · inspiration.csv · scripts/ · fastlane/ · .mcp.json · LICENSE.
+- Jede Datei, die nicht unter „ERLAUBTE DATEIEN“ in deinem Auftrag steht. Keine neue Datei außer den dort genannten.
+- Pull Requests, Merges, Issues, Kommentare, Reviews, Releases, Workflow-Starts, Repo-Einstellungen.
+- Neue Abhängigkeiten, Binärdateien, generierte Dateien, Code aus anderen Quellen.
+- Geheimnisse, Tokens, Logs, Gesundheitsdaten — weder lesen noch schreiben.
+
+PFLICHT:
+- Jeder Commit endet mit der Zeile: Orchester: ChatGPT · Auftrag 12
+- Kleine Commits, ein Gedanke je Commit.
+- Am Ende ein BERICHT nach der Vorlage unten — als Datei in deinem Branch UND derselbe Text als deine Chat-Antwort. Ohne vollständigen Bericht gilt der Auftrag als nicht erledigt, egal wie gut der Code ist.
+- Kannst du etwas nicht (z. B. nichts ausführen, kein Compiler), schreib das in den Bericht. Behaupte nie, etwas gebaut oder getestet zu haben, was du nicht gebaut oder getestet hast.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die du selbst geöffnet hast oder die in deinem Auftrag stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+
+BERICHTSVORLAGE (Datei: reports/orchester-berichte/2026-10-12_chatgpt_website-claims.md — genau diese Abschnitte, keiner darf fehlen; „keine“ ist eine gültige Antwort)
+# Bericht ChatGPT · Auftrag 12
+## 1. Kopf
+- Modell: ChatGPT
+- Branch: orchester/chatgpt/website-claims
+- Basis-Commit: 3a47150c5
+- Letzter Commit: <volle SHA>
+- Datum/Uhrzeit (UTC) des letzten Pushs:
+## 2. Commits (alle, in Reihenfolge)
+| SHA (7) | Commit-Zeile | Dateien |
+## 3. Dateien
+| Pfad | + Zeilen | − Zeilen | Warum genau diese Datei |
+## 4. Änderungen im Einzelnen
+Je Änderung: Datei:Zeile (im NEUEN Stand) · vorher (1 Satz) · nachher (1 Satz) · Beleg im Code (Datei:Zeile), warum das richtig ist.
+## 5. Was ich geprüft habe — und wie
+Je Prüfung: was, womit (gelesen / gerechnet / ausgeführt), Ergebnis. Was NICHT geprüft wurde, steht hier ausdrücklich (z. B. „nicht kompiliert“).
+## 6. CI
+Für den letzten Commit: Workflow-Name · Run-ID · Ergebnis, oder „nicht sichtbar für mich“.
+## 7. Abweichungen vom Auftrag
+## 8. Verbotsliste eingehalten?
+Die vollständige Ausgabe der Dateiliste deines Branchs gegenüber der Basis (Pfad + Status A/M/D je Zeile). Steht dort ein verbotener Pfad, sag es hier zuerst.
+## 9. Offene Fragen an Claude Code (höchstens 5)
+## 10. Vermutungen
+Alles, was du nicht belegen konntest, mit „ANNAHME:“.
+
+AUFTRAG 12 FÜR CHATGPT: Behauptet die Website nur, was die App heute kann? Schlage Korrekturen als Änderungen vor.
+
+Wahrheitsquelle (NUR lesen, nicht ändern): ContentPipeline/CLAIMS.md — die eine Liste, was heute wahr ist und was gestrichen ist, jeweils mit Grund. Zusätzlich docs/dev/FEATURE_STATUS.md.
+
+Prüfe diese Seiten Satz für Satz: docs/index.html, docs/faq.html, docs/health.html, docs/architecture.html, docs/artnet-sacn-from-a-phone.html.
+Für jeden Satz, der etwas behauptet, das CLAIMS.md als gestrichen, ausgesetzt oder nicht ausgeliefert führt, oder das CLAIMS.md nicht deckt:
+- Ändere den Satz so wenig wie möglich, so dass er nur noch sagt, was CLAIMS.md deckt — oder streiche ihn, wenn nichts Wahres übrig bleibt.
+- Keine neuen Behauptungen, keine Werbesprache, keine neuen Absätze, kein neues Design, kein HTML außer dem Satz selbst.
+- Rote Linien gelten verschärft: kein Wellness, keine Therapie, keine Heilwirkung, keine Esoterik.
+- Höchstens 10 Änderungen. Jede braucht: Seite:Zeile, alter Satz wörtlich, neuer Satz wörtlich, die CLAIMS.md-Zeile (Nummer), auf die du dich stützt.
+- Findest du einen Satz in CLAIMS.md selbst, der dir falsch vorkommt, ändere nichts — schreib ihn unter 9.
+
+ERLAUBTE DATEIEN (nur diese):
+- die fünf docs/*.html-Seiten oben
+- NEU: reports/orchester-berichte/2026-10-12_chatgpt_website-claims.md
+Hinweis: Website-Texte sind nutzersichtbar. Selbst wenn alles stimmt, entscheidet der Founder, ob eine Änderung live geht.
