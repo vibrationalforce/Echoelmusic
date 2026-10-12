@@ -111,7 +111,8 @@ final class TheGuideNamesOnlyRealControlsTests: XCTestCase {
         let studio = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
         for control in ["Text(\"Haptic beat (feel)\")",
                         "panel(\"Tempo & variations\"",
-                        "Text(\"Body voice\")"] {
+                        "Text(\"Body voice\")",
+                        "Text(\"Bio source\")"] {
             XCTAssertTrue(studio.contains(control), """
             The guide names a control this source no longer contains: \(control). Rename the \
             control and the guide entry in `LearnLibrary.guideEntries` in the SAME commit — a \
@@ -131,8 +132,8 @@ final class TheGuideNamesOnlyRealControlsTests: XCTestCase {
 
     /// L1 (2026-10-11) — the path card "From pulse to piece" quotes nine controls across three
     /// surfaces, and each is joined here to the source that renders it: the two Picker titles on
-    /// the Piece plate, the five compose-guide step labels on Arrange, the panel and the export
-    /// tile on Instrument. Both halves are pinned: the card must still QUOTE the name (so a
+    /// the Piece plate, the five compose-guide step labels on Arrange, the panel on Instrument
+    /// and the export tile on the Piece plate. Both halves are pinned: the card must still QUOTE the name (so a
     /// reworded card drops its join in the same commit, #456), and the UI must still RENDER it.
     func testThePathCardNamesOnlyRealControls() throws {
         let card = try XCTUnwrap(LearnLibrary.guideEntries.first { $0.id == "guide.pulseToPiece" },
@@ -140,6 +141,7 @@ final class TheGuideNamesOnlyRealControlsTests: XCTestCase {
         let piece = try source("Sources/Echoelmusic/Studio/WorkspaceView.swift")
         let arrange = try source("Sources/Echoelmusic/Studio/ComposeGuide.swift")
         let studio = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        let export = try source("Sources/Echoelmusic/Studio/SongExportTab.swift")
         let joins: [(quoted: String, needle: String, code: String, host: String)] = [
             ("Key", "Picker(\"Key\"", piece, "WorkspaceView"),
             ("Scale", "Picker(\"Scale\"", piece, "WorkspaceView"),
@@ -149,7 +151,7 @@ final class TheGuideNamesOnlyRealControlsTests: XCTestCase {
             ("Play the piece", "String(localized: \"Play the piece\")", arrange, "ComposeGuide"),
             ("Save the piece", "String(localized: \"Save the piece\")", arrange, "ComposeGuide"),
             ("Tempo & variations", "panel(\"Tempo & variations\"", studio, "EchoelStudioView"),
-            ("MIDI", "title: \"MIDI\"", studio, "EchoelStudioView"),
+            ("Export", "title: \"Export\"", export, "SongExportTab"),
         ]
         for join in joins {
             XCTAssertTrue(card.detail.contains("“" + join.quoted + "”"),

@@ -745,14 +745,14 @@
         }
       }
     },
-    "Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW." : {
+    "Press Play on “Instrument” to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW." : {
       "comment" : "Onboarding, page 3 body (#618: names Play, camera light, strap — the first act). Replaced the 'Breathe, lock a key…' key; its orphaned entry left with it (#618b).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW."
+            "value" : "Press Play on “Instrument” to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW."
           }
         }
       }
@@ -11449,14 +11449,14 @@
         }
       }
     },
-    "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Instrument, the “MIDI” tile among the quick actions exports the notes for your DAW. This is the path; each card above is one stop on it." : {
+    "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Piece, “Export” shares those notes as a MIDI file for your DAW. This is the path; each card above is one stop on it." : {
       "comment" : "Learn / guide card “From pulse to piece” (L1, 2026-10-11).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Instrument, the “MIDI” tile among the quick actions exports the notes for your DAW. This is the path; each card above is one stop on it."
+            "value" : "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Piece, “Export” shares those notes as a MIDI file for your DAW. This is the path; each card above is one stop on it."
           }
         }
       }
@@ -11473,14 +11473,14 @@
         }
       }
     },
-    "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing." : {
+    "After you press Play on “Instrument”, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds; tap the pulse pill and its panel tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: touch and hold the pulse pill and choose it, or tap the pill and use the “Bio source” row. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing." : {
       "comment" : "Learn / guide cards, the six Learn headings and the bio disclaimer (E4-23, 2026-09-30).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing."
+            "value" : "After you press Play on “Instrument”, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds; tap the pulse pill and its panel tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: touch and hold the pulse pill and choose it, or tap the pill and use the “Bio source” row. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing."
           }
         }
       }

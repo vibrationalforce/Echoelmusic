@@ -136,7 +136,7 @@ final class TheReadyPageNamesTheFirstActTests: XCTestCase {
             throw XCTSkip("string catalog not present at \(path.path)")
         }
         let catalog = try String(contentsOf: path, encoding: .utf8)
-        let sentence = "Press Play to start — a fingertip on the camera light, or a "
+        let sentence = "Press Play on “Instrument” to start — a fingertip on the camera light, or a "
             + "Bluetooth strap, lets your body drive the sound. Export to your DAW."
 
         // The SAME string must be the view's literal — a reworded `Text` with a stale

@@ -165,7 +165,7 @@ struct OnboardingView: View {
                 // after choosing it (pulse-pill long-press or the bioPanel "Bio source" row).
                 // The capability is real and reachable; do not cite this sentence as evidence
                 // the strap self-connects on Play.
-                Text("Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW.")
+                Text("Press Play on “Instrument” to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW.")
                     .font(EchoelTheme.font(15))
                     .foregroundStyle(EchoelTheme.text.opacity(0.7))   // WCAG AA on black (was 0.4)
                     .multilineTextAlignment(.center)
