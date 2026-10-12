@@ -38,6 +38,8 @@
 //    gain finite and in `engagedGain…1`.
 // 7. The limiter's numbers are `FlashGuard`'s (#416) — no second 3 Hz, no second WCAG step.
 // 9–11. VV-4c, a saturated red flash: see the grading note below (END-TO-END, claim 11 SOURCE-TEXT).
+// 12. VV-4d, the engaged gain stays under the red step AFTER the shader's screen blend (END-TO-END
+//     over a swept field + SOURCE-TEXT on the blend it is derived from).
 // 8. `VideoLayerMath`: WCAG relative luminance with the BT.709 weights, cell means (a side too large
 //    to square is refused, not a trap), a portrait clip's quarter-turn transform shown upright and
 //    fitted into a phone-sized visual.
@@ -49,7 +51,8 @@
 // rise per frame is 0.25/60; the step off a settled level shows 4; the resumed strobe shows 5, the
 // two-step fall 5, the drift 4; the 1.9 Hz flash ends at gain 1; the repeated media time shows 5 at
 // 2.6 Hz and its largest climb step is 0.25/24; the looped clock shows 5 and its second pass sits at
-// 0.05. The corner flash is 14 × 14
+// `engagedGain` (0.05 when measured; VV-4d lowered it to 0.015625 and a port of the limiter
+// reproduces every other number here unchanged, first rise 3.8167 s). The corner flash is 14 × 14
 // pixels of a 64 × 64 picture at a step of 0.10, which moves each fixed block by 49/256 × 0.10 ≈
 // 0.019 and the overlapping window on the corner by 196/256 × 0.10 ≈ 0.077 (threshold 0.025). The
 // mid-swing strobe is one cell 0.30 ↔ 0.42 starting at 0.36: its 2 × 2 window swings 0.03, but only
@@ -84,6 +87,14 @@
 // one `Signal` type verbatim, in the same channel order.
 // NOT covered: what the screen shows — the field under the layer has its own budget, and the sum is
 // a DEVICE PROBE, open until a door exists (VV-6).
+//
+// ⚠️ HONEST GRADING, VV-4d (transcribed in Python, not run): on the parent claim 12 is RED — the
+// engaged gain was 0.05, 3 × 0.05 = 0.15 against 0.0625, and the swept worst after the 8-bit
+// write is 0.146. Claim 7's needle moves with the constant in the same commit. Claims 1–11 and
+// TheVideoFrameIsPulledOnTheDrawTests 8–19 were driven through a port under 0.05 and 0.015625:
+// 143 of 143 green under both (engage frames 12, 32, 52 and the 360-tick lead-in unchanged).
+// STILL OPEN (VV-4e): at gain 1 the footage's green and blue swings show as red over a reddish
+// field and no channel counts them — see the limiter's WHAT IT IS NOT.
 
 import Foundation
 import XCTest
@@ -607,7 +618,7 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         let code = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8))
         for derived in ["FlashGuard.luminanceDeltaThreshold * regionCoverage", "Int(2 * FlashGuard.maxFlashHz) - 1",
                         "cellTransitionThreshold = FlashGuard.luminanceDeltaThreshold\n",
-                        "FlashGuard.luminanceDeltaThreshold / 2", "FlashGuard.maxDelta(perSecond: Self.releasePerSecond, dt: dt)"] {
+                        "engagedGain = redCellTransitionThreshold / 4", "FlashGuard.maxDelta(perSecond: Self.releasePerSecond, dt: dt)"] {
             XCTAssertTrue(code.contains(derived), "the limiter derives `\(derived)` from FlashGuard")
         }
         for copy in ["3.0", "= 0.1\n", "0.10", "= 3\n"] {
@@ -709,7 +720,8 @@ final class UserFootageCannotStrobeTests: XCTestCase {
 
     /// Claim 10 — the red signal is linear R − G − B floored at 0, a white, grey or green never moves
     /// it, its step is WCAG's 20/320, and the engaged gain sits under it, so nothing the capped layer
-    /// adds can make a red flash either.
+    /// adds can make a red flash either. That it holds over any field AFTER the shader's screen blend
+    /// is claim 12.
     func testTheRedSignalIsWCAGsAndTheCapSitsUnderItsStep() {
         XCTAssertEqual(VideoLayerMath.redFlashSignal(red: 1, green: 0, blue: 0), 1, accuracy: 1e-12)
         for (r, g, b) in [(1.0, 1.0, 1.0), (0.5, 0.5, 0.5), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (0.0, 0.0, 0.0)] {
@@ -741,5 +753,63 @@ final class UserFootageCannotStrobeTests: XCTestCase {
             let code = SourceText.codeOnly(try String(contentsOf: file, encoding: .utf8))
             XCTAssertFalse(code.contains("redCells: nil"), "\(file.lastPathComponent) hands the limiter no colour")
         }
+    }
+
+    // MARK: 12 — the engaged gain stays under the red step AFTER the screen blend (VV-4d)
+
+    /// Claim 12 — the shader composites the layer as a SCREEN, F + gain·L·(1 − F) per channel. Each
+    /// channel moves by at most the gain, but R − G − B sums three of them: over a reddish field a
+    /// red/cyan strobe swings it by 3·gain − 2·gain². At the first engaged gain, 0.05, that was 0.145
+    /// — a red flash the capped layer still showed while the shown red channel saw 0.05.
+    func testTheEngagedGainStaysUnderTheRedStepAfterTheScreenBlend() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let shader = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(
+            "Sources/Echoelmusic/Views/MetalBioView.swift"), encoding: .utf8))
+        XCTAssertEqual(shader.components(separatedBy: "lin + outCol * (1.0 - lin), clamp(u.footOpacity, 0.0, 1.0) * inside").count - 1, 1,
+                       "the footage is no longer composited as the screen this claim's factor is derived from — re-derive it (VV-4d)")
+        XCTAssertTrue(shader.contains("outCol += rippleLight(uv, u) * (float3(1.0) - outCol);"),
+                      "the ripple after the footage is no longer a screen, which only shrinks a swing")
+        // k = the summed per-channel weights of the shipped red signal, read at its unfloored corner:
+        // a change of the weights changes k, never a literal here.
+        let red = VideoLayerMath.redFlashSignal(red: 1, green: 0, blue: 0)
+        let k = red + (red - VideoLayerMath.redFlashSignal(red: 1, green: 1, blue: 0))
+                    + (red - VideoLayerMath.redFlashSignal(red: 1, green: 0, blue: 1))
+        XCTAssertGreaterThanOrEqual(k, 1, "premise: the red signal rises with red")
+        XCTAssertLessThan(k * VideoFlashLimiter.engagedGain, VideoFlashLimiter.redCellTransitionThreshold,
+                          "the screen blend can stretch the engaged layer's swing k-fold in R − G − B")
+        /// The worst shown red swing over a swept field, footage at any corner of the colour cube,
+        /// as the drawable's 8-bit sRGB write stores it.
+        func worstShownRed(_ gain: Double) -> Double {
+            func written(_ linear: Double) -> Double {
+                let c = Swift.min(1, Swift.max(0, linear))
+                let s = c <= 0.0031308 ? 12.92 * c : 1.055 * Foundation.pow(c, 1 / 2.4) - 0.055
+                return (s * 255).rounded() / 255
+            }
+            var worst = 0.0
+            for i in 0...256 {
+                for g in [0.0, 1.0 / 256, 4.0 / 256] {
+                    for b in [0.0, 1.0 / 256, 4.0 / 256] {
+                        let field = [Double(i) / 256, g, b]
+                        var lo = Double.infinity, hi = -Double.infinity
+                        for corner in 0..<8 {
+                            let l = [Double(corner & 1), Double((corner >> 1) & 1), Double((corner >> 2) & 1)]
+                            let s = (0..<3).map { written(field[$0] + gain * l[$0] * (1 - field[$0])) }
+                            let v = VideoLayerMath.redFlashSignal(red: s[0], green: s[1], blue: s[2])
+                            lo = Swift.min(lo, v)
+                            hi = Swift.max(hi, v)
+                        }
+                        worst = Swift.max(worst, hi - lo)
+                    }
+                }
+            }
+            return worst
+        }
+        XCTAssertLessThan(worstShownRed(VideoFlashLimiter.engagedGain),
+                          VideoFlashLimiter.redCellTransitionThreshold - VideoFlashLimiter.roundingAllowance,
+                          "an engaged layer over some field, as written to the drawable, swings the red signal a whole step")
+        XCTAssertGreaterThanOrEqual(worstShownRed(FlashGuard.luminanceDeltaThreshold / 2),
+                                    VideoFlashLimiter.redCellTransitionThreshold,
+                                    "counterweight (#343): the sweep sees the red flash of the VV-4c engaged gain, 0.05")
     }
 }

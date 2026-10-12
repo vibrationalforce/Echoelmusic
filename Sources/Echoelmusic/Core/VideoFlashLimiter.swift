@@ -41,11 +41,15 @@
 //   a level settled long ago is a change of its own, not the rest of a rise that ended before the
 //   counting window (second review: such a step started a strobe uncounted, and six showed).
 // · When any channel holds five transitions inside one second, the gain drops to `engagedGain`
-//   (0.05) on that frame. While engaged no pixel the layer adds can move by 0.05, half the WCAG
-//   step — nothing it shows can be a flash at all.
+//   (a quarter of the red step) on that frame. The shader composites the layer as a SCREEN,
+//   F + gain·L·(1 − F) per channel: the shown luminance moves by at most the gain, the shown
+//   R − G − B (three channels, unfloored over a reddish field) by at most 3·gain − 2·gain², and the
+//   last quarter of the step is room for the drawable's 8-bit rounding. While engaged nothing it
+//   shows can be a flash at all. (VV-4d: at the first engaged gain, 0.05, a capped red/cyan strobe
+//   over a dark-red field still showed a red swing of 0.145 — 46 against WCAG's 20.)
 // · A flash covering any rectangle at least two cells wide and tall covers some cell completely, and
-//   that cell's shown channel counts what is shown there (its red shown channel too: the engaged
-//   gain, 0.05, is under the red step as well) — with the gain of the frame before, so at
+//   that cell's shown channel counts what is shown there (its red shown channel too, which counts
+//   gain × the footage's OWN red signal — see WHAT IT IS NOT for the field under it) — with the gain of the frame before, so at
 //   most one climb step behind. So at most five transitions show in any second, two and a half
 //   flashes, under the three WCAG allows — the cap's own edge included. That is the argument; the
 //   transcription measured it too, at five, over the review's inputs and random and directed ones.
@@ -54,8 +58,8 @@
 // · It climbs back only after `holdSeconds` with no channel at the count, at `releasePerSecond`,
 //   stepped through `FlashGuard.maxDelta` and only on a frame that advanced its clock, so neither a
 //   stall nor a repeated frame turns the climb into a jump. A source that goes on strobing never
-//   releases it; a slower flash after a strobe does (the first version held a 1.9 Hz flash at 0.05
-//   for good, because it engaged at four while the gain was below 1).
+//   releases it; a slower flash after a strobe does (the first version held a 1.9 Hz flash at its then
+//   engaged gain, 0.05, for good, because it engaged at four while the gain was below 1).
 //
 // ⭐ IT KEEPS ITS OWN CLOCK. Each frame advances it by the source's elapsed time, clamped to
 // `shortestFrameSeconds…longestFrameSeconds`. A REPEATED time advances it by nothing — a 24 fps clip
@@ -71,6 +75,12 @@
 // ⚠️ WHAT IT IS NOT, so nobody reads more into it:
 // · It caps the LAYER, not the screen. The generated field under it has its own budget
 //   (`FlashGuard.fieldBudgets`); the sum of the two is a device probe, not a claim here.
+// · ⚠️ OPEN (VV-4e): the red count reads the footage's own R − G − B. Over a reddish field the
+//   layer's GREEN and BLUE swings show as red swings too — a footage flicker between black and a
+//   dim blue moves neither its luminance windows nor its red signal, so the gain stays at 1, while
+//   the shown R − G − B over the field swings by the blue's full amount. Lowering the engaged gain
+//   does not touch this; the cap never engages. Closed only by counting the field's colour or a
+//   per-channel bound.
 // · It engages at two and a half flashes a second ON PURPOSE, below the three WCAG allows, to
 //   leave room for its own edge. So legal footage flashing between about 2 and 3 Hz (beat lighting
 //   at 120–180 BPM) is dimmed, and a pulse near 2 Hz can be, depending on frame timing and on how
@@ -121,11 +131,13 @@ public struct VideoFlashLimiter: Sendable {
     public static let engageTransitions = Int(2 * FlashGuard.maxFlashHz) - 1
     /// The window transitions are counted in, in seconds.
     public static let windowSeconds = 1.0
-    /// The gain while engaged: half the WCAG step, so no pixel the layer adds can move by a step.
-    public static let engagedGain = FlashGuard.luminanceDeltaThreshold / 2
+    /// The gain while engaged: a quarter of the red step. The shader composites the layer as a
+    /// SCREEN, so the shown red signal (three channels summed) can swing 3·gain − 2·gain²; the
+    /// fourth share is room for the drawable's 8-bit sRGB rounding. Luminance moves by at most gain.
+    public static let engagedGain = redCellTransitionThreshold / 4
     /// Quiet time before the gain climbs back, in seconds.
     public static let holdSeconds = 1.0
-    /// How fast the gain climbs back, per second (0.05 → 1 in about four seconds).
+    /// How fast the gain climbs back, per second (`engagedGain` → 1 in about four seconds).
     public static let releasePerSecond = 0.25
     /// The least and the most one frame advances the limiter's own clock (see the header).
     public static let shortestFrameSeconds = 1.0 / 240

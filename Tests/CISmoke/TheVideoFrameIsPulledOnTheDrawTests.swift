@@ -43,10 +43,10 @@
 //   engages the 10 Hz strobe at frame 9).
 // · ZERO regressions are claimed: nothing on the parent could have been wrong the way these assert.
 // Mutants, and the claims that catch each. DRIVEN through the port, one switch per mutant: a count
-// on a new buffer only (17 — the paused clip stays at 0.05); a second renderer counted as a draw of
+// on a new buffer only (17 — the paused clip stays at the engaged gain); a second renderer counted as a draw of
 // its own (19 — it never engages); a buffer that reaches the second renderer counted at its own time
 // (19's third case — it never engages); no reset on a nil map (18); the dial left out of the count (14 —
-// 0.0025 instead of 0.05); the gain applied one frame late (9, 10, 19); media time for the limiter
+// dial × engaged gain, 0.0025 when driven at 0.05, instead of the dial's 0.05); the gain applied one frame late (9, 10, 19); media time for the limiter
 // (10, a rate-2 stand-in); an uneased dial (11, 12, 13, 18); no fade back after a gap (11); the dial
 // kept climbing while nothing was shown (12, 13); a stale frame kept after a refused buffer (13).
 // ARGUED, not driven: a queue/task/observer in the slot (1); an unpaired unlock or a second instance
