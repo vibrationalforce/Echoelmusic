@@ -1226,3 +1226,16 @@ lässt R − G − B um bis zu 3·Gain schwanken; bei 0,05 zeigte ein gedeckelte
 Grün/Blau der Ebene über rotem Feld, von keinem Kanal gezählt) — offen, im Limiter-Kopf benannt, braucht
 eine Entscheidung (Feldfarbe zählen oder Kanal-Schranke). Lehre: ein falsches Warum kann auf ein echtes Was
 zeigen — die Prämisse messen, die Folgerung trotzdem nachrechnen.
+
+## 2026-10-12 — Orchester Auftrag 12: ChatGPT mit Schreibrecht (Website-Ehrlichkeit) — [verified 8/10]
+
+Erster Lauf der Schreibrecht-Regel. Branch `orchester/chatgpt/website-claims` (11 Commits, Basis
+`3a47150c5`), `git diff --name-status` = nur die fünf erlaubten `docs/`-Seiten + der Bericht:
+Verbotsliste eingehalten. Acht von zehn Funden stimmen und sind von mir NEU formuliert auf
+`claude/…` gelandet; zwei abgelehnt, weil sie Sicherheitshinweise LÖSCHEN statt sie zu
+präzisieren (health.html: „kein therapeutisches Gerät“ und der 3-Hz-Satz — `FlashGuard` deckelt
+`LightingStore` und `VisualCreativeState`). **Lehre über die Quelle:** gut im Finden von
+Widersprüchen auf der Seite, schwach im Unterscheiden „Behauptung ohne Beleg“ vs. „Pflichttext“
+— ein Ehrlichkeits-Auftrag braucht künftig die Zeile „Sicherheits- und Haftungshinweise nie
+entfernen“. Beim Entrainment war das Ergebnis richtig, die Begründung falsch (CLAIMS §2 statt
+der fehlenden Tür). Der Branch wird nicht gemergt; Löschung gehört dem Founder.
