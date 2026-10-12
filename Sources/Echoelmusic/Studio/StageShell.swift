@@ -152,6 +152,11 @@ struct StageShell: View {
                     .font(EchoelTheme.font(11, .semibold))
                     .lineLimit(1)
                     .allowsTightening(true)
+                    // Five cells share the width: at 320 pt (SE with Display Zoom, a narrow
+                    // foldable cover) a cell is ~62 pt and "Instrument" truncated past the default
+                    // text size. Shrinking a little beats cutting the word; VoiceOver reads the
+                    // full label either way (reflow audit 2026-10-12).
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(isActive ? EchoelTheme.accent : EchoelTheme.dim)
             .frame(maxWidth: .infinity, minHeight: EchoelTheme.controlTapHeight)
