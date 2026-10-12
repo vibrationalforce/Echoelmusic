@@ -32,9 +32,10 @@
 //        1 % at full scale. Prose fixed, contract untouched.
 //    /echoelmusic/bio/heart/sdnn    float ms         — pulse AND its own sentinel
 //    /echoelmusic/bio/breath/rate   float [3..40]    — on the plausibility band (3…40/min)
-//    /echoelmusic/bio/breath/phase  float [0..1]     — with the RATE, never gated on itself:
-//        the phase has no unknown sentinel (0 = EXHALE start, 0.5 = inhale start), so a value
-//        gate would drop real data once per breath cycle
+//    /echoelmusic/bio/breath/phase  float [0..1]     — gated on `hasMeasuredBreathWaveform`
+//        (#1140: the rate gate was blind to a source with a real rate and no waveform),
+//        never gated on itself: the phase has no unknown sentinel (0 = EXHALE start,
+//        0.5 = inhale start), so a value gate would drop real data once per breath cycle
 //    /echoelmusic/bio/coherence     float [0..1]     — pulse AND its own sentinel, like hrv.
 //        ⚠️ This one is the LAST to arrive on any source: coherence needs
 //        `HRVCoherence.minIntervals` = 16 accepted RR intervals — ~16 beats on the BLE strap,
