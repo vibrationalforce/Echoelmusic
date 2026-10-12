@@ -1150,3 +1150,16 @@ Der Prompt als Ganzes ist ein Rollen-Wechsel: Claude soll Prompt-Lieferant für 
 - **Ein Scanner, der 0 meldet, hat etwas gemessen — nämlich seine eigene Nadelmenge.** Die 13 alten Nadeln waren alle englisch und alle aus der „ignore previous“-Familie; eine Rollen-Zuweisung mit Aktivierungsritual ist derselbe Ausfall in anderer Grammatik. Vor einer neuen Nadel zuerst das Repo zählen: eine mit 48 Treffern wäre schlimmer als keine.
 - **Eine Messung über fremden Text findet auch eigene Fehler.** Zeile 15 (variants.md) und Zeile 12 (der Scanner) standen in keiner Behauptung des Textes; sie fielen beim Nachmessen der Prämissen auf. Das ist der eigentliche Ertrag dieser Quelle — nicht ihre Behauptungen, die zu 10 von 13 widerlegt sind.
 - **Das Beispiel war schon geloggt.** Vision-Gate Schritt 1 (nicht neu bewerten, auf die Zeile zeigen) hat hier gegriffen: `inspiration.csv:242`, 2026-10-10, REJECT [verified 0/6]. Dieselbe Idee kam binnen 24 h in neuem Gewand zurück; der Tally für `unknown` sagt jetzt 2/19.
+
+## 2026-10-12 — Mistral: rote Blitze im Video-Begrenzer (Orchester-Auftrag, Stand `0205769fc`) — [verified 6/6]
+
+| Nr | Behauptung | Messung | Verdikt |
+|---|---|---|---|
+| 1 | WCAG 2.3.1 verlangt allgemeine UND Rot-Blitz-Schwelle, Flächenregel 25 % | Understanding-Dokument W3C; deckt sich mit `FlashGuard` (0.10 / 0.80 / 3 Hz) für die allgemeine Hälfte | BESTÄTIGT |
+| 2 | Keine Rot-Bedingung in `FlashGuard` | `git grep -i -E 'red flash\|saturated\|chromatic'` in den vier Dateien → 0 (ganze Datei, 672 Zeilen) | BESTÄTIGT |
+| 3 | Der Zähler sieht nur einen Skalar je Zelle | `step(time:cells: [Double], …)` Z. 204, `registers(_ value: Double…)` Z. 143, `VideoLayerSlot` Z. 340 → `relativeLuminance` | BESTÄTIGT (Zeilen versetzt) |
+| 4 | Gegenbeispiel ist normativ ein Rot-Blitz | R-Anteil 0.800, u'v'-Abstand 0.284 > 0.2, (R−G−B)×320 = 96 > 20 | BESTÄTIGT |
+| 5 | Begrenzer registriert ihn nicht | ΔL = 0.0077 < 0.025 (Fenster) und < 0.10 (Zelle) | BESTÄTIGT |
+| 6 | Leuchtdichte-Blitze: Zählregel hält (5 Übergänge → ≤ 2,5 Blitze/s) | `engageTransitions = 2·3−1` Z. 108 | BESTÄTIGT |
+
+Verdikt **ADOPT→PRODUCT, eine Scheibe**: ein Rot-Kanal im `VideoFlashLimiter` (je Zelle zusätzlich der Rot-Anteil bzw. u'v', Übergänge in/aus gesättigtem Rot zählen in dieselbe 3-Hz-Kappe), mit Wächter, **bevor `attachVideoOutput` einen Aufrufer bekommt**. Heute latent: kein Produktionspfad zeigt Footage. Offene Normfrage (Mistral): WCAG-2.2-u'v' oder 2.0/2.1-(R−G−B)×320 — Empfehlung 2.2, das Gegenbeispiel erfüllt beide. Lehre: der Auftrag mit eingesetzter Vermutung UND der Bitte um ein Gegenbeispiel mit Zahlen hat die erste voll bestätigte Antwort des Orchesters gebracht.
