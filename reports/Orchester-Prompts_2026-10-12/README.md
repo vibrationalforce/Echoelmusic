@@ -26,3 +26,5 @@ SCHREIBRECHT (Founder 2026-10-12, „Schreib welche mit Schreibberechtigung … 
 
 Nachtrag nach Auftrag 12 (ChatGPT, [verified 8/10]): Sicherheits- und Haftungshinweise (3-Hz-Blitzgrenze, „kein Medizin-/Therapiegerät“, Epilepsie-Warnung) werden in KEINEM Auftrag gelöscht — höchstens präziser gemacht. Zwei der zehn Vorschläge löschten genau solche Sätze und sind abgelehnt. Diese Zeile gehört in jeden künftigen Website- oder Text-Auftrag.
 Nie in einen dieser Chats: Logs, Diagnose-Dateien, Puls- oder Atemwerte, Tester-Daten, Schlüssel. Alles in diesen Dateien ist öffentlich.
+
+Nachtrag Branch-Anlage (2026-10-12): Die Connectoren können einen Branch nur von einem bestehenden Branch-Namen anlegen, nicht an einem Commit. Deshalb legt Claude Code jeden Vorschlags-Branch selbst an `3a47150c5` an, bevor das Modell schreibt. Angelegt: `orchester/mistral/sync-comment-truth`, `orchester/grok/vv4e-red-test`.
