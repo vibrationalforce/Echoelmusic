@@ -13,6 +13,7 @@ Die Antwort vollständig kopieren und zu Claude Code bringen (Rückweg: §4 des 
 | 05 | Mistral | erst nach der YCbCr-Antwort vom 11.10. — neuer Chat | `0205769fc` | `05_Mistral.txt` |
 | 06 | DeepSeek | erst nach der Ringpuffer-Antwort vom 11.10. — neuer Chat | `0205769fc` | `06_DeepSeek.txt` |
 | 07 | Grok | erst nach der OSC-Antwort vom 11.10. — neuer Chat | `0205769fc` | `07_Grok.txt` |
+| 09 | Codex/Astra | jetzt — eigener Chat; GROSSER Auftrag (Audio-Editor, 4 Bereiche, bis 15 Befunde) | `465713bf9` | `09_Codex-Astra_Audio-Editor_gross.txt` |
 
 Quelle und Herleitung: `reports/Orchester – ein Kopf, fünf Aufträge (2026-10-11).md` (§2 Kopf, §3 Aufträge, §6 Astra + ChatGPT-Nachtrag, §7 Meta AI).
 Ändert sich ein Auftrag dort, werden diese Dateien NEU erzeugt, nie von Hand nachgeführt (sonst zwei Wahrheiten, #416).

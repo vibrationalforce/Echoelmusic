@@ -1211,3 +1211,18 @@ Pflicht) — Echoel ist iPhone-only, läuft also darauf; die Reflow-Arbeit (#292
 CI/TestFlight pinnen Xcode 26.2 (founder-gated). Testliste des Briefings enthält vier Flächen, die es nicht
 gibt (iPad, Videoexport, Aufnahme, binaural) — nicht übernehmen. WATCH Toolchain-Wechsel; ADOPT→PIPELINE
 kanonischer Satz echter In-App-Aufnahmen für die Asset Library (CLAIMS.md-Regel: nur was ausgeliefert ist).
+
+## 2026-10-12 — Orchester Runde 3: Mistral [verified 7/7] · Grok [verified 5/6]
+
+**Mistral (Startkontext-Zeile, Stand `05047ad34`):** Alle sieben Aussagen stimmen. Übernommen in
+`8f4c45d61`: `Int(clamping:)` statt der fangenden `size_t → Int`-Umwandlung (Crash-Netz-Leser und
+`MemoryPressureHandler`), der init-Kommentar (ein Log, das am Urteil endet, starb im Kontext-Leser, nicht
+in einem Store-Konstruktor), die sysctl-Doku, und die Markerliste des Wächters (5 → 12 Schreibungen; „ein
+Marker ist nie klein geschrieben“ war falsch). Stärkste Quelle der Runde für Code-gegen-Kommentar.
+**Grok (Rot-Blitz-Angriff, Stand `a678d9959`):** Prämisse Gamma-Mischung widerlegt (der Shader mischt linear),
+aber Punkt 2 — „die Begründung gilt nur über dunklem Grund“ — führte zur echten Lücke: die Screen-Mischung
+lässt R − G − B um bis zu 3·Gain schwanken; bei 0,05 zeigte ein gedeckelter Rot/Cyan-Strobe über dunklem Rot
+0,145. VV-4d (`465713bf9`): engagedGain = Rot-Schritt/4, Anspruch 12. Der Lead fand dabei VV-4e (Gain 1,
+Grün/Blau der Ebene über rotem Feld, von keinem Kanal gezählt) — offen, im Limiter-Kopf benannt, braucht
+eine Entscheidung (Feldfarbe zählen oder Kanal-Schranke). Lehre: ein falsches Warum kann auf ein echtes Was
+zeigen — die Prämisse messen, die Folgerung trotzdem nachrechnen.
