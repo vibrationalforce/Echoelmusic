@@ -1,4 +1,4 @@
-build: v10.79.496 — Audio-Editor wie in einer DAW, Siri spricht mit Echoel, zehn Stabilitäts-Scheiben
+build: v10.79.497 — GMMW: Grain auf Audio-Spuren, Echoel beschreibt dein Stück, sicherer Start, Blitzschutz für Rot
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,48 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.497) ───────────────────────────────
+
+  ⭐ GMMW, ZWEITER SCHUB: 44 Code-Commits seit 10.79.496. Gebaut wird `465713bf9` — Xcode
+  Compile Check UND Build for Testing grün; danach kamen nur Website- und Protokoll-Commits.
+  Auf dem Gerät ist NICHTS von dem Folgenden geprüft.
+
+  ── POSTEN 1: ECHOEL GRAIN AUF AUDIO-SPUREN (Device-Seite einer Audio-Spur) ──
+  · Schalter „Grain“ auf der Device-Seite einer Audio-Spur, dann Position, Grain length, Density,
+    Spray, Pitch, Spread, Mix. Der Part wird einmal im Hintergrund „gebacken“ und dann gespielt;
+    Stereo bleibt Stereo; Mix 0 = die Datei. Eine Änderung hörst du ab dem nächsten Start des
+    Parts; ein Part mit eigener Tonhöhe oder Warp spielt ohne Grain (die Zeile sagt es).
+
+  ── POSTEN 2: ECHOEL HILFT MIT ──
+  · ≡-Menü → „Describe this piece“: das Gerät-eigene Modell beschreibt dein Stück, nur lesend
+    (braucht ein iPhone mit Apple Intelligence; sonst sagt die Zeile, warum nicht).
+  · Siri/Kurzbefehle neu: „Edit a copy of this part in Echoelmusic“, „Keep the selected part in
+    Echoelmusic“. Mehrere Anfragen stehen jetzt in einer Warteschlange, Siri antwortet mit dem
+    echten Ergebnis, ein Undo nimmt nur zurück, was Echoel gesetzt hat.
+
+  ── POSTEN 3: ERSTER START UND SCHMALE BILDSCHIRME ──
+  · Lernen: neue Start-Here-Karte „From pulse to piece“ (vom Puls zum Stück).
+  · Die Sätze beim ersten Start schicken dich auf die Instrument-Bühne.
+  · Die Bühnen-Leiste verkleinert ein Wort, bevor sie es abschneidet; die kleine Visual-Karte
+    ist nie schmaler als ihre eigene Knopfleiste (iPhone SE / Display-Zoom).
+
+  ── POSTEN 4: STABILITÄT UND SICHERHEIT ──
+  · Das Diagnose-Log hat eine Startkontext-Zeile (Prewarm, Bootzeit, Prozessalter, Speicher,
+    Hitze, Stromsparen) — der Leser selbst kann nicht mehr abstürzen. Log holen: Save/Export-Chip
+    → „Diagnostics“ → Teilen.
+  · Blitzschutz: gesättigtes Rot wird jetzt mitgezählt, auch nach dem Überblenden aufs Feld; der
+    3-Hz-Deckel gilt für jeden Bild-Stapel. (Eigenes Video im Visual hat noch KEINE Tür.)
+  · „Keep last“ im ersten Ring-Durchlauf füllt vorne auf statt zu verrutschen.
+
+  ── WAS DU PRÜFEN KANNST (7 neue Bitten, gedruckt mit
+     python3 scripts/founder-verify.py --since c25a445b6) ──
+  · Grain: Audio-Spur → Device-Seite → „Grain“ an → hörst du es? Während Play ändern → landet es
+    beim nächsten Start des Parts?
+  · „Describe this piece“ auf einem Apple-Intelligence-iPhone: kommt eine Antwort?
+  · Siri: „Edit a copy of this part in Echoelmusic“ mit einem gewählten Composer-Part.
+  · Piece → Kachel „WAV“ bis zum Teilen-Blatt, dann im nächsten Start kein Absturz.
+  · Lernen → „From pulse to piece“: alle drei Sinne in unter einer Minute?
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.496) ───────────────────────────────
 
