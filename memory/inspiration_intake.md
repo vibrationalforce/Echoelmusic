@@ -1239,3 +1239,16 @@ Widersprüchen auf der Seite, schwach im Unterscheiden „Behauptung ohne Beleg�
 — ein Ehrlichkeits-Auftrag braucht künftig die Zeile „Sicherheits- und Haftungshinweise nie
 entfernen“. Beim Entrainment war das Ergebnis richtig, die Begründung falsch (CLAIMS §2 statt
 der fehlenden Tür). Der Branch wird nicht gemergt; Löschung gehört dem Founder.
+
+## 2026-10-12 — Statusbericht eines fremden Modells mit CI-Zugriff — [verified 3/5]
+
+Die wertvollste Eigenschaft dieser Quelle: sie las das **xcresult-Artefakt** (5 473 bestanden,
+23 fehlgeschlagen, 1 übersprungen) — genau die vollständigen Ergebnisse, die der Job-Log wegen
+`tail -200` (#807) nie zeigt und die diese Sitzung nicht laden kann (Artefakt-Host von der
+Proxy-Richtlinie gesperrt). Einer der zwei genannten Fehler war in Minuten verifizierbar: ein
+kurzer `AVAudioFile.read` schloss einen halben Waveform-Bucket mitten in der Datei; ein einziger
+kurzer Lesezugriff ergibt genau die gemeldeten 201 statt 200 → Fix `939aaa63f` + Wächter.
+Widerlegt: „kein TestFlight-Upload“ (die Quelle verwechselte die übersprungenen Archiv-Jobs von
+`ci.yml` mit `testflight.yml`, das Build 2622 hochgeladen hat) und ein veralteter Zweig-Stand.
+**Lehre:** Diese Quelle als ARTEFAKT-LESER einsetzen — um die Namen und Meldungen aller 23
+Fehler bitten, nicht um Bewertungen.
