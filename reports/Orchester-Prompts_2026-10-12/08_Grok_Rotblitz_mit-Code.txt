@@ -1,0 +1,626 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit a678d9959.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: Grok · Auftrag: Rot-Blitz-Kanal angreifen: kann ein roter Blitz trotzdem durch? · Stand: a678d9959
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR GROK: Rot-Blitz-Kanal angreifen: kann ein roter Blitz trotzdem durch? (Stand a678d9959)
+
+Deine Spur: ein fertiges Sicherheits-Stück angreifen und den konkreten Eingabefall finden, bei dem es versagt.
+Nicht deine Spur: Code, ein eigener Gegenentwurf, die Helligkeits-Prüfung an sich (die ist zweimal geprüft), die Video-Uhr.
+
+WORUM ES GEHT
+- WCAG 2.3.1 kennt zwei Blitz-Arten: allgemeine (Helligkeit) und rote (gesättigtes Rot). Der Begrenzer für eigenes Video zählte nur die Helligkeit. Seit diesem Stand zählt er zusätzlich ein Rot-Signal je Zelle: lineares R − G − B, unten auf 0 begrenzt; Schritt 20/320 je Zelle, ein Viertel davon je Fenster. Bei 5 Wechseln in einer Sekunde in irgendeinem Kanal fällt die Ebene auf 0,05.
+- Bewusst weggelassen: der Sättigungs-Test von WCAG (ein Zustand mit R/(R+G+B) ≥ 0,8). Ohne ihn wird MEHR gezählt, nicht weniger.
+- Annahme im Code: Die Ebene wird mit (Regler × Begrenzer-Gain) multipliziert, und das wirkt auf das Rot-Signal linear (auf Helligkeit genauso).
+- Die Zellen sind Mittelwerte aus 2 × 2 Punktproben je Zelle auf einem 8 × 8-Gitter, aus dem 4:2:0-Puffer so dekodiert, wie der Shader es zeigt (BT.709).
+
+STELLEN (stehen alle unten im Code)
+- VideoFlashLimiter.swift: Kopf Z. 1–110 (die Begründung), Konstanten, Channel, Signal, step(), layOut()
+- VideoLayerMath.swift Z. 30–60: relativeLuminance, redFlashSignal, linearComponent
+- VideoLayerSlot.swift Z. 273–320 (ingest + count) und Z. 330–440 (Dekodierung, Zellen)
+
+FRAGEN
+1. Gibt es einen roten Blitz (Farben, Fläche, Frequenz, Startphase), der WCAG verletzt und bei dem kein Rot-Kanal fünf Wechsel in einer Sekunde zählt? Rechne mit den echten Schwellen und der Fenster-Logik.
+2. Hält die Begründung „Gain 0,05 liegt unter dem Rot-Schritt 0,0625, also kann die gedeckelte Ebene keinen roten Blitz zeigen“, wenn die Ebene über einem Bild liegt, das selbst rot ist (Mischung in Gamma- oder in linearem Licht)? Was zeigt der Code darüber, wie die Ebene gemischt wird?
+3. Kann die Dekodierung (Video-Range, Clamp, 4:2:0-Chroma-Unterabtastung, Punktproben statt echter Mittelwerte) das Rot-Signal so unterschätzen, dass ein echter roter Blitz unter der Schwelle bleibt?
+4. Wenn redCells die falsche Länge hat, zählt nur die Helligkeit — gibt es im gezeigten Code einen Weg, auf dem das in Produktion passiert?
+
+Nur für dich: Zu jedem Befund der konkrete Eingabewert und die Codezeile. Was nur am Gerät entscheidbar ist (Mischung im Metal-Shader, Bildschirm), schreibst du als offene Frage mit „ANNAHME:“. Kein Code, kein Fix.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/Core/VideoFlashLimiter.swift (Stand a678d9959) ===
+--- Z. 1–365 ---
+     1  // VideoFlashLimiter.swift
+     2  // Echoel — GMMW VV-4 (founder 2026-10-08, "own footage inside own engine"): the law gate that comes
+     3  // BEFORE any door shows a person's own video in the visuals. `FlashGuard` budgets the GENERATED
+     4  // looks — each one's flash rate is derived from its shader — but footage is not ours: a clip can
+     5  // hold a strobe, a lightning storm or a club light at 10 Hz, and no budget written in advance can
+     6  // cover it. The seed reader samples at most four frames a second, so it cannot certify a strobe
+     7  // either. This type watches the frames that are actually SHOWN and caps the layer's gain.
+     8  //
+     9  // ⭐ WHAT IT WATCHES. The caller hands a grid of CELL luminances (`VideoLayerMath.regionMeans`,
+    10  // 8 × 8 by `VideoLayerMath.flashCellsPerSide`). Every channel below is a hysteresis on one signal,
+    11  // and the cap engages when any one of them holds `engageTransitions` (5) inside one second:
+    12  // · WINDOWS on the footage: every 2 × 2 and 4 × 4 square of cells at half its own stride (so they
+    13  //   overlap) and the whole frame, at a quarter of the WCAG step. A WCAG flash counts when the
+    14  //   flashing area within any one 10° field is large enough, and that field can sit anywhere — on a
+    15  //   block corner, across two blocks (review of VV-4: fixed blocks diluted a corner flash four times
+    16  //   and never added up two neighbours taking turns). The whole frame also carries a small picture
+    17  //   (the floating card), where the 10° field is larger than the layer.
+    18  // · CELLS on the footage, each at the whole step. A window adds its cells up, so cells swinging
+    19  //   AGAINST each other cancel in it — a checkerboard or one-cell stripes reversing at 10 Hz never
+    20  //   moved a single window (second review of VV-4). A cell alone cannot cancel.
+    21  // · CELLS as SHOWN — the gain the layer has now times the cell — at the whole step: the viewer's own
+    22  //   count. The gain moves too, and only these channels see what that does: the climb back is a rise
+    23  //   of its own, and it turns footage that keeps falling (one movement to every footage channel) into
+    24  //   a fall, a rise and a fall on the screen (second review: six transitions in a second, which no
+    25  //   lowered count on the footage could catch — the first draft of this fix had one and still showed
+    26  //   six).
+    27  // · RED, on the same windows and cells (VV-4c, Mistral 2026-10-12, verified 6/6): WCAG 2.3.1 counts
+    28  //   a second kind of flash, saturated red, that a luminance count cannot see — a swing between a
+    29  //   saturated red and a grey of nearly the same luminance moves the luminance by under a tenth of
+    30  //   the step. The caller also hands each cell's `VideoLayerMath.redFlashSignal` (linear R − G − B,
+    31  //   floored at 0); every channel above runs again on it, at WCAG's red step (20/320) where the
+    32  //   luminance has its own, and the windows at a quarter of it. The red signal is 0 wherever red does
+    33  //   not exceed green plus blue, so a grey, a white or a green never moves it.
+    34  //
+    35  // ⭐ WHAT IT GUARANTEES, and the arithmetic behind it (WCAG 2.3.1, the numbers are `FlashGuard`'s):
+    36  // · A TRANSITION is a channel's signal moving its step against its last extreme (hysteresis, so a
+    37  //   slow fade is one transition, not many); before its first, against its own lowest and highest, so
+    38  //   a strobe that starts mid-swing counts from its first full swing. Two opposing ones are a flash.
+    39  //   Every step carries `roundingAllowance`, so a move of exactly the step counts. A direction whose
+    40  //   last transition is a whole second old is forgotten, its extreme kept as the reference: a step off
+    41  //   a level settled long ago is a change of its own, not the rest of a rise that ended before the
+    42  //   counting window (second review: such a step started a strobe uncounted, and six showed).
+    43  // · When any channel holds five transitions inside one second, the gain drops to `engagedGain`
+    44  //   (0.05) on that frame. While engaged no pixel the layer adds can move by 0.05, half the WCAG
+    45  //   step — nothing it shows can be a flash at all.
+    46  // · A flash covering any rectangle at least two cells wide and tall covers some cell completely, and
+    47  //   that cell's shown channel counts what is shown there (its red shown channel too: the engaged
+    48  //   gain, 0.05, is under the red step as well) — with the gain of the frame before, so at
+    49  //   most one climb step behind. So at most five transitions show in any second, two and a half
+    50  //   flashes, under the three WCAG allows — the cap's own edge included. That is the argument; the
+    51  //   transcription measured it too, at five, over the review's inputs and random and directed ones.
+    52  //   A smaller flash is counted on the footage only (a quarter of a 2 × 2 window at a quarter step:
+    53  //   over-counted, the safe side), not on the shown signal.
+    54  // · It climbs back only after `holdSeconds` with no channel at the count, at `releasePerSecond`,
+    55  //   stepped through `FlashGuard.maxDelta` and only on a frame that advanced its clock, so neither a
+    56  //   stall nor a repeated frame turns the climb into a jump. A source that goes on strobing never
+    57  //   releases it; a slower flash after a strobe does (the first version held a 1.9 Hz flash at 0.05
+    58  //   for good, because it engaged at four while the gain was below 1).
+    59  //
+    60  // ⭐ IT KEEPS ITS OWN CLOCK. Each frame advances it by the source's elapsed time, clamped to
+    61  // `shortestFrameSeconds…longestFrameSeconds`. A REPEATED time advances it by nothing — a 24 fps clip
+    62  // on a 120 Hz display passes each media time five times, and the first version's 1/240 s for each
+    63  // repeat ran its clock 40 % fast, so a 2.6 Hz flash read as under the count and played uncapped
+    64  // (second review). A time that goes BACK — a seek or a loop on a media clock — or NaN advances it by
+    65  // the shortest frame: a frame is never dropped from counting and the gain is never reset, so a loop
+    66  // back into a strobe is counted as it plays.
+    67  // ⚠️ PASS THE DISPLAY CLOCK. A media clock is read at rate 1: at a faster playback rate every
+    68  // frequency looks slower by that rate and the limiter counts too little. The door (VV-6) inherits
+    69  // this as a requirement, not a preference.
+    70  //
+    71  // ⚠️ WHAT IT IS NOT, so nobody reads more into it:
+    72  // · It caps the LAYER, not the screen. The generated field under it has its own budget
+    73  //   (`FlashGuard.fieldBudgets`); the sum of the two is a device probe, not a claim here.
+    74  // · It engages at two and a half flashes a second ON PURPOSE, below the three WCAG allows, to
+    75  //   leave room for its own edge. So legal footage flashing between about 2 and 3 Hz (beat lighting
+    76  //   at 120–180 BPM) is dimmed, and a pulse near 2 Hz can be, depending on frame timing and on how
+    77  //   unevenly it swings. That is the safe side; a steady flash at 1.9 Hz is never touched.
+    78  // · The windows' quarter step dims some LEGAL footage on the same side: a whole-picture flicker of
+    79  //   a quarter step or more at 2.5 Hz and faster (measured: 0.02 untouched, 0.025 capped), a
+    80  //   high-contrast edge shaken by a fraction of a cell, a textured pan of about half a picture width a
+    81  //   second. A single edge panning across is one transition per cell at any speed and is never
+    82  //   touched.
+    83  // · It ignores WCAG's dark-state exemption (two states both above 0.80 are not a flash): counting
+    84  //   them too is the safe direction, and a cap on a bright shimmer costs little.
+    85  // · It ignores the red flash's saturation test (one state at R/(R+G+B) ≥ 0.8): every move of R − G − B
+    86  //   by the red step counts, a strong orange or pink one too — the safe direction again.
+    87  // · It sees cell MEANS, not shapes: a pattern with a period of two cells set half a cell off the
+    88  //   grid keeps every cell mean flat while it reverses, and the grid cannot see it at all; a line an
+    89  //   eighth of a cell wide counts only once its share of some window reaches the quarter step.
+    90  // · It trusts the cells it is handed. `VideoLayerSlot` (VV-5b) estimates each from 2 × 2 point
+    91  //   samples half a cell apart, not the true mean: a flash smaller than about half a cell can fall
+    92  //   between the points, and a fine texture can alias either way.
+    93  // · A grid finer than `maxCellsPerSide` is read through the whole-frame window only.
+    94  // · A new grid layout restarts every channel but the whole frame; the gain is kept.
+    95  //
+    96  // Pure value type, Foundation only. One instance per playing layer; not on the audio thread.
+    97  // Guard: `UserFootageCannotStrobeTests`.
+    98  
+    99  import Foundation
+   100  
+   101  /// Caps the gain of a footage layer so what it adds cannot flash faster than WCAG allows.
+   102  public struct VideoFlashLimiter: Sendable {
+   103  
+   104      /// The share of one window a counted flash is assumed to cover (see the header).
+   105      public static let regionCoverage = 0.25
+   106      /// A window's move against its last extreme that counts as a transition: the WCAG step over
+   107      /// the share of the window a counted flash covers.
+   108      public static let transitionThreshold = FlashGuard.luminanceDeltaThreshold * regionCoverage
+   109      /// A cell's move that counts as a transition, on the footage and as shown: the whole WCAG step.
+   110      public static let cellTransitionThreshold = FlashGuard.luminanceDeltaThreshold
+   111      /// WCAG 2.3.1's red flash: a change of `(R − G − B) × 320` above 20, in linear RGB — so a
+   112      /// change of 20/320 in `VideoLayerMath.redFlashSignal`. Counted on cells and as shown.
+   113      public static let redCellTransitionThreshold = 20.0 / 320.0
+   114      /// The red step over the share of a window a counted flash covers, as for the luminance.
+   115      public static let redTransitionThreshold = redCellTransitionThreshold * regionCoverage
+   116      /// Taken off every step so a move of exactly the step counts: `0.4 - 0.3` is a hair under the
+   117      /// step in binary floating point, and the first version missed such a flash on some levels.
+   118      public static let roundingAllowance = 1e-9
+   119      /// Transitions inside one window of time, in any one channel, that engage the cap. One fewer
+   120      /// than the two-per-flash a WCAG-limit second holds, so the edge the cap itself makes still fits.
+   121      public static let engageTransitions = Int(2 * FlashGuard.maxFlashHz) - 1
+   122      /// The window transitions are counted in, in seconds.
+   123      public static let windowSeconds = 1.0
+   124      /// The gain while engaged: half the WCAG step, so no pixel the layer adds can move by a step.
+   125      public static let engagedGain = FlashGuard.luminanceDeltaThreshold / 2
+   126      /// Quiet time before the gain climbs back, in seconds.
+   127      public static let holdSeconds = 1.0
+   128      /// How fast the gain climbs back, per second (0.05 → 1 in about four seconds).
+   129      public static let releasePerSecond = 0.25
+   130      /// The least and the most one frame advances the limiter's own clock (see the header).
+   131      public static let shortestFrameSeconds = 1.0 / 240
+   132      public static let longestFrameSeconds = 0.25
+   133      /// The finest grid read through the overlapping windows; a finer one is read whole-frame.
+   134      public static let maxCellsPerSide = 16
+   135  
+   136      /// The gain to apply to the layer now, `engagedGain`…1.
+   137      public private(set) var gain: Double = 1
+   138  
+   139      /// One signal's hysteresis and the times of its last `engageTransitions` transitions.
+   140      private struct Channel: Sendable {
+   141          let threshold: Double
+   142          var seeded = false
+   143          var extreme = 0.0
+   144          var lowest = 0.0
+   145          var highest = 0.0
+   146          var direction = 0
+   147          var times = [Double](repeating: -Double.infinity, count: VideoFlashLimiter.engageTransitions)
+   148          var next = 0
+   149  
+   150          init(step: Double) {
+   151              threshold = step * (1 - VideoFlashLimiter.roundingAllowance)
+   152          }
+   153  
+   154          /// Whether `value`, seen at `now`, completes a transition (hysteresis against the extreme
+   155          /// since the last one; before the first, against the lowest and highest seen). A direction
+   156          /// whose last transition is a whole counting window old is forgotten, its extreme kept as
+   157          /// the reference — so a step off a level settled long ago is a change of its own.
+   158          mutating func registers(_ value: Double, at now: Double) -> Bool {
+   159              let last = times[(next + VideoFlashLimiter.engageTransitions - 1) % VideoFlashLimiter.engageTransitions]
+   160              if direction != 0, last <= now - VideoFlashLimiter.windowSeconds {
+   161                  direction = 0
+   162                  lowest = extreme
+   163                  highest = extreme
+   164              }
+   165              guard seeded else {
+   166                  seeded = true
+   167                  extreme = value
+   168                  lowest = value
+   169                  highest = value
+   170                  return false
+   171              }
+   172              switch direction {
+   173              case 1:
+   174                  if value > extreme { extreme = value; return false }
+   175                  guard value <= extreme - threshold else { return false }
+   176                  direction = -1
+   177              case -1:
+   178                  if value < extreme { extreme = value; return false }
+   179                  guard value >= extreme + threshold else { return false }
+   180                  direction = 1
+   181              default:
+   182                  lowest = Swift.min(lowest, value)
+   183                  highest = Swift.max(highest, value)
+   184                  guard highest - lowest >= threshold else { return false }
+   185                  direction = value >= highest ? 1 : -1
+   186              }
+   187              extreme = value
+   188              return true
+   189          }
+   190  
+   191          mutating func mark(_ time: Double) {
+   192              times[next] = time
+   193              next = (next + 1) % VideoFlashLimiter.engageTransitions
+   194          }
+   195  
+   196          /// Transitions after `start` — counted in place, this runs on every drawn frame.
+   197          func count(after start: Double) -> Int {
+   198              times.reduce(0) { total, at in at > start ? total + 1 : total }
+   199          }
+   200      }
+   201  
+   202      /// Every channel one signal needs: the whole frame and the windows at their step, the cells on
+   203      /// the footage and as shown at theirs. The luminance and the red signal each own one.
+   204      private struct Signal: Sendable {
+   205          let windowStep: Double
+   206          let cellStep: Double
+   207          var wholeFrame: Channel
+   208          var windows: [Channel] = []
+   209          var cells: [Channel] = []
+   210          var shown: [Channel] = []
+   211  
+   212          init(windowStep: Double, cellStep: Double) {
+   213              self.windowStep = windowStep
+   214              self.cellStep = cellStep
+   215              wholeFrame = Channel(step: windowStep)
+   216          }
+   217  
+   218          /// A new grid restarts every channel but the whole frame.
+   219          mutating func layOut(windowCount: Int, cellCount: Int) {
+   220              windows = Array(repeating: Channel(step: windowStep), count: windowCount)
+   221              cells = Array(repeating: Channel(step: cellStep), count: cellCount)
+   222              shown = cells
+   223          }
+   224  
+   225          /// Feeds one frame's cells (already the right count) and returns the most transitions any of
+   226          /// this signal's channels holds after `windowStart`. `gain` is the layer's gain before this
+   227          /// frame decides: the shown channels count what the screen shows with it.
+   228          mutating func feed(_ values: [Double], windowCells: [[Int]], gain: Double,
+   229                             at clock: Double, after windowStart: Double) -> Int {
+   230              var busiest = 0
+   231              var frameSum = 0.0
+   232              var finiteCells = 0
+   233              for value in values where value.isFinite {
+   234                  frameSum += Swift.min(1, Swift.max(0, value))
+   235                  finiteCells += 1
+   236              }
+   237              if finiteCells > 0 {
+   238                  if wholeFrame.registers(frameSum / Double(finiteCells), at: clock) { wholeFrame.mark(clock) }
+   239                  busiest = Swift.max(busiest, wholeFrame.count(after: windowStart))
+   240              }
+   241              for index in windows.indices {
+   242                  var windowSum = 0.0
+   243                  var usable = true
+   244                  for cell in windowCells[index] {
+   245                      let value = values[cell]
+   246                      guard value.isFinite else { usable = false; break }
+   247                      windowSum += Swift.min(1, Swift.max(0, value))
+   248                  }
+   249                  guard usable else { continue }
+   250                  if windows[index].registers(windowSum / Double(windowCells[index].count), at: clock) {
+   251                      windows[index].mark(clock)
+   252                  }
+   253                  busiest = Swift.max(busiest, windows[index].count(after: windowStart))
+   254              }
+   255              for cell in cells.indices {
+   256                  let value = values[cell]
+   257                  guard value.isFinite else { continue }
+   258                  let level = Swift.min(1, Swift.max(0, value))
+   259                  if cells[cell].registers(level, at: clock) { cells[cell].mark(clock) }
+   260                  // What this cell shows with the gain the layer has now — before this frame decides.
+   261                  if shown[cell].registers(gain * level, at: clock) { shown[cell].mark(clock) }
+   262                  busiest = Swift.max(busiest, cells[cell].count(after: windowStart),
+   263                                      shown[cell].count(after: windowStart))
+   264              }
+   265              return busiest
+   266          }
+   267      }
+   268  
+   269      private var side = 0
+   270      private var windowCells: [[Int]] = []
+   271      private var luminance = Signal(windowStep: VideoFlashLimiter.transitionThreshold,
+   272                                     cellStep: VideoFlashLimiter.cellTransitionThreshold)
+   273      private var red = Signal(windowStep: VideoFlashLimiter.redTransitionThreshold,
+   274                               cellStep: VideoFlashLimiter.redCellTransitionThreshold)
+   275      private var started = false
+   276      private var lastSourceTime: Double?
+   277      private var clock = 0.0
+   278      private var quietSince: Double?
+   279  
+   280      public init() {}
+   281  
+   282      /// Feeds one shown frame and returns the gain. `cells` are its cell luminances, 0…1, row-major in
+   283      /// a `cellsPerSide × cellsPerSide` grid; `redCells` the same cells' red signal
+   284      /// (`VideoLayerMath.redFlashSignal`), or nil where the caller has no colour — then only the
+   285      /// luminance counts, and a footage door must never pass nil (`UserFootageCannotStrobeTests`).
+   286      /// A luminance grid of the wrong size changes nothing; a red grid of the wrong size is left out
+   287      /// and the luminance still counts. A non-finite cell leaves out its own channels and the windows
+   288      /// it belongs to.
+   289      @discardableResult
+   290      public mutating func step(time: Double, cells: [Double], redCells: [Double]?, cellsPerSide: Int) -> Double {
+   291          guard cellsPerSide > 0 else { return gain }
+   292          let (cellCount, overflow) = cellsPerSide.multipliedReportingOverflow(by: cellsPerSide)
+   293          guard !overflow, cells.count == cellCount else { return gain }
+   294          let dt = advanceClock(to: time)
+   295          if cellsPerSide != side { layOut(cellsPerSide) }
+   296  
+   297          let windowStart = clock - Self.windowSeconds
+   298          var busiest = luminance.feed(cells, windowCells: windowCells, gain: gain,
+   299                                       at: clock, after: windowStart)
+   300          if let redCells, redCells.count == cellCount {
+   301              busiest = Swift.max(busiest, red.feed(redCells, windowCells: windowCells, gain: gain,
+   302                                                    at: clock, after: windowStart))
+   303          }
+   304  
+   305          if busiest >= Self.engageTransitions {
+   306              gain = Self.engagedGain
+   307              quietSince = nil
+   308          } else {
+   309              let since = quietSince ?? clock
+   310              quietSince = since
+   311              if clock - since >= Self.holdSeconds, gain < 1, dt > 0 {
+   312                  gain = Swift.min(1, gain + FlashGuard.maxDelta(perSecond: Self.releasePerSecond, dt: dt))
+   313              }
+   314          }
+   315          return gain
+   316      }
+   317  
+   318      /// Advances the limiter's own clock for one frame and returns by how much (see the header).
+   319      private mutating func advanceClock(to time: Double) -> Double {
+   320          guard started else {
+   321              started = true
+   322              if time.isFinite { lastSourceTime = time }
+   323              return 0
+   324          }
+   325          var dt = Self.shortestFrameSeconds
+   326          if time.isFinite, let last = lastSourceTime {
+   327              if time > last {
+   328                  dt = Swift.min(Swift.max(time - last, Self.shortestFrameSeconds), Self.longestFrameSeconds)
+   329              } else if time == last {
+   330                  dt = 0
+   331              }
+   332          }
+   333          if time.isFinite { lastSourceTime = time }
+   334          clock += dt
+   335          return dt
+   336      }
+   337  
+   338      /// Builds the overlapping windows and both signals' cell channels for a new grid. Both whole
+   339      /// frames are kept.
+   340      private mutating func layOut(_ cellsPerSide: Int) {
+   341          side = cellsPerSide
+   342          var windows: [[Int]] = []
+   343          var size = 2
+   344          while size < cellsPerSide, cellsPerSide <= Self.maxCellsPerSide {
+   345              let hop = size / 2
+   346              var origins = Array(Swift.stride(from: 0, through: cellsPerSide - size, by: hop))
+   347              if let last = origins.last, last != cellsPerSide - size { origins.append(cellsPerSide - size) }
+   348              for row in origins {
+   349                  for column in origins {
+   350                      var members: [Int] = []
+   351                      members.reserveCapacity(size * size)
+   352                      for r in row..<(row + size) {
+   353                          for c in column..<(column + size) { members.append(r * cellsPerSide + c) }
+   354                      }
+   355                      windows.append(members)
+   356                  }
+   357              }
+   358              size *= 2
+   359          }
+   360          windowCells = windows
+   361          let cellCount = cellsPerSide <= Self.maxCellsPerSide ? cellsPerSide * cellsPerSide : 0
+   362          luminance.layOut(windowCount: windows.count, cellCount: cellCount)
+   363          red.layOut(windowCount: windows.count, cellCount: cellCount)
+   364      }
+   365  }
+=== Sources/Echoelmusic/Core/VideoLayerMath.swift (Stand a678d9959) ===
+--- Z. 30–60 ---
+    30      /// overlapping 2 × 2 and 4 × 4 windows, so its smallest window is a sixteenth of the picture —
+    31      /// about the smallest area WCAG counts on a phone held at reading distance — and it can sit at
+    32      /// any half-window offset (review of VV-4: fixed 4 × 4 blocks diluted a flash on a corner).
+    33      public static let flashCellsPerSide = 8
+    34  
+    35      /// The relative luminance of an sRGB colour whose components are 0…1. Non-finite components
+    36      /// read as 0 and every component is clamped first, so the answer is always 0…1.
+    37      public static func relativeLuminance(red: Double, green: Double, blue: Double) -> Double {
+    38          let r: Double = redWeight * linearComponent(red)
+    39          let g: Double = greenWeight * linearComponent(green)
+    40          let b: Double = blueWeight * linearComponent(blue)
+    41          return Swift.min(1, r + g + b)
+    42      }
+    43  
+    44      /// The red-flash signal of an sRGB colour whose components are 0…1: linear R − G − B, floored at
+    45      /// 0 (WCAG 2.3.1 sets negative values to zero). `VideoFlashLimiter` counts a move of 20/320 in it
+    46      /// as a red transition. Non-finite components read as 0, every component is clamped first, so the
+    47      /// answer is always 0…1.
+    48      public static func redFlashSignal(red: Double, green: Double, blue: Double) -> Double {
+    49          return Swift.max(0, linearComponent(red) - linearComponent(green) - linearComponent(blue))
+    50      }
+    51  
+    52      /// One sRGB component, 0…1, undone to linear light — the curve both helpers above share.
+    53      /// Non-finite reads as 0; the component is clamped first.
+    54      private static func linearComponent(_ component: Double) -> Double {
+    55          let c = component.isFinite ? Swift.min(1, Swift.max(0, component)) : 0
+    56          return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
+    57      }
+    58  
+    59      /// The mean of each `blocks × blocks` block of a row-major `side × side` grid, row-major.
+    60      /// nil when the grid is not `side × side` (a side too large to square counts as that, it does
+=== Sources/Echoelmusic/Studio/VideoLayerSlot.swift (Stand a678d9959) ===
+--- Z. 273–320 ---
+   273      private func ingestLocked(_ buffer: CVPixelBuffer) {
+   274          guard let cells = Self.flashCells(of: buffer, samples: &samples),
+   275                let redCells = Self.redFlashCells(of: buffer, samples: &redSamples) else {
+   276              // Fail closed: a frame the limiter cannot count is not shown, and the stale one goes too.
+   277              shown = nil
+   278              if !refusalAnnounced {
+   279                  refusalAnnounced = true
+   280                  EchoelCrashLog.breadcrumb("video layer: frame refused - not 4:2:0 bi-planar, or unreadable")
+   281              }
+   282              return
+   283          }
+   284          shownCells = cells
+   285          shownRedCells = redCells
+   286          nextSequence &+= 1
+   287          if nextSequence == 0 { nextSequence = 1 }
+   288          let width = CVPixelBufferGetWidth(buffer)
+   289          let height = CVPixelBufferGetHeight(buffer)
+   290          shown = Shown(buffer: buffer, sequence: nextSequence, width: Double(width), height: Double(height))
+   291          if !firstFrameAnnounced {
+   292              firstFrameAnnounced = true
+   293              let range = CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+   294                  ? "video range" : "full range"
+   295              let matrix = (CVBufferCopyAttachment(buffer, kCVImageBufferYCbCrMatrixKey, nil) as? String) ?? "no matrix tag"
+   296              let transfer = (CVBufferCopyAttachment(buffer, kCVImageBufferTransferFunctionKey, nil) as? String)
+   297                  ?? "no transfer tag"
+   298              EchoelCrashLog.breadcrumb("video layer: first frame \(width)x\(height), \(range), \(matrix), \(transfer)")
+   299          }
+   300      }
+   301  
+   302      /// The limiter counts what the screen shows on this draw: the cached cells x the dial eased for
+   303      /// it. Every draw, not only a new buffer — a dial moving between two buffers changes the picture
+   304      /// too — and the gain it returns rides on that very draw.
+   305      private func countLocked(displaySeconds: Double) {
+   306          if countedCells.count != shownCells.count {
+   307              countedCells = [Double](repeating: 0, count: shownCells.count)
+   308          }
+   309          for index in shownCells.indices { countedCells[index] = shownCells[index] * easedDial }
+   310          if countedRedCells.count != shownRedCells.count {
+   311              countedRedCells = [Double](repeating: 0, count: shownRedCells.count)
+   312          }
+   313          for index in shownRedCells.indices { countedRedCells[index] = shownRedCells[index] * easedDial }
+   314          gain = limiter.step(time: displaySeconds, cells: countedCells, redCells: countedRedCells,
+   315                              cellsPerSide: VideoLayerMath.flashCellsPerSide)
+   316      }
+   317  
+   318      /// The cached frame for one caller's aspect. Nothing to show sends the dial back to 0 (header).
+   319      private func frameLocked(viewportAspect: Double) -> FootageFrame? {
+   320          guard let shown,
+--- Z. 330–440 ---
+   330  
+   331      // MARK: - Pure arithmetic (driven by the blocking bundle)
+   332  
+   333      /// The relative luminance the SHADER shows for one Y/Cb/Cr sample (each 0…1, as a texture reads
+   334      /// a byte): range expansion, BT.709 matrix and clamp exactly as in the MSL footage branch, then
+   335      /// `VideoLayerMath.relativeLuminance`, which undoes the same sRGB curve the shader undoes.
+   336      static func shownLuminance(y: Double, cb: Double, cr: Double, videoRange: Bool) -> Double {
+   337          let colour = shownRGB(y: y, cb: cb, cr: cr, videoRange: videoRange)
+   338          return VideoLayerMath.relativeLuminance(red: colour.red, green: colour.green, blue: colour.blue)
+   339      }
+   340  
+   341      /// The sRGB colour, each 0…1, the SHADER shows for one Y/Cb/Cr sample: range expansion, BT.709
+   342      /// matrix and clamp exactly as in the MSL footage branch. Both measures above read it.
+   343      private static func shownRGB(y: Double, cb: Double, cr: Double,
+   344                                   videoRange: Bool) -> (red: Double, green: Double, blue: Double) {
+   345          let luma: Double
+   346          let blueDifference: Double
+   347          let redDifference: Double
+   348          if videoRange {
+   349              luma = ((y - 16.0 / 255.0) * (255.0 / 219.0)).clamped(to: 0...1)
+   350              blueDifference = (cb - 128.0 / 255.0) * (255.0 / 224.0)
+   351              redDifference = (cr - 128.0 / 255.0) * (255.0 / 224.0)
+   352          } else {
+   353              luma = y.clamped(to: 0...1)
+   354              blueDifference = cb - 128.0 / 255.0
+   355              redDifference = cr - 128.0 / 255.0
+   356          }
+   357          let red = (luma + crToRed * redDifference).clamped(to: 0...1)
+   358          let green = (luma - cbToGreen * blueDifference - crToGreen * redDifference).clamped(to: 0...1)
+   359          let blue = (luma + cbToBlue * blueDifference).clamped(to: 0...1)
+   360          return (red, green, blue)
+   361      }
+   362  
+   363      /// The red-flash signal the SHADER shows for one Y/Cb/Cr sample (VV-4c): the same decode as
+   364      /// `shownLuminance`, then `VideoLayerMath.redFlashSignal`.
+   365      static func shownRedSignal(y: Double, cb: Double, cr: Double, videoRange: Bool) -> Double {
+   366          let colour = shownRGB(y: y, cb: cb, cr: cr, videoRange: videoRange)
+   367          return VideoLayerMath.redFlashSignal(red: colour.red, green: colour.green, blue: colour.blue)
+   368      }
+   369  
+   370      /// The limiter's `flashCellsPerSide` x `flashCellsPerSide` cells for one frame: every sample
+   371      /// linearised first, then averaged (averaging encoded values first would under-read a swing).
+   372      /// nil — no frame — for any format the renderer would not bind, or a buffer that cannot be read.
+   373      static func flashCells(of buffer: CVPixelBuffer, samples: inout [Double]) -> [Double]? {
+   374          cells(of: buffer, samples: &samples, measure: shownLuminance)
+   375      }
+   376  
+   377      /// The same cells of the red-flash signal (VV-4c): every sample decoded to its colour, its
+   378      /// `VideoLayerMath.redFlashSignal` taken in linear light, then averaged — like the luminance.
+   379      static func redFlashCells(of buffer: CVPixelBuffer, samples: inout [Double]) -> [Double]? {
+   380          cells(of: buffer, samples: &samples, measure: shownRedSignal)
+   381      }
+   382  
+   383      /// The one sampling grid both measures read, so they can never sample different points.
+   384      private static func cells(of buffer: CVPixelBuffer, samples: inout [Double],
+   385                                measure: (Double, Double, Double, Bool) -> Double) -> [Double]? {
+   386          let videoRange: Bool
+   387          switch CVPixelBufferGetPixelFormatType(buffer) {
+   388          case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange: videoRange = false
+   389          case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: videoRange = true
+   390          default: return nil
+   391          }
+   392          guard CVPixelBufferGetPlaneCount(buffer) == 2,
+   393                CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return nil }
+   394          defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+   395          let lumaWidth = CVPixelBufferGetWidthOfPlane(buffer, 0)
+   396          let lumaHeight = CVPixelBufferGetHeightOfPlane(buffer, 0)
+   397          let chromaWidth = CVPixelBufferGetWidthOfPlane(buffer, 1)
+   398          let chromaHeight = CVPixelBufferGetHeightOfPlane(buffer, 1)
+   399          let lumaStride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+   400          let chromaStride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 1)
+   401          guard lumaWidth > 0, lumaHeight > 0, chromaWidth > 0, chromaHeight > 0,
+   402                lumaStride >= lumaWidth, chromaStride >= chromaWidth * 2,
+   403                let lumaBase = CVPixelBufferGetBaseAddressOfPlane(buffer, 0),
+   404                let chromaBase = CVPixelBufferGetBaseAddressOfPlane(buffer, 1) else { return nil }
+   405          let side = samplesPerSide
+   406          if samples.count != side * side { samples = [Double](repeating: 0, count: side * side) }
+   407          for row in 0..<side {
+   408              let lumaY = Swift.min(lumaHeight - 1, (2 * row + 1) * lumaHeight / (2 * side))
+   409              let chromaY = Swift.min(chromaHeight - 1, lumaY * chromaHeight / lumaHeight)
+   410              for column in 0..<side {
+   411                  let lumaX = Swift.min(lumaWidth - 1, (2 * column + 1) * lumaWidth / (2 * side))
+   412                  let chromaX = Swift.min(chromaWidth - 1, lumaX * chromaWidth / lumaWidth)
+   413                  let lumaByte = lumaBase.load(fromByteOffset: lumaY * lumaStride + lumaX, as: UInt8.self)
+   414                  let chromaOffset = chromaY * chromaStride + chromaX * 2
+   415                  let cbByte = chromaBase.load(fromByteOffset: chromaOffset, as: UInt8.self)
+   416                  let crByte = chromaBase.load(fromByteOffset: chromaOffset + 1, as: UInt8.self)
+   417                  samples[row * side + column] = measure(Double(lumaByte) / 255,
+   418                                                         Double(cbByte) / 255,
+   419                                                         Double(crByte) / 255,
+   420                                                         videoRange)
+   421              }
+   422          }
+   423          return VideoLayerMath.regionMeans(samples, side: side, blocks: VideoLayerMath.flashCellsPerSide)
+   424      }
+   425  
+   426      /// The renderer's `viewportToImage` for one aspect: normalized viewport (top-left origin) ->
+   427      /// normalized BUFFER coordinates (top-left origin), with the track's turn applied and the shown
+   428      /// picture aspect-fitted (outside 0…1 is letterbox). Built from the transform's a, b, c, d and the
+   429      /// turned rectangle's corners — the file's own tx/ty are not trusted. nil for a viewport, a
+   430      /// buffer or a transform that cannot be inverted. One pure function for every target aspect: the
+   431      /// floating card, the beamer, and — once it has an engine — the stream.
+   432      static func viewportToImage(viewportAspect: Double, bufferWidth: Double, bufferHeight: Double,
+   433                                  transform: CGAffineTransform) -> CGAffineTransform? {
+   434          let a = Double(transform.a)
+   435          let b = Double(transform.b)
+   436          let c = Double(transform.c)
+   437          let d = Double(transform.d)
+   438          let determinant: Double = a * d - b * c
+   439          guard viewportAspect.isFinite, viewportAspect > 0, determinant.isFinite, determinant != 0,
+   440                let shownSize = VideoLayerMath.displaySize(width: bufferWidth, height: bufferHeight,
