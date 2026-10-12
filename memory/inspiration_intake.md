@@ -1202,3 +1202,12 @@ startet. Dazu Karte 5 ohne Bühnenangabe, Quellenmenü nur per Langdruck, Loslas
 Bio-Panel, Karte 6 schickt arrangierte Noten zur Instrument-MIDI-Kachel. Karte 1 nennt die Bühne sehr
 wohl (Teilbefund). ADOPT→PRODUCT: eine Copy-Scheibe, Founder-Freigabe nötig (nutzersichtbarer Text).
 DeepSeek schickte dieselbe Grain-Antwort ein zweites Mal — nicht doppelt geloggt.
+
+## 2026-10-12 — Musiktech-Briefing 5.–12.10. (Quelle nicht genannt) — [verified 2/3]
+
+Xcode 27.1 RC und iOS 27.2 Beta 3 extern bestätigt; Asset Library existiert, Startdatum unbelegt. Neu und
+relevant, im Briefing nicht genannt: **iPhone Duo** (faltbar, ab 23.10.; Duo-Screenshots ab April 2027
+Pflicht) — Echoel ist iPhone-only, läuft also darauf; die Reflow-Arbeit (#292) wird damit dringlicher.
+CI/TestFlight pinnen Xcode 26.2 (founder-gated). Testliste des Briefings enthält vier Flächen, die es nicht
+gibt (iPad, Videoexport, Aufnahme, binaural) — nicht übernehmen. WATCH Toolchain-Wechsel; ADOPT→PIPELINE
+kanonischer Satz echter In-App-Aufnahmen für die Asset Library (CLAIMS.md-Regel: nur was ausgeliefert ist).
