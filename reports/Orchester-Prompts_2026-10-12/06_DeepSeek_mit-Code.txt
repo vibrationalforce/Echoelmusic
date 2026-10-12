@@ -1,0 +1,175 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit 0205769fc.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: DeepSeek · Auftrag: Echoel Grain. Stimmt die Pegel- und Index-Rechnung? · Stand: 0205769fc
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR DEEPSEEK: Echoel Grain. Stimmt die Pegel- und Index-Rechnung? (Stand 0205769fc)
+
+Deine Spur: Grenzfälle und Index-Rechnung über genaue Ausschnitte.
+Nicht deine Spur: Code, Patches, Umbau-Vorschläge, der Ringpuffer (das ist dein Auftrag vom 11.10.).
+
+WORUM ES GEHT
+GrainCloud zerlegt Ton in kleine Körner (Grains) und läuft als Effekt auf Audiospuren. Sein Dateikopf behauptet:
+- Hann-Fenster bei gleichmäßigem Abstand summieren sich zu overlap/2.
+- Die Normierung 1/max(1, overlap·0,5) ist „FLAT“ bei overlap 2 und 3 (density 0,5 und 5/6).
+- Die Welligkeit beträgt bis overlap 3,5 nur „einige Prozent“.
+- Das Fenster ist an beiden Enden genau 0.
+- Höher gestimmte Körner werden gekürzt statt abgeschnitten.
+Eine falsche Normierung ist ein hörbarer Pegelsprung, den kein Test als Fehler sieht.
+
+ÖFFNE
+- Sources/Echoelmusic/DSP/GrainCloud.swift
+  - Z. 1–30: Kopf
+  - Z. 58: density → overlap
+  - Z. 78–82: window
+  - Z. 166–207: process, darin Z. 182–184 overlap und Normierung
+  - Z. 213–234: spawn
+
+FRAGEN
+1. Hält process den Pegel bei density 0,5, bei 5/6 und bei 1,0? Gib den erwarteten und den berechneten Wert in dB an.
+2. Wo wird die Normierung falsch: bei nicht-ganzzahligem overlap oder wenn alle Körner-Plätze belegt sind?
+3. Liest die Längen-Budgetierung je außerhalb des Puffers? Prüfe kurze Quellen (sourceCount 0, 1, 2, 3) und hohe Tonhöhe (pitchSemitones +24). Prüfe dabei die Länge als Float, das Abschalten bei position >= length und den readIndex als Double. Nenne den Index.
+
+Nur für dich: Nenne zu jedem Punkt eine konkrete Eingabe (density, pitchSemitones, lengthSamples, sourceCount). Ist ein Fall richtig behandelt, sag es kurz. Das zählt nicht als Punkt.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/DSP/GrainCloud.swift (Stand 0205769fc) ===
+--- Z. 1–30 ---
+    1  import Foundation
+    2  
+    3  /// GMMW GA-9 — Echoel Grain: a cloud of short windowed grains read from a SOURCE BUFFER (a file's
+    4  /// samples), each at its own place, length, pan and pitch. The kernel only: no door, no device. Its
+    5  /// one caller is `Sequencer/GrainBake` (GA-10b), which renders a part's grain once, off the render
+    6  /// thread; GA-10c plays that bake as an insert on an audio track.
+    7  ///
+    8  /// ⭐ PORTED, NOT INVENTED. `EchoelGranular` (2026-08-21 → #1305) ran the same scheduler over a ring of
+    9  /// the MICROPHONE and went with the audio input (`docs/dev/HISTORY_ARCHIVE.md` B5: "PORT ALGORITHM —
+   10  /// the source must become a buffer or clip, not the mic"). What carries over, with the reasons it
+   11  /// learned the hard way:
+   12  /// · **Spawning is driven by an accumulator incremented by a CONSTANT**, so the grain hop is uniform
+   13  ///   (`length / overlap`). Hann windows at a uniform hop sum to `overlap / 2`, and dividing by that
+   14  ///   (never by less than 1) holds the level: FLAT at overlap 2 and 3 (density 0.5 and 5/6), the
+   15  ///   same mean with a ripple of a few percent between them and up to 3.5. BELOW density 0.5 the
+   16  ///   cloud thins — grains no longer overlap, and its average falls with `overlap / 2` (a quarter of
+   17  ///   the level at density 0). Measured, GA-9 review. The randomness is in WHERE a grain reads and
+   18  ///   its pan, never in WHEN it starts; make spawning stochastic and the normalisation stops being
+   19  ///   exact. The accumulator starts FULL, so the first grain launches on the first frame rather than
+   20  ///   one hop later (up to a second of silence after every reset at long, sparse settings).
+   21  /// · **The raised-cosine window starts and ends at exactly zero** — the whole reason a grain cannot
+   22  ///   click.
+   23  /// · **A pitched grain's read is BUDGETED, not just offset.** A long up-shifted grain reads
+   24  ///   `length × ratio` source samples; where the buffer is too short for that, the grain is SHORTENED
+   25  ///   so its pitch stays true for its whole life (the old ring version silently stopped shifting for
+   26  ///   its tail instead — no click, so it would never have surfaced as a bug report). The hop follows
+   27  ///   the shortened length, so a short source keeps the cloud's density and level (the first cut
+   28  ///   kept the long hop: one short grain per long gap, 95 % silence). A source too short for a grain
+   29  ///   of two frames at this pitch renders silence.
+   30  /// · **The RNG is local on purpose**: `DSP/` must not reach for a Sequencer type
+--- Z. 58–58 ---
+   58      /// 0 … 1 → overlap 0.5 … 3.5 grains. Never zero: an enabled cloud that schedules nothing reads
+--- Z. 78–82 ---
+   78      public static func window(_ position01: Float) -> Float {
+   79          guard position01.isFinite, position01 >= 0, position01 <= 1 else { return 0 }
+   80          return 0.5 - 0.5 * cosf(2.0 * Float.pi * position01)
+   81      }
+   82  
+--- Z. 166–207 ---
+  166      public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
+  167                          frameCount: Int) {
+  168          guard frameCount > 0 else { return }
+  169          let lengthSamples = Swift.max(1, Self.bounded(grainMilliseconds, 10, 500, fallback: 80) * 0.001 * sampleRate)
+  170          let ratio = Double(powf(2.0, Self.bounded(pitchSemitones, -24, 24, fallback: 0) / 12.0))
+  171          // The budget (header): a grain reads `length × ratio` source frames and must stay inside the
+  172          // buffer, so one the buffer cannot hold at this ratio is shortened — and the hop follows it.
+  173          let usable = Double(sourceCount - 2)
+  174          let length = Float(Swift.max(1, Swift.min(Double(lengthSamples), usable / ratio)))
+  175          guard let src = source, sourceCount > 1, length >= 2 else {
+  176              for f in 0..<frameCount {
+  177                  left[f] = 0
+  178                  right[f] = 0
+  179              }
+  180              return
+  181          }
+  182          let overlap = 0.5 + 3.0 * Self.bounded(density, 0, 1, fallback: 0.5)
+  183          let grainsPerSample = overlap / length
+  184          let norm = 1.0 / Swift.max(1.0, overlap * 0.5)
+  185          for f in 0..<frameCount {
+  186              spawnAccumulator += grainsPerSample
+  187              while spawnAccumulator >= 1 {
+  188                  spawnAccumulator -= 1
+  189                  spawn(length: Double(length), ratio: ratio)
+  190              }
+  191              var wetL: Float = 0
+  192              var wetR: Float = 0
+  193              for i in 0..<Self.maxGrains where grains[i].active {
+  194                  let g = Self.window(grains[i].position / grains[i].length)
+  195                  let s = Self.read(src, count: sourceCount, at: grains[i].readIndex)
+  196                  wetL += s * g * grains[i].gainL
+  197                  wetR += s * g * grains[i].gainR
+  198                  grains[i].position += 1
+  199                  grains[i].readIndex += grains[i].step
+  200                  if grains[i].position >= grains[i].length { grains[i].active = false }
+  201              }
+  202              let outL = wetL * norm
+  203              let outR = wetR * norm
+  204              left[f] = outL.isFinite ? outL : 0
+  205              right[f] = outR.isFinite ? outR : 0
+  206          }
+  207      }
+--- Z. 213–234 ---
+  213      private func spawn(length: Double, ratio: Double) {
+  214          var slot = -1
+  215          for i in 0..<Self.maxGrains where !grains[i].active {
+  216              slot = i
+  217              break
+  218          }
+  219          guard slot >= 0 else { return }
+  220          let usable = Double(sourceCount - 2)
+  221          let span = Swift.min(usable, length * ratio)
+  222          let centre = Double(Self.bounded(position, 0, 1, fallback: 0)) * Double(sourceCount - 1)
+  223          let spray = Double(Self.bounded(spraySeconds, 0, 0.5, fallback: 0.05) * sampleRate)
+  224          let wanted = centre + Double(next01() * 2 - 1) * spray
+  225          let start = Swift.min(Swift.max(wanted, 0), Swift.max(0, usable - span))
+  226          let pan = (next01() * 2 - 1) * Self.bounded(stereoSpread, 0, 1, fallback: 0.5)   // −1 … +1
+  227          grains[slot] = Grain(active: true,
+  228                               readIndex: start,
+  229                               step: ratio,
+  230                               position: 0,
+  231                               length: Float(length),
+  232                               gainL: sqrtf(Swift.max(0, 0.5 * (1 - pan))),
+  233                               gainR: sqrtf(Swift.max(0, 0.5 * (1 + pan))))
+  234      }

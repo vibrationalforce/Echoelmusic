@@ -1,0 +1,334 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit 0205769fc.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: Grok · Auftrag: Video an die EINE Uhr hängen. Designprüfung vor dem Bau · Stand: 0205769fc
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR GROK: Video an die EINE Uhr hängen. Designprüfung vor dem Bau (Stand 0205769fc)
+
+Deine Spur: ein Design angreifen und den Fall finden, in dem es bricht.
+Nicht deine Spur: Code, ein eigener Gegenentwurf, OSC (das ist dein Auftrag vom 11.10.).
+
+WORUM ES GEHT
+Geplant, aber noch NICHT gebaut: Ein AVPlayer für eine Videospur soll per setRate(_:time:atHostTime:) an die Taktuhr gehängt und von VideoLanePlan.resync nachgeregelt werden. Einen VideoLanePlayer gibt es noch nicht. Die vorhandenen Bausteine:
+- Die Taktuhr (PatternEngine) tickt über einen DispatchSourceTimer auf der Main-Queue. Sie merkt sich die IDEALE Uptime des zuletzt geplanten Ticks.
+- Der Nachregler hat ein Totband von 1/30 s und springt ab 0,25 s. Er ändert die Rate um höchstens 3 %, mit 0,5 Rate pro Sekunde Abweichung jenseits des Totbands.
+- Die Bilder holt VideoLayerSlot beim Zeichnen per itemTime(forHostTime:).
+- Audio-Teile starten mit scheduleSegment(…, at: nil), also ohne Host-Zeit-Anker.
+
+ÖFFNE
+- Sources/Echoelmusic/Sequencer/PatternEngine.swift Z. 126–140
+- Sources/Echoelmusic/Sequencer/VideoLanePlan.swift Z. 99–110 und Z. 157–175
+- Sources/Echoelmusic/Studio/VideoLayerSlot.swift Z. 77–86 und Z. 180–250
+- Sources/Echoelmusic/Stream/BroadcastTimebase.swift Z. 25–95
+- Sources/Echoelmusic/Sequencer/TimelineAudioSink.swift Z. 590–640 (scheduleSegment bei Z. 596 und Z. 632–633)
+
+FRAGE
+Bleibt so ein AVPlayer mit den gezeichneten Bildern UND mit dem Ton synchron? Was bricht? Prüfe besonders:
+- automaticallyWaitsToMinimizeStalling
+- Ratenänderungen in kleinen Schritten
+- Toleranz beim Springen (Seek)
+- Jitter des Main-Queue-Timers
+- Ton ohne Host-Zeit-Anker
+
+Nur für dich: Beschreib jeden Bruch als Zeitablauf in Worten, mit dem Versatz in ms oder Bildern (Versatz, Ruckeln, Stillstand). Kein Skript, kein Code. Unter die Tabelle gehört genau eine Zeile: welcher Zeitstempel die EINE Referenz sein sollte, mit Datei:Zeile. „Nichts gefunden“ ist gültig.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/Sequencer/PatternEngine.swift (Stand 0205769fc) ===
+--- Z. 126–140 ---
+  126      // A DispatchSourceTimer that fires ON THE MAIN QUEUE. A DispatchSource (vs a
+  127      // RunLoop Timer) still fires while the run loop is in tracking mode — UI
+  128      // scrolling no longer needs `.common` mode to keep the beat — but by targeting
+  129      // the main queue the handler runs on the main thread, where the engine's
+  130      // @MainActor work (model/UI/synth mutation) is valid WITHOUT any cross-thread
+  131      // executor hop. See scheduleTick for why a background queue is fatal here.
+  132      // nonisolated(unsafe) so the nonisolated deinit can cancel it; the source is
+  133      // only mutated on the main actor.
+  134      @ObservationIgnored nonisolated(unsafe) private var timer: DispatchSourceTimer?
+  135  
+  136      /// IDEAL uptime (seconds on the `DispatchTime` clock) of the tick most recently scheduled —
+  137      /// the grid anchor the NEXT deadline is derived from (#1223, audit 2026-09-10
+  138      /// `sequencer-core-2`). ⛔ Until #1223 every re-arm was `.now() + interval` from inside
+  139      /// the handler, so each tick's main-thread latency δ (timer fire + the handler's own
+  140      /// `transport?.tick` / `onStep` / `onTick` fan-out) became a PERMANENT phase loss: the
+
+=== Sources/Echoelmusic/Sequencer/VideoLanePlan.swift (Stand 0205769fc) ===
+--- Z. 99–110 ---
+   99  
+  100      /// One frame at 30 fps. Drift up to this is held (the old policy's 0.033, written as what it is).
+  101      public static let deadbandSeconds: Double = 1.0 / 30.0
+  102      /// Drift beyond this cannot be slewed away in a useful time: seek instead.
+  103      public static let seekBeyondSeconds: Double = 0.25
+  104      /// The largest rate change a nudge may make (±3 %) — small enough not to read as a speed change.
+  105      public static let maxSlew: Double = 0.03
+  106      /// Rate change per second of drift BEYOND the deadband. 0.06 s of excess (0.093 s of drift)
+  107      /// reaches `maxSlew`.
+  108      public static let slewPerSecondOfDrift: Double = 0.5
+  109      /// How far inside the file's end a held last frame sits, so a seek lands on a frame and not
+  110      /// past the last one.
+--- Z. 157–175 ---
+  157      /// `itemSeconds` the lane holds the item's last frame instead, exactly as a measured clip does.
+  158      /// Required, never defaulted: a default no call site writes appears in no diff (#431).
+  159      public static func resync(_ shot: Shot, observedSeconds: Double, itemSeconds: Double?) -> Resync {
+  160          var expected = shot.mediaSeconds
+  161          var still = shot.holdsLastFrame
+  162          if !still, let held = lastFrame(at: expected, fileSeconds: itemSeconds) {
+  163              expected = held
+  164              still = true
+  165          }
+  166          guard observedSeconds.isFinite else { return .seek(toSeconds: expected) }
+  167          let drift = observedSeconds - expected
+  168          let size = abs(drift)
+  169          if size <= deadbandSeconds { return .hold }
+  170          if still || size > seekBeyondSeconds { return .seek(toSeconds: expected) }
+  171          let slew = ((size - deadbandSeconds) * slewPerSecondOfDrift).clamped(to: 0...maxSlew)
+  172          return .nudge(rate: Float(drift > 0 ? 1 - slew : 1 + slew))
+  173      }
+  174  
+  175      /// The one place a part becomes a shot: both entry points above come here, so priming and
+
+=== Sources/Echoelmusic/Studio/VideoLayerSlot.swift (Stand 0205769fc) ===
+--- Z. 77–86 ---
+   77  /// The three calls the slot makes on a video output. `AVPlayerItemVideoOutput` has them already;
+   78  /// the protocol exists so the blocking bundle can drive the whole pull with a stand-in.
+   79  protocol VideoFrameOutput: AnyObject {
+   80      func itemTime(forHostTime hostTimeInSeconds: CFTimeInterval) -> CMTime
+   81      func hasNewPixelBuffer(forItemTime itemTime: CMTime) -> Bool
+   82      func copyPixelBuffer(forItemTime itemTime: CMTime,
+   83                           itemTimeForDisplay outItemTimeForDisplay: UnsafeMutablePointer<CMTime>?) -> CVPixelBuffer?
+   84  }
+   85  
+   86  extension AVPlayerItemVideoOutput: VideoFrameOutput {}
+--- Z. 180–250 ---
+  180      func attachVideoOutput(_ output: any VideoFrameOutput, preferredTransform: CGAffineTransform, dial: Double) {
+  181          lock.lock()
+  182          defer { lock.unlock() }
+  183          self.output = output
+  184          self.preferredTransform = preferredTransform
+  185          dialTarget = dial.clamped(to: 0...1)
+  186          easedDial = 0
+  187          shown = nil
+  188          shownCells = []
+  189          lastPullSeconds = nil
+  190          firstFrameAnnounced = false
+  191          refusalAnnounced = false
+  192      }
+  193  
+  194      func setDial(_ dial: Double) {
+  195          lock.lock()
+  196          defer { lock.unlock() }
+  197          dialTarget = dial.clamped(to: 0...1)
+  198      }
+  199  
+  200      /// The layer goes on the next draw. The limiter is kept (see its declaration).
+  201      func detachVideoOutput() {
+  202          lock.lock()
+  203          defer { lock.unlock() }
+  204          output = nil
+  205          shown = nil
+  206          shownCells = []
+  207          easedDial = 0
+  208          lastPullSeconds = nil
+  209      }
+  210  
+  211      /// The renderer could not show the frame it pulled (no texture pair for it). The layer was absent
+  212      /// on that draw, so the next draw fades in from 0 — the rule for a refused buffer, applied to a
+  213      /// drop the slot cannot see.
+  214      func footageDropped() {
+  215          lock.lock()
+  216          defer { lock.unlock() }
+  217          easedDial = 0
+  218      }
+  219  
+  220      // MARK: - The pull (the renderer's side)
+  221  
+  222      /// Called by `MetalBioRenderer.refreshFootage()` once per draw, per renderer. A NEW buffer is
+  223      /// copied here and nowhere else and cached; the limiter then counts what this draw shows — the
+  224      /// cached cells at the dial eased for THIS pull. Every pull — the first or the second renderer in
+  225      /// one layout pass — gets that same frame, fitted to its own aspect.
+  226      func pullFootageFrame(viewportAspect: Float) -> FootageFrame? {
+  227          lock.lock()
+  228          defer { lock.unlock() }
+  229          guard let output else { return nil }
+  230          let now = clock()
+  231          let itemTime = output.itemTime(forHostTime: now)
+  232          var fresh: CVPixelBuffer?
+  233          if itemTime.isValid, output.hasNewPixelBuffer(forItemTime: itemTime) {
+  234              fresh = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: nil)
+  235          }
+  236          let newDraw = easeDialLocked(displaySeconds: now)
+  237          if let fresh { ingestLocked(fresh) }
+  238          // A buffer that reaches the second renderer of a pass is counted at the time of the draw it
+  239          // shares: on its own time the limiter's clock would step by at least its shortest frame.
+  240          if shown != nil, newDraw || fresh != nil {
+  241              countLocked(displaySeconds: newDraw ? now : (lastPullSeconds ?? now))
+  242          }
+  243          return frameLocked(viewportAspect: Double(viewportAspect))
+  244      }
+  245  
+  246      /// One ease step toward the target, or back to 0 after a gap no renderer pulled across. false =
+  247      /// this pull follows the last by less than `VideoFlashLimiter.shortestFrameSeconds`: the second
+  248      /// renderer of one layout pass. It gets the same dial and is not counted again, so two mounts
+  249      /// never run the limiter's clock ahead of the display's.
+  250      private func easeDialLocked(displaySeconds: Double) -> Bool {
+
+=== Sources/Echoelmusic/Stream/BroadcastTimebase.swift (Stand 0205769fc) ===
+--- Z. 25–95 ---
+   25  /// Converts between host ticks and seconds. `ticksPerSecond` comes from `mach_timebase_info`
+   26  /// on device; tests construct their own.
+   27  struct BroadcastTimebase: Sendable, Equatable {
+   28      let ticksPerSecond: Double
+   29  
+   30      init(ticksPerSecond: Double) {
+   31          self.ticksPerSecond = (ticksPerSecond.isFinite && ticksPerSecond > 0) ? ticksPerSecond : 1e9
+   32      }
+   33  
+   34      /// The device's host clock. On Apple silicon one tick is 125/3 ns; never assume 1 ns.
+   35      static let host: BroadcastTimebase = {
+   36          var info = mach_timebase_info_data_t()
+   37          guard mach_timebase_info(&info) == KERN_SUCCESS, info.numer > 0, info.denom > 0 else {
+   38              return BroadcastTimebase(ticksPerSecond: 1e9)
+   39          }
+   40          // ticks × numer / denom = nanoseconds  ⇒  ticks per second = 1e9 × denom / numer
+   41          return BroadcastTimebase(ticksPerSecond: 1e9 * Double(info.denom) / Double(info.numer))
+   42      }()
+   43  
+   44      func seconds(ticks: UInt64) -> Double { Double(ticks) / ticksPerSecond }
+   45  
+   46      func ticks(seconds: Double) -> UInt64 {
+   47          guard seconds.isFinite, seconds > 0 else { return 0 }
+   48          let t = seconds * ticksPerSecond
+   49          return t < Double(UInt64.max) ? UInt64(t) : UInt64.max
+   50      }
+   51  }
+   52  
+   53  /// "Frame `frame` of the master ring was rendered at host time `hostTicks`, at `sampleRate`."
+   54  /// Written by the master tap (`RetroCapture`) once per buffer; read by the broadcast pump.
+   55  struct BroadcastAudioAnchor: Sendable, Equatable {
+   56      let frame: Int64
+   57      let hostTicks: UInt64
+   58      let sampleRate: Double
+   59  
+   60      var isUsable: Bool { sampleRate.isFinite && sampleRate > 0 && hostTicks > 0 && frame >= 0 }
+   61  
+   62      /// Host time at which ring frame `f` was rendered. Frames BEFORE the anchor are allowed —
+   63      /// the ring holds 30 s of history behind the newest anchor.
+   64      func hostTicks(forFrame f: Int64, timebase: BroadcastTimebase) -> UInt64? {
+   65          guard isUsable else { return nil }
+   66          let deltaSeconds = Double(f - frame) / sampleRate
+   67          let deltaTicks = deltaSeconds * timebase.ticksPerSecond
+   68          let result = Double(hostTicks) + deltaTicks
+   69          guard result.isFinite, result > 0, result < Double(UInt64.max) else { return nil }
+   70          return UInt64(result)
+   71      }
+   72  
+   73      /// The ring frame rendered at host time `t` (rounded UP, so the frame returned is never
+   74      /// earlier than `t` — the start gate must not send audio from before the picture's `T0`).
+   75      func frame(atHostTicks t: UInt64, timebase: BroadcastTimebase) -> Int64? {
+   76          guard isUsable else { return nil }
+   77          let deltaSeconds = (Double(t) - Double(hostTicks)) / timebase.ticksPerSecond
+   78          let deltaFrames = (deltaSeconds * sampleRate).rounded(.up)
+   79          guard deltaFrames.isFinite, abs(deltaFrames) < 1e15 else { return nil }
+   80          return frame + Int64(deltaFrames)
+   81      }
+   82  }
+   83  
+   84  /// The shared start instant for both tracks.
+   85  enum BroadcastStartGate {
+   86  
+   87      /// How far in the future `T0` is placed when going live. The ring already holds audio up
+   88      /// to "now"; placing `T0` slightly ahead means the first audio frame and the first picture
+   89      /// are both produced AFTER the decision, so neither track starts on stale material.
+   90      static let leadSeconds: Double = 0.1
+   91  
+   92      static func startTicks(now: UInt64, timebase: BroadcastTimebase) -> UInt64 {
+   93          now &+ timebase.ticks(seconds: leadSeconds)
+   94      }
+   95  
+
+=== Sources/Echoelmusic/Sequencer/TimelineAudioSink.swift (Stand 0205769fc) ===
+--- Z. 590–640 ---
+  590          // transport keeps stepping (review MEDIUM 1). Degrade to silence instead;
+  591          // the next region onset re-drives the lane once the engine is back.
+  592          guard node.engine?.isRunning == true else { return }
+  593          stop()   // one region per lane: silence every node before the new segment
+  594          if let fades, playFaded(fades, url: url, file: file, on: node, startFrame: startFrame,
+  595                                  frames: frames, sampleRate: sampleRate, gain: gain) { return }
+  596          node.scheduleSegment(file, startingFrame: startFrame, frameCount: frames, at: nil)
+  597          setGain(gain)
+  598          node.play()
+  599      }
+  600  
+  601      /// Audio editor W4b: play the part's stretch of `file` with its fades. `PartFadePlan.pieces`
+  602      /// cuts the frames at the two fade edges; a faded piece is read from a FRESH handle (the node
+  603      /// streams the shared `file` on its own thread), multiplied by the ramp and scheduled as a
+  604      /// buffer, and the middle plays straight from the file. Every piece goes on ONE node, back to
+  605      /// back, so they play gapless and in order. Only the first piece is scheduled before `play()`
+  606      /// — a faded one cut to `firstFadedChunkSeconds` — so a long fade-in never delays the part's
+  607      /// start by its whole read; the rest is read while that first piece sounds.
+  608      /// Returns false, having scheduled NOTHING, when the fresh handle cannot be opened or reads
+  609      /// another format: the caller then plays the part unfaded — never silent.
+  610      private func playFaded(_ fades: PartFadePlan, url: URL, file: AVAudioFile,
+  611                             on node: AVAudioPlayerNode, startFrame: AVAudioFramePosition,
+  612                             frames: AVAudioFrameCount, sampleRate: Double, gain: Float) -> Bool {
+  613          guard let reader = try? AVAudioFile(forReading: url),
+  614                reader.processingFormat.isEqual(file.processingFormat) else { return false }
+  615          let cut = fades.pieces(startFrame: startFrame, frameCount: Int64(frames), sampleRate: sampleRate)
+  616          var queue: [(frames: Range<Int64>, faded: Bool)] = []
+  617          if let head = cut.head { queue.append((head, true)) }
+  618          if let middle = cut.middle { queue.append((middle, false)) }
+  619          if let tail = cut.tail { queue.append((tail, true)) }
+  620          guard let first = queue.first else { return false }
+  621          let chunk = Int64((Self.firstFadedChunkSeconds * sampleRate).rounded())
+  622          if first.faded, chunk > 0, Int64(first.frames.count) > chunk {
+  623              let cutAt = first.frames.lowerBound + chunk
+  624              queue[0] = (first.frames.lowerBound..<cutAt, true)
+  625              queue.insert((cutAt..<first.frames.upperBound, true), at: 1)
+  626          }
+  627          for (index, piece) in queue.enumerated() {
+  628              if piece.faded, let buffer = baked(piece.frames, from: reader, plan: fades, sampleRate: sampleRate) {
+  629                  node.scheduleBuffer(buffer, at: nil)
+  630              } else {
+  631                  // The middle — or a faded piece whose read failed: an unfaded edge, never a hole.
+  632                  node.scheduleSegment(file, startingFrame: piece.frames.lowerBound,
+  633                                       frameCount: AVAudioFrameCount(piece.frames.count), at: nil)
+  634              }
+  635              if index == 0 {
+  636                  setGain(gain)
+  637                  node.play()
+  638              }
+  639          }
+  640          return true
