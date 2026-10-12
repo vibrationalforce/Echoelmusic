@@ -1,0 +1,255 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit 05047ad34.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: ChatGPT · Auftrag: Der stille Start. Zählt ein Start, den iOS beendet, fälschlich als Absturz? · Stand: 05047ad34
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR CHATGPT: Der stille Start. Zählt ein Start, den iOS beendet, fälschlich als Absturz? (Stand 05047ad34)
+
+Deine Spur: Lebenszyklus von iOS-Apps und Architektur-Urteil.
+Nicht deine Spur: Code oder eine Lösung bauen (das macht Claude Code), andere Themen, das Format der Kontextzeile (das prüft eine andere KI).
+
+WORUM ES GEHT (nur in Worten, es gibt kein Log für dich)
+- Ein Start auf einem Testgerät schrieb vier Zeilen ins Diagnose-Protokoll. Die letzte war „LaunchGuard: normal launch“ (EchoelmusicApp.swift Z. 353–354).
+- Die nächste erwartete Zeile „init a: audio core“ (Z. 429) kam nie. Es gab keine Absturz-Markierung.
+- Der nächste Start ging in den Sicherheitsmodus. Der greift ab 2 unbestätigten Starts.
+- Zwischen der ersten gespeicherten Eigenschaft (Z. 64) und „init a“ legt die App Dutzende gespeicherte Eigenschaften mit Standardwert an. Keine schreibt eine eigene Protokollzeile.
+- Neu seit diesem Stand: Direkt NACH dem Urteil schreibt die App eine Zeile „launch context:“, die unter anderem die Umgebungsvariable ActivePrewarm liest (Z. 363 → EchoelCrashLog.swift Z. 732–756). Sie steht HINTER beginLaunch(), nicht davor.
+
+STELLEN (stehen alle unten im Code)
+- EchoelmusicApp.swift Z. 53–66 (erste gespeicherte Eigenschaft), Z. 325–365 (raiseCrashNet mit beginLaunch und Urteil), Z. 367–378 und Z. 425–431 (init bis „init a“)
+- LaunchGuard.swift Z. 55–95 (beginLaunch zählt jeden Prozessstart)
+- EchoelCrashLog.swift Z. 732–756 (der Leser der Kontextzeile)
+- Info.plist Z. 79–83 (Hintergrund-Modi) · EchoelAppIntents.swift Z. 40–70 (openAppWhenRun)
+
+FRAGEN
+1. Welche iOS-Mechanismen können den Prozess NACH Z. 64 und VOR Z. 429 beenden, ohne dass ein Signal-Handler etwas schreibt? Prüfe Prewarming, Start im Hintergrund, Watchdog, Jetsam eines angehaltenen Prozesses und Wegwischen durch den Nutzer.
+2. Baut SwiftUIs App.main() bei einem Prewarm das App-Struct schon auf, also auch Z. 64?
+3. Zählt beginLaunch() so einen Start fälschlich als Absturz und löst damit beim nächsten Start einen falschen Sicherheitsmodus aus?
+4. Die Prewarm-Erkennung steht heute HINTER beginLaunch(). Reicht das, oder müsste sie davor stehen, damit ein Prewarm-Start gar nicht erst gezählt wird? Welche Folge hätte jede Reihenfolge?
+
+Nur für dich: Kennzeichne jede Annahme mit „ANNAHME:“. Was du aus Apple-Dokumentation weißt, nenne so. Kein Code, kein Fix als Code, keine Bitte um das Log.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/EchoelmusicApp.swift (Stand 05047ad34) ===
+--- Z. 53–66 ---
+    53      /// ⭐ SH-2 (GMMW, 2026-10-08) — THE CRASH NET IS UP BEFORE THE FIRST STORE. This must stay
+    54      /// the FIRST stored property of this type. Swift evaluates stored-property initial values
+    55      /// in declaration order, before any statement of `init()`, so every `@State … = X()`
+    56      /// default below — stores among them, some of which decode from disk — used to run with
+    57      /// the diag log closed and the launch counter unmoved: a constructor crash there wrote
+    58      /// nothing and never raised the counter Safe Mode reads. Declared first, its initializer
+    59      /// opens the log, installs the signal handlers and counts the launch before any of them.
+    60      /// The value is always `true` and nothing reads it; the property exists for its ORDER.
+    61      /// ⚠️ LIMIT: this adds the log and the count, not recovery — Safe Mode constructs the same
+    62      /// defaults, so a constructor crash still repeats (that is SH-11). Guard:
+    63      /// `TheCrashNetIsUpBeforeTheStoresTests`.
+    64      private let crashNetRaised: Bool = EchoelmusicApp.raiseCrashNet()
+    65  
+    66      @State private var audioEngine: AudioEngine
+--- Z. 325–378 ---
+   325      /// SH-2 — the crash net, raised by `crashNetRaised`, the first stored property, so it runs
+   326      /// before every stored default and before `init()`. Called from that one initializer and
+   327      /// nowhere else: a second call would truncate the diag log and count the launch twice.
+   328      private static func raiseCrashNet() -> Bool {
+   329          EchoelCrashLog.begin()   // diagnostics first: capture any crash from here on
+   330          // Self-healing crash-loop guard: record this launch. If the previous one(s)
+   331          // crashed before becoming healthy, `body` boots into Safe Mode instead of
+   332          // re-rendering the view tree that crashed (no more black screen at launch).
+   333          LaunchGuard.beginLaunch()
+   334          // #915 — BOTH BRANCHES SPEAK, and the normal one is the addition. Until now only the
+   335          // Safe-Mode branch left a line, so a log carried either "SAFE MODE" or NOTHING — and
+   336          // nothing is ambiguous between "this was a normal launch" and "this build predates
+   337          // the marker". An ABSENCE is not a fact — #445/#579, the canonical home for that
+   338          // rule; #860b is the rung-before-call and durable-sink-first slice, cited correctly
+   339          // a few lines down and mis-cited here in the first draft.
+   340          //
+   341          // The count is the part no other line carries: read immediately after `beginLaunch()`,
+   342          // 1 means the PREVIOUS run confirmed healthy, ≥ 2 means it did not. That is the whole
+   343          // input to the Safe-Mode decision, and a founder log could not state it.
+   344          //
+   345          // ⚠️ NOT a new decision — `isSafeMode` is still the only thing branched on. This is a
+   346          // witness, and it is written to the durable sink FIRST (#860b) because the very next
+   347          // statements are the ones a launch crash lands in.
+   348          if LaunchGuard.isSafeMode {
+   349              EchoelCrashLog.breadcrumb(
+   350                  "LaunchGuard: SAFE MODE (prior launch did not confirm healthy) "
+   351                  + "— unconfirmed streak \(LaunchGuard.unconfirmedCount)")
+   352          } else {
+   353              EchoelCrashLog.breadcrumb(
+   354                  "LaunchGuard: normal launch — unconfirmed streak \(LaunchGuard.unconfirmedCount)")
+   355          }
+   356          // SH-2b — what the process knew about itself before the first stored default runs:
+   357          // prewarm, boot time, process age, available memory, thermal state, Low Power Mode.
+   358          // Build 2621 wrote the verdict above and then nothing, and the log could not say whether
+   359          // iOS had prewarmed the process, the phone had just rebooted or memory was already
+   360          // short. Written AFTER the verdict so the #915 verdict line keeps its place directly before
+   361          // this one — a clean run reads launch · crash net · image · verdict · context (no ordinals
+   362          // here: SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
+   363          EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())
+   364          return true
+   365      }
+   366  
+   367      init() {
+   368          // SH-2b — the first thing `init()` says is that every stored default has run: Swift
+   369          // evaluates them all before this statement, so a log that reaches this rung did not die
+   370          // in a store's constructor, and a log that ends at the LaunchGuard verdict or the launch
+   371          // context line did. Build 2621 died in exactly that window and the log could not tell
+   372          // the two apart. A rung stands BEFORE its step (the lifecycle-ladder law) — this one
+   373          // stands before the first statement of `init()`, which is the step the defaults precede.
+   374          EchoelCrashLog.breadcrumb("app: stored defaults done")
+   375          // SH-2 — `EchoelCrashLog.begin()` and `LaunchGuard.beginLaunch()` stood here as this
+   376          // initializer's first two statements, AFTER every stored default had already run. They
+   377          // now run from `crashNetRaised`, the first stored property (see `raiseCrashNet()`).
+   378          log.log(.info, category: .system, "APP INIT [start] — constructing engines (no audio I/O here)")
+--- Z. 425–431 ---
+   425          // Stage breadcrumbs (device log 1783269182: the diag ended at "launch" with
+   426          // NO crash-handler line — an uncatchable kill (watchdog/jetsam) somewhere in
+   427          // this ~20-constructor chain. These pins name the dying constructor in the
+   428          // NEXT log instead of leaving a 50-line suspect list.)
+   429          EchoelCrashLog.breadcrumb("init a: audio core")
+   430          let audio = AudioEngine()
+   431          _audioEngine = State(wrappedValue: audio)
+=== Sources/Echoelmusic/Core/LaunchGuard.swift (Stand 05047ad34) ===
+--- Z. 55–95 ---
+    55      /// land well inside it.
+    56      static let inactiveConfirmFloorSeconds = 3
+    57  
+    58      /// Decided ONCE per process in `beginLaunch()` and cached, so reading it later
+    59      /// (after the counter has been reset by `confirmHealthy()`) stays stable.
+    60      private static var cachedSafeMode = false
+    61  
+    62      /// Record that a launch has started. Increments the unconfirmed-launch counter,
+    63      /// flushes it to disk immediately (a crash moments later must not lose it), and
+    64      /// freezes the Safe-Mode decision for this process. Called from the app's FIRST stored
+    65      /// property (`EchoelmusicApp.raiseCrashNet()`, SH-2), before every stored default.
+    66      static func beginLaunch() {
+    67          let d = UserDefaults.standard
+    68          let next = d.integer(forKey: countKey) + 1
+    69          d.set(next, forKey: countKey)
+    70          // Force a synchronous write — the launch we are guarding against may crash
+    71          // milliseconds from now, before the normal periodic flush.
+    72          d.synchronize()
+    73          cachedSafeMode = next >= safeModeThreshold
+    74      }
+    75  
+    76      /// Whether this launch should boot into Safe Mode (frozen at `beginLaunch()`).
+    77      static var isSafeMode: Bool { cachedSafeMode }
+    78  
+    79      /// This launch's position in the unconfirmed-launch streak, for the diag log ONLY.
+    80      /// Read right after `beginLaunch()`, **1 means the previous run confirmed healthy** and
+    81      /// ≥ 2 means it did not — the single fact that decides Safe Mode, and the one a founder
+    82      /// log could not state.
+    83      ///
+    84      /// ⚠️ READ-ONLY AND NOT A SECOND VERDICT. `isSafeMode` is frozen once per process on
+    85      /// purpose (a screen must not change under the user mid-session); this reads the LIVE
+    86      /// counter, so after `confirmHealthy()` it is 0 while `isSafeMode` may still be true.
+    87      /// Never branch on it — log it. Nothing in the guard's decision path consults it.
+    88      static var unconfirmedCount: Int { UserDefaults.standard.integer(forKey: countKey) }
+    89  
+    90      /// Mark the app healthy: the main UI rendered and survived. Resets the counter
+    91      /// so the *next* launch starts clean. The studio calls it `steadyConfirmSeconds` after
+    92      /// its deferred starts, or at its first background (a crash during render or in a
+    93      /// deferred start fires before this, leaving the count raised — exactly what escalates
+    94      /// to Safe Mode). Onboarding calls it when its screen appears.
+    95      static func confirmHealthy() {
+=== Sources/Echoelmusic/Core/EchoelCrashLog.swift (Stand 05047ad34) ===
+--- Z. 732–756 ---
+   732      /// The same line read from the live process. `ActivePrewarm` is the environment flag iOS
+   733      /// sets on a prewarmed launch; boot time and this process's start time are two `sysctl`s
+   734      /// (`KERN_BOOTTIME`, `KERN_PROC_PID`); available memory is `os_proc_available_memory`
+   735      /// (iOS only — the reader `MemoryPressureHandler` already uses); thermal state and Low Power
+   736      /// Mode come from `ProcessInfo`. No actor, no closure handed to a framework, no I/O beyond
+   737      /// the two sysctls: this runs inside the first stored property's initializer.
+   738      static func launchContextLine() -> String {
+   739          let info = ProcessInfo.processInfo
+   740          let now = Date().timeIntervalSince1970
+   741          let boot = bootTime()
+   742          let started = processStartTime()
+   743          #if os(iOS)
+   744          let availableMB: Int? = Int(os_proc_available_memory()) / (1024 * 1024)
+   745          #else
+   746          let availableMB: Int? = nil   // `os_proc_available_memory` is iOS-family only
+   747          #endif
+   748          return launchContextLine(
+   749              prewarm: info.environment["ActivePrewarm"] == "1",
+   750              bootEpoch: boot.map { Int($0) },
+   751              uptimeSeconds: boot.map { Int(now - $0) },
+   752              processAgeMs: started.map { Int((now - $0) * 1000) },
+   753              availableMB: availableMB,
+   754              thermal: SelfCheckLine.thermalName(info.thermalState),
+   755              lowPower: info.isLowPowerModeEnabled)
+   756      }
+=== Resources/iOS/Info.plist (Stand 05047ad34) ===
+--- Z. 79–83 ---
+    79  	<key>UIBackgroundModes</key>
+    80  	<array>
+    81  		<string>audio</string>
+    82  		<string>bluetooth-central</string>
+    83  	</array>
+=== Sources/Echoelmusic/Studio/EchoelAppIntents.swift (Stand 05047ad34) ===
+--- Z. 40–70 ---
+    40      static let description = IntentDescription(
+    41          "Start the instrument and the pulse reading — your body begins making music.")
+    42      static let openAppWhenRun: Bool = true
+    43  
+    44      func perform() async throws -> some IntentResult {
+    45          EchoelIntentInbox.post(.start)
+    46          return .result()
+    47      }
+    48  }
+    49  
+    50  struct StopEchoelSessionIntent: AppIntent {
+    51      static let title: LocalizedStringResource = "Stop Echoelmusic"
+    52      static let description = IntentDescription("Stop the instrument and the pulse reading.")
+    53      static let openAppWhenRun: Bool = true
+    54  
+    55      func perform() async throws -> some IntentResult {
+    56          EchoelIntentInbox.post(.stop)
+    57          return .result()
+    58      }
+    59  }
+    60  
+    61  struct KeepLastLoopIntent: AppIntent {
+    62      static let title: LocalizedStringResource = "Keep Last Loop"
+    63      static let description = IntentDescription(
+    64          "Capture the loop you just played from the always-on buffer.")
+    65      static let openAppWhenRun: Bool = true
+    66  
+    67      func perform() async throws -> some IntentResult {
+    68          EchoelIntentInbox.post(.keepLoop)
+    69          return .result()
+    70      }

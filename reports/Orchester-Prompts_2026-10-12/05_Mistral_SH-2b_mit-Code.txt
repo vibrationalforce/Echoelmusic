@@ -1,0 +1,520 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit 05047ad34.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: Mistral · Auftrag: Die Startkontext-Zeile. Tut der Code, was sein Kommentar verspricht? · Stand: 05047ad34
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR MISTRAL: Die Startkontext-Zeile. Tut der Code, was sein Kommentar verspricht? (Stand 05047ad34)
+
+Deine Spur: Gegenprüfung einer FERTIGEN Scheibe. Den Fall finden, in dem der Code bei einem konkreten Eingabewert etwas anderes tut, als Kommentar, Dateikopf oder Wächter-Fehlermeldung versprechen.
+Nicht deine Spur: Plan, Lösung, Code, Patches, Testdesign; der Lebenszyklus-Auftrag an ChatGPT (ob ein Start fälschlich als Absturz zählt); ob die Felder auf dem Telefon lesbar sind (offene Gerätefrage) — dazu höchstens offene Fragen, keine Befunde; andere Dateien als die unten genannten.
+
+WORUM ES GEHT (nur in Worten, es gibt kein Log für dich)
+- Ein Start auf einem Testgerät schrieb vier Zeilen ins Diagnose-Protokoll, zuletzt das LaunchGuard-Urteil, und endete ohne Absturz-Marker, bevor „init a: audio core“ kam.
+- Seit dieser Scheibe schreibt die App direkt nach dem Urteil EINE Zeile „launch context:“ mit sieben Feldern (prewarm, boot, up, age, avail, thermal, lowpower) aus dem Initialisierer der ERSTEN gespeicherten Eigenschaft des App-Structs; init() sagt danach als Erstes „app: stored defaults done“.
+- Versprochen wird: die Zeile ist Kontext, nie ein Urteil (kleingeschrieben, frei von jedem Marker, den der nächste Start sucht); „-“ heißt „hier nicht lesbar“, nie ein Wert; eine sysctl-Verweigerung ergibt „-“; ein Log, das die Rung erreicht, starb nicht in einem Store-Konstruktor (Datenspeicher-Klassen); ein Log, das am Urteil oder an der Kontextzeile endet, schon.
+- Zwei Wächter (neun Methoden) pinnen Format und Platz der Zeile. Sie prüfen den reinen Formatierer und einen Scan des Quelltexts, nicht, was die Leser auf einem Gerät zurückgeben. Was den Testbau angeht: er steht in der CI; was die Felder am Gerät lesen, kann kein Test entscheiden.
+
+STELLEN (stehen alle unten im Code)
+- Sources/Echoelmusic/Core/EchoelCrashLog.swift
+  - Z. 704–730: Kommentar, Präfix (Z. 714), reiner Formatierer mit den zwei Helfern (Z. 720–721)
+  - Z. 732–756: der Live-Leser; Z. 758–770: bootTime(); Z. 772–787: processStartTime()
+  - Z. 198–204: breadcrumb() — Zeitstempel und die Bedingung, unter der eine Zeile stumm bleibt
+  - Z. 529–531, 546–547, 556, 564–565, 578: die Marker-Konstanten; Z. 445–451, 469–480, 590–598, 620–624, 879–886: ihre Leser
+- Sources/Echoelmusic/Core/SelfCheckLine.swift Z. 91–99: thermalName
+- Sources/Echoelmusic/Core/MemoryPressureHandler.swift Z. 117–123 und Z. 287–296: die zweite Lesart von os_proc_available_memory
+- Sources/Echoelmusic/EchoelmusicApp.swift Z. 53–64 (die erste gespeicherte Eigenschaft), Z. 325–365 (raiseCrashNet; Urteil Z. 348–355, Kontextzeile Z. 363), Z. 367–378 (Kopf von init()), Z. 429 („init a“)
+- Tests/CISmoke/TheLaunchContextLineIsNotAVerdictTests.swift Z. 1–38 (Kopf: was der Wächter NICHT beweist), Z. 56–64, 68–73, 77–94, 98–124 (die vier Ansprüche)
+- Tests/CISmoke/TheCrashNetIsUpBeforeTheStoresTests.swift Z. 27–38 und Z. 66–79 (was die Reihenfolge der Zeilen bedeuten soll), Z. 215–243 und Z. 247–274 (Ansprüche 4 und 5)
+
+FRAGEN
+1. Für jedes der sieben Felder: welcher Rückgabewert des jeweiligen Lesers (Umgebungsvariable, sysctl, os_proc_available_memory, ProcessInfo) wird im Live-Leser Z. 738–756 zu „-“, welcher zu einer Zahl oder Flagge? Nenne je Feld den Eingabewert und halte das Ergebnis gegen Z. 711–712 und Z. 716 sowie gegen den Wächter-Kopf Z. 16–25 und Z. 113–117.
+2. up= und age= (Z. 751–752) und der Zeitstempel jeder Zeile (Z. 201) rechnen mit der Wanduhr, boot= und die Prozess-Startzeit kommen aus dem Kernel. Welches Vorzeichen und welche Rundung bekommen die beiden Felder, wenn iOS die Uhr zwischen Boot bzw. Prozessstart und Lesen stellt (erster Start nach Neustart, Netzzeit, Zeitzone), und bleibt das Ergebnis vom Zeichen „-“ unterscheidbar (Z. 720–721; Wächter Z. 118–123)? Gilt Z. 758–759 („gleicher Wert = kein Neustart“) auch umgekehrt?
+3. Zwischen Urteil (Z. 348–355) und Kontextzeile (Z. 363) laufen die Leser aus Z. 738–787. Was bedeutet ein Log, das am Urteil endet, nach dem Kommentar Z. 368–373 und nach dem Wächter Z. 74–77 — und welche Enden lässt der Code an dieser Stelle tatsächlich zu?
+4. Z. 712–713 verspricht Freiheit von jedem Marker, den looksLikeUnseenCrash und unconfirmedRunToAttach suchen. Vergleiche die Liste, die der Wächter prüft (Tests Z. 78–80), mit den Konstanten und Lesern oben: Ist sie vollständig, und kann ein möglicher Wert aus thermalName (Z. 91–99) oder eine Zahl eine der Konstanten oder die Bedingungen in Z. 590–598 treffen?
+5. Welche Rückgaben von os_proc_available_memory (Z. 744) und der beiden sysctl-Aufrufe (Z. 765, Z. 780–782) fängt der Code ab, welche nicht — und deckt sich das mit „nil when the sysctl refuses“ (Z. 758, Z. 772) und mit der Lesart in MemoryPressureHandler Z. 287–296? Was iOS auf dem Gerät für die eigene PID oder ohne Speicher-Limit zurückgibt, kannst du nur als offene Frage stellen.
+
+Nur für dich: Zu jedem Befund der konkrete Eingabewert, die Kommentarzeile, die etwas anderes verspricht, und die Codezeile, an der es abweicht. Ein Fall, den der Code richtig behandelt, zählt nicht als Zeile — sag es kurz. Was nur iOS auf dem Gerät entscheiden kann (Sandbox, Umgebungsvariable, Prewarm-Phase), schreibst du als offene Frage mit „ANNAHME:“ davor, nie als Befund. Was du aus Apple-Dokumentation weißt, nenne so. Kein Code, kein Fix, keine Bitte um das Log oder ein Geräteprotokoll.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/Core/EchoelCrashLog.swift (Stand 05047ad34) ===
+--- Z. 198–204 ---
+   198      /// Append a timestamped step marker. Best-effort, any thread, no throw.
+   199      static func breadcrumb(_ message: String) {
+   200          guard fd >= 0 else { return }
+   201          let line = "\(String(format: "%.3f", Date().timeIntervalSince1970))  \(message)\n"
+   202          var bytes = Array(line.utf8)
+   203          _ = write(fd, &bytes, bytes.count)
+   204      }
+--- Z. 445–451 ---
+   445      static func unconfirmedRunToAttach(from previous: String) -> String? {
+   446          guard previous.contains(launchLinePrefix) else { return nil }
+   447          guard !looksLikeUnseenCrash(previous) else { return nil }
+   448          guard !counterEndedSettled(in: previous) else { return nil }
+   449          guard lastScenePhase(in: previous) != backgroundPhase else { return nil }
+   450          return trimToBudget(previous)
+   451      }
+--- Z. 469–480 ---
+   469      static func counterEndedSettled(in log: String) -> Bool {
+   470          var lastSettle = -1
+   471          var lastRaise = -1
+   472          for (i, line) in log.split(separator: "\n", omittingEmptySubsequences: false)
+   473              .enumerated() {
+   474              if line.contains(confirmedHealthyMarker) || line.contains(recoveryScreenClearedMarker) {
+   475                  lastSettle = i
+   476              }
+   477              if line.contains(rearmMarker) { lastRaise = i }
+   478          }
+   479          return lastSettle >= 0 && lastRaise < lastSettle
+   480      }
+--- Z. 529–531 ---
+   529      static let startTappedMarker = "Start tapped"
+   530      static let crashMarker = "CRASH"
+   531      static let backgroundPhase = "background"
+--- Z. 546–547 ---
+   546      static let confirmedHealthyMarker = "LaunchGuard: confirming healthy"
+   547      static let recoveryScreenClearedMarker = "LaunchGuard: counter cleared on the recovery screen"
+--- Z. 556 ---
+   556      static let rearmMarker = "LaunchGuard: re-arming"
+--- Z. 564–565 ---
+   564      static let rearmNotNeededMarker = "LaunchGuard: re-arm not needed"
+   565      static let launchLinePrefix = "launch v"
+--- Z. 578 ---
+   578      static let sceneArrow = "→"
+--- Z. 590–598 ---
+   590      static func lastScenePhase(in log: String) -> String? {
+   591          var last: String?
+   592          for line in log.split(separator: "\n", omittingEmptySubsequences: true) {
+   593              guard line.contains("scene: "), let arrow = line.range(of: sceneArrow) else { continue }
+   594              let phase = line[arrow.upperBound...].trimmingCharacters(in: .whitespaces)
+   595              if !phase.isEmpty { last = phase }
+   596          }
+   597          return last
+   598      }
+--- Z. 620–624 ---
+   620      static func looksLikeUnseenCrash(_ log: String) -> Bool {
+   621          if log.contains(crashMarker) { return true }
+   622          guard log.contains(startTappedMarker) else { return false }
+   623          return lastScenePhase(in: log) != backgroundPhase
+   624      }
+--- Z. 704–787 ---
+   704      // MARK: - SH-2b: what the process knew about itself before the stored defaults ran
+   705  
+   706      /// SH-2b — the line `raiseCrashNet()` writes right after the LaunchGuard verdict. Build 2621
+   707      /// (2026-10-10 10:58 UTC) wrote four lines and stopped without a crash marker, somewhere
+   708      /// between that verdict and `init a: audio core` — and the log could not say whether iOS
+   709      /// had prewarmed the process, whether the phone had just rebooted, how long the process had
+   710      /// already lived, or how much memory it had. Each field is one of those questions, asked at
+   711      /// the only moment they can still be asked about THIS run. `-` means "not readable here",
+   712      /// never a value. Lower-case throughout and free of every marker `looksLikeUnseenCrash` and
+   713      /// `unconfirmedRunToAttach` search for, so the line cannot be mistaken for a verdict.
+   714      static let launchContextPrefix = "launch context: "
+   715  
+   716      /// Pure: formats the readings; `nil` prints as `-`. The reader below supplies them.
+   717      static func launchContextLine(prewarm: Bool?, bootEpoch: Int?, uptimeSeconds: Int?,
+   718                                    processAgeMs: Int?, availableMB: Int?, thermal: String?,
+   719                                    lowPower: Bool?) -> String {
+   720          func flag(_ value: Bool?) -> String { value.map { $0 ? "1" : "0" } ?? "-" }
+   721          func number(_ value: Int?, _ unit: String) -> String { value.map { String($0) + unit } ?? "-" }
+   722          return launchContextPrefix
+   723              + "prewarm=" + flag(prewarm)
+   724              + " boot=" + number(bootEpoch, "")
+   725              + " up=" + number(uptimeSeconds, "s")
+   726              + " age=" + number(processAgeMs, "ms")
+   727              + " avail=" + number(availableMB, "mb")
+   728              + " thermal=" + (thermal ?? "-")
+   729              + " lowpower=" + flag(lowPower)
+   730      }
+   731  
+   732      /// The same line read from the live process. `ActivePrewarm` is the environment flag iOS
+   733      /// sets on a prewarmed launch; boot time and this process's start time are two `sysctl`s
+   734      /// (`KERN_BOOTTIME`, `KERN_PROC_PID`); available memory is `os_proc_available_memory`
+   735      /// (iOS only — the reader `MemoryPressureHandler` already uses); thermal state and Low Power
+   736      /// Mode come from `ProcessInfo`. No actor, no closure handed to a framework, no I/O beyond
+   737      /// the two sysctls: this runs inside the first stored property's initializer.
+   738      static func launchContextLine() -> String {
+   739          let info = ProcessInfo.processInfo
+   740          let now = Date().timeIntervalSince1970
+   741          let boot = bootTime()
+   742          let started = processStartTime()
+   743          #if os(iOS)
+   744          let availableMB: Int? = Int(os_proc_available_memory()) / (1024 * 1024)
+   745          #else
+   746          let availableMB: Int? = nil   // `os_proc_available_memory` is iOS-family only
+   747          #endif
+   748          return launchContextLine(
+   749              prewarm: info.environment["ActivePrewarm"] == "1",
+   750              bootEpoch: boot.map { Int($0) },
+   751              uptimeSeconds: boot.map { Int(now - $0) },
+   752              processAgeMs: started.map { Int((now - $0) * 1000) },
+   753              availableMB: availableMB,
+   754              thermal: SelfCheckLine.thermalName(info.thermalState),
+   755              lowPower: info.isLowPowerModeEnabled)
+   756      }
+   757  
+   758      /// Seconds since 1970 at which the kernel booted, or nil when the sysctl refuses. The same
+   759      /// value across two launches means no reboot happened between them.
+   760      private static func bootTime() -> TimeInterval? {
+   761          #if canImport(Darwin)
+   762          var mib: [Int32] = [CTL_KERN, KERN_BOOTTIME]
+   763          var value = timeval()
+   764          var size = MemoryLayout<timeval>.stride
+   765          guard sysctl(&mib, UInt32(mib.count), &value, &size, nil, 0) == 0, value.tv_sec > 0 else { return nil }
+   766          return TimeInterval(value.tv_sec) + TimeInterval(value.tv_usec) / 1_000_000
+   767          #else
+   768          return nil
+   769          #endif
+   770      }
+   771  
+   772      /// Seconds since 1970 at which THIS process started, or nil when the sysctl refuses. A large
+   773      /// age at the first stored property means the process existed long before the app ran —
+   774      /// a prewarm that `ActivePrewarm` did not flag, or a resume after suspension.
+   775      private static func processStartTime() -> TimeInterval? {
+   776          #if canImport(Darwin)
+   777          var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+   778          var proc = kinfo_proc()
+   779          var size = MemoryLayout<kinfo_proc>.stride
+   780          guard sysctl(&mib, UInt32(mib.count), &proc, &size, nil, 0) == 0, size > 0 else { return nil }
+   781          let start = proc.kp_proc.p_un.__p_starttime
+   782          guard start.tv_sec > 0 else { return nil }
+   783          return TimeInterval(start.tv_sec) + TimeInterval(start.tv_usec) / 1_000_000
+   784          #else
+   785          return nil
+   786          #endif
+   787      }
+--- Z. 879–886 ---
+   879      static func neutralized(_ text: String) -> String {
+   880          var out = text
+   881          for marker in [crashMarker, startTappedMarker, confirmedHealthyMarker, recoveryScreenClearedMarker,
+   882                         rearmMarker, rearmNotNeededMarker] {
+   883              out = out.replacingOccurrences(of: marker, with: marker.lowercased())
+   884          }
+   885          return out.replacingOccurrences(of: sceneArrow, with: "->")
+   886      }
+=== Sources/Echoelmusic/Core/SelfCheckLine.swift (Stand 05047ad34) ===
+--- Z. 91–99 ---
+    91      static func thermalName(_ state: ProcessInfo.ThermalState) -> String {
+    92          switch state {
+    93          case .nominal: return "nominal"
+    94          case .fair: return "fair"
+    95          case .serious: return "serious"
+    96          case .critical: return "critical"
+    97          @unknown default: return "unknown"
+    98          }
+    99      }
+=== Sources/Echoelmusic/Core/MemoryPressureHandler.swift (Stand 05047ad34) ===
+--- Z. 117–123 ---
+   117      /// This process's remaining headroom before jetsam, straight from
+   118      /// `os_proc_available_memory()`. The one figure here that means what its name says.
+   119      public private(set) var availableMemoryBytes: Int = 0
+   120  
+   121      /// The same headroom, read NOW. `availableMemoryBytes` is the 5 s poll's copy and still 0
+   122      /// before its first tick; the SH-10 `self-check:` line runs three seconds after launch.
+   123      public func currentHeadroomBytes() -> Int { getMemoryStats().available }
+--- Z. 287–296 ---
+   287      private func getMemoryStats() -> (used: Int, available: Int, total: Int) {
+   288          let total = Int(ProcessInfo.processInfo.physicalMemory)
+   289          // Use os_proc_available_memory which is concurrency-safe (no mach_task_self_)
+   290          if #available(iOS 13.0, macOS 10.15, *) {
+   291              let available = Int(os_proc_available_memory())
+   292              let used = total - available
+   293              return (used, available, total)
+   294          }
+   295          return (0, total, total)
+   296      }
+=== Sources/Echoelmusic/EchoelmusicApp.swift (Stand 05047ad34) ===
+--- Z. 53–64 ---
+    53      /// ⭐ SH-2 (GMMW, 2026-10-08) — THE CRASH NET IS UP BEFORE THE FIRST STORE. This must stay
+    54      /// the FIRST stored property of this type. Swift evaluates stored-property initial values
+    55      /// in declaration order, before any statement of `init()`, so every `@State … = X()`
+    56      /// default below — stores among them, some of which decode from disk — used to run with
+    57      /// the diag log closed and the launch counter unmoved: a constructor crash there wrote
+    58      /// nothing and never raised the counter Safe Mode reads. Declared first, its initializer
+    59      /// opens the log, installs the signal handlers and counts the launch before any of them.
+    60      /// The value is always `true` and nothing reads it; the property exists for its ORDER.
+    61      /// ⚠️ LIMIT: this adds the log and the count, not recovery — Safe Mode constructs the same
+    62      /// defaults, so a constructor crash still repeats (that is SH-11). Guard:
+    63      /// `TheCrashNetIsUpBeforeTheStoresTests`.
+    64      private let crashNetRaised: Bool = EchoelmusicApp.raiseCrashNet()
+--- Z. 325–378 ---
+   325      /// SH-2 — the crash net, raised by `crashNetRaised`, the first stored property, so it runs
+   326      /// before every stored default and before `init()`. Called from that one initializer and
+   327      /// nowhere else: a second call would truncate the diag log and count the launch twice.
+   328      private static func raiseCrashNet() -> Bool {
+   329          EchoelCrashLog.begin()   // diagnostics first: capture any crash from here on
+   330          // Self-healing crash-loop guard: record this launch. If the previous one(s)
+   331          // crashed before becoming healthy, `body` boots into Safe Mode instead of
+   332          // re-rendering the view tree that crashed (no more black screen at launch).
+   333          LaunchGuard.beginLaunch()
+   334          // #915 — BOTH BRANCHES SPEAK, and the normal one is the addition. Until now only the
+   335          // Safe-Mode branch left a line, so a log carried either "SAFE MODE" or NOTHING — and
+   336          // nothing is ambiguous between "this was a normal launch" and "this build predates
+   337          // the marker". An ABSENCE is not a fact — #445/#579, the canonical home for that
+   338          // rule; #860b is the rung-before-call and durable-sink-first slice, cited correctly
+   339          // a few lines down and mis-cited here in the first draft.
+   340          //
+   341          // The count is the part no other line carries: read immediately after `beginLaunch()`,
+   342          // 1 means the PREVIOUS run confirmed healthy, ≥ 2 means it did not. That is the whole
+   343          // input to the Safe-Mode decision, and a founder log could not state it.
+   344          //
+   345          // ⚠️ NOT a new decision — `isSafeMode` is still the only thing branched on. This is a
+   346          // witness, and it is written to the durable sink FIRST (#860b) because the very next
+   347          // statements are the ones a launch crash lands in.
+   348          if LaunchGuard.isSafeMode {
+   349              EchoelCrashLog.breadcrumb(
+   350                  "LaunchGuard: SAFE MODE (prior launch did not confirm healthy) "
+   351                  + "— unconfirmed streak \(LaunchGuard.unconfirmedCount)")
+   352          } else {
+   353              EchoelCrashLog.breadcrumb(
+   354                  "LaunchGuard: normal launch — unconfirmed streak \(LaunchGuard.unconfirmedCount)")
+   355          }
+   356          // SH-2b — what the process knew about itself before the first stored default runs:
+   357          // prewarm, boot time, process age, available memory, thermal state, Low Power Mode.
+   358          // Build 2621 wrote the verdict above and then nothing, and the log could not say whether
+   359          // iOS had prewarmed the process, the phone had just rebooted or memory was already
+   360          // short. Written AFTER the verdict so the #915 verdict line keeps its place directly before
+   361          // this one — a clean run reads launch · crash net · image · verdict · context (no ordinals
+   362          // here: SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
+   363          EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())
+   364          return true
+   365      }
+   366  
+   367      init() {
+   368          // SH-2b — the first thing `init()` says is that every stored default has run: Swift
+   369          // evaluates them all before this statement, so a log that reaches this rung did not die
+   370          // in a store's constructor, and a log that ends at the LaunchGuard verdict or the launch
+   371          // context line did. Build 2621 died in exactly that window and the log could not tell
+   372          // the two apart. A rung stands BEFORE its step (the lifecycle-ladder law) — this one
+   373          // stands before the first statement of `init()`, which is the step the defaults precede.
+   374          EchoelCrashLog.breadcrumb("app: stored defaults done")
+   375          // SH-2 — `EchoelCrashLog.begin()` and `LaunchGuard.beginLaunch()` stood here as this
+   376          // initializer's first two statements, AFTER every stored default had already run. They
+   377          // now run from `crashNetRaised`, the first stored property (see `raiseCrashNet()`).
+   378          log.log(.info, category: .system, "APP INIT [start] — constructing engines (no audio I/O here)")
+--- Z. 429 ---
+   429          EchoelCrashLog.breadcrumb("init a: audio core")
+=== Tests/CISmoke/TheLaunchContextLineIsNotAVerdictTests.swift (Stand 05047ad34) ===
+--- Z. 1–38 ---
+     1  // TheLaunchContextLineIsNotAVerdictTests.swift
+     2  // Echoel — GMMW SH-2b (2026-10-11). The launch context line reads as context, never as a verdict.
+     3  //
+     4  // WHAT THIS GUARDS. Build 2621 (2026-10-10) wrote `launch v…`, `crash net…`, `image…` and the
+     5  // `LaunchGuard:` verdict, then nothing — no crash marker, no `init a: audio core`. The log could
+     6  // not say whether iOS had prewarmed the process, whether the phone had just rebooted, how long
+     7  // the process had lived or how much memory it had. SH-2b adds ONE line after the verdict that
+     8  // answers those questions (`EchoelCrashLog.launchContextLine`). Its PLACE is pinned by claim 4 of
+     9  // `TheCrashNetIsUpBeforeTheStoresTests`; THIS file pins what the line looks like and, above all,
+    10  // what it is not: every reader of a pasted log (`looksLikeUnseenCrash`, `unconfirmedRunToAttach`,
+    11  // `neutralized`) searches for markers, and a context line that happened to contain one would turn
+    12  // a quiet run into a reported crash.
+    13  //
+    14  // THE CLAIMS — END-TO-END on the pure formatter (a `static func` on an `enum`, Foundation only),
+    15  // plus one on the live reader:
+    16  //   1. All-nil → every field prints `-`, in a fixed order with fixed names. `-` is "not readable
+    17  //      here", never a value; the order is what a triager's eye learns.
+    18  //   2. A full reading prints each value with its unit, lower-case throughout.
+    19  //   3. Neither line carries a marker: not `crashMarker`, not `startTappedMarker`, not either
+    20  //      confirm/clear marker, not the scene arrow; `looksLikeUnseenCrash` says false for a log of
+    21  //      just that line, and `neutralized` returns the line unchanged (there is nothing to lower).
+    22  //   4. The live reader (`launchContextLine()` without arguments) returns a line with the prefix,
+    23  //      the seven fields, a readable `prewarm` flag and a named thermal state — on the test host.
+    24  //      The two sysctl-backed fields and memory are allowed to read `-`: a refusal is a reading
+    25  //      this guard cannot force either way, and the format already says what `-` means.
+    26  //
+    27  // ⚠️ HONEST GRADING (#433). FORWARD: this file calls `EchoelCrashLog.launchContextLine`, which
+    28  // does not exist on the parent `a4df15c` (Sources/ and Tests/ equal to `5bc17bc`), so it DOES
+    29  // NOT COMPILE there — no assertion has a verdict on the parent (§3), and it needs
+    30  // `@testable import Echoelmusic` (#1337). Transcribed in
+    31  // Python against the worktree: the formatter is re-implemented and the two literals of claims 1–2
+    32  // are produced by it; the marker set of claim 3 is read from `EchoelCrashLog.swift`. Claim 4's
+    33  // field values are not predicted — only their shape is.
+    34  //
+    35  // ⚠️ THE LIMIT. Whether the fields are READABLE on the phone — `ActivePrewarm` present, the two
+    36  // sysctls answering, `os_proc_available_memory` meaningful — is a DEVICE PROBE (FOUNDER_INBOX §2,
+    37  // G10). This file proves the line cannot lie about being a verdict, not that it tells the truth
+    38  // about the device.
+--- Z. 56–64 ---
+    56      func testAnUnreadableFieldPrintsAsADashInAFixedOrder() {
+    57          XCTAssertEqual(empty, "launch context: prewarm=- boot=- up=- age=- avail=- thermal=- lowpower=-", """
+    58              The all-nil launch context line changed. `-` is "not readable here" and the field order \
+    59              is what a triager learns to read; a changed spelling here changes the context line of \
+    60              every pasted log (SH-2b).
+    61              """)
+    62          XCTAssertTrue(empty.hasPrefix(EchoelCrashLog.launchContextPrefix),
+    63                        "the line must start with `launchContextPrefix` — one spelling for writer and reader (#416)")
+    64      }
+--- Z. 68–73 ---
+    68      func testAFullReadingPrintsValuesWithUnits() {
+    69          XCTAssertEqual(full, "launch context: prewarm=1 boot=1791600000 up=29933s age=120ms avail=1800mb thermal=nominal lowpower=0",
+    70                         "a full launch context line changed its spelling — the units and flags are how a triager reads a prewarm (1), a fresh boot (small `up=`) or a long-lived process (large `age=`)")
+    71          XCTAssertEqual(full, full.lowercased(), "the launch context line is lower-case throughout — a marker is never lower-case")
+    72          XCTAssertEqual(full.components(separatedBy: "=").count - 1, 7, "seven fields, seven `=`")
+    73      }
+--- Z. 77–94 ---
+    77      func testTheLineCarriesNoMarker() {
+    78          let markers = [EchoelCrashLog.crashMarker, EchoelCrashLog.startTappedMarker,
+    79                         EchoelCrashLog.confirmedHealthyMarker, EchoelCrashLog.recoveryScreenClearedMarker,
+    80                         EchoelCrashLog.sceneArrow]
+    81          for line in [empty, full] {
+    82              for marker in markers {
+    83                  XCTAssertFalse(line.contains(marker), """
+    84                      The launch context line contains the marker `\(marker)`. The next launch reads a \
+    85                      pasted log for exactly these spellings; a context line carrying one would turn a \
+    86                      quiet run into a reported crash or a tapped Start (SH-2b).
+    87                      """)
+    88              }
+    89              XCTAssertFalse(EchoelCrashLog.looksLikeUnseenCrash(line + "\n"),
+    90                             "a log holding only the launch context line must not look like an unseen crash")
+    91              XCTAssertEqual(EchoelCrashLog.neutralized(line), line,
+    92                             "`neutralized` must have nothing to lower in the launch context line")
+    93          }
+    94      }
+--- Z. 98–124 ---
+    98      func testTheLiveReaderKeepsTheShape() throws {
+    99          let live = EchoelCrashLog.launchContextLine()
+   100          XCTAssertTrue(live.hasPrefix(EchoelCrashLog.launchContextPrefix), "the live line must carry the prefix: \(live)")
+   101          XCTAssertFalse(live.contains(EchoelCrashLog.crashMarker), "the live line must not carry the crash marker: \(live)")
+   102          XCTAssertEqual(live, live.lowercased(), "the live line is lower-case throughout: \(live)")
+   103  
+   104          let fields = live.dropFirst(EchoelCrashLog.launchContextPrefix.count)
+   105              .split(separator: " ")
+   106              .map { $0.split(separator: "=", maxSplits: 1).map(String.init) }
+   107          XCTAssertEqual(fields.map { $0.first ?? "" },
+   108                         ["prewarm", "boot", "up", "age", "avail", "thermal", "lowpower"],
+   109                         "the live line names its seven fields in the fixed order: \(live)")
+   110          let values = Dictionary(uniqueKeysWithValues: fields.compactMap { pair in
+   111              pair.count == 2 ? (pair[0], pair[1]) : nil
+   112          })
+   113          // Always readable on any host: the environment and `ProcessInfo`.
+   114          XCTAssertTrue(["0", "1"].contains(values["prewarm"] ?? ""), "`prewarm` is a flag, read from the environment: \(live)")
+   115          XCTAssertTrue(["0", "1"].contains(values["lowpower"] ?? ""), "`lowpower` is a flag, read from `ProcessInfo`: \(live)")
+   116          XCTAssertNotEqual(values["thermal"], "-", "`thermal` comes from `ProcessInfo` and is always named: \(live)")
+   117          // Readable on this host only if the kernel answers: a dash is a stated refusal, a value is a number.
+   118          for (name, unit) in [("boot", ""), ("up", "s"), ("age", "ms"), ("avail", "mb")] {
+   119              let value = try XCTUnwrap(values[name], "field `\(name)` missing: \(live)")
+   120              if value == "-" { continue }
+   121              XCTAssertTrue(value.hasSuffix(unit), "`\(name)` carries its unit `\(unit)`: \(live)")
+   122              XCTAssertNotNil(Int(value.dropLast(unit.count)), "`\(name)` is a whole number: \(live)")
+   123          }
+   124      }
+=== Tests/CISmoke/TheCrashNetIsUpBeforeTheStoresTests.swift (Stand 05047ad34) ===
+--- Z. 27–38 ---
+    27  //   4. (SH-2b, 2026-10-11) After BOTH verdict lines, `raiseCrashNet()` writes the launch
+    28  //      context line — `EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())`, exactly
+    29  //      once in the app, before `return true`. Build 2621 wrote the verdict and then nothing, and
+    30  //      no line said whether iOS had prewarmed the process, the phone had just rebooted or memory
+    31  //      was short. The line's FORMAT is pinned end-to-end in
+    32  //      `TheLaunchContextLineIsNotAVerdictTests`; this claim pins its PLACE.
+    33  //   5. (SH-2b) The FIRST statement of `init()` is `EchoelCrashLog.breadcrumb("app: stored
+    34  //      defaults done")` — one writer of that text in the app, inside the head window of claim 3
+    35  //      (between `    init() {` and the `APP INIT [start]` line). Swift runs every stored default
+    36  //      before it, so a log that reaches this rung did not die in a store's constructor, and one
+    37  //      that ends at the verdict or the context line did — the two the 2621 log could not tell
+    38  //      apart.
+--- Z. 66–79 ---
+    66  // ⚠️ THE LIMIT. Source text, not behaviour: nothing here constructs the app. That Swift runs
+    67  // stored initial values in declaration order is the language's rule, not something this file
+    68  // can observe. And the net adds the LOG and the COUNT, not recovery — Safe Mode constructs the
+    69  // same defaults, so a constructor crash still repeats (SH-11). DEVICE PROBE, open: a launch
+    70  // whose log opens with the `launch v` line (`EchoelCrashLog.launchLinePrefix`) and reaches the
+    71  // `LaunchGuard:` verdict before `init a: audio core`. After a run that ended badly `begin()`
+    72  // writes its `retain…` lines before the verdict, so the ORDER below holds only after a clean run
+    73  // (no ordinals here — SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
+    74  // Since SH-2b a clean run reads: `launch v` · `crash net:` · `image` · the one LaunchGuard
+    75  // verdict · `launch context:` · `app: stored defaults done` · `init a: audio core`. A log that
+    76  // ends after the context line died in a stored default; one that ends after the rung died in
+    77  // the `register(defaults:)` calls or the `APP INIT` line. Whether the fields are READABLE on the
+    78  // device (the two sysctls, `ActivePrewarm`) is part of that probe — the format pins `-` for a
+    79  // refusal, not a value.
+--- Z. 215–243 ---
+   215      func testTheNetSaysWhatTheProcessKnewAfterTheVerdict() throws {
+   216          let app = try source(Self.appPath)
+   217          guard let body = Self.bracedBody(after: Self.helperHead, in: app) else {
+   218              return XCTFail("ANCHOR MISSING: `\(Self.helperHead)` or its closing brace (#408)")
+   219          }
+   220          guard let safe = body.range(of: "\"LaunchGuard: SAFE MODE"),
+   221                let normal = body.range(of: "\"LaunchGuard: normal launch"),
+   222                let done = body.range(of: "return true") else {
+   223              return XCTFail("ANCHOR MISSING: the two verdict literals or `return true` in `raiseCrashNet()` (#408)")
+   224          }
+   225          guard let context = body.range(of: Self.contextCall) else {
+   226              return XCTFail("""
+   227                  `raiseCrashNet()` no longer writes `\(Self.contextCall)`. Build 2621 wrote the \
+   228                  LaunchGuard verdict and then nothing; without this line the next such log cannot \
+   229                  say whether iOS prewarmed the process, the phone had just rebooted or memory was \
+   230                  short (SH-2b).
+   231                  """)
+   232          }
+   233          XCTAssertGreaterThan(context.lowerBound, safe.upperBound,
+   234                               "the launch context line must follow the Safe-Mode verdict — a triager reads what the net DECIDED before what the process KNEW, and a counted position is not pinned here on purpose (#915, #818)")
+   235          XCTAssertGreaterThan(context.lowerBound, normal.upperBound,
+   236                               "the launch context line must follow the normal-launch verdict (#915)")
+   237          XCTAssertLessThan(context.lowerBound, done.lowerBound,
+   238                            "the launch context line must be written before `raiseCrashNet()` returns")
+   239          XCTAssertEqual(Self.occurrences(of: "launchContextLine(", in: app), 1, """
+   240              `EchoelmusicApp` must read the launch context exactly once, from the crash net — a \
+   241              second reading elsewhere would describe a later moment under the same label.
+   242              """)
+   243      }
+--- Z. 247–274 ---
+   247      func testInitSaysFirstThatTheStoredDefaultsAreDone() throws {
+   248          let app = try source(Self.appPath)
+   249          guard let initHead = app.range(of: "    init() {"),
+   250                let firstLine = app.range(of: "\"APP INIT [start]", range: initHead.upperBound..<app.endIndex) else {
+   251              return XCTFail("ANCHOR MISSING: `init()` or its `APP INIT [start]` line (#408)")
+   252          }
+   253          let head = app[initHead.upperBound..<firstLine.lowerBound]
+   254          XCTAssertEqual(Self.occurrences(of: Self.defaultsDoneRung, in: String(head)), 1, """
+   255              The head of `init()` must write `\(Self.defaultsDoneRung)` once, before the `APP INIT` \
+   256              log line. Swift runs every stored default before `init()`'s first statement, so this \
+   257              rung is the only thing that separates "died in a store's constructor" from "died in \
+   258              `init()`" in a log that stops early — the two the build-2621 log could not tell apart \
+   259              (SH-2b).
+   260              """)
+   261          XCTAssertEqual(Self.occurrences(of: "\"app: stored defaults done\"", in: app), 1,
+   262                         "one writer of the stored-defaults rung in the app — a second would make the log lie about the order")
+   263  
+   264          // The rung is the FIRST statement: nothing but whitespace stands between `init() {` and
+   265          // it (comments are already blanked by `SourceText.codeOnly`, which keeps line count).
+   266          guard let rung = head.range(of: Self.defaultsDoneRung) else { return }
+   267          let before = head[head.startIndex..<rung.lowerBound]
+   268          XCTAssertTrue(before.allSatisfy { $0 == " " || $0 == "\n" }, """
+   269              A statement runs before the stored-defaults rung in `init()`: \
+   270              `\(before.trimmingCharacters(in: .whitespacesAndNewlines))`. The rung stands BEFORE \
+   271              its step (the lifecycle-ladder law) — if that statement dies, the log must still show \
+   272              that the defaults had finished (SH-2b).
+   273              """)
+   274      }

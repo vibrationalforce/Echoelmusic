@@ -1,0 +1,478 @@
+Du arbeitest als PRÜFER für Echoel (Michael Terbuyken, Studio Hamburg). Mehrere KIs helfen mit, und jede hat genau eine Spur. Frieden heißt hier: Keine KI arbeitet gegen eine andere, und nur einer schreibt.
+
+WAS ECHOEL IST
+Echoelmusic ist eine iPhone-App, Instrument und Produktionsumgebung zugleich. Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit mit. Biofeedback ist hier eine gemessene Steuerquelle. Echoel ist kein Wellness-, Meditations- oder Therapieprodukt. Was die App HEUTE ausliefert, steht nur in ContentPipeline/CLAIMS.md. Alles andere ist ein Ziel und kein heutiges Feature.
+
+CODE (öffentlich, MIT-Lizenz), fester Stand: Commit 05047ad34.
+Du musst nichts öffnen: Alle Stellen, die du brauchst, stehen unten unter „CODE ZUM AUFTRAG“, mit Original-Zeilennummern. Zitiere genau diese Nummern. Was dort nicht steht, kennst du nicht; dann stell eine Frage.
+
+DEINE ROLLE
+- Du prüfst. Du schreibst keinen Code, keine Patches, keine Befehle und keine Skripte. Du schlägst nichts zum Installieren oder Ausführen vor.
+- Nur Claude Code schreibt ins Repo. Der Founder entscheidet den Umfang und alles, was sich nicht zurücknehmen lässt. Ob etwas baut, sagt die CI. Wie es klingt und aussieht, sagt das Gerät.
+- Deine Antwort wird Punkt für Punkt nachgemessen, bevor etwas übernommen wird. Belege zählen, Lob zählt nicht.
+- Bearbeite nur deinen Auftrag. Keine neuen Baustellen, keine Feature-Ideen, keine Bibliotheken, Plugins oder Dienste, keine Ratschläge an andere KIs.
+
+WAHRHEITSREGELN
+- Erfinde keine Dateien, Funktionen, Zeilennummern, Studien, Normen oder Zahlen. Nenne nur Stellen, die unten im Code stehen.
+- „Weiß ich nicht“ ist besser als Raten. Was du nicht wissen kannst, schreibst du als Frage.
+- Musst du doch etwas annehmen, schreib „ANNAHME:“ davor.
+- „Nichts gefunden“ ist eine gültige Antwort.
+
+ROTE LINIEN (gelten in jeder Antwort)
+- Keine Heilung, Therapie, Diagnose oder medizinische Wirkung.
+- Keine Heilfrequenzen, kein Solfeggio, keine Chakren, keine „Wirkung“ von 40-Hz-Gamma, Theta oder binauralen Beats.
+- Kein Weltfrieden als Wirkung. Gemeinsam spielen ist eine künstlerische Erfahrung von Verbundenheit, nie ein Versprechen.
+
+PRIVATE DATEN
+Frag nie nach Logs, Diagnose-Dateien, Puls-, Atem- oder anderen Gesundheitswerten, Nutzer- oder Testerdaten, Schlüsseln, Tokens, Passwörtern oder Dateien von meinem Rechner. Ich gebe sie nicht heraus. Steht so etwas doch vor dir, dann zitiere es nicht, verwende es nicht und melde es nur.
+
+ANTWORTFORMAT (genau so, nichts davor und nichts danach)
+Modell: Grok · Auftrag: Der erste Start — tut jeder Satz, was der Knopf dahinter tut? · Stand: 05047ad34
+| Nr | Datei:Zeile | Befund (1 Satz) | Folge (1 Satz) | sicher/vermutet |
+|---|---|---|---|---|
+| 1 | … | … | … | … |
+- Höchstens 8 Zeilen.
+- Findest du nichts, schreib genau eine Zeile: | – | – | nichts gefunden | <Grund> | sicher |
+- Darunter: „Offene Fragen:“, je eine Zeile, höchstens 3, oder „keine“.
+- Keine Einleitung, keine Zusammenfassung, kein Code.
+
+AUFTRAG FÜR GROK: Der erste Start — tut jeder Satz, was der Knopf dahinter tut? (Stand 05047ad34)
+
+Deine Spur: die ERSTNUTZER-LESART. Du installierst die App zum ersten Mal, liest jeden Satz, der dir gezeigt wird, und tust genau das, was er sagt. Gesucht ist der Satz, der etwas anderes verspricht, als das genannte Bedienelement tut; der eine Reihenfolge nennt, die die Fläche nicht hat; oder ein Wort, das du als Erstnutzer anders liest als der Entwickler.
+Nicht deine Spur: ob ein genannter Knopf EXISTIERT (das pinnen Tests, je Karte und je Griff); Text gegen Text; Code gegen Kommentar; Design; Normen; Grenzfälle; Lebenszyklus und Abstürze; Store-Text und Website; der Hinweis im Vollbild-Bild (eigener Wächter); Lösungen, Umformulierungen, Code. Andere Dateien als die unten genannten nur als offene Frage.
+
+WORUM ES GEHT (nur in Worten)
+- Eine frische Installation zeigt drei Seiten (Willkommen · „The wider vision“ · „Ready“ mit Sicherheitsbox, Schalter „I understand“ und „Start“). Danach öffnet die App auf dem Stück: eine Kopfzeile mit EINEM Play-Knopf und einer Puls-Pille, fünf Wörter unten, ein kleines Bild-Fenster, und obenauf eine Karte „Guide“, die sieben Lern-Einträge einzeln zeigt, Pfeil für Pfeil. Dieselben sieben stehen als erster Abschnitt „Start Here“ in der Learn-Fläche (≡-Menü oben links → Learn), zwei Sicherheits-Einträge als letzter.
+- Die Karten nennen Bedienelemente in Anführungszeichen, Orte („under“, „in the Bio panel“, „On Instrument“, „On Piece“) und Reihenfolgen („Start the music first — then …“; „in order: Play, a fingertip, a key — then Arrange and export“). Ein Test beweist, dass jeder genannte Name im Quelltext der Oberfläche vorkommt. Kein Test beweist, dass der Satz TUT, was er sagt — auf der Bühne, auf der der Nutzer gerade steht, in dem Moment, in dem er ihn liest.
+
+ZUERST — die Sätze (stehen unten im Code)
+- Sources/Echoelmusic/Views/OnboardingView.swift Z. 81–86, 116–122, 168, 185–189, 202–203, 226–227, 263
+- Sources/Echoelmusic/Studio/LearnLibrary.swift Z. 16–27 (Abschnitte), 71–86, 114, 116–127, 134–143, 148 (die sieben Karten), 219–230 (Sicherheit) · Sources/Echoelmusic/Studio/BioMetricInfo.swift Z. 78 (der Satz, den Z. 229 einbaut)
+- Sources/Echoelmusic/Studio/GuideOverlay.swift Z. 46, 102–113 (wie die Karten erscheinen und enden)
+DANN — die Knöpfe und Codepfade hinter den Sätzen (stehen unten im Code)
+- Tür und Start-Bühne: Sources/Echoelmusic/EchoelmusicApp.swift Z. 271, 544–547 · Sources/Echoelmusic/Core/StudioDefaultKeys.swift Z. 56, 109 · Sources/Echoelmusic/Studio/StudioStage.swift Z. 40, 49, 122–126
+- Der EINE Play: Sources/Echoelmusic/Studio/ProjectTransport.swift Z. 100–105, 176–183, 215–218 · Sources/Echoelmusic/Studio/ProjectHeader.swift Z. 290–292, 306–316, 343 · Sources/Echoelmusic/Studio/WorkstationView.swift Z. 1184 · Sources/Echoelmusic/Studio/EchoelStudioView.swift Z. 1355–1356, 9987–9995, 10228–10245
+- Quelle, Pille, Licht, Gurt, Uhr, Meldung: EchoelStudioView.swift Z. 3232–3245, 3275 · Sources/Echoelmusic/Studio/HeaderMonitors.swift Z. 426–428, 435–441 · Sources/Echoelmusic/Studio/BioSourceOption.swift Z. 71–74, 92–95 · Sources/Echoelmusic/Video/CameraCapture.swift Z. 175, 242, 253 · Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift Z. 5–9, 41–44 · Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift Z. 48 · Sources/Echoelmusic/Studio/BioStripView.swift Z. 187–197
+- Die genannten Orte: EchoelStudioView.swift Z. 2149–2152, 2481–2490, 3415, 3859–3866, 4815–4816, 12982–12984 · WorkstationView.swift Z. 1001–1009, 1304, 1313 · Sources/Echoelmusic/Studio/SongExportTab.swift Z. 76–85 · Sources/Echoelmusic/Studio/WorkspaceView.swift Z. 600–610
+- Bild, Licht, 3 Hz: Sources/Echoelmusic/Studio/TouchInstrumentView.swift Z. 158–168 · EchoelmusicApp.swift Z. 684–690 · Sources/Echoelmusic/Core/SignalRouting.swift Z. 405–407 · Sources/Echoelmusic/Core/SignalRouter.swift Z. 99 · Sources/Echoelmusic/Core/FlashGuard.swift Z. 45 · Sources/Echoelmusic/Core/VideoFlashLimiter.swift Z. 3–4
+
+FRAGEN
+1. „Press Play to start“ (Onboarding Z. 168), „press Play at the top“ (Karte 1, Z. 75), „After you press Play“ und „The order matters“ (Karte 5, Z. 125–126), „On Instrument, press Play“ (Karte 6, Z. 138): Auf welcher Bühne steht der Erstnutzer, wenn er jeden dieser Sätze liest, welchen Play findet er dort, was tut genau dieser Play mit dem Stück, das eine frische Installation enthält — und welche Schritte, Bühnenwechsel oder Systemdialoge liegen zwischen dem Satz und dem Codepfad, der die Kamera startet?
+2. „a fingertip on the camera light, or a Bluetooth strap“ (Z. 168) und Karte 5 (Z. 126: „the back camera and flash“, „tells you when you can let go“, „choose it from the pulse pill's source menu“, „An Apple Watch works via Health, a few seconds behind“): Welche Handlung setzt jede Hälfte voraus, die der Satz nicht nennt? Wo erscheint die Auskunft, dass man loslassen kann, und was muss der Nutzer geöffnet haben, um sie in dem Moment zu sehen, in dem der Finger auf der Linse liegt? Wie öffnet man das „source menu“ der Pille, und stimmt die Zeitangabe zur Uhr mit dem Code überein?
+3. Jeder Satz, der einen ORT nennt — „“Body voice” in the Bio panel“ (Z. 81), „“Haptic beat (feel)” under “Tempo & variations”“ (Z. 120), „Under “Tempo & variations” the tempo field“ (Z. 138), „the “MIDI” tile among the quick actions“ (Z. 138), „On Piece, choose “Key” and “Scale”“ (Z. 138), „Piece … saves, opens and exports“ (Z. 75): Sitzt das Bedienelement dort, wo der Satz es hinstellt, auf welcher Bühne, und unter welcher Bedingung ist es drückbar?
+4. „exported to your DAW“ (Z. 86), „Export to your DAW.“ (Z. 168), „exports the notes for your DAW“ (Z. 138): Welche Türen exportieren was, und was muss ein Erstnutzer getan haben, bevor die erste davon reagiert? Deckt sich das mit der Reihenfolge, die Karte 6 nennt?
+5. Wörter mit zwei Lesarten: „key“ (Z. 75, 81, 114, 137–138), „every touch lands in key, so there is no wrong place“ (Z. 114), „built in“ (Z. 122) mit den drei Zeilen Z. 116–118, „Arrange“ (Z. 138), „Visuals are capped at a safe 3 Hz flash rate“ (Z. 189) neben „Four limits“ (Z. 222–223) und den fünf Zeilen Z. 185–189: Welche Lesart nimmt ein Erstnutzer, welche löst der Code ein — und wo liest er jede der fünf Sicherheitszeilen nach „Start“ wieder?
+
+Nur für dich: Ein Befund ist ein SATZ mit seiner Zeile, das BEDIENELEMENT oder die CODEZEILE, die etwas anderes tut, und was der Nutzer stattdessen erlebt. Ein Satz, der tut, was er sagt, zählt nicht als Zeile — sag es kurz. Was nur das Gerät entscheidet (ob der Puls „within seconds“ einrastet, wie eine Karte auf einem Telefon liest, ob und wann ein Berechtigungsdialog erscheint, wie sich der Haptik-Schlag anfühlt), schreibst du als offene Frage mit „ANNAHME:“ davor, nie als Befund. Kein Code, kein Fix, keine neue Formulierung für die App, keine Bitte um Logs, Screenshots, Geräteprotokolle oder Gesundheitsdaten.
+Antworte nur in der Tabelle aus dem Kopf.
+
+CODE ZUM AUFTRAG
+=== Sources/Echoelmusic/Views/OnboardingView.swift (Stand 05047ad34) ===
+--- Z. 81–86 ---
+    81                  Text("Your heartbeat makes music.")
+    82                      .font(EchoelTheme.font(18))
+    83                      .foregroundStyle(EchoelTheme.text.opacity(0.6))
+    84                      .multilineTextAlignment(.center)
+    85  
+    86                  Text("Bio-reactive generative loops in any key and BPM — composed by your heart and breath, exported to your DAW.")
+--- Z. 116–122 ---
+   116                      row(symbol: "sparkles", text: "Living visuals that move with your body")
+   117                      row(symbol: "lightbulb.fill", text: "Light & stage — DMX / Art-Net")
+   118                      row(symbol: "waveform.circle", text: "Immersive spatial objects — ADM-OSC")
+   119                  }
+   120                  .padding(.horizontal, 40)
+   121  
+   122                  Text("This release is the bio-reactive instrument — with living visuals, stage light and immersive output built in.")
+--- Z. 168 ---
+   168                  Text("Press Play to start — a fingertip on the camera light, or a Bluetooth strap, lets your body drive the sound. Export to your DAW.")
+--- Z. 185–189 ---
+   185                      safetyRow("heart.text.square", "For self-observation, not medical diagnosis.")
+   186                      safetyRow("car", "Not while driving or operating machinery.")
+   187                      safetyRow("exclamationmark.triangle", "Not under the influence of alcohol or drugs.")
+   188                      safetyRow("cross.case", "Coordinate any therapeutic use with your provider.")
+   189                      safetyRow("eye", "Visuals are capped at a safe 3 Hz flash rate.")
+--- Z. 202–203 ---
+   202                  Toggle(isOn: $acknowledgedSafety) {
+   203                      Text("I understand")
+--- Z. 226–227 ---
+   226                  Button {
+   227                      isComplete = true
+--- Z. 263 ---
+   263                  .disabled(!acknowledgedSafety)
+=== Sources/Echoelmusic/Studio/LearnLibrary.swift (Stand 05047ad34) ===
+--- Z. 16–27 ---
+    16      case guide, body, bodyScience, music, light, safety
+    17  
+    18      public var id: String { rawValue }
+    19  
+    20      public var title: String {
+    21          switch self {
+    22          case .guide:       return String(localized: "Start Here")
+    23          case .body:        return String(localized: "Your Body")
+    24          case .bodyScience: return String(localized: "Body Science")
+    25          case .music:       return String(localized: "Music Theory")
+    26          case .light:       return String(localized: "Light & Colour")
+    27          case .safety:      return String(localized: "Safety & Scope")
+--- Z. 71–86 ---
+    71              LearnEntry(
+    72                  id: "guide.firstSession", section: .guide,
+    73                  title: String(localized: "Your first three minutes"),
+    74                  summary: String(localized: "The app opens on your piece. Here is the way in."),
+    75                  detail: String(localized: "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Piece — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Piece sets its key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault.")
+    76              ),
+    77              LearnEntry(
+    78                  id: "guide.hear", section: .guide,
+    79                  title: String(localized: "Hear it"),
+    80                  summary: String(localized: "Press Play; the music is composed, then your body shapes it."),
+    81                  detail: String(localized: "Play starts generated music — harmony, melody and bass in one key, at one tempo, in the genre you chose. Your heart and breath then bend its brightness, its swell and its calm in real time. For your own voice in the loop, switch on “Body voice” in the Bio panel: a held tone that your breath opens and closes — exhale, and it fades; inhale, and it returns. Toning with it, vowels and hums, is a practice of self-observation: you hear your own breathing pattern as sound.")
+    82              ),
+    83              LearnEntry(
+    84                  id: "guide.see", section: .guide,
+    85                  title: String(localized: "See it"),
+    86                  summary: String(localized: "The picture moves with your body — and it is playable."),
+--- Z. 114 ---
+   114                  detail: String(localized: "The picture breathes with you: pulse, breath and coherence drive its colour and motion, capped below 3 flashes per second. Touch it to play notes — every touch lands in key, so there is no wrong place. It stays playable at every window size. With Reduce Motion on, the picture stops its motion; the small header monitors keep following the music.")
+--- Z. 116–127 ---
+   116              LearnEntry(
+   117                  id: "guide.feel", section: .guide,
+   118                  title: String(localized: "Feel it"),
+   119                  summary: String(localized: "The beat in your hand, the bass in your body."),
+   120                  detail: String(localized: "Switch on “Haptic beat (feel)” under “Tempo & variations” and the phone pulses on each quarter-note, the downbeat strongest — you can hold time without watching the screen. The sub-bass is tuned to be felt as much as heard: on a sub, in headphones, or through the haptics. Eyes-free by intention: the instrument is playable without looking at it.")
+   121              ),
+   122              LearnEntry(
+   123                  id: "guide.pulse", section: .guide,
+   124                  title: String(localized: "Give it your pulse"),
+   125                  summary: String(localized: "Start the music first — then a finger on the back camera."),
+   126                  detail: String(localized: "After you press Play, lay a fingertip flat over the back camera and flash; the torch lights your skin and Echoel reads your heartbeat from it. Hold still and soft — it locks within seconds and tells you when you can let go. A Bluetooth chest strap (Polar and similar) is the most accurate source and frees your hands: choose it from the pulse pill's source menu. An Apple Watch works via Health, a few seconds behind. The order matters: the camera only starts with the music, so a finger before Play reads nothing.")
+   127              ),
+--- Z. 134–143 ---
+   134              LearnEntry(
+   135                  id: "guide.pulseToPiece", section: .guide,
+   136                  title: String(localized: "From pulse to piece"),
+   137                  summary: String(localized: "One path, in order: Play, a fingertip, a key — then Arrange and export."),
+   138                  detail: String(localized: "The whole way, in order. On Instrument, press Play — music starts in your key and genre. Lay a fingertip over the back camera and flash; when the pulse pill locks, your body is in the loop. Under “Tempo & variations” the tempo field shows what the beat follows: left free, the tempo follows your pulse within the genre's range; lock it and a fixed BPM holds for producing. On Piece, choose “Key” and “Scale” — every note the composer writes stays inside them. On Arrange, the guide card walks the five steps: “Add a MIDI track”, “Add a part”, “Write notes”, “Play the piece”, “Save the piece”. Back on Instrument, the “MIDI” tile among the quick actions exports the notes for your DAW. This is the path; each card above is one stop on it.")
+   139              ),
+   140              LearnEntry(
+   141                  id: "guide.access", section: .guide,
+   142                  title: String(localized: "For every body"),
+   143                  summary: String(localized: "Hearing, seeing or feeling — any one of them is a way in."),
+--- Z. 148 ---
+   148                  detail: String(localized: "The three channels above are deliberately redundant: the beat can be felt without being seen, the picture read without being heard, the music followed without the screen. VoiceOver speaks the primary controls, text follows your system size, numbers are typed on a large keypad instead of turned on tiny knobs, and Reduce Motion stops the immersive picture's motion without stopping the music. If flashing light affects you, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures.")
+--- Z. 219–230 ---
+   219              LearnEntry(
+   220                  id: "safety.contraindications", section: .safety,
+   221                  title: String(localized: "When not to use Echoelmusic"),
+   222                  summary: String(localized: "Four limits — read them once, they matter."),
+   223                  detail: String(localized: "Do not use rhythmic audio-visual pacing while driving or operating machinery. Do not use it under the influence of alcohol or drugs. If you are using Echoelmusic alongside any therapeutic programme, coordinate it — and any medication timing — with your own provider; Echoelmusic is not part of a treatment and replaces nothing. Visuals are capped at 3 flashes per second (W3C WCAG). Reduce Motion stops the immersive picture's motion; the small header monitors and any connected lamps keep following the music, rate-limited rather than frozen. If you are photosensitive, turn Reduce Motion on before you start, and use Blackout in Routing to cut connected fixtures. Stop if you feel unwell.")
+   224              ),
+   225              LearnEntry(
+   226                  id: "safety.scope", section: .safety,
+   227                  title: String(localized: "Self-observation, not diagnosis"),
+   228                  summary: String(localized: "What Echoelmusic’s biofeedback is — and is not."),
+   229                  detail: BioMetric.disclaimer + String(localized: " Bio readings are most accurate from a chest strap; wrist and camera are estimates. Breathing guides are optional and never forced.")
+   230              )
+=== Sources/Echoelmusic/Studio/BioMetricInfo.swift (Stand 05047ad34) ===
+--- Z. 78 ---
+    78      public static let disclaimer = String(localized: "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.")
+=== Sources/Echoelmusic/Studio/GuideOverlay.swift (Stand 05047ad34) ===
+--- Z. 46 ---
+    46          if guideVisible, !entries.isEmpty {
+--- Z. 102–113 ---
+   102              HStack(spacing: 8) {
+   103                  pageButton("chevron.left", label: "Previous guide card", disabled: index == 0) {
+   104                      page = index - 1
+   105                  }
+   106                  pageButton("chevron.right", label: "Next guide card", disabled: false) {
+   107                      // Last card: forward means "done" — the tour ends by getting out of
+   108                      // the way, not by dead-ending on a disabled control.
+   109                      if index >= count - 1 { guideVisible = false } else { page = index + 1 }
+   110                  }
+   111                  Spacer(minLength: 0)
+   112                  if index >= count - 1 {
+   113                      Text("Done — Guide in the logo menu brings the cards back.")
+=== Sources/Echoelmusic/EchoelmusicApp.swift (Stand 05047ad34) ===
+--- Z. 271 ---
+   271      @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+--- Z. 544–547 ---
+   544              } else if hasCompletedOnboarding {
+   545                  mainContent
+   546              } else {
+   547                  OnboardingView(isComplete: $hasCompletedOnboarding)
+--- Z. 684–690 ---
+   684          if g.hasEnabledRoute(toSink: "adm.out") { admOSC.start(subscribing: bus) } else { admOSC.stop() }
+   685          // Both light adapters READ the one creative lighting state; neither owns it. Attached
+   686          // before start/stop so a sender that begins streaming on this very call already has it.
+   687          artNet.attachLighting(lighting)
+   688          sacn.attachLighting(lighting)
+   689          if g.hasEnabledRoute(toSink: "artnet.out") { artNet.start(subscribing: bus) } else { artNet.stop() }
+   690          if g.hasEnabledRoute(toSink: "sacn.out") { sacn.start(subscribing: bus) } else { sacn.stop() }
+=== Sources/Echoelmusic/Core/StudioDefaultKeys.swift (Stand 05047ad34) ===
+--- Z. 56 ---
+    56      public static let guideVisible = StudioDefault(key: "studio.guideVisible", value: true)
+--- Z. 109 ---
+   109      public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.piece)
+=== Sources/Echoelmusic/Studio/StudioStage.swift (Stand 05047ad34) ===
+--- Z. 40 ---
+    40      public var headCarriesTransport: Bool { self != .piece }
+--- Z. 49 ---
+    49      public var playStartsTheInstrument: Bool { self == .instrument }
+--- Z. 122–126 ---
+   122          case .arrange:    return String(localized: "Arrange")
+   123          case .mixer:      return String(localized: "Mixer")
+   124          case .instrument: return String(localized: "Instrument")
+   125          case .browse:     return String(localized: "Browse")
+   126          case .project:    return String(localized: "Piece")
+=== Sources/Echoelmusic/Studio/ProjectTransport.swift (Stand 05047ad34) ===
+--- Z. 100–105 ---
+   100      static func playAction(_ facts: Facts, instrumentInFront: Bool) -> PlayAction {
+   101          if instrumentInFront { return facts.sessionRunning ? .resumeInstrument : .startInstrument }
+   102          if facts.songStartable { return facts.sessionRunning ? .startSongAndInstrument : .startSong }
+   103          if facts.sessionRunning { return .resumeInstrument }
+   104          return .unavailable
+   105      }
+--- Z. 176–183 ---
+   176          if running { return String(localized: "Stop all playback") }
+   177          switch play {
+   178          case .startSong:        return String(localized: "Play the piece")
+   179          case .startSongAndInstrument: return String(localized: "Play the piece and the instrument")
+   180          case .resumeInstrument: return String(localized: "Play the instrument")
+   181          case .startInstrument:  return String(localized: "Play the instrument")
+   182          case .unavailable:      return String(localized: "Play")
+   183          }
+--- Z. 215–218 ---
+   215          case .resumeInstrument: return String(localized: "Brings the music back. Your pulse reading keeps running.")
+   216          // The words the plate's own ▶ spoke until S7a, moved with the start they describe.
+   217          case .startInstrument:  return String(localized: "Starts biofeedback; your body then composes and plays the music.")
+   218          case .unavailable:      return String(localized: "Unavailable: add a part with notes or audio, or start the instrument.")
+=== Sources/Echoelmusic/Studio/ProjectHeader.swift (Stand 05047ad34) ===
+--- Z. 290–292 ---
+   290          let stage = StudioStage(rawValue: stageRaw) ?? StudioDefaultKeys.stage.value
+   291          playStopButton(running: ProjectTransport.isRunning(facts),
+   292                         play: ProjectTransport.playAction(facts, instrumentInFront: stage.playStartsTheInstrument))
+--- Z. 306–316 ---
+   306          let available = running || play != .unavailable
+   307          return Button {
+   308              if running {
+   309                  stopAll()
+   310              } else {
+   311                  switch play {
+   312                  case .startSong, .startSongAndInstrument: startSong()
+   313                  case .resumeInstrument: ProjectTransport.resumeInstrument(pattern: beatPlayer.pattern)
+   314                  case .startInstrument:  ProjectTransport.startInstrument()
+   315                  case .unavailable:      break
+   316                  }
+--- Z. 343 ---
+   343          .disabled(!available)
+=== Sources/Echoelmusic/Studio/WorkstationView.swift (Stand 05047ad34) ===
+--- Z. 1001–1009 ---
+  1001              CompositionHeaderStrip()
+  1002              // Restructure P2 (2026-10-04): the piece's light look — saved WITH the piece, one Undo
+  1003              // step per gesture. A cold leaf: the document changes on a gesture, never per frame.
+  1004              PieceLightLookField()
+  1005              HStack(spacing: 6) {
+  1006                  SongExportTab()
+  1007                  // UX audit slice 10b: the whole piece as audio, beside the MIDI export.
+  1008                  PieceAudioExportTab()
+  1009              }
+--- Z. 1184 ---
+  1184              ProjectPlayStopButton(source: "workstation")
+--- Z. 1304 ---
+  1304              HStack(spacing: 8) {
+--- Z. 1313 ---
+  1313  
+=== Sources/Echoelmusic/Studio/EchoelStudioView.swift (Stand 05047ad34) ===
+--- Z. 1355–1356 ---
+  1355                      case ProjectTransport.startInstrumentDoor:
+  1356                          if !running { startBiofeedback() }
+--- Z. 2149–2152 ---
+  2149          let tempo = BodyTempoField(onLockChanged: {
+  2150              NotificationCenter.default.post(name: .echoelCompositionEdited, object: "tempoLock")
+  2151          }, compact: true)
+  2152          return HStack(spacing: 8) { PlaybackToggleButton(); tempo }
+--- Z. 2481–2490 ---
+  2481              Button { exportMIDI() } label: {
+  2482                  EchoelIconTile(systemImage: "pianokeys", title: "MIDI", expands: true,
+  2483                                 enabled: !isExporting && hasComposed)
+  2484              }
+  2485              .buttonStyle(.plain)
+  2486              // `isExporting` is a WAV concern, but both writers land in the ONE `share` slot, so
+  2487              // a MIDI export mid-record would silently replace the WAV the user is waiting for.
+  2488              .disabled(isExporting || !hasComposed)
+  2489              .accessibilityLabel("Export MIDI for your DAW")
+  2490              .accessibilityHint("Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key")
+--- Z. 3232–3245 ---
+  3232      private var bioSourceRow: some View {
+  3233          let current = BioSourceOption(rawValue: bioSourceRaw) ?? .camera
+  3234          return HStack(spacing: 8) {
+  3235              Text("Bio source")
+  3236                  .font(EchoelTheme.font(12, .semibold))
+  3237                  .foregroundStyle(EchoelTheme.text)
+  3238                  // #616b: the Menu below carries the SAME accessibilityLabel — without
+  3239                  // this, VoiceOver stops twice on "Bio source" back to back.
+  3240                  .accessibilityHidden(true)
+  3241              Spacer(minLength: 8)
+  3242              Menu {
+  3243                  ForEach(BioSourceOption.offered) { option in
+  3244                      Button {
+  3245                          selectBioSource(option.rawValue)
+--- Z. 3275 ---
+  3275              BioStripView(measuring: running)
+--- Z. 3415 ---
+  3415              BreathVoiceRow()
+--- Z. 3859–3866 ---
+  3859          panel("Tempo & variations", "Tap · metronome · haptic beat · ideas",
+  3860                isExpanded: $showComposition) {
+  3861              tapTempoRow
+  3862              metronomeRow
+  3863              #if canImport(CoreHaptics)
+  3864              hapticsRow
+  3865              #endif
+  3866              variationsCard
+--- Z. 4815–4816 ---
+  4815          Toggle(isOn: $haptics.isEnabled) {
+  4816              Text("Haptic beat (feel)").font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+--- Z. 9987–9995 ---
+  9987              synth.bioModulationEnabled = true
+  9988              generate(reason: "start")
+  9989              startEvolving()
+  9990  
+  9991              // Now bring the body in. Anything that must wait for the camera dialog — when
+  9992              // there IS one — stays below this await. Note this only holds for the camera
+  9993              // branch: the BLE branch's `start` is synchronous, so CoreBluetooth's own prompt
+  9994              // can still coincide with the HealthKit ask below (pre-existing).
+  9995              await startBioSource()
+--- Z. 10228–10245 ---
+ 10228          switch BioSourceKind(rawValue: bioSourceRaw) ?? .camera {
+ 10229          case .camera:
+ 10230              #if canImport(AVFoundation)
+ 10231              EchoelCrashLog.breadcrumb("camera starting")
+ 10232              await cameraRPPG.start(publishing: bus)
+ 10233              EchoelCrashLog.breadcrumb("camera started (running=\(cameraRPPG.isRunning))")
+ 10234              // Returns as soon as the camera is publishing — NO lock-wait here. Sound
+ 10235              // starts immediately (composed from neutral defaults if no pulse yet) and
+ 10236              // snapToLockWhenReady() re-seeds from the real heartbeat the moment it locks.
+ 10237              #endif
+ 10238          case .ble:
+ 10239              #if canImport(CoreBluetooth)
+ 10240              EchoelCrashLog.breadcrumb("BLE HR strap starting (scan)")
+ 10241              polarH10.start(publishing: bus)   // idempotent; opens the Bluetooth scan
+ 10242              #endif
+ 10243          case .sim:
+ 10244              EchoelCrashLog.breadcrumb("bio simulation starting")
+ 10245              demoSource.start(publishing: bus) // deterministic demo frames; source == .fallback
+--- Z. 12982–12984 ---
+ 12982              Toggle(isOn: Binding(get: { voice.isArmed },
+ 12983                                   set: { $0 ? voice.arm() : voice.disarm() })) {
+ 12984                  Text("Body voice")
+=== Sources/Echoelmusic/Studio/HeaderMonitors.swift (Stand 05047ad34) ===
+--- Z. 426–428 ---
+   426              .onTapGesture {
+   427                  NotificationCenter.default.post(name: .echoelChromeDoor, object: "bio")
+   428              }
+--- Z. 435–441 ---
+   435              .contextMenu {
+   436                  ForEach(BioSourceOption.offered) { option in
+   437                      Button {
+   438                          NotificationCenter.default.post(name: .echoelSelectBioSource,
+   439                                                          object: option.rawValue)
+   440                      } label: { Label(option.menuLabel, systemImage: option.systemImage) }
+   441                  }
+=== Sources/Echoelmusic/Studio/BioSourceOption.swift (Stand 05047ad34) ===
+--- Z. 71–74 ---
+    71          case .camera: return String(localized: "Play with camera light")
+    72          case .ble:    return String(localized: "Play with a Bluetooth strap — scans for one")
+    73          case .sim:    return String(localized: "Play with the simulation")
+    74          case .health: return String(localized: "Play with Apple Health — your Watch, at its own pace")
+--- Z. 92–95 ---
+    92          case .camera: return String(localized: "Camera light")
+    93          case .ble:    return String(localized: "Bluetooth strap")
+    94          case .sim:    return String(localized: "Simulation")
+    95          case .health: return String(localized: "Apple Health")
+=== Sources/Echoelmusic/Video/CameraCapture.swift (Stand 05047ad34) ===
+--- Z. 175 ---
+   175          guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+--- Z. 242 ---
+   242                device.hasTorch else {
+--- Z. 253 ---
+   253          if torchDesired, !device.isTorchAvailable {
+=== Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift (Stand 05047ad34) ===
+--- Z. 5–9 ---
+     5  //  Universal low-latency BLE heart-rate source. Connects to ANY device
+     6  //  exposing the standard Bluetooth SIG Heart Rate Service (0x180D) with
+     7  //  the Heart Rate Measurement characteristic (0x2A37): Polar H10/H9/OH1/
+     8  //  Verity, Wahoo TICKR, Garmin/CooSpo/Magene/Decathlon chest straps,
+     9  //  and smartwatches in HR-broadcast mode. No SDK dependency.
+--- Z. 41–44 ---
+    41          /// The ~20 s scan watchdog fired with nothing discovered (BLE-2): chest
+    42          /// straps do not advertise until the electrodes make skin contact, so
+    43          /// "worn but dry" looks identical to "no strap" — the hint must say so.
+    44          case notFound
+=== Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift (Stand 05047ad34) ===
+--- Z. 48 ---
+    48      /// (correct for the 4–5 s Watch latency and the 180 s resting cadence) then presented a
+=== Sources/Echoelmusic/Studio/BioStripView.swift (Stand 05047ad34) ===
+--- Z. 187–197 ---
+   187          } else if cameraRPPG.isRunning {
+   188              // ⭐ TWO OCCUPANTS OF ONE RESERVED SLOT, and the ORDER inside this `ZStack` is not
+   189              // cosmetic: the lock cue is FIRST so that everything `LockCueDoesNotShoveTheControls`
+   190              // pins — the `.opacity(lockedCueVisible …)` expression, the two inertness modifiers,
+   191              // and the fact that the nearest enclosing condition above the cue text is still
+   192              // `cameraRPPG.isRunning` — is unchanged by construction. Nothing here weakens that
+   193              // slice; this only fills the blank its own header calls "the deliberate trade".
+   194              ZStack {
+   195                  banner(String(localized: "Pulse detected — you can let go & play"),
+   196                         color: EchoelTheme.success, systemImage: "checkmark.circle.fill")
+   197                      .opacity(lockedCueVisible ? 1 : 0)
+=== Sources/Echoelmusic/Studio/SongExportTab.swift (Stand 05047ad34) ===
+--- Z. 76–85 ---
+    76          ShareLink(item: file, preview: SharePreview(file.name)) {
+    77              EchoelIconTile(systemImage: "square.and.arrow.up", title: "Export",
+    78                             expands: true, enabled: enabled)
+    79          }
+    80          .buttonStyle(.plain)
+    81          .disabled(!enabled)
+    82          .accessibilityLabel("Export")
+    83          .accessibilityHint(enabled
+    84              ? String(localized: "Shares the piece as a MIDI file: every MIDI track with its notes, muted ones included. Level, pan and sound stay here")
+    85              : String(localized: "Nothing to export yet. Write a part on a MIDI track, and the piece can be shared as a MIDI file"))
+=== Sources/Echoelmusic/Studio/WorkspaceView.swift (Stand 05047ad34) ===
+--- Z. 600–610 ---
+   600                  Button { Self.postDoor("learn") } label: {
+   601                      Label("Learn", systemImage: "book")
+   602                  }
+   603                  // GMMW AI-4 — read-only: the on-device model describes the piece in the banner.
+   604                  Button { AgentReportBanner.describePiece() } label: {
+   605                      Label("Describe this piece", systemImage: "text.bubble")
+   606                  }
+   607                  Divider()
+   608                  Toggle(isOn: $guideVisible) {
+   609                      Label("Guide", systemImage: "info.circle")
+   610                  }
+=== Sources/Echoelmusic/Studio/TouchInstrumentView.swift (Stand 05047ad34) ===
+--- Z. 158–168 ---
+   158          for pitch in (guess - 6)...(guess + 6) {
+   159              let pitchClass = ((pitch % 12) + 12) % 12
+   160              let tuned = Double(pitch) + Double(pitchClassCents[pitchClass]) / 100.0
+   161              let distance = abs(semitones - tuned)
+   162              let inKey = degrees.contains(pitchClass)
+   163              if distance < bestDistance - tie
+   164                  || (abs(distance - bestDistance) <= tie && inKey && !bestInKey) {
+   165                  best = pitch
+   166                  bestDistance = distance
+   167                  bestInKey = inKey
+   168              }
+=== Sources/Echoelmusic/Core/SignalRouting.swift (Stand 05047ad34) ===
+--- Z. 405–407 ---
+   405      public func hasEnabledRoute(toSink id: String) -> Bool {
+   406          routes.contains { $0.sinkPortID == id && $0.enabled }
+   407      }
+=== Sources/Echoelmusic/Core/SignalRouter.swift (Stand 05047ad34) ===
+--- Z. 99 ---
+    99          guard let data = defaults.data(forKey: storageKey) else { return }   // nothing saved = normal
+=== Sources/Echoelmusic/Core/FlashGuard.swift (Stand 05047ad34) ===
+--- Z. 45 ---
+    45      public static let maxFlashHz: Double = 3.0
+=== Sources/Echoelmusic/Core/VideoFlashLimiter.swift (Stand 05047ad34) ===
+--- Z. 3–4 ---
+     3  // BEFORE any door shows a person's own video in the visuals. `FlashGuard` budgets the GENERATED
+     4  // looks — each one's flash rate is derived from its shader — but footage is not ours: a clip can
