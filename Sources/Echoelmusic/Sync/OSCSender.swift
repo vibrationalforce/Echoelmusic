@@ -2,7 +2,8 @@
 //  OSCSender.swift
 //  Echoelmusic — EchoelSync module
 //
-//  Streams EngineBus.latestBio onto an OSC over UDP endpoint so any
+//  Streams EngineBus.latestBio, the musical batch (#1383) and the
+//  discrete bio events onto an OSC over UDP endpoint so any
 //  companion tool — Resolume Arena, TouchDesigner, MadMapper, VDMX,
 //  TouchOSC, Sonic Pi, TidalCycles — can subscribe to the bus
 //  without knowing anything about Swift, CoreBluetooth, or HealthKit.
@@ -77,7 +78,7 @@
 //    /echoelmusic/bio/event/eeg            float[2]  aux = band power
 //
 //  Default endpoint: localhost:8000 (same as TouchOSC default;
-//  user-configurable in a later cycle).
+//  user-configurable: an edit persists and reconnects a live output).
 //
 
 #if canImport(Network)
