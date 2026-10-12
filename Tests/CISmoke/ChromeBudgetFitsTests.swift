@@ -648,4 +648,67 @@ final class ChromeBudgetFitsTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Widths outside the three shipped portrait phones
+
+    /// ⚠️ A SEPARATE CONSTANT, NOT AN ADDITION TO `devices` — same reason as
+    /// `landscapeDevices`: other claims assert exact state sets over `devices`.
+    /// 320 × 568 is an iPhone SE with Display Zoom (iOS 18 runs there); 600 × 800 is a wide
+    /// portrait canvas, the width class a fold-out phone would bring. Neither is a guess
+    /// about one device — both are widths the arithmetic must survive.
+    private static let narrowAndWideDevices: [CGSize] = [
+        CGSize(width: 320, height: 568),
+        CGSize(width: 600, height: 800)
+    ]
+
+    /// ⭐ THIS CLAIM FOUND A REAL OVERFLOW WHEN IT WAS WRITTEN (2026-10-12). At 320 pt the
+    /// small card came out at `minPicture.width` = 130 pt, while the bar's floor — logo,
+    /// resize, close, never shed — reserves 140 pt. So the bar drew 10 pt past the card on
+    /// exactly the screen with the least room. `cardSize` now lifts to
+    /// `floorChromeWidth`. The 1e-6 slack is float rounding of that lift, nothing more.
+    func testEveryFloatingStepFitsOnANarrowAndAWideScreen() {
+        let steps: [(name: String, fraction: CGFloat, transport: Bool, busy: [Bool])] = [
+            ("small", FloatingVisualLayout.smallStep, false, [false]),
+            ("medium", FloatingVisualLayout.mediumStep, true, [false]),
+            ("large", FloatingVisualLayout.largeStep, true, [false, true])
+        ]
+        for bounds in Self.narrowAndWideDevices {
+            for step in steps {
+                let cw = cardWidth(bounds, fraction: step.fraction)
+                for wavBusy in step.busy {
+                    let fit = FloatingVisualLayout.chromeFit(
+                        cardWidth: cw, isFullscreen: false,
+                        showsTransport: step.transport, wavBusy: wavBusy)
+                    XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), cw + 1e-6, """
+                        \(Int(bounds.width))pt screen, \(step.name) step, wavBusy=\(wavBusy): \
+                        the retained chrome is wider than the card (\(barWidth(fit, wavBusy: wavBusy)) \
+                        vs \(cw)). If this is the small step, the card has fallen below \
+                        `floorChromeWidth` again.
+                        """)
+                }
+            }
+            for wavBusy in [false, true] {
+                let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
+                                                         isFullscreen: true,
+                                                         showsTransport: true,
+                                                         wavBusy: wavBusy)
+                XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), bounds.width, """
+                    Fullscreen on a \(Int(bounds.width))pt screen, wavBusy=\(wavBusy): the \
+                    chrome overflows.
+                    """)
+            }
+        }
+    }
+
+    /// The floor is derived from the same reserves `chromeFit` charges, so the two cannot
+    /// drift: re-derived here independently, as `barWidth` is.
+    func testTheCardFloorIsTheBarFloor() {
+        var floor = FloatingVisualLayout.ChromeFit()
+        floor.wavRecord = false
+        XCTAssertEqual(FloatingVisualLayout.floorChromeWidth,
+                       barWidth(floor, wavBusy: false), accuracy: 1e-9, """
+            `floorChromeWidth` no longer equals the width of the bar's unsheddable items. \
+            The small card is lifted to it, so a mismatch reopens the overflow at 320 pt.
+            """)
+    }
 }

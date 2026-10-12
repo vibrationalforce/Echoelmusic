@@ -462,6 +462,17 @@ public enum FloatingVisualLayout {
     /// afford it gets the largest card that still fits rather than one that overflows.
     public static let minPicture = CGSize(width: 130, height: 100)
 
+    /// The toolbar's floor: logo, resize and close — the three items `chromeFit` never
+    /// sheds — with their gaps and padding, from the same `ChromeCost` reserves. 140 pt
+    /// today, wider than `minPicture.width`. On a 320 pt-wide screen (an iPhone SE with
+    /// Display Zoom) the small card used to come out at 130 pt, so this floor drew 10 pt
+    /// past the card — the "geht über den Rand hinaus" overflow #365 fixed for the wider
+    /// phones. `cardSize` lifts to the wider of the two floors, still capped by what fits.
+    public static var floorChromeWidth: CGFloat {
+        ChromeCost.logo + 2 * ChromeCost.iconButton
+            + 3 * ChromeCost.gap + ChromeCost.horizontalPadding
+    }
+
     /// The aspect the picture should take for a given AVAILABLE box (container minus
     /// margins and chrome). Follows the box's own orientation, clamped to the band.
     /// A non-positive or non-finite box falls back to 1:1 rather than dividing.
@@ -513,9 +524,12 @@ public enum FloatingVisualLayout {
         var w = Swift.min(availW * f, availH * f * aspect)
         var h = w / aspect
 
-        // Lift a too-small picture back to the floor, but never past what fits.
-        if w < minPicture.width || h < minPicture.height {
-            let lift = Swift.max(minPicture.width / Swift.max(w, 0.001),
+        // Lift a too-small picture back to the floor, but never past what fits. The width
+        // floor is the wider of the picture's own and the toolbar's unsheddable minimum —
+        // see `floorChromeWidth`.
+        let floorW = Swift.max(minPicture.width, floorChromeWidth)
+        if w < floorW || h < minPicture.height {
+            let lift = Swift.max(floorW / Swift.max(w, 0.001),
                                  minPicture.height / Swift.max(h, 0.001))
             let capped = Swift.min(lift, Swift.min(availW / Swift.max(w, 0.001),
                                                    availH / Swift.max(h, 0.001)))
