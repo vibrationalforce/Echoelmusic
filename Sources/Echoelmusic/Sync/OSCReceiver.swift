@@ -117,15 +117,15 @@ public enum OSCDecoder {
 public enum OSCControlCommand: Equatable, Sendable {
     /// `/echoelmusic/ctrl/bpm <f|i>` — applied ONLY while the BPM is locked (T1/T2).
     case tempo(Double)
-    /// `/echoelmusic/ctrl/key <i>` — root pitch class 0 (C) … 11 (B).
+    /// `/echoelmusic/ctrl/key <f|i|T|F>` — root pitch class 0 (C) … 11 (B); rounded, then bounded.
     case key(Int)
     /// `/echoelmusic/ctrl/scale <s>` — a `Scale` raw value (`major`, `dorian`, …).
     case scale(String)
     /// `/echoelmusic/ctrl/genre <s>` — a `MusicStyle` raw value (`techHouse`, `jazz`, …).
     case genre(String)
-    /// `/echoelmusic/ctrl/visualStyle <i>` — look 0…9 (`EchoelStudioView.visualStyle`'s index space).
+    /// `/echoelmusic/ctrl/visualStyle <f|i|T|F>` — look 0…9, rounded then bounded (`EchoelStudioView.visualStyle`'s index space).
     case visualStyle(Int)
-    /// `/echoelmusic/ctrl/blackout <T|F|i>` — Art-Net + sACN blackout, together.
+    /// `/echoelmusic/ctrl/blackout <f|i|T|F>` — Art-Net + sACN blackout, together; non-zero = on.
     case blackout(Bool)
 
     public static let prefix = "/echoelmusic/ctrl/"
@@ -398,7 +398,7 @@ public final class OSCReceiver {
     /// `CFAbsoluteTimeGetCurrent()` of the last ACCEPTED cue — the routing card's status line.
     public private(set) var lastReceivedTimestamp: TimeInterval = 0
     public private(set) var lastCommandSummary = ""
-    /// Datagrams that decoded but were not on the whitelist (or out of range). NOT observed:
+    /// Datagrams that did not decode, or decoded but were not on the whitelist (or out of range). NOT observed:
     /// a spatial controller streams leaves Echoel does not take (width, mute, name …) at its
     /// full send rate, so this counter moves per datagram — an observed one would make every
     /// reader a stream-rate observer (the 10.76.50 law). The status leaf POLLS it on its 0.5 s

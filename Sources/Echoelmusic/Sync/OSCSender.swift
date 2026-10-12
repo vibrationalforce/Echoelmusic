@@ -2,7 +2,8 @@
 //  OSCSender.swift
 //  Echoelmusic — EchoelSync module
 //
-//  Streams EngineBus.latestBio onto an OSC over UDP endpoint so any
+//  Sends three things over OSC/UDP on one tick: the bio snapshot (EngineBus.latestBio), the
+//  musical batch (#1383) and every queued discrete bio event — so any
 //  companion tool — Resolume Arena, TouchDesigner, MadMapper, VDMX,
 //  TouchOSC, Sonic Pi, TidalCycles — can subscribe to the bus
 //  without knowing anything about Swift, CoreBluetooth, or HealthKit.
@@ -31,7 +32,7 @@
 //        1 % at full scale. Prose fixed, contract untouched.
 //    /echoelmusic/bio/heart/sdnn    float ms         — pulse AND its own sentinel
 //    /echoelmusic/bio/breath/rate   float [3..40]    — on the plausibility band (3…40/min)
-//    /echoelmusic/bio/breath/phase  float [0..1]     — with the RATE, never gated on itself:
+//    /echoelmusic/bio/breath/phase  float [0..1]     — gated on `hasMeasuredBreathWaveform` (#1140), never on itself:
 //        the phase has no unknown sentinel (0 = EXHALE start, 0.5 = inhale start), so a value
 //        gate would drop real data once per breath cycle
 //    /echoelmusic/bio/coherence     float [0..1]     — pulse AND its own sentinel, like hrv.
@@ -72,12 +73,12 @@
 //    /echoelmusic/bio/event/heartbeat      float[2]  aux = inter-beat interval ms
 //    /echoelmusic/bio/event/breath/inhale  float[2]
 //    /echoelmusic/bio/event/breath/exhale  float[2]
-//    /echoelmusic/bio/event/motion         float[2]
-//    /echoelmusic/bio/event/coherence      float[2]
-//    /echoelmusic/bio/event/eeg            float[2]  aux = band power
+//    /echoelmusic/bio/event/motion         float[2]  ⚠️ mapped, never sent: no producer
+//    /echoelmusic/bio/event/coherence      float[2]  ⚠️ mapped, never sent: no producer
+//    /echoelmusic/bio/event/eeg            float[2]  ⚠️ mapped, never sent: no producer
 //
 //  Default endpoint: localhost:8000 (same as TouchOSC default;
-//  user-configurable in a later cycle).
+//  host and port are user-configurable; an edit is persisted and reconnects a live output).
 //
 
 #if canImport(Network)
@@ -106,7 +107,7 @@ public final class OSCSender {
 
     public private(set) var isActive = false
 
-    /// Mach-time of the last message sent. Lets the UI render an
+    /// `CFAbsoluteTimeGetCurrent()` of the last message sent. Lets the UI render an
     /// activity dot without spawning timers.
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
@@ -339,12 +340,6 @@ public final class OSCSender {
     /// exactly what CLAUDE.md's "als ZUSTAND latchen" asks of it.
     private var lastAnnouncedEventSynthetic: Bool?
 
-    /// Sends the latest discrete bio event if it is newer than the one we
-    /// last forwarded. Reads the `@MainActor` snapshot (`latestBioEvent`),
-    /// not the lock-free `bioEvents` queue, so it never contends with the
-    /// audio-thread consumer for that SPSC queue. At the 100 ms tick cadence,
-    /// events closer together than 100 ms collapse to the most recent — fine
-    /// for heartbeat/breath/motion rates; a return channel can tighten this later.
     /// Drains the `bioEvents` SPSC queue and sends EVERY discrete event at full
     /// resolution — so PolarH10 per-RR `.heartbeat` events (and breath/motion
     /// onsets) reach external tools with correct timing instead of being lost to

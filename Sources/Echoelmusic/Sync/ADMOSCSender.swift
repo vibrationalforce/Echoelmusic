@@ -33,7 +33,7 @@
 //  of them is sent only while its own channel is actually measured (#260) — see
 //  `admMessages` for why, and note that two of these structural zeros are extremes, not
 //  neutral positions:
-//    breath phase → azimuth    sound sweeps L↔R with the breath — needs `hasMeasuredBreath`
+//    breath phase → azimuth    sound sweeps L↔R with the breath — needs `hasMeasuredBreathWaveform` (#1140)
 //    coherence    → distance   coherent = pulled close; scattered = far — needs a pulse
 //                              AND a non-zero coherence: 16 accepted RR intervals, ~16 s
 //                              at rest on the camera since #1220 (⛔ "which a camera take
@@ -348,7 +348,7 @@ public final class ADMOSCSender {
         var msgs: [(String, Float)] = []
 
         // breath phase [0..1] → azimuth [-180..180]: L↔R sweep with the breath.
-        // Gated on `breathRate`, not on the phase: `breathPhase` has no unknown sentinel
+        // Gated on `hasMeasuredBreathWaveform` (#1140, below), not on the phase: `breathPhase` has no unknown sentinel
         // (0 is a real position, exhale start), so it cannot answer for itself.
         // `isFinite` too, because this is the ONE axis whose gate a corrupt value can pass:
         // the other two compare `> 0`, which is false for NaN, while `3...40` can hold a
