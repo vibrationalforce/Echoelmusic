@@ -5182,3 +5182,14 @@ Leinwand. Ein breiterer Zoom braucht zuerst gekacheltes Zeichnen.
 - **Warum:** `max(0, endFrame - frames)` legte im ersten Umlauf den Ton nach vorn und die leeren Plätze nach hinten; `LoopExporter` schneidet vom ENDE (`StudioCalculator.loopTrimWindow`). Ein früh gedrücktes „Keep last" exportierte so Stille oder die falschen Takte und meldete Erfolg. GA-3 nutzt denselben Mitschnitt — eine neue Tür auf einen Pfad, den noch kein Gerät bestätigt hat, wäre Stapeln auf Unbewiesenem.
 - **Grenze:** compile-verifiziert erst nach CI; die Geräteprobe steht in G9 (`docs/dev/FOUNDER_INBOX.md`).
 - **Review:** 2026-11-10.
+
+### 2026-10-12 — Schreibrecht für externe Modelle, nur als Vorschlags-Branch
+Founder-Entscheidung („Schreib welche mit Schreibberechtigung … alles genau im Bericht“). Form: je Modell EIN Branch
+`orchester/<modell>/<auftrag>` ab festem Basis-Commit; nie gemergt; Claude Code prüft zuerst
+`git diff <basis>..origin/orchester/… --name-status` gegen die Verbotsliste, dann Zeile für Zeile, und schreibt
+Übernommenes selbst (Lernmodus bleibt). Verboten: `.github/` (Geheimnisse), `.deploy/` (`.deploy/release` = TestFlight
+auf JEDEM Branch), `claude/**` (Auto-Merge nach main), Tags `deploy-*`, Projekt-/Plist-/Entitlement-Dateien,
+`CLAUDE.md`, `.claude/`, `memory/`, `scripts/`, `fastlane/`. Restrisiko, das nur der Founder schließen kann: ein
+Connector mit Workflow-Schreibrecht könnte auf seinem Branch einen Workflow ändern, der die Repo-Geheimnisse sieht —
+Abhilfe beim Anbieter (Rechte ohne `workflows`) oder Secrets in eine auf `main` beschränkte Environment. Review: 2026-11-11.
+Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
