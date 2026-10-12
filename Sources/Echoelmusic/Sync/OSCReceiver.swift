@@ -117,15 +117,18 @@ public enum OSCDecoder {
 public enum OSCControlCommand: Equatable, Sendable {
     /// `/echoelmusic/ctrl/bpm <f|i>` — applied ONLY while the BPM is locked (T1/T2).
     case tempo(Double)
-    /// `/echoelmusic/ctrl/key <i>` — root pitch class 0 (C) … 11 (B).
+    /// `/echoelmusic/ctrl/key` — root pitch class 0 (C) … 11 (B). Any numeric
+    /// argument (`Argument.number`); rounded, then bounded.
     case key(Int)
     /// `/echoelmusic/ctrl/scale <s>` — a `Scale` raw value (`major`, `dorian`, …).
     case scale(String)
     /// `/echoelmusic/ctrl/genre <s>` — a `MusicStyle` raw value (`techHouse`, `jazz`, …).
     case genre(String)
-    /// `/echoelmusic/ctrl/visualStyle <i>` — look 0…9 (`EchoelStudioView.visualStyle`'s index space).
+    /// `/echoelmusic/ctrl/visualStyle` — look 0…9 (`EchoelStudioView.visualStyle`'s
+    /// index space). Any numeric argument (`Argument.number`); rounded, then bounded.
     case visualStyle(Int)
-    /// `/echoelmusic/ctrl/blackout <T|F|i>` — Art-Net + sACN blackout, together.
+    /// `/echoelmusic/ctrl/blackout` — Art-Net + sACN blackout, together. Any
+    /// numeric argument (`Argument.number`: f/i/T/F); non-zero = on.
     case blackout(Bool)
 
     public static let prefix = "/echoelmusic/ctrl/"
