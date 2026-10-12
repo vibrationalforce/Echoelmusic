@@ -315,6 +315,16 @@ final class AnAudioPartShowsItsWaveformTests: XCTestCase {
             return XCTFail("the read no longer checks for cancellation before each chunk")
         }
         XCTAssertLessThan(check.lowerBound, chunk.lowerBound)
+        // A read may return fewer frames than asked. Reducing each read on its own closed a
+        // part-full bucket at every short read: one short read of 65 000 frames turned a
+        // 96 000-frame file into 201 buckets, and every later bucket sat off the time grid.
+        // Only whole buckets are reduced per read; the rest carries to the next one.
+        XCTAssertFalse(sketch.contains("buckets += WaveformReducer.reduce(folded, bucketSize: perBucket)"),
+                       "each read is reduced on its own again — a short read adds a bucket mid-file")
+        XCTAssertTrue(sketch.contains("carry += folded"),
+                      "the frames past the last whole bucket no longer carry into the next read")
+        XCTAssertTrue(sketch.contains("buckets += WaveformReducer.reduce(carry, bucketSize: perBucket)"),
+                      "the file's own tail is no longer reduced after the loop")
         XCTAssertTrue(sketch.contains("guard let url = MediaLibrary.resolveRef(ref),"),
                       "the file is found by the player's own resolver (#1439)")
     }

@@ -189,6 +189,12 @@ enum WaveformSketch {
                                             frameCapacity: AVAudioFrameCount(chunk)) else { return nil }
         var buckets: [WaveformBucket] = []
         buckets.reserveCapacity(Swift.min(maxBuckets, Int(file.length / Int64(perBucket)) + 1))
+        // `read(into:frameCount:)` reads UP TO `chunk` frames, and a short read mid-file is
+        // allowed. Reducing each read on its own would close a part-full bucket at every short
+        // read and shift every later bucket off the `secondsPerBucket` grid (96 000 frames read
+        // as 201 buckets instead of 200 in CI). So only whole buckets are reduced per read; the
+        // remainder carries into the next one, and only the file's own tail may be part-full.
+        var carry: [Float] = []
         while file.framePosition < file.length {
             if Task.isCancelled { return nil }
             do {
@@ -203,8 +209,14 @@ enum WaveformSketch {
                 folded = WaveformReducer.foldStereo(
                     left: folded, right: Array(UnsafeBufferPointer(start: data[channel], count: frames)))
             }
-            buckets += WaveformReducer.reduce(folded, bucketSize: perBucket)
+            carry += folded
+            let whole = (carry.count / perBucket) * perBucket
+            if whole > 0 {
+                buckets += WaveformReducer.reduce(Array(carry[..<whole]), bucketSize: perBucket)
+                carry.removeFirst(whole)
+            }
         }
+        buckets += WaveformReducer.reduce(carry, bucketSize: perBucket)
         guard !buckets.isEmpty else { return nil }
         return Overview(buckets: buckets, secondsPerBucket: Double(perBucket) / format.sampleRate)
     }
