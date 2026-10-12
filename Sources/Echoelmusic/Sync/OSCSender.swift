@@ -108,7 +108,7 @@ public final class OSCSender {
 
     public private(set) var isActive = false
 
-    /// Mach-time of the last message sent. Lets the UI render an
+    /// CFAbsoluteTime of the last message sent. Lets the UI render an
     /// activity dot without spawning timers.
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
@@ -341,12 +341,6 @@ public final class OSCSender {
     /// exactly what CLAUDE.md's "als ZUSTAND latchen" asks of it.
     private var lastAnnouncedEventSynthetic: Bool?
 
-    /// Sends the latest discrete bio event if it is newer than the one we
-    /// last forwarded. Reads the `@MainActor` snapshot (`latestBioEvent`),
-    /// not the lock-free `bioEvents` queue, so it never contends with the
-    /// audio-thread consumer for that SPSC queue. At the 100 ms tick cadence,
-    /// events closer together than 100 ms collapse to the most recent — fine
-    /// for heartbeat/breath/motion rates; a return channel can tighten this later.
     /// Drains the `bioEvents` SPSC queue and sends EVERY discrete event at full
     /// resolution — so PolarH10 per-RR `.heartbeat` events (and breath/motion
     /// onsets) reach external tools with correct timing instead of being lost to
