@@ -741,7 +741,9 @@ enum EchoelCrashLog {
         let boot = bootTime()
         let started = processStartTime()
         #if os(iOS)
-        let availableMB: Int? = Int(os_proc_available_memory()) / (1024 * 1024)
+        // `clamping:` — `size_t` → `Int` traps above `Int.max`, and this runs in the first
+        // stored property's initializer: the reader must never be the thing that dies.
+        let availableMB: Int? = Int(clamping: os_proc_available_memory()) / (1024 * 1024)
         #else
         let availableMB: Int? = nil   // `os_proc_available_memory` is iOS-family only
         #endif
@@ -755,7 +757,8 @@ enum EchoelCrashLog {
             lowPower: info.isLowPowerModeEnabled)
     }
 
-    /// Seconds since 1970 at which the kernel booted, or nil when the sysctl refuses. The same
+    /// Seconds since 1970 at which the kernel booted, or nil when the sysctl refuses or answers
+    /// 0 (a boot "at 1970" is a clock that was never set, not a reading). The same
     /// value across two launches means no reboot happened between them.
     private static func bootTime() -> TimeInterval? {
         #if canImport(Darwin)
@@ -769,7 +772,8 @@ enum EchoelCrashLog {
         #endif
     }
 
-    /// Seconds since 1970 at which THIS process started, or nil when the sysctl refuses. A large
+    /// Seconds since 1970 at which THIS process started, or nil when the sysctl refuses or
+    /// answers 0. A large
     /// age at the first stored property means the process existed long before the app ran —
     /// a prewarm that `ActivePrewarm` did not flag, or a resume after suspension.
     private static func processStartTime() -> TimeInterval? {

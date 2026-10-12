@@ -34,8 +34,8 @@
 //      defaults done")` — one writer of that text in the app, inside the head window of claim 3
 //      (between `    init() {` and the `APP INIT [start]` line). Swift runs every stored default
 //      before it, so a log that reaches this rung did not die in a store's constructor, and one
-//      that ends at the verdict or the context line did — the two the 2621 log could not tell
-//      apart.
+//      that ends at the context line did — the two the 2621 log could not tell apart. One that
+//      ends at the verdict died inside `launchContextLine()` itself, one step earlier.
 //
 // ⚠️ HONEST GRADING (#433), transcribed in Python against the parent `4ba2eb1` and the
 // worktree. This file names no `Sources/` symbol, so it compiles against both trees.

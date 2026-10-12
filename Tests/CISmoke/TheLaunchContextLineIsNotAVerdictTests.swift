@@ -68,16 +68,22 @@ final class TheLaunchContextLineIsNotAVerdictTests: XCTestCase {
     func testAFullReadingPrintsValuesWithUnits() {
         XCTAssertEqual(full, "launch context: prewarm=1 boot=1791600000 up=29933s age=120ms avail=1800mb thermal=nominal lowpower=0",
                        "a full launch context line changed its spelling — the units and flags are how a triager reads a prewarm (1), a fresh boot (small `up=`) or a long-lived process (large `age=`)")
-        XCTAssertEqual(full, full.lowercased(), "the launch context line is lower-case throughout — a marker is never lower-case")
+        XCTAssertEqual(full, full.lowercased(), "the launch context line is lower-case throughout — it carries no capitalised marker; the lower-case ones are claim 3's list")
         XCTAssertEqual(full.components(separatedBy: "=").count - 1, 7, "seven fields, seven `=`")
     }
 
     // MARK: 3 — not a verdict: no marker any reader searches for
 
     func testTheLineCarriesNoMarker() {
+        // Every spelling a log reader searches for, the lower-case ones included — `background`,
+        // `launch v`, `image `, `scene: ` — because "lower-case, so marker-free" is true only of
+        // the capitalised half (an external review 2026-10-12 caught the narrower list).
         let markers = [EchoelCrashLog.crashMarker, EchoelCrashLog.startTappedMarker,
                        EchoelCrashLog.confirmedHealthyMarker, EchoelCrashLog.recoveryScreenClearedMarker,
-                       EchoelCrashLog.sceneArrow]
+                       EchoelCrashLog.rearmMarker, EchoelCrashLog.rearmNotNeededMarker,
+                       EchoelCrashLog.sceneArrow, EchoelCrashLog.backgroundPhase,
+                       EchoelCrashLog.launchLinePrefix, EchoelCrashLog.imageLinePrefix,
+                       EchoelCrashLog.crashSignaturePrefix, "scene: "]
         for line in [empty, full] {
             for marker in markers {
                 XCTAssertFalse(line.contains(marker), """

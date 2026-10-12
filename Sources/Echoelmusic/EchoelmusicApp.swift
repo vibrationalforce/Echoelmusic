@@ -367,9 +367,10 @@ struct EchoelmusicApp: App {
     init() {
         // SH-2b — the first thing `init()` says is that every stored default has run: Swift
         // evaluates them all before this statement, so a log that reaches this rung did not die
-        // in a store's constructor, and a log that ends at the LaunchGuard verdict or the launch
-        // context line did. Build 2621 died in exactly that window and the log could not tell
-        // the two apart. A rung stands BEFORE its step (the lifecycle-ladder law) — this one
+        // in a store's constructor, and a log that ends at the launch context line did. A log
+        // that ends at the LaunchGuard verdict died one step earlier — inside
+        // `launchContextLine()` itself, which reads the two sysctls. Build 2621 died in exactly
+        // that window and the log could not tell the cases apart. A rung stands BEFORE its step (the lifecycle-ladder law) — this one
         // stands before the first statement of `init()`, which is the step the defaults precede.
         EchoelCrashLog.breadcrumb("app: stored defaults done")
         // SH-2 — `EchoelCrashLog.begin()` and `LaunchGuard.beginLaunch()` stood here as this
