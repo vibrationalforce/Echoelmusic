@@ -1163,3 +1163,18 @@ Der Prompt als Ganzes ist ein Rollen-Wechsel: Claude soll Prompt-Lieferant für 
 | 6 | Leuchtdichte-Blitze: Zählregel hält (5 Übergänge → ≤ 2,5 Blitze/s) | `engageTransitions = 2·3−1` Z. 108 | BESTÄTIGT |
 
 Verdikt **ADOPT→PRODUCT, eine Scheibe**: ein Rot-Kanal im `VideoFlashLimiter` (je Zelle zusätzlich der Rot-Anteil bzw. u'v', Übergänge in/aus gesättigtem Rot zählen in dieselbe 3-Hz-Kappe), mit Wächter, **bevor `attachVideoOutput` einen Aufrufer bekommt**. Heute latent: kein Produktionspfad zeigt Footage. Offene Normfrage (Mistral): WCAG-2.2-u'v' oder 2.0/2.1-(R−G−B)×320 — Empfehlung 2.2, das Gegenbeispiel erfüllt beide. Lehre: der Auftrag mit eingesetzter Vermutung UND der Bitte um ein Gegenbeispiel mit Zahlen hat die erste voll bestätigte Antwort des Orchesters gebracht.
+
+## 2026-10-12 — Grok: Video an die EINE Uhr (Orchester-Auftrag, Stand `0205769fc`) — [verified 6/7]
+
+Code war im Prompt eingebettet (Grok öffnet keine Links). Alle sieben FAKTEN stimmen am Code:
+`scheduleSegment/Buffer(…, at: nil)` an fünf Stellen in `TimelineAudioSink` (kein Host-Anker) ·
+`PatternEngine.nextTickUptime` ist das IDEAL-Raster (#1223) · `nextDeadline` springt nach einem Stau
+über eine Lücke auf `now` (Z.684) · `VideoLanePlan`-Konstanten (1/30 · 0,25 · 3 % · 0,5) · `resync`
+liefert eine Rate ohne Host-Zeit · `VideoLayerSlot.pullFootageFrame` fragt `itemTime` zur ZEICHEN-Zeit
+(`CACurrentMediaTime()`), nicht zur Anzeige-Zeit · `filePositionSeconds` rechnet mit der aktuellen bpm.
+**Teilweise:** Befund 7 — Audio und Video teilen dieselbe Funktion, springen beim Glide also gemeinsam.
+**Unverifiziert:** jedes Apple-API-Verhalten (setRate(atHostTime:)-Bedingung, Seek-Schleifen bei langem GOP).
+**Referenz-Vorschlag real:** `BroadcastAudioAnchor` wird lebend vom Render-Pfad geschrieben
+(`RetroCapture.masterRingView`). Verdikt WATCH→PLAN: Vorbedingung für den VideoLanePlayer, kein Code
+jetzt (`attachVideoOutput` hat 0 Aufrufer). Säuberung: nur die gemessene Zusammenfassung lag vor, der
+Rohtext wurde nicht durch `learn-intake.py` geschickt — keine Formulierung daraus übernommen.
