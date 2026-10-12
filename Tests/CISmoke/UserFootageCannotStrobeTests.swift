@@ -37,6 +37,7 @@
 //    a seek and a new layout keep an engaged cap; hostile values and 5 000 fuzzed frames leave the
 //    gain finite and in `engagedGain…1`.
 // 7. The limiter's numbers are `FlashGuard`'s (#416) — no second 3 Hz, no second WCAG step.
+// 9–11. VV-4c, a saturated red flash: see the grading note below (END-TO-END, claim 11 SOURCE-TEXT).
 // 8. `VideoLayerMath`: WCAG relative luminance with the BT.709 weights, cell means (a side too large
 //    to square is refused, not a trap), a portrait clip's quarter-turn transform shown upright and
 //    fitted into a phone-sized visual.
@@ -73,6 +74,14 @@
 // strobes, counter-phase and partial masks, jittered clocks) the transcription found at most five;
 // without the expiry it found six twice.
 // The first review's mutants were driven on `d944d2a` and are recorded in its commit.
+// VV-4c (2026-10-12, Mistral's red-flash finding, verified 6/6) adds claims 9–11. GRADING: the file
+// does not COMPILE on its parent (`a54428655`) — `step` gains a required `redCells:` and claims 9–11
+// name `redFlashSignal` and the two red thresholds, all created by this commit; no assertion has a
+// verdict there. Transcribed (the limiter as written, both signals, claim 9's input): with no red
+// cells the gain stays 1 on all 180 frames (the gap, now a counterweight); with them the cap engages
+// on frame 15 (0.25 s) and holds to the end. MUTANT: drop the red feed → claim 9 red (never capped).
+// Claims 1–8 hand `redCells: nil` and are unchanged in substance — the luminance path moved into
+// one `Signal` type verbatim, in the same channel order.
 // NOT covered: what the screen shows — the field under the layer has its own budget, and the sum is
 // a DEVICE PROBE, open until a door exists (VV-6).
 
@@ -227,7 +236,7 @@ final class UserFootageCannotStrobeTests: XCTestCase {
             let shown = Double(index) / displayHz
             let media = (shown * clipFPS + 1e-9).rounded(.down) / clipFPS
             let value: Double = media >= until ? 0.5 : (Int((2 * flashHertz * media).rounded(.down)) % 2 == 0 ? 1 : 0)
-            let gain = limiter.step(time: media, cells: frame(value), cellsPerSide: side)
+            let gain = limiter.step(time: media, cells: frame(value), redCells: nil, cellsPerSide: side)
             run.times.append(shown)
             run.gains.append(gain)
             run.outputs.append(gain * value)
@@ -250,7 +259,7 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         for index in 0..<Int(seconds * fps) {
             let shown = Double(index) / fps
             let cells = source(shown)
-            let gain = limiter.step(time: clock?(index) ?? shown, cells: cells, cellsPerSide: side)
+            let gain = limiter.step(time: clock?(index) ?? shown, cells: cells, redCells: nil, cellsPerSide: side)
             run.times.append(shown)
             run.gains.append(gain)
             run.outputs.append(gain * (cells.max() ?? 0))
@@ -398,7 +407,7 @@ final class UserFootageCannotStrobeTests: XCTestCase {
                 let time = Double(index) / Self.fps
                 var cells = [Double](repeating: base, count: 4)
                 cells[0] = Int((20 * time).rounded(.down)) % 2 == 0 ? base + Self.step : base
-                limiter.step(time: time, cells: cells, cellsPerSide: 2)
+                limiter.step(time: time, cells: cells, redCells: nil, cellsPerSide: 2)
             }
             XCTAssertEqual(limiter.gain, VideoFlashLimiter.engagedGain,
                            "one cell of a 2 × 2 grid flashing by exactly one WCAG step on \(base)")
@@ -546,8 +555,8 @@ final class UserFootageCannotStrobeTests: XCTestCase {
             let time = Double(index) / Self.fps
             let value: Double = Int((20 * time).rounded(.down)) % 2 == 0 ? 1 : 0
             let side = index % 2 == 0 ? Self.side : Self.side - 1
-            changingGrid.step(time: time, cells: [Double](repeating: value, count: side * side), cellsPerSide: side)
-            fineGrid.step(time: time, cells: [Double](repeating: value, count: fineSide * fineSide), cellsPerSide: fineSide)
+            changingGrid.step(time: time, cells: [Double](repeating: value, count: side * side), redCells: nil, cellsPerSide: side)
+            fineGrid.step(time: time, cells: [Double](repeating: value, count: fineSide * fineSide), redCells: nil, cellsPerSide: fineSide)
         }
         XCTAssertEqual(changingGrid.gain, VideoFlashLimiter.engagedGain, "a grid that changes size every frame")
         XCTAssertEqual(fineGrid.gain, VideoFlashLimiter.engagedGain, "a grid finer than the windows are built for")
@@ -556,18 +565,18 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         let bounds = VideoFlashLimiter.engagedGain...1
         for index in 0..<60 {
             let value: Double = index % 2 == 0 ? 1 : 0
-            limiter.step(time: Double(index) / Self.fps, cells: Self.frame(value), cellsPerSide: Self.side)
+            limiter.step(time: Double(index) / Self.fps, cells: Self.frame(value), redCells: nil, cellsPerSide: Self.side)
         }
         XCTAssertEqual(limiter.gain, VideoFlashLimiter.engagedGain)
-        XCTAssertEqual(limiter.step(time: 0.2, cells: Self.frame(0.5), cellsPerSide: Self.side), VideoFlashLimiter.engagedGain,
+        XCTAssertEqual(limiter.step(time: 0.2, cells: Self.frame(0.5), redCells: nil, cellsPerSide: Self.side), VideoFlashLimiter.engagedGain,
                        "a clock running backwards (a seek in media time) does not reset the cap")
-        XCTAssertEqual(limiter.step(time: 1.1, cells: [0.5, 0.5, 0.5, 0.5], cellsPerSide: 2), VideoFlashLimiter.engagedGain,
+        XCTAssertEqual(limiter.step(time: 1.1, cells: [0.5, 0.5, 0.5, 0.5], redCells: nil, cellsPerSide: 2), VideoFlashLimiter.engagedGain,
                        "a new grid layout restarts the windows, not the gain")
         let hostile: [(Double, [Double], Int)] = [(.nan, [0.5], 1), (.infinity, [0.5], 1), (1.2, [], 0), (1.25, [0.5], -3),
                                                   (1.3, [.nan, .infinity, -.infinity, -4], 2), (1.4, [0.5, 0.5], 2),
                                                   (1.5, [], Int.max)]
         for (time, cells, side) in hostile {
-            XCTAssertTrue(bounds.contains(limiter.step(time: time, cells: cells, cellsPerSide: side)))
+            XCTAssertTrue(bounds.contains(limiter.step(time: time, cells: cells, redCells: nil, cellsPerSide: side)))
         }
 
         var fuzzed = VideoFlashLimiter()
@@ -584,7 +593,7 @@ final class UserFootageCannotStrobeTests: XCTestCase {
                 let raw = Double((state >> UInt64(cell % 32)) & 0xFFFF) / 65_535
                 cells.append(cell == 3 && pick % 5 == 0 ? .nan : raw)
             }
-            let gain = fuzzed.step(time: time, cells: cells, cellsPerSide: side)
+            let gain = fuzzed.step(time: time, cells: cells, redCells: nil, cellsPerSide: side)
             XCTAssertTrue(gain.isFinite && bounds.contains(gain))
         }
     }
@@ -656,5 +665,81 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         XCTAssertEqual(fit.y, (844 - fittedHeight) / 2, accuracy: 1e-9)
         XCTAssertNil(VideoLayerMath.aspectFit(contentWidth: .infinity, contentHeight: 1,
                                               containerWidth: 390, containerHeight: 844))
+    }
+
+    // MARK: 9 — a saturated red flash, which no luminance count can see (VV-4c)
+
+    /// Claim 9 — WCAG 2.3.1's second flash kind. A swing between a saturated red and a grey of nearly
+    /// the same luminance moves no luminance channel (premise, and the counterweight: with no red
+    /// cells the gain stays 1 on every frame — the gap Mistral found, 2026-10-12, verified 6/6); handed
+    /// its red cells the limiter caps it within the first second and holds the cap while it runs.
+    func testASaturatedRedFlashIsCappedThoughItsLuminanceBarelyMoves() {
+        let red = (r: 0.8, g: 0.2, b: 0.2)
+        let grey = 0.43
+        let redLuminance = VideoLayerMath.relativeLuminance(red: red.r, green: red.g, blue: red.b)
+        let greyLuminance = VideoLayerMath.relativeLuminance(red: grey, green: grey, blue: grey)
+        let redSignal = VideoLayerMath.redFlashSignal(red: red.r, green: red.g, blue: red.b)
+        XCTAssertLessThan(abs(redLuminance - greyLuminance), VideoFlashLimiter.transitionThreshold,
+                          "premise: the two states sit inside even a window's quarter step")
+        XCTAssertGreaterThan(redSignal, VideoFlashLimiter.redCellTransitionThreshold,
+                             "premise: the red signal swings well past WCAG's red step")
+        XCTAssertEqual(VideoLayerMath.redFlashSignal(red: grey, green: grey, blue: grey), 0,
+                       "premise: a grey has no red signal")
+
+        var luminanceOnly = VideoFlashLimiter()
+        var withRed = VideoFlashLimiter()
+        var engagedAt: Int?
+        for index in 0..<Int(3 * Self.fps) {
+            let time = Double(index) / Self.fps
+            let isRed = Int(time * 2 * 10) % 2 == 0   // 10 Hz: a new state every 50 ms
+            let cells = Self.frame(isRed ? redLuminance : greyLuminance)
+            let redCells = Self.frame(isRed ? redSignal : 0)
+            XCTAssertEqual(luminanceOnly.step(time: time, cells: cells, redCells: nil, cellsPerSide: Self.side), 1,
+                           "frame \(index): the luminance alone cannot see this flash (counterweight)")
+            let gain = withRed.step(time: time, cells: cells, redCells: redCells, cellsPerSide: Self.side)
+            if let engagedAt {
+                XCTAssertEqual(gain, VideoFlashLimiter.engagedGain, "frame \(index): the cap let go of a running red strobe (engaged at \(engagedAt))")
+            } else if gain == VideoFlashLimiter.engagedGain {
+                engagedAt = index
+            }
+        }
+        XCTAssertNotNil(engagedAt, "a 10 Hz saturated red strobe was never capped")
+        XCTAssertLessThan(engagedAt ?? .max, Int(Self.fps), "the red cap engages within the first second")
+    }
+
+    /// Claim 10 — the red signal is linear R − G − B floored at 0, a white, grey or green never moves
+    /// it, its step is WCAG's 20/320, and the engaged gain sits under it, so nothing the capped layer
+    /// adds can make a red flash either.
+    func testTheRedSignalIsWCAGsAndTheCapSitsUnderItsStep() {
+        XCTAssertEqual(VideoLayerMath.redFlashSignal(red: 1, green: 0, blue: 0), 1, accuracy: 1e-12)
+        for (r, g, b) in [(1.0, 1.0, 1.0), (0.5, 0.5, 0.5), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (0.0, 0.0, 0.0)] {
+            XCTAssertEqual(VideoLayerMath.redFlashSignal(red: r, green: g, blue: b), 0, "(\(r), \(g), \(b)) has no red signal")
+        }
+        XCTAssertEqual(VideoLayerMath.redFlashSignal(red: .nan, green: -1, blue: 2), 0, "NaN reads as 0, every component is clamped")
+        XCTAssertEqual(VideoFlashLimiter.redCellTransitionThreshold * 320, 20, accuracy: 1e-12)
+        XCTAssertEqual(VideoFlashLimiter.redTransitionThreshold,
+                       VideoFlashLimiter.redCellTransitionThreshold * VideoFlashLimiter.regionCoverage, accuracy: 1e-15)
+        XCTAssertLessThan(VideoFlashLimiter.engagedGain, VideoFlashLimiter.redCellTransitionThreshold)
+    }
+
+    /// Claim 11 — SOURCE-TEXT scan: the one production caller hands the limiter the red cells it
+    /// decoded from the same frame, and no file under `Sources/` passes `redCells: nil` — nil is for
+    /// the luminance-only claims in this file, never for a door.
+    func testTheSlotHandsTheLimiterItsRedCells() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let slot = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(
+            "Sources/Echoelmusic/Studio/VideoLayerSlot.swift"), encoding: .utf8))
+        XCTAssertTrue(slot.contains("redCells: countedRedCells"), "the slot counts the red cells it decoded (VV-4c)")
+        XCTAssertTrue(slot.contains("Self.redFlashCells(of: buffer, samples: &redSamples)"),
+                      "the red cells come from the same buffer, and a frame they cannot be read from is refused")
+        let sources = root.appendingPathComponent("Sources")
+        let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?
+            .compactMap { $0 as? URL }.filter { $0.pathExtension == "swift" } ?? []
+        XCTAssertFalse(files.isEmpty, "the scan found no Swift file under Sources/")
+        for file in files {
+            let code = SourceText.codeOnly(try String(contentsOf: file, encoding: .utf8))
+            XCTAssertFalse(code.contains("redCells: nil"), "\(file.lastPathComponent) hands the limiter no colour")
+        }
     }
 }

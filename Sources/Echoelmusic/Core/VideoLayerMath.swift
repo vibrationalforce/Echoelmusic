@@ -35,14 +35,25 @@ public enum VideoLayerMath {
     /// The relative luminance of an sRGB colour whose components are 0…1. Non-finite components
     /// read as 0 and every component is clamped first, so the answer is always 0…1.
     public static func relativeLuminance(red: Double, green: Double, blue: Double) -> Double {
-        func linear(_ component: Double) -> Double {
-            let c = component.isFinite ? Swift.min(1, Swift.max(0, component)) : 0
-            return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
-        }
-        let r: Double = redWeight * linear(red)
-        let g: Double = greenWeight * linear(green)
-        let b: Double = blueWeight * linear(blue)
+        let r: Double = redWeight * linearComponent(red)
+        let g: Double = greenWeight * linearComponent(green)
+        let b: Double = blueWeight * linearComponent(blue)
         return Swift.min(1, r + g + b)
+    }
+
+    /// The red-flash signal of an sRGB colour whose components are 0…1: linear R − G − B, floored at
+    /// 0 (WCAG 2.3.1 sets negative values to zero). `VideoFlashLimiter` counts a move of 20/320 in it
+    /// as a red transition. Non-finite components read as 0, every component is clamped first, so the
+    /// answer is always 0…1.
+    public static func redFlashSignal(red: Double, green: Double, blue: Double) -> Double {
+        return Swift.max(0, linearComponent(red) - linearComponent(green) - linearComponent(blue))
+    }
+
+    /// One sRGB component, 0…1, undone to linear light — the curve both helpers above share.
+    /// Non-finite reads as 0; the component is clamped first.
+    private static func linearComponent(_ component: Double) -> Double {
+        let c = component.isFinite ? Swift.min(1, Swift.max(0, component)) : 0
+        return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
     }
 
     /// The mean of each `blocks × blocks` block of a row-major `side × side` grid, row-major.

@@ -24,6 +24,13 @@
 //   a fall, a rise and a fall on the screen (second review: six transitions in a second, which no
 //   lowered count on the footage could catch — the first draft of this fix had one and still showed
 //   six).
+// · RED, on the same windows and cells (VV-4c, Mistral 2026-10-12, verified 6/6): WCAG 2.3.1 counts
+//   a second kind of flash, saturated red, that a luminance count cannot see — a swing between a
+//   saturated red and a grey of nearly the same luminance moves the luminance by under a tenth of
+//   the step. The caller also hands each cell's `VideoLayerMath.redFlashSignal` (linear R − G − B,
+//   floored at 0); every channel above runs again on it, at WCAG's red step (20/320) where the
+//   luminance has its own, and the windows at a quarter of it. The red signal is 0 wherever red does
+//   not exceed green plus blue, so a grey, a white or a green never moves it.
 //
 // ⭐ WHAT IT GUARANTEES, and the arithmetic behind it (WCAG 2.3.1, the numbers are `FlashGuard`'s):
 // · A TRANSITION is a channel's signal moving its step against its last extreme (hysteresis, so a
@@ -37,7 +44,8 @@
 //   (0.05) on that frame. While engaged no pixel the layer adds can move by 0.05, half the WCAG
 //   step — nothing it shows can be a flash at all.
 // · A flash covering any rectangle at least two cells wide and tall covers some cell completely, and
-//   that cell's shown channel counts what is shown there — with the gain of the frame before, so at
+//   that cell's shown channel counts what is shown there (its red shown channel too: the engaged
+//   gain, 0.05, is under the red step as well) — with the gain of the frame before, so at
 //   most one climb step behind. So at most five transitions show in any second, two and a half
 //   flashes, under the three WCAG allows — the cap's own edge included. That is the argument; the
 //   transcription measured it too, at five, over the review's inputs and random and directed ones.
@@ -74,6 +82,8 @@
 //   touched.
 // · It ignores WCAG's dark-state exemption (two states both above 0.80 are not a flash): counting
 //   them too is the safe direction, and a cap on a bright shimmer costs little.
+// · It ignores the red flash's saturation test (one state at R/(R+G+B) ≥ 0.8): every move of R − G − B
+//   by the red step counts, a strong orange or pink one too — the safe direction again.
 // · It sees cell MEANS, not shapes: a pattern with a period of two cells set half a cell off the
 //   grid keeps every cell mean flat while it reverses, and the grid cannot see it at all; a line an
 //   eighth of a cell wide counts only once its share of some window reaches the quarter step.
@@ -98,6 +108,11 @@ public struct VideoFlashLimiter: Sendable {
     public static let transitionThreshold = FlashGuard.luminanceDeltaThreshold * regionCoverage
     /// A cell's move that counts as a transition, on the footage and as shown: the whole WCAG step.
     public static let cellTransitionThreshold = FlashGuard.luminanceDeltaThreshold
+    /// WCAG 2.3.1's red flash: a change of `(R − G − B) × 320` above 20, in linear RGB — so a
+    /// change of 20/320 in `VideoLayerMath.redFlashSignal`. Counted on cells and as shown.
+    public static let redCellTransitionThreshold = 20.0 / 320.0
+    /// The red step over the share of a window a counted flash covers, as for the luminance.
+    public static let redTransitionThreshold = redCellTransitionThreshold * regionCoverage
     /// Taken off every step so a move of exactly the step counts: `0.4 - 0.3` is a hair under the
     /// step in binary floating point, and the first version missed such a flash on some levels.
     public static let roundingAllowance = 1e-9
@@ -184,12 +199,79 @@ public struct VideoFlashLimiter: Sendable {
         }
     }
 
+    /// Every channel one signal needs: the whole frame and the windows at their step, the cells on
+    /// the footage and as shown at theirs. The luminance and the red signal each own one.
+    private struct Signal: Sendable {
+        let windowStep: Double
+        let cellStep: Double
+        var wholeFrame: Channel
+        var windows: [Channel] = []
+        var cells: [Channel] = []
+        var shown: [Channel] = []
+
+        init(windowStep: Double, cellStep: Double) {
+            self.windowStep = windowStep
+            self.cellStep = cellStep
+            wholeFrame = Channel(step: windowStep)
+        }
+
+        /// A new grid restarts every channel but the whole frame.
+        mutating func layOut(windowCount: Int, cellCount: Int) {
+            windows = Array(repeating: Channel(step: windowStep), count: windowCount)
+            cells = Array(repeating: Channel(step: cellStep), count: cellCount)
+            shown = cells
+        }
+
+        /// Feeds one frame's cells (already the right count) and returns the most transitions any of
+        /// this signal's channels holds after `windowStart`. `gain` is the layer's gain before this
+        /// frame decides: the shown channels count what the screen shows with it.
+        mutating func feed(_ values: [Double], windowCells: [[Int]], gain: Double,
+                           at clock: Double, after windowStart: Double) -> Int {
+            var busiest = 0
+            var frameSum = 0.0
+            var finiteCells = 0
+            for value in values where value.isFinite {
+                frameSum += Swift.min(1, Swift.max(0, value))
+                finiteCells += 1
+            }
+            if finiteCells > 0 {
+                if wholeFrame.registers(frameSum / Double(finiteCells), at: clock) { wholeFrame.mark(clock) }
+                busiest = Swift.max(busiest, wholeFrame.count(after: windowStart))
+            }
+            for index in windows.indices {
+                var windowSum = 0.0
+                var usable = true
+                for cell in windowCells[index] {
+                    let value = values[cell]
+                    guard value.isFinite else { usable = false; break }
+                    windowSum += Swift.min(1, Swift.max(0, value))
+                }
+                guard usable else { continue }
+                if windows[index].registers(windowSum / Double(windowCells[index].count), at: clock) {
+                    windows[index].mark(clock)
+                }
+                busiest = Swift.max(busiest, windows[index].count(after: windowStart))
+            }
+            for cell in cells.indices {
+                let value = values[cell]
+                guard value.isFinite else { continue }
+                let level = Swift.min(1, Swift.max(0, value))
+                if cells[cell].registers(level, at: clock) { cells[cell].mark(clock) }
+                // What this cell shows with the gain the layer has now — before this frame decides.
+                if shown[cell].registers(gain * level, at: clock) { shown[cell].mark(clock) }
+                busiest = Swift.max(busiest, cells[cell].count(after: windowStart),
+                                    shown[cell].count(after: windowStart))
+            }
+            return busiest
+        }
+    }
+
     private var side = 0
     private var windowCells: [[Int]] = []
-    private var channels: [Channel] = []
-    private var cellChannels: [Channel] = []
-    private var shownChannels: [Channel] = []
-    private var wholeFrame = Channel(step: VideoFlashLimiter.transitionThreshold)
+    private var luminance = Signal(windowStep: VideoFlashLimiter.transitionThreshold,
+                                   cellStep: VideoFlashLimiter.cellTransitionThreshold)
+    private var red = Signal(windowStep: VideoFlashLimiter.redTransitionThreshold,
+                             cellStep: VideoFlashLimiter.redCellTransitionThreshold)
     private var started = false
     private var lastSourceTime: Double?
     private var clock = 0.0
@@ -197,11 +279,15 @@ public struct VideoFlashLimiter: Sendable {
 
     public init() {}
 
-    /// Feeds one shown frame — `cells` are its cell luminances, 0…1, row-major in a
-    /// `cellsPerSide × cellsPerSide` grid — and returns the gain. A grid of the wrong size changes
-    /// nothing; a non-finite cell leaves out its own two channels and the windows it belongs to.
+    /// Feeds one shown frame and returns the gain. `cells` are its cell luminances, 0…1, row-major in
+    /// a `cellsPerSide × cellsPerSide` grid; `redCells` the same cells' red signal
+    /// (`VideoLayerMath.redFlashSignal`), or nil where the caller has no colour — then only the
+    /// luminance counts, and a footage door must never pass nil (`UserFootageCannotStrobeTests`).
+    /// A luminance grid of the wrong size changes nothing; a red grid of the wrong size is left out
+    /// and the luminance still counts. A non-finite cell leaves out its own channels and the windows
+    /// it belongs to.
     @discardableResult
-    public mutating func step(time: Double, cells: [Double], cellsPerSide: Int) -> Double {
+    public mutating func step(time: Double, cells: [Double], redCells: [Double]?, cellsPerSide: Int) -> Double {
         guard cellsPerSide > 0 else { return gain }
         let (cellCount, overflow) = cellsPerSide.multipliedReportingOverflow(by: cellsPerSide)
         guard !overflow, cells.count == cellCount else { return gain }
@@ -209,41 +295,11 @@ public struct VideoFlashLimiter: Sendable {
         if cellsPerSide != side { layOut(cellsPerSide) }
 
         let windowStart = clock - Self.windowSeconds
-        var busiest = 0
-
-        var frameSum = 0.0
-        var finiteCells = 0
-        for value in cells where value.isFinite {
-            frameSum += Swift.min(1, Swift.max(0, value))
-            finiteCells += 1
-        }
-        if finiteCells > 0 {
-            if wholeFrame.registers(frameSum / Double(finiteCells), at: clock) { wholeFrame.mark(clock) }
-            busiest = Swift.max(busiest, wholeFrame.count(after: windowStart))
-        }
-        for index in channels.indices {
-            var windowSum = 0.0
-            var usable = true
-            for cell in windowCells[index] {
-                let value = cells[cell]
-                guard value.isFinite else { usable = false; break }
-                windowSum += Swift.min(1, Swift.max(0, value))
-            }
-            guard usable else { continue }
-            if channels[index].registers(windowSum / Double(windowCells[index].count), at: clock) {
-                channels[index].mark(clock)
-            }
-            busiest = Swift.max(busiest, channels[index].count(after: windowStart))
-        }
-        for cell in cellChannels.indices {
-            let value = cells[cell]
-            guard value.isFinite else { continue }
-            let level = Swift.min(1, Swift.max(0, value))
-            if cellChannels[cell].registers(level, at: clock) { cellChannels[cell].mark(clock) }
-            // What this cell shows with the gain the layer has now — before this frame decides.
-            if shownChannels[cell].registers(gain * level, at: clock) { shownChannels[cell].mark(clock) }
-            busiest = Swift.max(busiest, cellChannels[cell].count(after: windowStart),
-                                shownChannels[cell].count(after: windowStart))
+        var busiest = luminance.feed(cells, windowCells: windowCells, gain: gain,
+                                     at: clock, after: windowStart)
+        if let redCells, redCells.count == cellCount {
+            busiest = Swift.max(busiest, red.feed(redCells, windowCells: windowCells, gain: gain,
+                                                  at: clock, after: windowStart))
         }
 
         if busiest >= Self.engageTransitions {
@@ -279,7 +335,8 @@ public struct VideoFlashLimiter: Sendable {
         return dt
     }
 
-    /// Builds the overlapping windows and the cell channels for a new grid. The whole frame is kept.
+    /// Builds the overlapping windows and both signals' cell channels for a new grid. Both whole
+    /// frames are kept.
     private mutating func layOut(_ cellsPerSide: Int) {
         side = cellsPerSide
         var windows: [[Int]] = []
@@ -301,9 +358,8 @@ public struct VideoFlashLimiter: Sendable {
             size *= 2
         }
         windowCells = windows
-        channels = Array(repeating: Channel(step: Self.transitionThreshold), count: windows.count)
         let cellCount = cellsPerSide <= Self.maxCellsPerSide ? cellsPerSide * cellsPerSide : 0
-        cellChannels = Array(repeating: Channel(step: Self.cellTransitionThreshold), count: cellCount)
-        shownChannels = cellChannels
+        luminance.layOut(windowCount: windows.count, cellCount: cellCount)
+        red.layOut(windowCount: windows.count, cellCount: cellCount)
     }
 }
