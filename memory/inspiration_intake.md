@@ -1252,3 +1252,14 @@ Widerlegt: „kein TestFlight-Upload“ (die Quelle verwechselte die übersprung
 `ci.yml` mit `testflight.yml`, das Build 2622 hochgeladen hat) und ein veralteter Zweig-Stand.
 **Lehre:** Diese Quelle als ARTEFAKT-LESER einsetzen — um die Namen und Meldungen aller 23
 Fehler bitten, nicht um Bewertungen.
+
+## 2026-10-12 — Orchester Auftrag 11: Mistral mit Schreibrecht (Sync-Kommentare) — [verified 10/10]
+
+Bester Lauf des Orchesters bisher. Branch nur mit den drei erlaubten Dateien + Bericht, jede
+geänderte Zeile ein Kommentar, jede Behauptung mit Beleg-Zeile — alle zehn hielten der Messung
+stand. Wert über den Auftrag hinaus: die offenen Fragen. Zwei davon (Event-Adressen ohne
+Produzent im Kopf; `ignoredCount` zählt auch Undekodierbares) waren weitere echte Abweichungen,
+eine (UI-Leser von `lastSentTimestamp`) konnte die Quelle aus ihrem Datei-Ausschnitt nicht
+beantworten und hat das ehrlich als offen markiert statt zu raten. **Lehre:** enge Aufträge mit
+Belegpflicht und „frag statt rate“ liefern bei Mistral fast fehlerfreie Ergebnisse; der Engpass
+war nur die Branch-Anlage (Connector kennt keinen SHA) — die übernimmt jetzt Claude Code.
