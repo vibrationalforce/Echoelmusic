@@ -1378,3 +1378,8 @@ Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
 ## 2026-10-13 — Reel alan.buildz: SEO-Workflow per Claude-Diktat — WATCH
 - Gesehen (12 Frames, Ton unbekannt): Search Console, Keyword Planner, Trends, AnswerThePublic, Ubersuggest, Screaming Frog, PageSpeed, Rich Results, Yoast, Business Profile; Platz #9 → #1 als Animation.
 - Für Echoel nur die Website betroffen (PIPELINE). Billig später: Linkcrawl auf 404/301 und Rich-Results-Prüfung der vorhandenen Seiten. Jetzt nicht — der Auftrag ist Produktionsniveau in der App.
+
+## 2026-10-13 — Short @leosynthess: GLM-5.3-Flash · OpenViking · lokaler Model-Hub — WATCH
+- Gesehen (12 Frames, Ton unbekannt): ein offenes Modell (GLM-5.3-Flash, GitHub MiaAI-Lab), OpenViking als „Kontext-Datenbank für Agenten" per MCP an Claude Code/Codex/Antigravity, Z.AI und ein Model-Hub für lokale GGUF-Modelle (Gemma 4, Feinjustierung).
+- PRODUKT: nein. Null Fremdabhängigkeiten (`Package.swift` leer); der Sprachpfad auf dem Gerät ist Apples eigener (`import FoundationModels` in drei Dateien). Ein mitgeliefertes Modell kostete Gigabytes und eine Lizenz für eine Aufgabe, die schon gelöst ist.
+- PIPELINE: OpenViking macht, was `memory/` + `scratchpads/` + `decisions.csv` von Hand tun. Ein neuer MCP-Server ist Founder-Sache (Sicherheitsaudit 2026-10-08 §T) und wird nie aus einem Video installiert. Wiedervorlage 2026-11-12.
