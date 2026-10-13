@@ -1298,3 +1298,11 @@ gebührenpflichtig) und OpenAI-Realtime-Sprache — zwei Cloud-Abhängigkeiten, 
 kostenfrei. Kein Musik-, VJ-, OSC- oder MIDI-Pfad auf der Seite. Die Abschnitte 6 und 7 des Berichts
 sind leere Überschriften. Für das Produkt REJECT (Echoels Visual ist der Körper, on-device). Die
 Installations-Schritte der „Roadmap" wurden nicht ausgeführt (Lernmodus Regel 1).
+
+**Dritter Nachtrag — derselbe Bericht, jetzt mit §8 „KI-Wasserzeichen neutralisieren", REJECT.** §8 ist eine
+Anleitung zum Entfernen von Herkunftsmarkern (SynthID, C2PA), damit Plattformen KI-Material nicht erkennen
+— Unterabschnitte leer, Zweck klar. Nicht bearbeitet, keine Methode irgendwo festgehalten. Widerspricht dem
+ACE-Step-Disclaimer (KI-Beteiligung offenlegen) und der Zeile vom 2026-07-02 (EU AI Act Art. 50(4) als Teil
+des rechtlichen Vorteils). „Wasserzeichenfrei" ≠ „rechtlich frei". GEV-„Taktsynchronisation" steht nicht im
+README. Lehre: der Bericht wächst je Runde um einen Abschnitt und korrigiert seine Kernfehler nicht —
+weitere Einfügungen davon nicht mehr messen, es sei denn mit NEUER Primärquelle.
