@@ -2,7 +2,10 @@
 
 Phase-0-Gate des Founder-Prompts "ECHOELMUSIC SPATIAL EXPANSION" —
 **v2.0 (CONSOLIDATED) gilt; v1.0 superseded.** §§1–5 unten (v1-Kartierung der
-Layer 1–5) bleiben gültig; §6 ergänzt die v2-Neuerungen: Prinzipien P1–P4,
+Layer 1–5) sind eine Kartierung IHRES DATUMS, nicht des heutigen Baums — ⛔ seit #1302
+(2026-09-12) gibt es kein Mikrofon mehr (`MicrophoneManager`, `FeedbackGuard` sind als Dateien
+gelöscht; die „Vocal-Kette … WIRED" in Layer 4 ist Geschichte), seit #1304 keinen
+`VisualRecorder` (Layer 3). Gemessen 2026-10-13: `git ls-files | grep -E 'MicrophoneManager|FeedbackGuard|VisualRecorder'` → leer; §6 ergänzt die v2-Neuerungen: Prinzipien P1–P4,
 Layer 6 (EchoelRender), Layer 7 (Motion & Show Control), P4-Inventar,
 bestätigte Zyklus-Reihenfolge. Kein Code geändert — dieses Dokument IST das Gate.
 
