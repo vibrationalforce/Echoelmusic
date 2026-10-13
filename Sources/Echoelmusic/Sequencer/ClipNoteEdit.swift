@@ -394,6 +394,57 @@ enum ClipNoteEdit {
         return (clipNotes + copies, Set(copies.map(\.id)))
     }
 
+    /// Production N4b — COPY: `ids` (those inside the part's window) as a clipboard, each start
+    /// made relative to the earliest one, in start order. nil when none of them is in the window,
+    /// so Copy greys out instead of filling the clipboard with nothing.
+    nonisolated static func copying(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                    lengthTicks: Int) -> [Note]? {
+        guard lengthTicks > 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let picked = clipNotes.filter {
+            ids.contains($0.id) && $0.startTick >= windowStart && $0.startTick < windowEnd
+        }
+        guard let first = picked.map(\.startTick).min() else { return nil }
+        return picked.map { note -> Note in
+            var held = note
+            held.startTick = note.startTick - first
+            return held
+        }.sorted { $0.startTick == $1.startTick ? $0.pitch < $1.pitch : $0.startTick < $1.startTick }
+    }
+
+    /// Production N4b — PASTE: the clipboard placed at `step` (a column of the part, 0 = its first
+    /// step), with new ids, appended so the copies draw on top; their ids are returned to select
+    /// them. A copy that would start past the part's end is left out — a phrase longer than the
+    /// room keeps what fits, the player would skip the rest. nil when nothing fits or the
+    /// clipboard is empty.
+    nonisolated static func pasting(_ clipboard: [Note], atStep step: Int, into clipNotes: [Note],
+                                    offsetTicks: Int, lengthTicks: Int) -> (notes: [Note], ids: Set<UUID>)? {
+        guard !clipboard.isEmpty, lengthTicks > 0, step >= 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let origin = windowStart + step * Note.ticksPerStep
+        var copies: [Note] = []
+        for held in clipboard {
+            var copy = held
+            copy.id = UUID()
+            copy.startTick = origin + Swift.max(0, held.startTick)
+            guard copy.startTick < windowEnd else { continue }
+            copies.append(copy)
+        }
+        guard !copies.isEmpty else { return nil }
+        return (clipNotes + copies, Set(copies.map(\.id)))
+    }
+
+    /// Where Paste puts the clipboard: right after the selected notes (the step after the last
+    /// one ends, rounded up), or at the part's first step when nothing is selected — so a paste
+    /// into an empty part starts at its top, and a paste after a phrase continues it.
+    nonisolated static func pasteStep(after ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int) -> Int {
+        let windowStart = Swift.max(0, offsetTicks)
+        guard let end = clipNotes.filter({ ids.contains($0.id) }).map(\.endTick).max() else { return 0 }
+        return Swift.max(0, (end - windowStart + Note.ticksPerStep - 1) / Note.ticksPerStep)
+    }
+
     /// Production N4 — LEGATO: each of `ids` ends where the next note of the part starts (any
     /// pitch; a note starting at the same tick is a chord partner, not the next note), or at the
     /// part's end when none follows. Starts and pitches stay; a note outside the part's window is

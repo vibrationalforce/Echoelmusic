@@ -23796,6 +23796,54 @@
           }
         }
       }
+    },
+    "Paste" : {
+      "comment" : "Note editor tool (production N4b): put the copied notes into this part.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        }
+      }
+    },
+    "Copy the selected notes, to paste them into any part" : {
+      "comment" : "Note editor, VoiceOver label of Copy (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy the selected notes, to paste them into any part"
+          }
+        }
+      }
+    },
+    "Paste the copied notes right after the selection" : {
+      "comment" : "Note editor, VoiceOver label of Paste with a selection (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste the copied notes right after the selection"
+          }
+        }
+      }
+    },
+    "Paste the copied notes at the start of this part" : {
+      "comment" : "Note editor, VoiceOver label of Paste with nothing selected (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste the copied notes at the start of this part"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

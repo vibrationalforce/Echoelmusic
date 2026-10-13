@@ -281,10 +281,11 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         // moved it to 14: VoiceOver's add, nudge and stretch — the same pure ops as the tap and the
         // drag, each one commit, so they are counted here rather than routed around the pin.
         // Production N4 (`TheLegatoStretchesToTheNextNoteTests`) moved it to 15: Legato.
-        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 15, """
+        // Production N4b (`TheCopiedNotesPasteIntoAnyPartTests`) moved it to 16: Paste.
+        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 16, """
             create, delete, move, stretch, transpose, quantize, duplicate, velocity, fit to key, \
             step in key, velocity stroke, VoiceOver add, VoiceOver nudge, VoiceOver stretch, \
-            legato — each one commit through the one writer
+            legato, paste — each one commit through the one writer
             """)
         // ⛔ `PianoRollModel`, `pianoRoll` and `player.` stood in the banned list below as bare
         // words. The colour slice (`f60fda649`) needed ONE cold read of the roll model and N1 ONE

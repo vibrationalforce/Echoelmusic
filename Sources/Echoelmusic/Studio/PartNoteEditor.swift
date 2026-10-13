@@ -322,7 +322,7 @@ private struct PartNoteGrid: View {
                         }
                     )
                     controls(range: range, picked: pickedOnScreen, editable: editable,
-                             region: region, steps: steps)
+                             region: region, steps: steps, notes: clip.melody?.notes ?? [], offset: offset)
                         .onAppear { if centre == nil { centre = heldCentre } }
                     if editable, !visible.isEmpty {
                         // Design slice 3: ONE picked note is said in words — the grid shows
@@ -548,6 +548,27 @@ private struct PartNoteGrid: View {
         _ = timeline.setClipNotes(clipID: region.clipID, joined, clips: clipStore)
     }
 
+    /// Production N4b — Copy changes nothing in the song, so it is no Undo step.
+    private func copyPicked(_ ids: Set<UUID>, notes: [Note], region: TimelineRegion, offset: Int) {
+        guard let held = ClipNoteEdit.copying(ids, in: notes, offsetTicks: offset,
+                                              lengthTicks: region.lengthTicks) else { return }
+        NoteClipboard.shared.hold(held)
+    }
+
+    /// Production N4b — Paste through the one writer: one commit, one Undo step; the copies are
+    /// selected, so the next move or transpose acts on what just landed.
+    private func paste(_ held: [Note], after ids: Set<UUID>, region: TimelineRegion, offset: Int) {
+        guard let clip = clipStore.clip(id: region.clipID) else { return }
+        let notes = clip.melody?.notes ?? []
+        guard let pasted = ClipNoteEdit.pasting(held, atStep: ClipNoteEdit.pasteStep(after: ids, in: notes,
+                                                                                    offsetTicks: offset),
+                                                into: notes, offsetTicks: offset,
+                                                lengthTicks: region.lengthTicks) else { return }
+        if timeline.setClipNotes(clipID: region.clipID, pasted.notes, clips: clipStore) {
+            picked = RollSelection(ids: Array(pasted.ids))
+        }
+    }
+
     private func duplicate(_ ids: Set<UUID>, region: TimelineRegion, offset: Int) {
         guard let clip = clipStore.clip(id: region.clipID),
               let copied = ClipNoteEdit.duplicating(ids, in: clip.melody?.notes ?? [],
@@ -712,8 +733,9 @@ private struct PartNoteGrid: View {
     // MARK: - Controls
 
     private func controls(range: ClosedRange<Int>, picked: Set<UUID>, editable: Bool,
-                          region: TimelineRegion, steps: Int) -> some View {
+                          region: TimelineRegion, steps: Int, notes: [Note], offset: Int) -> some View {
         let pickedCount = picked.count
+        let held = NoteClipboard.shared.notes
         return NoteToolFlow(spacing: EchoelTheme.spaceS) {
             button("Lower", "chevron.down", enabled: range.lowerBound > 0,
                    label: String(localized: "Show the octave below")) { octaveShift -= 1 }
@@ -742,6 +764,25 @@ private struct PartNoteGrid: View {
                 // picked with no visible way to drop it.
                 button("Deselect", "xmark", enabled: !self.picked.ids.isEmpty,
                        label: String(localized: "Clear the note selection")) { self.picked = .none }
+                // Production N4b — Copy holds the picked notes for Paste in ANY part of the song;
+                // Paste puts them right after the selection, or at the part's top when nothing is
+                // picked. Both stay available with an empty grid: Paste is how a phrase reaches
+                // a new part.
+                button("Copy", "doc.on.doc",
+                       enabled: ClipNoteEdit.copying(picked, in: notes, offsetTicks: offset,
+                                                     lengthTicks: region.lengthTicks) != nil,
+                       label: String(localized: "Copy the selected notes, to paste them into any part")) {
+                    copyPicked(picked, notes: notes, region: region, offset: offset)
+                }
+                button("Paste", "doc.on.clipboard",
+                       enabled: ClipNoteEdit.pasting(held, atStep: ClipNoteEdit.pasteStep(after: picked, in: notes,
+                                                                                          offsetTicks: offset),
+                                                     into: notes, offsetTicks: offset,
+                                                     lengthTicks: region.lengthTicks) != nil,
+                       label: pickedCount > 0 ? String(localized: "Paste the copied notes right after the selection")
+                                              : String(localized: "Paste the copied notes at the start of this part")) {
+                    paste(held, after: picked, region: region, offset: offset)
+                }
             }
         }
     }
@@ -1055,4 +1096,14 @@ private struct NoteVelocityRow: View {
             .onChange(of: targets) { _, _ in draft = nil }
             .onChange(of: shown) { _, _ in draft = nil }
     }
+}
+
+/// Production N4b — the notes Copy took, held for Paste in any part of the song. In memory for
+/// this run only: never saved, never on the system pasteboard, never an Undo step. Written by a
+/// tap, read cold by the editor (is Paste available?), so observing it costs no redraws.
+@MainActor @Observable
+final class NoteClipboard {
+    static let shared = NoteClipboard()
+    private(set) var notes: [Note] = []
+    func hold(_ notes: [Note]) { self.notes = notes }
 }
