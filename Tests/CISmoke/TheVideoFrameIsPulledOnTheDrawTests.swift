@@ -590,13 +590,16 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
     }
 
     /// Claim 14 — the limiter counts the layer AT THE DIAL: a full-contrast cell checkerboard
-    /// reversing at 10 Hz under a 0.05 dial swings 0.05 on the screen, half the WCAG step, and is
-    /// not capped. Every window holds as many white cells as black, so only the cell channels see it.
+    /// reversing at 10 Hz under a 0.03 dial swings the luminance by 0.03 (under its 0.1 step) and the
+    /// largest colour sum, −G−B, by 0.06 (under the red step 20/320 = 0.0625), and is not capped. Every
+    /// window holds as many white cells as black, so only the cell channels see it. ⛔ The dial was
+    /// 0.05 until VV-4e: −G−B then swings 0.1, which over a pure red field IS a red flash, and the
+    /// colour sums rightly cap it — the claim's premise moved, not the law.
     func testTheLimiterCountsTheLayerAtTheDial() throws {
         let clock = ManualClock()
         let slot = VideoLayerSlot(clock: { clock.now })
         let output = StandInOutput()
-        let dial = 0.05
+        let dial = 0.03
         slot.attachVideoOutput(output, preferredTransform: .identity, dial: dial)
         let square = 64 / VideoLayerMath.flashCellsPerSide   // one limiter cell per square (`planar`'s side)
         let even = try planar { x, y in (x / square + y / square) % 2 == 0 ? 255 : 0 }
@@ -608,8 +611,8 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
             let opacity = try XCTUnwrap(slot.pullFootageFrame(viewportAspect: 1)).opacity
             if k >= settled {
                 XCTAssertEqual(opacity, Float(dial), accuracy: 1e-6, """
-                    Pull \(k): the layer was capped although the screen swings by \(dial), under the \
-                    WCAG step. The limiter is counting the FILE, not the layer — and the same \
+                    Pull \(k): the layer was capped although its luminance swings by \(dial) and its \
+                    largest colour sum by twice that, both under their WCAG steps. The limiter is counting the FILE, not the layer — and the same \
                     multiplication is what lets it see a dial climbing against falling footage, which \
                     is the direction that matters. If a second count on the undimmed file is ever \
                     added on purpose, move this claim in the same commit (#364, VV-5b).

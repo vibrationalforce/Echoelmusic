@@ -161,10 +161,13 @@ final class TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests: XCTestCase
     func testTheColourSumsAreTheCornersOfTheFieldBox() {
         let sums = VideoFlashLimiter.colourCombinations
         XCTAssertEqual(sums.count, 7, "three channels, each weight 0 or 1: seven non-zero corners")
+        let up: [Double] = [0, 1]
+        let down: [Double] = [0, -1]
         var corners = Set<[Double]>()
         for sum in sums {
-            XCTAssertTrue([0, 1].contains(sum.red) && [0, -1].contains(sum.green) && [0, -1].contains(sum.blue),
-                          "red counts up and green and blue down in the shown R − G − B")
+            XCTAssertTrue(up.contains(sum.red), "red counts up in the shown R − G − B")
+            XCTAssertTrue(down.contains(sum.green), "green counts down in the shown R − G − B")
+            XCTAssertTrue(down.contains(sum.blue), "blue counts down in the shown R − G − B")
             corners.insert([sum.red, sum.green, sum.blue])
             let lowest = Swift.min(0, sum.green) + Swift.min(0, sum.blue)
             let highest = Swift.max(0, sum.red)
