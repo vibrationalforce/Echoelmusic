@@ -1284,3 +1284,10 @@ vom 2026-07-02 als rechtlichen Vorteil gegen Suno/Udio führt. Die Brücke exist
 externes Werkzeug erzeugt, kommt über „Import Audio" in die Workstation (Wellenform, Pegel, Fades,
 Warp). Für die eigenen Produktionen des Founders: Lizenz und Trainingsdaten-Bedingungen des Modells
 vor kommerzieller Veröffentlichung prüfen. Wiedervorlage 2026-11-12.
+
+**Nachtrag gleicher Tag — LLM-Bericht zu ACE-Step 1.5 (Founder eingefügt), [verified 3/6].** An der
+Primärquelle (GitHub-README) gemessen: Mac/MLX, Modellgrößen und Speicherbedarf stimmen. FALSCH: die
+Lizenz ist MIT (Code), nicht Apache 2.0, und für die Gewichte nennt die Seite keine; „uneingeschränkte
+kommerzielle Rechte" steht dort nicht — der Disclaimer verlangt Offenlegung von KI-Beteiligung und
+Erlaubnis bei geschützten Stilen. Lehre: Rechte-Aussagen aus einem LLM-Bericht immer an der Quelle
+nachlesen. Verdikt unverändert WATCH, Brücke = Import Audio.
