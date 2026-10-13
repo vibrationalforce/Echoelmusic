@@ -109,13 +109,21 @@
 //     all three are reached from action paths — but "checked" was the claim, and it was assumed.
 //   · An ACTION closure written inside such a member (`Button { … }`, `.onAppear { … }`,
 //     `.task { … }`) is not body evaluation, and a hot read there would be reported although
-//     it is safe. None exists today. Note the neighbouring case is the OPPOSITE: the value
-//     argument of `.onChange(of:)` IS evaluated during body, so flagging that is correct.
+//     it is safe. None exists today for the older needle sets (bio, engine, click); section
+//     7's needles have two, which is why it opts in. Note the neighbouring case is the
+//     OPPOSITE: the value argument of `.onChange(of:)` IS evaluated during body, so flagging
+//     that is correct.
 //     ⭐ Since section 7 (2026-10-13) a scan can opt in to skipping the BODIES of `.onReceive`,
 //     `.task`, `.onAppear`, `.onDisappear` and `.onChange(of:)` closures — never their opener
 //     line, never a `Button` action (its `label:` closure is body), and only when the braces
 //     balance exactly (`actionClosureLines`). The older scans do not opt in: their claims were
 //     graded without it, and widening them is its own slice.
+//   · It reads every type NESTED in a scanned ancestor as part of it: a leaf declared inside
+//     the ancestor's braces is scanned, so the documented repair is a TOP-LEVEL leaf `struct`.
+//   · It does not follow a METHOD that reads hot state for its caller (section 7): a body
+//     calling `transport.currentTick()` registers on `position` and `tempo` without either
+//     needle in its text. Measured: the one view caller, `FloatingVisualWindow`, calls it
+//     inside a touch closure — safe, and invisible to the scan either way.
 //   · It anchors on a RECEIVER SPELLING. An alias (`let cam = cameraRPPG`), a hot value passed
 //     down as a function argument, or a renamed binding is invisible to it. The `AudioEngine`
 //     half derives its spelling from the file's own `@Environment` binding, so a rename moves
@@ -208,14 +216,34 @@
 // derivations SELECT `currentStep` + `tempo` (the step clock and the glide), `position` + `tempo`
 // (the `Transport` relay) and `lastCommandSummary` + `lastReceivedTimestamp` (the OSC input); the
 // middle-ancestor premise finds none of the four types held by `WorkspaceView`, `SurfaceHost`,
-// `StageShell` or `ArrangeStage`; both leaf counterweights find their needle.
+// `StageShell` or `ArrangeStage`; the clock counterweight finds its spelling and the OSC one
+// finds the PROPERTY only (see below).
 // **The action-closure exemption is TRAGEND for exactly 2 reads — 2 of the 5 negative scans flip
 // without it, one read each:** `beatPlayer.pattern.tempo` in the host's save case (inside
 // `.onReceive`) and `transport.tempo` in the app's MIDI-clock `.task`. Both are event handlers,
 // not body evaluation, so neither registers an observer; without the exemption the section would
 // forbid correct work (#364). The synthetic claim pins the exempt lines as exactly `[4, 7]` of a
-// 19-line member whose `Button` label reads the clock — the label stays scanned.
+// 22-line member whose `Button` label and `.overlay` content read the clock — both stay scanned.
 // ANCHOR ABSENCE: 0. Execution on CI is unobserved until a job log names these claims (#445).
+// ⛔ **NEEDLE MATCHABILITY, MEASURED RATHER THAN IMPLIED (review of `9ab00ae7e`).** Of the ten
+// (scan, needle) pairs the five negative scans look for, only TWO occur in their file today
+// (code-only), and both only inside action closures: `beatPlayer.pattern.tempo` in the host and
+// `transport.tempo` in the app. The other EIGHT occur ZERO times — the host's
+// `transport.position`/`.tempo` and `beatPlayer.pattern.currentStep`, the app's
+// `transport.position`, `beatPlayer.pattern.currentStep`/`.tempo` and both `oscIn.` readouts.
+// Those eight are forward guards over a needle that cannot match today, NAMED here as the bio
+// and click app-level scans are. The first draft of this paragraph said "both leaf
+// counterweights find their needle": true of the clock spelling, false of the OSC one.
+// **THE REVIEW FIXES (this commit, test-only, `Sources/` unchanged) — graded against the old
+// helper, not against a tree.** Three defects in the guard's own machinery, each driven both
+// ways through the Python twin: (1) the skip took `.onAppear { go() }.overlay {` for an action
+// and skipped the overlay's content — a false GREEN; the extended synthetic claim is red on the
+// old rule (`[4, 7, 18]`) and green on the new one, and the new rule changes no verdict on
+// today's `Sources/` (zero opener lines there have the refused shape); (2) the premise regex's
+// `: X\b` arm matched `steps: Transport.stepsPerBar`, refusing the constant its own comment
+// allows — a false red, red on the old arm, green on `(?![\w.])`, which still matches every real
+// binding shape; (3) three limits blocks named the wrong failure direction. Plus two
+// COUNTERWEIGHTS, green on both: the host's derived binding names are names the file uses.
 //
 // The three older sections: 0 FORWARD guards. 0 red by ANCHOR ABSENCE. Everything else is a
 // COUNTERWEIGHT, and per §343 that is the content. The counterweights exist so no negative
@@ -383,9 +411,13 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     ]
 
     // ⭐ GMMW DEEP AUDIT (2026-10-13) — THREE MORE WRITERS, each on an object the app already
-    // injects, none with a section here, all read today ONLY in leaves (measured:
-    // `TransportPositionView`, `MiniTransportView`, `CompositionHeaderStrip`,
-    // `SessionNamePreviewLeaf`, `OSCInputStatusLine`):
+    // injects, none with a section here, all read today only in leaves or in action paths.
+    // Measured, among the leaves (⛔ the first draft listed five as if complete, and the review
+    // of `9ab00ae7e` found four more — an enumeration of what one search thought of, this
+    // file's recurring lesson): `TransportPositionView`, `MiniTransportView`,
+    // `SessionNamePreviewLeaf`, `ProjectTempoReadout`, `BodyTempoField` (`followingValue`),
+    // `KeepLastLoopButton`, `KeepLastAvailabilityNote`, `OSCInputStatusLine`; and
+    // `CompositionHeaderStrip` reads the tempo only inside a `Binding`'s `set:` closure:
     //   · the STEP CLOCK — `PatternEngine.advance()` runs once per sixteenth (8 Hz at 120 bpm,
     //     past 10 Hz above 150) and writes `currentStep`, then relays `Transport.tick(step:)`,
     //     which writes `position`;
@@ -998,12 +1030,26 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             `EchoelStudioView` no longer declares `@Environment(BeatPlayer.self)` — the binding \
             the host reaches the step clock through (`<binding>.pattern`).
             """)
+        // The cheap half of the question section 4 asks (#367): a derived name the file never
+        // USES would make both scans below look for a spelling that cannot occur.
+        let hostCode = SourceText.codeOnly(try read(Self.host))
+        XCTAssertTrue(hostCode.contains("\(transport)."), """
+            `environmentReceiver` derived "\(transport)" for `Transport` from \(Self.host), and \
+            that spelling is used nowhere in the file — the derivation read the wrong `var`, and \
+            the clock scan below would pass by looking for something that does not exist.
+            """)
+        XCTAssertTrue(hostCode.contains("\(player).pattern"), """
+            `environmentReceiver` derived "\(player)" for `BeatPlayer` from \(Self.host), and \
+            `\(player).pattern` occurs nowhere in the file — the step-clock scan below anchors \
+            on exactly that spelling.
+            """)
         let why = """
             The step clock writes on every sixteenth and the glide eases the tempo on every step \
             (20 Hz while stopped). One such read in a member `body` evaluates churns the whole \
             studio body and tears down any open Tonart/Genre Picker — the founder's "menus \
-            freeze while playing", from the clock this time. Put the read in a leaf `View` \
-            (`TransportPositionView` is the shape).
+            freeze while playing", from the clock this time. Put the read in a TOP-LEVEL leaf \
+            `struct … : View` (`TransportPositionView` is the shape) — a leaf nested inside \
+            `EchoelStudioView` sits inside the scanned span and is reported.
             ⚠️ This scan skips the BODIES of `.onReceive`, `.task`, `.onAppear`, `.onDisappear` \
             and `.onChange(of:)` closures — the host's door handler reads \
             `\(player).pattern.tempo` inside its `.onReceive`, which is safe. It never skips an \
@@ -1067,13 +1113,26 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
         // `WorkspaceView.swift`), so a file-wide check would forbid the documented repair (#364).
         // It matches BINDING shapes only — `(X.self)`, `: X`, `= X(` — so a static constant such
         // as `Transport.stepsPerBar` stays allowed: it is not an observed read.
+        // ⛔ The `: X` arm ended in `\b` until the review of `9ab00ae7e`, and `\b` sits between
+        // `t` and `.` — so an argument label, `steps: Transport.stepsPerBar`, matched it and the
+        // constant this comment allows was refused (a false red). `(?![\w.])` refuses both a
+        // longer type name and a member access, and still matches `: Transport` and
+        // `: Transport?`.
+        // ⚠️ #416, stated rather than hidden: this is a SECOND premise test beside
+        // `testTheMiddleAncestorsHoldNeitherNarrowProducer`, whose own comment argues that a
+        // near-copy is where two truths drift. It stands apart because that one is FILE-wide
+        // (`text.contains(type)`), and these types are legitimately named file-wide in
+        // `WorkspaceView.swift` (the leaf `TransportPositionView`, the constants
+        // `Transport.minTempo`/`maxTempo`) — folding them in would forbid correct work (#364).
+        // Moving the older table onto this type-scoped, binding-shaped check is its own slice:
+        // its claims were graded file-wide.
         for (path, type) in [(Self.root, "WorkspaceView"), (Self.wrapper, "SurfaceHost"),
                              (Self.seam, "StageShell"), (Self.seam, "ArrangeStage")] {
             let text = try XCTUnwrap(try typeText(of: type, in: path), """
                 `struct \(type):` is gone from \(path) — move this premise with it.
                 """)
             for held in ["Transport", "BeatPlayer", "PatternEngine", "OSCReceiver"] {
-                let binding = "\\(\(held)\\.self\\)|:\\s*\(held)\\b|=\\s*\(held)\\("
+                let binding = "\\(\(held)\\.self\\)|:\\s*\(held)(?![\\w.])|=\\s*\(held)\\("
                 XCTAssertNil(text.range(of: binding, options: .regularExpression), """
                     `\(type)` (\(path)) now binds `\(held)`. Not forbidden — but the clock and \
                     OSC scans run only on `EchoelStudioView` and `EchoelmusicApp`, so this \
@@ -1085,17 +1144,25 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     }
 
     func testTheLeavesStillReadTheClockAndTheOSCInput() throws {
-        // COUNTERWEIGHT (#343): the needles above must match real text somewhere, or every
-        // green in this section is green over a spelling nothing uses.
+        // COUNTERWEIGHT (#343), and what it does NOT prove is part of it. The clock half proves
+        // the needle SPELLING `transport.position` is real code. The OSC half proves less: the
+        // leaf reads the readouts through its OWN binding (`receiver.`), so it shows the
+        // PROPERTY is a live observed readout, not that the app-level needle `oscIn.<readout>`
+        // can match — measured, that spelling occurs nowhere in `Sources/` today, the same
+        // named limit as the bio app-level scan. `currentStep` has NO view reader at all (its
+        // one reader is `TimelineRegionPlayer`, not a view), so no counterweight exists for
+        // it; the derivation claim is its only anchor.
         let root = SourceText.codeOnly(try read(Self.root))
         XCTAssertTrue(root.contains("\(Self.transportReceiver).position"), """
             `TransportPositionView` (\(Self.root)) no longer reads \
-            `\(Self.transportReceiver).position` — the clock needle would then match nothing.
+            `\(Self.transportReceiver).position` — the clock needle's spelling would then match \
+            nothing in the view layer.
             """)
         let leaf = SourceText.codeOnly(try read(Self.oscStatusLeaf))
         XCTAssertTrue(leaf.contains(".lastCommandSummary"), """
-            `OSCInputStatusLine` (\(Self.oscStatusLeaf)) no longer reads `.lastCommandSummary` \
-            — the OSC needle would then match nothing anywhere.
+            `OSCInputStatusLine` (\(Self.oscStatusLeaf)) no longer reads `.lastCommandSummary`. \
+            This anchors the PROPERTY, not the receiver spelling `\(Self.oscReceiver).` — if the \
+            readout went, the OSC scans would be guarding a name no view reads.
             """)
     }
 
@@ -1120,15 +1187,21 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             "            .task {",
             "                let b = \"{\"",
             "            }",
+            "            .onAppear { go() }.overlay {",
+            "                Text(\"\\(transport.position)\")",
+            "            }",
             "        }",
             "    }",
         ]
         XCTAssertEqual(actionClosureLines(in: lines, member: 0), [4, 7], """
             Exactly two lines may be skipped: the `.onAppear` body (4) and the `.onChange` body \
             (7). NOT the `.onChange(of:)` opener (6, its value is evaluated in body), NOT the \
-            `Button` action or its `label:` (10, 12 — the label IS body), and NOT the `.task` \
-            body (15), whose braces do not balance because of the `{` inside a string — an \
-            inexact closure keeps every line scanned, so the failure direction is a false red.
+            `Button` action or its `label:` (10, 12 — the label IS body), NOT the `.task` body \
+            (15), whose braces do not balance because of the `{` inside a string, and NOT the \
+            `.overlay` content (18): its line opens with a one-line `.onAppear { … }` that has \
+            already CLOSED, so the last `{` belongs to the overlay, whose content is body. An \
+            inexact or foreign closure keeps every line scanned; the failure direction is a \
+            false red.
             """)
     }
 
@@ -1418,12 +1491,15 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     /// `@ObservationIgnored`, so the `didSet` chain and the render closure cannot invalidate
     /// a body).
     ///
-    /// ⚠️ TWO MORE LIMITS, both in the safe direction. (a) ONE write per line: the loop
-    /// `break`s after the first matching prefix, so `metronome?.bpm = b; metronome?.level = c`
-    /// drops the second — `meterProperties()` carries the same limit for the same reason.
-    /// (b) RATE IS NOT CHECKED: any assignment inside a machine-rate relay is ASSUMED
-    /// machine-rate, so a one-shot write added there would over-collect. That fails toward a
-    /// false red, not a false green.
+    /// ⚠️ TWO MORE LIMITS, and they fail in OPPOSITE directions. (a) ONE write per line: the
+    /// loop `break`s after the first matching prefix, so `metronome?.bpm = b; metronome?.level
+    /// = c` drops the second — a dropped name is a name the scans never look for, i.e. a false
+    /// GREEN. `meterProperties()` carries the same limit for the same reason. (b) RATE IS NOT
+    /// CHECKED: any assignment inside a machine-rate relay is ASSUMED machine-rate, so a
+    /// one-shot write added there would over-collect — a false red.
+    /// ⛔ This said "both in the safe direction" until the review of `9ab00ae7e`; (a) is not.
+    /// An under-collected hot set is the reassuring failure, and calling it safe is §3's
+    /// flattering direction.
     private func metronomeHotProperties() throws -> Set<String> {
         let lines = SourceText.codeOnly(try read(Self.app))
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -1484,19 +1560,25 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     /// `heartRate`, so a body reading `engine.snapshot.anything` registers on `snapshot` and
     /// churns at 20 Hz no matter which field it wanted.
     ///
-    /// ⚠️ THREE LIMITS, stated rather than engineered around (§1), all failing toward a false
-    /// RED rather than a false green:
+    /// ⚠️ THREE LIMITS, stated rather than engineered around (§1) — and NOT all in one
+    /// direction (⛔ this said "all failing toward a false RED" until the review of
+    /// `9ab00ae7e`; only (b) does):
     ///   (a) ONE write per line — the first `self.` on a line wins. That is also what makes
     ///       `self.smoothBreathPhase = self.snapshot.breathPhase` collect the WRITE and ignore
     ///       the read on the same line, which is correct; a second write on one line would be
-    ///       dropped. `meterProperties()` and `metronomeHotProperties()` carry the same limit.
+    ///       dropped, and so would a write after a leading read (`let x = self.a; self.b = x`).
+    ///       A dropped name is never looked for: a false GREEN. `meterProperties()` and
+    ///       `metronomeHotProperties()` carry the same limit.
     ///   (b) RATE IS NOT PARSED. Any tracked write inside this method is assumed machine-rate.
-    ///       If the timer were slowed to once a minute the set would still be called hot.
+    ///       If the timer were slowed to once a minute the set would still be called hot — a
+    ///       false red.
     ///   (c) `isObservationTracked` takes the FIRST `var <name>` in the file, and this file
     ///       declares the engine TWICE — the real type under `#if canImport(HealthKit)` and a
     ///       stub under `#else`. First match is the real one, which is what ships on iOS; if
     ///       the branches are ever reordered this reads the stub's declarations instead. They
-    ///       agree today, so that would be silent — hence writing it down.
+    ///       agree today, so that would be silent — and it can fail EITHER way: a name the
+    ///       stub marks `@ObservationIgnored` drops out (false green), one it tracks where the
+    ///       real type does not stays in (false red).
     private func fallbackBioHotProperties() throws -> Set<String> {
         let lines = SourceText.codeOnly(try read(Self.bioEngine))
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -1540,14 +1622,24 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     /// write is `tempo += diff * 0.15`, and a derivation that skipped it would keep `tempo` only
     /// because the snap line in the same method happens to assign it too.
     ///
-    /// ⚠️ LIMITS (§1), all failing toward a false RED except (d):
-    ///   (a) one write per line, at statement start;
-    ///   (b) rate is not parsed — any tracked write in the method is assumed machine-rate;
+    /// ⚠️ LIMITS (§1). ⛔ This said "all failing toward a false RED except (d)" until the review
+    /// of `9ab00ae7e`; it is the other way round — only (b) over-collects. Every other limit
+    /// UNDER-collects, and an under-collected set is a name the scans never look for:
+    ///   (a) one write per line, at statement start — `if x { tempo = y }` is not seen
+    ///       (false green);
+    ///   (b) rate is not parsed — any tracked write in the method is assumed machine-rate
+    ///       (false red);
     ///   (c) a name DECLARED inside the method is a local and is skipped — `Transport.tick`
     ///       declares `var bar = position.bar`, and `isObservationTracked` alone would take that
-    ///       local's `var bar =` for a stored property (its own documented limit);
+    ///       local's `var bar =` for a stored property (its own documented limit). A local that
+    ///       SHADOWS a tracked property hides that property's `self.` writes too (false green);
     ///   (d) a write in a helper the method CALLS is not followed, except the transport relay,
-    ///       which `transportRelayHotProperties()` follows one hop on purpose. A false green.
+    ///       which `transportRelayHotProperties()` follows one hop on purpose (false green);
+    ///   (e) a FIELD write through a tracked struct — `position.step = s` — is not recognised:
+    ///       the name is followed by `.`, not `=` (false green). `fallbackBioHotProperties()`
+    ///       handles that shape behind `self.`; this one does not. Today's four names are pinned
+    ///       by `testTheStepClockAndGlideHotSetsAreDerivedFromTheirWriters`, so (a)–(e) can hide
+    ///       a NEW name, never silently drop one of those four.
     private func assignedTrackedProperties(in path: String,
                                            method: String) throws -> (names: Set<String>, found: Bool) {
         let lines = SourceText.codeOnly(try read(path))
@@ -1762,6 +1854,15 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     /// body. A closure counts only when its braces balance exactly between the opener's LAST `{`
     /// and the `}` the indentation rule found; anything else (a `}.modifier` close, a brace in a
     /// string) keeps every line scanned, so the failure direction is a false red.
+    /// ⛔ AND THE OPENER LINE MUST NOT CLOSE ITS OWN ACTION BEFORE THAT LAST `{` (review of
+    /// `9ab00ae7e`). `.onAppear { go() }.overlay {` starts with an action opener, but its last
+    /// `{` opens the OVERLAY, whose content IS body — and the braces from there balance exactly,
+    /// so the first version skipped a view's content as if it were an event handler: a false
+    /// GREEN, the one direction this helper promised not to fail in. A `}` between the opener
+    /// token and the line's last `{` now refuses the line, so a one-line action followed by a
+    /// trailing closure stays scanned, and so does an `.onChange(of:)` whose value holds a
+    /// closure — a false red. Measured over every `.swift` file under `Sources/`: no opener
+    /// line has that shape today, so the refusal changes no verdict.
     private func actionClosureLines(in lines: [String], member start: Int) -> Set<Int> {
         guard let (lo, hi) = span(of: lines[start], in: lines, from: start), hi > lo + 1 else {
             return []
@@ -1770,7 +1871,8 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
         for index in (lo + 1)..<hi {
             let trimmed = lines[index].trimmingCharacters(in: .whitespaces)
             guard Self.actionClosureOpeners.contains(where: { trimmed.hasPrefix($0) }),
-                  lines[index].contains("{"),
+                  let lastBrace = trimmed.lastIndex(of: "{"),
+                  !trimmed[..<lastBrace].contains("}"),
                   let (open, close) = span(of: lines[index], in: lines, from: index),
                   close < hi,
                   bracesCloseExactly(lines, from: open, at: close) else { continue }
