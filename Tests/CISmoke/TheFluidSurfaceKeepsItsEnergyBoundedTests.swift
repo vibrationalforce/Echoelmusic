@@ -24,7 +24,7 @@
 //
 // ⚠️ HONEST LIMIT. Nothing here renders a pixel or reads a finger. Whether the ring LOOKS like
 // water, and whether "Ruhe dämpft sie" is felt rather than read, are device probes that arrive
-// with F3 as NEEDS-FOUNDER-VERIFY at the construction site.
+// with F3 as a NEEDS-FOUNDER-VERIFY at the construction site.
 //
 // `Tests/CISmoke` is the blocking bundle.
 

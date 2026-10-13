@@ -33,8 +33,9 @@
 // OKLab (scratchpad `tint/twin.py`: L 0.82 → 3.07:1, L 0.85 → 3.32:1 worst case; the accent's own
 // 0.55 floor reproduces the review's 3.12:1 in the same twin, which is how the twin was checked).
 // DEVICE PROBE, open — NEEDS-FOUNDER-VERIFY: open a MIDI part's Notes page: each row's blocks wear
-// one hue (twin at L 0.84: C mint green, F♯ pink, A salmon); change the concert pitch to 432 in the Tempo
-// tools — the blocks recolour with the pads and the picture; a quiet note is darker, never washed.
+// one hue (twin at L 0.84: C mint green, F♯ pink, A salmon); set A4 to 432 on the Piece stage (the one
+// concert-pitch field, `CompositionHeaderStrip`) — the blocks shift hue with the pads and the picture; a
+// quiet note is darker, never washed.
 
 import Foundation
 import SwiftUI
