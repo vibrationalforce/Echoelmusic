@@ -260,6 +260,8 @@ public final class TimelineRegionPlayer {
     /// not unload a plugin the next play needs again (a reload is a pause of the whole engine).
     /// A slot reused by another lane is re-named at its next load. nil sink ⇒ no hosting.
     @ObservationIgnored public var slotPluginSink: ((_ slot: Int, _ component: DeviceInsert.PluginComponent?) -> Void)?
+    /// H2d — what each slot was last told to play, so a pick during playback is seen as a CHANGE.
+    @ObservationIgnored private var namedPlugin: [Int: DeviceInsert.PluginComponent] = [:]
     @ObservationIgnored private var lanePool = LaneVoicePool(capacity: 0)
     @ObservationIgnored private var pumps: [Int: LaneNotePump] = [:]
 
@@ -1170,7 +1172,7 @@ public final class TimelineRegionPlayer {
                 // CURRENT binding, so the kind must land first (else patch/notes hit
                 // the old physical voice). Rebinding releases the old voice internally.
                 slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: doc, rollLane: rollLane))
-                slotPluginSink?(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
+                nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
                 // S2-W3: the lane's sample ref, AFTER the kind (binding first, then
                 // the sample lands in the bound sampler unit).
                 slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: doc, rollLane: rollLane))
@@ -1249,7 +1251,7 @@ public final class TimelineRegionPlayer {
             slotLaneSink?(load.slot, load.laneID)
             // S2-W2-4: kind before patch/gain/notes (same ordering law as the fan-out).
             slotKindSink?(load.slot, MultiRollFanout.voiceKind(forSlot: load.slot, in: doc, rollLane: rollLane))
-            slotPluginSink?(load.slot, MultiRollFanout.hostedInstrument(forSlot: load.slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
+            nameSlotPlugin(load.slot, MultiRollFanout.hostedInstrument(forSlot: load.slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
             // S2-W3: sample after kind (same ordering law as the fan-out).
             slotSampleSink?(load.slot, MultiRollFanout.samplePath(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotPatchSink?(load.slot, load.patch)
@@ -1301,7 +1303,24 @@ public final class TimelineRegionPlayer {
             slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
             slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
+            // H2d: a plugin picked (or un-picked, or undone) while the piece plays is taken now,
+            // not at the slot's next onset. Only on a CHANGE: the held notes are released through
+            // the OLD owner first (the load sites' order law), then the slot is named again.
+            let plugin = MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane)
+            if plugin != namedPlugin[slot] {
+                if let sink = slotNoteSink, var pump = pumps[slot], !pump.isEmpty {
+                    sink(slot, pump.reset())
+                    pumps[slot] = pump
+                }
+                nameSlotPlugin(slot, plugin)
+            }
         }
+    }
+
+    /// H2b/H2d — the one way a slot is told its hosted instrument: remember it, then tell the app.
+    private func nameSlotPlugin(_ slot: Int, _ component: DeviceInsert.PluginComponent?) {
+        namedPlugin[slot] = component
+        slotPluginSink?(slot, component)
     }
 
     /// The per-lane mute/solo/level gate for a slot's lane (rank→lane), matching the
@@ -1692,7 +1711,7 @@ public final class TimelineRegionPlayer {
             let roll = document.rollLaneID
             slotLaneSink?(slot, laneID)
             slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: document, rollLane: roll))
-            slotPluginSink?(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: document, rollLane: roll))   // H2b: the hosted unit, at the kind's sites
+            nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: document, rollLane: roll))   // H2b: the hosted unit, at the kind's sites
             slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: document, rollLane: roll))
             slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: document, rollLane: roll))
             slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: document, rollLane: roll))
@@ -1757,7 +1776,7 @@ public final class TimelineRegionPlayer {
         if !pump.isEmpty { sink(slot, pump.reset()) }
         slotLaneSink?(slot, laneID)
         slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: doc, rollLane: rollLane))
-        slotPluginSink?(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
+        nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
         slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: doc, rollLane: rollLane))
         slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: doc, rollLane: rollLane))
         slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))

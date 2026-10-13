@@ -17,8 +17,8 @@
 //    the slot is never overwritten; the track's effect insert is kept; clearing leaves no chain.
 //    Claim 4: the slot resolver answers for the track the rack plays in that slot, and nil for an
 //    out-of-range slot.
-//  · SOURCE-TEXT SCAN (claim 5) — the region player is the one reader, at its four load sites
-//    (H2b2 raised this from "no reader" when the host arrived).
+//  · SOURCE-TEXT SCAN (claim 5) — the region player is the one reader: its four load sites plus
+//    the live mixer merge (H2b2 raised this from "no reader"; H2d added the merge, 4 → 5).
 //
 //  GRADING against the parent tree (#433/#464): the file does NOT compile there — the insert type,
 //  the writer, the step kind and the resolver are created by this commit — so no assertion has a
@@ -175,10 +175,11 @@ final class ATrackPicksItsPluginInstrumentOnceTests: XCTestCase {
             let reads = code.components(separatedBy: "MultiRollFanout.hostedInstrument(forSlot:").count - 1
             if reads > 0 { callers[url.lastPathComponent] = reads }
         }
-        XCTAssertEqual(callers, ["TimelineRegionPlayer.swift": 4], """
+        XCTAssertEqual(callers, ["TimelineRegionPlayer.swift": 5], """
             The hosted-instrument choice is read somewhere other than the region player's four \
-            load sites (fan-out, prime, audition bind, re-bind — right after the slot's kind). A \
-            second reader is a second decision about what a track plays (#416).
+            load sites (fan-out, prime, audition bind, re-bind — right after the slot's kind) and \
+            its live mixer merge (H2d: a pick during playback). A second reader is a second \
+            decision about what a track plays (#416).
             """)
     }
 }

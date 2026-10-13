@@ -137,6 +137,24 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertTrue(app.contains("pluginHost.setTranspose(slot: slot, semitones: semitones)"))
     }
 
+    // MARK: 3c — a pick during playback is taken now (H2d)
+
+    func testAPickDuringPlaybackReleasesThenRenames() throws {
+        let player = SourceText.codeOnly(try source("Sources/Echoelmusic/Sequencer/TimelineRegionPlayer.swift"))
+        guard let merge = body(of: "private func refreshMixer()", in: player, length: 2400) else {
+            return XCTFail("ANCHOR MISSING: refreshMixer")
+        }
+        guard let change = merge.range(of: "if plugin != namedPlugin[slot] {"),
+              let release = merge.range(of: "sink(slot, pump.reset())", range: change.upperBound..<merge.endIndex),
+              let rename = merge.range(of: "nameSlotPlugin(slot, plugin)", range: change.upperBound..<merge.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the change test, the release or the rename in refreshMixer")
+        }
+        XCTAssertLessThan(release.lowerBound, rename.lowerBound,
+                          "held notes leave through the OLD owner before the slot is named again")
+        XCTAssertEqual(player.components(separatedBy: "slotPluginSink?(").count - 1, 1,
+                       "every naming goes through nameSlotPlugin, which remembers what it said")
+    }
+
     // MARK: 4 — the engine API
 
     func testTheEngineAttachIsTheSourceNodeShape() throws {
