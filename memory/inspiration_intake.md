@@ -1383,3 +1383,7 @@ Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
 - Gesehen (12 Frames, Ton unbekannt): ein offenes Modell (GLM-5.3-Flash, GitHub MiaAI-Lab), OpenViking als „Kontext-Datenbank für Agenten" per MCP an Claude Code/Codex/Antigravity, Z.AI und ein Model-Hub für lokale GGUF-Modelle (Gemma 4, Feinjustierung).
 - PRODUKT: nein. Null Fremdabhängigkeiten (`Package.swift` leer); der Sprachpfad auf dem Gerät ist Apples eigener (`import FoundationModels` in drei Dateien). Ein mitgeliefertes Modell kostete Gigabytes und eine Lizenz für eine Aufgabe, die schon gelöst ist.
 - PIPELINE: OpenViking macht, was `memory/` + `scratchpads/` + `decisions.csv` von Hand tun. Ein neuer MCP-Server ist Founder-Sache (Sicherheitsaudit 2026-10-08 §T) und wird nie aus einem Video installiert. Wiedervorlage 2026-11-12.
+
+## 2026-10-13 — Link kilernen.de (KI-Kursplattform) — WATCH
+- Seite aus der Sitzung gesperrt (Netzwerk-Regel); gelesen nur Suchtreffer: bezahlte deutsche KI-Kurse von Everlast Consulting GmbH, u. a. „Claude Code Masterclass" (5 Module, 108 Lektionen), „Agentic Coding Workshop", Team-Lizenzen.
+- Inhalt: allgemeines Claude-Code-/Agenten-Handwerk. Das Repo betreibt das schon (CLAUDE.md, Skills, Hooks, Teams, Workflows, Lernmodus, CI-Gates). Nutzen eher für den Founder persönlich (Sitzungen briefen und steuern), nicht für den Code. Kurs-Auszüge laufen über den Lernmodus. Wiedervorlage 2026-11-12.
