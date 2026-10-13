@@ -58,3 +58,31 @@ Gemessen am 2026-10-13 von zwei Lesern (nur lesend, file:line in der Sitzung). D
 
 Ob ein Fremd-Plugin lädt, klingt und seine Oberfläche zeigt, sieht nur ein Gerät mit installierten
 Plugins. Jede H-Scheibe trägt deshalb eine `NEEDS-FOUNDER-VERIFY`-Bitte mit genauem Weg.
+
+## Stand 2026-10-13 (abends)
+
+| Scheibe | Commit | Stand |
+|---|---|---|
+| H1 Liste der installierten AUv3 | `800110e1c` | gepusht, Gates offen |
+| N1 Noten hören beim Setzen/Antippen/Verschieben | `ca233360d` | gepusht |
+| N3a Raster zeichnet (Start an der Zelle, Länge = Zelle) | `69439cd36` | gepusht |
+| N4a Legato | `da2dbd3a8` | gepusht; repariert zugleich `TheSelectedPartsNotesAreEditedThroughOneWriterTests` (rot seit `f60fda649`) |
+
+## A1 — gemessener Weg (Explore-Bericht 2026-10-13, Belege file:line dort nachprüfen)
+
+- Heute bietet `SongAutomationEdit.offered` nur `PolySynthVoice.automatableBases`, und `sounds(on:)` nur POLY-Rack-Spuren
+  (`Studio/SongAutomationEditor.swift` ~62/133). Kein Lautstärke-/Pan-Ziel.
+- Anwenden läuft über `AutomationPlayer.applyStep` → `ParameterApplyRouter.applyPerTrack` → Slot; Roll-, Audio-
+  und Bio-Spuren lösen dort zu nil auf.
+- Pegel/Pan heute: Rack über `slotGainSink`/`slotPanSink` (`refreshMixer` jeden Schritt, aber früher Ausstieg ohne
+  Mixer-Änderung) · Audio über `AudioLanePlayer.reconcileMix` (jeden Schritt, mit Diff-Cache) · Roll nur
+  `pianoRoll.mixGain` = Anschlags-Skalierung, KEIN Live-Fader, KEIN Pan-Verbraucher.
+- **Entwurf (nicht über den Router, kein Dokument-Schreiben pro Schritt):**
+  - A1a: reservierte Basen `mix.gain`/`mix.pan` (ohne Registry-Deskriptor, also kein Doppel-Anwenden) +
+    reine `TimelineDocument.automatedGain(for:atTick:)`/`automatedPan(for:atTick:)`; Noten-Gate bleibt auf
+    `effectiveGain`.
+  - A1b: Rack — `refreshMixer` mit Tick, Diff-Cache je Slot statt frühem Ausstieg; Audio — Tick in
+    `start`/`reconcileMix`/Override.
+  - A1c: Editor bietet `mix.gain`/`mix.pan` jeder Spur mit Verbraucher an (Roll: nur Gain, und ehrlich: formt nur
+    Anschläge, bis ein Spur-Knoten existiert = H5).
+- Treppen-Artefakte bei schnellen Rampen (Schritt-Rate) — Glättung im Sink optional, als Grenze nennen.
