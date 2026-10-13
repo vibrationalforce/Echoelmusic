@@ -1274,3 +1274,13 @@ Testdatei, die nur die gezeigten APIs nutzt, plus eine Rechentabelle, die sich F
 nachrechnen ließ. **Lehre:** für Grok ist „Code im Prompt, Antwort im Chat“ verlässlicher als der
 Connector. Übernommen als `TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests` — Anspruch A als
 `XCTExpectFailure`, damit das blockierende Bündel heute ehrlich bleibt und bei der Reparatur rot wird.
+
+### 2026-10-13 — Lokale KI-Musikgeneratoren (ACE-Step 1.5), Video youtu.be/zeEpZhNSnqw
+
+Quelle: Founder-Link mit Zusammenfassung; das Video selbst nicht gesehen (Proxy). Verdikt **WATCH**.
+In der App nicht: ein Modell dieser Größe passt nicht in den Render-Pfad (REJECT 2026-06-18), und
+ganze Tracks zu generieren konkurriert mit dem deterministischen Körper→Klang-Kern, den der Eintrag
+vom 2026-07-02 als rechtlichen Vorteil gegen Suno/Udio führt. Die Brücke existiert schon: was ein
+externes Werkzeug erzeugt, kommt über „Import Audio" in die Workstation (Wellenform, Pegel, Fades,
+Warp). Für die eigenen Produktionen des Founders: Lizenz und Trainingsdaten-Bedingungen des Modells
+vor kommerzieller Veröffentlichung prüfen. Wiedervorlage 2026-11-12.
