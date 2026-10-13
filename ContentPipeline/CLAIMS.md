@@ -10,7 +10,11 @@ entfernte zwölf falsche Behauptungen aus dem App-Store-Text — dort ist eine f
 Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
-Stand: 2026-09-12 (#1302 — Face UND Audio Input sind auf Founder-Ansage komplett entfernt;
+Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
+Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
+Siri/Kurzbefehle — alle „Geräte-Verify offen“. §1b und §5 begründen nicht mehr mit einer
+„Produktgrenze“: eine historische Streichung widerruft eine IMPLEMENTIERUNG, nicht die Fähigkeit;
+behauptet wird weiter nur, was ausgeliefert ist. Davor 2026-09-12 (#1302 — Face UND Audio Input sind auf Founder-Ansage komplett entfernt;
 JEDE Stimm-, Mikrofon- und Gesichts-Zeile ist gestrichen, §11 als ganzer Abschnitt ausgesetzt.
 Davor 2026-08-28, Brand-Audit: §12 korrigiert — Kohärenz-Trend ist seit #813 WAHR). **Vor jeder neuen Kampagne
 gegen `CLAUDE.md` „CURRENT STATE" und `docs/dev/FEATURE_MATRIX.md` gegenprüfen.** (Die Versionsnummer stand hier früher
@@ -70,6 +74,11 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
 | **ADM-OSC-Objekteingang** (`/adm/obj/{n}/aed · xyz · azim · elev · dist · x · y · z · gain`, derselbe Port 8001, dasselbe Opt-in + Allowlist) | Spatial S1 (`ADMObjectInput` → `SpatialSceneStore.apply`); Objekt n = Spur n der Szene; ein Spatial-Controller (z. B. Grapes, L-ISA, SPAT) bewegt die Spuren, der ADM-OSC-Szenen-Stream reicht sie an den Renderer weiter. KEINE Glättung, KEIN Atmos, KEIN Dante. Binaural: seit Restructure S3c sitzen AUDIO-Spuren bei eingeschaltetem „Headphone space“ (Mixer, Default AUS) über Apples HRTF im Kopfhörer an ihrer Szenen-Position — gebaut, aber am Gerät UNBESTÄTIGT (G6), und die generierten Stimmen bleiben stereo. Bis G6 bestätigt ist trotzdem NIE „renders Atmos/binaural“ schreiben; **Geräte-Verify offen — so kennzeichnen** |
 | **MIDI-Export** der erzeugten Musik als `.mid` | `MIDIFileExporter`, Tür im Export-Schacht |
 | **Workstation**: Teile auf Spuren anordnen (verschieben, kopieren, teilen, trimmen, Undo), **Noteneditor** für MIDI-Teile, **`.mid`- und Audio-Import** auf eine Spur, **MIDI-Take-Aufnahme** vom Controller, Pegel/Pan/Mute/Solo je Spur | `WorkstationView` (Startfläche, `StageShell`), `PartNoteEditor`, ein `.fileImporter` (`UTType.midi`/`.audio`), `RecordTakeControls`, `TrackInspectorView`. Gates grün, **Geräte-Verify offen — so kennzeichnen** (die Website sagt „new, still being tested on devices“). ⛔ Bis Audit 2026-10-03 (MKT-1) VERNEINTEN FAQ, Presse, Übersicht, Architektur und `claims.html` genau das („deliberately no note editor“, „Importing a .mid is not in this build“, „an instrument, not a workstation“) — eine Unter-Behauptung über die Startfläche. ⚠️ **Aufnahme heißt MIDI, nie Ton**: es gibt keinen Mikrofon-Eingang (#1302), also nie „records audio“/„multitrack recording“ schreiben. |
+| **Mixer-Bühne**: Umschalter unten **Arrange · Mixer · Instrument · Browse · Piece**; Pegel, Pan, Mute, Solo je Spur, ein Undo-Schritt | DAW-Shell S2 (`StageShell`, fünftes Wort „Piece“ seit H18); **Geräte-Verify offen — so kennzeichnen** |
+| **Sampler je Spur**: ein Sample auf eine Spur laden, die Teile der Spur spielen es | GMMW GA-4 (`LaneVoiceRack.samplers`), Tür `TrackSampleRow` im Spur-Detail (2026-10-10); **Geräte-Verify offen — so kennzeichnen**. ⛔ Bis 2026-10-13 stand der Sampler in §5 als „türlos“ |
+| **Echoel Grain als Spur-Insert** auf Audiospuren (Position · Länge · Dichte · Streuung · Tonhöhe · Breite) | GMMW GA-9 + GA-10a–d2 (`GrainCloud`, `GrainBake`, Zeilen „Grain“ auf der Device-Seite: `TrackGrainRows`); **Geräte-Verify offen (G10) — so kennzeichnen** |
+| **WAV-Export des ganzen Stücks** („Piece (WAV)“, LUFS-normalisiert) neben dem Loop-Export | `PieceAudioExportTab` → `LoopExporter.exportPiece`; **Geräte-Verify offen — so kennzeichnen** |
+| **Siri / Kurzbefehle**: Start, Stop, „Keep last loop“, Spurpegel, Teil kopieren, Teil behalten, Undo — jeder Befehl mit Bericht und eigenem Undo in der App | GMMW AI-1/AI-2 (`EchoelAppIntents` → `EchoelAgentDesk` → `EchoelCommandExecutor`, `AgentReportBanner`); **Geräte-Verify offen — so kennzeichnen**. ⚠️ Kein Sprachmodell plant (AI-5 ist Founder-Gate) — „KI“ nicht behaupten |
 | **MIDI-Eingang**: ein externer Controller spielt EINE monophone Stimme — Noten, Pitch-Bend, Press (Channel Pressure, #939) und Slide (CC 74, #942) | `BioReactiveSynthVoice` ist der EINZIGE Verbraucher von `controllerEvents`; `apply(controller:)` ruft `playNote(` genau EINMAL, auf EIN `synth`. (⛔ #943b: hier stand «`heldByController` ist ein einzelner `Bool`» — mit #943 ist das ein BERECHNETER `Bool` über einen Tasten-STAPEL, der Beleg nannte also genau das, was aufgehört hatte, einzeln zu sein. Die Monophonie sitzt im einen `synth`, nicht im Riegel.) Wächter: `TheMPEInputHasNoZonesTests` |
 | **MIDI-Ausgang live**: gespielte NOTEN an dein Rig (MIDI 1.0) | `MIDIOutput`, Schalter in der Routing-Fläche (`midi.out`), Default AUS |
 | **Zweite Quelle im MIDI-2.0-Protokoll** („Echoelmusic (MIDI 2.0)": dieselben Noten mit 16-bit-Velocity, 32-bit-Bend/CC) | #1253, Schalter »MIDI 2.0 source« in der Routing-Fläche, Default AUS; **Geräte-Verify offen — so kennzeichnen**; NIE als „natives MIDI-2.0-MPE" (per-note-Bend bleibt Test-only) |
@@ -103,7 +112,7 @@ und nennt die Nummer. Umgekehrt genauso: ein Seiten-Eintrag ohne Sektion hier is
 Seite ist englisch und öffentlich, und eine maschinelle Übersetzung wäre schlechtere Kopie als
 ein geschriebener Satz. Die Grenze steht im Wächter-Kopf, statt versteckt zu sein.
 
-### 1. „läuft in Logic/Ableton/GarageBand", „in Deiner DAW" — **NOCH NICHT**, und „lädt fremde Plugins" — **NIE**
+### 1. „läuft in Logic/Ableton/GarageBand", „in Deiner DAW" — **NOCH NICHT**, und „lädt fremde Plugins" — **HEUTE NICHT**
 
 ⭐ **DIESER EINTRAG IST AM 2026-09-20 NEU GESCHRIEBEN (#1385).** Er stand seit dem 2026-07-24
 als schlichtes Verbot da („das Target wurde ENTFERNT"), und der Founder hat das Target
@@ -140,15 +149,21 @@ fest genagelten entspricht). (2) **Eine Instanz kostet in AUM rund 20 Prozentpun
 DSP-Anzeige** (1 % leer → 19–24 % mit einer Instanz). „Läuft neben Deinem ganzen Set" ist
 damit keine belegte Aussage.
 
-**b) Echoel lädt KEINE fremden Plugins. Diese Hälfte ist nicht zurückgekommen und steht nicht
-zur Debatte.** Das AUv3-*Hosting* ging mit #121 Slice 2 und bleibt gestrichen: Echoel ist ein
-Plugin, kein Wirt. Das ist keine Auslassung, sondern die Produktgrenze aus
-`docs/dev/PRODUCT_DEFINITION.md` — ein Instrument IN der DAW des Nutzers zu sein ist das
-Gegenteil davon, selbst die DAW sein zu wollen. Gepinnt von `ContentPipelineClaimsTests`
-gegen genau diesen Satz.
+**b) Echoel lädt KEINE fremden Plugins — heute.** Das AUv3-*Hosting* ging mit #121 Slice 2;
+nichts davon ist zurück, und behauptet wird nur, was ausgeliefert ist. ⛔ **Bis 2026-10-13
+stand hier als BEGRÜNDUNG „die Produktgrenze aus `PRODUCT_DEFINITION.md` — ein Instrument IN
+der DAW zu sein ist das Gegenteil davon, selbst die DAW sein zu wollen“, und „steht nicht zur
+Debatte“.** Das ist PHASENGESCHICHTE: seit dem Produktgesetz vom 2026-09-24
+(`docs/dev/FOUNDER_PRODUCT_LAW.md`) IST Echoelmusic die Workstation, und Plugin-Hosting ist
+künftiger DMMW-Umfang NACH dem Geräte-Vertrag (WA3; `CLAUDE.md` sagt es an der AUv3-Zeile). Eine
+Begründung, die das Gegenteil des geltenden Gesetzes sagt, verführt eine Content-Sitzung dazu,
+die Workstation selbst zu verneinen — und genau das stand bis heute in FAQ und Store-Text. Das
+VERBOT bleibt, seine Begründung ist jetzt die wahre: nicht gebaut, also nicht behauptet.
+Gepinnt von `ContentPipelineClaimsTests` gegen den Satz „Echoel lädt KEINE fremden Plugins“.
 
-*Wenn ein Bild eine DAW-ARRANGEMENT-Spur zeigt, ist es weiterhin das falsche Bild — ein
-Plugin-Slot in einem fremden Host ist ab Freigabe von (a) das richtige.*
+*Zwei richtige Bilder seit dem Produktgesetz: die EIGENE Arrange-Bühne (die App startet auf
+ihr) und ein Plugin-Slot in einem fremden Host (AUM, siehe a). Falsch bleibt ein Bild, in dem
+Echoel ein FREMDES Plugin lädt.*
 
 ### 2. Wellness, Meditation, Schlaf, Fokus, Stressabbau, Longevity, „HealthTech"
 `CLAUDE.md`: **„Biofeedback ist Kern, NICHT Wellness."** Echoel ist ausdrücklich kein
@@ -173,7 +188,14 @@ wahr, er braucht kein Zusatzgerät, und er sieht besser aus.
 ### 4. „Im App Store" / Store-Link
 Es gibt heute **nur TestFlight**. Erst nach der ersten Freigabe umstellen.
 
-### 5. Drums, Beats, Sampler-Instrument, Video-Schnitt, RTMP-Livestream, Audio-Mehrspur-Recorder
+### 5. Drums, Beats, ~~Sampler-Instrument~~, Video-Schnitt, RTMP-Livestream, Audio-Mehrspur-Recorder
+⭐ **2026-10-13: „Sampler-Instrument“ ist aus dieser Überschrift gestrichen** — seit GMMW GA-4
+(2026-10-10) hat jede Spur einen Sampler mit Lader und Tür (`TrackSampleRow` im Spur-Detail);
+die Behauptung steht in der ✅-Tabelle, „Geräte-Verify offen“. Gestrichen bleiben Drum-Kit und
+Beat-Maker. ⚠️ Die vier übrigen Verbote sind seit dem Produktgesetz (2026-09-24) KEINE
+Produktgrenze mehr, sondern Stand: Audio-Mehrspur-Aufnahme braucht einen Audio-Eingang (keiner,
+#1302), Video-Schnitt und -Aufnahme sind entfernt, RTMP ist nie gebaut — alles im Workstation-Plan,
+nichts davon behauptet, bis es ausgeliefert ist.
 ⭐ **2026-10-03 (Audit MKT-1): „Sample-Import“ ist aus dieser Überschrift gestrichen** — die Workstation importiert Audiodateien auf eine Spur (Audio Import V1), und ein Verbot, das diesen Weg mit-verneint, ist eine Unter-Behauptung. Verboten bleibt ein Sampler-INSTRUMENT (Pads, Sample-Browser). Ebenso „Mehrspur-Recorder“ → **Audio**-Mehrspur-Recorder: MIDI-Takes nimmt die Workstation auf (siehe ✅-Zeile „Workstation“).
 **Das VERBOT gilt unverändert — der Nutzer kann nichts davon aufrufen.** Die Begründung
 war falsch und ist der Grund, warum dieser Abschnitt jetzt drei Fälle unterscheidet
@@ -187,9 +209,10 @@ richtiges Verbot** — wer sie prüft und kippen sieht, kippt das Verbot gleich 
   (`SampleBrowserView` mit #167 gelöscht), Video-SCHNITT (#121 Slice 3).
 - **Im Code, aber nicht verlinkt:** RTMP — `BroadcastPublisher` ist ein
   `#if canImport(HaishinKit)`-Gerüst, `Package.swift` hat `dependencies: []`.
-- **Gebaut und konstruiert, aber für den Nutzer TÜRLOS:** `SamplerVoice` (in `BeatPlayer`
-  und `LaneVoiceRack` angelegt) — es gibt eine Sampler-Stimme, nur keine Oberfläche, die dem
-  Nutzer Samples in die Hand gibt.
+- **Betürt seit 2026-10-10 (GA-4):** `SamplerVoice` — ⛔ stand hier als „gebaut, aber für den
+  Nutzer TÜRLOS“ (keine Oberfläche, die Samples in die Hand gibt). `LaneVoiceRack.samplers` +
+  `loadSampleIfNeeded`, Tür `TrackSampleRow`; der Eintrag bleibt als Herkunft, die Behauptung
+  steht oben in ✅. Was NICHT zurück ist: das Drum-KIT und der Beat-Maker.
   ⛔ **`MultiTrackRecorder` stand hier an erster Stelle und ist GELÖSCHT** (#1302, Founder
   2026-09-12, „Face und Audio Input komplett entfernen"). Der Eintrag beschrieb ihn als „in
   `AudioEngine` bedingungslos angelegt" — die Datei existiert nicht mehr, und mit dem
@@ -200,7 +223,8 @@ richtiges Verbot** — wer sie prüft und kippen sieht, kippt das Verbot gleich 
   bei diesem Posten ist heute das Gegenteil wahr, es ist wirklich weg, und wer ihn nach
   dieser Zeile wieder anfassen will, fängt bei null an und braucht eine Founder-Frage.
 
-**Für Content heißt das dasselbe wie vorher: nicht behaupten.** Der Unterschied liegt
+**Für Content heißt das dasselbe wie vorher: nicht behaupten** (den Sampler je Spur
+ausgenommen, siehe ✅). Der Unterschied liegt
 nicht im Verbot, sondern in seiner Haltbarkeit — und darin, dass „nie gebaut" eine
 Session dazu einlädt, etwas neu zu bauen, das schon da ist.
 
