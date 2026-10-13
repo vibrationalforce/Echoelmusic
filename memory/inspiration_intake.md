@@ -1374,3 +1374,7 @@ Startknopf ist Play), „ECG" (kein Elektrodenpfad, nur rPPG — eine falsche Se
 „ARTIFACTS 2 %" ohne Messung — Uncodixfy verbietet genau diese Ästhetik. Die Studio-Szene taugt
 als Stimmungsbild für die Pipeline, wenn die ECG-/Respiration-Monitore weichen. Nichts aus den
 Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
+
+## 2026-10-13 — Reel alan.buildz: SEO-Workflow per Claude-Diktat — WATCH
+- Gesehen (12 Frames, Ton unbekannt): Search Console, Keyword Planner, Trends, AnswerThePublic, Ubersuggest, Screaming Frog, PageSpeed, Rich Results, Yoast, Business Profile; Platz #9 → #1 als Animation.
+- Für Echoel nur die Website betroffen (PIPELINE). Billig später: Linkcrawl auf 404/301 und Rich-Results-Prüfung der vorhandenen Seiten. Jetzt nicht — der Auftrag ist Produktionsniveau in der App.
