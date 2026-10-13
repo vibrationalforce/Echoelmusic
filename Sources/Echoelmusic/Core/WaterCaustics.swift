@@ -1,15 +1,18 @@
 //  WaterCaustics.swift
 //  Echoel — the light a rippled water surface throws on the floor beneath it, as a pure
-//  value type. It draws nothing and, in this slice, has NO production caller (the W1 shape
-//  that landed `FaradayDish` at #1100: pin the physics before a pixel depends on it).
+//  value type. It draws nothing itself. #1113 landed it with NO production caller (the W1
+//  shape that landed `FaradayDish` at #1100: pin the physics before a pixel depends on it);
+//  #1117 wired it — `MetalBioView`'s `fieldDepthCaustics` is generated from the `…MetalLiteral`
+//  constants below, so a retune here changes the shipped Depth look.
+//  (⛔ The "no caller" sentence stood here, present tense, until 2026-10-13.)
 //
 //  WHY THIS EXISTS. Founder 2026-09-08: "generative and physical association Visuals weiter
 //  entwickeln". The shipped look `fieldDepthCaustics` (style 7, in the DEFAULT slider
-//  sequence, so every user sees it) calls itself CAUSTICS and is not one: it computes
-//  `pow(0.5 + 0.14 * (sum of three sine layers), gamma)` — a brightness curve on a sine sum.
-//  Two things follow. The sounding pitch never reaches it (its only length scale is
-//  `mix(3.0, 5.0, breath)`, the exact defect Slice 1 of the physical-visuals plan removed
-//  from `fieldWater`), and the bright filaments are drawn rather than derived — a real
+//  sequence, so every user sees it) called itself CAUSTICS and, until #1117, was not one: it
+//  computed `pow(0.5 + 0.14 * (sum of three sine layers), gamma)` — a brightness curve on a
+//  sine sum. Two things followed. The sounding pitch never reached it (its only length scale
+//  was `mix(3.0, 5.0, breath)`, the exact defect Slice 1 of the physical-visuals plan removed
+//  from `fieldWater`), and the bright filaments were drawn rather than derived — a real
 //  caustic is a SINGULARITY of a ray map, not a steep power curve.
 //
 //  This file is the law that replaces it. Its input is the surface Echoel ALREADY solves
