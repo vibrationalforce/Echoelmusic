@@ -165,6 +165,23 @@ public enum MultiRollFanout {
         return Swift.max(-1, Swift.min(1, p.isFinite ? p : 0))
     }
 
+    /// Production A1b — the gain slot `slot`'s lane SOUNDS at on `tick`: `gain(forSlot:)` times
+    /// the track's volume curve (`TimelineDocument.automatedGain`). Unknown slot ⇒ unity, the
+    /// same stance as `gain(forSlot:)`. Note-on gates keep asking `audible`, never this.
+    public static func gain(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?,
+                            atTick tick: Int) -> Float {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return 1 }
+        return document.automatedGain(for: id, atTick: tick)
+    }
+
+    /// Production A1b — the pan slot `slot`'s lane sounds at on `tick` (its pan curve, else its
+    /// pan; −1…1, non-finite → centre). Unknown slot ⇒ centre, like `pan(forSlot:)`.
+    public static func pan(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?,
+                           atTick tick: Int) -> Float {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return 0 }
+        return document.automatedPan(for: id, atTick: tick)
+    }
+
     /// The continuous GAIN slot `slot`'s lane plays at — the full mute/foreign-solo/
     /// level rule (`effectiveGain`), so a half fader is HALF loud, not binary-gated
     /// (closes the B09 gap: the note-ON gate alone made 0.5 sound like 1.0). Unknown

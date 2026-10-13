@@ -996,6 +996,36 @@ public final class TimelineRegionPlayer {
         pianoRoll?.setTimelineAutomationTick(newTick)
         lastTick = newTick
         currentTick = newTick
+        followMixAutomation()
+    }
+
+    // MARK: - Track volume and pan automation (production A1b)
+
+    /// What each rack slot's gain and pan sinks last received, so a curve is followed per step
+    /// without re-pushing an unchanged value (a sampler's `setGain` reconfigures its shape).
+    @ObservationIgnored private var appliedSlotMix: [Int: (gain: Float, pan: Float)] = [:]
+
+    /// Push slot `slot`'s gain and pan as they sound on `currentTick` — the fader, mute and solo
+    /// times the track's curve (`MultiRollFanout.gain/pan(forSlot:atTick:)`). `force` is every
+    /// load and mixer edit; the per-step follow passes `false` and pushes only a change.
+    private func pushSlotMix(_ slot: Int, force: Bool) {
+        let gain = MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane, atTick: currentTick)
+        let pan = MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane, atTick: currentTick)
+        if !force, let applied = appliedSlotMix[slot], applied.gain == gain, applied.pan == pan { return }
+        slotGainSink?(slot, gain)
+        slotPanSink?(slot, pan)
+        appliedSlotMix[slot] = (gain, pan)
+    }
+
+    /// Once per step: every sounding rack slot follows its track's volume and pan curve. A song
+    /// with no mix curve does nothing here — the fader pushes above already hold.
+    private func followMixAutomation() {
+        guard multiRollCapacity > 0,
+              doc.automation.contains(where: { lane in
+                  lane.parameter.hasSuffix("." + TimelineDocument.mixGainBase)
+                      || lane.parameter.hasSuffix("." + TimelineDocument.mixPanBase)
+              }) else { return }
+        for slot in pumps.keys.sorted() { pushSlotMix(slot, force: false) }
     }
 
     // MARK: - Loading (mirrors ArrangementPlayer.loadCurrentSection — the proven path)
@@ -1147,8 +1177,7 @@ public final class TimelineRegionPlayer {
                 slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
                 // H4: the slot voice may be reused from another lane — reset its
                 // mixer position/level to THIS lane's values before its first notes.
-                slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
-                slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
+                pushSlotMix(slot, force: true)
                 // M1c: window + bar-slice the region's melody exactly like the
                 // primary roll (loadClip). Defensive flat fallback when the lane's
                 // active region can't be resolved (should not happen: the .load
@@ -1220,8 +1249,7 @@ public final class TimelineRegionPlayer {
             slotDetuneSink?(load.slot, MultiRollFanout.detune(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(load.slot, MultiRollFanout.octave(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotEffectSink?(load.slot, MultiRollFanout.effect(forSlot: load.slot, in: doc, rollLane: rollLane))
-            slotPanSink?(load.slot, MultiRollFanout.pan(forSlot: load.slot, in: doc, rollLane: rollLane))
-            slotGainSink?(load.slot, MultiRollFanout.gain(forSlot: load.slot, in: doc, rollLane: rollLane))
+            pushSlotMix(load.slot, force: true)
             // M1c: same windowing as the fan-out — and the PRIME case is exactly
             // where startBar matters (seek / region already active mid-way).
             if let region = TimelineScheduling.activeRegion(in: doc, laneID: load.laneID, at: tick),
@@ -1260,8 +1288,7 @@ public final class TimelineRegionPlayer {
         }
         guard multiRollCapacity > 0 else { return }
         for slot in pumps.keys.sorted() {
-            slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
-            slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
+            pushSlotMix(slot, force: true)
             slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
             slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
@@ -1727,8 +1754,7 @@ public final class TimelineRegionPlayer {
         slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
         slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
         slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
-        slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
-        slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
+        pushSlotMix(slot, force: true)
         pump.load(bars: windowedBars(for: region), startBar: startBar)
         pumps[slot] = pump
     }
