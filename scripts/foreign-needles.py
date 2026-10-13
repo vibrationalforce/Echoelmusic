@@ -56,6 +56,13 @@ ARE reused, because those two ask the same question in both files.
 without resolving the flag. That is deliberately coarse in the SAFE direction: it can only add
 a skip, never a finding.
 
+⚠️ A BINDING IS RESOLVED PER METHOD (since 2026-10-13; it was file-wide, and a name bound in
+three methods to three files took the first file for all three — four false alarms on a correct
+tree). A path held in a VARIABLE is not resolved, so its assertion is skipped: the loop in
+`TheHomePageLeadsWithTheMechanismTests` claim 1 (`text(page)` over two pages) was checked before
+only by borrowing another method's binding, i.e. against one page by accident. Skipped is the
+safe direction — never a check against the wrong file.
+
 ⚠️ IT SCANS `Tests/CISmoke/` ONLY, AND THAT IS MEASURED RATHER THAN ASSUMED. The
 non-blocking suite is the obvious second place to look, and today it has nothing to find:
 
@@ -146,9 +153,18 @@ def is_foreign(path):
     return "." in os.path.basename(path)
 
 
-def bindings(code):
-    """{var: (relative path, loader name or None)} for foreign files read in this guard."""
-    consts = {name: value for name, value in BIND_CONST_DECL.findall(code)}
+def bindings(code, consts):
+    """{var: (relative path, loader name or None)} for foreign files read in `code`.
+
+    `code` is ONE function chunk, and `consts` the WHOLE file's `static let` paths — required,
+    not defaulted (#431): a type-level constant is visible in every method, a local `let` only
+    in its own. ⛔ Until 2026-10-13 this ran over the whole file, so a name bound in several
+    methods took ONE file for all of them (`setdefault`: the first). The learn-mode guard binds
+    `text` to the skill, the intake script and the index in three methods; every assertion was
+    checked against the skill, and this tool printed four broken needles on a correct tree for
+    days — a permanent exit 1 that every session learned to ignore, which is where a real fifth
+    one would have hidden (#665).
+    """
     found = {}
     for var, loader, path in BIND_LOADER.findall(code):
         if is_foreign(path):
@@ -186,40 +202,45 @@ def scan(repo_root, guard_dir=None):
         # `dead-needles.py` strips the file it SEARCHES for the same reason; the assertion side
         # needed it too. #456: the repair goes in every home.
         code = strip_comments(raw)
-        bound = bindings(code)
-        if not bound:
+        consts = {name: value for name, value in BIND_CONST_DECL.findall(code)}
+        # One chunk per method, the sibling's split (#666/#941): a local `let` binds only in
+        # the method that declares it. Coarse in the SAFE direction — a binding read in another
+        # method is skipped, never checked against the wrong file.
+        chunked = [(chunk, bindings(chunk, consts)) for chunk in _DN.function_chunks(code)]
+        if not any(bound for _, bound in chunked):
             continue
         strippers = stripping_loaders(raw)
         stats["files"] += 1
-        stats["bindings"] += len(bound)
-        for var, (path, loader) in sorted(bound.items()):
-            if path not in cache:
-                full = os.path.join(repo_root, path)
-                try:
-                    with open(full, encoding="utf-8") as handle:
-                        cache[path] = handle.read()
-                except OSError:
-                    cache[path] = None
-            text = cache[path]
-            strips = loader in strippers if loader else False
-            for polarity, negated, literal in assertion_pattern(var).findall(code):
-                needle = decode_needle(literal)
-                if needle is None:
-                    stats["skip_escape"] += 1
-                    continue
-                if text is None:
-                    stats["skip_missing"] += 1
-                    continue
-                want_present = (polarity == "True") != bool(negated)
-                present = needle in text
-                if present == want_present:
+        for chunk, bound in chunked:
+            stats["bindings"] += len(bound)
+            for var, (path, loader) in sorted(bound.items()):
+                if path not in cache:
+                    full = os.path.join(repo_root, path)
+                    try:
+                        with open(full, encoding="utf-8") as handle:
+                            cache[path] = handle.read()
+                    except OSError:
+                        cache[path] = None
+                text = cache[path]
+                strips = loader in strippers if loader else False
+                for polarity, negated, literal in assertion_pattern(var).findall(chunk):
+                    needle = decode_needle(literal)
+                    if needle is None:
+                        stats["skip_escape"] += 1
+                        continue
+                    if text is None:
+                        stats["skip_missing"] += 1
+                        continue
+                    want_present = (polarity == "True") != bool(negated)
+                    present = needle in text
+                    if present == want_present:
+                        stats["checked"] += 1
+                        continue
+                    if present and not want_present and strips:
+                        stats["skip_stripped"] += 1     # the loader may have removed it
+                        continue
                     stats["checked"] += 1
-                    continue
-                if present and not want_present and strips:
-                    stats["skip_stripped"] += 1     # the loader may have removed it
-                    continue
-                stats["checked"] += 1
-                findings.append((name, path, want_present, needle))
+                    findings.append((name, path, want_present, needle))
     return findings, stats
 
 
@@ -321,7 +342,41 @@ def selftest():
     with tempfile.TemporaryDirectory() as root:
         _, stats = scan(root)
         assert stats["checked"] == 0, stats
-    print("foreign-needles --selftest: 8 claims OK")
+    # 8. ONE name bound in TWO methods to TWO files (2026-10-13, the learn-mode guard's shape):
+    #    each assertion is checked against ITS method's file. File-wide resolution gave both
+    #    methods the first file and reported "ONLY IN B" as broken on a correct tree.
+    twice = ('final class YTests: XCTestCase {\n'
+             '    private static let first = "A.md"\n'
+             '    private static let second = "B.md"\n'
+             '    func testA() throws {\n'
+             '        let text = try read(Self.first)\n'
+             '        XCTAssertTrue(text.contains("ONLY IN A"), "a")\n'
+             '    }\n'
+             '    func testB() throws {\n'
+             '        let text = try read(Self.second)\n'
+             '        XCTAssertTrue(text.contains("ONLY IN B"), "b")\n'
+             '    }\n'
+             '    private func read(_ p: String) throws -> String { "" }\n'
+             '}\n')
+
+    def build_two(root, a_text, b_text):
+        os.makedirs(os.path.join(root, "Tests", "CISmoke"))
+        for rel, body in (("A.md", a_text), ("B.md", b_text),
+                          (os.path.join("Tests", "CISmoke", "YTests.swift"), twice)):
+            with open(os.path.join(root, rel), "w", encoding="utf-8") as handle:
+                handle.write(body)
+
+    with tempfile.TemporaryDirectory() as root:
+        build_two(root, "ONLY IN A\n", "ONLY IN B\n")
+        findings, stats = scan(root)
+        assert findings == [], findings
+        assert stats["checked"] == 2, stats
+    #    …and the per-method binding still FINDS a real break, naming the right file.
+    with tempfile.TemporaryDirectory() as root:
+        build_two(root, "ONLY IN A\n", "reworded\n")
+        findings, _ = scan(root)
+        assert [(f[1], f[3]) for f in findings] == [("B.md", "ONLY IN B")], findings
+    print("foreign-needles --selftest: 9 claims OK")
     return 0
 
 
