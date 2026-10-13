@@ -1350,3 +1350,16 @@ Bug). Nicht messbar: die 22 Testnamen — nur in der Berichtsdatei und im 10-MB-
 Fehlerzeile). Beim Founder angefragt. Verdikt ADOPT→PRODUCT (Punkt 3 als Scheibe). Lehre: das
 Artefakt gehört in den Auftrag an das fremde Modell — die eine Behauptung, die auf dem xcresult
 steht, ist die, die die Sitzung selbst nicht erreichen kann.
+
+**2026-10-13 — ChatGPT, Design-Zielbild „Ein Stück. Viele Ausdrucksformen." (drei iPhones).** Acht
+Aussagen gemessen; fünf sind heute schon wahr (CI mit Atkinson/Wellen-E/kleinen Radien · ein Stück
+mit Ansichten, `WorkstationSelection` app-weit, Instrument bleibt montiert · Spielfläche mit
+Metal-Ripples · Quellenwahl an der Puls-Pille · fester Transport, Focus-Editor, Dynamic Type). Drei
+Lücken: (a) „Farbe mit musikalischer Bedeutung" ist zu zwei Dritteln gebaut — `SpectralColor`
+färbt Pads und Bild, der Noteneditor zeichnet in Theme-Farbe → EINE Scheibe (ADOPT→PRODUCT);
+(b) Tonart im Kopf fehlt (BPM + Takt stehen da) → klein, Council zuerst; (c) EINE Ausgabe-Fläche
+(Bild · Licht · Raum · Export · Bühne) gibt es nicht, die Teile liegen in Visual-Fenster, Routing
+(Blackout dort), türloser Bühne, `ExternalDisplayScene`, Export-Schacht — 3-Tab-IA „Stück · Medien
+· Ausgabe" ist eine FLÄCHEN-Entscheidung des Founders in der WA-Reihenfolge, keine Ad-hoc-Scheibe.
+Drums im Bild nur als Audio-Spur möglich. Kein Text und kein Bild aus dem Entwurf wandert in
+Sources/docs; das Bild ist Zielbild, nichts daraus wird behauptet.
