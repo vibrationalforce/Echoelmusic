@@ -7024,6 +7024,39 @@ schwerer zu entdecken als ein falsches Ergebnis, weil nichts auffällt.
 
 ---
 
+### AB.6 — Zwei Waisen eine Ebene tiefer (GMMW Deep Audit 2026-10-13)
+
+Der Raum-Cluster aus AB.1 hat einen Unterbau, den keine Register-Zeile nannte: zwei Dateien,
+deren Typen NUR von den sieben toten Kernen benutzt werden. Gemessen nach TYP (#1376),
+kommentar-bereinigt und mit Wortgrenzen, über alle `Sources/`:
+
+| Datei | Top-Level-Typen | wer sie außerhalb der eigenen Datei im CODE nennt |
+|---|---|---|
+| `Core/EchoelRenderLayout.swift` | 15 (das IEM-`LoudspeakerLayout`-Schema plus der `EchoelRender`-Block) | nur `Loudspeaker`, nur `Sync/VBAPPanner` (eine Code-Zeile); die anderen 14 niemand. `Sync/AmbisonicsEncode` nennt `Loudspeaker` nur im Kopfkommentar |
+| `Sequencer/AutomationGestureRecorder.swift` | 1 | nur `Sequencer/SpatialAutomationMapping` |
+
+Beide sind getestet, im nicht-blockierenden Bundle (`EchoelRenderLayoutTests`,
+`AutomationGestureRecorderTests`). Messen, nicht zitieren:
+
+```
+types=$(grep -oE '^(public )?(final )?(struct|enum|class) [A-Z][A-Za-z0-9]*' \
+  Sources/Echoelmusic/Core/EchoelRenderLayout.swift | awk '{print $NF}' | paste -sd'|')
+git grep -nwE "$types" -- Sources | grep -v 'EchoelRenderLayout.swift:' | grep -v ': *//'
+git grep -nw AutomationGestureRecorder -- Sources | grep -v 'AutomationGestureRecorder.swift:' | grep -v ': *//'
+```
+
+⭐ **Warum das ein eigener Befund ist:** das Register fragt je Eintrag „wer ruft DAS?“ — und
+findet hier jeweils einen Aufrufer. Dass dieser Aufrufer selbst keinen hat, sieht eine
+Pro-Eintrag-Frage nie: zwei Waisen sind eine KETTE. Die Gegenrichtung von §AJ (zwei Waisen als
+zwei Hälften EINER Fähigkeit) — hier trägt ein Waise den anderen.
+
+Im selben Lauf gefunden: `testTheSpatialCoresAreKept` hielt eine EIGENE Liste von FÜNF Pfaden,
+während Anspruch 1 desselben Wächters sieben nennt — `LightFixtureGroup` und `BioPhaser` waren
+ohne Rot löschbar, obwohl die Register-Zeile, die eine Sitzung dorthin schickt, „sieben“ sagt.
+Seit 2026-10-13 lesen die Ansprüche 1, 4 und 5 EINE Liste (#416). Wächter:
+`TheSpatialRenderHalfIsNotClaimedLiveTests`, Ansprüche 4 und 5. Kein Eintrag ist zu löschen
+(AB.4).
+
 ## AC — Der Auto-Merge-Dämpfer war zu großzügig: `if: false` schützt NUTZER, nicht ENTWICKLER (#1337, verschoben aus CLAUDE.md #1383)
 
 **Die Prosa in CLAUDE.md sagt das GESETZ; hier steht der gemessene Fall.**

@@ -29,14 +29,49 @@
 //  prose to move with it. It does NOT require the files to exist forever, and it does not scan
 //  `CLAUDE.md` negatively (#491).
 //
-//  GRADED BY TRANSCRIPTION (`Tests/CISmoke/CLAUDE.md` §0).
+//  ⭐ EXTENDED 2026-10-13 (GMMW deep audit). Claim 4 kept its own list and held FIVE of the
+//  seven claim 1 names: `LightFixtureGroup` and `BioPhaser` could be deleted without a red,
+//  while the register line that sends a session here says seven. Claims 1, 4 and 5 now read ONE
+//  list, `cores` (#416). And two more files are unwired one hop down and were named by no
+//  register — `Core/EchoelRenderLayout` and `Sequencer/AutomationGestureRecorder` (claim 5).
+//
+//  GRADED BY TRANSCRIPTION (`Tests/CISmoke/CLAUDE.md` §0). SOURCE-TEXT SCAN throughout.
+//  2026-10-13 regrade, every claim driven in Python against this tree and the parent
+//  `cc683262c` — identical in `Sources/`, because this slice touches no source file:
+//  ZERO REGRESSIONS, ZERO ANCHOR ABSENCES; every assertion is green on both, so the new ones
+//  are COUNTERWEIGHTS against a future deletion or wiring. Each was driven red by a mutant for
+//  its named reason: claim 4 by deleting any of the four newly kept files; claim 5 by an
+//  `EchoelRenderLayout` in `SpatialSceneStore`, a `Loudspeaker` in `AudioEngine`, an
+//  `AutomationGestureRecorder` in `TimelineStore`, and its anchor by renaming the namesake
+//  type. Green as intended: the same reference from a core or from the other leaned-on file
+//  (the chain stays dead), and a mention in a comment. The stripper is TRAGEND for claim 1
+//  (raw text books comment mentions in five files to five cores) and PROPHYLAKTISCH for claim 5
+//  (0 of 16 verdicts flip); the word boundary in claim 5 is PROPHYLAKTISCH today (0 flip) and
+//  keeps a future `LoudspeakerLayoutCache` from booking itself to `Loudspeaker` — mutant-shown.
 //
 
+import Foundation
 import XCTest
 
 final class TheSpatialRenderHalfIsNotClaimedLiveTests: XCTestCase {
 
     private struct AnchorMissing: Error { let reason: String }
+
+    /// The seven render cores — the type and the file that declares it. ONE list for claims 1,
+    /// 4 and 5 (#416): claim 4 kept its own copy until 2026-10-13 and had dropped two of them.
+    private static let cores: [(type: String, path: String)] = [
+        ("VBAPPanner", "Sources/Echoelmusic/Sync/VBAPPanner.swift"),
+        ("AmbisonicsEncode", "Sources/Echoelmusic/Sync/AmbisonicsEncode.swift"),
+        ("LightFixtureGroup", "Sources/Echoelmusic/Sync/LightFixtureGroup.swift"),
+        ("BioPhaser", "Sources/Echoelmusic/Sync/BioPhaser.swift"),
+        ("BinauralPanner", "Sources/Echoelmusic/DSP/BinauralPanner.swift"),
+        ("EchoelSpaceReverb", "Sources/Echoelmusic/DSP/EchoelSpaceReverb.swift"),
+        ("SpatialAutomationMapping", "Sources/Echoelmusic/Sequencer/SpatialAutomationMapping.swift"),
+    ]
+
+    /// The two files the cores lean on, one hop down (claim 5).
+    private static let leanedOn = ["Sources/Echoelmusic/Core/EchoelRenderLayout.swift",
+                                   "Sources/Echoelmusic/Sequencer/AutomationGestureRecorder.swift"]
 
     private var repoRoot: URL {
         URL(fileURLWithPath: #filePath)
@@ -66,21 +101,14 @@ final class TheSpatialRenderHalfIsNotClaimedLiveTests: XCTestCase {
 
     // MARK: - Claim 1 — the render half has no production caller, across BOTH directories
 
-    /// The seven are listed together ON PURPOSE. Splitting them by directory is exactly how
-    /// three of them stayed invisible for seventeen days.
+    /// The seven are listed together ON PURPOSE, in `cores` above. Splitting them by directory
+    /// is exactly how three of them stayed invisible for seventeen days.
     func testTheSpatialRenderCoresHaveNoProductionCaller() throws {
         let corpus = try productionCode()
 
-        // (type, the file that declares it — its own file is not a "caller")
-        let cores = [("VBAPPanner", "VBAPPanner.swift"),
-                     ("AmbisonicsEncode", "AmbisonicsEncode.swift"),
-                     ("LightFixtureGroup", "LightFixtureGroup.swift"),
-                     ("BioPhaser", "BioPhaser.swift"),
-                     ("BinauralPanner", "BinauralPanner.swift"),
-                     ("EchoelSpaceReverb", "EchoelSpaceReverb.swift"),
-                     ("SpatialAutomationMapping", "SpatialAutomationMapping.swift")]
-
-        for (type, own) in cores {
+        for core in Self.cores {
+            let type = core.type
+            let own = URL(fileURLWithPath: core.path).lastPathComponent  // not a "caller"
             let callers = corpus
                 .filter { $0.name != own && $0.code.contains(type) }
                 .map(\.name)
@@ -153,20 +181,83 @@ final class TheSpatialRenderHalfIsNotClaimedLiveTests: XCTestCase {
             """)
     }
 
-    // MARK: - Claim 4 — the cores are not deleted
+    // MARK: - Claim 4 — the cores, and the two files they lean on, are not deleted
 
+    /// ⛔ Until 2026-10-13 this claim carried its own list of FIVE paths while claim 1 named
+    /// seven, so `LightFixtureGroup` and `BioPhaser` could go without a red. It reads `cores`.
     func testTheSpatialCoresAreKept() throws {
-        for path in ["Sources/Echoelmusic/Sync/VBAPPanner.swift",
-                     "Sources/Echoelmusic/Sync/AmbisonicsEncode.swift",
-                     "Sources/Echoelmusic/DSP/BinauralPanner.swift",
-                     "Sources/Echoelmusic/DSP/EchoelSpaceReverb.swift",
-                     "Sources/Echoelmusic/Sequencer/SpatialAutomationMapping.swift"] {
+        for path in Self.cores.map(\.path) + Self.leanedOn {
             XCTAssertNoThrow(try source(path), """
-                \(path) is gone. Unreachable is NOT a reason to delete here: EchoelLux L2/L3 and
-                the EchoelRender path need exactly these, and they are pure, tested value types
-                costing nothing at runtime. The defect this guard records was never their
-                existence — it was that they were unreachable AND unwritten-down.
+                \(path) is gone. Unreachable is NOT a reason to delete here: EchoelLux L2/L3, the
+                EchoelRender path and spatial gesture automation need exactly these, and they are
+                pure, tested value types costing nothing at runtime. The defect this guard records
+                was never their existence — it was that they were unreachable AND unwritten-down.
                 """)
         }
+    }
+
+    // MARK: - Claim 5 — the two files the cores lean on are reachable only through them
+
+    /// Measured 2026-10-13 (GMMW deep audit), comment-stripped and word-bounded: one hop below
+    /// the seven sit two files no register named. `Core/EchoelRenderLayout.swift` declares
+    /// fifteen top-level types (the IEM loudspeaker layout plus the EchoelRender block); the only
+    /// one another production file names is `Loudspeaker`, and the only file naming it is
+    /// `VBAPPanner`. `Sequencer/AutomationGestureRecorder.swift` is named by
+    /// `SpatialAutomationMapping` alone. Both are as unwired as the seven: a cleanup that asks
+    /// "who calls this?" finds a caller that itself has none, and a register that asks that
+    /// question per entry cannot see that two orphans are one chain.
+    ///
+    /// A reference from a core or from the other leaned-on file keeps the chain dead and stays
+    /// green. Word-bounded because `Loudspeaker` is a prefix of `LoudspeakerLayout`, declared in
+    /// the same file.
+    func testTheFilesTheCoresLeanOnHaveNoOtherCaller() throws {
+        let corpus = try productionCode()
+        let deadChain = Set((Self.cores.map(\.path) + Self.leanedOn)
+            .map { URL(fileURLWithPath: $0).lastPathComponent })
+
+        for path in Self.leanedOn {
+            let own = URL(fileURLWithPath: path).lastPathComponent
+            let types = try topLevelTypes(in: SourceText.codeOnly(source(path)))
+            let namesake = String(own.dropLast(".swift".count))
+            guard types.contains(namesake) else {
+                throw AnchorMissing(reason: """
+                    The declaration scan found \(types) in \(path), not `\(namesake)` itself. A \
+                    scan that matches nothing is a finding, never a pass — re-anchor (#454).
+                    """)
+            }
+            for type in types {
+                let outside = corpus
+                    .filter { !deadChain.contains($0.name) && mentions($0.code, type) }
+                    .map(\.name)
+                    .sorted()
+                XCTAssertTrue(outside.isEmpty, """
+                    `\(type)` (declared in \(path)) is now named by production code outside the \
+                    seven spatial cores: \(outside.joined(separator: ", ")).
+                    That is EchoelRender or gesture-automation work, not a defect — but the file \
+                    stops being an orphan, so two things move in the SAME commit (#456):
+                      1. `docs/dev/FEATURE_STATUS.md` §2c, the Raum-Render row that names it.
+                      2. `memory/LEDGER_COUNTS.md` §AB.6, the row for this file.
+                    """)
+            }
+        }
+    }
+
+    // MARK: - Helpers for claim 5
+
+    /// Column-0 type declarations only. Nested types are indented and stay out on purpose: a
+    /// nested name like `Issue` would match every other file that declares its own.
+    private func topLevelTypes(in code: String) throws -> [String] {
+        let declaration = try NSRegularExpression(
+            pattern: #"^(?:(?:public|internal|fileprivate|private|open) )?(?:final )?(?:struct|enum|class|protocol|actor) ([A-Z][A-Za-z0-9_]*)"#,
+            options: [.anchorsMatchLines])
+        let ns = code as NSString
+        return declaration.matches(in: code, range: NSRange(location: 0, length: ns.length)).compactMap {
+            $0.numberOfRanges > 1 && $0.range(at: 1).location != NSNotFound
+                ? ns.substring(with: $0.range(at: 1)) : nil
+        }
+    }
+
+    private func mentions(_ code: String, _ type: String) -> Bool {
+        code.contains(type) && code.range(of: "\\b\(type)\\b", options: .regularExpression) != nil
     }
 }
