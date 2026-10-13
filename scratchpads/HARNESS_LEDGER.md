@@ -4434,3 +4434,39 @@ empty commit to kick it is forbidden. decisions.csv row 1044.
 - A consumer with a busy flag must LOOP after each run (and after any other run path, e.g. an Undo button), or a request that arrived mid-run waits silently.
 - The test host IS the app: a guard must never read or clear an App-Group key the app reads at launch. Give the consumer a pure seam (`handle(_:)`) and let only the shared instance touch the store (`self === Self.shared`).
 - A glossary-struck word hides inside a VERB ("Takes back" contains "take"); transcribe the chrome guard over new copy before committing.
+
+
+## PLAYBOOK + NEAR-MISSES (2026-10-13, GMMW final round: colour slice, Fluid F1, two guard extensions, two checker repairs)
+
+1. **#645 has an ATTRIBUTE twin, and that one is not cosmetic.** A declaration inserted directly
+   below an attribute line (`@MainActor`, `@Observable`, `@ObservationIgnored`) takes the
+   attribute — the same mechanism as a `///` block attaching to the next declaration (#645), but
+   it changes isolation or storage, so the result can compile and behave differently. Caught
+   before commit in this round. **Instead:** read the line directly ABOVE the insertion point;
+   if it is an attribute or a doc block, insert above it.
+2. **A NEW negative scan is red on correct code more often than an old one.** The Hot-State
+   extension's first form ("no tempo read in the menu host") was red on two correct reads inside
+   action closures (`.onReceive`, the save case). **Instead:** an opt-in exemption that skips
+   only closure bodies whose braces close exactly (counted from the opener line's LAST `{`),
+   never `Button` (its label closure IS body), plus a synthetic claim that pins exactly which
+   lines the exemption covers.
+3. **A device ask must name a door that exists.** The colour probe first sent the founder to
+   "Tempo tools" for A4; the one concert-pitch field is on the Piece stage
+   (`CompositionHeaderStrip`). `founder-verify.py` cannot see this. **Instead:** `git grep` the
+   label in `Sources/` before writing the ask.
+4. **A checker that is always red hides the next real finding.** `foreign-needles.py` exited 1
+   on a correct tree for days (four learn-mode needles); every session re-derived "known false
+   alarm". Cause: bindings resolved once per FILE, first one wins, while the guard re-binds
+   `text` per method. Fixed per method (`aba5129ac`), mutant-tested. **Instead of learning to
+   ignore an exit code, fix the instrument the day it lies.**
+5. **A docstring that quotes a regex needs `r"""`.** Three checkers printed SyntaxWarnings under
+   Python 3.13 (`b0cec876d`); Python has announced these become errors, which would stop the tools
+   from starting at all. Compare plain and `--selftest` output before and after; they were
+   identical.
+6. **An exemption is a new way to be falsely green, and its first draft was.** The action-closure
+   skip took `.onAppear { go() }.overlay {` for an action, because it counted braces from the
+   line's LAST `{` — the overlay's — and skipped view content. A reviewer found it by reading
+   (`9ab00ae7e` → `1e7c64aec`). **Instead:** refuse an opener line that has a `}` before its last
+   `{`, and put the overlay shape in the synthetic claim. The same review found three limits
+   blocks that called an UNDER-collecting derivation "safe": a dropped hot name is a false
+   GREEN. When writing a limits block, ask per limit which way the SET moves.

@@ -5224,3 +5224,25 @@ Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
   Wächter `Tests/CISmoke/TheFirstTakeRunsTheClockTests.swift`. Commit `777824234`.
 - **Review:** 2026-11-12 — Gerät: frisches Stück → Spur scharf → Record → spielen → Stop → erster
   Teil ab Takt 1; Play danach hell.
+
+
+### 2026-10-13 — GMMW Farbscheibe: das Notenraster trägt die Farbe der Tonhöhe
+
+- **Decision:** Jede nicht gewählte Note im Noten-Editor (`PartNoteCanvas`) ist eine deckende
+  Mischung aus Fläche und IHRER Tonhöhenfarbe — `SpectralColor.gridTint(forToneHz:)`: derselbe
+  Ton-zu-Farbton wie Pads und Bild, auf EINER OKLab-Helligkeit (`gridTintLightness` 0,84), Chroma
+  schrittweise ×0,97 bis in den sRGB-Raum. Die Frequenz kommt aus
+  `PianoRollModel.soundingHz(pitch:a4Hz:pitchClassCents:)`, der Regel, die `musicalFrame` selbst
+  benutzt. Die Lautstärke bleibt die Farbtiefe (`ClipNoteEdit.noteShade`, Boden 0,55).
+- **Why:** Vorher war jede Note die Akzentfarbe — der Editor war die eine Fläche, die die
+  Farbsprache von Pads und Bild nicht sprach (Design-Zielbild 2026-10-13, gemessen 8/8). Eine
+  gemeinsame Helligkeit hält den Kontrast auf den schattierten Zeilen außerhalb der Tonart ≥ 3:1
+  (Zwilling bei L 0,84: schlechtester Fall 3,23:1 mit OKLab-Mischung, 3,62:1 mit sRGB-Mischung — beide über 3:1) und lässt den Farbton allein die Tonhöhe tragen.
+  Über `soundingHz` gelesen, färben A4 und Tonsystem Raster, Pads und Bild gemeinsam um.
+- **Measure:** `git grep -n "func gridTint(forToneHz" -- Sources` → 1;
+  `git grep -n "NoteGridTint.pitchTints(" -- Sources` → 1 (die Canvas-Übergabe). Wächter
+  `Tests/CISmoke/TheNoteGridWearsThePitchColourTests.swift` und die neu verankerte Füll-Nadel in
+  `TheNoteGridShowsHowLoudEachNoteIsTests`. Commit `f60fda649`.
+- **Review:** 2026-11-12 — Gerät: Arrange → MIDI-Teil → Notes: jede Zeile ein Farbton (C mintgrün,
+  F♯ rosa, A lachs); Piece → A4 auf 432: die Blöcke verschieben ihren Farbton mit Pads und Bild;
+  eine leise Note ist dunkler, nie ausgewaschen.
