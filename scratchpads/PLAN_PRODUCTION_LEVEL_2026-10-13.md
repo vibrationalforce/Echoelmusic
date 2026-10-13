@@ -67,6 +67,16 @@ Plugins. Jede H-Scheibe trägt deshalb eine `NEEDS-FOUNDER-VERIFY`-Bitte mit gen
 | N1 Noten hören beim Setzen/Antippen/Verschieben | `ca233360d` | gepusht |
 | N3a Raster zeichnet (Start an der Zelle, Länge = Zelle) | `69439cd36` | gepusht |
 | N4a Legato | `da2dbd3a8` | gepusht; repariert zugleich `TheSelectedPartsNotesAreEditedThroughOneWriterTests` (rot seit `f60fda649`) |
+| A1a/b Lautstärke-/Pan-Kurve je Rack-Spur | `12680a37e` | gepusht |
+| A1c Volume/Pan im Automations-Editor | `e3f862fc0` | gepusht |
+| A1d Audiospuren folgen den Kurven | `3ee945bc7` | gepusht |
+| N4b Kopieren/Einfügen in jeden Part | `2b6661391` | gepusht |
+| H2a Plugin-Wahl im Song (Modell, Schreiber, Undo) | `a19f74c87` | gepusht |
+| H2b1 Host + `AudioEngine.attachAudioUnit` | `d43d1eb89` | gepusht |
+| H2b2 Verdrahtung (Player → Host, Noten-Senke) | `a6beb256e` | gepusht |
+| H2c Auswahl-Menü auf der Geräte-Seite | `4ca337a53` | gepusht; Gates in der Warteschlange (Stau, siehe HARNESS_LEDGER) |
+
+**Offen:** H3 Plugin-Oberfläche · H4 Plugin-Zustand im Stück · H5 Spur-Knoten · H6 Effekt-Inserts · A1e Echoel-Spur · N2 Tastatur · N3b Triolen · N5 CC-Spur · A2/A3. Gerät: H1, H2 (Klang, Klick beim Laden, Kopfhörer-Wechsel, Media-Reset), N1, A1.
 
 ## A1 — gemessener Weg (Explore-Bericht 2026-10-13, Belege file:line dort nachprüfen)
 
