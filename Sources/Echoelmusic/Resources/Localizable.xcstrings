@@ -23652,6 +23652,102 @@
           }
         }
       }
+    },
+    "Audio Units on this iPhone" : {
+      "comment" : "Device page (production H1): heading of the read-only list of installed AUv3 units.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio Units on this iPhone"
+          }
+        }
+      }
+    },
+    "Looking for installed Audio Units…" : {
+      "comment" : "Device page (production H1): shown while the system registry is queried.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking for installed Audio Units…"
+          }
+        }
+      }
+    },
+    "Loading one on a track is not available yet." : {
+      "comment" : "Device page (production H1): the list is read-only; hosting comes later.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading one on a track is not available yet."
+          }
+        }
+      }
+    },
+    "No Audio Unit instruments or effects are installed." : {
+      "comment" : "Device page (production H1): nothing installed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Audio Unit instruments or effects are installed."
+          }
+        }
+      }
+    },
+    "No instruments" : {
+      "comment" : "Device page (production H1): no AUv3 instrument installed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No instruments"
+          }
+        }
+      }
+    },
+    "No effects" : {
+      "comment" : "Device page (production H1): no AUv3 effect installed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No effects"
+          }
+        }
+      }
+    },
+    "instruments" : {
+      "comment" : "Device page (production H1): plural noun after a count, e.g. '3 instruments'.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "instruments"
+          }
+        }
+      }
+    },
+    "effects" : {
+      "comment" : "Device page (production H1): plural noun after a count, e.g. '2 effects'.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "effects"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
