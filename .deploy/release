@@ -1,4 +1,4 @@
-build: v10.79.497 — GMMW: Grain auf Audio-Spuren, Echoel beschreibt dein Stück, sicherer Start, Blitzschutz für Rot
+build: v10.79.498 — GMMW: der erste Take ins leere Stück, Blitzschutz begrenzt jede Schicht, Wahrheit nach außen
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,40 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.498) ───────────────────────────────
+
+  ⭐ DEIN AUFTRAG VOM 2026-10-13 („Du entscheidest alles aus meiner Perspektive und regelst
+  alles bis zum letzten TestFlight"). 6 Code-Commits seit 10.79.497. Gebaut wird `777824234` —
+  Xcode Compile Check UND Build for Testing grün (Lauf 38376558152); danach kamen nur
+  Doku-Commits (Claims, Register, Protokoll). Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: DER ERSTE TAKE INS LEERE STÜCK (GMMW R2, aus dem Deep Audit) ──
+  · Bisher stand auf einem leeren Stück unter Record „Add a part with notes or audio first" —
+    der erste Teil konnte nur vom Composer kommen, nie von dir. Jetzt: Arrange → MIDI-Spur →
+    „Arm for recording" → Record ist rot → tippen: die Uhr läuft, das Lineal bewegt sich, Play
+    bleibt gedimmt (es gibt nichts zu spielen) → MIDI-Keyboard spielen → Stop: der Take sitzt
+    als erster Teil ab Takt 1 auf der Spur, Play ist jetzt hell und spielt deine Noten.
+  · Der Take endet an Stop (ein leeres Stück hat kein Ende). Ein Teil, den du nicht willst:
+    Undo im Kopf. Geht etwas schief, hol das Diagnose-Log wie immer: Save/Export-Chip →
+    „Diagnostics" → Teilen.
+
+  ── POSTEN 2: BLITZSCHUTZ (VV-4e) ──
+  · Der Begrenzer für Video-Schichten rechnet jetzt mit der Farbe, die eine Schicht ÜBER dem
+    Feld darunter hinzufügt — für jedes Feld, nicht nur für Schwarz. Eigenes Video im Visual hat
+    weiterhin KEINE Tür; dieser Posten ist Vorarbeit und am Gerät nicht sichtbar.
+
+  ── POSTEN 3: KLEINES ──
+  · Wellenform einer kurzen Audiodatei: kein Eimer mehr mitten in der Datei.
+  · Nach außen (nicht in der App): CLAIMS, FAQ und claims.html sagen jetzt, was die App IST —
+    Workstation, Mixer-Bühne, Sampler je Spur, Grain, Stück-Export, Siri — und begründen die
+    Streichungen von 2026 nicht mehr als „Produktgrenze". Store-Text ist deine Sache (GM21).
+
+  ── WAS DU PRÜFEN KANNST (1 neue Bitte, gedruckt mit
+     python3 scripts/founder-verify.py --since 1b2a76c2f) ──
+  · Frisches Stück (≡ → New piece) → Arrange → eine MIDI-Spur → „Arm for recording" → Record
+    ist rot und reagiert → Uhr läuft, Play bleibt gedimmt → ein paar Noten spielen → Stop:
+    erster Teil ab Takt 1, Play danach hell und hörbar.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.497) ───────────────────────────────
 
