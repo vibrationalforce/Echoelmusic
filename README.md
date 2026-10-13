@@ -27,7 +27,7 @@ What it does have, structurally, is **biofeedback as a first-class modulation so
 
 ## One screen, one bus
 
-The root view is `WorkspaceView` — brand header and one surface below it, `EchoelStudioView` (the transport controls live inside the instrument). Not a TabView. The front plate carries the single **Create from Within** button: the bio-generative flow that writes in-key melody, harmony, rhythm and tempo from your body across curated genres. Everything else is a panel.
+The root view is `WorkspaceView` — brand header, `ProjectHeader` (project · place · BPM · one Play/Stop/Record) and `SurfaceHost` → `StageShell` below it, a bottom switcher over Arrange · Mixer · Instrument · Browse · Piece. Since 2026-09-30 the app opens on the **Piece** (`ArrangeStage` = `WorkstationView`); the instrument `EchoelStudioView` stays mounted beneath it and is one tap away. No TabView. The front plate carries the single **Create from Within** button: the bio-generative flow that writes in-key melody, harmony, rhythm and tempo from your body across curated genres. Everything else is a panel.
 
 **Eight chips render in the tab strip** (`EchoelStudioView.studioChips`, in strip order):
 

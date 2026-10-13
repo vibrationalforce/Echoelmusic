@@ -149,8 +149,9 @@ Audio Foundation (KEEP):
 ```
 
 Deprecated from main flow: SoundscapeEngine, ClipEngine, MomentCaptureView, BioSourceManager,
-  Oura/EEG bridges, WeatherProvider, CircadianClock — alle 2026-06-19 GELÖSCHT, existieren
-  nicht mehr. (HealthKit + rPPG sind LIVE, nicht deprecated.)
+  Oura/EEG bridges, CircadianClock — alle 2026-06-19 GELÖSCHT, existieren nicht mehr.
+  (HealthKit + rPPG sind LIVE.) ⛔ `WeatherProvider` stand hier als gelöscht und LEBT
+  (`Core/`, E3b, 3 Aufrufer; gemessen 2026-10-13).
 
   **REGISTER DER UNVERDRAHTETEN KERNE — Namen und die EINE Falle je Eintrag. Messung,
   Cluster-Begründung und Zähl-Ketten: `memory/LEDGER_COUNTS.md` §AB (Inventur) und §Q (die
@@ -352,7 +353,7 @@ Sources/Echoelmusic/
   Core/                ← EchoelStore, SPSCQueue, ProfessionalLogger, MemoryPressureHandler,
                           NumericExtensions, ClipStore, ModulationEngine (KEEP). No `SessionStore`
                           — the real files are SessionContext/SessionNaming/SessionRecorder
-                       ← (SoundscapeEngine/ClipEngine/WeatherProvider/CircadianClock/PlatformAvailability REMOVED 2026-06-19)
+                       ← (SoundscapeEngine/ClipEngine/CircadianClock/PlatformAvailability REMOVED 2026-06-19; WeatherProvider LIVES)
   Bio/                 ← BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver (PROTECTED)
                        ← EchoelBioEngine + HealthKitBioPublisher + CameraRPPGBioPublisher (LIVE)
                        ← (BioSourceManager/OuraRingClient/EEGSensorBridge/MotionActivityProvider REMOVED)
