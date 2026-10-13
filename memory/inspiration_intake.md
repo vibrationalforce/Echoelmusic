@@ -1312,3 +1312,25 @@ weitere Einfügungen davon nicht mehr messen, es sei denn mit NEUER Primärquell
 sagt selbst: nichts ins Swift-Repo geschrieben. Zweite Einfügung textgleich; nicht erneut gemessen.
 Der Vorspann wiederholt den einen Fehler („keine Viskosität“ — `Core/FaradayDish.swift`). Plan bleibt
 `scratchpads/PLAN_FLUID_SURFACE_2026-10-13.md`, F1–F5.
+
+**2026-10-13 — Grok, Deep Audit (nur gelesen, main @ 969c271fb).** Gemessen 17 Behauptungen,
+8 bestätigt. Bestätigt und FOUNDER-GATED (nur berichtet): die Repo-Beschreibung auf GitHub sagt
+„Wellbeing" (Marken-Regel: kein Wellness); `LICENSE:35` nennt HaishinKit als „einzige externe
+Abhängigkeit", während `Package.swift` `dependencies: []` hat, Copyright endet 2025. Bestätigt und
+von der Sitzung erledigt: `README.md:30` beschrieb den Root von vor dem 2026-09-30 (nur
+`EchoelStudioView`, ohne `StageShell`/Piece). Nebenbefund der Messung, nicht Groks: `CLAUDE.md`
+führte `WeatherProvider` zweimal als am 2026-06-19 gelöscht — die Datei lebt (`Core/`, E3b, drei
+Aufrufer); beide Zeilen korrigiert, 149.990 B von 150.000 (die nächste Zeile in CLAUDE.md braucht
+einen Umzug ins Ledger). Bestätigt, offen: `ContentPipeline/CLAIMS.md` hat keinen Haptik-Eintrag,
+obwohl `Studio/HapticEngine.swift` ausgeliefert ist (Website nennt „Haptic beat"); „Apple TV" auf
+`docs/index.html:679` steht in keinem Plan; Auto-Merge wartet auf `Build for Testing`, nie auf grüne
+Tests (#396); nie-rote Jobs (#208); große Dateien (`EchoelStudioView.swift` 941 KB!). Widerlegt:
+PrivacyInfo fehlt (existiert, drei Targets in `project.yml`); „MIDI 2.0-ready input" ist falsch
+(`MIDIInput.swift:131` öffnet mit `._2_0`); Blitz-Wortlaut unbelegt (FlashGuard-Slew in Art-Net UND
+sACN, VideoFlashLimiter am Schirm, kein Bypass-Symbol); /health-Wortlaut (die Medikamenten-Zeile IST
+die Pflicht-Warnung, der Coaches-Absatz sagt selbst „kein therapeutisches Gerät"); CloudKit vs
+„no cloud" (hart aus, `CloudSync(` null Aufrufer; WeatherKit Opt-in und in `privacy.html` erklärt);
+Footage-Layer unerwähnt (türlos — richtig so); Impressum fehlt (`docs/impressum.html`).
+Unverifiziert: Rechtsfragen der Datenschutzerklärung. Verdikt ADOPT→PIPELINE. Lehre: ein Audit,
+das den Baum nicht gezogen hat, findet Datei-Abwesenheiten, die ein `git ls-files` widerlegt —
+aber seine Vergleiche zweier Textstellen (README↔Code, LICENSE↔Package.swift) trafen alle.
