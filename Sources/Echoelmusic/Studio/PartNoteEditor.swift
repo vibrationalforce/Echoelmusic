@@ -172,6 +172,9 @@ private struct PartNoteGrid: View {
     /// change repaints the grid on its next redraw; the concert pitch is read OBSERVED from the
     /// session, its one owner, so a retune repaints an open grid at once.
     @Environment(PianoRollModel.self) private var pianoRoll
+    /// Production N1 — the instrument that plays this part's track sounds each note as it is set,
+    /// moved to a new pitch or tapped (`TimelineRegionPlayer.auditionNote`, the one route decision).
+    @Environment(TimelineRegionPlayer.self) private var player
     @State private var picked: RollSelection = .none
     @State private var octaveShift = 0
     /// The pitch the rows centre on — taken when the grid first draws, then held.
@@ -391,6 +394,7 @@ private struct PartNoteGrid: View {
                                               offsetTicks: offset, lengthTicks: region.lengthTicks),
               timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) else { return }
         picked = .single(added.id)
+        audition(added.id, in: added.notes, region: region)
         announceEdit(added.id, region: region, offset: offset, String(localized: ", added"))
     }
 
@@ -437,6 +441,7 @@ private struct PartNoteGrid: View {
         case .body(let id), .rightEdge(let id):
             // Multi-select: a tap adds the note to the selection, or takes it out again.
             picked = RollSelection(ids: Array(NoteGridGesture.toggling(id, in: picked.ids)))
+            audition(id, in: visible, region: region)
         case .empty(let pitch, let step):
             guard editable, let clip = clipStore.clip(id: region.clipID),
                   let added = ClipNoteEdit.adding(pitch: pitch, step: step,
@@ -445,8 +450,18 @@ private struct PartNoteGrid: View {
                                                   lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) {
                 picked = .single(added.id)
+                audition(added.id, in: added.notes, region: region)
             }
         }
+    }
+
+    /// Production N1 — sound one note on its track's instrument. A move sounds only when the
+    /// pitch changed (a sideways move adds nothing to hear); the route — the roll's voice, a
+    /// stopped rack slot, or nothing — is the player's one decision.
+    private func audition(_ id: UUID, in notes: [Note], region: TimelineRegion) {
+        guard let note = notes.first(where: { $0.id == id }) else { return }
+        player.auditionNote(laneID: region.laneID, pitch: note.pitch, velocity: note.velocity,
+                            role: note.role, in: timeline.document)
     }
 
     /// The finger lifted: a box adds to the selection (M9); a move or a stretch is ONE commit
@@ -465,6 +480,9 @@ private struct PartNoteGrid: View {
                                                   lengthTicks: region.lengthTicks) else { return }
             if timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) {
                 picked = RollSelection(ids: Array(NoteGridGesture.afterMove(ids, from: picked.ids)))
+                if dPitch != 0, let first = ids.sorted(by: { $0.uuidString < $1.uuidString }).first {
+                    audition(first, in: moved, region: region)
+                }
             }
         case .resize(let id, let dSteps):
             guard let clip = clipStore.clip(id: region.clipID),

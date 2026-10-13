@@ -1603,6 +1603,89 @@ public final class TimelineRegionPlayer {
         }
     }
 
+    // MARK: - Note audition (production N1, founder 2026-10-13)
+
+    /// Which voice sounds a note-editor audition for a lane. The roll lane plays the rich
+    /// `PianoRollModel`; a rack secondary plays its slot — but only while the transport is
+    /// STOPPED, because a playing transport owns every slot's binding and pump, and an audition
+    /// rebinding a slot mid-song would swap a sounding track's instrument under it.
+    public enum AuditionRoute: Equatable, Sendable {
+        case roll
+        case slot(Int)
+        case silent
+    }
+
+    /// The route for `laneID` — pure, so the one decision is testable without an engine.
+    public static func auditionRoute(laneID: UUID, in document: TimelineDocument,
+                                      capacity: Int, isPlaying: Bool) -> AuditionRoute {
+        if laneID == document.rollLaneID { return .roll }
+        guard !isPlaying,
+              let slot = MultiRollFanout.slot(forLaneID: laneID, in: document,
+                                              rollLane: document.rollLaneID, capacity: capacity)
+        else { return .silent }
+        return .slot(slot)
+    }
+
+    /// How long an audition note holds before its release — the roll's own tap preview length.
+    public static let auditionHoldNanoseconds: UInt64 = 200_000_000
+
+    @ObservationIgnored private var auditionRelease: Task<Void, Never>?
+    @ObservationIgnored private var auditionHeld: (slot: Int, pitch: Int)?
+
+    /// Sound ONE note on the instrument that plays `laneID`, as the note editor sets, moves or
+    /// taps it. A rack slot is first bound to the lane exactly as a part load binds it (lane →
+    /// kind → sample → patch → pitch → effect → mix), so the preview is the track's own sound
+    /// and level — a muted track stays silent. Monophonic: a new audition releases the previous
+    /// one first. Returns whether a voice was asked to sound. Main-actor only; the voices enqueue
+    /// their own render-safe events.
+    /// NEEDS-FOUNDER-VERIFY: N1 — in the note editor, setting, tapping and moving a note up or down sounds it on the track's own instrument (Echoel track and a Synth/Sampler track, transport stopped), at the track's level, and never leaves a note hanging.
+    @discardableResult
+    public func auditionNote(laneID: UUID, pitch: Int, velocity: Float, role: NoteRole,
+                             in document: TimelineDocument) -> Bool {
+        let v = velocity.clamped(to: 0.05...1)   // NaN-safe
+        switch Self.auditionRoute(laneID: laneID, in: document, capacity: multiRollCapacity,
+                                  isPlaying: isPlaying) {
+        case .roll:
+            guard let pianoRoll else { return false }
+            pianoRoll.audition(pitch: pitch, velocity: v, role: role)
+            return true
+        case .silent:
+            return false
+        case .slot(let slot):
+            guard let sink = slotNoteSink else { return false }
+            releaseAudition()
+            let roll = document.rollLaneID
+            slotLaneSink?(slot, laneID)
+            slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: document, rollLane: roll))
+            slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: document, rollLane: roll))
+            slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: document, rollLane: roll))
+            slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: document, rollLane: roll))
+            slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: document, rollLane: roll))
+            slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: document, rollLane: roll))
+            slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: document, rollLane: roll))
+            slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: document, rollLane: roll))
+            slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: document, rollLane: roll))
+            sink(slot, [LaneNotePump.Event(pitch: pitch, velocity: v)])
+            auditionHeld = (slot, pitch)
+            auditionRelease = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: Self.auditionHoldNanoseconds)
+                guard !Task.isCancelled else { return }
+                self?.releaseAudition()
+            }
+            return true
+        }
+    }
+
+    /// Release the held audition note. Always sent, even if the transport started meanwhile: a
+    /// note the pump never loaded is one `flushPumps` cannot release, so skipping it would hang.
+    private func releaseAudition() {
+        auditionRelease?.cancel()
+        auditionRelease = nil
+        guard let held = auditionHeld else { return }
+        auditionHeld = nil
+        slotNoteSink?(held.slot, [LaneNotePump.Event(pitch: held.pitch, velocity: 0)])
+    }
+
     // MARK: Clip-Launch secondary-lane load helpers (shared arrangement/launch path)
 
     /// The physical rack slot (priority rank) a SECONDARY MIDI lane owns, or nil when
