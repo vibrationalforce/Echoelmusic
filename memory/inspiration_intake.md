@@ -1291,3 +1291,10 @@ Lizenz ist MIT (Code), nicht Apache 2.0, und für die Gewichte nennt die Seite k
 kommerzielle Rechte" steht dort nicht — der Disclaimer verlangt Offenlegung von KI-Beteiligung und
 Erlaubnis bei geschützten Stilen. Lehre: Rechte-Aussagen aus einem LLM-Bericht immer an der Quelle
 nachlesen. Verdikt unverändert WATCH, Brücke = Import Audio.
+
+**Zweiter Nachtrag — erweiterter Bericht mit „God's Eye View" und Roadmap, [verified 2/5], REJECT.**
+GEV existiert (MIT, 54k Sterne), ist aber ein Browser-Globus auf CesiumJS mit Google-3D-Tiles (API-Key,
+gebührenpflichtig) und OpenAI-Realtime-Sprache — zwei Cloud-Abhängigkeiten, also weder „autark" noch
+kostenfrei. Kein Musik-, VJ-, OSC- oder MIDI-Pfad auf der Seite. Die Abschnitte 6 und 7 des Berichts
+sind leere Überschriften. Für das Produkt REJECT (Echoels Visual ist der Körper, on-device). Die
+Installations-Schritte der „Roadmap" wurden nicht ausgeführt (Lernmodus Regel 1).
