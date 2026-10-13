@@ -1,0 +1,168 @@
+Du hilfst Echoel (Michael Terbuyken, Studio Hamburg) als PRÜFER. Du brauchst KEINEN Repo-Zugriff und KEINEN Connector: alles, was du brauchst, steht unten wörtlich. Du schreibst nichts ins Repo — du antwortest NUR hier im Chat. Claude Code misst deine Antwort nach und schreibt den Test selbst.
+
+WAS ECHOEL IST
+Eine iPhone-App: Herzschlag und Atem spielen Klang, Bild, Licht und Raum in Echtzeit. Kein Wellness-, Meditations- oder Therapieprodukt.
+
+WAHRHEITSREGELN
+- Erfinde keine Funktionen, Typen oder Zahlen. Benutze nur die APIs, die unten wörtlich stehen.
+- Was du nicht wissen kannst, schreibst du als Frage. Musst du etwas annehmen, schreib „ANNAHME:“ davor.
+- Du kannst nichts kompilieren oder ausführen. Behaupte das nie. Rechnen darfst du — zeig die Rechnung.
+- Frag nie nach Logs, Gesundheitsdaten, Schlüsseln oder privaten Dateien.
+
+AUFTRAG 10b (ersetzt Auftrag 10 — gleicher Inhalt, ohne Connector)
+VV-4e als ROTER Test: beweise eine offene Lücke im Blitz-Schutz für eigenes Video. Repariere sie NICHT.
+
+Die Lage in drei Sätzen:
+1. Eigenes Video wird als SCREEN über das generierte Bild gelegt, je Kanal in linearem Licht: shown = F + g·L·(1 − F). F = Bild darunter (linear), L = Video-Ebene (linear), g = Gain des Begrenzers (VideoFlashLimiter.gain).
+2. Der Begrenzer zählt Helligkeit und Rot-Signal (linear R − G − B, nach unten bei 0 abgeschnitten) der EBENE L — nicht das, was auf dem Schirm landet.
+3. Über einem rötlichen Bild wird ein Grün- oder Blau-Wechsel der Ebene trotzdem zu einem Wechsel von R − G − B AUF DEM SCHIRM. Den zählt kein Kanal. Beispiel: F = (0,5; 0; 0) linear, Ebene wechselt mit 10 Hz zwischen Schwarz und (0; 0; 0,3) linear → Helligkeitswechsel der Ebene 0,0217 (unter der Fenster-Schwelle 0,025), Rot-Signal der Ebene 0, Gain bleibt 1, auf dem Schirm schwankt R − G − B um 0,3. WCAG-Grenze: 20/320 = 0,0625.
+
+DEINE AUFGABE
+Schreib eine Swift-XCTest-Datei `TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests.swift` (Klasse gleichen Namens, `@testable import Echoelmusic`), die diese Lücke festnagelt:
+- Anspruch A (heute ROT erwartet): Eine Ebene über einem festen, rötlichen Bild darf auf dem Schirm keinen Rot-Wechsel ≥ VideoFlashLimiter.redCellTransitionThreshold zeigen, der öfter als 2,5-mal pro Sekunde wiederkehrt. Treibe den echten `VideoFlashLimiter` Bild für Bild (z. B. 60 fps, 3 s) mit dem, was die App ihm gibt: Helligkeits- und Rot-Zellen der EBENE (alle 64 Zellen gleich, cellsPerSide = VideoLayerMath.flashCellsPerSide). Rechne den gezeigten Wert mit der Screen-Formel oben und dem Gain, den `step` zurückgibt.
+- Anspruch B (grün erwartet, Gegengewicht): Dieselbe Ebene über SCHWARZEM Bild zeigt keinen Rot-Wechsel — der Test braucht also das rote Bild, um rot zu werden.
+- Anspruch C (grün erwartet, Gegengewicht): Derselbe Wechsel mit 1 Hz über demselben roten Bild ist erlaubt.
+- Mindestens drei Bildfarben und zwei Ebenen-Farben als Fälle; alle Zahlen als benannte Konstanten oben in der Klasse, nicht verstreut.
+- Kopfkommentar: was die Datei beweist, warum A heute rot ist (mit deinen Zahlen), was eine Reparatur leisten muss — OHNE eine Reparatur vorzuschreiben (zwei Wege sind im Gespräch: die Bildfarbe mitzählen, oder eine Schranke je Farbkanal).
+- Methodennamen als Sätze (z. B. `testAGreenFlickerOverARedFieldIsCapped`), Fehlermeldungen sagen, was kaputt ist.
+
+WICHTIG ZU DEN EINHEITEN
+`VideoLayerMath.relativeLuminance` und `redFlashSignal` nehmen sRGB-Komponenten 0…1 und rechnen selbst in linear um. Die Screen-Formel rechnest du in LINEAR. Wenn du Ebenen-Farben linear angibst, musst du sie für diese zwei Funktionen nach sRGB umrechnen (oder die Werte linear direkt selbst ausrechnen und das im Kommentar sagen). Für den GEZEIGTEN Rot-Wert rechnest du linear R − G − B direkt aus shown, ohne die Funktion.
+
+DIE ECHTEN APIS (wörtlich aus dem Repo, Stand 465713bf9 — nur diese benutzen)
+
+=== Sources/Echoelmusic/Core/VideoFlashLimiter.swift (Auszug) ===
+public struct VideoFlashLimiter: Sendable {
+
+    /// The share of one window a counted flash is assumed to cover (see the header).
+    public static let regionCoverage = 0.25
+    /// A window's move against its last extreme that counts as a transition: the WCAG step over
+    /// the share of the window a counted flash covers.
+    public static let transitionThreshold = FlashGuard.luminanceDeltaThreshold * regionCoverage
+    /// A cell's move that counts as a transition, on the footage and as shown: the whole WCAG step.
+    public static let cellTransitionThreshold = FlashGuard.luminanceDeltaThreshold
+    /// WCAG 2.3.1's red flash: a change of `(R − G − B) × 320` above 20, in linear RGB — so a
+    /// change of 20/320 in `VideoLayerMath.redFlashSignal`. Counted on cells and as shown.
+    public static let redCellTransitionThreshold = 20.0 / 320.0
+    /// The red step over the share of a window a counted flash covers, as for the luminance.
+    public static let redTransitionThreshold = redCellTransitionThreshold * regionCoverage
+    /// Taken off every step so a move of exactly the step counts: `0.4 - 0.3` is a hair under the
+    /// step in binary floating point, and the first version missed such a flash on some levels.
+    public static let roundingAllowance = 1e-9
+    /// Transitions inside one window of time, in any one channel, that engage the cap. One fewer
+    /// than the two-per-flash a WCAG-limit second holds, so the edge the cap itself makes still fits.
+    public static let engageTransitions = Int(2 * FlashGuard.maxFlashHz) - 1
+    /// The window transitions are counted in, in seconds.
+    public static let windowSeconds = 1.0
+    /// The gain while engaged: a quarter of the red step. The shader composites the layer as a
+    /// SCREEN, so the shown red signal (three channels summed) can swing 3·gain − 2·gain²; the
+    /// fourth share is room for the drawable's 8-bit sRGB rounding. Luminance moves by at most gain.
+    public static let engagedGain = redCellTransitionThreshold / 4
+    /// Quiet time before the gain climbs back, in seconds.
+    public static let holdSeconds = 1.0
+    /// How fast the gain climbs back, per second (`engagedGain` → 1 in about four seconds).
+    public static let releasePerSecond = 0.25
+    /// The least and the most one frame advances the limiter's own clock (see the header).
+    public static let shortestFrameSeconds = 1.0 / 240
+    public static let longestFrameSeconds = 0.25
+    /// The finest grid read through the overlapping windows; a finer one is read whole-frame.
+    public static let maxCellsPerSide = 16
+
+    /// The gain to apply to the layer now, `engagedGain`…1.
+    public private(set) var gain: Double = 1
+
+    ...
+    public init() {}
+
+    /// Feeds one shown frame and returns the gain. `cells` are its cell luminances, 0…1, row-major in
+    /// a `cellsPerSide × cellsPerSide` grid; `redCells` the same cells' red signal
+    /// (`VideoLayerMath.redFlashSignal`), or nil where the caller has no colour — then only the
+    /// luminance counts, and a footage door must never pass nil (`UserFootageCannotStrobeTests`).
+    /// A luminance grid of the wrong size changes nothing; a red grid of the wrong size is left out
+    /// and the luminance still counts. A non-finite cell leaves out its own channels and the windows
+    /// it belongs to.
+    @discardableResult
+    public mutating func step(time: Double, cells: [Double], redCells: [Double]?, cellsPerSide: Int) -> Double {
+        guard cellsPerSide > 0 else { return gain }
+        let (cellCount, overflow) = cellsPerSide.multipliedReportingOverflow(by: cellsPerSide)
+        guard !overflow, cells.count == cellCount else { return gain }
+        let dt = advanceClock(to: time)
+        if cellsPerSide != side { layOut(cellsPerSide) }
+
+        let windowStart = clock - Self.windowSeconds
+        var busiest = luminance.feed(cells, windowCells: windowCells, gain: gain,
+                                     at: clock, after: windowStart)
+        if let redCells, redCells.count == cellCount {
+            busiest = Swift.max(busiest, red.feed(redCells, windowCells: windowCells, gain: gain,
+                                                  at: clock, after: windowStart))
+        }
+
+        if busiest >= Self.engageTransitions {
+            gain = Self.engagedGain
+            quietSince = nil
+        } else {
+            let since = quietSince ?? clock
+            quietSince = since
+            if clock - since >= Self.holdSeconds, gain < 1, dt > 0 {
+                gain = Swift.min(1, gain + FlashGuard.maxDelta(perSecond: Self.releasePerSecond, dt: dt))
+            }
+        }
+        return gain
+    }
+
+
+=== Sources/Echoelmusic/Core/VideoLayerMath.swift (Auszug) ===
+public enum VideoLayerMath {
+
+    /// The BT.709 weights of linear red, green and blue in relative luminance.
+    public static let redWeight = 0.2126
+    public static let greenWeight = 0.7152
+    public static let blueWeight = 0.0722
+
+    /// Cells per side handed to the flash limiter (an 8 × 8 grid). The limiter reads them through
+    /// overlapping 2 × 2 and 4 × 4 windows, so its smallest window is a sixteenth of the picture —
+    /// about the smallest area WCAG counts on a phone held at reading distance — and it can sit at
+    /// any half-window offset (review of VV-4: fixed 4 × 4 blocks diluted a flash on a corner).
+    public static let flashCellsPerSide = 8
+
+    /// The relative luminance of an sRGB colour whose components are 0…1. Non-finite components
+    /// read as 0 and every component is clamped first, so the answer is always 0…1.
+    public static func relativeLuminance(red: Double, green: Double, blue: Double) -> Double {
+        let r: Double = redWeight * linearComponent(red)
+        let g: Double = greenWeight * linearComponent(green)
+        let b: Double = blueWeight * linearComponent(blue)
+        return Swift.min(1, r + g + b)
+    }
+
+    /// The red-flash signal of an sRGB colour whose components are 0…1: linear R − G − B, floored at
+    /// 0 (WCAG 2.3.1 sets negative values to zero). `VideoFlashLimiter` counts a move of 20/320 in it
+    /// as a red transition. Non-finite components read as 0, every component is clamped first, so the
+    /// answer is always 0…1.
+    public static func redFlashSignal(red: Double, green: Double, blue: Double) -> Double {
+        return Swift.max(0, linearComponent(red) - linearComponent(green) - linearComponent(blue))
+    }
+
+    /// One sRGB component, 0…1, undone to linear light — the curve both helpers above share.
+    /// Non-finite reads as 0; the component is clamped first.
+    private static func linearComponent(_ component: Double) -> Double {
+        let c = component.isFinite ? Swift.min(1, Swift.max(0, component)) : 0
+        return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
+    }
+
+    /// The mean of each `blocks × blocks` block of a row-major `side × side` grid, row-major.
+    ...
+
+=== Sources/Echoelmusic/Views/MetalBioView.swift (Shader, Auszug: Ebene über Bild) ===
+            float3 lin = select(pow((rgb + 0.055) / 1.055, float3(2.4)), rgb / 12.92,
+                                rgb <= float3(0.04045));
+            outCol = mix(outCol, lin + outCol * (1.0 - lin), clamp(u.footOpacity, 0.0, 1.0) * inside);
+
+Hinweis: FlashGuard.luminanceDeltaThreshold = 0.1, FlashGuard.maxFlashHz = 3 (also engageTransitions = 5).
+
+ANTWORT (genau diese Teile, sonst nichts)
+1. Die vollständige Swift-Datei in EINEM Codeblock.
+2. Deine Rechnung je Fall von Anspruch A: Bildfarbe, Ebenen-Farbe, Helligkeits- und Rot-Wechsel der Ebene, Gain je Fall, gezeigter Rot-Wechsel — und damit warum A heute rot ist.
+3. Warum B und C grün sind (je ein Satz mit Zahl).
+4. Was du NICHT prüfen konntest (Kompilieren, Ausführen).
+5. Höchstens 3 Fragen an Claude Code.
+Letzte Zeile: Orchester: Grok · Auftrag 10b

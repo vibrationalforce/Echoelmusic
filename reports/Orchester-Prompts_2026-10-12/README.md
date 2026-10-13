@@ -28,3 +28,5 @@ Nachtrag nach Auftrag 12 (ChatGPT, [verified 8/10]): Sicherheits- und Haftungshi
 Nie in einen dieser Chats: Logs, Diagnose-Dateien, Puls- oder Atemwerte, Tester-Daten, Schlüssel. Alles in diesen Dateien ist öffentlich.
 
 Nachtrag Branch-Anlage (2026-10-12): Die Connectoren können einen Branch nur von einem bestehenden Branch-Namen anlegen, nicht an einem Commit. Deshalb legt Claude Code jeden Vorschlags-Branch selbst an `3a47150c5` an, bevor das Modell schreibt. Angelegt: `orchester/mistral/sync-comment-truth`, `orchester/grok/vv4e-red-test`.
+
+Nachtrag 10b (2026-10-13): Groks Connector bleibt unerreichbar. Auftrag 10 ist ersetzt durch `10b_Grok_VV-4e_roter-Test_ohne-Connector.txt`: der nötige Code steht wörtlich im Prompt (Stand 465713bf9), Grok antwortet nur im Chat, Claude Code misst nach und schreibt den Test selbst. Der Branch `orchester/grok/vv4e-red-test` wird dafür nicht gebraucht.
