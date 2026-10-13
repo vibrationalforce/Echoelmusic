@@ -28,7 +28,7 @@ für tot (Aufnahme-Knopf, WeatherProvider, Grain, Kopfhörer-Raum) und Totes fü
 | Befund | Messung | Klasse |
 |---|---|---|
 | Rausch-Triade: nur `BioEventGraph` ist verdrahtet | `BioSignalDeconvolver`, `HilbertSensorMapper`: 0 Aufrufer | Register (erledigt in CLAUDE.md) |
-| `SessionEngine` hängt beim Start im Master-Graph, keine Ansicht zeigt ihn | `EchoelmusicApp.swift:975 attach(to:)` | Founder-Frage (GM17) |
+| `SessionEngine` hängt beim Start im Master-Graph, keine Ansicht zeigt ihn | `EchoelmusicApp.swift:975 attach(to:)` | Founder-Frage (GM18) |
 | Song-Form wird gespeichert, nie zurückgelesen | `restoreSong` schreibt keine `ArrangementStore`; 0 Schreiber | WA2 Scenes — Kommentar-Scheibe |
 | Kohärenz fehlt auf der Apple-Health-Quelle | `HealthKitBioPublisher.swift:168 coherence: 0` | Feature (Watch-Plan), Doku erledigt |
 | `bioEvents` hat ohne `osc.out`-Route keinen Abnehmer; Überläufe zählt niemand | `EchoelmusicApp.swift:683` | SH-10-Zeile (klein) |
@@ -38,9 +38,9 @@ für tot (Aufnahme-Knopf, WeatherProvider, Grain, Kopfhörer-Raum) und Totes fü
 | `EchoelFDNReverb`: fertig, flag-gated auf ein Flag ohne Leser, kein Register | 0 Aufrufer | Register + B11 oder E21 |
 | 13 Archiv-Bausteine Scope YES ohne Plan-Slice | Karplus · Ladder · Cellular (App) · FDN · Ringmod · Freeze · Multiband · Fixture-Profile · Keystone · SharePlay · CloudSync · Euclid · Audio→MIDI | PLAN_GMMW A5 nachtragen |
 | Spatial-Render-Hälfte: Register sagt 7, Wächter pinnt 5; 2 transitive Waisen | `EchoelRenderLayout`, `AutomationGestureRecorder` | Wächter-Erweiterung (mit nächstem Sources-Push) |
-| `EchoelEntrainment` („Deep Sleep / Meditation / Peak Focus") stumm, türlos im Render-Pfad | Tiefe 0, Tür nur in türloser `BioSourceView` | Founder-Frage (GM18) |
+| `EchoelEntrainment` („Deep Sleep / Meditation / Peak Focus") stumm, türlos im Render-Pfad | Tiefe 0, Tür nur in türloser `BioSourceView` | Founder-Frage (GM19) |
 | Hot-State-Wächter kennt drei ≥10-Hz-Schreiber nicht | Transport-Position, Tempo-Glide, OSC-Eingang (alle Leser in Blättern) | Wächter-Erweiterung |
-| Fünf Speicher-Wurzeln fehlen im Wurzel-Register, zwei ohne Entscheidung | `PerformerSignature`, `bioVitals.v1` | Founder-Frage (GM19) |
+| Fünf Speicher-Wurzeln fehlen im Wurzel-Register, zwei ohne Entscheidung | `PerformerSignature`, `bioVitals.v1` | Founder-Frage (GM20) |
 
 ## 3 · Drift Richtung GMMW (nach außen)
 
@@ -48,7 +48,7 @@ App-Store-Text, Startseite, FAQ und `CLAIMS.md` verkaufen weiter das reine Instr
 auf der die App startet, der Mixer und der Sampler je Spur fehlen oder werden verneint; mehrere Seiten
 erklären die 2026er Streichungen (Video, Streaming, Hosting) zur Produktgrenze — gegen das
 Produktgesetz vom 24.09. → EIN Commit CLAIMS + faq + claims.html (Wächter koppelt sie), Store-Text ist
-Founder-Sache (GM20).
+Founder-Sache (GM21).
 
 ## 4 · Heute gelandet (alle Doku, kein Gate-Lauf, main folgt per Passagier)
 
@@ -65,8 +65,8 @@ A2b-Zeilen (16 Slices) · drei Lern-Logs.
 
 ## 6 · Founder-Fragen (einmal, in `docs/dev/FOUNDER_INBOX.md`)
 
-GM17 SessionEngine-Attach · GM18 Entrainment-Wortwahl · GM19 zwei Bio-Wurzeln · GM20 Store-Absatz ARRANGE ·
-GM21 trägt das Stück sein Bild (visueller Look)? · offen bleiben GM1, GM5, GM8.
+GM18 SessionEngine-Attach · GM19 Entrainment-Wortwahl · GM20 zwei Bio-Wurzeln · GM21 Store-Absatz ARRANGE ·
+GM22 trägt das Stück sein Bild (visueller Look)? · offen bleiben GM1, GM5, GM8.
 
 ## 7 · Lehren
 

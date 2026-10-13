@@ -1026,4 +1026,4 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   Spatial-Audit-Banner · A2b-Zeilen.
 - Lernmodus: Grok Deep Audit [8/17] · ChatGPT GMMW Audit [4/5] · ChatGPT Design-Zielbild [8/8, 3 Lücken]
   · unbekannt „optimiert" [6/8, Mockups REJECT]. Neue Aufgaben #77 (R2 erster Take), #78 (Notenfarbe).
-- Offen: die 22 Testnamen aus ChatGPTs xcresult (Artefakt nicht ziehbar, Blob 403); GM17–GM21.
+- Offen: die 22 Testnamen aus ChatGPTs xcresult (Artefakt nicht ziehbar, Blob 403); GM18–GM22.
