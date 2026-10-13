@@ -181,6 +181,7 @@ private struct PartNoteGrid: View {
     @State private var centre: Int?
     /// Design slice 6 — the grid Quantize snaps to. Local to the open grid (a choice for the
     /// next tap, like the octave shift), so it resets to sixteenths when the part changes.
+    /// Production N3 — the same grid draws: a new note starts at its cell and is one cell long.
     @State private var quantizeGrid: ClipNoteEdit.QuantizeGrid = .sixteenth
 
     /// DAW shell S9b — how wide a sixteenth is drawn (`NoteGridZoom`). A view of the part, not
@@ -391,7 +392,8 @@ private struct PartNoteGrid: View {
         let pitch = anchor?.pitch ?? centre
         let step = anchor?.endStep ?? 0
         guard let added = ClipNoteEdit.adding(pitch: pitch, step: step, to: clip.melody?.notes ?? [],
-                                              offsetTicks: offset, lengthTicks: region.lengthTicks),
+                                              offsetTicks: offset, lengthTicks: region.lengthTicks,
+                                              lengthSteps: quantizeGrid.steps),
               timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) else { return }
         picked = .single(added.id)
         audition(added.id, in: added.notes, region: region)
@@ -444,10 +446,11 @@ private struct PartNoteGrid: View {
             audition(id, in: visible, region: region)
         case .empty(let pitch, let step):
             guard editable, let clip = clipStore.clip(id: region.clipID),
-                  let added = ClipNoteEdit.adding(pitch: pitch, step: step,
+                  let added = ClipNoteEdit.adding(pitch: pitch, step: ClipNoteEdit.gridCellStart(step, gridSteps: quantizeGrid.steps),
                                                   to: clip.melody?.notes ?? [],
                                                   offsetTicks: offset,
-                                                  lengthTicks: region.lengthTicks) else { return }
+                                                  lengthTicks: region.lengthTicks,
+                                                  lengthSteps: quantizeGrid.steps) else { return }
             if timeline.setClipNotes(clipID: region.clipID, added.notes, clips: clipStore) {
                 picked = .single(added.id)
                 audition(added.id, in: added.notes, region: region)
@@ -654,7 +657,7 @@ private struct PartNoteGrid: View {
                 }
             }
             .pickerStyle(.segmented)
-            .accessibilityHint("The grid Quantize snaps note starts to")
+            .accessibilityHint("The grid new notes are drawn on and Quantize snaps to")
             NoteToolFlow(spacing: EchoelTheme.spaceS) {
                 button("Quantize", "square.grid.3x3",
                        enabled: can(ClipNoteEdit.quantizing(targets, in: notes, offsetTicks: offset,

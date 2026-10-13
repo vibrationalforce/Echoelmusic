@@ -4381,18 +4381,6 @@
         }
       }
     },
-    "The grid Quantize snaps note starts to" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The grid Quantize snaps note starts to"
-          }
-        }
-      }
-    },
     "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces are untouched. One setting changed: the studio now opens on Instrument, in case the stage you were on caused the problem. Piece is one tap away at the bottom." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -23745,6 +23733,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "effects"
+          }
+        }
+      }
+    },
+    "The grid new notes are drawn on and Quantize snaps to" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change. Production N3: the grid also draws new notes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The grid new notes are drawn on and Quantize snaps to"
           }
         }
       }

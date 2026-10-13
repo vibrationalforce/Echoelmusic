@@ -97,13 +97,15 @@ enum ClipNoteEdit {
     /// (shortened to the part's end), velocity 0.8, appended so it draws on top. nil when the
     /// step lies outside the part — nothing the player would skip is created.
     nonisolated static func adding(pitch: Int, step: Int, to clipNotes: [Note],
-                                   offsetTicks: Int, lengthTicks: Int,
+                                   offsetTicks: Int, lengthTicks: Int, lengthSteps: Int = 1,
                                    id: UUID = UUID()) -> (notes: [Note], id: UUID)? {
         guard step >= 0, lengthTicks > 0, (0...127).contains(pitch) else { return nil }
         let relative = step * Note.ticksPerStep
         guard relative < lengthTicks else { return nil }
         let start = Swift.max(0, offsetTicks) + relative
-        let length = Swift.min(Note.ticksPerStep, lengthTicks - relative)
+        // Production N3 — the new note is `lengthSteps` sixteenths long (the editor passes the
+        // chosen grid), cut at the part's end like a one-step note always was.
+        let length = Swift.min(Swift.max(1, lengthSteps) * Note.ticksPerStep, lengthTicks - relative)
         let note = Note(id: id, pitch: pitch, startTick: start, lengthTicks: length)
         return (clipNotes + [note], id)
     }
@@ -224,6 +226,14 @@ enum ClipNoteEdit {
             case .quarter:   return String(localized: "quarter note")
             }
         }
+    }
+
+    /// Production N3 — the start of the grid cell a tap at part step `step` falls in: a new note
+    /// is drawn at its cell's start, on the same grid OF THE PART that `quantizing` uses. A grid
+    /// below 1 and a negative step pass through unchanged (`adding` refuses the negative one).
+    nonisolated static func gridCellStart(_ step: Int, gridSteps: Int) -> Int {
+        guard gridSteps >= 1, step >= 0 else { return step }
+        return (step / gridSteps) * gridSteps
     }
 
     /// `ids` with their starts snapped to the nearest cell of a `gridSteps`-sixteenth grid OF THE
