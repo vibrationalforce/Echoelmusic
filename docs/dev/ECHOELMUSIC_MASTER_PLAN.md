@@ -401,7 +401,7 @@ done. WA4 is the first front.
     `Studio/TrackInspectorView.swift` (`0faea6e66`) — first production caller of
     `TimelineStore.removeLaneIfEmpty`. Only an empty, non-Echoel, non-bio track; the reason is
     shown otherwise. Guard `OnlyAnEmptyTrackCanBeRemovedTests`.
-  - **WA4.5 — the song at a glance: IMPLEMENTED.** `Studio/ArrangementStripView.swift`
+  - **WA4.5 — the song at a glance: IMPLEMENTED, then SUPERSEDED.** `Studio/ArrangementStripView.swift` (⛔ deleted with DAW shell S2/S3 2026-10-02 — the Arrange stage IS the song at a glance)
     (`325710ca9`) — every track's parts on one shared scale, overlap drawn in `activeRegion`
     order, no playhead (hot-state law). Guard `TheSongIsSeenOnOneScaleTests`. Plate copy
     corrected in `a6cc4fef2`.
@@ -461,10 +461,10 @@ done. WA4 is the first front.
     logged (MEDIUM-4):** the slot's Session stays while the live song holds no user parts — a
     flag set on Open and cleared on the first edit would close it.
   - **Acceptance Test A gap closed:** the Save tile was `hasComposed`-gated, so a song built
-    only by importing could not be saved. `SaveSessionButton` (`c69af8995`) is enabled by
+    only by importing could not be saved. `SaveSessionButton` (`c69af8995`; ⛔ deleted with S2/S3 2026-10-02, Save lives in `ProjectHeader`/≡) was enabled by
     `hasComposed || SessionSaveOpen.songHasUserParts` — the recovery slot's predicate — and reads
     the song in its own leaf body (freeze law). Guard `TheSongAloneCanBeSavedTests`.
-  - **Acceptance Test A inside the Workstation:** `WorkstationProjectRow` (`dc55c2d6e`) puts
+  - **Acceptance Test A inside the Workstation:** `WorkstationProjectRow` (`dc55c2d6e`; ⛔ deleted with S2/S3 2026-10-02, the Piece stage carries Save/Open in `ProjectHeader`) put
     Save and Open on the plate itself, gated on the same facts as the Studio's tiles, raising the
     Studio's OWN Save alert and Open sheet through the chrome door (`"save"`/`"open"` receiver
     cases) — no presentation modifier of its own. Guard `TheSongAloneCanBeSavedTests` claim 4.
@@ -502,11 +502,9 @@ done. WA4 is the first front.
     `ArrangeTimelineView` classified: body drag + snapped preview PORTED as idea,
     `TimelineDragMath.tickDelta` PORTED as algorithm; zoom, magnet, lane change and overlap
     trimming NOT RESTORED. Guard `TheArrangeCanvasMovesAPartByDraggingTests`.
-  - **Open in WA4 (after path D):** a general undo step beyond regions (mixer edits are not
-    undoable), drag across tracks and drag-trim of edges (and an outward trim — today's trim
-    only shortens), the MEDIUM-4 flag (kept open on purpose: today's behaviour errs toward
-    keeping a song, the flag would trade that for losing one); Arm stays absent (no record
-    path, #1302); the device proof journey is written and owed to the founder.
+  - **Open in WA4 (after path D):** drag across tracks, the MEDIUM-4 flag (kept open on purpose: today's behaviour errs toward
+    keeping a song, the flag would trade that for losing one); the device proof journey is written and owed to the founder.
+    ⭐ CLOSED since (measured 2026-10-13): mixer undo = `TimelineStore.commitLaneMix` (`.laneMix` step, Restructure S2) · edge drag-trim incl. outward = AE-4b (`AudioPartEditorView`) · Arm = Recording R1 (`TrackArmToggle`, MIDI take only — never audio, #1302).
 ---
 
 ## 8. Deferred — parked, not forgotten
@@ -659,7 +657,7 @@ general.
 | #58 | two blocked genres (gnawaGuembri, koraOstinato) | genre catalogue |
 | #208 / #396 / #807 / #1176 | CI: full-tests label, the simulator-clone crash, the `tail -200` log window, and the `CLAUDE.md` path filter | test-execution evidence (TESTED status) |
 | — | adding any dependency (HaishinKit, LinkKit, NDI SDK, …) | broadcast, Link, NDI |
-| WA4-P2 | **the Workstation as a first-class workspace (critical path 2).** ⭐ **TAKEN 2026-09-25 under the WA4 EXECUTION GO: option (a) with the banner.** A relaunch returns to the Workstation when the player left from there (`studio.reopensWorkstation`, one Bool, ONE writer = the plate the player chose); a first launch and every launch after leaving from an instrument panel still show Sound; `nonStandardTuningBanner` is mounted on the Workstation plate too, so #325 holds for whichever plate a launch shows; the chip strip scrolls the restored chip into view. (b) was measured and dropped — the brand keeps ~72 pt on a 360 pt phone and the header layout is founder-drawn; (c) stays forbidden (D10). Guards: `TheWorkstationHasADoorTests` claim G, `DetunedInstrumentSaysSoTests`. Evidence: TESTED by transcription; COMPILES pending; DEVICE open (founder sheet §2c). | path 2 |
+| WA4-P2 | **the Workstation as a first-class workspace (critical path 2).** ⛔ Mechanism since S2/S3 2026-10-02: the stage key in `StageShell.swift` (`studio.reopensWorkstation` is a tombstone). ⭐ **TAKEN 2026-09-25 under the WA4 EXECUTION GO: option (a) with the banner.** A relaunch returns to the Workstation when the player left from there (`studio.reopensWorkstation`, one Bool, ONE writer = the plate the player chose); a first launch and every launch after leaving from an instrument panel still show Sound; `nonStandardTuningBanner` is mounted on the Workstation plate too, so #325 holds for whichever plate a launch shows; the chip strip scrolls the restored chip into view. (b) was measured and dropped — the brand keeps ~72 pt on a 360 pt phone and the header layout is founder-drawn; (c) stays forbidden (D10). Guards: `TheWorkstationHasADoorTests` claim G, `DetunedInstrumentSaysSoTests`. Evidence: TESTED by transcription; COMPILES pending; DEVICE open (founder sheet §2c). | path 2 |
 
 ---
 
