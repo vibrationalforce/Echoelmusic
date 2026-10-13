@@ -22,7 +22,7 @@
 **Zugriffsdatum aller Web-Zeilen:** 2026-10-04.
 
 **Vier Prompt-Annahmen, die nicht mehr stimmen** (CLAUDE.md gewinnt, L0.1):
-1. **„Zero dependencies: `Package.swift dependencies: []`“** stimmt nicht mehr. Seit B2 (Founder-Freigabe 2026-10-04) gibt es genau zwei Pakete, HaishinKit und Logboard, und beide **nur für RTMP**. Für dieses Vorhaben gilt die Regel trotzdem unverändert: libbw64, libadm, EAR, libear, libiamf, libmysofa und iamf-tools werden **nie gelinkt**. Sie dienen nur als Orakel außerhalb der App.
+1. **„Zero dependencies: `Package.swift dependencies: []`“** stimmt nicht mehr. Seit B2 (Founder-Freigabe 2026-10-04) gibt es genau zwei Pakete, HaishinKit und Logboard, und beide **nur für RTMP**. Für dieses Vorhaben gilt die Regel trotzdem unverändert: libbw64, libadm, EAR, libear, libiamf, libmysofa und iamf-tools werden **nie gelinkt**. Sie dienen nur als Orakel außerhalb der App. ⛔ **Gemessen 2026-10-13: B2 ist BESCHLOSSEN, der Patch NICHT GELANDET** — `Package.swift` hat `dependencies: []`, `project.yml` nennt kein Paket, `scratchpads/LANDING_P2_B2_broadcast.patch` wartet auf die Founder-Freigabe (`project.yml` ist gated). Bis dahin gilt „zero dependencies“ weiter.
 2. **„EBU Tech 3392“** ist laut EBU-Guidelines `documents/ebu_documents.md` **deprecated**. Nachfolger ist **EBU Tech 3393**, das ADM-Produktionsprofil für BS.2076-3 (VERIFIED). Dessen Grenzwerte konnten nicht gelesen werden (NEEDS-VERIFY).
 3. **„Nothing in the headphone path is spatial today“** ist seit S3c (`5cf8d02fe`) **widerlegt**, siehe L3 #7.
 4. **„the flag-off multitrack recording chain“** stimmt nicht: `FeatureFlags.audioLaneRecording` hat seit #1302 **gar keinen Zweig** mehr. Siehe L3 #2.

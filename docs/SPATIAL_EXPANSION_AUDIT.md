@@ -290,7 +290,7 @@ CI-/project.yml-Risiko hängt.
 - **Der Mehrkanal-Gate A aus §6.5 ist für den Export nicht nötig.** Ein ADM-Master braucht kein `EchoelRender`-Target, sondern einen Datei-Writer.
   - EAR (BSD-3-Clause-Clear) übernimmt außerhalb der App die Rolle des BS.2127-Referenz-Renderers.
   - Eine eigene 4+7+0-Vorschau würde mehr verlangen als VBAP: Triplet, QuadRegion, VirtualNgon und virtuelle Lautsprecher (EAR `point_source.py`). `Sync/VBAPPanner` ist 2-D.
-- **Die Prompt-Grundannahme „zero dependencies“ gilt seit B2 so nicht mehr.** Es gibt jetzt HaishinKit und Logboard, beide nur für RTMP. Für dieses Vorhaben bleibt es trotzdem bei null neuen Abhängigkeiten.
+- **Die Prompt-Grundannahme „zero dependencies“ gilt seit B2 so nicht mehr.** Es gibt jetzt HaishinKit und Logboard, beide nur für RTMP. Für dieses Vorhaben bleibt es trotzdem bei null neuen Abhängigkeiten. ⛔ **Gemessen 2026-10-13: B2 ist BESCHLOSSEN, der Patch NICHT GELANDET** — `Package.swift` hat `dependencies: []`, `project.yml` nennt kein Paket, `scratchpads/LANDING_P2_B2_broadcast.patch` wartet auf die Founder-Freigabe (`project.yml` ist gated). Bis dahin gilt „zero dependencies“ weiter.
 - **Namenskollision:** Die Kanalrolle, die der Prompt vorschlägt, kann nicht `SpatialRole` heißen. Dieser Name gehört schon der Kollaborations-Berechtigung (`Core/SpatialScene.swift:153`). Vorschlag: `ChannelRole`.
 
 ### 7.2 Re-Audit der Founder-Liste — Kurzfassung (Langfassung: Research §7)

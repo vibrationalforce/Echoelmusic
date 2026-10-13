@@ -42,7 +42,7 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
    - Proprietäre Encoder (DD+, AC-4). Das ist der letzte Schritt **des Studios**, nicht unserer.
 7. **Abhängigkeiten:** keine neuen.
    - libbw64, libadm, EAR/libear, MediaInfo und iamf-tools sind **Orakel außerhalb der App**. Der Founder oder die Recherche lässt sie auf exportierten Dateien laufen. Gelinkt oder vendored werden sie nie.
-   - Die zwei Pakete aus B2 (HaishinKit, Logboard) gelten nur für RTMP.
+   - Die zwei Pakete aus B2 (HaishinKit, Logboard) gelten nur für RTMP. ⛔ **Gemessen 2026-10-13: B2 ist BESCHLOSSEN, der Patch NICHT GELANDET** — `Package.swift` hat `dependencies: []`, `project.yml` nennt kein Paket, `scratchpads/LANDING_P2_B2_broadcast.patch` wartet auf die Founder-Freigabe (`project.yml` ist gated). Bis dahin gilt „zero dependencies“ weiter.
 8. **Namen:** Die vom Prompt vorgeschlagene Kanalrolle heißt **`ChannelRole`** (`.object | .bed(BS2051Channel) | .lfe`), nicht `SpatialRole`. Der Grund: `SpatialRole` existiert schon in `Core/SpatialScene.swift:153` als Kollaborations-Berechtigung. Ein zweiter Typ gleichen Namens wäre ein Compile-Fehler, eine Umbenennung des lebenden Typs ein Eingriff, den niemand bestellt hat.
 9. **Ehrlichkeit (L7):** Erlaubter Satz bis zu einem Studio-Ingest:
    > „exportiert einen offenen ADM-BWF-Immersive-Master (ITU-R BS.2076 / BS.2088) für immersive Mixing-Workflows“
