@@ -1363,3 +1363,14 @@ färbt Pads und Bild, der Noteneditor zeichnet in Theme-Farbe → EINE Scheibe (
 · Ausgabe" ist eine FLÄCHEN-Entscheidung des Founders in der WA-Reihenfolge, keine Ad-hoc-Scheibe.
 Drums im Bild nur als Audio-Spur möglich. Kein Text und kein Bild aus dem Entwurf wandert in
 Sources/docs; das Bild ist Zielbild, nichts daraus wird behauptet.
+
+**2026-10-13 — unbekanntes Modell, „Echoelmusic optimiert" (Text + zwei Mockups).** Der Text hat
+das Repo gelesen: 6 von 8 Aussagen stimmen (Quellen, Atem gemessen, WAV/MIDI, vier Ausgänge,
+Produktgesetz nennt AUv3 · VST3 · CLAP, Plattformrichtung). Zwei veraltet: es gibt keinen Bio-CHIP
+(Puls-Pille, #704), und die Arrangement-Fläche ist nicht entfernt — die Workstation ist seit dem
+30.09. die Bühne. Die MOCKUPS sind als UI-Richtung abgelehnt: „CREATE SESSION"-Knopf (der eine
+Startknopf ist Play), „ECG" (kein Elektrodenpfad, nur rPPG — eine falsche Sensor-Behauptung),
+„INSIGHTS"-Dashboard, KPI-Kacheln, Serifen-Wortmarke statt Atkinson, dekoratives Blattwerk,
+„ARTIFACTS 2 %" ohne Messung — Uncodixfy verbietet genau diese Ästhetik. Die Studio-Szene taugt
+als Stimmungsbild für die Pipeline, wenn die ECG-/Respiration-Monitore weichen. Nichts aus den
+Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
