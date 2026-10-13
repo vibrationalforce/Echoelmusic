@@ -3,8 +3,8 @@
 //  Production level H2b, first half (founder 2026-10-13: „… auv3 Plugins für Effekte und MIDI
 //  Instrumente …"). `HostedInstrumentHost` loads a rack track's chosen Audio Unit instrument,
 //  hangs it into the master mix through `AudioEngine.attachAudioUnit` and plays the track's notes
-//  on it as MIDI. This half adds the host and the engine API; nothing constructs the host yet —
-//  the wiring (the region player naming each slot's plugin, the note sink routing to it) is H2b2.
+//  on it as MIDI. H2b1 added the host and the engine API; H2b2 wired it (the region player names
+//  each slot's plugin, the app's note sink routes an owned slot's notes to it).
 //
 //  WHAT THIS PINS, by kind (Tests/CISmoke/CLAUDE.md §1) — all SOURCE-TEXT SCANS, because the host
 //  needs a real `AVAudioUnit` from the system and the engine needs a device graph:
@@ -21,7 +21,9 @@
 //  · Claim 4 — the engine API is the `attachSourceNode` shape: rung first, pause, restart through
 //    `restartOrDegrade` (the counts live in `TheFailedRestartHandsOverToDegradedTests`, raised to
 //    7 and 6 in this commit; the rungs in `TheEngineLifecycleSpeaksInTheDiagLogTests`, #416).
-//  · Claim 5 — nothing constructs the host yet; H2b2 raises this to exactly one, in the app.
+//  · Claim 5 (H2b2) — the app builds exactly one host where the rack is wired; an owned slot's
+//    notes return to the host before the rack's note-on, and the slot's plugin, gain and pan
+//    reach it through the region player's sinks.
 //  · DEVICE PROBE, OPEN — NEEDS-FOUNDER-VERIFY H2 at the host's header.
 //
 //  GRADING against the parent tree (#433/#464): the host file and both engine methods are created
@@ -112,9 +114,9 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         }
     }
 
-    // MARK: 5 — no caller yet
+    // MARK: 5 — one host, in the app, owning the slot's notes (H2b2)
 
-    func testNothingConstructsTheHostYet() throws {
+    func testTheAppBuildsOneHostAndRoutesOwnedSlotsToIt() throws {
         var root = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
@@ -126,7 +128,19 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
             let code = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
             sites += code.components(separatedBy: "HostedInstrumentHost(engine:").count - 1
         }
-        XCTAssertEqual(sites, 0, "H2b2 constructs the host once, in the app — raise this to 1 there")
+        XCTAssertEqual(sites, 1, "one host for the whole rack, built where the rack is wired")
+        let app = SourceText.codeOnly(try source("Sources/Echoelmusic/EchoelmusicApp.swift"))
+        guard let host = app.range(of: "let pluginHost = HostedInstrumentHost(engine: audioEngine)"),
+              let owned = app.range(of: "if pluginHost.owns(slot) {\n                            pluginHost.send(events, toSlot: slot)\n                            return\n                        }"),
+              let rack = app.range(of: "laneVoiceRack?.noteOn(slot: slot, pitch: event.pitch, velocity: event.velocity)") else {
+            return XCTFail("ANCHOR MISSING: the host, the owned-slot branch or the rack's note-on in the note sink")
+        }
+        XCTAssertLessThan(host.lowerBound, owned.lowerBound)
+        XCTAssertLessThan(owned.lowerBound, rack.lowerBound,
+                          "an owned slot's notes return before the rack sees them — never both voices")
+        XCTAssertTrue(app.contains("pluginHost.setInstrument(component, forSlot: slot)"))
+        XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, gain: gain)"))
+        XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, pan: pan)"))
     }
 
     private func source(_ relative: String) throws -> String {

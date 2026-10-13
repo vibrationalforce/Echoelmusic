@@ -4,8 +4,8 @@
 //  A rack track can now STORE which installed Audio Unit instrument it plays instead of its
 //  built-in voice: `DeviceInsert.pluginInstrument` in the track's `DeviceChain.instrument`, written
 //  by ONE writer, one Undo step per pick, read per slot by `MultiRollFanout.hostedInstrument`.
-//  NOTHING LOADS OR SOUNDS YET — no caller reads the slot resolver until H2b, and no door writes
-//  the choice until H2c; this slice is the model the two stand on.
+//  H2a was the model alone; since H2b2 the region player names each slot's choice to the host
+//  (`HostedInstrumentHost`). No door writes the choice until H2c.
 //
 //  WHAT THIS PINS, by kind (Tests/CISmoke/CLAUDE.md §1):
 //  · END-TO-END BEHAVIOUR (claims 1–4) — the insert, the store and the fan-out are shipped and pure
@@ -17,8 +17,8 @@
 //    the slot is never overwritten; the track's effect insert is kept; clearing leaves no chain.
 //    Claim 4: the slot resolver answers for the track the rack plays in that slot, and nil for an
 //    out-of-range slot.
-//  · SOURCE-TEXT SCAN (claim 5) — nothing in `Sources/` reads the resolver yet: a caller arriving
-//    without the host (H2b) would claim a sound that does not exist. Raise it with H2b's commit.
+//  · SOURCE-TEXT SCAN (claim 5) — the region player is the one reader, at its four load sites
+//    (H2b2 raised this from "no reader" when the host arrived).
 //
 //  GRADING against the parent tree (#433/#464): the file does NOT compile there — the insert type,
 //  the writer, the step kind and the resolver are created by this commit — so no assertion has a
@@ -152,25 +152,25 @@ final class ATrackPicksItsPluginInstrumentOnceTests: XCTestCase {
         XCTAssertNil(MultiRollFanout.hostedInstrument(forSlot: 1, in: doc, rollLane: roll), "out of range")
     }
 
-    // MARK: 5 — nothing reads it yet
+    // MARK: 5 — only the region player reads it (H2b2)
 
-    func testNoCallerReadsTheResolverBeforeTheHost() throws {
+    func testOnlyTheRegionPlayerReadsTheResolver() throws {
         var root = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let sources = root.appendingPathComponent("Sources/Echoelmusic")
         guard let walker = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
             throw XCTSkip("Sources/ not on disk — this run has no source tree")
         }
-        var callers: [String] = []
+        var callers: [String: Int] = [:]
         for case let url as URL in walker where url.pathExtension == "swift" {
             let code = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
-            if code.contains("hostedInstrument(forSlot:") && !code.contains("static func hostedInstrument(forSlot") {
-                callers.append(url.lastPathComponent)
-            }
+            let reads = code.components(separatedBy: "MultiRollFanout.hostedInstrument(forSlot:").count - 1
+            if reads > 0 { callers[url.lastPathComponent] = reads }
         }
-        XCTAssertEqual(callers, [], """
-            Something reads the hosted-instrument choice before a host loads it. Until H2b the \
-            choice must not change what a track sounds like — raise this claim in H2b's commit.
+        XCTAssertEqual(callers, ["TimelineRegionPlayer.swift": 4], """
+            The hosted-instrument choice is read somewhere other than the region player's four \
+            load sites (fan-out, prime, audition bind, re-bind — right after the slot's kind). A \
+            second reader is a second decision about what a track plays (#416).
             """)
     }
 }
