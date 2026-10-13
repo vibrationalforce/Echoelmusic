@@ -1325,6 +1325,18 @@ public final class PianoRollModel {
             .map { $0 - 12 }
     }
 
+    /// The Hz a written pitch SOUNDS at — the ONE rule (#416): the concert pitch plus the tone
+    /// system's per-pitch-class cents. `musicalFrame` publishes it (so the picture and the light
+    /// are lit by it) and the note editor colours its blocks by it (GMMW colour slice, 2026-10-13)
+    /// — one definition, so the grid and the picture cannot disagree about a note's colour. A
+    /// cents table that is not twelve finite entries is read as 12-TET, never as NaN (claim 3 of
+    /// `AGeneratedNoteIsLitByItsTunedPitchTests`).
+    nonisolated public static func soundingHz(pitch: Int, a4Hz: Double, pitchClassCents: [Double]) -> Double {
+        let tableUsable = pitchClassCents.count == 12 && pitchClassCents.allSatisfy { $0.isFinite }
+        let cents = tableUsable ? pitchClassCents[((pitch % 12) + 12) % 12] : 0
+        return a4Hz * pow(2.0, (Double(pitch - 69) + cents / 100.0) / 12.0)
+    }
+
     /// Build the live musical snapshot from the notes sounding now. Pure (testable):
     /// pitch → Hz at the given concert pitch, velocity → amplitude, master = the
     /// summed velocities (clamped) so "how much is sounding" tracks the chord density.
@@ -1378,11 +1390,9 @@ public final class PianoRollModel {
                                     rootPitchClass: Int, scaleName: String,
                                     tempoBPM: Double, beatPhase: Double) -> MusicalFrame {
         let audible = notes.filter { $0.velocity > audibleVelocityFloor }
-        let tableUsable = pitchClassCents.count == 12 && pitchClassCents.allSatisfy { $0.isFinite }
         let mnotes = audible.map { n -> MusicalNote in
-            let cents = tableUsable ? pitchClassCents[((n.pitch % 12) + 12) % 12] : 0
-            let hz = a4Hz * pow(2.0, (Double(n.pitch - 69) + cents / 100.0) / 12.0)
-            return MusicalNote(frequencyHz: hz, amplitude: Double(n.velocity))
+            MusicalNote(frequencyHz: soundingHz(pitch: n.pitch, a4Hz: a4Hz, pitchClassCents: pitchClassCents),
+                        amplitude: Double(n.velocity))
         }
         let master = audible.isEmpty ? 0 : Swift.min(1.0, audible.reduce(0.0) { $0 + Double($1.velocity) })
         return MusicalFrame(notes: mnotes, rootPitchClass: rootPitchClass,

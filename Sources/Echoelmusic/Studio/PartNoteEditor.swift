@@ -167,6 +167,11 @@ private struct PartNoteGrid: View {
     /// the one owner of the key, and it changes on a user choice or a composer take — never on
     /// a clock, so this is a cold read.
     @Environment(SessionContext.self) private var session
+    /// The tone system's cents, for the blocks' colours (`NoteGridTint`). `musicalPitchClassCents`
+    /// is `@ObservationIgnored` on purpose (the roll model is the hot publisher) — a tone-system
+    /// change repaints the grid on its next redraw; the concert pitch is read OBSERVED from the
+    /// session, its one owner, so a retune repaints an open grid at once.
+    @Environment(PianoRollModel.self) private var pianoRoll
     @State private var picked: RollSelection = .none
     @State private var octaveShift = 0
     /// The pitch the rows centre on — taken when the grid first draws, then held.
@@ -230,6 +235,8 @@ private struct PartNoteGrid: View {
                             PartNoteCanvas(visible: visible, steps: steps, grid: grid, naming: naming,
                                            picked: picked.ids, editable: editable,
                                            keyClasses: Set(session.key.pitchClasses),
+                                           tints: NoteGridTint.pitchTints(a4Hz: session.a4Hz,
+                                                                          pitchClassCents: pianoRoll.musicalPitchClassCents),
                                            onTap: { location in
                                                tap(location, visible: visible, region: region,
                                                    offset: offset, steps: steps, range: range,
@@ -799,6 +806,30 @@ private struct NoteToolFlow: Layout {
     }
 }
 
+/// GMMW colour slice (founder 2026-10-13, "the note editor takes the pitch-class hue the pads and
+/// the picture use"). ONE colour per pitch class because `toneLinearRGB` folds octaves (claim 1 of
+/// `ASoundingNoteHasOneColourAndOnePlaceTests`), computed from the Hz the ONE publisher gives a
+/// written pitch (`PianoRollModel.soundingHz`) at the session's concert pitch and the tone
+/// system's cents — so the block, the pad and the cloud of one note are one hue. Cold: twelve
+/// colours per redraw of the grid, never per note.
+enum NoteGridTint {
+    static func pitchTints(a4Hz: Double, pitchClassCents: [Double]) -> [Color] {
+        (0..<12).map { (pitchClass: Int) -> Color in
+            let hz = PianoRollModel.soundingHz(pitch: 60 + pitchClass, a4Hz: a4Hz, pitchClassCents: pitchClassCents)
+            let c = SpectralColor.gridTint(forToneHz: hz)
+            return Color(.sRGBLinear, red: c.r, green: c.g, blue: c.b)
+        }
+    }
+
+    /// The tint index of a pitch — its pitch class, folded for negative pitches, and bounded by
+    /// the array handed in so a malformed table can never index out of range (it would show the
+    /// wrong class, never trap).
+    nonisolated static func index(forPitch pitch: Int, count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        return (((pitch % 12) + 12) % 12) % count
+    }
+}
+
 /// The drawn grid and its press-hold-and-slide. ⭐ THE ONLY FINGER-RATE STATE IN THE EDITOR:
 /// `live` is `@GestureState`, so only this leaf redraws while a finger slides, and it resets
 /// itself when the scroll view cancels the gesture. Nothing is written until the finger lifts,
@@ -816,6 +847,9 @@ private struct PartNoteCanvas: View {
     /// The pitch classes of the session key: rows outside it are shaded (M4). A chromatic key
     /// has no outside, so the rows fall back to the piano's black keys.
     let keyClasses: Set<Int>
+    /// The twelve pitch-class colours (`NoteGridTint.pitchTints`, index = `NoteGridTint.index`):
+    /// a block is the hue of the note it sounds, the same hue the pads and the picture give it.
+    let tints: [Color]
     let onTap: (CGPoint) -> Void
     let onRelease: (NoteGridGesture) -> Void
 
@@ -880,9 +914,12 @@ private struct PartNoteCanvas: View {
                 let shape = Path(roundedRect: rect, cornerRadius: 2)
                 // Velocity reads as depth of colour (design slice 12) — an OPAQUE mix, so nothing
                 // under a quiet note shows through it; a picked note keeps the full text colour,
-                // so the pick never fades with a quiet note.
+                // so the pick never fades with a quiet note. GMMW colour slice (2026-10-13): the
+                // colour mixed in is the NOTE'S OWN — the hue its pitch sounds at, brought to one
+                // lightness (`SpectralColor.gridTint`) so hue says the pitch and depth says the
+                // velocity — the accent (bio-green, signal only) is no longer every note's colour.
                 context.fill(shape, with: .color(lit.contains(note.id) ? EchoelTheme.text
-                    : EchoelTheme.surface.mix(with: EchoelTheme.accent,
+                    : EchoelTheme.surface.mix(with: tints[NoteGridTint.index(forPitch: note.pitch, count: tints.count)],
                                               by: ClipNoteEdit.noteShade(velocity: note.velocity))))
                 // A picked note also changes SHAPE, not only colour (WCAG 1.4.1 — modes census
                 // UX C): a 1 pt inner ring in the grid's own surface colour, so the pick reads

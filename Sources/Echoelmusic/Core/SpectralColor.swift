@@ -296,6 +296,39 @@ public enum SpectralColor {
         return (enc(rgb.r), enc(rgb.g), enc(rgb.b))
     }
 
+    // MARK: Tone → equal-lightness grid tint (the note editor's blocks)
+
+    /// GMMW colour slice (founder 2026-10-13, the note editor wears the SAME colour as pads and
+    /// picture): the hue `toneLinearRGB` gives a sounding frequency, brought to ONE OKLab
+    /// lightness so a grid of note blocks reads its pitch classes by hue alone and keeps
+    /// lightness free for a second quantity — the note editor spends it on velocity
+    /// (`ClipNoteEdit.noteShade`), which is the Phase 6 brief's "base colour, brightness and
+    /// density separate". Chroma is scaled down until the colour is inside the sRGB gamut, so the
+    /// hue survives and only saturation gives way (deep blue loses the most). `displayComponents`
+    /// lifts the dark field tint instead; both start from the one colour rule, so a retune
+    /// recolours grid, pads and picture together. Silence and invalid input land on the neutral
+    /// grey at this lightness.
+    ///
+    /// 0.84 is a FLOOR, not a taste value: at the quietest note shade (`ClipNoteEdit
+    /// .quietestNoteShade`) the darkest of the twelve mixes must still clear 3:1 against the
+    /// shaded out-of-key row — `TheNoteGridWearsThePitchColourTests` computes it from this
+    /// constant and the theme's numbers, the way the velocity floor was computed.
+    public static let gridTintLightness: Double = 0.84
+
+    public static func gridTint(forToneHz hz: Double) -> LinearRGB {
+        let lab = linearToOKLab(toneLinearRGB(forToneHz: hz))
+        var k = 1.0
+        for _ in 0..<64 {
+            let c = oklabToLinearRaw(OKLab(L: gridTintLightness, a: lab.a * k, b: lab.b * k))
+            let eps = 1e-6
+            if c.r >= -eps, c.r <= 1 + eps, c.g >= -eps, c.g <= 1 + eps, c.b >= -eps, c.b <= 1 + eps {
+                return LinearRGB(r: clamp01(c.r), g: clamp01(c.g), b: clamp01(c.b))
+            }
+            k *= 0.97
+        }
+        return oklabToLinear(OKLab(L: gridTintLightness, a: 0, b: 0))
+    }
+
     // MARK: Pitch → place in the visual field ("an der richtigen Stelle")
 
     /// Where a sounding note LIVES in the immersive visual's square [-1,1]² field
@@ -353,6 +386,13 @@ public enum SpectralColor {
     }
 
     public static func oklabToLinear(_ c: OKLab) -> LinearRGB {
+        let raw = oklabToLinearRaw(c)
+        return LinearRGB(r: clamp01(raw.r), g: clamp01(raw.g), b: clamp01(raw.b))
+    }
+
+    /// The same conversion WITHOUT the gamut clamp — `gridTint` asks it whether a chroma is still
+    /// inside sRGB, which the clamped form cannot tell (a clamped channel reads 1 either way).
+    private static func oklabToLinearRaw(_ c: OKLab) -> (r: Double, g: Double, b: Double) {
         let l_ = c.L + 0.3963377774 * c.a + 0.2158037573 * c.b
         let m_ = c.L - 0.1055613458 * c.a - 0.0638541728 * c.b
         let s_ = c.L - 0.0894841775 * c.a - 1.2914855480 * c.b
@@ -360,7 +400,7 @@ public enum SpectralColor {
         let r =  4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s
         let g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
         let bb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
-        return LinearRGB(r: clamp01(r), g: clamp01(g), b: clamp01(bb))
+        return (r, g, bb)
     }
 
     private static func clamp01(_ x: Double) -> Double {

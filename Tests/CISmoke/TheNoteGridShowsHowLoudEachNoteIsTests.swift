@@ -1,6 +1,9 @@
 // TheNoteGridShowsHowLoudEachNoteIsTests.swift
 // Echoel — modes census 2026-09-26, design slice 12: the note grid shows each note's velocity.
 //
+// ⭐ GMMW colour slice (2026-10-13): the colour mixed in is no longer the accent but the NOTE'S OWN
+// pitch hue at one lightness (`SpectralColor.gridTint`, `TheNoteGridWearsThePitchColourTests`).
+// The velocity law below is unchanged — depth of colour is still the shade; only its base moved.
 // WHAT THIS PINS. The grid drew every note in the same full accent, so a part's dynamics were
 // visible only through the velocity row of a selection. An unpicked note's fill now carries its
 // velocity as depth of colour: an OPAQUE mix of the grid's surface and the accent — loud is full
@@ -82,8 +85,9 @@ final class TheNoteGridShowsHowLoudEachNoteIsTests: XCTestCase {
         let loop = String(code[head.upperBound..<tail.lowerBound])
         XCTAssertTrue(loop.contains("context.fill(shape, with: .color(lit.contains(note.id) ? EchoelTheme.text"),
                       "a picked note keeps the full text colour")
-        XCTAssertTrue(loop.contains(": EchoelTheme.surface.mix(with: EchoelTheme.accent,"),
-                      "an unpicked note is an OPAQUE mix of surface and accent — nothing shows through it")
+        XCTAssertTrue(loop.contains(": EchoelTheme.surface.mix(with: tints[NoteGridTint.index(forPitch: note.pitch, count: tints.count)],"),
+                      "an unpicked note is an OPAQUE mix of surface and the note's own pitch colour — "
+                      + "nothing shows through it (GMMW colour slice: the accent was every note's colour before)")
         XCTAssertTrue(loop.contains("by: ClipNoteEdit.noteShade(velocity: note.velocity))))"),
                       "at ITS OWN velocity's shade")
         XCTAssertEqual(loop.components(separatedBy: "noteShade(").count - 1, 1,
