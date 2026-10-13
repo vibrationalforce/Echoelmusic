@@ -49,9 +49,10 @@ public enum VideoLayerMath {
         return Swift.max(0, linearComponent(red) - linearComponent(green) - linearComponent(blue))
     }
 
-    /// One sRGB component, 0…1, undone to linear light — the curve both helpers above share.
-    /// Non-finite reads as 0; the component is clamped first.
-    private static func linearComponent(_ component: Double) -> Double {
+    /// One sRGB component, 0…1, undone to linear light — the curve both helpers above share, and the
+    /// one `VideoLayerSlot` hands the limiter's colour cells through (VV-4e). Non-finite reads as 0;
+    /// the component is clamped first, so the answer is always 0…1.
+    public static func linearComponent(_ component: Double) -> Double {
         let c = component.isFinite ? Swift.min(1, Swift.max(0, component)) : 0
         return c <= 0.04045 ? c / 12.92 : Foundation.pow((c + 0.055) / 1.055, 2.4)
     }

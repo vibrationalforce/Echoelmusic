@@ -126,6 +126,10 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
     /// The same frame's red-flash cells (VV-4c) — cached and counted exactly like the luminance.
     private var shownRedCells: [Double] = []
     private var countedRedCells: [Double] = []
+    /// The same frame's linear R, G and B cells (VV-4e) — what the layer can add to the red over any
+    /// field; cached and counted exactly like the luminance.
+    private var shownColourCells = VideoFlashLimiter.ColourCells(red: [], green: [], blue: [])
+    private var countedColourCells = VideoFlashLimiter.ColourCells(red: [], green: [], blue: [])
     /// The limiter's gain from the last count; the limiter is kept across attaches, so is this.
     private var gain = 1.0
     /// Counts every accepted buffer of the process (there is one slot): never 0, never reused, so a
@@ -136,6 +140,7 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
     private var lastPullSeconds: Double?
     private var samples: [Double] = []
     private var redSamples: [Double] = []
+    private var colourSamples: [Double] = []
     private var firstFrameAnnounced = false
     private var refusalAnnounced = false
 
@@ -191,6 +196,7 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         shown = nil
         shownCells = []
         shownRedCells = []
+        shownColourCells = VideoFlashLimiter.ColourCells(red: [], green: [], blue: [])
         lastPullSeconds = nil
         firstFrameAnnounced = false
         refusalAnnounced = false
@@ -210,6 +216,7 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         shown = nil
         shownCells = []
         shownRedCells = []
+        shownColourCells = VideoFlashLimiter.ColourCells(red: [], green: [], blue: [])
         easedDial = 0
         lastPullSeconds = nil
     }
@@ -272,7 +279,8 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
     /// Decodes and caches a new buffer. A buffer that cannot be read is not shown at all.
     private func ingestLocked(_ buffer: CVPixelBuffer) {
         guard let cells = Self.flashCells(of: buffer, samples: &samples),
-              let redCells = Self.redFlashCells(of: buffer, samples: &redSamples) else {
+              let redCells = Self.redFlashCells(of: buffer, samples: &redSamples),
+              let colourCells = Self.colourCells(of: buffer, samples: &colourSamples) else {
             // Fail closed: a frame the limiter cannot count is not shown, and the stale one goes too.
             shown = nil
             if !refusalAnnounced {
@@ -283,6 +291,7 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         }
         shownCells = cells
         shownRedCells = redCells
+        shownColourCells = colourCells
         nextSequence &+= 1
         if nextSequence == 0 { nextSequence = 1 }
         let width = CVPixelBufferGetWidth(buffer)
@@ -311,8 +320,17 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
             countedRedCells = [Double](repeating: 0, count: shownRedCells.count)
         }
         for index in shownRedCells.indices { countedRedCells[index] = shownRedCells[index] * easedDial }
+        Self.scale(shownColourCells.red, by: easedDial, into: &countedColourCells.red)
+        Self.scale(shownColourCells.green, by: easedDial, into: &countedColourCells.green)
+        Self.scale(shownColourCells.blue, by: easedDial, into: &countedColourCells.blue)
         gain = limiter.step(time: displaySeconds, cells: countedCells, redCells: countedRedCells,
-                            cellsPerSide: VideoLayerMath.flashCellsPerSide)
+                            colourCells: countedColourCells, cellsPerSide: VideoLayerMath.flashCellsPerSide)
+    }
+
+    /// `source` x `factor` into `target`, which keeps its storage once it has the right count.
+    private static func scale(_ source: [Double], by factor: Double, into target: inout [Double]) {
+        if target.count != source.count { target = [Double](repeating: 0, count: source.count) }
+        for index in source.indices { target[index] = source[index] * factor }
     }
 
     /// The cached frame for one caller's aspect. Nothing to show sends the dial back to 0 (header).
@@ -367,6 +385,14 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         return VideoLayerMath.redFlashSignal(red: colour.red, green: colour.green, blue: colour.blue)
     }
 
+    /// One LINEAR channel the SHADER shows for one Y/Cb/Cr sample (VV-4e): the same decode as
+    /// `shownLuminance`, then `VideoLayerMath.linearComponent`. 0 = red, 1 = green, 2 = blue.
+    static func shownLinearChannel(_ channel: Int, y: Double, cb: Double, cr: Double, videoRange: Bool) -> Double {
+        let colour = shownRGB(y: y, cb: cb, cr: cr, videoRange: videoRange)
+        let component = channel == 0 ? colour.red : (channel == 1 ? colour.green : colour.blue)
+        return VideoLayerMath.linearComponent(component)
+    }
+
     /// The limiter's `flashCellsPerSide` x `flashCellsPerSide` cells for one frame: every sample
     /// linearised first, then averaged (averaging encoded values first would under-read a swing).
     /// nil — no frame — for any format the renderer would not bind, or a buffer that cannot be read.
@@ -380,7 +406,17 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         cells(of: buffer, samples: &samples, measure: shownRedSignal)
     }
 
-    /// The one sampling grid both measures read, so they can never sample different points.
+    /// The same cells of linear red, green and blue (VV-4e), each sample linearised, then averaged —
+    /// a linear sum of these is exact on the means. nil like the two above.
+    static func colourCells(of buffer: CVPixelBuffer, samples: inout [Double]) -> VideoFlashLimiter.ColourCells? {
+        guard let red = cells(of: buffer, samples: &samples, measure: { shownLinearChannel(0, y: $0, cb: $1, cr: $2, videoRange: $3) }),
+              let green = cells(of: buffer, samples: &samples, measure: { shownLinearChannel(1, y: $0, cb: $1, cr: $2, videoRange: $3) }),
+              let blue = cells(of: buffer, samples: &samples, measure: { shownLinearChannel(2, y: $0, cb: $1, cr: $2, videoRange: $3) })
+        else { return nil }
+        return VideoFlashLimiter.ColourCells(red: red, green: green, blue: blue)
+    }
+
+    /// The one sampling grid every measure reads, so they can never sample different points.
     private static func cells(of buffer: CVPixelBuffer, samples: inout [Double],
                               measure: (Double, Double, Double, Bool) -> Double) -> [Double]? {
         let videoRange: Bool

@@ -31,6 +31,22 @@
 //   floored at 0); every channel above runs again on it, at WCAG's red step (20/320) where the
 //   luminance has its own, and the windows at a quarter of it. The red signal is 0 wherever red does
 //   not exceed green plus blue, so a grey, a white or a green never moves it.
+// · COLOUR, on the same windows and cells at the same red steps (VV-4e, Grok 2026-10-13, verified
+//   6/6). The red channel above reads the FOOTAGE's red signal, but what is shown is the screen
+//   F + gain·L·(1 − F): over a reddish field a blue or green swing in the layer moves the SHOWN
+//   R − G − B while the layer's own red signal stays 0. This type never sees the field, so it bounds
+//   every field at once. For one field the layer's share of the shown, unfloored R − G − B is
+//   gain · (aR·R − aG·G − aB·B) in linear light, each a = 1 − F of its channel, 0…1; the move between
+//   any two frames is linear in (aR, aG, aB), so it is largest at a corner of that box — and the
+//   seven non-zero corners are the seven sums `colourCombinations` lists (R, −G, −B, R − G, R − B,
+//   −G − B, R − G − B). Each runs as a signal of its own on LINEAR channel means (a linear sum commutes
+//   with the mean, so the cells are exact, unlike the floored red signal's). Flooring the total at 0
+//   cannot add a move. The caller hands linear R, G and B cell means (`ColourCells`).
+//   ⚠️ THE PRICE, and it is the safe direction: the corner a = (0, 1, 0) is a pure GREEN swing and
+//   (0, 0, 1) a pure BLUE one, each at the red step — so footage whose colour shimmers at 2.5 Hz or
+//   faster is capped even over a field that is not red at all, a blue shimmer about twenty times
+//   sooner than its luminance alone would cap it. Only counting the field's own colour would lift
+//   that, and the field is drawn on the GPU where this type cannot read it.
 //
 // ⭐ WHAT IT GUARANTEES, and the arithmetic behind it (WCAG 2.3.1, the numbers are `FlashGuard`'s):
 // · A TRANSITION is a channel's signal moving its step against its last extreme (hysteresis, so a
@@ -48,8 +64,8 @@
 //   shows can be a flash at all. (VV-4d: at the first engaged gain, 0.05, a capped red/cyan strobe
 //   over a dark-red field still showed a red swing of 0.145 — 46 against WCAG's 20.)
 // · A flash covering any rectangle at least two cells wide and tall covers some cell completely, and
-//   that cell's shown channel counts what is shown there (its red shown channel too, which counts
-//   gain × the footage's OWN red signal — see WHAT IT IS NOT for the field under it) — with the gain of the frame before, so at
+//   that cell's shown channel counts what is shown there (its red shown channel too, and the seven
+//   colour shown channels, which bound what it adds to the red over any field under it — COLOUR) — with the gain of the frame before, so at
 //   most one climb step behind. So at most five transitions show in any second, two and a half
 //   flashes, under the three WCAG allows — the cap's own edge included. That is the argument; the
 //   transcription measured it too, at five, over the review's inputs and random and directed ones.
@@ -75,12 +91,9 @@
 // ⚠️ WHAT IT IS NOT, so nobody reads more into it:
 // · It caps the LAYER, not the screen. The generated field under it has its own budget
 //   (`FlashGuard.fieldBudgets`); the sum of the two is a device probe, not a claim here.
-// · ⚠️ OPEN (VV-4e): the red count reads the footage's own R − G − B. Over a reddish field the
-//   layer's GREEN and BLUE swings show as red swings too — a footage flicker between black and a
-//   dim blue moves neither its luminance windows nor its red signal, so the gain stays at 1, while
-//   the shown R − G − B over the field swings by the blue's full amount. Lowering the engaged gain
-//   does not touch this; the cap never engages. Closed only by counting the field's colour or a
-//   per-channel bound.
+// · The colour signals bound the field's effect only when the caller hands them: a nil
+//   `colourCells` counts the footage's own red signal alone, and a blue flicker over a reddish field
+//   then shows uncapped (VV-4e). A footage door must never pass nil (`UserFootageCannotStrobeTests`).
 // · It engages at two and a half flashes a second ON PURPOSE, below the three WCAG allows, to
 //   leave room for its own edge. So legal footage flashing between about 2 and 3 Hz (beat lighting
 //   at 120–180 BPM) is dimmed, and a pulse near 2 Hz can be, depending on frame timing and on how
@@ -148,6 +161,42 @@ public struct VideoFlashLimiter: Sendable {
     /// The gain to apply to the layer now, `engagedGain`…1.
     public private(set) var gain: Double = 1
 
+    /// One frame's cell means of LINEAR red, green and blue (each 0…1, `VideoLayerMath.linearComponent`
+    /// per sample, then averaged), in the same grid as the luminance cells — VV-4e.
+    public struct ColourCells: Sendable {
+        public var red: [Double]
+        public var green: [Double]
+        public var blue: [Double]
+
+        public init(red: [Double], green: [Double], blue: [Double]) {
+            self.red = red
+            self.green = green
+            self.blue = blue
+        }
+    }
+
+    /// One corner of the field box (see the header, COLOUR): the weights of linear R, G and B in the
+    /// shown R − G − B, and the range the sum can take, so every signal reads 0…1 inside its span.
+    public struct ColourCombination: Sendable, Equatable {
+        public let red: Double
+        public let green: Double
+        public let blue: Double
+        public let lowest: Double
+        public let span: Double
+    }
+
+    /// The seven non-zero corners of the field box: what a layer can add to the shown R − G − B over
+    /// any field, at its largest.
+    public static let colourCombinations: [ColourCombination] = [
+        ColourCombination(red: 1, green: 0, blue: 0, lowest: 0, span: 1),
+        ColourCombination(red: 0, green: -1, blue: 0, lowest: -1, span: 1),
+        ColourCombination(red: 0, green: 0, blue: -1, lowest: -1, span: 1),
+        ColourCombination(red: 1, green: -1, blue: 0, lowest: -1, span: 2),
+        ColourCombination(red: 1, green: 0, blue: -1, lowest: -1, span: 2),
+        ColourCombination(red: 0, green: -1, blue: -1, lowest: -2, span: 2),
+        ColourCombination(red: 1, green: -1, blue: -1, lowest: -2, span: 3)
+    ]
+
     /// One signal's hysteresis and the times of its last `engageTransitions` transitions.
     private struct Channel: Sendable {
         let threshold: Double
@@ -212,19 +261,35 @@ public struct VideoFlashLimiter: Sendable {
     }
 
     /// Every channel one signal needs: the whole frame and the windows at their step, the cells on
-    /// the footage and as shown at theirs. The luminance and the red signal each own one.
+    /// the footage and as shown at theirs. The luminance, the red signal and each colour sum own one.
+    /// A value is clamped to `lowest…lowest + span` and read as its share of the span, 0…1, so every
+    /// step is divided by the span too; the luminance and the red signal read 0…1 with span 1.
     private struct Signal: Sendable {
         let windowStep: Double
         let cellStep: Double
+        let lowest: Double
+        let span: Double
         var wholeFrame: Channel
         var windows: [Channel] = []
         var cells: [Channel] = []
         var shown: [Channel] = []
 
-        init(windowStep: Double, cellStep: Double) {
-            self.windowStep = windowStep
-            self.cellStep = cellStep
-            wholeFrame = Channel(step: windowStep)
+        init(windowStep: Double, cellStep: Double, lowest: Double, span: Double) {
+            self.windowStep = windowStep / span
+            self.cellStep = cellStep / span
+            self.lowest = lowest
+            self.span = span
+            wholeFrame = Channel(step: windowStep / span)
+        }
+
+        /// `value` clamped into the signal's range — still in its own units.
+        private func bounded(_ value: Double) -> Double {
+            Swift.min(lowest + span, Swift.max(lowest, value))
+        }
+
+        /// A bounded value as its share of the span, 0…1.
+        private func share(_ value: Double) -> Double {
+            (value - lowest) / span
         }
 
         /// A new grid restarts every channel but the whole frame.
@@ -243,7 +308,7 @@ public struct VideoFlashLimiter: Sendable {
             var frameSum = 0.0
             var finiteCells = 0
             for value in values where value.isFinite {
-                frameSum += Swift.min(1, Swift.max(0, value))
+                frameSum += share(bounded(value))
                 finiteCells += 1
             }
             if finiteCells > 0 {
@@ -256,7 +321,7 @@ public struct VideoFlashLimiter: Sendable {
                 for cell in windowCells[index] {
                     let value = values[cell]
                     guard value.isFinite else { usable = false; break }
-                    windowSum += Swift.min(1, Swift.max(0, value))
+                    windowSum += share(bounded(value))
                 }
                 guard usable else { continue }
                 if windows[index].registers(windowSum / Double(windowCells[index].count), at: clock) {
@@ -267,10 +332,12 @@ public struct VideoFlashLimiter: Sendable {
             for cell in cells.indices {
                 let value = values[cell]
                 guard value.isFinite else { continue }
-                let level = Swift.min(1, Swift.max(0, value))
-                if cells[cell].registers(level, at: clock) { cells[cell].mark(clock) }
+                let level = bounded(value)
+                if cells[cell].registers(share(level), at: clock) { cells[cell].mark(clock) }
                 // What this cell shows with the gain the layer has now — before this frame decides.
-                if shown[cell].registers(gain * level, at: clock) { shown[cell].mark(clock) }
+                // The gain scales the value, not its share: every span holds 0, so `gain * level`
+                // stays inside it, and a moving gain moves the share by nothing but the value's own.
+                if shown[cell].registers(share(gain * level), at: clock) { shown[cell].mark(clock) }
                 busiest = Swift.max(busiest, cells[cell].count(after: windowStart),
                                     shown[cell].count(after: windowStart))
             }
@@ -281,9 +348,15 @@ public struct VideoFlashLimiter: Sendable {
     private var side = 0
     private var windowCells: [[Int]] = []
     private var luminance = Signal(windowStep: VideoFlashLimiter.transitionThreshold,
-                                   cellStep: VideoFlashLimiter.cellTransitionThreshold)
+                                   cellStep: VideoFlashLimiter.cellTransitionThreshold, lowest: 0, span: 1)
     private var red = Signal(windowStep: VideoFlashLimiter.redTransitionThreshold,
-                             cellStep: VideoFlashLimiter.redCellTransitionThreshold)
+                             cellStep: VideoFlashLimiter.redCellTransitionThreshold, lowest: 0, span: 1)
+    private var colour: [Signal] = VideoFlashLimiter.colourCombinations.map {
+        Signal(windowStep: VideoFlashLimiter.redTransitionThreshold,
+               cellStep: VideoFlashLimiter.redCellTransitionThreshold, lowest: $0.lowest, span: $0.span)
+    }
+    /// One colour sum's cells, reused by every frame so a step allocates nothing once laid out.
+    private var colourSum: [Double] = []
     private var started = false
     private var lastSourceTime: Double?
     private var clock = 0.0
@@ -291,15 +364,23 @@ public struct VideoFlashLimiter: Sendable {
 
     public init() {}
 
-    /// Feeds one shown frame and returns the gain. `cells` are its cell luminances, 0…1, row-major in
-    /// a `cellsPerSide × cellsPerSide` grid; `redCells` the same cells' red signal
-    /// (`VideoLayerMath.redFlashSignal`), or nil where the caller has no colour — then only the
-    /// luminance counts, and a footage door must never pass nil (`UserFootageCannotStrobeTests`).
-    /// A luminance grid of the wrong size changes nothing; a red grid of the wrong size is left out
-    /// and the luminance still counts. A non-finite cell leaves out its own channels and the windows
-    /// it belongs to.
+    /// `step` without colour cells: the luminance and the footage's own red signal only. For the
+    /// claims that pin those two channels alone; a footage door passes `colourCells` (VV-4e).
     @discardableResult
     public mutating func step(time: Double, cells: [Double], redCells: [Double]?, cellsPerSide: Int) -> Double {
+        step(time: time, cells: cells, redCells: redCells, colourCells: nil, cellsPerSide: cellsPerSide)
+    }
+
+    /// Feeds one shown frame and returns the gain. `cells` are its cell luminances, 0…1, row-major in
+    /// a `cellsPerSide × cellsPerSide` grid; `redCells` the same cells' red signal
+    /// (`VideoLayerMath.redFlashSignal`) and `colourCells` their linear R, G and B means, or nil where
+    /// the caller has no colour — then only the luminance counts, and a footage door must never pass
+    /// nil (`UserFootageCannotStrobeTests`). A luminance grid of the wrong size changes nothing; a red
+    /// or colour grid of the wrong size is left out and the luminance still counts. A non-finite cell
+    /// leaves out its own channels and the windows it belongs to.
+    @discardableResult
+    public mutating func step(time: Double, cells: [Double], redCells: [Double]?, colourCells: ColourCells?,
+                              cellsPerSide: Int) -> Double {
         guard cellsPerSide > 0 else { return gain }
         let (cellCount, overflow) = cellsPerSide.multipliedReportingOverflow(by: cellsPerSide)
         guard !overflow, cells.count == cellCount else { return gain }
@@ -312,6 +393,19 @@ public struct VideoFlashLimiter: Sendable {
         if let redCells, redCells.count == cellCount {
             busiest = Swift.max(busiest, red.feed(redCells, windowCells: windowCells, gain: gain,
                                                   at: clock, after: windowStart))
+        }
+        if let colourCells, colourCells.red.count == cellCount, colourCells.green.count == cellCount,
+           colourCells.blue.count == cellCount {
+            if colourSum.count != cellCount { colourSum = [Double](repeating: 0, count: cellCount) }
+            for (index, combination) in Self.colourCombinations.enumerated() {
+                for cell in 0..<cellCount {
+                    colourSum[cell] = combination.red * colourCells.red[cell]
+                        + combination.green * colourCells.green[cell]
+                        + combination.blue * colourCells.blue[cell]
+                }
+                busiest = Swift.max(busiest, colour[index].feed(colourSum, windowCells: windowCells, gain: gain,
+                                                                at: clock, after: windowStart))
+            }
         }
 
         if busiest >= Self.engageTransitions {
@@ -347,8 +441,8 @@ public struct VideoFlashLimiter: Sendable {
         return dt
     }
 
-    /// Builds the overlapping windows and both signals' cell channels for a new grid. Both whole
-    /// frames are kept.
+    /// Builds the overlapping windows and every signal's cell channels for a new grid. Every whole
+    /// frame is kept.
     private mutating func layOut(_ cellsPerSide: Int) {
         side = cellsPerSide
         var windows: [[Int]] = []
@@ -373,5 +467,6 @@ public struct VideoFlashLimiter: Sendable {
         let cellCount = cellsPerSide <= Self.maxCellsPerSide ? cellsPerSide * cellsPerSide : 0
         luminance.layOut(windowCount: windows.count, cellCount: cellCount)
         red.layOut(windowCount: windows.count, cellCount: cellCount)
+        for index in colour.indices { colour[index].layOut(windowCount: windows.count, cellCount: cellCount) }
     }
 }

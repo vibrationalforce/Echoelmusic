@@ -93,8 +93,11 @@
 // write is 0.146. Claim 7's needle moves with the constant in the same commit. Claims 1–11 and
 // TheVideoFrameIsPulledOnTheDrawTests 8–19 were driven through a port under 0.05 and 0.015625:
 // 143 of 143 green under both (engage frames 12, 32, 52 and the 360-tick lead-in unchanged).
-// STILL OPEN (VV-4e): at gain 1 the footage's green and blue swings show as red over a reddish
-// field and no channel counts them — see the limiter's WHAT IT IS NOT.
+// VV-4e (2026-10-13, Grok's field finding, verified 6/6): at gain 1 the footage's green and blue
+// swings showed as red over a reddish field and no channel counted them. Closed by the seven colour
+// sums (limiter header, COLOUR), proven in `TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests`;
+// claim 11 here pins that the slot hands the colour cells. Claims 1–10 call the four-argument `step`,
+// which counts no colour — unchanged in behaviour, so their verdicts are unchanged.
 
 import Foundation
 import XCTest
@@ -745,6 +748,10 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         XCTAssertTrue(slot.contains("redCells: countedRedCells"), "the slot counts the red cells it decoded (VV-4c)")
         XCTAssertTrue(slot.contains("Self.redFlashCells(of: buffer, samples: &redSamples)"),
                       "the red cells come from the same buffer, and a frame they cannot be read from is refused")
+        XCTAssertTrue(slot.contains("colourCells: countedColourCells"),
+                      "the slot counts the linear colour cells it decoded — without them a blue flicker over a red field shows uncapped (VV-4e)")
+        XCTAssertTrue(slot.contains("let colourCells = Self.colourCells(of: buffer, samples: &colourSamples)"),
+                      "the colour cells come from the same buffer, inside the refusing guard (VV-4e)")
         let sources = root.appendingPathComponent("Sources")
         let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?
             .compactMap { $0 as? URL }.filter { $0.pathExtension == "swift" } ?? []
@@ -752,6 +759,20 @@ final class UserFootageCannotStrobeTests: XCTestCase {
         for file in files {
             let code = SourceText.codeOnly(try String(contentsOf: file, encoding: .utf8))
             XCTAssertFalse(code.contains("redCells: nil"), "\(file.lastPathComponent) hands the limiter no colour")
+            // The limiter's own four-argument `step` forwards nil on purpose (claims 1–10 call it); every
+            // OTHER file must call the five-argument form with real colour cells (VV-4e).
+            guard file.lastPathComponent != "VideoFlashLimiter.swift" else { continue }
+            XCTAssertFalse(code.contains("colourCells: nil"), "\(file.lastPathComponent) hands the limiter no colour cells (VV-4e)")
+            var rest = code[...]
+            while let call = rest.range(of: ".step(time:") {
+                let tail = rest[call.upperBound...]
+                let end = tail.firstIndex(of: ")") ?? tail.endIndex
+                XCTAssertTrue(tail[..<end].contains("colourCells:"), """
+                    \(file.lastPathComponent) calls a `step(time:` without `colourCells:` — the four-argument form \
+                    counts no colour, and a blue flicker over a red field shows uncapped (VV-4e)
+                    """)
+                rest = tail
+            }
         }
     }
 

@@ -1,7 +1,8 @@
 // TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests.swift
-// Echoel — GMMW VV-4e, the open gap in the footage flash limiter, pinned as an EXPECTED FAILURE.
-// It repairs nothing. The case and its arithmetic came from an outside review (orchestra task 10b,
-// 2026-10-13) and were re-derived here before this file was written.
+// Echoel — GMMW VV-4e: the footage flash limiter bounds what a layer adds to the red over ANY field.
+// The case and its arithmetic came from an outside review (orchestra task 10b, 2026-10-13) and were
+// re-derived here; the file first pinned the gap as an expected failure (`d3480ac13`), and the repair
+// that closed it lifted the wrapper in the same commit, as the file asked.
 //
 // THE GAP. Footage is composited as a SCREEN over the generated field, per channel in linear light:
 // shown = F + g·L·(1 − F) (`MetalBioView`, `lin + outCol * (1.0 - lin)`). `VideoFlashLimiter` counts the
@@ -12,24 +13,23 @@
 // red signal is 0, so the gain stays 1 — while the shown red signal swings by 0.2095…0.3 twenty times a
 // second, against a WCAG red step of 20/320 = 0.0625 and an allowance of five transitions a second.
 //
-// WHY AN EXPECTED FAILURE AND NOT A RED TEST. A guard that is red on today's tree would sit in the
-// blocking bundle as a permanent false alarm (Tests/CISmoke/CLAUDE.md §4). `XCTExpectFailure` keeps the
-// gap on record and flips the other way: the day a repair makes claim A hold, the expectation is not
-// met and the test fails — remove the `XCTExpectFailure` wrapper in that commit. No user can reach this
-// today: nothing calls `VideoLayerSlot.attachVideoOutput` yet, so the gap must close before a footage
-// door does.
+// THE REPAIR (VV-4e, `VideoFlashLimiter` header, COLOUR). The limiter never sees the field, so it
+// bounds every field at once: the layer's share of the shown R − G − B is linear in (1 − F) per
+// channel, so its move is largest at a corner of that box, and the limiter counts the seven corner
+// sums (`VideoFlashLimiter.colourCombinations`) on linear R, G, B cell means the slot hands it. The
+// driver below hands the same cells (`colourCells:`); with `colourCells: nil` claim 2 is red again —
+// that is the regression it catches. No user can reach this yet: nothing calls
+// `VideoLayerSlot.attachVideoOutput`; the bound has to be in place before a footage door is.
 //
-// WHAT A REPAIR MUST DO (not how): over a fixed field, the layer must not move the SHOWN red signal by
-// `redCellTransitionThreshold` more than `engageTransitions` times in a second, even when its own red
-// signal is 0. Two ways are under discussion — count the field's colour, or bound each colour channel
-// of the layer — and this file prescribes neither.
-//
-// GRADING (Tests/CISmoke/CLAUDE.md §3). All four claims are END-TO-END on the shipped, public,
+// GRADING (Tests/CISmoke/CLAUDE.md §3). All five claims are END-TO-END on the shipped, public,
 // Foundation-only `VideoFlashLimiter` and `VideoLayerMath`; the screen blend is transcribed from the
-// shader, not executed. Claim 1 (premise) and claims 3 and 4 (counterweights) are green on this tree;
-// claim 2 is the expected failure. The driver models the dial at 1 and the 8-bit drawable not at all.
-// Re-derived in Python before commit: the six shown swings 0.3 · 0.21 · 0.3 · 0.21 · 0.25 · 0.2095, both
-// layer luminances, and 0 over black.
+// shader, not executed. The file does NOT COMPILE on its parent (`colourCells:` and `ColourCells` are
+// new), so no assertion has a verdict there; transcribed in Python against the parent's limiter, claim
+// 2 counts 21 shown red transitions in a second on each of the six cases (a REGRESSION guard), and
+// against this tree 4. Claims 1, 3, 4 and 5 are counterweights, green on both. The driver models the
+// dial at 1 and the 8-bit drawable not at all. Re-derived in Python before commit: the six shown
+// swings 0.3 · 0.21 · 0.3 · 0.21 · 0.25 · 0.2095, both layer luminances, 0 over black, 2 a second at
+// 1 Hz, and 400 random fields × random colour strobes at 3…30 Hz with none above 5.
 
 import XCTest
 @testable import Echoelmusic
@@ -73,8 +73,9 @@ final class TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests: XCTestCase
     }
 
     /// Drives the real limiter frame by frame with what `VideoLayerSlot` hands it (every cell the
-    /// layer's luminance and red signal, dial at 1), and returns the most SHOWN red transitions — moves
-    /// of at least the WCAG red step against the last counted level — inside any one second.
+    /// layer's luminance, red signal and linear R, G, B, dial at 1), and returns the most SHOWN red
+    /// transitions — moves of at least the WCAG red step against the last counted level — inside any
+    /// one second.
     private static func mostShownRedTransitions(field: Linear, layer: Linear, hertz: Int) -> Int {
         var limiter = VideoFlashLimiter()
         let side = VideoLayerMath.flashCellsPerSide
@@ -85,9 +86,13 @@ final class TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests: XCTestCase
         for frame in 0..<(framesPerSecond * seconds) {
             let time = Double(frame) / Double(framesPerSecond)
             let current = (frame / framesPerHalfPeriod) % 2 == 1 ? layer : black
+            let colour = VideoFlashLimiter.ColourCells(red: [Double](repeating: current.r, count: cellCount),
+                                                       green: [Double](repeating: current.g, count: cellCount),
+                                                       blue: [Double](repeating: current.b, count: cellCount))
             let gain = limiter.step(time: time,
                                     cells: [Double](repeating: luminance(current), count: cellCount),
                                     redCells: [Double](repeating: redSignal(current), count: cellCount),
+                                    colourCells: colour,
                                     cellsPerSide: side)
             let shown = redSignal(screen(field: field, layer: current, gain: gain))
             guard let last = reference else {
@@ -117,18 +122,17 @@ final class TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests: XCTestCase
         }
     }
 
-    // 2 — the gap: EXPECTED to fail until VV-4e is repaired. When it starts passing, remove the wrapper.
+    // 2 — VV-4e: a colour flicker the layer's own red signal cannot see is capped over a reddish field.
     func testAColourFlickerOverAReddishFieldIsCapped() {
-        XCTExpectFailure("VV-4e: the limiter counts the layer, not the colour it shows over the field") {
-            for field in Self.reddishFields {
-                for layer in Self.layers {
-                    let most = Self.mostShownRedTransitions(field: field, layer: layer, hertz: Self.fastHertz)
-                    XCTAssertLessThanOrEqual(most, VideoFlashLimiter.engageTransitions, """
-                        over the field (\(field.r), \(field.g), \(field.b)) the layer (\(layer.r), \(layer.g), \
-                        \(layer.b)) at \(Self.fastHertz) Hz shows \(most) red transitions in one second; \
-                        the cap allows \(VideoFlashLimiter.engageTransitions)
-                        """)
-                }
+        for field in Self.reddishFields {
+            for layer in Self.layers {
+                let most = Self.mostShownRedTransitions(field: field, layer: layer, hertz: Self.fastHertz)
+                XCTAssertLessThanOrEqual(most, VideoFlashLimiter.engageTransitions, """
+                    over the field (\(field.r), \(field.g), \(field.b)) the layer (\(layer.r), \(layer.g), \
+                    \(layer.b)) at \(Self.fastHertz) Hz shows \(most) red transitions in one second; \
+                    the cap allows \(VideoFlashLimiter.engageTransitions) — the colour sums no longer reach the \
+                    count (VV-4e)
+                    """)
             }
         }
     }
@@ -150,5 +154,25 @@ final class TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests: XCTestCase
                                          "a 1 Hz change counts \(most) a second — the count in this file is too strict")
             }
         }
+    }
+
+    // 5 — the seven sums are the non-zero corners of the field box, each with a span that holds 0 and
+    //     every value its weights can reach — the premises the header's argument stands on.
+    func testTheColourSumsAreTheCornersOfTheFieldBox() {
+        let sums = VideoFlashLimiter.colourCombinations
+        XCTAssertEqual(sums.count, 7, "three channels, each weight 0 or 1: seven non-zero corners")
+        var corners = Set<[Double]>()
+        for sum in sums {
+            XCTAssertTrue([0, 1].contains(sum.red) && [0, -1].contains(sum.green) && [0, -1].contains(sum.blue),
+                          "red counts up and green and blue down in the shown R − G − B")
+            corners.insert([sum.red, sum.green, sum.blue])
+            let lowest = Swift.min(0, sum.green) + Swift.min(0, sum.blue)
+            let highest = Swift.max(0, sum.red)
+            XCTAssertEqual(sum.lowest, lowest, accuracy: 1e-12, "the sum's lowest value over 0…1 channels")
+            XCTAssertEqual(sum.lowest + sum.span, highest, accuracy: 1e-12, "the sum's highest value over 0…1 channels")
+            XCTAssertLessThanOrEqual(sum.lowest, 0, "a span that does not hold 0 would let the gain move the share")
+            XCTAssertGreaterThanOrEqual(sum.lowest + sum.span, 0)
+        }
+        XCTAssertEqual(corners.count, 7, "no corner twice, none missing")
     }
 }
