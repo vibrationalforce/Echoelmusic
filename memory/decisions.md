@@ -5193,3 +5193,15 @@ auf JEDEM Branch), `claude/**` (Auto-Merge nach main), Tags `deploy-*`, Projekt-
 Connector mit Workflow-Schreibrecht könnte auf seinem Branch einen Workflow ändern, der die Repo-Geheimnisse sieht —
 Abhilfe beim Anbieter (Rechte ohne `workflows`) oder Secrets in eine auf `main` beschränkte Environment. Review: 2026-11-11.
 Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
+
+### 2026-10-13 — CL-2: die fünf Reines-Instrument-Zeilen tragen jetzt ihren Nachfolger
+
+- **Decision:** `decisions.csv` Zeilen 202 (TestFlight-Freeze bis DMMW-Profi-Level), 298/299
+  (Reines Instrument, keine Timeline), 302 (DMMW retired) und 310 (Pianoroll-Tür raus) stehen
+  nicht mehr auf `active`, sondern auf `superseded-2026-09-24-product-law`. Nur das Status-Token
+  ist geändert; der Entscheidungstext bleibt wörtlich.
+- **Why:** `docs/dev/FOUNDER_PRODUCT_LAW.md` (2026-09-24) macht die Phasen-Verdikte zu
+  Geschichte; `review.sh` stellte die fünf trotzdem als aktive, überfällige Entscheidungen zur
+  Wiedervorlage. Die Engineering-Hälften (#1302 Eingangsgraph, #299 Refcount, Black-Screen-Kette)
+  stehen in `CLAUDE.md` und bleiben unberührt. Befund des GMMW-Deep-Audits (Deletions-Team).
+- **Measure:** `python3 -c "import csv;print([i for i,r in enumerate(csv.reader(open('decisions.csv')),1) if len(r)==6 and r[5]=='superseded-2026-09-24-product-law'])"` → `[202, 298, 299, 302, 310]`.
