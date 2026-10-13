@@ -1334,3 +1334,19 @@ Footage-Layer unerwähnt (türlos — richtig so); Impressum fehlt (`docs/impres
 Unverifiziert: Rechtsfragen der Datenschutzerklärung. Verdikt ADOPT→PIPELINE. Lehre: ein Audit,
 das den Baum nicht gezogen hat, findet Datei-Abwesenheiten, die ein `git ls-files` widerlegt —
 aber seine Vergleiche zweier Textstellen (README↔Code, LICENSE↔Package.swift) trafen alle.
+
+**2026-10-13 — ChatGPT, GMMW Deep Audit (nur gelesen, main @ 969c271fb, mit xcresult).** Sechs
+Punkte, fünf messbar, vier halten. Bestätigt: Safe Mode baut dieselben 44 `@State`-Stores wie der
+Normalstart (sie entstehen beim Bau des App-Structs, vor der `body`-Verzweigung) · Record im leeren
+Stück ist gesperrt (`RecordTake.state` → `.songCannotPlay`, `TimelineRegionPlayer.play:684` prüft
+`canPlay`) — der erste menschliche Take ist damit unmöglich, das wird die nächste Sources-Scheibe
+nach der Audit-Synthese · J0: `audioRecorder: nil` (bewusst seit #1302) und `StemCaptureSession(`
+null Produktions-Aufrufer (S-A3c-2b, offen) · J1: `MultipeerSession` sendet Bio-Frames und
+Link-Proben, keinen Ton — „hörbares Duo" ist nicht belegt. Widerlegt: Save/Open — `playerAutomation`
+steht in `DMMWProject.Content`, `lightLookIntensity`/`cycle`/`automation` im `TimelineDocument`;
+nur der VISUELLE Look bleibt App-Einstellung (Council-Frage „trägt das Stück sein Bild?", kein
+Bug). Nicht messbar: die 22 Testnamen — nur in der Berichtsdatei und im 10-MB-Artefakt
+`test-results-ios-iPhone 17` (Blob-Host 403 durch den Proxy; das Job-Log ist `tail -200` ohne
+Fehlerzeile). Beim Founder angefragt. Verdikt ADOPT→PRODUCT (Punkt 3 als Scheibe). Lehre: das
+Artefakt gehört in den Auftrag an das fremde Modell — die eine Behauptung, die auf dem xcresult
+steht, ist die, die die Sitzung selbst nicht erreichen kann.
