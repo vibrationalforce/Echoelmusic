@@ -1306,3 +1306,9 @@ ACE-Step-Disclaimer (KI-Beteiligung offenlegen) und der Zeile vom 2026-07-02 (EU
 des rechtlichen Vorteils). „Wasserzeichenfrei" ≠ „rechtlich frei". GEV-„Taktsynchronisation" steht nicht im
 README. Lehre: der Bericht wächst je Runde um einen Abschnitt und korrigiert seine Kernfehler nicht —
 weitere Einfügungen davon nicht mehr messen, es sei denn mit NEUER Primärquelle.
+
+**Nachtrag — Herkunft des Fluid-Prompts:** die Quelle (ein fremdes Modell mit Lesezugriff auf das
+öffentliche Repo, Workspace ohne Checkout) hat den Prompt nach eigenem Read-Audit geschrieben und
+sagt selbst: nichts ins Swift-Repo geschrieben. Zweite Einfügung textgleich; nicht erneut gemessen.
+Der Vorspann wiederholt den einen Fehler („keine Viskosität“ — `Core/FaradayDish.swift`). Plan bleibt
+`scratchpads/PLAN_FLUID_SURFACE_2026-10-13.md`, F1–F5.
