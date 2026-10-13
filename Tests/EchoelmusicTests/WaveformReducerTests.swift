@@ -37,4 +37,22 @@ final class WaveformReducerTests: XCTestCase {
         XCTAssertEqual(coarse[0].min, -1)                 // extremes never vanish
         XCTAssertEqual(coarse[0].max, 1)
     }
+
+    /// `join` is the one-bucket case of `downsample`. The canvas calls `join` on a
+    /// slice so a pinch does not copy it; this locks the two to the same bucket.
+    func testJoin_matchesDownsampleOfTheWholeSpan() {
+        let fine = WaveformReducer.reduce([-1, 0.2, 0.5, -0.4, 0, 1, -0.2, 0.3], bucketSize: 2)
+        XCTAssertNil(WaveformReducer.join([] as [WaveformBucket]))
+        XCTAssertEqual(WaveformReducer.join(fine),
+                       WaveformReducer.downsample(fine, factor: fine.count).first)
+        let slice = fine[1..<3]
+        XCTAssertEqual(WaveformReducer.join(slice),
+                       WaveformReducer.downsample(Array(slice), factor: slice.count).first,
+                       "a column's slice joins to the same bucket downsample used to return")
+        // A partial last group (factor that does not divide) stays the old algebra.
+        let coarse = WaveformReducer.downsample(fine, factor: 3)
+        XCTAssertEqual(coarse.count, 2)
+        XCTAssertEqual(coarse[0], WaveformReducer.join(fine[0..<3]))
+        XCTAssertEqual(coarse[1], WaveformReducer.join(fine[3..<4]))
+    }
 }
