@@ -86,10 +86,18 @@ final class ATrackPicksItsPluginInstrumentOnceTests: XCTestCase {
         XCTAssertEqual(timeline.document.lanes.first { $0.id == rack }?.deviceChain?.instrument, pick,
                        "Redo puts the same insert back")
 
-        // COUNTERWEIGHT: a re-pick of what the track already plays records nothing.
+        // COUNTERWEIGHT: a re-pick of what the track already plays records nothing — also when the
+        // menu builds a FRESH insert (new id) for the same component (review of H2b: comparing
+        // inserts recorded an empty step).
         timeline.replaceDocument(timeline.document)
         timeline.editLanePlugin(id: rack) { timeline.setLanePluginInstrument(rack, pick) }
         XCTAssertFalse(timeline.canUndo, "the same plugin again is no step")
+        let fresh = DeviceInsert.pluginInstrument(Self.synth)
+        XCTAssertNotEqual(fresh.id, pick.id, "premise: a new insert has a new id")
+        timeline.editLanePlugin(id: rack) { timeline.setLanePluginInstrument(rack, fresh) }
+        XCTAssertFalse(timeline.canUndo, "the same component in a fresh insert is no step either")
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == rack }?.deviceChain?.instrument?.id, pick.id,
+                       "nothing was rewritten")
     }
 
     // MARK: 3 — refusals and what is kept

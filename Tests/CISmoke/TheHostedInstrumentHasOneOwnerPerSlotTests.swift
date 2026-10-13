@@ -16,8 +16,12 @@
 //    the built-in voice of that track rather than doubling it; this app's own components are
 //    never hosted inside the app.
 //  · Claim 3 — leaving is clean: an unload sends all-notes-off on all 16 channels BEFORE it
-//    detaches, and a media-services reset forgets every unit WITHOUT touching the old graph
-//    (the engine's reset path has one owner, which this host never assigns).
+//    detaches, and a media-services reset DETACHES every unit (no MIDI to a dead unit) before it
+//    forgets it — the engine is one instance that outlives the reset (corrected H2d; H2b1 pinned
+//    the opposite). The engine's reset path has one owner, which this host never assigns.
+//  · Claim 3b (H2d) — a component that failed to load is remembered per slot and not retried at
+//    every region onset; the track's Transpose reaches the unit, and a release uses the number its
+//    attack was sent with.
 //  · Claim 4 — the engine API is the `attachSourceNode` shape: rung first, pause, restart through
 //    `restartOrDegrade` (the counts live in `TheFailedRestartHandsOverToDegradedTests`, raised to
 //    7 and 6 in this commit; the rungs in `TheEngineLifecycleSpeaksInTheDiagLogTests`, #416).
@@ -94,9 +98,43 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         guard let reset = body(of: "private func forgetAfterMediaReset()", in: code, length: 400) else {
             return XCTFail("ANCHOR MISSING: the media-reset handler")
         }
-        XCTAssertFalse(reset.contains("detach"), "after a reset the old graph is gone — never detach into it")
+        // ⛔ H2b1 asserted the OPPOSITE ("never detach into it") and pinned a defect: the app has
+        // ONE `AVAudioEngine` for its life and the reset restarts it, so a dead unit stayed wired
+        // into the mixer (review of H2b, 2026-10-13). Detach first; send it no MIDI.
+        guard let detach = reset.range(of: "for held in hosted.values { engine.detachAudioUnit(held.unit) }"),
+              let forget = reset.range(of: "hosted.removeAll()") else {
+            return XCTFail("ANCHOR MISSING: the reset's detach or its forget")
+        }
+        XCTAssertLessThan(detach.lowerBound, forget.lowerBound, "detach every unit before forgetting it")
+        XCTAssertFalse(reset.contains("scheduleMIDIEventBlock"), "a dead unit gets no MIDI")
         XCTAssertTrue(reset.contains("wanted.removeAll()"), "the next prime names each plugin again")
+        XCTAssertTrue(reset.contains("failed.removeAll()"), "after a reset a failed unit may load again")
         XCTAssertFalse(code.contains("onMediaServicesReset"), "the engine's reset path has one owner")
+    }
+
+    // MARK: 3b — a missing plugin is not retried, and Transpose reaches the unit (H2d)
+
+    func testAFailedUnitKeepsTheBuiltInVoiceAndNotesKeepTheirSentNumber() throws {
+        let code = SourceText.codeOnly(try source(Self.hostPath))
+        guard let set = body(of: "func setInstrument(", in: code, length: 600),
+              let skip = set.range(of: "if let component, failed[slot] == component { return }"),
+              let unload = set.range(of: "unload(slot)") else {
+            return XCTFail("ANCHOR MISSING: the failed-component check or the unload in setInstrument")
+        }
+        XCTAssertLessThan(skip.lowerBound, unload.lowerBound,
+                          "a component that failed here is not loaded again at every region onset")
+        guard let finish = body(of: "private func finishLoad(", in: code) else {
+            return XCTFail("ANCHOR MISSING: finishLoad")
+        }
+        XCTAssertTrue(finish.contains("failed[slot] = component"), "a failed load is remembered")
+        guard let send = body(of: "func send(_ events:", in: code, length: 1400) else {
+            return XCTFail("ANCHOR MISSING: send")
+        }
+        XCTAssertTrue(send.contains("event.pitch + (transpose[slot] ?? 0)"), "the track's Transpose shifts the note")
+        XCTAssertTrue(send.contains("sounding[slot]?.removeValue(forKey: event.pitch)"),
+                      "a release uses the number its attack was sent with — no stranded note")
+        let app = SourceText.codeOnly(try source("Sources/Echoelmusic/EchoelmusicApp.swift"))
+        XCTAssertTrue(app.contains("pluginHost.setTranspose(slot: slot, semitones: semitones)"))
     }
 
     // MARK: 4 — the engine API

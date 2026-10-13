@@ -22,8 +22,21 @@
 //
 // MEDIA-SERVICES RESET invalidates every out-of-process unit. The engine's own reset path has one
 // owner (`AudioConfiguration.onMediaServicesReset`), so this host listens to the notification
-// itself, forgets every unit WITHOUT touching the old graph, and forgets what each slot wanted —
-// the next prime names it again and the unit is loaded afresh.
+// itself. ⛔ The first version forgot the units WITHOUT detaching, "because the old graph is
+// gone" — it is not: `AudioEngine.masterEngine` is ONE `AVAudioEngine` for the app's life, and the
+// reset path restarts that same engine, so a dead unit stayed connected to the mixer and the next
+// load added a second one (review of H2b, 2026-10-13). Now every unit is DETACHED (legal on a live
+// engine object even when its unit is dead — no MIDI is sent to it), then forgotten, and the next
+// prime loads it afresh.
+//
+// A COMPONENT THAT FAILED TO LOAD is remembered per slot, so the next region onset does not try
+// again — every retry would mute the built-in voice while it waits. Naming another component, or
+// a media reset, clears the memory.
+//
+// TRANSPOSE: the rack voices apply the track's Transpose inside themselves; a hosted unit gets
+// MIDI, so the shift is added to the note number here, and a release uses the number its attack
+// was SENT with, so a transpose change while a note is held never strands it. Detune and the
+// octave doubler are rack-voice features and do not reach a hosted unit.
 //
 // NEEDS-FOUNDER-VERIFY H2: a third-party instrument chosen on a rack track sounds on the device;
 // no click beyond the short pause at load; it survives a headphone change and a media reset;
@@ -58,6 +71,12 @@ final class HostedInstrumentHost {
     private var hosted: [Int: Hosted] = [:]
     /// The level and pan the region player last asked for, applied when a unit arrives.
     private var mix: [Int: (gain: Float, pan: Float)] = [:]
+    /// The component that could not be loaded on this device, per slot — not retried until the
+    /// slot names something else or the media services reset.
+    private var failed: [Int: DeviceInsert.PluginComponent] = [:]
+    private var transpose: [Int: Int] = [:]
+    /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
+    private var sounding: [Int: [Int: UInt8]] = [:]
     private var resetObserver: NSObjectProtocol?
 
     init(engine: AudioEngine) {
@@ -79,7 +98,9 @@ final class HostedInstrumentHost {
     /// load.
     func setInstrument(_ component: DeviceInsert.PluginComponent?, forSlot slot: Int) {
         guard wanted[slot] != component else { return }
+        if let component, failed[slot] == component { return }   // keeps its built-in voice
         unload(slot)
+        failed[slot] = nil
         guard let component, component.manufacturer != Self.ownManufacturer else { return }
         wanted[slot] = component
         let description = AudioComponentDescription(componentType: component.type,
@@ -100,8 +121,15 @@ final class HostedInstrumentHost {
     func send(_ events: [LaneNotePump.Event], toSlot slot: Int) {
         guard let block = hosted[slot]?.unit.auAudioUnit.scheduleMIDIEventBlock else { return }
         for event in events {
-            let pitch = UInt8(max(0, min(127, event.pitch)))
             let velocity = event.velocity.isFinite ? event.velocity : 0
+            let pitch: UInt8
+            if velocity > 0 {
+                pitch = UInt8(max(0, min(127, event.pitch + (transpose[slot] ?? 0))))
+                sounding[slot, default: [:]][event.pitch] = pitch
+            } else {
+                pitch = sounding[slot]?.removeValue(forKey: event.pitch)
+                    ?? UInt8(max(0, min(127, event.pitch + (transpose[slot] ?? 0))))
+            }
             let bytes: [UInt8] = velocity > 0
                 ? [0x90, pitch, UInt8(max(1, min(127, (velocity * 127).rounded())))]
                 : [0x80, pitch, 0]
@@ -111,7 +139,13 @@ final class HostedInstrumentHost {
         }
     }
 
+    /// The track's Transpose in semitones, added to every note this slot sends from now on.
+    func setTranspose(slot: Int, semitones: Int) {
+        transpose[slot] = max(-48, min(48, semitones))
+    }
+
     /// The track's level and pan, on the unit's mixer input (`AVAudioMixing`, control plane).
+    /// ⚠️ A mixer input's volume is 0…1; the rack's 0…2 boost above unity does not reach a unit.
     func setMix(slot: Int, gain: Float? = nil, pan: Float? = nil) {
         var current = mix[slot] ?? (gain: 1, pan: 0)
         if let gain { current.gain = gain.isFinite ? max(0, gain) : 0 }
@@ -130,6 +164,7 @@ final class HostedInstrumentHost {
             log.audio("Plugin '\(component.name)' could not be loaded: \(failure ?? "no unit") — the track plays its built-in voice",
                       level: .warning)
             wanted[slot] = nil
+            failed[slot] = component
             return
         }
         guard engine.attachAudioUnit(unit) else {
@@ -152,6 +187,7 @@ final class HostedInstrumentHost {
     /// Silence the unit (all notes off on every channel), then take it out of the graph.
     private func unload(_ slot: Int) {
         wanted[slot] = nil
+        sounding[slot] = nil
         guard let held = hosted.removeValue(forKey: slot) else { return }
         if let block = held.unit.auAudioUnit.scheduleMIDIEventBlock {
             for channel: UInt8 in 0..<16 {
@@ -166,8 +202,11 @@ final class HostedInstrumentHost {
 
     private func forgetAfterMediaReset() {
         log.audio("Media services were reset — hosted plugins will load again on the next play", level: .warning)
+        for held in hosted.values { engine.detachAudioUnit(held.unit) }   // the engine outlives the reset
         hosted.removeAll()
         wanted.removeAll()
+        failed.removeAll()
+        sounding.removeAll()
     }
 }
 #endif

@@ -1376,6 +1376,10 @@ public final class TimelineStore {
         if let insert, insert.typeID != DeviceInsert.pluginInstrumentTypeID { return }
         var chain = document.lanes[i].deviceChain ?? DeviceChain(inserts: [])
         if let held = chain.instrument, held.typeID != DeviceInsert.pluginInstrumentTypeID { return }
+        // The same COMPONENT again is no change, whatever the new insert's id: a menu builds a
+        // fresh insert per pick, and comparing inserts would write and record an empty Undo step.
+        if let held = chain.instrument, let insert,
+           held.pluginComponent != nil, held.pluginComponent == insert.pluginComponent { return }
         chain.instrument = insert
         let next: DeviceChain? = chain.isEmpty ? nil : chain
         guard next != document.lanes[i].deviceChain else { return }

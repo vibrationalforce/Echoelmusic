@@ -1246,6 +1246,7 @@ struct EchoelmusicApp: App {
                         // mono note at enqueue (and releases a held note on a change);
                         // a kit is unpitched (documented ignore).
                         laneVoiceRack?.setTranspose(slot: slot, semitones: semitones)
+                        pluginHost.setTranspose(slot: slot, semitones: semitones)   // H2d: a hosted unit too
                     }
                     // Per-instrument Detune (founder 2026-07-14 "transpose detune"): fine
                     // cents offset per SECONDARY lane's rack voice, alongside transpose.
