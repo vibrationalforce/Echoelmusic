@@ -23784,6 +23784,18 @@
           }
         }
       }
+    },
+    "Volume" : {
+      "comment" : "Song automation parameter (production A1c): a track's volume curve, a fade over its fader.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
