@@ -224,7 +224,7 @@ Bulk-deletion commits cited below:
 - **C/R/O:** Y/Y/Y
 - **Removed because:** it went with the audio input.
 - **Scope / Class:** YES (future "Echoel Grain") / **PORT ALGORITHM**. The grain scheduler is reusable; the source must become a buffer or clip, not the mic.
-- **Next safe slice:** a pure grain kernel over an in-memory buffer, with tests.
+- **Next safe slice:** a pure grain kernel over an in-memory buffer, with tests. ⭐ LANDED as GMMW GA-9: `DSP/GrainCloud` (guard `TheGrainCloudAllocatesOnlyInPrepareTests`).
 
 ### B6 · Pitch correction / phase vocoder / formant
 - **Impl:**
@@ -393,8 +393,9 @@ Bulk-deletion commits cited below:
 - **Next safe slice:** a founder design session, not code.
 
 ### D11 · Lyrics model / take recorder
-- **Impl:** `LyricsModel` (syllabification, melisma; zero references); `TakeRecorder` / `RecordController` (`arm()` has no caller; needs an audio input).
-- **Scope / Class:** LATER / **REUSE** once an audio input exists (E-series).
+- **Impl:** `LyricsModel` (syllabification, melisma; zero references); `TakeRecorder` / `RecordController`.
+  ⛔ „`arm()` has no caller; needs an audio input" stood here and was false on 2026-10-13: `RecordTakeControls.swift:78` calls `recorder.arm()` from `RecordTakeButton`, doored in `ProjectHeader` and `WorkstationView` — MIDI takes are CURRENT; only the AUDIO half waits for an input (E1).
+- **Scope / Class:** `LyricsModel` LATER / **REUSE**; the take recorder is LIVE for MIDI, its audio half LATER (E-series).
 
 ---
 
@@ -591,7 +592,7 @@ Bulk-deletion commits cited below:
 - **Impl:**
   - `RTMPClient` (hand-rolled handshake + AMF0 over `NWConnection`, Blab era → 03-03; never verified against a server).
   - `LiveStreamEngine` (04-18 → 04-19; its subject said RTMP, the code wrote local mp4).
-  - Today `BroadcastPublisher`: a `#if canImport(HaishinKit)` scaffold. HaishinKit is not linked.
+  - Today `Sources/Echoelmusic/Stream/` holds seven files (B2 scaffold, guard `canImport(RTMPHaishinKit)` in `BroadcastEngine.swift`). HaishinKit is not linked: `Package.swift` `dependencies: []`, the B2 patch is unlanded (founder-gated `project.yml`).
 - **Scope / Class:** YES / **REBUILD** by integrating a proven library (new dependency = founder sign-off; `docs/dev/BROADCAST_HAISHINKIT_FINISH.md`)
 
 ### J5 · NDI / Dante / AES67 / SMPTE ST 2110
