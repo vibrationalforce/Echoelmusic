@@ -8,8 +8,9 @@
 //  · END-TO-END BEHAVIOUR (claims 1–3) — `SongAutomationEdit` and `TrackMix` are shipped and pure.
 //    Claim 1: a poly track offers Volume, Pan, then the synth projection; a Sampler track Volume
 //    alone (`TrackMix.controls` says it has no pan — the one truth, #416), and no synth parameter.
-//    Claim 2, COUNTERWEIGHTS: the Echoel track, an audio track and a rack with no room offer
-//    nothing and draw no row — their mix does not follow a curve yet (A1d/A1e). Claim 3: the
+//    Claim 2, COUNTERWEIGHTS: the Echoel track and a rack with no room offer nothing and draw no
+//    row (the Echoel level shapes new notes only — no live fader yet); an audio track (A1d)
+//    offers exactly Volume and Pan. Claim 3: the
 //    Volume curve's readout names the track and the parameter, and the two mix descriptors are
 //    NOT in the parameter catalog, so the router can never apply them a second time.
 //  · DEVICE PROBE, OPEN — the A1 ask at `TimelineDocument.automatedGain`.
@@ -60,10 +61,12 @@ final class EveryRackTrackAutomatesItsMixTests: XCTestCase {
 
     func testTracksWhoseMixDoesNotFollowACurveOfferNothing() {
         let doc = Self.document
-        for lane in [Self.echoel, Self.tape] {
-            XCTAssertTrue(SongAutomationEdit.parameters(on: lane.id, in: doc, voiceCapacity: 4).isEmpty, lane.name)
-            XCTAssertFalse(SongAutomationEdit.sounds(on: lane.id, in: doc, voiceCapacity: 4), lane.name)
-        }
+        XCTAssertTrue(SongAutomationEdit.parameters(on: Self.echoel.id, in: doc, voiceCapacity: 4).isEmpty,
+                      "the Echoel track's level shapes new notes only — a curve there would mislead")
+        XCTAssertFalse(SongAutomationEdit.sounds(on: Self.echoel.id, in: doc, voiceCapacity: 4))
+        // A1d: an audio track's mix follows its curve, so it offers Volume and Pan — nothing else.
+        XCTAssertEqual(SongAutomationEdit.parameters(on: Self.tape.id, in: doc, voiceCapacity: 4).map(\.keyPath),
+                       [TimelineDocument.mixGainBase, TimelineDocument.mixPanBase])
         XCTAssertTrue(SongAutomationEdit.parameters(on: Self.keys.id, in: doc, voiceCapacity: 0).isEmpty,
                       "no rack, no voice to follow the curve")
     }

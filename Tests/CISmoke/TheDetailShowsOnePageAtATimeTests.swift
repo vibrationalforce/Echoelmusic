@@ -153,7 +153,8 @@ final class TheDetailShowsOnePageAtATimeTests: XCTestCase {
         XCTAssertEqual(TrackMix.detailPages(of: rack.id, selectedRegion: rackPart.id, in: doc, voiceCapacity: 0),
                        [.track, .part, .notes, .device], "without a rack voice a curve would draw silence")
         XCTAssertEqual(TrackMix.detailPages(of: loop.id, selectedRegion: loopPart.id, in: doc, voiceCapacity: 4),
-                       [.track, .part, .device], "an audio part has no notes and no curve")
+                       [.track, .part, .automation, .device],
+                       "an audio part has no notes; since production A1d its track takes a Volume and Pan curve")
         XCTAssertEqual(TrackMix.detailPages(of: body.id, selectedRegion: bodyPart.id, in: doc, voiceCapacity: 4),
                        [.track, .device], "the bio curve has no parts, notes or curve row")
 

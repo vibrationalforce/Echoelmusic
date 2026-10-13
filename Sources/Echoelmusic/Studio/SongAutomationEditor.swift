@@ -79,17 +79,24 @@ enum SongAutomationEdit {
 
     /// Every parameter a curve on THIS track can move: its volume and pan where the track's mixer
     /// offers them (`TrackMix.controls`, the inspector's own truth — a Sampler or Sub has no
-    /// pan), on a rack track, which is the one kind whose mix follows a curve today (A1b); plus
-    /// the poly voice's parameters on a poly track. Empty everywhere else.
+    /// pan), on a rack track (A1b) or an audio track (A1d) — the kinds whose mix follows a curve
+    /// today; plus the poly voice's parameters on a poly track. Empty everywhere else: the Echoel
+    /// track's level only shapes new notes (no live fader), so a curve there would mislead.
     nonisolated static func parameters(on laneID: UUID, in document: TimelineDocument,
                                        voiceCapacity: Int) -> [ParameterDescriptor] {
-        guard case .laneSynth(let kind)? = TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity),
+        guard let role = TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity),
               let controls = TrackMix.controls(of: laneID, in: document, voiceCapacity: voiceCapacity)
         else { return [] }
+        let poly: Bool
+        switch role {
+        case .laneSynth(let kind): poly = kind == .poly
+        case .audio: poly = false
+        case .echoelInstrument, .bio, .unplayed, .noVoice: return []
+        }
         var list: [ParameterDescriptor] = []
         if controls.level { list.append(mixVolume) }
         if controls.pan { list.append(mixPan) }
-        if kind == .poly { list += SongAutomationEdit.offered }
+        if poly { list += SongAutomationEdit.offered }
         return list
     }
 

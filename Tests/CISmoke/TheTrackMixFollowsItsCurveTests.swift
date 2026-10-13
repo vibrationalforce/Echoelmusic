@@ -16,7 +16,11 @@
 //    every slot gain/pan push in the player goes through `pushSlotMix` (the audition's stopped-only
 //    bind is the one other site), and the step follows the curves after it sets `currentTick`.
 //  · DEVICE PROBE, OPEN — that a fade sounds smooth enough at step rate: NEEDS-FOUNDER-VERIFY A1
-//    at `TimelineDocument.automatedGain`. The Echoel track and audio tracks are A1c/A1d, not here.
+//    at `TimelineDocument.automatedGain`. The Echoel track is A1e, not here.
+//  · SOURCE-TEXT SCAN (claim 5, A1d) — `AudioLanePlayer` starts a part at its curve's level,
+//    follows a change with one `setGain` per real change on both reconcile paths, and asks
+//    `automatedPan`. Needles grepped against the worktree; on the parent the first two are
+//    absent (the RED a revert would show).
 //
 //  GRADING against the parent tree (#433/#464): the file does NOT compile there — `automatedGain`,
 //  `automatedPan`, `mixGainBase` and the `atTick:` overloads are created by this commit — so no
@@ -100,6 +104,22 @@ final class TheTrackMixFollowsItsCurveTests: XCTestCase {
         XCTAssertTrue(code.contains("        currentTick = newTick\n        followMixAutomation()"),
                       "the step follows the curves right after it sets currentTick")
     }
+
+    /// Claim 5 (A1d): an audio track follows the same curves. The part starts at its curve's
+    /// level, a live level change is ONE `setGain` through `followLevel` (never a stop), and the
+    /// pan asks `automatedPan`.
+    func testTheAudioLaneFollowsTheSameCurves() throws {
+        let code = SourceText.codeOnly(try source(Self.audioPath))
+        XCTAssertTrue(code.contains("let level = doc.automatedGain(for: laneID, atTick: tick) * region.gain"),
+                      "a part starts at the level its curve holds")
+        XCTAssertTrue(code.contains("let level = doc.automatedGain(for: laneID, atTick: tick) * regionGain"),
+                      "followLevel asks the same rule")
+        XCTAssertEqual(code.components(separatedBy: "followLevel(laneID, lane: lane,").count - 1, 2,
+                       "both reconcile paths (timeline and launch) follow the curve")
+        XCTAssertTrue(code.contains("doc.automatedPan(for: laneID, atTick: tick)"))
+    }
+
+    private static let audioPath = "Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift"
 
     private func source(_ relative: String) throws -> String {
         var url = URL(fileURLWithPath: #filePath)

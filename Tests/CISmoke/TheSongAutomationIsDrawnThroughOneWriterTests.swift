@@ -218,7 +218,11 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertTrue(SongAutomationEdit.sounds(on: keys, in: doc, voiceCapacity: 4))
         XCTAssertFalse(SongAutomationEdit.sounds(on: echoel, in: doc, voiceCapacity: 4),
                        "the Echoel track gets no row — which voice it means is a founder call")
-        XCTAssertFalse(SongAutomationEdit.sounds(on: audio, in: doc, voiceCapacity: 4))
+        // Production A1d: an audio track's mix follows a curve, so it takes a row — its Volume
+        // and Pan only, never a synth parameter (`EveryRackTrackAutomatesItsMixTests`).
+        XCTAssertTrue(SongAutomationEdit.sounds(on: audio, in: doc, voiceCapacity: 4))
+        XCTAssertFalse(SongAutomationEdit.parameters(on: audio, in: doc, voiceCapacity: 4)
+                        .contains { $0.keyPath == SongAutomationEdit.defaultBase })
         XCTAssertFalse(SongAutomationEdit.sounds(on: keys, in: doc, voiceCapacity: 0),
                        "a track without a rack voice would draw silence")
 
