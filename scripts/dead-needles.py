@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find guards that are BROKEN on a correct tree — two different ways.
+r"""Find guards that are BROKEN on a correct tree — two different ways.
 
   A. a needle asserted PRESENT in Sources/ that is not there  (shapes 1-3, #656/#665)
   B. a `\(Self.member)` reference the file cannot compile     (shape 4, #776)
@@ -508,7 +508,7 @@ def strip_comments(text):
 
 
 def strip_strings(text):
-    """Blank the CONTENTS of Swift string literals, keeping line structure.
+    r"""Blank the CONTENTS of Swift string literals, keeping line structure.
 
     Shape 5 (#781) needs the opposite input from shape 4. An interpolation lives INSIDE a
     string, so shape 4 must keep strings; a plain `Self.gone` reference is code, and the

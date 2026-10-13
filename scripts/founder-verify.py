@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Collect every NEEDS-FOUNDER-VERIFY marker into one device-session checklist.
+r"""Collect every NEEDS-FOUNDER-VERIFY marker into one device-session checklist.
 
 WHY THIS EXISTS. The two ship-gate checks that are still open — 1 Klang and
 5 Stabilität — are BOTH sensory (see CLAUDE.md's SHIP GATE paragraph). No cycle can

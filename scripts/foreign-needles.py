@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guards that read a NON-Swift repo file: is the needle still true there?
+r"""Guards that read a NON-Swift repo file: is the needle still true there?
 
 WHY THIS EXISTS (#1191). `scripts/moved-needles.py` says so in its own output: it diffs
 `-- Sources` ONLY (#1182). `scripts/dead-needles.py` is narrower still — every one of its shapes is
