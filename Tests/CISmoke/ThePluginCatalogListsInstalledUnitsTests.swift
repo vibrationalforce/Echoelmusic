@@ -6,15 +6,19 @@
 //  of a rack track lists the AUv3 instruments and effects installed on this iPhone.
 //
 //  WHAT THIS PINS, by kind (Tests/CISmoke/CLAUDE.md §1):
-//  · END-TO-END BEHAVIOUR (claims 1–3) — `PluginDescriptor`, `PluginCatalog` and
-//    `TrackPluginRow.summary` are shipped, pure, and called here directly. Claim 1: the three
-//    component types round-trip between role and four-character code, an unknown type has no
-//    role, and a non-printable byte is written as `?`. Claim 2: the order is one entry per
-//    component, third-party before Apple, then maker and name case-blind. Claim 3: the row's one
-//    line says "none" when nothing is installed and names at most three units per kind.
+//  · END-TO-END BEHAVIOUR (claims 1–3) — `PluginDescriptor`, `PluginCatalog` and the row's
+//    static helpers are shipped, pure, and called here directly. Claim 1: the three component
+//    types round-trip between role and four-character code, an unknown type has no role, and a
+//    non-printable byte is written as `?`. Claim 2: the order is one entry per component,
+//    third-party before Apple, then maker and name case-blind. Claim 3 (H2c, replaced the H1
+//    summary line): the row offers installed INSTRUMENTS but never this app's own unit or an
+//    effect; a component is known by its codes; the note says what plays and, plainly, that the
+//    plugin's screen and settings and effect inserts are not built yet.
 //  · SOURCE-TEXT SCAN (claim 4) — the row is a `View`: it is mounted only inside the rack-track
-//    branch of the Device page, it queries the registry DETACHED, and neither it nor the catalog
-//    instantiates a unit or offers a picker — H1 lists, H2 loads.
+//    branch of the Device page, it queries the registry DETACHED, a pick goes through
+//    `editLanePlugin` + `setLanePluginInstrument` (one Undo step), and neither the row nor the
+//    catalog instantiates a unit — `HostedInstrumentHost` does. ⛔ H1 forbade a `Picker(` here
+//    ("a menu that cannot load is a half door"); H2b made the load real, so H2c lifted it.
 //  · DEVICE PROBE, OPEN — that the list matches what AUM shows on the founder's iPhone: the
 //    NEEDS-FOUNDER-VERIFY ask at `TrackPluginRow`.
 //
@@ -79,30 +83,47 @@ final class ThePluginCatalogListsInstalledUnitsTests: XCTestCase {
         XCTAssertTrue(ordered.last?.isApple ?? false, "Apple's own units come last")
     }
 
-    // MARK: 3 — the row's one line
+    // MARK: 3 — what the row offers and says (H2c)
 
-    func testTheRowSaysNoneOrNamesAtMostThreePerKind() {
-        // COUNTERWEIGHT: an empty catalog says so, it does not render an empty line.
-        XCTAssertEqual(TrackPluginRow.summary(instruments: [], effects: []),
-                       "No Audio Unit instruments or effects are installed.")
-        let four = (0..<4).map {
-            Self.unit("I\($0)", maker: "M", subtype: UInt32(0x6100_0000 + $0), manufacturer: 0x6D6D_6D6D)
-        }
-        let line = TrackPluginRow.summary(instruments: four, effects: [])
-        XCTAssertTrue(line.hasPrefix("4 instruments: I0, I1, I2 +1"), line)
-        XCTAssertTrue(line.hasSuffix("No effects"), line)
-        XCTAssertFalse(line.contains("I3"), "at most three names per kind")
+    func testTheRowOffersInstalledInstrumentsButNeverItsOwn() {
+        let synth = Self.unit("Synth", maker: "Acme", subtype: 0x7379_6E74, manufacturer: 0x4163_6D65)
+        let own = Self.unit("Echoel", maker: "Echoel", subtype: 0x6563_686C,
+                            manufacturer: HostedInstrumentHost.ownManufacturer)
+        // COUNTERWEIGHT: an effect is listed, never offered as an instrument.
+        let reverb = Self.unit("Verb", maker: "Acme", subtype: 0x7665_7262, manufacturer: 0x4163_6D65,
+                               type: PluginCatalog.effectType)
+        let offered = TrackPluginRow.offered([synth, own, reverb])
+        XCTAssertEqual(offered.map(\.name), ["Synth"], "this app's own unit and effects are not offered")
+        XCTAssertEqual(offered.first?.manufacturer, 0x4163_6D65)
+        let twin = DeviceInsert.PluginComponent(type: synth.type, subtype: synth.subtype,
+                                                manufacturer: synth.manufacturer, name: "Renamed",
+                                                manufacturerName: "Acme")
+        XCTAssertEqual(TrackPluginRow.key(for: offered[0]), TrackPluginRow.key(for: twin),
+                       "a component is known by its codes, not its name")
     }
 
-    // MARK: 4 — mounted on rack tracks, detached, and it loads nothing
+    func testTheRowSaysWhatPlaysAndWhatIsNotBuiltYet() {
+        let synth = DeviceInsert.PluginComponent(type: PluginCatalog.instrumentType, subtype: 1,
+                                                 manufacturer: 2, name: "Synth", manufacturerName: "Acme")
+        let playing = TrackPluginRow.note(current: synth, installed: 3, effects: 0)
+        XCTAssertTrue(playing.contains("Synth"), playing)
+        XCTAssertTrue(playing.contains("not available here yet"), "no plugin screen and no saved settings yet: \(playing)")
+        XCTAssertEqual(TrackPluginRow.note(current: nil, installed: 0, effects: 0),
+                       "No Audio Unit instruments are installed on this iPhone.")
+        XCTAssertTrue(TrackPluginRow.note(current: nil, installed: 2, effects: 4)
+            .hasSuffix("4 effects installed — inserting one on a track is not available yet."),
+                      "effects are listed, not yet inserted (H6)")
+    }
 
-    func testTheRowIsMountedOnRackTracksAndLoadsNothing() throws {
+    // MARK: 4 — mounted on rack tracks, detached, and the pick goes through the one writer
+
+    func testTheRowIsMountedOnRackTracksAndPicksThroughTheWriter() throws {
         let inspector = SourceText.codeOnly(try text(Self.inspectorFile))
         guard let gate = inspector.range(of: "if !instruments.isEmpty {") else {
             return XCTFail("the Device page no longer has its rack-track branch")
         }
         let branch = String(inspector[gate.upperBound...].prefix(400))
-        XCTAssertTrue(branch.contains("TrackPluginRow()"),
+        XCTAssertTrue(branch.contains("TrackPluginRow(laneID: laneID)"),
                       "the plugin row belongs inside the rack-track branch of the Device page")
         XCTAssertEqual(inspector.components(separatedBy: "TrackPluginRow(").count - 1, 1,
                        "the row is mounted exactly once")
@@ -110,12 +131,16 @@ final class ThePluginCatalogListsInstalledUnitsTests: XCTestCase {
         let row = SourceText.codeOnly(try text(Self.rowFile))
         XCTAssertTrue(row.contains("Task.detached"), "the registry query runs off the main actor")
         XCTAssertTrue(row.contains("PluginCatalog.installed(.instrument)"))
-        XCTAssertFalse(row.contains("Picker("), "H1 lists; a menu that cannot load is a half door")
+        XCTAssertTrue(row.contains("timeline.editLanePlugin(id: laneID) { timeline.setLanePluginInstrument(laneID, insert) }"),
+                      "one pick, one Undo step, through the one writer")
+        XCTAssertEqual(row.components(separatedBy: "setLanePluginInstrument(").count - 1, 1)
+        XCTAssertTrue(row.contains(".pickerStyle(.menu)"), "a named choice is a menu (Uncodixfy: no sheet)")
 
         let catalog = SourceText.codeOnly(try text(Self.catalogFile))
         for source in [row, catalog] {
             for loader in ["instantiate(", "AUAudioUnit(", "AVAudioUnit(", "attach("] {
-                XCTAssertFalse(source.contains(loader), "H1 must not load a unit: found \(loader)")
+                XCTAssertFalse(source.contains(loader),
+                               "the row and the catalog never load a unit — `HostedInstrumentHost` does: found \(loader)")
             }
         }
     }

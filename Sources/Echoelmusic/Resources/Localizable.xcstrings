@@ -23641,18 +23641,6 @@
         }
       }
     },
-    "Audio Units on this iPhone" : {
-      "comment" : "Device page (production H1): heading of the read-only list of installed AUv3 units.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Audio Units on this iPhone"
-          }
-        }
-      }
-    },
     "Looking for installed Audio Units…" : {
       "comment" : "Device page (production H1): shown while the system registry is queried.",
       "extractionState" : "manual",
@@ -23661,66 +23649,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Looking for installed Audio Units…"
-          }
-        }
-      }
-    },
-    "Loading one on a track is not available yet." : {
-      "comment" : "Device page (production H1): the list is read-only; hosting comes later.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading one on a track is not available yet."
-          }
-        }
-      }
-    },
-    "No Audio Unit instruments or effects are installed." : {
-      "comment" : "Device page (production H1): nothing installed.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Audio Unit instruments or effects are installed."
-          }
-        }
-      }
-    },
-    "No instruments" : {
-      "comment" : "Device page (production H1): no AUv3 instrument installed.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No instruments"
-          }
-        }
-      }
-    },
-    "No effects" : {
-      "comment" : "Device page (production H1): no AUv3 effect installed.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No effects"
-          }
-        }
-      }
-    },
-    "instruments" : {
-      "comment" : "Device page (production H1): plural noun after a count, e.g. '3 instruments'.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "instruments"
           }
         }
       }
@@ -23841,6 +23769,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paste the copied notes at the start of this part"
+          }
+        }
+      }
+    },
+    "Plugin" : {
+      "comment" : "Track Device page (production H2c): label of the Audio Unit instrument menu.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugin"
+          }
+        }
+      }
+    },
+    "Built-in voice" : {
+      "comment" : "Track Device page (production H2c): the menu entry that plays the track's own voice, no plugin.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Built-in voice"
+          }
+        }
+      }
+    },
+    "Installed" : {
+      "comment" : "Track Device page (production H2c): menu section of Audio Unit instruments installed on this iPhone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installed"
+          }
+        }
+      }
+    },
+    " (not on this iPhone)" : {
+      "comment" : "Track Device page (production H2c): after a plugin name the song names but this iPhone does not have.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (not on this iPhone)"
+          }
+        }
+      }
+    },
+    "The Audio Unit instrument this track plays instead of its built-in voice" : {
+      "comment" : "Track Device page, VoiceOver hint of the plugin menu (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Audio Unit instrument this track plays instead of its built-in voice"
+          }
+        }
+      }
+    },
+    "This track plays " : {
+      "comment" : "Track Device page (production H2c): start of the sentence naming the plugin the track plays.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track plays "
+          }
+        }
+      }
+    },
+    " with its default sound. Its own screen and settings are not available here yet." : {
+      "comment" : "Track Device page (production H2c): end of that sentence — the plugin's screen and saved settings are not built yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " with its default sound. Its own screen and settings are not available here yet."
+          }
+        }
+      }
+    },
+    "No Audio Unit instruments are installed on this iPhone." : {
+      "comment" : "Track Device page (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Audio Unit instruments are installed on this iPhone."
+          }
+        }
+      }
+    },
+    "Pick an installed instrument to play this track instead of its built-in voice." : {
+      "comment" : "Track Device page (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an installed instrument to play this track instead of its built-in voice."
+          }
+        }
+      }
+    },
+    "effects installed — inserting one on a track is not available yet." : {
+      "comment" : "Track Device page (production H2c): after the number of installed Audio Unit effects.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "effects installed — inserting one on a track is not available yet."
           }
         }
       }

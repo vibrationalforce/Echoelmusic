@@ -581,9 +581,9 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                         controls.role, current: TrackMix.currentInstrument(of: laneID, in: document))
                     if !instruments.isEmpty {
                         instrumentRow(instruments)
-                        // Production H1 — the installed AUv3 units, read-only (own leaf: the
-                        // registry query runs detached, never in this body).
-                        TrackPluginRow()
+                        // Production H1/H2c — the installed AUv3 instruments, and the one this
+                        // track plays (own leaf: the registry query runs detached, never here).
+                        TrackPluginRow(laneID: laneID)
                     }
                     // E13-1 — the Sampler's sound: a file from the media library (own leaf).
                     if TrackMix.currentInstrument(of: laneID, in: document) == .sampler {
