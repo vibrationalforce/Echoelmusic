@@ -2065,6 +2065,46 @@ public final class AudioEngine {
         log.audio("Source node detached from master engine")
     }
 
+    /// Production H2b — attach a hosted Audio Unit instrument into the master mix, the
+    /// `attachSourceNode` shape: rung first, pause a running engine, attach, connect at the
+    /// unit's own format (else the mixer's), restart through the one helper. Called once per
+    /// LOAD of a plugin (`HostedInstrumentHost`), never per step — the pause is a short dropout.
+    /// Returns false when no format could be found; the unit is detached again then.
+    @discardableResult
+    func attachAudioUnit(_ unit: AVAudioUnit) -> Bool {
+        logEngineLifecycle("graph: attach audio unit (engine running: \(masterEngine.isRunning))")
+        prepareGraph()
+        let wasRunning = masterEngine.isRunning
+        if wasRunning { masterEngine.pause() }
+        masterEngine.attach(unit)
+        var connected = false
+        let own = unit.outputFormat(forBus: 0)
+        let fallback = masterMixer.outputFormat(forBus: 0)
+        if own.sampleRate > 0, own.channelCount > 0 {
+            masterEngine.connect(unit, to: masterMixer, format: own)
+            connected = true
+        } else if fallback.sampleRate > 0, fallback.channelCount > 0 {
+            masterEngine.connect(unit, to: masterMixer, format: fallback)
+            connected = true
+        } else {
+            log.audio("Cannot attach audio unit — no valid audio format available", level: .error)
+            masterEngine.detach(unit)
+        }
+        if wasRunning {
+            armTimingInstrument()
+            restartOrDegrade(after: "audio unit attachment")   // #611: never a log-only catch
+        }
+        return connected
+    }
+
+    /// Production H2b — take a hosted unit out of the graph again (`detachSourceNode` shape: a
+    /// detach needs no pause).
+    func detachAudioUnit(_ unit: AVAudioUnit) {
+        logEngineLifecycle("graph: detach audio unit (engine running: \(masterEngine.isRunning))")
+        masterEngine.disconnectNodeOutput(unit)
+        masterEngine.detach(unit)
+    }
+
     /// Attach an AVAudioPlayerNode additively into the master mix (same safe
     /// pause/attach/connect pattern as `attachSourceNode`). The live caller is
     /// `TimelineAudioSink` (the plain, unwarped lane path) — a clip plays into

@@ -347,6 +347,11 @@ final class TheEngineLifecycleSpeaksInTheDiagLogTests: XCTestCase {
              "logEngineLifecycle(\"graph: detach space bus"),
             ("func attachSpacePlayer(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch?,",
              "logEngineLifecycle(\"graph: attach space player"),
+            // Production H2b — a hosted Audio Unit's two graph edits speak like their siblings.
+            ("func attachAudioUnit(_ unit: AVAudioUnit) -> Bool {",
+             "logEngineLifecycle(\"graph: attach audio unit"),
+            ("func detachAudioUnit(_ unit: AVAudioUnit) {",
+             "logEngineLifecycle(\"graph: detach audio unit"),
         ] {
             XCTAssertEqual(occurrences(of: fn, in: code), 1,
                            "`\(fn)` is no longer unique — re-anchor this claim (#408, §4).")

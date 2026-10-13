@@ -107,10 +107,12 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // headphone space attaches a lane's space bus and its players with the same
         // pause → mutate → restart shape, and both restarts go through the helper. Claim 4
         // moves by the same two.
-        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 6, """
-            The helper's call-site count changed (expected 6: source-node attach, clip-player \
-            attach, warpable-player attach, space-bus attach, space-player attach, and the \
-            stranded-engine restore). If you ADDED a \
+        // ⭐ Production H2b (2026-10-13) — RAISED 6 → 7 with claim 4: a hosted Audio Unit is
+        // attached with the same pause → mutate → restart shape, once per plugin load.
+        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 7, """
+            The helper's call-site count changed (expected 7: source-node attach, clip-player \
+            attach, warpable-player attach, space-bus attach, space-player attach, audio-unit \
+            attach, and the stranded-engine restore). If you ADDED a \
             pause/mutate/restart site, route it through \
             `restartOrDegrade` and raise this count in the same commit. If you REMOVED one, \
             lower it. A site that restarts on its own re-opens the #611 silence.
@@ -145,10 +147,11 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // move too, and a reader obeying the old wording literally raises this to 4, leaves
         // claim 3 at 5 and ships a red. Decoupling them was as wrong as equating them.
         // ⭐ S3c — RAISED 3 → 5 with claim 3: the space-bus and space-player attaches pause too.
-        XCTAssertEqual(occurrences(of: "if wasRunning { masterEngine.pause() }", in: code), 5, """
-            The pause-before-mutate site count changed (expected 5: source-node attach, \
+        // ⭐ Production H2b — RAISED 5 → 6 with claim 3: the audio-unit attach pauses too.
+        XCTAssertEqual(occurrences(of: "if wasRunning { masterEngine.pause() }", in: code), 6, """
+            The pause-before-mutate site count changed (expected 6: source-node attach, \
             clip-player attach, warpable-player attach, space-bus attach, space-player \
-            attach). This is the premise that makes \
+            attach, audio-unit attach). This is the premise that makes \
             `restartOrDegrade` load-bearing. If a site was added or removed, update this \
             count and make sure any NEW site's restart goes through the helper. These two \
             counts differ by ONE: a new pause-before-mutate site raises BOTH; a helper \
