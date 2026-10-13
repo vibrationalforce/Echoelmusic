@@ -22,8 +22,8 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
 
 | Ebene | Stand | Beleg |
 |---|---|---|
-| **Ausgeliefert (TestFlight)** | **v10.79.490 · Build 2615** · Commit `4919d7001` · 2026-10-04 08:23 UTC | TestFlight-Lauf #2615 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 37188777769, Conclusion `success`; ob der Build in App Store Connect sichtbar ist, bestätigt der Founder |
-| **In `main`, noch in keinem Build** | `73deb73ba` — F1–F6b (eine Gestaltungssprache) und A3a (Raum reist mit dem Stück), siehe 1b | Auto-Merge hat `main` dorthin bewegt ⇒ Xcode Compile Check + Build for Testing grün |
+| **Ausgeliefert (TestFlight)** | **v10.79.497 · Build 2622** · Commit `1b2a76c2f` · 2026-10-12 18:34 UTC | TestFlight-Lauf #2622 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 38291799199, Conclusion `success`; ob der Build in App Store Connect verarbeitet wurde, sieht nur der Founder |
+| **Auf dem Branch, noch in keinem Build** | `777824234` — GMMW R2 (erster Take ins leere Stück) · VV-4e (Blitzschutz begrenzt die Farbe jeder Schicht) · ein Wellenform-Fix, siehe 1b | Xcode Compile Check grün (2026-10-13); `main` folgt, sobald auch Build for Testing grün ist |
 | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
 
 Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
@@ -42,24 +42,24 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 
 | Fähigkeit | Nutzerweg | Build | Gerät |
 |---|---|---|---|
-| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Project**; quer eine Leiste links | 2614 | offen |
+| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Piece** (fünftes Wort „Piece“ seit H18, 2026-10-07; davor „Project“); quer eine Leiste links | 2614 (2620: Piece) | offen |
+| Siri / Kurzbefehle: Start · Stop · „Keep last loop“ · Spurpegel · Teil kopieren · Teil behalten · Undo — jeder Befehl mit Bericht und eigenem Undo | Kurzbefehle-App oder Siri → `EchoelAppIntents`; Bericht + Undo im `AgentReportBanner` | 2622 | offen |
 | Projekt-Menü | E-Logo oben links → **Open · Save │ Live Colabo · Learn │ Guide** | 2614 | offen |
 | EIN Transport | Kopf: **Play / Stop / Record**; im Instrument hält „Pause“ auf der Platte, „Play“ setzt fort | 2614 | offen |
-| Song-Einstellungen | **Project** → Tonart, Stimmung, Tempo-Modus | 2614 | offen |
+| Song-Einstellungen | **Piece** → Tonart, Stimmung, Tempo-Modus | 2614 | offen |
 | Undo/Redo der Stück-Bearbeitung | Kopf (`SongHistoryRow`) · mit Tastatur ⌘Z / ⇧⌘Z | 2613 | offen |
 | Startet auf dem Stück, Visual als Karte | frische Installation → Arrange | 2609 | offen |
 
-### 1b. In `main`, aber in KEINEM ausgelieferten Build (kommt mit dem nächsten Bump)
+### 1b. Auf dem Branch, aber in KEINEM ausgelieferten Build (kommt mit dem nächsten Bump)
+
+⭐ F1–F6b (eine Gestaltungssprache) und A3a (Raum reist mit dem Stück) standen hier und sind mit
+**Build 2622** (2026-10-12) ausgeliefert — Gerät weiterhin offen. Was seit 2622 dazukam:
 
 | Fähigkeit | Was sich ändert | Commit | Gerät |
 |---|---|---|---|
-| F1 ein Werkzeug-Knopf | `EchoelToolButtonStyle` ersetzt drei Kopien | `ef49372bf` | offen |
-| F2a/F2b Abstände und Bewegung | eine Abstands-Skala `spaceXS…spaceXL`, zwei Bewegungs-Tempi | `704e0acfa` · `29ec3b6bc` | offen |
-| F3 „spielt“ | grünes Wort im starken Rahmen, nie eine grüne Fläche | `8613d84d6` · `a74b17f1a` | offen |
-| F4a/F4b Schalter und Auswahl | ein eingeschalteter Schalter ist die invertierte Monochrom-Kachel; jede gewählte Kachel zeichnet ihre Kante | `a0a53ba98` · `39d77bf3b` | offen |
-| F5a/F5b Haptik | das Wertfeld tickt an Standard und Rand, OK bestätigt; das eine Play/Stop ist spürbar | `a585fa507` · `75645cff9` | offen |
-| F6a/F6b Mixer-Streifen und Live-Rot | ein Mix-Streifen hat keine eigene Fläche; Broadcast „live“ trägt das Aufnahme-Rot | `360e6be0d` · `d4e7d1b9d` | offen |
-| A3a Raum reist mit dem Stück | Sichern schreibt die Raumszene (Spur-Positionen + Raum) in das Stück; Öffnen stellt sie NACH den Spuren wieder her; ältere Stücke bekommen die Standard-Positionen | `73deb73ba` | offen |
+| GMMW R2 — der erste Take ins LEERE Stück | Record ist auf einem leeren Stück nicht mehr gesperrt („Add a part … first“): Spur scharfschalten → Record lässt die Uhr laufen, Stop macht den Take zum ersten Teil; Play allein bleibt über dem leeren Stück gedimmt | `777824234` | offen |
+| VV-4e Blitzschutz begrenzt die FARBE, die eine Schicht über jedes Feld legt | der Begrenzer rechnet mit der Farbdifferenz zur darunterliegenden Fläche, nicht nur mit der Schicht | `616b68ce9` · `969c271fb` | offen |
+| Wellenform einer kurzen Datei | ein kurzer Datei-Read fügt keinen Wellenform-Eimer mitten in der Datei hinzu | `939aaa63f` | offen |
 
 ### 1c. Arrange — das Stück
 
@@ -77,6 +77,8 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 | MIDI-Aufnahme in eine scharfgeschaltete Spur | Kopf **Record** | ≤ 2612 | offen |
 | Export MIDI · Export WAV (ganzes Stück, Echtzeit, ab Takt 1) | Arrange-Reiter „Export“ · „WAV“ → „Share WAV“ | 2613 (WAV) | offen |
 | Foto und Video als Bild-Saat fürs Visual (kein Videoschnitt) | `PhotoSeedCard` · `VideoSeedCard` | ≤ 2612 | offen |
+| Sampler je Spur: ein Sample laden, die Teile der Spur spielen es | Spur antippen → Detail **Device** → `TrackSampleRow` | 2622 | offen |
+| Echoel Grain als Spur-Insert auf Audiospuren (Position · Länge · Dichte · Streuung · Tonhöhe · Breite; eine Änderung klingt ab dem nächsten Teil-Start) | Spur antippen → Detail **Device** → Zeilen „Grain“ (`TrackGrainRows`) | 2622 | offen (G10) |
 
 ### 1d. Mixer · Browse · Instrument
 
@@ -140,6 +142,8 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 
 ### 2c. Maschine läuft, aber kein Regler
 
+⛔ Echoel Grain und der Siri-Bedienagent standen hier bis 2026-10-13 und haben seit GA-10d2 bzw. AI-1/AI-2 eine Tür (Build 2622) — sie stehen jetzt in 1c und 1a.
+
 | Fähigkeit | Stand | Was fehlt |
 |---|---|---|
 | Tonhöhe je einzelnem TEIL (statt je Spur) | je Spur läuft seit #165 | ein neues gespeichertes Feld je Teil |
@@ -149,11 +153,10 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Raum-Render (7 eigene Kerne: VBAP, Ambisonics, `BinauralPanner`, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft. Im Kopfhörer: seit Restructure S3c sitzen AUDIO-Spuren an ihrer Szenen-Position — über Apples HRTF (`AVAudioEnvironmentNode`, `AudioEngine.attachSpaceBus`), NICHT über die 7 Kerne; Schalter „Headphone space“ im Mixer, Default aus, Gerät offen (G6). Die generierten Stimmen bleiben stereo. ⛔ Bis 2026-10-11 stand hier „im Kopfhörer ist nichts räumlich“ — seit S3c falsch (`docs/research/SPATIAL_MIX_RESEARCH.md` §7) | für die 7 Kerne: je ein Aufrufer; für den Kopfhörer: G6 am Gerät |
 | Stream-Key in der Keychain (Broadcast S1) | gebaut, Build 2615 | eine Fläche — und die hängt an S2 (gesperrt, siehe 2a) |
 | `CloudSync`, `BioSpaceMap`, `VisualModulation`, `AudioFeatureExtractor` | reine Kerne, kein Aufrufer | je ein Aufrufer |
-| Echoel Grain (`GrainCloud`, GMMW GA-9) | reiner DSP-Kern: Körner aus einem geladenen Puffer (Position · Länge · Dichte · Streuung · Tonhöhe · Breite), portiert aus der mit dem Mikrofon entfernten Granular-Stufe; Spur-Insert (GA-10a), Vorab-Berechnung `GrainBake` (GA-10b), gespielt auf Audiospuren (GA-10c), Schreiber mit eigenem Muster je Spur + Neuberechnung bei Änderungen (GA-10d1), Zeilen „Grain“ auf der Device-Seite einer Audiospur (GA-10d2) — auf dem Gerät UNBESTÄTIGT (G10); eine Änderung klingt ab dem nächsten Start eines Teils | nicht im Store-Text behaupten, bis G10 bestätigt ist |
 | Onset-Slicer (`SampleSlicer`, GMMW GA-6) | reiner Kern: schneidet ein Sample an seinen Treffern, mit der Onset-Regel der Tempo-Erkennung; kein Aufrufer | GA-7 (Founder-Gate): wo die Schnittpunkte liegen und was ein Schnitt spielt |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
-| EchoelAI-Bedienagent (`EchoelAI/EchoelCommand`, `EchoelCommandExecutor`) | Befehlsschicht + Ausführer gebaut und getestet (Auswahl lesen · Spurpegel · Teil kopieren · eigenes Undo); **Aufrufer seit AI-1/AI-2 (2026-10-09):** Siri / Kurzbefehle (`EchoelAppIntents`) → `EchoelAgentDesk`, Bericht + Undo im `AgentReportBanner`; Gerät offen | ein Sprachmodell als Planer (AI-5, Founder-Gate GM10); weiterhin ohne Aufrufer: `ParameterToolCore` |
+| `ParameterToolCore` (EchoelAI) | reiner Kern, kein Aufrufer — der Bedienagent selbst (`EchoelCommandExecutor`) hat seit AI-1/AI-2 seine Tür über Siri und steht in 1a | AI-5: ein Sprachmodell als Planer (Founder-Gate GM10) |
 
 ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
 `showControl`, `avObjects`, `performerTracking`, `liveCollab`, `headTracking`, `echoelAI`). Hinter
