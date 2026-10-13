@@ -13,7 +13,9 @@
 // 2. END-TO-END BEHAVIOUR: a take the full 8-slot clip grid cannot hold is COUNTED
 //    (`droppedTakes`), not skipped silently, and the next arm clears the count.
 // 3. END-TO-END BEHAVIOUR (pure): the door's state order (recording > stop first > arm first >
-//    song cannot play > ready) and who may be armed (a rack MIDI track only).
+//    foreign arm > grid full > first take | ready) and who may be armed (a rack MIDI track only).
+//    GMMW R2 (2026-10-13): "song cannot play" stopped being a block — an armed track over a piece
+//    Play cannot start is the FIRST take (`TheFirstTakeRunsTheClockTests`).
 // 4. SOURCE-TEXT SCAN: the Workstation mounts the button with its ONE start from the top and its
 //    own Stop, mounts the arm switch per open track, and still names no recorder; the door file is
 //    the only production caller of `.toggleArm(` and of the recorder's `arm()`; the app hands the
@@ -210,7 +212,8 @@ final class TheMIDITakeIsRecordedFromTheWorkstationTests: XCTestCase {
                        "an arm the door cannot see would be recorded unseen — it blocks, by name")
         XCTAssertEqual(state(false, false, one, 0, true), .gridFull,
                        "no room for the take is said BEFORE the performance")
-        XCTAssertEqual(state(false, false, one, 8, false), .songCannotPlay)
+        XCTAssertEqual(state(false, false, one, 8, false), .firstTake,
+                       "GMMW R2: an unplayable piece with an armed track offers the FIRST take, not a block")
         XCTAssertEqual(state(false, false, one, 8, true), .ready)
         XCTAssertTrue(RecordTake.caption(.ready, gridSize: 8).contains("instead of the parts under it"),
                       "a take plays over what the track had there — the caption says so")

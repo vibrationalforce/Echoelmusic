@@ -15,8 +15,11 @@
 //     otherwise land notes past the song — `RecordController.followSongEnd`) or at Stop.
 //   · A take is a new part OVER the track from bar 1: where it overlaps an older part, the take is
 //     what plays (`TimelineScheduling.activeRegion`); Undo brings the older one back. Said on screen.
-//   · A song that cannot play yet (no part with content) cannot be recorded into: there is no clock
-//     to record against. Said on screen, not hidden.
+//   · ⛔ R1 said here: "a song that cannot play yet cannot be recorded into — there is no clock to
+//     record against". GMMW R2 (founder 2026-10-13) REVERSED it: the first human take lands in an
+//     EMPTY piece. Record arms, then starts, and the player runs the clock for an armed take
+//     (`TimelineRegionPlayer.takeArmed`) where Play alone would refuse; the take ends at Stop and
+//     becomes the piece's first part. Play stays dimmed over the empty piece — it has nothing to play.
 //   · While recording, the keyboard sounds its live voice (mono); the take then plays back on the
 //     track's own sound.
 //
@@ -74,12 +77,13 @@ struct RecordTakeButton: View {
             switch state {
             case .recording:
                 stopSong()
-            case .ready:
+            case .ready, .firstTake:
+                // Arm BEFORE the start: the player admits an empty piece only for an armed take.
                 recorder.arm()
                 // A refused start (the player's own guard) must not leave an armed recorder
                 // that the NEXT start from any surface would record into.
                 if !startSong() { recorder.cancel() }
-            case .stopFirst, .armFirst, .foreignArm, .gridFull, .songCannotPlay:
+            case .stopFirst, .armFirst, .foreignArm, .gridFull:
                 break
             }
         } label: {
@@ -90,24 +94,24 @@ struct RecordTakeButton: View {
                 Image(systemName: recording ? "stop.circle.fill" : "record.circle")
                     .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(recording ? EchoelTheme.onPrimary
-                                               : (state == .ready ? EchoelTheme.recording : EchoelTheme.dim))
+                                               : (state.offersATake ? EchoelTheme.recording : EchoelTheme.dim))
                 if !compact {
                     Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
                         .font(EchoelTheme.font(13, .semibold))
                 }
             }
             .foregroundStyle(recording ? EchoelTheme.onPrimary
-                                       : (state == .ready ? EchoelTheme.text : EchoelTheme.dim))
+                                       : (state.offersATake ? EchoelTheme.text : EchoelTheme.dim))
             .padding(.horizontal, compact ? 0 : 14)
             .frame(minWidth: 44, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                 .fill(recording ? EchoelTheme.recording : EchoelTheme.fill))
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .strokeBorder(state == .ready ? EchoelTheme.border : Color.clear, lineWidth: 1))
+                .strokeBorder(state.offersATake ? EchoelTheme.border : Color.clear, lineWidth: 1))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(state != .ready && state != .recording)
+        .disabled(!state.offersATake && state != .recording)
         .accessibilityLabel(recording ? String(localized: "Stop recording") : String(localized: "Record"))
         .accessibilityHint(caption)
     }
@@ -137,7 +141,7 @@ struct RecordTakeNote: View {
         let state = RecordTake.current(recorder: recorder, timeline: timeline, clipStore: clipStore,
                                        transport: transport, playing: playing, startable: startable,
                                        voiceCapacity: voiceCapacity)
-        let reason = RecordTake.shownReason(state, startable: startable, gridSize: clipStore.slots.count)
+        let reason = RecordTake.shownReason(state, gridSize: clipStore.slots.count)
         let dropped = recorder.droppedTakes
         if reason != nil || dropped > 0 {
             VStack(alignment: .leading, spacing: 2) {
@@ -196,7 +200,12 @@ struct TrackArmToggle: View {
 enum RecordTake {
 
     enum State: Equatable, Sendable {
-        case recording, ready, stopFirst, armFirst, foreignArm(String), gridFull, songCannotPlay
+        case recording, ready, stopFirst, armFirst, foreignArm(String), gridFull
+        /// GMMW R2: an armed track over a piece Play cannot start — the take becomes its first part.
+        case firstTake
+
+        /// The two states in which a tap arms and starts: the button is lit and enabled for both.
+        var offersATake: Bool { self == .ready || self == .firstTake }
     }
 
     /// What Record would capture: the armed lanes this door can arm, and the NAMES of armed
@@ -221,8 +230,9 @@ enum RecordTake {
 
     /// Recording wins; then a running transport must stop first (a take starts at bar 1, and the
     /// recorder counts from Play); then a track must be armed; then no track the door cannot arm
-    /// may be armed (it would be recorded unseen); then the grid needs a slot per take; then the
-    /// song must be able to run.
+    /// may be armed (it would be recorded unseen); then the grid needs a slot per take. A piece
+    /// Play cannot start is the FIRST take (GMMW R2), not a block: the player runs the clock for
+    /// an armed take, and `startable` only picks the word for it.
     nonisolated static func state(recording: Bool, running: Bool, plan: Plan,
                                   freeSlots: Int, startable: Bool) -> State {
         if recording { return .recording }
@@ -230,7 +240,7 @@ enum RecordTake {
         if plan.armable.isEmpty && plan.foreign.isEmpty { return .armFirst }
         if let name = plan.foreign.first { return .foreignArm(name) }
         if freeSlots < plan.armable.count { return .gridFull }
-        if !startable { return .songCannotPlay }
+        if !startable { return .firstTake }
         return .ready
     }
 
@@ -250,22 +260,24 @@ enum RecordTake {
             return "\"\(name)\"" + String(localized: " is armed but cannot record here. Open it and switch Arm off first.")
         case .gridFull:
             return String(localized: "The part grid is full (") + "\(gridSize)" + String(localized: " parts). Remove a part to make room for the recording.")
-        case .songCannotPlay:
-            return String(localized: "Add a part with notes or audio first. Recording runs against the playing piece.")
+        case .firstTake:
+            return String(localized: "Runs the transport from bar 1 over the empty piece and records the armed tracks where you play. ")
+                + String(localized: "Stop ends the take; it becomes the piece's first part.")
         }
     }
 
     /// Design slice C — the caption the bar DRAWS under its row, or nil. Only a block the user can
-    /// lift from the Workstation is drawn, and only while the piece can start: an unplayable
-    /// piece is said once, by the bar's own line ("Nothing to play yet."), not twice. `.ready`,
-    /// `.recording` and `.stopFirst` draw nothing — the button's word and the Stop beside it say
-    /// that — and every caption stays the button's VoiceOver hint either way.
-    nonisolated static func shownReason(_ state: State, startable: Bool, gridSize: Int) -> String? {
-        guard startable else { return nil }
+    /// lift from the Workstation is drawn. `.ready`, `.firstTake`, `.recording` and `.stopFirst`
+    /// draw nothing — the button's word and the Stop beside it say that — and every caption stays
+    /// the button's VoiceOver hint either way. ⛔ Until GMMW R2 this took `startable:` and drew
+    /// nothing over an unplayable piece ("said once, by the bar's own line"). The bar's line says
+    /// what PLAY lacks; since R2 an empty piece is recordable, so what stands between the user and
+    /// the FIRST take — arm a track — is a different fact and is said.
+    nonisolated static func shownReason(_ state: State, gridSize: Int) -> String? {
         switch state {
         case .armFirst, .foreignArm, .gridFull:
             return caption(state, gridSize: gridSize)
-        case .recording, .ready, .stopFirst, .songCannotPlay:
+        case .recording, .ready, .firstTake, .stopFirst:
             return nil
         }
     }

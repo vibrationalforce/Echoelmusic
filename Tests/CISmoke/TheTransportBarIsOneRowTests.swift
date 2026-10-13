@@ -78,26 +78,26 @@ final class TheTransportBarIsOneRowTests: XCTestCase {
 
     func testOnlyABlockTheUserCanLiftIsDrawnUnderTheRow() {
         let grid = 8
-        XCTAssertEqual(RecordTake.shownReason(.armFirst, startable: true, gridSize: grid),
+        XCTAssertEqual(RecordTake.shownReason(.armFirst, gridSize: grid),
                        RecordTake.caption(.armFirst, gridSize: grid),
                        "nothing armed: the row says how to arm — the button alone cannot")
-        XCTAssertEqual(RecordTake.shownReason(.gridFull, startable: true, gridSize: grid),
+        XCTAssertEqual(RecordTake.shownReason(.gridFull, gridSize: grid),
                        RecordTake.caption(.gridFull, gridSize: grid),
                        "a full grid is said BEFORE the performance, not after (R1 review MED-4)")
-        let stale = RecordTake.shownReason(.foreignArm("Breath"), startable: true, gridSize: grid)
+        let stale = RecordTake.shownReason(.foreignArm("Breath"), gridSize: grid)
         XCTAssertTrue(stale?.contains("\"Breath\"") == true,
                       "a stale arm blocks Record by NAME (R1 review MED-5) — it must stay visible")
-        for quiet in [RecordTake.State.ready, .recording, .stopFirst, .songCannotPlay] {
-            XCTAssertNil(RecordTake.shownReason(quiet, startable: true, gridSize: grid), """
-                `\(quiet)` draws a sentence under the row again. Ready and recording are said by \
-                the button's word, "stop first" by the Stop beside it, "nothing to play" by the \
-                bar's own line — a second sentence for one fact is the slop slice C removed.
+        for quiet in [RecordTake.State.ready, .firstTake, .recording, .stopFirst] {
+            XCTAssertNil(RecordTake.shownReason(quiet, gridSize: grid), """
+                `\(quiet)` draws a sentence under the row again. Ready, the first take and recording \
+                are said by the button's word, "stop first" by the Stop beside it — a second \
+                sentence for one fact is the slop slice C removed.
                 """)
         }
-        for state in [RecordTake.State.armFirst, .foreignArm("Breath"), .gridFull, .ready] {
-            XCTAssertNil(RecordTake.shownReason(state, startable: false, gridSize: grid),
-                         "an unplayable piece is said ONCE, by the bar's own line — not again by the door")
-        }
+        // ⛔ Until GMMW R2 `shownReason` took `startable:` and returned nil for every state over an
+        // unplayable piece ("said once, by the bar's own line"). Since R2 an empty piece is
+        // recordable, so the block that stands between the user and the FIRST take is a different
+        // fact from "nothing to play" and is said — the parameter is gone, not defaulted.
         // COUNTERWEIGHT: the sentence did not vanish, it is the hint.
         XCTAssertFalse(RecordTake.caption(.ready, gridSize: grid).isEmpty,
                        "the ready sentence still exists — it is the Record button's VoiceOver hint")

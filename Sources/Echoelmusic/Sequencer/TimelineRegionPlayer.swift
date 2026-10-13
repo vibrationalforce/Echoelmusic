@@ -263,6 +263,17 @@ public final class TimelineRegionPlayer {
     /// Primed on play, driven per transport window, released on every stop path.
     @ObservationIgnored public var audioLanes: AudioLanePlayer?
 
+    /// GMMW R2 (founder 2026-10-13, the first human take): whether a take is ARMED right now —
+    /// `RecordController.isRecording`, handed in by the app the way `followSongEnd` hands the
+    /// song end the other way. `play` runs the clock for an armed take over a piece that `canPlay`
+    /// refuses: a fresh install is two lanes and no part, and the first part IS the take, so a
+    /// Record that waited for playable content could never record the first one (the recorder
+    /// counts steps from Play — there is no take without a running transport). nil ⇒ nothing
+    /// admits (every test rig, and the app before `wire`). The PLAY control stays honest: it asks
+    /// `canPlay` alone and dims over an empty piece; only Record, which arms BEFORE it starts
+    /// (`RecordTakeButton`), reaches this clause true — and a refused start cancels the arm.
+    @ObservationIgnored public var takeArmed: (() -> Bool)?
+
     // MARK: - Clip-Launch (P0 performance core — PLAN_TIMELINE_AUTOMATION_PERFORMANCE)
 
     /// The pure launch layer OVER the arrangement (Ableton lane-override): a lane
@@ -681,8 +692,12 @@ public final class TimelineRegionPlayer {
         // lines later; the button asked with `preflightTempo`, which mirrors it through the
         // one relay (see that property). `audioLanes` is nil until the app wires it, and a
         // nil resolver refusing every audio region is correct — unwired means unplayable.
+        // GMMW R2: OR an armed take — the one other reason the clock may run over a piece with
+        // nothing to execute (see `takeArmed`). An empty piece has no loop length, so the
+        // transport runs until Stop and the take ends there (R1's "no song end" path).
         guard Self.canPlay(document, clips: clips.filledClips, bpm: pattern.tempo,
                            resolveAudio: { self.audioLanes?.resolvedURL(forClipID: $0) })
+              || takeArmed?() == true
         else { return }
         self.doc = document
         self.clips = clips

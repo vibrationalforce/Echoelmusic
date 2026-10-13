@@ -7,8 +7,9 @@
 // THE THREE CLAIMS:
 // 1. SOURCE: `RecordTakeButton` fills with `EchoelTheme.recording` while recording, and no longer
 //    with `EchoelTheme.warning` (amber is the "needs attention" colour, not "recording").
-// 2. SOURCE: the glyph is red while ready (`state == .ready ? EchoelTheme.recording`), dim while
-//    blocked, and the black label colour while recording (it sits on the red fill).
+// 2. SOURCE: the glyph is red while a take is offered (`state.offersATake ? EchoelTheme.recording`
+//    — ready, and since GMMW R2 the first take over an empty piece), dim while blocked, and the
+//    black label colour while recording (it sits on the red fill).
 // 3. ARITHMETIC on numbers PARSED from `EchoelTheme.swift` (never hand-copied, #416): black on
 //    the `recording` red clears 4.5:1, so the word "Stop recording" stays legible on its fill.
 //
@@ -39,9 +40,10 @@ final class TheRecordButtonWearsTheRecordingRedTests: XCTestCase {
         // Whitespace is collapsed so a re-indent cannot red this claim (#364).
         let button = try buttonBody().split(whereSeparator: \.isWhitespace).joined(separator: " ")
         XCTAssertTrue(button.contains(
-            ".foregroundStyle(recording ? EchoelTheme.onPrimary : (state == .ready ? EchoelTheme.recording : EchoelTheme.dim))"), """
-            the Record glyph is no longer red while ready (black on the red fill while recording, \
-            dim while blocked). A ready Record that looks like every other icon is the H14 confusion.
+            ".foregroundStyle(recording ? EchoelTheme.onPrimary : (state.offersATake ? EchoelTheme.recording : EchoelTheme.dim))"), """
+            the Record glyph is no longer red while a take is offered (black on the red fill while \
+            recording, dim while blocked). A ready Record that looks like every other icon is the \
+            H14 confusion. GMMW R2: `offersATake` is ready OR the first take — one predicate (#416).
             """)
     }
 

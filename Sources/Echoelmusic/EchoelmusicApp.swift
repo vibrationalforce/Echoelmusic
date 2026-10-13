@@ -1661,6 +1661,9 @@ struct EchoelmusicApp: App {
                                       audioRecorder: nil)
                 // Phase 3 / Recording R1: a take ends where the song wraps.
                 recordController.followSongEnd { [weak timelinePlayer] in timelinePlayer?.songEndTick }
+                // GMMW R2: the first take has no song to play against — an armed take is the other
+                // reason the clock may run (`TimelineRegionPlayer.takeArmed`; Record arms first).
+                timelinePlayer.takeArmed = { [weak recordController] in recordController?.isRecording == true }
                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
                     recordController?.recordNoteOn(pitch: note, velocity: velocity)
                 }
