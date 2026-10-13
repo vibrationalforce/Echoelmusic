@@ -498,7 +498,7 @@ Bulk-deletion commits cited below:
   - `VBAPPanner`, `AmbisonicsEncode`, `BinauralPanner`, `EchoelSpaceReverb`, `BioPhaser`, `SpatialAutomationMapping` — zero callers.
   - `ImmersiveStageView` — doorless on purpose.
 - **Scope / Class:** YES / **CURRENT** (control half) + **REUSE** (render half)
-- **Next safe slice:** binaural monitoring of the scene on headphones via `BinauralPanner`.
+- **Next safe slice:** ⛔ none — binaural monitoring SHIPS as Apple HRTF via `AVAudioEnvironmentNode` (Restructure S3c, `AudioEngine.swift`, default off, device item G6 open). `BinauralPanner` stays a pure core for a non-Apple render path (EchoelRender); building it as monitoring would be a second truth.
 
 ### H3 · AirPods head tracking
 - **Impl:** `HeadTrackingManager` (`CMHeadphoneMotionManager`), 2025-11 → 03-03. Zero hits today.
