@@ -1027,3 +1027,19 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - Lernmodus: Grok Deep Audit [8/17] · ChatGPT GMMW Audit [4/5] · ChatGPT Design-Zielbild [8/8, 3 Lücken]
   · unbekannt „optimiert" [6/8, Mockups REJECT]. Neue Aufgaben #77 (R2 erster Take), #78 (Notenfarbe).
 - Offen: die 22 Testnamen aus ChatGPTs xcresult (Artefakt nicht ziehbar, Blob 403); GM18–GM22.
+
+## 2026-10-13 — „bis zum letzten TestFlight": R2 erster Take · Claims folgen dem Produktgesetz · Register (Fable 5.1)
+
+- **Mandat (Founder):** „Du entscheidest alles aus meiner Perspektive und regelst alles bis zum letzten TestFlight."
+- **R2 (`777824234`):** `TimelineRegionPlayer.takeArmed` (App: `recordController.isRecording`), `play`-Guard `canPlay || takeArmed`,
+  `RecordTake.State.firstTake` + `offersATake`, `shownReason` ohne `startable`-Gate. Neuer Wächter `TheFirstTakeRunsTheClockTests`
+  (zwei Laufzeit-Ansprüche, ein End-to-End-Take auf echtem `RecordController`, zwei Gegengewichte, Verdrahtungs-Scans); drei Wächter
+  neu verankert (Take-Tür-Reihenfolge, Ein-Zeilen-Leiste, Record-Glyph). Xcode Compile Check ✅ (38376558056); Build for Testing lief
+  beim Schreiben dieser Zeile.
+- **Claims (`c0479032b`):** CLAIMS.md ✅ +5 (Mixer-Bühne · Sampler je Spur · Grain-Insert · Stück-WAV · Siri), §1b-Begründung
+  „Produktgrenze" → Produktgesetz (Pin „Echoel lädt KEINE fremden Plugins" bleibt), §5 ohne „Sampler-Instrument"; claims.html claim-5;
+  faq.html fünf Antworten (EchoelMix Live, Sampler je Spur, Hosting/Video/RTMP ohne „second product" — „Video is not part of Echoelmusic"
+  und „never built" bleiben, die Wächter pinnen sie).
+- **Register (`0c178e98c`):** FEATURE_STATUS §0 = Build 2622 (`1b2a76c2f`), fünftes Wort „Piece", Siri/Sampler/Grain nach §1, §1b = R2 ·
+  VV-4e · Wellenform-Fix; PLAN_GMMW A5 die 13 Archiv-Posten mit Klasse und Phase; PLAN_RESTRUCTURE Löschliste 15 → 10.
+- **Entscheidung geloggt:** R2 in `decisions.csv` + `memory/decisions.md` (Review 2026-11-12).

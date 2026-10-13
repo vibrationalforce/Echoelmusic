@@ -5205,3 +5205,22 @@ Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
   Wiedervorlage. Die Engineering-Hälften (#1302 Eingangsgraph, #299 Refcount, Black-Screen-Kette)
   stehen in `CLAUDE.md` und bleiben unberührt. Befund des GMMW-Deep-Audits (Deletions-Team).
 - **Measure:** `python3 -c "import csv;print([i for i,r in enumerate(csv.reader(open('decisions.csv')),1) if len(r)==6 and r[5]=='superseded-2026-09-24-product-law'])"` → `[202, 298, 299, 302, 310]`.
+
+### 2026-10-13 — GMMW R2: der erste Take ins LEERE Stück
+
+- **Decision:** Ein SCHARFER TAKE ist der zweite Grund, aus dem die Uhr der Timeline laufen darf.
+  `TimelineRegionPlayer.play` lässt `canPlay || takeArmed` zu; die App reicht dem Spieler
+  `RecordController.isRecording` (Spiegel von `followSongEnd`); die Record-Tür zeigt über einem
+  unspielbaren Stück mit scharfer Spur `.firstTake` und scharfschaltet-und-startet wie `.ready`.
+  Play allein bleibt über dem leeren Stück gedimmt — `canPlay` ist unverändert, EINE Definition.
+- **Why:** R1 sagte „ein Stück, das nicht spielen kann, kann nicht aufgenommen werden — keine Uhr,
+  gegen die man aufnimmt“. Auf einer frischen Installation (zwei Spuren, kein Teil) las Record
+  deshalb „Add a part with notes or audio first“, und der erste Teil konnte nur vom Composer
+  kommen. Der Deep Audit 2026-10-13 nannte das R2. Der Recorder zählt Schritte ab Play, also muss
+  die Uhr laufen; ein leeres Stück hat keine Loop-Länge, der Take läuft bis Stop und wird der
+  erste Teil.
+- **Measure:** `git grep -n "|| takeArmed?() == true" -- Sources` → genau EINE Stelle (der
+  `play`-Guard); `git grep -n "takeArmed" -- Sources/Echoelmusic/Studio/WorkstationView.swift` → 0.
+  Wächter `Tests/CISmoke/TheFirstTakeRunsTheClockTests.swift`. Commit `777824234`.
+- **Review:** 2026-11-12 — Gerät: frisches Stück → Spur scharf → Record → spielen → Stop → erster
+  Teil ab Takt 1; Play danach hell.
