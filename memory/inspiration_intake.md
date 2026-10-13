@@ -1265,3 +1265,12 @@ Belegpflicht und „frag statt rate“ liefern bei Mistral fast fehlerfreie Erge
 war nur die Branch-Anlage (Connector kennt keinen SHA) — die übernimmt jetzt Claude Code.
 
 **Nachtrag 2026-10-13:** Die Quelle des Statusberichts mit xcresult-Zugriff ist ChatGPT (Founder). Ihre Folgemeldung „Build 2622 hochgeladen, processingState=VALID“ deckt sich mit der eigenen Messung (testflight.yml 38291799199 grün) — ihre frühere Aussage „kein TestFlight-Upload belegt“ hat sie damit selbst korrigiert. Für ChatGPT als CI-/Artefakt-Leser also: [verified 4/5] über beide Meldungen.
+
+## 2026-10-13 — Grok Auftrag 10b (ohne Connector) — [verified 6/6]
+
+Der Connector fiel aus; der Auftrag lief mit wörtlich eingebettetem Code und reiner Chat-Antwort —
+und das Ergebnis war das beste von Grok bisher: eine vollständige, kompilierfähig aussehende
+Testdatei, die nur die gezeigten APIs nutzt, plus eine Rechentabelle, die sich Fall für Fall
+nachrechnen ließ. **Lehre:** für Grok ist „Code im Prompt, Antwort im Chat“ verlässlicher als der
+Connector. Übernommen als `TheFieldUnderTheLayerCannotTurnAColourIntoARedFlashTests` — Anspruch A als
+`XCTExpectFailure`, damit das blockierende Bündel heute ehrlich bleibt und bei der Reparatur rot wird.
