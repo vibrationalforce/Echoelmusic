@@ -1,4 +1,4 @@
-build: v10.79.498 — GMMW: der erste Take ins leere Stück, Blitzschutz begrenzt jede Schicht, Wahrheit nach außen
+build: v10.79.499 — Notenraster in Tonhöhenfarbe, Fluid-Kern F1, zwei Wächter breiter (letzter Build des Auftrags)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,35 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.499) ───────────────────────────────
+
+  ⭐ DER LETZTE BUILD DIESES AUFTRAGS („… regelst alles bis zum letzten TestFlight").
+  Acht Commits an `Sources/` und `Tests/` seit 10.79.498. Gebaut wird `1e7c64aec` — Xcode Compile Check UND Build
+  for Testing grün. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: DAS NOTENRASTER TRÄGT DIE FARBE DER TONHÖHE ──
+  · Arrange → einen MIDI-Part antippen → Detail „Notes": jede Note hat jetzt die Farbe ihrer
+    Tonhöhe, nach derselben Regel wie die Pads und das Bild. Die Lautstärke bleibt die Tiefe
+    der Farbe: leise ist dunkler, nie durchsichtig; eine gewählte Note bleibt der helle Block
+    mit Ring.
+  · Stellst du A4 um (Piece-Bühne, das eine Kammerton-Feld), verschieben Raster, Pads und Bild
+    ihren Farbton gemeinsam.
+
+  ── POSTEN 2: VORARBEIT, AM GERÄT NICHT SICHTBAR ──
+  · Fluid F1: der Rechenkern für eine gestörte Wasseroberfläche, mit begrenzter Energie. Er
+    hat noch keinen Shader und keine Tür.
+  · Vier Quelltext-Kommentare sagen jetzt, was der Code tut, und zwei Wächter sind breiter:
+    alle sieben Raum-Kerne bleiben erhalten (samt zwei Dateien, die nur sie benutzen), und das
+    Menü darf keinen schnellen Zustand aus Taktuhr, Tempo-Gleiten oder OSC-Eingang lesen
+    (samt einer Prüfer-Korrektur an genau diesem Wächter).
+  · Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── WAS DU PRÜFEN KANNST (1 neue Bitte, gedruckt mit
+     python3 scripts/founder-verify.py --since 278d7c807) ──
+  · Arrange → MIDI-Part → Notes: hat jede Zeile EINEN Farbton (C mintgrün, F♯ rosa, A lachs)?
+    Dann auf der Piece-Bühne A4 auf 432 stellen: wandern die Blöcke im Farbton mit den Pads
+    und dem Bild? Eine leise Note ist dunkler, nie blass.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.498) ───────────────────────────────
 
