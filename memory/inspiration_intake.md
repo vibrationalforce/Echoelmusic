@@ -1263,3 +1263,5 @@ eine (UI-Leser von `lastSentTimestamp`) konnte die Quelle aus ihrem Datei-Aussch
 beantworten und hat das ehrlich als offen markiert statt zu raten. **Lehre:** enge Aufträge mit
 Belegpflicht und „frag statt rate“ liefern bei Mistral fast fehlerfreie Ergebnisse; der Engpass
 war nur die Branch-Anlage (Connector kennt keinen SHA) — die übernimmt jetzt Claude Code.
+
+**Nachtrag 2026-10-13:** Die Quelle des Statusberichts mit xcresult-Zugriff ist ChatGPT (Founder). Ihre Folgemeldung „Build 2622 hochgeladen, processingState=VALID“ deckt sich mit der eigenen Messung (testflight.yml 38291799199 grün) — ihre frühere Aussage „kein TestFlight-Upload belegt“ hat sie damit selbst korrigiert. Für ChatGPT als CI-/Artefakt-Leser also: [verified 4/5] über beide Meldungen.
