@@ -280,12 +280,29 @@ final class TheSelectedPartsNotesAreEditedThroughOneWriterTests: XCTestCase {
         // moved it to 11: the velocity lane's stroke. Audit A11Y-1 (`TheNoteGridEditsByVoiceOverTests`)
         // moved it to 14: VoiceOver's add, nudge and stretch — the same pure ops as the tap and the
         // drag, each one commit, so they are counted here rather than routed around the pin.
-        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 14, """
+        // Production N4 (`TheLegatoStretchesToTheNextNoteTests`) moved it to 15: Legato.
+        XCTAssertEqual(editor.components(separatedBy: "timeline.setClipNotes(").count - 1, 15, """
             create, delete, move, stretch, transpose, quantize, duplicate, velocity, fit to key, \
-            step in key, velocity stroke, VoiceOver add, VoiceOver nudge, VoiceOver stretch — \
-            each one commit through the one writer
+            step in key, velocity stroke, VoiceOver add, VoiceOver nudge, VoiceOver stretch, \
+            legato — each one commit through the one writer
             """)
-        for banned in ["updateMelody", "PianoRollModel", "pianoRoll", "currentTick", "player.",
+        // ⛔ `PianoRollModel`, `pianoRoll` and `player.` stood in the banned list below as bare
+        // words. The colour slice (`f60fda649`) needed ONE cold read of the roll model and N1 ONE
+        // audition call on the player; the bare words made this method red on a correct tree from
+        // `f60fda649` on, invisibly (the #807 window). The LAW was never "never name them" — it is
+        // "read no transport, tempo or playhead" — so each is now pinned to the one use it has.
+        XCTAssertEqual(editor.components(separatedBy: "pianoRoll.").count - 1,
+                       editor.components(separatedBy: "pianoRoll.musicalPitchClassCents").count - 1, """
+            PartNoteEditor reads the roll model for something other than its tone-system cents \
+            (`musicalPitchClassCents`, `@ObservationIgnored`, a cold read for the note colours). \
+            The roll model is the hot publisher — anything else it holds is playback state.
+            """)
+        XCTAssertEqual(editor.components(separatedBy: "player.").count - 1,
+                       editor.components(separatedBy: "player.auditionNote(").count - 1, """
+            PartNoteEditor touches the region player for something other than an audition (N1). \
+            Its isPlaying, playhead and slots are transport state this editor must not read.
+            """)
+        for banned in ["updateMelody", "currentTick",
                        "preflightTempo", "pattern.", "UserDefaults", "@AppStorage", ".sheet(",
                        ".fullScreenCover(", "Slider(", "Stepper("] {
             XCTAssertFalse(editor.contains(banned), """

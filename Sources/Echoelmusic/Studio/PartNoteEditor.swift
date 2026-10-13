@@ -540,6 +540,14 @@ private struct PartNoteGrid: View {
         _ = timeline.setClipNotes(clipID: region.clipID, snapped, clips: clipStore)
     }
 
+    /// Production N4 — Legato through the one writer: one commit, one Undo step.
+    private func legato(_ ids: Set<UUID>, region: TimelineRegion, offset: Int) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let joined = ClipNoteEdit.legato(ids, in: clip.melody?.notes ?? [], offsetTicks: offset,
+                                               lengthTicks: region.lengthTicks) else { return }
+        _ = timeline.setClipNotes(clipID: region.clipID, joined, clips: clipStore)
+    }
+
     private func duplicate(_ ids: Set<UUID>, region: TimelineRegion, offset: Int) {
         guard let clip = clipStore.clip(id: region.clipID),
               let copied = ClipNoteEdit.duplicating(ids, in: clip.melody?.notes ?? [],
@@ -670,6 +678,12 @@ private struct PartNoteGrid: View {
                                                          lengthTicks: length) != nil,
                        label: String(localized: "Copy ") + what + String(localized: " to right after themselves, and select the copies")) {
                     duplicate(targets, region: region, offset: offset)
+                }
+                button("Legato", "arrow.right.to.line",
+                       enabled: can(ClipNoteEdit.legato(targets, in: notes, offsetTicks: offset,
+                                                        lengthTicks: length)),
+                       label: String(localized: "Stretch ") + what + String(localized: " to where the next note starts")) {
+                    legato(targets, region: region, offset: offset)
                 }
             }
             if let mean = ClipNoteEdit.meanVelocity(targets, in: notes) {

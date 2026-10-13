@@ -23748,6 +23748,42 @@
           }
         }
       }
+    },
+    "Legato" : {
+      "comment" : "Note editor tool (production N4): stretch the notes to where the next note starts.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legato"
+          }
+        }
+      }
+    },
+    "Stretch " : {
+      "comment" : "Note editor (production N4): head of the Legato button's spoken label — 'Stretch' + what + tail.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stretch "
+          }
+        }
+      }
+    },
+    " to where the next note starts" : {
+      "comment" : "Note editor (production N4): tail of the Legato button's spoken label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to where the next note starts"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

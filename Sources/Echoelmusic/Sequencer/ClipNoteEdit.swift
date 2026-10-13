@@ -394,6 +394,29 @@ enum ClipNoteEdit {
         return (clipNotes + copies, Set(copies.map(\.id)))
     }
 
+    /// Production N4 — LEGATO: each of `ids` ends where the next note of the part starts (any
+    /// pitch; a note starting at the same tick is a chord partner, not the next note), or at the
+    /// part's end when none follows. Starts and pitches stay; a note outside the part's window is
+    /// left alone, like `quantizing` leaves it. nil when nothing changes, so the button greys out.
+    nonisolated static func legato(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                   lengthTicks: Int) -> [Note]? {
+        guard !ids.isEmpty, lengthTicks > 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let starts = clipNotes.map(\.startTick).filter { $0 >= windowStart && $0 < windowEnd }
+        var changed = false
+        let joined = clipNotes.map { note -> Note in
+            guard ids.contains(note.id), note.startTick >= windowStart, note.startTick < windowEnd
+            else { return note }
+            let next = starts.filter { $0 > note.startTick }.min() ?? windowEnd
+            var stretched = note
+            stretched.lengthTicks = next - note.startTick
+            if stretched.lengthTicks != note.lengthTicks { changed = true }
+            return stretched
+        }
+        return changed ? joined : nil
+    }
+
     // MARK: - M4: operations that know the key
     //
     // The key is `SessionContext.key`, read by the caller and handed in — this file never owns
