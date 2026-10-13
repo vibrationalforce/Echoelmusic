@@ -1016,3 +1016,14 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Lernmodus:** YouTube-Zusammenfassung ACE-Step 1.5 (WATCH, Brücke = Import Audio, `d9c63c6a8`); LLM-Bericht dazu [verified 3/6] — Lizenz ist MIT, Gewichte ohne Lizenz, „uneingeschränkt kommerziell“ steht nicht auf der Seite (`595f07bab`); erweiterter Bericht mit God's Eye View [verified 2/5] → REJECT: Browser-Globus auf Google-3D-Tiles + OpenAI-Sprache (zwei Cloud-Dienste), kein Musik/VJ/OSC-Pfad, Abschnitte 6/7 leere Überschriften (`b3ed51e57`). Installationsschritte nicht ausgeführt.
 - **Geplanter Trigger 06:52 gelöscht** (Bundle baute schon). Branch-Löschung der drei `orchester/*` hier vom Auto-Modus blockiert („Git Destructive“) — Founder oder Berechtigung.
 - **Offen:** ChatGPT Auftrag 13 (23 xcresult-Fehler), Astra 09, OSC-Loopback 8 s, VV-3a, LR5, Geräte-Session Build 2622.
+
+## 2026-10-13 — GMMW Deep Audit gelesen und korrigiert · drei fremde Berichte gemessen (Fable 5.1)
+
+- Workflow `wf_b009e54f-195` (3 Teams × 3 Worker + Lead) fertig: nichts Falsches gelöscht; die
+  Papiere hinken dem Code hinterher. Synthese: `scratchpads/AUDIT_GMMW_DEEP_2026-10-13.md`.
+- Gelandet (nur Doku): README-Root · CLAUDE.md WeatherProvider/Multitrack/MPE/Video/CL-1/Wiring-Wahrheit
+  (H1-Lehre nach Ledger §AM, 149.985 B) · CL-2 · CL-3 (D11 · B5 · J4 · H2) · CL-6 · B2-Wahrheit ·
+  Spatial-Audit-Banner · A2b-Zeilen.
+- Lernmodus: Grok Deep Audit [8/17] · ChatGPT GMMW Audit [4/5] · ChatGPT Design-Zielbild [8/8, 3 Lücken]
+  · unbekannt „optimiert" [6/8, Mockups REJECT]. Neue Aufgaben #77 (R2 erster Take), #78 (Notenfarbe).
+- Offen: die 22 Testnamen aus ChatGPTs xcresult (Artefakt nicht ziehbar, Blob 403); GM17–GM21.
