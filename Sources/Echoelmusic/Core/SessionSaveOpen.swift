@@ -144,6 +144,12 @@ public enum SessionSaveOpen {
     /// fresh, empty song when it was saved before Sessions existed. Returns false (and changes
     /// nothing) for a project `refusal(for:)` would refuse.
     ///
+    /// ⚠️ "The song" here is the TIMELINE and the CLIP GRID, not the song FORM. Saving captures
+    /// `ArrangementStore.arrangement` as `content.songForm`; nothing reads it back —
+    /// `ArrangementStore` has no replace call and keeps whatever it held before the open
+    /// (GMMW deep audit 2026-10-13). Harmless today because no view reads that store; the
+    /// first Scenes surface (WA2) has to add the read-back before it shows a scene list.
+    ///
     /// Order is load-bearing: the timeline player stops FIRST (it holds the previous song's
     /// regions and launch state), the clip grid is installed BEFORE the timeline (so the
     /// timeline never points at clips that are not there yet), and both write through at once.

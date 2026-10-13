@@ -2,11 +2,18 @@
 //  SessionView.swift
 //  Echoelmusic — Studio
 //
-//  THE Session screen — since the 2026-07-06 shell flip this IS the app home:
-//  one screen, one purpose — start, put a finger on the camera, and let the light
-//  breathe with you toward your resonance pace. When hosted as home (presentStudio
-//  wired) the header shows the brand + the one "Studio" door; the legacy modal
-//  mode (presentStudio == nil → X + dismiss) remains for previews/reversibility.
+//  The Session EXPERIMENT screen — one screen, one purpose: start, put a finger on the
+//  camera, and let the light breathe with you toward your resonance pace.
+//
+//  ⛔ NOT THE APP HOME, AND NOTHING PRESENTS IT. The 2026-07-06 shell flip made it the
+//  home for a short while; the home has since moved on, and today the Piece is home
+//  (`WorkspaceView`, founder 2026-09-30). Measured 2026-10-13 — no construction site:
+//      git grep -n "[^A-Za-z]SessionView(" -- Sources | grep -v ': *//'   → 0
+//  It stays compiling on purpose: it carries tested safety laws, and `SessionEngine` is
+//  still attached at launch (its source node renders silence). It is NOT the canonical
+//  Session (`DMMWProject`, WA2) — never door it as that, never delete it without a founder
+//  ask. When hosted (presentStudio wired) the header shows the brand + the one "Studio"
+//  door; presentStudio == nil → X + dismiss (previews).
 //
 //  Render-safety discipline:
 //   • This body reads only LOW-frequency state (isRunning). The live numbers

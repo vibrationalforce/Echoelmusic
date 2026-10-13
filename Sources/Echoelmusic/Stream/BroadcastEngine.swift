@@ -3,11 +3,14 @@
 //  Echoelmusic — Stream
 //
 //  The seam between the broadcast's own logic (state, pump, timestamps — this repo) and the
-//  library that speaks RTMP and runs the encoders (HaishinKit — linked, never rebuilt;
-//  `docs/dev/FOUNDER_PRODUCT_LAW.md`, integrate-don't-rebuild). The publisher only ever talks
-//  to this protocol, so every rule above the wire is testable with a fake engine, and the
-//  RTMP adapter (`RTMPBroadcastEngine.swift`, compiled only when the package is linked) stays
-//  a thin translation.
+//  library that speaks RTMP and runs the encoders (HaishinKit — to be LINKED, never rebuilt;
+//  `docs/dev/FOUNDER_PRODUCT_LAW.md`, integrate-don't-rebuild). ⚠️ NOT LINKED TODAY:
+//  `Package.swift` declares `dependencies: []`, so `canImport(RTMPHaishinKit)` is false in
+//  every build and `BroadcastEngineFactory.make()` returns nil — nothing here reaches a wire.
+//  (⛔ This line said "linked" until the GMMW deep audit of 2026-10-13.) The publisher only
+//  ever talks to this protocol, so every rule above the wire is testable with a fake engine,
+//  and the RTMP adapter (`RTMPBroadcastEngine.swift`, compiled only when the package is
+//  linked) stays a thin translation.
 //
 
 import Foundation
