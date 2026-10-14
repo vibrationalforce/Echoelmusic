@@ -261,8 +261,11 @@ final class HostedInstrumentHost {
     /// Ask `slot`'s loaded unit for its own screen. False at once when the slot holds no loaded
     /// unit (nothing will be called); otherwise `done` runs once, on the main actor, with the
     /// controller or nil (the plugin has no screen of its own).
-    func requestView(forSlot slot: Int,
+    /// `component` is the plugin the caller means: while stopped, a pick does not reach the host,
+    /// so the slot can still hold the PREVIOUS plugin — that one is never shown as the new one.
+    func requestView(forSlot slot: Int, expecting component: DeviceInsert.PluginComponent,
                      done: @escaping @MainActor @Sendable (UIViewController?) -> Void) -> Bool {
+        guard hosted[slot]?.component == component else { return false }
         guard let unit = hosted[slot]?.unit else { return false }
         unit.auAudioUnit.requestViewController { @Sendable controller in
             let box = ControllerBox(controller)
@@ -276,8 +279,11 @@ final class HostedInstrumentHost {
     /// the song to keep; nil when the slot holds no loaded unit, the unit reports none, or the
     /// report is not a property list. Asked on the main actor when the plugin window closes — a
     /// rare, user-paced moment, never per step.
-    func captureState(forSlot slot: Int) -> Data? {
-        guard let unit = hosted[slot]?.unit,
+    /// `component` as in `requestView`: the settings of a different plugin are never kept under
+    /// this one's name.
+    func captureState(forSlot slot: Int, expecting component: DeviceInsert.PluginComponent) -> Data? {
+        guard hosted[slot]?.component == component,
+              let unit = hosted[slot]?.unit,
               let state = unit.auAudioUnit.fullStateForDocument else { return nil }
         do {
             let data = try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)

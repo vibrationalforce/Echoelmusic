@@ -81,6 +81,27 @@ final class TheHostedPluginOpensItsOwnScreenTests: XCTestCase {
         XCTAssertTrue(row.contains("child.removeFromParent()"))
     }
 
+    // MARK: 2b — the screen and the kept settings belong to the plugin the person means
+
+    /// Night sweep 2026-10-14 (B3): while stopped, a pick does not reach the host, so the slot
+    /// can still hold the PREVIOUS plugin. "Open plugin" then showed that one under the new
+    /// name, and closing the window kept its settings under the new plugin.
+    func testTheScreenAndTheSettingsBelongToThePluginTheRowNames() throws {
+        let host = try code(Self.host)
+        let row = try code(Self.row)
+        for head in ["func requestView(forSlot slot: Int, expecting component: DeviceInsert.PluginComponent,",
+                     "func captureState(forSlot slot: Int, expecting component: DeviceInsert.PluginComponent) -> Data? {"] {
+            guard let start = host.range(of: head) else { return XCTFail("ANCHOR MISSING: \(head)") }
+            let body = host[start.upperBound...].prefix(260)
+            XCTAssertTrue(body.contains("hosted[slot]?.component == component"),
+                          "the host answers only for the plugin the caller names: \(head)")
+        }
+        XCTAssertTrue(row.contains("host.requestView(forSlot: slot, expecting: component, done:"))
+        XCTAssertTrue(row.contains("host.captureState(forSlot: slot, expecting: component)"))
+        XCTAssertTrue(row.contains("shownComponent = component"),
+                      "the window remembers which plugin it shows, for the settings kept on close")
+    }
+
     // MARK: 3 — counterweight: only the host loads a unit
 
     func testOnlyTheHostLoadsAUnit() throws {

@@ -36,6 +36,8 @@ struct TrackPluginRow: View {
     @State private var loaded = false
     #if canImport(UIKit)
     @State private var window: PluginWindow?
+    /// The plugin the open window shows — the settings kept on close belong to THIS one.
+    @State private var shownComponent: DeviceInsert.PluginComponent?
     #endif
     /// Why the last "Open plugin" tap opened nothing — cleared by the next pick.
     @State private var openNote: String?
@@ -133,9 +135,10 @@ struct TrackPluginRow: View {
     private func open(_ component: DeviceInsert.PluginComponent) {
         guard let host = HostedInstrumentHost.live,
               let slot = trackSlot(),
-              host.requestView(forSlot: slot, done: { controller in
+              host.requestView(forSlot: slot, expecting: component, done: { controller in
                   if let controller {
                       openNote = nil
+                      shownComponent = component
                       window = PluginWindow(name: component.name, controller: controller)
                   } else {
                       openNote = String(localized: "This plugin has no screen of its own.")
@@ -149,8 +152,10 @@ struct TrackPluginRow: View {
     /// H4b — when the plugin window closes, the song keeps what the person set in it. Nothing is
     /// written when the unit reports no settings; the store refuses an oversize state.
     private func keepSettings() {
-        guard let host = HostedInstrumentHost.live, let slot = trackSlot(),
-              let state = host.captureState(forSlot: slot) else { return }
+        let component = shownComponent
+        shownComponent = nil
+        guard let component, let host = HostedInstrumentHost.live, let slot = trackSlot(),
+              let state = host.captureState(forSlot: slot, expecting: component) else { return }
         timeline.setLanePluginState(laneID, state)
     }
     #endif
