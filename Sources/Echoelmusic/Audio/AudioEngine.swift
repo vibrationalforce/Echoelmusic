@@ -2124,7 +2124,14 @@ public final class AudioEngine {
         var connected = false
         let own = unit.outputFormat(forBus: 0)
         let fallback = destination.outputFormat(forBus: 0)
-        if own.sampleRate > 0, own.channelCount > 0 {
+        if own.sampleRate > 0, own.channelCount > 0, !Self.trackBusTakes(own) {
+            // Night sweep 2026-10-14: a bus-0 shape the track bus was never built for (a
+            // multi-out instrument, an integer or interleaved stream) is refused, not connected —
+            // `finishLoad` then marks the plugin failed and the track keeps its built-in voice.
+            log.audio("Plugin output (\(own.channelCount) ch) is not mono or stereo Float32 — not attached",
+                      level: .warning)
+            masterEngine.detach(unit)
+        } else if own.sampleRate > 0, own.channelCount > 0 {
             masterEngine.connect(unit, to: destination, format: own)
             connected = true
         } else if fallback.sampleRate > 0, fallback.channelCount > 0 {
@@ -2139,6 +2146,12 @@ public final class AudioEngine {
             restartOrDegrade(after: "audio unit attachment")   // #611: never a log-only catch
         }
         return connected
+    }
+
+    /// The one stream shape a hosted unit may hand a track bus: mono or stereo, 32-bit float,
+    /// one buffer per channel — the shape every voice in this graph already uses.
+    nonisolated static func trackBusTakes(_ format: AVAudioFormat) -> Bool {
+        format.channelCount <= 2 && format.commonFormat == .pcmFormatFloat32 && !format.isInterleaved
     }
 
     /// Production H2b — take a hosted unit out of the graph again (`detachSourceNode` shape: a

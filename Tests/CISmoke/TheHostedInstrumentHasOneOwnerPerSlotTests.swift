@@ -208,7 +208,7 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
 
     func testTheEngineAttachIsTheSourceNodeShape() throws {
         let code = SourceText.codeOnly(try source(Self.enginePath))
-        guard let attach = body(of: "func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {", in: code) else {
+        guard let attach = body(of: "func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {", in: code, length: 2400) else {
             return XCTFail("ANCHOR MISSING: attachAudioUnit")
         }
         for needle in ["logEngineLifecycle(\"graph: attach audio unit",
