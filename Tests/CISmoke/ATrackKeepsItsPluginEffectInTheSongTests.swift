@@ -10,7 +10,8 @@
 //  GRADING against the parent tree (#433/#464): `pluginEffect`, `pluginEffectComponent`,
 //  `settingPluginEffect` and `soundingPluginEffect` do not exist there — the file does not compile
 //  on the parent, so no assertion has a verdict there (ONE absence, #486). Claims 1–5 are forward
-//  guards, transcribed by reading the setter. COUNTERWEIGHTS (#343): claim 2 (other inserts and the
+//  guards, transcribed by reading the setter; claim 7 (H6-2) drives the store's one writer and its
+//  Undo step on a real `TimelineStore`. COUNTERWEIGHTS (#343): claim 2 (other inserts and the
 //  instrument untouched) and claim 6 (the two readers never answer for each other).
 //
 //  `Tests/CISmoke` is the blocking bundle.
@@ -93,5 +94,38 @@ final class ATrackKeepsItsPluginEffectInTheSongTests: XCTestCase {
                      "an effect insert must never load as an instrument")
         XCTAssertNil(DeviceInsert.pluginInstrument(Self.synth).pluginEffectComponent,
                      "an instrument insert must never load as an effect")
+    }
+
+    // MARK: 7 — H6-2: one writer, one Undo step, Undo gives the same insert back
+
+    @MainActor
+    func testOnePickIsOneUndoStepThroughTheOneWriter() throws {
+        let timeline = TimelineStore()
+        let original = timeline.document
+        defer { timeline.replaceDocument(original) }
+        let lead = TimelineLane(name: "Lead", kind: .midi)
+        let keys = TimelineLane(name: "Keys", kind: .midi)
+        timeline.replaceDocument(TimelineDocument(lanes: [lead, keys], regions: []))
+        let document = timeline.document
+        let rack = MultiRollFanout.secondaryLaneIDs(in: document, rollLane: document.rollLaneID)
+        guard let target = rack.first else { return XCTFail("ANCHOR: no rack track in a two-MIDI-track song") }
+
+        timeline.editLanePluginEffect(id: target) { timeline.setLanePluginEffect(target, Self.delay) }
+        let placed = try XCTUnwrap(timeline.document.lanes.first { $0.id == target }?.deviceChain?.pluginEffectInsert)
+        XCTAssertEqual(placed.pluginEffectComponent, Self.delay)
+
+        timeline.editLanePluginEffect(id: target) { timeline.setLanePluginEffect(target, Self.delay) }
+        timeline.undo()
+        XCTAssertNil(timeline.document.lanes.first { $0.id == target }?.deviceChain,
+                     "the same pick again records nothing, so ONE Undo takes the effect away")
+        timeline.redo()
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == target }?.deviceChain?.pluginEffectInsert, placed,
+                       "Redo gives back the same insert, not a copy")
+
+        if let roll = document.rollLaneID {
+            timeline.setLanePluginEffect(roll, Self.delay)
+            XCTAssertNil(timeline.document.lanes.first { $0.id == roll }?.deviceChain?.pluginEffectInsert,
+                         "the Echoel track takes no hosted effect — the rack does not play it")
+        }
     }
 }
