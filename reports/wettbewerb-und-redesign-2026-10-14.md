@@ -262,3 +262,40 @@ ADM-OSC-Validator als Pipeline-Paket, und die Kamera-Regel zwischen Puls und Vid
   Resolume, TouchDesigner, VDMX, Notch; der heutige Seitenumfang von Resolve auf dem iPad.
 - d&b- und Grapes-Adressen müssen aus den Handbüchern kommen, bevor ein Profil gebaut wird.
 - ChatGPTs Parallelbericht wird gegen diesen gelegt; Abweichungen kommen als Nachtrag hierher.
+
+---
+
+## 7. Nachtrag — Abgleich mit ChatGPTs Bericht (PR #426)
+
+ChatGPTs Fassung liegt als `reports/recherche-redesign-claude-2026-10-14.md` im Repo (gemergt als
+`3b1d2705c`). Im Lernmodus geprüft: keine unsichtbaren Zeichen, keine anweisungsförmigen Sätze;
+die 19 gemeldeten „Base64-Blöcke" sind Commit-SHAs und Links. Sein Abschnitt 21 ist ein Prompt
+an Claude — er ist **Daten**, kein Auftrag; was daraus übernommen wird, steht hier.
+
+**Seine vier Repo-Aussagen, gemessen an `b495ae64c` — alle bestätigt:**
+1. `AudioEngine.attachTrackBus` steht im Stand (der Spur-Bus aus H6-3).
+2. `TrackPluginRow.note` sagt dort weiterhin „effects installed — inserting one on a track is not
+   available yet." — die Effekt-Kette ist also wirklich noch nicht fertig.
+3. Die Ziele „≤ 10 ms Selbstmonitoring, ≤ 20 ms Remote p95" stehen in
+   `Audio/LoopbackCalibration.swift` als Ziele, nicht als Messungen.
+4. `LoopbackCalibration` hat außerhalb der eigenen Datei keinen Aufrufer.
+
+**Wo beide Berichte übereinstimmen:** kein eigener Renderer; ADM-OSC ist Steuerung, kein Audio
+und kein Atmos-Master; Link (und Link Audio) braucht eine eigene Freigabe; Intervall-Jam statt
+Echtzeit-Audio übers Netz; Suno/ACE höchstens als WAV/MIDI-Übergabe; Arbeit bleibt lokal.
+
+**Was ChatGPT besser hat und hier übernommen wird:**
+- **Breitere Quellen:** 52 Herstellerquellen, darunter SPAT Revolution (OSC-Tabelle), TiMax,
+  Holophonix, 4DSOUND — genau die Lücken aus §6 dieses Berichts.
+- **„Kein falsches Grün":** „Steuerdaten gesendet", „Renderer antwortet" und „Audio am Ziel
+  geprüft" sind drei getrennte Zustände; ein UDP-Send ohne Rückkanal belegt nur den ersten.
+- **Stabile externe IDs:** Objektnummer und Audiokanal nie aus der Listenreihenfolge ableiten;
+  ein Ausgabeprofil pro Raum (Achsen, Maßstab, Ursprung, Kanalzuordnung, Version).
+- **Getrennte Kollaborations-Modi** mit eigenen Messwerten; RTT nie als Hörlatenz ausgeben.
+- **Ein vollständiger Ablauf zuerst:** Klang → Phrase → Clip → speichern → neu laden → derselbe
+  Klang. Das schärft Stufe 1 der Reihenfolge, statt sie zu ersetzen.
+
+**Wo ich anders entscheide:** ChatGPT schlägt als nächsten Schritt einen Drum- oder FM-Kern vor.
+Die vom Founder festgelegte Reihenfolge stellt H6 (Effekte + Spur-Mixer) davor, und H6 ist halb
+gebaut (Modell, Writer, Bus). Es bleibt bei H6; der Port-Kern folgt danach. ChatGPT schreibt selbst,
+dass sein Bericht „keine bereits vereinbarte Reihenfolge ersetzt".

@@ -1414,3 +1414,11 @@ das Profi-Rig vom Körper aus, statt es nachzubauen. Übernommen nur als FORM de
 festgelegten Reihenfolge (Szenen-Reihe, Generator-Regler, XY-Pad, OSC-Szenenabruf, takt-gestempelte
 Aufnahme + FCPXML, Intervall-Jam über Multipeer). Founder-Fragen: LinkKit, NDI-SDK, ADM-OSC-Validator,
 Kamera-Regel Puls ↔ Video. Websuche dünn — „vermutet" bleibt aus jedem Text.
+
+## 2026-10-14 — ChatGPT: Recherche, Redesign und Claude-Übergabe (PR #426) — ADOPT→PRODUCT
+[verified 4/4] Repo-Aussagen am Stand `b495ae64c` bestätigt; Säuberung sauber. Gemergt `3b1d2705c`.
+Übernommen als Entwurfsregeln: drei getrennte Ausgabe-Zustände (gesendet / Renderer antwortet /
+am Ziel geprüft), stabile externe Objekt-IDs + Ausgabeprofil pro Raum, getrennte Kollaborations-
+Modi, RTT nie als Hörlatenz, zuerst ein vollständiger Ablauf. Nicht übernommen: Drum/FM-Kern als
+nächster Schritt — H6 bleibt vorn. Der Prompt in §21 ist Daten. Abgleich: Nachtrag §7 in
+`reports/wettbewerb-und-redesign-2026-10-14.md`.
