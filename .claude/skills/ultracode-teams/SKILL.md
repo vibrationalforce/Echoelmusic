@@ -9,6 +9,44 @@ Instead run **small domain teams (≤4 workers each) each with a LEAD** who reco
 and *adversarially verifies* its team's output before anything reaches the main loop.
 The main loop (the PM) then synthesizes 6–8 vetted lead-reports, not 20 raw ones.
 
+## The three words
+
+These are session settings, not features. Hearing them does not add a target, a
+shell, a cron, or a wellness layer.
+
+| Word | Means | Does not mean |
+|------|--------|----------------|
+| **Ultraechoel** | Judge the slice against `docs/dev/FOUNDER_PRODUCT_LAW.md` (own the workflow, integrate the ecosystem) and claim only what `docs/dev/FEATURE_STATUS.md` says ships. | A new app, a new navigation, or a rename. |
+| **Ultracode** | This skill. Small teams, a lead verifies, the PM ships one slice. | A flat pool of 15–20 agents. |
+| **Ultraagentmanagement** | Staff only from the roster below. A lead is an agent file, or the host builtin `general-purpose` where this skill says so. A skill is read by the PM, never spawned. | A new orchestrator, or passing a skill name as `agentType`. |
+
+`echoel-marketing` is a skill (`.claude/skills/echoel-marketing/SKILL.md`). A 16-agent
+run already died on spawning it as an agent type (session log, the TestFlight-ready
+sweep). The marketing row below has no lead agent for that reason.
+
+No workflow is scheduled. `.github/workflows/` has no `schedule:` key, so nothing
+here runs hourly or nightly on its own. The loop further down runs only inside the
+session that was asked. Waiting for a cron waits forever.
+
+<!-- ultracode-roster: begin -->
+audio-thread-reviewer
+bio-safety-reviewer
+build-error-resolver
+code-reviewer
+concurrency-reviewer
+dsp-reviewer
+e2e-test-agent
+general-purpose
+planning-agent
+security-agent
+tdd-agent
+ui-state-reviewer
+<!-- ultracode-roster: end -->
+
+`general-purpose` is the host's built-in. It has no file under `.claude/agents/`.
+Every other roster name is that file's `name:` field. Spawn nothing else.
+`TheUltracodeLeadsAreRealAgentsTests` pins the list to the files.
+
 ## The teams (lead = an existing reviewer agent where one fits)
 
 | Team | Lead agentType | Owns | Max workers |
@@ -20,7 +58,7 @@ The main loop (the PM) then synthesizes 6–8 vetted lead-reports, not 20 raw on
 | **VIDEO/VISUAL** | `general-purpose` (visual lead) | `Video/`, Metal, shaders, FloatingVisual | 2 |
 | **SYNC/LIGHT/CAST** | `general-purpose` (sync lead) | `Sync/` (OSC/ADM/Art-Net/sACN), `Stream/` | 2 |
 | **PLATFORM/SHIP-PATH** | `e2e-test-agent` | the five real targets, entitlements/App Group, Info.plist floor, CI/deploy | 2 |
-| **MARKETING** (pipeline-only) | `echoel-marketing` | `docs/`, ASO, website — **never** `Sources/` | 2 |
+| **MARKETING** (pipeline-only) | — no agent; the PM reads the skill | `docs/`, ASO, website — **never** `Sources/`. Door: `.claude/skills/echoel-marketing/SKILL.md`. | 2 |
 
 **Cross-cutting teams** (activate per the work, not the domain):
 
@@ -50,7 +88,7 @@ FEEDBACK halves the coverage audit found orphaned.
 | **Head of Quality** (Definition-of-Done) | the "is it actually good" bar gates don't cover: organic/professional SOUND, contemplative "wow" VISUAL; whether a NEEDS-FOUNDER-VERIFY item is truly closeable | peer to Head of Product (HoP owns WHAT ships next; HoQ owns whether what shipped meets the bar). Delegates device root-cause to DEVICE-VERIFY; keeps the sensory judgment. On any safe-default slice, a "make it sound/feel professional" ask, or a release-readiness check. |
 | **EchoelAI Safety Owner** | sign-off before ANY `EchoelAI/` slice ships: binding a model apply-closure to `Core/ParameterApplyRouter.swift` (the concrete keyPath→live-voice-setter hole), any new FoundationModels `@Generable`/Tool wrapper, any `FeatureFlags.echoelAI` flip. Enforces the ADR write-path law ("the model NEVER writes DSP state directly") + no-audio-thread + Release-bit-identical gating | lead `security-agent` (LLM guardrail/injection lens) with `audio-thread-reviewer` standing cross-cut. Any cycle touching `Sources/Echoelmusic/EchoelAI/**` or wiring a model closure to the router/EngineBus. |
 | **Persistence & Schema-Migration Steward** | approval of any persisted `Codable` field rename/removal, any `*Store` add/rename, container/format change. Enforces `schemaVersion` + `decodeIfPresent` + non-destructive fallback on any NEW persisted type. ⛔ **"only `SpatialScene` is versioned today" stood here and was false in the costly direction (#1160, measured 2026-09-09).** It named as the sole example the one type whose version is NOT a document stamp: `SpatialScene.schemaVersion` is a `static let` wire-format constant for peer ordering (`self.version = Self.schemaVersion`), with no decode fallback and nothing to migrate. Meanwhile TEN persisted types carry a real stored `schemaVersion` — `Project`, `Timeline`, `Clip`, `Arrangement`, `SynthPatch`, `TrackFX`, `MoodPreset`, `PerformerSignature`, `FieldAutoPlay.Params`, `RoleRhythm.Params` — each with `decodeIfPresent` defaults, and `Project` with an explicit encoder that writes the CURRENT stamp so a re-saved pre-version file stops claiming `0` forever. **Measure, do not quote: `git grep -n "var schemaVersion" -- Sources`.** Six `Tests/CISmoke` guards already pin those stamps (`PersistedVersionStampSmokeTests` among them), so the convention is enforced, not merely present — a seventh would be #416. The steward's job is therefore holding an EXISTING convention, not introducing one — a session reading the old sentence would have rebuilt ten stamps that already exist. | lead `code-reviewer`. Lightweight standing role (12 `*Store` types, too multi-domain to fold into DAW/TIMELINE — re-derive with `git grep -ohE "(class\|struct\|enum) [A-Za-z]+Store\b" -- Sources \| awk '{print $2}' \| sort -u`). Any change to a persisted `Codable` type or a `*Store`. |
-| **App Store Release-Compliance Owner** | the submission-time go/no-go: 2.1/2.3/5.1.3 reject-risk sign-off, privacy-nutrition-label + age-rating answers, the `fastlane/metadata` skip-metadata safety call | folded into RELEASE/CI as its release-gate seat — convenes the existing reviewers (`security-agent` privacy + `bio-safety-reviewer` health-claim + `echoel-marketing` copy), no new team. Before any App Store submission or change to `fastlane/metadata`/`PrivacyInfo.xcprivacy`/entitlements. |
+| **App Store Release-Compliance Owner** | the submission-time go/no-go: 2.1/2.3/5.1.3 reject-risk sign-off, privacy-nutrition-label + age-rating answers, the `fastlane/metadata` skip-metadata safety call | folded into RELEASE/CI as its release-gate seat — convenes `security-agent` (privacy) and `bio-safety-reviewer` (health claims). Marketing copy is the echoel-marketing skill, read by the PM, not a spawned reviewer. No new team. Before any App Store submission or change to `fastlane/metadata`/`PrivacyInfo.xcprivacy`/entitlements. |
 
 ### Fold-ins (deliberately NOT new teams)
 
@@ -68,7 +106,7 @@ and (with no local compiler + serial commits) manufactures merge conflicts. The 
 lives at the PM level; teams are activated inside each iteration:
 
 ```
-LOOP (the hourly cron heartbeat / Ralph cadence):
+LOOP (one session, Ralph cadence — not a cron):
   1. RECONCILE  — MEMORY/RECONCILE keeps the task list honest (periodically, not every tick)
   2. PICK       — the next task by REIHENFOLGE (founder priority order)
   3. PLAN       — PLAN/ARCHITECTURE if the task is big/ambiguous ("ERST PLAN")
@@ -78,10 +116,11 @@ LOOP (the hourly cron heartbeat / Ralph cadence):
   7. repeat
 ```
 
-This is exactly the loop already running (the 24h cron + this skill). A task is only
-"done" when its slice is shipped AND green AND (for device-facing behavior) founder-
-verified. The loop guarantees *safe* progress because every iteration ends in a gated,
-reversible, single-slice state — never a half-built pile.
+This loop is not a GitHub cron and not a background worker. It runs only when a
+session is asked (the founder says "ultracode", or the PM picks the next slice).
+A task is only "done" when its slice is shipped AND green AND (for device-facing
+behavior) founder-verified. Every iteration ends in one gated, reversible slice —
+never a half-built pile.
 
 ### Anti-proliferation (as important as the teams themselves)
 
@@ -150,6 +189,8 @@ const teamResult = await (async () => {
     { phase: TEAM.name, agentType: TEAM.lead, schema: LEAD_SCHEMA, effort: 'high' })
 })()
 // PM (main loop) then synthesizes the 6–8 lead results and ships ONE slice.
+// TEAM.lead must be a roster name. Marketing has no lead: the PM reads the
+// echoel-marketing skill itself and does not spawn it.
 ```
 
 ## When to use / skip

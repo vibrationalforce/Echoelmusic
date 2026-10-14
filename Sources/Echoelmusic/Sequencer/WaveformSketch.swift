@@ -12,8 +12,9 @@
 // ⭐ THE REDUCTION RULE IS `WaveformReducer`'s, NOT A NEW ONE (#416). The overview folds the
 // channels with `WaveformReducer.foldStereo` (the louder sample wins, so a hard-panned hit
 // stays visible), buckets them with `reduce` (min · max · RMS per bucket — the extremes
-// survive, never raw PCM), and a display column joins its buckets with `downsample` (min of
-// mins, max of maxes, RMS of RMS). That pure core was parked test-only since #132 Slice 5;
+// survive, never raw PCM), and a display column joins its buckets with `join` (min of
+// mins, max of maxes, RMS of RMS — the one-bucket case of `downsample`, walked in
+// place so a pinch does not copy the span). That pure core was parked test-only since #132 Slice 5;
 // this is its consumer.
 //
 // ⭐ THE WINDOW IS THE PLAYER'S, NOT A LOOKALIKE (#416). The canvas hands in the part's media
@@ -92,7 +93,7 @@ enum WaveformSketch {
     }
 
     /// The part's stretch of the file — `lengthSeconds` from `fromSeconds` — as `columns`
-    /// display columns, each the `WaveformReducer.downsample` join of the buckets it overlaps
+    /// display columns, each the `WaveformReducer.join` of the buckets it overlaps
     /// (a column narrower than a bucket takes the bucket it falls in). Amplitudes are scaled by
     /// the part's own `gain` and clamped to ±1 for drawing; a non-finite value draws as
     /// silence. Degenerate input — no buckets, a non-finite or non-positive length, no
@@ -113,8 +114,7 @@ enum WaveformSketch {
             let end = (fromSeconds + Double(column + 1) * step) / perBucket
             // Wholly before the file's start or past its end: silence, never a borrowed bucket.
             guard let span = overlap(start: start, end: end, count: count),
-                  let joined = WaveformReducer.downsample(Array(overview.buckets[span]),
-                                                          factor: span.count).first else {
+                  let joined = WaveformReducer.join(overview.buckets[span]) else {
                 out.append(silent); continue
             }
             out.append(drawable(joined, level: level))
