@@ -1,4 +1,4 @@
-build: v10.79.501 — eigene Plugin-Fenster, Plugin-Einstellungen im Stück, Spur bei Plugin-Absturz zurück
+build: v10.79.502 — dein Video im Bild, Spuren mit Mute/Solo im Kopf, sechs Plugin-Reparaturen
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,42 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.502) ───────────────────────────────
+
+  Achtzehn Commits an `Sources/` und `Tests/` seit 10.79.501. Gebaut wird `6a475f425`; Xcode
+  Compile Check UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon
+  geprüft.
+
+  ── POSTEN 1: DEIN VIDEO IM BILD (VV-3a/VV-6) ──
+  Browse → Regal „Visuals" → Video-Karte: ein Video wählen, dann „Show in Visuals". Es läuft
+  stumm und in Schleife als Ebene im lebenden Bild, mit derselben Blitz-Grenze wie das Visual
+  (unter 3 Hz, rote Blitze eigens begrenzt). Die Kopie liegt in der Mediathek.
+
+  ── POSTEN 2: SPUREN WIE FRÜHER (T1) ──
+  Im Arrange trägt jeder Spurkopf neben seinen Teilen Name UND Mute/Solo — eine ruhige Zeile
+  je Spur, wie auf den alten Screens. Ein Tipp auf den Namen wählt die Spur.
+
+  ── POSTEN 3: FREMD-PLUGINS, SECHS REPARATUREN ──
+  · Während ein gewähltes Plugin lädt, spielt die eingebaute Stimme — kein Loch am Anfang.
+  · Plugin während des Spielens wählen oder entfernen: die Spur spielt weiter, statt bis zum
+    nächsten Teil zu schweigen.
+  · Undo nach „Einstellungen behalten" nimmt die Plugin-Wahl zurück; Redo bringt sie MIT den
+    Einstellungen wieder.
+  · Gestoppt ein anderes Plugin gewählt, dann „Open plugin": statt des alten Plugins unter
+    neuem Namen kommt der Hinweis „press Play".
+  · Ein zweites Projekt mit demselben Plugin bekommt SEINE Einstellungen (oder ein frisches
+    Plugin), nicht die des ersten; schnelles Hin- und Herwählen lädt nur die letzte Wahl.
+  · Ein Plugin mit mehr als zwei Ausgängen wird nicht eingehängt; die Spur behält ihre
+    eingebaute Stimme.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 2341e8aa7) ──
+  Das Werkzeug meldet 0 neue Marker-Zeilen. Von Hand, weil diese Posten keinen Marker tragen:
+  · Video: „Show in Visuals" — das Video erscheint im Bild, flackert nicht, „Hide" nimmt es weg.
+  · Arrange: Mute/Solo im Spurkopf wirken hörbar, ein Undo nimmt sie zurück.
+  · Plugin: im Spielen ein Instrument wählen — die Spur reißt nicht ab; danach Undo/Redo.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.501) ───────────────────────────────
 
