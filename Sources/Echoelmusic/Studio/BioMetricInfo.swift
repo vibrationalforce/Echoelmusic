@@ -74,7 +74,8 @@ public enum BioMetric: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Shown under every explanation — the safety/scope disclaimer.
-    /// E4-23 (2026-09-30): a catalog key — the German phone reads the disclaimer in German.
+    /// E4-23 (2026-09-30): a catalog key, so it can be translated. ⛔ It said "the German phone reads the
+    /// disclaimer in German" — since 2026-10-02 the catalog is English-only (founder: "Nur Englisch").
     public static let disclaimer = String(localized: "For music and self-observation only — not a medical device and not for diagnosis. Readings are approximate; don’t use them for health decisions.")
 
     /// The origin note that belongs beside a heading claiming the body is showing something,

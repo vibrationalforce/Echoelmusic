@@ -139,8 +139,11 @@ public enum HRVCoherence {
     static let peakSearchLow = 0.04, peakSearchHigh = 0.26
     static let peakHalfWidth = 0.015
 
-    /// Minimum intervals before a spectrum is attempted (~enough record length
-    /// for a 0.04 Hz resolution at typical RR).
+    /// Minimum intervals before a spectrum is attempted. ⚠️ A FLOOR, NOT A RESOLUTION: 16 resting
+    /// intervals (RR 0.8–1.0 s) span ~13–16 s, a frequency resolution of ~0.06–0.08 Hz — several
+    /// times wider than `peakHalfWidth`, so the first readings are rough. ⛔ This said "~enough for
+    /// a 0.04 Hz resolution at typical RR"; that needs ~25 s, i.e. a 38 bpm pulse (two external
+    /// reviews, 2026-10-14). The camera keeps a rolling 64 (`coherenceRRHistory`, ≈0.016 Hz at 60 bpm).
     static let minIntervals = 16
 
     // MARK: Public entry points
