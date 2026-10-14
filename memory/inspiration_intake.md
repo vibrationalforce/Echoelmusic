@@ -1374,3 +1374,6 @@ Startknopf ist Play), „ECG" (kein Elektrodenpfad, nur rPPG — eine falsche Se
 „ARTIFACTS 2 %" ohne Messung — Uncodixfy verbietet genau diese Ästhetik. Die Studio-Szene taugt
 als Stimmungsbild für die Pipeline, wenn die ECG-/Respiration-Monitore weichen. Nichts aus den
 Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
+
+**2026-10-14 — TAUCHFLIEGE R14 (Founder-Zip, Konzeptprüfung 2026-10-05) plus die Bitte, Echoelmusic auf alle Apple-Plattformen, danach alle Betriebssysteme, Neuralink und VR/XR zu ziehen.** Das Zip ist gelesen (README, 37 Befunde, Tore, Sprechertext, Rechte). Nicht ins Repo kopiert (CAD/Film, AUD-032). Verdikt in `reports/PITCH_APPLE_TEAM_2026-10-14.md`. Gemessen am Baum: ausgeliefert ist iPhone (Familie „1“), Widget und AUv3; die Watch ist ein Ziel ohne Einbettung; iPad ist bewusst aus (Taschenlampen-Puls); kein Mac- und kein visionOS-Ziel. Switch Control ist an Arrangement und Slip angefangen. Fahrzeugsteuerung, Personenbeförderung und Neuralink: REJECT für diese App (AUD-023, AUD-029, AUD-031; kein Implantat-API im Baum; kein Medizinprodukt). WATCH nur als spätere OSC/MIDI-Ausgabe an eine andere, zertifizierte Anlage, und nur mit dokumentierter Eingabe plus Einwilligung plus fremdem Träger. Nächste Scheibe bleibt eine iPhone-Fläche, die Switch Control noch nicht erreicht.
+
