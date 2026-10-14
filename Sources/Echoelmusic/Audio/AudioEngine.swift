@@ -2108,26 +2108,27 @@ public final class AudioEngine {
         log.audio("Source node detached from master engine")
     }
 
-    /// Production H2b — attach a hosted Audio Unit instrument into the master mix, the
+    /// Production H2b — attach a hosted Audio Unit instrument into its slot's bus (H6-4), else the master mix, the
     /// `attachSourceNode` shape: rung first, pause a running engine, attach, connect at the
     /// unit's own format (else the mixer's), restart through the one helper. Called once per
     /// LOAD of a plugin (`HostedInstrumentHost`), never per step — the pause is a short dropout.
     /// Returns false when no format could be found; the unit is detached again then.
     @discardableResult
-    func attachAudioUnit(_ unit: AVAudioUnit) -> Bool {
+    func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {
         logEngineLifecycle("graph: attach audio unit (engine running: \(masterEngine.isRunning))")
         prepareGraph()
         let wasRunning = masterEngine.isRunning
         if wasRunning { masterEngine.pause() }
         masterEngine.attach(unit)
+        let destination = trackBuses[slot] ?? masterMixer
         var connected = false
         let own = unit.outputFormat(forBus: 0)
-        let fallback = masterMixer.outputFormat(forBus: 0)
+        let fallback = destination.outputFormat(forBus: 0)
         if own.sampleRate > 0, own.channelCount > 0 {
-            masterEngine.connect(unit, to: masterMixer, format: own)
+            masterEngine.connect(unit, to: destination, format: own)
             connected = true
         } else if fallback.sampleRate > 0, fallback.channelCount > 0 {
-            masterEngine.connect(unit, to: masterMixer, format: fallback)
+            masterEngine.connect(unit, to: destination, format: fallback)
             connected = true
         } else {
             log.audio("Cannot attach audio unit — no valid audio format available", level: .error)

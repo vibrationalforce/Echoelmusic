@@ -97,6 +97,21 @@ final class TheRackSlotsSoundThroughTheirOwnBusTests: XCTestCase {
         XCTAssertTrue(engine.contains("func trackBus(slot: Int) -> AVAudioMixerNode? { trackBuses[slot] }"))
     }
 
+    /// 7 — H6-4: a hosted plugin instrument sounds through its slot's bus, falling back to the master.
+    func testAHostedInstrumentSoundsThroughItsSlotsBus() throws {
+        let code = SourceText.codeOnly(try source(Self.enginePath))
+        guard let a = code.range(of: "func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {"),
+              let end = code[a.upperBound...].range(of: "\n    }\n") else {
+            return XCTFail("ANCHOR MISSING: attachAudioUnit(_:slot:)")
+        }
+        let body = String(code[a.lowerBound..<end.upperBound])
+        XCTAssertTrue(body.contains("let destination = trackBuses[slot] ?? masterMixer"))
+        XCTAssertFalse(body.contains("to: masterMixer, format:"),
+                       "every connect goes to the destination, never straight to the master")
+        let host = SourceText.codeOnly(try source("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift"))
+        XCTAssertTrue(host.contains("engine.attachAudioUnit(unit, slot: slot)"), "the host passes its rack slot")
+    }
+
     private func source(_ relative: String) throws -> String {
         var url = URL(fileURLWithPath: #filePath)
         for _ in 0..<3 { url.deleteLastPathComponent() }
