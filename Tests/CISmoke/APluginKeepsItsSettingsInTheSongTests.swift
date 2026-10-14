@@ -4,8 +4,9 @@
 //  track's instrument insert, so a song can bring the sound back after a relaunch.
 //
 //  KIND: END-TO-END BEHAVIOUR (claims 1–3) — `DeviceInsert` is a shipped Foundation-only value
-//  type, driven directly. SOURCE-TEXT SCAN (claim 4) for the store's one writer. The capture on
-//  close and the restore on load are H4b/H4c; the device sound is a DEVICE PROBE, open.
+//  type, driven directly. SOURCE-TEXT SCAN (claim 4) for the store's one writer, (claim 5, H4b)
+//  for the capture when the plugin window closes. Restore on load is H4c; the device sound is a
+//  DEVICE PROBE, open.
 //
 //  GRADING against the parent tree (#433/#464): `pluginFullState`, `settingPluginFullState`,
 //  `pluginStateLimit` and `setLanePluginState` do not exist there — the file does not compile on
@@ -81,5 +82,28 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         let body = String(store[start.upperBound..<end.lowerBound])
         XCTAssertFalse(body.contains("pushUndo("), "moving a plugin's own control is not an Undo step")
         XCTAssertTrue(body.contains("persist()"), "the settings are saved with the song")
+    }
+
+    // MARK: 5 — H4b: closing the plugin window hands its settings to that writer
+
+    func testClosingThePluginWindowKeepsItsSettings() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        func code(_ rel: String) throws -> String {
+            let url = root.appendingPathComponent(rel)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw XCTSkip("\(rel) not on disk — this run has no source tree")
+            }
+            return SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        }
+        let host = try code("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        let row = try code("Sources/Echoelmusic/Studio/TrackPluginRow.swift")
+        XCTAssertTrue(host.contains("unit.auAudioUnit.fullStateForDocument"),
+                      "the document state, not `fullState` — the one a host saves with a song")
+        XCTAssertTrue(host.contains("PropertyListSerialization.data(fromPropertyList: state, format: .binary"))
+        XCTAssertTrue(row.contains(".sheet(item: $window, onDismiss: keepSettings)"),
+                      "closing the window is the moment the settings are kept")
+        XCTAssertTrue(row.contains("timeline.setLanePluginState(laneID, state)"))
+        XCTAssertEqual(row.components(separatedBy: "setLanePluginState(").count - 1, 1)
     }
 }

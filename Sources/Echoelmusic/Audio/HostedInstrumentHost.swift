@@ -190,6 +190,21 @@ final class HostedInstrumentHost {
     }
     #endif
 
+    /// H4b — the loaded unit's own settings (`fullStateForDocument`) as a binary property list, for
+    /// the song to keep; nil when the slot holds no loaded unit, the unit reports none, or the
+    /// report is not a property list. Asked on the main actor when the plugin window closes — a
+    /// rare, user-paced moment, never per step.
+    func captureState(forSlot slot: Int) -> Data? {
+        guard let unit = hosted[slot]?.unit,
+              let state = unit.auAudioUnit.fullStateForDocument else { return nil }
+        do {
+            return try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)
+        } catch {
+            log.audio("Plugin '\(hosted[slot]?.component.name ?? "?")' settings could not be saved: \(error)", level: .warning)
+            return nil
+        }
+    }
+
     // MARK: - Private
 
     private func finishLoad(_ unit: AVAudioUnit?, failure: String?, slot: Int,

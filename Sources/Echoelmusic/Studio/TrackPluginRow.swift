@@ -92,7 +92,7 @@ struct TrackPluginRow: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         #if canImport(UIKit)
-        .sheet(item: $window) { shown in
+        .sheet(item: $window, onDismiss: keepSettings) { shown in
             PluginWindowSheet(window: shown)
         }
         #endif
@@ -122,12 +122,17 @@ struct TrackPluginRow: View {
     }
 
     #if canImport(UIKit)
+    /// The rack slot this track plays in — the one lane→slot lookup, asked on demand.
+    private func trackSlot() -> Int? {
+        let document = timeline.document
+        return MultiRollFanout.slot(forLaneID: laneID, in: document, rollLane: document.rollLaneID,
+                                    capacity: player.laneVoiceCapacity)
+    }
+
     /// Ask the host for the track's plugin screen — only now, on the tap.
     private func open(_ component: DeviceInsert.PluginComponent) {
-        let document = timeline.document
         guard let host = HostedInstrumentHost.live,
-              let slot = MultiRollFanout.slot(forLaneID: laneID, in: document, rollLane: document.rollLaneID,
-                                              capacity: player.laneVoiceCapacity),
+              let slot = trackSlot(),
               host.requestView(forSlot: slot, done: { controller in
                   if let controller {
                       openNote = nil
@@ -139,6 +144,14 @@ struct TrackPluginRow: View {
             openNote = String(localized: "The plugin loads when its track plays — press Play, then open it.")
             return
         }
+    }
+
+    /// H4b — when the plugin window closes, the song keeps what the person set in it. Nothing is
+    /// written when the unit reports no settings; the store refuses an oversize state.
+    private func keepSettings() {
+        guard let host = HostedInstrumentHost.live, let slot = trackSlot(),
+              let state = host.captureState(forSlot: slot) else { return }
+        timeline.setLanePluginState(laneID, state)
     }
     #endif
 
