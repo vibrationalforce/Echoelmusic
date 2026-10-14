@@ -226,7 +226,8 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
     /// names the component the way the system identifies it on every device — three four-char
     /// codes — plus the names a person reads when it is not installed here. Plain values on
     /// purpose: `Core/` stays Foundation-only, and the catalog's `PluginDescriptor` imports
-    /// AVFoundation. The unit's own `fullState` is not stored yet (H4).
+    /// AVFoundation. The unit's own settings ride in the same state since H4a
+    /// (`pluginFullState`).
     public static let pluginInstrumentTypeID = "com.echoelmusic.device.auv3.instrument"
     /// The state format this build reads and writes: sorted-keys JSON of `PluginComponent`.
     public static let pluginInstrumentTypeVersion = 1
@@ -262,6 +263,49 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
         guard typeID == Self.pluginInstrumentTypeID,
               typeVersion <= Self.pluginInstrumentTypeVersion else { return nil }
         return try? JSONDecoder().decode(PluginComponent.self, from: stateBlob)
+    }
+
+    // MARK: - The hosted unit's own settings (production H4a)
+
+    /// The largest settings state a song keeps for one plugin, in bytes. A sample-based unit can
+    /// report megabytes, and the song is one JSON file that loads at launch; a larger state is
+    /// refused (the song keeps the last one that fit) rather than stored.
+    public static let pluginStateLimit = 1 << 20
+
+    /// The v1 state with one more key. An older v1 reader ignores `fullState`, so the format
+    /// version does not move, and `PluginComponent` never sees it — a settings change is never a
+    /// different component, so the host does not reload the unit for it.
+    private struct PluginStored: Codable {
+        var type: UInt32
+        var subtype: UInt32
+        var manufacturer: UInt32
+        var name: String
+        var manufacturerName: String
+        var fullState: Data?
+    }
+
+    /// The unit's own settings as last saved (its `fullStateForDocument`, a binary property
+    /// list), or nil when none is stored or this is not a plugin instrument this build reads.
+    public var pluginFullState: Data? {
+        guard pluginComponent != nil else { return nil }
+        return (try? JSONDecoder().decode(PluginStored.self, from: stateBlob))?.fullState
+    }
+
+    /// This insert with the unit's settings set (nil clears them), the component kept as it was.
+    /// Nil when it is not a plugin instrument this build reads, or `state` is over
+    /// `pluginStateLimit`. With no settings the bytes equal a fresh `pluginInstrument(_:)`.
+    public func settingPluginFullState(_ state: Data?) -> DeviceInsert? {
+        guard let component = pluginComponent else { return nil }
+        if let state, state.count > Self.pluginStateLimit { return nil }
+        let stored = PluginStored(type: component.type, subtype: component.subtype,
+                                  manufacturer: component.manufacturer, name: component.name,
+                                  manufacturerName: component.manufacturerName, fullState: state)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        guard let blob = try? encoder.encode(stored) else { return nil }
+        var next = self
+        next.stateBlob = blob
+        return next
     }
 
     /// Sorted keys, so one state has one byte form and "unchanged" is an equality.
