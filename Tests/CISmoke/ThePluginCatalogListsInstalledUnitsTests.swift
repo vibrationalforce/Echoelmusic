@@ -13,7 +13,7 @@
 //    third-party before Apple, then maker and name case-blind. Claim 3 (H2c, replaced the H1
 //    summary line): the row offers installed INSTRUMENTS but never this app's own unit or an
 //    effect; a component is known by its codes; the note says what plays and, plainly, that the
-//    plugin's saved settings (H4) and effect inserts (H6) are not built yet — its screen opens since H3.
+//    effect inserts (H6) are not built yet; its screen opens since H3, its settings are kept since H4.
 //  · SOURCE-TEXT SCAN (claim 4) — the row is a `View`: it is mounted only inside the rack-track
 //    branch of the Device page, it queries the registry DETACHED, a pick goes through
 //    `editLanePlugin` + `setLanePluginInstrument` (one Undo step), and neither the row nor the
@@ -107,7 +107,7 @@ final class ThePluginCatalogListsInstalledUnitsTests: XCTestCase {
                                                  manufacturer: 2, name: "Synth", manufacturerName: "Acme")
         let playing = TrackPluginRow.note(current: synth, installed: 3, effects: 0)
         XCTAssertTrue(playing.contains("Synth"), playing)
-        XCTAssertTrue(playing.contains("not saved with the piece yet"), "the plugin's settings are not saved yet (H4): \(playing)")
+        XCTAssertTrue(playing.contains("the piece keeps its settings"), "the song keeps the plugin's settings (H4): \(playing)")
         XCTAssertEqual(TrackPluginRow.note(current: nil, installed: 0, effects: 0),
                        "No Audio Unit instruments are installed on this iPhone.")
         XCTAssertTrue(TrackPluginRow.note(current: nil, installed: 2, effects: 4)

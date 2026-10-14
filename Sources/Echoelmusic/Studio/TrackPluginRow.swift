@@ -16,8 +16,8 @@ import UIKit
 /// let go on close. A plugin without a screen, or one that is not loaded yet (it loads when its
 /// track plays), says so under the menu instead of opening an empty window.
 ///
-/// What the row says plainly, because it is not built yet: the plugin's own settings are not saved
-/// with the piece (H4) — after a relaunch it plays its default sound. Effects are listed only:
+/// H4: closing the window keeps the plugin's own settings in the song, and the next load gives
+/// them back. What the row says plainly, because it is not built yet: effects are listed only —
 /// inserting one on a track is H6.
 ///
 /// ⚠️ ITS OWN LEAF, ON PURPOSE: the component query walks the system registry, so it runs
@@ -175,7 +175,7 @@ struct TrackPluginRow: View {
         var lines: [String] = []
         if let current {
             lines.append(String(localized: "This track plays ") + current.name
-                         + String(localized: " with its default sound. Its own settings are not saved with the piece yet."))
+                         + String(localized: ". Open the plugin to shape its sound — the piece keeps its settings."))
         } else if installed == 0 {
             lines.append(String(localized: "No Audio Unit instruments are installed on this iPhone."))
         } else {

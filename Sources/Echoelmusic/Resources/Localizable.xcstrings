@@ -23845,14 +23845,14 @@
         }
       }
     },
-    " with its default sound. Its own settings are not saved with the piece yet." : {
+    ". Open the plugin to shape its sound — the piece keeps its settings." : {
       "comment" : "Track Device page (production H2c): end of that sentence — the plugin's screen and saved settings are not built yet.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " with its default sound. Its own settings are not saved with the piece yet."
+            "value" : ". Open the plugin to shape its sound — the piece keeps its settings."
           }
         }
       }
