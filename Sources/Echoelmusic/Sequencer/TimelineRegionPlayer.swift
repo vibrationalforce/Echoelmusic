@@ -1309,7 +1309,7 @@ public final class TimelineRegionPlayer {
             let plugin = MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane)
             if plugin != namedPlugin[slot] {
                 if let sink = slotNoteSink, var pump = pumps[slot], !pump.isEmpty {
-                    sink(slot, pump.reset())
+                    sink(slot, pump.releaseSounding())
                     pumps[slot] = pump
                 }
                 nameSlotPlugin(slot, plugin)

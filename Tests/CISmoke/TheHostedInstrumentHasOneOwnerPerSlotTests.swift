@@ -182,12 +182,24 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: refreshMixer")
         }
         guard let change = merge.range(of: "if plugin != namedPlugin[slot] {"),
-              let release = merge.range(of: "sink(slot, pump.reset())", range: change.upperBound..<merge.endIndex),
+              let release = merge.range(of: "sink(slot, pump.releaseSounding())", range: change.upperBound..<merge.endIndex),
               let rename = merge.range(of: "nameSlotPlugin(slot, plugin)", range: change.upperBound..<merge.endIndex) else {
             return XCTFail("ANCHOR MISSING: the change test, the release or the rename in refreshMixer")
         }
         XCTAssertLessThan(release.lowerBound, rename.lowerBound,
                           "held notes leave through the OLD owner before the slot is named again")
+        // Night sweep 2026-10-14 (B1): `reset()` here also dropped the bars, so a pick during
+        // playback silenced the track until its next part started. The pick releases what
+        // sounds and keeps the part.
+        XCTAssertFalse(merge[change.upperBound..<rename.lowerBound].contains("pump.reset()"),
+                       "a pick mid-play keeps the part — release the sounding notes, do not empty the pump")
+        let pump = SourceText.codeOnly(try source("Sources/Echoelmusic/Sequencer/LaneNotePump.swift"))
+        guard let keep = body(of: "public mutating func releaseSounding() -> [Event] {", in: pump, length: 400) else {
+            return XCTFail("ANCHOR MISSING: LaneNotePump.releaseSounding")
+        }
+        XCTAssertTrue(keep.contains("active.removeAll()"), "every sounding note gets its release")
+        XCTAssertFalse(keep.contains("bars.removeAll()") || keep.contains("notes.removeAll()"),
+                       "the part's content stays, so the next step still plays it")
         XCTAssertEqual(player.components(separatedBy: "slotPluginSink?(").count - 1, 1,
                        "every naming goes through nameSlotPlugin, which remembers what it said")
     }

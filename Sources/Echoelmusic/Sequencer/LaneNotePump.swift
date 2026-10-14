@@ -123,6 +123,16 @@ public struct LaneNotePump: Sendable, Equatable {
         return events
     }
 
+    /// Release what sounds and KEEP the content (an owner change mid-play: a plugin picked
+    /// or removed). The same note-offs as `reset()`, but the bars, the cursor and the last
+    /// step stay, so the next step keeps playing the part instead of falling silent until
+    /// the slot's next part starts.
+    public mutating func releaseSounding() -> [Event] {
+        let offs = Set(active.values.map(\.pitch)).sorted().map { Event(pitch: $0, velocity: 0) }
+        active.removeAll()
+        return offs
+    }
+
     /// Release everything and drop the content (slot clear / loop stop). Returns the
     /// note-offs the caller must apply so no voice is left hanging.
     public mutating func reset() -> [Event] {
