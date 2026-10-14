@@ -114,7 +114,9 @@ final class EveryHandMadeMixChangeIsOneUndoStepTests: XCTestCase {
 
     func testTheHeaderAndPerformTapsAreOneStepEach() throws {
         let view = SourceText.codeOnly(try text(Self.workstation))
-        let header = try member("private func laneRow(_ row: WorkstationSummary.LaneRow) -> some View {", in: view)
+        // T1 (2026-10-14): the header's two switches moved into ONE builder shared by the canvas
+        // gutter and the card — the taps are pinned where they are built.
+        let header = try member("private func muteSoloSwitches(_ row: WorkstationSummary.LaneRow) -> some View {", in: view)
         let perform = SourceText.codeOnly(try text(Self.perform))
         let grid = try member("private func mixRow(_ row: MixRow) -> some View {", in: perform)
         for (name, body) in [("the track header", header), ("the Perform grid", grid)] {

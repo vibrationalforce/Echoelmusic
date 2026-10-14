@@ -8,9 +8,14 @@
 // track's head at the left of its own lane — one row per track, name and lane side by side. The
 // plate drew every track TWICE: once as a canvas row, once more as a card in a list underneath,
 // so a five-track song read as ten rows and the head sat a screen away from the lane it names.
-// On a phone two 44 pt Mute/Solo switches do not fit a 96 pt gutter beside a name, so the gutter
-// SELECTS and the one Mute/Solo stays in the open track's header — still exactly one control
-// each, now one tap away from the lane.
+// On a phone two 44 pt Mute/Solo switches do not fit a 96 pt gutter BESIDE a name, so the gutter
+// SELECTS and the one Mute/Solo stayed in the open track's header. ⭐ T1 (founder 2026-10-14,
+// pointing at the old 10.79.198/244 screens: „Das waren schon ziemlich gute Spuren vom
+// Aussehen"): the head is now TWO lines — the name, then the 44 pt Mute and Solo UNDER it — so
+// they fit the same 96 pt and every drawn track wears its switches beside its lane, as the old
+// screens did. They are built by the Workstation's ONE builder (`muteSoloSwitches`) and handed
+// to the canvas; the card of a drawn track stops repeating them. Still one control each on
+// screen.
 //
 // THE THREE CLAIMS:
 // 1. One pure rule decides which tracks keep a card: the open one, and every track the canvas
@@ -66,7 +71,7 @@ final class TheTrackHeadSitsOnTheCanvasTests: XCTestCase {
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.emptyLane.id, open: nil, canvasRows: rows),
                       "a track with no parts is not drawn — it keeps its card, or it has no head at all")
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.keysLane.id, open: Self.keysLane.id, canvasRows: rows),
-                      "the OPEN track's card is its header, with the one Mute and Solo")
+                      "the OPEN track's card is its header (its Mute and Solo stand in the gutter since T1)")
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.keysLane.id, open: nil, canvasRows: []),
                       "with no canvas at all, every track keeps its card")
     }
@@ -87,8 +92,8 @@ final class TheTrackHeadSitsOnTheCanvasTests: XCTestCase {
             the gutter is hidden from VoiceOver again — a control nobody can reach without sight. \
             Since A5 it is the head of its track; it speaks name and state and selects.
             """)
-        XCTAssertTrue(canvas.contains("private static let rowHeight: CGFloat = 44"),
-                      "a tap target is 44 pt tall (A5); the gutter fills the row")
+        XCTAssertTrue(canvas.contains("private static let rowHeight: CGFloat = 68"),
+                      "T1: a 20 pt name line over the 44 pt switches — a tap target is still 44 pt")
 
         let view = SourceText.codeOnly(try text(Self.workstation))
         XCTAssertTrue(view.contains("if ArrangeCanvas.listsCard(row.id, open: open, canvasRows: arrangeRows) { laneRow(row) }"),
@@ -114,6 +119,15 @@ final class TheTrackHeadSitsOnTheCanvasTests: XCTestCase {
         let view = SourceText.codeOnly(try text(Self.workstation))
         XCTAssertEqual(view.components(separatedBy: "TrackMix.flipMute").count - 1, 1, "ONE Mute control")
         XCTAssertEqual(view.components(separatedBy: "TrackMix.flipSolo").count - 1, 1, "ONE Solo control")
+        // T1: the gutter PLACES the Workstation's one builder; the card of a drawn track stops
+        // repeating it, unless Focus has put the canvas aside.
+        XCTAssertTrue(gutter.contains("switches(row)"), "the drawn track wears its switches in the gutter")
+        XCTAssertTrue(view.contains("switches: { AnyView(muteSoloSwitches($0)) })"),
+                      "the canvas gets the ONE builder, not a second implementation")
+        XCTAssertTrue(view.contains("if editorFocusShown || !ArrangeCanvas.draws(row) { muteSoloSwitches(row) }"),
+                      "a card repeats them only where the canvas does not draw the track")
+        XCTAssertTrue(canvas.contains("summary.lanes.filter { draws($0) }"),
+                      "the canvas rows and the card ask the SAME rule")
         XCTAssertTrue(view.contains("TrackInspectorView(laneID: row.id)"), "the open track still mounts its inspector")
         XCTAssertTrue(view.contains("TrackArmToggle(laneID: row.id)"), "and its record arm")
     }

@@ -195,7 +195,7 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
         XCTAssertEqual(workstation.components(separatedBy: "ArrangeCanvasView(").count - 1, 1)
         XCTAssertTrue(workstation.contains("let arrangeRows = ArrangeCanvas.rows(summary)"),
                       "the rows are the pure rule's rows — never a bio curve, never an empty track")
-        XCTAssertTrue(workstation.contains("songTicks: ArrangementStrip.songTicks(summary))"),
+        XCTAssertTrue(workstation.contains("songTicks: ArrangementStrip.songTicks(summary)"),
                       "every row gets the SAME scale, or the rows do not line up")
         let doors = try filesMatching { code, _ in code.contains("ArrangeCanvasView(") }
         XCTAssertEqual(doors, [Self.workstationPath])

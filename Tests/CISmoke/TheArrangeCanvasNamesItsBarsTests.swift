@@ -212,7 +212,8 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         // alone, a symbol-led row would be 3 pt + the symbol wider than the names column's empty
         // ruler cell (`nameWidth`), and the time column would start at a different x per row.
         let gutterBody = String(body[gutter.upperBound..<gutterEnd.lowerBound])
-        XCTAssertNotNil(sequence([".lineLimit(1)", "}", ".frame(width: Self.nameWidth, alignment: .leading)"],
+        // T1 (2026-10-14): the outer stack is now the two-line head — name line, then the switches.
+        XCTAssertNotNil(sequence(["switches(row)", "}", ".frame(width: Self.nameWidth, alignment: .leading)"],
                                  in: gutterBody),
                         "the gutter's whole stack — symbol and name — keeps the width of the names column's empty ruler cell")
         XCTAssertEqual(gutterBody.components(separatedBy: "Self.nameWidth").count - 1, 1,

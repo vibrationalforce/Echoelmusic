@@ -382,7 +382,8 @@ struct WorkstationView: View {
                     if !focused {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       bpm: player.preflightTempo,
-                                      songTicks: ArrangementStrip.songTicks(summary))
+                                      songTicks: ArrangementStrip.songTicks(summary),
+                                      switches: { AnyView(muteSoloSwitches($0)) })
                     } else {
                         // AE-3 review (MED-1): the ruler stays — the one control that moves a
                         // stopped playhead, which "At playhead" tells the player to tap.
@@ -669,14 +670,11 @@ struct WorkstationView: View {
             // loses its own focus and hint. The facts are ONE sentence; the switch is a switch.
             // B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo step
                 // (`TrackMix.tapStep` opens and closes it, so this view sends the store no message).
-            if let role = muteSoloRole {
-                headerSwitch("M", name: String(localized: "Mute"), on: row.isMuted, hint: TrackMix.muteHint(role)) {
-                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
-                }
-                headerSwitch("S", name: String(localized: "Solo"), on: row.isSoloed, hint: TrackMix.soloHint(role)) {
-                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
-                }
-            }
+            // T1 (founder 2026-10-14, the old track look): a track the canvas draws wears its
+            // Mute and Solo in the canvas gutter, beside its lane — the card under the canvas
+            // stops repeating them, so each switch still has ONE place on screen.
+            // In Focus the canvas steps aside (AE-3a), so the card wears them again.
+            if editorFocusShown || !ArrangeCanvas.draws(row) { muteSoloSwitches(row) }
             if row.kind == .audio { warpSwitch(laneID: row.id) }
         }
         .padding(.vertical, 6).padding(.horizontal, 10)
@@ -688,6 +686,27 @@ struct WorkstationView: View {
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
             .strokeBorder(selected ? EchoelTheme.accent : EchoelTheme.border,
                           lineWidth: selected ? 2 : 1))
+    }
+
+    /// A track's Mute and Solo — only where they are HEARD (`TrackMix.controls`). ONE builder for
+    /// both places a track head stands: the canvas gutter (T1) and the card of a track the canvas
+    /// cannot draw. B3c: a tap is a whole gesture — one write inside it, closed at once: ONE Undo
+    /// step (`TrackMix.tapStep`), so no view sends the store a message of its own.
+    @ViewBuilder
+    private func muteSoloSwitches(_ row: WorkstationSummary.LaneRow) -> some View {
+        let controls = TrackMix.controls(of: row.id, in: timeline.document,
+                                         voiceCapacity: player.laneVoiceCapacity)
+        let muteSoloRole = controls.flatMap { $0.muteSolo ? $0.role : nil }
+        if let role = muteSoloRole {
+            HStack(spacing: 4) {
+                headerSwitch("M", name: String(localized: "Mute"), on: row.isMuted, hint: TrackMix.muteHint(role)) {
+                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipMute(laneID: row.id, timeline: timeline) }
+                }
+                headerSwitch("S", name: String(localized: "Solo"), on: row.isSoloed, hint: TrackMix.soloHint(role)) {
+                    TrackMix.tapStep(laneID: row.id, timeline: timeline) { TrackMix.flipSolo(laneID: row.id, timeline: timeline) }
+                }
+            }
+        }
     }
 
     /// One track-header switch (Mute or Solo). A letter on screen, the full word to VoiceOver;

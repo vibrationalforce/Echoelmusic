@@ -79,7 +79,9 @@
 //  (`TimelineDocument.effectiveGain`): mute wins over its own solo. Nothing here MUTES or
 //  SOLOS — Mute and Solo stay the track header's switches, the ONE control for each. Since A5
 //  (founder 2026-10-01) a tap on the name gutter SELECTS the track and opens that header under
-//  the canvas; on a phone two 44 pt switches do not fit a 96 pt gutter beside a name.
+//  the canvas. Since T1 (founder 2026-10-14, the old track look) the gutter is two lines — the
+//  name, then the 44 pt Mute and Solo UNDER it — built by the Workstation's ONE switch builder
+//  and only PLACED here, so this file still names neither mute nor solo.
 //
 //  ⭐ A PART SHOWS ITS NOTES (modes census 2026-09-26, design slice 11). Every block was the same
 //  grey bar, so two parts of one track looked alike and a composer evolve changed nothing on
@@ -110,12 +112,18 @@ enum ArrangeCanvas {
     /// The tracks the canvas draws, in the document's order: every non-bio track with parts.
     /// A bio curve is not an arrangement and draws no row.
     nonisolated static func rows(_ summary: WorkstationSummary) -> [WorkstationSummary.LaneRow] {
-        summary.lanes.filter { !$0.isBio && $0.regionCount > 0 }
+        summary.lanes.filter { draws($0) }
+    }
+
+    /// Whether the canvas draws this track — ONE rule for `rows` and for the card that hands its
+    /// Mute and Solo to the canvas gutter (T1), so the two cannot disagree (#416).
+    nonisolated static func draws(_ row: WorkstationSummary.LaneRow) -> Bool {
+        !row.isBio && row.regionCount > 0
     }
 
     /// Whether a track also gets a card in the list under the canvas (A5, founder 2026-10-01).
     /// The canvas gutter IS the head of every track it draws, so only the OPEN track (its card
-    /// is the inspector's head, holding the one Mute/Solo) and the tracks the canvas cannot draw
+    /// is the inspector's head; its Mute/Solo stand in the gutter since T1) and the tracks the canvas cannot draw
     /// (a bio curve, a track with no parts yet) keep a card. Every track has exactly one head.
     nonisolated static func listsCard(_ laneID: UUID, open: UUID?,
                                       canvasRows: [WorkstationSummary.LaneRow]) -> Bool {
@@ -387,11 +395,16 @@ struct ArrangeCanvasView: View {
     /// depend on it at all (its rate cancels the tempo).
     let bpm: Double
     let songTicks: Int
+    /// T1 (founder 2026-10-14, the old track look): each track's Mute and Solo, built by the
+    /// Workstation's ONE switch builder and placed under the name in the gutter. The canvas only
+    /// PLACES them — it never names mute or solo itself (`TheCanvasShowsWhatIsSilentTests`).
+    let switches: @MainActor (WorkstationSummary.LaneRow) -> AnyView
 
     /// Tall enough to hit with a finger and to read a part's sketch at a glance (A1, founder
     /// 2026-10-01: the workstation mockups' lanes; 28 pt read as a strip of grey bars). 44 since
-    /// A5: the gutter became a tap target, and a tap target is 44 pt.
-    private static let rowHeight: CGFloat = 44
+    /// A5: the gutter became a tap target, and a tap target is 44 pt. T1 (founder 2026-10-14):
+    /// two lines — the name, then the 44 pt Mute and Solo — the track head of the old screens.
+    private static let rowHeight: CGFloat = 68
     /// Room for the track's hue band, its instrument symbol and a short name.
     static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
@@ -451,38 +464,43 @@ struct ArrangeCanvasView: View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
         let open = WorkstationSelection.resolvedTrack(selection.trackID, in: document) == row.id
         let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
-        return HStack(spacing: 4) {
-            // The track's identity (A1): a hue band and the instrument's symbol in that hue —
-            // the colour never travels without the symbol and the name.
-            RoundedRectangle(cornerRadius: 1.5)
-                .fill(hue.color)
-                .frame(width: 3)
-            Image(systemName: EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,
-                                                          isBio: row.isBio))
-                .font(EchoelTheme.font(11))
-                .foregroundStyle(hue.color)
-            if let symbol = ArrangeCanvas.symbol(hearing) {
-                Image(systemName: symbol)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                // The track's identity (A1): a hue band and the instrument's symbol in that hue —
+                // the colour never travels without the symbol and the name.
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(hue.color)
+                    .frame(width: 3)
+                Image(systemName: EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,
+                                                              isBio: row.isBio))
                     .font(EchoelTheme.font(11))
-                    .foregroundStyle(EchoelTheme.dim)
+                    .foregroundStyle(hue.color)
+                if let symbol = ArrangeCanvas.symbol(hearing) {
+                    Image(systemName: symbol)
+                        .font(EchoelTheme.font(11))
+                        .foregroundStyle(EchoelTheme.dim)
+                }
+                Text(row.name)
+                    .font(EchoelTheme.font(12))
+                    .foregroundStyle(EchoelTheme.text)
+                    .lineLimit(1)
             }
-            Text(row.name)
-                .font(EchoelTheme.font(12))
-                .foregroundStyle(EchoelTheme.text)
-                .lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { selection.toggleTrack(row.id) }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(row.name + ArrangeCanvas.spokenState(hearing))
+            .accessibilityAddTraits(open ? [.isButton, .isSelected] : [.isButton])
+            .accessibilityAction { selection.toggleTrack(row.id) }
+            .accessibilityHint(open ? String(localized: "Closes this track's details")
+                                    : String(localized: "Opens this track's details: its device, and its mixer and parts where it has them"))
+            // T1: the switches are their own elements, outside the name's combined one (#621).
+            switches(row)
         }
         .frame(width: Self.nameWidth, alignment: .leading)
-        .frame(maxHeight: .infinity)
+        .frame(maxHeight: .infinity, alignment: .top)
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .strokeBorder(open ? EchoelTheme.accent : Color.clear, lineWidth: 2))
-        .contentShape(Rectangle())
-        .onTapGesture { selection.toggleTrack(row.id) }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(row.name + ArrangeCanvas.spokenState(hearing))
-        .accessibilityAddTraits(open ? [.isButton, .isSelected] : [.isButton])
-        .accessibilityAction { selection.toggleTrack(row.id) }
-        .accessibilityHint(open ? String(localized: "Closes this track's details")
-                                : String(localized: "Opens this track's details: its device, and its mixer and parts where it has them"))
     }
 
     private func laneRow(_ row: WorkstationSummary.LaneRow, selected: UUID?) -> some View {
