@@ -5264,3 +5264,15 @@ Produktgesetz schlägt historische Streichung. Reihenfolge nach H6: Automation s
 Harte Kopplungen: die Rückkamera ist der Puls-Sensor (beim Filmen Puls über Gurt/Watch); Ton
 braucht das Mikrofon zurück — `NSMicrophoneUsageDescription` + ein `RecordRouteOwner`-Fall im
 SELBEN Commit (Info.plist ist founder-gated). Review 2026-11-13.
+
+### 2026-10-14 — Belohnung: kein Bitcoin; faire Verteilung in Euro, gestuft
+Founder fragte nach „sozialer Umverteilung … rewards via bitcoin oder andere Strategie". Entschieden
+(Sitzung unter Founder-Delegation, Founder kann überstimmen): **kein Bitcoin, kein Token, kein
+Wallet in der App.** Gründe: Apple 3.1.1/3.1.5 (Krypto weder als Freischaltung noch als
+Aufgaben-Belohnung, Wallet nur für Firmen-Accounts), jede BTC-Auszahlung ist in Deutschland ein
+eigener Veräußerungsvorgang, Blockchain vs. DSGVO Art. 17, Musik-Krypto-Plattformen bis 2026
+gescheitert. Stattdessen: v1.0 Feedback + Credits + Hall of Fame + Liste für ein Gratis-Jahr
+„Echoel Live" (kein Geld); v1.1 Angebotscodes, beauftragte Inhalte gegen Euro-Honorar, ein
+veröffentlichter Topf nach anonymer On-Device-Nutzung (Council + Datenschutz vorher). Vor jeder
+Zahlung Steuerberater und Anwalt. Nie: bezahlte Bewertungen, Belohnung an Bio-Werte gekoppelt.
+Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 2026-11-13.
