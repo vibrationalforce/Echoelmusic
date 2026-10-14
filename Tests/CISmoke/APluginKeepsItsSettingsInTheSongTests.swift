@@ -127,7 +127,7 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertTrue(app.contains("MultiRollFanout.hostedInstrumentState(forSlot: slot, in: store.document,"))
         XCTAssertTrue(app.contains("pluginHost.setInstrument(component, state: state, forSlot: slot)"))
         guard let finish = host.range(of: "private func finishLoad("),
-              let restore = host.range(of: "if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }"),
+              let restore = host.range(of: "if let data = pendingState.removeValue(forKey: slot) {\n            restore(data, to: unit, name: component.name)"),
               let held = host.range(of: "hosted[slot] = Hosted(component: component, unit: unit)") else {
             return XCTFail("ANCHOR MISSING: the restore in finishLoad")
         }
@@ -140,5 +140,32 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertTrue(host[unload.upperBound...].prefix(200).contains("pendingState[slot] = nil"),
                       "unloading a slot forgets settings it never applied")
         XCTAssertTrue(host.contains("pendingState.removeAll()"), "a media reset forgets them too; the next prime names them again")
+    }
+
+    // MARK: 7 — H4d: the same plugin with OTHER song settings gets them; the same bytes change nothing
+
+    /// Review finding G (read-only review of 1657030d6…8b1203e93): `setInstrument` returned on the
+    /// same component, so a unit still loaded from project A kept A's sound in project B, and closing
+    /// its window wrote A's settings into B. SOURCE-TEXT SCAN — the host is an `AVAudioUnit` owner no
+    /// test can load; the sound is a DEVICE PROBE.
+    func testTheSamePluginWithOtherSettingsGetsThem() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let url = root.appendingPathComponent("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        guard FileManager.default.fileExists(atPath: url.path) else { throw XCTSkip("no source tree") }
+        let host = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        guard let same = host.range(of: "guard wanted[slot] != component else {"),
+              let load = host.range(of: "unload(slot)\n        failed[slot] = nil") else {
+            return XCTFail("ANCHOR MISSING: the same-component branch of setInstrument")
+        }
+        let branch = String(host[same.upperBound..<load.lowerBound])
+        XCTAssertTrue(branch.contains("guard appliedState[slot] != state, let unit = hosted[slot]?.unit else { return }"),
+                      "the same bytes must change nothing — a capture comes back from the song on every onset")
+        XCTAssertTrue(branch.contains("restore(state, to: unit, name: component.name)"), "other settings reach the loaded unit")
+        XCTAssertTrue(branch.contains("pendingState[slot] = state"), "a unit still loading takes the newest settings")
+        XCTAssertFalse(branch.contains("unload("), "COUNTERWEIGHT: new settings never reload the unit (that pauses the engine)")
+        XCTAssertTrue(host.contains("options: 0)\n            appliedState[slot] = data"), "a capture records what the song will hand back")
+        XCTAssertEqual(host.components(separatedBy: "appliedState[slot] = nil").count - 1, 2, "unload and a dead unit forget it")
+        XCTAssertTrue(host.contains("appliedState.removeAll()"), "a media reset forgets it")
     }
 }

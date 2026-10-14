@@ -90,6 +90,11 @@ final class HostedInstrumentHost {
     private var failed: [Int: DeviceInsert.PluginComponent] = [:]
     /// H4c — the settings the song keeps for the unit a slot is loading, applied when it arrives.
     private var pendingState: [Int: Data] = [:]
+    /// H4d — the settings the LOADED unit of a slot was last given by the song or reported to it
+    /// (`captureState`). A slot naming the same component with OTHER settings (another project
+    /// opened, an older version restored) gets them applied; the same bytes coming back from the
+    /// song after a capture change nothing, so a plugin the person is playing is never reset.
+    private var appliedState: [Int: Data] = [:]
     private var transpose: [Int: Int] = [:]
     /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
     private var sounding: [Int: [Int: UInt8]] = [:]
@@ -126,7 +131,21 @@ final class HostedInstrumentHost {
     /// load. `state` is the unit's own settings as the song keeps them (H4c), applied once the
     /// unit has loaded — a unit already playing keeps what it has.
     func setInstrument(_ component: DeviceInsert.PluginComponent?, state: Data?, forSlot slot: Int) {
-        guard wanted[slot] != component else { return }
+        guard wanted[slot] != component else {
+            // H4d (review of 1657030d6…8b1203e93, finding G): the same component with OTHER song
+            // settings. Without this, a unit still loaded from project A kept A's sound in project
+            // B, and closing its window then wrote A's settings into B. nil settings change
+            // nothing: a unit cannot be reset to defaults without reloading it.
+            guard let component, let state else { return }
+            if hosted[slot]?.component == component {
+                guard appliedState[slot] != state, let unit = hosted[slot]?.unit else { return }
+                restore(state, to: unit, name: component.name)
+                appliedState[slot] = state
+            } else {
+                pendingState[slot] = state   // still loading: the newest settings win
+            }
+            return
+        }
         if let component, failed[slot] == component { return }   // keeps its built-in voice
         unload(slot)
         failed[slot] = nil
@@ -213,7 +232,9 @@ final class HostedInstrumentHost {
         guard let unit = hosted[slot]?.unit,
               let state = unit.auAudioUnit.fullStateForDocument else { return nil }
         do {
-            return try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)
+            let data = try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)
+            appliedState[slot] = data   // H4d: the song will hand these bytes back — nothing to re-apply
+            return data
         } catch {
             log.audio("Plugin '\(hosted[slot]?.component.name ?? "?")' settings could not be saved: \(error)", level: .warning)
             return nil
@@ -240,7 +261,10 @@ final class HostedInstrumentHost {
             failed[slot] = component
             return
         }
-        if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }
+        if let data = pendingState.removeValue(forKey: slot) {
+            restore(data, to: unit, name: component.name)
+            appliedState[slot] = data
+        }
         hosted[slot] = Hosted(component: component, unit: unit)
         Self.apply(mix[slot] ?? (gain: 1, pan: 0), to: unit)
         log.audio("Plugin '\(component.name)' by \(component.manufacturerName) plays rack slot \(slot)")
@@ -272,6 +296,7 @@ final class HostedInstrumentHost {
     private func unload(_ slot: Int) {
         wanted[slot] = nil
         pendingState[slot] = nil
+        appliedState[slot] = nil
         sounding[slot] = nil
         guard let held = hosted.removeValue(forKey: slot) else { return }
         if let block = held.unit.auAudioUnit.scheduleMIDIEventBlock {
@@ -295,6 +320,7 @@ final class HostedInstrumentHost {
         engine.detachAudioUnit(held.unit)
         wanted[slot] = nil
         pendingState[slot] = nil
+        appliedState[slot] = nil
         sounding[slot] = nil
         failed[slot] = held.component
     }
@@ -305,6 +331,7 @@ final class HostedInstrumentHost {
         hosted.removeAll()
         wanted.removeAll()
         pendingState.removeAll()
+        appliedState.removeAll()
         failed.removeAll()
         sounding.removeAll()
     }
