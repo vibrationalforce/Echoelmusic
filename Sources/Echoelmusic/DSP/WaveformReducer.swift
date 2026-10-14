@@ -7,8 +7,16 @@
 // ⭐ LIVE AGAIN SINCE AUDIO EDITOR W1 (2026-10-08). Its consumer is
 // `Sequencer/WaveformSketch`: the overview of a media file is folded with
 // `foldStereo`, bucketed with `reduce`, and each display column of an audio part on
-// the Arrange canvas is the `downsample` join of the buckets it overlaps — so this
-// file is the ONE reduction rule the canvas draws by (#416).
+// the Arrange canvas is the `join` of the buckets a column overlaps — the same
+// algebra as `downsample` of that span, without copying it. `downsample` is
+// `join` repeated, so there is still one reduction rule (#416).
+//
+// ⭐ A column used to call `downsample(Array(slice), factor: slice.count).first`.
+// `Array(slice)` heap-copied the span, and `downsample` allocated a second
+// array, once per column, up to `WaveformSketch.maxColumns` (1 024), inside the
+// canvas draw that runs on every pinch and trim frame. That is the hitch on
+// zoom. `join` walks the slice in place: min of mins, max of maxes, RMS of RMS,
+// and returns the one bucket. The picture is unchanged.
 //
 // ⛔ History, kept because it is why the core survived: it was TEST-ONLY from
 // 2026-07-28 (#132 Slice 5), when the reader, the disk cache and the view that drew
@@ -71,6 +79,7 @@ public enum WaveformReducer {
 
     /// Re-reduce an existing bucket tier to a coarser one (mip chain: fine tier
     /// is computed from samples once; coarse tiers derive cheaply from it).
+    /// Each group is `join` — one rule, not a second copy of the min/max/RMS math.
     public static func downsample(_ buckets: [WaveformBucket], factor: Int) -> [WaveformBucket] {
         guard !buckets.isEmpty else { return [] }
         let f = Swift.max(1, factor)
@@ -79,17 +88,30 @@ public enum WaveformReducer {
         var i = 0
         while i < buckets.count {
             let end = Swift.min(i + f, buckets.count)
-            var lo = buckets[i].min, hi = buckets[i].max
-            var sumSq: Double = 0
-            for j in i..<end {
-                lo = Swift.min(lo, buckets[j].min)
-                hi = Swift.max(hi, buckets[j].max)
-                sumSq += Double(buckets[j].rms) * Double(buckets[j].rms)
-            }
-            let rms = Float((sumSq / Double(end - i)).squareRoot())
-            out.append(WaveformBucket(min: lo, max: hi, rms: rms))
+            if let joined = join(buckets[i..<end]) { out.append(joined) }
             i = end
         }
         return out
+    }
+
+    /// One coarser bucket from `buckets`, in place: min of mins, max of maxes,
+    /// RMS of the RMS values. Nil when `buckets` is empty. No heap allocation —
+    /// a display column calls this on the slice it overlaps, and `downsample`
+    /// calls it on each group, so both stay the same algebra.
+    public static func join<S: Sequence>(_ buckets: S) -> WaveformBucket? where S.Element == WaveformBucket {
+        var iterator = buckets.makeIterator()
+        guard let first = iterator.next() else { return nil }
+        var lo = first.min
+        var hi = first.max
+        var sumSq = Double(first.rms) * Double(first.rms)
+        var count = 1
+        while let bucket = iterator.next() {
+            lo = Swift.min(lo, bucket.min)
+            hi = Swift.max(hi, bucket.max)
+            sumSq += Double(bucket.rms) * Double(bucket.rms)
+            count += 1
+        }
+        let rms = Float((sumSq / Double(count)).squareRoot())
+        return WaveformBucket(min: lo, max: hi, rms: rms)
     }
 }

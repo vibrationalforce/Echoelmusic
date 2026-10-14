@@ -30,8 +30,9 @@
 // 6. SOURCE-TEXT SCAN — the canvas hands each block its window from the same one read of the
 //    clip grid; the block draws it between the note sketch and the name tag; the Workstation
 //    hands the tempo in COLD.
-// 7. COUNTERWEIGHTS (#343) — the premises: the reduction is `WaveformReducer`'s three functions
-//    (#416); the player still windows a region by the same two calls; the app's injected
+// 7. COUNTERWEIGHTS (#343) — the premises: the reduction is `WaveformReducer`'s
+//    (`foldStereo`, `reduce`, and `join` — the one-bucket `downsample`, walked in
+//    place; `downsample` itself calls `join`); the player still windows a region by the same two calls; the app's injected
 //    resolver is still `MediaLibrary.resolveRef` (#1439); `preflightTempo` is still
 //    `@ObservationIgnored`.
 //
@@ -378,10 +379,17 @@ final class AnAudioPartShowsItsWaveformTests: XCTestCase {
 
     func testThePremisesStillHold() throws {
         let sketch = try code(Self.sketch)
-        for needle in ["WaveformReducer.foldStereo(", "WaveformReducer.reduce(folded, bucketSize: perBucket)",
-                       "WaveformReducer.downsample("] {
+        for needle in ["WaveformReducer.foldStereo(",
+                       "WaveformReducer.reduce(Array(carry[..<whole]), bucketSize: perBucket)",
+                       "WaveformReducer.reduce(carry, bucketSize: perBucket)",
+                       "WaveformReducer.join("] {
             XCTAssertTrue(sketch.contains(needle), "the reduction is the reducer's (#416): `\(needle)` is gone")
         }
+        XCTAssertFalse(sketch.contains("Array(overview.buckets"),
+                       "a display column copies its buckets again — that heap copy, once per column, is the pinch hitch")
+        let reducer = try code("Sources/Echoelmusic/DSP/WaveformReducer.swift")
+        XCTAssertTrue(reducer.contains("join(buckets[i..<end])"),
+                      "`downsample` no longer calls `join` — two copies of the min/max/RMS rule (#416)")
         let lanes = try code(Self.lanePlayer)
         XCTAssertTrue(lanes.contains("AudioRegionPlayback.filePositionSeconds(for: region, atTick: tick,"),
                       "the player still finds the media position by this function — the canvas asks the same one")
