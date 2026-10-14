@@ -2298,6 +2298,26 @@ public final class AudioEngine {
         return true
     }
 
+    /// Crash 2624 (v10.79.499, 2026-10-14): `AVAudioPlayerNode.play()` raises an NSException —
+    /// "player started when in a disconnected state" — when the node has no path to the output,
+    /// and the app dies on the tap that started it. This walks the node's output connections
+    /// (bus 0 each hop) to the engine's output. nil = wired; otherwise the FIRST missing link, in
+    /// words, so the diag log names it (the log of 2624 could not). Control plane only.
+    func missingOutputLink(from node: AVAudioNode) -> String? {
+        var current = node
+        for hop in 0..<8 {
+            if current === masterEngine.mainMixerNode || current === masterEngine.outputNode { return nil }
+            guard current.engine === masterEngine else {
+                return "hop \(hop): \(type(of: current)) not attached"
+            }
+            guard let next = masterEngine.outputConnectionPoints(for: current, outputBus: 0).first?.node else {
+                return "hop \(hop): \(type(of: current)) has no output connection"
+            }
+            current = next
+        }
+        return "no output within 8 hops"
+    }
+
     // MARK: - Video audio capture (mux the mix into a visual recording)
 
     /// Grab the last `seconds` of the master mix from RetroCapture's always-on ring
