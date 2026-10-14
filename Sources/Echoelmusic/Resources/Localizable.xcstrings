@@ -23845,14 +23845,14 @@
         }
       }
     },
-    " with its default sound. Its own screen and settings are not available here yet." : {
+    " with its default sound. Its own settings are not saved with the piece yet." : {
       "comment" : "Track Device page (production H2c): end of that sentence — the plugin's screen and saved settings are not built yet.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " with its default sound. Its own screen and settings are not available here yet."
+            "value" : " with its default sound. Its own settings are not saved with the piece yet."
           }
         }
       }
@@ -23889,6 +23889,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "effects installed — inserting one on a track is not available yet."
+          }
+        }
+      }
+    },
+    "Open plugin" : {
+      "comment" : "Track Device page (production H3): opens the chosen Audio Unit's own screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open plugin"
+          }
+        }
+      }
+    },
+    "Shows this plugin's own screen" : {
+      "comment" : "Track Device page (production H3): VoiceOver hint of the Open plugin button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows this plugin's own screen"
+          }
+        }
+      }
+    },
+    "This plugin has no screen of its own." : {
+      "comment" : "Track Device page (production H3): the plugin answered without a view controller.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This plugin has no screen of its own."
+          }
+        }
+      }
+    },
+    "The plugin loads when its track plays — press Play, then open it." : {
+      "comment" : "Track Device page (production H3): Open plugin tapped before the hosted unit loaded.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The plugin loads when its track plays — press Play, then open it."
           }
         }
       }

@@ -38,6 +38,13 @@
 // was SENT with, so a transpose change while a note is held never strands it. Detune and the
 // octave doubler are rack-voice features and do not reach a hosted unit.
 //
+// THE PLUGIN'S OWN SCREEN (H3). `requestView(forSlot:done:)` asks the LOADED unit for its view
+// controller only when the window opens, and nothing here keeps it: the window holds it while it is
+// shown and drops it on close (a plugin's screen can cost real memory, and every instance shares
+// one budget). The system completes the request off the main thread — the result crosses in a
+// box and is handed over on the main actor. A nil controller is a real answer: the plugin has no
+// screen of its own. A slot that is still loading, or has no unit, answers false at once.
+//
 // NEEDS-FOUNDER-VERIFY H2: a third-party instrument chosen on a rack track sounds on the device;
 // no click beyond the short pause at load; it survives a headphone change and a media reset;
 // nothing changes for a track with no plugin chosen.
@@ -45,6 +52,9 @@
 import Foundation
 #if canImport(AVFoundation)
 import AVFoundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 final class HostedInstrumentHost {
@@ -64,6 +74,10 @@ final class HostedInstrumentHost {
         init(_ unit: AVAudioUnit?) { self.unit = unit }
     }
 
+    /// The one host the running app made (`EchoelmusicApp` builds it once, at start). The Device
+    /// page reaches it here to open a plugin's own screen; weak, so nothing here keeps it alive.
+    private(set) static weak var live: HostedInstrumentHost?
+
     private let engine: AudioEngine
     /// What each slot wants to play. Set before the load starts; a slot with an entry owns its
     /// notes (they reach the unit once it is loaded, and are dropped while it loads).
@@ -81,6 +95,7 @@ final class HostedInstrumentHost {
 
     init(engine: AudioEngine) {
         self.engine = engine
+        Self.live = self
         #if os(iOS)
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
@@ -153,6 +168,27 @@ final class HostedInstrumentHost {
         mix[slot] = current
         if let unit = hosted[slot]?.unit { Self.apply(current, to: unit) }
     }
+
+    #if canImport(UIKit)
+    /// Carries the plugin's view controller across the completion handler's thread hop.
+    private final class ControllerBox: @unchecked Sendable {
+        let controller: UIViewController?
+        init(_ controller: UIViewController?) { self.controller = controller }
+    }
+
+    /// Ask `slot`'s loaded unit for its own screen. False at once when the slot holds no loaded
+    /// unit (nothing will be called); otherwise `done` runs once, on the main actor, with the
+    /// controller or nil (the plugin has no screen of its own).
+    func requestView(forSlot slot: Int,
+                     done: @escaping @MainActor @Sendable (UIViewController?) -> Void) -> Bool {
+        guard let unit = hosted[slot]?.unit else { return false }
+        unit.auAudioUnit.requestViewController { @Sendable controller in
+            let box = ControllerBox(controller)
+            Task { @MainActor in done(box.controller) }
+        }
+        return true
+    }
+    #endif
 
     // MARK: - Private
 
