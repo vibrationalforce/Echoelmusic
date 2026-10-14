@@ -72,6 +72,11 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         }
         XCTAssertTrue(finish[failed.upperBound...].prefix(300).contains("wanted[slot] = nil"),
                       "a unit that cannot load gives the slot back to its built-in voice")
+        guard let attachFail = finish.range(of: "guard engine.attachAudioUnit(unit, slot: slot) else {") else {
+            return XCTFail("ANCHOR MISSING: the attach-failure branch")
+        }
+        XCTAssertTrue(finish[attachFail.upperBound...].prefix(400).contains("failed[slot] = component"),
+                      "a unit the engine cannot attach is remembered as failed, or every onset retries it")
     }
 
     // MARK: 2 — one owner per slot
