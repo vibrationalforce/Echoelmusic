@@ -105,6 +105,9 @@ final class HostedInstrumentHost {
     /// Per slot: the pitches whose attack the BUILT-IN voice played while the unit loaded (P0-2).
     /// Their releases go back to the built-in voice, wherever the unit is by then.
     private var builtInHeld: [Int: Set<Int>] = [:]
+    /// Per slot: the number of the newest load request. Only that request's answer may change the
+    /// slot — the component alone cannot tell A's first load from A's second after A → B → A.
+    private var loadRequest: [Int: Int] = [:]
     private var resetObserver: NSObjectProtocol?
     private var invalidationObserver: NSObjectProtocol?
 
@@ -200,11 +203,13 @@ final class HostedInstrumentHost {
                                                     componentManufacturer: component.manufacturer,
                                                     componentFlags: 0,
                                                     componentFlagsMask: 0)
+        let request = (loadRequest[slot] ?? 0) &+ 1
+        loadRequest[slot] = request
         AVAudioUnit.instantiate(with: description, options: []) { @Sendable [weak self] unit, error in
             let box = UnitBox(unit)
             let failure = error.map { String(describing: $0) }
             Task { @MainActor in
-                self?.finishLoad(box.unit, failure: failure, slot: slot, component: component)
+                self?.finishLoad(box.unit, failure: failure, slot: slot, component: component, request: request)
             }
         }
     }
@@ -290,8 +295,12 @@ final class HostedInstrumentHost {
     // MARK: - Private
 
     private func finishLoad(_ unit: AVAudioUnit?, failure: String?, slot: Int,
-                            component: DeviceInsert.PluginComponent) {
-        // Stale: the slot wants something else now, or already holds a unit.
+                            component: DeviceInsert.PluginComponent, request: Int) {
+        // Stale: a newer request was made for this slot (deep audit 2026-10-14, Lieferung 1.2 —
+        // after A → B → A a late success OR a late failure of the FIRST A matched the component
+        // check: the success attached the wrong instance, the failure marked A failed while the
+        // second load was still coming). Then: the slot wants something else, or holds a unit.
+        guard loadRequest[slot] == request else { return }
         guard wanted[slot] == component, hosted[slot] == nil else { return }
         guard let unit else {
             log.audio("Plugin '\(component.name)' could not be loaded: \(failure ?? "no unit") — the track plays its built-in voice",

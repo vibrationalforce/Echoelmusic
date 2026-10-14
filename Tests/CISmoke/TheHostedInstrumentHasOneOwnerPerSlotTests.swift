@@ -11,7 +11,10 @@
 //  · Claim 1 — the load is safe against late answers: the completion handler is `@Sendable` and
 //    hops to the main actor (builds 2613/2618 died of an inferred main-actor closure called off
 //    main), and the stale check (the slot still wants this component, holds no unit) runs BEFORE
-//    the graph is touched. A failed load gives the slot back to its built-in voice.
+//    the graph is touched. A failed load gives the slot back to its built-in voice. Since the deep
+//    audit of 2026-10-14 (Lieferung 1.2) each load carries a request number and only the NEWEST
+//    request's answer counts — after A → B → A the component check alone let the first A's late
+//    success attach, or its late failure mark A failed.
 //  · Claim 2 — one owner per NOTE (P0-2, 2026-10-14): `route(_:forSlot:)` gives an attack to the
 //    LOADED unit, and to the built-in voice while the unit is still loading (⛔ until P0-2 a slot
 //    that merely WANTED a unit owned its notes and dropped them, so a fresh pick opened with
@@ -69,6 +72,16 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: the stale check or the attach in finishLoad")
         }
         XCTAssertLessThan(stale.lowerBound, attach.lowerBound, "the stale check comes before the graph")
+        guard let newest = finish.range(of: "guard loadRequest[slot] == request else { return }") else {
+            return XCTFail("ANCHOR MISSING: the newest-request check in finishLoad")
+        }
+        XCTAssertLessThan(newest.lowerBound, stale.lowerBound,
+                          "an older request's answer is dropped before it can attach OR mark the component failed")
+        guard let numbered = code.range(of: "let request = (loadRequest[slot] ?? 0) &+ 1\n        loadRequest[slot] = request\n        AVAudioUnit.instantiate(") else {
+            return XCTFail("ANCHOR MISSING: the request number taken right before the load")
+        }
+        XCTAssertTrue(code[numbered.upperBound...].prefix(400).contains("component: component, request: request)"),
+                      "the answer carries the number of the request it answers")
         guard let failed = finish.range(of: "guard let unit else {") else {
             return XCTFail("ANCHOR MISSING: the failed-load branch")
         }
