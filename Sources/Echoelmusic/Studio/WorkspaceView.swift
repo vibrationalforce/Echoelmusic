@@ -119,7 +119,7 @@ struct WorkspaceView: View {
     /// audit measured a fresh install landing on a wall with the piece invisible
     /// beneath it. Turn the flag OFF (`FeatureFlags.set(.instrumentHome, false)`)
     /// and the persisted visible/size prefs are honored untouched (no seed at all).
-    @AppStorage("visual.floating.visible") private var floatingVisualVisible = true
+    @AppStorage(StudioDefaultKeys.floatingVisualVisible.key) private var floatingVisualVisible = StudioDefaultKeys.floatingVisualVisible.value
     /// Rule 12 part 2 (2026-09-30): the in-app text size, applied HERE on `SurfaceHost` so the
     /// piece and the instrument share one size (it lived inside `EchoelStudioView` and sized the
     /// instrument alone). ONE writer since DAW shell S9a — the Text size buttons (`TextSizeRow`);
