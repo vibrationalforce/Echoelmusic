@@ -234,7 +234,10 @@ final class HostedInstrumentHost {
             return
         }
         guard engine.attachAudioUnit(unit, slot: slot) else {
+            // Remember it, like a failed load: otherwise every later region onset instantiates
+            // the plugin again, and each attempt can pause the running engine.
             wanted[slot] = nil
+            failed[slot] = component
             return
         }
         if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }

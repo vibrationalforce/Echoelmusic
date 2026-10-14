@@ -2352,7 +2352,10 @@ public final class AudioEngine {
     /// words, so the diag log names it (the log of 2624 could not). Control plane only.
     func missingOutputLink(from node: AVAudioNode) -> String? {
         var current = node
-        for hop in 0..<8 {
+        // The deepest real chain is nine nodes (player → time-pitch → space bus → environment →
+        // masterMixer → EQ → gain → limiter → mainMixer). Eight hops never reached the end, so a
+        // pitched part in Headphone space read "unwired" and stayed silent. 32 leaves room.
+        for hop in 0..<32 {
             if current === masterEngine.mainMixerNode || current === masterEngine.outputNode { return nil }
             guard current.engine === masterEngine else {
                 return "hop \(hop): \(type(of: current)) not attached"
@@ -2362,7 +2365,7 @@ public final class AudioEngine {
             }
             current = next
         }
-        return "no output within 8 hops"
+        return "no output within 32 hops"
     }
 
     // MARK: - Video audio capture (mux the mix into a visual recording)
