@@ -33,7 +33,7 @@
 // · COUNTERWEIGHTS, green on both trees: claim 3's one `.pullFootageFrame(` site and the pull inside
 //   `refreshFootage`; claim 4's sweep (every `: some View {` and `-> some View {` block in Sources/,
 //   524 on both trees, 0 extraction failures, 0 hits — PROPHYLACTIC); claim 6's MSL half; claim 15's
-//   renderer half; claim 16, a SCOPE PIN (it counts `.attachVideoOutput(` callers: 0 on both trees).
+//   renderer half; claim 16, a SCOPE PIN (since VV-6: the video card is the one owner that attaches).
 // · Claims 5–15 and 17–19's behaviour: FORWARD, on new symbols. NOT RUN (no toolchain). The
 //   expectations come from the algebra and `VideoFlashLimiter`'s stated rules (#442) and were driven
 //   through an exact Python port of the limiter and the pull: the 10 Hz strobe engages on its fifth
@@ -653,15 +653,31 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
                       "COUNTERWEIGHT: the renderer no longer binds the format the output asks for — no layer, no log (VV-5a/VV-5b)")
     }
 
-    /// Claim 16 — the honest scope: nothing attaches a video output yet.
-    func testNothingAttachesAVideoOutputYet() throws {
-        let attaches = try sources().map { count(".attachVideoOutput(", in: $0.code) }.reduce(0, +)
-        XCTAssertEqual(attaches, 0, """
-            Something now attaches a video output — VV-6 or VV-8, the first time own footage can reach \
-            the visual. Flip this claim in THAT commit and move the prose with it (#456): the scope \
-            paragraph of `VideoLayerSlot`, the `FootageFrame` and `refreshFootage` docs in \
-            `MetalBioView`, and the plan rows. This claim does not forbid the door (#364).
+    /// Claim 16 — the scope since VV-6: exactly ONE owner attaches a video output, the video card's
+    /// `VideoFootageOwner`, and it lets the layer go before the card removes the file.
+    /// (Until VV-6 this claim pinned 0 attaches and was named for that, #374.)
+    func testTheVideoCardIsTheOneOwnerOfTheVideoOutput() throws {
+        let files = try sources()
+        let attachers = files.filter { count(".attachVideoOutput(", in: $0.code) > 0 }.map { $0.name }
+        XCTAssertEqual(attachers, ["VideoSeedCard.swift"], """
+            The owners of a video output changed — today only the video card's `VideoFootageOwner` \
+            attaches (VV-6). A second owner (the VV-8 picture lane) may be right: then move this claim \
+            in THAT commit and say which owner wins the one slot (#364).
             """)
+        let card = try code("Sources/Echoelmusic/Studio/VideoSeedCard.swift")
+        XCTAssertEqual(count(".attachVideoOutput(", in: card), 1)
+        XCTAssertTrue(card.contains("VideoLayerSlot.shared.detachVideoOutput()"), "the owner never lets the layer go")
+        XCTAssertTrue(card.contains("player.isMuted = true"), "the picture plays without sound — the sound is the import door's")
+        XCTAssertTrue(card.contains("forName: AVPlayerItem.didPlayToEndTimeNotification, object: item, queue: .main)"),
+                      "the one observer is delivered on main, once per clip end (2613/2618)")
+        for hot in ["addPeriodicTimeObserver", "addBoundaryTimeObserver", "AVPlayerLooper", "DispatchQueue"] {
+            XCTAssertFalse(card.contains(hot), "the owner hands AVFoundation `\(hot)` — a per-frame or worker-delivered closure")
+        }
+        // The layer goes BEFORE the file: both places that remove the kept copy stop the footage first.
+        XCTAssertEqual(count("stopFootage()\n            discardKeptVideo()", in: card), 1, "the card going away")
+        XCTAssertEqual(count("stopFootage()\n        discardKeptVideo()", in: card), 1, "a newer pick")
+        XCTAssertTrue(card.contains("if keptVideo != nil { visualsButton }"),
+                      "the door is offered only while the card holds a copy to play")
     }
 
     /// Claim 17 — the limiter counts every DRAW, not only a new buffer: after a strobe engaged the

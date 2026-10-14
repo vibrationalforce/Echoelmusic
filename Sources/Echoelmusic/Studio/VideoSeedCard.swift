@@ -27,6 +27,13 @@
 // there, the sweep must first ask who still uses a file. Durable footage with a delete door is
 // VV-10. Guard: `TheVideoCardKeepsItsCopyInTheLibraryTests`.
 //
+// ⭐ VV-6: "SHOW IN VISUALS" PLAYS THE KEPT COPY AS A LAYER OF THE VISUAL — silent, looping, through
+// `VideoLayerSlot`, which applies the flash limiter (VV-4) on every draw. The player lives in
+// `VideoFootageOwner`, one per card, and goes with the copy: a newer pick, a read that fails and the
+// card going away stop it BEFORE the file is removed. ⚠️ The one closure handed to a framework is the
+// end-of-clip observer, delivered on `.main` and hopping once per loop, never per frame (2613/2618,
+// 10.76.48). Nothing about the player is read in a `body`; the card reads one Bool.
+//
 // ⚠️ WHAT IS NOT HERE, AND WHY — so nobody reads it as forgotten:
 // · Recording a video with the camera: #1304 removed video capture (founder 2026-09-12) and the
 //   rear camera is the pulse source. Import only.
@@ -47,6 +54,7 @@
 #if canImport(SwiftUI) && canImport(PhotosUI) && canImport(AVFoundation)
 import SwiftUI
 import PhotosUI
+import AVFoundation
 import CoreTransferable
 import UniformTypeIdentifiers
 
@@ -91,6 +99,77 @@ enum VideoLibraryLeftovers {
             if (try? fm.removeItem(at: entry)) != nil { removed += 1 }
         }
         return removed
+    }
+}
+
+/// VV-6 — the video track's size and turn, loaded off the main actor with the async API.
+enum VideoFootageGeometry {
+    /// Plain numbers, so the value crosses back to the main actor with no Sendable question.
+    struct Geometry: Sendable {
+        let width: Double
+        let height: Double
+        let turn: [Double]   // a, b, c, d, tx, ty of the track's preferred transform
+
+        var transform: CGAffineTransform {
+            CGAffineTransform(a: turn[0], b: turn[1], c: turn[2], d: turn[3], tx: turn[4], ty: turn[5])
+        }
+    }
+
+    static func load(url: URL) async -> Geometry? {
+        let asset = AVURLAsset(url: url)
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let loaded = try? await track.load(.naturalSize, .preferredTransform) else { return nil }
+        let t = loaded.1
+        return Geometry(width: Double(loaded.0.width), height: Double(loaded.0.height),
+                        turn: [t.a, t.b, t.c, t.d, t.tx, t.ty].map { Double($0) })
+    }
+}
+
+/// VV-6 — plays one kept video, silent and looping, into `VideoLayerSlot`. Owned by the card;
+/// `stop()` runs before the card removes the file.
+@MainActor
+final class VideoFootageOwner {
+    private var player: AVPlayer?
+    private var endObserver: NSObjectProtocol?
+    /// Bumped by every show and stop, so a geometry load that a stop overtook attaches nothing.
+    private var generation = 0
+
+    /// Shows `url` in the visual. false when the file has no readable video track or a stop came first.
+    func show(_ url: URL) async -> Bool {
+        stop()
+        let mine = generation
+        guard let geometry = await VideoFootageGeometry.load(url: url), mine == generation else { return false }
+        let item = AVPlayerItem(url: url)
+        let output = VideoLayerSlot.makeVideoOutput(naturalWidth: geometry.width, naturalHeight: geometry.height)
+        item.add(output)
+        let player = AVPlayer(playerItem: item)
+        player.isMuted = true
+        player.actionAtItemEnd = .none
+        // Delivered on `.main`, once per loop: the hop is per CLIP END, never per frame.
+        endObserver = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.didPlayToEndTimeNotification, object: item, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.loopToStart() }
+        }
+        self.player = player
+        VideoLayerSlot.shared.attachVideoOutput(output, preferredTransform: geometry.transform, dial: 1)
+        player.play()
+        return true
+    }
+
+    private func loopToStart() {
+        guard let player else { return }
+        player.seek(to: .zero)
+        player.play()
+    }
+
+    /// The layer goes on the next draw; the player stops and lets the file go.
+    func stop() {
+        generation += 1
+        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+        endObserver = nil
+        player?.pause()
+        player = nil
+        VideoLayerSlot.shared.detachVideoOutput()
     }
 }
 
@@ -209,6 +288,9 @@ struct VideoSeedCard: View {
     @State private var soundPlaced = false
     @State private var soundNote: String?
     @State private var soundTask: Task<Void, Never>?
+    /// VV-6 — the player of the kept copy, and whether its picture is in the visual.
+    @State private var footage = VideoFootageOwner()
+    @State private var inVisuals = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -223,6 +305,7 @@ struct VideoSeedCard: View {
             // video be picked again, which is what the "released" sound line asks for.
             soundTask?.cancel()
             soundTask = nil
+            stopFootage()
             discardKeptVideo()
             // E12-1 review MED: a cancelled export must not leave "Reading the sound…" behind.
             soundNote = nil
@@ -377,6 +460,7 @@ struct VideoSeedCard: View {
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        if keptVideo != nil { visualsButton }
         if soundState(read) == .usable { soundButton }
         if let soundNote {
             Text(soundNote)
@@ -391,6 +475,38 @@ struct VideoSeedCard: View {
         guard read.hasAudioTrack else { return .none }
         if soundPlaced { return .placed }
         return keptVideo == nil ? .released : .usable
+    }
+
+    private var visualsButton: some View {
+        Button {
+            toggleFootage()
+        } label: {
+            MediaActionLabel(title: inVisuals ? "Hide from Visuals" : "Show in Visuals",
+                             systemImage: inVisuals ? "rectangle.slash" : "play.rectangle")
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(inVisuals ? "Hide from visuals" : "Show in visuals")
+        .accessibilityHint("Plays the video without sound as a layer of the visuals; fast flashes are dimmed")
+    }
+
+    /// VV-6 — shows the kept copy in the visual, or takes it out.
+    private func toggleFootage() {
+        guard !inVisuals else {
+            stopFootage()
+            return
+        }
+        guard let kept = keptVideo else { return }
+        inVisuals = true
+        Task {
+            let shown = await footage.show(kept.url)
+            // A stop that came first already set this false; a failed show sets it false too.
+            if !shown { inVisuals = false }
+        }
+    }
+
+    private func stopFootage() {
+        footage.stop()
+        inVisuals = false
     }
 
     private var soundButton: some View {
@@ -480,6 +596,7 @@ struct VideoSeedCard: View {
         // removes its own file.
         soundTask?.cancel()
         soundTask = nil
+        stopFootage()
         discardKeptVideo()
         soundPlaced = false
         soundNote = nil

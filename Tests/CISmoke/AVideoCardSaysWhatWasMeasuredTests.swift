@@ -109,7 +109,8 @@ final class AVideoCardSaysWhatWasMeasuredTests: XCTestCase {
         XCTAssertTrue(card.contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the header)")
         // Same shared face as the photo card — see APhotoIsReadSmallAndOffTheStageTests claim 3.
         // E12-1: Choose · Apply · Undo · Use Its Sound.
-        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 4)
+        XCTAssertEqual(card.components(separatedBy: "MediaActionLabel(title:").count - 1, 5,
+                       "Choose · Apply · Undo · Show in Visuals (VV-6) · Use Its Sound")
         XCTAssertFalse(card.contains("func actionLabel("), "the isolated helper is the compile error")
         XCTAssertTrue(try code("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
             .contains(".frame(minWidth: 92, minHeight: 44)"), "44 pt targets (the actions)")
