@@ -11,7 +11,7 @@ Thema masterclass vibecoding."
 | Lokaler GitHub-Token ist ignoriert | `git check-ignore -v .claude/settings.local.json` → `.gitignore:132` |
 | `detect-secrets` existiert lokal | `.secrets.baseline` + `.pre-commit-config.yaml`; **in keinem Workflow** |
 | **Höchstes Risiko:** `testflight.yml` hält den App-Store-Connect-Privatschlüssel (20 `secrets.`-Stellen) und lädt `maxim-lobanov/setup-xcode@v1` **per Tag** | `grep -n maxim-lobanov .github/workflows/testflight.yml` → Z. 139, 310 |
-| Keine Action ist per Commit-SHA gepinnt; 9 von 14 Workflows ohne `permissions:` | `grep -hoE "uses: [^ ]+" .github/workflows/*.yml` · `grep -c "^permissions:"` |
+| Keine Action war per Commit-SHA gepinnt; 7 von 14 Workflows ohne `permissions:` (⛔ hier stand „9“, falsch gezählt) — **Patch fertig 2026-10-14** (Founder: „erledige alle“): 49 `uses:` auf geprüfte SHAs, `permissions: contents: read` in den 7 Workflows — `reports/patches/ci-pin-actions-and-readonly-token-2026-10-14.patch`; der Repo-Hook sperrt Workflow-Commits im Auto-Modus, also wendet der Founder ihn an | `grep -hoE "uses: [^ ]+" .github/workflows/*.yml` · `grep -c "^permissions:"` |
 
 ## 2. Köder-Schlüssel (Honeytokens) — was sie können, was nicht
 
@@ -29,9 +29,8 @@ Thema masterclass vibecoding."
 
 ## 3. Was mehr schützt als jeder Köder (Reihenfolge)
 
-1. **Actions per Commit-SHA pinnen** — Tags können umgebogen werden (tj-actions). Steht seit dem
-   Audit 2026-10-08 in der Inbox §3.
-2. **`permissions: contents: read`** in jedem Workflow ohne Block.
+1. **Actions per Commit-SHA pinnen** — Tags können umgebogen werden (tj-actions). ✅ Patch fertig, Anwenden: Founder (siehe Abschnitt 1).
+2. **`permissions: contents: read`** in jedem Workflow ohne Block. ✅ Patch fertig, Anwenden: Founder (siehe Abschnitt 1).
 3. **GitHub Secret Scanning + Push Protection** einschalten (Repo-Einstellung, kostenlos für
    öffentliche Repos).
 4. Den App-Store-Connect-Schlüssel nur im Upload-Schritt lesen, nicht im ganzen Job.
