@@ -1,4 +1,4 @@
-build: v10.79.500 — Absturz 2624 behoben (Audiospur nach Stop), Plugins auf Spuren, Noten-Editor, Spur-Automation
+build: v10.79.501 — eigene Plugin-Fenster, Plugin-Einstellungen im Stück, Spur bei Plugin-Absturz zurück
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,46 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.501) ───────────────────────────────
+
+  Vierzehn Commits an `Sources/` und `Tests/` seit 10.79.500, dazu main mit #420/#421
+  hereingeholt (Merge `016a9f1cf`). Xcode Compile Check UND Build for Testing grün auf dem
+  Merge. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: DAS EIGENE FENSTER EINES PLUGINS (H3) ──
+  Auf der Device-Seite einer Synth-Spur mit Fremd-Instrument: „Open plugin" öffnet dessen
+  eigene Oberfläche. Das Plugin lädt erst, wenn die Spur spielt — also erst Play, dann
+  öffnen. Ein Plugin ohne eigene Oberfläche sagt das unter dem Menü.
+
+  ── POSTEN 2: PLUGIN-EINSTELLUNGEN REISEN IM STÜCK (H4a–c) ──
+  Was du im Plugin-Fenster einstellst, wird beim Schließen im Stück gespeichert und beim
+  nächsten Laden wieder gesetzt. Grenze: höchstens 1 MB je Plugin.
+
+  ── POSTEN 3: EIN ABGESTÜRZTES PLUGIN GIBT DIE SPUR ZURÜCK (H5) ──
+  Stirbt der Prozess eines Plugins, spielt die Spur wieder mit der eingebauten Stimme, und
+  das Plugin wird nicht bei jedem Teil neu geladen. Das Diagnose-Log nennt das Plugin.
+
+  ── POSTEN 4: JEDE RACK-SPUR HAT IHREN EIGENEN BUS (H6-3/H6-4) ──
+  Synth und Sampler einer Spur laufen über einen eigenen Bus; ein Fremd-Instrument auch.
+  Hörbar soll sich NICHTS ändern — das ist der Platz für Effekt-Plugins. Die Effekt-Wahl
+  selbst hat noch keine Tür (H6-5).
+
+  ── POSTEN 5: ZWEI REPARATUREN ──
+  Tonhöhen- oder gestretchte Teile im Kopfhörer-Raum blieben still und bauten bei jedem Play
+  neu auf — der Ausgangsweg war zu kurz geprüft. Ein Plugin, das sich nicht anhängen lässt,
+  wird nicht mehr bei jedem Teil neu versucht.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 3ac1bc292) ──
+  · H3 — Synth-Spur mit installiertem Instrument, Play, dann „Open plugin": das eigene Fenster
+    erscheint, seine Regler ändern den Klang im Spielen, Schließen behält den Klang.
+  · H4 — im Plugin etwas verstellen, Fenster schließen, App beenden, neu öffnen, Play: der
+    Klang ist der verstellte.
+  · H6-3 — Start ohne Fehler, jede Spur klingt wie vorher, Pan und Mute der Spuren wirken.
+  · Kopfhörer-Raum (Mixer → „Headphone space") mit einem tonhöhen-verschobenen Audioteil:
+    der Teil klingt, Play/Stop/Play ohne Aussetzer.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.500) ───────────────────────────────
 
