@@ -14,8 +14,10 @@
 //     `onDisappear` does not run when the app is killed, and a video copy can be gigabytes).
 //   · SOURCE-TEXT SCAN (claims 3–5) — the card and the Workstation are `View`s no test can render.
 //     Claim 3: there is still ONE import door (`AudioImport.perform` has one caller, and the card
-//     never names the importer). Claim 4: no picture is encoded (#1304). Claim 5: the card keeps
-//     the video's copy only while its sound can be used, and offers the button only then.
+//     never names the audio importer). Claim 4: no picture is encoded (#1304). Claim 5: the card
+//     offers the button only while it holds the video's copy. ⚠️ VV-3a changed what claim 5 pins:
+//     every readable video now keeps its copy in `Media/Video`, and a placed sound no longer lets
+//     it go (the picture stays the card's); the library side is `TheVideoCardKeepsItsCopyInTheLibraryTests`.
 //   · DEVICE PROBE, OPEN — the export actually produces audio for a real clip, the part plays,
 //     the file appears in the library, VoiceOver reads the button: G8 in `docs/dev/FOUNDER_INBOX.md`.
 //
@@ -86,7 +88,10 @@ final class AVideoGivesItsSoundToTheOneImportDoorTests: XCTestCase {
             analysis stay one transaction.
             """)
         let card = try code(Self.card)
-        for importer in ["AudioImport", "MediaLibrary", "ClipStore", "TimelineStore", "tuningPending"] {
+        // VV-3a: the card may name `MediaLibrary` for its OWN picture copy (`importVideo`, the
+        // `Media/Video` folder) — never for the sound, which is the Workstation's import.
+        for importer in ["AudioImport", "MediaLibrary.importAudio", "existingAudio", "ClipStore",
+                         "TimelineStore", "tuningPending"] {
             XCTAssertFalse(card.contains(importer), "the video card reaches into the import: `\(importer)`")
         }
         XCTAssertEqual(card.components(separatedBy: "useSound(").count - 1, 1, "the card calls the door once")
@@ -115,20 +120,23 @@ final class AVideoGivesItsSoundToTheOneImportDoorTests: XCTestCase {
         XCTAssertTrue(sound.contains("loadTracks(withMediaType: .audio)"), "a video without sound exports nothing")
     }
 
-    // MARK: 5 — the copy is kept only while its sound can be used
+    // MARK: 5 — the button is offered only while the card holds the video (VV-3a: every readable
+    // video keeps its copy now, not only one with sound — the picture is the card's too)
 
-    func testTheCardKeepsTheVideoOnlyWhileItsSoundCanBeUsed() throws {
+    func testTheSoundIsOfferedOnlyWhileTheCardHoldsTheVideo() throws {
         let card = try code(Self.card)
         XCTAssertTrue(card.contains("if soundState(read) == .usable { soundButton }"), """
             The button is no longer offered only while the card holds the video. In any other state \
             it would export from a file that is gone, or place the same sound twice.
             """)
-        XCTAssertTrue(card.contains("if read?.hasAudioTrack == true, !Task.isCancelled {"),
-                      "only a video with sound keeps its copy")
+        XCTAssertTrue(card.contains("if read != nil, !Task.isCancelled {"),
+                      "every readable video keeps its copy (VV-3a)")
         XCTAssertTrue(card.contains("try? FileManager.default.removeItem(at: file.url)"),
-                      "COUNTERWEIGHT: every other copy is removed right after the read")
-        XCTAssertGreaterThanOrEqual(card.components(separatedBy: "discardSoundSource()").count - 1, 4,
-                                    "the declaration plus three calls: a new pick, the card going away and a placed sound each let the copy go")
+                      "COUNTERWEIGHT: an unreadable or cancelled copy is removed right after the read")
+        XCTAssertEqual(card.components(separatedBy: "discardKeptVideo()").count - 1, 3,
+                       "the declaration plus two calls: a new pick and the card going away let the copy go")
+        XCTAssertTrue(card.contains("if landing.placed { soundPlaced = true }"),
+                      "a placed sound keeps the copy — the picture is still the card's (VV-3a)")
         XCTAssertTrue(card.contains("VideoSound.discard(extracted)"), "the exported file is removed after the import copied it")
         XCTAssertTrue(card.contains(".disabled(soundTask != nil)"), "one export at a time")
         XCTAssertTrue(card.contains(".accessibilityLabel(\"Use its sound\")"))
@@ -138,11 +146,11 @@ final class AVideoGivesItsSoundToTheOneImportDoorTests: XCTestCase {
         let rest = card[gone.upperBound...]
         let close = try XCTUnwrap(rest.range(of: "\n        }"), "the end of the going-away handler")
         let goneBody = String(rest[..<close.lowerBound])
-        for step in ["soundTask?.cancel()", "discardSoundSource()", "soundNote = nil", "item = nil"] {
+        for step in ["soundTask?.cancel()", "discardKeptVideo()", "soundNote = nil", "item = nil"] {
             XCTAssertTrue(goneBody.contains(step), "the card going away no longer does `\(step)`")
         }
-        XCTAssertTrue(card.contains("await VideoSound.sweepLeftovers(createdBefore: Date())"),
-                      "the card sweeps what a killed app left behind when it appears")
+        XCTAssertTrue(card.contains("await VideoSound.sweepLeftovers(createdBefore: appeared)"),
+                      "the card sweeps what a killed app (or an older build) left behind when it appears")
     }
 
     #if canImport(AVFoundation)

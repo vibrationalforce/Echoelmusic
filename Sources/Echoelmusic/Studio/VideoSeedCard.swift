@@ -14,8 +14,18 @@
 // says at which tempo.
 //
 // ⭐ THE FILE IS NEVER HELD WHOLE. The picker hands over a file; it is copied on disk, read by
-// `VideoSeedReader` in at most 48 small frames, and the copy is removed. A newer pick cancels the
-// older read (the reader checks before every frame).
+// `VideoSeedReader` in at most 48 small frames, and never loaded into memory. A newer pick cancels
+// the older read (the reader checks before every frame).
+//
+// ⭐ VV-3a: THE COPY LIVES IN THE MEDIA LIBRARY, NOT IN THE TEMPORARY FOLDER. The picker's file is
+// copied by `MediaLibrary.importVideo` (its one caller) into `Media/Video`, under the picked name,
+// inside the picker's own import closure — off the main actor. ⚠️ THE CARD OWNS THAT FILE, AND ONLY
+// FOR AS LONG AS IT SHOWS THE VIDEO: a read that fails or is cancelled removes exactly that URL; a
+// newer pick and the card going away remove it too; when the card appears, every file a killed app
+// left in `Media/Video` is swept. That sweep is right ONLY while the card is the one writer of
+// `Media/Video` — the day a second caller of `importVideo` (the VV-8 picture lane) keeps a file
+// there, the sweep must first ask who still uses a file. Durable footage with a delete door is
+// VV-10. Guard: `TheVideoCardKeepsItsCopyInTheLibraryTests`.
 //
 // ⚠️ WHAT IS NOT HERE, AND WHY — so nobody reads it as forgotten:
 // · Recording a video with the camera: #1304 removed video capture (founder 2026-09-12) and the
@@ -28,8 +38,9 @@
 //   built" here and "The sound is not used yet." on screen. What is STILL not here: the sound is
 //   not cut to the picture's length, and it is not a sampler source by itself — a Sampler track
 //   picks it from the library like any other file (E13-1, `TrackSampleRow`).
-//   ⚠️ The copy of a video WITH sound is kept until its sound is used, a newer video is picked, or
-//   the card goes away (`discardSoundSource`); every other copy is removed right after the read.
+//   The copy of every readable video is kept until a newer video is picked or the card goes away
+//   (`discardKeptVideo`) — using its sound no longer lets it go, because the picture is still the
+//   card's. A video that cannot be read is removed right after the read.
 // · Trimming the clip and placing it in the song: the bar count is shown, the arrangement slice
 //   (MS4/MV3) does the placing. Nothing here claims it.
 
@@ -40,8 +51,7 @@ import CoreTransferable
 import UniformTypeIdentifiers
 
 /// A picked video, copied out of the picker's short-lived file so it outlives the callback.
-/// The copy lives in the temporary directory and is removed after the read — or, for a video with
-/// sound, once its sound is used or the card lets it go (E12-1).
+/// The copy lives in `Media/Video` (VV-3a) and is the card's until the card lets it go.
 struct PickedVideoFile: Transferable {
     let url: URL
     /// The picked file's own name without its extension — the sound file is named after it.
@@ -49,13 +59,38 @@ struct PickedVideoFile: Transferable {
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(importedContentType: .movie) { received in
-            let ext = received.file.pathExtension.isEmpty ? "mov" : received.file.pathExtension
-            let copy = FileManager.default.temporaryDirectory
-                .appendingPathComponent("echoel-video-\(UUID().uuidString)")
-                .appendingPathExtension(ext)
-            try FileManager.default.copyItem(at: received.file, to: copy)
+            // VV-3a: this closure runs off the main actor, so the copy does too.
+            let copy = try MediaLibrary.importVideo(from: received.file)
             return PickedVideoFile(url: copy, name: received.file.deletingPathExtension().lastPathComponent)
         }
+    }
+}
+
+/// VV-3a — what a killed app left in `Media/Video`. The card holds no video when it appears, so
+/// every file there that arrived before that moment is an orphan. "Arrived" is the date the file
+/// was ADDED to the folder, not its creation date: a copy can carry the source's old creation date,
+/// and a fresh pick must never look old. A file without that date is kept — the sweep fails safe.
+enum VideoLibraryLeftovers {
+    /// `async` and nonisolated, like `VideoSound.sweepLeftovers`, so the listing leaves the main
+    /// actor without a detached task.
+    @discardableResult
+    static func sweep(in directory: URL? = MediaLibrary.directory("Media/Video"),
+                      addedBefore cutoff: Date) async -> Int {
+        let fm = FileManager.default
+        let keys: [URLResourceKey] = [.addedToDirectoryDateKey, .isRegularFileKey]
+        guard let directory,
+              let entries = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: keys,
+                                                        options: [.skipsHiddenFiles])
+        else { return 0 }
+        var removed = 0
+        for entry in entries {
+            guard let values = try? entry.resourceValues(forKeys: Set(keys)),
+                  values.isRegularFile == true,
+                  let added = values.addedToDirectoryDate, added < cutoff
+            else { continue }
+            if (try? fm.removeItem(at: entry)) != nil { removed += 1 }
+        }
+        return removed
     }
 }
 
@@ -169,8 +204,8 @@ struct VideoSeedCard: View {
     @State private var appliedHere = false
     @State private var loadTask: Task<Void, Never>?
     @State private var appliedCount = 0
-    /// E12-1 — the copy of a video with sound, kept so "Use Its Sound" can read it.
-    @State private var soundSource: PickedVideoFile?
+    /// VV-3a — the library copy of the video on screen; "Use Its Sound" reads it (E12-1).
+    @State private var keptVideo: PickedVideoFile?
     @State private var soundPlaced = false
     @State private var soundNote: String?
     @State private var soundTask: Task<Void, Never>?
@@ -188,7 +223,7 @@ struct VideoSeedCard: View {
             // video be picked again, which is what the "released" sound line asks for.
             soundTask?.cancel()
             soundTask = nil
-            discardSoundSource()
+            discardKeptVideo()
             // E12-1 review MED: a cancelled export must not leave "Reading the sound…" behind.
             soundNote = nil
             item = nil
@@ -196,7 +231,9 @@ struct VideoSeedCard: View {
         .task {
             // E12-1 review MED: copies a killed app left in the temporary folder. The card holds
             // none when it appears, so every older one is an orphan.
-            await VideoSound.sweepLeftovers(createdBefore: Date())
+            let appeared = Date()
+            await VideoSound.sweepLeftovers(createdBefore: appeared)
+            await VideoLibraryLeftovers.sweep(addedBefore: appeared)
         }
     }
 
@@ -353,7 +390,7 @@ struct VideoSeedCard: View {
     private func soundState(_ read: VideoSeedReader.Read) -> VideoSeedText.SoundState {
         guard read.hasAudioTrack else { return .none }
         if soundPlaced { return .placed }
-        return soundSource == nil ? .released : .usable
+        return keptVideo == nil ? .released : .usable
     }
 
     private var soundButton: some View {
@@ -372,7 +409,7 @@ struct VideoSeedCard: View {
     /// the export. The export runs in THIS task (`VideoSound.extract` is nonisolated async, so it
     /// leaves the main actor); the import is the Workstation's, on the main actor, as from Files.
     private func useItsSound() {
-        guard let source = soundSource, soundTask == nil else { return }
+        guard let source = keptVideo, soundTask == nil else { return }
         soundNote = VideoSeedText.extractingSound
         let base = VideoSound.soundFileBase(videoName: source.name)
         soundTask = Task {
@@ -389,18 +426,16 @@ struct VideoSeedCard: View {
             let landing = useSound(extracted)
             VideoSound.discard(extracted)
             soundNote = landing.note
-            if landing.placed {
-                soundPlaced = true
-                discardSoundSource()
-            }
+            // VV-3a: the copy stays — the picture is still the card's.
+            if landing.placed { soundPlaced = true }
             soundTask = nil
         }
     }
 
-    /// Removes the kept video copy, if any.
-    private func discardSoundSource() {
-        if let source = soundSource { try? FileManager.default.removeItem(at: source.url) }
-        soundSource = nil
+    /// Removes the kept video copy, if any — exactly that file.
+    private func discardKeptVideo() {
+        if let kept = keptVideo { try? FileManager.default.removeItem(at: kept.url) }
+        keptVideo = nil
     }
 
     private func applyButton(_ read: VideoSeedReader.Read, bpm: Double, undo: MediaLookUndo) -> some View {
@@ -445,7 +480,7 @@ struct VideoSeedCard: View {
         // removes its own file.
         soundTask?.cancel()
         soundTask = nil
-        discardSoundSource()
+        discardKeptVideo()
         soundPlaced = false
         soundNote = nil
         let bpm = beatPlayer.pattern.tempo
@@ -454,10 +489,10 @@ struct VideoSeedCard: View {
             var kept: PickedVideoFile?
             if let file = try? await picked.loadTransferable(type: PickedVideoFile.self) {
                 read = await VideoSeedReader.read(url: file.url)
-                // E12-1: a video with sound keeps its copy for "Use Its Sound"; every other copy
-                // goes now. No suspension between this check and the one below, so a kept copy
-                // is never one a newer pick cancelled.
-                if read?.hasAudioTrack == true, !Task.isCancelled {
+                // VV-3a: every readable video keeps its library copy; an unreadable one goes now.
+                // No suspension between this check and the one below, so a kept copy is never one
+                // a newer pick cancelled.
+                if read != nil, !Task.isCancelled {
                     kept = file
                 } else {
                     try? FileManager.default.removeItem(at: file.url)
@@ -466,7 +501,7 @@ struct VideoSeedCard: View {
             guard !Task.isCancelled else { return }
             if let read {
                 phase = .ready(read, VisualLookSnapshot.read(from: .standard), bpm: bpm)
-                soundSource = kept
+                keptVideo = kept
                 // Offered to the agent only while the card is OPEN: a read that finishes after the
                 // person collapsed the card must not re-publish a picture nobody sees (review
                 // repair 2e). Opening the card again offers it (`header`).
