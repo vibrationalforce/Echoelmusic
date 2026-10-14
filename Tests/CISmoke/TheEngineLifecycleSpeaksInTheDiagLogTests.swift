@@ -352,6 +352,9 @@ final class TheEngineLifecycleSpeaksInTheDiagLogTests: XCTestCase {
              "logEngineLifecycle(\"graph: attach audio unit"),
             ("func detachAudioUnit(_ unit: AVAudioUnit) {",
              "logEngineLifecycle(\"graph: detach audio unit"),
+            // Production H6-3 — a rack slot's own bus, built before start.
+            ("func attachTrackBus(slot: Int, feeding sources: [AVAudioNode]) -> AVAudioMixerNode? {",
+             "logEngineLifecycle(\"graph: attach track bus"),
         ] {
             XCTAssertEqual(occurrences(of: fn, in: code), 1,
                            "`\(fn)` is no longer unique — re-anchor this claim (#408, §4).")

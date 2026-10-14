@@ -71,6 +71,10 @@ public final class LaneVoiceRack {
     /// SwiftUI bodies (leaf-body law), so observation is ignored throughout.
     @ObservationIgnored public private(set) var subs: [SubBassVoice] = []
     @ObservationIgnored public private(set) var samplers: [SamplerVoice] = []
+    /// H6-3: how many slots were given their own bus at attach (all of them, unless the
+    /// engine was already running). Diagnostic and test seam only — the buses themselves are
+    /// owned by `AudioEngine`, so this file stays free of AVFoundation types.
+    @ObservationIgnored public private(set) var trackBusCount = 0
     /// BodyVibe B1: lane BioReactiveSynthVoice units — REAL instances (each owns
     /// its own EchoelDDSP + source node), COEXISTING with the global armed voice
     /// (separate instance, separate attach — never a double-attach of one node).
@@ -197,6 +201,17 @@ public final class LaneVoiceRack {
             let bio = BioReactiveSynthVoice()
             bio.attach(to: audioEngine)
             bios = [bio]
+        }
+        // H6-3: every slot gets its OWN bus — its synth voice and (when present) its sampler
+        // move off the master onto it. Sound is unchanged; the bus is the seam an effect
+        // plugin will sit in. Still before start; on a running engine the engine refuses and
+        // the slot keeps its direct path (`trackBusCount` stays below `capacity`).
+        trackBusCount = 0
+        for slot in voices.indices {
+            let sources = slot < samplers.count
+                ? [voices[slot].sourceNode, samplers[slot].sourceNode]
+                : [voices[slot].sourceNode]
+            if audioEngine.attachTrackBus(slot: slot, feeding: sources) != nil { trackBusCount += 1 }
         }
         // Seed the freshly-created voices with the tuning the instrument already decided
         // (see the `tuningA4Hz`/`tuningCents` doc): `onAppear`'s fan ran before this task,

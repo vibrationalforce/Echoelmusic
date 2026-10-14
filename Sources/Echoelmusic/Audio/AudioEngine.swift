@@ -2058,6 +2058,49 @@ public final class AudioEngine {
         }
     }
 
+    /// H6-3: one rack slot's own stereo bus. The slot's ALREADY-ATTACHED sources (its synth
+    /// voice and its sampler) are moved off `masterMixer` onto a mixer of their own, which
+    /// feeds `masterMixer`. Nothing audible changes: a mixer input at unity sums exactly like
+    /// the master input it replaces, and each source keeps its AVAudioMixing volume and pan,
+    /// which now act on the bus input. The point is the SEAM — an effect plugin can later sit
+    /// between this bus and the master without taking the track's level and pan with it.
+    ///
+    /// Built BEFORE engine start only (attach-before-start law). On a running engine it does
+    /// nothing and returns nil, so the slot simply keeps playing straight into the master —
+    /// no pause, no restart, nothing to recover from. The format is validated before the graph
+    /// is touched, and a source that is not attached to this engine is left alone.
+    func attachTrackBus(slot: Int, feeding sources: [AVAudioNode]) -> AVAudioMixerNode? {
+        logEngineLifecycle("graph: attach track bus (engine running: \(masterEngine.isRunning))")
+        guard !masterEngine.isRunning else {
+            log.audio("Track bus not built — engine already running; slot stays on the master", level: .warning)
+            return nil
+        }
+        prepareGraph()
+        let ownFormats = sources.map { $0.outputFormat(forBus: 0) }
+            .filter { $0.sampleRate > 0 && $0.channelCount > 0 }
+        let busFormat = ownFormats.first ?? masterMixer.outputFormat(forBus: 0)
+        guard busFormat.sampleRate > 0, busFormat.channelCount > 0 else {
+            log.audio("Track bus not built — no valid audio format", level: .error)
+            return nil
+        }
+        let bus = AVAudioMixerNode()
+        masterEngine.attach(bus)
+        masterEngine.connect(bus, to: masterMixer, format: busFormat)
+        for source in sources where source.engine === masterEngine {
+            let own = source.outputFormat(forBus: 0)
+            let format = (own.sampleRate > 0 && own.channelCount > 0) ? own : busFormat
+            masterEngine.disconnectNodeOutput(source)
+            masterEngine.connect(source, to: bus, format: format)
+        }
+        trackBuses[slot] = bus
+        log.audio("Track bus \(slot) attached (\(sources.count) sources → bus → masterMixer)")
+        return bus
+    }
+
+    /// The bus `attachTrackBus(slot:feeding:)` built for a rack slot, or nil when the slot
+    /// plays straight into the master. Read on the main actor only, never from render.
+    func trackBus(slot: Int) -> AVAudioMixerNode? { trackBuses[slot] }
+
     func detachSourceNode(_ sourceNode: AVAudioSourceNode) {
         logEngineLifecycle("graph: detach source node (engine running: \(masterEngine.isRunning))")
         masterEngine.disconnectNodeOutput(sourceNode)
@@ -2211,6 +2254,9 @@ public final class AudioEngine {
     /// The ONE environment node every space bus feeds. Attached on the first bus and never
     /// detached — without inputs it renders silence, and keeping it avoids a second pause.
     @ObservationIgnored private var spaceEnvironment: AVAudioEnvironmentNode?
+
+    /// H6-3: one bus per rack slot, keyed by slot. Written only by `attachTrackBus`.
+    @ObservationIgnored private var trackBuses: [Int: AVAudioMixerNode] = [:]
 
     /// Attach one lane's space bus: a MONO mixer (the environment node spatialises mono inputs
     /// only) feeding the shared environment node, which feeds `masterMixer` in stereo. The lane
