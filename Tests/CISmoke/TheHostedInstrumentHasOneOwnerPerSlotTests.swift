@@ -12,9 +12,11 @@
 //    hops to the main actor (builds 2613/2618 died of an inferred main-actor closure called off
 //    main), and the stale check (the slot still wants this component, holds no unit) runs BEFORE
 //    the graph is touched. A failed load gives the slot back to its built-in voice.
-//  · Claim 2 — one owner per slot: `owns` is "the slot wants a unit", so a chosen plugin silences
-//    the built-in voice of that track rather than doubling it; this app's own components are
-//    never hosted inside the app.
+//  · Claim 2 — one owner per NOTE (P0-2, 2026-10-14): `route(_:forSlot:)` gives an attack to the
+//    LOADED unit, and to the built-in voice while the unit is still loading (⛔ until P0-2 a slot
+//    that merely WANTED a unit owned its notes and dropped them, so a fresh pick opened with
+//    silence); a release follows its attack, so nothing doubles and nothing is stranded. This
+//    app's own components are never hosted inside the app.
 //  · Claim 3 — leaving is clean: an unload sends all-notes-off on all 16 channels BEFORE it
 //    detaches, and a media-services reset DETACHES every unit (no MIDI to a dead unit) before it
 //    forgets it — the engine is one instance that outlives the reset (corrected H2d; H2b1 pinned
@@ -25,8 +27,8 @@
 //  · Claim 4 — the engine API is the `attachSourceNode` shape: rung first, pause, restart through
 //    `restartOrDegrade` (the counts live in `TheFailedRestartHandsOverToDegradedTests`, raised to
 //    7 and 6 in this commit; the rungs in `TheEngineLifecycleSpeaksInTheDiagLogTests`, #416).
-//  · Claim 5 (H2b2) — the app builds exactly one host where the rack is wired; an owned slot's
-//    notes return to the host before the rack's note-on, and the slot's plugin, gain and pan
+//  · Claim 5 (H2b2) — the app builds exactly one host where the rack is wired; every slot's
+//    notes pass through the host's `route` before the rack's note-on (P0-2), and the slot's plugin, gain and pan
 //    reach it through the region player's sinks.
 //  · Claim 6 (H5) — a plugin whose extension process died (invalidation notification) is
 //    detached, its slot goes back to the built-in voice, and it is marked failed so it is not
@@ -81,9 +83,23 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
 
     // MARK: 2 — one owner per slot
 
-    func testASlotWithAPluginIsOwnedByTheHost() throws {
+    func testANoteBelongsToTheVoiceThatPlaysItsAttack() throws {
         let code = SourceText.codeOnly(try source(Self.hostPath))
-        XCTAssertTrue(code.contains("func owns(_ slot: Int) -> Bool { wanted[slot] != nil }"))
+        XCTAssertFalse(code.contains("func owns("),
+                       "P0-2: wanting a unit no longer owns its notes — that dropped them while it loaded")
+        guard let route = body(of: "func route(_ events: [LaneNotePump.Event], forSlot slot: Int) -> [LaneNotePump.Event] {",
+                               in: code, length: 1100) else {
+            return XCTFail("ANCHOR MISSING: route(_:forSlot:)")
+        }
+        guard let loaded = route.range(of: "if hosted[slot] != nil {\n                    unit.append(event)\n                } else {\n                    builtIn.append(event)\n                    builtInHeld[slot, default: []].insert(event.pitch)"),
+              let release = route.range(of: "} else if builtInHeld[slot]?.remove(event.pitch) != nil {\n                builtIn.append(event)") else {
+            return XCTFail("ANCHOR MISSING: the attack split or the release that follows its attack")
+        }
+        XCTAssertLessThan(loaded.lowerBound, release.lowerBound)
+        XCTAssertTrue(route.contains("guard wanted[slot] != nil else {\n            builtInHeld[slot] = nil\n            return events"),
+                      "a slot with no unit plays everything on its built-in voice")
+        XCTAssertTrue(route.contains("if !unit.isEmpty { send(unit, toSlot: slot) }"))
+        XCTAssertTrue(route.contains("return builtIn"))
         XCTAssertTrue(code.contains("component.manufacturer != Self.ownManufacturer"),
                       "the Echoel AUv3 is never hosted inside the app that embeds it")
         XCTAssertTrue(code.contains("static let ownManufacturer: UInt32 = 0x4563_686F"), "'Echo'")
@@ -195,13 +211,13 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertEqual(sites, 1, "one host for the whole rack, built where the rack is wired")
         let app = SourceText.codeOnly(try source("Sources/Echoelmusic/EchoelmusicApp.swift"))
         guard let host = app.range(of: "let pluginHost = HostedInstrumentHost(engine: audioEngine)"),
-              let owned = app.range(of: "if pluginHost.owns(slot) {\n                            pluginHost.send(events, toSlot: slot)\n                            return\n                        }"),
+              let owned = app.range(of: "let builtIn = pluginHost.route(events, forSlot: slot)"),
               let rack = app.range(of: "laneVoiceRack?.noteOn(slot: slot, pitch: event.pitch, velocity: event.velocity)") else {
-            return XCTFail("ANCHOR MISSING: the host, the owned-slot branch or the rack's note-on in the note sink")
+            return XCTFail("ANCHOR MISSING: the host, the routing line or the rack's note-on in the note sink")
         }
         XCTAssertLessThan(host.lowerBound, owned.lowerBound)
         XCTAssertLessThan(owned.lowerBound, rack.lowerBound,
-                          "an owned slot's notes return before the rack sees them — never both voices")
+                          "the host routes a slot's notes before the rack sees them — never both voices")
         XCTAssertTrue(app.contains("pluginHost.setInstrument(component, state: state, forSlot: slot)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, gain: gain)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, pan: pan)"))

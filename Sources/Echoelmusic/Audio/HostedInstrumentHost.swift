@@ -6,17 +6,21 @@
 //
 // ONE OWNER PER RACK SLOT. The region player names, per slot, which component it wants
 // (`setInstrument(_:state:forSlot:)`) at the same points it names the slot's built-in kind; the app's
-// note sink asks `owns(_:)` and sends a hosted slot's notes HERE instead of to `LaneVoiceRack`.
-// So a chosen plugin silences the built-in voice of that track — never both at once.
+// note sink hands every slot's notes to `route(_:forSlot:)`, which sends a LOADED unit's notes
+// here and returns the rest to `LaneVoiceRack`. So a playing plugin silences the built-in voice of
+// that track — never the same note on both.
 //
 // WHAT IS NOT OURS. The unit renders in its own process; nothing in this file runs on the audio
 // thread. MIDI goes through the unit's `scheduleMIDIEventBlock`, which the system documents as
 // safe to call from any thread, stamped `AUEventSampleTimeImmediate` — note timing is the
 // transport step's (main-actor) timing, like every rack voice's control plane.
 //
-// LOADING IS ASYNCHRONOUS and can take a few hundred milliseconds the first time. Notes for a
-// slot whose unit is still loading are DROPPED, not queued (a late burst would be worse than a
-// missed attack). A load that finishes after the slot changed its mind is thrown away before it
+// LOADING IS ASYNCHRONOUS and can take a few hundred milliseconds the first time. While a slot's
+// unit is still loading, its attacks are played by the slot's BUILT-IN voice (P0-2, review of the
+// hosting slices 2026-10-14: the first version dropped them, so a freshly chosen plugin opened
+// with a hole of silence). Every release goes to whoever played its attack, so a note the built-in
+// voice started while the unit loaded is never stranded when the unit arrives. Notes are not
+// queued for the unit (a late burst would be worse than a missed attack). A load that finishes after the slot changed its mind is thrown away before it
 // touches the graph. A component that cannot be loaded on this device (not installed, refused)
 // gives the slot back to its built-in voice, so a song from another device still sounds.
 //
@@ -79,8 +83,8 @@ final class HostedInstrumentHost {
     private(set) static weak var live: HostedInstrumentHost?
 
     private let engine: AudioEngine
-    /// What each slot wants to play. Set before the load starts; a slot with an entry owns its
-    /// notes (they reach the unit once it is loaded, and are dropped while it loads).
+    /// What each slot wants to play. Set before the load starts; the slot's attacks reach the unit
+    /// once it is loaded, and the built-in voice while it loads (`route`).
     private var wanted: [Int: DeviceInsert.PluginComponent] = [:]
     private var hosted: [Int: Hosted] = [:]
     /// The level and pan the region player last asked for, applied when a unit arrives.
@@ -98,6 +102,9 @@ final class HostedInstrumentHost {
     private var transpose: [Int: Int] = [:]
     /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
     private var sounding: [Int: [Int: UInt8]] = [:]
+    /// Per slot: the pitches whose attack the BUILT-IN voice played while the unit loaded (P0-2).
+    /// Their releases go back to the built-in voice, wherever the unit is by then.
+    private var builtInHeld: [Int: Set<Int>] = [:]
     private var resetObserver: NSObjectProtocol?
     private var invalidationObserver: NSObjectProtocol?
 
@@ -123,8 +130,34 @@ final class HostedInstrumentHost {
         }
     }
 
-    /// Whether `slot`'s notes belong to a hosted unit (loaded or loading) instead of the rack.
-    func owns(_ slot: Int) -> Bool { wanted[slot] != nil }
+    /// The one routing decision for a slot's notes (P0-2). A loaded unit gets the attacks; a slot
+    /// with no unit, or whose unit is still loading, gives them back to the caller for the built-in
+    /// voice. A release follows its attack. Returns what the built-in voice must play — never the
+    /// same note to both.
+    func route(_ events: [LaneNotePump.Event], forSlot slot: Int) -> [LaneNotePump.Event] {
+        guard wanted[slot] != nil else {
+            builtInHeld[slot] = nil
+            return events
+        }
+        var builtIn: [LaneNotePump.Event] = []
+        var unit: [LaneNotePump.Event] = []
+        for event in events {
+            if event.isOn {
+                if hosted[slot] != nil {
+                    unit.append(event)
+                } else {
+                    builtIn.append(event)
+                    builtInHeld[slot, default: []].insert(event.pitch)
+                }
+            } else if builtInHeld[slot]?.remove(event.pitch) != nil {
+                builtIn.append(event)
+            } else {
+                unit.append(event)
+            }
+        }
+        if !unit.isEmpty { send(unit, toSlot: slot) }
+        return builtIn
+    }
 
     /// The one decision per slot: play `component`, or (nil) give the slot back to its built-in
     /// voice. Naming what the slot already wants does nothing, so the player may say it on every

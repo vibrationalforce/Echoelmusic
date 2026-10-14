@@ -1193,19 +1193,18 @@ struct EchoelmusicApp: App {
                     // unset lane matches the primary timbre — never the bare DDSP default.
                     let fallbackPatch = patchStore.patches.first
                     // Production H2b: a rack track that chose an Audio Unit instrument plays
-                    // it instead of its built-in voice. ONE owner per slot — the host owns the
-                    // notes of a slot that wants a unit; every other slot plays the rack.
+                    // it instead of its built-in voice. ONE owner per note — the host routes a
+                    // slot's notes to its loaded unit, everything else plays the rack.
                     let pluginHost = HostedInstrumentHost(engine: audioEngine)
                     timelinePlayer.enableMultiRoll(capacity: laneVoiceRack.capacity) { [weak laneVoiceRack] slot, events in
-                        if pluginHost.owns(slot) {
-                            pluginHost.send(events, toSlot: slot)
-                            return
-                        }
+                        // P0-2: a loaded unit takes the notes; while it loads the built-in voice
+                        // plays them, and a release follows its attack.
+                        let builtIn = pluginHost.route(events, forSlot: slot)
                         // S2-W2-4: the built-in path goes through the rack FACADE,
                         // which routes the slot to its bound KIND (poly/drums/sub). With
                         // voiceKindRouting OFF every slot binds .poly ⇒ the facade calls
                         // voice(slot:) — bit-identical to the pre-S2-W2 rack path.
-                        for event in events {
+                        for event in builtIn {
                             if event.isOn {
                                 laneVoiceRack?.noteOn(slot: slot, pitch: event.pitch, velocity: event.velocity)
                             } else {
