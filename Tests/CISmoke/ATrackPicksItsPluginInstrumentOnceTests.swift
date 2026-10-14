@@ -100,6 +100,33 @@ final class ATrackPicksItsPluginInstrumentOnceTests: XCTestCase {
                        "nothing was rewritten")
     }
 
+    // MARK: 2b — Undo still finds the pick after its settings were kept (night sweep B2)
+
+    /// Keeping a plugin's settings rewrites the insert's state blob and keeps its id. The undo
+    /// case compared the whole insert, so the pick step no longer matched: Undo dropped it and
+    /// took back an older, unrelated edit instead.
+    func testUndoAfterKeptSettingsTakesBackThePick() {
+        let timeline = TimelineStore()
+        let original = timeline.document
+        defer { timeline.replaceDocument(original) }
+        let (doc, _, rack, _) = Self.song()
+        timeline.replaceDocument(doc)
+
+        let pick = DeviceInsert.pluginInstrument(Self.synth)
+        timeline.editLanePlugin(id: rack) { timeline.setLanePluginInstrument(rack, pick) }
+        timeline.setLanePluginState(rack, Data([1, 2, 3]))
+        let kept = timeline.document.lanes.first { $0.id == rack }?.deviceChain?.instrument
+        XCTAssertEqual(kept?.id, pick.id, "premise: keeping settings keeps the insert's id")
+        XCTAssertNotEqual(kept, pick, "premise: keeping settings rewrites the insert")
+
+        timeline.undo()
+        XCTAssertNil(timeline.document.lanes.first { $0.id == rack }?.deviceChain,
+                     "Undo takes back the pick, not an older edit")
+        timeline.redo()
+        XCTAssertEqual(timeline.document.lanes.first { $0.id == rack }?.deviceChain?.instrument, kept,
+                       "Redo gives the plugin back WITH the kept settings")
+    }
+
     // MARK: 3 — refusals and what is kept
 
     func testOnlyARackTrackTakesOneAndNothingForeignIsOverwritten() {

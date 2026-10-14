@@ -454,10 +454,15 @@ public final class TimelineStore {
             // Production H2a — the `.laneSample` rule for the track's hosted instrument: a track
             // removed since, or an instrument written since, takes nothing back; the write goes
             // through the one writer, which keeps every other insert and refuses a foreign one.
+            // Matched by the insert's ID, not by equality: keeping the plugin's settings
+            // (`setLanePluginState`) rewrites the state blob and keeps the id, so an equality
+            // test dropped this step and undid an older, unrelated one. The inverse takes the
+            // CURRENT insert, so Redo gives the kept settings back too.
             guard let lane = document.lanes.first(where: { $0.id == laneID }),
-                  lane.deviceChain?.instrument == after else { return nil }
+                  lane.deviceChain?.instrument?.id == after?.id else { return nil }
+            let current = lane.deviceChain?.instrument
             setLanePluginInstrument(laneID, before)
-            return HistoryStep.lanePlugin(laneID: laneID, before: after, after: before)
+            return HistoryStep.lanePlugin(laneID: laneID, before: current, after: before)
         case .lanePluginEffect(let laneID, let before, let after):
             // Production H6-2 — the `.lanePlugin` rule for the track's hosted effect. The insert is
             // restored as it was (its id and state), so an Undo gives back the effect, not a copy.
