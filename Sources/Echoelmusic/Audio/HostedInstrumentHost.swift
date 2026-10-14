@@ -5,7 +5,7 @@
 // mix through `AudioEngine.attachAudioUnit`, and plays the track's notes on it as MIDI.
 //
 // ONE OWNER PER RACK SLOT. The region player names, per slot, which component it wants
-// (`setInstrument(_:forSlot:)`) at the same points it names the slot's built-in kind; the app's
+// (`setInstrument(_:state:forSlot:)`) at the same points it names the slot's built-in kind; the app's
 // note sink asks `owns(_:)` and sends a hosted slot's notes HERE instead of to `LaneVoiceRack`.
 // So a chosen plugin silences the built-in voice of that track — never both at once.
 //
@@ -88,6 +88,8 @@ final class HostedInstrumentHost {
     /// The component that could not be loaded on this device, per slot — not retried until the
     /// slot names something else or the media services reset.
     private var failed: [Int: DeviceInsert.PluginComponent] = [:]
+    /// H4c — the settings the song keeps for the unit a slot is loading, applied when it arrives.
+    private var pendingState: [Int: Data] = [:]
     private var transpose: [Int: Int] = [:]
     /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
     private var sounding: [Int: [Int: UInt8]] = [:]
@@ -110,14 +112,16 @@ final class HostedInstrumentHost {
 
     /// The one decision per slot: play `component`, or (nil) give the slot back to its built-in
     /// voice. Naming what the slot already wants does nothing, so the player may say it on every
-    /// load.
-    func setInstrument(_ component: DeviceInsert.PluginComponent?, forSlot slot: Int) {
+    /// load. `state` is the unit's own settings as the song keeps them (H4c), applied once the
+    /// unit has loaded — a unit already playing keeps what it has.
+    func setInstrument(_ component: DeviceInsert.PluginComponent?, state: Data?, forSlot slot: Int) {
         guard wanted[slot] != component else { return }
         if let component, failed[slot] == component { return }   // keeps its built-in voice
         unload(slot)
         failed[slot] = nil
         guard let component, component.manufacturer != Self.ownManufacturer else { return }
         wanted[slot] = component
+        pendingState[slot] = state
         let description = AudioComponentDescription(componentType: component.type,
                                                     componentSubType: component.subtype,
                                                     componentManufacturer: component.manufacturer,
@@ -222,6 +226,7 @@ final class HostedInstrumentHost {
             wanted[slot] = nil
             return
         }
+        if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }
         hosted[slot] = Hosted(component: component, unit: unit)
         Self.apply(mix[slot] ?? (gain: 1, pan: 0), to: unit)
         log.audio("Plugin '\(component.name)' by \(component.manufacturerName) plays rack slot \(slot)")
@@ -235,9 +240,24 @@ final class HostedInstrumentHost {
         mixing.pan = mix.pan
     }
 
+    /// H4c — give the unit back the settings the song kept. A state that is not a property list
+    /// dictionary is skipped with a warning: the unit then plays its default sound, as before H4.
+    private func restore(_ data: Data, to unit: AVAudioUnit, name: String) {
+        do {
+            guard let state = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+                log.audio("Plugin '\(name)' settings are not a dictionary — it plays its default sound", level: .warning)
+                return
+            }
+            unit.auAudioUnit.fullStateForDocument = state
+        } catch {
+            log.audio("Plugin '\(name)' settings could not be read: \(error) — it plays its default sound", level: .warning)
+        }
+    }
+
     /// Silence the unit (all notes off on every channel), then take it out of the graph.
     private func unload(_ slot: Int) {
         wanted[slot] = nil
+        pendingState[slot] = nil
         sounding[slot] = nil
         guard let held = hosted.removeValue(forKey: slot) else { return }
         if let block = held.unit.auAudioUnit.scheduleMIDIEventBlock {
@@ -256,6 +276,7 @@ final class HostedInstrumentHost {
         for held in hosted.values { engine.detachAudioUnit(held.unit) }   // the engine outlives the reset
         hosted.removeAll()
         wanted.removeAll()
+        pendingState.removeAll()
         failed.removeAll()
         sounding.removeAll()
     }

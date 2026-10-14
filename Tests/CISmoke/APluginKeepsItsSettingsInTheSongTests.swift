@@ -5,8 +5,8 @@
 //
 //  KIND: END-TO-END BEHAVIOUR (claims 1–3) — `DeviceInsert` is a shipped Foundation-only value
 //  type, driven directly. SOURCE-TEXT SCAN (claim 4) for the store's one writer, (claim 5, H4b)
-//  for the capture when the plugin window closes. Restore on load is H4c; the device sound is a
-//  DEVICE PROBE, open.
+//  for the capture when the plugin window closes, (claim 6, H4c) for the restore when the unit
+//  loads. The device sound is a DEVICE PROBE, open.
 //
 //  GRADING against the parent tree (#433/#464): `pluginFullState`, `settingPluginFullState`,
 //  `pluginStateLimit` and `setLanePluginState` do not exist there — the file does not compile on
@@ -105,5 +105,37 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
                       "closing the window is the moment the settings are kept")
         XCTAssertTrue(row.contains("timeline.setLanePluginState(laneID, state)"))
         XCTAssertEqual(row.components(separatedBy: "setLanePluginState(").count - 1, 1)
+    }
+
+    // MARK: 6 — H4c: a unit that loads gets the song's settings back
+
+    func testALoadingUnitGetsTheSongsSettingsBack() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        func code(_ rel: String) throws -> String {
+            let url = root.appendingPathComponent(rel)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw XCTSkip("\(rel) not on disk — this run has no source tree")
+            }
+            return SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        }
+        let app = try code("Sources/Echoelmusic/EchoelmusicApp.swift")
+        let host = try code("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        let fanout = try code("Sources/Echoelmusic/Sequencer/MultiRollFanout.swift")
+        XCTAssertTrue(fanout.contains("?.deviceChain?.instrument?.pluginFullState"),
+                      "the slot's settings come from the insert's own reader")
+        XCTAssertTrue(app.contains("MultiRollFanout.hostedInstrumentState(forSlot: slot, in: store.document,"))
+        XCTAssertTrue(app.contains("pluginHost.setInstrument(component, state: state, forSlot: slot)"))
+        guard let finish = host.range(of: "private func finishLoad("),
+              let restore = host.range(of: "if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }"),
+              let held = host.range(of: "hosted[slot] = Hosted(component: component, unit: unit)") else {
+            return XCTFail("ANCHOR MISSING: the restore in finishLoad")
+        }
+        XCTAssertLessThan(finish.lowerBound, restore.lowerBound)
+        XCTAssertLessThan(restore.lowerBound, held.lowerBound, "settings are back before the slot plays notes")
+        XCTAssertTrue(host.contains("unit.auAudioUnit.fullStateForDocument = state"))
+        XCTAssertEqual(host.components(separatedBy: "pendingState[slot] = nil").count - 1, 1,
+                       "unloading a slot forgets settings it never applied")
+        XCTAssertTrue(host.contains("pendingState.removeAll()"), "a media reset forgets them too; the next prime names them again")
     }
 }

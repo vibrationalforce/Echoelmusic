@@ -194,7 +194,7 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertLessThan(host.lowerBound, owned.lowerBound)
         XCTAssertLessThan(owned.lowerBound, rack.lowerBound,
                           "an owned slot's notes return before the rack sees them — never both voices")
-        XCTAssertTrue(app.contains("pluginHost.setInstrument(component, forSlot: slot)"))
+        XCTAssertTrue(app.contains("pluginHost.setInstrument(component, state: state, forSlot: slot)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, gain: gain)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, pan: pan)"))
     }
