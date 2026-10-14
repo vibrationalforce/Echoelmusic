@@ -134,8 +134,11 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertLessThan(finish.lowerBound, restore.lowerBound)
         XCTAssertLessThan(restore.lowerBound, held.lowerBound, "settings are back before the slot plays notes")
         XCTAssertTrue(host.contains("unit.auAudioUnit.fullStateForDocument = state"))
-        XCTAssertEqual(host.components(separatedBy: "pendingState[slot] = nil").count - 1, 1,
-                       "unloading a slot forgets settings it never applied")
+        guard let unload = host.range(of: "private func unload(_ slot: Int) {") else {
+            return XCTFail("ANCHOR MISSING: unload")
+        }
+        XCTAssertTrue(host[unload.upperBound...].prefix(200).contains("pendingState[slot] = nil"),
+                      "unloading a slot forgets settings it never applied")
         XCTAssertTrue(host.contains("pendingState.removeAll()"), "a media reset forgets them too; the next prime names them again")
     }
 }

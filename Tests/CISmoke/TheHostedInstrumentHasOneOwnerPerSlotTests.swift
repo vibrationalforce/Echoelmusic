@@ -28,6 +28,9 @@
 //  · Claim 5 (H2b2) — the app builds exactly one host where the rack is wired; an owned slot's
 //    notes return to the host before the rack's note-on, and the slot's plugin, gain and pan
 //    reach it through the region player's sinks.
+//  · Claim 6 (H5) — a plugin whose extension process died (invalidation notification) is
+//    detached, its slot goes back to the built-in voice, and it is marked failed so it is not
+//    reloaded at every onset; a breadcrumb names it in the diag log.
 //  · DEVICE PROBE, OPEN — NEEDS-FOUNDER-VERIFY H2 at the host's header.
 //
 //  GRADING against the parent tree (#433/#464): the host file and both engine methods are created
@@ -197,6 +200,25 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertTrue(app.contains("pluginHost.setInstrument(component, state: state, forSlot: slot)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, gain: gain)"))
         XCTAssertTrue(app.contains("pluginHost.setMix(slot: slot, pan: pan)"))
+    }
+
+    // MARK: 6 — a plugin whose process died gives its slot back
+
+    func testACrashedPluginGivesItsSlotBack() throws {
+        let code = SourceText.codeOnly(try source(Self.hostPath))
+        XCTAssertTrue(code.contains("forName: Notification.Name(kAudioComponentInstanceInvalidationNotification as String),"),
+                      "the host listens for a dead plugin instance")
+        XCTAssertTrue(code.contains("Task { @MainActor in self?.forgetInvalidated(dead) }"),
+                      "the notification hops to the main actor before touching the host")
+        guard let forget = body(of: "private func forgetInvalidated(", in: code, length: 900),
+              let detach = forget.range(of: "engine.detachAudioUnit(held.unit)"),
+              let failed = forget.range(of: "failed[slot] = held.component") else {
+            return XCTFail("ANCHOR MISSING: the invalidation handler, its detach or its failed mark")
+        }
+        XCTAssertLessThan(detach.lowerBound, failed.lowerBound)
+        XCTAssertTrue(forget.contains("wanted[slot] = nil"), "the built-in voice owns the slot again")
+        XCTAssertTrue(forget.contains("EchoelCrashLog.breadcrumb(\"plugin: '"), "the diag log names the plugin")
+        XCTAssertFalse(forget.contains("scheduleMIDIEventBlock"), "a dead unit gets no MIDI")
     }
 
     private func source(_ relative: String) throws -> String {

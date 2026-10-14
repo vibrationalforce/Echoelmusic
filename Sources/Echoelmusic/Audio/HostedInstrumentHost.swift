@@ -94,6 +94,7 @@ final class HostedInstrumentHost {
     /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
     private var sounding: [Int: [Int: UInt8]] = [:]
     private var resetObserver: NSObjectProtocol?
+    private var invalidationObserver: NSObjectProtocol?
 
     init(engine: AudioEngine) {
         self.engine = engine
@@ -105,6 +106,16 @@ final class HostedInstrumentHost {
             Task { @MainActor in self?.forgetAfterMediaReset() }
         }
         #endif
+        // A plugin whose extension process crashed is INVALIDATED: it renders nothing and takes no
+        // MIDI. The system posts this per instance, with the dead `AUAudioUnit` as the object.
+        invalidationObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name(kAudioComponentInstanceInvalidationNotification as String),
+            object: nil, queue: .main
+        ) { @Sendable [weak self] note in
+            guard let object = note.object else { return }
+            let dead = ObjectIdentifier(object as AnyObject)
+            Task { @MainActor in self?.forgetInvalidated(dead) }
+        }
     }
 
     /// Whether `slot`'s notes belong to a hosted unit (loaded or loading) instead of the rack.
@@ -269,6 +280,20 @@ final class HostedInstrumentHost {
             }
         }
         engine.detachAudioUnit(held.unit)
+    }
+
+    /// A hosted unit's process died: take the dead unit out of the graph and give its slot back to
+    /// the built-in voice. It is remembered as failed, so the next region onset does not load a
+    /// crashing plugin again and again; picking it anew (or a media reset) tries once more.
+    private func forgetInvalidated(_ dead: ObjectIdentifier) {
+        guard let slot = hosted.first(where: { ObjectIdentifier($0.value.unit.auAudioUnit) == dead })?.key,
+              let held = hosted.removeValue(forKey: slot) else { return }
+        EchoelCrashLog.breadcrumb("plugin: '\(held.component.name)' stopped working — slot \(slot) back to its built-in voice")
+        engine.detachAudioUnit(held.unit)
+        wanted[slot] = nil
+        pendingState[slot] = nil
+        sounding[slot] = nil
+        failed[slot] = held.component
     }
 
     private func forgetAfterMediaReset() {
