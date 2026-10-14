@@ -5,8 +5,8 @@
 // limiter counting every draw, deciding the gain on the very draw it counts, the layer as the screen
 // shows it, on the display clock.
 //
-// ⚠️ SCOPE: NOTHING ATTACHES A VIDEO OUTPUT YET (claim 16). After this slice the picture is the
-// pre-VV-5b field on every device; the first producer is VV-6 (it waits on VV-3) or VV-8.
+// ⚠️ SCOPE (claim 16): since VV-6 ONE owner attaches a video output — the video card's
+// `VideoFootageOwner` ("Show in Visuals"). Until VV-6 nothing did, and this line said so.
 //
 // KIND, per assertion (Tests/CISmoke/CLAUDE.md §1):
 // · SOURCE-TEXT SCANS — claims 1, 2, 3, 4, 16; the MSL half of 6; the renderer halves of 15 and 18.

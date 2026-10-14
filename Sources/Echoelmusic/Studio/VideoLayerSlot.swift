@@ -3,11 +3,12 @@
 // the field (floating window, external stage) holds this slot as its `footageSource` — set once,
 // in `MetalBioView.makeUIView` — and PULLS from it synchronously, in `draw(in:)`, on the main thread.
 //
-// ⚠️ SCOPE, SAID FIRST: NOTHING ATTACHES A VIDEO OUTPUT YET. `attachVideoOutput` has no production
-// caller; the first will be the VV-6 door (it waits on VV-3, a kept copy of the file) or the VV-8
-// picture lane. Until then every pull is one lock and a nil, and the picture is exactly the pre-VV-5b
-// field. A seam, not a feature —
-// nothing here may be claimed in store text, on the website or in `ContentPipeline/CLAIMS.md`.
+// ⚠️ SCOPE, SAID FIRST: ONE OWNER ATTACHES A VIDEO OUTPUT — the video card's `VideoFootageOwner`
+// (VV-6, "Show in Visuals", playing the copy VV-3a keeps). Nothing else does; the VV-8 picture lane
+// would be the second owner and has to say which one wins the one slot. While nothing is attached
+// every pull is one lock and a nil, and the picture is exactly the pre-VV-5b field. Not
+// device-verified: nothing here may be claimed in store text, on the website or in
+// `ContentPipeline/CLAIMS.md` until a device run has seen it.
 //
 // THE SHAPE — the lock-leaf shape of `TouchRippleChannel` and `AudioFeatureChannel`: one `NSLock`,
 // no queue of its own, no task, no timer, no observer, no delegate, nothing observable. A frame moves

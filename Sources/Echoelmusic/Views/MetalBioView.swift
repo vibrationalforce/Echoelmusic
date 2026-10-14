@@ -250,9 +250,9 @@ private struct BioUniforms {
 }
 
 /// VV-5a (GMMW) — one decoded footage frame offered to the renderer. `VideoLayerSlot` (VV-5b)
-/// produces it, and every renderer's `footageSource` IS that slot (set in `makeUIView`). Until
-/// something attaches a video output (VV-6 or VV-8) its pull returns nil, and every footage path in
-/// the renderer returns before touching a uniform.
+/// produces it, and every renderer's `footageSource` IS that slot (set in `makeUIView`). While no
+/// video output is attached (the video card's "Show in Visuals" is the one owner, VV-6) its pull
+/// returns nil, and every footage path in the renderer returns before touching a uniform.
 struct FootageFrame {
     let pixelBuffer: CVPixelBuffer
     /// Changes exactly when the picture does; never 0 (0 is the renderer's "no footage").
@@ -1139,8 +1139,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     }
 
     /// VV-5a — the ONE footage call in `draw(in:)`. Returns the sequence of the pair bound this
-    /// frame, 0 = none; the #1244 skip compares it. No output attached (the only state until VV-6 or
-    /// VV-8): one weak load, one lock, a nil — no allocation, no uniform write, and sequence 0 equals
+    /// frame, 0 = none; the #1244 skip compares it. No output attached (every state but the video
+    /// card's "Show in Visuals", VV-6): one weak load, one lock, a nil — no allocation, no uniform write, and sequence 0 equals
     /// the encoded 0, so the skip and the picture are exactly the pre-VV-5a ones. A frame pulled and
     /// then NOT shown is reported back (`footageDropped`), so the layer fades in when it returns.
     private func refreshFootage() -> UInt64 {
