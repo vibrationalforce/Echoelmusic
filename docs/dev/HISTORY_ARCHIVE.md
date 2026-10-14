@@ -119,7 +119,7 @@ Bulk-deletion commits cited below:
 
 ### A6 · SamplerVoice (one-shot player)
 - **Impl:** `Sequencer/SamplerVoice.swift`, with a lock-free trigger counter.
-- **C/R/O:** Y/N/Y (no UI loads a sample)
+- **C/R/O:** Y/N/Y (no UI loads a sample) → REPAIRED by GA-4 (`TrackSampleRow`), see D5.
 - **Scope / Class:** YES / **REUSE**
 - **Owner:** lane rack sampler slot.
 - **Deps:** a sample-import surface (Workstation import exists for audio lanes).
@@ -290,7 +290,7 @@ Bulk-deletion commits cited below:
 ### C3 · Export (LoopExporter / SingleExport / RetroCapture)
 - **Impl:** a bar-exact loop WAV (24-bit) or AAC; a 30 s pre-roll ring.
 - **C/R/O:** Y/Y/Y
-- **Stub/overclaim:** normalisation is RMS and up to +12 dB with **no ceiling after it** (defect D1).
+- **Stub/overclaim:** normalisation is RMS and up to +12 dB with **no ceiling after it** (defect D1). → REPAIRED, see D1.
 - **Scope / Class:** YES / **CURRENT**
 - **Next safe slice:** the export-quality repair (see the end of this file).
 
@@ -684,14 +684,16 @@ it. Treat it as a dated snapshot (#818), not a pinned number.
 
 ## Current defects discovered while building this register
 
-- **D1 · export can clip.** `SingleExport.normalizeGainDB` allows up to +12 dB, then applies it with `vDSP_vsmul`, and **no limiter or ceiling follows**. The captured source is already peak-limited near 0 dBFS, so a sparse take read at −20 against a −14 target is written about 6 dB over full scale into a 24-bit integer WAV. Code-read; not device-verified.
+- **D1 · export can clip.** `SingleExport.normalizeGainDB` allows up to +12 dB, then applies it with `vDSP_vsmul`, and **no limiter or ceiling follows**. The captured source is already peak-limited near 0 dBFS, so a sparse take read at −20 against a −14 target is written about 6 dB over full scale into a 24-bit integer WAV. Code-read; not device-verified. → **REPAIRED**: the gain is capped so the sample peak stays at or under `SingleExport.exportSamplePeakCeilingDBFS` (−1 dBFS), pinned by `TheExportGainCannotClipTests`. Marked 2026-10-14.
 - **D2 · two loudness engines disagree.** The meter shown is R128. The auto-gain and the export normaliser steer by unweighted RMS.
 - **D3 · K-weighting coefficients are the 48 kHz set at every sample rate.** A documented approximation; the offset at 44.1 kHz has not been measured. → **REPAIRED by E3 (2026-09-24, `2e6b54d66`).** Measured before the repair: +1.13 dB at 20 Hz, +0.40 dB at 60 Hz, +0.33 dB at 1.5 kHz at 44.1 kHz. After: within 0.005 dB of the standard at 44.1 kHz; the export now takes peak and loudness in one 44.1 kHz decode.
 - **D4 · stale header claims in `EchoelDDSP.swift`.** "FIR noise"; "LF/HF → reverb".
-- **D5 · `SamplerVoice` has no loader.** No UI can load a sample into the rack slot.
+- **D5 · `SamplerVoice` has no loader.** No UI can load a sample into the rack slot. → **REPAIRED by GA-4**: every rack track has a sampler with a loader, door `TrackSampleRow` in the track inspector. Marked 2026-10-14.
 - **D6 · no undo** anywhere, while editing capabilities are in scope. → **REPAIRED** for song edits (`TimelineStore` history, `SongHistoryRow`).
 
 ### Export-quality repair — readiness
+
+⭐ **DONE (marked 2026-10-14)** — step 1 shipped as the sample-peak ceiling (D1 above); steps 2–3 as E3 and `TheExportGainCannotClipTests`. The text below is the original plan.
 
 **READY** as a bounded slice:
 1. a true-peak-aware ceiling after the normalisation gain;

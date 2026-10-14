@@ -193,9 +193,9 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 | Drums / Beat-Maker / Sampler-**Kit** | 2026-07-26, #166/#167 | Fokus aufs Instrument — ⭐ 2026-10-10: ein **Sampler je Spur** ist zurück (GMMW GA-4: `LaneVoiceRack.samplers` + `loadSampleIfNeeded`, Tür `TrackSampleRow` im Spur-Detail); gestrichen bleiben Drum-Kit und Beat-Maker |
 | Noten-**Fläche** Piano Roll | 2026-07-26, #178/#475 | „Pianoroll soll raus“ — ⭐ 2026-10-10: Noten werden wieder bearbeitet, im `PartNoteEditor` (Spur-Detail → Seite „Notes“, `TrackInspectorView`); Composer-Parts erst nach „Edit a copy“ |
 | DAW-Arrangement (Clips, Arrange-Timeline, Mixer-Spuren) | 2026-07-24…31, #121 | Phase „reines Instrument“ (historisch, 2026-07-24) |
-| AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) |
+| AUv3-HOST (fremde Plugins laden) | #121 Slice 2 | wie oben (das Echoel-PLUGIN ist zurück, #1385) — ⭐ 2026-10-14: **wieder GEBAUT** für Instrument-Plugins (`Audio/HostedInstrumentHost`, Tür `TrackPluginRow`), Gerät offen, nicht behauptet (CLAIMS §1b) |
 | Mikrofon / Audio-Eingang, Vocoder, Autotune | 2026-09-12, #1302 | „Face und Audio Input komplett entfernen“ |
-| Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen |
+| Harmonizer, Granularsynthese | 2026-09-12, #1305 | wörtlich gestrichen — ⭐ die Granular-Hälfte ist zurück (Echoel Grain, GA-9/GA-10, Fach 1); der Harmonizer bleibt gestrichen |
 | Gesichts-/Körper-Tracking | 2026-09-12, #1301 | wie Audio-Eingang |
 | Video-Aufnahme und -Schnitt | 2026-09-12, #1304 (Schnitt schon #121) | „Kein Video Capture“ |
 | Vollbild-Visual, VJ-Overlay | #1069 | durch das schwebende Fenster ersetzt |
@@ -207,7 +207,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 **Was einer Profi-DAW heute wirklich fehlt** (UX-Audit 2026-10-02, `UX_AUDIT_2026-10-02.md`; Song-WAV-Export und
 Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): Beats aus Samples (⛔ „eine Tür zum Sampler … `SamplerVoice` hat keinen Lader“ stand hier — seit GA-4 hat jede Spur
 einen Sampler mit Lader und Tür `TrackSampleRow`; korrigiert 2026-10-10) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
-(#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
+(#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — ⭐ für Instrument-Plugins seit H2–H4 gebaut, Gerät offen; Effekt-Plugins nicht; das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
 Video als musikalisches Material (Inbox E12; ⭐ der erste Schritt E12-1 „Use Its Sound“ ist seit Build 2617 ausgeliefert, Fach 1c) · ein hörbarer Raum im Kopfhörer (S3; ⭐ für Audiospuren seit Build 2617 über „Headphone space“, Fach 1c — die generierten Stimmen bleiben stereo). Die Pläne dazu stehen in
 `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
 
