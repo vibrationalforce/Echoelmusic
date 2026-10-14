@@ -160,24 +160,34 @@ final class HostedInstrumentHost {
     }
 
     /// The one decision per slot: play `component`, or (nil) give the slot back to its built-in
-    /// voice. Naming what the slot already wants does nothing, so the player may say it on every
-    /// load. `state` is the unit's own settings as the song keeps them (H4c), applied once the
-    /// unit has loaded — a unit already playing keeps what it has.
+    /// voice. Naming what the slot already wants with the settings it already has does nothing, so
+    /// the player may say it on every load. `state` is the unit's own settings as the song keeps
+    /// them (H4c): applied once the unit has loaded, applied in place to a loaded unit when they
+    /// differ (H4d), and a unit that carries settings the song does not keep loads afresh (H4e).
     func setInstrument(_ component: DeviceInsert.PluginComponent?, state: Data?, forSlot slot: Int) {
-        guard wanted[slot] != component else {
+        if wanted[slot] == component {
             // H4d (review of 1657030d6…8b1203e93, finding G): the same component with OTHER song
             // settings. Without this, a unit still loaded from project A kept A's sound in project
-            // B, and closing its window then wrote A's settings into B. nil settings change
-            // nothing: a unit cannot be reset to defaults without reloading it.
-            guard let component, let state else { return }
-            if hosted[slot]?.component == component {
+            // B, and closing its window then wrote A's settings into B.
+            guard let component else { return }
+            guard hosted[slot]?.component == component else {
+                // Still loading: the newest settings win — nil too, so it never inherits another's.
+                pendingState[slot] = state
+                return
+            }
+            if let state {
                 guard appliedState[slot] != state, let unit = hosted[slot]?.unit else { return }
                 restore(state, to: unit, name: component.name)
                 appliedState[slot] = state
-            } else {
-                pendingState[slot] = state   // still loading: the newest settings win
+                return
             }
-            return
+            // H4e (deep audit 2026-10-14, Lieferung 1.1): the song keeps NO settings for this
+            // unit, but the unit was given some — another project's track, or a song from before
+            // the pick was kept. A unit cannot be reset to its defaults in place, so it loads
+            // afresh. A unit nobody gave settings to (a fresh pick, its window still open) is
+            // left alone, so an onset never resets what the person is playing.
+            guard appliedState[slot] != nil else { return }
+            log.audio("Plugin '\(component.name)' on rack slot \(slot) loads afresh — this song keeps no settings for it")
         }
         if let component, failed[slot] == component { return }   // keeps its built-in voice
         unload(slot)
@@ -266,7 +276,10 @@ final class HostedInstrumentHost {
               let state = unit.auAudioUnit.fullStateForDocument else { return nil }
         do {
             let data = try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)
-            appliedState[slot] = data   // H4d: the song will hand these bytes back — nothing to re-apply
+            // H4d: the song will hand these bytes back — nothing to re-apply. H4e: only bytes the
+            // song can KEEP; settings over its limit are refused, the song hands back nil, and a
+            // recorded capture would then reload the unit the person just set up.
+            if data.count <= DeviceInsert.pluginStateLimit { appliedState[slot] = data }
             return data
         } catch {
             log.audio("Plugin '\(hosted[slot]?.component.name ?? "?")' settings could not be saved: \(error)", level: .warning)

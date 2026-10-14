@@ -154,7 +154,7 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         let url = root.appendingPathComponent("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
         guard FileManager.default.fileExists(atPath: url.path) else { throw XCTSkip("no source tree") }
         let host = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
-        guard let same = host.range(of: "guard wanted[slot] != component else {"),
+        guard let same = host.range(of: "if wanted[slot] == component {"),
               let load = host.range(of: "unload(slot)\n        failed[slot] = nil") else {
             return XCTFail("ANCHOR MISSING: the same-component branch of setInstrument")
         }
@@ -162,10 +162,38 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertTrue(branch.contains("guard appliedState[slot] != state, let unit = hosted[slot]?.unit else { return }"),
                       "the same bytes must change nothing — a capture comes back from the song on every onset")
         XCTAssertTrue(branch.contains("restore(state, to: unit, name: component.name)"), "other settings reach the loaded unit")
-        XCTAssertTrue(branch.contains("pendingState[slot] = state"), "a unit still loading takes the newest settings")
+        XCTAssertTrue(branch.contains("pendingState[slot] = state\n                return"),
+                      "a unit still loading takes the newest settings — nil too, so it never inherits another song's")
         XCTAssertFalse(branch.contains("unload("), "COUNTERWEIGHT: new settings never reload the unit (that pauses the engine)")
-        XCTAssertTrue(host.contains("options: 0)\n            appliedState[slot] = data"), "a capture records what the song will hand back")
+        XCTAssertTrue(host.contains("if data.count <= DeviceInsert.pluginStateLimit { appliedState[slot] = data }"),
+                      "a capture records what the song will hand back — only bytes the song can keep")
         XCTAssertEqual(host.components(separatedBy: "appliedState[slot] = nil").count - 1, 2, "unload and a dead unit forget it")
         XCTAssertTrue(host.contains("appliedState.removeAll()"), "a media reset forgets it")
+    }
+
+    // MARK: 8 — H4e: a song that keeps NO settings for the unit gets a fresh one
+
+    /// Deep audit 2026-10-14 (Lieferung 1.1): `nil` settings for the same component returned at once,
+    /// so project B — or another track that lands on the same rack slot — played project A's sound.
+    /// A unit cannot be reset in place; it loads afresh, but ONLY when it carries settings the song
+    /// gave or captured (`appliedState`), so a fresh pick with its window open is never reset by an
+    /// onset. SOURCE-TEXT SCAN; the sound is a DEVICE PROBE (A → B → A, same plugin).
+    func testASongWithoutSettingsGetsAFreshUnit() throws {
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let url = root.appendingPathComponent("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        guard FileManager.default.fileExists(atPath: url.path) else { throw XCTSkip("no source tree") }
+        let host = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        guard let same = host.range(of: "if wanted[slot] == component {"),
+              let given = host.range(of: "if let state {", range: same.upperBound..<host.endIndex),
+              let fresh = host.range(of: "guard appliedState[slot] != nil else { return }", range: given.upperBound..<host.endIndex),
+              let unload = host.range(of: "unload(slot)\n        failed[slot] = nil", range: fresh.upperBound..<host.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the settings branch, the fresh-unit test or the reload that follows it")
+        }
+        let between = String(host[fresh.upperBound..<unload.lowerBound])
+        XCTAssertFalse(between.contains("return\n"),
+                       "a unit carrying settings the song does not keep falls through to the reload")
+        XCTAssertTrue(String(host[given.upperBound..<fresh.lowerBound]).contains("return"),
+                      "COUNTERWEIGHT: settings the song DOES keep are applied in place, never by reloading")
     }
 }
