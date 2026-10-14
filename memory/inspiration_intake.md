@@ -1397,3 +1397,11 @@ Entwurfs-Annahmen: Fenster nur auf Tipp anfordern, Ergebnis auf den Main-Actor, 
 loslassen, nil heißt „kein eigenes Fenster“ (umgesetzt in H3, 1657030d6); `fullStateForDocument`
 mit Fehlerbehandlung speichern (H4); Invalidation-Notification bei abgestürztem Plugin (eigene
 Scheibe). Kein Befehl, kein Paket übernommen.
+
+## 2026-10-14 — ChatGPT: Port-Kandidaten aus HISTORY_ARCHIVE A+B (PR #425) — ADOPT→PRODUCT
+
+Bericht gemergt (e8e9250e7, nur `reports/`). Stichprobe 9/9 bestätigt, darunter zwei veraltete
+Archiv-Aussagen (A3 FX-Kette wird benutzt, A6 Sampler lädt). Reihenfolge für Schritt 2:
+ModalBank wieder anbinden (Kern erhalten, kompiliert) → eine FM-Engine → Kick/Hi-Hat.
+Jeder Port wird neu und audio-thread-sauber geschrieben (alte Kerne nehmen Try-Locks und
+allokieren), nie kopiert. PhaseVocoder bleibt draußen (fünf belegte Defekte).

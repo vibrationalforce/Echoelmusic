@@ -187,7 +187,8 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // hint already covers it twice over ("copies", "the composer's part"). Production H2a
         // (2026-10-13) added `.lanePlugin` — ONE rack track's hosted instrument from one pick,
         // both inserts as values; no name, no document; the hint's "picked sound" covers it, a
-        // track's instrument is its sound.
+        // track's instrument is its sound. Production H6-2 (2026-10-14) added `.lanePluginEffect`
+        // — the same shape for the track's hosted effect; "picked sound" covers it too.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
@@ -197,6 +198,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                                "case lightLook(before: Float?, after: Float?)",
                                "case laneSample(laneID: UUID, before: String?, after: String?)",
                                "case lanePlugin(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)",
+                               "case lanePluginEffect(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)",
                                "case cycle(before: TimelineCycle?, after: TimelineCycle?)",
                                "case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)"],
                        """

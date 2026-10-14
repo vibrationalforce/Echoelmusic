@@ -5253,3 +5253,14 @@ Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
 - **Entscheidung:** Reihenfolge (1) Produktionskern: Plugin-Fenster H3, Plugin-Einstellungen gespeichert H4, Effekt-Plugins auf Spuren H6, Mixer pro Spur · (2) Instrumente und Effekte zurück — bewährte Algorithmen aus dem Archiv in die heutigen Besitzer portieren · (3) Videoschnitt auf der Zeitleiste · (4) Performance, Licht, Mapping · (5) Stream und Colabo zuletzt (braucht eine Abhängigkeit → Founder).
 - **Regeln:** pro Scheibe Code + EIN kleiner Test; keine Prosa-Romane in Kommentaren oder Wächtern; keine Multi-Agent-Audits; ein Review-Agent nur bei Audio-Thread-Code; CLAUDE.md eingefroren. Jeder TestFlight mit kurzer „Probier das"-Liste.
 - Wiedervorlage 2026-11-13.
+
+### 2026-10-14 — Founder: MIDI/Automation/Clips/Performance/MPE/Touch überarbeiten, Video Capture + Schnitt zurück
+
+Wörtlich: „Das ganze MIDI und Automations Game, sowie Audio Clip, Performance und Arrangement Mode
+mit Automationen, MPE, Touch feel etc überarbeiten und optimieren. Video Schnitt, Video Capture
+integrieren." Hebt den Schnitt „Kein Video Capture" (2026-09-12, #1304) auf — aktuelles
+Produktgesetz schlägt historische Streichung. Reihenfolge nach H6: Automation schreiben/lesen
+→ MIDI/MPE-Eingang mit Zonen + Touch-Gefühl → Clip-Launcher/Performance → Video Capture → Video-Schnitt.
+Harte Kopplungen: die Rückkamera ist der Puls-Sensor (beim Filmen Puls über Gurt/Watch); Ton
+braucht das Mikrofon zurück — `NSMicrophoneUsageDescription` + ein `RecordRouteOwner`-Fall im
+SELBEN Commit (Info.plist ist founder-gated). Review 2026-11-13.
