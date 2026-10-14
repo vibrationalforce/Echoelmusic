@@ -1059,3 +1059,22 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Entscheidung geloggt:** Farbscheibe in `decisions.csv` + `memory/decisions.md` (Review 2026-11-12).
 - **Offen (Founder):** Geräte-Session für 2622–2624 · GM18–GM22 · E10-1, B2 und #310 im Standard-Modus · die drei
   `orchester/*`-Branches.
+
+## 2026-10-14 (Nacht) — Plugin-Hosting produktionsreif · Wächter-Reparatur · Website ehrlich · Förderfristen
+
+- **Hosting-Bugs aus dem Verlaufs-/Debug-Audit (wf_624b40ce-21e), je mit Wächter, rot auf dem Elternstand transkribiert:**
+  B1 `e04c020a0` (Plugin-Wahl im Spielen leerte die Pumpe → `LaneNotePump.releaseSounding`) · B2 `8369bfd6d`
+  (`.lanePlugin`-Undo nach ID statt Gleichheit, Redo mit gehaltenen Einstellungen) · B3 `1cc0f8676`
+  (`requestView`/`captureState` nur für die genannte Komponente) · Format-Sperre `f5600e3a6`
+  (`AudioEngine.trackBusTakes`, neuer Wächter `AHostedUnitMustSpeakTheTrackBusShapeTests`) · Review-Folgen `6a475f425`
+  (4-Kanal-Format mit Layout, begrenztes Pumpen-Fenster, Doppeltipp).
+- **Wächter `d6552d23f`:** drei auf dem Branch stille Rote (NoteGridZoom, SceneLaunch, ScrubNotifies) und ein #367-Grüner
+  (DetailCaption) neu verankert.
+- **Website `31ec619fd` / Register `eee0e12cd`:** Hosting auf faq/press/architecture wie overview („neu, nicht bestätigt,
+  nicht behauptet"); „In active development" weg; HISTORY_ARCHIVE D1/D5/C3/A6 REPAIRED; FEATURE_STATUS Hosting + Grain.
+- **Offen (Founder):** Video-Satz der FAQ (Wächter pinnt „Video is not part of Echoelmusic", Seed/Show-in-Visuals sind
+  ausgeliefert) · Streaming „auf dem Plan" vs. „not planned" · `brainstorming.html` im Footer.
+- **CI:** Runner-Schlange lang; Abbrechen alter Läufe ist dieser Integration verboten (403). Deploy 10.79.502 wartet auf
+  beide Gates auf `6a475f425`; Notiz liegt vorbereitet im Scratchpad.
+- **Außerhalb des Repos:** Förderfristen recherchiert, 12 Kalendertermine mit Gesprächsleitfäden und 5 Gmail-Entwürfe
+  angelegt (nichts gesendet).
