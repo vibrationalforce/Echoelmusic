@@ -1405,3 +1405,12 @@ Archiv-Aussagen (A3 FX-Kette wird benutzt, A6 Sampler lädt). Reihenfolge für S
 ModalBank wieder anbinden (Kern erhalten, kompiliert) → eine FM-Engine → Kick/Hi-Hat.
 Jeder Port wird neu und audio-thread-sauber geschrieben (alte Kerne nehmen Try-Locks und
 allokieren), nie kopiert. PhaseVocoder bleibt draußen (fünf belegte Defekte).
+
+## 2026-10-14 — Wettbewerb: Raumklang · Handy-Musik · KI · Video · Kollaboration — ADOPT→PRODUCT
+Fünf Rechercheure, ~40 Werkzeuge, Bericht `reports/wettbewerb-und-redesign-2026-10-14.md`.
+Befund: keinem Werkzeug dient der Körper als Quelle; die Profi-Welt lebt von offenen Protokollen;
+Endlesss (abgeschaltet 31.05.2024) ist die Warnung gegen Server-Bindung. Redesign: Echoel bespielt
+das Profi-Rig vom Körper aus, statt es nachzubauen. Übernommen nur als FORM der bereits
+festgelegten Reihenfolge (Szenen-Reihe, Generator-Regler, XY-Pad, OSC-Szenenabruf, takt-gestempelte
+Aufnahme + FCPXML, Intervall-Jam über Multipeer). Founder-Fragen: LinkKit, NDI-SDK, ADM-OSC-Validator,
+Kamera-Regel Puls ↔ Video. Websuche dünn — „vermutet" bleibt aus jedem Text.
