@@ -59,6 +59,24 @@ final class TheLaneNeverStartsAnUnwiredPlayerTests: XCTestCase {
                       "The walk no longer stops at the engine's output — every node would read unwired.")
     }
 
+    /// 1b — the walk is long enough for the deepest real chain. Headphone space with a pitched or
+    /// warped part is player → time-pitch → space bus → environment → masterMixer → EQ → gain →
+    /// limiter → mainMixer: nine nodes. A walk of eight checks never reached mainMixer and called
+    /// the part unwired, so it stayed silent and every Play rebuilt the lane.
+    func testTheWalkReachesTheDeepestChain() throws {
+        let engine = try code(Self.engine)
+        guard let a = engine.range(of: "func missingOutputLink(from node: AVAudioNode) -> String?"),
+              let loop = engine[a.upperBound...].range(of: "for hop in 0..<") else {
+            return XCTFail("ANCHOR MISSING: the hop loop in missingOutputLink")
+        }
+        let digits = engine[loop.upperBound...].prefix { $0.isNumber }
+        guard let limit = Int(String(digits)) else {
+            return XCTFail("The hop limit is no longer a literal — re-read this claim.")
+        }
+        XCTAssertGreaterThanOrEqual(limit, 12,
+                                    "The output walk must outreach the nine-node Headphone-space chain with room to spare.")
+    }
+
     // MARK: 2 — every start asks first
 
     func testEveryStartAsksWhetherTheNodeIsWired() throws {
