@@ -42,8 +42,8 @@ mehr, als der Test hält, und ein zu weit versprochener Zaun ist schlimmer als k
 - **AUv3:** geprüft wird das TARGET, gebunden an den Namen `EchoelmusicAUv3`, **seit
   #1385 auf ANWESENHEIT** (plus die Existenz von `Sources/EchoelmusicAUv3/`). Ein Target
   unter anderem Namen rutscht weiterhin durch — das wäre eine laute, gewollte Änderung,
-  aber der Test findet sie nicht. ⭐ Die HOSTING-Hälfte („kann keine fremden Plugins
-  laden") ist **seit #1385 gepinnt** und war es vorher nicht: sie steckte mit der
+  aber der Test findet sie nicht. ⭐ Die HOSTING-Hälfte (seit 2026-10-14: „Code da, nicht
+  behauptet") ist **seit #1385 gepinnt** und war es vorher nicht: sie steckte mit der
   Target-Hälfte in EINEM Satz, und genau deshalb machte die Rückkehr der einen den ganzen
   Eintrag falsch. Zwei Tatsachen in einem Satz sind ein Pin, der nur gemeinsam altern
   kann.
@@ -149,8 +149,15 @@ fest genagelten entspricht). (2) **Eine Instanz kostet in AUM rund 20 Prozentpun
 DSP-Anzeige** (1 % leer → 19–24 % mit einer Instanz). „Läuft neben Deinem ganzen Set" ist
 damit keine belegte Aussage.
 
-**b) Echoel lädt KEINE fremden Plugins — heute.** Das AUv3-*Hosting* ging mit #121 Slice 2;
-nichts davon ist zurück, und behauptet wird nur, was ausgeliefert ist. ⛔ **Bis 2026-10-13
+**b) Echoel BEHAUPTET KEIN Laden fremder Plugins — der Code ist da, ein Gerät hat ihn nicht
+bestätigt.** Das AUv3-*Hosting* ging mit #121 Slice 2 und ist seit der Production-Level-Reihe
+(H2b–H6, Oktober 2026, TestFlight ab 10.79.501) als INSTRUMENT-Hosting zurück:
+`Audio/HostedInstrumentHost` ruft `AVAudioUnit.instantiate`, die Tür ist die Device-Seite einer
+Rack-Spur. Effekt-Plugins klingen nicht (H6-5 offen). ⛔ **Bis 2026-10-14 stand hier „Echoel lädt
+KEINE fremden Plugins — heute. nichts davon ist zurück"**, und `docs/claims.html` sagte „never …
+not coming back", während der Build es auslieferte — eine UNTER-Behauptung, gefunden von einer
+lesenden Fremdprüfung. Behauptet wird weiter NICHTS davon, bis ein Gerätelauf mit einem echten
+Fremd-Plugin es bestätigt; dann wird dieser Absatz zur Erlaubnis, nicht vorher. ⛔ **Bis 2026-10-13
 stand hier als BEGRÜNDUNG „die Produktgrenze aus `PRODUCT_DEFINITION.md` — ein Instrument IN
 der DAW zu sein ist das Gegenteil davon, selbst die DAW sein zu wollen“, und „steht nicht zur
 Debatte“.** Das ist PHASENGESCHICHTE: seit dem Produktgesetz vom 2026-09-24
@@ -158,12 +165,12 @@ Debatte“.** Das ist PHASENGESCHICHTE: seit dem Produktgesetz vom 2026-09-24
 künftiger DMMW-Umfang NACH dem Geräte-Vertrag (WA3; `CLAUDE.md` sagt es an der AUv3-Zeile). Eine
 Begründung, die das Gegenteil des geltenden Gesetzes sagt, verführt eine Content-Sitzung dazu,
 die Workstation selbst zu verneinen — und genau das stand bis heute in FAQ und Store-Text. Das
-VERBOT bleibt, seine Begründung ist jetzt die wahre: nicht gebaut, also nicht behauptet.
-Gepinnt von `ContentPipelineClaimsTests` gegen den Satz „Echoel lädt KEINE fremden Plugins“.
+VERBOT bleibt, seine Begründung ist jetzt die wahre: nicht geräte-bestätigt, also nicht behauptet (bis 2026-10-14 stand hier „nicht gebaut" — seit H2b falsch).
+Gepinnt von `ContentPipelineClaimsTests` gegen den Satz „Echoel BEHAUPTET KEIN Laden fremder Plugins“.
 
 *Zwei richtige Bilder seit dem Produktgesetz: die EIGENE Arrange-Bühne (die App startet auf
-ihr) und ein Plugin-Slot in einem fremden Host (AUM, siehe a). Falsch bleibt ein Bild, in dem
-Echoel ein FREMDES Plugin lädt.*
+ihr) und ein Plugin-Slot in einem fremden Host (AUM, siehe a). Nicht erlaubt bleibt — bis ein
+Gerätelauf es bestätigt — ein Bild, in dem Echoel ein FREMDES Plugin lädt.*
 
 ### 2. Wellness, Meditation, Schlaf, Fokus, Stressabbau, Longevity, „HealthTech"
 `CLAUDE.md`: **„Biofeedback ist Kern, NICHT Wellness."** Echoel ist ausdrücklich kein

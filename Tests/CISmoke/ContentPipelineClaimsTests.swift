@@ -162,12 +162,16 @@ final class ContentPipelineClaimsTests: XCTestCase {
         // writing the check. Caught by grepping the rewritten file for the needle instead of
         // trusting that I had written what I meant to. If §1b is reworded, reword this in the
         // SAME commit; the sentence is the pin, not a decoration.
-        XCTAssertTrue(claims.contains("Echoel lädt KEINE fremden Plugins"), """
-        `ContentPipeline/CLAIMS.md` no longer states that Echoel cannot load foreign plugins. \
-        AUv3 HOSTING was cut by #121 Slice 2 and has NOT come back. Measure it with a grep for \
-        AUAudioUnit instantiate and AVAudioUnitComponentManager over Sources — both are zero. \
-        Reviving the plugin TARGET is not reviving the HOST, and §1 bundling the two into one \
-        sentence is precisely why one revival made the whole entry false.
+        // ⛔ Until 2026-10-14 the pin was "Echoel lädt KEINE fremden Plugins" and its message said
+        // hosting "has NOT come back" — while `Audio/HostedInstrumentHost` (H2b–H6) called
+        // `AVAudioUnit.instantiate` and 10.79.501 shipped it to TestFlight. The pin now holds the
+        // true state: the code is there, nothing claims it until a device confirms it.
+        XCTAssertTrue(claims.contains("Echoel BEHAUPTET KEIN Laden fremder Plugins"), """
+        `ContentPipeline/CLAIMS.md` §1b no longer says that foreign-plugin hosting is NOT claimed. \
+        The code exists (`Audio/HostedInstrumentHost`, instrument plugins only) but no device run \
+        has confirmed a real third-party plugin. When one has, rewrite §1b as a permission and \
+        this pin in the SAME commit. Reviving the plugin TARGET is not reviving the HOST — keep \
+        the two halves in separate sentences.
         """)
 
         // ⚠️ HALF A PIN, and CLAIMS.md now says so rather than letting the header imply more:

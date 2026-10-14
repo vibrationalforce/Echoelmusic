@@ -391,8 +391,10 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
             """)
     }
 
-    /// Claim 2 — HOSTING. This half never expired and never will: Echoelmusic loading someone
-    /// else's plugin was built, removed on purpose (#121 Slice 2), and is not coming back.
+    /// Claim 2 — HOSTING is not CLAIMED. ⛔ This doc said "never expired and never will … not
+    /// coming back" until 2026-10-14, while `Audio/HostedInstrumentHost` (H2b–H6) shipped
+    /// instrument hosting to TestFlight. The rule that stays: no page may SAY Echoelmusic hosts
+    /// plugins until a device run confirms it (`ContentPipeline/CLAIMS.md` §1b).
     ///
     /// ⚠️ The needles are the PHRASES the site actually uses, not the bare word "host" — which
     /// occurs in "hosted", "hosting provider" and ordinary prose, and would have made this
@@ -411,8 +413,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
         XCTAssertTrue(offenders.isEmpty, """
             \(offenders.count) place(s) on the site describe Echoelmusic as hosting other \
             plugins without a negation nearby: \(shown). Echoelmusic is an AUv3 instrument \
-            and has been since #1385 — it has NEVER been a plugin HOST since #121 Slice 2, \
-            and the two are routinely confused. See `ContentPipeline/CLAIMS.md` §1b.
+            since #1385; hosting other plugins exists in code but is not device-confirmed, so \
+            no page claims it. See `ContentPipeline/CLAIMS.md` §1b.
             """)
     }
 
