@@ -44,8 +44,8 @@
 // Claim 4 is behaviour on an UNCHANGED helper and was not transcribed (no toolchain); this edit
 // does not touch it. KIND (§1): claims 1–3 and 5–7 are SOURCE-TEXT SCANS; claim 4 is behaviour.
 // Whether a bound pair ever renders is a DEVICE PROBE. Since VV-5b `footageSource` has its one
-// writer (`makeUIView` → `VideoLayerSlot.shared`), but nothing attaches a video output yet (VV-6),
-// so no pair is produced — `TheVideoFrameIsPulledOnTheDrawTests` claim 16 pins that.
+// writer (`makeUIView` → `VideoLayerSlot.shared`), and since VV-6 one owner attaches a video output
+// (the video card's "Show in Visuals") — `TheVideoFrameIsPulledOnTheDrawTests` claim 16 pins that.
 
 import Foundation
 import XCTest

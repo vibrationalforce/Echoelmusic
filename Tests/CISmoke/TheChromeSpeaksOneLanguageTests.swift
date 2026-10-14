@@ -722,7 +722,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let mediaLabel = try codeOnly("Sources/Echoelmusic/Studio/MediaActionLabel.swift")
         XCTAssertTrue(mediaLabel.contains("Text(LocalizedStringKey(title))") && !mediaLabel.contains("Text(title)"),
                       "MediaActionLabel draws its title verbatim again — Choose Photo / Apply to Visuals / Choose Video would not translate")
-        try assertCatalogued(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo"], "media action titles")
+        try assertCatalogued(["Choose Photo", "Apply to Visuals", "Choose Video", "Undo", "Show in Visuals", "Hide from Visuals"],
+                             "media action titles")
         // E4-16 — the selected-part bar: titles as keys, every VoiceOver sentence localised at its caller
         let bar = try codeOnly("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(bar.contains("private func button(_ title: LocalizedStringKey, _ systemImage: String, enabled: Bool, showsTitle: Bool,"),

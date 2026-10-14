@@ -23940,6 +23940,66 @@
           }
         }
       }
+    },
+    "Show in Visuals" : {
+      "comment" : "Video card button (VV-6): play the kept video as a layer of the visuals.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show in Visuals"
+          }
+        }
+      }
+    },
+    "Hide from Visuals" : {
+      "comment" : "Video card button (VV-6): take the video out of the visuals.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide from Visuals"
+          }
+        }
+      }
+    },
+    "Show in visuals" : {
+      "comment" : "Video card VoiceOver label for Show in Visuals.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show in visuals"
+          }
+        }
+      }
+    },
+    "Hide from visuals" : {
+      "comment" : "Video card VoiceOver label for Hide from Visuals.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide from visuals"
+          }
+        }
+      }
+    },
+    "Plays the video without sound as a layer of the visuals; fast flashes are dimmed" : {
+      "comment" : "Video card VoiceOver hint for Show in Visuals.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plays the video without sound as a layer of the visuals; fast flashes are dimmed"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

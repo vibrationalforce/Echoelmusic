@@ -131,14 +131,24 @@ enum VideoFootageGeometry {
 final class VideoFootageOwner {
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
-    /// Bumped by every show and stop, so a geometry load that a stop overtook attaches nothing.
+    /// Bumped by every `begin` and `stop`, so a show that a later tap overtook attaches nothing.
     private var generation = 0
 
-    /// Shows `url` in the visual. false when the file has no readable video track or a stop came first.
-    func show(_ url: URL) async -> Bool {
+    /// Synchronous first half of a show: stops what plays and hands out the token the show must
+    /// still hold when it attaches. Called on the tap, BEFORE the task starts — a Hide that lands
+    /// before the task runs then overtakes it instead of being overtaken (review of 6dd1d6c3f).
+    func begin() -> Int {
         stop()
-        let mine = generation
-        guard let geometry = await VideoFootageGeometry.load(url: url), mine == generation else { return false }
+        return generation
+    }
+
+    /// Shows `url` in the visual. true: it plays. false: the file has no readable video track.
+    /// nil: a later tap overtook this show — the caller's state belongs to that tap, not to this one.
+    func show(_ url: URL, token: Int) async -> Bool? {
+        guard token == generation else { return nil }
+        let geometry = await VideoFootageGeometry.load(url: url)
+        guard token == generation else { return nil }
+        guard let geometry else { return false }
         let item = AVPlayerItem(url: url)
         let output = VideoLayerSlot.makeVideoOutput(naturalWidth: geometry.width, naturalHeight: geometry.height)
         item.add(output)
@@ -485,8 +495,15 @@ struct VideoSeedCard: View {
                              systemImage: inVisuals ? "rectangle.slash" : "play.rectangle")
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(inVisuals ? "Hide from visuals" : "Show in visuals")
-        .accessibilityHint("Plays the video without sound as a layer of the visuals; fast flashes are dimmed")
+        .accessibilityLabel(visualsSpokenLabel)
+        .accessibilityHint(String(localized: "Plays the video without sound as a layer of the visuals; fast flashes are dimmed"))
+    }
+
+    // E4-42: typed steps, each a catalog key — a ternary of plain literals picks the verbatim overload.
+    private var visualsSpokenLabel: String {
+        let hide: String = String(localized: "Hide from visuals")
+        let show: String = String(localized: "Show in visuals")
+        return inVisuals ? hide : show
     }
 
     /// VV-6 — shows the kept copy in the visual, or takes it out.
@@ -497,10 +514,10 @@ struct VideoSeedCard: View {
         }
         guard let kept = keptVideo else { return }
         inVisuals = true
+        let token = footage.begin()
         Task {
-            let shown = await footage.show(kept.url)
-            // A stop that came first already set this false; a failed show sets it false too.
-            if !shown { inVisuals = false }
+            // nil: a later tap overtook this show and owns `inVisuals` now — leave it alone.
+            if await footage.show(kept.url, token: token) == false { inVisuals = false }
         }
     }
 
