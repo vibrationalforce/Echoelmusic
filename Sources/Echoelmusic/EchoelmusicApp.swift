@@ -1192,7 +1192,15 @@ struct EchoelmusicApp: App {
                     // gets (patchStore.patches.first, applied at line ~527), so an
                     // unset lane matches the primary timbre — never the bare DDSP default.
                     let fallbackPatch = patchStore.patches.first
+                    // Production H2b: a rack track that chose an Audio Unit instrument plays
+                    // it instead of its built-in voice. ONE owner per slot — the host owns the
+                    // notes of a slot that wants a unit; every other slot plays the rack.
+                    let pluginHost = HostedInstrumentHost(engine: audioEngine)
                     timelinePlayer.enableMultiRoll(capacity: laneVoiceRack.capacity) { [weak laneVoiceRack] slot, events in
+                        if pluginHost.owns(slot) {
+                            pluginHost.send(events, toSlot: slot)
+                            return
+                        }
                         // S2-W2-4: the built-in path goes through the rack FACADE,
                         // which routes the slot to its bound KIND (poly/drums/sub). With
                         // voiceKindRouting OFF every slot binds .poly ⇒ the facade calls
@@ -1215,6 +1223,10 @@ struct EchoelmusicApp: App {
                     timelinePlayer.slotKindSink = { [weak laneVoiceRack] slot, kind in
                         laneVoiceRack?.setKind(slot: slot, kind: kind)
                     }
+                    // Production H2b: each slot's chosen Audio Unit, right after its kind.
+                    timelinePlayer.slotPluginSink = { slot, component in
+                        pluginHost.setInstrument(component, forSlot: slot)
+                    }
                     // S2-W3 (EchoelSampler klingt): the lane's persisted sample REF,
                     // fired right after the kind at the same player sites — resolved
                     // via the ONE ref lookup and loaded into the slot's bound sampler
@@ -1234,6 +1246,7 @@ struct EchoelmusicApp: App {
                         // mono note at enqueue (and releases a held note on a change);
                         // a kit is unpitched (documented ignore).
                         laneVoiceRack?.setTranspose(slot: slot, semitones: semitones)
+                        pluginHost.setTranspose(slot: slot, semitones: semitones)   // H2d: a hosted unit too
                     }
                     // Per-instrument Detune (founder 2026-07-14 "transpose detune"): fine
                     // cents offset per SECONDARY lane's rack voice, alongside transpose.
@@ -1263,9 +1276,11 @@ struct EchoelmusicApp: App {
                     // mixer state each step via `liveDocument` below).
                     timelinePlayer.slotPanSink = { [weak laneVoiceRack] slot, pan in
                         laneVoiceRack?.setPan(slot: slot, pan)   // sub un-panned (documented no-op)
+                        pluginHost.setMix(slot: slot, pan: pan)   // H2b: a hosted unit pans too
                     }
                     timelinePlayer.slotGainSink = { [weak laneVoiceRack] slot, gain in
                         laneVoiceRack?.setGain(slot: slot, gain)   // 0…2 per bound kind
+                        pluginHost.setMix(slot: slot, gain: gain)   // H2b: and follows the fader
                     }
                     // The roll-slot GAIN mirror (K2a), relocated here (heal-review
                     // HIGH): the old owner was ArrangeTimelineView.onChange, which

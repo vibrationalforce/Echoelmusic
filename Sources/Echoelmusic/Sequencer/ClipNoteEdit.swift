@@ -97,13 +97,15 @@ enum ClipNoteEdit {
     /// (shortened to the part's end), velocity 0.8, appended so it draws on top. nil when the
     /// step lies outside the part — nothing the player would skip is created.
     nonisolated static func adding(pitch: Int, step: Int, to clipNotes: [Note],
-                                   offsetTicks: Int, lengthTicks: Int,
+                                   offsetTicks: Int, lengthTicks: Int, lengthSteps: Int = 1,
                                    id: UUID = UUID()) -> (notes: [Note], id: UUID)? {
         guard step >= 0, lengthTicks > 0, (0...127).contains(pitch) else { return nil }
         let relative = step * Note.ticksPerStep
         guard relative < lengthTicks else { return nil }
         let start = Swift.max(0, offsetTicks) + relative
-        let length = Swift.min(Note.ticksPerStep, lengthTicks - relative)
+        // Production N3 — the new note is `lengthSteps` sixteenths long (the editor passes the
+        // chosen grid), cut at the part's end like a one-step note always was.
+        let length = Swift.min(Swift.max(1, lengthSteps) * Note.ticksPerStep, lengthTicks - relative)
         let note = Note(id: id, pitch: pitch, startTick: start, lengthTicks: length)
         return (clipNotes + [note], id)
     }
@@ -224,6 +226,14 @@ enum ClipNoteEdit {
             case .quarter:   return String(localized: "quarter note")
             }
         }
+    }
+
+    /// Production N3 — the start of the grid cell a tap at part step `step` falls in: a new note
+    /// is drawn at its cell's start, on the same grid OF THE PART that `quantizing` uses. A grid
+    /// below 1 and a negative step pass through unchanged (`adding` refuses the negative one).
+    nonisolated static func gridCellStart(_ step: Int, gridSteps: Int) -> Int {
+        guard gridSteps >= 1, step >= 0 else { return step }
+        return (step / gridSteps) * gridSteps
     }
 
     /// `ids` with their starts snapped to the nearest cell of a `gridSteps`-sixteenth grid OF THE
@@ -382,6 +392,80 @@ enum ClipNoteEdit {
             copies.append(copy)
         }
         return (clipNotes + copies, Set(copies.map(\.id)))
+    }
+
+    /// Production N4b — COPY: `ids` (those inside the part's window) as a clipboard, each start
+    /// made relative to the earliest one, in start order. nil when none of them is in the window,
+    /// so Copy greys out instead of filling the clipboard with nothing.
+    nonisolated static func copying(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                    lengthTicks: Int) -> [Note]? {
+        guard lengthTicks > 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let picked = clipNotes.filter {
+            ids.contains($0.id) && $0.startTick >= windowStart && $0.startTick < windowEnd
+        }
+        guard let first = picked.map(\.startTick).min() else { return nil }
+        return picked.map { note -> Note in
+            var held = note
+            held.startTick = note.startTick - first
+            return held
+        }.sorted { $0.startTick == $1.startTick ? $0.pitch < $1.pitch : $0.startTick < $1.startTick }
+    }
+
+    /// Production N4b — PASTE: the clipboard placed at `step` (a column of the part, 0 = its first
+    /// step), with new ids, appended so the copies draw on top; their ids are returned to select
+    /// them. A copy that would start past the part's end is left out — a phrase longer than the
+    /// room keeps what fits, the player would skip the rest. nil when nothing fits or the
+    /// clipboard is empty.
+    nonisolated static func pasting(_ clipboard: [Note], atStep step: Int, into clipNotes: [Note],
+                                    offsetTicks: Int, lengthTicks: Int) -> (notes: [Note], ids: Set<UUID>)? {
+        guard !clipboard.isEmpty, lengthTicks > 0, step >= 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let origin = windowStart + step * Note.ticksPerStep
+        var copies: [Note] = []
+        for held in clipboard {
+            var copy = held
+            copy.id = UUID()
+            copy.startTick = origin + Swift.max(0, held.startTick)
+            guard copy.startTick < windowEnd else { continue }
+            copies.append(copy)
+        }
+        guard !copies.isEmpty else { return nil }
+        return (clipNotes + copies, Set(copies.map(\.id)))
+    }
+
+    /// Where Paste puts the clipboard: right after the selected notes (the step after the last
+    /// one ends, rounded up), or at the part's first step when nothing is selected — so a paste
+    /// into an empty part starts at its top, and a paste after a phrase continues it.
+    nonisolated static func pasteStep(after ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int) -> Int {
+        let windowStart = Swift.max(0, offsetTicks)
+        guard let end = clipNotes.filter({ ids.contains($0.id) }).map(\.endTick).max() else { return 0 }
+        return Swift.max(0, (end - windowStart + Note.ticksPerStep - 1) / Note.ticksPerStep)
+    }
+
+    /// Production N4 — LEGATO: each of `ids` ends where the next note of the part starts (any
+    /// pitch; a note starting at the same tick is a chord partner, not the next note), or at the
+    /// part's end when none follows. Starts and pitches stay; a note outside the part's window is
+    /// left alone, like `quantizing` leaves it. nil when nothing changes, so the button greys out.
+    nonisolated static func legato(_ ids: Set<UUID>, in clipNotes: [Note], offsetTicks: Int,
+                                   lengthTicks: Int) -> [Note]? {
+        guard !ids.isEmpty, lengthTicks > 0 else { return nil }
+        let windowStart = Swift.max(0, offsetTicks)
+        let windowEnd = windowStart + lengthTicks
+        let starts = clipNotes.map(\.startTick).filter { $0 >= windowStart && $0 < windowEnd }
+        var changed = false
+        let joined = clipNotes.map { note -> Note in
+            guard ids.contains(note.id), note.startTick >= windowStart, note.startTick < windowEnd
+            else { return note }
+            let next = starts.filter { $0 > note.startTick }.min() ?? windowEnd
+            var stretched = note
+            stretched.lengthTicks = next - note.startTick
+            if stretched.lengthTicks != note.lengthTicks { changed = true }
+            return stretched
+        }
+        return changed ? joined : nil
     }
 
     // MARK: - M4: operations that know the key

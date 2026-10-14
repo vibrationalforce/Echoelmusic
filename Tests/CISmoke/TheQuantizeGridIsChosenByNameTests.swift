@@ -119,8 +119,9 @@ final class TheQuantizeGridIsChosenByNameTests: XCTestCase {
                       "each segment shows the short name and speaks the word")
         XCTAssertEqual(code.components(separatedBy: "ClipNoteEdit.quantizing(").count - 1, 2,
                        "two quantize calls: the button's enablement and the commit")
-        XCTAssertEqual(code.components(separatedBy: "gridSteps: quantizeGrid.steps").count - 1, 2,
-                       "BOTH calls use the chosen grid — the button must not grey on one grid and snap on another")
+        // Production N3 added the third: a tap draws its new note at the start of the chosen grid's cell.
+        XCTAssertEqual(code.components(separatedBy: "gridSteps: quantizeGrid.steps").count - 1, 3,
+                       "BOTH quantize calls use the chosen grid — the button must not grey on one grid and snap on another — and so does the tap's cell start")
         // E4-17: the sentence is localised as head + spoken scope + tail (a format key cannot be a catalog literal)
         XCTAssertTrue(code.contains("label: String(localized: \"Snap the starts of \") + what + String(localized: \" to the nearest \") + quantizeGrid.spoken)"),
                       "VoiceOver hears which grid the button snaps to")

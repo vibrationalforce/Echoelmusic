@@ -184,7 +184,10 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // button, both stored values; no lane, no name, no document — and the hint names "cycle"
         // in the same commit. GMMW GA-2a (2026-10-08) added `.keptTake` — the song's parts plus
         // the one clip slot a kept take filled; it carries no lane, no name, no document, and the
-        // hint already covers it twice over ("copies", "the composer's part").
+        // hint already covers it twice over ("copies", "the composer's part"). Production H2a
+        // (2026-10-13) added `.lanePlugin` — ONE rack track's hosted instrument from one pick,
+        // both inserts as values; no name, no document; the hint's "picked sound" covers it, a
+        // track's instrument is its sound.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
@@ -193,6 +196,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                                "case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)",
                                "case lightLook(before: Float?, after: Float?)",
                                "case laneSample(laneID: UUID, before: String?, after: String?)",
+                               "case lanePlugin(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)",
                                "case cycle(before: TimelineCycle?, after: TimelineCycle?)",
                                "case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)"],
                        """

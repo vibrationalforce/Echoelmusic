@@ -220,6 +220,50 @@ public struct DeviceInsert: Codable, Sendable, Equatable, Identifiable {
         return next
     }
 
+    // MARK: - A hosted Audio Unit instrument (production H2a)
+
+    /// A third-party AUv3 instrument a rack track plays instead of its built-in voice. The state
+    /// names the component the way the system identifies it on every device — three four-char
+    /// codes — plus the names a person reads when it is not installed here. Plain values on
+    /// purpose: `Core/` stays Foundation-only, and the catalog's `PluginDescriptor` imports
+    /// AVFoundation. The unit's own `fullState` is not stored yet (H4).
+    public static let pluginInstrumentTypeID = "com.echoelmusic.device.auv3.instrument"
+    /// The state format this build reads and writes: sorted-keys JSON of `PluginComponent`.
+    public static let pluginInstrumentTypeVersion = 1
+
+    public struct PluginComponent: Codable, Sendable, Equatable {
+        public var type: UInt32
+        public var subtype: UInt32
+        public var manufacturer: UInt32
+        public var name: String
+        public var manufacturerName: String
+
+        public init(type: UInt32, subtype: UInt32, manufacturer: UInt32, name: String, manufacturerName: String) {
+            self.type = type
+            self.subtype = subtype
+            self.manufacturer = manufacturer
+            self.name = name
+            self.manufacturerName = manufacturerName
+        }
+    }
+
+    /// A fresh plugin-instrument insert naming `component`.
+    public static func pluginInstrument(_ component: PluginComponent) -> DeviceInsert {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return DeviceInsert(typeID: pluginInstrumentTypeID, typeVersion: pluginInstrumentTypeVersion,
+                            isEnabled: true, stateBlob: (try? encoder.encode(component)) ?? Data())
+    }
+
+    /// The component this insert names, or nil when it is not a plugin instrument, its state is a
+    /// LATER format than this build reads, or the state does not decode — fails closed, so a
+    /// later build's insert is kept byte for byte and never loaded with v1 meaning.
+    public var pluginComponent: PluginComponent? {
+        guard typeID == Self.pluginInstrumentTypeID,
+              typeVersion <= Self.pluginInstrumentTypeVersion else { return nil }
+        return try? JSONDecoder().decode(PluginComponent.self, from: stateBlob)
+    }
+
     /// Sorted keys, so one state has one byte form and "unchanged" is an equality.
     static func echoelBlob(_ fields: [String: String]) -> Data {
         let encoder = JSONEncoder()

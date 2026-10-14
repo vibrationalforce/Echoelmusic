@@ -171,7 +171,7 @@ final class TheAudioTracksSitInTheHeadphoneSpaceTests: XCTestCase {
 
     func testTheRewireWaitsForThePrimeThatStartsPlayback() throws {
         let sink = SourceText.codeOnly(try text(Self.sink))
-        XCTAssertTrue(sink.contains("if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace {"), """
+        XCTAssertTrue(sink.contains("if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace"), """
             The sink rewires without asking whether playback is starting. A wrap or a structure \
             edit primes while the song plays, and a rewire there pauses the whole engine and \
             stops a launched loop that is sounding.

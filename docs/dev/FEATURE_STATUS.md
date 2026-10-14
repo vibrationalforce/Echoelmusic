@@ -22,8 +22,8 @@ SwiftUI-Ansicht existiert, die nirgends gebaut wird und hier fehlt. Er fängt nu
 
 | Ebene | Stand | Beleg |
 |---|---|---|
-| **Ausgeliefert (TestFlight)** | **v10.79.497 · Build 2622** · Commit `1b2a76c2f` · 2026-10-12 18:34 UTC | TestFlight-Lauf #2622 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 38291799199, Conclusion `success`; ob der Build in App Store Connect verarbeitet wurde, sieht nur der Founder |
-| **Auf dem Branch, noch in keinem Build** | `777824234` — GMMW R2 (erster Take ins leere Stück) · VV-4e (Blitzschutz begrenzt die Farbe jeder Schicht) · ein Wellenform-Fix, siehe 1b | Xcode Compile Check grün (2026-10-13); `main` folgt, sobald auch Build for Testing grün ist |
+| **Ausgeliefert (TestFlight)** | **v10.79.499 · Build 2624** · Commit `f2602f9d6` · 2026-10-13 11:39 UTC | TestFlight-Lauf #2624 (`testflight.yml`, `BUILD_NUMBER` = `github.run_number`), Lauf 38390494015, Schritt „Verify build landed in App Store Connect“ `success`; ob der Build in App Store Connect verarbeitet wurde, sieht nur der Founder |
+| **Auf dem Branch, noch in keinem Build** | kein App-Code — alles bis `1e7c64aec` steckt in Build 2624; danach nur Doku | `git log --oneline f2602f9d6..HEAD -- Sources` |
 | **Am Gerät bestätigt** | nur die Zeilen mit **ja** und Datum | Founder-Beobachtung; offene Bitten: `python3 scripts/founder-verify.py` |
 
 Messen statt abschreiben: `head -1 .deploy/release` (Version) · `git log -1 --format=%h -- .deploy/release`
@@ -42,9 +42,14 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 
 | Fähigkeit | Nutzerweg | Build | Gerät |
 |---|---|---|---|
-| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Piece** (fünftes Wort „Piece“ seit H18, 2026-10-07; davor „Project“); quer eine Leiste links | 2614 (2620: Piece) | offen |
-| Siri / Kurzbefehle: Start · Stop · „Keep last loop“ · Spurpegel · Teil kopieren · Teil behalten · Undo — jeder Befehl mit Bericht und eigenem Undo | Kurzbefehle-App oder Siri → `EchoelAppIntents`; Bericht + Undo im `AgentReportBanner` | 2622 | offen |
+| Fünf Bereiche als eine Oberfläche | Umschalter unten **Arrange · Mixer · Instrument · Browse · Piece** (fünftes Wort „Piece“ seit H18, 2026-10-07; davor „Project“); quer eine Leiste links | 2614 (2617: Piece) | offen |
+| Siri / Kurzbefehle: „Start Echoelmusic“ · „Stop Echoelmusic“ · „Keep Last Loop“ (ohne Bericht, über `EchoelIntentInbox`) | Kurzbefehle-App oder Siri | ≤ 2616 | offen |
+| Siri / Kurzbefehle mit Bericht und eigenem Undo: „Change Track Level“ · „Copy Selected Part“ · „Undo Echoel's Last Change“ | Kurzbefehle-App oder Siri; Bericht + „Undo Echoel's last change“ im `AgentReportBanner` | 2621 | offen |
+| Siri: „Edit a Copy of the Part“ (Teil behalten) · Siri spricht das Ergebnis | Kurzbefehle-App oder Siri | 2622 | offen |
 | Projekt-Menü | E-Logo oben links → **Open · Save │ Live Colabo · Learn │ Guide** | 2614 | offen |
+| „Describe this piece“ — die Antwort steht in der Bericht-Zeile | E-Logo → „Describe this piece“ | 2622 | offen |
+| Lernkarte „From pulse to piece“ | E-Logo → **Learn** → „Start Here“ | 2622 | offen |
+| Live Colabo zeigt die Netz-Rundlaufzeit („Link: … — network round trip, not heard latency“) | E-Logo → **Live Colabo** → verbundener Peer | 2618 | offen |
 | EIN Transport | Kopf: **Play / Stop / Record**; im Instrument hält „Pause“ auf der Platte, „Play“ setzt fort | 2614 | offen |
 | Song-Einstellungen | **Piece** → Tonart, Stimmung, Tempo-Modus | 2614 | offen |
 | Undo/Redo der Stück-Bearbeitung | Kopf (`SongHistoryRow`) · mit Tastatur ⌘Z / ⇧⌘Z | 2613 | offen |
@@ -52,14 +57,12 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 
 ### 1b. Auf dem Branch, aber in KEINEM ausgelieferten Build (kommt mit dem nächsten Bump)
 
-⭐ F1–F6b (eine Gestaltungssprache) und A3a (Raum reist mit dem Stück) standen hier und sind mit
-**Build 2622** (2026-10-12) ausgeliefert — Gerät weiterhin offen. Was seit 2622 dazukam:
-
-| Fähigkeit | Was sich ändert | Commit | Gerät |
-|---|---|---|---|
-| GMMW R2 — der erste Take ins LEERE Stück | Record ist auf einem leeren Stück nicht mehr gesperrt („Add a part … first“): Spur scharfschalten → Record lässt die Uhr laufen, Stop macht den Take zum ersten Teil; Play allein bleibt über dem leeren Stück gedimmt | `777824234` | offen |
-| VV-4e Blitzschutz begrenzt die FARBE, die eine Schicht über jedes Feld legt | der Begrenzer rechnet mit der Farbdifferenz zur darunterliegenden Fläche, nicht nur mit der Schicht | `616b68ce9` · `969c271fb` | offen |
-| Wellenform einer kurzen Datei | ein kurzer Datei-Read fügt keinen Wellenform-Eimer mitten in der Datei hinzu | `939aaa63f` | offen |
+Leer. ⛔ Hier standen GMMW R2 (`777824234`), VV-4e (`616b68ce9` · `969c271fb`) und ein Wellenform-Fix
+(`939aaa63f`) als „in keinem Build“ — alle drei sind seit **Build 2623** ausgeliefert (der Bump
+`278d7c807` enthält sie; dieses Fach wurde nach dem Bump nicht nachgezogen). Das Notenraster in
+Tonhöhenfarbe (`f60fda649`) kam mit **Build 2624**; es steht in 1c. Gerät für alle: offen.
+⛔ Ebenso falsch stand hier, F1–F6b und A3a seien mit Build 2622 gekommen: beide sind Posten der
+Notiz 10.79.491, also seit **Build 2616** ausgeliefert.
 
 ### 1c. Arrange — das Stück
 
@@ -75,9 +78,20 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 | Noten-Editor mit VoiceOver | VoiceOver auf dem Gitter → Aktionen „Add a note“, „Move earlier/later“, „Make longer/shorter“ | 2615 | offen |
 | Automations-Kurven je Parameter | Detail **Automation** | ≤ 2612 | offen |
 | MIDI-Aufnahme in eine scharfgeschaltete Spur | Kopf **Record** | ≤ 2612 | offen |
-| Export MIDI · Export WAV (ganzes Stück, Echtzeit, ab Takt 1) | Arrange-Reiter „Export“ · „WAV“ → „Share WAV“ | 2613 (WAV) | offen |
+| Export MIDI · Export WAV (ganzes Stück, Echtzeit, ab Takt 1) | Bühne **Piece** → Kacheln „Export“ (MIDI) · „WAV“ → „Share WAV“ (⛔ „Arrange-Reiter“ stand hier; die Kacheln sitzen auf der Piece-Platte) | 2613 (WAV) | offen |
 | Foto und Video als Bild-Saat fürs Visual (kein Videoschnitt) | `PhotoSeedCard` · `VideoSeedCard` | ≤ 2612 | offen |
-| Sampler je Spur: ein Sample laden, die Teile der Spur spielen es | Spur antippen → Detail **Device** → `TrackSampleRow` | 2622 | offen |
+| Sampler je Spur: ein Sample laden, die Teile der Spur spielen es | Spur antippen → Detail **Device** → Instrument „EchoelSampler“ → „Sample“ | 2617 (Tür) · 2621 (eigener Sampler je Spur) | offen |
+| Audio-Teil bearbeiten: Wellenform im Teil, „Part level“, „Normalize“, „Fade in“/„Fade out“, „Part pitch“, „Stretch“ (Clean · Tape · Beats, nur gewarpte Teile) | Audio-Teil antippen → Leiste unter dem Canvas | 2621 | offen |
+| Audio-Teil-Editor: Kanten ziehen, „Slip“, Pegel-Streifen mit Fade-Ecken | Spur antippen → Detail **Part** | 2621 | offen |
+| Teil teilen „At playhead“ · „Join next“ · „Focus“ / „Show all“ | Teil antippen → Leiste | 2621 · 2618 (Join next) · 2621 | offen |
+| Lineal: „Play from“ setzen (gestoppt) / springen (läuft), Scrub hört gestoppt mit | Lineal über den Spuren antippen oder ziehen | 2621 | offen |
+| Song-Zyklus | Transport-Leiste → „Cycle“ neben Click | 2621 | offen |
+| „Compose here“ auf einer Rack-MIDI-Spur, mit „Style“ und „New variation“ | Spur antippen → Detail **Device** | 2621 | offen |
+| „Edit a copy“ macht einen Composer-Teil editierbar | Composer-Teil antippen → Leiste | 2621 | offen |
+| Record ins LEERE Stück — der erste Take wird der erste Teil | Spur „Arm for recording“ → **Record** | 2623 | offen |
+| Notenraster in Tonhöhenfarbe (dieselbe Regel wie Pads und Bild; Lautstärke = Tiefe der Farbe) | Detail **Notes** | {B} | offen |
+| Kopfhörer-Raum für Audiospuren (Apple HRTF, nicht die 7 Raum-Kerne) | **Mixer** → „Headphone space“ (Default aus) | 2617 | offen |
+| Den Ton eines Videos als Audiospur nehmen | **Browse** → „Visuals“ → „Video to Visuals“ → „Use Its Sound“ | 2617 | offen |
 | Echoel Grain als Spur-Insert auf Audiospuren (Position · Länge · Dichte · Streuung · Tonhöhe · Breite; eine Änderung klingt ab dem nächsten Teil-Start) | Spur antippen → Detail **Device** → Zeilen „Grain“ (`TrackGrainRows`) | 2622 | offen (G10) |
 
 ### 1d. Mixer · Browse · Instrument
@@ -85,7 +99,7 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 | Fähigkeit | Nutzerweg | Build | Gerät |
 |---|---|---|---|
 | Spur-Streifen + Master-Kasten (Lautstärke, Pegel, LUFS/True-Peak, Clear) | **Mixer** | 2614 | offen |
-| Klänge für die gewählte MIDI-Spur, Medienbibliothek | **Browse** → „Sounds“ · darunter die Bibliothek | 2614 | offen |
+| Klänge für die gewählte MIDI-Spur, Medienbibliothek | **Browse** → ein Regal auf einmal: „Sounds“ · „Media“ (die Bibliothek) · „Visuals“ | 2614 (2621: Regale) | offen |
 | Synth-Klang formen: Presets, Ton/Filter/Hüllkurve, Speichern-als, Favoriten | **Instrument** → Chip **Sound** | ≤ 2612 | offen |
 | Effekt-Charakter, volle Effektkette | Chip **FX** → „All FX“ (`EchoelFXView`) | ≤ 2612 | offen |
 | Pegel je Stimme · Master · Mood (Genre, Charakter, Wetter, Takt-Variation) · Tempo (Tap, Metronom, Haptik, Explore) · Field | Chips **Mix · Master · Mood · Tempo · Field** | ≤ 2612 | offen |
@@ -142,12 +156,11 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 
 ### 2c. Maschine läuft, aber kein Regler
 
-⛔ Echoel Grain und der Siri-Bedienagent standen hier bis 2026-10-13 und haben seit GA-10d2 bzw. AI-1/AI-2 eine Tür (Build 2622) — sie stehen jetzt in 1c und 1a.
+⛔ Echoel Grain und der Siri-Bedienagent standen hier bis 2026-10-13 und haben eine Tür — Grain seit GA-10d2 (Build 2622), Siri seit AI-1/AI-2 (Build 2621, nicht 2622 wie hier stand); sie stehen jetzt in 1c und 1a. ⛔ Ebenso standen hier „Tonhöhe je einzelnem TEIL“ und „Stretch-Modi außer clean“ als reglerlos: beide haben seit Build 2621 einen Regler („Part pitch“, „Stretch“) und stehen in 1c.
 
 | Fähigkeit | Stand | Was fehlt |
 |---|---|---|
-| Tonhöhe je einzelnem TEIL (statt je Spur) | je Spur läuft seit #165 | ein neues gespeichertes Feld je Teil |
-| Stretch-Modi außer „clean“ | Engine kann es | eine Auswahl je Teil |
+| Fluid-Oberfläche (`FluidSurfaceMath`, F1) | reiner Kern mit begrenzter Energie, kein Aufrufer, kein Shader | F2–F3: Shader und Tür (`scratchpads/PLAN_FLUID_SURFACE_2026-10-13.md`) |
 | Erkannte Tonart übernehmen | wird nur angezeigt, nie übernommen (Absicht) | Founder-Entscheidung + ein Knopf |
 | „Follow pulse“-Tempo (`BioTempoDirector`) | fertig, aber ein Zwilling des lebenden Servos | Entscheidung, welcher gilt |
 | Raum-Render (7 eigene Kerne: VBAP, Ambisonics, `BinauralPanner`, Raumhall …) | Steuer-Hälfte (ADM-OSC aus und ein) läuft. Im Kopfhörer: seit Restructure S3c sitzen AUDIO-Spuren an ihrer Szenen-Position — über Apples HRTF (`AVAudioEnvironmentNode`, `AudioEngine.attachSpaceBus`), NICHT über die 7 Kerne; Schalter „Headphone space“ im Mixer, Default aus, Gerät offen (G6). Die generierten Stimmen bleiben stereo. ⛔ Bis 2026-10-11 stand hier „im Kopfhörer ist nichts räumlich“ — seit S3c falsch (`docs/research/SPATIAL_MIX_RESEARCH.md` §7). Unter den 7 Kernen hängen zwei Dateien, die NUR sie benutzen (aufgeschrieben 2026-10-13): `EchoelRenderLayout` — die Lautsprecher-Geometrie, von ihren 15 Typen nennt nur `VBAPPanner` einen — und `AutomationGestureRecorder`, den nur `SpatialAutomationMapping` nennt; Wächter `TheSpatialRenderHalfIsNotClaimedLiveTests` Anspruch 5 | für die 7 Kerne: je ein Aufrufer (die zwei Dateien darunter kommen mit); für den Kopfhörer: G6 am Gerät |
@@ -195,7 +208,7 @@ Zurückholen heißt aber meist **neu bauen**, nicht wieder anhängen.
 Zeit-Zoom aus dieser Liste sind seit Build 2613/2614 ausgeliefert, Fach 1): Beats aus Samples (⛔ „eine Tür zum Sampler … `SamplerVoice` hat keinen Lader“ stand hier — seit GA-4 hat jede Spur
 einen Sampler mit Lader und Tür `TrackSampleRow`; korrigiert 2026-10-10) · Sends/Returns · Audio-Eingang mit Aufnahme, Sampling, Analyse
 (#1302, Inbox E10) · AUv3-**Hosting** (Inbox E11 — das ausgelieferte AUv3-INSTRUMENT ist kein Hosting-Nachweis) ·
-Video als musikalisches Material (Inbox E12) · ein hörbarer Raum im Kopfhörer (S3). Die Pläne dazu stehen in
+Video als musikalisches Material (Inbox E12; ⭐ der erste Schritt E12-1 „Use Its Sound“ ist seit Build 2617 ausgeliefert, Fach 1c) · ein hörbarer Raum im Kopfhörer (S3; ⭐ für Audiospuren seit Build 2617 über „Headphone space“, Fach 1c — die generierten Stimmen bleiben stereo). Die Pläne dazu stehen in
 `scratchpads/PLAN_RESTRUCTURE_2026-10-04.md` §7; geplant heißt nicht ausgeliefert.
 
 RTMP-Livestream · Bewegungs-Sensor · EEG · MPE-**Eingang** mit Zonen (MPE-Ausgang läuft) · iPad ·

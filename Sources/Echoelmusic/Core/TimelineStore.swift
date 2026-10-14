@@ -255,6 +255,8 @@ public final class TimelineStore {
     ///   · `.laneSample` — ONE track's sample from ONE pick in the inspector's Sample row
     ///     (Restructure E13-1): the path the pick found and the one it left (`nil` = no sample).
     ///     The `.lanePatch` rule for one field. Recorded by `editLaneSample(id:_:)`, once per pick.
+    ///   · `.lanePlugin` — ONE rack track's hosted instrument from ONE pick (production H2a):
+    ///     the instrument found and left (`nil` = the built-in voice). Recorded by `editLanePlugin`.
     ///   · `.cycle` — the PIECE's cycle (GMMW AE-12b) from ONE tap of the transport's Cycle
     ///     button: the cycle the tap found and the one it left (`nil` = none). The `.lightLook`
     ///     rule for one field. Recorded by `setCycle(_:)`, once per tap.
@@ -287,6 +289,7 @@ public final class TimelineStore {
         case lanePatch(laneID: UUID, before: SynthPatch?, after: SynthPatch?)
         case lightLook(before: Float?, after: Float?)
         case laneSample(laneID: UUID, before: String?, after: String?)
+        case lanePlugin(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)
         case cycle(before: TimelineCycle?, after: TimelineCycle?)
         case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)
     }
@@ -444,6 +447,14 @@ public final class TimelineStore {
                   lane.samplePath == after else { return nil }
             setLaneSample(laneID, path: before)
             return HistoryStep.laneSample(laneID: laneID, before: after, after: before)
+        case .lanePlugin(let laneID, let before, let after):
+            // Production H2a — the `.laneSample` rule for the track's hosted instrument: a track
+            // removed since, or an instrument written since, takes nothing back; the write goes
+            // through the one writer, which keeps every other insert and refuses a foreign one.
+            guard let lane = document.lanes.first(where: { $0.id == laneID }),
+                  lane.deviceChain?.instrument == after else { return nil }
+            setLanePluginInstrument(laneID, before)
+            return HistoryStep.lanePlugin(laneID: laneID, before: after, after: before)
         case .cycle(let before, let after):
             // GMMW AE-12b — the `.lightLook` rule: a cycle written since keeps the later one. The
             // playing song takes the restored cycle on its next step (`refreshStructure`).
@@ -1350,6 +1361,43 @@ public final class TimelineStore {
         let after = document.lanes[j].samplePath
         guard after != before else { return }
         pushUndo(.laneSample(laneID: id, before: before, after: after))
+    }
+
+    /// Production H2a — THE one writer of a rack track's hosted Audio Unit instrument: set it
+    /// (`DeviceInsert.pluginInstrument`) or, with nil, go back to the built-in voice. Only a
+    /// track the rack plays (`MultiRollFanout.secondaryLaneIDs` — the player's own predicate,
+    /// #416); the Echoel track, a bio, audio or removed track is refused. The instrument slot is
+    /// written only when it is empty or already holds a plugin instrument: an Echoel instance or a
+    /// type this build cannot read is never overwritten. Inserts are kept; a chain left empty is
+    /// stored as none. No-op when nothing changes. Not an Undo step alone — `editLanePlugin` is.
+    public func setLanePluginInstrument(_ laneID: UUID, _ insert: DeviceInsert?) {
+        guard MultiRollFanout.secondaryLaneIDs(in: document, rollLane: document.rollLaneID).contains(laneID),
+              let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
+        if let insert, insert.typeID != DeviceInsert.pluginInstrumentTypeID { return }
+        var chain = document.lanes[i].deviceChain ?? DeviceChain(inserts: [])
+        if let held = chain.instrument, held.typeID != DeviceInsert.pluginInstrumentTypeID { return }
+        // The same COMPONENT again is no change, whatever the new insert's id: a menu builds a
+        // fresh insert per pick, and comparing inserts would write and record an empty Undo step.
+        if let held = chain.instrument, let insert,
+           held.pluginComponent != nil, held.pluginComponent == insert.pluginComponent { return }
+        chain.instrument = insert
+        let next: DeviceChain? = chain.isEmpty ? nil : chain
+        guard next != document.lanes[i].deviceChain else { return }
+        document.lanes[i].deviceChain = next
+        persist()
+    }
+
+    /// Production H2a — ONE pick of a track's instrument plugin is ONE Undo step (`.lanePlugin`),
+    /// the `editLaneSample` shape: `write` is the `setLanePluginInstrument` call, and a pick of
+    /// what the track already plays (or a refused write) records nothing.
+    public func editLanePlugin(id: UUID, _ write: () -> Void) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let before = document.lanes[i].deviceChain?.instrument
+        write()
+        guard let j = document.lanes.firstIndex(where: { $0.id == id }) else { return }
+        let after = document.lanes[j].deviceChain?.instrument
+        guard after != before else { return }
+        pushUndo(.lanePlugin(laneID: id, before: before, after: after))
     }
 
     public func setLaneSample(_ laneID: UUID, path: String?) {

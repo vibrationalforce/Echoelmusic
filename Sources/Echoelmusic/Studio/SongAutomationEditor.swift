@@ -65,6 +65,41 @@ enum SongAutomationEdit {
         }
     }
 
+    /// Production A1c — the track's own mix as automation targets: Volume (0…1, a fade over the
+    /// fader) and Pan (−1…1). NOT catalog descriptors on purpose: the router never sees them, so
+    /// `AutomationPlayer` cannot apply them a second time — `TimelineDocument.automatedGain/Pan`
+    /// is the one place they become sound. The linear `denormalized` maps the stored 0…1 exactly
+    /// as playback does (0.5 = centre).
+    nonisolated static let mixVolume = ParameterDescriptor(
+        keyPath: TimelineDocument.mixGainBase, displayName: "Volume",
+        min: 0, max: 1, defaultValue: 1, automationEligible: true)
+    nonisolated static let mixPan = ParameterDescriptor(
+        keyPath: TimelineDocument.mixPanBase, displayName: "Pan",
+        min: -1, max: 1, defaultValue: 0, automationEligible: true)
+
+    /// Every parameter a curve on THIS track can move: its volume and pan where the track's mixer
+    /// offers them (`TrackMix.controls`, the inspector's own truth — a Sampler or Sub has no
+    /// pan), on a rack track (A1b) or an audio track (A1d) — the kinds whose mix follows a curve
+    /// today; plus the poly voice's parameters on a poly track. Empty everywhere else: the Echoel
+    /// track's level only shapes new notes (no live fader), so a curve there would mislead.
+    nonisolated static func parameters(on laneID: UUID, in document: TimelineDocument,
+                                       voiceCapacity: Int) -> [ParameterDescriptor] {
+        guard let role = TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity),
+              let controls = TrackMix.controls(of: laneID, in: document, voiceCapacity: voiceCapacity)
+        else { return [] }
+        let poly: Bool
+        switch role {
+        case .laneSynth(let kind): poly = kind == .poly
+        case .audio: poly = false
+        case .echoelInstrument, .bio, .unplayed, .noVoice: return []
+        }
+        var list: [ParameterDescriptor] = []
+        if controls.level { list.append(mixVolume) }
+        if controls.pan { list.append(mixPan) }
+        if poly { list += SongAutomationEdit.offered }
+        return list
+    }
+
     /// E4-105: the parameter's name for the screen. The descriptor keeps its English literal
     /// (persisted, searched); every place this editor draws a name goes through here.
     nonisolated static func name(_ d: ParameterDescriptor) -> String {
@@ -105,8 +140,8 @@ enum SongAutomationEdit {
     nonisolated static func statusScale(_ parameter: String, in document: TimelineDocument,
                                         voiceCapacity: Int) -> AutomationScale? {
         guard let (laneID, base) = PerTrackParameterKeyPath.parse(parameter),
-              let d = offered.first(where: { $0.keyPath == base }),
-              sounds(on: laneID, in: document, voiceCapacity: voiceCapacity) else { return nil }
+              let d = parameters(on: laneID, in: document, voiceCapacity: voiceCapacity)
+                  .first(where: { $0.keyPath == base }) else { return nil }
         let track = document.lanes.first { $0.id == laneID }?.name ?? String(localized: "Track")
         return AutomationScale(displayName: track + " · " + name(d), unit: d.unit,
                                decimals: decimals(for: d)) { SongAutomationEdit.realValue($0, of: d) }
@@ -121,17 +156,17 @@ enum SongAutomationEdit {
 
     /// The parameter the row opens on: the first offered one this track already has a curve
     /// for (so a reopened row shows the work), else the default, else the first offered.
-    nonisolated static func openingBase(for laneID: UUID, in lanes: [AutomationLane]) -> String? {
-        let bases = offered.map(\.keyPath)
+    nonisolated static func openingBase(for laneID: UUID, in lanes: [AutomationLane],
+                                        among bases: [String] = SongAutomationEdit.offered.map(\.keyPath)) -> String? {
         return bases.first { hasCurve(laneID, base: $0, in: lanes) }
             ?? (bases.contains(defaultBase) ? defaultBase : bases.first)
     }
 
-    /// Whether a curve on this track would SOUND: a poly rack voice plays it.
+    /// Whether a curve on this track would SOUND: a rack voice plays it (A1c — any rack kind,
+    /// for its volume; a poly voice also for its synth parameters).
     nonisolated static func sounds(on laneID: UUID, in document: TimelineDocument,
                                    voiceCapacity: Int) -> Bool {
-        !offered.isEmpty
-            && TrackMix.role(of: laneID, in: document, voiceCapacity: voiceCapacity) == .laneSynth(.poly)
+        !parameters(on: laneID, in: document, voiceCapacity: voiceCapacity).isEmpty
     }
 
     /// The track's points inside the song (a point past a shortened song end is kept in the
@@ -289,7 +324,9 @@ struct SongAutomationEditor: View {
                                      voiceCapacity: player.laneVoiceCapacity) {
             // Keyed by the track: another track starts with nothing picked and opens on its own
             // parameter.
-            SongAutomationLane(laneID: laneID, songTicks: songTicks)
+            SongAutomationLane(laneID: laneID, songTicks: songTicks,
+                               offered: SongAutomationEdit.parameters(on: laneID, in: document,
+                                                                      voiceCapacity: player.laneVoiceCapacity))
                 .id(laneID)
         }
     }
@@ -301,6 +338,9 @@ private struct SongAutomationLane: View {
 
     let laneID: UUID
     let songTicks: Int
+    /// What a curve on this track can move (A1c — `SongAutomationEdit.parameters(on:)`, asked once
+    /// by the parent so the row and its gate cannot disagree).
+    let offered: [ParameterDescriptor]
 
     @Environment(TimelineStore.self) private var timeline
     /// View state: the picked point. Not part of the song.
@@ -313,9 +353,9 @@ private struct SongAutomationLane: View {
 
     var body: some View {
         let lanes = timeline.document.automation
-        let offered = SongAutomationEdit.offered
-        let base = chosenBase ?? SongAutomationEdit.openingBase(for: laneID, in: lanes)
-            ?? SongAutomationEdit.defaultBase
+        let bases = offered.map(\.keyPath)
+        let base = chosenBase ?? SongAutomationEdit.openingBase(for: laneID, in: lanes, among: bases)
+            ?? bases.first ?? SongAutomationEdit.defaultBase
         let descriptor = offered.first { $0.keyPath == base }
         let title = descriptor.map(SongAutomationEdit.name) ?? base
         let key = SongAutomationEdit.key(for: laneID, base: base)
@@ -359,7 +399,8 @@ private struct SongAutomationLane: View {
         .onAppear {
             if chosenBase == nil {
                 chosenBase = SongAutomationEdit.openingBase(for: laneID,
-                                                            in: timeline.document.automation)
+                                                            in: timeline.document.automation,
+                                                            among: offered.map(\.keyPath))
             }
         }
     }

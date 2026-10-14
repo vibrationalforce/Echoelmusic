@@ -21,6 +21,7 @@ won, and what is a known dead-end**, so the loop climbs instead of circling.
 
 | Dead-end (do NOT retry) | Do this instead |
 |---|---|
+| Push every slice the moment it is committed (2026-10-13, ~12 pushes in 90 min: each push starts TWO macOS runs — CI/CD Pipeline and Full Test Suite — that do NOT cancel-in-progress, only Xcode Compile Check does; 13 queued + 6 running, the tip's gates waited behind every superseded commit, and `POST …/runs/{id}/cancel` is 403 for this integration, so the queue cannot be drained from here) | Commit locally, push in BATCHES of 2–4 slices, and push the next batch only after the previous tip's `Build for Testing` has settled. Before a push, count `actions/runs?status=queued`: above ~4, hold. A batch still lands each slice as its own commit — one gate run grades all of them, and a red is bisected by reading the per-slice diffs. |
 | Grade a regex EDIT of Sources by the guard's transcription alone (2026-09-30, 79f9c5769: the ramp fold's replacement carried a second `)` — 64 sites in 22 files read `font(15,) .semibold)`; TheTextSizesSitOnTheRampTests reads the NUMBER and was green on the broken tree; Compile Check 3087 + Build for Testing 6551 red, one cycle lost) | A transcription grades the CLAIM, never the Swift around it (Tests/CISmoke/CLAUDE.md §0 / #E2). Before committing a mechanical edit: (1) per changed line, assert the paren delta equals the parent line's — the scratchpad `checkers.sh` now carries that pass over `git diff -U0 HEAD -- Sources`; (2) print one rebuilt line per FILE and read it; (3) an edit script's assertion must check the RESULT SHAPE, not only the anchor count. Repair pattern that worked (a2662b836): rebuild every changed line from the PARENT with the correct substitution and assert head == rebuilt + exactly one stray per site. |
 | Read an auto-merge `conflict` as a code conflict on the branch | Read the "Merge to main" STEP LOG. 2026-09-25 it was `fatal: refusing to merge unrelated histories`: the workflow fetched the pushed sha with `--depth=50` on a full checkout, which makes the repo SHALLOW; at 113 commits ahead of main the merge base fell below the cut. Locally `git merge-base --is-ancestor origin/main HEAD` was true — a fast-forward cannot conflict. Fixed (founder-approved) in `979383e1a`, guarded by `TheAutoMergeWaitsForTheGatesTests` claim 5b. |
 | Treat a Run Tests exit 65 as #396 because the tail window shows 0 failures | Absence from `tail -200` proves nothing (#807). 2026-09-25 (#6323) the red was a REAL, deterministic guard whose premise flipped (`testTheAUv3TargetIsStillAbsent` vs #1385) — found by checking which guards CAN be red on the tree, and proven by a sibling guard reading the same `#filePath` tree passing in the same window. |
@@ -4434,3 +4435,39 @@ empty commit to kick it is forbidden. decisions.csv row 1044.
 - A consumer with a busy flag must LOOP after each run (and after any other run path, e.g. an Undo button), or a request that arrived mid-run waits silently.
 - The test host IS the app: a guard must never read or clear an App-Group key the app reads at launch. Give the consumer a pure seam (`handle(_:)`) and let only the shared instance touch the store (`self === Self.shared`).
 - A glossary-struck word hides inside a VERB ("Takes back" contains "take"); transcribe the chrome guard over new copy before committing.
+
+
+## PLAYBOOK + NEAR-MISSES (2026-10-13, GMMW final round: colour slice, Fluid F1, two guard extensions, two checker repairs)
+
+1. **#645 has an ATTRIBUTE twin, and that one is not cosmetic.** A declaration inserted directly
+   below an attribute line (`@MainActor`, `@Observable`, `@ObservationIgnored`) takes the
+   attribute — the same mechanism as a `///` block attaching to the next declaration (#645), but
+   it changes isolation or storage, so the result can compile and behave differently. Caught
+   before commit in this round. **Instead:** read the line directly ABOVE the insertion point;
+   if it is an attribute or a doc block, insert above it.
+2. **A NEW negative scan is red on correct code more often than an old one.** The Hot-State
+   extension's first form ("no tempo read in the menu host") was red on two correct reads inside
+   action closures (`.onReceive`, the save case). **Instead:** an opt-in exemption that skips
+   only closure bodies whose braces close exactly (counted from the opener line's LAST `{`),
+   never `Button` (its label closure IS body), plus a synthetic claim that pins exactly which
+   lines the exemption covers.
+3. **A device ask must name a door that exists.** The colour probe first sent the founder to
+   "Tempo tools" for A4; the one concert-pitch field is on the Piece stage
+   (`CompositionHeaderStrip`). `founder-verify.py` cannot see this. **Instead:** `git grep` the
+   label in `Sources/` before writing the ask.
+4. **A checker that is always red hides the next real finding.** `foreign-needles.py` exited 1
+   on a correct tree for days (four learn-mode needles); every session re-derived "known false
+   alarm". Cause: bindings resolved once per FILE, first one wins, while the guard re-binds
+   `text` per method. Fixed per method (`aba5129ac`), mutant-tested. **Instead of learning to
+   ignore an exit code, fix the instrument the day it lies.**
+5. **A docstring that quotes a regex needs `r"""`.** Three checkers printed SyntaxWarnings under
+   Python 3.13 (`b0cec876d`); Python has announced these become errors, which would stop the tools
+   from starting at all. Compare plain and `--selftest` output before and after; they were
+   identical.
+6. **An exemption is a new way to be falsely green, and its first draft was.** The action-closure
+   skip took `.onAppear { go() }.overlay {` for an action, because it counted braces from the
+   line's LAST `{` — the overlay's — and skipped view content. A reviewer found it by reading
+   (`9ab00ae7e` → `1e7c64aec`). **Instead:** refuse an opener line that has a `}` before its last
+   `{`, and put the overlay shape in the synthetic claim. The same review found three limits
+   blocks that called an UNDER-collecting derivation "safe": a dropped hot name is a false
+   GREEN. When writing a limits block, ask per limit which way the SET moves.

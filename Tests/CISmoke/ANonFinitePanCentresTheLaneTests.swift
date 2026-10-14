@@ -125,10 +125,17 @@ final class ANonFinitePanCentresTheLaneTests: XCTestCase {
     func testTheAudioLaneBoundaryAndTheStoreCentreANonFinitePan() throws {
         let player = try source("Sources/Echoelmusic/Sequencer/AudioLanePlayer.swift")
         let store = try source("Sources/Echoelmusic/Core/TimelineStore.swift")
+        let timeline = try source("Sources/Echoelmusic/Sequencer/Timeline.swift")
+        // Production A1d: the audio lane's pan follows its curve, so `clampedPan` now asks the one
+        // rule `TimelineDocument.automatedPan` — and the finite check moved there with it. Both
+        // halves are pinned: the delegation, and the check at its new address (#416).
         let sites: [(label: String, code: String, head: String, tail: String, needle: String)] = [
             ("AudioLanePlayer.clampedPan", player,
-             "private func clampedPan(in doc: TimelineDocument, laneID: UUID) -> Float {",
-             "private func sink(for laneID: UUID)", "p.isFinite ? p : 0"),
+             "private func clampedPan(in doc: TimelineDocument, laneID: UUID, atTick tick: Int) -> Float {",
+             "private func sink(for laneID: UUID)", "doc.automatedPan(for: laneID, atTick: tick)"),
+            ("TimelineDocument.automatedPan", timeline,
+             "public func automatedPan(for laneID: UUID, atTick tick: Int) -> Float {",
+             "public var rollSlotGain: Float {", "pan.isFinite ? pan : 0"),
             ("TimelineStore.setLanePan", store,
              "public func setLanePan(id: UUID, _ pan: Float) {",
              "persist()", "pan.isFinite ? pan : 0"),

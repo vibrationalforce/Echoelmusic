@@ -4381,18 +4381,6 @@
         }
       }
     },
-    "The grid Quantize snaps note starts to" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The grid Quantize snaps note starts to"
-          }
-        }
-      }
-    },
     "The last launch ran into a problem before the studio finished loading. To keep you out of a black screen, Echoelmusic opened this recovery screen instead. Your pieces are untouched. One setting changed: the studio now opens on Instrument, in case the stage you were on caused the problem. Piece is one tap away at the bottom." : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -23649,6 +23637,258 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A pitched or warped part on this track plays without the grain."
+          }
+        }
+      }
+    },
+    "Looking for installed Audio Units…" : {
+      "comment" : "Device page (production H1): shown while the system registry is queried.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking for installed Audio Units…"
+          }
+        }
+      }
+    },
+    "effects" : {
+      "comment" : "Device page (production H1): plural noun after a count, e.g. '2 effects'.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "effects"
+          }
+        }
+      }
+    },
+    "The grid new notes are drawn on and Quantize snaps to" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change. Production N3: the grid also draws new notes.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The grid new notes are drawn on and Quantize snaps to"
+          }
+        }
+      }
+    },
+    "Legato" : {
+      "comment" : "Note editor tool (production N4): stretch the notes to where the next note starts.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legato"
+          }
+        }
+      }
+    },
+    "Stretch " : {
+      "comment" : "Note editor (production N4): head of the Legato button's spoken label — 'Stretch' + what + tail.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stretch "
+          }
+        }
+      }
+    },
+    " to where the next note starts" : {
+      "comment" : "Note editor (production N4): tail of the Legato button's spoken label.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " to where the next note starts"
+          }
+        }
+      }
+    },
+    "Volume" : {
+      "comment" : "Song automation parameter (production A1c): a track's volume curve, a fade over its fader.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "comment" : "Note editor tool (production N4b): put the copied notes into this part.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        }
+      }
+    },
+    "Copy the selected notes, to paste them into any part" : {
+      "comment" : "Note editor, VoiceOver label of Copy (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy the selected notes, to paste them into any part"
+          }
+        }
+      }
+    },
+    "Paste the copied notes right after the selection" : {
+      "comment" : "Note editor, VoiceOver label of Paste with a selection (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste the copied notes right after the selection"
+          }
+        }
+      }
+    },
+    "Paste the copied notes at the start of this part" : {
+      "comment" : "Note editor, VoiceOver label of Paste with nothing selected (production N4b).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste the copied notes at the start of this part"
+          }
+        }
+      }
+    },
+    "Plugin" : {
+      "comment" : "Track Device page (production H2c): label of the Audio Unit instrument menu.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plugin"
+          }
+        }
+      }
+    },
+    "Built-in voice" : {
+      "comment" : "Track Device page (production H2c): the menu entry that plays the track's own voice, no plugin.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Built-in voice"
+          }
+        }
+      }
+    },
+    "Installed" : {
+      "comment" : "Track Device page (production H2c): menu section of Audio Unit instruments installed on this iPhone.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installed"
+          }
+        }
+      }
+    },
+    " (not on this iPhone)" : {
+      "comment" : "Track Device page (production H2c): after a plugin name the song names but this iPhone does not have.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " (not on this iPhone)"
+          }
+        }
+      }
+    },
+    "The Audio Unit instrument this track plays instead of its built-in voice" : {
+      "comment" : "Track Device page, VoiceOver hint of the plugin menu (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Audio Unit instrument this track plays instead of its built-in voice"
+          }
+        }
+      }
+    },
+    "This track plays " : {
+      "comment" : "Track Device page (production H2c): start of the sentence naming the plugin the track plays.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This track plays "
+          }
+        }
+      }
+    },
+    " with its default sound. Its own screen and settings are not available here yet." : {
+      "comment" : "Track Device page (production H2c): end of that sentence — the plugin's screen and saved settings are not built yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " with its default sound. Its own screen and settings are not available here yet."
+          }
+        }
+      }
+    },
+    "No Audio Unit instruments are installed on this iPhone." : {
+      "comment" : "Track Device page (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Audio Unit instruments are installed on this iPhone."
+          }
+        }
+      }
+    },
+    "Pick an installed instrument to play this track instead of its built-in voice." : {
+      "comment" : "Track Device page (production H2c).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an installed instrument to play this track instead of its built-in voice."
+          }
+        }
+      }
+    },
+    "effects installed — inserting one on a track is not available yet." : {
+      "comment" : "Track Device page (production H2c): after the number of installed Audio Unit effects.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "effects installed — inserting one on a track is not available yet."
           }
         }
       }

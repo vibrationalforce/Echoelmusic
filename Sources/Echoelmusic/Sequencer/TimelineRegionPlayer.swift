@@ -254,6 +254,14 @@ public final class TimelineRegionPlayer {
     /// keeps a stale sample memo. nil sink ⇒ sampler lanes stay unloaded (their
     /// unit renders silence until a sample arrives; routing is unaffected).
     @ObservationIgnored public var slotSampleSink: ((_ slot: Int, _ path: String?) -> Void)?
+    /// Production H2b — the Audio Unit instrument a slot's lane chose (`MultiRollFanout
+    /// .hostedInstrument`), or nil for its built-in voice. Fired right after the kind at the four
+    /// LOAD sites (fan-out, prime, audition bind, re-bind) — never at the reset sites: a stop must
+    /// not unload a plugin the next play needs again (a reload is a pause of the whole engine).
+    /// A slot reused by another lane is re-named at its next load. nil sink ⇒ no hosting.
+    @ObservationIgnored public var slotPluginSink: ((_ slot: Int, _ component: DeviceInsert.PluginComponent?) -> Void)?
+    /// H2d — what each slot was last told to play, so a pick during playback is seen as a CHANGE.
+    @ObservationIgnored private var namedPlugin: [Int: DeviceInsert.PluginComponent] = [:]
     @ObservationIgnored private var lanePool = LaneVoicePool(capacity: 0)
     @ObservationIgnored private var pumps: [Int: LaneNotePump] = [:]
 
@@ -996,6 +1004,36 @@ public final class TimelineRegionPlayer {
         pianoRoll?.setTimelineAutomationTick(newTick)
         lastTick = newTick
         currentTick = newTick
+        followMixAutomation()
+    }
+
+    // MARK: - Track volume and pan automation (production A1b)
+
+    /// What each rack slot's gain and pan sinks last received, so a curve is followed per step
+    /// without re-pushing an unchanged value (a sampler's `setGain` reconfigures its shape).
+    @ObservationIgnored private var appliedSlotMix: [Int: (gain: Float, pan: Float)] = [:]
+
+    /// Push slot `slot`'s gain and pan as they sound on `currentTick` — the fader, mute and solo
+    /// times the track's curve (`MultiRollFanout.gain/pan(forSlot:atTick:)`). `force` is every
+    /// load and mixer edit; the per-step follow passes `false` and pushes only a change.
+    private func pushSlotMix(_ slot: Int, force: Bool) {
+        let gain = MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane, atTick: currentTick)
+        let pan = MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane, atTick: currentTick)
+        if !force, let applied = appliedSlotMix[slot], applied.gain == gain, applied.pan == pan { return }
+        slotGainSink?(slot, gain)
+        slotPanSink?(slot, pan)
+        appliedSlotMix[slot] = (gain, pan)
+    }
+
+    /// Once per step: every sounding rack slot follows its track's volume and pan curve. A song
+    /// with no mix curve does nothing here — the fader pushes above already hold.
+    private func followMixAutomation() {
+        guard multiRollCapacity > 0,
+              doc.automation.contains(where: { lane in
+                  lane.parameter.hasSuffix("." + TimelineDocument.mixGainBase)
+                      || lane.parameter.hasSuffix("." + TimelineDocument.mixPanBase)
+              }) else { return }
+        for slot in pumps.keys.sorted() { pushSlotMix(slot, force: false) }
     }
 
     // MARK: - Loading (mirrors ArrangementPlayer.loadCurrentSection — the proven path)
@@ -1134,6 +1172,7 @@ public final class TimelineRegionPlayer {
                 // CURRENT binding, so the kind must land first (else patch/notes hit
                 // the old physical voice). Rebinding releases the old voice internally.
                 slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: doc, rollLane: rollLane))
+                nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
                 // S2-W3: the lane's sample ref, AFTER the kind (binding first, then
                 // the sample lands in the bound sampler unit).
                 slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: doc, rollLane: rollLane))
@@ -1147,8 +1186,7 @@ public final class TimelineRegionPlayer {
                 slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
                 // H4: the slot voice may be reused from another lane — reset its
                 // mixer position/level to THIS lane's values before its first notes.
-                slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
-                slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
+                pushSlotMix(slot, force: true)
                 // M1c: window + bar-slice the region's melody exactly like the
                 // primary roll (loadClip). Defensive flat fallback when the lane's
                 // active region can't be resolved (should not happen: the .load
@@ -1213,6 +1251,7 @@ public final class TimelineRegionPlayer {
             slotLaneSink?(load.slot, load.laneID)
             // S2-W2-4: kind before patch/gain/notes (same ordering law as the fan-out).
             slotKindSink?(load.slot, MultiRollFanout.voiceKind(forSlot: load.slot, in: doc, rollLane: rollLane))
+            nameSlotPlugin(load.slot, MultiRollFanout.hostedInstrument(forSlot: load.slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
             // S2-W3: sample after kind (same ordering law as the fan-out).
             slotSampleSink?(load.slot, MultiRollFanout.samplePath(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotPatchSink?(load.slot, load.patch)
@@ -1220,8 +1259,7 @@ public final class TimelineRegionPlayer {
             slotDetuneSink?(load.slot, MultiRollFanout.detune(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(load.slot, MultiRollFanout.octave(forSlot: load.slot, in: doc, rollLane: rollLane))
             slotEffectSink?(load.slot, MultiRollFanout.effect(forSlot: load.slot, in: doc, rollLane: rollLane))
-            slotPanSink?(load.slot, MultiRollFanout.pan(forSlot: load.slot, in: doc, rollLane: rollLane))
-            slotGainSink?(load.slot, MultiRollFanout.gain(forSlot: load.slot, in: doc, rollLane: rollLane))
+            pushSlotMix(load.slot, force: true)
             // M1c: same windowing as the fan-out — and the PRIME case is exactly
             // where startBar matters (seek / region already active mid-way).
             if let region = TimelineScheduling.activeRegion(in: doc, laneID: load.laneID, at: tick),
@@ -1260,13 +1298,29 @@ public final class TimelineRegionPlayer {
         }
         guard multiRollCapacity > 0 else { return }
         for slot in pumps.keys.sorted() {
-            slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
-            slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
+            pushSlotMix(slot, force: true)
             slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
             slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
             slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
             slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
+            // H2d: a plugin picked (or un-picked, or undone) while the piece plays is taken now,
+            // not at the slot's next onset. Only on a CHANGE: the held notes are released through
+            // the OLD owner first (the load sites' order law), then the slot is named again.
+            let plugin = MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane)
+            if plugin != namedPlugin[slot] {
+                if let sink = slotNoteSink, var pump = pumps[slot], !pump.isEmpty {
+                    sink(slot, pump.reset())
+                    pumps[slot] = pump
+                }
+                nameSlotPlugin(slot, plugin)
+            }
         }
+    }
+
+    /// H2b/H2d — the one way a slot is told its hosted instrument: remember it, then tell the app.
+    private func nameSlotPlugin(_ slot: Int, _ component: DeviceInsert.PluginComponent?) {
+        namedPlugin[slot] = component
+        slotPluginSink?(slot, component)
     }
 
     /// The per-lane mute/solo/level gate for a slot's lane (rank→lane), matching the
@@ -1603,6 +1657,90 @@ public final class TimelineRegionPlayer {
         }
     }
 
+    // MARK: - Note audition (production N1, founder 2026-10-13)
+
+    /// Which voice sounds a note-editor audition for a lane. The roll lane plays the rich
+    /// `PianoRollModel`; a rack secondary plays its slot — but only while the transport is
+    /// STOPPED, because a playing transport owns every slot's binding and pump, and an audition
+    /// rebinding a slot mid-song would swap a sounding track's instrument under it.
+    public enum AuditionRoute: Equatable, Sendable {
+        case roll
+        case slot(Int)
+        case silent
+    }
+
+    /// The route for `laneID` — pure, so the one decision is testable without an engine.
+    public static func auditionRoute(laneID: UUID, in document: TimelineDocument,
+                                      capacity: Int, isPlaying: Bool) -> AuditionRoute {
+        if laneID == document.rollLaneID { return .roll }
+        guard !isPlaying,
+              let slot = MultiRollFanout.slot(forLaneID: laneID, in: document,
+                                              rollLane: document.rollLaneID, capacity: capacity)
+        else { return .silent }
+        return .slot(slot)
+    }
+
+    /// How long an audition note holds before its release — the roll's own tap preview length.
+    public static let auditionHoldNanoseconds: UInt64 = 200_000_000
+
+    @ObservationIgnored private var auditionRelease: Task<Void, Never>?
+    @ObservationIgnored private var auditionHeld: (slot: Int, pitch: Int)?
+
+    /// Sound ONE note on the instrument that plays `laneID`, as the note editor sets, moves or
+    /// taps it. A rack slot is first bound to the lane exactly as a part load binds it (lane →
+    /// kind → sample → patch → pitch → effect → mix), so the preview is the track's own sound
+    /// and level — a muted track stays silent. Monophonic: a new audition releases the previous
+    /// one first. Returns whether a voice was asked to sound. Main-actor only; the voices enqueue
+    /// their own render-safe events.
+    /// NEEDS-FOUNDER-VERIFY: N1 — in the note editor, setting, tapping and moving a note up or down sounds it on the track's own instrument (Echoel track and a Synth/Sampler track, transport stopped), at the track's level, and never leaves a note hanging.
+    @discardableResult
+    public func auditionNote(laneID: UUID, pitch: Int, velocity: Float, role: NoteRole,
+                             in document: TimelineDocument) -> Bool {
+        let v = velocity.clamped(to: 0.05...1)   // NaN-safe
+        switch Self.auditionRoute(laneID: laneID, in: document, capacity: multiRollCapacity,
+                                  isPlaying: isPlaying) {
+        case .roll:
+            guard let pianoRoll else { return false }
+            pianoRoll.audition(pitch: pitch, velocity: v, role: role)
+            return true
+        case .silent:
+            return false
+        case .slot(let slot):
+            guard let sink = slotNoteSink else { return false }
+            releaseAudition()
+            let roll = document.rollLaneID
+            slotLaneSink?(slot, laneID)
+            slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: document, rollLane: roll))
+            nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: document, rollLane: roll))   // H2b: the hosted unit, at the kind's sites
+            slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: document, rollLane: roll))
+            slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: document, rollLane: roll))
+            slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: document, rollLane: roll))
+            slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: document, rollLane: roll))
+            slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: document, rollLane: roll))
+            slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: document, rollLane: roll))
+            slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: document, rollLane: roll))
+            slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: document, rollLane: roll))
+            sink(slot, [LaneNotePump.Event(pitch: pitch, velocity: v)])
+            auditionHeld = (slot, pitch)
+            auditionRelease = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: Self.auditionHoldNanoseconds)
+                guard !Task.isCancelled else { return }
+                self?.releaseAudition()
+            }
+            return true
+        }
+    }
+
+    /// Release the held audition note. Always sent, even if the transport started meanwhile: a
+    /// note the pump never loaded is one `flushPumps` cannot release, so skipping it would hang.
+    private func releaseAudition() {
+        auditionRelease?.cancel()
+        auditionRelease = nil
+        guard let held = auditionHeld else { return }
+        auditionHeld = nil
+        slotNoteSink?(held.slot, [LaneNotePump.Event(pitch: held.pitch, velocity: 0)])
+    }
+
     // MARK: Clip-Launch secondary-lane load helpers (shared arrangement/launch path)
 
     /// The physical rack slot (priority rank) a SECONDARY MIDI lane owns, or nil when
@@ -1638,14 +1776,14 @@ public final class TimelineRegionPlayer {
         if !pump.isEmpty { sink(slot, pump.reset()) }
         slotLaneSink?(slot, laneID)
         slotKindSink?(slot, MultiRollFanout.voiceKind(forSlot: slot, in: doc, rollLane: rollLane))
+        nameSlotPlugin(slot, MultiRollFanout.hostedInstrument(forSlot: slot, in: doc, rollLane: rollLane))   // H2b: the hosted unit, at the kind's sites
         slotSampleSink?(slot, MultiRollFanout.samplePath(forSlot: slot, in: doc, rollLane: rollLane))
         slotPatchSink?(slot, MultiRollFanout.patch(forSlot: slot, in: doc, rollLane: rollLane))
         slotTransposeSink?(slot, MultiRollFanout.transpose(forSlot: slot, in: doc, rollLane: rollLane))
         slotDetuneSink?(slot, MultiRollFanout.detune(forSlot: slot, in: doc, rollLane: rollLane))
         slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
         slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
-        slotPanSink?(slot, MultiRollFanout.pan(forSlot: slot, in: doc, rollLane: rollLane))
-        slotGainSink?(slot, MultiRollFanout.gain(forSlot: slot, in: doc, rollLane: rollLane))
+        pushSlotMix(slot, force: true)
         pump.load(bars: windowedBars(for: region), startBar: startBar)
         pumps[slot] = pump
     }

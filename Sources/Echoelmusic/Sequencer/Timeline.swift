@@ -706,6 +706,44 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         return max(0, min(2, lane.level))
     }
 
+    // MARK: - Track volume and pan automation (production A1a — pure)
+
+    /// The automation base for a track's volume: `track.<laneID>.mix.gain`. No parameter
+    /// descriptor carries it, so `AutomationPlayer`/`ParameterApplyRouter` never apply it — the
+    /// mix sinks read it through `automatedGain`, the one place it is turned into sound.
+    public static let mixGainBase = "mix.gain"
+    /// The automation base for a track's pan: `track.<laneID>.mix.pan`, same rule as the gain.
+    public static let mixPanBase = "mix.pan"
+
+    /// The curve value (0…1) a track's mix lane holds at `tick`, or nil when it has none.
+    func mixAutomationValue(_ base: String, for laneID: UUID, atTick tick: Int) -> Double? {
+        let key = PerTrackParameterKeyPath.make(laneID: laneID, base: base)
+        return automation.first(where: { $0.parameter == key })?.value(atTick: tick)
+    }
+
+    /// The gain a track SOUNDS at on `tick`: its `effectiveGain` (mute, solo, fader) times its
+    /// volume curve (0…1 — a fade, never a boost past the fader). No curve → the fader alone. A
+    /// non-finite curve value is silent, the rule `effectiveGain` takes for a non-finite level.
+    /// ⚠️ Note-on gates keep asking `effectiveGain`: a fade-in from 0 must still start its notes.
+    /// NEEDS-FOUNDER-VERIFY: A1 — a volume curve drawn on a Synth/Sampler track fades it smoothly enough at step rate while the song plays (no zipper you mind), and a pan curve moves it across the field.
+    public func automatedGain(for laneID: UUID, atTick tick: Int) -> Float {
+        let fader = effectiveGain(for: laneID)
+        guard let curve = mixAutomationValue(Self.mixGainBase, for: laneID, atTick: tick) else { return fader }
+        guard curve.isFinite else { return 0 }
+        return fader * Float(Swift.max(0, Swift.min(1, curve)))
+    }
+
+    /// The pan a track SOUNDS at on `tick`, −1…1: its pan curve mapped 0…1 → −1…1, or the lane's
+    /// own pan when it has no curve. Non-finite → centre (the `MultiRollFanout.pan` rule).
+    public func automatedPan(for laneID: UUID, atTick tick: Int) -> Float {
+        if let curve = mixAutomationValue(Self.mixPanBase, for: laneID, atTick: tick) {
+            guard curve.isFinite else { return 0 }
+            return Float(Swift.max(0, Swift.min(1, curve)) * 2 - 1)
+        }
+        let pan = lanes.first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan
+        return Swift.max(-1, Swift.min(1, pan.isFinite ? pan : 0))
+    }
+
     /// The gain the ONE shared Piano-Roll slot plays at: the first non-bio MIDI
     /// lane owns the roll until A1 (multi-roll) gives every MIDI lane its own.
     /// No MIDI lane → unity (the roll is not represented on the timeline).

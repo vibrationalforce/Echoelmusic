@@ -199,3 +199,21 @@ Kanonisch dokumentiert in `docs/dev/PRODUCT_DEFINITION.md` ("Die vier Qualitäts
 - Founder dependency order is a hard input; READY ≠ next. Success = highest-priority slice built,
   independently reviewed, behaviourally verified, architecture preserved, concise evidence.
 
+
+## Anrede und Modellwahl (Founder 2026-10-14)
+
+- **Anrede:** den Founder in jeder Antwort mit Namen ansprechen — **„Echoel"** (sein Künstlername;
+  Michael Terbuyken bürgerlich). Deutsch, „du".
+- **Gedächtnis:** „stärke dein Gedächtnis auf unendlich". Ehrliche Grenze: eine Sitzung hat ein
+  endliches Kontextfenster und wird verdichtet; DAUERHAFT ist nur, was im Repo steht. Also: jede
+  Entscheidung, Vorliebe und Lehre sofort hier (`memory/`), in `decisions.csv` oder im
+  `SESSION_LOG` festhalten — nicht erst am Sitzungsende.
+- **Modellwahl nach Schwierigkeit (Token sparen):** Unteragenten und Workflow-Agenten bekommen das
+  passende Modell und die passende Denktiefe, statt alles mit dem stärksten zu fahren:
+  · leicht/mechanisch (Suchen, Zählen, Listen, Log-Lesen, Text-Abgleich) → `model: haiku`, `effort: low`
+  · normal (Datei-Review, eine Scheibe prüfen, Wächter transkribieren) → `model: sonnet`, `effort: medium`
+  · schwer (Audio-Thread, Nebenläufigkeit, Architektur, Sicherheit, adversariale Prüfung, Lead-Synthese)
+    → stärkstes Modell (`opus`), `effort: high`
+  Das Hauptmodell der Sitzung selbst kann eine Sitzung NICHT umschalten — das macht der Founder mit
+  `/model` (oder in den Einstellungen). Belegter Anlass: der Aufräum-Workflow wf_050785cb-fc9 lief
+  am 2026-10-13 ins Wochenlimit (4 von 9 Agenten abgebrochen, 1,45 Mio. Unteragenten-Token).

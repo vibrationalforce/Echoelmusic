@@ -129,6 +129,15 @@ public enum MultiRollFanout {
         return document.lanes.first(where: { $0.id == id })?.deviceChain?.soundingCharacter
     }
 
+    /// Production H2a — the hosted Audio Unit instrument slot `slot`'s lane plays instead of its
+    /// built-in voice, or nil (none chosen, an unreadable or foreign instrument, an out-of-range
+    /// slot). Asks the insert's own reader, so a later build's plugin state is never loaded.
+    public static func hostedInstrument(forSlot slot: Int, in document: TimelineDocument,
+                                        rollLane: UUID?) -> DeviceInsert.PluginComponent? {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return nil }
+        return document.lanes.first(where: { $0.id == id })?.deviceChain?.instrument?.pluginComponent
+    }
+
     /// Whether a secondary lane is audible this tick — mute/foreign-solo/0-level all
     /// silence it, matching the primary roll lane's rollSlotGain→laneAudible gate.
     public static func audible(_ document: TimelineDocument, laneID: UUID) -> Bool {
@@ -163,6 +172,23 @@ public enum MultiRollFanout {
         // Non-finite → centre BEFORE the clamp: `Swift.min(1, NaN)` is 1, so the bare clamp sent a
         // NaN lane to HARD RIGHT — upstream of both sinks, which never saw the NaN (overnight P8).
         return Swift.max(-1, Swift.min(1, p.isFinite ? p : 0))
+    }
+
+    /// Production A1b — the gain slot `slot`'s lane SOUNDS at on `tick`: `gain(forSlot:)` times
+    /// the track's volume curve (`TimelineDocument.automatedGain`). Unknown slot ⇒ unity, the
+    /// same stance as `gain(forSlot:)`. Note-on gates keep asking `audible`, never this.
+    public static func gain(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?,
+                            atTick tick: Int) -> Float {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return 1 }
+        return document.automatedGain(for: id, atTick: tick)
+    }
+
+    /// Production A1b — the pan slot `slot`'s lane sounds at on `tick` (its pan curve, else its
+    /// pan; −1…1, non-finite → centre). Unknown slot ⇒ centre, like `pan(forSlot:)`.
+    public static func pan(forSlot slot: Int, in document: TimelineDocument, rollLane: UUID?,
+                           atTick tick: Int) -> Float {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return 0 }
+        return document.automatedPan(for: id, atTick: tick)
     }
 
     /// The continuous GAIN slot `slot`'s lane plays at — the full mute/foreign-solo/

@@ -117,6 +117,9 @@ final class TimelineAudioSink: AudioRegionSink {
     /// that starts playback. True until first told, so a sink driven without a coordinator
     /// behaves as before.
     private var mayRewire = true
+    /// Crash 2624: a node found UNWIRED at play time asks the next prime that starts playback to
+    /// rebuild every node of this lane (`preload`), so the following Play sounds again.
+    private var rewireRequested = false
 
     func setMayRewire(_ allowed: Bool) { mayRewire = allowed }
 
@@ -397,8 +400,10 @@ final class TimelineAudioSink: AudioRegionSink {
         // S3c: only the prime that STARTS playback may change mode (`mayRewire`, set by the
         // coordinator). A wrap, a structure edit or a relocate primes while the song plays —
         // a rewire there would pause the whole engine and stop a launched loop (review MED-1/2).
-        if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace {
+        if mayRewire, let engine, engine.headphoneSpaceEnabled != wiredInSpace
+            || rewireRequested || hasUnwiredNode(engine) {
             releaseNodes()
+            rewireRequested = false
             wiredInSpace = engine.headphoneSpaceEnabled
         }
         if let key = knownURLs[url], nodes[key] != nil,
@@ -537,7 +542,7 @@ final class TimelineAudioSink: AudioRegionSink {
            let entry = beatsBuffers[BeatsKey(url: url, rate: stretch.rate, fromSeconds: fromSeconds,
                                              fades: fades)],
            abs(entry.lengthSeconds - lengthSeconds) < 0.001,
-           plainNode.engine?.isRunning == true {
+           plainNode.engine?.isRunning == true, wired(plainNode) {
             stop()
             plainNode.scheduleBuffer(entry.buffer, at: nil)
             setGain(gain)
@@ -551,7 +556,7 @@ final class TimelineAudioSink: AudioRegionSink {
            fromSeconds.isFinite, lengthSeconds.isFinite,
            let buffer = grainBuffers[GrainKey(url: url, fromSeconds: fromSeconds,
                                               lengthSeconds: lengthSeconds, settings: grain, fades: fades)],
-           plainNode.engine?.isRunning == true {
+           plainNode.engine?.isRunning == true, wired(plainNode) {
             stop()
             plainNode.scheduleBuffer(buffer, at: nil)
             setGain(gain)
@@ -590,6 +595,10 @@ final class TimelineAudioSink: AudioRegionSink {
         // transport keeps stepping (review MEDIUM 1). Degrade to silence instead;
         // the next region onset re-drives the lane once the engine is back.
         guard node.engine?.isRunning == true else { return }
+        // Crash 2624: `play()` on a node with no path to the output raises an NSException
+        // ("player started when in a disconnected state") and kills the app on the user's tap.
+        // Skip the part instead — silent, logged — and rebuild this lane at the next Play.
+        guard wired(node) else { stop(); return }
         stop()   // one region per lane: silence every node before the new segment
         if let fades, playFaded(fades, url: url, file: file, on: node, startFrame: startFrame,
                                 frames: frames, sampleRate: sampleRate, gain: gain) { return }
@@ -686,6 +695,24 @@ final class TimelineAudioSink: AudioRegionSink {
         self.pan = p
         for node in nodes.values { node.pan = p }
         for chain in warpChains.values { chain.player.pan = p }
+    }
+
+    /// Crash 2624 (v10.79.499, 2026-10-14): whether `node` reaches the engine's output. When it
+    /// does not, write the missing link to the diag log, ask for a rebuild at the next Play and
+    /// answer false — the caller then plays nothing rather than raising.
+    private func wired(_ node: AVAudioPlayerNode) -> Bool {
+        guard let engine else { return false }
+        guard let missing = engine.missingOutputLink(from: node) else { return true }
+        EchoelCrashLog.breadcrumb("audio lane: player not wired (\(missing)) — part skipped, lane rebuilt at the next Play")
+        rewireRequested = true
+        return false
+    }
+
+    /// Crash 2624: any node of this lane that has lost its path to the output — checked only in
+    /// the prime that starts playback, where a rebuild's engine pause is inaudible.
+    private func hasUnwiredNode(_ engine: AudioEngine) -> Bool {
+        nodes.values.contains { engine.missingOutputLink(from: $0) != nil }
+            || warpChains.values.contains { engine.missingOutputLink(from: $0.player) != nil }
     }
 
     /// Release every engine node (lane removed). Detach mutates the graph without

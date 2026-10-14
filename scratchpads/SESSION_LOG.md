@@ -1043,3 +1043,19 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **Register (`0c178e98c`):** FEATURE_STATUS §0 = Build 2622 (`1b2a76c2f`), fünftes Wort „Piece", Siri/Sampler/Grain nach §1, §1b = R2 ·
   VV-4e · Wellenform-Fix; PLAN_GMMW A5 die 13 Archiv-Posten mit Klasse und Phase; PLAN_RESTRUCTURE Löschliste 15 → 10.
 - **Entscheidung geloggt:** R2 in `decisions.csv` + `memory/decisions.md` (Review 2026-11-12).
+
+
+## 2026-10-13 — Letzter TestFlight des Auftrags: Notenraster in Tonhöhenfarbe · Fluid F1 · zwei Wächter breiter · zwei Prüfwerkzeuge repariert
+
+- **Build 2624 (v10.79.499, Bump `f2602f9d6`):** Farbscheibe `f60fda649` (`SpectralColor.gridTint` bei OKLab-L 0,84,
+  Frequenz über `PianoRollModel.soundingHz`, `NoteGridTint` im `PartNoteEditor`; schlechtester Kontrast auf den
+  schattierten Zeilen 3,23:1 mit OKLab-Mischung, gemessen am Zwilling) · Fluid F1 `dec1986c0` (alle 12 Tests im CI-Log
+  bestanden) · vier Kommentar-Wahrheiten (`9b44556d1`, `cc683262c`) · Spatial-Keep `ff6c4230d` (alle 7 Kerne plus zwei
+  Dateien eine Ebene tiefer, Anspruch 5) · Geräte-Bitten `781e4273f` (A4-Feld der Piece-Bühne; Fluid-Satz ist keine Bitte)
+  · Hot-State ``9ab00ae7e` + Prüfer-Korrektur `1e7c64aec` (Overlay-Lücke im Skip, Regex-Arm, Fehlrichtungen in drei Grenzblöcken)` (Taktuhr, Tempo-Gleiten, OSC-Eingang; Ausnahme nur für Aktions-Closures, exakt gepinnt).
+- **Werkzeuge:** drei Prüfer ohne SyntaxWarning (`b0cec876d`, Ausgaben vorher/nachher identisch); `foreign-needles.py`
+  bindet je Methode (`aba5129ac`) — die vier „bekannten" Lernmodus-Alarme waren Fehlalarme des Werkzeugs, Exit jetzt 0.
+- **Register:** FEATURE_STATUS §0 = Build 2624; §1b geleert (R2/VV-4e/Wellenform waren seit 2623 ausgeliefert, F1–F6b/A3a seit 2616); §1a/§1c um die fehlenden Türen mit erstem Build ergänzt (Zuordnung je Commit per `merge-base`, fünf Stichproben bestätigt); §2c: Tonhöhe je Teil und Stretch-Modi haben seit 2621 Regler, Fluid F1 als Kern ohne Aufrufer; §4: Kopfhörer-Raum und „Use Its Sound“ seit 2617.
+- **Entscheidung geloggt:** Farbscheibe in `decisions.csv` + `memory/decisions.md` (Review 2026-11-12).
+- **Offen (Founder):** Geräte-Session für 2622–2624 · GM18–GM22 · E10-1, B2 und #310 im Standard-Modus · die drei
+  `orchester/*`-Branches.

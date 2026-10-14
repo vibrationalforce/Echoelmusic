@@ -184,6 +184,10 @@ public final class AudioLanePlayer {
     /// know it must re-start the region (a stopped one-shot can't just re-gain).
     private var appliedGain: [UUID: Float] = [:]
     private var appliedPan: [UUID: Float] = [:]
+    /// Production A1d — the level the sink last SOUNDED at: `appliedGain` (the gate — fader,
+    /// mute, solo, part gain) times the track's volume curve. Kept apart from the gate on
+    /// purpose: a fade to 0 must lower the level, never stop the part and restart it later.
+    private var appliedLevel: [UUID: Float] = [:]
 
     /// Restructure S3b: where each lane sits in the headphone space. The app injects it from
     /// the piece's spatial scene (`SpatialSceneStore` → `HeadphoneSpace.point`), so the
@@ -333,6 +337,7 @@ public final class AudioLanePlayer {
             sinks[laneID] = nil
             appliedGain[laneID] = nil
             appliedPan[laneID] = nil
+            appliedLevel[laneID] = nil
             appliedSpace[laneID] = nil
             overrides[laneID] = nil   // a removed lane's launch dies with it
         }
@@ -514,11 +519,14 @@ public final class AudioLanePlayer {
         lane.setFades(AudioRegionPlayback.fadePlan(for: region, bpm: bpm, stretchRate: plan.rate))
         // GA-10c: the grain this part sounds, or nil — set before EVERY play, so none lingers.
         lane.setGrain(Self.grainToPlay(for: region, in: doc, nativeBPM: resolveNativeBPM(region.clipID), bpm: bpm))
+        // A1d: the part starts at the level its volume curve holds here; the gate stays `gain`.
+        let level = doc.automatedGain(for: laneID, atTick: tick) * region.gain
         lane.play(url: url, fromSeconds: from,
-                  lengthSeconds: max(0, length), gain: gain, stretch: plan)
+                  lengthSeconds: max(0, length), gain: level, stretch: plan)
+        appliedLevel[laneID] = level
         // H4: audio lanes take the lane's stereo position too (B2 gave TimelineLane
-        // a pan; the synth voices honored it, audio lanes never did).
-        let pan = clampedPan(in: doc, laneID: laneID)
+        // a pan; the synth voices honored it, audio lanes never did). A1d: at its curve's value.
+        let pan = clampedPan(in: doc, laneID: laneID, atTick: tick)
         lane.setPan(pan)
         appliedPan[laneID] = pan
         pushSpace(laneID, to: lane)   // S3b
@@ -547,16 +555,27 @@ public final class AudioLanePlayer {
                 }
                 // No active region (gap): stay at 0 — the next onset starts it.
             } else {
-                lane.setGain(gain)
                 appliedGain[laneID] = gain
             }
         }
-        let pan = clampedPan(in: doc, laneID: laneID)
+        followLevel(laneID, lane: lane, regionGain: active?.gain ?? 1, in: doc, atTick: tick)
+        let pan = clampedPan(in: doc, laneID: laneID, atTick: tick)
         if pan != (appliedPan[laneID] ?? 0) {
             lane.setPan(pan)
             appliedPan[laneID] = pan
         }
         pushSpace(laneID, to: lane)   // S3b
+    }
+
+    /// Production A1d — while the gate is open, the sink follows the track's volume curve: one
+    /// `setGain` per real change (the level cache), never a stop or a restart.
+    private func followLevel(_ laneID: UUID, lane: AudioRegionSink, regionGain: Float,
+                             in doc: TimelineDocument, atTick tick: Int) {
+        guard let gate = appliedGain[laneID], gate > 0 else { return }
+        let level = doc.automatedGain(for: laneID, atTick: tick) * regionGain
+        guard level != appliedLevel[laneID] else { return }
+        lane.setGain(level)
+        appliedLevel[laneID] = level
     }
 
     /// S1 Clip-Launch: drive one launched lane for the window `fromTick`→`toTick`.
@@ -596,11 +615,11 @@ public final class AudioLanePlayer {
                 start(ov.region, laneID: laneID,
                       atTick: ov.region.startTick + contentTick, in: doc, bpm: bpm)
             } else {
-                lane.setGain(gain)
                 appliedGain[laneID] = gain
             }
         }
-        let pan = clampedPan(in: doc, laneID: laneID)
+        followLevel(laneID, lane: lane, regionGain: ov.region.gain, in: doc, atTick: tick)
+        let pan = clampedPan(in: doc, laneID: laneID, atTick: tick)
         if pan != (appliedPan[laneID] ?? 0) {
             lane.setPan(pan)
             appliedPan[laneID] = pan
@@ -617,11 +636,11 @@ public final class AudioLanePlayer {
         appliedSpace[laneID] = point
     }
 
-    private func clampedPan(in doc: TimelineDocument, laneID: UUID) -> Float {
-        let p = doc.lanes.first(where: { $0.id == laneID })?.pan ?? TimelineLane.defaultPan
-        // Non-finite → centre, the rule `MultiRollFanout.pan(forSlot:)` and both sinks take:
-        // `min(1, NaN)` is 1, so the bare clamp played a NaN lane hard right (overnight P8).
-        return max(-1, min(1, p.isFinite ? p : 0))
+    /// A1d: the pan the lane sounds at on `tick` — its curve, else its own pan — through the one
+    /// rule `TimelineDocument.automatedPan`, which keeps the non-finite → centre law (overnight
+    /// P8: `min(1, NaN)` is 1, so a bare clamp played a NaN lane hard right).
+    private func clampedPan(in doc: TimelineDocument, laneID: UUID, atTick tick: Int) -> Float {
+        doc.automatedPan(for: laneID, atTick: tick)
     }
 
     /// GMMW GA-10d: ask every audio lane's sink for the renderings its parts' grains need, WITHOUT
