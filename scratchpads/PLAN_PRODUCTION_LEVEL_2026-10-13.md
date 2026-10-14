@@ -78,6 +78,24 @@ Plugins. Jede H-Scheibe trägt deshalb eine `NEEDS-FOUNDER-VERIFY`-Bitte mit gen
 
 **Offen:** H3 Plugin-Oberfläche · H4 Plugin-Zustand im Stück · H5 Spur-Knoten · H6 Effekt-Inserts · A1e Echoel-Spur · N2 Tastatur · N3b Triolen · N5 CC-Spur · A2/A3. Gerät: H1, H2 (Klang, Klick beim Laden, Kopfhörer-Wechsel, Media-Reset), N1, A1.
 
+## Stand 2026-10-14 (abends) — H3 bis H6-4 gelandet, Build v10.79.501
+
+| Scheibe | Commit | Stand |
+|---|---|---|
+| H3 Plugin-Fenster auf der Geräte-Seite („Open plugin“, Sheet, Controller nur beim Tipp) | `1657030d6` (+ Nadel `8492546c5`) | gepusht, Compile + Build for Testing grün |
+| H4a Plugin-Einstellungen im Insert (binäre Plist, ≤ 1 MB, Format v1 unverändert) | `a9b3f9f33` | dito |
+| H4b Einstellungen beim Schließen des Fensters gesichert | `0be642dfe` | dito |
+| H4c Plugin lädt mit den gespeicherten Einstellungen | `af3782365` (+ `fbc2addc7` Zeilentext) | dito |
+| H5 (im Code so benannt) Plugin-Prozess stirbt → Spur bekommt die eingebaute Stimme zurück | `87e3a77ca` | dito |
+| H6-1 Effekt-Insert-Typ (getrennt vom Instrument) | `6962533a6` | dito, noch kein Leser |
+| H6-2 ein Schreiber + Undo-Schritt für den Effekt | `314b918e2` | dito, **kein Aufrufer** (keine Tür) |
+| H6-3 ein Bus je Rack-Slot = der Spur-Knoten, den diese Tabelle oben „H5“ nennt | `cf551129d` | dito |
+| H6-4 Plugin-Instrument klingt über den Bus seiner Spur | `e49b3ef45` | dito |
+| Reparaturen: Ausgangsweg erreicht die Kopfhörer-Raum-Kette · ein nicht anhängbares Plugin gilt als gescheitert | `6d2d64572` · `8b1203e93` | dito |
+
+⚠️ **Namensfalle:** Der Plan-Name „H5 Spur-Mixer-Knoten“ und der Commit-Name „H5“ meinen zwei verschiedene Dinge. Der Knoten ist H6-3.
+**Offen:** H6-5 Effekt-Host + Einfügen in den Bus + Tür auf der Geräte-Seite · A1e · N2 · N3b · N5 · A2/A3. **Gerät:** alles ab H1 (keine Scheibe ist auf dem Gerät geprüft).
+
 ## A1 — gemessener Weg (Explore-Bericht 2026-10-13, Belege file:line dort nachprüfen)
 
 - Heute bietet `SongAutomationEdit.offered` nur `PolySynthVoice.automatableBases`, und `sounds(on:)` nur POLY-Rack-Spuren
