@@ -75,7 +75,7 @@ final class TheHostedPluginOpensItsOwnScreenTests: XCTestCase {
         XCTAssertTrue(row.contains("Button(\"Open plugin\") { open(current) }"))
         XCTAssertTrue(row.contains("MultiRollFanout.slot(forLaneID: laneID, in: document"),
                       "the slot comes from the one lane→slot lookup")
-        XCTAssertTrue(row.contains(".sheet(item: $window)"), "the sheet's item is the only holder")
+        XCTAssertTrue(row.contains(".sheet(item: $window, onDismiss: keepSettings)"), "the sheet's item is the only holder")
         XCTAssertTrue(row.contains("static func dismantleUIViewController"),
                       "closing must take the plugin's view out of the container")
         XCTAssertTrue(row.contains("child.removeFromParent()"))
