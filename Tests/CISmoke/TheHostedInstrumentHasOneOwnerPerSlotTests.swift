@@ -63,7 +63,7 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: finishLoad")
         }
         guard let stale = finish.range(of: "guard wanted[slot] == component, hosted[slot] == nil else { return }"),
-              let attach = finish.range(of: "engine.attachAudioUnit(unit)") else {
+              let attach = finish.range(of: "engine.attachAudioUnit(unit, slot: slot)") else {
             return XCTFail("ANCHOR MISSING: the stale check or the attach in finishLoad")
         }
         XCTAssertLessThan(stale.lowerBound, attach.lowerBound, "the stale check comes before the graph")
@@ -162,7 +162,7 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
 
     func testTheEngineAttachIsTheSourceNodeShape() throws {
         let code = SourceText.codeOnly(try source(Self.enginePath))
-        guard let attach = body(of: "func attachAudioUnit(_ unit: AVAudioUnit) -> Bool {", in: code) else {
+        guard let attach = body(of: "func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {", in: code) else {
             return XCTFail("ANCHOR MISSING: attachAudioUnit")
         }
         for needle in ["logEngineLifecycle(\"graph: attach audio unit",

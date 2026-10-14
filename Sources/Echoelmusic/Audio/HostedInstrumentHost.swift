@@ -233,7 +233,7 @@ final class HostedInstrumentHost {
             failed[slot] = component
             return
         }
-        guard engine.attachAudioUnit(unit) else {
+        guard engine.attachAudioUnit(unit, slot: slot) else {
             wanted[slot] = nil
             return
         }

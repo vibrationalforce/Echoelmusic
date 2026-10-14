@@ -348,7 +348,7 @@ final class TheEngineLifecycleSpeaksInTheDiagLogTests: XCTestCase {
             ("func attachSpacePlayer(_ node: AVAudioPlayerNode, timePitch: AVAudioUnitTimePitch?,",
              "logEngineLifecycle(\"graph: attach space player"),
             // Production H2b — a hosted Audio Unit's two graph edits speak like their siblings.
-            ("func attachAudioUnit(_ unit: AVAudioUnit) -> Bool {",
+            ("func attachAudioUnit(_ unit: AVAudioUnit, slot: Int) -> Bool {",
              "logEngineLifecycle(\"graph: attach audio unit"),
             ("func detachAudioUnit(_ unit: AVAudioUnit) {",
              "logEngineLifecycle(\"graph: detach audio unit"),
