@@ -95,7 +95,7 @@ code, kbd, samp { overflow-wrap: anywhere; }
     white-space: nowrap;
     font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
 }
-.nav-links { display: none; align-items: center; gap: 4px; }
+.nav-links { display: none; align-items: center; justify-content: flex-end; gap: 4px; }
 .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
     font-weight: 500; color: var(--dim);
     padding: 7px 14px; border-radius: 8px;
