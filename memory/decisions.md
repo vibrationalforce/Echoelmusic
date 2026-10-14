@@ -5246,3 +5246,10 @@ Aufträge: `reports/Orchester-Prompts_2026-10-12/10–12_*_SCHREIBRECHT.txt`.
 - **Review:** 2026-11-12 — Gerät: Arrange → MIDI-Teil → Notes: jede Zeile ein Farbton (C mintgrün,
   F♯ rosa, A lachs); Piece → A4 auf 432: die Blöcke verschieben ihren Farbton mit Pads und Bild;
   eine leise Note ist dunkler, nie ausgewaschen.
+
+### 2026-10-14 — Schlanker Arbeitsmodus: erst Funktionen, dann Prozess
+- **Anlass (Founder):** „Gerade habe ich das Gefühl wir tappen im dunkeln und haben uns mit vielen agents und Skills selbst ausgebremst." Dazu: die allererste DMMW-Fassung fand er gut — Instrumente, Effekte, Videoschnitt, Performance, Content, Stream/Colabo, Event mit Licht und Mapping; AUv3 ging damals nicht.
+- **Gemessen:** 902 Wächter-Dateien gegen 490 Quelldateien; CLAUDE.md bei 149 985 von 150 000 B; der Aufräum-Audit vom 13.10. verbrauchte 1,45 Mio. Token, lief ins Wochenlimit und lieferte nichts. Die erste DMMW war zu großen Teilen nie kompiliert (JUCE nie eingebunden, `HISTORY_ARCHIVE.md`) — die VISION war gut, der Code dahinter oft Fassade.
+- **Entscheidung:** Reihenfolge (1) Produktionskern: Plugin-Fenster H3, Plugin-Einstellungen gespeichert H4, Effekt-Plugins auf Spuren H6, Mixer pro Spur · (2) Instrumente und Effekte zurück — bewährte Algorithmen aus dem Archiv in die heutigen Besitzer portieren · (3) Videoschnitt auf der Zeitleiste · (4) Performance, Licht, Mapping · (5) Stream und Colabo zuletzt (braucht eine Abhängigkeit → Founder).
+- **Regeln:** pro Scheibe Code + EIN kleiner Test; keine Prosa-Romane in Kommentaren oder Wächtern; keine Multi-Agent-Audits; ein Review-Agent nur bei Audio-Thread-Code; CLAUDE.md eingefroren. Jeder TestFlight mit kurzer „Probier das"-Liste.
+- Wiedervorlage 2026-11-13.

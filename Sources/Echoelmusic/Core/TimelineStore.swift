@@ -1387,6 +1387,23 @@ public final class TimelineStore {
         persist()
     }
 
+    /// Production H4a — THE one writer of a hosted plugin's own settings on a track: stores the
+    /// unit's `fullStateForDocument` (as `DeviceInsert.pluginFullState`) in the track's instrument
+    /// insert, the component unchanged — so the host never reloads for it. Only an insert that
+    /// already holds a plugin instrument is written; a state over `DeviceInsert.pluginStateLimit`
+    /// is refused and the last one that fit stays. Not an Undo step: a plugin's controls are its
+    /// own, and moving one is not an edit of the song's structure. No-op when nothing changes.
+    public func setLanePluginState(_ laneID: UUID, _ state: Data?) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == laneID }),
+              var chain = document.lanes[i].deviceChain,
+              let held = chain.instrument,
+              let next = held.settingPluginFullState(state),
+              next != held else { return }
+        chain.instrument = next
+        document.lanes[i].deviceChain = chain
+        persist()
+    }
+
     /// Production H2a — ONE pick of a track's instrument plugin is ONE Undo step (`.lanePlugin`),
     /// the `editLaneSample` shape: `write` is the `setLanePluginInstrument` call, and a pick of
     /// what the track already plays (or a refused write) records nothing.

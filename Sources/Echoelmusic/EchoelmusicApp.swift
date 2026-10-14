@@ -1224,8 +1224,13 @@ struct EchoelmusicApp: App {
                         laneVoiceRack?.setKind(slot: slot, kind: kind)
                     }
                     // Production H2b: each slot's chosen Audio Unit, right after its kind.
-                    timelinePlayer.slotPluginSink = { slot, component in
-                        pluginHost.setInstrument(component, forSlot: slot)
+                    // H4c: with the settings the song keeps for that unit.
+                    timelinePlayer.slotPluginSink = { [weak timelineStore] slot, component in
+                        let state = timelineStore.flatMap { store in
+                            MultiRollFanout.hostedInstrumentState(forSlot: slot, in: store.document,
+                                                                  rollLane: store.document.rollLaneID)
+                        }
+                        pluginHost.setInstrument(component, state: state, forSlot: slot)
                     }
                     // S2-W3 (EchoelSampler klingt): the lane's persisted sample REF,
                     // fired right after the kind at the same player sites — resolved

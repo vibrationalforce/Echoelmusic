@@ -1,4 +1,4 @@
-build: v10.79.499 — Notenraster in Tonhöhenfarbe, Fluid-Kern F1, zwei Wächter breiter (letzter Build des Auftrags)
+build: v10.79.500 — Absturz 2624 behoben (Audiospur nach Stop), Plugins auf Spuren, Noten-Editor, Spur-Automation
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,44 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.500) ───────────────────────────────
+
+  Fünfzehn Commits an `Sources/` und `Tests/` seit 10.79.499. Gebaut wird `d1811fa85` —
+  Xcode Compile Check UND Build for Testing grün. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: ABSTURZ 2624 (dein Log vom 14.10.) ──
+  Eine Audiospur im Kopfhörer-Raum, Play, Stop, ein Tipp — die App starb an „player started
+  when in a disconnected state". Jetzt prüft jede Audiospur vor dem Start, ob ihr Player bis
+  zum Ausgang verbunden ist. Wenn nicht: der Teil bleibt still, das Log schreibt „audio lane:
+  player not wired" mit dem fehlenden Glied, und das nächste Play baut die Spur neu auf.
+  Probe: unten „Mixer" → Schalter „Headphone space" an. Audiospur abspielen, Stop, wieder
+  Play. Erwartet: kein Absturz, die Spur klingt.
+
+  ── POSTEN 2: PLUGINS AUF SPUREN (H1–H2d) ──
+  Die Device-Seite einer Synth-Spur listet die installierten Audio-Unit-Instrumente und
+  -Effekte. Ein gewähltes Instrument spielt die Noten dieser Spur statt der eingebauten Stimme;
+  Undo und „Built-in voice" geben sie zurück. Eigenes Plugin-Fenster und gespeicherte
+  Plugin-Einstellungen kommen noch (H3/H4); Effekte werden nur gelistet.
+
+  ── POSTEN 3: NOTEN-EDITOR (N1, N3a, N4a/b) ──
+  Eine Note klingt beim Setzen, Antippen und Verschieben. Neue Noten folgen dem gewählten
+  Raster. Legato zieht Noten bis zur nächsten. Copy/Paste von Noten zwischen Teilen.
+
+  ── POSTEN 4: SPUR-AUTOMATION (A1a–d) ──
+  Lautstärke und Pan jeder Rack-Spur und jeder Audiospur folgen ihren gezeichneten Kurven.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since f2602f9d6) ──
+  · crash 2624 — Audiospur im Kopfhörer-Raum, Play, Stop, Play: kein Absturz.
+  · H1 — die Device-Seite einer Synth-Spur listet die installierten AUv3-Instrumente und
+    -Effekte und sagt „none", wenn keine da sind.
+  · H2c — ein gewähltes Instrument spielt die Spur, Undo gibt die eingebaute Stimme zurück.
+  · H2 — ein Fremd-Instrument klingt; kein Knacken außer der kurzen Pause beim Laden; übersteht
+    Kopfhörerwechsel und Media-Reset; Spuren ohne Plugin ändern sich nicht.
+  · N1 — eine Note klingt beim Setzen, Antippen und Verschieben auf dem Instrument ihrer Spur.
+  · A1 — eine gezeichnete Lautstärkekurve blendet ruhig genug im Schritt-Takt.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.499) ───────────────────────────────
 

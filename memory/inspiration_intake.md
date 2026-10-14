@@ -1387,3 +1387,13 @@ Bildern wird behauptet. Verdikt REJECT (Bilder), kein Befund (Text).
 ## 2026-10-13 — Link kilernen.de (KI-Kursplattform) — WATCH
 - Seite aus der Sitzung gesperrt (Netzwerk-Regel); gelesen nur Suchtreffer: bezahlte deutsche KI-Kurse von Everlast Consulting GmbH, u. a. „Claude Code Masterclass" (5 Module, 108 Lektionen), „Agentic Coding Workshop", Team-Lizenzen.
 - Inhalt: allgemeines Claude-Code-/Agenten-Handwerk. Das Repo betreibt das schon (CLAUDE.md, Skills, Hooks, Teams, Workflows, Lernmodus, CI-Gates). Nutzen eher für den Founder persönlich (Sitzungen briefen und steuern), nicht für den Code. Kurs-Auszüge laufen über den Lernmodus. Wiedervorlage 2026-11-12.
+
+## 2026-10-14 — Grok: AUv3-Hosting-Recherche (H3/H4) — ADOPT→PRODUCT
+
+Zehn Punkte zum Plugin-Hosting, ohne Repo-Zugriff. Messbar hier: nur „Plugins laufen außerhalb
+des App-Prozesses“ — stimmt mit dem Kopf von `HostedInstrumentHost` überein (verified 1/10). Der
+Rest betrifft Apple-Frameworks und fremde Hosts und bleibt UNVERIFIZIERT; übernommen als
+Entwurfs-Annahmen: Fenster nur auf Tipp anfordern, Ergebnis auf den Main-Actor, beim Schließen
+loslassen, nil heißt „kein eigenes Fenster“ (umgesetzt in H3, 1657030d6); `fullStateForDocument`
+mit Fehlerbehandlung speichern (H4); Invalidation-Notification bei abgestürztem Plugin (eigene
+Scheibe). Kein Befehl, kein Paket übernommen.

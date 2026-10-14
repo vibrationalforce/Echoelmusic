@@ -5,7 +5,7 @@
 // mix through `AudioEngine.attachAudioUnit`, and plays the track's notes on it as MIDI.
 //
 // ONE OWNER PER RACK SLOT. The region player names, per slot, which component it wants
-// (`setInstrument(_:forSlot:)`) at the same points it names the slot's built-in kind; the app's
+// (`setInstrument(_:state:forSlot:)`) at the same points it names the slot's built-in kind; the app's
 // note sink asks `owns(_:)` and sends a hosted slot's notes HERE instead of to `LaneVoiceRack`.
 // So a chosen plugin silences the built-in voice of that track — never both at once.
 //
@@ -38,6 +38,13 @@
 // was SENT with, so a transpose change while a note is held never strands it. Detune and the
 // octave doubler are rack-voice features and do not reach a hosted unit.
 //
+// THE PLUGIN'S OWN SCREEN (H3). `requestView(forSlot:done:)` asks the LOADED unit for its view
+// controller only when the window opens, and nothing here keeps it: the window holds it while it is
+// shown and drops it on close (a plugin's screen can cost real memory, and every instance shares
+// one budget). The system completes the request off the main thread — the result crosses in a
+// box and is handed over on the main actor. A nil controller is a real answer: the plugin has no
+// screen of its own. A slot that is still loading, or has no unit, answers false at once.
+//
 // NEEDS-FOUNDER-VERIFY H2: a third-party instrument chosen on a rack track sounds on the device;
 // no click beyond the short pause at load; it survives a headphone change and a media reset;
 // nothing changes for a track with no plugin chosen.
@@ -45,6 +52,9 @@
 import Foundation
 #if canImport(AVFoundation)
 import AVFoundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 final class HostedInstrumentHost {
@@ -64,6 +74,10 @@ final class HostedInstrumentHost {
         init(_ unit: AVAudioUnit?) { self.unit = unit }
     }
 
+    /// The one host the running app made (`EchoelmusicApp` builds it once, at start). The Device
+    /// page reaches it here to open a plugin's own screen; weak, so nothing here keeps it alive.
+    private(set) static weak var live: HostedInstrumentHost?
+
     private let engine: AudioEngine
     /// What each slot wants to play. Set before the load starts; a slot with an entry owns its
     /// notes (they reach the unit once it is loaded, and are dropped while it loads).
@@ -74,13 +88,17 @@ final class HostedInstrumentHost {
     /// The component that could not be loaded on this device, per slot — not retried until the
     /// slot names something else or the media services reset.
     private var failed: [Int: DeviceInsert.PluginComponent] = [:]
+    /// H4c — the settings the song keeps for the unit a slot is loading, applied when it arrives.
+    private var pendingState: [Int: Data] = [:]
     private var transpose: [Int: Int] = [:]
     /// Per slot: the note number each held attack was sent with, keyed by the track's own pitch.
     private var sounding: [Int: [Int: UInt8]] = [:]
     private var resetObserver: NSObjectProtocol?
+    private var invalidationObserver: NSObjectProtocol?
 
     init(engine: AudioEngine) {
         self.engine = engine
+        Self.live = self
         #if os(iOS)
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
@@ -88,6 +106,16 @@ final class HostedInstrumentHost {
             Task { @MainActor in self?.forgetAfterMediaReset() }
         }
         #endif
+        // A plugin whose extension process crashed is INVALIDATED: it renders nothing and takes no
+        // MIDI. The system posts this per instance, with the dead `AUAudioUnit` as the object.
+        invalidationObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name(kAudioComponentInstanceInvalidationNotification as String),
+            object: nil, queue: .main
+        ) { @Sendable [weak self] note in
+            guard let object = note.object else { return }
+            let dead = ObjectIdentifier(object as AnyObject)
+            Task { @MainActor in self?.forgetInvalidated(dead) }
+        }
     }
 
     /// Whether `slot`'s notes belong to a hosted unit (loaded or loading) instead of the rack.
@@ -95,14 +123,16 @@ final class HostedInstrumentHost {
 
     /// The one decision per slot: play `component`, or (nil) give the slot back to its built-in
     /// voice. Naming what the slot already wants does nothing, so the player may say it on every
-    /// load.
-    func setInstrument(_ component: DeviceInsert.PluginComponent?, forSlot slot: Int) {
+    /// load. `state` is the unit's own settings as the song keeps them (H4c), applied once the
+    /// unit has loaded — a unit already playing keeps what it has.
+    func setInstrument(_ component: DeviceInsert.PluginComponent?, state: Data?, forSlot slot: Int) {
         guard wanted[slot] != component else { return }
         if let component, failed[slot] == component { return }   // keeps its built-in voice
         unload(slot)
         failed[slot] = nil
         guard let component, component.manufacturer != Self.ownManufacturer else { return }
         wanted[slot] = component
+        pendingState[slot] = state
         let description = AudioComponentDescription(componentType: component.type,
                                                     componentSubType: component.subtype,
                                                     componentManufacturer: component.manufacturer,
@@ -154,6 +184,42 @@ final class HostedInstrumentHost {
         if let unit = hosted[slot]?.unit { Self.apply(current, to: unit) }
     }
 
+    #if canImport(UIKit)
+    /// Carries the plugin's view controller across the completion handler's thread hop.
+    private final class ControllerBox: @unchecked Sendable {
+        let controller: UIViewController?
+        init(_ controller: UIViewController?) { self.controller = controller }
+    }
+
+    /// Ask `slot`'s loaded unit for its own screen. False at once when the slot holds no loaded
+    /// unit (nothing will be called); otherwise `done` runs once, on the main actor, with the
+    /// controller or nil (the plugin has no screen of its own).
+    func requestView(forSlot slot: Int,
+                     done: @escaping @MainActor @Sendable (UIViewController?) -> Void) -> Bool {
+        guard let unit = hosted[slot]?.unit else { return false }
+        unit.auAudioUnit.requestViewController { @Sendable controller in
+            let box = ControllerBox(controller)
+            Task { @MainActor in done(box.controller) }
+        }
+        return true
+    }
+    #endif
+
+    /// H4b — the loaded unit's own settings (`fullStateForDocument`) as a binary property list, for
+    /// the song to keep; nil when the slot holds no loaded unit, the unit reports none, or the
+    /// report is not a property list. Asked on the main actor when the plugin window closes — a
+    /// rare, user-paced moment, never per step.
+    func captureState(forSlot slot: Int) -> Data? {
+        guard let unit = hosted[slot]?.unit,
+              let state = unit.auAudioUnit.fullStateForDocument else { return nil }
+        do {
+            return try PropertyListSerialization.data(fromPropertyList: state, format: .binary, options: 0)
+        } catch {
+            log.audio("Plugin '\(hosted[slot]?.component.name ?? "?")' settings could not be saved: \(error)", level: .warning)
+            return nil
+        }
+    }
+
     // MARK: - Private
 
     private func finishLoad(_ unit: AVAudioUnit?, failure: String?, slot: Int,
@@ -171,6 +237,7 @@ final class HostedInstrumentHost {
             wanted[slot] = nil
             return
         }
+        if let data = pendingState.removeValue(forKey: slot) { restore(data, to: unit, name: component.name) }
         hosted[slot] = Hosted(component: component, unit: unit)
         Self.apply(mix[slot] ?? (gain: 1, pan: 0), to: unit)
         log.audio("Plugin '\(component.name)' by \(component.manufacturerName) plays rack slot \(slot)")
@@ -184,9 +251,24 @@ final class HostedInstrumentHost {
         mixing.pan = mix.pan
     }
 
+    /// H4c — give the unit back the settings the song kept. A state that is not a property list
+    /// dictionary is skipped with a warning: the unit then plays its default sound, as before H4.
+    private func restore(_ data: Data, to unit: AVAudioUnit, name: String) {
+        do {
+            guard let state = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+                log.audio("Plugin '\(name)' settings are not a dictionary — it plays its default sound", level: .warning)
+                return
+            }
+            unit.auAudioUnit.fullStateForDocument = state
+        } catch {
+            log.audio("Plugin '\(name)' settings could not be read: \(error) — it plays its default sound", level: .warning)
+        }
+    }
+
     /// Silence the unit (all notes off on every channel), then take it out of the graph.
     private func unload(_ slot: Int) {
         wanted[slot] = nil
+        pendingState[slot] = nil
         sounding[slot] = nil
         guard let held = hosted.removeValue(forKey: slot) else { return }
         if let block = held.unit.auAudioUnit.scheduleMIDIEventBlock {
@@ -200,11 +282,26 @@ final class HostedInstrumentHost {
         engine.detachAudioUnit(held.unit)
     }
 
+    /// A hosted unit's process died: take the dead unit out of the graph and give its slot back to
+    /// the built-in voice. It is remembered as failed, so the next region onset does not load a
+    /// crashing plugin again and again; picking it anew (or a media reset) tries once more.
+    private func forgetInvalidated(_ dead: ObjectIdentifier) {
+        guard let slot = hosted.first(where: { ObjectIdentifier($0.value.unit.auAudioUnit) == dead })?.key,
+              let held = hosted.removeValue(forKey: slot) else { return }
+        EchoelCrashLog.breadcrumb("plugin: '\(held.component.name)' stopped working — slot \(slot) back to its built-in voice")
+        engine.detachAudioUnit(held.unit)
+        wanted[slot] = nil
+        pendingState[slot] = nil
+        sounding[slot] = nil
+        failed[slot] = held.component
+    }
+
     private func forgetAfterMediaReset() {
         log.audio("Media services were reset — hosted plugins will load again on the next play", level: .warning)
         for held in hosted.values { engine.detachAudioUnit(held.unit) }   // the engine outlives the reset
         hosted.removeAll()
         wanted.removeAll()
+        pendingState.removeAll()
         failed.removeAll()
         sounding.removeAll()
     }

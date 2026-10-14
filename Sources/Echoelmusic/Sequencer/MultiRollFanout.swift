@@ -138,6 +138,15 @@ public enum MultiRollFanout {
         return document.lanes.first(where: { $0.id == id })?.deviceChain?.instrument?.pluginComponent
     }
 
+    /// Production H4c — the hosted unit's own settings slot `slot`'s lane keeps, or nil (none
+    /// saved, no plugin instrument, an out-of-range slot). The insert's own reader, like
+    /// `hostedInstrument(forSlot:in:rollLane:)`.
+    public static func hostedInstrumentState(forSlot slot: Int, in document: TimelineDocument,
+                                             rollLane: UUID?) -> Data? {
+        guard let id = laneID(forSlot: slot, in: document, rollLane: rollLane) else { return nil }
+        return document.lanes.first(where: { $0.id == id })?.deviceChain?.instrument?.pluginFullState
+    }
+
     /// Whether a secondary lane is audible this tick — mute/foreign-solo/0-level all
     /// silence it, matching the primary roll lane's rollSlotGain→laneAudible gate.
     public static func audible(_ document: TimelineDocument, laneID: UUID) -> Bool {
