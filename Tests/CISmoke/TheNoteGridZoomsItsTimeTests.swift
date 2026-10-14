@@ -199,8 +199,10 @@ final class TheNoteGridZoomsItsTimeTests: XCTestCase {
     func testTheThreeDoorsStepTheZoomAndNothingRedrawsAtFingerRate() throws {
         let code = SourceText.codeOnly(try text(Self.editor))
         let grid = try member("private struct PartNoteGrid: View {", in: code)
-        // The tail of `controls(range:picked:editable:region:steps:)`'s signature — unique in the file (#408).
-        let controls = try member("region: TimelineRegion, steps: Int) -> some View {", in: grid)
+        // The tail of the `controls(…)` signature — unique in the file (#408). Re-anchored in the
+        // night sweep 2026-10-14: the signature grew `notes:` and `offset:`, and the old tail
+        // matched nothing, so this claim was red on the branch head.
+        let controls = try member("steps: Int, notes: [Note], offset: Int) -> some View {", in: grid)
         let flow = try member("NoteToolFlow(spacing: EchoelTheme.spaceS) {", in: controls)
         for (word, delta, symbol) in [("Zoom out", "-1", "minus.magnifyingglass"), ("Zoom in", "1", "plus.magnifyingglass")] {
             guard let button = flow.range(of: "button(\"\(word)\", \"\(symbol)\",") else {

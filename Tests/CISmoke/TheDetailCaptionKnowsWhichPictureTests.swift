@@ -42,6 +42,7 @@ final class TheDetailCaptionKnowsWhichPictureTests: XCTestCase {
 
     private static let studio = "Sources/Echoelmusic/Studio/EchoelStudioView.swift"
     private static let map = "Sources/Echoelmusic/Studio/LookBlendMap.swift"
+    private static let window = "Sources/Echoelmusic/Studio/FloatingVisualWindow.swift"
 
     private func source(_ relative: String) throws -> String {
         var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
@@ -116,8 +117,11 @@ final class TheDetailCaptionKnowsWhichPictureTests: XCTestCase {
 
     // 3 — COUNTERWEIGHT: the consumer the caption now promises actually exists.
     func testDetailStillReachesTheDonutRenderer() throws {
-        let text = try source(Self.studio)
-        XCTAssertTrue(text.contains("bandCount: max(8, Int(visualDetail))"), """
+        // Comments stripped and the right file (2026-10-14): the raw read of the studio found
+        // the needle only in a comment, so this was green for the wrong reason (#367). The
+        // donut renderer is built in the floating visual window.
+        let text = SourceText.codeOnly(try source(Self.window))
+        XCTAssertTrue(text.contains("bandCount: max(8, Int(visualDetail)))"), """
             `SpectralDonutView` no longer takes its band count from `visualDetail`. The donut \
             branch of the caption then promises something that stopped being true, which is \
             the original defect with its sign flipped. Move the caption in the same commit.

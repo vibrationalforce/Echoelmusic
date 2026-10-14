@@ -223,7 +223,7 @@ final class ScrubNotifiesOnlyOnRealChangeTests: XCTestCase {
             """)
         // The other two paths, because the arithmetic above cannot tell them apart and because
         // the drag is the one everybody remembers to check.
-        XCTAssertTrue(squashed.contains("ifapply(newVal){onChange();onCommit()}"), """
+        XCTAssertTrue(squashed.contains("ifapply(newVal){onChange();onCommit();"), """
             The keypad path notifies unconditionally again. Confirming the number that is \
             already there is not an edit — on the concert-pitch field it re-tunes every voice \
             and recomposes.

@@ -318,7 +318,9 @@ final class TheSceneLaunchIsASwitchTests: XCTestCase {
         let player = try source(Self.playerPath)
         let play = try body(of: "public func play(", in: player)
         XCTAssertTrue(play.contains("launch.removeAll()"))
-        XCTAssertTrue(play.contains("Self.barStartTick(for: fromTick, loopTicks: loopTicks)"))
+        // The bar floor moved into `playStartTick`, which ThePlayStartsWhereTheRulerSaysTests
+        // owns; this premise only pins that play still asks it (re-anchored 2026-10-14).
+        XCTAssertTrue(play.contains("Self.playStartTick(forCue: fromTick, in: document)"))
     }
 
     /// S2 review (MED-1), SOURCE-TEXT SCAN: inside `play`, the scene is fired on the start bar
