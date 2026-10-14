@@ -35,7 +35,13 @@ final class AHostedUnitMustSpeakTheTrackBusShapeTests: XCTestCase {
         XCTAssertTrue(AudioEngine.trackBusTakes(stereo))
         XCTAssertTrue(AudioEngine.trackBusTakes(mono))
 
-        let quad = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 4))
+        // More than two channels needs an explicit layout — the channels-only initialiser
+        // returns nil there (review 2026-10-14), which would make this claim red on correct code.
+        let quadLayout = try XCTUnwrap(AVAudioChannelLayout(layoutTag: kAudioChannelLayoutTag_DiscreteInOrder | 4))
+        // Typed optional on purpose: compiles whether the SDK spells this initialiser failable or not.
+        let quadFormat: AVAudioFormat? = AVAudioFormat(standardFormatWithSampleRate: 48_000, channelLayout: quadLayout)
+        let quad = try XCTUnwrap(quadFormat)
+        XCTAssertEqual(quad.channelCount, 4, "premise: a four-channel bus 0")
         XCTAssertFalse(AudioEngine.trackBusTakes(quad), "a multi-out bus 0 is refused")
         let int16 = try XCTUnwrap(AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 48_000,
                                                 channels: 2, interleaved: false))

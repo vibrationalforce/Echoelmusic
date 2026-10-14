@@ -194,9 +194,12 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertFalse(merge[change.upperBound..<rename.lowerBound].contains("pump.reset()"),
                        "a pick mid-play keeps the part — release the sounding notes, do not empty the pump")
         let pump = SourceText.codeOnly(try source("Sources/Echoelmusic/Sequencer/LaneNotePump.swift"))
-        guard let keep = body(of: "public mutating func releaseSounding() -> [Event] {", in: pump, length: 400) else {
-            return XCTFail("ANCHOR MISSING: LaneNotePump.releaseSounding")
+        guard let head = pump.range(of: "public mutating func releaseSounding() -> [Event] {"),
+              let next = pump.range(of: "public mutating func reset() -> [Event] {", range: head.upperBound..<pump.endIndex) else {
+            return XCTFail("ANCHOR MISSING: LaneNotePump.releaseSounding, or reset() after it")
         }
+        // Bounded by the next member, so a longer doc above `reset()` cannot slide its body in.
+        let keep = String(pump[head.lowerBound..<next.lowerBound])
         XCTAssertTrue(keep.contains("active.removeAll()"), "every sounding note gets its release")
         XCTAssertFalse(keep.contains("bars.removeAll()") || keep.contains("notes.removeAll()"),
                        "the part's content stays, so the next step still plays it")

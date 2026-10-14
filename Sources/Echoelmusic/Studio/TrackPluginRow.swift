@@ -137,6 +137,9 @@ struct TrackPluginRow: View {
               let slot = trackSlot(),
               host.requestView(forSlot: slot, expecting: component, done: { controller in
                   if let controller {
+                      // A second fast tap answers while the first window is up: keep that one, so
+                      // its close still keeps the settings of the plugin it shows.
+                      guard window == nil else { return }
                       openNote = nil
                       shownComponent = component
                       window = PluginWindow(name: component.name, controller: controller)
