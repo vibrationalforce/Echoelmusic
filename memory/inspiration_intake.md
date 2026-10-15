@@ -1533,3 +1533,11 @@ landet heute hinter dem letzten Teil (`nextStartTick`), nicht an der Song-Stelle
 Anker; `TempoMap.tick(atSeconds:)` liefert bei NaN eine 0 (stille Tick-0-Platzierung). Multicam-Plan:
 zwei „höchstens ein Bild"-Zusagen als überholt markiert, Verträge 7–10 ergänzt. Vorschlag M1b-0
 (reiner `TakeAnchor`). Bericht: `reports/ZEIT_EMERGENZ_ECHOELMUSIC_2026-10-15.md`.
+
+## 2026-10-15 — Fünf KI-Mockups (Arrange · Mixer · Instrument · Device · Noten-Editor) — ADOPT→PRODUCT
+
+Keine App-Screenshots, sondern Entwürfe. Übernommen: Werkzeug-Modi im Noten-Editor (EP-3b),
+Noten-Inspektor Start/Dauer/Tonhöhe (N-F1), Teilleiste Start/Länge/Snap (EP-4), Device-Zeile
+Öffnen·Umgehen·Entfernen (H6-6). Abgelehnt: Schieberegler, Deko-Text, Eyebrow-Überschriften,
+eigene Leisten je Seite, Vocal/Lyrics/Echoel-als-Delay, lila Akzent. Details:
+`reports/Design-Input ChatGPT und Grok (2026-10-15).md` §4.

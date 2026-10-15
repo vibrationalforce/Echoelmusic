@@ -58,3 +58,34 @@ Am Ende: eine Tabelle Bühne · wichtigste Änderung · warum.
 3. **Barrierefreiheit:** Wo scheitert jemand mit großer Schrift, VoiceOver oder schwacher Sicht?
 4. **Was nicht ändern:** Welche zwei Dinge sind schon gut und dürfen beim Umbau nicht verloren gehen?
 Am Ende: EIN Satz, welche eine Änderung den größten Profi-Eindruck bringt.
+
+---
+
+## 4. Rücklauf: fünf KI-Mockups (2026-10-15) — gemessen
+
+Eingang: fünf Entwürfe (Arrange · Mixer · Instrument · Device · Noten-Editor), erkennbar KI-erzeugt
+(jede Seite eine andere Leiste unten; Funktionen, die es nicht gibt). Als RICHTUNG gelesen, nicht
+als Vorlage.
+
+### Übernehmen (je eine Scheibe, kein neuer Screen)
+| # | Muster aus dem Entwurf | Heute im Code | Scheibe |
+|---|---|---|---|
+| U1 | **Noten-Editor: Werkzeug-Wahl Add · Move · Lengthen** statt 0,3-s-Halten für alles | jede Bearbeitung braucht Halten (`PartNoteEditor` `LongPressGesture(minimumDuration: 0.3)`) | **EP-3b**: im Modus Move/Lengthen zieht ein Finger auf einer Note sofort; Scrollen bleibt auf leerer Fläche |
+| U2 | **Noten-Inspektor unten: Velocity · Dauer · Start · Tonhöhe** als Zahlenfelder | nur Velocity (`NoteVelocityRow`) | **N-F1**: Start/Dauer/Tonhöhe der gewählten Note als `EchoelValueField`, ein Undo-Schritt |
+| U3 | **Arrange-Teilleiste: Start + Länge + Snap** sichtbar | nur „Starts at bar" (`SelectedPartBar.swift:980`), ganze Takte | **EP-4** (geplant): Start Takt.Schlag.16tel, Länge, Snap-Wahl |
+| U4 | **Device-Kette: Zeile je Slot mit Öffnen · Umgehen · Entfernen + leerer Slot** | Instrument-Zeile mit „Open plugin"; Effekt-Slots klingen nicht | **H6-6** (geplant): genau diese Zeile |
+| U5 | **Mixer: Pegel und Pan als Zahl über dem Meter, Master mit LUFS** | Pegel/Pan als Felder, Meter `TrackLevelMeter` (B5) | Prüfen am Gerät, ob die Zahl auf den ersten Blick lesbar ist — sonst Anordnung, kein neues Element |
+| U6 | **Instrument: Zeile = Name + Unterzeile + Wert rechts**, einheitlich | `EchoelValueField` hat Name + Wert; Unterzeilen uneinheitlich | Teil von D-System (Regel 1/7), Fläche für Fläche |
+
+### Nicht übernehmen (mit Grund)
+- **Schieberegler** auf der Device-Seite und Pan-Regler im Mixer — Regel: jede Zahl ist ein Wertfeld.
+- **„Create from Within / Let the moment shape the music"** — Deko-Text, Uncodixfy-Verbot.
+- **Kleine Großbuchstaben-Überschriften** („DEVICE CHAIN") — Eyebrow-Labels, verboten; `groupHeader`.
+- **Je Bildschirm eine eigene Leiste unten** (Tracks/Mix/Settings, Editor/Lyrics …) — die fünf Bühnen bleiben die EINE Leiste.
+- **Vocal-/Backing-Vox-Spuren, Lyrics, Echoel als Delay** — gibt es nicht (kein Mikrofon seit #1302, `LyricsModel` tot, Echoel-AUv3 ist ein Instrument) — darf auch in keinem Promo-Bild auftauchen.
+- **Lila Akzent** — der Akzent bleibt Grün und nur für Körpersignale.
+- **Bunte Noten nach Zufall** — bei uns trägt die Farbe die Tonhöhe (`SpectralColor`), das bleibt.
+
+### Reihenfolge
+U1 (EP-3b) und U2 (N-F1) zuerst — sie treffen dein Urteil „Editing zu ungenau" direkt. Dann U3
+(EP-4). U4 mit H6-5/6. U5/U6 nach den echten Screenshots.
