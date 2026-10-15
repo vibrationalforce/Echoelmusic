@@ -2090,7 +2090,6 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                      "let head: String = String(localized: \"Imported “\") + landing.clip.name + String(localized: \"” — \")",
                      "let landed: String = noteWord + String(localized: \" on \") + laneName + \".\"",
                      "note += String(localized: \" Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.\")",
-                     "note += String(localized: \" Notes longer than a bar are held for one bar.\")",
                      "+ String(localized: \" drum notes skipped.\")"] {
             XCTAssertTrue(midiNotes.contains(seam), "MIDIImport lost the E4-56 seam `\(seam)`")
         }
@@ -2124,7 +2123,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           " cannot play a MIDI part, so it went on ", " Generate won't place its music over this part.",
                           "bar", "bars", "note", "notes", "Imported “", "” — ", " on ",
                           " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.",
-                          " Notes longer than a bar are held for one bar.", " drum notes skipped.",
+                          " drum notes skipped.",
                           "Placed “", ", playing the part it already has.", ", as a new part.",
                           "” is already in the library — placed ", ", no second copy."],
                          "import sentences")

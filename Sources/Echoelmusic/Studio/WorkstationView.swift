@@ -185,8 +185,8 @@
 // reverse — the two share ONE importer whose type switches (#W1). (45) Fresh install: Add MIDI
 // Track → Import MIDI → Play sounds the whole file, then loops; Stop silences it. (46) Import,
 // then the instrument's Start, then Workstation Play: bar 1 is still the imported file, not a
-// composed take (the composer now yields to a user part). (47) Long pads and dense chords: the
-// one-bar hold, and a note repeated across a bar line merging into one — acceptable? (48) With
+// composed take (the composer now yields to a user part). (47) Long pads (whole length since EP-10)
+// and dense chords: a note repeated across a bar line merging into one — acceptable? (48) With
 // the instrument RUNNING, Workstation Play for more than 45 s: its evolve reloads the shared
 // roll, so the part is replaced until Stop. The note says "with the instrument stopped"; say
 // whether that is enough or needs fixing. (49) After Workstation Stop, the instrument's Play and

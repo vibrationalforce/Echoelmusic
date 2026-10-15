@@ -40,8 +40,9 @@
 //   notes landed in the part (`Landing.droppedExpression`); the note names the loss when present.
 //   Time signature, program changes and a controller's starting value (volume, pan) are still
 //   unread AND unsaid — open, recorded here;
-// · a note longer than one bar is held for exactly one bar — the roll releases on
-//   `endStep % 16`, so a longer note would otherwise be cut to its remainder;
+// · a note longer than one bar keeps its length (EP-10). Until EP-9 the players released on
+//   `endStep % 16` and cut it to its remainder, so the import held it for exactly one bar;
+//   `RegionNoteWindow.barSlices` now plays it whole, and the hold went with the reason;
 // · channel 10 (General MIDI drums) is skipped — there is no drum voice any more (#166/#167);
 // · the ONE shared piano roll plays it. With the instrument session RUNNING, its evolve reloads
 //   that roll every 25–45 s, so the Workstation part is heard as intended with the instrument
@@ -121,18 +122,16 @@ public enum MIDIImport {
         public var laneID: UUID
         /// Notes on channel 10 that were left out.
         public var skippedDrumNotes: Int
-        /// Notes longer than a bar that now last exactly one bar.
-        public var heldForOneBar: Int
         /// What the file moved besides its notes, on the channels whose notes are in the part —
         /// pitch bend, pressure, controllers. Read past and never stored (B6b-0); the success
         /// note names the loss when present. Required, not defaulted (#431): every landing says it.
         public var droppedExpression: MIDIFileImporter.DroppedExpression
         /// Notes the sustain pedal lengthened (B6b-1), on the channels whose notes are in the
-        /// part — counted before the one-bar hold. Required, not defaulted (#431).
+        /// part. Required, not defaulted (#431).
         public var sustainedNotes: Int
 
         public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
-                    skippedDrumNotes: Int, heldForOneBar: Int,
+                    skippedDrumNotes: Int,
                     droppedExpression: MIDIFileImporter.DroppedExpression,
                     sustainedNotes: Int) {
             self.clip = clip
@@ -140,7 +139,6 @@ public enum MIDIImport {
             self.slotIndex = slotIndex
             self.laneID = laneID
             self.skippedDrumNotes = skippedDrumNotes
-            self.heldForOneBar = heldForOneBar
             self.droppedExpression = droppedExpression
             self.sustainedNotes = sustainedNotes
         }
@@ -234,7 +232,7 @@ public enum MIDIImport {
         let region = TimelineRegion(laneID: lane.id, clipID: clip.id,
                                     startTick: start, lengthTicks: emptyPartBars * bar)
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
-                                skippedDrumNotes: 0, heldForOneBar: 0,
+                                skippedDrumNotes: 0,
                                 droppedExpression: MIDIFileImporter.DroppedExpression(),
                                 sustainedNotes: 0))
     }
@@ -332,19 +330,13 @@ public enum MIDIImport {
         }
 
         var drums = 0
-        var held = 0
         var notes: [Note] = []
         var landedChannels = Set<Int>()
         notes.reserveCapacity(parsed.count)
         for pair in parsed {
             if pair.channel == drumChannel { drums += 1; continue }
             landedChannels.insert(pair.channel)
-            var note = pair.note
-            if note.lengthTicks > TimelineTime.ticksPerBar {
-                note.lengthTicks = TimelineTime.ticksPerBar
-                held += 1
-            }
-            notes.append(note)
+            notes.append(pair.note)
         }
         notes.sort { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
         guard let lastEnd = notes.map(\.endTick).max() else { return .failure(.noMelodicNotes) }
@@ -371,7 +363,7 @@ public enum MIDIImport {
                                     startTick: document.nextStartTick(inLane: lane.id),
                                     lengthTicks: bars * TimelineTime.ticksPerBar)
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
-                                skippedDrumNotes: drums, heldForOneBar: held,
+                                skippedDrumNotes: drums,
                                 droppedExpression: dropped, sustainedNotes: sustained))
     }
 
@@ -387,7 +379,6 @@ public enum MIDIImport {
         let landed: String = noteWord + String(localized: " on ") + laneName + "."
         var note: String = head + span + landed
         note += String(localized: " Plays at the piece's tempo on the 16th-note grid, with the instrument stopped.")
-        if landing.heldForOneBar > 0 { note += String(localized: " Notes longer than a bar are held for one bar.") }
         if landing.skippedDrumNotes > 0 { note += " " + "\(landing.skippedDrumNotes)" + String(localized: " drum notes skipped.") }
         // B6b-1: the pedal is applied, so the note says what it did — how many notes it held —
         // and only when it held one (a sentence on every file would teach the reader to skip it).

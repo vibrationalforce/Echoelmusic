@@ -21,7 +21,7 @@
 //    note-off written as note-on velocity 0 under running status; a file without a pedal unchanged.
 // 9–10. END-TO-END — `MIDIImport.plan` → `successNote`: `sustainedNotes` counts only channels whose
 //    notes land (channel 10 is folded but not counted); a lift after the last release lengthens the
-//    PART; a held note still obeys the one-bar hold; the sentence carries the count, singular and
+//    PART; a held note longer than a bar keeps its length (EP-10); the sentence carries the count, singular and
 //    plural, and is absent when nothing was held.
 // 11. SOURCE-TEXT SCAN: the B6b-0 pedal sentence and the `sustainPresses` count are gone from code,
 //    and both new sentences are catalog literals. Proves where text sits, not what runs. (The
@@ -37,7 +37,7 @@
 // off), plus `plan`/`successNote`, driven over the exact fixtures below.
 // REGRESSIONS (red on the parent's behaviour for their named reason — the pedal is not applied):
 // 13 — the held lengths of claims 1, 2, 3a, 3b (both orders: the NEW chord's held E4), 5a, 6a, 7a,
-// 7b, the part's held lengths, the tail's two bars, the long note's one-bar hold and its length.
+// 7b, the part's held lengths, the tail's two bars, the long note's whole length (EP-10; it was held for one bar).
 // FORWARD (drive a symbol this commit creates): 29 — every `sustained` / `sustainedNotes` read, the
 // two new sentences, the two new literals, the catalog's two new entries (6 checks each).
 // CHANGED LAW (red on the parent BY DESIGN — the B6b-0 sentence was that tree's law): 5 — the old
@@ -364,8 +364,9 @@ final class TheSustainPedalLengthensTheNotesItHoldsTests: XCTestCase {
 
         let long = try Self.landing(Self.smf(Self.heldPastABar))
         XCTAssertEqual(long.sustainedNotes, 1)
-        XCTAssertEqual(long.heldForOneBar, 1, "a held note longer than a bar still obeys the one-bar hold")
-        XCTAssertEqual(try XCTUnwrap(long.clip.melody?.notes).map(\.lengthTicks), [TimelineTime.ticksPerBar])
+        XCTAssertEqual(try XCTUnwrap(long.clip.melody?.notes).map(\.lengthTicks), [2400],
+                       "a held note longer than a bar keeps its whole length (EP-10 lifted the one-bar hold)")
+        XCTAssertEqual(long.region.lengthTicks, 2 * TimelineTime.ticksPerBar, "and its part spans it")
     }
 
     // MARK: 10 — the sentence

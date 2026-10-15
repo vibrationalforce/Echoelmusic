@@ -16443,16 +16443,6 @@
         }
       }
     },
-    " Notes longer than a bar are held for one bar." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : " Notes longer than a bar are held for one bar."
-          }
-        }
-      }
-    },
     " drum notes skipped." : {
       "localizations" : {
         "en" : {

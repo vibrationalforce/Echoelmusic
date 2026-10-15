@@ -9,7 +9,7 @@
 //   a success path — both persist into the App Group, so a success test would leave clips and
 //   tracks in the running app's saved state (`AudioImport.plan`'s header gives the same reason).
 // · Claims 9–13 are SOURCE-TEXT SCANS: who calls what, and where the one importer sits.
-// · DEVICE PROBE, open: that the picker shows MIDI files, that the part SOUNDS, the one-bar hold
+// · DEVICE PROBE, open: that the picker shows MIDI files, that the part SOUNDS, a long note held whole (EP-10)
 //   and the instrument-running coupling — items (44)–(52) in `WorkstationView`'s header.
 //
 // HONEST GRADING (§3). This file does NOT compile against the parent: it names `MIDIImport`,
@@ -218,18 +218,18 @@ final class TheWorkstationImportsMIDITests: XCTestCase {
                        "the byte cap is checked on what was read, before parsing")
     }
 
-    /// 7. A note longer than a bar is held for EXACTLY one bar — the roll releases on
-    /// `endStep % 16`, so a longer note would otherwise sound only its remainder.
-    func testANoteLongerThanABarIsHeldForOneBar() throws {
+    /// 7. A note longer than a bar keeps its length (EP-10). Until EP-9 the players released on
+    /// `endStep % 16` and cut it to its remainder, so the import held it for exactly one bar; the
+    /// players now sound it whole (`ALongNoteSoundsItsWholeLengthTests`), and the hold went.
+    func testANoteLongerThanABarKeepsItsLength() throws {
         let (doc, _) = Self.song()
         let pad = [Event(channel: 0, pitch: 48, start: 0, length: Self.bar + 4 * 120)]
         guard case .success(let l) = Self.landing(Self.smf(pad), doc) else {
             return XCTFail("a one-note pad was refused")
         }
-        XCTAssertEqual(l.clip.melody?.notes.first?.lengthTicks, Self.bar)
-        XCTAssertEqual(l.heldForOneBar, 1)
-        XCTAssertEqual(l.region.lengthTicks, Self.bar, "the clamp decides the bar span too")
-        XCTAssertTrue(MIDIImport.successNote(l, laneName: "MIDI 1").contains("held for one bar"))
+        XCTAssertEqual(l.clip.melody?.notes.first?.lengthTicks, Self.bar + 4 * 120)
+        XCTAssertEqual(l.region.lengthTicks, 2 * Self.bar, "the part spans the whole note")
+        XCTAssertFalse(MIDIImport.successNote(l, laneName: "MIDI 1").contains("held for one bar"))
     }
 
     /// 8. The composer's question: a NEW composer region over `[0, window)` would shadow a
