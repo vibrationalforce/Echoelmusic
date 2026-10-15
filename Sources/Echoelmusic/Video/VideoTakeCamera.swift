@@ -24,11 +24,13 @@
 // alone, and `open()` answers false so the card can say so. The two files start a few milliseconds apart (two
 // calls on one queue) — not frame-locked; audio-based alignment is M3.
 //
-// ⭐ ONE TAKE AT A TIME, BY IDENTITY (review 2026-10-15, ChatGPT/Astra findings 1, 5, 8, 9, 10).
-// A take owns the two file URLs it was started with; a delegate answer for any other URL is not
-// this take's and is ignored. A new take cannot start while the last one is still FINALISING its
-// files (recording stopped, delegate not yet answered) — Apple separates "recording ended" from
-// "file finished", and a second Stop in that gap waits instead of failing. The result names each
+// ⭐ ONE TAKE AT A TIME, BY IDENTITY (review 2026-10-15, ChatGPT/Astra findings 1, 5, 8, 9, 10,
+// and the counter-check B1/B4). The bookkeeping is `VideoTakeLedger`, a pure value held under
+// `lock`: a take owns the two file URLs it was started with, answers for other URLs are ignored,
+// no new take starts while the last one finalises or its result is unclaimed, and the last file's
+// answer completes the take AND hands the result to exactly one waiting Stop in one step (a later
+// Stop gets `.handedOver`). A Stop that arrives before an output confirmed its start is
+// remembered, and that output is stopped the moment it starts. The result names each
 // lens (`TakeFiles`), so a failed rear take never relabels the front file as the rear one. A file
 // AVFoundation reports as unusable is deleted. The multi-cam cost is re-checked AFTER
 // `commitConfiguration()` (Apple's AVMultiCamPiP does the same). Each take is turned the way the
@@ -43,12 +45,8 @@ import Foundation
 
 final class VideoTakeCamera: NSObject, @unchecked Sendable {
 
-    /// What one take wrote, per lens. Either may be nil — a lens that failed, or the front lens of
-    /// a single-lens take. Never both: a take with no file is a `.recording` failure.
-    struct TakeFiles: Equatable, Sendable {
-        let rear: URL?
-        let front: URL?
-    }
+    /// What one take wrote, per lens — the ledger's own type (one definition, #416).
+    typealias TakeFiles = VideoTakeLedger.Files
 
     enum Failure: Error, Equatable, Sendable {
         case denied
@@ -79,16 +77,11 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
     private var frontRotation: AVCaptureDevice.RotationCoordinator?
 
     /// The take and whoever waits for it — under `lock`, because the delegate answers on an
-    /// AVFoundation queue and the waiter arrives from the card.
+    /// AVFoundation queue and the waiters arrive from the card.
     private let lock = NSLock()
-    /// The files of the take in flight (rear, front), until each one has answered. Empty = no take
-    /// is finalising.
-    private var pendingRear: URL?
-    private var pendingFront: URL?
-    private var writtenRear: URL?
-    private var writtenFront: URL?
-    private var outcome: Result<TakeFiles, Failure>?
-    private var waiter: CheckedContinuation<Result<TakeFiles, Failure>, Never>?
+    private var ledger = VideoTakeLedger()
+    /// The waiting Stops, by the ledger's ticket.
+    private var waiters: [Int: CheckedContinuation<VideoTakeLedger.Outcome, Never>] = [:]
 
     /// Whether this phone can record both lenses at once.
     static var bothCamerasSupported: Bool { AVCaptureMultiCamSession.isMultiCamSupported }
@@ -251,100 +244,70 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
     }
 
     /// Stop the take and wait for its files. A take that already ended on its own (an
-    /// interruption, a full disk) answers at once; a take whose files are still finalising (a
-    /// second Stop) waits for them instead of failing.
-    func stopRecording() async -> Result<TakeFiles, Failure> {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Result<TakeFiles, Failure>, Never>) in
-            lock.lock()
-            if let done = outcome {
-                outcome = nil
-                lock.unlock()
-                continuation.resume(returning: done)
-                return
-            }
-            let earlier = waiter
-            waiter = continuation
-            lock.unlock()
-            earlier?.resume(returning: .failure(.recording))   // a second Stop never strands the first
-            queue.async { @Sendable [self] in
-                if self.output.isRecording { self.output.stopRecording() }
-                if self.frontOutput.isRecording { self.frontOutput.stopRecording() }
-                // Nothing recording AND nothing finalising: there is no take to wait for.
-                if !self.takeIsPending() { self.settle(.failure(.recording)) }
+    /// interruption, a full disk) answers at once; otherwise the answer comes with the take's last
+    /// file. Exactly one Stop per take receives the files; any other gets `.handedOver`.
+    func stopRecording() async -> VideoTakeLedger.Outcome {
+        await withCheckedContinuation { (continuation: CheckedContinuation<VideoTakeLedger.Outcome, Never>) in
+            switch requestStop(continuation) {
+            case .answer(let outcome):
+                continuation.resume(returning: outcome)
+            case .wait:
+                queue.async { @Sendable [self] in
+                    if self.output.isRecording { self.output.stopRecording() }
+                    if self.frontOutput.isRecording { self.frontOutput.stopRecording() }
+                }
             }
         }
     }
 
-    /// A synchronous helper, so the lock is never taken in an `async` body (`NSLock` is
-    /// `noasync`). Starts a take that owns `rear` (and `front`), or refuses while the last take
-    /// is still finalising. A waiter or a result left over from an earlier take is answered,
-    /// never stranded and never handed to this one.
-    private func beginTake(rear: URL, front: URL?) -> Bool {
-        lock.lock()
-        guard pendingRear == nil, pendingFront == nil else {
-            lock.unlock()
-            return false
-        }
-        let stranded = waiter
-        pendingRear = rear
-        pendingFront = front
-        writtenRear = nil
-        writtenFront = nil
-        outcome = nil
-        waiter = nil
-        lock.unlock()
-        stranded?.resume(returning: .failure(.recording))
-        return true
-    }
-
-    /// Whether a take's files are still owed (recording, or finalising after Stop).
-    private func takeIsPending() -> Bool {
+    /// A synchronous helper, so the lock is never taken in an `async` body (`NSLock` is `noasync`).
+    private func requestStop(_ continuation: CheckedContinuation<VideoTakeLedger.Outcome, Never>) -> VideoTakeLedger.StopStep {
         lock.lock()
         defer { lock.unlock() }
-        return pendingRear != nil || pendingFront != nil
+        let step = ledger.requestStop()
+        if case .wait(let ticket) = step { waiters[ticket] = continuation }
+        return step
     }
 
-    /// One output finished writing `url`. An answer for a URL this take does not own is an
-    /// earlier take's and is ignored. When every lens has answered, the take settles with the
-    /// files that were written, each under its own lens — or a failure when none was.
+    /// Starts a take that owns `rear` (and `front`), or refuses while the last take is still
+    /// finalising or its result is unclaimed.
+    private func beginTake(rear: URL, front: URL?) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return ledger.begin(rear: rear, front: front)
+    }
+
+    /// Whether a Stop for the take in flight arrived before this output confirmed its start.
+    fileprivate func stopWasRequested() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return ledger.stopRequested
+    }
+
+    /// One output finished writing `url`. The ledger decides — in the same locked step — whether
+    /// the file is this take's and who receives the finished take; the answers go out after the
+    /// lock is released. A file AVFoundation calls unusable is not left behind.
     fileprivate func fileFinished(_ url: URL, written: Bool) {
         lock.lock()
-        let isRear = url == pendingRear, isFront = url == pendingFront
-        guard isRear || isFront else {
-            lock.unlock()
-            return
+        let step = ledger.fileFinished(url, written: written)
+        let answers = step.deliveries.compactMap { delivery in
+            waiters.removeValue(forKey: delivery.ticket).map { (continuation: $0, outcome: delivery.outcome) }
         }
-        if isRear {
-            pendingRear = nil
-            if written { writtenRear = url }
-        } else {
-            pendingFront = nil
-            if written { writtenFront = url }
-        }
-        let complete = pendingRear == nil && pendingFront == nil
-        let files = TakeFiles(rear: writtenRear, front: writtenFront)
         lock.unlock()
-        // A file AVFoundation calls unusable is not left behind.
+        guard step.owned else { return }
         if !written { try? FileManager.default.removeItem(at: url) }
-        guard complete else { return }
-        settle(files.rear == nil && files.front == nil ? .failure(.recording) : .success(files))
-    }
-
-    /// Hand a result to the waiter, or keep it for the next `stopRecording`.
-    private func settle(_ result: Result<TakeFiles, Failure>) {
-        lock.lock()
-        if let waiting = waiter {
-            waiter = nil
-            lock.unlock()
-            waiting.resume(returning: result)
-            return
-        }
-        if outcome == nil { outcome = result }
-        lock.unlock()
+        for answer in answers { answer.continuation.resume(returning: answer.outcome) }
     }
 }
 
 extension VideoTakeCamera: AVCaptureFileOutputRecordingDelegate {
+    /// The output really started. A Stop that arrived before this (B4) stops it now, so a take
+    /// never runs on unattended after the card asked it to end.
+    func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL,
+                    from connections: [AVCaptureConnection]) {
+        if stopWasRequested() { output.stopRecording() }
+    }
+
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL,
                     from connections: [AVCaptureConnection], error: Error?) {
         // AVFoundation can report an error on a take that WAS written (a size or duration

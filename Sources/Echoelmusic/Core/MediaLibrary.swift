@@ -65,10 +65,12 @@ public enum MediaLibrary {
         try copyIn(source, subdirectory: "Media/Picture", fallbackExt: "mov")
     }
 
-    /// MOVE a camera take into `Media/Picture` (One World C1, review 2026-10-15 finding 2). The take
-    /// is the app's own temporary file and its ONLY copy: a move is a rename on the same volume, so
-    /// it cannot fail for want of space the way a copy can, and once moved the take survives a
-    /// refused landing instead of being deleted with the temporary folder.
+    /// MOVE a camera take into `Media/Picture` (One World C1, review 2026-10-15 finding 2 + B2). The
+    /// take is the app's own temporary file and its ONLY copy. Within one volume a move is a
+    /// rename and needs no free space, but it can still fail (a name clash raced, a container
+    /// problem) — the caller treats that as "not kept" and says so; it never claims the take safe.
+    /// Once moved, the take survives a refused landing instead of being deleted with the
+    /// temporary folder.
     public static func takePictureVideo(from source: URL) throws -> URL {
         guard let dir = directory("Media/Picture") else { throw MediaImportError.noContainer }
         let ext = source.pathExtension.isEmpty ? "mov" : source.pathExtension

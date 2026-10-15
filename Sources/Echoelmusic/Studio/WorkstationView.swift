@@ -1663,15 +1663,15 @@ struct WorkstationView: View {
                 importNote = VideoImport.Failure.noPictureLane.userMessage
                 return
             }
-            landVideo(url, laneID: lane.id, startTick: nil, source: .picked)
+            landVideo(url, laneID: lane.id)
         }
     }
 
     #if canImport(AVFoundation)
     /// A camera take (One World C1/M1): the rear file on the top video track, the front file on the
-    /// track below, BOTH at one position — the later of the two tracks' ends — so the two angles of
-    /// one take stay together in the piece (review 2026-10-15 finding 7). Lanes are fixed by ID
-    /// here, before any `await` (finding 6).
+    /// track below. Lanes are fixed by ID here, before any `await` (finding 6); the import keeps
+    /// both files in the library first and lands both parts at ONE position in one step, so they
+    /// stay together and never overlap a part that arrived meanwhile (review B2 + B3).
     private func landTake(_ files: VideoTakeCamera.TakeFiles) {
         let needed = files.front == nil ? 1 : 2
         while timeline.document.videoLaneIDs.count < needed {
@@ -1680,37 +1680,39 @@ struct WorkstationView: View {
             if timeline.document.videoLaneIDs.count == before { break }
         }
         let ids = timeline.document.videoLaneIDs
-        var targets: [(file: URL, lane: UUID)] = []
-        if let rear = files.rear, let top = ids.first { targets.append((file: rear, lane: top)) }
-        if let front = files.front, ids.count > 1 { targets.append((file: front, lane: ids[1])) }
-        let ends: [Int] = targets.map { timeline.document.nextStartTick(inLane: $0.lane) }
-        let start: Int? = ends.max()
-        for target in targets {
-            landVideo(target.file, laneID: target.lane, startTick: start, source: .take)
+        guard let top = ids.first else {
+            importNote = VideoImport.Failure.noPictureLane.userMessage
+            return
+        }
+        let below: UUID? = ids.count > 1 ? ids[1] : nil
+        let bpm = player.preflightTempo
+        Task { @MainActor in
+            let landing = await VideoImport.performTake(rear: files.rear, front: files.front,
+                                                        clipStore: clipStore, timeline: timeline, bpm: bpm,
+                                                        rearLane: top, frontLane: below)
+            importNote = VideoImport.takeNote(landing) { id in
+                timeline.document.lanes.first { $0.id == id }?.name ?? String(localized: "the video track")
+            }
         }
     }
     #endif
 
-    /// The one landing of a video file — a picked one or a camera take (One World C1). The file is
+    /// The landing of a PICKED video file, onto the lane fixed before the `await`. The file is
     /// measured off the main actor, so the write happens after an `await`; the tempo is read here,
-    /// at the tap's moment. A take is MOVED into the library and never deleted on a refusal.
-    private func landVideo(_ url: URL, laneID: UUID, startTick: Int?, source: VideoImport.Source) {
+    /// at the tap's moment.
+    private func landVideo(_ url: URL, laneID: UUID) {
         #if canImport(AVFoundation)
         let bpm = player.preflightTempo
         Task { @MainActor in
             let result = await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline,
-                                                   bpm: bpm, laneID: laneID, startTick: startTick, source: source)
+                                                   bpm: bpm, laneID: laneID, startTick: nil)
             switch result {
             case .success(let landing):
                 let laneName = timeline.document.lanes
                     .first { $0.id == landing.laneID }?.name ?? String(localized: "the video track")
                 importNote = VideoImport.successNote(landing, laneName: laneName)
             case .failure(let failure):
-                if source == .take && failure != .copyFailed {
-                    importNote = failure.userMessage + " " + String(localized: "The take is kept on this phone.")
-                } else {
-                    importNote = failure.userMessage
-                }
+                importNote = failure.userMessage
             }
         }
         #endif

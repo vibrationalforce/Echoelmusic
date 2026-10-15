@@ -10,6 +10,9 @@
 // camera pulse and says so; the strap, the Watch and Apple Health keep feeding bio. `isRunning`
 // flips on start and stop only — a cold read, and it stays in this leaf (the 10.76.41/50 law).
 //
+// ⭐ A TAKE IS LANDED EXACTLY ONCE: the camera hands a take's files to ONE Stop and answers any
+// other with `.handedOver`, which lands nothing (`VideoTakeLedger`, review B1).
+//
 // ⭐ A TAKE IS NEVER DROPPED BY THE CARD (review 2026-10-15, findings 3 + 4): while a take is
 // STARTING the close button and the lens choice are unavailable, and leaving in that phase stops
 // and lands it like a running take; an `openCamera` cancelled while it waited (the card closed)
@@ -217,15 +220,16 @@ struct VideoTakeCard: View {
         guard let camera else { return }
         phase = .saving
         Task { @MainActor in
-            switch await camera.stopRecording() {
-            case .success(let files):
-                startedAt = nil
-                if phase == .saving { phase = .ready }   // a pulse that took the lens keeps its word
+            let outcome = await camera.stopRecording()
+            startedAt = nil
+            if phase == .saving { phase = .ready }   // a pulse that took the lens keeps its word
+            switch outcome {
+            case .taken(let files):
                 land(files)
-            case .failure:
-                startedAt = nil
+            case .nothingRecorded:
                 takeError = String(localized: "The take could not be saved.")
-                if phase == .saving { phase = .ready }
+            case .handedOver:
+                break   // another Stop of this take received it and lands it (exactly once)
             }
         }
     }
@@ -243,7 +247,7 @@ struct VideoTakeCard: View {
         if phase == .recording || phase == .starting {
             let land = self.land
             Task { @MainActor in
-                if case .success(let files) = await camera.stopRecording() { land(files) }
+                if case .taken(let files) = await camera.stopRecording() { land(files) }
                 camera.close()
             }
         } else {

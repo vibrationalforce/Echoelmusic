@@ -32,12 +32,10 @@ import AVFoundation
 /// The picture-file import transaction: managed copy → measured length → clip + region.
 public enum VideoImport {
 
-    /// Where a video comes from — it decides whether the file is copied (a picked file stays the
-    /// person's) or moved (a camera take is the app's own and its only copy), and whether a refused
-    /// landing may delete the managed file (only a copy may go; a take is never deleted).
-    public enum Source: Equatable, Sendable {
-        case picked
-        case take
+    /// What a camera take's landing produced, per lens — nil for a lens that wrote no file.
+    public struct TakeLanding: Sendable, Equatable {
+        public var rear: Result<Landing, Failure>?
+        public var front: Result<Landing, Failure>?
     }
 
     public enum Failure: Error, Equatable, Sendable {
@@ -115,6 +113,25 @@ public enum VideoImport {
             + "\(bars) " + barWord + String(localized: " on ") + laneName + "."
     }
 
+    /// The sentence after a camera take lands. A refusal names its reason and, when the take was
+    /// kept in the library (every refusal except a failed move), says so — the take was never
+    /// deleted. Otherwise the success sentence of the rear part (or the front one).
+    public static func takeNote(_ landing: TakeLanding, laneName: (UUID) -> String) -> String {
+        let results = [landing.rear, landing.front].compactMap { $0 }
+        for result in results {
+            if case .failure(let failure) = result {
+                guard failure != .copyFailed else {
+                    return String(localized: "The take could not be saved.")
+                }
+                return failure.userMessage + " " + String(localized: "The take is kept on this phone.")
+            }
+        }
+        for result in results {
+            if case .success(let part) = result { return successNote(part, laneName: laneName(part.laneID)) }
+        }
+        return String(localized: "The take could not be saved.")
+    }
+
     // MARK: - The transaction
 
     /// The writes, after the copy and the measurement: the clip FIRST, the region SECOND. On a
@@ -143,29 +160,23 @@ public enum VideoImport {
 
     #if canImport(AVFoundation)
 
-    /// The production entry point: bring the file in (a picked file is COPIED under
-    /// security-scoped access, a camera take is MOVED — `Source`), measure it off the main actor
-    /// (the async asset load), then write on the main actor. `bpm` is read by the caller at the tap,
-    /// so a tempo glide during the measurement cannot move the part. A refused landing deletes a
-    /// copy, never a take: the take stays in `Media/Picture` (review 2026-10-15 finding 2).
+    /// The production entry point for a PICKED file: copy it under security-scoped access, measure
+    /// the copy off the main actor (the async asset load), then write on the main actor. `bpm` is
+    /// read by the caller at the tap, so a tempo glide during the measurement cannot move the part.
+    /// A refused landing deletes the copy it made — never the person's file.
     @MainActor
     public static func perform(pickedURL: URL,
                                clipStore: ClipStore,
                                timeline: TimelineStore,
                                bpm: Double,
                                laneID: UUID,
-                               startTick: Int?,
-                               source: Source) async -> Result<Landing, Failure> {
+                               startTick: Int?) async -> Result<Landing, Failure> {
         // Refuse before copying when nothing can land, so a refused import leaves no file.
         guard timeline.document.videoLaneIDs.contains(laneID) else { return .failure(.noPictureLane) }
-        let scoped = source == .picked && pickedURL.startAccessingSecurityScopedResource()
+        let scoped = pickedURL.startAccessingSecurityScopedResource()
         let managed: URL
         do {
-            if source == .take {
-                managed = try MediaLibrary.takePictureVideo(from: pickedURL)
-            } else {
-                managed = try MediaLibrary.importPictureVideo(from: pickedURL)
-            }
+            managed = try MediaLibrary.importPictureVideo(from: pickedURL)
         } catch {
             if scoped { pickedURL.stopAccessingSecurityScopedResource() }
             return .failure(.copyFailed)
@@ -174,9 +185,65 @@ public enum VideoImport {
         let seconds = await measuredSeconds(managed)
         return commit(managed: managed, durationSeconds: seconds, clipStore: clipStore, timeline: timeline,
                       bpm: bpm, laneID: laneID, startTick: startTick,
-                      deleteManagedCopy: { url in
-                          if source == .picked { try? FileManager.default.removeItem(at: url) }
-                      })
+                      deleteManagedCopy: { url in try? FileManager.default.removeItem(at: url) })
+    }
+
+    /// The production entry point for a CAMERA TAKE (One World C1/M1; review 2026-10-15 B2 + B3).
+    /// 1. KEEP FIRST: every file is moved into `Media/Picture` before any lane is checked, so a take
+    ///    the piece refuses still lives in the app's own library — never in the temporary folder.
+    /// 2. MEASURE both kept files (the only `await`).
+    /// 3. LAND IN ONE STEP: after the last `await`, on the main actor with no suspension in
+    ///    between, ONE start is read — the later of the two tracks' ends, as they are NOW — and
+    ///    both parts are written at it. Nothing can land between the read and the writes, so the
+    ///    two angles share a position and never overlap a part that arrived during the measuring.
+    /// A refused lens keeps its file; a take is never deleted.
+    @MainActor
+    public static func performTake(rear: URL?,
+                                   front: URL?,
+                                   clipStore: ClipStore,
+                                   timeline: TimelineStore,
+                                   bpm: Double,
+                                   rearLane: UUID,
+                                   frontLane: UUID?) async -> TakeLanding {
+        let rearKept = rear.map(keepTake)
+        let frontKept = front.map(keepTake)
+        let rearSeconds = await measuredSeconds(of: rearKept)
+        let frontSeconds = await measuredSeconds(of: frontKept)
+        // ⚠️ No `await` below this line — the start and both writes are one step.
+        var lanes: [UUID] = []
+        if rearKept != nil { lanes.append(rearLane) }
+        if frontKept != nil, let frontLane { lanes.append(frontLane) }
+        let start = lanes.filter { timeline.document.videoLaneIDs.contains($0) }
+            .map { timeline.document.nextStartTick(inLane: $0) }
+            .max()
+        func land(_ kept: Result<URL, Failure>?, seconds: Double?, lane: UUID?) -> Result<Landing, Failure>? {
+            guard let kept else { return nil }
+            switch kept {
+            case .failure(let failure):
+                return .failure(failure)
+            case .success(let managed):
+                guard let lane else { return .failure(.noPictureLane) }
+                return commit(managed: managed, durationSeconds: seconds, clipStore: clipStore, timeline: timeline,
+                              bpm: bpm, laneID: lane, startTick: start,
+                              deleteManagedCopy: { _ in })   // a take is never deleted
+            }
+        }
+        return TakeLanding(rear: land(rearKept, seconds: rearSeconds, lane: rearLane),
+                           front: land(frontKept, seconds: frontSeconds, lane: frontLane))
+    }
+
+    /// Move one take file into the library.
+    private static func keepTake(_ url: URL) -> Result<URL, Failure> {
+        do {
+            return .success(try MediaLibrary.takePictureVideo(from: url))
+        } catch {
+            return .failure(.copyFailed)
+        }
+    }
+
+    private static func measuredSeconds(of kept: Result<URL, Failure>?) async -> Double? {
+        guard case .success(let url)? = kept else { return nil }
+        return await measuredSeconds(url)
     }
 
     /// The copy's length in seconds — nil when it has no video track or no finite length.
