@@ -20,8 +20,9 @@ import UIKit
 struct VideoTakeCard: View {
     @Environment(CameraRPPGBioPublisher.self) private var cameraRPPG
 
-    /// The Workstation lands the finished file (`VideoImport.perform`) and deletes it after.
-    let land: (URL) -> Void
+    /// The Workstation lands a finished file (`VideoImport.perform`) on video track `n` (0 = the
+    /// shown one: the rear lens; 1 = the front lens of a two-lens take) and deletes it after.
+    let land: (URL, Int) -> Void
     let close: () -> Void
 
     @State private var camera: VideoTakeCamera?
@@ -31,6 +32,10 @@ struct VideoTakeCard: View {
     @State private var pulsePaused = false
     /// Why the last take failed — said above Record, which stays offered for the next take.
     @State private var takeError: String?
+    /// M1 — record the rear AND the front lens (a named choice: a Picker, not a number).
+    @State private var bothCameras = false
+    /// Whether this phone actually wired both lenses (false = it fell back to the rear lens).
+    @State private var bothRunning = false
 
     enum Phase: Equatable {
         case opening
@@ -61,7 +66,7 @@ struct VideoTakeCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg)
                 if let camera, phase == .ready || phase == .recording || phase == .saving {
-                    VideoTakePreview(session: camera.session)
+                    VideoTakePreview(layer: camera.previewLayer)
                         .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radius))
                         .accessibilityLabel("Camera preview")
                 }
@@ -70,6 +75,14 @@ struct VideoTakeCard: View {
             .frame(height: 260)
             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).stroke(EchoelTheme.border, lineWidth: 1))
             statusLine
+            if VideoTakeCamera.bothCamerasSupported, phase == .ready {
+                Picker("Lenses", selection: $bothCameras) {
+                    Text("Rear").tag(false)
+                    Text("Rear + Front").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityHint("Rear + Front records two takes at once, one per video track")
+            }
             if phase == .ready || phase == .recording {
                 Button { phase == .recording ? stop() : record() } label: {
                     Label(phase == .recording ? "Stop" : "Record",
@@ -89,7 +102,8 @@ struct VideoTakeCard: View {
         .background(EchoelTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radius))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).stroke(EchoelTheme.border, lineWidth: 1))
-        .task { await openCamera() }
+        // Re-runs when the lens choice changes: the old session is closed, a new one opened.
+        .task(id: bothCameras) { await openCamera() }
         // The camera pulse started while the card is open: it takes the rear lens, so the take
         // ends here and keeps what was recorded, instead of reading "Recording" over nothing.
         .onChange(of: cameraRPPG.isRunning) { _, running in
@@ -105,6 +119,10 @@ struct VideoTakeCard: View {
         case .ready:
             if let takeError {
                 note(Text(verbatim: takeError))
+            } else if bothCameras && !bothRunning {
+                note(Text("This phone records the rear camera only."))
+            } else if bothRunning {
+                note(Text("Rear and front record together — two takes, two video tracks."))
             } else if pulsePaused {
                 note(Text("The camera pulse is paused while the camera records video."))
             } else {
@@ -143,10 +161,13 @@ struct VideoTakeCard: View {
             cameraRPPG.stop()
             pulsePaused = true
         }
-        let recorder = VideoTakeCamera()
+        phase = .opening
+        await camera?.closeAndWait()
+        let recorder = VideoTakeCamera(bothCameras: bothCameras)
         camera = recorder
         switch await recorder.open() {
-        case .success:
+        case .success(let both):
+            bothRunning = both
             phase = .ready
         case .failure(.denied):
             phase = .failed(String(localized: "Camera access is off. Turn it on in Settings › Echoelmusic."))
@@ -157,10 +178,11 @@ struct VideoTakeCard: View {
 
     private func record() {
         guard let camera else { return }
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("echoel-take-\(UUID().uuidString).mov")
+        let take = UUID().uuidString
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("echoel-take-\(take).mov")
+        let frontURL = FileManager.default.temporaryDirectory.appendingPathComponent("echoel-take-\(take)-front.mov")
         Task { @MainActor in
-            if await camera.startRecording(to: url) {
+            if await camera.startRecording(to: url, frontURL: frontURL) {
                 takeError = nil
                 startedAt = Date()
                 phase = .recording
@@ -175,10 +197,10 @@ struct VideoTakeCard: View {
         phase = .saving
         Task { @MainActor in
             switch await camera.stopRecording() {
-            case .success(let file):
+            case .success(let files):
                 startedAt = nil
                 if phase == .saving { phase = .ready }   // a pulse that took the lens keeps its word
-                land(file)
+                for (lane, file) in files.enumerated() { land(file, lane) }
             case .failure:
                 startedAt = nil
                 takeError = String(localized: "The take could not be saved.")
@@ -200,7 +222,9 @@ struct VideoTakeCard: View {
         if phase == .recording {
             let land = self.land
             Task { @MainActor in
-                if case .success(let file) = await camera.stopRecording() { land(file) }
+                if case .success(let files) = await camera.stopRecording() {
+                    for (lane, file) in files.enumerated() { land(file, lane) }
+                }
                 camera.close()
             }
         } else {
@@ -214,23 +238,36 @@ struct VideoTakeCard: View {
     }
 }
 
-/// The rear camera's live picture: `AVCaptureVideoPreviewLayer` as the view's own layer.
+/// The rear camera's live picture. The recorder owns the preview layer (a multi-cam session
+/// connects it to the rear lens explicitly); this view only hosts it and keeps it sized.
 private struct VideoTakePreview: UIViewRepresentable {
-    let session: AVCaptureSession
+    let layer: AVCaptureVideoPreviewLayer
 
     func makeUIView(context: Context) -> VideoTakePreviewView {
         let view = VideoTakePreviewView()
-        if let layer = view.layer as? AVCaptureVideoPreviewLayer {
-            layer.session = session
-            layer.videoGravity = .resizeAspectFill
-        }
+        view.host(layer)
         return view
     }
 
-    func updateUIView(_ uiView: VideoTakePreviewView, context: Context) {}
+    func updateUIView(_ uiView: VideoTakePreviewView, context: Context) {
+        uiView.host(layer)   // a new recorder (the lens choice changed) brings a new layer
+    }
 }
 
 final class VideoTakePreviewView: UIView {
-    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+    private var hosted: AVCaptureVideoPreviewLayer?
+
+    func host(_ preview: AVCaptureVideoPreviewLayer) {
+        guard hosted !== preview else { return }
+        hosted?.removeFromSuperlayer()
+        layer.addSublayer(preview)
+        hosted = preview
+        setNeedsLayout()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        hosted?.frame = bounds
+    }
 }
 #endif

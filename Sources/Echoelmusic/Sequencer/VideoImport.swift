@@ -67,6 +67,15 @@ public enum VideoImport {
         return document.lanes.first { $0.id == id }
     }
 
+    /// The `ordinal`-th video track in document order — 0 is the one the engine shows. A camera
+    /// take with both lenses lands its front take on video track 1 (One World M1).
+    public static func videoLane(_ ordinal: Int, in document: TimelineDocument) -> TimelineLane? {
+        if ordinal == 0 { return pictureLane(in: document) }
+        let ids = document.videoLaneIDs
+        guard ordinal > 0, ordinal < ids.count else { return nil }
+        return document.lanes.first { $0.id == ids[ordinal] }
+    }
+
     /// "Add Video Track" — one tap appends one picture lane, through the ONE owner of lanes.
     /// It appends; it never "ensures" (a second picture track is legitimate — it is simply not
     /// shown in v1, and the inspector says which one is).
@@ -82,9 +91,10 @@ public enum VideoImport {
                             durationSeconds: Double?,
                             document: TimelineDocument,
                             freeSlotIndex: Int?,
-                            bpm: Double) -> Result<Landing, Failure> {
+                            bpm: Double,
+                            videoLane ordinal: Int) -> Result<Landing, Failure> {
         guard let seconds = durationSeconds, seconds.isFinite, seconds > 0 else { return .failure(.unreadableVideo) }
-        guard let lane = pictureLane(in: document) else { return .failure(.noPictureLane) }
+        guard let lane = videoLane(ordinal, in: document) else { return .failure(.noPictureLane) }
         guard let slot = freeSlotIndex else { return .failure(.clipGridFull) }
         let clip = Clip(name: managed.deletingPathExtension().lastPathComponent, kind: .video,
                         mediaRef: managed.path, nativeDurationSeconds: seconds)
@@ -113,9 +123,10 @@ public enum VideoImport {
                               clipStore: ClipStore,
                               timeline: TimelineStore,
                               bpm: Double,
+                              videoLane ordinal: Int,
                               deleteManagedCopy: (URL) -> Void) -> Result<Landing, Failure> {
         switch plan(managed: managed, durationSeconds: durationSeconds, document: timeline.document,
-                    freeSlotIndex: clipStore.firstEmptySlotIndex, bpm: bpm) {
+                    freeSlotIndex: clipStore.firstEmptySlotIndex, bpm: bpm, videoLane: ordinal) {
         case .failure(let failure):
             deleteManagedCopy(managed)
             return .failure(failure)
@@ -135,9 +146,10 @@ public enum VideoImport {
     public static func perform(pickedURL: URL,
                                clipStore: ClipStore,
                                timeline: TimelineStore,
-                               bpm: Double) async -> Result<Landing, Failure> {
+                               bpm: Double,
+                               videoLane ordinal: Int) async -> Result<Landing, Failure> {
         // Refuse before copying when nothing can land, so a refused import leaves no file.
-        guard pictureLane(in: timeline.document) != nil else { return .failure(.noPictureLane) }
+        guard videoLane(ordinal, in: timeline.document) != nil else { return .failure(.noPictureLane) }
         let scoped = pickedURL.startAccessingSecurityScopedResource()
         let managed: URL
         do {
@@ -149,7 +161,7 @@ public enum VideoImport {
         if scoped { pickedURL.stopAccessingSecurityScopedResource() }
         let seconds = await measuredSeconds(managed)
         return commit(managed: managed, durationSeconds: seconds, clipStore: clipStore, timeline: timeline,
-                      bpm: bpm, deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) })
+                      bpm: bpm, videoLane: ordinal, deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) })
     }
 
     /// The copy's length in seconds — nil when it has no video track or no finite length.

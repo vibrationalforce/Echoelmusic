@@ -41,7 +41,8 @@ final class AVideoPartIsPlacedThroughTheStoreTests: XCTestCase {
     private static let managed = URL(fileURLWithPath: "/media/Picture/dawn.mov")
 
     private func plan(_ seconds: Double?, _ doc: TimelineDocument, slot: Int? = 0) -> Result<VideoImport.Landing, VideoImport.Failure> {
-        VideoImport.plan(managed: Self.managed, durationSeconds: seconds, document: doc, freeSlotIndex: slot, bpm: 120)
+        VideoImport.plan(managed: Self.managed, durationSeconds: seconds, document: doc, freeSlotIndex: slot, bpm: 120,
+                         videoLane: 0)
     }
 
     private func failure(_ result: Result<VideoImport.Landing, VideoImport.Failure>) -> VideoImport.Failure? {

@@ -16,14 +16,21 @@
 //   4. SOURCE-TEXT SCAN — the door: "Record Video" sits in the Add menu, the card is mounted in the
 //      plate (no new modal), a take and a picked file share ONE landing (`landVideo`), the take's
 //      temporary file is deleted, and a piece without a video track gets one first.
+//   5. SOURCE-TEXT SCAN — both lenses (M1, the YoloBox replacement): a multi-cam phone records the
+//      rear AND the front lens into two files (rear → video track 0, front → track 1, created
+//      through the same creator when missing); a phone that cannot sustain both
+//      (`hardwareCost > 1.0`) falls back to the rear lens; the lens choice reopens the camera only
+//      after the old session let go of it.
 //   ⚠️ NOT ASSERTED: the camera prompt (`NSCameraUsageDescription`) still says "No images are
-//      stored". `Resources/iOS/Info.plist` is founder-gated; the new sentence waits in
-//      `scratchpads/LANDING_C1_camera_prompt.patch`. A claim here would be red on a correct tree
-//      until he lands it (#364) — add it in the commit that lands the text.
+//      stored" and names only the rear lens. `Resources/iOS/Info.plist` is founder-gated; the new
+//      sentence (both lenses) waits in `scratchpads/LANDING_C1_camera_prompt.patch`. A claim here
+//      would be red on a correct tree until the founder lands it (#364) — add it in that commit.
 //
 // ⚠️ HONEST GRADING (#433). Claim 1 names `VideoTakeCard`, which this commit creates, so the file
 // does NOT compile against the parent and no assertion has a verdict there (one absence, #486):
-// all four claims are FORWARD. Transcribed in Python against the worktree. Stripper
+// all four claims are FORWARD. Claim 5 and the M1 needles of claims 3 and 4 (`land(file, lane)`,
+// `videoLane:`) are FORWARD against `fac13cdad` too: there the recorder has one lens and the
+// landing one track. Transcribed in Python against the worktree. Stripper
 // `SourceText.codeOnly`: TRAGEND for claim 2's `@MainActor` absence (the recorder's header names
 // the attribute in prose; raw it would be red) — measured, not assumed. PROPHYLAKTISCH for the
 // audio-device absence (0 raw hits either way).
@@ -79,23 +86,45 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
 
     func testTheCardTakesTheCameraFromThePulseAndWritesNoStore() throws {
         let card = try code("Sources/Echoelmusic/Studio/VideoTakeCard.swift")
-        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "let recorder = VideoTakeCamera()"),
+        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "let recorder = VideoTakeCamera(bothCameras: bothCameras)"),
                                  "ANCHOR: `openCamera` is gone (#454)")
         XCTAssertTrue(open.contains("if cameraRPPG.isRunning {") && open.contains("cameraRPPG.stop()"),
                       "one lens, production first — the card stops the camera pulse BEFORE it builds the recorder")
         XCTAssertTrue(open.contains("pulsePaused = true"), "and remembers it, so the card can say the pulse is paused")
         XCTAssertTrue(card.contains("if pulsePaused {"))
-        XCTAssertTrue(card.contains("land(file)"), "a finished take is handed to the Workstation")
+        XCTAssertTrue(card.contains("for (lane, file) in files.enumerated() { land(file, lane) }"),
+                      "every file of a finished take is handed to the Workstation — rear on track 0, front on 1")
         for store in ["TimelineStore", "ClipStore", "timeline.", "clipStore."] {
             XCTAssertFalse(card.contains(store), "the card writes no store (`\(store)`) — the Workstation lands the take")
         }
         XCTAssertTrue(card.contains(".onDisappear { leave() }"), "leaving the plate releases the camera")
         let leave = try XCTUnwrap(slice(card, from: "private func leave() {", to: "private func shut() {"),
                                   "ANCHOR: `leave` is gone (#454)")
-        XCTAssertTrue(leave.contains("if case .success(let file) = await camera.stopRecording() { land(file) }"),
+        XCTAssertTrue(leave.contains("if case .success(let files) = await camera.stopRecording() {")
+                      && leave.contains("land(file, lane)"),
                       "leaving mid-take keeps the take — it is landed, never left in tmp")
         XCTAssertTrue(card.contains(".onChange(of: cameraRPPG.isRunning) { _, running in"),
                       "a camera pulse started mid-card ends the take instead of reading Recording over nothing")
+    }
+
+    // MARK: 5 — both lenses (M1)
+
+    func testBothLensesFallBackToTheRearOne() throws {
+        let camera = try code("Sources/Echoelmusic/Video/VideoTakeCamera.swift")
+        XCTAssertTrue(camera.contains("AVCaptureMultiCamSession.isMultiCamSupported"),
+                      "both lenses only on a phone that has a multi-cam session")
+        XCTAssertTrue(camera.contains("position: .front"), "the second lens is the front one")
+        XCTAssertTrue(camera.contains("let frontOutput = AVCaptureMovieFileOutput()"), "its own file")
+        let both = try XCTUnwrap(slice(camera, from: "private func wireBoth(", to: "func startRecording("),
+                                 "ANCHOR: `wireBoth` is gone (#454)")
+        XCTAssertTrue(both.contains("if multi.hardwareCost > 1.0 {") && both.contains("multi.removeConnection(frontTake)"),
+                      "a phone that cannot sustain both lenses records the rear one alone")
+        XCTAssertTrue(camera.contains("connection.isVideoMirrored = false"), "the front take is unmirrored, as a camera records")
+        let card = try code("Sources/Echoelmusic/Studio/VideoTakeCard.swift")
+        XCTAssertTrue(card.contains(".task(id: bothCameras) { await openCamera() }"), "the lens choice reopens the camera")
+        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "switch await recorder.open()"))
+        XCTAssertTrue(open.contains("await camera?.closeAndWait()"),
+                      "the old session lets go of the camera BEFORE the new one asks for it")
     }
 
     // MARK: 4 — the door
@@ -105,15 +134,18 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
         let menu = try XCTUnwrap(slice(door, from: "private var addMenu: some View {", to: ".menuStyle(.button)"),
                                  "ANCHOR: the Add menu is gone (#454)")
         XCTAssertTrue(menu.contains("{ openVideoTake() } label: { Label(\"Record Video\""))
-        XCTAssertTrue(door.contains("VideoTakeCard(land: { landVideo($0, discardSource: true) },"),
+        XCTAssertTrue(door.contains("VideoTakeCard(land: { landVideo($0, videoLane: $1, discardSource: true) },"),
                       "the card is mounted in the plate and hands its take to the one landing")
-        XCTAssertTrue(door.contains("landVideo(url, discardSource: false)"), "a picked file takes the same landing")
+        XCTAssertTrue(door.contains("landVideo(url, videoLane: 0, discardSource: false)"),
+                      "a picked file takes the same landing, onto the shown video track")
         XCTAssertEqual(door.components(separatedBy: "VideoImport.perform(").count - 1, 1,
                        "ONE landing for a picked file and a camera take (#416)")
         let landing = try XCTUnwrap(slice(door, from: "private func landVideo(", to: "private func openVideoTake("),
                                     "ANCHOR: `landVideo` is gone (#454)")
         XCTAssertTrue(landing.contains("if discardSource { try? FileManager.default.removeItem(at: url) }"),
                       "the take's temporary file is deleted once the copy exists or the landing refused")
+        XCTAssertTrue(landing.contains("addVideoTrack()") && landing.contains("bpm: bpm, videoLane: videoLane)"),
+                      "a front take gets its own video track, through the same creator, before it lands")
         let open = try XCTUnwrap(slice(door, from: "private func openVideoTake(", to: "\n    }\n"))
         XCTAssertTrue(open.contains("if VideoImport.pictureLane(in: timeline.document) == nil { addVideoTrack() }"),
                       "a take needs a video track to land on — through the same creator as Add Video Track")

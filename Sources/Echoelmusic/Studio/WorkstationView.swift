@@ -343,7 +343,7 @@ struct WorkstationView: View {
             #if canImport(AVFoundation) && canImport(UIKit)
             // One World C1 — "Record Video": the camera card stands in the plate, not in a modal.
             if videoTakeOpen {
-                VideoTakeCard(land: { landVideo($0, discardSource: true) },
+                VideoTakeCard(land: { landVideo($0, videoLane: $1, discardSource: true) },
                               close: { videoTakeOpen = false })
             }
             #endif
@@ -1659,7 +1659,7 @@ struct WorkstationView: View {
             importNote = VideoImport.Failure.pickerFailed.userMessage
         case .success(let urls):
             guard let url = urls.first else { return }
-            landVideo(url, discardSource: false)
+            landVideo(url, videoLane: 0, discardSource: false)
         }
     }
 
@@ -1667,11 +1667,18 @@ struct WorkstationView: View {
     /// measured off the main actor, so the write happens after an `await`; the tempo is read here,
     /// at the tap's moment. A camera take is a temporary file: it is deleted once the managed copy
     /// exists (or the landing refused), so a take never lingers outside the library.
-    private func landVideo(_ url: URL, discardSource: Bool) {
+    private func landVideo(_ url: URL, videoLane: Int, discardSource: Bool) {
         #if canImport(AVFoundation)
         let bpm = player.preflightTempo
+        // A two-lens take (One World M1) needs a second video track for the front lens.
+        while VideoImport.videoLane(videoLane, in: timeline.document) == nil {
+            let before = timeline.document.videoLaneIDs.count
+            addVideoTrack()
+            if timeline.document.videoLaneIDs.count == before { break }
+        }
         Task { @MainActor in
-            let result = await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline, bpm: bpm)
+            let result = await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline,
+                                                   bpm: bpm, videoLane: videoLane)
             if discardSource { try? FileManager.default.removeItem(at: url) }
             switch result {
             case .success(let landing):

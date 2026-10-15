@@ -19257,6 +19257,66 @@
         }
       }
     },
+    "Lenses" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lenses"
+          }
+        }
+      }
+    },
+    "Rear" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rear"
+          }
+        }
+      }
+    },
+    "Rear + Front" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rear + Front"
+          }
+        }
+      }
+    },
+    "Rear + Front records two takes at once, one per video track" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rear + Front records two takes at once, one per video track"
+          }
+        }
+      }
+    },
+    "This phone records the rear camera only." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone records the rear camera only."
+          }
+        }
+      }
+    },
+    "Rear and front record together — two takes, two video tracks." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rear and front record together — two takes, two video tracks."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {
