@@ -1,4 +1,4 @@
-build: v10.79.507 — Noten-Inspektor: Start, Länge und Tonhöhe als Zahlen
+build: v10.79.508 — Noten direkt ziehen, Teile auf den Schlag, Repeat
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,31 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.508) ───────────────────────────────
+
+  Nachtschicht „MIDI-Clips entspannt bearbeiten". Gebaut wird `32b65affc`; Xcode Compile Check
+  UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: GEWÄHLTE NOTEN DIREKT ZIEHEN ──
+  Eine angetippte (gewählte) Note zieht man sofort — kein 0,3-s-Halten mehr. Auf leerer Fläche
+  scrollt das Raster wie bisher; ein erneuter Tipp auf die Note wählt sie ab.
+
+  ── POSTEN 2: TEILE AUF DEN SCHLAG ──
+  In der Teil-Leiste unter „Starts at bar": „Starts at beat" (1–4) verschiebt den Teil im Takt;
+  bei MIDI-Teilen „Length" in Schlägen. Eine Länge, die einem anderen Teil Takte nehmen würde,
+  wird abgelehnt. Je ein Undo-Schritt.
+
+  ── POSTEN 3: REPEAT ──
+  „Repeat" wiederholt den gewählten Teil 1–16-mal direkt dahinter, bis zum nächsten Teil der
+  Spur — ein Loop in einem Schritt; EIN Undo nimmt alle Kopien zurück.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since fbd1ac422) ──
+  · Noten-Editor: Note antippen, sofort ziehen — sie wandert; leere Fläche wischen — scrollt.
+  · Arrange: MIDI-Teil wählen, Starts at beat 3, Length 6, Repeat 3 — je ein Undo.
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.507) ───────────────────────────────
