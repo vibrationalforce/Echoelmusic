@@ -1457,3 +1457,12 @@ nach Freigabe des Locks → ein fertiger Take konnte als Fehler enden). B1–B4 
 erstes Bild; fehlender Song-Anker) gehen in M1b. Lehre: Gegenprüfung durch dasselbe Modell auf
 konkretem Commit-Stand ist die ergiebigste Schleife; Text-Wächter beweisen keine Abläufe —
 Zustände gehören in reine Werte mit End-to-End-Tests.
+
+## 2026-10-15 — Grok Heavy: Deep Audit 2 (ohne Klon) — ADOPT→PRODUCT
+[verified 6/9] Behoben in `798e0f6a8`: zu große Plugin-Einstellungen (>1 MiB) werden jetzt
+GESAGT statt still verworfen; Plugin-Pegel auf 0…1 begrenzt. Bestätigt, offen: Plugin-Zustand
+nur beim Schließen des Fensters gesichert (Scheibe H4f: auch beim Speichern/Hintergrund);
+Workflow-only-Änderungen gehen ohne Gate nach `main` (E29, gesperrt); `gstack`-Paket mit
+Telemetrie (E30); LICENSE-Jahr (E31). Widerlegt: `PrivacyInfo.xcprivacy` fehlt nicht
+(`Resources/PrivacyInfo.xcprivacy`, drei Targets). Die Blitz-Aussage auf `/health` hält: auch die
+neue Video-Spur läuft durch `VideoLayerSlot` → `VideoFlashLimiter`.
