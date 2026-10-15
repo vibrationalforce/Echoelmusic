@@ -250,8 +250,9 @@ enum AudioPartEditor {
     /// the other way. A slide of zero writes nothing, and a snap that does not land beyond the
     /// edge in the slide's direction writes nothing either.
     ///
-    /// The grid is `PartTrim.snapUnit` at this pane's `snapZoom`; nothing else picks a grid. Then,
-    /// per direction, the rule that already exists:
+    /// The grid is `PartTrim.snapUnit` at this pane's `snapZoom`; nothing else picks a grid. The
+    /// rule per direction lives in `PartTrim.edgeEdit` since One World T1 — the arrange canvas asks
+    /// it too — and the media bound is this pane's file (`.media(seconds: fileSeconds)`):
     /// · INWARD (either edge) — the snapped tick, kept inside the part, must pass
     ///   `PartTrim.onlyLetsGo`, the rule the part bar's Trim buttons ask. Refused otherwise.
     /// · OUTWARD START — the snapped tick is held at the first grid line at or after the file's
@@ -281,74 +282,10 @@ enum AudioPartEditor {
               // A tick past the tick domain's ceiling is a corrupt part, not an edge to snap.
               Double(proposed).magnitude <= TimelineTime.tickMagnitudeCeiling else { return nil }
         let unit = PartTrim.snapUnit(zoom: zoom)
-        guard unit > 0 else { return nil }
-        let snapped = Int((Double(proposed) / Double(unit)).rounded()) * unit
-        let start = region.startTick
-        let end = region.endTick
         // Outward is left for the start and right for the end.
         let outward = (edge == .start) == (dragPoints < 0)
-        switch edge {
-        case .start:
-            if !outward {
-                // Inward: the start may not reach the end — the last grid line before it at most.
-                let tick = Swift.min(snapped, floorGrid(end - 1, unit))
-                guard tick > start,
-                      let trimmed = region.trimmedStart(toTick: tick, bpm: mediaBPM), trimmed.startTick == tick,
-                      PartTrim.onlyLetsGo(trimmed, replacing: region.id, in: document) else { return nil }
-                return .start(tick: tick)
-            }
-            // Outward: no further back than the file's start, on the grid.
-            let floor = region.trimmedStart(toTick: 0, bpm: mediaBPM)?.startTick ?? start
-            let tick = Swift.max(snapped, ceilGrid(floor, unit))
-            guard tick < start,
-                  let extended = region.trimmedStart(toTick: tick, bpm: mediaBPM), extended.startTick == tick,
-                  PartTrim.keepsWhoPlays(extending: extended, replacing: region.id, in: document) else { return nil }
-            return .start(tick: tick)
-        case .end:
-            if !outward {
-                // Inward: the end may not reach the start — the first grid line after it at least.
-                let tick = Swift.max(snapped, floorGrid(start, unit) + unit)
-                guard tick < end else { return nil }
-                var cut = region
-                cut.lengthTicks = tick - start
-                guard PartTrim.onlyLetsGo(cut, replacing: region.id, in: document) else { return nil }
-                return .end(lengthTicks: cut.lengthTicks)
-            }
-            // Outward: the grid lines after the end, up to the snapped tick; the farthest legal one.
-            let nearest = floorGrid(end, unit) + unit
-            guard snapped >= nearest else { return nil }
-            let count = (snapped - nearest) / unit + 1
-            func extended(_ index: Int) -> TimelineRegion {
-                var longer = region
-                longer.lengthTicks = nearest + index * unit - start
-                return longer
-            }
-            func legal(_ index: Int) -> Bool {
-                let longer = extended(index)
-                return PartTrim.keepsWhoPlays(extending: longer, replacing: region.id, in: document)
-                    && PartTrim.endFitsMedia(longer, mediaSeconds: fileSeconds, mediaBPM: mediaBPM)
-            }
-            guard legal(0) else { return nil }
-            var low = 0            // legal
-            var high = count - 1   // the farthest candidate
-            while low < high {
-                let middle = (low + high + 1) / 2
-                if legal(middle) { low = middle } else { high = middle - 1 }
-            }
-            return .end(lengthTicks: extended(low).lengthTicks)
-        }
-    }
-
-    /// The grid line at or before `tick` (floor division, so a negative tick rounds down too).
-    private nonisolated static func floorGrid(_ tick: Int, _ unit: Int) -> Int {
-        let quotient = tick / unit
-        return (tick % unit != 0 && tick < 0 ? quotient - 1 : quotient) * unit
-    }
-
-    /// The grid line at or after `tick`.
-    private nonisolated static func ceilGrid(_ tick: Int, _ unit: Int) -> Int {
-        let line = floorGrid(tick, unit)
-        return line == tick ? line : line + unit
+        return PartTrim.edgeEdit(edge, proposedTick: proposed, outward: outward, unit: unit, region: region,
+                                 in: document, mediaBPM: mediaBPM, endBound: .media(seconds: fileSeconds))
     }
 
     /// Where an edit leaves its edge on the file, 0…1 — the preview line's place. A start edit

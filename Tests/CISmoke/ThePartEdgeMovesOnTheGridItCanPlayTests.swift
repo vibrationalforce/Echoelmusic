@@ -54,6 +54,17 @@
 // (anchor absent for 7; claim 8 red). What a hold-and-slide FEELS like on a phone — whether the page's
 // scroll yields to the hold, whether 44 pt is enough at the file's first second — is a DEVICE
 // PROBE and open.
+//
+// ⭐ ONE WORLD T1 (2026-10-15). The rule body moved, unchanged, from `AudioPartEditor.edgeEdit` to
+// `PartTrim.edgeEdit`, so the arrange canvas asks the same rule for MIDI and audio parts (#416).
+// The one thing that differs per kind is the END bound (`PartTrim.EdgeBound`: `.media(seconds:)`
+// for a file, `.unbounded` for MIDI — silence past the last note, never a loop). Claim 7 is
+// re-anchored on both halves: the editor's front end (grid, direction, drawn edge, `.media`) and
+// the rule (`onlyLetsGo`, `keepsWhoPlays`, `endFitsMedia`, the content floor). Claim 9 drives the
+// rule END-TO-END for a MIDI-shaped part. GRADING: claim 9 and the re-anchored half of claim 7 are
+// FORWARD (`PartTrim.edgeEdit`/`EdgeBound` are new — the file does not compile against the parent,
+// one absence #486); claims 1–6 are unchanged and are the COUNTERWEIGHT that the move kept the
+// audio behaviour (their expectations were not touched). Transcribed, not run.
 
 import Foundation
 import XCTest
@@ -399,21 +410,67 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
         XCTAssertTrue(ended.contains("edit(edge, points: Double(slide.translation.width), width: width, bpm: bpm)"))
         XCTAssertTrue(handles.contains("let landing = edit(drag.edge, points: drag.points, width: width, bpm: bpm)"))
         // The grid is `snapUnit`'s and the rules are `PartTrim`'s — nothing here picks its own.
-        guard let rule = Self.bracedBody(after: "fileSeconds: Double, mediaBPM: Double) -> EdgeEdit? {", in: code) else {
+        // Since One World T1 the editor's function is the FRONT END (finger → tick, the grid, the
+        // direction, the file as the media bound) and the rule itself is `PartTrim.edgeEdit`,
+        // which the arrange canvas asks too.
+        guard let front = Self.bracedBody(after: "fileSeconds: Double, mediaBPM: Double) -> EdgeEdit? {", in: code) else {
             return XCTFail("ANCHOR MISSING: `AudioPartEditor.edgeEdit` (#408)")
         }
-        for asked in ["PartTrim.snapUnit(zoom: zoom)", "PartTrim.onlyLetsGo(", "PartTrim.keepsWhoPlays(",
-                      "PartTrim.endFitsMedia(", "region.trimmedStart(toTick: 0, bpm: mediaBPM)",
-                      "guard dragPoints != 0", "let outward = (edge == .start) == (dragPoints < 0)",
-                      "drawnEdgeTick(edge, region: region, fileSeconds: fileSeconds,"] {
+        for asked in ["PartTrim.snapUnit(zoom: zoom)", "guard dragPoints != 0",
+                      "let outward = (edge == .start) == (dragPoints < 0)",
+                      "drawnEdgeTick(edge, region: region, fileSeconds: fileSeconds,",
+                      "PartTrim.edgeEdit(", "endBound: .media(seconds: fileSeconds)"] {
+            XCTAssertTrue(front.contains(asked), "the editor's edge front end no longer asks `\(asked)`")
+        }
+        let bar = try source(Self.partBarPath)
+        guard let rule = Self.bracedBody(after: "mediaBPM: Double, endBound: EdgeBound) -> AudioPartEditor.EdgeEdit? {",
+                                         in: bar) else {
+            return XCTFail("ANCHOR MISSING: `PartTrim.edgeEdit` (#408)")
+        }
+        for asked in ["onlyLetsGo(", "keepsWhoPlays(", "endFitsMedia(", "region.trimmedStart(toTick: 0, bpm: mediaBPM)"] {
             XCTAssertTrue(rule.contains(asked), "the edge rule no longer asks `\(asked)`")
         }
         for grid in ["ticksPerBeat", "ticksPerTransportStep"] {
-            XCTAssertFalse(rule.contains(grid), """
-                The edge rule names `\(grid)` — a second grid. A handle snaps to `PartTrim.snapUnit` \
-                and nothing else (#416).
+            XCTAssertFalse(front.contains(grid) || rule.contains(grid), """
+                The edge rule names `\(grid)` — a second grid. A handle snaps to the unit its \
+                surface passes from `PartTrim.snapUnit` and nothing else (#416).
                 """)
         }
+        XCTAssertEqual(Self.occurrences(of: "func edgeEdit(", in: bar), 1, "the rule is written once")
+    }
+
+    // MARK: 9 — One World T1: the same rule for a MIDI part, whose end has no file
+
+    func testAMidiPartsEndMovesOutOverSilenceButItsStartStopsAtItsNotes() {
+        let bar = Self.bar
+        let part = region(2 * bar, 2 * bar)            // bars 3–4, content from its first note
+        let alone = TimelineDocument(lanes: [], regions: [part])
+        func edit(_ edge: AudioPartEditor.Edge, to tick: Int, outward: Bool,
+                  _ bound: PartTrim.EdgeBound = .unbounded,
+                  in document: TimelineDocument? = nil) -> AudioPartEditor.EdgeEdit? {
+            PartTrim.edgeEdit(edge, proposedTick: tick, outward: outward, unit: bar, region: part,
+                              in: document ?? alone, mediaBPM: 120, endBound: bound)
+        }
+        XCTAssertEqual(edit(.end, to: 5 * bar, outward: true), .end(lengthTicks: 3 * bar),
+                       "a MIDI end moves out one bar over silence")
+        XCTAssertNil(edit(.end, to: 5 * bar, outward: true, .media(seconds: 0)),
+                     "an end whose file length is unknown is never extended")
+        XCTAssertEqual(edit(.end, to: 3 * bar, outward: false), .end(lengthTicks: bar), "inward end")
+        XCTAssertEqual(edit(.start, to: 3 * bar, outward: false), .start(tick: 3 * bar), "inward start")
+        XCTAssertNil(edit(.start, to: bar, outward: true),
+                     "a start at its content's beginning cannot move earlier — there is nothing before it")
+        // A part that STARTED earlier and still plays over the new end would lose a bar: refused.
+        let earlier = TimelineRegion(laneID: Self.lane, clipID: UUID(), startTick: 0, lengthTicks: 6 * bar)
+        let covered = TimelineDocument(lanes: [], regions: [earlier, part])
+        XCTAssertNil(edit(.end, to: 5 * bar, outward: true, in: covered), "an outward end takes no bar")
+        // Degenerate input makes no edit.
+        XCTAssertNil(PartTrim.edgeEdit(.end, proposedTick: 5 * bar, outward: true, unit: 0, region: part,
+                                       in: alone, mediaBPM: 120, endBound: .unbounded))
+        XCTAssertNil(PartTrim.edgeEdit(.end, proposedTick: 5 * bar, outward: true, unit: bar, region: part,
+                                       in: alone, mediaBPM: .nan, endBound: .unbounded))
+        XCTAssertEqual(PartTrim.floorGrid(-1, bar), -bar, "floor division rounds a negative tick down")
+        XCTAssertEqual(PartTrim.ceilGrid(bar + 1, bar), 2 * bar)
+        XCTAssertEqual(PartTrim.ceilGrid(bar, bar), bar)
     }
 
     // MARK: 8 — the stale prose that said nothing could trim a part
@@ -432,6 +489,7 @@ final class ThePartEdgeMovesOnTheGridItCanPlayTests: XCTestCase {
 
     private static let editorPath = "Sources/Echoelmusic/Studio/AudioPartEditorView.swift"
     private static let warpPath = "Sources/Echoelmusic/Sequencer/AudioWarp.swift"
+    private static let partBarPath = "Sources/Echoelmusic/Studio/SelectedPartBar.swift"
 
     static func bracedBody(after head: String, in code: String) -> String? {
         guard let start = code.range(of: head), head.hasSuffix("{") else { return nil }

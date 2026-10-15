@@ -321,7 +321,8 @@ enum PartPitch {
 /// exactly what happens; lengthening a part past its media would be a different act with a
 /// different answer per media kind (silence for audio, a loop for MIDI) and stays out.
 /// ⚠️ That holds for the bar's two BUTTONS. Since AE-4a the enum also carries the outward rules
-/// the audio editor's edge handles ask since AE-4b (snap, precedence, media end) — see its last MARK.
+/// the audio editor's edge handles ask since AE-4b (snap, precedence, media end), and since One World T1
+/// the edge rule itself, which the arrange canvas asks too — where MIDI parts may also lengthen.
 enum PartTrim {
 
     /// The new start for "Trim start": the first song-grid bar line after the part's start, else
@@ -407,7 +408,8 @@ enum PartTrim {
     // (AE-4b) also move an edge OUTWARD, and `onlyLetsGo` refuses any tick a part gains by
     // construction, so the outward move gets its own rule here — beside the inward one, asked of
     // the same precedence (#1440) — plus the grid a handle snaps to and the media bound. Their
-    // caller is `AudioPartEditor.edgeEdit` (AE-4b), which the editor's edge handles ask.
+    // caller is `PartTrim.edgeEdit` below, which the editor's edge handles ask through
+    // `AudioPartEditor.edgeEdit` (AE-4b).
 
     /// The grid an edge handle snaps to at a time zoom: a bar while bars are small on screen
     /// (zoom below 4), a beat below 16, then one transport step. Never finer than a step: the
@@ -459,6 +461,119 @@ enum PartTrim {
         // One microsecond of slack: a part cut exactly at the file's end must not be refused for
         // the rounding of a tick→seconds conversion.
         return reach <= mediaSeconds + 1e-6
+    }
+
+    // MARK: One World T1 — the edge rule, shared by every surface that moves an edge
+    //
+    // The rule below was the body of `AudioPartEditor.edgeEdit` (AE-4b). It moved here unchanged
+    // so the arrange canvas can ask the SAME rule for any part, MIDI or audio (#416): the editor
+    // and the canvas differ only in how a finger becomes a tick and which grid it snaps to, never
+    // in what an edge may do. What a part may reach at its END is the one thing that differs per
+    // kind, and the caller says it in `endBound`.
+
+    /// How far an edge may move OUTWARD at the end.
+    enum EdgeBound: Equatable, Sendable {
+        /// No media end: a MIDI part's end may move out over silence. Lengthening it brings back
+        /// notes an earlier trim hid and then plays nothing; it never loops.
+        case unbounded
+        /// An audio part ends inside its file of `seconds` (`endFitsMedia`). Zero or unusable
+        /// seconds refuse every outward end — a file whose length is unknown is not extended.
+        case media(seconds: Double)
+    }
+
+    /// The edit an edge moved to `proposedTick` makes, or nil when it makes none. `outward` is the
+    /// FINGER's direction (AE-4b review M1), never the snap's; `unit` is the grid the caller's
+    /// surface snaps to.
+    ///
+    /// Per direction, the rule that already exists:
+    /// · INWARD (either edge) — the snapped tick, kept inside the part, must pass `onlyLetsGo`,
+    ///   the rule the part bar's Trim buttons ask. Refused otherwise.
+    /// · OUTWARD START — the snapped tick is held at the first grid line at or after the content's
+    ///   start (`TimelineRegion.trimmedStart`'s own floor, asked with tick 0), and must pass
+    ///   `keepsWhoPlays`. ⚠️ Refused otherwise, NOT walked back: moving a start changes which
+    ///   overlapping part starts later, and a tie goes to the later placement, so a start one bar
+    ///   back can take a bar from a neighbour while a start two bars back passes under it.
+    ///   Legality is not monotone in the distance, and a search would land somewhere the finger
+    ///   never pointed.
+    /// · OUTWARD END — the farthest grid line up to the snapped tick that passes `keepsWhoPlays`
+    ///   and, for `.media`, `endFitsMedia`, found by halving. That search is sound because the
+    ///   start does not move: who wins a newly covered tick does not depend on how far the end
+    ///   goes, and a longer part only reaches further into its content, so a legal end stays legal
+    ///   when it is pulled back.
+    nonisolated static func edgeEdit(_ edge: AudioPartEditor.Edge, proposedTick proposed: Int, outward: Bool,
+                                     unit: Int, region: TimelineRegion, in document: TimelineDocument,
+                                     mediaBPM: Double, endBound: EdgeBound) -> AudioPartEditor.EdgeEdit? {
+        guard unit > 0, region.lengthTicks > 0, mediaBPM.isFinite, mediaBPM > 0,
+              Double(proposed).magnitude <= TimelineTime.tickMagnitudeCeiling else { return nil }
+        let snapped = Int((Double(proposed) / Double(unit)).rounded()) * unit
+        let start = region.startTick
+        let end = region.endTick
+        switch edge {
+        case .start:
+            if !outward {
+                // Inward: the start may not reach the end — the last grid line before it at most.
+                let tick = Swift.min(snapped, floorGrid(end - 1, unit))
+                guard tick > start,
+                      let trimmed = region.trimmedStart(toTick: tick, bpm: mediaBPM), trimmed.startTick == tick,
+                      onlyLetsGo(trimmed, replacing: region.id, in: document) else { return nil }
+                return .start(tick: tick)
+            }
+            // Outward: no further back than the content's start, on the grid.
+            let floor = region.trimmedStart(toTick: 0, bpm: mediaBPM)?.startTick ?? start
+            let tick = Swift.max(snapped, ceilGrid(floor, unit))
+            guard tick < start,
+                  let extended = region.trimmedStart(toTick: tick, bpm: mediaBPM), extended.startTick == tick,
+                  keepsWhoPlays(extending: extended, replacing: region.id, in: document) else { return nil }
+            return .start(tick: tick)
+        case .end:
+            if !outward {
+                // Inward: the end may not reach the start — the first grid line after it at least.
+                let tick = Swift.max(snapped, floorGrid(start, unit) + unit)
+                guard tick < end else { return nil }
+                var cut = region
+                cut.lengthTicks = tick - start
+                guard onlyLetsGo(cut, replacing: region.id, in: document) else { return nil }
+                return .end(lengthTicks: cut.lengthTicks)
+            }
+            // Outward: the grid lines after the end, up to the snapped tick; the farthest legal one.
+            let nearest = floorGrid(end, unit) + unit
+            guard snapped >= nearest else { return nil }
+            let count = (snapped - nearest) / unit + 1
+            func extended(_ index: Int) -> TimelineRegion {
+                var longer = region
+                longer.lengthTicks = nearest + index * unit - start
+                return longer
+            }
+            func legal(_ index: Int) -> Bool {
+                let longer = extended(index)
+                guard keepsWhoPlays(extending: longer, replacing: region.id, in: document) else { return false }
+                switch endBound {
+                case .unbounded: return true
+                case .media(let seconds): return endFitsMedia(longer, mediaSeconds: seconds, mediaBPM: mediaBPM)
+                }
+            }
+            guard legal(0) else { return nil }
+            var low = 0            // legal
+            var high = count - 1   // the farthest candidate
+            while low < high {
+                let middle = (low + high + 1) / 2
+                if legal(middle) { low = middle } else { high = middle - 1 }
+            }
+            return .end(lengthTicks: extended(low).lengthTicks)
+        }
+    }
+
+    /// The grid line at or before `tick` (floor division, so a negative tick rounds down too).
+    nonisolated static func floorGrid(_ tick: Int, _ unit: Int) -> Int {
+        guard unit > 0 else { return tick }
+        let quotient = tick / unit
+        return (tick % unit != 0 && tick < 0 ? quotient - 1 : quotient) * unit
+    }
+
+    /// The grid line at or after `tick`.
+    nonisolated static func ceilGrid(_ tick: Int, _ unit: Int) -> Int {
+        let line = floorGrid(tick, unit)
+        return line == tick || unit <= 0 ? line : line + unit
     }
 }
 
