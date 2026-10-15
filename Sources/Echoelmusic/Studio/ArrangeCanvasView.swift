@@ -257,10 +257,10 @@ enum ArrangeCanvas {
     }
 
     /// The grid an edge moves on at this zoom: `PartTrim.snapUnit`, as for a moved part (#416) —
-    /// except a MIDI part's START, which moves by whole bars. The roll plays a part's notes on the
-    /// song's own bar lines (`TimelineRegionPlayer.loadClip`, KNOWN CONSTRAINT M1b), so a MIDI
-    /// part that starts mid-bar skips the notes before the next line instead of shifting them; a
-    /// bar-aligned start is exact.
+    /// except a MIDI part's START, which moves by whole bars. That rule was made for the M1b roll,
+    /// which played a mid-bar part pinned to the song's bar lines; since EP-8 a mid-bar part plays
+    /// at its own start (`RegionNoteWindow.songBarSlices`), so the bar step here is now a choice,
+    /// not a necessity — loosening it is its own slice (its guard pins the bar).
     nonisolated static func edgeUnit(_ edge: AudioPartEditor.Edge, clip: Clip?, laneWidth: CGFloat,
                                      songTicks: Int) -> Int {
         if edge == .start, clip?.kind == .midi { return TimelineTime.ticksPerBar }

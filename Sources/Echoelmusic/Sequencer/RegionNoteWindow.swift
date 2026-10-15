@@ -77,6 +77,39 @@ public enum RegionNoteWindow {
         return slices
     }
 
+    /// EP-8 — the SAME slices laid on the SONG's bar grid. The roll and the rack pumps advance
+    /// at GLOBAL bar lines (step 0), so a part starting mid-bar ("Starts at beat 3", a one-beat
+    /// move, a Repeat of a 6-beat part) used to play its bar 1 from the global bar line it was
+    /// loaded in: its first half bar was skipped and every later bar sounded half a bar EARLY
+    /// (the M1b "known constraint"). Pushing the region-relative notes back by the region's
+    /// phase inside its bar makes slice `k` the song bar `regionStartBar + k` — each note fires
+    /// at `regionStart + its offset`, exactly where `SongMIDIExport` writes it.
+    /// A LAUNCHED part keeps its own timebase (it starts on its launch bar): pass phase 0.
+    public static func songBarSlices(notes: [Note], regionLengthTicks: Int,
+                                     phaseTicks: Int) -> [[Note]] {
+        let phase = Swift.max(0, phaseTicks)
+        guard phase > 0 else { return barSlices(notes: notes, regionLengthTicks: regionLengthTicks) }
+        let shifted = notes.map { n -> Note in
+            var moved = n
+            moved.startTick = n.startTick + phase
+            return moved
+        }
+        return barSlices(notes: shifted, regionLengthTicks: Swift.max(1, regionLengthTicks) + phase)
+    }
+
+    /// EP-8 — where a region starts past its song bar line (0 on a bar line).
+    public static func barPhaseTicks(regionStartTick: Int) -> Int {
+        Swift.max(0, regionStartTick) % TimelineTime.ticksPerBar
+    }
+
+    /// EP-8 — the slice an ARRANGEMENT part sounds at `tick`: song bars since the bar its region
+    /// starts in. The partner of `songBarSlices` — the region-relative `(tick − start) / bar`
+    /// is one bar short for a mid-bar part once `tick` passes the next song bar line.
+    public static func songEntryBar(regionStartTick: Int, at tick: Int) -> Int {
+        let perBar = TimelineTime.ticksPerBar
+        return Swift.max(0, Swift.max(0, tick) / perBar - Swift.max(0, regionStartTick) / perBar)
+    }
+
     /// Snap a window offset onto the 16th-step grid (nearest step). The roll is a
     /// step-grid instrument: an off-grid offset (a "Frei"-snap split, or the seconds
     /// fallback at a drifted tempo) would shift every rebased note off the trigger

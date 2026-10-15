@@ -22,9 +22,9 @@
 //   · the transport asks `activeRegion` on its 16th-step grid, this file at the note's own
 //     tick — identical for boundaries on the 16th grid, exact here where a triplet or free
 //     snap puts a boundary between two steps;
-//   · the primary roll lane is BAR-LOCKED (`TimelineRegionPlayer.loadClip`'s known
-//     constraint): a part that starts mid-bar plays its content pinned to the global bar
-//     lines there, while this file writes it where the part starts;
+//   · (no longer a difference since EP-8: a part that starts mid-bar now PLAYS where it starts,
+//     `RegionNoteWindow.songBarSlices` — until then the roll pinned it to the global bar lines,
+//     half a bar early, while this file already wrote it at its start);
 //   · at a takeover the roll lets a sustain ring out to its own end, the secondary lanes cut
 //     it; this file cuts it, like the secondary lanes, so two parts never overlap on a track.
 //

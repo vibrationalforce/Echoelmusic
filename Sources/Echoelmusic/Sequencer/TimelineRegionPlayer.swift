@@ -1078,19 +1078,19 @@ public final class TimelineRegionPlayer {
     /// relative bar cycling via `loadRegionArrangement` (seamless while playing).
     /// `tick` = the song-absolute onset/seek tick; `step` = the within-bar
     /// transport step it lands on (0 ⇒ the roll's trigger(0) still runs this tick).
-    /// KNOWN CONSTRAINT (reviewer M1b): the roll is bar-locked to the GLOBAL grid,
-    /// so a region starting mid-bar plays its content pinned to global bar lines
-    /// (content ticks before the first global line are skipped) — not phase-shifted
-    /// to the region start. Bar-aligned regions (the default snap) are exact; the
-    /// region-relative phase for free placements is the M2 cycle.
+    /// EP-8: the roll advances at GLOBAL bar lines, so an arrangement part is sliced on the SONG's
+    /// bar grid (`songBarSlices`) and entered at its song bar — a part starting mid-bar plays at
+    /// its own start. (Until EP-8 it played pinned to the global bar line, half a bar early —
+    /// the M1b "known constraint".)
     private func loadClip(_ region: TimelineRegion, atTick tick: Int, step: Int) {
-        loadClip(region, startBar: max(0, tick - region.startTick) / TimelineTime.ticksPerBar,
-                 step: step)
+        loadClip(region, startBar: RegionNoteWindow.songEntryBar(regionStartTick: region.startTick, at: tick),
+                 step: step, onSongGrid: true)
     }
 
     /// The same load with the entry bar given — the arrangement phase above, or a LAUNCHED
-    /// part's own timebase (`launchedStartBar`), which the rack lanes have always used.
-    private func loadClip(_ region: TimelineRegion, startBar: Int, step: Int) {
+    /// part's own timebase (`launchedStartBar`, `onSongGrid: false`), which the rack lanes have
+    /// always used.
+    private func loadClip(_ region: TimelineRegion, startBar: Int, step: Int, onSongGrid: Bool) {
         guard let clip = clips?.clip(id: region.clipID) else {
             clearRoll()
             return
@@ -1114,8 +1114,9 @@ public final class TimelineRegionPlayer {
         let windowed = RegionNoteWindow.windowed(notes: clip.melody?.notes ?? [],
                                                  offsetTicks: offset,
                                                  lengthTicks: region.lengthTicks)
-        let bars = RegionNoteWindow.barSlices(notes: windowed,
-                                              regionLengthTicks: region.lengthTicks)
+        let bars = RegionNoteWindow.songBarSlices(notes: windowed,
+                                                  regionLengthTicks: region.lengthTicks,
+                                                  phaseTicks: barPhase(of: region, onSongGrid: onSongGrid))
         pianoRoll?.loadRegionArrangement(bars, startBar: startBar,
                                          atStepZero: step == 0,
                                          playing: pattern?.isPlaying ?? false)
@@ -1137,15 +1138,22 @@ public final class TimelineRegionPlayer {
     /// authoritative offset, legacy seconds fallback, step-aligned, region-length
     /// bar slices). Pre-fix, secondary lanes loaded the FULL clip melody flat and
     /// the pump's %16 fold superimposed every bar of a multi-bar clip.
-    private func windowedBars(for region: TimelineRegion) -> [[Note]] {
+    private func windowedBars(for region: TimelineRegion, onSongGrid: Bool) -> [[Note]] {
         let clipNotes = clips?.clip(id: region.clipID)?.melody?.notes ?? []
         let bpm = pattern?.tempo ?? Self.fallbackTempo
         let offset = RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm)   // #1439: one derivation
         let windowed = RegionNoteWindow.windowed(notes: clipNotes,
                                                  offsetTicks: offset,
                                                  lengthTicks: region.lengthTicks)
-        return RegionNoteWindow.barSlices(notes: windowed,
-                                          regionLengthTicks: region.lengthTicks)
+        return RegionNoteWindow.songBarSlices(notes: windowed,
+                                              regionLengthTicks: region.lengthTicks,
+                                              phaseTicks: barPhase(of: region, onSongGrid: onSongGrid))
+    }
+
+    /// EP-8: an arrangement part sits on the song grid at its phase inside its bar; a launched
+    /// part starts on its launch bar, so it has none.
+    private func barPhase(of region: TimelineRegion, onSongGrid: Bool) -> Int {
+        onSongGrid ? RegionNoteWindow.barPhaseTicks(regionStartTick: region.startTick) : 0
     }
 
     // MARK: - Multi-roll fan-out (B08)
@@ -1212,8 +1220,8 @@ public final class TimelineRegionPlayer {
                 if let laneID = MultiRollFanout.laneID(forSlot: slot, in: doc, rollLane: rollLane),
                    let region = TimelineScheduling.activeRegion(in: doc, laneID: laneID, at: toTick),
                    region.clipID == clipID {
-                    pump.load(bars: windowedBars(for: region),
-                              startBar: max(0, toTick - region.startTick) / TimelineTime.ticksPerBar)
+                    pump.load(bars: windowedBars(for: region, onSongGrid: true),
+                              startBar: RegionNoteWindow.songEntryBar(regionStartTick: region.startTick, at: toTick))
                 } else {
                     pump.load(clips?.clip(id: clipID)?.melody?.notes ?? [])
                 }
@@ -1282,8 +1290,8 @@ public final class TimelineRegionPlayer {
             // where startBar matters (seek / region already active mid-way).
             if let region = TimelineScheduling.activeRegion(in: doc, laneID: load.laneID, at: tick),
                region.clipID == load.clipID {
-                pump.load(bars: windowedBars(for: region),
-                          startBar: max(0, tick - region.startTick) / TimelineTime.ticksPerBar)
+                pump.load(bars: windowedBars(for: region, onSongGrid: true),
+                          startBar: RegionNoteWindow.songEntryBar(regionStartTick: region.startTick, at: tick))
             } else {
                 pump.load(clips?.clip(id: load.clipID)?.melody?.notes ?? [])
             }
@@ -1478,7 +1486,8 @@ public final class TimelineRegionPlayer {
               generation != seenMelodyGeneration else { return }
         seenMelodyGeneration = generation
         if let lane = rollLane, let region = soundingRegion(laneID: lane, at: tick) {
-            loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step)
+            loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step,
+                     onSongGrid: !launch.isOverriding(laneID: lane))
         }
         reloadSecondaryNotes(at: tick)
         log.log(.info, category: .audio, "timeline: note edit pulled into playback at tick \(tick)")
@@ -1497,12 +1506,11 @@ public final class TimelineRegionPlayer {
     /// The bar of `region` a lane sounds at `tick`: the launch timebase for a launched part
     /// (`launchedStartBar`), the region-relative bar for an arrangement part. ONE rule for the
     /// roll and the rack (M5 review: the roll used the arrangement phase for launched parts).
-    /// ⚠️ An OFF-GRID region start (mid-bar) is the M1b known constraint: the players advance at
-    /// global bar lines, so this region-relative bar can be one off there.
+    /// An arrangement part counts SONG bars (EP-8, the partner of its song-grid slices).
     private func entryBar(laneID: UUID, region: TimelineRegion, at tick: Int) -> Int {
         launch.isOverriding(laneID: laneID)
             ? launchedStartBar(laneID: laneID, atTick: tick)
-            : max(0, tick - region.startTick) / TimelineTime.ticksPerBar
+            : RegionNoteWindow.songEntryBar(regionStartTick: region.startTick, at: tick)
     }
 
     /// M5: a NOTE edit re-windows each secondary lane's pump IN PLACE — same slot, same
@@ -1517,7 +1525,7 @@ public final class TimelineRegionPlayer {
         for laneID in MultiRollFanout.secondaryLaneIDs(in: doc, rollLane: rollLane) {
             guard let slot = secondarySlot(forLane: laneID), var pump = pumps[slot],
                   let region = soundingRegion(laneID: laneID, at: tick) else { continue }
-            pump.load(bars: windowedBars(for: region),
+            pump.load(bars: windowedBars(for: region, onSongGrid: !launch.isOverriding(laneID: laneID)),
                       startBar: entryBar(laneID: laneID, region: region, at: tick))
             pumps[slot] = pump
         }
@@ -1612,10 +1620,12 @@ public final class TimelineRegionPlayer {
                 }
                 if isRoll {
                     applyRollLaneVoice()
-                    loadClip(region, startBar: launchedStartBar(laneID: t.laneID, atTick: tick), step: step)
+                    loadClip(region, startBar: launchedStartBar(laneID: t.laneID, atTick: tick), step: step,
+                     onSongGrid: false)
                 } else if let slot = secondarySlot(forLane: t.laneID) {
                     loadSecondaryWindow(region, laneID: t.laneID, slot: slot,
-                                        startBar: launchedStartBar(laneID: t.laneID, atTick: tick))
+                                        startBar: launchedStartBar(laneID: t.laneID, atTick: tick),
+                                    onSongGrid: false)
                 }
             case .stopped:
                 if isRoll {
@@ -1669,10 +1679,12 @@ public final class TimelineRegionPlayer {
         }
         if isRoll {
             applyRollLaneVoice()
-            loadClip(region, startBar: launchedStartBar(laneID: laneID, atTick: tick), step: step)
+            loadClip(region, startBar: launchedStartBar(laneID: laneID, atTick: tick), step: step,
+                     onSongGrid: false)
         } else if let slot = secondarySlot(forLane: laneID) {
             loadSecondaryWindow(region, laneID: laneID, slot: slot,
-                                startBar: launchedStartBar(laneID: laneID, atTick: tick))
+                                startBar: launchedStartBar(laneID: laneID, atTick: tick),
+                                onSongGrid: false)
         }
     }
 
@@ -1789,7 +1801,7 @@ public final class TimelineRegionPlayer {
     /// pitch → mix, then load the windowed bars). `startBar` is the loop entry bar —
     /// the launch timebase for a launched clip, the arrangement phase for a restore.
     private func loadSecondaryWindow(_ region: TimelineRegion, laneID: UUID,
-                                     slot: Int, startBar: Int) {
+                                     slot: Int, startBar: Int, onSongGrid: Bool) {
         guard let sink = slotNoteSink else { return }
         var pump = pumps[slot] ?? LaneNotePump()
         if !pump.isEmpty { sink(slot, pump.reset()) }
@@ -1803,7 +1815,7 @@ public final class TimelineRegionPlayer {
         slotOctaveSink?(slot, MultiRollFanout.octave(forSlot: slot, in: doc, rollLane: rollLane))
         slotEffectSink?(slot, MultiRollFanout.effect(forSlot: slot, in: doc, rollLane: rollLane))
         pushSlotMix(slot, force: true)
-        pump.load(bars: windowedBars(for: region), startBar: startBar)
+        pump.load(bars: windowedBars(for: region, onSongGrid: onSongGrid), startBar: startBar)
         pumps[slot] = pump
     }
 
@@ -1815,7 +1827,8 @@ public final class TimelineRegionPlayer {
     private func restoreSecondaryArrangement(laneID: UUID, slot: Int, at tick: Int) {
         if let region = TimelineScheduling.activeRegion(in: doc, laneID: laneID, at: tick) {
             loadSecondaryWindow(region, laneID: laneID, slot: slot,
-                                startBar: max(0, tick - region.startTick) / TimelineTime.ticksPerBar)
+                                startBar: RegionNoteWindow.songEntryBar(regionStartTick: region.startTick, at: tick),
+                                onSongGrid: true)
         } else if let sink = slotNoteSink {
             if var pump = pumps[slot] {
                 sink(slot, pump.reset())

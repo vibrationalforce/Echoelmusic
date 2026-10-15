@@ -207,13 +207,14 @@ final class AMidPlayNoteEditKeepsTheBarTests: XCTestCase {
         }
         let refresh = String(player[head.upperBound..<end.lowerBound])
         let reload = String(player[reloadHead.upperBound..<reloadEnd.lowerBound])
-        XCTAssertTrue(refresh.contains("loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step)"),
+        XCTAssertTrue(refresh.contains("loadClip(region, startBar: entryBar(laneID: lane, region: region, at: tick), step: step,"),
                       "the roll's bar plan gets THIS step (claim 2), and the entry bar the rack uses")
         XCTAssertTrue(reload.contains("startBar: entryBar(laneID: laneID, region: region, at: tick)"),
                       "one entry-bar rule for roll and rack — a launched part is on its own timebase in both")
         XCTAssertFalse(refresh.contains("lastTick"), "the refresh reads the tick it is handed, never the previous step's")
         XCTAssertFalse(refresh.contains("primeSecondaryLanes("), "the structure prime re-binds and resets every slot")
-        XCTAssertTrue(reload.contains("pump.load(bars: windowedBars(for: region),"))
+        XCTAssertTrue(reload.contains("pump.load(bars: windowedBars(for: region, onSongGrid: !launch.isOverriding(laneID: laneID)),"),
+                      "EP-8: an arrangement part re-windows on the song grid, a launched one on its own")
         XCTAssertFalse(reload.contains(".reset()"), "a note edit cuts no ringing note")
         XCTAssertFalse(reload.contains("Sink?("), "a note edit re-binds no slot and re-sends no patch or mix")
     }
