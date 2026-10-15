@@ -9,7 +9,7 @@
 //      no readable length, then no video track, then a full part grid; a success is a `.video` clip
 //      at the managed copy, spanning the file in whole bars at the song tempo (4.5 s at 120 BPM =
 //      2.25 bars → 3, written from the algebra, #442), after the track's last part, on the FIRST
-//      video track — the one `VideoLanePlayer.shownLane` names (#416).
+//      video track — the TOP one, `VideoLanePlayer.topLane` (#416).
 //   2. END-TO-END BEHAVIOUR: what lands is what plays — the landed region is executable by the
 //      Play predicate when its file resolves, and the engine's shot shows it.
 //   3. SOURCE-TEXT SCAN: the transaction writes the clip BEFORE the region and deletes the copy on
@@ -73,7 +73,7 @@ final class AVideoPartIsPlacedThroughTheStoreTests: XCTestCase {
         XCTAssertEqual(landing.clip.nativeDurationSeconds, 4.5)
         XCTAssertEqual(landing.clip.name, "dawn")
         XCTAssertEqual(landing.laneID, video.id, "the FIRST video track — the one the picture lane shows")
-        XCTAssertEqual(VideoLanePlayer.shownLane(in: doc), video.id, "premise: the engine shows that one")
+        XCTAssertEqual(VideoLanePlayer.topLane(in: doc), video.id, "premise: the top track, which covers the rest")
         XCTAssertEqual(landing.region.laneID, video.id)
         XCTAssertEqual(landing.region.clipID, landing.clip.id)
         XCTAssertEqual(landing.region.startTick, 2 * Self.bar, "after the track's last part")

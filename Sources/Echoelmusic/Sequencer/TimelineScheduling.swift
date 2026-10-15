@@ -253,8 +253,8 @@ public extension TimelineDocument {
     /// The video lanes (in order), mirroring `audioLaneIDs` — the ONE definition of which
     /// lanes are picture lanes: `videoLaneEvents` walks it and `VideoLanePlan.shot(in:…)`
     /// refuses any lane outside it (GMMW VV-7). The old video-lane player that read it
-    /// was removed in the pure-instrument cut; its successor is `VideoLanePlayer`, which shows the
-    /// FIRST of these lanes (one footage layer, v1).
+    /// was removed in the pure-instrument cut; its successor is `VideoLanePlayer`, which shows ONE
+    /// picture from these lanes as a stack: the first lane with a picture wins (One World M2).
     var videoLaneIDs: [UUID] {
         lanes.filter { $0.kind == .video && !$0.isBio }.map(\.id)
     }

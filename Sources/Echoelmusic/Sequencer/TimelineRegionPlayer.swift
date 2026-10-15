@@ -556,10 +556,10 @@ public final class TimelineRegionPlayer {
             let offsetSeconds: Double
         }
         var verdicts: [Judged: Bool] = [:]
-        // One picture lane plays (one footage layer): a part on any other is never shown.
-        let shownPicture = VideoLanePlayer.shownLane(in: document)
-        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind)
-            && (lane.kind != .video || lane.id == shownPicture) {
+        // Every picture lane counts (One World M2): the stack shows the top lane that has a picture,
+        // so an executable part on ANY picture lane is seen wherever the lanes above it are dark —
+        // and where they are not, the lane above is executable itself.
+        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind) {
             for tick in TimelineScheduling.candidateSampleTicks(in: document, laneID: lane.id) {
                 guard let region = TimelineScheduling.activeRegion(in: document,
                                                                    laneID: lane.id,

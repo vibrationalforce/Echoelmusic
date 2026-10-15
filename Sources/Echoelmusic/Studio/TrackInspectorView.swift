@@ -77,8 +77,9 @@ enum TrackMix {
         case audio
         /// A recorded bio curve. It makes no sound.
         case bio
-        /// A picture track (One World V3b). `VideoLanePlayer` shows the FIRST one in the visual
-        /// (one footage layer, v1); it makes no sound, so it has no level, pan or mute.
+        /// A picture track (One World V3b). The visual shows ONE picture from the stack of these
+        /// tracks — the top one with a picture (One World M2); it makes no sound, so it has no
+        /// level, pan or mute.
         case picture
         /// A kind no shipped engine plays on the timeline (visual).
         case unplayed
@@ -193,7 +194,7 @@ enum TrackMix {
         case .audio:              return String(localized: "Audio file player")
         case .bio:                return String(localized: "Bio curve — no sound")
         case .unplayed:           return String(localized: "No engine plays this track yet")
-        case .picture:            return String(localized: "Video player — the first video track shows in the visual")
+        case .picture:            return String(localized: "Video player — the top track with a picture shows; tracks below show through its gaps")
         case .noVoice(let capacity):
             let limited: String = String(localized: "No voice — only the first ") + "\(capacity)" + String(localized: " extra MIDI tracks play")
             return capacity > 0 ? limited : String(localized: "No voice — extra MIDI tracks are off in this build")

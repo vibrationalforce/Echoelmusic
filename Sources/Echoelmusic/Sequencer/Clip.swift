@@ -108,8 +108,9 @@ public enum ClipKind: String, Codable, Sendable, CaseIterable {
     /// ⭐ `.video` JOINED WITH ITS ENGINE (One World V3b), and the two questions were asked
     /// separately: the ENGINE is `VideoLanePlayer` + `VideoLaneAVSink`, injected by the app and
     /// driven by `TimelineRegionPlayer` at every audio-lane drive; the PRODUCER is answered on
-    /// its own (the video import door). ⚠️ The engine shows ONE picture lane — the first —
-    /// so `firstExecutableRegion` asks only that lane (`VideoLanePlayer.shownLane`).
+    /// its own (the video import door). ⭐ The engine shows ONE picture at a time, from a
+    /// STACK of picture lanes (`VideoLanePlan.programShot`, One World M2), so
+    /// `firstExecutableRegion` asks every picture lane.
     public static let timelineEngineKinds: Set<ClipKind> = [.midi, .audio, .video]
 
     /// Only kinds a SHIPPED engine drives render on the timeline. The arrangement may show

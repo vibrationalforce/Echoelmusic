@@ -371,9 +371,10 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             """)
         let first = TimelineLane(name: "Video 0", kind: .video)
         let second = TimelineDocument(lanes: [first, video], regions: [Self.part(clip, on: video)])
-        XCTAssertFalse(Self.startable(second, clips: [clip], resolveAudio: Self.resolving(clip.id)), """
-            The engine shows ONE picture lane, the first (`VideoLanePlayer.shownLane`). A part only \
-            on the second is never shown, so Play over it would start a transport over nothing.
+        XCTAssertTrue(Self.startable(second, clips: [clip], resolveAudio: Self.resolving(clip.id)), """
+            One World M2: picture lanes STACK (`VideoLanePlan.programShot`). The top track is empty \
+            here, so the second shows through — Play over it shows a picture, and refusing it \
+            would be the #1438 under-claim one layer up.
             """)
         let audio = Clip(name: "Not a film", kind: .audio, mediaRef: "Media/Audio/loop.wav")
         let mismatched = TimelineDocument(lanes: [video], regions: [Self.part(audio, on: video)])

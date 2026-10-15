@@ -173,6 +173,20 @@ public enum VideoLanePlan {
         return .nudge(rate: Float(drift > 0 ? 1 - slew : 1 + slew))
     }
 
+    /// The picture the song shows at `tick`: the TOP picture lane (document order) that has a part
+    /// to show there. A lower lane shows only where every lane above it is dark — the stacking rule
+    /// of every video editor, and the whole of the multi-camera cut (One World M2): trim or split
+    /// the part on the track above and the angle below shows through. `nil` when no lane shows.
+    public static func programShot(in document: TimelineDocument, at tick: Int, bpm: Double,
+                                   clip: (UUID) -> Clip?, resolveURL: (UUID) -> URL?) -> Shot? {
+        for laneID in document.videoLaneIDs {
+            if let shot = shot(in: document, laneID: laneID, at: tick, bpm: bpm, clip: clip, resolveURL: resolveURL) {
+                return shot
+            }
+        }
+        return nil
+    }
+
     /// Whether a clip is something the picture lane shows — the ONE definition the shot and the
     /// Play predicate (`TimelineRegionPlayer.isExecutable`) both ask (#416).
     public static func isPicture(_ clip: Clip) -> Bool { clip.kind == .video }

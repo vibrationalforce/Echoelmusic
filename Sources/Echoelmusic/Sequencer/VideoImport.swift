@@ -16,8 +16,8 @@
 // appears (VV-3a): a picture part kept there would be deleted by the next card. The two homes keep
 // the two owners apart, and `MediaLibrary.resolveRef` looks in both.
 //
-// ⚠️ THE LANE IS THE ENGINE'S OWN (#416): a part lands on `VideoLanePlayer.shownLane`, the one
-// picture lane the engine shows — never on a lane it would not play.
+// ⚠️ THE LANE IS THE ENGINE'S OWN (#416): a part lands on `VideoLanePlayer.topLane`, the picture
+// track that covers every track below it (One World M2: lower tracks show through its gaps).
 //
 // ⛔ WHAT THIS IS NOT: no de-duplication against the library, no durable asset record, no sound
 // (the video's sound is the video card's "Use Its Sound" door), no cut detection. A video file
@@ -63,11 +63,11 @@ public enum VideoImport {
 
     /// The lane a picture part lands on: the one the engine shows, or nil.
     public static func pictureLane(in document: TimelineDocument) -> TimelineLane? {
-        guard let id = VideoLanePlayer.shownLane(in: document) else { return nil }
+        guard let id = VideoLanePlayer.topLane(in: document) else { return nil }
         return document.lanes.first { $0.id == id }
     }
 
-    /// The `ordinal`-th video track in document order — 0 is the one the engine shows. A camera
+    /// The `ordinal`-th video track in document order — 0 is the top one. A camera
     /// take with both lenses lands its front take on video track 1 (One World M1).
     public static func videoLane(_ ordinal: Int, in document: TimelineDocument) -> TimelineLane? {
         if ordinal == 0 { return pictureLane(in: document) }
@@ -77,8 +77,8 @@ public enum VideoImport {
     }
 
     /// "Add Video Track" — one tap appends one picture lane, through the ONE owner of lanes.
-    /// It appends; it never "ensures" (a second picture track is legitimate — it is simply not
-    /// shown in v1, and the inspector says which one is).
+    /// It appends; it never "ensures" (a second picture track is legitimate — it is the angle
+    /// below, showing through the top track's gaps, One World M2).
     @MainActor
     public static func addVideoTrack(timeline: TimelineStore) {
         timeline.addLane(kind: .video)

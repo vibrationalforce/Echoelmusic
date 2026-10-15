@@ -12,10 +12,13 @@
 // injected `VideoLaneSink` (`Studio/VideoLaneAVSink.swift`), so this file can be driven end to end
 // by a spy sink in the blocking bundle.
 //
-// ⚠️ ONE PICTURE, ONE LANE (v1). The visual has ONE footage layer, so the lane shown is the FIRST
-// picture lane in the document's order (`TimelineDocument.videoLaneIDs`); a second picture lane is
-// never shown. Mute, solo and level are not read yet — `VideoLanePlan` records that as a founder
-// question, and this file keeps the answer open rather than guessing it.
+// ⭐ ONE PICTURE, STACKED LANES (One World M2, the multi-camera cut). The visual has ONE footage
+// layer, so ONE lane shows at a time: the TOP picture lane (document order) that has a part to show
+// there (`VideoLanePlan.programShot`). A lower lane shows through wherever every lane above it is
+// dark — trim or split the top angle and the next one takes over, exactly as in a video editor.
+// A two-lens take (M1) lands rear on the top track and front below it. Mute, solo and level are
+// not read yet — `VideoLanePlan` records that as a founder question, and this file keeps the answer
+// open rather than guessing it.
 //
 // ⚠️ NOT DEVICE-VERIFIED. Whether the picture stays on the beat — the resync constants, the seek
 // cadence under a Flow tempo glide — is a device probe. Nothing here may be claimed in store text,
@@ -68,43 +71,51 @@ public final class VideoLanePlayer {
     /// the audio lanes, whose `resolvedURL` the Play button asks (#1439). No caller yet.
     public func resolvedURL(forClipID id: UUID) -> URL? { resolveURL(id) }
 
-    /// The one lane shown: the first picture lane in the document's order.
-    nonisolated static func shownLane(in document: TimelineDocument) -> UUID? {
+    /// The top picture track — the one a picked file or a rear-lens take lands on, and the one that
+    /// covers every track below it.
+    nonisolated static func topLane(in document: TimelineDocument) -> UUID? {
         document.videoLaneIDs.first
     }
 
-    /// Start, locate, cycle wrap or a structure edit: show what the shown lane plays at `tick`,
-    /// or go dark.
+    /// Start, locate, cycle wrap or a structure edit: show the picture the song shows at `tick`
+    /// (`VideoLanePlan.programShot`), or go dark.
     public func prime(in document: TimelineDocument, atTick tick: Int, bpm: Double) {
-        guard let lane = Self.shownLane(in: document),
-              let shot = VideoLanePlan.shot(in: document, laneID: lane, at: tick, bpm: bpm,
-                                            clip: clip, resolveURL: resolveURL) else {
+        guard let shot = VideoLanePlan.programShot(in: document, at: tick, bpm: bpm,
+                                                   clip: clip, resolveURL: resolveURL) else {
             clear()
             return
         }
         show(shot)
     }
 
-    /// One contiguous transport step `fromTick` → `toTick`: a new part shows, a gap clears, and the
-    /// same part is corrected toward the song clock when the sink can say where it is.
+    /// One contiguous transport step `fromTick` → `toTick`. While no picture lane changes, the part
+    /// showing is corrected toward the song clock. When any lane changes — a part starts or ends on
+    /// ANY track — the stack is asked again: the same part keeps playing (and is corrected), another
+    /// part takes over from its own song position, or the picture goes.
     public func apply(in document: TimelineDocument, fromTick: Int, toTick: Int, bpm: Double) {
-        guard let lane = Self.shownLane(in: document) else {
+        guard !document.videoLaneIDs.isEmpty else {
             clear()
             return
         }
         let commands = VideoLanePlan.commands(in: document, fromTick: fromTick, toTick: toTick, bpm: bpm,
                                               clip: clip, resolveURL: resolveURL)
-        for command in commands {
-            switch command {
-            case .show(let shot) where shot.laneID == lane:
-                show(shot)
-            case .clear(let laneID) where laneID == lane:
-                clear()
-            case .keep(let laneID) where laneID == lane:
-                correct(in: document, lane: lane, atTick: toTick, bpm: bpm)
-            default:
-                continue
-            }
+        let changed = commands.contains { command in
+            if case .keep = command { return false }
+            return true
+        }
+        guard changed else {
+            if let showing = current { correct(in: document, lane: showing.laneID, atTick: toTick, bpm: bpm) }
+            return
+        }
+        guard let next = VideoLanePlan.programShot(in: document, at: toTick, bpm: bpm,
+                                                   clip: clip, resolveURL: resolveURL) else {
+            clear()
+            return
+        }
+        if let showing = current, showing.laneID == next.laneID, showing.regionID == next.regionID {
+            correct(in: document, lane: next.laneID, atTick: toTick, bpm: bpm)   // a change below: keep running
+        } else {
+            show(next)
         }
     }
 

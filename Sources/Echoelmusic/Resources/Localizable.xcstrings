@@ -19057,16 +19057,6 @@
         }
       }
     },
-    "Video player — the first video track shows in the visual" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Video player — the first video track shows in the visual"
-          }
-        }
-      }
-    },
     "Couldn't copy that video into the library." : {
       "localizations" : {
         "en" : {
@@ -19313,6 +19303,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rear and front record together — two takes, two video tracks."
+          }
+        }
+      }
+    },
+    "Video player — the top track with a picture shows; tracks below show through its gaps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video player — the top track with a picture shows; tracks below show through its gaps"
           }
         }
       }
