@@ -5320,3 +5320,15 @@ Measured cause #1 (timing): playback fires only notes whose start is exactly the
 (`Sequencer/PatternEngine.swift` ~:599) — sub-step positions are pulled to the grid and the step
 jitters with main-thread load. Editing precision (touch targets, snap, zoom) audited separately.
 Consequence: no new DAW surface until timing and editing precision are fixed and device-confirmed.
+
+### 2026-10-15 — Founder: 14 days simplify + stabilise; fresh install opens on the instrument
+Founder: „Mache einfach weiter wie du meinst … Ja zum spielbereiten Instrument als Einstieg bei einer
+frischen Installation. Ja zu 14 Tagen Vereinfachung und Stabilisierung. Bestehende Projekte und deine
+Ausrichtung auf professionelle Medienproduktion bleiben dabei maßgeblich." (with ChatGPT's 14-day plan.)
+- Product law stands: professional media production leads; bio is an optional modulation source
+  (corrects the audit's "bio as the heart" line).
+- Done: `StudioDefaultKeys.stage` → `.instrument` (stored choices kept). ⚠️ CLAUDE.md's Root-view
+  line ("THE PIECE IS THE HOME") is now stale; CLAUDE.md is frozen — update it when it is unfrozen.
+- Acceptance goal for the 14 days: make something audible, change it, keep it, open it again.
+- Order: Kandidat A (a start · c finger hint · g dead ends, b one-Play as a check) → device session 1
+  → Kandidat B (f tempo · e Field 4+More · d routing "Bühne" · h chips) → device session 2.
