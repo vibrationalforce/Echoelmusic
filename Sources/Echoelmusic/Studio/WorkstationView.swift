@@ -343,7 +343,7 @@ struct WorkstationView: View {
             #if canImport(AVFoundation) && canImport(UIKit)
             // One World C1 — "Record Video": the camera card stands in the plate, not in a modal.
             if videoTakeOpen {
-                VideoTakeCard(land: { landVideo($0, videoLane: $1, discardSource: true) },
+                VideoTakeCard(land: { landTake($0) },
                               close: { videoTakeOpen = false })
             }
             #endif
@@ -1659,34 +1659,58 @@ struct WorkstationView: View {
             importNote = VideoImport.Failure.pickerFailed.userMessage
         case .success(let urls):
             guard let url = urls.first else { return }
-            landVideo(url, videoLane: 0, discardSource: false)
+            guard let lane = VideoImport.pictureLane(in: timeline.document) else {
+                importNote = VideoImport.Failure.noPictureLane.userMessage
+                return
+            }
+            landVideo(url, laneID: lane.id, startTick: nil, source: .picked)
         }
     }
 
-    /// The one landing of a video file — a picked one or a camera take (One World C1). The copy is
-    /// measured off the main actor, so the write happens after an `await`; the tempo is read here,
-    /// at the tap's moment. A camera take is a temporary file: it is deleted once the managed copy
-    /// exists (or the landing refused), so a take never lingers outside the library.
-    private func landVideo(_ url: URL, videoLane: Int, discardSource: Bool) {
-        #if canImport(AVFoundation)
-        let bpm = player.preflightTempo
-        // A two-lens take (One World M1) needs a second video track for the front lens.
-        while VideoImport.videoLane(videoLane, in: timeline.document) == nil {
+    #if canImport(AVFoundation)
+    /// A camera take (One World C1/M1): the rear file on the top video track, the front file on the
+    /// track below, BOTH at one position — the later of the two tracks' ends — so the two angles of
+    /// one take stay together in the piece (review 2026-10-15 finding 7). Lanes are fixed by ID
+    /// here, before any `await` (finding 6).
+    private func landTake(_ files: VideoTakeCamera.TakeFiles) {
+        let needed = files.front == nil ? 1 : 2
+        while timeline.document.videoLaneIDs.count < needed {
             let before = timeline.document.videoLaneIDs.count
             addVideoTrack()
             if timeline.document.videoLaneIDs.count == before { break }
         }
+        let ids = timeline.document.videoLaneIDs
+        var targets: [(file: URL, lane: UUID)] = []
+        if let rear = files.rear, let top = ids.first { targets.append((file: rear, lane: top)) }
+        if let front = files.front, ids.count > 1 { targets.append((file: front, lane: ids[1])) }
+        let ends: [Int] = targets.map { timeline.document.nextStartTick(inLane: $0.lane) }
+        let start: Int? = ends.max()
+        for target in targets {
+            landVideo(target.file, laneID: target.lane, startTick: start, source: .take)
+        }
+    }
+    #endif
+
+    /// The one landing of a video file — a picked one or a camera take (One World C1). The file is
+    /// measured off the main actor, so the write happens after an `await`; the tempo is read here,
+    /// at the tap's moment. A take is MOVED into the library and never deleted on a refusal.
+    private func landVideo(_ url: URL, laneID: UUID, startTick: Int?, source: VideoImport.Source) {
+        #if canImport(AVFoundation)
+        let bpm = player.preflightTempo
         Task { @MainActor in
             let result = await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline,
-                                                   bpm: bpm, videoLane: videoLane)
-            if discardSource { try? FileManager.default.removeItem(at: url) }
+                                                   bpm: bpm, laneID: laneID, startTick: startTick, source: source)
             switch result {
             case .success(let landing):
                 let laneName = timeline.document.lanes
                     .first { $0.id == landing.laneID }?.name ?? String(localized: "the video track")
                 importNote = VideoImport.successNote(landing, laneName: laneName)
             case .failure(let failure):
-                importNote = failure.userMessage
+                if source == .take && failure != .copyFailed {
+                    importNote = failure.userMessage + " " + String(localized: "The take is kept on this phone.")
+                } else {
+                    importNote = failure.userMessage
+                }
             }
         }
         #endif

@@ -24,6 +24,16 @@
 // alone, and `open()` answers false so the card can say so. The two files start a few milliseconds apart (two
 // calls on one queue) — not frame-locked; audio-based alignment is M3.
 //
+// ⭐ ONE TAKE AT A TIME, BY IDENTITY (review 2026-10-15, ChatGPT/Astra findings 1, 5, 8, 9, 10).
+// A take owns the two file URLs it was started with; a delegate answer for any other URL is not
+// this take's and is ignored. A new take cannot start while the last one is still FINALISING its
+// files (recording stopped, delegate not yet answered) — Apple separates "recording ended" from
+// "file finished", and a second Stop in that gap waits instead of failing. The result names each
+// lens (`TakeFiles`), so a failed rear take never relabels the front file as the rear one. A file
+// AVFoundation reports as unusable is deleted. The multi-cam cost is re-checked AFTER
+// `commitConfiguration()` (Apple's AVMultiCamPiP does the same). Each take is turned the way the
+// phone is held, through `AVCaptureDevice.RotationCoordinator`, not a fixed 90°.
+//
 // ⚠️ NOT DEVICE-VERIFIED. NEEDS-FOUNDER-VERIFY: Workstation → Add → Record Video, record ten
 // seconds, Stop — the take appears on the video track and plays with the song.
 
@@ -32,6 +42,13 @@ import AVFoundation
 import Foundation
 
 final class VideoTakeCamera: NSObject, @unchecked Sendable {
+
+    /// What one take wrote, per lens. Either may be nil — a lens that failed, or the front lens of
+    /// a single-lens take. Never both: a take with no file is a `.recording` failure.
+    struct TakeFiles: Equatable, Sendable {
+        let rear: URL?
+        let front: URL?
+    }
 
     enum Failure: Error, Equatable, Sendable {
         case denied
@@ -55,15 +72,23 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
     private var configured = false
     /// Queue-only: the front lens is wired and recording with the rear one.
     private var bothWired = false
+    /// Queue-only: the front connection, kept so a post-commit cost check can remove it.
+    private var frontConnection: AVCaptureConnection?
+    /// Queue-only: the upright angle for each lens, as the phone is held.
+    private var rearRotation: AVCaptureDevice.RotationCoordinator?
+    private var frontRotation: AVCaptureDevice.RotationCoordinator?
 
-    /// The take's files and whoever waits for them — under `lock`, because the delegate answers
-    /// on an AVFoundation queue and the waiter arrives from the card.
+    /// The take and whoever waits for it — under `lock`, because the delegate answers on an
+    /// AVFoundation queue and the waiter arrives from the card.
     private let lock = NSLock()
-    private var expected = 0
-    private var finished: [URL] = []
-    private var failedCount = 0
-    private var outcome: Result<[URL], Failure>?
-    private var waiter: CheckedContinuation<Result<[URL], Failure>, Never>?
+    /// The files of the take in flight (rear, front), until each one has answered. Empty = no take
+    /// is finalising.
+    private var pendingRear: URL?
+    private var pendingFront: URL?
+    private var writtenRear: URL?
+    private var writtenFront: URL?
+    private var outcome: Result<TakeFiles, Failure>?
+    private var waiter: CheckedContinuation<Result<TakeFiles, Failure>, Never>?
 
     /// Whether this phone can record both lenses at once.
     static var bothCamerasSupported: Bool { AVCaptureMultiCamSession.isMultiCamSupported }
@@ -128,10 +153,24 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
             guard let back = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
                   let backInput = try? AVCaptureDeviceInput(device: back) else { return .failure(.noCamera) }
             session.beginConfiguration()
-            let wired = wantsBoth ? wireBoth(back: back, backInput: backInput) : wireRear(backInput)
+            var wired = wantsBoth ? wireBoth(back: back, backInput: backInput) : wireRear(backInput)
             session.commitConfiguration()
-            guard let wired else { return .failure(.configuration) }
-            bothWired = wired
+            guard wired != nil else { return .failure(.configuration) }
+            // Two full-quality lenses can exceed what the phone sustains. The cost is read AFTER the
+            // commit — the configuration it describes is then the one that will run.
+            if wired == true, let multi = session as? AVCaptureMultiCamSession, multi.hardwareCost > 1.0,
+               let front = frontConnection {
+                multi.beginConfiguration()
+                multi.removeConnection(front)
+                multi.commitConfiguration()
+                frontConnection = nil
+                wired = false
+            }
+            bothWired = wired ?? false
+            rearRotation = AVCaptureDevice.RotationCoordinator(device: back, previewLayer: nil)
+            if bothWired, let front = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+                frontRotation = AVCaptureDevice.RotationCoordinator(device: front, previewLayer: nil)
+            }
             configured = true
         }
         if !session.isRunning { session.startRunning() }
@@ -172,11 +211,7 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
         let frontTake = AVCaptureConnection(inputPorts: [frontPort], output: frontOutput)
         guard multi.canAddConnection(frontTake) else { return false }
         multi.addConnection(frontTake)
-        // Two full-quality lenses can exceed what the phone sustains: then the rear lens alone.
-        if multi.hardwareCost > 1.0 {
-            multi.removeConnection(frontTake)
-            return false
-        }
+        frontConnection = frontTake
         return true
     }
 
@@ -187,16 +222,15 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
     func startRecording(to url: URL, frontURL: URL) async -> Bool {
         return await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             queue.async { @Sendable [self] in
-                guard self.session.isRunning, !self.output.isRecording, !self.frontOutput.isRecording else {
-                    continuation.resume(returning: false)
+                guard self.session.isRunning, !self.output.isRecording, !self.frontOutput.isRecording,
+                      self.beginTake(rear: url, front: self.bothWired ? frontURL : nil) else {
+                    continuation.resume(returning: false)   // the last take is still finalising its files
                     return
                 }
-                let lenses = self.bothWired ? 2 : 1
-                self.resetTake(expecting: lenses)
-                Self.portrait(self.output)
+                Self.upright(self.output, self.rearRotation)
                 self.output.startRecording(to: url, recordingDelegate: self)
                 if self.bothWired {
-                    Self.portrait(self.frontOutput)
+                    Self.upright(self.frontOutput, self.frontRotation)
                     self.frontOutput.startRecording(to: frontURL, recordingDelegate: self)
                 }
                 continuation.resume(returning: true)
@@ -204,20 +238,23 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Upright, the way the phone is held; the front take unmirrored, as a camera records.
-    private static func portrait(_ output: AVCaptureMovieFileOutput) {
+    /// Upright, the way the phone is held NOW (each lens has its own angle); the front take
+    /// unmirrored, as a camera records. Without a coordinator the phone's default portrait angle.
+    private static func upright(_ output: AVCaptureMovieFileOutput, _ rotation: AVCaptureDevice.RotationCoordinator?) {
         guard let connection = output.connection(with: .video) else { return }
-        if connection.isVideoRotationAngleSupported(90) { connection.videoRotationAngle = 90 }
+        let angle = rotation?.videoRotationAngleForHorizonLevelCapture ?? 90
+        if connection.isVideoRotationAngleSupported(angle) { connection.videoRotationAngle = angle }
         if connection.isVideoMirroringSupported {
             connection.automaticallyAdjustsVideoMirroring = false
             connection.isVideoMirrored = false
         }
     }
 
-    /// Stop the take and wait for its files, rear first. A take that already ended on its own
-    /// (an interruption, a full disk) answers at once.
-    func stopRecording() async -> Result<[URL], Failure> {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Result<[URL], Failure>, Never>) in
+    /// Stop the take and wait for its files. A take that already ended on its own (an
+    /// interruption, a full disk) answers at once; a take whose files are still finalising (a
+    /// second Stop) waits for them instead of failing.
+    func stopRecording() async -> Result<TakeFiles, Failure> {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Result<TakeFiles, Failure>, Never>) in
             lock.lock()
             if let done = outcome {
                 outcome = nil
@@ -230,46 +267,71 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
             lock.unlock()
             earlier?.resume(returning: .failure(.recording))   // a second Stop never strands the first
             queue.async { @Sendable [self] in
-                let anyRecording = self.output.isRecording || self.frontOutput.isRecording
                 if self.output.isRecording { self.output.stopRecording() }
                 if self.frontOutput.isRecording { self.frontOutput.stopRecording() }
-                if !anyRecording { self.settle(.failure(.recording)) }
+                // Nothing recording AND nothing finalising: there is no take to wait for.
+                if !self.takeIsPending() { self.settle(.failure(.recording)) }
             }
         }
     }
 
     /// A synchronous helper, so the lock is never taken in an `async` body (`NSLock` is
-    /// `noasync`). A waiter left over from an earlier take is answered, never stranded.
-    private func resetTake(expecting lenses: Int) {
+    /// `noasync`). Starts a take that owns `rear` (and `front`), or refuses while the last take
+    /// is still finalising. A waiter or a result left over from an earlier take is answered,
+    /// never stranded and never handed to this one.
+    private func beginTake(rear: URL, front: URL?) -> Bool {
         lock.lock()
+        guard pendingRear == nil, pendingFront == nil else {
+            lock.unlock()
+            return false
+        }
         let stranded = waiter
-        expected = lenses
-        finished = []
-        failedCount = 0
+        pendingRear = rear
+        pendingFront = front
+        writtenRear = nil
+        writtenFront = nil
         outcome = nil
         waiter = nil
         lock.unlock()
         stranded?.resume(returning: .failure(.recording))
+        return true
     }
 
-    /// One output finished. When every lens of the take has answered, the take settles: the
-    /// files that were written (rear first), or a failure when none was.
-    fileprivate func fileFinished(_ url: URL?, isFront: Bool) {
+    /// Whether a take's files are still owed (recording, or finalising after Stop).
+    private func takeIsPending() -> Bool {
         lock.lock()
-        if let url {
-            if isFront { finished.append(url) } else { finished.insert(url, at: 0) }
-        } else {
-            failedCount += 1
+        defer { lock.unlock() }
+        return pendingRear != nil || pendingFront != nil
+    }
+
+    /// One output finished writing `url`. An answer for a URL this take does not own is an
+    /// earlier take's and is ignored. When every lens has answered, the take settles with the
+    /// files that were written, each under its own lens — or a failure when none was.
+    fileprivate func fileFinished(_ url: URL, written: Bool) {
+        lock.lock()
+        let isRear = url == pendingRear, isFront = url == pendingFront
+        guard isRear || isFront else {
+            lock.unlock()
+            return
         }
-        let complete = finished.count + failedCount >= expected
-        let files = finished
+        if isRear {
+            pendingRear = nil
+            if written { writtenRear = url }
+        } else {
+            pendingFront = nil
+            if written { writtenFront = url }
+        }
+        let complete = pendingRear == nil && pendingFront == nil
+        let files = TakeFiles(rear: writtenRear, front: writtenFront)
         lock.unlock()
+        // A file AVFoundation calls unusable is not left behind.
+        if !written { try? FileManager.default.removeItem(at: url) }
         guard complete else { return }
-        settle(files.isEmpty ? .failure(.recording) : .success(files))
+        settle(files.rear == nil && files.front == nil ? .failure(.recording) : .success(files))
     }
 
     /// Hand a result to the waiter, or keep it for the next `stopRecording`.
-    private func settle(_ result: Result<[URL], Failure>) {
+    private func settle(_ result: Result<TakeFiles, Failure>) {
         lock.lock()
         if let waiting = waiter {
             waiter = nil
@@ -292,7 +354,7 @@ extension VideoTakeCamera: AVCaptureFileOutputRecordingDelegate {
            let finished = error.userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool {
             written = finished
         }
-        fileFinished(written ? outputFileURL : nil, isFront: output === frontOutput)
+        fileFinished(outputFileURL, written: written)
     }
 }
 #endif

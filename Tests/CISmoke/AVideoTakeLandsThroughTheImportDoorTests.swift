@@ -16,6 +16,12 @@
 //   4. SOURCE-TEXT SCAN — the door: "Record Video" sits in the Add menu, the card is mounted in the
 //      plate (no new modal), a take and a picked file share ONE landing (`landVideo`), the take's
 //      temporary file is deleted, and a piece without a video track gets one first.
+//   6. SOURCE-TEXT SCAN — one take at a time, by identity (ChatGPT/Astra review of `e27de94d9`,
+//      2026-10-15, findings 1–10): a take owns its file URLs and ignores answers for others; no
+//      new take while the last one finalises; a second Stop waits; the result names each lens;
+//      an unusable file is deleted; the cost is read after the commit; each take is upright as
+//      held; the card holds a STARTING take and never drops it; a cancelled open builds nothing;
+//      the landing fixes lanes by ID, lands both lenses at one position, and never deletes a take.
 //   5. SOURCE-TEXT SCAN — both lenses (M1, the YoloBox replacement): a multi-cam phone records the
 //      rear AND the front lens into two files (rear → video track 0, front → track 1, created
 //      through the same creator when missing); a phone that cannot sustain both
@@ -92,17 +98,29 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
                       "one lens, production first — the card stops the camera pulse BEFORE it builds the recorder")
         XCTAssertTrue(open.contains("pulsePaused = true"), "and remembers it, so the card can say the pulse is paused")
         XCTAssertTrue(card.contains("if pulsePaused {"))
-        XCTAssertTrue(card.contains("for (lane, file) in files.enumerated() { land(file, lane) }"),
-                      "every file of a finished take is handed to the Workstation — rear on track 0, front on 1")
+        XCTAssertTrue(card.contains("land(files)") && card.contains("let land: (VideoTakeCamera.TakeFiles) -> Void"),
+                      "a finished take is handed over WHOLE, each file under its lens — never as a numbered list")
+        XCTAssertFalse(card.contains("files.enumerated()"),
+                       "a position in a list is not a lens: a failed rear take would relabel the front file (finding 5)")
         for store in ["TimelineStore", "ClipStore", "timeline.", "clipStore."] {
             XCTAssertFalse(card.contains(store), "the card writes no store (`\(store)`) — the Workstation lands the take")
         }
         XCTAssertTrue(card.contains(".onDisappear { leave() }"), "leaving the plate releases the camera")
         let leave = try XCTUnwrap(slice(card, from: "private func leave() {", to: "private func shut() {"),
                                   "ANCHOR: `leave` is gone (#454)")
-        XCTAssertTrue(leave.contains("if case .success(let files) = await camera.stopRecording() {")
-                      && leave.contains("land(file, lane)"),
+        XCTAssertTrue(leave.contains("if case .success(let files) = await camera.stopRecording() { land(files) }"),
                       "leaving mid-take keeps the take — it is landed, never left in tmp")
+        XCTAssertTrue(leave.contains("if phase == .recording || phase == .starting {"),
+                      "leaving while the take is STARTING stops and lands it too (finding 3)")
+        XCTAssertTrue(card.contains(".disabled(phase == .starting || phase == .recording || phase == .saving)"),
+                      "the card cannot be closed while a take starts, records or saves")
+        let starting = try XCTUnwrap(slice(card, from: "private func record() {", to: "private func stop() {"),
+                                     "ANCHOR: `record` is gone (#454)")
+        XCTAssertTrue(starting.contains("phase = .starting") && starting.contains("guard phase == .starting else { return }"),
+                      "Record holds the card in `.starting` until the camera confirms, and a late answer changes nothing")
+        let reopen = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "private func record() {"))
+        XCTAssertEqual(reopen.components(separatedBy: "guard !Task.isCancelled else").count - 1, 2,
+                       "a cancelled open builds no recorder after the wait, and closes the one it opened (finding 4)")
         XCTAssertTrue(card.contains(".onChange(of: cameraRPPG.isRunning) { _, running in"),
                       "a camera pulse started mid-card ends the take instead of reading Recording over nothing")
     }
@@ -117,14 +135,46 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
         XCTAssertTrue(camera.contains("let frontOutput = AVCaptureMovieFileOutput()"), "its own file")
         let both = try XCTUnwrap(slice(camera, from: "private func wireBoth(", to: "func startRecording("),
                                  "ANCHOR: `wireBoth` is gone (#454)")
-        XCTAssertTrue(both.contains("if multi.hardwareCost > 1.0 {") && both.contains("multi.removeConnection(frontTake)"),
-                      "a phone that cannot sustain both lenses records the rear one alone")
+        XCTAssertFalse(both.contains("hardwareCost"), "the cost is not read mid-configuration any more (finding 9)")
+        let commit = try XCTUnwrap(camera.range(of: "session.commitConfiguration()"))
+        let cost = try XCTUnwrap(camera.range(of: "multi.hardwareCost > 1.0"),
+                                 "a phone that cannot sustain both lenses records the rear one alone")
+        XCTAssertLessThan(commit.lowerBound, cost.lowerBound, "the cost is read AFTER the commit, as AVMultiCamPiP does")
+        XCTAssertTrue(camera.contains("multi.removeConnection(front)"))
+        XCTAssertTrue(camera.contains("rotation?.videoRotationAngleForHorizonLevelCapture"),
+                      "each take is upright the way the phone is held, not a fixed 90° (finding 10)")
         XCTAssertTrue(camera.contains("connection.isVideoMirrored = false"), "the front take is unmirrored, as a camera records")
         let card = try code("Sources/Echoelmusic/Studio/VideoTakeCard.swift")
         XCTAssertTrue(card.contains(".task(id: bothCameras) { await openCamera() }"), "the lens choice reopens the camera")
-        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "switch await recorder.open()"))
+        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "let opened = await recorder.open()"))
         XCTAssertTrue(open.contains("await camera?.closeAndWait()"),
                       "the old session lets go of the camera BEFORE the new one asks for it")
+    }
+
+    // MARK: 6 — one take at a time, by identity (review 2026-10-15)
+
+    func testATakeOwnsItsFilesAndIsNeverMixedWithAnother() throws {
+        let camera = try code("Sources/Echoelmusic/Video/VideoTakeCamera.swift")
+        XCTAssertTrue(camera.contains("struct TakeFiles: Equatable, Sendable {"), "a result names each lens")
+        let begin = try XCTUnwrap(slice(camera, from: "private func beginTake(", to: "private func takeIsPending("),
+                                  "ANCHOR: `beginTake` is gone (#454)")
+        XCTAssertTrue(begin.contains("guard pendingRear == nil, pendingFront == nil else {"),
+                      "no new take while the last one is still finalising its files (finding 1)")
+        let finished = try XCTUnwrap(slice(camera, from: "fileprivate func fileFinished(", to: "private func settle("),
+                                     "ANCHOR: `fileFinished` is gone (#454)")
+        XCTAssertTrue(finished.contains("guard isRear || isFront else {"),
+                      "an answer for a file this take does not own is ignored, never counted for another take")
+        XCTAssertTrue(finished.contains("if !written { try? FileManager.default.removeItem(at: url) }"),
+                      "a file AVFoundation calls unusable is not left behind (finding 8)")
+        XCTAssertTrue(camera.contains("if !self.takeIsPending() { self.settle(.failure(.recording)) }"),
+                      "a second Stop while the files finalise waits for them instead of failing")
+
+        let importer = try code("Sources/Echoelmusic/Sequencer/VideoImport.swift")
+        XCTAssertTrue(importer.contains("if source == .picked { try? FileManager.default.removeItem(at: url) }"),
+                      "a refused landing deletes a COPY, never a take (finding 2)")
+        let library = try code("Sources/Echoelmusic/Core/MediaLibrary.swift")
+        XCTAssertTrue(library.contains("try FileManager.default.moveItem(at: source, to: dest)"),
+                      "a take is MOVED into the library — a rename cannot fail for want of space")
     }
 
     // MARK: 4 — the door
@@ -134,18 +184,23 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
         let menu = try XCTUnwrap(slice(door, from: "private var addMenu: some View {", to: ".menuStyle(.button)"),
                                  "ANCHOR: the Add menu is gone (#454)")
         XCTAssertTrue(menu.contains("{ openVideoTake() } label: { Label(\"Record Video\""))
-        XCTAssertTrue(door.contains("VideoTakeCard(land: { landVideo($0, videoLane: $1, discardSource: true) },"),
-                      "the card is mounted in the plate and hands its take to the one landing")
-        XCTAssertTrue(door.contains("landVideo(url, videoLane: 0, discardSource: false)"),
-                      "a picked file takes the same landing, onto the shown video track")
+        XCTAssertTrue(door.contains("VideoTakeCard(land: { landTake($0) },"),
+                      "the card is mounted in the plate and hands its take to the Workstation")
+        XCTAssertTrue(door.contains("landVideo(url, laneID: lane.id, startTick: nil, source: .picked)"),
+                      "a picked file takes the same landing, onto the top video track")
         XCTAssertEqual(door.components(separatedBy: "VideoImport.perform(").count - 1, 1,
                        "ONE landing for a picked file and a camera take (#416)")
         let landing = try XCTUnwrap(slice(door, from: "private func landVideo(", to: "private func openVideoTake("),
                                     "ANCHOR: `landVideo` is gone (#454)")
-        XCTAssertTrue(landing.contains("if discardSource { try? FileManager.default.removeItem(at: url) }"),
-                      "the take's temporary file is deleted once the copy exists or the landing refused")
-        XCTAssertTrue(landing.contains("addVideoTrack()") && landing.contains("bpm: bpm, videoLane: videoLane)"),
+        XCTAssertFalse(landing.contains("removeItem"), "the landing never deletes the file it was handed (finding 2)")
+        XCTAssertTrue(landing.contains("laneID: laneID, startTick: startTick, source: source)"),
+                      "the lane is fixed by ID before the `await`, never re-read as a position (finding 6)")
+        let take = try XCTUnwrap(slice(door, from: "private func landTake(", to: "private func landVideo("),
+                                 "ANCHOR: `landTake` is gone (#454)")
+        XCTAssertTrue(take.contains("addVideoTrack()"),
                       "a front take gets its own video track, through the same creator, before it lands")
+        XCTAssertTrue(take.contains("let start: Int? = ends.max()") && take.contains("startTick: start, source: .take"),
+                      "both lenses of one take land at ONE position in the piece (finding 7)")
         let open = try XCTUnwrap(slice(door, from: "private func openVideoTake(", to: "\n    }\n"))
         XCTAssertTrue(open.contains("if VideoImport.pictureLane(in: timeline.document) == nil { addVideoTrack() }"),
                       "a take needs a video track to land on — through the same creator as Add Video Track")

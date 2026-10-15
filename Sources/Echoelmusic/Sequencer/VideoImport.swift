@@ -32,6 +32,14 @@ import AVFoundation
 /// The picture-file import transaction: managed copy → measured length → clip + region.
 public enum VideoImport {
 
+    /// Where a video comes from — it decides whether the file is copied (a picked file stays the
+    /// person's) or moved (a camera take is the app's own and its only copy), and whether a refused
+    /// landing may delete the managed file (only a copy may go; a take is never deleted).
+    public enum Source: Equatable, Sendable {
+        case picked
+        case take
+    }
+
     public enum Failure: Error, Equatable, Sendable {
         case pickerFailed
         case copyFailed
@@ -67,15 +75,6 @@ public enum VideoImport {
         return document.lanes.first { $0.id == id }
     }
 
-    /// The `ordinal`-th video track in document order — 0 is the top one. A camera
-    /// take with both lenses lands its front take on video track 1 (One World M1).
-    public static func videoLane(_ ordinal: Int, in document: TimelineDocument) -> TimelineLane? {
-        if ordinal == 0 { return pictureLane(in: document) }
-        let ids = document.videoLaneIDs
-        guard ordinal > 0, ordinal < ids.count else { return nil }
-        return document.lanes.first { $0.id == ids[ordinal] }
-    }
-
     /// "Add Video Track" — one tap appends one picture lane, through the ONE owner of lanes.
     /// It appends; it never "ensures" (a second picture track is legitimate — it is the angle
     /// below, showing through the top track's gaps, One World M2).
@@ -92,15 +91,19 @@ public enum VideoImport {
                             document: TimelineDocument,
                             freeSlotIndex: Int?,
                             bpm: Double,
-                            videoLane ordinal: Int) -> Result<Landing, Failure> {
+                            laneID: UUID,
+                            startTick: Int?) -> Result<Landing, Failure> {
         guard let seconds = durationSeconds, seconds.isFinite, seconds > 0 else { return .failure(.unreadableVideo) }
-        guard let lane = videoLane(ordinal, in: document) else { return .failure(.noPictureLane) }
+        // The lane is named by ID, fixed when the landing began — an ordinal re-read after the
+        // measurement could point at a different track (review 2026-10-15 finding 6).
+        guard document.videoLaneIDs.contains(laneID),
+              let lane = document.lanes.first(where: { $0.id == laneID }) else { return .failure(.noPictureLane) }
         guard let slot = freeSlotIndex else { return .failure(.clipGridFull) }
         let clip = Clip(name: managed.deletingPathExtension().lastPathComponent, kind: .video,
                         mediaRef: managed.path, nativeDurationSeconds: seconds)
         let region = AudioClipFactory.unwarpedRegion(forDurationSeconds: seconds, bpm: bpm,
                                                      laneID: lane.id, clipID: clip.id,
-                                                     startTick: document.nextStartTick(inLane: lane.id))
+                                                     startTick: startTick ?? document.nextStartTick(inLane: lane.id))
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id))
     }
 
@@ -123,10 +126,11 @@ public enum VideoImport {
                               clipStore: ClipStore,
                               timeline: TimelineStore,
                               bpm: Double,
-                              videoLane ordinal: Int,
+                              laneID: UUID,
+                              startTick: Int?,
                               deleteManagedCopy: (URL) -> Void) -> Result<Landing, Failure> {
         switch plan(managed: managed, durationSeconds: durationSeconds, document: timeline.document,
-                    freeSlotIndex: clipStore.firstEmptySlotIndex, bpm: bpm, videoLane: ordinal) {
+                    freeSlotIndex: clipStore.firstEmptySlotIndex, bpm: bpm, laneID: laneID, startTick: startTick) {
         case .failure(let failure):
             deleteManagedCopy(managed)
             return .failure(failure)
@@ -139,21 +143,29 @@ public enum VideoImport {
 
     #if canImport(AVFoundation)
 
-    /// The production entry point: copy under security-scoped access, measure the COPY off the
-    /// main actor (the async asset load), then write on the main actor. `bpm` is read by the
-    /// caller at the tap, so a tempo glide during the measurement cannot move the part.
+    /// The production entry point: bring the file in (a picked file is COPIED under
+    /// security-scoped access, a camera take is MOVED — `Source`), measure it off the main actor
+    /// (the async asset load), then write on the main actor. `bpm` is read by the caller at the tap,
+    /// so a tempo glide during the measurement cannot move the part. A refused landing deletes a
+    /// copy, never a take: the take stays in `Media/Picture` (review 2026-10-15 finding 2).
     @MainActor
     public static func perform(pickedURL: URL,
                                clipStore: ClipStore,
                                timeline: TimelineStore,
                                bpm: Double,
-                               videoLane ordinal: Int) async -> Result<Landing, Failure> {
+                               laneID: UUID,
+                               startTick: Int?,
+                               source: Source) async -> Result<Landing, Failure> {
         // Refuse before copying when nothing can land, so a refused import leaves no file.
-        guard videoLane(ordinal, in: timeline.document) != nil else { return .failure(.noPictureLane) }
-        let scoped = pickedURL.startAccessingSecurityScopedResource()
+        guard timeline.document.videoLaneIDs.contains(laneID) else { return .failure(.noPictureLane) }
+        let scoped = source == .picked && pickedURL.startAccessingSecurityScopedResource()
         let managed: URL
         do {
-            managed = try MediaLibrary.importPictureVideo(from: pickedURL)
+            if source == .take {
+                managed = try MediaLibrary.takePictureVideo(from: pickedURL)
+            } else {
+                managed = try MediaLibrary.importPictureVideo(from: pickedURL)
+            }
         } catch {
             if scoped { pickedURL.stopAccessingSecurityScopedResource() }
             return .failure(.copyFailed)
@@ -161,7 +173,10 @@ public enum VideoImport {
         if scoped { pickedURL.stopAccessingSecurityScopedResource() }
         let seconds = await measuredSeconds(managed)
         return commit(managed: managed, durationSeconds: seconds, clipStore: clipStore, timeline: timeline,
-                      bpm: bpm, videoLane: ordinal, deleteManagedCopy: { try? FileManager.default.removeItem(at: $0) })
+                      bpm: bpm, laneID: laneID, startTick: startTick,
+                      deleteManagedCopy: { url in
+                          if source == .picked { try? FileManager.default.removeItem(at: url) }
+                      })
     }
 
     /// The copy's length in seconds — nil when it has no video track or no finite length.

@@ -42,7 +42,7 @@ final class AVideoPartIsPlacedThroughTheStoreTests: XCTestCase {
 
     private func plan(_ seconds: Double?, _ doc: TimelineDocument, slot: Int? = 0) -> Result<VideoImport.Landing, VideoImport.Failure> {
         VideoImport.plan(managed: Self.managed, durationSeconds: seconds, document: doc, freeSlotIndex: slot, bpm: 120,
-                         videoLane: 0)
+                         laneID: VideoLanePlayer.topLane(in: doc) ?? UUID(), startTick: nil)
     }
 
     private func failure(_ result: Result<VideoImport.Landing, VideoImport.Failure>) -> VideoImport.Failure? {
@@ -79,6 +79,20 @@ final class AVideoPartIsPlacedThroughTheStoreTests: XCTestCase {
         XCTAssertEqual(landing.region.startTick, 2 * Self.bar, "after the track's last part")
         XCTAssertEqual(landing.region.lengthTicks, 3 * Self.bar, "4.5 s at 120 BPM is 2.25 bars, covered by 3")
         XCTAssertEqual(landing.slotIndex, 7)
+
+        // The lane is named by ID (review 2026-10-15 finding 6): a non-picture lane is refused, and a
+        // take's shared start overrides "after the track's last part" (finding 7).
+        XCTAssertEqual(failure(VideoImport.plan(managed: Self.managed, durationSeconds: 4.5, document: doc, freeSlotIndex: 0,
+                                                bpm: 120, laneID: audio.id, startTick: nil)), .noPictureLane,
+                       "an audio track is not a picture track, whatever its ID")
+        guard case .success(let shared) = VideoImport.plan(managed: Self.managed, durationSeconds: 4.5, document: doc,
+                                                           freeSlotIndex: 0, bpm: 120, laneID: second.id,
+                                                           startTick: 2 * Self.bar) else {
+            return XCTFail("a readable video lands on the second picture track")
+        }
+        XCTAssertEqual(shared.region.laneID, second.id)
+        XCTAssertEqual(shared.region.startTick, 2 * Self.bar,
+                       "the empty second track takes the take's shared start, not tick 0")
     }
 
     // MARK: 2 — what lands is what plays

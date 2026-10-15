@@ -10,6 +10,11 @@
 // camera pulse and says so; the strap, the Watch and Apple Health keep feeding bio. `isRunning`
 // flips on start and stop only — a cold read, and it stays in this leaf (the 10.76.41/50 law).
 //
+// ⭐ A TAKE IS NEVER DROPPED BY THE CARD (review 2026-10-15, findings 3 + 4): while a take is
+// STARTING the close button and the lens choice are unavailable, and leaving in that phase stops
+// and lands it like a running take; an `openCamera` cancelled while it waited (the card closed)
+// builds no new recorder, and one cancelled while opening closes what it opened.
+//
 // ⚠️ NOT DEVICE-VERIFIED (preview orientation, the first-frame delay, a take during playback).
 
 #if canImport(AVFoundation) && canImport(UIKit)
@@ -20,9 +25,9 @@ import UIKit
 struct VideoTakeCard: View {
     @Environment(CameraRPPGBioPublisher.self) private var cameraRPPG
 
-    /// The Workstation lands a finished file (`VideoImport.perform`) on video track `n` (0 = the
-    /// shown one: the rear lens; 1 = the front lens of a two-lens take) and deletes it after.
-    let land: (URL, Int) -> Void
+    /// The Workstation lands a finished take (`VideoImport.perform`): the rear file on the top
+    /// video track, the front file on the track below, both at ONE position in the piece.
+    let land: (VideoTakeCamera.TakeFiles) -> Void
     let close: () -> Void
 
     @State private var camera: VideoTakeCamera?
@@ -40,6 +45,8 @@ struct VideoTakeCard: View {
     enum Phase: Equatable {
         case opening
         case ready
+        /// Record was pressed; the camera has not confirmed yet.
+        case starting
         case recording
         case saving
         case failed(String)
@@ -60,12 +67,12 @@ struct VideoTakeCard: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(phase == .recording || phase == .saving)
+                .disabled(phase == .starting || phase == .recording || phase == .saving)
                 .accessibilityLabel("Close camera")
             }
             ZStack {
                 RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg)
-                if let camera, phase == .ready || phase == .recording || phase == .saving {
+                if let camera, phase == .ready || phase == .starting || phase == .recording || phase == .saving {
                     VideoTakePreview(layer: camera.previewLayer)
                         .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radius))
                         .accessibilityLabel("Camera preview")
@@ -128,6 +135,8 @@ struct VideoTakeCard: View {
             } else {
                 note(Text("Video only — the sound of the take is the song's own tracks."))
             }
+        case .starting:
+            note(Text("Starting…"))
         case .recording:
             if let startedAt {
                 TimelineView(.periodic(from: startedAt, by: 1)) { context in
@@ -163,9 +172,17 @@ struct VideoTakeCard: View {
         }
         phase = .opening
         await camera?.closeAndWait()
+        // The card closed while the old camera let go: build nothing new.
+        guard !Task.isCancelled else { return }
         let recorder = VideoTakeCamera(bothCameras: bothCameras)
         camera = recorder
-        switch await recorder.open() {
+        let opened = await recorder.open()
+        // Closed while opening: let go of what was just opened.
+        guard !Task.isCancelled else {
+            recorder.close()
+            return
+        }
+        switch opened {
         case .success(let both):
             bothRunning = both
             phase = .ready
@@ -181,13 +198,17 @@ struct VideoTakeCard: View {
         let take = UUID().uuidString
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("echoel-take-\(take).mov")
         let frontURL = FileManager.default.temporaryDirectory.appendingPathComponent("echoel-take-\(take)-front.mov")
+        phase = .starting
         Task { @MainActor in
-            if await camera.startRecording(to: url, frontURL: frontURL) {
+            let started = await camera.startRecording(to: url, frontURL: frontURL)
+            guard phase == .starting else { return }   // left or taken by the pulse meanwhile
+            if started {
                 takeError = nil
                 startedAt = Date()
                 phase = .recording
             } else {
                 takeError = String(localized: "The take could not start.")
+                phase = .ready
             }
         }
     }
@@ -200,7 +221,7 @@ struct VideoTakeCard: View {
             case .success(let files):
                 startedAt = nil
                 if phase == .saving { phase = .ready }   // a pulse that took the lens keeps its word
-                for (lane, file) in files.enumerated() { land(file, lane) }
+                land(files)
             case .failure:
                 startedAt = nil
                 takeError = String(localized: "The take could not be saved.")
@@ -211,7 +232,7 @@ struct VideoTakeCard: View {
 
     /// The camera pulse took the lens mid-card: land what was recorded, then say why it stopped.
     private func pulseTookTheCamera() {
-        if phase == .recording { stop() }
+        if phase == .recording || phase == .starting { stop() }
         camera?.close()
         phase = .failed(String(localized: "The camera pulse took the camera. Close and reopen to record again."))
     }
@@ -219,12 +240,10 @@ struct VideoTakeCard: View {
     /// Leaving the plate mid-take keeps the take: it is stopped and landed, never left in tmp.
     private func leave() {
         guard let camera else { return }
-        if phase == .recording {
+        if phase == .recording || phase == .starting {
             let land = self.land
             Task { @MainActor in
-                if case .success(let files) = await camera.stopRecording() {
-                    for (lane, file) in files.enumerated() { land(file, lane) }
-                }
+                if case .success(let files) = await camera.stopRecording() { land(files) }
                 camera.close()
             }
         } else {
