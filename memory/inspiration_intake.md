@@ -1484,3 +1484,15 @@ verlassen wurde) und die Datenschutzseite (`d386c6ee1`). Kamera-Zwecktext in der
 gesperrt, Patch liegt bereit — vor einer App-Store-Einreichung Pflicht. Neue Scheiben: AU-1
 (AUv3-Spiegel atomar), AU-2 (samplegenaues MIDI im AUv3). Lehre: vor jedem Push eines Wächters
 jede `VideoTakeLedger()`-artige Wert-Erzeugung auf `let`/Temporär-Mutation lesen.
+
+## 2026-10-15 — Fremdes Modell: „Eventide H90 aus Echoelmusic steuern" — ADOPT→PRODUCT (2/6)
+- Gemessen: MIDI-Clock (0xF8) stimmt und ist gebaut (HW-1 Host-Zeit, HW-2 SPP + Continue).
+- Lücke bestätigt: die App sendet KEIN Program Change (0xC0 nur im MIDI-Datei-Export) und KEINE
+  Parameter-CCs (nur MPE CC74, Panic CC123, RPN) → HW-8 (Program Change je Abschnitt) und HW-9
+  (Modulations-Matrix → CC out).
+- WATCH: Tonart/Skala per CC oder Noten an den H90 — ob der H90 das annimmt, steht nicht im Repo.
+- REJECT: OSC→MIDI-Brücke — CoreMIDI-Ausgang existiert nativ, ein zweiter Weg wäre eine Kopie.
+- UNVERIFIZIERT: die Menü-Schritte am H90.
+- Was die Quelle übersah: Clock UND Performer-Noten gehen an JEDES CoreMIDI-Ziel — am H90 per USB
+  kämen Noten ungefragt an → HW-7 Ziel-Auswahl zuerst. Und: ein USB-C-Port am iPhone — H90 und
+  Xone beide per USB heißt Hub, oder das Xone reicht USB-MIDI an seine DIN-Buchse durch (ungemessen).

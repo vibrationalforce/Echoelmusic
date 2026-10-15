@@ -43,6 +43,18 @@ format; each output pair gets its own stereo submixer + `AutoMixChain` limiter; 
 main pair. Rebuild on route change (USB in/out) through the existing `recoverEngine` path, with
 breadcrumbs before each step. Falls back to all-main when the route has 2 channels.
 
+**HW-7 MIDI destination picker (before HW-8/9).** Clock, notes and MPE go to EVERY CoreMIDI
+destination today (`MIDIOutput.send`, `sendSystemWord`). With the H90 on USB its notes arrive
+unasked. A per-message-kind choice in Routing (clock → H90, notes → a synth, or all), persisted
+by destination name; "all" stays the default so nothing that works today stops.
+
+**HW-8 Program Change per section.** A section of the piece can name a program (0–127, channel);
+entering it sends 0xCn on the clock's host-time stamp. H90 preset follows the set.
+
+**HW-9 Matrix → CC out.** A modulation-matrix destination "MIDI CC n" (channel, number), sent
+deduplicated at the matrix's ~1 Hz bio rate (never per audio buffer), so the body can move an H90
+parameter. Learned mapping stays on the H90.
+
 **HW-6 External sends (later).** A send per lane to an output pair (post-fader), so an outboard
 return (H90 on the Xone) can be fed directly from the app as well as from the mixer. Additive.
 
