@@ -289,3 +289,68 @@ im Colabo), E9 (SharePlay), E10-1 (Mikrofon), E15 (Mac/Vision), HaishinKit, NDI,
 Nichts davon ist am Gerät bestätigt außer dem, was §1 als „läuft" führt — und auch dort gilt die
 Geräte-Liste (`python3 scripts/founder-verify.py`). Die Größenangabe für Stem-Modelle und die
 Aussage über Ether Dream sind VERMUTET und vor der jeweiligen Scheibe zu messen.
+
+---
+
+## 9. Haltung und Formate — unabhängig, immersiv, inklusiv
+
+Founder 2026-10-15, wörtlich: *„Für alles möglichst unabhängig und authentisch Echoelmusic
+Chaos Computer Club Hamburg. VR/XR, Planetarium, 360, multidimensional, immersiv und inklusiv."*
+Das ist eine Haltung UND eine Liste von Ausgabe-Formaten. Beides wird hier einmal festgehalten.
+
+### 9.1 Unabhängigkeit — sieben Regeln für jede Scheibe
+
+Im Geist der Hacker-Ethik, für die der CCC steht. ⚠️ Das ist eine HALTUNG, keine Zugehörigkeit:
+nach außen wird keine Verbindung zum CCC behauptet, solange es keine gibt (E28).
+
+1. **Lokal zuerst.** Jede Produktions-Funktion läuft ohne Netz und ohne Konto. Cloud ist ein
+   Ausgang, nie eine Voraussetzung.
+2. **Offene Standards vor Anbieter-SDKs.** OSC, ADM-OSC, Art-Net, sACN, MIDI, AmbiX, FCPXML,
+   SRT. Ein SDK nur, wo kein offener Weg existiert, und dann founder-gated (HaishinKit, NDI,
+   LinkKit stehen schon so in der Inbox).
+3. **Deine Daten bleiben deine.** Medien liegen als normale Dateien im Projekt-Ordner, lesbar
+   ohne Echoel. Kein proprietärer Container, aus dem man nicht mehr herauskommt.
+4. **Keine Telemetrie, keine Tracker.** Diagnose bleibt auf dem Gerät und geht nur hinaus, wenn
+   du sie selbst teilst (heute schon so: `echoel_diag.log`).
+5. **Körperdaten verlassen das Gerät nie stillschweigend.** Die Bio-Egress-Sperre
+   (`BioEgressPolicy`) gilt für jeden neuen Ausgang, auch für Stream und Colabo.
+6. **Keine Abhängigkeit, die Geld kostet, ohne Freigabe** („Es sollen keine Kosten entstehen").
+   Ein Relay-Server für Internet-Jam ist genau so eine Frage (E25).
+7. **Nachvollziehbar.** Das Repo ist öffentlich; jede Behauptung nach außen steht in
+   `ContentPipeline/CLAIMS.md` und ist aus dem Code belegbar.
+
+### 9.2 Immersive Ausgabe-Formate
+
+Alle drei teilen EINEN Kern: die Szene wird einmal als volle Kugel gerendert (Würfel-Textur,
+sechs Seiten) und dann je Format umprojiziert. Ton läuft als Objekte oder Ambisonics daneben.
+
+| Format | Bild | Ton | Was es schon gibt | Erste Scheibe |
+|---|---|---|---|---|
+| **360-Video** (YouTube, Headsets) | equirektangular 2:1 | AmbiX (Ambisonics) | `Sync/AmbisonicsEncode` (AmbiX bis 3. Ordnung, rein, **ohne Aufrufer**) | Würfel → equirektangular als reine Funktion mit Wächter; Export später |
+| **Planetarium / Fulldome** | Domemaster: quadratisches Fischauge, 180° | Objekte über ADM-OSC an das Haus-System | `Sync/ADMOSCSender` (live) | Würfel → Domemaster aus demselben Kern |
+| **VR/XR** (Vision Pro) | Raum statt Fläche | Objekte | nichts; Vision läuft heute nur als „Designed for iPhone" (E15) | erst nach E15; der Kern oben ist die Vorarbeit |
+
+„Multidimensional" heißt hier praktisch: dieselbe Szene speist Fläche, Kuppel, Kugel und Raum,
+ohne dass für jedes Format ein eigenes Projekt entsteht. Der visuelle Renderer (`MetalBioView`)
+zeichnet heute nur eine flache Ansicht; die Kugel ist eine neue Stufe dahinter, keine Änderung
+an seinem Shader.
+
+### 9.3 Inklusiv
+
+§5 (barrierefreie Oberfläche) gilt für jedes Format oben. Dazu für immersive Ausgaben:
+
+- **Licht- und Blitz-Gesetz gilt auch in der Kuppel und im Headset** (max. 3 Hz) — gerade dort,
+  weil das Bild das ganze Sichtfeld füllt.
+- **Jede immersive Fassung hat eine flache Zweitfassung** (Stereo-Ton, normales Video), damit
+  niemand ausgeschlossen ist, der kein Headset trägt oder keine Kuppel erreicht.
+- **Sprache ist Teil der Barrierefreiheit:** die App ist heute nur englisch; Übersetzung bleibt
+  ein eigener Strang (#232).
+
+### 9.4 Reihenfolge
+
+Ändert §6 nicht. Der Kugel-Kern ist eine reine Funktion ohne Abhängigkeit und passt als kleine
+Scheibe zwischen V und S; Export eines 360- oder Domemaster-Films braucht danach den
+Video-Export, den es heute nicht gibt.
+
+**E28** (neu in `FOUNDER_INBOX.md`): Gibt es eine echte Verbindung zum CCC Hamburg (Vortrag,
+Workshop, Gruppe), die nach außen genannt werden darf — oder ist es nur die Haltung?

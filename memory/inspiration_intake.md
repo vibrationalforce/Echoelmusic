@@ -1431,3 +1431,12 @@ Xcode-27-Beta abgekündigt** (Apple DTS; TN-Nummer nicht auffindbar). Nicht übe
 Android), HaishinKit-Version 2.2.5 (gefunden 2.0.9). Übernommen in
 `scratchpads/PLAN_MULTICAM_2026-10-15.md`: M2 zuerst, M1b Writer-Start auf der Session-Uhr, M3
 GCC-PHAT-Funktionsliste, M4 auf Network.framework, neu **K1: Colab (`MultipeerSession`) umziehen**.
+
+## 2026-10-15 — ChatGPT Astra: Code-Review der Video-Aufnahme (e27de94d9) — ADOPT→PRODUCT
+[verified 10/10] Alle zehn Befunde am Code bestätigt und in `5279814c9` behoben: Take-Identität
+(zweites Stop, fremde Dateien), Take wurde bei fehlgeschlagenem Import gelöscht, Schließen während
+des Starts, abgebrochenes Öffnen, Front-Datei als Rück-Datei umetikettiert, zwei Landungen rasen
+um eine Spur, Linsen landen an verschiedenen Stellen, ungeschriebene Dateien bleiben liegen,
+Multicam-Kosten vor `commitConfiguration` gelesen, feste Drehung. Gerät für 8 davon offen.
+Lehre: ein fremdes Review gegen KONKRETEN Code mit Commit-Stand war die bisher ergiebigste Form —
+deutlich besser als offene Recherche-Fragen (Grok 8/12).

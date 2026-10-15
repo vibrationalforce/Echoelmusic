@@ -5289,3 +5289,9 @@ Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 202
 - Folge: Wo Bio und Produktion um etwas konkurrieren (Rückkamera, Platz, erster Bildschirm, Reihenfolge), gewinnt die Produktion. Bio-Code und Sicherheitsgesetz bleiben. `FOUNDER_PRODUCT_LAW.md` §1 FOCUS + §4 nachgezogen.
 - Offen beim Founder: Store-/Website-Positionierung (App-Store-Text bleibt seine Formulierung).
 - review_date 2026-11-14 · ACTIVE.
+
+### 2026-10-15 — Haltung: unabhängig, immersiv, inklusiv
+- **Entscheidung:** Sieben Unabhängigkeits-Regeln für jede Scheibe (lokal zuerst, offene Standards vor SDKs, normale Dateien, keine Telemetrie, Bio nie still hinaus, keine kostende Abhängigkeit ohne Freigabe, öffentlich belegbar). Immersive Ausgaben teilen einen Kugel-Kern: 360 (equirektangular + AmbiX), Planetarium (Domemaster + ADM-OSC), VR/XR nach E15. Jede immersive Fassung hat eine flache Zweitfassung.
+- **Grund:** Founder wörtlich „Für alles möglichst unabhängig und authentisch Echoelmusic Chaos Computer Club Hamburg. VR/XR, Planetarium, 360, multidimensional, immersiv und inklusiv". Keine CCC-Zugehörigkeit nach außen, bis E28 beantwortet ist.
+- **Wo:** `docs/dev/DMMW_DEEP_ARCHITECTURE_2026-10-15.md` §9.
+- **Review:** 2026-11-14
