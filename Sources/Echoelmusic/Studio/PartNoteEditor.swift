@@ -934,6 +934,10 @@ private struct PartNoteCanvas: View {
     let onRelease: (NoteGridGesture) -> Void
 
     @GestureState private var live: NoteGridGesture? = nil
+    /// EP-3 (founder on device 2026-10-15, "zu ungenau"): counts the moments the 0.3 s hold ARMS,
+    /// so a light tick tells the finger the grid now edits instead of scrolls. A counter, not a
+    /// flag: a scroll view that cancels the gesture leaves nothing standing to reset.
+    @State private var armCount = 0
 
     var body: some View {
         let shown = live?.applied(to: visible) ?? visible
@@ -1020,6 +1024,15 @@ private struct PartNoteCanvas: View {
         .contentShape(Rectangle())
         .onTapGesture(coordinateSpace: .local) { location in onTap(location) }
         .gesture(edit)
+        .sensoryFeedback(.impact(weight: .light), trigger: armCount)
+        // While a hold edits, the grid is framed — the visible half of the armed signal. It reads
+        // `live`, which SwiftUI resets itself when the gesture ends or is cancelled.
+        .overlay {
+            if live != nil {
+                Rectangle().stroke(EchoelTheme.text.opacity(0.5), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+        }
     }
 
     /// Hold first, then slide — so a swipe that starts on the grid still scrolls it.
@@ -1035,6 +1048,10 @@ private struct PartNoteCanvas: View {
                 guard case .second(true, let drag?) = value else { return }
                 state = Self.resolve(drag, visible: visible, picked: picked, grid: grid,
                                      editable: editable)
+            }
+            // The hold has armed and no slide has begun yet: one tick, once per hold.
+            .onChanged { value in
+                if case .second(true, nil) = value { armCount &+= 1 }
             }
             .onEnded { value in
                 guard case .second(true, let drag?) = value,
