@@ -76,9 +76,10 @@ final class ThePieceStageHasOnePlayTests: XCTestCase {
             """)
         XCTAssertTrue(StudioStage.instrument.headCarriesTransport,
                       "the Instrument stage has no bar — its Play is the head's, or it has no Play at all")
-        XCTAssertEqual(StudioDefaultKeys.stage.value, .piece, """
-            ANCHOR: a fresh install opens on the Piece stage, so the FIRST Play a newcomer meets is \
-            the bar's. If the default stage moved, re-read this slice's reasoning before re-anchoring.
+        XCTAssertEqual(StudioDefaultKeys.stage.value, .instrument, """
+            ANCHOR: since 2026-10-15 a fresh install opens on the Instrument stage, so the FIRST Play \
+            a newcomer meets is the head's — which this file pins as present there. If the default \
+            stage moved again, re-read this slice's reasoning before re-anchoring.
             """)
     }
 

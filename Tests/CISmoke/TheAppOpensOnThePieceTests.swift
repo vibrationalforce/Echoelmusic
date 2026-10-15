@@ -210,11 +210,13 @@ final class TheAppOpensOnThePieceTests: XCTestCase {
     func testTheGuidesFirstCardDescribesTheDoorThatShips() throws {
         let first = try XCTUnwrap(LearnLibrary.guideEntries.first)
         XCTAssertEqual(first.id, "guide.firstSession")
-        XCTAssertTrue(first.summary.contains("opens on your piece"), """
-            The first guide card no longer says the app opens on the piece. The front door is \
-            the piece with the visual as a card (2026-09-30); the card that greets a newcomer \
-            must describe the screen it is shown on.
+        XCTAssertTrue(first.summary.contains("opens on the instrument"), """
+            The first guide card no longer says the app opens on the instrument. Since 2026-10-15 \
+            a fresh install opens on the Instrument stage with the visual as a card; the card \
+            that greets a newcomer must describe the screen it is shown on.
             """)
+        XCTAssertFalse(first.summary.contains("opens on your piece"),
+                       "the 2026-09-30 front door is retired — the card must not describe it")
         for entry in LearnLibrary.guideEntries {
             XCTAssertFalse(entry.summary.contains("opens as a picture")
                            || entry.detail.contains("opens into its living picture"), """

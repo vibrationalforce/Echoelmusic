@@ -71,8 +71,8 @@ public enum LearnLibrary {
             LearnEntry(
                 id: "guide.firstSession", section: .guide,
                 title: String(localized: "Your first three minutes"),
-                summary: String(localized: "The app opens on your piece. Here is the way in."),
-                detail: String(localized: "Echoel opens on your piece — the header at the top, five words at the bottom (down the left side when you hold the phone sideways): Arrange, Mixer, Instrument, Browse and Piece — with its living picture as a small card over the piece. Arrange shows your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Piece sets its key and saves, opens and exports. Instrument is where your body plays: press Play at the top and it composes in your key and genre; once it can read your body, your body plays it. Tap the card's resize arrows to make the picture fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you start it — silence at launch is by design, not a fault.")
+                summary: String(localized: "The app opens on the instrument, ready to play. Here is the way in."),
+                detail: String(localized: "Echoel opens on the instrument, ready to play: press Play at the top and it composes in your key and genre. Five words at the bottom (down the left side when you hold the phone sideways) lead everywhere else: Arrange, Mixer, Instrument, Browse and Piece. Arrange holds your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Piece sets the key and saves, opens and exports. Your pieces stay where you left them. Lay a finger on the back camera and your pulse shapes the music. The living picture sits as a small card; tap its resize arrows to make it fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you press Play — silence at launch is by design, not a fault.")
             ),
             LearnEntry(
                 id: "guide.hear", section: .guide,

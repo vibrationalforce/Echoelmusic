@@ -323,7 +323,7 @@ struct WorkspaceView: View {
                 .accessibilityHidden(!floatingVisualVisible)
             #endif
             // #603 B1 — the founder's on/off guide, as the ZStack's TOP layer (above the
-            // visual card, so the tour's first card — "the app opens on your piece" — is
+            // visual card, so the tour's first card — "the app opens on the instrument" — is
             // readable on the very screen it describes). Costs ZERO presentation
             // modifiers (the whole point; the chain below is at its pinned 14). The view
             // reads one low-frequency `@AppStorage` bool in ITS OWN body — constructing

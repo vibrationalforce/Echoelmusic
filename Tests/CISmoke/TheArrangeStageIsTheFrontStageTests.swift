@@ -131,12 +131,13 @@ final class TheArrangeStageIsTheFrontStageTests: XCTestCase {
     // 1 — END-TO-END: the values the seam ships. Piece FIRST and Piece by DEFAULT is the
     // decision ("im Vordergrund eine DMMW"); the raw values are persisted, so they are pinned;
     // neither label may be "Play", because the transport button already is.
-    func testThePieceIsTheDefaultStageAndComesFirst() {
-        XCTAssertEqual(StudioDefaultKeys.stage.value, .piece, """
-            A fresh install no longer opens on the piece. Founder decision 2026-09-30: the DMMW \
-            is the foreground; the instrument is a device on one of the piece's tracks. If the \
-            front stage changed again, that is a founder decision — say so, and sweep the \
-            `StageShell.swift` header, the CLAUDE.md Root-view line and the first guide card.
+    func testTheInstrumentIsTheDefaultStageAndThePieceComesFirst() {
+        XCTAssertEqual(StudioDefaultKeys.stage.value, .instrument, """
+            A fresh install no longer opens on the instrument. Founder decision 2026-10-15 (after \
+            the deep audit): a new user must hear something at once; the 2026-09-30 piece door \
+            opened on an empty arrangement with Play greyed out. If the front stage changes again, \
+            that is a founder decision — say so, and sweep the `StageShell.swift` header, the \
+            CLAUDE.md Root-view line and the first guide card.
             """)
         XCTAssertEqual(StudioDefaultKeys.stage.key, "studio.stage")
         XCTAssertEqual(StudioStage.allCases, [.piece, .instrument], "the piece stands FIRST on the seam")

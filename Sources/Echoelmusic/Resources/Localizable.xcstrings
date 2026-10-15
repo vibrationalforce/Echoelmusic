@@ -19517,6 +19517,26 @@
         }
       }
     },
+    "The app opens on the instrument, ready to play. Here is the way in." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app opens on the instrument, ready to play. Here is the way in."
+          }
+        }
+      }
+    },
+    "Echoel opens on the instrument, ready to play: press Play at the top and it composes in your key and genre. Five words at the bottom (down the left side when you hold the phone sideways) lead everywhere else: Arrange, Mixer, Instrument, Browse and Piece. Arrange holds your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Piece sets the key and saves, opens and exports. Your pieces stay where you left them. Lay a finger on the back camera and your pulse shapes the music. The living picture sits as a small card; tap its resize arrows to make it fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you press Play — silence at launch is by design, not a fault." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel opens on the instrument, ready to play: press Play at the top and it composes in your key and genre. Five words at the bottom (down the left side when you hold the phone sideways) lead everywhere else: Arrange, Mixer, Instrument, Browse and Piece. Arrange holds your tracks and parts and walks you through making one; Mixer sets their levels, Browse holds your sounds and media, Piece sets the key and saves, opens and exports. Your pieces stay where you left them. Lay a finger on the back camera and your pulse shapes the music. The living picture sits as a small card; tap its resize arrows to make it fill the screen; there, the “Studio” chip brings the controls back and the X hides the picture. Nothing sounds until you press Play — silence at launch is by design, not a fault."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

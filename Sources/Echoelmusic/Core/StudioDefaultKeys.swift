@@ -98,15 +98,18 @@ public enum StudioDefaultKeys {
     /// state: the only bio→clock path stays the Flow-Servo (T1/T2,
     /// `AutoModeStartsOffAndOwnsNoTempoTests`).
     /// Slice 2a of the interface audit (2026-09-30) — the STAGE the workspace shows, Piece or
-    /// Instrument (`StudioStage`). PIECE on a fresh install, by decision: the piece is the home
-    /// and the instrument a device on one of its tracks. Three writers, all deliberate: the seam
+    /// Instrument (`StudioStage`). INSTRUMENT on a fresh install since 2026-10-15 (founder, after
+    /// the deep audit: a fresh install opened on an empty arrangement whose Play was greyed out —
+    /// silence as the first impression): the instrument plays at once. Pieces stay the home of the
+    /// work — a stage once chosen is stored and kept, and nothing here touches a saved project.
+    /// ⛔ 2026-09-30 → 2026-10-15 this was PIECE („the piece is the home"); phase history. Three writers, all deliberate: the seam
     /// in `StageShell` (the player's tap); the studio's `showStage` (slice 2b — a plate door
     /// posted from the piece turns the Instrument stage, "New piece" turns the Piece stage);
     /// and the Safe-Mode recovery in `EchoelmusicApp`, which points it at the instrument after a
     /// crash — a stage that crashed at render must not be the stage every relaunch returns to
     /// (WA4-P2 M1's reasoning; the plate memory it once applied to is gone with slice 2b).
     /// Guard: `TheArrangeStageIsTheFrontStageTests`.
-    public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.piece)
+    public static let stage = StudioDefault(key: "studio.stage", value: StudioStage.instrument)
 
     /// DAW shell S2 (founder 2026-10-02, inbox E18) — the plate the PIECE stage shows
     /// (`PieceView`: arrange · mixer · browse · project). ARRANGE on a fresh install: the

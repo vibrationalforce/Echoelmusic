@@ -6,9 +6,10 @@ import SwiftUI
 // of the interface audit; then „Du entscheidest alles … im Vordergrund eine DMMW"):
 //
 //   Piece       → `ArrangeStage`: `WorkstationView` standing free — tracks, parts, scenes,
-//                 import, the media library. The DEFAULT stage: a fresh install opens here.
+//                 import, the media library.
 //   Instrument  → `EchoelStudioView`: the bio-generative front panel with its start row, area
-//                 row and chip strip, exactly as before.
+//                 row and chip strip, exactly as before. The DEFAULT stage since 2026-10-15: a
+//                 fresh install opens here, ready to play (it was Piece 2026-09-30 → 10-15).
 //
 // ⛔ THE INSTRUMENT IS HIDDEN, NEVER UNMOUNTED. The audit doc planned this seam as "a sibling
 // switch inside SurfaceHost"; measured against the code, that would kill the music:
