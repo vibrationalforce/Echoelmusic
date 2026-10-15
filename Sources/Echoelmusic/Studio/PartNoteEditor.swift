@@ -199,7 +199,11 @@ private struct PartNoteGrid: View {
 
     /// The ONE column width the canvas, the playhead line, the velocity lane and the tap read.
     private var stepWidth: CGFloat { CGFloat(NoteGridZoom.stepWidth(atLevel: zoomLevel)) }
-    private static let rowHeight: CGFloat = 14
+    /// EP-1 (founder on device 2026-10-15: „editing View … zu ungenau") — a note row a finger can
+    /// hit. It was 14 pt, a third of Apple's 44-pt touch minimum; 24 pt keeps the 25-semitone
+    /// window at 600 pt, which the page scrolls. Guard: `TheNoteRowsAreTouchableTests` (a floor,
+    /// not a value — the size is a designer's call, #364).
+    private static let rowHeight: CGFloat = 24
 
     var body: some View {
         let document = timeline.document
