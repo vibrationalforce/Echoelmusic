@@ -19597,6 +19597,36 @@
         }
       }
     },
+    "Starts at beat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts at beat"
+          }
+        }
+      }
+    },
+    "Moves the part to this beat of its bar; the bar is kept." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves the part to this beat of its bar; the bar is kept."
+          }
+        }
+      }
+    },
+    "The part's length in beats; notes past the end stay in the part, unheard." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part's length in beats; notes past the end stay in the part, unheard."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

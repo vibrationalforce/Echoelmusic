@@ -632,6 +632,12 @@ struct SelectedPartBar: View {
                     }
                 }
                 PartStartField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
+                // EP-4 (founder 2026-10-15, "zu ungenau"): the beat within the bar, and a MIDI
+                // part's length in beats — exact without a finger, one Undo each.
+                PartBeatField(part: part)
+                if PartLength.isMIDI(regionID, in: document) {
+                    PartLengthField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
+                }
                 // W2: an audio part's own level, on top of its track's — nil for any other part.
                 if let gain = PartGain.gain(of: regionID, in: document) {
                     PartGainField(regionID: regionID, gain: gain)
@@ -996,6 +1002,70 @@ private struct PartStartField: View {
         if let tick = TrackParts.startTick(forBar: bar, keeping: part) {
             TrackParts.move(part, toStartTick: tick, timeline: timeline)
         }
+    }
+}
+
+/// EP-4 — the beat within its bar the selected part starts on. Same pattern as `PartStartField`:
+/// the drag edits a draft, the release writes once through `TrackParts.move` (one Undo), and the
+/// draft is cleared whenever the part's start moves under it.
+@MainActor
+private struct PartBeatField: View {
+    let part: TrackParts.Part
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        EchoelValueField(label: "Starts at beat",
+                         value: Binding(get: { draft ?? Double(TrackParts.beatInBar(forTick: part.startTick)) },
+                                        set: { draft = $0 }),
+                         range: 1...Double(Swift.max(1, TimelineTime.ticksPerBar / Swift.max(1, TimelineTime.ticksPerBeat))),
+                         decimals: 0,
+                         hint: String(localized: "Moves the part to this beat of its bar; the bar is kept."),
+                         onCommit: {
+                             if let beat = draft, let tick = TrackParts.startTick(forBeat: beat, keeping: part) {
+                                 TrackParts.move(part, toStartTick: tick, timeline: timeline)
+                             }
+                             draft = nil
+                         })
+            .onChange(of: part.startTick) { _, _ in draft = nil }
+    }
+}
+
+/// EP-4 — whether the selected part sits on a MIDI track, the one kind whose length is only a
+/// window over its notes (an audio part's length is its media window; its edges trim it).
+enum PartLength {
+    nonisolated static func isMIDI(_ regionID: UUID, in document: TimelineDocument) -> Bool {
+        guard let region = document.regions.first(where: { $0.id == regionID }),
+              let lane = document.lanes.first(where: { $0.id == region.laneID }) else { return false }
+        return lane.kind == .midi && !lane.isBio
+    }
+}
+
+/// EP-4 — a MIDI part's length in beats, written once on release through
+/// `TimelineStore.resizeRegion` (one Undo); notes past the new end stay in the clip, unheard.
+@MainActor
+private struct PartLengthField: View {
+    let part: TrackParts.Part
+    /// The song's length in whole bars — the range follows the song, like `PartStartField`'s,
+    /// because the field's drag step follows its range (`TrackParts.startBarRange`).
+    let songBars: Int
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        EchoelValueField(label: "Length",
+                         value: Binding(get: { draft ?? TrackParts.lengthBeats(part) }, set: { draft = $0 }),
+                         range: 1...Swift.max(TrackParts.lengthBeats(part).rounded(.up),
+                                              Double((Swift.min(Swift.max(1, songBars), 999) + 16) * 4)),
+                         unit: "beats", decimals: 0,
+                         hint: String(localized: "The part's length in beats; notes past the end stay in the part, unheard."),
+                         onCommit: {
+                             if let beats = draft, let ticks = TrackParts.lengthTicks(forBeats: beats, keeping: part) {
+                                 timeline.resizeRegion(id: part.id, lengthTicks: ticks)
+                             }
+                             draft = nil
+                         })
+            .onChange(of: part.lengthTicks) { _, _ in draft = nil }
     }
 }
 

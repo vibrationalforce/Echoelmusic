@@ -142,6 +142,44 @@ enum TrackParts {
         return (target - 1) * perBar + within
     }
 
+    // MARK: - EP-4: the beat and the length as numbers (founder 2026-10-15, "zu ungenau")
+
+    /// The beat within its bar a part starts on, 1-based — the number the beat field shows.
+    nonisolated static func beatInBar(forTick tick: Int) -> Int {
+        let perBar = TimelineTime.ticksPerBar, perBeat = TimelineTime.ticksPerBeat
+        guard perBar > 0, perBeat > 0 else { return 1 }
+        return (Swift.max(0, tick) % perBar) / perBeat + 1
+    }
+
+    /// Where the part lands when its beat is typed: the SAME bar, the named beat, and the same
+    /// place within the beat it holds now (the bar field's "keep the rest" rule). Nil when the
+    /// value is not finite, outside 1…beats-per-bar, or names the beat it already starts on.
+    nonisolated static func startTick(forBeat beat: Double, keeping part: Part) -> Int? {
+        let perBar = TimelineTime.ticksPerBar, perBeat = TimelineTime.ticksPerBeat
+        guard perBar > 0, perBeat > 0, beat.isFinite else { return nil }
+        let beats = perBar / perBeat
+        let target = Int(beat.rounded())
+        guard target >= 1, target <= beats, target != beatInBar(forTick: part.startTick) else { return nil }
+        let start = Swift.max(0, part.startTick)
+        return start - start % perBar + (target - 1) * perBeat + start % perBeat
+    }
+
+    /// The part's length in beats (may be fractional for a part cut off-grid).
+    nonisolated static func lengthBeats(_ part: Part) -> Double {
+        let perBeat = TimelineTime.ticksPerBeat
+        guard perBeat > 0 else { return 0 }
+        return Double(Swift.max(0, part.lengthTicks)) / Double(perBeat)
+    }
+
+    /// The length a typed beat count sets, in whole beats (at least one); nil when it is not
+    /// finite or would change nothing.
+    nonisolated static func lengthTicks(forBeats beats: Double, keeping part: Part) -> Int? {
+        let perBeat = TimelineTime.ticksPerBeat
+        guard perBeat > 0, beats.isFinite else { return nil }
+        let ticks = Swift.max(1, Int(beats.rounded())) * perBeat
+        return ticks == part.lengthTicks ? nil : ticks
+    }
+
     /// "Bar 5 · 4 bars" — the start as `SessionGrid.label` names it (one label rule, #416)
     /// and the length in the largest whole unit that fits.
     nonisolated static func title(_ part: Part) -> String {
