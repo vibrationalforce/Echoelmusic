@@ -675,6 +675,22 @@ public final class TimelineStore {
         persist()
     }
 
+    /// EP-6a (founder 2026-10-15, MIDI clips "entspannt" bearbeiten) — the part repeated `times`
+    /// times right after itself, end to end: the loop gesture of every DAW. The copies share the
+    /// clip like `duplicateRegion`'s (an edit to the notes plays in all of them, which the note
+    /// editor says). ONE undo step for all copies; a no-op outside 1…`maxRepeats` or for an
+    /// unknown or zero-length part.
+    public static let maxRepeats = 16
+    public func repeatRegion(id: UUID, times: Int) {
+        guard (1...Self.maxRepeats).contains(times),
+              let r = document.regions.first(where: { $0.id == id }), r.lengthTicks > 0 else { return }
+        snapshotForUndo()
+        for k in 0..<times {
+            document.regions.append(r.duplicated(atStartTick: r.endTick + k * r.lengthTicks))
+        }
+        persist()
+    }
+
     /// Move a region's start (caller applies snap/magnet first — the store
     /// stays gesture-agnostic). Clamped ≥ 0. Passing `bpm` applies the C5
     /// overlap rule (the moved clip wins) inside the same undo step.

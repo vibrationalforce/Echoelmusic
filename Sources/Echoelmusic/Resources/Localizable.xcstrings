@@ -19627,6 +19627,36 @@
         }
       }
     },
+    "Repeat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat"
+          }
+        }
+      }
+    },
+    "×" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "×"
+          }
+        }
+      }
+    },
+    "Repeats the part this many times right after itself. Undo removes all copies." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeats the part this many times right after itself. Undo removes all copies."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

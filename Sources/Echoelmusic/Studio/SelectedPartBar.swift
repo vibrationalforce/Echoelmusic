@@ -635,6 +635,7 @@ struct SelectedPartBar: View {
                 // EP-4 (founder 2026-10-15, "zu ungenau"): the beat within the bar, and a MIDI
                 // part's length in beats — exact without a finger, one Undo each.
                 PartBeatField(part: part)
+                PartRepeatField(part: part)
                 if PartLength.isMIDI(regionID, in: document) {
                     PartLengthField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
                 }
@@ -1028,6 +1029,30 @@ private struct PartBeatField: View {
                              draft = nil
                          })
             .onChange(of: part.startTick) { _, _ in draft = nil }
+    }
+}
+
+/// EP-6a — repeat the selected part N times right after itself (the loop gesture). The field
+/// rests at 0; a commit writes all copies at once through `TimelineStore.repeatRegion` (one Undo)
+/// and the field falls back to 0, so it never claims copies that are not there.
+@MainActor
+private struct PartRepeatField: View {
+    let part: TrackParts.Part
+    @Environment(TimelineStore.self) private var timeline
+    @State private var draft: Double? = nil
+
+    var body: some View {
+        EchoelValueField(label: "Repeat",
+                         value: Binding(get: { draft ?? 0 }, set: { draft = $0 }),
+                         range: 0...Double(TimelineStore.maxRepeats),
+                         unit: "×", decimals: 0,
+                         hint: String(localized: "Repeats the part this many times right after itself. Undo removes all copies."),
+                         onCommit: {
+                             if let times = draft, times.isFinite, times >= 1 {
+                                 timeline.repeatRegion(id: part.id, times: Int(times.rounded()))
+                             }
+                             draft = nil
+                         })
     }
 }
 
