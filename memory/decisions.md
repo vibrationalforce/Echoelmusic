@@ -5312,3 +5312,11 @@ In-app drums return (the 2026-07-07 cut is phase history under the 2026-09-24 pr
 standalone law of 2026-10-15 needs them); hardware (TR-8S via HW-10) stays an optional second voice.
 Order and slices: `scratchpads/PLAN_SOUND_PALETTE_2026-10-15.md` (after the building-block map).
 Review: 2026-11-14.
+
+### 2026-10-15 — Founder device verdict: MIDI, clips and the editing view are unusable and imprecise
+Founder (on device): „Midi und Clips sowie editing View sind bisher komplett unbrauchbar und zu ungenau."
+Measured cause #1 (timing): playback fires only notes whose start is exactly the current 16th step
+(`Studio/PianoRollView.swift` ~:1126 `startStep == step`), driven by a main-queue timer
+(`Sequencer/PatternEngine.swift` ~:599) — sub-step positions are pulled to the grid and the step
+jitters with main-thread load. Editing precision (touch targets, snap, zoom) audited separately.
+Consequence: no new DAW surface until timing and editing precision are fixed and device-confirmed.
