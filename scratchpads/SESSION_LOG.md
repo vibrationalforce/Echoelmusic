@@ -1085,3 +1085,16 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
 - **V1** `912cb1dd5` Slot-Besitz (letzter Anhang gewinnt, eigener Detach) · **V2** `383ae1415` `VideoLanePlayer` an jedem Transport-Schritt · **V3a** `322358e5e` `VideoLaneAVSink` (stummer AVPlayer, keine eigene Uhr) · **V3b** `7b2e48b10` `.video` spielbar, Rolle `.picture` · **P1+P2** `a0489e091` `VideoImport` nach `Media/Picture`, Tür „Add Video Track"/„Import Video".
 - **Review-Fixes** `e12903aaa`: Wächter 11b war rot (`clip.kind` im Prädikat) → `VideoLanePlan.isPicture`; frisch geladener Teil spielte nie (`clear()` setzte `running`); Lane holt den Slot bei jedem Show zurück; Ziel während langsamen Ladens bleibt erhalten.
 - Offen: Gates für `e12903aaa`, Deploy-Bump, S4 VoiceOver-Kantenaktionen, Gerät-Verify (Bild läuft im Takt mit).
+
+## 2026-10-15 (Nacht) — Echoel-Modus: MIDI-Clips entspannt bearbeiten
+
+Founder: „Ich finde kein Spaß am Testen so lange ich so einfache Sachen wie Midi Clips nicht
+entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
+- Gebaut und gepusht: AUv3 still bis zur ersten Note (`950a25bcf`), D1 44-pt-Fingerziele
+  (`9545797cc`) → 10.79.506; N-F1 Noten-Inspektor (`fc8733dc9`) → 10.79.507; EP-3b gewählte Noten
+  direkt ziehen (`1b90c631d`), EP-4 Teil auf den Schlag + Länge (`ddb656a4c`), EP-6a Repeat
+  (`d3dd0dd0e`), Review-Fixes (`32b65affc`: Länge/Repeat ändern nie „wer spielt", Überlauf-Wache).
+- Review-Agent: kein Compile-Befund; Lücke Länge ohne #1440-Präzedenz → behoben.
+- Bewusst offen: unabhängige Kopie (Clip-Platz, den Undo nicht zurückgibt), T-1 samplegenauer
+  Sequencer (Council zuerst), Werkzeug-Modi (Gerät entscheidet, ob direktes Ziehen reicht).
+- Design-Input: KI-Mockups gemessen (§4), Runde 2 an Grok/ChatGPT vorbereitet (§5, echte 508-Bilder).
