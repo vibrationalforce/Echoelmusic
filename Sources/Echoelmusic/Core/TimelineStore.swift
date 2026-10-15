@@ -683,7 +683,10 @@ public final class TimelineStore {
     public static let maxRepeats = 16
     public func repeatRegion(id: UUID, times: Int) {
         guard (1...Self.maxRepeats).contains(times),
-              let r = document.regions.first(where: { $0.id == id }), r.lengthTicks > 0 else { return }
+              let r = document.regions.first(where: { $0.id == id }), r.lengthTicks > 0,
+              // A corrupt document with a huge length must refuse, not overflow (trap) below.
+              Double(r.endTick) + Double(times) * Double(r.lengthTicks) <= TimelineTime.tickMagnitudeCeiling
+        else { return }
         snapshotForUndo()
         for k in 0..<times {
             document.regions.append(r.duplicated(atStartTick: r.endTick + k * r.lengthTicks))

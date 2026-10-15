@@ -19617,16 +19617,6 @@
         }
       }
     },
-    "The part's length in beats; notes past the end stay in the part, unheard." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The part's length in beats; notes past the end stay in the part, unheard."
-          }
-        }
-      }
-    },
     "Repeat" : {
       "localizations" : {
         "en" : {
@@ -19647,12 +19637,22 @@
         }
       }
     },
-    "Repeats the part this many times right after itself. Undo removes all copies." : {
+    "The part's length in beats; notes past the end stay in the part, unheard. A length that would change which part plays is refused." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Repeats the part this many times right after itself. Undo removes all copies."
+            "value" : "The part's length in beats; notes past the end stay in the part, unheard. A length that would change which part plays is refused."
+          }
+        }
+      }
+    },
+    "Repeats the part this many times right after itself, up to the next part on the track. Undo removes all copies." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeats the part this many times right after itself, up to the next part on the track. Undo removes all copies."
           }
         }
       }

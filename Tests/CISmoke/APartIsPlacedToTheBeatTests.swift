@@ -47,6 +47,27 @@ final class APartIsPlacedToTheBeatTests: XCTestCase {
         XCTAssertNil(TrackParts.lengthTicks(forBeats: .infinity, keeping: part))
     }
 
+    /// Review of ddb656a4c: the length field asks the precedence the bar's other length controls
+    /// ask (#1440) — a longer part may not take ticks from a part that plays them now.
+    func testATypedLengthNeverChangesWhoPlays() {
+        let lane = TimelineLane(name: "Keys", kind: .midi)
+        let part = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: bar)
+        let later = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 2 * bar, lengthTicks: bar)
+        let doc = TimelineDocument(lanes: [lane], regions: [part, later])
+        XCTAssertTrue(PartLength.keepsWhoPlays(part.id, lengthTicks: 2 * bar, in: doc), "up to the next part is free")
+        XCTAssertTrue(PartLength.keepsWhoPlays(part.id, lengthTicks: beat, in: doc), "shorter only lets ticks go")
+        XCTAssertTrue(PartLength.keepsWhoPlays(part.id, lengthTicks: bar, in: doc), "unchanged")
+        XCTAssertFalse(PartLength.keepsWhoPlays(part.id, lengthTicks: 0, in: doc))
+        // An earlier, longer part plays under this one: lengthening this part would take bars the
+        // earlier part plays today (the later start wins) — refused.
+        let under = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: 4 * bar)
+        let over = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: bar, lengthTicks: bar)
+        let layered = TimelineDocument(lanes: [lane], regions: [under, over])
+        XCTAssertFalse(PartLength.keepsWhoPlays(over.id, lengthTicks: 2 * bar, in: layered),
+                       "a longer part may not take bars another part plays now")
+        XCTAssertFalse(PartLength.keepsWhoPlays(UUID(), lengthTicks: bar, in: doc))
+    }
+
     func testBothFieldsAreMountedAndTheLengthOnlyForMIDI() throws {
         let code = try source("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         guard let start = code.range(of: "PartStartField(part: part, songBars:"),
@@ -59,6 +80,8 @@ final class APartIsPlacedToTheBeatTests: XCTestCase {
         XCTAssertTrue(code.contains("return lane.kind == .midi && !lane.isBio"), "the length field is MIDI-only")
         XCTAssertTrue(code.contains("TrackParts.move(part, toStartTick: tick, timeline: timeline)"), "the beat writes through the one mover")
         XCTAssertTrue(code.contains("timeline.resizeRegion(id: part.id, lengthTicks: ticks)"), "the length writes through the store")
+        XCTAssertTrue(code.contains("PartLength.keepsWhoPlays(part.id, lengthTicks: ticks, in: timeline.document) {"),
+                      "the length is asked against who plays before it is written")
     }
 
     // MARK: helpers

@@ -1046,10 +1046,12 @@ private struct PartRepeatField: View {
                          value: Binding(get: { draft ?? 0 }, set: { draft = $0 }),
                          range: 0...Double(TimelineStore.maxRepeats),
                          unit: "×", decimals: 0,
-                         hint: String(localized: "Repeats the part this many times right after itself. Undo removes all copies."),
+                         hint: String(localized: "Repeats the part this many times right after itself, up to the next part on the track. Undo removes all copies."),
                          onCommit: {
                              if let times = draft, times.isFinite, times >= 1 {
-                                 timeline.repeatRegion(id: part.id, times: Int(times.rounded()))
+                                 let fit = PartRepeat.copiesThatFit(part.id, wanted: Int(times.rounded()),
+                                                                    in: timeline.document)
+                                 if fit > 0 { timeline.repeatRegion(id: part.id, times: fit) }
                              }
                              draft = nil
                          })
@@ -1063,6 +1065,42 @@ enum PartLength {
         guard let region = document.regions.first(where: { $0.id == regionID }),
               let lane = document.lanes.first(where: { $0.id == region.laneID }) else { return false }
         return lane.kind == .midi && !lane.isBio
+    }
+
+    /// The precedence the bar's other length controls ask (#1440): a shorter part may only let
+    /// ticks go (`PartTrim.onlyLetsGo`, the "Trim end" rule), a longer one may not take ticks from
+    /// a part that plays them now (`PartTrim.keepsWhoPlays`, the edge-handle rule). A typed length
+    /// that would change who plays is refused, never written.
+    nonisolated static func keepsWhoPlays(_ regionID: UUID, lengthTicks: Int,
+                                          in document: TimelineDocument) -> Bool {
+        guard let region = document.regions.first(where: { $0.id == regionID }), lengthTicks > 0 else { return false }
+        var changed = region
+        changed.lengthTicks = lengthTicks
+        if lengthTicks < region.lengthTicks {
+            return PartTrim.onlyLetsGo(changed, replacing: regionID, in: document)
+        }
+        if lengthTicks > region.lengthTicks {
+            return PartTrim.keepsWhoPlays(extending: changed, replacing: regionID, in: document)
+        }
+        return true
+    }
+}
+
+/// EP-6a review — how many end-to-end copies fit before the next part on the same track, so a
+/// Repeat never buries a part that is already there (the copies would start later and win its
+/// ticks, #1440). The field writes at most this many; Undo is not the only protection.
+enum PartRepeat {
+    nonisolated static func copiesThatFit(_ regionID: UUID, wanted: Int, in document: TimelineDocument) -> Int {
+        guard wanted > 0, let region = document.regions.first(where: { $0.id == regionID }),
+              region.lengthTicks > 0 else { return 0 }
+        let end = region.endTick
+        var fit = wanted
+        for other in document.regions where other.laneID == region.laneID && other.id != regionID
+            && other.endTick > end {
+            if other.startTick <= end { return 0 }
+            fit = Swift.min(fit, (other.startTick - end) / region.lengthTicks)
+        }
+        return Swift.max(0, fit)
     }
 }
 
@@ -1080,12 +1118,13 @@ private struct PartLengthField: View {
     var body: some View {
         EchoelValueField(label: "Length",
                          value: Binding(get: { draft ?? TrackParts.lengthBeats(part) }, set: { draft = $0 }),
-                         range: 1...Swift.max(TrackParts.lengthBeats(part).rounded(.up),
+                         range: Swift.min(1, TrackParts.lengthBeats(part))...Swift.max(TrackParts.lengthBeats(part).rounded(.up),
                                               Double((Swift.min(Swift.max(1, songBars), 999) + 16) * 4)),
                          unit: "beats", decimals: 0,
-                         hint: String(localized: "The part's length in beats; notes past the end stay in the part, unheard."),
+                         hint: String(localized: "The part's length in beats; notes past the end stay in the part, unheard. A length that would change which part plays is refused."),
                          onCommit: {
-                             if let beats = draft, let ticks = TrackParts.lengthTicks(forBeats: beats, keeping: part) {
+                             if let beats = draft, let ticks = TrackParts.lengthTicks(forBeats: beats, keeping: part),
+                                PartLength.keepsWhoPlays(part.id, lengthTicks: ticks, in: timeline.document) {
                                  timeline.resizeRegion(id: part.id, lengthTicks: ticks)
                              }
                              draft = nil

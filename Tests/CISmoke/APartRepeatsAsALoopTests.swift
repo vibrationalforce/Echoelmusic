@@ -55,12 +55,32 @@ final class APartRepeatsAsALoopTests: XCTestCase {
         XCTAssertEqual(timeline.document.regions.count, 1, "an unknown part changes nothing")
     }
 
+    /// Review of d3dd0dd0e: copies start later than a following part, so they would win its
+    /// ticks (#1440) — Repeat stops at the next part on the track instead of burying it.
+    func testRepeatStopsAtTheNextPartOnTheTrack() {
+        let bar = TimelineTime.ticksPerBar
+        let lane = TimelineLane(name: "Keys", kind: .midi)
+        let other = TimelineLane(name: "Bass", kind: .midi)
+        let part = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: bar)
+        let next = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 3 * bar + bar / 2, lengthTicks: bar)
+        let elsewhere = TimelineRegion(laneID: other.id, clipID: UUID(), startTick: bar, lengthTicks: bar)
+        let doc = TimelineDocument(lanes: [lane, other], regions: [part, next, elsewhere])
+        XCTAssertEqual(PartRepeat.copiesThatFit(part.id, wanted: 8, in: doc), 2,
+                       "bars 2 and 3 fit; a third copy would cover the part at bar 4.5")
+        XCTAssertEqual(PartRepeat.copiesThatFit(part.id, wanted: 1, in: doc), 1)
+        let touching = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: bar, lengthTicks: bar)
+        XCTAssertEqual(PartRepeat.copiesThatFit(part.id, wanted: 4,
+                                                in: TimelineDocument(lanes: [lane], regions: [part, touching])), 0,
+                       "a part right behind leaves no room")
+        XCTAssertEqual(PartRepeat.copiesThatFit(UUID(), wanted: 4, in: doc), 0)
+    }
+
     func testTheFieldRestsAtZeroAndWritesOnce() throws {
         let code = try source("Sources/Echoelmusic/Studio/SelectedPartBar.swift")
         XCTAssertTrue(code.contains("value: Binding(get: { draft ?? 0 }, set: { draft = $0 }),"),
                       "the field rests at 0 — it never claims copies that are not there")
-        XCTAssertTrue(code.contains("timeline.repeatRegion(id: part.id, times: Int(times.rounded()))"),
-                      "one commit through the store")
+        XCTAssertTrue(code.contains("if fit > 0 { timeline.repeatRegion(id: part.id, times: fit) }"),
+                      "one commit through the store, of only the copies that fit")
         guard let beat = code.range(of: "PartBeatField(part: part)"),
               let repeatField = code.range(of: "PartRepeatField(part: part)", range: beat.upperBound..<code.endIndex) else {
             return XCTFail("ANCHOR MISSING: the repeat field under the beat field")
