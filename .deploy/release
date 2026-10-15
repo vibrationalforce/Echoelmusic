@@ -1,4 +1,4 @@
-build: v10.79.502 — dein Video im Bild, Spuren mit Mute/Solo im Kopf, sechs Plugin-Reparaturen
+build: v10.79.503 — Video aufnehmen mit Rück- und Frontkamera, Video-Spuren übereinander, Teile auf der Leinwand kürzen
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,44 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.503) ───────────────────────────────
+
+  Siebzehn Commits an `Sources/` und `Tests/` seit 10.79.502. Gebaut wird `d82fb7b9f`; Xcode
+  Compile Check UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon
+  geprüft.
+
+  ── POSTEN 1: VIDEO-SPUR (Import) ──
+  Im Arrange: Add → „Add Video Track", dann Add → „Import Video". Das Video landet als Teil auf
+  der Video-Spur und läuft stumm mit dem Song (Play, Stop, Springen, Loop).
+
+  ── POSTEN 2: VIDEO AUFNEHMEN (Rück + Front) ──
+  Add → „Record Video": die Kamera öffnet sich als Karte im Arrange. „Rear" oder „Rear + Front"
+  wählen, Record, ein paar Sekunden, Stop. Die Rückkamera landet auf der oberen Video-Spur, die
+  Front auf der Spur darunter, beide an derselben Stelle. Läuft der Kamera-Puls, wird er dafür
+  pausiert (die Karte sagt es). Jeder Take wird zuerst in der Mediathek gesichert und nie
+  gelöscht. Ton nimmt die Aufnahme nicht auf. Ein Take landet heute am Spur-Ende, noch nicht an
+  der Song-Stelle der Aufnahme (kommt mit M1b).
+
+  ── POSTEN 3: SPUREN ÜBEREINANDER (M2) ──
+  Mit zwei Video-Spuren zeigt das Bild die obere; wo sie eine Lücke hat, erscheint die untere.
+
+  ── POSTEN 4: TEILE AUF DER LEINWAND KÜRZEN ──
+  Im Arrange einen MIDI- oder Audio-Teil wählen und an seinem linken oder rechten Rand ziehen.
+
+  ── POSTEN 5: FREMD-PLUGINS ──
+  Sind die Einstellungen eines Plugins größer als 1 MB, sagt die Plugin-Zeile das beim
+  Schließen des Fensters, statt sie still zu verwerfen. Der Pegel eines Plugins bleibt in 0…1.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 66cc42fd2) ──
+  · Arrange: einen MIDI-Teil wählen, rechten Rand nach rechts ziehen — die Linie folgt.
+  · Video-Spur: Teil drauf, Play — das Bild läuft mit dem Song und hält bei Stop an.
+  · Add → Add Video Track, Add → Import Video, ein Clip — er landet auf der Video-Spur.
+  · Add → Record Video, zehn Sekunden, Stop — der Take erscheint auf der Video-Spur.
+  · Rear + Front, Record und sofort Stop — genau ein Take landet, oder die Karte sagt warum.
+  · Zwei Video-Spuren, oben eine Lücke — dort erscheint das untere Bild.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.502) ───────────────────────────────
 
