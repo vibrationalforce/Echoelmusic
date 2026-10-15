@@ -57,18 +57,19 @@ TestFlight-Link in der Bio.
 `#GenerativeMusic #Biofeedback #Synthesizer #AmbientMusic #iOSMusic #SoundDesign
 #ArtNet #DMX #Immersive #LiveVisuals #HRV #Echoel`
 
-⛔ **Nicht** verwenden: `#AUv3` (Falschbehauptung), `#HealthTech` · `#Wellness` ·
-`#Meditation` · `#Sleep` · `#Longevity` (rote Linie), `#HealingFrequency` und Verwandte.
-`#Biohacking` ist grenzwertig: nur zulässig, wenn im Video **keine** Wirkung auf
-Gesundheit behauptet wird — es zieht sonst das Wellness-Publikum an, für das dieses
-Produkt nicht gebaut ist.
+⛔ **Nicht** verwenden: `#HealthTech` · `#Wellness` · `#Meditation` · `#Sleep` · `#Longevity`
+(rote Linie), `#HealingFrequency` und Verwandte, `#Biohacking` (nie — `CLAIMS.md` §9, ⛔ hier
+stand es als „grenzwertig zulässig" und widersprach dem Register).
+`#AUv3` nur in einem Clip, der Echoel **in AUM** zeigt (`CLAIMS.md` §1a, am Gerät gemessen
+2026-09-20) — nie mit „läuft in deiner DAW", „Logic" oder „GarageBand" (ungeprüft). ⛔ Hier stand
+`#AUv3` pauschal als Falschbehauptung; das ist seit #1386 überholt.
 
 ---
 
 ## Checkliste vor dem Posten
 
 - [ ] Jede Fähigkeit steht in `CLAIMS.md` unter ✅
-- [ ] Kein AUv3/DAW/Plugin-Bild und -Wort
+- [ ] AUv3 nur als „läuft in AUM" und nur mit AUM im Bild; kein DAW-Name, kein „lädt deine Plugins"
 - [ ] Keine Gesundheits-, Schlaf-, Fokus- oder Longevity-Wirkung behauptet
 - [ ] Die Pulsquelle im Bild ist die Kamera (oder ein Gurt), nicht die Watch
 - [ ] Blitz-/Schnittrate ≤ 3 Hz
