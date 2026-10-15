@@ -7,10 +7,10 @@ import os
 ///
 /// A playable DAW instrument: host MIDI notes drive the pitch (walked from the
 /// render block's realtime event list) while bio-reactive parameters (coherence,
-/// HRV, heart rate, breath) shape the timbre. Before the first MIDI note a
-/// free-running bio tone plays as the idle default (armed once in
-/// `allocateRenderResources`); once the host plays notes, a note-off releases the
-/// voice like any instrument. Parameters are automatable from Logic Pro,
+/// HRV, heart rate, breath) shape the timbre. It is SILENT until the first MIDI note
+/// (founder 2026-10-15: a professional instrument does not sound when it is loaded — AUM
+/// played a drone the moment the plug-in opened, FOUNDER_DEVICE_SESSION §2b finding 2); a
+/// note-off releases the voice like any instrument, and the texture bed follows the voice. Parameters are automatable from Logic Pro,
 /// GarageBand, AUM, etc.
 ///
 /// Component: aumu/echl/Echo (instrument — MIDI in, no audio input needed)
@@ -140,13 +140,18 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     }
     private let bioRenderState = BioRenderState()
     /// Render-owned last-note-priority tracker for the mono voice: the MIDI note number
-    /// currently sounding (-1 = none, or the free-running bio drone). A note-off silences
+    /// currently sounding (-1 = none). A note-off silences
     /// the voice ONLY when it releases THAT note, so releasing a still-held earlier note
     /// no longer kills the current one. Written by the render thread, and by
     /// `allocateRenderResources` (the reset to -1 before the drone starts) only while no render
     /// is in flight — the same contract as `BioRenderState` above — so the plain field is safe.
     /// `Int32` holds a 7-bit MIDI note plus the -1 sentinel.
-    private final class RenderNoteState { nonisolated(unsafe) var current: Int32 = -1 }
+    private final class RenderNoteState {
+        nonisolated(unsafe) var current: Int32 = -1
+        /// The voice's envelope at the end of the previous block, so the texture bed ramps
+        /// across a block instead of stepping at its edge (no zipper on attack or release).
+        nonisolated(unsafe) var textureLevel: Float = 0
+    }
     private let renderNoteState = RenderNoteState()
 
     // MARK: - Buses
@@ -581,7 +586,14 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         // late note-off released this fresh drone. No render is in flight here.
         // Guard: `TheReallocatedDroneIgnoresAStaleNoteOffTests`.
         renderNoteState.current = -1
+        renderNoteState.textureLevel = 0
         synth.noteOn()
+        // ⭐ 2026-10-15 (founder: "still bis zur ersten Note"): the start above still primes the
+        // admitted pitch (P8h), and this release takes it straight back — nothing has rendered,
+        // so the envelope releases from 0 and the voice is silent until the host plays a note.
+        // The texture bed is scaled by the voice's envelope in the render block, so it is
+        // silent with it. Guard: `TheInstrumentIsSilentUntilTheFirstNoteTests`.
+        synth.noteOff()
         isNoteOn = true
         startVitalsPolling()
         os_log(.info, log: Self.auLog, "Instrument started: %.0f Hz at %.0f Hz host rate",
@@ -780,6 +792,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             // scratch to unsafe buffer pointers so the per-sample loop takes no per-element ARC on
             // the class-held arrays.
             let gain = gainBox.value
+            // The texture bed follows the voice (silent until the first note, gone after the
+            // release): a per-sample ramp from the last block's envelope to this block's.
+            let textureFrom = noteState.textureLevel
+            let textureTo = synthRef.envelopeLevel.isFinite ? synthRef.envelopeLevel : 0
+            noteState.textureLevel = textureTo
+            let textureStep = count > 0 ? (textureTo - textureFrom) / Float(count) : 0
             let ablPointer = UnsafeMutableAudioBufferListPointer(outputData)
             let mono = ablPointer.count == 1
             scratch.pad.withUnsafeBufferPointer { padBuf in
@@ -801,7 +819,8 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
                                 // synth, which is the pre-WA3.3 output exactly.
                                 let synthSample = mono ? (padBuf[i] + padRBuf[i]) * 0.5
                                                        : (channel == 0 ? padBuf[i] : padRBuf[i])
-                                data[i] = (synthSample + texBuf[i]) * gain
+                                let bed = textureFrom + textureStep * Float(i + 1)
+                                data[i] = (synthSample + texBuf[i] * bed) * gain
                             }
                         }
                     }

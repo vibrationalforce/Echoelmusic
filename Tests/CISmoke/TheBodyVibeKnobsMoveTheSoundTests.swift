@@ -151,8 +151,9 @@ final class TheBodyVibeKnobsMoveTheSoundTests: XCTestCase {
             The render block no longer reads the output-gain mirror. Master Gain would then be \
             a knob with no reader.
             """)
-        XCTAssertTrue(render.contains("data[i] = (synthSample + texBuf[i]) * gain"), """
-            The output is no longer `(synth + texture) * gain`. If the mix stage moved, move this \
+        XCTAssertTrue(render.contains("data[i] = (synthSample + texBuf[i] * bed) * gain"), """
+            The output is no longer `(synth + texture · bed) * gain` (the bed follows the voice
+            since 2026-10-15, `TheInstrumentIsSilentUntilTheFirstNoteTests`). If the mix stage moved, move this \
             needle with it (#456) — the claim is that every rendered sample passes the gain.
             """)
         XCTAssertTrue(code.contains("self.gainMirror.value = admitted"),
