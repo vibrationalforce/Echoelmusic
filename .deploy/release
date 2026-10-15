@@ -1,4 +1,4 @@
-build: v10.79.505 — Start auf dem Instrument, Finger-Hinweis für den Puls, Noten-Editor greifbarer (Kandidat A + EP-2/EP-3)
+build: v10.79.506 — Echoel-Plugin still bis zur ersten Note, 44-Punkt-Bedienelemente
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,26 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.506) ───────────────────────────────
+
+  Gebaut wird `9545797cc`; Xcode Compile Check UND Build for Testing grün auf diesem Stand.
+  Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: ECHOEL-PLUGIN STILL BIS ZUR ERSTEN NOTE ──
+  In AUM klang Echoel sofort beim Laden. Jetzt schweigt es, bis der Host eine Note spielt; die
+  Textur-Schicht blendet mit der Note ein und mit dem Loslassen aus.
+
+  ── POSTEN 2: JEDES BEDIENELEMENT IST 44 PUNKT GROSS ──
+  Chips, Quellen-Menü, Vollbild, Routing-Pillen, „Invite", Undo und die Erzähl-Zeile waren 30–36
+  Punkt hoch. Jetzt alle 44 Punkt (Apples Mindestmaß), sie wachsen mit großer Schrift weiter mit.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since a01928300) ──
+  · AUM → Echoel hinzufügen → still, bis eine Taste gespielt wird; eine Note klingt; nach dem
+    Loslassen verklingt auch die Textur.
+  · Instrument und Routing: Chips und Pillen treffen leicht, nichts überlappt.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.505) ───────────────────────────────
 
