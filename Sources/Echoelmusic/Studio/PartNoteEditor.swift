@@ -474,8 +474,8 @@ private struct PartNoteGrid: View {
                                        stepCount: steps, edgeSlop: 0)
         switch hit {
         case .body(let id), .rightEdge(let id):
-            // Multi-select: a tap adds the note to the selection, or takes it out again.
-            picked = RollSelection(ids: Array(NoteGridGesture.toggling(id, in: picked.ids)))
+            // EP-7: a tap picks this note alone (a second tap lets it go); a box adds to a selection.
+            picked = RollSelection(ids: Array(NoteGridGesture.tapping(id, in: picked.ids)))
             audition(id, in: visible, region: region)
         case .empty(let pitch, let step):
             guard editable, let clip = clipStore.clip(id: region.clipID),
@@ -1115,7 +1115,7 @@ private struct PartNoteCanvas: View {
 
     /// EP-3b — the slide on a PICKED note, without the hold: the same `resolve`, the same
     /// finger-rate `live`, the same one commit at release. A few points of travel first, so a
-    /// tap on a picked note still toggles it.
+    /// tap on a picked note still reaches `tapping`.
     private var direct: some Gesture {
         let visible = self.visible
         let picked = self.picked

@@ -166,11 +166,12 @@ enum NoteGridGesture: Equatable, Sendable {
         }
     }
 
-    /// The selection a TAP leaves: the note joins it, or leaves it if it was already in.
-    static func toggling(_ id: UUID, in picked: Set<UUID>) -> Set<UUID> {
-        var next = picked
-        if next.contains(id) { next.remove(id) } else { next.insert(id) }
-        return next
+    /// The selection a TAP leaves (EP-7): the tapped note ALONE — or nothing, when it already
+    /// was the only pick. A tap that JOINED the selection (M1) made the everyday move "tap A, then
+    /// tap B" pick both: the single-note number row vanished and the next drag moved two notes.
+    /// Building a selection is the box's job (`boxing` joins); Deselect starts over.
+    static func tapping(_ id: UUID, in picked: Set<UUID>) -> Set<UUID> {
+        picked == [id] ? [] : [id]
     }
 
     /// The selection a BOX leaves (M9): the boxed notes JOIN it, like a tap's. A box that

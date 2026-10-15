@@ -1,7 +1,7 @@
 // ABoxAddsToTheSelectionTests.swift
 // Echoel — Phase 3 / Creation Workflow, MIDI editor slice M9: a box adds to the selection.
 //
-// WHAT IT PINS. A tap adds a note to the selection (or takes it out) since M1. A box — press,
+// WHAT IT PINS. A tap picks one note (EP-7; it ADDED to the selection from M1). A box — press,
 // hold and slide on an empty cell — REPLACED the selection with what it touched, so a selection
 // could not be built from two boxes, and every note picked two octaves away or in the bar before
 // was dropped without a word. Since M9 the boxed notes JOIN the selection (`NoteGridGesture
@@ -10,7 +10,7 @@
 //
 // 1. END-TO-END BEHAVIOUR (`NoteGridGesture`, pure): a real box resolved on the grid touches one
 //    note, and the selection that box leaves holds it AND the note picked before; a box over a
-//    note already picked keeps it (a box never takes a note out — that is the tap's toggle); an
+//    note already picked keeps it (a box never takes a note out; a tap narrows to one note, EP-7); an
 //    empty box leaves the selection as it was.
 // 2. SOURCE: the release and the live preview ask the same `boxing`.
 //

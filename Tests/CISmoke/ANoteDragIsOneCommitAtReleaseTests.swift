@@ -173,11 +173,22 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
                        .move(ids: [late.id], dPitch: 0, dStep: 0), "and it cannot go further right")
     }
 
-    func testATapTogglesANoteInOrOutOfTheSelection() {
+    /// EP-7 (founder 2026-10-15, "MIDI-Clips entspannt bearbeiten"): a tap picks ONE note. The
+    /// M1 toggle made "tap A, then tap B" pick both — the number row vanished, a drag moved two.
+    func testATapPicksTheNoteAloneAndASecondTapLetsItGo() {
         let a = UUID(), b = UUID()
-        XCTAssertEqual(NoteGridGesture.toggling(a, in: []), [a])
-        XCTAssertEqual(NoteGridGesture.toggling(b, in: [a]), [a, b])
-        XCTAssertEqual(NoteGridGesture.toggling(a, in: [a, b]), [b])
+        XCTAssertEqual(NoteGridGesture.tapping(a, in: []), [a])
+        XCTAssertEqual(NoteGridGesture.tapping(b, in: [a]), [b], "the next note REPLACES the pick")
+        XCTAssertEqual(NoteGridGesture.tapping(a, in: [a]), [], "a second tap lets the only pick go")
+        XCTAssertEqual(NoteGridGesture.tapping(a, in: [a, b]), [a],
+                       "inside a boxed selection a tap narrows to that note, it never removes it")
+    }
+
+    /// The canvas tap asks `tapping` — a pure helper nobody calls pins nothing (#416).
+    func testTheEditorsTapAsksTapping() throws {
+        let source = try source("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
+        XCTAssertTrue(source.contains("NoteGridGesture.tapping(id, in: picked.ids)"),
+                      "the note editor's tap must pick through NoteGridGesture.tapping")
     }
 
     /// M8–M10 review repair: the selection a finished move leaves, over a move `resolve` really
