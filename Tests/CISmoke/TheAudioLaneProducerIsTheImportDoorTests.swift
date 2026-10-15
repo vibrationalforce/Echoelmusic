@@ -251,7 +251,9 @@ final class TheAudioLaneProducerIsTheImportDoorTests: XCTestCase {
     /// not to argue against the change. Mitigate by updating; never by deleting.
     func testOnlyOneOfTheTwoMidiCreatorsHasADoor() throws {
         let composerCallers = try filesUnderSources(containing: ".ensureComposerRegion(")
-        XCTAssertEqual(composerCallers, ["Studio/EchoelStudioView.swift"], """
+        // GA-1 (`5733f6b65`) added the second door: "Compose here" on a rack track's Device page
+        // (`TrackCompose.turnOn` in `TrackComposeRows.swift`). The guard was red from then on.
+        XCTAssertEqual(composerCallers, ["Studio/EchoelStudioView.swift", "Studio/TrackComposeRows.swift"], """
             `ensureComposerRegion` is now called from \
             \(composerCallers.isEmpty ? "nothing" : composerCallers.joined(separator: ", ")). \
             If it lost its caller, the composer clip has no producer either and the header's \
