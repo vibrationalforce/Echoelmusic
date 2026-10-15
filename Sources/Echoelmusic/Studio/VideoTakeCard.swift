@@ -29,6 +29,8 @@ struct VideoTakeCard: View {
     @State private var startedAt: Date?
     /// The card stopped a running camera pulse to take the lens.
     @State private var pulsePaused = false
+    /// Why the last take failed — said above Record, which stays offered for the next take.
+    @State private var takeError: String?
 
     enum Phase: Equatable {
         case opening
@@ -88,7 +90,12 @@ struct VideoTakeCard: View {
         .clipShape(RoundedRectangle(cornerRadius: EchoelTheme.radius))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).stroke(EchoelTheme.border, lineWidth: 1))
         .task { await openCamera() }
-        .onDisappear { camera?.close() }
+        // The camera pulse started while the card is open: it takes the rear lens, so the take
+        // ends here and keeps what was recorded, instead of reading "Recording" over nothing.
+        .onChange(of: cameraRPPG.isRunning) { _, running in
+            if running { pulseTookTheCamera() }
+        }
+        .onDisappear { leave() }
     }
 
     @ViewBuilder private var statusLine: some View {
@@ -96,7 +103,9 @@ struct VideoTakeCard: View {
         case .opening:
             note(Text("Opening the camera…"))
         case .ready:
-            if pulsePaused {
+            if let takeError {
+                note(Text(verbatim: takeError))
+            } else if pulsePaused {
                 note(Text("The camera pulse is paused while the camera records video."))
             } else {
                 note(Text("Video only — the sound of the take is the song's own tracks."))
@@ -152,10 +161,11 @@ struct VideoTakeCard: View {
             .appendingPathComponent("echoel-take-\(UUID().uuidString).mov")
         Task { @MainActor in
             if await camera.startRecording(to: url) {
+                takeError = nil
                 startedAt = Date()
                 phase = .recording
             } else {
-                phase = .failed(String(localized: "The take could not start."))
+                takeError = String(localized: "The take could not start.")
             }
         }
     }
@@ -167,12 +177,34 @@ struct VideoTakeCard: View {
             switch await camera.stopRecording() {
             case .success(let file):
                 startedAt = nil
-                phase = .ready
+                if phase == .saving { phase = .ready }   // a pulse that took the lens keeps its word
                 land(file)
             case .failure:
                 startedAt = nil
-                phase = .failed(String(localized: "The take could not be saved."))
+                takeError = String(localized: "The take could not be saved.")
+                if phase == .saving { phase = .ready }
             }
+        }
+    }
+
+    /// The camera pulse took the lens mid-card: land what was recorded, then say why it stopped.
+    private func pulseTookTheCamera() {
+        if phase == .recording { stop() }
+        camera?.close()
+        phase = .failed(String(localized: "The camera pulse took the camera. Close and reopen to record again."))
+    }
+
+    /// Leaving the plate mid-take keeps the take: it is stopped and landed, never left in tmp.
+    private func leave() {
+        guard let camera else { return }
+        if phase == .recording {
+            let land = self.land
+            Task { @MainActor in
+                if case .success(let file) = await camera.stopRecording() { land(file) }
+                camera.close()
+            }
+        } else {
+            camera.close()
         }
     }
 

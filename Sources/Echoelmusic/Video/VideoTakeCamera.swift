@@ -123,8 +123,10 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
                 continuation.resume(returning: done)
                 return
             }
+            let earlier = waiter
             waiter = continuation
             lock.unlock()
+            earlier?.resume(returning: .failure(.recording))   // a second Stop never strands the first
             queue.async { @Sendable [self] in
                 if self.output.isRecording {
                     self.output.stopRecording()
@@ -139,9 +141,11 @@ final class VideoTakeCamera: NSObject, @unchecked Sendable {
     /// `noasync`).
     private func resetTake() {
         lock.lock()
+        let stranded = waiter
         outcome = nil
         waiter = nil
         lock.unlock()
+        stranded?.resume(returning: .failure(.recording))
     }
 
     /// Hand a result to the waiter, or keep it for the next `stopRecording`.

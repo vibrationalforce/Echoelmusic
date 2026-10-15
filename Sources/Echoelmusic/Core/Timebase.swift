@@ -20,7 +20,10 @@
 //  ⚠️ THREE SPACES, NOT FOUR — AND THE MISSING ONE IS A DECISION, NOT AN OVERSIGHT.
 //  The audit proposed a fourth, `FrameTime` (frames + a drop-frame-aware video rate). It is
 //  NOT built here because the founder withdrew video on 2026-09-12 (#1303/#1304, verbatim
-//  "Kein Video Capture"): `Sources/` constructs no VIDEO writer at all. ⛔ THIS LINE SAID
+//  "Kein Video Capture"); ⭐ since One World C1 (2026-10-15) the camera take records a movie
+//  file again (`Video/VideoTakeCamera`), and the picture lane places it in SECONDS through
+//  `VideoLanePlan` — still no frame-rate domain, so `FrameTime` stays unbuilt until a frame-exact
+//  edit needs it. Before C1 `Sources/` constructed no VIDEO writer at all. ⛔ THIS LINE SAID
 //  "`AVAssetWriter` occurs zero times under `Sources/`" and that was FALSE the day it was
 //  written (#1425) — `Audio/SingleExport.swift` constructs exactly one, with
 //  `mediaType: .audio`, for the master export. The argument survives UNCHANGED and a

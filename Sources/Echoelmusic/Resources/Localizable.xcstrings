@@ -17783,16 +17783,6 @@
         }
       }
     },
-    "Add a part with notes or audio first. Recording runs against the playing piece." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add a part with notes or audio first. Recording runs against the playing piece."
-          }
-        }
-      }
-    },
     "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. " : {
       "localizations" : {
         "en" : {
@@ -19253,6 +19243,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The camera pulse is paused while the camera records video."
+          }
+        }
+      }
+    },
+    "The camera pulse took the camera. Close and reopen to record again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The camera pulse took the camera. Close and reopen to record again."
           }
         }
       }

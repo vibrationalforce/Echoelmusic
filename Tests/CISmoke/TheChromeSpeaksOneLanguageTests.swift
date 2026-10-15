@@ -2471,7 +2471,6 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           " is armed but cannot record here. Open it and switch Arm off first.",
                           "The part grid is full (",
                           " parts). Remove a part to make room for the recording.",
-                          "Add a part with notes or audio first. Recording runs against the playing piece.",
                           "Record plays the piece from bar 1 and records your MIDI keyboard onto this track. ",
                           "Every armed track gets the same notes.",
                           "This track cannot record here. Switch Arm off so Record can run.",

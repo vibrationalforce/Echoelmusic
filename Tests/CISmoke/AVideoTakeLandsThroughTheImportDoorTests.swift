@@ -89,7 +89,13 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
         for store in ["TimelineStore", "ClipStore", "timeline.", "clipStore."] {
             XCTAssertFalse(card.contains(store), "the card writes no store (`\(store)`) — the Workstation lands the take")
         }
-        XCTAssertTrue(card.contains(".onDisappear { camera?.close() }"), "leaving the plate releases the camera")
+        XCTAssertTrue(card.contains(".onDisappear { leave() }"), "leaving the plate releases the camera")
+        let leave = try XCTUnwrap(slice(card, from: "private func leave() {", to: "private func shut() {"),
+                                  "ANCHOR: `leave` is gone (#454)")
+        XCTAssertTrue(leave.contains("if case .success(let file) = await camera.stopRecording() { land(file) }"),
+                      "leaving mid-take keeps the take — it is landed, never left in tmp")
+        XCTAssertTrue(card.contains(".onChange(of: cameraRPPG.isRunning) { _, running in"),
+                      "a camera pulse started mid-card ends the take instead of reading Recording over nothing")
     }
 
     // MARK: 4 — the door

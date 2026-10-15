@@ -97,7 +97,9 @@ public enum LearnLibrary {
                 // capability #1304 DELETED (founder 2026-09-12, "Kein Video Capture").
                 // Nothing under `Sources/` can write one: the only `AVAssetWriter` is in
                 // `Audio/SingleExport.swift` with `mediaType: .audio`, and there is no
-                // ReplayKit and no `AVCaptureMovieFileOutput` anywhere. This entry renders
+                // ReplayKit and no `AVCaptureMovieFileOutput` anywhere (⭐ since One World C1
+                // there is ONE: the camera take records a part onto the video track — a part,
+                // not a share-ready export, so the deleted sentence stays deleted). This entry renders
                 // unconditionally behind a LIVE door (`LearnView` `Text(entry.detail)`;
                 // `.guide` is the first section; the Learn sheet hangs off `quickDoorRow`),
                 // so it was the retracted claim's most reachable home in the whole product.
