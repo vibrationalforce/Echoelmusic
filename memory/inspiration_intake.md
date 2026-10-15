@@ -1466,3 +1466,11 @@ Workflow-only-Änderungen gehen ohne Gate nach `main` (E29, gesperrt); `gstack`-
 Telemetrie (E30); LICENSE-Jahr (E31). Widerlegt: `PrivacyInfo.xcprivacy` fehlt nicht
 (`Resources/PrivacyInfo.xcprivacy`, drei Targets). Die Blitz-Aussage auf `/health` hält: auch die
 neue Video-Spur läuft durch `VideoLayerSlot` → `VideoFlashLimiter`.
+
+## 2026-10-15 — Grok Heavy: Deep Audit 3 — ADOPT→PRODUCT
+[verified 5/7] Bestätigt: `/health` versprach für Art-Net/sACN dieselbe harte 3-Hz-Grenze wie
+für den Bildschirm; `ArtNetSender` sagt selbst, dass die Slew-Bremse kleine schnelle Wechsel nicht
+zählt. `/health` jetzt präzise (`79b469e06`). Offen als Scheiben: DMX-Blitz-ZÄHLER wie
+`VideoFlashLimiter` (S-DMX1), Plugin-Zustand auch beim Speichern/Hintergrund (H4f),
+Plugin-Fenstergröße (H3b). Widerlegt: „therapeutic use" in der Sicherheitswarnung ist PFLICHT
+(CLAUDE.md SAFETY WARNINGS). `EchoelEntrainment` nur aus der türlosen `BioSourceView`, Standard aus.
