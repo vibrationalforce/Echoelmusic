@@ -1516,3 +1516,12 @@ jede `VideoTakeLedger()`-artige Wert-Erzeugung auf `let`/Temporär-Mutation lese
   eigener Pilot: ~45 % mehr Schritte, Nutzen nicht belegt → nur opt-in und gemessen); (2) Stop-Hook,
   der vor „pre-existing" / „kann ich lokal nicht prüfen" ohne Gate-Ergebnis warnt; (3) Konfidenz-Spalte
   im HARNESS_LEDGER. Hooks ändern jede Sitzung → Founder-Frage E33.
+
+## 2026-10-15 — Grok: Auftrag G, das Deep Audit angreifen — ADOPT→PIPELINE (4/5)
+
+Gemessen: Founder-Notiz „kleines Gimmick" stimmt (decisions.csv); `main` öffnet noch auf dem Stück
+(`StudioDefaultKeys` `.piece` auf `2d8d8b11f`, der Zweig hat `.instrument`); Export/MIDI-Out existieren;
+der blinde Fleck ist echt. Falsch: „357 offene Geräteprüfungen" — `founder-verify.py` zählt heute 371.
+Ungeprüft: „kein Instrument mit Retention auf Kamera-rPPG" (plausibel, ohne Quelle). Sein 14-Tage-Satz
+ist schon unterwegs (Kandidat A + Gerätesitzung 1). Übernommen: der blinde Fleck als drei Felder im
+Gerätebogen (Licht + Sekunden bis zum Lock · WAV in einer DAW gehört · „morgen wieder öffnen?"). Kein Code.
