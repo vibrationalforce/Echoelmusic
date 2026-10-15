@@ -271,6 +271,12 @@ public final class TimelineRegionPlayer {
     /// Primed on play, driven per transport window, released on every stop path.
     @ObservationIgnored public var audioLanes: AudioLanePlayer?
 
+    /// The PICTURE lane (One World V2, the VV-8 executor): `VideoLanePlayer`, injected by the app
+    /// with its device sink factory (`VideoLaneAVSink`) — this file stays Foundation-only. nil ⇒ no
+    /// picture plays from the arrangement. Driven as the audio lanes' twin: primed where they are
+    /// primed, stepped where they step, released on both stop paths.
+    @ObservationIgnored public var videoLanes: VideoLanePlayer?
+
     /// GMMW R2 (founder 2026-10-13, the first human take): whether a take is ARMED right now —
     /// `RecordController.isRecording`, handed in by the app the way `followSongEnd` hands the
     /// song end the other way. `play` runs the clock for an armed take over a piece that `canPlay`
@@ -752,6 +758,7 @@ public final class TimelineRegionPlayer {
         primeSecondaryLanes(at: entryTick)       // secondary lanes active at the entry tick
         audioLanes?.prime(in: document, atTick: entryTick, bpm: pattern.tempo,   // audio lanes (A1)
                           launchingInThisCall: Set(startLaunches.map(\.laneID)))
+        videoLanes?.prime(in: document, atTick: entryTick, bpm: pattern.tempo)  // the picture lane (V2)
         if !startLaunches.isEmpty {
             // The scene is still requested and fired ON the bar (`startTick` above — its
             // boundary); what it is applied AT is where the transport really is. ⚠️ An AUDIO
@@ -854,6 +861,7 @@ public final class TimelineRegionPlayer {
         pianoRoll?.setTimelineAutomationTick(tick)
         primeSecondaryLanes(at: tick)
         audioLanes?.prime(in: doc, atTick: tick, bpm: pattern?.tempo ?? Self.fallbackTempo)
+        videoLanes?.prime(in: doc, atTick: tick, bpm: pattern?.tempo ?? Self.fallbackTempo)
     }
 
     /// The phase-consistent tick a relocate must anchor at: the target bar's
@@ -883,6 +891,7 @@ public final class TimelineRegionPlayer {
         audioLanes?.clearAllLaunchOverrides()  // S2: audio override reset paired with stopAll below
         flushPumps()                           // release every secondary-lane voice
         audioLanes?.stopAll()                  // release every audio lane (A1)
+        videoLanes?.stopAll()                  // the picture holds its frame (V2)
         pianoRoll?.setTimelineAutomation([])   // release the arrangement layer (cycle 5)
     }
 
@@ -897,6 +906,7 @@ public final class TimelineRegionPlayer {
         audioLanes?.clearAllLaunchOverrides()  // S2: audio override reset paired with stopAll below
         flushPumps()                           // release every secondary-lane voice
         audioLanes?.stopAll()                  // release every audio lane (A1)
+        videoLanes?.stopAll()                  // the picture holds its frame (V2)
         pianoRoll?.setTimelineAutomation([])   // release the arrangement layer (cycle 5)
     }
 
@@ -986,6 +996,7 @@ public final class TimelineRegionPlayer {
         // must be force-restarted at the wrapped position (audio review HIGH 1).
         if wrapped {
             audioLanes?.prime(in: doc, atTick: newTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
+            videoLanes?.prime(in: doc, atTick: newTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
             // S3a: `prime` warms every lane's files but SKIPS overridden lanes, so a
             // launched audio loop whose boundary coincides with the song wrap would
             // lose its re-trigger there (one silent bar per song loop, audio/MIDI out
@@ -996,6 +1007,8 @@ public final class TimelineRegionPlayer {
                                               toTick: newTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         } else {
             audioLanes?.apply(in: doc, fromTick: lastTick, toTick: newTick,
+                              bpm: pattern?.tempo ?? Self.fallbackTempo)
+            videoLanes?.apply(in: doc, fromTick: lastTick, toTick: newTick,
                               bpm: pattern?.tempo ?? Self.fallbackTempo)
         }
         // Feed the arrangement automation the absolute playhead BEFORE the roll's
@@ -1392,6 +1405,7 @@ public final class TimelineRegionPlayer {
         }
         // Audio stays on its own window: primed here, then `apply` over (lastTick, newTick].
         audioLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
+        videoLanes?.prime(in: doc, atTick: lastTick, bpm: pattern?.tempo ?? Self.fallbackTempo)
         log.log(.info, category: .audio, "timeline: structure edit pulled into playback at tick \(lastTick)")
         // The region decision is made here, on both documents at the same tick; the roll and
         // the rack are re-driven by `chaseStructure` once this step's tick is known.
