@@ -1,4 +1,4 @@
-build: v10.79.503 — Video aufnehmen mit Rück- und Frontkamera, Video-Spuren übereinander, Teile auf der Leinwand kürzen
+build: v10.79.504 — Klangliste mit Typ und Favoriten, Roll mit Keep on Roll, Plugin-Einstellungen gesichert, MIDI-Clock auf Host-Zeit
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,47 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.504) ───────────────────────────────
+
+  Sieben Commits an `Sources/` und `Tests/` seit 10.79.503. Gebaut wird `e75d99b7f`; Xcode
+  Compile Check UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon
+  geprüft.
+
+  ── POSTEN 1: KLANGLISTE (Name · Typ · Favorit) ──
+  Browse → Sounds: jede Zeile zeigt den Typ (Pad, Lead, Bass, Keys, Pluck, Bell, Orchestral).
+  Oben filtert ein Menü nach Typ oder Favoriten. Der Stern ist ein eigener Knopf.
+
+  ── POSTEN 2: ROLL + KEEP ON ROLL ──
+  Im Arrange: Add → „Roll" gibt jeder komponierenden Spur eine neue Variation. Auf der
+  Device-Seite einer Spur hält „Keep on Roll" sie fest. Die Echoel-Spur folgt dem Körper und
+  wird nie gewürfelt. Die neuen Linien klingen, sobald das Instrument komponiert.
+
+  ── POSTEN 3: FREMD-PLUGINS ──
+  Speichern und der Wechsel in den Hintergrund sichern jetzt die Einstellungen JEDES geladenen
+  Plugins im Song — auch wenn sein Fenster noch offen ist oder nie geöffnet wurde.
+
+  ── POSTEN 4: WORTWAHL-WÄCHTER (unsichtbar) ──
+  Website, Store-Text und App-Texte werden bei jedem Push auf Heil-, Therapie- und
+  Wellness-Behauptungen geprüft; ein Satz darf sie nur verneinen.
+
+  ── POSTEN 5: MIDI-CLOCK FÜR DEN H90 (Xone:96-Set) ──
+  Jeder Clock-Puls verlässt das iPhone jetzt mit einem Zeitstempel: sein idealer Zeitpunkt plus
+  die Ausgangs-Latenz. Der H90 bekommt die Clock dadurch gleichmäßig, auch wenn gerade ein Menü
+  aufgeht, und im Takt mit dem, was aus dem Mixer kommt. Einschalten: Routing → MIDI out.
+  Neu: Startest du das Stück ab einem späteren Takt, sendet die App Song Position + Continue —
+  der H90 läuft mit, statt (wie bisher) gar keine Clock zu bekommen.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 38b2508ce) ──
+  · Browse → Sounds → Typ ▸ Bass zeigt nur Deep Sub; Pluck mit Stern markieren, dann
+    Favoriten zeigt Pluck.
+  · Zwei Synth-Spuren mit „Compose here", eine mit „Keep on Roll", beim Spielen Add → Roll —
+    die andere ändert sich, die gehaltene nicht.
+  · Routing → MIDI out an, H90 auf MIDI-Clock, Play bei 126 BPM, das Genre-Menü offen halten —
+    das Tempo im H90 darf nicht wackeln.
+  · Das Stück ab Takt 9 starten (Lineal) — der H90 bekommt die Clock und läuft mit.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.503) ───────────────────────────────
 
