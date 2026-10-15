@@ -5276,3 +5276,9 @@ gescheitert. Stattdessen: v1.0 Feedback + Credits + Hall of Fame + Liste für ei
 veröffentlichter Topf nach anonymer On-Device-Nutzung (Council + Datenschutz vorher). Vor jeder
 Zahlung Steuerberater und Anwalt. Nie: bezahlte Bewertungen, Belohnung an Bio-Werte gekoppelt.
 Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 2026-11-13.
+
+### 2026-10-15 — One World: Video-Spur und Kanten-Trim
+
+- **Video-Spur:** Ein Bildteil auf der ERSTEN Video-Spur läuft mit der Song-Uhr (`VideoLanePlan` rein, `VideoLanePlayer` als Ausführer, `VideoLaneAVSink` = ein stummer `AVPlayer`). v1 zeigt genau eine Bildspur. Kopien liegen in `Media/Picture`, weil die Video-Karte `Media/Video` aufräumt. Der eine `VideoLayerSlot`: letzter Anhang gewinnt, jeder Besitzer löst nur seinen eigenen Ausgang. Gerät-Verify offen.
+- **Kanten-Trim:** MIDI- und Audio-Teile haben Start/End-Griffe im Arrange-Canvas; Griffe enden am Nachbarteil und am Spurende. MIDI-Ende darf verlängern, MIDI-Start rastet auf Takte.
+- review_date 2026-11-14 · Status ACTIVE.

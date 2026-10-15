@@ -1078,3 +1078,10 @@ Founder: „Vermeide, dass es unübersichtlich ist … so gut designt wie FL Stu
   beide Gates auf `6a475f425`; Notiz liegt vorbereitet im Scratchpad.
 - **Außerhalb des Repos:** Förderfristen recherchiert, 12 Kalendertermine mit Gesprächsleitfäden und 5 Gmail-Entwürfe
   angelegt (nichts gesendet).
+
+## 2026-10-15 — One World: Kanten-Trim + Video-Spur (ultracode)
+
+- **T1** `6c2d3fea9`: Start/End-Griffe für MIDI- und Audio-Teile im Arrange-Canvas (`ArrangePartEdges.frames/room`), Griffe enden am Nachbarn und am Spurende. Wächter `TheCanvasPartEdgeMovesOnTheGridTests`.
+- **V1** `912cb1dd5` Slot-Besitz (letzter Anhang gewinnt, eigener Detach) · **V2** `383ae1415` `VideoLanePlayer` an jedem Transport-Schritt · **V3a** `322358e5e` `VideoLaneAVSink` (stummer AVPlayer, keine eigene Uhr) · **V3b** `7b2e48b10` `.video` spielbar, Rolle `.picture` · **P1+P2** `a0489e091` `VideoImport` nach `Media/Picture`, Tür „Add Video Track"/„Import Video".
+- **Review-Fixes** `e12903aaa`: Wächter 11b war rot (`clip.kind` im Prädikat) → `VideoLanePlan.isPicture`; frisch geladener Teil spielte nie (`clear()` setzte `running`); Lane holt den Slot bei jedem Show zurück; Ziel während langsamen Ladens bleibt erhalten.
+- Offen: Gates für `e12903aaa`, Deploy-Bump, S4 VoiceOver-Kantenaktionen, Gerät-Verify (Bild läuft im Takt mit).
