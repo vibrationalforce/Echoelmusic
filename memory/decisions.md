@@ -5304,3 +5304,11 @@ First target named by the founder: iPhone → Allen & Heath Xone:96 over USB wit
 synced to MIDI clock from the iPhone. Law: the app's own FX stay the default; multi-out, clock out
 and external sends are optional routes that replace nothing. Plan + Council before code (audio graph).
 Review: 2026-11-14.
+
+### 2026-10-15 — Echoelmusic's own sound palette
+Founder: „Eigene Echoelmusic Drums, rhythmische Moog und acid bass pattern, deep tech glitches,
+psychedelic effects and patterns, dub chords, lead sounds, classic Elektro vibes."
+In-app drums return (the 2026-07-07 cut is phase history under the 2026-09-24 product law, and the
+standalone law of 2026-10-15 needs them); hardware (TR-8S via HW-10) stays an optional second voice.
+Order and slices: `scratchpads/PLAN_SOUND_PALETTE_2026-10-15.md` (after the building-block map).
+Review: 2026-11-14.
