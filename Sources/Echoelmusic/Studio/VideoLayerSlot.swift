@@ -3,9 +3,9 @@
 // the field (floating window, external stage) holds this slot as its `footageSource` — set once,
 // in `MetalBioView.makeUIView` — and PULLS from it synchronously, in `draw(in:)`, on the main thread.
 //
-// ⚠️ SCOPE, SAID FIRST: ONE OWNER ATTACHES A VIDEO OUTPUT TODAY — the video card's `VideoFootageOwner`
-// (VV-6, "Show in Visuals", playing the copy VV-3a keeps). Since One World V1 the slot says which
-// owner wins, before a second one (the VV-8 picture lane) exists: the LAST attach wins, and an owner
+// ⚠️ SCOPE, SAID FIRST: TWO OWNERS ATTACH A VIDEO OUTPUT — the video card's `VideoFootageOwner`
+// (VV-6, "Show in Visuals", playing the copy VV-3a keeps) and the picture lane's `VideoLaneAVSink`
+// (One World V3a). Since One World V1 the slot says which owner wins: the LAST attach wins, and an owner
 // lets go only of its OWN output (`detachVideoOutput(ifAttached:)`) — there is no detach that clears
 // whatever happens to be attached. While nothing is attached
 // every pull is one lock and a nil, and the picture is exactly the pre-VV-5b field. Not

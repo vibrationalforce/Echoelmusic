@@ -9,7 +9,7 @@
 //      a document with no picture creates nothing.
 //   2. END-TO-END BEHAVIOUR: one step inside the same part asks the plan's `resync` — a drift of
 //      0.1 s is a nudge at the ±3 % ceiling, 0.5 s is a seek to the song position, a drift inside
-//      one frame is nothing, and a sink that cannot say where it is (loading, seeking) is never
+//      one frame is `.hold` (handed on, so the sink can return a nudged rate to 1), and a sink that cannot say where it is (loading, seeking) is never
 //      corrected. Written from the algebra (#442): at 120 BPM one bar is 2 s.
 //   3. END-TO-END BEHAVIOUR: ONE PICTURE, ONE LANE — a second picture lane's part is never shown,
 //      by prime or by step; stepping out of the shown lane's part clears it.
@@ -121,7 +121,7 @@ final class ThePictureLaneRidesTheSongClockTests: XCTestCase {
 
         spy.observedSeconds = 2 + VideoLanePlan.deadbandSeconds / 2
         player.apply(in: doc, fromTick: from, toTick: to, bpm: 120)
-        XCTAssertEqual(spy.corrections, [], "drift inside one frame is held")
+        XCTAssertEqual(spy.corrections, [.hold], "drift inside one frame is held — handed on, so a nudged rate returns to 1")
 
         spy.observedSeconds = 2.1
         player.apply(in: doc, fromTick: from, toTick: to, bpm: 120)
@@ -131,7 +131,7 @@ final class ThePictureLaneRidesTheSongClockTests: XCTestCase {
         spy.observedSeconds = 2.5
         player.apply(in: doc, fromTick: from, toTick: to, bpm: 120)
         XCTAssertEqual(spy.corrections.last, .seek(toSeconds: 2), "beyond 0.25 s the picture is sought to the song position")
-        XCTAssertEqual(spy.corrections.count, 2)
+        XCTAssertEqual(spy.corrections.count, 3)
         XCTAssertEqual(spy.shown.count, 1, "staying in the part is never a new shot")
     }
 

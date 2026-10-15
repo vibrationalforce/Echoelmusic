@@ -653,17 +653,32 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
                       "COUNTERWEIGHT: the renderer no longer binds the format the output asks for — no layer, no log (VV-5a/VV-5b)")
     }
 
-    /// Claim 16 — the scope since VV-6: exactly ONE owner attaches a video output, the video card's
-    /// `VideoFootageOwner`, and it lets the layer go before the card removes the file.
+    /// Claim 16 — the scope since One World V3a: TWO owners attach a video output, the video card's
+    /// `VideoFootageOwner` (it lets the layer go before the card removes the file) and the picture
+    /// lane's `VideoLaneAVSink` (silent, no clock of its own). The last attach wins (claim 16b).
     /// (Until VV-6 this claim pinned 0 attaches and was named for that, #374.)
     func testTheVideoCardIsTheOneOwnerOfTheVideoOutput() throws {
         let files = try sources()
-        let attachers = files.filter { count(".attachVideoOutput(", in: $0.code) > 0 }.map { $0.name }
-        XCTAssertEqual(attachers, ["VideoSeedCard.swift"], """
-            The owners of a video output changed — today only the video card's `VideoFootageOwner` \
-            attaches (VV-6). A second owner (the VV-8 picture lane) may be right: then move this claim \
-            in THAT commit and say which owner wins the one slot (#364).
+        let attachers = files.filter { count(".attachVideoOutput(", in: $0.code) > 0 }.map { $0.name }.sorted()
+        XCTAssertEqual(attachers, ["VideoLaneAVSink.swift", "VideoSeedCard.swift"], """
+            The owners of a video output changed — today the video card's `VideoFootageOwner` (VV-6) and \
+            the picture lane's `VideoLaneAVSink` (One World V3a) attach; the last attach wins and each \
+            lets go only of its own output (claim 16b). A third owner may be right: then move this claim \
+            in THAT commit and say how it shares the one slot (#364).
             """)
+        let lane = try code("Sources/Echoelmusic/Studio/VideoLaneAVSink.swift")
+        XCTAssertEqual(count(".attachVideoOutput(", in: lane), 1)
+        XCTAssertTrue(lane.contains("if let output { VideoLayerSlot.shared.detachVideoOutput(ifAttached: output) }"),
+                      "the picture lane lets go only of the output it attached (One World V1)")
+        XCTAssertTrue(lane.contains("player.isMuted = true"), "the picture lane plays without sound — the sound is the audio tracks'")
+        XCTAssertTrue(lane.contains("player.actionAtItemEnd = .pause"),
+                      "the lane never loops on its own — at the file's end it holds, and the song clock decides")
+        XCTAssertTrue(lane.contains("{ @Sendable [weak self] _ in"),
+                      "the one closure handed to AVFoundation (the seek's completion) is `@Sendable` (2613/2618)")
+        for hot in ["addPeriodicTimeObserver", "addBoundaryTimeObserver", "AVPlayerLooper", "DispatchQueue",
+                    "NotificationCenter", "Timer"] {
+            XCTAssertFalse(lane.contains(hot), "the picture lane has no clock of its own: `\(hot)`")
+        }
         let card = try code("Sources/Echoelmusic/Studio/VideoSeedCard.swift")
         XCTAssertEqual(count(".attachVideoOutput(", in: card), 1)
         XCTAssertTrue(card.contains("if let output { VideoLayerSlot.shared.detachVideoOutput(ifAttached: output) }"),

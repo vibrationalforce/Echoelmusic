@@ -184,9 +184,8 @@ public enum TimelineScheduling {
 
     /// The scheduling event for every VIDEO lane moving `fromTick`→`toTick`, in lane
     /// order — the video analog of `laneEvents`. Its consumer is `VideoLanePlan.commands`
-    /// (GMMW VV-7), which turns each event into what the lane shows; the player that
-    /// executes those commands is VV-8 and does not exist yet, so nothing plays a picture
-    /// lane today. ⛔ This said the video-lane model would retire with the DAW model — a
+    /// (GMMW VV-7), which turns each event into what the lane shows; `VideoLanePlayer`
+    /// (One World V2, the VV-8 executor) runs those commands on the transport's step. ⛔ This said the video-lane model would retire with the DAW model — a
     /// phase-history verdict the product law reversed on 2026-09-24; the model is the
     /// picture track's foundation, not a leftover.
     public static func videoLaneEvents(in document: TimelineDocument,
@@ -254,7 +253,8 @@ public extension TimelineDocument {
     /// The video lanes (in order), mirroring `audioLaneIDs` — the ONE definition of which
     /// lanes are picture lanes: `videoLaneEvents` walks it and `VideoLanePlan.shot(in:…)`
     /// refuses any lane outside it (GMMW VV-7). The old video-lane player that read it
-    /// was removed in the pure-instrument cut; its successor is VV-8.
+    /// was removed in the pure-instrument cut; its successor is `VideoLanePlayer`, which shows the
+    /// FIRST of these lanes (one footage layer, v1).
     var videoLaneIDs: [UUID] {
         lanes.filter { $0.kind == .video && !$0.isBio }.map(\.id)
     }

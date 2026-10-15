@@ -30,7 +30,8 @@ public protocol VideoLaneSink: AnyObject {
     /// Load `shot.url` (or keep it when it is the file already loaded) and run it from
     /// `shot.mediaSeconds` — held still when `shot.holdsLastFrame`.
     func show(_ shot: VideoLanePlan.Shot)
-    /// Apply a drift correction the plan computed.
+    /// Apply the correction the plan computed — `.hold` included, so a nudged rate goes back to 1
+    /// once the picture is inside the deadband again.
     func correct(_ resync: VideoLanePlan.Resync)
     /// The transport stopped: hold the frame on screen, stop advancing.
     func pause()
@@ -130,7 +131,7 @@ public final class VideoLanePlayer {
         guard current != nil, let sink, let observed = sink.observedSeconds,
               let expected = VideoLanePlan.shot(in: document, laneID: lane, at: tick, bpm: bpm,
                                                 clip: clip, resolveURL: resolveURL) else { return }
-        let resync = VideoLanePlan.resync(expected, observedSeconds: observed, itemSeconds: sink.itemSeconds)
-        if resync != .hold { sink.correct(resync) }
+        // `.hold` goes through too: inside the deadband the sink returns a nudged rate to 1.
+        sink.correct(VideoLanePlan.resync(expected, observedSeconds: observed, itemSeconds: sink.itemSeconds))
     }
 }

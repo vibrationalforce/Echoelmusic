@@ -1383,18 +1383,29 @@ struct EchoelmusicApp: App {
                 // the tested AudioLanePlayer coordinator finally gets its device sink —
                 // one streaming AVAudioPlayerNode per audio lane, additive into the
                 // master mix — and rides timelinePlayer's transport (prime/apply/stop).
+                // ONE resolver for every lane that plays a file (#1439): the audio lanes, the
+                // picture lane and the Play button's question all ask this closure.
+                let resolveMedia: (UUID) -> URL? = { [weak clipStore] id in
+                    guard let clip = clipStore?.clip(id: id) else { return nil }
+                    return MediaLibrary.resolveRef(clip.mediaRef)
+                }
                 timelinePlayer.audioLanes = AudioLanePlayer(
                     makeSink: { [weak audioEngine] in TimelineAudioSink(engine: audioEngine) },
-                    resolveURL: { [weak clipStore] id in
-                        guard let clip = clipStore?.clip(id: id) else { return nil }
-                        return MediaLibrary.resolveRef(clip.mediaRef)
-                    },
+                    resolveURL: resolveMedia,
                     // Stretch Slice B: the clip's native tempo feeds the region's
                     // StretchPlan, so a warp+Tape placement sounds on the timeline
                     // exactly like the editor preview.
                     resolveNativeBPM: { [weak clipStore] id in
                         clipStore?.clip(id: id)?.nativeBPM ?? 0
                     })
+                // One World V3a: the picture lane rides the same transport — one silent player
+                // feeding the visual's footage layer, driven on the transport's step (VV-8).
+                #if canImport(AVFoundation)
+                timelinePlayer.videoLanes = VideoLanePlayer(
+                    makeSink: { VideoLaneAVSink() },
+                    resolveURL: resolveMedia,
+                    clip: { [weak clipStore] id in clipStore?.clip(id: id) })
+                #endif
                 // Restructure S3b: each audio lane's place in the headphone space comes from
                 // the piece's OWN scene — the position ADM-OSC streams and the piece saves
                 // (A3a). One source for both outputs, so the rig and the headphones cannot

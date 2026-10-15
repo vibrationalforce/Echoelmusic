@@ -9,10 +9,11 @@
 // ⭐ ONE CLOCK. The song clock is the transport `PatternEngine` drives, the one every lane rides.
 // This file never asks a player what time it is and keeps no time of its own: it maps a tick the
 // transport hands it to a file position, and it compares a position a player REPORTS with the one
-// that tick demands. ⚠️ THE EXECUTOR DOES NOT EXIST YET (VV-8): nothing plays a picture lane today,
-// and `.video` stays out of `ClipKind.timelineEngineKinds` until something does — the label moves
-// with the engine, never ahead of it (#1438). Nor does a PRODUCER: nothing in `Sources/` makes a
-// picture lane or a video clip yet, so engine and producer are two open facts, not one.
+// that tick demands. ⭐ THE EXECUTOR EXISTS since One World V2/V3a: `VideoLanePlayer` runs these
+// answers on the transport's step into `VideoLaneAVSink`. `.video` joins
+// `ClipKind.timelineEngineKinds` only together with it — the label moves with the engine, never
+// ahead of it (#1438). ⚠️ A PRODUCER is still open: nothing reachable in `Sources/` makes a picture
+// lane or a video clip yet, so the engine runs over nothing until the import door lands.
 //
 // ⭐ PRECEDENCE IS NOT DEFINED HERE (#1440). Which part a lane shows is
 // `TimelineScheduling.activeRegion`, asked directly (`shot(in:…)`) or through `videoLaneEvents`,
