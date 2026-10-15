@@ -85,15 +85,29 @@ public struct LaneNotePump: Sendable, Equatable {
     /// multi-bar regions play bar BY bar and loop over their full length.
     public mutating func step(_ step: Int) -> [Event] {
         let s = ((step % stepCount) % stepCount + stepCount) % stepCount
+        var advancedInsideTheLoop = false
         if s == 0, lastLocalStep != nil, bars.count > 1 {
             barCursor = (barCursor + 1) % bars.count
             notes = bars[barCursor]
+            advancedInsideTheLoop = barCursor > 0
         }
         lastLocalStep = s
         var events: [Event] = []
 
+        // EP-9 — a note longer than a bar arrives as segments with ONE id, cut at the bar lines
+        // (`RegionNoteWindow.barSlices`). Where its head ends on the line its next segment starts
+        // on, that is one sound: no release, no attack, the entry takes the segment's end. Only
+        // when the cursor moved ON inside the loop — at the loop's wrap (and in a one-bar loop)
+        // the same note starting again is a new pass and attacks again, as it always did.
+        let carried = advancedInsideTheLoop ? notes.filter { note in
+            note.startStep % stepCount == s
+                && active[note.id].map { $0.endStep % stepCount == s && $0.pitch == note.pitch } == true
+        } : []
+        for note in carried { active[note.id] = ActiveNote(pitch: note.pitch, endStep: note.endStep) }
+        let carriedIDs = Set(carried.map(\.id))
+
         // Releases: active notes whose exclusive end lands on this step.
-        let ending = active.filter { $0.value.endStep % stepCount == s }
+        let ending = active.filter { $0.value.endStep % stepCount == s && !carriedIDs.contains($0.key) }
         for id in ending.keys { active[id] = nil }
         for info in ending.values {
             if !active.values.contains(where: { $0.pitch == info.pitch }) {
@@ -104,7 +118,7 @@ public struct LaneNotePump: Sendable, Equatable {
         // M5 — displaced releases, still ahead of every attack: an edit can move a SOUNDING
         // note (same id) onto a later onset inside its own span with a new pitch. The onset
         // below would overwrite its entry, and the old pitch would never be released.
-        let starting = notes.filter { $0.startStep % stepCount == s }
+        let starting = notes.filter { $0.startStep % stepCount == s && !carriedIDs.contains($0.id) }
         for note in starting {
             guard let old = active[note.id], old.pitch != note.pitch else { continue }
             active[note.id] = nil

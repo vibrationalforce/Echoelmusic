@@ -20,10 +20,13 @@
 //    A note starting before the trim-in never sounds (its tail does not leak in).
 //  • Sustains are clipped at the REGION end (the block edge is a hard stop) but
 //    NOT at bar lines inside the region: a sustain of up to one bar crosses the
-//    line intact (its noteOff falls in the next bar). NOTE the roll's release
-//    matcher is `endStep % 16 == step`, so a windowed note LONGER than one bar
-//    still releases at the first match — one bar after its start (pre-existing
-//    roll mechanics; per-bar tied segments are a later refinement).
+//    line intact (its noteOff falls in the next bar). A note LONGER than one bar
+//    (EP-9) is cut at the bar line into segments that keep the note's ID: both
+//    players release on `endStep % 16 == step`, which a longer note hit after its
+//    remainder (a 20-step pad sounded 4 steps), and both tie a segment ending on a
+//    bar line to the same ID starting there (`PianoRollModel.wrapTies`,
+//    `LaneNotePump.step` — the pump only inside the loop, never at its wrap),
+//    so the segments are ONE sound.
 //  • All returned times are REBASED (region-relative, then bar-relative for
 //    slices) so consumers never see song-absolute or clip-absolute ticks.
 //
@@ -56,8 +59,9 @@ public enum RegionNoteWindow {
     /// sets for the bar-cycling arrangement loader: slice `b` holds the notes
     /// starting in bar `b`, rebased to bar-relative ticks. The slice count is the
     /// region's spanned bars (`ceil(regionLengthTicks / ticksPerBar)`, min 1) —
-    /// empty bars yield empty slices so the cycle length stays honest. Cross-bar
-    /// sustains stay in their START bar with their full length (see contract).
+    /// empty bars yield empty slices so the cycle length stays honest. A cross-bar
+    /// sustain of up to one bar stays in its START bar with its full length; a longer
+    /// one is cut into same-ID segments at the bar lines (EP-9, see contract).
     public static func barSlices(notes: [Note], regionLengthTicks: Int) -> [[Note]] {
         let perBar = TimelineTime.ticksPerBar
         let bars = Swift.max(1, (Swift.max(1, regionLengthTicks) + perBar - 1) / perBar)
@@ -67,12 +71,30 @@ public enum RegionNoteWindow {
         // which the 0…15 trigger never fires — the note silently vanishes (reviewer
         // M1b). Clamp such stragglers onto the last real step instead.
         let lastTriggerableTick = perBar - Note.ticksPerStep / 2 - 1
+        let stepsPerBar = perBar / Note.ticksPerStep
         for n in notes {
             let bar = n.startTick / perBar
             guard bar >= 0, bar < bars else { continue }
             var rebased = n
             rebased.startTick = Swift.min(n.startTick - bar * perBar, lastTriggerableTick)
+            // EP-9: longer than a bar → the head ends ON the next bar line, then whole-bar and
+            // remainder segments from step 0 with the SAME id (the players tie them).
+            var remaining = n.lengthSteps - (stepsPerBar - rebased.startStep)
+            guard n.lengthSteps > stepsPerBar, remaining > 0 else {
+                slices[bar].append(rebased)
+                continue
+            }
+            rebased.lengthTicks = (stepsPerBar - rebased.startStep) * Note.ticksPerStep
             slices[bar].append(rebased)
+            var next = bar + 1
+            while remaining > 0, next < bars {
+                var segment = n
+                segment.startTick = 0
+                segment.lengthTicks = Swift.min(remaining, stepsPerBar) * Note.ticksPerStep
+                slices[next].append(segment)
+                remaining -= stepsPerBar
+                next += 1
+            }
         }
         return slices
     }
