@@ -51,7 +51,7 @@ final class ABoxAddsToTheSelectionTests: XCTestCase {
             dropped every note picked elsewhere, and two boxes could never make one selection
             """)
         XCTAssertEqual(NoteGridGesture.boxing([c.id], into: [c.id]), [c.id],
-                       "a box over a picked note keeps it — taking a note out is the tap's toggle")
+                       "a box over a picked note keeps it — letting a note go is the tap's job (EP-7)")
         XCTAssertEqual(NoteGridGesture.boxing([], into: [a.id]), [a.id],
                        "an empty box leaves the selection as it was")
     }

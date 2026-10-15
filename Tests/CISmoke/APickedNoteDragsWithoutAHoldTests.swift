@@ -39,7 +39,7 @@ final class APickedNoteDragsWithoutAHoldTests: XCTestCase {
         let direct = try XCTUnwrap(body(after: "private var direct: some Gesture {", in: code),
                                    "the direct gesture is gone — re-anchor (#456)")
         XCTAssertTrue(direct.contains("DragGesture(minimumDistance: 6, coordinateSpace: .named(Self.space))"),
-                      "a few points of travel, so a tap still toggles")
+                      "a few points of travel, so a tap still reaches the tap rule")
         XCTAssertTrue(direct.contains(".updating($live)"), "the same finger-rate state previews the slide")
         XCTAssertTrue(direct.contains("onRelease(gesture)"), "the same one commit at release")
         XCTAssertFalse(direct.contains("LongPressGesture"), "no hold on a picked note")

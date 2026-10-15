@@ -8,7 +8,7 @@
 //  detail (`TrackInspectorView`), no longer a switch of its own under the part bar: see the part's notes,
 //  tap an empty cell to add one, tap notes to select them, delete the selection, and take any of
 //  it back with the Workstation's one Undo. Since M2: press and hold, then slide — on a note to
-//  move the selection, on its right edge to stretch it, on an empty cell to box-select (since M9 the box adds to the selection, like a tap). An edit is heard from the next step while the song
+//  move the selection, on its right edge to stretch it, on an empty cell to box-select (since M9 the box adds to the selection; since EP-7 a tap picks one note). An edit is heard from the next step while the song
 //  plays (`TimelineRegionPlayer.refreshNoteContent`), not only from the part's next start.
 //
 //  ⭐ ONE OWNER, ONE WRITER, ONE HISTORY. The notes are the clip's (`ClipStore`,

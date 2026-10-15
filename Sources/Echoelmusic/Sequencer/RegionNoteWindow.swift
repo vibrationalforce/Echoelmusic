@@ -97,9 +97,16 @@ public enum RegionNoteWindow {
         return barSlices(notes: shifted, regionLengthTicks: Swift.max(1, regionLengthTicks) + phase)
     }
 
-    /// EP-8 — where a region starts past its song bar line (0 on a bar line).
+    /// EP-8 — where a region starts past its song bar line (0 on a bar line), ROUNDED UP to the
+    /// 16th step: the players find a region's onset on the first transport step at or after its
+    /// start (`activeRegion` at a step tick), so a part that starts between two steps (triplet or
+    /// free snap) sounds its first note on that step — at the raw phase the note rounded to the
+    /// step BEFORE the onset and never fired (review of EP-8). A phase that rounds up to a whole
+    /// bar is that bar: the slices then start one song bar later, as the onset does.
     public static func barPhaseTicks(regionStartTick: Int) -> Int {
-        Swift.max(0, regionStartTick) % TimelineTime.ticksPerBar
+        let step = Note.ticksPerStep
+        let raw = Swift.max(0, regionStartTick) % TimelineTime.ticksPerBar
+        return (raw + step - 1) / step * step
     }
 
     /// EP-8 — the slice an ARRANGEMENT part sounds at `tick`: song bars since the bar its region

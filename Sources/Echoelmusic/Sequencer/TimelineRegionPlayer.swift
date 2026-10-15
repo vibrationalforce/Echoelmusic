@@ -1621,11 +1621,11 @@ public final class TimelineRegionPlayer {
                 if isRoll {
                     applyRollLaneVoice()
                     loadClip(region, startBar: launchedStartBar(laneID: t.laneID, atTick: tick), step: step,
-                     onSongGrid: false)
+                             onSongGrid: false)
                 } else if let slot = secondarySlot(forLane: t.laneID) {
                     loadSecondaryWindow(region, laneID: t.laneID, slot: slot,
                                         startBar: launchedStartBar(laneID: t.laneID, atTick: tick),
-                                    onSongGrid: false)
+                                        onSongGrid: false)
                 }
             case .stopped:
                 if isRoll {

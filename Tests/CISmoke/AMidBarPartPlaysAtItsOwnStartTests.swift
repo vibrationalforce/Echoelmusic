@@ -89,6 +89,11 @@ final class AMidBarPartPlaysAtItsOwnStartTests: XCTestCase {
         XCTAssertEqual((bar - 960) / bar, 0, "premise: the old region-relative count")
         XCTAssertEqual(RegionNoteWindow.songEntryBar(regionStartTick: 960, at: 960), 0)
         XCTAssertEqual(RegionNoteWindow.songEntryBar(regionStartTick: 5 * bar, at: 0), 0, "never negative")
+        // Review of EP-8: a start between two steps is found on the NEXT step — the phase rounds
+        // up to it, so the part's first note lands on the step where the part is loaded.
+        XCTAssertEqual(RegionNoteWindow.barPhaseTicks(regionStartTick: bar + 1000), 1080)
+        XCTAssertEqual(RegionNoteWindow.barPhaseTicks(regionStartTick: 1900), bar,
+                       "a start in the bar's last step is found on the next bar line")
     }
 
     // MARK: 3 — SOURCE
@@ -101,8 +106,8 @@ final class AMidBarPartPlaysAtItsOwnStartTests: XCTestCase {
                        "no loader may slice from the part's own start again")
         XCTAssertFalse(player.contains("tick - region.startTick) / TimelineTime.ticksPerBar"),
                        "no region-relative entry bar is left — it is one bar short past the next song bar line")
-        XCTAssertEqual(player.components(separatedBy: "launchedStartBar(laneID: t.laneID, atTick: tick), step: step,\n                     onSongGrid: false)").count - 1, 1,
-                       "a launched part on the roll keeps its own timebase")
+        XCTAssertEqual(player.components(separatedBy: "onSongGrid: false").count - 1, 4,
+                       "the four launched loads (roll + rack, two transitions each) keep their own timebase")
         XCTAssertTrue(player.contains("onSongGrid ? RegionNoteWindow.barPhaseTicks(regionStartTick: region.startTick) : 0"))
     }
 
