@@ -238,6 +238,72 @@ enum ArrangeCanvas {
         return CGFloat(tick - startTick) / CGFloat(songTicks) * laneWidth
     }
 
+    // MARK: One World T1 — an edge moved on the canvas (founder 2026-10-15: "Midi trim fehlt")
+
+    /// How far a part's END may move outward on the canvas, or nil when the canvas gives the part
+    /// no edge handles. A MIDI part's end moves out over silence (`.unbounded`: notes an earlier
+    /// trim hid come back, then nothing plays — it never loops). An audio part's end stays inside
+    /// its file as measured at import (`nativeDurationSeconds`); a file whose length the canvas
+    /// does not know is never lengthened here (`.media(seconds: 0)` refuses — the track's Part
+    /// page can, once it has read the file). A video or visual part, or a part whose clip is gone,
+    /// gets no handles: neither plays from the arrangement yet.
+    nonisolated static func edgeBound(for clip: Clip?) -> PartTrim.EdgeBound? {
+        guard let clip else { return nil }
+        switch clip.kind {
+        case .midi:            return .unbounded
+        case .audio:           return .media(seconds: clip.nativeDurationSeconds ?? 0)
+        case .video, .visual:  return nil
+        }
+    }
+
+    /// The grid an edge moves on at this zoom: `PartTrim.snapUnit`, as for a moved part (#416) —
+    /// except a MIDI part's START, which moves by whole bars. The roll plays a part's notes on the
+    /// song's own bar lines (`TimelineRegionPlayer.loadClip`, KNOWN CONSTRAINT M1b), so a MIDI
+    /// part that starts mid-bar skips the notes before the next line instead of shifting them; a
+    /// bar-aligned start is exact.
+    nonisolated static func edgeUnit(_ edge: AudioPartEditor.Edge, clip: Clip?, laneWidth: CGFloat,
+                                     songTicks: Int) -> Int {
+        if edge == .start, clip?.kind == .midi { return TimelineTime.ticksPerBar }
+        return PartTrim.snapUnit(zoom: snapZoom(laneWidth: laneWidth, songTicks: songTicks))
+    }
+
+    /// The edit a slide of `dragPoints` on a part's `edge` makes on a lane `laneWidth` wide, or
+    /// nil when it makes none. The ONE question the canvas's edge handles ask — for the preview
+    /// while the finger moves and for the write on release — so the edge lands where its preview
+    /// sat. Points become ticks on the scale the blocks are placed on (`dropTick`'s), the
+    /// direction is the finger's, and the rule is `PartTrim.edgeEdit`, the audio editor's own.
+    nonisolated static func edgeEdit(_ edge: AudioPartEditor.Edge, dragPoints: CGFloat, laneWidth: CGFloat,
+                                     songTicks: Int, region: TimelineRegion, in document: TimelineDocument,
+                                     clip: Clip?, mediaBPM: Double) -> AudioPartEditor.EdgeEdit? {
+        guard dragPoints != 0, dragPoints.isFinite, songTicks > 0, laneWidth.isFinite, laneWidth > 0,
+              let bound = edgeBound(for: clip),
+              document.regions.contains(where: { $0.id == region.id }) else { return nil }
+        let pointsPerBeat = laneWidth * CGFloat(TimelineTime.ticksPerBeat) / CGFloat(songTicks)
+        let delta = TimelineDragMath.tickDelta(fromPoints: dragPoints, ppb: pointsPerBeat)
+        let edgeTick = edge == .start ? region.startTick : region.endTick
+        let (proposed, overflow) = edgeTick.addingReportingOverflow(delta)
+        guard !overflow else { return nil }
+        // Outward is left for the start and right for the end.
+        let outward = (edge == .start) == (dragPoints < 0)
+        return PartTrim.edgeEdit(edge, proposedTick: proposed, outward: outward,
+                                 unit: edgeUnit(edge, clip: clip, laneWidth: laneWidth, songTicks: songTicks),
+                                 region: region, in: document, mediaBPM: mediaBPM, endBound: bound)
+    }
+
+    /// Where an edit leaves its edge on a lane `laneWidth` wide, in points from the lane's left
+    /// edge — the preview line — held on the lane. nil for degenerate geometry.
+    nonisolated static func edgeX(_ edit: AudioPartEditor.EdgeEdit, region: TimelineRegion,
+                                  laneWidth: CGFloat, songTicks: Int) -> CGFloat? {
+        guard songTicks > 0, laneWidth.isFinite, laneWidth > 0 else { return nil }
+        let tick: Int
+        switch edit {
+        case .start(let start):       tick = start
+        case .end(let lengthTicks):   tick = region.startTick + lengthTicks
+        }
+        let x = CGFloat(tick) / CGFloat(songTicks) * laneWidth
+        return x.isFinite ? Swift.min(Swift.max(x, 0), laneWidth) : nil
+    }
+
     /// One number on the bar ruler: the bar (1-based, as every other surface names it) and
     /// where its downbeat sits on the lane, 0…1 — the scale the blocks are placed on.
     struct RulerMark: Identifiable, Equatable, Sendable {
@@ -519,6 +585,8 @@ struct ArrangeCanvasView: View {
         // W1: the same one read of the clip grid gives each AUDIO part the stretch of its file
         // it plays; a MIDI part gets nil and keeps its note sketch.
         let waves = clips.compactMapValues { ArrangeCanvas.audioWindow(for: $0.0, clip: $0.1, bpm: bpm) }
+        // Edge handles only where a part's edges mean something to the arrangement: MIDI and audio.
+        let arrangeable = TrackParts.arrangeable(row.id, in: document)
         return GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .leading) {
@@ -538,6 +606,14 @@ struct ArrangeCanvasView: View {
                                      onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
                                      onNudge: { later in nudge(block.id, onLane: row.id, later: later) },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
+                }
+                // One World T1: the selected part's two edges, above every block so the hold on
+                // an edge reaches them before the block's own hold-to-move.
+                if let selected, arrangeable, let pair = clips[selected],
+                   ArrangeCanvas.edgeBound(for: pair.1) != nil {
+                    ArrangePartEdgeHandles(region: pair.0, document: document, clip: pair.1,
+                                           laneWidth: width, songTicks: songTicks, height: Self.rowHeight)
+                        .zIndex(2)
                 }
             }
             // Dimmed, not hidden: the parts are still there to select and move — they make no
