@@ -194,9 +194,10 @@ struct TrackPluginRow: View {
         } else {
             lines.append(String(localized: "Pick an installed instrument to play this track instead of its built-in voice."))
         }
-        if effects > 0 {
-            lines.append("\(effects) " + String(localized: "effects installed — inserting one on a track is not available yet."))
-        }
+        // Kandidat A (g), 2026-10-15: the installed-effects count used to end this note with
+        // "inserting one on a track is not available yet" — a sentence about a door that does not
+        // exist is a dead end. `effects` stays in the signature for the day the insert door ships.
+        _ = effects
         return lines.joined(separator: " ")
     }
 }

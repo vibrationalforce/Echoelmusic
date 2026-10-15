@@ -102,7 +102,7 @@ final class ThePluginCatalogListsInstalledUnitsTests: XCTestCase {
                        "a component is known by its codes, not its name")
     }
 
-    func testTheRowSaysWhatPlaysAndWhatIsNotBuiltYet() {
+    func testTheRowSaysWhatPlaysAndPromisesNothingWithoutADoor() {
         let synth = DeviceInsert.PluginComponent(type: PluginCatalog.instrumentType, subtype: 1,
                                                  manufacturer: 2, name: "Synth", manufacturerName: "Acme")
         let playing = TrackPluginRow.note(current: synth, installed: 3, effects: 0)
@@ -110,9 +110,10 @@ final class ThePluginCatalogListsInstalledUnitsTests: XCTestCase {
         XCTAssertTrue(playing.contains("the piece keeps its settings"), "the song keeps the plugin's settings (H4): \(playing)")
         XCTAssertEqual(TrackPluginRow.note(current: nil, installed: 0, effects: 0),
                        "No Audio Unit instruments are installed on this iPhone.")
-        XCTAssertTrue(TrackPluginRow.note(current: nil, installed: 2, effects: 4)
-            .hasSuffix("4 effects installed — inserting one on a track is not available yet."),
-                      "effects are listed, not yet inserted (H6)")
+        // Kandidat A (g), 2026-10-15: no sentence about the effect insert until its door ships.
+        XCTAssertEqual(TrackPluginRow.note(current: nil, installed: 2, effects: 4),
+                       "Pick an installed instrument to play this track instead of its built-in voice.",
+                       "the note promises nothing that has no door — installed effects are not announced")
     }
 
     // MARK: 4 — mounted on rack tracks, detached, and the pick goes through the one writer
