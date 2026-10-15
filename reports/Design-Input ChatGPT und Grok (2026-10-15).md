@@ -20,6 +20,10 @@ Glas-/Blur-Effekte, keine Glow-/Neon-Effekte, Schatten höchstens 8 pt · Überg
 nur Deckkraft/Farbe · Grün nur für Körpersignale · jede Zahl ist ein Wertfeld (Name + Zahl +
 Einheit), kein Drehknopf · Blitze höchstens 3 Hz · Schrift Atkinson Hyperlegible · keine neue
 Bühne und kein neues Pop-up-Fenster (fünf Bühnen: Arrange · Mixer · Instrument · Browse · Piece).
+Keine modulare Patch-Fläche. **Einhand- und Daumen-Skala** (Vorbild Koala), große Touch-Ziele
+(44 pt, live 60 pt). **Sichtbare Hierarchie:** was auf den ersten Blick, was auf den zweiten, was
+erst nach einem Tipp. **Barrierefreiheit:** große Schrift, VoiceOver, kein Zustand nur über Farbe.
+Fokus ist professionelle Medienproduktion auf dem Daumen; Bio ist eine optionale Quelle.
 
 **Bekannte Schwächen (gemessen):** zu viele verschiedene Abstände und Schriftgrößen; zwei Arten
 von Überschriften; Bedienelemente mit 34–36 pt statt 44 pt; Rahmen von Bedienelementen kaum

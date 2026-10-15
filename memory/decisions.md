@@ -5332,3 +5332,11 @@ Ausrichtung auf professionelle Medienproduktion bleiben dabei maßgeblich." (wit
 - Acceptance goal for the 14 days: make something audible, change it, keep it, open it again.
 - Order: Kandidat A (a start · c finger hint · g dead ends, b one-Play as a check) → device session 1
   → Kandidat B (f tempo · e Field 4+More · d routing "Bühne" · h chips) → device session 2.
+
+### 2026-10-15 — Redesign: D1 44 pt, AUv3 still bis zur ersten Note, Design-Input nur mit Bildern
+- Founder: „44-pt-Fingerziele (D1) – ja" und „Echoel-Plugin still bis zur ersten Note – ja".
+- Plugin-Stille gebaut (`950a25bcf`); D1 ersetzt den 34-pt-Hausstandard (#617).
+- Design-Input von ChatGPT/Grok erst mit den fünf Screenshots aus Gerätesitzung 1; Kopf des
+  Auftrags um Daumen-Skala (Koala), Hierarchie in drei Ebenen und „keine modulare Patch-Fläche"
+  ergänzt. Bis dahin vom Redesign nur D1–D3.
+- review: 2026-11-14
