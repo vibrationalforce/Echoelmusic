@@ -20,6 +20,14 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 
 ## 1. What Echoelmusic is
 
+> ⭐ **FOCUS (founder 2026-10-15, verbatim: „Biofeedback ist nur ein kleines gimmick. Wir wollen
+> den hauptfocus auf professionelle Medienproduktion legen").** The main focus is professional
+> media production — audio, MIDI, video, arrangement, mixing, export, the professional
+> ecosystem. Biofeedback is one optional modulation source among others, not the identity.
+> Consequences: when bio and production compete for a resource (the rear camera, screen space,
+> the first screen a newcomer sees, the build order), **production wins**. Bio code stays, works
+> and keeps its safety law (§4); it is no longer the lead of any surface or of the pitch.
+
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
 
@@ -118,7 +126,8 @@ The UI engineering laws are unchanged and non-negotiable:
 
 ## 4. Bio and science law
 
-Bio stays a major differentiator. **It is not the outer product boundary.**
+⛔ "Bio stays a major differentiator" stood here (2026-09-24). **Since 2026-10-15 bio is an
+optional extra, not the focus** (§1, FOCUS). **It is not the outer product boundary.**
 
 The allowed chain is:
 

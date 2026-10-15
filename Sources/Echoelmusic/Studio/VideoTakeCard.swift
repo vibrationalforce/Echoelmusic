@@ -4,9 +4,11 @@
 // button. A finished take is handed to the Workstation, which lands it through the same
 // transaction as "Import Video"; this leaf never writes a store.
 //
-// ⭐ ONE CAMERA OWNER AT A TIME. While the camera pulse runs, the rear lens is the pulse sensor
-// (`CameraCapture`), so the card says so and does not open the recorder. `isRunning` flips on start
-// and stop only — a cold read, and it stays in this leaf (the 10.76.41/50 freeze law).
+// ⭐ ONE CAMERA OWNER AT A TIME, AND PRODUCTION WINS (founder 2026-10-15: "Biofeedback ist nur ein
+// kleines gimmick … hauptfocus auf professionelle Medienproduktion"). The rear lens cannot serve
+// the pulse sensor (`CameraCapture`) and the recorder at once, so opening the card STOPS the
+// camera pulse and says so; the strap, the Watch and Apple Health keep feeding bio. `isRunning`
+// flips on start and stop only — a cold read, and it stays in this leaf (the 10.76.41/50 law).
 //
 // ⚠️ NOT DEVICE-VERIFIED (preview orientation, the first-frame delay, a take during playback).
 
@@ -25,13 +27,14 @@ struct VideoTakeCard: View {
     @State private var camera: VideoTakeCamera?
     @State private var phase: Phase = .opening
     @State private var startedAt: Date?
+    /// The card stopped a running camera pulse to take the lens.
+    @State private var pulsePaused = false
 
     enum Phase: Equatable {
         case opening
         case ready
         case recording
         case saving
-        case pulseHoldsCamera
         case failed(String)
     }
 
@@ -93,7 +96,11 @@ struct VideoTakeCard: View {
         case .opening:
             note(Text("Opening the camera…"))
         case .ready:
-            note(Text("Video only — the sound of the take is the song's own tracks."))
+            if pulsePaused {
+                note(Text("The camera pulse is paused while the camera records video."))
+            } else {
+                note(Text("Video only — the sound of the take is the song's own tracks."))
+            }
         case .recording:
             if let startedAt {
                 TimelineView(.periodic(from: startedAt, by: 1)) { context in
@@ -102,8 +109,6 @@ struct VideoTakeCard: View {
             }
         case .saving:
             note(Text("Saving the take…"))
-        case .pulseHoldsCamera:
-            note(Text("The camera is measuring your pulse. Stop the camera pulse to record video."))
         case .failed(let message):
             note(Text(verbatim: message))
         }
@@ -125,9 +130,9 @@ struct VideoTakeCard: View {
     // MARK: - Actions
 
     private func openCamera() async {
-        guard !cameraRPPG.isRunning else {
-            phase = .pulseHoldsCamera
-            return
+        if cameraRPPG.isRunning {
+            cameraRPPG.stop()
+            pulsePaused = true
         }
         let recorder = VideoTakeCamera()
         camera = recorder

@@ -5282,3 +5282,10 @@ Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 202
 - **Video-Spur:** Ein Bildteil auf der ERSTEN Video-Spur läuft mit der Song-Uhr (`VideoLanePlan` rein, `VideoLanePlayer` als Ausführer, `VideoLaneAVSink` = ein stummer `AVPlayer`). v1 zeigt genau eine Bildspur. Kopien liegen in `Media/Picture`, weil die Video-Karte `Media/Video` aufräumt. Der eine `VideoLayerSlot`: letzter Anhang gewinnt, jeder Besitzer löst nur seinen eigenen Ausgang. Gerät-Verify offen.
 - **Kanten-Trim:** MIDI- und Audio-Teile haben Start/End-Griffe im Arrange-Canvas; Griffe enden am Nachbarteil und am Spurende. MIDI-Ende darf verlängern, MIDI-Start rastet auf Takte.
 - review_date 2026-11-14 · Status ACTIVE.
+
+### 2026-10-15 — Fokus: professionelle Medienproduktion, Biofeedback ist ein Extra
+
+- Founder wörtlich: „Biofeedback ist nur ein kleines gimmick. Wir wollen den hauptfocus auf professionelle Medienproduktion legen".
+- Folge: Wo Bio und Produktion um etwas konkurrieren (Rückkamera, Platz, erster Bildschirm, Reihenfolge), gewinnt die Produktion. Bio-Code und Sicherheitsgesetz bleiben. `FOUNDER_PRODUCT_LAW.md` §1 FOCUS + §4 nachgezogen.
+- Offen beim Founder: Store-/Website-Positionierung (App-Store-Text bleibt seine Formulierung).
+- review_date 2026-11-14 · ACTIVE.

@@ -10,8 +10,9 @@
 //      never touched (set BEFORE configuration, the "camera kills audio" law of `CameraCapture`),
 //      the rear lens, not a main-actor type, every closure it hands its queue spelled `@Sendable`
 //      (2613/2618), and no `NSLock` taken in an `async` body (`noasync`).
-//   3. SOURCE-TEXT SCAN — the card: one camera owner (it refuses while the camera pulse runs), it
-//      hands the file over and writes no store.
+//   3. SOURCE-TEXT SCAN — the card: one camera owner, and production wins (founder 2026-10-15:
+//      "Biofeedback ist nur ein kleines gimmick") — opening the card stops a running camera pulse
+//      and says so; it hands the file over and writes no store.
 //   4. SOURCE-TEXT SCAN — the door: "Record Video" sits in the Add menu, the card is mounted in the
 //      plate (no new modal), a take and a picked file share ONE landing (`landVideo`), the take's
 //      temporary file is deleted, and a piece without a video track gets one first.
@@ -76,11 +77,14 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
 
     // MARK: 3 — the card
 
-    func testTheCardHasOneCameraOwnerAndWritesNoStore() throws {
+    func testTheCardTakesTheCameraFromThePulseAndWritesNoStore() throws {
         let card = try code("Sources/Echoelmusic/Studio/VideoTakeCard.swift")
-        XCTAssertTrue(card.contains("guard !cameraRPPG.isRunning else {"),
-                      "while the camera pulse runs, the rear lens is the pulse sensor — the card does not open the recorder")
-        XCTAssertTrue(card.contains("phase = .pulseHoldsCamera"))
+        let open = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "let recorder = VideoTakeCamera()"),
+                                 "ANCHOR: `openCamera` is gone (#454)")
+        XCTAssertTrue(open.contains("if cameraRPPG.isRunning {") && open.contains("cameraRPPG.stop()"),
+                      "one lens, production first — the card stops the camera pulse BEFORE it builds the recorder")
+        XCTAssertTrue(open.contains("pulsePaused = true"), "and remembers it, so the card can say the pulse is paused")
+        XCTAssertTrue(card.contains("if pulsePaused {"))
         XCTAssertTrue(card.contains("land(file)"), "a finished take is handed to the Workstation")
         for store in ["TimelineStore", "ClipStore", "timeline.", "clipStore."] {
             XCTAssertFalse(card.contains(store), "the card writes no store (`\(store)`) — the Workstation lands the take")

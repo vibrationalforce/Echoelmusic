@@ -19207,16 +19207,6 @@
         }
       }
     },
-    "The camera is measuring your pulse. Stop the camera pulse to record video." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The camera is measuring your pulse. Stop the camera pulse to record video."
-          }
-        }
-      }
-    },
     "Camera access is off. Turn it on in Settings › Echoelmusic." : {
       "localizations" : {
         "en" : {
@@ -19253,6 +19243,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The take could not be saved."
+          }
+        }
+      }
+    },
+    "The camera pulse is paused while the camera records video." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The camera pulse is paused while the camera records video."
           }
         }
       }
