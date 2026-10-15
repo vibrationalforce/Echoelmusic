@@ -91,7 +91,7 @@ enum SongAutomationEdit {
         switch role {
         case .laneSynth(let kind): poly = kind == .poly
         case .audio: poly = false
-        case .echoelInstrument, .bio, .unplayed, .noVoice: return []
+        case .echoelInstrument, .bio, .unplayed, .noVoice, .picture: return []
         }
         var list: [ParameterDescriptor] = []
         if controls.level { list.append(mixVolume) }

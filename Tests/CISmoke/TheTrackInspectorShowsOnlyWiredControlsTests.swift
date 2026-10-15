@@ -111,7 +111,7 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
     }
 
     func testEveryRoleHasADeviceName() {
-        let roles: [TrackMix.Role] = [.echoelInstrument, .laneSynth(.poly), .audio, .bio, .unplayed,
+        let roles: [TrackMix.Role] = [.echoelInstrument, .laneSynth(.poly), .audio, .bio, .unplayed, .picture,
                                       .noVoice(capacity: 4), .noVoice(capacity: 0)]
         for role in roles {
             XCTAssertFalse(TrackMix.deviceName(role).isEmpty, "\(role) has no device name")

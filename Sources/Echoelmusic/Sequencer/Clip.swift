@@ -104,7 +104,13 @@ public enum ClipKind: String, Codable, Sendable, CaseIterable {
     /// older build that the engine would happily play, refused by a predicate reading this
     /// set. "Silently mute" where "visibly absent" was the honest state. The next medium to
     /// join this set will be asked the same two questions separately.
-    public static let timelineEngineKinds: Set<ClipKind> = [.midi, .audio]
+    ///
+    /// ⭐ `.video` JOINED WITH ITS ENGINE (One World V3b), and the two questions were asked
+    /// separately: the ENGINE is `VideoLanePlayer` + `VideoLaneAVSink`, injected by the app and
+    /// driven by `TimelineRegionPlayer` at every audio-lane drive; the PRODUCER is answered on
+    /// its own (the video import door). ⚠️ The engine shows ONE picture lane — the first —
+    /// so `firstExecutableRegion` asks only that lane (`VideoLanePlayer.shownLane`).
+    public static let timelineEngineKinds: Set<ClipKind> = [.midi, .audio, .video]
 
     /// Only kinds a SHIPPED engine drives render on the timeline. The arrangement may show
     /// the other lanes, but must not pretend they play. ⚠️ "Shipped" is the claim, not

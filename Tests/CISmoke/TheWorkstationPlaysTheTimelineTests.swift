@@ -354,19 +354,31 @@ final class TheWorkstationPlaysTheTimelineTests: XCTestCase {
             """)
     }
 
-    // MARK: - 12. BEHAVIOUR — a kind with no engine is not content (GUARD E)
+    // MARK: - 12. BEHAVIOUR — a picture part plays only where the picture engine shows it (GUARD E)
 
-    func testAPartOnlyOnAVideoLaneIsNotASong() {
+    func testAPicturePartPlaysOnlyOnTheShownLaneAndOnlyWhenItsFileResolves() {
         let video = TimelineLane(name: "Video 1", kind: .video)
-        let clip = Clip(name: "Intro", kind: .video, mediaRef: "Media/Video/intro.mov")
+        let clip = Clip(name: "Intro", kind: .video, mediaRef: "Media/Picture/intro.mov")
         let doc = TimelineDocument(lanes: [video], regions: [Self.part(clip, on: video)])
         XCTAssertFalse(Self.startable(doc, clips: [clip]), """
-            Lane kind, clip kind and media reference all AGREE here — and it is still not \
-            playable, because no video engine ships (`ClipKind.timelineEngineKinds`, and the \
-            capture path was removed outright by #1304). The arrangement may SHOW such a \
-            lane — `WorkstationSummary` marks it "no engine yet" — but offering Play over it \
-            would promise a rendering that does not exist.
+            A picture part whose file the resolver cannot find shows nothing — `VideoLanePlan.shot` \
+            refuses it — so it is not a song (#1439: the resolver decides, never the reference).
             """)
+        XCTAssertTrue(Self.startable(doc, clips: [clip], resolveAudio: Self.resolving(clip.id)), """
+            One World V3b: `.video` is in `ClipKind.timelineEngineKinds` because its engine ships \
+            (`VideoLanePlayer` + `VideoLaneAVSink`, driven at every audio-lane drive). A resolving \
+            picture part on the shown lane is content — refusing it is the #1438 under-claim.
+            """)
+        let first = TimelineLane(name: "Video 0", kind: .video)
+        let second = TimelineDocument(lanes: [first, video], regions: [Self.part(clip, on: video)])
+        XCTAssertFalse(Self.startable(second, clips: [clip], resolveAudio: Self.resolving(clip.id)), """
+            The engine shows ONE picture lane, the first (`VideoLanePlayer.shownLane`). A part only \
+            on the second is never shown, so Play over it would start a transport over nothing.
+            """)
+        let audio = Clip(name: "Not a film", kind: .audio, mediaRef: "Media/Audio/loop.wav")
+        let mismatched = TimelineDocument(lanes: [video], regions: [Self.part(audio, on: video)])
+        XCTAssertFalse(Self.startable(mismatched, clips: [audio], resolveAudio: Self.resolving(audio.id)),
+                       "an audio clip on a picture lane: the plan shows only `.video` clips")
     }
 
     // MARK: - 13. BEHAVIOUR — the AUDIO verdict, decided by the RESOLVER (GUARD G)

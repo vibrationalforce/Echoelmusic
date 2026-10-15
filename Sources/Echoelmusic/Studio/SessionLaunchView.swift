@@ -83,7 +83,7 @@ enum SessionGrid {
 
     /// Tracks a launch is HEARD on, in document order: the roles `TrackMix.role` gives a
     /// voice — the Echoel track, a rack-voiced MIDI lane, an audio lane. That excludes what
-    /// `TimelineRegionPlayer.launchRegion` refuses (bio, video, visual) and a MIDI lane with no
+    /// `TimelineRegionPlayer.launchRegion` refuses (bio, picture, visual) and a MIDI lane with no
     /// rack voice. `voiceCapacity` is `TimelineRegionPlayer.laneVoiceCapacity`, never defaulted.
     nonisolated static func tracks(in document: TimelineDocument, voiceCapacity: Int) -> [Track] {
         document.lanes
@@ -92,7 +92,7 @@ enum SessionGrid {
                                                voiceCapacity: voiceCapacity) else { return false }
                 switch role {
                 case .echoelInstrument, .laneSynth, .audio: return true
-                case .bio, .unplayed, .noVoice:             return false
+                case .bio, .unplayed, .noVoice, .picture:   return false
                 }
             }
             .map { Track(id: $0.id, name: $0.name) }

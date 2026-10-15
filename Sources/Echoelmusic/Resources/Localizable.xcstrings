@@ -19067,6 +19067,16 @@
         }
       }
     },
+    "Picture player — the first picture track shows in the visual" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picture player — the first picture track shows in the visual"
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

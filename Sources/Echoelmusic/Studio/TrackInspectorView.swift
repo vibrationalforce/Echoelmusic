@@ -77,7 +77,10 @@ enum TrackMix {
         case audio
         /// A recorded bio curve. It makes no sound.
         case bio
-        /// A kind no shipped engine plays on the timeline (video, visual).
+        /// A picture track (One World V3b). `VideoLanePlayer` shows the FIRST one in the visual
+        /// (one footage layer, v1); it makes no sound, so it has no level, pan or mute.
+        case picture
+        /// A kind no shipped engine plays on the timeline (visual).
         case unplayed
     }
 
@@ -126,7 +129,9 @@ enum TrackMix {
                 return .noVoice(capacity: voiceCapacity)
             }
             return .laneSynth(lane.builtinInstrument?.voiceKind ?? .poly)
-        case .video, .visual:
+        case .video:
+            return .picture
+        case .visual:
             return .unplayed
         }
     }
@@ -148,7 +153,7 @@ enum TrackMix {
         case .audio:
             return Controls(role: role, level: true, pan: true, muteSolo: true, effect: false, genre: false,
                             sound: false)
-        case .bio, .unplayed, .noVoice:
+        case .bio, .unplayed, .noVoice, .picture:
             return Controls(role: role, level: false, pan: false, muteSolo: false, effect: false, genre: false,
                             sound: false)
         }
@@ -188,6 +193,7 @@ enum TrackMix {
         case .audio:              return String(localized: "Audio file player")
         case .bio:                return String(localized: "Bio curve — no sound")
         case .unplayed:           return String(localized: "No engine plays this track yet")
+        case .picture:            return String(localized: "Picture player — the first picture track shows in the visual")
         case .noVoice(let capacity):
             let limited: String = String(localized: "No voice — only the first ") + "\(capacity)" + String(localized: " extra MIDI tracks play")
             return capacity > 0 ? limited : String(localized: "No voice — extra MIDI tracks are off in this build")

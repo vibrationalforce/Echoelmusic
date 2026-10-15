@@ -555,7 +555,10 @@ public final class TimelineRegionPlayer {
             let offsetSeconds: Double
         }
         var verdicts: [Judged: Bool] = [:]
-        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind) {
+        // One picture lane plays (one footage layer): a part on any other is never shown.
+        let shownPicture = VideoLanePlayer.shownLane(in: document)
+        for lane in document.lanes where !lane.isBio && engineKinds.contains(lane.kind)
+            && (lane.kind != .video || lane.id == shownPicture) {
             for tick in TimelineScheduling.candidateSampleTicks(in: document, laneID: lane.id) {
                 guard let region = TimelineScheduling.activeRegion(in: document,
                                                                    laneID: lane.id,
@@ -636,13 +639,14 @@ public final class TimelineRegionPlayer {
             // runtime call is `resolveURL(region.clipID)` at all three `AudioLanePlayer`
             // sites, and a predicate that mirrors a call should mirror its ARGUMENT too.
             return resolveAudio(region.clipID) != nil
-        case .video, .visual:
-            // Unreachable while `timelineEngineKinds` excludes them — exhaustive on purpose,
-            // so adding a kind to that set can never silently inherit "executable". TWO
-            // independent gates, deliberately: a mutation run shows EITHER half alone still
-            // refuses a video lane, which is the point — widening the set is a one-line
-            // change made for a different reason (a new engine), and it must not quietly
-            // decide this question on the way past.
+        case .video:
+            // One World V3b: the picture engine's own two refusals, asked — never re-derived.
+            // `VideoLanePlan.shot` shows only a `.video` clip whose file the resolver finds; the
+            // resolver here is the one closure the app hands every lane (#1439).
+            return clip.kind == .video && resolveAudio(region.clipID) != nil
+        case .visual:
+            // Unreachable while `timelineEngineKinds` excludes it — exhaustive on purpose, so
+            // adding a kind to that set can never silently inherit "executable".
             return false
         }
     }
