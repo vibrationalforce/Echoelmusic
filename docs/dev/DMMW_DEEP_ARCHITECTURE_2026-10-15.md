@@ -330,6 +330,22 @@ sechs Seiten) und dann je Format umprojiziert. Ton läuft als Objekte oder Ambis
 | **Planetarium / Fulldome** | Domemaster: quadratisches Fischauge, 180° | Objekte über ADM-OSC an das Haus-System | `Sync/ADMOSCSender` (live) | Würfel → Domemaster aus demselben Kern |
 | **VR/XR** (Vision Pro) | Raum statt Fläche | Objekte | nichts; Vision läuft heute nur als „Designed for iPhone" (E15) | erst nach E15; der Kern oben ist die Vorarbeit |
 
+**Gemessene Liefer-Eckdaten (Grok Heavy, Quellen geprüft 2026-10-15):**
+- **Domemaster (IMERSA):**
+  - Bild: quadratisch, äquidistantes Fischauge, unten = vorn in der Kuppel.
+  - Größen: 1024² bis 4096² (größer zulässig).
+  - Bildrate: 30 fps empfohlen, 24–60 möglich.
+  - Neigung: nominal 15°.
+  - Dateiformat: PNG- oder TARGA-Bildfolge.
+  - ⚠️ Den sicheren Aktionsbereich geben die zwei IMERSA-Fassungen verschieden an (±50° gegen ±90° Länge): je Haus erfragen.
+- **360-Video:**
+  - Damit Plattformen und Headsets es als 360 erkennen, braucht die MP4-Datei die Box `sv3d`, mit Projektion `equi` oder `cbmp` (Google Spherical Video V2, offen).
+  - AVFoundation schreibt diese Box nicht selbst. Wir schreiben sie selbst, als reine Funktion ohne Abhängigkeit.
+- **360-Ton (YouTube):**
+  - Format: AmbiX 1. Ordnung, ACN/SN3D, Kanalfolge W Y Z X, 48 kHz, genau EINE Tonspur.
+  - Optional sechs Kanäle mit Head-Locked-Stereo. Dass YouTube das noch unterstützt, ist zwischen Google und Dritten strittig; vor Nutzung prüfen.
+  - `AmbisonicsEncode` liefert genau diese Ordnung und Normierung.
+
 „Multidimensional" heißt hier praktisch: dieselbe Szene speist Fläche, Kuppel, Kugel und Raum,
 ohne dass für jedes Format ein eigenes Projekt entsteht. Der visuelle Renderer (`MetalBioView`)
 zeichnet heute nur eine flache Ansicht; die Kugel ist eine neue Stufe dahinter, keine Änderung

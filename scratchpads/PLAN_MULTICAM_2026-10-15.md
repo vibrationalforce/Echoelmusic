@@ -104,6 +104,28 @@ Bass oder Hall dominiert nicht mehr. Die Rück-Transformation (inverse FFT) ergi
 einer scharfen Spitze genau beim Zeitversatz. Wie deutlich diese Spitze über der zweithöchsten
 steht, ist das Vertrauensmaß.
 
+## Update 2026-10-15 (nachts) — Grok Heavy Runde 2, gemessen
+
+- **M1b nimmt `AVAssetWriter`, nicht `AVCaptureMovieFileOutput`.** Nur der Writer legt den Start
+  fest: `startSession(atSourceTime:)` bildet eine Quellzeit auf Filmzeit 0 ab. Alle
+  Ausgabe-Puffer einer Multicam-Session tragen Zeiten der `synchronizationClock`. Ein
+  gemeinsamer Startpunkt auf dieser Uhr gibt also beiden Linsen dieselbe Null, und die
+  Song-Stelle folgt aus derselben Uhr über `AVAudioTime.hostTime`.
+  ⚠️ Front und Rück laufen dabei NICHT im Gleichschritt: Gleichschritt gilt nur für die
+  Teile eines virtuellen Geräts (WWDC19-249). Der Rest-Versatz ist höchstens ein Bild und
+  wird gemessen, nicht angenommen. Apple nennt dazu keine Zahlen.
+- **K1 braucht KEINE Änderung an der Info.plist und kein Multicast-Entitlement.**
+  `NSLocalNetworkUsageDescription` und `NSBonjourServices` mit `_echoel-colab._tcp` stehen
+  schon in `Resources/iOS/Info.plist`. Das Entitlement ist nur bei frei gewählten
+  Bonjour-Typen oder echtem Multicast Pflicht (TN3179). Weg: `NWListener`/`NWBrowser` +
+  Bonjour, `includePeerToPeer`, TLS. Apples Anleitung ist **TN3213** (Seite vorhanden, Titel
+  bestätigt; der Text war von hier nicht lesbar).
+  ⚠️ „Ganzes Framework in Xcode 27 abgekündigt" ist weiter UNVERIFIZIERT: ein DTS-Beitrag
+  sagt, Multipeer sei offiziell NICHT abgekündigt (TN3151). Der Umzug lohnt sich trotzdem —
+  Gegendruck/Flusskontrolle fehlt, NSStream läuft aus.
+- **Uhren-Abgleich zwischen zwei iPhones (M4):** Für einen einfachen Ping-Abgleich gibt es
+  KEINE belegte Genauigkeit. Er wird bei M4 am Gerät gemessen, bevor eine Zahl im Plan steht.
+
 ## Ehrlichkeit
 Nichts davon ist am Gerät bestätigt. Nach außen (Store, Website, CLAIMS) wird nichts davon
 behauptet, bevor es läuft.

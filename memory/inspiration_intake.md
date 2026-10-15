@@ -1440,3 +1440,11 @@ um eine Spur, Linsen landen an verschiedenen Stellen, ungeschriebene Dateien ble
 Multicam-Kosten vor `commitConfiguration` gelesen, feste Drehung. Gerät für 8 davon offen.
 Lehre: ein fremdes Review gegen KONKRETEN Code mit Commit-Stand war die bisher ergiebigste Form —
 deutlich besser als offene Recherche-Fragen (Grok 8/12).
+
+## 2026-10-15 — Grok Heavy Runde 2: Uhr, immersive Formate, Network.framework — ADOPT→PRODUCT
+[verified 6/8] Bestätigt: Plist-Schlüssel samt `_echoel-colab._tcp` liegen schon, also braucht K1
+KEINE gesperrte Plist-Änderung und kein Multicast-Entitlement. M1b nimmt `AVAssetWriter` (Start
+festlegbar). IMERSA-Domemaster, `sv3d` für MP4 und YouTube-AmbiX stimmen. TN3213 existiert (Titel).
+Strittig: „Multipeer ganz abgekündigt" — ein DTS-Beitrag sagt offiziell nicht (TN3151). Die
+UNGEPRÜFT-Markierungen waren ehrlich. Eingang in `PLAN_MULTICAM` (Update nachts) und
+Tiefenarchitektur §9.2.
