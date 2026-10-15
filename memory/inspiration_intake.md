@@ -1474,3 +1474,13 @@ zählt. `/health` jetzt präzise (`79b469e06`). Offen als Scheiben: DMX-Blitz-Z�
 `VideoFlashLimiter` (S-DMX1), Plugin-Zustand auch beim Speichern/Hintergrund (H4f),
 Plugin-Fenstergröße (H3b). Widerlegt: „therapeutic use" in der Sicherheitswarnung ist PFLICHT
 (CLAUDE.md SAFETY WARNINGS). `EchoelEntrainment` nur aus der türlosen `BioSourceView`, Standard aus.
+
+## 2026-10-15 — ChatGPT: vollständiges Deep Audit (Stand 79361144) — ADOPT→PRODUCT
+[verified 6/8] Der wertvollste Fund des Tages: mein neuer Test kompilierte nicht (mutierende
+Methode auf einem temporären Wert, Z. 128) — meine Python-Transkription liest Nadeln als Daten
+und kann so etwas nicht sehen (CLAUDE.md Tests §4, fünfte Gestalt). Behoben `d82fb7b9f`, dazu der
+Stop-vor-Start-Pfad (der Start beendet und landet seinen Take selbst, wenn die Karte inzwischen
+verlassen wurde) und die Datenschutzseite (`d386c6ee1`). Kamera-Zwecktext in der Info.plist:
+gesperrt, Patch liegt bereit — vor einer App-Store-Einreichung Pflicht. Neue Scheiben: AU-1
+(AUv3-Spiegel atomar), AU-2 (samplegenaues MIDI im AUv3). Lehre: vor jedem Push eines Wächters
+jede `VideoTakeLedger()`-artige Wert-Erzeugung auf `let`/Temporär-Mutation lesen.
