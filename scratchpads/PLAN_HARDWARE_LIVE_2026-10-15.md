@@ -43,6 +43,12 @@ format; each output pair gets its own stereo submixer + `AutoMixChain` limiter; 
 main pair. Rebuild on route change (USB in/out) through the existing `recoverEngine` path, with
 breadcrumbs before each step. Falls back to all-main when the route has 2 channels.
 
+**2026-10-15 — the founder also owns an iConnectivity multi-port MIDI interface.** Each DIN port
+appears to iOS as its own CoreMIDI destination, so devices hang on separate ports (H90, TR-8S,
+synths) and the H90-thru question disappears. It also makes the send-to-every-destination default
+WRONG for notes: every port would play every note. HW-7 therefore moves AHEAD of the sound-palette
+slices.
+
 **HW-7 MIDI destination picker (before HW-8/9).** Clock, notes and MPE go to EVERY CoreMIDI
 destination today (`MIDIOutput.send`, `sendSystemWord`). With the H90 on USB its notes arrive
 unasked. A per-message-kind choice in Routing (clock → H90, notes → a synth, or all), persisted
