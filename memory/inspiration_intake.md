@@ -1525,3 +1525,11 @@ der blinde Fleck ist echt. Falsch: „357 offene Geräteprüfungen" — `founder
 Ungeprüft: „kein Instrument mit Retention auf Kamera-rPPG" (plausibel, ohne Quelle). Sein 14-Tage-Satz
 ist schon unterwegs (Kandidat A + Gerätesitzung 1). Übernommen: der blinde Fleck als drei Felder im
 Gerätebogen (Licht + Sekunden bis zum Lock · WAV in einer DAW gehört · „morgen wieder öffnen?"). Kein Code.
+
+## 2026-10-15 — ChatGPT: Physik-Short „Zeit" + Zeitwege im Repo — ADOPT→PIPELINE (6/6)
+
+Physik: Kunst-Impuls, kein Beleg. Repo-Aussagen alle bestätigt. Selbst gefunden: eine Kamera-Aufnahme
+landet heute hinter dem letzten Teil (`nextStartTick`), nicht an der Song-Stelle — es gibt keinen
+Anker; `TempoMap.tick(atSeconds:)` liefert bei NaN eine 0 (stille Tick-0-Platzierung). Multicam-Plan:
+zwei „höchstens ein Bild"-Zusagen als überholt markiert, Verträge 7–10 ergänzt. Vorschlag M1b-0
+(reiner `TakeAnchor`). Bericht: `reports/ZEIT_EMERGENZ_ECHOELMUSIC_2026-10-15.md`.

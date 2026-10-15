@@ -66,7 +66,8 @@ offen.
 2. **M1b — bildgenauer Start:** statt zwei `AVCaptureMovieFileOutput` je Linse ein
    `AVCaptureVideoDataOutput` + `AVAssetWriter`; beide Writer starten an DERSELBEN Zeit der
    `session.synchronizationClock` (`startSession(atSourceTime:)`), frühere Bilder werden
-   verworfen. Ergebnis: Versatz höchstens ein Bild, statt „einige ms + Startzufall“.
+   verworfen. ~~Ergebnis: Versatz höchstens ein Bild, statt „einige ms + Startzufall“.~~ ⛔ ÜBERHOLT —
+   unbelegt, siehe „M1b — Verträge vor dem Bau“ unten: gemeinsamer Datei-Ursprung ≠ gleichzeitiges erstes Bild.
    ⚠️ `TheShareReadyClipIsNotSoldAnywhereTests` verbietet heute `AVAssetWriterInput(mediaType: .video`
    in `Sources/` — der Wächter wird im SELBEN Commit bewusst umgestellt (erlaubt nur in
    `Video/VideoTakeCamera.swift`), nie still umgangen.
@@ -112,8 +113,8 @@ steht, ist das Vertrauensmaß.
   gemeinsamer Startpunkt auf dieser Uhr gibt also beiden Linsen dieselbe Null, und die
   Song-Stelle folgt aus derselben Uhr über `AVAudioTime.hostTime`.
   ⚠️ Front und Rück laufen dabei NICHT im Gleichschritt: Gleichschritt gilt nur für die
-  Teile eines virtuellen Geräts (WWDC19-249). Der Rest-Versatz ist höchstens ein Bild und
-  wird gemessen, nicht angenommen. Apple nennt dazu keine Zahlen.
+  Teile eines virtuellen Geräts (WWDC19-249). ~~Der Rest-Versatz ist höchstens ein Bild~~ ⛔ ÜBERHOLT
+  (unbelegt, siehe „M1b — Verträge vor dem Bau“) — der Rest-Versatz wird gemessen, nicht angenommen. Apple nennt dazu keine Zahlen.
 - **K1 braucht KEINE Änderung an der Info.plist und kein Multicast-Entitlement.**
   `NSLocalNetworkUsageDescription` und `NSBonjourServices` mit `_echoel-colab._tcp` stehen
   schon in `Resources/iOS/Info.plist`. Das Entitlement ist nur bei frei gewählten
@@ -144,6 +145,18 @@ Zuerst rein und mit Sollwerten (Wächter vor dem Writer-Umbau):
    (M2 zeigt dann die untere) — nicht dunkel.
 5. **Rückstau/Verlust** gehört ins Take-Ergebnis; keine unbegrenzten Puffer.
 6. Rotation am Writer-Input (Transform), nicht über den Movie-File-Weg.
+7. **Ist-Zustand, gemessen 2026-10-15:** eine Aufnahme landet heute NICHT an der Song-Stelle ihres
+   Starts, sondern hinter dem letzten Teil der Spur (`VideoImport.performTake` →
+   `Timeline.nextStartTick(inLane:)`). Der Song-Anker (1.) ersetzt genau diese Regel.
+8. **Umrechnung nur über die vorhandene Tempo-Karte** (`TempoMap.tick(atSeconds:ppq:)`, stückweise je
+   Tempo-Abschnitt) — keine zweite Uhr. ⚠️ Sie gibt bei nicht-endlicher Eingabe `0` zurück; der
+   Anker muss Ungültigkeit VORHER als „nicht bestimmbar" abfangen, sonst ist genau diese 0 die
+   stille Platzierung bei Tick 0.
+9. **Epoche:** ein Engine-Neustart, eine Abtastraten-Änderung oder ein Seek/Loop/Stop während der
+   Aufnahme beendet die Gültigkeit des Ankers (neue Epoche); platziert wird nach der Regel aus 3.,
+   nie durch Fortrechnen über die Unstetigkeit. Intervalle bei 44,1 und 48 kHz werden über
+   `SampleTime.converted(to:)` verglichen, nie über gleiche Framezahlen.
+10. **Drift-Prüfwert (synthetisch):** 20 ppm = 72 ms pro Stunde. Kein Versprechen über ein iPhone.
 Der Wächter `TheShareReadyClipIsNotSoldAnywhereTests` (Anspruch 4) wird im SELBEN Commit wie der
 Writer bewusst umgestellt.
 
