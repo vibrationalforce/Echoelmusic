@@ -1053,6 +1053,25 @@ private struct PartNoteCanvas: View {
         .contentShape(Rectangle())
         .onTapGesture(coordinateSpace: .local) { location in onTap(location) }
         .gesture(edit)
+        // EP-3b (founder 2026-10-15: "so einfache Sachen wie Midi Clips nicht entspannt bearbeiten"):
+        // a PICKED note is grabbed directly — no hold. Only the picked notes carry a touch target,
+        // so a swipe anywhere else still scrolls the grid; the slide goes through the SAME
+        // `resolve` and the same one commit at release as the held gesture.
+        .overlay(alignment: .topLeading) {
+            if editable {
+                ForEach(visible.filter { picked.contains($0.id) && range.contains($0.pitch) }) { note in
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .frame(width: Swift.max(2, CGFloat(note.lengthSteps) * stepW),
+                               height: rowH)
+                        .offset(x: CGFloat(note.startStep) * stepW,
+                                y: CGFloat(high - note.pitch) * rowH)
+                        .onTapGesture(coordinateSpace: .named(Self.space)) { location in onTap(location) }
+                        .gesture(direct)
+                }
+            }
+        }
+        .coordinateSpace(.named(Self.space))
         .sensoryFeedback(.impact(weight: .light), trigger: armCount)
         // While a hold edits, the grid is framed — the visible half of the armed signal. It reads
         // `live`, which SwiftUI resets itself when the gesture ends or is cancelled.
@@ -1085,6 +1104,29 @@ private struct PartNoteCanvas: View {
             .onEnded { value in
                 guard case .second(true, let drag?) = value,
                       let gesture = Self.resolve(drag, visible: visible, picked: picked,
+                                                 grid: grid, editable: editable) else { return }
+                onRelease(gesture)
+            }
+    }
+
+    /// The grid's own coordinate space: the direct handles of picked notes report their touches
+    /// in it, so `resolve` reads one geometry whichever view the finger landed on.
+    private static let space = "noteGrid"
+
+    /// EP-3b — the slide on a PICKED note, without the hold: the same `resolve`, the same
+    /// finger-rate `live`, the same one commit at release. A few points of travel first, so a
+    /// tap on a picked note still toggles it.
+    private var direct: some Gesture {
+        let visible = self.visible
+        let picked = self.picked
+        let grid = self.grid
+        let editable = self.editable
+        return DragGesture(minimumDistance: 6, coordinateSpace: .named(Self.space))
+            .updating($live) { drag, state, _ in
+                state = Self.resolve(drag, visible: visible, picked: picked, grid: grid, editable: editable)
+            }
+            .onEnded { drag in
+                guard let gesture = Self.resolve(drag, visible: visible, picked: picked,
                                                  grid: grid, editable: editable) else { return }
                 onRelease(gesture)
             }
