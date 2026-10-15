@@ -117,7 +117,8 @@ final class AVideoTakeLandsThroughTheImportDoorTests: XCTestCase {
                       "the card cannot be closed while a take starts, records or saves")
         let starting = try XCTUnwrap(slice(card, from: "private func record() {", to: "private func stop() {"),
                                      "ANCHOR: `record` is gone (#454)")
-        XCTAssertTrue(starting.contains("phase = .starting") && starting.contains("guard phase == .starting else { return }"),
+        XCTAssertTrue(starting.contains("phase = .starting") && starting.contains("guard phase == .starting else {")
+                      && starting.contains("if started, case .taken(let files) = await camera.stopRecording() { land(files) }"),
                       "Record holds the card in `.starting` until the camera confirms, and a late answer changes nothing")
         let reopen = try XCTUnwrap(slice(card, from: "private func openCamera() async {", to: "private func record() {"))
         XCTAssertEqual(reopen.components(separatedBy: "guard !Task.isCancelled else").count - 1, 2,

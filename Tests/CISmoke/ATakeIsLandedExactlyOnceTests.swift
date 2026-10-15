@@ -125,7 +125,8 @@ final class ATakeIsLandedExactlyOnceTests: XCTestCase {
         XCTAssertTrue(ledger.stopRequested, "an output that starts after this Stop is stopped at once")
         _ = ledger.fileFinished(rearA, written: true)
         XCTAssertFalse(ledger.stopRequested, "the finished take leaves no stop behind for the next one")
-        XCTAssertEqual(VideoTakeLedger().requestStop(), .answer(.nothingRecorded), "no take, nothing to wait for")
+        var fresh = VideoTakeLedger()
+        XCTAssertEqual(fresh.requestStop(), .answer(.nothingRecorded), "no take, nothing to wait for")
     }
 
     // MARK: 5 — the take sentence (B2)

@@ -204,7 +204,14 @@ struct VideoTakeCard: View {
         phase = .starting
         Task { @MainActor in
             let started = await camera.startRecording(to: url, frontURL: frontURL)
-            guard phase == .starting else { return }   // left or taken by the pulse meanwhile
+            guard phase == .starting else {
+                // Left, or taken by the pulse, while the take was starting: a Stop sent then may
+                // have reached the camera BEFORE the take began (audit 2026-10-15, finding 4), so
+                // this start ends its own take and lands it. Exactly one Stop receives the files;
+                // any other gets `.handedOver`.
+                if started, case .taken(let files) = await camera.stopRecording() { land(files) }
+                return
+            }
             if started {
                 takeError = nil
                 startedAt = Date()
