@@ -89,3 +89,25 @@ als Vorlage.
 ### Reihenfolge
 U1 (EP-3b) und U2 (N-F1) zuerst — sie treffen dein Urteil „Editing zu ungenau" direkt. Dann U3
 (EP-4). U4 mit H6-5/6. U5/U6 nach den echten Screenshots.
+
+---
+
+## 5. Zweite Runde (nach Build 10.79.508) — nur zum Bearbeiten von MIDI-Clips
+
+Vorher: Kopf (§1) wie oben, dazu 4 ECHTE Bildschirmaufnahmen aus 10.79.508: (a) Noten-Editor mit
+einer gewählten Note und den drei Zahlenfeldern, (b) Teil-Leiste mit Starts at bar/beat, Length,
+Repeat, (c) Arrange mit mehreren Teilen, (d) ein 20-s-Bildschirmvideo: Note antippen → ziehen →
+länger ziehen → Undo.
+
+**Auftrag G2 — Grok: die Reibung finden.** Spiele denselben Ablauf gedanklich in Ableton Note,
+Logic Pro für iPad (Piano Roll) und Koala nach: eine 4-Takt-Bassline eingeben, zwei Noten
+verschieben, eine verlängern, den Teil 4× wiederholen, einen Takt später starten lassen. Zähle je
+App die Taps und Gesten. Wo braucht Echoel mehr Schritte, wo ist es unklar, was ein Finger gerade
+tut? Höchstens 8 Punkte, je: Schritt · Echoel-Taps · Vorbild-Taps · kleinster Fix. Kein Code.
+
+**Auftrag C2 — ChatGPT: den Editor ruhig machen.** Entwirf auf Basis von Bild (a) und (b) EIN
+Mockup des Noten-Editors im selben dunklen Stil: wo sitzen Werkzeug-Wahl (Add · Move · Lengthen),
+Raster-Wahl, Zoom, Undo und der Noten-Inspektor, sodass alles mit dem Daumen erreichbar ist und
+das Raster möglichst groß bleibt? Feste Regeln aus §1 (keine Schieberegler, keine eigene untere
+Leiste, keine Deko-Texte). Dazu drei Sätze: was auf den ersten Blick, was auf den zweiten, was
+erst nach einem Tipp.
