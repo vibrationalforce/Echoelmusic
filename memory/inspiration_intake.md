@@ -1506,3 +1506,13 @@ jede `VideoTakeLedger()`-artige Wert-Erzeugung auf `let`/Temporär-Mutation lese
 - Übernommen als Setup-Anleitung (Gerätedaten, hier nicht prüfbar): aktiver USB-C-Hub mit Netzteil,
   H90 Dual Routing, Line-Pegel, Kill Dry ON, Sends post-fader, Return-Low-EQ absenken.
 - Offen am Gerät: reicht der H90 per USB empfangenes MIDI an seine DIN-Thru (TR-8S-Kette) durch?
+
+## 2026-10-15 — ECC (everything-claude-code) v2.2.3 erneut gesichtet — ADOPT→PIPELINE (Muster), REJECT (Paket)
+- Nur gelesen (Klon `b92f181`, 11.10.), nichts ausgeführt. MIT. Neu seit Juli: GateGuard (Fakten
+  vor der ersten Änderung einer Datei), delivery-gate (Stop-Hook gegen Ausreden), config-protection.
+- Gemessen: 16 MCP-Server per `npx -y`, 3 davon `@latest`; Lern-Daemon per `nohup`, der im
+  Hintergrund `claude --print` aufruft; Selbst-Updater; Sponsor-Aufrufe → Paket bleibt verboten.
+- Muster zum Selbstbauen: (1) Fakten-Gate vor der ersten Änderung an `Sources/**/*.swift` (ECCs
+  eigener Pilot: ~45 % mehr Schritte, Nutzen nicht belegt → nur opt-in und gemessen); (2) Stop-Hook,
+  der vor „pre-existing" / „kann ich lokal nicht prüfen" ohne Gate-Ergebnis warnt; (3) Konfidenz-Spalte
+  im HARNESS_LEDGER. Hooks ändern jede Sitzung → Founder-Frage E33.
