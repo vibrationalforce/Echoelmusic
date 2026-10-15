@@ -331,7 +331,7 @@ final class MIDIClockTests: XCTestCase {
         // ⛔ ONE assertion, not two. The first version also checked `stop.contains("pendingStart")`
         // — which the PRE-fix `stopClock` already satisfied (it cleared the flag), so that half
         // could not redden and only made the guard LOOK doubly strong.
-        XCTAssertTrue(stop.contains("if !startWasOwed { sendRealTime(.stop) }"), """
+        XCTAssertTrue(stop.contains("if !startWasOwed { sendRealTime(.stop, at: stopStamp) }"), """
         `stopClock` sends Stop unconditionally again. Spec-legal, and exactly wrong for the \
         one receiver that matters here: one already running under a different master. The \
         invariant that makes the suppression safe is that `pendingStart == true` implies ZERO \

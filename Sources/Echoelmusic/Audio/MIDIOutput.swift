@@ -30,6 +30,9 @@ import Observation
 #if canImport(CoreMIDI)
 import CoreMIDI
 #endif
+#if os(iOS)
+import AVFoundation   // HW-1: the session's output latency sets the clock's lookahead
+#endif
 
 @MainActor
 @Observable
@@ -483,6 +486,15 @@ public final class MIDIOutput {
     /// (a body-driven tempo) reaches the receiver as the tempo Echoel is playing.
     @ObservationIgnored private var lastPulseAt: DispatchTime?
 
+    /// HW-1 — the ideal uptime (ns) of the next pulse and the pulse spacing, so each pulse is
+    /// STAMPED with when it should sound (`MIDIClockSchedule`) rather than sent "now". Set where
+    /// the timer is armed; advanced one spacing per pulse.
+    @ObservationIgnored private var idealPulseNs: UInt64?
+    @ObservationIgnored private var pulseSpacingNs: UInt64 = 0
+    /// HW-1 — seconds a pulse is sent ahead of its ideal moment (the session's output path),
+    /// read once per `startClock`.
+    @ObservationIgnored private var clockLookahead: Double = MIDIClockSchedule.fallbackLookahead
+
     /// The absolute deadline the timer is currently armed for.
     ///
     /// ⛔ THIS EXISTS BECAUSE THE FIRST VERSION OF THIS NACHLESE RE-BROKE ITS OWN FIX, and
@@ -545,6 +557,7 @@ public final class MIDIOutput {
         }
         lastPulseAt = nil                      // fresh phase; the first pulse anchors it
         nextPulseAt = nil                      // …and no stale deadline survives the re-arm
+        clockLookahead = Self.sessionLookahead()
         armClockTimer(interval: interval, firstAfter: Swift.max(0, delay))
         log.log(.info, category: .system, "MIDI CLOCK: on (\(bpm) bpm, 24 ppqn)")
     }
@@ -563,9 +576,13 @@ public final class MIDIOutput {
         pendingStart = false
         lastPulseAt = nil
         nextPulseAt = nil
+        // HW-1: Stop is stamped like the next pulse would have been, so it arrives AFTER every
+        // pulse already handed to CoreMIDI with a future stamp — never between them.
+        let stopStamp = pulseStamp()
+        idealPulseNs = nil
         guard isSendingClock else { return }
         isSendingClock = false
-        if !startWasOwed { sendRealTime(.stop) }
+        if !startWasOwed { sendRealTime(.stop, at: stopStamp) }
         log.log(.info, category: .system, "MIDI CLOCK: off")
     }
 
@@ -636,6 +653,8 @@ public final class MIDIOutput {
         // load is compile-verified only — it needs a device run with a Picker open.
         let deadline = DispatchTime.now() + firstAfter
         nextPulseAt = deadline
+        idealPulseNs = deadline.uptimeNanoseconds
+        pulseSpacingNs = UInt64((interval * 1_000_000_000).rounded())
         t.schedule(deadline: deadline, repeating: interval, leeway: .nanoseconds(0))
         t.setEventHandler { [weak self] in
             MainActor.assumeIsolated { self?.emitPulse() }
@@ -648,11 +667,13 @@ public final class MIDIOutput {
     /// One clock pulse — and the owed Start, if this is the first pulse of a run, so Start
     /// lands on the downbeat rather than one step early.
     private func emitPulse() {
+        let stamp = pulseStamp()
         if pendingStart {
             pendingStart = false
-            sendRealTime(.start)
+            sendRealTime(.start, at: stamp)
         }
-        sendRealTime(.clock)
+        sendRealTime(.clock, at: stamp)
+        if let ideal = idealPulseNs { idealPulseNs = ideal &+ pulseSpacingNs }
         lastPulseAt = DispatchTime.now()
         // The armed deadline has been consumed; from here `lastPulseAt` is the phase anchor.
         // Clearing it keeps `setClockTempo`'s two branches mutually exclusive by CONSTRUCTION
@@ -693,13 +714,39 @@ public final class MIDIOutput {
         clockTimer?.cancel()
     }
 
-    private func sendRealTime(_ message: UMPEncoder.RealTime) {
+    /// HW-1 — the host-time stamp for the pulse now due: its ideal moment plus the lookahead,
+    /// in `mach_absolute_time` ticks (what `MIDITimeStamp` counts). 0 ("now") when no ideal
+    /// moment is known.
+    private func pulseStamp() -> UInt64 {
+        #if canImport(CoreMIDI)
+        guard let ideal = idealPulseNs else { return 0 }
+        var timebase = mach_timebase_info_data_t()
+        guard mach_timebase_info(&timebase) == KERN_SUCCESS else { return 0 }
+        let arrival = MIDIClockSchedule.arrivalNanoseconds(idealNanoseconds: ideal, lookahead: clockLookahead)
+        return MIDIClockSchedule.hostTicks(nanoseconds: arrival, numer: timebase.numer, denom: timebase.denom)
+        #else
+        return 0
+        #endif
+    }
+
+    /// HW-1 — the session's output path (latency + one IO buffer), the lookahead's source.
+    private static func sessionLookahead() -> Double {
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        return MIDIClockSchedule.lookahead(outputLatency: session.outputLatency,
+                                           ioBufferDuration: session.ioBufferDuration)
+        #else
+        return MIDIClockSchedule.fallbackLookahead
+        #endif
+    }
+
+    private func sendRealTime(_ message: UMPEncoder.RealTime, at time: UInt64) {
         #if canImport(CoreMIDI)
         guard isReady else { return }
         var word = UMPEncoder.systemRealTime(status: message.rawValue)
         var eventList = MIDIEventList()
         let packet = MIDIEventListInit(&eventList, ._1_0)
-        _ = MIDIEventListAdd(&eventList, MemoryLayout<MIDIEventList>.size, packet, 0, 1, &word)
+        _ = MIDIEventListAdd(&eventList, MemoryLayout<MIDIEventList>.size, packet, time, 1, &word)
         _ = MIDIReceivedEventList(virtualSource, &eventList)
         let destCount = MIDIGetNumberOfDestinations()
         for i in 0..<destCount {
@@ -711,7 +758,7 @@ public final class MIDIOutput {
         if virtualSource2 != 0 {
             var list2 = MIDIEventList()
             let packet2 = MIDIEventListInit(&list2, ._2_0)
-            _ = MIDIEventListAdd(&list2, MemoryLayout<MIDIEventList>.size, packet2, 0, 1, &word)
+            _ = MIDIEventListAdd(&list2, MemoryLayout<MIDIEventList>.size, packet2, time, 1, &word)
             _ = MIDIReceivedEventList(virtualSource2, &list2)
         }
         #endif
