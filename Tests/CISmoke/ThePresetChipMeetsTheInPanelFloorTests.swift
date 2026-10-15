@@ -23,6 +23,9 @@
 // guard that cannot fail honestly is worse than none, so this file pins only what is
 // exactly checkable and says so.
 //
+// ⭐ D1 (founder 2026-10-15): the floor is now the HIG's 44 pt (`EchoelTheme.controlTapHeight`)
+// everywhere — the 34 below is history; claim 2 reads the token.
+//
 // ⚠️ THIS FORBIDS NO IMPROVEMENT (#364). Raising the chip to a full 44 pt target keeps
 // claim 1 true (it asserts a FLOOR, not equality) and would only need claim 2's neighbour
 // pin re-read. The padding is deliberately NOT pinned: 11 and 12 both occur beside a 34 pt
@@ -90,7 +93,7 @@ final class ThePresetChipMeetsTheInPanelFloorTests: XCTestCase {
         // `touchPatchChip` is the ONE home of the 34 pt rationale (#416). This guard cites
         // it rather than restating it, so the law does not grow a second copy here.
         XCTAssertEqual(count("""
-            .padding(.horizontal, 11).frame(minHeight: 34)
+            .padding(.horizontal, 11).frame(minHeight: EchoelTheme.controlTapHeight)
             """, in: studio), 2, """
             The two 11 pt chip strips (`touchPatchChip` and the look chips) no longer read \
             34. They are where the in-panel floor is DEFINED (#617); the preset chip was \
@@ -98,7 +101,7 @@ final class ThePresetChipMeetsTheInPanelFloorTests: XCTestCase {
             re-read this file's header.
             """)
 
-        XCTAssertGreaterThanOrEqual(count("frame(minHeight: 34)", in: studio), 3, """
+        XCTAssertGreaterThanOrEqual(count("frame(minHeight: EchoelTheme.controlTapHeight)", in: studio), 3, """
             Fewer than three rows meet the 34 pt in-panel floor. The preset chip was raised \
             to 34 by #1144 precisely to join its two neighbours; if the floor itself is being \
             replaced (e.g. everything moves to 44), that is an improvement this guard does \

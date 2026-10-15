@@ -79,7 +79,7 @@ struct LiveNarrationDisclosure: View {
                         .font(EchoelTheme.font(11, .semibold))
                         .foregroundStyle(EchoelTheme.dim)
                 }
-                .frame(minHeight: 34)
+                .frame(minHeight: EchoelTheme.controlTapHeight)
                 .contentShape(Rectangle().inset(by: -5))
             }
             .buttonStyle(.plain)

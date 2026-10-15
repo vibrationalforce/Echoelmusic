@@ -448,7 +448,7 @@ struct PatchbayView: View {
                 } label: {
                     Label("Add route", systemImage: "plus")
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                        .padding(.horizontal, 12).frame(minHeight: 34)
+                        .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                 }
@@ -491,7 +491,7 @@ struct PatchbayView: View {
             TextField("Allowed sender IPs, comma-separated (empty = this device only)", text: oscInAllowedHosts)
                 .textFieldStyle(.plain)
                 .font(EchoelTheme.font(13).monospacedDigit())
-                .padding(.horizontal, 10).frame(minHeight: 34)
+                .padding(.horizontal, 10).frame(minHeight: EchoelTheme.controlTapHeight)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
                 #if os(iOS)
@@ -661,7 +661,7 @@ struct PatchbayView: View {
             TextField("IP / host", text: host)
                 .textFieldStyle(.plain)
                 .font(EchoelTheme.font(13).monospacedDigit())
-                .padding(.horizontal, 10).frame(minHeight: 34)
+                .padding(.horizontal, 10).frame(minHeight: EchoelTheme.controlTapHeight)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
                 #if os(iOS)
@@ -886,7 +886,7 @@ struct PatchbayView: View {
             Button { router.applyAllSuggestions() } label: {
                 Label("Smart patch", systemImage: "wand.and.stars")
                     .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
-                    .padding(.horizontal, 12).frame(minHeight: 34)
+                    .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                     .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
             }
             .buttonStyle(.plain)
@@ -897,7 +897,7 @@ struct PatchbayView: View {
             .disabled(router.suggestions().isEmpty)
             Button { router.clearAll() } label: {
                 Text("Clear").font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 12).frame(minHeight: 34)
+                    .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
@@ -946,7 +946,7 @@ struct PatchbayView: View {
                 Spacer(minLength: 0)
                 statusTag(dst)
             }
-            .frame(minHeight: 32)
+            .frame(minHeight: EchoelTheme.controlTapHeight)
         }
         .buttonStyle(.plain)
         .disabled(!compatible)

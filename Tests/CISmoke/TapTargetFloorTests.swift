@@ -519,8 +519,8 @@ final class TapTargetFloorTests: XCTestCase {
               })
         else { throw XCTSkip("the narration disclosure is gone — remove this case with it") }
         let control = narration[start...stop]
-        XCTAssertTrue(control.contains { $0.contains("frame(minHeight: 34)") }, """
-            the narration disclosure lost its `frame(minHeight: 34)` (#617) — back to a \
+        XCTAssertTrue(control.contains { $0.contains("frame(minHeight: EchoelTheme.controlTapHeight)") }, """
+            the narration disclosure lost its 44 pt `frame(minHeight: EchoelTheme.controlTapHeight)` (#617, D1) — back to a \
             ~16 pt tap strip. `minHeight`, never `height`: the label wraps at large \
             Dynamic Type (the #353 class).
             """)
@@ -545,7 +545,7 @@ final class TapTargetFloorTests: XCTestCase {
     /// spellings this slice changed, padding included, so only a revert can trip them.
     func testTheStudioChipsAreMinimumsNotFixedHeights() throws {
         let studio = try codeLines(Self.studio)
-        let grown = studio.filter { $0.contains(".padding(.horizontal, 11).frame(minHeight: 34)") }
+        let grown = studio.filter { $0.contains(".padding(.horizontal, 11).frame(minHeight: EchoelTheme.controlTapHeight)") }
         XCTAssertEqual(grown.count, 2, """
             expected exactly the two 11-padded chip pills (`touchPatchChip` + the look \
             chips) at `minHeight: 34` — found \(grown.count). If a chip was redesigned, \
@@ -573,7 +573,7 @@ final class TapTargetFloorTests: XCTestCase {
         if let start = exploreHits.first {
             let windowEnd = min(start + 10, studio.count)
             let window = studio[start..<windowEnd]
-            XCTAssertTrue(window.contains { $0.contains(".padding(.horizontal, 12).frame(minHeight: 34)") }, """
+            XCTAssertTrue(window.contains { $0.contains(".padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)") }, """
                 the variations Explore/New pill is no longer the 12-padded `minHeight: 34` \
                 chip (#617). It sits above tappable variation rows, which is why it has no \
                 outset and the minimum IS the whole fix.

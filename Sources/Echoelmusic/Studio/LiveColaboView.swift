@@ -199,7 +199,7 @@ struct LiveColaboView: View {
                     // Invite by IDENTITY, show the LABEL (#1435).
                     Button { colab.invite(peer.id) } label: {
                         Text("Invite").font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.onPrimary)
-                            .padding(.horizontal, 12).frame(minHeight: 30)
+                            .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.text))
                     }
                     .buttonStyle(.plain)

@@ -3253,7 +3253,7 @@ struct EchoelStudioView: View {
                     Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                 }
                 .foregroundStyle(EchoelTheme.text)
-                .padding(.horizontal, 12).frame(minHeight: 34)
+                .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                 // `borderStrong`, DIVERGING from the moodPresetBar Menu (and, until slice G
                 // deleted it, the in-panel "Open Routing" button) on purpose (#616b annotates what the
                 // review called accident-shaped): this control DECIDES what feeds the
@@ -3914,12 +3914,12 @@ struct EchoelStudioView: View {
                 // grown pill was decoration. The pill now lives INSIDE the label with a
                 // `contentShape`, the construction its two sibling chips
                 // (`touchPatchChip`, the look chips) already had. `minHeight`, not
-                // `height` (#353), 34 = the house in-panel floor (#610b); no outset
+                // `height` (#353), 44 pt = `controlTapHeight` since D1 (was 34, #610b); no outset
                 // because tappable variation rows sit directly below.
                 Button { exploreVariations() } label: {
                     Text(mazeBoard == nil ? String(localized: "Explore") : String(localized: "New"))
                         .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                        .padding(.horizontal, 12).frame(minHeight: 34)
+                        .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg))
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -5395,7 +5395,7 @@ struct EchoelStudioView: View {
                     Spacer(minLength: 0)
                 }
                 .foregroundStyle(EchoelTheme.text)
-                .padding(.horizontal, 12).frame(minHeight: 36)
+                .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -6023,11 +6023,11 @@ struct EchoelStudioView: View {
             Text(name)
                 .font(EchoelTheme.font(12))
                 .foregroundStyle(selected ? EchoelTheme.onPrimary : EchoelTheme.text)
-                // `minHeight` 34, not `height` 30 (#617): the fixed pill clipped at AX
-                // sizes (#353 class) AND sat under every tap floor. 34 is the house
-                // in-panel floor; no outset — the neighbouring chips in the 8 pt row
-                // are themselves selectable, and two −5 outsets would overlap by 2 pt.
-                .padding(.horizontal, 11).frame(minHeight: 34)
+                // `minHeight`, not `height` 30 (#617): the fixed pill clipped at AX sizes
+                // (#353 class). The floor is the HIG's 44 pt (`controlTapHeight`) since D1
+                // (founder 2026-10-15) — the 34 pt house floor of #617 is retired; no outset,
+                // the neighbouring chips in the 8 pt row are selectable peers.
+                .padding(.horizontal, 11).frame(minHeight: EchoelTheme.controlTapHeight)
                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .fill(selected ? EchoelTheme.text : EchoelTheme.fill))
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -6088,8 +6088,8 @@ struct EchoelStudioView: View {
                             Text(preset.name)
                                 .font(EchoelTheme.font(12))
                                 .foregroundStyle(selected ? EchoelTheme.onPrimary : EchoelTheme.text)
-                                // 34, the in-panel floor its two neighbouring chip strips
-                                // already cite as law (#617, `touchPatchChip` above). This row
+                                // The in-panel floor its two neighbouring chip strips cite
+                                // (#617, `touchPatchChip` above) — 44 pt since D1, was 34. This row
                                 // sat 2 pt under it. ⚠️ THE PRECISE CLAIM, because the
                                 // obvious one is false: two rows in this file are SMALLER
                                 // still (26 and 28) and both are correct — each is a visual
@@ -6111,7 +6111,7 @@ struct EchoelStudioView: View {
                                 // height in this file, so padding is a look, not the floor.
                                 // Changing it would have been a taste edit smuggled in under
                                 // a tap-target fix.
-                                .padding(.horizontal, 12).frame(minHeight: 34)
+                                .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .fill(selected ? EchoelTheme.text : EchoelTheme.fill))
                                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -6273,9 +6273,9 @@ struct EchoelStudioView: View {
                                 Text(look.name).font(EchoelTheme.font(12))
                             }
                             .foregroundStyle(on ? EchoelTheme.onPrimary : EchoelTheme.text)
-                            // Same law as `touchPatchChip` above (#617): min-34 pill,
+                            // Same law as `touchPatchChip` above (#617, 44 pt since D1),
                             // no outset — adjacent look chips are selectable peers.
-                            .padding(.horizontal, 11).frame(minHeight: 34)
+                            .padding(.horizontal, 11).frame(minHeight: EchoelTheme.controlTapHeight)
                             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                 .fill(on ? EchoelTheme.text : EchoelTheme.fill))
                             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -7502,7 +7502,7 @@ struct EchoelStudioView: View {
                     Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                 }
                 .foregroundStyle(EchoelTheme.text)
-                .padding(.horizontal, 12).frame(minHeight: 34)
+                .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                     .strokeBorder(EchoelTheme.border, lineWidth: 1))
             }
@@ -8145,7 +8145,7 @@ struct EchoelStudioView: View {
                         Image(systemName: "chevron.down").font(EchoelTheme.font(11))
                     }
                     .foregroundStyle(EchoelTheme.text)
-                    .padding(.horizontal, 12).frame(minHeight: 34)
+                    .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                         .strokeBorder(EchoelTheme.border, lineWidth: 1))
@@ -13287,14 +13287,14 @@ private struct SoundPromptRow: View {
                         .autocorrectionDisabled()
                         .submitLabel(.done)
                         .onSubmit { onShape(text) }
-                        // 34 pt matches `presetRow`'s Menu directly above — a full-width field
+                        // 44 pt matches `presetRow`'s Menu directly above — a full-width field
                         // is not the small-target case the 44 pt rule is about. The two SMALL
                         // controls in this row carry the 44 pt hit frame instead.
                         // `minHeight`, never `height`: `EchoelTheme.font` is `.custom(…,
                         // relativeTo: .body)`, so it grows with Dynamic Type and a fixed box
                         // clips the text at accessibility sizes — #262's finding, and CLAUDE.md
                         // now calls a fixed frame "Ökosystem-Schuld" outright.
-                        .padding(.horizontal, 12).frame(minHeight: 34)
+                        .padding(.horizontal, 12).frame(minHeight: EchoelTheme.controlTapHeight)
                         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                             .strokeBorder(EchoelTheme.border, lineWidth: 1))
                         // The hint rides on the FIELD, not only as a visual sibling below the
@@ -13313,7 +13313,7 @@ private struct SoundPromptRow: View {
                         // stroke and the padded space between them is dead.
                         Text("Shape").font(EchoelTheme.font(13, .semibold))
                             .foregroundStyle(terms.isEmpty ? EchoelTheme.dim : EchoelTheme.text)
-                            .padding(.horizontal, 14).frame(minHeight: 34)
+                            .padding(.horizontal, 14).frame(minHeight: EchoelTheme.controlTapHeight)
                             .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                 .fill(EchoelTheme.fill))
                             .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
@@ -13337,7 +13337,7 @@ private struct SoundPromptRow: View {
                         Button(action: onUndo) {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(EchoelTheme.font(15)).foregroundStyle(EchoelTheme.text)
-                                .frame(minWidth: 34, minHeight: 34)
+                                .frame(minWidth: EchoelTheme.controlTapHeight, minHeight: EchoelTheme.controlTapHeight)
                                 .background(RoundedRectangle(cornerRadius: EchoelTheme.radius)
                                     .fill(EchoelTheme.fill))
                                 .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
