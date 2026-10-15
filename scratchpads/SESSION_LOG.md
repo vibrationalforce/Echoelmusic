@@ -1098,3 +1098,17 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - Bewusst offen: unabhängige Kopie (Clip-Platz, den Undo nicht zurückgibt), T-1 samplegenauer
   Sequencer (Council zuerst), Werkzeug-Modi (Gerät entscheidet, ob direktes Ziehen reicht).
 - Design-Input: KI-Mockups gemessen (§4), Runde 2 an Grok/ChatGPT vorbereitet (§5, echte 508-Bilder).
+
+## 2026-10-15 (spät) — End-to-End-Audit MIDI-Fluss + fünf Scheiben
+
+- **Deploy:** 10.79.508 (`6f492d8`, Bump nach grünen Gates auf `32b65affc`).
+- **Audit** (drei nur-lesende Agenten: Bearbeiten · Abspielen · Export). Kernbefunde: Tipp schaltete Auswahl um ·
+  Teile außerhalb des Taktstrichs spielten versetzt (M1b, über EP-4/Repeat erreichbar) · Noten > 1 Takt klangen nur
+  ihren Rest · Import kürzte deshalb auf einen Takt · MIDI-Startgriff nur ganztaktig. Offen: 16tel-Quantisierung beim
+  Abspielen (T-1), Main-Queue-Takt, Rack 4 Plätze, kein Einzelteil-.mid, zwei „MIDI"-Türen, WAV nur Echtzeit,
+  „unabhängige Kopie", versteckte Noten hinter verkürztem Teil ohne Hinweis.
+- **Gebaut:** EP-7 `e7a54fb` Tipp wählt eine Note · EP-8 `e8f0ce4` Teil auf Schlag 3 spielt auf Schlag 3
+  (`RegionNoteWindow.songBarSlices`/`songEntryBar`) · Review-Fix `757e2ca` (Phase auf den 16tel aufgerundet) ·
+  EP-9 `9d7a259` lange Noten als Segmente mit derselben ID (Pumpe bindet nur innerhalb des Loops) · EP-10 `0fef0ef`
+  Import ohne Ein-Takt-Kürzung · EP-11 `230dd33` MIDI-Startgriff folgt dem Zoom-Raster.
+- Je Scheibe Wächter, in Python transkribiert (§0). Gates bei Schreiben in der Runner-Schlange; nichts am Gerät geprüft.
