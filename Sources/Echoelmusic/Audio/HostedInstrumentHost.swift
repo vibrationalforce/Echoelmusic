@@ -298,6 +298,27 @@ final class HostedInstrumentHost {
         }
     }
 
+    /// H4f — every loaded unit's settings into the song, so a Save or a trip to the background
+    /// keeps what the person set even when the plugin window was never closed. Each slot is
+    /// mapped back to its track (`MultiRollFanout.laneID(forSlot:)`, the inverse the player
+    /// used), and kept only when that track still names the SAME component — settings of one
+    /// plugin are never stored under another's name. Settings over the song's limit are skipped
+    /// (the Device page says so when its window closes). Returns how many tracks were written.
+    @discardableResult
+    func keepAllStates(in timeline: TimelineStore) -> Int {
+        var kept = 0
+        for slot in hosted.keys.sorted() {
+            let document = timeline.document
+            guard let laneID = MultiRollFanout.laneID(forSlot: slot, in: document, rollLane: document.rollLaneID),
+                  let component = document.lanes.first(where: { $0.id == laneID })?.deviceChain?.instrument?.pluginComponent,
+                  let state = captureState(forSlot: slot, expecting: component),
+                  state.count <= DeviceInsert.pluginStateLimit else { continue }
+            timeline.setLanePluginState(laneID, state)
+            kept += 1
+        }
+        return kept
+    }
+
     // MARK: - Private
 
     private func finishLoad(_ unit: AVAudioUnit?, failure: String?, slot: Int,

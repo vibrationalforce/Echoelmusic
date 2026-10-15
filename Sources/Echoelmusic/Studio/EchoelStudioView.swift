@@ -11856,6 +11856,10 @@ struct EchoelStudioView: View {
     /// A1 step 2: a song that cannot be encoded no longer leaves the row without one — the row
     /// keeps the song it was last saved with, and the Save says so (`noteSongCapture`).
     private func withSession(_ take: Project) -> Project {
+        // H4f — a plugin whose window is still open (or was never opened) keeps its settings too.
+        #if canImport(AVFoundation)
+        HostedInstrumentHost.live?.keepAllStates(in: timelineStore)
+        #endif
         let capture = SessionSaveOpen.capturing(take, timeline: timelineStore.document,
                                   clipSlots: clipStore.slots,
                                   songForm: arrangementStore.arrangement,

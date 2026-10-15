@@ -221,4 +221,49 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertTrue(String(host[given.upperBound..<fresh.lowerBound]).contains("return"),
                       "COUNTERWEIGHT: settings the song DOES keep are applied in place, never by reloading")
     }
+
+    // MARK: 7 — H4f: a Save and a trip to the background keep every loaded plugin's settings
+
+    func testSaveAndBackgroundKeepEveryLoadedPluginsSettings() throws {
+        func code(_ rel: String) throws -> String {
+            var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            for _ in 0..<8 where !FileManager.default.fileExists(atPath: dir.appendingPathComponent("Package.swift").path) {
+                dir = dir.deletingLastPathComponent()
+            }
+            let url = dir.appendingPathComponent(rel)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw XCTSkip("\(rel) not on disk — this run has no source tree")
+            }
+            return SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        }
+        let host = try code("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        guard let start = host.range(of: "func keepAllStates(in timeline: TimelineStore) -> Int {"),
+              let end = host.range(of: "return kept", range: start.upperBound..<host.endIndex) else {
+            return XCTFail("ANCHOR MISSING: HostedInstrumentHost.keepAllStates")
+        }
+        let body = String(host[start.upperBound..<end.lowerBound])
+        XCTAssertTrue(body.contains("MultiRollFanout.laneID(forSlot: slot, in: document, rollLane: document.rollLaneID)"),
+                      "each slot goes back to its track through the player's own inverse (#416)")
+        XCTAssertTrue(body.contains("captureState(forSlot: slot, expecting: component)"),
+                      "only the component the track still names — never one plugin's settings under another's name")
+        XCTAssertTrue(body.contains("state.count <= DeviceInsert.pluginStateLimit"),
+                      "settings the song cannot keep are skipped, not written")
+        XCTAssertTrue(body.contains("timeline.setLanePluginState(laneID, state)"), "through the one writer")
+
+        let app = try code("Sources/Echoelmusic/EchoelmusicApp.swift")
+        guard let keep = app.range(of: "HostedInstrumentHost.live?.keepAllStates(in: timelineStore)"),
+              let flush = app.range(of: "timelineStore.flushPendingSave()", range: keep.upperBound..<app.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the background branch keeps the plugins' settings before the flush")
+        }
+        XCTAssertLessThan(app.distance(from: keep.upperBound, to: flush.lowerBound), 200,
+                          "the settings go into the song right before the background flush writes it")
+
+        let studio = try code("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        guard let session = studio.range(of: "private func withSession(_ take: Project) -> Project {"),
+              let capture = studio.range(of: "SessionSaveOpen.capturing(", range: session.upperBound..<studio.endIndex) else {
+            return XCTFail("ANCHOR MISSING: withSession, the one Save funnel")
+        }
+        XCTAssertTrue(String(studio[session.upperBound..<capture.lowerBound]).contains("HostedInstrumentHost.live?.keepAllStates(in: timelineStore)"),
+                      "a Save captures the plugins' settings before the song is copied into the project")
+    }
 }

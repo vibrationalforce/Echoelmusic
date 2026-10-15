@@ -1880,6 +1880,11 @@ struct EchoelmusicApp: App {
                     // Task #56 C6: a debounced timeline save (see TimelineStore.persist())
                     // could still be sleeping when the app suspends — flush it now so a
                     // backgrounded/terminated app never loses the last un-flushed edit.
+                    // H4f: the hosted plugins' own settings go into the song FIRST, so the flush
+                    // below writes them too.
+                    #if canImport(AVFoundation)
+                    HostedInstrumentHost.live?.keepAllStates(in: timelineStore)
+                    #endif
                     timelineStore.flushPendingSave()
                     spatialScene.flushPendingSave()   // S3d review: the scene's working copy, same reason
                     // Guideline 2.5.4: the `audio` background mode may keep the session
