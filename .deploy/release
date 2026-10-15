@@ -1,4 +1,4 @@
-build: v10.79.506 — Echoel-Plugin still bis zur ersten Note, 44-Punkt-Bedienelemente
+build: v10.79.507 — Noten-Inspektor: Start, Länge und Tonhöhe als Zahlen
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,22 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.507) ───────────────────────────────
+
+  Gebaut wird `fc8733dc9`; Xcode Compile Check UND Build for Testing grün auf diesem Stand.
+  Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: NOTEN-INSPEKTOR — EXAKTE ZAHLEN ──
+  Ist im Noten-Editor genau EINE Note gewählt, stehen unter ihrer Zeile drei Zahlenfelder:
+  Start step (Sechzehntel im Teil), Length (Sechzehntel) und Pitch (MIDI-Note, 60 = mittleres C).
+  Eintippen oder ziehen; jedes Feld ist ein Undo-Schritt. Eine neue Tonhöhe scrollt die Zeilen mit.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 0c905f77a) ──
+  · Einen MIDI-Teil öffnen, eine Note antippen, Start step 9 · Length 4 · Pitch 64 eintippen —
+    die Note springt, wird länger und wechselt die Zeile; dreimal Undo nimmt es zurück.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.506) ───────────────────────────────
 
