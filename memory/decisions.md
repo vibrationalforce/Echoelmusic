@@ -5296,3 +5296,11 @@ Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 202
 - **Wo:** `docs/dev/DMMW_DEEP_ARCHITECTURE_2026-10-15.md` §9.
 - **Review:** 2026-11-14
 - **Nachtrag 2026-10-15 (E28):** Founder „CCC nur Haltung" — der CCC wird nach außen nirgends genannt (kein Name, kein Logo, keine Kopie); die sieben Regeln aus §9.1 bleiben die Haltung.
+
+### 2026-10-15 — Hardware integration is additive, never required
+Founder: „Sollte auch ohne externe Effekte gehen. Aber all umfassende Hardware Integration soll möglich sein."
+First target named by the founder: iPhone → Allen & Heath Xone:96 over USB with several channels
+(drums / bass / pad / rest on separate mixer channels), Eventide H90 on Return A/B, H90 delays
+synced to MIDI clock from the iPhone. Law: the app's own FX stay the default; multi-out, clock out
+and external sends are optional routes that replace nothing. Plan + Council before code (audio graph).
+Review: 2026-11-14.
