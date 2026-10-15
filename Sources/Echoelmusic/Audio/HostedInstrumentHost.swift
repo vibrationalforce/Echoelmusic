@@ -245,7 +245,7 @@ final class HostedInstrumentHost {
     /// ⚠️ A mixer input's volume is 0…1; the rack's 0…2 boost above unity does not reach a unit.
     func setMix(slot: Int, gain: Float? = nil, pan: Float? = nil) {
         var current = mix[slot] ?? (gain: 1, pan: 0)
-        if let gain { current.gain = gain.isFinite ? max(0, gain) : 0 }
+        if let gain { current.gain = gain.isFinite ? min(1, max(0, gain)) : 0 }   // a mixer input is 0…1
         if let pan { current.pan = pan.isFinite ? max(-1, min(1, pan)) : 0 }
         mix[slot] = current
         if let unit = hosted[slot]?.unit { Self.apply(current, to: unit) }

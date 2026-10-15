@@ -107,6 +107,31 @@ final class APluginKeepsItsSettingsInTheSongTests: XCTestCase {
         XCTAssertEqual(row.components(separatedBy: "setLanePluginState(").count - 1, 1)
     }
 
+    // MARK: 5b — oversize settings are SAID, and a plugin's level stays in range (Grok, 2026-10-15)
+
+    func testOversizeSettingsAreSaidAndThePluginLevelIsBounded() throws {
+        func code(_ rel: String) throws -> String {
+            var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            for _ in 0..<8 where !FileManager.default.fileExists(atPath: dir.appendingPathComponent("Package.swift").path) {
+                dir = dir.deletingLastPathComponent()
+            }
+            let url = dir.appendingPathComponent(rel)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw XCTSkip("\(rel) not on disk — this run has no source tree")
+            }
+            return SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        }
+        XCTAssertEqual(DeviceInsert.pluginStateLimit, 1 << 20,
+                       "the oversize sentence says 1 MB — move it with the limit")
+        let row = try code("Sources/Echoelmusic/Studio/TrackPluginRow.swift")
+        XCTAssertTrue(row.contains("guard state.count <= DeviceInsert.pluginStateLimit else {"),
+                      "settings over the limit are refused by the store — the row says so instead of dropping them in silence")
+        XCTAssertTrue(row.contains("so the piece cannot keep them"))
+        let host = try code("Sources/Echoelmusic/Audio/HostedInstrumentHost.swift")
+        XCTAssertTrue(host.contains("current.gain = gain.isFinite ? min(1, max(0, gain)) : 0"),
+                      "a mixer input's volume is 0…1 — the hosted unit's level is clamped to it")
+    }
+
     // MARK: 6 — H4c: a unit that loads gets the song's settings back
 
     func testALoadingUnitGetsTheSongsSettingsBack() throws {

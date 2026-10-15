@@ -19337,6 +19337,16 @@
         }
       }
     },
+    "This plugin's settings are larger than 1 MB, so the piece cannot keep them. The plugin keeps them while the app runs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This plugin's settings are larger than 1 MB, so the piece cannot keep them. The plugin keeps them while the app runs."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

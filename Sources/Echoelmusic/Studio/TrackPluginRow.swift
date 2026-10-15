@@ -153,12 +153,17 @@ struct TrackPluginRow: View {
     }
 
     /// H4b — when the plugin window closes, the song keeps what the person set in it. Nothing is
-    /// written when the unit reports no settings; the store refuses an oversize state.
+    /// written when the unit reports no settings. Settings over the song's limit are refused by
+    /// the store — and SAID here, never dropped in silence (audit 2026-10-15, Grok P1-C).
     private func keepSettings() {
         let component = shownComponent
         shownComponent = nil
         guard let component, let host = HostedInstrumentHost.live, let slot = trackSlot(),
               let state = host.captureState(forSlot: slot, expecting: component) else { return }
+        guard state.count <= DeviceInsert.pluginStateLimit else {
+            openNote = String(localized: "This plugin's settings are larger than 1 MB, so the piece cannot keep them. The plugin keeps them while the app runs.")
+            return
+        }
         timeline.setLanePluginState(laneID, state)
     }
     #endif
