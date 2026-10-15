@@ -2302,6 +2302,8 @@ struct EchoelStudioView: View {
             // no sound, and it is a banner rather than an alert because the body's presentation
             // chain is at 14 and a 15th is the black-screen SIGSEGV.
             AudioDegradedRow()
+            // Kandidat A (c) — the whole "where does the finger go" sentence; a leaf like the row above.
+            PulseFingerHint()
             // ⛔ #1024 — the plug-in invitation banner stood here (it opened the microphone
             // sheet when a USB mic or interface was plugged in) and went with the other two
             // mic doors. Its one durable lesson, kept because it is about ANY conditional
