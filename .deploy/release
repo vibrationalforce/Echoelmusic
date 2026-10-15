@@ -1,4 +1,4 @@
-build: v10.79.504 — Klangliste mit Typ und Favoriten, Roll mit Keep on Roll, Plugin-Einstellungen gesichert, MIDI-Clock auf Host-Zeit
+build: v10.79.505 — Start auf dem Instrument, Finger-Hinweis für den Puls, Noten-Editor greifbarer (Kandidat A + EP-2/EP-3)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,40 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.505) ───────────────────────────────
+
+  Kandidat A der 14 Tage „Vereinfachen und Stabilisieren". Gebaut wird `5f4f6f72c`; Xcode
+  Compile Check UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon
+  geprüft. Ergebnisblatt: docs/dev/DEVICE_SESSION_1_2026-10-17.md (fünf Prüfungen, 30 Minuten).
+
+  ── POSTEN 1: START AUF DEM INSTRUMENT ──
+  Eine frische Installation öffnet auf dem Instrument statt auf dem leeren Arrange: Play oben
+  drücken, es klingt. Wer schon einmal eine Bühne gewählt hat, behält sie; Stücke bleiben unberührt.
+
+  ── POSTEN 2: WO DER FINGER HINGEHÖRT ──
+  Läuft die Kamera und ist der Puls noch nicht eingerastet, steht unter der ersten Zeile:
+  „Cover the rear camera + flash". Hängt die Kamera, steht dort, wie man sie zurückholt. Sobald der
+  Puls einrastet, verschwindet die Zeile.
+
+  ── POSTEN 3: NOTEN-EDITOR ──
+  Die Notenzeilen sind 24 statt 14 Punkt hoch — ein Finger trifft die gemeinte Tonhöhe.
+
+  ── POSTEN 4: KEINE SACKGASSE MEHR BEIM PLUGIN ──
+  Die Plugin-Zeile kündigt kein Einfügen von Effekten mehr an, das es nicht gibt.
+
+  ── POSTEN 5: NOTEN GREIFEN UND SPÜREN ──
+  Hält man eine Note 0,3 s, gibt es einen leichten Tick und das Raster bekommt einen dünnen Rahmen —
+  ab jetzt wird editiert, nicht gescrollt. Das Ende einer Note greift man jetzt 16 Punkt weit innen
+  und 12 Punkt weit dahinter (in ihrer Zeile), statt in einem 8-Punkt-Streifen.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 5e9d57f49) ──
+  · Frischinstallation → die App öffnet auf dem Instrument → Play → es klingt.
+  · Play mit Kamera → die Zeile „Cover the rear camera + flash" erscheint und geht beim Einrasten.
+  · Einen MIDI-Teil öffnen, zehn Noten in Nachbarzeilen tippen — jeder Tipp trifft.
+  · Eine Note halten → Tick + Rahmen; knapp rechts neben einem Notenende halten und ziehen → sie wird länger.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.504) ───────────────────────────────
 
