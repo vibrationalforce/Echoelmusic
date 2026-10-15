@@ -1448,3 +1448,12 @@ festlegbar). IMERSA-Domemaster, `sv3d` für MP4 und YouTube-AmbiX stimmen. TN321
 Strittig: „Multipeer ganz abgekündigt" — ein DTS-Beitrag sagt offiziell nicht (TN3151). Die
 UNGEPRÜFT-Markierungen waren ehrlich. Eingang in `PLAN_MULTICAM` (Update nachts) und
 Tiefenarchitektur §9.2.
+
+## 2026-10-15 — ChatGPT Astra: Gegenprüfung der Take-Korrekturen — ADOPT→PRODUCT
+[verified 7/7] Astra fand in meinem Fix `5279814c9` einen echten Fehler (B1: Ergebnis-Übergabe
+nach Freigabe des Locks → ein fertiger Take konnte als Fehler enden). B1–B4 in `4ac093662` behoben
+(`VideoTakeLedger` als reiner Wert, End-to-End-Wächter `ATakeIsLandedExactlyOnceTests`). B5
+(Standbild bei gestopptem Sprung) war schon vor M2 da; B6/B7 (gemeinsamer Startpunkt ≠ gleiches
+erstes Bild; fehlender Song-Anker) gehen in M1b. Lehre: Gegenprüfung durch dasselbe Modell auf
+konkretem Commit-Stand ist die ergiebigste Schleife; Text-Wächter beweisen keine Abläufe —
+Zustände gehören in reine Werte mit End-to-End-Tests.
