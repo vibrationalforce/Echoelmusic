@@ -3,9 +3,11 @@
 // the field (floating window, external stage) holds this slot as its `footageSource` — set once,
 // in `MetalBioView.makeUIView` — and PULLS from it synchronously, in `draw(in:)`, on the main thread.
 //
-// ⚠️ SCOPE, SAID FIRST: ONE OWNER ATTACHES A VIDEO OUTPUT — the video card's `VideoFootageOwner`
-// (VV-6, "Show in Visuals", playing the copy VV-3a keeps). Nothing else does; the VV-8 picture lane
-// would be the second owner and has to say which one wins the one slot. While nothing is attached
+// ⚠️ SCOPE, SAID FIRST: ONE OWNER ATTACHES A VIDEO OUTPUT TODAY — the video card's `VideoFootageOwner`
+// (VV-6, "Show in Visuals", playing the copy VV-3a keeps). Since One World V1 the slot says which
+// owner wins, before a second one (the VV-8 picture lane) exists: the LAST attach wins, and an owner
+// lets go only of its OWN output (`detachVideoOutput(ifAttached:)`) — there is no detach that clears
+// whatever happens to be attached. While nothing is attached
 // every pull is one lock and a nil, and the picture is exactly the pre-VV-5b field. Not
 // device-verified: nothing here may be claimed in store text, on the website or in
 // `ContentPipeline/CLAIMS.md` until a device run has seen it.
@@ -209,10 +211,15 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         dialTarget = dial.clamped(to: 0...1)
     }
 
-    /// The layer goes on the next draw. The limiter is kept (see its declaration).
-    func detachVideoOutput() {
+    /// The layer goes on the next draw — but only while `owned` is the output attached NOW (One
+    /// World V1). The rule for the one slot: the LAST attach wins, and each owner can take down only
+    /// its own output. So the video card's Hide can never blank a picture lane that attached after
+    /// it, and a lane that stops can never blank the card's footage. The limiter is kept (see its
+    /// declaration).
+    func detachVideoOutput(ifAttached owned: any VideoFrameOutput) {
         lock.lock()
         defer { lock.unlock() }
+        guard output === owned else { return }
         output = nil
         shown = nil
         shownCells = []

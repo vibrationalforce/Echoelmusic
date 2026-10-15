@@ -666,7 +666,8 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
             """)
         let card = try code("Sources/Echoelmusic/Studio/VideoSeedCard.swift")
         XCTAssertEqual(count(".attachVideoOutput(", in: card), 1)
-        XCTAssertTrue(card.contains("VideoLayerSlot.shared.detachVideoOutput()"), "the owner never lets the layer go")
+        XCTAssertTrue(card.contains("if let output { VideoLayerSlot.shared.detachVideoOutput(ifAttached: output) }"),
+                      "the owner never lets the layer go — or lets go of something it did not attach (One World V1)")
         XCTAssertTrue(card.contains("player.isMuted = true"), "the picture plays without sound — the sound is the import door's")
         XCTAssertTrue(card.contains("forName: AVPlayerItem.didPlayToEndTimeNotification, object: item, queue: .main)"),
                       "the one observer is delivered on main, once per clip end (2613/2618)")
@@ -678,6 +679,29 @@ final class TheVideoFrameIsPulledOnTheDrawTests: XCTestCase {
         XCTAssertEqual(count("stopFootage()\n        discardKeptVideo()", in: card), 1, "a newer pick")
         XCTAssertTrue(card.contains("if keptVideo != nil { visualsButton }"),
                       "the door is offered only while the card holds a copy to play")
+    }
+
+    /// Claim 16b (One World V1) — the one slot's ownership rule, before a second owner exists: the
+    /// LAST attach wins, and an owner's detach takes down only its OWN output. Behaviour, on the
+    /// shipped slot with two stand-in outputs. FORWARD: `detachVideoOutput(ifAttached:)` is new.
+    func testAnOwnerLetsGoOnlyOfItsOwnOutput() throws {
+        let slot = VideoLayerSlot(clock: { 0 })
+        let card = StandInOutput()
+        let lane = StandInOutput()
+        slot.attachVideoOutput(card, preferredTransform: .identity, dial: 1)
+        slot.attachVideoOutput(lane, preferredTransform: .identity, dial: 1)
+        lane.pending = try planar { _, _ in 128 }
+        slot.detachVideoOutput(ifAttached: card)
+        _ = slot.pullFootageFrame(viewportAspect: 1)
+        XCTAssertEqual(lane.copyCalls, 1, "the card's Hide must not blank the output that attached after it")
+        XCTAssertEqual(card.copyCalls, 0, "the last attach wins the one slot")
+        slot.detachVideoOutput(ifAttached: lane)
+        lane.pending = try planar { _, _ in 128 }
+        XCTAssertNil(slot.pullFootageFrame(viewportAspect: 1), "the owner's own detach takes the layer down")
+        XCTAssertEqual(lane.copyCalls, 1, "nothing pulls a detached output")
+        let code = try code("Sources/Echoelmusic/Studio/VideoLayerSlot.swift")
+        XCTAssertFalse(code.contains("func detachVideoOutput() {"),
+                       "a detach that clears whatever is attached is back — an owner could blank another's picture")
     }
 
     /// Claim 17 — the limiter counts every DRAW, not only a new buffer: after a strobe engaged the

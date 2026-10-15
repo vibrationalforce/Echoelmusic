@@ -130,6 +130,8 @@ enum VideoFootageGeometry {
 @MainActor
 final class VideoFootageOwner {
     private var player: AVPlayer?
+    /// The output this owner attached — the only one its `stop` may take down (One World V1).
+    private var output: AVPlayerItemVideoOutput?
     private var endObserver: NSObjectProtocol?
     /// Bumped by every `begin` and `stop`, so a show that a later tap overtook attaches nothing.
     private var generation = 0
@@ -161,6 +163,7 @@ final class VideoFootageOwner {
             Task { @MainActor in self?.loopToStart() }
         }
         self.player = player
+        self.output = output
         VideoLayerSlot.shared.attachVideoOutput(output, preferredTransform: geometry.transform, dial: 1)
         player.play()
         return true
@@ -179,7 +182,8 @@ final class VideoFootageOwner {
         endObserver = nil
         player?.pause()
         player = nil
-        VideoLayerSlot.shared.detachVideoOutput()
+        if let output { VideoLayerSlot.shared.detachVideoOutput(ifAttached: output) }
+        output = nil
     }
 }
 
