@@ -1496,3 +1496,13 @@ jede `VideoTakeLedger()`-artige Wert-Erzeugung auf `let`/Temporär-Mutation lese
 - Was die Quelle übersah: Clock UND Performer-Noten gehen an JEDES CoreMIDI-Ziel — am H90 per USB
   kämen Noten ungefragt an → HW-7 Ziel-Auswahl zuerst. Und: ein USB-C-Port am iPhone — H90 und
   Xone beide per USB heißt Hub, oder das Xone reicht USB-MIDI an seine DIN-Buchse durch (ungemessen).
+
+## 2026-10-15 — Gemini: Live-Rig Xone:96 + H90 + iPhone + Echoel AI — ADOPT→PIPELINE (2/6)
+- Stimmt am Repo: Clock auf Host-Zeit (HW-1, heute) · 128-Frame-Puffer als Latenz-Option „Ultra".
+- Stimmt heute NICHT: Mehrkanal-Ausgang der App (Graph auf Stereo, HW-5 geplant) · KI hört den
+  Mixer (kein Audio-Eingang seit #1302; E10-1/J0 offen in der Inbox) · Live-Tonart/BPM per CoreML
+  (kein CoreML, Tonart nur offline auf importierten Dateien) · PC/CC/Noten an den H90 (HW-8/HW-9).
+- Erfunden: die CC-Nummern 11/12/21/22 (H90-Zuweisung ist frei; CC11 ist MIDI-Expression).
+- Übernommen als Setup-Anleitung (Gerätedaten, hier nicht prüfbar): aktiver USB-C-Hub mit Netzteil,
+  H90 Dual Routing, Line-Pegel, Kill Dry ON, Sends post-fader, Return-Low-EQ absenken.
+- Offen am Gerät: reicht der H90 per USB empfangenes MIDI an seine DIN-Thru (TR-8S-Kette) durch?

@@ -80,7 +80,15 @@ channel 10 is never a member channel; the RPN zone message announces the narrowe
 **HW-6 External sends (later).** A send per lane to an output pair (post-fader), so an outboard
 return (H90 on the Xone) can be fed directly from the app as well as from the mixer. Additive.
 
+## Setup guide (from the Gemini research, device facts UNVERIFIED here)
+Powered USB-C hub (≥45 W pass-through) → iPhone, Xone:96 USB 1, H90 USB-C. H90: Routing Dual
+(Path 1 = Send 1 → Return A, Path 2 = Send 2 → Return B), all I/O at Line level, Global Kill Dry
+ON (else the dry signal sums twice → comb filter), Tempo Source MIDI Clock. Xone: sends
+post-fader (pre-fader for dub throws), Return A/B low EQ down a little. App: Routing → MIDI out on,
+MPE off, latency "Low" or "Ultra" only if the phone stays cool.
+
 ## Open device facts (founder, one session)
+- Does the H90 forward USB-received MIDI to its DIN Out/Thru (the TR-8S chain), or only DIN-In?
 - Xone:96 USB: how many outputs does iOS report? (HW-3 prints it.)
 - Does the Xone:96 pass USB-MIDI clock to its MIDI DIN out, or is the H90 on its own USB/MIDI path?
 
