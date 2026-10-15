@@ -246,7 +246,7 @@ enum ArrangeCanvas {
     /// its file as measured at import (`nativeDurationSeconds`); a file whose length the canvas
     /// does not know is never lengthened here (`.media(seconds: 0)` refuses — the track's Part
     /// page can, once it has read the file). A video or visual part, or a part whose clip is gone,
-    /// gets no handles: neither plays from the arrangement yet.
+    /// gets no handles (a picture part's edge rule is not decided yet).
     nonisolated static func edgeBound(for clip: Clip?) -> PartTrim.EdgeBound? {
         guard let clip else { return nil }
         switch clip.kind {

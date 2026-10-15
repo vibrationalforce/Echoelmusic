@@ -64,7 +64,8 @@ public final class VideoLanePlayer {
         self.clip = clip
     }
 
-    /// The file a clip resolves to — the one answer the Play button's question asks too (#1439).
+    /// The file a clip resolves to, through the injected resolver — the same closure the app hands
+    /// the audio lanes, whose `resolvedURL` the Play button asks (#1439). No caller yet.
     public func resolvedURL(forClipID id: UUID) -> URL? { resolveURL(id) }
 
     /// The one lane shown: the first picture lane in the document's order.
@@ -128,9 +129,10 @@ public final class VideoLanePlayer {
     /// The drift correction for the part still showing — only while the sink reports a settled
     /// position, so a load or a seek in flight is never corrected again.
     private func correct(in document: TimelineDocument, lane: UUID, atTick tick: Int, bpm: Double) {
-        guard current != nil, let sink, let observed = sink.observedSeconds,
+        // The file is the one already showing: no resolver (no file probes) on the step path.
+        guard let showing = current, let sink, let observed = sink.observedSeconds,
               let expected = VideoLanePlan.shot(in: document, laneID: lane, at: tick, bpm: bpm,
-                                                clip: clip, resolveURL: resolveURL) else { return }
+                                                clip: clip, resolveURL: { _ in showing.url }) else { return }
         // `.hold` goes through too: inside the deadband the sink returns a nudged rate to 1.
         sink.correct(VideoLanePlan.resync(expected, observedSeconds: observed, itemSeconds: sink.itemSeconds))
     }

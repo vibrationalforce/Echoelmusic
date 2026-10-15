@@ -19,7 +19,7 @@ final class ClipTypeTests: XCTestCase {
         // landed and nothing re-read it. What is still missing is a PRODUCER of audio clips
         // (#204/#527), which is a different fact from a missing engine.
         XCTAssertTrue(ClipKind.audio.isPlayable)
-        XCTAssertFalse(ClipKind.video.isPlayable)   // capture removed outright by #1304
+        XCTAssertTrue(ClipKind.video.isPlayable)    // One World V3b: the picture lane engine ships
         XCTAssertFalse(ClipKind.visual.isPlayable)
     }
 

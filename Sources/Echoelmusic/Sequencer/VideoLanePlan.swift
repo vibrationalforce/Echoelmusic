@@ -173,12 +173,16 @@ public enum VideoLanePlan {
         return .nudge(rate: Float(drift > 0 ? 1 - slew : 1 + slew))
     }
 
+    /// Whether a clip is something the picture lane shows — the ONE definition the shot and the
+    /// Play predicate (`TimelineRegionPlayer.isExecutable`) both ask (#416).
+    public static func isPicture(_ clip: Clip) -> Bool { clip.kind == .video }
+
     /// The one place a part becomes a shot: both entry points above come here, so priming and
     /// stepping can never disagree about what a part shows.
     private static func shot(of region: TimelineRegion, at tick: Int, bpm: Double,
                              clip: (UUID) -> Clip?, resolveURL: (UUID) -> URL?) -> Shot? {
         guard bpm.isFinite, bpm > 0,
-              let media = clip(region.clipID), media.kind == .video,
+              let media = clip(region.clipID), isPicture(media),
               let url = resolveURL(region.clipID),
               let position = AudioRegionPlayback.filePositionSeconds(for: region, atTick: tick, bpm: bpm,
                                                                      stretchRate: 1),

@@ -549,6 +549,7 @@ public final class TimelineRegionPlayer {
         // each other's verdict. `contentOffsetSeconds` is finite by construction (the
         // initialiser clamps it through `max(0,)`, which maps NaN to 0), so it is a safe key.
         struct Judged: Hashable {
+            let laneKind: ClipKind
             let clipID: UUID
             let lengthTicks: Int
             let offsetTicks: Int
@@ -563,7 +564,7 @@ public final class TimelineRegionPlayer {
                 guard let region = TimelineScheduling.activeRegion(in: document,
                                                                    laneID: lane.id,
                                                                    at: tick) else { continue }
-                let key = Judged(clipID: region.clipID, lengthTicks: region.lengthTicks,
+                let key = Judged(laneKind: lane.kind, clipID: region.clipID, lengthTicks: region.lengthTicks,
                                  offsetTicks: region.contentOffsetTicks,
                                  offsetSeconds: region.contentOffsetSeconds)
                 if let known = verdicts[key] {
@@ -640,10 +641,10 @@ public final class TimelineRegionPlayer {
             // sites, and a predicate that mirrors a call should mirror its ARGUMENT too.
             return resolveAudio(region.clipID) != nil
         case .video:
-            // One World V3b: the picture engine's own two refusals, asked — never re-derived.
-            // `VideoLanePlan.shot` shows only a `.video` clip whose file the resolver finds; the
-            // resolver here is the one closure the app hands every lane (#1439).
-            return clip.kind == .video && resolveAudio(region.clipID) != nil
+            // One World V3b: the plan's own content question (`isPicture`) plus the resolver the
+            // app hands every lane (#1439). The clock refusals of `VideoLanePlan.shot` (tempo,
+            // file position) are not asked here — the same bpm the audio branch trusts.
+            return VideoLanePlan.isPicture(clip) && resolveAudio(region.clipID) != nil
         case .visual:
             // Unreachable while `timelineEngineKinds` excludes it — exhaustive on purpose, so
             // adding a kind to that set can never silently inherit "executable".

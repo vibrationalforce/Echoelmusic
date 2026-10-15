@@ -6,13 +6,15 @@
 // the last frame and the plan's next correction decides what follows.
 //
 // ⭐ THE SAME SLOT RULE AS THE VIDEO CARD (One World V1): the last attach wins, and this sink lets go
-// only of the output IT attached. Starting the song over a card's "Show in Visuals" puts the lane's
-// picture on top; stopping the card's footage then cannot blank the lane, and the other way round.
+// only of the output IT attached. Every show (Play, a locate, a new part) puts the lane's output
+// back if the card took the slot meanwhile; stopping the card's footage cannot blank the lane, and
+// the other way round. ⚠️ A card shown or hidden WHILE the song plays takes or empties the slot
+// until the lane's next show — known, not covered.
 //
 // ⭐ ONE CLOSURE IS HANDED TO AVFOUNDATION, and it is spelled `@Sendable`: the seek's completion,
 // which hops to main once per SEEK, never per frame (2613/2618: a closure a framework calls off main
 // must not inherit main-actor isolation). The file is measured by the async geometry read inside a
-// main-actor `Task`, once per shot. Seeks are COALESCED: while one is in
+// main-actor `Task`, once per new file. Seeks are COALESCED: while one is in
 // flight the newest target waits, and older targets are dropped, so a Flow tempo glide never queues
 // a seek per step. While loading or seeking `observedSeconds` is nil, so the executor does not
 // correct a position in flux.
@@ -34,6 +36,8 @@ final class VideoLaneAVSink: VideoLaneSink {
     private var output: AVPlayerItemVideoOutput?
     /// The file loaded (or loading) now.
     private var url: URL?
+    /// The video track's own transform, kept for a re-attach.
+    private var transform: CGAffineTransform = .identity
     /// Bumped by every load and every clear, so a load a later shot overtook attaches nothing.
     private var generation = 0
     private var loading = false
@@ -57,7 +61,13 @@ final class VideoLaneAVSink: VideoLaneSink {
 
     func show(_ shot: VideoLanePlan.Shot) {
         running = !shot.holdsLastFrame
-        if shot.url == url, player != nil || loading {
+        if shot.url == url, loading {
+            // The newest target waits for the load (a locate or a wrap during a slow load).
+            pendingSeek = (shot.mediaSeconds, running)
+            return
+        }
+        if shot.url == url, player != nil {
+            attachIfTaken()   // the video card may have taken the slot since the last show
             seek(to: shot.mediaSeconds, play: running)
             return
         }
@@ -97,6 +107,7 @@ final class VideoLaneAVSink: VideoLaneSink {
 
     private func load(_ shot: VideoLanePlan.Shot) {
         clear()
+        running = !shot.holdsLastFrame   // `clear` stops the run; this shot starts it again
         let token = generation
         url = shot.url
         loading = true
@@ -117,9 +128,19 @@ final class VideoLaneAVSink: VideoLaneSink {
             player.actionAtItemEnd = .pause
             self.player = player
             self.output = output
-            VideoLayerSlot.shared.attachVideoOutput(output, preferredTransform: geometry.transform, dial: 1)
-            self.seek(to: shot.mediaSeconds, play: self.running)
+            self.transform = geometry.transform
+            self.attachIfTaken()
+            let target = self.pendingSeek?.seconds ?? shot.mediaSeconds
+            self.pendingSeek = nil
+            self.seek(to: target, play: self.running)
         }
+    }
+
+    /// Put this sink's output on the slot unless it is already there — the one attach. Re-asked on
+    /// every show, so a lane whose slot the video card took is put back on Play.
+    private func attachIfTaken() {
+        guard let output, !VideoLayerSlot.shared.holds(output) else { return }
+        VideoLayerSlot.shared.attachVideoOutput(output, preferredTransform: transform, dial: 1)
     }
 
     /// One seek at a time; the newest target waits and older ones are dropped.

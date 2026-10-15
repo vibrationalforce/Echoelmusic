@@ -205,6 +205,14 @@ final class VideoLayerSlot: FootageFrameSource, @unchecked Sendable {
         refusalAnnounced = false
     }
 
+    /// Whether `output` is the one attached now — an owner asks before re-attaching, so a
+    /// re-attach never restarts a layer that is already showing (the fade-in).
+    func holds(_ output: any VideoFrameOutput) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return self.output === output
+    }
+
     func setDial(_ dial: Double) {
         lock.lock()
         defer { lock.unlock() }
