@@ -57,6 +57,14 @@ public enum MediaLibrary {
         try copyIn(source, subdirectory: "Media/Video", fallbackExt: "mov")
     }
 
+    /// Copy a user-picked video for the PICTURE TRACK into `Media/Picture` (One World P1 —
+    /// `VideoImport`'s one copy). Kept apart from `Media/Video` on purpose: the video card owns
+    /// that home and sweeps it when it appears (VV-3a), so a picture part kept there would be
+    /// deleted by the next card. Same contract as `importAudio`.
+    public static func importPictureVideo(from source: URL) throws -> URL {
+        try copyIn(source, subdirectory: "Media/Picture", fallbackExt: "mov")
+    }
+
     /// Copy a user-picked IMAGE into `Media/Image` (V3 — stills land on video lanes
     /// as fixed-length clips; same contract as importVideo).
     public static func importImage(from source: URL) throws -> URL {
@@ -164,7 +172,7 @@ public enum MediaLibrary {
     ///    update/device migration changes the app-group container UUID, but the
     ///    file itself still sits under the same media subdirectory in the NEW
     ///    container. Re-resolve by file name against every media home, FIRST match
-    ///    wins in the Audio→Video→Image order. (Import names are readable + only
+    ///    wins in the Audio→Video→Image→Picture order (Picture since One World P1). (Import names are readable + only
     ///    per-directory-unique since O11, no longer globally-unique UUIDs; a full
     ///    name+extension clash across two homes is effectively unreachable because
     ///    the audio/video/image picker extension sets are disjoint — but do not
@@ -183,7 +191,7 @@ public enum MediaLibrary {
         if fm.fileExists(atPath: url.path) { return url }
         let name = url.lastPathComponent
         guard !name.isEmpty else { return nil }
-        for sub in ["Media/Audio", "Media/Video", "Media/Image"] {
+        for sub in ["Media/Audio", "Media/Video", "Media/Image", "Media/Picture"] {
             if let dir = directory(sub) {
                 let candidate = dir.appendingPathComponent(name, isDirectory: false)
                 if fm.fileExists(atPath: candidate.path) { return candidate }

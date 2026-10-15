@@ -193,7 +193,7 @@ enum TrackMix {
         case .audio:              return String(localized: "Audio file player")
         case .bio:                return String(localized: "Bio curve — no sound")
         case .unplayed:           return String(localized: "No engine plays this track yet")
-        case .picture:            return String(localized: "Picture player — the first picture track shows in the visual")
+        case .picture:            return String(localized: "Video player — the first video track shows in the visual")
         case .noVoice(let capacity):
             let limited: String = String(localized: "No voice — only the first ") + "\(capacity)" + String(localized: " extra MIDI tracks play")
             return capacity > 0 ? limited : String(localized: "No voice — extra MIDI tracks are off in this build")

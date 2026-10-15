@@ -1092,12 +1092,14 @@ final class TheWorkstationImportsAudioTests: XCTestCase {
         // carries the same note for the same reason — the type checker is not needed here.
         let callerList: String = callers.isEmpty ? "nothing outside its own file"
                                                  : callers.joined(separator: ", ")
-        XCTAssertEqual(callers, ["Sequencer/AudioImport.swift", "Sequencer/MIDIImport.swift"], """
+        XCTAssertEqual(callers, ["Sequencer/AudioImport.swift", "Sequencer/MIDIImport.swift",
+                                 "Sequencer/VideoImport.swift"], """
             `TimelineStore.addLane` is called from \(callerList). \
             The founder's shape is one creator per importer, each beside the predicate that \
             decides which lane its import lands on (`firstImportableAudioLane`, \
             `firstImportableMIDILane`), so neither can drift from it, and the view stays \
-            read-only toward the store. S2 added the MIDI one.
+            read-only toward the store. S2 added the MIDI one; One World P1 the video one \
+            (`VideoImport.addVideoTrack`, beside `pictureLane`).
             """)
     }
 

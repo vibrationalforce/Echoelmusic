@@ -19067,12 +19067,72 @@
         }
       }
     },
-    "Picture player — the first picture track shows in the visual" : {
+    "Video player — the first video track shows in the visual" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Picture player — the first picture track shows in the visual"
+            "value" : "Video player — the first video track shows in the visual"
+          }
+        }
+      }
+    },
+    "Couldn't copy that video into the library." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't copy that video into the library."
+          }
+        }
+      }
+    },
+    "That video could not be read — try another file." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That video could not be read — try another file."
+          }
+        }
+      }
+    },
+    "This piece has no video track — add a video track first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This piece has no video track — add a video track first."
+          }
+        }
+      }
+    },
+    "Add Video Track" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Video Track"
+          }
+        }
+      }
+    },
+    "Import Video" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import Video"
+          }
+        }
+      }
+    },
+    "the video track" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the video track"
           }
         }
       }
@@ -23045,12 +23105,12 @@
         }
       }
     },
-    "Adds a track, imports an audio or MIDI file, or starts a new MIDI part" : {
+    "Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Adds a track, imports an audio or MIDI file, or starts a new MIDI part"
+            "value" : "Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part"
           }
         }
       }

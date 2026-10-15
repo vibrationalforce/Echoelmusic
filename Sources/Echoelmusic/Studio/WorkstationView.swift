@@ -271,7 +271,7 @@ struct WorkstationView: View {
     /// switches, never a second one: two importers on one view is the shape that can shadow a
     /// picker (#W1), and `TheWorkstationImportsAudioTests` pins the prefix of this one.
     /// Local and cold, like the two above — it changes on a tap.
-    private enum ImportKind { case audio, midi }
+    private enum ImportKind { case audio, midi, video }
     @State private var importKind: ImportKind = .audio
     /// DAW shell S2 (founder 2026-10-02, inbox E18): what the plate shows — the arrangement, the
     /// whole-piece mixer (`PieceMixerView`), the browser (the media library and the photo/video
@@ -544,11 +544,15 @@ struct WorkstationView: View {
         // already said it claims to be audio; `AudioImport` still measures the MANAGED COPY
         // afterwards, because "claims to be audio" and "decodes" are different facts.
         .fileImporter(isPresented: $importPresented,
-                      allowedContentTypes: [importKind == .midi ? UTType.midi : UTType.audio],
+                      allowedContentTypes: [importContentType],
                       allowsMultipleSelection: false) { result in
             // ⚠️ `.midi` conforms to `.audio`, so the AUDIO picker also lists `.mid` files;
             // picking one there is refused by `AudioImport` as audio it cannot read.
-            if importKind == .midi { handleMIDIImport(result) } else { handleImport(result) }
+            switch importKind {
+            case .midi:  handleMIDIImport(result)
+            case .video: handleVideoImport(result)
+            case .audio: handleImport(result)
+            }
         }
         #endif
         // MARK: - Detected tuning (Phase E)
@@ -1121,13 +1125,17 @@ struct WorkstationView: View {
                 Button { newMIDIPart() } label: { Label("New MIDI Part", systemImage: "square.grid.3x3") }
                     .accessibilityHint(MIDIImport.newPartHint)
             }
+            Section {
+                Button { addVideoTrack() } label: { Label("Add Video Track", systemImage: "plus") }
+                Button { openImporter(.video) } label: { Label("Import Video", systemImage: "film") }
+            }
         } label: {
             EchoelIconTile(systemImage: "plus", title: "Add")
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityLabel("Add")
-        .accessibilityHint("Adds a track, imports an audio or MIDI file, or starts a new MIDI part")
+        .accessibilityHint("Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part")
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border
@@ -1615,6 +1623,54 @@ struct WorkstationView: View {
         importNote = nil
         AudioImport.addAudioTrack(timeline: timeline)
         if let added = timeline.document.lanes.last, added.kind == .audio, !added.isBio {
+            selection.selectTrack(added.id)
+            importNote = MIDIImport.addedTrackNote(laneName: added.name)
+        }
+    }
+
+    #if canImport(UniformTypeIdentifiers)
+    /// The one importer's file type for the kind it was opened for.
+    private var importContentType: UTType {
+        switch importKind {
+        case .midi:  return UTType.midi
+        case .video: return UTType.movie
+        case .audio: return UTType.audio
+        }
+    }
+    #endif
+
+    /// One World P2 — "Import Video": a picked video lands as a part on the video track the
+    /// picture lane shows (`VideoImport.perform`). The copy is measured off the main actor, so
+    /// the write happens after an `await`; the tempo is read here, at the tap's moment.
+    private func handleVideoImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .failure(let error):
+            if (error as? CocoaError)?.code == .userCancelled { return }
+            importNote = VideoImport.Failure.pickerFailed.userMessage
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            #if canImport(AVFoundation)
+            let bpm = player.preflightTempo
+            Task { @MainActor in
+                switch await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline, bpm: bpm) {
+                case .success(let landing):
+                    let laneName = timeline.document.lanes
+                        .first { $0.id == landing.laneID }?.name ?? String(localized: "the video track")
+                    importNote = VideoImport.successNote(landing, laneName: laneName)
+                case .failure(let failure):
+                    importNote = failure.userMessage
+                }
+            }
+            #endif
+        }
+    }
+
+    /// "Add Video Track" — one tap appends one video track through `VideoImport.addVideoTrack`,
+    /// the seam the audio and MIDI creators use (the view hands the store over, claim F).
+    private func addVideoTrack() {
+        importNote = nil
+        VideoImport.addVideoTrack(timeline: timeline)
+        if let added = timeline.document.lanes.last, added.kind == .video, !added.isBio {
             selection.selectTrack(added.id)
             importNote = MIDIImport.addedTrackNote(laneName: added.name)
         }
