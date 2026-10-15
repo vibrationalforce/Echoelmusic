@@ -44,6 +44,8 @@ struct SoundBrowserView: View {
     @Environment(PatchStore.self) private var patchStore
     /// Closed until opened, like `MediaBrowserView` beside it (review of 4dedb218d, MED-2).
     @State private var isOpen = false
+    /// The Type filter (founder 2026-10-15) — per view, never persisted.
+    @State private var filter: SoundFilter = .all
 
     var body: some View {
         let target = Self.target(selection.trackID, in: timeline.document,
@@ -64,9 +66,17 @@ struct SoundBrowserView: View {
                     row(String(localized: "In this piece: ") + kept.name, pick: .kept, favorite: false,
                         choice: choice, target: target)
                 }
+                filterRow
                 ForEach(patchStore.patches) { patch in
-                    row(patch.name, pick: .library(patch.id), favorite: patchStore.isFavorite(id: patch.id),
-                        choice: choice, target: target)
+                    let favorite = patchStore.isFavorite(id: patch.id)
+                    if filter.admits(patch, favorite: favorite) {
+                        row(patch.name, pick: .library(patch.id), favorite: favorite,
+                            choice: choice, target: target, type: SoundType.of(patch), patchID: patch.id)
+                    }
+                }
+                if !patchStore.patches.contains(where: { filter.admits($0, favorite: patchStore.isFavorite(id: $0.id)) }) {
+                    Text("No sounds match this filter.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 }
             }
         }
@@ -112,6 +122,19 @@ struct SoundBrowserView: View {
         .accessibilityHint("Lists the stored sounds. A tap on one gives it to the open synth track")
     }
 
+    /// Name · Type · favourite, filtered by type (the Analog Console browser's shape). Named
+    /// values, so a menu Picker — the parameter-row law is for numbers.
+    private var filterRow: some View {
+        Picker("Type", selection: $filter) {
+            ForEach(SoundFilter.choices, id: \.self) { choice in
+                Text(verbatim: choice.label).tag(choice)
+            }
+        }
+        .pickerStyle(.menu)
+        .tint(EchoelTheme.text)
+        .accessibilityHint("Shows only the sounds of one type, or your favorites")
+    }
+
     @ViewBuilder
     private func caption(_ target: UUID?) -> some View {
         Group {
@@ -128,48 +151,69 @@ struct SoundBrowserView: View {
     }
 
     private func row(_ name: String, pick: TrackMix.SoundChoice, favorite: Bool,
-                     choice: TrackMix.SoundChoice?, target: UUID?) -> some View {
+                     choice: TrackMix.SoundChoice?, target: UUID?,
+                     type: SoundType? = nil, patchID: UUID? = nil) -> some View {
         let chosen = choice == pick
         let enabled = target != nil
-        return Button {
-            guard let target else { return }
-            timeline.editLanePatch(id: target) {
-                TrackMix.setSound(pick, laneID: target, library: patchStore.patches, timeline: timeline)
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill")
-                    .font(EchoelTheme.font(12))
-                    .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-                    .opacity(favorite ? 1 : 0)
-                    .accessibilityHidden(true)
-                Text(name)
-                    .font(EchoelTheme.font(13))
-                    // `.plain` does not dim a styled label, so the disabled state is drawn here
-                    // (review of 4dedb218d, MED-1 — the Warp switch's own pattern).
-                    .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
-                    .lineLimit(1)
-                Spacer(minLength: 8)
-                if chosen {
-                    Image(systemName: "checkmark")
-                        .font(EchoelTheme.font(12, .semibold))
-                        .foregroundStyle(EchoelTheme.text)
-                        .accessibilityHidden(true)
+        return HStack(spacing: 6) {
+            // The star is its own button beside the row: a favourite needs no track, and a button
+            // nested in another button's label does not take taps reliably.
+            if let patchID {
+                Button {
+                    patchStore.toggleFavorite(id: patchID)
+                } label: {
+                    Image(systemName: favorite ? "star.fill" : "star")
+                        .font(EchoelTheme.font(13))
+                        .foregroundStyle(favorite ? EchoelTheme.text : EchoelTheme.dim)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(favorite ? String(localized: "Unfavorite") : String(localized: "Favorite"))
+            } else {
+                Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
             }
-            .padding(.horizontal, 10)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
-            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-                .strokeBorder(chosen ? EchoelTheme.text : EchoelTheme.border, lineWidth: 1))
-            .contentShape(Rectangle())
+            Button {
+                guard let target else { return }
+                timeline.editLanePatch(id: target) {
+                    TrackMix.setSound(pick, laneID: target, library: patchStore.patches, timeline: timeline)
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(name)
+                        .font(EchoelTheme.font(13))
+                        // `.plain` does not dim a styled label, so the disabled state is drawn here
+                        // (review of 4dedb218d, MED-1 — the Warp switch's own pattern).
+                        .foregroundStyle(enabled ? EchoelTheme.text : EchoelTheme.dim)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    if let type {
+                        Text(verbatim: type.label)
+                            .font(EchoelTheme.font(11))
+                            .foregroundStyle(EchoelTheme.dim)
+                    }
+                    if chosen {
+                        Image(systemName: "checkmark")
+                            .font(EchoelTheme.font(12, .semibold))
+                            .foregroundStyle(EchoelTheme.text)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                    .strokeBorder(chosen ? EchoelTheme.text : EchoelTheme.border, lineWidth: 1))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(target == nil)
+            .accessibilityLabel(name)
+            .accessibilityValue([favorite ? String(localized: "Favorite") : "", type?.label ?? ""]
+                                    .filter { !$0.isEmpty }.joined(separator: ", "))
+            .accessibilityAddTraits(chosen ? .isSelected : [])
+            .accessibilityHint(enabled ? String(localized: "Gives the open synth track this sound. One Undo step")
+                                       : String(localized: "Unavailable: open a synth track in Arrange first"))
         }
-        .buttonStyle(.plain)
-        .disabled(target == nil)
-        .accessibilityLabel(name)
-        .accessibilityValue(favorite ? String(localized: "Favorite") : "")
-        .accessibilityAddTraits(chosen ? .isSelected : [])
-        .accessibilityHint(enabled ? String(localized: "Gives the open synth track this sound. One Undo step")
-                                   : String(localized: "Unavailable: open a synth track in Arrange first"))
     }
 }

@@ -19347,6 +19347,86 @@
         }
       }
     },
+    "Lead" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lead"
+          }
+        }
+      }
+    },
+    "Keys" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keys"
+          }
+        }
+      }
+    },
+    "Pluck" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pluck"
+          }
+        }
+      }
+    },
+    "Orchestral" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orchestral"
+          }
+        }
+      }
+    },
+    "All" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        }
+      }
+    },
+    "Favorites" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favorites"
+          }
+        }
+      }
+    },
+    "No sounds match this filter." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sounds match this filter."
+          }
+        }
+      }
+    },
+    "Shows only the sounds of one type, or your favorites" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows only the sounds of one type, or your favorites"
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {
