@@ -5295,3 +5295,4 @@ Bericht: `reports/reality-check-stabilitaet-belohnung-2026-10-14.md`. Review 202
 - **Grund:** Founder wörtlich „Für alles möglichst unabhängig und authentisch Echoelmusic Chaos Computer Club Hamburg. VR/XR, Planetarium, 360, multidimensional, immersiv und inklusiv". Keine CCC-Zugehörigkeit nach außen, bis E28 beantwortet ist.
 - **Wo:** `docs/dev/DMMW_DEEP_ARCHITECTURE_2026-10-15.md` §9.
 - **Review:** 2026-11-14
+- **Nachtrag 2026-10-15 (E28):** Founder „CCC nur Haltung" — der CCC wird nach außen nirgends genannt (kein Name, kein Logo, keine Kopie); die sieben Regeln aus §9.1 bleiben die Haltung.

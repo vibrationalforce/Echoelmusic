@@ -75,7 +75,7 @@ Widerruf ist jederzeit eine Zeile hier.
 | E25 | Echtzeit-Audio-Jam (à la JamKazam) über das Internet: braucht einen Relay-/Vermittlungs-Server mit laufenden Kosten — oder nur im lokalen Netz? | Erst LAN (keine Kosten), Internet erst mit eigener Kostenfreigabe | **[ ] offen** seit 2026-10-15. Setzt das Mikrofon voraus (E10-1, `Info.plist`). Herleitung: Tiefenarchitektur §4.8 |
 | E26 | Laser: zuerst nur über den DMX-Modus der Geräte (Art-Net/sACN, keine Abhängigkeit), ILDA-Netz-DACs später? | Ja | **[ ] offen** seit 2026-10-15. ⚠️ Laser ab Klasse 3B brauchen am Einsatzort einen Laserschutzbeauftragten; die App behauptet nie „sicher“. Herleitung: Tiefenarchitektur §4.11 |
 | E27 | Generatives Video: nur Import aus externen Werkzeugen, kein eigenes Modell auf dem iPhone? | Ja | **[ ] offen** seit 2026-10-15. Herleitung: Tiefenarchitektur §4.3 |
-| E28 | CCC Hamburg: eine echte Verbindung (Vortrag, Workshop, Gruppe), die nach außen genannt werden darf — oder nur die Haltung? | Nur Haltung, bis es eine Verbindung gibt | **[ ] offen** seit 2026-10-15. Herleitung: Tiefenarchitektur §9.1 |
+| E28 | CCC Hamburg: eine echte Verbindung (Vortrag, Workshop, Gruppe), die nach außen genannt werden darf — oder nur die Haltung? | Nur Haltung, bis es eine Verbindung gibt | **[x] Nur Haltung, 2026-10-15** (Founder: „CCC nur Haltung"). Nach außen wird keine Verbindung zum CCC genannt — weder Name noch Logo, in keiner Kopie. Herleitung: Tiefenarchitektur §9.1 |
 
 **Weitere HOLDs, die vor dieser Datei in Sitzungs-Aufgaben standen** (jede einmal, sonst
 verfallen sie mit der Sitzung):

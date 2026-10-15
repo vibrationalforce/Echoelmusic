@@ -301,7 +301,7 @@ Das ist eine Haltung UND eine Liste von Ausgabe-Formaten. Beides wird hier einma
 ### 9.1 Unabhängigkeit — sieben Regeln für jede Scheibe
 
 Im Geist der Hacker-Ethik, für die der CCC steht. ⚠️ Das ist eine HALTUNG, keine Zugehörigkeit:
-nach außen wird keine Verbindung zum CCC behauptet, solange es keine gibt (E28).
+nach außen wird der CCC nicht genannt — weder Name noch Logo, in keiner Kopie (E28, Founder 2026-10-15: „CCC nur Haltung").
 
 1. **Lokal zuerst.** Jede Produktions-Funktion läuft ohne Netz und ohne Konto. Cloud ist ein
    Ausgang, nie eine Voraussetzung.
@@ -352,5 +352,5 @@ an seinem Shader.
 Scheibe zwischen V und S; Export eines 360- oder Domemaster-Films braucht danach den
 Video-Export, den es heute nicht gibt.
 
-**E28** (neu in `FOUNDER_INBOX.md`): Gibt es eine echte Verbindung zum CCC Hamburg (Vortrag,
-Workshop, Gruppe), die nach außen genannt werden darf — oder ist es nur die Haltung?
+**E28 beantwortet** (2026-10-15): nur Haltung. Die sieben Regeln in §9.1 gelten; der Name CCC erscheint
+in keiner App-, Store-, Website- oder Content-Kopie.
