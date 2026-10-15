@@ -7,8 +7,9 @@
 //  `trimRegionStart` for the start, `resizeRegion` for the end, each one Undo step. MIDI and audio
 //  parts alike, inward and outward:
 //  · a MIDI part's END moves out over silence — notes an earlier trim hid come back, then nothing
-//    plays; it never loops. Its START moves by whole bars and never before its content's start
-//    (clip tick 0 — `ArrangeCanvas.edgeUnit`, `TimelineRegion.trimmedStart`).
+//    plays; it never loops. Its START moves on the zoom's grid like every edge (whole bars until
+//    EP-11) and never before its content's start (clip tick 0 — `ArrangeCanvas.edgeUnit`,
+//    `TimelineRegion.trimmedStart`).
 //  · an audio part's end stays inside its file as measured at import; a file whose length the
 //    canvas does not know is not lengthened here (the track's Part page can, once it has read it).
 //    ⚠️ The canvas measures from the part's END, not from the drawn end of its file as the audio

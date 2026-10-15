@@ -12,8 +12,9 @@
 //    to its content's start but never before it, a covered end is refused, an audio part's end stops at
 //    its file and refuses when the file's length is unknown, a video part gets no edit, and
 //    degenerate input makes none.
-// 2. END-TO-END — the grid: a MIDI START moves by whole bars at any zoom (the roll plays notes on
-//    the song's bar lines), every other edge on `PartTrim.snapUnit` at the canvas zoom.
+// 2. END-TO-END — the grid: every edge on `PartTrim.snapUnit` at the canvas zoom. A MIDI START
+//    moved by whole bars until EP-11 (the M1b roll played a mid-bar part on the song's bar lines;
+//    EP-8 made it play at its own start), so zoomed in it now moves by a beat.
 // 3. END-TO-END — the handles' touch areas: centred on a wide part's edges, OUTSIDE a narrow part
 //    so its body stays free for the move, never past the nearest neighbouring part or the lane's
 //    end (a side without half a target of room has none), never overlapping. The room comes from
@@ -102,7 +103,7 @@ final class TheCanvasPartEdgeMovesOnTheGridTests: XCTestCase {
 
     // MARK: 2 — the grid
 
-    func testAMidiStartMovesByBarsAndEverythingElseFollowsTheZoom() {
+    func testEveryEdgeFollowsTheZoomAMidiStartToo() {
         let bar = Self.bar
         let midi = Clip(name: "T1", kind: .midi)
         let audio = Clip(name: "T1", kind: .audio, mediaRef: "t1.wav", nativeDurationSeconds: 60)
@@ -110,13 +111,24 @@ final class TheCanvasPartEdgeMovesOnTheGridTests: XCTestCase {
         let zoomed: (CGFloat, Int) = (400, 2 * bar)
         let beatGrid = PartTrim.snapUnit(zoom: ArrangeCanvas.snapZoom(laneWidth: zoomed.0, songTicks: zoomed.1))
         XCTAssertEqual(beatGrid, TimelineTime.ticksPerBeat, "premise: this zoom snaps to beats")
-        XCTAssertEqual(ArrangeCanvas.edgeUnit(.start, clip: midi, laneWidth: zoomed.0, songTicks: zoomed.1), bar,
-                       "a MIDI start moves by whole bars — its notes sit on the song's bar lines")
-        XCTAssertEqual(ArrangeCanvas.edgeUnit(.end, clip: midi, laneWidth: zoomed.0, songTicks: zoomed.1), beatGrid)
-        XCTAssertEqual(ArrangeCanvas.edgeUnit(.start, clip: audio, laneWidth: zoomed.0, songTicks: zoomed.1), beatGrid)
-        // A slide of less than half a bar on a MIDI start is no move.
+        XCTAssertEqual(ArrangeCanvas.edgeUnit(laneWidth: zoomed.0, songTicks: zoomed.1), beatGrid)
+        // EP-11, end to end at that zoom (50 pt a beat): a MIDI start slid in by one beat moves
+        // one beat — it used to round back to its bar. The audio start, the counterweight, too.
+        let zoomedPart = TimelineRegion(laneID: Self.lane, clipID: midi.id, startTick: 0, lengthTicks: 2 * bar)
+        XCTAssertEqual(ArrangeCanvas.edgeEdit(.start, dragPoints: 50, laneWidth: zoomed.0, songTicks: zoomed.1,
+                                              region: zoomedPart,
+                                              in: TimelineDocument(lanes: [], regions: [zoomedPart]),
+                                              clip: midi, mediaBPM: 120),
+                       .start(tick: TimelineTime.ticksPerBeat), "a MIDI start moves by a beat when beats are the grid")
+        let audioPart = TimelineRegion(laneID: Self.lane, clipID: audio.id, startTick: 0, lengthTicks: 2 * bar)
+        XCTAssertEqual(ArrangeCanvas.edgeEdit(.start, dragPoints: 50, laneWidth: zoomed.0, songTicks: zoomed.1,
+                                              region: audioPart,
+                                              in: TimelineDocument(lanes: [], regions: [audioPart]),
+                                              clip: audio, mediaBPM: 120),
+                       .start(tick: TimelineTime.ticksPerBeat))
+        // Zoomed out (40 pt a bar) the grid is the bar: a slide of less than half a bar is no move.
         let part = TimelineRegion(laneID: Self.lane, clipID: midi.id, startTick: 2 * bar, lengthTicks: 2 * bar)
-        XCTAssertNil(edit(.start, 16, part, clip: midi), "1.6 beats rounds back to the part's own bar")
+        XCTAssertNil(edit(.start, 16, part, clip: midi), "1.6 beats rounds back to the bar grid's own bar")
         // The preview line sits where the edit leaves the edge, held on the lane.
         XCTAssertEqual(ArrangeCanvas.edgeX(.end(lengthTicks: 3 * bar), region: part, laneWidth: Self.width,
                                            songTicks: Self.song), 200)

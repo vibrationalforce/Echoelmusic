@@ -256,15 +256,12 @@ enum ArrangeCanvas {
         }
     }
 
-    /// The grid an edge moves on at this zoom: `PartTrim.snapUnit`, as for a moved part (#416) —
-    /// except a MIDI part's START, which moves by whole bars. That rule was made for the M1b roll,
-    /// which played a mid-bar part pinned to the song's bar lines; since EP-8 a mid-bar part plays
-    /// at its own start (`RegionNoteWindow.songBarSlices`), so the bar step here is now a choice,
-    /// not a necessity — loosening it is its own slice (its guard pins the bar).
-    nonisolated static func edgeUnit(_ edge: AudioPartEditor.Edge, clip: Clip?, laneWidth: CGFloat,
-                                     songTicks: Int) -> Int {
-        if edge == .start, clip?.kind == .midi { return TimelineTime.ticksPerBar }
-        return PartTrim.snapUnit(zoom: snapZoom(laneWidth: laneWidth, songTicks: songTicks))
+    /// The grid an edge moves on at this zoom: `PartTrim.snapUnit`, as for a moved part (#416).
+    /// EP-11: a MIDI part's START used to move by whole bars, because the M1b roll played a
+    /// mid-bar part pinned to the song's bar lines; since EP-8 it plays at its own start
+    /// (`RegionNoteWindow.songBarSlices`), so its edge follows the zoom like every other.
+    nonisolated static func edgeUnit(laneWidth: CGFloat, songTicks: Int) -> Int {
+        PartTrim.snapUnit(zoom: snapZoom(laneWidth: laneWidth, songTicks: songTicks))
     }
 
     /// The edit a slide of `dragPoints` on a part's `edge` makes on a lane `laneWidth` wide, or
@@ -286,7 +283,7 @@ enum ArrangeCanvas {
         // Outward is left for the start and right for the end.
         let outward = (edge == .start) == (dragPoints < 0)
         return PartTrim.edgeEdit(edge, proposedTick: proposed, outward: outward,
-                                 unit: edgeUnit(edge, clip: clip, laneWidth: laneWidth, songTicks: songTicks),
+                                 unit: edgeUnit(laneWidth: laneWidth, songTicks: songTicks),
                                  region: region, in: document, mediaBPM: mediaBPM, endBound: bound)
     }
 
