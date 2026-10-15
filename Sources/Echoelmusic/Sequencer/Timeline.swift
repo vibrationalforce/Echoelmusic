@@ -62,6 +62,12 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     public var genreOverride: MusicStyle?
     public var mood: MoodProfile?
     public var variationSeed: UInt64?
+    /// Roll + Lock (founder 2026-10-15, after Synth Shaper's dice): the track keeps its variation
+    /// when the piece is rolled. Stored only as `true`; unlocked is `nil`, so an unlocked track
+    /// writes exactly the bytes it wrote before this field existed.
+    public var rollLocked: Bool?
+    /// Whether "Roll" leaves this track's variation alone.
+    public var isRollLocked: Bool { rollLocked == true }
     /// Per-instrument TRANSPOSE in whole semitones (founder 2026-07-14: "Wenn einzelne
     /// Instrumenten Elemente im synth nen transpose Button haben ist das kool"). Shifts
     /// THIS lane's SOUNDING pitch (e.g. bass −12, a layer +7) on the voice's MIDI→Hz
@@ -111,7 +117,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
                 pan: Float = TimelineLane.defaultPan,
                 builtinInstrument: TrackInstrument? = nil, isArmed: Bool = false,
                 patch: SynthPatch? = nil, genreOverride: MusicStyle? = nil,
-                mood: MoodProfile? = nil, variationSeed: UInt64? = nil,
+                mood: MoodProfile? = nil, variationSeed: UInt64? = nil, rollLocked: Bool? = nil,
                 transposeSemitones: Int = TimelineLane.defaultTransposeSemitones, detuneCents: Float = 0,
                 octaveDouble: Int = 0, samplePath: String? = nil,
                 deviceChain: DeviceChain? = nil) {
@@ -129,6 +135,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         self.genreOverride = genreOverride
         self.mood = mood
         self.variationSeed = variationSeed
+        self.rollLocked = rollLocked
         self.transposeSemitones = transposeSemitones
         self.detuneCents = detuneCents
         self.octaveDouble = octaveDouble
@@ -249,6 +256,8 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         genreOverride = try? c.decode(MusicStyle.self, forKey: .genreOverride)
         mood = try? c.decode(MoodProfile.self, forKey: .mood)
         variationSeed = try c.decodeIfPresent(UInt64.self, forKey: .variationSeed)
+        // Pre-Roll docs carry no lock ⇒ unlocked.
+        rollLocked = try c.decodeIfPresent(Bool.self, forKey: .rollLocked)
         // Pre-2026-07-14 docs carry no per-track transpose ⇒ 0 (no shift, bit-identical).
         transposeSemitones = try c.decodeIfPresent(Int.self, forKey: .transposeSemitones) ?? TimelineLane.defaultTransposeSemitones
         // Pre-2026-07-14 docs carry no per-track detune ⇒ 0 (no offset, bit-identical).
@@ -928,6 +937,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
             n.pan = lb.pan
             n.name = lb.name
             n.isArmed = lb.isArmed
+            n.rollLocked = lb.rollLocked   // a lock changes nothing that sounds
             n.transposeSemitones = lb.transposeSemitones
             n.detuneCents = lb.detuneCents
             n.octaveDouble = lb.octaveDouble

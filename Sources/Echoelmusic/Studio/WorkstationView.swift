@@ -1139,6 +1139,10 @@ struct WorkstationView: View {
                 Button { openImporter(.video) } label: { Label("Import Video", systemImage: "film") }
                 Button { openVideoTake() } label: { Label("Record Video", systemImage: "video") }
             }
+            Section {
+                Button { rollPiece() } label: { Label("Roll", systemImage: "dice") }
+                    .accessibilityHint("Gives every composing track that is not kept a new variation")
+            }
         } label: {
             EchoelIconTile(systemImage: "plus", title: "Add")
         }
@@ -1762,6 +1766,16 @@ struct WorkstationView: View {
     /// are handed to `MIDIImport.addEmptyPart`, never messaged (claim F); the new part is
     /// selected so the part bar and the track's Notes page open on it; every outcome says what
     /// happened on the one note line.
+    /// Roll + Lock (founder 2026-10-15): a fresh variation for every composing track that "Keep on
+    /// Roll" does not hold, then one compose. All reads happen in the tap, none in `body`.
+    private func rollPiece() {
+        importNote = nil
+        let outcome = PieceRoll.roll(timeline: timeline, clips: clipStore.filledClips,
+                                     loopBars: TrackCompose.loopBars(in: .standard))
+        PieceRoll.requestCompose(after: outcome)
+        importNote = PieceRoll.note(outcome)
+    }
+
     private func newMIDIPart() {
         importNote = nil
         tuningPending = nil

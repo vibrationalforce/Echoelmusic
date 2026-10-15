@@ -1528,6 +1528,15 @@ public final class TimelineStore {
         persist()
     }
 
+    /// Roll + Lock — the track keeps its variation when the piece is rolled (`PieceRoll`). A lane
+    /// field, so not on Undo (the `setLaneVariationSeed` contract). Stored only as `true`; unlocking
+    /// writes nil, the bytes the lane had before.
+    public func setLaneRollLocked(_ laneID: UUID, locked: Bool) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == laneID }) else { return }
+        document.lanes[i].rollLocked = locked ? true : nil
+        persist()
+    }
+
     /// Slice A2 — the EXPLICIT act that makes a lane's composition override
     /// audible: make sure the lane owns a composer-owned clip + a region inside
     /// the active loop window [0, loopBars×ticksPerBar), so the generate/evolve

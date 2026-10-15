@@ -187,11 +187,23 @@ struct TrackComposeRows: View {
                 }
                 .buttonStyle(EchoelToolButtonStyle())
                 .accessibilityLabel("New variation: this track composes a different line the next time the instrument composes; its style stays")
+                // Roll + Lock: "Roll" in the Add menu leaves a kept track's variation alone.
+                Toggle(isOn: Binding(get: { lockedOnRoll(document) },
+                                     set: { PieceRoll.setLocked(laneID, locked: $0, timeline: timeline) })) {
+                    Text("Keep on Roll")
+                        .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                }
+                .tint(EchoelTheme.text)
+                .accessibilityHint("Roll in the Add menu leaves this track's variation as it is")
                 Text("Its notes arrive the next time the instrument composes. Off keeps the composer's part as it is.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func lockedOnRoll(_ document: TimelineDocument) -> Bool {
+        document.lanes.first { $0.id == laneID }?.isRollLocked ?? false
     }
 
     private func toggle(_ on: Bool) {

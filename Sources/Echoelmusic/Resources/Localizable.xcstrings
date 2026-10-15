@@ -19427,6 +19427,96 @@
         }
       }
     },
+    "Roll" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roll"
+          }
+        }
+      }
+    },
+    "Gives every composing track that is not kept a new variation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gives every composing track that is not kept a new variation"
+          }
+        }
+      }
+    },
+    "Keep on Roll" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep on Roll"
+          }
+        }
+      }
+    },
+    "Roll in the Add menu leaves this track's variation as it is" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roll in the Add menu leaves this track's variation as it is"
+          }
+        }
+      }
+    },
+    "Nothing to roll yet: turn on Compose here on a synth track's Device page." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to roll yet: turn on Compose here on a synth track's Device page."
+          }
+        }
+      }
+    },
+    "Every composing track is kept. Turn off Keep on Roll to roll one." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every composing track is kept. Turn off Keep on Roll to roll one."
+          }
+        }
+      }
+    },
+    "Rolled tracks: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rolled tracks: "
+          }
+        }
+      }
+    },
+    "Kept: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept: "
+          }
+        }
+      }
+    },
+    "The new lines play when the instrument composes. The Echoel track follows your body." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The new lines play when the instrument composes. The Echoel track follows your body."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

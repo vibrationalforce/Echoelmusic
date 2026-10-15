@@ -4703,6 +4703,10 @@ struct EchoelStudioView: View {
             // everything that sounds or shows the tempo follows the clock);
             // this is the recompose hook the panel's full field used to pass.
             recomposeIfRunning()
+        case PieceRoll.rollField:
+            // Roll (founder 2026-10-15): the seeds are already stored; compose once so the
+            // rolled lines arrive now while the instrument runs.
+            recomposeIfRunning()
         default:
             break
         }
