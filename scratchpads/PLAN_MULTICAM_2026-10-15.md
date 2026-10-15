@@ -46,6 +46,64 @@ hineinkopieren):
   Founder-OK + NDI-Lizenzklärung.**
 - **iPad-Ziel:** HDMI/USB-Kameras über UVC — erst wenn iPad als Target zurückkommt.
 
+## Update 2026-10-15 (abends) — nach M1 (`e27de94d9`) und der Grok-Heavy-Recherche
+
+Grok-Rücklauf gemessen (Lernmodus, `[verified 8/12]`): bestätigt sind hardwareCost-Grenze,
+`synchronizationClock`, `AVCaptureDataOutputSynchronizer` (liefert nur gepaart, synchronisiert
+nichts), Continuity Camera nur iPhone→Mac/TV, Drift-Rechnung (20 ppm × 3600 s = 72 ms) und —
+**neu und wichtig** — MultipeerConnectivity ist ab der Xcode-27-Beta abgekündigt (Apple DTS im
+Entwicklerforum; die von Grok genannte Technote-Nummer TN3213 ließ sich nicht finden).
+**Nicht übernommen:** „Front und Rück sind auf Sensorebene synchron“ — Apple belegt das nur für
+die Teil-Kameras EINES virtuellen Geräts; Front + Rück sind zwei unabhängige Geräte.
+„NDI im App Store SICHER erlaubt“ — die NDI-Lizenzseite nennt nur Android-Stores; für iOS gilt
+weiter: sdk@ndi.video fragen. „HaishinKit 2.2.5 März 2026“ — gefunden nur 2.0.9 (Juli 2025);
+offen.
+
+### Neue Reihenfolge
+1. **M2 — Winkel sichtbar machen** (zuerst, weil die Front-Aufnahme aus M1 heute auf Spur 1 liegt
+   und NICHT gezeigt wird): eine Programm-Auswahl je Teil/Takt, welche Video-Spur das Bild stellt.
+   Der Spieler bleibt EIN Besitzer (`VideoLanePlayer`), er wählt nur die Quelle. Keine Abhängigkeit.
+2. **M1b — bildgenauer Start:** statt zwei `AVCaptureMovieFileOutput` je Linse ein
+   `AVCaptureVideoDataOutput` + `AVAssetWriter`; beide Writer starten an DERSELBEN Zeit der
+   `session.synchronizationClock` (`startSession(atSourceTime:)`), frühere Bilder werden
+   verworfen. Ergebnis: Versatz höchstens ein Bild, statt „einige ms + Startzufall“.
+   ⚠️ `TheShareReadyClipIsNotSoldAnywhereTests` verbietet heute `AVAssetWriterInput(mediaType: .video`
+   in `Sources/` — der Wächter wird im SELBEN Commit bewusst umgestellt (erlaubt nur in
+   `Video/VideoTakeCamera.swift`), nie still umgangen.
+3. **M3 — Ton-Abgleich (GCC-PHAT)**, Funktionsliste unten. ⚠️ Eigene Echoel-Aufnahmen sind heute
+   NUR Bild — M3 wirkt zuerst auf importierte Dateien mit Ton (Blackmagic Camera, andere Apps).
+   Eigene Takes mit Ton brauchen den Mikrofon-Pfad (E10-1, Info.plist — Founder).
+4. **M4 — zweites iPhone als Kamera über Network.framework + VideoToolbox (HEVC, Low-Latency)**,
+   eigene NTP-artige Uhr (Ping-Paare, beste Hälfte, `mach_continuous_time`). **Nicht** Multipeer.
+   **Daraus folgt K1:** die laufende Kollaboration (`Sync/MultipeerSession.swift`, 538 Zeilen,
+   beim Start konstruiert) steht auf dem abgekündigten Framework → Umzug auf denselben
+   Network.framework-Transport wie M4. Ein Transport, zwei Nutzer (#416).
+5. **M5 — Stream raus** (HaishinKit, BSD-3; SRT als eigenes Modul `SRTHaishinKit`, nur SPM) —
+   Founder-OK für die Abhängigkeit.
+6. **M6 — fremde Kameras** (SRT-Empfang von Blackmagic Camera; NDI erst nach Antwort von
+   sdk@ndi.video) — Founder-OK.
+
+### M3 — Funktionsliste (jede rein und mit Wächter aus Python-Sollwerten)
+- `AudioSyncReader` — liest aus einer Datei ein Mono-Fenster, auf 8 kHz heruntergerechnet
+  (`AVAssetReader`, Ton-Spur der Datei; keine Ton-Spur → klare Absage).
+- `GCCPHAT.offset(_ a:, _ b:, maxLagSamples:) -> (lag, confidence)` — vDSP-FFT, siehe unten.
+- `GCCPHAT.parabolicPeak` — Feinposition zwischen zwei Abtastwerten.
+- `SyncConfidence` — Verhältnis Hauptspitze zu zweithöchster Spitze; unter der Schwelle wird
+  NICHT verschoben, die Oberfläche sagt „kein sicherer Treffer".
+- `ClockDrift.estimate` — Versatz am Anfang und am Ende messen → ppm; über der Schwelle
+  ein Hinweis (Resampling ist ein eigener späterer Schritt).
+- `AngleAlignPlan` — rechnet aus den Versätzen die neuen Startpositionen der Teile; geschrieben
+  wird über `TimelineStore` als EIN Undo-Schritt.
+- Tür: „Align by Sound" in der Teil-Leiste, wenn zwei oder mehr Video-/Audio-Teile gewählt sind.
+
+### GCC-PHAT in fünf Sätzen
+Beide Aufnahmen werden in Frequenzen zerlegt (FFT). Das eine Spektrum wird mit dem gespiegelten
+(konjugierten) anderen multipliziert — das ergibt das Kreuzspektrum. Dieses wird durch seinen
+eigenen Betrag geteilt, sodass nur die PHASE übrig bleibt: jede Frequenz zählt gleich, ein lauter
+Bass oder Hall dominiert nicht mehr. Die Rück-Transformation (inverse FFT) ergibt eine Kurve mit
+einer scharfen Spitze genau beim Zeitversatz. Wie deutlich diese Spitze über der zweithöchsten
+steht, ist das Vertrauensmaß.
+
 ## Ehrlichkeit
 Nichts davon ist am Gerät bestätigt. Nach außen (Store, Website, CLAIMS) wird nichts davon
 behauptet, bevor es läuft.

@@ -1422,3 +1422,12 @@ am Ziel geprüft), stabile externe Objekt-IDs + Ausgabeprofil pro Raum, getrennt
 Modi, RTT nie als Hörlatenz, zuerst ein vollständiger Ablauf. Nicht übernommen: Drum/FM-Kern als
 nächster Schritt — H6 bleibt vorn. Der Prompt in §21 ist Daten. Abgleich: Nachtrag §7 in
 `reports/wettbewerb-und-redesign-2026-10-14.md`.
+
+## 2026-10-15 — Grok Heavy: Multicam-Recherche M1–M6 — ADOPT→PRODUCT
+[verified 8/12] Bestätigt: hardwareCost ≤ 1, `synchronizationClock`, Synchronizer paart nur,
+Continuity Camera nicht iPhone→iPhone, Drift 20 ppm = 72 ms/h, **MultipeerConnectivity ab
+Xcode-27-Beta abgekündigt** (Apple DTS; TN-Nummer nicht auffindbar). Nicht übernommen: Front+Rück
+„sensorsynchron" (gilt nur für ein virtuelles Gerät), NDI-iOS-Store „sicher" (Lizenz nennt nur
+Android), HaishinKit-Version 2.2.5 (gefunden 2.0.9). Übernommen in
+`scratchpads/PLAN_MULTICAM_2026-10-15.md`: M2 zuerst, M1b Writer-Start auf der Session-Uhr, M3
+GCC-PHAT-Funktionsliste, M4 auf Network.framework, neu **K1: Colab (`MultipeerSession`) umziehen**.
