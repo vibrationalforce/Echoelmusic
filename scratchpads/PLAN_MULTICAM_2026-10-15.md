@@ -126,6 +126,27 @@ steht, ist das Vertrauensmaß.
 - **Uhren-Abgleich zwischen zwei iPhones (M4):** Für einen einfachen Ping-Abgleich gibt es
   KEINE belegte Genauigkeit. Er wird bei M4 am Gerät gemessen, bevor eine Zahl im Plan steht.
 
+## M1b — Verträge vor dem Bau (Astra-Gegenprüfung B6/B7, 2026-10-15)
+
+⛔ „Rest-Versatz höchstens ein Bild" stand hier oben und ist UNBELEGT — gestrichen als Zusage;
+gemessen wird am Gerät. Ein gemeinsamer Writer-Start ist ein gemeinsamer DATEI-Ursprung, kein
+gleichzeitiges erstes Bild.
+
+Zuerst rein und mit Sollwerten (Wächter vor dem Writer-Umbau):
+1. **Song-Anker** (reine Funktion): Take-ID + Host-Zeit + Song-Tick + Tempo-Abschnitt beim Start.
+   480 PPQ, 120 BPM, Anker 100,000 s ↔ 3.840 Ticks, Quellzeit 100,050 s → **3.888 Ticks**,
+   unabhängig vom Stop-Zeitpunkt. 200 ms Startverzögerung bei 120 BPM = **192 Ticks**, sichtbar,
+   nie still auf Medienzeit 0 gezogen. Zwei Tempo-Abschnitte (0,5 s @120 + 0,5 s @60) = **720**.
+2. **Uhr-Domänen**: nur konvertierte Zeiten vergleichen (`CMSyncConvertTime`); ungültige
+   Korrelation → „nicht bestimmbar", nie Tick 0.
+3. **Gestoppter Song**: Platzierungsregel (Cue-Takt), weil keine musikalische Zeit läuft.
+4. **Erste Samples je Linse** festhalten; Anfangslücke einer Linse = Spur dort transparent
+   (M2 zeigt dann die untere) — nicht dunkel.
+5. **Rückstau/Verlust** gehört ins Take-Ergebnis; keine unbegrenzten Puffer.
+6. Rotation am Writer-Input (Transform), nicht über den Movie-File-Weg.
+Der Wächter `TheShareReadyClipIsNotSoldAnywhereTests` (Anspruch 4) wird im SELBEN Commit wie der
+Writer bewusst umgestellt.
+
 ## Ehrlichkeit
 Nichts davon ist am Gerät bestätigt. Nach außen (Store, Website, CLAIMS) wird nichts davon
 behauptet, bevor es läuft.
