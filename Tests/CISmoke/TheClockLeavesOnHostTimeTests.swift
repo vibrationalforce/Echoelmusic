@@ -66,7 +66,7 @@ final class TheClockLeavesOnHostTimeTests: XCTestCase {
         let stamp = try body(of: "private func pulseStamp() -> UInt64 {", in: out)
         XCTAssertTrue(stamp.contains("MIDIClockSchedule.arrivalNanoseconds(idealNanoseconds: ideal, lookahead: clockLookahead)"))
         XCTAssertTrue(stamp.contains("MIDIClockSchedule.hostTicks(nanoseconds: arrival"))
-        let send = try body(of: "private func sendRealTime(_ message: UMPEncoder.RealTime, at time: UInt64) {", in: out)
+        let send = try body(of: "private func sendSystemWord(_ systemWord: UInt32, at time: UInt64) {", in: out)
         XCTAssertEqual(send.components(separatedBy: ", time, 1, &word)").count - 1, 2,
                        "both protocol lists carry the stamp")
         XCTAssertFalse(send.contains(", 0, 1, &word)"), "no list is stamped 'now' any more")
@@ -77,8 +77,27 @@ final class TheClockLeavesOnHostTimeTests: XCTestCase {
         }
         XCTAssertLessThan(stamped.lowerBound, cleared.lowerBound, "Stop is stamped before the ideal moment is cleared")
         XCTAssertTrue(stop.contains("sendRealTime(.stop, at: stopStamp)"))
-        let start = try body(of: "public func startClock(bpm: Double, startingIn delay: TimeInterval = 0) {", in: out)
+        let start = try body(of: "public func startClock(bpm: Double, startingIn delay: TimeInterval = 0, fromSixteenth: Int) {", in: out)
         XCTAssertTrue(start.contains("clockLookahead = Self.sessionLookahead()"), "the lookahead is read on every start")
+    }
+
+    // MARK: 3 — HW-2: a piece started past bar 1 says where
+
+    func testTheSongPositionHasItsGoldenWords() {
+        XCTAssertEqual(UMPEncoder.songPosition(sixteenths: 80), 0x10F2_5000, "bar 6 = 80 sixteenths, LSB first")
+        XCTAssertEqual(UMPEncoder.songPosition(sixteenths: 200, group: 3), 0x13F2_4801, "the group nibble and a two-byte position")
+        XCTAssertEqual(UMPEncoder.songPosition(sixteenths: 0x3FFF), 0x10F2_7F7F, "the 14-bit maximum")
+        XCTAssertEqual(UMPEncoder.songPosition(sixteenths: 99_999), 0x10F2_7F7F, "clamped above")
+        XCTAssertEqual(UMPEncoder.songPosition(sixteenths: -5), 0x10F2_0000, "clamped below")
+
+        XCTAssertEqual(MIDIClockSchedule.songPositionSixteenths(forTick: 0), 0)
+        XCTAssertEqual(MIDIClockSchedule.songPositionSixteenths(forTick: 4 * TimelineTime.ticksPerBar), 64, "bar 5")
+        XCTAssertEqual(MIDIClockSchedule.songPositionSixteenths(forTick: TimelineTime.ticksPerTransportStep + 1), 1,
+                       "between two sixteenths, the one before")
+        XCTAssertNil(MIDIClockSchedule.songPositionSixteenths(forTick: -1))
+        XCTAssertEqual(MIDIClockSchedule.songPositionSixteenths(forTick: 0x3FFF * TimelineTime.ticksPerTransportStep), 0x3FFF)
+        XCTAssertNil(MIDIClockSchedule.songPositionSixteenths(forTick: 0x4000 * TimelineTime.ticksPerTransportStep),
+                     "past 1024 bars the pointer cannot say it — no clock rather than a wrong one")
     }
 
     // MARK: helpers

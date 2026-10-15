@@ -78,6 +78,16 @@ public enum UMPEncoder {
         (UInt32(0x1) << 28) | (UInt32(group & 0x0F) << 24) | (UInt32(status) << 16)
     }
 
+    /// HW-2 — Song Position Pointer (System Common 0xF2): where a receiver resumes, in MIDI beats
+    /// (sixteenth notes) since the song's start, 14 bits. Same message type 0x1 as real time, with
+    /// two 7-bit data bytes, LSB first. Out-of-range positions are clamped to 0…16383.
+    /// Layout: [mt 0x1 | group | 0xF2 | lsb | msb].
+    public static func songPosition(sixteenths: Int, group: UInt8 = 0) -> UInt32 {
+        let p = UInt32(Swift.min(Swift.max(sixteenths, 0), 0x3FFF))
+        return (UInt32(0x1) << 28) | (UInt32(group & 0x0F) << 24) | (UInt32(0xF2) << 16)
+            | ((p & 0x7F) << 8) | ((p >> 7) & 0x7F)
+    }
+
     /// The System Real Time messages Echoel actually sends as a clock master.
     ///
     /// ⚠️ THREE CASES, NOT FIVE, AND THE OMISSIONS ARE DELIBERATE:
@@ -97,9 +107,15 @@ public enum UMPEncoder {
     ///     nobody adds a caller has to be re-checked whenever a caller is added.
     ///   • Active Sensing (0xFE) — a keep-alive some gear mishandles; not a transport signal.
     ///   • System Reset (0xFF) — resets a receiver's entire state. Never on a clock.
+    ///
+    ///   ⭐ HW-2 (founder 2026-10-15, a live set started mid-piece): **Continue now has its
+    ///   producer.** A piece played from bar N sends Song Position Pointer (`songPosition`) and
+    ///   then Continue on the first pulse, so a slaved device (the H90's delays, a DAW) resumes at
+    ///   bar N instead of being pulled to bar 1 — the two conditions the paragraph above named.
     public enum RealTime: UInt8 {
         case clock = 0xF8   // 24 per quarter note
         case start = 0xFA   // begin at position zero
+        case resume = 0xFB  // Continue: begin at the last Song Position Pointer
         case stop  = 0xFC
     }
 

@@ -520,6 +520,9 @@ public final class MIDIOutput {
     /// Start (0xFA) is owed but not yet sent — it goes out from the FIRST pulse, not from
     /// the play edge. See `startClock(bpm:startingIn:)`.
     @ObservationIgnored private var pendingStart = false
+    /// HW-2 — where the owed transport message resumes: 0 → Start (bar 1); > 0 → Song Position
+    /// Pointer plus Continue. Set with `pendingStart`, consumed by the first pulse.
+    @ObservationIgnored private var pendingSongPosition = 0
 
     /// Begin clock output at `bpm`: Start (0xFA) once, then Clock (0xF8) at 24 PPQN.
     /// No-op when MIDI out is not routed, or when a non-usable tempo is passed.
@@ -536,7 +539,7 @@ public final class MIDIOutput {
     /// is what the spec says. The fix is right under either reading; only the number moves.)
     /// Start is therefore deferred to the first pulse and the first pulse is armed for
     /// `startingIn` seconds from now: pass `Transport.stepDuration(atTempo:)`.
-    public func startClock(bpm: Double, startingIn delay: TimeInterval = 0) {
+    public func startClock(bpm: Double, startingIn delay: TimeInterval = 0, fromSixteenth: Int) {
         guard enabled else { return }
         guard let interval = UMPEncoder.clockInterval(bpm: bpm) else {
             logOutcome("clock refused to start at bpm \(bpm)", level: .warning)
@@ -553,6 +556,7 @@ public final class MIDIOutput {
         stopClockTimer()                       // idempotent re-arm, no double timer
         if !isSendingClock {
             pendingStart = true                // Start ONLY on a true start, not on a re-arm
+            pendingSongPosition = Swift.max(0, fromSixteenth)
             isSendingClock = true
         }
         lastPulseAt = nil                      // fresh phase; the first pulse anchors it
@@ -670,7 +674,13 @@ public final class MIDIOutput {
         let stamp = pulseStamp()
         if pendingStart {
             pendingStart = false
-            sendRealTime(.start, at: stamp)
+            if pendingSongPosition > 0 {
+                // HW-2: the piece starts past bar 1 — say where, then Continue (not Start).
+                sendSystemWord(UMPEncoder.songPosition(sixteenths: pendingSongPosition), at: stamp)
+                sendRealTime(.resume, at: stamp)
+            } else {
+                sendRealTime(.start, at: stamp)
+            }
         }
         sendRealTime(.clock, at: stamp)
         if let ideal = idealPulseNs { idealPulseNs = ideal &+ pulseSpacingNs }
@@ -741,9 +751,15 @@ public final class MIDIOutput {
     }
 
     private func sendRealTime(_ message: UMPEncoder.RealTime, at time: UInt64) {
+        sendSystemWord(UMPEncoder.systemRealTime(status: message.rawValue), at: time)
+    }
+
+    /// One system word (real time, or HW-2's Song Position Pointer) to every listener, in both
+    /// protocol lists, stamped `time` (0 = now).
+    private func sendSystemWord(_ systemWord: UInt32, at time: UInt64) {
         #if canImport(CoreMIDI)
         guard isReady else { return }
-        var word = UMPEncoder.systemRealTime(status: message.rawValue)
+        var word = systemWord
         var eventList = MIDIEventList()
         let packet = MIDIEventListInit(&eventList, ._1_0)
         _ = MIDIEventListAdd(&eventList, MemoryLayout<MIDIEventList>.size, packet, time, 1, &word)

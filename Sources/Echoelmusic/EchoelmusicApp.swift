@@ -1019,10 +1019,17 @@ struct EchoelmusicApp: App {
                     // clock then, said in the log. `play` writes `startedFromTick` and `isPlaying`
                     // BEFORE it starts the pattern, so both are current on this edge; a stale
                     // `startedFromTick` from an earlier take is masked by `isPlaying`.
+                    // ⭐ HW-2 (2026-10-15): the piece now SAYS where it starts — Song Position Pointer
+                    // then Continue — so the clock runs from any bar. Only a position the pointer
+                    // cannot carry (past 1024 bars) still sends no clock.
+                    var fromSixteenth = 0
                     if let song = timelinePlayer, song.isPlaying, song.startedFromTick > 0 {
-                        log.log(.info, category: .midi,
-                                "midi clock: no Start — the piece starts at bar \(WorkstationSummary.barNumber(forTick: song.startedFromTick)), and Start means bar 1 (no SPP)")
-                        return
+                        guard let position = MIDIClockSchedule.songPositionSixteenths(forTick: song.startedFromTick) else {
+                            log.log(.info, category: .midi,
+                                    "midi clock: no clock — bar \(WorkstationSummary.barNumber(forTick: song.startedFromTick)) is past what a Song Position Pointer can say")
+                            return
+                        }
+                        fromSixteenth = position
                     }
                     // ONE STEP LATER, not now. This callback runs on the play EDGE, but
                     // `PatternEngine` sounds step 0 one 16th afterwards — so Start (0xFA)
@@ -1047,7 +1054,8 @@ struct EchoelmusicApp: App {
                     // wiring), so it is latent, not a bug. Read the engine's tempo if either
                     // condition breaks.
                     midiOut.startClock(bpm: transport.tempo,
-                                       startingIn: Transport.stepDuration(atTempo: transport.tempo))
+                                       startingIn: Transport.stepDuration(atTempo: transport.tempo),
+                                       fromSixteenth: fromSixteenth)
                 }
                 transport.addStopSubscriber("midi.clock") { [weak midiOut] in
                     midiOut?.stopClock()

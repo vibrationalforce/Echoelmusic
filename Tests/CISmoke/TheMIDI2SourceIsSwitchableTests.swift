@@ -77,7 +77,7 @@ final class TheMIDI2SourceIsSwitchableTests: XCTestCase {
         XCTAssertFalse(mirror.contains("._1_0"), "a 1.0 list into the 2.0 source (#1253)")
         XCTAssertFalse(mirror.contains("MIDISendEventList("),
                        "the mirror goes to the VIRTUAL source only — hardware has one protocol and already got the 1.0 words (#1253)")
-        let realtime = try Self.member("private func sendRealTime(_ message: UMPEncoder.RealTime, at time: UInt64)", in: src)
+        let realtime = try Self.member("private func sendSystemWord(_ systemWord: UInt32, at time: UInt64)", in: src)
         XCTAssertTrue(realtime.contains("MIDIEventListInit(&list2, ._2_0)"),
                       "clock/start/stop must reach the 2.0 source in a 2.0 list too (#1253)")
     }

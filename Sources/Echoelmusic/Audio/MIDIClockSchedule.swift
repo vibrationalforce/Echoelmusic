@@ -40,6 +40,17 @@ enum MIDIClockSchedule {
         return (nanoseconds / n) * d + (nanoseconds % n) * d / n
     }
 
+    /// HW-2 — the Song Position Pointer for a piece that starts at `tick`: whole sixteenths since
+    /// bar 1. nil when the position cannot be said — before the start, or past the 14-bit range
+    /// (1024 bars of 4/4) — in which case no clock is better than a wrong one. A start between
+    /// two sixteenths reports the one before it.
+    static func songPositionSixteenths(forTick tick: Int) -> Int? {
+        let step = TimelineTime.ticksPerTransportStep
+        guard tick >= 0, step > 0 else { return nil }
+        let sixteenths = tick / step
+        return sixteenths <= 0x3FFF ? sixteenths : nil
+    }
+
     /// The moment, in uptime nanoseconds, a pulse due at `idealNanoseconds` should arrive.
     static func arrivalNanoseconds(idealNanoseconds: UInt64, lookahead: Double) -> UInt64 {
         let clamped = Swift.min(Swift.max(lookahead.isFinite ? lookahead : fallbackLookahead,

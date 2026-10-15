@@ -148,21 +148,17 @@ final class MIDIClockTests: XCTestCase {
         XCTAssertEqual(UMPEncoder.RealTime.clock.rawValue, 0xF8, "Clock must be 0xF8")
         XCTAssertEqual(UMPEncoder.RealTime.start.rawValue, 0xFA, "Start must be 0xFA")
         XCTAssertEqual(UMPEncoder.RealTime.stop.rawValue, 0xFC, "Stop must be 0xFC")
-        // Continue (0xFB) is deliberately NOT declared — see the enum's own comment. It has
-        // no producer without a resume-from-position transport, and #300's Nachlese removed
-        // the one path that had made it look necessary.
-        XCTAssertNil(UMPEncoder.RealTime(rawValue: 0xFB), """
-        Continue (0xFB) has been declared. That is a real decision, not a typo: it needs a \
-        transport that resumes from a position and a Song Position Pointer to resume TO. \
-        Update `UMPEncoder.RealTime`'s comment in the same commit or delete the case.
-        """)
+        // HW-2 (2026-10-15): Continue (0xFB) IS declared now, because both conditions this line
+        // used to demand exist — a play from any bar (`startedFromTick`) and a Song Position
+        // Pointer to resume TO (`UMPEncoder.songPosition`). Its value is the spec's.
+        XCTAssertEqual(UMPEncoder.RealTime.resume.rawValue, 0xFB, "Continue must be 0xFB")
     }
 
     /// ⚠️ THE STATUS MUST NOT BE MASKED. Every other builder in `UMPEncoder` writes
     /// `status | (channel & 0x0F)` — copying that reflex here turns Start (0xFA) into 0x0A.
     /// Real-time messages have no channel nibble; the status byte IS the whole message.
     func testRealTimeStatusIsNotMaskedLikeAChannelNibble() {
-        for message in [UMPEncoder.RealTime.clock, .start, .stop] {
+        for message in [UMPEncoder.RealTime.clock, .start, .resume, .stop] {
             let word = UMPEncoder.systemRealTime(status: message.rawValue)
             let status = UInt8((word >> 16) & 0xFF)
             XCTAssertEqual(status, message.rawValue, """

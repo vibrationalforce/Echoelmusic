@@ -343,21 +343,33 @@ final class ThePlayStartsWhereTheRulerSaysTests: XCTestCase {
             """)
     }
 
+    /// HW-2 (2026-10-15): a Play past bar 1 still sends no Start (0xFA means bar 1) — it now
+    /// sends a Song Position Pointer and Continue instead of no clock at all. Only a position
+    /// the pointer cannot carry still skips the clock.
     func testAPlayPastBarOneSendsNoMIDIStart() throws {
         let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
         guard let start = app.range(of: "transport.addPlaySubscriber(\"midi.clock\")"),
-              let skip = app.range(of: "if let song = timelinePlayer, song.isPlaying, song.startedFromTick > 0 {",
-                                   range: start.upperBound..<app.endIndex),
+              let position = app.range(of: "MIDIClockSchedule.songPositionSixteenths(forTick: song.startedFromTick)",
+                                       range: start.upperBound..<app.endIndex),
               let clock = app.range(of: "midiOut.startClock(bpm: transport.tempo,",
                                     range: start.upperBound..<app.endIndex) else {
-            return XCTFail("ANCHOR MISSING: the midi.clock play subscriber, its skip, or its startClock (#454)")
+            return XCTFail("ANCHOR MISSING: the midi.clock play subscriber, its song position, or its startClock (#454)")
         }
-        XCTAssertLessThan(skip.lowerBound, clock.lowerBound, """
-            the skip must come BEFORE the clock starts — MIDI Start (0xFA) means bar 1 and Echoel \
-            sends no Song Position Pointer, so a Play from bar 5 would pull a slaved device to bar 1.
-            """)
-        let between = String(app[skip.upperBound..<clock.lowerBound])
-        XCTAssertTrue(between.contains("return"), "the skip returns before any clock is sent")
+        XCTAssertLessThan(position.lowerBound, clock.lowerBound, "the position is known before the clock starts")
+        let between = String(app[position.upperBound..<clock.lowerBound])
+        XCTAssertTrue(between.contains("return"), "a position the pointer cannot carry still sends no clock")
+        XCTAssertTrue(app[clock.upperBound...].prefix(200).contains("fromSixteenth: fromSixteenth"),
+                      "the clock is told where the piece starts")
+        let out = try source("Sources/Echoelmusic/Audio/MIDIOutput.swift")
+        guard let owed = out.range(of: "if pendingSongPosition > 0 {"),
+              let resume = out.range(of: "sendRealTime(.resume, at: stamp)", range: owed.upperBound..<out.endIndex),
+              let start0 = out.range(of: "sendRealTime(.start, at: stamp)", range: owed.upperBound..<out.endIndex) else {
+            return XCTFail("ANCHOR MISSING: the first pulse's Start-or-Continue choice")
+        }
+        let before = String(out[owed.upperBound..<resume.lowerBound])
+        XCTAssertTrue(before.contains("UMPEncoder.songPosition(sixteenths: pendingSongPosition)"),
+                      "the pointer goes out before Continue")
+        XCTAssertLessThan(resume.lowerBound, start0.lowerBound, "Continue past bar 1, Start only from bar 1")
     }
 
     // MARK: helpers
