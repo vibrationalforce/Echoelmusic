@@ -19137,6 +19137,126 @@
         }
       }
     },
+    "Record Video" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record Video"
+          }
+        }
+      }
+    },
+    "Close camera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close camera"
+          }
+        }
+      }
+    },
+    "Camera preview" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera preview"
+          }
+        }
+      }
+    },
+    "The take lands on the video track when you stop" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The take lands on the video track when you stop"
+          }
+        }
+      }
+    },
+    "Opening the camera…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening the camera…"
+          }
+        }
+      }
+    },
+    "Video only — the sound of the take is the song's own tracks." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video only — the sound of the take is the song's own tracks."
+          }
+        }
+      }
+    },
+    "Saving the take…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saving the take…"
+          }
+        }
+      }
+    },
+    "The camera is measuring your pulse. Stop the camera pulse to record video." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The camera is measuring your pulse. Stop the camera pulse to record video."
+          }
+        }
+      }
+    },
+    "Camera access is off. Turn it on in Settings › Echoelmusic." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is off. Turn it on in Settings › Echoelmusic."
+          }
+        }
+      }
+    },
+    "The camera could not start." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The camera could not start."
+          }
+        }
+      }
+    },
+    "The take could not start." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The take could not start."
+          }
+        }
+      }
+    },
+    "The take could not be saved." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The take could not be saved."
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {
@@ -23105,12 +23225,12 @@
         }
       }
     },
-    "Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part" : {
+    "Adds a track, imports an audio, MIDI or video file, records video, or starts a new MIDI part" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part"
+            "value" : "Adds a track, imports an audio, MIDI or video file, records video, or starts a new MIDI part"
           }
         }
       }

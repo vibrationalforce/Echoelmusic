@@ -59,7 +59,8 @@
 // already drifted from it (the shipped metadata never carried this sentence).
 //
 // ⚠️ HONEST GRADING. No local Swift toolchain (§0). **11 assertions across four claims** —
-// stated rather than left to be counted (claim 1 = 2, claim 2 = 2, claim 3 = 4, claim 4 = 3).
+// stated rather than left to be counted (claim 1 = 2, claim 2 = 2, claim 3 = 4, claim 4 = 3;
+// claim 4 = 4 since One World C1 — the camera-take writer is pinned as present).
 // All eleven were transcribed in Python and driven against BOTH trees. On the PARENT tree
 // (`016c5b3`) **2 assertions are red** and they cover **three distinct false sentences** in
 // three files — three findings, not one absence counted three times (#486 does not apply:
@@ -80,6 +81,11 @@
 // ⚠️ WHAT GOES RED IF VIDEO EVER RETURNS. Claim 4, by design. A tree that re-adds a video
 // writer must re-word this guard in the SAME commit — the ban would then be forbidding
 // correct work (#364), and the copy would need to say what ships. The message says so.
+// ⭐ IT RETURNED, and this is that re-wording (One World C1, founder 2026-10-15: "Video capture
+// … Die workstation sollte alles können"). Claim 4 now names the ONE writer — the camera take
+// in `Video/VideoTakeCamera.swift`, a movie-file output — and still forbids every other shape
+// (a screen recorder, an `AVAssetWriter` video input, a second camera writer). Claims 1–2 are
+// unchanged and still right: a camera take is a part in the piece, not a "share-ready" export.
 import XCTest
 
 final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
@@ -176,10 +182,14 @@ final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
             """)
     }
 
-    // MARK: - claim 4 — the premise: nothing here can write a video
+    // MARK: - claim 4 — the premise: the one video writer is the camera take
 
-    /// This is what makes claims 1–2 a statement about the product rather than about tidiness.
-    func testNothingUnderSourcesCanWriteAVideo() throws {
+    /// The file that may record a camera take (One World C1). Everything else stays banned.
+    private static let cameraTakeWriter = "Sources/Echoelmusic/Video/VideoTakeCamera.swift"
+
+    /// This is what makes claims 1–2 a statement about the product rather than about tidiness:
+    /// no export path writes a video, and the one thing that does is the camera recorder.
+    func testTheOneVideoWriterIsTheCameraTake() throws {
         let files = try sourceSwiftFiles()
         XCTAssertGreaterThan(files.count, 200, """
             Only \(files.count) Swift files were walked under `Sources/`; the tree holds well \
@@ -190,11 +200,16 @@ final class TheShareReadyClipIsNotSoldAnywhereTests: XCTestCase {
             let code = SourceText.codeOnly(file.text)
             for needle in ["AVCaptureMovieFileOutput", "RPScreenRecorder",
                            "AVAssetWriterInput(mediaType: .video"] where code.contains(needle) {
+                if needle == "AVCaptureMovieFileOutput", file.path == Self.cameraTakeWriter { continue }
                 offenders.append("\(file.path): \(needle)")
             }
         }
+        XCTAssertTrue(SourceText.codeOnly(try text(Self.cameraTakeWriter)).contains("AVCaptureMovieFileOutput()"), """
+            The camera take no longer records through a movie-file output. If the recorder moved, \
+            point `cameraTakeWriter` at its new home; if it is gone, claim 4's exemption is dead.
+            """)
         XCTAssertTrue(offenders.isEmpty, """
-            `Sources/` constructs a video writer again: \(offenders.joined(separator: ", ")).
+            `Sources/` constructs a video writer outside the camera take: \(offenders.joined(separator: ", ")).
 
             That is not a failure of this guard — it is this guard asking for a decision. If \
             video recording came back on purpose, the copy must say so and THIS FILE must be \

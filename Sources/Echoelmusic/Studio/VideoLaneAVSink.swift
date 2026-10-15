@@ -6,7 +6,8 @@
 // the last frame and the plan's next correction decides what follows.
 //
 // ⭐ THE SAME SLOT RULE AS THE VIDEO CARD (One World V1): the last attach wins, and this sink lets go
-// only of the output IT attached. Every show (Play, a locate, a new part) puts the lane's output
+// only of the output IT attached. Every show (Play, a locate, a new part, a loop wrap, a structure
+// edit while playing) puts the lane's output
 // back if the card took the slot meanwhile; stopping the card's footage cannot blank the lane, and
 // the other way round. ⚠️ A card shown or hidden WHILE the song plays takes or empties the slot
 // until the lane's next show — known, not covered.

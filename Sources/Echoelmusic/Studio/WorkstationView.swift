@@ -273,6 +273,8 @@ struct WorkstationView: View {
     /// Local and cold, like the two above — it changes on a tap.
     private enum ImportKind { case audio, midi, video }
     @State private var importKind: ImportKind = .audio
+    /// One World C1 — the camera card is open (a tap flips it; the card itself owns the camera).
+    @State private var videoTakeOpen = false
     /// DAW shell S2 (founder 2026-10-02, inbox E18): what the plate shows — the arrangement, the
     /// whole-piece mixer (`PieceMixerView`), the browser (the media library and the photo/video
     /// seeds) or the project (save, open, export). Written ONLY by the bottom switcher in
@@ -338,6 +340,13 @@ struct WorkstationView: View {
             // (`composeGuide`). Browse and Piece are plates of their own; Arrange and Mixer share
             // the song's branch below. The stack is not re-indented under the new `if` (see A3).
             composeGuide
+            #if canImport(AVFoundation) && canImport(UIKit)
+            // One World C1 — "Record Video": the camera card stands in the plate, not in a modal.
+            if videoTakeOpen {
+                VideoTakeCard(land: { landVideo($0, discardSource: true) },
+                              close: { videoTakeOpen = false })
+            }
+            #endif
             if pieceView == .browse {
                 browsePlate
             } else if pieceView == .project {
@@ -1128,6 +1137,7 @@ struct WorkstationView: View {
             Section {
                 Button { addVideoTrack() } label: { Label("Add Video Track", systemImage: "plus") }
                 Button { openImporter(.video) } label: { Label("Import Video", systemImage: "film") }
+                Button { openVideoTake() } label: { Label("Record Video", systemImage: "video") }
             }
         } label: {
             EchoelIconTile(systemImage: "plus", title: "Add")
@@ -1135,7 +1145,7 @@ struct WorkstationView: View {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityLabel("Add")
-        .accessibilityHint("Adds a track, imports an audio, MIDI or video file, or starts a new MIDI part")
+        .accessibilityHint("Adds a track, imports an audio, MIDI or video file, records video, or starts a new MIDI part")
     }
 
     /// A3 — `transportRow` pinned under the plate's scroll: a solid bar with a 1 px top border
@@ -1649,20 +1659,37 @@ struct WorkstationView: View {
             importNote = VideoImport.Failure.pickerFailed.userMessage
         case .success(let urls):
             guard let url = urls.first else { return }
-            #if canImport(AVFoundation)
-            let bpm = player.preflightTempo
-            Task { @MainActor in
-                switch await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline, bpm: bpm) {
-                case .success(let landing):
-                    let laneName = timeline.document.lanes
-                        .first { $0.id == landing.laneID }?.name ?? String(localized: "the video track")
-                    importNote = VideoImport.successNote(landing, laneName: laneName)
-                case .failure(let failure):
-                    importNote = failure.userMessage
-                }
-            }
-            #endif
+            landVideo(url, discardSource: false)
         }
+    }
+
+    /// The one landing of a video file — a picked one or a camera take (One World C1). The copy is
+    /// measured off the main actor, so the write happens after an `await`; the tempo is read here,
+    /// at the tap's moment. A camera take is a temporary file: it is deleted once the managed copy
+    /// exists (or the landing refused), so a take never lingers outside the library.
+    private func landVideo(_ url: URL, discardSource: Bool) {
+        #if canImport(AVFoundation)
+        let bpm = player.preflightTempo
+        Task { @MainActor in
+            let result = await VideoImport.perform(pickedURL: url, clipStore: clipStore, timeline: timeline, bpm: bpm)
+            if discardSource { try? FileManager.default.removeItem(at: url) }
+            switch result {
+            case .success(let landing):
+                let laneName = timeline.document.lanes
+                    .first { $0.id == landing.laneID }?.name ?? String(localized: "the video track")
+                importNote = VideoImport.successNote(landing, laneName: laneName)
+            case .failure(let failure):
+                importNote = failure.userMessage
+            }
+        }
+        #endif
+    }
+
+    /// "Record Video" — open the camera card. A take needs a video track to land on, so a piece
+    /// without one gets one first, through the same creator as "Add Video Track".
+    private func openVideoTake() {
+        if VideoImport.pictureLane(in: timeline.document) == nil { addVideoTrack() }
+        videoTakeOpen = true
     }
 
     /// "Add Video Track" — one tap appends one video track through `VideoImport.addVideoTrack`,

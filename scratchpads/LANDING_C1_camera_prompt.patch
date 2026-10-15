@@ -1,0 +1,6 @@
+--- a/Resources/iOS/Info.plist
++++ b/Resources/iOS/Info.plist
+@@ NSCameraUsageDescription @@
+ 	<key>NSCameraUsageDescription</key>
+-	<string>Echoelmusic uses the rear camera as an instrument input: it reads your pulse from a fingertip held on the lens, lit by the torch (photoplethysmography). No images are stored or transmitted.</string>
++	<string>Echoelmusic uses the rear camera in two ways: it reads your pulse from a fingertip held on the lens, lit by the torch (no image is stored), and, when you choose Record Video, it records a video part into your piece. Recordings stay on this device and are never sent anywhere.</string>
