@@ -19537,6 +19537,66 @@
         }
       }
     },
+    "Moves the note to this sixteenth of the part" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves the note to this sixteenth of the part"
+          }
+        }
+      }
+    },
+    "The note's length in sixteenths" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note's length in sixteenths"
+          }
+        }
+      }
+    },
+    "The note's pitch as a MIDI note number, 60 is middle C" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The note's pitch as a MIDI note number, 60 is middle C"
+          }
+        }
+      }
+    },
+    "Start step" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start step"
+          }
+        }
+      }
+    },
+    "16th" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16th"
+          }
+        }
+      }
+    },
+    "Length" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Length"
+          }
+        }
+      }
+    },
     "No voice — only the first " : {
       "localizations" : {
         "en" : {

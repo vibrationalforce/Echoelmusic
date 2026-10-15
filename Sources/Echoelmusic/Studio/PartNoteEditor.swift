@@ -345,6 +345,20 @@ private struct PartNoteGrid: View {
                                 .accessibilityLabel(ClipNoteEdit.pickedNoteLine(one, partStartTick: region.startTick,
                                                                                 naming: naming, preferFlats: flats,
                                                                                 spoken: true))
+                            // N-F1 (founder on device 2026-10-15, "zu ungenau"): the picked note's
+                            // place, length and pitch as numbers — exact without a finger.
+                            NoteNumbersRow(step: (one.startTick - Swift.max(0, offset)) / Note.ticksPerStep + 1,
+                                           lengthSteps: one.lengthSteps, pitch: one.pitch,
+                                           partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks),
+                                           noteID: one.id,
+                                           move: { dPitch, dStep in
+                                               moveByNumbers(one.id, dPitch: dPitch, dStep: dStep,
+                                                             region: region, offset: offset)
+                                           },
+                                           stretch: { dSteps in
+                                               stretchByAction([one.id], bySteps: dSteps, region: region,
+                                                               offset: offset, editable: editable)
+                                           })
                         }
                         selectionControls(targets: targets,
                                           scope: Self.scope(selected: selected.count,
@@ -425,6 +439,21 @@ private struct PartNoteGrid: View {
                                                   offsetTicks: offset, lengthTicks: region.lengthTicks),
               timeline.setClipNotes(clipID: region.clipID, resized, clips: clipStore) else { return }
         announceEdit(id, region: region, offset: offset, String(localized: ", resized"))
+    }
+
+    /// N-F1: the picked note moved to typed numbers — the drag's move, through the same pure op,
+    /// so the part's edges and the 0…127 pitch range clamp it the same way. ONE commit, ONE Undo.
+    /// A new pitch re-centres the rows on it, so the note never leaves the screen it was typed on.
+    private func moveByNumbers(_ id: UUID, dPitch: Int, dStep: Int, region: TimelineRegion, offset: Int) {
+        guard let clip = clipStore.clip(id: region.clipID),
+              let moved = ClipNoteEdit.moving([id], dPitch: dPitch, dStep: dStep, in: clip.melody?.notes ?? [],
+                                              offsetTicks: offset, lengthTicks: region.lengthTicks),
+              timeline.setClipNotes(clipID: region.clipID, moved, clips: clipStore) else { return }
+        if dPitch != 0, let note = moved.first(where: { $0.id == id }) {
+            centre = note.pitch
+            audition(id, in: moved, region: region)
+        }
+        announceEdit(id, region: region, offset: offset, String(localized: ", moved"))
     }
 
     /// Says where the edited note sits now, read back from the clip — VoiceOver does not re-read
@@ -1081,6 +1110,63 @@ private extension RollSelection {
         case .single(let id): return [id]
         case .group(let ids): return ids
         }
+    }
+}
+
+/// N-F1 — the ONE picked note as three numbers: its step in the part, its length in steps and
+/// its pitch (MIDI note). ⭐ ITS OWN LEAF, for the performance law `NoteVelocityRow` states: a
+/// drag on a field moves `draft` at finger rate and only this row redraws; the note is written
+/// ONCE when the edit ends, as a DELTA through the same pure ops the grid's gestures use, so the
+/// part's edges clamp a typed value exactly as they clamp a drag. One field, one commit, one Undo.
+@MainActor
+private struct NoteNumbersRow: View {
+
+    let step: Int
+    let lengthSteps: Int
+    let pitch: Int
+    let partSteps: Int
+    let noteID: UUID
+    let move: (_ dPitch: Int, _ dStep: Int) -> Void
+    let stretch: (_ dSteps: Int) -> Void
+
+    @State private var stepDraft: Double?
+    @State private var lengthDraft: Double?
+    @State private var pitchDraft: Double?
+
+    var body: some View {
+        let lastStep = Double(Swift.max(1, partSteps))
+        VStack(spacing: EchoelTheme.spaceXS) {
+            EchoelValueField(label: "Start step",
+                             value: Binding(get: { stepDraft ?? Double(step) }, set: { stepDraft = $0 }),
+                             range: 1...lastStep, decimals: 0,
+                             hint: String(localized: "Moves the note to this sixteenth of the part"),
+                             onCommit: {
+                                 if let d = stepDraft { move(0, Int(d.rounded()) - step) }
+                                 stepDraft = nil
+                             })
+            EchoelValueField(label: "Length", value: Binding(get: { lengthDraft ?? Double(lengthSteps) },
+                                                              set: { lengthDraft = $0 }),
+                             range: 1...lastStep, unit: "16th", decimals: 0,
+                             hint: String(localized: "The note's length in sixteenths"),
+                             onCommit: {
+                                 if let d = lengthDraft { stretch(Int(d.rounded()) - lengthSteps) }
+                                 lengthDraft = nil
+                             })
+            EchoelValueField(label: "Pitch", value: Binding(get: { pitchDraft ?? Double(pitch) },
+                                                             set: { pitchDraft = $0 }),
+                             range: 0...127, unit: "MIDI", decimals: 0,
+                             hint: String(localized: "The note's pitch as a MIDI note number, 60 is middle C"),
+                             onCommit: {
+                                 if let d = pitchDraft { move(Int(d.rounded()) - pitch, 0) }
+                                 pitchDraft = nil
+                             })
+        }
+        // A draft no commit cleared must not outlive the note it was drafted from — another pick,
+        // or an Undo that moved this one (the `NoteVelocityRow` reason).
+        .onChange(of: noteID) { _, _ in stepDraft = nil; lengthDraft = nil; pitchDraft = nil }
+        .onChange(of: step) { _, _ in stepDraft = nil }
+        .onChange(of: lengthSteps) { _, _ in lengthDraft = nil }
+        .onChange(of: pitch) { _, _ in pitchDraft = nil }
     }
 }
 
