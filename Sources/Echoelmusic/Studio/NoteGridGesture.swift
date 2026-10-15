@@ -51,8 +51,15 @@ enum NoteGridGesture: Equatable, Sendable {
         var partSteps: Int
     }
 
-    /// Points at a note's right end that grab its length rather than its body.
-    static let edgeSlop: Double = 8
+    /// Points at a note's right end that grab its length rather than its body (capped at half
+    /// the note by `RollHitTest`, so a short note keeps a body to move). EP-2 (founder on device
+    /// 2026-10-15, "zu ungenau"): 8 pt was a sliver no finger could find.
+    static let edgeSlop: Double = 16
+    /// Points of EMPTY grid just past a note's right end, in its own row, that also grab its
+    /// length (EP-2) — so a finger aimed at the end of a short note need not land inside it.
+    /// Only empty grid: a point on another note's body is that note's, so the reach can never
+    /// cover the next note.
+    static let edgeReach: Double = 12
 
     /// Whether this gesture changes notes (a box only selects).
     var edits: Bool {
@@ -70,14 +77,14 @@ enum NoteGridGesture: Equatable, Sendable {
                                        lowPitch: grid.rows.lowerBound,
                                        stepCount: Swift.max(1, grid.partSteps),
                                        edgeSlop: edgeSlop)
-        switch hit {
+        switch reachingEdge(hit, startX: startX, startY: startY, notes: onScreen, grid: grid) {
         case .rightEdge(let id):
             guard let note = onScreen.first(where: { $0.id == id }), grid.stepWidth > 0 else {
                 return .resize(id: id, dSteps: 0)
             }
             // The steps the finger SLID, rounded — the rule a body move uses. Not the column
-            // boundaries it crossed: the grab zone is the last 8 points before a boundary, so a
-            // 2-point drift to the right crossed one and committed a step (M4 review).
+            // boundaries it crossed: the grab zone sits right at a boundary, so a 2-point drift
+            // to the right crossed one and committed a step (M4 review).
             let slid = Int((dx / grid.stepWidth).rounded())
             let drawn = note.lengthSteps
             let room = Swift.max(1, grid.partSteps - note.startStep)
@@ -99,6 +106,21 @@ enum NoteGridGesture: Equatable, Sendable {
                                               rowH: grid.rowHeight, highPitch: grid.rows.upperBound)
             return .marquee(ids: Set(ids), x0: startX, y0: startY, x1: startX + dx, y1: startY + dy)
         }
+    }
+
+    /// An EMPTY hit within `edgeReach` points past a note's right end, in that note's row, is
+    /// that note's edge (EP-2). Topmost-first like `RollHitTest`; any other hit is returned as is.
+    static func reachingEdge(_ hit: RollHit, startX: Double, startY: Double, notes: [Note],
+                             grid: Grid) -> RollHit {
+        guard case .empty = hit, grid.stepWidth > 0, grid.rowHeight > 0 else { return hit }
+        for note in notes.reversed() {
+            let top = Double(grid.rows.upperBound - note.pitch) * grid.rowHeight
+            let end = Double(note.startStep + note.lengthSteps) * grid.stepWidth
+            if startY >= top, startY < top + grid.rowHeight, startX >= end, startX < end + edgeReach {
+                return .rightEdge(id: note.id)
+            }
+        }
+        return hit
     }
 
     /// The group delta, clamped so every moved note starts inside the part and sits on a row

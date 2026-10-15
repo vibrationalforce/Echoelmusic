@@ -93,7 +93,7 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.resolve(startX: 50, startY: rowY(60), dx: 0, dy: 0,
                                                visible: notes, picked: [], grid: g),
                        .move(ids: [a.id], dPitch: 0, dStep: 0))
-        // Right edge (the last 8 points): the END moves by the steps the finger crossed, never
+        // Right edge (the last `edgeSlop` points): the END moves by the steps the finger crossed, never
         // past the part (a DELTA since the M2 review — see claim 2's hold-without-slide cases).
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 44, dy: 0,
                                                visible: notes, picked: [], grid: g),
@@ -112,7 +112,7 @@ final class ANoteDragIsOneCommitAtReleaseTests: XCTestCase {
         XCTAssertEqual(NoteGridGesture.resolve(startX: 84, startY: rowY(60), dx: 3, dy: 2,
                                                visible: notes, picked: [], grid: g),
                        .resize(id: a.id, dSteps: 0))
-        // M4 review: the grab zone is the last 8 points before a column boundary, so counting
+        // M4 review: the grab zone sits right before a column boundary, so counting
         // BOUNDARIES CROSSED turned a 2-point drift to the RIGHT into a one-step stretch. The
         // delta is the distance slid, rounded — the rule a body move uses.
         XCTAssertEqual(NoteGridGesture.resolve(startX: 87, startY: rowY(60), dx: 2, dy: 0,
