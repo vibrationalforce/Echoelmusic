@@ -55,6 +55,28 @@ entering it sends 0xCn on the clock's host-time stamp. H90 preset follows the se
 deduplicated at the matrix's ~1 Hz bio rate (never per audio buffer), so the body can move an H90
 parameter. Learned mapping stays on the H90.
 
+## The chain since 2026-10-15 (founder): iPhone → H90 → MIDI Thru → Roland TR-8S
+
+Every device behind the H90 sees the SAME stream, so the MIDI CHANNEL decides who answers, not
+the destination (HW-7 matters less). Measured channels today:
+· notes, MPE off: channel 1 (`allocateChannel`, `ch = 0`).
+· notes, MPE on: member channels 2…16 — **this includes 10**, the TR-8S's usual drum channel:
+  every tenth or so note would fire a drum. Until HW-11, keep MPE out OFF in this chain.
+· clock / Start / Stop / SPP / Continue: no channel — every device follows (wanted).
+
+**HW-10 Drums → MIDI (TR-8S).** The composer still computes a drum grid per genre (four-on-floor,
+half-time, …; `BioComposition.drumSteps`, 8 tracks × 16 steps, `BioComposer.Track`) and the
+instrument plays `silentBeat()` (founder 2026-07-07 cut the INTERNAL drums; product law
+2026-09-24 makes that phase history). A Routing switch "Drums to MIDI" (default off, channel 10,
+note per track editable, defaults kick 36 · snare 38 · closed hat 42 · open hat 46 …) sends the
+genre groove as notes on each step, on the clock's host-time stamp. The app's own sound is
+unchanged; the TR-8S becomes the drum voice. Fills the reference piece's drum gap through
+hardware; the in-app drum role stays its own slice (standalone law). Note map is UNVERIFIED
+against the TR-8S defaults — editable for that reason.
+
+**HW-11 Channel discipline.** MPE zone narrows to members 2…9 when "Drums to MIDI" is on, so
+channel 10 is never a member channel; the RPN zone message announces the narrower zone.
+
 **HW-6 External sends (later).** A send per lane to an output pair (post-fader), so an outboard
 return (H90 on the Xone) can be fed directly from the app as well as from the mixer. Additive.
 
