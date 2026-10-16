@@ -47,6 +47,29 @@ enum NoteGridZoom {
         return clampedLevel(clampedLevel(level) + Swift.min(Swift.max(delta, -span), span))
     }
 
+    // MARK: Ultraplan-A3 (N2b) — the row zoom
+
+    /// How tall a note row is drawn, as a multiple of the grid's row height (`PartNoteGrid
+    /// .rowHeight`, the touch floor — EP-1). The first is the floor itself, so the row zoom only
+    /// ever makes a row EASIER to hit: zooming out past it would undo EP-1.
+    nonisolated static let rowScales: [Double] = [1, 4.0 / 3.0, 5.0 / 3.0]
+
+    /// `level` kept inside the list of row scales.
+    nonisolated static func clampedRowLevel(_ level: Int) -> Int {
+        Swift.min(Swift.max(level, 0), rowScales.count - 1)
+    }
+
+    /// The row scale at `level`; a level outside the list reads as its nearest end.
+    nonisolated static func rowScale(atLevel level: Int) -> Double {
+        rowScales[clampedRowLevel(level)]
+    }
+
+    /// The row level `delta` steps away, kept inside the list. Overflow-safe for any `delta`.
+    nonisolated static func rowLevel(_ level: Int, steppedBy delta: Int) -> Int {
+        let span = rowScales.count
+        return clampedRowLevel(clampedRowLevel(level) + Swift.min(Swift.max(delta, -span), span))
+    }
+
     /// How many levels a released pinch of `magnification` moves: none inside a dead zone of
     /// about a quarter either way (so a touch that only wobbles changes nothing), otherwise the
     /// nearest whole doubling, at least one. A pinch that reports nothing usable moves nothing.

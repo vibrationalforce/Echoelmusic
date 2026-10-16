@@ -24858,6 +24858,46 @@
           }
         }
       }
+    },
+    "Shorter rows" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shorter rows"
+          }
+        }
+      }
+    },
+    "Taller rows" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taller rows"
+          }
+        }
+      }
+    },
+    "Shorter rows: more pitches at once" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shorter rows: more pitches at once"
+          }
+        }
+      }
+    },
+    "Taller rows: easier to hit a pitch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taller rows: easier to hit a pitch"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

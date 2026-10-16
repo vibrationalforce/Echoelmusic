@@ -173,10 +173,10 @@ final class TheNoteGridZoomsItsTimeTests: XCTestCase {
         XCTAssertFalse(code.contains("Self.stepWidth"), "a reader still takes the old fixed width — it would not follow the zoom")
         XCTAssertFalse(code.contains("static let stepWidth"), "the fixed 22-pt constant is back beside the zoomed width — two widths")
         for (needle, who) in [
-            ("stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),", "the canvas grid (notes, drag, box)"),
+            ("stepWidth: Double(stepWidth), rowHeight: Double(zoomedRowHeight),", "the canvas grid (notes, drag, box)"),
             ("stepWidth: stepWidth)", "the playhead line"),
             ("stepWidth: stepWidth, editable: editable,", "the velocity lane"),
-            ("stepW: Double(stepWidth), rowH: Double(Self.rowHeight),", "the tap hit-test"),
+            ("stepW: Double(stepWidth), rowH: Double(zoomedRowHeight),", "the tap hit-test"),
         ] {
             XCTAssertEqual(occurrences(needle, in: code), 1, "\(who) reads the one zoomed width")
         }

@@ -116,7 +116,7 @@ final class TheNoteGridShowsWhereTheSongIsTests: XCTestCase {
         }
         XCTAssertTrue(code.contains("let rect = CGRect(x: CGFloat(note.startStep) * stepW + 1,"),
                       "counterweight: the canvas places a note at `startStep × stepW` — the unit the playhead uses")
-        XCTAssertTrue(code.contains("stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),"),
+        XCTAssertTrue(code.contains("stepWidth: Double(stepWidth), rowHeight: Double(zoomedRowHeight),"),
                       "counterweight: the canvas's grid is built from the same `stepWidth` the leaf is handed")
     }
 

@@ -204,6 +204,11 @@ private struct PartNoteGrid: View {
     /// window at 600 pt, which the page scrolls. Guard: `TheNoteRowsAreTouchableTests` (a floor,
     /// not a value — the size is a designer's call, #364).
     private static let rowHeight: CGFloat = 24
+    /// Ultraplan-A3 (N2b) — how tall rows are drawn now: the floor above times the row zoom
+    /// (`NoteGridZoom.rowScale`). The ONE row height the canvas, the hit test and the key column
+    /// read. A view, not an edit: local to the open grid like the time zoom.
+    @State private var rowLevel = 0
+    private var zoomedRowHeight: CGFloat { Self.rowHeight * CGFloat(NoteGridZoom.rowScale(atLevel: rowLevel)) }
 
     var body: some View {
         let document = timeline.document
@@ -234,7 +239,7 @@ private struct PartNoteGrid: View {
                     let targets = ClipNoteEdit.targets(selected: selected, onScreen: pickedOnScreen,
                                                        visible: visible)
                     let grid = NoteGridGesture.Grid(
-                        stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),
+                        stepWidth: Double(stepWidth), rowHeight: Double(zoomedRowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
                     // Ultraplan-A2 (N2a): the key column stands OUTSIDE the scroll view, so every
                     // row keeps its name while the part scrolls sideways; same row height, same
@@ -242,7 +247,7 @@ private struct PartNoteGrid: View {
                     HStack(alignment: .top, spacing: 0) {
                     PartNoteKeyColumn(rows: ClipNoteEdit.keyRows(range, naming: naming,
                                                                  preferFlats: session.key.prefersFlatSpelling),
-                                      rowHeight: Self.rowHeight)
+                                      rowHeight: zoomedRowHeight)
                     ScrollView(.horizontal, showsIndicators: true) {
                         // B6a: the velocity lane rides in the SAME scroll view, under the grid, so a
                         // stem stays under its note's column while the part scrolls.
@@ -477,7 +482,7 @@ private struct PartNoteGrid: View {
                      steps: Int, range: ClosedRange<Int>, editable: Bool) {
         let hit = RollHitTest.classify(x: Double(location.x), y: Double(location.y),
                                        notes: visible,
-                                       stepW: Double(stepWidth), rowH: Double(Self.rowHeight),
+                                       stepW: Double(stepWidth), rowH: Double(zoomedRowHeight),
                                        highPitch: range.upperBound, lowPitch: range.lowerBound,
                                        stepCount: steps, edgeSlop: 0)
         switch hit {
@@ -793,6 +798,18 @@ private struct PartNoteGrid: View {
                    enabled: NoteGridZoom.level(zoomLevel, steppedBy: 1) != zoomLevel,
                    label: String(localized: "Zoom in: wider steps, easier to tap")) {
                 zoom(by: 1, steps: steps, anchor: viewport.width / 2)
+            }
+            // Ultraplan-A3 (N2b): the row zoom, one step per tap. Never shorter than the touch
+            // floor; the page scrolls vertically, so a taller grid needs no anchoring.
+            button("Shorter rows", "rectangle.compress.vertical",
+                   enabled: NoteGridZoom.rowLevel(rowLevel, steppedBy: -1) != rowLevel,
+                   label: String(localized: "Shorter rows: more pitches at once")) {
+                rowLevel = NoteGridZoom.rowLevel(rowLevel, steppedBy: -1)
+            }
+            button("Taller rows", "rectangle.expand.vertical",
+                   enabled: NoteGridZoom.rowLevel(rowLevel, steppedBy: 1) != rowLevel,
+                   label: String(localized: "Taller rows: easier to hit a pitch")) {
+                rowLevel = NoteGridZoom.rowLevel(rowLevel, steppedBy: 1)
             }
             if editable {
                 button("Delete", "trash", enabled: pickedCount > 0,

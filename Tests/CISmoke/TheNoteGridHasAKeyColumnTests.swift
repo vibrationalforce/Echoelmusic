@@ -9,7 +9,7 @@
 //     each named by `rowName` (the canvas's own naming, #416), black keys by pitch class.
 //   · Claim 2 is a SOURCE-TEXT SCAN — `PartNoteGrid` is a private View: the column is mounted
 //     BEFORE the scroll view inside one HStack (so it does not scroll), from the grid's own `range`
-//     and `Self.rowHeight`, and it reads no state (no `@Environment`, no `@State`) and is hidden
+//     and the grid's zoomed row height, and it reads no state (no `@Environment`, no `@State`) and is hidden
 //     from VoiceOver.
 //   · DEVICE PROBE, open: the names line up with the rows, they stay while the part scrolls, and
 //     the column fits at the largest type size.
@@ -69,7 +69,7 @@ final class TheNoteGridHasAKeyColumnTests: XCTestCase {
         let between = String(code[stack.upperBound..<scroll.lowerBound])
         XCTAssertTrue(between.contains("preferFlats: session.key.prefersFlatSpelling),"),
                       "the key's own spelling, as the picked note's line uses")
-        XCTAssertTrue(between.contains("rowHeight: Self.rowHeight)"), "the grid's one row height")
+        XCTAssertTrue(between.contains("rowHeight: zoomedRowHeight)"), "the grid's one (zoomed) row height")
         XCTAssertEqual(code.components(separatedBy: "PartNoteKeyColumn(").count - 1, 1, "mounted once")
 
         guard let leaf = code.range(of: "private struct PartNoteKeyColumn: View {"),
