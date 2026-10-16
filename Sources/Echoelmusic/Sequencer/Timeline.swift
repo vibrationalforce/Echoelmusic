@@ -544,6 +544,19 @@ public struct TimelineMarker: Codable, Sendable, Equatable, Identifiable {
         return (Swift.max(0, tick) / bar) * bar
     }
 
+    /// The number for the next "<prefix>n" marker: one past the highest number already in use, so a
+    /// removed marker never hands its name to a second one (four markers, the second removed, the
+    /// next is n = 5 — never a second "Marker 4"). Names the person did not write in that shape
+    /// are ignored; an absurd number is ignored too, so the sum cannot overflow. Pure.
+    public static func nextNumber(after markers: [TimelineMarker], prefix: String) -> Int {
+        let used = markers.compactMap { marker -> Int? in
+            guard marker.name.hasPrefix(prefix),
+                  let n = Int(marker.name.dropFirst(prefix.count)), n > 0, n < 1_000_000 else { return nil }
+            return n
+        }
+        return (used.max() ?? 0) + 1
+    }
+
     /// `markers` with the one on `tick`'s bar removed, or — when that bar has none — a new one
     /// named `name` added there; sorted by bar either way. One marker per bar. Pure.
     public static func toggled(_ markers: [TimelineMarker], atTick tick: Int,

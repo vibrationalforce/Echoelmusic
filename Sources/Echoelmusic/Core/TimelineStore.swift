@@ -1297,7 +1297,9 @@ public final class TimelineStore {
     @discardableResult
     public func toggleMarker(atTick tick: Int) -> Bool {
         let before = document.markers
-        let name = String(localized: "Marker ") + "\(before.count + 1)"
+        // C7: one past the highest number in use — a count would repeat a name after a removal.
+        let prefix = String(localized: "Marker ")
+        let name = prefix + "\(TimelineMarker.nextNumber(after: before, prefix: prefix))"
         let after = TimelineMarker.toggled(before, atTick: tick, name: name)
         guard after != before else { return false }
         document.markers = after

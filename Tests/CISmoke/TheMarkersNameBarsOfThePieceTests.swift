@@ -46,6 +46,14 @@ final class TheMarkersNameBarsOfThePieceTests: XCTestCase {
         XCTAssertEqual(MarkerChoice.marker(atTick: bar + 5, in: back)?.name, "Marker 2")
         XCTAssertNil(MarkerChoice.marker(atTick: 4 * bar, in: back))
         XCTAssertNotEqual(MarkerChoice.hint(hasMarkerHere: true), MarkerChoice.hint(hasMarkerHere: false))
+        // C7: the next number is one past the highest in use — never a count, which repeats a name.
+        let kept = [TimelineMarker(tick: 0, name: "Marker 1"), TimelineMarker(tick: bar, name: "Marker 3")]
+        XCTAssertEqual(TimelineMarker.nextNumber(after: kept, prefix: "Marker "), 4,
+                       "two markers, the highest Marker 3: the next is 4, not a second Marker 3")
+        XCTAssertEqual(TimelineMarker.nextNumber(after: [], prefix: "Marker "), 1)
+        let odd = [TimelineMarker(tick: 0, name: "Drop"), TimelineMarker(tick: bar, name: "Marker 99999999999")]
+        XCTAssertEqual(TimelineMarker.nextNumber(after: odd, prefix: "Marker "), 1,
+                       "a hand-named marker and an absurd number are ignored, the sum never overflows")
     }
 
     // MARK: 2 — the document carries them, and a song without any is unchanged
@@ -88,6 +96,12 @@ final class TheMarkersNameBarsOfThePieceTests: XCTestCase {
         XCTAssertEqual(timeline.document.markers.map(\.tick), [2 * Self.bar], "and Redo restores it")
         XCTAssertFalse(timeline.toggleMarker(atTick: 2 * Self.bar), "a second tap on the bar removes it")
         XCTAssertEqual(timeline.document.markers, [])
+        // C7 through the store: three markers, the middle one removed, the next is "Marker 4".
+        for b in [0, 1, 2] { timeline.toggleMarker(atTick: b * Self.bar) }
+        timeline.toggleMarker(atTick: Self.bar)
+        XCTAssertEqual(timeline.document.markers.map(\.name), ["Marker 1", "Marker 3"])
+        timeline.toggleMarker(atTick: 5 * Self.bar)
+        XCTAssertEqual(timeline.document.markers.last?.name, "Marker 4", "a removal never hands its name on")
     }
 
     // MARK: 4 — the door, the one writer, the ruler
