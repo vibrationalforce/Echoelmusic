@@ -37,8 +37,13 @@ Lyria RealTime). Sie sind Recherche-Hinweise, keine Integrationszusage.
   `documentGeneration` nach jedem await, Stop ≠ Close, Deadline 45 s (`describeDeadline`),
   `isModelBusy` verhindert gestapelte Modellarbeit; Wächter `TheAgentDescribesThePieceTests` 5–9.
   Gerät offen: echter Modellaufruf, Stop unter Last.
-- **C** modellgestützter Planner hinter `EchoelActionPlanning`, max. 3 Schritte, erst
-  `project.describeState` · `track.setLevel` · `part.duplicateAfter` — NÄCHSTER Slice, Council zuerst.
+- **C** modellgestützter Planner — **C1 GEBAUT (`183650e`)**: `EchoelModelPlanner`, drei erlaubte
+  Befehle, max. 3 Schritte, nur `"selected"` als Ziel, Frage statt Raten (`needsAnswer`),
+  `planRefused` mit Grund; Wächter `TheModelPlansOnlyWhatItMayTests`. **KEINE TÜR.** C2 = Tür:
+  Kandidat ist ein App-Intent „Ask Echoel" mit Freitext über die vorhandene Inbox/Desk-Bahn (kein
+  neues UI). ⚠️ Er braucht eine ZWEITE Produktions-Konstruktion von `FoundationModelsBrain`, die
+  `TheOnDeviceModelHasOneGateTests` heute verbietet („exactly ONE") — das ist bewusst Gesetz,
+  also Council vor dem Umbau, nicht still nachziehen.
 - **D** `agentEligible`/`applyAgent` mit Rücklesen + Ziel-Revisionen (PLAN_GMMW AI-7a/b).
 - **E** generierte Ergebnisse als normale Clips mit Herkunft (Erweiterung von `keepComposerTake`).
 - **F** Medienzeit (M1b), Projektpaket mit Medien, Zusammenarbeit, LAN-Audio-Studie (Link Audio) —

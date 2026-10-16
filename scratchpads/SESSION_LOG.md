@@ -1112,3 +1112,14 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
   EP-9 `9d7a259` lange Noten als Segmente mit derselben ID (Pumpe bindet nur innerhalb des Loops) · EP-10 `0fef0ef`
   Import ohne Ein-Takt-Kürzung · EP-11 `230dd33` MIDI-Startgriff folgt dem Zoom-Raster.
 - Je Scheibe Wächter, in Python transkribiert (§0). Gates bei Schreiben in der Runner-Schlange; nichts am Gerät geprüft.
+
+## 2026-10-16 (Vormittag) — GSIDMMW, Ultra-Masterplan, C2 Teil-Export, C1 Planer
+
+- Bericht „Generative Intelligenz für Echoelmusic" (`reports/`), Ultra-Masterplan (`scratchpads/ULTRAMASTERPLAN_2026-10-16.md`, 278 Posten, 152 offen — seit GSIDMMW als UNTERGEORDNET markiert).
+- Grok-GSI-Paste: Lernmodus 5/6; Copy-Wächter um superintelligence/quantum erweitert (353e14f).
+- GSIDMMW-Übergabe (Founder): Nordstern in Law §1 + Masterplan §1, KI-Status dreigeteilt (0f8f08e); Audit-Messung `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
+- Paket B (35d95ee + 8a17474): Describe gehört zum Stück (Ticket + documentGeneration nach jedem await), kein isWorking über den Modellaufruf, Deadline 45 s, Stop ≠ Close, isModelBusy. ⛔ Erst rot im Compile Check: `Task { await self?.f() }` ist `Task<()?, Never>` (Einzelausdruck-Closure) — `guard let self` + `() -> Void`.
+- C2 (fc5d1da): „Share as MIDI" für das gewählte MIDI-Teil (`SongMIDIExport.partTrack/partFile`, ShareLink-Blatt).
+- C1 (183650e): `EchoelModelPlanner` ohne Tür.
+- Gates: d17bb3c BfT grün (#396-Muster); 8a17474 Compile Check abgebrochen (cancel-in-progress), fc5d1da/183650e laufen.
+- Nächstes: Gates lesen; dann C1-Tür (Council: zweite FoundationModelsBrain-Konstruktion) oder Masterplan-Scheiben A1/C1.
