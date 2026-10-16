@@ -396,8 +396,12 @@ final class HostedInstrumentHost {
     /// the built-in voice. It is remembered as failed, so the next region onset does not load a
     /// crashing plugin again and again; picking it anew (or a media reset) tries once more.
     private func forgetInvalidated(_ dead: ObjectIdentifier) {
+        // RC-R4: posted for EVERY dead instance; one this host does not hold is logged, not acted on.
         guard let slot = hosted.first(where: { ObjectIdentifier($0.value.unit.auAudioUnit) == dead })?.key,
-              let held = hosted.removeValue(forKey: slot) else { return }
+              let held = hosted.removeValue(forKey: slot) else {
+            EchoelCrashLog.breadcrumb("plugin: an instance this host does not hold stopped working — ignored")
+            return
+        }
         EchoelCrashLog.breadcrumb("plugin: '\(held.component.name)' stopped working — slot \(slot) back to its built-in voice")
         engine.detachAudioUnit(held.unit)
         wanted[slot] = nil

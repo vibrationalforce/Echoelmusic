@@ -268,6 +268,10 @@ final class TheHostedInstrumentHasOneOwnerPerSlotTests: XCTestCase {
         XCTAssertTrue(forget.contains("wanted[slot] = nil"), "the built-in voice owns the slot again")
         XCTAssertTrue(forget.contains("EchoelCrashLog.breadcrumb(\"plugin: '"), "the diag log names the plugin")
         XCTAssertFalse(forget.contains("scheduleMIDIEventBlock"), "a dead unit gets no MIDI")
+        // Ultraplan-E3 (RC-R4): an invalidation for an instance this host does not hold is said in
+        // the diag log and changes nothing — the guard's `else` speaks before it returns.
+        XCTAssertTrue(forget.contains("let held = hosted.removeValue(forKey: slot) else {\n            EchoelCrashLog.breadcrumb(\"plugin: an instance this host does not hold stopped working — ignored\")\n            return\n        }"),
+                      "an unknown dead instance is logged, never silently dropped")
     }
 
     private func source(_ relative: String) throws -> String {
