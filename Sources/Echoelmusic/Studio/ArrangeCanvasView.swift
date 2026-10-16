@@ -761,12 +761,18 @@ struct ArrangeCanvasView: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(spokenName): " + ArrangementStrip.spoken(onLane: row.id, in: document))
         // A1 — the tap's VoiceOver twin: a part after the track's last one, on a bar.
-        .accessibilityAction(named: Text("Add a part")) {
-            guard !selection.drawingAutomation, !selection.gathering,
-                  creatableLanes.contains(row.id) else { return }
-            let bar = TimelineTime.ticksPerBar
-            let next = Swift.max(0, document.nextStartTick(inLane: row.id))
-            createPart(row.id, ((next + bar - 1) / bar) * bar)
+        // Offered only where a tap would make a part (review UI#8) — VoiceOver never lists an
+        // action that does nothing; the guard inside stays, the mode can change while it is read.
+        .accessibilityActions {
+            if !selection.drawingAutomation, !selection.gathering, creatableLanes.contains(row.id) {
+                Button("Add a part") {
+                    guard !selection.drawingAutomation, !selection.gathering,
+                          creatableLanes.contains(row.id) else { return }
+                    let bar = TimelineTime.ticksPerBar
+                    let next = Swift.max(0, document.nextStartTick(inLane: row.id))
+                    createPart(row.id, ((next + bar - 1) / bar) * bar)
+                }
+            }
         }
     }
 

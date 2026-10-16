@@ -162,7 +162,7 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
         let modeGuard = "guard !selection.drawingAutomation, !selection.gathering,"
         XCTAssertEqual(canvas.components(separatedBy: modeGuard).count - 1, 2, "the tap and its VoiceOver twin")
         guard let tap = canvas.range(of: ".onTapGesture(coordinateSpace: .local) { location in"),
-              let a11y = canvas.range(of: ".accessibilityAction(named: Text(\"Add a part\")) {") else {
+              let a11y = canvas.range(of: "Button(\"Add a part\") {") else {
             return XCTFail("ANCHOR MISSING: the lane's tap or its VoiceOver action (#408)")
         }
         for door in [tap, a11y] {
@@ -171,6 +171,10 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
             let createAt = try XCTUnwrap(after.range(of: "createPart(row.id,"), "the door makes the part")
             XCTAssertTrue(guardAt.lowerBound < createAt.lowerBound, "the mode is asked before the part is made")
         }
+        XCTAssertTrue(canvas.contains("if !selection.drawingAutomation, !selection.gathering, creatableLanes.contains(row.id) {\n                Button(\"Add a part\") {"),
+                      "VoiceOver lists the action only where a tap would make a part (UI#8)")
+        XCTAssertFalse(canvas.contains(".accessibilityAction(named: Text(\"Add a part\"))"),
+                       "never an always-listed action that does nothing")
     }
 
     // MARK: helpers
