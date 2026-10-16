@@ -218,6 +218,17 @@ struct ArrangeRulerLocator: View {
                         .offset(x: width * band.start)
                 }
                 ArrangeBarRuler(songTicks: songTicks, height: numbersHeight)
+                // A5: the piece's markers — a 2-pt mark at the top of the row, the text colour
+                // (never green, the body's signal; never accent, the playhead's). They take no tap
+                // of their own: the ruler's tap on that bar sets Play there.
+                ForEach(document.markers) { marker in
+                    if let fraction = ArrangeCanvas.playheadFraction(tick: marker.tick, songTicks: songTicks) {
+                        Rectangle()
+                            .fill(EchoelTheme.text)
+                            .frame(width: 2, height: height)
+                            .offset(x: width * fraction)
+                    }
+                }
                 if let fraction = ArrangeCanvas.playheadFraction(tick: start, songTicks: songTicks) {
                     // Where Play starts. Accent, the colour of the playhead it becomes; 2 pt so it
                     // reads as a marker beside the 1-pt bar lines.

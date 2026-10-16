@@ -1270,6 +1270,10 @@ struct WorkstationView: View {
             // Its own leaf, beside Click: this row names neither the store's cycle nor the cue.
             WorkstationCycleToggle()
 
+            // A5 — the Marker: names the bar Play starts from, or clears its marker. Its own leaf,
+            // beside Cycle, for the same reason: this row names neither the markers nor the cue.
+            WorkstationMarkerToggle()
+
             // Phase 3 / Recording R1 — the MIDI take, started through THIS row's one start
             // (from the top) and stopped by the same Stop. A leaf in its own file: this view
             // names neither the recorder nor its controller. Slice C: in the row, not under it,

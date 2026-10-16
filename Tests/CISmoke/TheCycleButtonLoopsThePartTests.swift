@@ -198,7 +198,7 @@ final class TheCycleButtonLoopsThePartTests: XCTestCase {
                        "COUNTERWEIGHT: the ruler still has its one tap, and the band takes none")
 
         let history = try source(Self.historyPath)
-        XCTAssertTrue(history.contains("the piece's light look and cycle"), "the head's Undo hint names the cycle it now takes back")
+        XCTAssertTrue(history.contains("the piece's light look, cycle and markers"), "the head's Undo hint names the cycle it now takes back")
     }
 
     // MARK: helpers

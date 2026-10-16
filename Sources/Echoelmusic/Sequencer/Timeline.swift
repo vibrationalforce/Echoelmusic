@@ -508,6 +508,41 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// A5 (founder 2026-10-16, "Arrangement auf Ableton-Level") — a marker: a named bar of the
+/// piece, Live's locator. Ticks are song-ABSOLUTE and always on a bar line (`barTick`). Playback
+/// view state, not sound: the transport never reads it, and `structurallyEqual` leaves it out.
+public struct TimelineMarker: Codable, Sendable, Equatable, Identifiable {
+    public var id: UUID
+    public var tick: Int
+    public var name: String
+
+    public init(id: UUID = UUID(), tick: Int, name: String) {
+        self.id = id
+        self.tick = tick
+        self.name = name
+    }
+
+    /// The bar line a marker at `tick` sits on — floored, never negative. Pure.
+    public static func barTick(_ tick: Int) -> Int {
+        let bar = TimelineTime.ticksPerBar
+        return (Swift.max(0, tick) / bar) * bar
+    }
+
+    /// `markers` with the one on `tick`'s bar removed, or — when that bar has none — a new one
+    /// named `name` added there; sorted by bar either way. One marker per bar. Pure.
+    public static func toggled(_ markers: [TimelineMarker], atTick tick: Int,
+                               name: String) -> [TimelineMarker] {
+        let bar = barTick(tick)
+        var result = markers
+        if result.contains(where: { barTick($0.tick) == bar }) {
+            result.removeAll { barTick($0.tick) == bar }
+        } else {
+            result.append(TimelineMarker(tick: bar, name: name))
+        }
+        return result.sorted { $0.tick < $1.tick }
+    }
+}
+
 /// GMMW AE-12a (founder 2026-10-08, "Orientiere dich an den Bigplayern") — a cycle range: the
 /// bars a DAW loops while its cycle is on. Two raw song-absolute ticks; the transport never reads
 /// them directly, only `window(loopTicks:)`.
@@ -597,6 +632,9 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
     /// shorter cannot send the transport somewhere the ruler does not show. Playback view state,
     /// not sound: `structurallyEqual` leaves it out, and the player adopts it on its own.
     public var cycle: TimelineCycle?
+    /// A5 — the piece's markers, sorted by bar (`TimelineMarker`). Empty for every song written
+    /// before A5; an empty list writes no key, so those songs save byte-for-byte as before.
+    public var markers: [TimelineMarker]
 
     public init(lanes: [TimelineLane] = [], regions: [TimelineRegion] = [],
                 automation: [AutomationLane] = []) {
@@ -609,10 +647,11 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         self.automation = automation
         self.lightLookIntensity = nil
         self.cycle = nil
+        self.markers = []
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schemaVersion, lanes, regions, automation, lightLookIntensity, cycle
+        case schemaVersion, lanes, regions, automation, lightLookIntensity, cycle, markers
     }
 
     /// Wrapper that decodes an element or yields nil on a malformed one, always
@@ -659,6 +698,8 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         lightLookIntensity = try? c.decodeIfPresent(Float.self, forKey: .lightLookIntensity)
         // AE-12a: absent (every older song) or malformed → nil, no cycle. Never thrown, same rule.
         cycle = try? c.decodeIfPresent(TimelineCycle.self, forKey: .cycle)
+        // A5: absent (every older song) → none; a malformed marker is dropped, never thrown.
+        markers = Self.lossyArray(TimelineMarker.self, in: c, forKey: .markers).sorted { $0.tick < $1.tick }
     }
 
     /// EXPLICIT rather than synthesized, for one reason: the stamp written to disk must be
@@ -682,6 +723,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
         try c.encode(automation, forKey: .automation)
         try c.encodeIfPresent(lightLookIntensity, forKey: .lightLookIntensity)
         try c.encodeIfPresent(cycle, forKey: .cycle)   // AE-12a: no cycle writes no key
+        if !markers.isEmpty { try c.encode(markers, forKey: .markers) }   // A5: none writes no key
     }
 
     public func regions(in laneID: UUID) -> [TimelineRegion] {

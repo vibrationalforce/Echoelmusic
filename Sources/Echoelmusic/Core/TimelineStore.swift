@@ -294,6 +294,7 @@ public final class TimelineStore {
         case lanePlugin(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)
         case lanePluginEffect(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)
         case cycle(before: TimelineCycle?, after: TimelineCycle?)
+        case markers(before: [TimelineMarker], after: [TimelineMarker])
         case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)
     }
 
@@ -479,6 +480,12 @@ public final class TimelineStore {
             document.cycle = before
             persist()
             return HistoryStep.cycle(before: after, after: before)
+        case .markers(let before, let after):
+            // A5 — the `.cycle` rule: markers changed since keep the later ones.
+            guard document.markers == after, before != after else { return nil }
+            document.markers = before
+            persist()
+            return HistoryStep.markers(before: after, after: before)
         case .keptTake(let slot, let keptID, let clip, let regions, let clips):
             // GMMW GA-2a — the slot must hold exactly what the step expects: the kept take when
             // Undo frees it, nothing when Redo fills it again. Anything else was written since
@@ -1194,6 +1201,22 @@ public final class TimelineStore {
         document.cycle = cycle
         persist()
         pushUndo(.cycle(before: before, after: cycle))
+    }
+
+    /// A5 — a marker on the bar of `tick`: added when that bar has none (named "Marker n"),
+    /// removed when it has one. ONE writer, ONE `.markers` step per call. Returns whether the bar
+    /// now carries a marker.
+    @discardableResult
+    public func toggleMarker(atTick tick: Int) -> Bool {
+        let before = document.markers
+        let name = String(localized: "Marker ") + "\(before.count + 1)"
+        let after = TimelineMarker.toggled(before, atTick: tick, name: name)
+        guard after != before else { return false }
+        document.markers = after
+        persist()
+        pushUndo(.markers(before: before, after: after))
+        let bar = TimelineMarker.barTick(tick)
+        return after.contains { TimelineMarker.barTick($0.tick) == bar }
     }
 
     /// Restructure P2 — write the piece's light look. Records NO step: the bare writer, as
