@@ -15,6 +15,11 @@
 //    three generated voices call the tap after they wrote, on both render exits (claim 9, S-A3b-2).
 //  · END-TO-END BEHAVIOUR also claims 8 (interleaved refusal) and 10 (a voice's tap starts
 //    unarmed).
+//  · LS-ST1 (2026-10-16), claim 11: `SamplerVoice` carries the same seam — SOURCE-TEXT SCAN of its
+//    one render exit plus the unarmed default (END-TO-END). Graded against the parent: the scan is
+//    a REGRESSION guard (no `stemTap` there), the default a FORWARD guard (the member is new, so
+//    the file does not compile on the parent — one absence, #486). Mutants: capture before
+//    `state.render` · the closure capturing `self` · the `_` timestamp left in place.
 //  · NOT PINNED, and said so: a render pass that overlaps an owner swap. A unit test cannot hold
 //    a render thread inside a pass; that half is the fence review written into the type's doc
 //    comment. Nor that anything ARMS a voice's tap — nothing does yet (S-A3c), so the voices
@@ -306,6 +311,30 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
         XCTAssertFalse(voice.stemTap.isArmed, "no capture session, no capture — the default costs nothing")
         XCTAssertFalse(voice.stemTap.hasRetiredTarget)
         XCTAssertEqual(voice.stemTap.invalidTimeBlocks, 0)
+    }
+
+    // MARK: 11 — the sampler hands its finished mono block to its own tap (LS-ST1)
+
+    /// One render exit (no `weakSelf`: the closure owns the render state, not the voice), so ONE
+    /// capture, after `state.render` wrote the block — `render` zeroes a silent block itself.
+    func testTheSamplerHandsItsBlockToTheTap() throws {
+        let code = SourceText.codeOnly(try text("Sources/Echoelmusic/Sequencer/SamplerVoice.swift"))
+        XCTAssertTrue(code.contains("let stemTap = StemTapPoint()"), "the sampler owns a tap point")
+        guard let make = code.range(of: "private func makeSourceNode()"),
+              let end = code.range(of: "AVAudioSourceNode(format:", range: make.upperBound..<code.endIndex) else {
+            return XCTFail("SamplerVoice.makeSourceNode moved — re-anchor this guard")
+        }
+        let body = String(code[make.upperBound..<end.lowerBound])
+        XCTAssertTrue(body.contains("let tap = stemTap"), "the closure captures the tap, not the voice")
+        XCTAssertTrue(body.contains("{ _, timestamp, frameCount, audioBufferList in"),
+                      "the render block reads the engine's timestamp")
+        let call = "tap.capture(audioBufferList, frameCount: Int(frameCount), timestamp: timestamp)"
+        XCTAssertEqual(body.components(separatedBy: call).count - 1, 1, "one render exit, one capture")
+        guard let w = body.range(of: "state.render(frameCount:"), let c = body.range(of: call) else {
+            return XCTFail("the sampler's render or its capture is missing")
+        }
+        XCTAssertLessThan(w.lowerBound, c.lowerBound, "the sampler writes, THEN the tap copies")
+        XCTAssertFalse(SamplerVoice().stemTap.isArmed, "no capture session, no capture")
     }
 
     private func text(_ relative: String) throws -> String {

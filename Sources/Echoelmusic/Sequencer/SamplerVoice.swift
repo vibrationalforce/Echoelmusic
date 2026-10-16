@@ -77,6 +77,13 @@ public final class SamplerVoice: @unchecked Sendable {
 
     private let renderState = RenderState()
 
+    /// Stem seam (ADR-008 S-A3b, the same one the three generated voices carry): the render
+    /// block hands every finished block — silent ones too, `render` zeroes them — to this tap.
+    /// MONO: the node has one buffer, so a capture session must arm it `.mono`. Nothing arms it
+    /// until a session exists (S-A3c-2b), so today every call falls through the empty slot.
+    /// The closure owns the tap, never the voice, so a stem cannot vanish with the voice.
+    let stemTap = StemTapPoint()
+
     /// The source node to attach to `AudioEngine.attachSourceNode(_:)`.
     public lazy var sourceNode: AVAudioSourceNode = makeSourceNode()
 
@@ -214,8 +221,10 @@ public final class SamplerVoice: @unchecked Sendable {
 
     private func makeSourceNode() -> AVAudioSourceNode {
         let state = renderState
-        let renderBlock: AVAudioSourceNodeRenderBlock = { _, _, frameCount, audioBufferList in
+        let tap = stemTap
+        let renderBlock: AVAudioSourceNodeRenderBlock = { _, timestamp, frameCount, audioBufferList in
             state.render(frameCount: Int(frameCount), audioBufferList: audioBufferList)
+            tap.capture(audioBufferList, frameCount: Int(frameCount), timestamp: timestamp)
             return noErr
         }
         // A constant sample rate always yields a valid format; if the OS ever
