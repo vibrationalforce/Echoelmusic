@@ -4717,18 +4717,6 @@
         }
       }
     },
-    "Export MIDI for your DAW" : {
-      "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export MIDI for your DAW"
-          }
-        }
-      }
-    },
     "Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key" : {
       "comment" : "Panel text (E4-7, 2026-09-30): SwiftUI literal keys of EchoelStudioView, the instrument — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -24895,6 +24883,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taller rows: easier to hit a pitch"
+          }
+        }
+      }
+    },
+    "Take .mid" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take .mid"
+          }
+        }
+      }
+    },
+    "Export the take as MIDI for your DAW" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export the take as MIDI for your DAW"
           }
         }
       }
