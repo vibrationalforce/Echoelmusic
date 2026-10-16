@@ -1,4 +1,4 @@
-build: v10.79.510 — True Peak (BS.1770) für Export und Meter, Ask Echoel Pan/Mute
+build: v10.79.511 — Sampler-Spuren pannen und bleiben stereo
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,33 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.511) ───────────────────────────────
+
+  Gebaut wird `0d54962`; Xcode Compile Check UND Build for Testing grün auf diesem Stand.
+  Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: EINE SAMPLER-SPUR LÄSST SICH PANNEN ──
+  Im Spur-Inspektor einer Sampler-Spur steht jetzt das Feld „Pan" (vorher fehlte es), und
+  Ask Echoel setzt auch eine Sampler-Spur nach links/rechts. Die Bass-Spur bleibt ohne Pan.
+
+  ── POSTEN 2: EIN STEREO-SAMPLE BLEIBT STEREO ──
+  Eine geladene Stereo-Datei (Loop, Pad, Raum-Aufnahme) klingt mit ihrem Stereobild — vorher
+  wurde jede Datei beim Laden zu Mono gefaltet. Mono-Samples klingen auf beiden Seiten gleich;
+  Pan wirkt bei einem Stereo-Sample als Balance. Eine Datei mit mehr als zwei Kanälen (z. B. 5.1)
+  wird auf Stereo heruntergemischt statt auf ihre ersten zwei Kanäle abgeschnitten.
+
+  ── IM CODE, NOCH OHNE TÜR ──
+  Audiospuren können offline als Stem in Songlänge gerendert werden (ungewarpt, ohne
+  Spur-Effekte). Kein Knopf ruft das auf — die Stem-Tür wartet auf G-D (FOUNDER_INBOX E35).
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since d25c788) ──
+  · Sampler-Spur mit einem MONO-Treffer, gleicher Fader wie im letzten Build: gleich laut?
+    (Der Mixer hat Mono früher selbst verteilt; ob dabei −3 dB im Spiel waren, misst nur dein Ohr.)
+  · Eine Stereo-Loop laden → das Stereobild ist da; Pan nach links → die rechte Seite wird leiser.
+  · Mono-Treffer hart links pannen → klingt er nur links?
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.510) ───────────────────────────────
 
