@@ -1,4 +1,4 @@
-build: v10.79.512 — Arrangement: jede Spur hat eine Zeile, Tipp legt Part an · Session-Umschalter
+build: v10.79.513 — Arrangement: Marker, Cycle-Ränder ziehen, Mehrfachauswahl + Kopieren/Einfügen · Session-Raster + Startpunkt
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,53 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.513) ───────────────────────────────
+
+  Gebaut wird der App-Code von `8b5d152` (danach nur ein Plan-Dokument); Xcode Compile Check
+  UND Build for Testing grün auf `d67566e`. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: SESSION IST EIN RASTER (P2) ──
+  Piece → Arrange → „Session": Spuren sind Spalten, Szenen sind Zeilen. Jede Spur steht in
+  jeder Zeile an derselben Stelle; ein leerer Platz heißt, die Szene lässt die Spur beim
+  Stück. Viele Spuren → das Raster scrollt seitwärts.
+
+  ── POSTEN 2: STARTPUNKT WÄHLBAR (P3) ──
+  Über dem Raster: „Launch on" Beat · Bar · 2 Bars · 4 Bars. Eine gestartete Szene oder ein
+  Part setzt auf dem nächsten solchen Punkt ein. Standard bleibt Bar.
+
+  ── POSTEN 3: MARKER (A5) ──
+  In der Transportzeile neben Cycle: der Fahnen-Knopf „Marker". Er setzt einen Marker auf den
+  Takt, an dem Play startet (die Linie auf dem Lineal), oder nimmt den dort stehenden weg.
+  Das Lineal zeigt jeden Marker als Strich. Undo nimmt ihn zurück.
+
+  ── POSTEN 4: CYCLE-RÄNDER ZIEHEN (A2) ──
+  Läuft Cycle, hat sein Band auf dem Lineal an jedem Rand einen Griff. Ziehen rastet auf den
+  nächsten Taktstrich, eine Umrandung zeigt das Ziel; erst beim Loslassen wird übernommen —
+  ein Undo-Schritt pro Zug. Mindestens ein Takt, nie über das Stück hinaus.
+
+  ── POSTEN 5: MEHRERE PARTS AUSWÄHLEN, KOPIEREN, EINFÜGEN, LÖSCHEN (A9) ──
+  Über der Zeitleiste: „Select". Danach sammelt ein Tipp auf einen Part ihn ein (zweiter Tipp
+  lässt ihn los); die gesammelten tragen den Auswahlrahmen. „Copy" merkt sie sich (nur in der
+  App), „Paste" setzt sie an den Takt, an dem Play startet — Abstände und Spuren bleiben —,
+  „Delete" löscht sie, „Done" beendet den Modus. Einfügen und Löschen sind je ein Undo-Schritt.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 26be2e6) ──
+  · Session mit drei Spuren und vier Szenen → stehen die Spuren als Spalten, jede Szene als
+    Zeile, und scrollt es seitwärts, wenn die Spuren nicht passen? (P2)
+  · „Launch on" auf „Beat", einen Part starten, während das Stück läuft → setzt er auf dem
+    nächsten Schlag ein? Auf „4 Bars" → erst am nächsten Vier-Takt-Punkt? (P3)
+  · Lineal auf Takt 5 antippen, „Marker" tippen → steht ein Strich auf Takt 5? Noch einmal
+    tippen → weg? Undo nach beidem → der vorige Stand? (A5)
+  · Cycle an, den rechten Griff zwei Takte nach rechts ziehen → folgt die Umrandung Takt für
+    Takt, loopt Play danach die neuen Takte? Undo → der alte Bereich? Ein einfacher Tipp auf
+    einen Griff setzt weiter Play auf diesen Takt? (A2)
+  · „Select", zwei Parts auf verschiedenen Spuren antippen → beide umrandet, „2 parts"?
+    „Copy", Lineal auf einen späteren Takt, „Paste" → stehen beide ab dort, auf ihren Spuren,
+    im selben Abstand? Undo → in einem Schritt weg? „Delete" → weg, Undo → zurück? (A9)
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.512) ───────────────────────────────
