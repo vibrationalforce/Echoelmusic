@@ -61,15 +61,20 @@ final class TheSessionRecordsIntoTheArrangementTests: XCTestCase {
             searchFrom = hit.upperBound
         }
         XCTAssertEqual(checked, removes)
-        let wrap = try XCTUnwrap(player.range(of: "writeLaunchSpans(launchTake.wrap(atTick: loopTicks, lengthOf: { id in"))
+        let wrap = try XCTUnwrap(player.range(of: "launchTake.wrap(atTick: loopTicks, periodOf: { LaunchTake.period(ofRegion: $0, in: document) })"))
         let fold = try XCTUnwrap(player.range(of: "if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }"))
-        XCTAssertTrue(wrap.upperBound <= fold.lowerBound, "the take ends at the wrap BEFORE the launch timebase folds")
+        XCTAssertTrue(wrap.upperBound <= fold.lowerBound, "the pass ends at the wrap BEFORE the launch timebase folds")
+        // Finesse review (2026-10-16): nothing is WRITTEN at the wrap — a write mid-play is a
+        // structural edit that cut every voice a step later and stacked a layer per pass.
+        XCTAssertEqual(player.components(separatedBy: "writeLaunchSpans(").count - 1, 2,
+                       "one write site (the take's end) plus the function itself")
+        XCTAssertTrue(player.contains("let spans = launchTake.composed"), "the take writes every pass, layered")
         XCTAssertTrue(player.contains("launchTake.started(laneID: t.laneID, regionID: regionID, atTick: t.atTick)"),
                       "a start is logged from its boundary")
         XCTAssertTrue(player.contains("launchTake.stopped(laneID: t.laneID, atTick: tick)"),
                       "a stop is logged where the arrangement resumes")
-        XCTAssertTrue(player.contains("didSet { if !recordsLaunches { endLaunchTake() } }"),
-                      "switching off ends the take there")
+        XCTAssertTrue(player.contains("if recordsLaunches { joinLaunchedParts() } else { endLaunchTake() }"),
+                      "switching off ends the take there; switching on joins the parts already launched")
         XCTAssertTrue(player.contains("let parts = LaunchTake.regions(for: spans, in: doc)"))
     }
 

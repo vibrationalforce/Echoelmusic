@@ -311,10 +311,15 @@ public final class TimelineRegionPlayer {
     /// jump or the song's wrap — the spans become parts on the arrangement through
     /// `launchTakeSink` (the app hands them to the store's paste writer, one Undo step per take).
     /// A cold switch a finger flips; switching it off ends the take there.
-    /// ⚠️ Each wrap writes its pass as its own Undo step, and a part still launched goes on being
-    /// recorded from its first loop boundary after the wrap (P4c, `LaunchTake.wrap`).
+    /// ⚠️ The take is written ONCE, when it ends — every pass across the song's wrap together, one
+    /// Undo step; a part still launched goes on being recorded from its first loop boundary after
+    /// the wrap (P4c, `LaunchTake.wrap`), and a part already launched when the switch turns on is
+    /// recorded from its next one (`joinLaunchedParts`).
     public var recordsLaunches = false {
-        didSet { if !recordsLaunches { endLaunchTake() } }
+        didSet {
+            guard recordsLaunches != oldValue else { return }
+            if recordsLaunches { joinLaunchedParts() } else { endLaunchTake() }
+        }
     }
     @ObservationIgnored private var launchTake = LaunchTake()
     /// Where a finished take's parts go. nil ⇒ nothing is written (every test rig).
@@ -325,9 +330,23 @@ public final class TimelineRegionPlayer {
     /// launches die — and before the song's wrap folds the launch timebase.
     private func endLaunchTake() {
         launchTake.finish(atTick: currentTick + TimelineTime.ticksPerTransportStep)
-        let spans = launchTake.spans
+        let spans = launchTake.composed
         launchTake = LaunchTake()
         writeLaunchSpans(spans)
+    }
+
+    /// The switch turned on while parts are launched: each one is recorded from its next loop
+    /// boundary (its anchor and period, as the wrap reopens a part), so what plays on is not missed.
+    /// Nothing is launched while stopped, so this does nothing then.
+    private func joinLaunchedParts() {
+        let document = doc
+        let now = currentTick + TimelineTime.ticksPerTransportStep
+        for lane in document.lanes {
+            guard let sounding = launch.soundingRegion(laneID: lane.id),
+                  let period = LaunchTake.period(ofRegion: sounding.regionID, in: document), period > 0 else { continue }
+            let boundary = now + LaunchTake.firstBoundary(anchor: sounding.startedAtTick - now, length: period)
+            launchTake.started(laneID: lane.id, regionID: sounding.regionID, atTick: boundary)
+        }
     }
 
     /// Hands finished spans to the sink as parts. Nothing to write writes nothing.
@@ -994,13 +1013,13 @@ public final class TimelineRegionPlayer {
         // by the loop length FIRST (boundaries and loopTicks are whole bars, so
         // grid alignment survives), then due boundaries fire. An idle engine
         // emits nothing and every path below is byte-identical (golden gate).
-        // P4b/P4c: at the wrap, before the fold — this pass is written now (so the next pass is
-        // placed later and wins), and every part still launched goes on being recorded.
-        if wrapped, launchTake.isOpen {
+        // P4b/P4c: at the wrap, before the fold — this pass is kept for the end of the take (a
+        // later pass wins where it covers it), and every part still launched goes on being
+        // recorded. Nothing is WRITTEN here: a write mid-play is a structural edit that would cut
+        // every voice a step later (finesse review 2026-10-16).
+        if wrapped, !launchTake.isEmpty {
             let document = doc
-            writeLaunchSpans(launchTake.wrap(atTick: loopTicks, lengthOf: { id in
-                document.regions.first { $0.id == id }?.lengthTicks
-            }))
+            launchTake.wrap(atTick: loopTicks, periodOf: { LaunchTake.period(ofRegion: $0, in: document) })
         }
         if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }
         // S3: fold the AUDIO override timebase with the same wrap, so a launched

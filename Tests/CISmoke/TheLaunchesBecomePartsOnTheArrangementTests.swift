@@ -13,7 +13,7 @@
 // no assertion has a verdict on the parent. Hand-transcribed: every claim is the CAPABILITY plus
 // COUNTERWEIGHTS (a switch closes the span; a stop writes nothing after it; an empty span, a gone
 // part or a gone track writes nothing; the recording plays over the parts under it and one Undo
-// takes it back). Mutants: no tiling (1) · last copy not cut (1) · switch leaves the old span open
+// takes it back; a later pass cuts an earlier one on its own track only; a MIDI part loops over whole bars, an audio part over its length; a one-step blip writes nothing). Mutants: no tiling (1) · last copy not cut (1) · switch leaves the old span open
 // (2) · zero-length span written (2) · the gone part written (2) · two undo steps (3).
 
 import Foundation
@@ -105,23 +105,59 @@ final class TheLaunchesBecomePartsOnTheArrangementTests: XCTestCase {
         let loop = 8 * bar
         var take = LaunchTake()
         take.started(laneID: f.lead.id, regionID: f.loopB.id, atTick: 5 * bar)   // a 2-bar part from bar 5
-        let lengths: (UUID) -> Int? = { id in f.document.regions.first { $0.id == id }?.lengthTicks }
-        let pass = take.wrap(atTick: loop, lengthOf: lengths)
-        XCTAssertEqual(pass, [LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: 5 * bar, endTick: loop)],
-                       "the first pass ends at the wrap and is handed out")
-        XCTAssertTrue(take.spans.isEmpty)
+        let document = f.document
+        let periods: (UUID) -> Int? = { LaunchTake.period(ofRegion: $0, in: document) }
+        take.wrap(atTick: loop, periodOf: periods)
+        XCTAssertTrue(take.spans.isEmpty, "the first pass is kept for the end of the take")
         XCTAssertTrue(take.isOpen, "the part is still playing")
         take.finish(atTick: 4 * bar)
         // Anchor 5 bars folds back to −3 bars; its loops start at −3, −1, +1 → the first at or after 0 is bar 1.
-        XCTAssertEqual(take.spans, [LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: bar, endTick: 4 * bar)],
-                       "recording resumes on the part's own loop boundary, so the copies stay in phase")
+        XCTAssertEqual(take.composed, [
+            LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: bar, endTick: 4 * bar),
+            LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: 5 * bar, endTick: loop),
+        ], "both passes, written once at the end; recording resumes on the part's own loop boundary")
         XCTAssertEqual(LaunchTake.firstBoundary(anchor: -3 * bar, length: 2 * bar), bar)
         XCTAssertEqual(LaunchTake.firstBoundary(anchor: -4 * bar, length: 2 * bar), 0, "a boundary on the wrap itself")
         XCTAssertEqual(LaunchTake.firstBoundary(anchor: 2 * bar, length: 2 * bar), 2 * bar)
         var unknown = LaunchTake()
         unknown.started(laneID: f.lead.id, regionID: UUID(), atTick: 0)
-        _ = unknown.wrap(atTick: loop, lengthOf: lengths)
-        XCTAssertFalse(unknown.isOpen, "a part whose length is unknown is not reopened")
+        unknown.wrap(atTick: loop, periodOf: periods)
+        XCTAssertFalse(unknown.isOpen, "a part whose period is unknown is not reopened")
+    }
+
+    // MARK: 2c — a later pass wins where it covers an earlier one; MIDI loops over whole bars
+
+    func testALaterPassWinsAndAMIDIPartLoopsOverItsWholeBars() {
+        let f = Fixture()
+        let bar = Self.bar
+        let a = LaunchTake.Span(laneID: f.lead.id, regionID: f.loopA.id, startTick: 0, endTick: 8 * bar)
+        let b = LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: 2 * bar, endTick: 4 * bar)
+        let other = LaunchTake.Span(laneID: f.bass.id, regionID: f.bassLoop.id, startTick: 0, endTick: 8 * bar)
+        let expected: [LaunchTake.Span] = [
+            LaunchTake.Span(laneID: f.lead.id, regionID: f.loopA.id, startTick: 0, endTick: 2 * bar),
+            other,
+            b,
+            LaunchTake.Span(laneID: f.lead.id, regionID: f.loopA.id, startTick: 4 * bar, endTick: 8 * bar),
+        ]
+        let ordered: [LaunchTake.Span] = expected.sorted { lhs, rhs in
+            (lhs.startTick, lhs.laneID.uuidString) < (rhs.startTick, rhs.laneID.uuidString)
+        }
+        XCTAssertEqual(LaunchTake.layered([[a, other], [b]]), ordered,
+                       "the later pass cuts what it covers on its own track only, never stacks a layer on it")
+        // A 1.5-bar MIDI part is heard every 2 bars (the pump cycles whole bars), so it is written so.
+        var odd = f.loopA
+        odd.lengthTicks = bar + bar / 2
+        let doc = TimelineDocument(lanes: [f.lead], regions: [odd])
+        XCTAssertEqual(LaunchTake.period(of: odd, kind: .midi), 2 * bar)
+        XCTAssertEqual(LaunchTake.period(of: odd, kind: .audio), bar + bar / 2, "audio loops over its own length")
+        let parts = LaunchTake.regions(for: [LaunchTake.Span(laneID: f.lead.id, regionID: odd.id,
+                                                              startTick: 0, endTick: 4 * bar)], in: doc)
+        XCTAssertEqual(parts.map(\.startTick), [0, 2 * bar])
+        XCTAssertEqual(parts.map(\.lengthTicks), [bar + bar / 2, bar + bar / 2])
+        // Launched and stopped before anything was heard: nothing is written.
+        let blip = LaunchTake.Span(laneID: f.lead.id, regionID: f.loopA.id, startTick: 4 * bar,
+                                   endTick: 4 * bar + TimelineTime.ticksPerTransportStep)
+        XCTAssertTrue(LaunchTake.regions(for: [blip], in: f.document).isEmpty)
     }
 
     // MARK: 3 — the store writes the recording as ONE undo step, over the parts under it
