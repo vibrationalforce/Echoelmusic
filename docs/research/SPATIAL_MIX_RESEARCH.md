@@ -202,7 +202,7 @@ Was Dolbys Nutzungsrichtlinien zu „Dolby Atmos“ in Fremdprodukt-Texten sagen
 | BS.2051-3 (05/2022). Reihenfolgen: **0+5+0** = M+030, M−030, M+000, **LFE1**, M+110, M−110; **4+7+0** = M±030, M+000, LFE1, M±090, M±135, U±045, U±135 | EAR `ear/core/data/2051_layouts.yaml` | VERIFIED (EAR) / LIKELY (Revision) | Kanalreihenfolge im Bett-Export. LFE steht an 4. Stelle, anders als im IAMF-Substream. |
 | BS.1770-5 (11/2023) ist aktuell; was sich gegenüber -4 geändert hat, ist offen | itu.int (Titel) | LIKELY | IAMF und Apple zitieren **-4**. Unser Messgerät auch (`DSP/EchoelLoudnessMeter.swift`). |
 | Immersive Gewichtung: bei \|Elev\| < 30° gilt 1,41 (+1,5 dB) für 60° ≤ \|Az\| ≤ 120°, sonst 1,0; Höhen 1,0; **LFE ausgeschlossen** | BS.1770-Tabelle (Snippet); libebur128 `ebur128.c` | LIKELY (Tabelle) / VERIFIED (libebur128-Verhalten) | ⛔ libebur128 setzt das nur mit **explizit gesetzten** Kanalkarten um. Die Default-Karte wirft bei 4+7+0 sechs Kanäle still weg. Ein eigener Mehrkanal-Meter braucht Gewichte pro Kanalposition, und dieser Fallstrick gehört in den Test. |
-| True Peak: BS.1770 Annex 2 verlangt ≥4× Oversampling; libebur128 nutzt einen 49-Tap-Polyphasen-Sinc | libebur128 | VERIFIED (libebur128) / LIKELY (ITU) | **Befund:** `DSP/EchoelMeter` schätzt True Peak mit 4× **Catmull-Rom**, nicht mit dem BS.1770-FIR. Unser dBTP ist **nicht normgerecht** und darf nicht als „BS.1770 true peak“ in eine Datei geschrieben werden. Außerdem ist die Boost-Kappe im Export ein **Sample**-Peak (`SingleExport.peakSafeGainDB`). |
+| True Peak: BS.1770 Annex 2 verlangt ≥4× Oversampling; libebur128 nutzt einen 49-Tap-Polyphasen-Sinc | libebur128 | VERIFIED (libebur128) / LIKELY (ITU) | **Befund (2026-10, behoben 2026-10-16):** `DSP/EchoelMeter` schätzte True Peak mit 4× **Catmull-Rom**, und die Boost-Kappe im Export war ein **Sample**-Peak. Beide lesen jetzt `DSP/EchoelTruePeak` (BS.1770-4 Annex 2, 48 Taps, LS-TP1/TP2). |
 | HRTF-Datensätze: **SADIE (original) Apache-2.0** in Googles Resonance Audio (VERIFIED, LICENSE gelesen); SADIE II Apache-2.0 (LIKELY); MIT KEMAR „keine Nutzungsbeschränkung, Zitat erbeten“ (LIKELY; ⛔ KEMAR ist ein Kopf- **und Torso**-Simulator, „ohne Torso“ war falsch); ARI CC BY-SA, Version 3.0 vs. 4.0 strittig (LIKELY); HUTUBS CC BY 4.0 (LIKELY) | Resonance-Audio-LICENSE; Suchtreffer | siehe Zeile | **Bevorzugt: SADIE II** (Apache-2.0, nach Lesen der LICENSE im Download). **ARI meiden**: ShareAlike würde ein verarbeitetes Asset in der App anstecken. Zero-Dep: SOFA bei Build-Zeit in ein flaches Asset wandeln, kein libmysofa (C) zur Laufzeit. |
 
 ---
@@ -286,7 +286,7 @@ Was Dolbys Nutzungsrichtlinien zu „Dolby Atmos“ in Fremdprodukt-Texten sagen
 
 **Was die Liste übersieht:**
 - **a.** Der Export ist 44,1 kHz; ein Immersive-Master braucht 48 kHz.
-- **b.** Unser True Peak ist eine Catmull-Rom-Schätzung, kein BS.1770-FIR.
+- **b.** ~~Unser True Peak ist eine Catmull-Rom-Schätzung, kein BS.1770-FIR.~~ Behoben 2026-10-16 (LS-TP1/TP2): `DSP/EchoelTruePeak`, BS.1770-4 4×, in Meter und Export-Grenze.
 - **c.** `extent` und `roomSend` werden im Kopfhörer- und ADM-Pfad nicht gelesen.
 - **d.** Das ADM-OSC-Kartesisch (Nuendo) ist in der App nicht schaltbar.
 - **e.** Die generierten Stimmen (Synth, Bass, Body) haben keine Objektposition; nur Audiospuren sind Objekte.

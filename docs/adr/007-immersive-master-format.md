@@ -27,7 +27,7 @@ Ein Mischtonmeister kann mit einem Echoel-Stück deshalb nicht immersiv weiterar
    - Format: **48 kHz / 24 bit PCM.** Der Stereo-Export bleibt unverändert bei 44,1 kHz.
    - ⛔ Hier stand „Die Engine läuft bereits mit 48 kHz“. Das stimmt nur für die BITTE: `AudioConfiguration` fragt 48 kHz an und protokolliert die gewährte Rate (`session: rate asked … granted …`). Die Route kann 44,1 kHz gewähren. Der Master prüft deshalb die gewährte Rate und rechnet um oder bricht mit einer Meldung ab; er nimmt 48 kHz nie an (Kritik 2026-10-04).
 3. **Kein Limiter, keine Normalisierung und kein Trim auf Stems oder Objekten.** Lautheit wird **gemessen und berichtet**, nie erzwungen: in einer eigenen `loudness.json` (S-A6) oder als Information.
-   - Unser True Peak ist eine Catmull-Rom-Schätzung und nicht BS.1770-normgerecht. Er wird deshalb **nicht als BS.1770-Wert** in eine Datei geschrieben, bis der FIR-Meter existiert.
+   - ⛔ Hier stand „Unser True Peak ist eine Catmull-Rom-Schätzung und nicht BS.1770-normgerecht“. Seit LS-TP1/TP2 (2026-10-16) ist er die BS.1770-4-4×-Schätzung mit der veröffentlichten 48-Tap-Tabelle (`DSP/EchoelTruePeak`), dieselbe im Meter und in der Export-Grenze. Ein 4×-Wert ist weiter nicht der bandbegrenzte Spitzenwert (bis ~1 dB darunter nahe Nyquist); in eine Datei geschrieben wird er nur mit dieser Angabe.
 4. **Zwischenstufe vor dem BW64 (S-A4):** ein Exportordner mit Stems und Trajektorien. Er besteht aus `manifest.json`, `stems/NN_<track>.wav` (alle gleich lang, sample-genau, vor dem Master), `trajectories/NN_<track>.json`/`.csv` und `README.txt`.
    - Damit kann ein Studio schon arbeiten, bevor der ADM-Writer bewiesen ist.
    - Er ist zugleich die Testgrundlage des ADM-Writers.

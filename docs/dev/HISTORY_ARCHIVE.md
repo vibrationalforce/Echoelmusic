@@ -279,7 +279,7 @@ Bulk-deletion commits cited below:
 - **Next safe slice:** feed the auto-gain from `EchoelLoudnessMeter`.
 
 ### C2 · R128 / true peak metering
-- **Impl:** `EchoelLoudnessMeter` — BS.1770-4: K-weighting, M/S/I, gating, LRA. `EchoelMeter` — peak/RMS plus 4× Catmull-Rom true-peak estimate.
+- **Impl:** `EchoelLoudnessMeter` — BS.1770-4: K-weighting, M/S/I, gating, LRA. `EchoelMeter` — peak/RMS plus 4× Catmull-Rom true-peak estimate (replaced 2026-10-16 by the BS.1770-4 FIR in `EchoelTruePeak`, LS-TP2).
 - **C/R/O:** Y/Y/Y (Master chip)
 - **Stub/overclaim:**
   - ~~K-weighting coefficients are the 48 kHz set at every rate~~ — REPAIRED by E3 (2026-09-24, `2e6b54d66`): derived per rate by the bilinear transform, 44.1–192 kHz supported, any other rate reads the floor instead of borrowing coefficients.

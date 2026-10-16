@@ -56,6 +56,9 @@ public struct EchoelTruePeak: Sendable {
     public init(channels: Int) {
         self.channels = Swift.max(1, channels)
         ring = [Float](repeating: 0, count: self.channels * 2 * Self.tapsPerPhase)
+        // A `static let` is initialised lazily, on first read — touch both tables HERE so that
+        // first read (and its allocation) never lands on a render thread.
+        _ = Self.phase0.count + Self.phase1.count
     }
 
     public mutating func reset() {
@@ -65,48 +68,83 @@ public struct EchoelTruePeak: Sendable {
         for i in ring.indices { ring[i] = 0 }
     }
 
-    /// Feed `sampleCount` interleaved floats. Segments may split a frame.
-    public mutating func append(interleaved samples: UnsafePointer<Float>, sampleCount: Int) {
-        guard sampleCount > 0 else { return }
-        let taps = Self.tapsPerPhase
-        let p0 = Self.phase0
-        let p1 = Self.phase1
+    /// Feed `sampleCount` interleaved floats. Segments may split a frame. Returns the largest
+    /// true-peak magnitude in THIS block (NaN if a NaN arrived in it) and folds it into `peak`.
+    @discardableResult
+    public mutating func append(interleaved samples: UnsafePointer<Float>, sampleCount: Int) -> Float {
+        guard sampleCount > 0 else { return 0 }
         let channels = self.channels
         // Locals, written back after: touching `self.write` inside the closure would overlap
         // the exclusive access to `self.ring`.
-        var m = peak
+        var block: Float = 0
         var write = self.write
         var channel = self.channel
         ring.withUnsafeMutableBufferPointer { buf in
             guard let r = buf.baseAddress else { return }
             for i in 0..<sampleCount {
-                let x = samples[i]
-                let base = channel * 2 * taps
-                r[base + write] = x
-                r[base + write + taps] = x
-                // Newest sample at `newest`, the one k steps older at `newest - k`.
-                let newest = base + write + taps
-                var y0: Float = 0, y1: Float = 0, y2: Float = 0, y3: Float = 0
-                for k in 0..<taps {
-                    let h = r[newest - k]
-                    y0 += p0[k] * h
-                    y1 += p1[k] * h
-                    y2 += p1[taps - 1 - k] * h
-                    y3 += p0[taps - 1 - k] * h
-                }
-                let v = Swift.max(Swift.max(abs(x), abs(y0)),
-                                  Swift.max(Swift.max(abs(y1), abs(y2)), abs(y3)))
+                let v = Self.push(samples[i], into: r, base: channel * 2 * Self.tapsPerPhase, write: write)
                 // `v.isNaN ||` keeps a NaN once seen: `Swift.max` would drop it.
-                if v.isNaN || v > m { m = v }
+                if v.isNaN || v > block { block = v }
                 channel += 1
                 if channel == channels {
                     channel = 0
-                    write = (write + 1) % taps
+                    write = (write + 1) % Self.tapsPerPhase
                 }
             }
         }
-        peak = m
         self.write = write
         self.channel = channel
+        fold(block)
+        return block
+    }
+
+    /// Feed planar stereo — a tap's two channel pointers — frame by frame; `right == nil`
+    /// feeds the left channel to both sides. Only for a two-channel estimator (any other count
+    /// measures nothing and returns 0). Allocation-free: this is the live meter's path.
+    @discardableResult
+    public mutating func append(left: UnsafePointer<Float>, right: UnsafePointer<Float>?,
+                                frameCount: Int) -> Float {
+        guard frameCount > 0, channels == 2, channel == 0 else { return 0 }
+        var block: Float = 0
+        var write = self.write
+        ring.withUnsafeMutableBufferPointer { buf in
+            guard let r = buf.baseAddress else { return }
+            for i in 0..<frameCount {
+                let l = left[i]
+                let vl = Self.push(l, into: r, base: 0, write: write)
+                let vr = Self.push(right?[i] ?? l, into: r, base: 2 * Self.tapsPerPhase, write: write)
+                if vl.isNaN || vl > block { block = vl }
+                if vr.isNaN || vr > block { block = vr }
+                write = (write + 1) % Self.tapsPerPhase
+            }
+        }
+        self.write = write
+        fold(block)
+        return block
+    }
+
+    private mutating func fold(_ block: Float) {
+        if block.isNaN || block > peak { peak = block }
+    }
+
+    /// The ONE interpolation: write `x` into its channel's doubled ring at `write`, run the four
+    /// phases over the 12 newest samples, return max(|x|, |y0…y3|).
+    @inline(__always)
+    private static func push(_ x: Float, into r: UnsafeMutablePointer<Float>, base: Int, write: Int) -> Float {
+        let taps = tapsPerPhase
+        r[base + write] = x
+        r[base + write + taps] = x
+        // Newest sample at `newest`, the one k steps older at `newest - k`.
+        let newest = base + write + taps
+        var y0: Float = 0, y1: Float = 0, y2: Float = 0, y3: Float = 0
+        for k in 0..<taps {
+            let h = r[newest - k]
+            y0 += phase0[k] * h
+            y1 += phase1[k] * h
+            y2 += phase1[taps - 1 - k] * h
+            y3 += phase0[taps - 1 - k] * h
+        }
+        return Swift.max(Swift.max(abs(x), abs(y0)),
+                         Swift.max(Swift.max(abs(y1), abs(y2)), abs(y3)))
     }
 }
