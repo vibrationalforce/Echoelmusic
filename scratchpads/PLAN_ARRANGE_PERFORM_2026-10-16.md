@@ -57,18 +57,28 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 1 | Markers (A5) | ✅ `48a28d6` | guard `TheMarkersNameBarsOfThePieceTests` (pure + store undo + scan); gates: not yet read |
 | 2 | Cycle region drag (A2) | ✅ `28b1059` | guard `TheCycleEdgesAreDraggedOnTheRulerTests` (pure `CycleDrag` + scan), Python transcription green, 6 checkers 0; gates: pending |
 | 3 | Multi-select + clipboard (A9) | ✅ `8b5d152` | guard `TheGatheredPartsAreCopiedAndPastedTests` (pure paste + store undo + gather rules + scan), Python transcription of the scan green, 6 checkers 0; gates: pending |
-| 4 | Track reorder + colour | **NEXT** — council first (order decides `rollLaneID`) | — |
+| 4a | Track colour (A4b) | ✅ `fa1f6b8` | guard `TheTrackColourIsThePersonsChoiceTests`; 6 checkers 0; gates: pending |
+| 4b | Track reorder (A4c) | **NEXT** | — |
 | 5 | Count-in | open | — |
 | 6 | Record scenes into arrangement (P4) | open | — |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
 
-### Exact next step (item 4)
-Track reorder + colour. Lane ORDER is load-bearing (`rollLaneID` picks a lane by position), so
-first measure every reader of `document.lanes` order and convene the council; then the slice:
-`TimelineStore.moveLane(id:by:)` as ONE undo step (a new `HistoryStep` case or the lanes
-snapshot), Move up / Move down in the track header (no drag in v1), and a colour choice that
-overrides `EchoelTheme.TrackHue.of` per track, persisted on `TimelineLane` with a lossy decode.
+### Measured before item 4 (read-only audit, 2026-10-16)
+Lane ORDER is routing, not display: `rollLaneID` = first non-bio MIDI lane (and two inline
+copies of that rule: the `rollSlot*` getters in `Timeline.swift`, `EchoelStudioView`'s
+`applyLaneOverrides`); voice-rack slots = rank among the non-roll MIDI lanes, capped by
+`laneVoiceCapacity` ("top lanes win"); SongMIDIExport channels by MIDI-lane index; video
+`programShot` = first video lane with a picture; `AudioImport` lands on the first audio lane.
+`structurallyEqual` already treats ORDER as structural, and the player flushes/re-primes on a
+rank shift. Council: colour first (display only); reorder second, with the roll lane pinned.
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9.
+### Exact next step (item 4b, A4c)
+`TimelineStore.moveLane(id:by:)` (±1) as ONE undo step, refusing any move that would put a
+lane above the roll lane or move the roll lane itself (so `rollLaneID` never changes), and the
+bio lane stays where it is. Doors: "Move up" / "Move down" on the Track page (+ VoiceOver
+actions on the canvas head). Guard: rollLaneID invariant under every allowed move, one undo
+step, refusals, and the over-capacity rank change stated in the hint.
+
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b.
