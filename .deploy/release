@@ -1,4 +1,4 @@
-build: v10.79.513 — Arrangement: Marker, Cycle-Ränder ziehen, Mehrfachauswahl + Kopieren/Einfügen · Session-Raster + Startpunkt
+build: v10.79.514 — Arrangement: Spurfarbe, Spuren umsortieren, Einzähler vor Record
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,38 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.514) ───────────────────────────────
+
+  Gebaut wird der App-Code von `2eb8044`; Xcode Compile Check UND Build for Testing grün
+  (main steht auf `2eb8044`). Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: SPURFARBE (A4b) ──
+  Eine Spur öffnen → Track-Seite → „Colour": Automatic oder eine von sieben Farben. Kopf,
+  Parts, Mixer-Streifen und Audio-Editor tragen die Wahl. Die Bio-Spur bleibt grün.
+
+  ── POSTEN 2: SPUREN UMSORTIEREN (A4c) ──
+  Track-Seite → „Move up" / „Move down", ein Undo-Schritt pro Tipp. Die erste MIDI-Spur
+  spielt das Echoel-Instrument; ein Zug, der ihr das wegnehmen würde, ist ausgegraut, und die
+  Bio-Spur bleibt, wo sie ist.
+
+  ── POSTEN 3: EINZÄHLER VOR RECORD (A10) ──
+  Neben Record: „Count-in" Off · 1 bar · 2 bars. Record lässt erst den Click so viele Takte
+  laufen und startet dann das Stück samt Aufnahme ab Takt 1. War der Click aus, ist er danach
+  wieder aus. Ein Tipp auf Record während des Einzählens bricht ab — nichts wird aufgenommen.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since df59b13) ──
+  · Synth-Spur öffnen, Colour → Orchid → tragen Kopf und Parts auf der Zeitleiste und der
+    Mixer-Streifen die Farbe? Liest sie sich neben den anderen? Automatic → zurück? (A4b)
+  · Drei Spuren Echoel · Synth · Audio, die Audio-Spur öffnen, Move up → Echoel · Audio ·
+    Synth? Undo → zurück? Während das Stück läuft verschieben → spielt es ohne Hänger weiter,
+    und spielt die Echoel-Spur weiter das Instrument? (A4c)
+  · MIDI-Spur scharf schalten, Count-in → 1 bar, Record → vier Clicks, dann startet das Stück
+    auf dem fünften, ohne Lücke und ohne Doppel-Click? Während des Einzählens noch einmal
+    Record → bricht ab, nichts aufgenommen, der Click wieder wie vorher? (A10)
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.513) ───────────────────────────────
