@@ -1541,3 +1541,17 @@ Noten-Inspektor Start/Dauer/Tonhöhe (N-F1), Teilleiste Start/Länge/Snap (EP-4)
 Öffnen·Umgehen·Entfernen (H6-6). Abgelehnt: Schieberegler, Deko-Text, Eyebrow-Überschriften,
 eigene Leisten je Seite, Vocal/Lyrics/Echoel-als-Delay, lila Akzent. Details:
 `reports/Design-Input ChatGPT und Grok (2026-10-15).md` §4.
+
+## 2026-10-16 — Grok: GSI-Recherche + Audit — ADOPT→PRODUCT (5/6)
+
+Founder-Paste, read-only, Repo-Kontext unklar. Fünf von sechs Behauptungen gemessen bestätigt
+(PLAN_GMMW:392 DO NOT RESTORE · CLAIMS.md ohne „Describe this piece" · PerformerSignature im
+Backup-Kanal, als Abwägung dokumentiert, 5.1.3-Konformität UNVERIFIZIERT → Anwalt/Founder ·
+„EchoelAI — " auf deterministischem Text, `BioMusicDirector.swift:285` = GM9/AI-8 · kein Wächter
+nannte „superintelligence"). TEILWEISE: die Stem-Trennung ist auf `faq.html`/`overview.html` als
+Planned markiert, nur „in active development" überbehauptet — das ist CL-15, Founder-Gate. Eigener
+Nebenbefund: `faq.html` „On-device AI is on the roadmap, not in the app today" könnte seit
+„Describe this piece" UNTER-behaupten. **Übernommen, genau eins:** superintelligence/quantum im
+Satz-Wächter `TheCopyMakesNoHealthClaimTests` (353e14f), Verneinung bleibt erlaubt. Abgelehnt: das
+„EchoelAI"-Präfix vor AI-8 umbenennen (Grok sagt selbst: erst nach AI-8). Quelle lohnt die Messung:
+präzise Zeilenangaben, eine Teil-Überbehauptung.
