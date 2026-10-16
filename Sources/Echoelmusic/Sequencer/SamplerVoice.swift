@@ -104,8 +104,8 @@ public final class SamplerVoice: @unchecked Sendable {
         }
         try file.read(into: pcm, frameCount: frameCap)
 
-        // Convert to mono float32 at the node's fixed 44.1 kHz. Without this a
-        // 48 kHz WAV played ~8.8% flat — the node format is constant 44.1 kHz.
+        // Convert to mono float32 at the node's fixed rate (`Self.sampleRate`, 48 kHz since
+        // #1213). Without this a file at any other rate would play off-pitch and off-length.
         var mono = try Self.resampleToMono(pcm, targetRate: Self.sampleRate)
         if mono.count > Self.maxSampleFrames {
             mono = Array(mono[0..<Self.maxSampleFrames])
