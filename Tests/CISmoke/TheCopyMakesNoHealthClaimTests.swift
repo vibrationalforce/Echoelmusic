@@ -2,8 +2,10 @@
 // Echoel — the wording guard (founder 2026-10-15, tip 4: "red terms in CI"). Every sentence the
 // app, the website or the store text says is read for the struck vocabulary — therapeutic,
 // therapy, healing, wellbeing, wellness, Solfeggio, chakra, binaural beats, 40 Hz, and their German
-// store-text forms (Therapie, Heilung, Wohlbefinden) — and a sentence
-// that names one must DENY it ("not therapy", "no healing frequencies", "don't describe it as …"),
+// store-text forms (Therapie, Heilung, Wohlbefinden), plus two CAPABILITY overclaims that shipped
+// once and were struck (superintelligence, quantum — `decisions.csv` 2026-06-20, HISTORY_ARCHIVE
+// M8 DO NOT RESTORE; re-added by the 2026-10-16 GSI audit, which found no guard naming them) — and
+// a sentence that names one must DENY it ("not therapy", "no healing frequencies", "don't describe it as …"),
 // be the mandated safety warning ("coordinate any therapeutic use with your provider"), or carry a
 // proper name ("Super Natural Healing Killers", "self-healing" engine).
 //
@@ -22,6 +24,7 @@
 // ⚠️ HONEST GRADING (#433). No new symbol: the file compiles on the parent and claim 2 is GREEN
 // there — this is a forward fence, not a regression find. Transcribed in Python against the tree
 // (0 findings over 23 pages, 16 store files, the whole catalog) and against thirteen mutants (two of them German).
+// The overclaim terms (2026-10-16): re-transcribed, 0 findings over the same 23 pages, 16 store files, catalog.
 //
 // ⚠️ THE LIMITS, stated so a green is not read as more than it is:
 //   · A negation ANYWHERE in the sentence admits it: "Not a toy — it supports your wellbeing"
@@ -38,7 +41,9 @@ final class TheCopyMakesNoHealthClaimTests: XCTestCase {
     private static let terms = ["therapeutic", "therapy", "healing", "wellbeing", "well-being", "wellness",
                                 "solfeggio", "chakra", "binaural beat", "40 hz", "40hz",
                                 // the German store text (`fastlane/metadata/de-DE`)
-                                "therapie", "heilung", "heilend", "heilfrequen", "wohlbefinden"]
+                                "therapie", "heilung", "heilend", "heilfrequen", "wohlbefinden",
+                                // capability overclaims: "GSI" may name a plan, never the product
+                                "superintelligen", "super intelligen", "super-intelligen", "quantum"]
     /// Proper names and an engineering term that contain a red word and claim nothing.
     private static let names = ["super natural healing killers", "supernaturalhealingkillers", "self-healing"]
     /// Computed, not stored: a stored `NSRegularExpression` global is a Sendable question in Swift 6.
@@ -73,13 +78,14 @@ final class TheCopyMakesNoHealthClaimTests: XCTestCase {
         XCTAssertNotNil(Self.denial, "the denial pattern compiles")
         for claim in ["Echoel supports your wellbeing.", "Healing frequencies at 528 Hz.", "Use Solfeggio tones.",
                       "A 40 Hz gamma session.", "Binaural beats for focus.", "Feel the therapy. It is not a toy.",
-                      "Heilende Frequenzen für dich.", "Dein Wohlbefinden steigt."] {
+                      "Heilende Frequenzen für dich.", "Dein Wohlbefinden steigt.",
+                      "Echoel is a Generative Super Intelligence for music.", "Quantum sound design."] {
             XCTAssertFalse(Self.affirmative(claim).isEmpty, "a claim must be caught: \(claim)")
         }
         for fine in ["Science for self-observation, not therapy.", "Coordinate any therapeutic use with your provider.",
                      "Super Natural Healing Killers", "The self-healing audio engine recovers.",
                      "Please don\u{2019}t describe it as a wellness product.", "A 140 Hz low-shelf.",
-                     "Keine Therapie, ein Instrument."] {
+                     "Keine Therapie, ein Instrument.", "Echoel is not a superintelligence."] {
             XCTAssertTrue(Self.affirmative(fine).isEmpty, "a denial, the warning, a name or a number passes: \(fine)")
         }
     }
