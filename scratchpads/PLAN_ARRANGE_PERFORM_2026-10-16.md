@@ -60,7 +60,8 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 4a | Track colour (A4b) | ✅ `fa1f6b8` | guard `TheTrackColourIsThePersonsChoiceTests`; 6 checkers 0; gates: pending |
 | 4b | Track reorder (A4c) | ✅ `1ded828` | guard `TheTracksMoveWithoutTakingTheEchoelTests`; 6 checkers 0; gates: pending |
 | 5 | Count-in (A10) | ✅ (this commit) | guard `TheRecordCountsInWithTheOneClickTests` (pure length through the click's clamp + scan of the button paths); two guards re-anchored (`TheFirstTakeRunsTheClockTests` → `beginTake()`, header word + hint needles); Python transcription green; checkers 0 |
-| 6 | Record scenes into arrangement (P4) | open | — |
+| 6a | Record scenes — pure take (P4a) | ✅ (this commit) | guard `TheLaunchesBecomePartsOnTheArrangementTests` (log → tiled copies, switch/stop/gone, store paste = one undo, recording wins over parts under it); checkers 0 |
+| 6b | Record scenes — player + door (P4b) | **NEXT** | — |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
@@ -84,11 +85,20 @@ click-only count-in BEFORE the one start — `CountInPicker` (menu, Off · 1 bar
 during the count-in cancels it; music started another way meanwhile records nothing. The wait is a
 main-actor sleep; the first transport beat re-anchors the click (≤ ¼ beat absorbed). NEEDS-FOUNDER-VERIFY (A10).
 
-### Exact next step (item 6, record scenes into the arrangement — P4)
-Measure first: what a scene launch writes today (`ClipLaunchEngine`, `SessionLaunchView`, the
-latch `LaneLaunchLatch`) and whether anything records launches with their ticks. The guard
-`SessionLaunchView persists nothing` stands — the capture must live in the engine/store, not the view.
-Slice idea: while the transport runs with "Record to arrangement" on, every landed launch is logged
-(lane, clip, tick); Stop turns the log into regions through ONE store writer as ONE undo step.
+### Exact next step (item 6b, P4b — feed the take and give it a door)
+`LaunchTake` exists and is pure. Wire it in `TimelineRegionPlayer` (NOT in `SessionLaunchView`:
+`TheSessionLaunchesWhatTheSongPlaysTests` bans `TimelineRegion(` and any store message but
+`document` there):
+· `public var recordsLaunches = false` (cold switch) + `@ObservationIgnored private var launchTake`.
+· In `applyLaunchTransitions`, per transition, when recording: `.started/.switched` →
+  `launchTake.started(laneID:, regionID:, atTick: t.atTick)`; `.stopped` → `stopped(…, atTick: tick)`.
+  ⚠️ `t.atTick` is folded on a wrap (`launch.shift`) — on a wrap call `launchTake.finish(atTick:
+  loopTicks)` and re-open the still-playing lanes at 0 BEFORE the tick (or v1: end the take at the wrap).
+· In `stop()` AND `handleTransportStopped()` (both paths): `finish(atTick: currentTick)` then hand
+  `LaunchTake.regions(for:in: doc)` to `@ObservationIgnored public var launchTakeSink: (([TimelineRegion]) -> Void)?`,
+  wired in `EchoelmusicApp` to `timeline.pasteRegions(parts, atTick: min start)`.
+· Door: a "Record to arrangement" switch in the Session grid header, writing `player.recordsLaunches`
+  (the view may message the player; it must not touch the store).
+Guard: the player paths by source scan + the sink wired once in the app.
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10.
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`).
