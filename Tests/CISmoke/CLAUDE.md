@@ -377,6 +377,25 @@ a build error here costs a whole CI round-trip", 2026-10-04). A precaution writt
 guard's comment reaches the next guard's author only by luck; this paragraph is where it reaches
 them on purpose.
 
+⛔ **AND A SIXTH MEMBER: A TUPLE-ARRAY LITERAL JOINED WITH `+` TO A TYPED FIXTURE (Ultraplan-A6,
+`3d39e60` → `cb20ed8` → `dcb9ffb`, 2026-10-16).** `TheMIDIImportNamesTimingAndInstrumentChangesTests`
+joined a fixture typed `[(tick: Int, bytes: [UInt8])]` with unlabelled tuple literals. Five
+single-element ones compiled (`Self.note + [(0, [0xC0, 0x05])]`); the ONE with two elements —
+`Self.note + [(0, [0xC2, 0x05]), (960, [0xC2, 0x30])]` — was solved as `[(Int, [Any])]`, and the
+call site reported `cannot convert value of type
+'[(Int, [Any])]' to expected argument type '[(tick: Int, bytes: [UInt8])]'` — ONE error,
+`** TEST BUILD FAILED **`, the whole blocking bundle uncompiled. It hid behind a second error in
+the push before it (`3d39e60`: `static member 'note' cannot be used on instance` — the fixture
+read bare from an instance method), and fixing that first is what exposed it (#689: fix the
+FIRST, re-measure). All checkers were clean and the transcription green, for the reason above.
+**Annotate the result AND label the tuples:** `let x: [(tick: Int, bytes: [UInt8])] = Self.note
++ [(tick: 0, bytes: [0xC0, 0x05])]` — the shape `TheMIDIImportSaysWhatItLeavesOutTests` already
+compiled with. ⚠️ N = 1 again, so it is a habit, not a checker (#665, the third member's
+argument). ⚠️ Read the measured edge exactly: single-element literals of the same shape
+compiled in the same file, so "unlabelled tuples always collapse" would be the too-wide wording
+the third member already retracted once; annotating every derived array is cheap, which is why
+the repair did all of them.
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
