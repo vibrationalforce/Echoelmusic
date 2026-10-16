@@ -1575,3 +1575,19 @@ jeder `AVAudioEngineConfigurationChange` installiert den `RetroCapture`-Master-T
 verwirft beim Ratenwechsel die alte Vorgeschichte statt sie hochgepitcht zu exportieren. WATCH für
 einen künftigen Eingangs-Neubau (GSIDMMW-F): Segment je Eingangssignatur, echte Lücke im Export.
 Der Artikel selbst ist ungelesen (kein Netz); sein Autor hat keinen physischen Wechsel belegt.
+
+## 2026-10-16 — ChatGPT Astra: kompaktes Live-Set (Laptop · Xone:96 · H90) + dediziertes Performance-Feedback — ADOPT→PRODUCT (17/17)
+
+Quelle: zwei Founder-Pastes, statisches Audit am Commit `1221d0d`, kein Compiler, kein Gerät. Alle 17 messbaren Befunde am HEAD `7628d7d` nachgemessen und BESTÄTIGT (Liste in `inspiration.csv`). Keiner widerlegt, keiner inzwischen behoben. Das ist die bisher genaueste fremde Quelle: sie trennt selbst „Kern vorhanden“ von „produktiver Aufrufer“ und behauptet keine Kompilierung.
+
+Übernommen als EINE Scheibe: **Ultraplan-MPE1** (`6df340a`) — der Kanal läuft vom CoreMIDI-Callback bis `MIDINoteRecorder`, offene Noten heißen Kanal+Tonhöhe; zwei gleich hohe Noten auf zwei Member-Kanälen bleiben zwei Noten. Ausdruck pro Note und polyphone Wiedergabe bleiben offen (MPE IN ist weiter nicht real). Nebenbei: ein veralteter 44,1-kHz-Kommentar im Sampler (`e26457b`).
+
+Nicht übernommen, mit Grund — alles eigene Phasen oder founder-gated:
+- **Laptop-Ziel (F1):** neues macOS-/Catalyst-Target = `project.yml` + neues Target → `FOUNDER_INBOX` E27. E15 (iPhone-App als „Designed for iPhone“ auf Apple-Silicon-Macs) ist die Ein-Häkchen-Brücke, belegt aber keine getrennten Ausgänge.
+- **Vier Stereo-Busse zum Xone (F7):** Engine-Format hart auf 2 Kanäle; Mehrkanal-Ausgang ist Audio-Graph-Umbau mit Council, auf iPhone nur mit Mehrkanal-Interface prüfbar.
+- **Samplegenauer Szenenstart (F5) und A/V-Szenen-Cue (F9):** echte, gemessene Lücke (`at: nil` + `play()` vom Main-Queue-Tick); Plan-Posten für GSIDMMW-F (gemeinsame Medienzeit), nicht ad hoc.
+- **Live-Grain (F2/F3) und Vierquellen-Morph (F4):** neue Instrumente; Stereo-Wet-Downmix ist im Code als „Honest limit“ dokumentiert, kein versteckter Fehler.
+- **Nahtloser Projektwechsel (F6):** `restoreSong` stoppt mit Absicht (Reihenfolge ist tragend, Datei-Kommentar). Ein Live-Set = eine Session mit Szenen; kein zweites Projektmodell.
+- **Streaming:** HaishinKit = neue Abhängigkeit, founder-gated (unverändert).
+
+Lehre über die Quelle: ein Audit, das seinen Prüfstand (Commit, kein Compiler, keine Gerätemessung) selbst nennt und jede Negativaussage auf „im geprüften Pfad“ begrenzt, hat 17/17 getroffen. Die Form ist es wert, als Vorlage für künftige Briefs zu dienen.
