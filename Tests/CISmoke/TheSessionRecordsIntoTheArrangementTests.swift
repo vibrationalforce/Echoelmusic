@@ -78,8 +78,23 @@ final class TheSessionRecordsIntoTheArrangementTests: XCTestCase {
     func testTheAppWritesTheTakeThroughThePasteWriter() throws {
         let app = try source("Sources/Echoelmusic/EchoelmusicApp.swift")
         XCTAssertEqual(app.components(separatedBy: "timelinePlayer.launchTakeSink = {").count - 1, 1, "one sink")
-        XCTAssertTrue(app.contains("Task { @MainActor in _ = store.pasteRegions(parts, atTick: start) }"),
-                      "one paste = one Undo step, every part at its own tick, never inside the player's stop")
+        XCTAssertTrue(app.contains("_ = store.pasteRegions(parts, atTick: start)"),
+                      "one paste = one Undo step, every part at its own tick")
+        // Finesse review (2026-10-16): the paste is AT ONCE. A deferred `Task` ran after Open had
+        // rescued and replaced the song, so the take landed in the next piece or was lost.
+        let sink = try XCTUnwrap(app.range(of: "timelinePlayer.launchTakeSink = {"))
+        let sinkEnd = try XCTUnwrap(app.range(of: "_ = store.pasteRegions(parts, atTick: start)", range: sink.upperBound..<app.endIndex))
+        XCTAssertFalse(app[sink.upperBound..<sinkEnd.lowerBound].contains("Task"),
+                       "the take is written in the stop that ended it, into the piece it was played in")
+        let studio = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        for (head, rescue) in [("private func startNewPiece() {", "autosaveTake()"),
+                               ("private func openFromLibrary(_ p: Project) {", "open(p)")] {
+            let fn = try XCTUnwrap(studio.range(of: head), "ANCHOR MISSING: \(head) (#454)")
+            let stop = try XCTUnwrap(studio.range(of: "timelinePlayer.stop()", range: fn.upperBound..<studio.endIndex))
+            let saved = try XCTUnwrap(studio.range(of: rescue, range: fn.upperBound..<studio.endIndex))
+            XCTAssertLessThan(stop.lowerBound, saved.lowerBound,
+                              "\(head) stops the player before it rescues, so a running take is kept")
+        }
         let view = try source("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
         XCTAssertEqual(view.components(separatedBy: "SessionRecordToggle()").count - 1, 1, "one door, in the Session grid")
         let door = try source("Sources/Echoelmusic/Studio/SessionRecordToggle.swift")

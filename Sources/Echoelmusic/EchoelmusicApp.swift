@@ -1722,12 +1722,16 @@ struct EchoelmusicApp: App {
                 // reason the clock may run (`TimelineRegionPlayer.takeArmed`; Record arms first).
                 timelinePlayer.takeArmed = { [weak recordController] in recordController?.isRecording == true }
                 // P4b: a finished Session → Arrangement take is written by the store's paste writer —
-                // one Undo step, every part at its own tick. Next main-actor turn, never inside the
-                // player's stop or wrap that produced it.
+                // one Undo step, every part at its own tick. AT ONCE, in the stop or wrap that ended
+                // it: Open and New piece stop the player before they rescue the song, so the take is
+                // in the piece it was played in. ⛔ It was a deferred `Task` until the finesse review
+                // (2026-10-16): Open ran its rescue and replaced the song in the same turn, and the
+                // Task then pasted the take into the NEXT piece (same ids after reopening the same
+                // project) or lost it (other ids). Safe at once because the player reads the store
+                // only at its next step (`liveDocument`), never back from this write.
                 timelinePlayer.launchTakeSink = { [weak timelineStore] parts in
-                    // A strong local, not the weak capture: a `weak var` may not be captured by the Task.
                     guard let store = timelineStore, let start = parts.map(\.startTick).min() else { return }
-                    Task { @MainActor in _ = store.pasteRegions(parts, atTick: start) }
+                    _ = store.pasteRegions(parts, atTick: start)
                 }
                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity, channel in
                     recordController?.recordNoteOn(pitch: note, velocity: velocity, channel: channel)

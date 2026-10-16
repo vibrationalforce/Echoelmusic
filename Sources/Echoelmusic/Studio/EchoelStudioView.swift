@@ -9746,6 +9746,10 @@ struct EchoelStudioView: View {
     /// the Piece stage shows — the player asked for it by tapping the row that says so. The
     /// instrument's own take, genre and sound stay.
     private func startNewPiece() {
+        // The song is about to be replaced: stop its player BEFORE the rescue, as Open does — a
+        // Session → Arrangement take still running is written into THIS song by the stop, and the
+        // rescue then keeps it (finesse review 2026-10-16).
+        timelinePlayer.stop()
         autosaveTake()
         // Restructure A1 step 1 — the empty song is written through to disk at once; with the
         // rescue still pending that would replace the piece's last copy on disk (`SessionController`).
@@ -11898,8 +11902,9 @@ struct EchoelStudioView: View {
         }
         openNote = nil
         // The song is about to be replaced: stop its player BEFORE `open(p)`, so the take is not
-        // loaded into a still-running arrangement (review L3). Stopping changes no document —
-        // the rescue inside `open(p)` still records the song being replaced.
+        // loaded into a still-running arrangement (review L3). Stopping writes a running Session →
+        // Arrangement take into THIS song (P4b), so the rescue inside `open(p)` records it with the
+        // song being replaced; otherwise stopping changes no document.
         timelinePlayer.stop()
         open(p)
         // `open(_:)` refused (a save is pending): it changed nothing, so the song stays too.
