@@ -24772,6 +24772,42 @@
           }
         }
       }
+    },
+    " The file's instrument changes are not followed; the track's own sound plays every note." : {
+      "comment" : "Ultraplan-A6 (2026-10-16): MIDI import success note — the file changes program on a channel whose notes landed (MIDIImport.successNote).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " The file's instrument changes are not followed; the track's own sound plays every note."
+          }
+        }
+      }
+    },
+    " The file's tempo changes are not followed." : {
+      "comment" : "Ultraplan-A6: MIDI import success note — the file changes tempo.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " The file's tempo changes are not followed."
+          }
+        }
+      }
+    },
+    " The file is not in 4/4; its notes are placed on the piece's 4/4 bars." : {
+      "comment" : "Ultraplan-A6: MIDI import success note — the file has a time signature other than 4/4.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " The file is not in 4/4; its notes are placed on the piece's 4/4 bars."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

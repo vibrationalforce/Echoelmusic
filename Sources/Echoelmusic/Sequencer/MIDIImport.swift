@@ -38,8 +38,10 @@
 //   above said the success note STATED these limits, and it stated only the tempo. Now the
 //   parse COUNTS bend/pressure/controller MOVEMENT, and the import sums only the channels whose
 //   notes landed in the part (`Landing.droppedExpression`); the note names the loss when present.
-//   Time signature, program changes and a controller's starting value (volume, pan) are still
-//   unread AND unsaid — open, recorded here;
+//   A controller's starting value (volume, pan) is still unread AND unsaid — open, recorded here.
+//   ⭐ Ultraplan-A6: program CHANGES on a landed channel, tempo CHANGES and a time signature other
+//   than 4/4 are now said (`Landing.fileTiming`, `DroppedExpression.programChanges`) — changes
+//   only, so a file that merely OPENS with a tempo, a 4/4 and a program gets no sentence;
 // · a note longer than one bar keeps its length (EP-10). Until EP-9 the players released on
 //   `endStep % 16` and cut it to its remainder, so the import held it for exactly one bar;
 //   `RegionNoteWindow.barSlices` now plays it whole, and the hold went with the reason;
@@ -129,11 +131,14 @@ public enum MIDIImport {
         /// Notes the sustain pedal lengthened (B6b-1), on the channels whose notes are in the
         /// part. Required, not defaulted (#431).
         public var sustainedNotes: Int
+        /// The file's tempo changes and a time signature other than 4/4 (Ultraplan-A6). Required (#431).
+        public var fileTiming: MIDIFileImporter.FileTiming
 
         public init(clip: Clip, region: TimelineRegion, slotIndex: Int, laneID: UUID,
                     skippedDrumNotes: Int,
                     droppedExpression: MIDIFileImporter.DroppedExpression,
-                    sustainedNotes: Int) {
+                    sustainedNotes: Int,
+                    fileTiming: MIDIFileImporter.FileTiming) {
             self.clip = clip
             self.region = region
             self.slotIndex = slotIndex
@@ -141,6 +146,7 @@ public enum MIDIImport {
             self.skippedDrumNotes = skippedDrumNotes
             self.droppedExpression = droppedExpression
             self.sustainedNotes = sustainedNotes
+            self.fileTiming = fileTiming
         }
     }
 
@@ -234,7 +240,7 @@ public enum MIDIImport {
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
                                 skippedDrumNotes: 0,
                                 droppedExpression: MIDIFileImporter.DroppedExpression(),
-                                sustainedNotes: 0))
+                                sustainedNotes: 0, fileTiming: MIDIFileImporter.FileTiming()))
     }
 
     /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
@@ -320,11 +326,13 @@ public enum MIDIImport {
         let parsed: [(channel: Int, note: Note)]
         let droppedPerChannel: [MIDIFileImporter.DroppedExpression]
         let sustainedPerChannel: [Int]
+        let timing: MIDIFileImporter.FileTiming
         do {
             let file = try MIDIFileImporter.parse(from: bytes)
             parsed = file.notes
             droppedPerChannel = file.dropped
             sustainedPerChannel = file.sustained
+            timing = file.timing
         } catch {
             return .failure(.notAMIDIFile)
         }
@@ -364,7 +372,7 @@ public enum MIDIImport {
                                     lengthTicks: bars * TimelineTime.ticksPerBar)
         return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
                                 skippedDrumNotes: drums,
-                                droppedExpression: dropped, sustainedNotes: sustained))
+                                droppedExpression: dropped, sustainedNotes: sustained, fileTiming: timing))
     }
 
     /// The sentence shown after a successful import: what landed, where, and the limits the
@@ -392,6 +400,16 @@ public enum MIDIImport {
         // disclaimer on a file that has none.
         if landing.droppedExpression.hasBendPressureOrControllers {
             note += String(localized: " Pitch bend, pressure and controller changes are not imported.")
+        }
+        // Ultraplan-A6: changes only — an opening program, tempo or 4/4 is set-up, never a loss.
+        if landing.droppedExpression.programChanges > 0 {
+            note += String(localized: " The file's instrument changes are not followed; the track's own sound plays every note.")
+        }
+        if landing.fileTiming.tempoChanges > 0 {
+            note += String(localized: " The file's tempo changes are not followed.")
+        }
+        if landing.fileTiming.hasTimeSignatureOtherThanFourFour {
+            note += String(localized: " The file is not in 4/4; its notes are placed on the piece's 4/4 bars.")
         }
         return note
     }

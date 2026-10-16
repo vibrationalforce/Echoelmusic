@@ -23,8 +23,14 @@
 //  counted, never set-up, because almost every exported file opens with set-up messages and a
 //  sentence that fires on every file is a blanket disclaimer: a bend at centre, a pressure of 0,
 //  a controller's FIRST value (volume, pan, effect sends), bank select, data entry and RPN/NRPN
-//  (CC 0, 6, 32, 38, 96…101), and channel mode (CC 120…127) are not counted. Program changes are
-//  skipped, not counted. A starting volume or pan is therefore read past AND unsaid — recorded here.
+//  (CC 0, 6, 32, 38, 96…101), and channel mode (CC 120…127) are not counted. A starting volume
+//  or pan is therefore read past AND unsaid — recorded here.
+//  ⭐ Ultraplan-A6 (2026-10-16): the same rule now covers three more things the part cannot carry.
+//  A program CHANGE — a channel's program that differs from its earlier one — is counted per
+//  channel (`DroppedExpression.programChanges`); the opening program is set-up, like a starting
+//  volume, because nearly every file has one. File-wide (`FileTiming`): a tempo CHANGE (an FF 51
+//  that differs from the one before; the opening tempo is set-up), and any time signature
+//  (FF 58) that is not 4/4 — the timeline's bar is 4/4 (`TimelineTime.beatsPerBar`).
 //
 //  ⭐ THE SUSTAIN PEDAL IS APPLIED, NOT READ PAST (B6b-1, 2026-10-01). CC 64 is the one controller
 //  a listener hears as a wrong note LENGTH, and it needs no new field: it folds into `lengthTicks`,
@@ -101,6 +107,10 @@ public enum MIDIFileImporter {
         /// the same channel. CC 1…119 except 6, 32, 38 and 96…101 (set-up, not movement) and 64
         /// (the sustain pedal, applied to note lengths since B6b-1).
         public var controllers = 0
+        /// Program CHANGES (Ultraplan-A6): a program that differs from the channel's earlier one.
+        /// The opening program is set-up and not counted. Not part of
+        /// `hasBendPressureOrControllers` — the import names it with its own sentence.
+        public var programChanges = 0
 
         public init() {}
 
@@ -114,7 +124,19 @@ public enum MIDIFileImporter {
             pitchBends += other.pitchBends
             pressures += other.pressures
             controllers += other.controllers
+            programChanges += other.programChanges
         }
+    }
+
+    /// What the file says about time that the part cannot carry (Ultraplan-A6) — file-wide, since
+    /// a Type-1 file keeps its tempo map on a track of its own.
+    public struct FileTiming: Sendable, Equatable {
+        /// Tempo events (FF 51) that differ from the tempo before them. The opening tempo is set-up.
+        public var tempoChanges = 0
+        /// True when a time signature (FF 58) other than 4/4 appears anywhere in the file.
+        public var hasTimeSignatureOtherThanFourFour = false
+
+        public init() {}
     }
 
     /// The ONE walk over a file: its (channel, note) pairs with the sustain pedal folded into
@@ -122,7 +144,8 @@ public enum MIDIFileImporter {
     /// lengthened — the last two indexed by the 0-based channel (always 16 entries).
     /// `channelNotes(from:)` is this without the counts.
     public static func parse(from data: [UInt8]) throws
-        -> (notes: [(channel: Int, note: Note)], dropped: [DroppedExpression], sustained: [Int]) {
+        -> (notes: [(channel: Int, note: Note)], dropped: [DroppedExpression], sustained: [Int],
+            timing: FileTiming) {
         var p = 0
         func need(_ n: Int) throws { if p + n > data.count { throw ImportError.truncated } }
         func u16(_ i: Int) -> Int { (Int(data[i]) << 8) | Int(data[i + 1]) }
@@ -147,6 +170,9 @@ public enum MIDIFileImporter {
         var closed: [Closed] = []
         var dropped = [DroppedExpression](repeating: DroppedExpression(), count: 16)
         var lastController = [Int](repeating: -1, count: 16 * 128)   // channel*128 + number
+        var lastProgram = [Int](repeating: -1, count: 16)
+        var timing = FileTiming()
+        var lastTempo: Int?
         var pedals = [[(tick: Int, down: Bool)]](repeating: [], count: 16)   // CC 64, walk order
         var strikes: [Int: [Int]] = [:]    // key = channel*128 + pitch → every note-on tick
 
@@ -230,7 +256,12 @@ public enum MIDIFileImporter {
                         if (msb << 7) + lsb != 0x2000 { dropped[chan].pitchBends += 1 }   // centre is set-up
                     }
                     i += 2
-                case 0xC0:                             // program change — skipped, not counted
+                case 0xC0:                             // program change — a CHANGE is counted, not kept
+                    if i < bodyEnd {
+                        let program = Int(data[i] & 0x7F)
+                        if lastProgram[chan] >= 0, lastProgram[chan] != program { dropped[chan].programChanges += 1 }
+                        lastProgram[chan] = program
+                    }
                     i += 1
                 case 0xD0:                             // channel pressure — counted, not kept
                     if i < bodyEnd, data[i] & 0x7F > 0 { dropped[chan].pressures += 1 }
@@ -238,8 +269,19 @@ public enum MIDIFileImporter {
                 case 0xF0:                             // meta / sysex
                     if status == 0xFF {                // meta: type + VLQ len + bytes
                         guard i < bodyEnd else { break }
+                        let type = data[i]
                         i += 1                         // meta type
                         let mlen = readVLQ()
+                        // Ultraplan-A6: tempo (FF 51, 3 bytes) and time signature (FF 58, ≥ 2 bytes),
+                        // read only when the whole payload is inside the track.
+                        if type == 0x51, mlen == 3, i + 3 <= bodyEnd {
+                            let tempo = (Int(data[i]) << 16) | (Int(data[i + 1]) << 8) | Int(data[i + 2])
+                            if let last = lastTempo, last != tempo { timing.tempoChanges += 1 }
+                            lastTempo = tempo
+                        } else if type == 0x58, mlen >= 2, i + 2 <= bodyEnd,
+                                  data[i] != 4 || data[i + 1] != 2 {
+                            timing.hasTimeSignatureOtherThanFourFour = true
+                        }
                         i = min(bodyEnd, i + mlen)
                     } else {                           // sysex: VLQ len + bytes
                         let slen = readVLQ()
@@ -297,7 +339,7 @@ public enum MIDIFileImporter {
                                    lengthTicks: lenT, velocity: c.velocity)))
         }
 
-        return (notes: out, dropped: dropped, sustained: sustained)
+        return (notes: out, dropped: dropped, sustained: sustained, timing: timing)
     }
 
     /// How many of the ascending `ticks` are at or before `tick` — also the index of the first
