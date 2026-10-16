@@ -24,7 +24,15 @@ public struct MIDINoteRecorder: Sendable {
     public let minLengthTicks: Int
 
     private struct OpenNote { let startTick: Int; let velocity: Float }
-    private var open: [Int: OpenNote] = [:]
+    /// An open note is named by its CHANNEL and its pitch (Ultraplan-MPE1, 2026-10-16): an MPE
+    /// controller plays each note on its own member channel, so two notes of one pitch can be
+    /// held at once. Keyed by pitch alone, the second note-on closed the first as a re-trigger
+    /// and the first note-off then closed the second — one short note where two were played.
+    private struct Key: Hashable, Comparable {
+        let channel: Int, pitch: Int
+        static func < (a: Key, b: Key) -> Bool { (a.pitch, a.channel) < (b.pitch, b.channel) }
+    }
+    private var open: [Key: OpenNote] = [:]
     private var completed: [Note] = []
 
     public init(anchorTick: Int = 0, role: NoteRole = .harmony, minLengthTicks: Int = 1) {
@@ -40,23 +48,26 @@ public struct MIDINoteRecorder: Sendable {
 
     /// A note-on at a song-absolute tick. `velocity` is normalized [0..1]; a velocity
     /// `<= 0` is treated as a note-OFF (MIDI running-status convention). Ignored before
-    /// the anchor. Re-triggering an already-open pitch closes the previous note first.
-    public mutating func noteOn(pitch: Int, velocity: Float, atTick tick: Int) {
-        guard velocity > 0 else { closeNote(pitch: pitch, atTick: tick); return }
+    /// the anchor. Re-triggering a pitch already open ON THE SAME CHANNEL closes the previous
+    /// note first; the same pitch on another channel is a second note. `channel` defaults to 0,
+    /// so a single-channel caller keeps the old behaviour exactly.
+    public mutating func noteOn(pitch: Int, velocity: Float, atTick tick: Int, channel: Int = 0) {
+        let key = Key(channel: channel, pitch: pitch)
+        guard velocity > 0 else { closeNote(key, atTick: tick); return }
         guard tick >= anchorTick else { return }
-        if open[pitch] != nil { closeNote(pitch: pitch, atTick: tick) }   // re-trigger
-        open[pitch] = OpenNote(startTick: tick, velocity: velocity)
+        if open[key] != nil { closeNote(key, atTick: tick) }   // re-trigger
+        open[key] = OpenNote(startTick: tick, velocity: velocity)
     }
 
-    /// A note-off at a song-absolute tick. Closes the matching open note (if any); a
-    /// note-off without a matching note-on is ignored.
-    public mutating func noteOff(pitch: Int, atTick tick: Int) {
-        closeNote(pitch: pitch, atTick: tick)
+    /// A note-off at a song-absolute tick. Closes the open note of that pitch ON THAT CHANNEL (if
+    /// any); a note-off without a matching note-on is ignored.
+    public mutating func noteOff(pitch: Int, atTick tick: Int, channel: Int = 0) {
+        closeNote(Key(channel: channel, pitch: pitch), atTick: tick)
     }
 
     /// Close every still-open note at `tick` (end of the take). Deterministic order.
     public mutating func flushOpen(atTick tick: Int) {
-        for pitch in open.keys.sorted() { closeNote(pitch: pitch, atTick: tick) }
+        for key in open.keys.sorted() { closeNote(key, atTick: tick) }
     }
 
     /// Completed notes, sorted by start tick then pitch (deterministic).
@@ -70,8 +81,9 @@ public struct MIDINoteRecorder: Sendable {
     /// call `flushOpen(atTick:)` at record-stop first if you want them included).
     public func melody() -> MelodyClip { MelodyClip(notes: notes()) }
 
-    private mutating func closeNote(pitch: Int, atTick tick: Int) {
-        guard let on = open.removeValue(forKey: pitch) else { return }
+    private mutating func closeNote(_ key: Key, atTick tick: Int) {
+        guard let on = open.removeValue(forKey: key) else { return }
+        let pitch = key.pitch
         let relStart = max(0, on.startTick - anchorTick)
         let length = max(minLengthTicks, tick - on.startTick)
         completed.append(Note(pitch: pitch, startTick: relStart, lengthTicks: length,

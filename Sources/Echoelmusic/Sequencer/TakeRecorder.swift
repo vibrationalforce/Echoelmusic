@@ -80,16 +80,17 @@ public struct TakeRecorder: Sendable {
     }
 
     /// Feed a live note-on (from CoreMIDI input) into every armed MIDI lane, stamped at
-    /// the song tick it arrived. No-op unless a take is running.
-    public mutating func noteOn(pitch: Int, velocity: Float, atTick tick: Int) {
+    /// the song tick it arrived. No-op unless a take is running. `channel` names the note
+    /// together with its pitch (MPE member channels, Ultraplan-MPE1).
+    public mutating func noteOn(pitch: Int, velocity: Float, atTick tick: Int, channel: Int = 0) {
         guard isRecording else { return }
-        for id in midiOrder { midi[id]?.noteOn(pitch: pitch, velocity: velocity, atTick: tick) }
+        for id in midiOrder { midi[id]?.noteOn(pitch: pitch, velocity: velocity, atTick: tick, channel: channel) }
     }
 
     /// Feed a live note-off into every armed MIDI lane.
-    public mutating func noteOff(pitch: Int, atTick tick: Int) {
+    public mutating func noteOff(pitch: Int, atTick tick: Int, channel: Int = 0) {
         guard isRecording else { return }
-        for id in midiOrder { midi[id]?.noteOff(pitch: pitch, atTick: tick) }
+        for id in midiOrder { midi[id]?.noteOff(pitch: pitch, atTick: tick, channel: channel) }
     }
 
     /// Feed a normalized bio value (bioNormalized 0…1) into every armed bio lane. The

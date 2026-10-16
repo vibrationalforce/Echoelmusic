@@ -102,8 +102,9 @@ public final class MIDIBusPublisher {
     /// Record-system tee (B): when a take is running the RecordController installs
     /// these so every external MIDI note is captured into the armed lane. nil ⇒ not
     /// recording (zero overhead). Invoked on @MainActor alongside the existing publish.
-    @ObservationIgnored public var onRecordNoteOn: ((_ note: Int, _ velocity: Float) -> Void)?
-    @ObservationIgnored public var onRecordNoteOff: ((_ note: Int) -> Void)?
+    /// The channel rides along so a take keeps two same-pitch MPE notes apart (Ultraplan-MPE1).
+    @ObservationIgnored public var onRecordNoteOn: ((_ note: Int, _ velocity: Float, _ channel: Int) -> Void)?
+    @ObservationIgnored public var onRecordNoteOff: ((_ note: Int, _ channel: Int) -> Void)?
 
     init(midi: MIDIInput) {
         self.midi = midi
@@ -134,7 +135,7 @@ public final class MIDIBusPublisher {
             // Thru: echo external notes straight to MIDI out (router mode).
             if self.thruEnabled { self.midiOut?.noteOn(pitch: note, velocity: velocity) }
             // Record tee: capture into the armed lane's take (no-op unless recording).
-            self.onRecordNoteOn?(note, velocity)
+            self.onRecordNoteOn?(note, velocity, channel)
             // Built-in voice via the bus — the external keyboard plays Echoel's voice.
             self.publish(ControllerEvent(
                 timestamp: CFAbsoluteTimeGetCurrent(),
@@ -148,7 +149,7 @@ public final class MIDIBusPublisher {
         midi.onNoteOff = { [weak self] note, channel in
             guard let self else { return }
             if self.thruEnabled { self.midiOut?.noteOff(pitch: note) }
-            self.onRecordNoteOff?(note)   // record tee (no-op unless recording)
+            self.onRecordNoteOff?(note, channel)   // record tee (no-op unless recording)
             // Note-off always reaches the bus so the built-in voice can't stick.
             self.publish(ControllerEvent(
                 timestamp: CFAbsoluteTimeGetCurrent(),

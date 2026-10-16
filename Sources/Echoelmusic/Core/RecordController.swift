@@ -139,12 +139,12 @@ public final class RecordController {
 
     // MARK: - Fed by the app's MIDI tee (no-op unless a take is running)
 
-    public func recordNoteOn(pitch: Int, velocity: Float) {
-        recorder.noteOn(pitch: pitch, velocity: velocity, atTick: currentTick)
+    public func recordNoteOn(pitch: Int, velocity: Float, channel: Int = 0) {
+        recorder.noteOn(pitch: pitch, velocity: velocity, atTick: currentTick, channel: channel)
     }
 
-    public func recordNoteOff(pitch: Int) {
-        recorder.noteOff(pitch: pitch, atTick: currentTick)
+    public func recordNoteOff(pitch: Int, channel: Int = 0) {
+        recorder.noteOff(pitch: pitch, atTick: currentTick, channel: channel)
     }
 
     // MARK: - Clock hooks

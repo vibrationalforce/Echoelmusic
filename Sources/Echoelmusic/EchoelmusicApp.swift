@@ -1702,11 +1702,11 @@ struct EchoelmusicApp: App {
                 // GMMW R2: the first take has no song to play against — an armed take is the other
                 // reason the clock may run (`TimelineRegionPlayer.takeArmed`; Record arms first).
                 timelinePlayer.takeArmed = { [weak recordController] in recordController?.isRecording == true }
-                midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
-                    recordController?.recordNoteOn(pitch: note, velocity: velocity)
+                midiPub.onRecordNoteOn = { [weak recordController] note, velocity, channel in
+                    recordController?.recordNoteOn(pitch: note, velocity: velocity, channel: channel)
                 }
-                midiPub.onRecordNoteOff = { [weak recordController] note in
-                    recordController?.recordNoteOff(pitch: note)
+                midiPub.onRecordNoteOff = { [weak recordController] note, channel in
+                    recordController?.recordNoteOff(pitch: note, channel: channel)
                 }
 
                 log.log(.info, category: .system, "STARTUP [4/4] Core ready — instrument live")
