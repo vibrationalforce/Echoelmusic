@@ -55,8 +55,9 @@ import SwiftUI
 /// cell is in. Foundation-only value logic, so a test drives it end to end.
 enum SessionGrid {
 
-    /// Launches land on the next bar — the same unit the arrangement and the loop point use.
-    static let quantize: LaunchQuantize = .bar
+    /// Where launches land: the player's launch point (P3, `SessionLaunchPoint` — its own file,
+    /// because this file persists nothing). `.bar` until a player picks another.
+    static var quantize: LaunchQuantize { SessionLaunchPoint.current }
     /// Rows shown before the rest is summarised in one line (never silently dropped).
     static let sceneLimit = 32
 
@@ -275,10 +276,11 @@ struct SessionLaunchView: View {
                 Text("Scenes")
                     .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
                 Text(playing
-                     ? String(localized: "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar.")
+                     ? String(localized: "Tap a part to loop it on its track from the next launch point. A launched part starts from its top — on the Echoel track it continues where the piece is. A scene switches: its parts start and every other launched track returns to the piece at the same launch point.")
                      : String(localized: "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged."))
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
+                SessionLaunchPointPicker()
 
                 // One read per track per repaint (the repaint is a tap or a fired bar).
                 let states = Dictionary(tracks.map { ($0.id, player.launchState(laneID: $0.id)) },
@@ -331,7 +333,7 @@ struct SessionLaunchView: View {
         let title = SessionGrid.label(forTick: scene.startTick)
         let songStart = SessionGrid.songStartLabel(forTick: scene.startTick)
         // E4-66: the two spoken hints are catalog keys around the scene title and the start bar (≤ 4 operands per step).
-        let loopHint: String = String(localized: "From the next bar, loops every part listed at ") + title
+        let loopHint: String = String(localized: "From the next launch point, loops every part listed at ") + title
             + String(localized: " and returns every other launched track to the piece")
         let startHint: String = String(localized: "Starts the piece at the start of ") + songStart
             + String(localized: " and loops every part listed at ") + title
@@ -421,7 +423,7 @@ struct SessionLaunchView: View {
         .accessibilityValue(SessionGrid.word(state) ?? String(localized: "Not launched"))
         .accessibilityHint(state == .playing
                            ? String(localized: "Already looping. Stop the track to hand it back to the piece")
-                           : String(localized: "Loops this part on its track from the next bar"))
+                           : String(localized: "Loops this part on its track from the next launch point"))
     }
 
     private func stopButton(_ track: SessionGrid.Track) -> some View {
@@ -443,7 +445,7 @@ struct SessionLaunchView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(String(localized: "Stop the launched part on ") + track.name)
-        .accessibilityHint("From the next bar the track plays the piece again")
+        .accessibilityHint("From the next launch point the track plays the piece again")
     }
 
     /// A scene is a SWITCH (Phase 3 / S1): one player call, so its parts and the other tracks'
@@ -480,6 +482,6 @@ struct SessionLaunchView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Back to the piece")
-        .accessibilityHint("From the next bar every launched track plays the piece again")
+        .accessibilityHint("From the next launch point every launched track plays the piece again")
     }
 }

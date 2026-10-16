@@ -3193,30 +3193,6 @@
         }
       }
     },
-    "From the next bar every launched track plays the piece again" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "From the next bar every launched track plays the piece again"
-          }
-        }
-      }
-    },
-    "From the next bar the track plays the piece again" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "From the next bar the track plays the piece again"
-          }
-        }
-      }
-    },
     "Hide guide" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
@@ -17969,16 +17945,6 @@
         }
       }
     },
-    "From the next bar, loops every part listed at " : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "From the next bar, loops every part listed at "
-          }
-        }
-      }
-    },
     " and returns every other launched track to the piece" : {
       "localizations" : {
         "en" : {
@@ -21363,16 +21329,6 @@
         }
       }
     },
-    "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap a part to loop it on its track from the next bar. A launched part starts from its top — on the Echoel track it continues where the piece is. Launch scene switches: its parts start and every other launched track returns to the piece on the same bar."
-          }
-        }
-      }
-    },
     "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged." : {
       "localizations" : {
         "en" : {
@@ -21389,16 +21345,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Already looping. Stop the track to hand it back to the piece"
-          }
-        }
-      }
-    },
-    "Loops this part on its track from the next bar" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loops this part on its track from the next bar"
           }
         }
       }
@@ -25001,6 +24947,84 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Every bar where parts start is a scene. Place parts in Arrangement, then launch scenes here while the piece plays."
+          }
+        }
+      }
+    },
+    "Tap a part to loop it on its track from the next launch point. A launched part starts from its top — on the Echoel track it continues where the piece is. A scene switches: its parts start and every other launched track returns to the piece at the same launch point." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a part to loop it on its track from the next launch point. A launched part starts from its top — on the Echoel track it continues where the piece is. A scene switches: its parts start and every other launched track returns to the piece at the same launch point."
+          }
+        }
+      }
+    },
+    "From the next launch point, loops every part listed at " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next launch point, loops every part listed at "
+          }
+        }
+      }
+    },
+    "Loops this part on its track from the next launch point" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loops this part on its track from the next launch point"
+          }
+        }
+      }
+    },
+    "From the next launch point the track plays the piece again" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next launch point the track plays the piece again"
+          }
+        }
+      }
+    },
+    "From the next launch point every launched track plays the piece again" : {
+      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From the next launch point every launched track plays the piece again"
+          }
+        }
+      }
+    },
+    "Launch on" : {
+      "comment" : "Session (P3, 2026-10-16): the launch-quantization switch above the grid.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Launch on"
+          }
+        }
+      }
+    },
+    "Where a launched part, scene or stop lands: the next beat, bar, two bars or four bars" : {
+      "comment" : "Session (P3): VoiceOver hint of the launch-point switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where a launched part, scene or stop lands: the next beat, bar, two bars or four bars"
           }
         }
       }

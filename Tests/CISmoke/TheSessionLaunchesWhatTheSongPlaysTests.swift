@@ -320,6 +320,10 @@ final class TheSessionLaunchesWhatTheSongPlaysTests: XCTestCase {
         // (through the Workstation's own transport, `playFrom`); a single PART still cannot.
         XCTAssertEqual(code.components(separatedBy: ".disabled(!playing)").count - 1, 1,
                        "a part cannot be launched while the song is stopped — only a scene starts it")
+        // P3 (2026-10-16): the launch POINT is a player preference, not song or launch state; it
+        // is persisted in its own file, `SessionLaunchPoint.swift`, and read here only through
+        // `SessionGrid.quantize`. The ban below still holds for this file — named, not routed around.
+        XCTAssertTrue(code.contains("static var quantize: LaunchQuantize { SessionLaunchPoint.current }"))
         for banned in ["player.play(", "player.stop()", "relocate", "currentTick", "loopEnabled",
                        "UserDefaults", "@AppStorage", "JSONEncoder", "AppGroupStore",
                        "TimelineStore(", "TimelineLane(", "TimelineDocument(", "TimelineRegion(",

@@ -2497,12 +2497,12 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         // seam), the look-name fallback every look readout can show, and the value field's VoiceOver "Default" action
         // (TheValueFieldOffersItsDefaultTests keeps both of its needles inside the action block).
         let sceneHints = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
-        for seam in ["let loopHint: String = String(localized: \"From the next bar, loops every part listed at \") + title",
+        for seam in ["let loopHint: String = String(localized: \"From the next launch point, loops every part listed at \") + title",
                      "let startHint: String = String(localized: \"Starts the piece at the start of \") + songStart",
                      ".accessibilityHint(playing ? loopHint : startHint)"] {
             XCTAssertTrue(sceneHints.contains(seam), "SessionLaunchView lost the E4-66 seam `\(seam)`")
         }
-        for verbatim in ["? \"From the next bar, loops every part listed at \\(title)", ": \"Starts the piece at the start of \\(songStart)"] {
+        for verbatim in ["? \"From the next launch point, loops every part listed at \\(title)", ": \"Starts the piece at the start of \\(songStart)"] {
             XCTAssertFalse(sceneHints.contains(verbatim), "SessionLaunchView interpolates a scene hint again: `\(verbatim)`")
         }
         let lookName = try codeOnly("Sources/Echoelmusic/Studio/LookBlendMap.swift")
@@ -2516,7 +2516,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         for verbatim in ["Button(\"Default \\(EchoelDecimalText"] {
             XCTAssertFalse(fieldDefault.contains(verbatim), "EchoelValueField interpolates the Default action again: `\(verbatim)`")
         }
-        try assertCatalogued(["From the next bar, loops every part listed at ", " and returns every other launched track to the piece",
+        try assertCatalogued(["From the next launch point, loops every part listed at ", " and returns every other launched track to the piece",
                           "Starts the piece at the start of ", " and loops every part listed at ", "Look ", "Default "],
                          "scene hints, look name and the Default action")
 
@@ -2977,10 +2977,10 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
         let launchHints = try codeOnly("Sources/Echoelmusic/Studio/SessionLaunchView.swift")
         for seam in [": String(localized: \"Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged.\")",
                      "? String(localized: \"Already looping. Stop the track to hand it back to the piece\")",
-                     ": String(localized: \"Loops this part on its track from the next bar\")"] {
+                     ": String(localized: \"Loops this part on its track from the next launch point\")"] {
             XCTAssertTrue(launchHints.contains(seam), "SessionLaunchView lost the E4-81 seam `\(seam)`")
         }
-        XCTAssertFalse(launchHints.contains("                           : \"Loops this part on its track from the next bar\")"),
+        XCTAssertFalse(launchHints.contains("                           : \"Loops this part on its track from the next launch point\")"),
                        "SessionLaunchView spells the part hint verbatim again")
         let noteGridHints = try codeOnly("Sources/Echoelmusic/Studio/PartNoteEditor.swift")
         // DAW shell S4a: the editor's open/close switch is gone (the Notes page of the track's detail
@@ -2996,7 +2996,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
                           "Plays only the soloed tracks",
                           "Plays only the soloed tracks. This also silences the Studio instrument, whose Start clears the solo",
                           "Launch a scene to start the piece at its bar and loop it, or press Play for the piece as arranged.",
-                          "Already looping. Stop the track to hand it back to the piece", "Loops this part on its track from the next bar",
+                          "Already looping. Stop the track to hand it back to the piece", "Loops this part on its track from the next launch point",
                           "Shown, not edited",
                           "Select next note", "Select previous note", "Search presets & tags",
                           "Streams your heart rate and coherence to connected peers while this screen is open. Everyone sees their own numbers side by side."],
