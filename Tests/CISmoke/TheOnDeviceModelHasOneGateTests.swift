@@ -10,8 +10,13 @@
 //      cases — guardrail → `.refused`, context window → `.contextOverflow`.
 //   3. BEHAVIOUR: every `OnDeviceModelStatus` has a non-empty sentence without the word "AI"
 //      (that copy is founder-gated, AI-8), and `isOnDeviceLLMAvailable` agrees with `status`.
-//   4. SOURCE-TEXT SCAN (lifted by AI-4): exactly one production `FoundationModelsBrain(`, in
-//      `AgentReportBanner.describePiece`, whose only caller is the ≡ menu's Button.
+//   4. SOURCE-TEXT SCAN (lifted by AI-4, sharpened by GSIDMMW C2b 2026-10-16): exactly one
+//      production `FoundationModelsBrain(`, in the banner's private `onDeviceBrain()`, and that has
+//      exactly TWO callers, both started by the person: `describePiece` (only the ≡ menu's Button
+//      calls it) and `ask` (only `AskEchoelIntent` calls it — a request spoken or typed, which
+//      only PROPOSES; the piece changes on the Apply tap). Graded against `0c6e0de`: the old
+//      claim's literal (`describePiece(with: FoundationModelsBrain())`) is gone by design, so the
+//      new needles are FORWARD guards; the one-construction count is a COUNTERWEIGHT, green on both.
 //
 // ⚠️ THE LIMIT. The runtime VALUE of `status` is not asserted: on iOS 26 simulators it follows the
 // CI host Mac's Apple Intelligence state (`BioMusicDirectorTests` skips for the same reason). The
@@ -55,9 +60,9 @@ final class TheOnDeviceModelHasOneGateTests: XCTestCase {
         XCTAssertEqual(OnDeviceModelGate.isOnDeviceLLMAvailable, OnDeviceModelGate.status == .available)
     }
 
-    /// AI-4 lifted claim 4: exactly ONE production construction, in the banner's `describePiece`,
-    /// and the only caller of that is a Button in the ≡ menu.
-    func testTheBrainIsConstructedOnlyByTheDescribeTap() throws {
+    /// AI-4 lifted claim 4; GSIDMMW C2b sharpened it: still exactly ONE production construction,
+    /// now in the banner's private factory, and exactly two callers of that — a tap and an intent.
+    func testTheBrainIsConstructedOnlyWhenThePersonAsks() throws {
         let files = try Self.codeFiles()
         let hits = files.filter {
             $0.code.contains("FoundationModelsBrain(") && !$0.path.hasSuffix("EchoelAI/FoundationModelsBrain.swift")
@@ -65,11 +70,26 @@ final class TheOnDeviceModelHasOneGateTests: XCTestCase {
         XCTAssertEqual(hits.map(\.path), ["Sources/Echoelmusic/Studio/AgentReportBanner.swift"])
         let banner = try XCTUnwrap(hits.first?.code)
         XCTAssertEqual(banner.components(separatedBy: "FoundationModelsBrain(").count - 1, 1)
-        XCTAssertTrue(banner.contains("Task { await EchoelAgentDesk.shared.describePiece(with: FoundationModelsBrain()) }"))
-        let callers = files.filter { $0.code.contains("AgentReportBanner.describePiece()") }
-        XCTAssertEqual(callers.map(\.path), ["Sources/Echoelmusic/Studio/WorkspaceView.swift"])
-        let root = try XCTUnwrap(callers.first?.code)
-        XCTAssertTrue(root.contains("Button { AgentReportBanner.describePiece() }"), "only a tap asks the model")
+        XCTAssertTrue(banner.contains("private static func onDeviceBrain() -> any BrainBackend {"),
+                      "the one construction sits in a PRIVATE factory, so nothing outside the banner can call it")
+        XCTAssertEqual(banner.components(separatedBy: "onDeviceBrain()").count - 1, 3,
+                       "the factory and exactly two calls — a third caller is a new way to start the model")
+        XCTAssertTrue(banner.contains("Task { await EchoelAgentDesk.shared.describePiece(with: onDeviceBrain()) }"))
+        XCTAssertTrue(banner.contains("await EchoelAgentDesk.shared.proposePlan(for: request, with: onDeviceBrain())"),
+                      "the second call only PROPOSES — the desk changes nothing until Apply")
+
+        let describers = files.filter { $0.code.contains("AgentReportBanner.describePiece()") }
+        XCTAssertEqual(describers.map(\.path), ["Sources/Echoelmusic/Studio/WorkspaceView.swift"])
+        let root = try XCTUnwrap(describers.first?.code)
+        XCTAssertTrue(root.contains("Button { AgentReportBanner.describePiece() }"), "only a tap asks for a description")
+
+        let askers = files.filter { $0.code.contains("AgentReportBanner.ask(") }
+        XCTAssertEqual(askers.map(\.path), ["Sources/Echoelmusic/Studio/EchoelAppIntents.swift"])
+        let intents = try XCTUnwrap(askers.first?.code)
+        XCTAssertEqual(intents.components(separatedBy: "AgentReportBanner.ask(").count - 1, 1)
+        let intent = try XCTUnwrap(intents.range(of: "struct AskEchoelIntent: AppIntent {"))
+        let call = try XCTUnwrap(intents.range(of: "await AgentReportBanner.ask(request)"))
+        XCTAssertLessThan(intent.lowerBound, call.lowerBound, "the one asker is the Ask Echoel intent")
     }
 
     // MARK: - helpers

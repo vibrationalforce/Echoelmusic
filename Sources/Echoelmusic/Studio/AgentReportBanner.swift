@@ -77,11 +77,23 @@ struct AgentReportBanner: View {
         }
     }
 
-    /// GMMW AI-4 — the ONE place the on-device model is constructed for a person: the ≡ menu's
-    /// "Describe this piece" Button calls this, and only that tap does. The answer lands in this
-    /// banner as a notice; no modal, nothing in the piece changes.
+    /// GMMW AI-4 — the ≡ menu's "Describe this piece" Button calls this, and only that tap does.
+    /// The answer lands in this banner as a notice; no modal, nothing in the piece changes.
     static func describePiece() {
-        Task { await EchoelAgentDesk.shared.describePiece(with: FoundationModelsBrain()) }
+        Task { await EchoelAgentDesk.shared.describePiece(with: onDeviceBrain()) }
+    }
+
+    /// GSIDMMW C2b — "Ask Echoel" (Siri, Shortcuts, Spotlight) calls this, and only that intent
+    /// does. The model only PROPOSES: the plan lands in this banner with Apply and Discard, and
+    /// nothing in the piece changes until the person taps Apply (`EchoelAgentDesk.proposePlan`).
+    static func ask(_ request: String) async {
+        await EchoelAgentDesk.shared.proposePlan(for: request, with: onDeviceBrain())
+    }
+
+    /// The ONE production construction of the on-device model. Its two callers are above — a tap
+    /// and a request the person spoke or typed — and neither changes the piece by itself.
+    private static func onDeviceBrain() -> any BrainBackend {
+        FoundationModelsBrain()
     }
 
     /// "Echoel: Done", "Echoel: Failed" … — whose notice it is, then the state's own word.

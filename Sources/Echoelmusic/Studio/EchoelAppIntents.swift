@@ -181,6 +181,32 @@ struct UndoEchoelChangeIntent: AppIntent {
     }
 }
 
+/// GSIDMMW C2b — a request in the person's own words. The on-device model PROPOSES a change to the
+/// selected track or part (at most three steps, three commands — `EchoelModelPlanner`); the app
+/// shows it with Apply and Discard and changes nothing until the person taps Apply. A question
+/// comes back as a question. Unlike the four typed intents it does not post to the mailbox: there
+/// is no action to post yet, only words, and the plan must be read against the piece as it is now.
+/// NEEDS-FOUNDER-VERIFY (device, Apple Intelligence iPhone): select a track, say "Ask Echoelmusic",
+/// answer "make it 3 dB quieter" → the notice row says what Echoel would do, Apply changes the
+/// level, Undo takes it back; switch the selection before Apply → nothing changes and it says why.
+struct AskEchoelIntent: AppIntent {
+    static let title: LocalizedStringResource = "Ask Echoel"
+    static let description = IntentDescription(
+        "Ask in your own words for a change to the selected track or part. Echoel proposes it in the app and changes nothing until you tap Apply.")
+    static let openAppWhenRun: Bool = true
+
+    @Parameter(title: "Request",
+               description: "For example: make the selected track 3 dB quieter.")
+    var request: String
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        await AgentReportBanner.ask(request)
+        let answer = EchoelAgentDesk.shared.notice.map(\.message) ?? EchoelAgentDesk.waitingSentence
+        return .result(dialog: "\(answer)")
+    }
+}
+
 /// Surfaces the intents to Siri, Spotlight and the Shortcuts app with spoken
 /// phrases. `\(.applicationName)` resolves to the app's display name.
 struct EchoelAppShortcuts: AppShortcutsProvider {
@@ -243,6 +269,14 @@ struct EchoelAppShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Undo Echoel's Change",
             systemImageName: "arrow.uturn.backward")
+        AppShortcut(
+            intent: AskEchoelIntent(),
+            phrases: [
+                "Ask \(.applicationName)",
+                "Ask \(.applicationName) for a change"
+            ],
+            shortTitle: "Ask Echoel",
+            systemImageName: "text.bubble")
     }
 }
 #endif

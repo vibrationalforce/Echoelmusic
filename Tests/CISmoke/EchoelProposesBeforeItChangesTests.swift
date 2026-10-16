@@ -19,8 +19,8 @@
 // the executor's basis refusal (claim 3) and the agent Undo (claim 2) are older and unchanged.
 // Transcribed by reading against THIS tree (no toolchain, §0).
 //
-// ⛔ HONEST LIMIT: there is NO door yet — nothing in the app calls `proposePlan` (C2b). A real
-// model's plan and the banner's buttons on screen are DEVICE PROBES, open.
+// ⛔ HONEST LIMIT: the door is `AskEchoelIntent` (C2b, pinned in `TheOnDeviceModelHasOneGateTests`).
+// A real model's plan, Siri's dialog and the banner's buttons on screen are DEVICE PROBES, open.
 
 import Foundation
 import XCTest

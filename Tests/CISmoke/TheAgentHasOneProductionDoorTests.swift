@@ -329,8 +329,10 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
             (`bindAgentDesk`). A second one would keep a second journal — an Undo that cannot see \
             the other's changes, and two "the selection" readers.
             """)
-        XCTAssertEqual(plans, [Self.deskPath], "every request is planned in one place, the desk")
-        XCTAssertEqual(executions, [Self.deskPath], "and run in one place, the desk")
+        // GSIDMMW C2a (2026-10-16): the desk plans and runs in TWO named places — a typed request
+        // (`run`) and a model's proposal (`plan`, then `applyProposal`). Still one desk, one executor.
+        XCTAssertEqual(plans, [Self.deskPath, Self.deskPath], "every request is planned in one place, the desk")
+        XCTAssertEqual(executions, [Self.deskPath, Self.deskPath], "and run in one place, the desk")
 
         let app = try source(Self.appPath)
         let bind = try member("private func bindAgentDesk() {", in: app)
@@ -357,6 +359,10 @@ final class TheAgentHasOneProductionDoorTests: XCTestCase {
         XCTAssertFalse(desk.contains("consents:"), "the desk writes no consent — `EchoelPlanning.plan` gives the empty set")
         XCTAssertTrue(desk.contains("planner: EchoelPostedPlanner(actions: actions)"),
                       "the planner hands back what the intent wrote — no model, no keyword matcher")
+        XCTAssertTrue(desk.contains("planner: EchoelModelPlanner(brain: brain)"),
+                      "the second plan is the model's, and only through its rule-reading planner")
+        XCTAssertTrue(desk.contains("let report = await executor.execute(proposal.plan)"),
+                      "the second run is the person's Apply of a held proposal")
     }
 
     // MARK: 5 — the app binds once and runs the mailbox at startup and on `.active`
