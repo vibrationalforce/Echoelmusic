@@ -123,27 +123,34 @@ final class SingleExport {
     // at the converter), and the AAC branch hands the same over-range floats to the encoder.
     //
     // ⭐ THE REPAIR IS A GAIN BOUND, NOT A LIMITER. The export reads the whole window once at
-    // the RENDER's settings (`exportSampleRate`) to take the SAMPLE PEAK — since E3 in the same
+    // the RENDER's settings (`exportSampleRate`) to take the TRUE PEAK — since E3 in the same
     // pass that measures loudness (see `ExportLoudnessMeasurement`) — and a positive gain
-    // is capped so `peak × gain` stays at or under `exportSamplePeakCeilingDBFS`. Nothing is
+    // is capped so `peak × gain` stays at or under `exportTruePeakCeilingDBTP`. Nothing is
     // clipped and no dynamics change: the bound only lowers ONE scalar, so the waveform is the
     // same shape at a lower level. `EchoelLimiter` (`DSP/EchoelDynamics.swift`) was NOT reused:
     // it is a stateful real-time stage with release ballistics — running it offline here would
     // change what the export SOUNDS like, which is a mastering decision, not a safety repair.
     //
-    // ⚠️ WHAT THIS IS, NAMED HONESTLY: a SAMPLE-PEAK bound on the decoded 44.1 kHz float
-    // samples, measured and rendered from the SAME reader settings and window. It is NOT a
-    // true-peak (inter-sample) bound, and it does not bound what the AAC ENCODER does to the
-    // signal afterwards (codec overshoot). The −1 dBFS ceiling leaves room for both, but that
-    // room is headroom, not a proof.
+    // ⭐ TRUE PEAK SINCE LS-TP1 (2026-10-16): the peak is the BS.1770-4 4× estimate
+    // (`EchoelTruePeak`), not the largest sample. Until then this was a SAMPLE-peak bound, and
+    // a signal whose crests fall between samples (a tone at a quarter of the rate, 45° off,
+    // reads 3 dB under its crest) could be boosted until the reconstructed waveform crossed
+    // full scale — the inter-sample over a DAC and every streaming spec measure. The filter is
+    // linear, so `truePeak × gain` is exactly the true peak of the rendered samples.
+    //
+    // ⚠️ WHAT THIS IS, NAMED HONESTLY: a 4× TRUE-PEAK bound on the decoded 44.1 kHz float
+    // samples, measured and rendered from the SAME reader settings and window. A 4× estimate
+    // can read up to ~1 dB under the band-limited peak on energy near Nyquist, and nothing here
+    // bounds what the AAC ENCODER does afterwards (codec overshoot). The −1 dBTP ceiling leaves
+    // room for both, but that room is headroom, not a proof.
     //
     // NEEDS-FOUNDER-VERIFY: export a sparse take (quiet pad + one hard hit) at target −14 as
     // WAV and as AAC and listen — the hit must not crackle, and a plainly quiet take must still
     // come out louder than it was captured. Guard: `TheExportGainCannotClipTests`.
 
-    /// Sample-peak ceiling a NORMALISATION BOOST may raise the export to, in dBFS.
-    /// Sample peak, not true peak — see the block above.
-    nonisolated static let exportSamplePeakCeilingDBFS: Float = -1
+    /// True-peak ceiling a NORMALISATION BOOST may raise the export to, in dBTP (BS.1770-4
+    /// 4× estimate — see the block above).
+    nonisolated static let exportTruePeakCeilingDBTP: Float = -1
 
     /// The ONE rate the export decodes at — for the analysis pass (peak + loudness) and for
     /// the render — and encodes at. One constant on purpose: E1 bounds the gain by the peak
@@ -156,7 +163,7 @@ final class SingleExport {
     nonisolated static let peakBoundMarginDB: Float = 0.001
 
     /// The gain actually applied: `requestedDB` from `normalizeGainDB`, capped so a BOOST
-    /// cannot lift the sample peak above `exportSamplePeakCeilingDBFS`.
+    /// cannot lift the true peak above `exportTruePeakCeilingDBTP`.
     ///
     /// The rule, and why each branch is what it is:
     /// · requested ≤ 0 dB passes UNCHANGED — attenuation never raises a peak, and "No target"
@@ -173,17 +180,8 @@ final class SingleExport {
         guard requestedDB > 0 else { return requestedDB }
         guard sourcePeak.isFinite, sourcePeak >= 0 else { return 0 }
         guard sourcePeak > 0 else { return requestedDB }
-        let headroomDB = exportSamplePeakCeilingDBFS - 20 * log10f(sourcePeak) - peakBoundMarginDB
+        let headroomDB = exportTruePeakCeilingDBTP - 20 * log10f(sourcePeak) - peakBoundMarginDB
         return Swift.min(requestedDB, Swift.max(headroomDB, 0))
-    }
-
-    /// Largest |sample| in a block. A NaN in the block may be reported as NaN — callers keep it,
-    /// so `peakSafeGainDB` refuses the boost rather than trusting a partial measurement.
-    nonisolated static func samplePeak(_ samples: UnsafePointer<Float>, count: Int) -> Float {
-        guard count > 0 else { return 0 }
-        var peak: Float = 0
-        vDSP_maxmgv(samples, 1, &peak, vDSP_Length(count))
-        return peak
     }
 
     /// dB → linear, the ONE conversion the renderer uses (so a test drives the same number).
@@ -215,7 +213,7 @@ final class SingleExport {
             EchoelCrashLog.breadcrumb("export 2/4: measure loudness")
             let levels = try await measureExportLevels(sourceURL: sourceURL, timeRange: timeRange)
             let requestedGain = Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.integratedLUFS)
-            let safeGain = Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)
+            let safeGain = Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.truePeak)
 
             exportState = .exporting(progress: 0)
             let loudnessText = levels.integratedLUFS.map { String(format: "%.1f LUFS", $0) } ?? "undefined"
@@ -274,23 +272,23 @@ final class SingleExport {
     /// wrong gain for what actually ships in the file), at the render's own rate:
     /// · `integratedLUFS` — gated BS.1770 integrated loudness via `ExportLoudnessMeasurement`;
     ///   nil when undefined (see `normalizeGainDB`).
-    /// · `samplePeak` — of the very samples the gain is later applied to (E1).
+    /// · `truePeak` — BS.1770-4 4× true peak (`EchoelTruePeak`, stereo, state carried across
+    ///   segments) of the very samples the gain is later applied to (E1, LS-TP1).
     /// ⛔ Until E3 this was two decodes: loudness had to be decoded at 48 kHz, because the
     /// meter's K-weighting was the 48 kHz table at every rate. The meter now derives its
     /// coefficients per rate, so the loudness pass rides along with the peak pass.
     private func measureExportLevels(sourceURL: URL,
-                                     timeRange: CMTimeRange?) async throws -> (integratedLUFS: Float?, samplePeak: Float) {
-        // `isNaN ||` keeps a NaN once seen: `Swift.max(x, NaN)` would silently drop it, and a
-        // dropped NaN reads as a clean measurement that can vouch for a boost.
-        var peak: Float = 0
+                                     timeRange: CMTimeRange?) async throws -> (integratedLUFS: Float?, truePeak: Float) {
+        // The estimator keeps a NaN once seen: a dropped NaN reads as a clean measurement that
+        // can vouch for a boost. Two channels — the reader is asked for interleaved stereo.
+        var truePeak = EchoelTruePeak(channels: 2)
         let loudness = ExportLoudnessMeasurement(sampleRate: Self.exportSampleRate)
         try await forEachDecodedSegment(sourceURL: sourceURL, timeRange: timeRange,
                                         sampleRate: Self.exportSampleRate) { floatPtr, count in
-            let segmentPeak = Self.samplePeak(floatPtr, count: count)
-            if segmentPeak.isNaN || segmentPeak > peak { peak = segmentPeak }
+            truePeak.append(interleaved: floatPtr, sampleCount: count)
             loudness.append(interleaved: floatPtr, sampleCount: count)
         }
-        return (loudness.integratedLUFS(), peak)
+        return (loudness.integratedLUFS(), truePeak.peak)
     }
 
     /// Decode `timeRange` of `sourceURL` to interleaved stereo Float32 at `sampleRate` and

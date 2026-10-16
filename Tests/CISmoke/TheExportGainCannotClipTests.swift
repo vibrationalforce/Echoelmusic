@@ -1,5 +1,6 @@
 // TheExportGainCannotClipTests.swift
-// Echoel — Export quality E1: post-normalisation SAMPLE-PEAK safety in `SingleExport`.
+// Echoel — Export quality E1: post-normalisation PEAK safety in `SingleExport` (true peak
+// since LS-TP1 — `TheExportIsBoundedByTheTruePeakTests`).
 //
 // THE DEFECT. `SingleExport.normalizeGainDB` may ask for up to +12 dB, steered by a loudness
 // that knows nothing about peaks (an RMS at E1, gated integrated LUFS since E2). A sparse
@@ -8,19 +9,20 @@
 // Nothing after the `vDSP_vsmul` bounded it: WAV converts to 24-bit integer PCM (hard clip),
 // AAC received the same over-range floats.
 //
-// THE REPAIR (a gain BOUND, not a limiter): the measurement pass also takes the sample peak;
-// `peakSafeGainDB` caps a positive gain so `peak × gain ≤ exportSamplePeakCeilingDBFS`
-// (−1 dBFS); attenuation and "No target" (0 dB) pass unchanged. The renderer applies the
+// THE REPAIR (a gain BOUND, not a limiter): the measurement pass also takes the peak (the
+// BS.1770-4 4× true peak since LS-TP1); `peakSafeGainDB` caps a positive gain so
+// `peak × gain ≤ exportTruePeakCeilingDBTP` (−1 dBTP); attenuation and "No target" (0 dB) pass unchanged. The renderer applies the
 // result through `applyGain` — the ONE place the export gain touches samples.
 //
 // ⚠️ HONEST LIMITS (§1).
 //   · Claims 1–8 are END-TO-END over shipped, nonisolated, Foundation+Accelerate statics: they
-//     render synthetic buffers through the SAME `samplePeak` → `peakSafeGainDB` → `gainFactor`
+//     render synthetic buffers through the SAME `EchoelTruePeak` → `peakSafeGainDB` → `gainFactor`
 //     → `applyGain` chain the export uses, and read the rendered sample values.
 //   · Claims 9–10 are SOURCE-TEXT SCANS that the async AVFoundation method actually wires that
 //     chain (`renderWithGain` is private and needs a real asset — no bundle drives it).
-//   · SAMPLE peak only. Not true peak (no oversampling), and nothing here bounds what the AAC
-//     ENCODER does after the samples are handed over. That the export sounds right is a
+//   · ⛔ "SAMPLE peak only" stood here; since LS-TP1 the bound reads the 4× true peak, and the
+//     inter-sample case has its own guard. Nothing here bounds what the AAC ENCODER does after
+//     the samples are handed over. That the export sounds right is a
 //     DEVICE / LISTENING probe — NEEDS-FOUNDER-VERIFY, not claimed.
 //
 // ⭐ GRADING (§3), transcribed in Python (float32) against both trees:
@@ -39,7 +41,7 @@ import XCTest
 final class TheExportGainCannotClipTests: XCTestCase {
 
     private static let export = "Sources/Echoelmusic/Audio/SingleExport.swift"
-    private static let ceiling: Float = powf(10, SingleExport.exportSamplePeakCeilingDBFS / 20)
+    private static let ceiling: Float = powf(10, SingleExport.exportTruePeakCeilingDBTP / 20)
 
     // MARK: - the chain the export runs, on a synthetic buffer
 
@@ -50,11 +52,13 @@ final class TheExportGainCannotClipTests: XCTestCase {
     }
 
     /// Measure → bound → convert → apply, exactly as `export` / `renderWithGain` do.
-    private static func render(_ source: [Float], requestedDB: Float) -> Rendered {
-        let peak = source.withUnsafeBufferPointer { buf -> Float in
-            guard let base = buf.baseAddress else { return 0 }
-            return SingleExport.samplePeak(base, count: buf.count)
+    private static func render(_ source: [Float], requestedDB: Float, channels: Int = 1) -> Rendered {
+        var meter = EchoelTruePeak(channels: channels)
+        source.withUnsafeBufferPointer { buf in
+            guard let base = buf.baseAddress else { return }
+            meter.append(interleaved: base, sampleCount: buf.count)
         }
+        let peak = meter.peak
         let gainDB = SingleExport.peakSafeGainDB(requestedDB: requestedDB, sourcePeak: peak)
         var out = source
         out.withUnsafeMutableBufferPointer { buf in
@@ -135,7 +139,7 @@ final class TheExportGainCannotClipTests: XCTestCase {
             stereo[2 * f + 1] = 0.02 * sinf(Float(f) * 0.07) // R: quiet body …
         }
         stereo[2 * 500 + 1] = -0.4                            // … with a hot negative peak
-        let r = Self.render(stereo, requestedDB: 12)
+        let r = Self.render(stereo, requestedDB: 12, channels: 2)
         let lin = SingleExport.gainFactor(dB: r.gainDB)
         let rightSamples: [Float] = stride(from: 1, to: r.samples.count, by: 2).map { (i: Int) -> Float in
             abs(r.samples[i])
@@ -211,7 +215,7 @@ final class TheExportGainCannotClipTests: XCTestCase {
     func testTheExportRendersTheBoundedGain() throws {
         let code = SourceText.codeOnly(try Self.text(Self.export))
         guard let request = code.range(of: "Self.normalizeGainDB(target: targetLUFS"),
-              let bound = code.range(of: "Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)"),
+              let bound = code.range(of: "Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.truePeak)"),
               let render = code.range(of: "gainDB: safeGain, timeRange: timeRange)") else {
             return XCTFail("ANCHOR MISSING (#454): `export` no longer bounds the requested gain by "
                            + "the measured sample peak before rendering. That reopens E1: a sparse "
@@ -228,8 +232,8 @@ final class TheExportGainCannotClipTests: XCTestCase {
     /// silently.
     func testThePeakIsMeasuredAndTheGainHasOneApplicationSite() throws {
         let code = SourceText.codeOnly(try Self.text(Self.export))
-        XCTAssertTrue(code.contains("let segmentPeak = Self.samplePeak(floatPtr, count: count)"),
-                      "the measurement pass no longer takes the sample peak — the bound would "
+        XCTAssertTrue(code.contains("truePeak.append(interleaved: floatPtr, sampleCount: count)"),
+                      "the measurement pass no longer takes the true peak — the bound would "
                       + "be steering by a number nothing measures.")
         XCTAssertTrue(code.contains("SingleExport.applyGain(floatPtr, count: n, linearGain: linearGain)"),
                       "the render loop no longer applies the gain through `applyGain`.")

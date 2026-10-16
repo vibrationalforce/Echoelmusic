@@ -145,7 +145,7 @@ final class TheExportNormalisesByIntegratedLoudnessTests: XCTestCase {
     /// what is APPLIED: a hot transient gets no boost, a moderate one gets only its headroom,
     /// and the rendered peak stays under the ceiling.
     func testTheLoudnessRequestStillPassesTheE1PeakBound() throws {
-        let ceiling = powf(10, SingleExport.exportSamplePeakCeilingDBFS / 20)
+        let ceiling = powf(10, SingleExport.exportTruePeakCeilingDBTP / 20)
         for rate in Self.rates {
             let measured = try XCTUnwrap(Self.measure(Self.stereoTone(seconds: 4, dBFS: -40, rate: rate), rate: rate))
             XCTAssertEqual(measured, -40, accuracy: 0.1, "@\(rate)")
@@ -271,10 +271,10 @@ final class TheExportNormalisesByIntegratedLoudnessTests: XCTestCase {
                        "the export decodes the analysis window more than once again — E3 folded the "
                        + "loudness pass into the peak pass; a second decode is the retired shape.")
         guard let pass = code.range(of: "sampleRate: Self.exportSampleRate) { floatPtr, count in"),
-              let peak = code.range(of: "let segmentPeak = Self.samplePeak(floatPtr, count: count)", range: pass.upperBound..<code.endIndex),
+              let peak = code.range(of: "truePeak.append(interleaved: floatPtr, sampleCount: count)", range: pass.upperBound..<code.endIndex),
               code.range(of: "loudness.append(interleaved: floatPtr, sampleCount: count)", range: peak.upperBound..<code.endIndex) != nil,
               let request = code.range(of: "Self.normalizeGainDB(target: targetLUFS, measuredDB: levels.integratedLUFS)"),
-              let bound = code.range(of: "Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.samplePeak)") else {
+              let bound = code.range(of: "Self.peakSafeGainDB(requestedDB: requestedGain, sourcePeak: levels.truePeak)") else {
             return XCTFail("ANCHOR MISSING (#454): the single analysis decode no longer takes both the "
                            + "peak and the loudness at the export rate, or the request/bound chain moved.")
         }
