@@ -1591,3 +1591,9 @@ Nicht übernommen, mit Grund — alles eigene Phasen oder founder-gated:
 - **Streaming:** HaishinKit = neue Abhängigkeit, founder-gated (unverändert).
 
 Lehre über die Quelle: ein Audit, das seinen Prüfstand (Commit, kein Compiler, keine Gerätemessung) selbst nennt und jede Negativaussage auf „im geprüften Pfad“ begrenzt, hat 17/17 getroffen. Die Form ist es wert, als Vorlage für künftige Briefs zu dienen.
+
+## 2026-10-16 — SuperGrok Heavy: unabhängiger Live-Set-Audit — ADOPT→PRODUCT (11/13)
+
+Quelle: Founder-Paste, statisch, gelesen über raw-URLs am `fdc41cd` (kein Clone). Deckt sich in allen Kernpunkten mit dem Astra-Audit vom selben Tag (17/17). **Zwei Nuancen widerlegt:** H4 („Audio-Starts nicht ausschließlich `at: nil`“) — jeder Start in `TimelineAudioSink` ist `at: nil` + `play()`, `entryTick` entscheidet WAS, nicht WANN; und „`SUPPORTS_MACCATALYST: NO`“ steht in `project.yml:344` im AUv3-Target, nicht in der App (gleiche Wirkung, falsche Zuordnung). Sein Inkrement 1 (MPE-Note-Identität) war schon gebaut (`6df340a`). **Übernommen:** die Längen-Hälfte von Inkrement 2 — Sampler hält 8 s statt 2 s (`97405e6`). Stereo-Sampler, Live-Grain, Xone-Routing, True Peak, Stem-Capture bleiben eigene Scheiben bzw. founder-gated (E27).
+
+Quellen-Lehre: zwei unabhängige Modelle, dieselben Befunde — die Übereinstimmung ist KEIN zweiter Beweis (beide lasen denselben Code; gemessen hat nur diese Sitzung). Die zwei Abweichungen von Grok waren genau die Stellen, an denen es über den gelesenen Text hinaus interpretierte.
