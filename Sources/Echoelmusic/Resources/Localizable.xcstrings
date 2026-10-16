@@ -25341,14 +25341,14 @@
         }
       }
     },
-    "Where a launched part, scene or stop lands: the next beat, bar, two bars or four bars" : {
+    "Where a launched part, scene or stop lands: the next bar, two bars or four bars" : {
       "comment" : "Session (P3): VoiceOver hint of the launch-point switch.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Where a launched part, scene or stop lands: the next beat, bar, two bars or four bars"
+            "value" : "Where a launched part, scene or stop lands: the next bar, two bars or four bars"
           }
         }
       }

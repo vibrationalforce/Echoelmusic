@@ -13,10 +13,14 @@ import SwiftUI
 /// Where a launched part, a scene or a Stop lands (founder 2026-10-16, Session on Ableton level).
 enum SessionLaunchPoint {
 
-    /// The points a player may pick — Live's launch quantization without "None" and 1/16: an
-    /// unquantized launch in the lane-override model starts a part mid-step, and 1/16 is finer
-    /// than the bar-based phase rule a launched part follows (`SessionLaunchView`'s PHASE CAVEAT).
-    nonisolated static let offered: [LaunchQuantize] = [.beat, .bar, .twoBar, .fourBar]
+    /// The points a player may pick — Live's launch quantization without "None", 1/16 and Beat: an
+    /// unquantized launch in the lane-override model starts a part mid-step, and a point finer than
+    /// the bar breaks the bar-based phase rule a launched part follows (`SessionLaunchView`'s PHASE
+    /// CAVEAT). ⛔ "Beat" was offered from P3 until the finesse review (2026-10-16): a MIDI part
+    /// launched on beat 2 did not start from its top but played on the song's bar grid, its first
+    /// beat skipped (`launchedStartBar` carries whole bars only), and a Session → Arrangement take
+    /// then wrote it a beat off what was heard. It returns with a sub-bar launch phase.
+    nonisolated static let offered: [LaunchQuantize] = [.bar, .twoBar, .fourBar]
 
     /// The persisted choice. One writer, `SessionLaunchPointPicker`; one reader, `current`.
     nonisolated static let key = "session.launchQuantize"
@@ -44,6 +48,6 @@ struct SessionLaunchPointPicker: View {
             }
         }
         .pickerStyle(.segmented)
-        .accessibilityHint("Where a launched part, scene or stop lands: the next beat, bar, two bars or four bars")
+        .accessibilityHint("Where a launched part, scene or stop lands: the next bar, two bars or four bars")
     }
 }

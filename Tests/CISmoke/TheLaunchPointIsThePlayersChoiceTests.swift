@@ -11,8 +11,8 @@
 //     still promises "the next bar"; the picker is mounted in the grid's header.
 //   · NOT CLAIMED (DEVICE PROBE): that a launch lands on the picked boundary. The engine's
 //     quantize maths is pinned elsewhere (`LaneLaunchLatch`); the wiring is what is new.
-//     NEEDS-FOUNDER-VERIFY (P3): Session view, pick "Beat", launch a part while the piece plays —
-//     does it start on the next beat instead of waiting for the bar?
+//     NEEDS-FOUNDER-VERIFY (P3): Session view, pick "2 Bars", launch a part while the piece plays —
+//     does it wait for the next two-bar line? ("Beat" is withdrawn, claim 1.)
 //
 // HONEST GRADING against the parent (§3): the file does not compile there (`SessionLaunchPoint`
 // is new), so no assertion has a verdict on the parent. Hand-transcribed: claim 1 is the
@@ -31,7 +31,12 @@ final class TheLaunchPointIsThePlayersChoiceTests: XCTestCase {
     // MARK: 1 — the stored choice resolves to an offered point, bar by default
 
     func testTheStoredChoiceResolvesToAnOfferedPoint() {
-        XCTAssertEqual(SessionLaunchPoint.offered, [.beat, .bar, .twoBar, .fourBar])
+        XCTAssertEqual(SessionLaunchPoint.offered, [.bar, .twoBar, .fourBar])
+        XCTAssertEqual(SessionLaunchPoint.resolved(LaunchQuantize.beat.rawValue), .bar, """
+            "Beat" is withdrawn (finesse review 2026-10-16): a MIDI part launched mid-bar plays on the \
+            bar grid with its first beat skipped, and a recorded take lands a beat off. A stored \
+            "beat" must launch on the bar until a sub-bar launch phase exists.
+            """)
         for point in SessionLaunchPoint.offered {
             XCTAssertEqual(SessionLaunchPoint.resolved(point.rawValue), point)
         }
