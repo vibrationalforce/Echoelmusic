@@ -58,8 +58,8 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 2 | Cycle region drag (A2) | ✅ `28b1059` | guard `TheCycleEdgesAreDraggedOnTheRulerTests` (pure `CycleDrag` + scan), Python transcription green, 6 checkers 0; gates: pending |
 | 3 | Multi-select + clipboard (A9) | ✅ `8b5d152` | guard `TheGatheredPartsAreCopiedAndPastedTests` (pure paste + store undo + gather rules + scan), Python transcription of the scan green, 6 checkers 0; gates: pending |
 | 4a | Track colour (A4b) | ✅ `fa1f6b8` | guard `TheTrackColourIsThePersonsChoiceTests`; 6 checkers 0; gates: pending |
-| 4b | Track reorder (A4c) | **NEXT** | — |
-| 5 | Count-in | open | — |
+| 4b | Track reorder (A4c) | ✅ `1ded828` | guard `TheTracksMoveWithoutTakingTheEchoelTests`; 6 checkers 0; gates: pending |
+| 5 | Count-in | **NEXT** | — |
 | 6 | Record scenes into arrangement (P4) | open | — |
 | 7 | Automation on the canvas | open | — |
 
@@ -74,11 +74,12 @@ copies of that rule: the `rollSlot*` getters in `Timeline.swift`, `EchoelStudioV
 `structurallyEqual` already treats ORDER as structural, and the player flushes/re-primes on a
 rank shift. Council: colour first (display only); reorder second, with the roll lane pinned.
 
-### Exact next step (item 4b, A4c)
-`TimelineStore.moveLane(id:by:)` (±1) as ONE undo step, refusing any move that would put a
-lane above the roll lane or move the roll lane itself (so `rollLaneID` never changes), and the
-bio lane stays where it is. Doors: "Move up" / "Move down" on the Track page (+ VoiceOver
-actions on the canvas head). Guard: rollLaneID invariant under every allowed move, one undo
-step, refusals, and the over-capacity rank change stated in the hint.
+### Exact next step (item 5, count-in)
+Measure first: what the transport does on Record (`RecordTakeButton`, `TakeRecorder`/MIDI take path,
+`PatternEngine` start) and whether a metronome click exists on Play (`WorkstationClickToggle`).
+Slice: a "Count-in" choice (Off · 1 bar · 2 bars, named → segmented Picker, persisted per device in
+its own file) — Record starts the transport that many bars BEFORE the record point, the click plays
+during them, and nothing is captured until the record point. Guard: the pure pre-roll plan
+(start tick = record tick − n bars, clamped at 0, capture window starts at the record tick) end to end.
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b.
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c.
