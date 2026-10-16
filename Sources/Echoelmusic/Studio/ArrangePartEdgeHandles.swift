@@ -32,8 +32,11 @@
 //  (they read the stored part, not the block's live offset); and the slide gives no haptic tick.
 //
 //  Hidden from VoiceOver like the audio editor's handles; the part bar's Trim buttons move an edge
-//  inward by one step on the same rules. ⚠️ Lengthening a part has no VoiceOver path yet — an open
-//  accessibility gap, not a covered one.
+//  inward by one step on the same rules, and since Ultraplan-A11 the part bar's title carries two
+//  VoiceOver actions that move an edge OUTWARD to the next bar line ("Start from the bar line
+//  before", "Lengthen to the next bar line" — `ArrangeCanvas.barLineEdit`, this rule). A MIDI
+//  part's length field sets it by the beat. ⚠️ Still open: an outward move finer than a bar line
+//  without a finger, for an audio part's start.
 //  NEEDS-FOUNDER-VERIFY: on Arrange, select a MIDI part, hold its right edge and slide right — the
 //  line follows, release lengthens it once (one Undo); slide its left edge — it moves by bars; the
 //  hold wins over the canvas scroll and the part can still be moved by its middle.

@@ -24808,6 +24808,56 @@
           }
         }
       }
+    },
+    "Start from the bar line before" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from the bar line before"
+          }
+        }
+      }
+    },
+    "Lengthen to the next bar line" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lengthen to the next bar line"
+          }
+        }
+      }
+    },
+    "That edge cannot move further out here." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That edge cannot move further out here."
+          }
+        }
+      }
+    },
+    "The part now starts at the bar line before." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part now starts at the bar line before."
+          }
+        }
+      }
+    },
+    "The part now ends at the next bar line." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The part now ends at the next bar line."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

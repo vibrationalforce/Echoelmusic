@@ -287,6 +287,34 @@ enum ArrangeCanvas {
                                  region: region, in: document, mediaBPM: mediaBPM, endBound: bound)
     }
 
+    /// Ultraplan-A11 — an edge moved OUTWARD to the next bar line, without a finger: the start to
+    /// the bar line before it, the end to the bar line after it. The part bar's two VoiceOver
+    /// actions ask this; the rule is `PartTrim.edgeEdit` with the canvas's own end bound
+    /// (`edgeBound`), so an action moves an edge only where the handles could (#416). The target
+    /// is a bar LINE, not "one bar": a part starting mid-bar reaches the line it sits after, never
+    /// further. nil when the rules refuse (the content's start, a neighbour still playing there,
+    /// the file's end, an unknown file length) or the part has no edge bound.
+    nonisolated static func barLineEdit(_ edge: AudioPartEditor.Edge, region: TimelineRegion,
+                                        in document: TimelineDocument, clip: Clip?,
+                                        mediaBPM: Double) -> AudioPartEditor.EdgeEdit? {
+        let bar = TimelineTime.ticksPerBar
+        guard let bound = edgeBound(for: clip),
+              document.regions.contains(where: { $0.id == region.id }) else { return nil }
+        let line: Int
+        switch edge {
+        case .start:
+            let (before, overflow) = region.startTick.subtractingReportingOverflow(1)
+            guard !overflow else { return nil }
+            line = PartTrim.floorGrid(before, bar)
+        case .end:
+            let (after, overflow) = PartTrim.floorGrid(region.endTick, bar).addingReportingOverflow(bar)
+            guard !overflow else { return nil }
+            line = after
+        }
+        return PartTrim.edgeEdit(edge, proposedTick: line, outward: true, unit: bar, region: region,
+                                 in: document, mediaBPM: mediaBPM, endBound: bound)
+    }
+
     /// Where an edit leaves its edge on a lane `laneWidth` wide, in points from the lane's left
     /// edge — the preview line — held on the lane. nil for degenerate geometry.
     nonisolated static func edgeX(_ edit: AudioPartEditor.EdgeEdit, region: TimelineRegion,

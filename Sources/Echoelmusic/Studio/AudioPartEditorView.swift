@@ -544,9 +544,11 @@ private struct AudioPartFileWave: View {
 /// ⭐ THE FINGER-RATE STATE LIVES HERE. `drag` is `@GestureState` — it resets itself when the
 /// slide ends or a scroll takes it over — and only this leaf redraws while the finger moves; the
 /// pane, its wave and the Part page above it do not. Nothing here reads the song position.
-/// Hidden from VoiceOver like the rest of the pane. ⚠️ The part bar's Trim buttons move an edge
-/// INWARD by one song-grid step on the same rules; EXTENDING a part has no VoiceOver path yet —
-/// an open accessibility gap, not a covered one.
+/// Hidden from VoiceOver like the rest of the pane. The part bar's Trim buttons move an edge
+/// INWARD by one song-grid step on the same rules; since Ultraplan-A11 the part bar's title
+/// EXTENDS a part to the next bar line by two VoiceOver actions (`ArrangeCanvas.barLineEdit`) —
+/// within the file's length as measured at import, so a file whose length is unknown is not
+/// extended there either.
 /// NEEDS-FOUNDER-VERIFY: on the Part page, hold an audio part's edge and slide — the hold wins
 /// over the page's scroll, the line follows the finger, release trims or extends once (one Undo),
 /// and the handles are hittable at the file's first and last second.

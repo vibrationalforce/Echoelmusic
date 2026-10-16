@@ -584,7 +584,7 @@ struct SelectedPartBar: View {
 
     @Environment(WorkstationSelection.self) private var selection
     @Environment(TimelineStore.self) private var timeline
-    /// ⚠️ READ ONLY INSIDE THE SPLIT, TRIM-START AND JOIN HANDLERS — plus ONE read in the body for Join's
+    /// ⚠️ READ ONLY INSIDE THE SPLIT, TRIM-START, EDGE-OUT (A11) AND JOIN HANDLERS — plus ONE read in the body for Join's
     /// enabled state: `preflightTempo` is `@ObservationIgnored`, so that read registers nothing and may go
     /// stale, which is immaterial there (only a legacy part without a tick twin depends on the tempo at
     /// all — `TimelineRegion.abuts` — and the handler re-reads before the store writes). The clip grid is
@@ -619,16 +619,16 @@ struct SelectedPartBar: View {
                 // size or in a narrow column the buttons drop under the title, then under each other.
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: EchoelTheme.spaceS) {
-                        headingTitle(title)
+                        headingTitle(title, regionID: regionID)
                         Spacer(minLength: 8)
                         headingButtons(part, stacked: false)
                     }
                     VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
-                        headingTitle(title)
+                        headingTitle(title, regionID: regionID)
                         headingButtons(part, stacked: false)
                     }
                     VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
-                        headingTitle(title)
+                        headingTitle(title, regionID: regionID)
                         headingButtons(part, stacked: true)
                     }
                 }
@@ -698,10 +698,16 @@ struct SelectedPartBar: View {
         }
     }
 
-    private func headingTitle(_ title: String) -> some View {
+    /// Ultraplan-A11 — the title carries the two edge moves the canvas handles make by finger, as
+    /// VoiceOver actions (the handles are hidden from VoiceOver). Each asks
+    /// `ArrangeCanvas.barLineEdit` — the handles' own rule — and writes once, one Undo step.
+    private func headingTitle(_ title: String, regionID: UUID) -> some View {
         Text(String(localized: "Selected part · ") + title)
             .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+            .accessibilityAction(named: "Start from the bar line before") { moveEdgeOut(.start, regionID) }
+            .accessibilityAction(named: "Lengthen to the next bar line") { moveEdgeOut(.end, regionID) }
     }
+
 
     /// Focus and Play, side by side or (`stacked`) one under the other.
     private func headingButtons(_ part: TrackParts.Part, stacked: Bool) -> some View {
@@ -876,6 +882,28 @@ struct SelectedPartBar: View {
             return
         }
         timeline.trimRegionStart(id: regionID, toTick: tick, bpm: bpm)
+    }
+
+    /// A11 — one edge to the next bar line outward, or a spoken refusal. The clip grid and the
+    /// tempo are read here, in the handler, never in the body.
+    private func moveEdgeOut(_ edge: AudioPartEditor.Edge, _ regionID: UUID) {
+        let document = timeline.document
+        guard let region = document.regions.first(where: { $0.id == regionID }) else { return }
+        let clip = clipStore.clip(id: region.clipID)
+        guard let bpm = PartSplit.mediaBPM(for: region, clip: clip, projectBPM: player.preflightTempo),
+              let change = ArrangeCanvas.barLineEdit(edge, region: region, in: document, clip: clip,
+                                                     mediaBPM: bpm) else {
+            AccessibilityNotification.Announcement(String(localized: "That edge cannot move further out here.")).post()
+            return
+        }
+        switch change {
+        case .start(let tick):
+            timeline.trimRegionStart(id: regionID, toTick: tick, bpm: bpm)
+            AccessibilityNotification.Announcement(String(localized: "The part now starts at the bar line before.")).post()
+        case .end(let lengthTicks):
+            timeline.resizeRegion(id: regionID, lengthTicks: lengthTicks)
+            AccessibilityNotification.Announcement(String(localized: "The part now ends at the next bar line.")).post()
+        }
     }
 
     // E4-16 (2026-09-30): `title` is a catalog KEY (every caller passes a literal); `label` stays a
