@@ -685,7 +685,9 @@ struct ArrangeCanvasView: View {
                     // A1 — a tap on empty lane space makes a part on that bar. The parts above
                     // take their own taps, so only the empty space reaches this.
                     .onTapGesture(coordinateSpace: .local) { location in
-                        guard creatableLanes.contains(row.id),
+                        // Draw and Select mode own the row's taps — neither makes a part.
+                        guard !selection.drawingAutomation, !selection.gathering,
+                              creatableLanes.contains(row.id),
                               let tick = ArrangeCanvas.barTick(atX: location.x, laneWidth: width,
                                                                songTicks: songTicks) else { return }
                         createPart(row.id, tick)
@@ -758,7 +760,8 @@ struct ArrangeCanvasView: View {
         .accessibilityLabel("\(spokenName): " + ArrangementStrip.spoken(onLane: row.id, in: document))
         // A1 — the tap's VoiceOver twin: a part after the track's last one, on a bar.
         .accessibilityAction(named: Text("Add a part")) {
-            guard creatableLanes.contains(row.id) else { return }
+            guard !selection.drawingAutomation, !selection.gathering,
+                  creatableLanes.contains(row.id) else { return }
             let bar = TimelineTime.ticksPerBar
             let next = Swift.max(0, document.nextStartTick(inLane: row.id))
             createPart(row.id, ((next + bar - 1) / bar) * bar)

@@ -149,6 +149,27 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
         XCTAssertTrue(action.contains("importNote = failure.userMessage"), "a refusal is said, not silent")
     }
 
+    // MARK: 5 — Draw and Select mode own the row's taps
+
+    /// A tap in Draw automation sets a point and a tap in Select gathers — neither may also make a
+    /// part on the empty space beside it. Both doors (the tap and its VoiceOver twin) carry the
+    /// same two-mode guard. FORWARD guard (review 2026-10-16, UI#2).
+    func testNeitherDrawNorSelectModeMakesAPart() throws {
+        let canvas = try source("Sources/Echoelmusic/Studio/ArrangeCanvasView.swift")
+        let modeGuard = "guard !selection.drawingAutomation, !selection.gathering,"
+        XCTAssertEqual(canvas.components(separatedBy: modeGuard).count - 1, 2, "the tap and its VoiceOver twin")
+        guard let tap = canvas.range(of: ".onTapGesture(coordinateSpace: .local) { location in"),
+              let a11y = canvas.range(of: ".accessibilityAction(named: Text(\"Add a part\")) {") else {
+            return XCTFail("ANCHOR MISSING: the lane's tap or its VoiceOver action (#408)")
+        }
+        for door in [tap, a11y] {
+            let after = String(canvas[door.upperBound...].prefix(600))
+            let guardAt = try XCTUnwrap(after.range(of: modeGuard), "the guard follows the door")
+            let createAt = try XCTUnwrap(after.range(of: "createPart(row.id,"), "the door makes the part")
+            XCTAssertTrue(guardAt.lowerBound < createAt.lowerBound, "the mode is asked before the part is made")
+        }
+    }
+
     // MARK: helpers
 
     private struct Unreadable: Error {}
