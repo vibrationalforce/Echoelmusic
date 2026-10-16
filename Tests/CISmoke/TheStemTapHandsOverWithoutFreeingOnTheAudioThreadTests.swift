@@ -313,7 +313,7 @@ final class TheStemTapHandsOverWithoutFreeingOnTheAudioThreadTests: XCTestCase {
         XCTAssertEqual(voice.stemTap.invalidTimeBlocks, 0)
     }
 
-    // MARK: 11 — the sampler hands its finished mono block to its own tap (LS-ST1)
+    // MARK: 11 — the sampler hands its finished block (stereo since SS2) to its own tap (LS-ST1)
 
     /// One render exit (no `weakSelf`: the closure owns the render state, not the voice), so ONE
     /// capture, after `state.render` wrote the block — `render` zeroes a silent block itself.

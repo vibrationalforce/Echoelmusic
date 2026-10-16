@@ -52,7 +52,7 @@ final class StemTapTarget: @unchecked Sendable {
 ///
 /// Built: yes. Wired: HALF — the three generated voices (`PolySynthVoice`, `SubBassVoice`,
 /// `BioReactiveSynthVoice`, each `nonisolated let stemTap`) call `capture` on every render block
-/// since S-A3b-2, and `SamplerVoice` (mono, `let stemTap`) since LS-ST1; the timeline's audio
+/// since S-A3b-2, and `SamplerVoice` (stereo since SS2, `let stemTap`) since LS-ST1; the timeline's audio
 /// lanes have NO tap (that is the node-tap path ADR-008 §1 holds UNVERIFIED). Nothing ARMS a tap yet, so every call falls through the empty slot. The
 /// arming session is S-A3c-2b (`StemCaptureSession.start` is its one caller of `arm`, itself
 /// unconstructed). ⛔ "no voice calls `capture` yet" stood here after S-A3b-2 had landed.

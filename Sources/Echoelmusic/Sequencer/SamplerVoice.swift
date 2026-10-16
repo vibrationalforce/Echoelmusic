@@ -21,7 +21,8 @@ import Foundation
 /// **Lifecycle:**
 /// 1. `init()` — pre-allocates render state.
 /// 2. `try loadSample(from:)` — synchronously reads a WAV into a `[Float]`
-///    buffer (mono, sample-rate-converted to the node's format). Call once
+///    buffer (one channel for a mono file, two for anything wider since SS2,
+///    sample-rate-converted to the node's format). Call once
 ///    before attaching the node to `AudioEngine`.
 /// 3. `AudioEngine.attachSourceNode(voice.sourceNode)` — wires output to the
 ///    master mixer.
@@ -79,8 +80,10 @@ public final class SamplerVoice: @unchecked Sendable {
 
     /// Stem seam (ADR-008 S-A3b, the same one the three generated voices carry): the render
     /// block hands every finished block — silent ones too, `render` zeroes them — to this tap.
-    /// MONO: the node has one buffer, so a capture session must arm it `.mono`. Nothing arms it
-    /// until a session exists (S-A3c-2b), so today every call falls through the empty slot.
+    /// STEREO since SS2: the node has two buffers (a mono sample writes the same signal to both),
+    /// so a capture session arms it `.stereo` — a `.mono` arm would record the LEFT channel only,
+    /// not a fold. Nothing arms it until a session exists (S-A3c-2b), so today every call falls
+    /// through the empty slot.
     /// The closure owns the tap, never the voice, so a stem cannot vanish with the voice.
     let stemTap = StemTapPoint()
 
@@ -95,9 +98,9 @@ public final class SamplerVoice: @unchecked Sendable {
 
     /// Loads a WAV from disk into the in-memory render buffer.
     ///
-    /// Reads the entire file (capped at `maxSampleFrames`), down-mixes to
-    /// mono if needed, and stores as a `[Float]`. Subsequent triggers play
-    /// from this buffer with zero allocation.
+    /// Reads the entire file (capped at `maxSampleFrames`), keeps one channel for a
+    /// mono file and two for anything wider (SS2), and stores them planar in one slab.
+    /// Subsequent triggers play from this buffer with zero allocation.
     ///
     /// - Throws: `AVAudioFile` errors or `SamplerVoiceError.unsupportedFormat`.
     public func loadSample(from url: URL) throws {
@@ -116,14 +119,16 @@ public final class SamplerVoice: @unchecked Sendable {
         }
         try file.read(into: pcm, frameCount: frameCap)
 
-        // Convert to mono float32 at the node's fixed rate (`Self.sampleRate`, 48 kHz since
+        // Convert to float32 at the node's fixed rate (`Self.sampleRate`, 48 kHz since
         // #1213). Without this a file at any other rate would play off-pitch and off-length.
-        var mono = try Self.resampleToMono(pcm, targetRate: Self.sampleRate)
-        if mono.count > Self.maxSampleFrames {
-            mono = Array(mono[0..<Self.maxSampleFrames])
+        // SS2: a file with two or more channels keeps its stereo image (folded to two by the
+        // converter); a mono file stays one channel and renders exactly as before.
+        var channels = try Self.resample(pcm, targetRate: Self.sampleRate)
+        for c in channels.indices where channels[c].count > Self.maxSampleFrames {
+            channels[c] = Array(channels[c][0..<Self.maxSampleFrames])
         }
 
-        renderState.installBuffer(mono)
+        renderState.installBuffer(channels)
         isLoaded = true
         sourceURL = url
     }
@@ -133,24 +138,28 @@ public final class SamplerVoice: @unchecked Sendable {
     /// skipped as already loaded. Nothing loaded: a no-op (no install, no allocation).
     public func unload() {
         guard isLoaded || sourceURL != nil else { return }
-        renderState.installBuffer([])
+        renderState.installBuffer([[]])
         isLoaded = false
         sourceURL = nil
     }
 
-    /// Down-mixes + sample-rate-converts a PCM buffer to mono float32 at
-    /// `targetRate`, returning the raw samples. Uses `AVAudioConverter`, which
-    /// handles both channel down-mix and resampling. Main thread, load-time only.
-    private static func resampleToMono(_ src: AVAudioPCMBuffer, targetRate: Double) throws -> [Float] {
-        // Fast path: already mono at the target rate — copy directly.
-        if src.format.sampleRate == targetRate, src.format.channelCount == 1,
+    /// Sample-rate-converts a PCM buffer to float32 at `targetRate`, returning ONE channel for a
+    /// mono file and TWO for anything wider (SS2: the converter folds 3+ channels to stereo).
+    /// Uses `AVAudioConverter`, which handles both channel mapping and resampling. Main thread,
+    /// load-time only.
+    private static func resample(_ src: AVAudioPCMBuffer, targetRate: Double) throws -> [[Float]] {
+        let outChannels: AVAudioChannelCount = src.format.channelCount >= 2 ? 2 : 1
+        // Fast path: already at the target rate and channel count — copy directly.
+        if src.format.sampleRate == targetRate, src.format.channelCount == outChannels,
            let ch = src.floatChannelData {
-            return Array(UnsafeBufferPointer(start: ch[0], count: Int(src.frameLength)))
+            return (0..<Int(outChannels)).map {
+                Array(UnsafeBufferPointer(start: ch[$0], count: Int(src.frameLength)))
+            }
         }
 
         guard let targetFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32, sampleRate: targetRate,
-            channels: 1, interleaved: false
+            channels: outChannels, interleaved: false
         ), let converter = AVAudioConverter(from: src.format, to: targetFormat) else {
             throw SamplerVoiceError.unsupportedFormat
         }
@@ -172,7 +181,9 @@ public final class SamplerVoice: @unchecked Sendable {
         if status == .error { throw convError ?? SamplerVoiceError.unsupportedFormat }
 
         guard let ch = out.floatChannelData else { throw SamplerVoiceError.unsupportedFormat }
-        return Array(UnsafeBufferPointer(start: ch[0], count: Int(out.frameLength)))
+        return (0..<Int(outChannels)).map {
+            Array(UnsafeBufferPointer(start: ch[$0], count: Int(out.frameLength)))
+        }
     }
 
     /// Triggers playback from the start. Safe to call from the main thread.
@@ -202,8 +213,8 @@ public final class SamplerVoice: @unchecked Sendable {
     }
 
     /// SP1 — the lane pan, at the source node's mixer stage (`AVAudioMixing`): the node feeds
-    /// the slot's track bus, which is stereo (the slot's synth voice sets its format), so the pan
-    /// places the mono sample in the stereo field. Control-plane only, never in the render.
+    /// the slot's stereo track bus (the slot's synth voice sets its format). Since SS2 the node is
+    /// two-channel, so on a stereo sample the pan acts as the mixer's balance. Control-plane only, never in the render.
     /// Non-finite ⇒ centre, like `PolySynthVoice.setPan` (`min(1, NaN)` is 1 — hard right).
     public func setPan(_ pan: Float) {
         sourceNode.pan = max(-1, min(1, pan.isFinite ? pan : 0))
@@ -238,7 +249,9 @@ public final class SamplerVoice: @unchecked Sendable {
         // A constant sample rate always yields a valid format; if the OS ever
         // returns nil, use the format-inferring initializer rather than the no-arg
         // AVAudioFormat() (an invalid 0 Hz/0 ch format that crashes the node init).
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: Self.sampleRate, channels: 1) else {
+        // SS2: two channels, so a stereo sample keeps its image; a mono sample writes the same
+        // signal to both (the mixer's mono→stereo up-mix did the same before).
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: Self.sampleRate, channels: 2) else {
             return AVAudioSourceNode(renderBlock: renderBlock)
         }
         return AVAudioSourceNode(format: format, renderBlock: renderBlock)
@@ -277,7 +290,9 @@ private final class RenderState: @unchecked Sendable {
     /// (retire); allocate/free happen on the main thread only.
     private struct SampleSlab {
         var ptr: UnsafeMutablePointer<Float>?
+        /// Frames per channel. A two-channel slab holds left then right, `count` each.
         var count: Int
+        var channels: Int = 1
         /// `triggerCount` snapshot at install time. Adoption absorbs triggers only
         /// UP TO this value — a `fire()` issued after `installBuffer` (the
         /// loadSample→fire audition flow) must still play the NEW sample; setting
@@ -290,6 +305,7 @@ private final class RenderState: @unchecked Sendable {
     /// AUDIO-THREAD-owned after adoption (main never dereferences these).
     private var activeBuf: UnsafeMutablePointer<Float>?
     private var activeCount: Int = 0
+    private var activeChannels: Int = 1
 
     /// main → render: freshly installed slabs (newest wins at adoption).
     /// INVARIANT: install and retire capacities must stay EQUAL and installBuffer
@@ -340,6 +356,8 @@ private final class RenderState: @unchecked Sendable {
 
     // Audio-thread-only effect instance + last-applied params (change detection).
     private var insertFX = ChannelInsertFX(sampleRate: Float(SamplerVoice.sampleRate))
+    /// SS2: the right channel's own filter state — one biquad cannot carry two signals.
+    private var insertFXRight = ChannelInsertFX(sampleRate: Float(SamplerVoice.sampleRate))
     private var lastFxType: Int = -1
     private var lastFxCutoff: Float = .nan
     private var lastFxRes: Float = .nan
@@ -349,16 +367,24 @@ private final class RenderState: @unchecked Sendable {
     /// Copies `samples` into a fresh slab and hands it to the render thread via
     /// the SPSC handshake; the cursor/trigger reset happens ON ADOPTION (render
     /// side), so the sounding sample is never cut by a half-applied reset.
-    func installBuffer(_ samples: [Float]) {
+    func installBuffer(_ channels: [[Float]]) {
         drainRetired()
-        let count = samples.count
-        let ptr = UnsafeMutablePointer<Float>.allocate(capacity: Swift.max(1, count))
-        samples.withUnsafeBufferPointer { src in
-            if let base = src.baseAddress, count > 0 {
-                ptr.update(from: base, count: count)
+        // One or two channels (SS2); a second channel shorter than the first is padded with
+        // silence so the slab stays rectangular, a third is ignored (the loader never makes one).
+        let channelCount = channels.count >= 2 ? 2 : 1
+        let count = channels.first?.count ?? 0
+        let ptr = UnsafeMutablePointer<Float>.allocate(capacity: Swift.max(1, count * channelCount))
+        for c in 0..<channelCount {
+            let lane = ptr.advanced(by: c * count)
+            let source = c < channels.count ? channels[c] : []
+            let copied = Swift.min(source.count, count)
+            source.withUnsafeBufferPointer { src in
+                if let base = src.baseAddress, copied > 0 { lane.update(from: base, count: copied) }
             }
+            if copied < count { lane.advanced(by: copied).update(repeating: 0, count: count - copied) }
         }
-        if installQueue.tryEnqueue(SampleSlab(ptr: ptr, count: count, trigAtInstall: triggerCount)) {
+        if installQueue.tryEnqueue(SampleSlab(ptr: ptr, count: count, channels: channelCount,
+                                              trigAtInstall: triggerCount)) {
             mainInstalledCount = count
         } else {
             // Pathological install burst filled the queue — drop THIS install and
@@ -434,25 +460,38 @@ private final class RenderState: @unchecked Sendable {
 
     /// Audio thread. Apply the current insert-FX params (recomputing coefficients
     /// only when a param changed) and run the buffer through the biquad + drive.
-    private func applyInsertFX(buf: UnsafeMutablePointer<Float>, frameCount: Int) {
+    private func applyInsertFX(buf: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>?,
+                               frameCount: Int) {
         // Nothing to do when the channel is clean.
         if fxType == 0 && fxDrive <= 0 { return }
         if fxType != lastFxType || fxCutoff != lastFxCutoff
             || fxRes != lastFxRes || fxDrive != lastFxDrive {
             let t = ChannelInsertFX.FilterType(rawValue: fxType) ?? .off
             insertFX.setParams(type: t, cutoffHz: fxCutoff, resonance: fxRes, drive: fxDrive)
+            insertFXRight.setParams(type: t, cutoffHz: fxCutoff, resonance: fxRes, drive: fxDrive)
             lastFxType = fxType; lastFxCutoff = fxCutoff
             lastFxRes = fxRes; lastFxDrive = fxDrive
         }
         for i in 0..<frameCount { buf[i] = insertFX.process(buf[i]) }
+        guard let right else { return }
+        if activeChannels == 2 {
+            for i in 0..<frameCount { right[i] = insertFXRight.process(right[i]) }
+        } else {
+            // A mono slab wrote one signal to both sides; filter it once and copy (SS2 review).
+            right.update(from: buf, count: frameCount)
+        }
     }
 
-    /// Audio thread. Writes `frameCount` mono float32 samples into the first
-    /// channel of `audioBufferList`. Zero allocation, no locks.
+    /// Audio thread. Writes `frameCount` float32 frames into `audioBufferList`: left into the
+    /// first buffer, right into the second when there is one (the node is two-channel since
+    /// SS2). A mono sample writes the same signal to both; with only ONE buffer (the test hook)
+    /// a stereo sample is folded to (L + R) / 2. Zero allocation, no locks.
     func render(frameCount: Int, audioBufferList: UnsafeMutablePointer<AudioBufferList>) {
         let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
         guard abl.count > 0, let raw = abl[0].mData else { return }
         let buf = raw.assumingMemoryBound(to: Float.self)
+        let right: UnsafeMutablePointer<Float>? = abl.count > 1
+            ? abl[1].mData?.assumingMemoryBound(to: Float.self) : nil
         let byteCount = frameCount * MemoryLayout<Float>.size
 
         // Adopt the newest installed slab at the block boundary: pointer moves
@@ -462,10 +501,11 @@ private final class RenderState: @unchecked Sendable {
         // unreachable in practice (main drains on every install).
         while let slab = installQueue.dequeue() {
             if let old = activeBuf {
-                _ = retireQueue.tryEnqueue(SampleSlab(ptr: old, count: activeCount))
+                _ = retireQueue.tryEnqueue(SampleSlab(ptr: old, count: activeCount, channels: activeChannels))
             }
             activeBuf = slab.ptr
             activeCount = slab.count
+            activeChannels = slab.channels
             posF = 0
             playedOut = 0
             isPlaying = false
@@ -495,6 +535,7 @@ private final class RenderState: @unchecked Sendable {
             posF = reverse ? Float(playEnd - 1) : Float(playStart)   // start at the right edge
             playedOut = 0
             insertFX.reset()   // clear filter memory so a new hit starts clean
+            insertFXRight.reset()
         }
 
         if silenceRequested {
@@ -504,6 +545,7 @@ private final class RenderState: @unchecked Sendable {
 
         if !isPlaying || count == 0 || playEnd <= playStart {
             memset(buf, 0, byteCount)
+            if let right { memset(right, 0, byteCount) }
             return
         }
 
@@ -519,6 +561,9 @@ private final class RenderState: @unchecked Sendable {
         let startF = Float(playStart)
         let endF = Float(playEnd)
 
+        // SS2: the right channel sits `count` frames after the left in a two-channel slab; a
+        // mono slab reads its one channel for both, so a mono sample is unchanged.
+        let rightOffset = activeChannels == 2 ? count : 0
         var produced = 0
         if let b = activeBuf {
             while produced < frameCount {
@@ -527,6 +572,8 @@ private final class RenderState: @unchecked Sendable {
                 let frac = posF - Float(i0)
                 let s0 = b[i0]
                 let s1 = (i0 + 1 < count) ? b[i0 + 1] : s0
+                let r0 = b[rightOffset + i0]
+                let r1 = (i0 + 1 < count) ? b[rightOffset + i0 + 1] : r0
                 var amp = base
                 if attackFrames > 0 && playedOut < attackFrames {
                     amp *= Float(playedOut) / Float(attackFrames)
@@ -534,8 +581,15 @@ private final class RenderState: @unchecked Sendable {
                 let distEnd = reverse ? (posF - startF) : (endF - posF)
                 if distEnd < Float(rel) { amp *= Swift.max(0, distEnd) / Float(rel) }
                 var v = (s0 + (s1 - s0) * frac) * amp
+                var w = (r0 + (r1 - r0) * frac) * amp
                 if v > -1e-15 && v < 1e-15 { v = 0 }   // flush denormals (edge ramps)
-                buf[produced] = v
+                if w > -1e-15 && w < 1e-15 { w = 0 }
+                if let right {
+                    buf[produced] = v
+                    right[produced] = w
+                } else {
+                    buf[produced] = rightOffset == 0 ? v : (v + w) * 0.5
+                }
                 posF += step
                 produced += 1
                 playedOut += 1
@@ -544,6 +598,9 @@ private final class RenderState: @unchecked Sendable {
 
         if produced < frameCount {
             memset(buf.advanced(by: produced), 0, (frameCount - produced) * MemoryLayout<Float>.size)
+            if let right {
+                memset(right.advanced(by: produced), 0, (frameCount - produced) * MemoryLayout<Float>.size)
+            }
         }
 
         // Per-channel insert FX (filter + drive) on the channel's output, over the whole
@@ -558,7 +615,7 @@ private final class RenderState: @unchecked Sendable {
         // filter's INPUT, not its stored state, so at high resonance the cut is not
         // provably small. Not device-verified. (The earlier wording claimed ring-out
         // "across the silent tail"; true of the intra-block tail, never across blocks.)
-        applyInsertFX(buf: buf, frameCount: frameCount)
+        applyInsertFX(buf: buf, right: right, frameCount: frameCount)
         // Source-node output boundary — last, because `applyInsertFX` writes the
         // hardware buffer in place. Unconditional, since that call returns early on
         // a clean channel, and this voice plays USER-IMPORTED audio: the sample slab
@@ -568,6 +625,7 @@ private final class RenderState: @unchecked Sendable {
         // file carrying those bit patterns reaches here intact. Finite audio is
         // bit-identical. See `AudioOutputGuard`.
         AudioOutputGuard.sweepNonFinite(buf, count: frameCount)
+        if let right { AudioOutputGuard.sweepNonFinite(right, count: frameCount) }
 
         if posF < startF || posF >= endF { isPlaying = false }
     }
