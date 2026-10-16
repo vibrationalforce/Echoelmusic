@@ -265,7 +265,7 @@ struct ArrangeRulerLocator: View {
         .frame(height: height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(String(localized: "Play from"))
-        .accessibilityValue(SessionGrid.label(forTick: start))
+        .accessibilityValue(MarkerChoice.rulerValue(forTick: start, in: document.markers))
         .accessibilityHint(locked
             ? String(localized: "Locked while a recording or an audio bounce runs.")
             : String(localized: "Sets the bar Play starts from. While the piece plays, it moves there at once."))

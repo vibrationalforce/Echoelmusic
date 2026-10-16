@@ -1,6 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    ", marker " : {
+      "comment" : "VoiceOver on the arrangement ruler: joins the bar Play starts from and the name of the marker on it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", marker "
+          }
+        }
+      }
+    },
     "2 bars" : {
       "comment" : "A10 count-in (2026-10-16).",
       "extractionState" : "manual",

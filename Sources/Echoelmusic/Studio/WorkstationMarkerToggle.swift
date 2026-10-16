@@ -30,6 +30,14 @@ enum MarkerChoice {
         return markers.first { TimelineMarker.barTick($0.tick) == bar }
     }
 
+    /// What the ruler says for the bar Play starts from: the bar, and the marker's name when that
+    /// bar carries one — the marker is otherwise never spoken (review UI#5). Pure.
+    nonisolated static func rulerValue(forTick tick: Int, in markers: [TimelineMarker]) -> String {
+        let bar = SessionGrid.label(forTick: tick)
+        guard let marker = marker(atTick: tick, in: markers) else { return bar }
+        return bar + String(localized: ", marker ") + marker.name
+    }
+
     /// The button's VoiceOver hint — one sentence per state. Pure.
     nonisolated static func hint(hasMarkerHere: Bool) -> String {
         hasMarkerHere

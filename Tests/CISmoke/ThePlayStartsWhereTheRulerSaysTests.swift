@@ -271,8 +271,13 @@ final class ThePlayStartsWhereTheRulerSaysTests: XCTestCase {
         XCTAssertTrue(row.contains(".accessibilityElement(children: .ignore)"), "ONE VoiceOver element, not a list of numbers")
         XCTAssertTrue(row.contains(".accessibilityAdjustableAction"), "the non-gesture twin: a swipe moves a bar")
         XCTAssertTrue(row.contains("RulerLocate.steppedBarTick(from: start, later: later,"), "the step asks the pure rule")
-        XCTAssertTrue(row.contains(".accessibilityValue(SessionGrid.label(forTick: start))"),
-                      "VoiceOver hears the bar in the words every part speaks")
+        XCTAssertTrue(row.contains(".accessibilityValue(MarkerChoice.rulerValue(forTick: start, in: document.markers))"),
+                      "VoiceOver hears the bar in the words every part speaks, and its marker (UI#5)")
+        let bar = TimelineTime.ticksPerBar
+        XCTAssertEqual(MarkerChoice.rulerValue(forTick: 2 * bar, in: []), SessionGrid.label(forTick: 2 * bar),
+                       "a bar without a marker reads exactly as before")
+        XCTAssertTrue(MarkerChoice.rulerValue(forTick: 2 * bar + 5, in: [TimelineMarker(tick: 2 * bar, name: "Drop")])
+                        .hasSuffix("Drop"), "a marked bar names its marker")
     }
 
     func testTheOnePlayPassesTheCueAndRecordAndTheBounceKeepBarOne() throws {
