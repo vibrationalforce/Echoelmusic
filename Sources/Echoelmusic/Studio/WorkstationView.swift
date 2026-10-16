@@ -287,6 +287,12 @@ struct WorkstationView: View {
     private var pieceViewRaw = StudioDefaultKeys.pieceView.value.rawValue
     private var pieceView: PieceView { PieceView(rawValue: pieceViewRaw) ?? StudioDefaultKeys.pieceView.value }
 
+    /// P1 — Arrangement or Session on the Arrange plate (`ArrangeMode`). One writer, the
+    /// segmented control in `arrangeModePicker`; one reader, this view. COLD: a tap writes it.
+    @AppStorage("studio.arrangeMode")
+    private var arrangeModeRaw = ArrangeMode.arrangement.rawValue
+    private var arrangeMode: ArrangeMode { ArrangeMode(rawValue: arrangeModeRaw) ?? .arrangement }
+
     /// The managed copy a tuning analysis is owed for, or nil. It is the `.task(id:)` key,
     /// which is why it holds the URL rather than a flag: a SECOND import must supersede the
     /// first, and SwiftUI restarts the task exactly when this value changes. A `Bool` would
@@ -362,6 +368,7 @@ struct WorkstationView: View {
                 PieceMixerView(voiceCapacity: player.laneVoiceCapacity)
             } else {
                 if !focused { songLine(summary) }
+                if !focused { arrangeModePicker }
                 // WA4 path 4 — the arrangement: every track's parts on the one shared scale,
                 // a part selected by tapping it. Handed the document this body already read;
                 // the canvas observes the selection and the clip grid (its note sketches, design
@@ -382,6 +389,8 @@ struct WorkstationView: View {
                 let columns = sideBySide
                     ? AnyLayout(HStackLayout(alignment: .top, spacing: 10))
                     : AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                // P1: Session takes the timeline's place; the scenes mount below (one mount).
+                if arrangeMode.showsTimeline(focused: focused) {
                 columns {
                 if !arrangeRows.isEmpty {
                   VStack(alignment: .leading, spacing: 10) {
@@ -462,6 +471,7 @@ struct WorkstationView: View {
                 .frame(minWidth: sideBySide ? 260 : 0, maxWidth: sideBySide ? 360 : CGFloat.infinity,
                        alignment: .leading)
                 }
+                }
                 if !focused && summary.orphanRegionCount > 0 { orphanLine(summary.orphanRegionCount) }
                 if !focused && summary.automationLaneCount > 0 { automationLine(summary.automationLaneCount) }
             }
@@ -495,7 +505,10 @@ struct WorkstationView: View {
             // transport is not authorised to call (`TheWorkstationPlaysTheTimelineTests` B).
             // S2: it may START the song at a scene, through this file's own transport.
             if pieceView == .arrange && !focused {
+                // P1: only in the Session view — Arrangement and Session are two views, as in Live.
+                if arrangeMode.showsScenes(focused: focused) {
                 SessionLaunchView(playFrom: { tick, parts in startTimeline(fromTick: tick, launching: parts) })
+                }
             }
 
             // MARK: - The import door (Audio Import V1, founder 2026-09-22)
@@ -637,6 +650,26 @@ struct WorkstationView: View {
         // heading and the explanation as unrelated items.
         .accessibilityElement(children: .combine)
         .accessibilityLabel("No tracks yet. Add Audio Track or Add MIDI Track to begin. A file you import becomes a part you can play, and a new MIDI part plays once it has notes.")
+    }
+
+    /// P1 — the Arrangement ⇄ Session switch at the top of the Arrange plate. A named choice,
+    /// so a segmented `Picker` (the `EchoelValueField` law is for numbers). Not a modal.
+    @ViewBuilder private var arrangeModePicker: some View {
+        Picker(String(localized: "View"), selection: $arrangeModeRaw) {
+            ForEach(ArrangeMode.allCases) { mode in
+                Text(mode.label).tag(mode.rawValue)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 10)
+        .accessibilityHint(ArrangeMode.spokenHint)
+        // Said, not discovered: where Session's scenes come from — also the empty state's words.
+        if arrangeMode == .session {
+            Text(ArrangeMode.sessionNote)
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 10)
+        }
     }
 
     private func songLine(_ summary: WorkstationSummary) -> some View {

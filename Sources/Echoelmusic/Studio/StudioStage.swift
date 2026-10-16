@@ -59,6 +59,40 @@ public enum StudioStage: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// P1 (founder 2026-10-16, „integrierten Performance Modus"): the Arrange plate's two views of
+/// ONE song — Ableton's Arrangement ⇄ Session. Arrangement shows the timeline (canvas, part bar,
+/// track column); Session shows the scenes, launched live on the bar. Before P1 the scene
+/// launcher stood UNDER the canvas, a screen below the parts, and nobody found it.
+///
+/// ⭐ A VIEW CHOICE, NOT A SECOND SONG (WA2): both views read the same `TimelineDocument`;
+/// nothing here is stored in the piece. Persisted per device, so the plate reopens in the view
+/// it was left in. Raw values are PERSISTED — rename a label, never a case.
+public enum ArrangeMode: String, CaseIterable, Identifiable, Sendable {
+    case arrangement, session
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .arrangement: return String(localized: "Arrangement")
+        case .session:     return String(localized: "Session")
+        }
+    }
+
+    /// Whether the plate shows the timeline. An open editor (focus) always keeps it — the
+    /// editor IS part of the timeline, and hiding it would strand the part being edited.
+    public func showsTimeline(focused: Bool) -> Bool { self == .arrangement || focused }
+
+    /// Whether the plate shows the scene launcher. Never in focus: the editor has the plate.
+    public func showsScenes(focused: Bool) -> Bool { self == .session && !focused }
+
+    /// Spoken (#482: a control names what it does).
+    public static let spokenHint = String(localized: "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar.")
+
+    /// Under the switch in Session: a scene is a bar where parts start, so scenes are MADE in
+    /// Arrangement. Also the words of an empty Session — the launcher draws nothing without one.
+    public static let sessionNote = String(localized: "Every bar where parts start is a scene. Place parts in Arrangement, then launch scenes here while the piece plays.")
+}
+
 /// What the PIECE stage shows (DAW shell S2, founder 2026-10-02, inbox E18 „Ja, so bauen"): the
 /// arrangement, the mixer, the browser (the sounds, the media library and the photo/video seeds) or the
 /// project (the song's settings, its light look, export — Save and Open are the ≡ menu's since S3). One persisted choice, written only by the bottom switcher
