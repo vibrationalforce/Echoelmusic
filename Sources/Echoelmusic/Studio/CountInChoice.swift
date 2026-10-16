@@ -18,6 +18,10 @@
 // (`MetronomeVoice.anchorAbsorbShare`). NEEDS-FOUNDER-VERIFY (A10): arm a MIDI track, hold Click → Count-in
 // → 1 bar, press Record — four clicks, then the piece starts on the fifth with no gap or double click;
 // press Record again during the count-in — it stops, nothing records, the click returns to its state.
+// ⚠️ KNOWN LIMIT (review C6): the wait is fixed at the tap from `transport.tempo`. In Flow the tempo
+// follows the pulse and may glide during the count-in, so the clicks and the start can drift apart
+// by a fraction of a beat. In Loop (the BPM lock) the tempo cannot move and the two stay together —
+// the mode for a counted-in take. Probe it in Flow too and say whether the drift is heard.
 
 import SwiftUI
 
