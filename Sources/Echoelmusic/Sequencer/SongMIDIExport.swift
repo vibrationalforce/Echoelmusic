@@ -147,6 +147,35 @@ public enum SongMIDIExport {
                                     keyRootPitchClass: keyRootPitchClass, keyIsMinor: keyIsMinor)
     }
 
+    /// ONE part as a track (C2, 2026-10-16 — "this part into my DAW"): the notes the part HOLDS —
+    /// its window (`executableNotes`: trim-in and end, the same rule the player uses), at PART
+    /// ticks, at its track's transpose, named after its track. Overlap precedence is NOT asked
+    /// here, on purpose: the person asked for this part, not for what the song plays at its place
+    /// (that is `songNotes`). Nil for a part that is not on a MIDI track (`midiLaneIDs`: audio and
+    /// bio tracks never export as MIDI) or whose clip is missing.
+    public static func partTrack(_ region: TimelineRegion, in document: TimelineDocument,
+                                 clip: (UUID) -> Clip?, bpm: Double) -> Track? {
+        guard document.midiLaneIDs.contains(region.laneID),
+              let lane = document.lanes.first(where: { $0.id == region.laneID }),
+              let content = clip(region.clipID) else { return nil }
+        let notes = TimelineRegionPlayer.executableNotes(of: content, in: region, bpm: bpm)
+            .sorted { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
+        return Track(name: lane.name, channel: channels[0],
+                     notes: sounding(notes, transposeSemitones: lane.transposeSemitones))
+    }
+
+    /// The part as Standard MIDI File bytes: the conductor track plus the part's one track, which
+    /// ends at the part's own end — the file is exactly as long as the part, so a DAW loops it as
+    /// placed here. Nil where `partTrack` is nil.
+    public static func partFile(_ region: TimelineRegion, in document: TimelineDocument,
+                                clip: (UUID) -> Clip?, bpm: Double,
+                                keyRootPitchClass: Int, keyIsMinor: Bool) -> Data? {
+        guard let track = partTrack(region, in: document, clip: clip, bpm: bpm) else { return nil }
+        return MIDIFileExporter.exportSong(tracks: [track], tempo: bpm,
+                                           endTick: Swift.max(1, region.lengthTicks),
+                                           keyRootPitchClass: keyRootPitchClass, keyIsMinor: keyIsMinor)
+    }
+
     /// Whether `region` is the part the track plays at `tick` — overlap precedence asked, never
     /// re-derived (#1440).
     private static func wins(_ region: TimelineRegion, laneID: UUID, at tick: Int,

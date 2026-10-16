@@ -24592,6 +24592,30 @@
           }
         }
       }
+    },
+    "Share as MIDI" : {
+      "comment" : "C2 (2026-10-16): the selected part's MIDI share link (SelectedPartBar, PartMIDIShareLink).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share as MIDI"
+          }
+        }
+      }
+    },
+    "Share this part as a MIDI file: its notes and its track's transpose. Sound, level and pan stay here." : {
+      "comment" : "C2 (2026-10-16): the selected part's MIDI share link (SelectedPartBar, PartMIDIShareLink).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share this part as a MIDI file: its notes and its track's transpose. Sound, level and pan stay here."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -95,6 +95,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The pure half of Split: where it cuts, and the tempo at which the part's media elapses.
 enum PartSplit {
@@ -659,6 +660,10 @@ struct SelectedPartBar: View {
                 // part of the person's own. The leaf decides whether it shows: it reads the clip
                 // grid, which this body never does.
                 PartEditCopyButton(regionID: regionID)
+                // C2 (2026-10-16): this one MIDI part as a `.mid`, through the share sheet that
+                // `ShareLink` owns — no presentation modifier on any chain. The leaf decides whether
+                // it shows: it reads the clip grid, which this body never does.
+                PartMIDIShareLink(regionID: regionID)
                 // Nine labelled buttons do not fit a phone at every type size (review
                 // MEDIUM-3): the row falls back to icons, then to two rows of icons — every
                 // button keeping its full spoken label.
@@ -1282,6 +1287,66 @@ private struct PartEditCopyButton: View {
         selection.setNotesOpen(true)
         AccessibilityNotification.Announcement(
             String(localized: "A copy of the composer's part is selected; its notes can be edited")).post()
+    }
+}
+
+/// C2 — the selected MIDI part as a `.mid`, built when the share sheet asks for it. Its bytes are
+/// `SongMIDIExport.partFile` (the part's own window, its track's transpose); the tempo is read at
+/// that moment from the player's `@ObservationIgnored` mirror, never subscribed to (the
+/// `SongMIDIFile` rule, `SongExportTab.swift`).
+struct PartMIDIFile: Transferable {
+    let region: TimelineRegion
+    let document: TimelineDocument
+    let clip: Clip
+    let keyRootPitchClass: Int
+    let keyIsMinor: Bool
+    let name: String
+    let player: TimelineRegionPlayer
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .midi) { file in
+            await file.makeData()
+        }
+        .suggestedFileName { file in file.name + ".mid" }
+    }
+
+    @MainActor func makeData() -> Data {
+        SongMIDIExport.partFile(region, in: document, clip: { $0 == clip.id ? clip : nil },
+                                bpm: player.preflightTempo,
+                                keyRootPitchClass: keyRootPitchClass, keyIsMinor: keyIsMinor) ?? Data()
+    }
+}
+
+/// C2 — "Share as MIDI" for the selected part: shown only for a part on a MIDI track that holds
+/// at least one note in its window, so the share sheet never opens over an empty file (#164/#227).
+private struct PartMIDIShareLink: View {
+    let regionID: UUID
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    @Environment(TimelineRegionPlayer.self) private var player
+    @AppStorage(StudioDefaultKeys.rootIndex.key) private var rootIndex = StudioDefaultKeys.rootIndex.value
+    @AppStorage(StudioDefaultKeys.scale.key) private var scale: Scale = StudioDefaultKeys.scale.value
+
+    var body: some View {
+        let document = timeline.document
+        if let region = document.regions.first(where: { $0.id == regionID }),
+           let clip = clipStore.clip(id: region.clipID),
+           let track = SongMIDIExport.partTrack(region, in: document, clip: { $0 == clip.id ? clip : nil },
+                                                bpm: player.preflightTempo),
+           !track.notes.isEmpty {
+            let file = PartMIDIFile(region: region, document: document, clip: clip,
+                                    keyRootPitchClass: rootIndex, keyIsMinor: scale.isMinorTonality,
+                                    name: SongExportTab.fileName(track.name), player: player)
+            ShareLink(item: file, preview: SharePreview(file.name)) {
+                HStack(spacing: EchoelTheme.spaceXS) {
+                    Image(systemName: "square.and.arrow.up").font(EchoelTheme.font(11, .semibold))
+                    Text("Share as MIDI").font(EchoelTheme.font(11, .semibold)).lineLimit(1).fixedSize()
+                }
+            }
+            .buttonStyle(EchoelToolButtonStyle())
+            .accessibilityLabel(String(localized: "Share this part as a MIDI file: its notes and its track's transpose. Sound, level and pan stay here."))
+            .accessibilityInputLabels([String(localized: "Share as MIDI")])
+        }
     }
 }
 
