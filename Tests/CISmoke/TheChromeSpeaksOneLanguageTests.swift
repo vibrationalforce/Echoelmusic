@@ -618,6 +618,8 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/CountInChoice.swift",   // A10: the Count-in menu
             "Sources/Echoelmusic/Studio/SessionRecordToggle.swift",   // P4b: Record to arrangement
             "Sources/Echoelmusic/Studio/ArrangeAutomationEditLane.swift",   // 7b: draw automation on the canvas
+            "Sources/Echoelmusic/Studio/PartNameField.swift",   // A8: the part's Name field
+            "Sources/Echoelmusic/Studio/TrackCopyButton.swift",   // A7: Duplicate track
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 

@@ -194,6 +194,9 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // "markers" in the same commit. A4c (2026-10-16) added `.laneOrder` — the ORDER of the
         // tracks from one Move up/down, both as id lists; no lane's content, no name, no mix — and
         // the hint names "the order of the tracks" in the same commit.
+        // A7 (2026-10-16) added `.trackCopy` — ONE duplicated track with its parts and curves, as
+        // values; it carries a lane (the copy itself, which it adds or takes away whole), no
+        // document — and the hint names "a copied track" in the same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
@@ -207,6 +210,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                                "case cycle(before: TimelineCycle?, after: TimelineCycle?)",
                                "case markers(before: [TimelineMarker], after: [TimelineMarker])",
                                "case laneOrder(before: [UUID], after: [UUID])",
+                               "case trackCopy(lane: TimelineLane, index: Int, regions: [TimelineRegion], automation: [AutomationLane])",
                                "case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)"],
                        """
                        The history holds a step kind this list does not name. `SongHistoryRow`'s \

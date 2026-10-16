@@ -25,6 +25,18 @@
         }
       }
     },
+    "Adds a copy of this track below it, with its parts, sound and curves." : {
+      "comment" : "A7 duplicate track (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adds a copy of this track below it, with its parts, sound and curves."
+          }
+        }
+      }
+    },
     "Automatic" : {
       "comment" : "A4b track colour menu (2026-10-16).",
       "extractionState" : "manual",
@@ -169,6 +181,18 @@
         }
       }
     },
+    "Copies of this part share its name and notes." : {
+      "comment" : "A8 part name (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copies of this part share its name and notes."
+          }
+        }
+      }
+    },
     "Copy the composer's notes into a part of your own after the last part on this track, and open its notes. The composer's part keeps evolving. One undo step." : {
       "comment" : "Part bar (GA-2b): spoken label of Edit a copy.",
       "extractionState" : "manual",
@@ -237,6 +261,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Draw automation"
+          }
+        }
+      }
+    },
+    "Duplicate track" : {
+      "comment" : "A7 duplicate track (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate track"
           }
         }
       }
@@ -453,6 +489,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orchid"
+          }
+        }
+      }
+    },
+    "Part name" : {
+      "comment" : "A8 part name (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part name"
           }
         }
       }
@@ -25305,14 +25353,14 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, a copied track, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
       "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01; Restructure P2 2026-10-04 adds the piece's light look; GMMW AE-12b 2026-10-08 its cycle): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, a copied track, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
           }
         }
       }

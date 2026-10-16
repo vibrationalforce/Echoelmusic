@@ -652,6 +652,8 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                     if TrackColorChoice.offered(laneID, in: timeline.document) {
                         TrackOrderRow(laneID: laneID)
                     }
+                    // A7 — a copy of the track below it (own leaf; refused for Echoel and bio).
+                    TrackCopyButton(laneID: laneID)
 
                     if controls.level {
                         let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)
@@ -710,6 +712,8 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                 }
 
                 if page == .part {
+                    // A8 — the selected part's name (own leaf; one writer, committed once).
+                    PartNameField(laneID: laneID)
                     // GMMW AE-2 — the selected AUDIO part's whole file, its window marked, above
                     // the part list. Its own leaf: it draws nothing for a MIDI part, no selection
                     // or a part on another track, and reads the song position only in its playhead.

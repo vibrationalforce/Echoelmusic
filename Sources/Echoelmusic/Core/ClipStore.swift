@@ -243,6 +243,16 @@ public final class ClipStore {
         return true
     }
 
+    /// A8 — the person names a part: renames the clip a part plays, by id. Every part that plays
+    /// that clip (its copies) wears the new name, as they share its notes. Returns false, writing
+    /// nothing, for an unknown id or an unchanged name. Like a track rename, not an Undo step.
+    @discardableResult
+    public func renameClip(id: UUID, to name: String) -> Bool {
+        guard let i = slots.firstIndex(where: { $0?.id == id }), slots[i]?.name != name else { return false }
+        rename(at: i, to: name)
+        return true
+    }
+
     public func rename(at index: Int, to name: String) {
         guard slots.indices.contains(index), var clip = slots[index] else { return }
         clip.name = name

@@ -296,6 +296,7 @@ public final class TimelineStore {
         case cycle(before: TimelineCycle?, after: TimelineCycle?)
         case markers(before: [TimelineMarker], after: [TimelineMarker])
         case laneOrder(before: [UUID], after: [UUID])
+        case trackCopy(lane: TimelineLane, index: Int, regions: [TimelineRegion], automation: [AutomationLane])
         case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)
     }
 
@@ -494,6 +495,31 @@ public final class TimelineStore {
             document.lanes = LaneOrder.ordered(document.lanes, as: before)
             persist()
             return HistoryStep.laneOrder(before: after, after: before)
+        case .trackCopy(let lane, let index, let regions, let automation):
+            // A7 — ONE step toggles a copied track: present → Undo takes it away with its parts and
+            // curves; absent → Redo puts it back where it stood. A copy whose parts changed since
+            // (a part added, moved off or deleted) keeps the later state and the step is skipped.
+            if let i = document.lanes.firstIndex(where: { $0.id == lane.id }) {
+                let own = document.regions.filter { $0.laneID == lane.id }
+                guard Set(own.map(\.id)) == Set(regions.map(\.id)) else { return nil }
+                let curves = document.automation.filter {
+                    PerTrackParameterKeyPath.parse($0.parameter)?.laneID == lane.id
+                }
+                let current = document.lanes[i]
+                document.lanes.remove(at: i)
+                document.regions.removeAll { $0.laneID == lane.id }
+                document.automation = liveAutomation(document.automation)
+                persist()
+                return HistoryStep.trackCopy(lane: current, index: i, regions: own, automation: curves)
+            }
+            var lanes = document.lanes
+            lanes.insert(lane, at: min(max(0, index), lanes.count))
+            guard TimelineDocument(lanes: lanes, regions: []).rollLaneID == document.rollLaneID else { return nil }
+            document.lanes = lanes
+            document.regions.append(contentsOf: regions)
+            document.automation.append(contentsOf: automation)
+            persist()
+            return step
         case .keptTake(let slot, let keptID, let clip, let regions, let clips):
             // GMMW GA-2a — the slot must hold exactly what the step expects: the kept take when
             // Undo frees it, nothing when Redo fills it again. Anything else was written since
@@ -1125,6 +1151,20 @@ public final class TimelineStore {
         document.lanes = next
         persist()
         return true
+    }
+
+    /// A7 — duplicate a track right below itself: its settings, its parts (playing the same clips)
+    /// and its own curves (`TrackCopy`). Refused for the Echoel and the bio track. ONE `.trackCopy`
+    /// Undo step. Returns the copy's id.
+    @discardableResult
+    public func duplicateLane(id: UUID) -> UUID? {
+        guard let copy = TrackCopy.copy(of: id, in: document) else { return nil }
+        pushUndo(.trackCopy(lane: copy.lane, index: copy.index, regions: copy.regions, automation: copy.automation))
+        document.lanes.insert(copy.lane, at: copy.index)
+        document.regions.append(contentsOf: copy.regions)
+        document.automation.append(contentsOf: copy.automation)
+        persist()
+        return copy.lane.id
     }
 
     /// Whether `moveLane(id:by:)` would move — the buttons' enabled state. Pure read.
