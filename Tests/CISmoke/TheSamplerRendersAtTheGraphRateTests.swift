@@ -11,7 +11,8 @@
 //
 // WHAT THIS PINS. (1) The sampler's rate IS the graph's — by value, against the one constant
 // the graph is configured from, so a future rate change moves both or goes red. (2) The frame
-// ceiling still means ~2 s at that rate (the documented contract of `maxSampleFrames`).
+// ceiling still means `maxSampleSeconds` at that rate (the documented contract of `maxSampleFrames`;
+// 2 s until the live-set audit 2026-10-16 raised it to 8 s), and the track row says the same number.
 // (3) COUNTERWEIGHT — `loadSample` still resamples every file to `Self.sampleRate` at LOAD
 // time and the source node is built from `Self.sampleRate`, so a 44.1 kHz WAV keeps its pitch
 // and length; the converter moved from every render block to a one-off at load.
@@ -39,11 +40,17 @@ final class TheSamplerRendersAtTheGraphRateTests: XCTestCase {
                        "inserts a converter on the always-attached previewVoice (#1213)")
     }
 
-    /// Claim 2 — the frame ceiling is still ~2 s AT that rate.
-    func testTheFrameCeilingIsTwoSecondsAtThatRate() {
-        XCTAssertEqual(SamplerVoice.maxSampleFrames, Int(SamplerVoice.sampleRate * 2),
-                       "maxSampleFrames no longer means ~2 s at SamplerVoice.sampleRate — the " +
+    /// Claim 2 — the frame ceiling is the stated seconds AT that rate, and the row that tells a
+    /// person the limit names the same number.
+    func testTheFrameCeilingIsTheStatedSecondsAtThatRate() throws {
+        XCTAssertEqual(SamplerVoice.maxSampleFrames, Int(SamplerVoice.sampleRate * SamplerVoice.maxSampleSeconds),
+                       "maxSampleFrames no longer means maxSampleSeconds at SamplerVoice.sampleRate — the " +
                        "documented ceiling and the rate drifted apart (#1213)")
+        XCTAssertGreaterThanOrEqual(SamplerVoice.maxSampleSeconds, 4, "a long 808 fits (live-set audit 2026-10-16)")
+        let row = SourceText.codeOnly(try text("Sources/Echoelmusic/Studio/TrackSampleRow.swift"))
+        let seconds = Int(SamplerVoice.maxSampleSeconds)
+        XCTAssertTrue(row.contains("Plays the first \(seconds) seconds of the file."),
+                      "the track row states a different limit than the sampler holds")
     }
 
     /// Claim 3 — counterweight: files are resampled to that rate at LOAD, and the node is

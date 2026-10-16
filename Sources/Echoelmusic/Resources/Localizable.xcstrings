@@ -24017,14 +24017,14 @@
         }
       }
     },
-    "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down." : {
+    "Plays the first 8 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down." : {
       "comment" : "Sample row note: the sampler's limits.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Plays the first 2 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down."
+            "value" : "Plays the first 8 seconds of the file. Middle C plays it as recorded; other notes pitch it up or down."
           }
         }
       }

@@ -43,8 +43,13 @@ public final class SamplerVoice: @unchecked Sendable {
 
     // MARK: - Constants
 
-    /// Maximum sample length, in mono 32-bit float frames (~2 s @ 48 kHz).
-    public static let maxSampleFrames: Int = 96_000
+    /// Longest stretch of a file the sampler holds, in seconds. Live-set audit 2026-10-16: two
+    /// seconds cut a long 808 or a one-bar loop short; eight hold four bars at 120 BPM. Memory:
+    /// 8 s of mono Float at 48 kHz is 1.5 MB per loaded slot, allocated on the main thread.
+    public static let maxSampleSeconds: Double = 8
+
+    /// Maximum sample length, in mono 32-bit float frames (`maxSampleSeconds` at `sampleRate`).
+    public static let maxSampleFrames: Int = Int(sampleRate * maxSampleSeconds)
 
     /// Render format: mono float32 at 48 kHz — the graph's own rate
     /// (`AudioConfiguration.preferredSampleRate`), like every other source node.
@@ -95,9 +100,9 @@ public final class SamplerVoice: @unchecked Sendable {
             throw SamplerVoiceError.unsupportedFormat
         }
 
-        // Read up to ~2s of SOURCE audio (the buffer is later capped at
-        // maxSampleFrames of TARGET-rate audio after conversion).
-        let maxSrcFrames = max(1, Int(srcFormat.sampleRate * 2.05))
+        // Read up to `maxSampleSeconds` (plus a little slack) of SOURCE audio; the buffer is
+        // later capped at maxSampleFrames of TARGET-rate audio after conversion.
+        let maxSrcFrames = max(1, Int(srcFormat.sampleRate * (Self.maxSampleSeconds + 0.05)))
         let frameCap = AVAudioFrameCount(min(Int(file.length), maxSrcFrames))
         guard let pcm = AVAudioPCMBuffer(pcmFormat: srcFormat, frameCapacity: frameCap) else {
             throw SamplerVoiceError.unsupportedFormat

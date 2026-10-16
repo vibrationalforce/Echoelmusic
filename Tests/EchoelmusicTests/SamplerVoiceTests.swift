@@ -30,8 +30,8 @@ final class SamplerVoiceTests: XCTestCase {
     }
 
     func testLoadSample_capsAtMaxSampleFrames() throws {
-        // 3-second tone at 44.1k = 132,300 frames > 88,200 cap.
-        let url = try makeTempWav(seconds: 3.0, frequency: 220)
+        // A tone one second longer than the cap.
+        let url = try makeTempWav(seconds: SamplerVoice.maxSampleSeconds + 1, frequency: 220)
         defer { try? FileManager.default.removeItem(at: url) }
 
         let voice = SamplerVoice()
