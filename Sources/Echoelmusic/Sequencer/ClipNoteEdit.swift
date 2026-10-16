@@ -579,6 +579,26 @@ enum ClipNoteEdit {
         naming.name(pitchClass: pitch, preferFlats: preferFlats) + "\(octave(of: pitch))"
     }
 
+    /// Ultraplan-A2 (N2a) — one row of the key column beside the note grid.
+    struct KeyRow: Equatable, Sendable {
+        let pitch: Int
+        let name: String
+        /// A black key of the piano (C♯ D♯ F♯ G♯ A♯), whatever the session key — the column is
+        /// a keyboard; the grid's own rows shade by the key.
+        let isBlackKey: Bool
+    }
+
+    /// The key column's rows for the grid's `rows`, TOP DOWN — the order the canvas draws them
+    /// (`y = (rows.upperBound − pitch) × rowHeight`), so row i of the column sits beside row i of
+    /// the grid. Every row is named (`rowName`), in the reader's note names and the key's spelling.
+    nonisolated static func keyRows(_ rows: ClosedRange<Int>, naming: NoteNaming,
+                                    preferFlats: Bool) -> [KeyRow] {
+        rows.reversed().map { pitch in
+            KeyRow(pitch: pitch, name: rowName(pitch: pitch, naming: naming, preferFlats: preferFlats),
+                   isBlackKey: [1, 3, 6, 8, 10].contains(((pitch % 12) + 12) % 12))
+        }
+    }
+
     /// One picked note, said in words under the grid (design slice 3): its name, where it
     /// starts IN THE SONG (bar and beat, 1-based) and how long it is in sixteenths. `note` is
     /// REGION-relative — the grid's own `visibleNotes` — so `partStartTick` (the part's start)

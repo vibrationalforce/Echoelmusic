@@ -236,6 +236,13 @@ private struct PartNoteGrid: View {
                     let grid = NoteGridGesture.Grid(
                         stepWidth: Double(stepWidth), rowHeight: Double(Self.rowHeight),
                         rows: range, partSteps: ClipNoteEdit.stepCount(lengthTicks: region.lengthTicks))
+                    // Ultraplan-A2 (N2a): the key column stands OUTSIDE the scroll view, so every
+                    // row keeps its name while the part scrolls sideways; same row height, same
+                    // order as the canvas. Cold values only — the key and the reader's names.
+                    HStack(alignment: .top, spacing: 0) {
+                    PartNoteKeyColumn(rows: ClipNoteEdit.keyRows(range, naming: naming,
+                                                                 preferFlats: session.key.prefersFlatSpelling),
+                                      rowHeight: Self.rowHeight)
                     ScrollView(.horizontal, showsIndicators: true) {
                         // B6a: the velocity lane rides in the SAME scroll view, under the grid, so a
                         // stem stays under its note's column while the part scrolls.
@@ -325,6 +332,7 @@ private struct PartNoteGrid: View {
                                  steps: steps, anchor: value.startAnchor.x * viewport.width)
                         }
                     )
+                    }
                     controls(range: range, picked: pickedOnScreen, editable: editable,
                              region: region, steps: steps, notes: clip.melody?.notes ?? [], offset: offset)
                         .onAppear { if centre == nil { centre = heldCentre } }
@@ -944,6 +952,42 @@ enum NoteGridTint {
 /// itself when the scroll view cancels the gesture. Nothing is written until the finger lifts,
 /// and then exactly once, through `onRelease`.
 @MainActor
+/// Ultraplan-A2 (N2a) — the key column: one named row per grid row, white and black keys, fixed
+/// beside the scrolling grid. Drawn in one `Canvas`; it reads no state, so it redraws only when
+/// the rows change (an octave step, a key change). Hidden from VoiceOver: the grid's label and the
+/// picked note's line already say the pitch in words, and 25 key names would be noise.
+private struct PartNoteKeyColumn: View {
+
+    let rows: [ClipNoteEdit.KeyRow]
+    let rowHeight: CGFloat
+
+    /// Wide enough for "C♯-1" at 10 pt; a designer's call, not pinned (#364).
+    private static let width: CGFloat = 40
+
+    var body: some View {
+        Canvas { context, size in
+            for (index, row) in rows.enumerated() {
+                let y = CGFloat(index) * rowHeight
+                if row.isBlackKey {
+                    context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: rowHeight)),
+                                 with: .color(EchoelTheme.fill))
+                }
+                context.fill(Path(CGRect(x: 0, y: y + rowHeight - 0.5, width: size.width, height: 0.5)),
+                             with: .color(EchoelTheme.border.opacity(0.6)))
+                context.draw(Text(row.name)
+                                .font(EchoelTheme.font(10).monospacedDigit())
+                                .foregroundStyle(row.pitch % 12 == 0 ? EchoelTheme.text : EchoelTheme.dim),
+                             at: CGPoint(x: size.width - 4, y: y + rowHeight / 2), anchor: .trailing)
+            }
+            context.fill(Path(CGRect(x: size.width - 1, y: 0, width: 1, height: size.height)),
+                         with: .color(EchoelTheme.border))
+        }
+        .frame(width: Self.width, height: CGFloat(rows.count) * rowHeight)
+        .background(EchoelTheme.surface)
+        .accessibilityHidden(true)
+    }
+}
+
 private struct PartNoteCanvas: View {
 
     let visible: [Note]
