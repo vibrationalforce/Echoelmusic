@@ -1566,3 +1566,12 @@ C2-Kollision (SESSION_LOG „C2" = Share as MIDI, Audit „C2" = Planer-Tür) �
 dem Zweig → nachgetragen, Audit-Tabelle trennt gebaut / im Build / erreichbar / Gerät; (4) Geräte-
 Bitte G11 in FOUNDER_INBOX. Nicht übernommen: Website-Beleg aus gestellten Screens — er wartet auf
 einen echten Gerätelauf. Formulierungen der Quelle nicht übernommen.
+
+## 2026-10-16 — ChatGPT: „AirPods Route Changes During Audio Recording" (The Swift Dev) — WATCH (2/2)
+
+Säuberung sauber. Gemessen: (1) kein Audio-Eingang seit #1302 (`inputNode` in `Sources/` → 0) —
+Mikrofon-Takes, um die es im Artikel geht, gibt es hier nicht. (2) Die Ausgangs-Seite ist erledigt:
+jeder `AVAudioEngineConfigurationChange` installiert den `RetroCapture`-Master-Tap neu, und #630
+verwirft beim Ratenwechsel die alte Vorgeschichte statt sie hochgepitcht zu exportieren. WATCH für
+einen künftigen Eingangs-Neubau (GSIDMMW-F): Segment je Eingangssignatur, echte Lücke im Export.
+Der Artikel selbst ist ungelesen (kein Netz); sein Autor hat keinen physischen Wechsel belegt.
