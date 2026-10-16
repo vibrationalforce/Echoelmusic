@@ -14,7 +14,7 @@
 //  row only mounts this; the grips hold the drag, the row keeps its one tap and its scrub.
 //
 //  ⚠️ PREVIEW, THEN ONE WRITE. During the drag the new range is drawn as an outline over the band
-//  (local `@State`); the store is written once, on lift. A write per drag frame would be dozens of
+//  (local `@GestureState`, so a cancelled drag clears it); the store is written once, on lift. A write per drag frame would be dozens of
 //  Undo steps and a structure refresh of the playing song per frame.
 //
 //  ⚠️ COLD: it reads the piece handed in, never `currentTick`.

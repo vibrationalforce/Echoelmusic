@@ -128,8 +128,8 @@ final class TheGatheredPartsAreCopiedAndPastedTests: XCTestCase {
         XCTAssertTrue(bar.contains("TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)"),
                       "Paste lands on the ruler's bar")
         XCTAssertTrue(bar.contains("timeline.pasteRegions(selection.clipboard, atTick: start)"))
-        XCTAssertTrue(bar.contains("let canPaste = selection.clipboard.contains { lanes.contains($0.laneID) }"),
-                      "Paste is offered only while a copied part's track still exists — the rule `pasted` keeps (UI#6)")
+        XCTAssertTrue(bar.contains("let canPaste = !RegionClipboard.pasted(selection.clipboard, atTick: pasteStart, in: document).isEmpty"),
+                      "Paste is offered only when it would place something — asked of `pasted` itself (UI#6, #416)")
         XCTAssertTrue(bar.contains("timeline.removeRegions(ids: gathered)"))
         XCTAssertFalse(bar.contains("currentTick"), "cold: the playhead is a leaf of its own")
         XCTAssertFalse(bar.contains("EchoelTheme.accent"), "never green — green is the body's signal")

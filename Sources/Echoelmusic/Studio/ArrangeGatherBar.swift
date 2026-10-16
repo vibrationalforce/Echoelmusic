@@ -46,10 +46,12 @@ struct ArrangeGatherBar: View {
     var body: some View {
         let document = timeline.document
         let gathered = WorkstationSelection.resolvedGathered(selection.gathered, in: document)
-        // A copy whose tracks are gone (another piece opened, the track deleted) pastes nothing —
-        // `RegionClipboard.pasted` drops it — so it offers no Paste (review 2026-10-16, UI#6).
-        let lanes = Set(document.lanes.map(\.id))
-        let canPaste = selection.clipboard.contains { lanes.contains($0.laneID) }
+        // Paste is offered only when it would place something (review 2026-10-16, UI#6): a copy
+        // whose tracks are gone (another piece opened, the track deleted) or that would run past
+        // the tick ceiling pastes nothing. Asked of `RegionClipboard.pasted` itself, at the bar
+        // Paste lands on, so the button and the paste cannot disagree (#416). Cold: a tap.
+        let pasteStart = TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)
+        let canPaste = !RegionClipboard.pasted(selection.clipboard, atTick: pasteStart, in: document).isEmpty
         HStack(spacing: 8) {
             if selection.drawingAutomation {
                 // Item 7b — what a touch on a row means while drawing, said once, then Done.
