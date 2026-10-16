@@ -59,18 +59,52 @@ enum LaunchGuard {
     /// (after the counter has been reset by `confirmHealthy()`) stays stable.
     private static var cachedSafeMode = false
 
+    /// G10 — set when iOS PREWARMED this process (`ActivePrewarm=1`): the count waits for
+    /// `countPrewarmedLaunch()`, called when the first scene builds.
+    private(set) static var launchCountDeferred = false
+
     /// Record that a launch has started. Increments the unconfirmed-launch counter,
     /// flushes it to disk immediately (a crash moments later must not lose it), and
     /// freezes the Safe-Mode decision for this process. Called from the app's FIRST stored
     /// property (`EchoelmusicApp.raiseCrashNet()`, SH-2), before every stored default.
     static func beginLaunch() {
+        beginLaunch(prewarmed: ProcessInfo.processInfo.environment["ActivePrewarm"] == "1")
+    }
+
+    /// G10 (founder log, v10.79.509 build 2634: `prewarm=1 … unconfirmed streak 1`, then
+    /// nothing). iOS may PREWARM an app — run its launch sequence speculatively, before
+    /// anyone taps the icon — and then discard the process unused. Counted here, such a
+    /// process left the counter raised without a crash, and the NEXT real launch opened Safe
+    /// Mode for a user who had seen nothing go wrong: the "silent start" of build 2621.
+    /// So a prewarmed launch decides its verdict the same way but writes nothing; the count
+    /// happens when the first scene builds (`countPrewarmedLaunch()`), which a discarded
+    /// prewarm never reaches and a real launch reaches before its first render.
+    /// ⚠️ What this gives up, deliberately: a crash in `init()` DURING a prewarm is not
+    /// counted. The user did not see it, and if it is deterministic the launch they DO start
+    /// (a fresh process) crashes counted.
+    static func beginLaunch(prewarmed: Bool) {
         let d = UserDefaults.standard
         let next = d.integer(forKey: countKey) + 1
+        cachedSafeMode = next >= safeModeThreshold
+        launchCountDeferred = prewarmed
+        guard !prewarmed else { return }
         d.set(next, forKey: countKey)
         // Force a synchronous write — the launch we are guarding against may crash
         // milliseconds from now, before the normal periodic flush.
         d.synchronize()
-        cachedSafeMode = next >= safeModeThreshold
+    }
+
+    /// The deferred half of a prewarmed `beginLaunch` — counts it once, now that a scene is
+    /// being built, i.e. a person launched the app. A no-op on every other launch.
+    /// Returns whether it counted.
+    @discardableResult
+    static func countPrewarmedLaunch() -> Bool {
+        guard launchCountDeferred else { return false }
+        launchCountDeferred = false
+        let d = UserDefaults.standard
+        d.set(d.integer(forKey: countKey) + 1, forKey: countKey)
+        d.synchronize()
+        return true
     }
 
     /// Whether this launch should boot into Safe Mode (frozen at `beginLaunch()`).
@@ -143,6 +177,7 @@ enum LaunchGuard {
     static func resetForTesting() {
         reset()
         cachedSafeMode = false
+        launchCountDeferred = false
     }
     #endif
 }

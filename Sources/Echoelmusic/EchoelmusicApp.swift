@@ -361,7 +361,25 @@ struct EchoelmusicApp: App {
         // this one — a clean run reads launch · crash net · image · verdict · context (no ordinals
         // here: SH-3 and SH-7 each added a line, and a counted position goes stale, #818).
         EchoelCrashLog.breadcrumb(EchoelCrashLog.launchContextLine())
+        // G10 — a prewarmed launch has not raised the counter yet, so the streak above is the
+        // PREVIOUS run's; say so, or the line reads like a counted launch.
+        if LaunchGuard.launchCountDeferred {
+            EchoelCrashLog.breadcrumb(
+                "LaunchGuard: prewarmed — not counted until its first scene builds")
+        }
         return true
+    }
+
+    /// G10 — the deferred count of a PREWARMED launch (`LaunchGuard.beginLaunch(prewarmed:)`),
+    /// taken when the first scene builds: a discarded prewarm never gets here, a real launch
+    /// gets here before its first render. The line stands before the act (#859). A no-op,
+    /// silent, on every launch that was not prewarmed.
+    private static func countPrewarmedLaunchAtFirstScene() -> Bool {
+        guard LaunchGuard.launchCountDeferred else { return false }
+        EchoelCrashLog.breadcrumb(
+            "LaunchGuard: prewarmed launch reached its first scene — counting it now "
+            + "(streak before: \(LaunchGuard.unconfirmedCount))")
+        return LaunchGuard.countPrewarmedLaunch()
     }
 
     init() {
@@ -494,6 +512,7 @@ struct EchoelmusicApp: App {
 
     var body: some Scene {
         WindowGroup {
+            let _ = Self.countPrewarmedLaunchAtFirstScene()
             if LaunchGuard.isSafeMode && !forceNormalMode {
                 // Self-healing recovery: the previous launch crashed before becoming
                 // healthy. Show a legible recovery screen (never a black one). The
