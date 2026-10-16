@@ -552,6 +552,9 @@ final class EchoelAgentDesk {
                 }
             case .duplicatePart:
                 return "copy the selected part to right after it"
+            case .setTrackPan(_, let pan):
+                let name = plan.basis.track?.name ?? "the selected track"
+                return "pan \(name) to " + EchoelPanText.text(pan)
             case .undoAgentChange, .applyMediaLook, .keepTake, .composeHere:
                 return EchoelCommandRegistry.spec(step.id).summary.lowercased()
             }

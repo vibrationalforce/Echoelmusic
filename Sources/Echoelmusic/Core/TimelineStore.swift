@@ -424,6 +424,7 @@ public final class TimelineStore {
             // A level put back by Undo is a WRITE: the agent's own Undo must see it, or it would
             // overwrite the person's Undo with the value it once replaced (review repair 2b's rule).
             if restored.level != current.level { laneLevelWrites[laneID, default: 0] += 1 }
+            if restored.pan != current.pan { lanePanWrites[laneID, default: 0] += 1 }
             persist()
             return HistoryStep.laneMix(laneID: laneID, before: current, after: restored)
         case .lanePatch(let laneID, let before, let after):
@@ -1122,8 +1123,14 @@ public final class TimelineStore {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
         // Non-finite → centre, as on the playback path: a bare `min(1, NaN)` would STORE hard right.
         document.lanes[i].pan = max(-1, min(1, pan.isFinite ? pan : 0))
+        lanePanWrites[id, default: 0] += 1
         persist()
     }
+
+    /// `laneLevelWrites` for the stereo position (GSIDMMW D1): every write through `setLanePan`,
+    /// and every pan a mixer Undo puts back, moves it by one — the same number entered again too.
+    /// It lets the agent's Undo leave a pan the person set after it. Not persisted, not observed.
+    @ObservationIgnored public private(set) var lanePanWrites: [UUID: Int] = [:]
 
     // MARK: - Mixer history (Workstation redesign B3b) — the person's path, never the agent's
 

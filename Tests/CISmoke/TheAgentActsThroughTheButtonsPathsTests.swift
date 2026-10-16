@@ -617,12 +617,12 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         }
         let executor = try code("Sources/Echoelmusic/EchoelAI/EchoelCommandExecutor.swift")
         let commands = try code("Sources/Echoelmusic/EchoelAI/EchoelCommand.swift")
-        for writer in ["TrackMix.setLevel(", "TrackParts.duplicate(", "TrackParts.remove(",
+        for writer in ["TrackMix.setLevel(", "TrackMix.setPan(", "TrackParts.duplicate(", "TrackParts.remove(",
                        "mediaLooks.apply(photo:", "mediaLooks.apply(video:", "mediaLooks.undo(on:",
                        "timeline.keepComposerTake("] {
             XCTAssertTrue(executor.contains(writer), "the executor writes through `\(writer)`, the buttons' path")
         }
-        for direct in ["setLaneLevel(", "duplicateRegion(", "removeRegion(", "replaceDocument(", "timeline.undo(",
+        for direct in ["setLaneLevel(", "setLanePan(", "duplicateRegion(", "removeRegion(", "replaceDocument(", "timeline.undo(",
                        "document.regions.append", "document.lanes[", "MediaSeedApplication.apply(", ".write(to:",
                        "mediaLooks.record("] {
             XCTAssertFalse(executor.contains(direct), "the executor bypasses the button writers with `\(direct)`")
@@ -649,8 +649,11 @@ final class TheAgentActsThroughTheButtonsPathsTests: XCTestCase {
         })
         // AI-6a: `keepComposerTake` (the part bar's "Edit a copy") and `releaseKeptTake` (its take-back,
         // the `.keptTake` Undo's own order) are the two store verbs allowed.
-        XCTAssertEqual(members, ["document", "documentGeneration", "keepComposerTake", "laneLevelWrites", "releaseKeptTake"],
-                       "the executor touches the store beyond reading its document, its generation and the level write count")
+        // GSIDMMW D1: `lanePanWrites` is the pan's write count — read, like the level's (claim 7 of
+        // `TheAgentPansThroughTheInspectorsWriterTests` pins it at the store's writers).
+        XCTAssertEqual(members, ["document", "documentGeneration", "keepComposerTake", "laneLevelWrites", "lanePanWrites",
+                                 "releaseKeptTake"],
+                       "the executor touches the store beyond reading its document, its generation and the two write counts")
         // Review repair 2b: the write count is bumped at the ONE lane-level writer, on every write.
         let store = try code("Sources/Echoelmusic/Core/TimelineStore.swift")
         // Review 4a: the generation moves at BOTH wholesale replacements, and nowhere else.

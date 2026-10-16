@@ -30,7 +30,7 @@ final class TheAgentProposesOnlyRegisteredCommandsTests: XCTestCase {
     func testEveryCommandIsSpecifiedAndNoneIsIrreversible() {
         XCTAssertEqual(EchoelCommandID.allCases.map(\.rawValue),
                        ["project.describeState", "track.setLevel", "part.duplicateAfter", "agent.undoLast",
-                        "media.applyLook", "take.keep", "track.composeHere"],
+                        "media.applyLook", "take.keep", "track.composeHere", "track.setPan"],
                        "ids are a contract with every planner and transcript — renaming one breaks them")
         for spec in EchoelCommandRegistry.all {
             XCTAssertFalse(spec.summary.isEmpty)

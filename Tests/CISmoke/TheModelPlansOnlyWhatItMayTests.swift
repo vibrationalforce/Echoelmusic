@@ -106,7 +106,7 @@ final class TheModelPlansOnlyWhatItMayTests: XCTestCase {
         let guessed = #"{"actions": [{"command": "part.duplicateAfter", "arguments": {"part": ""# + UUID().uuidString + #""}}]}"#
         let failure6 = error(await plan(guessed))
         XCTAssertEqual(failure6, EchoelPlannerRefusal.notTheSelection.commandError)
-        XCTAssertEqual(EchoelModelPlanner.allowed, [.describeState, .setTrackLevel, .duplicatePart])
+        XCTAssertEqual(EchoelModelPlanner.allowed, [.describeState, .setTrackLevel, .duplicatePart, .setTrackPan])
     }
 
     // MARK: 4

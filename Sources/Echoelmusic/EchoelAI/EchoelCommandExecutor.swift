@@ -67,6 +67,8 @@ final class EchoelCommandExecutor {
     private enum Inverse {
         /// `write` is the store's write count for that lane right after the agent's write.
         case level(laneID: UUID, before: Float, after: Float, write: Int)
+        /// The same shape for the stereo position; `write` is `TimelineStore.lanePanWrites` (GSIDMMW D1).
+        case pan(laneID: UUID, before: Float, after: Float, write: Int)
         case removeCopy(TimelineRegion)
         /// The look and the owner's `generation` right after it was recorded — an equal look
         /// applied again by hand is a different generation, and is the person's (review MED-2).
@@ -144,7 +146,8 @@ final class EchoelCommandExecutor {
            let controls = TrackMix.controls(of: trackID, in: document, voiceCapacity: voiceCapacity()) {
             track = EchoelProjectSnapshot.Track(id: trackID, name: lane.name,
                                                 device: TrackMix.deviceName(controls.role),
-                                                hasLevel: controls.level, level: lane.level)
+                                                hasLevel: controls.level, level: lane.level,
+                                                hasPan: controls.pan, pan: lane.pan)
         }
         var part: EchoelProjectSnapshot.Part?
         if let partID, let region = document.regions.first(where: { $0.id == partID }) {
@@ -245,10 +248,11 @@ final class EchoelCommandExecutor {
             case .duplicatePart(.selected) where plan.basis.part == nil,
                  .keepTake(.selected) where plan.basis.part == nil:
                 return .nothingSelected("part")
-            case .composeHere(.selected) where plan.basis.track == nil:
+            case .composeHere(.selected) where plan.basis.track == nil,
+                 .setTrackPan(.selected, _) where plan.basis.track == nil:
                 return .nothingSelected("track")
             case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
-                 .composeHere:
+                 .composeHere, .setTrackPan:
                 continue
             }
         }
@@ -272,8 +276,11 @@ final class EchoelCommandExecutor {
         case .composeHere(.selected):
             guard let id = basis.track?.id else { return command }
             return .composeHere(track: .id(id))
+        case .setTrackPan(.selected, let pan):
+            guard let id = basis.track?.id else { return command }
+            return .setTrackPan(track: .id(id), pan: pan)
         case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
-             .composeHere:
+             .composeHere, .setTrackPan:
             return command
         }
     }
@@ -303,6 +310,8 @@ final class EchoelCommandExecutor {
             return keep(target, into: &group)
         case .composeHere(let target):
             return composeHere(target, into: &group)
+        case .setTrackPan(let target, let pan):
+            return setPan(target, pan, into: &group)
         }
     }
 
@@ -349,7 +358,61 @@ final class EchoelCommandExecutor {
         journal = journal.map { (generation: $0.generation, entries: $0.entries.map(advanced)) }
     }
 
+    /// `noteOwnLevelWrite` for the stereo position: the agent's own pan writes (a change, or a
+    /// restore in Undo) move that lane's `lanePanWrites` and its journal marks together, so only a
+    /// write by someone else blocks the agent's Undo.
+    private func noteOwnPanWrite(on laneID: UUID, pending: inout [Inverse]) {
+        func advanced(_ entry: Inverse) -> Inverse {
+            if case .pan(let id, let before, let after, let write) = entry, id == laneID {
+                return .pan(laneID: id, before: before, after: after, write: write + 1)
+            }
+            return entry
+        }
+        pending = pending.map(advanced)
+        journal = journal.map { (generation: $0.generation, entries: $0.entries.map(advanced)) }
+    }
+
     // MARK: Commands
+
+    /// GSIDMMW D1 — the inspector's Pan field: written through `TrackMix.setPan`, then read back.
+    /// A position past −1 … 1 never gets here (the parser refuses it), and the store's own clamp is
+    /// therefore never what decides the value: the read-back must equal what was asked.
+    private func setPan(_ target: EchoelTarget, _ pan: Double,
+                        into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+        let document = timeline.document
+        let laneID: UUID
+        switch track(target, in: document) {
+        case .success(let id): laneID = id
+        case .failure(let error): return .failed(error)
+        }
+        guard let lane = document.lanes.first(where: { $0.id == laneID }),
+              let controls = TrackMix.controls(of: laneID, in: document, voiceCapacity: voiceCapacity()) else {
+            return .failed(.targetGone("track"))
+        }
+        guard controls.pan else { return .failed(.noPan(TrackMix.deviceName(controls.role))) }
+        guard pan.isFinite, TrackMix.panRange.contains(pan) else {
+            return .failed(.outOfRange("A stereo position goes from -1 (left) to 1 (right), so I did nothing."))
+        }
+        let before = lane.pan
+        let asked = Float(pan)
+        if asked == before {
+            return .done("\(lane.name) is already at \(EchoelPanText.text(Double(before))).")
+        }
+        TrackMix.setPan(pan, laneID: laneID, timeline: timeline)
+        noteOwnPanWrite(on: laneID, pending: &group)
+        guard let after = timeline.document.lanes.first(where: { $0.id == laneID })?.pan else {
+            return .failed(.verificationFailed("the track is gone"))
+        }
+        if after != before {
+            group.append(.pan(laneID: laneID, before: before, after: after,
+                              write: timeline.lanePanWrites[laneID] ?? 0))
+        }
+        guard after == asked else {
+            return .failed(.verificationFailed("the stereo position reads \(EchoelPanText.text(Double(after))), "
+                + "not \(EchoelPanText.text(pan))"))
+        }
+        return .done("\(lane.name): \(EchoelPanText.text(Double(before))) → \(EchoelPanText.text(Double(after))).")
+    }
 
     private func setLevel(_ target: EchoelTarget, _ change: EchoelLevelChange,
                           into group: inout [Inverse]) -> EchoelStepResult.Outcome {
@@ -612,6 +675,22 @@ final class EchoelCommandExecutor {
                 } else {
                     kept.append("The level of \(lane.name)")
                 }
+            case .pan(let laneID, let before, let after, let write):
+                guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else {
+                    kept.append("A removed track")
+                    continue
+                }
+                guard lane.pan == after, timeline.lanePanWrites[laneID] ?? 0 == write else {
+                    kept.append("The stereo position of \(lane.name)")
+                    continue
+                }
+                TrackMix.setPan(Double(before), laneID: laneID, timeline: timeline)
+                noteOwnPanWrite(on: laneID, pending: &entries)
+                if timeline.document.lanes.first(where: { $0.id == laneID })?.pan == before {
+                    restored += 1
+                } else {
+                    kept.append("The stereo position of \(lane.name)")
+                }
             case .removeCopy(let copy):
                 guard let live = timeline.document.regions.first(where: { $0.id == copy.id }) else {
                     alreadyUndone += 1   // the song's Undo or Remove took it back before this
@@ -683,7 +762,8 @@ enum EchoelStateText {
         var lines: [String] = []
         if let track = state.track {
             let level = track.hasLevel ? "level \(TrackMix.decibelText(Double(track.level)))" : "no level"
-            lines.append("Selected track: \(track.name) — \(track.device), \(level).")
+            let pan = track.hasPan ? ", pan \(EchoelPanText.text(Double(track.pan)))" : ""
+            lines.append("Selected track: \(track.name) — \(track.device), \(level)\(pan).")
         } else {
             lines.append("No track is selected.")
         }

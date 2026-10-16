@@ -47,6 +47,9 @@ enum EchoelCommandID: String, CaseIterable, Sendable, Codable {
     /// Let the instrument's composer write a part on a rack track — the Device page's "Compose
     /// here" (GMMW AI-6c).
     case composeHere = "track.composeHere"
+    /// Put the selected (or a named) track at a stereo position, −1 (left) … 1 (right) — the
+    /// inspector's Pan field (GSIDMMW D1).
+    case setTrackPan = "track.setPan"
 }
 
 /// Which card a media command means. "This photo" is the one the photo card has read and shows.
@@ -78,6 +81,9 @@ enum EchoelCommand: Equatable, Sendable {
     case applyMediaLook(medium: EchoelMedium)
     case keepTake(part: EchoelTarget)
     case composeHere(track: EchoelTarget)
+    /// To this stereo position, −1 (left) … 0 (centre) … 1 (right). Absolute only: "a bit more
+    /// left" has no number the product could stand behind, so a planner asks instead.
+    case setTrackPan(track: EchoelTarget, pan: Double)
 
     var id: EchoelCommandID {
         switch self {
@@ -88,6 +94,7 @@ enum EchoelCommand: Equatable, Sendable {
         case .applyMediaLook: return .applyMediaLook
         case .keepTake: return .keepTake
         case .composeHere: return .composeHere
+        case .setTrackPan: return .setTrackPan
         }
     }
 }
@@ -207,6 +214,16 @@ enum EchoelCommandRegistry {
                 effect: "Places a composer part in the loop and gives the track a variation of its own "
                     + "— the Device page's Compose here. Its notes arrive the next time the instrument composes.",
                 undo: .agentJournal, permission: .reversibleEdit)
+        case .setTrackPan:
+            return EchoelCommandSpec(
+                id: id, summary: "Move a track left or right",
+                parameters: ["track: selected | track id",
+                             "pan: a number from -1 (left) through 0 (centre) to 1 (right)"],
+                preconditions: ["the track exists",
+                                "the track has a Pan field (not the Echoel track, not a bio curve, not a track without a voice)",
+                                "the number is inside -1 … 1 — a number past it is refused, never shortened"],
+                effect: "Sets the track's stereo position through the inspector's own writer.",
+                undo: .agentJournal, permission: .reversibleEdit)
         }
     }
 
@@ -221,6 +238,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case nothingSelected(String)
     case targetGone(String)
     case noLevel(String)
+    case noPan(String)
     case levelIsSilent
     case outOfRange(String)
     case notArrangeable
@@ -264,6 +282,8 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "That \(what) is no longer in the piece."
         case .noLevel(let device):
             return "This track has no level to change (\(device))."
+        case .noPan(let device):
+            return "This track has no stereo position to change (\(device))."
         case .levelIsSilent:
             return "The track is silent, so it cannot get louder or quieter by a step. Give it a level in decibels."
         case .outOfRange(let detail):
@@ -375,6 +395,16 @@ enum EchoelLevelMath {
     }
 }
 
+// MARK: - Stereo position, in words (one place)
+
+enum EchoelPanText {
+    /// "centre", or the position with its side — "-0.50 (left)". Two decimals, as the Pan field reads.
+    nonisolated static func text(_ pan: Double) -> String {
+        guard pan.isFinite, abs(pan) >= 0.005 else { return "centre" }
+        return String(format: "%.2f", pan) + (pan < 0 ? " (left)" : " (right)")
+    }
+}
+
 // MARK: - What a planner proposes (data) → a command (typed)
 
 /// One action as a planner writes it: a command id and string arguments. DATA — it grants nothing.
@@ -411,6 +441,22 @@ enum EchoelCommandParser {
             return target(proposal.arguments["part"], naming: "that part").map { EchoelCommand.keepTake(part: $0) }
         case .composeHere:
             return target(proposal.arguments["track"], naming: "that track").map { EchoelCommand.composeHere(track: $0) }
+        case .setTrackPan:
+            let track: EchoelTarget
+            switch target(proposal.arguments["track"], naming: "that track") {
+            case .success(let t): track = t
+            case .failure(let e): return .failure(e)
+            }
+            guard let raw = proposal.arguments["pan"],
+                  let pan = Double(raw.replacingOccurrences(of: "\u{2212}", with: "-")
+                    .trimmingCharacters(in: .whitespaces)),
+                  pan.isFinite else {
+                return .failure(.invalidArgument("that stereo position"))
+            }
+            guard TrackMix.panRange.contains(pan) else {
+                return .failure(.outOfRange("A stereo position goes from -1 (left) to 1 (right), so I did nothing."))
+            }
+            return .success(.setTrackPan(track: track, pan: pan))
         case .setTrackLevel:
             let track: EchoelTarget
             switch target(proposal.arguments["track"], naming: "that track") {
@@ -439,6 +485,7 @@ enum EchoelCommandParser {
         case .setTrackLevel: return ["track", "decibels", "mode"]
         case .applyMediaLook: return ["medium"]
         case .composeHere: return ["track"]
+        case .setTrackPan: return ["track", "pan"]
         }
     }
 
@@ -461,6 +508,10 @@ struct EchoelProjectSnapshot: Equatable, Sendable {
         let device: String
         let hasLevel: Bool
         let level: Float
+        /// Whether the track shows a Pan field, and where it sits (GSIDMMW D1) — a plan made
+        /// before the person moved the pan is refused, as one made before a level change is.
+        let hasPan: Bool
+        let pan: Float
     }
     struct Part: Equatable, Sendable {
         let id: UUID
