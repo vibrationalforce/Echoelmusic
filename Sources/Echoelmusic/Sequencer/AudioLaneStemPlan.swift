@@ -97,15 +97,21 @@ public enum AudioLaneStemPlan {
                               sampleRate: Double, fileFrames: Int) -> AudioLaneStemFrames? {
         guard segment.rate == 1, bpm.isFinite, bpm > 0, sampleRate.isFinite, sampleRate > 0,
               fileFrames > 0 else { return nil }
-        func frame(_ tick: Int) -> Int {
-            Int((TimelineTime.seconds(fromTicks: tick, bpm: bpm) * sampleRate).rounded())
-        }
-        let destination = frame(segment.startTick)
-        let span = frame(segment.endTick) - destination
+        let destination = frame(atTick: segment.startTick, bpm: bpm, sampleRate: sampleRate)
+        let span = frame(atTick: segment.endTick, bpm: bpm, sampleRate: sampleRate) - destination
         let source = Swift.max(0, Int((segment.mediaFromSeconds * sampleRate).rounded(.down)))
         guard span > 0, source < fileFrames else { return nil }
         return AudioLaneStemFrames(destinationStart: destination, sourceStart: source,
                                    count: Swift.min(span, fileFrames - source))
+    }
+}
+
+extension AudioLaneStemPlan {
+    /// The stem frame of song-absolute `tick` — the ONE rounding every stem of a song shares, so
+    /// segment edges and the song's total length land on the same frames in every file.
+    /// The caller validates `bpm` and `sampleRate` (finite, positive).
+    public static func frame(atTick tick: Int, bpm: Double, sampleRate: Double) -> Int {
+        Int((TimelineTime.seconds(fromTicks: tick, bpm: bpm) * sampleRate).rounded())
     }
 }
 

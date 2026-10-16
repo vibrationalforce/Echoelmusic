@@ -57,6 +57,20 @@ final class StemFileWriter {
     /// The bit depth every stem file is written with (ADR-008 §4: PCM 24 bit).
     static let fileBitDepth = 24
 
+    /// The ONE file format of a stem — mono, integer PCM at `fileBitDepth`, the take's rate. The
+    /// offline audio-lane renderer writes the same, so a set of stems never mixes two formats.
+    static func fileSettings(sampleRate: Double) -> [String: Any] {
+        [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: StemFileWriter.fileBitDepth,
+            AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false,
+        ]
+    }
+
     /// The engine sample time every stem starts at.
     let startSampleTime: Int64
 
@@ -81,15 +95,7 @@ final class StemFileWriter {
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames)) else {
             throw WriterError.bufferUnavailable
         }
-        let settings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: sampleRate,
-            AVNumberOfChannelsKey: 1,
-            AVLinearPCMBitDepthKey: StemFileWriter.fileBitDepth,
-            AVLinearPCMIsFloatKey: false,
-            AVLinearPCMIsBigEndianKey: false,
-            AVLinearPCMIsNonInterleaved: false,
-        ]
+        let settings = StemFileWriter.fileSettings(sampleRate: sampleRate)
         self.files = try stems.map {
             try AVAudioFile(forWriting: $0.url, settings: settings,
                             commonFormat: .pcmFormatFloat32, interleaved: false)
