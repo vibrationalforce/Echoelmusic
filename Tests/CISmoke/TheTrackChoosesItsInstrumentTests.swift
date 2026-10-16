@@ -24,7 +24,7 @@
 // THIS tree (no toolchain): the role rule over the fixture, and every scan needle.
 //
 // 5. REVIEW OF 895cf025a (4 MED + 1 LOW), added in the repair commit: the Pan field is offered
-//    only where `LaneVoiceRack.setPan` moves the sound (not the sub-bass, not the sampler); the
+//    only where `LaneVoiceRack.setPan` moves the sound (not the sub-bass; the sampler since SP1); the
 //    Device row names the voice by the Instrument row's name (one name per voice); the hint says
 //    a track on EchoelBodyVibe cannot be armed — measured end to end through `RecordTake.canArm`;
 //    and a pick of what already plays writes nothing. FORWARD guards; the `setPan` no-op and the
@@ -189,10 +189,12 @@ final class TheTrackChoosesItsInstrumentTests: XCTestCase {
         // The pan premise, at the rack.
         let rack = try source(Self.rackPath)
         let setPan = try member("public func setPan(slot: Int, _ pan: Float) {", in: rack)
-        XCTAssertTrue(setPan.contains("case .subBass, .sampler:"), """
-            the sub-bass and sampler units still take no pan — if one gains a pan stage, offer the \
+        XCTAssertTrue(setPan.contains("case .subBass:\n            break"), """
+            the sub-bass unit still takes no pan (the sampler pans since SP1) — if it gains a pan stage, offer the \
             field in `TrackMix.controls` in the same commit
             """)
+        XCTAssertTrue(setPan.contains("samplers[i].setPan(pan)"),
+                      "SP1: the sampler unit takes the lane pan at its node's mixer stage")
     }
 
     func testTheBodyVoiceTrackSaysItCannotBeArmed() {

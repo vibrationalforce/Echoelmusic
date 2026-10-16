@@ -1,6 +1,12 @@
 # PLAN — Stereo-Sampler (Live-Set-Audit, Posten „Sampler stereo + Überlappung")
 
-Stand 2026-10-16. Council inline, Gate: **MITIGATE → erst messen, dann bauen.**
+Stand 2026-10-16. ⛔ **PRÄMISSE ZURÜCKGENOMMEN (dieselbe Stunde):** `PolySynthVoice` rendert
+**stereo** (`channels: 2`), also ist der Spur-Bus — Format der ersten Quelle — schon stereo. SS0 und
+SS1 unten sind GESTRICHEN. Gebaut statt dessen: **SP1** (Sampler nimmt den Spur-Pan, Inspektor bietet
+das Feld). Bleiben: SS2 (Stereo-Samples) und SS3 (Überlappung). Der Rest dieser Datei ist die
+ursprüngliche, falsche Herleitung — stehen gelassen, damit niemand sie neu herleitet.
+
+Council inline, Gate: **MITIGATE → erst messen, dann bauen.**
 
 ## Gemessen
 - `SamplerVoice.loadSample` faltet jede Datei auf Mono (`resampleToMono`), Knoten-Format 1 Kanal.

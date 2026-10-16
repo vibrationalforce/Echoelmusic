@@ -76,7 +76,7 @@ final class TheTrackInspectorShowsOnlyWiredControlsTests: XCTestCase {
         let rack = try XCTUnwrap(TrackMix.controls(of: Self.rackLane.id, in: doc, voiceCapacity: Self.rack))
         XCTAssertEqual(rack.role, .laneSynth(TrackInstrument.sampler.voiceKind))
         XCTAssertTrue(rack.level && rack.muteSolo)
-        XCTAssertFalse(rack.pan, "the sampler unit has no pan stage (`LaneVoiceRack.setPan` no-op) — a pan field moves nothing")
+        XCTAssertTrue(rack.pan, "SP1: the sampler pans at its node's mixer stage, so its track offers the field")
         // Counterweight (#343): a rack lane on the synth pans.
         let plain = TimelineLane(name: "Pad", kind: .midi)
         let synthDoc = TimelineDocument(lanes: [Self.echoelLane, plain], regions: [])

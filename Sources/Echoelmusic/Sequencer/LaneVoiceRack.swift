@@ -601,10 +601,10 @@ public final class LaneVoiceRack {
     }
 
     /// Lane pan per bound kind. The mono sub stays un-panned (pro-audio
-    /// convention: subs are not localized) — documented no-op. The sampler is a
-    /// mono source node without a pan stage (slice 1) — documented no-op too.
-    /// The bio unit pans at its source node's mixer stage (AVAudioMixing, the
-    /// B2/PolySynthVoice engine path).
+    /// convention: subs are not localized) — documented no-op. The sampler and
+    /// the bio unit pan at their source node's mixer stage (AVAudioMixing, the
+    /// B2/PolySynthVoice engine path; the sampler since SP1 — its mono node feeds
+    /// the slot's stereo track bus, so the pan places it).
     public func setPan(slot: Int, _ pan: Float) {
         switch binding(forSlot: slot) {
         case .poly:
@@ -612,7 +612,10 @@ public final class LaneVoiceRack {
         case .bio(let i):
             guard bios.indices.contains(i) else { return }
             bios[i].setPan(pan)   // encapsulated: clamps −1…1
-        case .subBass, .sampler:
+        case .sampler(let i):
+            guard samplers.indices.contains(i) else { return }
+            samplers[i].setPan(pan)   // encapsulated: non-finite ⇒ centre, clamps −1…1
+        case .subBass:
             break
         }
     }

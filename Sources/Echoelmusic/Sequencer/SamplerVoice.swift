@@ -201,6 +201,14 @@ public final class SamplerVoice: @unchecked Sendable {
         )
     }
 
+    /// SP1 — the lane pan, at the source node's mixer stage (`AVAudioMixing`): the node feeds
+    /// the slot's track bus, which is stereo (the slot's synth voice sets its format), so the pan
+    /// places the mono sample in the stereo field. Control-plane only, never in the render.
+    /// Non-finite ⇒ centre, like `PolySynthVoice.setPan` (`min(1, NaN)` is 1 — hard right).
+    public func setPan(_ pan: Float) {
+        sourceNode.pan = max(-1, min(1, pan.isFinite ? pan : 0))
+    }
+
     /// Set per-pad playback: region trim (`start`/`end` as 0…1 of the sample),
     /// `reverse`, and `pitchSemitones` (−24…+24, realised as a playback-rate
     /// change with linear interpolation). Main-thread only. FL/Ableton-style

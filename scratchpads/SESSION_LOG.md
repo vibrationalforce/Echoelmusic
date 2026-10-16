@@ -1160,6 +1160,6 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 
 - **LS-TP1** (`d82e1e8`) Export-Normalisierung gegen BS.1770-True-Peak (−1 dBTP) · **LS-TP2** (`120e2b2`) Meter liest denselben Schätzer · Kernel-Zeiger (`896bc53`).
 - **LS-ST1** (`784f1c7`) Sampler übergibt seinen Block an einen Stem-Abgriff (aus) · **LS-ST2** (`d9c22c8`) `AudioLaneStemPlan` = Gewinner-Regel des Live-Spielers · **LS-ST3a** (`7f66387`) Frames aus Ticks, Nachbarn teilen den Frame · **LS-ST3b** Renderer (mono 24 bit, Songlänge, lehnt Warp/Transpose/Effekte/fremde Rate vor dem Schreiben ab).
-- **E34** (Laptop: E15 vor Catalyst) und **E35** (Stem-Tür wartet auf G-D) im Inbox; Stereo-Sampler auf SS0 gehalten (Bus-Format = erste Quelle).
+- **E34** (Laptop: E15 vor Catalyst) und **E35** (Stem-Tür wartet auf G-D) im Inbox; Stereo-Sampler: Bus ist schon stereo (PolySynthVoice 2 Kanäle; meine erste Herleitung „mono“ ist zurückgenommen) → **SP1** Sampler-Pan gebaut; SS2/SS3 offen.
 - **10.79.510** (`d25c788`) gehoben nach grünem Compile Check + Build for Testing auf `d9c22c8`; TestFlight 2635 lief zum Zeitpunkt.
 - Lehre: auf einen Gate-Lauf nicht warten — lokal weiterbauen, den Release-Commit EINZELN pushen (`git push origin <sha>:refs/heads/<branch>`), damit TestFlight genau den geprüften Stand baut.

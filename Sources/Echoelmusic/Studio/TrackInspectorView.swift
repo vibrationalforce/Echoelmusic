@@ -147,8 +147,9 @@ enum TrackMix {
                             genre: document.echoelGenre != nil, sound: false)
         case .laneSynth(let kind):
             // Review of 895cf025a (MED): `LaneVoiceRack.setPan` is a documented no-op for the
-            // sub-bass and the sampler unit — a pan field there would move a number, not the sound.
-            return Controls(role: role, level: true, pan: kind != .subBass && kind != .sampler,
+            // sub-bass — a pan field there would move a number, not the sound. The sampler pans
+            // since SP1 (its node feeds the slot's stereo track bus).
+            return Controls(role: role, level: true, pan: kind != .subBass,
                             muteSolo: true, effect: kind == .poly, genre: false,
                             sound: kind == .poly)
         case .audio:

@@ -5373,6 +5373,6 @@ eine eigene Scheibe. Ein Intel-Mac führt keine iPhone-Apps aus — dann fällt 
 
 Audiospur-Stems werden aus Datei und `TimelineDocument` gerechnet, nicht abgegriffen: `AudioLaneStemPlan` (LS-ST2/3a) fragt `TimelineScheduling` nach dem Gewinner, `AudioLaneStemRenderer` (LS-ST3b) schreibt mono, 24 bit, so lang wie das Stück. Er lehnt vor dem ersten Byte ab, was er nicht originalgetreu kann: Warp, Transpose, aktive Spur-Effekte (inkl. Grain), fehlende Datei, fremde Sample-Rate. Grund: ein Stem, der still anders klingt als das Stück, ist schlimmer als ein abgelehnter. SRC und Stretcher folgen als eigene Scheiben. Review 2026-11-15.
 
-### 2026-10-16 — Stereo-Sampler wartet auf eine Pan-Messung (SS0)
+### 2026-10-16 — Stereo-Sampler: der Bus ist schon stereo; SP1 zuerst
 
-Der Spur-Bus übernimmt das Format seiner ERSTEN Quelle (`AudioEngine.attachTrackBus`), das ist der Mono-Synth — ein Stereo-Sampler würde dort wieder mono. Den Bus zu verbreitern ändert das Pan-Gesetz jeder Spur. Erst offline messen (SS0), dann Bus (SS1), Sampler (SS2), Überlappung (SS3). Plan: `scratchpads/PLAN_STEREO_SAMPLER_2026-10-16.md`. Review 2026-11-15.
+Der Spur-Bus übernimmt das Format seiner ERSTEN Quelle (`AudioEngine.attachTrackBus`), und das ist `PolySynthVoice` mit **2 Kanälen** — der Bus ist also stereo, eine Bus-Änderung ist unnötig. ⛔ Die erste Fassung dieses Eintrags nannte den Synth mono und plante dafür eine Messung (SS0) und einen Bus-Umbau (SS1); beides ist gestrichen, eine Stunde später, bevor Code daran hing. Gebaut: **SP1** — der Mono-Sampler nimmt den Spur-Pan an seiner Mixer-Stufe, der Inspektor bietet das Feld an. Offen: SS2 Stereo-Samples, SS3 Überlappung. Review 2026-11-15.
