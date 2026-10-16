@@ -391,7 +391,12 @@ struct WorkstationView: View {
                     if !focused {
                     ArrangeCanvasView(rows: arrangeRows, document: timeline.document,
                                       bpm: player.preflightTempo,
-                                      songTicks: ArrangementStrip.songTicks(summary),
+                                      songTicks: ArrangeCanvas.canvasTicks(songTicks: ArrangementStrip.songTicks(summary)),
+                                      creatableLanes: Set(arrangeRows.map(\.id).filter {
+                                          MIDIImport.takesEmptyPart(onLane: $0, in: timeline.document,
+                                                                    voiceCapacity: player.laneVoiceCapacity)
+                                      }),
+                                      createPart: { createPart(onLane: $0, atTick: $1) },
                                       switches: { AnyView(muteSoloSwitches($0)) })
                     } else {
                         // AE-3 review (MED-1): the ruler stays — the one control that moves a
@@ -1780,6 +1785,22 @@ struct WorkstationView: View {
                                      loopBars: TrackCompose.loopBars(in: .standard))
         PieceRoll.requestCompose(after: outcome)
         importNote = PieceRoll.note(outcome)
+    }
+
+    /// A1 — a tap on an empty lane: an empty part on THAT track at THAT bar, selected, its notes
+    /// open — "New MIDI Part"'s outcome, placed where the finger pointed.
+    private func createPart(onLane laneID: UUID, atTick tick: Int) {
+        importNote = nil
+        tuningPending = nil
+        switch MIDIImport.placeEmptyPart(clipStore: clipStore, timeline: timeline,
+                                         onLane: laneID, atTick: tick,
+                                         voiceCapacity: player.laneVoiceCapacity) {
+        case .success(let landing):
+            selection.selectRegion(landing.region.id, in: timeline.document)
+            selection.setNotesOpen(true)
+        case .failure(let failure):
+            importNote = failure.userMessage
+        }
     }
 
     private func newMIDIPart() {

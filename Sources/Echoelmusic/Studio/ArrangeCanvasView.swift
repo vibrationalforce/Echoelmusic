@@ -109,16 +109,41 @@ import SwiftUI
 /// The pure half of the canvas: which tracks it draws and where the playhead sits.
 enum ArrangeCanvas {
 
-    /// The tracks the canvas draws, in the document's order: every non-bio track with parts.
-    /// A bio curve is not an arrangement and draws no row.
+    /// The tracks the canvas draws, in the document's order: every non-bio track, with parts or
+    /// not. A bio curve is not an arrangement and draws no row.
     nonisolated static func rows(_ summary: WorkstationSummary) -> [WorkstationSummary.LaneRow] {
         summary.lanes.filter { draws($0) }
     }
 
     /// Whether the canvas draws this track — ONE rule for `rows` and for the card that hands its
     /// Mute and Solo to the canvas gutter (T1), so the two cannot disagree (#416).
+    /// ⭐ A1 (founder 2026-10-16, "einen einfachen Arrangement-Modus … auf Ableton-Level"): an
+    /// EMPTY track is drawn too. Until now a new track had no lane — the arrangement began as a
+    /// screen of buttons, and the place a part goes could not be pointed at.
     nonisolated static func draws(_ row: WorkstationSummary.LaneRow) -> Bool {
-        !row.isBio && row.regionCount > 0
+        !row.isBio
+    }
+
+    /// A1 — open bars the canvas shows past the song's end, so there is always room to place
+    /// the next part, and the shortest canvas, so a new song is a timeline and not a sliver.
+    static let headroomBars = 4
+    static let minimumBars = 8
+
+    /// A1 — the canvas's scale: the song plus `headroomBars`, never under `minimumBars`. Every
+    /// row, the ruler and the playhead take THIS one number, so they still line up (#416).
+    nonisolated static func canvasTicks(songTicks: Int) -> Int {
+        let bar = TimelineTime.ticksPerBar
+        return Swift.max(Swift.max(0, songTicks) + headroomBars * bar, minimumBars * bar)
+    }
+
+    /// A1 — the bar a tap at `x` on a lane `laneWidth` wide names: the bar under the finger,
+    /// floored to its downbeat, never past the canvas's last bar. nil for degenerate geometry.
+    nonisolated static func barTick(atX x: CGFloat, laneWidth: CGFloat, songTicks: Int) -> Int? {
+        guard songTicks > 0, laneWidth.isFinite, laneWidth > 0, x.isFinite else { return nil }
+        let fraction = Double(x / laneWidth).clamped(to: 0...1)
+        let bar = TimelineTime.ticksPerBar
+        let lastBar = ((songTicks - 1) / bar) * bar
+        return Swift.min((Int(fraction * Double(songTicks)) / bar) * bar, lastBar)
     }
 
     /// Whether a track also gets a card in the list under the canvas (A5, founder 2026-10-01).
@@ -513,6 +538,11 @@ struct ArrangeCanvasView: View {
     /// depend on it at all (its rate cancels the tempo).
     let bpm: Double
     let songTicks: Int
+    /// A1 — the tracks a tap on empty lane space makes a part on (`MIDIImport.takesEmptyPart`,
+    /// asked by the Workstation, which holds the voice capacity), and the one writer it calls.
+    /// Declared before `switches` so the call keeps that closure last.
+    let creatableLanes: Set<UUID>
+    let createPart: @MainActor (UUID, Int) -> Void
     /// T1 (founder 2026-10-14, the old track look): each track's Mute and Solo, built by the
     /// Workstation's ONE switch builder and placed under the name in the gutter. The canvas only
     /// PLACES them — it never names mute or solo itself (`TheCanvasShowsWhatIsSilentTests`).
@@ -649,6 +679,24 @@ struct ArrangeCanvasView: View {
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
                     .fill(EchoelTheme.fill)
+                    .contentShape(Rectangle())
+                    // A1 — a tap on empty lane space makes a part on that bar. The parts above
+                    // take their own taps, so only the empty space reaches this.
+                    .onTapGesture(coordinateSpace: .local) { location in
+                        guard creatableLanes.contains(row.id),
+                              let tick = ArrangeCanvas.barTick(atX: location.x, laneWidth: width,
+                                                               songTicks: songTicks) else { return }
+                        createPart(row.id, tick)
+                    }
+                if blocks.isEmpty && creatableLanes.contains(row.id) {
+                    // Said, not discovered: an empty track says what a tap does.
+                    Text("Tap to add a part")
+                        .font(EchoelTheme.font(11))
+                        .foregroundStyle(EchoelTheme.dim)
+                        .padding(.leading, 8)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
                 ForEach(blocks) { block in
                     let start = starts[block.id] ?? 0
                     ArrangePartBlock(block: block, startTick: start,
@@ -694,6 +742,13 @@ struct ArrangeCanvasView: View {
         // rule, `ArrangementStrip.spoken`) — and each part inside it is its own button.
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(spokenName): " + ArrangementStrip.spoken(onLane: row.id, in: document))
+        // A1 — the tap's VoiceOver twin: a part after the track's last one, on a bar.
+        .accessibilityAction(named: Text("Add a part")) {
+            guard creatableLanes.contains(row.id) else { return }
+            let bar = TimelineTime.ticksPerBar
+            let next = Swift.max(0, document.nextStartTick(inLane: row.id))
+            createPart(row.id, ((next + bar - 1) / bar) * bar)
+        }
     }
 
     /// The release of a drag: select the part, then ONE store edit — or nothing, when it lands

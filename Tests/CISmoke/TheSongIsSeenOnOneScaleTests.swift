@@ -13,7 +13,8 @@
 //    blocks sit at start/length fractions of it; overlapping parts are ordered start-then-
 //    placement (the order `activeRegion` resolves in, so the part that plays is drawn on top);
 //    an empty song draws nothing; the spoken form names bars the way the Session view does.
-// 2. END-TO-END (pure): the canvas draws exactly the non-bio tracks with parts; the playhead
+// 2. END-TO-END (pure): the canvas draws exactly the non-bio tracks (since A1, 2026-10-16, empty
+//    ones too, and its scale is the song plus `ArrangeCanvas.headroomBars`); the playhead
 //    fraction is nil without a scale and pinned to 0…1 otherwise.
 // 3. SOURCE: the canvas reads no player, no position and no song from the store, and has no
 //    drag of its own; the playhead is its own self-driving leaf that selects nothing and
@@ -130,8 +131,9 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
             regions: [TimelineRegion(laneID: bio.id, clipID: clip, startTick: 0, lengthTicks: Self.bar),
                       TimelineRegion(laneID: Self.keysLane.id, clipID: clip, startTick: 0,
                                      lengthTicks: Self.bar)])
-        XCTAssertEqual(ArrangeCanvas.rows(WorkstationSummary(document: doc)).map(\.id), [Self.keysLane.id],
-                       "a bio curve is not an arrangement, and an empty track has no row")
+        XCTAssertEqual(ArrangeCanvas.rows(WorkstationSummary(document: doc)).map(\.id),
+                       [Self.keysLane.id, Self.loopLane.id],
+                       "a bio curve is not an arrangement; an empty track has a row since A1 (2026-10-16)")
 
         let song = 4 * Self.bar
         XCTAssertNil(ArrangeCanvas.playheadFraction(tick: 0, songTicks: 0), "no scale, no playhead")
@@ -194,9 +196,10 @@ final class TheSongIsSeenOnOneScaleTests: XCTestCase {
         let workstation = try source(Self.workstationPath)
         XCTAssertEqual(workstation.components(separatedBy: "ArrangeCanvasView(").count - 1, 1)
         XCTAssertTrue(workstation.contains("let arrangeRows = ArrangeCanvas.rows(summary)"),
-                      "the rows are the pure rule's rows — never a bio curve, never an empty track")
-        XCTAssertTrue(workstation.contains("songTicks: ArrangementStrip.songTicks(summary)"),
-                      "every row gets the SAME scale, or the rows do not line up")
+                      "the rows are the pure rule's rows — never a bio curve")
+        XCTAssertTrue(workstation.contains(
+                          "songTicks: ArrangeCanvas.canvasTicks(songTicks: ArrangementStrip.songTicks(summary)),"),
+                      "every row gets the SAME scale — the song plus the open bars after it (A1) — or the rows do not line up")
         let doors = try filesMatching { code, _ in code.contains("ArrangeCanvasView(") }
         XCTAssertEqual(doors, [Self.workstationPath])
         let strips = try filesMatching { code, _ in code.contains("ArrangementStripView(") }

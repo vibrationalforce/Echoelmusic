@@ -19,7 +19,8 @@
 //
 // THE THREE CLAIMS:
 // 1. One pure rule decides which tracks keep a card: the open one, and every track the canvas
-//    does not draw (a bio curve, a track without parts) — so every track has exactly one head
+//    does not draw (a bio curve — since A1, 2026-10-16, an empty track IS drawn, so it no longer
+//    keeps a card) — so every track has exactly one head
 //    (RUNTIME, on `ArrangeCanvas.listsCard`, driven through `ArrangeCanvas.rows`).
 // 2. The gutter is a selection target: it calls `selection.toggleTrack` for the tap AND for
 //    VoiceOver, says selected as a trait and as a ring (never colour alone), is one accessible
@@ -62,14 +63,15 @@ final class TheTrackHeadSitsOnTheCanvasTests: XCTestCase {
             regions: [TimelineRegion(laneID: Self.bioLane.id, clipID: clip, startTick: 0, lengthTicks: Self.bar),
                       TimelineRegion(laneID: Self.keysLane.id, clipID: clip, startTick: 0, lengthTicks: Self.bar)])
         let rows = ArrangeCanvas.rows(WorkstationSummary(document: doc))
-        XCTAssertEqual(rows.map(\.id), [Self.keysLane.id], "the fixture's canvas draws Keys only")
+        XCTAssertEqual(rows.map(\.id), [Self.keysLane.id, Self.emptyLane.id],
+                       "the canvas draws every non-bio track, an empty one too (A1, 2026-10-16)")
 
         XCTAssertFalse(ArrangeCanvas.listsCard(Self.keysLane.id, open: nil, canvasRows: rows),
                        "a drawn, closed track's head is its canvas gutter — no second card")
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.bioLane.id, open: nil, canvasRows: rows),
                       "a bio curve is not drawn on the canvas — it keeps its card")
-        XCTAssertTrue(ArrangeCanvas.listsCard(Self.emptyLane.id, open: nil, canvasRows: rows),
-                      "a track with no parts is not drawn — it keeps its card, or it has no head at all")
+        XCTAssertFalse(ArrangeCanvas.listsCard(Self.emptyLane.id, open: nil, canvasRows: rows),
+                       "since A1 a track with no parts IS drawn — its head is its gutter, no second card")
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.keysLane.id, open: Self.keysLane.id, canvasRows: rows),
                       "the OPEN track's card is its header (its Mute and Solo stand in the gutter since T1)")
         XCTAssertTrue(ArrangeCanvas.listsCard(Self.keysLane.id, open: nil, canvasRows: []),

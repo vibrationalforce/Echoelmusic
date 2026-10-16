@@ -212,26 +212,9 @@ public enum MIDIImport {
                                      voiceCapacity: Int) -> Result<Landing, Failure> {
         guard let lane = emptyPartLane(in: document, selectedTrack: selectedTrack,
                                        voiceCapacity: voiceCapacity) else { return .failure(.noMIDILane) }
-        let name = "MIDI · \(lane.name)"
-        let played = Set(document.regions.map(\.clipID))
-        let clip: Clip
-        let slot: Int
-        if let reuse = slots.firstIndex(where: { candidate in
-               guard let c = candidate else { return false }
-               return c.kind == .midi && !c.composerOwned && c.isEmpty && c.automation.isEmpty
-                   && !played.contains(c.id)
-           }),
-           let old = slots[reuse] {
-            clip = Clip(id: old.id, name: name, colorIndex: old.colorIndex, kind: .midi,
-                        melody: MelodyClip(notes: []), composerOwned: false)
-            slot = reuse
-        } else if let free = slots.firstIndex(where: { $0 == nil }) {
-            clip = Clip(name: name, colorIndex: free, kind: .midi,
-                        melody: MelodyClip(notes: []), composerOwned: false)
-            slot = free
-        } else {
-            return .failure(.clipGridFull)
-        }
+        guard let picked = emptyClip(named: "MIDI · \(lane.name)", document: document,
+                                     slots: slots) else { return .failure(.clipGridFull) }
+        let (clip, slot) = picked
         let bar = TimelineTime.ticksPerBar
         let end = document.nextStartTick(inLane: lane.id)
         let start = ((Swift.max(0, end) + bar - 1) / bar) * bar
@@ -241,6 +224,79 @@ public enum MIDIImport {
                                 skippedDrumNotes: 0,
                                 droppedExpression: MIDIFileImporter.DroppedExpression(),
                                 sustainedNotes: 0, fileTiming: MIDIFileImporter.FileTiming()))
+    }
+
+    /// The clip an empty part gets — ONE rule for "New MIDI Part" and a tap on an empty lane
+    /// (#416): an orphaned empty user clip is reused (see `planEmptyPart`), else a free slot;
+    /// nil when the grid is full.
+    private static func emptyClip(named name: String, document: TimelineDocument,
+                                  slots: [Clip?]) -> (Clip, Int)? {
+        let played = Set(document.regions.map(\.clipID))
+        if let reuse = slots.firstIndex(where: { candidate in
+               guard let c = candidate else { return false }
+               return c.kind == .midi && !c.composerOwned && c.isEmpty && c.automation.isEmpty
+                   && !played.contains(c.id)
+           }),
+           let old = slots[reuse] {
+            return (Clip(id: old.id, name: name, colorIndex: old.colorIndex, kind: .midi,
+                         melody: MelodyClip(notes: []), composerOwned: false), reuse)
+        }
+        if let free = slots.firstIndex(where: { $0 == nil }) {
+            return (Clip(name: name, colorIndex: free, kind: .midi,
+                         melody: MelodyClip(notes: []), composerOwned: false), free)
+        }
+        return nil
+    }
+
+    /// A1 (founder 2026-10-16, "Arrangement auf Ableton-Level"): whether a tap on THIS track's
+    /// empty lane space makes a part there — exactly when "New MIDI Part" with this track
+    /// selected would land on it (`emptyPartLane`, #416). A track the engine would not play
+    /// gets no tap, so a part never lands somewhere the finger did not point.
+    public static func takesEmptyPart(onLane laneID: UUID, in document: TimelineDocument,
+                                      voiceCapacity: Int) -> Bool {
+        emptyPartLane(in: document, selectedTrack: laneID, voiceCapacity: voiceCapacity)?.id == laneID
+    }
+
+    /// A1 — the empty part a tap on a lane makes: on THAT lane, starting on the bar under the
+    /// finger, `emptyPartBars` long, the clip rule of `planEmptyPart`. Refused (`.noMIDILane`)
+    /// on a lane `takesEmptyPart` rejects — never moved to another track.
+    public static func planEmptyPart(document: TimelineDocument, slots: [Clip?],
+                                     onLane laneID: UUID, atTick tick: Int,
+                                     voiceCapacity: Int) -> Result<Landing, Failure> {
+        guard takesEmptyPart(onLane: laneID, in: document, voiceCapacity: voiceCapacity),
+              let lane = document.lanes.first(where: { $0.id == laneID }) else {
+            return .failure(.noMIDILane)
+        }
+        guard let picked = emptyClip(named: "MIDI · \(lane.name)", document: document,
+                                     slots: slots) else { return .failure(.clipGridFull) }
+        let (clip, slot) = picked
+        let bar = TimelineTime.ticksPerBar
+        let start = (Swift.max(0, tick) / bar) * bar
+        let region = TimelineRegion(laneID: lane.id, clipID: clip.id,
+                                    startTick: start, lengthTicks: emptyPartBars * bar)
+        return .success(Landing(clip: clip, region: region, slotIndex: slot, laneID: lane.id,
+                                skippedDrumNotes: 0,
+                                droppedExpression: MIDIFileImporter.DroppedExpression(),
+                                sustainedNotes: 0, fileTiming: MIDIFileImporter.FileTiming()))
+    }
+
+    /// A1 — plan, then write, `addEmptyPart`'s order: clip FIRST, region SECOND, one undo step.
+    /// A separate transaction from `addEmptyPart` on purpose: that one is "New MIDI Part" (the
+    /// row and the guide share it), this one is the canvas tap, which names its own lane and bar.
+    @MainActor
+    @discardableResult
+    public static func placeEmptyPart(clipStore: ClipStore, timeline: TimelineStore,
+                                      onLane laneID: UUID, atTick tick: Int,
+                                      voiceCapacity: Int) -> Result<Landing, Failure> {
+        switch planEmptyPart(document: timeline.document, slots: clipStore.slots,
+                             onLane: laneID, atTick: tick, voiceCapacity: voiceCapacity) {
+        case .failure(let failure):
+            return .failure(failure)
+        case .success(let landing):
+            clipStore.setClip(at: landing.slotIndex, landing.clip)  // FIRST
+            timeline.addRegion(landing.region)                      // SECOND
+            return .success(landing)
+        }
     }
 
     /// The "New MIDI Part" row's spoken hint — the SAME rule `emptyPartLane` implements, in
@@ -292,7 +348,7 @@ public enum MIDIImport {
     public static func addEmptyPart(clipStore: ClipStore,
                                     timeline: TimelineStore,
                                     selectedTrack: UUID?,
-                                    voiceCapacity: Int) -> Result<Landing, Failure> {
+                                      voiceCapacity: Int) -> Result<Landing, Failure> {
         switch planEmptyPart(document: timeline.document, slots: clipStore.slots,
                              selectedTrack: selectedTrack, voiceCapacity: voiceCapacity) {
         case .failure(let failure):
