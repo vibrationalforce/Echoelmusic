@@ -1844,13 +1844,15 @@ struct WorkstationView: View {
         case .success(let landing):
             selection.selectRegion(landing.region.id, in: timeline.document)
             selection.setNotesOpen(true)
-            // The same sentence as "New MIDI Part" (review 2026-10-16, UI#3): a part at the song's
-            // start on the roll lane makes Generate yield, and that is said, never left for the ear.
+            // The same sentence as "New MIDI Part" (review 2026-10-16, UI#3): a part on the roll
+            // lane that STARTS INSIDE Generate's loop window makes Generate yield — the window
+            // `userPartWouldBeShadowed` reads, not only bar 1, because a tap can name any bar.
             // The tap names its own track, so there is no "went on another track" half.
             let laneName = timeline.document.lanes.first { $0.id == landing.laneID }?.name
                 ?? String(localized: "the MIDI track")
+            let window = TrackCompose.windowTicks(loopBars: TrackCompose.loopBars(in: .standard))
             importNote = MIDIImport.emptyPartNote(laneName: laneName,
-                                                  atSongStart: landing.region.startTick == 0
+                                                  atSongStart: landing.region.startTick < window
                                                       && landing.laneID == timeline.document.rollLaneID,
                                                   notOnSelected: nil)
         case .failure(let failure):

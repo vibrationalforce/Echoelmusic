@@ -159,6 +159,10 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
         XCTAssertTrue(action.contains("importNote = MIDIImport.emptyPartNote("),
                       "a success says what \"New MIDI Part\" says — Generate yielding to it included (UI#3)")
         XCTAssertTrue(action.contains("notOnSelected: nil)"), "the tap names its own track")
+        XCTAssertTrue(action.contains("atSongStart: landing.region.startTick < window"),
+                      "Generate yields to a part starting anywhere in its loop window, so the sentence does too")
+        XCTAssertTrue(action.contains("let window = TrackCompose.windowTicks(loopBars: TrackCompose.loopBars(in: .standard))"),
+                      "the window Generate's shadow rule reads (#416)")
     }
 
     // MARK: 5 — Draw and Select mode own the row's taps
