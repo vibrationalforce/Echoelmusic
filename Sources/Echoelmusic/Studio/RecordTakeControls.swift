@@ -81,11 +81,12 @@ struct RecordTakeButton: View {
                                        voiceCapacity: voiceCapacity)
         let caption = RecordTake.caption(state, gridSize: clipStore.slots.count)
         Button {
+            // A tap during the count-in cancels it, whatever the state reads now.
+            if countIn != nil { endCountIn(); return }
             switch state {
             case .recording:
                 stopSong()
             case .ready, .firstTake:
-                if countIn != nil { endCountIn(); break }
                 let bars = CountInChoice.resolved(countInRaw).bars
                 guard bars > 0 else { beginTake(); break }
                 startCountIn(bars: bars)
@@ -97,10 +98,11 @@ struct RecordTakeButton: View {
                 // H14 (2026-10-02): the DAW convention, so Record never reads as a second Stop —
                 // a red dot while ready, a red fill while recording. Red is the `recording`
                 // MEANING colour (`EchoelTheme`), not chrome; black on it reads ~5.5:1.
-                Image(systemName: recording ? "stop.circle.fill" : "record.circle")
+                // While counting in the glyph is the click, so the header's word-less mount shows it too.
+                Image(systemName: recording ? "stop.circle.fill" : (countIn != nil ? "metronome" : "record.circle"))
                     .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(recording ? EchoelTheme.onPrimary
-                                               : (state.offersATake ? EchoelTheme.recording : EchoelTheme.dim))
+                                               : (state.offersATake || countIn != nil ? EchoelTheme.recording : EchoelTheme.dim))
                 if !compact {
                     Text(recording ? String(localized: "Stop recording")
                          : (countIn != nil ? String(localized: "Counting in") : String(localized: "Record")))
@@ -118,11 +120,15 @@ struct RecordTakeButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!state.offersATake && state != .recording)
+        .disabled(countIn == nil && !state.offersATake && state != .recording)
         .accessibilityLabel(recording ? String(localized: "Stop recording")
                             : (countIn != nil ? String(localized: "Counting in") : String(localized: "Record")))
         .accessibilityHint(countIn != nil ? String(localized: "Tap to cancel the count-in.") : caption)
         .onDisappear { endCountIn() }
+        // Play or Stop pressed anywhere else during the count-in cancels it: the person chose
+        // another start, or none. Cold (`isPlaying` flips twice a take); the count-in's own start
+        // comes after `endCountIn()`, so it never cancels itself.
+        .onChange(of: transport.isPlaying) { _, _ in endCountIn() }
     }
 
     /// The take itself: arm, then the one start from the top.
@@ -137,15 +143,19 @@ struct RecordTakeButton: View {
     /// n bars of the one click from a fresh downbeat, then the take — unless the music was
     /// started some other way meanwhile, or the count-in was cancelled.
     private func startCountIn(bars: Int) {
-        let wait = CountInChoice.seconds(bars: bars, bpm: transport.tempo, beatsPerBar: Transport.beatsPerBar)
+        let wait = CountInChoice.startDelay(bars: bars, bpm: transport.tempo, beatsPerBar: Transport.beatsPerBar)
         countInSilencesClick = !metronome.enabled
         if metronome.enabled { metronome.restartBar() } else { metronome.enabled = true }
         countIn = Task { @MainActor in
             try? await Task.sleep(for: .seconds(wait))
             guard !Task.isCancelled else { return }
-            let started = transport.isPlaying || recorder.isRecording
+            // Asked again at the end, not trusted from the tap: a track disarmed or a take begun
+            // meanwhile records nothing.
+            let still = RecordTake.current(recorder: recorder, timeline: timeline, clipStore: clipStore,
+                                           transport: transport, playing: transport.isPlaying,
+                                           startable: startable, voiceCapacity: voiceCapacity)
             endCountIn()
-            if !started { beginTake() }
+            if still.offersATake { beginTake() }
         }
     }
 

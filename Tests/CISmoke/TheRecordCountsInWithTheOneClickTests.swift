@@ -44,6 +44,12 @@ final class TheRecordCountsInWithTheOneClickTests: XCTestCase {
         XCTAssertEqual(CountInChoice.allCases.map(\.rawValue), [0, 1, 2], "the stored value is the number of bars")
         XCTAssertEqual(CountInChoice.resolved(7), .off, "a count-in nobody chose is never played")
         XCTAssertEqual(CountInChoice.resolved(2), .twoBars)
+        // Step 0 sounds one step after `play()`, so the start comes one sixteenth before the bar.
+        XCTAssertEqual(CountInChoice.startDelay(bars: 1, bpm: 120, beatsPerBar: 4),
+                       2 - Transport.stepDuration(atTempo: 120), accuracy: 1e-9,
+                       "bar 1 lands on the count-in's next downbeat, not a sixteenth after it")
+        XCTAssertEqual(CountInChoice.startDelay(bars: 0, bpm: 120, beatsPerBar: 4), 0, "Off waits for nothing")
+        XCTAssertGreaterThanOrEqual(CountInChoice.startDelay(bars: 1, bpm: .nan, beatsPerBar: 4), 0, "never negative")
     }
 
     // MARK: 2 — the button: count in, then the take; cancel; the click given back
@@ -52,14 +58,23 @@ final class TheRecordCountsInWithTheOneClickTests: XCTestCase {
         let door = try source("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
         XCTAssertTrue(door.contains("@AppStorage(CountInChoice.key) private var countInRaw"),
                       "Record reads the one persisted choice")
-        XCTAssertTrue(door.contains("if countIn != nil { endCountIn(); break }"), "a tap during the count-in cancels it")
+        XCTAssertTrue(door.contains("if countIn != nil { endCountIn(); return }"), "a tap during the count-in cancels it")
+        let button = try XCTUnwrap(door.range(of: "if countIn != nil { endCountIn(); return }"))
+        let stateSwitch = try XCTUnwrap(door.range(of: "switch state {"))
+        XCTAssertTrue(button.upperBound <= stateSwitch.lowerBound,
+                      "the cancel comes before the state is asked — a state changed meanwhile must not keep it running")
+        XCTAssertTrue(door.contains(".onChange(of: transport.isPlaying) { _, _ in endCountIn() }"),
+                      "Play or Stop pressed anywhere else cancels the count-in")
         XCTAssertTrue(door.contains("guard bars > 0 else { beginTake(); break }"), "Off records at once, as before")
         let start = try body(of: "private func startCountIn(", to: "private func endCountIn(", in: door)
         XCTAssertFalse(start.contains("recorder.arm()"), "nothing is armed while counting in")
         XCTAssertTrue(start.contains("if metronome.enabled { metronome.restartBar() } else { metronome.enabled = true }"),
                       "the one click, from a fresh downbeat")
         XCTAssertTrue(start.contains("guard !Task.isCancelled else { return }"))
-        XCTAssertTrue(start.contains("if !started { beginTake() }"), "music started another way meanwhile records nothing")
+        XCTAssertTrue(start.contains("if still.offersATake { beginTake() }"),
+                      "the take begins only if Record still offers one — a disarm or a start meanwhile records nothing")
+        XCTAssertTrue(start.contains("CountInChoice.startDelay(bars: bars, bpm: transport.tempo"),
+                      "the wait is the count-in less the one step before step 0 sounds")
         let end = try body(of: "private func endCountIn(", to: "\n}", in: door)
         XCTAssertTrue(end.contains("if countInSilencesClick { metronome.enabled = false }"),
                       "a click the count-in switched on is off again when the take starts")

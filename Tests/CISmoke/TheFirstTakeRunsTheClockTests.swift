@@ -248,8 +248,8 @@ final class TheFirstTakeRunsTheClockTests: XCTestCase {
             true, so a start before the arm is refused on the first take — and the refusal \
             cancels the arm, so nothing happens at all.
             """)
-        XCTAssertTrue(door.contains(".disabled(!state.offersATake && state != .recording)"),
-                      "the enabled set is the two take states plus recording — one predicate, not two spellings")
+        XCTAssertTrue(door.contains(".disabled(countIn == nil && !state.offersATake && state != .recording)"),
+                      "the enabled set is the two take states plus recording — one predicate, not two spellings — and a running count-in, so it can always be cancelled")
     }
 
     // MARK: helpers

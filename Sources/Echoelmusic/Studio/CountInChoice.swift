@@ -43,6 +43,17 @@ enum CountInChoice: Int, CaseIterable, Sendable {
     /// An unknown stored value counts in nothing — a count-in nobody chose is never played.
     nonisolated static func resolved(_ raw: Int) -> CountInChoice { CountInChoice(rawValue: raw) ?? .off }
 
+    /// How long to wait before the one start: the count-in less ONE step, because the transport's
+    /// step 0 sounds one step after `play()` (`Transport.stepDuration`). So bar 1 lands on the
+    /// count-in's next downbeat — the click's own, which the first transport beat then anchors
+    /// inside the absorb window instead of striking it a second time a sixteenth late (finesse
+    /// review 2026-10-16). Never negative. Pure.
+    nonisolated static func startDelay(bars: Int, bpm: Double, beatsPerBar: Int) -> Double {
+        let length = seconds(bars: bars, bpm: bpm, beatsPerBar: beatsPerBar)
+        guard length > 0 else { return 0 }
+        return Swift.max(0, length - Transport.stepDuration(atTempo: bpm))
+    }
+
     /// How long `bars` bars of `beatsPerBar` beats last at `bpm`, through the click's own tempo
     /// clamp. Zero for no bars or a bar of no beats; never NaN or infinite.
     nonisolated static func seconds(bars: Int, bpm: Double, beatsPerBar: Int) -> Double {
