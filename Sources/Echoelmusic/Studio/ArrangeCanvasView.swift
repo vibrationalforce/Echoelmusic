@@ -732,6 +732,12 @@ struct ArrangeCanvasView: View {
                 // display only, its own leaf, no gesture (the parts keep their taps and holds).
                 ArrangeAutomationTrace(curves: ArrangeAutomation.curves(for: row.id, in: document.automation),
                                        songTicks: songTicks)
+                // Item 7b: in Draw mode the row edits its automation — its own leaf, above the parts,
+                // and only on a track whose curves move something (the leaf draws nothing elsewhere).
+                if selection.drawingAutomation {
+                    ArrangeAutomationEditLane(laneID: row.id, songTicks: songTicks)
+                        .zIndex(3)
+                }
                 // One World T1: the selected part's two edges, above every block so the hold on
                 // an edge reaches them before the block's own hold-to-move.
                 if let selected, arrangeable, let pair = clips[selected],

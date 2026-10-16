@@ -48,7 +48,14 @@ struct ArrangeGatherBar: View {
         let gathered = WorkstationSelection.resolvedGathered(selection.gathered, in: document)
         let canPaste = !selection.clipboard.isEmpty
         HStack(spacing: 8) {
-            if selection.gathering {
+            if selection.drawingAutomation {
+                // Item 7b — what a touch on a row means while drawing, said once, then Done.
+                Text("Tap a row to add a point, tap a point to remove it, hold a point and slide to move it.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                action(String(localized: "Done"), enabled: true) { selection.setDrawingAutomation(false) }
+            } else if selection.gathering {
                 Text(GatherChoice.countLine(gathered.count))
                     .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
                     .lineLimit(1)
@@ -67,6 +74,9 @@ struct ArrangeGatherBar: View {
                 if canPaste {
                     action(String(localized: "Paste"), enabled: true) { paste(in: document) }
                 }
+                // Item 7b — draw a track's automation straight on its row of the canvas.
+                action(String(localized: "Draw automation"), enabled: true) { selection.setDrawingAutomation(true) }
+                    .accessibilityHint(String(localized: "Tap a track's row to add an automation point; Done ends it."))
                 Spacer(minLength: 0)
             }
         }

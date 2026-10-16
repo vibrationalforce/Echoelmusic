@@ -62,8 +62,8 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 5 | Count-in (A10) | ✅ (this commit) | guard `TheRecordCountsInWithTheOneClickTests` (pure length through the click's clamp + scan of the button paths); two guards re-anchored (`TheFirstTakeRunsTheClockTests` → `beginTake()`, header word + hint needles); Python transcription green; checkers 0 |
 | 6a | Record scenes — pure take (P4a) | ✅ (this commit) | guard `TheLaunchesBecomePartsOnTheArrangementTests` (log → tiled copies, switch/stop/gone, store paste = one undo, recording wins over parts under it); checkers 0 |
 | 6b | Record scenes — player + door (P4b) | ✅ (this commit) | guard `TheSessionRecordsIntoTheArrangementTests` (every `launch.removeAll()` ends the take first; wrap before fold; sink → `pasteRegions`; leaf door); Python transcription green; checkers 0 |
-| 7a | Automation on the canvas — display (this commit) | ✅ | guard `TheCanvasShowsEachTracksAutomationTests` (own curves only; samples = `value(atTick:)` at the canvas scale; leaf, no gesture, canvas pins intact); checkers 0 |
-| 7b | Automation on the canvas — edit points there | **NEXT** | — |
+| 7a | Automation on the canvas — display | ✅ `9bb2d22` | guard `TheCanvasShowsEachTracksAutomationTests` (own curves only; samples = `value(atTick:)` at the canvas scale; leaf, no gesture, canvas pins intact); checkers 0 |
+| 7b | Automation on the canvas — edit points there | ✅ (this commit) | guard `TheAutomationIsDrawnOnTheCanvasTests` (Draw ⟂ Select; a tap at the canvas scale = a point at that bar, one Undo each; leaf in Draw mode only, shared `SongAutomationEdit` decisions, 3 commits through the one writer; canvas pins intact); checkers 0 |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
@@ -94,16 +94,18 @@ Undo step per take). The take ends wherever launches die (Stop, external stop, l
 restart) and at the song's wrap (each wrap = its own Undo step; a part still launched across the wrap
 is recorded up to it). NEEDS-FOUNDER-VERIFY (P4b).
 
-### Exact next step (item 7b, edit automation on the canvas)
-Measured constraints (read-only audit 2026-10-16): the canvas file may hold exactly ONE
-`DragGesture(` and ONE `@GestureState` (`TheArrangeCanvasMovesAPartByDraggingTests`), no `.menu`
-Picker (freeze law, ArrangeCanvasView header), and `SongAutomationEditor(` may be mounted only in
-the inspector (`TheSongAutomationIsDrawnThroughOneWriterTests`, `TheDetailShowsOnePageAtATimeTests`).
-So 7b = an "Edit automation" mode (a cold toggle in the gather bar row): while on, the parts on the
-SELECTED track step back and the trace becomes a leaf in its own file that reuses
-`SongAutomationEdit.resolveTap` / `resolveMove` / `adding` / `moving` with the canvas's `songTicks`,
-for the parameter the Track page opens on (`openingBase`), and commits through
-`timeline.setSongAutomation` — one Undo step per gesture. The writer-count pin (4 in the editor file)
-does not move; the new leaf is a second file the pin must then name (update it in the same commit).
+### Item 7 as built
+7a `ArrangeAutomationTrace` draws every per-track curve across its row (sampled via
+`AutomationLane.value(atTick:)`, `AutomationCanvasMath.y` — the same mapping as every automation
+surface). 7b "Draw automation" in the gather bar (`WorkstationSelection.drawingAutomation`, excludes
+Select mode) mounts `ArrangeAutomationEditLane` per row: tap = add, tap a point = remove, hold-slide
+= move, on the parameter the Track page opens on; another parameter is chosen on the Track page (no
+menu on the canvas). NEEDS-FOUNDER-VERIFY (7a, 7b).
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`); next build: P4b, 7a.
+### ALL SEVEN ITEMS DONE (2026-10-16). Next
+Release v10.79.515 after green gates (asks: P4b, 7a, 7b; `founder-verify --since d6105b9`). Then the
+open follow-ups recorded above: a launched part across a song wrap (P4b records up to the wrap),
+the Track page's parameter choice shared with the canvas row (7b draws the opening one), and the
+founder's device pass over A1–A10/P1–P4/7.
+
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`); next build: P4b, 7a, 7b.

@@ -63,12 +63,25 @@ public final class WorkstationSelection {
     /// never the system pasteboard, never persisted — a copy belongs to this run of this piece.
     public private(set) var clipboard: [TimelineRegion] = []
 
+    /// Item 7b (founder 2026-10-16, "Automation direkt auf dem Canvas") — the canvas's Draw mode:
+    /// while on, a tap on a track's row adds an automation point there, a tap on a point removes it,
+    /// and a hold-and-slide moves it (`ArrangeAutomationEditLane`). Cold (a tap), never persisted;
+    /// it and Select mode exclude each other, so one tap never means two things.
+    public private(set) var drawingAutomation = false
+
     public init() {}
 
-    /// A9 — Select mode on or off; off lets every gathered part go.
+    /// A9 — Select mode on or off; off lets every gathered part go. On ends Draw mode.
     public func setGathering(_ on: Bool) {
         gathering = on
         if !on { gathered = [] }
+        if on { drawingAutomation = false }
+    }
+
+    /// Item 7b — Draw mode on or off. On ends Select mode and lets every gathered part go.
+    public func setDrawingAutomation(_ on: Bool) {
+        drawingAutomation = on
+        if on { setGathering(false) }
     }
 
     /// A9 — gather a part, or let it go when it is gathered. Unknown ids gather nothing.

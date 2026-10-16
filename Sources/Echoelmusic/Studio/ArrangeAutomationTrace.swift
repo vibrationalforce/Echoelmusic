@@ -62,16 +62,19 @@ struct ArrangeAutomationTrace: View {
     var body: some View {
         if !curves.isEmpty {
             Canvas { context, size in
-                let inset: CGFloat = 6
-                let height = Swift.max(0, size.height - 2 * inset)
+                // The value → height mapping of every automation surface (`AutomationCanvasMath`),
+                // so the points Draw mode puts on this row sit on this line (#416).
+                let height = Double(size.height)
                 let columns = ArrangeAutomation.columns(forWidth: Double(size.width))
                 for lane in curves {
                     let samples = ArrangeAutomation.samples(of: lane, songTicks: songTicks, columns: columns)
                     guard let first = samples.first else { continue }
                     var path = Path()
-                    path.move(to: CGPoint(x: first.x * size.width, y: inset + (1 - first.value) * height))
+                    path.move(to: CGPoint(x: first.x * Double(size.width),
+                                          y: AutomationCanvasMath.y(forValue: first.value, height: height)))
                     for s in samples.dropFirst() {
-                        path.addLine(to: CGPoint(x: s.x * size.width, y: inset + (1 - s.value) * height))
+                        path.addLine(to: CGPoint(x: s.x * Double(size.width),
+                                                 y: AutomationCanvasMath.y(forValue: s.value, height: height)))
                     }
                     context.stroke(path, with: .color(EchoelTheme.text.opacity(0.6)), lineWidth: 1.5)
                 }

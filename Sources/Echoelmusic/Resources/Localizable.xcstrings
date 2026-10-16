@@ -217,6 +217,30 @@
         }
       }
     },
+    "Double-tap adds a point in the middle of the piece. The Track page lists every point." : {
+      "comment" : "7b draw automation on the canvas (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap adds a point in the middle of the piece. The Track page lists every point."
+          }
+        }
+      }
+    },
+    "Draw automation" : {
+      "comment" : "7b draw automation on the canvas (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Draw automation"
+          }
+        }
+      }
+    },
     "Edit a copy" : {
       "comment" : "Part bar (GA-2b): button on a composer part — copies its notes into a part the person owns.",
       "extractionState" : "manual",
@@ -669,6 +693,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Only the selected part and its editors are shown"
+          }
+        }
+      }
+    },
+    "Tap a row to add a point, tap a point to remove it, hold a point and slide to move it." : {
+      "comment" : "7b draw automation on the canvas (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a row to add a point, tap a point to remove it, hold a point and slide to move it."
+          }
+        }
+      }
+    },
+    "Tap a track's row to add an automation point; Done ends it." : {
+      "comment" : "7b draw automation on the canvas (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a track's row to add an automation point; Done ends it."
           }
         }
       }
