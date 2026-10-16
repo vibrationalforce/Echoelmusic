@@ -639,6 +639,9 @@ struct SelectedPartBar: View {
                 PartRepeatField(part: part)
                 if PartLength.isMIDI(regionID, in: document) {
                     PartLengthField(part: part, songBars: WorkstationSummary(document: document).lengthBars)
+                    // A1 (2026-10-16): notes a shortened part keeps but no longer plays, said on
+                    // screen — until now only the length field's VoiceOver hint said so.
+                    PartHiddenNotesLine(regionID: regionID)
                 }
                 // W2: an audio part's own level, on top of its track's — nil for any other part.
                 if let gain = PartGain.gain(of: regionID, in: document) {
@@ -1076,6 +1079,20 @@ enum PartLength {
     /// ticks go (`PartTrim.onlyLetsGo`, the "Trim end" rule), a longer one may not take ticks from
     /// a part that plays them now (`PartTrim.keepsWhoPlays`, the edge-handle rule). A typed length
     /// that would change who plays is refused, never written.
+    /// A1 — how many of the clip's notes START at or after the part's end: kept in the part,
+    /// unheard (`RegionNoteWindow.windowed` drops them). The window's own offset is asked
+    /// (`effectiveOffsetTicks`), never restated (#416). Notes before a trimmed-in start are not
+    /// counted: they are what "Trim start" cut, not what a shorter length hides.
+    nonisolated static func notesPastTheEnd(of region: TimelineRegion, clip: Clip, bpm: Double) -> Int {
+        let end = Swift.max(0, RegionNoteWindow.effectiveOffsetTicks(of: region, bpm: bpm)) + region.lengthTicks
+        return (clip.melody?.notes ?? []).filter { $0.startTick >= end }.count
+    }
+
+    nonisolated static func pastTheEndText(_ count: Int) -> String {
+        count == 1 ? String(localized: "1 note lies past the part's end and is not heard. Lengthen the part to hear it.")
+                   : String(count) + String(localized: " notes lie past the part's end and are not heard. Lengthen the part to hear them.")
+    }
+
     nonisolated static func keepsWhoPlays(_ regionID: UUID, lengthTicks: Int,
                                           in document: TimelineDocument) -> Bool {
         guard let region = document.regions.first(where: { $0.id == regionID }), lengthTicks > 0 else { return false }
@@ -1135,6 +1152,29 @@ private struct PartLengthField: View {
                              draft = nil
                          })
             .onChange(of: part.lengthTicks) { _, _ in draft = nil }
+    }
+}
+
+/// A1 — the line under a MIDI part's Length that names the notes past its end. Its own leaf: it
+/// reads the clip grid, which the bar's body never does. Nothing shows while every note plays.
+@MainActor
+private struct PartHiddenNotesLine: View {
+    let regionID: UUID
+    @Environment(TimelineStore.self) private var timeline
+    @Environment(ClipStore.self) private var clipStore
+    /// `preflightTempo` is `@ObservationIgnored` — only a legacy seconds offset depends on it.
+    @Environment(TimelineRegionPlayer.self) private var player
+
+    var body: some View {
+        if let region = timeline.document.regions.first(where: { $0.id == regionID }),
+           let clip = clipStore.clip(id: region.clipID) {
+            let hidden = PartLength.notesPastTheEnd(of: region, clip: clip, bpm: player.preflightTempo)
+            if hidden > 0 {
+                Text(PartLength.pastTheEndText(hidden))
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 

@@ -24616,6 +24616,30 @@
           }
         }
       }
+    },
+    "1 note lies past the part's end and is not heard. Lengthen the part to hear it." : {
+      "comment" : "A1 (2026-10-16): notes past a MIDI part's end (SelectedPartBar, PartLength.pastTheEndText).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 note lies past the part's end and is not heard. Lengthen the part to hear it."
+          }
+        }
+      }
+    },
+    " notes lie past the part's end and are not heard. Lengthen the part to hear them." : {
+      "comment" : "A1 (2026-10-16): notes past a MIDI part's end (SelectedPartBar, PartLength.pastTheEndText).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " notes lie past the part's end and are not heard. Lengthen the part to hear them."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
