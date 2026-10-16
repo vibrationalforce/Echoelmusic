@@ -1,4 +1,4 @@
-build: v10.79.511 — Sampler-Spuren pannen und bleiben stereo
+build: v10.79.512 — Arrangement: jede Spur hat eine Zeile, Tipp legt Part an · Session-Umschalter
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,41 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.512) ───────────────────────────────
+
+  Gebaut wird der App-Code von `8788833` (danach nur ein Plan-Dokument); Xcode Compile Check
+  UND Build for Testing grün auf diesem Stand. Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: JEDE SPUR HAT EINE ZEILE, EIN TIPP LEGT EINEN PART AN ──
+  Piece → Arrange: jede Spur (außer der Bio-Kurve) steht als Zeile auf der Zeitleiste, auch
+  eine ohne Parts. Die Zeitleiste reicht 4 Takte über das Stückende hinaus, mindestens 8.
+  Ein Tipp auf eine leere Stelle einer MIDI-Spur legt dort einen leeren 4-Takt-Part an, auf
+  dem angetippten Takt — ausgewählt, der Noteneditor öffnet sich. Spuren ohne Stimme nehmen
+  keinen Tipp (der Part landet nie auf einer anderen Spur). Eine leere Spur sagt
+  „Tap to add a part".
+
+  ── POSTEN 2: ARRANGEMENT · SESSION ──
+  Oben im Arrange-Bereich: Umschalter „Arrangement · Session". Session zeigt die Szenen
+  statt der Zeitleiste — starten auf den nächsten Takt, „Back to song" kehrt zurück. Ein
+  offener Editor behält immer die Zeitleiste. Gleiches Stück, kein zweites.
+
+  ── POSTEN 3: KEIN SAFE MODE MEHR NACH EINEM VORSTART (G10) ──
+  Dein Log von Build 2634 (`prewarm=1`, dann Stille) war ein Vorstart: iOS startet die App
+  manchmal vorab im Hintergrund und verwirft sie wieder. Der wurde als abgebrochener Start
+  gezählt, und der nächste echte Start öffnete Safe Mode. Jetzt zählt ein Vorstart erst,
+  wenn sein erster Bildschirm gebaut wird. Im Log steht dann eine „LaunchGuard: prewarmed"-Zeile.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 0696a01) ──
+  · Leere Spur, Tipp auf Takt 3 → erscheint dort ein 4-Takt-Part und öffnet sich der Editor?
+    Tipp auf einen bestehenden Part → wird er nur ausgewählt, ohne zweiten Part?
+  · Piece → Arrange → „Session", Stück abspielen, eine Szene starten → wechselt sie auf den
+    nächsten Takt?
+  · Ein Start, dessen Diagnose-Log `prewarm=1` zeigt und früh endet → öffnet der nächste
+    Tipp aufs Icon trotzdem Safe Mode? (Sollte nicht mehr.)
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.511) ───────────────────────────────
