@@ -84,7 +84,7 @@ G-A … G-C bleiben. Vor S-A3 sind fünf Punkte zu klären:
 
 | # | Befund | Folge für S-A3 |
 |---|---|---|
-| K1 | Audiospuren sind Dateien plus `TimelineDocument`. Ihre Stems lassen sich **offline und deterministisch** nachrechnen | Bevorzugter Weg für Audiospur-Stems; der Tap pro Spur bleibt Rückfall, abhängig vom Gerätetest oben. Für die generierten Stimmen bleibt der Mitschnitt im Render-Block |
+| K1 | Audiospuren sind Dateien plus `TimelineDocument`. Ihre Stems lassen sich **offline und deterministisch** nachrechnen | Bevorzugter Weg für Audiospur-Stems; der Tap pro Spur bleibt Rückfall, abhängig vom Gerätetest oben. Für die generierten Stimmen bleibt der Mitschnitt im Render-Block. **Seit LS-ST2 (2026-10-16) gibt es den Platzierungsplan** (`Sequencer/AudioLaneStemPlan`, welcher Dateiabschnitt wann klingt, dieselbe Gewinner-Regel wie der Live-Spieler); der Renderer, der ihn liest, ist noch nicht gebaut |
 | K2 | Eine Kopie im Render-Block der Stimme liegt **vor** Pegel, Pan und Mute des `masterMixer`-Eingangs (die Regler aus dem Spur-Inspektor) | S-A3 entscheidet ausdrücklich, ob ein Stem diese Regler trägt. Vorschlag: Pegel und Mute ja, Pan nein (die Position kommt aus der Trajektorie) |
 | K3 | Mit eingeschaltetem „Headphone space“ ist der „Stereo“-Mitschnitt **binaural** | Der Immersive-Export schaltet den Kopfhörer-Raum für den Durchgang ab oder verweigert den Export, solange er an ist. Nie still binaural als Stereo-Master ausliefern |
 | K4 | Ob der RetroCapture-Tap auf `mainMixerNode` vor oder nach dem −1-dB-Trim liegt, ist ungemessen | Vor S-A3 messen; es bestimmt den Bezugspegel des Stereo-Masters |
