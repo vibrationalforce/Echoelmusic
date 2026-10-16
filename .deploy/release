@@ -1,4 +1,4 @@
-build: v10.79.509 — Ask Echoel (Vorschlag → Apply → Undo), Share as MIDI, Describe mit Stop
+build: v10.79.510 — True Peak (BS.1770) für Export und Meter, Ask Echoel Pan/Mute
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,55 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.510) ───────────────────────────────
+
+  Gebaut wird `d9c22c8`; Xcode Compile Check UND Build for Testing grün auf diesem Stand.
+  Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: ECHOEL MISCHT MIT — PAN UND MUTE, AUCH GETIPPT ──
+  Logo-Menü ≡ → „Ask Echoel" öffnet eine Eingabezeile im Bericht (kein Fenster): eine Bitte
+  tippen, „Ask". Neu erlaubt: eine Spur nach links/rechts setzen („pan the loop left") und
+  stumm/laut schalten („mute the drums"). Wie immer: erst Vorschlag, dann „Apply", dann Undo;
+  ein Wert, den du danach selbst änderst, bleibt beim Undo stehen.
+
+  ── POSTEN 2: TEILE ÜBER SPUREN ZIEHEN ──
+  Arrange: einen Teil halten, dann nach unten/oben ziehen — er landet auf der Spur gleicher Art
+  (MIDI auf MIDI, Audio auf Audio), die Vorschau sitzt schon auf der Zielzeile; ein Undo nimmt
+  Zeit UND Spur zurück. VoiceOver: „Move to the track above / below".
+
+  ── POSTEN 3: NOTEN LESEN UND TREFFEN ──
+  Notes-Seite: links steht eine Tasten-Spalte, jede Zeile mit Namen, sie bleibt beim seitlichen
+  Scrollen stehen. „Taller rows" / „Shorter rows" stellen die Zeilenhöhe (24 · 32 · 40 pt).
+
+  ── POSTEN 4: KLEINE KLARHEITEN ──
+  Eine Sample-Spur spielt jetzt bis zu 8 Sekunden der Datei (vorher 2) — lange 808s, ein Takt Loop.
+  MIDI-Aufnahme mit einem MPE-Controller: zwei gleich hohe Noten auf zwei Kanälen bleiben zwei Noten.
+  MIDI-Import nennt Programm-, Tempowechsel und eine Taktart ≠ 4/4, die er nicht übernimmt.
+  Die MIDI-Tür des Instruments heißt „Instrument .mid". Die Echoel-Spur nennt ihren Patch. VoiceOver kann einen Teil
+  bis zur nächsten Taktlinie verlängern oder früher beginnen lassen (Aktionen am Titel der
+  Teil-Leiste).
+
+  ── POSTEN 5: EXPORT UND METER LESEN DEN ECHTEN SPITZENWERT ──
+  Der Export-Normalisierer hebt eine leise Aufnahme nur noch so weit, dass der True Peak
+  (BS.1770, 4× überabgetastet) unter −1 dBTP bleibt — vorher zählte nur der höchste Sample-Wert,
+  und Spitzen ZWISCHEN den Samples konnten über 0 dB rekonstruieren. Die dBTP-Anzeige im Master
+  liest jetzt dieselbe Messung (vorher bis zu ~2 dB zu niedrig).
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since e171fed) ──
+  (Das Werkzeug meldete 0 neue Marker; die Bitten stehen als G11 (g)(h) in FOUNDER_INBOX und hier:)
+  · Ask Echoel getippt: „pan the selected track left" → Vorschlag → Apply → Undo.
+  · „mute it" zweimal → das zweite Mal „already muted"; Undo spielt wieder.
+  · Teil auf eine andere MIDI-Spur ziehen → er klingt mit deren Stimme; Undo → zurück.
+    Dabei schauen: liegt die Vorschau ÜBER der Zielzeile oder wird sie von ihr verdeckt?
+  · Notes-Seite: Tasten-Namen passen zu den Zeilen, bei jeder Zeilenhöhe; Tipps treffen die Zeile.
+  · Sample-Spur mit einer 6-s-808 → sie klingt ganz aus, nicht nach 2 s abgeschnitten.
+  · DAW-Export mit Tempoänderung importieren → die Meldung nennt sie.
+  · Eine leise Aufnahme mit Ziel −14 als WAV exportieren, in einer DAW mit True-Peak-Meter
+    öffnen → höchstens −1 dBTP. Master-Anzeige dBTP: liegt sie bei lauter Musik höher als
+    der Sample-Peak daneben (sie darf nie darunter liegen)?
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.509) ───────────────────────────────
 
