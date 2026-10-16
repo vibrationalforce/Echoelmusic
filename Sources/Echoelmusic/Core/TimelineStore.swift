@@ -1107,6 +1107,16 @@ public final class TimelineStore {
         persist()
     }
 
+    /// A4b — the colour the person chose for a track; nil = its instrument's colour. Display only
+    /// (`structurallyEqual` leaves it out). The bio track keeps the body's colour, and an unchanged
+    /// colour writes nothing. Like a rename, it is not an Undo step.
+    public func setLaneColor(id: UUID, _ color: TrackColor?) {
+        guard let i = document.lanes.firstIndex(where: { $0.id == id }), !document.lanes[i].isBio,
+              document.lanes[i].color != color else { return }
+        document.lanes[i].color = color
+        persist()
+    }
+
     // MARK: - Lane mixer (K2a) — state only; the SURFACE pushes gains into engines
 
     public func setLaneLevel(id: UUID, _ level: Float) {

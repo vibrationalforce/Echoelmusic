@@ -44,6 +44,8 @@ public struct WorkstationSummary: Equatable, Sendable {
         /// says so at its own declaration, and the surface must not upgrade it to "recording".
         public let isArmed: Bool
         public let instrument: TrackInstrument?
+        /// A4b — the colour the person chose for the track, nil = its instrument's.
+        public let color: TrackColor?
         /// `ClipKind.isPlayable` — whether a shipped engine drives this kind on the timeline.
         public let playsOnTheTimeline: Bool
     }
@@ -111,6 +113,7 @@ public struct WorkstationSummary: Equatable, Sendable {
                            isSoloed: lane.isSoloed,
                            isArmed: lane.isArmed,
                            instrument: lane.builtinInstrument,
+                           color: lane.color,
                            playsOnTheTimeline: lane.kind.isPlayable)
         }
         self.regionCount = document.regions.count

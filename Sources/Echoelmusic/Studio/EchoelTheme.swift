@@ -207,8 +207,12 @@ enum EchoelTheme {
 
         /// One switch decides a track's hue, the way `TrackInstrument.systemImage` decides its
         /// symbol. A MIDI track without a built-in instrument is the generative Echoel track.
-        static func of(kind: ClipKind, instrument: TrackInstrument?, isBio: Bool) -> TrackHue {
+        /// A4b: a colour the person chose (`TimelineLane.color`) wins — except on the bio track,
+        /// which always wears the body's green. `color` has NO default (#431): every call site
+        /// says which lane's choice it passes.
+        static func of(kind: ClipKind, instrument: TrackInstrument?, isBio: Bool, color: TrackColor?) -> TrackHue {
             if isBio { return .body }
+            if let color { return chosen(color) }
             switch instrument {
             case .polySynth?:         return .synth
             case .subBass?:           return .bass
@@ -221,6 +225,19 @@ enum EchoelTheme {
                 case .audio, .video:  return .audio
                 case .visual:         return .visual
                 }
+            }
+        }
+
+        /// A4b — the hue a chosen colour names: the same seven an instrument can wear. Pure.
+        static func chosen(_ color: TrackColor) -> TrackHue {
+            switch color {
+            case .teal:       return .synth
+            case .blue:       return .bass
+            case .sand:       return .sampler
+            case .terracotta: return .breakbeat
+            case .violet:     return .echoel
+            case .slate:      return .audio
+            case .orchid:     return .visual
             }
         }
 

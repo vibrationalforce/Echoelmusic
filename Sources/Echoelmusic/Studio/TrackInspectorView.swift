@@ -644,6 +644,10 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                             }
                             .accessibilityLabel("Track name")
                     }
+                    // A4b — the colour the person chooses (own leaf; one writer).
+                    if TrackColorChoice.offered(laneID, in: timeline.document) {
+                        TrackColorRow(laneID: laneID)
+                    }
 
                     if controls.level {
                         let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)

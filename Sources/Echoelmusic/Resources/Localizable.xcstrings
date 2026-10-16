@@ -13,6 +13,18 @@
         }
       }
     },
+    "Automatic" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        }
+      }
+    },
     "Body" : {
       "comment" : "Routing segment (GMMW P1-1, 2026-10-08): the body's routes to instrument parameters (the modulation matrix).",
       "extractionState" : "manual",
@@ -57,6 +69,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Colour" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colour"
           }
         }
       }
@@ -313,6 +337,18 @@
         }
       }
     },
+    "Orchid" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orchid"
+          }
+        }
+      }
+    },
     "Routing group" : {
       "comment" : "Accessibility label of Routing's segmented row (GMMW P1-1): which group of the sheet is shown.",
       "extractionState" : "manual",
@@ -321,6 +357,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routing group"
+          }
+        }
+      }
+    },
+    "Sand" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sand"
           }
         }
       }
@@ -369,6 +417,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows one shelf: the stored sounds, the imported audio files, or the photo and video that shape the visual."
+          }
+        }
+      }
+    },
+    "Slate" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slate"
           }
         }
       }
@@ -529,6 +589,30 @@
         }
       }
     },
+    "Teal" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teal"
+          }
+        }
+      }
+    },
+    "Terracotta" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terracotta"
+          }
+        }
+      }
+    },
     "The instrument also composes this track, in its own style, from the same body. Its notes arrive the next time the instrument composes: on Start, and as it evolves." : {
       "comment" : "GA-1 Compose here (rack track Device page): switch hint.",
       "extractionState" : "manual",
@@ -585,6 +669,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Locked while a recording runs."
+          }
+        }
+      }
+    },
+    "Track colour" : {
+      "comment" : "A4b track colour menu (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track colour"
           }
         }
       }

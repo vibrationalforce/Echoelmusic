@@ -351,7 +351,7 @@ struct AudioPartEditorView: View {
             AudioPartEditorPane(subject: subject, region: region, document: document,
                                 clip: clipStore.clip(id: region.clipID),
                                 tint: EchoelTheme.TrackHue.of(kind: lane.kind, instrument: lane.builtinInstrument,
-                                                              isBio: lane.isBio).color)
+                                                              isBio: lane.isBio, color: lane.color).color)
         }
     }
 }

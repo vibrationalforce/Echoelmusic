@@ -613,6 +613,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/TrackPluginRow.swift",   // production H1: installed AUv3 units
             "Sources/Echoelmusic/Studio/AgentReportBanner.swift",   // GMMW AI-1b: the agent's report row
             "Sources/Echoelmusic/Studio/ArrangeGatherBar.swift",   // A9: Select · Copy · Paste · Delete
+            "Sources/Echoelmusic/Studio/TrackColorRow.swift",   // A4b: the track's colour menu
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 

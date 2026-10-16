@@ -794,7 +794,7 @@ struct WorkstationView: View {
         // gutter (A1): one hue band and the instrument's symbol in that hue, from the one switch
         // `EchoelTheme.TrackHue`. The open card then reads as belonging to the ringed canvas row;
         // the hue never travels without the symbol and the name (never colour alone).
-        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
+        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio, color: row.color)
         return HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 1.5)
                 .fill(hue.color)

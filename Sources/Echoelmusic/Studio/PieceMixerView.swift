@@ -114,7 +114,7 @@ struct PieceMixerView: View {
     // MARK: - One channel strip
 
     private func strip(_ lane: TimelineLane, _ controls: TrackMix.Controls) -> some View {
-        let hue = EchoelTheme.TrackHue.of(kind: lane.kind, instrument: lane.builtinInstrument, isBio: lane.isBio)
+        let hue = EchoelTheme.TrackHue.of(kind: lane.kind, instrument: lane.builtinInstrument, isBio: lane.isBio, color: lane.color)
         let level = Double(lane.level)
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: EchoelTheme.spaceS) {

@@ -614,7 +614,7 @@ struct ArrangeCanvasView: View {
     private func nameGutter(_ row: WorkstationSummary.LaneRow) -> some View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
         let open = WorkstationSelection.resolvedTrack(selection.trackID, in: document) == row.id
-        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)
+        let hue = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio, color: row.color)
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 // The track's identity (A1): a hue band and the instrument's symbol in that hue —
@@ -662,7 +662,7 @@ struct ArrangeCanvasView: View {
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
             .map { ($0.id, $0.startTick) }, uniquingKeysWith: { first, _ in first })
-        let tint = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio).color
+        let tint = EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio, color: row.color).color
         // The clip grid is read ONCE per lane: each part's own clip gives its sketch and its name.
         let clips: [UUID: (TimelineRegion, Clip?)] = Dictionary(document.regions.filter { $0.laneID == row.id }
             .map { ($0.id, ($0, clipStore.clip(id: $0.clipID))) },

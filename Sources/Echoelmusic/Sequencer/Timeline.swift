@@ -111,6 +111,11 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
     /// would decode a plug-in reference as an effect. Sink-applied per lane like transpose — it
     /// flows LIVE through `mergeMixer`, never through a relocate. See `Core/DeviceChain.swift`.
     public var deviceChain: DeviceChain?
+    /// A4b (founder 2026-10-16, gap list item 4 "Spurfarbe") — the colour the person chose for this
+    /// track; nil = the colour its instrument gives it (`EchoelTheme.TrackHue.of`). DISPLAY only:
+    /// `structurallyEqual` leaves it out, so recolouring a playing track re-attacks nothing. Never
+    /// the body's green — that hue belongs to the bio track (`TrackColor` has no green case).
+    public var color: TrackColor?
 
     public init(id: UUID = UUID(), name: String, kind: ClipKind, isBio: Bool = false,
                 level: Float = TimelineLane.defaultLevel, isMuted: Bool = false, isSoloed: Bool = false,
@@ -120,7 +125,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
                 mood: MoodProfile? = nil, variationSeed: UInt64? = nil, rollLocked: Bool? = nil,
                 transposeSemitones: Int = TimelineLane.defaultTransposeSemitones, detuneCents: Float = 0,
                 octaveDouble: Int = 0, samplePath: String? = nil,
-                deviceChain: DeviceChain? = nil) {
+                deviceChain: DeviceChain? = nil, color: TrackColor? = nil) {
         self.id = id
         self.name = name
         self.kind = kind
@@ -141,6 +146,7 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         self.octaveDouble = octaveDouble
         self.samplePath = samplePath
         self.deviceChain = deviceChain
+        self.color = color
     }
 
     /// What this track's record button captures — derived from its kind + built-in
@@ -271,6 +277,8 @@ public struct TimelineLane: Codable, Sendable, Equatable, Identifiable {
         // non-primitive field here: a chain this build cannot read costs the EFFECT, never the
         // lane (and `DeviceChain` itself skips one unreadable insert rather than failing).
         deviceChain = (try? c.decodeIfPresent(DeviceChain.self, forKey: .deviceChain)) ?? nil
+        // A4b: an unknown or missing colour is the instrument's colour, never a lost track.
+        color = (try? c.decodeIfPresent(TrackColor.self, forKey: .color)) ?? nil
     }
 }
 
@@ -506,6 +514,14 @@ public struct TimelineRegion: Codable, Sendable, Equatable, Identifiable {
         copy.startTick = max(0, tick ?? endTick)
         return copy
     }
+}
+
+/// A4b (founder 2026-10-16, gap list item 4) — the colours a person can give a track. They are the
+/// track hues the instruments already wear (`EchoelTheme.TrackHue`), minus the body's green, which
+/// only the bio track wears. Persisted by raw value; an unknown one decodes to nil (the instrument's
+/// colour). The ORDER is the menu's order.
+public enum TrackColor: String, CaseIterable, Codable, Sendable {
+    case teal, blue, sand, terracotta, violet, slate, orchid
 }
 
 /// A5 (founder 2026-10-16, "Arrangement auf Ableton-Level") — a marker: a named bar of the
@@ -984,6 +1000,7 @@ public struct TimelineDocument: Codable, Sendable, Equatable {
             n.detuneCents = lb.detuneCents
             n.octaveDouble = lb.octaveDouble
             n.deviceChain = lb.deviceChain
+            n.color = lb.color             // A4b: a colour changes nothing that sounds
             if n != lb { return false }
         }
         return true

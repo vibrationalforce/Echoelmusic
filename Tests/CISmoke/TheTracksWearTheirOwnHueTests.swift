@@ -84,16 +84,16 @@ final class TheTracksWearTheirOwnHueTests: XCTestCase {
 
     func testOneSwitchMapsEveryTrack() {
         typealias Hue = EchoelTheme.TrackHue
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: .polySynth, isBio: false), .synth)
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: .subBass, isBio: false), .bass)
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: .sampler, isBio: false), .sampler)
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: .breakLoop, isBio: false), .breakbeat)
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: .bioVoice, isBio: false), .body)
-        XCTAssertEqual(Hue.of(kind: .midi, instrument: nil, isBio: false), .echoel,
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: .polySynth, isBio: false, color: nil), .synth)
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: .subBass, isBio: false, color: nil), .bass)
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: .sampler, isBio: false, color: nil), .sampler)
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: .breakLoop, isBio: false, color: nil), .breakbeat)
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: .bioVoice, isBio: false, color: nil), .body)
+        XCTAssertEqual(Hue.of(kind: .midi, instrument: nil, isBio: false, color: nil), .echoel,
                        "a MIDI track without a built-in instrument is the generative Echoel track")
-        XCTAssertEqual(Hue.of(kind: .audio, instrument: nil, isBio: false), .audio)
-        XCTAssertEqual(Hue.of(kind: .visual, instrument: nil, isBio: false), .visual)
-        XCTAssertEqual(Hue.of(kind: .audio, instrument: nil, isBio: true), .body,
+        XCTAssertEqual(Hue.of(kind: .audio, instrument: nil, isBio: false, color: nil), .audio)
+        XCTAssertEqual(Hue.of(kind: .visual, instrument: nil, isBio: false, color: nil), .visual)
+        XCTAssertEqual(Hue.of(kind: .audio, instrument: nil, isBio: true, color: nil), .body,
                        "a bio lane carries the body's curve — it wears the body's colour")
         // Every combination resolves, and every resolution carries a symbol beside it.
         let instruments: [TrackInstrument?] = [nil] + TrackInstrument.allCases.map { $0 }
@@ -117,7 +117,7 @@ final class TheTracksWearTheirOwnHueTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `nameGutter`, `laneRow` or `ArrangePartBlock` (#454)")
         }
         let gutterBody = String(file[gutter.upperBound..<gutterEnd.lowerBound])
-        XCTAssertTrue(gutterBody.contains("EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)"),
+        XCTAssertTrue(gutterBody.contains("EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio, color: row.color)"),
                       "the gutter asks the one switch for the track's hue")
         XCTAssertTrue(gutterBody.contains("EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,"),
                       "the hue travels with the instrument's symbol")
@@ -146,7 +146,7 @@ final class TheTracksWearTheirOwnHueTests: XCTestCase {
             return XCTFail("ANCHOR MISSING: `laneFacts` and the member after it (#454)")
         }
         let header = String(file[facts.upperBound..<factsEnd.lowerBound])
-        XCTAssertTrue(header.contains("EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio)"),
+        XCTAssertTrue(header.contains("EchoelTheme.TrackHue.of(kind: row.kind, instrument: row.instrument, isBio: row.isBio, color: row.color)"),
                       "the header asks the one switch for the track's hue")
         XCTAssertTrue(header.contains("EchoelTheme.TrackHue.symbol(kind: row.kind, instrument: row.instrument,"),
                       "and shows the instrument's symbol in it, like the gutter")
