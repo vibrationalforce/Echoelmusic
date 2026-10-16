@@ -19,6 +19,8 @@ widerspricht, gewinnt der Masterplan.
 
 **Schon in dieser Sitzung erledigt, steht hier nicht als offen:** EP-7, EP-8, EP-9, EP-10, EP-11, Deploy 10.79.508.
 
+**Erledigt am 2026-10-16 (später, Branch, Gates offen):** A1 `cd93c14` · C2 `fc5d1da` · D1(Ultraplan) `81ebe64` · A6 `1221d0d` · A11 `aae615b` · A2 `924564c` · A3 `6a02e43` · C1 `84a7514` (nur die Take-Tür; die Song-Tür „Export“ bleibt, weil die Lernkarte sie zitiert) · D8 `6f6d5d1` · A4 `e8fd57e`. Jede Zeile hat einen Wächter; Gerät für alle offen.
+
 ---
 
 ## 1. Tracks

@@ -70,6 +70,13 @@ Pläne dieselben Buchstaben nutzen (`scratchpads/GSIDMMW_AUDIT_2026-10-16.md` §
 | „Share as MIDI“ für das gewählte MIDI-Teil (Ultraplan-C2) | Part-Leiste | `fc5d1da` |
 | Gekürztes MIDI-Teil sagt, wie viele Noten es verbirgt (Ultraplan-A1) | unter dem Length-Feld | `cd93c14` |
 | Neue MIDI-Spur jenseits der Rack-Stimmen sagt beim Anlegen, dass sie stumm ist (Ultraplan-D1) | „Add MIDI Track“ | `81ebe64` |
+| MIDI-Import nennt Programmwechsel, Tempowechsel und eine Taktart ≠ 4/4, die er nicht übernimmt — nur bei WECHSELN (Ultraplan-A6) | Erfolgsmeldung des Imports | `1221d0d` |
+| Teil-Kante per VoiceOver nach außen: „Start from the bar line before“ / „Lengthen to the next bar line“ (Ultraplan-A11) | Titel der Part-Leiste, VoiceOver-Aktionen | `aae615b` |
+| Notengitter mit fester Tasten-Spalte: jede Zeile benannt, bleibt beim Scrollen stehen (Ultraplan-A2) | Notes-Seite | `924564c` |
+| „Taller rows“ / „Shorter rows“: Zeilenhöhe 24 · 32 · 40 pt, nie unter dem Touch-Boden (Ultraplan-A3) | Werkzeugzeile der Notes-Seite | `6a02e43` |
+| Take-MIDI-Tür heißt „Take .mid“ (Ultraplan-C1) | Instrument → Export | `84a7514` |
+| Echoel-Spurzeile nennt den Patch, den die Stimme spielt (Ultraplan-D8) | Track-Inspektor der Echoel-Spur | `6f6d5d1` |
+| Teil per Halten-und-Ziehen auf eine andere Spur gleicher Art; Vorschau auf der Zielzeile, ein Undo; VoiceOver: „Move to the track above / below“ (Ultraplan-A4) | Arrange-Canvas | `e8fd57e` |
 
 ⛔ Davor stand hier „Leer.“ und eine Rücknahme-Kette; sie gilt für Build 2623/2624 und bleibt wahr:
 GMMW R2, VV-4e, der Wellenform-Fix, F1–F6b und A3a sind ausgeliefert.

@@ -1143,3 +1143,15 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - **C2c** (`b53f423`) ≡ → „Ask Echoel" öffnet eine Eingabezeile im Bericht (kein Modal), gleicher `ask`-Weg wie Siri. Wächter `TheTypedRequestTakesTheSiriRoadTests`; `TheOnDeviceModelHasOneGateTests` Anspruch 4 auf zwei Frager erweitert.
 - Register: FEATURE_STATUS §1b, Audit (Paket D, C2c, Fähigkeitstabelle), FOUNDER_INBOX G11 (g)(h).
 - Gates zum Zeitpunkt in der Schlange; kein Bump vor grünem Compile Check + Build for Testing auf `b53f423`.
+
+## 2026-10-16 (Fortsetzung) — Ultraplan Track A/C/D: sechs Scheiben, lokal gestapelt, ein Push
+
+- **A6** (`1221d0d`) MIDI-Import nennt Programm-/Tempowechsel und Taktart ≠ 4/4 (nur Wechsel, B6b-0). Wächter `TheMIDIImportNamesTimingAndInstrumentChangesTests`.
+- **A11** (`aae615b`) zwei VoiceOver-Aktionen am Titel der Part-Leiste: Kante nach außen bis zur nächsten Taktlinie, über `ArrangeCanvas.barLineEdit` (die Regel der Griffe). Wächter `APartsEdgeMovesOutWithoutAFingerTests`.
+- **A2** (`924564c`) Tasten-Spalte neben dem Notengitter (`ClipNoteEdit.keyRows`, außerhalb der ScrollView). Wächter `TheNoteGridHasAKeyColumnTests`.
+- **A3** (`6a02e43`) Zeilenzoom 1 · 4/3 · 5/3 des Touch-Bodens; EINE `zoomedRowHeight` für Canvas, Treffertest, Spalte. Wächter `TheNoteRowsZoomTallerNeverShorterTests`.
+- **C1** (`84a7514`) Take-Tür „Take .mid“; Song-Tür „Export“ bleibt (Lernkarte zitiert sie). Wächter `TheMIDIDoorsNameWhatTheyWriteTests`.
+- **D8** (`6f6d5d1`) Echoel-Spurzeile nennt `synth.appliedPatch` (das Gedächtnis der Stimme, nicht `currentPatch`). Wächter-Anspruch 5 in `TheEchoelTrackNamesItsInstanceTests`.
+- **A4** (`e8fd57e`) Teil auf andere Spur ziehen: `ArrangeCanvas.dropLane` (gleiche Art, kein Bio, keine Komponisten-Take), `TrackParts.move(_:toStartTick:toLane:timeline:)` zählt in DOKUMENT-Reihenfolge; ein `@GestureState` (jetzt `CGSize`); VoiceOver-Aktionen. Wächter `APartIsDraggedOntoAnotherTrackTests`; drei Wächter nachgezogen.
+- Lehre: bei voller macOS-Schlange lokal stapeln und EINMAL pushen — ein wartender Compile Check hat nichts gemessen, sein Abbruch verliert nichts; ein laufender schon.
+- Gates: D1 (`c87ee46`) `Build for Testing` = success. Der Rest wartete zum Zeitpunkt auf Runner. Kein Bump vor grünem Compile Check + Build for Testing auf der Spitze.
