@@ -728,6 +728,10 @@ struct ArrangeCanvasView: View {
                                      },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
                 }
+                // Item 7a: the track's automation, drawn across its own row at the canvas's scale —
+                // display only, its own leaf, no gesture (the parts keep their taps and holds).
+                ArrangeAutomationTrace(curves: ArrangeAutomation.curves(for: row.id, in: document.automation),
+                                       songTicks: songTicks)
                 // One World T1: the selected part's two edges, above every block so the hold on
                 // an edge reaches them before the block's own hold-to-move.
                 if let selected, arrangeable, let pair = clips[selected],
