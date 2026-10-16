@@ -18,10 +18,17 @@ import SwiftUI
 ///
 /// It stays until it is closed or the next request replaces it — a notice that hides itself on a
 /// timer could be gone before a person who needs longer has read it.
+///
+/// GSIDMMW C2c — the ≡ menu's "Ask Echoel" opens `AgentRequestRow` above the notice: a request
+/// typed in the app takes the same road as one spoken to Siri (`ask`), and the model still only
+/// proposes. An inline row, not a modal: the root's presentation chain is untouched.
 struct AgentReportBanner: View {
     private var desk: EchoelAgentDesk { EchoelAgentDesk.shared }
 
     var body: some View {
+        if desk.isTypingRequest {
+            AgentRequestRow()
+        }
         if let notice = desk.notice {
             VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
                 HStack(alignment: .firstTextBaseline, spacing: EchoelTheme.spaceS) {
@@ -83,8 +90,8 @@ struct AgentReportBanner: View {
         Task { await EchoelAgentDesk.shared.describePiece(with: onDeviceBrain()) }
     }
 
-    /// GSIDMMW C2b — "Ask Echoel" (Siri, Shortcuts, Spotlight) calls this, and only that intent
-    /// does. The model only PROPOSES: the plan lands in this banner with Apply and Discard, and
+    /// GSIDMMW C2b/C2c — "Ask Echoel" calls this from two doors, both the person's own words: the
+    /// intent (Siri, Shortcuts, Spotlight) and the banner's typed row. The model only PROPOSES: the plan lands in this banner with Apply and Discard, and
     /// nothing in the piece changes until the person taps Apply (`EchoelAgentDesk.proposePlan`).
     static func ask(_ request: String) async {
         await EchoelAgentDesk.shared.proposePlan(for: request, with: onDeviceBrain())
@@ -108,6 +115,59 @@ struct AgentReportBanner: View {
         case .needsAnswer: return "questionmark.circle"
         case .understood, .running: return "ellipsis.circle"
         }
+    }
+}
+
+/// GSIDMMW C2c — the typed request: one line, Ask and Cancel. Its own leaf so the draft's
+/// keystrokes rebuild only this row. Ask is off while the model is busy or the request is empty;
+/// the draft is cut to what the planner reads (`EchoelModelPlanner.requestLimit`).
+private struct AgentRequestRow: View {
+    @State private var draft = ""
+    @FocusState private var focused: Bool
+    private var desk: EchoelAgentDesk { EchoelAgentDesk.shared }
+
+    private var request: String {
+        String(draft.trimmingCharacters(in: .whitespacesAndNewlines).prefix(EchoelModelPlanner.requestLimit))
+    }
+
+    private var canAsk: Bool { !request.isEmpty && !desk.isModelBusy && !desk.isWorking }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: EchoelTheme.spaceXS) {
+            Text("Ask Echoel")
+                .font(EchoelTheme.font(15, .semibold))
+            TextField("Make the selected track 3 dB quieter", text: $draft)
+                .textFieldStyle(.roundedBorder)
+                .focused($focused)
+                .submitLabel(.send)
+                .onSubmit(send)
+                .accessibilityLabel("Request for Echoel")
+                .accessibilityHint("Echoel proposes the change first. Nothing changes until you tap Apply.")
+            HStack(spacing: EchoelTheme.spaceS) {
+                Button("Ask", action: send)
+                    .buttonStyle(.borderedProminent)
+                    .frame(minHeight: 44)
+                    .disabled(!canAsk)
+                    .accessibilityHint("Sends the request to the on-device model. Changes nothing in the piece.")
+                Button("Cancel") { desk.endTypedRequest() }
+                    .buttonStyle(.bordered)
+                    .frame(minHeight: 44)
+                    .accessibilityHint("Closes the request line. Changes nothing in the piece.")
+            }
+        }
+        .foregroundStyle(EchoelTheme.text)
+        .padding(EchoelTheme.spaceS)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(EchoelTheme.surface)
+        .accessibilityElement(children: .contain)
+        .onAppear { focused = true }
+    }
+
+    private func send() {
+        guard canAsk else { return }
+        let asked = request
+        desk.endTypedRequest()
+        Task { await AgentReportBanner.ask(asked) }
     }
 }
 #endif

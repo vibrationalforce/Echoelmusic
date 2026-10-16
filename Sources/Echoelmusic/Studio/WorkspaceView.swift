@@ -604,6 +604,10 @@ struct WorkspaceView: View {
                 Button { AgentReportBanner.describePiece() } label: {
                     Label("Describe this piece", systemImage: "text.bubble")
                 }
+                // GSIDMMW C2c — the typed twin of Siri's "Ask Echoel": a line in the banner, no modal.
+                Button { EchoelAgentDesk.shared.beginTypedRequest() } label: {
+                    Label("Ask Echoel", systemImage: "text.cursor")
+                }
                 Divider()
                 Toggle(isOn: $guideVisible) {
                     Label("Guide", systemImage: "info.circle")
@@ -617,7 +621,7 @@ struct WorkspaceView: View {
             }
             .padding(.horizontal, -9)
             .accessibilityLabel("Menu")
-            .accessibilityHint("Open, save, Live Colabo, Learn, describe this piece and the guide")
+            .accessibilityHint("Open, save, Live Colabo, Learn, describe this piece, ask Echoel and the guide")
             // SECOND: the loop length + the playhead inside it — the founder's "die Anzeige für
             // die Loop Länge und der Balken" (#490), which lived in the MIDDLE until the #516
             // swap moved it to the leading edge and #528 put the mark to its left. It is still

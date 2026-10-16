@@ -83,9 +83,14 @@ final class TheOnDeviceModelHasOneGateTests: XCTestCase {
         let root = try XCTUnwrap(describers.first?.code)
         XCTAssertTrue(root.contains("Button { AgentReportBanner.describePiece() }"), "only a tap asks for a description")
 
+        // GSIDMMW C2c: two askers, both the person's own words — the intent (Siri, Shortcuts) and the
+        // banner's typed row; `TheTypedRequestTakesTheSiriRoadTests` pins where the row's one call sits.
         let askers = files.filter { $0.code.contains("AgentReportBanner.ask(") }
-        XCTAssertEqual(askers.map(\.path), ["Sources/Echoelmusic/Studio/EchoelAppIntents.swift"])
-        let intents = try XCTUnwrap(askers.first?.code)
+        XCTAssertEqual(askers.map(\.path), ["Sources/Echoelmusic/Studio/AgentReportBanner.swift",
+                                             "Sources/Echoelmusic/Studio/EchoelAppIntents.swift"])
+        XCTAssertEqual(banner.components(separatedBy: "AgentReportBanner.ask(").count - 1, 1,
+                       "the typed row asks once, in its send()")
+        let intents = try XCTUnwrap(askers.last?.code)
         XCTAssertEqual(intents.components(separatedBy: "AgentReportBanner.ask(").count - 1, 1)
         let intent = try XCTUnwrap(intents.range(of: "struct AskEchoelIntent: AppIntent {"))
         let call = try XCTUnwrap(intents.range(of: "await AgentReportBanner.ask(request)"))

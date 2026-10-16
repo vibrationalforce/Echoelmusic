@@ -627,6 +627,14 @@ final class EchoelAgentDesk {
         notice = nil
     }
 
+    /// GSIDMMW C2c — the ≡ menu's "Ask Echoel" opens a typed request row in the banner, the in-app
+    /// twin of the Siri intent: no modal, no new surface. Read only by the banner's own body.
+    private(set) var isTypingRequest = false
+
+    func beginTypedRequest() { isTypingRequest = true }
+
+    func endTypedRequest() { isTypingRequest = false }
+
     private func run(requestID: UUID, request: String, actions: [EchoelProposedAction],
                      on executor: EchoelCommandExecutor) async {
         isWorking = true

@@ -253,14 +253,14 @@
         }
       }
     },
-    "Open, save, Live Colabo, Learn, describe this piece and the guide" : {
+    "Open, save, Live Colabo, Learn, describe this piece, ask Echoel and the guide" : {
       "comment" : "DAW shell S3 (2026-10-02, inbox E18): the ≡ menu's spoken hint — it holds Open, Save, Live Colabo, Learn and the Guide switch.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open, save, Live Colabo, Learn, describe this piece and the guide"
+            "value" : "Open, save, Live Colabo, Learn, describe this piece, ask Echoel and the guide"
           }
         }
       }
@@ -24685,6 +24685,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Drops the proposal. Changes nothing in the piece."
+          }
+        }
+      }
+    },
+    "Ask Echoel" : {
+      "comment" : "GSIDMMW C2c (2026-10-16): the ≡ menu row and the title of the banner's typed request (WorkspaceView, AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask Echoel"
+          }
+        }
+      }
+    },
+    "Ask" : {
+      "comment" : "GSIDMMW C2c: sends the typed request to the on-device model (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask"
+          }
+        }
+      }
+    },
+    "Make the selected track 3 dB quieter" : {
+      "comment" : "GSIDMMW C2c: placeholder of the typed request — an example the planner can do.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make the selected track 3 dB quieter"
+          }
+        }
+      }
+    },
+    "Request for Echoel" : {
+      "comment" : "GSIDMMW C2c: VoiceOver label of the typed request field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request for Echoel"
+          }
+        }
+      }
+    },
+    "Echoel proposes the change first. Nothing changes until you tap Apply." : {
+      "comment" : "GSIDMMW C2c: VoiceOver hint of the typed request field.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoel proposes the change first. Nothing changes until you tap Apply."
+          }
+        }
+      }
+    },
+    "Sends the request to the on-device model. Changes nothing in the piece." : {
+      "comment" : "GSIDMMW C2c: VoiceOver hint of Ask.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sends the request to the on-device model. Changes nothing in the piece."
+          }
+        }
+      }
+    },
+    "Closes the request line. Changes nothing in the piece." : {
+      "comment" : "GSIDMMW C2c: VoiceOver hint of Cancel on the typed request.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closes the request line. Changes nothing in the piece."
           }
         }
       }
