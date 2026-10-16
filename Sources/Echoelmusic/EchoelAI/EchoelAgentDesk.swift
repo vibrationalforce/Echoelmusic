@@ -553,7 +553,7 @@ final class EchoelAgentDesk {
             case .duplicatePart:
                 return "copy the selected part to right after it"
             case .undoAgentChange, .applyMediaLook, .keepTake, .composeHere:
-                return EchoelCommandSpec.spec(step.id).summary.lowercased()
+                return EchoelCommandRegistry.spec(step.id).summary.lowercased()
             }
         }
         return "Echoel would " + steps.joined(separator: ", then ") + ". " + proposalTail
