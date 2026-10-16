@@ -81,10 +81,20 @@ struct ArrangeCycleHandles: View {
     let locked: Bool
 
     /// The range under the finger while a grip is dragged; nil otherwise. Never persisted.
-    @State private var preview: TimelineCycle?
+    /// `@GestureState` (review UI#7): a drag the system cancels — a second finger's pinch, an
+    /// interruption — resets it, so no stale outline is left drawn.
+    @GestureState private var preview: TimelineCycle? = nil
 
     /// The hit width of a grip — the tap floor, centred on the edge.
     private static let gripTarget: CGFloat = 44
+
+    /// How far a grip's hit area reaches INTO the band: half the tap floor, but never past the
+    /// band's middle, so on a short cycle the two grips never cover each other (review UI#7 —
+    /// the end grip, later in the stack, took the start grip's drags). Outward it keeps the full
+    /// half. Pure.
+    static func inwardReach(bandWidth: CGFloat) -> CGFloat {
+        Swift.max(0, Swift.min(gripTarget / 2, bandWidth / 2))
+    }
 
     var body: some View {
         let loopTicks = TimelineRegionPlayer.loopTicks(for: document)
@@ -99,34 +109,46 @@ struct ArrangeCycleHandles: View {
                         .offset(x: laneWidth * outline.start)
                         .allowsHitTesting(false)
                 }
-                grip(.start, at: laneWidth * band.start, committed: committed, loopTicks: loopTicks)
-                grip(.end, at: laneWidth * (band.start + band.width), committed: committed, loopTicks: loopTicks)
+                let inward = Self.inwardReach(bandWidth: laneWidth * band.width)
+                grip(.start, at: laneWidth * band.start, inward: inward, committed: committed, loopTicks: loopTicks)
+                grip(.end, at: laneWidth * (band.start + band.width), inward: inward,
+                     committed: committed, loopTicks: loopTicks)
             }
             .frame(width: laneWidth, height: height, alignment: .topLeading)
             .accessibilityHidden(true)
         }
     }
 
-    private func grip(_ edge: CycleDrag.Edge, at x: CGFloat, committed: Range<Int>,
+    private func grip(_ edge: CycleDrag.Edge, at x: CGFloat, inward: CGFloat, committed: Range<Int>,
                       loopTicks: Int) -> some View {
-        RoundedRectangle(cornerRadius: 1)
+        let outward = Self.gripTarget / 2
+        // The hit area: the full half outside the band, `inward` inside it; the line sits on the edge.
+        let left = edge == .start ? outward : inward
+        return RoundedRectangle(cornerRadius: 1)
             .fill(EchoelTheme.text)
             .frame(width: 3, height: height)
-            .frame(width: Self.gripTarget, height: height)
+            .offset(x: left - (outward + inward) / 2)
+            .frame(width: outward + inward, height: height)
             .contentShape(Rectangle())
-            .offset(x: x - Self.gripTarget / 2)
+            .offset(x: x - left)
             .highPriorityGesture(
                 DragGesture(minimumDistance: 4)
-                    .onChanged { value in
-                        guard let tick = CycleDrag.barLine(atX: x + value.translation.width,
-                                                           laneWidth: laneWidth, songTicks: songTicks) else { return }
-                        preview = CycleDrag.dragged(committed, edge: edge, toTick: tick, loopTicks: loopTicks)
+                    .updating($preview) { value, state, _ in
+                        state = target(of: value, edge: edge, from: x, committed: committed, loopTicks: loopTicks)
                     }
-                    .onEnded { _ in
+                    .onEnded { value in
                         // ONE write, on lift — one `.cycle` Undo step; an unchanged range writes nothing.
-                        if let next = preview { timeline.setCycle(next) }
-                        preview = nil
+                        if let next = target(of: value, edge: edge, from: x, committed: committed,
+                                             loopTicks: loopTicks) { timeline.setCycle(next) }
                     }
             )
+    }
+
+    /// The range a drag of `edge` from `x` asks for, on the bar under the finger.
+    private func target(of value: DragGesture.Value, edge: CycleDrag.Edge, from x: CGFloat,
+                        committed: Range<Int>, loopTicks: Int) -> TimelineCycle? {
+        guard let tick = CycleDrag.barLine(atX: x + value.translation.width,
+                                           laneWidth: laneWidth, songTicks: songTicks) else { return nil }
+        return CycleDrag.dragged(committed, edge: edge, toTick: tick, loopTicks: loopTicks)
     }
 }

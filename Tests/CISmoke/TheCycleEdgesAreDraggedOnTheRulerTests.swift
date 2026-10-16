@@ -79,16 +79,22 @@ final class TheCycleEdgesAreDraggedOnTheRulerTests: XCTestCase {
                        "the ruler row mounts the grips once")
         XCTAssertTrue(ruler.contains("height: height, locked: locked)"), "with the row's own lock")
         let handles = try source("Sources/Echoelmusic/Studio/ArrangeCycleHandles.swift")
-        XCTAssertTrue(handles.contains("@State private var preview: TimelineCycle?"), "the range under the finger is local")
-        guard let ended = handles.range(of: ".onEnded { _ in"),
-              let changed = handles.range(of: ".onChanged { value in") else {
+        XCTAssertTrue(handles.contains("@GestureState private var preview: TimelineCycle? = nil"),
+                      "the range under the finger is local, and a cancelled drag clears it (UI#7)")
+        guard let ended = handles.range(of: ".onEnded { value in"),
+              let changed = handles.range(of: ".updating($preview) { value, state, _ in") else {
             return XCTFail("ANCHOR MISSING: the grip's drag phases (#408)")
         }
         XCTAssertLessThan(changed.lowerBound, ended.lowerBound)
         XCTAssertEqual(handles.components(separatedBy: "timeline.setCycle(").count - 1, 1, "one write")
         XCTAssertFalse(handles[changed.lowerBound..<ended.lowerBound].contains("setCycle"),
                        "never a write per drag frame — one Undo step per drag")
-        XCTAssertTrue(handles[ended.upperBound...].contains("if let next = preview { timeline.setCycle(next) }"))
+        XCTAssertTrue(handles[ended.upperBound...].contains("loopTicks: loopTicks) { timeline.setCycle(next) }"),
+                      "the lift writes the range the finger asked for")
+        // UI#7: on a short cycle the grips never cover each other — each reaches at most half the band inward.
+        XCTAssertEqual(ArrangeCycleHandles.inwardReach(bandWidth: 200), 22, "a wide band keeps the full tap floor")
+        XCTAssertEqual(ArrangeCycleHandles.inwardReach(bandWidth: 20), 10, "a 1-bar band splits at its middle")
+        XCTAssertEqual(ArrangeCycleHandles.inwardReach(bandWidth: -5), 0)
         XCTAssertTrue(handles.contains("if !locked, let committed = document.cycle?.window(loopTicks: loopTicks),"),
                       "no grips while a take records or a bounce runs")
         XCTAssertFalse(handles.contains("currentTick"), "cold: the playhead is a leaf of its own")
