@@ -147,6 +147,9 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
                        "\"New MIDI Part\" lands after the last part — the tap names a bar")
         XCTAssertTrue(action.contains("selection.setNotesOpen(true)"), "the new part opens for notes")
         XCTAssertTrue(action.contains("importNote = failure.userMessage"), "a refusal is said, not silent")
+        XCTAssertTrue(action.contains("importNote = MIDIImport.emptyPartNote("),
+                      "a success says what \"New MIDI Part\" says — Generate yielding to it included (UI#3)")
+        XCTAssertTrue(action.contains("notOnSelected: nil)"), "the tap names its own track")
     }
 
     // MARK: 5 — Draw and Select mode own the row's taps
