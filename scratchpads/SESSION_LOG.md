@@ -1155,3 +1155,11 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - **A4** (`e8fd57e`) Teil auf andere Spur ziehen: `ArrangeCanvas.dropLane` (gleiche Art, kein Bio, keine Komponisten-Take), `TrackParts.move(_:toStartTick:toLane:timeline:)` zählt in DOKUMENT-Reihenfolge; ein `@GestureState` (jetzt `CGSize`); VoiceOver-Aktionen. Wächter `APartIsDraggedOntoAnotherTrackTests`; drei Wächter nachgezogen.
 - Lehre: bei voller macOS-Schlange lokal stapeln und EINMAL pushen — ein wartender Compile Check hat nichts gemessen, sein Abbruch verliert nichts; ein laufender schon.
 - Gates: D1 (`c87ee46`) `Build for Testing` = success. Der Rest wartete zum Zeitpunkt auf Runner. Kein Bump vor grünem Compile Check + Build for Testing auf der Spitze.
+
+## 2026-10-16 (Nachmittag) — 10.79.510 ausgeliefert; True Peak; Stem-Bausteine LS-ST1…3b
+
+- **LS-TP1** (`d82e1e8`) Export-Normalisierung gegen BS.1770-True-Peak (−1 dBTP) · **LS-TP2** (`120e2b2`) Meter liest denselben Schätzer · Kernel-Zeiger (`896bc53`).
+- **LS-ST1** (`784f1c7`) Sampler übergibt seinen Block an einen Stem-Abgriff (aus) · **LS-ST2** (`d9c22c8`) `AudioLaneStemPlan` = Gewinner-Regel des Live-Spielers · **LS-ST3a** (`7f66387`) Frames aus Ticks, Nachbarn teilen den Frame · **LS-ST3b** Renderer (mono 24 bit, Songlänge, lehnt Warp/Transpose/Effekte/fremde Rate vor dem Schreiben ab).
+- **E34** (Laptop: E15 vor Catalyst) und **E35** (Stem-Tür wartet auf G-D) im Inbox; Stereo-Sampler auf SS0 gehalten (Bus-Format = erste Quelle).
+- **10.79.510** (`d25c788`) gehoben nach grünem Compile Check + Build for Testing auf `d9c22c8`; TestFlight 2635 lief zum Zeitpunkt.
+- Lehre: auf einen Gate-Lauf nicht warten — lokal weiterbauen, den Release-Commit EINZELN pushen (`git push origin <sha>:refs/heads/<branch>`), damit TestFlight genau den geprüften Stand baut.

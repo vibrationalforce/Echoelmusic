@@ -5368,3 +5368,11 @@ darauf. **Warum:** Catalyst baut nichts neu, ein natives macOS-Target spaltete d
 ist heute auf 2 Kanäle gedeckelt (`AudioEngine.swift:866`), die Busse brauchen also in jedem Fall
 eine eigene Scheibe. Ein Intel-Mac führt keine iPhone-Apps aus — dann fällt die Brücke weg.
 **Offen beim Founder:** Laptop-Modell/Chip und das E15-Häkchen. Review: 2026-11-15.
+
+### 2026-10-16 — Audiospur-Stems offline, mit lauter Ablehnung (ADR-008 K1)
+
+Audiospur-Stems werden aus Datei und `TimelineDocument` gerechnet, nicht abgegriffen: `AudioLaneStemPlan` (LS-ST2/3a) fragt `TimelineScheduling` nach dem Gewinner, `AudioLaneStemRenderer` (LS-ST3b) schreibt mono, 24 bit, so lang wie das Stück. Er lehnt vor dem ersten Byte ab, was er nicht originalgetreu kann: Warp, Transpose, aktive Spur-Effekte (inkl. Grain), fehlende Datei, fremde Sample-Rate. Grund: ein Stem, der still anders klingt als das Stück, ist schlimmer als ein abgelehnter. SRC und Stretcher folgen als eigene Scheiben. Review 2026-11-15.
+
+### 2026-10-16 — Stereo-Sampler wartet auf eine Pan-Messung (SS0)
+
+Der Spur-Bus übernimmt das Format seiner ERSTEN Quelle (`AudioEngine.attachTrackBus`), das ist der Mono-Synth — ein Stereo-Sampler würde dort wieder mono. Den Bus zu verbreitern ändert das Pan-Gesetz jeder Spur. Erst offline messen (SS0), dann Bus (SS1), Sampler (SS2), Überlappung (SS3). Plan: `scratchpads/PLAN_STEREO_SAMPLER_2026-10-16.md`. Review 2026-11-15.
