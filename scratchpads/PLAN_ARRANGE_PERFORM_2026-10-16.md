@@ -56,19 +56,19 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 |---|---|---|---|
 | 1 | Markers (A5) | ✅ `48a28d6` | guard `TheMarkersNameBarsOfThePieceTests` (pure + store undo + scan); gates: not yet read |
 | 2 | Cycle region drag (A2) | ✅ `28b1059` | guard `TheCycleEdgesAreDraggedOnTheRulerTests` (pure `CycleDrag` + scan), Python transcription green, 6 checkers 0; gates: pending |
-| 3 | Multi-select + clipboard (A9) | **NEXT** | — |
-| 4 | Track reorder + colour | open — council first (order decides `rollLaneID`) | — |
+| 3 | Multi-select + clipboard (A9) | ✅ `8b5d152` | guard `TheGatheredPartsAreCopiedAndPastedTests` (pure paste + store undo + gather rules + scan), Python transcription of the scan green, 6 checkers 0; gates: pending |
+| 4 | Track reorder + colour | **NEXT** — council first (order decides `rollLaneID`) | — |
 | 5 | Count-in | open | — |
 | 6 | Record scenes into arrangement (P4) | open | — |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
 
-### Exact next step (item 3)
-The multi-select APIs in `TimelineStore` exist without a door (measured gap). Slice: a
-"Select" mode in the canvas — a tap toggles a part into the selection (no new modal), and
-Copy / Paste act on the selection at the Play-start bar through the store, ONE undo step per
-paste. Clipboard = an in-memory value on the store (never the system pasteboard, never
-persisted). Guard: pure paste plan end to end + one writer + no `currentTick` in the door.
+### Exact next step (item 4)
+Track reorder + colour. Lane ORDER is load-bearing (`rollLaneID` picks a lane by position), so
+first measure every reader of `document.lanes` order and convene the council; then the slice:
+`TimelineStore.moveLane(id:by:)` as ONE undo step (a new `HistoryStep` case or the lanes
+snapshot), Move up / Move down in the track header (no drag in v1), and a colour choice that
+overrides `EchoelTheme.TrackHue.of` per track, persisted on `TimelineLane` with a lossy decode.
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2.
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9.
