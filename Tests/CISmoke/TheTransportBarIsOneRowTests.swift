@@ -148,7 +148,7 @@ final class TheTransportBarIsOneRowTests: XCTestCase {
             """)
         XCTAssertFalse(buttonOnly.contains("droppedSentence("),
                        "the dropped-recordings warning is drawn by `RecordTakeNote`, not under the button")
-        XCTAssertTrue(buttonOnly.contains(".accessibilityHint(caption)"),
+        XCTAssertTrue(buttonOnly.contains(".accessibilityHint(countIn != nil ? String(localized: \"Tap to cancel the count-in.\") : caption)"),
                       "COUNTERWEIGHT: the sentence the row no longer draws is still spoken")
         XCTAssertTrue(buttonOnly.contains(".frame(minWidth: 44, minHeight: 44)"),
                       "COUNTERWEIGHT: the Record door keeps its 44 pt target in the row")

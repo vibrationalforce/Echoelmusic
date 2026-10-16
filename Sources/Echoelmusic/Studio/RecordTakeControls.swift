@@ -49,6 +49,13 @@ struct RecordTakeButton: View {
     @Environment(TimelineStore.self) private var timeline
     @Environment(ClipStore.self) private var clipStore
     @Environment(Transport.self) private var transport
+    @Environment(MetronomeVoice.self) private var metronome
+    /// Arrange & Perform item 5 — the bars of click before the take (`CountInChoice`).
+    @AppStorage(CountInChoice.key) private var countInRaw = CountInChoice.off.rawValue
+    /// The running count-in, if any. A tap during it cancels it; nothing has been armed yet.
+    @State private var countIn: Task<Void, Never>?
+    /// The click was off before the count-in switched it on, so the take starts with it off again.
+    @State private var countInSilencesClick = false
 
     /// The song is running (the Workstation's own `player.isPlaying`).
     let playing: Bool
@@ -78,11 +85,10 @@ struct RecordTakeButton: View {
             case .recording:
                 stopSong()
             case .ready, .firstTake:
-                // Arm BEFORE the start: the player admits an empty piece only for an armed take.
-                recorder.arm()
-                // A refused start (the player's own guard) must not leave an armed recorder
-                // that the NEXT start from any surface would record into.
-                if !startSong() { recorder.cancel() }
+                if countIn != nil { endCountIn(); break }
+                let bars = CountInChoice.resolved(countInRaw).bars
+                guard bars > 0 else { beginTake(); break }
+                startCountIn(bars: bars)
             case .stopFirst, .armFirst, .foreignArm, .gridFull:
                 break
             }
@@ -96,7 +102,8 @@ struct RecordTakeButton: View {
                     .foregroundStyle(recording ? EchoelTheme.onPrimary
                                                : (state.offersATake ? EchoelTheme.recording : EchoelTheme.dim))
                 if !compact {
-                    Text(recording ? String(localized: "Stop recording") : String(localized: "Record"))
+                    Text(recording ? String(localized: "Stop recording")
+                         : (countIn != nil ? String(localized: "Counting in") : String(localized: "Record")))
                         .font(EchoelTheme.font(13, .semibold))
                 }
             }
@@ -112,8 +119,43 @@ struct RecordTakeButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!state.offersATake && state != .recording)
-        .accessibilityLabel(recording ? String(localized: "Stop recording") : String(localized: "Record"))
-        .accessibilityHint(caption)
+        .accessibilityLabel(recording ? String(localized: "Stop recording")
+                            : (countIn != nil ? String(localized: "Counting in") : String(localized: "Record")))
+        .accessibilityHint(countIn != nil ? String(localized: "Tap to cancel the count-in.") : caption)
+        .onDisappear { endCountIn() }
+    }
+
+    /// The take itself: arm, then the one start from the top.
+    private func beginTake() {
+        // Arm BEFORE the start: the player admits an empty piece only for an armed take.
+        recorder.arm()
+        // A refused start (the player's own guard) must not leave an armed recorder
+        // that the NEXT start from any surface would record into.
+        if !startSong() { recorder.cancel() }
+    }
+
+    /// n bars of the one click from a fresh downbeat, then the take — unless the music was
+    /// started some other way meanwhile, or the count-in was cancelled.
+    private func startCountIn(bars: Int) {
+        let wait = CountInChoice.seconds(bars: bars, bpm: transport.tempo, beatsPerBar: Transport.beatsPerBar)
+        countInSilencesClick = !metronome.enabled
+        if metronome.enabled { metronome.restartBar() } else { metronome.enabled = true }
+        countIn = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(wait))
+            guard !Task.isCancelled else { return }
+            let started = transport.isPlaying || recorder.isRecording
+            endCountIn()
+            if !started { beginTake() }
+        }
+    }
+
+    /// Stops a running count-in and gives the click back its own state. Safe to call when none runs.
+    private func endCountIn() {
+        guard let running = countIn else { return }
+        running.cancel()
+        countIn = nil
+        if countInSilencesClick { metronome.enabled = false }
+        countInSilencesClick = false
     }
 }
 

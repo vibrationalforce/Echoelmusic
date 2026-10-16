@@ -233,7 +233,14 @@ final class TheFirstTakeRunsTheClockTests: XCTestCase {
                                       "ANCHOR MISSING: the arm-and-start case of `RecordTakeButton` (#454)")
         let caseEnd = try XCTUnwrap(door.range(of: "case .stopFirst, .armFirst, .foreignArm, .gridFull:",
                                                range: caseStart.upperBound..<door.endIndex))
-        let body = door[caseStart.upperBound..<caseEnd.lowerBound]
+        XCTAssertTrue(door[caseStart.upperBound..<caseEnd.lowerBound].contains("beginTake()"),
+                      "the take states start the take (directly, or after the count-in, A10)")
+        // A10: the arm and the start live in `beginTake()`, the one path both the plain tap and the
+        // end of a count-in take.
+        let takeStart = try XCTUnwrap(door.range(of: "private func beginTake() {"),
+                                      "ANCHOR MISSING: `RecordTakeButton.beginTake` (#454)")
+        let takeEnd = try XCTUnwrap(door.range(of: "private func startCountIn(", range: takeStart.upperBound..<door.endIndex))
+        let body = door[takeStart.upperBound..<takeEnd.lowerBound]
         let arm = try XCTUnwrap(body.range(of: "recorder.arm()"))
         let start = try XCTUnwrap(body.range(of: "if !startSong() { recorder.cancel() }"))
         XCTAssertTrue(arm.upperBound <= start.lowerBound, """

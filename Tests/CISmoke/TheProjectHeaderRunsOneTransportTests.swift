@@ -379,7 +379,7 @@ final class TheProjectHeaderRunsOneTransportTests: XCTestCase {
         // two effects is the confusion `OneStartControlTests` names.
         let record = try source("Sources/Echoelmusic/Studio/RecordTakeControls.swift")
         guard let gate = record.range(of: "if !compact {"),
-              let recordWord = record.range(of: "Text(recording ? String(localized: \"Stop recording\") : String(localized: \"Record\"))",
+              let recordWord = record.range(of: "Text(recording ? String(localized: \"Stop recording\")",   // A10: then "Counting in" or "Record"
                                             range: gate.upperBound..<record.endIndex) else {
             return XCTFail("ANCHOR MISSING: the compact Record's word is no longer behind `if !compact {` (#454)")
         }

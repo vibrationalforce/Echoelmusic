@@ -1288,6 +1288,10 @@ struct WorkstationView: View {
                              startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },
                              stopSong: { player.stop() })
 
+            // Arrange & Perform item 5 — the bars of click before Record starts the piece. Its own
+            // leaf: it writes one persisted choice, and Record reads it.
+            CountInPicker()
+
             // DAW shell S8b — in landscape the Add tile ends the row instead of standing on a
             // row of its own above the plate (`ArrangeAddPlacement`); the same one menu.
             if addPlacement == .transportBar {

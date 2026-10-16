@@ -615,6 +615,7 @@ final class TheChromeSpeaksOneLanguageTests: XCTestCase {
             "Sources/Echoelmusic/Studio/ArrangeGatherBar.swift",   // A9: Select · Copy · Paste · Delete
             "Sources/Echoelmusic/Studio/TrackColorRow.swift",   // A4b: the track's colour menu
             "Sources/Echoelmusic/Studio/TrackOrderRow.swift",   // A4c: Move up · Move down
+            "Sources/Echoelmusic/Studio/CountInChoice.swift",   // A10: the Count-in menu
     ]
     static let untranslatedPanelWords: Set<String> = ["BPM", "Create from Within", "Demo", "E", "ECHOEL", "Echoelmusic", "OK", "Studio", "Tempo", "WAV …"]
 

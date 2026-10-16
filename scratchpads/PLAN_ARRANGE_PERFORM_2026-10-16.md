@@ -59,7 +59,7 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 3 | Multi-select + clipboard (A9) | ✅ `8b5d152` | guard `TheGatheredPartsAreCopiedAndPastedTests` (pure paste + store undo + gather rules + scan), Python transcription of the scan green, 6 checkers 0; gates: pending |
 | 4a | Track colour (A4b) | ✅ `fa1f6b8` | guard `TheTrackColourIsThePersonsChoiceTests`; 6 checkers 0; gates: pending |
 | 4b | Track reorder (A4c) | ✅ `1ded828` | guard `TheTracksMoveWithoutTakingTheEchoelTests`; 6 checkers 0; gates: pending |
-| 5 | Count-in | **NEXT** | — |
+| 5 | Count-in (A10) | ✅ (this commit) | guard `TheRecordCountsInWithTheOneClickTests` (pure length through the click's clamp + scan of the button paths); two guards re-anchored (`TheFirstTakeRunsTheClockTests` → `beginTake()`, header word + hint needles); Python transcription green; checkers 0 |
 | 6 | Record scenes into arrangement (P4) | open | — |
 | 7 | Automation on the canvas | open | — |
 
@@ -74,12 +74,21 @@ copies of that rule: the `rollSlot*` getters in `Timeline.swift`, `EchoelStudioV
 `structurallyEqual` already treats ORDER as structural, and the player flushes/re-primes on a
 rank shift. Council: colour first (display only); reorder second, with the roll lane pinned.
 
-### Exact next step (item 5, count-in)
-Measure first: what the transport does on Record (`RecordTakeButton`, `TakeRecorder`/MIDI take path,
-`PatternEngine` start) and whether a metronome click exists on Play (`WorkstationClickToggle`).
-Slice: a "Count-in" choice (Off · 1 bar · 2 bars, named → segmented Picker, persisted per device in
-its own file) — Record starts the transport that many bars BEFORE the record point, the click plays
-during them, and nothing is captured until the record point. Guard: the pure pre-roll plan
-(start tick = record tick − n bars, clamped at 0, capture window starts at the record tick) end to end.
+### Item 5 as built (deviation from the plan, measured)
+Record always plays the piece from bar 1 and records from bar 1 (`RecordTake.caption`), so a
+transport pre-roll "n bars before the record point" would start before tick 0. Built instead: a
+click-only count-in BEFORE the one start — `CountInPicker` (menu, Off · 1 bar · 2 bars, key
+`record.countInBars`) beside Record; `RecordTakeButton` restarts the one click's bar
+(`MetronomeVoice.restartBar()`, or arms it and switches it off again at the take), waits
+`bars × 4` beats through `MetronomeVoice.samplesPerBeat`, then `beginTake()` (arm → start). A tap
+during the count-in cancels it; music started another way meanwhile records nothing. The wait is a
+main-actor sleep; the first transport beat re-anchors the click (≤ ¼ beat absorbed). NEEDS-FOUNDER-VERIFY (A10).
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c.
+### Exact next step (item 6, record scenes into the arrangement — P4)
+Measure first: what a scene launch writes today (`ClipLaunchEngine`, `SessionLaunchView`, the
+latch `LaneLaunchLatch`) and whether anything records launches with their ticks. The guard
+`SessionLaunchView persists nothing` stands — the capture must live in the engine/store, not the view.
+Slice idea: while the transport runs with "Record to arrangement" on, every landed launch is logged
+(lane, clip, tick); Stop turns the log into regions through ONE store writer as ONE undo step.
+
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10.

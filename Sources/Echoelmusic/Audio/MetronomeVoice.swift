@@ -47,6 +47,14 @@ public final class MetronomeVoice {
         }
     }
 
+    /// Start a fresh bar now, exactly as arming the click does — for a click that is already on
+    /// (the count-in, `CountInChoice`). A no-op while the click is off: arming it does this.
+    public func restartBar() {
+        guard enabled else { return }
+        pendingAnchor = MetronomeVoice.noAnchor
+        pendingResync = true
+    }
+
     /// Tempo in BPM. Kept in sync with the transport by the host view. The audio
     /// thread reads `audioSamplesPerBeat` (derived) — never `bpm` directly.
     public var bpm: Double = 120 {
