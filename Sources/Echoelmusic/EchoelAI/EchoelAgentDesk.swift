@@ -173,6 +173,14 @@ struct EchoelPostedPlanner: EchoelActionPlanning {
 
 // MARK: - What the banner shows
 
+/// GSIDMMW C2a — a plan the on-device model proposed for a request in the person's words, held
+/// until the person applies or discards it. It carries the state it was planned against.
+struct EchoelAgentProposal: Equatable, Sendable {
+    let requestID: UUID
+    let request: String
+    let plan: EchoelActionPlan
+}
+
 /// The outcome of the last request, in one state and one sentence, and whether Undo can act.
 struct EchoelAgentNotice: Equatable, Sendable {
     /// The request it reports. A new request replaces the notice even when the words repeat.
@@ -319,6 +327,32 @@ final class EchoelAgentDesk {
     /// call on top would stack model work — so a second tap is told to wait instead.
     /// Returns when the backend does (a hung one keeps only this suspended call, never the desk).
     func describePiece(with brain: any BrainBackend) async {
+        await startModelRequest { [weak self] ticket, generation, executor in
+            guard let self else { return }
+            await self.describe(with: brain, ticket: ticket, generation: generation, on: executor)
+        }
+    }
+
+    /// GSIDMMW C2a — a request in the person's words becomes a PROPOSAL, never a change. The
+    /// on-device model plans through `EchoelModelPlanner` (three commands, three steps, the
+    /// selection only); a valid plan is held as `proposal` and the notice says what it would do.
+    /// Nothing in the piece changes until the person taps Apply (`applyProposal`), and then the
+    /// executor refuses the plan if the piece or the selection moved since it was read
+    /// (`plan.basis`). A question, a refusal or a model failure is the notice instead. The same
+    /// ownership rules as the describe hold (stop, deadline, another piece opened, one model call
+    /// at a time), because it is the same model request.
+    func proposePlan(for request: String, with brain: any BrainBackend) async {
+        await startModelRequest { [weak self] ticket, generation, executor in
+            guard let self else { return }
+            await self.plan(request, with: brain, ticket: ticket, generation: generation, on: executor)
+        }
+    }
+
+    /// One model request at a time, owning the notice until it lands, is stopped, times out or
+    /// the piece changes — shared by the describe and the proposal.
+    private func startModelRequest(
+        _ body: @escaping @MainActor @Sendable (Int, Int, EchoelCommandExecutor) async -> Void
+    ) async {
         // Busy: the running request's notice is already on screen and stays the one truth.
         guard !isWorking else { return }
         // Not bound yet (the app is still starting): a tap that did nothing would read as "done".
@@ -336,10 +370,9 @@ final class EchoelAgentDesk {
         let ticket = describeTicket
         let generation = executor.snapshot().documentGeneration
         isModelBusy = true
-        // `guard let self` rather than `self?.`: an optional call makes this a `Task<()?, Never>`.
-        let flow = Task { @MainActor [weak self] () -> Void in
-            guard let self else { return }
-            await self.describe(with: brain, ticket: ticket, generation: generation, on: executor)
+        // An explicit `() -> Void`: an optional call inside would make this a `Task<()?, Never>`.
+        let flow = Task { @MainActor () -> Void in
+            await body(ticket, generation, executor)
         }
         describeFlow = flow
         let deadline = describeDeadline
@@ -429,6 +462,103 @@ final class EchoelAgentDesk {
         }
     }
 
+    private func plan(_ request: String, with brain: any BrainBackend, ticket: Int, generation: Int,
+                      on executor: EchoelCommandExecutor) async {
+        let requestID = UUID()
+        describeRequestID = requestID
+        proposal = nil
+        notice = EchoelAgentNotice(requestID: requestID, state: .running, message: request, canUndo: false)
+        let basis = executor.snapshot()
+        // The rung stands BEFORE the call (#859); it names the action only, never the request text.
+        EchoelCrashLog.breadcrumb("agent: plan")
+        let planned = await EchoelPlanning.plan(requestID: requestID, request: request,
+                                                planner: EchoelModelPlanner(brain: brain), basis: basis)
+        guard owns(ticket, generation: generation, on: executor) else { return }
+        switch planned {
+        case .failure(let error):
+            let message = error == .modelUnavailable ? Self.unavailableSentence(OnDeviceModelGate.status) : error.message
+            if case .needsAnswer = error {
+                land(.needsAnswer(message), message, requestID: requestID, on: executor)
+            } else {
+                land(.failed(message), message, requestID: requestID, on: executor)
+            }
+        case .success(let plan):
+            // The selection moved while the model read it: the plan names what is no longer selected.
+            guard executor.snapshot() == plan.basis else {
+                let message = EchoelCommandError.projectChanged.message
+                return land(.needsAnswer(message), message, requestID: requestID, on: executor)
+            }
+            let sentence = Self.proposalSentence(plan)
+            land(.understood, sentence, requestID: requestID, on: executor)
+            if notice?.requestID == requestID {
+                proposal = EchoelAgentProposal(requestID: requestID, request: request, plan: plan)
+            }
+        }
+    }
+
+    /// The plan the model proposed and the person has not applied or discarded yet. It belongs
+    /// to its notice: once another notice replaces it, or the notice is closed, there is none.
+    var pendingProposal: EchoelAgentProposal? {
+        guard let proposal, notice?.requestID == proposal.requestID else { return nil }
+        return proposal
+    }
+    private var proposal: EchoelAgentProposal?
+
+    /// The banner's Apply: the proposed plan runs through the one executor. The plan carries the
+    /// state it was read against, so a piece or a selection that changed since is refused there
+    /// (`.projectChanged`), never applied to whatever is selected now. The agent's Undo takes it back.
+    func applyProposal() async {
+        guard let executor, !isWorking, let proposal = pendingProposal else { return }
+        self.proposal = nil
+        isWorking = true
+        notice = EchoelAgentNotice(requestID: proposal.requestID, state: .running, message: proposal.request,
+                                   canUndo: false)
+        // The rung stands BEFORE the call (#859); it names command ids only, never a value or a name.
+        EchoelCrashLog.breadcrumb("agent: apply " + proposal.plan.steps.map(\.id.rawValue).joined(separator: ", "))
+        let report = await executor.execute(proposal.plan)
+        let finished = EchoelAgentNotice.from(report, canUndo: executor.canUndoAgentChange)
+        EchoelCrashLog.breadcrumb("agent: " + finished.state.title.lowercased())
+        notice = finished
+        isWorking = false
+        await runPending(now: Date())
+    }
+
+    /// The banner's Discard: the proposal is dropped, nothing in the piece changes.
+    func discardProposal() {
+        guard let proposal = pendingProposal else { return }
+        self.proposal = nil
+        notice = EchoelAgentNotice(requestID: proposal.requestID, state: .done, message: Self.discardedMessage,
+                                   canUndo: executor?.canUndoAgentChange ?? false)
+    }
+
+    nonisolated static let discardedMessage = "Discarded. Nothing was changed."
+    nonisolated static let proposalTail = "Nothing changes until you tap Apply."
+
+    /// What the plan would do, in the inspector's words, before it runs — read from the plan's own
+    /// basis, the state the model was shown.
+    nonisolated static func proposalSentence(_ plan: EchoelActionPlan) -> String {
+        let steps = plan.steps.map { step -> String in
+            switch step {
+            case .describeState:
+                return "say what is selected and what the piece holds"
+            case .setTrackLevel(_, let change):
+                let name = plan.basis.track?.name ?? "the selected track"
+                switch change {
+                case .relativeDecibels(let db):
+                    let amount = String(format: "%.1f dB", abs(db))
+                    return db < 0 ? "make \(name) \(amount) quieter" : "make \(name) \(amount) louder"
+                case .absoluteDecibels(let db):
+                    return "set \(name) to " + String(format: "%.1f dB", db)
+                }
+            case .duplicatePart:
+                return "copy the selected part to right after it"
+            case .undoAgentChange, .applyMediaLook, .keepTake, .composeHere:
+                return EchoelCommandSpec.spec(step.id).summary.lowercased()
+            }
+        }
+        return "Echoel would " + steps.joined(separator: ", then ") + ". " + proposalTail
+    }
+
     /// The current describe; a stopped, timed-out or finished one has moved past it.
     @ObservationIgnored private var describeTicket = 0
     /// The notice id of the describe that still owns the notice, nil when none does.
@@ -443,7 +573,7 @@ final class EchoelAgentDesk {
         "The on-device model took too long, so Echoel stopped waiting. Nothing was changed."
     nonisolated static let describeStoppedMessage = "Stopped. Nothing was changed."
     nonisolated static let pieceChangedMessage =
-        "Another piece was opened while Echoel was describing, so the answer was dropped. Nothing was changed."
+        "Another piece was opened while Echoel was reading this one, so the answer was dropped. Nothing was changed."
     nonisolated static let modelBusyMessage =
         "The on-device model is still finishing the last request. Please try again in a moment."
 

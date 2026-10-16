@@ -24581,18 +24581,6 @@
         }
       }
     },
-    "Stops waiting for the description. Changes nothing in the piece." : {
-      "comment" : "GSIDMMW audit F3 (2026-10-16): the banner's Stop while a describe runs (AgentReportBanner).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stops waiting for the description. Changes nothing in the piece."
-          }
-        }
-      }
-    },
     "Share as MIDI" : {
       "comment" : "C2 (2026-10-16): the selected part's MIDI share link (SelectedPartBar, PartMIDIShareLink).",
       "extractionState" : "manual",
@@ -24637,6 +24625,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : " notes lie past the part's end and are not heard. Lengthen the part to hear them."
+          }
+        }
+      }
+    },
+    "Stops waiting for the on-device model. Changes nothing in the piece." : {
+      "comment" : "GSIDMMW audit F3 (2026-10-16): the banner's Stop while a describe runs (AgentReportBanner). GSIDMMW C2a: also while a proposal is planned.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stops waiting for the on-device model. Changes nothing in the piece."
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "comment" : "GSIDMMW C2a (2026-10-16): the banner's Apply for a plan Echoel proposed (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        }
+      }
+    },
+    "Discard" : {
+      "comment" : "GSIDMMW C2a (2026-10-16): the banner's Discard for a plan Echoel proposed (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        }
+      }
+    },
+    "Makes the change Echoel proposed. Echoel's Undo takes it back." : {
+      "comment" : "GSIDMMW C2a: VoiceOver hint of Apply (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Makes the change Echoel proposed. Echoel's Undo takes it back."
+          }
+        }
+      }
+    },
+    "Drops the proposal. Changes nothing in the piece." : {
+      "comment" : "GSIDMMW C2a: VoiceOver hint of Discard (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drops the proposal. Changes nothing in the piece."
           }
         }
       }

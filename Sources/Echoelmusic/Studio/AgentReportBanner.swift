@@ -10,7 +10,7 @@ import SwiftUI
 /// the same path as the request itself, and it keeps any value a person changed since.
 ///
 /// ⚠️ ITS OWN LEAF, ON PURPOSE (10.76.41/50 law): it is mounted in the ROOT (`WorkspaceView`), above
-/// every menu host. It reads `notice`, `isWorking` and `isDescribing` in THIS body only; both change once or twice per
+/// every menu host. It reads `notice`, `isWorking`, `isDescribing` and `pendingProposal` in THIS body only; both change once or twice per
 /// request, never on a clock, and the root body reads neither.
 ///
 /// ⚠️ NO PRESENTATION MODIFIER. It is a status row in the root's column, beside
@@ -32,7 +32,7 @@ struct AgentReportBanner: View {
                         Button("Stop") { desk.stopDescribe() }
                             .buttonStyle(.bordered)
                             .frame(minHeight: 44)
-                            .accessibilityHint("Stops waiting for the description. Changes nothing in the piece.")
+                            .accessibilityHint("Stops waiting for the on-device model. Changes nothing in the piece.")
                     }
                     Button("Close") { desk.dismiss() }
                         .buttonStyle(.bordered)
@@ -43,6 +43,21 @@ struct AgentReportBanner: View {
                     Text(notice.message)
                         .font(EchoelTheme.font(13))
                         .fixedSize(horizontal: false, vertical: true)
+                }
+                if desk.pendingProposal != nil {
+                    HStack(spacing: EchoelTheme.spaceS) {
+                        Button("Apply") {
+                            Task { await desk.applyProposal() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .frame(minHeight: 44)
+                        .disabled(desk.isWorking)
+                        .accessibilityHint("Makes the change Echoel proposed. Echoel's Undo takes it back.")
+                        Button("Discard") { desk.discardProposal() }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: 44)
+                            .accessibilityHint("Drops the proposal. Changes nothing in the piece.")
+                    }
                 }
                 if notice.canUndo {
                     Button("Undo Echoel's last change") {
