@@ -220,7 +220,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Motion as a bio source | **IDEA** | No producer (`ModulationMatrix.hasProducer(.motion)` is false) |
 | Collaboration (Live Colabo) | IMPLEMENTED | Two-phone probe open (#113) |
 | Broadcast / streaming | **IDEA** | HaishinKit is not linked; `BroadcastPublisher` is a compile guard |
-| AI (`EchoelAI`) | Three different capabilities: **(1) describe** — a READ-ONLY production path ("Describe this piece", the ≡ menu → `AgentReportBanner.describePiece` → `FoundationModelsBrain`), DEVICE UNVERIFIED; **(2) typed actions** — Siri/Shortcuts intents through `EchoelCommandExecutor`, IMPLEMENTED; **(3) model-made action plans** — **IDEA**, no model proposes actions yet (GSIDMMW package C) | `FeatureFlags.echoelAI` has zero readers (re-measured 2026-10-16) |
+| AI (`EchoelAI`) | Three different capabilities: **(1) describe** — a READ-ONLY production path ("Describe this piece", the ≡ menu → `AgentReportBanner.describePiece` → `FoundationModelsBrain`), DEVICE UNVERIFIED; **(2) typed actions** — Siri/Shortcuts intents through `EchoelCommandExecutor`, IMPLEMENTED; **(3) model-made action plans** — core IMPLEMENTED (`EchoelModelPlanner`, GSIDMMW C1: three allowed commands, selection only, question instead of guess), **no door** — no model proposes an action in the app today | `FeatureFlags.echoelAI` has zero readers (re-measured 2026-10-16) |
 | AUv3 instrument (`Sources/EchoelmusicAUv3`) | IMPLEMENTED · **DEVICE VERIFIED in AUM 2026-09-20** | Other hosts are not verified |
 | Plugin hosting (AUv3/VST3/CLAP) | **IDEA** | Hosting removed with #121 Slice 2 |
 

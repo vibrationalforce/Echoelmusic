@@ -15,8 +15,9 @@
 // ⭐ WHAT IS NOT HERE, SAID PLAINLY. No language model proposes these actions yet. The existing
 // `EchoelLanguageModel` / `EchoelAIRouter` answer text; `FoundationModelsBrain` has ONE caller,
 // the READ-ONLY "Describe this piece" (`AgentReportBanner.describePiece`), and has never run on a
-// device. Step 1 delivers the tested action interface; the language binding is the named next
-// step (GSIDMMW package C), not a keyword matcher dressed up as understanding.
+// device. Step 1 delivered the tested action interface. The language binding exists since
+// GSIDMMW C1 as `EchoelModelPlanner` (three allowed commands, the selection only) and has NO door
+// yet — no production code constructs it, so no model proposes an action in the app today.
 //
 // ⚠️ PERMISSIONS COME FROM THE PERSON, NEVER FROM THE PROPOSAL. A proposal's arguments are data:
 // an imported file, its metadata or a transcript can end up inside them, and nothing in them can
@@ -245,6 +246,10 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case cannotCompose(String)
     /// GMMW AI-6c: a part of the person's own starts inside the loop.
     case wouldCoverOwnPart
+    /// GSIDMMW C1: the planner asks back instead of guessing (its own words, already bounded).
+    case needsAnswer(String)
+    /// GSIDMMW C1: the planner's answer broke a rule of `EchoelModelPlanner` (the reason named).
+    case planRefused(String)
 
     /// What the person reads. Plain, specific, never "error".
     var message: String {
@@ -308,6 +313,10 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "The composer cannot write on this track (\(device)). Pick a MIDI track a rack voice plays."
         case .wouldCoverOwnPart:
             return "This track has a part of your own in the loop, and the composer's part would play over it, so I did nothing."
+        case .needsAnswer(let question):
+            return question
+        case .planRefused(let reason):
+            return reason
         }
     }
 }
@@ -568,6 +577,9 @@ enum EchoelPlanning {
         let proposals: [EchoelProposedAction]
         do {
             proposals = try await planner.propose(request, state: basis)
+        } catch let refusal as EchoelPlannerRefusal {
+            // GSIDMMW C1: a question or a broken rule says what it is — never "the model failed".
+            return .failure(refusal.commandError)
         } catch {
             return .failure(.modelFailed)
         }
