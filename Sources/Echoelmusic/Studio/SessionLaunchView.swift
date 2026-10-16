@@ -281,6 +281,8 @@ struct SessionLaunchView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
                 SessionLaunchPointPicker()
+                // P4b — the launches that land become parts on the arrangement (its own leaf).
+                SessionRecordToggle()
 
                 // One read per track per repaint (the repaint is a tap or a fired bar).
                 let states = Dictionary(tracks.map { ($0.id, player.launchState(laneID: $0.id)) },

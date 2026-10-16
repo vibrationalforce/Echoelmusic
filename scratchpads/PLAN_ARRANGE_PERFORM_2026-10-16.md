@@ -61,7 +61,8 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 4b | Track reorder (A4c) | ✅ `1ded828` | guard `TheTracksMoveWithoutTakingTheEchoelTests`; 6 checkers 0; gates: pending |
 | 5 | Count-in (A10) | ✅ (this commit) | guard `TheRecordCountsInWithTheOneClickTests` (pure length through the click's clamp + scan of the button paths); two guards re-anchored (`TheFirstTakeRunsTheClockTests` → `beginTake()`, header word + hint needles); Python transcription green; checkers 0 |
 | 6a | Record scenes — pure take (P4a) | ✅ (this commit) | guard `TheLaunchesBecomePartsOnTheArrangementTests` (log → tiled copies, switch/stop/gone, store paste = one undo, recording wins over parts under it); checkers 0 |
-| 6b | Record scenes — player + door (P4b) | **NEXT** | — |
+| 6b | Record scenes — player + door (P4b) | ✅ (this commit) | guard `TheSessionRecordsIntoTheArrangementTests` (every `launch.removeAll()` ends the take first; wrap before fold; sink → `pasteRegions`; leaf door); Python transcription green; checkers 0 |
+| 7 | Automation on the canvas | **NEXT** | — |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
@@ -85,20 +86,18 @@ click-only count-in BEFORE the one start — `CountInPicker` (menu, Off · 1 bar
 during the count-in cancels it; music started another way meanwhile records nothing. The wait is a
 main-actor sleep; the first transport beat re-anchors the click (≤ ¼ beat absorbed). NEEDS-FOUNDER-VERIFY (A10).
 
-### Exact next step (item 6b, P4b — feed the take and give it a door)
-`LaunchTake` exists and is pure. Wire it in `TimelineRegionPlayer` (NOT in `SessionLaunchView`:
-`TheSessionLaunchesWhatTheSongPlaysTests` bans `TimelineRegion(` and any store message but
-`document` there):
-· `public var recordsLaunches = false` (cold switch) + `@ObservationIgnored private var launchTake`.
-· In `applyLaunchTransitions`, per transition, when recording: `.started/.switched` →
-  `launchTake.started(laneID:, regionID:, atTick: t.atTick)`; `.stopped` → `stopped(…, atTick: tick)`.
-  ⚠️ `t.atTick` is folded on a wrap (`launch.shift`) — on a wrap call `launchTake.finish(atTick:
-  loopTicks)` and re-open the still-playing lanes at 0 BEFORE the tick (or v1: end the take at the wrap).
-· In `stop()` AND `handleTransportStopped()` (both paths): `finish(atTick: currentTick)` then hand
-  `LaunchTake.regions(for:in: doc)` to `@ObservationIgnored public var launchTakeSink: (([TimelineRegion]) -> Void)?`,
-  wired in `EchoelmusicApp` to `timeline.pasteRegions(parts, atTick: min start)`.
-· Door: a "Record to arrangement" switch in the Session grid header, writing `player.recordsLaunches`
-  (the view may message the player; it must not touch the store).
-Guard: the player paths by source scan + the sink wired once in the app.
+### Item 6 as built
+`LaunchTake` (pure) + `TimelineRegionPlayer.recordsLaunches` / `launchTakeSink` + `SessionRecordToggle`
+("Record to arrangement", Session grid header) + the app's sink → `TimelineStore.pasteRegions` (one
+Undo step per take). The take ends wherever launches die (Stop, external stop, locate, cycle jump,
+restart) and at the song's wrap (each wrap = its own Undo step; a part still launched across the wrap
+is recorded up to it). NEEDS-FOUNDER-VERIFY (P4b).
 
-Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`).
+### Exact next step (item 7, automation directly on the canvas)
+Measure first: what draws automation today (`SongAutomationEditor` on the POLY rack track's detail page,
+`TimelineStore.setSongAutomation`, `AutomationCanvasMath`), and what the Arrange canvas row offers
+(`ArrangeCanvasView`, row height, the block layer). Slice idea: a per-track "show automation" lane
+under the track row on the canvas that draws the chosen parameter's curve and edits points through the
+ONE writer `setSongAutomation` (one Undo step per gesture), reusing `AutomationCanvasMath`.
+
+Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`); next build: P4b.

@@ -306,6 +306,33 @@ public final class TimelineRegionPlayer {
     /// + quantize boundaries), never per-tick, so a leaf view may read it.
     public private(set) var launchGeneration = 0
 
+    /// P4b (founder 2026-10-16, "Record scenes into the arrangement"): while true, every launch
+    /// that LANDS is logged (`LaunchTake`), and when the take ends — Stop, a locate, the cycle's
+    /// jump or the song's wrap — the spans become parts on the arrangement through
+    /// `launchTakeSink` (the app hands them to the store's paste writer, one Undo step per take).
+    /// A cold switch a finger flips; switching it off ends the take there.
+    /// ⚠️ A part still launched when the song wraps is recorded up to the wrap; the next pass is
+    /// recorded from the next launch on. Each wrap therefore writes its own Undo step.
+    public var recordsLaunches = false {
+        didSet { if !recordsLaunches { endLaunchTake() } }
+    }
+    @ObservationIgnored private var launchTake = LaunchTake()
+    /// Where a finished take's parts go. nil ⇒ nothing is written (every test rig).
+    @ObservationIgnored public var launchTakeSink: (([TimelineRegion]) -> Void)?
+
+    /// Ends the running take at the end of the step that sounds now and hands its parts out.
+    /// Safe with nothing recorded. Runs BEFORE every `launch.removeAll()` — the take ends where the
+    /// launches die — and before the song's wrap folds the launch timebase.
+    private func endLaunchTake() {
+        launchTake.finish(atTick: currentTick + TimelineTime.ticksPerTransportStep)
+        let spans = launchTake.spans
+        launchTake = LaunchTake()
+        guard !spans.isEmpty else { return }
+        let parts = LaunchTake.regions(for: spans, in: doc)
+        guard !parts.isEmpty else { return }
+        launchTakeSink?(parts)
+    }
+
     /// Queue a MIDI or AUDIO region to LAUNCH on its lane at the next `quantize`
     /// boundary (`.off` = immediate, i.e. the next transport tick). The launched
     /// clip overrides its lane's arrangement and LOOPS over its own length until
@@ -737,6 +764,7 @@ public final class TimelineRegionPlayer {
         // startTick` and every line below is the pre-fix path.
         let entryStep = Self.nextTransportStep(isPlaying: pattern.isPlaying, currentStep: pattern.currentStep)
         let entryTick = Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)
+        endLaunchTake()   // P4b: a restart ends the take at the old position
         self.cursor = TimelinePlaybackCursor(startBar: startTick / TimelineTime.ticksPerBar)
         self.lastTick = entryTick
         self.currentTick = entryTick
@@ -855,6 +883,7 @@ public final class TimelineRegionPlayer {
         pianoRoll?.allNotesOff()   // hard cut: the primary roll's ringing notes
         flushPumps()               // offs through current bindings (H5b), slots released
         if !launch.isIdle { launchGeneration &+= 1 }   // the launch UI must see the cut
+        endLaunchTake()            // P4b: the take ends where the jump leaves (currentTick is still the old one)
         launch.removeAll()         // P0 policy: a jump is a hard cut — launches do not
                                    // survive it (their boundaries reference the old
                                    // position); the arrangement re-primes below.
@@ -892,6 +921,7 @@ public final class TimelineRegionPlayer {
         isPlaying = false
         pattern?.stop()
         pianoRoll?.allNotesOff()
+        endLaunchTake()                        // P4b: the take ends with the transport
         launch.removeAll()                     // launches die with the transport (P0)
         audioLanes?.clearAllLaunchOverrides()  // S2: audio override reset paired with stopAll below
         flushPumps()                           // release every secondary-lane voice
@@ -907,6 +937,7 @@ public final class TimelineRegionPlayer {
         guard isPlaying else { return }
         isPlaying = false
         pianoRoll?.allNotesOff()
+        endLaunchTake()                        // P4b: the take ends with the transport
         launch.removeAll()                     // launches die with the transport (P0)
         audioLanes?.clearAllLaunchOverrides()  // S2: audio override reset paired with stopAll below
         flushPumps()                           // release every secondary-lane voice
@@ -958,6 +989,7 @@ public final class TimelineRegionPlayer {
         // by the loop length FIRST (boundaries and loopTicks are whole bars, so
         // grid alignment survives), then due boundaries fire. An idle engine
         // emits nothing and every path below is byte-identical (golden gate).
+        if wrapped, launchTake.isOpen { endLaunchTake() }   // P4b: up to the wrap, before the fold
         if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }
         // S3: fold the AUDIO override timebase with the same wrap, so a launched
         // audio clip keeps looping across the song wrap (the wrap re-prime below now
@@ -1576,6 +1608,15 @@ public final class TimelineRegionPlayer {
     private func applyLaunchTransitions(_ transitions: [LaunchTransition], atTick tick: Int, step: Int) {
         let bpm = pattern?.tempo ?? Self.fallbackTempo
         for t in transitions {
+            // P4b: log what landed — a start from its boundary, a stop where the arrangement resumes.
+            if recordsLaunches {
+                switch t.kind {
+                case .started(let regionID), .switched(_, let regionID):
+                    launchTake.started(laneID: t.laneID, regionID: regionID, atTick: t.atTick)
+                case .stopped:
+                    launchTake.stopped(laneID: t.laneID, atTick: tick)
+                }
+            }
             // S2 (audio-lane launch): an AUDIO lane's transition drives the
             // AudioLanePlayer override (loop the launched segment / hand back to the
             // arrangement), NOT the roll/rack MIDI path. The launched region is a

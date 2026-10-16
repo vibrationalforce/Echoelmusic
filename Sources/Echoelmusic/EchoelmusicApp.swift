@@ -1721,6 +1721,14 @@ struct EchoelmusicApp: App {
                 // GMMW R2: the first take has no song to play against — an armed take is the other
                 // reason the clock may run (`TimelineRegionPlayer.takeArmed`; Record arms first).
                 timelinePlayer.takeArmed = { [weak recordController] in recordController?.isRecording == true }
+                // P4b: a finished Session → Arrangement take is written by the store's paste writer —
+                // one Undo step, every part at its own tick. Next main-actor turn, never inside the
+                // player's stop or wrap that produced it.
+                timelinePlayer.launchTakeSink = { [weak timelineStore] parts in
+                    // A strong local, not the weak capture: a `weak var` may not be captured by the Task.
+                    guard let store = timelineStore, let start = parts.map(\.startTick).min() else { return }
+                    Task { @MainActor in _ = store.pasteRegions(parts, atTick: start) }
+                }
                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity, channel in
                     recordController?.recordNoteOn(pitch: note, velocity: velocity, channel: channel)
                 }

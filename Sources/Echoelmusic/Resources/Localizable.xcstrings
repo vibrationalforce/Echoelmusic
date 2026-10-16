@@ -433,6 +433,18 @@
         }
       }
     },
+    "Record to arrangement" : {
+      "comment" : "P4b record launches (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record to arrangement"
+          }
+        }
+      }
+    },
     "Routing group" : {
       "comment" : "Accessibility label of Routing's segmented row (GMMW P1-1): which group of the sheet is shown.",
       "extractionState" : "manual",
@@ -1245,6 +1257,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Where the light is sent — the node's address and universe for Art-Net or sACN — is set under Connections."
+          }
+        }
+      }
+    },
+    "While on, the parts you launch are written into the arrangement where they played. Stop ends the recording; Undo takes it back." : {
+      "comment" : "P4b record launches (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "While on, the parts you launch are written into the arrangement where they played. Stop ends the recording; Undo takes it back."
           }
         }
       }
