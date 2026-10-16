@@ -54,6 +54,9 @@ struct WorkstationClickToggle: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // A10 — hold the Click for the count-in (Logic's metronome menu): the bars of click before
+        // Record starts the piece. One persisted choice; Record reads it (`CountInChoice`).
+        .contextMenu { CountInPicker() }
         .accessibilityLabel("Click")
         .accessibilityValue(on ? String(localized: "On") : String(localized: "Off"))
         .accessibilityAddTraits(.isToggle)

@@ -15,8 +15,8 @@
 //
 // ⚠️ The wait is a main-actor sleep, not a sample-accurate pre-roll. The first transport beat
 // re-anchors the click (`anchorBeat`, slice 10), which absorbs a late start of up to a quarter beat
-// (`MetronomeVoice.anchorAbsorbShare`). NEEDS-FOUNDER-VERIFY (A10): arm a MIDI track, set Count-in to
-// 1 bar, press Record — four clicks, then the piece starts on the fifth with no gap or double click;
+// (`MetronomeVoice.anchorAbsorbShare`). NEEDS-FOUNDER-VERIFY (A10): arm a MIDI track, hold Click → Count-in
+// → 1 bar, press Record — four clicks, then the piece starts on the fifth with no gap or double click;
 // press Record again during the count-in — it stops, nothing records, the click returns to its state.
 
 import SwiftUI
@@ -63,7 +63,8 @@ enum CountInChoice: Int, CaseIterable, Sendable {
     }
 }
 
-/// The Count-in menu beside Record. Writes the one persisted choice; Record reads it.
+/// The Count-in menu, in the Click's hold menu (`WorkstationClickToggle`). Writes the one
+/// persisted choice; Record reads it.
 struct CountInPicker: View {
 
     @AppStorage(CountInChoice.key) private var raw = CountInChoice.off.rawValue

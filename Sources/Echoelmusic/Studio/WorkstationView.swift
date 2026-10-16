@@ -1288,9 +1288,10 @@ struct WorkstationView: View {
                              startSong: { startTimeline(fromTick: 0, launching: []); return player.isPlaying },
                              stopSong: { player.stop() })
 
-            // Arrange & Perform item 5 — the bars of click before Record starts the piece. Its own
-            // leaf: it writes one persisted choice, and Record reads it.
-            CountInPicker()
+            // Arrange & Perform item 5 — the count-in is chosen in the Click's hold menu
+            // (`WorkstationClickToggle`), as Logic's metronome holds it. ⛔ It stood here as a
+            // menu of its own until the finesse review (2026-10-16): with the Marker beside it the
+            // row needed ~410 pt and pushed the menu off a 375–402 pt phone in portrait.
 
             // DAW shell S8b — in landscape the Add tile ends the row instead of standing on a
             // row of its own above the plate (`ArrangeAddPlacement`); the same one menu.

@@ -1,6 +1,6 @@
 // TheRecordCountsInWithTheOneClickTests.swift
 // A10 (founder 2026-10-16, gap list item 5 "Count-in"): Record can count in one or two bars of click
-// before the piece starts and the take begins. A "Count-in" menu beside Record holds the choice
+// before the piece starts and the take begins. A "Count-in" menu in the Click's hold menu holds the choice
 // (Off · 1 bar · 2 bars, persisted); the click is the one `MetronomeVoice`, restarted on a fresh
 // downbeat; a tap during the count-in cancels it and nothing is armed.
 //
@@ -9,7 +9,7 @@
 //     tempo clamp, the persisted raw values, and an unknown stored value counting in nothing.
 //   · Claims 2–3 are SOURCE-TEXT SCANS: the button's paths (count-in → take, cancel, the click
 //     given back its state, nothing armed before the take), the metronome's bar restart, and the
-//     menu mounted once beside Record writing the key Record reads.
+//     menu mounted once in the Click's hold menu, writing the key Record reads.
 //   · NOT CLAIMED (DEVICE PROBE): that the count-in lands in time. NEEDS-FOUNDER-VERIFY (A10) — the
 //     probe is at `CountInChoice.swift`'s head.
 //
@@ -85,14 +85,17 @@ final class TheRecordCountsInWithTheOneClickTests: XCTestCase {
         XCTAssertTrue(restart.contains("pendingResync = true"), "the bar restarts the way arming the click does")
     }
 
-    // MARK: 3 — the menu beside Record
+    // MARK: 3 — the menu in the Click's hold menu
 
-    func testTheCountInMenuSitsBesideRecord() throws {
+    func testTheCountInMenuIsHeldInTheClick() throws {
         let workstation = try source("Sources/Echoelmusic/Studio/WorkstationView.swift")
-        XCTAssertEqual(workstation.components(separatedBy: "CountInPicker()").count - 1, 1, "one mount")
-        let record = try XCTUnwrap(workstation.range(of: "RecordTakeButton(playing: playing, startable: startable,"))
-        let menu = try XCTUnwrap(workstation.range(of: "CountInPicker()"))
-        XCTAssertTrue(record.upperBound <= menu.lowerBound, "the menu follows Record")
+        XCTAssertEqual(workstation.components(separatedBy: "CountInPicker()").count - 1, 0, """
+            The count-in is no longer a menu of its own in the transport row: with the Marker \
+            beside it the row pushed it off a 375–402 pt phone in portrait (finesse review 2026-10-16).
+            """)
+        let click = try source("Sources/Echoelmusic/Studio/WorkstationClickToggle.swift")
+        XCTAssertEqual(click.components(separatedBy: ".contextMenu { CountInPicker() }").count - 1, 1,
+                       "one mount: the Click's hold menu, as Logic's metronome holds it")
         let picker = try source("Sources/Echoelmusic/Studio/CountInChoice.swift")
         XCTAssertTrue(picker.contains("@AppStorage(CountInChoice.key) private var raw"), "the menu writes the key Record reads")
         XCTAssertTrue(picker.contains(".pickerStyle(.menu)"), "a named choice is a menu, not a number field")
