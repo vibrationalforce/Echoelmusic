@@ -87,18 +87,18 @@ final class TheMIDIImportNamesTimingAndInstrumentChangesTests: XCTestCase {
     // MARK: 1 — a program CHANGE on a landed channel is named; the opening program is not
 
     func testAProgramChangeIsNamedAndTheOpeningProgramIsNot() throws {
-        let opening = Self.note + [(0, [0xC0, 0x05])]
+        let opening: [(tick: Int, bytes: [UInt8])] = Self.note + [(tick: 0, bytes: [0xC0, 0x05])]
         XCTAssertEqual(try Self.landing(opening).droppedExpression.programChanges, 0, "the opening program is set-up")
         XCTAssertFalse(try Self.sentence(opening).contains(Self.programSentence))
 
-        let changed = opening + [(960, [0xC0, 0x30])]
+        let changed: [(tick: Int, bytes: [UInt8])] = opening + [(tick: 960, bytes: [0xC0, 0x30])]
         XCTAssertEqual(try Self.landing(changed).droppedExpression.programChanges, 1)
         XCTAssertTrue(try Self.sentence(changed).contains(Self.programSentence))
 
-        let same = opening + [(960, [0xC0, 0x05])]
+        let same: [(tick: Int, bytes: [UInt8])] = opening + [(tick: 960, bytes: [0xC0, 0x05])]
         XCTAssertEqual(try Self.landing(same).droppedExpression.programChanges, 0, "the same program again is no change")
 
-        let otherChannel = Self.note + [(0, [0xC2, 0x05]), (960, [0xC2, 0x30])]
+        let otherChannel: [(tick: Int, bytes: [UInt8])] = Self.note + [(tick: 0, bytes: [0xC2, 0x05]), (tick: 960, bytes: [0xC2, 0x30])]
         XCTAssertEqual(try Self.landing(otherChannel).droppedExpression.programChanges, 0,
                        "channel 3 has no note in the part, so its change is no loss of the part")
         XCTAssertFalse(try Self.landing(changed).droppedExpression.hasBendPressureOrControllers,
@@ -108,12 +108,13 @@ final class TheMIDIImportNamesTimingAndInstrumentChangesTests: XCTestCase {
     // MARK: 2 — a tempo CHANGE is named; the opening tempo, and the same tempo again, are not
 
     func testATempoChangeIsNamedAndTheOpeningTempoIsNot() throws {
-        let opening = Self.note + [(0, Self.tempo120)]
+        let opening: [(tick: Int, bytes: [UInt8])] = Self.note + [(tick: 0, bytes: Self.tempo120)]
         XCTAssertEqual(try Self.landing(opening).fileTiming.tempoChanges, 0)
         XCTAssertFalse(try Self.sentence(opening).contains(Self.tempoSentence))
-        XCTAssertEqual(try Self.landing(opening + [(960, Self.tempo120)]).fileTiming.tempoChanges, 0)
+        let repeated: [(tick: Int, bytes: [UInt8])] = opening + [(tick: 960, bytes: Self.tempo120)]
+        XCTAssertEqual(try Self.landing(repeated).fileTiming.tempoChanges, 0)
 
-        let changed = opening + [(960, Self.tempo90)]
+        let changed: [(tick: Int, bytes: [UInt8])] = opening + [(tick: 960, bytes: Self.tempo90)]
         XCTAssertEqual(try Self.landing(changed).fileTiming.tempoChanges, 1)
         XCTAssertTrue(try Self.sentence(changed).contains(Self.tempoSentence))
         XCTAssertTrue(try Self.sentence(changed).contains("16th-note grid"), "counterweight: the tempo line stays")
@@ -122,10 +123,10 @@ final class TheMIDIImportNamesTimingAndInstrumentChangesTests: XCTestCase {
     // MARK: 3 — a time signature other than 4/4 is named; 4/4 is not
 
     func testATimeSignatureOtherThanFourFourIsNamed() throws {
-        let common = Self.note + [(0, Self.fourFour)]
+        let common: [(tick: Int, bytes: [UInt8])] = Self.note + [(tick: 0, bytes: Self.fourFour)]
         XCTAssertFalse(try Self.landing(common).fileTiming.hasTimeSignatureOtherThanFourFour)
         XCTAssertFalse(try Self.sentence(common).contains(Self.meterSentence))
-        let waltz = Self.note + [(0, Self.threeFour)]
+        let waltz: [(tick: Int, bytes: [UInt8])] = Self.note + [(tick: 0, bytes: Self.threeFour)]
         XCTAssertTrue(try Self.landing(waltz).fileTiming.hasTimeSignatureOtherThanFourFour)
         XCTAssertTrue(try Self.sentence(waltz).contains(Self.meterSentence))
         let plain = try Self.sentence(Self.note)
