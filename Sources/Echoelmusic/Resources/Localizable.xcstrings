@@ -325,6 +325,18 @@
         }
       }
     },
+    "Select" : {
+      "comment" : "A9 gather bar (2026-10-16): Select mode over the Arrange canvas.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select"
+          }
+        }
+      }
+    },
     "Sets the visuals' intensity, hue and saturation from the photo" : {
       "comment" : "Photo card (GMMW VV-2, 2026-10-08): Apply's spoken hint while Detail cannot show (no Rings look in the slider, donuts off).",
       "extractionState" : "manual",
@@ -501,6 +513,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Only the selected part and its editors are shown"
+          }
+        }
+      }
+    },
+    "Tap parts to gather them, then copy, paste or delete them together." : {
+      "comment" : "A9 gather bar (2026-10-16): Select mode over the Arrange canvas.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap parts to gather them, then copy, paste or delete them together."
           }
         }
       }

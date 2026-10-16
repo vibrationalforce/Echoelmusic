@@ -656,6 +656,8 @@ struct ArrangeCanvasView: View {
 
     private func laneRow(_ row: WorkstationSummary.LaneRow, selected: UUID?) -> some View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
+        // A9: the parts gathered in Select mode wear the selection ring too (cold — a tap).
+        let gathered: Set<UUID> = selection.gathering ? selection.gathered : []
         let spokenName = row.name + ArrangeCanvas.spokenState(hearing)
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
         let starts = Dictionary(TrackParts.parts(onLane: row.id, in: document)
@@ -700,14 +702,16 @@ struct ArrangeCanvasView: View {
                 ForEach(blocks) { block in
                     let start = starts[block.id] ?? 0
                     ArrangePartBlock(block: block, startTick: start,
-                                     isSelected: block.id == selected,
+                                     isSelected: block.id == selected || gathered.contains(block.id),
                                      laneWidth: width, songTicks: songTicks,
                                      label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
                                      audio: waves[block.id],
                                      name: names[block.id] ?? "",
                                      tint: tint,
-                                     onSelect: { selection.selectRegion(block.id, in: document) },
+                                     // A9: in Select mode a tap gathers the part instead.
+                                     onSelect: { selection.gathering ? selection.toggleGathered(block.id, in: document)
+                                                                     : selection.selectRegion(block.id, in: document) },
                                      rowPitch: Self.rowHeight + Self.rowSpacing,
                                      acceptsRows: { crossed in
                                          ArrangeCanvas.dropLane(for: block.id, rows: crossed, order: order,

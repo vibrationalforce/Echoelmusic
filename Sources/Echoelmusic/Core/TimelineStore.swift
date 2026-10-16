@@ -1036,6 +1036,19 @@ public final class TimelineStore {
         return selected.allSatisfy { $0.laneID == first.laneID && $0.clipID == first.clipID }
     }
 
+    /// A9 — paste copied parts at `tick` (`RegionClipboard.pasted`: the earliest lands there, the
+    /// others keep their spacing and their tracks). ONE history step for the whole paste; a no-op
+    /// when nothing lands. Returns the new parts' ids.
+    @discardableResult
+    public func pasteRegions(_ copied: [TimelineRegion], atTick tick: Int) -> [UUID] {
+        let placed = RegionClipboard.pasted(copied, atTick: tick, in: document)
+        guard !placed.isEmpty else { return [] }
+        snapshotForUndo()
+        document.regions.append(contentsOf: placed)
+        persist()
+        return placed.map(\.id)
+    }
+
     /// Batch delete (clip game C3): remove every selected region in ONE history step.
     public func removeRegions(ids: Set<UUID>) {
         guard document.regions.contains(where: { ids.contains($0.id) }) else { return }

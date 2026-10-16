@@ -391,6 +391,10 @@ struct WorkstationView: View {
                     : AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
                 // P1: Session takes the timeline's place; the scenes mount below (one mount).
                 if arrangeMode.showsTimeline(focused: focused) {
+                // A9: Select · Copy · Paste · Delete over the canvas — a row, never a modal.
+                if !focused && !arrangeRows.isEmpty {
+                    ArrangeGatherBar().padding(.horizontal, 10)
+                }
                 columns {
                 if !arrangeRows.isEmpty {
                   VStack(alignment: .leading, spacing: 10) {

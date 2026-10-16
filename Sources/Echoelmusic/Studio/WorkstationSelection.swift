@@ -52,8 +52,42 @@ public final class WorkstationSelection {
     /// never persisted. Ends with the track: `clear`, `toggleTrack`, `selectTrack` and a
     /// `selectRegion` on another track turn it off.
     public private(set) var editorFocused = false
+    /// A9 (founder 2026-10-16, gap list item 3 "Mehrfachauswahl + Zwischenablage") — the canvas's
+    /// Select mode: while on, a tap on a part GATHERS it (or lets it go) instead of selecting it, so
+    /// several parts can be copied or deleted together. View state like the ids: cold (a tap), never
+    /// persisted; leaving the mode lets every gathered part go. Stale ids resolve on read
+    /// (`resolvedGathered`), never pruned in a body.
+    public private(set) var gathering = false
+    public private(set) var gathered: Set<UUID> = []
+    /// A9 — the parts last copied, as they stood (their lanes, starts and clips). In memory only:
+    /// never the system pasteboard, never persisted — a copy belongs to this run of this piece.
+    public private(set) var clipboard: [TimelineRegion] = []
 
     public init() {}
+
+    /// A9 — Select mode on or off; off lets every gathered part go.
+    public func setGathering(_ on: Bool) {
+        gathering = on
+        if !on { gathered = [] }
+    }
+
+    /// A9 — gather a part, or let it go when it is gathered. Unknown ids gather nothing.
+    public func toggleGathered(_ id: UUID, in document: TimelineDocument) {
+        guard document.regions.contains(where: { $0.id == id }) else { return }
+        if gathered.contains(id) { gathered.remove(id) } else { gathered.insert(id) }
+    }
+
+    /// A9 — copy the gathered parts that still exist. Nothing gathered leaves the clipboard as it was.
+    public func copyGathered(from document: TimelineDocument) {
+        let ids = Self.resolvedGathered(gathered, in: document)
+        guard !ids.isEmpty else { return }
+        clipboard = document.regions.filter { ids.contains($0.id) }
+    }
+
+    /// A9 — the gathered parts that still exist in `document`.
+    public nonisolated static func resolvedGathered(_ ids: Set<UUID>, in document: TimelineDocument) -> Set<UUID> {
+        Set(document.regions.lazy.map(\.id).filter { ids.contains($0) })
+    }
 
     /// Select a track (its inspector opens); selecting the open one closes it. A part that
     /// does not sit on the newly selected track is deselected with it.
