@@ -97,6 +97,33 @@ final class TheLaunchesBecomePartsOnTheArrangementTests: XCTestCase {
         XCTAssertTrue(LaunchTake.regions(for: [], in: f.document).isEmpty)
     }
 
+    // MARK: 2b — P4c: a part still playing at the song's wrap goes on being recorded
+
+    func testAPartStillPlayingAtTheWrapGoesOnBeingRecorded() {
+        let f = Fixture()
+        let bar = Self.bar
+        let loop = 8 * bar
+        var take = LaunchTake()
+        take.started(laneID: f.lead.id, regionID: f.loopB.id, atTick: 5 * bar)   // a 2-bar part from bar 5
+        let lengths: (UUID) -> Int? = { id in f.document.regions.first { $0.id == id }?.lengthTicks }
+        let pass = take.wrap(atTick: loop, lengthOf: lengths)
+        XCTAssertEqual(pass, [LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: 5 * bar, endTick: loop)],
+                       "the first pass ends at the wrap and is handed out")
+        XCTAssertTrue(take.spans.isEmpty)
+        XCTAssertTrue(take.isOpen, "the part is still playing")
+        take.finish(atTick: 4 * bar)
+        // Anchor 5 bars folds back to −3 bars; its loops start at −3, −1, +1 → the first at or after 0 is bar 1.
+        XCTAssertEqual(take.spans, [LaunchTake.Span(laneID: f.lead.id, regionID: f.loopB.id, startTick: bar, endTick: 4 * bar)],
+                       "recording resumes on the part's own loop boundary, so the copies stay in phase")
+        XCTAssertEqual(LaunchTake.firstBoundary(anchor: -3 * bar, length: 2 * bar), bar)
+        XCTAssertEqual(LaunchTake.firstBoundary(anchor: -4 * bar, length: 2 * bar), 0, "a boundary on the wrap itself")
+        XCTAssertEqual(LaunchTake.firstBoundary(anchor: 2 * bar, length: 2 * bar), 2 * bar)
+        var unknown = LaunchTake()
+        unknown.started(laneID: f.lead.id, regionID: UUID(), atTick: 0)
+        _ = unknown.wrap(atTick: loop, lengthOf: lengths)
+        XCTAssertFalse(unknown.isOpen, "a part whose length is unknown is not reopened")
+    }
+
     // MARK: 3 — the store writes the recording as ONE undo step, over the parts under it
 
     func testTheStoreWritesTheRecordingAsOneUndoStep() {

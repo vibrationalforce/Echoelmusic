@@ -69,6 +69,33 @@ public struct LaunchTake: Equatable, Sendable {
         }
     }
 
+    /// P4c — the song wrapped at `loopTicks` (the launch timebase folds back by it). Every span
+    /// ends there and is RETURNED — the caller writes this pass now, so the next pass is placed
+    /// later and wins where the two overlap — and every part still playing goes on being recorded
+    /// from its first loop boundary at or after the new 0 (its anchor folded back by `loopTicks`).
+    /// ⚠️ Between 0 and that boundary the part plays mid-loop; that stretch is not written, so the
+    /// arrangement's part plays there on playback. A part whose length is unknown is not reopened.
+    public mutating func wrap(atTick loopTicks: Int, lengthOf: (UUID) -> Int?) -> [Span] {
+        let playing = open
+        finish(atTick: loopTicks)
+        let pass = spans
+        spans = []
+        for laneID in playing.keys.sorted(by: { $0.uuidString < $1.uuidString }) {
+            guard let still = playing[laneID], let length = lengthOf(still.regionID), length > 0 else { continue }
+            open[laneID] = Open(regionID: still.regionID,
+                                startTick: Self.firstBoundary(anchor: still.startTick - loopTicks, length: length))
+        }
+        return pass
+    }
+
+    /// The first tick at or after 0 where a part of `length`, anchored at `anchor`, starts a loop.
+    public nonisolated static func firstBoundary(anchor: Int, length: Int) -> Int {
+        guard length > 0 else { return Swift.max(0, anchor) }
+        guard anchor < 0 else { return anchor }
+        let loops = (-anchor + length - 1) / length
+        return anchor + loops * length
+    }
+
     private mutating func close(laneID: UUID, atTick tick: Int) {
         guard let playing = open.removeValue(forKey: laneID) else { return }
         guard tick > playing.startTick else { return }

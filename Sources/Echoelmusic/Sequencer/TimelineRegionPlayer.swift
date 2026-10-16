@@ -311,8 +311,8 @@ public final class TimelineRegionPlayer {
     /// jump or the song's wrap — the spans become parts on the arrangement through
     /// `launchTakeSink` (the app hands them to the store's paste writer, one Undo step per take).
     /// A cold switch a finger flips; switching it off ends the take there.
-    /// ⚠️ A part still launched when the song wraps is recorded up to the wrap; the next pass is
-    /// recorded from the next launch on. Each wrap therefore writes its own Undo step.
+    /// ⚠️ Each wrap writes its pass as its own Undo step, and a part still launched goes on being
+    /// recorded from its first loop boundary after the wrap (P4c, `LaunchTake.wrap`).
     public var recordsLaunches = false {
         didSet { if !recordsLaunches { endLaunchTake() } }
     }
@@ -327,6 +327,11 @@ public final class TimelineRegionPlayer {
         launchTake.finish(atTick: currentTick + TimelineTime.ticksPerTransportStep)
         let spans = launchTake.spans
         launchTake = LaunchTake()
+        writeLaunchSpans(spans)
+    }
+
+    /// Hands finished spans to the sink as parts. Nothing to write writes nothing.
+    private func writeLaunchSpans(_ spans: [LaunchTake.Span]) {
         guard !spans.isEmpty else { return }
         let parts = LaunchTake.regions(for: spans, in: doc)
         guard !parts.isEmpty else { return }
@@ -989,7 +994,14 @@ public final class TimelineRegionPlayer {
         // by the loop length FIRST (boundaries and loopTicks are whole bars, so
         // grid alignment survives), then due boundaries fire. An idle engine
         // emits nothing and every path below is byte-identical (golden gate).
-        if wrapped, launchTake.isOpen { endLaunchTake() }   // P4b: up to the wrap, before the fold
+        // P4b/P4c: at the wrap, before the fold — this pass is written now (so the next pass is
+        // placed later and wins), and every part still launched goes on being recorded.
+        if wrapped, launchTake.isOpen {
+            let document = doc
+            writeLaunchSpans(launchTake.wrap(atTick: loopTicks, lengthOf: { id in
+                document.regions.first { $0.id == id }?.lengthTicks
+            }))
+        }
         if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }
         // S3: fold the AUDIO override timebase with the same wrap, so a launched
         // audio clip keeps looping across the song wrap (the wrap re-prime below now

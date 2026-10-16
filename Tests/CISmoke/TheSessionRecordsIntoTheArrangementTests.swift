@@ -61,7 +61,7 @@ final class TheSessionRecordsIntoTheArrangementTests: XCTestCase {
             searchFrom = hit.upperBound
         }
         XCTAssertEqual(checked, removes)
-        let wrap = try XCTUnwrap(player.range(of: "if wrapped, launchTake.isOpen { endLaunchTake() }"))
+        let wrap = try XCTUnwrap(player.range(of: "writeLaunchSpans(launchTake.wrap(atTick: loopTicks, lengthOf: { id in"))
         let fold = try XCTUnwrap(player.range(of: "if wrapped, !launch.isIdle { launch.shift(by: -loopTicks) }"))
         XCTAssertTrue(wrap.upperBound <= fold.lowerBound, "the take ends at the wrap BEFORE the launch timebase folds")
         XCTAssertTrue(player.contains("launchTake.started(laneID: t.laneID, regionID: regionID, atTick: t.atTick)"),
