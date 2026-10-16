@@ -229,6 +229,9 @@ struct ArrangeRulerLocator: View {
                             .offset(x: width * fraction)
                     }
                 }
+                // A2: the cycle's two grips — their own view, which holds the drag this row may not.
+                ArrangeCycleHandles(document: document, songTicks: songTicks, laneWidth: width,
+                                    height: height, locked: locked)
                 if let fraction = ArrangeCanvas.playheadFraction(tick: start, songTicks: songTicks) {
                     // Where Play starts. Accent, the colour of the playhead it becomes; 2 pt so it
                     // reads as a marker beside the 1-pt bar lines.

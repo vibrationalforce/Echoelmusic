@@ -153,7 +153,10 @@ final class TheCycleButtonLoopsThePartTests: XCTestCase {
             if SourceText.codeOnly(text).contains(".setCycle(") { writers.append(relative) }
         }
         XCTAssertGreaterThan(seen, 200, "the walk saw \(seen) files — the wrong directory")
-        XCTAssertEqual(writers, ["Studio/WorkstationCycleToggle.swift"], "one door sets the cycle: the transport's Cycle button")
+        // A2 (2026-10-16) added the SECOND door on purpose: the band's grips drag an edge and write
+        // once on lift (`ArrangeCycleHandles`, guard `TheCycleEdgesAreDraggedOnTheRulerTests`).
+        XCTAssertEqual(writers.sorted(), ["Studio/ArrangeCycleHandles.swift", "Studio/WorkstationCycleToggle.swift"],
+                       "two doors set the cycle: the transport's Cycle button and the band's grips")
 
         let store = try source(Self.storePath)
         XCTAssertEqual(store.components(separatedBy: "document.cycle = ").count - 1, 2,
