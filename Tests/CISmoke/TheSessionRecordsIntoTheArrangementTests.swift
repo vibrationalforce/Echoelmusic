@@ -76,6 +76,11 @@ final class TheSessionRecordsIntoTheArrangementTests: XCTestCase {
         XCTAssertTrue(player.contains("if recordsLaunches { joinLaunchedParts() } else { endLaunchTake() }"),
                       "switching off ends the take there; switching on joins the parts already launched")
         XCTAssertTrue(player.contains("let parts = LaunchTake.regions(for: spans, in: doc)"))
+        // Review P8: a restart ends the take against the document the parts were launched in.
+        let play = try XCTUnwrap(player.range(of: "public func play(\n        document: TimelineDocument,"))
+        let end = try XCTUnwrap(player.range(of: "endLaunchTake()", range: play.upperBound..<player.endIndex))
+        let take = try XCTUnwrap(player.range(of: "self.doc = document", range: play.upperBound..<player.endIndex))
+        XCTAssertTrue(end.upperBound <= take.lowerBound, "the take ends before Play takes the new document")
     }
 
     // MARK: 3 — the one sink, and a door that touches no store

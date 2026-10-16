@@ -769,6 +769,9 @@ public final class TimelineRegionPlayer {
                            resolveAudio: { self.audioLanes?.resolvedURL(forClipID: $0) })
               || takeArmed?() == true
         else { return }
+        // P4b: a restart ends the take at the old position — and BEFORE the new document is
+        // taken, so its parts are resolved against the piece they were launched in (review P8).
+        endLaunchTake()
         self.doc = document
         self.clips = clips
         self.seenMelodyGeneration = clips.userMelodyGeneration   // Play loads the current notes
@@ -788,7 +791,6 @@ public final class TimelineRegionPlayer {
         // startTick` and every line below is the pre-fix path.
         let entryStep = Self.nextTransportStep(isPlaying: pattern.isPlaying, currentStep: pattern.currentStep)
         let entryTick = Self.relocateAnchorTick(targetBarTick: startTick, nextPatternStep: entryStep)
-        endLaunchTake()   // P4b: a restart ends the take at the old position
         self.cursor = TimelinePlaybackCursor(startBar: startTick / TimelineTime.ticksPerBar)
         self.lastTick = entryTick
         self.currentTick = entryTick
