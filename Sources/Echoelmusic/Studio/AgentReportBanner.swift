@@ -10,7 +10,7 @@ import SwiftUI
 /// the same path as the request itself, and it keeps any value a person changed since.
 ///
 /// ⚠️ ITS OWN LEAF, ON PURPOSE (10.76.41/50 law): it is mounted in the ROOT (`WorkspaceView`), above
-/// every menu host. It reads `notice` and `isWorking` in THIS body only; both change once or twice per
+/// every menu host. It reads `notice`, `isWorking` and `isDescribing` in THIS body only; both change once or twice per
 /// request, never on a clock, and the root body reads neither.
 ///
 /// ⚠️ NO PRESENTATION MODIFIER. It is a status row in the root's column, beside
@@ -28,6 +28,12 @@ struct AgentReportBanner: View {
                     Label(Self.title(notice.state), systemImage: Self.symbol(notice.state))
                         .font(EchoelTheme.font(15, .semibold))
                     Spacer(minLength: 0)
+                    if desk.isDescribing {
+                        Button("Stop") { desk.stopDescribe() }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: 44)
+                            .accessibilityHint("Stops waiting for the description. Changes nothing in the piece.")
+                    }
                     Button("Close") { desk.dismiss() }
                         .buttonStyle(.bordered)
                         .frame(minHeight: 44)

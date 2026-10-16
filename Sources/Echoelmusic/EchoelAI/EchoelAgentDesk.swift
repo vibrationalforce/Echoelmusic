@@ -308,48 +308,142 @@ final class EchoelAgentDesk {
     /// is founder-gated). The answer, or why there is none, is the banner's notice. The brain is
     /// handed in by the one tap that asks (`AgentReportBanner.describePiece`), so a test can hand in
     /// its own; nothing here constructs one.
+    ///
+    /// ⭐ THE ANSWER BELONGS TO THE PIECE IT WAS ASKED ABOUT (GSIDMMW audit F2/F3, 2026-10-16). The
+    /// model call does NOT hold `isWorking`: a slow or hung model must not keep Siri requests and
+    /// the Undo waiting. Instead every await ends in `owns(_:generation:)` — the describe is still
+    /// the current one (not stopped, not timed out) and the timeline is still the document it read
+    /// (`documentGeneration`, bumped by every Open). A late answer, error or availability reply that
+    /// fails it is dropped. `isModelBusy` stays true until the backend really returns, even after a
+    /// Stop or the deadline: a backend that ignores cancellation is still computing, and a second
+    /// call on top would stack model work — so a second tap is told to wait instead.
+    /// Returns when the backend does (a hung one keeps only this suspended call, never the desk).
     func describePiece(with brain: any BrainBackend) async {
         // Busy: the running request's notice is already on screen and stays the one truth.
         guard !isWorking else { return }
         // Not bound yet (the app is still starting): a tap that did nothing would read as "done".
-        guard executor != nil else {
+        guard let executor else {
             notice = EchoelAgentNotice(requestID: UUID(), state: .failed(Self.stillStartingMessage),
                                        message: Self.stillStartingMessage, canUndo: false)
             return
         }
-        await describe(with: brain)
+        guard !isModelBusy else {
+            notice = EchoelAgentNotice(requestID: UUID(), state: .failed(Self.modelBusyMessage),
+                                       message: Self.modelBusyMessage, canUndo: executor.canUndoAgentChange)
+            return
+        }
+        describeTicket += 1
+        let ticket = describeTicket
+        let generation = executor.snapshot().documentGeneration
+        isModelBusy = true
+        let flow = Task { @MainActor [weak self] in
+            await self?.describe(with: brain, ticket: ticket, generation: generation, on: executor)
+        }
+        describeFlow = flow
+        let deadline = describeDeadline
+        let timer = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: deadline)
+            guard !Task.isCancelled else { return }
+            self?.giveUpDescribe(ticket: ticket, message: EchoelAgentDesk.describeTimeoutMessage)
+        }
+        await flow.value
+        timer.cancel()
+        isModelBusy = false
+        if describeFlow == flow { describeFlow = nil }
         // A Siri request that arrived while the model answered found the desk busy — take it now (`undoLast`).
         await runPending(now: Date())
     }
 
-    private func describe(with brain: any BrainBackend) async {
-        guard let executor, !isWorking else { return }
-        isWorking = true
-        defer { isWorking = false }
-        let requestID = UUID()
-        guard await brain.isAvailable else {
-            let message = Self.unavailableSentence(OnDeviceModelGate.status)
+    /// The banner's Stop while a describe runs. NOT the same as Close: Close only hides the notice,
+    /// and a running describe still lands its answer; Stop drops the answer and says so. The
+    /// backend is asked to cancel; one that ignores it keeps `isModelBusy` until it returns.
+    func stopDescribe() {
+        describeFlow?.cancel()
+        giveUpDescribe(ticket: describeTicket, message: Self.describeStoppedMessage)
+    }
+
+    /// True while a describe still owns the notice — the banner shows Stop then.
+    var isDescribing: Bool { describeRequestID != nil && notice?.requestID == describeRequestID }
+
+    /// Ends the describe `ticket`, if it is still the current one, with `message`. A ticket that
+    /// already finished, stopped or timed out changes nothing.
+    private func giveUpDescribe(ticket: Int, message: String) {
+        guard ticket == describeTicket, let requestID = describeRequestID else { return }
+        describeTicket += 1
+        describeRequestID = nil
+        // A closed notice stays closed: giving up is no news the person asked for (unlike an answer).
+        if notice?.requestID == requestID {
             notice = EchoelAgentNotice(requestID: requestID, state: .failed(message), message: message,
-                                       canUndo: executor.canUndoAgentChange)
-            return
+                                       canUndo: executor?.canUndoAgentChange ?? false)
         }
+    }
+
+    /// The describe may still write the notice: it was not stopped or timed out, and the piece is
+    /// the one it read. A changed piece ends it with a sentence instead of the stale answer.
+    private func owns(_ ticket: Int, generation: Int, on executor: EchoelCommandExecutor) -> Bool {
+        guard ticket == describeTicket else { return false }
+        guard executor.snapshot().documentGeneration == generation else {
+            giveUpDescribe(ticket: ticket, message: Self.pieceChangedMessage)
+            return false
+        }
+        return true
+    }
+
+    /// Writes this describe's result, unless another notice replaced its own meanwhile (a Siri
+    /// request, an Undo). A notice the person closed is no reason to drop the answer they asked for.
+    private func land(_ state: EchoelAgentState, _ message: String, requestID: UUID, on executor: EchoelCommandExecutor) {
+        describeTicket += 1
+        describeRequestID = nil
+        guard notice == nil || notice?.requestID == requestID else { return }
+        notice = EchoelAgentNotice(requestID: requestID, state: state, message: message,
+                                   canUndo: executor.canUndoAgentChange)
+    }
+
+    private func describe(with brain: any BrainBackend, ticket: Int, generation: Int,
+                          on executor: EchoelCommandExecutor) async {
+        let requestID = UUID()
+        describeRequestID = requestID
         notice = EchoelAgentNotice(requestID: requestID, state: .running, message: Self.describeRequest,
                                    canUndo: false)
+        let available = await brain.isAvailable
+        guard owns(ticket, generation: generation, on: executor) else { return }
+        guard available else {
+            let message = Self.unavailableSentence(OnDeviceModelGate.status)
+            return land(.failed(message), message, requestID: requestID, on: executor)
+        }
         let facts = EchoelStateText.describe(executor.snapshot())
         // The rung stands BEFORE the call (#859); it names the action only, never the piece.
         EchoelCrashLog.breadcrumb("agent: describe")
         do {
             let answer = try await brain.respond(to: Self.describePrompt(facts: facts))
+            guard owns(ticket, generation: generation, on: executor) else { return }
             let text = String(answer.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Self.describeLimit))
             let message = text.isEmpty ? Self.noAnswerMessage : text
-            notice = EchoelAgentNotice(requestID: requestID, state: text.isEmpty ? .failed(message) : .done,
-                                       message: message, canUndo: executor.canUndoAgentChange)
+            land(text.isEmpty ? .failed(message) : .done, message, requestID: requestID, on: executor)
         } catch {
+            guard owns(ticket, generation: generation, on: executor) else { return }
             let message = Self.describeFailure(error)
-            notice = EchoelAgentNotice(requestID: requestID, state: .failed(message), message: message,
-                                       canUndo: executor.canUndoAgentChange)
+            land(.failed(message), message, requestID: requestID, on: executor)
         }
     }
+
+    /// The current describe; a stopped, timed-out or finished one has moved past it.
+    @ObservationIgnored private var describeTicket = 0
+    /// The notice id of the describe that still owns the notice, nil when none does.
+    private(set) var describeRequestID: UUID?
+    /// True until the backend of the last describe really returned — also after a Stop or the deadline.
+    private(set) var isModelBusy = false
+    @ObservationIgnored private var describeFlow: Task<Void, Never>?
+    /// How long a describe may own the notice (F3). A product choice; a test sets its own.
+    @ObservationIgnored var describeDeadline: Duration = .seconds(45)
+
+    nonisolated static let describeTimeoutMessage =
+        "The on-device model took too long, so Echoel stopped waiting. Nothing was changed."
+    nonisolated static let describeStoppedMessage = "Stopped. Nothing was changed."
+    nonisolated static let pieceChangedMessage =
+        "Another piece was opened while Echoel was describing, so the answer was dropped. Nothing was changed."
+    nonisolated static let modelBusyMessage =
+        "The on-device model is still finishing the last request. Please try again in a moment."
 
     nonisolated static let describeRequest = "Describe this piece"
     /// The longest answer the notice shows; the model's own budget is far larger (`PromptBudget`).

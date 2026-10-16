@@ -24580,6 +24580,18 @@
           }
         }
       }
+    },
+    "Stops waiting for the description. Changes nothing in the piece." : {
+      "comment" : "GSIDMMW audit F3 (2026-10-16): the banner's Stop while a describe runs (AgentReportBanner).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stops waiting for the description. Changes nothing in the piece."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
