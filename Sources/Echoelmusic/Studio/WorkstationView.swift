@@ -1759,6 +1759,12 @@ struct WorkstationView: View {
         if let added = timeline.document.lanes.last, added.kind == .midi, !added.isBio {
             selection.selectTrack(added.id)
             importNote = MIDIImport.addedTrackNote(laneName: added.name)
+            // D1 (2026-10-16): a track past the rack's voices stays silent — say so where it is
+            // made, with the sentence the Device row and the note editor already use (#416).
+            if let silent = PartNoteEditor.noVoiceLine(TrackMix.role(of: added.id, in: timeline.document,
+                                                                     voiceCapacity: player.laneVoiceCapacity)) {
+                importNote = (importNote ?? "") + " " + silent + "."
+            }
         }
     }
 
