@@ -5359,3 +5359,12 @@ Rücklesen und Schreibzähler (`track.setPan` D1, `track.setMute` D2), nicht üb
 Router-Setter schreibt nur den Live-Spiegel der Stimme; nichts liest ihn zurück, der Patch im
 Sound-Panel erfährt nichts — eine zweite Wahrheit ohne Undo. `agentEligible` kommt erst mit einem
 Leser. Mute ist ein ZUSTAND, nie ein Umschalter. Review: 2026-11-15.
+
+### 2026-10-16 — Laptop-Live-Set: Brücke vor Target (E34, Founder delegiert)
+
+**Entscheidung:** Erst E15 (die iPhone-App als „Designed for iPhone“ auf einem Apple-Silicon-Mac,
+kein Code), dann ein Mac-Catalyst-Target (gleiche Quellen), getrennte Xone-Busse als eigene Phase
+darauf. **Warum:** Catalyst baut nichts neu, ein natives macOS-Target spaltete die UI; der Ausgang
+ist heute auf 2 Kanäle gedeckelt (`AudioEngine.swift:866`), die Busse brauchen also in jedem Fall
+eine eigene Scheibe. Ein Intel-Mac führt keine iPhone-Apps aus — dann fällt die Brücke weg.
+**Offen beim Founder:** Laptop-Modell/Chip und das E15-Häkchen. Review: 2026-11-15.
