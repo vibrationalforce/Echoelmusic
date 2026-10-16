@@ -125,6 +125,10 @@ final class TheMarkersNameBarsOfThePieceTests: XCTestCase {
                        "the markers have one writer and one door")
         let ruler = try source("Sources/Echoelmusic/Studio/ArrangeRulerLocator.swift")
         XCTAssertTrue(ruler.contains("ForEach(document.markers) { marker in"), "the ruler draws the document's markers")
+        XCTAssertTrue(ruler.contains(".frame(width: Self.markerFlagWidth, height: Self.markerFlagHeight)"),
+                      "a marker carries a flag (UI#5)")
+        XCTAssertGreaterThan(ArrangeRulerLocator.markerFlagWidth, 2,
+                             "wider than the 2-pt Play-start line, so a marker on that bar still shows")
         XCTAssertEqual(ruler.components(separatedBy: ".onTapGesture(coordinateSpace: .local)").count - 1, 1,
                        "COUNTERWEIGHT: the ruler keeps its one tap; the marks take none")
     }

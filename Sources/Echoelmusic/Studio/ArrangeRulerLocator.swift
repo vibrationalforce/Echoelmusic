@@ -201,6 +201,10 @@ struct ArrangeRulerLocator: View {
     /// The numbers' own scaled height (`rulerHeight`), drawn at the row's foot.
     let numbersHeight: CGFloat
 
+    /// A marker's flag: wider than the 2-pt Play-start line, so it peeks out beside it.
+    static let markerFlagWidth: CGFloat = 8
+    static let markerFlagHeight: CGFloat = 6
+
     var body: some View {
         let start = TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)
         let locked = recorder.isRecording || exporter.pieceTakeInFlight || exporter.status == .capturing
@@ -218,15 +222,21 @@ struct ArrangeRulerLocator: View {
                         .offset(x: width * band.start)
                 }
                 ArrangeBarRuler(songTicks: songTicks, height: numbersHeight)
-                // A5: the piece's markers — a 2-pt mark at the top of the row, the text colour
-                // (never green, the body's signal; never accent, the playhead's). They take no tap
-                // of their own: the ruler's tap on that bar sets Play there.
+                // A5: the piece's markers — a 2-pt line across the row plus a small flag at its top,
+                // the text colour (never green, the body's signal; never accent, the playhead's).
+                // The flag reaches right of the line, so a marker on the bar Play starts from still
+                // shows beside the accent line drawn over it (review UI#5). They take no tap of
+                // their own: the ruler's tap on that bar sets Play there.
                 ForEach(document.markers) { marker in
                     if let fraction = ArrangeCanvas.playheadFraction(tick: marker.tick, songTicks: songTicks) {
                         Rectangle()
                             .fill(EchoelTheme.text)
                             .frame(width: 2, height: height)
                             .offset(x: width * fraction)
+                        Rectangle()
+                            .fill(EchoelTheme.text)
+                            .frame(width: Self.markerFlagWidth, height: Self.markerFlagHeight)
+                            .offset(x: width * fraction, y: Self.markerFlagHeight - height)
                     }
                 }
                 // A2: the cycle's two grips — their own view, which holds the drag this row may not.
