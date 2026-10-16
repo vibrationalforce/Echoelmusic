@@ -48,8 +48,11 @@ final class TheTypedRequestTakesTheSiriRoadTests: XCTestCase {
 
     func testTheMenuDoorOnlyOpensTheLine() throws {
         let root = try code("Sources/Echoelmusic/Studio/WorkspaceView.swift")
-        XCTAssertTrue(root.contains("Button { EchoelAgentDesk.shared.beginTypedRequest() } label: {"),
-                      "the menu row opens the line and does nothing else")
+        XCTAssertTrue(root.contains("Button { AgentReportBanner.beginTypedRequest() } label: {"),
+                      "the menu row opens the line and does nothing else — through the banner, so the root never names the desk")
+        let banner = try code("Sources/Echoelmusic/Studio/AgentReportBanner.swift")
+        XCTAssertTrue(banner.contains("static func beginTypedRequest() { EchoelAgentDesk.shared.beginTypedRequest() }"),
+                      "the banner hands the open straight to the desk")
         XCTAssertTrue(root.contains("Label(\"Ask Echoel\", systemImage: \"text.cursor\")"),
                       "the row has a spoken title, not only a glyph (#480)")
         XCTAssertFalse(root.contains("AgentReportBanner.ask("), "the root never asks the model itself")

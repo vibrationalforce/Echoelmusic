@@ -605,7 +605,7 @@ struct WorkspaceView: View {
                     Label("Describe this piece", systemImage: "text.bubble")
                 }
                 // GSIDMMW C2c — the typed twin of Siri's "Ask Echoel": a line in the banner, no modal.
-                Button { EchoelAgentDesk.shared.beginTypedRequest() } label: {
+                Button { AgentReportBanner.beginTypedRequest() } label: {
                     Label("Ask Echoel", systemImage: "text.cursor")
                 }
                 Divider()

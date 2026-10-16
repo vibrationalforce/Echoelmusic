@@ -61,7 +61,7 @@ final class TheNoteGridHasAKeyColumnTests: XCTestCase {
         for _ in 0..<3 { root.deleteLastPathComponent() }
         let code = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(
             "Sources/Echoelmusic/Studio/PartNoteEditor.swift"), encoding: .utf8))
-        guard let stack = code.range(of: "HStack(alignment: .top, spacing: 0) {\n                    PartNoteKeyColumn(rows: ClipNoteEdit.keyRows(range, naming: naming,"),
+        guard let stack = code.range(of: "HStack(alignment: .top, spacing: .zero) {\n                    PartNoteKeyColumn(rows: ClipNoteEdit.keyRows(range, naming: naming,"),
               let scroll = code.range(of: "ScrollView(.horizontal, showsIndicators: true) {") else {
             return XCTFail("the key column's mount or the grid's scroll view moved — re-anchor")
         }

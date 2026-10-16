@@ -1,7 +1,7 @@
 // TheMIDIDoorsNameWhatTheyWriteTests.swift
 // Ultraplan-C1 (2026-10-16): three doors write a MIDI file, and two of them said only "MIDI" and
 // "Export" — the difference (the instrument's TAKE vs the whole SONG) lived in their VoiceOver
-// hints alone. The take door now reads "Take .mid"; the song's "Export" on Piece and the part bar's
+// hints alone. The take door now reads "Instrument .mid" (the glossary strikes "take": the block is a part, the instrument's output is its music); the song's "Export" on Piece and the part bar's
 // "Share as MIDI" already said their scope and stay (the song door's word is quoted by the Learn
 // path card and pinned by `TheGuideNamesOnlyRealControlsTests`, so it is not renamed here).
 //
@@ -24,7 +24,7 @@ final class TheMIDIDoorsNameWhatTheyWriteTests: XCTestCase {
         return SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8))
     }
 
-    // MARK: 1 — the take door says "Take .mid", and answers to it
+    // MARK: 1 — the take door says "Instrument .mid", and answers to it
 
     func testTheTakeDoorNamesTheTake() throws {
         let studio = try code("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
@@ -32,10 +32,10 @@ final class TheMIDIDoorsNameWhatTheyWriteTests: XCTestCase {
             return XCTFail("the take's MIDI door moved — re-anchor")
         }
         let tile = String(studio[door.upperBound...].prefix(900))
-        XCTAssertTrue(tile.contains("EchoelIconTile(systemImage: \"pianokeys\", title: \"Take .mid\", expands: true,"),
+        XCTAssertTrue(tile.contains("EchoelIconTile(systemImage: \"pianokeys\", title: \"Instrument .mid\", expands: true,"),
                       "the take door's title names its scope")
-        XCTAssertTrue(tile.contains(".accessibilityLabel(\"Export the take as MIDI for your DAW\")"))
-        XCTAssertTrue(tile.contains(".accessibilityInputLabels([String(localized: \"Take .mid\")])"),
+        XCTAssertTrue(tile.contains(".accessibilityLabel(\"Export the instrument's music as MIDI for your DAW\")"))
+        XCTAssertTrue(tile.contains(".accessibilityInputLabels([String(localized: \"Instrument .mid\")])"),
                       "Voice Control answers to the word on the tile (WCAG 2.5.3)")
         XCTAssertFalse(studio.contains("title: \"MIDI\""), "no MIDI door says only \"MIDI\"")
     }
@@ -59,7 +59,7 @@ final class TheMIDIDoorsNameWhatTheyWriteTests: XCTestCase {
         let data = try Data(contentsOf: root.appendingPathComponent("Sources/Echoelmusic/Resources/Localizable.xcstrings"))
         let catalog = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let strings = try XCTUnwrap(catalog["strings"] as? [String: Any])
-        for key in ["Take .mid", "Export the take as MIDI for your DAW"] {
+        for key in ["Instrument .mid", "Export the instrument's music as MIDI for your DAW"] {
             XCTAssertNotNil(strings[key], "`\(key)` is not in the catalog")
         }
         XCTAssertNil(strings["Export MIDI for your DAW"], "the retired label left the catalog with its literal")

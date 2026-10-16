@@ -86,6 +86,10 @@ struct AgentReportBanner: View {
 
     /// GMMW AI-4 — the ≡ menu's "Describe this piece" Button calls this, and only that tap does.
     /// The answer lands in this banner as a notice; no modal, nothing in the piece changes.
+    /// GSIDMMW C2c — the root's "Ask Echoel" door. Routed through the banner like `describePiece`,
+    /// so `WorkspaceView` never names the desk (`TheAgentHasOneProductionDoorTests`).
+    static func beginTypedRequest() { EchoelAgentDesk.shared.beginTypedRequest() }
+
     static func describePiece() {
         Task { await EchoelAgentDesk.shared.describePiece(with: onDeviceBrain()) }
     }

@@ -2481,17 +2481,17 @@ struct EchoelStudioView: View {
                                busyLabel: busyStatusLabel) { Task { await keepLastLoop() } }
 
             Button { exportMIDI() } label: {
-                // Ultraplan-C1: the title names the SCOPE — this writes the instrument's take; the
+                // Ultraplan-C1: the title names the SCOPE — this writes the instrument's music; the
                 // song is Piece's "Export", one part is the part bar's "Share as MIDI".
-                EchoelIconTile(systemImage: "pianokeys", title: "Take .mid", expands: true,
+                EchoelIconTile(systemImage: "pianokeys", title: "Instrument .mid", expands: true,
                                enabled: !isExporting && hasComposed)
             }
             .buttonStyle(.plain)
             // `isExporting` is a WAV concern, but both writers land in the ONE `share` slot, so
             // a MIDI export mid-record would silently replace the WAV the user is waiting for.
             .disabled(isExporting || !hasComposed)
-            .accessibilityLabel("Export the take as MIDI for your DAW")
-            .accessibilityInputLabels([String(localized: "Take .mid")])
+            .accessibilityLabel("Export the instrument's music as MIDI for your DAW")
+            .accessibilityInputLabels([String(localized: "Instrument .mid")])
             .accessibilityHint("Exports the instrument's music as a MIDI file to open in a DAW, with tempo and key")
 
             // ⛔ The Save tile (`SaveSessionButton`, WA4 Acceptance Test A) stood here; DAW shell

@@ -24887,22 +24887,22 @@
         }
       }
     },
-    "Take .mid" : {
+    "Instrument .mid" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Take .mid"
+            "value" : "Instrument .mid"
           }
         }
       }
     },
-    "Export the take as MIDI for your DAW" : {
+    "Export the instrument's music as MIDI for your DAW" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export the take as MIDI for your DAW"
+            "value" : "Export the instrument's music as MIDI for your DAW"
           }
         }
       }

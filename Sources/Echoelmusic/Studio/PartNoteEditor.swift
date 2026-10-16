@@ -244,7 +244,7 @@ private struct PartNoteGrid: View {
                     // Ultraplan-A2 (N2a): the key column stands OUTSIDE the scroll view, so every
                     // row keeps its name while the part scrolls sideways; same row height, same
                     // order as the canvas. Cold values only — the key and the reader's names.
-                    HStack(alignment: .top, spacing: 0) {
+                    HStack(alignment: .top, spacing: .zero) {
                     PartNoteKeyColumn(rows: ClipNoteEdit.keyRows(range, naming: naming,
                                                                  preferFlats: session.key.prefersFlatSpelling),
                                       rowHeight: zoomedRowHeight)
@@ -964,11 +964,6 @@ enum NoteGridTint {
     }
 }
 
-/// The drawn grid and its press-hold-and-slide. ⭐ THE ONLY FINGER-RATE STATE IN THE EDITOR:
-/// `live` is `@GestureState`, so only this leaf redraws while a finger slides, and it resets
-/// itself when the scroll view cancels the gesture. Nothing is written until the finger lifts,
-/// and then exactly once, through `onRelease`.
-@MainActor
 /// Ultraplan-A2 (N2a) — the key column: one named row per grid row, white and black keys, fixed
 /// beside the scrolling grid. Drawn in one `Canvas`; it reads no state, so it redraws only when
 /// the rows change (an octave step, a key change). Hidden from VoiceOver: the grid's label and the
@@ -978,8 +973,8 @@ private struct PartNoteKeyColumn: View {
     let rows: [ClipNoteEdit.KeyRow]
     let rowHeight: CGFloat
 
-    /// Wide enough for "C♯-1" at 10 pt; a designer's call, not pinned (#364).
-    private static let width: CGFloat = 40
+    /// Wide enough for "C♯-1" at the 11-pt chrome floor; a designer's call, not pinned (#364).
+    private static let width: CGFloat = 44
 
     var body: some View {
         Canvas { context, size in
@@ -992,7 +987,7 @@ private struct PartNoteKeyColumn: View {
                 context.fill(Path(CGRect(x: 0, y: y + rowHeight - 0.5, width: size.width, height: 0.5)),
                              with: .color(EchoelTheme.border.opacity(0.6)))
                 context.draw(Text(row.name)
-                                .font(EchoelTheme.font(10).monospacedDigit())
+                                .font(EchoelTheme.font(11).monospacedDigit())
                                 .foregroundStyle(row.pitch % 12 == 0 ? EchoelTheme.text : EchoelTheme.dim),
                              at: CGPoint(x: size.width - 4, y: y + rowHeight / 2), anchor: .trailing)
             }
@@ -1005,6 +1000,11 @@ private struct PartNoteKeyColumn: View {
     }
 }
 
+/// The drawn grid and its press-hold-and-slide. ⭐ THE ONLY FINGER-RATE STATE IN THE EDITOR:
+/// `live` is `@GestureState`, so only this leaf redraws while a finger slides, and it resets
+/// itself when the scroll view cancels the gesture. Nothing is written until the finger lifts,
+/// and then exactly once, through `onRelease`.
+@MainActor
 private struct PartNoteCanvas: View {
 
     let visible: [Note]
