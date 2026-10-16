@@ -24956,6 +24956,66 @@
           }
         }
       }
+    },
+    "Tap to add a part" : {
+      "comment" : "Arrange canvas (A1, 2026-10-16): the hint on an empty track's lane.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to add a part"
+          }
+        }
+      }
+    },
+    "Session" : {
+      "comment" : "Arrange plate (P1, 2026-10-16): the Session half of the Arrangement · Session switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        }
+      }
+    },
+    "View" : {
+      "comment" : "Arrange plate (P1, 2026-10-16): the label of the Arrangement · Session switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View"
+          }
+        }
+      }
+    },
+    "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar." : {
+      "comment" : "Arrange plate (P1): VoiceOver hint of the Arrangement · Session switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangement shows the piece on its timeline. Session launches its scenes live, on the bar."
+          }
+        }
+      }
+    },
+    "Every bar where parts start is a scene. Place parts in Arrangement, then launch scenes here while the piece plays." : {
+      "comment" : "Arrange plate (P1): the note under the switch in the Session view.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every bar where parts start is a scene. Place parts in Arrangement, then launch scenes here while the piece plays."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
