@@ -155,6 +155,8 @@ verfallen sie mit der Sitzung):
 
 ⭐ **2026-10-12: die 20-Minuten-Geräte-Sitzung zum Abarbeiten steht in `docs/dev/DEVICE_SESSION_2026-10-12.md`** — fünf Familien, je Schritt Tun · Achten auf · Zurück; sie fragt nichts doppelt, was unten offen steht. Der neue Erststart-Text (`2ca5eb87f`) ist erst im nächsten Build zu sehen.
 
+⭐ **2026-10-16: Gerätesitzung 2 — Arrangement & Performance steht in `docs/dev/DEVICE_SESSION_2_ARRANGE_2026-10-16.md`** (ab 10.79.515; zehn Prüfungen, ~30 Minuten, nach Wert geordnet). Sie deckt jede Bitte der Arrange-&-Perform-Liste ab (A1 · A2 · A4b · A4c · A5 · A9 · A10 · P1–P4 · 7a–7c; die Quelle druckt `python3 scripts/founder-verify.py --since 26be2e6~1`) und fragt nichts aus der Tabelle unten doppelt. Gerätesitzung 1 (`DEVICE_SESSION_1_2026-10-17.md`) bleibt daneben offen.
+
 **G1–G5 gelten ab 10.79.491** (Deploy 2026-10-04; Build-Nummer = Nummer des TestFlight-Laufs). ⭐ Neuester TestFlight-Build, gemessen 2026-10-11: **10.79.496 = Build 2621** (Lauf 2621 grün, 2026-10-09); G6–G8 kamen mit 10.79.492, G9 mit 10.79.494/495. ⛔ Hier stand „Gilt für 10.79.491“, fünf Deploys lang (GMMW CL-4). Neu seit
 10.79.490: der Raum reist mit dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein
 fehlgeschlagenes Sichern ersetzt nichts mehr (P3a), und die einheitliche Gestaltung F1–F6b.
