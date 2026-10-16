@@ -129,6 +129,12 @@ struct RecordTakeButton: View {
         // another start, or none. Cold (`isPlaying` flips twice a take); the count-in's own start
         // comes after `endCountIn()`, so it never cancels itself.
         .onChange(of: transport.isPlaying) { _, _ in endCountIn() }
+        // The person switched the click off during the count-in (review C5): that is their choice
+        // now, and the count-in's end must not restore an older one over it. Cold — a tap; the
+        // count-in's own switch-on is `true` and never reaches this.
+        .onChange(of: metronome.enabled) { _, now in
+            if countIn != nil, !now { countInSilencesClick = false }
+        }
     }
 
     /// The take itself: arm, then the one start from the top.

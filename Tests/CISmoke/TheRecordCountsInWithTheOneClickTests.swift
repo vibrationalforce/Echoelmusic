@@ -78,6 +78,8 @@ final class TheRecordCountsInWithTheOneClickTests: XCTestCase {
         let end = try body(of: "private func endCountIn(", to: "\n}", in: door)
         XCTAssertTrue(end.contains("if countInSilencesClick { metronome.enabled = false }"),
                       "a click the count-in switched on is off again when the take starts")
+        XCTAssertTrue(door.contains(".onChange(of: metronome.enabled) { _, now in\n            if countIn != nil, !now { countInSilencesClick = false }"),
+                      "a click switched off during the count-in stays the person's choice (C5)")
         XCTAssertTrue(door.contains(".onDisappear { endCountIn() }"), "a count-in never outlives its button")
         XCTAssertEqual(door.components(separatedBy: "MetronomeVoice(").count - 1, 0, "no second click voice")
         let metronome = try source("Sources/Echoelmusic/Audio/MetronomeVoice.swift")
