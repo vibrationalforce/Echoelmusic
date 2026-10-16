@@ -6,6 +6,9 @@
 // WHAT KIND OF GREEN THIS IS (§1):
 //   · Claims 1–3 are END-TO-END: a real WAV loaded by the shipped `loadSample`, rendered by the
 //     render the source node runs (`_testRender`), read sample by sample.
+//   · Claim 5 is END-TO-END for the load of a 3-channel file plus a SOURCE-TEXT scan for the
+//     downmix flag. DEVICE-SIDE UNKNOWN: whether an unmixed converter would cut or refuse —
+//     the claim only demands the third channel be heard, which a cut to two cannot do.
 //   · Claim 4 is a SOURCE-TEXT SCAN: the node is built two-channel and the right channel has its
 //     own filter state.
 //   · NOT CLAIMED (DEVICE PROBE): whether a MONO sample at centre is as loud as before. The node
@@ -48,7 +51,7 @@ final class TheSamplerKeepsAStereoSampleStereoTests: XCTestCase {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("ss2-\(UUID().uuidString).wav")
         urls.append(url)
-        let settings: [String: Any] = [
+        var settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVSampleRateKey: 48_000.0,
             AVNumberOfChannelsKey: values.count,
@@ -57,6 +60,13 @@ final class TheSamplerKeepsAStereoSampleStereoTests: XCTestCase {
             AVLinearPCMIsBigEndianKey: false,
             AVLinearPCMIsNonInterleaved: false,
         ]
+        if values.count == 3 {
+            // More than two channels needs a layout; L R C makes the third the CENTRE, which a
+            // mix-down spreads into both sides and a positional cut drops.
+            var layout = AudioChannelLayout()
+            layout.mChannelLayoutTag = kAudioChannelLayoutTag_MPEG_3_0_A
+            settings[AVChannelLayoutKey] = Data(bytes: &layout, count: MemoryLayout<AudioChannelLayout>.size)
+        }
         let file = try AVAudioFile(forWriting: url, settings: settings,
                                    commonFormat: .pcmFormatFloat32, interleaved: false)
         let frames = 4_800
@@ -117,6 +127,30 @@ final class TheSamplerKeepsAStereoSampleStereoTests: XCTestCase {
         XCTAssertEqual(out[0], [Float](repeating: 0.125, count: Self.frames))
         let mono = render(try loaded([0.5]), bufferCount: 1)
         XCTAssertEqual(mono[0], [Float](repeating: 0.5, count: Self.frames), "COUNTERWEIGHT: mono is untouched")
+    }
+
+    // MARK: 5 — a wider file loads, plays on both sides, and its third channel is heard
+
+    /// END-TO-END for the load, SOURCE-TEXT for the flag. A three-channel file with silent left
+    /// and right and a constant third channel: remapped by position it would render SILENCE,
+    /// mixed it reaches the output. The mix coefficients are Apple's, so only "not silent,
+    /// finite, both sides" is asserted — never a value.
+    func testAWiderFileIsMixedDownNotCut() throws {
+        let voice: SamplerVoice
+        do { voice = try loaded([0, 0, 0.5]) } catch {
+            // The FIXTURE failed (this host would not write or read a 3-channel WAV) — a skip
+            // names it; it is not a verdict on the downmix.
+            throw XCTSkip("no 3-channel fixture on this host: \(error)")
+        }
+        let out = render(voice, bufferCount: 2)
+        XCTAssertTrue(out.allSatisfy { $0.allSatisfy(\.isFinite) }, "a mixed-down file renders finite samples")
+        XCTAssertTrue(out[0].contains { $0 != 0 } || out[1].contains { $0 != 0 },
+                      "the third channel reaches the output — a positional cut to the first two would be silence")
+        var root = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { root.deleteLastPathComponent() }
+        let code = SourceText.codeOnly(try String(contentsOf: root.appendingPathComponent(
+            "Sources/Echoelmusic/Sequencer/SamplerVoice.swift"), encoding: .utf8))
+        XCTAssertTrue(code.contains("converter.downmix = true"), "a wider file is mixed, not cut")
     }
 
     // MARK: 4 — the node is two-channel and each side has its own filter

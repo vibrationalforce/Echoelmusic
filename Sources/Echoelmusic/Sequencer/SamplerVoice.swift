@@ -163,6 +163,9 @@ public final class SamplerVoice: @unchecked Sendable {
         ), let converter = AVAudioConverter(from: src.format, to: targetFormat) else {
             throw SamplerVoiceError.unsupportedFormat
         }
+        // A wider file is MIXED into the two (or one) channels, never cut to its first ones —
+        // without this flag the converter remaps by channel position (SS2 review).
+        if src.format.channelCount > outChannels { converter.downmix = true }
 
         let ratio = targetRate / src.format.sampleRate
         let outCapacity = AVAudioFrameCount(Double(src.frameLength) * ratio) + 2048
