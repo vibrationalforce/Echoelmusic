@@ -40,8 +40,17 @@ final class ATapOnAnEmptyLaneMakesAPartTests: XCTestCase {
         let bar = Self.bar
         XCTAssertEqual(ArrangeCanvas.canvasTicks(songTicks: 0), ArrangeCanvas.minimumBars * bar,
                        "an empty song is a timeline, not a sliver")
-        XCTAssertEqual(ArrangeCanvas.canvasTicks(songTicks: 16 * bar), (16 + ArrangeCanvas.headroomBars) * bar,
-                       "there is always open space after the last part")
+        XCTAssertEqual(ArrangeCanvas.canvasTicks(songTicks: 16 * bar), 24 * bar,
+                       "there is always open space after the last part, in a whole 8-bar step")
+        for bars in [1, 4, 5, 9, 16, 20, 21, 63] {
+            let ticks = ArrangeCanvas.canvasTicks(songTicks: bars * bar)
+            XCTAssertGreaterThanOrEqual(ticks, (bars + ArrangeCanvas.headroomBars) * bar, "headroom kept at \(bars) bars")
+            XCTAssertEqual(ticks % (ArrangeCanvas.minimumBars * bar), 0, "a whole step at \(bars) bars")
+        }
+        // UI#9: a 9-bar song, and a 4-bar part tapped in on another track at bar 9 lengthens it to
+        // 12 bars — the scale (16 bars both times) holds. Bar by bar it went 13 → 16.
+        XCTAssertEqual(ArrangeCanvas.canvasTicks(songTicks: 12 * bar), ArrangeCanvas.canvasTicks(songTicks: 9 * bar),
+                       "a part placed in the open space does not rescale the canvas under the finger")
         XCTAssertEqual(ArrangeCanvas.canvasTicks(songTicks: -5), ArrangeCanvas.minimumBars * bar)
 
         let song = 8 * bar

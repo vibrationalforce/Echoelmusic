@@ -129,11 +129,16 @@ enum ArrangeCanvas {
     static let headroomBars = 4
     static let minimumBars = 8
 
-    /// A1 — the canvas's scale: the song plus `headroomBars`, never under `minimumBars`. Every
-    /// row, the ruler and the playhead take THIS one number, so they still line up (#416).
+    /// A1 — the canvas's scale: the song plus `headroomBars`, rounded UP to a whole
+    /// `minimumBars` step. Every row, the ruler and the playhead take THIS one number, so they
+    /// still line up (#416).
+    /// ⚠️ The step is the point (review UI#9): a part placed in the headroom lengthens the song,
+    /// and a scale that followed it bar by bar rescaled every part under the finger on each such
+    /// tap. In 8-bar steps it holds still until the open space is used up.
     nonisolated static func canvasTicks(songTicks: Int) -> Int {
-        let bar = TimelineTime.ticksPerBar
-        return Swift.max(Swift.max(0, songTicks) + headroomBars * bar, minimumBars * bar)
+        let step = minimumBars * TimelineTime.ticksPerBar
+        let wanted = Swift.max(0, songTicks) + headroomBars * TimelineTime.ticksPerBar
+        return Swift.max(1, (wanted + step - 1) / step) * step
     }
 
     /// A1 — the bar a tap at `x` on a lane `laneWidth` wide names: the bar under the finger,
