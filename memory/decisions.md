@@ -5340,3 +5340,13 @@ Ausrichtung auf professionelle Medienproduktion bleiben dabei maßgeblich." (wit
   Auftrags um Daumen-Skala (Koala), Hierarchie in drei Ebenen und „keine modulare Patch-Fläche"
   ergänzt. Bis dahin vom Redesign nur D1–D3.
 - review: 2026-11-14
+
+### 2026-10-16 — Nordstern GSIDMMW (Founder)
+
+**Entscheidung:** Oberstes Ziel heißt GSIDMMW — Generative Superintelligence Distributed
+Multidimensional Multimedia Workstation. D bleibt Distributed, Marke bleibt Echoelmusic, kein Typ
+wird umbenannt. **Warum:** Founder-Auftrag mit der GSIDMMW-Audit-Übergabe. **Grenze:**
+„Superintelligence" ist Forschungsziel, nie eine ausgelieferte Fähigkeit; nach außen verboten
+(Satz-Wächter `TheCopyMakesNoHealthClaimTests`). Eine Roadmap (Masterplan); PLAN_GMMW und
+ULTRAMASTERPLAN sind untergeordnet. Audit-Messung: `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
+Review: 2026-11-15.

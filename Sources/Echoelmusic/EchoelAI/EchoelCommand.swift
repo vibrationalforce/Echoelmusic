@@ -13,9 +13,10 @@
 // simulated taps.
 //
 // ⭐ WHAT IS NOT HERE, SAID PLAINLY. No language model proposes these actions yet. The existing
-// `EchoelLanguageModel` / `EchoelAIRouter` answer text; `FoundationModelsBrain` has no caller and
-// has never run on a device. Step 1 delivers the tested action interface; the language binding is
-// the named next step, not a keyword matcher dressed up as understanding.
+// `EchoelLanguageModel` / `EchoelAIRouter` answer text; `FoundationModelsBrain` has ONE caller,
+// the READ-ONLY "Describe this piece" (`AgentReportBanner.describePiece`), and has never run on a
+// device. Step 1 delivers the tested action interface; the language binding is the named next
+// step (GSIDMMW package C), not a keyword matcher dressed up as understanding.
 //
 // ⚠️ PERMISSIONS COME FROM THE PERSON, NEVER FROM THE PROPOSAL. A proposal's arguments are data:
 // an imported file, its metadata or a transcript can end up inside them, and nothing in them can

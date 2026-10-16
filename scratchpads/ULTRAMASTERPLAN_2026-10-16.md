@@ -8,6 +8,11 @@
 | **Gemessen an** | HEAD `4dbcfc6` (Gatherer plan/board) und `9e570bc` (Gatherer founder/code). ⚠️ Das sind **zwei verschiedene HEADs**. Ein Befund, der nur an einem gemessen wurde, steht unten mit seinem SHA. |
 | **Zieldatei** | `scratchpads/ULTRAMASTERPLAN_2026-10-16.md` |
 
+⚠️ **NACHGETRAGEN 2026-10-16 (GSIDMMW-Übergabe): kein konkurrierender Plan.** Die eine Roadmap ist
+`docs/dev/ECHOELMUSIC_MASTER_PLAN.md`; diese Datei ist ein untergeordneter, datierter Arbeitsstapel
+(eine Momentaufnahme offener Posten), wie `PLAN_GMMW_2026-10-08.md`. Wo sie der Masterplan-Reihenfolge
+widerspricht, gewinnt der Masterplan.
+
 **Was dieser Plan ist:** Er bringt die offene Arbeit in eine Reihenfolge. Jeder Posten ist gegen den Code geprüft. Er gilt **unter** `docs/dev/FOUNDER_PRODUCT_LAW.md` (volle DMMW: das Ökosystem anbinden, Spezial-Infrastruktur nie selbst nachbauen) und **unter** `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` (WA1–WA4). **Er setzt keins von beiden außer Kraft.**
 
 ⚠️ **Vorschlag an dich, keine Entscheidung:** Laut CLAUDE.md ist WA3 als Nächstes dran (Geräte-Instanzen: WA3-S3/S4, PRE2/PRE3). Dein Fokus vom 2026-10-15/16 lautet aber: Produktion zuerst, entspanntes MIDI-Editieren, jede sichtbare Funktion arbeitet von Ende zu Ende. Dieser Plan zieht deshalb **WA4-Edit- und Export-Scheiben vor WA3-S3/S4**. WA3-S3 hat heute keinen sichtbaren Nutzen („internal plumbing; nothing user-visible until a second instance"). Willst du die WA-Reihenfolge behalten, verschieben sich Track A und C hinter Track E/WA3. → Frage **F-0** unten.

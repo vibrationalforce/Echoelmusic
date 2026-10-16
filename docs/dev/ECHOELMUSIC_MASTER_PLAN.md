@@ -26,6 +26,15 @@ wins. Where this file disagrees with `FOUNDER_PRODUCT_LAW.md`, the law wins.
 
 ## 1. Product North Star
 
+**Top goal (founder 2026-10-16, `FOUNDER_PRODUCT_LAW.md` §1):** Echoelmusic pursues a
+Generative Superintelligence Distributed Multidimensional Multimedia Workstation (GSIDMMW). The
+platform joins professional media production, generative design and distributed collaboration.
+Every step must arrive as a concrete, checkable capability inside the existing project, time,
+control and undo structures. Superintelligence names the long-term research goal; shipped
+capabilities are described by their real implementation and acceptance. This stays the ONE
+roadmap — `scratchpads/PLAN_GMMW_2026-10-08.md` and `scratchpads/ULTRAMASTERPLAN_2026-10-16.md`
+are subordinate feeds, never a second order.
+
 **Echoelmusic is a full professional Distributed Multidimensional Multimedia Workstation
 (DMMW).**
 
@@ -211,7 +220,7 @@ Detail and device status: `FEATURE_STATUS.md` §1. Owners: `scratchpads/PLAN_DOC
 | Motion as a bio source | **IDEA** | No producer (`ModulationMatrix.hasProducer(.motion)` is false) |
 | Collaboration (Live Colabo) | IMPLEMENTED | Two-phone probe open (#113) |
 | Broadcast / streaming | **IDEA** | HaishinKit is not linked; `BroadcastPublisher` is a compile guard |
-| AI (`EchoelAI`, registry/tool core) | IMPLEMENTED core, **no caller** | `FeatureFlags.echoelAI` has zero readers |
+| AI (`EchoelAI`) | Three different capabilities: **(1) describe** — a READ-ONLY production path ("Describe this piece", the ≡ menu → `AgentReportBanner.describePiece` → `FoundationModelsBrain`), DEVICE UNVERIFIED; **(2) typed actions** — Siri/Shortcuts intents through `EchoelCommandExecutor`, IMPLEMENTED; **(3) model-made action plans** — **IDEA**, no model proposes actions yet (GSIDMMW package C) | `FeatureFlags.echoelAI` has zero readers (re-measured 2026-10-16) |
 | AUv3 instrument (`Sources/EchoelmusicAUv3`) | IMPLEMENTED · **DEVICE VERIFIED in AUM 2026-09-20** | Other hosts are not verified |
 | Plugin hosting (AUv3/VST3/CLAP) | **IDEA** | Hosting removed with #121 Slice 2 |
 

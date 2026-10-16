@@ -28,6 +28,22 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 > the first screen a newcomer sees, the build order), **production wins**. Bio code stays, works
 > and keeps its safety law (§4); it is no longer the lead of any surface or of the pitch.
 
+> ⭐ **NORTH STAR (founder 2026-10-16): GSIDMMW — Generative Superintelligence Distributed
+> Multidimensional Multimedia Workstation.** D stays *Distributed*, the canonical DMMW word; the
+> brand stays Echoelmusic; no type is renamed (`DMMWProject` keeps its name). Generative
+> intelligence is meant to connect the domains below: understand an intention, use the right
+> tool, produce a result, check it, and leave it editable under the person's control — the work
+> and the responsibility for it stay with the person. **"Superintelligence" names the long-term
+> research goal, never a shipped capability.** A language model, several agents or good music
+> generation are not superintelligence. Shipped capabilities are named by what they do and how
+> they were accepted (`FEATURE_STATUS.md`); outward copy never says "superintelligence" — the
+> sentence guard `TheCopyMakesNoHealthClaimTests` refuses it on the website, the store text and
+> the string catalog (history: `decisions.csv` 2026-06-20, `HISTORY_ARCHIVE.md` M8). The north
+> star is no licence for a new dependency, target, cloud upload or for skipping a rule of this
+> repo. Every step lands as a concrete, checkable capability inside the existing project, time,
+> control and undo structures. Order: `ECHOELMUSIC_MASTER_PLAN.md` §1; the audit behind it and
+> its packages A–G: `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
+
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
 
