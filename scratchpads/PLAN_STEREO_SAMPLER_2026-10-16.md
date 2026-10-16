@@ -38,4 +38,6 @@ Council inline, Gate: **MITIGATE → erst messen, dann bauen.**
 4. **SS3 Überlappung** — eigener Vertragsbruch (Drum-Machine-Retrigger), mit Choke-Option;
    erst nach SS2 und Geräte-Hörprobe.
 
+**Stand 2026-10-16:** SS2 GEBAUT (`37b8c7c`, Wächter `TheSamplerKeepsAStereoSampleStereoTests`). SS3 wartet auf FOUNDER_INBOX E36.
+
 Geräte-Hörprobe nach SS2: Stereo-Loop auf Sampler-Spur, Pan links/rechts, klingt die Breite?
