@@ -81,14 +81,17 @@ public struct EchoelTruePeak: Sendable {
         var channel = self.channel
         ring.withUnsafeMutableBufferPointer { buf in
             guard let r = buf.baseAddress else { return }
-            for i in 0..<sampleCount {
-                let v = Self.push(samples[i], into: r, base: channel * 2 * Self.tapsPerPhase, write: write)
-                // `v.isNaN ||` keeps a NaN once seen: `Swift.max` would drop it.
-                if v.isNaN || v > block { block = v }
-                channel += 1
-                if channel == channels {
-                    channel = 0
-                    write = (write + 1) % Self.tapsPerPhase
+            Self.withTables { p0, p1 in
+                for i in 0..<sampleCount {
+                    let v = Self.push(samples[i], into: r, base: channel * 2 * Self.tapsPerPhase,
+                                      write: write, p0, p1)
+                    // `v.isNaN ||` keeps a NaN once seen: `Swift.max` would drop it.
+                    if v.isNaN || v > block { block = v }
+                    channel += 1
+                    if channel == channels {
+                        channel = 0
+                        write = (write + 1) % Self.tapsPerPhase
+                    }
                 }
             }
         }
@@ -109,13 +112,16 @@ public struct EchoelTruePeak: Sendable {
         var write = self.write
         ring.withUnsafeMutableBufferPointer { buf in
             guard let r = buf.baseAddress else { return }
-            for i in 0..<frameCount {
-                let l = left[i]
-                let vl = Self.push(l, into: r, base: 0, write: write)
-                let vr = Self.push(right?[i] ?? l, into: r, base: 2 * Self.tapsPerPhase, write: write)
-                if vl.isNaN || vl > block { block = vl }
-                if vr.isNaN || vr > block { block = vr }
-                write = (write + 1) % Self.tapsPerPhase
+            Self.withTables { p0, p1 in
+                for i in 0..<frameCount {
+                    let l = left[i]
+                    let vl = Self.push(l, into: r, base: 0, write: write, p0, p1)
+                    let vr = Self.push(right?[i] ?? l, into: r, base: 2 * Self.tapsPerPhase,
+                                       write: write, p0, p1)
+                    if vl.isNaN || vl > block { block = vl }
+                    if vr.isNaN || vr > block { block = vr }
+                    write = (write + 1) % Self.tapsPerPhase
+                }
             }
         }
         self.write = write
@@ -127,10 +133,26 @@ public struct EchoelTruePeak: Sendable {
         if block.isNaN || block > peak { peak = block }
     }
 
+    /// Both coefficient tables as raw pointers, fetched ONCE per block: read through the
+    /// `static let` per tap they would cost an init check, a bounds check and a possible
+    /// retain/release 48 times a sample (audio-thread review, LS-TP2). If a table could not
+    /// lend its storage the block measures nothing rather than reading out of bounds.
+    @inline(__always)
+    private static func withTables(_ body: (UnsafePointer<Float>, UnsafePointer<Float>) -> Void) {
+        phase0.withUnsafeBufferPointer { a in
+            phase1.withUnsafeBufferPointer { b in
+                guard let p0 = a.baseAddress, let p1 = b.baseAddress,
+                      a.count == tapsPerPhase, b.count == tapsPerPhase else { return }
+                body(p0, p1)
+            }
+        }
+    }
+
     /// The ONE interpolation: write `x` into its channel's doubled ring at `write`, run the four
     /// phases over the 12 newest samples, return max(|x|, |y0…y3|).
     @inline(__always)
-    private static func push(_ x: Float, into r: UnsafeMutablePointer<Float>, base: Int, write: Int) -> Float {
+    private static func push(_ x: Float, into r: UnsafeMutablePointer<Float>, base: Int, write: Int,
+                             _ phase0: UnsafePointer<Float>, _ phase1: UnsafePointer<Float>) -> Float {
         let taps = tapsPerPhase
         r[base + write] = x
         r[base + write + taps] = x
