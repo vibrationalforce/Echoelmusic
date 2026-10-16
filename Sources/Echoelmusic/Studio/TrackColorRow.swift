@@ -62,6 +62,9 @@ struct TrackColorRow: View {
                 }
             }
             .pickerStyle(.menu)
+            // The palette's text colour, like every menu row in the inspector — not the system
+            // blue, which would read as one more track colour (UI#10).
+            .tint(EchoelTheme.text)
             .accessibilityLabel(String(localized: "Track colour"))
         }
     }

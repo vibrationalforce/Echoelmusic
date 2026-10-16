@@ -98,6 +98,7 @@ final class TheTrackColourIsThePersonsChoiceTests: XCTestCase {
         let row = try source("Sources/Echoelmusic/Studio/TrackColorRow.swift")
         XCTAssertTrue(row.contains("timeline.setLaneColor(id: laneID, $0)"))
         XCTAssertTrue(row.contains(".pickerStyle(.menu)"), "a named choice is a menu, not a number field")
+        XCTAssertTrue(row.contains(".tint(EchoelTheme.text)"), "the menu wears the palette text, not system blue (UI#10)")
         let store = try source("Sources/Echoelmusic/Core/TimelineStore.swift")
         XCTAssertEqual(store.components(separatedBy: "].color = ").count - 1, 1, "one writer of the colour")
         let doc = try source("Sources/Echoelmusic/Sequencer/Timeline.swift")
