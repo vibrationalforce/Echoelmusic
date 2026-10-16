@@ -648,6 +648,10 @@ struct TrackInspectorView<TrackRows: View, PartRows: View>: View {
                     if TrackColorChoice.offered(laneID, in: timeline.document) {
                         TrackColorRow(laneID: laneID)
                     }
+                    // A4c — the track's place in the piece (own leaf; refusals are the store's).
+                    if TrackColorChoice.offered(laneID, in: timeline.document) {
+                        TrackOrderRow(laneID: laneID)
+                    }
 
                     if controls.level {
                         let level = Double(timeline.document.lanes.first(where: { $0.id == laneID })?.level ?? TimelineLane.defaultLevel)

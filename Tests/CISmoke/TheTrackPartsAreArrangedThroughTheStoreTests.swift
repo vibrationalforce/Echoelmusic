@@ -191,7 +191,9 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
         // — the same shape for the track's hosted effect; "picked sound" covers it too.
         // A5 (2026-10-16) added `.markers` — the PIECE's markers from one tap of the transport's
         // Marker button, both lists as values; no lane, no name, no document — and the hint names
-        // "markers" in the same commit.
+        // "markers" in the same commit. A4c (2026-10-16) added `.laneOrder` — the ORDER of the
+        // tracks from one Move up/down, both as id lists; no lane's content, no name, no mix — and
+        // the hint names "the order of the tracks" in the same commit.
         XCTAssertEqual(cases, ["case regions([TimelineRegion])",
                                "case clipNotes(clipID: UUID, notes: [Note], clips: ClipStore)",
                                "case automation([AutomationLane])",
@@ -204,6 +206,7 @@ final class TheTrackPartsAreArrangedThroughTheStoreTests: XCTestCase {
                                "case lanePluginEffect(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)",
                                "case cycle(before: TimelineCycle?, after: TimelineCycle?)",
                                "case markers(before: [TimelineMarker], after: [TimelineMarker])",
+                               "case laneOrder(before: [UUID], after: [UUID])",
                                "case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)"],
                        """
                        The history holds a step kind this list does not name. `SongHistoryRow`'s \

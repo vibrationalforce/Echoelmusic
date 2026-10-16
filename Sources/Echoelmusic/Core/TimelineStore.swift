@@ -295,6 +295,7 @@ public final class TimelineStore {
         case lanePluginEffect(laneID: UUID, before: DeviceInsert?, after: DeviceInsert?)
         case cycle(before: TimelineCycle?, after: TimelineCycle?)
         case markers(before: [TimelineMarker], after: [TimelineMarker])
+        case laneOrder(before: [UUID], after: [UUID])
         case keptTake(slot: Int, keptID: UUID, clip: Clip?, regions: [TimelineRegion], clips: ClipStore)
     }
 
@@ -486,6 +487,13 @@ public final class TimelineStore {
             document.markers = before
             persist()
             return HistoryStep.markers(before: after, after: before)
+        case .laneOrder(let before, let after):
+            // A4c — the `.cycle` rule: an order changed since (a track added, removed or moved)
+            // keeps the later one.
+            guard document.lanes.map(\.id) == after, before != after else { return nil }
+            document.lanes = LaneOrder.ordered(document.lanes, as: before)
+            persist()
+            return HistoryStep.laneOrder(before: after, after: before)
         case .keptTake(let slot, let keptID, let clip, let regions, let clips):
             // GMMW GA-2a — the slot must hold exactly what the step expects: the kept take when
             // Undo frees it, nothing when Redo fills it again. Anything else was written since
@@ -1105,6 +1113,23 @@ public final class TimelineStore {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
         document.lanes[i].name = name
         persist()
+    }
+
+    /// A4c — move a track one place up (`delta` −1) or down (+1); `LaneOrder.moved` refuses a move
+    /// that would hand the Echoel instrument to another track or move past the bio lane. ONE
+    /// `.laneOrder` Undo step. Returns whether it moved.
+    @discardableResult
+    public func moveLane(id: UUID, by delta: Int) -> Bool {
+        guard let next = LaneOrder.moved(document.lanes, id: id, by: delta) else { return false }
+        pushUndo(.laneOrder(before: document.lanes.map(\.id), after: next.map(\.id)))
+        document.lanes = next
+        persist()
+        return true
+    }
+
+    /// Whether `moveLane(id:by:)` would move — the buttons' enabled state. Pure read.
+    public func canMoveLane(id: UUID, by delta: Int) -> Bool {
+        LaneOrder.moved(document.lanes, id: id, by: delta) != nil
     }
 
     /// A4b — the colour the person chose for a track; nil = its instrument's colour. Display only

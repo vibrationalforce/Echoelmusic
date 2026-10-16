@@ -49,6 +49,18 @@
         }
       }
     },
+    "Changes the order of the tracks. With more tracks than voices, the upper ones sound." : {
+      "comment" : "A4c track order (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes the order of the tracks. With more tracks than voices, the upper ones sound."
+          }
+        }
+      }
+    },
     "Choose a photo; its colour and brightness can shape the visuals" : {
       "comment" : "Photo card (GMMW VV-2, 2026-10-08): the header's spoken hint while Detail cannot show (no Rings look in the slider, donuts off) — contrast only reaches Detail, so it is not named.",
       "extractionState" : "manual",
@@ -249,6 +261,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Media"
+          }
+        }
+      }
+    },
+    "Move down" : {
+      "comment" : "A4c track order (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move down"
+          }
+        }
+      }
+    },
+    "Move up" : {
+      "comment" : "A4c track order (2026-10-16).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move up"
           }
         }
       }
@@ -25137,14 +25173,14 @@
         }
       }
     },
-    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
+    "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes" : {
       "comment" : "Head history hint (Workstation redesign B3c, B2b, 2026-10-01; Restructure P2 2026-10-04 adds the piece's light look; GMMW AE-12b 2026-10-08 its cycle): what the piece's Undo covers — every hand-made level, pan, Mute or Solo and every pick in a rack track's Sound row is one step; the Studio instrument's own sound (its Sound panel) and its Start are not. Glossary: Stück · Spur · Teil · Klang.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
+            "value" : "Covers moves, copies, splits, removals, imports, note edits, automation points, relinked files, the composer's part, the piece's light look, cycle and markers, the order of the tracks, and a track's level, pan, mute, solo or picked sound — not the Studio instrument's own sound or what its Start changes"
           }
         }
       }
