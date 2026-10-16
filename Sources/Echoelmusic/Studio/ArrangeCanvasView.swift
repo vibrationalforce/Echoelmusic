@@ -656,7 +656,8 @@ struct ArrangeCanvasView: View {
 
     private func laneRow(_ row: WorkstationSummary.LaneRow, selected: UUID?) -> some View {
         let hearing = ArrangeCanvas.hearing(of: row.id, in: document)
-        // A9: the parts gathered in Select mode wear the selection ring too (cold — a tap).
+        // A9: in Select mode the gathered parts wear the selection ring, and ONLY they — the part
+        // selected before stays selected underneath, but a ring on it would read as gathered (cold — a tap).
         let gathered: Set<UUID> = selection.gathering ? selection.gathered : []
         let spokenName = row.name + ArrangeCanvas.spokenState(hearing)
         let blocks = ArrangementStrip.blocks(onLane: row.id, in: document, songTicks: songTicks)
@@ -704,7 +705,7 @@ struct ArrangeCanvasView: View {
                 ForEach(blocks) { block in
                     let start = starts[block.id] ?? 0
                     ArrangePartBlock(block: block, startTick: start,
-                                     isSelected: block.id == selected || gathered.contains(block.id),
+                                     isSelected: selection.gathering ? gathered.contains(block.id) : block.id == selected,
                                      laneWidth: width, songTicks: songTicks,
                                      label: spokenName + String(localized: ", part at ") + SessionGrid.label(forTick: start),
                                      noteMarks: sketches[block.id] ?? [],
@@ -742,7 +743,8 @@ struct ArrangeCanvasView: View {
                 }
                 // One World T1: the selected part's two edges, above every block so the hold on
                 // an edge reaches them before the block's own hold-to-move.
-                if let selected, arrangeable, let pair = clips[selected],
+                // In Select mode the gathered set is the selection (UI#4): no single part's edges.
+                if !selection.gathering, let selected, arrangeable, let pair = clips[selected],
                    ArrangeCanvas.edgeBound(for: pair.1) != nil {
                     ArrangePartEdgeHandles(region: pair.0, document: document, clip: pair.1,
                                            laneWidth: width, songTicks: songTicks, height: Self.rowHeight)

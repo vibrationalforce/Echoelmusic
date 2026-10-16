@@ -120,8 +120,10 @@ final class TheGatheredPartsAreCopiedAndPastedTests: XCTestCase {
         let canvas = try source("Sources/Echoelmusic/Studio/ArrangeCanvasView.swift")
         XCTAssertTrue(canvas.contains("onSelect: { selection.gathering ? selection.toggleGathered(block.id, in: document)"),
                       "in Select mode a tap gathers")
-        XCTAssertTrue(canvas.contains("isSelected: block.id == selected || gathered.contains(block.id),"),
-                      "the gathered parts wear the ring")
+        XCTAssertTrue(canvas.contains("isSelected: selection.gathering ? gathered.contains(block.id) : block.id == selected,"),
+                      "in Select mode the gathered parts wear the ring, and only they (UI#4)")
+        XCTAssertTrue(canvas.contains("if !selection.gathering, let selected, arrangeable, let pair = clips[selected],"),
+                      "in Select mode no single part offers its edges")
         let bar = try source("Sources/Echoelmusic/Studio/ArrangeGatherBar.swift")
         XCTAssertTrue(bar.contains("TimelineRegionPlayer.playStartTick(forCue: player.cueTick, in: document)"),
                       "Paste lands on the ruler's bar")
