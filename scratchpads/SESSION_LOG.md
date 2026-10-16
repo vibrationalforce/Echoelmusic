@@ -1123,3 +1123,13 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - C1 (183650e): `EchoelModelPlanner` ohne Tür.
 - Gates: d17bb3c BfT grün (#396-Muster); 8a17474 Compile Check abgebrochen (cancel-in-progress), fc5d1da/183650e laufen.
 - Nächstes: Gates lesen; dann C1-Tür (Council: zweite FoundationModelsBrain-Konstruktion) oder Masterplan-Scheiben A1/C1.
+
+## 2026-10-16 (Fortsetzung) — Ultraplan-D1, GSIDMMW-C2a/C2b, Register nachgezogen
+
+- **Ultraplan-D1** (`81ebe64`): „Add MIDI Track" hängt den No-voice-Satz an, wenn die Spur jenseits der Rack-Stimmen liegt. Wächter `AMIDITrackPastTheVoicesSaysItIsSilentTests`.
+- **Founder-Korrektur (ChatGPT-Paste):** GSIDMMW bleibt führend; Lernmodus 4/4 (inspiration.csv, intake).
+- **GSIDMMW-C2a** (`8e0299e`): `proposePlan` → `pendingProposal`, Apply/Discard im Banner, veraltete Basis → `.projectChanged`, Undo. Describe-Maschinerie geteilt (`startModelRequest`). Wächter `EchoelProposesBeforeItChangesTests`.
+  ⚠️ C2a hätte `TheAgentHasOneProductionDoorTests` Anspruch 4 rot gemacht (zweites `EchoelPlanning.plan(` / `executor.execute(` im Desk) — beim Lesen für C2b gefunden und im C2b-Commit mitgezogen. Lehre (§4): vor einem zweiten Aufruf einer „genau-einmal"-Stelle `git grep` über `Tests/CISmoke`.
+- **GSIDMMW-C2b** (`39f954d`): `AskEchoelIntent` → `AgentReportBanner.ask`; eine Konstruktion im privaten `onDeviceBrain()`, zwei Aufrufer (Tap, Intent). `TheOnDeviceModelHasOneGateTests` Anspruch 4 verschärft.
+- **Register:** Audit (Präfix-IDs, vier Nachweise je Fähigkeit), FEATURE_STATUS §1b (fünf Einträge statt „Leer."), FOUNDER_INBOX G11.
+- **Gates:** zum Zeitpunkt offen; 10.79.509 noch nicht gehoben (wartet auf grünen Compile Check + Build for Testing auf dem neuesten Code-Commit).

@@ -45,9 +45,11 @@ Lyria RealTime). Sie sind Recherche-Hinweise, keine Integrationszusage.
   Executor aus (veraltete Basis → `.projectChanged`, nie auf die jetzige Auswahl umgelenkt),
   „Discard“/„Close“ lassen nichts zurück, Undo über `agent.undoLast`; Stop/Deadline/Stückwechsel
   teilt er mit der Beschreibung (`startModelRequest`). Wächter `EchoelProposesBeforeItChangesTests`.
-  **C2b OFFEN = die Tür** (Absicht eingeben): Kandidat App-Intent „Ask Echoel“ mit Freitext über die
-  Inbox/Desk-Bahn. ⚠️ Braucht eine zweite Produktions-Konstruktion von `FoundationModelsBrain`, die
-  `TheOnDeviceModelHasOneGateTests` heute verbietet — Council vor dem Umbau.
+  **C2b GEBAUT (`39f954d`) = die Tür**: `AskEchoelIntent` („Ask Echoelmusic“, Freitext) →
+  `AgentReportBanner.ask` → `proposePlan`. Council: das Modell schlägt nur vor, geändert wird erst
+  beim Apply-Tap. Die eine Konstruktion bleibt EINE (privates `onDeviceBrain()` im Banner) mit genau
+  zwei Aufrufern, beide vom Menschen ausgelöst; `TheOnDeviceModelHasOneGateTests` Anspruch 4
+  verschärft statt gelockert. Offen: ob Siri auf den Plan wartet (Gerät, G11).
 - **D** `agentEligible`/`applyAgent` mit Rücklesen + Ziel-Revisionen (PLAN_GMMW AI-7a/b).
 - **E** generierte Ergebnisse als normale Clips mit Herkunft (Erweiterung von `keepComposerTake`).
 - **F** Medienzeit (M1b), Projektpaket mit Medien, Zusammenarbeit, LAN-Audio-Studie (Link Audio) —
@@ -62,7 +64,7 @@ für ein MIDI-Teil (`SongMIDIExport.partFile`, `fc5d1da`). Ebenso Ultraplan-A1 (
 `cd93c14`) und Ultraplan-D1 (stumme Spur sagt es, `81ebe64`) ≠ GSIDMMW-A/D. Immer mit Präfix und
 Dateipfad nennen.
 
-## Fähigkeitsstand — vier verschiedene Nachweise (Stand 2026-10-16, HEAD `8e0299e`)
+## Fähigkeitsstand — vier verschiedene Nachweise (Stand 2026-10-16, HEAD `39f954d`)
 
 „Gebaut“ = Code im Branch · „Im Build“ = in einem TestFlight-Build enthalten · „Erreichbar“ = eine
 Tür in der App führt hin · „Gerät“ = auf einem iPhone bestätigt. Kompilierung (Xcode Compile Check),
@@ -72,11 +74,11 @@ Testausführung (CI/CD Build for Testing) und Gerätetest sind drei getrennte Be
 |---|---|---|---|---|
 | Describe this piece + Stop/Deadline/Stückbindung (GSIDMMW-B) | ja | nein (Gates offen, 10.79.509 nicht gehoben) | ja (≡-Menü) | offen |
 | Modellplaner-Regeln (GSIDMMW-C1) | ja | nein | nein | offen |
-| Vorschlag → Apply/Discard → Undo (GSIDMMW-C2a) | ja | nein | **nein** (C2b) | offen |
+| Vorschlag → Apply/Discard → Undo (GSIDMMW-C2a) | ja | nein | ja, über „Ask Echoel“ (C2b, Siri/Kurzbefehle) | offen (G11) |
 | Share as MIDI (Ultraplan-C2) | ja | nein | ja (Part-Leiste) | offen |
 | Hidden-Notes-Zeile (Ultraplan-A1) | ja | nein | ja (Length-Feld) | offen |
 | Stumme Spur sagt es (Ultraplan-D1) | ja | nein | ja (Add MIDI Track) | offen |
 
 Website (`docs/`) und Store-Text bekommen eine Zeile erst ab „Erreichbar“ UND „Im Build“; der
 Website-Beleg (echte Sitzung: Auftrag → Vorschlag → Apply → Bearbeiten → Undo) braucht C2b plus
-einen Gerätelauf — kein gestellter Screen als Ist-Zustand.
+einen Gerätelauf — kein gestellter Screen als Ist-Zustand. C2b ist gebaut; es fehlen der Build und G11.

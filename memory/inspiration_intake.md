@@ -1555,3 +1555,14 @@ Nebenbefund: `faq.html` „On-device AI is on the roadmap, not in the app today"
 Satz-Wächter `TheCopyMakesNoHealthClaimTests` (353e14f), Verneinung bleibt erlaubt. Abgelehnt: das
 „EchoelAI"-Präfix vor AI-8 umbenennen (Grok sagt selbst: erst nach AI-8). Quelle lohnt die Messung:
 präzise Zeilenangaben, eine Teil-Überbehauptung.
+
+## 2026-10-16 — ChatGPT: korrigierter Auftrag „Website und TestFlight im laufenden GSIMMW-Ausbau" — ADOPT→PRODUCT (4/4)
+
+Founder-Paste, ChatGPT hatte den Zweig bei `81ebe64` gelesen (kein Code-Audit, kein Gerät). Kern: der
+GSIDMMW-Ausbau bleibt führend, keine vorgeschaltete Beta-Phase. Gemessen und übernommen: (1) die
+C2-Kollision (SESSION_LOG „C2" = Share as MIDI, Audit „C2" = Planer-Tür) → Präfix-Regel im Audit;
+(2) die Planer-Tür fehlte → GSIDMMW-C2a (`8e0299e`, Vorschlag → Apply/Discard → Undo) und C2b
+(`39f954d`, „Ask Echoel"-Intent); (3) FEATURE_STATUS §1b stand auf „Leer." bei fünf Fähigkeiten auf
+dem Zweig → nachgetragen, Audit-Tabelle trennt gebaut / im Build / erreichbar / Gerät; (4) Geräte-
+Bitte G11 in FOUNDER_INBOX. Nicht übernommen: Website-Beleg aus gestellten Screens — er wartet auf
+einen echten Gerätelauf. Formulierungen der Quelle nicht übernommen.

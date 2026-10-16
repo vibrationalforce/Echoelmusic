@@ -57,12 +57,20 @@ Spalten in Fach 1: **Fähigkeit** = was der Code kann · **Nutzerweg** = wie man
 
 ### 1b. Auf dem Branch, aber in KEINEM ausgelieferten Build (kommt mit dem nächsten Bump)
 
-Leer. ⛔ Hier standen GMMW R2 (`777824234`), VV-4e (`616b68ce9` · `969c271fb`) und ein Wellenform-Fix
-(`939aaa63f`) als „in keinem Build“ — alle drei sind seit **Build 2623** ausgeliefert (der Bump
-`278d7c807` enthält sie; dieses Fach wurde nach dem Bump nicht nachgezogen). Das Notenraster in
-Tonhöhenfarbe (`f60fda649`) kam mit **Build 2624**; es steht in 1c. Gerät für alle: offen.
-⛔ Ebenso falsch stand hier, F1–F6b und A3a seien mit Build 2622 gekommen: beide sind Posten der
-Notiz 10.79.491, also seit **Build 2616** ausgeliefert.
+Stand 2026-10-16, Zweig `claude/echoelmusic-review-optimize-u5jjpd` ab `81ebe64`/`39f954d`; Gates zum
+Zeitpunkt des Eintrags offen, kein TestFlight-Build. Gerät für alle: offen. Präfix je ID, weil zwei
+Pläne dieselben Buchstaben nutzen (`scratchpads/GSIDMMW_AUDIT_2026-10-16.md` §ID-Namensraum).
+
+| Was | Wo | Commit |
+|---|---|---|
+| „Describe this piece“ gehört bis zum Ende zum richtigen Stück; „Stop“; 45-s-Deadline (GSIDMMW-B) | Bericht-Zeile | `35d95ee` · `8a17474` |
+| „Ask Echoel“: eine Bitte in eigenen Worten → Echoel schlägt vor (Spur + Betrag), „Apply“ / „Discard“, Undo; geänderte Auswahl wird abgewiesen; Rückfrage statt Raten (GSIDMMW-C1/C2a/C2b). Drei Befehle: beschreiben, Spur lauter/leiser, Teil kopieren | Siri/Kurzbefehle „Ask Echoelmusic“ → Bericht-Zeile; braucht Apple Intelligence | `183650e` · `8e0299e` · `39f954d` |
+| „Share as MIDI“ für das gewählte MIDI-Teil (Ultraplan-C2) | Part-Leiste | `fc5d1da` |
+| Gekürztes MIDI-Teil sagt, wie viele Noten es verbirgt (Ultraplan-A1) | unter dem Length-Feld | `cd93c14` |
+| Neue MIDI-Spur jenseits der Rack-Stimmen sagt beim Anlegen, dass sie stumm ist (Ultraplan-D1) | „Add MIDI Track“ | `81ebe64` |
+
+⛔ Davor stand hier „Leer.“ und eine Rücknahme-Kette; sie gilt für Build 2623/2624 und bleibt wahr:
+GMMW R2, VV-4e, der Wellenform-Fix, F1–F6b und A3a sind ausgeliefert.
 
 ### 1c. Arrange — das Stück
 
@@ -169,7 +177,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Onset-Slicer (`SampleSlicer`, GMMW GA-6) | reiner Kern: schneidet ein Sample an seinen Treffern, mit der Onset-Regel der Tempo-Erkennung; kein Aufrufer | GA-7 (Founder-Gate): wo die Schnittpunkte liegen und was ein Schnitt spielt |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
-| `ParameterToolCore` (EchoelAI) | reiner Kern, kein Aufrufer — der Bedienagent selbst (`EchoelCommandExecutor`) hat seit AI-1/AI-2 seine Tür über Siri und steht in 1a | AI-5: ein Sprachmodell als Planer (Founder-Gate GM10) |
+| `ParameterToolCore` (EchoelAI) | reiner Kern, kein Aufrufer — der Bedienagent selbst (`EchoelCommandExecutor`) hat seit AI-1/AI-2 seine Tür über Siri und steht in 1a; ein Sprachmodell als Planer (drei Befehle, nur Vorschlag) steht seit GSIDMMW-C2b in 1b | GSIDMMW-D: Parameter mit Rücklesen und Ziel-Revision; Körper-Adjektive für den Planer bleiben Founder-Gate GM10 |
 
 ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
 `showControl`, `avObjects`, `performerTracking`, `liveCollab`, `headTracking`, `echoelAI`). Hinter
