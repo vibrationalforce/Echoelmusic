@@ -399,7 +399,9 @@ final class TheSongAutomationIsDrawnThroughOneWriterTests: XCTestCase {
         XCTAssertTrue(editor.contains("ForEach(offered, id: \\.keyPath)"), "the menu lists the projection")
         XCTAssertTrue(editor.contains("set: { chosenBase = $0; picked = nil }"),
                       "switching parameter drops the pick — a point of the old curve is not editable")
-        XCTAssertTrue(editor.contains("chosenBase = SongAutomationEdit.openingBase(for: laneID,"),
+        // 7c: the opening is now asked through `shownBase` (an earlier choice for this track, else
+        // `openingBase`) — still decided ONCE, in `onAppear`.
+        XCTAssertTrue(editor.contains("chosenBase = SongAutomationEdit.shownBase(chosen: selection.automationBase(for: laneID),"),
                       "the opening parameter is decided once — removing a curve's last point does not jump the row")
         XCTAssertEqual(editor.components(separatedBy: "\"ddsp.").count - 1, 1,
                        "one hard-coded base (the opening default); the rest come from the voice")

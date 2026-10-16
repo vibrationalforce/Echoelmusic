@@ -68,6 +68,9 @@ public final class WorkstationSelection {
     /// and a hold-and-slide moves it (`ArrangeAutomationEditLane`). Cold (a tap), never persisted;
     /// it and Select mode exclude each other, so one tap never means two things.
     public private(set) var drawingAutomation = false
+    /// 7c — the automation parameter chosen per track on the Track page (this run, never persisted),
+    /// so the track's canvas row in Draw mode draws the same curve (`SongAutomationEdit.shownBase`).
+    public private(set) var automationBases: [UUID: String] = [:]
 
     public init() {}
 
@@ -76,6 +79,15 @@ public final class WorkstationSelection {
         gathering = on
         if !on { gathered = [] }
         if on { drawingAutomation = false }
+    }
+
+    /// 7c — the parameter chosen for `laneID`'s automation, if any.
+    public func automationBase(for laneID: UUID) -> String? { automationBases[laneID] }
+
+    /// 7c — remember the parameter chosen for `laneID`'s automation.
+    public func setAutomationBase(_ base: String, for laneID: UUID) {
+        guard automationBases[laneID] != base else { return }
+        automationBases[laneID] = base
     }
 
     /// Item 7b — Draw mode on or off. On ends Select mode and lets every gathered part go.

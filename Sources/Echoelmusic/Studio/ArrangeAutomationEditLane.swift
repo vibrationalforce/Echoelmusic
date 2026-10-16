@@ -15,7 +15,8 @@
 //     (`TheArrangeCanvasMovesAPartByDraggingTests`); this leaf's hold-and-slide and its
 //     `@GestureState` live here instead, and the canvas mounts it only in Draw mode.
 //   · No parameter menu on the canvas (its header: no `.menu` Picker under the finger). The row
-//     draws the parameter the Track page opens on; another one is chosen there.
+//     draws the parameter chosen on the Track page (7c, `SongAutomationEdit.shownBase`), else the
+//     one it opens on.
 //
 // NEEDS-FOUNDER-VERIFY (7b): a synth track, "Draw automation", tap its row on bar 3 high and on bar
 // 7 low → two points, the line runs between them; hold the second and slide → it follows and lands
@@ -32,13 +33,16 @@ struct ArrangeAutomationEditLane: View {
 
     @Environment(TimelineStore.self) private var timeline
     @Environment(TimelineRegionPlayer.self) private var player
+    @Environment(WorkstationSelection.self) private var selection
 
     var body: some View {
         let document = timeline.document
         let offered = SongAutomationEdit.parameters(on: laneID, in: document,
                                                     voiceCapacity: player.laneVoiceCapacity)
-        if let base = SongAutomationEdit.openingBase(for: laneID, in: document.automation,
-                                                     among: offered.map(\.keyPath)) {
+        // 7c: the parameter chosen on the Track page, else the one it opens on (one question).
+        if let base = SongAutomationEdit.shownBase(chosen: selection.automationBase(for: laneID),
+                                                   for: laneID, in: document.automation,
+                                                   among: offered.map(\.keyPath)) {
             let key = SongAutomationEdit.key(for: laneID, base: base)
             let points = SongAutomationEdit.points(key, in: document.automation, songTicks: songTicks)
             let name = offered.first { $0.keyPath == base }.map(SongAutomationEdit.name) ?? base

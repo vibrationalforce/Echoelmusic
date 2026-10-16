@@ -82,6 +82,30 @@ final class TheAutomationIsDrawnOnTheCanvasTests: XCTestCase {
         XCTAssertFalse(timeline.canUndo, "two touches, two Undo steps")
     }
 
+    // MARK: 2b — 7c: the Track page's parameter choice is the canvas row's
+
+    func testTheCanvasRowDrawsTheParameterChosenOnTheTrackPage() throws {
+        let lane = UUID()
+        let bases = ["mix.gain", "ddsp.osc.brightness", "ddsp.filter.cutoff"]
+        XCTAssertEqual(SongAutomationEdit.shownBase(chosen: "ddsp.filter.cutoff", for: lane, in: [], among: bases),
+                       "ddsp.filter.cutoff", "the chosen parameter wins")
+        XCTAssertEqual(SongAutomationEdit.shownBase(chosen: "ddsp.gone", for: lane, in: [], among: bases),
+                       SongAutomationEdit.openingBase(for: lane, in: [], among: bases),
+                       "a choice the track no longer offers falls back to the opening one")
+        XCTAssertEqual(SongAutomationEdit.shownBase(chosen: nil, for: lane, in: [], among: bases),
+                       SongAutomationEdit.openingBase(for: lane, in: [], among: bases))
+        let selection = WorkstationSelection()
+        XCTAssertNil(selection.automationBase(for: lane))
+        selection.setAutomationBase("ddsp.filter.cutoff", for: lane)
+        XCTAssertEqual(selection.automationBase(for: lane), "ddsp.filter.cutoff")
+        let editor = try source("Sources/Echoelmusic/Studio/SongAutomationEditor.swift")
+        XCTAssertTrue(editor.contains("if let base { selection.setAutomationBase(base, for: laneID) }"),
+                      "the Track page publishes its choice")
+        let leaf = try source("Sources/Echoelmusic/Studio/ArrangeAutomationEditLane.swift")
+        XCTAssertTrue(leaf.contains("SongAutomationEdit.shownBase(chosen: selection.automationBase(for: laneID),"),
+                      "and the canvas row asks the same question")
+    }
+
     // MARK: 3 — mounted in Draw mode only, shared decisions, the one writer, the canvas's pins
 
     func testTheEditLaneIsMountedInDrawModeThroughTheSharedDecisions() throws {
@@ -96,7 +120,7 @@ final class TheAutomationIsDrawnOnTheCanvasTests: XCTestCase {
         XCTAssertEqual(canvas.components(separatedBy: "DragGesture(").count - 1, 1, "COUNTERWEIGHT: one drag on the canvas")
         let leaf = try source("Sources/Echoelmusic/Studio/ArrangeAutomationEditLane.swift")
         for shared in ["SongAutomationEdit.parameters(on: laneID, in: document,",
-                       "SongAutomationEdit.openingBase(for: laneID, in: document.automation,",
+                       "SongAutomationEdit.shownBase(chosen: selection.automationBase(for: laneID),",
                        "SongAutomationEdit.resolveTap(", "SongAutomationEdit.resolveMove(",
                        "SongAutomationEdit.adding(", "SongAutomationEdit.moving(", "SongAutomationEdit.removing("] {
             XCTAssertTrue(leaf.contains(shared), "the canvas decides as the Track page does: `\(shared)`")

@@ -154,6 +154,15 @@ enum SongAutomationEdit {
         return lanes.contains { $0.parameter == key && !$0.isEmpty }
     }
 
+    /// 7c: the parameter a row shows — the one chosen for this track (Track page, this run) while
+    /// the track still offers it, else the opening one. The Track page and the canvas row ask this
+    /// same question, so they show the same curve.
+    nonisolated static func shownBase(chosen: String?, for laneID: UUID, in lanes: [AutomationLane],
+                                      among bases: [String]) -> String? {
+        if let chosen, bases.contains(chosen) { return chosen }
+        return openingBase(for: laneID, in: lanes, among: bases)
+    }
+
     /// The parameter the row opens on: the first offered one this track already has a curve
     /// for (so a reopened row shows the work), else the default, else the first offered.
     nonisolated static func openingBase(for laneID: UUID, in lanes: [AutomationLane],
@@ -343,6 +352,8 @@ private struct SongAutomationLane: View {
     let offered: [ParameterDescriptor]
 
     @Environment(TimelineStore.self) private var timeline
+    /// 7c: the parameter this row shows is shared with the track's canvas row in Draw mode.
+    @Environment(WorkstationSelection.self) private var selection
     /// View state: the picked point. Not part of the song.
     @State private var picked: UUID?
     /// View state: the parameter the user switched to (A2); nil = the opening parameter. Not
@@ -398,10 +409,15 @@ private struct SongAutomationLane: View {
         // does not make the row jump to another parameter under the finger.
         .onAppear {
             if chosenBase == nil {
-                chosenBase = SongAutomationEdit.openingBase(for: laneID,
-                                                            in: timeline.document.automation,
-                                                            among: offered.map(\.keyPath))
+                // 7c: a parameter chosen for this track earlier (this run) opens again.
+                chosenBase = SongAutomationEdit.shownBase(chosen: selection.automationBase(for: laneID),
+                                                          for: laneID, in: timeline.document.automation,
+                                                          among: offered.map(\.keyPath))
             }
+        }
+        // 7c: the canvas row in Draw mode draws the parameter chosen here.
+        .onChange(of: chosenBase) { _, base in
+            if let base { selection.setAutomationBase(base, for: laneID) }
         }
     }
 
