@@ -45,7 +45,7 @@ final class ThePartDragTicksOnEachBarTests: XCTestCase {
                        "one haptic on the part block")
         XCTAssertTrue(block.contains(".sensoryFeedback(.selection, trigger: landing)"),
                       "a light selection tick, triggered by the bar the part would land on")
-        XCTAssertFalse(block.contains("trigger: dragPoints"),
+        XCTAssertFalse(block.contains("trigger: drag"),
                        "a trigger on the raw finger fires every frame — a buzz, not a grid")
     }
 
@@ -53,7 +53,8 @@ final class ThePartDragTicksOnEachBarTests: XCTestCase {
 
     func testTheLandingIsTheSnappedDropTick() throws {
         let block = try partBlock()
-        XCTAssertTrue(block.contains("let landing = ArrangeCanvas.dropTick(startTick: startTick, dragPoints: dragPoints,"),
+        // Ultraplan-A4: the delta is a size; its WIDTH is the time drag.
+        XCTAssertTrue(block.contains("let landing = ArrangeCanvas.dropTick(startTick: startTick, dragPoints: drag.width,"),
                       "`landing` is grid-snapped by `dropTick` (a bar, or a beat or step once zoomed — AE-11) — the trigger only changes once per cell")
     }
 

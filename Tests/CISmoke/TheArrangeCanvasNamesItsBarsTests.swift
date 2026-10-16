@@ -157,11 +157,11 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
         // and the lanes share ONE zoomed column on the right, the ruler first. One sequence, so
         // the two columns sit side by side with the same spacing and nothing between them.
         guard sequence(["HStack(alignment: .top, spacing: Self.gutter) {",
-                                      "VStack(spacing: 4) {",
+                                      "VStack(spacing: Self.rowSpacing) {",
                                       "Color.clear.frame(width: Self.nameWidth, height: rulerRowHeight)",
                                       "ForEach(rows) { row in", "nameGutter(row)",
                                       ".frame(height: Self.rowHeight)", "}", "}",
-                                      "ArrangeTimeZoom {", "VStack(spacing: 4) {",
+                                      "ArrangeTimeZoom {", "VStack(spacing: Self.rowSpacing) {",
                                       "ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight,",
                                       "numbersHeight: rulerHeight)",
                                       "ForEach(rows) { row in", "laneRow(row, selected: selected)", "}", "}"],
@@ -169,7 +169,7 @@ final class TheArrangeCanvasNamesItsBarsTests: XCTestCase {
             return XCTFail("""
                 the canvas is no longer a still name column (an empty `rulerRowHeight` cell, then \
                 each `nameGutter` at `rowHeight`) beside ONE `ArrangeTimeZoom` column that holds \
-                the ruler above the lanes, both stacked with spacing 4 — so a name can leave its \
+                the ruler above the lanes, both stacked with the ONE `rowSpacing` (Ultraplan-A4 reads it too) — so a name can leave its \
                 lane, or a number its bar, when the time zooms
                 """)
         }

@@ -102,7 +102,8 @@ final class TheArrangeCanvasMovesAPartByDraggingTests: XCTestCase {
         let block = String(file[blockStart.upperBound...])
         XCTAssertEqual(file.components(separatedBy: "@GestureState").count - 1, 1,
                        "exactly one finger-rate state in the canvas file")
-        XCTAssertTrue(block.contains("@GestureState private var dragPoints: CGFloat = 0"),
+        // Ultraplan-A4: the delta is a SIZE — across for time, down for the track — still ONE state.
+        XCTAssertTrue(block.contains("@GestureState private var drag: CGSize = .zero"),
                       "the drag delta is `@GestureState` — it resets itself when the scroll view cancels the drag (#56 C2)")
         XCTAssertFalse(block.contains("@State"),
                        "a plain `@State` delta sticks on a cancelled drag and leaves the part drawn away from where it sits")
@@ -147,8 +148,10 @@ final class TheArrangeCanvasMovesAPartByDraggingTests: XCTestCase {
         }
         XCTAssertTrue(select.upperBound <= noMove.lowerBound && noMove.upperBound <= move.lowerBound,
                       "select first, refuse a no-move, then ONE store edit")
-        XCTAssertEqual(file.components(separatedBy: "TrackParts.move(").count - 1, 1,
-                       "one commit site on the canvas")
+        // Ultraplan-A4: TWO commit sites, each ONE store edit — a time move, and a move in time AND
+        // onto another track (`TrackParts.move(_:toStartTick:toLane:timeline:)`), never both at once.
+        XCTAssertEqual(file.components(separatedBy: "TrackParts.move(").count - 1, 2,
+                       "two commit sites on the canvas: the time drop and the cross-track drop")
         for banned in ["moveRegion(", "resizeRegion(", "trimRegionStart(", "splitRegion(", "undo("] {
             XCTAssertFalse(file.contains(banned), """
                 the canvas calls `\(banned)` directly. Its one edit is `TrackParts.move` — the \

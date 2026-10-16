@@ -24926,6 +24926,36 @@
           }
         }
       }
+    },
+    "Part moved to " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Part moved to "
+          }
+        }
+      }
+    },
+    "Move to the track above" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to the track above"
+          }
+        }
+      }
+    },
+    "Move to the track below" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to the track below"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

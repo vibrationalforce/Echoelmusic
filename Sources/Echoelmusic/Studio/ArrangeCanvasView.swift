@@ -315,6 +315,33 @@ enum ArrangeCanvas {
                                  in: document, mediaBPM: mediaBPM, endBound: bound)
     }
 
+    // MARK: Ultraplan-A4 — a part dragged onto another track
+
+    /// How many canvas rows a vertical drag of `points` crosses: the nearest whole row, so a part
+    /// changes track once the finger is past the middle of the next one. 0 for unusable input.
+    nonisolated static func rowsCrossed(dragPoints points: CGFloat, rowPitch: CGFloat) -> Int {
+        guard points.isFinite, rowPitch.isFinite, rowPitch > 0 else { return 0 }
+        return Int((points / rowPitch).rounded().clamped(to: -1_000...1_000))
+    }
+
+    /// The track a part lands on when it is dragged `rows` canvas rows down (negative = up), or
+    /// nil when it stays on its own: no row there, a bio track, a track of another kind (an
+    /// audio part never lands on a MIDI track — the store refuses the same), or a composer take
+    /// (it is the Echoel's own part; it stays on the track that plays it). `rows` is the
+    /// canvas's own row order, top to bottom — the order the finger sees.
+    nonisolated static func dropLane(for regionID: UUID, rows crossed: Int, order: [UUID],
+                                     in document: TimelineDocument, clip: Clip?) -> UUID? {
+        guard crossed != 0, clip?.composerOwned != true,
+              let region = document.regions.first(where: { $0.id == regionID }),
+              let from = order.firstIndex(of: region.laneID),
+              let source = document.lanes.first(where: { $0.id == region.laneID }) else { return nil }
+        let (to, overflow) = from.addingReportingOverflow(crossed)
+        guard !overflow, order.indices.contains(to),
+              let target = document.lanes.first(where: { $0.id == order[to] }),
+              target.kind == source.kind, TrackParts.arrangeable(target.id, in: document) else { return nil }
+        return target.id
+    }
+
     /// Where an edit leaves its edge on a lane `laneWidth` wide, in points from the lane's left
     /// edge — the preview line — held on the lane. nil for degenerate geometry.
     nonisolated static func edgeX(_ edit: AudioPartEditor.EdgeEdit, region: TimelineRegion,
@@ -496,6 +523,9 @@ struct ArrangeCanvasView: View {
     /// A5: the gutter became a tap target, and a tap target is 44 pt. T1 (founder 2026-10-14):
     /// two lines — the name, then the 44 pt Mute and Solo — the track head of the old screens.
     private static let rowHeight: CGFloat = 68
+    /// The lanes' `VStack` spacing — read by the lane column AND by a part dragged across rows
+    /// (Ultraplan-A4), so a row crossed is a row drawn.
+    private static let rowSpacing: CGFloat = 4
     /// Room for the track's hue band, its instrument symbol and a short name.
     static let nameWidth: CGFloat = 96
     static let gutter: CGFloat = 8
@@ -517,7 +547,7 @@ struct ArrangeCanvasView: View {
         // lane. VoiceOver reads the names first, then the lanes; every lane and every part says
         // its track's name and state, so no lane is anonymous.
         HStack(alignment: .top, spacing: Self.gutter) {
-            VStack(spacing: 4) {
+            VStack(spacing: Self.rowSpacing) {
                 // The ruler's row in this column is empty, so the names start where the lanes do.
                 Color.clear.frame(width: Self.nameWidth, height: rulerRowHeight)
                 ForEach(rows) { row in
@@ -532,7 +562,7 @@ struct ArrangeCanvasView: View {
                 }
             }
             ArrangeTimeZoom {
-                VStack(spacing: 4) {
+                VStack(spacing: Self.rowSpacing) {
                     ArrangeRulerLocator(document: document, songTicks: songTicks, height: rulerRowHeight,
                                         numbersHeight: rulerHeight)
                     ForEach(rows) { row in
@@ -612,6 +642,8 @@ struct ArrangeCanvasView: View {
         let waves = clips.compactMapValues { ArrangeCanvas.audioWindow(for: $0.0, clip: $0.1, bpm: bpm) }
         // Edge handles only where a part's edges mean something to the arrangement: MIDI and audio.
         let arrangeable = TrackParts.arrangeable(row.id, in: document)
+        // A4: the rows top to bottom, as the finger sees them — the order a cross-track drag counts in.
+        let order = rows.map(\.id)
         return GeometryReader { geometry in
             let width = geometry.size.width
             ZStack(alignment: .leading) {
@@ -628,8 +660,20 @@ struct ArrangeCanvasView: View {
                                      name: names[block.id] ?? "",
                                      tint: tint,
                                      onSelect: { selection.selectRegion(block.id, in: document) },
-                                     onDrop: { tick in drop(block.id, onLane: row.id, from: start, to: tick) },
+                                     rowPitch: Self.rowHeight + Self.rowSpacing,
+                                     acceptsRows: { crossed in
+                                         ArrangeCanvas.dropLane(for: block.id, rows: crossed, order: order,
+                                                                in: document, clip: clips[block.id]?.1) != nil
+                                     },
+                                     onDrop: { tick, crossed in
+                                         drop(block.id, onLane: row.id, from: start, to: tick, rows: crossed,
+                                              order: order, clip: clips[block.id]?.1)
+                                     },
                                      onNudge: { later in nudge(block.id, onLane: row.id, later: later) },
+                                     onMoveTrack: { crossed in
+                                         drop(block.id, onLane: row.id, from: start, to: start, rows: crossed,
+                                              order: order, clip: clips[block.id]?.1)
+                                     },
                                      onStep: { later in step(block.id, onLane: row.id, later: later) })
                 }
                 // One World T1: the selected part's two edges, above every block so the hold on
@@ -660,6 +704,25 @@ struct ArrangeCanvasView: View {
               let part = TrackParts.parts(onLane: laneID, in: document)
                 .first(where: { $0.id == regionID }) else { return }
         TrackParts.move(part, toStartTick: tick, timeline: timeline)
+    }
+
+    /// Ultraplan-A4 — a release `crossed` rows away: onto the track `ArrangeCanvas.dropLane`
+    /// names, in ONE store edit (time and track together, one Undo step), and the selection
+    /// follows the part to its new track — or, when no track takes it, the time-only drop above.
+    private func drop(_ regionID: UUID, onLane laneID: UUID, from startTick: Int, to tick: Int,
+                      rows crossed: Int, order: [UUID], clip: Clip?) {
+        guard let target = ArrangeCanvas.dropLane(for: regionID, rows: crossed, order: order,
+                                                   in: document, clip: clip),
+              let part = TrackParts.parts(onLane: laneID, in: document)
+                .first(where: { $0.id == regionID }) else {
+            drop(regionID, onLane: laneID, from: startTick, to: tick)
+            return
+        }
+        TrackParts.move(part, toStartTick: tick, toLane: target, timeline: timeline)
+        selection.selectRegion(regionID, in: timeline.document)
+        if let name = timeline.document.lanes.first(where: { $0.id == target })?.name {
+            AccessibilityNotification.Announcement(String(localized: "Part moved to ") + name).post()
+        }
     }
 
     /// The drag's non-drag twin: one bar through the part bar's own step, landed by `drop`.
@@ -758,7 +821,8 @@ struct ArrangePlayheadView: View {
 /// screen can show (a bar, or a beat or step once zoomed — AE-11).
 ///
 /// ⭐ THE ONLY FINGER-RATE STATE IN THIS FILE (the time zoom's pinch lives in its own leaf,
-/// `ArrangeTimeZoom`, since S9a). `dragPoints` is `@GestureState`, so it lives
+/// `ArrangeTimeZoom`, since S9a). `drag` is `@GestureState` (a size since Ultraplan-A4: across
+/// for time, down for the track), so it lives
 /// in this leaf alone (only this block redraws while it moves) and resets itself when the
 /// scroll view cancels the gesture — a plain `@State` delta stuck there and left the part
 /// drawn away from where it sits (the cut arrange view's #56 C2). Nothing is written until the
@@ -780,20 +844,34 @@ struct ArrangePartBlock: View {
     /// Its track's hue (A1): the part wears the colour of the track it sits on.
     let tint: Color
     let onSelect: () -> Void
-    let onDrop: (Int) -> Void
+    /// A4: one canvas row's height plus the spacing between rows — a vertical drag of this many
+    /// points crosses one track.
+    let rowPitch: CGFloat
+    /// A4: whether a drag `n` rows down (negative = up) lands on another track
+    /// (`ArrangeCanvas.dropLane`); asked for the preview, so a part never previews a track that
+    /// would refuse it.
+    let acceptsRows: (Int) -> Bool
+    /// The release: the landing tick and the rows crossed (0 when no track takes the part).
+    let onDrop: (Int, Int) -> Void
     /// The finer twin (true = one beat later) — the grid a zoomed drag lands on (AE-11 review).
     let onNudge: (Bool) -> Void
+    /// A4: the cross-track drag's non-drag twin (−1 = the track above, 1 = the one below), for
+    /// VoiceOver and Switch Control (WCAG 2.5.7) — offered only where a track takes the part.
+    let onMoveTrack: (Int) -> Void
     /// The drag's non-drag twin (true = one bar later) — see the file header.
     let onStep: (Bool) -> Void
 
-    @GestureState private var dragPoints: CGFloat = 0
+    @GestureState private var drag: CGSize = .zero
 
     var body: some View {
-        let landing = ArrangeCanvas.dropTick(startTick: startTick, dragPoints: dragPoints,
+        let landing = ArrangeCanvas.dropTick(startTick: startTick, dragPoints: drag.width,
                                              laneWidth: laneWidth, songTicks: songTicks)
         let shift = ArrangeCanvas.offsetPoints(from: startTick, to: landing,
                                                laneWidth: laneWidth, songTicks: songTicks)
-        let moving = dragPoints != 0
+        // A4: the rows the part would cross — drawn only where a track takes it, so the preview
+        // never sits on a track that would refuse it.
+        let crossed = landingRows(drag.height)
+        let moving = drag != .zero
         RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
             .fill(tint.opacity(Self.tintOpacity))
             .overlay { noteSketch }
@@ -807,7 +885,7 @@ struct ArrangePartBlock: View {
             // (review of e3211f21d, L4); at rest the draw order is the play order again.
             .zIndex(moving ? 1 : 0)
             .frame(width: Swift.max(2, laneWidth * block.width))
-            .offset(x: laneWidth * block.start + shift)
+            .offset(x: laneWidth * block.start + shift, y: CGFloat(crossed) * rowPitch)
             .contentShape(Rectangle())
             .onTapGesture(perform: onSelect)
             .gesture(move)
@@ -831,6 +909,12 @@ struct ArrangePartBlock: View {
                     Button("Move one beat earlier") { onNudge(false) }
                 }
                 Button("Move one beat later") { onNudge(true) }
+                if acceptsRows(-1) {
+                    Button("Move to the track above") { onMoveTrack(-1) }
+                }
+                if acceptsRows(1) {
+                    Button("Move to the track below") { onMoveTrack(1) }
+                }
             }
     }
 
@@ -901,14 +985,22 @@ struct ArrangePartBlock: View {
     private var move: some Gesture {
         LongPressGesture(minimumDuration: 0.3)
             .sequenced(before: DragGesture(minimumDistance: 0))
-            .updating($dragPoints) { value, state, _ in
-                if case .second(true, let drag?) = value { state = drag.translation.width }
+            .updating($drag) { value, state, _ in
+                if case .second(true, let finger?) = value { state = finger.translation }
             }
             .onEnded { value in
-                guard case .second(true, let drag?) = value else { return }
+                guard case .second(true, let finger?) = value else { return }
                 onDrop(ArrangeCanvas.dropTick(startTick: startTick,
-                                              dragPoints: drag.translation.width,
-                                              laneWidth: laneWidth, songTicks: songTicks))
+                                              dragPoints: finger.translation.width,
+                                              laneWidth: laneWidth, songTicks: songTicks),
+                       landingRows(finger.translation.height))
             }
+    }
+
+    /// A4: the rows a vertical drag of `points` lands the part across, or 0 when no track there
+    /// takes it — the ONE answer the preview and the release share.
+    private func landingRows(_ points: CGFloat) -> Int {
+        let crossed = ArrangeCanvas.rowsCrossed(dragPoints: points, rowPitch: rowPitch)
+        return crossed != 0 && acceptsRows(crossed) ? crossed : 0
     }
 }

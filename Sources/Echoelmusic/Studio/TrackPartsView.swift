@@ -218,6 +218,24 @@ enum TrackParts {
         timeline.moveRegion(id: part.id, toStartTick: tick)
     }
 
+    /// Ultraplan-A4 — a part moved in time AND onto another track, ONE store command and one Undo
+    /// step (`TimelineStore.moveRegion(id:toStartTick:laneOffset:)`, whose own guard re-checks the
+    /// target's kind and refuses a bio lane). The offset is counted in the DOCUMENT's lane order —
+    /// the order the store counts in — never in a surface's row order, so a surface that hides or
+    /// reorders rows still lands on the track it named. A target that is not in the piece moves
+    /// the part in time only, like the store.
+    @MainActor
+    static func move(_ part: Part, toStartTick tick: Int, toLane laneID: UUID, timeline: TimelineStore) {
+        let lanes = timeline.document.lanes
+        guard let region = timeline.document.regions.first(where: { $0.id == part.id }),
+              let from = lanes.firstIndex(where: { $0.id == region.laneID }),
+              let to = lanes.firstIndex(where: { $0.id == laneID }) else {
+            timeline.moveRegion(id: part.id, toStartTick: tick)
+            return
+        }
+        timeline.moveRegion(id: part.id, toStartTick: tick, laneOffset: to - from)
+    }
+
     @MainActor
     static func duplicate(_ part: Part, timeline: TimelineStore) {
         timeline.duplicateRegion(id: part.id)
