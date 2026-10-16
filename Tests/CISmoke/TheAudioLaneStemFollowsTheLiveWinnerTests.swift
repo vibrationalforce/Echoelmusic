@@ -6,7 +6,7 @@
 // it, and ends it at the region's exact end or the next winner's tick.
 //
 // WHAT KIND OF GREEN THIS IS (§1):
-//   · Claims 1–6 are END-TO-END over the public pure `AudioLaneStemPlan` and `TimelineScheduling`.
+//   · Claims 1–6 and 8–10 are END-TO-END over the public pure `AudioLaneStemPlan` and `TimelineScheduling`.
 //     Claim 5 is the cross-check: a grid walk through `laneEvent` — the call the live player
 //     makes per step — loads exactly the segments the plan lists, in order.
 //   · Claim 7 is a SOURCE-TEXT SCAN that the plan asks the owners and walks no regions itself.
@@ -19,11 +19,12 @@
 //
 // HONEST GRADING against the parent (§3): `AudioLaneStemPlan` does not exist there — the file
 // does not COMPILE on the parent, so no assertion has a verdict there; claims 1–7 are FORWARD
-// guards (one absence, #486). Claim 7's last two needles are COUNTERWEIGHTS (green on both trees:
+// guards (one absence, #486); claims 8–10 (LS-ST3a, the frame mapping) likewise. Claim 7's last two needles are COUNTERWEIGHTS (green on both trees:
 // the live player still resolves with the timeline capabilities). Mutants: overlap decided by
 // start order instead of `activeRegion` (2, 3, 5) · a segment cut at the next region's START
 // instead of its own end (2) · the sub-step region listed (4) · `stretchRate` dropped from the
-// resume position (6).
+// resume position (6) · destination frames from rounded LENGTHS instead of ticks (8) · the
+// file-end clamp dropped (9) · a warped segment copied plainly (10).
 
 import Foundation
 import XCTest
@@ -147,6 +148,71 @@ final class TheAudioLaneStemFollowsTheLiveWinnerTests: XCTestCase {
         XCTAssertEqual(segments.map(\.rate), [rate, 1, rate])
         XCTAssertEqual(segments.last?.mediaFromSeconds ?? -1, 1.5 + 4 * rate, accuracy: 1e-12,
                        "song seconds 4 consume media seconds 4 × rate")
+    }
+
+    // MARK: 8 — touching segments share their frame: no gap, no overlap
+
+    func testTouchingSegmentsShareTheirFrame() {
+        let lane = TimelineLane(name: "Audio", kind: .audio)
+        let under = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0,
+                                   lengthTicks: 4 * Self.bar, contentOffsetSeconds: 1.5)
+        let top = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: Self.bar, lengthTicks: Self.bar)
+        let frames = Self.plan([under, top], lane: lane).compactMap {
+            AudioLaneStemPlan.frames(for: $0, bpm: Self.bpm, sampleRate: 48_000, fileFrames: 480_000)
+        }
+        XCTAssertEqual(frames.map(\.destinationStart), [0, 96_000, 192_000])
+        XCTAssertEqual(frames.map(\.count), [96_000, 96_000, 192_000])
+        XCTAssertEqual(frames.map(\.sourceStart), [72_000, 0, 264_000])
+
+        // An odd tempo and rate, where two separately rounded lengths would drift by a sample.
+        let regions: [TimelineRegion] = [
+            TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0, lengthTicks: 3 * Self.bar),
+            TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 500, lengthTicks: Self.bar),
+            TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 4_000, lengthTicks: 2 * Self.bar),
+            TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 4_500, lengthTicks: 600),
+        ]
+        let doc = TimelineDocument(lanes: [lane], regions: regions)
+        let segments = AudioLaneStemPlan.segments(in: doc, laneID: lane.id, bpm: 127)
+        let odd = segments.compactMap {
+            AudioLaneStemPlan.frames(for: $0, bpm: 127, sampleRate: 44_100, fileFrames: 10_000_000)
+        }
+        XCTAssertEqual(odd.count, segments.count)
+        var touching = 0
+        for i in 1..<segments.count where segments[i - 1].endTick == segments[i].startTick {
+            XCTAssertEqual(odd[i - 1].destinationStart + odd[i - 1].count, odd[i].destinationStart,
+                           "segment \(i) does not start on the frame its neighbour ends on")
+            touching += 1
+        }
+        XCTAssertGreaterThanOrEqual(touching, 3, "premise: the layout has cuts that touch")
+    }
+
+    // MARK: 9 — a file that ends early leaves silence; a position past it copies nothing
+
+    func testAShortFileLeavesTheRestSilent() {
+        let lane = TimelineLane(name: "Audio", kind: .audio)
+        let part = TimelineRegion(laneID: lane.id, clipID: UUID(), startTick: 0,
+                                  lengthTicks: 4 * Self.bar, contentOffsetSeconds: 1.5)
+        guard let segment = Self.plan([part], lane: lane).first else { return XCTFail("premise: one segment") }
+        let short = AudioLaneStemPlan.frames(for: segment, bpm: Self.bpm, sampleRate: 48_000, fileFrames: 144_000)
+        XCTAssertEqual(short, AudioLaneStemFrames(destinationStart: 0, sourceStart: 72_000, count: 72_000))
+        XCTAssertNil(AudioLaneStemPlan.frames(for: segment, bpm: Self.bpm, sampleRate: 48_000, fileFrames: 72_000),
+                     "a media position at the file's end copies nothing")
+        XCTAssertNil(AudioLaneStemPlan.frames(for: segment, bpm: 0, sampleRate: 48_000, fileFrames: 144_000))
+        XCTAssertNil(AudioLaneStemPlan.frames(for: segment, bpm: Self.bpm, sampleRate: .nan, fileFrames: 144_000))
+    }
+
+    // MARK: 10 — a warped segment is not copied at the wrong speed
+
+    func testAWarpedSegmentIsNotCopiedAtTheWrongSpeed() {
+        let lane = TimelineLane(name: "Audio", kind: .audio)
+        let clip = UUID()
+        let part = TimelineRegion(laneID: lane.id, clipID: clip, startTick: 0,
+                                  lengthTicks: Self.bar, warpEnabled: true)
+        let segments = Self.plan([part], lane: lane, nativeBPM: { $0 == clip ? 60 : 0 })
+        XCTAssertEqual(segments.first?.rate, 2, "premise: the segment is warped")
+        XCTAssertNil(segments.first.flatMap {
+            AudioLaneStemPlan.frames(for: $0, bpm: Self.bpm, sampleRate: 48_000, fileFrames: 480_000)
+        }, "a plain copy of a warped segment would not match the song")
     }
 
     // MARK: 7 — the plan asks the owners; the live player still resolves the same way

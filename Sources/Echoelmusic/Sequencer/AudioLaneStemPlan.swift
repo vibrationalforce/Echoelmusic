@@ -28,6 +28,8 @@ public struct AudioLaneStemSegment: Equatable, Sendable {
     public let clipID: UUID
     /// The grid tick at which the live player loads this segment.
     public let startTick: Int
+    /// The tick at which it stops: its region's end, or the next winner's tick.
+    public let endTick: Int
     /// Song seconds from tick 0 where it starts sounding.
     public let songStartSeconds: Double
     /// Song seconds it sounds for.
@@ -72,11 +74,45 @@ public enum AudioLaneStemPlan {
                                                                bpm: bpm, stretchRate: plan.rate)
                 ?? region.contentOffsetSeconds
             out.append(AudioLaneStemSegment(
-                regionID: region.id, clipID: region.clipID, startTick: change.tick,
+                regionID: region.id, clipID: region.clipID, startTick: change.tick, endTick: end,
                 songStartSeconds: TimelineTime.seconds(fromTicks: change.tick, bpm: bpm),
                 songLengthSeconds: TimelineTime.seconds(fromTicks: end - change.tick, bpm: bpm),
                 mediaFromSeconds: from, rate: plan.rate))
         }
         return out
     }
+
+    /// Where one segment lands in a stem rendered at `sampleRate`, and which frames of its file
+    /// (already read at `sampleRate`, `fileFrames` long) fill it. Destination frames are taken from
+    /// the segment's TICKS, so a segment ending where the next begins shares that frame exactly —
+    /// no one-sample gap or overlap from rounding two lengths separately. The file position floors,
+    /// as `AudioRegionPlayback.startFrame` does for the live player. A file that ends early leaves
+    /// the rest of the segment silent (the count shrinks), as the live player stops at EOF.
+    ///
+    /// nil when there is nothing to copy (bad rate or tempo, a position at or past the file's end,
+    /// an empty span) — and when the segment is WARPED (`rate != 1`): a warped stem needs the
+    /// stretcher, and a plain copy at the wrong speed would be a stem that does not match the song.
+    /// The renderer must refuse that segment loudly rather than skip it.
+    public static func frames(for segment: AudioLaneStemSegment, bpm: Double,
+                              sampleRate: Double, fileFrames: Int) -> AudioLaneStemFrames? {
+        guard segment.rate == 1, bpm.isFinite, bpm > 0, sampleRate.isFinite, sampleRate > 0,
+              fileFrames > 0 else { return nil }
+        func frame(_ tick: Int) -> Int {
+            Int((TimelineTime.seconds(fromTicks: tick, bpm: bpm) * sampleRate).rounded())
+        }
+        let destination = frame(segment.startTick)
+        let span = frame(segment.endTick) - destination
+        let source = Swift.max(0, Int((segment.mediaFromSeconds * sampleRate).rounded(.down)))
+        guard span > 0, source < fileFrames else { return nil }
+        return AudioLaneStemFrames(destinationStart: destination, sourceStart: source,
+                                   count: Swift.min(span, fileFrames - source))
+    }
+}
+
+/// One copy instruction for an unwarped stem segment: `count` frames from the file at
+/// `sourceStart` into the stem at `destinationStart`.
+public struct AudioLaneStemFrames: Equatable, Sendable {
+    public let destinationStart: Int
+    public let sourceStart: Int
+    public let count: Int
 }
