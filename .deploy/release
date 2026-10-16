@@ -1,4 +1,4 @@
-build: v10.79.508 — Noten direkt ziehen, Teile auf den Schlag, Repeat
+build: v10.79.509 — Ask Echoel (Vorschlag → Apply → Undo), Share as MIDI, Describe mit Stop
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,6 +50,41 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.509) ───────────────────────────────
+
+  Gebaut wird `0505589`; Xcode Compile Check UND Build for Testing grün auf diesem Stand.
+  Auf dem Gerät ist NICHTS davon geprüft.
+
+  ── POSTEN 1: ASK ECHOEL — VORSCHLAG, DANN APPLY ──
+  Siri oder Kurzbefehle: „Ask Echoelmusic", dann eine Bitte in eigenen Worten (z. B. „make it
+  3 dB quieter" bei gewählter Spur). Die Bericht-Zeile oben sagt, was Echoel tun würde, mit
+  „Apply" und „Discard" — nichts ändert sich vor „Apply". Danach „Undo Echoel's last change".
+  Wechselt die Auswahl vor „Apply", wird abgewiesen. Unklare Bitte → Rückfrage. Braucht ein
+  iPhone mit Apple Intelligence; erlaubt sind nur: beschreiben, Spur lauter/leiser, Teil kopieren.
+
+  ── POSTEN 2: DESCRIBE THIS PIECE GEHÖRT ZUM RICHTIGEN STÜCK ──
+  Logo-Menü ≡ → „Describe this piece": eine späte Antwort landet nie in einem anderen Stück;
+  „Stop" bricht ab, nach 45 s gibt Echoel auf und sagt es.
+
+  ── POSTEN 3: SHARE AS MIDI ──
+  Ein MIDI-Teil wählen → Teil-Leiste „Share as MIDI" → eine .mid-Datei nur mit diesem Teil.
+
+  ── POSTEN 4: ZWEI SÄTZE, DIE STILLE ERKLÄREN ──
+  Ein gekürzter MIDI-Teil sagt unter „Length", wie viele Noten hinter seinem Ende liegen.
+  „Add MIDI Track" sagt es, wenn die neue Spur jenseits der Rack-Stimmen stumm bleibt.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since 6f492d8) ──
+  · Ask Echoel: Spur wählen, „Ask Echoelmusic" → „make it 3 dB quieter" → Satz in der Bericht-
+    Zeile, Apply ändert die Lautstärke, Undo stellt sie zurück; Auswahl vor Apply wechseln → nichts.
+  · Planer: deutsche und englische Bitten, je dreimal — nur die drei erlaubten Befehle kommen.
+  · Share as MIDI: Datei in einer DAW öffnen — die Noten des Teils, ab Takt 1, in seiner Länge.
+  · Gekürzter MIDI-Teil über die letzte Note → die Zeile erscheint; wieder verlängern → sie geht.
+  · Add MIDI Track, bis eine Spur über den Rack-Stimmen liegt → die Meldung sagt „No voice".
+  · Lange Note (ein Takt und ein Viertel) hält über die Taktlinie und endet auf Schlag 2.
+  · Ein-Takt-MIDI-Teil mit Note auf Schlag 1, „Starts at beat" 3 → die Note kommt auf Schlag 3.
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.508) ───────────────────────────────
 
