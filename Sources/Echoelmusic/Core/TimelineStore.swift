@@ -425,6 +425,7 @@ public final class TimelineStore {
             // overwrite the person's Undo with the value it once replaced (review repair 2b's rule).
             if restored.level != current.level { laneLevelWrites[laneID, default: 0] += 1 }
             if restored.pan != current.pan { lanePanWrites[laneID, default: 0] += 1 }
+            if restored.isMuted != current.isMuted { laneMuteWrites[laneID, default: 0] += 1 }
             persist()
             return HistoryStep.laneMix(laneID: laneID, before: current, after: restored)
         case .lanePatch(let laneID, let before, let after):
@@ -1766,8 +1767,16 @@ public final class TimelineStore {
     public func toggleMute(id: UUID) {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }
         document.lanes[i].isMuted.toggle()
+        laneMuteWrites[id, default: 0] += 1
         persist()
     }
+
+    /// `laneLevelWrites` for Mute (GSIDMMW D2): every Mute tap and every mute a mixer Undo puts
+    /// back moves it by one. ⚠️ The roll slot's heal (`unsilenceRollSlot`, `healRollSlotAudibility`)
+    /// does NOT move it, on purpose: it only ever UNMUTES, so after an agent's mute it leaves the
+    /// track at the value the agent's Undo would restore (read as already taken back), and after an
+    /// agent's unmute it has nothing to change. Not persisted, not observed.
+    @ObservationIgnored public private(set) var laneMuteWrites: [UUID: Int] = [:]
 
     public func toggleSolo(id: UUID) {
         guard let i = document.lanes.firstIndex(where: { $0.id == id }) else { return }

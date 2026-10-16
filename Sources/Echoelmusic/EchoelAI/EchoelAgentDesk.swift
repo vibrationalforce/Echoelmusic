@@ -555,6 +555,9 @@ final class EchoelAgentDesk {
             case .setTrackPan(_, let pan):
                 let name = plan.basis.track?.name ?? "the selected track"
                 return "pan \(name) to " + EchoelPanText.text(pan)
+            case .setTrackMute(_, let muted):
+                let name = plan.basis.track?.name ?? "the selected track"
+                return muted ? "mute \(name)" : "unmute \(name)"
             case .undoAgentChange, .applyMediaLook, .keepTake, .composeHere:
                 return EchoelCommandRegistry.spec(step.id).summary.lowercased()
             }

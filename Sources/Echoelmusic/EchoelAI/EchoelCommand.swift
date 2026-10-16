@@ -50,6 +50,8 @@ enum EchoelCommandID: String, CaseIterable, Sendable, Codable {
     /// Put the selected (or a named) track at a stereo position, −1 (left) … 1 (right) — the
     /// inspector's Pan field (GSIDMMW D1).
     case setTrackPan = "track.setPan"
+    /// Mute or unmute the selected (or a named) track — the track's M switch (GSIDMMW D2).
+    case setTrackMute = "track.setMute"
 }
 
 /// Which card a media command means. "This photo" is the one the photo card has read and shows.
@@ -84,6 +86,9 @@ enum EchoelCommand: Equatable, Sendable {
     /// To this stereo position, −1 (left) … 0 (centre) … 1 (right). Absolute only: "a bit more
     /// left" has no number the product could stand behind, so a planner asks instead.
     case setTrackPan(track: EchoelTarget, pan: Double)
+    /// Muted (`true`) or playing (`false`). Never a toggle: a plan read against one state must
+    /// not flip a track the person has switched since.
+    case setTrackMute(track: EchoelTarget, muted: Bool)
 
     var id: EchoelCommandID {
         switch self {
@@ -95,6 +100,7 @@ enum EchoelCommand: Equatable, Sendable {
         case .keepTake: return .keepTake
         case .composeHere: return .composeHere
         case .setTrackPan: return .setTrackPan
+        case .setTrackMute: return .setTrackMute
         }
     }
 }
@@ -224,6 +230,14 @@ enum EchoelCommandRegistry {
                                 "the number is inside -1 … 1 — a number past it is refused, never shortened"],
                 effect: "Sets the track's stereo position through the inspector's own writer.",
                 undo: .agentJournal, permission: .reversibleEdit)
+        case .setTrackMute:
+            return EchoelCommandSpec(
+                id: id, summary: "Mute or unmute a track",
+                parameters: ["track: selected | track id", "muted: true | false"],
+                preconditions: ["the track exists",
+                                "the track has Mute (not a bio curve, not a track without a voice)"],
+                effect: "Switches the track's Mute through the track's own switch.",
+                undo: .agentJournal, permission: .reversibleEdit)
         }
     }
 
@@ -239,6 +253,7 @@ enum EchoelCommandError: Error, Equatable, Sendable {
     case targetGone(String)
     case noLevel(String)
     case noPan(String)
+    case noMute(String)
     case levelIsSilent
     case outOfRange(String)
     case notArrangeable
@@ -284,6 +299,8 @@ enum EchoelCommandError: Error, Equatable, Sendable {
             return "This track has no level to change (\(device))."
         case .noPan(let device):
             return "This track has no stereo position to change (\(device))."
+        case .noMute(let device):
+            return "This track has no Mute to switch (\(device))."
         case .levelIsSilent:
             return "The track is silent, so it cannot get louder or quieter by a step. Give it a level in decibels."
         case .outOfRange(let detail):
@@ -457,6 +474,17 @@ enum EchoelCommandParser {
                 return .failure(.outOfRange("A stereo position goes from -1 (left) to 1 (right), so I did nothing."))
             }
             return .success(.setTrackPan(track: track, pan: pan))
+        case .setTrackMute:
+            let track: EchoelTarget
+            switch target(proposal.arguments["track"], naming: "that track") {
+            case .success(let t): track = t
+            case .failure(let e): return .failure(e)
+            }
+            switch proposal.arguments["muted"] ?? "" {
+            case "true": return .success(.setTrackMute(track: track, muted: true))
+            case "false": return .success(.setTrackMute(track: track, muted: false))
+            default: return .failure(.invalidArgument("whether to mute — true or false"))
+            }
         case .setTrackLevel:
             let track: EchoelTarget
             switch target(proposal.arguments["track"], naming: "that track") {
@@ -486,6 +514,7 @@ enum EchoelCommandParser {
         case .applyMediaLook: return ["medium"]
         case .composeHere: return ["track"]
         case .setTrackPan: return ["track", "pan"]
+        case .setTrackMute: return ["track", "muted"]
         }
     }
 
@@ -512,6 +541,9 @@ struct EchoelProjectSnapshot: Equatable, Sendable {
         /// before the person moved the pan is refused, as one made before a level change is.
         let hasPan: Bool
         let pan: Float
+        /// Whether the track shows Mute, and whether it is muted (GSIDMMW D2).
+        let hasMute: Bool
+        let isMuted: Bool
     }
     struct Part: Equatable, Sendable {
         let id: UUID

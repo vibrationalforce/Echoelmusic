@@ -69,6 +69,8 @@ final class EchoelCommandExecutor {
         case level(laneID: UUID, before: Float, after: Float, write: Int)
         /// The same shape for the stereo position; `write` is `TimelineStore.lanePanWrites` (GSIDMMW D1).
         case pan(laneID: UUID, before: Float, after: Float, write: Int)
+        /// Mute: `before` is the state the agent found; `write` is `TimelineStore.laneMuteWrites` (D2).
+        case mute(laneID: UUID, before: Bool, write: Int)
         case removeCopy(TimelineRegion)
         /// The look and the owner's `generation` right after it was recorded — an equal look
         /// applied again by hand is a different generation, and is the person's (review MED-2).
@@ -147,7 +149,8 @@ final class EchoelCommandExecutor {
             track = EchoelProjectSnapshot.Track(id: trackID, name: lane.name,
                                                 device: TrackMix.deviceName(controls.role),
                                                 hasLevel: controls.level, level: lane.level,
-                                                hasPan: controls.pan, pan: lane.pan)
+                                                hasPan: controls.pan, pan: lane.pan,
+                                                hasMute: controls.muteSolo, isMuted: lane.isMuted)
         }
         var part: EchoelProjectSnapshot.Part?
         if let partID, let region = document.regions.first(where: { $0.id == partID }) {
@@ -249,10 +252,11 @@ final class EchoelCommandExecutor {
                  .keepTake(.selected) where plan.basis.part == nil:
                 return .nothingSelected("part")
             case .composeHere(.selected) where plan.basis.track == nil,
-                 .setTrackPan(.selected, _) where plan.basis.track == nil:
+                 .setTrackPan(.selected, _) where plan.basis.track == nil,
+                 .setTrackMute(.selected, _) where plan.basis.track == nil:
                 return .nothingSelected("track")
             case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
-                 .composeHere, .setTrackPan:
+                 .composeHere, .setTrackPan, .setTrackMute:
                 continue
             }
         }
@@ -279,8 +283,11 @@ final class EchoelCommandExecutor {
         case .setTrackPan(.selected, let pan):
             guard let id = basis.track?.id else { return command }
             return .setTrackPan(track: .id(id), pan: pan)
+        case .setTrackMute(.selected, let muted):
+            guard let id = basis.track?.id else { return command }
+            return .setTrackMute(track: .id(id), muted: muted)
         case .describeState, .setTrackLevel, .duplicatePart, .undoAgentChange, .applyMediaLook, .keepTake,
-             .composeHere, .setTrackPan:
+             .composeHere, .setTrackPan, .setTrackMute:
             return command
         }
     }
@@ -312,6 +319,8 @@ final class EchoelCommandExecutor {
             return composeHere(target, into: &group)
         case .setTrackPan(let target, let pan):
             return setPan(target, pan, into: &group)
+        case .setTrackMute(let target, let muted):
+            return setMute(target, muted, into: &group)
         }
     }
 
@@ -372,7 +381,52 @@ final class EchoelCommandExecutor {
         journal = journal.map { (generation: $0.generation, entries: $0.entries.map(advanced)) }
     }
 
+    /// The same for Mute (`laneMuteWrites`).
+    private func noteOwnMuteWrite(on laneID: UUID, pending: inout [Inverse]) {
+        func advanced(_ entry: Inverse) -> Inverse {
+            if case .mute(let id, let before, let write) = entry, id == laneID {
+                return .mute(laneID: id, before: before, write: write + 1)
+            }
+            return entry
+        }
+        pending = pending.map(advanced)
+        journal = journal.map { (generation: $0.generation, entries: $0.entries.map(advanced)) }
+    }
+
     // MARK: Commands
+
+    /// GSIDMMW D2 — the track's M switch, asked as a STATE: a track already in that state is not
+    /// touched (the switch flips, so writing it twice would undo the request). Read back after.
+    private func setMute(_ target: EchoelTarget, _ muted: Bool,
+                         into group: inout [Inverse]) -> EchoelStepResult.Outcome {
+        let document = timeline.document
+        let laneID: UUID
+        switch track(target, in: document) {
+        case .success(let id): laneID = id
+        case .failure(let error): return .failed(error)
+        }
+        guard let lane = document.lanes.first(where: { $0.id == laneID }),
+              let controls = TrackMix.controls(of: laneID, in: document, voiceCapacity: voiceCapacity()) else {
+            return .failed(.targetGone("track"))
+        }
+        guard controls.muteSolo else { return .failed(.noMute(TrackMix.deviceName(controls.role))) }
+        let before = lane.isMuted
+        if before == muted {
+            return .done("\(lane.name) is already \(muted ? "muted" : "playing").")
+        }
+        TrackMix.flipMute(laneID: laneID, timeline: timeline)
+        noteOwnMuteWrite(on: laneID, pending: &group)
+        guard let after = timeline.document.lanes.first(where: { $0.id == laneID })?.isMuted else {
+            return .failed(.verificationFailed("the track is gone"))
+        }
+        if after != before {
+            group.append(.mute(laneID: laneID, before: before, write: timeline.laneMuteWrites[laneID] ?? 0))
+        }
+        guard after == muted else {
+            return .failed(.verificationFailed("the track reads \(after ? "muted" : "playing")"))
+        }
+        return .done(muted ? "\(lane.name) is muted." : "\(lane.name) plays again.")
+    }
 
     /// GSIDMMW D1 — the inspector's Pan field: written through `TrackMix.setPan`, then read back.
     /// A position past −1 … 1 never gets here (the parser refuses it), and the store's own clamp is
@@ -691,6 +745,28 @@ final class EchoelCommandExecutor {
                 } else {
                     kept.append("The stereo position of \(lane.name)")
                 }
+            case .mute(let laneID, let before, let write):
+                guard let lane = timeline.document.lanes.first(where: { $0.id == laneID }) else {
+                    kept.append("A removed track")
+                    continue
+                }
+                guard timeline.laneMuteWrites[laneID] ?? 0 == write else {
+                    kept.append("The Mute of \(lane.name)")
+                    continue
+                }
+                // Back where the agent found it already — the roll slot's heal unmutes without a
+                // write (see `TimelineStore.laneMuteWrites`).
+                guard lane.isMuted != before else {
+                    alreadyUndone += 1
+                    continue
+                }
+                TrackMix.flipMute(laneID: laneID, timeline: timeline)
+                noteOwnMuteWrite(on: laneID, pending: &entries)
+                if timeline.document.lanes.first(where: { $0.id == laneID })?.isMuted == before {
+                    restored += 1
+                } else {
+                    kept.append("The Mute of \(lane.name)")
+                }
             case .removeCopy(let copy):
                 guard let live = timeline.document.regions.first(where: { $0.id == copy.id }) else {
                     alreadyUndone += 1   // the song's Undo or Remove took it back before this
@@ -763,7 +839,8 @@ enum EchoelStateText {
         if let track = state.track {
             let level = track.hasLevel ? "level \(TrackMix.decibelText(Double(track.level)))" : "no level"
             let pan = track.hasPan ? ", pan \(EchoelPanText.text(Double(track.pan)))" : ""
-            lines.append("Selected track: \(track.name) — \(track.device), \(level)\(pan).")
+            let mute = track.hasMute && track.isMuted ? ", muted" : ""
+            lines.append("Selected track: \(track.name) — \(track.device), \(level)\(pan)\(mute).")
         } else {
             lines.append("No track is selected.")
         }
