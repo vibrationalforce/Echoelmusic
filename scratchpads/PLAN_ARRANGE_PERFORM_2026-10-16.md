@@ -17,30 +17,34 @@ Performance Modus".
 - Fresh install: the default document seeds no tracks → empty state.
 - **Lesson: a capability with no visible door does not count as delivered.**
 
-## Gap map against Ableton (Arrangement)
+## Gap map against Ableton (Arrangement) — MEASURED 2026-10-16 (read-only audit)
 
-| Ableton | Echoel today | Slice |
+⛔ The first version of this table named loop brace, duplicate and snap as missing. Measured,
+they exist: the "Cycle" toggle (`WorkstationCycleToggle`), "Copy" + the "Repeat" field and
+`moveRegion(laneOffset:)` in `SelectedPartBar`, automatic snap via `PartTrim.snapUnit`, and pinch
+zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
+
+| Ableton | Echoel | Slice |
 |---|---|---|
-| every track has a lane | only tracks with parts had a lane | **A1 ✅ `2c56287`** |
-| click into a lane → clip | "New MIDI Part" row only | **A1 ✅** (tap on an empty bar) |
-| room past the song's end | canvas = song length | **A1 ✅** (+4 bars, min. 8) |
-| Session ⇄ Arrangement (Tab) | Session buried under the canvas | **P1 ✅ `8788833`** |
-| loop brace over the ruler | loop point exists, no brace | A2 |
-| right-click menu on a clip | button row under the canvas | A3 |
-| duplicate (⌘D) | — | A4 |
-| markers / locators | — | A5 |
-| choice of snap grid | bar only | A6 |
-| track order, colour, duplicate | partly | A7 |
-| record from the playhead + count-in | arm exists (R1) | A8 |
-| multi-select, clipboard | single selection | A9 |
+| every track has a lane, click → clip, room past the end | built | **A1 ✅ `2c56287`** |
+| Session ⇄ Arrangement | built | **P1 ✅ `8788833`** |
+| cycle brace | toggle only (selection or 4 bars from the cue), not draggable | A2: drag/resize the band |
+| markers / locators | MISSING (no model) | A5 |
+| grid choice | automatic from zoom; no picker | A6 (low priority) |
+| track reorder / colour / duplicate | MISSING (⚠️ order decides `rollLaneID`) | A7 — council first |
+| part name / colour | MISSING (no field on `TimelineRegion`) | A8 |
+| multi-select | store APIs take `Set<UUID>`, no door | A9 |
+| clipboard copy/paste | MISSING | A9b |
+| count-in | MISSING | A10 (transport, device-heavy) |
+| automation on the canvas | inspector page only | A11 |
 
 ## Performance (Session)
 
 - **P1 — the toggle**: in the Arrange view, a segmented toggle `Arrangement · Session` at the
   top. Session takes the canvas's place and shows the scene grid full-width. Persisted
   per device, no new modal, no new switcher entry (the founder approved exactly five, E18).
-- **P2 — the grid**: tracks as columns × scenes as rows, Ableton's picture instead of the list.
-- **P3 — the launch quantize choice** (bar / 2 bars / beat). The engine has `LaunchQuantize`.
+- **P2 ✅ `1fd0e02`** — the grid: tracks as columns × scenes as rows.
+- **P3 ✅ `2f694fe`** — "Launch on" Beat · Bar · 2 Bars · 4 Bars (`SessionLaunchPoint`).
 - **P4 — capture**: launches are recorded into the arrangement.
 - **P5 — free slots**: clips that do not stand in the arrangement. ⚠️ This touches WA2 ("no
   second Session owner"), so the founder decides (inbox).
@@ -48,5 +52,5 @@ Performance Modus".
 
 ## Order
 
-A1 → P1 → P2 → A3 → A4 → A2 → P3 → the rest. Every slice has a guard.
+A1 → P1 → P2 → P3 (done) → P4 capture → A9 multi-select → A2 drag cycle → A5 markers → the rest. Every slice has a guard.
 Device asks go into the next release note (A1, P1).
