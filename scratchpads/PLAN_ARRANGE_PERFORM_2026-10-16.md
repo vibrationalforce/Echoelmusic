@@ -50,7 +50,25 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
   second Session owner"), so the founder decides (inbox).
 - **P6 — performance with the instrument**: the body-voice and the scenes on ONE surface.
 
-## Order
+## Order — FIXED since the founder's goal (2026-10-16, seven items, one slice per turn)
 
-A1 → P1 → P2 → P3 (done) → P4 capture → A9 multi-select → A2 drag cycle → A5 markers → the rest. Every slice has a guard.
-Device asks go into the next release note (A1, P1).
+| # | Item | State | Evidence |
+|---|---|---|---|
+| 1 | Markers (A5) | ✅ `48a28d6` | guard `TheMarkersNameBarsOfThePieceTests` (pure + store undo + scan); gates: not yet read |
+| 2 | Cycle region drag (A2) | ✅ `28b1059` | guard `TheCycleEdgesAreDraggedOnTheRulerTests` (pure `CycleDrag` + scan), Python transcription green, 6 checkers 0; gates: pending |
+| 3 | Multi-select + clipboard (A9) | **NEXT** | — |
+| 4 | Track reorder + colour | open — council first (order decides `rollLaneID`) | — |
+| 5 | Count-in | open | — |
+| 6 | Record scenes into arrangement (P4) | open | — |
+| 7 | Automation on the canvas | open | — |
+
+Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
+
+### Exact next step (item 3)
+The multi-select APIs in `TimelineStore` exist without a door (measured gap). Slice: a
+"Select" mode in the canvas — a tap toggles a part into the selection (no new modal), and
+Copy / Paste act on the selection at the Play-start bar through the store, ONE undo step per
+paste. Clipboard = an in-memory value on the store (never the system pasteboard, never
+persisted). Guard: pure paste plan end to end + one writer + no `currentTick` in the door.
+
+Device asks for the next release note: A1, P1, P2, P3, A5, A2.
