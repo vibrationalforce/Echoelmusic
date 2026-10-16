@@ -5381,8 +5381,27 @@ Der Spur-Bus übernimmt das Format seiner ERSTEN Quelle (`AudioEngine.attachTrac
 `LaunchTake` protokolliert, was wo von wann bis wann lief; geschrieben wird bei Stop, Sprung,
 Cycle, Neustart und an jedem Song-Wrap über `pasteRegions` (ein Undo-Schritt je Durchgang). Die
 Tür ist ein Player-Schalter, nie die Session-Ansicht (die speichert nichts — ihr Wächter). Review 2026-11-15.
+⛔ **Noch am selben Tag ersetzt** (Finesse-Review): geschrieben wird NICHT mehr an jedem Wrap — siehe den Eintrag „Session-Aufnahme: einmal schreiben" unten.
 
 ### 2026-10-16 — Automation auf dem Canvas: Spur + Draw-Modus, ein Entscheidungssatz
 Anzeige-Blatt plus ein Bearbeitungs-Blatt in eigener Datei, beide über `SongAutomationEdit` im
 Canvas-Maßstab; Parameter wird auf der Track-Seite gewählt und pro Spur geteilt. Grund: der Canvas
 ist auf einen Drag, einen Finger-State und keinen Menü-Picker gepinnt. Review 2026-11-15.
+
+### 2026-10-16 — Session-Aufnahme: einmal schreiben, geschichtet, in der echten Schleife
+Die Aufnahme wird EINMAL geschrieben, wenn sie endet (Stop, Sprung, Cycle-Sprung, Neustart,
+Schalter aus); jeder Song-Durchgang wird behalten, ein späterer schneidet auf derselben Spur, was
+er von einem früheren überdeckt. Kopien liegen in der echten Schleifenlänge (MIDI ganze Takte,
+Audio die eigene Länge). Grund: ein Schreiben mitten im Spiel ist eine Strukturänderung — Schnitt
+in jeder Stimme je Durchgang, eine Lage mehr je Durchgang, Raster wächst unter dem Finger; ein
+1,5-Takt-Teil driftete je Schleife einen halben Takt. Review 2026-11-15.
+
+### 2026-10-16 — „Beat" als Launch-Punkt zurückgenommen
+Angeboten: Bar · 2 Bars · 4 Bars; ein gespeichertes „beat" wird zum Takt. `launchedStartBar` trägt
+nur ganze Takte — ein auf Schlag 2 gestarteter MIDI-Part übersprang seinen ersten Schlag. Das
+`.beat` der Engine bleibt für eine spätere Unter-Takt-Phase. Review 2026-11-15.
+
+### 2026-10-16 — Einzähler im Halte-Menü von „Click"
+Nicht als eigenes Menü in der Transportzeile: mit Marker und Count-in brauchte sie ~410 pt und
+schob das Menü auf 375–402-pt-Telefonen über den Rand. Logic hält dieselbe Wahl am Metronom.
+Review 2026-11-15.

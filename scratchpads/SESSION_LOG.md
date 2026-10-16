@@ -1177,3 +1177,23 @@ Liste in fester Reihenfolge (`scratchpads/PLAN_ARRANGE_PERFORM_2026-10-16.md`):
 - Lehre: die Wächter des Canvas (genau EIN `DragGesture(`, EIN `@GestureState`, kein `.menu`-Picker) haben die Form von 7b bestimmt — die Bearbeitung lebt in einem eigenen Blatt, nicht im Canvas. Vor jedem neuen Canvas-Zug zuerst diese Zähl-Pins messen.
 - Lehre: `pasteRegions(parts, atTick: min start)` ist schon ein „füge an eigenen Ticks ein, ein Undo“-Schreiber — kein neuer Store-Schreiber für die Session-Aufnahme nötig.
 - Alles NEEDS-FOUNDER-VERIFY (A1–A10, P1–P4, 7a–7c); nichts davon auf dem Gerät gesehen.
+
+## 2026-10-16 (Nacht) — Finesse-Loop: alle Befunde der drei Reviews repariert, A7/A8 gebaut
+
+**Gebaut:** A8 Teil benennen (`PartNameField`, `ClipStore.renameClip`) · A7 Spur duplizieren
+(`TrackCopy`, `TimelineStore.duplicateLane`, ein Undo-Schritt `.trackCopy`).
+**Repariert (26 Befunde aus drei Linsen: Count-in, Player/Session, Canvas-UI):** Aufnahme landet
+nach Open im falschen Stück (HIGH, Sink jetzt synchron) · Aufnahme einmal schreiben, geschichtet,
+echte MIDI-Schleifenlänge · Schalter an mitten im Spiel schließt laufende Parts ein · Ein-Schritt-
+Blip nicht geschrieben · „Beat"-Launch zurückgenommen · Count-in: Sechzehntel-Flam, Abbruch immer
+möglich, Play/Stop anderswo bricht ab, Klick-Abschalten bleibt (C5), Flow-Grenze benannt (C6) ·
+Count-in ins Halte-Menü von Click (Transportzeile passte nicht) · Draw/Select legen kein Teil an ·
+getipptes Teil sagt den „New MIDI Part"-Satz · Select-Ring nur für Gesammelte · Paste nur mit
+existierender Spur · Farbmenü-Tönung · Marker-Namen nie doppelt · Neustart beendet Aufnahme gegen
+ihr eigenes Stück · VoiceOver „Add a part" nur wo es wirkt · Marker-Fähnchen + VoiceOver-Name ·
+Cycle-Griffe überlappen nicht, abgebrochener Zug räumt auf · Canvas-Maßstab in 8-Takt-Stufen.
+**Werkzeug:** `gate.sh` im Scratchpad (sechs Prüfer); Commit nur bei sauberem Gate.
+**Offen:** CI-Warteschlange (~20 CI/CD-Läufe gestapelt, Abbrechen per Integration verboten —
+403); EIN Release 10.79.515 erst, wenn main den letzten Stand mit grünen Gates hat.
+**Lehre:** viele kleine Pushes stapeln macOS-Läufe, die nichts abbricht — Scheiben lokal
+sammeln, seltener pushen.
