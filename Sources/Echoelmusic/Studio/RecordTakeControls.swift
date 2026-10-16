@@ -102,7 +102,7 @@ struct RecordTakeButton: View {
                 Image(systemName: recording ? "stop.circle.fill" : (countIn != nil ? "metronome" : "record.circle"))
                     .font(EchoelTheme.font(13, .semibold))
                     .foregroundStyle(recording ? EchoelTheme.onPrimary
-                                               : (state.offersATake || countIn != nil ? EchoelTheme.recording : EchoelTheme.dim))
+                                               : (state.offersATake ? EchoelTheme.recording : EchoelTheme.dim))
                 if !compact {
                     Text(recording ? String(localized: "Stop recording")
                          : (countIn != nil ? String(localized: "Counting in") : String(localized: "Record")))
