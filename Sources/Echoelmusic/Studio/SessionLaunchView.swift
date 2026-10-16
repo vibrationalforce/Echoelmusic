@@ -249,6 +249,11 @@ struct SessionLaunchView: View {
     /// start bar inside that one call instead of one step later.
     let playFrom: (_ tick: Int, _ parts: [UUID]) -> Void
 
+    /// P2 — the grid's column widths: the scene's launch, and one track's cell. Fixed, so every
+    /// row's columns line up; the grid scrolls sideways when the tracks outgrow the screen.
+    private static let sceneColumn: CGFloat = 104
+    private static let cellColumn: CGFloat = 96
+
     var body: some View {
         let document = timeline.document
         let capacity = player.laneVoiceCapacity
@@ -289,9 +294,28 @@ struct SessionLaunchView: View {
                     }
                 }
 
-                ForEach(scenes.prefix(SessionGrid.sceneLimit)) { scene in
-                    sceneBlock(scene, tracks: tracks, playing: playing,
-                               state: SessionGrid.sceneState(scene, tracks: tracks, states: states))
+                // P2 (founder 2026-10-16, „Performance Modus … auf Ableton Level"): Live's grid —
+                // a column per track, a row per scene, the scene's launch at the row's head. A part
+                // keeps its column in every scene, so a glance down a column is one track's parts.
+                // Wider than the phone: it scrolls sideways, the scene column scrolls with it.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Color.clear.frame(width: Self.sceneColumn, height: 1)
+                            ForEach(tracks) { track in
+                                Text(track.name)
+                                    .font(EchoelTheme.font(11, .semibold))
+                                    .foregroundStyle(EchoelTheme.dim)
+                                    .lineLimit(1)
+                                    .frame(width: Self.cellColumn, alignment: .leading)
+                                    .accessibilityAddTraits(.isHeader)
+                            }
+                        }
+                        ForEach(scenes.prefix(SessionGrid.sceneLimit)) { scene in
+                            sceneBlock(scene, tracks: tracks, playing: playing,
+                                       state: SessionGrid.sceneState(scene, tracks: tracks, states: states))
+                        }
+                    }
                 }
                 if scenes.count > SessionGrid.sceneLimit {
                     Text("\(scenes.count - SessionGrid.sceneLimit)" + String(localized: " later scenes are not shown."))
@@ -311,47 +335,54 @@ struct SessionLaunchView: View {
             + String(localized: " and returns every other launched track to the piece")
         let startHint: String = String(localized: "Starts the piece at the start of ") + songStart
             + String(localized: " and loops every part listed at ") + title
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text(title)
-                    .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
-                if let word = state.flatMap(SessionGrid.word) {
-                    Text(word)
-                        .font(EchoelTheme.font(11, .semibold))
-                        .foregroundStyle(state == .playing ? EchoelTheme.text : EchoelTheme.dim)
+        return HStack(spacing: 6) {
+            Button {
+                launchScene(scene)
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Image(systemName: state == .playing ? "play.fill" : "play")
+                            .font(EchoelTheme.font(11, .semibold))
+                        Text(title)
+                            .font(EchoelTheme.font(12, .semibold))
+                            .lineLimit(1)
+                    }
+                    if let word = state.flatMap(SessionGrid.word) {
+                        Text(word).font(EchoelTheme.font(10, .semibold))
+                    }
                 }
-                Spacer(minLength: 8)
-                Button {
-                    launchScene(scene)
-                } label: {
-                    Text("Launch scene")
-                        .font(EchoelTheme.font(12, .semibold))
-                        .foregroundStyle(EchoelTheme.text)
-                        .padding(.horizontal, 12)
-                        .frame(minHeight: 44)
-                        .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                            .fill(EchoelTheme.fill))
-                        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
-                            .strokeBorder(EchoelTheme.border, lineWidth: 1))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                // S2: enabled while stopped too — a scene starts the song at its bar. A single
-                // PART stays disabled then: which part starts the whole song is not a question
-                // one cell can answer.
-                .accessibilityLabel(String(localized: "Launch scene at ") + title)
-                .accessibilityValue(state.flatMap(SessionGrid.word) ?? String(localized: "Not the current scene"))
-                .accessibilityHint(playing ? loopHint : startHint)
+                .foregroundStyle(state == .playing ? EchoelTheme.accent : EchoelTheme.text)
+                .padding(.horizontal, 8)
+                .frame(width: Self.sceneColumn, alignment: .leading)
+                .frame(minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .fill(EchoelTheme.fill))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                    .strokeBorder(state == .playing ? EchoelTheme.borderStrong : EchoelTheme.border,
+                                  lineWidth: 1))
+                .contentShape(Rectangle())
             }
-            ForEach(tracks.filter { scene.cells[$0.id] != nil }) { track in
+            .buttonStyle(.plain)
+            // S2: enabled while stopped too — a scene starts the song at its bar. A single
+            // PART stays disabled then: which part starts the whole song is not a question
+            // one cell can answer.
+            .accessibilityLabel(String(localized: "Launch scene at ") + title)
+            .accessibilityValue(state.flatMap(SessionGrid.word) ?? String(localized: "Not the current scene"))
+            .accessibilityHint(playing ? loopHint : startHint)
+            ForEach(tracks) { track in
                 if let regionID = scene.cells[track.id] {
                     cellButton(track: track, regionID: regionID, title: title, playing: playing)
+                        .frame(width: Self.cellColumn)
+                } else {
+                    // An empty slot: this scene leaves the track to the piece. Drawn, so the
+                    // columns line up; silent to VoiceOver — there is nothing to launch.
+                    RoundedRectangle(cornerRadius: EchoelTheme.radiusSmall)
+                        .strokeBorder(EchoelTheme.border, lineWidth: 1)
+                        .frame(width: Self.cellColumn, height: 44)
+                        .accessibilityHidden(true)
                 }
             }
         }
-        .padding(.vertical, 6).padding(.horizontal, 10)
-        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
-            .strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
     private func cellButton(track: SessionGrid.Track, regionID: UUID, title: String,
@@ -361,15 +392,12 @@ struct SessionLaunchView: View {
         return Button {
             player.launchRegion(regionID, quantize: SessionGrid.quantize)
         } label: {
-            HStack(spacing: 8) {
+            // P2: the column header names the track, so the cell says only its state.
+            HStack(spacing: 6) {
                 Image(systemName: lit ? "play.fill" : "play")
                     .font(EchoelTheme.font(11, .semibold))
-                Text(track.name)
-                    .font(EchoelTheme.font(12))
-                    .lineLimit(1)
-                Spacer(minLength: 8)
                 if let word = SessionGrid.word(state) {
-                    Text(word).font(EchoelTheme.font(11, .semibold))
+                    Text(word).font(EchoelTheme.font(11, .semibold)).lineLimit(1)
                 }
             }
             .foregroundStyle(state == .playing ? EchoelTheme.accent

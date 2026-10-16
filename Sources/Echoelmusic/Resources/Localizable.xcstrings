@@ -3361,18 +3361,6 @@
         }
       }
     },
-    "Launch scene" : {
-      "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Launch scene"
-          }
-        }
-      }
-    },
     "Learn what this means" : {
       "comment" : "Panel text (E4-6, 2026-09-30): SwiftUI literal keys of the Workstation, head, inspector, visual window, bio strip and the small chrome files — localised by content, no Sources change.",
       "extractionState" : "manual",
