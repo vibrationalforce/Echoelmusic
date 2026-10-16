@@ -336,8 +336,10 @@ final class EchoelAgentDesk {
         let ticket = describeTicket
         let generation = executor.snapshot().documentGeneration
         isModelBusy = true
-        let flow = Task { @MainActor [weak self] in
-            await self?.describe(with: brain, ticket: ticket, generation: generation, on: executor)
+        // `guard let self` rather than `self?.`: an optional call makes this a `Task<()?, Never>`.
+        let flow = Task { @MainActor [weak self] () -> Void in
+            guard let self else { return }
+            await self.describe(with: brain, ticket: ticket, generation: generation, on: executor)
         }
         describeFlow = flow
         let deadline = describeDeadline
