@@ -5350,3 +5350,12 @@ wird umbenannt. **Warum:** Founder-Auftrag mit der GSIDMMW-Audit-Übergabe. **Gr
 (Satz-Wächter `TheCopyMakesNoHealthClaimTests`). Eine Roadmap (Masterplan); PLAN_GMMW und
 ULTRAMASTERPLAN sind untergeordnet. Audit-Messung: `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
 Review: 2026-11-15.
+
+### 2026-10-16 — GSIDMMW D: Parameter über Besitzer, nicht über den Router
+
+**Entscheidung:** Echoel schreibt Parameter je Befehl über einen gespeicherten Besitzer mit
+Rücklesen und Schreibzähler (`track.setPan` D1, `track.setMute` D2), nicht über ein generisches
+`parameter.set` auf `ParameterApplyRouter` (PLAN_GMMW AI-7b). **Warum (gemessen):** jeder
+Router-Setter schreibt nur den Live-Spiegel der Stimme; nichts liest ihn zurück, der Patch im
+Sound-Panel erfährt nichts — eine zweite Wahrheit ohne Undo. `agentEligible` kommt erst mit einem
+Leser. Mute ist ein ZUSTAND, nie ein Umschalter. Review: 2026-11-15.

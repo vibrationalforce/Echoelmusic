@@ -65,6 +65,8 @@ Pläne dieselben Buchstaben nutzen (`scratchpads/GSIDMMW_AUDIT_2026-10-16.md` §
 |---|---|---|
 | „Describe this piece“ gehört bis zum Ende zum richtigen Stück; „Stop“; 45-s-Deadline (GSIDMMW-B) | Bericht-Zeile | `35d95ee` · `8a17474` |
 | „Ask Echoel“: eine Bitte in eigenen Worten → Echoel schlägt vor (Spur + Betrag), „Apply“ / „Discard“, Undo; geänderte Auswahl wird abgewiesen; Rückfrage statt Raten (GSIDMMW-C1/C2a/C2b). Drei Befehle: beschreiben, Spur lauter/leiser, Teil kopieren | Siri/Kurzbefehle „Ask Echoelmusic“ → Bericht-Zeile; braucht Apple Intelligence | `183650e` · `8e0299e` · `39f954d` |
+| „Ask Echoel“ auch IN der App: eine Eingabezeile im Bericht, gleicher Weg wie Siri (GSIDMMW-C2c) | ≡-Menü → „Ask Echoel“ | `b53f423` |
+| Echoel kann eine Spur nach links/rechts setzen (−1 … 1) und stumm/laut schalten — beides mit Rücklesen und eigenem Undo; ein Wert, den du danach selbst setzt, bleibt (GSIDMMW-D1/D2). Jetzt fünf Befehle | Vorschlag → „Apply“ | `c87ee46` · `ee43f47` |
 | „Share as MIDI“ für das gewählte MIDI-Teil (Ultraplan-C2) | Part-Leiste | `fc5d1da` |
 | Gekürztes MIDI-Teil sagt, wie viele Noten es verbirgt (Ultraplan-A1) | unter dem Length-Feld | `cd93c14` |
 | Neue MIDI-Spur jenseits der Rack-Stimmen sagt beim Anlegen, dass sie stumm ist (Ultraplan-D1) | „Add MIDI Track“ | `81ebe64` |
@@ -177,7 +179,7 @@ Messen: `python3 scripts/doctor.py --section C` (Abschnitt „never constructed�
 | Onset-Slicer (`SampleSlicer`, GMMW GA-6) | reiner Kern: schneidet ein Sample an seinen Treffern, mit der Onset-Regel der Tempo-Erkennung; kein Aufrufer | GA-7 (Founder-Gate): wo die Schnittpunkte liegen und was ein Schnitt spielt |
 | Watch-App | Target existiert, wird nicht mit ausgeliefert | Transport Telefon→Uhr (`WCSession`, neues Framework) |
 | Mehrspur-Aufnahme | Kette gebaut, flag-aus | ein Audio-EINGANG, den es nicht mehr gibt |
-| `ParameterToolCore` (EchoelAI) | reiner Kern, kein Aufrufer — der Bedienagent selbst (`EchoelCommandExecutor`) hat seit AI-1/AI-2 seine Tür über Siri und steht in 1a; ein Sprachmodell als Planer (drei Befehle, nur Vorschlag) steht seit GSIDMMW-C2b in 1b | GSIDMMW-D: Parameter mit Rücklesen und Ziel-Revision; Körper-Adjektive für den Planer bleiben Founder-Gate GM10 |
+| `ParameterToolCore` (EchoelAI) | reiner Kern, kein Aufrufer — der Bedienagent selbst (`EchoelCommandExecutor`) hat seit AI-1/AI-2 seine Tür über Siri und steht in 1a; ein Sprachmodell als Planer (drei Befehle, nur Vorschlag) steht seit GSIDMMW-C2b in 1b | GSIDMMW-D: Pan und Mute mit Rücklesen + Undo GEBAUT (D1/D2); Synth-Parameter warten auf einen Besitzer mit Rücklesen (der Router schreibt nur die Live-Stimme); Körper-Adjektive für den Planer bleiben Founder-Gate GM10 |
 
 ⚠️ **Zehn Feature-Flags haben null Leser** (`spatialEngine`, `bioSpace`, `echoelRender`, `motionEngine`,
 `showControl`, `avObjects`, `performerTracking`, `liveCollab`, `headTracking`, `echoelAI`). Hinter

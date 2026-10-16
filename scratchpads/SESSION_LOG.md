@@ -1133,3 +1133,13 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - **GSIDMMW-C2b** (`39f954d`): `AskEchoelIntent` → `AgentReportBanner.ask`; eine Konstruktion im privaten `onDeviceBrain()`, zwei Aufrufer (Tap, Intent). `TheOnDeviceModelHasOneGateTests` Anspruch 4 verschärft.
 - **Register:** Audit (Präfix-IDs, vier Nachweise je Fähigkeit), FEATURE_STATUS §1b (fünf Einträge statt „Leer."), FOUNDER_INBOX G11.
 - **Gates:** zum Zeitpunkt offen; 10.79.509 noch nicht gehoben (wartet auf grünen Compile Check + Build for Testing auf dem neuesten Code-Commit).
+
+## 2026-10-16 (Mittag) — 10.79.509 ausgeliefert; GSIDMMW-D1/D2 Pan + Mute; C2c Ask Echoel in der App
+
+- **TestFlight 2634 = 10.79.509** (`e171fed`) Conclusion success; dem Founder gemeldet, Verweis G11.
+- **Paket D umgeplant, gemessen:** AI-7b (`parameter.set` über den Router) wäre eine zweite Wahrheit (Router-Setter schreiben nur den Live-Spiegel, kein Rücklesen, Patch erfährt nichts). Stattdessen je Befehl ein Besitzer + Rücklesen + Schreibzähler. decisions.csv + memory/decisions.md.
+- **D1** (`c87ee46`) `track.setPan` (−1 … 1 ablehnen statt klemmen, `lanePanWrites`), Wächter `TheAgentPansThroughTheInspectorsWriterTests`.
+- **D2** (`ee43f47`) `track.setMute` als ZUSTAND (`laneMuteWrites`; Heilung der Instrument-Spur zählt bewusst nicht), Wächter `TheAgentMutesThroughTheTracksSwitchTests`.
+- **C2c** (`b53f423`) ≡ → „Ask Echoel" öffnet eine Eingabezeile im Bericht (kein Modal), gleicher `ask`-Weg wie Siri. Wächter `TheTypedRequestTakesTheSiriRoadTests`; `TheOnDeviceModelHasOneGateTests` Anspruch 4 auf zwei Frager erweitert.
+- Register: FEATURE_STATUS §1b, Audit (Paket D, C2c, Fähigkeitstabelle), FOUNDER_INBOX G11 (g)(h).
+- Gates zum Zeitpunkt in der Schlange; kein Bump vor grünem Compile Check + Build for Testing auf `b53f423`.

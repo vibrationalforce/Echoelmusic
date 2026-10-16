@@ -50,7 +50,21 @@ Lyria RealTime). Sie sind Recherche-Hinweise, keine Integrationszusage.
   beim Apply-Tap. Die eine Konstruktion bleibt EINE (privates `onDeviceBrain()` im Banner) mit genau
   zwei Aufrufern, beide vom Menschen ausgelöst; `TheOnDeviceModelHasOneGateTests` Anspruch 4
   verschärft statt gelockert. Offen: ob Siri auf den Plan wartet (Gerät, G11).
-- **D** `agentEligible`/`applyAgent` mit Rücklesen + Ziel-Revisionen (PLAN_GMMW AI-7a/b).
+  **C2c GEBAUT (`b53f423`) = die Tür IN der App**: ≡ → „Ask Echoel“ öffnet eine Eingabezeile im
+  Bericht (`AgentRequestRow`, kein Modal), dieselbe `AgentReportBanner.ask` wie Siri; Wächter
+  `TheTypedRequestTakesTheSiriRoadTests`.
+- **D** Rücklesen + eigenes Undo für weitere Parameter. **Gemessen vor dem Bau (2026-10-16):** der
+  Plan-Weg AI-7b (`parameter.set` über `ParameterApplyRouter`) wäre eine zweite Wahrheit — jeder
+  Router-Setter ist `(Float) -> Void` und schreibt den LIVE-Spiegel der Stimme
+  (`PolySynthVoice.automatableSetter`); nichts liest ihn zurück, und der gespeicherte Patch, den das
+  Sound-Panel zeigt, erfährt nichts davon. Deshalb je Befehl ein Besitzer mit Speicherung, Rücklesen
+  und Schreibzähler. **D1 GEBAUT (`c87ee46`)** `track.setPan` (−1 … 1, ablehnen statt klemmen,
+  `TimelineStore.lanePanWrites`; Wächter `TheAgentPansThroughTheInspectorsWriterTests`). **D2 GEBAUT
+  (`ee43f47`)** `track.setMute` als ZUSTAND, nie als Umschalter (`laneMuteWrites`; die Heilung der
+  Instrument-Spur zählt bewusst nicht — sie entmutet nur; Wächter
+  `TheAgentMutesThroughTheTracksSwitchTests`). Offen: Synth-Parameter über `SynthPatch`/den
+  Sound-Panel-Schreiber (eine eigene Scheibe, braucht dessen Undo-Weg); `agentEligible` erst, wenn
+  es einen Leser bekommt — ein Flag ohne Leser wäre das `FeatureFlags.echoelAI`-Muster.
 - **E** generierte Ergebnisse als normale Clips mit Herkunft (Erweiterung von `keepComposerTake`).
 - **F** Medienzeit (M1b), Projektpaket mit Medien, Zusammenarbeit, LAN-Audio-Studie (Link Audio) —
   jede neue Abhängigkeit Founder-Gate.
@@ -78,6 +92,8 @@ Testausführung (CI/CD Build for Testing) und Gerätetest sind drei getrennte Be
 | Share as MIDI (Ultraplan-C2) | ja | nein | ja (Part-Leiste) | offen |
 | Hidden-Notes-Zeile (Ultraplan-A1) | ja | nein | ja (Length-Feld) | offen |
 | Stumme Spur sagt es (Ultraplan-D1) | ja | nein | ja (Add MIDI Track) | offen |
+| „Ask Echoel“ in der App (GSIDMMW-C2c) | ja | nein | ja (≡-Menü) | offen (G11) |
+| Pan / Mute über Echoel (GSIDMMW-D1/D2) | ja | nein | ja (über C2b/C2c) | offen (G11) |
 
 Website (`docs/`) und Store-Text bekommen eine Zeile erst ab „Erreichbar“ UND „Im Build“; der
 Website-Beleg (echte Sitzung: Auftrag → Vorschlag → Apply → Bearbeiten → Undo) braucht C2b plus
