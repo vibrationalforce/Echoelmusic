@@ -16,9 +16,12 @@
 //  `EchoelInstanceState` names and keeps, because `.auto` is the type's own "defer to the
 //  genre" case, not a tuned number.
 //
-//  ⚠️ NOT THE WHOLE INSTANCE. The patch is view-private state of the instrument
-//  (`currentPatch`), so its name is not shown here rather than guessed; mood, rhythm characters
-//  and the role mix are left out on purpose — this is a label, not a second editor.
+//  ⭐ THE PATCH (Ultraplan-D8, 2026-10-16). The instrument's `currentPatch` is view-private, so it
+//  is not read; the line names what the VOICE was last given — `PolySynthVoice.appliedPatch`,
+//  the voice's own patch memory, set only by `apply(_:)`. That is the sound that plays, not a
+//  guess at what the editor holds. Before the first apply there is no patch fact.
+//  ⚠️ NOT THE WHOLE INSTANCE. Mood, rhythm characters and the role mix are left out on purpose —
+//  this is a label, not a second editor.
 //
 //  ⚠️ IT IS ITS OWN FILE BECAUSE THE INSPECTOR OWNS NO PERSISTENCE (its guard bans
 //  `@AppStorage` there). This leaf only READS two keys, at selection rate — both change on a
@@ -31,13 +34,16 @@ struct EchoelInstanceLine: View {
 
     @AppStorage(StudioDefaultKeys.genre.key) private var genre: MusicStyle = StudioDefaultKeys.genre.value
     @AppStorage(EchoelInstanceState.fxCharacterKey) private var character: FXCharacter = .auto
+    /// D8: the voice's patch memory — changes on a patch apply (a preset, an edit, a genre),
+    /// never on a clock, and only this leaf reads it.
+    @Environment(PolySynthVoice.self) private var synth
 
     var body: some View {
         // One row where it fits, the two facts stacked where it does not (large type, a narrow
         // phone) — never a truncated genre name.
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 6) { genreFact; characterFact }
-            VStack(alignment: .leading, spacing: 2) { genreFact; characterFact }
+            HStack(spacing: 6) { genreFact; characterFact; patchFact }
+            VStack(alignment: .leading, spacing: 2) { genreFact; characterFact; patchFact }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenInstance)
@@ -47,13 +53,34 @@ struct EchoelInstanceLine: View {
     /// catalog literal; the two names come from their types and are not this line's to translate.
     /// Built outside `body` so the `+` chain does not sit in the view's type-check budget.
     private var spokenInstance: String {
-        String(localized: "Echoel plays ") + genre.displayName + String(localized: ", FX character ") + character.displayName
+        let base = String(localized: "Echoel plays ") + genre.displayName + String(localized: ", FX character ") + character.displayName
+        guard let name = patchName else { return base }
+        return base + String(localized: ", patch ") + name
+    }
+
+    /// The name of the patch the voice was last given, or nil before the first apply (or for a
+    /// patch without a name).
+    private var patchName: String? {
+        guard let name = synth.appliedPatch?.name.trimmingCharacters(in: .whitespacesAndNewlines),
+              !name.isEmpty else { return nil }
+        return name
     }
 
     // A2 (founder 2026-10-01): the genre is the Echoel device's STYLE, and the row right above
     // this line says "Style" — one word for one thing on one surface (rule 1).
     private var genreFact: some View { fact("Style", genre.displayName) }
     private var characterFact: some View { fact("FX", character.displayName) }
+    /// A patch name is the player's own text and can be long, so unlike the two type names it
+    /// truncates at its end instead of holding its width (`fact` is `fixedSize`).
+    @ViewBuilder private var patchFact: some View {
+        if let name = patchName {
+            HStack(spacing: 4) {
+                Text("Patch").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim).fixedSize()
+                Text(name).font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.text)
+                    .lineLimit(1).truncationMode(.tail)
+            }
+        }
+    }
 
     // E4-18: `name` is a catalog KEY (two literal callers); `value` is a type's display name.
     private func fact(_ name: LocalizedStringKey, _ value: String) -> some View {

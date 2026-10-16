@@ -16,6 +16,11 @@
 //    owns no persistence (the ban in `TheTrackInspectorShowsOnlyWiredControlsTests` claim 4 is
 //    why the leaf is its own file).
 // 4. SOURCE: no hot state in the leaf — it sits in the Workstation plate, under the menu host.
+// 5. SOURCE (Ultraplan-D8, 2026-10-16): the patch fact names what the VOICE was last given —
+//    `PolySynthVoice.appliedPatch`, set only by `apply(_:)` — never the instrument's view-private
+//    `currentPatch`; no fact before the first apply; the name truncates instead of holding its
+//    width; its words are catalog keys. Against the parent (`84a7514`) claim 5 is red by ABSENCE
+//    of the patch fact — a FORWARD guard; its `appliedPatch = patch` half is a COUNTERWEIGHT.
 //
 // Grading (§0, no Swift toolchain in a web session): all claims driven in Python against this
 // tree and against be933a627. On be933a627 claims 1, 3 and 4 are red by ABSENCE of
@@ -95,6 +100,28 @@ final class TheEchoelTrackNamesItsInstanceTests: XCTestCase {
         for hot in ["latestBio", "EngineBus", "currentTick", "CameraRPPGBioPublisher",
                     "masterLevel", "TimelineView(", "Timer"] {
             XCTAssertFalse(line.contains(hot), "the instance line reads `\(hot)` — a clock-rate read churns the Workstation plate")
+        }
+    }
+
+    // MARK: 5 — the patch the voice plays, read from the voice's own memory
+
+    func testThePatchFactNamesWhatTheVoiceWasGiven() throws {
+        let line = try code(Self.linePath)
+        XCTAssertTrue(line.contains("@Environment(PolySynthVoice.self) private var synth"))
+        XCTAssertTrue(line.contains("guard let name = synth.appliedPatch?.name.trimmingCharacters(in: .whitespacesAndNewlines),"),
+                      "the name comes from the voice's patch memory")
+        XCTAssertFalse(line.contains("currentPatch"), "the instrument's view-private patch is not reachable — and not guessed")
+        XCTAssertTrue(line.contains("if let name = patchName {"), "no patch fact before the first apply")
+        XCTAssertTrue(line.contains(".lineLimit(1).truncationMode(.tail)"), "a long patch name truncates, it never widens the row")
+        XCTAssertTrue(line.contains("return base + String(localized: \", patch \") + name"), "VoiceOver hears the patch too")
+        let voice = try code("Sources/Echoelmusic/Tools/PolySynthVoice.swift")
+        XCTAssertTrue(voice.contains("appliedPatch = patch"), "counterweight: `apply(_:)` still writes the memory the line reads")
+        XCTAssertTrue(voice.contains("public private(set) var appliedPatch: SynthPatch?"),
+                      "and only the voice writes it")
+        let data = try Data(contentsOf: repoRoot().appendingPathComponent("Sources/Echoelmusic/Resources/Localizable.xcstrings"))
+        let strings = try XCTUnwrap((try JSONSerialization.jsonObject(with: data) as? [String: Any])?["strings"] as? [String: Any])
+        for key in ["Patch", ", patch "] {
+            XCTAssertNotNil(strings[key], "`\(key)` is not in the catalog")
         }
     }
 

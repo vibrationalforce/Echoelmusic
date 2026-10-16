@@ -24906,6 +24906,26 @@
           }
         }
       }
+    },
+    "Patch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patch"
+          }
+        }
+      }
+    },
+    ", patch " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", patch "
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
