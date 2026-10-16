@@ -63,7 +63,7 @@ zoom (`ArrangeTimeZoom`). **Lesson: measure the gap map BEFORE writing it.**
 | 6a | Record scenes — pure take (P4a) | ✅ (this commit) | guard `TheLaunchesBecomePartsOnTheArrangementTests` (log → tiled copies, switch/stop/gone, store paste = one undo, recording wins over parts under it); checkers 0 |
 | 6b | Record scenes — player + door (P4b) | ✅ (this commit) | guard `TheSessionRecordsIntoTheArrangementTests` (every `launch.removeAll()` ends the take first; wrap before fold; sink → `pasteRegions`; leaf door); Python transcription green; checkers 0 |
 | 7a | Automation on the canvas — display | ✅ `9bb2d22` | guard `TheCanvasShowsEachTracksAutomationTests` (own curves only; samples = `value(atTick:)` at the canvas scale; leaf, no gesture, canvas pins intact); checkers 0 |
-| 7b | Automation on the canvas — edit points there | ✅ (this commit) | guard `TheAutomationIsDrawnOnTheCanvasTests` (Draw ⟂ Select; a tap at the canvas scale = a point at that bar, one Undo each; leaf in Draw mode only, shared `SongAutomationEdit` decisions, 3 commits through the one writer; canvas pins intact); checkers 0 |
+| 7b | Automation on the canvas — edit points there | ✅ `27353aa` | guard `TheAutomationIsDrawnOnTheCanvasTests` (Draw ⟂ Select; a tap at the canvas scale = a point at that bar, one Undo each; leaf in Draw mode only, shared `SongAutomationEdit` decisions, 3 commits through the one writer; canvas pins intact); checkers 0 |
 | 7 | Automation on the canvas | open | — |
 
 Done before the fixed order: A1 `2c56287` · P1 `8788833` · P2 `1fd0e02` · P3 `2f694fe` (release v10.79.512 = `26be2e6`).
@@ -103,9 +103,8 @@ Select mode) mounts `ArrangeAutomationEditLane` per row: tap = add, tap a point 
 menu on the canvas). NEEDS-FOUNDER-VERIFY (7a, 7b).
 
 ### ALL SEVEN ITEMS DONE (2026-10-16). Next
-Release v10.79.515 after green gates (asks: P4b, 7a, 7b; `founder-verify --since d6105b9`). Then the
-open follow-ups recorded above: a launched part across a song wrap (P4b records up to the wrap),
-the Track page's parameter choice shared with the canvas row (7b draws the opening one), and the
-founder's device pass over A1–A10/P1–P4/7.
+Follow-ups DONE: P4c (a launched part across the wrap keeps recording, in phase) and 7c (the Track
+page's parameter choice is the canvas row's). Release v10.79.515 after green gates (asks: P4b, P4c,
+7a, 7b, 7c; `founder-verify --since d6105b9`). Open: the founder's device pass over A1–A10/P1–P4/7.
 
 Device asks for the next release note: A1, P1, P2, P3, A5, A2, A9, A4b, A4c, A10 (all in v10.79.514 = `d6105b9`); next build: P4b, 7a, 7b.

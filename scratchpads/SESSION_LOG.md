@@ -1163,3 +1163,17 @@ entspannt bearbeiten kann" → eine Schleife nur für den MIDI-Editierfluss.
 - **E34** (Laptop: E15 vor Catalyst) und **E35** (Stem-Tür wartet auf G-D) im Inbox; Stereo-Sampler: Bus ist schon stereo (PolySynthVoice 2 Kanäle; meine erste Herleitung „mono“ ist zurückgenommen) → **SP1** Sampler-Pan gebaut; SS2/SS3 offen.
 - **10.79.510** (`d25c788`) gehoben nach grünem Compile Check + Build for Testing auf `d9c22c8`; TestFlight 2635 lief zum Zeitpunkt.
 - Lehre: auf einen Gate-Lauf nicht warten — lokal weiterbauen, den Release-Commit EINZELN pushen (`git push origin <sha>:refs/heads/<branch>`), damit TestFlight genau den geprüften Stand baut.
+
+## 2026-10-16 (Abend) — Arrange & Perform: die sieben Punkte gebaut
+
+Founder-Ziel „einfacher Arrangement-Modus auf Ableton-Level + integrierter Performance-Modus“,
+Liste in fester Reihenfolge (`scratchpads/PLAN_ARRANGE_PERFORM_2026-10-16.md`):
+- **1 Marker** (`48a28d6`) · **2 Cycle-Ränder ziehen** (`28b1059`) · **3 Mehrfachauswahl + Zwischenablage** (`8b5d152`)
+- **4a Spurfarbe** (`fa1f6b8`) · **4b Spuren umsortieren** (`1ded828`, die Echoel-Spur bleibt die erste MIDI-Spur — Reihenfolge IST Routing)
+- **5 Einzähler** (`2eb8044`) — nur Click VOR dem einen Start; Record nimmt weiter ab Takt 1 (ein Transport-Pre-Roll hätte vor Tick 0 starten müssen — die Planabweichung steht im Plan)
+- **6 Szenen ins Arrangement** (`69ac75d` pur `LaunchTake`, `fe858c1` Player + „Record to arrangement“, P4c über den Wrap)
+- **7 Automation auf dem Canvas** (`9bb2d22` Anzeige, `27353aa` „Draw automation“, 7c geteilte Parameterwahl)
+- Builds: **v10.79.513** (`df59b13`), **v10.79.514** (`d6105b9`); 515 nach grünen Gates.
+- Lehre: die Wächter des Canvas (genau EIN `DragGesture(`, EIN `@GestureState`, kein `.menu`-Picker) haben die Form von 7b bestimmt — die Bearbeitung lebt in einem eigenen Blatt, nicht im Canvas. Vor jedem neuen Canvas-Zug zuerst diese Zähl-Pins messen.
+- Lehre: `pasteRegions(parts, atTick: min start)` ist schon ein „füge an eigenen Ticks ein, ein Undo“-Schreiber — kein neuer Store-Schreiber für die Session-Aufnahme nötig.
+- Alles NEEDS-FOUNDER-VERIFY (A1–A10, P1–P4, 7a–7c); nichts davon auf dem Gerät gesehen.

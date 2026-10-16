@@ -5376,3 +5376,13 @@ Audiospur-Stems werden aus Datei und `TimelineDocument` gerechnet, nicht abgegri
 ### 2026-10-16 — Stereo-Sampler: der Bus ist schon stereo; SP1 zuerst
 
 Der Spur-Bus übernimmt das Format seiner ERSTEN Quelle (`AudioEngine.attachTrackBus`), und das ist `PolySynthVoice` mit **2 Kanälen** — der Bus ist also stereo, eine Bus-Änderung ist unnötig. ⛔ Die erste Fassung dieses Eintrags nannte den Synth mono und plante dafür eine Messung (SS0) und einen Bus-Umbau (SS1); beides ist gestrichen, eine Stunde später, bevor Code daran hing. Gebaut: **SP1** — der Mono-Sampler nimmt den Spur-Pan an seiner Mixer-Stufe, der Inspektor bietet das Feld an. Offen: SS2 Stereo-Samples, SS3 Überlappung. Review 2026-11-15.
+
+### 2026-10-16 — Session → Arrangement: ein Protokoll der gelandeten Launches
+`LaunchTake` protokolliert, was wo von wann bis wann lief; geschrieben wird bei Stop, Sprung,
+Cycle, Neustart und an jedem Song-Wrap über `pasteRegions` (ein Undo-Schritt je Durchgang). Die
+Tür ist ein Player-Schalter, nie die Session-Ansicht (die speichert nichts — ihr Wächter). Review 2026-11-15.
+
+### 2026-10-16 — Automation auf dem Canvas: Spur + Draw-Modus, ein Entscheidungssatz
+Anzeige-Blatt plus ein Bearbeitungs-Blatt in eigener Datei, beide über `SongAutomationEdit` im
+Canvas-Maßstab; Parameter wird auf der Track-Seite gewählt und pro Spur geteilt. Grund: der Canvas
+ist auf einen Drag, einen Finger-State und keinen Menü-Picker gepinnt. Review 2026-11-15.
