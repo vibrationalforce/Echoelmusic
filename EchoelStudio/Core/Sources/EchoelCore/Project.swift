@@ -102,6 +102,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var placements: [Placement]
     /// Session view: which clip sits in which scene's slot.
     public var slots: [SlotAssignment]
+    /// The synth sound. Instrument tracks play it; other kinds keep the default and ignore it.
+    public var instrument: InstrumentSettings
 
     public init(
         id: TrackID = TrackID(),
@@ -111,7 +113,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         mixer: MixerStrip = MixerStrip(),
         clips: [Clip] = [],
         placements: [Placement] = [],
-        slots: [SlotAssignment] = []
+        slots: [SlotAssignment] = [],
+        instrument: InstrumentSettings = InstrumentSettings()
     ) {
         self.id = id
         self.name = name
@@ -121,6 +124,25 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         self.clips = clips
         self.placements = placements
         self.slots = slots
+        self.instrument = instrument
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument
+    }
+
+    /// Fields added after format 1 shipped decode with their default when absent.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(TrackID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decode(TrackKind.self, forKey: .kind)
+        colorIndex = try c.decode(Int.self, forKey: .colorIndex)
+        mixer = try c.decode(MixerStrip.self, forKey: .mixer)
+        clips = try c.decode([Clip].self, forKey: .clips)
+        placements = try c.decode([Placement].self, forKey: .placements)
+        slots = try c.decode([SlotAssignment].self, forKey: .slots)
+        instrument = try c.decodeIfPresent(InstrumentSettings.self, forKey: .instrument) ?? InstrumentSettings()
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

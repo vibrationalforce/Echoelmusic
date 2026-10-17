@@ -47,6 +47,11 @@ public struct ParameterKey: RawRepresentable, Hashable, Codable, Sendable {
 
 public enum ParameterUnit: String, Codable, Sendable {
     case bpm, decibel, pan
+    case hertz, seconds, octaves
+    /// A plain 0…1 amount.
+    case amount
+    /// One of the descriptor's named `choices`, stored as its index.
+    case choice
 }
 
 /// How a 0…1 control (a CC, a fader, a modulation amount) maps onto the parameter's range.
@@ -55,6 +60,11 @@ public enum ParameterTaper: Sendable, Equatable {
     /// Cubic amplitude law, the standard console fader feel: most travel sits where levels
     /// are actually set, and the bottom of the throw is silence.
     case fader
+    /// Equal ratios per equal travel — frequencies and times, where an octave or a doubling
+    /// should feel the same everywhere. Needs a positive lower bound.
+    case exponential
+    /// Whole steps from the lower bound: named choices.
+    case stepped
 }
 
 public struct ParameterDescriptor: Sendable, Equatable {
@@ -64,6 +74,19 @@ public struct ParameterDescriptor: Sendable, Equatable {
     public let range: ClosedRange<Double>
     public let defaultValue: Double
     public let taper: ParameterTaper
+    /// The names of a `.choice` parameter's values, in index order; empty otherwise.
+    public let choices: [String]
+
+    public init(address: ParameterAddress, title: String, unit: ParameterUnit, range: ClosedRange<Double>,
+                defaultValue: Double, taper: ParameterTaper, choices: [String] = []) {
+        self.address = address
+        self.title = title
+        self.unit = unit
+        self.range = range
+        self.defaultValue = defaultValue
+        self.taper = taper
+        self.choices = choices
+    }
 
     /// The parameter value for a normalised control position. Non-finite input reads as 0.
     public func value(forNormalized position: Double) -> Double {
@@ -76,6 +99,11 @@ public struct ParameterDescriptor: Sendable, Equatable {
             let maxGain = Foundation.pow(10, range.upperBound / 20)
             let db = 20 * Foundation.log10(n * n * n * maxGain)
             return Swift.min(Swift.max(db, range.lowerBound), range.upperBound)
+        case .exponential:
+            guard range.lowerBound > 0 else { return range.lowerBound + n * (range.upperBound - range.lowerBound) }
+            return range.lowerBound * Foundation.pow(range.upperBound / range.lowerBound, n)
+        case .stepped:
+            return (range.lowerBound + n * (range.upperBound - range.lowerBound)).rounded()
         }
     }
 
@@ -91,6 +119,12 @@ public struct ParameterDescriptor: Sendable, Equatable {
             let maxGain = Foundation.pow(10, range.upperBound / 20)
             let cube = Foundation.pow(10, v / 20) / maxGain
             return Swift.min(Swift.max(Foundation.cbrt(cube), 0), 1)
+        case .exponential:
+            guard range.lowerBound > 0, range.upperBound > range.lowerBound else { return 0 }
+            return Foundation.log(v / range.lowerBound) / Foundation.log(range.upperBound / range.lowerBound)
+        case .stepped:
+            let span = range.upperBound - range.lowerBound
+            return span > 0 ? (v.rounded() - range.lowerBound) / span : 0
         }
     }
 }
@@ -106,6 +140,9 @@ extension Project {
         for track in tracks {
             list.append(Self.descriptor(.volume(track.id), title: "\(track.name) Volume"))
             list.append(Self.descriptor(.pan(track.id), title: "\(track.name) Pan"))
+            if track.kind == .instrument {
+                list += SynthParameter.all.map { $0.descriptor(track: track) }
+            }
         }
         return list
     }
@@ -113,6 +150,9 @@ extension Project {
     /// The descriptor for `address`, or nil when it names nothing in this project.
     public func descriptor(for address: ParameterAddress) -> ParameterDescriptor? {
         guard value(of: address) != nil else { return nil }
+        if case .track(let id) = address.owner, let synth = SynthParameter.named(address.key), let track = track(id) {
+            return synth.descriptor(track: track)
+        }
         let title: String
         switch address.owner {
         case .project: title = "Tempo"
@@ -132,6 +172,9 @@ extension Project {
         case (.master, .pan): return master.pan
         case (.track(let id), .volume): return track(id)?.mixer.volumeDB
         case (.track(let id), .pan): return track(id)?.mixer.pan
+        case (.track(let id), let key):
+            guard let synth = SynthParameter.named(key), let track = track(id), track.kind == .instrument else { return nil }
+            return track.instrument.value(synth)
         default: return nil
         }
     }
@@ -162,6 +205,8 @@ extension Command {
         case (.master, .pan): return .setPan(.master, pan: value)
         case (.track(let id), .volume): return .setVolume(.track(id), db: value)
         case (.track(let id), .pan): return .setPan(.track(id), pan: value)
+        case (.track(let id), let key) where SynthParameter.named(key) != nil:
+            return .setInstrumentParameter(id, key: key.rawValue, value: value)
         default: return nil
         }
     }

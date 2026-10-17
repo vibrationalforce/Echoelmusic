@@ -34,6 +34,7 @@ extension Command {
     public enum Kind: String, CaseIterable, Sendable {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
+        case setInstrumentParameter, loadInstrumentPreset
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
@@ -53,6 +54,8 @@ extension Command {
         case .renameTrack: .renameTrack
         case .moveTrack: .moveTrack
         case .setTrackColor: .setTrackColor
+        case .setInstrumentParameter: .setInstrumentParameter
+        case .loadInstrumentPreset: .loadInstrumentPreset
         case .setVolume: .setVolume
         case .setPan: .setPan
         case .setMute: .setMute
@@ -127,6 +130,17 @@ public enum CommandCatalog {
             return CommandSpec(name: "track.color", title: "Change Track Color",
                                summary: "Chooses one of the 12 track colours.",
                                parameters: [P("track", .trackID, "The track."), P("colorIndex", .integer, "Colour 0–11.")])
+        case .setInstrumentParameter:
+            return CommandSpec(name: "instrument.parameter", title: "Change Sound",
+                               summary: "Sets one synth parameter of an instrument track, e.g. synth.cutoff in Hz.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("key", .string, "A synth parameter key: " + SynthParameter.all.map(\.key.rawValue).joined(separator: ", ") + "."),
+                                            P("value", .number, "The new value, within the parameter's range.")])
+        case .loadInstrumentPreset:
+            return CommandSpec(name: "instrument.preset", title: "Load Preset",
+                               summary: "Replaces an instrument track's sound with a built-in preset.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("name", .string, "One of: " + InstrumentPreset.all.map(\.name).joined(separator: ", ") + ".")])
         case .setVolume:
             return CommandSpec(name: "mixer.volume", title: "Change Volume",
                                summary: "Sets a fader level in dB (−144 is silence, +6 is the maximum).",

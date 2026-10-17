@@ -11,7 +11,7 @@ final class ParameterTests: XCTestCase {
 
     func testEveryListedParameterHasAValueAndACommandThatSetsIt() throws {
         var (project, _) = try projectWithTrack()
-        XCTAssertEqual(project.parameters.count, 5)
+        XCTAssertEqual(project.parameters.count, 5 + SynthParameter.all.count)
         for descriptor in project.parameters {
             XCTAssertNotNil(project.value(of: descriptor.address), descriptor.address.description)
             XCTAssertEqual(project.descriptor(for: descriptor.address), descriptor)

@@ -18,6 +18,10 @@ public enum Command: Codable, Equatable, Sendable {
     case moveTrack(TrackID, toIndex: Int)
     case setTrackColor(TrackID, colorIndex: Int)
 
+    // Instrument
+    case setInstrumentParameter(TrackID, key: String, value: Double)
+    case loadInstrumentPreset(TrackID, name: String)
+
     // Mixer
     case setVolume(MixerTarget, db: Double)
     case setPan(MixerTarget, pan: Double)
@@ -146,6 +150,29 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "colorIndex", reason: "must be within 0…\(Palette.trackColorCount - 1)")
             }
             project.tracks[t].colorIndex = colorIndex
+
+        case let .setInstrumentParameter(id, key, value):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have a synth")
+            }
+            guard let parameter = SynthParameter.named(ParameterKey(rawValue: key)) else {
+                throw CommandError.invalidValue(parameter: "key", reason: "no synth parameter named \(key)")
+            }
+            guard parameter.accepts(value) else {
+                throw CommandError.invalidValue(parameter: "value", reason: "must be within \(parameter.range)")
+            }
+            project.tracks[t].instrument.values[key] = value
+
+        case let .loadInstrumentPreset(id, name):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have a synth")
+            }
+            guard let preset = InstrumentPreset.named(name) else {
+                throw CommandError.invalidValue(parameter: "name", reason: "no preset named \(name)")
+            }
+            project.tracks[t].instrument = InstrumentSettings(preset: preset.name, values: preset.values)
 
         case let .setVolume(target, db):
             guard db.isFinite, MixerStrip.volumeRange.contains(db) else {
