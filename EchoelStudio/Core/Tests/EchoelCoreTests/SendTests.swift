@@ -86,4 +86,21 @@ final class TrackOutputTests: XCTestCase {
         try Command.setInput(vocal, channel: nil).apply(to: &p)
         XCTAssertNil(p.track(vocal)?.input)
     }
+
+    func testAnAudioTrackChoosesWhenItHearsItsInput() throws {
+        var p = Project()
+        let vocal = TrackID(), keys = TrackID()
+        try Command.addTrack(id: vocal, name: "Vocal", kind: .audio, index: nil).apply(to: &p)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &p)
+        XCTAssertEqual(p.track(vocal)?.monitor, .auto, "a new track monitors while armed")
+        try Command.setMonitor(vocal, .input).apply(to: &p)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).track(vocal)?.monitor, .input)
+        let before = p
+        XCTAssertThrowsError(try Command.setMonitor(keys, .off).apply(to: &p), "an instrument track has no input")
+        XCTAssertEqual(p, before)
+        let index = try XCTUnwrap(p.tracks.firstIndex { $0.id == keys })
+        p.tracks[index].monitor = .off
+        XCTAssertThrowsError(try p.validate(), "and a document that says otherwise is refused")
+        XCTAssertEqual(CommandCatalog.spec(for: .setMonitor).name, "track.monitor")
+    }
 }

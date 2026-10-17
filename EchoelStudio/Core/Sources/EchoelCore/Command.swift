@@ -47,6 +47,8 @@ public enum Command: Codable, Equatable, Sendable {
     case setOutput(TrackID, channel: Int?)
     /// The interface input an audio track records from (0-based), or the first with nil.
     case setInput(TrackID, channel: Int?)
+    /// When an audio track plays its input through its strip.
+    case setMonitor(TrackID, MonitorMode)
 
     // MIDI
     /// Makes `control` move `target`, replacing whatever it moved before.
@@ -402,6 +404,13 @@ extension Command {
                 }
             }
             project.tracks[t].input = channel
+
+        case let .setMonitor(id, mode):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio tracks have an input")
+            }
+            project.tracks[t].monitor = mode
 
         case let .mapMIDI(control, target):
             guard control.isValid else {

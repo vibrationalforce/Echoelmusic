@@ -95,6 +95,16 @@ public struct Project: Codable, Equatable, Sendable {
     }
 }
 
+/// When an audio track plays its input through its own channel strip.
+public enum MonitorMode: String, Codable, Sendable, CaseIterable {
+    /// While the track is armed — and never into the device's own speaker, where it would howl.
+    case auto
+    /// Always, armed or not.
+    case input = "in"
+    /// Never; the interface or the mixer monitors directly.
+    case off
+}
+
 public enum TrackKind: String, Codable, Sendable, CaseIterable {
     /// Plays MIDI clips into an instrument (own or AUv3).
     case instrument
@@ -132,6 +142,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// The interface input an audio track records from, 0-based; nil is the first. A channel the
     /// interface lacks is kept, and the track records the first until it is back.
     public var input: Int?
+    /// When an audio track hears its input; other kinds keep `auto` and ignore it.
+    public var monitor: MonitorMode = .auto
 
     /// Interface channels a track may name; the device decides how many exist.
     public static let outputChannelLimit = 64
@@ -166,7 +178,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input, monitor
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -186,6 +198,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
         output = try c.decodeIfPresent(Int.self, forKey: .output)
         input = try c.decodeIfPresent(Int.self, forKey: .input)
+        monitor = try c.decodeIfPresent(MonitorMode.self, forKey: .monitor) ?? .auto
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {
