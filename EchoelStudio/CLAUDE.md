@@ -35,6 +35,17 @@ on modules below it — never the other way round.
 8. **Tests test behaviour.** No test reads source text or prose.
 9. **Swift 6 language mode, strict concurrency.** No `print`, no force unwrap.
 
+## Build lessons (each cost one red CI round, 2026-10-17)
+
+- **A local never takes the name of a method or helper in scope.** `let end = end(of:)`,
+  `let core = core()` — Swift resolves the name to the local and reports "cannot call value of
+  non-function type". Name locals for what they hold (`stop`, `engine`).
+- **Split a large view body into builders.** One long `body` expression with nested `ForEach`
+  and many modifiers exceeds the type checker's time limit; a property per region and a
+  function per row/cell fix it.
+- **A test file can hold more than one test class.** Appending at the end of the file puts a
+  test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
+
 ## Verifying
 
 There is no Swift toolchain in a cloud session. The workflow `.github/workflows/studio.yml`
