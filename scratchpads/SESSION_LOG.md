@@ -1224,3 +1224,8 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Blockgröße abhängig — aus dem Ausgabe-Index berechnen. Ein von der Platte gelesener Song ist nie
   durch `media.add` gegangen: Pfade beim LESEN prüfen (`MediaFile.url(in:)`).
   Nächstes: Audio-Aufnahme (§6.2), dann M3.
+- 14:06 UTC — **Audio-Aufnahme gebaut**: Ring + Platzierung (3b5c5c2), Eingang/Take/Bedienung (a88d7e4),
+  Import-Fix (76037b3, Run #35 grün). Rot einmal: neue Engine-Datei ohne `import EchoelCore` — jede neue
+  Datei eines Pakets importiert, was sie benutzt; die Nachbardateien vererben nichts.
+  Nicht gerätegeprüft: Latenz, Startpositions-Schätzung (positionSample − Blockgröße), Picker-Dismiss.
+  Nächstes: Audit der Render-Pfade (Agent), dann M3 AUv3-Host.
