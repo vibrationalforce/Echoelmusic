@@ -5,7 +5,7 @@
 /// never allocates. Mixer state (mute, solo, volume) is NOT baked in, so toggling a mute
 /// while playing changes the mix without recompiling the notes.
 public struct PlaybackPlan: Equatable, Sendable {
-    public var tempo: Double
+    public var tempoMap: TempoMap
     public var tracks: [TrackEvents]
     /// The end of the last note on any track, or 0 for an empty song.
     public var songEnd: Tick
@@ -29,7 +29,7 @@ public struct PlaybackPlan: Equatable, Sendable {
     }
 
     public init(compiling project: Project) {
-        tempo = project.tempo
+        tempoMap = project.tempoMap
         var end: Tick = 0
         tracks = project.tracks.compactMap { track in
             guard track.kind == .instrument else { return nil }
@@ -123,32 +123,37 @@ extension PlaybackPlan.NoteEvent.Kind {
     }
 }
 
-/// Converting between musical and clock time at a constant tempo. A tempo map with changes
-/// replaces this when tempo automation arrives; every caller already goes through it.
+/// Converting between musical time and samples, through the project's tempo map.
 public struct TimeConversion: Equatable, Sendable {
-    public let bpm: Double
+    public let tempoMap: TempoMap
     public let sampleRate: Double
 
-    public init(bpm: Double, sampleRate: Double) {
-        self.bpm = bpm
+    public init(tempoMap: TempoMap, sampleRate: Double) {
+        self.tempoMap = tempoMap
         self.sampleRate = sampleRate
     }
 
-    public var samplesPerTick: Double {
-        sampleRate * 60 / (bpm * Double(MusicalTime.ticksPerQuarter))
+    /// A constant tempo.
+    public init(bpm: Double, sampleRate: Double) {
+        self.init(tempoMap: TempoMap(bpm: bpm), sampleRate: sampleRate)
+    }
+
+    /// Samples per tick at the tempo sounding at `tick`.
+    public func samplesPerTick(at tick: Tick) -> Double {
+        sampleRate * 60 / (tempoMap.bpm(at: tick) * Double(MusicalTime.ticksPerQuarter))
     }
 
     public func seconds(at tick: Tick) -> Double {
-        Double(tick) * 60 / (bpm * Double(MusicalTime.ticksPerQuarter))
+        tempoMap.seconds(at: tick)
     }
 
     /// The sample on which `tick` falls, rounded down, counted from tick 0.
     public func sample(at tick: Tick) -> Int64 {
-        Int64((Double(tick) * samplesPerTick).rounded(.down))
+        Int64((tempoMap.seconds(at: tick) * sampleRate).rounded(.down))
     }
 
     /// The tick that is sounding at `sample`, rounded down.
     public func tick(atSample sample: Int64) -> Tick {
-        Tick((Double(sample) / samplesPerTick).rounded(.down))
+        tempoMap.tick(atSeconds: Double(sample) / sampleRate)
     }
 }

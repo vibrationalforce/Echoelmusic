@@ -8,6 +8,8 @@ public enum Command: Codable, Equatable, Sendable {
     case renameProject(name: String)
     case setTempo(bpm: Double)
     case setTimeSignature(TimeSignature)
+    case setTempoChange(at: Tick, bpm: Double)
+    case removeTempoChange(at: Tick)
 
     // Tracks
     case addTrack(id: TrackID, name: String, kind: TrackKind, index: Int?)
@@ -94,6 +96,23 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "timeSignature", reason: "numerator 1…32, denominator a power of two up to 32")
             }
             project.timeSignature = signature
+
+        case let .setTempoChange(tick, bpm):
+            guard tick > 0, tick <= MusicalTime.maximumTick else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "must be within 1…\(MusicalTime.maximumTick); tick 0 is the project tempo")
+            }
+            guard bpm.isFinite, Tempo.range.contains(bpm) else {
+                throw CommandError.invalidValue(parameter: "bpm", reason: "must be within \(Tempo.range)")
+            }
+            project.tempoChanges.removeAll { $0.tick == tick }
+            project.tempoChanges.append(TempoChange(tick: tick, bpm: bpm))
+            project.tempoChanges.sort { $0.tick < $1.tick }
+
+        case .removeTempoChange(let tick):
+            guard project.tempoChanges.contains(where: { $0.tick == tick }) else {
+                throw CommandError.invalidValue(parameter: "tick", reason: "no tempo change at \(tick)")
+            }
+            project.tempoChanges.removeAll { $0.tick == tick }
 
         case let .addTrack(id, name, kind, index):
             guard project.trackIndex(id) == nil else { throw CommandError.duplicateID(id.description) }

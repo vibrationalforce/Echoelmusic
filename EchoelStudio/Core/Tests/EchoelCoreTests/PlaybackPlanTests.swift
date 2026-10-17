@@ -100,6 +100,6 @@ final class PlaybackPlanTests: XCTestCase {
         XCTAssertEqual(time.sample(at: 960), 24_000)
         XCTAssertEqual(time.sample(at: MusicalTime.ticksPerBar(.common)), 96_000)
         XCTAssertEqual(time.tick(atSample: 24_000), 960)
-        XCTAssertEqual(time.samplesPerTick, 25, accuracy: 1e-12)
+        XCTAssertEqual(time.samplesPerTick(at: 0), 25, accuracy: 1e-12)
     }
 }

@@ -32,7 +32,7 @@ public struct ParameterSpec: Equatable, Sendable {
 
 extension Command {
     public enum Kind: String, CaseIterable, Sendable {
-        case renameProject, setTempo, setTimeSignature
+        case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
@@ -46,6 +46,8 @@ extension Command {
         case .renameProject: .renameProject
         case .setTempo: .setTempo
         case .setTimeSignature: .setTimeSignature
+        case .setTempoChange: .setTempoChange
+        case .removeTempoChange: .removeTempoChange
         case .addTrack: .addTrack
         case .removeTrack: .removeTrack
         case .renameTrack: .renameTrack
@@ -93,6 +95,15 @@ public enum CommandCatalog {
             return CommandSpec(name: "project.timeSignature", title: "Change Time Signature",
                                summary: "Sets the time signature, for example 4/4 or 7/8.",
                                parameters: [P("timeSignature", .timeSignature, "Numerator 1–32, denominator 1, 2, 4, 8, 16 or 32.")])
+        case .setTempoChange:
+            return CommandSpec(name: "tempo.change.set", title: "Set Tempo Change",
+                               summary: "From a position after the song start, plays at a new tempo until the next change. Replaces a change at the same position.",
+                               parameters: [P("tick", .ticks, "Position in ticks (960 per quarter note), after 0."),
+                                            P("bpm", .number, "Tempo in BPM (20–999).")])
+        case .removeTempoChange:
+            return CommandSpec(name: "tempo.change.remove", title: "Remove Tempo Change",
+                               summary: "Removes the tempo change at a position.",
+                               parameters: [P("tick", .ticks, "Position of the change in ticks.")])
         case .addTrack:
             return CommandSpec(name: "track.add", title: "Add Track",
                                summary: "Adds an instrument, audio or return track.",

@@ -8,7 +8,10 @@ public struct Project: Codable, Equatable, Sendable {
 
     public var formatVersion: Int
     public var name: String
+    /// The tempo from tick 0 until the first change.
     public var tempo: Double
+    /// Later tempo changes, sorted by tick, each after tick 0 and at a distinct tick.
+    public var tempoChanges: [TempoChange]
     public var timeSignature: TimeSignature
     public var tracks: [Track]
     public var scenes: [Scene]
@@ -17,6 +20,7 @@ public struct Project: Codable, Equatable, Sendable {
     public init(
         name: String = "Untitled",
         tempo: Double = Tempo.defaultBPM,
+        tempoChanges: [TempoChange] = [],
         timeSignature: TimeSignature = .common,
         tracks: [Track] = [],
         scenes: [Scene] = [],
@@ -25,10 +29,28 @@ public struct Project: Codable, Equatable, Sendable {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
         self.tempo = tempo
+        self.tempoChanges = tempoChanges
         self.timeSignature = timeSignature
         self.tracks = tracks
         self.scenes = scenes
         self.master = master
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master
+    }
+
+    /// Fields added after format 1 shipped decode with their default when absent.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        formatVersion = try c.decode(Int.self, forKey: .formatVersion)
+        name = try c.decode(String.self, forKey: .name)
+        tempo = try c.decode(Double.self, forKey: .tempo)
+        tempoChanges = try c.decodeIfPresent([TempoChange].self, forKey: .tempoChanges) ?? []
+        timeSignature = try c.decode(TimeSignature.self, forKey: .timeSignature)
+        tracks = try c.decode([Track].self, forKey: .tracks)
+        scenes = try c.decode([Scene].self, forKey: .scenes)
+        master = try c.decode(MixerStrip.self, forKey: .master)
     }
 
     public func trackIndex(_ id: TrackID) -> Int? {
