@@ -39,7 +39,8 @@ final class SynthKernelTests: XCTestCase {
         kernel.receive(status: 0x90, 60, 127)
         let loud = peak(render(kernel, frames: 4_800).0)
         kernel.setParameter(level, 0)
-        XCTAssertEqual(peak(render(kernel, frames: 4_800).0), 0)
+        _ = render(kernel, frames: 4_800)            // the level glides down (5 ms)
+        XCTAssertLessThan(peak(render(kernel, frames: 960).0), 1e-6)
         XCTAssertGreaterThan(loud, 0)
     }
 
