@@ -1234,3 +1234,6 @@ Nächstes: Arrangement-Ansicht, dann M2.
   `import AVFoundation` für `UnsafeMutableAudioBufferListPointer` und `import CoreAudioKit` für
   `requestViewController` — macOS-`swift test` sieht beides nicht. Nichts gerätegeprüft.
   Nächstes: Effekt-Inserts, Offline-Render mit Plugins.
+- 14:46 UTC — **M3 Teil 2: Effekt-Inserts + Export mit Plugins** — Stereo-Bus pro Spur + HostedEffect
+  (d3991bf), Insert-Modell + 5 Befehle (bb6ea6e), Laden + Mixer-FX-Seite (437bcad), Offline-Export mit
+  frischen Plugin-Kopien (c35d406), Run #46 grün. Nichts gerätegeprüft. Nächstes: eigene AUv3s (Kauf), Sends.
