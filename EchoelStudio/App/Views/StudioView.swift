@@ -8,13 +8,27 @@ struct StudioView: View {
     @Environment(AudioEngine.self) private var engine
 
     @State private var router = StudioRouter()
+    @State private var surface: Surface = .tracks
+
+    enum Surface: Hashable { case tracks, mixer }
 
     var body: some View {
         @Bindable var router = router
         VStack(spacing: 0) {
             TransportBar()
             Divider().overlay(Theme.Color.border)
-            TrackListView { router.sheet = .clipEditor($0) }
+            Picker("View", selection: $surface) {
+                Text("Tracks").tag(Surface.tracks)
+                Text("Mixer").tag(Surface.mixer)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.s)
+            .background(Theme.Color.surface)
+            switch surface {
+            case .tracks: TrackListView { router.sheet = .clipEditor($0) }
+            case .mixer: MixerView()
+            }
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
