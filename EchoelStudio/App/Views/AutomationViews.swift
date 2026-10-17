@@ -5,13 +5,23 @@ import SwiftUI
 /// with one point holding the parameter's current value.
 struct AutomateMenu: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     let owner: ParameterAddress.Owner
+
+    /// One loaded unit of the track and its parameters that have no lane yet.
+    private struct UnitParameters: Identifiable {
+        let unit: PluginParameter.Unit
+        let title: String
+        let parameters: [PluginParameterInfo]
+        var id: PluginParameter.Unit { unit }
+    }
 
     var body: some View {
         let project = store.project
         let open = project.parameters.filter {
             $0.address.owner == owner && $0.address != .tempo && project.automation(for: $0.address) == nil
         }
+        let units = pluginUnits(project)
         Menu("Automate", systemImage: "point.topleft.down.curvedto.point.bottomright.up") {
             ForEach(open, id: \.address) { descriptor in
                 Button(descriptor.title) {
@@ -19,18 +29,49 @@ struct AutomateMenu: View {
                     try? store.perform(.setAutomation(descriptor.address, points: [AutomationPoint(tick: 0, value: value)]))
                 }
             }
+            ForEach(units) { unit in
+                Menu(unit.title) {
+                    ForEach(unit.parameters) { parameter in
+                        Button(parameter.name) { automate(unit.unit, parameter) }
+                    }
+                }
+            }
         }
-        .disabled(open.isEmpty)
+        .disabled(open.isEmpty && units.isEmpty)
+    }
+
+    /// A new lane starts where the unit's control is now.
+    private func automate(_ unit: PluginParameter.Unit, _ parameter: PluginParameterInfo) {
+        guard case .track(let track) = owner else { return }
+        let address = ParameterAddress.plugin(track, PluginParameter(unit, address: parameter.address))
+        try? store.perform(.setAutomation(address, points: [AutomationPoint(tick: 0, value: parameter.position)]))
+    }
+
+    private func pluginUnits(_ project: Project) -> [UnitParameters] {
+        guard case .track(let id) = owner, let track = project.track(id) else { return [] }
+        _ = engine.plugins.revision
+        var units: [(PluginParameter.Unit, PluginHost.Slot, String)] = []
+        if track.kind == .instrument, track.instrument.device == .plugin, let plugin = track.instrument.plugin {
+            units.append((.instrument, .instrument(id), plugin.name))
+        }
+        for insert in track.inserts { units.append((.insert(insert.id), .insert(insert.id), insert.plugin.name)) }
+        return units.compactMap { unit, slot, title in
+            let open = engine.plugins.automatableParameters(slot).filter {
+                project.automation(for: .plugin(id, PluginParameter(unit, address: $0.address))) == nil
+            }
+            return open.isEmpty ? nil : UnitParameters(unit: unit, title: title, parameters: open)
+        }
     }
 }
 
 /// The name cell of an automation lane, with its delete action.
 struct AutomationName: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     let lane: AutomationLane
 
     var body: some View {
-        let title = store.project.descriptor(for: lane.target)?.title ?? lane.target.description
+        let title = pluginTitle ?? store.project.descriptor(for: lane.target)?.title ?? lane.target.description
         Text(title)
             .font(Theme.Font.caption)
             .foregroundStyle(Theme.Color.textSecondary)
@@ -47,6 +88,21 @@ struct AutomationName: View {
                 }
             }
             .accessibilityHidden(true)
+    }
+
+    /// A plugin parameter by the name its unit gives it, once the unit is loaded.
+    private var pluginTitle: String? {
+        guard case .track(let id) = lane.target.owner, let parameter = lane.target.key.pluginParameter,
+              let track = store.project.track(id), let plugin = track.plugin(for: parameter.unit) else { return nil }
+        _ = engine.plugins.revision
+        let slot: PluginHost.Slot
+        switch parameter.unit {
+        case .instrument: slot = .instrument(id)
+        case .insert(let insert): slot = .insert(insert)
+        }
+        guard let name = engine.plugins.automatableParameters(slot).first(where: { $0.address == parameter.address })?.name
+        else { return nil }
+        return "\(plugin.name) \(name)"
     }
 }
 

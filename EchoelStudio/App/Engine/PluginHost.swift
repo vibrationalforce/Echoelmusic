@@ -200,7 +200,7 @@ final class PluginHost {
         let rate = request.sampleRate
         loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
                               instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate),
-                              effect: isEffect ? Self.effect(unit, sampleRate: rate) : nil)
+                              effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate) })
         syncedState[slot] = state
         problems[slot] = nil
         revision += 1
@@ -236,11 +236,38 @@ final class PluginHost {
 
     private static func instrument(_ unit: AUAudioUnit, sampleRate: Double) -> HostedUnit {
         HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock, sampleRate: sampleRate,
-                   maximumFrames: EngineCore.maximumFrames, owner: unit)
+                   maximumFrames: EngineCore.maximumFrames, owner: unit,
+                   scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit))
     }
 
-    private static func effect(_ unit: AUAudioUnit, sampleRate: Double) -> HostedEffect {
-        HostedEffect(render: unit.renderBlock, sampleRate: sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit)
+    private static func effect(_ unit: AUAudioUnit, insert: InsertID, sampleRate: Double) -> HostedEffect {
+        HostedEffect(render: unit.renderBlock, sampleRate: sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit,
+                     insert: insert, scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit))
+    }
+
+    /// The parameters automation may move: writable, with a real range. Read after the saved
+    /// settings are applied — some units build their tree from them.
+    private static func automatable(_ unit: AUAudioUnit) -> [UInt64: ClosedRange<Float>] {
+        var ranges: [UInt64: ClosedRange<Float>] = [:]
+        for parameter in unit.parameterTree?.allParameters ?? [] where parameter.flags.contains(.flag_IsWritable) {
+            let low = parameter.minValue, high = parameter.maxValue
+            guard low.isFinite, high.isFinite, high > low else { continue }
+            ranges[parameter.address] = low...high
+        }
+        return ranges
+    }
+
+    /// The parameters of the unit in `slot` that the song can automate, in the unit's order, or
+    /// none while it is not loaded.
+    func automatableParameters(_ slot: Slot) -> [PluginParameterInfo] {
+        guard let unit = loaded[slot]?.unit else { return [] }
+        return (unit.parameterTree?.allParameters ?? []).compactMap { parameter in
+            guard parameter.flags.contains(.flag_IsWritable), parameter.minValue.isFinite, parameter.maxValue.isFinite,
+                  parameter.maxValue > parameter.minValue else { return nil }
+            return PluginParameterInfo(address: parameter.address, name: parameter.displayName,
+                                       low: parameter.minValue, high: parameter.maxValue, unitName: parameter.unitName,
+                                       current: parameter.value)
+        }
     }
 
     /// Fresh units for an export: the live ones belong to the render thread. Each is loaded with
@@ -262,7 +289,7 @@ final class PluginHost {
             var chain: [HostedEffect] = []
             for insert in track.inserts where !insert.isBypassed {
                 if let unit = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
-                    chain.append(Self.effect(unit, sampleRate: sampleRate))
+                    chain.append(Self.effect(unit, insert: insert.id, sampleRate: sampleRate))
                 } else {
                     missing.append(insert.plugin.name)
                 }
@@ -348,6 +375,28 @@ final class PluginHost {
 extension PluginHost.Slot {
     var isInsert: Bool {
         if case .insert = self { true } else { false }
+    }
+
+    var insertID: InsertID? {
+        if case .insert(let id) = self { id } else { nil }
+    }
+}
+
+/// One automatable parameter of a loaded unit, as the unit describes it.
+struct PluginParameterInfo: Identifiable, Equatable {
+    let address: UInt64
+    let name: String
+    let low: Float
+    let high: Float
+    let unitName: String?
+    /// The unit's value when this was read.
+    let current: Float
+
+    var id: UInt64 { address }
+
+    /// Where `current` sits along the parameter's travel, 0…1.
+    var position: Double {
+        Double(Swift.min(Swift.max((current - low) / (high - low), 0), 1))
     }
 }
 
