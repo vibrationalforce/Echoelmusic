@@ -110,6 +110,9 @@ final class PolySynthTests: XCTestCase {
         var patch = synth.patch
         patch.level = 0
         synth.setPatch(patch)
-        XCTAssertEqual(peak(render(&synth, seconds: 0.05)), 0)
+        // The level glides (5 ms), so the sounding voice falls silent within a few time
+        // constants instead of at the next sample.
+        _ = render(&synth, seconds: 0.1)
+        XCTAssertLessThan(peak(render(&synth, seconds: 0.02)), 1e-6)
     }
 }
