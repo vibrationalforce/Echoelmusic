@@ -87,8 +87,9 @@ public final class EngineCore: @unchecked Sendable {
     private var mixTo: Tick = 0
     /// The next sample at which automated synth parameters are set again.
     private var automationNext: Int64 = 0
-    /// Frames between two settings of an automated synth parameter: under 3 ms at 48 kHz.
-    static let automationStep: Int64 = 128
+    /// Frames between two settings of an automated synth parameter: 0.67 ms at 48 kHz. The
+    /// synth glides between them, so the sweep is continuous.
+    static let automationStep: Int64 = 32
     /// Host time of the current render call, and where the current chunk starts in it.
     private var callHostTime: UInt64 = 0
     private var chunkStart = 0

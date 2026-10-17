@@ -29,6 +29,20 @@ final class PolySynthTests: XCTestCase {
         XCTAssertEqual(peak(render(&synth, seconds: 0.05)), 0)
     }
 
+    func testALevelOrCutoffChangeGlidesInsteadOfJumping() {
+        var patch = SynthPatch(waveform: .sine, cutoff: 12_000, filterEnvelopeAmount: 0,
+                               ampEnvelope: .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.2), level: 1)
+        var synth = PolySynth(patch: patch, sampleRate: rate)
+        synth.noteOn(pitch: 69, velocity: 127)
+        let before = peak(Array(render(&synth, seconds: 0.1).suffix(480)))
+        patch.level = 0
+        synth.setPatch(patch)
+        let firstMillisecond = peak(render(&synth, seconds: 0.001))
+        XCTAssertGreaterThan(firstMillisecond, before * 0.5, "the level glides down, it does not cut")
+        let later = peak(Array(render(&synth, seconds: 0.06).suffix(480)))
+        XCTAssertLessThan(later, before * 0.01, "and arrives within a few time constants")
+    }
+
     func testAChordUsesOneVoicePerNoteAndTheSamePitchRetriggersItsOwn() {
         var synth = PolySynth(sampleRate: rate)
         for pitch: UInt8 in [60, 64, 67] { synth.noteOn(pitch: pitch, velocity: 90) }

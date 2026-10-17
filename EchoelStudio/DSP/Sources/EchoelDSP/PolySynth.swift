@@ -49,12 +49,33 @@ public struct SynthVoice: Sendable {
     private var increment: Float = 0
     private var gain: Float = 0
     private var controlCountdown = 0
+    /// Cutoff (in octaves above 1 Hz), resonance and level glide towards the patch instead of
+    /// jumping, so an automated sweep or a 7-bit MIDI knob sounds continuous.
+    private var cutoffOctaves: Float
+    private var resonance: Float
+    private var level: Float
+    private let cutoffPole: Float
+    private let resonancePole: Float
+    private let levelPole: Float
 
-    /// Samples between cutoff updates: the filter envelope moves smoothly at this rate and
-    /// the prewarp `tan` runs 1/32 as often as a per-sample update would.
-    static let controlInterval = 32
+    /// Glide time constants, in seconds. Short enough to follow a fast ride, long enough that a
+    /// step of one MIDI value — or of one automation update — is never heard as a step.
+    static let cutoffGlide: Float = 0.008
+    static let resonanceGlide: Float = 0.008
+    static let levelGlide: Float = 0.005
+
+    /// Samples between filter coefficient updates: the filter envelope and the gliding cutoff
+    /// move at this rate (0.33 ms at 48 kHz) and the prewarp `tan` runs 1/16 as often as a
+    /// per-sample update would.
+    static let controlInterval = 16
 
     init(patch: SynthPatch, sampleRate: Float) {
+        cutoffOctaves = Self.octaves(patch.cutoff)
+        resonance = Self.clampedResonance(patch.resonance)
+        level = Self.clampedLevel(patch.level)
+        cutoffPole = Self.pole(Self.cutoffGlide, sampleRate)
+        resonancePole = Self.pole(Self.resonanceGlide, sampleRate)
+        levelPole = Self.pole(Self.levelGlide, sampleRate)
         filter = SVFilter(mode: patch.filterMode, cutoff: patch.cutoff, resonance: patch.resonance, sampleRate: sampleRate)
         ampEnvelope = Envelope(settings: patch.ampEnvelope, sampleRate: sampleRate)
         filterEnvelope = Envelope(settings: patch.filterEnvelope, sampleRate: sampleRate)
@@ -63,7 +84,17 @@ public struct SynthVoice: Sendable {
 
     public var isActive: Bool { ampEnvelope.isActive }
 
-    mutating func start(pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float) {
+    /// One-pole coefficient for a time constant.
+    static func pole(_ seconds: Float, _ sampleRate: Float) -> Float {
+        guard seconds > 0, sampleRate > 0 else { return 0 }
+        return expf(-1 / (seconds * sampleRate))
+    }
+
+    static func octaves(_ hz: Float) -> Float { log2f(hz.isFinite ? Swift.max(hz, 1) : 1_000) }
+    static func clampedResonance(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 0.95) : 0.3 }
+    static func clampedLevel(_ value: Float) -> Float { value.isFinite ? Swift.min(Swift.max(value, 0), 1) : 0 }
+
+    mutating func start(pitch: UInt8, velocity: UInt8, order: UInt64, sampleRate: Float, patch: SynthPatch) {
         let wasSilent = !ampEnvelope.isActive
         self.pitch = pitch
         isHeld = true
@@ -74,6 +105,11 @@ public struct SynthVoice: Sendable {
         if wasSilent {
             oscillator.reset()
             filter.reset()
+            // A fresh note starts where the patch is; only a sounding note glides.
+            cutoffOctaves = Self.octaves(patch.cutoff)
+            resonance = Self.clampedResonance(patch.resonance)
+            level = Self.clampedLevel(patch.level)
+            filter.setResonance(resonance)
         }
         controlCountdown = 0
         ampEnvelope.gateOn()
@@ -95,7 +131,6 @@ public struct SynthVoice: Sendable {
     mutating func apply(_ patch: SynthPatch) {
         oscillator.waveform = patch.waveform
         filter.mode = patch.filterMode
-        filter.setResonance(patch.resonance)
         ampEnvelope.update(patch.ampEnvelope)
         filterEnvelope.update(patch.filterEnvelope)
         controlCountdown = 0
@@ -106,11 +141,17 @@ public struct SynthVoice: Sendable {
     mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, patch: SynthPatch) {
         guard ampEnvelope.isActive else { return }
         let amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
-        let level = patch.level.isFinite ? Swift.min(Swift.max(patch.level, 0), 1) : 0
+        let targetOctaves = Self.octaves(patch.cutoff)
+        let targetResonance = Self.clampedResonance(patch.resonance)
+        let targetLevel = Self.clampedLevel(patch.level)
         for i in buffer.indices {
+            cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
+            resonance = targetResonance + (resonance - targetResonance) * resonancePole
+            level = targetLevel + (level - targetLevel) * levelPole
             let modulation = filterEnvelope.next()
             if controlCountdown <= 0 {
-                filter.setCutoff(patch.cutoff * exp2f(amount * modulation))
+                filter.setResonance(resonance)
+                filter.setCutoff(exp2f(cutoffOctaves + amount * modulation))
                 controlCountdown = Self.controlInterval
             }
             controlCountdown -= 1
@@ -155,7 +196,7 @@ public struct PolySynth: Sendable {
         guard pitch <= 127 else { return }
         guard velocity > 0 else { noteOff(pitch: pitch); return }
         let index = voiceIndex(for: pitch)
-        voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate)
+        voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch)
         nextOrder &+= 1
     }
 
