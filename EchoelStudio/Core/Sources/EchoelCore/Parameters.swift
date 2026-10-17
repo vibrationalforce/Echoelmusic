@@ -63,6 +63,56 @@ extension ParameterAddress {
     public static func send(_ track: TrackID, to target: TrackID) -> ParameterAddress {
         ParameterAddress(.track(track), .send(to: target))
     }
+
+    /// One parameter of an Audio Unit on `track`: its instrument plugin or one of its inserts.
+    public static func plugin(_ track: TrackID, _ parameter: PluginParameter) -> ParameterAddress {
+        ParameterAddress(.track(track), .plugin(parameter))
+    }
+}
+
+/// A parameter of a hosted Audio Unit, by the unit's own parameter address. The song stores its
+/// value as 0…1 of the parameter's travel: the unit's ranges belong to the unit and can change
+/// with its version, a position along them does not.
+public struct PluginParameter: Hashable, Sendable {
+    public enum Unit: Hashable, Sendable {
+        /// The track's instrument plugin.
+        case instrument
+        case insert(InsertID)
+    }
+
+    public let unit: Unit
+    /// The `AUParameterAddress` the unit gave the parameter.
+    public let address: UInt64
+
+    public init(_ unit: Unit, address: UInt64) {
+        self.unit = unit
+        self.address = address
+    }
+}
+
+extension ParameterKey {
+    private static let instrumentPluginPrefix = "plugin.instrument/"
+    private static let insertPluginPrefix = "plugin.insert/"
+
+    public static func plugin(_ parameter: PluginParameter) -> ParameterKey {
+        switch parameter.unit {
+        case .instrument: ParameterKey(rawValue: instrumentPluginPrefix + String(parameter.address))
+        case .insert(let id): ParameterKey(rawValue: insertPluginPrefix + id.description + "/" + String(parameter.address))
+        }
+    }
+
+    /// The plugin parameter this key names, if it is a plugin key.
+    public var pluginParameter: PluginParameter? {
+        if rawValue.hasPrefix(Self.instrumentPluginPrefix) {
+            guard let address = UInt64(rawValue.dropFirst(Self.instrumentPluginPrefix.count)) else { return nil }
+            return PluginParameter(.instrument, address: address)
+        }
+        guard rawValue.hasPrefix(Self.insertPluginPrefix) else { return nil }
+        let rest = rawValue.dropFirst(Self.insertPluginPrefix.count)
+        guard let slash = rest.firstIndex(of: "/"), let uuid = UUID(uuidString: String(rest[..<slash])),
+              let address = UInt64(rest[rest.index(after: slash)...]) else { return nil }
+        return PluginParameter(.insert(InsertID(uuid)), address: address)
+    }
 }
 
 public enum ParameterUnit: String, Codable, Sendable {
@@ -174,6 +224,12 @@ extension Project {
 
     /// The descriptor for `address`, or nil when it names nothing in this project.
     public func descriptor(for address: ParameterAddress) -> ParameterDescriptor? {
+        if case .track(let id) = address.owner, let parameter = address.key.pluginParameter {
+            guard let track = track(id), let plugin = track.plugin(for: parameter.unit) else { return nil }
+            // The unit names its parameters; the song only knows where it is.
+            return ParameterDescriptor(address: address, title: "\(track.name) \(plugin.name) #\(parameter.address)",
+                                       unit: .amount, range: 0...1, defaultValue: 0, taper: .linear)
+        }
         guard value(of: address) != nil else { return nil }
         if case .track(let id) = address.owner, let synth = SynthParameter.named(address.key), let track = track(id) {
             return synth.descriptor(track: track)
@@ -193,7 +249,8 @@ extension Project {
         return Self.descriptor(address, title: title)
     }
 
-    /// The current value at `address`, or nil when it names nothing in this project.
+    /// The current value at `address`, or nil when it names nothing in this project. A plugin
+    /// parameter's value lives in the unit, not the song: nil, though it has a descriptor.
     public func value(of address: ParameterAddress) -> Double? {
         switch (address.owner, address.key) {
         case (.project, .tempo): return tempo
@@ -247,5 +304,28 @@ extension Command {
             return .setInstrumentParameter(id, key: key.rawValue, value: value)
         default: return nil
         }
+    }
+}
+
+extension Track {
+    /// The plugin a plugin parameter belongs to: the instrument plugin of an instrument track
+    /// (chosen, whether or not it is the device playing), or the named insert.
+    public func plugin(for unit: PluginParameter.Unit) -> PluginComponent? {
+        switch unit {
+        case .instrument: kind == .instrument ? instrument.plugin : nil
+        case .insert(let id): inserts.first { $0.id == id }?.plugin
+        }
+    }
+}
+
+extension Project {
+    /// Drops the lanes and mappings of one unit's parameters on `track` — its addresses mean
+    /// nothing to the unit that replaces it.
+    mutating func forgetParameters(of unit: PluginParameter.Unit, on track: TrackID) {
+        let gone = { (address: ParameterAddress) in
+            address.owner == .track(track) && address.key.pluginParameter?.unit == unit
+        }
+        automation.removeAll { gone($0.target) }
+        midiMappings.removeAll { gone($0.target) }
     }
 }

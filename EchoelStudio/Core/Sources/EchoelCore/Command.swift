@@ -239,6 +239,7 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
             }
             guard let component else {
+                project.forgetParameters(of: .instrument, on: id)
                 project.tracks[t].instrument.plugin = nil
                 project.tracks[t].instrument.pluginState = nil
                 if project.tracks[t].instrument.device == .plugin { project.tracks[t].instrument.device = .synth }
@@ -250,7 +251,10 @@ extension Command {
             var named = component
             named.name = try Names.validated(component.name, parameter: "name")
             // Another plugin's settings mean nothing to this one.
-            if project.tracks[t].instrument.plugin != named { project.tracks[t].instrument.pluginState = nil }
+            if project.tracks[t].instrument.plugin != named {
+                project.tracks[t].instrument.pluginState = nil
+                project.forgetParameters(of: .instrument, on: id)
+            }
             project.tracks[t].instrument.plugin = named
             project.tracks[t].instrument.device = .plugin
 
@@ -286,6 +290,7 @@ extension Command {
         case let .removeInsert(trackID, id):
             let (t, i) = try project.requireInsert(id, on: trackID)
             project.tracks[t].inserts.remove(at: i)
+            project.forgetParameters(of: .insert(id), on: trackID)
 
         case let .moveInsert(trackID, id, toIndex):
             let (t, i) = try project.requireInsert(id, on: trackID)

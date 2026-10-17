@@ -61,4 +61,40 @@ final class AutomationTests: XCTestCase {
         try Command.removeTrack(track).apply(to: &song)
         XCTAssertTrue(song.automation.isEmpty)
     }
+
+    func testAPluginParameterIsAutomatedAsAPositionAndGoesWithItsUnit() throws {
+        let made = try project()
+        var song = made.0
+        let track = made.1
+        let synth = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("Mini"),
+                                    manufacturer: PluginComponent.code("Acme"), name: "Mini", manufacturerName: "Acme")
+        let delay = PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("Dely"),
+                                    manufacturer: PluginComponent.code("Acme"), name: "Delay", manufacturerName: "Acme")
+        let insert = InsertID()
+        let cutoff = ParameterAddress.plugin(track, PluginParameter(.instrument, address: 7))
+        let feedback = ParameterAddress.plugin(track, PluginParameter(.insert(insert), address: 3))
+        let points = [AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: 960, value: 1)]
+        XCTAssertThrowsError(try Command.setAutomation(cutoff, points: points).apply(to: &song), "no plugin yet")
+
+        try Command.setInstrumentPlugin(track, synth).apply(to: &song)
+        try Command.addInsert(track: track, id: insert, plugin: delay, index: nil).apply(to: &song)
+        try Command.setAutomation(cutoff, points: points).apply(to: &song)
+        try Command.setAutomation(feedback, points: points).apply(to: &song)
+        XCTAssertThrowsError(try Command.setAutomation(cutoff, points: [AutomationPoint(tick: 0, value: 2)]).apply(to: &song),
+                             "a position is 0…1")
+        XCTAssertEqual(ParameterKey(rawValue: cutoff.key.rawValue).pluginParameter, PluginParameter(.instrument, address: 7))
+        XCTAssertEqual(feedback.key.pluginParameter, PluginParameter(.insert(insert), address: 3))
+        XCTAssertNil(ParameterKey(rawValue: "plugin.insert/nonsense/3").pluginParameter)
+
+        let decoded = try ProjectCodec.decode(ProjectCodec.encode(song))
+        XCTAssertEqual(decoded.automation, song.automation)
+
+        try Command.removeInsert(track: track, insert).apply(to: &song)
+        XCTAssertNil(song.automation(for: feedback), "the insert took its lanes")
+        XCTAssertNotNil(song.automation(for: cutoff))
+        try Command.setInstrumentPlugin(track, synth).apply(to: &song)
+        XCTAssertNotNil(song.automation(for: cutoff), "the same plugin keeps them")
+        try Command.setInstrumentPlugin(track, nil).apply(to: &song)
+        XCTAssertNil(song.automation(for: cutoff), "another plugin's addresses mean nothing")
+    }
 }
