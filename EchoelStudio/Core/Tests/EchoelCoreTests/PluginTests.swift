@@ -88,4 +88,17 @@ final class OwnPluginTests: XCTestCase {
             XCTAssertTrue(plugin.productID.hasPrefix("com.echoelmusic.studio."))
         }
     }
+
+    func testTheStandardEffectsAreDistinctEffectsThatKnowThemselvesAgain() {
+        let components = StandardEffect.allCases.map(\.component)
+        XCTAssertEqual(Set(components).count, StandardEffect.allCases.count)
+        let sold = Set(OwnPlugin.all.map(\.component.subtype))
+        for effect in StandardEffect.allCases {
+            XCTAssertEqual(effect.component.role, .effect)
+            XCTAssertEqual(effect.component.manufacturer, PluginComponent.code("Echo"))
+            XCTAssertFalse(sold.contains(effect.component.subtype), "a free effect is never a product")
+            XCTAssertEqual(StandardEffect(component: effect.component), effect)
+        }
+        XCTAssertNil(StandardEffect(component: OwnPlugin.synth.component))
+    }
 }
