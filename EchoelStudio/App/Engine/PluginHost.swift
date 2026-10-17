@@ -16,7 +16,7 @@ import os
 @Observable
 final class PluginHost {
     /// 'Echo' — this app's own components are never hosted inside it.
-    static let ownManufacturer: UInt32 = 0x4563_686F
+    nonisolated static let ownManufacturer: UInt32 = 0x4563_686F
 
     private(set) var instruments: [PluginComponent] = []
     /// Why a track's plugin does not play; nil while it plays or loads.
