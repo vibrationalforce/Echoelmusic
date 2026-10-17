@@ -71,6 +71,7 @@ struct ChannelStrip: View {
                         .accessibilityLabel("Solo \(track.name)")
                         .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
                 }
+                OutputMenu(track: track)
             }
         }
         .frame(width: 104)
@@ -78,4 +79,53 @@ struct ChannelStrip: View {
         .background(Theme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
     }
+}
+
+/// Where a track plays: the master, or a stereo pair of the interface (3/4, 5/6 …). A pair the
+/// interface lacks is kept and shown, and the track plays in the master until it is back.
+struct OutputMenu: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    let track: Track
+
+    var body: some View {
+        let pairs = Array(stride(from: 2, to: engine.outputChannels - 1, by: 2))
+        Menu {
+            Button { set(nil) } label: { choice("Master", selected: track.output == nil) }
+            ForEach(pairs, id: \.self) { channel in
+                Button { set(channel) } label: { choice(Self.name(channel), selected: track.output == channel) }
+            }
+        } label: {
+            Text(label)
+                .font(Theme.Font.caption)
+                .foregroundStyle(isMissing ? Theme.Color.record : Theme.Color.textSecondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+        }
+        .disabled(pairs.isEmpty && track.output == nil)
+        .accessibilityLabel("Output of \(track.name)")
+        .accessibilityValue(label)
+        .accessibilityHint(pairs.isEmpty ? "The interface has only outputs 1/2." : "")
+    }
+
+    private var isMissing: Bool {
+        guard let output = track.output else { return false }
+        return output + 1 >= engine.outputChannels
+    }
+
+    private var label: String {
+        guard let output = track.output else { return "Out Master" }
+        return isMissing ? "\(Self.name(output)) missing" : "Out \(Self.name(output))"
+    }
+
+    @ViewBuilder private func choice(_ title: String, selected: Bool) -> some View {
+        if selected { Label(title, systemImage: "checkmark") } else { Text(title) }
+    }
+
+    private func set(_ channel: Int?) {
+        try? store.perform(.setOutput(track.id, channel: channel))
+    }
+
+    /// Channel 2 is "3/4": outputs are counted from 1 on the interface.
+    static func name(_ channel: Int) -> String { "\(channel + 1)/\(channel + 2)" }
 }

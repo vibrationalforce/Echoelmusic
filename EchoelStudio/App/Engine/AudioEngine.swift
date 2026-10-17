@@ -20,6 +20,8 @@ final class AudioEngine {
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
     private(set) var lastError: String?
+    /// Output channels of the interface the graph plays on; 2 on the built-in speaker.
+    private(set) var outputChannels = 2
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
@@ -33,6 +35,7 @@ final class AudioEngine {
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
+    @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
     let plugins: PluginHost
@@ -53,6 +56,27 @@ final class AudioEngine {
             guard let self, let project = self.project else { return }
             self.publish(project)
         }
+        // Plugging an interface in or out stops the engine and may change its channels and rate.
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.hardwareChanged() }
+        }
+    }
+
+    /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
+    private func hardwareChanged() {
+        guard isRunning else { return }
+        let output = engine.outputNode.outputFormat(forBus: 0)
+        let channels = Self.usableChannels(output.channelCount)
+        log.info("engine: configuration change, \(output.channelCount, privacy: .public) ch at \(output.sampleRate, privacy: .public) Hz")
+        if engine.isRunning, channels == outputChannels, output.sampleRate == core?.sampleRate { return }
+        configure(input: isInputOpen)
+    }
+
+    /// Channels the graph renders: at least the stereo pair, at most what a track can name.
+    nonisolated private static func usableChannels(_ count: AVAudioChannelCount) -> Int {
+        Swift.min(Swift.max(Int(count), 2), Track.outputChannelLimit)
     }
 
     func start() {
@@ -106,12 +130,24 @@ final class AudioEngine {
                 try session.setCategory(.playback, mode: .default, options: [])
             }
             try session.setActive(true)
+            // Every output the interface has, so a track can play on 3/4, 5/6 …
+            let available = session.maximumOutputNumberOfChannels
+            if available > 2, session.outputNumberOfChannels != available {
+                log.info("session: prefer \(available, privacy: .public) output channels")
+                try? session.setPreferredOutputNumberOfChannels(available)
+            }
 
             let output = engine.outputNode.outputFormat(forBus: 0)
             let sampleRate = output.sampleRate > 0 ? output.sampleRate : 48_000
-            guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
-                throw EngineError.noFormat
+            let channels = Self.usableChannels(output.channelCount)
+            let format: AVAudioFormat?
+            if channels > 2 {
+                let layout = AVAudioChannelLayout(layoutTag: kAudioChannelLayoutTag_DiscreteInOrder | UInt32(channels))
+                format = layout.map { AVAudioFormat(standardFormatWithSampleRate: sampleRate, channelLayout: $0) }
+            } else {
+                format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
             }
+            guard let format else { throw EngineError.noFormat }
 
             // A new output rate needs a new core; the same rate keeps the playhead and the voices.
             let current: EngineCore
@@ -127,11 +163,23 @@ final class AudioEngine {
             }
 
             let node = Self.makeSourceNode(format: format, core: current)
-            log.info("graph: attach source node at \(sampleRate, privacy: .public) Hz")
+            log.info("graph: attach source node at \(sampleRate, privacy: .public) Hz, \(channels, privacy: .public) ch")
             engine.attach(node)
             sourceNode = node
-            log.info("graph: connect source → main mixer")
-            engine.connect(node, to: engine.mainMixerNode, format: format)
+            if channels > 2 {
+                // Straight to the interface: the main mixer would fold the discrete channels to its own layout.
+                log.info("graph: connect source → output")
+                engine.connect(node, to: engine.outputNode, format: format)
+            } else {
+                log.info("graph: connect source → main mixer")
+                engine.connect(node, to: engine.mainMixerNode, format: format)
+                // A multichannel graph before this one took the mixer off the output.
+                engine.connect(engine.mainMixerNode, to: engine.outputNode, format: nil)
+            }
+            if outputChannels != channels {
+                outputChannels = channels
+                if let project { publish(project) }
+            }
 
             if input {
                 // Connect only in the input's own format, and only when it runs at the output rate:
@@ -246,7 +294,8 @@ final class AudioEngine {
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
-                                    samples: samples, units: plugins.units, effects: plugins.chains))
+                                    samples: samples, units: plugins.units, effects: plugins.chains,
+                                    outputChannels: outputChannels))
     }
 
     /// The track that plays live: the chosen one while it exists, else the first instrument track.
@@ -263,18 +312,33 @@ final class AudioEngine {
     /// inside a `@MainActor` method inherits that isolation, and the render thread would trap
     /// on the isolation check before the first sample (the legacy app's builds 2613/2618).
     nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore) -> AVAudioSourceNode {
-        AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, bufferList in
+        let pointers = ChannelPointers()
+        return AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, bufferList in
             let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
             let frames = Int(frameCount)
-            guard buffers.count >= 2,
-                  let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
-                  let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else {
+            let count = Swift.min(buffers.count, ChannelPointers.capacity)
+            var complete = count >= 2
+            for c in 0..<count {
+                guard let data = buffers[c].mData?.assumingMemoryBound(to: Float.self) else {
+                    complete = false
+                    break
+                }
+                pointers.base[c] = data
+            }
+            guard complete else {
                 for buffer in buffers {
                     if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) }
                 }
                 return noErr
             }
-            core.render(frameCount: frames, left: left, right: right)
+            for c in count..<buffers.count {
+                if let data = buffers[c].mData { memset(data, 0, Int(buffers[c].mDataByteSize)) }
+            }
+            if count == 2 {
+                core.render(frameCount: frames, left: pointers.base[0], right: pointers.base[1])
+            } else {
+                core.render(frameCount: frames, channels: pointers.base, channelCount: count)
+            }
             return noErr
         }
     }
@@ -295,4 +359,13 @@ final class AudioEngine {
             }
         }
     }
+}
+
+/// Channel pointers for one render callback, allocated once with the source node so the render
+/// thread allocates nothing. Only that node's render block touches it.
+private final class ChannelPointers: @unchecked Sendable {
+    static let capacity = Track.outputChannelLimit
+    let base = UnsafeMutablePointer<UnsafeMutablePointer<Float>>.allocate(capacity: capacity)
+
+    deinit { base.deallocate() }
 }
