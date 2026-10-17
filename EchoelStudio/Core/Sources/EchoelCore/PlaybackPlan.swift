@@ -15,6 +15,15 @@ public struct PlaybackPlan: Equatable, Sendable {
         /// Sorted by tick; at equal ticks every note-off comes before any note-on, so a note
         /// that ends where the next one of the same pitch starts re-triggers cleanly.
         public var events: [NoteEvent]
+        /// Every clip of the track on its own, in clip time, for launching from the session.
+        public var clips: [ClipEvents] = []
+    }
+
+    /// One clip as a loop: events in clip time, sorted like a track's, all before `length`.
+    public struct ClipEvents: Equatable, Sendable {
+        public var clip: ClipID
+        public var length: Tick
+        public var events: [NoteEvent]
     }
 
     public struct NoteEvent: Equatable, Sendable {
@@ -35,7 +44,8 @@ public struct PlaybackPlan: Equatable, Sendable {
             guard track.kind == .instrument else { return nil }
             let intervals = Self.noteIntervals(of: track)
             end = intervals.reduce(end) { Swift.max($0, $1.end) }
-            return TrackEvents(track: track.id, events: Self.events(from: intervals))
+            return TrackEvents(track: track.id, events: Self.events(from: intervals),
+                               clips: track.clips.map(Self.loop))
         }
         songEnd = end
     }
@@ -75,6 +85,17 @@ public struct PlaybackPlan: Equatable, Sendable {
             }
         }
         return resolvingOverlaps(intervals)
+    }
+
+    /// A clip's notes in clip time, each cut at the clip's end so the loop never carries a note
+    /// into its next pass.
+    static func loop(_ clip: Clip) -> ClipEvents {
+        let intervals = clip.notes.compactMap { note -> Interval? in
+            guard note.start < clip.length else { return nil }
+            return Interval(start: note.start, end: Swift.min(note.start + note.length, clip.length),
+                            pitch: note.pitch, velocity: note.velocity)
+        }
+        return ClipEvents(clip: clip.id, length: clip.length, events: events(from: resolvingOverlaps(intervals)))
     }
 
     /// One pitch can sound only once on a monophonic MIDI key. Where two notes of the same

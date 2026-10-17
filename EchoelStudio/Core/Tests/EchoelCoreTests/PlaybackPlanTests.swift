@@ -33,6 +33,15 @@ final class PlaybackPlanTests: XCTestCase {
         XCTAssertEqual(plan.songEnd, 2 * bar + 720)
     }
 
+    func testEveryClipCompilesAsALoopInClipTimeEvenUnplaced() throws {
+        let (project, _) = try makeProject(notes: [Note(pitch: 60, start: 480, length: 240),
+                                                   Note(pitch: 62, start: bar - 240, length: 960)],
+                                           placementsAt: [])
+        let loop = try XCTUnwrap(PlaybackPlan(compiling: project).tracks.first?.clips.first)
+        XCTAssertEqual(loop.length, bar)
+        XCTAssertEqual(loop.events.map(\.tick), [480, 720, bar - 240, bar], "the long note ends at the loop's end")
+    }
+
     func testANoteIsCutAtTheEndOfItsClip() throws {
         let (project, _) = try makeProject(notes: [Note(pitch: 48, start: 3 * 960, length: 4 * 960)],
                                        placementsAt: [0])
