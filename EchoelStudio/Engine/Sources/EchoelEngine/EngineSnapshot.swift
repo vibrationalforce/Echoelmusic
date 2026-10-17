@@ -28,6 +28,9 @@ public struct EngineSnapshot: Sendable {
         public let output: Int
         /// The track's clips as loops, for the session.
         public let clips: [PlaybackPlan.ClipEvents]
+        /// Changes exactly when the track's notes or clips change. The render thread releases a
+        /// lane's sounding notes only then, so a fader ride never cuts a held chord.
+        public let eventsRevision: UInt64
     }
 
     /// Where a track's post-fader signal also goes: return bus `bus`, at these gains.
@@ -89,9 +92,12 @@ public struct EngineSnapshot: Sendable {
     /// track without one (still loading, missing on this device) stays silent.
     /// `effects` holds each track's loaded insert effects in order; one prepared for another
     /// rate is left out.
+    /// `revisions` numbers each track's events (`EventRevisions`); without one, every snapshot
+    /// counts as an edit of the track.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                effects: [TrackID: [HostedEffect]] = [:], outputChannels: Int = 2) {
+                effects: [TrackID: [HostedEffect]] = [:], outputChannels: Int = 2,
+                revisions: [TrackID: UInt64] = [:]) {
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
@@ -145,7 +151,7 @@ public struct EngineSnapshot: Sendable {
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
-                        clips: events.clips)
+                        clips: events.clips, eventsRevision: revisions[events.track] ?? generation)
         }
     }
 
@@ -212,5 +218,29 @@ public struct SlotAssigner: Sendable {
             slots[id] = free
             used.insert(free)
         }
+    }
+}
+
+/// Numbers each instrument track's compiled events, raising a track's number only when its
+/// notes or clips differ from the last plan. Main thread only.
+public struct EventRevisions: Sendable {
+    private var last: [TrackID: PlaybackPlan.TrackEvents] = [:]
+    private var numbers: [TrackID: UInt64] = [:]
+    private var counter: UInt64 = 0
+
+    public init() {}
+
+    public mutating func update(for plan: PlaybackPlan) -> [TrackID: UInt64] {
+        var alive: [TrackID: PlaybackPlan.TrackEvents] = [:]
+        for track in plan.tracks {
+            alive[track.track] = track
+            if last[track.track] != track || numbers[track.track] == nil {
+                counter += 1
+                numbers[track.track] = counter
+            }
+        }
+        last = alive
+        numbers = numbers.filter { alive[$0.key] != nil }
+        return numbers
     }
 }

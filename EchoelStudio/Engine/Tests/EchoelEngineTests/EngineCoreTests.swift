@@ -281,6 +281,33 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(core, frames: 4_800).left))
     }
 
+    func testAFaderMoveWhilePlayingKeepsAHeldNote() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
+        let engine = core()
+        var revisions = EventRevisions()
+        func publishKeepingNotes() {
+            let plan = PlaybackPlan(compiling: s.project)
+            var slots = SlotAssigner(capacity: engine.slotCapacity)
+            slots.update(for: s.project)
+            generation += 1
+            engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
+                                          generation: generation, revisions: revisions.update(for: plan)))
+        }
+        publishKeepingNotes()
+        engine.play()
+        _ = render(engine, frames: 24_000)
+        try Command.setVolume(.track(s.tracks[0]), db: -6).apply(to: &s.project)
+        publishKeepingNotes()
+        _ = render(engine, frames: 48_000)                // longer than the release: a cut note would be gone
+        XCTAssertNotNil(firstSound(render(engine, frames: 4_800).left), "the note held through the fader move")
+
+        let clip = try XCTUnwrap(s.project.tracks[0].clips.first)
+        try Command.removeNotes(clip.id, clip.notes.map(\.id)).apply(to: &s.project)
+        publishKeepingNotes()
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "deleting the note still releases it")
+    }
+
     func testFaderGainsFollowTheMixerLaw() {
         XCTAssertEqual(EngineSnapshot.linear(MixerStrip.volumeRange.lowerBound), 0)
         XCTAssertEqual(EngineSnapshot.linear(0), 1, accuracy: 1e-6)

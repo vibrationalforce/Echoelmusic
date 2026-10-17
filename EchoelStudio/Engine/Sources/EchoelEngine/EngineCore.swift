@@ -15,8 +15,9 @@ import Synchronization
 /// - **Render thread:** `render` only. No locks, no allocation, no Objective-C, no I/O: every
 ///   buffer and synth is allocated in `init`.
 ///
-/// Editing while playing releases the sounding notes and re-seeks, so a deleted note can
-/// never hang; a note that was already sounding is not restarted mid-way.
+/// Editing a track's notes while playing releases that track's sounding notes and re-seeks, so
+/// a deleted note can never hang; a mix change keeps every note. A note that already sounded is
+/// never fired twice.
 public final class EngineCore: @unchecked Sendable {
     public static let maximumFrames = 4_096
 
@@ -58,6 +59,8 @@ public final class EngineCore: @unchecked Sendable {
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
     private let sessions: UnsafeMutablePointer<SessionSlot>
+    /// The events revision each slot last played; a different one means its notes were edited.
+    private let revisions: UnsafeMutablePointer<UInt64>
     private let scratch: UnsafeMutablePointer<Float>
     /// One stereo bus per slot, `maximumFrames` each: a track renders into its bus, its inserts
     /// process the bus, then the bus is mixed at the track's gains. Plus one bus audio tracks
@@ -112,6 +115,8 @@ public final class EngineCore: @unchecked Sendable {
         cursors.initialize(repeating: 0, count: self.slotCapacity)
         sessions = .allocate(capacity: self.slotCapacity)
         sessions.initialize(repeating: SessionSlot(), count: self.slotCapacity)
+        revisions = .allocate(capacity: self.slotCapacity)
+        revisions.initialize(repeating: .max, count: self.slotCapacity)
         scratch = .allocate(capacity: Self.maximumFrames)
         scratch.initialize(repeating: 0, count: Self.maximumFrames)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -146,6 +151,7 @@ public final class EngineCore: @unchecked Sendable {
         cursors.deallocate()
         sessions.deinitialize(count: slotCapacity)
         sessions.deallocate()
+        revisions.deallocate()
         scratch.deallocate()
         busLeft.deallocate()
         busRight.deallocate()
@@ -528,7 +534,12 @@ public final class EngineCore: @unchecked Sendable {
         for lane in snapshot.lanes where synths[lane.slot].patch != lane.patch {
             synths[lane.slot].setPatch(lane.patch)
         }
-        releaseAllNotes()
+        // Only a track whose notes changed lets go of what it holds: a deleted note must not
+        // hang, but a fader, a pan or a send must not cut a held chord.
+        for lane in snapshot.lanes where revisions[lane.slot] != lane.eventsRevision {
+            silence(lane)
+            revisions[lane.slot] = lane.eventsRevision
+        }
         resync()
         acknowledged.store(snapshot.generation, ordering: .releasing)
     }
@@ -568,7 +579,10 @@ public final class EngineCore: @unchecked Sendable {
         guard let snapshot = current?.snapshot else { return }
         let tick = snapshot.time.tick(atSample: playhead)
         for lane in snapshot.lanes {
-            cursors[lane.slot] = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
+            // The playhead's tick is rounded down: skip events of that tick that already played.
+            var cursor = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
+            while cursor < lane.events.count, snapshot.time.sample(at: lane.events[cursor].tick) < playhead { cursor += 1 }
+            cursors[lane.slot] = cursor
         }
         let beatTicks = Swift.max(MusicalTime.ticksPerBeat(snapshot.timeSignature), 1)
         var beat = (tick / beatTicks) * beatTicks
@@ -583,7 +597,10 @@ public final class EngineCore: @unchecked Sendable {
             let since = tick - session.launchTick
             let passes = since >= 0 ? since / length : -((-since + length - 1) / length)
             session.base = session.launchTick + passes * length
-            session.cursor = PlaybackPlan.firstIndex(in: clip.events, atOrAfter: tick - session.base)
+            var cursor = PlaybackPlan.firstIndex(in: clip.events, atOrAfter: tick - session.base)
+            while cursor < clip.events.count,
+                  snapshot.time.sample(at: session.base + clip.events[cursor].tick) < playhead { cursor += 1 }
+            session.cursor = cursor
             sessions[lane.slot] = session
         }
         let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter

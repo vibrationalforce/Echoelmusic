@@ -32,6 +32,7 @@ final class AudioEngine {
     @ObservationIgnored private var core: EngineCore?
     @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
     @ObservationIgnored private var generation: UInt64 = 0
+    @ObservationIgnored private var revisions = EventRevisions()
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
@@ -391,10 +392,11 @@ final class AudioEngine {
         live.set(core: core, slot: liveSlot(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
-        core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
+        let plan = PlaybackPlan(compiling: project)
+        core.publish(EngineSnapshot(plan: plan, project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
                                     samples: samples, units: plugins.units, effects: plugins.chains,
-                                    outputChannels: outputChannels))
+                                    outputChannels: outputChannels, revisions: revisions.update(for: plan)))
     }
 
     /// The track that plays live: the chosen one while it exists, else the first instrument track.
