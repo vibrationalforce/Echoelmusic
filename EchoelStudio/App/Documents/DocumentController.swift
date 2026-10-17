@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import Foundation
 import Observation
 import os
@@ -11,6 +12,7 @@ final class DocumentController {
     private(set) var currentURL: URL?
     private(set) var songs: [ProjectLibrary.Entry] = []
     private(set) var lastError: String?
+    private(set) var isExporting = false
 
     @ObservationIgnored private let library: ProjectLibrary
     @ObservationIgnored private let store: ProjectStore
@@ -89,6 +91,35 @@ final class DocumentController {
         } catch {
             log.error("save failed — \(error.localizedDescription, privacy: .public)")
             lastError = "Could not save. Your changes are still open."
+        }
+    }
+
+    /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
+    /// and returns its URL for the share sheet.
+    func exportWAV() async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        let project = store.project
+        let name = ProjectLibrary.safeFileName(for: project.name)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let render = OfflineRender.render(project)
+            let data = WAVFile.data(left: render.left, right: render.right, sampleRate: render.sampleRate)
+            return Result {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try data.write(to: url, options: .atomic)
+            }
+        }.value
+        switch result {
+        case .success:
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("export failed — \(error.localizedDescription, privacy: .public)")
+            lastError = "Could not export the song."
+            return nil
         }
     }
 

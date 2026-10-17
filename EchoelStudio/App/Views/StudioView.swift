@@ -7,19 +7,22 @@ struct StudioView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
 
-    @State private var sheet: StudioSheet?
+    @State private var router = StudioRouter()
 
     var body: some View {
+        @Bindable var router = router
         VStack(spacing: 0) {
             TransportBar()
             Divider().overlay(Theme.Color.border)
-            TrackListView { sheet = .clipEditor($0) }
+            TrackListView { router.sheet = .clipEditor($0) }
         }
-        .sheet(item: $sheet) { sheet in
+        .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .clipEditor(let track): ClipEditorView(trackID: track)
+            case .share(let url): ShareSheet(url: url).ignoresSafeArea()
             }
         }
+        .environment(router)
         .background(Theme.Color.background)
         .onAppear { engine.update(store.project) }
         .onChange(of: store.project) { _, project in engine.update(project) }
@@ -155,10 +158,17 @@ struct TempoField: View {
 struct SongMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
+    @Environment(StudioRouter.self) private var router
 
     var body: some View {
         Menu {
             Button("New Song", systemImage: "plus") { documents.newSong() }
+            Button("Export WAV", systemImage: "square.and.arrow.up") {
+                Task {
+                    if let url = await documents.exportWAV() { router.sheet = .share(url) }
+                }
+            }
+            .disabled(documents.isExporting || store.project.tracks.allSatisfy { $0.clips.allSatisfy(\.notes.isEmpty) })
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {

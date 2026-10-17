@@ -1,13 +1,6 @@
 import EchoelCore
 import SwiftUI
 
-/// What the studio can present. One `.sheet(item:)` serves every case — the presentation
-/// chain never grows (the legacy app's black screen came from a growing chain).
-enum StudioSheet: Identifiable, Hashable {
-    case clipEditor(TrackID)
-
-    var id: Self { self }
-}
 
 /// The note editor for an instrument track's clip.
 struct ClipEditorView: View {
