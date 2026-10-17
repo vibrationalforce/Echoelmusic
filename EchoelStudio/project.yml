@@ -24,6 +24,10 @@ settings:
 packages:
   EchoelCore:
     path: Core
+  EchoelDSP:
+    path: DSP
+  EchoelEngine:
+    path: Engine
 
 targets:
   EchoelStudio:
@@ -33,6 +37,7 @@ targets:
       - path: App
     dependencies:
       - package: EchoelCore
+      - package: EchoelEngine
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio

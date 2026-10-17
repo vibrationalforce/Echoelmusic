@@ -14,16 +14,8 @@ struct StudioView: View {
             TrackListView()
         }
         .background(Theme.Color.background)
-        .onAppear { syncEngine(with: store.project) }
-        .onChange(of: store.project.tempo) { _, bpm in engine.setTempo(bpm) }
-        .onChange(of: store.project.timeSignature) { _, signature in
-            engine.setBeatsPerBar(signature.numerator)
-        }
-    }
-
-    private func syncEngine(with project: Project) {
-        engine.setTempo(project.tempo)
-        engine.setBeatsPerBar(project.timeSignature.numerator)
+        .onAppear { engine.update(store.project) }
+        .onChange(of: store.project) { _, project in engine.update(project) }
     }
 }
 

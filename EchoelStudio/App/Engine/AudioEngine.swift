@@ -1,9 +1,12 @@
 import AVFoundation
+import EchoelCore
+import EchoelEngine
 import Observation
 import os
 
 /// The one owner of the audio graph and the audio session. Nothing else creates an
-/// `AVAudioEngine` or changes the session category.
+/// `AVAudioEngine` or changes the session category. The sound itself comes from
+/// `EngineCore`, which this class feeds with snapshots of the project.
 @MainActor
 @Observable
 final class AudioEngine {
@@ -11,16 +14,20 @@ final class AudioEngine {
     private(set) var isPlaying = false
     private(set) var lastError: String?
 
-    let transport = TransportState()
-
     @ObservationIgnored private let engine = AVAudioEngine()
-    @ObservationIgnored private var clickNode: AVAudioSourceNode?
+    @ObservationIgnored private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var core: EngineCore?
+    @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
+    @ObservationIgnored private var generation: UInt64 = 0
+    @ObservationIgnored private var project: Project?
+    @ObservationIgnored private var clickEnabled = true
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
     func start() {
         guard !isRunning else { return }
         do {
             let session = AVAudioSession.sharedInstance()
+            log.info("session: configure playback")
             try session.setCategory(.playback, mode: .default, options: [])
             try session.setActive(true)
 
@@ -30,12 +37,16 @@ final class AudioEngine {
                 throw EngineError.noFormat
             }
 
-            let renderer = ClickRenderer(state: transport, sampleRate: sampleRate)
-            let node = Self.makeSourceNode(format: format, renderer: renderer)
-            log.info("graph: attach click node at \(sampleRate, privacy: .public) Hz")
+            let core = EngineCore(sampleRate: sampleRate)
+            core.setClickEnabled(clickEnabled)
+            self.core = core
+            if let project { publish(project) }
+
+            let node = Self.makeSourceNode(format: format, core: core)
+            log.info("graph: attach source node at \(sampleRate, privacy: .public) Hz")
             engine.attach(node)
             engine.connect(node, to: engine.mainMixerNode, format: format)
-            clickNode = node
+            sourceNode = node
 
             log.info("engine: start")
             try engine.start()
@@ -47,36 +58,58 @@ final class AudioEngine {
         }
     }
 
+    /// Hands the current project to the render thread. Call on every project change; it is
+    /// cheap (the note events are shared, not copied).
+    func update(_ project: Project) {
+        self.project = project
+        publish(project)
+    }
+
     func play() {
-        guard isRunning else { return }
-        transport.isPlaying.store(true, ordering: .relaxed)
+        guard let core else { return }
+        core.play()
         isPlaying = true
     }
 
+    /// Stops and returns to the start.
     func stop() {
-        transport.isPlaying.store(false, ordering: .relaxed)
-        transport.rewindRequested.store(true, ordering: .releasing)
+        core?.stop()
         isPlaying = false
     }
 
-    func setTempo(_ bpm: Double) {
-        transport.bpm = bpm
-    }
-
-    func setBeatsPerBar(_ beats: Int) {
-        transport.beatsPerBar.store(max(1, beats), ordering: .relaxed)
-    }
-
     func setClickEnabled(_ enabled: Bool) {
-        transport.clickEnabled.store(enabled, ordering: .relaxed)
+        clickEnabled = enabled
+        core?.setClickEnabled(enabled)
+    }
+
+    /// The playhead in samples. For a small leaf view that polls it, never a view body.
+    var positionSample: Int64 { core?.positionSample ?? 0 }
+
+    private func publish(_ project: Project) {
+        guard let core else { return }
+        slots.update(for: project)
+        generation += 1
+        core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
+                                    slots: slots.slots, sampleRate: core.sampleRate, generation: generation))
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed
     /// inside a `@MainActor` method inherits that isolation, and the render thread would trap
     /// on the isolation check before the first sample (the legacy app's builds 2613/2618).
-    nonisolated private static func makeSourceNode(format: AVAudioFormat, renderer: ClickRenderer) -> AVAudioSourceNode {
+    nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore) -> AVAudioSourceNode {
         AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, bufferList in
-            renderer.render(frameCount: frameCount, into: bufferList)
+            let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
+            let frames = Int(frameCount)
+            guard buffers.count >= 2,
+                  let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
+                  let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else {
+                for buffer in buffers {
+                    if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) }
+                }
+                return noErr
+            }
+            core.render(frameCount: frames, left: left, right: right)
+            return noErr
         }
     }
 
