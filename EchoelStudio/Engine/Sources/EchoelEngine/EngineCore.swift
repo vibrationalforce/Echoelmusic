@@ -35,6 +35,7 @@ public final class EngineCore: @unchecked Sendable {
     private var current: SnapshotBox?
     private let synths: UnsafeMutablePointer<PolySynth>
     private let drums: UnsafeMutablePointer<DrumKit>
+    private let samplers: UnsafeMutablePointer<Sampler>
     private let devices: UnsafeMutablePointer<InstrumentDevice>
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
@@ -61,6 +62,10 @@ public final class EngineCore: @unchecked Sendable {
         for i in 0..<self.slotCapacity {
             (drums + i).initialize(to: DrumKit(sampleRate: Float(rate)))
         }
+        samplers = .allocate(capacity: self.slotCapacity)
+        for i in 0..<self.slotCapacity {
+            (samplers + i).initialize(to: Sampler(sampleRate: Float(rate)))
+        }
         devices = .allocate(capacity: self.slotCapacity)
         devices.initialize(repeating: .synth, count: self.slotCapacity)
         owners = .allocate(capacity: self.slotCapacity)
@@ -77,6 +82,8 @@ public final class EngineCore: @unchecked Sendable {
         synths.deallocate()
         drums.deinitialize(count: slotCapacity)
         drums.deallocate()
+        samplers.deinitialize(count: slotCapacity)
+        samplers.deallocate()
         devices.deallocate()
         owners.deinitialize(count: slotCapacity)
         owners.deallocate()
@@ -181,8 +188,8 @@ public final class EngineCore: @unchecked Sendable {
                 case (.noteOff, .synth): synths[lane.slot].noteOff(pitch: event.pitch)
                 case (.noteOn(let velocity), .drums): drums[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
                 case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
-                // The sampler joins the engine with sample loading; until then it is silent.
-                case (_, .sampler): break
+                case (.noteOn(let velocity), .sampler): samplers[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+                case (.noteOff, .sampler): samplers[lane.slot].noteOff(pitch: event.pitch)
                 }
                 cursors[lane.slot] += 1
             } else {
@@ -201,7 +208,6 @@ public final class EngineCore: @unchecked Sendable {
         // newer one, so this assignment's release of the old box never frees on this thread.
         current = Unmanaged<SnapshotBox>.fromOpaque(pointer).takeUnretainedValue()
         guard let snapshot = current?.snapshot else { return }
-        acknowledged.store(snapshot.generation, ordering: .releasing)
 
         // A slot handed to a different track, or no track at all, starts silent.
         for slot in 0..<slotCapacity {
@@ -213,13 +219,27 @@ public final class EngineCore: @unchecked Sendable {
             if owners[slot] != owner {
                 synths[slot].reset()
                 drums[slot].reset()
+                samplers[slot].reset()
                 owners[slot] = owner
             }
+        }
+        // Every sampler now points at this snapshot's buffer or none. This happens BEFORE the
+        // acknowledgement below: until then the main thread keeps the previous snapshot — and
+        // with it every buffer a sampler let go of here — alive, so no buffer is ever freed on
+        // this thread.
+        for slot in 0..<slotCapacity {
+            var sample: SampleBuffer?
+            for lane in snapshot.lanes where lane.slot == slot {
+                sample = lane.sample
+                break
+            }
+            samplers[slot].setSample(sample)
         }
         // A track that changes instrument starts the new one silent and cuts the old one.
         for lane in snapshot.lanes where devices[lane.slot] != lane.device {
             synths[lane.slot].reset()
             drums[lane.slot].reset()
+            samplers[lane.slot].reset()
             devices[lane.slot] = lane.device
         }
         for lane in snapshot.lanes where synths[lane.slot].patch != lane.patch {
@@ -227,6 +247,7 @@ public final class EngineCore: @unchecked Sendable {
         }
         releaseAllNotes()
         resync()
+        acknowledged.store(snapshot.generation, ordering: .releasing)
     }
 
     /// Points every cursor and the beat counter at the playhead.
@@ -243,7 +264,10 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     private func releaseAllNotes() {
-        for slot in 0..<slotCapacity { synths[slot].allNotesOff() }
+        for slot in 0..<slotCapacity {
+            synths[slot].allNotesOff()
+            samplers[slot].allNotesOff()
+        }
     }
 
     private func renderVoices(_ range: Range<Int>, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
@@ -253,7 +277,7 @@ public final class EngineCore: @unchecked Sendable {
                 let sounding = switch lane.device {
                 case .synth: synths[lane.slot].activeVoiceCount > 0
                 case .drums: drums[lane.slot].activeVoiceCount > 0
-                case .sampler: false
+                case .sampler: samplers[lane.slot].activeVoiceCount > 0
                 }
                 guard sounding else { continue }
                 let mono = scratch + range.lowerBound
@@ -262,7 +286,7 @@ public final class EngineCore: @unchecked Sendable {
                 switch lane.device {
                 case .synth: synths[lane.slot].render(into: buffer)
                 case .drums: drums[lane.slot].render(into: buffer)
-                case .sampler: break
+                case .sampler: samplers[lane.slot].render(into: buffer)
                 }
                 for i in 0..<range.count {
                     left[range.lowerBound + i] += mono[i] * lane.gainLeft

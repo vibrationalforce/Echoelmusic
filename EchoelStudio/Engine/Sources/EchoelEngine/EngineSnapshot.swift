@@ -16,6 +16,9 @@ public struct EngineSnapshot: Sendable {
         public let patch: SynthPatch
         /// Which instrument in the slot plays the events.
         public let device: InstrumentDevice
+        /// The sample a sampler lane plays. The snapshot holds the reference, so the buffer
+        /// lives exactly as long as a snapshot that can still reach the render thread.
+        public let sample: SampleBuffer?
     }
 
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
@@ -24,7 +27,10 @@ public struct EngineSnapshot: Sendable {
     public let timeSignature: TimeSignature
     public let lanes: [Lane]
 
-    public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64) {
+    /// `samples` holds the loaded buffer of every media file a sampler track may play; a
+    /// file that is missing or not yet loaded leaves its track silent.
+    public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
+                samples: [MediaID: SampleBuffer] = [:]) {
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
@@ -35,7 +41,8 @@ public struct EngineSnapshot: Sendable {
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
             let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
-                        patch: SynthPatch(track.instrument), device: track.instrument.device)
+                        patch: SynthPatch(track.instrument), device: track.instrument.device,
+                        sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil)
         }
     }
 

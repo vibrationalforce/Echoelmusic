@@ -230,6 +230,33 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNotNil(firstSound(drumOut))
         XCTAssertNotEqual(synthOut, drumOut)
     }
+
+    func testASamplerTrackPlaysItsLoadedSampleAndIsSilentWithoutOne() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 960)]])
+        let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: 4_800, sampleRate: rate)
+        try Command.addMedia(media).apply(to: &s.project)
+        try Command.setInstrumentDevice(s.tracks[0], .sampler).apply(to: &s.project)
+        try Command.setInstrumentSample(s.tracks[0], media.id).apply(to: &s.project)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate, rootPitch: 60))
+
+        var slots = SlotAssigner(capacity: 32)
+        slots.update(for: s.project)
+        let plan = PlaybackPlan(compiling: s.project)
+
+        let loaded = core()
+        loaded.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
+                                      generation: 1, samples: [media.id: buffer]))
+        loaded.play()
+        let out = render(loaded, frames: 9_600).left
+        XCTAssertEqual(firstSound(out), 0)
+        XCTAssertGreaterThan(out[2_000], 0.05, "the sample sounds while the note is held")
+        XCTAssertEqual(out[6_000], 0, "a 0.1 s sample ends after 0.1 s")
+
+        let missing = core()
+        missing.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate, generation: 1))
+        missing.play()
+        XCTAssertNil(firstSound(render(missing, frames: 4_800).left), "a file that is not loaded stays silent")
+    }
 }
 
 final class InstrumentPatchTests: XCTestCase {

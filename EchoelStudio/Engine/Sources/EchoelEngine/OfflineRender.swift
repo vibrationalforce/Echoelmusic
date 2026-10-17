@@ -15,8 +15,10 @@ public enum OfflineRender {
     }
 
     /// The song from its start to the end of its last note, plus `tailSeconds` so releases
-    /// ring out. An empty song renders nothing.
-    public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2) -> Result {
+    /// ring out. An empty song renders nothing. `samples` are the loaded media files, as for
+    /// live playback; a sampler whose file is missing stays silent in the export too.
+    public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
+                              samples: [MediaID: SampleBuffer] = [:]) -> Result {
         let plan = PlaybackPlan(compiling: project)
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         guard plan.songEnd > 0 else { return Result(left: [], right: [], sampleRate: rate, peak: 0) }
@@ -25,7 +27,8 @@ public enum OfflineRender {
         core.setClickEnabled(false)
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
-        core.publish(EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1))
+        core.publish(EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
+                                    samples: samples))
         core.play()
 
         let time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: rate)
