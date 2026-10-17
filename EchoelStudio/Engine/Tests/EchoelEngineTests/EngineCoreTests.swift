@@ -237,12 +237,13 @@ final class InstrumentPatchTests: XCTestCase {
         publish(s.project, to: core)
         core.play()
         let beat = Int(rate / 2)
-        let out = render(core, frames: 4 * beat + beat)
+        let out = render(core, frames: 8 * beat)
         XCTAssertEqual(firstSound(out.left), 0, "the kick starts on its sample")
         let kick = out.left[0..<beat].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
         XCTAssertGreaterThan(kick, 0.05)
-        let afterKickTail = out.left[(4 * beat)...].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
-        XCTAssertEqual(afterKickTail, 0, "bar 2 holds only a C, which the kit ignores")
+        // The kick has died away (−60 dB) by 2.3 s; bar 2 from 2 s holds only a C.
+        let afterKickTail = out.left[(5 * beat)...].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        XCTAssertEqual(afterKickTail, 0, "the kit ignores a note outside the drum map")
     }
 
     func testSwitchingTheInstrumentChangesTheSoundOfTheSameNotes() throws {
