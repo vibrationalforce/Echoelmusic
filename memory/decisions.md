@@ -5412,3 +5412,11 @@ Review 2026-11-15.
 - **Plan und Produktgrenze:** `docs/dev/NEUSTART_2026-10-17.md` — gilt vor `CLAUDE.md`, `FOUNDER_PRODUCT_LAW.md`, `ECHOELMUSIC_MASTER_PLAN.md` (die bleiben als Plan für später und als Lehren-Archiv).
 - **Architektur-Kern:** EIN `ProjectStore`, jede Änderung ein typisierter Befehl (Undo, MIDI-Learn und Agent über denselben Katalog), Render-Thread liest nur einen kompilierten Abspielplan.
 - **Review:** 2026-11-17.
+
+### 2026-10-17 — Neustart: alle offenen Fragen beantwortet (Founder: „auf professioneller Ebene")
+- Build-Dateien/CI: JA; der Founder bestätigt jeden gegateten Commit im Modus `default` (der Hook verweigert im Modus `auto`, gewollt).
+- Audio-Aufnahme: JA, in Version 1 (M2), mit den Eingangsgraph-Lehren #859–#862b und #299.
+- Hardware nach Geräteklassen (class-compliant USB-Audio und -MIDI, BLE-/RTP-MIDI, Launchpad-Vorlage, MIDI-Clock, Ableton Link über LinkKit in M5 mit eigener Council-Entscheidung).
+- Agent auf dem Gerät zuerst (Foundation Models + lokale Spracherkennung, ab iOS 26; App bleibt iOS 18).
+- Geschäftsmodell: App kostenlos und vollständig, eigene Plugins als Einmalkäufe plus Paket, kein Abo; löst die Abo-Pläne vom 2026-07-10 ab.
+- Volltext: `docs/dev/NEUSTART_2026-10-17.md` §6.
