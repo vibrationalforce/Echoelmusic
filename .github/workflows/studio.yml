@@ -24,7 +24,7 @@ env:
 
 jobs:
   core:
-    name: EchoelCore
+    name: EchoelCore + EchoelDSP
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -45,6 +45,21 @@ jobs:
           set -o pipefail
           swift test --package-path EchoelStudio/Core 2>&1 | tee core-test.log
 
+      - name: Test DSP (macOS host)
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/DSP 2>&1 | tee dsp-test.log
+
+      - name: Build DSP for iOS
+        working-directory: EchoelStudio/DSP
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -scheme EchoelDSP \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee ../../dsp-ios.log | tail -40
+
       - name: Build for iOS
         working-directory: EchoelStudio/Core
         run: |
@@ -59,7 +74,8 @@ jobs:
         if: failure()
         run: |
           tail -150 core-test.log || true
-          grep -n "error:" core-ios.log | head -60 || true
+          tail -150 dsp-test.log || true
+          grep -n "error:" core-ios.log dsp-ios.log | head -60 || true
 
   app:
     name: App (iPhone + iPad)

@@ -10,7 +10,9 @@ nothing has to be fished out of the long file.
 
 | Path | What | Depends on |
 |---|---|---|
-| `Core/` | Swift package `EchoelCore`: project document, commands, command catalog, undo, codec | Foundation, Observation |
+| `Core/` | Swift package `EchoelCore`: project document, commands, command catalog, undo, codec, parameters, tempo map | Foundation, Observation |
+| `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope — pure value types, render-thread safe | Foundation |
+| `App/` | the app (XcodeGen spec `project.yml`): design system, engine, views | EchoelCore, EchoelDSP |
 
 More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
 on modules below it — never the other way round.
