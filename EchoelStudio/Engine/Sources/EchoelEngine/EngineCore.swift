@@ -183,6 +183,9 @@ public final class EngineCore: @unchecked Sendable {
 
     public func play() { isPlayingFlag.store(true, ordering: .releasing) }
 
+    /// Stops where it is, as an external clock's Stop asks.
+    public func pause() { isPlayingFlag.store(false, ordering: .releasing) }
+
     /// Stops and returns to the start.
     public func stop() {
         isPlayingFlag.store(false, ordering: .releasing)

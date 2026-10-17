@@ -166,6 +166,7 @@ struct RecordButton: View {
 /// one undo step.
 struct TempoField: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(MIDIInput.self) private var midi
     @State private var dragStart: Double?
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
 
@@ -181,7 +182,8 @@ struct TempoField: View {
                 Text(store.project.tempo, format: .number.precision(.fractionLength(1)))
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(Theme.Color.text)
-                Text("BPM")
+                // EXT: an external MIDI clock sets the tempo.
+                Text(midi.followedSource == nil ? "BPM" : "EXT")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -229,6 +231,7 @@ struct TempoField: View {
 struct SongMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(MIDIInput.self) private var midi
     @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
 
@@ -248,6 +251,20 @@ struct SongMenu: View {
                 }
             }
             .disabled(engine.clock.destinations.isEmpty)
+            Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
+                Button { midi.follow(nil) } label: {
+                    if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
+                }
+                ForEach(midi.sources) { source in
+                    Button { midi.follow(source.id) } label: {
+                        if midi.followedSource == source.id {
+                            Label(source.name, systemImage: "checkmark")
+                        } else {
+                            Text(source.name)
+                        }
+                    }
+                }
+            }
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
                     if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }

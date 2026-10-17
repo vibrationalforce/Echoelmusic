@@ -303,6 +303,17 @@ final class AudioEngine {
         isPlaying = true
     }
 
+    /// Stops where it is (an external clock's Stop; Continue goes on from here).
+    func pause() {
+        core?.pause()
+        isPlaying = false
+    }
+
+    func seek(toTick tick: Tick) {
+        guard let core, let project else { return }
+        core.seek(toSample: TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate).sample(at: tick))
+    }
+
     /// Stops and returns to the start.
     func stop() {
         core?.stop()
