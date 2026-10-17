@@ -15,6 +15,16 @@ enum ParameterFormat {
             return percent == 0 ? "C" : (value < 0 ? "L\(percent)" : "R\(percent)")
         case .bpm:
             return String(format: "%.1f BPM", value)
+        case .hertz:
+            return value >= 1_000 ? String(format: "%.2f kHz", value / 1_000) : String(format: "%.0f Hz", value)
+        case .seconds:
+            return value >= 1 ? String(format: "%.2f s", value) : String(format: "%.0f ms", value * 1_000)
+        case .octaves:
+            return String(format: "%.1f oct", value)
+        case .amount:
+            return String(format: "%.2f", value)
+        case .choice:
+            return String(Int(value.rounded()))
         }
     }
 }
@@ -128,5 +138,71 @@ struct PanControl: View {
                 store.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
             }
         }
+    }
+}
+
+/// A number you drag: label above, value below; drag up or down to change it (finer as the
+/// finger moves away sideways is a later refinement), double-tap for the default. The one
+/// numeric control for every parameter that is not a fader or a pan.
+struct ParameterField: View {
+    @Environment(ProjectStore.self) private var store
+    let address: ParameterAddress
+    @State private var start: Double?
+
+    /// Points of vertical travel for the full range.
+    private static let travel: CGFloat = 240
+
+    var body: some View {
+        if let descriptor = store.project.descriptor(for: address), let value = store.project.value(of: address) {
+            let position = descriptor.normalized(value)
+            VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                Text(title(descriptor))
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .lineLimit(1)
+                Text(ParameterFormat.text(value, unit: descriptor.unit))
+                    .font(Theme.Font.value)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Rectangle().fill(Theme.Color.surfaceRaised)
+                        Rectangle().fill(Theme.Color.accent)
+                            .frame(width: geometry.size.width * CGFloat(position))
+                    }
+                }
+                .frame(height: 3)
+                .accessibilityHidden(true)
+            }
+            .padding(Theme.Space.s)
+            .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 2)
+                    .onChanged { drag in
+                        let origin = start ?? position
+                        start = origin
+                        store.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
+                    }
+                    .onEnded { _ in
+                        start = nil
+                        store.endGesture()
+                    }
+            )
+            .onTapGesture(count: 2) { store.reset(address) }
+            .accessibilityElement()
+            .accessibilityLabel(title(descriptor))
+            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
+            .accessibilityAdjustableAction { direction in
+                store.set(address, normalized: position + (direction == .increment ? 0.02 : -0.02), gesture: false)
+            }
+        }
+    }
+
+    /// The parameter's own name, without the track name the descriptor carries for lists.
+    private func title(_ descriptor: ParameterDescriptor) -> String {
+        SynthParameter.named(address.key)?.title ?? descriptor.title
     }
 }

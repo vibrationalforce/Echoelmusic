@@ -9,6 +9,9 @@ struct ClipEditorView: View {
     @Environment(\.dismiss) private var dismiss
     let trackID: TrackID
     @State private var grid: NoteEditing.Grid = .sixteenth
+    @State private var page: Page = .notes
+
+    enum Page: Hashable { case notes, sound }
 
     private static let newClipBars: Tick = 4
 
@@ -16,7 +19,9 @@ struct ClipEditorView: View {
         let track = store.project.track(trackID)
         NavigationStack {
             Group {
-                if let track, let clip = track.clips.first {
+                if let track, page == .sound {
+                    SoundPanel(track: track)
+                } else if let track, let clip = track.clips.first {
                     PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue)
                 } else if let track {
                     emptyState(track)
@@ -40,11 +45,21 @@ struct ClipEditorView: View {
                     .disabled(!engine.isRunning)
                 }
                 ToolbarItem(placement: .principal) {
-                    Picker("Grid", selection: $grid) {
-                        ForEach(NoteEditing.Grid.allCases, id: \.self) { Text($0.title).tag($0) }
+                    Picker("Page", selection: $page) {
+                        Text("Notes").tag(Page.notes)
+                        Text("Sound").tag(Page.sound)
                     }
-                    .pickerStyle(.menu)
-                    .accessibilityLabel("Grid")
+                    .pickerStyle(.segmented)
+                    .fixedSize()
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    if page == .notes {
+                        Picker("Grid", selection: $grid) {
+                            ForEach(NoteEditing.Grid.allCases, id: \.self) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+                        .accessibilityLabel("Grid")
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
