@@ -24,7 +24,7 @@ env:
 
 jobs:
   core:
-    name: EchoelCore + EchoelDSP
+    name: Core + DSP + Engine
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -60,6 +60,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee ../../dsp-ios.log | tail -40
 
+      - name: Test Engine (macOS host)
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/Engine 2>&1 | tee engine-test.log
+
+      - name: Build Engine for iOS
+        working-directory: EchoelStudio/Engine
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -scheme EchoelEngine \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee ../../engine-ios.log | tail -40
+
       - name: Build for iOS
         working-directory: EchoelStudio/Core
         run: |
@@ -75,7 +90,8 @@ jobs:
         run: |
           tail -150 core-test.log || true
           tail -150 dsp-test.log || true
-          grep -n "error:" core-ios.log dsp-ios.log | head -60 || true
+          tail -150 engine-test.log || true
+          grep -n "error:" core-ios.log dsp-ios.log engine-ios.log | head -60 || true
 
   app:
     name: App (iPhone + iPad)
