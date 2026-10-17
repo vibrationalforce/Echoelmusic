@@ -107,6 +107,16 @@ final class HostedUnitTests: XCTestCase {
         XCTAssertTrue(out.allSatisfy { $0 == 0 })
     }
 
+    func testAnExportPlaysTheUnitItIsGiven() throws {
+        let (project, track) = try pluginSong()
+        let fake = FakeInstrument(level: 0.5)
+        let result = OfflineRender.render(project, sampleRate: rate, tailSeconds: 0,
+                                          units: [track: fake.makeUnit(sampleRate: rate)])
+        XCTAssertEqual(result.left[30_000], 0.5 * Float(0.5).squareRoot(), accuracy: 1e-5)
+        XCTAssertEqual(fake.heard.filter { $0.status == 0x90 }.map(\.frame), [24_000])
+        XCTAssertTrue(OfflineRender.render(project, sampleRate: rate, tailSeconds: 0).left.allSatisfy { $0 == 0 })
+    }
+
     func testStoppingSendsAllNotesOff() throws {
         let (project, track) = try pluginSong()
         let fake = FakeInstrument(level: 0)

@@ -106,18 +106,23 @@ final class DocumentController {
     }
 
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
-    /// and returns its URL for the share sheet.
-    func exportWAV() async -> URL? {
+    /// and returns its URL for the share sheet. Plugins play from fresh copies loaded with the
+    /// settings they have right now; one that cannot load is named in `lastError` and left out.
+    func exportWAV(plugins: PluginHost) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
         defer { isExporting = false }
+        let rate = 48_000.0
+        try? store.perform(plugins.captureCommands(for: store.project), title: "Plugin Settings")
         let project = store.project
+        let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let buffers = samples
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let render = OfflineRender.render(project, samples: buffers)
+            let render = OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
+                                              effects: offline.chains)
             let data = WAVFile.data(left: render.left, right: render.right, sampleRate: render.sampleRate)
             return Result {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -126,7 +131,8 @@ final class DocumentController {
         }.value
         switch result {
         case .success:
-            lastError = nil
+            lastError = offline.missing.isEmpty ? nil
+                : "Exported without \(offline.missing.joined(separator: ", ")): not available on this device."
             return url
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .public)")

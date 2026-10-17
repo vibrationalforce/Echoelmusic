@@ -216,6 +216,7 @@ struct TempoField: View {
 /// The song's name, and the menu to start or open another. Songs save themselves.
 struct SongMenu: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
 
@@ -224,7 +225,7 @@ struct SongMenu: View {
             Button("New Song", systemImage: "plus") { documents.newSong() }
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
-                    if let url = await documents.exportWAV() { router.sheet = .share(url) }
+                    if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }
                 }
             }
             .disabled(documents.isExporting

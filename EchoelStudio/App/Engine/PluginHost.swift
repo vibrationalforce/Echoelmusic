@@ -188,33 +188,19 @@ final class PluginHost {
             fail(slot, request.component, reason: "\(request.component.name) is not installed on this device.", detail: failure)
             return
         }
-        let isEffect: Bool
-        if case .insert = slot { isEffect = true } else { isEffect = false }
+        let isEffect = slot.isInsert
         do {
-            guard let format = AVAudioFormat(standardFormatWithSampleRate: request.sampleRate, channels: 2),
-                  unit.outputBusses.count > 0 else {
-                throw HostError.noOutput
-            }
-            try unit.outputBusses[0].setFormat(format)
-            if isEffect {
-                guard unit.inputBusses.count > 0 else { throw HostError.noInput }
-                try unit.inputBusses[0].setFormat(format)
-            }
-            unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
-            if let state { Self.apply(state, to: unit) }
             log.info("plugin: allocate \(request.component.name, privacy: .public)")
-            try unit.allocateRenderResources()
+            try Self.prepare(unit, isEffect: isEffect, sampleRate: request.sampleRate, state: state)
         } catch {
             fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo at this rate.",
                  detail: error.localizedDescription)
             return
         }
-        let rate = request.sampleRate, frames = EngineCore.maximumFrames
-        loaded[slot] = Loaded(
-            component: request.component, sampleRate: rate, unit: unit,
-            instrument: isEffect ? nil : HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock,
-                                                    sampleRate: rate, maximumFrames: frames, owner: unit),
-            effect: isEffect ? HostedEffect(render: unit.renderBlock, sampleRate: rate, maximumFrames: frames, owner: unit) : nil)
+        let rate = request.sampleRate
+        loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
+                              instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate),
+                              effect: isEffect ? Self.effect(unit, sampleRate: rate) : nil)
         syncedState[slot] = state
         problems[slot] = nil
         revision += 1
@@ -230,6 +216,80 @@ final class PluginHost {
     }
 
     func isLoaded(_ slot: Slot) -> Bool { loaded[slot] != nil }
+
+    /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
+    /// settings, then render resources.
+    private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?) throws {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
+              unit.outputBusses.count > 0 else {
+            throw HostError.noOutput
+        }
+        try unit.outputBusses[0].setFormat(format)
+        if isEffect {
+            guard unit.inputBusses.count > 0 else { throw HostError.noInput }
+            try unit.inputBusses[0].setFormat(format)
+        }
+        unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
+        if let state { apply(state, to: unit) }
+        try unit.allocateRenderResources()
+    }
+
+    private static func instrument(_ unit: AUAudioUnit, sampleRate: Double) -> HostedUnit {
+        HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock, sampleRate: sampleRate,
+                   maximumFrames: EngineCore.maximumFrames, owner: unit)
+    }
+
+    private static func effect(_ unit: AUAudioUnit, sampleRate: Double) -> HostedEffect {
+        HostedEffect(render: unit.renderBlock, sampleRate: sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit)
+    }
+
+    /// Fresh units for an export: the live ones belong to the render thread. Each is loaded with
+    /// the song's saved settings at `sampleRate`; one that cannot load is left out, and its track
+    /// or insert is silent (or passes its sound through) in the file. The names of those are returned.
+    func offlineUnits(for project: Project, sampleRate: Double) async -> OfflineUnits {
+        var units: [TrackID: HostedUnit] = [:]
+        var chains: [TrackID: [HostedEffect]] = [:]
+        var missing: [String] = []
+        for track in project.tracks {
+            if track.kind == .instrument, track.instrument.device == .plugin, let plugin = track.instrument.plugin {
+                if let unit = await Self.instantiate(plugin, isEffect: false, sampleRate: sampleRate,
+                                                     state: track.instrument.pluginState) {
+                    units[track.id] = Self.instrument(unit, sampleRate: sampleRate)
+                } else {
+                    missing.append(plugin.name)
+                }
+            }
+            var chain: [HostedEffect] = []
+            for insert in track.inserts where !insert.isBypassed {
+                if let unit = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
+                    chain.append(Self.effect(unit, sampleRate: sampleRate))
+                } else {
+                    missing.append(insert.plugin.name)
+                }
+            }
+            if !chain.isEmpty { chains[track.id] = chain }
+        }
+        return OfflineUnits(units: units, chains: chains, missing: missing)
+    }
+
+    private static func instantiate(_ component: PluginComponent, isEffect: Bool, sampleRate: Double,
+                                    state: Data?) async -> AUAudioUnit? {
+        let description = AudioComponentDescription(componentType: component.type, componentSubType: component.subtype,
+                                                    componentManufacturer: component.manufacturer, componentFlags: 0,
+                                                    componentFlagsMask: 0)
+        let box: UnitBox = await withCheckedContinuation { continuation in
+            AUAudioUnit.instantiate(with: description, options: []) { @Sendable unit, _ in
+                continuation.resume(returning: UnitBox(unit))
+            }
+        }
+        guard let unit = box.unit else { return nil }
+        do {
+            try prepare(unit, isEffect: isEffect, sampleRate: sampleRate, state: state)
+        } catch {
+            return nil
+        }
+        return unit
+    }
 
     private static func apply(_ state: Data, to unit: AUAudioUnit) {
         guard let settings = try? PropertyListSerialization.propertyList(from: state, format: nil) as? [String: Any]
@@ -283,4 +343,18 @@ final class PluginHost {
     }
 
     enum HostError: Error { case noOutput, noInput }
+}
+
+extension PluginHost.Slot {
+    var isInsert: Bool {
+        if case .insert = self { true } else { false }
+    }
+}
+
+/// Units loaded for one export, handed to the offline render.
+struct OfflineUnits: @unchecked Sendable {
+    let units: [TrackID: HostedUnit]
+    let chains: [TrackID: [HostedEffect]]
+    /// Plugins that could not load; the export is made without them.
+    let missing: [String]
 }
