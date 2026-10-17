@@ -1212,3 +1212,7 @@ Translation mit der bewegten Note); ein Kind-Gesture verliert gegen ein highPrio
 Elternteils — Verschieben und Länge sind deshalb EINE Geste, entschieden am Startpunkt. Dreieck
 aus integriertem Rechteck mit Integrator-Startwert = Dreieckswert, sonst 1,6-facher Überschwinger.
 Nächstes: Arrangement-Ansicht, dann M2.
+- 11:56 UTC — **M1 im Code komplett**: Arrange-Seite (c76051e, Namensfix d828beb, Run #17 grün).
+  Gelernt: in einer `static func` verdeckt ein lokales `let end` die Schwester-Funktion `end(of:)` —
+  Swift meldet „cannot call value of non-function type"; lokale Namen nie wie Methoden des Typs nennen.
+  Nächstes: M2, zuerst Drum-Pattern-Core (Step-Raster als Clip-Noten, keine zweite Notenwahrheit).
