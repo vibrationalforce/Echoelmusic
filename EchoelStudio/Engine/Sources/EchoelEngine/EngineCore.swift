@@ -4,7 +4,8 @@ import Foundation
 import Synchronization
 
 /// The render-thread half of the engine: plays the newest `EngineSnapshot` sample-accurately
-/// into one `PolySynth` per instrument track, mixes them to stereo and adds the metronome.
+/// into one `PolySynth` per instrument track, mixes them to the master pair (or a track's own
+/// interface pair) and adds the metronome.
 ///
 /// Threading — two sides, never mixed:
 /// - **Main thread:** `publish`, `play`, `stop`, `seek`, `setClickEnabled`. A snapshot is
@@ -53,6 +54,12 @@ public final class EngineCore: @unchecked Sendable {
     private let audioRight: UnsafeMutablePointer<Float>
     private let returnLeft: UnsafeMutablePointer<Float>
     private let returnRight: UnsafeMutablePointer<Float>
+    /// The channels of the chunk being rendered, offset into the caller's buffers; 0/1 is the
+    /// master mix, a routed track adds into its own pair.
+    private let outputs: UnsafeMutablePointer<UnsafeMutablePointer<Float>>
+    private var outputCount = 2
+    /// The right half of the mix when the device has one channel.
+    private let monoRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
     private var wasPlaying = false
@@ -99,6 +106,10 @@ public final class EngineCore: @unchecked Sendable {
         returnLeft.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
         returnRight = .allocate(capacity: Self.returnCapacity * Self.maximumFrames)
         returnRight.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
+        monoRight = .allocate(capacity: Self.maximumFrames)
+        monoRight.initialize(repeating: 0, count: Self.maximumFrames)
+        outputs = .allocate(capacity: Track.outputChannelLimit)
+        outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
         metronome = Metronome(sampleRate: Float(rate))
     }
 
@@ -120,6 +131,8 @@ public final class EngineCore: @unchecked Sendable {
         audioRight.deallocate()
         returnLeft.deallocate()
         returnRight.deallocate()
+        monoRight.deallocate()
+        outputs.deallocate()
     }
 
     // MARK: - Main thread
@@ -173,14 +186,45 @@ public final class EngineCore: @unchecked Sendable {
         var done = 0
         while done < frameCount {
             let frames = Swift.min(frameCount - done, Self.maximumFrames)
-            renderChunk(frames: frames, left: left + done, right: right + done)
+            outputs[0] = left + done
+            outputs[1] = right + done
+            outputCount = 2
+            renderChunk(frames: frames)
             done += frames
         }
     }
 
-    private func renderChunk(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
-        left.update(repeating: 0, count: frames)
-        right.update(repeating: 0, count: frames)
+    /// Writes `frameCount` frames into each of `channelCount` channels (overwriting them):
+    /// the master mix on 1/2, each routed track added into its own pair. A pair the device lacks
+    /// plays in the master mix; one channel gets the mix folded to mono.
+    public func render(frameCount: Int, channels: UnsafePointer<UnsafeMutablePointer<Float>>, channelCount: Int) {
+        guard channelCount > 0 else { return }
+        let used = Swift.min(channelCount, Track.outputChannelLimit)
+        for c in used..<channelCount { channels[c].update(repeating: 0, count: frameCount) }
+        var done = 0
+        while done < frameCount {
+            let frames = Swift.min(frameCount - done, Self.maximumFrames)
+            for c in 0..<used { outputs[c] = channels[c] + done }
+            if used == 1 { outputs[1] = monoRight }
+            outputCount = Swift.max(used, 2)
+            renderChunk(frames: frames)
+            if used == 1 {
+                let mono = outputs[0]
+                for i in 0..<frames { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
+            }
+            done += frames
+        }
+    }
+
+    /// The pair a lane adds into: its own, or the master mix.
+    private func pair(_ output: Int) -> (UnsafeMutablePointer<Float>, UnsafeMutablePointer<Float>) {
+        guard output >= 2, output + 1 < outputCount else { return (outputs[0], outputs[1]) }
+        return (outputs[output], outputs[output + 1])
+    }
+
+    private func renderChunk(frames: Int) {
+        for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
+        let left = outputs[0], right = outputs[1]
 
         takePendingSnapshot()
 
@@ -201,8 +245,8 @@ public final class EngineCore: @unchecked Sendable {
         guard playing, let box = current else {
             renderVoices(0..<frames, left: left, right: right)
             renderUnits(frames: frames)
-            mixLanes(frames: frames, left: left, right: right)
-            mixReturns(frames: frames, left: left, right: right)
+            mixLanes(frames: frames)
+            mixReturns(frames: frames)
             return
         }
         let snapshot = box.snapshot
@@ -252,9 +296,9 @@ public final class EngineCore: @unchecked Sendable {
         }
         renderVoices(rendered..<frames, left: left, right: right)
         renderUnits(frames: frames)
-        mixLanes(frames: frames, left: left, right: right)
-        renderAudio(snapshot, frames: frames, left: left, right: right)
-        mixReturns(frames: frames, left: left, right: right)
+        mixLanes(frames: frames)
+        renderAudio(snapshot, frames: frames)
+        mixReturns(frames: frames)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
     }
@@ -376,9 +420,10 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Every lane's bus through its inserts, then into the mix at its gains, then cleared. Runs
     /// for silent lanes too, so an effect's tail rings out after the last note.
-    private func mixLanes(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    private func mixLanes(frames: Int) {
         guard let snapshot = current?.snapshot else { return }
         for lane in snapshot.lanes {
+            let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             for i in 0..<frames {
@@ -405,9 +450,10 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Every return bus through its effects, into the mix at its fader, then cleared — every
     /// block, so a reverb's tail rings out after the transport stops.
-    private func mixReturns(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    private func mixReturns(frames: Int) {
         guard let snapshot = current?.snapshot else { return }
         for lane in snapshot.returns {
+            let (left, right) = pair(lane.output)
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             for i in 0..<frames {
@@ -424,10 +470,10 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Audio regions are read straight from the snapshot at the playhead — no voices, no state —
     /// so a seek or an edit lands on the right frame at once.
-    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, left: UnsafeMutablePointer<Float>,
-                             right: UnsafeMutablePointer<Float>) {
+    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int) {
         let blockEnd = playhead + Int64(frames)
         for lane in snapshot.audioLanes where lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty {
+            let (left, right) = pair(lane.output)
             audioLeft.update(repeating: 0, count: frames)
             audioRight.update(repeating: 0, count: frames)
             for region in lane.regions {

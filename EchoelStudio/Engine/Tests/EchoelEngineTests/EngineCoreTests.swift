@@ -28,12 +28,24 @@ final class EngineCoreTests: XCTestCase {
         return Song(project: project, tracks: ids)
     }
 
-    private func publish(_ project: Project, to core: EngineCore) {
+    private func publish(_ project: Project, to core: EngineCore, outputChannels: Int = 2) {
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
-                                    slots: slots.slots, sampleRate: rate, generation: generation))
+                                    slots: slots.slots, sampleRate: rate, generation: generation,
+                                    outputChannels: outputChannels))
+    }
+
+    /// Renders `frames` into `count` separate channels.
+    private func render(_ core: EngineCore, frames: Int, channels count: Int) -> [[Float]] {
+        let buffers = (0..<count).map { _ in UnsafeMutablePointer<Float>.allocate(capacity: frames) }
+        defer { buffers.forEach { $0.deallocate() } }
+        buffers.withUnsafeBufferPointer { pointers in
+            guard let base = pointers.baseAddress else { return }
+            core.render(frameCount: frames, channels: base, channelCount: count)
+        }
+        return buffers.map { Array(UnsafeBufferPointer(start: $0, count: frames)) }
     }
 
     private func render(_ core: EngineCore, frames: Int, block: Int = 256) -> (left: [Float], right: [Float]) {
@@ -140,6 +152,33 @@ final class EngineCoreTests: XCTestCase {
         let out = render(core, frames: 9_600)
         XCTAssertNotNil(firstSound(out.left), "the solo plays")
         XCTAssertNil(firstSound(out.right), "hard left, and the other track is not soloed")
+    }
+
+    func testARoutedTrackPlaysOnItsOwnPairPastTheMasterAndFallsBackWithoutOne() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 9_600)], [Note(pitch: 64, start: 0, length: 9_600)]])
+        try Command.setOutput(s.tracks[1], channel: 2).apply(to: &s.project)
+        try Command.setVolume(.master, db: MixerStrip.volumeRange.lowerBound).apply(to: &s.project)
+
+        let routed = core()
+        publish(s.project, to: routed, outputChannels: 4)
+        routed.play()
+        let out = render(routed, frames: 4_800, channels: 4)
+        XCTAssertNil(firstSound(out[0]), "the master is down, and the routed track does not pass through it")
+        XCTAssertNil(firstSound(out[1]))
+        XCTAssertNotNil(firstSound(out[2]), "outputs 3/4 carry the routed track at its own fader")
+        XCTAssertNotNil(firstSound(out[3]))
+
+        let stereo = core()
+        publish(s.project, to: stereo, outputChannels: 2)
+        stereo.play()
+        let folded = render(stereo, frames: 4_800, channels: 2)
+        XCTAssertNil(firstSound(folded[0]), "without outputs 3/4 the track plays in the master mix, which is down")
+
+        let mono = core()
+        try Command.setVolume(.master, db: 0).apply(to: &s.project)
+        publish(s.project, to: mono, outputChannels: 1)
+        mono.play()
+        XCTAssertNotNil(firstSound(render(mono, frames: 4_800, channels: 1)[0]), "one channel gets the mix")
     }
 
     func testANoteAfterATempoChangeLandsWhereTheMapSays() throws {
