@@ -137,6 +137,8 @@ public struct EngineSnapshot: Sendable {
         public let sends: [SendTap]
         public let output: Int
         public let mix: MovingMix?
+        /// The interface input the lane plays through its strip, or −1.
+        public let monitor: Int
     }
 
     /// An audio clip resolved to its buffer: `length` buffer frames from `offset` each pass of
@@ -189,7 +191,7 @@ public struct EngineSnapshot: Sendable {
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
                 effects: [TrackID: [HostedEffect]] = [:], outputChannels: Int = 2,
-                revisions: [TrackID: UInt64] = [:]) {
+                revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:]) {
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
@@ -254,7 +256,8 @@ public struct EngineSnapshot: Sendable {
             return AudioLane(track: track.id, slot: slots[track.id] ?? -1, loops: loops,
                              gainLeft: left, gainRight: right, regions: regions,
                              inserts: inserts(track.id), sends: sends(track, audible), output: output,
-                             mix: audible ? moving(track, output < 0) : nil)
+                             mix: audible ? moving(track, output < 0) : nil,
+                             monitor: monitoring[track.id].flatMap { (0..<InputMonitor.channelLimit).contains($0) ? $0 : nil } ?? -1)
         }
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         let compiled = plan.tracks.compactMap { events -> Lane? in

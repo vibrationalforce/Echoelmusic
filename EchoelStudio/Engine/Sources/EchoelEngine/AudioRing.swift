@@ -55,6 +55,14 @@ public final class AudioRing: @unchecked Sendable {
         consumed.store(written.load(ordering: .acquiring), ordering: .releasing)
     }
 
+    /// Consumer side. Throws away the oldest `count` waiting samples, or all of them.
+    public func discard(_ count: Int) {
+        guard count > 0 else { return }
+        let r = consumed.load(ordering: .relaxed)
+        let w = written.load(ordering: .acquiring)
+        consumed.store(r + Swift.min(count, w - r), ordering: .releasing)
+    }
+
     /// Consumer side. Copies up to `count` waiting samples into `destination` and returns how
     /// many that was.
     @discardableResult

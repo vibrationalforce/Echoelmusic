@@ -75,6 +75,11 @@ public final class EngineCore: @unchecked Sendable {
     /// master mix, a routed track adds into its own pair.
     private let outputs: UnsafeMutablePointer<UnsafeMutablePointer<Float>>
     private var outputCount = 2
+    /// The interface inputs, from the input callback; a monitoring audio lane plays one.
+    public let inputs = InputMonitor()
+    /// The inputs of the chunk being rendered, `maximumFrames` each, read once per chunk so
+    /// two tracks can monitor the same input.
+    private let heard: UnsafeMutablePointer<Float>
     /// The right half of the mix when the device has one channel.
     private let monoRight: UnsafeMutablePointer<Float>
     /// One audio lane's mono signal for part of a chunk, before it is faded into the lane.
@@ -162,6 +167,8 @@ public final class EngineCore: @unchecked Sendable {
         returnRight = .allocate(capacity: Self.returnCapacity * Self.maximumFrames)
         returnRight.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
         monoRight = .allocate(capacity: Self.maximumFrames)
+        heard = .allocate(capacity: InputMonitor.channelLimit * Self.maximumFrames)
+        heard.initialize(repeating: 0, count: InputMonitor.channelLimit * Self.maximumFrames)
         segment = .allocate(capacity: Self.maximumFrames)
         segment.initialize(repeating: 0, count: Self.maximumFrames)
         monoRight.initialize(repeating: 0, count: Self.maximumFrames)
@@ -190,6 +197,7 @@ public final class EngineCore: @unchecked Sendable {
         busLeft.deallocate()
         busRight.deallocate()
         audioLeft.deallocate()
+        heard.deallocate()
         audioRight.deallocate()
         returnLeft.deallocate()
         returnRight.deallocate()
@@ -201,6 +209,7 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Main thread
 
     public func publish(_ snapshot: EngineSnapshot) {
+        inputs.want(snapshot.audioLanes.map(\.monitor).filter { $0 >= 0 })
         // A lane outside the preallocated slots would index past them on the render thread.
         let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity))
         published.append(box)
@@ -345,6 +354,7 @@ public final class EngineCore: @unchecked Sendable {
             renderVoices(0..<frames, left: left, right: right)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
+            if let snapshot = current?.snapshot { renderAudio(snapshot, frames: frames, playing: false) }
             mixReturns(frames: frames)
             return
         }
@@ -953,9 +963,12 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Audio regions are read straight from the snapshot at the playhead — no voices, no state —
     /// so a seek or an edit lands on the right frame at once.
-    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int) {
+    /// Stopped, only the lanes that monitor their input render — the input, through the strip.
+    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, playing: Bool = true) {
         let blockEnd = playhead + Int64(frames)
+        var fetched: UInt32 = 0
         for (index, lane) in snapshot.audioLanes.enumerated() {
+            if !playing, lane.monitor < 0 { continue }
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
             // A track just muted still renders this chunk, to ramp down instead of clicking off.
             let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
@@ -963,7 +976,7 @@ public final class EngineCore: @unchecked Sendable {
             let session = lane.slot >= 0 && lane.slot < slotCapacity
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil || fading else {
                 // Silent, but a launch still happens on its bar.
-                if session, !sessions[lane.slot].isIdle,
+                if playing, session, !sessions[lane.slot].isIdle,
                    snapshot.time.sample(at: sessions[lane.slot].pendingTick) < blockEnd { fireAudio(lane) }
                 continue
             }
@@ -973,7 +986,7 @@ public final class EngineCore: @unchecked Sendable {
             // Up to the sample a pending launch or stop takes effect, then on from there. What
             // played before the switch fades out over a few milliseconds while what follows
             // fades in, so a launch, stop or return never clicks.
-            var from = 0
+            var from = playing ? 0 : frames
             var fadeStart = 0, fadeEnd = 0
             while from < frames {
                 var until = frames
@@ -998,6 +1011,19 @@ public final class EngineCore: @unchecked Sendable {
                     }
                 }
                 from = until
+            }
+            // The input, through the same inserts, fader and pan as what the track plays.
+            if lane.monitor >= 0, lane.monitor < InputMonitor.channelLimit {
+                let input = heard + lane.monitor * Self.maximumFrames
+                let bit: UInt32 = 1 << UInt32(lane.monitor)
+                if fetched & bit == 0 {
+                    inputs.read(channel: lane.monitor, into: input, frames: frames)
+                    fetched |= bit
+                }
+                for i in 0..<frames {
+                    audioLeft[i] += input[i]
+                    audioRight[i] += input[i]
+                }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,

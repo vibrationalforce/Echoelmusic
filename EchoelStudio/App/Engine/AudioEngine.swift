@@ -41,6 +41,7 @@ final class AudioEngine {
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
+    @ObservationIgnored private var routeObserver: NSObjectProtocol?
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
     let plugins: PluginHost
@@ -57,6 +58,36 @@ final class AudioEngine {
     func setLiveTrack(_ track: TrackID?) {
         liveTrack = track
         if let project { publish(project) }
+    }
+
+    /// The armed audio track; with `auto` monitoring it hears its input.
+    @ObservationIgnored private var armedTrack: TrackID?
+
+    func setArmedTrack(_ track: TrackID?) {
+        armedTrack = track
+        if let project { publish(project) }
+    }
+
+    /// The device's own speaker or earpiece, where a monitored microphone would howl.
+    private var outputIsBuiltIn: Bool {
+        AVAudioSession.sharedInstance().currentRoute.outputs.contains {
+            $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
+        }
+    }
+
+    /// Which input each audio track plays through its strip right now.
+    private func monitoring(in project: Project) -> [TrackID: Int] {
+        guard isInputOpen else { return [:] }
+        let speaker = outputIsBuiltIn
+        var result: [TrackID: Int] = [:]
+        for track in project.tracks where track.kind == .audio {
+            switch track.monitor {
+            case .input: result[track.id] = track.input ?? 0
+            case .auto: if track.id == armedTrack, !speaker { result[track.id] = track.input ?? 0 }
+            case .off: break
+            }
+        }
+        return result
     }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
@@ -79,6 +110,15 @@ final class AudioEngine {
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             guard raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) == .ended else { return }
             MainActor.assumeIsolated { self?.resume(after: "interruption ended") }
+        }
+        // Headphones in or out: `auto` monitoring follows, so the speaker never howls.
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let project = self.project else { return }
+                self.publish(project)
+            }
         }
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
@@ -123,6 +163,7 @@ final class AudioEngine {
         }
         stop()
         configure(input: true)
+        if let project { publish(project) }
         return isInputOpen
     }
 
@@ -130,6 +171,7 @@ final class AudioEngine {
         guard isInputOpen else { return }
         stop()
         configure(input: false)
+        if let project { publish(project) }
     }
 
     /// Builds the graph from scratch for playback, or playback plus input.
@@ -423,7 +465,8 @@ final class AudioEngine {
         core.publish(EngineSnapshot(plan: plan, project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
                                     samples: samples, units: plugins.units, effects: plugins.chains,
-                                    outputChannels: outputChannels, revisions: revisions.update(for: plan)))
+                                    outputChannels: outputChannels, revisions: revisions.update(for: plan),
+                                    monitoring: monitoring(in: project)))
     }
 
     /// The track that plays live: the chosen one while it exists, else the first instrument track.

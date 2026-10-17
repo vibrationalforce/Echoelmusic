@@ -27,11 +27,30 @@ final class RecordController {
         if isRecording { await stopRecording() }
         if armedTrack == track {
             armedTrack = nil
-            engine.closeInput()
+            engine.setArmedTrack(nil)
+            if !monitorsAlways { engine.closeInput() }
             return
         }
         guard await engine.openInput() else { return }
         armedTrack = track
+        engine.setArmedTrack(track)
+    }
+
+    /// Some audio track hears its input whether armed or not, so the input stays open.
+    private var monitorsAlways: Bool {
+        store.project.tracks.contains { $0.kind == .audio && $0.monitor == .input }
+    }
+
+    /// When an audio track hears its input. `in` opens the input now; leaving the last `in`
+    /// closes it again unless a track is armed. Only on this choice — never on any edit, because
+    /// opening the input reconfigures the session and stops the song.
+    func setMonitor(_ mode: MonitorMode, on track: TrackID) async {
+        do { try store.perform(.setMonitor(track, mode)) } catch { return }
+        if monitorsAlways {
+            _ = await engine.openInput()
+        } else if armedTrack == nil, !isRecording {
+            engine.closeInput()
+        }
     }
 
     func record() {

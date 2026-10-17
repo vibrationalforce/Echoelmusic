@@ -136,6 +136,7 @@ struct OutputMenu: View {
 struct InputMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(RecordController.self) private var recording
     let track: Track
 
     var body: some View {
@@ -145,6 +146,13 @@ struct InputMenu: View {
             ForEach(0..<count, id: \.self) { channel in
                 Button { set(channel) } label: {
                     if channel == chosen { Label("Input \(channel + 1)", systemImage: "checkmark") } else { Text("Input \(channel + 1)") }
+                }
+            }
+            Section("Monitor") {
+                ForEach(MonitorMode.allCases, id: \.self) { mode in
+                    Button { Task { await recording.setMonitor(mode, on: track.id) } } label: {
+                        if mode == track.monitor { Label(Self.title(mode), systemImage: "checkmark") } else { Text(Self.title(mode)) }
+                    }
                 }
             }
         } label: {
@@ -165,7 +173,20 @@ struct InputMenu: View {
 
     private var label: String {
         let name = "In \((track.input ?? 0) + 1)"
-        return isMissing ? "\(name) missing" : name
+        if isMissing { return "\(name) missing" }
+        switch track.monitor {
+        case .auto: return name
+        case .input: return "\(name) · Mon"
+        case .off: return "\(name) · No Mon"
+        }
+    }
+
+    static func title(_ mode: MonitorMode) -> String {
+        switch mode {
+        case .auto: "Auto (while armed, not on the speaker)"
+        case .input: "Always"
+        case .off: "Off (the interface monitors)"
+        }
     }
 
     private func set(_ channel: Int) {

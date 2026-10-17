@@ -45,7 +45,9 @@ final class InputRecorder: @unchecked Sendable {
 
     /// Render thread.
     func receive(_ list: UnsafePointer<AudioBufferList>, frames: Int) {
-        guard frames > 0, armed.load(ordering: .acquiring) else { return }
+        guard frames > 0 else { return }
+        monitor(list, frames: frames)
+        guard armed.load(ordering: .acquiring) else { return }
         if start.load(ordering: .relaxed) < 0 {
             // The playhead has already moved past the block that plays with this input block.
             start.store(Swift.max(0, core.positionSample - Int64(frames)), ordering: .releasing)
@@ -71,6 +73,49 @@ final class InputRecorder: @unchecked Sendable {
             let n = Swift.min(held - done, Self.scratchFrames)
             for i in 0..<n { scratch[i] = data[(done + i) * stride + lane] }
             ring.write(scratch, count: n)
+            done += n
+        }
+    }
+
+    /// Every input a track monitors, to the engine — whether or not a take runs.
+    private func monitor(_ list: UnsafePointer<AudioBufferList>, frames: Int) {
+        let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: list))
+        let inputs = core.inputs
+        if buffers.count > 1 {
+            for (channel, buffer) in buffers.enumerated() where inputs.isWanted(channel) {
+                guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                let stride = Swift.max(1, Int(buffer.mNumberChannels))
+                copy(data, lane: 0, stride: stride, held: held(buffer, frames: frames, stride: stride)) {
+                    inputs.write(channel: channel, $0, count: $1)
+                }
+            }
+        } else if let buffer = buffers.first, let data = buffer.mData?.assumingMemoryBound(to: Float.self) {
+            let stride = Swift.max(1, Int(buffer.mNumberChannels))
+            for channel in 0..<Swift.min(stride, InputMonitor.channelLimit) where inputs.isWanted(channel) {
+                copy(data, lane: channel, stride: stride, held: held(buffer, frames: frames, stride: stride)) {
+                    inputs.write(channel: channel, $0, count: $1)
+                }
+            }
+        }
+    }
+
+    /// Frames the buffer really holds, whatever the frame count claims.
+    private func held(_ buffer: AudioBuffer, frames: Int, stride: Int) -> Int {
+        Swift.min(frames, Int(buffer.mDataByteSize) / (MemoryLayout<Float>.size * stride))
+    }
+
+    /// One channel of a buffer, de-interleaved through `scratch` when it must be.
+    private func copy(_ data: UnsafeMutablePointer<Float>, lane: Int, stride: Int, held: Int,
+                      to write: (UnsafePointer<Float>, Int) -> Void) {
+        guard stride > 1 else {
+            write(UnsafePointer(data), held)
+            return
+        }
+        var done = 0
+        while done < held {
+            let n = Swift.min(held - done, Self.scratchFrames)
+            for i in 0..<n { scratch[i] = data[(done + i) * stride + lane] }
+            write(UnsafePointer(scratch), n)
             done += n
         }
     }
