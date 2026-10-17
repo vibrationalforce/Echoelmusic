@@ -31,7 +31,7 @@ struct TrackRow: View {
                 .frame(width: 6)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Space.xs / 2) {
                 Text(track.name)
                     .font(Theme.Font.body)
                     .foregroundStyle(Theme.Color.text)
@@ -39,6 +39,11 @@ struct TrackRow: View {
                 Text(track.kind.displayName)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(track.name), \(track.kind.displayName), \(Theme.Color.trackName(track.colorIndex))")
+            .accessibilityAction(named: "Delete Track") {
+                try? store.perform(.removeTrack(track.id))
             }
 
             Spacer(minLength: Theme.Space.s)
@@ -67,7 +72,7 @@ struct TrackRow: View {
         .contextMenu {
             Menu("Color") {
                 ForEach(0..<Palette.trackColorCount, id: \.self) { index in
-                    Button("Color \(index + 1)") {
+                    Button(Theme.Color.trackName(index)) {
                         try? store.perform(.setTrackColor(track.id, colorIndex: index))
                     }
                 }

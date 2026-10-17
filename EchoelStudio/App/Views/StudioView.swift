@@ -77,7 +77,8 @@ struct TransportBar: View {
                 .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
         }
         .padding(.horizontal, Theme.Space.m)
-        .frame(height: Theme.Size.transportHeight)
+        .frame(minHeight: Theme.Size.transportHeight)
+        .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .background(Theme.Color.surface)
         .overlay(alignment: .bottom) {
             if let error = engine.lastError {
@@ -95,6 +96,7 @@ struct TransportBar: View {
 struct TempoField: View {
     @Environment(ProjectStore.self) private var store
     @State private var dragStart: Double?
+    @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
 
     private static let gestureKey = "project.tempo"
 
@@ -112,7 +114,7 @@ struct TempoField: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
-            .frame(minWidth: 72)
+            .frame(minWidth: valueWidth)
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 2)

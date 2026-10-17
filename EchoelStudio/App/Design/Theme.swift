@@ -11,7 +11,8 @@ enum Theme {
         static let border = SwiftUI.Color(white: 0.22)
         static let text = SwiftUI.Color(white: 0.92)
         static let textSecondary = SwiftUI.Color(white: 0.60)
-        static let textTertiary = SwiftUI.Color(white: 0.40)
+        /// 0.55 on the 0.07 background is about 5.5:1 — above WCAG AA (4.5:1) for small text.
+        static let textTertiary = SwiftUI.Color(white: 0.55)
         static let accent = SwiftUI.Color(red: 0.98, green: 0.62, blue: 0.20)
         static let play = SwiftUI.Color(red: 0.36, green: 0.80, blue: 0.47)
         static let record = SwiftUI.Color(red: 0.93, green: 0.30, blue: 0.30)
@@ -32,8 +33,23 @@ enum Theme {
             SwiftUI.Color(red: 0.66, green: 0.66, blue: 0.68),
         ]
 
+        /// Spoken and shown names, one per colour. Colour is never the only cue: a track is
+        /// always also named, and the colour has a word for VoiceOver and colour-blind players.
+        static let trackNames = [
+            "Red", "Orange", "Yellow", "Lime", "Green", "Teal",
+            "Blue", "Indigo", "Violet", "Magenta", "Pink", "Grey",
+        ]
+
         static func track(_ index: Int) -> SwiftUI.Color {
-            tracks[((index % tracks.count) + tracks.count) % tracks.count]
+            tracks[wrapped(index)]
+        }
+
+        static func trackName(_ index: Int) -> String {
+            trackNames[wrapped(index)]
+        }
+
+        private static func wrapped(_ index: Int) -> Int {
+            ((index % tracks.count) + tracks.count) % tracks.count
         }
     }
 
@@ -59,13 +75,21 @@ enum Theme {
     }
 
     enum Font {
-        static let title = SwiftUI.Font.system(size: 17, weight: .semibold)
-        static let body = SwiftUI.Font.system(size: 15, weight: .regular)
-        static let label = SwiftUI.Font.system(size: 13, weight: .medium)
-        static let caption = SwiftUI.Font.system(size: 11, weight: .medium)
+        // Text styles, never fixed point sizes: every label follows the reader's Dynamic Type
+        // setting. Dense surfaces (the transport) cap the size they grow to, they never opt out.
+        static let title = SwiftUI.Font.headline
+        static let body = SwiftUI.Font.body
+        static let label = SwiftUI.Font.subheadline.weight(.medium)
+        static let caption = SwiftUI.Font.caption.weight(.medium)
         /// Numbers that change (tempo, position, levels) use monospaced digits so they never jitter.
-        static let value = SwiftUI.Font.system(size: 17, weight: .semibold).monospacedDigit()
-        static let valueLarge = SwiftUI.Font.system(size: 22, weight: .semibold).monospacedDigit()
+        static let value = SwiftUI.Font.headline.monospacedDigit()
+        static let valueLarge = SwiftUI.Font.title2.weight(.semibold).monospacedDigit()
+    }
+
+    enum Accessibility {
+        /// The largest text size a dense control strip grows to. Beyond it the strip would no
+        /// longer fit a phone; lists and editors keep scaling all the way.
+        static let denseStripLimit = DynamicTypeSize.accessibility2
     }
 }
 
