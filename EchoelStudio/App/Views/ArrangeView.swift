@@ -33,6 +33,7 @@ struct ArrangeView: View {
                         .minimumScaleFactor(0.7)
                         .frame(height: Theme.Size.rulerHeight)
                         .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
+                        .contextMenu { AutomateMenu(owner: .master) }
                     ForEach(project.tracks) { track in
                         Text(track.name)
                             .font(Theme.Font.label)
@@ -43,7 +44,14 @@ struct ArrangeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: Theme.Size.trackRowHeight)
                             .background(Theme.Color.surface)
+                            .contextMenu { AutomateMenu(owner: .track(track.id)) }
                             .accessibilityHidden(true)
+                        ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
+                            AutomationName(lane: lane)
+                        }
+                    }
+                    ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
+                        AutomationName(lane: lane)
                     }
                 }
                 .frame(width: nameWidth)
@@ -53,6 +61,14 @@ struct ArrangeView: View {
                         ForEach(project.tracks) { track in
                             ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
                                         open: open, importAudio: importAudio)
+                                .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                            ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
+                                AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
+                                    .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
+                            }
+                        }
+                        ForEach(Self.lanes(of: .master, in: project), id: \.target) { lane in
+                            AutomationRow(lane: lane, signature: project.timeSignature, pointsPerBar: pointsPerBar)
                                 .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                         }
                     }
@@ -66,6 +82,13 @@ struct ArrangeView: View {
             }
         }
         .background(Theme.Color.background)
+    }
+}
+
+extension ArrangeView {
+    /// The song's lanes that belong to `owner`, in the order they were made.
+    static func lanes(of owner: ParameterAddress.Owner, in project: Project) -> [AutomationLane] {
+        project.automation.filter { $0.target.owner == owner }
     }
 }
 
