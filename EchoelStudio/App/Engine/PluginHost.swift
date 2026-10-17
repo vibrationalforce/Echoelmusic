@@ -1,4 +1,5 @@
 import AVFoundation
+import UIKit
 import EchoelCore
 import EchoelEngine
 import Observation
@@ -32,6 +33,9 @@ final class PluginHost {
     @ObservationIgnored private var loaded: [TrackID: Loaded] = [:]
     @ObservationIgnored private var requests: [TrackID: Request] = [:]
     @ObservationIgnored private var failed: [TrackID: PluginComponent] = [:]
+    /// The saved state each loaded unit was last brought in line with — applied on load or
+    /// after an undo, or captured from the unit. A song whose state differs gets it applied.
+    @ObservationIgnored private var syncedState: [TrackID: Data] = [:]
     @ObservationIgnored private var requestCount = 0
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "plugins")
@@ -98,7 +102,14 @@ final class PluginHost {
         for (id, entry) in loaded where wanted[id] != entry.component || entry.sampleRate != sampleRate {
             loaded[id] = nil
             units[id] = nil
+            syncedState[id] = nil
             changed = true
+        }
+        // An undo or a reopened song can carry other settings than the loaded unit has.
+        for (id, entry) in loaded {
+            guard let state = project.track(id)?.instrument.pluginState, state != syncedState[id] else { continue }
+            Self.apply(state, to: entry.unit)
+            syncedState[id] = state
         }
         for (id, request) in requests where wanted[id] != request.component || request.sampleRate != sampleRate {
             requests[id] = nil
@@ -144,10 +155,7 @@ final class PluginHost {
             }
             try unit.outputBusses[0].setFormat(format)
             unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
-            if let state,
-               let settings = try? PropertyListSerialization.propertyList(from: state, format: nil) as? [String: Any] {
-                unit.fullStateForDocument = settings
-            }
+            if let state { Self.apply(state, to: unit) }
             log.info("plugin: allocate \(request.component.name, privacy: .public)")
             try unit.allocateRenderResources()
         } catch {
@@ -156,6 +164,7 @@ final class PluginHost {
             return
         }
         loaded[track] = Loaded(component: request.component, sampleRate: request.sampleRate, unit: unit)
+        syncedState[track] = state
         units[track] = HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock,
                                   sampleRate: request.sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit)
         problems[track] = nil
@@ -170,11 +179,42 @@ final class PluginHost {
         problems[track] = reason
     }
 
-    /// The loaded unit's own settings as a binary property list, for the song to keep; nil when
-    /// the track has no loaded unit or its settings are not a property list.
-    func captureState(of track: TrackID) -> Data? {
-        guard let settings = loaded[track]?.unit.fullStateForDocument else { return nil }
-        return try? PropertyListSerialization.data(fromPropertyList: settings, format: .binary, options: 0)
+    private static func apply(_ state: Data, to unit: AUAudioUnit) {
+        guard let settings = try? PropertyListSerialization.propertyList(from: state, format: nil) as? [String: Any]
+        else { return }
+        unit.fullStateForDocument = settings
+    }
+
+    /// The commands that store every loaded unit's current settings in the song, for the tracks
+    /// whose settings changed since they were last stored. Empty when nothing changed.
+    func captureCommands(for project: Project) -> [Command] {
+        var commands: [Command] = []
+        for (id, entry) in loaded {
+            guard let settings = entry.unit.fullStateForDocument,
+                  let data = try? PropertyListSerialization.data(fromPropertyList: settings, format: .binary, options: 0),
+                  data.count <= PluginComponent.maximumStateBytes,
+                  data != project.track(id)?.instrument.pluginState else { continue }
+            syncedState[id] = data
+            commands.append(.setPluginState(id, data))
+        }
+        return commands
+    }
+
+    /// The plugin's own interface, or nil when it has none or the track's unit is not loaded.
+    func interface(for track: TrackID) async -> UIViewController? {
+        guard let unit = loaded[track]?.unit else { return nil }
+        return await withCheckedContinuation { continuation in
+            unit.requestViewController { @Sendable controller in
+                let box = ControllerBox(controller)
+                Task { @MainActor in continuation.resume(returning: box.controller) }
+            }
+        }
+    }
+
+    /// Carries the plugin's view controller across the completion handler's thread hop.
+    private final class ControllerBox: @unchecked Sendable {
+        let controller: UIViewController?
+        init(_ controller: UIViewController?) { self.controller = controller }
     }
 
     enum HostError: Error { case noOutput }

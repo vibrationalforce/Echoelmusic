@@ -31,6 +31,8 @@ struct SoundPanel: View {
                     synthControls
                 case .plugin:
                     pluginStatus
+                    PluginInterfaceSection(track: track.id)
+                        .id(track.instrument.plugin)
                 }
                 pluginMenu
             }
