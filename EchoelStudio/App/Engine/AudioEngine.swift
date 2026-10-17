@@ -347,7 +347,7 @@ final class AudioEngine {
     /// Every track with a clip in the scene plays it; the others stop.
     func launch(_ scene: SceneID, in project: Project) {
         guard let core else { return }
-        for track in project.tracks where track.kind == .instrument {
+        for track in project.tracks where track.kind != .returnTrack {
             guard let slot = slots.slots[track.id] else { continue }
             if let clip = track.clipInSlot(scene) {
                 core.launch(slot: slot, .launch(clip))

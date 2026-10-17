@@ -33,7 +33,8 @@ struct StudioView: View {
             case .arrange:
                 ArrangeView(open: { router.sheet = .clipEditor($0) },
                             importAudio: { router.sheet = .importAudio($0, $1) })
-            case .session: SessionView { router.sheet = .clip($0, $1) }
+            case .session:
+                SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
             case .mixer: MixerView()
             }
         }
@@ -48,6 +49,12 @@ struct StudioView: View {
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
                     Task { await documents.importAudio(url, placingOn: track, at: start) }
+                }, cancel: { router.sheet = nil })
+                .ignoresSafeArea()
+            case let .importClip(track, scene):
+                AudioFilePicker(pick: { url in
+                    router.sheet = nil
+                    Task { await documents.importAudioClip(url, onto: track, scene: scene) }
                 }, cancel: { router.sheet = nil })
                 .ignoresSafeArea()
             }

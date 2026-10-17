@@ -1,20 +1,23 @@
 import EchoelCore
 import SwiftUI
 
-/// The session: instrument tracks as columns, scenes as rows. Tap a clip to launch it on the
-/// next bar, a scene to launch its row, an empty slot to make a clip. Launch state comes from
-/// the engine; every document change is a command.
+/// The session: instrument and audio tracks as columns, scenes as rows. Tap a clip to launch it
+/// on the next bar, a scene to launch its row, an empty slot to make a clip — a MIDI clip, or on
+/// an audio track a loop from a file. Launch state comes from the engine; every document change
+/// is a command.
 struct SessionView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     /// Opens a clip in the editor.
     let open: (TrackID, ClipID) -> Void
+    /// Picks a file for an audio track's empty slot.
+    let importClip: (TrackID, SceneID) -> Void
 
     static let columnWidth: CGFloat = 120
     static let sceneWidth: CGFloat = 104
 
     var body: some View {
-        let tracks = store.project.tracks.filter { $0.kind == .instrument }
+        let tracks = store.project.tracks.filter { $0.kind != .returnTrack }
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical]) {
                 VStack(alignment: .leading, spacing: 1) {
@@ -45,7 +48,7 @@ struct SessionView: View {
         HStack(spacing: 1) {
             SceneButton(scene: scene)
             ForEach(tracks) { track in
-                SessionCell(track: track, scene: scene, open: open)
+                SessionCell(track: track, scene: scene, open: open, importClip: importClip)
             }
         }
     }
@@ -124,6 +127,7 @@ struct SessionCell: View {
     let track: Track
     let scene: EchoelCore.Scene
     let open: (TrackID, ClipID) -> Void
+    let importClip: (TrackID, SceneID) -> Void
 
     var body: some View {
         if let id = track.clipInSlot(scene.id), let index = track.clipIndex(id) {
@@ -139,7 +143,7 @@ struct SessionCell: View {
         let color = Theme.Color.track(track.colorIndex)
         return Button { engine.launch(clip.id, on: track.id) } label: {
             HStack(spacing: Theme.Space.xs) {
-                Image(systemName: isPlaying ? "play.fill" : "play")
+                Image(systemName: clip.audio != nil ? "waveform" : isPlaying ? "play.fill" : "play")
                     .font(Theme.Font.caption)
                     .foregroundStyle(isPlaying ? Theme.Color.play : Theme.Color.textSecondary)
                 Text(clip.name)
@@ -159,7 +163,11 @@ struct SessionCell: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button("Edit", systemImage: "pianokeys") { open(track.id, clip.id) }
+            if clip.audio == nil {
+                Button("Edit", systemImage: "pianokeys") { open(track.id, clip.id) }
+            } else {
+                loopMenu(clip)
+            }
             Button("Remove from Slot", systemImage: "minus.circle") {
                 try? store.perform(.setSlot(track: track.id, scene: scene.id, clip: nil))
             }
@@ -167,11 +175,28 @@ struct SessionCell: View {
         .accessibilityLabel("\(clip.name) on \(track.name)")
         .accessibilityValue(isPlaying ? "Playing" : isQueued ? "Starts on the next bar" : "Stopped")
         .accessibilityHint("Launches the clip.")
-        .accessibilityAction(named: "Edit") { open(track.id, clip.id) }
+        .accessibilityActions {
+            if clip.audio == nil { Button("Edit") { open(track.id, clip.id) } }
+        }
+    }
+
+    /// An audio clip's loop, in whole bars.
+    private func loopMenu(_ clip: Clip) -> some View {
+        let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
+        return Menu("Loop", systemImage: "repeat") {
+            ForEach([1, 2, 4, 8, 16], id: \.self) { bars in
+                Button {
+                    try? store.perform(.setClipLength(clip.id, length: Tick(bars) * bar))
+                } label: {
+                    let title = bars == 1 ? "1 Bar" : "\(bars) Bars"
+                    if clip.length == Tick(bars) * bar { Label(title, systemImage: "checkmark") } else { Text(title) }
+                }
+            }
+        }
     }
 
     private var empty: some View {
-        Button(action: makeClip) {
+        Button(action: track.kind == .audio ? { importClip(track.id, scene.id) } : makeClip) {
             Image(systemName: "plus")
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textTertiary)
@@ -181,7 +206,7 @@ struct SessionCell: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Empty slot, \(track.name), \(scene.name)")
-        .accessibilityHint("Makes a new clip here and opens it.")
+        .accessibilityHint(track.kind == .audio ? "Picks an audio file to loop here." : "Makes a new clip here and opens it.")
     }
 
     /// A one-bar clip in this slot, as one undo step, then the editor.

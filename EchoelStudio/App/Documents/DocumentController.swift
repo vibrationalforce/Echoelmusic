@@ -157,6 +157,21 @@ final class DocumentController {
                 title: "Import \(file.name)")
     }
 
+    /// Copies an audio file into the song as a session clip of an audio track, looping over the
+    /// nearest whole number of bars, in a scene's slot — one undo step.
+    func importAudioClip(_ source: URL, onto track: TrackID, scene: SceneID) async {
+        guard let file = await importMedia(source) else { return }
+        let project = store.project
+        let length = Arranging.loopLength(seconds: Double(file.frameCount) / file.sampleRate, bpm: project.tempo,
+                                          signature: project.timeSignature)
+        let clip = ClipID()
+        perform([.addMedia(file),
+                 .createAudioClip(track: track, id: clip, name: file.name, length: length,
+                                  audio: ClipAudio(media: file.id, length: file.frameCount)),
+                 .setSlot(track: track, scene: scene, clip: clip)],
+                title: "Import \(file.name)")
+    }
+
     /// Copies and decodes a file off the main thread and keeps its buffer, returning the file
     /// ready for `media.add`. Nil, with `lastError` set, when it cannot be read — or when
     /// another song was opened meanwhile.

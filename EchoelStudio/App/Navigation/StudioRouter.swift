@@ -13,6 +13,8 @@ enum StudioSheet: Identifiable, Hashable {
     case share(URL)
     /// Pick an audio file to place on an audio track at a tick.
     case importAudio(TrackID, Tick)
+    /// Pick an audio file to become a clip in an audio track's session slot.
+    case importClip(TrackID, SceneID)
     /// A track's insert effects.
     case effects(TrackID)
     /// Echoel's own Audio Units, to buy for other apps.
