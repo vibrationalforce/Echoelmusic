@@ -1199,3 +1199,16 @@ Cycle-Griffe überlappen nicht, abgebrochener Zug räumt auf · Canvas-Maßstab 
 sammeln, seltener pushen.
 
 - 2026-10-17 03:45 UTC — **10.79.515 ausgeliefert**: TestFlight-Lauf 38996952047 auf `7aa0b1e` = success (App-Code `abb8261`, beide Gates grün). ⛔ **`main` hat ihn NICHT erreicht** (bleibt `cc63f2d`, 27 Commits dahinter): `auto-merge-claude.yml` triggert nur auf `Sources/** Tests/** Package.swift project.yml .github/workflows/**` — `.deploy/release` ist KEIN Trigger, die „Passagier"-Annahme im Release-Plan war falsch. Der nächste Code-Commit auf dem Zweig nimmt alles mit (nach Gates auf SEINEM sha). Nichts gerätegeprüft; Blatt `docs/dev/DEVICE_SESSION_2_ARRANGE_2026-10-16.md`.
+
+## 2026-10-17 — Neustart Echoel Studio: M0 fertig, M1 bis auf Arrangement
+
+Founder: „Alles nochmal von vorne" — konventionelle Profi-DAW (FL Studio Mobile / Ableton), iPad + iPhone,
+AUv3, Live-Set, Agent. Plan: `docs/dev/NEUSTART_2026-10-17.md` (§3.5 offen gehaltene Türen für die
+ganze DMMW-Vision, §4 Stand). Neuer Code nur unter `EchoelStudio/` (Core · DSP · Engine · App),
+eigene CI `studio.yml` (macOS-Tests aller Pakete + iOS-Builds + App Simulator/Gerät). Jeder Schritt
+dort grün, Runs #1–#15. Nichts gerätegeprüft. Commits a9a1c8b … 0b80aca.
+Gelernt: Gesten im Piano Roll laufen im benannten Koordinatenraum des Rasters (sonst springt die
+Translation mit der bewegten Note); ein Kind-Gesture verliert gegen ein highPriorityGesture des
+Elternteils — Verschieben und Länge sind deshalb EINE Geste, entschieden am Startpunkt. Dreieck
+aus integriertem Rechteck mit Integrator-Startwert = Dreieckswert, sonst 1,6-facher Überschwinger.
+Nächstes: Arrangement-Ansicht, dann M2.
