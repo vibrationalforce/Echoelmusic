@@ -36,6 +36,7 @@ struct EchoelStudioApp: App {
                     documents.restore()
                     engine.start()
                     midi.start()
+                    engine.clock.start()
                 }
                 .onChange(of: store.project) { _, project in
                     documents.projectChanged()

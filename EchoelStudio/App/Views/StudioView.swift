@@ -233,6 +233,18 @@ struct SongMenu: View {
         Menu {
             Button("New Song", systemImage: "plus") { documents.newSong() }
             Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
+            Menu("Send MIDI Clock", systemImage: "metronome") {
+                ForEach(engine.clock.destinations) { destination in
+                    Button { engine.clock.toggle(destination) } label: {
+                        if engine.clock.isChosen(destination) {
+                            Label(destination.name, systemImage: "checkmark")
+                        } else {
+                            Text(destination.name)
+                        }
+                    }
+                }
+            }
+            .disabled(engine.clock.destinations.isEmpty)
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
                     if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }

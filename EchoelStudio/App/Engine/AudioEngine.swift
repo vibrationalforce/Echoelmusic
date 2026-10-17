@@ -43,6 +43,8 @@ final class AudioEngine {
     let plugins: PluginHost
     /// Where a controller's notes go; the MIDI input reads it.
     let live = LiveRouter()
+    /// Sends the transport's MIDI clock to the outputs picked in the song menu.
+    let clock = MIDIClockOutput()
     /// The instrument track a controller plays. Nil: the first instrument track.
     private(set) var liveTrack: TrackID?
 
@@ -219,6 +221,7 @@ final class AudioEngine {
                 engine.connect(engine.inputNode, to: sink, format: inputFormat)
             }
 
+            clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
             log.info("engine: start")
             try engine.start()
             isRunning = true
@@ -334,7 +337,8 @@ final class AudioEngine {
     /// on the isolation check before the first sample (the legacy app's builds 2613/2618).
     nonisolated private static func makeSourceNode(format: AVAudioFormat, core: EngineCore) -> AVAudioSourceNode {
         let pointers = ChannelPointers()
-        return AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, bufferList in
+        return AVAudioSourceNode(format: format) { @Sendable _, timestamp, frameCount, bufferList in
+            let hostTime = timestamp.pointee.mFlags.contains(.hostTimeValid) ? timestamp.pointee.mHostTime : 0
             let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
             let frames = Int(frameCount)
             let count = Swift.min(buffers.count, ChannelPointers.capacity)
@@ -356,9 +360,9 @@ final class AudioEngine {
                 if let data = buffers[c].mData { memset(data, 0, Int(buffers[c].mDataByteSize)) }
             }
             if count == 2 {
-                core.render(frameCount: frames, left: pointers.base[0], right: pointers.base[1])
+                core.render(frameCount: frames, left: pointers.base[0], right: pointers.base[1], hostTime: hostTime)
             } else {
-                core.render(frameCount: frames, channels: pointers.base, channelCount: count)
+                core.render(frameCount: frames, channels: pointers.base, channelCount: count, hostTime: hostTime)
             }
             return noErr
         }
