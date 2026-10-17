@@ -81,6 +81,34 @@ final class ClockInbox: Sendable {
     }
 }
 
+/// Messages from grid controllers (a Launchpad), waiting for the main thread. Their sources
+/// are known by connection tag; nothing from them is played or learned.
+final class GridInbox: Sendable {
+    private let tags = Mutex<Set<Int>>([])
+    private let waiting = Mutex<[Launchpad.Press]>([])
+    private let scheduled = Atomic<Bool>(false)
+
+    func setTags(_ new: Set<Int>) { tags.withLock { $0 = new } }
+
+    /// MIDI thread.
+    func isGrid(_ tag: Int) -> Bool { tags.withLock { $0.contains(tag) } }
+
+    /// MIDI thread. True when the main thread must be asked to drain.
+    func post(_ press: Launchpad.Press) -> Bool {
+        waiting.withLock { $0.append(press) }
+        return !scheduled.exchange(true, ordering: .acquiringAndReleasing)
+    }
+
+    /// Main thread.
+    func take() -> [Launchpad.Press] {
+        scheduled.store(false, ordering: .releasing)
+        return waiting.withLock { presses in
+            defer { presses.removeAll(keepingCapacity: true) }
+            return presses
+        }
+    }
+}
+
 /// Every MIDI source on the device — USB and Bluetooth controllers, network sessions, other
 /// apps' virtual ports — connected to one input port. Notes go to the live track; controllers
 /// move the parameters the song mapped them to, or are learned; sources that appear later are
@@ -113,6 +141,9 @@ final class MIDIInput {
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private let inbox = ControlInbox()
     @ObservationIgnored private let clockInbox = ClockInbox()
+    @ObservationIgnored private let gridInbox = GridInbox()
+    /// Called on the main thread for each press on a grid controller.
+    @ObservationIgnored var onGridPress: ((Launchpad.Press) -> Void)?
     @ObservationIgnored private var follower = ClockFollower()
     @ObservationIgnored private var lastTempoWrite: UInt64 = 0
     @ObservationIgnored private let engine: AudioEngine
@@ -146,6 +177,15 @@ final class MIDIInput {
         }
         clockInbox.followed.store(source.map(Self.tag) ?? 0, ordering: .relaxed)
         store.endGesture()
+    }
+
+    /// The sources that are grid controllers; their messages go to `onGridPress` only.
+    func setGridSources(_ ids: Set<MIDIUniqueID>) {
+        gridInbox.setTags(Set(ids.map(Self.tag)))
+    }
+
+    private func drainGrid() {
+        for press in gridInbox.take() { onGridPress?(press) }
     }
 
     /// A non-zero connection tag for a source.
@@ -241,11 +281,16 @@ final class MIDIInput {
             Task { @MainActor [weak self] in self?.connectSources() }
         }
         guard status == noErr else { return fail("client", status) }
-        let router = self.router, inbox = self.inbox, clockInbox = self.clockInbox
+        let router = self.router, inbox = self.inbox, clockInbox = self.clockInbox, gridInbox = self.gridInbox
         let portStatus = MIDIInputPortCreateWithProtocol(client, "Echoel In" as CFString, ._1_0, &port) {
             @Sendable [weak self] list, tag in
             let followed = clockInbox.followed.load(ordering: .relaxed)
             let fromFollowed = followed != 0 && Int(bitPattern: tag) == followed
+            if gridInbox.isGrid(Int(bitPattern: tag)) {
+                guard Self.receiveGrid(list, inbox: gridInbox) else { return }
+                Task { @MainActor in self?.drainGrid() }
+                return
+            }
             let (controls, clock) = Self.receive(list, router: router, inbox: inbox,
                                                  clock: fromFollowed ? clockInbox : nil)
             // One hop: two tasks would each send the captured `self` across actors.
@@ -290,6 +335,18 @@ final class MIDIInput {
         connected.formIntersection(seen)
         sourceNames = names
         sources = found
+    }
+
+    /// MIDI thread: a grid controller's presses. True when some are waiting for the main thread.
+    nonisolated private static func receiveGrid(_ list: UnsafePointer<MIDIEventList>, inbox: GridInbox) -> Bool {
+        var drain = false
+        for packet in list.unsafeSequence() {
+            for word in MIDIEventPacket.WordCollection(packet) where word >> 28 == 0x2 {
+                let press = Launchpad.press(status: UInt8((word >> 16) & 0xFF), UInt8((word >> 8) & 0x7F), UInt8(word & 0x7F))
+                if let press, inbox.post(press) { drain = true }
+            }
+        }
+        return drain
     }
 
     /// MIDI thread: MIDI 1.0 channel voice messages in Universal MIDI Packets (message type 2).

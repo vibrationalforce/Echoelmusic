@@ -10,6 +10,7 @@ struct EchoelStudioApp: App {
     @State private var plugins = StoreController()
     @State private var midi: MIDIInput
     @State private var writer: ParameterWriter
+    @State private var launchpad: LaunchpadController
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -24,6 +25,7 @@ struct EchoelStudioApp: App {
         _writer = State(initialValue: writer)
         let midi = MIDIInput(router: engine.live, store: store, engine: engine, writer: writer)
         _midi = State(initialValue: midi)
+        _launchpad = State(initialValue: LaunchpadController(store: store, engine: engine, midi: midi))
         // A control moved in a plugin's own interface: the learn target while learning, else written.
         engine.plugins.onParameterMoved = { [weak writer, weak midi] address, position, phase in
             if let midi, midi.isLearning {
@@ -49,6 +51,7 @@ struct EchoelStudioApp: App {
                     documents.restore()
                     engine.start()
                     midi.start()
+                    launchpad.start()
                     engine.clock.start()
                 }
                 .onChange(of: store.project) { _, project in
