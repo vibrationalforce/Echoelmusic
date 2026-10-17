@@ -65,6 +65,13 @@ final class StereoDelayTests: XCTestCase {
         delay.settings.time = .infinity
         XCTAssertEqual(delay.settings.time, 0.375, "non-finite takes the default")
 
+        let loaded = StereoDelay(sampleRate: rate)
+        loaded.settings = .init(time: 0.01, feedback: 0, mix: 1)
+        var click = [Float](repeating: 0, count: 1_000)
+        click[0] = 1
+        XCTAssertEqual(run(loaded, left: click, right: click).0[480], 1, accuracy: 0.05,
+                       "settings given before the first sample apply at once, without a sweep")
+
         let gliding = StereoDelay(sampleRate: rate, settings: .init(time: 0.1, feedback: 0, mix: 1))
         // One continuous tone, so any jump in the output is the read head's own.
         let tone = (0..<19_200).map { Float(sin(Double($0) * 0.05)) }

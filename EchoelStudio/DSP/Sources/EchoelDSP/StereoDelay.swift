@@ -62,6 +62,9 @@ public final class StereoDelay: @unchecked Sendable {
     private var dampCoefficient: Float = 1
     private var dampLeft: Float = 0
     private var dampRight: Float = 0
+    /// Until the first sample runs, a new time takes effect at once: a delay loaded with its
+    /// settings must not sweep from the default into them.
+    private var hasRun = false
 
     public init(sampleRate: Double, settings: Settings = Settings()) {
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -89,11 +92,13 @@ public final class StereoDelay: @unchecked Sendable {
         dampLeft = 0
         dampRight = 0
         distance = target
+        hasRun = false
     }
 
     private func update() {
         target = Swift.min(Swift.max(settings.time * sampleRate, 1), Double(capacity - 3))
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
+        if !hasRun { distance = target }
     }
 
     /// Processes `frames` samples in place.
@@ -101,6 +106,7 @@ public final class StereoDelay: @unchecked Sendable {
         let feedback = Float(settings.feedback)
         let wet = Float(settings.mix), dry = 1 - wet
         let pingPong = settings.pingPong
+        if frames > 0 { hasRun = true }
         for i in 0..<frames {
             distance += (target - distance) * glide
             var position = Double(write) - distance

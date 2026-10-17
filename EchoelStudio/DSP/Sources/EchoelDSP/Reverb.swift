@@ -65,6 +65,8 @@ public final class Reverb: @unchecked Sendable {
     private let outputs: UnsafeMutablePointer<Float>
     private var dampCoefficient: Float = 1
     private let glide: Double
+    /// Until the first sample runs, a new size takes effect at once (see `StereoDelay`).
+    private var hasRun = false
 
     private let preCapacity: Int
     private let pre: UnsafeMutablePointer<Float>
@@ -130,6 +132,7 @@ public final class Reverb: @unchecked Sendable {
         diffuser.update(repeating: 0, count: 4 * diffuserCapacity)
         damp.update(repeating: 0, count: Self.lines)
         for i in 0..<Self.lines { length[i] = target[i] }
+        hasRun = false
     }
 
     private func update() {
@@ -142,12 +145,14 @@ public final class Reverb: @unchecked Sendable {
         }
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
         preLength = Swift.min(Int(settings.predelay * sampleRate), preCapacity - 1)
+        if !hasRun { for i in 0..<Self.lines { length[i] = target[i] } }
     }
 
     /// Processes `frames` samples in place.
     public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         let wet = Float(settings.mix), dry = 1 - wet
         let scale: Float = 2 / Float(Self.lines)
+        if frames > 0 { hasRun = true }
         for i in 0..<frames {
             // A bad input sample reads as silence; it never reaches the lines.
             let inLeft = left[i].isFinite ? left[i] : 0, inRight = right[i].isFinite ? right[i] : 0
