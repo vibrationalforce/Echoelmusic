@@ -31,6 +31,7 @@ struct StudioView: View {
 struct TransportBar: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(DocumentController.self) private var documents
     @State private var clickOn = true
 
     var body: some View {
@@ -58,10 +59,7 @@ struct TransportBar: View {
 
             Spacer(minLength: Theme.Space.s)
 
-            Text(store.project.name)
-                .font(Theme.Font.title)
-                .foregroundStyle(Theme.Color.text)
-                .lineLimit(1)
+            SongMenu()
 
             Spacer(minLength: Theme.Space.s)
 
@@ -80,7 +78,7 @@ struct TransportBar: View {
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .background(Theme.Color.surface)
         .overlay(alignment: .bottom) {
-            if let error = engine.lastError {
+            if let error = engine.lastError ?? documents.lastError {
                 Text(error)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)
@@ -150,5 +148,46 @@ struct TempoField: View {
     private func set(_ bpm: Double) {
         let clamped = min(max(bpm, Tempo.range.lowerBound), Tempo.range.upperBound)
         try? store.perform(.setTempo(bpm: clamped), coalescingKey: Self.gestureKey)
+    }
+}
+
+/// The song's name, and the menu to start or open another. Songs save themselves.
+struct SongMenu: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
+
+    var body: some View {
+        Menu {
+            Button("New Song", systemImage: "plus") { documents.newSong() }
+            Menu("Open", systemImage: "folder") {
+                ForEach(documents.songs) { song in
+                    Button {
+                        documents.open(song.url)
+                    } label: {
+                        if song.url == documents.currentURL {
+                            Label(song.name, systemImage: "checkmark")
+                        } else {
+                            Text(song.name)
+                        }
+                    }
+                }
+            }
+            .disabled(documents.songs.isEmpty)
+        } label: {
+            HStack(spacing: Theme.Space.xs) {
+                Text(store.project.name)
+                    .font(Theme.Font.title)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .accessibilityHidden(true)
+            }
+            .frame(minHeight: Theme.Size.touch)
+        }
+        .accessibilityLabel("Song \(store.project.name)")
+        .accessibilityHint("New song or open another. Songs save automatically.")
+        .onAppear { documents.refresh() }
     }
 }
