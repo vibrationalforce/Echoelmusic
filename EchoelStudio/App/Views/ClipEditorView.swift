@@ -8,6 +8,8 @@ struct ClipEditorView: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(\.dismiss) private var dismiss
     let trackID: TrackID
+    /// The clip to edit; nil edits the track's first clip.
+    var clipID: ClipID?
     @State private var grid: NoteEditing.Grid = .sixteenth
     @State private var page: Page = .notes
 
@@ -15,15 +17,20 @@ struct ClipEditorView: View {
 
     private static let newClipBars: Tick = 4
 
+    private func editedClip(_ track: Track) -> Clip? {
+        if let clipID, let index = track.clipIndex(clipID) { return track.clips[index] }
+        return track.clips.first
+    }
+
     var body: some View {
         let track = store.project.track(trackID)
         NavigationStack {
             Group {
                 if let track, page == .sound {
                     SoundPanel(track: track)
-                } else if let track, let clip = track.clips.first, track.instrument.device == .drums {
+                } else if let track, let clip = editedClip(track), track.instrument.device == .drums {
                     StepGridView(clip: clip, color: Theme.Color.track(track.colorIndex), step: grid.rawValue)
-                } else if let track, let clip = track.clips.first {
+                } else if let track, let clip = editedClip(track) {
                     PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue)
                 } else if let track {
                     emptyState(track)

@@ -11,7 +11,7 @@ struct StudioView: View {
     @State private var router = StudioRouter()
     @State private var surface: Surface = .tracks
 
-    enum Surface: Hashable { case tracks, arrange, mixer }
+    enum Surface: Hashable { case tracks, arrange, session, mixer }
 
     var body: some View {
         @Bindable var router = router
@@ -21,6 +21,7 @@ struct StudioView: View {
             Picker("View", selection: $surface) {
                 Text("Tracks").tag(Surface.tracks)
                 Text("Arrange").tag(Surface.arrange)
+                Text("Session").tag(Surface.session)
                 Text("Mixer").tag(Surface.mixer)
             }
             .pickerStyle(.segmented)
@@ -32,12 +33,14 @@ struct StudioView: View {
             case .arrange:
                 ArrangeView(open: { router.sheet = .clipEditor($0) },
                             importAudio: { router.sheet = .importAudio($0, $1) })
+            case .session: SessionView { router.sheet = .clip($0, $1) }
             case .mixer: MixerView()
             }
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
             case .clipEditor(let track): ClipEditorView(trackID: track)
+            case let .clip(track, clip): ClipEditorView(trackID: track, clipID: clip)
             case .share(let url): ShareSheet(url: url).ignoresSafeArea()
             case .effects(let track): EffectsView(trackID: track)
             case .store: StoreView()

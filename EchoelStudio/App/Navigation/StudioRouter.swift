@@ -8,6 +8,8 @@ import UniformTypeIdentifiers
 /// chain never grows (the legacy app's black screen came from a growing chain).
 enum StudioSheet: Identifiable, Hashable {
     case clipEditor(TrackID)
+    /// One clip of a track, as the session opens it.
+    case clip(TrackID, ClipID)
     case share(URL)
     /// Pick an audio file to place on an audio track at a tick.
     case importAudio(TrackID, Tick)

@@ -45,6 +45,9 @@ final class AudioEngine {
     let live = LiveRouter()
     /// Sends the transport's MIDI clock to the outputs picked in the song menu.
     let clock = MIDIClockOutput()
+    /// Which session clip each track plays, as the render thread reports it.
+    let session = SessionState()
+    @ObservationIgnored private var reportTask: Task<Void, Never>?
     /// The instrument track a controller plays. Nil: the first instrument track.
     private(set) var liveTrack: TrackID?
 
@@ -179,6 +182,8 @@ final class AudioEngine {
             } else {
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
+                current.setLaunchQuantum(self.session.quantum)
+                self.session.reset()
                 core = current
                 slots = SlotAssigner(capacity: current.slotCapacity)
                 isPlaying = false
@@ -222,6 +227,7 @@ final class AudioEngine {
             }
 
             clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
+            if reportTask == nil { pollLaunchReports() }
             log.info("engine: start")
             try engine.start()
             isRunning = true
@@ -300,6 +306,75 @@ final class AudioEngine {
     func stop() {
         core?.stop()
         isPlaying = false
+    }
+
+    // MARK: - Session
+
+    /// Plays the clip on its track from the next bar, starting the transport if it is stopped.
+    func launch(_ clip: ClipID, on track: TrackID) {
+        guard let core, let slot = slots.slots[track] else { return }
+        core.launch(slot: slot, .launch(clip))
+        if !isPlaying { play() }
+    }
+
+    func stopClip(on track: TrackID) {
+        guard let core, let slot = slots.slots[track] else { return }
+        core.launch(slot: slot, .stop)
+    }
+
+    /// Every track with a clip in the scene plays it; the others stop.
+    func launch(_ scene: SceneID, in project: Project) {
+        guard let core else { return }
+        for track in project.tracks where track.kind == .instrument {
+            guard let slot = slots.slots[track.id] else { continue }
+            if let clip = track.clipInSlot(scene) {
+                core.launch(slot: slot, .launch(clip))
+            } else if session.playing[track.id] != nil {
+                core.launch(slot: slot, .stop)
+            }
+        }
+        if !isPlaying { play() }
+    }
+
+    func stopAllClips() {
+        guard let core else { return }
+        for track in session.playing.keys { if let slot = slots.slots[track] { core.launch(slot: slot, .stop) } }
+    }
+
+    /// Every track the session took over plays its arrangement again.
+    func backToArrangement() {
+        guard let core else { return }
+        for track in session.detached { if let slot = slots.slots[track] { core.launch(slot: slot, .backToArrangement) } }
+    }
+
+    /// Bar, beat, or none: how long a launch waits.
+    func setLaunchQuantum(_ ticks: Tick?) {
+        session.quantum = ticks
+        core?.setLaunchQuantum(ticks)
+    }
+
+    /// Reads the render thread's launch reports a few times a second; writes only on change.
+    private func pollLaunchReports() {
+        reportTask?.cancel()
+        reportTask = Task { [weak self] in
+            while !Task.isCancelled {
+                self?.drainLaunchReports()
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+        }
+    }
+
+    private func drainLaunchReports() {
+        guard let core else { return }
+        var owner: [Int: TrackID] = [:]
+        var reports: [LaunchReport] = []
+        while let report = core.launchReports.pop() { reports.append(report) }
+        guard !reports.isEmpty else { return }
+        for (track, slot) in slots.slots { owner[slot] = track }
+        for report in reports {
+            guard let track = owner[report.slot] else { continue }
+            session.apply(report, to: track)
+        }
     }
 
     func setClickEnabled(_ enabled: Bool) {
