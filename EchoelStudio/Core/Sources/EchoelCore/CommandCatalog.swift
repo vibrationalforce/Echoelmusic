@@ -13,7 +13,7 @@ public struct CommandSpec: Equatable, Sendable {
 
 public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
-        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID
+        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID
         case noteList, noteIDList, timeSignature, trackKind, mixerTarget
     }
 
@@ -40,6 +40,7 @@ extension Command {
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
         case placeClip, movePlacement, removePlacement
+        case placeAudio, moveRegion, trimRegion, removeRegion
         case addScene, removeScene, renameScene, setSlot
     }
 
@@ -75,6 +76,10 @@ extension Command {
         case .placeClip: .placeClip
         case .movePlacement: .movePlacement
         case .removePlacement: .removePlacement
+        case .placeAudio: .placeAudio
+        case .moveRegion: .moveRegion
+        case .trimRegion: .trimRegion
+        case .removeRegion: .removeRegion
         case .addScene: .addScene
         case .removeScene: .removeScene
         case .renameScene: .renameScene
@@ -162,7 +167,7 @@ public enum CommandCatalog {
                                parameters: [P("file", .string, "The file: id, name, path inside Media/, frame count, sample rate.")])
         case .removeMedia:
             return CommandSpec(name: "media.remove", title: "Remove Audio",
-                               summary: "Removes an audio file from the song; samplers that played it fall silent.",
+                               summary: "Removes an audio file from the song; its regions go and samplers that played it fall silent.",
                                parameters: [P("media", .mediaID, "A file in the song's media.")])
         case .setVolume:
             return CommandSpec(name: "mixer.volume", title: "Change Volume",
@@ -227,6 +232,28 @@ public enum CommandCatalog {
             return CommandSpec(name: "arrangement.remove", title: "Remove Clip from Arrangement",
                                summary: "Removes a placed clip from the timeline; the clip itself stays.",
                                parameters: [P("track", .trackID, "The track."), P("placement", .placementID, "The placement.")])
+        case .placeAudio:
+            return CommandSpec(name: "audio.place", title: "Place Audio",
+                               summary: "Puts a whole audio file from the song's media on an audio track's timeline.",
+                               parameters: [P("track", .trackID, "An audio track."),
+                                            P("id", .regionID, "Identifier for the region."),
+                                            P("media", .mediaID, "A file in the song's media."),
+                                            P("start", .ticks, "Position on the timeline in ticks.")])
+        case .moveRegion:
+            return CommandSpec(name: "audio.move", title: "Move Audio",
+                               summary: "Moves an audio region to a new position on the timeline.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("start", .ticks, "New position in ticks.")])
+        case .trimRegion:
+            return CommandSpec(name: "audio.trim", title: "Trim Audio",
+                               summary: "Chooses which part of the file an audio region plays, in frames of the file.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region."),
+                                            P("offset", .integer, "First frame that plays."),
+                                            P("length", .integer, "Frames that play, at least 1, ending at or before the file's end.")])
+        case .removeRegion:
+            return CommandSpec(name: "audio.remove", title: "Delete Audio",
+                               summary: "Removes an audio region from the timeline; the file stays in the song.",
+                               parameters: [P("track", .trackID, "The audio track."), P("region", .regionID, "The region.")])
         case .addScene:
             return CommandSpec(name: "scene.add", title: "Add Scene",
                                summary: "Adds a scene (a row of clip slots) to the session view.",

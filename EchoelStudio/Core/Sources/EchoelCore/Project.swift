@@ -88,7 +88,7 @@ public struct Project: Codable, Equatable, Sendable {
 public enum TrackKind: String, Codable, Sendable, CaseIterable {
     /// Plays MIDI clips into an instrument (own or AUv3).
     case instrument
-    /// Plays audio regions and records from an input.
+    /// Plays audio regions (and, later, records from an input).
     case audio
     /// Receives sends from other tracks; holds effects only, no clips.
     case returnTrack
@@ -107,6 +107,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var placements: [Placement]
     /// Session view: which clip sits in which scene's slot.
     public var slots: [SlotAssignment]
+    /// Audio on the timeline, sorted by start. Only audio tracks have any.
+    public var regions: [AudioRegion]
     /// The synth sound. Instrument tracks play it; other kinds keep the default and ignore it.
     public var instrument: InstrumentSettings
 
@@ -119,7 +121,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         clips: [Clip] = [],
         placements: [Placement] = [],
         slots: [SlotAssignment] = [],
-        instrument: InstrumentSettings = InstrumentSettings()
+        instrument: InstrumentSettings = InstrumentSettings(),
+        regions: [AudioRegion] = []
     ) {
         self.id = id
         self.name = name
@@ -130,10 +133,11 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         self.placements = placements
         self.slots = slots
         self.instrument = instrument
+        self.regions = regions
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -148,6 +152,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         placements = try c.decode([Placement].self, forKey: .placements)
         slots = try c.decode([SlotAssignment].self, forKey: .slots)
         instrument = try c.decodeIfPresent(InstrumentSettings.self, forKey: .instrument) ?? InstrumentSettings()
+        regions = try c.decodeIfPresent([AudioRegion].self, forKey: .regions) ?? []
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

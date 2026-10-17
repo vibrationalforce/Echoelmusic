@@ -48,6 +48,12 @@ public enum Command: Codable, Equatable, Sendable {
     case movePlacement(track: TrackID, PlacementID, start: Tick)
     case removePlacement(track: TrackID, PlacementID)
 
+    // Audio regions
+    case placeAudio(track: TrackID, id: RegionID, media: MediaID, start: Tick)
+    case moveRegion(track: TrackID, RegionID, start: Tick)
+    case trimRegion(track: TrackID, RegionID, offset: Int, length: Int)
+    case removeRegion(track: TrackID, RegionID)
+
     // Session
     case addScene(id: SceneID, name: String, index: Int?)
     case removeScene(SceneID)
@@ -67,6 +73,7 @@ public enum CommandError: Error, Equatable, Sendable {
     case unknownScene(SceneID)
     case unknownNote(NoteID)
     case unknownMedia(MediaID)
+    case unknownRegion(RegionID)
     case duplicateID(String)
     case invalidValue(parameter: String, reason: String)
 }
@@ -213,8 +220,9 @@ extension Command {
             guard let m = project.media.firstIndex(where: { $0.id == id }) else { throw CommandError.unknownMedia(id) }
             project.media.remove(at: m)
             // Nothing may point at a file the song no longer has.
-            for t in project.tracks.indices where project.tracks[t].instrument.sample == id {
-                project.tracks[t].instrument.sample = nil
+            for t in project.tracks.indices {
+                if project.tracks[t].instrument.sample == id { project.tracks[t].instrument.sample = nil }
+                project.tracks[t].regions.removeAll { $0.media == id }
             }
 
         case let .setVolume(target, db):
@@ -314,6 +322,43 @@ extension Command {
             let t = try project.requireTrack(trackID)
             guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
             project.tracks[t].placements.remove(at: p)
+
+        case let .placeAudio(trackID, id, mediaID, start):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only audio tracks hold audio regions")
+            }
+            guard let file = project.mediaFile(mediaID) else { throw CommandError.unknownMedia(mediaID) }
+            guard project.tracks.allSatisfy({ $0.regionIndex(id) == nil }) else { throw CommandError.duplicateID(id.description) }
+            try Self.validateStart(start)
+            project.tracks[t].regions.append(AudioRegion(id: id, media: mediaID, start: start, length: file.frameCount))
+            project.tracks[t].regions.sort { $0.start < $1.start }
+
+        case let .moveRegion(trackID, id, start):
+            let t = try project.requireTrack(trackID)
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            try Self.validateStart(start)
+            project.tracks[t].regions[r].start = start
+            project.tracks[t].regions.sort { $0.start < $1.start }
+
+        case let .trimRegion(trackID, id, offset, length):
+            let t = try project.requireTrack(trackID)
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            let media = project.tracks[t].regions[r].media
+            guard let file = project.mediaFile(media) else { throw CommandError.unknownMedia(media) }
+            guard offset >= 0, offset < file.frameCount else {
+                throw CommandError.invalidValue(parameter: "offset", reason: "must be within 0…\(file.frameCount - 1) frames")
+            }
+            guard length >= 1, length <= file.frameCount - offset else {
+                throw CommandError.invalidValue(parameter: "length", reason: "must be within 1…\(file.frameCount - offset) frames")
+            }
+            project.tracks[t].regions[r].offset = offset
+            project.tracks[t].regions[r].length = length
+
+        case let .removeRegion(trackID, id):
+            let t = try project.requireTrack(trackID)
+            guard let r = project.tracks[t].regionIndex(id) else { throw CommandError.unknownRegion(id) }
+            project.tracks[t].regions.remove(at: r)
 
         case let .addScene(id, name, index):
             guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
