@@ -36,6 +36,8 @@ final class AudioEngine {
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
+    @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
+    @ObservationIgnored private var resetObserver: NSObjectProtocol?
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
     let plugins: PluginHost
@@ -62,6 +64,25 @@ final class AudioEngine {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.hardwareChanged() }
         }
+        // A call or Siri takes the audio away; when it ends the graph comes back by itself.
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            guard raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) == .ended else { return }
+            MainActor.assumeIsolated { self?.resume(after: "interruption ended") }
+        }
+        resetObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.resume(after: "media services reset") }
+        }
+    }
+
+    private func resume(after reason: String) {
+        guard isRunning else { return }
+        log.info("engine: \(reason, privacy: .public), rebuilding")
+        configure(input: isInputOpen)
     }
 
     /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
