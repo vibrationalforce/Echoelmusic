@@ -14,7 +14,7 @@ public struct CommandSpec: Equatable, Sendable {
 public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
         case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID, insertID
-        case noteList, noteIDList, timeSignature, trackKind, mixerTarget
+        case noteList, noteIDList, timeSignature, trackKind, mixerTarget, pointList
     }
 
     public let name: String
@@ -39,7 +39,7 @@ extension Command {
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo, setSend, setOutput
-        case mapMIDI, unmapMIDI
+        case mapMIDI, unmapMIDI, setAutomation
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
         case placeClip, movePlacement, removePlacement
@@ -80,6 +80,7 @@ extension Command {
         case .setOutput: .setOutput
         case .mapMIDI: .mapMIDI
         case .unmapMIDI: .unmapMIDI
+        case .setAutomation: .setAutomation
         case .createClip: .createClip
         case .deleteClip: .deleteClip
         case .renameClip: .renameClip
@@ -251,6 +252,11 @@ public enum CommandCatalog {
                                summary: "Makes a controller knob or fader move a parameter across its whole range.",
                                parameters: [P("control", .string, "Channel 0…15 and controller number 0…127."),
                                             P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume.")])
+        case .setAutomation:
+            return CommandSpec(name: "automation.set", title: "Edit Automation",
+                               summary: "Sets how a mixer or instrument parameter moves over the song: straight lines between points. No points removes the automation.",
+                               parameters: [P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume."),
+                                            P("points", .pointList, "Points of tick and value, ticks rising, values in the parameter's range.")])
         case .unmapMIDI:
             return CommandSpec(name: "midi.unmap", title: "Forget MIDI",
                                summary: "Stops a controller knob or fader moving anything.",

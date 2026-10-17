@@ -27,6 +27,12 @@ extension Project {
               Set(midiMappings.map(\.control)).count == midiMappings.count else {
             throw Self.invalid("midiMappings", "a controller out of range, or mapped twice")
         }
+        var automated = Set<ParameterAddress>()
+        for lane in automation {
+            guard automated.insert(lane.target).inserted, lane.target != .tempo else {
+                throw Self.invalid("automation", "a parameter has two lanes, or the tempo has one")
+            }
+        }
         var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()
         for track in tracks {
             guard trackIDs.insert(track.id).inserted else { throw CommandError.duplicateID(track.id.description) }
@@ -67,6 +73,11 @@ extension Project {
                     throw Self.invalid("regions", "a region reaches past the end of its file")
                 }
             }
+        }
+        for lane in automation {
+            // A lane on a parameter this build does not know is kept, but still plays safely.
+            let range = descriptor(for: lane.target)?.range ?? -Double.infinity...Double.infinity
+            try AutomationLane.validate(lane.points, range: range)
         }
     }
 

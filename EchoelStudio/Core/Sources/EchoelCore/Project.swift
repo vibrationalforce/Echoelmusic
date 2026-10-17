@@ -20,6 +20,8 @@ public struct Project: Codable, Equatable, Sendable {
     public var media: [MediaFile]
     /// Controllers learned for this song, one target per control.
     public var midiMappings: [MIDIMapping]
+    /// Parameters that move over time, one lane per parameter.
+    public var automation: [AutomationLane]
 
     public init(
         name: String = "Untitled",
@@ -30,7 +32,8 @@ public struct Project: Codable, Equatable, Sendable {
         scenes: [Scene] = [],
         master: MixerStrip = MixerStrip(),
         media: [MediaFile] = [],
-        midiMappings: [MIDIMapping] = []
+        midiMappings: [MIDIMapping] = [],
+        automation: [AutomationLane] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -42,10 +45,11 @@ public struct Project: Codable, Equatable, Sendable {
         self.master = master
         self.media = media
         self.midiMappings = midiMappings
+        self.automation = automation
     }
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings
+        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -61,6 +65,7 @@ public struct Project: Codable, Equatable, Sendable {
         master = try c.decode(MixerStrip.self, forKey: .master)
         media = try c.decodeIfPresent([MediaFile].self, forKey: .media) ?? []
         midiMappings = try c.decodeIfPresent([MIDIMapping].self, forKey: .midiMappings) ?? []
+        automation = try c.decodeIfPresent([AutomationLane].self, forKey: .automation) ?? []
     }
 
     public func trackIndex(_ id: TrackID) -> Int? {
