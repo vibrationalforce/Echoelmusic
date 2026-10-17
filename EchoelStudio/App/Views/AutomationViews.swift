@@ -52,14 +52,20 @@ struct AutomationName: View {
 
 /// One lane drawn on the bar timeline: the line between its points, and the points. Tap empty
 /// space to add a point there (snapped to a sixteenth), tap a point to remove it, drag a point
-/// to move it between its neighbours. One drag is one undo step.
+/// to move it between its neighbours. Each segment has a handle at its middle: drag it up or
+/// down to bend the segment, tap it to straighten it. One drag is one
+/// undo step.
 struct AutomationRow: View {
     @Environment(ProjectStore.self) private var store
     let lane: AutomationLane
     let signature: TimeSignature
     let pointsPerBar: CGFloat
 
-    @State private var dragging: Int?
+    /// What the current drag holds: a point, or the bend of the segment after a point.
+    @State private var dragging: Grab?
+    @State private var bendStart: Double = 0
+
+    enum Grab: Equatable { case point(Int), bend(Int), nothing }
 
     private static let hit: CGFloat = 14
     private static let snap = MusicalTime.ticksPerQuarter / 4
@@ -89,9 +95,25 @@ struct AutomationRow: View {
         let points = lane.points.map { CGPoint(x: x(of: $0.tick), y: y(of: $0.value, descriptor, size.height)) }
         var line = Path()
         line.move(to: CGPoint(x: 0, y: points[0].y))
-        for point in points { line.addLine(to: point) }
+        line.addLine(to: points[0])
+        for index in lane.points.indices.dropLast() {
+            let a = lane.points[index], b = lane.points[index + 1]
+            // Enough steps that a bend reads as a curve at any zoom.
+            let steps = Swift.max(2, Swift.min(48, Int((points[index + 1].x - points[index].x) / 3)))
+            for step in 1...steps {
+                let t = Double(step) / Double(steps)
+                let value = a.value + (b.value - a.value) * AutomationPoint.shape(t, curve: a.curve)
+                line.addLine(to: CGPoint(x: points[index].x + (points[index + 1].x - points[index].x) * CGFloat(t),
+                                         y: y(of: value, descriptor, size.height)))
+            }
+        }
         line.addLine(to: CGPoint(x: size.width, y: points[points.count - 1].y))
         context.stroke(line, with: .color(Theme.Color.accent), lineWidth: 1.5)
+        for index in lane.points.indices.dropLast() {
+            let handle = bendHandle(index, descriptor, size.height)
+            let mark = CGRect(x: handle.x - 3, y: handle.y - 3, width: 6, height: 6)
+            context.stroke(Path(roundedRect: mark, cornerRadius: 1), with: .color(Theme.Color.accent), lineWidth: 1)
+        }
         for point in points {
             let dot = CGRect(x: point.x - 4, y: point.y - 4, width: 8, height: 8)
             context.fill(Path(ellipseIn: dot), with: .color(Theme.Color.text))
@@ -99,6 +121,22 @@ struct AutomationRow: View {
     }
 
     private func x(of tick: Tick) -> CGFloat { CGFloat(Double(tick) / ticksPerPoint) }
+
+    /// The middle of the segment after point `index`, on its curve.
+    private func bendHandle(_ index: Int, _ descriptor: ParameterDescriptor, _ height: CGFloat) -> CGPoint {
+        let a = lane.points[index], b = lane.points[index + 1]
+        let value = a.value + (b.value - a.value) * AutomationPoint.shape(0.5, curve: a.curve)
+        return CGPoint(x: (x(of: a.tick) + x(of: b.tick)) / 2, y: y(of: value, descriptor, height))
+    }
+
+    private func nearestBend(to location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor) -> Int? {
+        for index in lane.points.indices.dropLast() {
+            let handle = bendHandle(index, descriptor, height)
+            let dx = handle.x - location.x, dy = handle.y - location.y
+            if (dx * dx + dy * dy).squareRoot() <= Self.hit { return index }
+        }
+        return nil
+    }
 
     private func y(of value: Double, _ descriptor: ParameterDescriptor, _ height: CGFloat) -> CGFloat {
         let inset: CGFloat = 6
@@ -134,6 +172,12 @@ struct AutomationRow: View {
             try? store.perform(.setAutomation(lane.target, points: points))
             return
         }
+        if let index = nearestBend(to: location, height: height, descriptor) {
+            // A tap on a bend handle straightens the segment.
+            points[index].curve = 0
+            try? store.perform(.setAutomation(lane.target, points: points))
+            return
+        }
         let tick = tick(atX: location.x)
         points.removeAll { $0.tick == tick }
         let index = points.firstIndex { $0.tick > tick } ?? points.count
@@ -145,20 +189,48 @@ struct AutomationRow: View {
         DragGesture(minimumDistance: 4)
             .onChanged { drag in
                 guard let descriptor else { return }
-                if dragging == nil { dragging = nearest(to: drag.startLocation, height: height, descriptor) ?? -1 }
-                guard let index = dragging, index >= 0, index < lane.points.count else { return }
+                if dragging == nil {
+                    if let index = nearest(to: drag.startLocation, height: height, descriptor) {
+                        dragging = .point(index)
+                    } else if let index = nearestBend(to: drag.startLocation, height: height, descriptor) {
+                        dragging = .bend(index)
+                        bendStart = lane.points[index].curve
+                    } else {
+                        dragging = .nothing
+                    }
+                }
+                if case .bend(let index) = dragging {
+                    bend(index, by: drag.translation.height, height: height)
+                    return
+                }
+                guard case .point(let index) = dragging, index < lane.points.count else { return }
                 var points = lane.points
                 let low = index > 0 ? points[index - 1].tick + 1 : 0
                 let high = index + 1 < points.count ? points[index + 1].tick - 1 : MusicalTime.maximumTick
                 guard low <= high else { return }
                 let snapped = tick(atX: drag.location.x)
                 points[index] = AutomationPoint(tick: Swift.min(Swift.max(snapped, low), high),
-                                                value: value(atY: drag.location.y, descriptor, height))
+                                                value: value(atY: drag.location.y, descriptor, height),
+                                                curve: points[index].curve)
                 try? store.perform(.setAutomation(lane.target, points: points), coalescingKey: "automation.edit.\(lane.target)")
             }
             .onEnded { _ in
                 dragging = nil
                 store.endGesture()
             }
+    }
+
+    /// The handle follows the finger: pulling the middle of a segment down bends it below the
+    /// straight line, pulling it up bends it above, whichever way the segment runs.
+    private func bend(_ index: Int, by dy: CGFloat, height: CGFloat) {
+        guard index + 1 < lane.points.count else { return }
+        var points = lane.points
+        let rising = points[index + 1].value >= points[index].value
+        let amount = Double(dy / Swift.max(height, 1)) * 2 * (rising ? 1 : -1)
+        let curve = Swift.min(Swift.max(bendStart + amount, AutomationPoint.curveRange.lowerBound),
+                              AutomationPoint.curveRange.upperBound)
+        guard curve != points[index].curve else { return }
+        points[index].curve = curve
+        try? store.perform(.setAutomation(lane.target, points: points), coalescingKey: "automation.bend.\(lane.target)")
     }
 }
