@@ -77,6 +77,8 @@ public final class EngineCore: @unchecked Sendable {
     private var outputCount = 2
     /// The right half of the mix when the device has one channel.
     private let monoRight: UnsafeMutablePointer<Float>
+    /// One audio lane's mono signal for part of a chunk, before it is faded into the lane.
+    private let segment: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
     private var wasPlaying = false
@@ -160,6 +162,8 @@ public final class EngineCore: @unchecked Sendable {
         returnRight = .allocate(capacity: Self.returnCapacity * Self.maximumFrames)
         returnRight.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
         monoRight = .allocate(capacity: Self.maximumFrames)
+        segment = .allocate(capacity: Self.maximumFrames)
+        segment.initialize(repeating: 0, count: Self.maximumFrames)
         monoRight.initialize(repeating: 0, count: Self.maximumFrames)
         outputs = .allocate(capacity: Track.outputChannelLimit)
         outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
@@ -190,6 +194,7 @@ public final class EngineCore: @unchecked Sendable {
         returnLeft.deallocate()
         returnRight.deallocate()
         monoRight.deallocate()
+        segment.deallocate()
         outputs.deallocate()
     }
 
@@ -956,8 +961,11 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             audioLeft.update(repeating: 0, count: frames)
             audioRight.update(repeating: 0, count: frames)
-            // Up to the sample a pending launch or stop takes effect, then on from there.
+            // Up to the sample a pending launch or stop takes effect, then on from there. What
+            // played before the switch fades out over a few milliseconds while what follows
+            // fades in, so a launch, stop or return never clicks.
             var from = 0
+            var fadeStart = 0, fadeEnd = 0
             while from < frames {
                 var until = frames
                 var due = false
@@ -968,8 +976,18 @@ public final class EngineCore: @unchecked Sendable {
                         due = true
                     }
                 }
-                renderAudio(lane, from: from, to: until, snapshot)
-                if due { fireAudio(lane) }
+                let state = session ? sessions[lane.slot] : SessionSlot()
+                addAudio(lane, state: state, from: from, to: until, snapshot, fadeIn: fadeStart..<fadeEnd, fadeOut: nil)
+                if due {
+                    fireAudio(lane)
+                    let next = sessions[lane.slot]
+                    if next.overrides != state.overrides || next.clip != state.clip {
+                        fadeStart = until
+                        fadeEnd = Swift.min(until + Int(Self.regionFadeFrames), frames)
+                        addAudio(lane, state: state, from: fadeStart, to: fadeEnd, snapshot, fadeIn: 0..<0,
+                                 fadeOut: fadeStart..<fadeEnd)
+                    }
+                }
                 from = until
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
@@ -979,37 +997,42 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
-    /// Frames `from..<to` of the chunk of one audio lane into `audioLeft`/`audioRight`: its
-    /// launched clip when the session took the track over, else its regions.
-    private func renderAudio(_ lane: EngineSnapshot.AudioLane, from: Int, to: Int, _ snapshot: EngineSnapshot) {
+    /// Frames `from..<to` of one audio lane, as `state` has it, added into `audioLeft` and
+    /// `audioRight` — rising over `fadeIn`, falling over `fadeOut`.
+    private func addAudio(_ lane: EngineSnapshot.AudioLane, state: SessionSlot, from: Int, to: Int,
+                          _ snapshot: EngineSnapshot, fadeIn: Range<Int>, fadeOut: Range<Int>?) {
         guard to > from else { return }
+        segment.update(repeating: 0, count: Self.maximumFrames)
         let start = playhead + Int64(from), end = playhead + Int64(to)
-        if lane.slot >= 0, lane.slot < slotCapacity, sessions[lane.slot].overrides {
-            guard let clip = sessions[lane.slot].clip, let loop = lane.loops.first(where: { $0.clip == clip }) else { return }
-            renderLoop(loop, launchTick: sessions[lane.slot].launchTick, from: start, to: end, snapshot)
-            return
-        }
-        for region in lane.regions {
-            guard region.startSample < end else { break }
-            guard region.endSample > start else { continue }
-            let first = Int(Swift.max(region.startSample, start) - playhead)
-            let count = Int(Swift.min(region.endSample, end) - playhead) - first
-            guard count > 0 else { continue }
-            let mono = scratch + first
-            mono.update(repeating: 0, count: count)
-            region.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count),
-                              elapsed: playhead + Int64(first) - region.startSample, step: region.step,
-                              offset: region.offset, length: region.length,
-                              fade: Self.regionFadeFrames * region.step)
-            for i in 0..<count {
-                audioLeft[first + i] += mono[i]
-                audioRight[first + i] += mono[i]
+        if state.overrides {
+            if let clip = state.clip, let loop = lane.loops.first(where: { $0.clip == clip }) {
+                renderLoop(loop, launchTick: state.launchTick, from: start, to: end, snapshot)
             }
+        } else {
+            for region in lane.regions {
+                guard region.startSample < end else { break }
+                guard region.endSample > start else { continue }
+                let first = Int(Swift.max(region.startSample, start) - playhead)
+                let count = Int(Swift.min(region.endSample, end) - playhead) - first
+                guard count > 0 else { continue }
+                region.buffer.add(into: UnsafeMutableBufferPointer(start: segment + first, count: count),
+                                  elapsed: playhead + Int64(first) - region.startSample, step: region.step,
+                                  offset: region.offset, length: region.length,
+                                  fade: Self.regionFadeFrames * region.step)
+            }
+        }
+        for i in from..<to {
+            var gain: Float = 1
+            if fadeIn.contains(i) { gain = Float(i - fadeIn.lowerBound + 1) / Float(fadeIn.count + 1) }
+            if let fadeOut { gain = 1 - Float(i - fadeOut.lowerBound + 1) / Float(fadeOut.count + 1) }
+            let value = segment[i] * gain
+            audioLeft[i] += value
+            audioRight[i] += value
         }
     }
 
-    /// A clip from its launch, restarting every `loopLength` ticks; each pass is cut at the loop
-    /// and faded at both ends, so the seam never clicks.
+    /// A clip from its launch into `segment`, restarting every `loopLength` ticks; each pass is
+    /// cut at the loop and faded at both ends, so the seam never clicks.
     private func renderLoop(_ loop: EngineSnapshot.AudioLoop, launchTick: Tick, from start: Int64, to end: Int64,
                             _ snapshot: EngineSnapshot) {
         let length = Swift.max(loop.loopLength, 1)
@@ -1022,16 +1045,10 @@ public final class EngineCore: @unchecked Sendable {
             if passEnd <= position { passEnd = position + 1 }
             let stop = Swift.min(end, passEnd)
             let first = Int(position - playhead), count = Int(stop - position)
-            let mono = scratch + first
-            mono.update(repeating: 0, count: count)
             let played = Swift.min(loop.length, Double(passEnd - passStart) * loop.step)
-            loop.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count), elapsed: position - passStart,
-                            step: loop.step, offset: loop.offset, length: played,
+            loop.buffer.add(into: UnsafeMutableBufferPointer(start: segment + first, count: count),
+                            elapsed: position - passStart, step: loop.step, offset: loop.offset, length: played,
                             fade: Self.regionFadeFrames * loop.step)
-            for i in 0..<count {
-                audioLeft[first + i] += mono[i]
-                audioRight[first + i] += mono[i]
-            }
             position = stop
         }
     }

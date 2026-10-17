@@ -126,10 +126,12 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertEqual(reports.last, LaunchReport(slot: slot, clip: clip, state: .playing))
 
         engine.launch(slot: slot, .stop)
-        XCTAssertTrue(render(engine, frames: 4_800).allSatisfy { $0 == 0 }, "stopped, and the region stays off")
+        let stopped = render(engine, frames: 4_800)
+        XCTAssertTrue(stopped[64...].allSatisfy { $0 == 0 }, "stopped after a short fade, and the region stays off")
         engine.launch(slot: slot, .backToArrangement)
         let back = render(engine, frames: 4_800)
         XCTAssertEqual(back[2_400], 0.25 * centre, accuracy: 1e-4, "the region plays again")
+        XCTAssertLessThan(abs(back[0]), 0.25 * centre * 0.1, "and fades in rather than jumping in mid-file")
     }
 
     func testTheExportRunsToTheEndOfTheLastRegion() throws {
