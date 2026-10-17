@@ -173,6 +173,11 @@ public struct TimeConversion: Equatable, Sendable {
         Int64((tempoMap.seconds(at: tick) * sampleRate).rounded(.down))
     }
 
+    /// Where `sample` falls in musical time, in fractional ticks.
+    public func position(atSample sample: Int64) -> Double {
+        tempoMap.position(atSeconds: Double(sample) / sampleRate)
+    }
+
     /// The tick that is sounding at `sample`, rounded down.
     public func tick(atSample sample: Int64) -> Tick {
         tempoMap.tick(atSeconds: Double(sample) / sampleRate)

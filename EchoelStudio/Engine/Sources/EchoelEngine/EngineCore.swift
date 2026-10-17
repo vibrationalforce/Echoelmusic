@@ -83,8 +83,8 @@ public final class EngineCore: @unchecked Sendable {
     private var nextBeat: Tick = 0
     private var nextClock: Tick = 0
     /// Ticks at the start and end of the chunk being mixed; automated gains ramp between them.
-    private var mixFrom: Tick = 0
-    private var mixTo: Tick = 0
+    private var mixFrom: Double = 0
+    private var mixTo: Double = 0
     /// The gains each mix point ended the last chunk on (NaN: none yet), so every change —
     /// a hand on a fader, a MIDI knob, an automation jump after a seek — ramps over one chunk
     /// instead of stepping. Points: instrument slots, then audio tracks, then return buses.
@@ -99,7 +99,7 @@ public final class EngineCore: @unchecked Sendable {
     private var automationNext: Int64 = 0
     /// The tick unit automation was last sent for; false until the first send after a seek or
     /// a new snapshot.
-    private var unitAutomationTick: Tick = 0
+    private var unitAutomationTick: Double = 0
     private var unitAutomationPrimed = false
     /// Frames between two settings of an automated synth parameter: 0.67 ms at 48 kHz. The
     /// synth glides between them, so the sweep is continuous.
@@ -334,7 +334,7 @@ public final class EngineCore: @unchecked Sendable {
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
 
         guard playing, let box = current else {
-            let held = current?.snapshot.time.tick(atSample: playhead) ?? 0
+            let held = current?.snapshot.time.position(atSample: playhead) ?? 0
             mixFrom = held
             mixTo = held
             renderVoices(0..<frames, left: left, right: right)
@@ -398,7 +398,7 @@ public final class EngineCore: @unchecked Sendable {
             case .launch:
                 fire(snapshot.lanes[due.lane])
             case .automation:
-                let tick = snapshot.time.tick(atSample: due.sample)
+                let tick = snapshot.time.position(atSample: due.sample)
                 applyPatchAutomation(snapshot, at: tick)
                 applyUnitAutomation(snapshot, at: tick, offset: offset)
                 automationNext = Swift.max(due.sample, playhead) + Self.automationStep
@@ -407,8 +407,8 @@ public final class EngineCore: @unchecked Sendable {
         renderVoices(rendered..<frames, left: left, right: right)
         if clocking { sendClocks(snapshot, blockEnd: blockEnd) }
         renderUnits(frames: frames)
-        mixFrom = snapshot.time.tick(atSample: playhead)
-        mixTo = snapshot.time.tick(atSample: blockEnd)
+        mixFrom = snapshot.time.position(atSample: playhead)
+        mixTo = snapshot.time.position(atSample: blockEnd)
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
         mixReturns(frames: frames)
@@ -787,9 +787,9 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// The song position `offset` frames into the chunk being mixed.
-    private func tick(at offset: Int, of frames: Int) -> Tick {
+    private func tick(at offset: Int, of frames: Int) -> Double {
         guard frames > 0 else { return mixFrom }
-        return mixFrom + Tick(Double(mixTo - mixFrom) * Double(offset) / Double(frames))
+        return mixFrom + (mixTo - mixFrom) * Double(offset) / Double(frames)
     }
 
     /// Adds a stereo source into a stereo destination, gains moving straight from start to end
@@ -815,7 +815,7 @@ public final class EngineCore: @unchecked Sendable {
     /// Moves each automated unit parameter towards its lane's value at `tick`, gliding over one
     /// automation step. A value the lane held since the last step is not sent again, except
     /// after a seek or a new snapshot, when every lane is sent once.
-    private func applyUnitAutomation(_ snapshot: EngineSnapshot, at tick: Tick, offset: Int) {
+    private func applyUnitAutomation(_ snapshot: EngineSnapshot, at tick: Double, offset: Int) {
         guard !snapshot.unitAutomation.isEmpty else { return }
         let ramp = Int(Self.automationStep)
         for automation in snapshot.unitAutomation {
@@ -828,11 +828,11 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Sets each automated synth parameter to its lane's value at `tick`.
-    private func applyPatchAutomation(_ snapshot: EngineSnapshot, at tick: Tick) {
+    private func applyPatchAutomation(_ snapshot: EngineSnapshot, at tick: Double) {
         for lane in snapshot.lanes where !lane.patchLanes.isEmpty && lane.device == .synth {
             var patch = lane.patch
             for automation in lane.patchLanes {
-                if let value = automation.lane.value(at: tick) { automation.field.apply(value, to: &patch) }
+                if let value = automation.lane.value(atPosition: tick) { automation.field.apply(value, to: &patch) }
             }
             if synths[lane.slot].patch != patch { synths[lane.slot].setPatch(patch) }
         }

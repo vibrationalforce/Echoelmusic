@@ -52,17 +52,23 @@ public struct AutomationLane: Codable, Equatable, Sendable {
 
     /// The value at `tick`, or nil for a lane without points.
     public func value(at tick: Tick) -> Double? {
+        value(atPosition: Double(tick))
+    }
+
+    /// The value at a fractional tick — what the engine reads, so a slow ramp moves between
+    /// ticks instead of in whole-tick steps.
+    public func value(atPosition position: Double) -> Double? {
         guard let first = points.first, let last = points.last else { return nil }
-        if tick <= first.tick { return first.value }
-        if tick >= last.tick { return last.value }
-        // The last point at or before the tick, by binary search.
+        guard position.isFinite, position > Double(first.tick) else { return first.value }
+        if position >= Double(last.tick) { return last.value }
+        // The last point at or before the position, by binary search.
         var low = 0, high = points.count - 1
         while low + 1 < high {
             let mid = (low + high) / 2
-            if points[mid].tick <= tick { low = mid } else { high = mid }
+            if Double(points[mid].tick) <= position { low = mid } else { high = mid }
         }
         let a = points[low], b = points[high]
-        let t = Double(tick - a.tick) / Double(b.tick - a.tick)
+        let t = (position - Double(a.tick)) / Double(b.tick - a.tick)
         return a.value + (b.value - a.value) * AutomationPoint.shape(t, curve: a.curve)
     }
 

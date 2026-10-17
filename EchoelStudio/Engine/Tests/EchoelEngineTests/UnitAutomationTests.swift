@@ -62,7 +62,9 @@ final class UnitAutomationTests: XCTestCase {
         XCTAssertEqual(values.first ?? 0, 20, accuracy: 1)
         XCTAssertEqual(values.last ?? 0, 20_000, accuracy: 1)
         XCTAssertEqual(values, values.sorted(), "it only rises")
-        XCTAssertLessThan(zip(values, values.dropFirst()).map { $1 - $0 }.max() ?? .infinity, 20, "no jumps")
+        let steps = zip(values, values.dropFirst()).map { $1 - $0 }.dropLast()
+        XCTAssertLessThan(steps.max() ?? .infinity, 15, "no jumps")
+        XCTAssertGreaterThan(steps.min() ?? 0, 12, "even steps: the lane is read between ticks, not on them")
 
         let count = fake.sent.count
         render(20)

@@ -16,6 +16,10 @@ final class AutomationTests: XCTestCase {
         XCTAssertEqual(lane.value(at: 1_440), -6)
         XCTAssertEqual(lane.value(at: 9_999), 0)
         XCTAssertNil(AutomationLane(target: .masterVolume, points: []).value(at: 0))
+        XCTAssertEqual(lane.value(atPosition: 960.5) ?? 0, -12 + 12 * 0.5 / 960, accuracy: 1e-9, "between ticks too")
+        XCTAssertEqual(lane.value(atPosition: .nan), -12, "a position that is not finite reads the start")
+        let time = TimeConversion(bpm: 120, sampleRate: 48_000)
+        XCTAssertEqual(time.position(atSample: 12), 0.48, accuracy: 1e-9, "25 samples per tick at 120 BPM")
     }
 
     func testABentSegmentStillMeetsItsPointsAndBendsBetweenThem() {

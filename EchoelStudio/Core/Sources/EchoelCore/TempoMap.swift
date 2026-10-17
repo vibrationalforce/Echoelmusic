@@ -61,6 +61,14 @@ public struct TempoMap: Equatable, Sendable {
         return s.startTick + Tick(ticks.rounded(.down))
     }
 
+    /// Where in musical time `seconds` falls, in fractional ticks — for what moves continuously
+    /// (automation), where a whole tick would be a step. Non-finite input reads as 0.
+    public func position(atSeconds seconds: Double) -> Double {
+        guard seconds.isFinite else { return 0 }
+        let s = segments[segmentIndex(atSeconds: seconds)]
+        return Double(s.startTick) + (seconds - s.startSeconds) / s.secondsPerTick
+    }
+
     private func segmentIndex(atTick tick: Tick) -> Int {
         var low = 0, high = segments.count - 1
         while low < high {

@@ -52,10 +52,10 @@ public struct EngineSnapshot: Sendable {
         public let range: ClosedRange<Float>
         public let lane: AutomationLane
 
-        /// The unit's value for the lane at `tick`, or nil for a lane without points.
-        public func value(at tick: Tick) -> Float? {
-            guard let position = lane.value(at: tick) else { return nil }
-            let n = Float(position.isFinite ? Swift.min(Swift.max(position, 0), 1) : 0)
+        /// The unit's value for the lane at a fractional tick, or nil for a lane without points.
+        public func value(at position: Double) -> Float? {
+            guard let travel = lane.value(atPosition: position) else { return nil }
+            let n = Float(travel.isFinite ? Swift.min(Swift.max(travel, 0), 1) : 0)
             return range.lowerBound + n * (range.upperBound - range.lowerBound)
         }
     }
@@ -75,15 +75,15 @@ public struct EngineSnapshot: Sendable {
         /// Nil when the lane skips the master (its own output pair, or a send's pre-master tap).
         public let master: MasterMix?
 
-        public func gains(at tick: Tick) -> (Float, Float) {
+        public func gains(at position: Double) -> (Float, Float) {
             var track = strip
-            if let value = volume?.value(at: tick) { track.volumeDB = value }
-            if let value = pan?.value(at: tick) { track.pan = value }
+            if let value = volume?.value(atPosition: position) { track.volumeDB = value }
+            if let value = pan?.value(atPosition: position) { track.pan = value }
             var bus = MixerStrip()
             if let master {
                 bus = master.strip
-                if let value = master.volume?.value(at: tick) { bus.volumeDB = value }
-                if let value = master.pan?.value(at: tick) { bus.pan = value }
+                if let value = master.volume?.value(atPosition: position) { bus.volumeDB = value }
+                if let value = master.pan?.value(atPosition: position) { bus.pan = value }
             }
             return EngineSnapshot.gains(track: track, master: bus)
         }
@@ -95,9 +95,9 @@ public struct EngineSnapshot: Sendable {
         public let levelDB: Double
         public let level: AutomationLane?
 
-        public func gains(at tick: Tick) -> (Float, Float) {
-            let (left, right) = mix.gains(at: tick)
-            let send = EngineSnapshot.linear(level?.value(at: tick) ?? levelDB)
+        public func gains(at position: Double) -> (Float, Float) {
+            let (left, right) = mix.gains(at: position)
+            let send = EngineSnapshot.linear(level?.value(atPosition: position) ?? levelDB)
             return (left * send, right * send)
         }
     }
@@ -366,5 +366,6 @@ public struct EventRevisions: Sendable {
 
 /// Gains that move over song time. Pure and render-safe.
 public protocol GainCurve: Sendable {
-    func gains(at tick: Tick) -> (Float, Float)
+    /// The gains at a fractional tick.
+    func gains(at position: Double) -> (Float, Float)
 }
