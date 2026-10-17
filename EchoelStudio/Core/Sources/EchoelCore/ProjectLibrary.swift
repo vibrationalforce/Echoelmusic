@@ -75,6 +75,9 @@ public struct ProjectLibrary: Sendable {
         try FileManager.default.removeItem(at: url)
     }
 
+    /// A file name for `name`, for exports beside the library.
+    public static func safeFileName(for name: String) -> String { fileName(for: name) }
+
     static func fileName(for name: String) -> String {
         let forbidden = CharacterSet(charactersIn: "/\\:?%*|\"<>").union(.newlines).union(.controlCharacters)
         let cleaned = name.unicodeScalars.map { forbidden.contains($0) ? "-" : String($0) }.joined()
