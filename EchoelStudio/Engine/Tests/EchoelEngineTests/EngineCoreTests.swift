@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import XCTest
 @testable import EchoelEngine
 
@@ -196,5 +197,35 @@ final class EngineCoreTests: XCTestCase {
         try Command.addTrack(id: TrackID(), name: "z", kind: .instrument, index: nil).apply(to: &project)
         slots.update(for: project)
         XCTAssertEqual(slots.slots.count, 2, "beyond capacity a track gets no slot")
+    }
+}
+
+final class InstrumentPatchTests: XCTestCase {
+    func testTheDefaultSettingsGiveTheDefaultSoundAndAPresetChangesIt() throws {
+        let initial = SynthPatch(InstrumentSettings())
+        XCTAssertEqual(initial.waveform, .saw)
+        XCTAssertEqual(initial.cutoff, 800)
+        let preset = try XCTUnwrap(InstrumentPreset.named("Sub Bass"))
+        let bass = SynthPatch(InstrumentSettings(preset: preset.name, values: preset.values))
+        XCTAssertEqual(bass.waveform, .sine)
+        XCTAssertEqual(bass.cutoff, 300)
+        XCTAssertNotEqual(bass, initial)
+    }
+
+    func testEachTrackPlaysItsOwnSound() throws {
+        var project = Project()
+        let a = TrackID(), b = TrackID()
+        for (id, preset) in [(a, "Sub Bass"), (b, "Square Lead")] {
+            let clip = ClipID()
+            try Command.addTrack(id: id, name: preset, kind: .instrument, index: nil).apply(to: &project)
+            try Command.loadInstrumentPreset(id, name: preset).apply(to: &project)
+            try Command.createClip(track: id, id: clip, name: "C", length: 3_840).apply(to: &project)
+            try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 960)]).apply(to: &project)
+            try Command.placeClip(track: id, id: PlacementID(), clip: clip, start: 0).apply(to: &project)
+        }
+        let snapshot = EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
+                                      slots: { var s = SlotAssigner(capacity: 4); s.update(for: project); return s.slots }(),
+                                      sampleRate: 48_000, generation: 1)
+        XCTAssertEqual(snapshot.lanes.map(\.patch.waveform), [.sine, .square])
     }
 }

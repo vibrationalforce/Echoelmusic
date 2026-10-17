@@ -200,6 +200,9 @@ public final class EngineCore: @unchecked Sendable {
                 owners[slot] = owner
             }
         }
+        for lane in snapshot.lanes where synths[lane.slot].patch != lane.patch {
+            synths[lane.slot].setPatch(lane.patch)
+        }
         releaseAllNotes()
         resync()
     }

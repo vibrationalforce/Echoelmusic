@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import Foundation
 
 /// Everything the render thread needs for one state of the project, compiled on the main
@@ -12,6 +13,7 @@ public struct EngineSnapshot: Sendable {
         public let events: [PlaybackPlan.NoteEvent]
         public let gainLeft: Float
         public let gainRight: Float
+        public let patch: SynthPatch
     }
 
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
@@ -30,7 +32,8 @@ public struct EngineSnapshot: Sendable {
             guard let slot = slots[events.track], let track = project.track(events.track) else { return nil }
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
             let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
-            return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right)
+            return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
+                        patch: SynthPatch(track.instrument))
         }
     }
 

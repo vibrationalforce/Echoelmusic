@@ -25,6 +25,10 @@ let package = Package(
             .product(name: "EchoelCore", package: "Core"),
             .product(name: "EchoelDSP", package: "DSP"),
         ]),
-        .testTarget(name: "EchoelEngineTests", dependencies: ["EchoelEngine"]),
+        .testTarget(name: "EchoelEngineTests", dependencies: [
+            "EchoelEngine",
+            .product(name: "EchoelCore", package: "Core"),
+            .product(name: "EchoelDSP", package: "DSP"),
+        ]),
     ]
 )
