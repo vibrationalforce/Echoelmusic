@@ -1251,3 +1251,10 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Lanes: curves per segment (expm1 shape), bend handle in the middle, write mode "A" writes at the playhead.
 - Two tests adjusted to the glide (silence after a few time constants instead of at the next sample) — the intent is unchanged.
 - NOT device-verified: the feel of the automation, zipper-freeness at 64/32 frames.
+
+## 2026-10-17 22:12 — EchoelStudio: automating plugin parameters (CI green, studio.yml #72 on fd12b10)
+- Core: `PluginParameter` (instrument plugin | insert, AU address); the value is stored as 0…1 of the parameter's travel. Swapping the plugin or removing the insert also drops its lanes and mappings.
+- Engine: every 32 frames, `scheduleParameterBlock` is called at the exact frame with a 32-frame ramp; values the lane holds are not resent. Lanes for a parameter that does not exist, a bypassed insert or a plugin that is not loaded do nothing.
+- App: the Automate menu has one submenu per loaded unit, using the unit's own parameter names.
+- Fix along the way: all automation is now read at the fractional song position (before: whole ticks, so the steps were uneven).
+- NOT device-verified: a filter sweep on a third-party synth (M4 criterion), and how well individual plugins handle ramps.
