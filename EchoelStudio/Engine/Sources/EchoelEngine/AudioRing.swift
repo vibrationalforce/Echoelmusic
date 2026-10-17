@@ -1,3 +1,4 @@
+import EchoelCore
 import Synchronization
 
 /// A single-producer, single-consumer ring of samples between the render thread and a writer.
