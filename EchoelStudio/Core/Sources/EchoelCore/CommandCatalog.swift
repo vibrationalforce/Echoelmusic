@@ -38,7 +38,7 @@ extension Command {
         case setInstrumentPlugin, setPluginState
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMedia, removeMedia
-        case setVolume, setPan, setMute, setSolo
+        case setVolume, setPan, setMute, setSolo, setSend
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
         case placeClip, movePlacement, removePlacement
@@ -75,6 +75,7 @@ extension Command {
         case .setPan: .setPan
         case .setMute: .setMute
         case .setSolo: .setSolo
+        case .setSend: .setSend
         case .createClip: .createClip
         case .deleteClip: .deleteClip
         case .renameClip: .renameClip
@@ -230,6 +231,12 @@ public enum CommandCatalog {
             return CommandSpec(name: "mixer.solo", title: "Solo",
                                summary: "Solos or unsolos a track.",
                                parameters: [P("track", .trackID, "The track."), P("soloed", .boolean, "true to solo.")])
+        case .setSend:
+            return CommandSpec(name: "mixer.send", title: "Send",
+                               summary: "Sets how much of a track goes into a return track, after its fader and pan; null removes the send.",
+                               parameters: [P("track", .trackID, "The sending track (not a return)."),
+                                            P("to", .trackID, "The return track."),
+                                            P("db", .number, "Send level in dB, as on a fader; omit to remove.", optional: true)])
         case .createClip:
             return CommandSpec(name: "clip.create", title: "New Clip",
                                summary: "Creates an empty MIDI clip on an instrument track.",

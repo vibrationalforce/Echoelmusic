@@ -100,6 +100,30 @@ final class HostedEffectTests: XCTestCase {
         XCTAssertEqual(out[10], 0.125 * panLaw, accuracy: 1e-5)
     }
 
+    func testASendFeedsAReturnThatSolosDoNotSilence() throws {
+        var (project, track, unit) = try constantSong()
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Reverb", kind: .returnTrack, index: nil).apply(to: &project)
+        let direct = 0.5 * panLaw
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], direct, accuracy: 1e-5)
+
+        try Command.setSend(track: track, to: verb, db: 0).apply(to: &project)
+        // The send is post-fader and post-pan, then the return's own centre pan.
+        let both = direct + direct * panLaw
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], both, accuracy: 1e-5)
+
+        try Command.setSolo(track, true).apply(to: &project)
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], both, accuracy: 1e-5)
+
+        try Command.setMute(verb, true).apply(to: &project)
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], direct, accuracy: 1e-5)
+
+        try Command.setMute(verb, false).apply(to: &project)
+        try Command.setMute(track, true).apply(to: &project)
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], 0, accuracy: 1e-6,
+                       "a muted track sends nothing")
+    }
+
     func testAnEffectPreparedForAnotherRateIsLeftOut() throws {
         let (project, track, unit) = try constantSong()
         let out = render(project, track: track, unit: unit,

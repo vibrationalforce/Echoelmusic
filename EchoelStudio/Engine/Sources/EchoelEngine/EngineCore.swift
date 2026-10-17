@@ -21,6 +21,8 @@ public final class EngineCore: @unchecked Sendable {
 
     public let sampleRate: Double
     public let slotCapacity: Int
+    /// Return tracks the engine has buses for; ones beyond it stay silent.
+    public static let returnCapacity = 8
 
     // Main → render.
     private let isPlayingFlag = Atomic<Bool>(false)
@@ -47,6 +49,8 @@ public final class EngineCore: @unchecked Sendable {
     private let busRight: UnsafeMutablePointer<Float>
     private let audioLeft: UnsafeMutablePointer<Float>
     private let audioRight: UnsafeMutablePointer<Float>
+    private let returnLeft: UnsafeMutablePointer<Float>
+    private let returnRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
     private var wasPlaying = false
@@ -89,6 +93,10 @@ public final class EngineCore: @unchecked Sendable {
         audioLeft.initialize(repeating: 0, count: Self.maximumFrames)
         audioRight = .allocate(capacity: Self.maximumFrames)
         audioRight.initialize(repeating: 0, count: Self.maximumFrames)
+        returnLeft = .allocate(capacity: Self.returnCapacity * Self.maximumFrames)
+        returnLeft.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
+        returnRight = .allocate(capacity: Self.returnCapacity * Self.maximumFrames)
+        returnRight.initialize(repeating: 0, count: Self.returnCapacity * Self.maximumFrames)
         metronome = Metronome(sampleRate: Float(rate))
     }
 
@@ -108,13 +116,15 @@ public final class EngineCore: @unchecked Sendable {
         busRight.deallocate()
         audioLeft.deallocate()
         audioRight.deallocate()
+        returnLeft.deallocate()
+        returnRight.deallocate()
     }
 
     // MARK: - Main thread
 
     public func publish(_ snapshot: EngineSnapshot) {
         // A lane outside the preallocated slots would index past them on the render thread.
-        let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity))
+        let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity, returnCapacity: Self.returnCapacity))
         published.append(box)
         if let unseen = pending.exchange(Unmanaged.passUnretained(box).toOpaque(), ordering: .acquiringAndReleasing) {
             // The render thread never took this one and now never can; without this, every
@@ -180,6 +190,7 @@ public final class EngineCore: @unchecked Sendable {
             renderVoices(0..<frames, left: left, right: right)
             renderUnits(frames: frames)
             mixLanes(frames: frames, left: left, right: right)
+            mixReturns(frames: frames, left: left, right: right)
             return
         }
         let snapshot = box.snapshot
@@ -231,6 +242,7 @@ public final class EngineCore: @unchecked Sendable {
         renderUnits(frames: frames)
         mixLanes(frames: frames, left: left, right: right)
         renderAudio(snapshot, frames: frames, left: left, right: right)
+        mixReturns(frames: frames, left: left, right: right)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
     }
@@ -331,6 +343,35 @@ public final class EngineCore: @unchecked Sendable {
                 left[i] += l[i] * lane.gainLeft
                 right[i] += r[i] * lane.gainRight
             }
+            send(lane.sends, frames: frames, left: l, right: r)
+            l.update(repeating: 0, count: frames)
+            r.update(repeating: 0, count: frames)
+        }
+    }
+
+    /// Adds a track's processed bus into the return buses it sends to.
+    private func send(_ sends: [EngineSnapshot.SendTap], frames: Int, left: UnsafeMutablePointer<Float>,
+                      right: UnsafeMutablePointer<Float>) {
+        for tap in sends where tap.bus >= 0 && tap.bus < Self.returnCapacity {
+            let l = returnLeft + tap.bus * Self.maximumFrames, r = returnRight + tap.bus * Self.maximumFrames
+            for i in 0..<frames {
+                l[i] += left[i] * tap.gainLeft
+                r[i] += right[i] * tap.gainRight
+            }
+        }
+    }
+
+    /// Every return bus through its effects, into the mix at its fader, then cleared — every
+    /// block, so a reverb's tail rings out after the transport stops.
+    private func mixReturns(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        guard let snapshot = current?.snapshot else { return }
+        for lane in snapshot.returns {
+            let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
+            for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            for i in 0..<frames {
+                left[i] += l[i] * lane.gainLeft
+                right[i] += r[i] * lane.gainRight
+            }
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
@@ -369,6 +410,7 @@ public final class EngineCore: @unchecked Sendable {
                 left[i] += audioLeft[i] * lane.gainLeft
                 right[i] += audioRight[i] * lane.gainRight
             }
+            send(lane.sends, frames: frames, left: audioLeft, right: audioRight)
         }
     }
 

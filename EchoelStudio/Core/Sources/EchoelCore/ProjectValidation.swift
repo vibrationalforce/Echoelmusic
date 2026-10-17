@@ -37,6 +37,14 @@ extension Project {
                 guard track.clipIndex(placement.clip) != nil else { throw CommandError.unknownClip(placement.clip) }
                 try Command.validateStart(placement.start)
             }
+            for send in track.sends {
+                guard track.kind != .returnTrack,
+                      tracks.first(where: { $0.id == send.target })?.kind == .returnTrack,
+                      send.levelDB.isFinite, MixerStrip.volumeRange.contains(send.levelDB) else {
+                    throw Self.invalid("sends", "a send must go from a track into a return track, within the fader's range")
+                }
+            }
+            guard Set(track.sends.map(\.target)).count == track.sends.count else { throw Self.invalid("sends", "two sends into one return") }
             guard track.inserts.count <= Insert.maximumPerTrack else { throw Self.invalid("inserts", "too many on one track") }
             for insert in track.inserts {
                 guard insertIDs.insert(insert.id).inserted else { throw CommandError.duplicateID(insert.id.description) }

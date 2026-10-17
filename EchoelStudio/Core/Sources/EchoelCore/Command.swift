@@ -40,6 +40,8 @@ public enum Command: Codable, Equatable, Sendable {
     case setPan(MixerTarget, pan: Double)
     case setMute(TrackID, Bool)
     case setSolo(TrackID, Bool)
+    /// Sets a track's send into a return track; nil removes the send.
+    case setSend(track: TrackID, to: TrackID, db: Double?)
 
     // Clips
     case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
@@ -153,6 +155,8 @@ extension Command {
         case .removeTrack(let id):
             let t = try project.requireTrack(id)
             project.tracks.remove(at: t)
+            // Nothing may send into a return that is gone.
+            for i in project.tracks.indices { project.tracks[i].sends.removeAll { $0.target == id } }
 
         case let .renameTrack(id, name):
             let t = try project.requireTrack(id)
@@ -330,6 +334,28 @@ extension Command {
         case let .setSolo(id, soloed):
             let t = try project.requireTrack(id)
             project.tracks[t].mixer.isSoloed = soloed
+
+        case let .setSend(trackID, targetID, db):
+            let t = try project.requireTrack(trackID)
+            let target = try project.requireTrack(targetID)
+            guard project.tracks[target].kind == .returnTrack else {
+                throw CommandError.invalidValue(parameter: "to", reason: "sends go into a return track")
+            }
+            guard project.tracks[t].kind != .returnTrack else {
+                throw CommandError.invalidValue(parameter: "track", reason: "a return track does not send")
+            }
+            guard let db else {
+                project.tracks[t].sends.removeAll { $0.target == targetID }
+                break
+            }
+            guard db.isFinite, MixerStrip.volumeRange.contains(db) else {
+                throw CommandError.invalidValue(parameter: "db", reason: "must be within \(MixerStrip.volumeRange)")
+            }
+            if let s = project.tracks[t].sends.firstIndex(where: { $0.target == targetID }) {
+                project.tracks[t].sends[s].levelDB = db
+            } else {
+                project.tracks[t].sends.append(Send(target: targetID, levelDB: db))
+            }
 
         case let .createClip(trackID, id, name, length):
             let t = try project.requireTrack(trackID)

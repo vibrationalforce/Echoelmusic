@@ -113,6 +113,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var instrument: InstrumentSettings
     /// Effects on the track's signal, in order, before its fader and pan.
     public var inserts: [Insert]
+    /// Post-fader sends into return tracks, one per return at most. A return track has none.
+    public var sends: [Send]
 
     public init(
         id: TrackID = TrackID(),
@@ -125,7 +127,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         slots: [SlotAssignment] = [],
         instrument: InstrumentSettings = InstrumentSettings(),
         regions: [AudioRegion] = [],
-        inserts: [Insert] = []
+        inserts: [Insert] = [],
+        sends: [Send] = []
     ) {
         self.id = id
         self.name = name
@@ -138,10 +141,11 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         self.instrument = instrument
         self.regions = regions
         self.inserts = inserts
+        self.sends = sends
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -158,6 +162,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         instrument = try c.decodeIfPresent(InstrumentSettings.self, forKey: .instrument) ?? InstrumentSettings()
         regions = try c.decodeIfPresent([AudioRegion].self, forKey: .regions) ?? []
         inserts = try c.decodeIfPresent([Insert].self, forKey: .inserts) ?? []
+        sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

@@ -23,6 +23,24 @@ public struct EngineSnapshot: Sendable {
         public let unit: HostedUnit?
         /// The track's insert effects, in order, held like the unit.
         public let inserts: [HostedEffect]
+        public let sends: [SendTap]
+    }
+
+    /// Where a track's post-fader signal also goes: return bus `bus`, at these gains.
+    public struct SendTap: Sendable {
+        public let bus: Int
+        public let gainLeft: Float
+        public let gainRight: Float
+    }
+
+    /// A return track: its own bus, effects and fader. Solo does not silence it — the soloed
+    /// track's sends must still be heard through it.
+    public struct ReturnLane: Sendable {
+        public let track: TrackID
+        public let bus: Int
+        public let gainLeft: Float
+        public let gainRight: Float
+        public let inserts: [HostedEffect]
     }
 
     /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
@@ -33,6 +51,7 @@ public struct EngineSnapshot: Sendable {
         /// Sorted by `startSample`. Overlapping regions both sound.
         public let regions: [Region]
         public let inserts: [HostedEffect]
+        public let sends: [SendTap]
     }
 
     /// An audio region in output samples. The buffer is held by the snapshot, as for samplers.
@@ -54,6 +73,7 @@ public struct EngineSnapshot: Sendable {
     public let timeSignature: TimeSignature
     public private(set) var lanes: [Lane]
     public let audioLanes: [AudioLane]
+    public private(set) var returns: [ReturnLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
 
@@ -73,6 +93,24 @@ public struct EngineSnapshot: Sendable {
         let anySolo = project.tracks.contains { $0.mixer.isSoloed }
         let master = project.master
         let conversion = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
+        let returnTracks = project.tracks.filter { $0.kind == .returnTrack }
+        var busOf: [TrackID: Int] = [:]
+        for (index, track) in returnTracks.enumerated() { busOf[track.id] = index }
+        returns = returnTracks.enumerated().map { index, track in
+            let (left, right) = track.mixer.isMuted ? (0, 0) : Self.gains(track: track.mixer, master: master)
+            return ReturnLane(track: track.id, bus: index, gainLeft: left, gainRight: right, inserts: inserts(track.id))
+        }
+        /// Post-fader, post-pan: the track's own gains (without the master) times the send level.
+        let sends = { (track: Track, audible: Bool) -> [SendTap] in
+            guard audible else { return [] }
+            let (left, right) = Self.gains(track: track.mixer, master: MixerStrip())
+            return track.sends.compactMap { send in
+                guard let bus = busOf[send.target] else { return nil }
+                let level = Self.linear(send.levelDB)
+                guard level > 0 else { return nil }
+                return SendTap(bus: bus, gainLeft: left * level, gainRight: right * level)
+            }
+        }
         audioLanes = project.tracks.filter { $0.kind == .audio }.map { track in
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
             let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
@@ -80,7 +118,7 @@ public struct EngineSnapshot: Sendable {
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
             }
             return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions,
-                             inserts: inserts(track.id))
+                             inserts: inserts(track.id), sends: sends(track, audible))
         }
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         lanes = plan.tracks.compactMap { events in
@@ -91,14 +129,16 @@ public struct EngineSnapshot: Sendable {
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
-                        inserts: inserts(events.track))
+                        inserts: inserts(events.track), sends: sends(track, audible))
         }
     }
 
-    /// This snapshot without lanes whose slot is outside `0..<capacity`.
-    func limited(toSlots capacity: Int) -> EngineSnapshot {
+    /// This snapshot without lanes whose slot is outside `0..<capacity` and without return
+    /// buses beyond `returnCapacity` (and the sends into them).
+    func limited(toSlots capacity: Int, returnCapacity: Int = .max) -> EngineSnapshot {
         var copy = self
         copy.lanes.removeAll { $0.slot < 0 || $0.slot >= capacity }
+        copy.returns.removeAll { $0.bus < 0 || $0.bus >= returnCapacity }
         return copy
     }
 
