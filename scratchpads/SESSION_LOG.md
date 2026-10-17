@@ -1237,3 +1237,6 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - 14:46 UTC — **M3 Teil 2: Effekt-Inserts + Export mit Plugins** — Stereo-Bus pro Spur + HostedEffect
   (d3991bf), Insert-Modell + 5 Befehle (bb6ea6e), Laden + Mixer-FX-Seite (437bcad), Offline-Export mit
   frischen Plugin-Kopien (c35d406), Run #46 grün. Nichts gerätegeprüft. Nächstes: eigene AUv3s (Kauf), Sends.
+- 17:35 UTC — **Eigenes AUv3 „Echoel Synth" + Kauf** (c3e6de2, Run #47 grün beim ersten Lauf; `.appex`
+  im Release-Build unter PlugIns/ belegt). SynthKernel im Engine-Paket getestet. Founder: IAP in ASC anlegen.
+  Nicht gerätegeprüft: Laden in AUM/Logic, Demo-Stille, Kauf-Freischaltung in der Erweiterung.
