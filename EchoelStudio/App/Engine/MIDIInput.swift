@@ -246,8 +246,12 @@ final class MIDIInput {
             let fromFollowed = followed != 0 && Int(bitPattern: tag) == followed
             let (controls, clock) = Self.receive(list, router: router, inbox: inbox,
                                                  clock: fromFollowed ? clockInbox : nil)
-            if controls { Task { @MainActor in self?.drainControls() } }
-            if clock { Task { @MainActor in self?.drainClock() } }
+            // One hop: two tasks would each send the captured `self` across actors.
+            guard controls || clock else { return }
+            Task { @MainActor in
+                if controls { self?.drainControls() }
+                if clock { self?.drainClock() }
+            }
         }
         guard portStatus == noErr else { return fail("port", portStatus) }
         clockInbox.followed.store(followedSource.map(Self.tag) ?? 0, ordering: .relaxed)

@@ -49,6 +49,9 @@ on modules below it — never the other way round.
   that passes `swift test` on macOS can still fail for iOS: `UnsafeMutableAudioBufferListPointer`
   comes with `import AudioToolbox` on macOS only; on iOS it needs `import AVFoundation`. `AUAudioUnit.requestViewController` needs
   `import CoreAudioKit` — the legacy target only compiled because another file imported it.
+- **A `@Sendable` callback may send its captured `self` to the main actor only once.** Two
+  `Task { @MainActor in self?.… }` in the same block is "sending 'self' risks causing data races";
+  do both steps in one task.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
 
