@@ -5405,3 +5405,10 @@ nur ganze Takte — ein auf Schlag 2 gestarteter MIDI-Part übersprang seinen er
 Nicht als eigenes Menü in der Transportzeile: mit Marker und Count-in brauchte sie ~410 pt und
 schob das Menü auf 375–402-pt-Telefonen über den Rand. Logic hält dieselbe Wahl am Metronom.
 Review 2026-11-15.
+
+### 2026-10-17 — NEUSTART: Echoel Studio als konventionelle Profi-DAW
+- **Founder:** „Alles nochmal von vorne … ich will selbst komponieren in einer professionellen Umgebung, ähnlich FL Studio Mobile und Ableton Desktop. AUv3 … Live Set mit Xone 96 … Erstmal kein Biofeedback/Visuals/Video/LichtLaser … kein Spatial Audio."
+- **Antworten:** gleiches Repo, neu aufgebaut (Tag `legacy-10.79.515`) · iPad + iPhone · v1 = Komponieren, AUv3-Host, eigene AUv3 als Käufe, Live-Set + Hardware, Chat-/Sprach-Agent für alle Funktionen · Klang: eigener Synth + Sampler.
+- **Plan und Produktgrenze:** `docs/dev/NEUSTART_2026-10-17.md` — gilt vor `CLAUDE.md`, `FOUNDER_PRODUCT_LAW.md`, `ECHOELMUSIC_MASTER_PLAN.md` (die bleiben als Plan für später und als Lehren-Archiv).
+- **Architektur-Kern:** EIN `ProjectStore`, jede Änderung ein typisierter Befehl (Undo, MIDI-Learn und Agent über denselben Katalog), Render-Thread liest nur einen kompilierten Abspielplan.
+- **Review:** 2026-11-17.
