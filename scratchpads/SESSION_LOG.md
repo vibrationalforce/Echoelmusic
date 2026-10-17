@@ -1264,3 +1264,8 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - `track.input` + "In" menu; the session requests every input; the recorder takes the chosen channel (per-channel or interleaved).
 - `ClipGrid` + `Launchpad` + `UniversalMIDI` (Engine, tested); `LaunchpadController` (App): programmer mode, pads/scenes/arrows, LED diff at 25 Hz.
 - NOT device-verified: Launchpad (port names, Pro MK3 arrow CCs), input channels of the Xone:96, plugin touch events.
+
+## 2026-10-17 23:40 — EchoelStudio: audio clips in the session grid + crossfade
+- Audio tracks get session slots (shared pool, after instrument tracks); an empty slot imports a file as a clip; loop length 1/2/4/8/16 bars, passes computed from the launch tick.
+- Launch, stop and return to the arrangement switch at their sample and crossfade over 64 frames (run #78 caught that the return was applied before the render — fixed in d335f4d).
+- NOT device-verified: audio loop timing and the feel of the crossfade.
