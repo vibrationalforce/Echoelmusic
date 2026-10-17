@@ -44,6 +44,22 @@ public struct EngineSnapshot: Sendable {
         public let lane: AutomationLane
     }
 
+    /// A hosted unit's parameter and its lane, compiled for the render thread: the lane holds
+    /// 0…1 of the parameter's travel, `range` is the unit's own.
+    public struct UnitAutomation: Sendable {
+        public let unit: any ParameterScheduling
+        public let address: UInt64
+        public let range: ClosedRange<Float>
+        public let lane: AutomationLane
+
+        /// The unit's value for the lane at `tick`, or nil for a lane without points.
+        public func value(at tick: Tick) -> Float? {
+            guard let position = lane.value(at: tick) else { return nil }
+            let n = Float(position.isFinite ? Swift.min(Swift.max(position, 0), 1) : 0)
+            return range.lowerBound + n * (range.upperBound - range.lowerBound)
+        }
+    }
+
     /// The master's strip and the lanes that move it.
     public struct MasterMix: Sendable {
         public let strip: MixerStrip
@@ -143,6 +159,9 @@ public struct EngineSnapshot: Sendable {
     public let audioEnd: Int64
     /// Some lane automates a synth parameter.
     public let automatesPatches: Bool
+    /// The song's lanes on parameters of loaded, playing units. A lane on a unit that is not
+    /// loaded, bypassed, or does not have that parameter (another version) does nothing.
+    public let unitAutomation: [UnitAutomation]
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -238,6 +257,21 @@ public struct EngineSnapshot: Sendable {
         }
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
+        unitAutomation = project.automation.compactMap { lane -> UnitAutomation? in
+            guard case .track(let id) = lane.target.owner, let parameter = lane.target.key.pluginParameter,
+                  let track = project.track(id) else { return nil }
+            let unit: (any ParameterScheduling)?
+            switch parameter.unit {
+            case .instrument:
+                unit = track.kind == .instrument && track.instrument.device == .plugin
+                    ? units[id].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil
+            case .insert(let insert):
+                unit = inserts(id).first { $0.insert == insert && !$0.isBypassed }
+            }
+            guard let unit, let range = unit.parameterRanges[parameter.address], range.upperBound > range.lowerBound,
+                  range.lowerBound.isFinite, range.upperBound.isFinite else { return nil }
+            return UnitAutomation(unit: unit, address: parameter.address, range: range, lane: lane)
+        }
     }
 
     /// This snapshot without lanes whose slot is outside `0..<capacity` and without return

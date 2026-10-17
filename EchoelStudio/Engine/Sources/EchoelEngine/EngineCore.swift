@@ -97,6 +97,10 @@ public final class EngineCore: @unchecked Sendable {
     private var sendingPoints: Int { slotCapacity + Self.smoothedAudioTracks }
     /// The next sample at which automated synth parameters are set again.
     private var automationNext: Int64 = 0
+    /// The tick unit automation was last sent for; false until the first send after a seek or
+    /// a new snapshot.
+    private var unitAutomationTick: Tick = 0
+    private var unitAutomationPrimed = false
     /// Frames between two settings of an automated synth parameter: 0.67 ms at 48 kHz. The
     /// synth glides between them, so the sweep is continuous.
     static let automationStep: Int64 = 32
@@ -349,7 +353,7 @@ public final class EngineCore: @unchecked Sendable {
             // The earliest due event: a launch, a session note, an arrangement note, or the next
             // beat. At one sample a launch comes first, so the old clip's notes there never play.
             var due = Due(sample: snapshot.time.sample(at: nextBeat))
-            if snapshot.automatesPatches { due.offer(automationNext, -1, .automation) }
+            if snapshot.automatesPatches || !snapshot.unitAutomation.isEmpty { due.offer(automationNext, -1, .automation) }
             for (index, lane) in snapshot.lanes.enumerated() {
                 let session = sessions[lane.slot]
                 if case .none = session.pending {} else {
@@ -394,7 +398,9 @@ public final class EngineCore: @unchecked Sendable {
             case .launch:
                 fire(snapshot.lanes[due.lane])
             case .automation:
-                applyPatchAutomation(snapshot, at: snapshot.time.tick(atSample: due.sample))
+                let tick = snapshot.time.tick(atSample: due.sample)
+                applyPatchAutomation(snapshot, at: tick)
+                applyUnitAutomation(snapshot, at: tick, offset: offset)
                 automationNext = Swift.max(due.sample, playhead) + Self.automationStep
             }
         }
@@ -523,6 +529,7 @@ public final class EngineCore: @unchecked Sendable {
         // newer one, so this assignment's release of the old box never frees on this thread.
         current = Unmanaged<SnapshotBox>.fromOpaque(pointer).takeUnretainedValue()
         guard let snapshot = current?.snapshot else { return }
+        unitAutomationPrimed = false
 
         // A slot handed to a different track, or no track at all, starts silent.
         for slot in 0..<slotCapacity {
@@ -629,6 +636,7 @@ public final class EngineCore: @unchecked Sendable {
         if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
         nextBeat = beat
         automationNext = playhead
+        unitAutomationPrimed = false
         // A playing clip keeps its loop phase from where it was launched.
         for lane in snapshot.lanes {
             var session = sessions[lane.slot]
@@ -802,6 +810,21 @@ public final class EngineCore: @unchecked Sendable {
             left[i] += sourceLeft[i] * (ramp.left0 + (ramp.left1 - ramp.left0) * t)
             right[i] += sourceRight[i] * (ramp.right0 + (ramp.right1 - ramp.right0) * t)
         }
+    }
+
+    /// Moves each automated unit parameter towards its lane's value at `tick`, gliding over one
+    /// automation step. A value the lane held since the last step is not sent again, except
+    /// after a seek or a new snapshot, when every lane is sent once.
+    private func applyUnitAutomation(_ snapshot: EngineSnapshot, at tick: Tick, offset: Int) {
+        guard !snapshot.unitAutomation.isEmpty else { return }
+        let ramp = Int(Self.automationStep)
+        for automation in snapshot.unitAutomation {
+            guard let value = automation.value(at: tick) else { continue }
+            if unitAutomationPrimed, automation.value(at: unitAutomationTick) == value { continue }
+            automation.unit.schedule(address: automation.address, value: value, offset: offset, ramp: ramp)
+        }
+        unitAutomationTick = tick
+        unitAutomationPrimed = true
     }
 
     /// Sets each automated synth parameter to its lane's value at `tick`.

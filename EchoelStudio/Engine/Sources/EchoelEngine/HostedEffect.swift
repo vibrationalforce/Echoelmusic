@@ -1,5 +1,6 @@
 import AudioToolbox
 import AVFoundation
+import EchoelCore
 import Foundation
 
 /// An Audio Unit effect on a track's insert chain, processed inside the engine's own render
@@ -8,13 +9,17 @@ import Foundation
 ///
 /// Built on the main thread from a unit whose render resources are allocated at the engine's
 /// rate. The render thread only calls the blocks and writes buffers allocated here.
-public final class HostedEffect: @unchecked Sendable {
+public final class HostedEffect: ParameterScheduling, @unchecked Sendable {
     public let sampleRate: Double
     public let maximumFrames: Int
     /// A bypassed effect is skipped; the bus passes through unchanged.
     public let isBypassed: Bool
+    /// The insert this effect plays, so the song's automation of it finds it.
+    public let insert: InsertID?
+    public let parameterRanges: [UInt64: ClosedRange<Float>]
 
     private let renderBlock: AURenderBlock
+    private let scheduleParameter: AUScheduleParameterBlock?
     private let owner: AnyObject?
     private let outLeft: UnsafeMutablePointer<Float>
     private let outRight: UnsafeMutablePointer<Float>
@@ -26,8 +31,12 @@ public final class HostedEffect: @unchecked Sendable {
     private var pullInput: AURenderPullInputBlock?
 
     public init(render: @escaping AURenderBlock, sampleRate: Double, maximumFrames: Int, isBypassed: Bool = false,
-                owner: AnyObject?) {
+                owner: AnyObject?, insert: InsertID? = nil, scheduleParameter: AUScheduleParameterBlock? = nil,
+                parameterRanges: [UInt64: ClosedRange<Float>] = [:]) {
         renderBlock = render
+        self.insert = insert
+        self.scheduleParameter = scheduleParameter
+        self.parameterRanges = parameterRanges
         self.sampleRate = sampleRate
         self.maximumFrames = Swift.max(1, maximumFrames)
         self.isBypassed = isBypassed
@@ -65,6 +74,11 @@ public final class HostedEffect: @unchecked Sendable {
             }
         }
         return noErr
+    }
+
+    public func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {
+        scheduleParameter?(AUEventSampleTimeImmediate + AUEventSampleTime(Swift.max(0, offset)),
+                           AUAudioFrameCount(Swift.max(0, ramp)), address, value)
     }
 
     /// Replaces `frames` of the bus with the effect's output. A unit that fails a block leaves
