@@ -51,14 +51,16 @@ final class InputRecorder: @unchecked Sendable {
         let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: list))
         guard let channel = buffers.first, let data = channel.mData?.assumingMemoryBound(to: Float.self) else { return }
         let stride = Swift.max(1, Int(channel.mNumberChannels))
+        // Never read past the buffer, whatever the frame count claims.
+        let held = Swift.min(frames, Int(channel.mDataByteSize) / (MemoryLayout<Float>.size * stride))
         guard stride > 1 else {
-            ring.write(data, count: frames)
+            ring.write(data, count: held)
             return
         }
         // Interleaved input: take channel 1.
         var done = 0
-        while done < frames {
-            let n = Swift.min(frames - done, Self.scratchFrames)
+        while done < held {
+            let n = Swift.min(held - done, Self.scratchFrames)
             for i in 0..<n { scratch[i] = data[(done + i) * stride] }
             ring.write(scratch, count: n)
             done += n
@@ -92,6 +94,8 @@ actor TakeWriter {
                                interleaved: false)
         self.chunk = chunk
         self.ring = ring
+        // A block that arrived as the previous take was stopped would otherwise open this one.
+        ring.discardAvailable()
     }
 
     /// Writes whatever is waiting in the ring.

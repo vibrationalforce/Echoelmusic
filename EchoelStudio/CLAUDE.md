@@ -43,6 +43,8 @@ on modules below it — never the other way round.
 - **Split a large view body into builders.** One long `body` expression with nested `ForEach`
   and many modifiers exceeds the type checker's time limit; a property per region and a
   function per row/cell fix it.
+- **Every new file imports what it uses.** A sibling file's `import EchoelCore` does not reach
+  it; `Tick` and `TimeConversion` were "not in scope" in a fresh Engine file.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
 

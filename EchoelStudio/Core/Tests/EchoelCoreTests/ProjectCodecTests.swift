@@ -46,6 +46,34 @@ final class ProjectCodecTests: XCTestCase {
         }
     }
 
+    /// A file edited by hand or damaged on disk must not reach the engine: a denominator of 0
+    /// or a tempo of 0 would stop the render thread, a pitch of 300 the playback plan.
+    func testAFileThatBreaksTheRulesIsRefused() throws {
+        let valid = try sampleProject()
+        var broken: [Project] = []
+        var signature = valid
+        signature.timeSignature = TimeSignature(4, 0)
+        broken.append(signature)
+        var tempo = valid
+        tempo.tempo = 0
+        broken.append(tempo)
+        var pitch = valid
+        pitch.tracks[0].clips[0].notes[0].pitch = 300
+        broken.append(pitch)
+        var pan = valid
+        pan.tracks[0].mixer.pan = 5
+        broken.append(pan)
+        var escape = valid
+        escape.media = [MediaFile(name: "x", path: "../../etc/passwd", frameCount: 1, sampleRate: 48_000)]
+        broken.append(escape)
+        for project in broken {
+            let data = try ProjectCodec.encode(project)
+            XCTAssertThrowsError(try ProjectCodec.decode(data)) { error in
+                guard case .invalidContent = error as? ProjectCodec.DecodeError else { return XCTFail("\(error)") }
+            }
+        }
+    }
+
     func testCommandsThemselvesAreCodable() throws {
         let command = Command.addNotes(ClipID(), [Note(pitch: 60, start: 0, length: 240)])
         let data = try JSONEncoder().encode(command)

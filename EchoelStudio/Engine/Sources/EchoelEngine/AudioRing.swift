@@ -50,6 +50,11 @@ public final class AudioRing: @unchecked Sendable {
         return n
     }
 
+    /// Consumer side. Throws away everything waiting — the rest of an earlier take.
+    public func discardAvailable() {
+        consumed.store(written.load(ordering: .acquiring), ordering: .releasing)
+    }
+
     /// Consumer side. Copies up to `count` waiting samples into `destination` and returns how
     /// many that was.
     @discardableResult

@@ -428,19 +428,19 @@ extension Command {
         }
     }
 
-    private static func validateLength(_ length: Tick) throws {
+    static func validateLength(_ length: Tick) throws {
         guard length > 0, length <= MusicalTime.maximumTick else {
             throw CommandError.invalidValue(parameter: "length", reason: "must be within 1…\(MusicalTime.maximumTick) ticks")
         }
     }
 
-    private static func validateStart(_ start: Tick) throws {
+    static func validateStart(_ start: Tick) throws {
         guard start >= 0, start <= MusicalTime.maximumTick else {
             throw CommandError.invalidValue(parameter: "start", reason: "must be within 0…\(MusicalTime.maximumTick) ticks")
         }
     }
 
-    private static func validate(_ note: Note, in clip: Clip) throws {
+    static func validate(_ note: Note, in clip: Clip) throws {
         guard Note.pitchRange.contains(note.pitch) else {
             throw CommandError.invalidValue(parameter: "pitch", reason: "must be within \(Note.pitchRange)")
         }

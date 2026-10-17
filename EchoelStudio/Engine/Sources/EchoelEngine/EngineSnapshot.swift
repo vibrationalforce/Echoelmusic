@@ -47,7 +47,7 @@ public struct EngineSnapshot: Sendable {
     public let generation: UInt64
     public let time: TimeConversion
     public let timeSignature: TimeSignature
-    public let lanes: [Lane]
+    public private(set) var lanes: [Lane]
     public let audioLanes: [AudioLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
@@ -79,6 +79,13 @@ public struct EngineSnapshot: Sendable {
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil)
         }
+    }
+
+    /// This snapshot without lanes whose slot is outside `0..<capacity`.
+    func limited(toSlots capacity: Int) -> EngineSnapshot {
+        var copy = self
+        copy.lanes.removeAll { $0.slot < 0 || $0.slot >= capacity }
+        return copy
     }
 
     /// Nil when the file is not loaded or nothing of the region falls inside the loaded file

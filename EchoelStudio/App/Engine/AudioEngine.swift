@@ -101,6 +101,7 @@ final class AudioEngine {
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
                 core = current
+                slots = SlotAssigner(capacity: current.slotCapacity)
                 isPlaying = false
                 if let project { publish(project) }
             }

@@ -94,9 +94,15 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Main thread
 
     public func publish(_ snapshot: EngineSnapshot) {
-        let box = SnapshotBox(snapshot)
+        // A lane outside the preallocated slots would index past them on the render thread.
+        let box = SnapshotBox(snapshot.limited(toSlots: slotCapacity))
         published.append(box)
-        _ = pending.exchange(Unmanaged.passUnretained(box).toOpaque(), ordering: .acquiringAndReleasing)
+        if let unseen = pending.exchange(Unmanaged.passUnretained(box).toOpaque(), ordering: .acquiringAndReleasing) {
+            // The render thread never took this one and now never can; without this, every
+            // publish while the output is stopped would keep another snapshot and its buffers.
+            let skipped = Unmanaged<SnapshotBox>.fromOpaque(unseen).takeUnretainedValue()
+            published.removeAll { $0 === skipped }
+        }
         // A box older than the one the render thread acknowledged can no longer be reached:
         // the render thread only ever takes the newest pending one.
         let ack = acknowledged.load(ordering: .acquiring)

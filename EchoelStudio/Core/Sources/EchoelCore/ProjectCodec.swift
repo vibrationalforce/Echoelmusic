@@ -7,6 +7,8 @@ public enum ProjectCodec {
         /// The file was written by a newer version of the app.
         case newerFormat(found: Int, supported: Int)
         case missingFormatVersion
+        /// The file breaks a rule every command enforces (`Project.validate`).
+        case invalidContent(CommandError)
     }
 
     public static func encode(_ project: Project) throws -> Data {
@@ -22,6 +24,12 @@ public enum ProjectCodec {
         guard version <= Project.currentFormatVersion else {
             throw DecodeError.newerFormat(found: version, supported: Project.currentFormatVersion)
         }
-        return try JSONDecoder().decode(Project.self, from: data)
+        let project = try JSONDecoder().decode(Project.self, from: data)
+        do {
+            try project.validate()
+        } catch let error as CommandError {
+            throw DecodeError.invalidContent(error)
+        }
+        return project
     }
 }

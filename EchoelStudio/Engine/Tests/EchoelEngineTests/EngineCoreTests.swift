@@ -199,6 +199,21 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(slots.slots.count, 2, "beyond capacity a track gets no slot")
     }
 
+    func testALaneBeyondThePreallocatedSlotsIsDroppedNotIndexed() throws {
+        let s = try song([[Note(pitch: 60, start: 0, length: 960)], [Note(pitch: 64, start: 0, length: 960)]])
+        let engine = EngineCore(sampleRate: rate, slotCapacity: 1)
+        engine.setClickEnabled(false)
+        // Slots assigned for a larger engine: the second track gets slot 1, which this engine lacks.
+        var slots = SlotAssigner(capacity: 8)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project,
+                                      slots: slots.slots, sampleRate: rate, generation: 1))
+        engine.play()
+        let out = render(engine, frames: 4_800).left
+        XCTAssertNotNil(firstSound(out), "the track in slot 0 still plays")
+        XCTAssertTrue(out.allSatisfy(\.isFinite))
+    }
+
     func testADrumTrackPlaysTheKitAndOnlyKitNotes() throws {
         // Kick on the downbeat; middle C is not in the drum map and must stay silent.
         var s = try song([[Note(pitch: 36, start: 0, length: 240), Note(pitch: 60, start: bar, length: 240)]])

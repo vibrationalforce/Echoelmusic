@@ -30,6 +30,15 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(read(ring, 4), [1, 2, 3, 4])
     }
 
+    func testDiscardingDropsWhatAnEarlierTakeLeft() {
+        let ring = AudioRing(capacity: 8)
+        _ = write(ring, [1, 2, 3])
+        ring.discardAvailable()
+        XCTAssertEqual(ring.available, 0)
+        _ = write(ring, [4])
+        XCTAssertEqual(read(ring, 4), [4])
+    }
+
     func testATakeLinesUpWithTheBeatItWasPlayedTo() {
         // 120 BPM at 48 kHz: one tick is 25 samples, one beat 24,000.
         let time = TimeConversion(bpm: 120, sampleRate: 48_000)
