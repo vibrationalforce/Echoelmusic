@@ -30,9 +30,6 @@
       "Bash(git branch --show-current:*)"
     ],
     "ask": [
-      "Edit(/project.yml)",
-      "Edit(/Resources/iOS/Info.plist)",
-      "Edit(/.github/workflows/**)",
       "Edit(/.claude/settings.json)",
       "Edit(/.mcp.json)",
       "Edit(/.claude/hooks/**)"
