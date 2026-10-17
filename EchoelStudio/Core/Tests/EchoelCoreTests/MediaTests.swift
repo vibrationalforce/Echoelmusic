@@ -33,6 +33,15 @@ final class MediaTests: XCTestCase {
         XCTAssertNoThrow(try Command.addMedia(file(path: "Media/sub/x.wav")).apply(to: &p))
     }
 
+    func testAFileResolvesInsideItsPackageAndAnEscapingPathDoesNot() {
+        let package = URL(fileURLWithPath: "/songs/Song.echoel", isDirectory: true)
+        XCTAssertEqual(file(path: "Media/sub/kick.wav").url(in: package)?.path, "/songs/Song.echoel/Media/sub/kick.wav")
+        // A song read from disk never went through media.add, so the reader must refuse these itself.
+        for bad in ["../../etc/passwd", "/etc/passwd", "Media/../../x.wav", "Other/x.wav"] {
+            XCTAssertNil(file(path: bad).url(in: package), bad)
+        }
+    }
+
     func testADuplicateIDIsRefused() throws {
         var (p, _) = try project()
         let f = file()

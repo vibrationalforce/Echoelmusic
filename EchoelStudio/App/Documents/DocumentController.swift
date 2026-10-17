@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import EchoelEngine
 import Foundation
 import Observation
@@ -13,11 +14,19 @@ final class DocumentController {
     private(set) var songs: [ProjectLibrary.Entry] = []
     private(set) var lastError: String?
     private(set) var isExporting = false
+    private(set) var isImporting = false
+    /// Changes whenever `samples` does; observe this, not the buffers.
+    private(set) var mediaRevision = 0
+
+    /// The open song's audio files, decoded, for the engine and the export. A file that is
+    /// missing or unreadable is simply absent, and its track stays silent.
+    @ObservationIgnored private(set) var samples: [MediaID: SampleBuffer] = [:]
 
     @ObservationIgnored private let library: ProjectLibrary
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     @ObservationIgnored private var savedProject: Project?
+    @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
 
     /// Quiet time after an edit before the song is written.
@@ -48,6 +57,7 @@ final class DocumentController {
         currentURL = library.newURL(for: project.name)
         savedProject = nil
         saveNow()
+        loadMedia(of: project)
     }
 
     @discardableResult
@@ -59,6 +69,7 @@ final class DocumentController {
             currentURL = url
             savedProject = project
             lastError = nil
+            loadMedia(of: project)
             return true
         } catch {
             log.error("open failed — \(error.localizedDescription, privacy: .public)")
@@ -101,11 +112,12 @@ final class DocumentController {
         isExporting = true
         defer { isExporting = false }
         let project = store.project
+        let buffers = samples
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let render = OfflineRender.render(project)
+            let render = OfflineRender.render(project, samples: buffers)
             let data = WAVFile.data(left: render.left, right: render.right, sampleRate: render.sampleRate)
             return Result {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -120,6 +132,66 @@ final class DocumentController {
             log.error("export failed — \(error.localizedDescription, privacy: .public)")
             lastError = "Could not export the song."
             return nil
+        }
+    }
+
+    /// Copies an audio file into the song and makes it `track`'s sample, switching the track
+    /// to the sampler — one undo step. The copy and the decoding run off the main thread.
+    func importAudio(_ source: URL, onto track: TrackID) async {
+        guard !isImporting, let package = currentURL else { return }
+        isImporting = true
+        defer { isImporting = false }
+        let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
+            // A file picked outside the app is readable only inside this scope.
+            let scoped = source.startAccessingSecurityScopedResource()
+            defer { if scoped { source.stopAccessingSecurityScopedResource() } }
+            return Result { try AudioFileImport.importFile(source, into: package) }
+        }.value
+        guard currentURL == package else { return }
+        switch result {
+        case .success(let imported):
+            samples[imported.file.id] = imported.buffer
+            mediaRevision += 1
+            do {
+                try store.perform([
+                    .addMedia(imported.file),
+                    .setInstrumentDevice(track, .sampler),
+                    .setInstrumentSample(track, imported.file.id),
+                ], title: "Import \(imported.file.name)")
+                lastError = nil
+            } catch {
+                log.error("import rejected — \(String(describing: error), privacy: .public)")
+                lastError = "Could not add the file to the song."
+            }
+        case .failure(let error):
+            log.error("import failed — \(error.localizedDescription, privacy: .public)")
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file."
+        }
+    }
+
+    /// Decodes every audio file of the song just opened, off the main thread. The previous
+    /// song's buffers are dropped at once; the engine's snapshot keeps any it still plays.
+    private func loadMedia(of project: Project) {
+        mediaLoad?.cancel()
+        samples = [:]
+        mediaRevision += 1
+        guard let package = currentURL, !project.media.isEmpty else { return }
+        let files = project.media
+        mediaLoad = Task { [weak self] in
+            let loaded = await Task.detached(priority: .userInitiated) {
+                var decoded: [MediaID: SampleBuffer] = [:]
+                for file in files {
+                    guard let url = file.url(in: package),
+                          let buffer = try? AudioFileImport.decode(url) else { continue }
+                    decoded[file.id] = buffer
+                }
+                return decoded
+            }.value
+            guard let self, !Task.isCancelled, self.currentURL == package else { return }
+            let missing = files.count - loaded.count
+            if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
+            self.samples.merge(loaded) { current, _ in current }
+            self.mediaRevision += 1
         }
     }
 

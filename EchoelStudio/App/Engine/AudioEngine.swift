@@ -1,5 +1,6 @@
 import AVFoundation
 import EchoelCore
+import EchoelDSP
 import EchoelEngine
 import Observation
 import os
@@ -20,6 +21,7 @@ final class AudioEngine {
     @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
     @ObservationIgnored private var generation: UInt64 = 0
     @ObservationIgnored private var project: Project?
+    @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
@@ -65,6 +67,12 @@ final class AudioEngine {
         publish(project)
     }
 
+    /// The decoded audio files sampler tracks play. Republishes the current project with them.
+    func setSamples(_ samples: [MediaID: SampleBuffer]) {
+        self.samples = samples
+        if let project { publish(project) }
+    }
+
     func play() {
         guard let core else { return }
         core.play()
@@ -90,7 +98,8 @@ final class AudioEngine {
         slots.update(for: project)
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
-                                    slots: slots.slots, sampleRate: core.sampleRate, generation: generation))
+                                    slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
+                                    samples: samples))
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

@@ -37,6 +37,7 @@ targets:
       - path: App
     dependencies:
       - package: EchoelCore
+      - package: EchoelDSP
       - package: EchoelEngine
     settings:
       base:

@@ -1,10 +1,17 @@
 import EchoelCore
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// An instrument track's sound: a preset to start from, then every synth parameter.
+/// An instrument track's sound: which instrument plays it, then that instrument's settings.
+///
+/// The file picker is this sheet's own presentation: it opens from inside the editor sheet,
+/// so it cannot share the root's one slot without closing the editor first.
 struct SoundPanel: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(DocumentController.self) private var documents
     let track: Track
+
+    @State private var isPickingFile = false
 
     @ScaledMetric(relativeTo: .body) private var columnWidth: CGFloat = 150
 
@@ -12,17 +19,25 @@ struct SoundPanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.l) {
                 devicePicker
-                if track.instrument.device == .drums {
+                switch track.instrument.device {
+                case .drums:
                     Text("General MIDI drum kit: Kick 36, Snare 38, Clap 39, Low Tom 45, Closed Hat 42, High Tom 50, Open Hat 46, Crash 49.")
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
-                } else {
+                case .sampler:
+                    samplerControls
+                case .synth:
                     synthControls
                 }
             }
             .padding(Theme.Space.l)
         }
         .background(Theme.Color.background)
+        .fileImporter(isPresented: $isPickingFile, allowedContentTypes: [.audio]) { result in
+            guard case .success(let url) = result else { return }
+            let target = track.id
+            Task { await documents.importAudio(url, onto: target) }
+        }
     }
 
     private var devicePicker: some View {
@@ -30,11 +45,61 @@ struct SoundPanel: View {
             get: { track.instrument.device },
             set: { try? store.perform(.setInstrumentDevice(track.id, $0)) }
         )) {
-            // The sampler is offered once the engine plays it and a file can be imported.
-            ForEach(InstrumentDevice.allCases.filter { $0 != .sampler }, id: \.self) { Text($0.title).tag($0) }
+            ForEach(InstrumentDevice.allCases, id: \.self) { Text($0.title).tag($0) }
         }
         .pickerStyle(.segmented)
         .accessibilityLabel("Instrument")
+    }
+
+    @ViewBuilder private var samplerControls: some View {
+        let loaded = track.instrument.sample.flatMap { store.project.mediaFile($0) }
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text(loaded?.name ?? "No sample loaded")
+                .font(Theme.Font.body)
+                .foregroundStyle(loaded == nil ? Theme.Color.textSecondary : Theme.Color.text)
+                .lineLimit(2)
+            if let loaded {
+                Text("\(loaded.duration, format: .number.precision(.fractionLength(2))) s · \(Int(loaded.sampleRate)) Hz")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+
+        HStack(spacing: Theme.Space.s) {
+            Button {
+                isPickingFile = true
+            } label: {
+                Label(documents.isImporting ? "Importing…" : "Import Audio File", systemImage: "square.and.arrow.down")
+                    .font(Theme.Font.label)
+                    .frame(minHeight: Theme.Size.touch)
+            }
+            .disabled(documents.isImporting)
+
+            if !store.project.media.isEmpty {
+                Menu {
+                    ForEach(store.project.media) { file in
+                        Button {
+                            try? store.perform(.setInstrumentSample(track.id, file.id))
+                        } label: {
+                            if file.id == track.instrument.sample {
+                                Label(file.name, systemImage: "checkmark")
+                            } else {
+                                Text(file.name)
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Song Samples", systemImage: "waveform")
+                        .font(Theme.Font.label)
+                        .frame(minHeight: Theme.Size.touch)
+                }
+            }
+        }
+
+        Text("Plays the sample at its own pitch on C4 (MIDI 60); other notes transpose it.")
+            .font(Theme.Font.caption)
+            .foregroundStyle(Theme.Color.textSecondary)
     }
 
     @ViewBuilder private var synthControls: some View {

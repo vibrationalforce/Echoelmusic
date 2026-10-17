@@ -6,6 +6,7 @@ import SwiftUI
 struct StudioView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(DocumentController.self) private var documents
 
     @State private var router = StudioRouter()
     @State private var surface: Surface = .tracks
@@ -40,8 +41,12 @@ struct StudioView: View {
         }
         .environment(router)
         .background(Theme.Color.background)
-        .onAppear { engine.update(store.project) }
+        .onAppear {
+            engine.setSamples(documents.samples)
+            engine.update(store.project)
+        }
         .onChange(of: store.project) { _, project in engine.update(project) }
+        .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
     }
 }
 

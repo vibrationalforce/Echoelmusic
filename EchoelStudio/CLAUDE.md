@@ -13,7 +13,7 @@ nothing has to be fished out of the long file.
 | `Core/` | Swift package `EchoelCore`: project document, commands, command catalog, undo, codec, parameters, tempo map | Foundation, Observation |
 | `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope — pure value types, render-thread safe | Foundation |
 | `Engine/` | Swift package `EchoelEngine`: snapshot, synth slots, sample-accurate sequencer, mix, metronome — render thread, tested offline | EchoelCore, EchoelDSP, Synchronization |
-| `App/` | the app (XcodeGen spec `project.yml`): design system, AVAudioEngine glue, views | EchoelCore, EchoelEngine |
+| `App/` | the app (XcodeGen spec `project.yml`): design system, AVAudioEngine glue, media import, views | EchoelCore, EchoelDSP, EchoelEngine |
 
 More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
 on modules below it — never the other way round.
@@ -31,7 +31,7 @@ on modules below it — never the other way round.
 5. **Render thread** (once the engine exists): no locks, no allocation, no ObjC, no file
    I/O, no GCD. It reads a compiled playback plan, never the `Project`.
 6. **No hot state in a view body.** Playhead, meters, levels are read by small leaf views.
-7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum.
+7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum. A presented sheet may own ONE presentation of its own (the Sound page's file picker), because it cannot use the root slot without closing itself.
 8. **Tests test behaviour.** No test reads source text or prose.
 9. **Swift 6 language mode, strict concurrency.** No `print`, no force unwrap.
 

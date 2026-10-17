@@ -29,11 +29,21 @@ public struct MediaFile: Codable, Equatable, Sendable, Identifiable {
     }
 
     /// A relative path with no parent steps and no empty segment, inside `Media/`.
-    static func isSafePath(_ path: String) -> Bool {
+    public static func isSafePath(_ path: String) -> Bool {
         guard !path.isEmpty, !path.hasPrefix("/"), !path.contains("\\") else { return false }
         let parts = path.split(separator: "/", omittingEmptySubsequences: false)
         guard parts.count >= 2, parts.first == Substring(directory) else { return false }
         return parts.allSatisfy { !$0.isEmpty && $0 != "." && $0 != ".." }
+    }
+}
+
+extension MediaFile {
+    /// Where the file lives inside the song package at `package`, or nil when the stored path
+    /// would leave the package. A song file read from disk was never checked by `media.add`,
+    /// so a reader resolves through this, never by appending the path itself.
+    public func url(in package: URL) -> URL? {
+        guard Self.isSafePath(path) else { return nil }
+        return path.split(separator: "/").reduce(package) { $0.appendingPathComponent(String($1)) }
     }
 }
 
