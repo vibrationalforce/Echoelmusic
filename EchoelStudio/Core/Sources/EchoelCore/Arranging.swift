@@ -28,8 +28,8 @@ public enum Arranging {
     /// drawn on top.
     public static func placement(in track: Track, at tick: Tick) -> Placement? {
         track.placements.last { p in
-            guard let end = end(of: p, in: track) else { return false }
-            return p.start <= tick && tick < end
+            guard let stop = Self.end(of: p, in: track) else { return false }
+            return p.start <= tick && tick < stop
         }
     }
 
@@ -37,10 +37,10 @@ public enum Arranging {
     public static func songBars(of project: Project) -> Int {
         let bar = MusicalTime.ticksPerBar(project.timeSignature)
         guard bar > 0 else { return 1 }
-        let end = project.tracks.reduce(Tick(0)) { result, track in
-            track.placements.reduce(result) { Swift.max($0, end(of: $1, in: track) ?? 0) }
+        let last = project.tracks.reduce(Tick(0)) { result, track in
+            track.placements.reduce(result) { Swift.max($0, Self.end(of: $1, in: track) ?? 0) }
         }
-        return Swift.max(1, Int((end + bar - 1) / bar))
+        return Swift.max(1, Int((last + bar - 1) / bar))
     }
 
     /// A tap on the track's lane at `tick`. On a placement: nil — the view opens or selects it.
@@ -65,7 +65,7 @@ public enum Arranging {
 
     /// A copy of the placement straight after it, as in any DAW's Duplicate.
     public static func duplicated(_ placement: Placement, in track: Track) -> Command? {
-        guard let end = end(of: placement, in: track), end <= MusicalTime.maximumTick else { return nil }
-        return .placeClip(track: track.id, id: PlacementID(), clip: placement.clip, start: end)
+        guard let stop = Self.end(of: placement, in: track), stop <= MusicalTime.maximumTick else { return nil }
+        return .placeClip(track: track.id, id: PlacementID(), clip: placement.clip, start: stop)
     }
 }
