@@ -2,12 +2,13 @@ import EchoelCore
 import SwiftUI
 import UIKit
 
-/// A loaded plugin's own interface, inside the Sound page rather than in a sheet of its own (one
-/// presentation slot, law 7). Leaving it stores the plugin's settings in the song as one step.
+/// A loaded plugin's own interface, inside the page that shows it rather than in a sheet of its
+/// own (one presentation slot, law 7). Leaving it stores the plugin's settings in the song as one
+/// step.
 struct PluginInterfaceSection: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
-    let track: TrackID
+    let slot: PluginHost.Slot
 
     @State private var controller: UIViewController?
     @State private var hasNoInterface = false
@@ -26,18 +27,15 @@ struct PluginInterfaceSection: View {
         }
         .task(id: engine.plugins.revision) {
             guard controller == nil else { return }
-            let found = await engine.plugins.interface(for: track)
+            let found = await engine.plugins.interface(for: slot)
             controller = found
-            hasNoInterface = found == nil && engine.plugins.units[track] != nil
+            hasNoInterface = found == nil && engine.plugins.isLoaded(slot)
         }
         .onDisappear(perform: storeSettings)
     }
 
     private func storeSettings() {
-        let commands = engine.plugins.captureCommands(for: store.project).filter {
-            if case .setPluginState(let id, _) = $0 { return id == track }
-            return false
-        }
+        let commands = engine.plugins.captureCommands(for: store.project, only: slot)
         try? store.perform(commands, title: "Plugin Settings")
     }
 

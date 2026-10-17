@@ -11,6 +11,8 @@ enum StudioSheet: Identifiable, Hashable {
     case share(URL)
     /// Pick an audio file to place on an audio track at a tick.
     case importAudio(TrackID, Tick)
+    /// A track's insert effects.
+    case effects(TrackID)
 
     var id: Self { self }
 }

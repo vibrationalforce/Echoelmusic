@@ -31,7 +31,7 @@ struct SoundPanel: View {
                     synthControls
                 case .plugin:
                     pluginStatus
-                    PluginInterfaceSection(track: track.id)
+                    PluginInterfaceSection(slot: .instrument(track.id))
                         .id(track.instrument.plugin)
                 }
                 pluginMenu
@@ -84,9 +84,9 @@ struct SoundPanel: View {
         let host = engine.plugins
         let name = track.instrument.plugin?.name ?? "A plugin"
         Group {
-            if let problem = host.problems[track.id] {
+            if let problem = host.problems[.instrument(track.id)] {
                 Text(problem)
-            } else if host.loadingTracks.contains(track.id) {
+            } else if host.loading.contains(.instrument(track.id)) {
                 Text("Loading \(name)…")
             } else if host.revision >= 0 && host.units[track.id] != nil {
                 Text("Plays \(name). Notes reach it on the exact frame they fall on.")

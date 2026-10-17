@@ -39,6 +39,7 @@ struct StudioView: View {
             switch sheet {
             case .clipEditor(let track): ClipEditorView(trackID: track)
             case .share(let url): ShareSheet(url: url).ignoresSafeArea()
+            case .effects(let track): EffectsView(trackID: track)
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil

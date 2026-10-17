@@ -236,7 +236,7 @@ final class AudioEngine {
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
-                                    samples: samples, units: plugins.units))
+                                    samples: samples, units: plugins.units, effects: plugins.chains))
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

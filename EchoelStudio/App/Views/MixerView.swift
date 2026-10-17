@@ -25,6 +25,7 @@ struct MixerView: View {
 
 struct ChannelStrip: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(StudioRouter.self) private var router
     let title: String
     let color: Color
     let volume: ParameterAddress
@@ -39,6 +40,15 @@ struct ChannelStrip: View {
                 .font(Theme.Font.label)
                 .foregroundStyle(Theme.Color.text)
                 .lineLimit(1)
+            if let track {
+                let active = track.inserts.filter { !$0.isBypassed }.count
+                Button(track.inserts.isEmpty ? "FX" : "FX \(active)/\(track.inserts.count)") {
+                    router.sheet = .effects(track.id)
+                }
+                .buttonStyle(ToolButtonStyle(isActive: active > 0))
+                .accessibilityLabel("Effects on \(track.name)")
+                .accessibilityValue(track.inserts.isEmpty ? "None" : "\(active) of \(track.inserts.count) on")
+            }
             PanControl(address: pan)
             Fader(address: volume)
             Text(ParameterFormat.text(store.project.value(of: volume) ?? 0, unit: .decibel))
