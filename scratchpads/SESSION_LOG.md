@@ -1244,3 +1244,10 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Mehrkanal-Ausgang + Interface-/Anruf-Wiederanlauf (138c625, 1955487), MIDI-Clock aus (99d34a0, 71cb948),
   Session-Launching Engine + Ansicht (e007818, e78ce16). Nichts gerätegeprüft. Nächstes: MIDI-Clock ein,
   Link (Council), Launchpad, Automation M4.
+
+## 2026-10-17 19:10 — EchoelStudio: stepless automation (CI green, studio.yml #69 on de23e7f)
+- Gain automation: evaluated every 64 frames, ramped in between; gain memory smooths every jump (fader, mute, lane).
+- Patch automation every 32 frames; SynthVoice glides cutoff (octaves, 8 ms), resonance (8 ms) and level (5 ms) as one-pole filters — a fresh note starts on the patch.
+- Lanes: curves per segment (expm1 shape), bend handle in the middle, write mode "A" writes at the playhead.
+- Two tests adjusted to the glide (silence after a few time constants instead of at the next sample) — the intent is unchanged.
+- NOT device-verified: the feel of the automation, zipper-freeness at 64/32 frames.
