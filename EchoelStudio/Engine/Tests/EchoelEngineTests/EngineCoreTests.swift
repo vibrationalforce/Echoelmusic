@@ -308,6 +308,43 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "deleting the note still releases it")
     }
 
+    private func rms(_ samples: ArraySlice<Float>) -> Float {
+        guard !samples.isEmpty else { return 0 }
+        return (samples.reduce(0) { $0 + $1 * $1 } / Float(samples.count)).squareRoot()
+    }
+
+    func testAVolumeLaneFadesTheTrackOut() throws {
+        var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        try Command.setAutomation(.volume(s.tracks[0]), points: [
+            AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: bar, value: MixerStrip.volumeRange.lowerBound),
+        ]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        let out = render(engine, frames: 110_000).left   // a bar is 96 000 samples
+        let early = rms(out[4_800..<14_400]), late = rms(out[80_000..<90_000]), after = rms(out[100_000..<110_000])
+        XCTAssertGreaterThan(early, 0.01)
+        XCTAssertLessThan(late, early * 0.5, "the level falls along the lane")
+        XCTAssertEqual(after, 0, "and holds the lane's last value, silence")
+    }
+
+    func testACutoffLaneShapesTheSynth() throws {
+        var open = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
+        var closed = open
+        try Command.setAutomation(ParameterAddress(.track(closed.tracks[0]), SynthParameter.cutoff.key),
+                                  points: [AutomationPoint(tick: 0, value: 20)]).apply(to: &closed.project)
+        try Command.setInstrumentParameter(open.tracks[0], key: SynthParameter.cutoff.key.rawValue, value: 18_000)
+            .apply(to: &open.project)
+        var levels: [Float] = []
+        for tune in [open, closed] {
+            let engine = core()
+            publish(tune.project, to: engine)
+            engine.play()
+            levels.append(rms(render(engine, frames: 48_000).left[24_000..<48_000]))
+        }
+        XCTAssertLessThan(levels[1], levels[0] * 0.5, "the lane, not the stored cutoff, sets the filter")
+    }
+
     func testFaderGainsFollowTheMixerLaw() {
         XCTAssertEqual(EngineSnapshot.linear(MixerStrip.volumeRange.lowerBound), 0)
         XCTAssertEqual(EngineSnapshot.linear(0), 1, accuracy: 1e-6)

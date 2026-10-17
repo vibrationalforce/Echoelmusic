@@ -82,6 +82,13 @@ public final class EngineCore: @unchecked Sendable {
     private var wasPlaying = false
     private var nextBeat: Tick = 0
     private var nextClock: Tick = 0
+    /// Ticks at the start and end of the chunk being mixed; automated gains ramp between them.
+    private var mixFrom: Tick = 0
+    private var mixTo: Tick = 0
+    /// The next sample at which automated synth parameters are set again.
+    private var automationNext: Int64 = 0
+    /// Frames between two settings of an automated synth parameter: under 3 ms at 48 kHz.
+    static let automationStep: Int64 = 128
     /// Host time of the current render call, and where the current chunk starts in it.
     private var callHostTime: UInt64 = 0
     private var chunkStart = 0
@@ -304,6 +311,9 @@ public final class EngineCore: @unchecked Sendable {
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
 
         guard playing, let box = current else {
+            let held = current?.snapshot.time.tick(atSample: playhead) ?? 0
+            mixFrom = held
+            mixTo = held
             renderVoices(0..<frames, left: left, right: right)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
@@ -320,6 +330,7 @@ public final class EngineCore: @unchecked Sendable {
             // The earliest due event: a launch, a session note, an arrangement note, or the next
             // beat. At one sample a launch comes first, so the old clip's notes there never play.
             var due = Due(sample: snapshot.time.sample(at: nextBeat))
+            if snapshot.automatesPatches { due.offer(automationNext, -1, .automation) }
             for (index, lane) in snapshot.lanes.enumerated() {
                 let session = sessions[lane.slot]
                 if case .none = session.pending {} else {
@@ -363,11 +374,16 @@ public final class EngineCore: @unchecked Sendable {
                 sessions[lane.slot] = session
             case .launch:
                 fire(snapshot.lanes[due.lane])
+            case .automation:
+                applyPatchAutomation(snapshot, at: snapshot.time.tick(atSample: due.sample))
+                automationNext = Swift.max(due.sample, playhead) + Self.automationStep
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
         if clocking { sendClocks(snapshot, blockEnd: blockEnd) }
         renderUnits(frames: frames)
+        mixFrom = snapshot.time.tick(atSample: playhead)
+        mixTo = snapshot.time.tick(atSample: blockEnd)
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
         mixReturns(frames: frames)
@@ -591,6 +607,7 @@ public final class EngineCore: @unchecked Sendable {
         var beat = (tick / beatTicks) * beatTicks
         if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
         nextBeat = beat
+        automationNext = playhead
         // A playing clip keeps its loop phase from where it was launched.
         for lane in snapshot.lanes {
             var session = sessions[lane.slot]
@@ -678,13 +695,48 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            for i in 0..<frames {
-                left[i] += l[i] * lane.gainLeft
-                right[i] += r[i] * lane.gainRight
-            }
+            add(l, r, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
             send(lane.sends, frames: frames, left: l, right: r)
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
+        }
+    }
+
+    /// Gains at the chunk's start and end: the fixed ones, or the automation's at both ticks.
+    private func ramp(_ mix: EngineSnapshot.MovingMix?, _ left: Float, _ right: Float) -> Ramp {
+        guard let mix else { return Ramp(left0: left, right0: right, left1: left, right1: right) }
+        let (l0, r0) = mix.gains(at: mixFrom), (l1, r1) = mix.gains(at: mixTo)
+        return Ramp(left0: l0, right0: r0, left1: l1, right1: r1)
+    }
+
+    /// Adds a stereo source into a stereo destination, gains moving straight from start to end
+    /// over the chunk — no step, so a fader ride never clicks.
+    private func add(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
+                     into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
+                     frames: Int, _ ramp: Ramp) {
+        if ramp.isFlat {
+            for i in 0..<frames {
+                left[i] += sourceLeft[i] * ramp.left0
+                right[i] += sourceRight[i] * ramp.right0
+            }
+            return
+        }
+        let step = 1 / Float(Swift.max(frames, 1))
+        for i in 0..<frames {
+            let t = Float(i) * step
+            left[i] += sourceLeft[i] * (ramp.left0 + (ramp.left1 - ramp.left0) * t)
+            right[i] += sourceRight[i] * (ramp.right0 + (ramp.right1 - ramp.right0) * t)
+        }
+    }
+
+    /// Sets each automated synth parameter to its lane's value at `tick`.
+    private func applyPatchAutomation(_ snapshot: EngineSnapshot, at tick: Tick) {
+        for lane in snapshot.lanes where !lane.patchLanes.isEmpty && lane.device == .synth {
+            var patch = lane.patch
+            for automation in lane.patchLanes {
+                if let value = automation.lane.value(at: tick) { automation.field.apply(value, to: &patch) }
+            }
+            if synths[lane.slot].patch != patch { synths[lane.slot].setPatch(patch) }
         }
     }
 
@@ -693,10 +745,12 @@ public final class EngineCore: @unchecked Sendable {
                       right: UnsafeMutablePointer<Float>) {
         for tap in sends where tap.bus >= 0 && tap.bus < Self.returnCapacity {
             let l = returnLeft + tap.bus * Self.maximumFrames, r = returnRight + tap.bus * Self.maximumFrames
-            for i in 0..<frames {
-                l[i] += left[i] * tap.gainLeft
-                r[i] += right[i] * tap.gainRight
+            var gains = Ramp(left0: tap.gainLeft, right0: tap.gainRight, left1: tap.gainLeft, right1: tap.gainRight)
+            if let moving = tap.moving {
+                let (l0, r0) = moving.gains(at: mixFrom), (l1, r1) = moving.gains(at: mixTo)
+                gains = Ramp(left0: l0, right0: r0, left1: l1, right1: r1)
             }
+            add(left, right, into: l, r, frames: frames, gains)
         }
     }
 
@@ -708,10 +762,7 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            for i in 0..<frames {
-                left[i] += l[i] * lane.gainLeft
-                right[i] += r[i] * lane.gainRight
-            }
+            add(l, r, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
@@ -724,7 +775,8 @@ public final class EngineCore: @unchecked Sendable {
     /// so a seek or an edit lands on the right frame at once.
     private func renderAudio(_ snapshot: EngineSnapshot, frames: Int) {
         let blockEnd = playhead + Int64(frames)
-        for lane in snapshot.audioLanes where lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty {
+        for lane in snapshot.audioLanes
+        where lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil {
             let (left, right) = pair(lane.output)
             audioLeft.update(repeating: 0, count: frames)
             audioRight.update(repeating: 0, count: frames)
@@ -746,10 +798,7 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
-            for i in 0..<frames {
-                left[i] += audioLeft[i] * lane.gainLeft
-                right[i] += audioRight[i] * lane.gainRight
-            }
+            add(audioLeft, audioRight, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
             send(lane.sends, frames: frames, left: audioLeft, right: audioRight)
         }
     }
@@ -788,7 +837,8 @@ public final class EngineCore: @unchecked Sendable {
 /// The earliest event of a render step. At one sample the higher kind wins; within a kind the
 /// first lane does.
 private struct Due {
-    enum Kind: Int { case beat, arrangement, session, launch }
+    /// Automation comes first at a sample, so a note there already hears the new value.
+    enum Kind: Int { case beat, arrangement, session, launch, automation }
 
     var sample: Int64
     var lane = -1
@@ -800,6 +850,12 @@ private struct Due {
         self.lane = lane
         self.kind = kind
     }
+}
+
+/// A chunk's gains at its start and end.
+private struct Ramp {
+    var left0, right0, left1, right1: Float
+    var isFlat: Bool { left0 == left1 && right0 == right1 }
 }
 
 /// A snapshot with an identity, so it can cross threads behind one pointer.

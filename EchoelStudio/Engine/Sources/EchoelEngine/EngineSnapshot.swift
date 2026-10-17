@@ -31,6 +31,59 @@ public struct EngineSnapshot: Sendable {
         /// Changes exactly when the track's notes or clips change. The render thread releases a
         /// lane's sounding notes only then, so a fader ride never cuts a held chord.
         public let eventsRevision: UInt64
+        /// Set when automation moves the lane's level or pan (or the master's): the gains above
+        /// are then only the value at the playhead.
+        public let mix: MovingMix?
+        /// Synth parameters the song automates on this track.
+        public let patchLanes: [PatchAutomation]
+    }
+
+    /// A synth parameter and its lane, compiled for the render thread.
+    public struct PatchAutomation: Sendable {
+        public let field: PatchField
+        public let lane: AutomationLane
+    }
+
+    /// The master's strip and the lanes that move it.
+    public struct MasterMix: Sendable {
+        public let strip: MixerStrip
+        public let volume: AutomationLane?
+        public let pan: AutomationLane?
+    }
+
+    /// A track's gains that move with automation. Pure, render-safe.
+    public struct MovingMix: Sendable {
+        public let strip: MixerStrip
+        public let volume: AutomationLane?
+        public let pan: AutomationLane?
+        /// Nil when the lane skips the master (its own output pair, or a send's pre-master tap).
+        public let master: MasterMix?
+
+        public func gains(at tick: Tick) -> (Float, Float) {
+            var track = strip
+            if let value = volume?.value(at: tick) { track.volumeDB = value }
+            if let value = pan?.value(at: tick) { track.pan = value }
+            var bus = MixerStrip()
+            if let master {
+                bus = master.strip
+                if let value = master.volume?.value(at: tick) { bus.volumeDB = value }
+                if let value = master.pan?.value(at: tick) { bus.pan = value }
+            }
+            return EngineSnapshot.gains(track: track, master: bus)
+        }
+    }
+
+    /// A send whose level, or whose track's level, moves.
+    public struct MovingSend: Sendable {
+        public let mix: MovingMix
+        public let levelDB: Double
+        public let level: AutomationLane?
+
+        public func gains(at tick: Tick) -> (Float, Float) {
+            let (left, right) = mix.gains(at: tick)
+            let send = EngineSnapshot.linear(level?.value(at: tick) ?? levelDB)
+            return (left * send, right * send)
+        }
     }
 
     /// Where a track's post-fader signal also goes: return bus `bus`, at these gains.
@@ -38,6 +91,7 @@ public struct EngineSnapshot: Sendable {
         public let bus: Int
         public let gainLeft: Float
         public let gainRight: Float
+        public let moving: MovingSend?
     }
 
     /// A return track: its own bus, effects and fader. Solo does not silence it — the soloed
@@ -49,6 +103,7 @@ public struct EngineSnapshot: Sendable {
         public let gainRight: Float
         public let inserts: [HostedEffect]
         public let output: Int
+        public let mix: MovingMix?
     }
 
     /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
@@ -61,6 +116,7 @@ public struct EngineSnapshot: Sendable {
         public let inserts: [HostedEffect]
         public let sends: [SendTap]
         public let output: Int
+        public let mix: MovingMix?
     }
 
     /// An audio region in output samples. The buffer is held by the snapshot, as for samplers.
@@ -85,6 +141,8 @@ public struct EngineSnapshot: Sendable {
     public private(set) var returns: [ReturnLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
+    /// Some lane automates a synth parameter.
+    public let automatesPatches: Bool
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -110,6 +168,15 @@ public struct EngineSnapshot: Sendable {
             guard let output = track.output, output >= 2, output + 1 < outputChannels else { return (-1, master) }
             return (output, MixerStrip())
         }
+        let automation = Dictionary(project.automation.map { ($0.target, $0) }, uniquingKeysWith: { first, _ in first })
+        let masterMix = MasterMix(strip: master, volume: automation[.masterVolume], pan: automation[.masterPan])
+        let masterMoves = masterMix.volume != nil || masterMix.pan != nil
+        /// Nil when nothing moves the track's gains, so the render thread keeps the fixed ones.
+        let moving = { (track: Track, throughMaster: Bool) -> MovingMix? in
+            let volume = automation[.volume(track.id)], pan = automation[.pan(track.id)]
+            guard volume != nil || pan != nil || (throughMaster && masterMoves) else { return nil }
+            return MovingMix(strip: track.mixer, volume: volume, pan: pan, master: throughMaster ? masterMix : nil)
+        }
         let returnTracks = project.tracks.filter { $0.kind == .returnTrack }
         var busOf: [TrackID: Int] = [:]
         for (index, track) in returnTracks.enumerated() { busOf[track.id] = index }
@@ -117,7 +184,7 @@ public struct EngineSnapshot: Sendable {
             let (output, into) = route(track)
             let (left, right) = track.mixer.isMuted ? (0, 0) : Self.gains(track: track.mixer, master: into)
             return ReturnLane(track: track.id, bus: index, gainLeft: left, gainRight: right, inserts: inserts(track.id),
-                              output: output)
+                              output: output, mix: track.mixer.isMuted ? nil : moving(track, output < 0))
         }
         /// Post-fader, post-pan: the track's own gains (without the master) times the send level.
         let sends = { (track: Track, audible: Bool) -> [SendTap] in
@@ -126,8 +193,14 @@ public struct EngineSnapshot: Sendable {
             return track.sends.compactMap { send in
                 guard let bus = busOf[send.target] else { return nil }
                 let level = Self.linear(send.levelDB)
-                guard level > 0 else { return nil }
-                return SendTap(bus: bus, gainLeft: left * level, gainRight: right * level)
+                let lane = automation[.send(track.id, to: send.target)]
+                let pre = moving(track, false)
+                guard level > 0 || lane != nil else { return nil }
+                let movingSend = lane != nil || pre != nil
+                    ? MovingSend(mix: pre ?? MovingMix(strip: track.mixer, volume: nil, pan: nil, master: nil),
+                                 levelDB: send.levelDB, level: lane)
+                    : nil
+                return SendTap(bus: bus, gainLeft: left * level, gainRight: right * level, moving: movingSend)
             }
         }
         audioLanes = project.tracks.filter { $0.kind == .audio }.map { track in
@@ -138,21 +211,33 @@ public struct EngineSnapshot: Sendable {
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
             }
             return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions,
-                             inserts: inserts(track.id), sends: sends(track, audible), output: output)
+                             inserts: inserts(track.id), sends: sends(track, audible), output: output,
+                             mix: audible ? moving(track, output < 0) : nil)
         }
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
-        lanes = plan.tracks.compactMap { events in
+        let compiled = plan.tracks.compactMap { events -> Lane? in
             guard let slot = slots[events.track], let track = project.track(events.track) else { return nil }
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
             let (output, into) = route(track)
             let (left, right) = audible ? Self.gains(track: track.mixer, master: into) : (0, 0)
+            var patchLanes: [PatchAutomation] = []
+            if track.instrument.device == .synth {
+                for parameter in SynthParameter.all {
+                    guard let lane = automation[ParameterAddress(.track(track.id), parameter.key)],
+                          let field = PatchField(parameter.key) else { continue }
+                    patchLanes.append(PatchAutomation(field: field, lane: lane))
+                }
+            }
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
-                        clips: events.clips, eventsRevision: revisions[events.track] ?? generation)
+                        clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
+                        mix: audible ? moving(track, output < 0) : nil, patchLanes: patchLanes)
         }
+        lanes = compiled
+        automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
     }
 
     /// This snapshot without lanes whose slot is outside `0..<capacity` and without return
