@@ -129,9 +129,13 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// stereo pair on the audio interface — channel 2 is outputs 3/4. Such a track skips the
     /// master fader; its sends still reach the returns.
     public var output: Int?
+    /// The interface input an audio track records from, 0-based; nil is the first. A channel the
+    /// interface lacks is kept, and the track records the first until it is back.
+    public var input: Int?
 
     /// Interface channels a track may name; the device decides how many exist.
     public static let outputChannelLimit = 64
+    public static let inputChannelLimit = 64
 
     public init(
         id: TrackID = TrackID(),
@@ -162,7 +166,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -181,6 +185,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         inserts = try c.decodeIfPresent([Insert].self, forKey: .inserts) ?? []
         sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
         output = try c.decodeIfPresent(Int.self, forKey: .output)
+        input = try c.decodeIfPresent(Int.self, forKey: .input)
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

@@ -71,6 +71,7 @@ struct ChannelStrip: View {
                         .accessibilityLabel("Solo \(track.name)")
                         .accessibilityValue(track.mixer.isSoloed ? "On" : "Off")
                 }
+                if track.kind == .audio { InputMenu(track: track) }
                 OutputMenu(track: track)
             }
         }
@@ -128,4 +129,46 @@ struct OutputMenu: View {
 
     /// Channel 2 is "3/4": outputs are counted from 1 on the interface.
     static func name(_ channel: Int) -> String { "\(channel + 1)/\(channel + 2)" }
+}
+
+/// Which interface input an audio track records from. The inputs are known while one is open
+/// (a track is armed); a chosen input the interface lacks is kept and shown, and the first records.
+struct InputMenu: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    let track: Track
+
+    var body: some View {
+        let chosen = track.input ?? 0
+        let count = Swift.max(engine.inputChannels, chosen + 1)
+        Menu {
+            ForEach(0..<count, id: \.self) { channel in
+                Button { set(channel) } label: {
+                    if channel == chosen { Label("Input \(channel + 1)", systemImage: "checkmark") } else { Text("Input \(channel + 1)") }
+                }
+            }
+        } label: {
+            Text(label)
+                .font(Theme.Font.caption)
+                .foregroundStyle(isMissing ? Theme.Color.record : Theme.Color.textSecondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: Theme.Size.touch)
+        }
+        .accessibilityLabel("Input of \(track.name)")
+        .accessibilityValue(label)
+        .accessibilityHint(engine.inputChannels == 0 ? "Arm the track to see every input of the interface." : "")
+    }
+
+    private var isMissing: Bool {
+        engine.inputChannels > 0 && (track.input ?? 0) >= engine.inputChannels
+    }
+
+    private var label: String {
+        let name = "In \((track.input ?? 0) + 1)"
+        return isMissing ? "\(name) missing" : name
+    }
+
+    private func set(_ channel: Int) {
+        try? store.perform(.setInput(track.id, channel: channel == 0 ? nil : channel))
+    }
 }

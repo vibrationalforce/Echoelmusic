@@ -68,4 +68,22 @@ final class TrackOutputTests: XCTestCase {
         try Command.setOutput(deck, channel: nil).apply(to: &p)
         XCTAssertNil(p.track(deck)?.output)
     }
+
+    func testAnAudioTrackRecordsFromTheInputItNames() throws {
+        var p = Project()
+        let vocal = TrackID(), keys = TrackID()
+        try Command.addTrack(id: vocal, name: "Vocal", kind: .audio, index: nil).apply(to: &p)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &p)
+        try Command.setInput(vocal, channel: 3).apply(to: &p)
+        XCTAssertEqual(p.track(vocal)?.input, 3)
+        let before = p
+        for bad in [-1, Track.inputChannelLimit] {
+            XCTAssertThrowsError(try Command.setInput(vocal, channel: bad).apply(to: &p), "\(bad)")
+        }
+        XCTAssertThrowsError(try Command.setInput(keys, channel: 0).apply(to: &p), "an instrument track does not record")
+        XCTAssertEqual(p, before)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).track(vocal)?.input, 3)
+        try Command.setInput(vocal, channel: nil).apply(to: &p)
+        XCTAssertNil(p.track(vocal)?.input)
+    }
 }

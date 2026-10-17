@@ -13,11 +13,13 @@ final class RecordController {
 
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let documents: DocumentController
+    @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private var target: (track: TrackID, file: DocumentController.TakeTarget)?
 
-    init(engine: AudioEngine, documents: DocumentController) {
+    init(engine: AudioEngine, documents: DocumentController, store: ProjectStore) {
         self.engine = engine
         self.documents = documents
+        self.store = store
     }
 
     /// Arms `track`, or disarms it when it is the armed one.
@@ -35,7 +37,7 @@ final class RecordController {
     func record() {
         guard !isRecording, let track = armedTrack, let file = documents.newTakeTarget() else { return }
         do {
-            try engine.beginTake(url: file.url)
+            try engine.beginTake(url: file.url, channel: store.project.track(track)?.input ?? 0)
         } catch {
             return
         }

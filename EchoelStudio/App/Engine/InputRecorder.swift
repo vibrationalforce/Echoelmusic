@@ -4,7 +4,7 @@ import Foundation
 import Synchronization
 
 /// The render-thread half of recording: a sink node hands every input block to `receive`,
-/// which copies the first input channel into a ring while a take is armed and notes the
+/// which copies the track's input channel into a ring while a take is armed and notes the
 /// playhead at the take's first frame. No locks, no allocation, no I/O — the file is written
 /// by a `TakeWriter` that drains the ring.
 final class InputRecorder: @unchecked Sendable {
@@ -12,6 +12,7 @@ final class InputRecorder: @unchecked Sendable {
     private let core: EngineCore
     private let armed = Atomic<Bool>(false)
     private let start = Atomic<Int64>(-1)
+    private let channel = Atomic<Int>(0)
     private let scratch: UnsafeMutablePointer<Float>
     private static let scratchFrames = 8_192
 
@@ -27,8 +28,9 @@ final class InputRecorder: @unchecked Sendable {
         scratch.deallocate()
     }
 
-    /// Main thread: the next input block starts a take.
-    func arm() {
+    /// Main thread: the next input block starts a take, from input `channel` (0-based).
+    func arm(channel: Int) {
+        self.channel.store(Swift.max(0, channel), ordering: .releasing)
         start.store(-1, ordering: .releasing)
         armed.store(true, ordering: .releasing)
     }
@@ -49,19 +51,25 @@ final class InputRecorder: @unchecked Sendable {
             start.store(Swift.max(0, core.positionSample - Int64(frames)), ordering: .releasing)
         }
         let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: list))
-        guard let channel = buffers.first, let data = channel.mData?.assumingMemoryBound(to: Float.self) else { return }
-        let stride = Swift.max(1, Int(channel.mNumberChannels))
+        let wanted = channel.load(ordering: .acquiring)
+        // One buffer per channel, or all channels interleaved in one; a channel the input lacks
+        // records the first.
+        let index = buffers.count > 1 && wanted < buffers.count ? wanted : 0
+        guard index < buffers.count else { return }
+        let buffer = buffers[index]
+        guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { return }
+        let stride = Swift.max(1, Int(buffer.mNumberChannels))
+        let lane = buffers.count == 1 && wanted < stride ? wanted : 0
         // Never read past the buffer, whatever the frame count claims.
-        let held = Swift.min(frames, Int(channel.mDataByteSize) / (MemoryLayout<Float>.size * stride))
+        let held = Swift.min(frames, Int(buffer.mDataByteSize) / (MemoryLayout<Float>.size * stride))
         guard stride > 1 else {
             ring.write(data, count: held)
             return
         }
-        // Interleaved input: take channel 1.
         var done = 0
         while done < held {
             let n = Swift.min(held - done, Self.scratchFrames)
-            for i in 0..<n { scratch[i] = data[(done + i) * stride] }
+            for i in 0..<n { scratch[i] = data[(done + i) * stride + lane] }
             ring.write(scratch, count: n)
             done += n
         }

@@ -48,6 +48,9 @@ extension Project {
                 try Command.validateStart(placement.start)
             }
             if let output = track.output, !Track.isValidOutput(output) { throw Self.invalid("output", "not a stereo pair after 1/2") }
+            if let input = track.input, track.kind != .audio || !(0..<Track.inputChannelLimit).contains(input) {
+                throw Self.invalid("input", "only an audio track records, from input 0…\(Track.inputChannelLimit - 1)")
+            }
             for send in track.sends {
                 guard track.kind != .returnTrack,
                       tracks.first(where: { $0.id == send.target })?.kind == .returnTrack,

@@ -22,6 +22,8 @@ final class AudioEngine {
     private(set) var lastError: String?
     /// Output channels of the interface the graph plays on; 2 on the built-in speaker.
     private(set) var outputChannels = 2
+    /// Inputs the open input delivers; 0 while it is closed.
+    private(set) var inputChannels = 0
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
@@ -163,6 +165,12 @@ final class AudioEngine {
                 log.info("session: prefer \(available, privacy: .public) output channels")
                 try? session.setPreferredOutputNumberOfChannels(available)
             }
+            // Every input too, so a track can record from input 3 of a mixer or interface.
+            if input, session.maximumInputNumberOfChannels > 1,
+               session.inputNumberOfChannels != session.maximumInputNumberOfChannels {
+                log.info("session: prefer \(session.maximumInputNumberOfChannels, privacy: .public) input channels")
+                try? session.setPreferredInputNumberOfChannels(session.maximumInputNumberOfChannels)
+            }
 
             let output = engine.outputNode.outputFormat(forBus: 0)
             let sampleRate = output.sampleRate > 0 ? output.sampleRate : 48_000
@@ -233,6 +241,7 @@ final class AudioEngine {
             try engine.start()
             isRunning = true
             isInputOpen = input
+            inputChannels = input ? Int(engine.inputNode.inputFormat(forBus: 0).channelCount) : 0
             lastError = nil
         } catch {
             log.error("engine: configure failed — \(error.localizedDescription, privacy: .public)")
@@ -243,13 +252,14 @@ final class AudioEngine {
     }
 
     /// Starts writing the input to `url` from the next input block.
-    func beginTake(url: URL) throws {
+    /// `channel` is the input to record, 0-based; one the input lacks records the first.
+    func beginTake(url: URL, channel: Int) throws {
         guard take == nil, let recorder, let core else { throw EngineError.inputClosed }
         let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, ring: recorder.ring)
         let session = AVAudioSession.sharedInstance()
         let latency = Int64(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
         take = (url, writer, Swift.max(0, latency))
-        recorder.arm()
+        recorder.arm(channel: channel)
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
                 try? await writer.drain()

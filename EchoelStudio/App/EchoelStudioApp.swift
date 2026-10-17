@@ -19,7 +19,7 @@ struct EchoelStudioApp: App {
         _store = State(initialValue: store)
         _engine = State(initialValue: engine)
         _documents = State(initialValue: documents)
-        _recording = State(initialValue: RecordController(engine: engine, documents: documents))
+        _recording = State(initialValue: RecordController(engine: engine, documents: documents, store: store))
         let writer = ParameterWriter(store: store, engine: engine)
         _writer = State(initialValue: writer)
         let midi = MIDIInput(router: engine.live, store: store, engine: engine, writer: writer)

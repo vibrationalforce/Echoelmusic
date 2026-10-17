@@ -38,7 +38,7 @@ extension Command {
         case setInstrumentPlugin, setPluginState
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMedia, removeMedia
-        case setVolume, setPan, setMute, setSolo, setSend, setOutput
+        case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput
         case mapMIDI, unmapMIDI, setAutomation
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
@@ -78,6 +78,7 @@ extension Command {
         case .setSolo: .setSolo
         case .setSend: .setSend
         case .setOutput: .setOutput
+        case .setInput: .setInput
         case .mapMIDI: .mapMIDI
         case .unmapMIDI: .unmapMIDI
         case .setAutomation: .setAutomation
@@ -247,6 +248,11 @@ public enum CommandCatalog {
                                summary: "Plays a track on its own stereo pair of the audio interface, e.g. a channel on a DJ mixer, or back into the master.",
                                parameters: [P("track", .trackID, "The track."),
                                             P("channel", .integer, "First channel of the pair, 0-based and even, from 2 (outputs 3/4); omit for the master.", optional: true)])
+        case .setInput:
+            return CommandSpec(name: "track.input", title: "Track Input",
+                               summary: "Chooses which input of the audio interface an audio track records from.",
+                               parameters: [P("track", .trackID, "The audio track."),
+                                            P("channel", .integer, "The input, 0-based (0 is input 1); omit for the first.", optional: true)])
         case .mapMIDI:
             return CommandSpec(name: "midi.map", title: "Learn MIDI",
                                summary: "Makes a controller knob or fader move a parameter across its whole range.",
