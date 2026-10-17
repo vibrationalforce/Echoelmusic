@@ -7,22 +7,26 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     /// Which built-in instrument plays the track. Synth parameters stay stored when the
     /// device changes, so switching back restores the sound.
     public var device: InstrumentDevice
+    /// The sample the sampler device plays; nil until one is chosen.
+    public var sample: MediaID?
     public var preset: String
     public var values: [String: Double]
 
-    public init(device: InstrumentDevice = .synth, preset: String = InstrumentPreset.initial.name,
+    public init(device: InstrumentDevice = .synth, sample: MediaID? = nil, preset: String = InstrumentPreset.initial.name,
                 values: [String: Double] = [:]) {
         self.device = device
+        self.sample = sample
         self.preset = preset
         self.values = values
     }
 
-    private enum CodingKeys: String, CodingKey { case device, preset, values }
+    private enum CodingKeys: String, CodingKey { case device, sample, preset, values }
 
     /// Songs written before devices existed are synth tracks.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         device = try c.decodeIfPresent(InstrumentDevice.self, forKey: .device) ?? .synth
+        sample = try c.decodeIfPresent(MediaID.self, forKey: .sample)
         preset = try c.decode(String.self, forKey: .preset)
         values = try c.decode([String: Double].self, forKey: .values)
     }
@@ -38,11 +42,14 @@ public enum InstrumentDevice: String, Codable, CaseIterable, Sendable {
     case synth
     /// The drum kit on the General MIDI drum map, played by the step sequencer.
     case drums
+    /// Plays one imported audio file across the keyboard.
+    case sampler
 
     public var title: String {
         switch self {
         case .synth: "Synth"
         case .drums: "Drums"
+        case .sampler: "Sampler"
         }
     }
 }

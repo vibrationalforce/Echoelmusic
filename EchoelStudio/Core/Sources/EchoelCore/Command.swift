@@ -22,6 +22,9 @@ public enum Command: Codable, Equatable, Sendable {
     case setInstrumentParameter(TrackID, key: String, value: Double)
     case loadInstrumentPreset(TrackID, name: String)
     case setInstrumentDevice(TrackID, InstrumentDevice)
+    case setInstrumentSample(TrackID, MediaID?)
+    case addMedia(MediaFile)
+    case removeMedia(MediaID)
 
     // Mixer
     case setVolume(MixerTarget, db: Double)
@@ -63,6 +66,7 @@ public enum CommandError: Error, Equatable, Sendable {
     case unknownPlacement(PlacementID)
     case unknownScene(SceneID)
     case unknownNote(NoteID)
+    case unknownMedia(MediaID)
     case duplicateID(String)
     case invalidValue(parameter: String, reason: String)
 }
@@ -174,7 +178,9 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "name", reason: "no preset named \(name)")
             }
             let device = project.tracks[t].instrument.device
-            project.tracks[t].instrument = InstrumentSettings(device: device, preset: preset.name, values: preset.values)
+            let sample = project.tracks[t].instrument.sample
+            project.tracks[t].instrument = InstrumentSettings(device: device, sample: sample,
+                                                              preset: preset.name, values: preset.values)
 
         case let .setInstrumentDevice(id, device):
             let t = try project.requireTrack(id)
@@ -182,6 +188,34 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
             }
             project.tracks[t].instrument.device = device
+
+        case let .setInstrumentSample(id, media):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            if let media, project.mediaFile(media) == nil { throw CommandError.unknownMedia(media) }
+            project.tracks[t].instrument.sample = media
+
+        case let .addMedia(file):
+            guard project.mediaFile(file.id) == nil else { throw CommandError.duplicateID(file.id.description) }
+            guard MediaFile.isSafePath(file.path) else {
+                throw CommandError.invalidValue(parameter: "path", reason: "must be a relative path inside \(MediaFile.directory)/")
+            }
+            guard file.frameCount > 0, file.sampleRate.isFinite, file.sampleRate > 0 else {
+                throw CommandError.invalidValue(parameter: "file", reason: "needs at least one frame at a positive sample rate")
+            }
+            var named = file
+            named.name = try Names.validated(file.name, parameter: "name")
+            project.media.append(named)
+
+        case let .removeMedia(id):
+            guard let m = project.media.firstIndex(where: { $0.id == id }) else { throw CommandError.unknownMedia(id) }
+            project.media.remove(at: m)
+            // Nothing may point at a file the song no longer has.
+            for t in project.tracks.indices where project.tracks[t].instrument.sample == id {
+                project.tracks[t].instrument.sample = nil
+            }
 
         case let .setVolume(target, db):
             guard db.isFinite, MixerStrip.volumeRange.contains(db) else {

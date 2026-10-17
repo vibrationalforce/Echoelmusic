@@ -26,3 +26,4 @@ public typealias ClipID = Identifier<Clip>
 public typealias PlacementID = Identifier<Placement>
 public typealias NoteID = Identifier<Note>
 public typealias SceneID = Identifier<Scene>
+public typealias MediaID = Identifier<MediaFile>

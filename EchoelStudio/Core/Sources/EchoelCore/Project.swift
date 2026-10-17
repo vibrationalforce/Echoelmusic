@@ -16,6 +16,8 @@ public struct Project: Codable, Equatable, Sendable {
     public var tracks: [Track]
     public var scenes: [Scene]
     public var master: MixerStrip
+    /// Audio files imported into the song, in import order.
+    public var media: [MediaFile]
 
     public init(
         name: String = "Untitled",
@@ -24,7 +26,8 @@ public struct Project: Codable, Equatable, Sendable {
         timeSignature: TimeSignature = .common,
         tracks: [Track] = [],
         scenes: [Scene] = [],
-        master: MixerStrip = MixerStrip()
+        master: MixerStrip = MixerStrip(),
+        media: [MediaFile] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -34,10 +37,11 @@ public struct Project: Codable, Equatable, Sendable {
         self.tracks = tracks
         self.scenes = scenes
         self.master = master
+        self.media = media
     }
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master
+        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -51,6 +55,7 @@ public struct Project: Codable, Equatable, Sendable {
         tracks = try c.decode([Track].self, forKey: .tracks)
         scenes = try c.decode([Scene].self, forKey: .scenes)
         master = try c.decode(MixerStrip.self, forKey: .master)
+        media = try c.decodeIfPresent([MediaFile].self, forKey: .media) ?? []
     }
 
     public func trackIndex(_ id: TrackID) -> Int? {

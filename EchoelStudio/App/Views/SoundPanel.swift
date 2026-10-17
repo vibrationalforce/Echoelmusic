@@ -30,7 +30,8 @@ struct SoundPanel: View {
             get: { track.instrument.device },
             set: { try? store.perform(.setInstrumentDevice(track.id, $0)) }
         )) {
-            ForEach(InstrumentDevice.allCases, id: \.self) { Text($0.title).tag($0) }
+            // The sampler is offered once the engine plays it and a file can be imported.
+            ForEach(InstrumentDevice.allCases.filter { $0 != .sampler }, id: \.self) { Text($0.title).tag($0) }
         }
         .pickerStyle(.segmented)
         .accessibilityLabel("Instrument")

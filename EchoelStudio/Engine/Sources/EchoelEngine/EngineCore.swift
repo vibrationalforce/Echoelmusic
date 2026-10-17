@@ -181,6 +181,8 @@ public final class EngineCore: @unchecked Sendable {
                 case (.noteOff, .synth): synths[lane.slot].noteOff(pitch: event.pitch)
                 case (.noteOn(let velocity), .drums): drums[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
                 case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
+                // The sampler joins the engine with sample loading; until then it is silent.
+                case (_, .sampler): break
                 }
                 cursors[lane.slot] += 1
             } else {
@@ -248,8 +250,11 @@ public final class EngineCore: @unchecked Sendable {
         guard !range.isEmpty else { return }
         if let snapshot = current?.snapshot {
             for lane in snapshot.lanes {
-                let sounding = lane.device == .drums ? drums[lane.slot].activeVoiceCount > 0
-                                                     : synths[lane.slot].activeVoiceCount > 0
+                let sounding = switch lane.device {
+                case .synth: synths[lane.slot].activeVoiceCount > 0
+                case .drums: drums[lane.slot].activeVoiceCount > 0
+                case .sampler: false
+                }
                 guard sounding else { continue }
                 let mono = scratch + range.lowerBound
                 mono.update(repeating: 0, count: range.count)
@@ -257,6 +262,7 @@ public final class EngineCore: @unchecked Sendable {
                 switch lane.device {
                 case .synth: synths[lane.slot].render(into: buffer)
                 case .drums: drums[lane.slot].render(into: buffer)
+                case .sampler: break
                 }
                 for i in 0..<range.count {
                     left[range.lowerBound + i] += mono[i] * lane.gainLeft

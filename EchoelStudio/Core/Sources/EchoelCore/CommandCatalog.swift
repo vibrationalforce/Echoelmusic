@@ -13,7 +13,7 @@ public struct CommandSpec: Equatable, Sendable {
 
 public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
-        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID
+        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID
         case noteList, noteIDList, timeSignature, trackKind, mixerTarget
     }
 
@@ -34,7 +34,8 @@ extension Command {
     public enum Kind: String, CaseIterable, Sendable {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
-        case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice
+        case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
+        case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
@@ -57,6 +58,9 @@ extension Command {
         case .setInstrumentParameter: .setInstrumentParameter
         case .loadInstrumentPreset: .loadInstrumentPreset
         case .setInstrumentDevice: .setInstrumentDevice
+        case .setInstrumentSample: .setInstrumentSample
+        case .addMedia: .addMedia
+        case .removeMedia: .removeMedia
         case .setVolume: .setVolume
         case .setPan: .setPan
         case .setMute: .setMute
@@ -147,6 +151,19 @@ public enum CommandCatalog {
                                summary: "Chooses the built-in instrument that plays an instrument track.",
                                parameters: [P("track", .trackID, "An instrument track."),
                                             P("device", .string, "One of: " + InstrumentDevice.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
+        case .setInstrumentSample:
+            return CommandSpec(name: "instrument.sample", title: "Choose Sample",
+                               summary: "Sets the audio file the sampler of an instrument track plays, or clears it.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("media", .mediaID, "A file in the song's media, or null to clear.")])
+        case .addMedia:
+            return CommandSpec(name: "media.add", title: "Import Audio",
+                               summary: "Records an audio file the app has copied into the song's Media folder.",
+                               parameters: [P("file", .string, "The file: id, name, path inside Media/, frame count, sample rate.")])
+        case .removeMedia:
+            return CommandSpec(name: "media.remove", title: "Remove Audio",
+                               summary: "Removes an audio file from the song; samplers that played it fall silent.",
+                               parameters: [P("media", .mediaID, "A file in the song's media.")])
         case .setVolume:
             return CommandSpec(name: "mixer.volume", title: "Change Volume",
                                summary: "Sets a fader level in dB (−144 is silence, +6 is the maximum).",
