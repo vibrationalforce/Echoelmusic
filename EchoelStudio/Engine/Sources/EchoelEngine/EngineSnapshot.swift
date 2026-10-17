@@ -21,6 +21,8 @@ public struct EngineSnapshot: Sendable {
         public let sample: SampleBuffer?
         /// The loaded Audio Unit a plugin lane plays, held like the sample.
         public let unit: HostedUnit?
+        /// The track's insert effects, in order, held like the unit.
+        public let inserts: [HostedEffect]
     }
 
     /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
@@ -30,6 +32,7 @@ public struct EngineSnapshot: Sendable {
         public let gainRight: Float
         /// Sorted by `startSample`. Overlapping regions both sound.
         public let regions: [Region]
+        public let inserts: [HostedEffect]
     }
 
     /// An audio region in output samples. The buffer is held by the snapshot, as for samplers.
@@ -58,8 +61,12 @@ public struct EngineSnapshot: Sendable {
     /// file that is missing or not yet loaded leaves its track silent.
     /// `units` holds the loaded Audio Unit of every plugin track, at this sample rate; a plugin
     /// track without one (still loading, missing on this device) stays silent.
+    /// `effects` holds each track's loaded insert effects in order; one prepared for another
+    /// rate is left out.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
-                samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:]) {
+                samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
+                effects: [TrackID: [HostedEffect]] = [:]) {
+        let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
@@ -72,7 +79,8 @@ public struct EngineSnapshot: Sendable {
             let regions = track.regions.compactMap { region in
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
             }
-            return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions)
+            return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions,
+                             inserts: inserts(track.id))
         }
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         lanes = plan.tracks.compactMap { events in
@@ -82,7 +90,8 @@ public struct EngineSnapshot: Sendable {
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
-                        unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil)
+                        unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
+                        inserts: inserts(events.track))
         }
     }
 

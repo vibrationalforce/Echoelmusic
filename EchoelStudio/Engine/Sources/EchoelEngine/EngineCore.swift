@@ -40,6 +40,13 @@ public final class EngineCore: @unchecked Sendable {
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
     private let scratch: UnsafeMutablePointer<Float>
+    /// One stereo bus per slot, `maximumFrames` each: a track renders into its bus, its inserts
+    /// process the bus, then the bus is mixed at the track's gains. Plus one bus audio tracks
+    /// take in turn.
+    private let busLeft: UnsafeMutablePointer<Float>
+    private let busRight: UnsafeMutablePointer<Float>
+    private let audioLeft: UnsafeMutablePointer<Float>
+    private let audioRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
     private var wasPlaying = false
@@ -74,6 +81,14 @@ public final class EngineCore: @unchecked Sendable {
         cursors.initialize(repeating: 0, count: self.slotCapacity)
         scratch = .allocate(capacity: Self.maximumFrames)
         scratch.initialize(repeating: 0, count: Self.maximumFrames)
+        busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
+        busLeft.initialize(repeating: 0, count: self.slotCapacity * Self.maximumFrames)
+        busRight = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
+        busRight.initialize(repeating: 0, count: self.slotCapacity * Self.maximumFrames)
+        audioLeft = .allocate(capacity: Self.maximumFrames)
+        audioLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        audioRight = .allocate(capacity: Self.maximumFrames)
+        audioRight.initialize(repeating: 0, count: Self.maximumFrames)
         metronome = Metronome(sampleRate: Float(rate))
     }
 
@@ -89,6 +104,10 @@ public final class EngineCore: @unchecked Sendable {
         owners.deallocate()
         cursors.deallocate()
         scratch.deallocate()
+        busLeft.deallocate()
+        busRight.deallocate()
+        audioLeft.deallocate()
+        audioRight.deallocate()
     }
 
     // MARK: - Main thread
@@ -159,7 +178,8 @@ public final class EngineCore: @unchecked Sendable {
 
         guard playing, let box = current else {
             renderVoices(0..<frames, left: left, right: right)
-            renderUnits(frames: frames, left: left, right: right)
+            renderUnits(frames: frames)
+            mixLanes(frames: frames, left: left, right: right)
             return
         }
         let snapshot = box.snapshot
@@ -208,7 +228,8 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
-        renderUnits(frames: frames, left: left, right: right)
+        renderUnits(frames: frames)
+        mixLanes(frames: frames, left: left, right: right)
         renderAudio(snapshot, frames: frames, left: left, right: right)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
@@ -287,10 +308,31 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Every hosted unit renders every block, playing or not, so its notes ring out and its own
     /// clock never skips.
-    private func renderUnits(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    private func renderUnits(frames: Int) {
         guard let snapshot = current?.snapshot else { return }
         for lane in snapshot.lanes {
-            lane.unit?.render(frames: frames, left: left, right: right, gainLeft: lane.gainLeft, gainRight: lane.gainRight)
+            lane.unit?.render(frames: frames, left: bus(lane.slot, busLeft), right: bus(lane.slot, busRight),
+                              gainLeft: 1, gainRight: 1)
+        }
+    }
+
+    private func bus(_ slot: Int, _ base: UnsafeMutablePointer<Float>) -> UnsafeMutablePointer<Float> {
+        base + slot * Self.maximumFrames
+    }
+
+    /// Every lane's bus through its inserts, then into the mix at its gains, then cleared. Runs
+    /// for silent lanes too, so an effect's tail rings out after the last note.
+    private func mixLanes(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        guard let snapshot = current?.snapshot else { return }
+        for lane in snapshot.lanes {
+            let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
+            for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            for i in 0..<frames {
+                left[i] += l[i] * lane.gainLeft
+                right[i] += r[i] * lane.gainRight
+            }
+            l.update(repeating: 0, count: frames)
+            r.update(repeating: 0, count: frames)
         }
     }
 
@@ -302,7 +344,9 @@ public final class EngineCore: @unchecked Sendable {
     private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, left: UnsafeMutablePointer<Float>,
                              right: UnsafeMutablePointer<Float>) {
         let blockEnd = playhead + Int64(frames)
-        for lane in snapshot.audioLanes where lane.gainLeft != 0 || lane.gainRight != 0 {
+        for lane in snapshot.audioLanes where lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty {
+            audioLeft.update(repeating: 0, count: frames)
+            audioRight.update(repeating: 0, count: frames)
             for region in lane.regions {
                 guard region.startSample < blockEnd else { break }
                 guard region.endSample > playhead else { continue }
@@ -316,9 +360,14 @@ public final class EngineCore: @unchecked Sendable {
                                   offset: region.offset, length: region.length,
                                   fade: Self.regionFadeFrames * region.step)
                 for i in 0..<count {
-                    left[first + i] += mono[i] * lane.gainLeft
-                    right[first + i] += mono[i] * lane.gainRight
+                    audioLeft[first + i] += mono[i]
+                    audioRight[first + i] += mono[i]
                 }
+            }
+            for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
+            for i in 0..<frames {
+                left[i] += audioLeft[i] * lane.gainLeft
+                right[i] += audioRight[i] * lane.gainRight
             }
         }
     }
@@ -343,9 +392,10 @@ public final class EngineCore: @unchecked Sendable {
                 case .sampler: samplers[lane.slot].render(into: buffer)
                 case .plugin: break
                 }
+                let l = bus(lane.slot, busLeft) + range.lowerBound, r = bus(lane.slot, busRight) + range.lowerBound
                 for i in 0..<range.count {
-                    left[range.lowerBound + i] += mono[i] * lane.gainLeft
-                    right[range.lowerBound + i] += mono[i] * lane.gainRight
+                    l[i] += mono[i]
+                    r[i] += mono[i]
                 }
             }
         }
