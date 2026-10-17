@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import SwiftUI
 
 @main
@@ -14,6 +15,8 @@ struct EchoelStudioApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // The standard effects load like any Audio Unit once they are registered in this process.
+        StandardEffectUnit.register()
         let store = ProjectStore(project: .starter())
         let engine = AudioEngine()
         let documents = DocumentController(store: store)

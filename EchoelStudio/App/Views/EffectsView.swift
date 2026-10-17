@@ -2,7 +2,8 @@ import EchoelCore
 import SwiftUI
 
 /// A track's insert chain: the effects in order, each with bypass, order and remove, and the
-/// selected one's own interface below the list. Installed effects are added from the menu.
+/// selected one's own interface below the list. Echoel's standard effects and the installed
+/// Audio Unit effects are added from the menu.
 struct EffectsView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
@@ -19,9 +20,14 @@ struct EffectsView: View {
                     if let track {
                         chain(track)
                         addMenu(track)
-                        if let id = selected, track.insertIndex(id) != nil {
-                            PluginInterfaceSection(slot: .insert(id))
-                                .id(id)
+                        if let id = selected, let index = track.insertIndex(id) {
+                            if let standard = StandardEffect(component: track.inserts[index].plugin) {
+                                StandardEffectPanel(track: track.id, insert: id, effect: standard)
+                                    .id(id)
+                            } else {
+                                PluginInterfaceSection(slot: .insert(id))
+                                    .id(id)
+                            }
                         }
                     } else {
                         Text("This track was deleted.")
@@ -113,13 +119,15 @@ struct EffectsView: View {
     private func addMenu(_ track: Track) -> some View {
         let installed = engine.plugins.effects
         return Menu {
-            if installed.isEmpty { Text("No Audio Unit effects installed") }
-            ForEach(installed, id: \.self) { component in
-                Button("\(component.name) — \(component.manufacturerName)") {
-                    let id = InsertID()
-                    if (try? store.perform(.addInsert(track: track.id, id: id, plugin: component, index: nil))) != nil {
-                        selected = id
-                    }
+            Section("Echoel") {
+                ForEach(StandardEffect.allCases) { effect in
+                    Button(effect.title) { add(effect.component, to: track) }
+                }
+            }
+            Section("Audio Units") {
+                if installed.isEmpty { Text("No Audio Unit effects installed") }
+                ForEach(installed, id: \.self) { component in
+                    Button("\(component.name) — \(component.manufacturerName)") { add(component, to: track) }
                 }
             }
         } label: {
@@ -127,5 +135,12 @@ struct EffectsView: View {
                 .font(Theme.Font.body)
         }
         .disabled(track.inserts.count >= Insert.maximumPerTrack)
+    }
+
+    private func add(_ component: PluginComponent, to track: Track) {
+        let id = InsertID()
+        if (try? store.perform(.addInsert(track: track.id, id: id, plugin: component, index: nil))) != nil {
+            selected = id
+        }
     }
 }

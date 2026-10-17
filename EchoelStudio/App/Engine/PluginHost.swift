@@ -335,6 +335,11 @@ final class PluginHost {
 
     /// The parameters of the unit in `slot` that the song can automate, in the unit's order, or
     /// none while it is not loaded.
+    /// The loaded unit in `slot` when it is one of Echoel's standard effects, for its meter.
+    func standardEffect(_ slot: Slot) -> StandardEffectUnit? {
+        loaded[slot]?.unit as? StandardEffectUnit
+    }
+
     func automatableParameters(_ slot: Slot) -> [PluginParameterInfo] {
         guard let unit = loaded[slot]?.unit else { return [] }
         return (unit.parameterTree?.allParameters ?? []).compactMap { parameter in
