@@ -13,6 +13,32 @@ final class AudioRegionTests: XCTestCase {
         return (project, audio, keys)
     }
 
+    func testAnAudioClipIsASessionLoopOfAFileOnAnAudioTrack() throws {
+        var (p, audio, keys) = try project()
+        let clip = ClipID(), scene = SceneID()
+        let loop = ClipAudio(media: file.id, length: 96_000)
+        try Command.addScene(id: scene, name: "A", index: nil).apply(to: &p)
+        let before = p
+        XCTAssertThrowsError(try Command.createAudioClip(track: keys, id: clip, name: "L", length: 3_840, audio: loop).apply(to: &p))
+        XCTAssertThrowsError(try Command.createAudioClip(track: audio, id: clip, name: "L", length: 3_840,
+                                                         audio: ClipAudio(media: file.id, offset: 90_000, length: 10_000)).apply(to: &p),
+                             "past the end of the file")
+        XCTAssertEqual(p, before)
+
+        try Command.createAudioClip(track: audio, id: clip, name: "Loop", length: 3_840, audio: loop).apply(to: &p)
+        try Command.setSlot(track: audio, scene: scene, clip: clip).apply(to: &p)
+        XCTAssertEqual(p.track(audio)?.clipInSlot(scene), clip)
+        XCTAssertThrowsError(try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 10)]).apply(to: &p))
+        XCTAssertThrowsError(try Command.placeClip(track: audio, id: PlacementID(), clip: clip, start: 0).apply(to: &p),
+                             "session-only")
+        try Command.setClipLength(clip, length: 7_680).apply(to: &p)
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).clip(clip), p.clip(clip))
+
+        try Command.removeMedia(file.id).apply(to: &p)
+        XCTAssertNil(p.clip(clip), "a clip goes with its file")
+        XCTAssertNil(p.track(audio)?.clipInSlot(scene))
+    }
+
     func testAPlacedFilePlaysWholeAndRegionsStaySortedByStart() throws {
         var (p, audio, _) = try project()
         let late = RegionID(), early = RegionID()

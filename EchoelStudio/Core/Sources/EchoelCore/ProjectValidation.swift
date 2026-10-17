@@ -42,9 +42,16 @@ extension Project {
                 guard clipIDs.insert(clip.id).inserted else { throw CommandError.duplicateID(clip.id.description) }
                 try Command.validateLength(clip.length)
                 for note in clip.notes { try Command.validate(note, in: clip) }
+                if let audio = clip.audio {
+                    guard track.kind == .audio, clip.notes.isEmpty else {
+                        throw Self.invalid("clips", "an audio clip sits on an audio track and has no notes")
+                    }
+                    try validate(audio)
+                }
             }
             for placement in track.placements {
-                guard track.clipIndex(placement.clip) != nil else { throw CommandError.unknownClip(placement.clip) }
+                guard let c = track.clipIndex(placement.clip) else { throw CommandError.unknownClip(placement.clip) }
+                guard track.clips[c].audio == nil else { throw Self.invalid("placements", "an audio clip is session-only") }
                 try Command.validateStart(placement.start)
             }
             if let output = track.output, !Track.isValidOutput(output) { throw Self.invalid("output", "not a stereo pair after 1/2") }

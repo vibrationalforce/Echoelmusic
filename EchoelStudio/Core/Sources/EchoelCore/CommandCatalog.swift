@@ -40,7 +40,7 @@ extension Command {
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput
         case mapMIDI, unmapMIDI, setAutomation
-        case createClip, deleteClip, renameClip, setClipLength
+        case createClip, createAudioClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
         case placeClip, movePlacement, removePlacement
         case placeAudio, moveRegion, trimRegion, removeRegion
@@ -83,6 +83,7 @@ extension Command {
         case .unmapMIDI: .unmapMIDI
         case .setAutomation: .setAutomation
         case .createClip: .createClip
+        case .createAudioClip: .createAudioClip
         case .deleteClip: .deleteClip
         case .renameClip: .renameClip
         case .setClipLength: .setClipLength
@@ -274,6 +275,16 @@ public enum CommandCatalog {
                                             P("id", .clipID, "Identifier for the new clip."),
                                             P("name", .string, "Clip name."),
                                             P("length", .ticks, "Loop length in ticks (960 per quarter note).")])
+        case .createAudioClip:
+            return CommandSpec(name: "clip.createAudio", title: "New Audio Clip",
+                               summary: "Creates a session loop on an audio track that plays part of a song file.",
+                               parameters: [P("track", .trackID, "An audio track."),
+                                            P("id", .clipID, "Identifier for the new clip."),
+                                            P("name", .string, "Clip name."),
+                                            P("length", .ticks, "Loop length in ticks (960 per quarter note)."),
+                                            P("media", .mediaID, "A file in the song's media."),
+                                            P("offset", .integer, "First frame of the file that plays.", optional: true),
+                                            P("frames", .integer, "How many frames of the file play.")])
         case .deleteClip:
             return CommandSpec(name: "clip.delete", title: "Delete Clip",
                                summary: "Deletes a clip and every place it is used.",

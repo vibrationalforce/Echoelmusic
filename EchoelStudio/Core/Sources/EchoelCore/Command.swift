@@ -57,6 +57,8 @@ public enum Command: Codable, Equatable, Sendable {
 
     // Clips
     case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
+    /// An audio clip on an audio track: a session loop of `length` ticks playing a song file.
+    case createAudioClip(track: TrackID, id: ClipID, name: String, length: Tick, audio: ClipAudio)
     case deleteClip(ClipID)
     case renameClip(ClipID, name: String)
     case setClipLength(ClipID, length: Tick)
@@ -332,6 +334,9 @@ extension Command {
             for t in project.tracks.indices {
                 if project.tracks[t].instrument.sample == id { project.tracks[t].instrument.sample = nil }
                 project.tracks[t].regions.removeAll { $0.media == id }
+                let gone = Set(project.tracks[t].clips.filter { $0.audio?.media == id }.map(\.id))
+                project.tracks[t].clips.removeAll { gone.contains($0.id) }
+                project.tracks[t].slots.removeAll { gone.contains($0.clip) }
             }
 
         case let .setVolume(target, db):
@@ -439,6 +444,17 @@ extension Command {
             try Self.validateLength(length)
             project.tracks[t].clips.append(Clip(id: id, name: try Names.validated(name, parameter: "name"), length: length))
 
+        case let .createAudioClip(trackID, id, name, length, audio):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .audio else {
+                throw CommandError.invalidValue(parameter: "track", reason: "audio clips belong on an audio track")
+            }
+            guard project.clipLocation(id) == nil else { throw CommandError.duplicateID(id.description) }
+            try Self.validateLength(length)
+            try project.validate(audio)
+            project.tracks[t].clips.append(Clip(id: id, name: try Names.validated(name, parameter: "name"),
+                                                length: length, audio: audio))
+
         case .deleteClip(let id):
             let (t, c) = try project.requireClip(id)
             project.tracks[t].clips.remove(at: c)
@@ -457,6 +473,7 @@ extension Command {
         case let .addNotes(id, notes):
             let (t, c) = try project.requireClip(id)
             var clip = project.tracks[t].clips[c]
+            guard clip.audio == nil else { throw CommandError.invalidValue(parameter: "clip", reason: "an audio clip has no notes") }
             var seen = Set(clip.notes.map(\.id))
             for note in notes {
                 try Self.validate(note, in: clip)
@@ -490,7 +507,10 @@ extension Command {
 
         case let .placeClip(trackID, id, clipID, start):
             let t = try project.requireTrack(trackID)
-            guard project.tracks[t].clipIndex(clipID) != nil else { throw CommandError.unknownClip(clipID) }
+            guard let c = project.tracks[t].clipIndex(clipID) else { throw CommandError.unknownClip(clipID) }
+            guard project.tracks[t].clips[c].audio == nil else {
+                throw CommandError.invalidValue(parameter: "clip", reason: "an audio clip plays in the session; place audio as a region")
+            }
             guard project.tracks[t].placementIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
             try Self.validateStart(start)
             project.tracks[t].placements.append(Placement(id: id, clip: clipID, start: start))
@@ -628,6 +648,15 @@ extension Project {
         let t = try requireTrack(track)
         guard let i = tracks[t].insertIndex(id) else { throw CommandError.unknownInsert(id) }
         return (t, i)
+    }
+
+    /// Rejects audio that does not lie within a file of the song.
+    func validate(_ audio: ClipAudio) throws {
+        guard let file = mediaFile(audio.media) else { throw CommandError.unknownMedia(audio.media) }
+        guard audio.offset >= 0, audio.length >= 1, audio.offset < file.frameCount,
+              audio.length <= file.frameCount - audio.offset else {
+            throw CommandError.invalidValue(parameter: "audio", reason: "must lie within the file")
+        }
     }
 
     func requireClip(_ id: ClipID) throws -> (Int, Int) {

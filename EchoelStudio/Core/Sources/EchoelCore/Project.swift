@@ -226,12 +226,42 @@ public struct Clip: Codable, Equatable, Sendable, Identifiable {
     /// Loop length. Notes are positioned relative to the clip start.
     public var length: Tick
     public var notes: [Note]
+    /// Set for an audio clip, a session loop on an audio track: the stretch of a file it plays,
+    /// from the start of each pass. An audio clip has no notes.
+    public var audio: ClipAudio?
 
-    public init(id: ClipID = ClipID(), name: String, length: Tick, notes: [Note] = []) {
+    public init(id: ClipID = ClipID(), name: String, length: Tick, notes: [Note] = [], audio: ClipAudio? = nil) {
         self.id = id
         self.name = name
         self.length = length
         self.notes = notes
+        self.audio = audio
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, name, length, notes, audio }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(ClipID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        length = try c.decode(Tick.self, forKey: .length)
+        notes = try c.decode([Note].self, forKey: .notes)
+        audio = try c.decodeIfPresent(ClipAudio.self, forKey: .audio)
+    }
+}
+
+/// The audio an audio clip plays: `length` frames of a song file from `offset`, at the file's
+/// own speed. A pass shorter than the clip's loop leaves silence until the next; a longer one is
+/// cut at the loop.
+public struct ClipAudio: Codable, Equatable, Sendable {
+    public var media: MediaID
+    public var offset: Int
+    public var length: Int
+
+    public init(media: MediaID, offset: Int = 0, length: Int) {
+        self.media = media
+        self.offset = offset
+        self.length = length
     }
 }
 
