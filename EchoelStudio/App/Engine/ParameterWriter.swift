@@ -41,8 +41,28 @@ final class ParameterWriter {
 
     func set(_ address: ParameterAddress, to value: Double, coalescingKey: String?) {
         if isWriting, engine.isPlaying, address != .tempo, write(address, value) { return }
+        // A plugin parameter's value lives in the unit, not the song.
+        if address.key.pluginParameter != nil {
+            engine.plugins.setPosition(address, to: value)
+            return
+        }
         guard let command = Command.setParameter(address, to: value) else { return }
         try? store.perform(command, coalescingKey: coalescingKey)
+    }
+
+    /// A control in a plugin's own interface moved. With writing armed and the transport
+    /// running, the movement is written like any other; letting go ends the pass.
+    func pluginMoved(_ address: ParameterAddress, to position: Double, phase: PluginHost.ParameterPhase) {
+        switch phase {
+        case .touch:
+            written[address] = nil
+        case .value:
+            guard isWriting, engine.isPlaying else { return }
+            _ = write(address, position)
+        case .release:
+            written[address] = nil
+            store.endGesture()
+        }
     }
 
     /// The control was let go: the next movement starts a new undo step and a new pass.
@@ -55,7 +75,8 @@ final class ParameterWriter {
     /// where writing began, so nothing before it changes.
     private func write(_ address: ParameterAddress, _ value: Double) -> Bool {
         let project = store.project
-        guard let descriptor = project.descriptor(for: address), let current = project.value(of: address) else { return false }
+        guard let descriptor = project.descriptor(for: address),
+              let current = project.value(of: address) ?? engine.plugins.position(of: address) else { return false }
         let now = engine.playheadTick(in: project)
         let clamped = Swift.min(Swift.max(value, descriptor.range.lowerBound), descriptor.range.upperBound)
         var points = project.automation(for: address)?.points ?? []

@@ -21,7 +21,7 @@ final class PluginHost {
     nonisolated static let ownManufacturer: UInt32 = 0x4563_686F
 
     /// What a loaded unit plays: a track's instrument, or one insert on a track's chain.
-    enum Slot: Hashable {
+    enum Slot: Hashable, Sendable {
         case instrument(TrackID)
         case insert(InsertID)
     }
@@ -40,6 +40,11 @@ final class PluginHost {
     /// Called when a unit finished loading, so the engine republishes with it. `sync` does not
     /// call it: its caller publishes anyway.
     @ObservationIgnored var onUnitsChanged: (() -> Void)?
+    /// Called on the main thread when a control in a plugin's own interface moves one of its
+    /// parameters: which, to where along its travel (0…1), and whether it was touched, moved or let go.
+    @ObservationIgnored var onParameterMoved: ((ParameterAddress, Double, ParameterPhase) -> Void)?
+    /// Which track each insert sits on, as of the last `sync`.
+    @ObservationIgnored private var insertTracks: [InsertID: TrackID] = [:]
     @ObservationIgnored private var loaded: [Slot: Loaded] = [:]
     @ObservationIgnored private var requests: [Slot: Request] = [:]
     @ObservationIgnored private var failed: [Slot: PluginComponent] = [:]
@@ -56,7 +61,12 @@ final class PluginHost {
         let unit: AUAudioUnit
         let instrument: HostedUnit?
         let effect: HostedEffect?
+        /// Our observer on the unit's parameters; also the originator of values we set, so the
+        /// unit does not report them back.
+        let observer: AUParameterObserverToken?
     }
+
+    enum ParameterPhase: Sendable { case touch, value, release }
 
     private struct Request {
         let component: PluginComponent
@@ -125,8 +135,13 @@ final class PluginHost {
                 wanted[.insert(insert.id)] = Wanted(component: insert.plugin, state: insert.state)
             }
         }
+        insertTracks = [:]
+        for track in project.tracks {
+            for insert in track.inserts { insertTracks[insert.id] = track.id }
+        }
         var changed = false
         for (slot, entry) in loaded where wanted[slot]?.component != entry.component || entry.sampleRate != sampleRate {
+            if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
             loaded[slot] = nil
             syncedState[slot] = nil
             changed = true
@@ -200,7 +215,8 @@ final class PluginHost {
         let rate = request.sampleRate
         loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
                               instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate),
-                              effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate) })
+                              effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate) },
+                              observer: observe(unit, slot: slot))
         syncedState[slot] = state
         problems[slot] = nil
         revision += 1
@@ -216,6 +232,66 @@ final class PluginHost {
     }
 
     func isLoaded(_ slot: Slot) -> Bool { loaded[slot] != nil }
+
+    /// Watches the unit's own controls. The unit calls this on any thread, in batches.
+    private func observe(_ unit: AUAudioUnit, slot: Slot) -> AUParameterObserverToken? {
+        unit.parameterTree?.token(byAddingParameterAutomationObserver: { @Sendable [weak self] count, events in
+            var moves: [(address: UInt64, value: Float, phase: ParameterPhase)] = []
+            for index in 0..<count {
+                let event = events[index]
+                let phase: ParameterPhase = event.eventType == .touch ? .touch
+                    : event.eventType == .release ? .release : .value
+                moves.append((event.address, event.value, phase))
+            }
+            let batch = moves
+            Task { @MainActor in self?.moved(batch, in: slot) }
+        })
+    }
+
+    private func moved(_ moves: [(address: UInt64, value: Float, phase: ParameterPhase)], in slot: Slot) {
+        guard let onParameterMoved, let tree = loaded[slot]?.unit.parameterTree, let owner = track(of: slot) else { return }
+        for move in moves {
+            guard let parameter = tree.parameter(withAddress: move.address),
+                  parameter.maxValue > parameter.minValue, move.value.isFinite else { continue }
+            let position = Double(Swift.min(Swift.max((move.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 0), 1))
+            onParameterMoved(.plugin(owner, PluginParameter(slot.unit, address: move.address)), position, move.phase)
+        }
+    }
+
+    private func track(of slot: Slot) -> TrackID? {
+        switch slot {
+        case .instrument(let track): track
+        case .insert(let insert): insertTracks[insert]
+        }
+    }
+
+    /// The loaded parameter a plugin address names, and the observer to set it as.
+    private func loadedParameter(_ address: ParameterAddress) -> (AUParameter, AUParameterObserverToken?)? {
+        guard case .track(let track) = address.owner, let plugin = address.key.pluginParameter else { return nil }
+        let slot: Slot
+        switch plugin.unit {
+        case .instrument: slot = .instrument(track)
+        case .insert(let insert): slot = .insert(insert)
+        }
+        guard let entry = loaded[slot], let parameter = entry.unit.parameterTree?.parameter(withAddress: plugin.address),
+              parameter.maxValue > parameter.minValue else { return nil }
+        return (parameter, entry.observer)
+    }
+
+    /// Where a loaded plugin parameter is now, 0…1 of its travel.
+    func position(of address: ParameterAddress) -> Double? {
+        guard let found = loadedParameter(address)?.0 else { return nil }
+        return Double(Swift.min(Swift.max((found.value - found.minValue) / (found.maxValue - found.minValue), 0), 1))
+    }
+
+    /// Moves a loaded plugin parameter to `position` (0…1) of its travel — a mapped controller.
+    func setPosition(_ address: ParameterAddress, to position: Double) {
+        guard let target = loadedParameter(address), position.isFinite else { return }
+        let (found, observer) = target
+        let n = Float(Swift.min(Swift.max(position, 0), 1))
+        let value = found.minValue + n * (found.maxValue - found.minValue)
+        if let observer { found.setValue(value, originator: observer) } else { found.value = value }
+    }
 
     /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
     /// settings, then render resources.
@@ -379,6 +455,14 @@ extension PluginHost.Slot {
 
     var insertID: InsertID? {
         if case .insert(let id) = self { id } else { nil }
+    }
+
+    /// The unit a plugin parameter of this slot names.
+    var unit: PluginParameter.Unit {
+        switch self {
+        case .instrument: .instrument
+        case .insert(let id): .insert(id)
+        }
     }
 }
 

@@ -22,7 +22,16 @@ struct EchoelStudioApp: App {
         _recording = State(initialValue: RecordController(engine: engine, documents: documents))
         let writer = ParameterWriter(store: store, engine: engine)
         _writer = State(initialValue: writer)
-        _midi = State(initialValue: MIDIInput(router: engine.live, store: store, engine: engine, writer: writer))
+        let midi = MIDIInput(router: engine.live, store: store, engine: engine, writer: writer)
+        _midi = State(initialValue: midi)
+        // A control moved in a plugin's own interface: the learn target while learning, else written.
+        engine.plugins.onParameterMoved = { [weak writer, weak midi] address, position, phase in
+            if let midi, midi.isLearning {
+                midi.choose(address)
+            } else {
+                writer?.pluginMoved(address, to: position, phase: phase)
+            }
+        }
     }
 
     var body: some SwiftUI.Scene {

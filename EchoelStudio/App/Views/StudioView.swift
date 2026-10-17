@@ -135,7 +135,7 @@ struct TransportBar: View {
         .background(Theme.Color.surface)
         .overlay(alignment: .bottom) {
             if midi.isLearning {
-                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control." : "MIDI Learn: move a knob or fader on your device.")
+                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.accent)
                     .padding(.bottom, 2)
