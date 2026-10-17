@@ -11,16 +11,23 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     public var sample: MediaID?
     public var preset: String
     public var values: [String: Double]
+    /// The Audio Unit the plugin device plays, kept when the track switches to a built-in
+    /// instrument so switching back restores it.
+    public var plugin: PluginComponent?
+    /// The plugin's own saved settings, as it reported them; applied when it loads.
+    public var pluginState: Data?
 
     public init(device: InstrumentDevice = .synth, sample: MediaID? = nil, preset: String = InstrumentPreset.initial.name,
-                values: [String: Double] = [:]) {
+                values: [String: Double] = [:], plugin: PluginComponent? = nil, pluginState: Data? = nil) {
         self.device = device
         self.sample = sample
         self.preset = preset
         self.values = values
+        self.plugin = plugin
+        self.pluginState = pluginState
     }
 
-    private enum CodingKeys: String, CodingKey { case device, sample, preset, values }
+    private enum CodingKeys: String, CodingKey { case device, sample, preset, values, plugin, pluginState }
 
     /// Songs written before devices existed are synth tracks.
     public init(from decoder: Decoder) throws {
@@ -29,6 +36,8 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         sample = try c.decodeIfPresent(MediaID.self, forKey: .sample)
         preset = try c.decode(String.self, forKey: .preset)
         values = try c.decode([String: Double].self, forKey: .values)
+        plugin = try c.decodeIfPresent(PluginComponent.self, forKey: .plugin)
+        pluginState = try c.decodeIfPresent(Data.self, forKey: .pluginState)
     }
 
     public func value(_ parameter: SynthParameter) -> Double {
@@ -44,14 +53,20 @@ public enum InstrumentDevice: String, Codable, CaseIterable, Sendable {
     case drums
     /// Plays one imported audio file across the keyboard.
     case sampler
+    /// A third-party Audio Unit instrument (`InstrumentSettings.plugin`).
+    case plugin
 
     public var title: String {
         switch self {
         case .synth: "Synth"
         case .drums: "Drums"
         case .sampler: "Sampler"
+        case .plugin: "Plugin"
         }
     }
+
+    /// The instruments the app plays itself; `plugin` is chosen through `instrument.plugin`.
+    public static let builtIn: [InstrumentDevice] = [.synth, .drums, .sampler]
 }
 
 /// The built-in synth's parameters: names, ranges, defaults and how a control maps onto

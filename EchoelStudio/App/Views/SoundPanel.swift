@@ -28,6 +28,10 @@ struct SoundPanel: View {
                     samplerControls
                 case .synth:
                     synthControls
+                case .plugin:
+                    Text("Plays \(track.instrument.plugin?.name ?? "a plugin"). Hosting plugins arrives in the next update; until then this track is silent.")
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.textSecondary)
                 }
             }
             .padding(Theme.Space.l)
@@ -45,7 +49,7 @@ struct SoundPanel: View {
             get: { track.instrument.device },
             set: { try? store.perform(.setInstrumentDevice(track.id, $0)) }
         )) {
-            ForEach(InstrumentDevice.allCases, id: \.self) { Text($0.title).tag($0) }
+            ForEach(InstrumentDevice.builtIn, id: \.self) { Text($0.title).tag($0) }
         }
         .pickerStyle(.segmented)
         .accessibilityLabel("Instrument")

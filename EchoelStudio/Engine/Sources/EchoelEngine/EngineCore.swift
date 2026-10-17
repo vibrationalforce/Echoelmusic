@@ -190,6 +190,8 @@ public final class EngineCore: @unchecked Sendable {
                 case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
                 case (.noteOn(let velocity), .sampler): samplers[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
                 case (.noteOff, .sampler): samplers[lane.slot].noteOff(pitch: event.pitch)
+                // Hosted plugins are not played by the engine yet; the lane stays silent.
+                case (_, .plugin): break
                 }
                 cursors[lane.slot] += 1
             } else {
@@ -308,6 +310,7 @@ public final class EngineCore: @unchecked Sendable {
                 case .synth: synths[lane.slot].activeVoiceCount > 0
                 case .drums: drums[lane.slot].activeVoiceCount > 0
                 case .sampler: samplers[lane.slot].activeVoiceCount > 0
+                case .plugin: false
                 }
                 guard sounding else { continue }
                 let mono = scratch + range.lowerBound
@@ -317,6 +320,7 @@ public final class EngineCore: @unchecked Sendable {
                 case .synth: synths[lane.slot].render(into: buffer)
                 case .drums: drums[lane.slot].render(into: buffer)
                 case .sampler: samplers[lane.slot].render(into: buffer)
+                case .plugin: break
                 }
                 for i in 0..<range.count {
                     left[range.lowerBound + i] += mono[i] * lane.gainLeft

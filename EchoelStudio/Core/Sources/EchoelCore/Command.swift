@@ -23,6 +23,8 @@ public enum Command: Codable, Equatable, Sendable {
     case loadInstrumentPreset(TrackID, name: String)
     case setInstrumentDevice(TrackID, InstrumentDevice)
     case setInstrumentSample(TrackID, MediaID?)
+    case setInstrumentPlugin(TrackID, PluginComponent?)
+    case setPluginState(TrackID, Data?)
     case addMedia(MediaFile)
     case removeMedia(MediaID)
 
@@ -184,15 +186,18 @@ extension Command {
             guard let preset = InstrumentPreset.named(name) else {
                 throw CommandError.invalidValue(parameter: "name", reason: "no preset named \(name)")
             }
-            let device = project.tracks[t].instrument.device
-            let sample = project.tracks[t].instrument.sample
-            project.tracks[t].instrument = InstrumentSettings(device: device, sample: sample,
-                                                              preset: preset.name, values: preset.values)
+            var settings = project.tracks[t].instrument
+            settings.preset = preset.name
+            settings.values = preset.values
+            project.tracks[t].instrument = settings
 
         case let .setInstrumentDevice(id, device):
             let t = try project.requireTrack(id)
             guard project.tracks[t].kind == .instrument else {
                 throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            guard device != .plugin || project.tracks[t].instrument.plugin != nil else {
+                throw CommandError.invalidValue(parameter: "device", reason: "choose a plugin with instrument.plugin first")
             }
             project.tracks[t].instrument.device = device
 
@@ -203,6 +208,37 @@ extension Command {
             }
             if let media, project.mediaFile(media) == nil { throw CommandError.unknownMedia(media) }
             project.tracks[t].instrument.sample = media
+
+        case let .setInstrumentPlugin(id, component):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            guard let component else {
+                project.tracks[t].instrument.plugin = nil
+                project.tracks[t].instrument.pluginState = nil
+                if project.tracks[t].instrument.device == .plugin { project.tracks[t].instrument.device = .synth }
+                break
+            }
+            guard component.role == .instrument else {
+                throw CommandError.invalidValue(parameter: "plugin", reason: "must be an instrument (type aumu)")
+            }
+            var named = component
+            named.name = try Names.validated(component.name, parameter: "name")
+            // Another plugin's settings mean nothing to this one.
+            if project.tracks[t].instrument.plugin != named { project.tracks[t].instrument.pluginState = nil }
+            project.tracks[t].instrument.plugin = named
+            project.tracks[t].instrument.device = .plugin
+
+        case let .setPluginState(id, state):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].instrument.plugin != nil else {
+                throw CommandError.invalidValue(parameter: "track", reason: "the track has no plugin")
+            }
+            if let state, state.count > PluginComponent.maximumStateBytes {
+                throw CommandError.invalidValue(parameter: "state", reason: "larger than \(PluginComponent.maximumStateBytes) bytes")
+            }
+            project.tracks[t].instrument.pluginState = state
 
         case let .addMedia(file):
             guard project.mediaFile(file.id) == nil else { throw CommandError.duplicateID(file.id.description) }

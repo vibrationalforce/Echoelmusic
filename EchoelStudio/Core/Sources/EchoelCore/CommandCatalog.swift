@@ -35,6 +35,7 @@ extension Command {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
+        case setInstrumentPlugin, setPluginState
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
@@ -60,6 +61,8 @@ extension Command {
         case .loadInstrumentPreset: .loadInstrumentPreset
         case .setInstrumentDevice: .setInstrumentDevice
         case .setInstrumentSample: .setInstrumentSample
+        case .setInstrumentPlugin: .setInstrumentPlugin
+        case .setPluginState: .setPluginState
         case .addMedia: .addMedia
         case .removeMedia: .removeMedia
         case .setVolume: .setVolume
@@ -155,12 +158,22 @@ public enum CommandCatalog {
             return CommandSpec(name: "instrument.device", title: "Change Instrument",
                                summary: "Chooses the built-in instrument that plays an instrument track.",
                                parameters: [P("track", .trackID, "An instrument track."),
-                                            P("device", .string, "One of: " + InstrumentDevice.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
+                                            P("device", .string, "One of: " + InstrumentDevice.allCases.map(\.rawValue).joined(separator: ", ") + "; plugin needs instrument.plugin first.")])
         case .setInstrumentSample:
             return CommandSpec(name: "instrument.sample", title: "Choose Sample",
                                summary: "Sets the audio file the sampler of an instrument track plays, or clears it.",
                                parameters: [P("track", .trackID, "An instrument track."),
                                             P("media", .mediaID, "A file in the song's media, or null to clear.")])
+        case .setInstrumentPlugin:
+            return CommandSpec(name: "instrument.plugin", title: "Choose Plugin",
+                               summary: "Plays an instrument track through an installed Audio Unit instrument, or clears it and returns to the synth.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("plugin", .string, "The component: type aumu, subtype, manufacturer, name, manufacturer name; null to clear.")])
+        case .setPluginState:
+            return CommandSpec(name: "instrument.pluginState", title: "Plugin Settings",
+                               summary: "Stores the settings a track's plugin reported, so the song reopens with them. Written by the app, not typed.",
+                               parameters: [P("track", .trackID, "A track with a plugin."),
+                                            P("state", .string, "The plugin's saved state, at most 8 MB; null to forget it.")])
         case .addMedia:
             return CommandSpec(name: "media.add", title: "Import Audio",
                                summary: "Records an audio file the app has copied into the song's Media folder.",
