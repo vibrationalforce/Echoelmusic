@@ -177,6 +177,68 @@ final class DocumentController {
         }
     }
 
+    /// Where the next take is written: a fresh file in the open song's Media folder.
+    struct TakeTarget: Sendable {
+        let id: MediaID
+        let path: String
+        let url: URL
+    }
+
+    func newTakeTarget() -> TakeTarget? {
+        guard let package = currentURL else { return nil }
+        let id = MediaID()
+        let path = "\(MediaFile.directory)/\(id).caf"
+        guard let url = MediaFile(id: id, name: "Take", path: path, frameCount: 1, sampleRate: 1).url(in: package) else {
+            return nil
+        }
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        } catch {
+            lastError = "Could not prepare the song's Media folder."
+            return nil
+        }
+        return TakeTarget(id: id, path: path, url: url)
+    }
+
+    /// Turns a finished take into a region on `track`, lined up with the beat it was played to —
+    /// one undo step. The take is decoded off the main thread like an imported file.
+    func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID) async {
+        let package = currentURL
+        let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
+            Result { try AudioFileImport.decode(take.url) }
+        }.value
+        guard currentURL == package else { return }
+        let buffer: SampleBuffer
+        switch result {
+        case .success(let decoded): buffer = decoded
+        case .failure(let error):
+            log.error("take unreadable — \(error.localizedDescription, privacy: .public)")
+            lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read."
+            return
+        }
+        let time = TimeConversion(tempoMap: store.project.tempoMap, sampleRate: take.sampleRate)
+        let placement = RecordingPlacement.place(startSample: take.startSample, latency: take.latency, time: time)
+        guard buffer.frameCount > placement.offset else {
+            try? FileManager.default.removeItem(at: take.url)
+            return
+        }
+        samples[target.id] = buffer
+        mediaRevision += 1
+        let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
+        let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
+                             frameCount: buffer.frameCount, sampleRate: buffer.sampleRate)
+        let region = RegionID()
+        var commands: [Command] = [
+            .addMedia(file),
+            .placeAudio(track: track, id: region, media: file.id, start: placement.start),
+        ]
+        if placement.offset > 0 {
+            commands.append(.trimRegion(track: track, region, offset: placement.offset,
+                                        length: buffer.frameCount - placement.offset))
+        }
+        perform(commands, title: "Record Take")
+    }
+
     private func perform(_ commands: [Command], title: String) {
         do {
             try store.perform(commands, title: title)

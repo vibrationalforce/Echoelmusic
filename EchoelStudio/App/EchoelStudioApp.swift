@@ -4,14 +4,19 @@ import SwiftUI
 @main
 struct EchoelStudioApp: App {
     @State private var store: ProjectStore
-    @State private var engine = AudioEngine()
+    @State private var engine: AudioEngine
     @State private var documents: DocumentController
+    @State private var recording: RecordController
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let store = ProjectStore(project: .starter())
+        let engine = AudioEngine()
+        let documents = DocumentController(store: store)
         _store = State(initialValue: store)
-        _documents = State(initialValue: DocumentController(store: store))
+        _engine = State(initialValue: engine)
+        _documents = State(initialValue: documents)
+        _recording = State(initialValue: RecordController(engine: engine, documents: documents))
     }
 
     var body: some SwiftUI.Scene {
@@ -20,12 +25,16 @@ struct EchoelStudioApp: App {
                 .environment(store)
                 .environment(engine)
                 .environment(documents)
+                .environment(recording)
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
                     engine.start()
                 }
-                .onChange(of: store.project) { documents.projectChanged() }
+                .onChange(of: store.project) { _, project in
+                    documents.projectChanged()
+                    Task { await recording.trackRemoved(from: project) }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { documents.saveNow() }

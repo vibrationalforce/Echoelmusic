@@ -54,6 +54,8 @@ struct TrackRow: View {
                 try? store.perform(.removeTrack(track.id))
             }
 
+            if track.kind == .audio { ArmButton(track: track) }
+
             Button {
                 try? store.perform(.setMute(track.id, !track.mixer.isMuted))
             } label: {
@@ -87,6 +89,24 @@ struct TrackRow: View {
                 try? store.perform(.removeTrack(track.id))
             }
         }
+    }
+}
+
+/// Arms an audio track for recording; one track at a time. Arming opens the input.
+struct ArmButton: View {
+    @Environment(RecordController.self) private var recording
+    let track: Track
+
+    var body: some View {
+        let armed = recording.armedTrack == track.id
+        Button {
+            Task { await recording.toggleArm(track.id) }
+        } label: {
+            Image(systemName: "record.circle")
+        }
+        .buttonStyle(ToolButtonStyle(isActive: armed, activeColor: Theme.Color.record))
+        .accessibilityLabel("Arm \(track.name) for Recording")
+        .accessibilityValue(armed ? "On" : "Off")
     }
 }
 

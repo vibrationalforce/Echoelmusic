@@ -64,18 +64,25 @@ struct TransportBar: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
+    @Environment(RecordController.self) private var recording
     @State private var clickOn = true
 
     var body: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
-                engine.isPlaying ? engine.stop() : engine.play()
+                if engine.isPlaying {
+                    Task { await recording.stopTransport() }
+                } else {
+                    engine.play()
+                }
             } label: {
                 Image(systemName: engine.isPlaying ? "stop.fill" : "play.fill")
             }
             .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying, activeColor: Theme.Color.play))
             .accessibilityLabel(engine.isPlaying ? "Stop" : "Play")
             .disabled(!engine.isRunning)
+
+            RecordButton()
 
             TempoField()
 
@@ -117,6 +124,28 @@ struct TransportBar: View {
                     .padding(.bottom, 2)
             }
         }
+    }
+}
+
+/// Starts a take on the armed track, or ends the one running.
+struct RecordButton: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(RecordController.self) private var recording
+
+    var body: some View {
+        Button {
+            if recording.isRecording {
+                Task { await recording.stopRecording() }
+            } else {
+                recording.record()
+            }
+        } label: {
+            Image(systemName: "record.circle")
+        }
+        .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, activeColor: Theme.Color.record))
+        .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
+        .accessibilityHint(recording.armedTrack == nil ? "Arm an audio track first." : "")
+        .disabled(recording.armedTrack == nil || !engine.isInputOpen)
     }
 }
 
