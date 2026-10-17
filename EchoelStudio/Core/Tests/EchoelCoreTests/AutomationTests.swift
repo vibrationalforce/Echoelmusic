@@ -18,6 +18,19 @@ final class AutomationTests: XCTestCase {
         XCTAssertNil(AutomationLane(target: .masterVolume, points: []).value(at: 0))
     }
 
+    func testABentSegmentStillMeetsItsPointsAndBendsBetweenThem() {
+        let rising = AutomationLane(target: .masterVolume, points: [AutomationPoint(tick: 0, value: 0, curve: 0.8),
+                                                                    AutomationPoint(tick: 1_000, value: 1)])
+        XCTAssertEqual(rising.value(at: 0), 0)
+        XCTAssertEqual(rising.value(at: 1_000), 1)
+        XCTAssertLessThan(rising.value(at: 500) ?? 1, 0.2, "exponential: slow at first")
+        let falling = AutomationLane(target: .masterVolume, points: [AutomationPoint(tick: 0, value: 0, curve: -0.8),
+                                                                     AutomationPoint(tick: 1_000, value: 1)])
+        XCTAssertGreaterThan(falling.value(at: 500) ?? 0, 0.8, "logarithmic: early")
+        let old = Data(#"{"tick":0,"value":0.5}"#.utf8)
+        XCTAssertEqual(try JSONDecoder().decode(AutomationPoint.self, from: old).curve, 0, "an older file is straight")
+    }
+
     func testSetAutomationValidatesAndAnEmptyListRemovesTheLane() throws {
         let made = try project()
         var song = made.0

@@ -1,15 +1,41 @@
-/// One breakpoint of an automation lane: the parameter's value at a tick.
+import Foundation
+
+/// One breakpoint of an automation lane: the parameter's value at a tick, and how the line to
+/// the next point bends.
 public struct AutomationPoint: Codable, Equatable, Sendable {
     public var tick: Tick
     public var value: Double
+    /// −1…1. 0 is a straight line; above 0 the segment starts slowly and rises late
+    /// (exponential), below 0 it moves early and settles (logarithmic).
+    public var curve: Double
 
-    public init(tick: Tick, value: Double) {
+    public static let curveRange: ClosedRange<Double> = -1...1
+
+    public init(tick: Tick, value: Double, curve: Double = 0) {
         self.tick = tick
         self.value = value
+        self.curve = curve
+    }
+
+    private enum CodingKeys: String, CodingKey { case tick, value, curve }
+
+    /// A point written before curves existed is straight.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        tick = try c.decode(Tick.self, forKey: .tick)
+        value = try c.decode(Double.self, forKey: .value)
+        curve = try c.decodeIfPresent(Double.self, forKey: .curve) ?? 0
+    }
+
+    /// Where a segment with this curve is at `t` (0…1) of its way.
+    public static func shape(_ t: Double, curve: Double) -> Double {
+        guard curve.isFinite, Swift.abs(curve) > 1e-6 else { return t }
+        let k = curve * 6
+        return Foundation.expm1(k * t) / Foundation.expm1(k)
     }
 }
 
-/// A parameter's value over song time: straight lines between breakpoints, the first value
+/// A parameter's value over song time: lines between breakpoints, straight or bent, the first value
 /// before the first point and the last after the last. Mixer and instrument parameters can be
 /// automated; the tempo has its own tempo track and cannot.
 public struct AutomationLane: Codable, Equatable, Sendable {
@@ -37,7 +63,7 @@ public struct AutomationLane: Codable, Equatable, Sendable {
         }
         let a = points[low], b = points[high]
         let t = Double(tick - a.tick) / Double(b.tick - a.tick)
-        return a.value + (b.value - a.value) * t
+        return a.value + (b.value - a.value) * AutomationPoint.shape(t, curve: a.curve)
     }
 
     /// Rejects what the engine could not play: unsorted or repeated ticks, ticks outside the
@@ -53,6 +79,9 @@ public struct AutomationLane: Codable, Equatable, Sendable {
             }
             guard point.value.isFinite, range.contains(point.value) else {
                 throw CommandError.invalidValue(parameter: "points", reason: "values must lie within \(range)")
+            }
+            guard point.curve.isFinite, AutomationPoint.curveRange.contains(point.curve) else {
+                throw CommandError.invalidValue(parameter: "points", reason: "curves must lie within −1…1")
             }
             previous = point.tick
         }

@@ -716,28 +716,12 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            add(l, r, into: left, right, frames: frames, smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: lane.slot))
+            mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
+                memory: memory(point: lane.slot))
             send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
-    }
-
-    /// The ramp starting where the mix point ended the last chunk, which it then remembers.
-    private func smoothed(_ target: Ramp, point: Int) -> Ramp {
-        guard point >= 0, point < mixPoints else { return target }
-        return smoothed(target, at: gainMemory + point * 2)
-    }
-
-    private func smoothed(_ target: Ramp, at memory: UnsafeMutablePointer<Float>) -> Ramp {
-        var ramp = target
-        if memory[0].isFinite, memory[1].isFinite {
-            ramp.left0 = memory[0]
-            ramp.right0 = memory[1]
-        }
-        memory[0] = ramp.left1
-        memory[1] = ramp.right1
-        return ramp
     }
 
     private func forget(point: Int) {
@@ -752,11 +736,52 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
-    /// Gains at the chunk's start and end: the fixed ones, or the automation's at both ticks.
-    private func ramp(_ mix: EngineSnapshot.MovingMix?, _ left: Float, _ right: Float) -> Ramp {
-        guard let mix else { return Ramp(left0: left, right0: right, left1: left, right1: right) }
-        let (l0, r0) = mix.gains(at: mixFrom), (l1, r1) = mix.gains(at: mixTo)
-        return Ramp(left0: l0, right0: r0, left1: l1, right1: r1)
+    private func memory(point: Int) -> UnsafeMutablePointer<Float>? {
+        point >= 0 && point < mixPoints ? gainMemory + point * 2 : nil
+    }
+
+    /// Frames between two evaluations of a moving gain: a bent lane is followed within 1.3 ms.
+    static let gainSegment = 64
+
+    /// Adds a stereo source into a destination at gains that may move. Fixed gains ramp from
+    /// where `memory` ended the last chunk; a lane's gains are evaluated every 64 frames and
+    /// ramped between, so a curve is followed and nothing steps. `memory` then holds the end.
+    private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
+                                       into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
+                                       frames: Int, curve: Curve?, fixed: (Float, Float),
+                                       memory: UnsafeMutablePointer<Float>?) {
+        var previous: (Float, Float)?
+        if let memory, memory[0].isFinite, memory[1].isFinite { previous = (memory[0], memory[1]) }
+        var last = fixed
+        if let curve, mixFrom != mixTo {
+            var start = 0
+            while start < frames {
+                let end = Swift.min(start + Self.gainSegment, frames)
+                let to = curve.gains(at: tick(at: end, of: frames))
+                let from = previous ?? curve.gains(at: tick(at: start, of: frames))
+                add(sourceLeft + start, sourceRight + start, into: left + start, right + start, frames: end - start,
+                    Ramp(left0: from.0, right0: from.1, left1: to.0, right1: to.1))
+                previous = to
+                start = end
+            }
+            last = previous ?? fixed
+        } else {
+            let target = curve?.gains(at: mixFrom) ?? fixed
+            let from = previous ?? target
+            add(sourceLeft, sourceRight, into: left, right, frames: frames,
+                Ramp(left0: from.0, right0: from.1, left1: target.0, right1: target.1))
+            last = target
+        }
+        if let memory {
+            memory[0] = last.0
+            memory[1] = last.1
+        }
+    }
+
+    /// The song position `offset` frames into the chunk being mixed.
+    private func tick(at offset: Int, of frames: Int) -> Tick {
+        guard frames > 0 else { return mixFrom }
+        return mixFrom + Tick(Double(mixTo - mixFrom) * Double(offset) / Double(frames))
     }
 
     /// Adds a stereo source into a stereo destination, gains moving straight from start to end
@@ -795,15 +820,9 @@ public final class EngineCore: @unchecked Sendable {
                       right: UnsafeMutablePointer<Float>) {
         for tap in sends where tap.bus >= 0 && tap.bus < Self.returnCapacity {
             let l = returnLeft + tap.bus * Self.maximumFrames, r = returnRight + tap.bus * Self.maximumFrames
-            var gains = Ramp(left0: tap.gainLeft, right0: tap.gainRight, left1: tap.gainLeft, right1: tap.gainRight)
-            if let moving = tap.moving {
-                let (l0, r0) = moving.gains(at: mixFrom), (l1, r1) = moving.gains(at: mixTo)
-                gains = Ramp(left0: l0, right0: r0, left1: l1, right1: r1)
-            }
-            if point >= 0, point < sendingPoints {
-                gains = smoothed(gains, at: sendMemory + (point * Self.returnCapacity + tap.bus) * 2)
-            }
-            add(left, right, into: l, r, frames: frames, gains)
+            let tapMemory = point >= 0 && point < sendingPoints ? sendMemory + (point * Self.returnCapacity + tap.bus) * 2 : nil
+            mix(left, right, into: l, r, frames: frames, curve: tap.moving, fixed: (tap.gainLeft, tap.gainRight),
+                memory: tapMemory)
         }
     }
 
@@ -816,7 +835,8 @@ public final class EngineCore: @unchecked Sendable {
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             let point = slotCapacity + Self.smoothedAudioTracks + lane.bus
-            add(l, r, into: left, right, frames: frames, smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: point))
+            mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
+                memory: memory(point: point))
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
@@ -858,8 +878,8 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
-            add(audioLeft, audioRight, into: left, right, frames: frames,
-                smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: point))
+            mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
+                fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point))
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
         }
     }

@@ -52,7 +52,7 @@ public struct EngineSnapshot: Sendable {
     }
 
     /// A track's gains that move with automation. Pure, render-safe.
-    public struct MovingMix: Sendable {
+    public struct MovingMix: GainCurve {
         public let strip: MixerStrip
         public let volume: AutomationLane?
         public let pan: AutomationLane?
@@ -74,7 +74,7 @@ public struct EngineSnapshot: Sendable {
     }
 
     /// A send whose level, or whose track's level, moves.
-    public struct MovingSend: Sendable {
+    public struct MovingSend: GainCurve {
         public let mix: MovingMix
         public let levelDB: Double
         public let level: AutomationLane?
@@ -328,4 +328,9 @@ public struct EventRevisions: Sendable {
         numbers = numbers.filter { alive[$0.key] != nil }
         return numbers
     }
+}
+
+/// Gains that move over song time. Pure and render-safe.
+public protocol GainCurve: Sendable {
+    func gains(at tick: Tick) -> (Float, Float)
 }
