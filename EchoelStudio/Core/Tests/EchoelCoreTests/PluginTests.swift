@@ -77,3 +77,15 @@ final class PluginTests: XCTestCase {
         XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)), p)
     }
 }
+
+final class OwnPluginTests: XCTestCase {
+    func testOwnPluginsAreInstrumentsOrEffectsUnderOurManufacturer() {
+        XCTAssertFalse(OwnPlugin.all.isEmpty)
+        XCTAssertEqual(Set(OwnPlugin.all.map(\.productID)).count, OwnPlugin.all.count)
+        for plugin in OwnPlugin.all {
+            XCTAssertEqual(plugin.component.manufacturer, PluginComponent.code("Echo"))
+            XCTAssertNotNil(plugin.component.role)
+            XCTAssertTrue(plugin.productID.hasPrefix("com.echoelmusic.studio."))
+        }
+    }
+}

@@ -7,6 +7,7 @@ struct EchoelStudioApp: App {
     @State private var engine: AudioEngine
     @State private var documents: DocumentController
     @State private var recording: RecordController
+    @State private var plugins = StoreController()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -26,6 +27,7 @@ struct EchoelStudioApp: App {
                 .environment(engine)
                 .environment(documents)
                 .environment(recording)
+                .environment(plugins)
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()

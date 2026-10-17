@@ -13,6 +13,8 @@ enum StudioSheet: Identifiable, Hashable {
     case importAudio(TrackID, Tick)
     /// A track's insert effects.
     case effects(TrackID)
+    /// Echoel's own Audio Units, to buy for other apps.
+    case store
 
     var id: Self { self }
 }

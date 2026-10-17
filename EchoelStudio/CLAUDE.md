@@ -14,6 +14,7 @@ nothing has to be fished out of the long file.
 | `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope — pure value types, render-thread safe | Foundation |
 | `Engine/` | Swift package `EchoelEngine`: snapshot, synth slots, sample-accurate sequencer, mix, metronome — render thread, tested offline | EchoelCore, EchoelDSP, Synchronization |
 | `App/` | the app (XcodeGen spec `project.yml`): design system, AVAudioEngine glue, media import, views | EchoelCore, EchoelDSP, EchoelEngine |
+| `Plugins/Synth/` | AUv3 extension `EchoelSynth` (aumu `eSyn` `Echo`), embedded in the app, sold as an in-app purchase; ids in `EchoelCore.OwnPlugin` | EchoelCore, EchoelDSP, EchoelEngine |
 
 More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
 on modules below it — never the other way round.
