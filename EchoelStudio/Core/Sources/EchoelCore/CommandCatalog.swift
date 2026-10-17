@@ -39,6 +39,7 @@ extension Command {
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo, setSend
+        case mapMIDI, unmapMIDI
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
         case placeClip, movePlacement, removePlacement
@@ -76,6 +77,8 @@ extension Command {
         case .setMute: .setMute
         case .setSolo: .setSolo
         case .setSend: .setSend
+        case .mapMIDI: .mapMIDI
+        case .unmapMIDI: .unmapMIDI
         case .createClip: .createClip
         case .deleteClip: .deleteClip
         case .renameClip: .renameClip
@@ -237,6 +240,15 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The sending track (not a return)."),
                                             P("to", .trackID, "The return track."),
                                             P("db", .number, "Send level in dB, as on a fader; omit to remove.", optional: true)])
+        case .mapMIDI:
+            return CommandSpec(name: "midi.map", title: "Learn MIDI",
+                               summary: "Makes a controller knob or fader move a parameter across its whole range.",
+                               parameters: [P("control", .string, "Channel 0…15 and controller number 0…127."),
+                                            P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume.")])
+        case .unmapMIDI:
+            return CommandSpec(name: "midi.unmap", title: "Forget MIDI",
+                               summary: "Stops a controller knob or fader moving anything.",
+                               parameters: [P("control", .string, "Channel 0…15 and controller number 0…127.")])
         case .createClip:
             return CommandSpec(name: "clip.create", title: "New Clip",
                                summary: "Creates an empty MIDI clip on an instrument track.",

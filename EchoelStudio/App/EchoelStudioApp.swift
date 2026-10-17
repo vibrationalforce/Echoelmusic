@@ -19,7 +19,7 @@ struct EchoelStudioApp: App {
         _engine = State(initialValue: engine)
         _documents = State(initialValue: documents)
         _recording = State(initialValue: RecordController(engine: engine, documents: documents))
-        _midi = State(initialValue: MIDIInput(router: engine.live))
+        _midi = State(initialValue: MIDIInput(router: engine.live, store: store))
     }
 
     var body: some SwiftUI.Scene {

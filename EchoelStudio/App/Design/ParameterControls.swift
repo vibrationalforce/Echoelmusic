@@ -88,6 +88,7 @@ struct Fader: View {
                 let step = direction == .increment ? 0.02 : -0.02
                 store.set(address, normalized: position + step, gesture: false)
             }
+            .midiLearnable(address)
         }
     }
 }
@@ -137,6 +138,7 @@ struct PanControl: View {
             .accessibilityAdjustableAction { direction in
                 store.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
             }
+            .midiLearnable(address)
         }
     }
 }
@@ -198,6 +200,7 @@ struct ParameterField: View {
             .accessibilityAdjustableAction { direction in
                 store.set(address, normalized: position + (direction == .increment ? 0.02 : -0.02), gesture: false)
             }
+            .midiLearnable(address)
         }
     }
 

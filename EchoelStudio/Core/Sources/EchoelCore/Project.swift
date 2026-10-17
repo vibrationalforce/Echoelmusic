@@ -18,6 +18,8 @@ public struct Project: Codable, Equatable, Sendable {
     public var master: MixerStrip
     /// Audio files imported into the song, in import order.
     public var media: [MediaFile]
+    /// Controllers learned for this song, one target per control.
+    public var midiMappings: [MIDIMapping]
 
     public init(
         name: String = "Untitled",
@@ -27,7 +29,8 @@ public struct Project: Codable, Equatable, Sendable {
         tracks: [Track] = [],
         scenes: [Scene] = [],
         master: MixerStrip = MixerStrip(),
-        media: [MediaFile] = []
+        media: [MediaFile] = [],
+        midiMappings: [MIDIMapping] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -38,10 +41,11 @@ public struct Project: Codable, Equatable, Sendable {
         self.scenes = scenes
         self.master = master
         self.media = media
+        self.midiMappings = midiMappings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media
+        case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -56,6 +60,7 @@ public struct Project: Codable, Equatable, Sendable {
         scenes = try c.decode([Scene].self, forKey: .scenes)
         master = try c.decode(MixerStrip.self, forKey: .master)
         media = try c.decodeIfPresent([MediaFile].self, forKey: .media) ?? []
+        midiMappings = try c.decodeIfPresent([MIDIMapping].self, forKey: .midiMappings) ?? []
     }
 
     public func trackIndex(_ id: TrackID) -> Int? {

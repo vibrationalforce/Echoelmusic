@@ -67,6 +67,7 @@ struct TransportBar: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     @Environment(RecordController.self) private var recording
+    @Environment(MIDIInput.self) private var midi
     @State private var clickOn = true
 
     var body: some View {
@@ -98,6 +99,8 @@ struct TransportBar: View {
             .accessibilityLabel("Click")
             .accessibilityValue(clickOn ? "On" : "Off")
 
+            MIDILearnButton()
+
             Spacer(minLength: Theme.Space.s)
 
             SongMenu()
@@ -119,7 +122,12 @@ struct TransportBar: View {
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .background(Theme.Color.surface)
         .overlay(alignment: .bottom) {
-            if let error = engine.lastError ?? documents.lastError {
+            if midi.isLearning {
+                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control." : "MIDI Learn: move a knob or fader on your device.")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.accent)
+                    .padding(.bottom, 2)
+            } else if let error = engine.lastError ?? documents.lastError {
                 Text(error)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.record)

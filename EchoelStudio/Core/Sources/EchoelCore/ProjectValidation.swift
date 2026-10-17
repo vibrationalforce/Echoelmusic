@@ -23,6 +23,10 @@ extension Project {
                 throw Self.invalid("media", "a file has no frames or no sample rate")
             }
         }
+        guard midiMappings.allSatisfy(\.control.isValid),
+              Set(midiMappings.map(\.control)).count == midiMappings.count else {
+            throw Self.invalid("midiMappings", "a controller out of range, or mapped twice")
+        }
         var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()
         for track in tracks {
             guard trackIDs.insert(track.id).inserted else { throw CommandError.duplicateID(track.id.description) }

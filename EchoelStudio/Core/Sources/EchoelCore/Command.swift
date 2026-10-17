@@ -43,6 +43,11 @@ public enum Command: Codable, Equatable, Sendable {
     /// Sets a track's send into a return track; nil removes the send.
     case setSend(track: TrackID, to: TrackID, db: Double?)
 
+    // MIDI
+    /// Makes `control` move `target`, replacing whatever it moved before.
+    case mapMIDI(MIDIControl, ParameterAddress)
+    case unmapMIDI(MIDIControl)
+
     // Clips
     case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
     case deleteClip(ClipID)
@@ -155,8 +160,9 @@ extension Command {
         case .removeTrack(let id):
             let t = try project.requireTrack(id)
             project.tracks.remove(at: t)
-            // Nothing may send into a return that is gone.
+            // Nothing may send into a return that is gone, and no controller may move its controls.
             for i in project.tracks.indices { project.tracks[i].sends.removeAll { $0.target == id } }
+            project.midiMappings.removeAll { $0.target.involves(id) }
 
         case let .renameTrack(id, name):
             let t = try project.requireTrack(id)
@@ -356,6 +362,22 @@ extension Command {
             } else {
                 project.tracks[t].sends.append(Send(target: targetID, levelDB: db))
             }
+
+        case let .mapMIDI(control, target):
+            guard control.isValid else {
+                throw CommandError.invalidValue(parameter: "control", reason: "channel 0…15, controller 0…127")
+            }
+            guard project.descriptor(for: target) != nil else {
+                throw CommandError.invalidValue(parameter: "target", reason: "names no parameter in this song")
+            }
+            project.midiMappings.removeAll { $0.control == control }
+            project.midiMappings.append(MIDIMapping(control: control, target: target))
+
+        case let .unmapMIDI(control):
+            guard project.midiMappings.contains(where: { $0.control == control }) else {
+                throw CommandError.invalidValue(parameter: "control", reason: "is not mapped")
+            }
+            project.midiMappings.removeAll { $0.control == control }
 
         case let .createClip(trackID, id, name, length):
             let t = try project.requireTrack(trackID)
