@@ -1,0 +1,322 @@
+import Foundation
+
+/// Every change to a `Project` is one of these. The UI, MIDI-learn and the agent all build
+/// commands and hand them to `ProjectStore`; nothing edits the document any other way.
+/// That single door is what makes undo, saving, controller mapping and the agent agree.
+public enum Command: Codable, Equatable, Sendable {
+    // Project
+    case renameProject(name: String)
+    case setTempo(bpm: Double)
+    case setTimeSignature(TimeSignature)
+
+    // Tracks
+    case addTrack(id: TrackID, name: String, kind: TrackKind, index: Int?)
+    case removeTrack(TrackID)
+    case renameTrack(TrackID, name: String)
+    case moveTrack(TrackID, toIndex: Int)
+    case setTrackColor(TrackID, colorIndex: Int)
+
+    // Mixer
+    case setVolume(MixerTarget, db: Double)
+    case setPan(MixerTarget, pan: Double)
+    case setMute(TrackID, Bool)
+    case setSolo(TrackID, Bool)
+
+    // Clips
+    case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
+    case deleteClip(ClipID)
+    case renameClip(ClipID, name: String)
+    case setClipLength(ClipID, length: Tick)
+
+    // Notes
+    case addNotes(ClipID, [Note])
+    case updateNotes(ClipID, [Note])
+    case removeNotes(ClipID, [NoteID])
+
+    // Arrangement
+    case placeClip(track: TrackID, id: PlacementID, clip: ClipID, start: Tick)
+    case movePlacement(track: TrackID, PlacementID, start: Tick)
+    case removePlacement(track: TrackID, PlacementID)
+
+    // Session
+    case addScene(id: SceneID, name: String, index: Int?)
+    case removeScene(SceneID)
+    case renameScene(SceneID, name: String)
+    case setSlot(track: TrackID, scene: SceneID, clip: ClipID?)
+}
+
+public enum MixerTarget: Codable, Equatable, Hashable, Sendable {
+    case track(TrackID)
+    case master
+}
+
+public enum CommandError: Error, Equatable, Sendable {
+    case unknownTrack(TrackID)
+    case unknownClip(ClipID)
+    case unknownPlacement(PlacementID)
+    case unknownScene(SceneID)
+    case unknownNote(NoteID)
+    case duplicateID(String)
+    case invalidValue(parameter: String, reason: String)
+}
+
+public enum Names {
+    public static let maximumLength = 128
+
+    /// Trimmed, non-empty, at most `maximumLength` characters.
+    static func validated(_ name: String, parameter: String) throws -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw CommandError.invalidValue(parameter: parameter, reason: "must not be empty")
+        }
+        guard trimmed.count <= maximumLength else {
+            throw CommandError.invalidValue(parameter: parameter, reason: "longer than \(maximumLength) characters")
+        }
+        return trimmed
+    }
+}
+
+extension Command {
+    /// Applies the command to `project`, or throws and leaves it untouched.
+    public func apply(to project: inout Project) throws {
+        switch self {
+        case .renameProject(let name):
+            project.name = try Names.validated(name, parameter: "name")
+
+        case .setTempo(let bpm):
+            guard bpm.isFinite, Tempo.range.contains(bpm) else {
+                throw CommandError.invalidValue(parameter: "bpm", reason: "must be within \(Tempo.range)")
+            }
+            project.tempo = bpm
+
+        case .setTimeSignature(let signature):
+            guard signature.isValid else {
+                throw CommandError.invalidValue(parameter: "timeSignature", reason: "numerator 1…32, denominator a power of two up to 32")
+            }
+            project.timeSignature = signature
+
+        case let .addTrack(id, name, kind, index):
+            guard project.trackIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
+            let track = Track(id: id, name: try Names.validated(name, parameter: "name"), kind: kind,
+                              colorIndex: project.tracks.count % Palette.trackColorCount)
+            let at = index ?? project.tracks.count
+            guard (0...project.tracks.count).contains(at) else {
+                throw CommandError.invalidValue(parameter: "index", reason: "must be within 0…\(project.tracks.count)")
+            }
+            project.tracks.insert(track, at: at)
+
+        case .removeTrack(let id):
+            let t = try project.requireTrack(id)
+            project.tracks.remove(at: t)
+
+        case let .renameTrack(id, name):
+            let t = try project.requireTrack(id)
+            project.tracks[t].name = try Names.validated(name, parameter: "name")
+
+        case let .moveTrack(id, toIndex):
+            let t = try project.requireTrack(id)
+            guard project.tracks.indices.contains(toIndex) else {
+                throw CommandError.invalidValue(parameter: "toIndex", reason: "must be within 0…\(project.tracks.count - 1)")
+            }
+            let track = project.tracks.remove(at: t)
+            project.tracks.insert(track, at: toIndex)
+
+        case let .setTrackColor(id, colorIndex):
+            let t = try project.requireTrack(id)
+            guard (0..<Palette.trackColorCount).contains(colorIndex) else {
+                throw CommandError.invalidValue(parameter: "colorIndex", reason: "must be within 0…\(Palette.trackColorCount - 1)")
+            }
+            project.tracks[t].colorIndex = colorIndex
+
+        case let .setVolume(target, db):
+            guard db.isFinite, MixerStrip.volumeRange.contains(db) else {
+                throw CommandError.invalidValue(parameter: "db", reason: "must be within \(MixerStrip.volumeRange)")
+            }
+            try project.withMixer(target) { $0.volumeDB = db }
+
+        case let .setPan(target, pan):
+            guard pan.isFinite, MixerStrip.panRange.contains(pan) else {
+                throw CommandError.invalidValue(parameter: "pan", reason: "must be within \(MixerStrip.panRange)")
+            }
+            try project.withMixer(target) { $0.pan = pan }
+
+        case let .setMute(id, muted):
+            let t = try project.requireTrack(id)
+            project.tracks[t].mixer.isMuted = muted
+
+        case let .setSolo(id, soloed):
+            let t = try project.requireTrack(id)
+            project.tracks[t].mixer.isSoloed = soloed
+
+        case let .createClip(trackID, id, name, length):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "MIDI clips belong on an instrument track")
+            }
+            guard project.clipLocation(id) == nil else { throw CommandError.duplicateID(id.description) }
+            try Self.validateLength(length)
+            project.tracks[t].clips.append(Clip(id: id, name: try Names.validated(name, parameter: "name"), length: length))
+
+        case .deleteClip(let id):
+            let (t, c) = try project.requireClip(id)
+            project.tracks[t].clips.remove(at: c)
+            project.tracks[t].placements.removeAll { $0.clip == id }
+            project.tracks[t].slots.removeAll { $0.clip == id }
+
+        case let .renameClip(id, name):
+            let (t, c) = try project.requireClip(id)
+            project.tracks[t].clips[c].name = try Names.validated(name, parameter: "name")
+
+        case let .setClipLength(id, length):
+            let (t, c) = try project.requireClip(id)
+            try Self.validateLength(length)
+            project.tracks[t].clips[c].length = length
+
+        case let .addNotes(id, notes):
+            let (t, c) = try project.requireClip(id)
+            var clip = project.tracks[t].clips[c]
+            var seen = Set(clip.notes.map(\.id))
+            for note in notes {
+                try Self.validate(note, in: clip)
+                guard seen.insert(note.id).inserted else { throw CommandError.duplicateID(note.id.description) }
+                clip.notes.append(note)
+            }
+            clip.notes.sort(by: Self.noteOrder)
+            project.tracks[t].clips[c] = clip
+
+        case let .updateNotes(id, notes):
+            let (t, c) = try project.requireClip(id)
+            var clip = project.tracks[t].clips[c]
+            for note in notes {
+                guard let n = clip.notes.firstIndex(where: { $0.id == note.id }) else {
+                    throw CommandError.unknownNote(note.id)
+                }
+                try Self.validate(note, in: clip)
+                clip.notes[n] = note
+            }
+            clip.notes.sort(by: Self.noteOrder)
+            project.tracks[t].clips[c] = clip
+
+        case let .removeNotes(id, noteIDs):
+            let (t, c) = try project.requireClip(id)
+            let existing = Set(project.tracks[t].clips[c].notes.map(\.id))
+            if let missing = noteIDs.first(where: { !existing.contains($0) }) {
+                throw CommandError.unknownNote(missing)
+            }
+            let doomed = Set(noteIDs)
+            project.tracks[t].clips[c].notes.removeAll { doomed.contains($0.id) }
+
+        case let .placeClip(trackID, id, clipID, start):
+            let t = try project.requireTrack(trackID)
+            guard project.tracks[t].clipIndex(clipID) != nil else { throw CommandError.unknownClip(clipID) }
+            guard project.tracks[t].placementIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
+            try Self.validateStart(start)
+            project.tracks[t].placements.append(Placement(id: id, clip: clipID, start: start))
+            project.tracks[t].placements.sort { $0.start < $1.start }
+
+        case let .movePlacement(trackID, id, start):
+            let t = try project.requireTrack(trackID)
+            guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
+            try Self.validateStart(start)
+            project.tracks[t].placements[p].start = start
+            project.tracks[t].placements.sort { $0.start < $1.start }
+
+        case let .removePlacement(trackID, id):
+            let t = try project.requireTrack(trackID)
+            guard let p = project.tracks[t].placementIndex(id) else { throw CommandError.unknownPlacement(id) }
+            project.tracks[t].placements.remove(at: p)
+
+        case let .addScene(id, name, index):
+            guard project.sceneIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
+            let at = index ?? project.scenes.count
+            guard (0...project.scenes.count).contains(at) else {
+                throw CommandError.invalidValue(parameter: "index", reason: "must be within 0…\(project.scenes.count)")
+            }
+            project.scenes.insert(Scene(id: id, name: try Names.validated(name, parameter: "name")), at: at)
+
+        case .removeScene(let id):
+            guard let s = project.sceneIndex(id) else { throw CommandError.unknownScene(id) }
+            project.scenes.remove(at: s)
+            for t in project.tracks.indices {
+                project.tracks[t].slots.removeAll { $0.scene == id }
+            }
+
+        case let .renameScene(id, name):
+            guard let s = project.sceneIndex(id) else { throw CommandError.unknownScene(id) }
+            project.scenes[s].name = try Names.validated(name, parameter: "name")
+
+        case let .setSlot(trackID, sceneID, clipID):
+            let t = try project.requireTrack(trackID)
+            guard project.sceneIndex(sceneID) != nil else { throw CommandError.unknownScene(sceneID) }
+            if let clipID, project.tracks[t].clipIndex(clipID) == nil {
+                throw CommandError.unknownClip(clipID)
+            }
+            project.tracks[t].slots.removeAll { $0.scene == sceneID }
+            if let clipID {
+                project.tracks[t].slots.append(SlotAssignment(scene: sceneID, clip: clipID))
+            }
+        }
+    }
+
+    private static func validateLength(_ length: Tick) throws {
+        guard length > 0, length <= MusicalTime.maximumTick else {
+            throw CommandError.invalidValue(parameter: "length", reason: "must be within 1…\(MusicalTime.maximumTick) ticks")
+        }
+    }
+
+    private static func validateStart(_ start: Tick) throws {
+        guard start >= 0, start <= MusicalTime.maximumTick else {
+            throw CommandError.invalidValue(parameter: "start", reason: "must be within 0…\(MusicalTime.maximumTick) ticks")
+        }
+    }
+
+    private static func validate(_ note: Note, in clip: Clip) throws {
+        guard Note.pitchRange.contains(note.pitch) else {
+            throw CommandError.invalidValue(parameter: "pitch", reason: "must be within \(Note.pitchRange)")
+        }
+        guard Note.velocityRange.contains(note.velocity) else {
+            throw CommandError.invalidValue(parameter: "velocity", reason: "must be within \(Note.velocityRange)")
+        }
+        guard note.start >= 0, note.start < clip.length else {
+            throw CommandError.invalidValue(parameter: "start", reason: "must lie inside the clip (0…\(clip.length - 1))")
+        }
+        guard note.length > 0, note.length <= MusicalTime.maximumTick else {
+            throw CommandError.invalidValue(parameter: "length", reason: "must be at least one tick")
+        }
+    }
+
+    /// Notes are kept sorted by start, then pitch, so the document has one canonical order
+    /// and two equal edits compare equal.
+    static func noteOrder(_ a: Note, _ b: Note) -> Bool {
+        if a.start != b.start { return a.start < b.start }
+        if a.pitch != b.pitch { return a.pitch < b.pitch }
+        return a.id.rawValue.uuidString < b.id.rawValue.uuidString
+    }
+}
+
+public enum Palette {
+    /// Number of track colours the UI offers. The document stores an index into them.
+    public static let trackColorCount = 12
+}
+
+extension Project {
+    func requireTrack(_ id: TrackID) throws -> Int {
+        guard let t = trackIndex(id) else { throw CommandError.unknownTrack(id) }
+        return t
+    }
+
+    func requireClip(_ id: ClipID) throws -> (Int, Int) {
+        guard let location = clipLocation(id) else { throw CommandError.unknownClip(id) }
+        return location
+    }
+
+    mutating func withMixer(_ target: MixerTarget, _ change: (inout MixerStrip) -> Void) throws {
+        switch target {
+        case .master:
+            change(&master)
+        case .track(let id):
+            let t = try requireTrack(id)
+            change(&tracks[t].mixer)
+        }
+    }
+}

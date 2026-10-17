@@ -1,0 +1,43 @@
+# EchoelStudio/ — the restart (2026-10-17)
+
+This directory is the new app. **The product, scope and architecture are defined in
+`docs/dev/NEUSTART_2026-10-17.md`; read it before any change here.** The root `CLAUDE.md`
+describes the legacy bio-instrument under `Sources/Echoelmusic` — its PRODUCT rules do not
+apply here. Its engineering lessons do, and the ones that matter are restated below so
+nothing has to be fished out of the long file.
+
+## Layout
+
+| Path | What | Depends on |
+|---|---|---|
+| `Core/` | Swift package `EchoelCore`: project document, commands, command catalog, undo, codec | Foundation, Observation |
+
+More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
+on modules below it — never the other way round.
+
+## Laws
+
+1. **One door.** The document changes only through `ProjectStore.perform`. UI, MIDI-learn
+   and the agent build `Command` values; nothing mutates `Project` directly.
+2. **A new command is three edits:** the case in `Command`, its `apply` branch, its
+   `CommandCatalog` entry (the compiler enforces the last one). Plus a test.
+3. **Catalog names are stable.** They are stored in MIDI mappings and agent transcripts.
+   Never rename one; add a new command instead.
+4. **Validate at the door.** `apply` rejects non-finite numbers, out-of-range values,
+   unknown and duplicate ids, and leaves the project untouched when it throws.
+5. **Render thread** (once the engine exists): no locks, no allocation, no ObjC, no file
+   I/O, no GCD. It reads a compiled playback plan, never the `Project`.
+6. **No hot state in a view body.** Playhead, meters, levels are read by small leaf views.
+7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum.
+8. **Tests test behaviour.** No test reads source text or prose.
+9. **Swift 6 language mode, strict concurrency.** No `print`, no force unwrap.
+
+## Verifying
+
+There is no Swift toolchain in a cloud session. The workflow `.github/workflows/studio.yml`
+runs `swift test` for `Core/` on macOS and builds it for iOS; read its job steps on the
+commit you pushed. On a Mac: `swift test --package-path EchoelStudio/Core`.
+
+⚠️ `EchoelStudio/**` is in no auto-merge path filter yet: a commit touching only this
+directory does not reach `main` by itself. That is deliberate until the Studio workflow is a
+merge gate.
