@@ -1229,3 +1229,8 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Datei eines Pakets importiert, was sie benutzt; die Nachbardateien vererben nichts.
   Nicht gerätegeprüft: Latenz, Startpositions-Schätzung (positionSample − Blockgröße), Picker-Dismiss.
   Nächstes: Audit der Render-Pfade (Agent), dann M3 AUv3-Host.
+- 14:30 UTC — **M3 Teil 1: AUv3-Instrument-Hosting** — HostedUnit (5679017), PluginHost + Sound-Seite
+  (9671dae), Plugin-Oberfläche + Zustand im Song (7e4155a), Run #42 grün (8484084). Rot zweimal: iOS braucht
+  `import AVFoundation` für `UnsafeMutableAudioBufferListPointer` und `import CoreAudioKit` für
+  `requestViewController` — macOS-`swift test` sieht beides nicht. Nichts gerätegeprüft.
+  Nächstes: Effekt-Inserts, Offline-Render mit Plugins.
