@@ -5,12 +5,14 @@ import SwiftUI
 /// go through commands.
 struct TrackListView: View {
     @Environment(ProjectStore.self) private var store
+    /// Opens a track's editor.
+    let open: (TrackID) -> Void
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 1) {
                 ForEach(store.project.tracks) { track in
-                    TrackRow(track: track)
+                    TrackRow(track: track, open: open)
                 }
                 AddTrackMenu()
                     .padding(Theme.Space.m)
@@ -23,6 +25,7 @@ struct TrackListView: View {
 struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
     let track: Track
+    let open: (TrackID) -> Void
 
     var body: some View {
         HStack(spacing: Theme.Space.m) {
@@ -40,13 +43,16 @@ struct TrackRow: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { if track.kind == .instrument { open(track.id) } }
             .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(track.kind == .instrument ? .isButton : [])
+            .accessibilityHint(track.kind == .instrument ? "Opens the note editor." : "")
             .accessibilityLabel("\(track.name), \(track.kind.displayName), \(Theme.Color.trackName(track.colorIndex))")
             .accessibilityAction(named: "Delete Track") {
                 try? store.perform(.removeTrack(track.id))
             }
-
-            Spacer(minLength: Theme.Space.s)
 
             Button {
                 try? store.perform(.setMute(track.id, !track.mixer.isMuted))

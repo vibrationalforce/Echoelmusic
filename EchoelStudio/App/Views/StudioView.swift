@@ -7,11 +7,18 @@ struct StudioView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
 
+    @State private var sheet: StudioSheet?
+
     var body: some View {
         VStack(spacing: 0) {
             TransportBar()
             Divider().overlay(Theme.Color.border)
-            TrackListView()
+            TrackListView { sheet = .clipEditor($0) }
+        }
+        .sheet(item: $sheet) { sheet in
+            switch sheet {
+            case .clipEditor(let track): ClipEditorView(trackID: track)
+            }
         }
         .background(Theme.Color.background)
         .onAppear { engine.update(store.project) }
