@@ -116,6 +116,7 @@ final class MIDIInput {
     @ObservationIgnored private var follower = ClockFollower()
     @ObservationIgnored private var lastTempoWrite: UInt64 = 0
     @ObservationIgnored private let engine: AudioEngine
+    @ObservationIgnored private let writer: ParameterWriter
     private static let followKey = "midi.clockIn.source"
     @ObservationIgnored private let timebase: (numer: UInt32, denom: UInt32) = {
         var info = mach_timebase_info_data_t()
@@ -125,10 +126,11 @@ final class MIDIInput {
     @ObservationIgnored private var gestureEnd: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
-    init(router: LiveRouter, store: ProjectStore, engine: AudioEngine) {
+    init(router: LiveRouter, store: ProjectStore, engine: AudioEngine, writer: ParameterWriter) {
         self.router = router
         self.store = store
         self.engine = engine
+        self.writer = writer
         if let stored = UserDefaults.standard.object(forKey: Self.followKey) as? Int {
             followedSource = MIDIUniqueID(truncatingIfNeeded: stored)
         }
@@ -217,18 +219,18 @@ final class MIDIInput {
                 continue
             }
             for mapping in store.project.midiMappings where mapping.control == control {
-                guard let descriptor = store.project.descriptor(for: mapping.target),
-                      let command = Command.setParameter(mapping.target,
-                                                         to: descriptor.value(forNormalized: Double(value) / 127)) else { continue }
-                // One undo step per turn of the knob: the step closes when it rests.
-                try? store.perform(command, coalescingKey: "midi.\(control.description)")
+                guard let descriptor = store.project.descriptor(for: mapping.target) else { continue }
+                // One undo step per turn of the knob: the step closes when it rests. With
+                // automation write armed, the turn is written into the lane.
+                writer.set(mapping.target, to: descriptor.value(forNormalized: Double(value) / 127),
+                           coalescingKey: "midi.\(control.description)")
             }
         }
         gestureEnd?.cancel()
         gestureEnd = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
-            self?.store.endGesture()
+            self?.writer.endGesture()
         }
     }
 

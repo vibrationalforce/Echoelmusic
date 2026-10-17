@@ -29,24 +29,11 @@ enum ParameterFormat {
     }
 }
 
-private extension ProjectStore {
-    func set(_ address: ParameterAddress, normalized: Double, gesture: Bool) {
-        guard let descriptor = project.descriptor(for: address),
-              let command = Command.setParameter(address, to: descriptor.value(forNormalized: normalized)) else { return }
-        try? perform(command, coalescingKey: gesture ? "parameter.\(address.description)" : nil)
-    }
-
-    func reset(_ address: ParameterAddress) {
-        guard let descriptor = project.descriptor(for: address),
-              let command = Command.setParameter(address, to: descriptor.defaultValue) else { return }
-        try? perform(command)
-    }
-}
-
 /// A vertical fader. Drag anywhere on it to set the level (the console law puts 0 dB at
 /// about 80 % of the travel); double-tap returns to 0 dB.
 struct Fader: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     var height: CGFloat = 180
 
@@ -76,17 +63,17 @@ struct Fader: View {
                 DragGesture(minimumDistance: 1)
                     .onChanged { drag in
                         let n = 1 - (drag.location.y - Self.thumbHeight / 2) / (height - Self.thumbHeight)
-                        store.set(address, normalized: Double(n), gesture: true)
+                        writer.set(address, normalized: Double(n), gesture: true)
                     }
-                    .onEnded { _ in store.endGesture() }
+                    .onEnded { _ in writer.endGesture() }
             )
-            .onTapGesture(count: 2) { store.reset(address) }
+            .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
             .accessibilityLabel(descriptor.title)
             .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
             .accessibilityAdjustableAction { direction in
                 let step = direction == .increment ? 0.02 : -0.02
-                store.set(address, normalized: position + step, gesture: false)
+                writer.set(address, normalized: position + step, gesture: false)
             }
             .midiLearnable(address)
         }
@@ -96,6 +83,7 @@ struct Fader: View {
 /// A horizontal pan control: drag left or right from where it is; double-tap centres it.
 struct PanControl: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     @State private var start: Double?
 
@@ -124,19 +112,19 @@ struct PanControl: View {
                     .onChanged { drag in
                         let origin = start ?? position
                         start = origin
-                        store.set(address, normalized: origin + Double(drag.translation.width / (Self.width * 2)), gesture: true)
+                        writer.set(address, normalized: origin + Double(drag.translation.width / (Self.width * 2)), gesture: true)
                     }
                     .onEnded { _ in
                         start = nil
-                        store.endGesture()
+                        writer.endGesture()
                     }
             )
-            .onTapGesture(count: 2) { store.reset(address) }
+            .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
             .accessibilityLabel(descriptor.title)
             .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
             .accessibilityAdjustableAction { direction in
-                store.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
+                writer.set(address, normalized: position + (direction == .increment ? 0.05 : -0.05), gesture: false)
             }
             .midiLearnable(address)
         }
@@ -148,6 +136,7 @@ struct PanControl: View {
 /// numeric control for every parameter that is not a fader or a pan.
 struct ParameterField: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     @State private var start: Double?
 
@@ -186,19 +175,19 @@ struct ParameterField: View {
                     .onChanged { drag in
                         let origin = start ?? position
                         start = origin
-                        store.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
+                        writer.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
                     }
                     .onEnded { _ in
                         start = nil
-                        store.endGesture()
+                        writer.endGesture()
                     }
             )
-            .onTapGesture(count: 2) { store.reset(address) }
+            .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
             .accessibilityLabel(title(descriptor))
             .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
             .accessibilityAdjustableAction { direction in
-                store.set(address, normalized: position + (direction == .increment ? 0.02 : -0.02), gesture: false)
+                writer.set(address, normalized: position + (direction == .increment ? 0.02 : -0.02), gesture: false)
             }
             .midiLearnable(address)
         }

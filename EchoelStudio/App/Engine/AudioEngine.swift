@@ -397,6 +397,12 @@ final class AudioEngine {
     /// The playhead in samples. For a small leaf view that polls it, never a view body.
     var positionSample: Int64 { core?.positionSample ?? 0 }
 
+    /// The playhead as a song position. For actions, never a view body.
+    func playheadTick(in project: Project) -> Tick {
+        guard let core else { return 0 }
+        return TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate).tick(atSample: core.positionSample)
+    }
+
     private func publish(_ project: Project) {
         guard let core else { return }
         slots.update(for: project)

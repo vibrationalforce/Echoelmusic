@@ -71,6 +71,7 @@ struct TransportBar: View {
     @Environment(DocumentController.self) private var documents
     @Environment(RecordController.self) private var recording
     @Environment(MIDIInput.self) private var midi
+    @Environment(ParameterWriter.self) private var writer
     @State private var clickOn = true
 
     var body: some View {
@@ -103,6 +104,14 @@ struct TransportBar: View {
             .accessibilityValue(clickOn ? "On" : "Off")
 
             MIDILearnButton()
+
+            Button { writer.setWriting(!writer.isWriting) } label: {
+                Text("A").font(Theme.Font.label)
+            }
+            .buttonStyle(ToolButtonStyle(isActive: writer.isWriting, activeColor: Theme.Color.record))
+            .accessibilityLabel("Write Automation")
+            .accessibilityValue(writer.isWriting ? "On" : "Off")
+            .accessibilityHint("While playing, moving a control writes it into the song.")
 
             Spacer(minLength: Theme.Space.s)
 
