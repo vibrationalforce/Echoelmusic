@@ -46,7 +46,8 @@ on modules below it — never the other way round.
 - **Every new file imports what it uses.** A sibling file's `import EchoelCore` does not reach
   it; `Tick` and `TimeConversion` were "not in scope" in a fresh Engine file. And a package
   that passes `swift test` on macOS can still fail for iOS: `UnsafeMutableAudioBufferListPointer`
-  comes with `import AudioToolbox` on macOS only; on iOS it needs `import AVFoundation`.
+  comes with `import AudioToolbox` on macOS only; on iOS it needs `import AVFoundation`. `AUAudioUnit.requestViewController` needs
+  `import CoreAudioKit` — the legacy target only compiled because another file imported it.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
 

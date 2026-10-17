@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreAudioKit
 import UIKit
 import EchoelCore
 import EchoelEngine
