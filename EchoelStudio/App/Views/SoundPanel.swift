@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 struct SoundPanel: View {
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
+    @Environment(AudioEngine.self) private var engine
     let track: Track
 
     @State private var isPickingFile = false
@@ -29,10 +30,9 @@ struct SoundPanel: View {
                 case .synth:
                     synthControls
                 case .plugin:
-                    Text("Plays \(track.instrument.plugin?.name ?? "a plugin"). Hosting plugins arrives in the next update; until then this track is silent.")
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.textSecondary)
+                    pluginStatus
                 }
+                pluginMenu
             }
             .padding(Theme.Space.l)
         }
@@ -53,6 +53,47 @@ struct SoundPanel: View {
         }
         .pickerStyle(.segmented)
         .accessibilityLabel("Instrument")
+    }
+
+    /// Every installed Audio Unit instrument; choosing one plays this track through it.
+    private var pluginMenu: some View {
+        let host = engine.plugins
+        return Menu {
+            if host.instruments.isEmpty {
+                Text("No Audio Unit instruments installed")
+            }
+            ForEach(host.instruments, id: \.self) { component in
+                Button("\(component.name) — \(component.manufacturerName)") { choose(component) }
+            }
+        } label: {
+            Label("Audio Unit Instrument…", systemImage: "puzzlepiece.extension")
+                .font(Theme.Font.body)
+        }
+        .accessibilityHint("Plays this track through an installed Audio Unit instrument")
+    }
+
+    /// The chosen plugin and the switch to it, as one undo step.
+    private func choose(_ component: PluginComponent) {
+        try? store.perform([.setInstrumentPlugin(track.id, component), .setInstrumentDevice(track.id, .plugin)],
+                           title: "Choose Plugin")
+    }
+
+    @ViewBuilder private var pluginStatus: some View {
+        let host = engine.plugins
+        let name = track.instrument.plugin?.name ?? "A plugin"
+        Group {
+            if let problem = host.problems[track.id] {
+                Text(problem)
+            } else if host.loadingTracks.contains(track.id) {
+                Text("Loading \(name)…")
+            } else if host.revision >= 0 && host.units[track.id] != nil {
+                Text("Plays \(name). Notes reach it on the exact frame they fall on.")
+            } else {
+                Text("\(name) is not loaded yet.")
+            }
+        }
+        .font(Theme.Font.caption)
+        .foregroundStyle(Theme.Color.textSecondary)
     }
 
     @ViewBuilder private var samplerControls: some View {

@@ -1,4 +1,5 @@
 import AudioToolbox
+import AVFoundation
 import Foundation
 
 /// An Audio Unit instrument the engine plays from inside its own render pass: the sequencer

@@ -33,7 +33,18 @@ final class AudioEngine {
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
+    /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
+    /// of the graph this class builds.
+    let plugins: PluginHost
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
+
+    init() {
+        plugins = PluginHost()
+        plugins.onUnitsChanged = { [weak self] in
+            guard let self, let project = self.project else { return }
+            self.publish(project)
+        }
+    }
 
     func start() {
         guard !isRunning else { return }
@@ -221,10 +232,11 @@ final class AudioEngine {
     private func publish(_ project: Project) {
         guard let core else { return }
         slots.update(for: project)
+        plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
-                                    samples: samples))
+                                    samples: samples, units: plugins.units))
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

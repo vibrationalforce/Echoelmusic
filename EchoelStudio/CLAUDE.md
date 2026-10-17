@@ -44,7 +44,9 @@ on modules below it — never the other way round.
   and many modifiers exceeds the type checker's time limit; a property per region and a
   function per row/cell fix it.
 - **Every new file imports what it uses.** A sibling file's `import EchoelCore` does not reach
-  it; `Tick` and `TimeConversion` were "not in scope" in a fresh Engine file.
+  it; `Tick` and `TimeConversion` were "not in scope" in a fresh Engine file. And a package
+  that passes `swift test` on macOS can still fail for iOS: `UnsafeMutableAudioBufferListPointer`
+  comes with `import AudioToolbox` on macOS only; on iOS it needs `import AVFoundation`.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
 
