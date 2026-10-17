@@ -1269,3 +1269,10 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Audio tracks get session slots (shared pool, after instrument tracks); an empty slot imports a file as a clip; loop length 1/2/4/8/16 bars, passes computed from the launch tick.
 - Launch, stop and return to the arrangement switch at their sample and crossfade over 64 frames (run #78 caught that the return was applied before the render — fixed in d335f4d).
 - NOT device-verified: audio loop timing and the feel of the crossfade.
+
+## 2026-10-17 23:50 — EchoelStudio: input monitoring + the four standard effects (CI green, studio.yml #83 on 85792f5)
+- `track.monitor` auto/in/off; `InputMonitor` (one ring per input, ≤512 samples waiting, silence for what has not arrived) plays the input through the track's strip, also while stopped; auto never into the built-in speaker (route observer republishes).
+- DSP: `StereoDelay` (tape glide, ping-pong, damped feedback), `Reverb` (pre-delay, 4 allpasses, 8-line Householder FDN, decay-derived line gains), `ParametricEQ` (5 RBJ bands, flat = bit-exact), `Compressor` (stereo-linked, soft knee, makeup, mix).
+- Engine: `EffectKernel` (parameters in atomics, applied per block) + `StandardEffectUnit` (one in-process AUAudioUnit for all four, registered at launch); App: FX menu "Echoel" section, `StandardEffectPanel` with log-scale frequency fields and a reduction meter.
+- Caught by CI: a delay restored with its settings swept from the default (#82) — settings now apply at once before the first sample.
+- NOT device-verified: monitoring latency, auto vs speaker route, how the effects sound, that iOS instantiates the registered subclass.
