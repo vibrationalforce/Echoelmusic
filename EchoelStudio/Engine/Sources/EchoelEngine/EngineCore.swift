@@ -496,8 +496,10 @@ public final class EngineCore: @unchecked Sendable {
         let tick = snapshot.time.tick(atSample: playhead)
         switch action {
         case .backToArrangement:
-            sessions[slot] = SessionSlot()
-            report(slot, nil, .arrangement)
+            // At once, but through `renderAudio`, so what played fades into the regions.
+            sessions[slot].pending = .arrangement
+            sessions[slot].pendingTick = tick
+            if !playing { fireAudio(lane) }
             return
         case .launch(let clip):
             sessions[slot].pending = .launch(clip)
@@ -535,6 +537,10 @@ public final class EngineCore: @unchecked Sendable {
         case .stop:
             report(slot, session.clip, .stopped)
             session.clip = nil
+        case .arrangement:
+            sessions[slot] = SessionSlot()
+            report(slot, nil, .arrangement)
+            return
         }
         session.pending = .none
         sessions[slot] = session
@@ -571,6 +577,9 @@ public final class EngineCore: @unchecked Sendable {
             report(lane.slot, session.clip, .stopped)
             session.clip = nil
             session.index = -1
+        case .arrangement:
+            // Only audio slots return through a pending state.
+            session = SessionSlot()
         }
         session.pending = .none
         sessions[lane.slot] = session

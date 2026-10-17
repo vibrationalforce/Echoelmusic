@@ -35,7 +35,8 @@ public struct LaunchReport: Sendable, Equatable {
 
 /// Render-thread state of one slot's session clip.
 struct SessionSlot {
-    enum Pending { case none, launch(ClipID), stop }
+    /// `arrangement` is an audio slot's return, taken at its sample so it crossfades.
+    enum Pending { case none, launch(ClipID), stop, arrangement }
 
     /// The arrangement is muted for the slot.
     var overrides = false
