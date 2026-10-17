@@ -181,6 +181,37 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNotNil(firstSound(render(mono, frames: 4_800, channels: 1)[0]), "one channel gets the mix")
     }
 
+    func testMIDIClockStartsTicks24PerQuarterAndRepositionsOnASeek() throws {
+        let s = try song([[]])
+        let engine = core()
+        publish(s.project, to: engine)
+        _ = render(engine, frames: 4_800)
+        XCTAssertNil(engine.clockOut.pop(), "nothing is timed until clock out is on")
+
+        engine.setClockOutEnabled(true)
+        engine.play()
+        _ = render(engine, frames: 48_000, block: 48_000)
+        var messages: [TimedMIDIMessage] = []
+        while let message = engine.clockOut.pop() { messages.append(message) }
+        XCTAssertEqual(messages.first?.status, 0xFA, "playing from the top is a Start")
+        let clocks = messages.filter { $0.status == 0xF8 }
+        // 120 BPM: a quarter is 24 000 samples, a clock every 1 000.
+        XCTAssertEqual(clocks.count, 48)
+        XCTAssertEqual(clocks.prefix(3).map(\.frame), [0, 1_000, 2_000])
+
+        engine.seek(toSample: 96_000)                  // bar 2 = sixteenth 16
+        _ = render(engine, frames: 256)
+        let repositioned = Array(sequence(state: engine.clockOut) { $0.pop() }.prefix(3))
+        XCTAssertEqual(repositioned.map(\.status), [0xFC, 0xF2, 0xFB])
+        XCTAssertEqual(repositioned[1].bytes, [0xF2, 16, 0])
+
+        engine.stop()
+        while engine.clockOut.pop() != nil {}
+        _ = render(engine, frames: 256)
+        XCTAssertEqual(engine.clockOut.pop()?.status, 0xFC)
+        XCTAssertNil(engine.clockOut.pop(), "no clock while stopped")
+    }
+
     func testANoteAfterATempoChangeLandsWhereTheMapSays() throws {
         var s = try song([[Note(pitch: 60, start: bar + 960, length: 480)]])
         try Command.setTempoChange(at: bar, bpm: 60).apply(to: &s.project)

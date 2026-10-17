@@ -35,6 +35,13 @@ public final class EngineCore: @unchecked Sendable {
     private let position = Atomic<Int64>(0)
     /// Controller → render: notes played live, each packed as slot · status · data1 · data2.
     private let live = EventRing()
+    private let clockFlag = Atomic<Bool>(false)
+    /// Render → MIDI sender: clock (24 per quarter), start/continue/stop and song position,
+    /// written only while `setClockOutEnabled(true)`.
+    public let clockOut = MIDIClockRing()
+
+    /// MIDI clock ticks per quarter note.
+    public static let clocksPerQuarter: Tick = 24
 
     // Render thread only.
     private var current: SnapshotBox?
@@ -64,6 +71,10 @@ public final class EngineCore: @unchecked Sendable {
     private var playhead: Int64 = 0
     private var wasPlaying = false
     private var nextBeat: Tick = 0
+    private var nextClock: Tick = 0
+    /// Host time of the current render call, and where the current chunk starts in it.
+    private var callHostTime: UInt64 = 0
+    private var chunkStart = 0
 
     // Main thread only.
     private var published: [SnapshotBox] = []
@@ -167,6 +178,10 @@ public final class EngineCore: @unchecked Sendable {
 
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
 
+    /// Whether the render thread times MIDI clock into `clockOut`. Off while nothing reads it,
+    /// so the ring never fills up.
+    public func setClockOutEnabled(_ enabled: Bool) { clockFlag.store(enabled, ordering: .relaxed) }
+
     // MARK: - Controller thread
 
     /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
@@ -182,9 +197,13 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Render thread
 
     /// Writes `frameCount` frames into `left` and `right` (overwriting them).
-    public func render(frameCount: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    /// `hostTime` is when the first frame plays; it stamps the MIDI clock this call produces.
+    public func render(frameCount: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
+                       hostTime: UInt64 = 0) {
+        callHostTime = hostTime
         var done = 0
         while done < frameCount {
+            chunkStart = done
             let frames = Swift.min(frameCount - done, Self.maximumFrames)
             outputs[0] = left + done
             outputs[1] = right + done
@@ -197,13 +216,16 @@ public final class EngineCore: @unchecked Sendable {
     /// Writes `frameCount` frames into each of `channelCount` channels (overwriting them):
     /// the master mix on 1/2, each routed track added into its own pair. A pair the device lacks
     /// plays in the master mix; one channel gets the mix folded to mono.
-    public func render(frameCount: Int, channels: UnsafePointer<UnsafeMutablePointer<Float>>, channelCount: Int) {
+    public func render(frameCount: Int, channels: UnsafePointer<UnsafeMutablePointer<Float>>, channelCount: Int,
+                       hostTime: UInt64 = 0) {
         guard channelCount > 0 else { return }
+        callHostTime = hostTime
         let used = Swift.min(channelCount, Track.outputChannelLimit)
         for c in used..<channelCount { channels[c].update(repeating: 0, count: frameCount) }
         var done = 0
         while done < frameCount {
             let frames = Swift.min(frameCount - done, Self.maximumFrames)
+            chunkStart = done
             for c in 0..<used { outputs[c] = channels[c] + done }
             if used == 1 { outputs[1] = monoRight }
             outputCount = Swift.max(used, 2)
@@ -237,6 +259,8 @@ public final class EngineCore: @unchecked Sendable {
         }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)
+        let clocking = clockFlag.load(ordering: .relaxed)
+        if clocking { sendTransport(playing: playing, sought: seek >= 0) }
         if wasPlaying, !playing { releaseAllNotes() }
         if !wasPlaying, playing { resync() }
         wasPlaying = playing
@@ -295,6 +319,7 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
+        if clocking { sendClocks(snapshot, blockEnd: blockEnd) }
         renderUnits(frames: frames)
         mixLanes(frames: frames)
         renderAudio(snapshot, frames: frames)
@@ -392,6 +417,44 @@ public final class EngineCore: @unchecked Sendable {
         var beat = (tick / beatTicks) * beatTicks
         if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
         nextBeat = beat
+        let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter
+        var clock = ((tick + clockTicks - 1) / clockTicks) * clockTicks
+        if snapshot.time.sample(at: clock) < playhead { clock += clockTicks }
+        nextClock = clock
+    }
+
+    private func emit(_ status: UInt8, _ data1: UInt8 = 0, _ data2: UInt8 = 0, at offset: Int = 0) {
+        clockOut.push(TimedMIDIMessage(hostTime: callHostTime, frame: chunkStart + offset,
+                                       status: status, data1: data1, data2: data2))
+    }
+
+    /// Start from the top, or stop · song position · continue from anywhere else, so a device
+    /// following the clock lands on the same sixteenth.
+    private func sendTransport(playing: Bool, sought: Bool) {
+        if wasPlaying, !playing {
+            emit(0xFC)
+            return
+        }
+        guard playing, !wasPlaying || sought else { return }
+        if !wasPlaying, playhead == 0 {
+            emit(0xFA)
+            return
+        }
+        if wasPlaying { emit(0xFC) }
+        let tick = current?.snapshot.time.tick(atSample: playhead) ?? 0
+        let sixteenth = Swift.min(Swift.max(tick / (MusicalTime.ticksPerQuarter / 4), 0), 0x3FFF)
+        emit(0xF2, UInt8(sixteenth & 0x7F), UInt8(sixteenth >> 7))
+        emit(0xFB)
+    }
+
+    private func sendClocks(_ snapshot: EngineSnapshot, blockEnd: Int64) {
+        let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter
+        while true {
+            let sample = snapshot.time.sample(at: nextClock)
+            guard sample < blockEnd else { break }
+            emit(0xF8, at: Int(Swift.max(sample - playhead, 0)))
+            nextClock += clockTicks
+        }
     }
 
     private func releaseAllNotes() {
