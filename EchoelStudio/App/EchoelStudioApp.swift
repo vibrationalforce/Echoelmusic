@@ -8,6 +8,7 @@ struct EchoelStudioApp: App {
     @State private var documents: DocumentController
     @State private var recording: RecordController
     @State private var plugins = StoreController()
+    @State private var midi: MIDIInput
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -18,6 +19,7 @@ struct EchoelStudioApp: App {
         _engine = State(initialValue: engine)
         _documents = State(initialValue: documents)
         _recording = State(initialValue: RecordController(engine: engine, documents: documents))
+        _midi = State(initialValue: MIDIInput(router: engine.live))
     }
 
     var body: some SwiftUI.Scene {
@@ -28,10 +30,12 @@ struct EchoelStudioApp: App {
                 .environment(documents)
                 .environment(recording)
                 .environment(plugins)
+                .environment(midi)
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
                     engine.start()
+                    midi.start()
                 }
                 .onChange(of: store.project) { _, project in
                     documents.projectChanged()

@@ -24,6 +24,7 @@ struct TrackListView: View {
 
 struct TrackRow: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     let track: Track
     let open: (TrackID) -> Void
 
@@ -55,6 +56,17 @@ struct TrackRow: View {
             }
 
             if track.kind == .audio { ArmButton(track: track) }
+            if track.kind == .instrument {
+                let isLive = engine.liveTrackID(in: store.project) == track.id
+                Button {
+                    engine.setLiveTrack(track.id)
+                } label: {
+                    Image(systemName: "pianokeys")
+                }
+                .buttonStyle(ToolButtonStyle(isActive: isLive))
+                .accessibilityLabel("Play \(track.name) from MIDI")
+                .accessibilityValue(isLive ? "On" : "Off")
+            }
 
             Button {
                 try? store.perform(.setMute(track.id, !track.mixer.isMuted))

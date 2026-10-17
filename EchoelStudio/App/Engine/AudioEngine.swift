@@ -36,6 +36,15 @@ final class AudioEngine {
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
     let plugins: PluginHost
+    /// Where a controller's notes go; the MIDI input reads it.
+    let live = LiveRouter()
+    /// The instrument track a controller plays. Nil: the first instrument track.
+    private(set) var liveTrack: TrackID?
+
+    func setLiveTrack(_ track: TrackID?) {
+        liveTrack = track
+        if let project { publish(project) }
+    }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
     init() {
@@ -232,11 +241,22 @@ final class AudioEngine {
     private func publish(_ project: Project) {
         guard let core else { return }
         slots.update(for: project)
+        live.set(core: core, slot: liveSlot(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         core.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                     slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
                                     samples: samples, units: plugins.units, effects: plugins.chains))
+    }
+
+    /// The track that plays live: the chosen one while it exists, else the first instrument track.
+    func liveTrackID(in project: Project) -> TrackID? {
+        if let liveTrack, project.track(liveTrack)?.kind == .instrument { return liveTrack }
+        return project.tracks.first { $0.kind == .instrument }?.id
+    }
+
+    private func liveSlot(in project: Project) -> Int? {
+        liveTrackID(in: project).flatMap { slots.slots[$0] }
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

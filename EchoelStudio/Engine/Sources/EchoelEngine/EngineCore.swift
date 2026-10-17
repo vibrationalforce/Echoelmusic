@@ -32,6 +32,8 @@ public final class EngineCore: @unchecked Sendable {
     // Render → main.
     private let acknowledged = Atomic<UInt64>(0)
     private let position = Atomic<Int64>(0)
+    /// Controller → render: notes played live, each packed as slot · status · data1 · data2.
+    private let live = EventRing()
 
     // Render thread only.
     private var current: SnapshotBox?
@@ -152,6 +154,15 @@ public final class EngineCore: @unchecked Sendable {
 
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
 
+    // MARK: - Controller thread
+
+    /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
+    /// the next block. One thread only — the MIDI input's. Note on/off and controllers 120/123.
+    public func playLive(slot: Int, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
+        guard slot >= 0, slot < slotCapacity, slot <= 0xFF else { return }
+        live.push(UInt32(slot) << 24 | UInt32(status) << 16 | UInt32(data1 & 0x7F) << 8 | UInt32(data2 & 0x7F))
+    }
+
     /// The playhead in samples, for a small leaf view — never for a view body that hosts menus.
     public var positionSample: Int64 { position.load(ordering: .relaxed) }
 
@@ -180,6 +191,7 @@ public final class EngineCore: @unchecked Sendable {
             releaseAllNotes()
             resync()
         }
+        playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)
         if wasPlaying, !playing { releaseAllNotes() }
         if !wasPlaying, playing { resync() }
@@ -293,6 +305,36 @@ public final class EngineCore: @unchecked Sendable {
         releaseAllNotes()
         resync()
         acknowledged.store(snapshot.generation, ordering: .releasing)
+    }
+
+    private func playLiveEvents() {
+        while let event = live.pop() {
+            let slot = Int(event >> 24)
+            let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
+            guard slot < slotCapacity else { continue }
+            let kind = status & 0xF0
+            let on = kind == 0x90 && value > 0
+            let off = kind == 0x80 || (kind == 0x90 && value == 0)
+            let allOff = kind == 0xB0 && (pitch == 123 || pitch == 120)
+            switch devices[slot] {
+            case .synth:
+                if on { synths[slot].noteOn(pitch: pitch, velocity: value) }
+                if off { synths[slot].noteOff(pitch: pitch) }
+                if allOff { synths[slot].allNotesOff() }
+            case .drums:
+                if on { drums[slot].noteOn(pitch: pitch, velocity: value) }
+                if off { drums[slot].noteOff(pitch: pitch) }
+            case .sampler:
+                if on { samplers[slot].noteOn(pitch: pitch, velocity: value) }
+                if off { samplers[slot].noteOff(pitch: pitch) }
+                if allOff { samplers[slot].allNotesOff() }
+            case .plugin:
+                guard let unit = current?.snapshot.lanes.first(where: { $0.slot == slot })?.unit else { continue }
+                if on { unit.noteOn(pitch: pitch, velocity: value, offset: 0) }
+                if off { unit.noteOff(pitch: pitch, offset: 0) }
+                if allOff { unit.allNotesOff() }
+            }
+        }
     }
 
     /// Points every cursor and the beat counter at the playhead.

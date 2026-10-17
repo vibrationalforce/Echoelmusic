@@ -63,6 +63,21 @@ final class EngineCoreTests: XCTestCase {
         return core
     }
 
+    func testALiveNoteSoundsWhileStoppedAndAllNotesOffReleasesIt() throws {
+        let tune = try song([[]])
+        let engine = core()
+        publish(tune.project, to: engine)
+        _ = render(engine, frames: 256)
+        XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "silent before a key is played")
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        XCTAssertNotNil(firstSound(render(engine, frames: 1_024).left))
+        engine.playLive(slot: 0, status: 0x90, 60, 0)
+        _ = render(engine, frames: 48_000)
+        XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "velocity 0 is a note off")
+        engine.playLive(slot: 99, status: 0x90, 60, 100)
+        XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "a slot that does not exist plays nothing")
+    }
+
     func testANoteStartsOnItsSample() throws {
         let s = try song([[Note(pitch: 60, start: 960, length: 960)]])
         let core = core()
