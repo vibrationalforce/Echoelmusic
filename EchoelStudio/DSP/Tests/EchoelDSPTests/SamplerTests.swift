@@ -96,4 +96,23 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(sampler.activeVoiceCount, 2)
         XCTAssertTrue(render(&sampler, frames: 4_800).allSatisfy(\.isFinite))
     }
+
+    func testAStretchReadsOnlyItsFramesAndDoesNotDependOnTheBlockSplit() throws {
+        let ramp = (0..<1_000).map { Float($0) }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: ramp, sampleRate: 48_000))
+        func read(elapsed: Int64, count: Int) -> [Float] {
+            var out = [Float](repeating: 0, count: count)
+            out.withUnsafeMutableBufferPointer {
+                buffer.add(into: $0, elapsed: elapsed, step: 0.75, offset: 100, length: 300, fade: 0)
+            }
+            return out
+        }
+        let whole = read(elapsed: -10, count: 500)
+        XCTAssertTrue(whole[..<10].allSatisfy { $0 == 0 }, "nothing before the stretch")
+        XCTAssertEqual(whole[10], 100, "starts at the offset")
+        XCTAssertEqual(whole[14], 103, accuracy: 1e-4, "steps at the given rate")
+        XCTAssertTrue(whole[410...].allSatisfy { $0 == 0 }, "nothing after the stretch's 400 output frames")
+        XCTAssertEqual(read(elapsed: -10, count: 137) + read(elapsed: 127, count: 363), whole)
+    }
+
 }

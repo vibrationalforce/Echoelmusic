@@ -198,6 +198,7 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
+        renderAudio(snapshot, frames: frames, left: left, right: right)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
     }
@@ -267,6 +268,35 @@ public final class EngineCore: @unchecked Sendable {
         for slot in 0..<slotCapacity {
             synths[slot].allNotesOff()
             samplers[slot].allNotesOff()
+        }
+    }
+
+    /// Output frames of fade at each edge of an audio region.
+    static let regionFadeFrames: Double = 64
+
+    /// Audio regions are read straight from the snapshot at the playhead — no voices, no state —
+    /// so a seek or an edit lands on the right frame at once.
+    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, left: UnsafeMutablePointer<Float>,
+                             right: UnsafeMutablePointer<Float>) {
+        let blockEnd = playhead + Int64(frames)
+        for lane in snapshot.audioLanes where lane.gainLeft != 0 || lane.gainRight != 0 {
+            for region in lane.regions {
+                guard region.startSample < blockEnd else { break }
+                guard region.endSample > playhead else { continue }
+                let first = Int(Swift.max(region.startSample - playhead, 0))
+                let count = Int(Swift.min(region.endSample, blockEnd) - playhead) - first
+                guard count > 0 else { continue }
+                let mono = scratch + first
+                mono.update(repeating: 0, count: count)
+                region.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count),
+                                  elapsed: playhead + Int64(first) - region.startSample, step: region.step,
+                                  offset: region.offset, length: region.length,
+                                  fade: Self.regionFadeFrames * region.step)
+                for i in 0..<count {
+                    left[first + i] += mono[i] * lane.gainLeft
+                    right[first + i] += mono[i] * lane.gainRight
+                }
+            }
         }
     }
 

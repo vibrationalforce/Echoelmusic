@@ -21,11 +21,36 @@ public struct EngineSnapshot: Sendable {
         public let sample: SampleBuffer?
     }
 
+    /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
+    public struct AudioLane: Sendable {
+        public let track: TrackID
+        public let gainLeft: Float
+        public let gainRight: Float
+        /// Sorted by `startSample`. Overlapping regions both sound.
+        public let regions: [Region]
+    }
+
+    /// An audio region in output samples. The buffer is held by the snapshot, as for samplers.
+    public struct Region: Sendable {
+        public let startSample: Int64
+        /// One past the last output sample the region writes.
+        public let endSample: Int64
+        public let buffer: SampleBuffer
+        /// First frame of the buffer that plays, and how many play.
+        public let offset: Double
+        public let length: Double
+        /// Buffer frames per output sample: the file plays at its own speed at any output rate.
+        public let step: Double
+    }
+
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
     public let generation: UInt64
     public let time: TimeConversion
     public let timeSignature: TimeSignature
     public let lanes: [Lane]
+    public let audioLanes: [AudioLane]
+    /// One past the last output sample any audio region writes; 0 without audio.
+    public let audioEnd: Int64
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -36,6 +61,16 @@ public struct EngineSnapshot: Sendable {
         timeSignature = project.timeSignature
         let anySolo = project.tracks.contains { $0.mixer.isSoloed }
         let master = project.master
+        let conversion = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
+        audioLanes = project.tracks.filter { $0.kind == .audio }.map { track in
+            let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
+            let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
+            let regions = track.regions.compactMap { region in
+                Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
+            }
+            return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions)
+        }
+        audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         lanes = plan.tracks.compactMap { events in
             guard let slot = slots[events.track], let track = project.track(events.track) else { return nil }
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
@@ -44,6 +79,20 @@ public struct EngineSnapshot: Sendable {
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil)
         }
+    }
+
+    /// Nil when the file is not loaded or nothing of the region falls inside the loaded file
+    /// (the file on disk may be shorter than when it was measured).
+    static func resolve(_ region: AudioRegion, samples: [MediaID: SampleBuffer], time: TimeConversion,
+                        sampleRate: Double) -> Region? {
+        guard let buffer = samples[region.media], sampleRate > 0, sampleRate.isFinite else { return nil }
+        let length = Swift.min(region.length, buffer.frameCount - region.offset)
+        guard region.offset >= 0, length > 0 else { return nil }
+        let step = buffer.sampleRate / sampleRate
+        let start = time.sample(at: region.start)
+        let end = start + Int64((Double(length) / step).rounded(.up))
+        return Region(startSample: start, endSample: end, buffer: buffer, offset: Double(region.offset),
+                      length: Double(length), step: step)
     }
 
     /// Track fader × master fader; constant-power track pan, master pan as a balance.

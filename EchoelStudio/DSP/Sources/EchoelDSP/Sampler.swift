@@ -31,6 +31,36 @@ public final class SampleBuffer: @unchecked Sendable {
     }
 }
 
+extension SampleBuffer {
+    /// Adds a stretch of the sample — `length` frames from frame `offset` — into `buffer`, as
+    /// heard `elapsed` output frames after the stretch began, advancing `step` sample frames per
+    /// output frame with linear interpolation. Output frames before the stretch or after its end
+    /// (or the sample's) add nothing. Each read position is computed from its output index, never
+    /// accumulated, so the result does not depend on how the output is split into blocks.
+    /// Within `fade` sample frames of either edge the level ramps from silence, so a stretch
+    /// that starts or stops mid-waveform never clicks. Render-thread safe.
+    public func add(into buffer: UnsafeMutableBufferPointer<Float>, elapsed: Int64, step: Double,
+                    offset: Double, length: Double, fade: Double) {
+        guard step.isFinite, step > 0, offset.isFinite, offset >= 0, length.isFinite, length > 0 else { return }
+        let stop = Swift.min(offset + length, Double(frameCount))
+        for i in buffer.indices {
+            let frame = elapsed + Int64(i)
+            guard frame >= 0 else { continue }
+            let read = offset + Double(frame) * step
+            guard read < stop else { return }
+            let index = Int(read)
+            let a = frames[index]
+            let b = index + 1 < frameCount ? frames[index + 1] : a
+            var value = a + (b - a) * Float(read - Double(index))
+            if fade > 0 {
+                let edge = Swift.min(read - offset, stop - read)
+                if edge < fade { value *= Float(edge / fade) }
+            }
+            buffer[i] += value
+        }
+    }
+}
+
 public struct SamplerPatch: Equatable, Sendable {
     public var envelope: Envelope.Settings
     /// Play to the end of the sample regardless of note-off — the drum-pad behaviour.
