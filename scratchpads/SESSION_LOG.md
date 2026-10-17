@@ -1258,3 +1258,9 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - App: the Automate menu has one submenu per loaded unit, using the unit's own parameter names.
 - Fix along the way: all automation is now read at the fractional song position (before: whole ticks, so the steps were uneven).
 - NOT device-verified: a filter sweep on a third-party synth (M4 criterion), and how well individual plugins handle ramps.
+
+## 2026-10-17 22:55 — EchoelStudio: plugin controls, input selection, Launchpad (CI green to #75)
+- Write mode "A" also records moves made in a plugin's own UI (AUParameter automation observer, touch → release = one pass); MIDI Learn: moving a plugin control picks the target; a mapped controller sets the plugin directly (originator token, no echo).
+- `track.input` + "In" menu; the session requests every input; the recorder takes the chosen channel (per-channel or interleaved).
+- `ClipGrid` + `Launchpad` + `UniversalMIDI` (Engine, tested); `LaunchpadController` (App): programmer mode, pads/scenes/arrows, LED diff at 25 Hz.
+- NOT device-verified: Launchpad (port names, Pro MK3 arrow CCs), input channels of the Xone:96, plugin touch events.
