@@ -136,9 +136,26 @@ final class DocumentController {
     }
 
     /// Copies an audio file into the song and makes it `track`'s sample, switching the track
-    /// to the sampler — one undo step. The copy and the decoding run off the main thread.
+    /// to the sampler — one undo step.
     func importAudio(_ source: URL, onto track: TrackID) async {
-        guard !isImporting, let package = currentURL else { return }
+        guard let file = await importMedia(source) else { return }
+        perform([.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)],
+                title: "Import \(file.name)")
+    }
+
+    /// Copies an audio file into the song and places all of it on an audio track at `start` —
+    /// one undo step.
+    func importAudio(_ source: URL, placingOn track: TrackID, at start: Tick) async {
+        guard let file = await importMedia(source) else { return }
+        perform([.addMedia(file), .placeAudio(track: track, id: RegionID(), media: file.id, start: start)],
+                title: "Import \(file.name)")
+    }
+
+    /// Copies and decodes a file off the main thread and keeps its buffer, returning the file
+    /// ready for `media.add`. Nil, with `lastError` set, when it cannot be read — or when
+    /// another song was opened meanwhile.
+    private func importMedia(_ source: URL) async -> MediaFile? {
+        guard !isImporting, let package = currentURL else { return nil }
         isImporting = true
         defer { isImporting = false }
         let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
@@ -147,25 +164,26 @@ final class DocumentController {
             defer { if scoped { source.stopAccessingSecurityScopedResource() } }
             return Result { try AudioFileImport.importFile(source, into: package) }
         }.value
-        guard currentURL == package else { return }
+        guard currentURL == package else { return nil }
         switch result {
         case .success(let imported):
             samples[imported.file.id] = imported.buffer
             mediaRevision += 1
-            do {
-                try store.perform([
-                    .addMedia(imported.file),
-                    .setInstrumentDevice(track, .sampler),
-                    .setInstrumentSample(track, imported.file.id),
-                ], title: "Import \(imported.file.name)")
-                lastError = nil
-            } catch {
-                log.error("import rejected — \(String(describing: error), privacy: .public)")
-                lastError = "Could not add the file to the song."
-            }
+            return imported.file
         case .failure(let error):
             log.error("import failed — \(error.localizedDescription, privacy: .public)")
             lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file."
+            return nil
+        }
+    }
+
+    private func perform(_ commands: [Command], title: String) {
+        do {
+            try store.perform(commands, title: title)
+            lastError = nil
+        } catch {
+            log.error("import rejected — \(String(describing: error), privacy: .public)")
+            lastError = "Could not add the file to the song."
         }
     }
 

@@ -87,4 +87,28 @@ final class ArrangingTests: XCTestCase {
         try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: 5 * bar).apply(to: &p)
         XCTAssertEqual(Arranging.songBars(of: p), 7)
     }
+
+    func testAnAudioRegionLastsAsLongAsItsFileAtTheSongsTempo() throws {
+        var p = Project(tempo: 120)
+        let track = TrackID(), region = RegionID()
+        // Four seconds of audio is two bars of 4/4 at 120 BPM.
+        let file = MediaFile(name: "Loop", path: "Media/loop.wav", frameCount: 192_000, sampleRate: 48_000)
+        try Command.addTrack(id: track, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addMedia(file).apply(to: &p)
+        try Command.placeAudio(track: track, id: region, media: file.id, start: bar).apply(to: &p)
+        let t = try XCTUnwrap(p.track(track))
+        let placed = try XCTUnwrap(t.regions.first)
+
+        XCTAssertEqual(Arranging.end(of: placed, in: p), 3 * bar)
+        XCTAssertEqual(Arranging.songBars(of: p), 3)
+        XCTAssertEqual(Arranging.region(in: t, at: 2 * bar, project: p)?.id, region)
+        XCTAssertNil(Arranging.region(in: t, at: 3 * bar, project: p))
+
+        let command = try XCTUnwrap(Arranging.moved(placed, in: t, byTicks: bar + bar / 3, signature: .common))
+        guard case let .moveRegion(_, id, start) = command else { return XCTFail("\(command)") }
+        XCTAssertEqual(id, region)
+        XCTAssertEqual(start, 2 * bar)
+        XCTAssertNil(Arranging.moved(placed, in: t, byTicks: bar / 3, signature: .common))
+    }
+
 }

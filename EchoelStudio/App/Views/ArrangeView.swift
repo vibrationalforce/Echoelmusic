@@ -1,14 +1,17 @@
 import EchoelCore
 import SwiftUI
 
-/// The song on a bar timeline: one lane per track, its clips laid out where they play.
-/// Tap empty space to place the track's clip at that bar, tap a clip to edit its notes, drag
-/// a clip to move it by whole bars, hold for Duplicate and Delete. One drag is one undo step.
+/// The song on a bar timeline: one lane per track, its clips and audio laid out where they
+/// play. Tap empty space to place the track's clip at that bar — or, on an audio track, to
+/// import a file there; tap a clip to edit its notes, drag a clip or audio region to move it
+/// by whole bars, hold for Duplicate and Delete. One drag is one undo step.
 /// Reads no playhead, so nothing here rebuilds while the song plays.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     /// Opens a track's editor.
     let open: (TrackID) -> Void
+    /// Asks for an audio file to place on a track at a tick.
+    let importAudio: (TrackID, Tick) -> Void
 
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 96
     /// Points per bar; the horizontal zoom.
@@ -48,8 +51,8 @@ struct ArrangeView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         BarRuler(bars: bars, pointsPerBar: pointsPerBar)
                         ForEach(project.tracks) { track in
-                            ArrangeLane(track: track, signature: project.timeSignature,
-                                        pointsPerBar: pointsPerBar, open: open)
+                            ArrangeLane(track: track, project: project, pointsPerBar: pointsPerBar,
+                                        open: open, importAudio: importAudio)
                                 .frame(width: laneWidth, height: Theme.Size.trackRowHeight)
                         }
                     }
@@ -91,9 +94,12 @@ private struct BarRuler: View {
 private struct ArrangeLane: View {
     @Environment(ProjectStore.self) private var store
     let track: Track
-    let signature: TimeSignature
+    let project: Project
     let pointsPerBar: CGFloat
     let open: (TrackID) -> Void
+    let importAudio: (TrackID, Tick) -> Void
+
+    private var signature: TimeSignature { project.timeSignature }
 
     private var ticksPerPoint: Double {
         Double(MusicalTime.ticksPerBar(signature)) / Double(pointsPerBar)
@@ -114,25 +120,53 @@ private struct ArrangeLane: View {
             .onTapGesture { location in tapEmpty(at: location.x) }
             .accessibilityElement()
             .accessibilityLabel("\(track.name) lane")
-            .accessibilityHint(track.clips.isEmpty ? "Tap to create a clip." : "")
-            .accessibilityAction(named: "Place Clip at End") { placeAtEnd() }
+            .accessibilityHint(laneHint)
+            .accessibilityAction(named: track.kind == .audio ? "Import Audio at End" : "Place Clip at End") { placeAtEnd() }
 
-            ForEach(track.placements) { placement in
-                if let clip = track.clips.first(where: { $0.id == placement.clip }) {
-                    PlacementBlock(track: track, placement: placement, clip: clip, signature: signature,
-                                   pointsPerBar: pointsPerBar, open: open)
-                }
-            }
+            placementBlocks
+            regionBlocks
         }
         .coordinateSpace(.named(ArrangeLane.space))
+    }
+
+    @ViewBuilder private var placementBlocks: some View {
+        ForEach(track.placements) { placement in
+            if let clip = track.clips.first(where: { $0.id == placement.clip }) {
+                PlacementBlock(track: track, placement: placement, clip: clip, signature: signature,
+                               pointsPerBar: pointsPerBar, open: open)
+            }
+        }
+    }
+
+    @ViewBuilder private var regionBlocks: some View {
+        ForEach(track.regions) { region in
+            if let file = project.mediaFile(region.media), let stop = Arranging.end(of: region, in: project) {
+                RegionBlock(track: track, region: region, file: file, length: stop - region.start,
+                            signature: signature, pointsPerBar: pointsPerBar)
+            }
+        }
     }
 
     /// Drags are measured here, not in the moving block, so the offset never feeds back.
     static let space = "arrange.lane"
 
+    private var laneHint: String {
+        switch track.kind {
+        case .audio: "Tap to import an audio file at that bar."
+        case .instrument: track.clips.isEmpty ? "Tap to create a clip." : ""
+        case .returnTrack: ""
+        }
+    }
+
     private func tapEmpty(at x: CGFloat) {
-        guard track.kind == .instrument else { return }
         let tick = Tick((Double(x) * ticksPerPoint).rounded(.down))
+        if track.kind == .audio {
+            if Arranging.region(in: track, at: tick, project: project) == nil {
+                importAudio(track.id, Arranging.barStart(tick, signature: signature))
+            }
+            return
+        }
+        guard track.kind == .instrument else { return }
         if track.clips.isEmpty {
             createClip(at: Arranging.barStart(tick, signature: signature))
         } else if let command = Arranging.tap(on: track, at: tick, signature: signature) {
@@ -141,9 +175,13 @@ private struct ArrangeLane: View {
     }
 
     private func placeAtEnd() {
-        let end = track.placements.compactMap { Arranging.end(of: $0, in: track) }.max() ?? 0
-        let start = Arranging.barStart(end + MusicalTime.ticksPerBar(signature) - 1, signature: signature)
-        if track.clips.isEmpty {
+        let clipsEnd = track.placements.compactMap { Arranging.end(of: $0, in: track) }.max() ?? 0
+        let audioEnd = track.regions.compactMap { Arranging.end(of: $0, in: project) }.max() ?? 0
+        let start = Arranging.barStart(Swift.max(clipsEnd, audioEnd) + MusicalTime.ticksPerBar(signature) - 1,
+                                       signature: signature)
+        if track.kind == .audio {
+            importAudio(track.id, start)
+        } else if track.clips.isEmpty {
             createClip(at: start)
         } else if let command = Arranging.tap(on: track, at: start, signature: signature) {
             try? store.perform(command)
@@ -238,5 +276,74 @@ private struct PlacementBlock: View {
 
     private func remove() {
         try? store.perform(.removePlacement(track: track.id, placement.id))
+    }
+}
+
+/// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
+/// undo step on release; hold for Delete.
+private struct RegionBlock: View {
+    @Environment(ProjectStore.self) private var store
+    let track: Track
+    let region: AudioRegion
+    let file: MediaFile
+    /// The region's length in ticks at the song's tempo.
+    let length: Tick
+    let signature: TimeSignature
+    let pointsPerBar: CGFloat
+
+    @State private var dragX: CGFloat = 0
+
+    private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
+    private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
+    private var startBar: Int { Int(region.start / Swift.max(1, ticksPerBar)) + 1 }
+    private var seconds: Double { file.sampleRate > 0 ? Double(region.length) / file.sampleRate : 0 }
+
+    var body: some View {
+        let color = Theme.Color.track(track.colorIndex)
+        let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint))
+        RoundedRectangle(cornerRadius: Theme.Radius.small)
+            .fill(color.opacity(0.25))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
+            )
+            .overlay(alignment: .topLeading) {
+                Label(file.name, systemImage: "waveform")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                    .padding(Theme.Space.xs)
+            }
+            .frame(width: width, height: Theme.Size.trackRowHeight - 8)
+            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX, y: 4)
+            .opacity(dragX == 0 ? 1 : 0.8)
+            .gesture(
+                DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
+                    .onChanged { dragX = $0.translation.width }
+                    .onEnded { value in
+                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
+                        dragX = 0
+                        if let command = Arranging.moved(region, in: track, byTicks: delta, signature: signature) {
+                            try? store.perform(command)
+                        }
+                    }
+            )
+            .contextMenu {
+                Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(file.name), audio, bar \(startBar), \(seconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+            .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
+            .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
+            .accessibilityAction(named: "Delete") { remove() }
+    }
+
+    private func move(byBars bars: Tick) {
+        if let command = Arranging.moved(region, in: track, byTicks: bars * ticksPerBar, signature: signature) {
+            try? store.perform(command)
+        }
+    }
+
+    private func remove() {
+        try? store.perform(.removeRegion(track: track.id, region.id))
     }
 }

@@ -29,7 +29,9 @@ struct StudioView: View {
             .background(Theme.Color.surface)
             switch surface {
             case .tracks: TrackListView { router.sheet = .clipEditor($0) }
-            case .arrange: ArrangeView { router.sheet = .clipEditor($0) }
+            case .arrange:
+                ArrangeView(open: { router.sheet = .clipEditor($0) },
+                            importAudio: { router.sheet = .importAudio($0, $1) })
             case .mixer: MixerView()
             }
         }
@@ -37,6 +39,12 @@ struct StudioView: View {
             switch sheet {
             case .clipEditor(let track): ClipEditorView(trackID: track)
             case .share(let url): ShareSheet(url: url).ignoresSafeArea()
+            case let .importAudio(track, start):
+                AudioFilePicker(pick: { url in
+                    router.sheet = nil
+                    Task { await documents.importAudio(url, placingOn: track, at: start) }
+                }, cancel: { router.sheet = nil })
+                .ignoresSafeArea()
             }
         }
         .environment(router)
@@ -189,7 +197,8 @@ struct SongMenu: View {
                     if let url = await documents.exportWAV() { router.sheet = .share(url) }
                 }
             }
-            .disabled(documents.isExporting || store.project.tracks.allSatisfy { $0.clips.allSatisfy(\.notes.isEmpty) })
+            .disabled(documents.isExporting
+                      || store.project.tracks.allSatisfy { $0.clips.allSatisfy(\.notes.isEmpty) && $0.regions.isEmpty })
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {

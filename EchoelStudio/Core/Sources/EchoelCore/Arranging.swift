@@ -33,12 +33,39 @@ public enum Arranging {
         }
     }
 
-    /// The song's length in whole bars: up to the end of the last placement, at least one bar.
+    /// Where an audio region stops, in ticks: the file time it plays, laid over the song's
+    /// tempo map from its start. Nil when the song no longer has its file.
+    public static func end(of region: AudioRegion, in project: Project) -> Tick? {
+        guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite else { return nil }
+        let map = project.tempoMap
+        return map.tick(atSeconds: map.seconds(at: region.start) + Double(region.length) / file.sampleRate)
+    }
+
+    /// The audio region covering `tick`, the latest-starting one if several overlap.
+    public static func region(in track: Track, at tick: Tick, project: Project) -> AudioRegion? {
+        track.regions.last { r in
+            guard let stop = Self.end(of: r, in: project) else { return false }
+            return r.start <= tick && tick < stop
+        }
+    }
+
+    /// The command for a region dragged by `delta` ticks, snapped to the nearest bar.
+    /// Nil when it lands where it started.
+    public static func moved(_ region: AudioRegion, in track: Track, byTicks delta: Tick,
+                             signature: TimeSignature) -> Command? {
+        let target = nearestBar(region.start + delta, signature: signature)
+        guard target != region.start else { return nil }
+        return .moveRegion(track: track.id, region.id, start: target)
+    }
+
+    /// The song's length in whole bars: up to the end of the last placement or audio region,
+    /// at least one bar.
     public static func songBars(of project: Project) -> Int {
         let bar = MusicalTime.ticksPerBar(project.timeSignature)
         guard bar > 0 else { return 1 }
         let last = project.tracks.reduce(Tick(0)) { result, track in
-            track.placements.reduce(result) { Swift.max($0, Self.end(of: $1, in: track) ?? 0) }
+            let clips = track.placements.reduce(result) { Swift.max($0, Self.end(of: $1, in: track) ?? 0) }
+            return track.regions.reduce(clips) { Swift.max($0, Self.end(of: $1, in: project) ?? 0) }
         }
         return Swift.max(1, Int((last + bar - 1) / bar))
     }
