@@ -1240,3 +1240,7 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - 17:35 UTC — **Eigenes AUv3 „Echoel Synth" + Kauf** (c3e6de2, Run #47 grün beim ersten Lauf; `.appex`
   im Release-Build unter PlugIns/ belegt). SynthKernel im Engine-Paket getestet. Founder: IAP in ASC anlegen.
   Nicht gerätegeprüft: Laden in AUM/Logic, Demo-Stille, Kauf-Freischaltung in der Erweiterung.
+- 18:25 UTC — **M5 erster Teil** (Studio-Runs #42–#58 grün): Sends/Returns, MIDI-Learn, Live-MIDI,
+  Mehrkanal-Ausgang + Interface-/Anruf-Wiederanlauf (138c625, 1955487), MIDI-Clock aus (99d34a0, 71cb948),
+  Session-Launching Engine + Ansicht (e007818, e78ce16). Nichts gerätegeprüft. Nächstes: MIDI-Clock ein,
+  Link (Council), Launchpad, Automation M4.
