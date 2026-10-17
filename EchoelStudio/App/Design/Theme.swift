@@ -72,6 +72,7 @@ enum Theme {
         static let touch: CGFloat = 44
         static let transportHeight: CGFloat = 56
         static let trackRowHeight: CGFloat = 56
+        static let rulerHeight: CGFloat = 24
     }
 
     enum Font {

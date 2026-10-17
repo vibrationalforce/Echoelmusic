@@ -10,7 +10,7 @@ struct StudioView: View {
     @State private var router = StudioRouter()
     @State private var surface: Surface = .tracks
 
-    enum Surface: Hashable { case tracks, mixer }
+    enum Surface: Hashable { case tracks, arrange, mixer }
 
     var body: some View {
         @Bindable var router = router
@@ -19,6 +19,7 @@ struct StudioView: View {
             Divider().overlay(Theme.Color.border)
             Picker("View", selection: $surface) {
                 Text("Tracks").tag(Surface.tracks)
+                Text("Arrange").tag(Surface.arrange)
                 Text("Mixer").tag(Surface.mixer)
             }
             .pickerStyle(.segmented)
@@ -27,6 +28,7 @@ struct StudioView: View {
             .background(Theme.Color.surface)
             switch surface {
             case .tracks: TrackListView { router.sheet = .clipEditor($0) }
+            case .arrange: ArrangeView { router.sheet = .clipEditor($0) }
             case .mixer: MixerView()
             }
         }
