@@ -60,3 +60,50 @@ jobs:
         run: |
           tail -150 core-test.log || true
           grep -n "error:" core-ios.log | head -60 || true
+
+  app:
+    name: App (iPhone + iPad)
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Setup XcodeGen
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: Generate project
+        run: xcodegen generate --spec EchoelStudio/project.yml
+
+      - name: Build for iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project EchoelStudio/EchoelStudio.xcodeproj \
+            -scheme EchoelStudio \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee app-sim.log | tail -30
+
+      - name: Build for iOS device (Release)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project EchoelStudio/EchoelStudio.xcodeproj \
+            -scheme EchoelStudio \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee app-device.log | tail -30
+
+      - name: Print errors on failure
+        if: failure()
+        run: |
+          grep -n "error:" app-sim.log app-device.log | head -80 || true
