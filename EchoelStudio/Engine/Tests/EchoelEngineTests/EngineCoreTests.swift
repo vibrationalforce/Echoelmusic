@@ -233,11 +233,11 @@ final class InstrumentPatchTests: XCTestCase {
         // Kick on the downbeat; middle C is not in the drum map and must stay silent.
         var s = try song([[Note(pitch: 36, start: 0, length: 240), Note(pitch: 60, start: bar, length: 240)]])
         try Command.setInstrumentDevice(s.tracks[0], .drums).apply(to: &s.project)
-        let core = core()
-        publish(s.project, to: core)
-        core.play()
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
         let beat = Int(rate / 2)
-        let out = render(core, frames: 8 * beat)
+        let out = render(engine, frames: 8 * beat)
         XCTAssertEqual(firstSound(out.left), 0, "the kick starts on its sample")
         let kick = out.left[0..<beat].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
         XCTAssertGreaterThan(kick, 0.05)

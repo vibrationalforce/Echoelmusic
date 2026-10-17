@@ -20,37 +20,11 @@ struct StepGridView: View {
         let count = StepEditing.stepCount(of: clip, step: step)
         ScrollView(.vertical) {
             HStack(alignment: .top, spacing: Theme.Space.xs) {
-                VStack(spacing: 2) {
-                    ForEach(lanes) { lane in
-                        Text(lane.name)
-                            .font(Theme.Font.label)
-                            .foregroundStyle(Theme.Color.text)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .frame(width: nameWidth, height: cell, alignment: .leading)
-                            .contextMenu {
-                                Button("Clear \(lane.name)", systemImage: "xmark", role: .destructive) { clear(lane) }
-                            }
-                            .accessibilityAddTraits(.isHeader)
-                            .accessibilityAction(named: "Clear \(lane.name)") { clear(lane) }
-                    }
-                }
+                laneNames
                 ScrollView(.horizontal) {
                     VStack(spacing: 2) {
                         ForEach(lanes) { lane in
-                            HStack(spacing: 2) {
-                                ForEach(0..<count, id: \.self) { index in
-                                    StepCell(state: state(lane, index), color: color, downbeat: index % 4 == 0, size: cell)
-                                        .onTapGesture { toggle(lane, index) }
-                                        .onLongPressGesture { accent(lane, index) }
-                                        .accessibilityElement()
-                                        .accessibilityLabel("\(lane.name), step \(index + 1)")
-                                        .accessibilityValue(state(lane, index).spoken)
-                                        .accessibilityAddTraits(.isButton)
-                                        .accessibilityAction { toggle(lane, index) }
-                                        .accessibilityAction(named: "Accent") { accent(lane, index) }
-                                }
-                            }
+                            laneRow(lane, count: count)
                         }
                     }
                 }
@@ -58,6 +32,45 @@ struct StepGridView: View {
             .padding(Theme.Space.m)
         }
         .background(Theme.Color.background)
+    }
+
+    private var laneNames: some View {
+        VStack(spacing: 2) {
+            ForEach(lanes) { lane in
+                Text(lane.name)
+                    .font(Theme.Font.label)
+                    .foregroundStyle(Theme.Color.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: nameWidth, height: cell, alignment: .leading)
+                    .contextMenu {
+                        Button("Clear \(lane.name)", systemImage: "xmark", role: .destructive) { clear(lane) }
+                    }
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityAction(named: "Clear \(lane.name)") { clear(lane) }
+            }
+        }
+    }
+
+    private func laneRow(_ lane: DrumLane, count: Int) -> some View {
+        HStack(spacing: 2) {
+            ForEach(0..<count, id: \.self) { index in
+                stepCell(lane, index)
+            }
+        }
+    }
+
+    private func stepCell(_ lane: DrumLane, _ index: Int) -> some View {
+        let mark = state(lane, index)
+        return StepCell(state: mark, color: color, downbeat: index % 4 == 0, size: cell)
+            .onTapGesture { toggle(lane, index) }
+            .onLongPressGesture { accent(lane, index) }
+            .accessibilityElement()
+            .accessibilityLabel("\(lane.name), step \(index + 1)")
+            .accessibilityValue(mark.spoken)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { toggle(lane, index) }
+            .accessibilityAction(named: "Accent") { accent(lane, index) }
     }
 
     private func state(_ lane: DrumLane, _ index: Int) -> StepCell.Mark {
