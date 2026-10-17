@@ -54,3 +54,18 @@ final class SendTests: XCTestCase {
         XCTAssertNil(p.value(of: .send(verb, to: verb)), "a return has no sends")
     }
 }
+
+final class TrackOutputTests: XCTestCase {
+    func testATrackPlaysOnAnEvenPairAfterTheMasterOrBackInTheMaster() throws {
+        var p = Project()
+        let deck = TrackID()
+        try Command.addTrack(id: deck, name: "Deck A", kind: .instrument, index: nil).apply(to: &p)
+        try Command.setOutput(deck, channel: 2).apply(to: &p)
+        XCTAssertEqual(p.track(deck)?.output, 2)
+        for bad in [0, 1, 3, -2, Track.outputChannelLimit] {
+            XCTAssertThrowsError(try Command.setOutput(deck, channel: bad).apply(to: &p), "\(bad)")
+        }
+        try Command.setOutput(deck, channel: nil).apply(to: &p)
+        XCTAssertNil(p.track(deck)?.output)
+    }
+}

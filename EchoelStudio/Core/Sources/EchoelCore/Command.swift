@@ -42,6 +42,9 @@ public enum Command: Codable, Equatable, Sendable {
     case setSolo(TrackID, Bool)
     /// Sets a track's send into a return track; nil removes the send.
     case setSend(track: TrackID, to: TrackID, db: Double?)
+    /// Plays a track on a stereo pair of the interface (its first channel, 0-based and even, at
+    /// least 2), or into the master with nil.
+    case setOutput(TrackID, channel: Int?)
 
     // MIDI
     /// Makes `control` move `target`, replacing whatever it moved before.
@@ -362,6 +365,16 @@ extension Command {
             } else {
                 project.tracks[t].sends.append(Send(target: targetID, levelDB: db))
             }
+
+        case let .setOutput(id, channel):
+            let t = try project.requireTrack(id)
+            if let channel {
+                guard Track.isValidOutput(channel) else {
+                    throw CommandError.invalidValue(parameter: "channel",
+                                                    reason: "an even channel from 2 to \(Track.outputChannelLimit - 2); 0/1 is the master")
+                }
+            }
+            project.tracks[t].output = channel
 
         case let .mapMIDI(control, target):
             guard control.isValid else {

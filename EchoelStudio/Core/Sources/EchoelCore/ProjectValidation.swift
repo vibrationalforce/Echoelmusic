@@ -41,6 +41,7 @@ extension Project {
                 guard track.clipIndex(placement.clip) != nil else { throw CommandError.unknownClip(placement.clip) }
                 try Command.validateStart(placement.start)
             }
+            if let output = track.output, !Track.isValidOutput(output) { throw Self.invalid("output", "not a stereo pair after 1/2") }
             for send in track.sends {
                 guard track.kind != .returnTrack,
                       tracks.first(where: { $0.id == send.target })?.kind == .returnTrack,

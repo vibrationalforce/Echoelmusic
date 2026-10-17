@@ -13,6 +13,10 @@ public struct Send: Codable, Equatable, Sendable {
 }
 
 extension Track {
+    public static func isValidOutput(_ channel: Int) -> Bool {
+        channel >= 2 && channel % 2 == 0 && channel <= outputChannelLimit - 2
+    }
+
     public func send(to target: TrackID) -> Send? {
         sends.first { $0.target == target }
     }
