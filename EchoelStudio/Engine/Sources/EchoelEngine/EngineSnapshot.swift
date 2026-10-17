@@ -19,6 +19,8 @@ public struct EngineSnapshot: Sendable {
         /// The sample a sampler lane plays. The snapshot holds the reference, so the buffer
         /// lives exactly as long as a snapshot that can still reach the render thread.
         public let sample: SampleBuffer?
+        /// The loaded Audio Unit a plugin lane plays, held like the sample.
+        public let unit: HostedUnit?
     }
 
     /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
@@ -54,8 +56,10 @@ public struct EngineSnapshot: Sendable {
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
+    /// `units` holds the loaded Audio Unit of every plugin track, at this sample rate; a plugin
+    /// track without one (still loading, missing on this device) stays silent.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
-                samples: [MediaID: SampleBuffer] = [:]) {
+                samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:]) {
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
@@ -77,7 +81,8 @@ public struct EngineSnapshot: Sendable {
             let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
-                        sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil)
+                        sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
+                        unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil)
         }
     }
 

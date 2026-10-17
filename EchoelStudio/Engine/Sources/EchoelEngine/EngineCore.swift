@@ -159,6 +159,7 @@ public final class EngineCore: @unchecked Sendable {
 
         guard playing, let box = current else {
             renderVoices(0..<frames, left: left, right: right)
+            renderUnits(frames: frames, left: left, right: right)
             return
         }
         let snapshot = box.snapshot
@@ -196,8 +197,9 @@ public final class EngineCore: @unchecked Sendable {
                 case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
                 case (.noteOn(let velocity), .sampler): samplers[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
                 case (.noteOff, .sampler): samplers[lane.slot].noteOff(pitch: event.pitch)
-                // Hosted plugins are not played by the engine yet; the lane stays silent.
-                case (_, .plugin): break
+                // A plugin gets the note at its frame in this block and renders the block once, below.
+                case (.noteOn(let velocity), .plugin): lane.unit?.noteOn(pitch: event.pitch, velocity: velocity, offset: offset)
+                case (.noteOff, .plugin): lane.unit?.noteOff(pitch: event.pitch, offset: offset)
                 }
                 cursors[lane.slot] += 1
             } else {
@@ -206,6 +208,7 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
+        renderUnits(frames: frames, left: left, right: right)
         renderAudio(snapshot, frames: frames, left: left, right: right)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
@@ -276,6 +279,18 @@ public final class EngineCore: @unchecked Sendable {
         for slot in 0..<slotCapacity {
             synths[slot].allNotesOff()
             samplers[slot].allNotesOff()
+        }
+        if let snapshot = current?.snapshot {
+            for lane in snapshot.lanes { lane.unit?.allNotesOff() }
+        }
+    }
+
+    /// Every hosted unit renders every block, playing or not, so its notes ring out and its own
+    /// clock never skips.
+    private func renderUnits(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        guard let snapshot = current?.snapshot else { return }
+        for lane in snapshot.lanes {
+            lane.unit?.render(frames: frames, left: left, right: right, gainLeft: lane.gainLeft, gainRight: lane.gainRight)
         }
     }
 
