@@ -66,10 +66,12 @@ final class StereoDelayTests: XCTestCase {
         XCTAssertEqual(delay.settings.time, 0.375, "non-finite takes the default")
 
         let gliding = StereoDelay(sampleRate: rate, settings: .init(time: 0.1, feedback: 0, mix: 1))
-        let tone = (0..<9_600).map { Float(sin(Double($0) * 0.05)) }
-        _ = run(gliding, left: tone, right: tone)
+        // One continuous tone, so any jump in the output is the read head's own.
+        let tone = (0..<19_200).map { Float(sin(Double($0) * 0.05)) }
+        let first = Array(tone[..<9_600]), second = Array(tone[9_600...])
+        _ = run(gliding, left: first, right: first)
         gliding.settings.time = 0.2
-        let (moved, _) = run(gliding, left: tone, right: tone)
+        let (moved, _) = run(gliding, left: second, right: second)
         let jumps = zip(moved.dropFirst(), moved).map { abs($0 - $1) }.max() ?? 1
         XCTAssertLessThan(jumps, 0.1, "the read head bends instead of jumping")
     }
