@@ -1,4 +1,4 @@
-build: v10.79.514 — Arrangement: Spurfarbe, Spuren umsortieren, Einzähler vor Record
+build: v10.79.515 — Session ins Arrangement · Automation auf dem Canvas · Teil benennen · Spur duplizieren
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -49,6 +49,54 @@ notes: |
   ⚠️ Reparatur wäre workflow-seitig (Bump erkennen statt Pfad) und ist founder-gated:
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
+
+
+  ── WAS IN DIESEM BUILD NEU IST (10.79.515) ───────────────────────────────
+
+  Gebaut wird der App-Code von `abb8261` (danach nur dieser Bump). Xcode Compile Check UND
+  Build for Testing auf genau diesem Stand grün. Auf dem Gerät ist NICHTS davon geprüft.
+  Prüfblatt: docs/dev/DEVICE_SESSION_2_ARRANGE_2026-10-16.md (elf Prüfungen, ~33 min).
+
+  ── POSTEN 1: SESSION INS ARRANGEMENT AUFNEHMEN (P4b, P4c) ──
+  Piece → Arrange → „Session": über dem Raster der Schalter „Record to arrangement". Ist er an,
+  wird jeder gestartete Part mitgeschrieben. Geschrieben wird EINMAL, wenn die Aufnahme endet
+  (Stop, Sprung, Cycle-Sprung, Neustart, Schalter aus): die Parts stehen dann im Arrangement,
+  dort wo sie liefen, über den Parts darunter — ein Undo für die ganze Aufnahme. Über das
+  Stück-Ende hinweg wird weiter aufgenommen, jeder Durchgang geschichtet. Wird der Schalter
+  mitten im Spiel eingeschaltet, kommen laufende Parts ab ihrer nächsten Schleifengrenze dazu.
+
+  ── POSTEN 2: AUTOMATION AUF DEM CANVAS (7a, 7b, 7c) ──
+  Jede Automationskurve einer Spur läuft als Linie über ihre Zeile. „Draw automation": Zeile
+  antippen = Punkt, Punkt antippen = weg, halten und ziehen = verschieben; je Berührung ein Undo;
+  gezeichnet wird der auf der Track-Seite gewählte Parameter.
+
+  ── POSTEN 3: TEIL BENENNEN (A8) · SPUR DUPLIZIEREN (A7) ──
+  Seite „Part": ein Namensfeld für das gewählte Teil; das Canvas zeigt den Namen. Seite „Track":
+  „Duplicate track" — die Kopie steht darunter, mit Teilen, Klang und Kurven, ein Undo nimmt sie
+  weg (nicht für die Echoel- und die Körper-Spur).
+
+  ── POSTEN 4: GEÄNDERT NACH DEM REVIEW ──
+  · Einzähler: jetzt im Halte-Menü von „Click" (die Transportzeile passte nicht mehr). Takt 1
+    landet auf seinem Downbeat (vorher eine Sechzehntel zu spät); Record während des Einzählens
+    bricht immer ab; Play/Stop anderswo bricht ab; ein Klick, den du dabei ausschaltest, bleibt
+    aus. Im Flow kann das Tempo während des Einzählens gleiten — für eingezählte Aufnahmen Loop.
+  · Session: „Beat" als Startpunkt ist zurückgenommen (ein MIDI-Teil übersprang seinen ersten
+    Schlag); es bleiben Bar · 2 Bars · 4 Bars.
+  · Arrangement: Draw/Select legen kein Teil an · im Select-Modus tragen nur gesammelte Teile den
+    Ring · Paste nur, wenn es etwas einsetzt · Marker mit Fähnchen, ohne doppelte Namen, von
+    VoiceOver gelesen · Cycle-Griffe überlappen nicht · der Maßstab wächst in 8-Takt-Stufen.
+
+  Geht etwas schief: Save/Export-Chip → „Diagnostics" → Teilen.
+
+  ── NEU PRÜFBAR SEIT DIESEM BUILD (python3 scripts/founder-verify.py --since d6105b9) ──
+  12 Bitten neu oder umformuliert (6 an der Quelle, 6 als Wächter-Zeiger darauf):
+  · (P4b) SessionRecordToggle.swift — Session-Aufnahme ins Arrangement, ein Undo, Schalter aus.
+  · (7a)  ArrangeAutomationTrace.swift — Kurve der Track-Seite als Linie über der Spurzeile.
+  · (7b)  ArrangeAutomationEditLane.swift — Punkte setzen, ziehen, löschen, je ein Undo.
+  · (A10) CountInChoice.swift — Click halten → Count-in → 1 bar, vier Klicks, Start auf dem fünften.
+  · (A8)  PartNameField.swift — Teil „Verse" nennen, das Canvas zeigt es.
+  · (A7)  TrackCopyButton.swift — Spur duplizieren, beide klingen, Undo nimmt die Kopie weg.
+  · (P3)  Session „2 Bars": wartet der Start auf die nächste Zwei-Takt-Linie?
 
 
   ── WAS IN DIESEM BUILD NEU IST (10.79.514) ───────────────────────────────
