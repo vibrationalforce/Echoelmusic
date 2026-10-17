@@ -1216,3 +1216,11 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Gelernt: in einer `static func` verdeckt ein lokales `let end` die Schwester-Funktion `end(of:)` —
   Swift meldet „cannot call value of non-function type"; lokale Namen nie wie Methoden des Typs nennen.
   Nächstes: M2, zuerst Drum-Pattern-Core (Step-Raster als Clip-Noten, keine zweite Notenwahrheit).
+- 13:55 UTC — **M2 im Code bis auf die Aufnahme**: Drum-Kit + Step-Raster (bis Run #24), Sampler-Kern
+  (#25), Medien-Modell (#26), Engine spielt Sampler (6b75618, #28), Audio-Import auf Sampler-Spur
+  (47b9b87, #29), Audioregionen im Core (ba31df5, #30), Engine spielt Regionen (b80149b, #31),
+  Audiospuren im Arrange (ac05ffa, #32). Alles CI-grün, nichts gerätegeprüft.
+  Gelernt: eine Leseposition, die über Blöcke AUFSUMMIERT wird, macht das Ergebnis von der
+  Blockgröße abhängig — aus dem Ausgabe-Index berechnen. Ein von der Platte gelesener Song ist nie
+  durch `media.add` gegangen: Pfade beim LESEN prüfen (`MediaFile.url(in:)`).
+  Nächstes: Audio-Aufnahme (§6.2), dann M3.
