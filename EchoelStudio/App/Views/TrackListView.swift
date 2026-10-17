@@ -39,7 +39,7 @@ struct TrackRow: View {
                     .font(Theme.Font.body)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
-                Text(track.kind.displayName)
+                Text(track.typeName)
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -48,8 +48,8 @@ struct TrackRow: View {
             .onTapGesture { if track.kind == .instrument { open(track.id) } }
             .accessibilityElement(children: .ignore)
             .accessibilityAddTraits(track.kind == .instrument ? .isButton : [])
-            .accessibilityHint(track.kind == .instrument ? "Opens the note editor." : "")
-            .accessibilityLabel("\(track.name), \(track.kind.displayName), \(Theme.Color.trackName(track.colorIndex))")
+            .accessibilityHint(track.kind == .instrument ? "Opens the editor." : "")
+            .accessibilityLabel("\(track.name), \(track.typeName), \(Theme.Color.trackName(track.colorIndex))")
             .accessibilityAction(named: "Delete Track") {
                 try? store.perform(.removeTrack(track.id))
             }
@@ -98,6 +98,7 @@ struct AddTrackMenu: View {
             ForEach(TrackKind.allCases, id: \.self) { kind in
                 Button(kind.displayName) { add(kind) }
             }
+            Button("Drums") { addDrums() }
         } label: {
             Label("Add Track", systemImage: "plus")
                 .font(Theme.Font.label)
@@ -108,6 +109,18 @@ struct AddTrackMenu: View {
                         .stroke(Theme.Color.border, lineWidth: 1)
                 )
         }
+    }
+
+    /// An instrument track playing the drum kit, with an empty one-bar pattern ready to fill.
+    private func addDrums() {
+        let track = TrackID(), clip = ClipID()
+        let count = store.project.tracks.filter { $0.instrument.device == .drums && $0.kind == .instrument }.count + 1
+        try? store.perform([
+            .addTrack(id: track, name: "Drums \(count)", kind: .instrument, index: nil),
+            .setInstrumentDevice(track, .drums),
+            .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
+            .placeClip(track: track, id: PlacementID(), clip: clip, start: 0),
+        ], title: "Add Drums")
     }
 
     private func add(_ kind: TrackKind) {
@@ -123,5 +136,12 @@ extension TrackKind {
         case .audio: "Audio"
         case .returnTrack: "Return"
         }
+    }
+}
+
+extension Track {
+    /// What the track list calls it: an instrument track says which instrument it plays.
+    var typeName: String {
+        kind == .instrument ? instrument.device.title : kind.displayName
     }
 }

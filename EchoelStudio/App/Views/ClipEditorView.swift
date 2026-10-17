@@ -21,6 +21,8 @@ struct ClipEditorView: View {
             Group {
                 if let track, page == .sound {
                     SoundPanel(track: track)
+                } else if let track, let clip = track.clips.first, track.instrument.device == .drums {
+                    StepGridView(clip: clip, color: Theme.Color.track(track.colorIndex), step: grid.rawValue)
                 } else if let track, let clip = track.clips.first {
                     PianoRoll(clip: clip, color: Theme.Color.track(track.colorIndex), grid: grid.rawValue)
                 } else if let track {
@@ -46,7 +48,7 @@ struct ClipEditorView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     Picker("Page", selection: $page) {
-                        Text("Notes").tag(Page.notes)
+                        Text(track?.instrument.device == .drums ? "Steps" : "Notes").tag(Page.notes)
                         Text("Sound").tag(Page.sound)
                     }
                     .pickerStyle(.segmented)
