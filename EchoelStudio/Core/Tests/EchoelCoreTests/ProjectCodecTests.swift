@@ -66,6 +66,10 @@ final class ProjectCodecTests: XCTestCase {
         var escape = valid
         escape.media = [MediaFile(name: "x", path: "../../etc/passwd", frameCount: 1, sampleRate: 48_000)]
         broken.append(escape)
+        var notAnEffect = valid
+        notAnEffect.tracks[0].inserts = [Insert(plugin: PluginComponent(type: PluginComponent.code("aumu"), subtype: 1,
+                                                                         manufacturer: 1, name: "Synth", manufacturerName: "X"))]
+        broken.append(notAnEffect)
         for project in broken {
             let data = try ProjectCodec.encode(project)
             XCTAssertThrowsError(try ProjectCodec.decode(data)) { error in

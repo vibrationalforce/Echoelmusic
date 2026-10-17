@@ -28,3 +28,4 @@ public typealias NoteID = Identifier<Note>
 public typealias SceneID = Identifier<Scene>
 public typealias MediaID = Identifier<MediaFile>
 public typealias RegionID = Identifier<AudioRegion>
+public typealias InsertID = Identifier<Insert>

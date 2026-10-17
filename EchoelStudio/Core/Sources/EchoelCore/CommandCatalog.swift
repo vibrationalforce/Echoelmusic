@@ -13,7 +13,7 @@ public struct CommandSpec: Equatable, Sendable {
 
 public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
-        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID
+        case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID, insertID
         case noteList, noteIDList, timeSignature, trackKind, mixerTarget
     }
 
@@ -36,6 +36,7 @@ extension Command {
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
         case setInstrumentPlugin, setPluginState
+        case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
@@ -63,6 +64,11 @@ extension Command {
         case .setInstrumentSample: .setInstrumentSample
         case .setInstrumentPlugin: .setInstrumentPlugin
         case .setPluginState: .setPluginState
+        case .addInsert: .addInsert
+        case .removeInsert: .removeInsert
+        case .moveInsert: .moveInsert
+        case .setInsertBypass: .setInsertBypass
+        case .setInsertState: .setInsertState
         case .addMedia: .addMedia
         case .removeMedia: .removeMedia
         case .setVolume: .setVolume
@@ -174,6 +180,32 @@ public enum CommandCatalog {
                                summary: "Stores the settings a track's plugin reported, so the song reopens with them. Written by the app, not typed.",
                                parameters: [P("track", .trackID, "A track with a plugin."),
                                             P("state", .string, "The plugin's saved state, at most 8 MB; null to forget it.")])
+        case .addInsert:
+            return CommandSpec(name: "insert.add", title: "Add Effect",
+                               summary: "Adds an installed Audio Unit effect to a track's insert chain, before its fader and pan.",
+                               parameters: [P("track", .trackID, "The track."),
+                                            P("id", .insertID, "Identifier for the insert."),
+                                            P("plugin", .string, "The component: type aufx, subtype, manufacturer, name, manufacturer name."),
+                                            P("index", .integer, "Position in the chain; appended when omitted.", optional: true)])
+        case .removeInsert:
+            return CommandSpec(name: "insert.remove", title: "Remove Effect",
+                               summary: "Removes an effect from a track's insert chain.",
+                               parameters: [P("track", .trackID, "The track."), P("insert", .insertID, "The insert.")])
+        case .moveInsert:
+            return CommandSpec(name: "insert.move", title: "Move Effect",
+                               summary: "Moves an effect to another position in a track's insert chain.",
+                               parameters: [P("track", .trackID, "The track."), P("insert", .insertID, "The insert."),
+                                            P("toIndex", .integer, "New position in the chain.")])
+        case .setInsertBypass:
+            return CommandSpec(name: "insert.bypass", title: "Bypass Effect",
+                               summary: "Bypasses an effect, or turns it back on; it keeps its place and settings.",
+                               parameters: [P("track", .trackID, "The track."), P("insert", .insertID, "The insert."),
+                                            P("bypassed", .boolean, "True to bypass.")])
+        case .setInsertState:
+            return CommandSpec(name: "insert.state", title: "Effect Settings",
+                               summary: "Stores the settings an effect reported, so the song reopens with them. Written by the app, not typed.",
+                               parameters: [P("track", .trackID, "The track."), P("insert", .insertID, "The insert."),
+                                            P("state", .string, "The effect's saved state, at most 8 MB; null to forget it.")])
         case .addMedia:
             return CommandSpec(name: "media.add", title: "Import Audio",
                                summary: "Records an audio file the app has copied into the song's Media folder.",

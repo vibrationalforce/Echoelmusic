@@ -111,6 +111,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var regions: [AudioRegion]
     /// The synth sound. Instrument tracks play it; other kinds keep the default and ignore it.
     public var instrument: InstrumentSettings
+    /// Effects on the track's signal, in order, before its fader and pan.
+    public var inserts: [Insert]
 
     public init(
         id: TrackID = TrackID(),
@@ -122,7 +124,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         placements: [Placement] = [],
         slots: [SlotAssignment] = [],
         instrument: InstrumentSettings = InstrumentSettings(),
-        regions: [AudioRegion] = []
+        regions: [AudioRegion] = [],
+        inserts: [Insert] = []
     ) {
         self.id = id
         self.name = name
@@ -134,10 +137,11 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         self.slots = slots
         self.instrument = instrument
         self.regions = regions
+        self.inserts = inserts
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -153,6 +157,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         slots = try c.decode([SlotAssignment].self, forKey: .slots)
         instrument = try c.decodeIfPresent(InstrumentSettings.self, forKey: .instrument) ?? InstrumentSettings()
         regions = try c.decodeIfPresent([AudioRegion].self, forKey: .regions) ?? []
+        inserts = try c.decodeIfPresent([Insert].self, forKey: .inserts) ?? []
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

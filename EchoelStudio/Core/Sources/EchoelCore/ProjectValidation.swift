@@ -23,7 +23,7 @@ extension Project {
                 throw Self.invalid("media", "a file has no frames or no sample rate")
             }
         }
-        var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>()
+        var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()
         for track in tracks {
             guard trackIDs.insert(track.id).inserted else { throw CommandError.duplicateID(track.id.description) }
             try Self.validate(track.mixer, name: "mixer")
@@ -36,6 +36,14 @@ extension Project {
             for placement in track.placements {
                 guard track.clipIndex(placement.clip) != nil else { throw CommandError.unknownClip(placement.clip) }
                 try Command.validateStart(placement.start)
+            }
+            guard track.inserts.count <= Insert.maximumPerTrack else { throw Self.invalid("inserts", "too many on one track") }
+            for insert in track.inserts {
+                guard insertIDs.insert(insert.id).inserted else { throw CommandError.duplicateID(insert.id.description) }
+                guard insert.plugin.role == .effect else { throw Self.invalid("inserts", "an insert is not an effect") }
+                if let state = insert.state, state.count > PluginComponent.maximumStateBytes {
+                    throw Self.invalid("inserts", "an effect's state is larger than \(PluginComponent.maximumStateBytes) bytes")
+                }
             }
             for region in track.regions {
                 guard regionIDs.insert(region.id).inserted else { throw CommandError.duplicateID(region.id.description) }

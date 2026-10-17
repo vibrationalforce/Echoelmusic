@@ -25,6 +25,13 @@ public enum Command: Codable, Equatable, Sendable {
     case setInstrumentSample(TrackID, MediaID?)
     case setInstrumentPlugin(TrackID, PluginComponent?)
     case setPluginState(TrackID, Data?)
+
+    // Inserts
+    case addInsert(track: TrackID, id: InsertID, plugin: PluginComponent, index: Int?)
+    case removeInsert(track: TrackID, InsertID)
+    case moveInsert(track: TrackID, InsertID, toIndex: Int)
+    case setInsertBypass(track: TrackID, InsertID, Bool)
+    case setInsertState(track: TrackID, InsertID, Data?)
     case addMedia(MediaFile)
     case removeMedia(MediaID)
 
@@ -76,6 +83,7 @@ public enum CommandError: Error, Equatable, Sendable {
     case unknownNote(NoteID)
     case unknownMedia(MediaID)
     case unknownRegion(RegionID)
+    case unknownInsert(InsertID)
     case duplicateID(String)
     case invalidValue(parameter: String, reason: String)
 }
@@ -239,6 +247,48 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "state", reason: "larger than \(PluginComponent.maximumStateBytes) bytes")
             }
             project.tracks[t].instrument.pluginState = state
+
+        case let .addInsert(trackID, id, plugin, index):
+            let t = try project.requireTrack(trackID)
+            guard !project.tracks.contains(where: { $0.insertIndex(id) != nil }) else {
+                throw CommandError.duplicateID(id.description)
+            }
+            guard plugin.role == .effect else {
+                throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
+            }
+            guard project.tracks[t].inserts.count < Insert.maximumPerTrack else {
+                throw CommandError.invalidValue(parameter: "track", reason: "has \(Insert.maximumPerTrack) inserts already")
+            }
+            let at = index ?? project.tracks[t].inserts.count
+            guard (0...project.tracks[t].inserts.count).contains(at) else {
+                throw CommandError.invalidValue(parameter: "index", reason: "must be within 0…\(project.tracks[t].inserts.count)")
+            }
+            var named = plugin
+            named.name = try Names.validated(plugin.name, parameter: "name")
+            project.tracks[t].inserts.insert(Insert(id: id, plugin: named), at: at)
+
+        case let .removeInsert(trackID, id):
+            let (t, i) = try project.requireInsert(id, on: trackID)
+            project.tracks[t].inserts.remove(at: i)
+
+        case let .moveInsert(trackID, id, toIndex):
+            let (t, i) = try project.requireInsert(id, on: trackID)
+            guard project.tracks[t].inserts.indices.contains(toIndex) else {
+                throw CommandError.invalidValue(parameter: "toIndex", reason: "must be within 0…\(project.tracks[t].inserts.count - 1)")
+            }
+            let insert = project.tracks[t].inserts.remove(at: i)
+            project.tracks[t].inserts.insert(insert, at: toIndex)
+
+        case let .setInsertBypass(trackID, id, bypassed):
+            let (t, i) = try project.requireInsert(id, on: trackID)
+            project.tracks[t].inserts[i].isBypassed = bypassed
+
+        case let .setInsertState(trackID, id, state):
+            let (t, i) = try project.requireInsert(id, on: trackID)
+            if let state, state.count > PluginComponent.maximumStateBytes {
+                throw CommandError.invalidValue(parameter: "state", reason: "larger than \(PluginComponent.maximumStateBytes) bytes")
+            }
+            project.tracks[t].inserts[i].state = state
 
         case let .addMedia(file):
             guard project.mediaFile(file.id) == nil else { throw CommandError.duplicateID(file.id.description) }
@@ -473,6 +523,12 @@ extension Project {
     func requireTrack(_ id: TrackID) throws -> Int {
         guard let t = trackIndex(id) else { throw CommandError.unknownTrack(id) }
         return t
+    }
+
+    func requireInsert(_ id: InsertID, on track: TrackID) throws -> (Int, Int) {
+        let t = try requireTrack(track)
+        guard let i = tracks[t].insertIndex(id) else { throw CommandError.unknownInsert(id) }
+        return (t, i)
     }
 
     func requireClip(_ id: ClipID) throws -> (Int, Int) {
