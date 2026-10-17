@@ -43,6 +43,26 @@ public struct ParameterKey: RawRepresentable, Hashable, Codable, Sendable {
     public static let tempo = ParameterKey(rawValue: "tempo")
     public static let volume = ParameterKey(rawValue: "mixer.volume")
     public static let pan = ParameterKey(rawValue: "mixer.pan")
+
+    private static let sendPrefix = "mixer.send/"
+
+    /// A track's send level into one return track.
+    public static func send(to target: TrackID) -> ParameterKey {
+        ParameterKey(rawValue: sendPrefix + target.description)
+    }
+
+    /// The return track this key sends to, if it is a send key.
+    public var sendTarget: TrackID? {
+        guard rawValue.hasPrefix(Self.sendPrefix),
+              let uuid = UUID(uuidString: String(rawValue.dropFirst(Self.sendPrefix.count))) else { return nil }
+        return TrackID(uuid)
+    }
+}
+
+extension ParameterAddress {
+    public static func send(_ track: TrackID, to target: TrackID) -> ParameterAddress {
+        ParameterAddress(.track(track), .send(to: target))
+    }
 }
 
 public enum ParameterUnit: String, Codable, Sendable {
@@ -140,6 +160,11 @@ extension Project {
         for track in tracks {
             list.append(Self.descriptor(.volume(track.id), title: "\(track.name) Volume"))
             list.append(Self.descriptor(.pan(track.id), title: "\(track.name) Pan"))
+            if track.kind != .returnTrack {
+                for target in tracks where target.kind == .returnTrack {
+                    list.append(Self.descriptor(.send(track.id, to: target.id), title: "\(track.name) → \(target.name)"))
+                }
+            }
             if track.kind == .instrument {
                 list += SynthParameter.all.map { $0.descriptor(track: track) }
             }
@@ -159,7 +184,11 @@ extension Project {
         case .master: title = address.key == .pan ? "Master Pan" : "Master Volume"
         case .track(let id):
             guard let track = track(id) else { return nil }
-            title = "\(track.name) \(address.key == .pan ? "Pan" : "Volume")"
+            if let target = address.key.sendTarget.flatMap({ self.track($0) }) {
+                title = "\(track.name) → \(target.name)"
+            } else {
+                title = "\(track.name) \(address.key == .pan ? "Pan" : "Volume")"
+            }
         }
         return Self.descriptor(address, title: title)
     }
@@ -172,6 +201,10 @@ extension Project {
         case (.master, .pan): return master.pan
         case (.track(let id), .volume): return track(id)?.mixer.volumeDB
         case (.track(let id), .pan): return track(id)?.mixer.pan
+        case (.track(let id), let key) where key.sendTarget != nil:
+            guard let source = track(id), source.kind != .returnTrack, let target = key.sendTarget,
+                  track(target)?.kind == .returnTrack else { return nil }
+            return source.send(to: target)?.levelDB ?? MixerStrip.volumeRange.lowerBound
         case (.track(let id), let key):
             guard let synth = SynthParameter.named(key), let track = track(id), track.kind == .instrument else { return nil }
             return track.instrument.value(synth)
@@ -188,8 +221,10 @@ extension Project {
             return ParameterDescriptor(address: address, title: title, unit: .pan, range: MixerStrip.panRange,
                                        defaultValue: 0, taper: .linear)
         default:
+            // A send starts silent; double-tap returns it there.
             return ParameterDescriptor(address: address, title: title, unit: .decibel, range: MixerStrip.volumeRange,
-                                       defaultValue: 0, taper: .fader)
+                                       defaultValue: address.key.sendTarget == nil ? 0 : MixerStrip.volumeRange.lowerBound,
+                                       taper: .fader)
         }
     }
 }
@@ -205,6 +240,9 @@ extension Command {
         case (.master, .pan): return .setPan(.master, pan: value)
         case (.track(let id), .volume): return .setVolume(.track(id), db: value)
         case (.track(let id), .pan): return .setPan(.track(id), pan: value)
+        case (.track(let id), let key) where key.sendTarget != nil:
+            guard let target = key.sendTarget else { return nil }
+            return .setSend(track: id, to: target, db: value)
         case (.track(let id), let key) where SynthParameter.named(key) != nil:
             return .setInstrumentParameter(id, key: key.rawValue, value: value)
         default: return nil

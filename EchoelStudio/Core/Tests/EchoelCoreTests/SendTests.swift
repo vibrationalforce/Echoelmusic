@@ -40,4 +40,17 @@ final class SendTests: XCTestCase {
         XCTAssertEqual(p.track(keys)?.sends, [])
         XCTAssertNoThrow(try p.validate())
     }
+
+    func testASendIsAParameterLikeAFader() throws {
+        var (p, keys, verb) = try project()
+        let address = ParameterAddress.send(keys, to: verb)
+        XCTAssertEqual(address.key.sendTarget, verb)
+        XCTAssertEqual(p.value(of: address), MixerStrip.volumeRange.lowerBound, "no send yet reads as silence")
+        XCTAssertTrue(p.parameters.contains { $0.address == address })
+        let command = try XCTUnwrap(Command.setParameter(address, to: -9))
+        try command.apply(to: &p)
+        XCTAssertEqual(p.value(of: address), -9)
+        XCTAssertEqual(p.descriptor(for: address)?.title, "Keys → Reverb")
+        XCTAssertNil(p.value(of: .send(verb, to: verb)), "a return has no sends")
+    }
 }

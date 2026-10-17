@@ -49,6 +49,11 @@ struct ChannelStrip: View {
                 .accessibilityLabel("Effects on \(track.name)")
                 .accessibilityValue(track.inserts.isEmpty ? "None" : "\(active) of \(track.inserts.count) on")
             }
+            if let track, track.kind != .returnTrack {
+                ForEach(store.project.tracks.filter { $0.kind == .returnTrack }) { target in
+                    ParameterField(address: .send(track.id, to: target.id))
+                }
+            }
             PanControl(address: pan)
             Fader(address: volume)
             Text(ParameterFormat.text(store.project.value(of: volume) ?? 0, unit: .decibel))

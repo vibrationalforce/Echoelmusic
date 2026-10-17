@@ -203,6 +203,7 @@ struct ParameterField: View {
 
     /// The parameter's own name, without the track name the descriptor carries for lists.
     private func title(_ descriptor: ParameterDescriptor) -> String {
-        SynthParameter.named(address.key)?.title ?? descriptor.title
+        if let target = address.key.sendTarget { return store.project.track(target).map { "→ \($0.name)" } ?? descriptor.title }
+        return SynthParameter.named(address.key)?.title ?? descriptor.title
     }
 }
