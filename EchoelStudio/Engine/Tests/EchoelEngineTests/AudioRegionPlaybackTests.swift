@@ -98,6 +98,40 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertEqual(small, large)
     }
 
+    func testALaunchedAudioClipLoopsOnTheBeatAndSilencesTheTracksRegions() throws {
+        // The region (0.25) from beat 1 for two beats; the clip (0.5) a quarter-second pass, looping every beat.
+        var s = try song(frames: 2 * beat, fileRate: rate)
+        let loopFile = MediaFile(name: "Hit", path: "Media/hit.wav", frameCount: beat / 2, sampleRate: rate)
+        try Command.addMedia(loopFile).apply(to: &s.project)
+        let clip = ClipID()
+        try Command.createAudioClip(track: s.track, id: clip, name: "Hit", length: MusicalTime.ticksPerQuarter,
+                                    audio: ClipAudio(media: loopFile.id, length: beat / 2)).apply(to: &s.project)
+        let samples = [s.media.id: try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.25, count: 2 * beat), sampleRate: rate)),
+                       loopFile.id: try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: beat / 2), sampleRate: rate))]
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(false)
+        engine.setLaunchQuantum(0)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        let slot = try XCTUnwrap(slots.slots[s.track], "an audio track gets a session slot")
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, samples: samples))
+        engine.launch(slot: slot, .launch(clip))
+        engine.play()
+        let looping = render(engine, frames: 2 * beat)
+        XCTAssertEqual(looping[beat / 4], 0.5 * centre, accuracy: 1e-4, "the first pass")
+        XCTAssertEqual(looping[3 * beat / 4], 0, "a pass shorter than the loop leaves silence")
+        XCTAssertEqual(looping[beat + beat / 4], 0.5 * centre, accuracy: 1e-4, "the next pass, without the region")
+        let reports = Array(sequence(state: engine) { $0.launchReports.pop() })
+        XCTAssertEqual(reports.last, LaunchReport(slot: slot, clip: clip, state: .playing))
+
+        engine.launch(slot: slot, .stop)
+        XCTAssertTrue(render(engine, frames: 4_800).allSatisfy { $0 == 0 }, "stopped, and the region stays off")
+        engine.launch(slot: slot, .backToArrangement)
+        let back = render(engine, frames: 4_800)
+        XCTAssertEqual(back[2_400], 0.25 * centre, accuracy: 1e-4, "the region plays again")
+    }
+
     func testTheExportRunsToTheEndOfTheLastRegion() throws {
         let s = try song(frames: 4_800, fileRate: rate)
         let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate))

@@ -1,7 +1,7 @@
 import EchoelCore
 
 /// What an 8×8 clip grid shows of the session, and what each pad means: the model behind a grid
-/// controller. Columns are the session's tracks, rows its scenes, from an offset the arrows move.
+/// controller. Columns are the session's tracks (instrument and audio), rows its scenes, from an offset the arrows move.
 /// Pure — the main thread builds it from the song and the session state; a template draws it.
 public struct ClipGrid: Equatable, Sendable {
     public enum Pad: Equatable, Sendable {
@@ -30,11 +30,11 @@ public struct ClipGrid: Equatable, Sendable {
     public let canMoveLeft: Bool
     public let canMoveRight: Bool
 
-    /// The session's instrument tracks and scenes from the offsets, which are clamped so the grid
+    /// The session's instrument and audio tracks and scenes from the offsets, which are clamped so the grid
     /// never shows less than it could.
     public init(project: Project, playing: [TrackID: ClipID], queued: [TrackID: ClipID],
                 trackOffset: Int, sceneOffset: Int) {
-        let allTracks = project.tracks.filter { $0.kind == .instrument }
+        let allTracks = project.tracks.filter { $0.kind != .returnTrack }
         let allScenes = project.scenes
         let tracksFrom = Self.clamp(trackOffset, count: allTracks.count)
         let scenesFrom = Self.clamp(sceneOffset, count: allScenes.count)

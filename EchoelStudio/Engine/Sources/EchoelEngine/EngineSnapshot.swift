@@ -125,6 +125,10 @@ public struct EngineSnapshot: Sendable {
     /// An audio track: its regions, each resolved to the buffer it plays and to output samples.
     public struct AudioLane: Sendable {
         public let track: TrackID
+        /// The session slot the track's clips launch in, or −1 without one.
+        public internal(set) var slot: Int
+        /// The track's audio clips with their buffers, for the session.
+        public let loops: [AudioLoop]
         public let gainLeft: Float
         public let gainRight: Float
         /// Sorted by `startSample`. Overlapping regions both sound.
@@ -133,6 +137,17 @@ public struct EngineSnapshot: Sendable {
         public let sends: [SendTap]
         public let output: Int
         public let mix: MovingMix?
+    }
+
+    /// An audio clip resolved to its buffer: `length` buffer frames from `offset` each pass of
+    /// `loopLength` ticks.
+    public struct AudioLoop: Sendable {
+        public let clip: ClipID
+        public let buffer: SampleBuffer
+        public let offset: Double
+        public let length: Double
+        public let step: Double
+        public let loopLength: Tick
     }
 
     /// An audio region in output samples. The buffer is held by the snapshot, as for samplers.
@@ -153,7 +168,7 @@ public struct EngineSnapshot: Sendable {
     public let time: TimeConversion
     public let timeSignature: TimeSignature
     public private(set) var lanes: [Lane]
-    public let audioLanes: [AudioLane]
+    public private(set) var audioLanes: [AudioLane]
     public private(set) var returns: [ReturnLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
@@ -229,7 +244,15 @@ public struct EngineSnapshot: Sendable {
             let regions = track.regions.compactMap { region in
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
             }
-            return AudioLane(track: track.id, gainLeft: left, gainRight: right, regions: regions,
+            let loops = track.clips.compactMap { clip -> AudioLoop? in
+                guard let audio = clip.audio, let buffer = samples[audio.media], sampleRate > 0, sampleRate.isFinite else { return nil }
+                let length = Swift.min(audio.length, buffer.frameCount - audio.offset)
+                guard audio.offset >= 0, length > 0 else { return nil }
+                return AudioLoop(clip: clip.id, buffer: buffer, offset: Double(audio.offset), length: Double(length),
+                                 step: buffer.sampleRate / sampleRate, loopLength: clip.length)
+            }
+            return AudioLane(track: track.id, slot: slots[track.id] ?? -1, loops: loops,
+                             gainLeft: left, gainRight: right, regions: regions,
                              inserts: inserts(track.id), sends: sends(track, audible), output: output,
                              mix: audible ? moving(track, output < 0) : nil)
         }
@@ -279,6 +302,9 @@ public struct EngineSnapshot: Sendable {
     func limited(toSlots capacity: Int, returnCapacity: Int = .max) -> EngineSnapshot {
         var copy = self
         copy.lanes.removeAll { $0.slot < 0 || $0.slot >= capacity }
+        for index in copy.audioLanes.indices where copy.audioLanes[index].slot >= capacity {
+            copy.audioLanes[index].slot = -1
+        }
         copy.returns.removeAll { $0.bus < 0 || $0.bus >= returnCapacity }
         return copy
     }
@@ -325,10 +351,13 @@ public struct SlotAssigner: Sendable {
         self.capacity = Swift.max(0, capacity)
     }
 
-    /// Frees the slots of tracks that are gone and assigns free slots to new instrument
-    /// tracks, in track order. Tracks beyond `capacity` get none and stay silent.
+    /// Frees the slots of tracks that are gone and assigns free slots to new tracks in track
+    /// order — instrument tracks first, then audio tracks, whose slot holds only their session
+    /// clip. A track beyond `capacity` gets none: an instrument stays silent, an audio track
+    /// plays its regions but launches no clips.
     public mutating func update(for project: Project) {
         let instruments = project.tracks.filter { $0.kind == .instrument }.map(\.id)
+            + project.tracks.filter { $0.kind == .audio }.map(\.id)
         let alive = Set(instruments)
         slots = slots.filter { alive.contains($0.key) }
         var used = Set(slots.values)

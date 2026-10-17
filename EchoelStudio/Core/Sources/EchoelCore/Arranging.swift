@@ -13,6 +13,16 @@ public enum Arranging {
     }
 
     /// The bar line at or before `tick`; never before bar 1.
+    /// The loop length for a stretch of audio `seconds` long: the nearest whole number of bars
+    /// at `bpm`, at least one — a loop recorded to the song's tempo comes out exact.
+    public static func loopLength(seconds: Double, bpm: Double, signature: TimeSignature) -> Tick {
+        let bar = MusicalTime.ticksPerBar(signature)
+        guard seconds.isFinite, seconds > 0, bpm.isFinite, bpm > 0, bar > 0 else { return Swift.max(bar, 1) }
+        let secondsPerBar = Double(bar) / Double(MusicalTime.ticksPerQuarter) * 60 / bpm
+        let bars = Swift.min(Swift.max((seconds / secondsPerBar).rounded(), 1), Double(MusicalTime.maximumTick / bar))
+        return Tick(bars) * bar
+    }
+
     public static func barStart(_ tick: Tick, signature: TimeSignature) -> Tick {
         let bar = MusicalTime.ticksPerBar(signature)
         guard bar > 0 else { return Swift.max(0, tick) }

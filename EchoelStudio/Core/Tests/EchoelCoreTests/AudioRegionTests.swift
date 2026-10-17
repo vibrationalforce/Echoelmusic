@@ -34,6 +34,12 @@ final class AudioRegionTests: XCTestCase {
         try Command.setClipLength(clip, length: 7_680).apply(to: &p)
         XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(p)).clip(clip), p.clip(clip))
 
+        // 2 s at 120 BPM is one 4/4 bar; 7.9 s is four; a click is still one.
+        XCTAssertEqual(Arranging.loopLength(seconds: 2, bpm: 120, signature: .common), 3_840)
+        XCTAssertEqual(Arranging.loopLength(seconds: 7.9, bpm: 120, signature: .common), 4 * 3_840)
+        XCTAssertEqual(Arranging.loopLength(seconds: 0.1, bpm: 120, signature: .common), 3_840)
+        XCTAssertEqual(Arranging.loopLength(seconds: .nan, bpm: 120, signature: .common), 3_840)
+
         try Command.removeMedia(file.id).apply(to: &p)
         XCTAssertNil(p.clip(clip), "a clip goes with its file")
         XCTAssertNil(p.track(audio)?.clipInSlot(scene))

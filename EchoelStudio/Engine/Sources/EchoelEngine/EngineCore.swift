@@ -453,7 +453,12 @@ public final class EngineCore: @unchecked Sendable {
             return
         }
         while let request = launchRequests.pop() {
-            guard let lane = snapshot.lanes.first(where: { $0.slot == request.slot }) else { continue }
+            guard let lane = snapshot.lanes.first(where: { $0.slot == request.slot }) else {
+                if let audio = snapshot.audioLanes.first(where: { $0.slot == request.slot }) {
+                    takeAudioLaunch(request.action, on: audio, snapshot, playing: playing)
+                }
+                continue
+            }
             let tick = snapshot.time.tick(atSample: playhead)
             switch request.action {
             case .backToArrangement:
@@ -475,6 +480,59 @@ public final class EngineCore: @unchecked Sendable {
             sessions[lane.slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
             if !playing { fire(lane) }
         }
+    }
+
+    /// A launch, stop or return on an audio track's slot. It takes effect at its sample inside
+    /// `renderAudio`, or now while the transport is stopped.
+    private func takeAudioLaunch(_ action: LaunchAction, on lane: EngineSnapshot.AudioLane, _ snapshot: EngineSnapshot,
+                                 playing: Bool) {
+        let slot = lane.slot
+        guard slot >= 0, slot < slotCapacity else { return }
+        let tick = snapshot.time.tick(atSample: playhead)
+        switch action {
+        case .backToArrangement:
+            sessions[slot] = SessionSlot()
+            report(slot, nil, .arrangement)
+            return
+        case .launch(let clip):
+            sessions[slot].pending = .launch(clip)
+            report(slot, clip, .queued)
+        case .stop:
+            guard sessions[slot].clip != nil else {
+                sessions[slot].pending = .none
+                return
+            }
+            sessions[slot].pending = .stop
+        }
+        sessions[slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
+        if !playing { fireAudio(lane) }
+    }
+
+    /// An audio slot's pending launch or stop takes effect. A clip the lane does not have
+    /// (its file is missing) reports stopped.
+    private func fireAudio(_ lane: EngineSnapshot.AudioLane) {
+        let slot = lane.slot
+        guard slot >= 0, slot < slotCapacity else { return }
+        var session = sessions[slot]
+        switch session.pending {
+        case .none:
+            return
+        case .launch(let clip):
+            session.overrides = true
+            session.launchTick = session.pendingTick
+            if lane.loops.contains(where: { $0.clip == clip }) {
+                session.clip = clip
+                report(slot, clip, .playing)
+            } else {
+                session.clip = nil
+                report(slot, clip, .stopped)
+            }
+        case .stop:
+            report(slot, session.clip, .stopped)
+            session.clip = nil
+        }
+        session.pending = .none
+        sessions[slot] = session
     }
 
     /// The first launch boundary at or after `tick` that has not yet been played.
@@ -538,6 +596,12 @@ public final class EngineCore: @unchecked Sendable {
                 owner = lane.track
                 break
             }
+            if owner == nil {
+                for lane in snapshot.audioLanes where lane.slot == slot {
+                    owner = lane.track
+                    break
+                }
+            }
             if owners[slot] != owner {
                 synths[slot].reset()
                 drums[slot].reset()
@@ -550,6 +614,11 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         // A playing clip follows its edits; a deleted one stops.
+        for lane in snapshot.audioLanes where lane.slot >= 0 && lane.slot < slotCapacity {
+            guard let clip = sessions[lane.slot].clip, !lane.loops.contains(where: { $0.clip == clip }) else { continue }
+            sessions[lane.slot].clip = nil
+            report(lane.slot, clip, .stopped)
+        }
         for lane in snapshot.lanes {
             guard let clip = sessions[lane.slot].clip else { continue }
             let index = clipIndex(clip, in: lane)
@@ -877,33 +946,93 @@ public final class EngineCore: @unchecked Sendable {
             // A track just muted still renders this chunk, to ramp down instead of clicking off.
             let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
                 && gainMemory[point * 2].isFinite
+            let session = lane.slot >= 0 && lane.slot < slotCapacity
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil || fading else {
+                // Silent, but a launch still happens on its bar.
+                if session, !sessions[lane.slot].isIdle,
+                   snapshot.time.sample(at: sessions[lane.slot].pendingTick) < blockEnd { fireAudio(lane) }
                 continue
             }
             let (left, right) = pair(lane.output)
             audioLeft.update(repeating: 0, count: frames)
             audioRight.update(repeating: 0, count: frames)
-            for region in lane.regions {
-                guard region.startSample < blockEnd else { break }
-                guard region.endSample > playhead else { continue }
-                let first = Int(Swift.max(region.startSample - playhead, 0))
-                let count = Int(Swift.min(region.endSample, blockEnd) - playhead) - first
-                guard count > 0 else { continue }
-                let mono = scratch + first
-                mono.update(repeating: 0, count: count)
-                region.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count),
-                                  elapsed: playhead + Int64(first) - region.startSample, step: region.step,
-                                  offset: region.offset, length: region.length,
-                                  fade: Self.regionFadeFrames * region.step)
-                for i in 0..<count {
-                    audioLeft[first + i] += mono[i]
-                    audioRight[first + i] += mono[i]
+            // Up to the sample a pending launch or stop takes effect, then on from there.
+            var from = 0
+            while from < frames {
+                var until = frames
+                var due = false
+                if session, !sessions[lane.slot].isIdle {
+                    let at = snapshot.time.sample(at: sessions[lane.slot].pendingTick)
+                    if at < blockEnd {
+                        until = Swift.min(Swift.max(Int(at - playhead), from), frames)
+                        due = true
+                    }
                 }
+                renderAudio(lane, from: from, to: until, snapshot)
+                if due { fireAudio(lane) }
+                from = until
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
                 fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point))
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
+        }
+    }
+
+    /// Frames `from..<to` of the chunk of one audio lane into `audioLeft`/`audioRight`: its
+    /// launched clip when the session took the track over, else its regions.
+    private func renderAudio(_ lane: EngineSnapshot.AudioLane, from: Int, to: Int, _ snapshot: EngineSnapshot) {
+        guard to > from else { return }
+        let start = playhead + Int64(from), end = playhead + Int64(to)
+        if lane.slot >= 0, lane.slot < slotCapacity, sessions[lane.slot].overrides {
+            guard let clip = sessions[lane.slot].clip, let loop = lane.loops.first(where: { $0.clip == clip }) else { return }
+            renderLoop(loop, launchTick: sessions[lane.slot].launchTick, from: start, to: end, snapshot)
+            return
+        }
+        for region in lane.regions {
+            guard region.startSample < end else { break }
+            guard region.endSample > start else { continue }
+            let first = Int(Swift.max(region.startSample, start) - playhead)
+            let count = Int(Swift.min(region.endSample, end) - playhead) - first
+            guard count > 0 else { continue }
+            let mono = scratch + first
+            mono.update(repeating: 0, count: count)
+            region.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count),
+                              elapsed: playhead + Int64(first) - region.startSample, step: region.step,
+                              offset: region.offset, length: region.length,
+                              fade: Self.regionFadeFrames * region.step)
+            for i in 0..<count {
+                audioLeft[first + i] += mono[i]
+                audioRight[first + i] += mono[i]
+            }
+        }
+    }
+
+    /// A clip from its launch, restarting every `loopLength` ticks; each pass is cut at the loop
+    /// and faded at both ends, so the seam never clicks.
+    private func renderLoop(_ loop: EngineSnapshot.AudioLoop, launchTick: Tick, from start: Int64, to end: Int64,
+                            _ snapshot: EngineSnapshot) {
+        let length = Swift.max(loop.loopLength, 1)
+        var position = start
+        while position < end {
+            let since = snapshot.time.tick(atSample: position) - launchTick
+            let pass = since >= 0 ? since / length : -((-since + length - 1) / length)
+            let passStart = snapshot.time.sample(at: launchTick + pass * length)
+            var passEnd = snapshot.time.sample(at: launchTick + (pass + 1) * length)
+            if passEnd <= position { passEnd = position + 1 }
+            let stop = Swift.min(end, passEnd)
+            let first = Int(position - playhead), count = Int(stop - position)
+            let mono = scratch + first
+            mono.update(repeating: 0, count: count)
+            let played = Swift.min(loop.length, Double(passEnd - passStart) * loop.step)
+            loop.buffer.add(into: UnsafeMutableBufferPointer(start: mono, count: count), elapsed: position - passStart,
+                            step: loop.step, offset: loop.offset, length: played,
+                            fade: Self.regionFadeFrames * loop.step)
+            for i in 0..<count {
+                audioLeft[first + i] += mono[i]
+                audioRight[first + i] += mono[i]
+            }
+            position = stop
         }
     }
 
