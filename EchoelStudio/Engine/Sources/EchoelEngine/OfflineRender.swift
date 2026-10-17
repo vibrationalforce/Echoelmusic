@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import Foundation
 
 /// Renders a whole song faster than real time through the same `EngineCore` that plays it
