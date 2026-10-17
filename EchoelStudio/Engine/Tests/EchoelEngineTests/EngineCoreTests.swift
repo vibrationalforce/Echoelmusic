@@ -212,6 +212,35 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(engine.clockOut.pop(), "no clock while stopped")
     }
 
+    func testALaunchedClipLoopsFromTheNextBarAndStopsOnABar() throws {
+        var s = try song([[]])
+        let loop = ClipID()
+        try Command.createClip(track: s.tracks[0], id: loop, name: "L", length: bar).apply(to: &s.project)
+        try Command.addNotes(loop, [Note(pitch: 60, start: 0, length: 480)]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+
+        // 120 BPM in 4/4: a bar is 96 000 samples.
+        engine.launch(slot: 0, .launch(loop))
+        let wait = render(engine, frames: 100_800 - 256)
+        let start = try XCTUnwrap(firstSound(wait.left), "the clip starts on the next bar")
+        XCTAssertTrue((96_000 - 256...96_002 - 256).contains(start), "\(start)")
+        _ = render(engine, frames: 192_000 - 100_800)
+        XCTAssertNotNil(firstSound(render(engine, frames: 4_800).left), "and plays again on the bar after: it loops")
+
+        engine.launch(slot: 0, .stop)
+        _ = render(engine, frames: 288_000 - 196_800)
+        _ = render(engine, frames: 96_000)              // the last note rings out
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "stopped on the bar: no further pass")
+
+        engine.launch(slot: 0, .backToArrangement)
+        _ = render(engine, frames: 256)
+        let states = Array(sequence(state: engine.launchReports) { $0.pop() }).map(\.state)
+        XCTAssertEqual(states, [.queued, .playing, .stopped, .arrangement])
+    }
+
     func testANoteAfterATempoChangeLandsWhereTheMapSays() throws {
         var s = try song([[Note(pitch: 60, start: bar + 960, length: 480)]])
         try Command.setTempoChange(at: bar, bpm: 60).apply(to: &s.project)

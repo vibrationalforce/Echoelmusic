@@ -42,6 +42,12 @@ public final class EngineCore: @unchecked Sendable {
 
     /// MIDI clock ticks per quarter note.
     public static let clocksPerQuarter: Tick = 24
+    /// Main → render: session launches, stops and returns to the arrangement.
+    private let launchRequests = SPSCRing(capacity: 256, filler: LaunchRequest(slot: -1, action: .stop))
+    /// Render → main: what each slot's clip did, for the session view.
+    public let launchReports = SPSCRing(capacity: 1_024, filler: LaunchReport(slot: -1, clip: nil, state: .stopped))
+    /// Ticks a launch waits for: −1 one bar of the song's signature, 0 none.
+    private let launchQuantum = Atomic<Int64>(-1)
 
     // Render thread only.
     private var current: SnapshotBox?
@@ -51,6 +57,7 @@ public final class EngineCore: @unchecked Sendable {
     private let devices: UnsafeMutablePointer<InstrumentDevice>
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
+    private let sessions: UnsafeMutablePointer<SessionSlot>
     private let scratch: UnsafeMutablePointer<Float>
     /// One stereo bus per slot, `maximumFrames` each: a track renders into its bus, its inserts
     /// process the bus, then the bus is mixed at the track's gains. Plus one bus audio tracks
@@ -103,6 +110,8 @@ public final class EngineCore: @unchecked Sendable {
         owners.initialize(repeating: nil, count: self.slotCapacity)
         cursors = .allocate(capacity: self.slotCapacity)
         cursors.initialize(repeating: 0, count: self.slotCapacity)
+        sessions = .allocate(capacity: self.slotCapacity)
+        sessions.initialize(repeating: SessionSlot(), count: self.slotCapacity)
         scratch = .allocate(capacity: Self.maximumFrames)
         scratch.initialize(repeating: 0, count: Self.maximumFrames)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -135,6 +144,8 @@ public final class EngineCore: @unchecked Sendable {
         owners.deinitialize(count: slotCapacity)
         owners.deallocate()
         cursors.deallocate()
+        sessions.deinitialize(count: slotCapacity)
+        sessions.deallocate()
         scratch.deallocate()
         busLeft.deallocate()
         busRight.deallocate()
@@ -177,6 +188,19 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
+
+    /// Session: launch a clip on the track in `slot`, stop it, or give the track back to the
+    /// arrangement. Launches and stops wait for the launch boundary while playing; stopped, they
+    /// take effect at once. Main thread only.
+    public func launch(slot: Int, _ action: LaunchAction) {
+        guard slot >= 0, slot < slotCapacity else { return }
+        launchRequests.push(LaunchRequest(slot: slot, action: action))
+    }
+
+    /// How long a launch waits: `nil` one bar, 0 not at all, otherwise that many ticks.
+    public func setLaunchQuantum(_ ticks: Tick?) {
+        launchQuantum.store(ticks.map { Swift.max(0, $0) } ?? -1, ordering: .relaxed)
+    }
 
     /// Whether the render thread times MIDI clock into `clockOut`. Off while nothing reads it,
     /// so the ring never fills up.
@@ -261,9 +285,13 @@ public final class EngineCore: @unchecked Sendable {
         let playing = isPlayingFlag.load(ordering: .acquiring)
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
-        if wasPlaying, !playing { releaseAllNotes() }
+        if wasPlaying, !playing {
+            releaseAllNotes()
+            stopSessionClips()
+        }
         if !wasPlaying, playing { resync() }
         wasPlaying = playing
+        takeLaunchRequests(playing: playing)
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
 
         guard playing, let box = current else {
@@ -280,42 +308,52 @@ public final class EngineCore: @unchecked Sendable {
         var rendered = 0
 
         while true {
-            // The earliest due event: a note on any lane, or the next beat.
-            var dueSample = snapshot.time.sample(at: nextBeat)
-            var dueLane = -1
+            // The earliest due event: a launch, a session note, an arrangement note, or the next
+            // beat. At one sample a launch comes first, so the old clip's notes there never play.
+            var due = Due(sample: snapshot.time.sample(at: nextBeat))
             for (index, lane) in snapshot.lanes.enumerated() {
+                let session = sessions[lane.slot]
+                if case .none = session.pending {} else {
+                    due.offer(snapshot.time.sample(at: session.pendingTick), index, .launch)
+                }
+                if session.index >= 0, session.index < lane.clips.count {
+                    let clip = lane.clips[session.index]
+                    if session.cursor < clip.events.count {
+                        due.offer(snapshot.time.sample(at: session.base + clip.events[session.cursor].tick), index, .session)
+                    }
+                }
                 let cursor = cursors[lane.slot]
-                guard cursor < lane.events.count else { continue }
-                let sample = snapshot.time.sample(at: lane.events[cursor].tick)
-                if sample < dueSample || (sample == dueSample && dueLane == -1) {
-                    dueSample = sample
-                    dueLane = index
+                if !session.overrides, cursor < lane.events.count {
+                    due.offer(snapshot.time.sample(at: lane.events[cursor].tick), index, .arrangement)
                 }
             }
-            guard dueSample < blockEnd else { break }
+            guard due.sample < blockEnd else { break }
 
-            let offset = Swift.min(Swift.max(Int(dueSample - playhead), rendered), frames)
+            let offset = Swift.min(Swift.max(Int(due.sample - playhead), rendered), frames)
             renderVoices(rendered..<offset, left: left, right: right)
             rendered = offset
 
-            if dueLane >= 0 {
-                let lane = snapshot.lanes[dueLane]
-                let event = lane.events[cursors[lane.slot]]
-                switch (event.kind, lane.device) {
-                case (.noteOn(let velocity), .synth): synths[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
-                case (.noteOff, .synth): synths[lane.slot].noteOff(pitch: event.pitch)
-                case (.noteOn(let velocity), .drums): drums[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
-                case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
-                case (.noteOn(let velocity), .sampler): samplers[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
-                case (.noteOff, .sampler): samplers[lane.slot].noteOff(pitch: event.pitch)
-                // A plugin gets the note at its frame in this block and renders the block once, below.
-                case (.noteOn(let velocity), .plugin): lane.unit?.noteOn(pitch: event.pitch, velocity: velocity, offset: offset)
-                case (.noteOff, .plugin): lane.unit?.noteOff(pitch: event.pitch, offset: offset)
-                }
-                cursors[lane.slot] += 1
-            } else {
+            switch due.kind {
+            case .beat:
                 metronome.trigger(accent: barTicks > 0 && nextBeat % barTicks == 0)
                 nextBeat += Swift.max(beatTicks, 1)
+            case .arrangement:
+                let lane = snapshot.lanes[due.lane]
+                play(lane.events[cursors[lane.slot]], on: lane, offset: offset)
+                cursors[lane.slot] += 1
+            case .session:
+                let lane = snapshot.lanes[due.lane]
+                var session = sessions[lane.slot]
+                let clip = lane.clips[session.index]
+                play(clip.events[session.cursor], on: lane, offset: offset)
+                session.cursor += 1
+                if session.cursor >= clip.events.count {
+                    session.cursor = 0
+                    session.base += Swift.max(clip.length, 1)
+                }
+                sessions[lane.slot] = session
+            case .launch:
+                fire(snapshot.lanes[due.lane])
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
@@ -326,6 +364,113 @@ public final class EngineCore: @unchecked Sendable {
         mixReturns(frames: frames)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
+    }
+
+    private func play(_ event: PlaybackPlan.NoteEvent, on lane: EngineSnapshot.Lane, offset: Int) {
+        switch (event.kind, lane.device) {
+        case (.noteOn(let velocity), .synth): synths[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+        case (.noteOff, .synth): synths[lane.slot].noteOff(pitch: event.pitch)
+        case (.noteOn(let velocity), .drums): drums[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+        case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
+        case (.noteOn(let velocity), .sampler): samplers[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+        case (.noteOff, .sampler): samplers[lane.slot].noteOff(pitch: event.pitch)
+        // A plugin gets the note at its frame in this block and renders the block once, below.
+        case (.noteOn(let velocity), .plugin): lane.unit?.noteOn(pitch: event.pitch, velocity: velocity, offset: offset)
+        case (.noteOff, .plugin): lane.unit?.noteOff(pitch: event.pitch, offset: offset)
+        }
+    }
+
+    // MARK: - Session
+
+    private func report(_ slot: Int, _ clip: ClipID?, _ state: LaunchReport.State) {
+        launchReports.push(LaunchReport(slot: slot, clip: clip, state: state))
+    }
+
+    /// Ends every sounding note of one track's instrument.
+    private func silence(_ lane: EngineSnapshot.Lane) {
+        synths[lane.slot].allNotesOff()
+        samplers[lane.slot].allNotesOff()
+        lane.unit?.allNotesOff()
+    }
+
+    private func clipIndex(_ clip: ClipID, in lane: EngineSnapshot.Lane) -> Int {
+        lane.clips.firstIndex { $0.clip == clip } ?? -1
+    }
+
+    private func takeLaunchRequests(playing: Bool) {
+        guard let snapshot = current?.snapshot else {
+            while launchRequests.pop() != nil {}
+            return
+        }
+        while let request = launchRequests.pop() {
+            guard let lane = snapshot.lanes.first(where: { $0.slot == request.slot }) else { continue }
+            let tick = snapshot.time.tick(atSample: playhead)
+            switch request.action {
+            case .backToArrangement:
+                silence(lane)
+                sessions[lane.slot] = SessionSlot()
+                cursors[lane.slot] = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
+                report(lane.slot, nil, .arrangement)
+                continue
+            case .launch(let clip):
+                sessions[lane.slot].pending = .launch(clip)
+                report(lane.slot, clip, .queued)
+            case .stop:
+                guard sessions[lane.slot].clip != nil else {
+                    sessions[lane.slot].pending = .none
+                    continue
+                }
+                sessions[lane.slot].pending = .stop
+            }
+            sessions[lane.slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
+            if !playing { fire(lane) }
+        }
+    }
+
+    /// The first launch boundary at or after `tick` that has not yet been played.
+    private func boundary(after tick: Tick, _ snapshot: EngineSnapshot) -> Tick {
+        let stored = launchQuantum.load(ordering: .relaxed)
+        let quantum = stored < 0 ? MusicalTime.ticksPerBar(snapshot.timeSignature) : stored
+        guard quantum > 0 else { return tick }
+        var at = ((tick + quantum - 1) / quantum) * quantum
+        if snapshot.time.sample(at: at) < playhead { at += quantum }
+        return at
+    }
+
+    /// The slot's pending launch or stop takes effect.
+    private func fire(_ lane: EngineSnapshot.Lane) {
+        var session = sessions[lane.slot]
+        switch session.pending {
+        case .none:
+            return
+        case .launch(let clip):
+            silence(lane)
+            session.overrides = true
+            session.clip = clip
+            session.index = clipIndex(clip, in: lane)
+            session.launchTick = session.pendingTick
+            session.base = session.pendingTick
+            session.cursor = 0
+            if session.index < 0 { session.clip = nil }
+            report(lane.slot, session.clip ?? clip, session.index < 0 ? .stopped : .playing)
+        case .stop:
+            silence(lane)
+            report(lane.slot, session.clip, .stopped)
+            session.clip = nil
+            session.index = -1
+        }
+        session.pending = .none
+        sessions[lane.slot] = session
+    }
+
+    /// The transport stopped: every clip stops with it; the tracks stay off the arrangement.
+    private func stopSessionClips() {
+        for slot in 0..<slotCapacity where sessions[slot].clip != nil || !sessions[slot].isIdle {
+            if let clip = sessions[slot].clip { report(slot, clip, .stopped) }
+            sessions[slot].clip = nil
+            sessions[slot].index = -1
+            sessions[slot].pending = .none
+        }
     }
 
     private func takePendingSnapshot() {
@@ -347,6 +492,18 @@ public final class EngineCore: @unchecked Sendable {
                 drums[slot].reset()
                 samplers[slot].reset()
                 owners[slot] = owner
+                if sessions[slot].overrides { report(slot, nil, .arrangement) }
+                sessions[slot] = SessionSlot()
+            }
+        }
+        // A playing clip follows its edits; a deleted one stops.
+        for lane in snapshot.lanes {
+            guard let clip = sessions[lane.slot].clip else { continue }
+            let index = clipIndex(clip, in: lane)
+            sessions[lane.slot].index = index
+            if index < 0 {
+                sessions[lane.slot].clip = nil
+                report(lane.slot, clip, .stopped)
             }
         }
         // Every sampler now points at this snapshot's buffer or none. This happens BEFORE the
@@ -417,6 +574,18 @@ public final class EngineCore: @unchecked Sendable {
         var beat = (tick / beatTicks) * beatTicks
         if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
         nextBeat = beat
+        // A playing clip keeps its loop phase from where it was launched.
+        for lane in snapshot.lanes {
+            var session = sessions[lane.slot]
+            guard session.index >= 0, session.index < lane.clips.count else { continue }
+            let clip = lane.clips[session.index]
+            let length = Swift.max(clip.length, 1)
+            let since = tick - session.launchTick
+            let passes = since >= 0 ? since / length : -((-since + length - 1) / length)
+            session.base = session.launchTick + passes * length
+            session.cursor = PlaybackPlan.firstIndex(in: clip.events, atOrAfter: tick - session.base)
+            sessions[lane.slot] = session
+        }
         let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter
         var clock = ((tick + clockTicks - 1) / clockTicks) * clockTicks
         if snapshot.time.sample(at: clock) < playhead { clock += clockTicks }
@@ -593,6 +762,23 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         metronome.render(left: left, right: right, range: range)
+    }
+}
+
+/// The earliest event of a render step. At one sample the higher kind wins; within a kind the
+/// first lane does.
+private struct Due {
+    enum Kind: Int { case beat, arrangement, session, launch }
+
+    var sample: Int64
+    var lane = -1
+    var kind = Kind.beat
+
+    mutating func offer(_ sample: Int64, _ lane: Int, _ kind: Kind) {
+        guard sample < self.sample || (sample == self.sample && kind.rawValue > self.kind.rawValue) else { return }
+        self.sample = sample
+        self.lane = lane
+        self.kind = kind
     }
 }
 

@@ -26,6 +26,8 @@ public struct EngineSnapshot: Sendable {
         public let sends: [SendTap]
         /// First interface channel of the pair the lane plays on, or −1 for the master mix.
         public let output: Int
+        /// The track's clips as loops, for the session.
+        public let clips: [PlaybackPlan.ClipEvents]
     }
 
     /// Where a track's post-fader signal also goes: return bus `bus`, at these gains.
@@ -142,7 +144,8 @@ public struct EngineSnapshot: Sendable {
                         patch: SynthPatch(track.instrument), device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
-                        inserts: inserts(events.track), sends: sends(track, audible), output: output)
+                        inserts: inserts(events.track), sends: sends(track, audible), output: output,
+                        clips: events.clips)
         }
     }
 
