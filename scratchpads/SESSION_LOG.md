@@ -1197,3 +1197,5 @@ Cycle-Griffe überlappen nicht, abgebrochener Zug räumt auf · Canvas-Maßstab 
 403); EIN Release 10.79.515 erst, wenn main den letzten Stand mit grünen Gates hat.
 **Lehre:** viele kleine Pushes stapeln macOS-Läufe, die nichts abbricht — Scheiben lokal
 sammeln, seltener pushen.
+
+- 2026-10-17 03:45 UTC — **10.79.515 ausgeliefert**: TestFlight-Lauf 38996952047 auf `7aa0b1e` = success (App-Code `abb8261`, beide Gates grün). ⛔ **`main` hat ihn NICHT erreicht** (bleibt `cc63f2d`, 27 Commits dahinter): `auto-merge-claude.yml` triggert nur auf `Sources/** Tests/** Package.swift project.yml .github/workflows/**` — `.deploy/release` ist KEIN Trigger, die „Passagier"-Annahme im Release-Plan war falsch. Der nächste Code-Commit auf dem Zweig nimmt alles mit (nach Gates auf SEINEM sha). Nichts gerätegeprüft; Blatt `docs/dev/DEVICE_SESSION_2_ARRANGE_2026-10-16.md`.
