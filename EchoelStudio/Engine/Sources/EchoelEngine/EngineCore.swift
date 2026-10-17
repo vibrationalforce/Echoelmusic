@@ -34,6 +34,8 @@ public final class EngineCore: @unchecked Sendable {
     // Render thread only.
     private var current: SnapshotBox?
     private let synths: UnsafeMutablePointer<PolySynth>
+    private let drums: UnsafeMutablePointer<DrumKit>
+    private let devices: UnsafeMutablePointer<InstrumentDevice>
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
     private let scratch: UnsafeMutablePointer<Float>
@@ -55,6 +57,12 @@ public final class EngineCore: @unchecked Sendable {
             // the render thread at the first note.
             (synths + i).initialize(to: PolySynth(sampleRate: Float(rate)))
         }
+        drums = .allocate(capacity: self.slotCapacity)
+        for i in 0..<self.slotCapacity {
+            (drums + i).initialize(to: DrumKit(sampleRate: Float(rate)))
+        }
+        devices = .allocate(capacity: self.slotCapacity)
+        devices.initialize(repeating: .synth, count: self.slotCapacity)
         owners = .allocate(capacity: self.slotCapacity)
         owners.initialize(repeating: nil, count: self.slotCapacity)
         cursors = .allocate(capacity: self.slotCapacity)
@@ -67,6 +75,9 @@ public final class EngineCore: @unchecked Sendable {
     deinit {
         synths.deinitialize(count: slotCapacity)
         synths.deallocate()
+        drums.deinitialize(count: slotCapacity)
+        drums.deallocate()
+        devices.deallocate()
         owners.deinitialize(count: slotCapacity)
         owners.deallocate()
         cursors.deallocate()
@@ -165,9 +176,11 @@ public final class EngineCore: @unchecked Sendable {
             if dueLane >= 0 {
                 let lane = snapshot.lanes[dueLane]
                 let event = lane.events[cursors[lane.slot]]
-                switch event.kind {
-                case .noteOn(let velocity): synths[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
-                case .noteOff: synths[lane.slot].noteOff(pitch: event.pitch)
+                switch (event.kind, lane.device) {
+                case (.noteOn(let velocity), .synth): synths[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+                case (.noteOff, .synth): synths[lane.slot].noteOff(pitch: event.pitch)
+                case (.noteOn(let velocity), .drums): drums[lane.slot].noteOn(pitch: event.pitch, velocity: velocity)
+                case (.noteOff, .drums): drums[lane.slot].noteOff(pitch: event.pitch)
                 }
                 cursors[lane.slot] += 1
             } else {
@@ -197,8 +210,15 @@ public final class EngineCore: @unchecked Sendable {
             }
             if owners[slot] != owner {
                 synths[slot].reset()
+                drums[slot].reset()
                 owners[slot] = owner
             }
+        }
+        // A track that changes instrument starts the new one silent and cuts the old one.
+        for lane in snapshot.lanes where devices[lane.slot] != lane.device {
+            synths[lane.slot].reset()
+            drums[lane.slot].reset()
+            devices[lane.slot] = lane.device
         }
         for lane in snapshot.lanes where synths[lane.slot].patch != lane.patch {
             synths[lane.slot].setPatch(lane.patch)
@@ -227,10 +247,17 @@ public final class EngineCore: @unchecked Sendable {
     private func renderVoices(_ range: Range<Int>, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
         guard !range.isEmpty else { return }
         if let snapshot = current?.snapshot {
-            for lane in snapshot.lanes where synths[lane.slot].activeVoiceCount > 0 {
+            for lane in snapshot.lanes {
+                let sounding = lane.device == .drums ? drums[lane.slot].activeVoiceCount > 0
+                                                     : synths[lane.slot].activeVoiceCount > 0
+                guard sounding else { continue }
                 let mono = scratch + range.lowerBound
                 mono.update(repeating: 0, count: range.count)
-                synths[lane.slot].render(into: UnsafeMutableBufferPointer(start: mono, count: range.count))
+                let buffer = UnsafeMutableBufferPointer(start: mono, count: range.count)
+                switch lane.device {
+                case .synth: synths[lane.slot].render(into: buffer)
+                case .drums: drums[lane.slot].render(into: buffer)
+                }
                 for i in 0..<range.count {
                     left[range.lowerBound + i] += mono[i] * lane.gainLeft
                     right[range.lowerBound + i] += mono[i] * lane.gainRight

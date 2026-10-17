@@ -21,6 +21,7 @@ public enum Command: Codable, Equatable, Sendable {
     // Instrument
     case setInstrumentParameter(TrackID, key: String, value: Double)
     case loadInstrumentPreset(TrackID, name: String)
+    case setInstrumentDevice(TrackID, InstrumentDevice)
 
     // Mixer
     case setVolume(MixerTarget, db: Double)
@@ -172,7 +173,15 @@ extension Command {
             guard let preset = InstrumentPreset.named(name) else {
                 throw CommandError.invalidValue(parameter: "name", reason: "no preset named \(name)")
             }
-            project.tracks[t].instrument = InstrumentSettings(preset: preset.name, values: preset.values)
+            let device = project.tracks[t].instrument.device
+            project.tracks[t].instrument = InstrumentSettings(device: device, preset: preset.name, values: preset.values)
+
+        case let .setInstrumentDevice(id, device):
+            let t = try project.requireTrack(id)
+            guard project.tracks[t].kind == .instrument else {
+                throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
+            }
+            project.tracks[t].instrument.device = device
 
         case let .setVolume(target, db):
             guard db.isFinite, MixerStrip.volumeRange.contains(db) else {

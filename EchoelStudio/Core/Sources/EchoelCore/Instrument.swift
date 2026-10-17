@@ -4,16 +4,46 @@ import Foundation
 /// the musician has set. Values are stored by parameter key, so a future build that adds a
 /// parameter reads an older song with that parameter at its default.
 public struct InstrumentSettings: Codable, Equatable, Sendable {
+    /// Which built-in instrument plays the track. Synth parameters stay stored when the
+    /// device changes, so switching back restores the sound.
+    public var device: InstrumentDevice
     public var preset: String
     public var values: [String: Double]
 
-    public init(preset: String = InstrumentPreset.initial.name, values: [String: Double] = [:]) {
+    public init(device: InstrumentDevice = .synth, preset: String = InstrumentPreset.initial.name,
+                values: [String: Double] = [:]) {
+        self.device = device
         self.preset = preset
         self.values = values
     }
 
+    private enum CodingKeys: String, CodingKey { case device, preset, values }
+
+    /// Songs written before devices existed are synth tracks.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        device = try c.decodeIfPresent(InstrumentDevice.self, forKey: .device) ?? .synth
+        preset = try c.decode(String.self, forKey: .preset)
+        values = try c.decode([String: Double].self, forKey: .values)
+    }
+
     public func value(_ parameter: SynthParameter) -> Double {
         values[parameter.key.rawValue] ?? parameter.defaultValue
+    }
+}
+
+/// The built-in instruments. Stored by name in the song; never rename a case.
+public enum InstrumentDevice: String, Codable, CaseIterable, Sendable {
+    /// The polyphonic subtractive synth.
+    case synth
+    /// The drum kit on the General MIDI drum map, played by the step sequencer.
+    case drums
+
+    public var title: String {
+        switch self {
+        case .synth: "Synth"
+        case .drums: "Drums"
+        }
     }
 }
 

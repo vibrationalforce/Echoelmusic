@@ -14,6 +14,8 @@ public struct EngineSnapshot: Sendable {
         public let gainLeft: Float
         public let gainRight: Float
         public let patch: SynthPatch
+        /// Which instrument in the slot plays the events.
+        public let device: InstrumentDevice
     }
 
     /// Rises with every published snapshot; the render thread re-seeks when it changes.
@@ -33,7 +35,7 @@ public struct EngineSnapshot: Sendable {
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
             let (left, right) = audible ? Self.gains(track: track.mixer, master: master) : (0, 0)
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
-                        patch: SynthPatch(track.instrument))
+                        patch: SynthPatch(track.instrument), device: track.instrument.device)
         }
     }
 

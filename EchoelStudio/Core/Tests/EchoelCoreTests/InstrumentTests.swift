@@ -54,6 +54,8 @@ final class InstrumentTests: XCTestCase {
             .setInstrumentParameter(audio, key: "synth.cutoff", value: 1_000),
             .loadInstrumentPreset(keys, name: "Nope"),
             .loadInstrumentPreset(audio, name: "Pluck"),
+            .setInstrumentDevice(audio, .drums),
+            .setInstrumentDevice(TrackID(), .drums),
         ]
         let before = project
         for command in bad { XCTAssertThrowsError(try command.apply(to: &project), "\(command)") }
@@ -85,5 +87,26 @@ final class InstrumentTests: XCTestCase {
         json["tracks"] = tracks
         let old = try ProjectCodec.decode(JSONSerialization.data(withJSONObject: json))
         XCTAssertEqual(old.track(keys)?.instrument, InstrumentSettings())
+    }
+
+    func testTheDeviceSwitchesAndAPresetKeepsIt() throws {
+        var (project, keys, _) = try project()
+        XCTAssertEqual(project.track(keys)?.instrument.device, .synth)
+        try Command.setInstrumentParameter(keys, key: "synth.cutoff", value: 3_000).apply(to: &project)
+        try Command.setInstrumentDevice(keys, .drums).apply(to: &project)
+        XCTAssertEqual(project.track(keys)?.instrument.device, .drums)
+        XCTAssertEqual(project.track(keys)?.instrument.value(.cutoff), 3_000, "switching keeps the synth sound")
+        try Command.loadInstrumentPreset(keys, name: "Pluck").apply(to: &project)
+        XCTAssertEqual(project.track(keys)?.instrument.device, .drums)
+    }
+
+    func testASongFromBeforeDevicesIsASynthTrack() throws {
+        let json = #"{"preset":"Init","values":{"synth.cutoff":1200}}"#
+        let settings = try JSONDecoder().decode(InstrumentSettings.self, from: Data(json.utf8))
+        XCTAssertEqual(settings.device, .synth)
+        XCTAssertEqual(settings.value(.cutoff), 1_200)
+        let again = try JSONDecoder().decode(InstrumentSettings.self,
+                                              from: JSONEncoder().encode(InstrumentSettings(device: .drums)))
+        XCTAssertEqual(again.device, .drums)
     }
 }

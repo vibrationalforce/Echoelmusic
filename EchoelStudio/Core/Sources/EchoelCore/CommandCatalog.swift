@@ -34,7 +34,7 @@ extension Command {
     public enum Kind: String, CaseIterable, Sendable {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
-        case setInstrumentParameter, loadInstrumentPreset
+        case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice
         case setVolume, setPan, setMute, setSolo
         case createClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes
@@ -56,6 +56,7 @@ extension Command {
         case .setTrackColor: .setTrackColor
         case .setInstrumentParameter: .setInstrumentParameter
         case .loadInstrumentPreset: .loadInstrumentPreset
+        case .setInstrumentDevice: .setInstrumentDevice
         case .setVolume: .setVolume
         case .setPan: .setPan
         case .setMute: .setMute
@@ -141,6 +142,11 @@ public enum CommandCatalog {
                                summary: "Replaces an instrument track's sound with a built-in preset.",
                                parameters: [P("track", .trackID, "An instrument track."),
                                             P("name", .string, "One of: " + InstrumentPreset.all.map(\.name).joined(separator: ", ") + ".")])
+        case .setInstrumentDevice:
+            return CommandSpec(name: "instrument.device", title: "Change Instrument",
+                               summary: "Chooses the built-in instrument that plays an instrument track.",
+                               parameters: [P("track", .trackID, "An instrument track."),
+                                            P("device", .string, "One of: " + InstrumentDevice.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
         case .setVolume:
             return CommandSpec(name: "mixer.volume", title: "Change Volume",
                                summary: "Sets a fader level in dB (−144 is silence, +6 is the maximum).",

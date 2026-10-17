@@ -228,4 +228,35 @@ final class InstrumentPatchTests: XCTestCase {
                                       sampleRate: 48_000, generation: 1)
         XCTAssertEqual(snapshot.lanes.map(\.patch.waveform), [.sine, .square])
     }
+
+    func testADrumTrackPlaysTheKitAndOnlyKitNotes() throws {
+        // Kick on the downbeat; middle C is not in the drum map and must stay silent.
+        var s = try song([[Note(pitch: 36, start: 0, length: 240), Note(pitch: 60, start: bar, length: 240)]])
+        try Command.setInstrumentDevice(s.tracks[0], .drums).apply(to: &s.project)
+        let core = core()
+        publish(s.project, to: core)
+        core.play()
+        let beat = Int(rate / 2)
+        let out = render(core, frames: 4 * beat + beat)
+        XCTAssertEqual(firstSound(out.left), 0, "the kick starts on its sample")
+        let kick = out.left[0..<beat].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        XCTAssertGreaterThan(kick, 0.05)
+        let afterKickTail = out.left[(4 * beat)...].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        XCTAssertEqual(afterKickTail, 0, "bar 2 holds only a C, which the kit ignores")
+    }
+
+    func testSwitchingTheInstrumentChangesTheSoundOfTheSameNotes() throws {
+        var s = try song([[Note(pitch: 38, start: 0, length: 960)]])
+        let synth = core()
+        publish(s.project, to: synth)
+        synth.play()
+        let synthOut = render(synth, frames: 9_600).left
+        try Command.setInstrumentDevice(s.tracks[0], .drums).apply(to: &s.project)
+        let drums = core()
+        publish(s.project, to: drums)
+        drums.play()
+        let drumOut = render(drums, frames: 9_600).left
+        XCTAssertNotNil(firstSound(drumOut))
+        XCTAssertNotEqual(synthOut, drumOut)
+    }
 }
