@@ -85,6 +85,16 @@ public final class EngineCore: @unchecked Sendable {
     /// Ticks at the start and end of the chunk being mixed; automated gains ramp between them.
     private var mixFrom: Tick = 0
     private var mixTo: Tick = 0
+    /// The gains each mix point ended the last chunk on (NaN: none yet), so every change —
+    /// a hand on a fader, a MIDI knob, an automation jump after a seek — ramps over one chunk
+    /// instead of stepping. Points: instrument slots, then audio tracks, then return buses.
+    private let gainMemory: UnsafeMutablePointer<Float>
+    /// The same for each send, per mix point and return bus.
+    private let sendMemory: UnsafeMutablePointer<Float>
+    /// Audio tracks whose gains are smoothed; more than this play with fixed steps.
+    static let smoothedAudioTracks = 64
+    private var mixPoints: Int { slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity }
+    private var sendingPoints: Int { slotCapacity + Self.smoothedAudioTracks }
     /// The next sample at which automated synth parameters are set again.
     private var automationNext: Int64 = 0
     /// Frames between two settings of an automated synth parameter: 0.67 ms at 48 kHz. The
@@ -123,6 +133,12 @@ public final class EngineCore: @unchecked Sendable {
         cursors.initialize(repeating: 0, count: self.slotCapacity)
         sessions = .allocate(capacity: self.slotCapacity)
         sessions.initialize(repeating: SessionSlot(), count: self.slotCapacity)
+        let points = self.slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity
+        gainMemory = .allocate(capacity: points * 2)
+        gainMemory.initialize(repeating: .nan, count: points * 2)
+        let sending = (self.slotCapacity + Self.smoothedAudioTracks) * Self.returnCapacity
+        sendMemory = .allocate(capacity: sending * 2)
+        sendMemory.initialize(repeating: .nan, count: sending * 2)
         revisions = .allocate(capacity: self.slotCapacity)
         revisions.initialize(repeating: .max, count: self.slotCapacity)
         scratch = .allocate(capacity: Self.maximumFrames)
@@ -160,6 +176,8 @@ public final class EngineCore: @unchecked Sendable {
         sessions.deinitialize(count: slotCapacity)
         sessions.deallocate()
         revisions.deallocate()
+        gainMemory.deallocate()
+        sendMemory.deallocate()
         scratch.deallocate()
         busLeft.deallocate()
         busRight.deallocate()
@@ -520,6 +538,8 @@ public final class EngineCore: @unchecked Sendable {
                 owners[slot] = owner
                 if sessions[slot].overrides { report(slot, nil, .arrangement) }
                 sessions[slot] = SessionSlot()
+                // Another track's level is no place to ramp from.
+                forget(point: slot)
             }
         }
         // A playing clip follows its edits; a deleted one stops.
@@ -696,10 +716,39 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            add(l, r, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
-            send(lane.sends, frames: frames, left: l, right: r)
+            add(l, r, into: left, right, frames: frames, smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: lane.slot))
+            send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
+        }
+    }
+
+    /// The ramp starting where the mix point ended the last chunk, which it then remembers.
+    private func smoothed(_ target: Ramp, point: Int) -> Ramp {
+        guard point >= 0, point < mixPoints else { return target }
+        return smoothed(target, at: gainMemory + point * 2)
+    }
+
+    private func smoothed(_ target: Ramp, at memory: UnsafeMutablePointer<Float>) -> Ramp {
+        var ramp = target
+        if memory[0].isFinite, memory[1].isFinite {
+            ramp.left0 = memory[0]
+            ramp.right0 = memory[1]
+        }
+        memory[0] = ramp.left1
+        memory[1] = ramp.right1
+        return ramp
+    }
+
+    private func forget(point: Int) {
+        guard point >= 0, point < mixPoints else { return }
+        gainMemory[point * 2] = .nan
+        gainMemory[point * 2 + 1] = .nan
+        guard point < sendingPoints else { return }
+        for bus in 0..<Self.returnCapacity {
+            let index = (point * Self.returnCapacity + bus) * 2
+            sendMemory[index] = .nan
+            sendMemory[index + 1] = .nan
         }
     }
 
@@ -742,7 +791,7 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Adds a track's processed bus into the return buses it sends to.
-    private func send(_ sends: [EngineSnapshot.SendTap], frames: Int, left: UnsafeMutablePointer<Float>,
+    private func send(_ sends: [EngineSnapshot.SendTap], from point: Int, frames: Int, left: UnsafeMutablePointer<Float>,
                       right: UnsafeMutablePointer<Float>) {
         for tap in sends where tap.bus >= 0 && tap.bus < Self.returnCapacity {
             let l = returnLeft + tap.bus * Self.maximumFrames, r = returnRight + tap.bus * Self.maximumFrames
@@ -750,6 +799,9 @@ public final class EngineCore: @unchecked Sendable {
             if let moving = tap.moving {
                 let (l0, r0) = moving.gains(at: mixFrom), (l1, r1) = moving.gains(at: mixTo)
                 gains = Ramp(left0: l0, right0: r0, left1: l1, right1: r1)
+            }
+            if point >= 0, point < sendingPoints {
+                gains = smoothed(gains, at: sendMemory + (point * Self.returnCapacity + tap.bus) * 2)
             }
             add(left, right, into: l, r, frames: frames, gains)
         }
@@ -763,7 +815,8 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = returnLeft + lane.bus * Self.maximumFrames, r = returnRight + lane.bus * Self.maximumFrames
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
-            add(l, r, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
+            let point = slotCapacity + Self.smoothedAudioTracks + lane.bus
+            add(l, r, into: left, right, frames: frames, smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: point))
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
@@ -776,8 +829,14 @@ public final class EngineCore: @unchecked Sendable {
     /// so a seek or an edit lands on the right frame at once.
     private func renderAudio(_ snapshot: EngineSnapshot, frames: Int) {
         let blockEnd = playhead + Int64(frames)
-        for lane in snapshot.audioLanes
-        where lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil {
+        for (index, lane) in snapshot.audioLanes.enumerated() {
+            let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
+            // A track just muted still renders this chunk, to ramp down instead of clicking off.
+            let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
+                && gainMemory[point * 2].isFinite
+            guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil || fading else {
+                continue
+            }
             let (left, right) = pair(lane.output)
             audioLeft.update(repeating: 0, count: frames)
             audioRight.update(repeating: 0, count: frames)
@@ -799,8 +858,9 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
-            add(audioLeft, audioRight, into: left, right, frames: frames, ramp(lane.mix, lane.gainLeft, lane.gainRight))
-            send(lane.sends, frames: frames, left: audioLeft, right: audioRight)
+            add(audioLeft, audioRight, into: left, right, frames: frames,
+                smoothed(ramp(lane.mix, lane.gainLeft, lane.gainRight), point: point))
+            send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
         }
     }
 

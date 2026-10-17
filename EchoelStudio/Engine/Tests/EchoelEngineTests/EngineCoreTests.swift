@@ -345,6 +345,20 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertLessThan(levels[1], levels[0] * 0.5, "the lane, not the stored cutoff, sets the filter")
     }
 
+    func testAMuteRampsDownOverOneChunkInsteadOfClicking() throws {
+        var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 24_000)
+        try Command.setMute(s.tracks[0], true).apply(to: &s.project)
+        publish(s.project, to: engine)
+        let chunk = render(engine, frames: 512, block: 512).left
+        XCTAssertGreaterThan(rms(chunk[0..<64]), rms(chunk[448..<512]) * 4, "the level falls across the chunk")
+        XCTAssertNotNil(firstSound(chunk), "it does not vanish at the first sample")
+        XCTAssertNil(firstSound(render(engine, frames: 512, block: 512).left), "and is silent after it")
+    }
+
     func testFaderGainsFollowTheMixerLaw() {
         XCTAssertEqual(EngineSnapshot.linear(MixerStrip.volumeRange.lowerBound), 0)
         XCTAssertEqual(EngineSnapshot.linear(0), 1, accuracy: 1e-6)
