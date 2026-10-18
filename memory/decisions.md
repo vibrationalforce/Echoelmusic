@@ -5420,3 +5420,11 @@ Review 2026-11-15.
 - Agent auf dem Gerät zuerst (Foundation Models + lokale Spracherkennung, ab iOS 26; App bleibt iOS 18).
 - Geschäftsmodell: App kostenlos und vollständig, eigene Plugins als Einmalkäufe plus Paket, kein Abo; löst die Abo-Pläne vom 2026-07-10 ab.
 - Volltext: `docs/dev/NEUSTART_2026-10-17.md` §6.
+
+### 2026-10-18 — Neuplanung freigegeben: keine Genres, EchoelStudio ordnen, P0 vor 1.0
+
+**Founder:** „Mir wäre lieber alles nochmal von vorne gründlich architektonisch geplant … Das mit den Genres ist nicht so kool, das lähmt die Kreativität … aus Marketing- und Chaos-Computer-Club-Sicht“ — dann „OK du entscheidest alles super“.
+
+**Entscheidung:** `docs/dev/NEUPLANUNG_2026-10-18.md` ist der Bauplan. Keine Genres, keine generierten Noten; `MusicalContext` + Instrument-Presets + neutrale Startprojekte. EchoelStudio wird geordnet (P0), nicht neu geschrieben. Effekte in fremden Hosts frei, nur Instrumente im Demo-Modus. Einmalkauf, nie Abo für Gekauftes. MIT bleibt, `SECURITY.md` kommt.
+
+**Review:** 2026-11-17.

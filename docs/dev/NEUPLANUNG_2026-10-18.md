@@ -1,6 +1,6 @@
 # Echoel: Neuplanung (2026-10-18)
 
-> Status: **Vorschlag, wartet auf Founder-Freigabe.** Entstanden aus drei Bestandsaufnahmen (EchoelStudio, Alt-App, Vertrauens-Audit), zwei Web-Recherchen (Markt, CCC) und drei unabhängigen Entwürfen (Kreativität · Offenheit · Markt), adversarial zusammengeführt. Nichts davon ist gebaut, was nicht schon im Repo steht.
+> Status: **FREIGEGEBEN (Founder 2026-10-18: „OK du entscheidest alles super“).** Die Fragen in §8 sind nach den Empfehlungen entschieden. Entstanden aus drei Bestandsaufnahmen (EchoelStudio, Alt-App, Vertrauens-Audit), zwei Web-Recherchen (Markt, CCC) und drei unabhängigen Entwürfen (Kreativität · Offenheit · Markt), adversarial zusammengeführt. Nichts davon ist gebaut, was nicht schon im Repo steht.
 
 ## 0. Entscheidung in fünf Sätzen
 
@@ -269,7 +269,7 @@ Der Agent ist bereits gebaut. Er läuft ab P1 mit. Wo das Modell fehlt, ist er a
 - Die App ist kostenlos und vollständig, inklusive Speichern und Export. Eingebaute Instrumente sind in der App frei (`OwnPlugins.swift:1-4`).
 - Ein Non-Consumable „Pro" für etwa 24,99–29,99 € schaltet die eigenen AUv3 in fremden Hosts frei.
 - Später werden nur **neue** Instrumente separat verkauft, nie bereits verkaufte Funktionen.
-- Eine schriftliche Zusage, dass Gekauftes nie zum Abo wird, steht unter Founder-Vorbehalt (§8).
+- Schriftliche Zusage: Gekauftes wird nie zum Abo (§8, entschieden).
 
 **Kanäle:**
 1. Loopy-Pro-/Audiobus-Forum: Entwickler-Thread mit Beta und Changelog.
@@ -300,11 +300,11 @@ Der Agent ist bereits gebaut. Er läuft ab P1 mit. Wo das Modell fehlt, ist er a
 
 ## 8. Risiken und offene Founder-Entscheidungen
 
-1. **Abo oder Einmalkauf.** Die dokumentierte Entscheidung vom 2026-07-10 sieht für v1.1 ein Jahres-Abo „Echoel Live" vor. Die Community straft Abos für Werkzeuge ab (Logic iPad, Audiobus 2025).
+1. **Abo oder Einmalkauf — ENTSCHIEDEN: Einmalkauf.** Schon mit der Neustart-Entscheidung vom 2026-10-17 (`decisions.csv`) ersetzt; die Pläne vom 2026-07-10 zum Jahres-Abo „Echoel Live" gelten nicht mehr. Die Community straft Abos für Werkzeuge ab (Logic iPad, Audiobus 2025).
    - **Empfehlung:** Einmalkauf, schriftlich „kein Abo für Gekauftes". Ein Abo höchstens für einen echten laufenden Dienst (z. B. Kollaboration). Vor jedem Store-Text entscheiden.
-2. **Effekte frei oder gesperrt in fremden Hosts.** Heute haben die Effekt-Units der Extension keinen Demo-Modus.
+2. **Effekte frei oder gesperrt in fremden Hosts — ENTSCHIEDEN: frei.** Heute haben die Effekt-Units der Extension keinen Demo-Modus.
    - **Empfehlung:** Effekte frei, als Einstieg und Goodwill. Gesperrt bleiben nur Instrumente. Das passt zum heutigen Code.
-3. **P0 verzögert 1.0.** Umbau ohne sichtbaren Gewinn. Nach 1.0 ist er aber teurer, weil Namen und Format einfrieren.
+3. **P0 verzögert 1.0 — ENTSCHIEDEN: P0 zuerst, strikt begrenzt.** Umbau ohne sichtbaren Gewinn. Nach 1.0 ist er aber teurer, weil Namen und Format einfrieren.
    - **Empfehlung:** P0 strikt auf die Liste in §5 begrenzen, keine Feature-Arbeit, kein Verhaltensunterschied.
 4. **AUv3-Kompatibilität ist nur in AUM gemessen.** Für GarageBand gibt es eine Tonhöhen-Vorhersage von +8,8 % bei 44,1 kHz.
    - **Empfehlung:** Kein Verkauf, bevor AUM und GarageBand auf dem Gerät bei beiden Abtastraten bestanden sind. Logic folgt danach.

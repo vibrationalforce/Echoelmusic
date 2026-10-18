@@ -1,3 +1,5 @@
+> **Bauplan seit 2026-10-18: `docs/dev/NEUPLANUNG_2026-10-18.md`** — ordnet den Weg dorthin (P0–P7); diese Datei bleibt die Scope-Autorität.
+
 # FOUNDER PRODUCT LAW — the current product definition
 
 **Status: CURRENT, highest authority for product scope.** Founder decision 2026-09-24.
