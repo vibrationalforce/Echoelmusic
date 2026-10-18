@@ -6,7 +6,12 @@ import Foundation
 public struct InstrumentSettings: Codable, Equatable, Sendable {
     /// Which built-in instrument plays the track. Synth parameters stay stored when the
     /// device changes, so switching back restores the sound.
-    public var device: InstrumentDevice
+    public var device: InstrumentDevice {
+        didSet { if device != .unrecognized { unrecognizedDevice = nil } }
+    }
+    /// The stored name of an instrument this build does not know (`device == .unrecognized`),
+    /// written back unchanged so a later build still finds its instrument.
+    public private(set) var unrecognizedDevice: String?
     /// The sample the sampler device plays; nil until one is chosen.
     public var sample: MediaID?
     public var preset: String
@@ -29,15 +34,33 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey { case device, sample, preset, values, plugin, pluginState }
 
-    /// Songs written before devices existed are synth tracks.
+    /// Songs written before devices existed are synth tracks. A device from a later build opens
+    /// as `.unrecognized`: the track plays nothing here and keeps its instrument for that build,
+    /// instead of the whole song being refused.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        device = try c.decodeIfPresent(InstrumentDevice.self, forKey: .device) ?? .synth
+        let name = try c.decodeIfPresent(String.self, forKey: .device) ?? InstrumentDevice.synth.rawValue
+        if let known = InstrumentDevice(rawValue: name), known != .unrecognized {
+            device = known
+        } else {
+            device = .unrecognized
+            unrecognizedDevice = name
+        }
         sample = try c.decodeIfPresent(MediaID.self, forKey: .sample)
         preset = try c.decode(String.self, forKey: .preset)
         values = try c.decode([String: Double].self, forKey: .values)
         plugin = try c.decodeIfPresent(PluginComponent.self, forKey: .plugin)
         pluginState = try c.decodeIfPresent(Data.self, forKey: .pluginState)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(unrecognizedDevice ?? device.rawValue, forKey: .device)
+        try c.encodeIfPresent(sample, forKey: .sample)
+        try c.encode(preset, forKey: .preset)
+        try c.encode(values, forKey: .values)
+        try c.encodeIfPresent(plugin, forKey: .plugin)
+        try c.encodeIfPresent(pluginState, forKey: .pluginState)
     }
 
     public func value(_ parameter: SynthParameter) -> Double {
@@ -55,6 +78,9 @@ public enum InstrumentDevice: String, Codable, CaseIterable, Sendable {
     case sampler
     /// A third-party Audio Unit instrument (`InstrumentSettings.plugin`).
     case plugin
+    /// An instrument from a later build, kept by name (`InstrumentSettings.unrecognizedDevice`)
+    /// and silent here. Never chosen, only read from a file.
+    case unrecognized
 
     public var title: String {
         switch self {
@@ -62,11 +88,14 @@ public enum InstrumentDevice: String, Codable, CaseIterable, Sendable {
         case .drums: "Drums"
         case .sampler: "Sampler"
         case .plugin: "Plugin"
+        case .unrecognized: "Unknown"
         }
     }
 
     /// The instruments the app plays itself; `plugin` is chosen through `instrument.plugin`.
     public static let builtIn: [InstrumentDevice] = [.synth, .drums, .sampler]
+    /// What a track can be set to.
+    public static let choosable: [InstrumentDevice] = builtIn + [.plugin]
 }
 
 /// The built-in synth's parameters: names, ranges, defaults and how a control maps onto

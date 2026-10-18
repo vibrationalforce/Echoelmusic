@@ -288,6 +288,7 @@ public enum AgentTools {
                 case .drums: parts.append("drums")
                 case .sampler: parts.append("sampler")
                 case .plugin: parts.append("plugin instrument")
+                case .unrecognized: parts.append("an instrument from a later version, silent here")
                 }
             case .audio: parts.append("audio")
             case .returnTrack: parts.append("return")

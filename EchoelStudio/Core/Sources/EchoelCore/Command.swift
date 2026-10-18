@@ -270,6 +270,9 @@ extension Command {
             guard project.tracks[t].kind == .instrument else {
                 throw CommandError.invalidValue(parameter: "track", reason: "only instrument tracks have an instrument")
             }
+            guard device != .unrecognized else {
+                throw CommandError.invalidValue(parameter: "device", reason: "names no instrument this build plays")
+            }
             guard device != .plugin || project.tracks[t].instrument.plugin != nil else {
                 throw CommandError.invalidValue(parameter: "device", reason: "choose a plugin with instrument.plugin first")
             }

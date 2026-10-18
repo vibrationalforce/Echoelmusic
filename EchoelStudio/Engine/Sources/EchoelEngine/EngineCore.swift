@@ -570,6 +570,8 @@ public final class EngineCore: @unchecked Sendable {
         case let (.control(number, value), .plugin): lane.unit?.control(status: 0xB0, number, value, offset: offset)
         // The kit and the sampler play notes only; the synth knows the wheel and the pedal.
         case (.pitchBend, _), (.control, _): break
+        // An instrument from a later build is kept in the song and silent here.
+        case (_, .unrecognized): break
         }
     }
 
@@ -850,6 +852,8 @@ public final class EngineCore: @unchecked Sendable {
                 if off { unit.noteOff(pitch: pitch, offset: 0) }
                 if bend || pedal { unit.control(status: status, pitch, value) }
                 if allOff { unit.allNotesOff() }
+            case .unrecognized:
+                break
             }
         }
     }
@@ -1259,7 +1263,7 @@ public final class EngineCore: @unchecked Sendable {
                 case .synth: synths[lane.slot].activeVoiceCount > 0
                 case .drums: drums[lane.slot].activeVoiceCount > 0
                 case .sampler: samplers[lane.slot].activeVoiceCount > 0
-                case .plugin: false
+                case .plugin, .unrecognized: false
                 }
                 guard sounding else { continue }
                 let mono = scratch + range.lowerBound
@@ -1269,7 +1273,7 @@ public final class EngineCore: @unchecked Sendable {
                 case .synth: synths[lane.slot].render(into: buffer)
                 case .drums: drums[lane.slot].render(into: buffer)
                 case .sampler: samplers[lane.slot].render(into: buffer)
-                case .plugin: break
+                case .plugin, .unrecognized: break
                 }
                 let l = bus(lane.slot, busLeft) + range.lowerBound, r = bus(lane.slot, busRight) + range.lowerBound
                 for i in 0..<range.count {

@@ -206,7 +206,7 @@ public enum CommandCatalog {
             return CommandSpec(name: "instrument.device", title: "Change Instrument",
                                summary: "Chooses the built-in instrument that plays an instrument track.",
                                parameters: [P("track", .trackID, "An instrument track."),
-                                            P("device", .string, "One of: " + InstrumentDevice.allCases.map(\.rawValue).joined(separator: ", ") + "; plugin needs instrument.plugin first.")])
+                                            P("device", .string, "One of: " + InstrumentDevice.choosable.map(\.rawValue).joined(separator: ", ") + "; plugin needs instrument.plugin first.")])
         case .setInstrumentSample:
             return CommandSpec(name: "instrument.sample", title: "Choose Sample",
                                summary: "Sets the audio file the sampler of an instrument track plays, or clears it.",

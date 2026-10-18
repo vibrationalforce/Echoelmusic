@@ -109,4 +109,26 @@ final class InstrumentTests: XCTestCase {
                                               from: JSONEncoder().encode(InstrumentSettings(device: .drums)))
         XCTAssertEqual(again.device, .drums)
     }
+
+    func testAnInstrumentFromALaterBuildIsKeptAndCanBeReplaced() throws {
+        var (project, keys, _) = try project()
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: try ProjectCodec.encode(project)) as? [String: Any])
+        var tracks = try XCTUnwrap(json["tracks"] as? [[String: Any]])
+        var instrument = try XCTUnwrap(tracks[0]["instrument"] as? [String: Any])
+        instrument["device"] = "granular"
+        tracks[0]["instrument"] = instrument
+        json["tracks"] = tracks
+        project = try ProjectCodec.decode(JSONSerialization.data(withJSONObject: json))
+
+        XCTAssertEqual(project.track(keys)?.instrument.device, .unrecognized, "the song opens")
+        XCTAssertEqual(project.track(keys)?.instrument.unrecognizedDevice, "granular")
+        let saved = try XCTUnwrap(JSONSerialization.jsonObject(with: try ProjectCodec.encode(project)) as? [String: Any])
+        let savedInstrument = try XCTUnwrap(((saved["tracks"] as? [[String: Any]])?[0])?["instrument"] as? [String: Any])
+        XCTAssertEqual(savedInstrument["device"] as? String, "granular", "saving here does not lose it")
+
+        XCTAssertThrowsError(try Command.setInstrumentDevice(keys, .unrecognized).apply(to: &project))
+        try Command.setInstrumentDevice(keys, .sampler).apply(to: &project)
+        XCTAssertEqual(project.track(keys)?.instrument.device, .sampler)
+        XCTAssertNil(project.track(keys)?.instrument.unrecognizedDevice, "choosing an instrument replaces the unknown one")
+    }
 }

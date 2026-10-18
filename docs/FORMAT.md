@@ -73,7 +73,8 @@ slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the 
 (first channel of an interface stereo pair, absent = master), `input`, `monitor`
 (`auto` · `in` · `off`).
 
-**Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`), `preset`, `values` (parameter
+**Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
+is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
 key → number, e.g. `synth.cutoff`), optional `sample` (a media id), `plugin` (an Audio Unit's
 type, subtype and manufacturer codes plus names) and `pluginState` (the plugin's own saved state,
 base64).

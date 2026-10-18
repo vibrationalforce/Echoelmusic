@@ -29,6 +29,10 @@ struct SoundPanel: View {
                     samplerControls
                 case .synth:
                     synthControls
+                case .unrecognized:
+                    Text("This track's instrument comes from a later version of Echoel Studio. It stays in the song and plays nothing here; choose another instrument to replace it.")
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.textSecondary)
                 case .plugin:
                     pluginStatus
                     PluginInterfaceSection(slot: .instrument(track.id))
