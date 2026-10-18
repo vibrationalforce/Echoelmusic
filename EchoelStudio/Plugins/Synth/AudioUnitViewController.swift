@@ -1,11 +1,12 @@
 import CoreAudioKit
+import EchoelCore
 import SwiftUI
 import UIKit
 
 /// The extension's principal class: it makes the Audio Unit for the host and shows its controls.
 public final class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     private var audioUnit: EchoelSynthAudioUnit?
-    private var hosting: UIHostingController<SynthPluginView>?
+    private var hosting: UIHostingController<PluginControlsView>?
 
     /// Carries the new unit from the host's thread to the main thread.
     private final class UnitBox: @unchecked Sendable {
@@ -41,7 +42,8 @@ public final class AudioUnitViewController: AUViewController, AUAudioUnitFactory
             hosting.removeFromParent()
         }
         guard let tree = unit.parameterTree else { return }
-        let controller = UIHostingController(rootView: SynthPluginView(model: SynthPluginModel(tree: tree, unit: unit)))
+        let controller = UIHostingController(rootView: PluginControlsView(model: PluginControlsModel(
+            tree: tree, title: OwnPlugin.synth.component.name, isUnlocked: unit.isUnlocked)))
         controller.view.backgroundColor = .clear
         addChild(controller)
         controller.view.frame = view.bounds

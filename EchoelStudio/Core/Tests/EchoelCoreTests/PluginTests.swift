@@ -101,4 +101,18 @@ final class OwnPluginTests: XCTestCase {
         }
         XCTAssertNil(StandardEffect(component: OwnPlugin.synth.component))
     }
+
+    func testTheExtensionCopiesNeverShareAnIdWithTheFreeOnes() {
+        let free = Set(StandardEffect.allCases.map(\.component))
+        let sold = StandardEffect.allCases.map(\.extensionComponent)
+        XCTAssertEqual(Set(sold).count, StandardEffect.allCases.count)
+        for (effect, component) in zip(StandardEffect.allCases, sold) {
+            XCTAssertFalse(free.contains(component), "one id, two registrations: which loads is chance")
+            XCTAssertEqual(component.role, .effect)
+            XCTAssertEqual(StandardEffect(extensionComponent: component), effect)
+            XCTAssertNil(StandardEffect(component: component), "the app's own chain never takes the paid copy")
+            XCTAssertNil(StandardEffect(extensionComponent: effect.component))
+        }
+        XCTAssertTrue(OwnPlugin.all.contains(OwnPlugin.effects))
+    }
 }

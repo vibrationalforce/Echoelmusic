@@ -48,7 +48,7 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
             state.kernel.parameter(Int(parameter.address))
         }
         maximumFramesToRender = 4_096
-        Task { [state] in state.unlocked.store(await PluginLicense.isUnlocked(), ordering: .releasing) }
+        Task { [state] in state.unlocked.store(await PluginLicense.isUnlocked(.synth), ordering: .releasing) }
     }
 
     private static func makeTree() -> AUParameterTree {

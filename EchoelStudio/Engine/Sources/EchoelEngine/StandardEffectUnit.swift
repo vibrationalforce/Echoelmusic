@@ -2,10 +2,13 @@ import AudioToolbox
 import AVFoundation
 import EchoelCore
 import Foundation
+import Synchronization
 
 /// A standard effect as an Audio Unit effect (`aufx`): stereo in, stereo out, its parameters in
 /// a tree that hosts, automation and MIDI learn reach like any plugin's. The app registers it in
-/// its own process, so it loads without an extension and without a purchase.
+/// its own process, so it loads without an extension and without a purchase. The Echoel Effects
+/// extension makes the same unit from its own ids (`StandardEffect.extensionComponent`) and
+/// locks it to the demo until the purchase is found.
 public final class StandardEffectUnit: AUAudioUnit {
     /// Registers every standard effect in this process. Call once, before the first load.
     public static func register() {
@@ -24,6 +27,8 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// What the render block reads; the kernel is swapped only in `allocateRenderResources`.
     final class RenderState: @unchecked Sendable {
         var kernel: EffectKernel
+        let unlocked = Atomic<Bool>(true)
+        var demoFrame: Int64 = 0
         init(kernel: EffectKernel) { self.kernel = kernel }
     }
 
@@ -41,7 +46,7 @@ public final class StandardEffectUnit: AUAudioUnit {
                                         subtype: componentDescription.componentSubType,
                                         manufacturer: componentDescription.componentManufacturer, name: "",
                                         manufacturerName: "")
-        guard let effect = StandardEffect(component: component) else {
+        guard let effect = StandardEffect(component: component) ?? StandardEffect(extensionComponent: component) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_InvalidProperty))
         }
         self.effect = effect
@@ -106,6 +111,20 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     public override var canProcessInPlace: Bool { true }
 
+    /// Unlocked, the unit always plays. Locked, it plays as a demo: two seconds of silence every
+    /// thirty. Units made in the app are unlocked; the extension locks its own until the
+    /// purchase is found.
+    public var isUnlocked: Bool {
+        get { render.unlocked.load(ordering: .acquiring) }
+        set { render.unlocked.store(newValue, ordering: .releasing) }
+    }
+
+    /// Whether a locked unit is silent `frame` frames after its resources were allocated.
+    public static func demoIsSilent(atFrame frame: Int64, sampleRate: Double) -> Bool {
+        let second = Swift.max(Int64(sampleRate), 1)
+        return frame % (30 * second) >= 28 * second
+    }
+
     /// The compressor's gain reduction in dB, for a meter.
     public var gainReduction: Float { render.kernel.gainReduction }
 
@@ -117,6 +136,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         }
         let old = render.kernel
         render.kernel = EffectKernel(effect: effect, sampleRate: format.sampleRate, values: old.allValues)
+        render.demoFrame = 0
     }
 
     public override var internalRenderBlock: AUInternalRenderBlock {
@@ -149,6 +169,13 @@ public final class StandardEffectUnit: AUAudioUnit {
                 event = UnsafePointer(header.next)
             }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
+            if !state.unlocked.load(ordering: .relaxed) {
+                if Self.demoIsSilent(atFrame: state.demoFrame, sampleRate: kernel.sampleRate) {
+                    left.update(repeating: 0, count: frames)
+                    right.update(repeating: 0, count: frames)
+                }
+                state.demoFrame += Int64(frames)
+            }
             return noErr
         }
     }

@@ -3,21 +3,23 @@ import EchoelCore
 import Observation
 import SwiftUI
 
-/// The plugin's controls, mirrored from its parameter tree: the host's automation moves them,
-/// and moving them writes the tree.
+/// A plugin's controls, mirrored from its parameter tree: the host's automation moves them,
+/// and moving them writes the tree. Shared by every Echoel extension.
 @MainActor
 @Observable
-final class SynthPluginModel {
+final class PluginControlsModel {
     private(set) var values: [AUParameterAddress: AUValue] = [:]
     let parameters: [AUParameter]
+    let title: String
     let isUnlocked: Bool
     @ObservationIgnored private var token: AUParameterObserverToken?
     @ObservationIgnored private let tree: AUParameterTree
 
-    init(tree: AUParameterTree, unit: EchoelSynthAudioUnit) {
+    init(tree: AUParameterTree, title: String, isUnlocked: Bool) {
         self.tree = tree
+        self.title = title
         parameters = tree.allParameters
-        isUnlocked = unit.isUnlocked
+        self.isUnlocked = isUnlocked
         for parameter in parameters { values[parameter.address] = parameter.value }
         token = tree.token(byAddingParameterObserver: { @Sendable [weak self] address, value in
             Task { @MainActor in self?.values[address] = value }
@@ -30,8 +32,8 @@ final class SynthPluginModel {
     }
 }
 
-struct SynthPluginView: View {
-    let model: SynthPluginModel
+struct PluginControlsView: View {
+    let model: PluginControlsModel
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.
     private static func isExponential(_ parameter: AUParameter) -> Bool {
@@ -54,11 +56,11 @@ struct SynthPluginView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Echoel Synth")
+                Text(model.title)
                     .font(.headline)
                     .foregroundStyle(.white)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every thirty. Unlock Echoel Synth in the Echoel app to remove it.")
+                    Text("Demo: two seconds of silence every thirty. Unlock \(model.title) in the Echoel app to remove it.")
                         .font(.caption)
                         .foregroundStyle(Color(white: 0.6))
                 }
@@ -89,6 +91,10 @@ struct SynthPluginView: View {
                     ForEach(names.indices, id: \.self) { Text(names[$0]).tag($0) }
                 }
                 .pickerStyle(.segmented)
+            } else if parameter.unit == .boolean {
+                Toggle(parameter.displayName, isOn: Binding(get: { value >= 0.5 },
+                                                            set: { model.set(parameter, $0 ? 1 : 0) }))
+                    .labelsHidden()
             } else {
                 Slider(value: Binding(get: { Self.position(of: value, in: parameter) },
                                       set: { model.set(parameter, Self.value(at: $0, in: parameter)) }),
