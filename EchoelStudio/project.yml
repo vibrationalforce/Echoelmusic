@@ -21,6 +21,11 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     ENABLE_USER_SCRIPT_SANDBOXING: YES
+    # One version for the app and its extension (App Store Connect rejects a mismatch). The
+    # record already shipped 10.79.x builds to TestFlight, so this one must be higher. The build
+    # number is set by the release workflow, which replaces the literal below with the run number.
+    MARKETING_VERSION: "11.0.0"
+    CURRENT_PROJECT_VERSION: "${BUILD_NUMBER:=1}"
 
 packages:
   EchoelCore:
@@ -36,6 +41,9 @@ targets:
     platform: iOS
     sources:
       - path: App
+      - path: Support/App/PrivacyInfo.xcprivacy
+        type: file
+        buildPhase: resources
     dependencies:
       - package: EchoelCore
       - package: EchoelDSP
@@ -47,10 +55,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         PRODUCT_NAME: Echoel
         TARGETED_DEVICE_FAMILY: "1,2"
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Echoel
+        # The earlier app's icon, one 1024 image (Xcode draws every size from it).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIRequiresFullScreen: NO
@@ -67,6 +75,8 @@ targets:
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+        # Only Apple's own encryption (HTTPS for the store); no export-compliance question per build.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         CODE_SIGN_STYLE: Automatic
 
   # Echoel Plugins — every Echoel Audio Unit in ONE extension under the one registered Audio Unit
@@ -84,6 +94,9 @@ targets:
         excludes:
           - "Info.plist"
       - path: Plugins/Shared
+      - path: Support/Plugins/PrivacyInfo.xcprivacy
+        type: file
+        buildPhase: resources
     dependencies:
       - package: EchoelCore
       - package: EchoelDSP
@@ -94,8 +107,6 @@ targets:
         PRODUCT_NAME: EchoelPlugins
         INFOPLIST_FILE: Plugins/AUv3/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
