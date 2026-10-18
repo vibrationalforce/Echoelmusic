@@ -57,6 +57,11 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UIBackgroundModes: audio
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoel records your microphone or audio interface onto the audio track you arm."
+        # Network MIDI (CoreMIDI's RTP-MIDI session): the prompt shows the first time it is
+        # turned on. NSBonjourServices is an array, which the generated plist cannot carry, so
+        # it comes from the small Info.plist below and the two are merged.
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Echoel sends and receives MIDI over your local network when you turn on Network MIDI."
+        INFOPLIST_FILE: Support/Info.plist
         INFOPLIST_KEY_UIFileSharingEnabled: YES
         INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent

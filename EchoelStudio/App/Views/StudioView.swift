@@ -281,6 +281,9 @@ struct SongMenu: View {
                     }
                 }
             }
+            Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
+                Label("Network MIDI", systemImage: "network")
+            }
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
                     if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }

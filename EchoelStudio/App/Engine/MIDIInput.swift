@@ -133,6 +133,9 @@ final class MIDIInput {
     private(set) var learnTarget: ParameterAddress?
     /// The control that moved last, for the learn banner.
     private(set) var lastControl: MIDIControl?
+    /// MIDI over the network (RTP-MIDI): a Mac's Audio MIDI Setup, another iPad, any rtpMIDI host
+    /// on Windows. While on, the session is one more source and destination like a cable.
+    private(set) var networkEnabled = false
 
     @ObservationIgnored private var client = MIDIClientRef()
     @ObservationIgnored private var port = MIDIPortRef()
@@ -151,6 +154,7 @@ final class MIDIInput {
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let writer: ParameterWriter
     private static let followKey = "midi.clockIn.source"
+    private static let networkKey = "midi.network"
     @ObservationIgnored private let timebase: (numer: UInt32, denom: UInt32) = {
         var info = mach_timebase_info_data_t()
         mach_timebase_info(&info)
@@ -324,7 +328,20 @@ final class MIDIInput {
         }
         guard portStatus == noErr else { return fail("port", portStatus) }
         clockInbox.followed.store(followedSource.map(Self.tag) ?? 0, ordering: .relaxed)
+        if UserDefaults.standard.bool(forKey: Self.networkKey) { setNetwork(true) }
         connectSources()
+    }
+
+    /// Turns the network session on or off. Off by default: turning it on is what asks for
+    /// local-network access, so it happens when the musician asks for it, not at launch.
+    func setNetwork(_ on: Bool) {
+        let session = MIDINetworkSession.default()
+        session.isEnabled = on
+        // Anyone on the local network may connect, as a cable plugged in would.
+        session.connectionPolicy = on ? .anyone : .noOne
+        networkEnabled = on
+        UserDefaults.standard.set(on, forKey: Self.networkKey)
+        log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .public)")
     }
 
     private func fail(_ step: String, _ status: OSStatus) {
