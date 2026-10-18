@@ -1276,3 +1276,12 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Engine: `EffectKernel` (parameters in atomics, applied per block) + `StandardEffectUnit` (one in-process AUAudioUnit for all four, registered at launch); App: FX menu "Echoel" section, `StandardEffectPanel` with log-scale frequency fields and a reduction meter.
 - Caught by CI: a delay restored with its settings swept from the default (#82) — settings now apply at once before the first sample.
 - NOT device-verified: monitoring latency, auto vs speaker route, how the effects sound, that iOS instantiates the registered subclass.
+
+## 2026-10-18 09:05 — EchoelStudio: Clock & Sync aus dem Legacy portiert (Run #84, #85 grün)
+
+- Tempowechsel beim Spielen hält die Song-Position (`24668c4`).
+- Phasenkorrektur beim Clock-Folgen: `ClockFollower.position(at:)` + `PhaseLock` (Deadband 2 ms, ≤0,5 ms je Schritt, Relock ab 80 ms), `EngineCore.nudge(bySamples:)` ohne Noten-Release (`376bd6d`).
+- Netzwerk-MIDI (CoreMIDI RTP, Song-Menü, aus per Vorgabe; `NSLocalNetworkUsageDescription` + `Support/Info.plist` mit Bonjour `_apple-midi._udp`) (`c2c67c8`).
+- Tap-Tempo (Median, `EchoelCore.TapTempo`) (`718fa7c`) · Clock-Versatz −20…+40 ms (`6549406`).
+- Ableton Link bewusst nicht: C++-Abhängigkeit + Multicast-Entitlement; Founder „keine Abhängigkeiten". Nichts zu beantragen.
+- Nichts gerätegeprüft.
