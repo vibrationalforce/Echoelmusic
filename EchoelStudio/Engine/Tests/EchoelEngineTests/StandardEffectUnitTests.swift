@@ -46,10 +46,16 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertTrue(paid.isUnlocked, "a unit plays until something locks it")
         paid.isUnlocked = false
         let rate = 48_000
-        let input = (0..<(30 * rate)).map { Float(sin(Double($0) * 2 * .pi * 440 / Double(rate))) * 0.5 }
+        let step: Double = 2 * Double.pi * 440 / Double(rate)
+        let input: [Float] = (0..<(30 * rate)).map { (n: Int) -> Float in
+            let phase: Double = Double(n) * step
+            return Float(sin(phase)) * 0.5
+        }
         let out = render(paid, input)
         func peak(_ seconds: ClosedRange<Double>) -> Float {
-            out[Int(seconds.lowerBound * Double(rate))..<Int(seconds.upperBound * Double(rate))].map(abs).max() ?? 0
+            let from = Int(seconds.lowerBound * Double(rate))
+            let to = Int(seconds.upperBound * Double(rate))
+            return out[from..<to].map { abs($0) }.max() ?? 0
         }
         XCTAssertGreaterThan(peak(1...2), 0.3, "the demo plays")
         XCTAssertEqual(peak(28.1...29.9), 0, "then two seconds of silence")
@@ -59,8 +65,9 @@ final class StandardEffectUnitTests: XCTestCase {
 
         let free = try self.unit(.equalizer)
         XCTAssertTrue(free.isUnlocked)
-        XCTAssertGreaterThan(render(free, Array(input[(28 * rate)..<(29 * rate)])).map(abs).max() ?? 0, 0.3,
-                             "the app's own copy never goes silent")
+        let late: [Float] = Array(input[(28 * rate)..<(29 * rate)])
+        let freePeak: Float = render(free, late).map { abs($0) }.max() ?? 0
+        XCTAssertGreaterThan(freePeak, 0.3, "the app's own copy never goes silent")
     }
 
     func testTheDelayRepeatsAnImpulseWhenItsTreeSaysSo() throws {
