@@ -14,6 +14,8 @@ final class DocumentController {
     private(set) var songs: [ProjectLibrary.Entry] = []
     private(set) var lastError: String?
     private(set) var isExporting = false
+    /// How loud the last WAV export came out, for the status line; nil before one.
+    private(set) var lastExportLoudness: (integrated: Double, truePeak: Double)?
     private(set) var isImporting = false
     /// Changes whenever `samples` does; observe this, not the buffers.
     private(set) var mediaRevision = 0
@@ -121,24 +123,29 @@ final class DocumentController {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         // Block by block into the file: a long song never sits in memory whole.
-        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+        // Measured on the way, as the file receives it (BS.1770 / EBU R 128).
+        let result: Result<LoudnessMeter, Error> = await Task.detached(priority: .userInitiated) {
             Result {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 let writer = try WAVWriter(url: url, sampleRate: rate)
+                var meter = LoudnessMeter(sampleRate: rate)
                 do {
                     _ = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
                                                  effects: offline.chains) { left, right, count in
                         try writer.append(left: left, right: right, count: count)
+                        meter.process(left: left, right: right, count: count)
                     }
                     try writer.finish()
                 } catch {
                     try? FileManager.default.removeItem(at: url)
                     throw error
                 }
+                return meter
             }
         }.value
         switch result {
-        case .success:
+        case .success(let meter):
+            lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
             lastError = offline.missing.isEmpty ? nil
                 : "Exported without \(offline.missing.joined(separator: ", ")): not available on this device."
             return url

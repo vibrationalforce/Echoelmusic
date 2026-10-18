@@ -165,7 +165,21 @@ struct TransportBar: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.record)
                 .padding(.bottom, 2)
+        } else if let loudness = documents.lastExportLoudness {
+            // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
+            Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
+                .font(Theme.Font.caption.monospacedDigit())
+                .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
+                .padding(.bottom, 2)
         }
+    }
+
+    static func exportText(integrated: Double, truePeak: Double) -> String {
+        func value(_ number: Double, _ unit: String) -> String {
+            number.isFinite ? String(format: "%.1f", number) + " " + unit : "silent"
+        }
+        let warning = truePeak > -1 ? " — peaks above −1 dBTP may distort when encoded" : ""
+        return "Last export: " + value(integrated, "LUFS") + " · " + value(truePeak, "dBTP") + warning
     }
 }
 
