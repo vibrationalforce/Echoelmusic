@@ -40,6 +40,9 @@ final class InputRecorder: @unchecked Sendable {
         armed.store(false, ordering: .releasing)
     }
 
+    /// Whether this recorder stamps its takes against `core` — a rebuilt graph may reuse it then.
+    func records(for core: EngineCore) -> Bool { self.core === core }
+
     /// The output sample the playhead stood at when the take's first frame arrived; −1 before.
     var startSample: Int64 { start.load(ordering: .acquiring) }
 
@@ -136,6 +139,12 @@ actor TakeWriter {
     private let chunk: AVAudioPCMBuffer
     private let ring: AudioRing
     private var frames = 0
+    /// A take may not outgrow what the song can load again: longer audio is never written, so
+    /// the take ends at the limit instead of being refused whole when it is read back.
+    private let maximumFrames: Int
+
+    /// Whether the take reached the length limit and later input was dropped.
+    private(set) var reachedLimit = false
 
     init(url: URL, sampleRate: Double, ring: AudioRing) throws {
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 1,
@@ -147,6 +156,7 @@ actor TakeWriter {
                                interleaved: false)
         self.chunk = chunk
         self.ring = ring
+        maximumFrames = Int(AudioFileImport.maximumSeconds * sampleRate)
         // A block that arrived as the previous take was stopped would otherwise open this one.
         ring.discardAvailable()
     }
@@ -157,9 +167,12 @@ actor TakeWriter {
         while true {
             let n = ring.read(into: data, count: Int(chunk.frameCapacity))
             guard n > 0 else { return }
-            chunk.frameLength = AVAudioFrameCount(n)
+            let kept = Swift.min(n, Swift.max(0, maximumFrames - frames))
+            if kept < n { reachedLimit = true }
+            guard kept > 0 else { continue }
+            chunk.frameLength = AVAudioFrameCount(kept)
             try file.write(from: chunk)
-            frames += n
+            frames += kept
         }
     }
 

@@ -30,7 +30,9 @@ final class AudioEngine {
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var sinkNode: AVAudioSinkNode?
     @ObservationIgnored private var recorder: InputRecorder?
-    @ObservationIgnored private var take: (url: URL, writer: TakeWriter, latency: Int64)?
+    /// The take owns its recorder and rate: a route change rebuilds the graph under it.
+    @ObservationIgnored private var take: (url: URL, writer: TakeWriter, recorder: InputRecorder,
+                                           sampleRate: Double, latency: Int64)?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
     @ObservationIgnored private var core: EngineCore?
     @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
@@ -186,6 +188,9 @@ final class AudioEngine {
             engine.detach(sinkNode)
             self.sinkNode = nil
         }
+        // A running take keeps its recorder: when the input reopens on the same core, the same
+        // recorder (and ring) carries on, so the take survives a route change.
+        let previous = recorder
         recorder = nil
         if let sourceNode {
             log.info("graph: detach source node")
@@ -268,7 +273,8 @@ final class AudioEngine {
                 guard inputFormat.channelCount > 0, inputFormat.sampleRate == sampleRate else {
                     throw EngineError.inputUnusable(inputFormat.sampleRate, sampleRate)
                 }
-                let recorder = InputRecorder(core: current, sampleRate: sampleRate)
+                let recorder = previous.flatMap { $0.records(for: current) ? $0 : nil }
+                    ?? InputRecorder(core: current, sampleRate: sampleRate)
                 let sink = InputRecorder.makeSinkNode(recorder)
                 log.info("graph: attach sink node, \(inputFormat.channelCount, privacy: .public) ch")
                 engine.attach(sink)
@@ -301,7 +307,7 @@ final class AudioEngine {
         let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, ring: recorder.ring)
         let session = AVAudioSession.sharedInstance()
         let latency = Int64(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
-        take = (url, writer, Swift.max(0, latency))
+        take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency))
         recorder.arm(channel: channel)
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
@@ -314,8 +320,10 @@ final class AudioEngine {
 
     /// Stops the take and closes its file. Nil when nothing was captured; the empty file is gone.
     func endTake() async -> RecordedTake? {
-        guard let current = take, let recorder, let core else { return nil }
+        // Never the engine's recorder: after a route change that is a different one, or none.
+        guard let current = take else { return nil }
         take = nil
+        let recorder = current.recorder
         recorder.disarm()
         drainTask?.cancel()
         await drainTask?.value
@@ -329,12 +337,16 @@ final class AudioEngine {
             lastError = "The take could not be written."
             return nil
         }
+        if await current.writer.reachedLimit {
+            lastError = "The take stopped at ten minutes, the longest the song can hold."
+        }
         let firstSample = recorder.startSample
         guard frames > 0, firstSample >= 0 else {
             try? FileManager.default.removeItem(at: current.url)
             return nil
         }
-        return RecordedTake(url: current.url, sampleRate: core.sampleRate, startSample: firstSample, latency: current.latency)
+        return RecordedTake(url: current.url, sampleRate: current.sampleRate, startSample: firstSample,
+                            latency: current.latency)
     }
 
     /// Hands the current project to the render thread. Call on every project change; it is
