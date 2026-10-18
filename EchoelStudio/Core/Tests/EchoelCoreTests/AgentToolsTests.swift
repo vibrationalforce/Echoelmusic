@@ -1,0 +1,118 @@
+import XCTest
+@testable import EchoelCore
+
+@MainActor
+final class AgentToolsTests: XCTestCase {
+    private func run(_ actions: [AgentAction], on store: ProjectStore) throws {
+        for action in actions {
+            let commands = try AgentTools.commands(for: action, in: store.project)
+            try store.perform(commands, title: "Agent", coalescingKey: "agent.turn")
+        }
+        store.endGesture()
+    }
+
+    func testANewDrumTrackAt120WithFourOnTheFloorIsOneUndoStep() throws {
+        let store = ProjectStore(project: Project(tempo: 90))
+        try run([
+            .setTempo(bpm: 120),
+            .addTrack(name: "Drums", kind: "drums", sound: nil),
+            .drumPattern(track: "drums", drum: "kick", steps: "x...x...x...x...", bar: 1, bars: 1),
+        ], on: store)
+
+        XCTAssertEqual(store.project.tempo, 120)
+        let drums = try XCTUnwrap(store.project.tracks.first)
+        XCTAssertEqual(drums.instrument.device, .drums)
+        XCTAssertEqual(drums.clips.count, 1, "the pattern lands in the track's first clip, not a second one")
+        let kicks = drums.clips[0].notes.filter { $0.pitch == 36 }.map(\.start).sorted()
+        XCTAssertEqual(kicks, [0, 960, 1_920, 2_880], "a kick on every beat")
+
+        XCTAssertEqual(store.undoStack.count, 1)
+        store.undo()
+        XCTAssertEqual(store.project.tempo, 90)
+        XCTAssertTrue(store.project.tracks.isEmpty)
+    }
+
+    func testAPatternRepeatsOverItsBarsAndReplacesOnlyItsDrum() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Beat", kind: "drums", sound: nil),
+            .drumPattern(track: "1", drum: "Snare", steps: "....X.......X...", bar: 1, bars: 2),
+            .drumPattern(track: "1", drum: "hi-hat", steps: "x.x.", bar: 1, bars: 2),
+            .drumPattern(track: "1", drum: "hihat", steps: "x...", bar: 1, bars: 2),
+        ], on: store)
+        let clip = try XCTUnwrap(store.project.tracks.first?.clips.first)
+        XCTAssertEqual(clip.length, 2 * 3_840, "the clip grew to two bars")
+        let snares = clip.notes.filter { $0.pitch == 38 }
+        XCTAssertEqual(snares.map(\.start).sorted(), [960, 2_880, 4_800, 6_720])
+        XCTAssertTrue(snares.allSatisfy { $0.velocity == StepEditing.accentVelocity })
+        XCTAssertEqual(clip.notes.filter { $0.pitch == 42 }.count, 8, "the second hat pattern replaced the first")
+    }
+
+    func testNotesAreWrittenByNameBeatAndLength() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Keys", kind: "instrument", sound: "soft keys"),
+            .writeNotes(track: "keys", notes: "C4+E4+G4 1 4, Bb3 3.5 0.5 90", bar: 2, bars: 1, replace: false),
+        ], on: store)
+        let track = try XCTUnwrap(store.project.tracks.first)
+        XCTAssertEqual(track.instrument.preset, "Soft Keys")
+        XCTAssertEqual(track.placements.map(\.start), [3_840], "bar 2")
+        let notes = track.clips[0].notes.sorted { ($0.start, $0.pitch) < ($1.start, $1.pitch) }
+        XCTAssertEqual(notes.map(\.pitch), [60, 64, 67, 58])
+        XCTAssertEqual(notes.map(\.start), [0, 0, 0, 2_400])
+        XCTAssertEqual(notes.map(\.length), [3_840, 3_840, 3_840, 480])
+        XCTAssertEqual(notes.last?.velocity, 90)
+
+        try run([.writeNotes(track: "Keys", notes: "D4 1 1", bar: 2, bars: 1, replace: true)], on: store)
+        XCTAssertEqual(store.project.tracks[0].clips[0].notes.map(\.pitch), [62])
+    }
+
+    func testMistakesComeBackAsSentencesAndChangeNothing() throws {
+        var project = Project()
+        try Command.addTrack(id: TrackID(), name: "Bass", kind: .instrument, index: nil).apply(to: &project)
+        try Command.addTrack(id: TrackID(), name: "Bass 2", kind: .instrument, index: nil).apply(to: &project)
+        func message(_ action: AgentAction) -> String {
+            do {
+                _ = try AgentTools.commands(for: action, in: project)
+                return ""
+            } catch {
+                return String(describing: error)
+            }
+        }
+        XCTAssertTrue(message(.removeTrack(track: "Lead")).contains("Bass, Bass 2"), "names the tracks there are")
+        XCTAssertTrue(message(.removeTrack(track: "Ba")).contains("several"))
+        XCTAssertEqual(try AgentTools.track("bass", in: project).name, "Bass", "an exact name wins over a prefix")
+        XCTAssertTrue(message(.drumPattern(track: "Bass", drum: "kick", steps: "x", bar: 1, bars: 1)).contains("not a drum track"))
+        XCTAssertTrue(message(.setTempo(bpm: .nan)).contains("BPM"))
+        XCTAssertTrue(message(.setSound(track: "Bass", sound: "Hyper Saw")).contains("Sub Bass"), "lists the sounds")
+        XCTAssertTrue(message(.writeNotes(track: "Bass", notes: "H2 1 1", bar: 1, bars: 1, replace: false)).contains("not a note"))
+        XCTAssertTrue(message(.writeNotes(track: "Bass", notes: "C2 5 1", bar: 1, bars: 1, replace: false)).contains("after the end"))
+        XCTAssertTrue(message(.mix(track: "master", volumeDB: nil, pan: nil, mute: true, solo: nil)).contains("master"))
+        XCTAssertTrue(message(.mix(track: "Bass", volumeDB: nil, pan: 3, mute: nil, solo: nil)).contains("Pan"))
+    }
+
+    func testNoteNamesAndDrumNames() {
+        XCTAssertEqual(AgentTools.pitch("C4"), 60)
+        XCTAssertEqual(AgentTools.pitch("a4"), 69)
+        XCTAssertEqual(AgentTools.pitch("F#3"), 54)
+        XCTAssertEqual(AgentTools.pitch("Bb2"), 46)
+        XCTAssertEqual(AgentTools.pitch("C-1"), 0)
+        XCTAssertNil(AgentTools.pitch("G10"))
+        XCTAssertEqual(AgentTools.drumPitch("Open Hat"), 46)
+        XCTAssertEqual(AgentTools.drumPitch("clap"), 39)
+        XCTAssertNil(AgentTools.drumPitch("cowbell bell"))
+    }
+
+    func testTheDescriptionNamesEveryTrackByNumber() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Drums", kind: "drums", sound: nil),
+            .addTrack(name: "Bass", kind: "instrument", sound: "Sub Bass"),
+            .mix(track: "Bass", volumeDB: -6, pan: nil, mute: true, solo: nil),
+        ], on: store)
+        let text = AgentTools.describe(store.project)
+        XCTAssertTrue(text.contains("120 BPM, 4/4"))
+        XCTAssertTrue(text.contains("1. Drums, drums, clips at bar 1."))
+        XCTAssertTrue(text.contains("2. Bass, synth, sound Sub Bass, muted, -6 dB."))
+    }
+}
