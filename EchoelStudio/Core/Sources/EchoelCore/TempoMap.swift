@@ -69,6 +69,15 @@ public struct TempoMap: Equatable, Sendable {
         return Double(s.startTick) + (seconds - s.startSeconds) / s.secondsPerTick
     }
 
+    /// Clock time of a fractional tick — the inverse of `position(atSeconds:)`. Non-finite input
+    /// reads as 0.
+    public func seconds(atPosition position: Double) -> Double {
+        guard position.isFinite else { return 0 }
+        let whole = Tick(Swift.min(Swift.max(position, -Double(MusicalTime.maximumTick)), Double(MusicalTime.maximumTick)).rounded(.down))
+        let s = segments[segmentIndex(atTick: whole)]
+        return s.startSeconds + (position - Double(s.startTick)) * s.secondsPerTick
+    }
+
     private func segmentIndex(atTick tick: Tick) -> Int {
         var low = 0, high = segments.count - 1
         while low < high {

@@ -607,10 +607,17 @@ public final class EngineCore: @unchecked Sendable {
 
     private func takePendingSnapshot() {
         guard let pointer = pending.exchange(nil, ordering: .acquiringAndReleasing) else { return }
+        let previous = current?.snapshot.time
         // Unretained: the main thread's `published` list owns it until we acknowledge a
         // newer one, so this assignment's release of the old box never frees on this thread.
         current = Unmanaged<SnapshotBox>.fromOpaque(pointer).takeUnretainedValue()
         guard let snapshot = current?.snapshot else { return }
+        // A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
+        // beat changes. Without this the playhead kept its sample and jumped in musical time.
+        if let previous, previous != snapshot.time, playhead > 0 {
+            playhead = Swift.max(0, snapshot.time.sample(atPosition: previous.position(atSample: playhead)))
+            position.store(playhead, ordering: .relaxed)
+        }
         unitAutomationPrimed = false
 
         // A slot handed to a different track, or no track at all, starts silent.

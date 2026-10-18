@@ -281,6 +281,21 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(core, frames: 4_800).left))
     }
 
+    func testATempoChangeWhilePlayingKeepsTheSongWhereItIs() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: bar)]])
+        let core = core()
+        publish(s.project, to: core)
+        core.play()
+        _ = render(core, frames: 48_000)                  // one second at 120 BPM: beat 2
+        let before = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate).position(atSample: core.positionSample)
+        try Command.setTempo(bpm: 90).apply(to: &s.project)
+        publish(s.project, to: core)
+        _ = render(core, frames: 256)
+        let after = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate).position(atSample: core.positionSample)
+        let block = 256 * 90 * Double(MusicalTime.ticksPerQuarter) / (60 * rate)
+        XCTAssertEqual(after - before, block, accuracy: 1, "the song moved on by one block, not by the tempo ratio")
+    }
+
     func testAFaderMoveWhilePlayingKeepsAHeldNote() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
         let engine = core()
