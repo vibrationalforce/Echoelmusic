@@ -54,13 +54,17 @@ public enum MIDIFile {
 
     static func events(of track: Track, channel: UInt8) -> [Event] {
         var events = [Event(tick: 0, bytes: meta(0x03, Array(track.name.utf8)))]
-        for event in PlaybackPlan.events(from: PlaybackPlan.noteIntervals(of: track)) {
+        for event in PlaybackPlan.events(from: PlaybackPlan.noteIntervals(of: track), controls: PlaybackPlan.controls(of: track)) {
             let pitch = event.pitch & 0x7F
             switch event.kind {
             case .noteOn(let velocity):
                 events.append(Event(tick: event.tick, bytes: [0x90 | channel, pitch, Swift.max(1, velocity & 0x7F)]))
             case .noteOff:
                 events.append(Event(tick: event.tick, bytes: [0x80 | channel, pitch, 0x40]))
+            case let .control(number, value):
+                events.append(Event(tick: event.tick, bytes: [0xB0 | channel, number & 0x7F, value & 0x7F]))
+            case .pitchBend(let value):
+                events.append(Event(tick: event.tick, bytes: [0xE0 | channel, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F)]))
             }
         }
         return events

@@ -249,16 +249,20 @@ public struct Clip: Codable, Equatable, Sendable, Identifiable {
     /// Set for an audio clip, a session loop on an audio track: the stretch of a file it plays,
     /// from the start of each pass. An audio clip has no notes.
     public var audio: ClipAudio?
+    /// Pitch bends and controllers, sorted by start. Only a MIDI clip has them.
+    public var controls: [ControlChange]
 
-    public init(id: ClipID = ClipID(), name: String, length: Tick, notes: [Note] = [], audio: ClipAudio? = nil) {
+    public init(id: ClipID = ClipID(), name: String, length: Tick, notes: [Note] = [], audio: ClipAudio? = nil,
+                controls: [ControlChange] = []) {
         self.id = id
         self.name = name
         self.length = length
         self.notes = notes
         self.audio = audio
+        self.controls = controls
     }
 
-    private enum CodingKeys: String, CodingKey { case id, name, length, notes, audio }
+    private enum CodingKeys: String, CodingKey { case id, name, length, notes, audio, controls }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -267,6 +271,7 @@ public struct Clip: Codable, Equatable, Sendable, Identifiable {
         length = try c.decode(Tick.self, forKey: .length)
         notes = try c.decode([Note].self, forKey: .notes)
         audio = try c.decodeIfPresent(ClipAudio.self, forKey: .audio)
+        controls = try c.decodeIfPresent([ControlChange].self, forKey: .controls) ?? []
     }
 }
 

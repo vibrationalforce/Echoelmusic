@@ -104,6 +104,18 @@ final class MIDIFileTests: XCTestCase {
         XCTAssertEqual(tracks[2].notes, ["0 on ch10 36 v100", "120 off ch10 36"], "drums play on the General MIDI drum channel")
     }
 
+    func testBendsAndControllersAreWrittenOnTheTracksChannel() throws {
+        var project = try song()
+        let clip = project.tracks[0].clips[0].id
+        try Command.setControls(clip, [ControlChange(kind: .pitchBend, start: 480, value: 0x2001),
+                                       ControlChange(kind: .controller(number: 1), start: 240, value: 77)]).apply(to: &project)
+        let keys = try read(MIDIFile.data(for: project)).tracks[1]
+        let controls = keys.events.filter { [0xB0, 0xE0].contains($0.bytes[0] & 0xF0) }
+        XCTAssertEqual(controls.map(\.tick), [bar + 240, bar + 480, 2 * bar])
+        XCTAssertEqual(controls.map(\.bytes), [[0xB0, 1, 77], [0xE0, 0x01, 0x40], [0xE0, 0x00, 0x40]],
+                       "14-bit bend, low seven bits first; the wheel returns to centre where the clip ends")
+    }
+
     func testEveryTrackEndsWithEndOfTrack() throws {
         for track in try read(MIDIFile.data(for: try song())).tracks {
             XCTAssertEqual(track.events.last?.bytes, [0xFF, 0x2F, 0x00])

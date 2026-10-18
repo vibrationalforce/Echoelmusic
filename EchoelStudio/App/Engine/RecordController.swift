@@ -117,11 +117,13 @@ final class RecordController {
         func tick(_ sample: Int64) -> Tick { time.tick(atSample: Swift.max(0, sample - latency)) }
         var take = MIDITake()
         for event in events {
-            let on = event.status & 0xF0 == 0x90 && event.data2 > 0
-            if on {
-                take.noteOn(pitch: Int(event.data1), velocity: Int(event.data2), at: tick(event.sample))
-            } else {
-                take.noteOff(pitch: Int(event.data1), at: tick(event.sample))
+            let at = tick(event.sample)
+            switch event.status & 0xF0 {
+            case 0x90 where event.data2 > 0: take.noteOn(pitch: Int(event.data1), velocity: Int(event.data2), at: at)
+            case 0x80, 0x90: take.noteOff(pitch: Int(event.data1), at: at)
+            case 0xE0: take.control(.pitchBend, value: Int(event.data1 & 0x7F) | Int(event.data2 & 0x7F) << 7, at: at)
+            case 0xB0: take.control(.controller(number: Int(event.data1)), value: Int(event.data2), at: at)
+            default: break
             }
         }
         let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
@@ -130,6 +132,7 @@ final class RecordController {
         let number = (store.project.track(track)?.clips.filter { $0.name.hasPrefix("Take ") }.count ?? 0) + 1
         try? store.perform([.createClip(track: track, id: id, name: "Take \(number)", length: clip.length),
                             .addNotes(id, clip.notes),
+                            .setControls(id, clip.controls),
                             .placeClip(track: track, id: PlacementID(), clip: id, start: clip.start)],
                            title: "Record MIDI")
     }

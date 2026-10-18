@@ -125,5 +125,25 @@ final class HostedUnitTests: XCTestCase {
         engine.stop()
         _ = render(engine, frames: 1_024, block: 512)
         XCTAssertTrue(fake.heard.contains { $0.status == 0xB0 && $0.pitch == 123 }, "controller 123 after stop")
+        XCTAssertTrue(fake.heard.contains { $0.status == 0xB0 && $0.pitch == 64 }, "the pedal lifted after stop")
+        XCTAssertTrue(fake.heard.contains { $0.status == 0xE0 }, "the wheel centred after stop")
+    }
+
+    func testAClipsBendAndPedalReachTheUnitAtTheirFrame() throws {
+        let song = try pluginSong()
+        var project = song.0
+        let track = song.1
+        guard let clip = project.track(track)?.clips.first?.id else { return XCTFail("no clip") }
+        // The pedal at the note (beat 1, frame 24,000), a bend at beat 2 (frame 48,000).
+        try Command.setControls(clip, [ControlChange(kind: .controller(number: 64), start: 960, value: 127),
+                                       ControlChange(kind: .pitchBend, start: 1_920, value: 12_000)]).apply(to: &project)
+        let fake = FakeInstrument(level: 0)
+        _ = render(playing(project, track: track, unit: fake.makeUnit(sampleRate: rate)), frames: 50_000, block: 700)
+        // Frame 0 may carry the rest a fresh plan sends; the clip's own moves are at their frames.
+        let pedal = fake.heard.filter { $0.status == 0xB0 && $0.pitch == 64 && $0.frame > 0 }.map(\.frame)
+        XCTAssertEqual(pedal, [24_000])
+        XCTAssertEqual(fake.heard.filter { $0.status == 0xE0 && $0.frame > 0 }.map(\.frame), [48_000])
+        let atBeat = fake.heard.filter { $0.frame == 24_000 }.map(\.status)
+        XCTAssertEqual(atBeat, [0xB0, 0x90], "the pedal is down before the note it holds")
     }
 }

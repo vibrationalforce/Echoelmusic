@@ -25,6 +25,7 @@ public typealias TrackID = Identifier<Track>
 public typealias ClipID = Identifier<Clip>
 public typealias PlacementID = Identifier<Placement>
 public typealias NoteID = Identifier<Note>
+public typealias ControlID = Identifier<ControlChange>
 public typealias SceneID = Identifier<Scene>
 public typealias MediaID = Identifier<MediaFile>
 public typealias RegionID = Identifier<AudioRegion>

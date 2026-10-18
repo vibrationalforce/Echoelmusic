@@ -75,6 +75,8 @@ public enum Command: Codable, Equatable, Sendable {
     case addNotes(ClipID, [Note])
     case updateNotes(ClipID, [Note])
     case removeNotes(ClipID, [NoteID])
+    /// Replaces a MIDI clip's pitch bends and controllers with `controls`; none clears them.
+    case setControls(ClipID, [ControlChange])
 
     // Arrangement
     case placeClip(track: TrackID, id: PlacementID, clip: ClipID, start: Tick)
@@ -558,6 +560,22 @@ extension Command {
             let doomed = Set(noteIDs)
             project.tracks[t].clips[c].notes.removeAll { doomed.contains($0.id) }
 
+        case let .setControls(id, controls):
+            let (t, c) = try project.requireClip(id)
+            let clip = project.tracks[t].clips[c]
+            guard clip.audio == nil || controls.isEmpty else {
+                throw CommandError.invalidValue(parameter: "clip", reason: "an audio clip has no controllers")
+            }
+            var seen = Set<ControlID>()
+            for control in controls {
+                try Self.validate(control, in: clip)
+                guard seen.insert(control.id).inserted else { throw CommandError.duplicateID(control.id.description) }
+            }
+            // Stable: two changes of one kind on one tick keep their order, so the later one wins.
+            project.tracks[t].clips[c].controls = controls.enumerated()
+                .sorted { $0.element.start != $1.element.start ? $0.element.start < $1.element.start : $0.offset < $1.offset }
+                .map(\.element)
+
         case let .placeClip(trackID, id, clipID, start):
             let t = try project.requireTrack(trackID)
             guard let c = project.tracks[t].clipIndex(clipID) else { throw CommandError.unknownClip(clipID) }
@@ -659,6 +677,16 @@ extension Command {
     static func validateStart(_ start: Tick) throws {
         guard start >= 0, start <= MusicalTime.maximumTick else {
             throw CommandError.invalidValue(parameter: "start", reason: "must be within 0…\(MusicalTime.maximumTick) ticks")
+        }
+    }
+
+    static func validate(_ control: ControlChange, in clip: Clip) throws {
+        guard control.isValid else {
+            throw CommandError.invalidValue(parameter: "controls",
+                                            reason: "a bend is 0…16383; a controller is 0…119 with a value of 0…127")
+        }
+        guard control.start >= 0, control.start < clip.length else {
+            throw CommandError.invalidValue(parameter: "start", reason: "must lie inside the clip (0…\(clip.length - 1))")
         }
     }
 

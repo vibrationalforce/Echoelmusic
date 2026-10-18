@@ -12,8 +12,9 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     public struct TrackEvents: Equatable, Sendable {
         public var track: TrackID
-        /// Sorted by tick; at equal ticks every note-off comes before any note-on, so a note
-        /// that ends where the next one of the same pitch starts re-triggers cleanly.
+        /// Sorted by tick; at equal ticks every note-off comes first, then bends and controllers,
+        /// then note-ons — a note that ends where the next one of the same pitch starts
+        /// re-triggers cleanly, and a pedal or bend at a note's tick is in place when it sounds.
         public var events: [NoteEvent]
         /// Every clip of the track on its own, in clip time, for launching from the session.
         public var clips: [ClipEvents] = []
@@ -30,6 +31,10 @@ public struct PlaybackPlan: Equatable, Sendable {
         public enum Kind: Equatable, Sendable {
             case noteOn(velocity: UInt8)
             case noteOff
+            /// A controller 0…119; `pitch` is unused.
+            case control(number: UInt8, value: UInt8)
+            /// 14-bit, centre 8192; `pitch` is unused.
+            case pitchBend(UInt16)
         }
 
         public var tick: Tick
@@ -44,7 +49,7 @@ public struct PlaybackPlan: Equatable, Sendable {
             guard track.kind == .instrument else { return nil }
             let intervals = Self.noteIntervals(of: track)
             end = intervals.reduce(end) { Swift.max($0, $1.end) }
-            return TrackEvents(track: track.id, events: Self.events(from: intervals),
+            return TrackEvents(track: track.id, events: Self.events(from: intervals, controls: Self.controls(of: track)),
                                clips: track.clips.map(Self.loop))
         }
         songEnd = end
@@ -87,15 +92,60 @@ public struct PlaybackPlan: Equatable, Sendable {
         return resolvingOverlaps(intervals)
     }
 
+    struct Control {
+        var tick: Tick
+        var kind: NoteEvent.Kind
+    }
+
+    /// Every bend and controller of every placement in song time, plus a return to rest — wheel
+    /// centred, pedal up — where a placement that moved them ends. The returns come first in the
+    /// list, so where a placement ends on the tick the next one starts, the next one's own value
+    /// at that tick wins.
+    static func controls(of track: Track) -> [Control] {
+        var returns: [Control] = []
+        var changes: [Control] = []
+        for placement in track.placements {
+            guard let clip = track.clips.first(where: { $0.id == placement.clip }), !clip.controls.isEmpty else { continue }
+            for control in clip.controls where control.start < clip.length {
+                changes.append(Control(tick: placement.start + control.start, kind: event(control.kind, control.value)))
+            }
+            for rest in rests(of: clip) {
+                returns.append(Control(tick: placement.start + clip.length, kind: rest))
+            }
+        }
+        return returns + changes
+    }
+
+    /// The returns to rest a clip needs, once per kind it moves, in a fixed order.
+    static func rests(of clip: Clip) -> [NoteEvent.Kind] {
+        var kinds: [ControlChange.Kind] = []
+        for control in clip.controls where control.start < clip.length && !kinds.contains(control.kind) {
+            kinds.append(control.kind)
+        }
+        return kinds.compactMap { kind in
+            ControlChange(kind: kind, start: 0, value: 0).rest.map { event(kind, $0) }
+        }
+    }
+
+    static func event(_ kind: ControlChange.Kind, _ value: Int) -> NoteEvent.Kind {
+        switch kind {
+        case .pitchBend: .pitchBend(UInt16(clamping: Swift.min(Swift.max(value, 0), ControlChange.bendRange.upperBound)))
+        case .controller(let number): .control(number: UInt8(clamping: number), value: UInt8(clamping: Swift.min(Swift.max(value, 0), 127)))
+        }
+    }
+
     /// A clip's notes in clip time, each cut at the clip's end so the loop never carries a note
-    /// into its next pass.
+    /// into its next pass. A clip that bends or holds the pedal starts every pass from rest.
     static func loop(_ clip: Clip) -> ClipEvents {
         let intervals = clip.notes.compactMap { note -> Interval? in
             guard note.start < clip.length else { return nil }
             return Interval(start: note.start, end: Swift.min(note.start + note.length, clip.length),
                             pitch: note.pitch, velocity: note.velocity)
         }
-        return ClipEvents(clip: clip.id, length: clip.length, events: events(from: resolvingOverlaps(intervals)))
+        let changes = rests(of: clip).map { Control(tick: 0, kind: $0) }
+            + clip.controls.filter { $0.start < clip.length }.map { Control(tick: $0.start, kind: event($0.kind, $0.value)) }
+        return ClipEvents(clip: clip.id, length: clip.length,
+                          events: events(from: resolvingOverlaps(intervals), controls: changes))
     }
 
     /// One pitch can sound only once on a monophonic MIDI key. Where two notes of the same
@@ -120,20 +170,24 @@ public struct PlaybackPlan: Equatable, Sendable {
         return result
     }
 
-    static func events(from intervals: [Interval]) -> [NoteEvent] {
+    static func events(from intervals: [Interval], controls: [Control] = []) -> [NoteEvent] {
         var events: [NoteEvent] = []
-        events.reserveCapacity(intervals.count * 2)
+        events.reserveCapacity(intervals.count * 2 + controls.count)
         for interval in intervals {
             events.append(NoteEvent(tick: interval.start, pitch: UInt8(interval.pitch),
                                     kind: .noteOn(velocity: UInt8(interval.velocity))))
             events.append(NoteEvent(tick: interval.end, pitch: UInt8(interval.pitch), kind: .noteOff))
         }
-        events.sort { a, b in
-            if a.tick != b.tick { return a.tick < b.tick }
-            if a.kind.isOff != b.kind.isOff { return a.kind.isOff }
-            return a.pitch < b.pitch
+        for control in controls {
+            events.append(NoteEvent(tick: control.tick, pitch: 0, kind: control.kind))
         }
-        return events
+        // Controllers keep their list order at one tick (a return to rest before a new value).
+        return events.enumerated().sorted { a, b in
+            if a.element.tick != b.element.tick { return a.element.tick < b.element.tick }
+            if a.element.kind.rank != b.element.kind.rank { return a.element.kind.rank < b.element.kind.rank }
+            if a.element.kind.rank == 1 { return a.offset < b.offset }
+            return a.element.pitch < b.element.pitch
+        }.map(\.element)
     }
 }
 
@@ -141,6 +195,15 @@ extension PlaybackPlan.NoteEvent.Kind {
     var isOff: Bool {
         if case .noteOff = self { return true }
         return false
+    }
+
+    /// The order at one tick: offs, then bends and controllers, then ons.
+    var rank: Int {
+        switch self {
+        case .noteOff: 0
+        case .control, .pitchBend: 1
+        case .noteOn: 2
+        }
     }
 }
 

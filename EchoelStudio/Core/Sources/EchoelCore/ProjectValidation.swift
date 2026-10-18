@@ -50,6 +50,13 @@ extension Project {
                 guard clipIDs.insert(clip.id).inserted else { throw CommandError.duplicateID(clip.id.description) }
                 try Command.validateLength(clip.length)
                 for note in clip.notes { try Command.validate(note, in: clip) }
+                guard Set(clip.controls.map(\.id)).count == clip.controls.count else {
+                    throw Self.invalid("controls", "two controller changes share an id")
+                }
+                for control in clip.controls { try Command.validate(control, in: clip) }
+                guard clip.audio == nil || clip.controls.isEmpty else {
+                    throw Self.invalid("controls", "an audio clip has no controllers")
+                }
                 if let audio = clip.audio {
                     guard track.kind == .audio, clip.notes.isEmpty else {
                         throw Self.invalid("clips", "an audio clip sits on an audio track and has no notes")

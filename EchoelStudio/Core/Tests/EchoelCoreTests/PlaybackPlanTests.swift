@@ -21,6 +21,8 @@ final class PlaybackPlanTests: XCTestCase {
             switch event.kind {
             case .noteOn(let velocity): "\(event.tick) on \(event.pitch) v\(velocity)"
             case .noteOff: "\(event.tick) off \(event.pitch)"
+            case let .control(number, value): "\(event.tick) cc\(number) \(value)"
+            case .pitchBend(let value): "\(event.tick) bend \(value)"
             }
         }
     }
@@ -46,6 +48,57 @@ final class PlaybackPlanTests: XCTestCase {
         let (project, _) = try makeProject(notes: [Note(pitch: 48, start: 3 * 960, length: 4 * 960)],
                                        placementsAt: [0])
         XCTAssertEqual(events(PlaybackPlan(compiling: project)), ["2880 on 48 v100", "3840 off 48"])
+    }
+
+    func testControllersPlayInSongTimeAndReturnToRestWhereThePlacementEnds() throws {
+        var (project, _) = try makeProject(notes: [Note(pitch: 60, start: 0, length: 960)], placementsAt: [bar])
+        let clip = try XCTUnwrap(project.tracks.first?.clips.first?.id)
+        try Command.setControls(clip, [ControlChange(kind: .pitchBend, start: 480, value: 10_000),
+                                       ControlChange(kind: .controller(number: 64), start: 0, value: 127),
+                                       ControlChange(kind: .controller(number: 1), start: 240, value: 90)]).apply(to: &project)
+        XCTAssertEqual(events(PlaybackPlan(compiling: project)), [
+            "\(bar) cc64 127", "\(bar) on 60 v100", "\(bar + 240) cc1 90", "\(bar + 480) bend 10000", "\(bar + 960) off 60",
+            "\(2 * bar) cc64 0", "\(2 * bar) bend 8192",
+        ], "the pedal is down before the note at its tick; the mod wheel keeps its value")
+    }
+
+    func testANewValueOnTheTickAPlacementEndsWinsOverTheReturnToRest() throws {
+        var (project, _) = try makeProject(notes: [], placementsAt: [0, bar])
+        let clip = try XCTUnwrap(project.tracks.first?.clips.first?.id)
+        try Command.setControls(clip, [ControlChange(kind: .pitchBend, start: 0, value: 0)]).apply(to: &project)
+        let bends = PlaybackPlan(compiling: project).tracks[0].events.filter { $0.tick == bar }.map(\.kind)
+        XCTAssertEqual(bends, [.pitchBend(8192), .pitchBend(0)], "the second pass starts bent as written")
+    }
+
+    func testALoopStartsEveryPassFromRest() throws {
+        var (project, _) = try makeProject(notes: [], placementsAt: [])
+        let clip = try XCTUnwrap(project.tracks.first?.clips.first?.id)
+        try Command.setControls(clip, [ControlChange(kind: .controller(number: 64), start: 960, value: 127),
+                                       ControlChange(kind: .controller(number: 7), start: 0, value: 50)]).apply(to: &project)
+        let loop = try XCTUnwrap(PlaybackPlan(compiling: project).tracks.first?.clips.first)
+        XCTAssertEqual(loop.events.map(\.kind), [.control(number: 64, value: 0), .control(number: 7, value: 50),
+                                                 .control(number: 64, value: 127)])
+    }
+
+    func testControllerChangesAreValidatedAtTheDoor() throws {
+        var (project, _) = try makeProject(notes: [], placementsAt: [])
+        let clip = try XCTUnwrap(project.tracks.first?.clips.first?.id)
+        let before = project
+        for bad in [ControlChange(kind: .pitchBend, start: 0, value: 16_384),
+                    ControlChange(kind: .controller(number: 120), start: 0, value: 0),
+                    ControlChange(kind: .controller(number: 1), start: 0, value: 128),
+                    ControlChange(kind: .controller(number: 1), start: bar, value: 1),
+                    ControlChange(kind: .controller(number: 1), start: -1, value: 1)] {
+            XCTAssertThrowsError(try Command.setControls(clip, [bad]).apply(to: &project))
+        }
+        let twin = ControlChange(kind: .pitchBend, start: 0, value: 1)
+        XCTAssertThrowsError(try Command.setControls(clip, [twin, twin]).apply(to: &project))
+        XCTAssertEqual(project, before)
+        try Command.setControls(clip, [ControlChange(kind: .pitchBend, start: 100, value: 1),
+                                       ControlChange(kind: .pitchBend, start: 50, value: 2)]).apply(to: &project)
+        XCTAssertEqual(project.tracks[0].clips[0].controls.map(\.start), [50, 100], "kept in order")
+        try Command.setControls(clip, []).apply(to: &project)
+        XCTAssertTrue(project.tracks[0].clips[0].controls.isEmpty)
     }
 
     func testAnUnplacedClipPlaysNothing() throws {

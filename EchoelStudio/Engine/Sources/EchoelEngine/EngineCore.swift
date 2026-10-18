@@ -562,6 +562,14 @@ public final class EngineCore: @unchecked Sendable {
         // A plugin gets the note at its frame in this block and renders the block once, below.
         case (.noteOn(let velocity), .plugin): lane.unit?.noteOn(pitch: event.pitch, velocity: velocity, offset: offset)
         case (.noteOff, .plugin): lane.unit?.noteOff(pitch: event.pitch, offset: offset)
+        case let (.pitchBend(value), .synth): synths[lane.slot].pitchBend(Int(value))
+        case let (.control(number, value), .synth) where Int(number) == ControlChange.sustainPedal:
+            synths[lane.slot].sustain(value >= 64)
+        case let (.pitchBend(value), .plugin):
+            lane.unit?.control(status: 0xE0, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F), offset: offset)
+        case let (.control(number, value), .plugin): lane.unit?.control(status: 0xB0, number, value, offset: offset)
+        // The kit and the sampler play notes only; the synth knows the wheel and the pedal.
+        case (.pitchBend, _), (.control, _): break
         }
     }
 

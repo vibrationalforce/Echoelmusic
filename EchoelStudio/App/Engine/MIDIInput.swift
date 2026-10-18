@@ -16,8 +16,8 @@ final class LiveRouter: Sendable {
 
     private let target = Mutex(Target())
 
-    /// A note as it was played while a MIDI take records: the output sample the engine had
-    /// reached, and the message.
+    /// A note, bend or controller as it was played while a MIDI take records: the output sample
+    /// the engine had reached, and the message.
     struct Captured: Sendable {
         let sample: Int64
         let status: UInt8
@@ -52,7 +52,7 @@ final class LiveRouter: Sendable {
         guard let core, let slot else { return }
         core.playLive(slot: slot, status: status, data1, data2)
         let kind = status & 0xF0
-        guard kind == 0x90 || kind == 0x80 else { return }
+        guard kind == 0x90 || kind == 0x80 || kind == 0xB0 || kind == 0xE0 else { return }
         let sample = core.positionSample
         capture.withLock { events in
             guard events != nil else { return }

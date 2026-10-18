@@ -14,7 +14,7 @@ public struct CommandSpec: Equatable, Sendable {
 public struct ParameterSpec: Equatable, Sendable {
     public enum ValueType: String, Sendable {
         case string, number, integer, boolean, ticks, trackID, clipID, placementID, sceneID, mediaID, regionID, insertID
-        case noteList, noteIDList, timeSignature, trackKind, mixerTarget, pointList
+        case noteList, noteIDList, timeSignature, trackKind, mixerTarget, pointList, controlList
     }
 
     public let name: String
@@ -42,7 +42,7 @@ extension Command {
         case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput, setMonitor
         case mapMIDI, unmapMIDI, setAutomation
         case createClip, createAudioClip, deleteClip, renameClip, setClipLength
-        case addNotes, updateNotes, removeNotes
+        case addNotes, updateNotes, removeNotes, setControls
         case placeClip, movePlacement, removePlacement
         case placeAudio, moveRegion, trimRegion, removeRegion
         case addScene, removeScene, renameScene, setSlot
@@ -97,6 +97,7 @@ extension Command {
         case .addNotes: .addNotes
         case .updateNotes: .updateNotes
         case .removeNotes: .removeNotes
+        case .setControls: .setControls
         case .placeClip: .placeClip
         case .movePlacement: .movePlacement
         case .removePlacement: .removePlacement
@@ -345,6 +346,11 @@ public enum CommandCatalog {
             return CommandSpec(name: "notes.remove", title: "Delete Notes",
                                summary: "Deletes notes from a MIDI clip.",
                                parameters: [P("clip", .clipID, "The clip."), P("notes", .noteIDList, "Ids of the notes to delete.")])
+        case .setControls:
+            return CommandSpec(name: "controls.set", title: "Edit Controllers",
+                               summary: "Replaces a MIDI clip's pitch bends and controllers.",
+                               parameters: [P("clip", .clipID, "The clip."),
+                                            P("controls", .controlList, "Bends (0…16383) and controllers (0…119, value 0…127) with their start in ticks.")])
         case .placeClip:
             return CommandSpec(name: "arrangement.place", title: "Place Clip",
                                summary: "Puts a clip of a track on the arrangement timeline.",
