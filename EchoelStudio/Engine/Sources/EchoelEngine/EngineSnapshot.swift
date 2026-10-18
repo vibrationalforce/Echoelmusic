@@ -369,15 +369,29 @@ public struct SlotAssigner: Sendable {
 
     /// Frees the slots of tracks that are gone and assigns free slots to new tracks in track
     /// order — instrument tracks first, then audio tracks, whose slot holds only their session
-    /// clip. A track beyond `capacity` gets none: an instrument stays silent, an audio track
-    /// plays its regions but launches no clips.
+    /// clip. An instrument needs its slot to sound at all, an audio track only to launch clips,
+    /// so an instrument without a slot takes one from the last audio track holding one; the
+    /// capacity matches the instrument limit, so every instrument a song may have plays,
+    /// whatever order the tracks were made in. An audio track left without a slot still plays
+    /// its regions.
     public mutating func update(for project: Project) {
         let instruments = project.tracks.filter { $0.kind == .instrument }.map(\.id)
-            + project.tracks.filter { $0.kind == .audio }.map(\.id)
-        let alive = Set(instruments)
+        let audio = project.tracks.filter { $0.kind == .audio }.map(\.id)
+        let alive = Set(instruments + audio)
         slots = slots.filter { alive.contains($0.key) }
         var used = Set(slots.values)
         for id in instruments where slots[id] == nil {
+            if let free = (0..<capacity).first(where: { !used.contains($0) }) {
+                slots[id] = free
+                used.insert(free)
+            } else if let donor = audio.last(where: { slots[$0] != nil }), let slot = slots[donor] {
+                slots[donor] = nil
+                slots[id] = slot
+            } else {
+                break
+            }
+        }
+        for id in audio where slots[id] == nil {
             guard let free = (0..<capacity).first(where: { !used.contains($0) }) else { break }
             slots[id] = free
             used.insert(free)

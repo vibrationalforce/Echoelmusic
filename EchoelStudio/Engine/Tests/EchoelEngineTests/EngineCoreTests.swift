@@ -455,6 +455,22 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(slots.slots.count, 2, "beyond capacity a track gets no slot")
     }
 
+    func testAnInstrumentGetsASlotEvenWhenAudioTracksTookThemFirst() throws {
+        var project = Project()
+        let first = TrackID(), second = TrackID(), keys = TrackID()
+        for id in [first, second] { try Command.addTrack(id: id, name: "a", kind: .audio, index: nil).apply(to: &project) }
+        var slots = SlotAssigner(capacity: 2)
+        slots.update(for: project)
+        XCTAssertEqual(slots.slots.count, 2)
+
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        slots.update(for: project)
+        XCTAssertNotNil(slots.slots[keys], "an instrument without a slot would be silent")
+        XCTAssertNotNil(slots.slots[first], "the earlier audio track keeps its slot")
+        XCTAssertNil(slots.slots[second], "the last audio track gives its slot up; its regions still play")
+        XCTAssertEqual(Set(slots.slots.values).count, slots.slots.count, "no slot is shared")
+    }
+
     func testALaneBeyondThePreallocatedSlotsIsDroppedNotIndexed() throws {
         let s = try song([[Note(pitch: 60, start: 0, length: 960)], [Note(pitch: 64, start: 0, length: 960)]])
         let engine = EngineCore(sampleRate: rate, slotCapacity: 1)
