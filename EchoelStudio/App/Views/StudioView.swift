@@ -280,6 +280,18 @@ struct SongMenu: View {
                 }
             }
             .disabled(engine.clock.destinations.isEmpty)
+            Menu("Clock Offset", systemImage: "timer") {
+                ForEach(MIDIClockOutput.offsetChoices, id: \.self) { choice in
+                    Button { engine.clock.setOffset(milliseconds: choice) } label: {
+                        if engine.clock.offsetMilliseconds == choice {
+                            Label(Self.offsetTitle(choice), systemImage: "checkmark")
+                        } else {
+                            Text(Self.offsetTitle(choice))
+                        }
+                    }
+                }
+            }
+            .disabled(engine.clock.chosen.isEmpty)
             Menu("Follow MIDI Clock", systemImage: "clock.arrow.2.circlepath") {
                 Button { midi.follow(nil) } label: {
                     if midi.followedSource == nil { Label("Off", systemImage: "checkmark") } else { Text("Off") }
@@ -334,5 +346,9 @@ struct SongMenu: View {
         .accessibilityLabel("Song \(store.project.name)")
         .accessibilityHint("New song or open another. Songs save automatically.")
         .onAppear { documents.refresh() }
+    }
+
+    static func offsetTitle(_ milliseconds: Double) -> String {
+        milliseconds == 0 ? "None" : String(format: "%+.0f ms", milliseconds)
     }
 }

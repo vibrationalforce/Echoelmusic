@@ -22,6 +22,10 @@ final class MIDIClockOutput {
     /// Chosen outputs, by CoreMIDI unique id; kept on this device across songs.
     private(set) var chosen: Set<MIDIUniqueID>
     private(set) var lastError: String?
+    /// Milliseconds the clock is sent late (+) or early (−) against the sound, for a device that
+    /// reacts slower or faster than it should; kept on this device.
+    private(set) var offsetMilliseconds: Double
+    static let offsetChoices: [Double] = [-20, -10, -5, -2, 0, 2, 5, 10, 20, 40]
 
     @ObservationIgnored private var client = MIDIClientRef()
     @ObservationIgnored private var port = MIDIPortRef()
@@ -30,10 +34,20 @@ final class MIDIClockOutput {
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
     private static let defaultsKey = "midi.clockOut.destinations"
+    private static let offsetKey = "midi.clockOut.offset"
 
     init() {
         let stored = UserDefaults.standard.array(forKey: Self.defaultsKey) as? [Int] ?? []
         chosen = Set(stored.map { MIDIUniqueID(truncatingIfNeeded: $0) })
+        offsetMilliseconds = UserDefaults.standard.double(forKey: Self.offsetKey)
+        pump.setOffset(offsetMilliseconds / 1000)
+    }
+
+    func setOffset(milliseconds: Double) {
+        guard milliseconds.isFinite else { return }
+        offsetMilliseconds = milliseconds
+        UserDefaults.standard.set(milliseconds, forKey: Self.offsetKey)
+        pump.setOffset(milliseconds / 1000)
     }
 
     func start() {
@@ -97,6 +111,7 @@ final class ClockPump: Sendable {
         var core: EngineCore?
         var sampleRate: Double = 48_000
         var latency: TimeInterval = 0
+        var offset: TimeInterval = 0
         var endpoints: [MIDIEndpointRef] = []
         var port = MIDIPortRef()
     }
@@ -131,6 +146,12 @@ final class ClockPump: Sendable {
         }
     }
 
+    /// Bounded so a stored value can never schedule a clock seconds away.
+    func setOffset(_ seconds: TimeInterval) {
+        let bounded = seconds.isFinite ? Swift.min(Swift.max(seconds, -0.05), 0.1) : 0
+        state.withLock { $0.offset = bounded }
+    }
+
     func setEndpoints(_ endpoints: [MIDIEndpointRef]) {
         state.withLock { $0.endpoints = endpoints }
     }
@@ -140,7 +161,7 @@ final class ClockPump: Sendable {
         guard let core = current.core else { return }
         while let message = core.clockOut.pop() {
             guard !current.endpoints.isEmpty else { continue }
-            let time = timestamp(message, sampleRate: current.sampleRate, latency: current.latency)
+            let time = timestamp(message, sampleRate: current.sampleRate, latency: current.latency + current.offset)
             // A Universal MIDI Packet, message type 1: system common and real-time.
             let word = UInt32(0x1) << 28 | UInt32(message.status) << 16 | UInt32(message.data1) << 8
                 | UInt32(message.data2)
@@ -159,6 +180,8 @@ final class ClockPump: Sendable {
         guard message.hostTime > 0 else { return 0 }
         let nanos = (Double(message.frame) / sampleRate + latency) * 1e9
         let ticks = nanos * Double(timebase.denom) / Double(timebase.numer)
-        return message.hostTime &+ MIDITimeStamp(Swift.max(0, ticks))
+        // Early beyond the render call means now: CoreMIDI sends a past timestamp at once.
+        guard ticks > 0 else { return message.hostTime }
+        return message.hostTime &+ MIDITimeStamp(ticks)
     }
 }
