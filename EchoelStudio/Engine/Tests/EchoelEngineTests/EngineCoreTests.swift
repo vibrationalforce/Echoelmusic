@@ -312,6 +312,39 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(core.positionSample, 256, "never before the top of the song")
     }
 
+    func testTheTimelineAnchorTellsWhereTheSongStoodAtTheBuffersHostTime() throws {
+        let s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        let core = core()
+        publish(s.project, to: core)
+        var left = [Float](repeating: 0, count: 512), right = left
+        func block(hostTime: UInt64) {
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let a = l.baseAddress, let b = r.baseAddress else { return }
+                    core.render(frameCount: 512, left: a, right: b, hostTime: hostTime)
+                }
+            }
+        }
+        block(hostTime: 1_000)
+        XCTAssertNil(core.timelineAnchor(), "stopped")
+        core.play()
+        block(hostTime: 2_000)
+        block(hostTime: 3_000)
+        let anchor = try XCTUnwrap(core.timelineAnchor())
+        XCTAssertEqual(anchor.hostTime, 3_000)
+        XCTAssertEqual(anchor.frames, 512)
+        let time = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate)
+        XCTAssertEqual(anchor.tick, time.position(atSample: core.positionSample), accuracy: 1e-9)
+        XCTAssertEqual(anchor.samplesPerTick, rate * 60 / (120 * Double(MusicalTime.ticksPerQuarter)), accuracy: 1e-9)
+        block(hostTime: 0)
+        XCTAssertNil(core.timelineAnchor(), "no host time, no anchor")
+
+        let before = core.positionSample
+        core.jump(bySamples: -256)
+        block(hostTime: 4_000)
+        XCTAssertEqual(core.positionSample, before - 256 + 512, "a jump is relative to where the playhead is")
+    }
+
     func testAFaderMoveWhilePlayingKeepsAHeldNote() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
         let engine = core()

@@ -32,10 +32,19 @@ public final class EngineCore: @unchecked Sendable {
     private let seekRequest = Atomic<Int64>(-1)
     /// Samples to move the playhead by without a seek, for phase correction.
     private let nudgeRequest = Atomic<Int64>(0)
+    /// Samples to jump by AS a seek (notes released, cues rebuilt), for a far-off phase.
+    private let jumpRequest = Atomic<Int64>(0)
     private let pending = Atomic<UnsafeMutableRawPointer?>(nil)
     // Render → main.
     private let acknowledged = Atomic<UInt64>(0)
     private let position = Atomic<Int64>(0)
+    /// Where the song stood at the end of the last rendered buffer, written under a sequence
+    /// counter (odd while writing) so the main thread reads the four values consistently.
+    private let anchorSequence = Atomic<UInt64>(0)
+    private let anchorHostTime = Atomic<UInt64>(0)
+    private let anchorFrames = Atomic<Int64>(0)
+    private let anchorTick = Atomic<UInt64>(0)
+    private let anchorSamplesPerTick = Atomic<UInt64>(0)
     /// Controller → render: notes played live, each packed as slot · status · data1 · data2.
     private let live = EventRing()
     private let clockFlag = Atomic<Bool>(false)
@@ -245,6 +254,56 @@ public final class EngineCore: @unchecked Sendable {
         nudgeRequest.add(samples, ordering: .relaxed)
     }
 
+    /// Main thread: moves the playhead by `samples` at the next block as a seek does — held
+    /// notes released, cues rebuilt. Relative, so it cannot land a buffer off.
+    public func jump(bySamples samples: Int64) {
+        jumpRequest.add(samples, ordering: .relaxed)
+    }
+
+    /// The musical position at a known host time, in the render thread's own time base.
+    public struct TimelineAnchor: Equatable, Sendable {
+        /// When the first frame of the last buffer plays (the render call's host time).
+        public let hostTime: UInt64
+        /// Frames in that buffer.
+        public let frames: Int64
+        /// The position in fractional ticks after that buffer.
+        public let tick: Double
+        public let samplesPerTick: Double
+    }
+
+    /// Main thread: where the song stood after the last buffer, or nil while stopped or when the
+    /// device gives no host time. Converted by the snapshot that was rendered, never by a newer
+    /// project the render thread has not taken yet.
+    public func timelineAnchor() -> TimelineAnchor? {
+        for _ in 0..<4 {
+            let before = anchorSequence.load(ordering: .acquiring)
+            guard before & 1 == 0 else { continue }
+            let anchor = TimelineAnchor(hostTime: anchorHostTime.load(ordering: .acquiring),
+                                        frames: anchorFrames.load(ordering: .acquiring),
+                                        tick: Double(bitPattern: anchorTick.load(ordering: .acquiring)),
+                                        samplesPerTick: Double(bitPattern: anchorSamplesPerTick.load(ordering: .acquiring)))
+            guard anchorSequence.load(ordering: .acquiring) == before else { continue }
+            guard anchor.hostTime != 0, anchor.samplesPerTick > 0, anchor.tick.isFinite else { return nil }
+            return anchor
+        }
+        return nil
+    }
+
+    /// Render thread, after a whole buffer.
+    private func publishAnchor(frames: Int) {
+        anchorSequence.add(1, ordering: .acquiringAndReleasing)
+        if callHostTime != 0, wasPlaying, let time = current?.snapshot.time {
+            let tick = time.position(atSample: playhead)
+            anchorHostTime.store(callHostTime, ordering: .releasing)
+            anchorFrames.store(Int64(frames), ordering: .releasing)
+            anchorTick.store(tick.bitPattern, ordering: .releasing)
+            anchorSamplesPerTick.store(time.samplesPerTick(at: Tick(Swift.max(0, tick))).bitPattern, ordering: .releasing)
+        } else {
+            anchorHostTime.store(0, ordering: .releasing)
+        }
+        anchorSequence.add(1, ordering: .acquiringAndReleasing)
+    }
+
     public func seek(toSample sample: Int64) {
         seekRequest.store(Swift.max(0, sample), ordering: .releasing)
     }
@@ -297,6 +356,7 @@ public final class EngineCore: @unchecked Sendable {
             renderChunk(frames: frames)
             done += frames
         }
+        publishAnchor(frames: frameCount)
     }
 
     /// Writes `frameCount` frames into each of `channelCount` channels (overwriting them):
@@ -322,6 +382,7 @@ public final class EngineCore: @unchecked Sendable {
             }
             done += frames
         }
+        publishAnchor(frames: frameCount)
     }
 
     /// The pair a lane adds into: its own, or the master mix.
@@ -336,7 +397,9 @@ public final class EngineCore: @unchecked Sendable {
 
         takePendingSnapshot()
 
-        let seek = seekRequest.exchange(-1, ordering: .acquiringAndReleasing)
+        var seek = seekRequest.exchange(-1, ordering: .acquiringAndReleasing)
+        let jump = jumpRequest.exchange(0, ordering: .relaxed)
+        if seek < 0, jump != 0 { seek = Swift.max(0, playhead + jump) }
         if seek >= 0 {
             playhead = seek
             position.store(seek, ordering: .relaxed)

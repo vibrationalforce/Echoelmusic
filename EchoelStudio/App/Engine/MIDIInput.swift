@@ -150,6 +150,9 @@ final class MIDIInput {
     @ObservationIgnored private var follower = ClockFollower()
     @ObservationIgnored private var phase = PhaseLock()
     @ObservationIgnored private var lastPhaseCheck: Double = 0
+    /// Set by a start, continue or song position: the first measurement after it jumps straight
+    /// onto the clock instead of nudging the start-up gap away over many seconds.
+    @ObservationIgnored private var needsLock = false
     @ObservationIgnored private var lastTempoWrite: UInt64 = 0
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let writer: ParameterWriter
@@ -179,6 +182,7 @@ final class MIDIInput {
         clockTempo = nil
         follower = ClockFollower()
         phase.reset()
+        engine.followsExternalClock = source != nil
         if let source { UserDefaults.standard.set(Int(source), forKey: Self.followKey) } else {
             UserDefaults.standard.removeObject(forKey: Self.followKey)
         }
@@ -206,6 +210,7 @@ final class MIDIInput {
                 continue
             }
             phase.reset()
+            needsLock = action != .stop
             switch action {
             case .start:
                 engine.seek(toTick: 0)
@@ -226,16 +231,31 @@ final class MIDIInput {
     /// Four times a second: how far the song is heard ahead of or behind the clock, and the
     /// correction for it — a nudge of a fraction of a millisecond, or a jump when it is far off.
     private func keepInPhase() {
-        let now = Double(mach_absolute_time()) * Double(timebase.numer) / Double(timebase.denom) / 1e9
+        let host = mach_absolute_time()
+        let now = Double(host) * Double(timebase.numer) / Double(timebase.denom) / 1e9
         guard now - lastPhaseCheck >= 0.25, let theirs = follower.position(at: now), let tempo = follower.tempo,
-              let ours = engine.heardPosition() else { return }
+              let heard = engine.heardPosition(atHostTime: host) else { return }
         lastPhaseCheck = now
+        let gap = theirs - heard.tick
         let secondsPerTick = 60 / (tempo * Double(MusicalTime.ticksPerQuarter))
-        switch phase.correct(error: (ours - theirs) * secondsPerTick) {
+        if needsLock {
+            needsLock = false
+            if abs(gap * secondsPerTick) > PhaseLock.deadband { relock(by: gap, heard.samplesPerTick, at: now) }
+            return
+        }
+        switch phase.correct(error: -gap * secondsPerTick) {
         case .none: break
         case .nudge(let seconds): engine.nudge(seconds: seconds)
-        case .relock: engine.relock(toHeard: theirs)
+        case .relock: relock(by: gap, heard.samplesPerTick, at: now)
         }
+    }
+
+    /// A jump onto the clock. The next check waits an extra quarter second, so it cannot measure
+    /// a buffer rendered before the jump and jump a second time.
+    private func relock(by ticks: Double, _ samplesPerTick: Double, at now: Double) {
+        engine.relock(byTicks: ticks, samplesPerTick: samplesPerTick)
+        phase.reset()
+        lastPhaseCheck = now + 0.25
     }
 
     /// The clock's tempo into the song, twice a second at most and only when it moved: one
@@ -328,6 +348,7 @@ final class MIDIInput {
         }
         guard portStatus == noErr else { return fail("port", portStatus) }
         clockInbox.followed.store(followedSource.map(Self.tag) ?? 0, ordering: .relaxed)
+        engine.followsExternalClock = followedSource != nil
         if UserDefaults.standard.bool(forKey: Self.networkKey) { setNetwork(true) }
         connectSources()
     }

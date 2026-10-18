@@ -1,4 +1,5 @@
 import AVFoundation
+import Darwin
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
@@ -340,13 +341,29 @@ final class AudioEngine {
     /// cheap (the note events are shared, not copied).
     func update(_ project: Project) {
         self.project = project
-        publish(project)
+        publish(playing(project))
+    }
+
+    /// While an external MIDI clock is followed, the clock is the tempo: the song's own tempo
+    /// changes would run it off the clock, so they are left out of what the engine plays.
+    var followsExternalClock = false {
+        didSet {
+            guard followsExternalClock != oldValue, let project else { return }
+            publish(playing(project))
+        }
+    }
+
+    private func playing(_ project: Project) -> Project {
+        guard followsExternalClock, !project.tempoChanges.isEmpty else { return project }
+        var played = project
+        played.tempoChanges = []
+        return played
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.
     func setSamples(_ samples: [MediaID: SampleBuffer]) {
         self.samples = samples
-        if let project { publish(project) }
+        if let project { publish(playing(project)) }
     }
 
     func play() {
@@ -363,23 +380,32 @@ final class AudioEngine {
 
     func seek(toTick tick: Tick) {
         guard let core, let project else { return }
-        core.seek(toSample: TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate).sample(at: tick))
+        core.seek(toSample: TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).sample(at: tick))
     }
 
-    /// Where the song is heard right now, in fractional ticks: the rendered position less what
-    /// is still on its way to the speaker. Nil while stopped.
-    func heardPosition() -> Double? {
-        guard let core, let project, isPlaying else { return nil }
+    /// Where the song is heard at host time `now`, in fractional ticks, and how many samples a
+    /// tick lasts there. Taken from the position the render thread published with the host time
+    /// of its last buffer, so it does not depend on when in that buffer it is asked, and it is
+    /// in the time base that buffer was actually rendered with. Nil while stopped.
+    func heardPosition(atHostTime now: UInt64) -> (tick: Double, samplesPerTick: Double)? {
+        guard let core, isPlaying, let anchor = core.timelineAnchor() else { return nil }
         let rate = core.sampleRate
-        let sample = core.positionSample - Int64(Self.renderLead * rate)
-        return TimeConversion(tempoMap: project.tempoMap, sampleRate: rate).position(atSample: Swift.max(0, sample))
+        let elapsed = (Double(now) - Double(anchor.hostTime)) * Double(Self.timebase.numer) / Double(Self.timebase.denom) / 1e9
+        let samples = elapsed * rate - Double(anchor.frames) - Self.outputLatency * rate
+        let tick = anchor.tick + samples / anchor.samplesPerTick
+        return tick.isFinite ? (tick, anchor.samplesPerTick) : nil
     }
 
-    /// Seconds the rendered position runs ahead of the speaker.
-    private static var renderLead: Double {
-        let session = AVAudioSession.sharedInstance()
-        let lead = session.outputLatency + session.ioBufferDuration
-        return lead.isFinite ? Swift.min(Swift.max(lead, 0), 0.25) : 0
+    private static let timebase: (numer: UInt32, denom: UInt32) = {
+        var info = mach_timebase_info_data_t()
+        mach_timebase_info(&info)
+        return (Swift.max(info.numer, 1), Swift.max(info.denom, 1))
+    }()
+
+    /// Seconds from the device playing a frame to the speaker.
+    private static var outputLatency: Double {
+        let latency = AVAudioSession.sharedInstance().outputLatency
+        return latency.isFinite ? Swift.min(Swift.max(latency, 0), 0.25) : 0
     }
 
     /// Moves the playhead by a few milliseconds without a seek (phase correction).
@@ -388,11 +414,12 @@ final class AudioEngine {
         core.nudge(bySamples: Int64((seconds * core.sampleRate).rounded()))
     }
 
-    /// Jumps so the song is HEARD at `position` (fractional ticks) now.
-    func relock(toHeard position: Double) {
-        guard let core, let project, position.isFinite else { return }
-        let time = TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate)
-        core.seek(toSample: time.sample(atPosition: position) + Int64(Self.renderLead * core.sampleRate))
+    /// Jumps by `ticks` (the measured gap), as a seek: for a phase too far off to nudge.
+    func relock(byTicks ticks: Double, samplesPerTick: Double) {
+        guard let core, ticks.isFinite, samplesPerTick.isFinite, samplesPerTick > 0 else { return }
+        let samples = (ticks * samplesPerTick).rounded()
+        guard abs(samples) < 1e12 else { return }
+        core.jump(bySamples: Int64(samples))
     }
 
     /// Stops and returns to the start.
