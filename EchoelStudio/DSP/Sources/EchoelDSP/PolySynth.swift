@@ -39,6 +39,8 @@ public struct SynthPatch: Equatable, Codable, Sendable {
 public struct SynthVoice: Sendable {
     public private(set) var pitch: UInt8 = 0
     public private(set) var isHeld = false
+    /// Let go while the sustain pedal is down: sounds on until the pedal comes up.
+    public private(set) var isPedalled = false
     /// Rises with every note-on across the synth; the smallest is the oldest.
     public private(set) var startOrder: UInt64 = 0
 
@@ -98,6 +100,7 @@ public struct SynthVoice: Sendable {
         let wasSilent = !ampEnvelope.isActive
         self.pitch = pitch
         isHeld = true
+        isPedalled = false
         startOrder = order
         increment = 440 * powf(2, (Float(pitch) - 69) / 12) / sampleRate
         let v = Float(Swift.min(velocity, 127)) / 127
@@ -116,14 +119,22 @@ public struct SynthVoice: Sendable {
         filterEnvelope.gateOn()
     }
 
+    /// The key is up but the pedal holds the note.
+    mutating func pedal() {
+        isHeld = false
+        isPedalled = true
+    }
+
     mutating func release() {
         isHeld = false
+        isPedalled = false
         ampEnvelope.gateOff()
         filterEnvelope.gateOff()
     }
 
     mutating func silence() {
         isHeld = false
+        isPedalled = false
         ampEnvelope.kill()
         filterEnvelope.kill()
     }
@@ -138,8 +149,12 @@ public struct SynthVoice: Sendable {
 
     /// Adds this voice into `buffer`. Nothing here allocates.
     @inline(__always)
-    mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, patch: SynthPatch) {
+    /// `bendFrom` and `bendTo` are the pitch-bend frequency ratios at the start and end of the
+    /// buffer; the bend moves straight between them, so a wheel never steps.
+    mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, patch: SynthPatch,
+                         bendFrom: Float = 1, bendTo: Float = 1) {
         guard ampEnvelope.isActive else { return }
+        let bendStep = buffer.count > 0 ? (bendTo - bendFrom) / Float(buffer.count) : 0
         let amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
@@ -155,7 +170,8 @@ public struct SynthVoice: Sendable {
                 controlCountdown = Self.controlInterval
             }
             controlCountdown -= 1
-            let sample = filter.process(oscillator.next(increment: increment)) * ampEnvelope.next()
+            let bend = bendFrom + bendStep * Float(i - buffer.startIndex)
+            let sample = filter.process(oscillator.next(increment: increment * bend)) * ampEnvelope.next()
             buffer[i] += sample * gain * level
             if !ampEnvelope.isActive { break }
         }
@@ -177,6 +193,13 @@ public struct PolySynth: Sendable {
     public private(set) var voices: [SynthVoice]
     private let sampleRate: Float
     private var nextOrder: UInt64 = 1
+    /// Pitch-bend frequency ratio now, and where the next buffer takes it.
+    private var bend: Float = 1
+    private var bendTarget: Float = 1
+    private var isSustaining = false
+
+    /// Semitones the wheel bends at either end: the General MIDI default.
+    public static let bendRange: Float = 2
 
     public init(patch: SynthPatch = SynthPatch(), voiceCount: Int = defaultVoiceCount, sampleRate: Float = 48_000) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -202,13 +225,30 @@ public struct PolySynth: Sendable {
 
     public mutating func noteOff(pitch: UInt8) {
         for i in voices.indices where voices[i].isHeld && voices[i].pitch == pitch {
-            voices[i].release()
+            if isSustaining { voices[i].pedal() } else { voices[i].release() }
         }
     }
 
-    /// Releases every held note (the transport stopped, a MIDI all-notes-off).
+    /// The pitch wheel, 0…16383 with 8192 at rest, over ±`bendRange` semitones.
+    public mutating func pitchBend(_ value: Int) {
+        let centred = Float(Swift.min(Swift.max(value, 0), 16_383) - 8_192) / 8_192
+        bendTarget = powf(2, centred * Self.bendRange / 12)
+    }
+
+    /// The sustain pedal (controller 64): while down, a released key keeps sounding; up releases
+    /// every note it held.
+    public mutating func sustain(_ down: Bool) {
+        isSustaining = down
+        guard !down else { return }
+        for i in voices.indices where voices[i].isPedalled { voices[i].release() }
+    }
+
+    /// Releases every held note (the transport stopped, a MIDI all-notes-off), lifts the pedal
+    /// and centres the wheel.
     public mutating func allNotesOff() {
-        for i in voices.indices where voices[i].isHeld { voices[i].release() }
+        isSustaining = false
+        bendTarget = 1
+        for i in voices.indices where voices[i].isHeld || voices[i].isPedalled { voices[i].release() }
     }
 
     /// Silences everything at once (panic). Use `allNotesOff` when a click is not wanted.
@@ -220,11 +260,13 @@ public struct PolySynth: Sendable {
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard !buffer.isEmpty else { return }
         let patch = self.patch
+        let from = bend, to = bendTarget
         voices.withUnsafeMutableBufferPointer { all in
             for i in all.indices where all[i].isActive {
-                all[i].render(into: buffer, patch: patch)
+                all[i].render(into: buffer, patch: patch, bendFrom: from, bendTo: to)
             }
         }
+        bend = to
     }
 
     private func voiceIndex(for pitch: UInt8) -> Int {

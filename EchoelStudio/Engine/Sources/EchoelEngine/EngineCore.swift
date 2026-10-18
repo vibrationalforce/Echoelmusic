@@ -811,10 +811,14 @@ public final class EngineCore: @unchecked Sendable {
             let on = kind == 0x90 && value > 0
             let off = kind == 0x80 || (kind == 0x90 && value == 0)
             let allOff = kind == 0xB0 && (pitch == 123 || pitch == 120)
+            let bend = kind == 0xE0
+            let pedal = kind == 0xB0 && pitch == 64
             switch devices[slot] {
             case .synth:
                 if on { synths[slot].noteOn(pitch: pitch, velocity: value) }
                 if off { synths[slot].noteOff(pitch: pitch) }
+                if bend { synths[slot].pitchBend(Int(pitch) | Int(value) << 7) }
+                if pedal { synths[slot].sustain(value >= 64) }
                 if allOff { synths[slot].allNotesOff() }
             case .drums:
                 if on { drums[slot].noteOn(pitch: pitch, velocity: value) }
@@ -827,6 +831,7 @@ public final class EngineCore: @unchecked Sendable {
                 guard let unit = current?.snapshot.lanes.first(where: { $0.slot == slot })?.unit else { continue }
                 if on { unit.noteOn(pitch: pitch, velocity: value, offset: 0) }
                 if off { unit.noteOff(pitch: pitch, offset: 0) }
+                if bend || pedal { unit.control(status: status, pitch, value) }
                 if allOff { unit.allNotesOff() }
             }
         }

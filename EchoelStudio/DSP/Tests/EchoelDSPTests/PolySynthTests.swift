@@ -74,6 +74,84 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue((439...441).contains(crossings), "\(crossings)")
     }
 
+    private func crossings(_ samples: [Float]) -> Int {
+        var count = 0
+        for i in 1..<samples.count where samples[i - 1] < 0 && samples[i] >= 0 { count += 1 }
+        return count
+    }
+
+    private func sineSynth() -> PolySynth {
+        var patch = SynthPatch(waveform: .sine, cutoff: 18_000, filterEnvelopeAmount: 0)
+        patch.ampEnvelope = .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.05)
+        return PolySynth(patch: patch, sampleRate: rate)
+    }
+
+    func testTheWheelBendsTwoSemitonesEachWayAndRestsInTune() {
+        var synth = sineSynth()
+        synth.noteOn(pitch: 69, velocity: 127)
+        synth.pitchBend(16_383)
+        _ = render(&synth, seconds: 0.01)
+        let up = crossings(render(&synth, seconds: 1))
+        XCTAssertTrue((492...496).contains(up), "A4 two semitones up is 493.9 Hz, got \(up)")
+        synth.pitchBend(0)
+        _ = render(&synth, seconds: 0.01)
+        let down = crossings(render(&synth, seconds: 1))
+        XCTAssertTrue((391...393).contains(down), "two semitones down is 392 Hz, got \(down)")
+        synth.pitchBend(8_192)
+        _ = render(&synth, seconds: 0.01)
+        XCTAssertTrue((439...441).contains(crossings(render(&synth, seconds: 1))))
+    }
+
+    func testTheBendGlidesAcrossABufferInsteadOfStepping() {
+        var synth = sineSynth()
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.05)
+        synth.pitchBend(16_383)
+        var block = [Float](repeating: 0, count: 4_800)
+        block.withUnsafeMutableBufferPointer { synth.render(into: $0) }
+        // Over the 100 ms block the frequency moves from 440 to 494 Hz: in between, not at either end.
+        let measured = crossings(block)
+        XCTAssertTrue((45...48).contains(measured), "\(measured)")
+    }
+
+    func testTheSustainPedalHoldsReleasedKeysUntilItComesUp() {
+        var synth = sineSynth()
+        synth.sustain(true)
+        synth.noteOn(pitch: 60, velocity: 100)
+        _ = render(&synth, seconds: 0.05)
+        synth.noteOff(pitch: 60)
+        XCTAssertGreaterThan(peak(Array(render(&synth, seconds: 0.5).suffix(480))), 0.01, "the pedal holds it")
+        synth.sustain(false)
+        _ = render(&synth, seconds: 0.5)
+        XCTAssertEqual(synth.activeVoiceCount, 0, "pedal up releases it")
+    }
+
+    func testAKeyStillDownWhenThePedalComesUpKeepsSounding() {
+        var synth = sineSynth()
+        synth.sustain(true)
+        synth.noteOn(pitch: 60, velocity: 100)
+        synth.sustain(false)
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 1)
+        synth.noteOff(pitch: 60)
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 0)
+    }
+
+    func testAllNotesOffLiftsThePedalAndCentresTheWheel() {
+        var synth = sineSynth()
+        synth.sustain(true)
+        synth.pitchBend(16_383)
+        synth.noteOn(pitch: 69, velocity: 127)
+        synth.noteOff(pitch: 69)
+        synth.allNotesOff()
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 0)
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.01)
+        XCTAssertTrue((439...441).contains(crossings(render(&synth, seconds: 1))))
+    }
+
     func testAFullHardChordAtMaximumResonanceNeverRunsAway() {
         var synth = PolySynth(patch: SynthPatch(resonance: 0.95), sampleRate: rate)
         for pitch in stride(from: UInt8(24), through: 120, by: 6) { synth.noteOn(pitch: pitch, velocity: 127) }

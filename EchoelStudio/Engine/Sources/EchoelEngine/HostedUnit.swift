@@ -72,6 +72,13 @@ public final class HostedUnit: ParameterScheduling, @unchecked Sendable {
         send(0x80, pitch & 0x7F, 0, offset: offset)
     }
 
+    /// A pitch bend or controller as it came in, at the start of the next `render` call.
+    func control(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
+        let kind = status & 0xF0
+        guard kind == 0xB0 || kind == 0xE0 else { return }
+        send(kind, data1 & 0x7F, data2 & 0x7F, offset: 0)
+    }
+
     /// All Notes Off (controller 123), at the start of the next `render` call.
     func allNotesOff() {
         send(0xB0, 123, 0, offset: 0)

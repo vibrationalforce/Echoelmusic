@@ -471,6 +471,8 @@ final class MIDIInput {
                     let status = UInt8((word >> 16) & 0xFF), data1 = UInt8((word >> 8) & 0x7F), data2 = UInt8(word & 0x7F)
                     if status & 0xF0 == 0xB0, data1 != 120, data1 != 123 {
                         if inbox.post(MIDIControl(channel: status & 0x0F, number: data1), data2) { drain = true }
+                        // The sustain pedal also plays: it holds the live instrument's notes.
+                        if data1 == 64 { router.receive(status: status, data1, data2) }
                     } else {
                         router.receive(status: status, data1, data2)
                     }
