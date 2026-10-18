@@ -25,6 +25,8 @@ final class AudioEngine {
     private(set) var outputChannels = 2
     /// Inputs the open input delivers; 0 while it is closed.
     private(set) var inputChannels = 0
+    /// Stopped for the background (nothing to play, record or follow); the input it had, to reopen.
+    @ObservationIgnored private var suspendedInput: Bool?
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
@@ -108,13 +110,20 @@ final class AudioEngine {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.hardwareChanged() }
         }
-        // A call or Siri takes the audio away; when it ends the graph comes back by itself.
+        // A call or Siri takes the audio away. The transport stops where it is, so the song does
+        // not carry on by itself when the call ends; the graph comes back, silent, ready to play.
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification, object: nil, queue: .main
         ) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-            guard raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:)) == .ended else { return }
-            MainActor.assumeIsolated { self?.resume(after: "interruption ended") }
+            let type = raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:))
+            MainActor.assumeIsolated {
+                switch type {
+                case .began: self?.pause()
+                case .ended: self?.resume(after: "interruption ended")
+                default: break
+                }
+            }
         }
         // Headphones in or out: `auto` monitoring follows, so the speaker never howls.
         routeObserver = NotificationCenter.default.addObserver(
@@ -128,7 +137,10 @@ final class AudioEngine {
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.resume(after: "media services reset") }
+            MainActor.assumeIsolated {
+                self?.pause()
+                self?.resume(after: "media services reset")
+            }
         }
     }
 
@@ -156,6 +168,27 @@ final class AudioEngine {
     func start() {
         guard !isRunning else { return }
         configure(input: false)
+    }
+
+    /// The app went to the background. With nothing playing, recording or following a clock the
+    /// audio stops, so a silent app does not keep the device awake (App Review 2.5.4). The
+    /// playhead, the voices and the song stay; `enterForeground` or a play brings it back.
+    func enterBackground() {
+        guard isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
+        log.info("engine: suspend in background")
+        suspendedInput = isInputOpen
+        engine.stop()
+        isRunning = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    /// Back in the foreground, or asked to play while suspended: the graph as it was.
+    func enterForeground() {
+        guard let input = suspendedInput else { return }
+        suspendedInput = nil
+        log.info("engine: resume from background")
+        configure(input: input)
+        if let project { publish(project) }
     }
 
     /// Opens the input for recording, asking for microphone permission first. False when it is
@@ -393,6 +426,7 @@ final class AudioEngine {
     }
 
     func play() {
+        enterForeground()
         guard let core else { return }
         core.play()
         isPlaying = true

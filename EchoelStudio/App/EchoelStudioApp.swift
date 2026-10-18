@@ -66,6 +66,11 @@ struct EchoelStudioApp: App {
                 }
         }
         .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active: engine.enterForeground()
+            case .background: engine.enterBackground()
+            default: break
+            }
             guard phase != .active else { return }
             // Plugins keep their settings to themselves until asked; ask before writing the song.
             try? store.perform(engine.plugins.captureCommands(for: store.project), title: "Plugin Settings")
