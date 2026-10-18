@@ -11,3 +11,5 @@ What to try on the device (nothing here is device-verified yet):
 - Send the app to the background while stopped: audio stops; come back and play.
 - Take a call while playing: the song does not resume by itself.
 - Buy the instruments; open Echoel Synth/Drums/Sampler in AUM or GarageBand. The effects are free.
+
+Attempt 2: names the provisioning profile entitlements if signing fails again.
