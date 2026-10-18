@@ -33,7 +33,11 @@ Komponenten-Beschreibung wählen" existiert schon (`Plugins/Effects`, `PluginVie
 
 **Ein Kauf-Produkt lässt sich nicht vermeiden, wenn etwas verkauft wird.** Ist `com.echoelmusic.app.pro`
 in App Store Connect schon angelegt, ist es der Weg mit null neuen Objekten. Sonst braucht es genau
-eines — ein Produkt im bestehenden Record, keine neue App, keine neue ID. (Die Entscheidung vom
+eines — ein Produkt im bestehenden Record, keine neue App, keine neue ID.
+**Gemessen 2026-10-18 (Bildschirmaufnahme des Founders):** in ASC existiert noch KEIN In-App-Kauf, und
+die App steht bei iOS 1.0 „In Vorbereitung zur Übermittlung" — nie veröffentlicht, also nur Tester
+betroffen. Vor dem ersten Kauf muss der Account-Inhaber den aktualisierten „Paid Applications Schedule"
+akzeptieren. (Die Entscheidung vom
 2026-10-17 „einzeln plus Komplett-Paket" wird damit auf „ein Paket" reduziert — Founder-Frage E37.)
 
 ## 3. Was vor dem Wechsel auf `com.echoelmusic.app` fehlt
