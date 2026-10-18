@@ -182,6 +182,7 @@ final class MIDIInput {
         clockTempo = nil
         follower = ClockFollower()
         phase.reset()
+        engine.externalTempo = nil
         engine.followsExternalClock = source != nil
         if let source { UserDefaults.standard.set(Int(source), forKey: Self.followKey) } else {
             UserDefaults.standard.removeObject(forKey: Self.followKey)
@@ -258,8 +259,9 @@ final class MIDIInput {
         lastPhaseCheck = now + 0.25
     }
 
-    /// The clock's tempo into the song, twice a second at most and only when it moved: one
-    /// undo step for the whole time the clock ran.
+    /// The clock's tempo to the engine, twice a second at most and only when it moved. Never into
+    /// the song: a tempo write there would close the open undo step of any other edit and clear
+    /// the redo stack each time the clock drifted.
     private func applyClockTempo() {
         guard let tempo = follower.tempo else { return }
         clockTempo = tempo
@@ -267,9 +269,10 @@ final class MIDIInput {
         let halfSecond = UInt64(5e8 * Double(timebase.denom) / Double(timebase.numer))
         // To the follower's own hundredth: a coarser step would leave a steady drift for the
         // phase lock to chase.
-        guard abs(store.project.tempo - tempo) >= 0.01, now &- lastTempoWrite >= halfSecond else { return }
+        if let played = engine.externalTempo, abs(played - tempo) < 0.01 { return }
+        guard now &- lastTempoWrite >= halfSecond else { return }
         lastTempoWrite = now
-        try? store.perform(.setTempo(bpm: tempo), coalescingKey: "midi.clock.tempo")
+        engine.externalTempo = tempo
     }
 
     func setLearning(_ on: Bool) {

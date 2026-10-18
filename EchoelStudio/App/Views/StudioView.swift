@@ -209,9 +209,10 @@ struct TempoField: View {
             Button { nudge(-1) } label: { Image(systemName: "minus") }
                 .buttonStyle(ToolButtonStyle())
                 .accessibilityLabel("Slower")
+                .disabled(followsClock)
 
             VStack(spacing: 0) {
-                Text(store.project.tempo, format: .number.precision(.fractionLength(1)))
+                Text(shownTempo, format: .number.precision(.fractionLength(1)))
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(Theme.Color.text)
                 // EXT: an external MIDI clock sets the tempo.
@@ -237,7 +238,7 @@ struct TempoField: View {
             )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
-            .accessibilityValue("\(Int(store.project.tempo.rounded())) BPM")
+            .accessibilityValue("\(Int(shownTempo.rounded())) BPM")
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
@@ -245,12 +246,20 @@ struct TempoField: View {
             Button { nudge(1) } label: { Image(systemName: "plus") }
                 .buttonStyle(ToolButtonStyle())
                 .accessibilityLabel("Faster")
+                .disabled(followsClock)
 
             Button("Tap", action: tap)
                 .buttonStyle(ToolButtonStyle())
                 .accessibilityHint("Tap in time to set the tempo.")
-                .disabled(midi.followedSource != nil)
+                .disabled(followsClock)
         }
+    }
+
+    private var followsClock: Bool { midi.followedSource != nil }
+
+    /// While a clock is followed it sets the pace; the song's own tempo waits underneath, unchanged.
+    private var shownTempo: Double {
+        followsClock ? (midi.clockTempo ?? store.project.tempo) : store.project.tempo
     }
 
     /// A run of taps is one undo step: a new measurement closes the one before.
@@ -266,6 +275,7 @@ struct TempoField: View {
     }
 
     private func set(_ bpm: Double, key: String = TempoField.gestureKey) {
+        guard !followsClock else { return }
         let clamped = min(max(bpm, Tempo.range.lowerBound), Tempo.range.upperBound)
         try? store.perform(.setTempo(bpm: clamped), coalescingKey: key)
     }

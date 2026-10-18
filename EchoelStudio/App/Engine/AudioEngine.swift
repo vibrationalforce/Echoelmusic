@@ -353,7 +353,7 @@ final class AudioEngine {
     /// cheap (the note events are shared, not copied).
     func update(_ project: Project) {
         self.project = project
-        publish(playing(project))
+        publish(project)
     }
 
     /// While an external MIDI clock is followed, the clock is the tempo: the song's own tempo
@@ -361,21 +361,33 @@ final class AudioEngine {
     var followsExternalClock = false {
         didSet {
             guard followsExternalClock != oldValue, let project else { return }
-            publish(playing(project))
+            publish(project)
+        }
+    }
+
+    /// The followed clock's tempo, once known. It is played, never written into the song: the
+    /// song keeps its own tempo and its undo history while another device sets the pace.
+    var externalTempo: Double? {
+        didSet {
+            guard externalTempo != oldValue, followsExternalClock, let project else { return }
+            publish(project)
         }
     }
 
     private func playing(_ project: Project) -> Project {
-        guard followsExternalClock, !project.tempoChanges.isEmpty else { return project }
+        guard followsExternalClock else { return project }
         var played = project
         played.tempoChanges = []
+        if let externalTempo, externalTempo.isFinite {
+            played.tempo = Swift.min(Swift.max(externalTempo, Tempo.range.lowerBound), Tempo.range.upperBound)
+        }
         return played
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.
     func setSamples(_ samples: [MediaID: SampleBuffer]) {
         self.samples = samples
-        if let project { publish(playing(project)) }
+        if let project { publish(project) }
     }
 
     func play() {
@@ -520,11 +532,15 @@ final class AudioEngine {
     /// The playhead as a song position. For actions, never a view body.
     func playheadTick(in project: Project) -> Tick {
         guard let core else { return 0 }
-        return TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate).tick(atSample: core.positionSample)
+        // The tempo the engine plays: an external clock's, not the song's, while following one.
+        return TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).tick(atSample: core.positionSample)
     }
 
-    private func publish(_ project: Project) {
+    /// Every snapshot goes through here, so none can carry the song's tempo changes while an
+    /// external clock sets the tempo (they would jump the playhead until the clock relocks).
+    private func publish(_ song: Project) {
         guard let core else { return }
+        let project = playing(song)
         slots.update(for: project)
         live.set(core: core, slot: liveSlot(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
