@@ -26,6 +26,23 @@ final class ExportTests: XCTestCase {
         XCTAssertTrue(result.left[95_000...].allSatisfy { Swift.abs($0) < 1e-4 }, "the release has rung out")
     }
 
+    func testALongReleaseRingsOutPastTheFixedTailAndThenStops() throws {
+        var song = try oneNoteSong(start: 0, length: 960)
+        let track = try XCTUnwrap(song.tracks.first?.id)
+        try Command.setInstrumentParameter(track, key: SynthParameter.release.key.rawValue, value: 5).apply(to: &song)
+        let rate = 48_000.0
+        let result = OfflineRender.render(song, sampleRate: rate, tailSeconds: 2)
+        // The note ends at 0.5 s; a 2 s fixed tail would stop at 2.5 s, mid-release.
+        XCTAssertGreaterThan(result.frameCount, Int(3.5 * rate), "the release is not cut at the fixed tail")
+        XCTAssertLessThan(result.frameCount, Int((2.5 + OfflineRender.maximumRingOutSeconds) * rate),
+                          "and the render ends once it has died away, before the limit")
+        let end = result.left[(result.frameCount - 1_000)...]
+        XCTAssertTrue(end.allSatisfy { Swift.abs($0) < 1e-4 }, "the last samples are silence")
+
+        let cut = OfflineRender.render(song, sampleRate: rate, tailSeconds: 2, ringOutSeconds: 0)
+        XCTAssertEqual(cut.frameCount, Int(2.5 * rate), "no ring-out keeps the fixed length")
+    }
+
     func testAnEmptySongRendersNothing() {
         let result = OfflineRender.render(Project())
         XCTAssertEqual(result.frameCount, 0)

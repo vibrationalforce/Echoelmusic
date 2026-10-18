@@ -150,7 +150,7 @@ final class AudioRegionPlaybackTests: XCTestCase {
     func testTheExportRunsToTheEndOfTheLastRegion() throws {
         let s = try song(frames: 4_800, fileRate: rate)
         let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate))
-        let result = OfflineRender.render(s.project, sampleRate: rate, tailSeconds: 0, samples: [s.media.id: buffer])
+        let result = OfflineRender.render(s.project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, samples: [s.media.id: buffer])
         XCTAssertEqual(result.frameCount, beat + 4_800)
         XCTAssertGreaterThan(result.peak, 0.3)
     }

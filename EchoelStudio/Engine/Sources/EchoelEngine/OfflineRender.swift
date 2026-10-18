@@ -23,17 +23,27 @@ public enum OfflineRender {
         public let peak: Float
     }
 
-    /// The song from its start to the end of its last note or audio region, plus `tailSeconds` so releases
-    /// ring out. An empty song renders nothing. `samples` are the loaded media files, as for
+    /// The longest a render goes on past the fixed tail while something still sounds.
+    public static let maximumRingOutSeconds: Double = 30
+    /// A tail counts as rung out once this long stays below `quietLevel`.
+    static let quietSeconds: Double = 0.25
+    /// −100 dBFS: below anything a 16-bit file can carry.
+    static let quietLevel: Float = 1e-5
+
+    /// The song from its start to the end of its last note or audio region, plus `tailSeconds`, and
+    /// then on until the sound has died away — a long reverb, a delay, a slow release — for at most
+    /// `ringOutSeconds` more. An empty song renders nothing. `samples` are the loaded media files, as for
     /// live playback; a sampler whose file is missing stays silent in the export too. `units` and
     /// `effects` are plugin units prepared at `sampleRate` for this render alone — never the live
     /// ones, which the render thread is calling. Holds the whole song in memory: for a file, use
     /// the streaming form.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
+                              ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
                               effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = []) -> Result {
         var left: [Float] = [], right: [Float] = []
-        let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, samples: samples,
+        let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, ringOutSeconds: ringOutSeconds,
+                             samples: samples,
                              units: units, effects: effects, masterEffects: masterEffects) { l, r, count in
             left.append(contentsOf: UnsafeBufferPointer(start: l, count: count))
             right.append(contentsOf: UnsafeBufferPointer(start: r, count: count))
@@ -44,6 +54,7 @@ public enum OfflineRender {
     /// The same render, handed to `write` one block at a time, so a song of any length needs only
     /// two blocks of memory. `write` may throw to stop; the render stops with it.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
+                              ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
                               effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = [],
                               blockFrames: Int = 16_384,
@@ -63,6 +74,9 @@ public enum OfflineRender {
         let time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: rate)
         let tail = Int64(Swift.max(0, tailSeconds.isFinite ? tailSeconds : 0) * rate)
         let frames = Int(Swift.max(time.sample(at: plan.songEnd), snapshot.audioEnd) + tail)
+        let ringOut = Swift.min(Swift.max(0, ringOutSeconds.isFinite ? ringOutSeconds : 0), maximumRingOutSeconds)
+        let limit = frames + Int(ringOut * rate)
+        let quietFrames = Swift.max(1, Int(quietSeconds * rate))
         let block = Swift.max(1, blockFrames)
         let left = UnsafeMutablePointer<Float>.allocate(capacity: block)
         let right = UnsafeMutablePointer<Float>.allocate(capacity: block)
@@ -72,18 +86,23 @@ public enum OfflineRender {
         }
         var peak: Float = 0
         var done = 0
-        while done < frames {
-            let count = Swift.min(block, frames - done)
+        // One past the last sample that was still audible.
+        var lastAudible = 0
+        // The song and its fixed tail, then a block at a time while the tail still sounds.
+        while done < frames || (done < limit && done - lastAudible < quietFrames) {
+            let count = Swift.min(block, (done < frames ? frames : limit) - done)
             left.update(repeating: 0, count: count)
             right.update(repeating: 0, count: count)
             core.render(frameCount: count, left: left, right: right)
             for i in 0..<count {
-                peak = Swift.max(peak, Swift.abs(left[i]), Swift.abs(right[i]))
+                let level = Swift.max(Swift.abs(left[i]), Swift.abs(right[i]))
+                peak = Swift.max(peak, level)
+                if level >= quietLevel || !level.isFinite { lastAudible = done + i + 1 }
             }
             try write(left, right, count)
             done += count
         }
-        return Summary(frameCount: frames, sampleRate: rate, peak: peak)
+        return Summary(frameCount: done, sampleRate: rate, peak: peak)
     }
 }
 
