@@ -5428,3 +5428,13 @@ Review 2026-11-15.
 **Entscheidung:** `docs/dev/NEUPLANUNG_2026-10-18.md` ist der Bauplan. Keine Genres, keine generierten Noten; `MusicalContext` + Instrument-Presets + neutrale Startprojekte. EchoelStudio wird geordnet (P0), nicht neu geschrieben. Effekte in fremden Hosts frei, nur Instrumente im Demo-Modus. Einmalkauf, nie Abo für Gekauftes. MIT bleibt, `SECURITY.md` kommt.
 
 **Review:** 2026-11-17.
+
+### 2026-10-18 — One Clock zuerst: eine freie Web-Seite, Profi-Instrumente später
+
+**Founder:** „Macht es die App erst ohne Apple herauszubringen, wegen accessible for all devices und html https …?“ — dann „Was ist für Weltfrieden das beste? Urgency! Profi Instrumente später“ — dann „du sagst wie es weiter geht … führst mein Ultra Echoelmusic Peacefully Business Mind sicher zum Erfolg“.
+
+**Entscheidung:** Die DAW wird NICHT als Web-App neu gebaut (Latenz, kein Web-MIDI auf dem iPhone, keine AUv3). Was ins offene Web gehört, ist das Gemeinsame: `docs/one-clock.html`, ein Atemzyklus an der Weltzeit (10 s, 4 ein / 6 aus), ohne Server, Konto oder Daten — läuft auf jedem Gerät, bleibt für immer frei und nie hinter dem Kauf. Reihenfolge ab jetzt: (1) One Clock live (PR nach Founder-Ja), (2) Studio-TestFlight sobald das App-Group-Häkchen gesetzt ist (FOUNDER_INBOX F17), (3) App Store 1.0 des Studios, (4) Profi-Instrumente P1/P2, (5) „Zusammen“ in der App: Ableton Link + Publikums-Seite mit der Uhr der App.
+
+**Grenzen, ehrlich:** Keine Software bringt Weltfrieden; die Seite ist ein gemeinsamer Moment, kein Programm. Sie zählt niemanden — ein Zähler bräuchte einen Server und änderte den Satz „nobody is counted“ auf der Seite.
+
+**Review:** 2026-11-18.
