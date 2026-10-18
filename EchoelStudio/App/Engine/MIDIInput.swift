@@ -398,7 +398,7 @@ final class MIDIInput {
         session.connectionPolicy = on ? .anyone : .noOne
         networkEnabled = on
         UserDefaults.standard.set(on, forKey: Self.networkKey)
-        log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .public)")
+        log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .private)")
     }
 
     private func fail(_ step: String, _ status: OSStatus) {

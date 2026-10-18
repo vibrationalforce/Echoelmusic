@@ -30,6 +30,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The trust promise "no tracking, network only where named" as a check, not a sentence
+      # (docs/dev/NEUPLANUNG_2026-10-18.md §2 Vertrauen). Every network API in EchoelStudio's
+      # sources must sit in one of the files listed here; a new one fails until it is added on
+      # purpose, which is the moment to say what it sends and that it is off by default.
+      - name: Network only where named
+        run: |
+          allowed='EchoelStudio/App/Store/StoreController.swift
+          EchoelStudio/App/Store/StoreView.swift
+          EchoelStudio/Plugins/Shared/PluginLicense.swift
+          EchoelStudio/App/Engine/MIDIInput.swift'
+          found=$(git grep -lE '^[[:space:]]*import (Network|StoreKit|MultipeerConnectivity|CloudKit|WebKit|SafariServices)|URLSession|NWConnection|NWListener|NWBrowser|MIDINetworkSession|URLRequest' \
+                  -- 'EchoelStudio/*.swift' ':!EchoelStudio/**/Tests/**' | sort -u)
+          bad=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$allowed" | sed 's/^ *//' | sort -u) | sed '/^$/d')
+          if [ -n "$bad" ]; then
+            echo "::error::Network API outside the named files:"; echo "$bad"; exit 1
+          fi
+          echo "Network APIs only in:"; echo "$found"
+
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
