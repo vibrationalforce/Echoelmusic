@@ -47,6 +47,19 @@ on 2026-10-18); the first one must be submitted together with an app version, af
 accepts the updated Paid Applications Schedule. Measured in the developer portal on 2026-10-18: the six
 ids above plus `.voice` and a wildcard `*`.
 
+**Measured again 2026-10-18 evening (two founder screen recordings of the developer portal):**
+- An App ID **„Echoelmusic Pro" `com.echoelmusic.app.pro`** was registered, with no capability ticked
+  beyond the default In-App Purchase. **It is not needed:** a product id is not an App ID. The purchase
+  is created in App Store Connect under the app (Monetarisierung → In-App-Käufe); nothing builds,
+  signs or ships under the bundle id `.pro`. Harmless if kept; removing it avoids the confusion.
+- `com.echoelmusic.app` carries App Groups (needed — the Studio's one entitlement, for the import of
+  earlier songs) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
+  with Apple, Siri, WeatherKit, MusicKit, ShazamKit, Maps, Data Protection „Complete" …). An App ID
+  capability only PERMITS an entitlement; what App Review sees is the binary's entitlements, and the
+  Studio's file asks for the App Group alone. Do not untick them while builds of the earlier app exist.
+- `com.echoelmusic.app.auv3` has **no** App Group (correct — see the row above) and only Sign in with
+  Apple ticked, which nothing uses.
+
 > **Deferred platforms** (macOS / tvOS / visionOS) were previously declared only in the removed
 > Tuist `Project.swift`. They are **not currently defined anywhere** and would be re-added to
 > `project.yml` in a dedicated, signing-verified cycle when actually built (iPhone-first for now).
