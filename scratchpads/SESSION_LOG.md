@@ -1317,3 +1317,19 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Sample-Tausch, nie Freigabe im Render-Thread), `SampleFile` (ein Decoder für App und Plugin), Laden in der
   Plugin-Fläche (≤ 30 s), Sample im `fullState`. CI #101 grün. Lehre: im Test vor der ersten Note nach
   einem `load` einmal rendern — im Host holt der Render das Sample, bevor er MIDI verarbeitet.
+
+## 2026-10-18 — EchoelStudio: unter der vorhandenen Identität + Audit-Befunde 1–5 + Ship-Grundlagen + MIDI-Export + Meter
+
+- `1118a1b` Identität: App `com.echoelmusic.app`, EINE Erweiterung `EchoelPlugins` (`.app.auv3`, 8 Komponenten
+  inkl. `echl` für alte Host-Sessions), EIN Kauf `com.echoelmusic.app.pro`. CI #102 grün (auch Release-Gerätebuild).
+- `30c861d` Take überlebt Routenwechsel (Take besitzt seinen Recorder; gleicher Core → derselbe Recorder weiter);
+  Takes enden bei 10 min statt beim Lesen verworfen zu werden.
+- `c4cb613` Externe Clock: jeder Snapshot über EIN publish mit gespielter Tempo-Karte; Clock-Tempo nur in die
+  Engine (`externalTempo`), nie ins Dokument → kein Undo-Schritt, Redo bleibt; Tempo-Feld zeigt EXT-Tempo, gesperrt.
+- `e115d72` Export blockweise in die Datei (`OfflineRender` Streaming-Form, `WAVWriter`, `tooLong` ab ~6,5 h).
+- `24bb4a2` Version 11.0.0 (App + Erweiterung gemeinsam), Build-Nummer = das `${BUILD_NUMBER:=1}`-Literal, das
+  `testflight.yml` schon ersetzt; Icon (1024 RGB); Privacy-Manifeste App (CA92.1 · 35F9.1 · C617.1) + Erweiterung
+  (leer); `ITSAppUsesNonExemptEncryption` NO.
+- `d45b7b6` MIDI-Datei-Export (SMF Typ 1, 960 PPQ, Tempo-Karte, Taktart, GM-Drumkanal).
+- `ff779ea` Peak-Meter je Strip + Master (`MeterBank`, Atomics, nach dem Fader, 20 dB/s Fall).
+- Nichts gerätegeprüft. Offen: Master-Inserts + LUFS, MIDI-Aufnahme, Pitch-Bend/CC, dann testflight.yml (E38).

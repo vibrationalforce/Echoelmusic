@@ -113,3 +113,23 @@ zurück. Root-`CLAUDE.md` nennt weiter „bio-reaktives Instrument", „WA3 next
    die Tester-Verluste aus §4 vorher geschlossen sein müssen).
 6. Danach die zwei Türen (Spur-Modell, Ereignis-Spur) + Live-Modulation — die Voraussetzung, damit
    Bio, Visual, Licht und Raum als Module zurückkommen.
+
+---
+
+## 9. Stand nach dem Abarbeiten (2026-10-18, Abend)
+
+Nur kompiliert und in CI getestet — nichts gerätegeprüft.
+
+| Punkt | Commit |
+|---|---|
+| §8.1 Identität (eine App-ID, eine Erweiterung, ein Kauf) | `1118a1b` |
+| Befund 1 Aufnahme bei Routenwechsel · Befund 2 Takes > 10 min | `30c861d` |
+| Befund 3 Tempo-Karte beim Folgen · Befund 4 Clock-Tempo über Undo | `c4cb613` |
+| Befund 5 Export im RAM / UInt32-Falle | `e115d72` |
+| §3 Version 11.0.0, Build-Nummer, Icon, Privacy-Manifeste, Verschlüsselung | `24bb4a2` |
+| §4 MIDI-Datei-Export | `d45b7b6` |
+| §4 Meter | `ff779ea` |
+
+Noch offen aus §8: Master-Inserts + LUFS/True-Peak, MIDI-Aufnahme, Pitch-Bend/CC; dann `testflight.yml` (E38).
+Bekannt und nicht behoben: eine Aufnahme während des Folgens einer fremden Clock wird mit der Tempo-Karte des
+Songs platziert (`DocumentController.commitTake`), nicht mit der gespielten.
