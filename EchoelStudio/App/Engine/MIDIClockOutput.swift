@@ -180,8 +180,13 @@ final class ClockPump: Sendable {
         guard message.hostTime > 0 else { return 0 }
         let nanos = (Double(message.frame) / sampleRate + latency) * 1e9
         let ticks = nanos * Double(timebase.denom) / Double(timebase.numer)
-        // Early beyond the render call means now: CoreMIDI sends a past timestamp at once.
-        guard ticks > 0 else { return message.hostTime }
+        guard ticks.isFinite else { return 0 }
+        // A negative offset moves EVERY pulse earlier by the same amount, so their spacing stays
+        // even; a time already past is sent at once by CoreMIDI.
+        if ticks < 0 {
+            let back = MIDITimeStamp(-ticks)
+            return message.hostTime > back ? message.hostTime - back : 0
+        }
         return message.hostTime &+ MIDITimeStamp(ticks)
     }
 }

@@ -20,6 +20,21 @@ final class ClockFollowerTests: XCTestCase {
         XCTAssertEqual(follower.tempo ?? 0, 120, accuracy: 0.05, "a pause is not a slow beat")
     }
 
+    func testASenderThatReallySlowsDownIsFollowedAndNotTakenForAPause() {
+        var follower = ClockFollower()
+        var time = 0.0
+        for _ in 0...24 {
+            _ = follower.receive(status: 0xF8, at: time)
+            time += 60 / (200 * 24)
+        }
+        XCTAssertEqual(follower.tempo ?? 0, 200, accuracy: 0.05)
+        for _ in 0...30 {
+            time += 60 / (45 * 24)                     // more than four times slower
+            _ = follower.receive(status: 0xF8, at: time)
+        }
+        XCTAssertEqual(follower.tempo ?? 0, 45, accuracy: 0.05)
+    }
+
     func testTransportMessagesBecomeActions() {
         var follower = ClockFollower()
         XCTAssertEqual(follower.receive(status: 0xFA, at: 0), .start)

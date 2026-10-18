@@ -24,6 +24,10 @@ public struct ClockFollower: Sendable {
     public private(set) var tempo: Double?
     private var intervals: [Double] = []
     private var lastPulse: Double?
+    /// Long intervals set aside as pauses. When a few in a row agree, the sender has really
+    /// slowed down, and they become the new tempo instead of being ignored for ever.
+    private var longIntervals: [Double] = []
+    static let slowdownEvidence = 3
 
     /// Ticks one pulse spans.
     public static let ticksPerPulse = MusicalTime.ticksPerQuarter / Tick(window)
@@ -96,7 +100,19 @@ public struct ClockFollower: Sendable {
         guard let last = lastPulse, time.isFinite else { return }
         let interval = time - last
         guard interval > 0 else { return }
-        if let tempo, interval > Self.gapFactor * 60 / (tempo * Double(Self.window)) { return }
+        if let tempo, interval > Self.gapFactor * 60 / (tempo * Double(Self.window)) {
+            longIntervals.append(interval)
+            guard longIntervals.count >= Self.slowdownEvidence,
+                  let low = longIntervals.min(), let high = longIntervals.max(), high <= low * 1.1 else {
+                if longIntervals.count >= Self.slowdownEvidence { longIntervals.removeFirst() }
+                return
+            }
+            intervals = longIntervals
+            longIntervals.removeAll()
+            self.tempo = nil
+            return
+        }
+        longIntervals.removeAll()
         intervals.append(interval)
         if intervals.count > Self.window { intervals.removeFirst(intervals.count - Self.window) }
         guard intervals.count == Self.window else { return }
