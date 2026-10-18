@@ -25,6 +25,10 @@ public enum AgentAction: Equatable, Sendable {
     case removeEffect(track: String, effect: String)
     /// Places the clip that starts at `bar` again `times` times, back to back after it.
     case repeatClip(track: String, bar: Int, times: Int)
+    /// A movement of one parameter from the start of `fromBar` to the start of `toBar`, in the
+    /// parameter's own unit (dB, −1…1, Hz, seconds). What the lane held in between is replaced;
+    /// the rest of it stays. `curve` −1…1 bends the line, 0 is straight.
+    case automate(track: String, parameter: String, fromBar: Int, toBar: Int, from: Double, to: Double, curve: Double)
 }
 
 public enum AgentError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -202,7 +206,58 @@ public enum AgentTools {
             return (1...times).map { copy in
                 .placeClip(track: target.id, id: PlacementID(), clip: clip.id, start: start + Tick(copy) * length)
             }
+
+        case let .automate(reference, name, fromBar, toBar, from, to, curve):
+            let address = try parameter(name, on: reference, in: project)
+            guard let descriptor = project.descriptor(for: address) else {
+                throw AgentError.invalid("\"\(name)\" cannot be automated on \(reference).")
+            }
+            let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
+            let lastBar = Int(MusicalTime.maximumTick / barTicks)
+            guard fromBar >= 1, toBar > fromBar, toBar <= lastBar else {
+                throw AgentError.invalid("A movement runs from one bar to a later one, both between 1 and \(lastBar).")
+            }
+            let range = descriptor.range
+            for value in [from, to] where !(value.isFinite && range.contains(value)) {
+                throw AgentError.invalid("\(descriptor.title) goes from \(format(range.lowerBound)) to \(format(range.upperBound)), not \(format(value)).")
+            }
+            guard curve.isFinite, AutomationPoint.curveRange.contains(curve) else {
+                throw AgentError.invalid("A curve is between -1 and 1; 0 is straight.")
+            }
+            let start = Tick(fromBar - 1) * barTicks, end = Tick(toBar - 1) * barTicks
+            let kept = (project.automation(for: address)?.points ?? []).filter { $0.tick < start || $0.tick > end }
+            let points = (kept + [AutomationPoint(tick: start, value: from, curve: curve),
+                                  AutomationPoint(tick: end, value: to)]).sorted { $0.tick < $1.tick }
+            return [.setAutomation(address, points: points)]
         }
+    }
+
+    /// A parameter by its plain name on a track or the master: volume, pan, or one of the synth's
+    /// (cutoff, resonance …).
+    public static func parameter(_ name: String, on reference: String, in project: Project) throws -> ParameterAddress {
+        let key = name.lowercased().filter(\.isLetter)
+        if reference.lowercased() == "master" {
+            switch key {
+            case "volume", "level", "fader", "gain": return ParameterAddress(.master, .volume)
+            case "pan": return ParameterAddress(.master, .pan)
+            default: throw AgentError.invalid("The master has volume and pan.")
+            }
+        }
+        let target = try track(reference, in: project)
+        switch key {
+        case "volume", "fader", "gain": return .volume(target.id)
+        case "pan", "panning": return .pan(target.id)
+        default: break
+        }
+        let aliases = ["filter": "cutoff", "filtercutoff": "cutoff", "res": "resonance", "envelope": "filterenvelope"]
+        let wanted = aliases[key] ?? key
+        if target.kind == .instrument, target.instrument.device == .synth,
+           let synth = SynthParameter.all.first(where: { $0.title.lowercased().filter(\.isLetter) == wanted }) {
+            return ParameterAddress(.track(target.id), synth.key)
+        }
+        let names = ["volume", "pan"] + (target.instrument.device == .synth && target.kind == .instrument
+                                          ? SynthParameter.all.map { $0.title.lowercased() } : [])
+        throw AgentError.invalid("Track \"\(target.name)\" has no parameter \"\(name)\". It has: \(names.joined(separator: ", ")).")
     }
 
     /// A standard effect by its title or a common word for it.

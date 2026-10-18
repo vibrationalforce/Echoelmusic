@@ -177,7 +177,7 @@ final class AgentModel {
             SetTempoTool(executor: executor), AddTrackTool(executor: executor), RemoveTrackTool(executor: executor),
             RenameTrackTool(executor: executor), SetSoundTool(executor: executor), DrumPatternTool(executor: executor),
             WriteNotesTool(executor: executor), MixTool(executor: executor), EffectTool(executor: executor),
-            RepeatClipTool(executor: executor),
+            RepeatClipTool(executor: executor), AutomateTool(executor: executor),
         ]
         session = LanguageModelSession(tools: tools, instructions: Self.instructions)
     }
@@ -199,6 +199,8 @@ final class AgentModel {
     Sounds for an instrument track: \(InstrumentPreset.all.map(\.name).joined(separator: ", ")).
     Drums: \(DrumLane.standardKit.map(\.name).joined(separator: ", ")).
     Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).
+    A movement of a parameter over bars (a fade, a filter opening) is the automate tool; values are in \
+    the parameter's unit: volume in dB (0 is unity, -144 silence), pan -1 to 1, cutoff in Hz.
     Answer in one or two short sentences, in the language the musician writes in.
     """
 }
@@ -424,6 +426,37 @@ struct RepeatClipTool: Tool {
     func call(arguments: Arguments) async throws -> String {
         await executor.run(.repeatClip(track: arguments.track, bar: arguments.bar ?? 1, times: arguments.times),
                            "repeated \(arguments.track) \(arguments.times) times")
+    }
+}
+@available(iOS 26.0, *)
+struct AutomateTool: Tool {
+    let executor: AgentExecutor
+    let name = "automate"
+    let description = "Moves a parameter of a track or the master from one value to another between two bars: fades, filter sweeps, pans."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The track's name or number, or master.")
+        var track: String
+        @Guide(description: "volume, pan, or a synth parameter: cutoff, resonance, filter envelope, attack, decay, sustain, release, level.")
+        var parameter: String
+        @Guide(description: "The bar the movement starts at.")
+        var fromBar: Int
+        @Guide(description: "The bar it arrives at, later than fromBar.")
+        var toBar: Int
+        @Guide(description: "The value at the start, in the parameter's unit.")
+        var from: Double
+        @Guide(description: "The value at the end, in the parameter's unit.")
+        var to: Double
+        @Guide(description: "-1 to 1: below 0 moves early, above 0 moves late. Leave out for a straight line.")
+        var curve: Double?
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.run(.automate(track: arguments.track, parameter: arguments.parameter, fromBar: arguments.fromBar,
+                                     toBar: arguments.toBar, from: arguments.from, to: arguments.to,
+                                     curve: arguments.curve ?? 0),
+                           "\(arguments.parameter) on \(arguments.track) from \(arguments.from) to \(arguments.to), bars \(arguments.fromBar)–\(arguments.toBar)")
     }
 }
 #endif

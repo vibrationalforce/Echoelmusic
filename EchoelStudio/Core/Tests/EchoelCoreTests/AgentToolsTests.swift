@@ -141,6 +141,33 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Keys", bar: Int.max, times: 1), in: project))
     }
 
+    func testAMovementReplacesItsBarsOfTheLaneAndKeepsTheRest() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Bass", kind: "instrument", sound: "Sub Bass"),
+            .automate(track: "Bass", parameter: "volume", fromBar: 1, toBar: 9, from: 0, to: 0, curve: 0),
+            .automate(track: "Bass", parameter: "filter", fromBar: 5, toBar: 9, from: 300, to: 4_000, curve: 0.5),
+            .automate(track: "Bass", parameter: "Volume", fromBar: 7, toBar: 9, from: 0, to: -144, curve: -0.5),
+        ], on: store)
+        let id = try XCTUnwrap(store.project.tracks.first?.id)
+        let fade = try XCTUnwrap(store.project.automation(for: .volume(id))).points
+        XCTAssertEqual(fade.map(\.tick), [0, 6 * 3_840, 8 * 3_840], "the first point stays, 7–9 is replaced")
+        XCTAssertEqual(fade.last?.value, -144)
+        let cutoff = try XCTUnwrap(store.project.automation(for: ParameterAddress(.track(id), SynthParameter.cutoff.key)))
+        XCTAssertEqual(cutoff.value(at: 4 * 3_840), 300)
+        XCTAssertEqual(cutoff.value(at: 8 * 3_840), 4_000)
+        XCTAssertEqual(store.undoStack.count, 1)
+
+        func message(_ action: AgentAction) -> String {
+            do { _ = try AgentTools.commands(for: action, in: store.project); return "" } catch { return String(describing: error) }
+        }
+        XCTAssertTrue(message(.automate(track: "Bass", parameter: "pan", fromBar: 1, toBar: 2, from: 0, to: 2, curve: 0)).contains("-1"))
+        XCTAssertTrue(message(.automate(track: "Bass", parameter: "wobble", fromBar: 1, toBar: 2, from: 0, to: 1, curve: 0)).contains("cutoff"))
+        XCTAssertTrue(message(.automate(track: "Bass", parameter: "pan", fromBar: 3, toBar: 3, from: 0, to: 1, curve: 0)).contains("later"))
+        XCTAssertNoThrow(try AgentTools.commands(for: .automate(track: "master", parameter: "volume", fromBar: 1, toBar: 2,
+                                                                from: 0, to: -12, curve: 0), in: store.project))
+    }
+
     func testNoteNamesAndDrumNames() {
         XCTAssertEqual(AgentTools.pitch("C4"), 60)
         XCTAssertEqual(AgentTools.pitch("a4"), 69)
