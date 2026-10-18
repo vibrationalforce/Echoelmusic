@@ -38,13 +38,11 @@ on:
         required: false
         default: true
         type: boolean
-  # Tokenless deploy: bumping `.deploy/release` on any branch triggers an iOS
-  # TestFlight upload. App Store Connect credentials live as GitHub repo secrets
-  # (CI-side), so no local token is needed — a `git push` is enough. Path-filtered
-  # so ordinary code pushes never deploy; only an explicit `.deploy/release` bump.
-  push:
-    paths:
-      - '.deploy/release'
+  # ⛔ FROZEN 2026-10-18: the tokenless `.deploy/release` trigger is off. Echoel Studio now ships
+  # to the same App Store record (com.echoelmusic.app) through studio-testflight.yml, version
+  # 11.0.0; a routine bump here would put the earlier app back in front of testers between Studio
+  # builds. The earlier app can still be built by hand (workflow_dispatch). To restore the
+  # trigger, put back:  push: { paths: ['.deploy/release'] }
 
 concurrency:
   group: testflight-${{ github.event.inputs.platform }}-${{ github.ref }}

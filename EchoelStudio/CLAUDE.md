@@ -68,6 +68,12 @@ app for the simulator and as a Release device build; read its job steps on the c
 pushed (a newer push cancels the older run). On a Mac:
 `swift test --package-path EchoelStudio/Core` (likewise `DSP`, `Engine`).
 
+**Shipping to TestFlight:** bump `EchoelStudio/RELEASE` and push —
+`.github/workflows/studio-testflight.yml` archives, signs (App Store Connect API key, automatic
+signing), checks that `EchoelPlugins.appex` is inside and uploads build `10000 + run number` of
+version 11.0.0. Only bump it on a commit whose `Echoel Studio` run is green. The earlier app's
+`.deploy/release` trigger is frozen, so the two never alternate on the same record.
+
 ⚠️ `EchoelStudio/**` is in no auto-merge path filter yet: a commit touching only this
 directory does not reach `main` by itself. That is deliberate until the Studio workflow is a
 merge gate.
