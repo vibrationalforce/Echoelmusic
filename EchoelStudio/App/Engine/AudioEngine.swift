@@ -366,6 +366,35 @@ final class AudioEngine {
         core.seek(toSample: TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate).sample(at: tick))
     }
 
+    /// Where the song is heard right now, in fractional ticks: the rendered position less what
+    /// is still on its way to the speaker. Nil while stopped.
+    func heardPosition() -> Double? {
+        guard let core, let project, isPlaying else { return nil }
+        let rate = core.sampleRate
+        let sample = core.positionSample - Int64(Self.renderLead * rate)
+        return TimeConversion(tempoMap: project.tempoMap, sampleRate: rate).position(atSample: Swift.max(0, sample))
+    }
+
+    /// Seconds the rendered position runs ahead of the speaker.
+    private static var renderLead: Double {
+        let session = AVAudioSession.sharedInstance()
+        let lead = session.outputLatency + session.ioBufferDuration
+        return lead.isFinite ? Swift.min(Swift.max(lead, 0), 0.25) : 0
+    }
+
+    /// Moves the playhead by a few milliseconds without a seek (phase correction).
+    func nudge(seconds: Double) {
+        guard let core, seconds.isFinite else { return }
+        core.nudge(bySamples: Int64((seconds * core.sampleRate).rounded()))
+    }
+
+    /// Jumps so the song is HEARD at `position` (fractional ticks) now.
+    func relock(toHeard position: Double) {
+        guard let core, let project, position.isFinite else { return }
+        let time = TimeConversion(tempoMap: project.tempoMap, sampleRate: core.sampleRate)
+        core.seek(toSample: time.sample(atPosition: position) + Int64(Self.renderLead * core.sampleRate))
+    }
+
     /// Stops and returns to the start.
     func stop() {
         core?.stop()

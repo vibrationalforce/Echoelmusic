@@ -145,6 +145,8 @@ final class MIDIInput {
     /// Called on the main thread for each press on a grid controller.
     @ObservationIgnored var onGridPress: ((Launchpad.Press) -> Void)?
     @ObservationIgnored private var follower = ClockFollower()
+    @ObservationIgnored private var phase = PhaseLock()
+    @ObservationIgnored private var lastPhaseCheck: Double = 0
     @ObservationIgnored private var lastTempoWrite: UInt64 = 0
     @ObservationIgnored private let engine: AudioEngine
     @ObservationIgnored private let writer: ParameterWriter
@@ -172,6 +174,7 @@ final class MIDIInput {
         followedSource = source
         clockTempo = nil
         follower = ClockFollower()
+        phase.reset()
         if let source { UserDefaults.standard.set(Int(source), forKey: Self.followKey) } else {
             UserDefaults.standard.removeObject(forKey: Self.followKey)
         }
@@ -198,6 +201,7 @@ final class MIDIInput {
             guard let action = follower.receive(status: message.status, message.data1, message.data2, at: time) else {
                 continue
             }
+            phase.reset()
             switch action {
             case .start:
                 engine.seek(toTick: 0)
@@ -212,6 +216,22 @@ final class MIDIInput {
             }
         }
         applyClockTempo()
+        keepInPhase()
+    }
+
+    /// Four times a second: how far the song is heard ahead of or behind the clock, and the
+    /// correction for it — a nudge of a fraction of a millisecond, or a jump when it is far off.
+    private func keepInPhase() {
+        let now = Double(mach_absolute_time()) * Double(timebase.numer) / Double(timebase.denom) / 1e9
+        guard now - lastPhaseCheck >= 0.25, let theirs = follower.position(at: now), let tempo = follower.tempo,
+              let ours = engine.heardPosition() else { return }
+        lastPhaseCheck = now
+        let secondsPerTick = 60 / (tempo * Double(MusicalTime.ticksPerQuarter))
+        switch phase.correct(error: (ours - theirs) * secondsPerTick) {
+        case .none: break
+        case .nudge(let seconds): engine.nudge(seconds: seconds)
+        case .relock: engine.relock(toHeard: theirs)
+        }
     }
 
     /// The clock's tempo into the song, twice a second at most and only when it moved: one
@@ -221,7 +241,9 @@ final class MIDIInput {
         clockTempo = tempo
         let now = mach_absolute_time()
         let halfSecond = UInt64(5e8 * Double(timebase.denom) / Double(timebase.numer))
-        guard abs(store.project.tempo - tempo) >= 0.05, now &- lastTempoWrite >= halfSecond else { return }
+        // To the follower's own hundredth: a coarser step would leave a steady drift for the
+        // phase lock to chase.
+        guard abs(store.project.tempo - tempo) >= 0.01, now &- lastTempoWrite >= halfSecond else { return }
         lastTempoWrite = now
         try? store.perform(.setTempo(bpm: tempo), coalescingKey: "midi.clock.tempo")
     }

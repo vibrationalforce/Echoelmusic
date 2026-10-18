@@ -296,6 +296,22 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(after - before, block, accuracy: 1, "the song moved on by one block, not by the tempo ratio")
     }
 
+    func testANudgeMovesThePlayheadWithoutStoppingAHeldNote() throws {
+        let s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        let core = core()
+        publish(s.project, to: core)
+        core.play()
+        _ = render(core, frames: 4_800)
+        let before = core.positionSample
+        core.nudge(bySamples: -24)
+        let out = render(core, frames: 4_800)
+        XCTAssertGreaterThan(rms(out.left[4_000...]), 0.001, "the held note sounds on")
+        XCTAssertEqual(core.positionSample, before + 4_800 - 24)
+        core.nudge(bySamples: -1_000_000)
+        _ = render(core, frames: 256)
+        XCTAssertEqual(core.positionSample, 256, "never before the top of the song")
+    }
+
     func testAFaderMoveWhilePlayingKeepsAHeldNote() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
         let engine = core()

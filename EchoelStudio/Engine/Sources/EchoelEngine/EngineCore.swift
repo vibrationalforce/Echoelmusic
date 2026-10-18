@@ -30,6 +30,8 @@ public final class EngineCore: @unchecked Sendable {
     private let isPlayingFlag = Atomic<Bool>(false)
     private let clickFlag = Atomic<Bool>(true)
     private let seekRequest = Atomic<Int64>(-1)
+    /// Samples to move the playhead by without a seek, for phase correction.
+    private let nudgeRequest = Atomic<Int64>(0)
     private let pending = Atomic<UnsafeMutableRawPointer?>(nil)
     // Render → main.
     private let acknowledged = Atomic<UInt64>(0)
@@ -236,6 +238,13 @@ public final class EngineCore: @unchecked Sendable {
         seekRequest.store(0, ordering: .releasing)
     }
 
+    /// Main thread: moves the playhead by a few samples at the next block — no notes released,
+    /// nothing re-cued, so it is inaudible. Events the move skips over play at once; events it
+    /// moves back over do not play twice. For keeping in phase with an external clock.
+    public func nudge(bySamples samples: Int64) {
+        nudgeRequest.add(samples, ordering: .relaxed)
+    }
+
     public func seek(toSample sample: Int64) {
         seekRequest.store(Swift.max(0, sample), ordering: .releasing)
     }
@@ -333,6 +342,11 @@ public final class EngineCore: @unchecked Sendable {
             position.store(seek, ordering: .relaxed)
             releaseAllNotes()
             resync()
+        }
+        let shift = nudgeRequest.exchange(0, ordering: .relaxed)
+        if shift != 0, seek < 0 {
+            playhead = Swift.max(0, playhead + shift)
+            position.store(playhead, ordering: .relaxed)
         }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)

@@ -25,6 +25,16 @@ public struct ClockFollower: Sendable {
     private var intervals: [Double] = []
     private var lastPulse: Double?
 
+    /// Ticks one pulse spans.
+    public static let ticksPerPulse = MusicalTime.ticksPerQuarter / Tick(window)
+    /// Where the sender's song stands: the position of its next pulse after a start, continue or
+    /// song position, then counted on per pulse.
+    private var anchor: Tick = 0
+    private var pulsesSinceAnchor = -1
+    private var lastPulseTime: Double?
+    /// The sender's transport runs.
+    public private(set) var isRunning = false
+
     public init() {}
 
     /// One message, at `time` seconds on any steady clock. Returns what the transport should do.
@@ -32,20 +42,53 @@ public struct ClockFollower: Sendable {
         switch status {
         case 0xF8:
             pulse(at: time)
+            if isRunning, time.isFinite {
+                pulsesSinceAnchor += 1
+                lastPulseTime = time
+            }
             return nil
         case 0xFA:
             lastPulse = nil
+            reanchor(at: 0)
+            isRunning = true
             return .start
         case 0xFB:
             lastPulse = nil
+            reanchor(at: nextPulsePosition)
+            isRunning = true
             return .resume
         case 0xFC:
+            reanchor(at: nextPulsePosition)
+            isRunning = false
             return .stop
         case 0xF2:
-            return .position(Int(data1 & 0x7F) | Int(data2 & 0x7F) << 7)
+            let sixteenths = Int(data1 & 0x7F) | Int(data2 & 0x7F) << 7
+            reanchor(at: Tick(sixteenths) * MusicalTime.ticksPerQuarter / 4)
+            return .position(sixteenths)
         default:
             return nil
         }
+    }
+
+    /// The tick the sender's next pulse stands for.
+    private var nextPulsePosition: Tick { anchor + Tick(pulsesSinceAnchor + 1) * Self.ticksPerPulse }
+
+    private mutating func reanchor(at tick: Tick) {
+        anchor = tick
+        pulsesSinceAnchor = -1
+        lastPulseTime = nil
+    }
+
+    /// Where the sender's song stood at `time` (same clock as `receive`), in fractional ticks:
+    /// its last pulse, carried on at its tempo for at most one pulse. Nil while it is stopped or
+    /// before its first pulse.
+    public func position(at time: Double) -> Double? {
+        guard isRunning, pulsesSinceAnchor >= 0, let pulseTime = lastPulseTime, time.isFinite else { return nil }
+        let base = Double(anchor + Tick(pulsesSinceAnchor) * Self.ticksPerPulse)
+        guard let tempo else { return base }
+        let interval = 60 / (tempo * Double(Self.window))
+        let along = Swift.min(Swift.max((time - pulseTime) / interval, 0), 1)
+        return base + along * Double(Self.ticksPerPulse)
     }
 
     private mutating func pulse(at time: Double) {
