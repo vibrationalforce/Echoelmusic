@@ -5,32 +5,37 @@ import EchoelEngine
 import Synchronization
 import os
 
-/// Echoel Synth as an Audio Unit instrument for other apps: the studio's own synth, MIDI in,
-/// stereo out. Until it is unlocked (a purchase in Echoel) it plays as a demo: two seconds of
-/// silence every thirty.
-final class EchoelSynthAudioUnit: AUAudioUnit {
-    static let component = AudioComponentDescription(componentType: kAudioUnitType_MusicDevice,
-                                                     componentSubType: 0x6553_796E, // 'eSyn'
-                                                     componentManufacturer: 0x4563_686F, // 'Echo'
-                                                     componentFlags: 0, componentFlagsMask: 0)
-
+/// An Echoel instrument as an Audio Unit (`aumu`) for other apps: a kernel's parameters in a
+/// tree, MIDI in, stereo out. Until it is unlocked (a purchase in Echoel) it plays as a demo:
+/// two seconds of silence every thirty. Every instrument extension uses this one class.
+final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
+    let plugin: OwnPlugin
+    var title: String { plugin.component.name }
+    let help: String?
+    private let kernelType: any InstrumentKernel.Type
     private var outputBus: AUAudioUnitBus?
     private var busArray: AUAudioUnitBusArray?
     private var tree: AUParameterTree?
-    private let render = RenderState()
-    private let log = Logger(subsystem: "com.echoelmusic.studio.synth", category: "audiounit")
+    private let render: RenderState
+    private let log = Logger(subsystem: "com.echoelmusic.studio.plugins", category: "instrument")
 
     /// What the render block reads. Swapped only in `allocateRenderResources`, which a host
     /// never calls while rendering.
     final class RenderState: @unchecked Sendable {
-        var kernel = SynthKernel(sampleRate: 48_000)
+        var kernel: any InstrumentKernel
         var left: UnsafeMutablePointer<Float>?
         var right: UnsafeMutablePointer<Float>?
-        let unlocked = Atomic<Bool>(false)
+        let unlocked = Atomic<Bool>(true)
         var demoFrame: Int64 = 0
+        init(kernel: any InstrumentKernel) { self.kernel = kernel }
     }
 
-    override init(componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+    init(kernel: any InstrumentKernel.Type, plugin: OwnPlugin, help: String? = nil,
+         componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
+        kernelType = kernel
+        self.plugin = plugin
+        self.help = help
+        render = RenderState(kernel: kernel.init(sampleRate: 48_000, maximumFrames: 4_096))
         try super.init(componentDescription: componentDescription, options: options)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
@@ -39,7 +44,7 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
         bus.maximumChannelCount = 2
         outputBus = bus
         busArray = AUAudioUnitBusArray(audioUnit: self, busType: .output, busses: [bus])
-        tree = Self.makeTree()
+        tree = Self.makeTree(kernel.parameters)
         let state = render
         tree?.implementorValueObserver = { parameter, value in
             state.kernel.setParameter(Int(parameter.address), value)
@@ -48,11 +53,10 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
             state.kernel.parameter(Int(parameter.address))
         }
         maximumFramesToRender = 4_096
-        Task { [state] in state.unlocked.store(await PluginLicense.isUnlocked(.synth), ordering: .releasing) }
     }
 
-    private static func makeTree() -> AUParameterTree {
-        let parameters = SynthKernel.parameters.enumerated().map { index, parameter in
+    private static func makeTree(_ parameters: [InstrumentKernelParameter]) -> AUParameterTree {
+        let nodes = parameters.enumerated().map { index, parameter in
             let unit: AudioUnitParameterUnit = switch parameter.unit {
             case .hertz: .hertz
             case .seconds: .seconds
@@ -60,16 +64,15 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
             case .choice: .indexed
             default: .generic
             }
-            let p = AUParameterTree.createParameter(
-                withIdentifier: parameter.key.rawValue.replacingOccurrences(of: ".", with: "_"),
-                name: parameter.title, address: AUParameterAddress(index),
+            let node = AUParameterTree.createParameter(
+                withIdentifier: parameter.identifier, name: parameter.title, address: AUParameterAddress(index),
                 min: AUValue(parameter.range.lowerBound), max: AUValue(parameter.range.upperBound), unit: unit,
                 unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable, .flag_CanRamp],
                 valueStrings: parameter.choices.isEmpty ? nil : parameter.choices, dependentParameters: nil)
-            p.value = AUValue(parameter.defaultValue)
-            return p
+            node.value = AUValue(parameter.defaultValue)
+            return node
         }
-        return AUParameterTree.createTree(withChildren: parameters)
+        return AUParameterTree.createTree(withChildren: nodes)
     }
 
     override var parameterTree: AUParameterTree? {
@@ -83,7 +86,10 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
 
     override var canProcessInPlace: Bool { false }
 
-    var isUnlocked: Bool { render.unlocked.load(ordering: .acquiring) }
+    var isUnlocked: Bool {
+        get { render.unlocked.load(ordering: .acquiring) }
+        set { render.unlocked.store(newValue, ordering: .releasing) }
+    }
 
     override func allocateRenderResources() throws {
         try super.allocateRenderResources()
@@ -91,11 +97,11 @@ final class EchoelSynthAudioUnit: AUAudioUnit {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FormatNotSupported))
         }
         let frames = Int(maximumFramesToRender)
-        let kernel = SynthKernel(sampleRate: format.sampleRate, maximumFrames: frames)
-        for index in SynthKernel.parameters.indices {
+        let kernel = kernelType.init(sampleRate: format.sampleRate, maximumFrames: frames)
+        for index in kernelType.parameters.indices {
             kernel.setParameter(index, render.kernel.parameter(index))
         }
-        log.info("allocate \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
+        log.info("allocate \(self.plugin.productID, privacy: .public) \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
         render.kernel = kernel
         render.left = .allocate(capacity: frames)
         render.right = .allocate(capacity: frames)

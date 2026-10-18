@@ -31,7 +31,7 @@ final class SynthKernelTests: XCTestCase {
 
     func testParametersAreClampedAndChangeTheSound() {
         let kernel = SynthKernel(sampleRate: 48_000)
-        let level = SynthKernel.parameters.firstIndex { $0.key == SynthParameter.level.key } ?? -1
+        let level = SynthParameter.all.firstIndex { $0.key == SynthParameter.level.key } ?? -1
         kernel.setParameter(level, 5)
         XCTAssertEqual(kernel.parameter(level), 1)
         kernel.setParameter(level, .nan)
@@ -48,5 +48,22 @@ final class SynthKernelTests: XCTestCase {
         let kernel = SynthKernel(sampleRate: 48_000)
         kernel.receive(status: 0x90, 60, 100)
         XCTAssertEqual(peak(render(kernel, frames: 2_048, gain: 0).0), 0)
+    }
+
+    func testEveryInstrumentKernelPublishesStableDistinctParametersAndPlaysThroughTheProtocol() {
+        let kinds: [any InstrumentKernel.Type] = [SynthKernel.self, DrumKernel.self]
+        for kind in kinds {
+            let parameters = kind.parameters
+            XCTAssertFalse(parameters.isEmpty)
+            XCTAssertEqual(Set(parameters.map(\.identifier)).count, parameters.count)
+            XCTAssertFalse(parameters.contains { $0.identifier.contains(".") }, "hosts key automation on the identifier")
+            let kernel = kind.init(sampleRate: 48_000, maximumFrames: 512)
+            for (index, parameter) in parameters.enumerated() {
+                XCTAssertEqual(Double(kernel.parameter(index)), parameter.defaultValue, accuracy: 1e-6)
+            }
+        }
+        XCTAssertEqual(SynthKernel.parameters.count, SynthParameter.all.count)
+        XCTAssertEqual(SynthKernel.parameters.first?.identifier,
+                       SynthParameter.all.first?.key.rawValue.replacingOccurrences(of: ".", with: "_"))
     }
 }

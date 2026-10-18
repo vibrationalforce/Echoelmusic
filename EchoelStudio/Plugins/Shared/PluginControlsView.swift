@@ -12,14 +12,16 @@ final class PluginControlsModel {
     let parameters: [AUParameter]
     let title: String
     let isUnlocked: Bool
+    let help: String?
     @ObservationIgnored private var token: AUParameterObserverToken?
     @ObservationIgnored private let tree: AUParameterTree
 
-    init(tree: AUParameterTree, title: String, isUnlocked: Bool) {
+    init(tree: AUParameterTree, title: String, isUnlocked: Bool, help: String? = nil) {
         self.tree = tree
         self.title = title
         parameters = tree.allParameters
         self.isUnlocked = isUnlocked
+        self.help = help
         for parameter in parameters { values[parameter.address] = parameter.value }
         token = tree.token(byAddingParameterObserver: { @Sendable [weak self] address, value in
             Task { @MainActor in self?.values[address] = value }
@@ -66,6 +68,11 @@ struct PluginControlsView: View {
                 }
                 ForEach(model.parameters, id: \.address) { parameter in
                     row(parameter)
+                }
+                if let help = model.help {
+                    Text(help)
+                        .font(.caption)
+                        .foregroundStyle(Color(white: 0.6))
                 }
             }
             .padding(16)

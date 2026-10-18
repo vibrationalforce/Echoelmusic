@@ -10,7 +10,8 @@ import Synchronization
 /// it writes one float and raises a version the render thread compares. Everything else is the
 /// render thread's. Nothing allocates after `init`.
 public final class SynthKernel: @unchecked Sendable {
-    public static let parameters = SynthParameter.all
+    /// The patch parameters by index; `parameters` (InstrumentKernel) publishes the same list.
+    static let patchParameters = SynthParameter.all
     public let sampleRate: Double
 
     private let values: UnsafeMutablePointer<Float>
@@ -39,11 +40,11 @@ public final class SynthKernel: @unchecked Sendable {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
         self.maximumFrames = Swift.max(1, maximumFrames)
-        index = Indices(Self.parameters)
-        count = Self.parameters.count
-        ranges = Self.parameters.map { Float($0.range.lowerBound)...Float($0.range.upperBound) }
-        values = .allocate(capacity: Self.parameters.count)
-        for (i, parameter) in Self.parameters.enumerated() { values[i] = Float(parameter.defaultValue) }
+        index = Indices(Self.patchParameters)
+        count = Self.patchParameters.count
+        ranges = Self.patchParameters.map { Float($0.range.lowerBound)...Float($0.range.upperBound) }
+        values = .allocate(capacity: Self.patchParameters.count)
+        for (i, parameter) in Self.patchParameters.enumerated() { values[i] = Float(parameter.defaultValue) }
         synth = PolySynth(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)

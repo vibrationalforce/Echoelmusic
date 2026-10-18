@@ -41,6 +41,7 @@ targets:
       - package: EchoelEngine
       # Our own Audio Units ship inside the app (PlugIns/); they are sold as in-app purchases.
       - target: EchoelSynth
+      - target: EchoelDrums
       - target: EchoelEffects
     settings:
       base:
@@ -91,6 +92,34 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.synth
         PRODUCT_NAME: EchoelSynth
         INFOPLIST_FILE: Plugins/Synth/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+
+  # Echoel Drums — the studio's synthesized kit as an AUv3 instrument (aumu 'eDrm' 'Echo'),
+  # General MIDI drum map. Same lessons as EchoelSynth above; same shared unit class.
+  EchoelDrums:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Plugins/Drums
+        excludes:
+          - "Info.plist"
+      - path: Plugins/Shared
+    dependencies:
+      - package: EchoelCore
+      - package: EchoelDSP
+      - package: EchoelEngine
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.drums
+        PRODUCT_NAME: EchoelDrums
+        INFOPLIST_FILE: Plugins/Drums/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
