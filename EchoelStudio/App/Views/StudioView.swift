@@ -83,6 +83,19 @@ struct TransportBar: View {
     @State private var clickOn = true
 
     var body: some View {
+        // A phone in portrait cannot show every control at once: then the strip scrolls
+        // sideways instead of squeezing or clipping its buttons.
+        ViewThatFits(in: .horizontal) {
+            controls
+            ScrollView(.horizontal, showsIndicators: false) { controls }
+        }
+        .frame(minHeight: Theme.Size.transportHeight)
+        .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
+        .background(Theme.Color.surface)
+        .overlay(alignment: .bottom) { status }
+    }
+
+    private var controls: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
                 if engine.isPlaying {
@@ -138,21 +151,20 @@ struct TransportBar: View {
                 .accessibilityLabel(store.redoTitle.map { "Redo \($0)" } ?? "Redo")
         }
         .padding(.horizontal, Theme.Space.m)
-        .frame(minHeight: Theme.Size.transportHeight)
-        .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
-        .background(Theme.Color.surface)
-        .overlay(alignment: .bottom) {
-            if midi.isLearning {
-                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.accent)
-                    .padding(.bottom, 2)
-            } else if let error = engine.lastError ?? documents.lastError {
-                Text(error)
-                    .font(Theme.Font.caption)
-                    .foregroundStyle(Theme.Color.record)
-                    .padding(.bottom, 2)
-            }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        if midi.isLearning {
+            Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.accent)
+                .padding(.bottom, 2)
+        } else if let error = engine.lastError ?? documents.lastError {
+            Text(error)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.record)
+                .padding(.bottom, 2)
         }
     }
 }
