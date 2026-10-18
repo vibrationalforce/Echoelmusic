@@ -62,13 +62,15 @@ final class HostedEffectTests: XCTestCase {
         return (project, track, unit)
     }
 
-    private func render(_ project: Project, track: TrackID, unit: HostedUnit, effects: [HostedEffect]) -> [Float] {
-        let engine = EngineCore(sampleRate: rate)
+    private func render(_ project: Project, track: TrackID, unit: HostedUnit, effects: [HostedEffect],
+                        master: [HostedEffect] = [], engine: EngineCore? = nil) -> [Float] {
+        let engine = engine ?? EngineCore(sampleRate: rate)
         engine.setClickEnabled(false)
         var slots = SlotAssigner(capacity: engine.slotCapacity)
         slots.update(for: project)
         engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
-                                      sampleRate: rate, generation: 1, units: [track: unit], effects: [track: effects]))
+                                      sampleRate: rate, generation: 1, units: [track: unit], effects: [track: effects],
+                                      masterEffects: master))
         var left = [Float](repeating: 0, count: 1_024)
         var right = [Float](repeating: 0, count: 1_024)
         left.withUnsafeMutableBufferPointer { l in
@@ -122,6 +124,33 @@ final class HostedEffectTests: XCTestCase {
         try Command.setMute(track, true).apply(to: &project)
         XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], 0, accuracy: 1e-6,
                        "a muted track sends nothing")
+    }
+
+    func testTheMasterChainRunsOnTheMixAfterTheMasterFader() throws {
+        var (project, track, unit) = try constantSong()
+        try Command.setVolume(.master, db: -6).apply(to: &project)
+        let fader = Float(pow(10, -6.0 / 20))
+        let plain = render(project, track: track, unit: unit, effects: [])[500]
+        XCTAssertEqual(plain, 0.5 * panLaw * fader, accuracy: 1e-4)
+        let chain = [FakeEffect(scale: 0.5, ownBuffers: true).makeEffect(sampleRate: rate),
+                     FakeEffect(scale: 0.1, ownBuffers: false).makeEffect(sampleRate: rate, bypassed: true)]
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [], master: chain)[500], plain * 0.5, accuracy: 1e-5)
+    }
+
+    func testTheMasterMeterReadsAfterTheMasterChain() throws {
+        let (project, track, unit) = try constantSong()
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(false)
+        _ = render(project, track: track, unit: unit, effects: [],
+                   master: [FakeEffect(scale: 0.5, ownBuffers: true).makeEffect(sampleRate: rate)], engine: engine)
+        XCTAssertEqual(engine.meters.level(engine.masterMeter).left, 0.25 * panLaw, accuracy: 1e-4)
+    }
+
+    func testAMasterEffectPreparedForAnotherRateIsLeftOut() throws {
+        let (project, track, unit) = try constantSong()
+        let out = render(project, track: track, unit: unit, effects: [],
+                         master: [FakeEffect(scale: 0, ownBuffers: true).makeEffect(sampleRate: 44_100)])
+        XCTAssertEqual(out[10], 0.5 * panLaw, accuracy: 1e-5)
     }
 
     func testAnEffectPreparedForAnotherRateIsLeftOut() throws {

@@ -17,6 +17,8 @@ enum StudioSheet: Identifiable, Hashable {
     case importClip(TrackID, SceneID)
     /// A track's insert effects.
     case effects(TrackID)
+    /// The master's insert effects.
+    case masterEffects
     /// Echoel's own Audio Units, to buy for other apps.
     case store
     /// The assistant: change the song by asking.

@@ -376,6 +376,7 @@ public final class EngineCore: @unchecked Sendable {
             outputs[1] = right + done
             outputCount = 2
             renderChunk(frames: frames)
+            processMaster(frames: frames)
             meterMaster(frames: frames)
             done += frames
         }
@@ -399,6 +400,7 @@ public final class EngineCore: @unchecked Sendable {
             if used == 1 { outputs[1] = monoRight }
             outputCount = Swift.max(used, 2)
             renderChunk(frames: frames)
+            processMaster(frames: frames)
             meterMaster(frames: frames)
             if used == 1 {
                 let mono = outputs[0]
@@ -407,6 +409,13 @@ public final class EngineCore: @unchecked Sendable {
             done += frames
         }
         publishAnchor(frames: frameCount)
+    }
+
+    /// The master's inserts on the master pair, every chunk, so a limiter or a reverb tail runs
+    /// on whether or not the song plays.
+    private func processMaster(frames: Int) {
+        guard let effects = current?.snapshot.masterEffects else { return }
+        for effect in effects { effect.process(frames: frames, left: outputs[0], right: outputs[1]) }
     }
 
     /// The master pair's peaks, after everything was mixed into it.

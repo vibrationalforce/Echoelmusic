@@ -7,7 +7,8 @@ import SwiftUI
 /// writing and MIDI learn reach them.
 struct StandardEffectPanel: View {
     @Environment(AudioEngine.self) private var engine
-    let track: TrackID
+    /// The track the insert sits on, or the master.
+    let owner: ParameterAddress.Owner
     let insert: InsertID
     let effect: StandardEffect
 
@@ -18,7 +19,7 @@ struct StandardEffectPanel: View {
                       alignment: .leading, spacing: Theme.Space.s) {
                 ForEach(EffectKernel.parameters(for: effect), id: \.address) { parameter in
                     EffectParameterField(
-                        address: .plugin(track, PluginParameter(.insert(insert), address: UInt64(parameter.address))),
+                        address: ParameterAddress(owner, .plugin(PluginParameter(.insert(insert), address: UInt64(parameter.address)))),
                         parameter: parameter)
                 }
             }

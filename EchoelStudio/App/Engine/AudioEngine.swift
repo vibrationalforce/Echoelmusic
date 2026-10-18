@@ -566,7 +566,7 @@ final class AudioEngine {
                                       slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
                                       samples: samples, units: plugins.units, effects: plugins.chains,
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
-                                      monitoring: monitoring(in: project))
+                                      monitoring: monitoring(in: project), masterEffects: plugins.masterChain)
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
     }

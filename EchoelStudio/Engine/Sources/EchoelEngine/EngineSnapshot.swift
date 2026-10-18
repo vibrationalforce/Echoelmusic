@@ -179,6 +179,9 @@ public struct EngineSnapshot: Sendable {
     /// The song's lanes on parameters of loaded, playing units. A lane on a unit that is not
     /// loaded, bypassed, or does not have that parameter (another version) does nothing.
     public let unitAutomation: [UnitAutomation]
+    /// The master's loaded, active insert effects in order, run on the master pair after
+    /// everything is mixed into it.
+    public let masterEffects: [HostedEffect]
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -191,8 +194,11 @@ public struct EngineSnapshot: Sendable {
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
                 effects: [TrackID: [HostedEffect]] = [:], outputChannels: Int = 2,
-                revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:]) {
+                revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
+                masterEffects: [HostedEffect] = []) {
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
+        let masterChain = masterEffects.filter { $0.sampleRate == sampleRate }
+        self.masterEffects = masterChain
         self.generation = generation
         time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: sampleRate)
         timeSignature = project.timeSignature
@@ -284,6 +290,13 @@ public struct EngineSnapshot: Sendable {
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
         unitAutomation = project.automation.compactMap { lane -> UnitAutomation? in
+            if lane.target.owner == .master, let parameter = lane.target.key.pluginParameter,
+               case .insert(let insert) = parameter.unit {
+                guard let unit = masterChain.first(where: { $0.insert == insert && !$0.isBypassed }),
+                      let range = unit.parameterRanges[parameter.address], range.upperBound > range.lowerBound,
+                      range.lowerBound.isFinite, range.upperBound.isFinite else { return nil }
+                return UnitAutomation(unit: unit, address: parameter.address, range: range, lane: lane)
+            }
             guard case .track(let id) = lane.target.owner, let parameter = lane.target.key.pluginParameter,
                   let track = project.track(id) else { return nil }
             let unit: (any ParameterScheduling)?

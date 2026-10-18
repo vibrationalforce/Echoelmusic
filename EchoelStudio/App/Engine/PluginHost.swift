@@ -37,14 +37,16 @@ final class PluginHost {
     @ObservationIgnored private(set) var units: [TrackID: HostedUnit] = [:]
     /// Each track's loaded, active inserts in chain order, for the engine.
     @ObservationIgnored private(set) var chains: [TrackID: [HostedEffect]] = [:]
+    /// The master's loaded, active inserts in chain order.
+    @ObservationIgnored private(set) var masterChain: [HostedEffect] = []
     /// Called when a unit finished loading, so the engine republishes with it. `sync` does not
     /// call it: its caller publishes anyway.
     @ObservationIgnored var onUnitsChanged: (() -> Void)?
     /// Called on the main thread when a control in a plugin's own interface moves one of its
     /// parameters: which, to where along its travel (0…1), and whether it was touched, moved or let go.
     @ObservationIgnored var onParameterMoved: ((ParameterAddress, Double, ParameterPhase) -> Void)?
-    /// Which track each insert sits on, as of the last `sync`.
-    @ObservationIgnored private var insertTracks: [InsertID: TrackID] = [:]
+    /// Whose chain each insert sits on — a track's or the master's — as of the last `sync`.
+    @ObservationIgnored private var insertOwners: [InsertID: ParameterAddress.Owner] = [:]
     @ObservationIgnored private var loaded: [Slot: Loaded] = [:]
     @ObservationIgnored private var requests: [Slot: Request] = [:]
     @ObservationIgnored private var failed: [Slot: PluginComponent] = [:]
@@ -135,10 +137,14 @@ final class PluginHost {
                 wanted[.insert(insert.id)] = Wanted(component: insert.plugin, state: insert.state)
             }
         }
-        insertTracks = [:]
-        for track in project.tracks {
-            for insert in track.inserts { insertTracks[insert.id] = track.id }
+        for insert in project.masterInserts {
+            wanted[.insert(insert.id)] = Wanted(component: insert.plugin, state: insert.state)
         }
+        insertOwners = [:]
+        for track in project.tracks {
+            for insert in track.inserts { insertOwners[insert.id] = .track(track.id) }
+        }
+        for insert in project.masterInserts { insertOwners[insert.id] = .master }
         var changed = false
         for (slot, entry) in loaded where wanted[slot]?.component != entry.component || entry.sampleRate != sampleRate {
             if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
@@ -176,6 +182,7 @@ final class PluginHost {
         }
         units = instruments
         self.chains = chains
+        masterChain = project.masterInserts.filter { !$0.isBypassed }.compactMap { loaded[.insert($0.id)]?.effect }
     }
 
     private func load(_ component: PluginComponent, for slot: Slot, state: Data?, sampleRate: Double) {
@@ -249,29 +256,31 @@ final class PluginHost {
     }
 
     private func moved(_ moves: [(address: UInt64, value: Float, phase: ParameterPhase)], in slot: Slot) {
-        guard let onParameterMoved, let tree = loaded[slot]?.unit.parameterTree, let owner = track(of: slot) else { return }
+        guard let onParameterMoved, let tree = loaded[slot]?.unit.parameterTree, let owner = owner(of: slot) else { return }
         for move in moves {
             guard let parameter = tree.parameter(withAddress: move.address),
                   parameter.maxValue > parameter.minValue, move.value.isFinite else { continue }
             let position = Double(Swift.min(Swift.max((move.value - parameter.minValue) / (parameter.maxValue - parameter.minValue), 0), 1))
-            onParameterMoved(.plugin(owner, PluginParameter(slot.unit, address: move.address)), position, move.phase)
+            onParameterMoved(ParameterAddress(owner, .plugin(PluginParameter(slot.unit, address: move.address))),
+                             position, move.phase)
         }
     }
 
-    private func track(of slot: Slot) -> TrackID? {
+    private func owner(of slot: Slot) -> ParameterAddress.Owner? {
         switch slot {
-        case .instrument(let track): track
-        case .insert(let insert): insertTracks[insert]
+        case .instrument(let track): .track(track)
+        case .insert(let insert): insertOwners[insert]
         }
     }
 
     /// The loaded parameter a plugin address names, and the observer to set it as.
     private func loadedParameter(_ address: ParameterAddress) -> (AUParameter, AUParameterObserverToken?)? {
-        guard case .track(let track) = address.owner, let plugin = address.key.pluginParameter else { return nil }
+        guard let plugin = address.key.pluginParameter else { return nil }
         let slot: Slot
-        switch plugin.unit {
-        case .instrument: slot = .instrument(track)
-        case .insert(let insert): slot = .insert(insert)
+        switch (address.owner, plugin.unit) {
+        case (.track(let track), .instrument): slot = .instrument(track)
+        case (.track, .insert(let insert)), (.master, .insert(let insert)): slot = .insert(insert)
+        default: return nil
         }
         guard let entry = loaded[slot], let parameter = entry.unit.parameterTree?.parameter(withAddress: plugin.address),
               parameter.maxValue > parameter.minValue else { return nil }
@@ -377,7 +386,15 @@ final class PluginHost {
             }
             if !chain.isEmpty { chains[track.id] = chain }
         }
-        return OfflineUnits(units: units, chains: chains, missing: missing)
+        var masterChain: [HostedEffect] = []
+        for insert in project.masterInserts where !insert.isBypassed {
+            if let unit = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
+                masterChain.append(Self.effect(unit, insert: insert.id, sampleRate: sampleRate))
+            } else {
+                missing.append(insert.plugin.name)
+            }
+        }
+        return OfflineUnits(units: units, chains: chains, masterChain: masterChain, missing: missing)
     }
 
     private static func instantiate(_ component: PluginComponent, isEffect: Bool, sampleRate: Double,
@@ -420,6 +437,12 @@ final class PluginHost {
                                          make: { .setInsertState(track: track.id, insert.id, $0) }) {
                     commands.append(command)
                 }
+            }
+        }
+        for insert in project.masterInserts {
+            if let command = capture(.insert(insert.id), stored: insert.state, only: only,
+                                     make: { .setMasterInsertState(insert.id, $0) }) {
+                commands.append(command)
             }
         }
         return commands
@@ -493,6 +516,7 @@ struct PluginParameterInfo: Identifiable, Equatable {
 struct OfflineUnits: @unchecked Sendable {
     let units: [TrackID: HostedUnit]
     let chains: [TrackID: [HostedEffect]]
+    let masterChain: [HostedEffect]
     /// Plugins that could not load; the export is made without them.
     let missing: [String]
 }

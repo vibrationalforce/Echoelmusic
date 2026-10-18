@@ -49,6 +49,15 @@ struct ChannelStrip: View {
                 .buttonStyle(ToolButtonStyle(isActive: active > 0))
                 .accessibilityLabel("Effects on \(track.name)")
                 .accessibilityValue(track.inserts.isEmpty ? "None" : "\(active) of \(track.inserts.count) on")
+            } else {
+                let inserts = store.project.masterInserts
+                let active = inserts.filter { !$0.isBypassed }.count
+                Button(inserts.isEmpty ? "FX" : "FX \(active)/\(inserts.count)") {
+                    router.sheet = .masterEffects
+                }
+                .buttonStyle(ToolButtonStyle(isActive: active > 0))
+                .accessibilityLabel("Master effects")
+                .accessibilityValue(inserts.isEmpty ? "None" : "\(active) of \(inserts.count) on")
             }
             if let track, track.kind != .returnTrack {
                 ForEach(store.project.tracks.filter { $0.kind == .returnTrack }) { target in

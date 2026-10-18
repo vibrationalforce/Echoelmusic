@@ -43,7 +43,8 @@ struct StudioView: View {
             case .clipEditor(let track): ClipEditorView(trackID: track)
             case let .clip(track, clip): ClipEditorView(trackID: track, clipID: clip)
             case .share(let url): ShareSheet(url: url).ignoresSafeArea()
-            case .effects(let track): EffectsView(trackID: track)
+            case .effects(let track): EffectsView(owner: .track(track))
+            case .masterEffects: EffectsView(owner: .master)
             case .store: StoreView()
             case .agent: AgentView()
             case let .importAudio(track, start):

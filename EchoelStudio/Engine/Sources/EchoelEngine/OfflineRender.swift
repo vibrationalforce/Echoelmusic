@@ -31,10 +31,10 @@ public enum OfflineRender {
     /// the streaming form.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                              effects: [TrackID: [HostedEffect]] = [:]) -> Result {
+                              effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = []) -> Result {
         var left: [Float] = [], right: [Float] = []
         let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, samples: samples,
-                             units: units, effects: effects) { l, r, count in
+                             units: units, effects: effects, masterEffects: masterEffects) { l, r, count in
             left.append(contentsOf: UnsafeBufferPointer(start: l, count: count))
             right.append(contentsOf: UnsafeBufferPointer(start: r, count: count))
         }
@@ -45,7 +45,8 @@ public enum OfflineRender {
     /// two blocks of memory. `write` may throw to stop; the render stops with it.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                              effects: [TrackID: [HostedEffect]] = [:], blockFrames: Int = 16_384,
+                              effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = [],
+                              blockFrames: Int = 16_384,
                               into write: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) rethrows -> Summary {
         let plan = PlaybackPlan(compiling: project)
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -54,7 +55,7 @@ public enum OfflineRender {
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
         let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
-                                      samples: samples, units: units, effects: effects)
+                                      samples: samples, units: units, effects: effects, masterEffects: masterEffects)
         guard plan.songEnd > 0 || snapshot.audioEnd > 0 else { return Summary(frameCount: 0, sampleRate: rate, peak: 0) }
         core.publish(snapshot)
         core.play()
