@@ -346,20 +346,37 @@ final class DocumentController {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.importedKey) else { return }
         let found = Self.earlierBases().lazy.compactMap { Self.earlierSongs(in: $0, defaults: defaults) }.first { !$0.isEmpty }
-        var written = 0
-        for project in found ?? [] {
+        let songs = found ?? []
+        // The songs already written by an earlier attempt, by their place in the earlier app's
+        // list (its files are never changed, so the order holds): a retry never writes one twice.
+        var done = Set(defaults.array(forKey: Self.importedIndicesKey) as? [Int] ?? [])
+        var failed = 0
+        for (index, project) in songs.enumerated() where !done.contains(index) {
             do {
                 try library.write(project, to: library.newURL(for: project.name))
-                written += 1
+                done.insert(index)
             } catch {
+                failed += 1
                 log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .public)")
             }
         }
-        log.info("imported \(written, privacy: .public) song(s) from the earlier app")
-        defaults.set(true, forKey: Self.importedKey)
+        log.info("imported \(done.count, privacy: .public) of \(songs.count, privacy: .public) song(s) from the earlier app")
+        // A failure (a full disk, a locked container) is retried on the next launches, a few times.
+        let attempts = defaults.integer(forKey: Self.importAttemptsKey) + 1
+        if failed == 0 || attempts >= Self.importAttemptLimit {
+            defaults.set(true, forKey: Self.importedKey)
+            defaults.removeObject(forKey: Self.importedIndicesKey)
+            defaults.removeObject(forKey: Self.importAttemptsKey)
+        } else {
+            defaults.set(done.sorted(), forKey: Self.importedIndicesKey)
+            defaults.set(attempts, forKey: Self.importAttemptsKey)
+        }
     }
 
     private static let importedKey = "studio.importedEarlierSongs"
+    private static let importedIndicesKey = "studio.importedEarlierSongIndices"
+    private static let importAttemptsKey = "studio.earlierSongImportAttempts"
+    private static let importAttemptLimit = 3
 
     /// Where the earlier app wrote: its App Group container, or Application Support when the
     /// container was unavailable.
