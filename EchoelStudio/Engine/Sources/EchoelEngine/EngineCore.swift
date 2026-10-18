@@ -437,6 +437,9 @@ public final class EngineCore: @unchecked Sendable {
 
         takePendingSnapshot()
 
+        // Where the song was heard last block: a stop fades the audio tracks out from here,
+        // although Stop has already sent the playhead home.
+        let heardAt = playhead
         var seek = seekRequest.exchange(-1, ordering: .acquiringAndReleasing)
         let jump = jumpRequest.exchange(0, ordering: .relaxed)
         if seek < 0, jump != 0 { seek = Swift.max(0, playhead + jump) }
@@ -458,13 +461,12 @@ public final class EngineCore: @unchecked Sendable {
         let playing = isPlayingFlag.load(ordering: .acquiring)
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
-        if wasPlaying, !playing {
-            releaseAllNotes()
-            stopSessionClips()
-        }
+        let stopping = wasPlaying && !playing
+        if stopping { releaseAllNotes() }
         if !wasPlaying, playing { resync() }
         wasPlaying = playing
-        takeLaunchRequests(playing: playing)
+        // A stopping block still fades out the clips that were playing; they stop after it.
+        if !stopping { takeLaunchRequests(playing: playing) }
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
 
         guard playing, let box = current else {
@@ -474,7 +476,13 @@ public final class EngineCore: @unchecked Sendable {
             renderVoices(0..<frames, left: left, right: right)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
-            if let snapshot = current?.snapshot { renderAudio(snapshot, frames: frames, playing: false) }
+            if let snapshot = current?.snapshot {
+                renderAudio(snapshot, frames: frames, playing: false, fadingFrom: stopping ? heardAt : nil)
+            }
+            if stopping {
+                stopSessionClips()
+                takeLaunchRequests(playing: false)
+            }
             mixReturns(frames: frames)
             return
         }
@@ -1115,14 +1123,16 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Audio regions are read straight from the snapshot at the playhead — no voices, no state —
     /// so a seek or an edit lands on the right frame at once.
-    /// Stopped, only the lanes that monitor their input render — the input, through the strip.
-    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, playing: Bool = true) {
+    /// Stopped, a lane renders its input if it monitors one and its inserts with silence, so a
+    /// reverb or delay rings out; in the block the transport stops, what was playing at
+    /// `fadingFrom` fades out over a few milliseconds instead of being cut.
+    private func renderAudio(_ snapshot: EngineSnapshot, frames: Int, playing: Bool = true, fadingFrom: Int64? = nil) {
         let blockEnd = playhead + Int64(frames)
         var fetched: UInt32 = 0
         for (index, lane) in snapshot.audioLanes.enumerated() {
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
             // A track that renders nothing this chunk still lets its reading fall.
-            if !playing, lane.monitor < 0 {
+            if !playing, lane.monitor < 0, fadingFrom == nil, lane.inserts.isEmpty {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 continue
             }
@@ -1145,6 +1155,14 @@ public final class EngineCore: @unchecked Sendable {
             // fades in, so a launch, stop or return never clicks.
             var from = playing ? 0 : frames
             var fadeStart = 0, fadeEnd = 0
+            if !playing, let fadingFrom {
+                let length = Swift.min(Int(Self.regionFadeFrames), frames)
+                let state = session ? sessions[lane.slot] : SessionSlot()
+                let home = playhead
+                playhead = fadingFrom
+                addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
+                playhead = home
+            }
             if playing, nudgedBy != 0 {
                 // A nudge jumps the read position by a few samples: what would have played fades
                 // out while the moved audio fades in, so a sustained sound does not tick.
