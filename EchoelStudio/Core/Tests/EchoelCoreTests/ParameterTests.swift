@@ -11,7 +11,7 @@ final class ParameterTests: XCTestCase {
 
     func testEveryListedParameterHasAValueAndACommandThatSetsIt() throws {
         var (project, _) = try projectWithTrack()
-        XCTAssertEqual(project.parameters.count, 5 + SynthParameter.all.count)
+        XCTAssertEqual(project.parameters.count, 5 + Project.contextDescriptors.count + SynthParameter.all.count)
         for descriptor in project.parameters {
             XCTAssertNotNil(project.value(of: descriptor.address), descriptor.address.description)
             XCTAssertEqual(project.descriptor(for: descriptor.address), descriptor)
@@ -42,7 +42,7 @@ final class ParameterTests: XCTestCase {
     func testRemovingATrackRemovesItsParameters() throws {
         var (project, track) = try projectWithTrack()
         try Command.removeTrack(track).apply(to: &project)
-        XCTAssertEqual(project.parameters.count, 3)
+        XCTAssertEqual(project.parameters.count, 3 + Project.contextDescriptors.count, "tempo, master volume and pan, and the musical context")
         XCTAssertNil(project.descriptor(for: .volume(track)))
     }
 
