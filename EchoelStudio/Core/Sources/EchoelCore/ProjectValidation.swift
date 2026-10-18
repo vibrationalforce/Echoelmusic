@@ -34,6 +34,14 @@ extension Project {
             }
         }
         var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()
+        guard masterInserts.count <= Insert.maximumPerTrack else { throw Self.invalid("masterInserts", "too many") }
+        for insert in masterInserts {
+            guard insertIDs.insert(insert.id).inserted else { throw CommandError.duplicateID(insert.id.description) }
+            guard insert.plugin.role == .effect else { throw Self.invalid("masterInserts", "an insert is not an effect") }
+            if let state = insert.state, state.count > PluginComponent.maximumStateBytes {
+                throw Self.invalid("masterInserts", "an effect's state is larger than \(PluginComponent.maximumStateBytes) bytes")
+            }
+        }
         for track in tracks {
             guard trackIDs.insert(track.id).inserted else { throw CommandError.duplicateID(track.id.description) }
             try Self.validate(track.mixer, name: "mixer")

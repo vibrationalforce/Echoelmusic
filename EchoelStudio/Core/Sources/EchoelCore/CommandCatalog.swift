@@ -37,6 +37,7 @@ extension Command {
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
         case setInstrumentPlugin, setPluginState
         case addInsert, removeInsert, moveInsert, setInsertBypass, setInsertState
+        case addMasterInsert, removeMasterInsert, moveMasterInsert, setMasterInsertBypass, setMasterInsertState
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput, setMonitor
         case mapMIDI, unmapMIDI, setAutomation
@@ -70,6 +71,11 @@ extension Command {
         case .moveInsert: .moveInsert
         case .setInsertBypass: .setInsertBypass
         case .setInsertState: .setInsertState
+        case .addMasterInsert: .addMasterInsert
+        case .removeMasterInsert: .removeMasterInsert
+        case .moveMasterInsert: .moveMasterInsert
+        case .setMasterInsertBypass: .setMasterInsertBypass
+        case .setMasterInsertState: .setMasterInsertState
         case .addMedia: .addMedia
         case .removeMedia: .removeMedia
         case .setVolume: .setVolume
@@ -214,6 +220,30 @@ public enum CommandCatalog {
             return CommandSpec(name: "insert.state", title: "Effect Settings",
                                summary: "Stores the settings an effect reported, so the song reopens with them. Written by the app, not typed.",
                                parameters: [P("track", .trackID, "The track."), P("insert", .insertID, "The insert."),
+                                            P("state", .string, "The effect's saved state, at most 8 MB; null to forget it.")])
+        case .addMasterInsert:
+            return CommandSpec(name: "master.insert.add", title: "Add Master Effect",
+                               summary: "Adds an effect to the master's insert chain, after the master fader — where a final limiter goes.",
+                               parameters: [P("id", .insertID, "Identifier for the insert."),
+                                            P("plugin", .string, "The component: type aufx, subtype, manufacturer, name, manufacturer name."),
+                                            P("index", .integer, "Position in the chain; appended when omitted.", optional: true)])
+        case .removeMasterInsert:
+            return CommandSpec(name: "master.insert.remove", title: "Remove Master Effect",
+                               summary: "Removes an effect from the master's insert chain.",
+                               parameters: [P("insert", .insertID, "The insert.")])
+        case .moveMasterInsert:
+            return CommandSpec(name: "master.insert.move", title: "Move Master Effect",
+                               summary: "Moves an effect to another position in the master's insert chain.",
+                               parameters: [P("insert", .insertID, "The insert."),
+                                            P("toIndex", .integer, "New position in the chain.")])
+        case .setMasterInsertBypass:
+            return CommandSpec(name: "master.insert.bypass", title: "Bypass Master Effect",
+                               summary: "Bypasses a master effect, or turns it back on; it keeps its place and settings.",
+                               parameters: [P("insert", .insertID, "The insert."), P("bypassed", .boolean, "True to bypass.")])
+        case .setMasterInsertState:
+            return CommandSpec(name: "master.insert.state", title: "Master Effect Settings",
+                               summary: "Stores the settings a master effect reported, so the song reopens with them. Written by the app, not typed.",
+                               parameters: [P("insert", .insertID, "The insert."),
                                             P("state", .string, "The effect's saved state, at most 8 MB; null to forget it.")])
         case .addMedia:
             return CommandSpec(name: "media.add", title: "Import Audio",

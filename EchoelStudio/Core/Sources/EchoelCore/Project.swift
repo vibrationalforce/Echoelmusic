@@ -16,6 +16,9 @@ public struct Project: Codable, Equatable, Sendable {
     public var tracks: [Track]
     public var scenes: [Scene]
     public var master: MixerStrip
+    /// Effects on the master mix, in order, after the master fader — where a final limiter goes.
+    /// Tracks on their own outputs skip the master, and its inserts with it.
+    public var masterInserts: [Insert]
     /// Audio files imported into the song, in import order.
     public var media: [MediaFile]
     /// Controllers learned for this song, one target per control.
@@ -33,7 +36,8 @@ public struct Project: Codable, Equatable, Sendable {
         master: MixerStrip = MixerStrip(),
         media: [MediaFile] = [],
         midiMappings: [MIDIMapping] = [],
-        automation: [AutomationLane] = []
+        automation: [AutomationLane] = [],
+        masterInserts: [Insert] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -46,10 +50,12 @@ public struct Project: Codable, Equatable, Sendable {
         self.media = media
         self.midiMappings = midiMappings
         self.automation = automation
+        self.masterInserts = masterInserts
     }
 
     private enum CodingKeys: String, CodingKey {
         case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
+        case masterInserts
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -66,6 +72,7 @@ public struct Project: Codable, Equatable, Sendable {
         media = try c.decodeIfPresent([MediaFile].self, forKey: .media) ?? []
         midiMappings = try c.decodeIfPresent([MIDIMapping].self, forKey: .midiMappings) ?? []
         automation = try c.decodeIfPresent([AutomationLane].self, forKey: .automation) ?? []
+        masterInserts = try c.decodeIfPresent([Insert].self, forKey: .masterInserts) ?? []
     }
 
     public func trackIndex(_ id: TrackID) -> Int? {

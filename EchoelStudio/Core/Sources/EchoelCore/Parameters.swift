@@ -224,6 +224,12 @@ extension Project {
 
     /// The descriptor for `address`, or nil when it names nothing in this project.
     public func descriptor(for address: ParameterAddress) -> ParameterDescriptor? {
+        if address.owner == .master, let parameter = address.key.pluginParameter {
+            guard case .insert(let id) = parameter.unit, let insert = masterInserts.first(where: { $0.id == id })
+            else { return nil }
+            return ParameterDescriptor(address: address, title: "Master \(insert.plugin.name) #\(parameter.address)",
+                                       unit: .amount, range: 0...1, defaultValue: 0, taper: .linear)
+        }
         if case .track(let id) = address.owner, let parameter = address.key.pluginParameter {
             guard let track = track(id), let plugin = track.plugin(for: parameter.unit) else { return nil }
             // The unit names its parameters; the song only knows where it is.
@@ -322,8 +328,12 @@ extension Project {
     /// Drops the lanes and mappings of one unit's parameters on `track` — its addresses mean
     /// nothing to the unit that replaces it.
     mutating func forgetParameters(of unit: PluginParameter.Unit, on track: TrackID) {
+        forgetParameters(of: unit, owner: .track(track))
+    }
+
+    mutating func forgetParameters(of unit: PluginParameter.Unit, owner: ParameterAddress.Owner) {
         let gone = { (address: ParameterAddress) in
-            address.owner == .track(track) && address.key.pluginParameter?.unit == unit
+            address.owner == owner && address.key.pluginParameter?.unit == unit
         }
         automation.removeAll { gone($0.target) }
         midiMappings.removeAll { gone($0.target) }

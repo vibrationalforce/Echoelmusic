@@ -32,6 +32,12 @@ public enum Command: Codable, Equatable, Sendable {
     case moveInsert(track: TrackID, InsertID, toIndex: Int)
     case setInsertBypass(track: TrackID, InsertID, Bool)
     case setInsertState(track: TrackID, InsertID, Data?)
+    /// The master's insert chain, after the master fader. Same rules as a track's.
+    case addMasterInsert(id: InsertID, plugin: PluginComponent, index: Int?)
+    case removeMasterInsert(InsertID)
+    case moveMasterInsert(InsertID, toIndex: Int)
+    case setMasterInsertBypass(InsertID, Bool)
+    case setMasterInsertState(InsertID, Data?)
     case addMedia(MediaFile)
     case removeMedia(MediaID)
 
@@ -276,9 +282,7 @@ extension Command {
 
         case let .addInsert(trackID, id, plugin, index):
             let t = try project.requireTrack(trackID)
-            guard !project.tracks.contains(where: { $0.insertIndex(id) != nil }) else {
-                throw CommandError.duplicateID(id.description)
-            }
+            guard !project.hasInsert(id) else { throw CommandError.duplicateID(id.description) }
             guard plugin.role == .effect else {
                 throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
             }
@@ -316,6 +320,46 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "state", reason: "larger than \(PluginComponent.maximumStateBytes) bytes")
             }
             project.tracks[t].inserts[i].state = state
+
+        case let .addMasterInsert(id, plugin, index):
+            guard !project.hasInsert(id) else { throw CommandError.duplicateID(id.description) }
+            guard plugin.role == .effect else {
+                throw CommandError.invalidValue(parameter: "plugin", reason: "must be an effect (type aufx)")
+            }
+            guard project.masterInserts.count < Insert.maximumPerTrack else {
+                throw CommandError.invalidValue(parameter: "master", reason: "has \(Insert.maximumPerTrack) inserts already")
+            }
+            let at = index ?? project.masterInserts.count
+            guard (0...project.masterInserts.count).contains(at) else {
+                throw CommandError.invalidValue(parameter: "index", reason: "must be within 0…\(project.masterInserts.count)")
+            }
+            var named = plugin
+            named.name = try Names.validated(plugin.name, parameter: "name")
+            project.masterInserts.insert(Insert(id: id, plugin: named), at: at)
+
+        case .removeMasterInsert(let id):
+            let i = try project.requireMasterInsert(id)
+            project.masterInserts.remove(at: i)
+            project.forgetParameters(of: .insert(id), owner: .master)
+
+        case let .moveMasterInsert(id, toIndex):
+            let i = try project.requireMasterInsert(id)
+            guard project.masterInserts.indices.contains(toIndex) else {
+                throw CommandError.invalidValue(parameter: "toIndex", reason: "must be within 0…\(project.masterInserts.count - 1)")
+            }
+            let insert = project.masterInserts.remove(at: i)
+            project.masterInserts.insert(insert, at: toIndex)
+
+        case let .setMasterInsertBypass(id, bypassed):
+            let i = try project.requireMasterInsert(id)
+            project.masterInserts[i].isBypassed = bypassed
+
+        case let .setMasterInsertState(id, state):
+            let i = try project.requireMasterInsert(id)
+            if let state, state.count > PluginComponent.maximumStateBytes {
+                throw CommandError.invalidValue(parameter: "state", reason: "larger than \(PluginComponent.maximumStateBytes) bytes")
+            }
+            project.masterInserts[i].state = state
 
         case let .addMedia(file):
             guard project.mediaFile(file.id) == nil else { throw CommandError.duplicateID(file.id.description) }
@@ -657,6 +701,16 @@ extension Project {
         let t = try requireTrack(track)
         guard let i = tracks[t].insertIndex(id) else { throw CommandError.unknownInsert(id) }
         return (t, i)
+    }
+
+    func requireMasterInsert(_ id: InsertID) throws -> Int {
+        guard let i = masterInserts.firstIndex(where: { $0.id == id }) else { throw CommandError.unknownInsert(id) }
+        return i
+    }
+
+    /// Whether any chain, a track's or the master's, holds an insert with this id.
+    func hasInsert(_ id: InsertID) -> Bool {
+        masterInserts.contains { $0.id == id } || tracks.contains { $0.insertIndex(id) != nil }
     }
 
     /// Rejects audio that does not lie within a file of the song.
