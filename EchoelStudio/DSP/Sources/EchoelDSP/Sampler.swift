@@ -25,6 +25,11 @@ public final class SampleBuffer: @unchecked Sendable {
         for (i, s) in samples.enumerated() { (frames + i).initialize(to: s.isFinite ? s : 0) }
     }
 
+    /// A copy of the frames, for saving the sample. Allocates: never on the render thread.
+    public func copyFrames() -> [Float] {
+        Array(UnsafeBufferPointer(start: frames, count: frameCount))
+    }
+
     deinit {
         frames.deinitialize(count: frameCount)
         frames.deallocate()

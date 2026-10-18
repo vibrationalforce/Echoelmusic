@@ -1,6 +1,7 @@
 import AVFoundation
 import EchoelCore
 import EchoelDSP
+import EchoelEngine
 import Foundation
 
 /// Bringing an audio file into a song: copy it into the song package, then decode the copy to
@@ -9,8 +10,6 @@ import Foundation
 enum AudioFileImport {
     /// The longest file a sampler takes: ten minutes, about 115 MB of mono floats at 48 kHz.
     static let maximumSeconds: Double = 600
-    /// Frames read per pass while decoding.
-    private static let chunkFrames: AVAudioFrameCount = 65_536
 
     enum ImportError: LocalizedError {
         case unreadable
@@ -57,33 +56,15 @@ enum AudioFileImport {
 
     /// Reads a whole file and mixes its channels down to one.
     static func decode(_ url: URL) throws -> SampleBuffer {
-        let audio: AVAudioFile
-        do { audio = try AVAudioFile(forReading: url) } catch { throw ImportError.unreadable }
-        let format = audio.processingFormat
-        let rate = format.sampleRate
-        let length = audio.length
-        let channels = Int(format.channelCount)
-        guard rate.isFinite, rate > 0, channels > 0 else { throw ImportError.unreadable }
-        guard length > 0 else { throw ImportError.empty }
-        guard Double(length) / rate <= maximumSeconds else { throw ImportError.tooLong }
-        guard let chunk = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunkFrames) else {
-            throw ImportError.unreadable
-        }
-
-        var mono = [Float]()
-        mono.reserveCapacity(Int(length))
-        let scale = 1 / Float(channels)
-        while audio.framePosition < length {
-            do { try audio.read(into: chunk) } catch { throw ImportError.unreadable }
-            let frames = Int(chunk.frameLength)
-            guard frames > 0, let data = chunk.floatChannelData else { break }
-            for i in 0..<frames {
-                var sum: Float = 0
-                for c in 0..<channels { sum += data[c][i] }
-                mono.append(sum * scale)
+        let mono: SampleFile.Mono
+        do { mono = try SampleFile.readMono(url, maximumSeconds: maximumSeconds) } catch let error as SampleFile.ReadError {
+            switch error {
+            case .unreadable: throw ImportError.unreadable
+            case .empty: throw ImportError.empty
+            case .tooLong: throw ImportError.tooLong
             }
         }
-        guard let buffer = SampleBuffer(samples: mono, sampleRate: rate) else { throw ImportError.empty }
+        guard let buffer = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else { throw ImportError.empty }
         return buffer
     }
 
