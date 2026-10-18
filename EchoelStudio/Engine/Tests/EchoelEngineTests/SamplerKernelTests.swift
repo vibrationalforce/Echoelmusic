@@ -29,6 +29,7 @@ final class SamplerKernelTests: XCTestCase {
         kernel.receive(status: 0x90, 60, 127)
         XCTAssertEqual(peak(render(kernel, frames: 960)), 0)
         XCTAssertTrue(kernel.load(try XCTUnwrap(constant(0.5))))
+        _ = render(kernel, frames: 16) // a render takes the sample first, as in a host
         kernel.receive(status: 0x90, 60, 127)
         XCTAssertGreaterThan(peak(render(kernel, frames: 960)), 0.3)
         kernel.load(nil)
