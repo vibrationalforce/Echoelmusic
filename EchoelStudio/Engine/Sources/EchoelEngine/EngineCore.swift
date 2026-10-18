@@ -97,6 +97,8 @@ public final class EngineCore: @unchecked Sendable {
     private let segment: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
+    /// How far this chunk's nudge moved the playhead; audio crossfades across it.
+    private var nudgedBy: Int64 = 0
     private var wasPlaying = false
     private var nextBeat: Tick = 0
     private var nextClock: Tick = 0
@@ -407,8 +409,11 @@ public final class EngineCore: @unchecked Sendable {
             resync()
         }
         let shift = nudgeRequest.exchange(0, ordering: .relaxed)
+        nudgedBy = 0
         if shift != 0, seek < 0 {
-            playhead = Swift.max(0, playhead + shift)
+            let moved = Swift.max(0, playhead + shift)
+            nudgedBy = moved - playhead
+            playhead = moved
             position.store(playhead, ordering: .relaxed)
         }
         playLiveEvents()
@@ -1072,6 +1077,16 @@ public final class EngineCore: @unchecked Sendable {
             // fades in, so a launch, stop or return never clicks.
             var from = playing ? 0 : frames
             var fadeStart = 0, fadeEnd = 0
+            if playing, nudgedBy != 0 {
+                // A nudge jumps the read position by a few samples: what would have played fades
+                // out while the moved audio fades in, so a sustained sound does not tick.
+                let length = Swift.min(Int(Self.regionFadeFrames), frames)
+                let state = session ? sessions[lane.slot] : SessionSlot()
+                playhead -= nudgedBy
+                addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
+                playhead += nudgedBy
+                fadeEnd = length
+            }
             while from < frames {
                 var until = frames
                 var due = false
