@@ -342,6 +342,10 @@ struct SongMenu: View {
             }
             .disabled(documents.isExporting
                       || store.project.tracks.allSatisfy { $0.clips.allSatisfy(\.notes.isEmpty) && $0.regions.isEmpty })
+            Button("Export MIDI", systemImage: "pianokeys") {
+                if let url = documents.exportMIDI() { router.sheet = .share(url) }
+            }
+            .disabled(store.project.tracks.allSatisfy { $0.placements.isEmpty })
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {

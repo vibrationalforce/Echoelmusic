@@ -151,6 +151,24 @@ final class DocumentController {
         }
     }
 
+    /// Writes the open song's notes as a Standard MIDI File in a temporary folder and returns its
+    /// URL for the share sheet. Small and quick, so it runs here.
+    func exportMIDI() -> URL? {
+        let project = store.project
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: project.name)).appendingPathExtension("mid")
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try MIDIFile.data(for: project).write(to: url, options: .atomic)
+            lastError = nil
+            return url
+        } catch {
+            log.error("MIDI export failed — \(error.localizedDescription, privacy: .public)")
+            lastError = "Could not export the MIDI file."
+            return nil
+        }
+    }
+
     /// Copies an audio file into the song and makes it `track`'s sample, switching the track
     /// to the sampler — one undo step.
     func importAudio(_ source: URL, onto track: TrackID) async {
