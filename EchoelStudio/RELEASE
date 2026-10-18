@@ -1,0 +1,13 @@
+11.0.0 — first Echoel Studio TestFlight
+
+Bump this file on a commit whose "Echoel Studio" run is green to upload a build
+(.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
+
+What to try on the device (nothing here is device-verified yet):
+- Launch, make an instrument track, play notes on the screen keyboard and from a MIDI keyboard.
+- Automate a synth parameter: notes still end and release.
+- Record a take on an audio track; Stop fades it out, its reverb rings.
+- Export a song with a long reverb: the file ends after the tail, not 2 s after the last note.
+- Send the app to the background while stopped: audio stops; come back and play.
+- Take a call while playing: the song does not resume by itself.
+- Buy the instruments; open Echoel Synth/Drums/Sampler in AUM or GarageBand. The effects are free.
