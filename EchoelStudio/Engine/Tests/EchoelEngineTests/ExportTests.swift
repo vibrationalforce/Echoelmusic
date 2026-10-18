@@ -37,6 +37,58 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(OfflineRender.render(song).left, OfflineRender.render(song).left)
     }
 
+    func testTheStreamedRenderIsTheWholeRender() throws {
+        let song = try oneNoteSong(start: 960, length: 960)
+        var left: [Float] = [], right: [Float] = [], blocks = 0
+        let summary = OfflineRender.render(song, tailSeconds: 1, blockFrames: 1_000) { l, r, count in
+            XCTAssertLessThanOrEqual(count, 1_000)
+            left.append(contentsOf: UnsafeBufferPointer(start: l, count: count))
+            right.append(contentsOf: UnsafeBufferPointer(start: r, count: count))
+            blocks += 1
+        }
+        let whole = OfflineRender.render(song, tailSeconds: 1)
+        XCTAssertEqual(blocks, 96)
+        XCTAssertEqual(summary.frameCount, whole.frameCount)
+        XCTAssertEqual(summary.peak, whole.peak)
+        XCTAssertEqual(left, whole.left)
+        XCTAssertEqual(right, whole.right)
+    }
+
+    func testAThrowingBlockStopsTheRender() throws {
+        struct Stop: Error {}
+        var blocks = 0
+        XCTAssertThrowsError(try OfflineRender.render(try oneNoteSong(), blockFrames: 512) { _, _, _ in
+            blocks += 1
+            if blocks == 3 { throw Stop() }
+        })
+        XCTAssertEqual(blocks, 3)
+    }
+
+    func testTheWriterWritesWhatDataEncodes() throws {
+        let left: [Float] = [0, 0.5, -1, 0.25, 2]
+        let right: [Float] = [1, 0, 0, -0.25, .nan]
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("writer-\(UUID()).wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let writer = try WAVWriter(url: url, sampleRate: 44_100)
+        try left.withUnsafeBufferPointer { l in
+            try right.withUnsafeBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return XCTFail("no storage") }
+                try writer.append(left: lp, right: rp, count: 2)
+                try writer.append(left: lp + 2, right: rp + 2, count: 3)
+            }
+        }
+        try writer.finish()
+        XCTAssertEqual(writer.frameCount, 5)
+        XCTAssertEqual(try Data(contentsOf: url), WAVFile.data(left: left, right: right, sampleRate: 44_100))
+    }
+
+    func testTheHeaderNeverCountsPastWhatRIFFCanHold() {
+        let header = WAVFile.header(frames: .max, sampleRate: 48_000, bitDepth: .twentyFour)
+        func u32(_ at: Int) -> UInt32 { header[at..<at + 4].enumerated().reduce(0) { $0 | UInt32($1.element) << (8 * $1.offset) } }
+        XCTAssertEqual(Int(u32(40)), WAVFile.maximumFrames(.twentyFour) * 6)
+        XCTAssertLessThanOrEqual(Int(u32(4)), Int(UInt32.max))
+    }
+
     func testTheWAVHeaderDescribesTheData() {
         let data = WAVFile.data(left: [0, 0.5, -1], right: [1, 0, 0], sampleRate: 44_100)
         XCTAssertEqual(data.count, 44 + 3 * 2 * 3)

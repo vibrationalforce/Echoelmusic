@@ -120,13 +120,21 @@ final class DocumentController {
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
+        // Block by block into the file: a long song never sits in memory whole.
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let render = OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
-                                              effects: offline.chains)
-            let data = WAVFile.data(left: render.left, right: render.right, sampleRate: render.sampleRate)
-            return Result {
+            Result {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                try data.write(to: url, options: .atomic)
+                let writer = try WAVWriter(url: url, sampleRate: rate)
+                do {
+                    _ = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
+                                                 effects: offline.chains) { left, right, count in
+                        try writer.append(left: left, right: right, count: count)
+                    }
+                    try writer.finish()
+                } catch {
+                    try? FileManager.default.removeItem(at: url)
+                    throw error
+                }
             }
         }.value
         switch result {
@@ -136,7 +144,9 @@ final class DocumentController {
             return url
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .public)")
-            lastError = "Could not export the song."
+            lastError = error as? WAVWriter.WriteError == .tooLong
+                ? "The song is longer than a WAV file can hold (about six hours)."
+                : "Could not export the song."
             return nil
         }
     }
