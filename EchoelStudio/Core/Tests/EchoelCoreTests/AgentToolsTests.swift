@@ -151,7 +151,9 @@ final class AgentToolsTests: XCTestCase {
         ], on: store)
         let id = try XCTUnwrap(store.project.tracks.first?.id)
         let fade = try XCTUnwrap(store.project.automation(for: .volume(id))).points
-        XCTAssertEqual(fade.map(\.tick), [Tick(0), 6 * 3_840, 8 * 3_840], "the first point stays, 7–9 is replaced")
+        let ticks: [Tick] = fade.map(\.tick)
+        let expected: [Tick] = [0, 6 * 3_840, 8 * 3_840]
+        XCTAssertEqual(ticks, expected, "the first point stays, 7–9 is replaced")
         XCTAssertEqual(fade.last?.value, -144)
         let cutoff = try XCTUnwrap(store.project.automation(for: ParameterAddress(.track(id), SynthParameter.cutoff.key)))
         XCTAssertEqual(cutoff.value(at: 4 * 3_840), 300)
