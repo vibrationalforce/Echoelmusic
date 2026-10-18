@@ -23,8 +23,8 @@ public final class EngineCore: @unchecked Sendable {
 
     public let sampleRate: Double
     public let slotCapacity: Int
-    /// Return tracks the engine has buses for; ones beyond it stay silent.
-    public static let returnCapacity = 8
+    /// Return tracks the engine has buses for: as many as a song may hold.
+    public static let returnCapacity = Track.limit(for: .returnTrack)
 
     // Main → render.
     private let isPlayingFlag = Atomic<Bool>(false)
@@ -112,7 +112,7 @@ public final class EngineCore: @unchecked Sendable {
     /// The same for each send, per mix point and return bus.
     private let sendMemory: UnsafeMutablePointer<Float>
     /// Audio tracks whose gains are smoothed; more than this play with fixed steps.
-    static let smoothedAudioTracks = 64
+    static let smoothedAudioTracks = Track.limit(for: .audio)
     private var mixPoints: Int { slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity }
     private var sendingPoints: Int { slotCapacity + Self.smoothedAudioTracks }
 
@@ -150,7 +150,7 @@ public final class EngineCore: @unchecked Sendable {
     // Main thread only.
     private var published: [SnapshotBox] = []
 
-    public init(sampleRate: Double, slotCapacity: Int = 32) {
+    public init(sampleRate: Double, slotCapacity: Int = Track.limit(for: .instrument)) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
         self.slotCapacity = Swift.max(1, slotCapacity)

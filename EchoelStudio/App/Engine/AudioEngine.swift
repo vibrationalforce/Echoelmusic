@@ -37,7 +37,7 @@ final class AudioEngine {
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
-    @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
+    @ObservationIgnored private var slots = SlotAssigner(capacity: Track.limit(for: .instrument))
     @ObservationIgnored private var generation: UInt64 = 0
     @ObservationIgnored private var revisions = EventRevisions()
     @ObservationIgnored private var project: Project?

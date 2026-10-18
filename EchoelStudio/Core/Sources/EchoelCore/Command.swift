@@ -168,6 +168,10 @@ extension Command {
 
         case let .addTrack(id, name, kind, index):
             guard project.trackIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
+            guard project.canAddTrack(kind) else {
+                throw CommandError.invalidValue(parameter: "kind",
+                                                reason: "a song holds at most \(Track.limit(for: kind)) tracks of this kind")
+            }
             let track = Track(id: id, name: try Names.validated(name, parameter: "name"), kind: kind,
                               colorIndex: project.tracks.count % Palette.trackColorCount)
             let at = index ?? project.tracks.count

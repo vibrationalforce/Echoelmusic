@@ -129,9 +129,13 @@ struct AddTrackMenu: View {
     var body: some View {
         Menu {
             ForEach(TrackKind.allCases, id: \.self) { kind in
-                Button(kind.displayName) { add(kind) }
+                Button(title(kind)) { add(kind) }
+                    .disabled(!store.project.canAddTrack(kind))
             }
-            Button("Drums") { addDrums() }
+            Button(store.project.canAddTrack(.instrument) ? "Drums" : "Drums (\(Track.limit(for: .instrument)) instruments is the limit)") {
+                addDrums()
+            }
+            .disabled(!store.project.canAddTrack(.instrument))
         } label: {
             Label("Add Track", systemImage: "plus")
                 .font(Theme.Font.label)
@@ -154,6 +158,12 @@ struct AddTrackMenu: View {
             .createClip(track: track, id: clip, name: "Beat", length: MusicalTime.ticksPerBar(store.project.timeSignature)),
             .placeClip(track: track, id: PlacementID(), clip: clip, start: 0),
         ], title: "Add Drums")
+    }
+
+    /// The menu says why an entry is off: the song is full for that kind.
+    private func title(_ kind: TrackKind) -> String {
+        store.project.canAddTrack(kind) ? kind.displayName
+            : "\(kind.displayName) (\(Track.limit(for: kind)) is the limit)"
     }
 
     private func add(_ kind: TrackKind) {

@@ -75,6 +75,11 @@ public struct Project: Codable, Equatable, Sendable {
         masterInserts = try c.decodeIfPresent([Insert].self, forKey: .masterInserts) ?? []
     }
 
+    /// Whether one more track of `kind` fits (`Track.limit(for:)`).
+    public func canAddTrack(_ kind: TrackKind) -> Bool {
+        tracks.lazy.filter { $0.kind == kind }.count < Track.limit(for: kind)
+    }
+
     public func trackIndex(_ id: TrackID) -> Int? {
         tracks.firstIndex { $0.id == id }
     }
@@ -151,6 +156,17 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     public var input: Int?
     /// When an audio track hears its input; other kinds keep `auto` and ignore it.
     public var monitor: MonitorMode = .auto
+
+    /// How many tracks of a kind one song may hold: the engine has exactly this many instrument
+    /// voices, smoothed audio channels and return buses, and a track past them would play
+    /// silently. The command that would add one is refused instead.
+    public static func limit(for kind: TrackKind) -> Int {
+        switch kind {
+        case .instrument: 32
+        case .audio: 64
+        case .returnTrack: 8
+        }
+    }
 
     /// Interface channels a track may name; the device decides how many exist.
     public static let outputChannelLimit = 64

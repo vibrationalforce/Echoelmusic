@@ -50,6 +50,24 @@ final class CommandTests: XCTestCase {
         XCTAssertThrowsError(try Command.addTrack(id: TrackID(), name: "X", kind: .audio, index: 5).apply(to: &project))
     }
 
+    func testASongHoldsNoMoreTracksOfAKindThanTheEngineCanPlay() throws {
+        var project = Project()
+        for kind in TrackKind.allCases {
+            for n in 0..<Track.limit(for: kind) {
+                try Command.addTrack(id: TrackID(), name: "\(kind) \(n)", kind: kind, index: nil).apply(to: &project)
+            }
+            XCTAssertFalse(project.canAddTrack(kind))
+            let full = project
+            XCTAssertThrowsError(try Command.addTrack(id: TrackID(), name: "One more", kind: kind, index: nil).apply(to: &project))
+            XCTAssertEqual(project, full, "a refused track leaves the song as it was")
+        }
+        XCTAssertEqual(Track.limit(for: .instrument), 32)
+        XCTAssertEqual(Track.limit(for: .returnTrack), 8)
+        let instrument = try XCTUnwrap(project.tracks.first { $0.kind == .instrument })
+        try Command.removeTrack(instrument.id).apply(to: &project)
+        XCTAssertTrue(project.canAddTrack(.instrument), "removing one makes room again")
+    }
+
     func testMoveTrackReordersTheList() throws {
         var project = Project()
         let ids = [TrackID(), TrackID(), TrackID()]

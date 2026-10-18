@@ -59,6 +59,8 @@ public enum LegacySong {
             case "audio": kind = .audio
             default: continue
             }
+            // A song with more lanes than this app has voices keeps the first ones that fit.
+            guard project.canAddTrack(kind) else { continue }
             let track = TrackID()
             try Command.addTrack(id: track, name: safeName(lane.name ?? "", fallback: "Track \(number + 1)"),
                                  kind: kind, index: nil).apply(to: &project)
