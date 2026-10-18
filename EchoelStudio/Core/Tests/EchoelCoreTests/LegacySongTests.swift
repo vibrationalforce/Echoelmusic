@@ -76,6 +76,31 @@ final class LegacySongTests: XCTestCase {
                        "offset 480 old ticks, so the first note falls before it; region −12 and lane +2")
     }
 
+    func testExtremeNumbersInADamagedFileAreLeftOutInsteadOfTrapping() throws {
+        let big = Int64.max, small = Int64.min
+        let timeline = Data("""
+        {"lanes":[{"id":"\(keys)","kind":"midi","name":"Keys","transposeSemitones":\(Int.max)}],
+         "regions":[
+          {"clipID":"\(part)","laneID":"\(keys)","lengthTicks":\(big),"startTick":0},
+          {"clipID":"\(part)","laneID":"\(keys)","lengthTicks":1920,"startTick":\(big)},
+          {"clipID":"\(part)","laneID":"\(keys)","lengthTicks":1920,"startTick":0,"contentOffsetTicks":\(big)},
+          {"clipID":"\(part)","laneID":"\(keys)","lengthTicks":1920,"startTick":0,"transposeSemitones":\(Int.min)}
+         ]}
+        """.utf8)
+        let clips = Data("""
+        [{"id":"\(part)","kind":"midi","name":"Verse","melody":{"notes":[
+          {"pitch":60,"startStep":\(big)},
+          {"pitch":60,"startTick":\(small)},
+          {"pitch":\(Int.max),"startTick":0},
+          {"pitch":200,"startTick":0,"lengthTicks":\(big)},
+          {"pitch":64,"startTick":0,"lengthSteps":\(big)}]}}]
+        """.utf8)
+        let project = try LegacySong.project(timeline: timeline, clips: clips, tempo: 120, name: "N")
+        let keys = try XCTUnwrap(project.tracks.first)
+        XCTAssertEqual(keys.placements.count, 1, "only the region whose numbers fit a song is placed")
+        XCTAssertNoThrow(try project.validate())
+    }
+
     func testASongWithoutLanesIsNotImported() {
         XCTAssertThrowsError(try LegacySong.project(timeline: Data(#"{"lanes":[],"regions":[]}"#.utf8), clips: Data("[]".utf8),
                                                     tempo: 120, name: "N"))

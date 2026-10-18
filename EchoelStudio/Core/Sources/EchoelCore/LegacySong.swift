@@ -98,10 +98,10 @@ public enum LegacySong {
         var made: [Stretch: ClipID] = [:]
         for region in regions {
             guard let source = clips[region.clipID], source.kind == "midi" || source.kind == nil else { continue }
-            let length = region.lengthTicks * scale, start = region.startTick * scale
-            guard length > 0, length <= MusicalTime.maximumTick, start >= 0, start <= MusicalTime.maximumTick else { continue }
-            let stretch = Stretch(clip: region.clipID, offset: Swift.max(0, region.contentOffsetTicks ?? 0) * scale,
-                                  length: length, transpose: (lane.transposeSemitones ?? 0) + (region.transposeSemitones ?? 0))
+            guard let length = converted(region.lengthTicks), length > 0, let start = converted(region.startTick),
+                  let offset = converted(Swift.max(0, region.contentOffsetTicks ?? 0)) else { continue }
+            let stretch = Stretch(clip: region.clipID, offset: offset, length: length,
+                                  transpose: semitones(lane.transposeSemitones) + semitones(region.transposeSemitones))
             let id: ClipID
             if let existing = made[stretch] {
                 id = existing
@@ -122,21 +122,42 @@ public enum LegacySong {
     /// A note of the earlier app in this clip's time, or nil when it lies outside the stretch or
     /// leaves the keyboard.
     static func note(_ old: Note, from offset: Tick, length: Tick, transpose: Int) -> EchoelCore.Note? {
-        let oldStart = old.startTick ?? (old.startStep ?? 0) * 120
-        let oldLength = old.lengthTicks ?? (old.lengthSteps ?? 1) * 120
-        let start = oldStart * scale - offset
+        guard let oldStart = old.startTick ?? steps(old.startStep ?? 0),
+              let oldLength = old.lengthTicks ?? steps(old.lengthSteps ?? 1),
+              let scaledStart = converted(oldStart) else { return nil }
+        // Both lie within a song, so the difference cannot overflow.
+        let start = scaledStart - offset
         guard start >= 0, start < length else { return nil }
-        let pitch = old.pitch + transpose
-        guard EchoelCore.Note.pitchRange.contains(pitch) else { return nil }
+        let (pitch, overflow) = old.pitch.addingReportingOverflow(transpose)
+        guard !overflow, EchoelCore.Note.pitchRange.contains(pitch) else { return nil }
+        let noteLength = oldLength > 0 ? converted(oldLength) ?? MusicalTime.maximumTick : 1
         let velocity = Double(old.velocity ?? 0.8)
         let midi = velocity.isFinite ? Int((velocity * 127).rounded()) : 100
         return EchoelCore.Note(pitch: pitch,
                                velocity: Swift.min(Swift.max(midi, EchoelCore.Note.velocityRange.lowerBound),
                                                    EchoelCore.Note.velocityRange.upperBound),
-                               start: start, length: Swift.min(Swift.max(oldLength * scale, 1), MusicalTime.maximumTick))
+                               start: start, length: Swift.min(Swift.max(noteLength, 1), MusicalTime.maximumTick))
     }
 
     static var scale: Tick { MusicalTime.ticksPerQuarter / ticksPerQuarter }
+
+    /// Ticks of the earlier app in this format's ticks, or nil when they overflow or lie outside a
+    /// song. Every number in its files is read through here: a damaged file holds anything.
+    static func converted(_ ticks: Tick) -> Tick? {
+        let (value, overflow) = ticks.multipliedReportingOverflow(by: scale)
+        return overflow || value < 0 || value > MusicalTime.maximumTick ? nil : value
+    }
+
+    /// Sixteenth steps in the earlier app's ticks, or nil on overflow.
+    static func steps(_ steps: Tick) -> Tick? {
+        let (value, overflow) = steps.multipliedReportingOverflow(by: ticksPerQuarter / 4)
+        return overflow ? nil : value
+    }
+
+    /// A transpose of the earlier app, held to more than the keyboard spans so a sum cannot overflow.
+    static func semitones(_ value: Int?) -> Int {
+        Swift.min(Swift.max(value ?? 0, -256), 256)
+    }
 
     static func safeName(_ name: String, fallback: String) -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
