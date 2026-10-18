@@ -78,6 +78,8 @@ targets:
         # Only Apple's own encryption (HTTPS for the store); no export-compliance question per build.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         CODE_SIGN_STYLE: Automatic
+        # The App Group the earlier app saved its songs in; read once to import them.
+        CODE_SIGN_ENTITLEMENTS: Support/App/EchoelStudio.entitlements
 
   # Echoel Plugins — every Echoel Audio Unit in ONE extension under the one registered Audio Unit
   # id: Synth (aumu eSyn), Drums (eDrm), Sampler (eSmp), EQ/Compressor/Delay/Reverb (aufx

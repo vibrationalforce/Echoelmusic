@@ -47,6 +47,7 @@ final class DocumentController {
 
     /// Opens the most recent song, or starts a new one when there is none.
     func restore() {
+        importEarlierSongs()
         refresh()
         if let latest = songs.first, open(latest.url) { return }
         newSong()
@@ -334,5 +335,58 @@ final class DocumentController {
 
     func refresh() {
         songs = (try? library.list()) ?? []
+    }
+
+    // MARK: - Songs of the earlier app
+
+    /// Once per install: the songs the earlier Echoelmusic app left in its App Group container —
+    /// the one it had open and every one in its library — become songs here. Its files are only
+    /// read, never changed or removed, and a song deleted here does not come back.
+    private func importEarlierSongs() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.importedKey) else { return }
+        let found = Self.earlierBases().lazy.compactMap { Self.earlierSongs(in: $0, defaults: defaults) }.first { !$0.isEmpty }
+        var written = 0
+        for project in found ?? [] {
+            do {
+                try library.write(project, to: library.newURL(for: project.name))
+                written += 1
+            } catch {
+                log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        log.info("imported \(written, privacy: .public) song(s) from the earlier app")
+        defaults.set(true, forKey: Self.importedKey)
+    }
+
+    private static let importedKey = "studio.importedEarlierSongs"
+
+    /// Where the earlier app wrote: its App Group container, or Application Support when the
+    /// container was unavailable.
+    nonisolated static func earlierBases() -> [URL] {
+        let fm = FileManager.default
+        return [fm.containerURL(forSecurityApplicationGroupIdentifier: "group.com.echoelmusic"),
+                fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first].compactMap { $0 }
+    }
+
+    /// The open song (`Timeline/timeline.json` + `Clips/clips.json`) and the library
+    /// (`Echoel/projects.json.json`, the earlier store appended `.json` to a name ending in it),
+    /// or nil when this base holds neither.
+    nonisolated static func earlierSongs(in base: URL, defaults: UserDefaults) -> [Project]? {
+        let timeline = try? Data(contentsOf: base.appendingPathComponent("Timeline/timeline.json"))
+        let library = try? Data(contentsOf: base.appendingPathComponent("Echoel/projects.json.json"))
+        guard timeline != nil || library != nil else { return nil }
+        var songs: [Project] = []
+        if let timeline {
+            let clips = (try? Data(contentsOf: base.appendingPathComponent("Clips/clips.json"))) ?? Data("[]".utf8)
+            // The earlier app kept no song tempo; its locked tempo is the one the song was made at.
+            let tempo = defaults.bool(forKey: "studio.lockBPM") ? defaults.double(forKey: "studio.lockedBPM") : Tempo.defaultBPM
+            if let song = try? LegacySong.project(timeline: timeline, clips: clips, tempo: tempo > 0 ? tempo : Tempo.defaultBPM,
+                                                  name: "Earlier Song") {
+                songs.append(song)
+            }
+        }
+        if let library { songs += LegacySong.library(library) }
+        return songs
     }
 }

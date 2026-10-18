@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Read-only use: the earlier app kept its songs in this container, and the first launch
+	     after the update imports them (EchoelCore.LegacySong). The app's App ID already carries
+	     the capability; the extension's does not and must not get this file. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic</string>
+	</array>
+</dict>
+</plist>
