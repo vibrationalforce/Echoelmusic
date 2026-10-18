@@ -5438,3 +5438,15 @@ Review 2026-11-15.
 **Grenzen, ehrlich:** Keine Software bringt Weltfrieden; die Seite ist ein gemeinsamer Moment, kein Programm. Sie zählt niemanden — ein Zähler bräuchte einen Server und änderte den Satz „nobody is counted“ auf der Seite.
 
 **Review:** 2026-11-18.
+
+### 2026-10-18 — Lieber Förderung: Prototype Fund Jahrgang 03, der offene Kern als Förderobjekt
+
+**Founder:** „Lieber Förderung. Termin Open Repo morgen angleichen bitte!“ — nach dem Blick auf Taktile (Kredit-Entscheidungssoftware): Förderung geht vor Kredit und vor Investoren.
+
+**Entscheidung:** Bewerbung beim Prototype Fund, Jahrgang 03 (Frist 30.11.2026, 15:00). Förderobjekt ist der OFFENE KERN, nicht die iOS-Oberfläche: `EchoelStudio/Core` + `Engine` + `DSP` als plattformunabhängige Pakete mit dokumentiertem Projektformat, plus die Körper→Licht/Raum-Schnittstelle (OSC · ADM-OSC · Art-Net · sACN) als abhängigkeitsfreie Bibliothek. Linie Innovation zuerst; Resilienz, wenn die Sprechstunde am 19.10. es sagt. Fakten, Satz in 20 Sekunden, Fragenliste, Zeitplan und Quellen: `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md`. Der Kalender-Termin vom 14.10. ist auf diesen Stand gebracht (Studio statt Alt-App, One Clock, sieben Fragen statt fünf).
+
+**Warum so:** Fördergeld lässt „kein Abo, kein Tracking, kein Konto“ unangetastet; ein Kredit oder Investor drückt auf Monetarisierung. Die harten Bedingungen sind erfüllt (MIT, öffentliches Repo, Einzelperson in Deutschland, Software). Der erwartbare Einwand ist die Verteilung über Apples App Store — deshalb das Förderobjekt der Kern, nicht die Hülle.
+
+**Grenzen, ehrlich:** Förderzeitraum (ab Juni 2027 vs. „Dez 2026–März 2027“ auf der Seite) ist UNSICHER und wird in der Sprechstunde geklärt. Der Link zur Sprechstunde war aus der Sitzung nicht abrufbar. Ein Linux-Build des Kerns ist ein Nachweis, der noch nicht existiert.
+
+**Review:** 2026-11-16 (Entwurf fertig).
