@@ -170,7 +170,8 @@ final class AgentModel {
         let tools: [any Tool] = [
             SetTempoTool(executor: executor), AddTrackTool(executor: executor), RemoveTrackTool(executor: executor),
             RenameTrackTool(executor: executor), SetSoundTool(executor: executor), DrumPatternTool(executor: executor),
-            WriteNotesTool(executor: executor), MixTool(executor: executor),
+            WriteNotesTool(executor: executor), MixTool(executor: executor), EffectTool(executor: executor),
+            RepeatClipTool(executor: executor),
         ]
         session = LanguageModelSession(tools: tools, instructions: Self.instructions)
     }
@@ -191,6 +192,7 @@ final class AgentModel {
     (middle C), F#3 or Bb2; a chord joins notes with +, for example C4+E4+G4.
     Sounds for an instrument track: \(InstrumentPreset.all.map(\.name).joined(separator: ", ")).
     Drums: \(DrumLane.standardKit.map(\.name).joined(separator: ", ")).
+    Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).
     Answer in one or two short sentences, in the language the musician writes in.
     """
 }
@@ -369,6 +371,53 @@ struct MixTool: Tool {
         await executor.run(.mix(track: arguments.track, volumeDB: arguments.volumeDB, pan: arguments.pan,
                                 mute: arguments.mute, solo: arguments.solo),
                            "mixed \(arguments.track)")
+    }
+}
+@available(iOS 26.0, *)
+struct EffectTool: Tool {
+    let executor: AgentExecutor
+    let name = "effect"
+    let description = "Adds one of the effects to the end of a track's chain, or removes it."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The track's name or number.")
+        var track: String
+        @Guide(description: "One of the effect names.")
+        var effect: String
+        @Guide(description: "True to remove the effect instead of adding it.")
+        var remove: Bool?
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        if arguments.remove == true {
+            return await executor.run(.removeEffect(track: arguments.track, effect: arguments.effect),
+                                      "removed \(arguments.effect) from \(arguments.track)")
+        }
+        return await executor.run(.addEffect(track: arguments.track, effect: arguments.effect),
+                                  "\(arguments.effect) on \(arguments.track)")
+    }
+}
+
+@available(iOS 26.0, *)
+struct RepeatClipTool: Tool {
+    let executor: AgentExecutor
+    let name = "repeat_clip"
+    let description = "Plays the clip that starts at a bar again and again, back to back, to make a part longer."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "The track's name or number.")
+        var track: String
+        @Guide(description: "The bar the clip starts at. Leave out for bar 1.")
+        var bar: Int?
+        @Guide(description: "How many more times it plays, 1 to 64.")
+        var times: Int
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        await executor.run(.repeatClip(track: arguments.track, bar: arguments.bar ?? 1, times: arguments.times),
+                           "repeated \(arguments.track) \(arguments.times) times")
     }
 }
 #endif

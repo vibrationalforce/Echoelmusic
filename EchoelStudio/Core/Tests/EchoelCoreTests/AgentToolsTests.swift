@@ -91,6 +91,27 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertTrue(message(.mix(track: "Bass", volumeDB: nil, pan: 3, mute: nil, solo: nil)).contains("Pan"))
     }
 
+    func testEffectsGoOnTheChainAndAClipRepeatsBackToBack() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Drums", kind: "drums", sound: nil),
+            .addEffect(track: "Drums", effect: "comp"),
+            .addEffect(track: "Drums", effect: "Reverb"),
+            .repeatClip(track: "Drums", bar: 1, times: 3),
+        ], on: store)
+        let drums = try XCTUnwrap(store.project.tracks.first)
+        XCTAssertEqual(drums.inserts.map { StandardEffect(component: $0.plugin) }, [.compressor, .reverb])
+        XCTAssertEqual(drums.placements.map(\.start).sorted(), [0, 3_840, 7_680, 11_520])
+        XCTAssertEqual(Set(drums.placements.map(\.clip)).count, 1, "the copies play the same clip")
+        XCTAssertTrue(AgentTools.describe(store.project).contains("effects Compressor → Reverb"))
+
+        try run([.removeEffect(track: "Drums", effect: "verb")], on: store)
+        XCTAssertEqual(store.project.tracks[0].inserts.count, 1)
+        XCTAssertThrowsError(try AgentTools.commands(for: .removeEffect(track: "Drums", effect: "delay"), in: store.project))
+        XCTAssertThrowsError(try AgentTools.commands(for: .addEffect(track: "Drums", effect: "flanger"), in: store.project))
+        XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Drums", bar: 9, times: 1), in: store.project))
+    }
+
     func testNoteNamesAndDrumNames() {
         XCTAssertEqual(AgentTools.pitch("C4"), 60)
         XCTAssertEqual(AgentTools.pitch("a4"), 69)

@@ -19,6 +19,12 @@ public enum AgentAction: Equatable, Sendable {
     case writeNotes(track: String, notes: String, bar: Int, bars: Int, replace: Bool)
     /// `track` may be "master"; nil leaves a value as it is.
     case mix(track: String, volumeDB: Double?, pan: Double?, mute: Bool?, solo: Bool?)
+    /// One of the standard effects at the end of the track's insert chain.
+    case addEffect(track: String, effect: String)
+    /// The last insert of that effect on the track.
+    case removeEffect(track: String, effect: String)
+    /// Places the clip that starts at `bar` again `times` times, back to back after it.
+    case repeatClip(track: String, bar: Int, times: Int)
 }
 
 public enum AgentError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -159,7 +165,52 @@ public enum AgentTools {
             if let id, let solo { commands.append(.setSolo(id, solo)) }
             guard !commands.isEmpty else { throw AgentError.invalid("Nothing to change: give a volume, pan, mute or solo.") }
             return commands
+
+        case let .addEffect(reference, name):
+            let target = try track(reference, in: project)
+            let effect = try standardEffect(name)
+            guard target.inserts.count < Insert.maximumPerTrack else {
+                throw AgentError.wrongTrack(target.name, reason: "already has \(Insert.maximumPerTrack) effects")
+            }
+            return [.addInsert(track: target.id, id: InsertID(), plugin: effect.component, index: nil)]
+
+        case let .removeEffect(reference, name):
+            let target = try track(reference, in: project)
+            let effect = try standardEffect(name)
+            guard let insert = target.inserts.last(where: { StandardEffect(component: $0.plugin) == effect }) else {
+                throw AgentError.wrongTrack(target.name, reason: "has no \(effect.title)")
+            }
+            return [.removeInsert(track: target.id, insert.id)]
+
+        case let .repeatClip(reference, bar, times):
+            let target = try track(reference, in: project)
+            guard (1...maximumBars).contains(times) else { throw AgentError.invalid("Repeat a clip 1 to \(maximumBars) times.") }
+            let start = Tick(Swift.max(bar, 1) - 1) * MusicalTime.ticksPerBar(project.timeSignature)
+            guard let placement = target.placements.first(where: { $0.start == start }),
+                  let clip = target.clips.first(where: { $0.id == placement.clip }) else {
+                throw AgentError.wrongTrack(target.name, reason: "has no clip starting at bar \(bar)")
+            }
+            let length = Swift.max(clip.length, 1)
+            guard start + Tick(times + 1) * length <= MusicalTime.maximumTick else {
+                throw AgentError.invalid("That is past the end of the song.")
+            }
+            return (1...times).map { copy in
+                .placeClip(track: target.id, id: PlacementID(), clip: clip.id, start: start + Tick(copy) * length)
+            }
         }
+    }
+
+    /// A standard effect by its title or a common word for it.
+    public static func standardEffect(_ name: String) throws -> StandardEffect {
+        let key = name.lowercased().filter(\.isLetter)
+        let aliases: [String: StandardEffect] = ["eq": .equalizer, "equalizer": .equalizer, "equaliser": .equalizer,
+                                                 "compressor": .compressor, "comp": .compressor,
+                                                 "delay": .delay, "echo": .delay,
+                                                 "reverb": .reverb, "verb": .reverb, "hall": .reverb, "room": .reverb]
+        guard let effect = aliases[key] else {
+            throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
+        }
+        return effect
     }
 
     /// One line per fact, for the model's context and for the chat: tempo, metre, every track
@@ -189,6 +240,8 @@ public enum AgentTools {
             }
             if !bars.isEmpty { parts.append("clips at " + bars.joined(separator: ", ")) }
             if !track.regions.isEmpty { parts.append("\(track.regions.count) audio regions") }
+            let effects = track.inserts.map { StandardEffect(component: $0.plugin)?.title ?? $0.plugin.name }
+            if !effects.isEmpty { parts.append("effects " + effects.joined(separator: " → ")) }
             if track.mixer.isMuted { parts.append("muted") }
             if track.mixer.isSoloed { parts.append("soloed") }
             if track.mixer.volumeDB != 0 { parts.append("\(format(track.mixer.volumeDB)) dB") }
