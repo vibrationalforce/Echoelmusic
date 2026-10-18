@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelEngine
 import SwiftUI
 
 /// One channel strip per track and the master: level, pan, mute and solo, all through the
@@ -55,7 +56,10 @@ struct ChannelStrip: View {
                 }
             }
             PanControl(address: pan)
-            Fader(address: volume)
+            HStack(alignment: .bottom, spacing: Theme.Space.xs) {
+                Fader(address: volume)
+                PeakMeter(track: track?.id, height: 180)
+            }
             Text(ParameterFormat.text(store.project.value(of: volume) ?? 0, unit: .decibel))
                 .font(Theme.Font.caption.monospacedDigit())
                 .foregroundStyle(Theme.Color.textSecondary)
@@ -79,6 +83,58 @@ struct ChannelStrip: View {
         .padding(.vertical, Theme.Space.s)
         .background(Theme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+    }
+}
+
+/// A strip's level after its fader, left and right, from −60 dB to +6 dB with 0 dB marked. Red
+/// at the top once the signal passed full scale. Polled in its own leaf, never in a strip body.
+struct PeakMeter: View {
+    @Environment(AudioEngine.self) private var engine
+    /// Nil for the master.
+    let track: TrackID?
+    let height: CGFloat
+
+    static let floor: Float = -60
+    static let ceiling: Float = 6
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1.0 / 30)) { _ in
+            let level = engine.meterLevel(track)
+            HStack(spacing: 2) {
+                bar(level.left)
+                bar(level.right)
+            }
+            .frame(height: height)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(Theme.Color.textSecondary)
+                    .frame(height: 1)
+                    .offset(y: -height * CGFloat(Self.position(1)))
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Level")
+            .accessibilityValue(Self.spoken(Swift.max(level.left, level.right)))
+        }
+    }
+
+    private func bar(_ peak: Float) -> some View {
+        ZStack(alignment: .bottom) {
+            Rectangle().fill(Theme.Color.surfaceRaised)
+            Rectangle().fill(peak > 1 ? Theme.Color.record : Theme.Color.play)
+                .frame(height: height * CGFloat(Self.position(peak)))
+        }
+        .frame(width: 4)
+    }
+
+    /// 0 at the floor, 1 at the ceiling, linear in decibels.
+    static func position(_ peak: Float) -> Float {
+        guard peak > 0, peak.isFinite else { return 0 }
+        let db = 20 * Foundation.log10(peak)
+        return Swift.min(Swift.max((db - floor) / (ceiling - floor), 0), 1)
+    }
+
+    static func spoken(_ peak: Float) -> String {
+        guard peak > 0, peak.isFinite, 20 * Foundation.log10(peak) > floor else { return "Silent" }
+        return String(format: "%.0f decibels", 20 * Foundation.log10(peak))
     }
 }
 

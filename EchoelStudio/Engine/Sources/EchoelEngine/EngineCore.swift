@@ -115,6 +115,25 @@ public final class EngineCore: @unchecked Sendable {
     static let smoothedAudioTracks = 64
     private var mixPoints: Int { slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity }
     private var sendingPoints: Int { slotCapacity + Self.smoothedAudioTracks }
+
+    /// Peak meters: one per mix point (instrument slot, audio track, return), then the master.
+    public let meters: MeterBank
+    /// The master's reading in `meters`.
+    public var masterMeter: Int { mixPoints }
+    /// What a reading falls by over the chunk being rendered.
+    private var meterFall: Float = 1
+
+    /// Main thread: which reading in `meters` shows each track of `snapshot`. An audio track
+    /// past the ones the mix smooths has none.
+    public func meterIndices(for snapshot: EngineSnapshot) -> [TrackID: Int] {
+        var indices: [TrackID: Int] = [:]
+        for lane in snapshot.lanes { indices[lane.track] = lane.slot }
+        for (index, lane) in snapshot.audioLanes.enumerated() where index < Self.smoothedAudioTracks {
+            indices[lane.track] = slotCapacity + index
+        }
+        for lane in snapshot.returns { indices[lane.track] = slotCapacity + Self.smoothedAudioTracks + lane.bus }
+        return indices
+    }
     /// The next sample at which automated synth parameters are set again.
     private var automationNext: Int64 = 0
     /// The tick unit automation was last sent for; false until the first send after a seek or
@@ -135,6 +154,7 @@ public final class EngineCore: @unchecked Sendable {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
         self.slotCapacity = Swift.max(1, slotCapacity)
+        meters = MeterBank(count: self.slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity + 1)
         synths = .allocate(capacity: self.slotCapacity)
         for i in 0..<self.slotCapacity {
             // One by one: copies of a single synth would share voice storage and copy it on
@@ -356,6 +376,7 @@ public final class EngineCore: @unchecked Sendable {
             outputs[1] = right + done
             outputCount = 2
             renderChunk(frames: frames)
+            meterMaster(frames: frames)
             done += frames
         }
         publishAnchor(frames: frameCount)
@@ -378,6 +399,7 @@ public final class EngineCore: @unchecked Sendable {
             if used == 1 { outputs[1] = monoRight }
             outputCount = Swift.max(used, 2)
             renderChunk(frames: frames)
+            meterMaster(frames: frames)
             if used == 1 {
                 let mono = outputs[0]
                 for i in 0..<frames { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
@@ -387,6 +409,12 @@ public final class EngineCore: @unchecked Sendable {
         publishAnchor(frames: frameCount)
     }
 
+    /// The master pair's peaks, after everything was mixed into it.
+    private func meterMaster(frames: Int) {
+        meters.record(masterMeter, left: MeterBank.peak(outputs[0], frames: frames),
+                      right: MeterBank.peak(outputs[1], frames: frames), fall: meterFall)
+    }
+
     /// The pair a lane adds into: its own, or the master mix.
     private func pair(_ output: Int) -> (UnsafeMutablePointer<Float>, UnsafeMutablePointer<Float>) {
         guard output >= 2, output + 1 < outputCount else { return (outputs[0], outputs[1]) }
@@ -394,6 +422,7 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     private func renderChunk(frames: Int) {
+        meterFall = MeterBank.fall(frames: frames, sampleRate: sampleRate)
         for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
         let left = outputs[0], right = outputs[1]
 
@@ -907,7 +936,7 @@ public final class EngineCore: @unchecked Sendable {
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
-                memory: memory(point: lane.slot))
+                memory: memory(point: lane.slot), meter: lane.slot)
             send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
@@ -939,9 +968,10 @@ public final class EngineCore: @unchecked Sendable {
     private func mix<Curve: GainCurve>(_ sourceLeft: UnsafeMutablePointer<Float>, _ sourceRight: UnsafeMutablePointer<Float>,
                                        into left: UnsafeMutablePointer<Float>, _ right: UnsafeMutablePointer<Float>,
                                        frames: Int, curve: Curve?, fixed: (Float, Float),
-                                       memory: UnsafeMutablePointer<Float>?) {
+                                       memory: UnsafeMutablePointer<Float>?, meter: Int = -1) {
         var previous: (Float, Float)?
         if let memory, memory[0].isFinite, memory[1].isFinite { previous = (memory[0], memory[1]) }
+        let startGains = previous
         var last = fixed
         if let curve, mixFrom != mixTo {
             var start = 0
@@ -965,6 +995,13 @@ public final class EngineCore: @unchecked Sendable {
         if let memory {
             memory[0] = last.0
             memory[1] = last.1
+        }
+        if meter >= 0 {
+            // After the fader: the source's peak at the louder of the gains the chunk ran between.
+            let gainLeft = Swift.max(Swift.abs(last.0), Swift.abs(startGains?.0 ?? last.0))
+            let gainRight = Swift.max(Swift.abs(last.1), Swift.abs(startGains?.1 ?? last.1))
+            meters.record(meter, left: MeterBank.peak(sourceLeft, frames: frames) * gainLeft,
+                          right: MeterBank.peak(sourceRight, frames: frames) * gainRight, fall: meterFall)
         }
     }
 
@@ -1041,7 +1078,7 @@ public final class EngineCore: @unchecked Sendable {
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
             let point = slotCapacity + Self.smoothedAudioTracks + lane.bus
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
-                memory: memory(point: point))
+                memory: memory(point: point), meter: point)
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }
@@ -1057,13 +1094,18 @@ public final class EngineCore: @unchecked Sendable {
         let blockEnd = playhead + Int64(frames)
         var fetched: UInt32 = 0
         for (index, lane) in snapshot.audioLanes.enumerated() {
-            if !playing, lane.monitor < 0 { continue }
             let point = index < Self.smoothedAudioTracks ? slotCapacity + index : -1
+            // A track that renders nothing this chunk still lets its reading fall.
+            if !playing, lane.monitor < 0 {
+                meters.record(point, left: 0, right: 0, fall: meterFall)
+                continue
+            }
             // A track just muted still renders this chunk, to ramp down instead of clicking off.
             let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
                 && gainMemory[point * 2].isFinite
             let session = lane.slot >= 0 && lane.slot < slotCapacity
             guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil || fading else {
+                meters.record(point, left: 0, right: 0, fall: meterFall)
                 // Silent, but a launch still happens on its bar.
                 if playing, session, !sessions[lane.slot].isIdle,
                    snapshot.time.sample(at: sessions[lane.slot].pendingTick) < blockEnd { fireAudio(lane) }
@@ -1126,7 +1168,7 @@ public final class EngineCore: @unchecked Sendable {
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
-                fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point))
+                fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point)
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
         }
     }

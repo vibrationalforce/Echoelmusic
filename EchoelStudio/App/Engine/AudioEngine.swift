@@ -34,6 +34,8 @@ final class AudioEngine {
     @ObservationIgnored private var take: (url: URL, writer: TakeWriter, recorder: InputRecorder,
                                            sampleRate: Double, latency: Int64)?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
+    /// Which reading of the engine's meters shows each track, as of the last snapshot.
+    @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
     @ObservationIgnored private var slots = SlotAssigner(capacity: 32)
     @ObservationIgnored private var generation: UInt64 = 0
@@ -546,11 +548,21 @@ final class AudioEngine {
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         let plan = PlaybackPlan(compiling: project)
-        core.publish(EngineSnapshot(plan: plan, project: project,
-                                    slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
-                                    samples: samples, units: plugins.units, effects: plugins.chains,
-                                    outputChannels: outputChannels, revisions: revisions.update(for: plan),
-                                    monitoring: monitoring(in: project)))
+        let snapshot = EngineSnapshot(plan: plan, project: project,
+                                      slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
+                                      samples: samples, units: plugins.units, effects: plugins.chains,
+                                      outputChannels: outputChannels, revisions: revisions.update(for: plan),
+                                      monitoring: monitoring(in: project))
+        meterIndices = core.meterIndices(for: snapshot)
+        core.publish(snapshot)
+    }
+
+    /// A track's peak meter, or the master's for nil. For a small leaf view that polls it.
+    func meterLevel(_ track: TrackID?) -> MeterBank.Level {
+        guard let core else { return .silent }
+        guard let track else { return core.meters.level(core.masterMeter) }
+        guard let index = meterIndices[track] else { return .silent }
+        return core.meters.level(index)
     }
 
     /// The track that plays live: the chosen one while it exists, else the first instrument track.
