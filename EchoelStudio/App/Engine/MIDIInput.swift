@@ -16,8 +16,34 @@ final class LiveRouter: Sendable {
 
     private let target = Mutex(Target())
 
+    /// A note as it was played while a MIDI take records: the output sample the engine had
+    /// reached, and the message.
+    struct Captured: Sendable {
+        let sample: Int64
+        let status: UInt8
+        let data1: UInt8
+        let data2: UInt8
+    }
+
+    /// Nil while nothing records. The MIDI thread appends; never the render thread.
+    private let capture = Mutex<[Captured]?>(nil)
+
     func set(core: EngineCore?, slot: Int?) {
         target.withLock { $0 = Target(core: core, slot: slot) }
+    }
+
+    /// Main thread: notes played from now on are kept for the take.
+    func startCapture() {
+        capture.withLock { $0 = [] }
+    }
+
+    /// Main thread: the notes played since `startCapture`, and capturing stops.
+    func stopCapture() -> [Captured] {
+        capture.withLock { (events: inout [Captured]?) -> [Captured] in
+            let taken = events ?? []
+            events = nil
+            return taken
+        }
     }
 
     /// MIDI thread.
@@ -25,6 +51,13 @@ final class LiveRouter: Sendable {
         let (core, slot) = target.withLock { ($0.core, $0.slot) }
         guard let core, let slot else { return }
         core.playLive(slot: slot, status: status, data1, data2)
+        let kind = status & 0xF0
+        guard kind == 0x90 || kind == 0x80 else { return }
+        let sample = core.positionSample
+        capture.withLock { events in
+            guard events != nil else { return }
+            events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+        }
     }
 }
 

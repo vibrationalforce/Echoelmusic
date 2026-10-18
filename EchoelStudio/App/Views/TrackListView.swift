@@ -55,7 +55,7 @@ struct TrackRow: View {
                 try? store.perform(.removeTrack(track.id))
             }
 
-            if track.kind == .audio { ArmButton(track: track) }
+            if track.kind == .audio || track.kind == .instrument { ArmButton(track: track) }
             if track.kind == .instrument {
                 let isLive = engine.liveTrackID(in: store.project) == track.id
                 Button {
@@ -104,7 +104,8 @@ struct TrackRow: View {
     }
 }
 
-/// Arms an audio track for recording; one track at a time. Arming opens the input.
+/// Arms a track for recording; one track at a time. Arming an audio track opens the input; an
+/// instrument track records MIDI and plays it live.
 struct ArmButton: View {
     @Environment(RecordController.self) private var recording
     let track: Track

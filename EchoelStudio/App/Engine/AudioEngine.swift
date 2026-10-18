@@ -528,6 +528,15 @@ final class AudioEngine {
         core?.setClickEnabled(enabled)
     }
 
+    /// The output rate the engine runs at, once it does.
+    var sampleRate: Double? { core?.sampleRate }
+
+    /// Output latency in samples: how long after the engine renders a sample it is heard.
+    var outputLatencySamples: Int64 {
+        guard let core else { return 0 }
+        return Int64((AVAudioSession.sharedInstance().outputLatency * core.sampleRate).rounded())
+    }
+
     /// The playhead in samples. For a small leaf view that polls it, never a view body.
     var positionSample: Int64 { core?.positionSample ?? 0 }
 

@@ -185,7 +185,6 @@ struct TransportBar: View {
 
 /// Starts a take on the armed track, or ends the one running.
 struct RecordButton: View {
-    @Environment(AudioEngine.self) private var engine
     @Environment(RecordController.self) private var recording
 
     var body: some View {
@@ -200,8 +199,8 @@ struct RecordButton: View {
         }
         .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, activeColor: Theme.Color.record))
         .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
-        .accessibilityHint(recording.armedTrack == nil ? "Arm an audio track first." : "")
-        .disabled(recording.armedTrack == nil || !engine.isInputOpen)
+        .accessibilityHint(recording.armedTrack == nil ? "Arm a track first." : "")
+        .disabled(!recording.canRecord)
     }
 }
 

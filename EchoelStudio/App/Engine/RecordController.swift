@@ -15,6 +15,8 @@ final class RecordController {
     @ObservationIgnored private let documents: DocumentController
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private var target: (track: TrackID, file: DocumentController.TakeTarget)?
+    /// The instrument track a MIDI take records onto, while one does.
+    @ObservationIgnored private var midiTrack: TrackID?
 
     init(engine: AudioEngine, documents: DocumentController, store: ProjectStore) {
         self.engine = engine
@@ -22,18 +24,35 @@ final class RecordController {
         self.store = store
     }
 
-    /// Arms `track`, or disarms it when it is the armed one.
+    /// Arms `track`, or disarms it when it is the armed one. An instrument track records what is
+    /// played on MIDI and plays it live; it needs no audio input.
     func toggleArm(_ track: TrackID) async {
         if isRecording { await stopRecording() }
+        let wasAudio = armedTrack.flatMap { store.project.track($0) }?.kind == .audio
         if armedTrack == track {
             armedTrack = nil
             engine.setArmedTrack(nil)
-            if !monitorsAlways { engine.closeInput() }
+            if wasAudio, !monitorsAlways { engine.closeInput() }
+            return
+        }
+        if store.project.track(track)?.kind == .instrument {
+            if wasAudio {
+                engine.setArmedTrack(nil)
+                if !monitorsAlways { engine.closeInput() }
+            }
+            armedTrack = track
+            engine.setLiveTrack(track)
             return
         }
         guard await engine.openInput() else { return }
         armedTrack = track
         engine.setArmedTrack(track)
+    }
+
+    /// Whether Record can start: an armed instrument track, or an armed audio track with the input open.
+    var canRecord: Bool {
+        guard let armedTrack, let track = store.project.track(armedTrack) else { return false }
+        return track.kind == .instrument || engine.isInputOpen
     }
 
     /// Some audio track hears its input whether armed or not, so the input stays open.
@@ -54,7 +73,15 @@ final class RecordController {
     }
 
     func record() {
-        guard !isRecording, let track = armedTrack, let file = documents.newTakeTarget() else { return }
+        guard !isRecording, let track = armedTrack else { return }
+        if store.project.track(track)?.kind == .instrument {
+            engine.live.startCapture()
+            midiTrack = track
+            isRecording = true
+            if !engine.isPlaying { engine.play() }
+            return
+        }
+        guard let file = documents.newTakeTarget() else { return }
         do {
             try engine.beginTake(url: file.url, channel: store.project.track(track)?.input ?? 0)
         } catch {
@@ -68,12 +95,43 @@ final class RecordController {
     func stopRecording() async {
         guard isRecording else { return }
         isRecording = false
+        if let track = midiTrack {
+            midiTrack = nil
+            commitMIDI(engine.live.stopCapture(), onto: track)
+            return
+        }
         let pending = target
         target = nil
         // The map at the stop, before anything else can change it: the one the take played against.
         let tempoMap = engine.playedTempoMap(of: store.project)
         guard let take = await engine.endTake(), let pending else { return }
         await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: tempoMap)
+    }
+
+    /// The notes of a MIDI take as one new clip on `track`, placed on the bar it began in —
+    /// one undo step. Each note sits where it was heard: the output latency is taken off.
+    private func commitMIDI(_ events: [LiveRouter.Captured], onto track: TrackID) {
+        guard let rate = engine.sampleRate, store.project.track(track) != nil else { return }
+        let time = TimeConversion(tempoMap: engine.playedTempoMap(of: store.project), sampleRate: rate)
+        let latency = engine.outputLatencySamples
+        func tick(_ sample: Int64) -> Tick { time.tick(atSample: Swift.max(0, sample - latency)) }
+        var take = MIDITake()
+        for event in events {
+            let on = event.status & 0xF0 == 0x90 && event.data2 > 0
+            if on {
+                take.noteOn(pitch: Int(event.data1), velocity: Int(event.data2), at: tick(event.sample))
+            } else {
+                take.noteOff(pitch: Int(event.data1), at: tick(event.sample))
+            }
+        }
+        let bar = MusicalTime.ticksPerBar(store.project.timeSignature)
+        guard let clip = take.clip(endingAt: tick(engine.positionSample), bar: bar) else { return }
+        let id = ClipID()
+        let number = (store.project.track(track)?.clips.filter { $0.name.hasPrefix("Take ") }.count ?? 0) + 1
+        try? store.perform([.createClip(track: track, id: id, name: "Take \(number)", length: clip.length),
+                            .addNotes(id, clip.notes),
+                            .placeClip(track: track, id: PlacementID(), clip: id, start: clip.start)],
+                           title: "Record MIDI")
     }
 
     /// The transport's Stop: ends a take first, so the take never outlives the song playing.
