@@ -43,6 +43,22 @@ final class PolySynthTests: XCTestCase {
         XCTAssertLessThan(later, before * 0.01, "and arrives within a few time constants")
     }
 
+    func testANoteEndsWhileItsPatchIsAutomated() {
+        var patch = SynthPatch(waveform: .saw, cutoff: 2_000,
+                               ampEnvelope: .init(attack: 0.003, decay: 0.1, sustain: 0.7, release: 0.1))
+        var synth = PolySynth(patch: patch, sampleRate: rate)
+        synth.noteOn(pitch: 60, velocity: 100)
+        var buffer = [Float](repeating: 0, count: 32)
+        // A cutoff sweep, applied every 32 frames as the engine does.
+        for step in 0..<Int(0.3 * rate / 32) {
+            if step == Int(0.15 * rate / 32) { synth.noteOff(pitch: 60) }
+            patch.cutoff = 2_000 + Float(step % 100) * 20
+            synth.setPatch(patch)
+            buffer.withUnsafeMutableBufferPointer { synth.render(into: $0) }
+        }
+        XCTAssertEqual(synth.activeVoiceCount, 0, "the release finished although the patch moved every block")
+    }
+
     func testAChordUsesOneVoicePerNoteAndTheSamePitchRetriggersItsOwn() {
         var synth = PolySynth(sampleRate: rate)
         for pitch: UInt8 in [60, 64, 67] { synth.noteOn(pitch: pitch, velocity: 90) }

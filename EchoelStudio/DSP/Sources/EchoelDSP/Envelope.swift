@@ -29,6 +29,10 @@ public struct Envelope: Sendable {
     // Per-sample coefficients for the current segment.
     private var coefficient: Float = 0
     private var target: Float = 0
+    /// The level the current attack or release began at. A settings change re-times the segment
+    /// from here, so an unchanged setting keeps the same curve and a changed one takes effect
+    /// without restarting the segment.
+    private var segmentStart: Float = 0
 
     /// The overshoot target of the attack, so the exponential curve reaches 1 in time.
     private static let attackTarget: Float = 1.3
@@ -42,20 +46,29 @@ public struct Envelope: Sendable {
 
     public var isActive: Bool { stage != .idle }
 
+    /// New times and sustain for the running note. Called whenever a patch is applied — every
+    /// 32 frames while a parameter is automated — so it must not restart the segment: re-entering
+    /// it from the current level would stretch the remaining distance over the whole time again,
+    /// and the envelope would never reach its goal.
     public mutating func update(_ settings: Settings) {
+        guard settings != self.settings else { return }
         self.settings = settings
-        switch stage {
-        case .attack: enter(.attack)
-        case .decay: enter(.decay)
-        case .sustain: level = Self.sustainLevel(settings)
-        case .release: enter(.release)
-        case .idle: break
-        }
+        retime()
     }
 
     public mutating func setSampleRate(_ rate: Float) {
-        sampleRate = rate > 0 && rate.isFinite ? rate : 48_000
-        update(settings)
+        let rate = rate > 0 && rate.isFinite ? rate : 48_000
+        guard rate != sampleRate else { return }
+        sampleRate = rate
+        retime()
+    }
+
+    private mutating func retime() {
+        switch stage {
+        case .attack, .decay, .release: setCurve(for: stage)
+        case .sustain: level = Self.sustainLevel(settings)
+        case .idle: break
+        }
     }
 
     public mutating func gateOn() { enter(.attack) }
@@ -103,16 +116,22 @@ public struct Envelope: Sendable {
 
     private mutating func enter(_ next: Stage) {
         stage = next
-        switch next {
+        segmentStart = level
+        setCurve(for: next)
+    }
+
+    private mutating func setCurve(for stage: Stage) {
+        switch stage {
         case .attack:
             target = Self.attackTarget
-            coefficient = coefficientFor(seconds: settings.attack, from: level, to: 1, aimingAt: target)
+            coefficient = coefficientFor(seconds: settings.attack, from: segmentStart, to: 1, aimingAt: target)
         case .decay:
             target = Self.sustainLevel(settings)
             coefficient = coefficientFor(seconds: settings.decay, from: 1, to: target + Self.epsilon, aimingAt: target)
         case .release:
             target = 0
-            coefficient = coefficientFor(seconds: settings.release, from: Swift.max(level, Self.epsilon * 2), to: Self.epsilon, aimingAt: 0)
+            coefficient = coefficientFor(seconds: settings.release, from: Swift.max(segmentStart, Self.epsilon * 2),
+                                         to: Self.epsilon, aimingAt: 0)
         case .sustain:
             level = Self.sustainLevel(settings)
         case .idle:

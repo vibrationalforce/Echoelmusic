@@ -165,6 +165,46 @@ final class EnvelopeTests: XCTestCase {
         XCTAssertLessThan(biggest, 0.02)
     }
 
+    /// The engine applies a patch every 32 frames while a parameter is automated. The envelope
+    /// must keep its course through that: same settings change nothing, and the note still
+    /// reaches its peak, settles at sustain and ends in silence.
+    func testUpdatesEveryThirtyTwoSamplesDoNotStallTheEnvelope() {
+        let settings = Envelope.Settings(attack: 0.003, decay: 0.05, sustain: 0.7, release: 0.1)
+        var env = Envelope(settings: settings, sampleRate: rate)
+        var steady = Envelope(settings: settings, sampleRate: rate)
+        env.gateOn()
+        steady.gateOn()
+        for i in 0..<Int(0.2 * rate) {
+            if i % 32 == 0 { env.update(settings) }
+            XCTAssertEqual(env.next(), steady.next(), accuracy: 1e-6)
+        }
+        XCTAssertEqual(env.stage, .sustain)
+        XCTAssertEqual(env.level, 0.7, accuracy: 1e-3)
+        env.gateOff()
+        for i in 0..<Int(0.3 * rate) {
+            if i % 32 == 0 { env.update(settings) }
+            _ = env.next()
+        }
+        XCTAssertEqual(env.stage, .idle, "a release under constant updates still ends")
+    }
+
+    func testAChangedReleaseTimeTakesEffectWithoutRestartingTheRelease() {
+        var env = Envelope(settings: .init(attack: 0.001, decay: 0.01, sustain: 1, release: 0.2), sampleRate: rate)
+        env.gateOn()
+        _ = run(&env, seconds: 0.05)
+        env.gateOff()
+        var settings = Envelope.Settings(attack: 0.001, decay: 0.01, sustain: 1, release: 0.2)
+        // Shorten the release a little every 32 samples, as an automation lane would.
+        for i in 0..<Int(0.4 * rate) {
+            if i % 32 == 0 {
+                settings.release = Swift.max(0.05, settings.release - 0.0005)
+                env.update(settings)
+            }
+            _ = env.next()
+        }
+        XCTAssertEqual(env.stage, .idle)
+    }
+
     func testFullSustainSkipsTheDecay() {
         var env = Envelope(settings: .init(attack: 0.001, decay: 1, sustain: 1, release: 0.1), sampleRate: rate)
         env.gateOn()
