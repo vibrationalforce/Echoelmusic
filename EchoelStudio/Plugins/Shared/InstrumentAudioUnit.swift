@@ -10,8 +10,7 @@ import os
 /// tree, MIDI in, stereo out. Until it is unlocked (a purchase in Echoel) it plays as a demo:
 /// two seconds of silence every thirty. Every instrument extension uses this one class.
 final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
-    let plugin: OwnPlugin
-    var title: String { plugin.component.name }
+    let title: String
     let help: String?
     private let kernelType: any InstrumentKernel.Type
     private var outputBus: AUAudioUnitBus?
@@ -47,10 +46,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         init(kernel: any InstrumentKernel) { self.kernel = kernel }
     }
 
-    init(kernel: any InstrumentKernel.Type, plugin: OwnPlugin, help: String? = nil,
+    init(kernel: any InstrumentKernel.Type, title: String, help: String? = nil,
          componentDescription: AudioComponentDescription, options: AudioComponentInstantiationOptions = []) throws {
         kernelType = kernel
-        self.plugin = plugin
+        self.title = title
         self.help = help
         render = RenderState(kernel: kernel.init(sampleRate: 48_000, maximumFrames: 4_096))
         try super.init(componentDescription: componentDescription, options: options)
@@ -118,7 +117,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         for index in kernelType.parameters.indices {
             kernel.setParameter(index, render.kernel.parameter(index))
         }
-        log.info("allocate \(self.plugin.productID, privacy: .public) \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
+        log.info("allocate \(self.title, privacy: .public) \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
         if let sample, let sampler = kernel as? any SampleLoadingKernel { sampler.load(sample.buffer) }
         render.kernel = kernel
         render.left = .allocate(capacity: frames)

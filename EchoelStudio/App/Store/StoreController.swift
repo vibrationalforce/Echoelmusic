@@ -3,13 +3,13 @@ import Observation
 import StoreKit
 import os
 
-/// Sells Echoel's own Audio Units. A purchase unlocks the plugin in every host on every device of
-/// the same Apple account; the plugin itself reads the same transactions.
+/// Sells Echoel's own Audio Units as ONE purchase (`PluginUnlock`). It unlocks every plugin in
+/// every host on every device of the same Apple account; the plugins read the same transactions.
 @MainActor
 @Observable
 final class StoreController {
-    private(set) var products: [String: Product] = [:]
-    private(set) var owned: Set<String> = []
+    private(set) var product: Product?
+    private(set) var isOwned = false
     private(set) var isLoading = false
     private(set) var message: String?
 
@@ -29,9 +29,8 @@ final class StoreController {
         isLoading = true
         defer { isLoading = false }
         do {
-            let found = try await Product.products(for: OwnPlugin.all.map(\.productID))
-            products = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-            message = found.isEmpty ? "The store is not available right now." : nil
+            product = try await Product.products(for: [PluginUnlock.productID]).first
+            message = product == nil ? "The store is not available right now." : nil
         } catch {
             log.error("products failed — \(error.localizedDescription, privacy: .public)")
             message = "The store is not available right now."
@@ -39,13 +38,13 @@ final class StoreController {
         await refreshOwned()
     }
 
-    func buy(_ plugin: OwnPlugin) async {
-        guard let product = products[plugin.productID] else { return }
+    func buy() async {
+        guard let product else { return }
         do {
             switch try await product.purchase() {
             case .success(.verified(let transaction)):
                 await transaction.finish()
-                message = "\(plugin.component.name) is unlocked. Reload it in your host to remove the demo."
+                message = "\(PluginUnlock.name) are unlocked. Reload them in your host to remove the demo."
             case .success(.unverified):
                 message = "The purchase could not be verified."
             case .pending:
@@ -73,12 +72,13 @@ final class StoreController {
     }
 
     private func refreshOwned() async {
-        var found: Set<String> = []
+        var found = false
         for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result, transaction.revocationDate == nil {
-                found.insert(transaction.productID)
+            if case .verified(let transaction) = result, transaction.revocationDate == nil,
+               transaction.productID == PluginUnlock.productID {
+                found = true
             }
         }
-        owned = found
+        isOwned = found
     }
 }

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Echoel Effects</string>
+	<string>Echoel Plugins</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,8 +22,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<!-- AudioComponents MUST sit under NSExtensionAttributes: pluginkit registers only those
 	     (legacy device log 2026-07-16). type/subtype/manufacturer never change: hosts key saved
-	     sessions on them. The subtypes differ from the app's in-process eEQ5/eCmp/eDly/eRvb on
-	     purpose (StandardEffect.extensionComponent). -->
+	     sessions on them. ONE extension (com.echoelmusic.app.auv3, the only registered Audio Unit
+	     id) carries every Echoel unit; the effect subtypes differ from the app's in-process
+	     eEQ5/eCmp/eDly/eRvb on purpose. "echl" is the earlier app's instrument, kept so sessions
+	     saved with it open (it plays the synth). -->
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
@@ -36,9 +38,69 @@
 			<array>
 				<dict>
 					<key>name</key>
+					<string>Echoel: Echoel Synth</string>
+					<key>description</key>
+					<string>Subtractive synthesizer from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aumu</string>
+					<key>subtype</key>
+					<string>eSyn</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Synthesizer</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Drums</string>
+					<key>description</key>
+					<string>Synthesized drum kit from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aumu</string>
+					<key>subtype</key>
+					<string>eDrm</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Drums</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: Echoel Sampler</string>
+					<key>description</key>
+					<string>Sampler from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aumu</string>
+					<key>subtype</key>
+					<string>eSmp</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Sampler</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
 					<string>Echoel: Echoel EQ</string>
 					<key>description</key>
-					<string>Five-band parametric EQ from Echoel Studio</string>
+					<string>Five-band parametric EQ from Echoel</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -58,7 +120,7 @@
 					<key>name</key>
 					<string>Echoel: Echoel Compressor</string>
 					<key>description</key>
-					<string>Compressor from Echoel Studio</string>
+					<string>Compressor from Echoel</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -78,7 +140,7 @@
 					<key>name</key>
 					<string>Echoel: Echoel Delay</string>
 					<key>description</key>
-					<string>Stereo delay from Echoel Studio</string>
+					<string>Stereo delay from Echoel</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -98,7 +160,7 @@
 					<key>name</key>
 					<string>Echoel: Echoel Reverb</string>
 					<key>description</key>
-					<string>Reverb from Echoel Studio</string>
+					<string>Reverb from Echoel</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>type</key>
@@ -112,6 +174,26 @@
 					<key>tags</key>
 					<array>
 						<string>Effects</string>
+					</array>
+				</dict>
+				<dict>
+					<key>name</key>
+					<string>Echoel: EchoelBodyVibe</string>
+					<key>description</key>
+					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>type</key>
+					<string>aumu</string>
+					<key>subtype</key>
+					<string>echl</string>
+					<key>version</key>
+					<integer>65536</integer>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>tags</key>
+					<array>
+						<string>Synthesizer</string>
 					</array>
 				</dict>
 			</array>

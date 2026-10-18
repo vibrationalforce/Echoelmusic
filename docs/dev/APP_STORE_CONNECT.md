@@ -37,6 +37,15 @@ single `com.echoelmusic.app` ID so one purchase unlocks iOS / macOS / tvOS / vis
 | Echoelmusic watchOS | `com.echoelmusic.app.watchkitapp` | watchOS companion | ⚠️ compile-verified, **embed blocked** (local Xcode) |
 | Echoelmusic Clip | `com.echoelmusic.app.clip` | App Clip | ❌ ASC-registered, **target deferred** |
 | Echoelmusic Notification Service | `com.echoelmusic.app.notification-service` | Notification Service extension | ❌ ASC-registered, **target deferred** |
+| (voice) | `com.echoelmusic.app.voice` | — | ❌ **registered** in the developer portal (founder screen recording 2026-10-18), no target. ⛔ The note below said it was "not in the owner's ASC bundle set"; it is. Unused — a spare id, do not build on it without a founder ask |
+
+**EchoelStudio (the restart) uses exactly two of these** (audit 2026-10-18,
+`docs/dev/AUDIT_ECHOELSTUDIO_2026-10-18.md`): the app `com.echoelmusic.app` and ONE extension
+`com.echoelmusic.app.auv3` carrying every Echoel Audio Unit. Its single in-app purchase is
+`com.echoelmusic.app.pro` — **not yet created in App Store Connect** (the In-App-Käufe page was empty
+on 2026-10-18); the first one must be submitted together with an app version, after the Account Holder
+accepts the updated Paid Applications Schedule. Measured in the developer portal on 2026-10-18: the six
+ids above plus `.voice` and a wildcard `*`.
 
 > **Deferred platforms** (macOS / tvOS / visionOS) were previously declared only in the removed
 > Tuist `Project.swift`. They are **not currently defined anywhere** and would be re-added to

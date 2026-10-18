@@ -81,12 +81,17 @@ final class PluginTests: XCTestCase {
 final class OwnPluginTests: XCTestCase {
     func testOwnPluginsAreInstrumentsOrEffectsUnderOurManufacturer() {
         XCTAssertFalse(OwnPlugin.all.isEmpty)
-        XCTAssertEqual(Set(OwnPlugin.all.map(\.productID)).count, OwnPlugin.all.count)
-        for plugin in OwnPlugin.all {
+        let every = OwnPlugin.all + [OwnPlugin.legacyBodyVibe]
+        XCTAssertEqual(Set(every.map(\.component.subtype)).count, every.count)
+        for plugin in every {
             XCTAssertEqual(plugin.component.manufacturer, PluginComponent.code("Echo"))
             XCTAssertNotNil(plugin.component.role)
-            XCTAssertTrue(plugin.productID.hasPrefix("com.echoelmusic.studio."))
         }
+        XCTAssertFalse(OwnPlugin.all.contains(OwnPlugin.legacyBodyVibe), "a door for old sessions, not a product")
+        XCTAssertEqual(OwnPlugin.legacyBodyVibe.component.subtype, PluginComponent.code("echl"),
+                       "host sessions saved with the earlier app name this id")
+        XCTAssertTrue(PluginUnlock.productID.hasPrefix("com.echoelmusic.app."),
+                      "the one purchase lives in the existing App Store record")
     }
 
     func testTheStandardEffectsAreDistinctEffectsThatKnowThemselvesAgain() {

@@ -1,43 +1,54 @@
-/// The Audio Units Echoel makes and sells, as the app's store and the plugins themselves know
-/// them. One list, so a product id cannot differ between the place that sells a plugin and the
-/// plugin that checks the sale.
+/// The one purchase that unlocks every Echoel Audio Unit in other hosts. It lives in the app's
+/// existing App Store record (`com.echoelmusic.app`), so selling the plugins needs no new app, no
+/// new bundle id and exactly one in-app purchase. Inside Echoel the same instruments and effects
+/// are free.
+public enum PluginUnlock {
+    public static let productID = "com.echoelmusic.app.pro"
+    public static let name = "Echoel Plugins"
+}
+
+/// The Audio Units Echoel makes, as the app's store and the plugins themselves know them. All of
+/// them ship in ONE extension (`com.echoelmusic.app.auv3`) and are unlocked by `PluginUnlock`.
 public struct OwnPlugin: Sendable, Equatable, Identifiable {
-    /// The in-app purchase that unlocks the plugin in every host.
-    public let productID: String
     public let component: PluginComponent
     public let summary: String
 
-    public var id: String { productID }
+    public var id: UInt32 { component.subtype }
 
     public static let synth = OwnPlugin(
-        productID: "com.echoelmusic.studio.synth",
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSyn"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Echoel Synth",
                                    manufacturerName: "Echoel"),
-        summary: "The studio's synth as an Audio Unit for AUM, Logic, Cubasis, GarageBand and other hosts.")
+        summary: "The studio's synth.")
 
     public static let drums = OwnPlugin(
-        productID: "com.echoelmusic.studio.drums",
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eDrm"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Echoel Drums",
                                    manufacturerName: "Echoel"),
-        summary: "The studio's synthesized drum kit on the General MIDI drum map, as an Audio Unit for other hosts.")
+        summary: "The studio's synthesized drum kit on the General MIDI drum map.")
 
     public static let sampler = OwnPlugin(
-        productID: "com.echoelmusic.studio.sampler",
         component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSmp"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Echoel Sampler",
                                    manufacturerName: "Echoel"),
-        summary: "Load a sample and play it across the keys, as an Audio Unit for other hosts. The sample is saved with the host's session.")
+        summary: "Load a sample and play it across the keys. The sample is saved with the host's session.")
 
-    /// The four standard effects for other hosts, as one purchase. In Echoel itself they stay
-    /// free; this unlocks the extension's copies (`StandardEffect.extensionComponent`).
+    /// The four standard effects for other hosts (`StandardEffect.extensionComponent`). In Echoel
+    /// itself they stay free under their own ids.
     public static let effects = OwnPlugin(
-        productID: "com.echoelmusic.studio.effects",
         component: PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code("xEQ5"),
                                    manufacturer: PluginComponent.code("Echo"), name: "Echoel Effects",
                                    manufacturerName: "Echoel"),
-        summary: "EQ, Compressor, Delay and Reverb as Audio Units for AUM, Logic, Cubasis, GarageBand and other hosts.")
+        summary: "EQ, Compressor, Delay and Reverb.")
+
+    /// The instrument the earlier Echoelmusic app shipped (`echl`, "EchoelBodyVibe"). The
+    /// extension still answers to it with the synth, so a host session saved with it opens.
+    /// Not listed in the store: it is a door for old sessions, not a product.
+    public static let legacyBodyVibe = OwnPlugin(
+        component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("echl"),
+                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Synth",
+                                   manufacturerName: "Echoel"),
+        summary: "Opens host sessions saved with the earlier Echoelmusic instrument.")
 
     public static let all: [OwnPlugin] = [synth, drums, sampler, effects]
 }

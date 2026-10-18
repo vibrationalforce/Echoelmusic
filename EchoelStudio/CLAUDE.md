@@ -14,11 +14,8 @@ nothing has to be fished out of the long file.
 | `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope — pure value types, render-thread safe | Foundation |
 | `Engine/` | Swift package `EchoelEngine`: snapshot, synth slots, sample-accurate sequencer, mix, metronome — render thread, tested offline | EchoelCore, EchoelDSP, Synchronization |
 | `App/` | the app (XcodeGen spec `project.yml`): design system, AVAudioEngine glue, media import, views | EchoelCore, EchoelDSP, EchoelEngine |
-| `Plugins/Synth/` | AUv3 extension `EchoelSynth` (aumu `eSyn` `Echo`), embedded in the app, sold as an in-app purchase; ids in `EchoelCore.OwnPlugin` | EchoelCore, EchoelDSP, EchoelEngine |
-| `Plugins/Effects/` | AUv3 extension `EchoelEffects`: the four standard effects (aufx `xEQ5` `xCmp` `xDly` `xRvb`) for other hosts, one purchase. Never the in-app ids `eEQ5` …, which stay free | EchoelCore, EchoelDSP, EchoelEngine |
-| `Plugins/Drums/` | AUv3 extension `EchoelDrums` (aumu `eDrm`): the synthesized kit, GM drum map, one purchase | EchoelCore, EchoelDSP, EchoelEngine |
-| `Plugins/Sampler/` | AUv3 extension `EchoelSampler` (aumu `eSmp`): load a sample in the plugin's view, play it across the keys; the sample rides in `fullState` (≤ 30 s) | EchoelCore, EchoelDSP, EchoelEngine |
-| `Plugins/Shared/` | compiled into every extension: the one instrument unit (`InstrumentAudioUnit` over an `InstrumentKernel`), the principal-class base (demo lock, license, controls), controls from the parameter tree. An extension adds only its `makeUnit` | EchoelCore, EchoelEngine |
+| `Plugins/AUv3/` | the ONE AUv3 extension `EchoelPlugins` under `com.echoelmusic.app.auv3` (the only registered Audio Unit id): Synth `eSyn`, Drums `eDrm`, Sampler `eSmp`, EQ/Compressor/Delay/Reverb `xEQ5`/`xCmp`/`xDly`/`xRvb`, plus `echl` (the earlier app's instrument, kept so saved host sessions open). ONE purchase unlocks all (`EchoelCore.PluginUnlock`, `com.echoelmusic.app.pro`). Never add a second extension or product: no other id is registered | EchoelCore, EchoelDSP, EchoelEngine |
+| `Plugins/Shared/` | the extension's building blocks: the one instrument unit (`InstrumentAudioUnit` over an `InstrumentKernel`), the principal-class base (demo lock, license, controls), controls from the parameter tree. An extension adds only its `makeUnit` | EchoelCore, EchoelEngine |
 
 More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
 on modules below it — never the other way round.

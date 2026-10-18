@@ -3,9 +3,8 @@ import EchoelCore
 import SwiftUI
 import UIKit
 
-/// A unit an Echoel extension makes: which purchase unlocks it, and its lock.
+/// A unit the Echoel extension makes, and its lock. One purchase unlocks them all.
 protocol EchoelPluginUnit: AUAudioUnit {
-    var plugin: OwnPlugin { get }
     var title: String { get }
     var isUnlocked: Bool { get set }
     /// One line under the controls, for what the parameters cannot say (a note map).
@@ -16,9 +15,9 @@ extension EchoelPluginUnit {
     var help: String? { nil }
 }
 
-/// What every Echoel extension's principal class does: make the unit the host asks for, lock it
-/// to the demo until the purchase is found, and show its controls. An extension subclasses it
-/// and says only how to make its unit.
+/// What the Echoel extension's principal class does: make the unit the host asks for, lock it
+/// to the demo until the purchase is found, and show its controls. The subclass says only how
+/// to make each unit.
 class PluginViewController: AUViewController, AUAudioUnitFactory {
     private var audioUnit: (any EchoelPluginUnit)?
     private var hosting: UIHostingController<PluginControlsView>?
@@ -42,7 +41,7 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
         unit.isUnlocked = false
         let box = UnitBox(unit)
         Task {
-            let unlocked = await PluginLicense.isUnlocked(box.unit.plugin)
+            let unlocked = await PluginLicense.isUnlocked()
             box.unit.isUnlocked = unlocked
             await MainActor.run { self.adopt(box.unit) }
         }
