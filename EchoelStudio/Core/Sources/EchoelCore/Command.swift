@@ -407,8 +407,9 @@ extension Command {
             guard MediaFile.isSafePath(file.path) else {
                 throw CommandError.invalidValue(parameter: "path", reason: "must be a relative path inside \(MediaFile.directory)/")
             }
-            guard file.frameCount > 0, file.sampleRate.isFinite, file.sampleRate > 0 else {
-                throw CommandError.invalidValue(parameter: "file", reason: "needs at least one frame at a positive sample rate")
+            guard file.hasUsableFormat else {
+                throw CommandError.invalidValue(parameter: "file",
+                                                reason: "needs at least one frame at a sample rate of \(MediaFile.sampleRateRange)")
             }
             var named = file
             named.name = try Names.validated(file.name, parameter: "name")
@@ -564,7 +565,11 @@ extension Command {
         case let .setClipLength(id, length):
             let (t, c) = try project.requireClip(id)
             try Self.validateLength(length)
+            // What starts past the new end is dropped with it, so the clip stays a valid one —
+            // a note left behind would make the song refuse to open (undo brings it back).
             project.tracks[t].clips[c].length = length
+            project.tracks[t].clips[c].notes.removeAll { $0.start >= length }
+            project.tracks[t].clips[c].controls.removeAll { $0.start >= length }
 
         case let .addNotes(id, notes):
             let (t, c) = try project.requireClip(id)

@@ -23,6 +23,18 @@ public struct MediaFile: Codable, Equatable, Sendable, Identifiable {
     /// The folder inside a song package that holds its media.
     public static let directory = "Media"
 
+    /// The rates an audio file can have. A file claiming a rate outside it is refused: the
+    /// arrangement turns frames into ticks through it, and an absurd rate overflows that sum.
+    public static let sampleRateRange: ClosedRange<Double> = 1_000...768_000
+    /// At most a day of audio at the highest rate.
+    public static let maximumFrameCount = 768_000 * 60 * 60 * 24
+
+    /// Frames and rate a song can lay out on its timeline.
+    public var hasUsableFormat: Bool {
+        frameCount > 0 && frameCount <= Self.maximumFrameCount
+            && sampleRate.isFinite && Self.sampleRateRange.contains(sampleRate)
+    }
+
     /// Duration in seconds; 0 when the measurement is unusable.
     public var duration: Double {
         sampleRate > 0 && sampleRate.isFinite ? Double(frameCount) / sampleRate : 0

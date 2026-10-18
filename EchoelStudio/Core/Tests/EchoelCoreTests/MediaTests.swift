@@ -29,6 +29,10 @@ final class MediaTests: XCTestCase {
         }
         XCTAssertThrowsError(try Command.addMedia(file(frames: 0)).apply(to: &p))
         XCTAssertThrowsError(try Command.addMedia(file(rate: .nan)).apply(to: &p))
+        for rate in [1e-300, 0.5, 999, 768_001, 1e300] {
+            XCTAssertThrowsError(try Command.addMedia(file(rate: rate)).apply(to: &p), "\(rate)")
+        }
+        XCTAssertThrowsError(try Command.addMedia(file(frames: MediaFile.maximumFrameCount + 1)).apply(to: &p))
         XCTAssertEqual(p, before)
         XCTAssertNoThrow(try Command.addMedia(file(path: "Media/sub/x.wav")).apply(to: &p))
     }

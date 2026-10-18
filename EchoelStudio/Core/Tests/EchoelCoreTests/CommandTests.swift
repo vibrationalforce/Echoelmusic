@@ -20,6 +20,19 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(MusicalTime.ticksPerBeat(TimeSignature(6, 8)), 480)
     }
 
+    func testShorteningAClipDropsWhatLiesPastItsEndAndTheSongStillOpens() throws {
+        var (project, _, clip) = try projectWithInstrument()
+        try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 480),
+                                    Note(pitch: 64, start: bar / 2, length: 480)]).apply(to: &project)
+        try Command.setControls(clip, [ControlChange(kind: .pitchBend, start: bar / 2, value: 9_000)]).apply(to: &project)
+        try Command.setClipLength(clip, length: bar / 4).apply(to: &project)
+
+        let shortened = try XCTUnwrap(project.clipLocation(clip).map { project.tracks[$0.track].clips[$0.clip] })
+        XCTAssertEqual(shortened.notes.map(\.pitch), [60])
+        XCTAssertTrue(shortened.controls.isEmpty)
+        XCTAssertNoThrow(try ProjectCodec.decode(ProjectCodec.encode(project)), "a shortened clip must not lock the song")
+    }
+
     func testTempoOutsideTheRangeOrNotFiniteIsRefused() {
         var project = Project()
         for bpm in [19.9, 1_000, .nan, .infinity] {

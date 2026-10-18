@@ -21,8 +21,8 @@ extension Project {
         try Self.validate(master, name: "master")
         for file in media {
             guard MediaFile.isSafePath(file.path) else { throw Self.invalid("media", "a path leaves the Media folder") }
-            guard file.frameCount > 0, file.sampleRate.isFinite, file.sampleRate > 0 else {
-                throw Self.invalid("media", "a file has no frames or no sample rate")
+            guard file.hasUsableFormat else {
+                throw Self.invalid("media", "a file has no frames, too many, or a sample rate outside \(MediaFile.sampleRateRange)")
             }
         }
         guard midiMappings.allSatisfy(\.control.isValid),
