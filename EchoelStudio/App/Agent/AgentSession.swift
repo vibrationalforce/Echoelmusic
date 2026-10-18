@@ -20,6 +20,8 @@ struct AgentLine: Identifiable, Equatable {
 final class AgentExecutor {
     private let store: ProjectStore
     private var turnKey = "agent.0"
+    /// The song the request was asked about; a different song opened since is never written.
+    private var document = 0
     /// Called with a short sentence for every action that changed the song.
     var onAction: ((String) -> Void)?
 
@@ -32,12 +34,16 @@ final class AgentExecutor {
     func begin(turn: Int) {
         store.endGesture()
         turnKey = "agent.\(turn)"
+        document = store.documentGeneration
     }
 
     func end() { store.endGesture() }
 
     /// The tool's answer for the model: what was done, or why not, so it can correct itself.
     func run(_ action: AgentAction, _ summary: String) -> String {
+        guard store.documentGeneration == document else {
+            return "Not done: the musician opened a different song. Stop and say so."
+        }
         do {
             let commands = try AgentTools.commands(for: action, in: store.project)
             try store.perform(commands, title: "Agent", coalescingKey: turnKey)

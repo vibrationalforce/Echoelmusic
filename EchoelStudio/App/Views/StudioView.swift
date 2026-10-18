@@ -201,6 +201,8 @@ struct TempoField: View {
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
 
     private static let gestureKey = "project.tempo"
+    /// Taps get their own key, so a drag or step after a run of taps is its own undo step.
+    private static let tapKey = "project.tempo.tap"
 
     var body: some View {
         HStack(spacing: Theme.Space.xs) {
@@ -255,7 +257,7 @@ struct TempoField: View {
     private func tap() {
         let now = ProcessInfo.processInfo.systemUptime
         if taps.startsOver(at: now) { store.endGesture() }
-        if let bpm = taps.tap(at: now) { set(bpm) }
+        if let bpm = taps.tap(at: now) { set(bpm, key: Self.tapKey) }
     }
 
     private func nudge(_ delta: Double) {
@@ -263,9 +265,9 @@ struct TempoField: View {
         store.endGesture()
     }
 
-    private func set(_ bpm: Double) {
+    private func set(_ bpm: Double, key: String = TempoField.gestureKey) {
         let clamped = min(max(bpm, Tempo.range.lowerBound), Tempo.range.upperBound)
-        try? store.perform(.setTempo(bpm: clamped), coalescingKey: Self.gestureKey)
+        try? store.perform(.setTempo(bpm: clamped), coalescingKey: key)
     }
 }
 

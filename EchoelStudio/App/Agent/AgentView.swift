@@ -118,6 +118,9 @@ struct AgentView: View {
 
     private func send() {
         let request = draft
+        // Keep the text when it cannot be sent now, rather than dropping it silently.
+        guard !request.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !agent.isWorking, agent.availability == .ready else { return }
         draft = ""
         Task { await agent.send(request) }
     }

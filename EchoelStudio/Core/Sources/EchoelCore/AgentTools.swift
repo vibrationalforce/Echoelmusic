@@ -109,7 +109,8 @@ public enum AgentTools {
             let place = try region(on: target, bar: bar, bars: bars, in: project)
             var commands = place.commands
             let clip = place.clip, length = place.length
-            let old = clip.notes.filter { $0.pitch == drumKey }.map(\.id)
+            // Only inside the bars asked for: a longer clip keeps the drum in its other bars.
+            let old = clip.notes.filter { $0.pitch == drumKey && $0.start < length }.map(\.id)
             if !old.isEmpty { commands.append(.removeNotes(clip.id, old)) }
             let step = MusicalTime.ticksPerQuarter / 4
             var notes: [Note] = []
@@ -185,7 +186,11 @@ public enum AgentTools {
         case let .repeatClip(reference, bar, times):
             let target = try track(reference, in: project)
             guard (1...maximumBars).contains(times) else { throw AgentError.invalid("Repeat a clip 1 to \(maximumBars) times.") }
-            let start = Tick(Swift.max(bar, 1) - 1) * MusicalTime.ticksPerBar(project.timeSignature)
+            let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
+            guard bar >= 1, Tick(bar) <= MusicalTime.maximumTick / barTicks else {
+                throw AgentError.invalid("Bar \(bar) is not in the song.")
+            }
+            let start = Tick(bar - 1) * barTicks
             guard let placement = target.placements.first(where: { $0.start == start }),
                   let clip = target.clips.first(where: { $0.id == placement.clip }) else {
                 throw AgentError.wrongTrack(target.name, reason: "has no clip starting at bar \(bar)")
@@ -341,11 +346,16 @@ public enum AgentTools {
             guard let velocity, Note.velocityRange.contains(velocity) else {
                 throw AgentError.invalid("A velocity is 1 to 127.")
             }
+            // Bounded while still a Double, so no model-written number can overflow a Tick.
+            guard position - 1 < Double(regionLength) / Double(beat) else {
+                throw AgentError.invalid("Beat \(fields[1]) lies after the end of the region.")
+            }
             let start = Tick(((position - 1) * Double(beat)).rounded())
             guard start < regionLength else {
                 throw AgentError.invalid("Beat \(fields[1]) lies after the end of the region.")
             }
-            let length = Swift.max(1, Swift.min(Tick((duration * Double(beat)).rounded()), regionLength - start))
+            let beats = Swift.min(duration, Double(regionLength) / Double(beat))
+            let length = Swift.max(1, Swift.min(Tick((beats * Double(beat)).rounded()), regionLength - start))
             for name in fields[0].split(separator: "+") {
                 guard let key = pitch(String(name)) else {
                     throw AgentError.invalid("\"\(name)\" is not a note; write C4, F#3, Bb2 or a MIDI number.")
@@ -365,6 +375,8 @@ public enum AgentTools {
             throw AgentError.invalid("A region starts at bar 1 or later and is 1 to \(maximumBars) bars long.")
         }
         let barTicks = MusicalTime.ticksPerBar(project.timeSignature)
+        // Checked before multiplying, so a wild number from the model cannot overflow.
+        guard Tick(bar) <= MusicalTime.maximumTick / barTicks else { throw AgentError.invalid("Bar \(bar) is not in the song.") }
         let start = Tick(bar - 1) * barTicks, length = Tick(bars) * barTicks
         guard start + length <= MusicalTime.maximumTick else { throw AgentError.invalid("That is past the end of the song.") }
         if let placement = track.placements.first(where: { $0.start == start }),
@@ -372,6 +384,14 @@ public enum AgentTools {
             guard clip.audio == nil else { throw AgentError.wrongTrack(track.name, reason: "has an audio clip there") }
             var commands: [Command] = []
             if clip.length < length {
+                // Lengthening a clip that also plays elsewhere, or that would run into the next
+                // clip, changes more than was asked; say so instead.
+                let shared = track.placements.contains { $0.clip == clip.id && $0.id != placement.id }
+                let blocked = track.placements.contains { $0.start > start && $0.start < start + length }
+                if shared || blocked {
+                    let have = Swift.max(1, clip.length / barTicks)
+                    throw AgentError.wrongTrack(track.name, reason: "has a \(have)-bar clip at bar \(bar) that \(shared ? "plays elsewhere too" : "runs into the next clip") if lengthened; write \(have) bars there, or start at a free bar")
+                }
                 commands.append(.setClipLength(clip.id, length: length))
                 clip.length = length
             }

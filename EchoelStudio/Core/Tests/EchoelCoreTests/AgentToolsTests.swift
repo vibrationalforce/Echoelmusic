@@ -112,6 +112,35 @@ final class AgentToolsTests: XCTestCase {
         XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Drums", bar: 9, times: 1), in: store.project))
     }
 
+    func testAPatternOnPartOfALongerClipKeepsTheRestAndASharedClipIsNotStretched() throws {
+        let store = ProjectStore()
+        try run([
+            .addTrack(name: "Drums", kind: "drums", sound: nil),
+            .drumPattern(track: "Drums", drum: "kick", steps: "x...", bar: 1, bars: 4),
+            .drumPattern(track: "Drums", drum: "kick", steps: "x.......", bar: 1, bars: 1),
+        ], on: store)
+        let kicks = try XCTUnwrap(store.project.tracks.first?.clips.first).notes.filter { $0.pitch == 36 }
+        XCTAssertEqual(kicks.count, 2 + 12, "bar 1 rewritten, bars 2–4 kept")
+
+        let sharing = ProjectStore()
+        try run([.addTrack(name: "Beat", kind: "drums", sound: nil), .repeatClip(track: "Beat", bar: 1, times: 2)], on: sharing)
+        let shared = sharing.project
+        XCTAssertThrowsError(try AgentTools.commands(for: .drumPattern(track: "Beat", drum: "kick", steps: "x", bar: 1, bars: 2),
+                                                     in: shared)) { error in
+            XCTAssertTrue(String(describing: error).contains("plays elsewhere"))
+        }
+    }
+
+    func testWildNumbersFromTheModelAreRefusedNotCrashing() throws {
+        var project = Project()
+        try Command.addTrack(id: TrackID(), name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        XCTAssertThrowsError(try AgentTools.commands(for: .writeNotes(track: "Keys", notes: "C4 1e300 1", bar: 1, bars: 1, replace: false), in: project))
+        XCTAssertNoThrow(try AgentTools.commands(for: .writeNotes(track: "Keys", notes: "C4 1 1e300", bar: 1, bars: 1, replace: false), in: project),
+                         "an endless note is cut at the end of the region")
+        XCTAssertThrowsError(try AgentTools.commands(for: .writeNotes(track: "Keys", notes: "C4 1 1", bar: Int.max, bars: 1, replace: false), in: project))
+        XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Keys", bar: Int.max, times: 1), in: project))
+    }
+
     func testNoteNamesAndDrumNames() {
         XCTAssertEqual(AgentTools.pitch("C4"), 60)
         XCTAssertEqual(AgentTools.pitch("a4"), 69)

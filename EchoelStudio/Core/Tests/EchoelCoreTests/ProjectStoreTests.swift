@@ -87,8 +87,10 @@ final class ProjectStoreTests: XCTestCase {
     func testOpeningAProjectClearsHistory() throws {
         let store = ProjectStore()
         try store.perform(.setTempo(bpm: 100))
+        let before = store.documentGeneration
         store.open(Project(name: "Other"))
         XCTAssertFalse(store.canUndo)
         XCTAssertEqual(store.project.name, "Other")
+        XCTAssertEqual(store.documentGeneration, before + 1, "work started on the old song can tell")
     }
 }

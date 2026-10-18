@@ -13,6 +13,10 @@ public final class ProjectStore {
     public private(set) var undoStack: [Step] = []
     public private(set) var redoStack: [Step] = []
 
+    /// Counts the documents opened in this store: whoever started work on one song can tell,
+    /// before writing, that a different song has been opened since.
+    public private(set) var documentGeneration = 0
+
     /// How many steps undo remembers. The oldest step is dropped beyond it.
     public var undoLimit = 500
 
@@ -91,6 +95,7 @@ public final class ProjectStore {
         openCoalescingKey = nil
         undoStack.removeAll()
         redoStack.removeAll()
+        documentGeneration += 1
         self.project = project
     }
 }
