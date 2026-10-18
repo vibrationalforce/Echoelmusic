@@ -129,7 +129,13 @@ Nur kompiliert und in CI getestet — nichts gerätegeprüft.
 | §3 Version 11.0.0, Build-Nummer, Icon, Privacy-Manifeste, Verschlüsselung | `24bb4a2` |
 | §4 MIDI-Datei-Export | `d45b7b6` |
 | §4 Meter | `ff779ea` |
+| §4 Lautheit (BS.1770 / EBU R 128) und True-Peak am Export | `1d254e0` |
+| §4 MIDI-Aufnahme auf eine scharfgeschaltete Instrumentenspur | `b978009` |
+| §4 Pitch-Bend und Sustain-Pedal live (Synth + gehostete AUv3) | `1e97c97` |
+| §4 Master-Inserts (Dokument · Engine · App · Export) | `2e66371` · `023b219` |
 
-Noch offen aus §8: Master-Inserts + LUFS/True-Peak, MIDI-Aufnahme, Pitch-Bend/CC; dann `testflight.yml` (E38).
+Damit ist §8.1–8.4 abgearbeitet. Offen bleibt: Bends und Controller AUFNEHMEN und abspielen (braucht die
+Ereignis-Spur, §8.6), dann `testflight.yml` (E38). Master-Inserts laufen hinter dem Master-Fader: der
+Master-Gain ist in die Spur-Gains eingerechnet, die Kette sitzt deshalb dort, wo ein Limiter hingehört.
 Nachgezogen: eine Aufnahme während des Folgens einer fremden Clock wird mit der gespielten Tempo-Karte
 platziert, nicht mit der des Songs (`commitTake(tempoMap:)`).

@@ -1333,3 +1333,6 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - `d45b7b6` MIDI-Datei-Export (SMF Typ 1, 960 PPQ, Tempo-Karte, Taktart, GM-Drumkanal).
 - `ff779ea` Peak-Meter je Strip + Master (`MeterBank`, Atomics, nach dem Fader, 20 dB/s Fall).
 - Nichts gerätegeprüft. Offen: Master-Inserts + LUFS, MIDI-Aufnahme, Pitch-Bend/CC, dann testflight.yml (E38).
+- Nachtrag: `1d254e0` LUFS/True-Peak am Export (EBU 3341 Fall 1 als Test) · `b978009` MIDI-Aufnahme
+  (`MIDITake` in Core, Erfassung im LiveRouter auf dem MIDI-Thread, Latenz abgezogen) · `1e97c97` Pitch-Bend
+  ±2 HT + Sustain (live; Aufnahme braucht Ereignis-Spur) · `2e66371`/`023b219` Master-Inserts (nach dem Fader).
