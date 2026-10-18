@@ -19,6 +19,8 @@ enum StudioSheet: Identifiable, Hashable {
     case effects(TrackID)
     /// Echoel's own Audio Units, to buy for other apps.
     case store
+    /// The assistant: change the song by asking.
+    case agent
 
     var id: Self { self }
 }

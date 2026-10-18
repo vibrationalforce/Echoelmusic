@@ -45,6 +45,7 @@ struct StudioView: View {
             case .share(let url): ShareSheet(url: url).ignoresSafeArea()
             case .effects(let track): EffectsView(trackID: track)
             case .store: StoreView()
+            case .agent: AgentView()
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -267,6 +268,7 @@ struct SongMenu: View {
     var body: some View {
         Menu {
             Button("New Song", systemImage: "plus") { documents.newSong() }
+            Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
             Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
             Menu("Send MIDI Clock", systemImage: "metronome") {
                 ForEach(engine.clock.destinations) { destination in
