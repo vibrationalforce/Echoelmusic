@@ -1,6 +1,7 @@
 import AudioToolbox
 import AVFoundation
 import EchoelCore
+import EchoelDSP
 import EchoelEngine
 import Synchronization
 import os
@@ -18,6 +19,22 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     private var tree: AUParameterTree?
     private let render: RenderState
     private let log = Logger(subsystem: "com.echoelmusic.studio.plugins", category: "instrument")
+
+    /// The sample a sampler kernel plays, kept here so a new kernel (a new sample rate) and the
+    /// host's saved session both get it back.
+    struct LoadedSample {
+        let buffer: SampleBuffer
+        let name: String
+    }
+    private(set) var sample: LoadedSample?
+    /// The longest sample the plugin takes. A host keeps it inside its session, so it stays short.
+    static let maximumSampleSeconds: Double = 30
+    private enum StateKey {
+        static let frames = "echoel.sample.frames", rate = "echoel.sample.rate", name = "echoel.sample.name"
+    }
+
+    /// Whether this instrument plays a sample the user loads.
+    var acceptsSamples: Bool { kernelType is any SampleLoadingKernel.Type }
 
     /// What the render block reads. Swapped only in `allocateRenderResources`, which a host
     /// never calls while rendering.
@@ -102,10 +119,52 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             kernel.setParameter(index, render.kernel.parameter(index))
         }
         log.info("allocate \(self.plugin.productID, privacy: .public) \(format.sampleRate, privacy: .public) Hz, \(frames, privacy: .public) frames")
+        if let sample, let sampler = kernel as? any SampleLoadingKernel { sampler.load(sample.buffer) }
         render.kernel = kernel
         render.left = .allocate(capacity: frames)
         render.right = .allocate(capacity: frames)
         render.demoFrame = 0
+    }
+
+    /// Makes `mono` the sample, or takes the sample away. Off the render thread.
+    func installSample(_ mono: SampleFile.Mono?, name: String) throws {
+        guard acceptsSamples else { return }
+        var loaded: LoadedSample?
+        if let mono {
+            guard let buffer = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else {
+                throw SampleFile.ReadError.empty
+            }
+            loaded = LoadedSample(buffer: buffer, name: name)
+        }
+        sample = loaded
+        (render.kernel as? any SampleLoadingKernel)?.load(loaded?.buffer)
+    }
+
+    /// The parameters (the system's part) plus the sample, so a host's session brings it back.
+    override var fullState: [String: Any]? {
+        get {
+            var state = super.fullState ?? [:]
+            if acceptsSamples, let sample {
+                let frames = sample.buffer.copyFrames()
+                state[StateKey.frames] = frames.withUnsafeBufferPointer { Data(buffer: $0) }
+                state[StateKey.rate] = sample.buffer.sampleRate
+                state[StateKey.name] = sample.name
+            }
+            return state
+        }
+        set {
+            super.fullState = newValue
+            guard acceptsSamples else { return }
+            guard let data = newValue?[StateKey.frames] as? Data, let rate = newValue?[StateKey.rate] as? Double,
+                  rate.isFinite, rate > 0, Double(data.count / 4) / rate <= Self.maximumSampleSeconds else {
+                try? installSample(nil, name: "")
+                return
+            }
+            var frames = [Float](repeating: 0, count: data.count / MemoryLayout<Float>.size)
+            _ = frames.withUnsafeMutableBytes { data.copyBytes(to: $0) }
+            let name = newValue?[StateKey.name] as? String ?? "Sample"
+            try? installSample(SampleFile.Mono(samples: frames, sampleRate: rate), name: name)
+        }
     }
 
     override func deallocateRenderResources() {

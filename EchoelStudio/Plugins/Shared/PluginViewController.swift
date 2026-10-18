@@ -68,8 +68,16 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
             hosting.removeFromParent()
         }
         guard let tree = unit.parameterTree else { return }
-        let model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help)
-        let controller = UIHostingController(rootView: PluginControlsView(model: model))
+        let model: PluginControlsModel
+        if let instrument = unit as? InstrumentAudioUnit, instrument.acceptsSamples {
+            model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help,
+                                        sampleName: instrument.sample?.name,
+                                        installSample: { mono, name in try instrument.installSample(mono, name: name) })
+        } else {
+            model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help)
+        }
+        let controller = UIHostingController(rootView: PluginControlsView(
+            model: model, maximumSampleSeconds: InstrumentAudioUnit.maximumSampleSeconds))
         controller.view.backgroundColor = .clear
         addChild(controller)
         controller.view.frame = view.bounds

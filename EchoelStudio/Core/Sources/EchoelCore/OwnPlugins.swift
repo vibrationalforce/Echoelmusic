@@ -23,6 +23,13 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
                                    manufacturerName: "Echoel"),
         summary: "The studio's synthesized drum kit on the General MIDI drum map, as an Audio Unit for other hosts.")
 
+    public static let sampler = OwnPlugin(
+        productID: "com.echoelmusic.studio.sampler",
+        component: PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("eSmp"),
+                                   manufacturer: PluginComponent.code("Echo"), name: "Echoel Sampler",
+                                   manufacturerName: "Echoel"),
+        summary: "Load a sample and play it across the keys, as an Audio Unit for other hosts. The sample is saved with the host's session.")
+
     /// The four standard effects for other hosts, as one purchase. In Echoel itself they stay
     /// free; this unlocks the extension's copies (`StandardEffect.extensionComponent`).
     public static let effects = OwnPlugin(
@@ -32,7 +39,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
                                    manufacturerName: "Echoel"),
         summary: "EQ, Compressor, Delay and Reverb as Audio Units for AUM, Logic, Cubasis, GarageBand and other hosts.")
 
-    public static let all: [OwnPlugin] = [synth, drums, effects]
+    public static let all: [OwnPlugin] = [synth, drums, sampler, effects]
 }
 
 /// The effects every Echoel user has, free: the channel tools of a desk. They are Audio Units

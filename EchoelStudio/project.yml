@@ -42,6 +42,7 @@ targets:
       # Our own Audio Units ship inside the app (PlugIns/); they are sold as in-app purchases.
       - target: EchoelSynth
       - target: EchoelDrums
+      - target: EchoelSampler
       - target: EchoelEffects
     settings:
       base:
@@ -120,6 +121,34 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.drums
         PRODUCT_NAME: EchoelDrums
         INFOPLIST_FILE: Plugins/Drums/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+
+  # Echoel Sampler — load a sample, play it across the keys (aumu 'eSmp' 'Echo'). The sample
+  # travels in the unit's fullState, so a host session brings it back.
+  EchoelSampler:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Plugins/Sampler
+        excludes:
+          - "Info.plist"
+      - path: Plugins/Shared
+    dependencies:
+      - package: EchoelCore
+      - package: EchoelDSP
+      - package: EchoelEngine
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.studio.sampler
+        PRODUCT_NAME: EchoelSampler
+        INFOPLIST_FILE: Plugins/Sampler/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"

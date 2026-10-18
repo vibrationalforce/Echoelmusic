@@ -8,6 +8,11 @@ public enum SampleFile {
     public struct Mono: Sendable, Equatable {
         public let samples: [Float]
         public let sampleRate: Double
+
+        public init(samples: [Float], sampleRate: Double) {
+            self.samples = samples
+            self.sampleRate = sampleRate
+        }
     }
 
     public enum ReadError: Error, Equatable {

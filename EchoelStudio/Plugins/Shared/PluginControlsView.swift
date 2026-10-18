@@ -1,7 +1,9 @@
 import AudioToolbox
 import EchoelCore
+import EchoelEngine
 import Observation
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// A plugin's controls, mirrored from its parameter tree: the host's automation moves them,
 /// and moving them writes the tree. Shared by every Echoel extension.
@@ -13,10 +15,18 @@ final class PluginControlsModel {
     let title: String
     let isUnlocked: Bool
     let help: String?
+    /// For a sampler: what it plays, and the last problem loading one.
+    private(set) var sampleName: String?
+    private(set) var sampleMessage: String?
+    var acceptsSamples: Bool { installSample != nil }
+    @ObservationIgnored private let installSample: ((SampleFile.Mono?, String) throws -> Void)?
     @ObservationIgnored private var token: AUParameterObserverToken?
     @ObservationIgnored private let tree: AUParameterTree
 
-    init(tree: AUParameterTree, title: String, isUnlocked: Bool, help: String? = nil) {
+    init(tree: AUParameterTree, title: String, isUnlocked: Bool, help: String? = nil, sampleName: String? = nil,
+         installSample: ((SampleFile.Mono?, String) throws -> Void)? = nil) {
+        self.sampleName = sampleName
+        self.installSample = installSample
         self.tree = tree
         self.title = title
         parameters = tree.allParameters
@@ -28,6 +38,32 @@ final class PluginControlsModel {
         })
     }
 
+    /// Reads the file off the main thread, then hands it to the unit.
+    func loadSample(from url: URL, maximumSeconds: Double) async {
+        guard let installSample else { return }
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        let result = await Task.detached { try SampleFile.readMono(url, maximumSeconds: maximumSeconds) }.result
+        let name = String(url.deletingPathExtension().lastPathComponent.prefix(60))
+        do {
+            try installSample(try result.get(), name)
+            sampleName = name
+            sampleMessage = nil
+        } catch SampleFile.ReadError.tooLong(let seconds) {
+            sampleMessage = "This file is longer than \(Int(seconds)) seconds."
+        } catch SampleFile.ReadError.empty {
+            sampleMessage = "This file holds no audio."
+        } catch {
+            sampleMessage = "This file is not an audio format Echoel can read."
+        }
+    }
+
+    func clearSample() {
+        try? installSample?(nil, "")
+        sampleName = nil
+        sampleMessage = nil
+    }
+
     func set(_ parameter: AUParameter, _ value: AUValue) {
         values[parameter.address] = value
         parameter.setValue(value, originator: token)
@@ -36,6 +72,9 @@ final class PluginControlsModel {
 
 struct PluginControlsView: View {
     let model: PluginControlsModel
+    /// The longest sample the controls offer to load.
+    var maximumSampleSeconds: Double = 30
+    @State private var importing = false
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.
     private static func isExponential(_ parameter: AUParameter) -> Bool {
@@ -66,6 +105,7 @@ struct PluginControlsView: View {
                         .font(.caption)
                         .foregroundStyle(Color(white: 0.6))
                 }
+                if model.acceptsSamples { sampleRow }
                 ForEach(model.parameters, id: \.address) { parameter in
                     row(parameter)
                 }
@@ -78,6 +118,26 @@ struct PluginControlsView: View {
             .padding(16)
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var sampleRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(model.sampleName ?? "No sample").font(.subheadline).foregroundStyle(.white).lineLimit(1)
+                Spacer()
+                if model.sampleName != nil {
+                    Button("Clear") { model.clearSample() }
+                }
+                Button("Load Sample") { importing = true }
+            }
+            if let message = model.sampleMessage {
+                Text(message).font(.caption).foregroundStyle(Color(white: 0.6))
+            }
+        }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.audio]) { result in
+            guard case .success(let url) = result else { return }
+            Task { await model.loadSample(from: url, maximumSeconds: maximumSampleSeconds) }
+        }
     }
 
     @ViewBuilder private func row(_ parameter: AUParameter) -> some View {
