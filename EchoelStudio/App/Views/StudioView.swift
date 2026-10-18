@@ -184,6 +184,7 @@ struct TempoField: View {
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
     @State private var dragStart: Double?
+    @State private var taps = TapTempo()
     @ScaledMetric(relativeTo: .title2) private var valueWidth: CGFloat = 72
 
     private static let gestureKey = "project.tempo"
@@ -229,7 +230,19 @@ struct TempoField: View {
             Button { nudge(1) } label: { Image(systemName: "plus") }
                 .buttonStyle(ToolButtonStyle())
                 .accessibilityLabel("Faster")
+
+            Button("Tap", action: tap)
+                .buttonStyle(ToolButtonStyle())
+                .accessibilityHint("Tap in time to set the tempo.")
+                .disabled(midi.followedSource != nil)
         }
+    }
+
+    /// A run of taps is one undo step: a new measurement closes the one before.
+    private func tap() {
+        let now = ProcessInfo.processInfo.systemUptime
+        if taps.startsOver(at: now) { store.endGesture() }
+        if let bpm = taps.tap(at: now) { set(bpm) }
     }
 
     private func nudge(_ delta: Double) {
