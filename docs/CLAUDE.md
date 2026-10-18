@@ -175,6 +175,13 @@ stubs (`privacy/`, `terms/`, `support/`, ~450 B each), three screenshot demos, `
 — and **`index.html`**, the largest page in the directory at **63,899 B**, which instead carries
 one inline `<style>` block of **21,942 chars** and no `shared.js` at all.
 
+**`one-clock.html` (2026-10-18) is standalone BY DESIGN and stays that way:** one file, the
+breath cycle anchored to UTC (10 s, 4 in / 6 out), no server, no `shared.css`/`shared.js`, only
+the site's own typeface. It is meant to open on any device in a second and to keep running
+without a connection, so do not "repair" it onto the shared assets. It is linked from the
+homepage footer and listed in the sitemap; rendered headless at 320/390/1024 px with no
+overflow and no console error before it shipped.
+
 That is not automatically a defect (the homepage may want to inline its critical CSS), but it
 means **a change to `shared.css` does not reach the homepage**. Any site-wide visual or a11y
 change has to be made twice, and the second place is easy to miss. State which one you edited.
