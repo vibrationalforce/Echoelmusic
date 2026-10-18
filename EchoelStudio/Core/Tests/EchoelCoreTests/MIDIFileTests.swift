@@ -111,7 +111,7 @@ final class MIDIFileTests: XCTestCase {
                                        ControlChange(kind: .controller(number: 1), start: 240, value: 77)]).apply(to: &project)
         let keys = try read(MIDIFile.data(for: project)).tracks[1]
         let controls = keys.events.filter { [0xB0, 0xE0].contains($0.bytes[0] & 0xF0) }
-        XCTAssertEqual(controls.map(\.tick), [bar + 240, bar + 480, 2 * bar])
+        XCTAssertEqual(controls.map(\.tick), [bar + 240, bar + 480, 2 * bar].map { Int($0) })
         XCTAssertEqual(controls.map(\.bytes), [[0xB0, 1, 77], [0xE0, 0x01, 0x40], [0xE0, 0x00, 0x40]],
                        "14-bit bend, low seven bits first; the wheel returns to centre where the clip ends")
     }
