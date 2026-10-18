@@ -303,7 +303,7 @@ private struct PlacementBlock: View {
 }
 
 /// A placed audio region: the file's name over its length. Drag moves it by whole bars, one
-/// undo step on release; hold for Delete.
+/// undo step on release; drag an edge to trim it to the beat; hold for Delete.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
     let track: Track
@@ -315,6 +315,9 @@ private struct RegionBlock: View {
     let pointsPerBar: CGFloat
 
     @State private var dragX: CGFloat = 0
+    /// Live drag of the left and right edge, in points, until the finger lifts.
+    @State private var trimLeft: CGFloat = 0
+    @State private var trimRight: CGFloat = 0
 
     private var ticksPerBar: Tick { MusicalTime.ticksPerBar(signature) }
     private var ticksPerPoint: Double { Double(ticksPerBar) / Double(pointsPerBar) }
@@ -323,7 +326,7 @@ private struct RegionBlock: View {
 
     var body: some View {
         let color = Theme.Color.track(track.colorIndex)
-        let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint))
+        let width = Swift.max(8, CGFloat(Double(length) / ticksPerPoint) - trimLeft + trimRight)
         RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.25))
             .overlay(
@@ -336,9 +339,11 @@ private struct RegionBlock: View {
                     .lineLimit(1)
                     .padding(Theme.Space.xs)
             }
+            .overlay(alignment: .leading) { edgeHandle(.start) }
+            .overlay(alignment: .trailing) { edgeHandle(.end) }
             .frame(width: width, height: Theme.Size.trackRowHeight - 8)
-            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX, y: 4)
-            .opacity(dragX == 0 ? 1 : 0.8)
+            .offset(x: CGFloat(Double(region.start) / ticksPerPoint) + dragX + trimLeft, y: 4)
+            .opacity(dragX == 0 && trimLeft == 0 && trimRight == 0 ? 1 : 0.8)
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
                     .onChanged { dragX = $0.translation.width }
@@ -358,6 +363,40 @@ private struct RegionBlock: View {
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Delete") { remove() }
+            .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
+            .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
+            .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
+    }
+
+    /// A grip along one edge, wide enough for a finger; it wins over the move drag.
+    private func edgeHandle(_ edge: Arranging.Edge) -> some View {
+        Rectangle()
+            .fill(Theme.Color.track(track.colorIndex).opacity(0.6))
+            .frame(width: 4)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 2, coordinateSpace: .named(ArrangeLane.space))
+                    .onChanged { value in
+                        if edge == .start { trimLeft = value.translation.width } else { trimRight = value.translation.width }
+                    }
+                    .onEnded { value in
+                        trimLeft = 0
+                        trimRight = 0
+                        let delta = Tick((Double(value.translation.width) * ticksPerPoint).rounded())
+                        apply(edge, byTicks: delta)
+                    }
+            )
+            .accessibilityHidden(true)
+    }
+
+    private func trim(_ edge: Arranging.Edge, beats: Tick) {
+        apply(edge, byTicks: beats * MusicalTime.ticksPerBeat(signature))
+    }
+
+    private func apply(_ edge: Arranging.Edge, byTicks delta: Tick) {
+        guard let commands = Arranging.trimmed(region, edge: edge, byTicks: delta, in: track, project: store.project) else { return }
+        try? store.perform(commands, title: "Trim Region")
     }
 
     private func move(byBars bars: Tick) {

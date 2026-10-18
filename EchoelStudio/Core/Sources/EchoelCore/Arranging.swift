@@ -100,6 +100,47 @@ public enum Arranging {
         return .movePlacement(track: track.id, placement.id, start: target)
     }
 
+    public enum Edge: Sendable { case start, end }
+
+    /// The commands for an audio region's edge dragged by `delta` ticks, snapped to the beat.
+    /// The end changes how much of the file plays. The start moves where the region begins AND
+    /// where in the file it starts, so the audio that stays sits exactly where it sat in the
+    /// song; dragged before the file's first frame it stops there. Nil when nothing changes.
+    public static func trimmed(_ region: AudioRegion, edge: Edge, byTicks delta: Tick,
+                               in track: Track, project: Project) -> [Command]? {
+        guard let file = project.mediaFile(region.media), file.sampleRate > 0, file.sampleRate.isFinite,
+              let stop = end(of: region, in: project) else { return nil }
+        let beat = MusicalTime.ticksPerBeat(project.timeSignature)
+        let map = project.tempoMap
+        func snapped(_ tick: Tick) -> Tick {
+            let clamped = Swift.min(Swift.max(0, tick), MusicalTime.maximumTick)
+            return beat > 0 ? (clamped + beat / 2) / beat * beat : clamped
+        }
+        func frames(from: Tick, to: Tick) -> Int {
+            Int(((map.seconds(at: to) - map.seconds(at: from)) * file.sampleRate).rounded())
+        }
+        switch edge {
+        case .end:
+            let target = snapped(stop + delta)
+            guard target > region.start else { return nil }
+            let length = Swift.min(Swift.max(1, frames(from: region.start, to: target)), file.frameCount - region.offset)
+            guard length >= 1, length != region.length else { return nil }
+            return [.trimRegion(track: track.id, region.id, offset: region.offset, length: length)]
+        case .start:
+            var target = snapped(region.start + delta)
+            var offset = region.offset + frames(from: region.start, to: target)
+            if offset < 0 {
+                // The file begins later than the drag: the region starts on its first frame.
+                offset = 0
+                target = map.tick(atSeconds: map.seconds(at: region.start) - Double(region.offset) / file.sampleRate)
+            }
+            let endFrame = region.offset + region.length
+            guard target != region.start, offset < endFrame else { return nil }
+            return [.trimRegion(track: track.id, region.id, offset: offset, length: endFrame - offset),
+                    .moveRegion(track: track.id, region.id, start: Swift.max(0, target))]
+        }
+    }
+
     /// A copy of the placement straight after it, as in any DAW's Duplicate.
     public static func duplicated(_ placement: Placement, in track: Track) -> Command? {
         guard let stop = Self.end(of: placement, in: track), stop <= MusicalTime.maximumTick else { return nil }

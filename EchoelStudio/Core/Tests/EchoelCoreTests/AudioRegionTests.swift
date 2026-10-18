@@ -115,4 +115,42 @@ final class AudioRegionTests: XCTestCase {
             XCTAssertTrue(names.contains(name), name)
         }
     }
+
+    func testTrimmingAnEdgeKeepsTheAudioWhereItSatInTheSong() throws {
+        // 120 BPM: one beat is 0.5 s, 24 000 frames. A 5 s file; the region plays 0.25 s…2.25 s
+        // of it from bar 2.
+        let long = MediaFile(name: "Take", path: "Media/take.wav", frameCount: 240_000, sampleRate: 48_000)
+        var p = Project()
+        let audio = TrackID(), region = RegionID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addMedia(long).apply(to: &p)
+        try Command.placeAudio(track: audio, id: region, media: long.id, start: 3_840).apply(to: &p)
+        try Command.trimRegion(track: audio, region, offset: 12_000, length: 96_000).apply(to: &p)
+        func trimmed(_ edge: Arranging.Edge, _ delta: Tick) throws -> AudioRegion? {
+            var copy = p
+            let track = try XCTUnwrap(copy.track(audio))
+            let r = try XCTUnwrap(track.regions.first)
+            guard let commands = Arranging.trimmed(r, edge: edge, byTicks: delta, in: track, project: copy) else { return nil }
+            for command in commands { try command.apply(to: &copy) }
+            return copy.track(audio)?.regions.first
+        }
+
+        let longer = try XCTUnwrap(try trimmed(.end, 1_000))
+        XCTAssertEqual(longer.length, 120_000, "one beat more, snapped to the beat")
+        XCTAssertEqual(try XCTUnwrap(try trimmed(.end, 1_000_000)).length, 228_000, "never past the end of the file")
+
+        let later = try XCTUnwrap(try trimmed(.start, 960))
+        XCTAssertEqual(later.start, 4_800)
+        XCTAssertEqual(later.offset, 36_000)
+        XCTAssertEqual(later.offset + later.length, 108_000, "the end of the audio has not moved")
+
+        let earlier = try XCTUnwrap(try trimmed(.start, -960))
+        XCTAssertEqual(earlier.offset, 0, "stops at the file's first frame")
+        XCTAssertEqual(earlier.start, 3_360, "0.25 s before bar 2")
+        XCTAssertEqual(earlier.length, 108_000)
+
+        XCTAssertNil(try trimmed(.start, 100), "less than half a beat snaps back")
+        XCTAssertNil(try trimmed(.end, -100_000), "the end cannot pass the start")
+        XCTAssertNil(try trimmed(.start, 10_000), "the start cannot pass the end")
+    }
 }
