@@ -133,9 +133,13 @@ Nur kompiliert und in CI getestet — nichts gerätegeprüft.
 | §4 MIDI-Aufnahme auf eine scharfgeschaltete Instrumentenspur | `b978009` |
 | §4 Pitch-Bend und Sustain-Pedal live (Synth + gehostete AUv3) | `1e97c97` |
 | §4 Master-Inserts (Dokument · Engine · App · Export) | `2e66371` · `023b219` |
+| §8.6 Ereignis-Spur: Bends und Controller im Clip — aufgenommen, gespielt (Synth + AUv3), als MIDI exportiert | `f7f2aaf` |
+| §4.1 Import der Songs der Alt-App (MIDI-Spuren, Mixer; Audio-Spuren leer) beim ersten Start | `a9e8cdb` |
 
-Damit ist §8.1–8.4 abgearbeitet. Offen bleibt: Bends und Controller AUFNEHMEN und abspielen (braucht die
-Ereignis-Spur, §8.6), dann `testflight.yml` (E38). Master-Inserts laufen hinter dem Master-Fader: der
+Damit ist §8.1–8.4 abgearbeitet und die E38-Bedingungen (MIDI-Export, Meter, Import) sind im Code
+erfüllt, CI grün bis Run #110. Offen: der Import hat nur aus den Codable-Definitionen abgeleitetes
+JSON gesehen, keine echte Datei vom Gerät; Audio-Regionen und Drum-Raster der Alt-App kommen nicht mit;
+kein Editor für Bends/Controller. Danach `testflight.yml` umstellen (E38). Master-Inserts laufen hinter dem Master-Fader: der
 Master-Gain ist in die Spur-Gains eingerechnet, die Kette sitzt deshalb dort, wo ein Limiter hingehört.
 Nachgezogen: eine Aufnahme während des Folgens einer fremden Clock wird mit der gespielten Tempo-Karte
 platziert, nicht mit der des Songs (`commitTake(tempoMap:)`).
