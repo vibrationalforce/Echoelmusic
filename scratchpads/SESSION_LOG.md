@@ -1291,3 +1291,12 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - `EchoelCore.AgentTools` (`6cd8b96`): 8 Aktionen → Befehle, Spur-Auflösung per Nummer/Name/Präfix, Fehler als Sätze, `describe()`.
 - App (`ccc3775`): `AgentSession` + `AgentView`, Foundation Models (iOS 26, `#if canImport` + `#available`), 8 `Tool`s, eine Anfrage = ein Undo-Schritt (Coalescing-Key je Anfrage). Song-Menü → „Assistant".
 - Nichts gerätegeprüft (Modell-Trefferquote, Transportleiste auf iPhone-Breite wegen neuer Tap-Taste).
+
+## 2026-10-18 10:45 — Review-Workflow (4 Linsen × Gegenprüfung, 8 Agenten) → 14 bestätigte Befunde, alle behoben (Run #93 grün)
+
+- Assistent: Drum-Pattern löschte die Trommel im ganzen Clip · geteilter Clip wurde über Nachbarn gestreckt · Int64-Überlauf durch Modellzahlen · Anfrage schrieb nach Songwechsel weiter (`ProjectStore.documentGeneration`) · abgelehnter Text verschwand.
+- Tap-Tempo eigener Coalescing-Key.
+- Clock-Out: negativer Versatz verschiebt jetzt jeden Puls gleich (signed hostTime). Follower: echtes Verlangsamen (≥3 übereinstimmende lange Intervalle) wird übernommen.
+- Phasenschloss: `EngineCore.timelineAnchor()` (Seqlock, Host-Zeit + Tick nach jedem Puffer, Zeitbasis des gerenderten Snapshots) statt Puffer-quantisierter Messung · Tempo-Änderungen des Songs beim Folgen ausgeblendet · erste Messung nach Start/Continue/SPP springt (`EngineCore.jump`, relativ) · Nudge mit 64-Frame-Überblendung in Audio-Regionen.
+- Audio-Regionen: Trim-Griffe (Beat-gerastet, Audio bleibt an seiner Song-Stelle).
+- Nichts gerätegeprüft.
