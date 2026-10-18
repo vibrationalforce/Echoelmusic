@@ -1285,3 +1285,9 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Tap-Tempo (Median, `EchoelCore.TapTempo`) (`718fa7c`) · Clock-Versatz −20…+40 ms (`6549406`).
 - Ableton Link bewusst nicht: C++-Abhängigkeit + Multicast-Entitlement; Founder „keine Abhängigkeiten". Nichts zu beantragen.
 - Nichts gerätegeprüft.
+
+## 2026-10-18 10:00 — EchoelStudio M6: Assistent (Run #86 grün)
+
+- `EchoelCore.AgentTools` (`6cd8b96`): 8 Aktionen → Befehle, Spur-Auflösung per Nummer/Name/Präfix, Fehler als Sätze, `describe()`.
+- App (`ccc3775`): `AgentSession` + `AgentView`, Foundation Models (iOS 26, `#if canImport` + `#available`), 8 `Tool`s, eine Anfrage = ein Undo-Schritt (Coalescing-Key je Anfrage). Song-Menü → „Assistant".
+- Nichts gerätegeprüft (Modell-Trefferquote, Transportleiste auf iPhone-Breite wegen neuer Tap-Taste).
