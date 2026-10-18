@@ -251,7 +251,8 @@ final class DocumentController {
 
     /// Turns a finished take into a region on `track`, lined up with the beat it was played to —
     /// one undo step. The take is decoded off the main thread like an imported file.
-    func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID) async {
+    /// `tempoMap` is the one the take was heard against — an external clock's while following one.
+    func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID, tempoMap: TempoMap) async {
         let package = currentURL
         let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
             Result { try AudioFileImport.decode(take.url) }
@@ -265,7 +266,7 @@ final class DocumentController {
             lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read."
             return
         }
-        let time = TimeConversion(tempoMap: store.project.tempoMap, sampleRate: take.sampleRate)
+        let time = TimeConversion(tempoMap: tempoMap, sampleRate: take.sampleRate)
         let placement = RecordingPlacement.place(startSample: take.startSample, latency: take.latency, time: time)
         guard buffer.frameCount > placement.offset else {
             try? FileManager.default.removeItem(at: take.url)

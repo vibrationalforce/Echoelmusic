@@ -131,5 +131,5 @@ Nur kompiliert und in CI getestet — nichts gerätegeprüft.
 | §4 Meter | `ff779ea` |
 
 Noch offen aus §8: Master-Inserts + LUFS/True-Peak, MIDI-Aufnahme, Pitch-Bend/CC; dann `testflight.yml` (E38).
-Bekannt und nicht behoben: eine Aufnahme während des Folgens einer fremden Clock wird mit der Tempo-Karte des
-Songs platziert (`DocumentController.commitTake`), nicht mit der gespielten.
+Nachgezogen: eine Aufnahme während des Folgens einer fremden Clock wird mit der gespielten Tempo-Karte
+platziert, nicht mit der des Songs (`commitTake(tempoMap:)`).

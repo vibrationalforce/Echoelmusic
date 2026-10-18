@@ -70,8 +70,10 @@ final class RecordController {
         isRecording = false
         let pending = target
         target = nil
+        // The map at the stop, before anything else can change it: the one the take played against.
+        let tempoMap = engine.playedTempoMap(of: store.project)
         guard let take = await engine.endTake(), let pending else { return }
-        await documents.commitTake(take, target: pending.file, onto: pending.track)
+        await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: tempoMap)
     }
 
     /// The transport's Stop: ends a take first, so the take never outlives the song playing.

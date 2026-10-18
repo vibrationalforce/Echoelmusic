@@ -531,6 +531,11 @@ final class AudioEngine {
     /// The playhead in samples. For a small leaf view that polls it, never a view body.
     var positionSample: Int64 { core?.positionSample ?? 0 }
 
+    /// The tempo map the engine plays `project` with: an external clock's tempo while following one.
+    func playedTempoMap(of project: Project) -> TempoMap {
+        playing(project).tempoMap
+    }
+
     /// The playhead as a song position. For actions, never a view body.
     func playheadTick(in project: Project) -> Tick {
         guard let core else { return 0 }
