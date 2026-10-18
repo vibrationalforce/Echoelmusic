@@ -6,6 +6,8 @@ extension Project {
     public func validate() throws {
         guard timeSignature.isValid else { throw Self.invalid("timeSignature", "numerator 1…32, denominator a power of two up to 32") }
         guard tempo.isFinite, Tempo.range.contains(tempo) else { throw Self.invalid("tempo", "must be within \(Tempo.range)") }
+        // An unknown tone system is kept and plays as twelve equal steps; a later build may know it.
+        guard context.isValid else { throw Self.invalid("context", "root 0…11, concert pitch 400…480 Hz, swing 0…1") }
         var previous: Tick = 0
         for change in tempoChanges {
             guard change.tick > previous, change.tick <= MusicalTime.maximumTick else {
@@ -29,8 +31,8 @@ extension Project {
         }
         var automated = Set<ParameterAddress>()
         for lane in automation {
-            guard automated.insert(lane.target).inserted, lane.target != .tempo else {
-                throw Self.invalid("automation", "a parameter has two lanes, or the tempo has one")
+            guard automated.insert(lane.target).inserted, lane.target.owner != .project else {
+                throw Self.invalid("automation", "a parameter has two lanes, or a song-wide one has one")
             }
         }
         var trackIDs = Set<TrackID>(), clipIDs = Set<ClipID>(), regionIDs = Set<RegionID>(), insertIDs = Set<InsertID>()

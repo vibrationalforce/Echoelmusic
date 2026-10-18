@@ -13,6 +13,8 @@ public struct Project: Codable, Equatable, Sendable {
     /// Later tempo changes, sorted by tick, each after tick 0 and at a distinct tick.
     public var tempoChanges: [TempoChange]
     public var timeSignature: TimeSignature
+    /// Key, scale, tone system, concert pitch and swing — the frame the musician sets.
+    public var context: MusicalContext
     public var tracks: [Track]
     public var scenes: [Scene]
     public var master: MixerStrip
@@ -37,13 +39,15 @@ public struct Project: Codable, Equatable, Sendable {
         media: [MediaFile] = [],
         midiMappings: [MIDIMapping] = [],
         automation: [AutomationLane] = [],
-        masterInserts: [Insert] = []
+        masterInserts: [Insert] = [],
+        context: MusicalContext = MusicalContext()
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
         self.tempo = tempo
         self.tempoChanges = tempoChanges
         self.timeSignature = timeSignature
+        self.context = context
         self.tracks = tracks
         self.scenes = scenes
         self.master = master
@@ -55,7 +59,7 @@ public struct Project: Codable, Equatable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
-        case masterInserts
+        case masterInserts, context
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -73,6 +77,7 @@ public struct Project: Codable, Equatable, Sendable {
         midiMappings = try c.decodeIfPresent([MIDIMapping].self, forKey: .midiMappings) ?? []
         automation = try c.decodeIfPresent([AutomationLane].self, forKey: .automation) ?? []
         masterInserts = try c.decodeIfPresent([Insert].self, forKey: .masterInserts) ?? []
+        context = try c.decodeIfPresent(MusicalContext.self, forKey: .context) ?? MusicalContext()
     }
 
     /// Whether one more track of `kind` fits (`Track.limit(for:)`).

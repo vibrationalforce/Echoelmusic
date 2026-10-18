@@ -99,6 +99,7 @@ final class FormatGoldenTests: XCTestCase {
 
     func testTheEarliestFormatOneFileStillOpens() throws {
         let project = try ProjectCodec.decode(earliest)
+        XCTAssertEqual(project.context, MusicalContext(), "a song from before the musical context frames nothing")
         XCTAssertEqual(project.name, "First")
         XCTAssertEqual(project.timeSignature, TimeSignature(3, 4))
         XCTAssertEqual(project.master.volumeDB, -3)
@@ -134,8 +135,11 @@ final class FormatGoldenTests: XCTestCase {
     func testTheEncoderWritesTheDocumentedKeys() throws {
         let project = try ProjectCodec.decode(current)
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
-        XCTAssertEqual(Set(root.keys), ["formatVersion", "name", "tempo", "tempoChanges", "timeSignature", "tracks",
-                                        "scenes", "master", "masterInserts", "media", "midiMappings", "automation"])
+        XCTAssertEqual(Set(root.keys), ["formatVersion", "name", "tempo", "tempoChanges", "timeSignature", "context",
+                                        "tracks", "scenes", "master", "masterInserts", "media", "midiMappings",
+                                        "automation"])
+        let context = try XCTUnwrap(root["context"] as? [String: Any])
+        XCTAssertEqual(Set(context.keys), ["root", "scale", "tuning", "concertPitch", "swing"])
         let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
         XCTAssertEqual(Set(tracks[0].keys), ["id", "name", "kind", "colorIndex", "mixer", "clips", "placements", "slots",
                                              "instrument", "regions", "inserts", "sends", "monitor"])

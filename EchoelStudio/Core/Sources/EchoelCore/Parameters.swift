@@ -19,6 +19,11 @@ public struct ParameterAddress: Hashable, Codable, Sendable, CustomStringConvert
     }
 
     public static let tempo = ParameterAddress(.project, .tempo)
+    public static let keyRoot = ParameterAddress(.project, .keyRoot)
+    public static let scale = ParameterAddress(.project, .scale)
+    public static let tuning = ParameterAddress(.project, .tuning)
+    public static let concertPitch = ParameterAddress(.project, .concertPitch)
+    public static let swing = ParameterAddress(.project, .swing)
     public static let masterVolume = ParameterAddress(.master, .volume)
     public static let masterPan = ParameterAddress(.master, .pan)
     public static func volume(_ track: TrackID) -> ParameterAddress { ParameterAddress(.track(track), .volume) }
@@ -41,6 +46,11 @@ public struct ParameterKey: RawRepresentable, Hashable, Codable, Sendable {
     public init(rawValue: String) { self.rawValue = rawValue }
 
     public static let tempo = ParameterKey(rawValue: "tempo")
+    public static let keyRoot = ParameterKey(rawValue: "key.root")
+    public static let scale = ParameterKey(rawValue: "key.scale")
+    public static let tuning = ParameterKey(rawValue: "tuning.system")
+    public static let concertPitch = ParameterKey(rawValue: "tuning.concertPitch")
+    public static let swing = ParameterKey(rawValue: "groove.swing")
     public static let volume = ParameterKey(rawValue: "mixer.volume")
     public static let pan = ParameterKey(rawValue: "mixer.pan")
 
@@ -204,6 +214,7 @@ extension Project {
     public var parameters: [ParameterDescriptor] {
         var list = [
             Self.descriptor(.tempo, title: "Tempo"),
+        ] + Self.contextDescriptors + [
             Self.descriptor(.masterVolume, title: "Master Volume"),
             Self.descriptor(.masterPan, title: "Master Pan"),
         ]
@@ -237,6 +248,9 @@ extension Project {
                                        unit: .amount, range: 0...1, defaultValue: 0, taper: .linear)
         }
         guard value(of: address) != nil else { return nil }
+        if address.owner == .project, address.key != .tempo {
+            return Self.contextDescriptors.first { $0.address == address }
+        }
         if case .track(let id) = address.owner, let synth = SynthParameter.named(address.key), let track = track(id) {
             return synth.descriptor(track: track)
         }
@@ -260,6 +274,11 @@ extension Project {
     public func value(of address: ParameterAddress) -> Double? {
         switch (address.owner, address.key) {
         case (.project, .tempo): return tempo
+        case (.project, .keyRoot): return Double(context.root)
+        case (.project, .scale): return Double(Scale.allCases.firstIndex(of: context.scale) ?? 0)
+        case (.project, .tuning): return Double(TuningSystem.library.firstIndex { $0.id == context.tuning } ?? 0)
+        case (.project, .concertPitch): return context.concertPitch
+        case (.project, .swing): return context.swing
         case (.master, .volume): return master.volumeDB
         case (.master, .pan): return master.pan
         case (.track(let id), .volume): return track(id)?.mixer.volumeDB
@@ -273,6 +292,25 @@ extension Project {
             return track.instrument.value(synth)
         default: return nil
         }
+    }
+
+    /// Key, scale, tone system, concert pitch and swing, as parameters for MIDI Learn and the agent.
+    static var contextDescriptors: [ParameterDescriptor] {
+        [
+            ParameterDescriptor(address: .keyRoot, title: "Key", unit: .choice,
+                                range: Double(MusicalContext.rootRange.lowerBound)...Double(MusicalContext.rootRange.upperBound),
+                                defaultValue: 0, taper: .stepped, choices: MusicalContext.rootNames),
+            ParameterDescriptor(address: .scale, title: "Scale", unit: .choice,
+                                range: 0...Double(Scale.allCases.count - 1), defaultValue: 0, taper: .stepped,
+                                choices: Scale.allCases.map(\.title)),
+            ParameterDescriptor(address: .tuning, title: "Tone System", unit: .choice,
+                                range: 0...Double(TuningSystem.library.count - 1), defaultValue: 0, taper: .stepped,
+                                choices: TuningSystem.library.map(\.name)),
+            ParameterDescriptor(address: .concertPitch, title: "Concert Pitch", unit: .hertz,
+                                range: MusicalContext.concertPitchRange, defaultValue: 440, taper: .linear),
+            ParameterDescriptor(address: .swing, title: "Swing", unit: .amount,
+                                range: MusicalContext.swingRange, defaultValue: 0, taper: .linear),
+        ]
     }
 
     private static func descriptor(_ address: ParameterAddress, title: String) -> ParameterDescriptor {
@@ -299,6 +337,19 @@ extension Command {
     public static func setParameter(_ address: ParameterAddress, to value: Double) -> Command? {
         switch (address.owner, address.key) {
         case (.project, .tempo): return .setTempo(bpm: value)
+        case (.project, .keyRoot):
+            guard value.isFinite else { return nil }
+            return .setKeyRoot(Int(Swift.min(Swift.max(value.rounded(), 0), 11)))
+        case (.project, .scale):
+            guard value.isFinite else { return nil }
+            let scales = Scale.allCases
+            return .setScale(scales[Int(Swift.min(Swift.max(value.rounded(), 0), Double(scales.count - 1)))])
+        case (.project, .tuning):
+            guard value.isFinite else { return nil }
+            let systems = TuningSystem.library
+            return .setTuning(id: systems[Int(Swift.min(Swift.max(value.rounded(), 0), Double(systems.count - 1)))].id)
+        case (.project, .concertPitch): return .setConcertPitch(hertz: value)
+        case (.project, .swing): return .setSwing(value)
         case (.master, .volume): return .setVolume(.master, db: value)
         case (.master, .pan): return .setPan(.master, pan: value)
         case (.track(let id), .volume): return .setVolume(.track(id), db: value)

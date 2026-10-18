@@ -33,6 +33,7 @@ public struct ParameterSpec: Equatable, Sendable {
 extension Command {
     public enum Kind: String, CaseIterable, Sendable {
         case renameProject, setTempo, setTimeSignature, setTempoChange, removeTempoChange
+        case setKeyRoot, setScale, setTuning, setConcertPitch, setSwing
         case addTrack, removeTrack, renameTrack, moveTrack, setTrackColor
         case setInstrumentParameter, loadInstrumentPreset, setInstrumentDevice, setInstrumentSample
         case setInstrumentPlugin, setPluginState
@@ -55,6 +56,11 @@ extension Command {
         case .setTimeSignature: .setTimeSignature
         case .setTempoChange: .setTempoChange
         case .removeTempoChange: .removeTempoChange
+        case .setKeyRoot: .setKeyRoot
+        case .setScale: .setScale
+        case .setTuning: .setTuning
+        case .setConcertPitch: .setConcertPitch
+        case .setSwing: .setSwing
         case .addTrack: .addTrack
         case .removeTrack: .removeTrack
         case .renameTrack: .renameTrack
@@ -142,6 +148,26 @@ public enum CommandCatalog {
             return CommandSpec(name: "tempo.change.remove", title: "Remove Tempo Change",
                                summary: "Removes the tempo change at a position.",
                                parameters: [P("tick", .ticks, "Position of the change in ticks.")])
+        case .setKeyRoot:
+            return CommandSpec(name: "context.root", title: "Change Key",
+                               summary: "Sets the key's root as a pitch class: 0 = C, 1 = C♯ … 11 = B. Writes no notes.",
+                               parameters: [P("root", .integer, "Pitch class 0–11.")])
+        case .setScale:
+            return CommandSpec(name: "context.scale", title: "Change Scale",
+                               summary: "Sets the scale a keyboard or pads can stay in. Writes no notes; chromatic constrains nothing.",
+                               parameters: [P("scale", .string, Scale.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
+        case .setTuning:
+            return CommandSpec(name: "context.tuning", title: "Change Tone System",
+                               summary: "Sets the tone system the song is tuned in, measured from the key's root.",
+                               parameters: [P("id", .string, TuningSystem.library.map(\.id).joined(separator: ", ") + ".")])
+        case .setConcertPitch:
+            return CommandSpec(name: "context.concertPitch", title: "Change Concert Pitch",
+                               summary: "Sets the A above middle C in hertz (400–480).",
+                               parameters: [P("hertz", .number, "Concert pitch in Hz.")])
+        case .setSwing:
+            return CommandSpec(name: "context.swing", title: "Change Swing",
+                               summary: "How late every second sixteenth note falls: 0 straight, 1 a full triplet feel.",
+                               parameters: [P("amount", .number, "Swing 0–1.")])
         case .addTrack:
             return CommandSpec(name: "track.add", title: "Add Track",
                                summary: "Adds an instrument, audio or return track.",

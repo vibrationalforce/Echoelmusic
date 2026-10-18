@@ -48,6 +48,7 @@ Every audio file is a plain file you can take out of `Media/`.
 | `tempo` | number | required; the tempo from tick 0 |
 | `tempoChanges` | `[{tick, bpm}]` | optional; ticks rising, after 0 |
 | `timeSignature` | `{numerator, denominator}` | required; denominator a power of two ≤ 32 |
+| `context` | musical context | optional; absent = C, chromatic, 12 equal at 440 Hz, straight |
 | `master` | mixer strip | required |
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
 | `tracks` | `[track]` | required |
@@ -57,6 +58,13 @@ Every audio file is a plain file you can take out of `Media/`.
 | `automation` | `[lane]` | optional; one lane per parameter |
 
 **Mixer strip:** `{volumeDB, pan, isMuted, isSoloed}`.
+
+**Musical context:** `{root, scale, tuning, concertPitch, swing}` — `root` a pitch class 0 (C) …
+11 (B); `scale` one of `chromatic` `major` `minor` `dorian` `phrygian` `lydian` `mixolydian`
+`locrian` `harmonicMinor` `melodicMinor` `majorPentatonic` `minorPentatonic` `blues` `wholeTone`;
+`tuning` a tone-system id (`edo12` and others; an unknown id is kept and plays as 12 equal);
+`concertPitch` 400–480 Hz; `swing` 0 (straight) … 1 (triplet feel). It frames what is played and
+writes no notes.
 
 **Track:** `id`, `name`, `kind` (`instrument` · `audio` · `returnTrack`), `colorIndex` (a palette
 slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the timeline),

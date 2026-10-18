@@ -10,6 +10,11 @@ public enum Command: Codable, Equatable, Sendable {
     case setTimeSignature(TimeSignature)
     case setTempoChange(at: Tick, bpm: Double)
     case removeTempoChange(at: Tick)
+    case setKeyRoot(Int)
+    case setScale(Scale)
+    case setTuning(id: String)
+    case setConcertPitch(hertz: Double)
+    case setSwing(Double)
 
     // Tracks
     case addTrack(id: TrackID, name: String, kind: TrackKind, index: Int?)
@@ -165,6 +170,33 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "tick", reason: "no tempo change at \(tick)")
             }
             project.tempoChanges.removeAll { $0.tick == tick }
+
+        case .setKeyRoot(let root):
+            guard MusicalContext.rootRange.contains(root) else {
+                throw CommandError.invalidValue(parameter: "root", reason: "a pitch class 0 (C) … 11 (B)")
+            }
+            project.context.root = root
+
+        case .setScale(let scale):
+            project.context.scale = scale
+
+        case .setTuning(let id):
+            guard TuningSystem.library.contains(where: { $0.id == id }) else {
+                throw CommandError.invalidValue(parameter: "id", reason: "names no tone system")
+            }
+            project.context.tuning = id
+
+        case .setConcertPitch(let hertz):
+            guard hertz.isFinite, MusicalContext.concertPitchRange.contains(hertz) else {
+                throw CommandError.invalidValue(parameter: "hertz", reason: "must be within \(MusicalContext.concertPitchRange)")
+            }
+            project.context.concertPitch = hertz
+
+        case .setSwing(let amount):
+            guard amount.isFinite, MusicalContext.swingRange.contains(amount) else {
+                throw CommandError.invalidValue(parameter: "amount", reason: "must be within 0…1")
+            }
+            project.context.swing = amount
 
         case let .addTrack(id, name, kind, index):
             guard project.trackIndex(id) == nil else { throw CommandError.duplicateID(id.description) }
@@ -473,7 +505,9 @@ extension Command {
             project.midiMappings.append(MIDIMapping(control: control, target: target))
 
         case let .setAutomation(target, points):
-            guard target != .tempo, let descriptor = project.descriptor(for: target) else {
+            // The song-wide frame — tempo, key, tuning, swing — is not automated: the tempo has
+            // its own track, and the engine reads the rest once per song.
+            guard target.owner != .project, let descriptor = project.descriptor(for: target) else {
                 throw CommandError.invalidValue(parameter: "target",
                                                 reason: "names no parameter that can be automated (the tempo has its own track)")
             }

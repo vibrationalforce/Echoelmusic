@@ -19,7 +19,7 @@ struct AutomateMenu: View {
     var body: some View {
         let project = store.project
         let open = project.parameters.filter {
-            $0.address.owner == owner && $0.address != .tempo && project.automation(for: $0.address) == nil
+            $0.address.owner == owner && $0.address.owner != .project && project.automation(for: $0.address) == nil
         }
         let units = pluginUnits(project)
         Menu("Automate", systemImage: "point.topleft.down.curvedto.point.bottomright.up") {
