@@ -1300,3 +1300,16 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Phasenschloss: `EngineCore.timelineAnchor()` (Seqlock, Host-Zeit + Tick nach jedem Puffer, Zeitbasis des gerenderten Snapshots) statt Puffer-quantisierter Messung · Tempo-Änderungen des Songs beim Folgen ausgeblendet · erste Messung nach Start/Continue/SPP springt (`EngineCore.jump`, relativ) · Nudge mit 64-Frame-Überblendung in Audio-Regionen.
 - Audio-Regionen: Trim-Griffe (Beat-gerastet, Audio bleibt an seiner Song-Stelle).
 - Nichts gerätegeprüft.
+
+## 2026-10-18 — EchoelStudio M7: eigene AUv3 als Käufe (CI #98 grün, nichts gerätegeprüft)
+
+- `2d464cc` Echoel Effects: EQ/Kompressor/Delay/Reverb als aufx `xEQ5`/`xCmp`/`xDly`/`xRvb` für fremde
+  Hosts, ein Kauf. Eigene Subtypen statt der In-App-Ids (`eEQ5` …), sonst lädt der Zufall. Demo-Sperre
+  in `StandardEffectUnit` (2 s Stille / 30 s), in der App immer offen.
+- `59c6542` Echoel Drums (aumu `eDrm`): das synthetisierte Kit, GM-Map. Synth und Drums laufen über EINE
+  `InstrumentAudioUnit` (Plugins/Shared) über `InstrumentKernel`; alle Erweiterungen über die Basis
+  `PluginViewController` (Unit machen, sperren bis Kauf gefunden, Bedienfläche).
+- Rot-Runden: #94 `[0, …]` gegen `[Tick]` (Literal als Int geschlossen), #95 Plist-Splice mit übrigen
+  Tags (vor dem Push `plistlib.load` laufen lassen!), #96 Sinus-Map zu langsam für den Typprüfer.
+- Offen: Sampler-AUv3 (Datei + Zustand in der Erweiterung), Produkte/Preise in ASC (Founder),
+  Gerätetest in AUM, ob StoreKit in der Erweiterung im fremden Host trägt.
