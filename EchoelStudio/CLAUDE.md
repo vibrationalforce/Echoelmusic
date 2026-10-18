@@ -1,7 +1,11 @@
 # EchoelStudio/ — the restart (2026-10-17)
 
-This directory is the new app. **The product, scope and architecture are defined in
-`docs/dev/NEUSTART_2026-10-17.md`; read it before any change here.** The root `CLAUDE.md`
+This directory is the new app. **The build plan is `docs/dev/NEUPLANUNG_2026-10-18.md`
+(approved 2026-10-18: no genres, no generated notes, EchoelStudio is ordered rather than
+rewritten, phase P0 before 1.0); product and scope are in `docs/dev/NEUSTART_2026-10-17.md`.
+Read both before any change here. The song format is public: `docs/FORMAT.md`, pinned by
+`Core/Tests/EchoelCoreTests/FormatGoldenTests.swift` — a change that breaks it is a format
+version bump with a migration, never an edit to the golden files.** The root `CLAUDE.md`
 describes the legacy bio-instrument under `Sources/Echoelmusic` — its PRODUCT rules do not
 apply here. Its engineering lessons do, and the ones that matter are restated below so
 nothing has to be fished out of the long file.
@@ -11,8 +15,8 @@ nothing has to be fished out of the long file.
 | Path | What | Depends on |
 |---|---|---|
 | `Core/` | Swift package `EchoelCore`: project document, commands, command catalog, undo, codec, parameters, tempo map | Foundation, Observation |
-| `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope — pure value types, render-thread safe | Foundation |
-| `Engine/` | Swift package `EchoelEngine`: snapshot, synth slots, sample-accurate sequencer, mix, metronome — render thread, tested offline | EchoelCore, EchoelDSP, Synchronization |
+| `DSP/` | Swift package `EchoelDSP`: oscillator, filter, envelope, PolySynth, drum kit, sampler, EQ/compressor/delay/reverb, loudness (BS.1770) and true peak — pure processors, render-thread safe, no Core | Foundation |
+| `Engine/` | Swift package `EchoelEngine`: snapshot, sample-accurate sequencer, mixer, meters, metronome, offline render, plugin kernels, AUv3 hosting — render thread, tested offline | EchoelCore, EchoelDSP, Synchronization |
 | `App/` | the app (XcodeGen spec `project.yml`): design system, AVAudioEngine glue, media import, views | EchoelCore, EchoelDSP, EchoelEngine |
 | `Plugins/AUv3/` | the ONE AUv3 extension `EchoelPlugins` under `com.echoelmusic.app.auv3` (the only registered Audio Unit id): Synth `eSyn`, Drums `eDrm`, Sampler `eSmp`, EQ/Compressor/Delay/Reverb `xEQ5`/`xCmp`/`xDly`/`xRvb`, plus `echl` (the earlier app's instrument, kept so saved host sessions open). ONE purchase unlocks all (`EchoelCore.PluginUnlock`, `com.echoelmusic.app.pro`). Never add a second extension or product: no other id is registered | EchoelCore, EchoelDSP, EchoelEngine |
 | `Plugins/Shared/` | the extension's building blocks: the one instrument unit (`InstrumentAudioUnit` over an `InstrumentKernel`), the principal-class base (demo lock, license, controls), controls from the parameter tree. An extension adds only its `makeUnit` | EchoelCore, EchoelEngine |
@@ -59,8 +63,10 @@ on modules below it — never the other way round.
 ## Verifying
 
 There is no Swift toolchain in a cloud session. The workflow `.github/workflows/studio.yml`
-runs `swift test` for `Core/` on macOS and builds it for iOS; read its job steps on the
-commit you pushed. On a Mac: `swift test --package-path EchoelStudio/Core`.
+runs `swift test` for `Core/`, `DSP/` and `Engine/` on macOS, builds each for iOS, and builds the
+app for the simulator and as a Release device build; read its job steps on the commit you
+pushed (a newer push cancels the older run). On a Mac:
+`swift test --package-path EchoelStudio/Core` (likewise `DSP`, `Engine`).
 
 ⚠️ `EchoelStudio/**` is in no auto-merge path filter yet: a commit touching only this
 directory does not reach `main` by itself. That is deliberate until the Studio workflow is a
