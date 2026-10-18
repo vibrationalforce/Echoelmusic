@@ -1313,3 +1313,7 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Tags (vor dem Push `plistlib.load` laufen lassen!), #96 Sinus-Map zu langsam für den Typprüfer.
 - Offen: Sampler-AUv3 (Datei + Zustand in der Erweiterung), Produkte/Preise in ASC (Founder),
   Gerätetest in AUM, ob StoreKit in der Erweiterung im fremden Host trägt.
+- `5957963`/`c37c4e0`/`73e374c` Echoel Sampler (aumu `eSmp`): `SamplerKernel` (Ring + Folgenummer für den
+  Sample-Tausch, nie Freigabe im Render-Thread), `SampleFile` (ein Decoder für App und Plugin), Laden in der
+  Plugin-Fläche (≤ 30 s), Sample im `fullState`. CI #101 grün. Lehre: im Test vor der ersten Note nach
+  einem `load` einmal rendern — im Host holt der Render das Sample, bevor er MIDI verarbeitet.
