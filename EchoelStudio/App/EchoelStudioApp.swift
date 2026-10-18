@@ -73,7 +73,7 @@ struct EchoelStudioApp: App {
             }
             guard phase != .active else { return }
             // Plugins keep their settings to themselves until asked; ask before writing the song.
-            try? store.perform(engine.plugins.captureCommands(for: store.project), title: "Plugin Settings")
+            try? store.absorb(engine.plugins.captureCommands(for: store.project))
             documents.saveNow()
         }
     }

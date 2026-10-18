@@ -71,6 +71,29 @@ public final class ProjectStore {
         project = draft
     }
 
+    /// Writes state that is not an edit — the plugins' own settings, captured before a save or an
+    /// export — into the song and into every undo and redo step where it applies. Saving then
+    /// neither adds a step nor clears redo, and an undo never takes a plugin back to settings it
+    /// no longer has. All or nothing on the open song; a step it cannot apply to stays as it was.
+    public func absorb(_ commands: [Command]) throws {
+        guard !commands.isEmpty else { return }
+        var draft = project
+        for command in commands {
+            try command.apply(to: &draft)
+        }
+        guard draft != project else { return }
+        func absorbed(_ snapshot: Project) -> Project {
+            var copy = snapshot
+            for command in commands {
+                guard (try? command.apply(to: &copy)) != nil else { return snapshot }
+            }
+            return copy
+        }
+        undoStack = undoStack.map { Step(title: $0.title, before: absorbed($0.before), after: absorbed($0.after)) }
+        redoStack = redoStack.map { Step(title: $0.title, before: absorbed($0.before), after: absorbed($0.after)) }
+        project = draft
+    }
+
     /// Closes an open gesture, so the next perform starts a new undo step.
     public func endGesture() {
         openCoalescingKey = nil

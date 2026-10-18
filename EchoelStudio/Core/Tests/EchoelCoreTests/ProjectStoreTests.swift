@@ -45,6 +45,27 @@ final class ProjectStoreTests: XCTestCase {
         XCTAssertEqual(store.project, Project())
     }
 
+    func testAbsorbedStateIsNoStepKeepsRedoAndSurvivesUndo() throws {
+        let store = ProjectStore()
+        let track = TrackID()
+        try store.perform(.addTrack(id: track, name: "Keys", kind: .instrument, index: nil))
+        try store.perform(.setTempo(bpm: 140))
+        try store.perform(.renameProject(name: "Night"))
+        store.undo()
+        try store.absorb([.setTrackColor(track, colorIndex: 3)])
+        XCTAssertEqual(store.undoStack.count, 2, "no step of its own")
+        XCTAssertEqual(store.redoTitle, "Rename Project", "and redo is kept")
+        store.redo()
+        XCTAssertEqual(store.project.name, "Night")
+        XCTAssertEqual(store.project.tracks.first?.colorIndex, 3, "redo keeps the absorbed state")
+        store.undo()
+        store.undo()
+        XCTAssertEqual(store.project.tracks.first?.colorIndex, 3, "so does undo")
+        store.undo()
+        XCTAssertTrue(store.project.tracks.isEmpty, "a step before the track existed stays as it was")
+        XCTAssertThrowsError(try store.absorb([.setTrackColor(TrackID(), colorIndex: 1)]))
+    }
+
     func testACommandThatChangesNothingAddsNoStep() throws {
         let store = ProjectStore()
         try store.perform(.setTempo(bpm: Tempo.defaultBPM))

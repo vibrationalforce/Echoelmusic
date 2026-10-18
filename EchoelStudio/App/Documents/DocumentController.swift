@@ -116,7 +116,7 @@ final class DocumentController {
         isExporting = true
         defer { isExporting = false }
         let rate = 48_000.0
-        try? store.perform(plugins.captureCommands(for: store.project), title: "Plugin Settings")
+        try? store.absorb(plugins.captureCommands(for: store.project))
         let project = store.project
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let buffers = samples
