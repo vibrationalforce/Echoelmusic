@@ -29,4 +29,6 @@ final class AudioUnitViewController: PluginViewController {
 
 extension StandardEffectUnit: EchoelPluginUnit {
     var title: String { effect.extensionComponent.name }
+    /// The effects are free in other hosts as in Echoel.
+    var needsPurchase: Bool { false }
 }

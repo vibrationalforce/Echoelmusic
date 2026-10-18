@@ -1,4 +1,5 @@
-/// The one purchase that unlocks every Echoel Audio Unit in other hosts. It lives in the app's
+/// The one purchase that unlocks Echoel's instruments in other hosts; the effects are free there
+/// too (founder decision 2026-10-18). It lives in the app's
 /// existing App Store record (`com.echoelmusic.app`), so selling the plugins needs no new app, no
 /// new bundle id and exactly one in-app purchase. Inside Echoel the same instruments and effects
 /// are free.
@@ -8,7 +9,8 @@ public enum PluginUnlock {
 }
 
 /// The Audio Units Echoel makes, as the app's store and the plugins themselves know them. All of
-/// them ship in ONE extension (`com.echoelmusic.app.auv3`) and are unlocked by `PluginUnlock`.
+/// them ship in ONE extension (`com.echoelmusic.app.auv3`); the instruments are unlocked by
+/// `PluginUnlock`, the effects need nothing.
 public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public let component: PluginComponent
     public let summary: String
@@ -50,7 +52,11 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
                                    manufacturerName: "Echoel"),
         summary: "Opens host sessions saved with the earlier Echoelmusic instrument.")
 
-    public static let all: [OwnPlugin] = [synth, drums, sampler, effects]
+    /// What the purchase unlocks in other hosts.
+    public static let instruments: [OwnPlugin] = [synth, drums, sampler]
+    /// Free in other hosts as in Echoel.
+    public static let free: [OwnPlugin] = [effects]
+    public static let all: [OwnPlugin] = instruments + free
 }
 
 /// The effects every Echoel user has, free: the channel tools of a desk. They are Audio Units

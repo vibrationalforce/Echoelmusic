@@ -3,16 +3,19 @@ import EchoelCore
 import SwiftUI
 import UIKit
 
-/// A unit the Echoel extension makes, and its lock. One purchase unlocks them all.
+/// A unit the Echoel extension makes, and its lock. One purchase unlocks the instruments; the
+/// effects are free (`needsPurchase` false) and never play as a demo.
 protocol EchoelPluginUnit: AUAudioUnit {
     var title: String { get }
     var isUnlocked: Bool { get set }
+    var needsPurchase: Bool { get }
     /// One line under the controls, for what the parameters cannot say (a note map).
     var help: String? { get }
 }
 
 extension EchoelPluginUnit {
     var help: String? { nil }
+    var needsPurchase: Bool { true }
 }
 
 /// What the Echoel extension's principal class does: make the unit the host asks for, lock it
@@ -38,8 +41,13 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
     /// demo's first silence at 28 seconds.
     nonisolated func createAudioUnit(with componentDescription: AudioComponentDescription) throws -> AUAudioUnit {
         let unit = try Self.makeUnit(componentDescription)
-        unit.isUnlocked = false
         let box = UnitBox(unit)
+        guard unit.needsPurchase else {
+            unit.isUnlocked = true
+            Task { await MainActor.run { self.adopt(box.unit) } }
+            return unit
+        }
+        unit.isUnlocked = false
         Task {
             let unlocked = await PluginLicense.isUnlocked()
             box.unit.isUnlocked = unlocked

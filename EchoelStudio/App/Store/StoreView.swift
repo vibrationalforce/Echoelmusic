@@ -12,10 +12,13 @@ struct StoreView: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(OwnPlugin.all) { plugin in row(plugin) }
+                    ForEach(OwnPlugin.instruments) { plugin in row(plugin) }
                     purchase
                 } footer: {
-                    Text("Use them in AUM, Logic Pro, Cubasis, GarageBand and any other Audio Unit host. Before you buy, they play as a demo: two seconds of silence every thirty.")
+                    Text("Play them in AUM, Logic Pro, Cubasis, GarageBand and any other Audio Unit host. Before you buy, the instruments play as a demo: two seconds of silence every thirty. One purchase, no subscription.")
+                }
+                Section("Free") {
+                    ForEach(OwnPlugin.free) { plugin in row(plugin) }
                 }
                 Section {
                     Button("Restore Purchases") { Task { await store.restore() } }
@@ -45,7 +48,7 @@ struct StoreView: View {
     /// One purchase unlocks all of them.
     private var purchase: some View {
         HStack {
-            Text("All \(OwnPlugin.all.count) in other apps").font(Theme.Font.body)
+            Text("All \(OwnPlugin.instruments.count) instruments in other apps").font(Theme.Font.body)
             Spacer()
             if store.isOwned {
                 Text("Owned")

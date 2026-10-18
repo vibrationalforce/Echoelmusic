@@ -94,6 +94,13 @@ final class OwnPluginTests: XCTestCase {
                       "the one purchase lives in the existing App Store record")
     }
 
+    func testThePurchaseIsForTheInstrumentsAndTheEffectsAreFree() {
+        XCTAssertEqual(OwnPlugin.all, OwnPlugin.instruments + OwnPlugin.free)
+        XCTAssertTrue(OwnPlugin.instruments.allSatisfy { $0.component.role == .instrument })
+        XCTAssertTrue(OwnPlugin.free.allSatisfy { $0.component.role == .effect })
+        XCTAssertTrue(OwnPlugin.free.contains(OwnPlugin.effects))
+    }
+
     func testTheStandardEffectsAreDistinctEffectsThatKnowThemselvesAgain() {
         let components = StandardEffect.allCases.map(\.component)
         XCTAssertEqual(Set(components).count, StandardEffect.allCases.count)
