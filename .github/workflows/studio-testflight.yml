@@ -134,6 +134,15 @@ jobs:
           set -eo pipefail
           if [ $RESULT -ne 0 ]; then
             echo "::error title=Archive failed::$(grep -E ': error: |provision|signing|certificate' /tmp/archive.log | tail -15 | tr '\n' ' | ')"
+            # What the profiles Xcode fetched actually grant, so a capability mismatch is named.
+            for profile in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision \
+                           ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+              [ -f "$profile" ] || continue
+              security cms -D -i "$profile" > /tmp/profile.plist 2>/dev/null || continue
+              name=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/profile.plist 2>/dev/null)
+              groups=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups' /tmp/profile.plist 2>/dev/null | tr -d '\n ' || echo none)
+              echo "::warning title=Profile::$name — application-groups: ${groups:-none}"
+            done
             { echo '## Archive failed'; echo '```'; grep -E ': error: ' /tmp/archive.log | head -30 || true; echo '---'; tail -60 /tmp/archive.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
