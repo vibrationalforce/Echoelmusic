@@ -33,6 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     timeout-minutes: 20
+    # Inside a container the default step shell is `sh` (dash), where `set -o pipefail` is an
+    # illegal option — run #1 died on that line before the first swift command. Bash it is.
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
