@@ -7,8 +7,10 @@ import Synchronization
 /// A standard effect as an Audio Unit effect (`aufx`): stereo in, stereo out, its parameters in
 /// a tree that hosts, automation and MIDI learn reach like any plugin's. The app registers it in
 /// its own process, so it loads without an extension and without a purchase. The Echoel Effects
-/// extension makes the same unit from its own ids (`StandardEffect.extensionComponent`) and
-/// locks it to the demo until the purchase is found.
+/// extension makes the same unit from its own ids (`StandardEffect.extensionComponent`) — and
+/// leaves it unlocked: the effects are free in other hosts too (founder 2026-10-18; the
+/// extension's shell declares `needsPurchase == false`). The demo branch below stays so a shell
+/// COULD lock a unit; today only `StandardEffectUnitTests` exercises it.
 public final class StandardEffectUnit: AUAudioUnit {
     /// Registers every standard effect in this process. Call once, before the first load.
     public static func register() {
@@ -112,8 +114,9 @@ public final class StandardEffectUnit: AUAudioUnit {
     public override var canProcessInPlace: Bool { true }
 
     /// Unlocked, the unit always plays. Locked, it plays as a demo: two seconds of silence every
-    /// thirty. Units made in the app are unlocked; the extension locks its own until the
-    /// purchase is found.
+    /// thirty. Every unit starts unlocked, and no shell locks an effect: the effects are free in
+    /// the app and in other hosts (founder 2026-10-18). The instruments' demo lives in their own
+    /// shell (`Plugins/Shared/InstrumentAudioUnit`), not here.
     public var isUnlocked: Bool {
         get { render.unlocked.load(ordering: .acquiring) }
         set { render.unlocked.store(newValue, ordering: .releasing) }
