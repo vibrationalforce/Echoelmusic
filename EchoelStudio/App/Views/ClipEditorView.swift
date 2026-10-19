@@ -97,7 +97,7 @@ struct ClipEditorView: View {
         let clip = ClipID()
         let length = Self.newClipBars * MusicalTime.ticksPerBar(store.project.timeSignature)
         try? store.perform([
-            .createClip(track: track.id, id: clip, name: "\(track.name) Clip", length: length),
+            .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"), length: length),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: 0),
         ], title: "New Clip")
     }

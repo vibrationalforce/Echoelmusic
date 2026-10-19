@@ -51,6 +51,30 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(project.timeSignature, TimeSignature(7, 8))
     }
 
+    func testADerivedClipNameFitsWhateverTheTrackIsCalled() throws {
+        let long = String(repeating: "x", count: Names.maximumLength)
+        var project = Project()
+        let track = TrackID()
+        try Command.addTrack(id: track, name: long, kind: .instrument, index: nil).apply(to: &project)
+
+        // The hand-built name the views used to compose is one word too long and is refused.
+        XCTAssertThrowsError(try Command.createClip(track: track, id: ClipID(), name: "\(long) Clip", length: bar)
+            .apply(to: &project))
+
+        let derived = Names.derived(long, suffix: "Clip")
+        XCTAssertEqual(derived.count, Names.maximumLength)
+        XCTAssertTrue(derived.hasSuffix(" Clip"))
+        try Command.createClip(track: track, id: ClipID(), name: derived, length: bar).apply(to: &project)
+        XCTAssertEqual(project.tracks[0].clips.count, 1)
+
+        XCTAssertEqual(Names.derived("Bass", suffix: "Clip"), "Bass Clip")
+        XCTAssertEqual(Names.derived("Bass", suffix: "3"), "Bass 3")
+        XCTAssertEqual(Names.derived("   ", suffix: "3"), "3")
+        XCTAssertEqual(Names.derived("Bass", suffix: ""), "Bass")
+        XCTAssertEqual(Names.derived("", suffix: ""), "Untitled")
+        XCTAssertEqual(Names.derived(long, suffix: long).count, Names.maximumLength)
+    }
+
     func testTracksAreAddedAtTheIndexAndNamesAreTrimmed() throws {
         var project = Project()
         let a = TrackID(), b = TrackID()

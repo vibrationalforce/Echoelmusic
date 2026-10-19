@@ -216,7 +216,7 @@ private struct ArrangeLane: View {
         guard track.kind == .instrument else { return }
         let clip = ClipID()
         try? store.perform([
-            .createClip(track: track.id, id: clip, name: "\(track.name) Clip",
+            .createClip(track: track.id, id: clip, name: Names.derived(track.name, suffix: "Clip"),
                         length: 4 * MusicalTime.ticksPerBar(signature)),
             .placeClip(track: track.id, id: PlacementID(), clip: clip, start: start),
         ], title: "New Clip")

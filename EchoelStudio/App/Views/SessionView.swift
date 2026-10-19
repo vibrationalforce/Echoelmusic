@@ -213,7 +213,7 @@ struct SessionCell: View {
     private func makeClip() {
         let clip = ClipID()
         let length = MusicalTime.ticksPerBar(store.project.timeSignature)
-        let name = "\(track.name) \(track.clips.count + 1)"
+        let name = Names.derived(track.name, suffix: "\(track.clips.count + 1)")
         do {
             try store.perform([.createClip(track: track.id, id: clip, name: name, length: length),
                                .setSlot(track: track.id, scene: scene.id, clip: clip)], title: "New Clip")

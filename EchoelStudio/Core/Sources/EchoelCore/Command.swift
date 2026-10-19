@@ -133,6 +133,24 @@ public enum Names {
         }
         return trimmed
     }
+
+    /// A name the app composes for the user — "<base> <suffix>" — shortened on the base so it
+    /// always passes `validated`: a track called by 128 characters still gets a clip. The suffix
+    /// stays whole, an empty base yields the suffix alone, and nothing at all yields "Untitled".
+    /// Before this, three views built `"\(track.name) Clip"` by hand and the command was refused
+    /// behind a `try?` — a long track name made every new clip silently impossible.
+    public static func derived(_ base: String, suffix: String) -> String {
+        let tail = String(suffix.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maximumLength))
+        let room = maximumLength - (tail.isEmpty ? 0 : tail.count + 1)
+        let head = String(base.trimmingCharacters(in: .whitespacesAndNewlines).prefix(Swift.max(room, 0)))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        switch (head.isEmpty, tail.isEmpty) {
+        case (true, true): return "Untitled"
+        case (true, false): return tail
+        case (false, true): return head
+        case (false, false): return "\(head) \(tail)"
+        }
+    }
 }
 
 extension Command {
