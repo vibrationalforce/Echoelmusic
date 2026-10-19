@@ -19,9 +19,12 @@ Counting rule — conservative on purpose, because nobody has measured the platf
            list markers ("1.", "-", "•") removed; a lone dash or middle dot still counts.
   worst  = the same text with "-", "/", "–", "—" and "→" treated as word separators
            (OSC/ADM-OSC → 3 words). If `worst` exceeds the limit the answer is NOT safe.
-  status = OVER  if words  > limit
-           TIGHT if words  > limit − ceil(limit × 0.08)  (less than an 8 % margin)
+  status = OVER  if words  > limit, or worst > limit
+           TIGHT if words or worst > limit − ceil(limit × 0.08)  (less than an 8 % margin)
            OK    otherwise
+  ⚠️ TIGHT reads `worst` too since 2026-10-19: a block whose plain count has room but whose
+  worst case sits at the limit flips to OVER as soon as a placeholder is filled with a
+  hyphenated name — the critic of the verification round found two such blocks reported OK.
 
 Placeholders such as "[Founder: …]" count as words — they will be replaced by text of similar
 length, so the margin must hold with them in place.
@@ -64,7 +67,7 @@ def count_words(block: str) -> tuple[int, int]:
 def status(words: int, worst: int, limit: int) -> str:
     if words > limit or worst > limit:
         return "OVER"
-    if words > limit - math.ceil(limit * 0.08):
+    if max(words, worst) > limit - math.ceil(limit * 0.08):
         return "TIGHT"
     return "OK"
 
@@ -129,7 +132,9 @@ def selftest() -> int:
     assert status(b_words, b_worst, 9) == "OVER", "worst-case split must count (9 words fit, 10 do not)"
     c_words, _ = count_words(rows[2][2])
     assert c_words == 6 and status(c_words, c_words, 5) == "OVER"
-    assert status(27, 30, 30) == "OK" and status(28, 28, 30) == "TIGHT"
+    assert status(27, 27, 30) == "OK" and status(28, 28, 30) == "TIGHT"
+    assert status(27, 30, 30) == "TIGHT", "a worst case at the limit has no margin"
+    assert status(60, 60, 60) == "TIGHT" and status(53, 60, 60) == "TIGHT"
     assert status(92, 92, 100) == "OK" and status(93, 93, 100) == "TIGHT"
     assert status(161, 161, 175) == "OK" and status(162, 162, 175) == "TIGHT"
     unclosed = list(blocks("<!-- ptf: X limit=3 --> text without end"))

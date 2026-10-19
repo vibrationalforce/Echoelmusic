@@ -256,9 +256,11 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
   werden gezählt. Die Grenze gehört in Frage 4 als eigener Absatz „Grenzen“.
 - *„Kamera-Puls und Herzfrequenz→OSC sind gelöst — was ist euer Beitrag jenseits des
   Zusammensteckens?“* Die Datenpolitik an der Quelle (Quelle × Feldklasse, erschöpfender Switch,
-  getestet), die Herkunft auf dem Draht (`/echoelmusic/bio/synthetic`, sACN-Quellname), portable
-  Werttypen mit Tests, EIN Prozess auf dem Telefon statt Gurt→Laptop→Brücke→Pult, und ADM-OSC-
-  Objekte, die keine der offenen Brücken spricht (§7.1 Frage 7, dritter Absatz).
+  getestet), die Herkunft auf dem Draht (`/echoelmusic/bio/synthetic`, sACN-Quellname), und portable
+  Werttypen mit Tests. ⛔ „EIN Prozess auf dem Telefon“ und „ADM-OSC-Objekte, die keine offene
+  Brücke spricht“ standen hier und sind am 19.10. widerlegt: HeartOSC läuft als Android-App auf
+  dem Telefon, Chataigne hat ein ADM-OSC-Modul (§7.1 Frage 7). Der Unterschied ist die
+  Ausgaberegel, nicht der Ort des Prozesses.
 - *„Andere Förderung für dasselbe?“* Satz in Frage 5 und Team-7: „Für dieses Förderobjekt wird
   keine andere öffentliche Förderung bezogen oder beantragt.“ Vorher: Status des älteren Antrags
   „Syng.Visibra“ klären (Founder, §8) — sein Installationsteil ähnelt M4.
@@ -371,15 +373,14 @@ proprietären Formaten; eine quelloffene, native Workstation gibt es für iPhone
 unserer Recherche (Stand 19.10.2026) nicht — offene DAWs sind Desktop (Ardour, LMMS, Zrythm);
 wer dort arbeitet, arbeitet eingesperrt. Drittens: Bühnen-, Licht- und Installationstechnik ist
 eine Landschaft proprietärer Inseln; die offenen Protokolle existieren (OSC, ADM-OSC, Art-Net,
-sACN), und offene Brücken bringen Herzfrequenz heute schon vom Laptop nach OSC — aber keine davon
-trägt eine Regel, welche Felder das Gerät verlassen dürfen, und keine läuft als ein Prozess auf
-dem Gerät. Teilhabe: offenes Format und offene Protokolle statt SDK-Käfig; die Oberfläche mit
+sACN), und offene Brücken bringen Herzfrequenz heute schon nach OSC (vom Laptop oder als Android-App)
+— aber keine uns bekannte trägt eine Regel, welche Felder das Gerät verlassen dürfen. Teilhabe: offenes Format und offene Protokolle statt SDK-Käfig; die Oberfläche mit
 VoiceOver und Reduce Motion, die Blitzgrenze (≤ 3 Hz) als Test — beides wird je Meilenstein ein
 Abnahmekriterium (Frage 9). ⛔ „fließen standardmäßig in Clouds“ stand hier und hat im Repo keinen
 Beleg — nur mit einer zitierten Hersteller-Datenschutzerklärung wieder aufnehmen.
 
 **4. Wie willst du dein Projekt technisch umsetzen?** [ENTWURF]
-Swift, 100 %, null externe Abhängigkeiten (alle drei `Package.swift` ohne `dependencies`). Das
+Paketcode in Swift (die GitHub-Sprachleiste zeigt ~93 %, der Rest sind Skripte und Website), null externe Abhängigkeiten (alle drei `Package.swift` ohne `dependencies`). Das
 Projektdokument (`Project`, Befehle, Format) besteht aus reinen Werttypen hinter einer einzigen
 Änderungstür; Core und DSP importieren nur Foundation (Core zusätzlich Observation), gemessen.
 Die Engine kommt ohne Locks und ohne GCD aus: ihre einzige Synchronisation sind `Atomic`-Werte,
@@ -387,18 +388,20 @@ Puffer werden beim Aufbau angelegt, nie im Render-Pfad; die Render-Regeln (keine
 Lock, kein ObjC, kein I/O, kein GCD) sind heute Architektur-Vertrag und Code-Review, kein
 automatischer Test. Die Ausnahme ist das AUv3-Hosting — vier Dateien auf AVFoundation/AudioToolbox,
 deren Render-Blöcke aus dem Render-Pfad gerufen werden; ihre Auslagerung in ein eigenes Target ist
-Voraussetzung des Linux-Builds der Engine und Teil von M1. Die Paket-Tests prüfen Verhalten
+Voraussetzung des Linux-Builds der Engine und läuft VOR dem Förderzeitraum (Bauplan P0, seit 17.10.). Die Paket-Tests prüfen Verhalten
 (Offline-Rendering, Determinismus, feste Slot-Zahl) und laufen in einer eigenen CI-Pipeline auf
 macOS — und für Core und DSP seit dem 19.10. auch auf Linux (Swift 6.2.4 im Container: DSP 64/64,
-Core 201/201 grün); sie zum Merge-Gate zu machen, die Engine nachzuziehen und die Render-Regel als prüfbare
-Zusicherung zu fassen, ist M1. Das Projektformat ist heute versioniertes JSON mit sortierten
+Core 201/201 grün); sie zum Merge-Gate zu machen und die Engine nachzuziehen, ist ebenfalls P0, nicht Förderinhalt;
+die Render-Regel bleibt Architektur-Vertrag und Review — ein Import-Scan kann sie nicht beweisen. Das Projektformat ist heute versioniertes JSON mit sortierten
 Schlüsseln, Spezifikation und Golden-Files mit Round-Trip-Tests (Bestand). Für die Förderung kommt
 hinzu: eine Transportschicht hinter einer schmalen Schnittstelle (Apple: Network.framework; Linux:
 POSIX-Sockets — geplant; Encoder als reine Funktionen gibt es, der Beitrag ist das Profil und die
 Policy, nicht der Encoder), und die Körpersignal-Verarbeitung (Signalaufbereitung,
-Pulsperioden-Schätzer, HRV-Kohärenz; ~900 Zeilen, nur Foundation) als portable Werttypen. Der
+Pulsperioden-Schätzer, HRV-Kohärenz, ~900 Zeilen; dazu der Atemschätzer `Bio/RespirationEstimator`,
+852 Zeilen — zusammen ~1.750 Zeilen, alle nur Foundation) als portable Werttypen. ⛔ Der Atemschätzer
+fehlte in dieser Inventur bis 19.10., obwohl F1 und F2 „Puls und Atem“ versprechen. Der
 Kamera-Adapter ist mit ~4.400 Zeilen der größte Block und bleibt bewusst plattformspezifisch in
-der älteren App; portiert werden Kern, Policy und der Bluetooth-Adapter. Die Egress-Policy ist
+der älteren App; portiert werden Kern, Policy und die Bluetooth-Gurt-Anbindung (heute schreibt sie Atem = 0; der Atem kommt aus dem Schätzer). Die Egress-Policy ist
 zweistufig: die Quellen-Sperre ist ein erschöpfender Switch ohne Default über alle Ausgänge —
 jede neue Körper-Quelle ist ein Compile-Fehler, bis jemand entscheidet; die Feld-Sperre
 klassifiziert jede Adresse (musikalisch / HRV-Detail opt-in / roh nie), eine neue Adresse ohne
@@ -418,9 +421,9 @@ spezifiziert (`docs/FORMAT.md`) und durch Golden-Files gepinnt; `SECURITY.md`; C
 für Core und DSP — auf Linux;
 TestFlight-Builds, App-Store-1.0 für 2027 geplant; (b) die ältere App mit live laufender
 rPPG-Pulserkennung, Bluetooth-Gurt, HealthKit, OSC/ADM-OSC/Art-Net/sACN-Ausgängen und der
-Egress-Policy (gebaut, getestet, auf TestFlight); (c) One Clock, eine Seite ohne Server. Neu im
-Förderzeitraum: die Engine wird in einen portablen Teil und einen Apple-Adapter geteilt und zieht
-auf Linux nach (Core und DSP laufen dort seit dem 19.10. — DSP 64/64, Core 201/201 grün — Bestand); das Förderobjekt wird ein eigenes, getaggtes Paket, das ein
+Egress-Policy (gebaut, getestet, auf TestFlight); (c) One Clock, eine Seite ohne Server. VOR dem
+Förderzeitraum (Bauplan P0, läuft seit 17.10., kein Förderinhalt): die Engine wird in einen portablen Teil und einen Apple-Adapter geteilt und zieht
+auf Linux nach (Core und DSP laufen dort seit dem 19.10. — DSP 64/64, Core 201/201 grün — Bestand). Neu im Förderzeitraum: das Förderobjekt wird zwei eigene, versionierte Pakete, deren Kern nur Foundation braucht und die ein
 Dritter per `.package(url:)` zieht; das Körpersignal-Profil wird spezifiziert und bekommt
 Konformitätsvektoren; die Protokollbrücken werden aus der älteren App in `EchoelIO` portiert (mit
 EINER benannten Integration, einem Lichtpult mit sACN/OSC-Eingang); die Egress-Policy wird in den
@@ -442,12 +445,19 @@ App an ihrem Bus; der Förderzeitraum löst sie als Paket heraus. Vorarbeit, auf
 über das Protokoll, nicht über den Code: Herzfrequenz→OSC gibt es als offene Desktop-/Android-
 Brücken (hr-bridge-ble, BluetoothHeartRateOSC, Polar-Stream, HeartOSC, biofeed; GitHub,
 19.10.2026); OSC→Art-Net/sACN leisten QLC+ (Apache-2.0), Chataigne (GPL-3.0) und ossia score
-(CeCILL, GPLv3-kompatibel); OpenBCI GUI streamt Biosignale per OSC/LSL. Keines davon trägt eine
+(CeCILL, GPLv3-kompatibel); OpenBCI GUI streamt Biosignale per OSC/LSL. Soweit wir sehen (Stand 19.10.2026; der
+Quellencheck aus §8 steht noch aus), trägt keines davon eine
 Regel, welche Felder das Gerät verlassen dürfen (bei uns: Quelle × Feldklasse, erschöpfender
-Switch, getestet), keines schreibt die Herkunft auf den Draht (`/echoelmusic/bio/synthetic`,
-sACN-Quellname), keines kennt ADM-OSC-Objekte oder eine musikalische Abbildung (Kohärenz, ein
-Spektralmaß der HRV, bewegt vier Syntheseparameter), und keines läuft als ein Prozess auf dem
-Telefon statt Gurt→Laptop→Brücke→Pult. Workstation-Seite: **Ardour** (GPL-2), **LMMS** (GPL-2.0)
+Switch, getestet), keines markiert gesendete Werte als gemessen oder simuliert
+(`/echoelmusic/bio/synthetic`, sACN-Quellname), und keines hat eine musikalische Abbildung
+(Kohärenz, ein Spektralmaß der HRV, bewegt vier Syntheseparameter). ⛔ Zwei Sätze standen hier und
+sind am 19.10. widerlegt: „keines kennt ADM-OSC-Objekte“ (Chataigne hat ein ADM-OSC-Modul, die
+ADM-OSC-README nennt es als erstes Werkzeug) und „keines läuft als ein Prozess auf dem Telefon“
+(HeartOSC ist eine Android-App, die einen Gurt direkt koppelt und OSC sendet). Ebenso nie
+behauptet werden darf, Echoel schreibe die DATENKLASSE auf den Draht: `BioEgressPolicy.FieldClass`
+entscheidet nur, OB eine Adresse gesendet wird. Offen: die Plattform von hr-bridge-ble an der
+Quelle prüfen und mit Abrufdatum eintragen, erst dann darf ein Zusatz wie „läuft nicht auf iOS“
+in F7. Workstation-Seite: **Ardour** (GPL-2), **LMMS** (GPL-2.0)
 und **Zrythm** (AGPL-3.0) sind C++-Desktop-DAWs ohne iOS-Build; **Tracktion Engine/JUCE**
 (GPL + kommerziell) laufen auf iOS, aber Copyleft ist mit einem MIT-Kern, der als App-Store-Binary
 ausgeliefert wird, nicht vereinbar, und unser Render-Pfad ist bewusst reines Swift ohne
@@ -462,11 +472,13 @@ Abhängigkeiten“ stand hier und ist falsch (Kernpaket abhängigkeitsfrei laut 
 `Package.swift`, 19.10.2026). Lizenzen je Projekt vor Abgabe an der Quelle prüfen (Grok-Brief, §10).
 
 **8. Zielgruppe und wie erreichen?** [ENTWURF]
-Drei Gruppen: Musiker*innen und Produzent*innen auf iPad/iPhone, die ohne Abo und Konto arbeiten
+Drei Gruppen: Musiker*innen und Produzent*innen auf dem iPhone (iPad hat kein Licht für den
+Kamera-Puls, und Echoel Studio hat in v1 keinen Bio-Eingang), die Puls und Atem mitspielen lassen
 wollen; Medienkünstler*innen, Licht- und Showdesigner*innen, Theater- und Installationsbauende,
 die den Körper als Steuersignal in bestehende Rigs holen wollen (Lichtpulte, Medienserver,
 ADM-Renderer sprechen die Protokolle bereits); Entwickler*innen, die eine lokale, geprüfte
-Körpersignal-Pipeline brauchen. Erreichen: die App selbst (TestFlight heute, App Store 1.0 frei),
+Körpersignal-Pipeline brauchen. Erreichen: die App selbst (TestFlight heute nur INTERN, `distribute_external: false`; vor der Abgabe
+die externe Gruppe nach `docs/dev/TESTFLIGHT_PUBLIC_BETA.md` anlegen — App Store 1.0 frei),
 das öffentliche Repo mit Paketen und Beispielen, echoelmusic.com, die eigenen Installationen und
 Auftritte des Antragstellers als Vorführungen, Integrator-Dokumentation je Protokoll (heute:
 Rezepte für grandMA3, QLC+, Resolume, TouchDesigner auf echoelmusic.com/integrations), und als
@@ -482,27 +494,39 @@ und ein Fediverse-Konto gibt es nicht.
 **9. Meilensteine im Förderzeitraum (Juni–November 2027).** [ENTWURF]
 Gekürzt auf das, was eine Person in sechs Monaten neben laufenden Projekten trägt — mit Stunden
 je Meilenstein, menschliche Geschwindigkeit, Bestand ausgewiesen (Herleitung §9):
-- **M1 (Juni, ~90 h):** Host-Split der Engine (vier AVFoundation/AudioToolbox-Dateien in einen
-  Apple-Adapter), die Engine portabel und auf Linux in der öffentlichen CI (Core und DSP laufen dort
-  seit dem 19.10. — Bestand, nicht M1); ein Import-Scan-Test, der die Render-Regeln und die Plattform-Trennung pinnt;
-  Format-Migration v1→v2 mit Golden-File je Version (Format v1 und seine Golden-Files sind
-  Bestand); erstes getaggtes Release des Förderobjekts, das ein Dritter per `.package(url:)` zieht.
-- **M2 (Juli–August, ~220 h):** `EchoelIO` = OSC + ADM-OSC + sACN als eigenständiges Paket mit
-  reinen Encodern, einer Transportschicht hinter schmaler Schnittstelle (Apple/Linux) und
-  Konformitätsvektoren; „Verbindungen“-Bildschirm, alles standardmäßig aus, Allowlist sichtbar;
-  genau EINE benannte Integration (Lichtpult mit sACN/OSC-Eingang [Founder nennt es]).
-  Abnahme: VoiceOver und Reduce Motion auf dem Bildschirm, Blitzgrenze als Test.
-- **M3 (September–Oktober, ~200 h):** `EchoelSense` = portable Signalverarbeitung
-  (Pulsperioden-Schätzer, Kohärenz) + Egress-Policy (Quelle × Feldklasse) + Bluetooth-Adapter +
-  eine minimale Modulationsquelle im Kern (ein Routentyp → Parameteradresse); Körpersignal-Profil
-  v1 als Spezifikation; Demo-Modus ehrlich benannt und auf dem Draht markiert. Der Kamera-Puls
-  bleibt in der älteren App (Second Stage).
-- **M4 (November, ~80 h):** Referenz-Installation (Wasser/Licht/Klang) läuft 4 Stunden aus Echoel
-  über sACN; `/.well-known/security.txt` (RFC 9116) und ein Fuzz-Lauf über den Projekt-Decoder
-  (`SECURITY.md` ist Bestand); Transparenz- und Abschlussbericht; Release 1.x.
-Summe ~590 h plus Puffer; Art-Net, der Kamera-Port und zwei weitere Integrationen sind
-Second-Stage-Meilensteine (§7.3). ⛔ Die erste Fassung kostete nach Messung 800–1.080 h, zählte
-Bestand (Format, Golden-Files, `SECURITY.md`) als neu und setzte den Kamera-Port in M3 — §9.
+⭐ **Umgebaut 19.10. nach der Verifikations-Runde (Formularfassung F9).** Drei Gründe: (1) der alte
+M1 war Bauplan-Phase P0 der Workstation, die vor 1.0 und damit JETZT läuft — gefördert worden wäre
+fertige Arbeit; (2) das Neue (Ausgaberegel, Körpersignal-Profil) stand zuletzt, also wäre es bei
+Zeitnot als Erstes gefallen; (3) die Pakete hingen laut Bauplan an Core und Engine, eine Licht-App
+hätte das Dokumentmodell der Workstation mitgezogen. Jetzt:
+- **M1 (Juni, ~90 h; Entwicklung 80, Spezifikation 10):** Paketgerüst `EchoelSense` und `EchoelIO`,
+  deren Kern nur von Foundation abhängt (Plattform-Anbindungen je `canImport`); ein Linux-Build in
+  der öffentlichen CI, der die Plattformtrennung erzwingt (Verhalten, nicht Quelltext-Scan);
+  Entwurf des Körpersignal-Profils (Adressen, Klassen); Vorab-Release 0.1 mit eigenem Tag-Präfix je
+  Paket, damit es nicht mit dem Bestands-Tag `v1.0.0` (2025-12-03) kollidiert.
+- **M2 (Juli–August, ~200 h; Entwicklung 190, Doku 10):** `EchoelSense` = Signalaufbereitung,
+  Pulsperioden- und Atemschätzer (`Bio/RespirationEstimator`, 852 Zeilen, wird mitportiert),
+  HRV-Kohärenz, die Ausgaberegel (Quelle × Feldklasse, erschöpfender Switch) und die
+  Bluetooth-Gurt-Anbindung; Körpersignal-Profil v1 mit Konformitätstests; Demo-Modus ehrlich
+  benannt und auf dem Draht markiert.
+- **M3 (September–Oktober, ~220 h; Entwicklung 190, Abnahme Barrierefreiheit 30):** `EchoelIO` =
+  Encoder für OSC, ADM-OSC und sACN plus ein OSC-Decoder für den Eingang, Transport hinter
+  schmaler Schnittstelle (Apple: Network.framework, Linux: POSIX-Sockets), Konformitätstests;
+  EchoelIO darf `EchoelSense` importieren (die Ausgaberegel ist ein Werttyp dort), nie umgekehrt;
+  Referenzansicht „Verbindungen“, alles standardmäßig aus, Allowlist sichtbar; EINE Integration mit
+  dem freien Lichtpult **QLC+** (Apache-2.0, OSC- und sACN-Eingang). Abnahme: VoiceOver und
+  „Bewegung reduzieren“, die 3-Hz-Blitzgrenze als Test.
+- **M4 (November, ~110 h; Entwicklung 40, Nutzertest/Installation/Bericht 70):** Nutzertest an
+  der Referenz-Installation (Wasser/Licht/Klang), 4 Stunden aus Echoel über sACN;
+  `/.well-known/security.txt` (RFC 9116) und ein Fuzz-Lauf über den OSC-Decoder des Eingangs
+  (`SECURITY.md` ist Bestand); Transparenz- und Abschlussbericht; Paketversion 1.0.
+Summe **620 h**, davon **500 h Entwicklung (≈ 81 %)** — der Richtwert der Linie Innovation ist
+~80 %. Der Puffer steht sichtbar in M4. Art-Net, der Kamera-Port und Format v2 sind NICHT in der
+Bewerbung (§7.3 ⛔; Second Stage erlaubt keine Code-Meilensteine). ⛔ Die erste Fassung kostete nach
+Messung 800–1.080 h, zählte Bestand (Format, Golden-Files, `SECURITY.md`) als neu und setzte den
+Kamera-Port in M3 — §9. ⛔ Die zweite Fassung (bis 19.10. abends) setzte den Host-Split der Engine
+als M1 und einen Import-Scan-Test, der „die Render-Regeln pinnt“ — ein Import-Scan sieht keine
+Allokation und kein Lock, und der Host-Split ist P0.
 
 ### 7.2 Team und Erfahrung — Langfassung
 
@@ -558,7 +582,7 @@ eine bestehende Open-Source-Alternative?** [ENTWURF]
 Beides, in verschiedenen Schichten. Die Alternative: ein offenes Paket, das Körpersignale lokal
 verarbeitet, pro Feld entscheidet, was das Gerät verlässt, und in die offenen Protokolle von Licht
 und Raum spricht — dort, wo heute Hersteller-SDKs und Konten stehen. Die Verbesserung: QLC+,
-Chataigne und ossia score bekommen eine Quelle, die Herkunft und Datenklasse auf den Draht schreibt;
+Chataigne und ossia score bekommen eine Quelle, die markiert, ob ein Wert gemessen oder simuliert ist, und je Feld entscheidet, was gesendet wird;
 ihre Protokolle werden nicht ersetzt, sondern bedient. Keine Behauptung „freie DAW für iOS“ — das
 wäre mehr als sechs Monate.
 
@@ -582,88 +606,103 @@ gerätegeprüft; alles Behauptete ist in §2 gemessen oder als Plan formuliert.
 
 **F1 — Ergebnis (30 Wörter, ein Satz).**
 <!-- ptf: F1 limit=30 -->
-Zwei Open-Source-Pakete (Swift), die Puls und Atem auf dem Gerät verarbeiten, jedem Datenfeld eine Ausgaberegel geben und damit Klang, Licht und Raumklang über offene Bühnenprotokolle steuern.
+Zwei Open-Source-Pakete (Swift), die Puls und Atem auf dem Gerät verarbeiten, jedem Datenfeld eine Ausgaberegel geben und Klang, Licht und Raumklang über offene Bühnenprotokolle steuern.
 <!-- /ptf -->
 
 **F2 — Vorhaben (100 Wörter).**
 <!-- ptf: F2 limit=100 -->
-Ich baue zwei freie Software-Bausteine, mit denen Apps für Musik, Licht und Bühne Puls und Atem mitspielen lassen können, ohne dass diese Körperdaten das Gerät verlassen. Gedacht für Musiker*innen, Licht- und Bühnenleute und Entwickler*innen. Ausgangspunkt ist Echoelmusic, meine Musik-App: die Fingerkuppe auf der Handykamera misst den Herzschlag, daraus entstehen Klang und Licht. Ich löse diese fest eingebaute Schicht heraus, damit andere Swift-Programme sie einbinden können: Pulsmessung und Atemphase, eine Regel, welche Körperdaten das Gerät nie verlassen, und Brücken zu den offenen Protokollen der Licht- und Bühnentechnik. Kein Konto, kein Server.
+Ich baue zwei freie Software-Bausteine, mit denen Apps für Musik, Licht und Bühne Puls und Atem mitspielen lassen können, ohne dass Körperdaten das Gerät verlassen. Gedacht für Musiker*innen, Licht- und Bühnenleute und Entwickler*innen. Ausgangspunkt ist Echoelmusic, meine Musik-App: die Fingerkuppe auf der Handykamera misst den Herzschlag, daraus entstehen Klang und Licht. Ich löse diese fest eingebaute Schicht heraus, damit andere Swift-Programme sie einbinden können: Pulsmessung und Atemphase, eine Regel, welche Körperdaten das Gerät nie verlassen, und Brücken zu den offenen Protokollen der Licht- und Bühnentechnik. Kein Konto, kein Server.
 <!-- /ptf -->
 
 **F3 — Gesellschaftlicher Mehrwert (175 Wörter).**
 <!-- ptf: F3 limit=175 -->
-Herzfrequenz und Herzratenvariabilität (HRV) sind nach meiner Einordnung Gesundheitsdaten im Sinne der Datenschutz-Grundverordnung (Art. 4 Nr. 15; juristisch nicht geprüft). Wer solche Signale in Musik, Licht oder Bühne holen will, findet keinen offenen Baustein, der die Verarbeitung auf dem Gerät hält und sauber trennt, was es verlassen darf. Dringend ist das, weil Uhren, Gurte und Handykameras diese Signale jeder App liefern. Die Lichttechnik spricht offene Protokolle, und offene Brücken bringen Herzfrequenz vom Laptop nach Open Sound Control (OSC) — aber keine uns bekannte trägt eine Regel, welche Felder das Gerät verlassen dürfen. Software hilft, weil diese Regel in den Code gehört, nicht in eine Datenschutzerklärung: jede Datenquelle braucht eine ausdrückliche Entscheidung, sonst baut das Programm nicht, und eine Körperdaten-Adresse ohne Freigabe bleibt stumm. So werden Körperdaten von Publikum und Spielenden für Kunst, Theater und Installation nutzbar, ohne jemandem zu gehören — mit offenem Format, offenen Protokollen, Screenreader-Bedienung und einer Blitzgrenze von höchstens 3 Hz für das ausgegebene Licht (geplante Abnahme).
+Herzfrequenz und Herzratenvariabilität (HRV) sind nach meiner Einordnung Gesundheitsdaten im Sinne der Datenschutz-Grundverordnung (Art. 4 Nr. 15; juristisch nicht geprüft). Wer solche Signale in Musik, Licht oder Bühne holen will, findet keinen offenen Baustein, der die Verarbeitung auf dem Gerät hält und sauber trennt, was es verlassen darf. Dringend, weil Uhren, Gurte und Handykameras diese Signale jeder App liefern. Die Lichttechnik spricht offene Protokolle, und offene Brücken bringen Herzfrequenz nach Open Sound Control (OSC) — aber keine mir bekannte trägt eine Regel, welche Felder das Gerät verlassen dürfen. Software hilft, weil diese Regel in den Code gehört, nicht in eine Datenschutzerklärung: jede Datenquelle braucht eine ausdrückliche Entscheidung, sonst baut das Programm nicht, und eine Körperdaten-Adresse ohne Freigabe bleibt stumm. So werden Körperdaten von Spielenden und einwilligendem Publikum für Kunst, Theater und Installation nutzbar, ohne jemandem zu gehören — mit offenem Format, offenen Protokollen, Screenreader-Bedienung und einer Blitzgrenze von höchstens 3 Hz für das ausgegebene Licht (geplante Abnahme).
 <!-- /ptf -->
 
 **F4 — Technische Umsetzung (175 Wörter).**
 <!-- ptf: F4 limit=175 -->
-Reines Swift (Apache-2.0-Toolchain), null externe Abhängigkeiten. Bestand: Core und DSP (Signalverarbeitung) importieren nur Foundation (Core zusätzlich Observation) und laufen öffentlich getestet auf Linux (266 Tests grün, Oktober 2026); die Engine arbeitet ohne Sperren und wird in einen portablen Teil und eine Apple-Anbindung getrennt. Neu entstehen zwei Pakete. EchoelSense: Signalaufbereitung, Pulsperiodenschätzer und ein Spektralmaß der Herzratenvariabilität (HRV-Kohärenz) als reine Werttypen, ein Bluetooth-Adapter und die Ausgaberegel — neue Quellen brechen den Build, bis jemand entscheidet, dazu eine Datenklasse je Adresse: abgeleitete Steuerwerte dürfen raus, HRV-Detailwerte nur per Opt-in, Rohsignale nie; eine Körperdaten-Adresse ohne Klasse bleibt stumm. EchoelIO: Encoder für Open Sound Control (OSC 1.0), ADM-OSC (Objektpositionen für Raumklang) und sACN (ANSI E1.31, Lichtsteuerung) mit Konformitätstests, Übertragung hinter einer schmalen Schnittstelle (Apple: Network.framework, Linux: POSIX-Sockets). Prüfziel: QLC+ und ossia score. Grenze: diese Protokolle sind unverschlüsselt, ich erfinde keine Kryptografie darüber; Ausgänge senden per UDP nur an den eingestellten Host, der OSC-Eingang ist Opt-in mit IP-Allowlist, kein Internetdienst.
+Paketcode: Swift, null externe Abhängigkeiten. Bestand: Core und DSP (Signalverarbeitung) importieren nur Foundation (Core zusätzlich Observation) und laufen öffentlich getestet auf Linux (Tests grün, Oktober 2026); die Engine arbeitet ohne Sperren. Neu entstehen zwei Pakete, deren Kern nur Foundation braucht. EchoelSense: Signalaufbereitung, Pulsperioden- und Atemschätzer, ein Spektralmaß der Herzratenvariabilität (HRV-Kohärenz) als Werttypen, Bluetooth-Anbindung (Apple) und die Ausgaberegel — neue Quellen brechen den Build, bis jemand entscheidet, dazu eine Datenklasse je Adresse: abgeleitete Steuerwerte nach Freigabe, HRV-Detailwerte nur per Opt-in, Rohsignale nie; eine Körperdaten-Adresse ohne Klasse bleibt stumm. EchoelIO: Encoder für Open Sound Control (OSC 1.0, dazu ein Decoder), ADM-OSC (Objektpositionen für Raumklang) und sACN (ANSI E1.31, Lichtsteuerung), Konformitätstests, Übertragung hinter einer schmalen Schnittstelle (Apple: Network.framework, Linux: POSIX-Sockets). Prüfziel: das freie Lichtpult QLC+. Grenze: diese Protokolle sind unverschlüsselt, ich erfinde keine Kryptografie darüber; Ausgänge senden per UDP nur an den eingestellten Host, der OSC-Eingang ist Opt-in mit IP-Allowlist, kein Internetdienst.
 <!-- /ptf -->
 
 **F5 — Stand (100 Wörter).**
 <!-- ptf: F5 limit=100 -->
-Ja: öffentliches Repository seit Oktober 2025, MIT-Lizenz. Zwei Codebasen. Die ältere App enthält Kamera-Puls, eine Bluetooth-Gurt-Anbindung (noch ohne Gerätetest), HealthKit, die Ausgaberegel und Ausgänge für vier offene Licht- und Raumprotokolle. Echoel Studio, die neue Workstation: drei Pakete ohne Fremdabhängigkeiten, offen dokumentiertes Projektformat, Tests auf macOS und Linux (Kernpakete), TestFlight-Build. Gefördert wird nicht die Verbesserung der Apps, sondern etwas, das es noch nicht gibt: die Körpersignal-Schicht als zwei versionierte Pakete (EchoelSense, EchoelIO) mit Spezifikation und Konformitätstests, die Dritte einbinden können — plus die Engine-Trennung für Linux.
+Ja: öffentliches Repository seit Oktober 2025, MIT-Lizenz. Zwei Codebasen. Die ältere App enthält Kamera-Puls, eine Bluetooth-Gurt-Anbindung (noch ohne Gerätetest), HealthKit, die Ausgaberegel und Ausgänge für vier offene Licht- und Raumprotokolle. Echoel Studio, die neue Workstation: drei Pakete ohne Fremdabhängigkeiten, offen dokumentiertes Projektformat, Tests auf macOS und Linux (Kernpakete), TestFlight-Build. Gefördert wird nicht die Verbesserung der Apps, sondern etwas, das es noch nicht gibt: die Körpersignal-Schicht als zwei versionierte Pakete (EchoelSense, EchoelIO) mit Spezifikation und Konformitätstests, die Dritte einbinden können.
 <!-- /ptf -->
 
-**F6 — Link.** https://github.com/vibrationalforce/Echoelmusic · https://echoelmusic.com
+**F6 — Link.** https://github.com/vibrationalforce/Echoelmusic · https://echoelmusic.com/integrations.html (die Startseite beschreibt die ältere App; die Integrationsseite zeigt die Protokolle, um die es geht)
 
 **F7 — Innovation (100 Wörter).**
 <!-- ptf: F7 limit=100 -->
-Vergleichbar, geprüft Oktober 2026: offene Brücken Herzfrequenz→OSC (hr-bridge-ble, HeartOSC) laufen auf Laptop oder Android; QLC+, Chataigne und ossia score bringen OSC nach Art-Net/sACN; anira (Prototype Fund) macht Echtzeit-Inferenz. Keines trägt eine Regel, welche Felder das Gerät verlassen dürfen, keines schreibt Herkunft und Datenklasse auf den Draht, keines kennt ADM-OSC-Objekte, und keines läuft als ein Prozess auf dem Telefon. Wir bauen auf ihren Protokollen auf, nicht auf ihrem Code: die Encoder sind klein, der Beitrag sind Profil und Policy; getestet wird gegen QLC+ und ossia score, statt sie zu ersetzen.
+Vergleichbar, Stand 19.10.2026: offene Brücken (hr-bridge-ble, HeartOSC) bringen Herzfrequenz nach Open Sound Control (OSC); QLC+, Chataigne und ossia score übersetzen OSC in Lichtsteuerung (Art-Net, sACN), Chataigne spricht auch ADM-OSC. Soweit ich sehe, trägt keines eine Regel, welche Felder das Gerät verlassen dürfen, und keines markiert gesendete Werte als gemessen oder simuliert. Ich nutze dieselben Standards, nicht ihren Code: neu sind Körpersignal-Profil und Ausgaberegel als Swift-Pakete, die jede App einbinden kann. Prüfziel ist QLC+, ersetzt wird keines.
 <!-- /ptf -->
 
 **F8 — Zielgruppe (100 Wörter).**
 <!-- ptf: F8 limit=100 -->
-Drei Gruppen: Musiker*innen und Produzent*innen auf iPad und iPhone, die ohne Abo und Konto arbeiten wollen; Licht-, Show- und Medienkünstler*innen sowie Theater- und Installationsbauende, die den Körper als Steuersignal in bestehende Rigs holen (Lichtpulte, Medienserver und ADM-Renderer sprechen die Protokolle schon); Entwickler*innen, die eine lokale, geprüfte Körpersignal-Pipeline brauchen. Erreichen: über die App (TestFlight heute, App Store 2027), meine eigenen Installationen und Auftritte in Hamburg als Vorführungen, [Ort/Partner 1, Founder] und [Ort/Partner 2, Founder] als Testorte, Integrator-Rezepte je Protokoll auf echoelmusic.com/integrations, das QLC+-Forum, das Open Lighting Project und die ADM-OSC-Implementierungsliste.
+Drei Gruppen: Musiker*innen und Produzent*innen auf dem iPhone, die Puls und Atem mitspielen lassen wollen; Licht-, Show- und Medienkünstler*innen sowie Theater- und Installationsbauende, die den Körper als Steuersignal in bestehende Anlagen holen (Lichtpulte, Medienserver und Raumklang-Systeme sprechen offene Protokolle); Entwickler*innen, die eine lokale, getestete Körpersignal-Verarbeitung brauchen. Erreichen: über die App ([Zahl, Founder] Testende heute, App Store 2027), Vorführungen bei eigenen Auftritten in Hamburg [Ort, Founder], [Ort/Partner 1, Founder] und [Ort/Partner 2, Founder] als Testorte, Rezepte je Protokoll auf echoelmusic.com/integrations.html; geplant: QLC+-Forum.
 <!-- /ptf -->
 
 **F9 — Meilensteine Juni–November 2027 (100 Wörter).**
 <!-- ptf: F9 limit=100 -->
-1. Juni (~90 h): Host-Split der Engine, portabler Teil auf Linux in der CI; Importscan-Test pinnt Renderregeln und Plattformtrennung; erstes getaggtes Release, das Dritte per Paketmanager ziehen.
-2. Juli–August (~220 h): EchoelIO — OSC, ADM-OSC, sACN mit reinen Encodern, Transport für Apple und Linux, Konformitätsvektoren; „Verbindungen“-Bildschirm, alles standardmäßig aus; eine benannte Integration mit einem freien Lichtpult; VoiceOver, Reduce Motion und Blitzgrenze als Abnahme.
-3. September–Oktober (~200 h): EchoelSense — portable Signalverarbeitung, Egress-Policy, Bluetooth-Adapter; Körpersignal-Profil v1 mit Konformitätsvektoren.
-4. November (~80 h): Referenzinstallation läuft vier Stunden über sACN; security.txt, Fuzzing des Decoders; Abschlussbericht, Release 1.x.
+1. Juni (~90 h): Paketgerüst EchoelSense und EchoelIO, nur von Foundation abhängig; Entwurf des Körpersignal-Profils; Linux-Build erzwingt die Plattformtrennung; Vorab-Release 0.1.
+2. Juli–August (~200 h): EchoelSense — Puls- und Atemschätzer, HRV-Kohärenz, Ausgaberegel, Bluetooth-Gurt-Anbindung; Körpersignal-Profil v1 mit Konformitätstests.
+3. September–Oktober (~220 h): EchoelIO — drei offene Bühnenprotokolle, Übertragung für Apple und Linux, Konformitätstests; Referenzansicht „Verbindungen“, standardmäßig aus; Integration mit dem freien Lichtpult QLC+; VoiceOver, „Bewegung reduzieren“ und 3-Hz-Blitzgrenze als Abnahme.
+4. November (~110 h): Nutzertest: Referenzinstallation, vier Stunden über sACN; security.txt, Fuzzing des OSC-Eingangs; Abschlussbericht, Paketversion 1.0.
 <!-- /ptf -->
 
 **F10 — Team (30 Wörter).** Leer lassen — das Handbuch sagt es so für Einzelbewerbungen.
 
 **F11 — Erfahrungen (100 Wörter, max. 3 Projekte).**
 <!-- ptf: F11 limit=100 -->
-1. Echoelmusic (https://github.com/vibrationalforce/Echoelmusic): Maintainer seit Oktober 2025; zwei öffentliche Codebasen unter MIT — die ältere App mit Kamera-Puls, Bluetooth-Gurt, OSC-, ADM-OSC-, Art-Net- und sACN-Ausgängen und Egress-Policy; Echoel Studio mit drei abhängigkeitsfreien Swift-Paketen, Tests auf macOS und Linux, TestFlight-Builds.
+1. Echoelmusic (https://github.com/vibrationalforce/Echoelmusic): Maintainer seit Oktober 2025; zwei öffentliche Codebasen unter MIT — die ältere App mit Kamera-Puls, Ausgaberegel und vier offenen Licht- und Raumklang-Protokollen; Echoel Studio mit drei abhängigkeitsfreien Swift-Paketen, Tests auf macOS, Kernpakete auch auf Linux, erste Testversion über TestFlight.
 2. [Founder: zweites Projekt mit Link und Rolle — oder streichen]
 3. [Founder: drittes Projekt mit Link und Rolle — oder streichen]
-Außerhalb von Software: interaktive Wasser-Licht-Klang-Installationen und Musikproduktion (Echoel) seit [Jahr, Founder] — die Domäne, in die das Paket zurückfließt.
 <!-- /ptf -->
 
 **F12 — Förderfähigkeit, Verbindungen (60 Wörter).**
 <!-- ptf: F12 limit=60 -->
-Ich bin [Rechtsform: selbstständig/freiberuflich als Künstler und Musikproduzent — Founder]; Echoelmusic ist mein privates Open-Source-Projekt, kein Unternehmensprojekt. Die App ist kostenlos, ein In-App-Kauf für Instrument-Erweiterungen ist geplant; das Förderobjekt ist ein eigenes MIT-Paket ohne Kauflogik, das jede Anwendung nutzen kann. Für dieses Vorhaben beziehe und beantrage ich keine andere öffentliche Förderung [Syng.Visibra-Status, Founder].
+Ich bin [Rechtsform, Founder]; Echoelmusic ist mein privates Open-Source-Projekt, kein Unternehmensprojekt [Tropical-Drones-Status, Founder]. Die App ist kostenlos, ein In-App-Kauf für Instrument-Erweiterungen ist vorbereitet; das Förderobjekt sind zwei eigene MIT-Pakete ohne Bezahlfunktion, die jede Anwendung nutzen kann. Andere öffentliche Förderung dafür: weder bezogen noch beantragt [Syng.Visibra, Founder].
 <!-- /ptf -->
 
-**F13 — Stundenzahl (eine Zahl).** Vorschlag **620** = ~590 h aus der Tabelle (F9) plus 5 % Puffer; bei 50 €/h sind das 31.000 €. [Founder trägt die Zahl ein, die er neben Installationen und Musikprojekten wirklich trägt — zwischen 250 und 950; keine Wochenstunden.]
+**F13 — Stundenzahl (eine Zahl).** Vorschlag **620** = die Summe der vier Meilensteine in F9 (90 + 200 + 220 + 110). Der Puffer steht sichtbar in M4, weil Nutzertest, Installation und Bericht erfahrungsgemäß länger dauern; im Formular selbst ist F13 eine nackte Zahl, und eine Jurorin rechnet F9 nach. Bei 50 €/h sind das 31.000 €; der Entwicklungsanteil liegt bei rund 81 % (Aufteilung §7.1 Frage 9). [Founder trägt die Zahl ein, die er neben Installationen und Musikprojekten wirklich trägt — zwischen 250 und 950; keine Wochenstunden.]
 
 **F14 — Erfahrung, Motivation — Wild Card (100 Wörter).**
 <!-- ptf: F14 limit=100 -->
-Ich bin Künstler für interaktive Wasser-Licht-Klang-Installationen und Musikproduzent; Echoelmusic kommt aus meiner eigenen Praxis — Körper, Klang, Licht und Raum zusammen. Bühne, Installation und Lichtpult kenne ich von innen — die Domänenexpertise für die Zielgruppe. Was mir fehlt und wie ich es hole: die DSGVO-Einordnung der Körperdaten prüft vor der Förderung ein Datenschutzbeauftragter; Barrierefreiheit teste ich mit [Partner oder Nutzer*innen, Founder]. Offen gesagt: ich entwickle KI-gestützt — 8.805 von 9.861 Commits auf GitHub tragen den KI-Co-Autor-Account; Architektur, Umfang, Tests und jede Änderung entscheide und verantworte ich, datiert dokumentiert im Repo (decisions.csv).
+Ich baue seit [Jahr, Founder] interaktive Wasser-Licht-Klang-Installationen und produziere Musik; Echoelmusic kommt aus dieser Praxis — Körperdaten sollen dabei beim Menschen bleiben. Programmierkenntnisse: [Beleg, Founder]. Was mir fehlt und wie ich es hole: die Datenschutz-Einordnung der Körperdaten prüft vor der Förderung ein*e Datenschutzjurist*in; Barrierefreiheit teste ich mit [Partner oder Nutzer*innen, Founder]. Ich entwickle KI-gestützt — [Zahl] von [Zahl] Commits, Echoel Studio vollständig, stammen vom KI-Account; Architektur, Umfang und Tests entscheide ich, jede Änderung verantworte ich, die Stunden kalkuliere ich in menschlichem Tempo.
 <!-- /ptf -->
 
 **F15 — Second Stage.** Ja.
 
 **F16 — Nachhaltigkeitsstrategie (175 Wörter).**
 <!-- ptf: F16 limit=175 -->
-Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von mir. Erstens Nutzer*innen: mindestens drei fremde Integrationen dokumentiert (ein Lichtpult, ein Medienserver, ein ADM-Renderer), davon eine Installation, die nicht ich betreibe; Werkstätten mit [Theater oder Installationsort, Founder]; Nutzertests mit den TestFlight-Tester*innen, deren Feedback die einzige Programmierarbeit der Second Stage bestimmt. Zweitens Community: Beitragenden-Prozess (Beitragsleitfaden, Verhaltenskodex und Issue-Vorlagen liegen seit Oktober 2026), gute erste Aufgaben, ein gemergter Beitrag einer anderen Person und Commit-Rechte für eine zweite Maintainerin oder einen zweiten Maintainer, damit das Paket nicht an einer Person hängt. Drittens Standards: Körpersignal-Profil und Konformitätsvektoren als Spezifikation veröffentlicht, Eintrag in die ADM-OSC-Implementierungsliste, Integrator-Leitfäden je Protokoll. Viertens Finanzierung: die App bleibt kostenlos, Instrument-Erweiterungen als In-App-Kauf finanzieren die Pflege; das Paket bleibt MIT und frei von Kauflogik. Ein Transparenzbericht am Ende sagt, was erreicht wurde und was nicht.
+Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von mir. Erstens Nutzer*innen: mindestens drei fremde Integrationen dokumentiert (ossia score, ein Medienserver, ein Raumklang-Renderer), davon eine Installation, die nicht ich betreibe; Werkstätten mit [Theater oder Installationsort, Founder]; Nutzertests mit [Zahl, Founder] Beta-Tester*innen, deren Feedback die einzige Programmierarbeit der Second Stage bestimmt. Zweitens Community: Beitragenden-Prozess (Beitragsleitfaden, Verhaltenskodex und Issue-Vorlage liegen seit Oktober 2026), Einsteiger-Aufgaben, ein gemergter Beitrag einer anderen Person und Commit-Rechte für eine zweite Maintainerin oder einen zweiten Maintainer, damit die Pakete nicht an einer Person hängen. Drittens Standards: Spezifikation der Körpersignal-Adressen samt Testfällen weitergepflegt, Eintrag als Umsetzung des Raumklang-Standards ADM-OSC, Paket-Leitfäden je Protokoll. Viertens Finanzierung: die App bleibt kostenlos, Instrument-Erweiterungen per In-App-Kauf sollen die Pflege mittragen; die Pakete bleiben MIT, ohne Bezahlfunktion. Ein Transparenzbericht nennt Erreichtes und Verfehltes.
 <!-- /ptf -->
 
 **F17 — Second-Stage-Meilensteine Dezember 2027–März 2028 (100 Wörter).**
 <!-- ptf: F17 limit=100 -->
-1. Dezember: Nutzertests mit den Integrator*innen und TestFlight-Tester*innen, Befunde priorisiert; Integrator-Leitfäden je Protokoll (OSC, ADM-OSC, sACN) veröffentlicht.
-2. Januar–Februar: Werkstätten mit [Theater oder Installationsort, Founder]; Beitragenden-Prozess live (gute erste Aufgaben, Review-Regeln), erster fremder Beitrag gemergt, zweite Maintainerin oder zweiter Maintainer mit Commit-Rechten; Eintrag in die ADM-OSC-Implementierungsliste.
-3. März: drei externe Integrationen gezeigt, eine davon nicht von mir betrieben; Finanzierungsplan für die Pflege (In-App-Kauf); Transparenz- und Abschlussbericht; Abschlussworkshop.
+1. Dezember: Nutzertests mit Entwickler*innen, Lichtleuten und Beta-Tester*innen, Befunde priorisiert; Paket-Leitfäden für Licht- und Raumklang-Protokolle veröffentlicht.
+2. Januar–Februar: Werkstätten mit [Theater oder Installationsort, Founder]; Beitragenden-Prozess live (Einsteiger-Aufgaben, Review-Regeln), erster fremder Beitrag gemergt, [Kandidat*in, Founder] als zweite*r Maintainer*in mit Commit-Rechten; Eintrag als Umsetzung des Raumklang-Standards ADM-OSC.
+3. März: drei externe Integrationen gezeigt, eine nicht von mir betrieben; Pflegekosten und Einnahmen aus In-App-Kauf beziffert; Transparenz- und Abschlussbericht.
 <!-- /ptf -->
 
 **F18 — Formalia.** Volljährig, Wohnsitz Deutschland, FOSS-Lizenz: Häkchen beim Founder. ⚠️ Die GitHub-API erkennt den `LICENSE`-Text nicht als MIT (`NOASSERTION`, §1) — LR2 vor Abgabe entscheiden.
 
-⚠️ **Was in KEINER Formularantwort steht, mit Absicht:** Heilung, Therapie, Wellness, Meditation, „klinisch“; „CCC“ (E28); „Fediverse“ (kein Konto); „Superintelligenz“; eine Zahl zur Erfolgschance; die Art-Net-, Linux-Renderer- und Kamera-Port-Posten (§7.3 ⛔). Was noch FEHLT, steht in eckigen Klammern — sechs Platzhalter, alle Founder: E-Mail (Kopf), zwei Orte/Partner (F8), Projekte 2–3 oder streichen (F11), Rechtsform und Syng.Visibra (F12), Stundenzahl (F13), Barrierefreiheits-Partner (F14), Jahr der Installationspraxis (F11).
+⚠️ **Was in KEINER Formularantwort steht, mit Absicht:** Heilung, Therapie, Wellness, Meditation, „klinisch“; „CCC“ (E28); „Fediverse“ (kein Konto); „Superintelligenz“; eine Zahl zur Erfolgschance; die Art-Net-, Linux-Renderer- und Kamera-Port-Posten (§7.3 ⛔).
+
+⭐ **Was noch FEHLT — die Liste, nicht ihre Anzahl** (⛔ hier stand „sechs Platzhalter“ und dann acht Arten; TODO sagte sieben, §8 vier, und keine Liste kannte den Theater-Platzhalter in F16/F17):
+- **Kopf:** E-Mail-Adresse, die bis März 2027 gelesen wird.
+- **F8:** Zahl der Testenden heute · den Hamburger Auftrittsort bestätigen (z. B. Hafenklang, steht auf der Künstlerseite) · Ort/Partner 1 · Ort/Partner 2.
+- **F11:** Projekt 2 und 3 mit Link und Rolle — oder die Zeilen streichen.
+- **F12:** Rechtsform (höchstens vier Wörter) · ist Tropical Drones eine Organisation (Verein, Gesellschaft)? Wenn nein, entfällt der Platzhalter · Syng.Visibra-Status (höchstens zwei Wörter; fördert oder beantragt der Altantrag eine Installation, braucht M4 eine ANDERE Referenzinstallation).
+- **F13:** die Stundenzahl (Vorschlag 620).
+- **F14:** Jahr des Beginns der Installationspraxis · ein prüfbarer Beleg eigener Programmierkenntnisse (der Fonds verlangt sie) · Partner oder Nutzer*innen für die Barrierefreiheits-Tests · beide Commit-Zahlen am ABGABETAG neu messen (Contributors-API, Autor-Feld).
+- **F16 und F17:** Theater- oder Installationsort · Zahl der Beta-Tester*innen · Kandidat*in für die zweite Maintainer-Rolle.
+
+⭐ **Was VOR dem Absenden passieren muss, sonst sind Sätze falsch, die heute wahr klingen:**
+- Den Arbeitszweig nach `main` bringen. Auf `main` fehlen heute `EchoelStudio/`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` und die Issue-Vorlage (der Zweig ist ~275 Commits voraus) — F5, F11 und F16 beschreiben sie, und die Jury öffnet den Standard-Zweig. Danach das Community-Profil neu messen (heute 42 %).
+- LR2: `LICENSE` auf den reinen MIT-Text bringen (GitHub zeigt sonst „Other“, und der Drittlizenz-Block nennt HaishinKit als Abhängigkeit, die es nicht gibt).
+- Die externe TestFlight-Gruppe anlegen (`docs/dev/TESTFLIGHT_PUBLIC_BETA.md`), sonst heißt es in F8 „intern“ statt einer Testenden-Zahl.
+- Nach dem Datenschutz-Termin am 16.11. F3 („juristisch nicht geprüft“) und F14 („prüft vor der Förderung“) gemeinsam angleichen.
+- `ptf-wordcount.py` nach dem Einsetzen JEDES Platzhalters erneut laufen lassen; TIGHT liest seit 19.10. auch den Worst-Case.
 
 ## 8. Offene Punkte (wer liefert was)
 
@@ -675,9 +714,9 @@ Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von 
 | Die drei Chat-Links der Sprechstunde (Jury-Seite, „Learnings aus 450 Bewerbungen“, „Freie Open-Source-Lizenzen“) lesen; der dritte entscheidet LR2 | Founder lädt hoch → Sitzung arbeitet ein | **erledigt 19.10.** (vier PDFs; Fakten in §1, Regeln als Kasten in §7.1; der Lizenz-Beitrag schreibt keine Lizenz vor — LR2 bleibt frei). Jury-Seite nachgeliefert 19.10. abends: alle 18 Namen in §1b bestätigt, Verfahren (Empfehlung → BMFTR) ergänzt |
 | Status des älteren Förderantrags „Syng.Visibra“ (Kriterium „keine Doppelförderung“) | Founder | 25.10. |
 | Das Jahrgang-03-Handbuch (Direktlink: https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf) und die Checkliste (prototypefund.de/bewerbung) als PDF — Wortgrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.) | Founder | **erledigt 19.10. abends** — Handbuch geliefert und seitenweise gelesen; die Checkliste steht auf S. 28 des Handbuchs selbst (§1e), ein zweiter Upload ist nicht nötig |
-| Blog-Regeln (Kasten §7.1) beim Kürzen auf jede Antwort anwenden; Frage 8 bekommt ein, zwei benannte Orte/Partner | Sitzung (Namen: Founder) | **erste Fassung erledigt 19.10.** (§7.5, jede Antwort gemessen); offen bleiben NUR die Founder-Platzhalter: zwei Orte/Partner (F8), Rechtsform (F12), Stundenzahl (F13), bis zu zwei weitere Projekte (F11) |
+| Blog-Regeln (Kasten §7.1) beim Kürzen auf jede Antwort anwenden; Frage 8 bekommt ein, zwei benannte Orte/Partner | Sitzung (Namen: Founder) | **erste Fassung erledigt 19.10.** (§7.5, jede Antwort gemessen); offen bleiben NUR die Founder-Platzhalter — Liste in §7.5 „Was noch FEHLT“, hier bewusst nicht abgeschrieben |
 | Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF; Sitzung arbeitet sie in §1 ein | Founder → Sitzung | foerderlinien erledigt 19.10.; **die drei Schwerpunkt-Seiten und die FAQ sind seit dem Handbuch OPTIONAL** — Linie und Förderobjekt sind mit Weg A festgezogen, das Handbuch trägt alle Formalien; die Seiten lohnen nur noch für Wortwahl (bis 1.11., wenn es passt) |
-| Rechtsform, Stundenzahl (aus der ~590-h-Tabelle), frühere Projekte, Jahr des Projektbeginns, Accounts-Feld (`vibrationalforce`) | Founder | 25.10. |
+| Rechtsform, Stundenzahl (aus der 620-h-Tabelle, §7.1 Frage 9), frühere Projekte, Accounts-Feld (`vibrationalforce`) — die vollständige Liste steht in §7.5 „Was noch FEHLT“ | Founder | 25.10. |
 | `PluginUnlock` aus `EchoelCore` nach `Plugins/Shared` verlegen; veraltete Demo-Kommentare in `StandardEffectUnit.swift` korrigieren | Sitzung | **erledigt 19.10.** (`b035916`, `ea613d7`; macOS-CI grün, nichts gerätegeprüft) |
 | `docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md` §0 (behauptete HaishinKit-Broadcast und Mikrofon „im Arbeitsbaum“) und README-Kopf: zwei Codebasen | Sitzung | **erledigt 19.10.** (`607cf73`, `638d667`); `docs/version.json` braucht KEINE Änderung — sein Changelog trägt seit 28.08. einen HISTORY-NOTE-Banner (Eintrag 0) |
 | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, Issue-Vorlage (Community-Health war 42 %) | Sitzung | **erledigt 19.10.** (`c477267`) |
@@ -686,7 +725,9 @@ Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von 
 | Linux-Lauf für `EchoelCore` und `EchoelDSP` (`studio-linux.yml`) | Sitzung | **erledigt 19.10.**: DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
 | Belege Dritter: TestFlight-Tester-/Install-Zahl (datiert) · zwei bis drei namentliche Interessensbekundungen · EINE benannte Integration (freies Lichtpult mit sACN/OSC-Eingang) | Founder | 16.11. |
 | Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und Ton kalibrieren | Sitzung | 1.11. |
-| Lizenzen der Vergleichsprojekte in Frage 7 gegen die Quellen prüfen (Grok-Brief §10) | Sitzung | 16.11. |
+| Lizenzen der Vergleichsprojekte in Frage 7 gegen die Quellen prüfen (Grok-Brief §10); dazu die Plattform und das Ausgabeprotokoll von hr-bridge-ble und HeartOSC mit Abrufdatum eintragen | Sitzung | 16.11. |
+| Verifikations-Runde über F7–F17 (19 Agenten, Befunde gemessen) einarbeiten; EchoelSense/EchoelIO im Bauplan von Core und Engine lösen; `ptf-wordcount.py` liest den Worst-Case auch für TIGHT | Sitzung | **erledigt 19.10. 23:50** |
+| Arbeitszweig vor dem Absenden nach `main` bringen (F5, F11, F16 beschreiben Dateien, die auf `main` fehlen) · externe TestFlight-Gruppe anlegen | Founder (Sitzung prüft vorher den Auto-Merge) | 16.11. |
 | Entwurf auf die WORTGRENZEN kürzen (Reihenfolge: Bestand vor Plan, Messbares vor Prosa), Gegenlesen durch eine zweite Person | Sitzung + Founder | **Kürzung erledigt 19.10.** (§7.5, `scripts/ptf-wordcount.py`: kein Block OVER); Founder-Fakten einsetzen und neu messen, dann Gegenlesen bis 16.11. |
 | Formaler Antrag beim BMFTR (nur nach Jury-Auswahl, auf Deutsch, mit VDI/VDE-IT) | Founder | Dez 2026–März 2027 |
 
