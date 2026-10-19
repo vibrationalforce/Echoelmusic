@@ -5524,3 +5524,15 @@ Review 2026-11-15.
 **Founder-Berichte daraus:** Alt-App nimmt Video auf (Front- und Rückkamera) gegen CLAUDE.md, FEATURE_STATUS, Kamera-Beschreibung und Website; `main` zeigt kein Studio; Lizenzjahr 2024 gegen Repo-Anlage 2025. Stehen in `docs/dev/FOUNDER_INBOX.md`.
 
 **Review:** 2026-11-19.
+
+### 2026-10-19 — Prüfrunde über Vision, Website und Studio-Kopie: Behauptungen nur aus dem Code
+
+**Anlass:** adversariale Prüfrunde (Task 35) über die Ultraechoel-Runde, zwei Finder unabhängig, jeder Befund selbst nachgemessen.
+
+**Befund:** die Website-Runde `20a5469` und der Store-Fußtext schrieben „tested in AUM“ für Studios Instrumente — die AUM-Messung #1386 gilt nur `echl` der Alt-App. Die Roadmap nannte eine Bildschirmtastatur (`git grep -i keyboard -- EchoelStudio/App` → 0), Kopie und About-Seite den Kauf im Präsens, obwohl in App Store Connect kein In-App-Kauf existiert (F-15). Der Claims-Kasten nannte „drei“ Unterschiede zu Studio, es sind mehr. Die Vision führte einen „Gehörschutz-Hinweis“ als Alt-App-Bestand, den es nie gab. Dazu waren zwei Website-Wächter schon vor der Sitzung rot (behoben in `c43ed75dc`).
+
+**Entscheidung (drei Zeilen in `decisions.csv`):** (1) Studio-Kopie nur aus gemessenem Code, `EchoelStudio/RELEASE` ist eine Prüfliste, keine Quelle; Host „noch in keiner Host-App geprüft“, Kauf „geplant, noch nicht im Verkauf“. (2) `echl` heißt im Host „Echoel: Echoel Synth (earlier sessions)“, Codes unverändert. (3) „Produktionsgesundheit“ bleibt internes Etikett.
+
+**Commits:** `26e507745` (StoreView, echl-Name), `e755fd52d` (Website, CLAIMS, Vision), `e9e36b146` (About-Seite).
+
+**Review:** 2026-11-19.

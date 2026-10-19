@@ -1509,3 +1509,25 @@ Nächstes: Arrangement-Ansicht, dann M2.
   `decisions.csv` + `memory/decisions.md` (Review 16.11.). Nichts ist Code, nichts gerätegeprüft.
 - Nächster Schritt: adversariale Prüfung der 13 Blöcke per Workflow (Behauptung gegen Repo, Regel gegen Handbuch), dann
   Founder-Fakten einsetzen und neu messen; Prüfer-Briefe §10 auf §7.5 umstellen; Routine Do 22.10.
+
+## 2026-10-19 23:50 — Ultraechoel: Vision-Einstieg, Website für Studio, Build 10005, Evidenzkarte, Prüfrunde
+
+- Auftrag: „Alles Aktualisieren, kombinieren der Echoelmusic Vision im Repo, TestFlight Deploy und Website“ — mit
+  Produktionsgesundheit, One Clock, Biofeedback, Heilungs-Forschung, Inklusion, EchoelBodyVibe, allen EchoelTools,
+  DMMW/GMMW/GSIDMMW, Peaceful Business. Heilung bleibt Forschung ohne jede Behauptung (Founder: „Weiter“).
+- `docs/dev/ECHOEL_VISION_2026-10-19.md` (29c9dd9): Autoritäts-Karte, ein Produktsatz, Namensleiter, Domänen-Register,
+  EchoelBodyVibe = P6, Gesundheit als Forschungslinie, Zeitachse bis 2030. Sieben Zeilen decisions.csv.
+- Website (20a5469): `docs/roadmap.html` neu, privacy/claims/brainstorming/index für Studio; Cache 10.24.0 überall.
+- TestFlight: Build 10005 (Lauf 39324647126) mit About-Seite. Ohne App Group (F17).
+- Evidenzkarte Gesundheitsforschung (2e249ef): 67 Befunde, 18 Grenzen, 8 Forschungsfragen; Methodengrenze offen
+  (Proxy ließ nur developer.apple.com und GitHub durch). F21 im Founder-Eingang.
+- Prüfrunde (zwei Finder, jeder Befund selbst nachgemessen): ⛔ „tested in AUM“ für Studios Instrumente war falsch — die
+  AUM-Messung #1386 gilt nur `echl` der Alt-App. Dazu Bildschirmtastatur (0 Treffer), Kauf im Präsens (kein IAP, F-15),
+  „three entries“, ein nie existierender „Gehörschutz-Hinweis“. Behoben in 26e507745 (StoreView, `echl`-Name),
+  e755fd52d (sechs Seiten, CLAIMS.md, Vision §4/§5/§6a), e9e36b146 (About-Seite). Zwei Website-Wächter waren schon vor
+  der Sitzung rot (claims „not</strong>“, privacy „place in session name“) — c43ed75dc, Anspruch liest den Namen jetzt
+  aus der Ansicht. ⭐ Lehre: eine Behauptung über einen NEUEN Build aus der Messung eines ALTEN Ziels ist dieselbe
+  Verwechslung wie #1386 → „läuft in Logic“; je Ziel messen.
+- Drei Zeilen decisions.csv + memory/decisions.md (Kopie nur aus Code, `echl`-Name, Produktionsgesundheit intern).
+- Nichts gerätegeprüft. Nächster Schritt: RELEASE für 10006, sobald studio.yml auf e9e36b146 grün ist; Gates auf
+  c43ed75dc lesen; Routine Do 22.10.
