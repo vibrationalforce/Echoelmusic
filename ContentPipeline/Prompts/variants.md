@@ -12,9 +12,12 @@ Echoel IST ein AUv3-Instrument und HOSTET keines; `CLAIMS.md` §a/§b, zwei Häl
 Lies ZUERST ContentPipeline/CLAIMS.md, dann ContentPipeline/Scripts/template_short_form.md.
 
 CLAIMS.md ist bindend. Behaupte nichts, was dort nicht unter ✅ steht. Insbesondere:
-Echoel IST ein AUv3-Instrument (Target `EchoelmusicAUv3`, lädt in AUM, am Gerät gemessen
-2026-09-20, #1386) und HOSTET selbst KEINE fremden Plugins — kein Wirt, das Hosting bleibt
-gestrichen (CLAIMS.md, die zwei Hälften a/b); es ist KEIN Wellness-/Meditations-/Schlaf-/Fokus-Produkt (harte Markenregel,
+die ALT-App (10.79) IST ein AUv3-Instrument (Target `EchoelmusicAUv3`, `echl`, lädt in AUM, am
+Gerät gemessen 2026-09-20, #1386) und HOSTET selbst KEINE fremden Plugins (CLAIMS.md, die zwei
+Hälften a/b). Für Echoel Studio, das TestFlight seit 2026-10-19 trägt, gilt das NICHT: seine
+eigenen Instrumente sind in keiner Host-App auf einem Gerät geprüft, es spielt Audio Units anderer
+Apps auf Spuren (ungeprüft), und der Einmalkauf ist noch nicht im Verkauf (CLAIMS.md, Nachträge
+(1), (3), (4) oben); es ist KEIN Wellness-/Meditations-/Schlaf-/Fokus-Produkt (harte Markenregel,
 und die App selbst sagt "Selbstbeobachtung, nicht medizinische Diagnose"); die Apple
 Watch ZEIGT Werte an, sie misst sie nicht für die App; es gibt keinen App-Store-Link,
 nur TestFlight.
