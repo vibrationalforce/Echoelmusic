@@ -1531,3 +1531,17 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Drei Zeilen decisions.csv + memory/decisions.md (Kopie nur aus Code, `echl`-Name, Produktionsgesundheit intern).
 - Nichts gerätegeprüft. Nächster Schritt: RELEASE für 10006, sobald studio.yml auf e9e36b146 grün ist; Gates auf
   c43ed75dc lesen; Routine Do 22.10.
+- Nachtrag (zweite Hälfte der Prüfrunde + Gegenprüfung der neuen Kopie, acht Skeptiker): ⛔ zwei blockierende
+  Website-Wächter waren auf dem Zweig rot (roadmap-Meta 162 > 160, erstes „RTMP“ ohne „never built“ im Fenster) —
+  4adabf3a7, Transkription HEAD 2 rot → 0. ⛔ CODE-FEHLER: der Import alter Songs setzte sein Erledigt-Flag auch
+  ohne Fund; jedes Gerät mit 10004–10006 (alle ohne App Group) hätte nie importiert — 75ab37182,
+  `LegacySong.importIsFinished` + Test, Schlüssel `.v2`. Kauf im Präsens in StoreView/StoreController/
+  PluginControlsView, Skalen-Beschreibung ohne Tastatur (042cfdfa2). Register: „öffentlich“ erst nach dem Merge,
+  Abo abgelöst, GMMW bis 1.0 eng (NEUPLANUNG §2.1), M3 (2c45fd058). Alt-App-AUv3-Sätze mit Geltungsbereich,
+  Studio hostet fremde Audio Units (CLAIMS (4), privacy), health.html Hördauer statt Pausen (ffc0a5e5d),
+  Varianten-Prompt (2b25e03ea). F22 neu: `main` sagt „Microphone: Not requested“, Studio fragt danach.
+- TestFlight: 10006 hochgeladen (Lauf 39331060196), 10007 ausgelöst (bab0f614a). CI `c43ed75dc`: Build for Testing
+  grün, Ausführung unbelegt (Log-Fenster; das xcresult-Artefakt ist am Proxy gesperrt). ⭐ Lehre: wer zwei
+  Wächter-Rotfunde repariert, transkribiert ALLE Ansprüche der Datei, nicht nur die zwei gemeldeten — die
+  Meta-Länge und das RTMP-Fenster standen in derselben Datei bzw. Nachbardatei und blieben stehen.
+

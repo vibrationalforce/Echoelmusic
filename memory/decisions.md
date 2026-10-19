@@ -5533,6 +5533,6 @@ Review 2026-11-15.
 
 **Entscheidung (drei Zeilen in `decisions.csv`):** (1) Studio-Kopie nur aus gemessenem Code, `EchoelStudio/RELEASE` ist eine Prüfliste, keine Quelle; Host „noch in keiner Host-App geprüft“, Kauf „geplant, noch nicht im Verkauf“. (2) `echl` heißt im Host „Echoel: Echoel Synth (earlier sessions)“, Codes unverändert. (3) „Produktionsgesundheit“ bleibt internes Etikett.
 
-**Commits:** `26e507745` (StoreView, echl-Name), `e755fd52d` (Website, CLAIMS, Vision), `e9e36b146` (About-Seite).
+**Commits:** `26e507745` (StoreView, echl-Name), `e755fd52d` (Website, CLAIMS, Vision), `e9e36b146` (About-Seite). Zweite Hälfte: `4adabf3a7` (zwei rote Website-Wächter), `75ab37182` (Import-Flag ohne Fund, Schlüssel `.v2` — ohne ihn hätte kein Gerät mit 10004–10006 je importiert), `042cfdfa2` (Kauf im Präsens in der App), `2c45fd058` (GMMW bis 1.0 eng — eigene Zeile in `decisions.csv`), `ffc0a5e5d`, `2b25e03ea`. Founder: F22 (Live-Datenschutzseite gegen Studio-Build).
 
 **Review:** 2026-11-19.
