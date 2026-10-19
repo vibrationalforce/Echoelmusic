@@ -1,0 +1,37 @@
+{
+ "id": "003-locked-set-at-base",
+ "title": "Sperrliste von der Job-Basis, Abnahme gezählt",
+ "stage": "review",
+ "round": 1,
+ "base": "f61d7872d57f7fab8582fb9ed6b63c1c2a389c10",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "e2e-test-agent"
+ ],
+ "paths": [
+  ".claude/workflows/echoel-factory-review.js",
+  ".claude/skills/factory",
+  "scripts/factory-review-selftest.py",
+  "scripts/factory-board.py",
+  "scripts/INDEX.md",
+  "Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift",
+  "scratchpads/factory/003-locked-set-at-base",
+  "scratchpads/factory/001-factory-loop/spec.md"
+ ],
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-20",
+   "note": "Nachfolge von Job 001 (Inbox GM27): Sperrliste von der Basis, Abnahme gezählt, Minors der Runde 3"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-20",
+   "note": "Workflow, Selbsttest (Mutationen 28/28), Board scopeOpen (8/8), SKILL.md, Wächter-Ansprüche 7 und 8; kein Lauf außer dem Wächter im Test-Bundle"
+  }
+ ],
+ "criteria": 9,
+ "deviceCriteria": []
+}

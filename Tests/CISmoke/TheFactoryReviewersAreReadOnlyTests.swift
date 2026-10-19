@@ -19,6 +19,13 @@
 // 5. The skill routes an escalation to `docs/dev/FOUNDER_INBOX.md`, and that file exists.
 // 6. `withReadOnly` really PREPENDS `READ_ONLY` — claims 1 and 2 would stay green over a wrapper
 //    rewritten as `(text) => text`, while no prompt carried the clause (factory job 001, round 1).
+// 7. The approver reads the locked set AT THE JOB BASE — `git show ${a.base}:` of
+//    `.claude/rules/context.md`, `.claude/hooks/protect-founder-gated.py` and
+//    `.claude/settings.json` — never from the tree under review, which the job itself may have
+//    edited (factory job 001, round 3; job 003).
+// 8. Every file in the hook's `PROTECTED_FILES` is in the workflow's `LOCK_CONFIG`, which escalates
+//    a change to it deterministically. Two lists of one lock is #416: a file added to the hook and
+//    not to the workflow would be judged by the approver's discretion again.
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
 // by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
@@ -27,10 +34,13 @@
 // in Python against both trees.
 // Claim 6 (added in the job-001 rework) is a COUNTERWEIGHT: the wrapper already prepended the clause
 // on the parent, so it is green on both trees and pins a premise of claims 1–2 (#343).
+// Claims 7 and 8 (job 003) are FORWARD guards: on the parent `f61d7872d` the approver read the
+// lock files from the working tree and there was no `LOCK_CONFIG`, so both are red there by the
+// change itself, not by an absent anchor; the hook half of claim 8 is green on both trees.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
-// unrelated commit. Whoever edits the workflow transcribes claims 1–4 and 6 before pushing, and
+// unrelated commit. Whoever edits the workflow transcribes claims 1–4 and 6–8 before pushing, and
 // runs `scripts/factory-review-selftest.py` for the decision logic, which no guard here can see.
 //
 // THIS GUARD FORBIDS NOTHING (#364): more lenses, a different cap, a new agent type on the
@@ -157,6 +167,46 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
         XCTAssertEqual(inSkill, inCode, """
             The skill says \(inSkill) rework rounds, the workflow enforces \(inCode). Change both \
             in one commit.
+            """)
+    }
+
+    /// Every string between a pair of `quote` characters in `list` (the odd pieces of a split).
+    private func quoted(_ list: String, by quote: String) -> Set<String> {
+        let pieces = list.components(separatedBy: quote)
+        var found = Set<String>()
+        var index = 1
+        while index < pieces.count {
+            found.insert(pieces[index])
+            index += 2
+        }
+        return found
+    }
+
+    func testTheApproverReadsTheLockAtTheJobBase() {
+        let code = workflowCode()
+        for file in [".claude/rules/context.md", ".claude/hooks/protect-founder-gated.py", ".claude/settings.json"] {
+            XCTAssertTrue(code.contains("git show ${a.base}:\(file)"), """
+                The approver prompt in \(Self.workflowPath) no longer reads `\(file)` with \
+                `git show ${a.base}:`. Read from the working tree, the locked set is the one the job \
+                under review may have edited — the job would be judged by its own rules.
+                """)
+        }
+    }
+
+    func testEveryHookProtectedFileEscalatesDeterministically() {
+        guard let hookList = firstCapture("PROTECTED_FILES = \\(([^)]*)\\)", in: text(".claude/hooks/protect-founder-gated.py")) else {
+            return XCTFail("ANCHOR MISSING: `PROTECTED_FILES = (…)` in .claude/hooks/protect-founder-gated.py (#454)")
+        }
+        guard let lockList = firstCapture("const LOCK_CONFIG = \\[([^\\]]*)\\]", in: workflowCode()) else {
+            return XCTFail("ANCHOR MISSING: `const LOCK_CONFIG = [...]` in \(Self.workflowPath) (#454)")
+        }
+        let hookFiles = quoted(hookList, by: "\"")
+        let locked = quoted(lockList, by: "'")
+        XCTAssertFalse(hookFiles.isEmpty, "PROTECTED_FILES parsed empty — the scan matched nothing useful")
+        XCTAssertTrue(hookFiles.isSubset(of: locked), """
+            The hook protects \(hookFiles.subtracting(locked).sorted()), which the factory workflow's \
+            LOCK_CONFIG does not escalate. Add it to LOCK_CONFIG in the same commit, or a job that \
+            edits it is judged by the approver's discretion instead of escalating.
             """)
     }
 

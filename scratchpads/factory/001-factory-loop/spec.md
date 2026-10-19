@@ -21,7 +21,7 @@ getrennter Approver, der freigibt oder über `docs/dev/FOUNDER_INBOX.md` eskalie
 5. Ein CHANGES ohne Befund mit Datei und Schwere blocker/major zählt nicht; ein PASS mit Blocker zählt als CHANGES; eine fehlende Prüfer-Antwort ist kein Pass (`RERUN`).
 6. `scripts/factory-board.py --selftest` endet mit 0 und das Werkzeug steht in `scripts/INDEX.md` (`TheToolboxHasAnIndexTests`).
 7. Der Skill zitiert nur Pfade, die existieren (`TheAgentRecipesPointAtThisRepoTests` Anspruch 3, `scripts/doctor.py --section B`).
-8. [DEVICE] entfällt — die Scheibe berührt keine App.
+8. Kein Geräte-Kriterium — die Scheibe berührt keine App (bis 2026-10-20 trug die Zeile die Geräte-Marke mit „entfällt“; Job 003: ein Satz ohne Geräte-Bitte trägt keine Geräte-Marke).
 
 ## Out of scope
 Ein Web-Board als Artifact, ein automatischer Merge, ein Builder-Subagent, eine Änderung an Workflows unter `.github/`.
