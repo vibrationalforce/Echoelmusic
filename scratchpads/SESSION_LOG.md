@@ -1478,3 +1478,10 @@ Nächstes: Arrangement-Ansicht, dann M2.
   scheiterte an genau dieser Zählung, bbdf5e2 trägt deshalb NUR das Förderdokument. Jetzt umbenannt in F-05b/F-06b, Querverweise
   in FOERDERUNG §6/§8 mitgezogen. Lehre: eine neue Posten-Nummer wird gegen die Datei GEMESSEN, nicht aus dem Gedächtnis vergeben.
 - Noch beim Founder: Handbuch + Checkliste (Zeichengrenzen), Jury-Seite, drei Schwerpunkt-Seiten, FAQ aufgeklappt. Nichts ist Code.
+
+## 2026-10-19 19:50 — Jury-PDF: 18 Namen bestätigt; die zwei new.prototypefund.de-Links sind tot
+
+- Founder: beide 2023-Handbuch-Links (new.prototypefund.de/files/…) liefern 404 — im Förderdokument und im Zwilling als tot
+  markiert; die EINE gültige Adresse ist prototypefund.de/handbuch (Jahrgang 03), Checkliste auf prototypefund.de/bewerbung.
+- Jury-PDF (25 Seiten, Fotos) gelesen: alle 18 Namen aus §1b stimmen (gegen die Datei geprüft, nicht gegen das Gedächtnis);
+  neu in §1b: die Jury EMPFIEHLT, das BMFTR entscheidet; Up and Coming hat eine eigene Sechser-Jury (für uns ohne Belang).
