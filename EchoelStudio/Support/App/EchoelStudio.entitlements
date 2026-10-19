@@ -2,12 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Read-only use: the earlier app kept its songs in this container, and the first launch
-	     after the update imports them (EchoelCore.LegacySong). The app's App ID already carries
-	     the capability; the extension's does not and must not get this file. -->
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.echoelmusic</string>
-	</array>
+	<!-- The App Group `group.com.echoelmusic` is deliberately NOT requested in this build.
+	     It served one read-only purpose: the earlier app kept its songs in that container and
+	     the first launch imports them (EchoelCore.LegacySong, DocumentController.earlierBases).
+	     Since 2026-10-18 Apple's profile for com.echoelmusic.app grants only
+	     `group.com.echoelmusic.shared`, so three TestFlight attempts failed at signing (F17 in
+	     docs/dev/FOUNDER_INBOX.md). Without the entitlement the import finds no container and
+	     skips silently; nothing else in Echoel Studio touches the group. Restore the key with
+	     <string>group.com.echoelmusic</string> once the founder has re-added the group to the
+	     App ID (developer.apple.com → Identifiers → App Groups). The extension never had it. -->
 </dict>
 </plist>

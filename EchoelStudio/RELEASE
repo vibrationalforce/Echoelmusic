@@ -1,4 +1,6 @@
-11.0.0 — first Echoel Studio TestFlight
+11.0.1 — attempt 4: no App Group entitlement (F17), legacy import skips until the group is back on the App ID
+
+Previous: 11.0.0 — first Echoel Studio TestFlight (attempts 1–3 failed at signing, F17)
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
