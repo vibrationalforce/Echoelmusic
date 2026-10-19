@@ -170,7 +170,10 @@ final class AgentToolsTests: XCTestCase {
             XCTAssertEqual(cutoff.value(at: 8 * 3_840), 4_000)
             XCTAssertEqual(store.undoStack.count, 1)
 
-            func message(_ action: AgentAction) -> String {
+            // A local function does NOT inherit the enclosing closure's main-actor isolation
+            // (Linux run #4, Swift 6.2.4, 2026-10-19: "main actor-isolated property 'project'
+            // can not be referenced from a nonisolated context"); it is spelled out.
+            @MainActor func message(_ action: AgentAction) -> String {
                 do { _ = try AgentTools.commands(for: action, in: store.project); return "" } catch { return String(describing: error) }
             }
             XCTAssertTrue(message(.automate(track: "Bass", parameter: "pan", fromBar: 1, toBar: 2, from: 0, to: 2, curve: 0)).contains("-1"))

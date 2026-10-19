@@ -22,8 +22,11 @@ final class ProjectStoreTests: XCTestCase {
         }
     }
 
-    func testAFailedCommandInAGroupChangesNothing() async {
-        await MainActor.run {
+    // `async throws` although nothing is thrown at runtime: the closure passed to the
+    // rethrowing `MainActor.run` is INFERRED throwing because `XCTAssertThrowsError(try …)`
+    // holds a `try` syntactically inside its body (Linux run #4, Swift 6.2.4, 2026-10-19).
+    func testAFailedCommandInAGroupChangesNothing() async throws {
+        try await MainActor.run {
             let store = ProjectStore()
             let track = TrackID()
             XCTAssertThrowsError(try store.perform([
