@@ -1,4 +1,36 @@
-{"id": "001-factory-loop", "title": "Die Factory-Schleife selbst", "stage": "review", "round": 1,
- "base": "b1cfc8ad1e49b93edc1a4832cac89e96bf1ccde4", "head": "", "lenses": ["code-reviewer", "security-agent", "ux", "e2e-test-agent"],
- "history": [{"stage": "spec", "date": "2026-10-19", "note": "aus dem zazencodes-Reel gelernt, neu geschrieben"},
-             {"stage": "build", "date": "2026-10-19", "note": "Skill, Workflow, Board, Wächter"}]}
+{
+ "id": "001-factory-loop",
+ "title": "Die Factory-Schleife selbst",
+ "stage": "review",
+ "round": 2,
+ "base": "b1cfc8ad1e49b93edc1a4832cac89e96bf1ccde4",
+ "head": "9c0677f03",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "e2e-test-agent"
+ ],
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-19",
+   "note": "aus dem zazencodes-Reel gelernt, neu geschrieben"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-19",
+   "note": "Skill, Workflow, Board, Wächter"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-19",
+   "note": "Runde 1 (wf_53b5c83e-663): REWORK, 7 major offen — Verdikt-Logik, Argumente, Linsen-Boden, gesperrte Dateien, Herkunftsverweis"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-19",
+   "note": "Nacharbeit 1: alle Befunde eingearbeitet, 27 Attrappen-Fälle; head der Runde 2 = der Nacharbeits-Commit"
+  }
+ ]
+}

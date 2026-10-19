@@ -10,8 +10,9 @@ read-only agents and never touch it (.claude/skills/factory/SKILL.md).
     python3 -I scripts/factory-board.py --open       # only jobs that are not done or dropped
     python3 -I scripts/factory-board.py --selftest   # after touching this file
 
-Exit 0 = printed · 1 = a board.json is unreadable or names an unknown stage (a finding, the
-board does not guess) · 2 = the factory folder does not exist yet.
+Exit 0 = printed · 1 = a board.json is unreadable, is not a JSON object, names an unknown stage,
+or carries an id that is not its folder name (each a finding; the board does not guess) ·
+2 = the factory folder does not exist yet.
 """
 import json
 import sys

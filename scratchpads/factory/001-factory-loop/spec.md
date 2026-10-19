@@ -11,7 +11,7 @@ getrennter Approver, der freigibt oder über `docs/dev/FOUNDER_INBOX.md` eskalie
 - APPROVE erfindet keinen Merge-Pfad; der Weg nach `main` bleibt Gates + `auto-merge-claude.yml`.
 - Die Agenten erben das Sitzungsmodell; nur der Approver bekommt `effort: 'high'` (keine festen Modell-Etiketten wie im Clip).
 - Drei Linsen sind immer an (Code, Security, UX/Claims), eine vierte nach Pfad.
-- Das Video ist Inspiration, kein Code: nichts daraus wurde kopiert, die Quelle wurde nicht geöffnet.
+- Das Video ist Inspiration, kein Code: nichts daraus wurde kopiert. Das Reel lag als Founder-Upload vor; die Endkarten-URL und der Code des Kanals wurden nicht geöffnet.
 
 ## Acceptance criteria
 1. `.claude/workflows/echoel-factory-review.js` ist syntaktisch gültig (in einer async-Hülle mit `node --check` geprüft) und lehnt fehlerhafte Argumente mit `decision: "INVALID"` ab, statt zu raten.

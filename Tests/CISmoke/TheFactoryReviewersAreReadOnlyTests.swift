@@ -17,12 +17,21 @@
 // 3. Every `agentType:` in the workflow is a name on the ultracode roster.
 // 4. `MAX_REWORK_ROUNDS` in the workflow equals the number the skill states for it.
 // 5. The skill routes an escalation to `docs/dev/FOUNDER_INBOX.md`, and that file exists.
+// 6. `withReadOnly` really PREPENDS `READ_ONLY` — claims 1 and 2 would stay green over a wrapper
+//    rewritten as `(text) => text`, while no prompt carried the clause (factory job 001, round 1).
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
 // by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
 // files this commit creates; none is a regression. Claim 2's context.md half and claim 5's inbox
 // half are COUNTERWEIGHTS, green on both trees. Not compiled here (no toolchain); transcribed
 // in Python against both trees.
+// Claim 6 (added in the job-001 rework) is a COUNTERWEIGHT: the wrapper already prepended the clause
+// on the parent, so it is green on both trees and pins a premise of claims 1–2 (#343).
+//
+// WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
+// edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
+// unrelated commit. Whoever edits the workflow transcribes claims 1–4 and 6 before pushing, and
+// runs `scripts/factory-review-selftest.py` for the decision logic, which no guard here can see.
 //
 // THIS GUARD FORBIDS NOTHING (#364): more lenses, a different cap, a new agent type on the
 // roster — each is one consistent edit away from green.
@@ -88,6 +97,14 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             \(calls - wrapped) agent call(s) in \(Self.workflowPath) do not go through \
             `withReadOnly(`. Every subagent prompt must carry the §5 clause of \
             `.claude/rules/context.md` verbatim — a subagent here once destroyed uncommitted work.
+            """)
+    }
+
+    func testTheWrapperPrependsTheClause() {
+        XCTAssertTrue(workflowCode().contains("const withReadOnly = (text) => `${READ_ONLY}"), """
+            `withReadOnly` in \(Self.workflowPath) no longer starts with `${READ_ONLY}`. Claims 1 and \
+            2 only see that every agent call goes through the wrapper and that the constant is right; \
+            this is the line that puts one into the other.
             """)
     }
 
