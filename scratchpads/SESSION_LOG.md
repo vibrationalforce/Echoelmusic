@@ -1395,3 +1395,27 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Nichts gerätegeprüft. Offen beim Founder: A/B/C nach 17 Uhr, Mail an den Fonds, Handbuch + vier Fonds-Seiten +
   FAQ als PDF, Rechtsform/Stunden/Projekte/Startjahr, Syng.Visibra-Status, Tester-Zahl, Interessensbekundungen,
   EINE Integration, DSB-Prüfung, LR1/LR2/LR3/LR6, F17 App Group im Portal.
+
+## 2026-10-19 13:05 — Interview-Paket für die Sprechstunde, Runde-2-Lernmodus, eine Code-Scheibe (c81abb6, beide Studio-Gates grün)
+
+- **Interview-Paket** (Founder: „Mache mir fürs Interview alles fertig … Ultracode“): Workflow `wf_59725ce6` (7 Agenten:
+  Hörspiel + Jury-Kritik, Masterplan, Drei-Wochen-Plan, To-do, fünf Prüfaufträge, Schluss-Kritiker). Seite
+  **Echoel Interview-Paket** https://claude.ai/artifact/Y4UEurBvzWhLRtqzJBedSW (privat; Tabs Heute · Hörspiel (9 Kapitel,
+  Web-Speech de-DE, Hören/Üben) · Fragen · 3 Wochen · To-do (Haken in der Seiten-DB `todo/state`) · Masterplan · Briefs;
+  Spickzettel mit Antwortfeldern in `notes/sprechstunde`). Headless-Test bei 400 px: sieben Tabs, kein Seitenscroll, keine
+  Konsolenfehler. Kalender-Ereignis `lp0dkcmsmjh8hkmd3l37k2oaqs` trägt den Link (Beschreibung gekürzt — 8 192-Zeichen-Grenze).
+- **Kritiker-Befund, der zählt:** die Mail an info@prototypefund.de ist um 12:35 CEST vom Founder GESENDET worden — mit dem
+  Platzhalter „[Jahr des Projektbeginns]“ und „rund 500“ (richtig 516). Nachreichen im selben Thread = To-do F-03b
+  (Repo angelegt 15.10.2025 laut GitHub-API, LICENSE sagt 2024 — der Founder nennt EIN Jahr). Sprechstunden-Link weiter
+  unbekannt (F-00, Rückfall 16:55 im Mail-Thread). Termine je Posten auf den Plan-Tag vereinheitlicht; drei Masterplan-
+  Zahlen am HEAD neu gemessen (74 `case`-Zeilen, 860 REVIEW DUE, 411 Gerätebitten in 358 Dateien); LR2 = Founder-Ja,
+  Sitzung schreibt (S-40). Repo-Zwilling der Liste: `docs/dev/TODO_FOUNDER_2026-10-19.md` (18/73 erledigt).
+- **Lernmodus Runde 2** geloggt (`17d9903`): ChatGPT `[verified 28/31]` ADOPT→PRODUCT, Grok `[verified 3/8]` WATCH;
+  NEUPLANUNG-Zeile `.anyone` auf `MIDIInput.swift:437` korrigiert.
+- **Scheibe C4 gebaut** (`c81abb6`): `Names.derived(_:suffix:)` in Core, drei Aufrufer (Arrange, Clip-Editor, Session),
+  Test pinnt die Abweisung des handgebauten Namens und das Gelingen des abgeleiteten. CI: `Echoel Studio` 39240263494
+  und `Echoel Studio (Linux)` 39240263256 beide `success`. Nicht gerätegeprüft. Offen aus derselben Messung:
+  `exportWAV` wartet nicht auf `mediaLoad` (zweite Scheibe), `CommandError` hat keinen Weg auf den Schirm (60+ `try?`).
+- Lehre (HARNESS_LEDGER): dem Kritiker den VERÖFFENTLICHTEN Text geben, nicht den Rohentwurf — und ihn die Außenwelt
+  prüfen lassen (Gmail, Kalender, HEAD); dort lagen die echten Funde.
+- Nichts gerätegeprüft. Beim Founder: 17:00 Sprechstunde (Frage 1 zuerst), Jahr nachreichen, Entscheidung A/B/C abends.
