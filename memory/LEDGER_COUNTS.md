@@ -7663,3 +7663,10 @@ stehen verkürzt noch in CLAUDE.md; ihr Scope-Urteil ist durch das Founder-Geset
 Wörtlich, wie es in der Identitäts-Zeile stand (Umzug, weil die Datei 5 B unter ihrer Decke lag und fünf Wahrheits-Korrekturen des GMMW-Deep-Audits Platz brauchten):
 
 ⛔ **Und die ERSTE Fassung dieser Streichung ließ die Zeile stehen, die eine Session zuallererst liest: die H1.** Sie behauptete „Bio · Audio · Video · Light · **Broadcast**" als Produktsäule, während der Absatz direkt darunter erklärte, warum Broadcast nicht existiert — die einzige überlebende Falschstelle saß in der Überschrift, und der Absatz nannte sich dabei selbst „die erste Zeile, die eine Session liest". Die H1 sagt jetzt **Space** (ADM-OSC ist real und verdrahtet). Lehre für die nächste Wahrheits-Runde: **die Überschrift ist Teil der Behauptung**; ein `git grep` nach dem gestrichenen Wort über die GANZE Datei gehört zum Streichen dazu, nicht nur das Bearbeiten der Absätze, an die man gerade denkt.
+
+## AN — Die TECH-STACK-Zeile ließ `Network` weg, aus CLAUDE.md ausgelagert 2026-10-19
+
+Wörtlich aus CLAUDE.md (TECH STACK, Absatz unter der Phantom-Rücknahme), ausgelagert, um die
+Ultraechoel-Verweise byte-neutral aufzunehmen. Die Auswahlregel blieb dort, weil sie Gesetz ist.
+
+⛔ **Und die erste Reparatur dieser Zeile machte denselben Fehler eine Stufe kleiner.** Sie ergänzte fünf Sensor-/Kollab-Frameworks und ließ **`Network` weg** — dabei trägt genau das die Sync-Fähigkeit, die die Identitätszeile nennt (`Sync/OSCSender`, `ADMOSCSender`, `ArtNetSender`, `SACNSender`, **4 Dateien**, mehr als HealthKit mit 3). Eine Tabelle, die vor der Wahl einer Netzwerk-API gelesen wird und das Netzwerk-Framework verschweigt, ist derselbe Defekt wie ein Phantom, nur andersherum. Ebenfalls nachgetragen: `SwiftUI` (47 Dateien, das mit Abstand meistimportierte). Bewusst NICHT gelistet: `UIKit` (13) — es steht schon als Plattform-Guard-Regel weiter unten; und die Ein-Datei-Fälle CloudKit · Photos · ARKit · AVKit · CoreHaptics · UserNotifications, damit die Zeile eine Orientierung bleibt und kein Inventar wird.

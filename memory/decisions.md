@@ -5510,3 +5510,17 @@ Review 2026-11-15.
 **Offen (Founder, bis 25.10.):** sieben Platzhalter in §7.5 — E-Mail, zwei Orte/Partner mit Namen, Projekte 2–3 oder „keine", Rechtsform + Syng.Visibra, Stundenzahl (eine Zahl 250–950; Vorschlag 620), Barrierefreiheits-Partner, Jahr der Installationspraxis. Danach neu messen, Gegenlesen bis 16.11.
 
 **Review:** 2026-11-16.
+
+### 2026-10-19 — Ultraechoel: ein Einstieg für Vision, Ordnung, Gesundheit und Zeitachse
+
+**Anlass:** Founder: „Ultraechoel mit dem Neuen Wissen: Alles Aktualisieren, kombinieren der Echoelmusic Vision im Repo, TestFlight Deploy und Website …" — mit Produktionsgesundheit, One Clock, Biofeedback, Knochen-, Wund-, Gewebe- und Organheilung, Inklusion, EchoelBodyVibe, allen EchoelTools der Geschichte, DMMW/GMMW/GSIMMW und dem mehrjährigen „Peaceful Business". Auf den Hinweis, Heilung nur als Forschung ohne Behauptung zu führen: „Weiter".
+
+**Befund (Korpus-Karte, acht Leser plus Kritiker):** zwei Dateien beanspruchen Scope-Autorität, fünf Produktsätze, drei Reihenfolge-Dateien ohne gegenseitigen Verweis, GM1 offen, EchoelBodyVibe mit drei Bedeutungen und ohne Register-Eintrag, keine Zeitachse über 2026 hinaus außer der Förderung, „Echoel Live" noch als Plan in vier Dateien.
+
+**Entscheidung (Sitzung, unter „du entscheidest alles"):** `docs/dev/ECHOEL_VISION_2026-10-19.md` ist der Einstieg. Sieben Zeilen in `decisions.csv` (2026-10-19): Autoritäts-Karte, GM1 (G = generativ, Generatoren als Geräte, keine neue Navigation), EchoelBodyVibe = Körper-Instrument in P6, Gesundheit als Forschungslinie außerhalb des Produkts plus Definition Produktionsgesundheit, 8-Punkte-Messlatte als Studio-Abnahme vor 1.0, One Clock ohne Zähler / Ableton Link draußen / E28 bleibt, Zeitachse bis 2030 mit 1.0 im März 2027.
+
+**Was es NICHT ändert:** die rote Linie gegen Heil-, Therapie- und Wellnessbehauptungen; die founder-gesperrten Dateien; den Store-Text (Founder).
+
+**Founder-Berichte daraus:** Alt-App nimmt Video auf (Front- und Rückkamera) gegen CLAUDE.md, FEATURE_STATUS, Kamera-Beschreibung und Website; `main` zeigt kein Studio; Lizenzjahr 2024 gegen Repo-Anlage 2025. Stehen in `docs/dev/FOUNDER_INBOX.md`.
+
+**Review:** 2026-11-19.

@@ -1,5 +1,11 @@
 # Echoel — Vision (North Star, tiered)
 
+> ⭐ **Einstieg seit 2026-10-19: `docs/dev/ECHOEL_VISION_2026-10-19.md`.** Das Produkt ist Echoel Studio,
+> eine Musik-Workstation für iPhone und iPad; Körpersignale, Bild, Licht und Raum kommen als Module
+> dazu (NEUPLANUNG P4–P7). Gesundheit ist dort eine Forschungslinie außerhalb des Produkts (§6),
+> ohne jede Behauptung. Diese Datei bleibt der Filter für fremde Ideen; ihre Tiers beschreiben die
+> eingefrorene Alt-App und das Ziel, nicht den Studio-Build.
+
 Durable knowledge. Read at session start with the rest of `memory/`. This is the
 **optimized Echoel vision** — the filter every external idea is measured against
 (see `memory/inspiration_intake.md` + `.claude/skills/vision-gate/`).

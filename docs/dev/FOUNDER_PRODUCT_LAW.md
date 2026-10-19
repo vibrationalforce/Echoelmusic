@@ -1,3 +1,5 @@
+> **Einstieg seit 2026-10-19: `docs/dev/ECHOEL_VISION_2026-10-19.md`** — welche Datei welche Frage beantwortet, der eine Produktsatz, die Mehrjahres-Zeitachse. Ziel und rote Linien bleiben hier.
+>
 > **Bauplan seit 2026-10-18: `docs/dev/NEUPLANUNG_2026-10-18.md`** — ordnet den Weg dorthin (P0–P7); diese Datei bleibt die Scope-Autorität.
 
 # FOUNDER PRODUCT LAW — the current product definition

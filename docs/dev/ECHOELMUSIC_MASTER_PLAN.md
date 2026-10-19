@@ -1,3 +1,5 @@
+> ⛔ **Seit 2026-10-17 ist die Reihenfolge hier GESCHICHTE der eingefrorenen Alt-App** (WA1–WA4, `Sources/Echoelmusic`). Echoel Studio baut nach `docs/dev/NEUPLANUNG_2026-10-18.md` §5; Einstieg und Zeitachse: `docs/dev/ECHOEL_VISION_2026-10-19.md`. Die Invarianten unten (eine Session, eine Uhr, keine KI im Echtzeit-Callback) gelten weiter.
+
 # ECHOELMUSIC MASTER PLAN — the canonical roadmap and control document
 
 **Status: CANONICAL for SEQUENCE and STATUS.** Created 2026-09-24 at `main` = `7b2690357`.

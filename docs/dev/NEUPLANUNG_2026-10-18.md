@@ -1,5 +1,7 @@
 # Echoel: Neuplanung (2026-10-18)
 
+> **Zeitachse und Einstieg seit 2026-10-19: `docs/dev/ECHOEL_VISION_2026-10-19.md`** (§8 Jahre, §11 Entscheidungen). Ableton Link bleibt draußen, bis der Founder es bestellt; ein Kongress-Vortrag nennt den CCC in keiner Kopie (E28).
+
 > Status: **FREIGEGEBEN (Founder 2026-10-18: „OK du entscheidest alles super“).** Die Fragen in §8 sind nach den Empfehlungen entschieden. Entstanden aus drei Bestandsaufnahmen (EchoelStudio, Alt-App, Vertrauens-Audit), zwei Web-Recherchen (Markt, CCC) und drei unabhängigen Entwürfen (Kreativität · Offenheit · Markt), adversarial zusammengeführt. Nichts davon ist gebaut, was nicht schon im Repo steht.
 
 ## 0. Entscheidung in fünf Sätzen
