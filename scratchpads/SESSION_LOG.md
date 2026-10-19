@@ -1438,3 +1438,16 @@ Nächstes: Arrangement-Ansicht, dann M2.
   einen weiteren Build hoch).
 - **Nichts gerätegeprüft.** Beim Founder: Build 10004 in TestFlight installieren, Checkliste aus `EchoelStudio/RELEASE` fahren;
   F-14 (Haken) bleibt offen und entscheidet Versuch 5 (Alt-Song-Import) und die Alt-App-Route.
+
+## 2026-10-19 18:05 — Sprechstunde besucht; Nachbereitungs-Mail als Entwurf im Thread
+
+- Sprechstunde 17:00–18:00 lief in meet1.prototypefund.de (Gastgeberinnen Marie-Lena Wiese, Patricia Leu). Founder 17:58:
+  „alle unsere Fragen zu unserer vollsten Zufriedenheit beantwortet" — Wortlaut nicht protokolliert, S-01 bleibt offen.
+  Gemessen am Thread: BEIDE Mails von heute sind GESENDET (12:35 Frage 1; 15:38 Nachtrag: 15.10.2025, 9.861/8.805/540/516,
+  Reviews-Klarstellung) — der „Entwurf" r1138972195191136231 aus dem Sitzungsstand war längst raus (Label SENT); F-03b ist zu.
+- Neu: Nachbereitungs-Entwurf r-4956875384379251419 als Antwort im selben Thread (Dank, Fragen beantwortet, Einreichung Linie
+  Innovation als Einzelperson angekündigt = Weg A; der Founder streicht den Absatz, wenn er B/C wählt). Senden ist seins (F-05).
+  Gmail-MCP kann nicht zeitversetzt senden — „Senden planen" macht er in der App.
+- Drei Chat-Links der Sprechstunde in FOERDERUNG §6/§8 und TODO F-06 (Jury-Seite, „Learnings aus 450 Bewerbungen",
+  „Freie Open-Source-Lizenzen"); zwei Websuchen fanden keinen der Posts, prototypefund.de ist aus der Sandbox nicht erreichbar.
+- Lehre: ein Gmail-„Entwurf" aus dem Gedächtnis ist zu MESSEN (`labelIds`), bevor man ihn „fertig machen" will — er war gesendet.
