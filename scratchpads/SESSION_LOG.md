@@ -1461,3 +1461,20 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Der Nachbereitungs-Entwurf im Gmail-Thread bleibt wie er ist (zweiter Absatz = A); Senden ist Founder-Sache (F-05).
 - Nächste Sitzungs-Scheiben aus dem Plan, unverändert: Förderobjekt taggbar (Paket + Linux-CI), Entwurf kürzen (braucht die
   Handbuch-PDFs), Prüfer-Briefe §10 nach dem Kürzen; externe Prüfrunde Do 22.10. (Routine).
+
+## 2026-10-19 19:35 — Vier PTF-PDFs gelesen und eingearbeitet (Förderlinien-Vergleich, zwei Blog-Beiträge, FAQ-Übersicht)
+
+- Founder lud vier PDFs hoch; `pdftotext` im isolierten Scratch-Ordner, Inhalte CC BY-SA 4.0. **Elf neue Fakten-Zeilen in
+  FOERDERUNG §1** (bbdf5e2), die den Entwurf direkt treffen: nur ARBEITSSTUNDEN förderfähig (keine Geräte, keine Reisekosten —
+  §7.0 Frage 6 damit beantwortet) · „innovativ" = ausdrücklich auch „ein existierendes Projekt um ein neues Modul, eine
+  Bibliothek oder eine Anbindung erweitern" (trägt das Förderobjekt wörtlich) · Richtwert 80 % Entwicklung · ≥ 200 h · Second
+  Stage optional, Wahl endgültig, bis zu 31.650 € (⛔ §1 sagte 31.667/62.000) · Pflichttermine (Antragsworkshop remote
+  Feb/März 2027, Kick-off Berlin ~1.6., Demo Day Berlin ~30.11.2027) · Jahrgang 02: >450 Bewerbungen auf 30 Plätze ·
+  „Menschen, keine Unternehmen" · Lizenz: FOSS Pflicht, keine bestimmte (LR2 bleibt frei) · Vibe-Coding-Satz wörtlich.
+- Blog-Regeln als Kasten über §7.1 (neun Punkte); Frage 2 beginnt jetzt mit dem Nicht-Expert*innen-Satz und „für wen";
+  §7.3 Frage 1 trägt die Endgültigkeit; §8 zwei Zeilen; §9-Nachtrag nennt die Basisrate. Handbuch-Link korrigiert:
+  prototypefund.de/handbuch (Jahrgang 03), die new.prototypefund.de-PDFs sind 2023.
+- ⛔ Mein 18:05-Eintrag vergab F-05 und F-06 doppelt (Syng.Visibra und Handbuch trugen sie schon) — der erste Nachführ-Lauf
+  scheiterte an genau dieser Zählung, bbdf5e2 trägt deshalb NUR das Förderdokument. Jetzt umbenannt in F-05b/F-06b, Querverweise
+  in FOERDERUNG §6/§8 mitgezogen. Lehre: eine neue Posten-Nummer wird gegen die Datei GEMESSEN, nicht aus dem Gedächtnis vergeben.
+- Noch beim Founder: Handbuch + Checkliste (Zeichengrenzen), Jury-Seite, drei Schwerpunkt-Seiten, FAQ aufgeklappt. Nichts ist Code.
