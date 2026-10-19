@@ -15,6 +15,7 @@ table here. Update this file whenever a target or identifier changes.
 | Bundle prefix | `com.echoelmusic` |
 | Marketing version | follows line 1 of `.deploy/release` — `testflight.yml` rewrites `project.yml`'s `MARKETING_VERSION` from the first `vX.Y.Z` in that file on every run (measure: `head -1 .deploy/release`; shipped 2026-10-07: 10.79.492, build 2617). The literal in `project.yml` is a stale placeholder that never reaches a build |
 | Build number | `${BUILD_NUMBER:=1}` (`CURRENT_PROJECT_VERSION`) |
+| Echoel Studio version | `MARKETING_VERSION` in `EchoelStudio/project.yml` (11.0.0) — `EchoelStudio/RELEASE` only triggers the upload. Build number = 10000 + the run number of `studio-testflight.yml` (2026-10-19: 10004 and 10005), so it never collides with the earlier app's builds (2617 on 2026-10-07) |
 | Team ID | via `APPLE_TEAM_ID` GitHub Actions secret (not committed) |
 | App category | `public.app-category.music` |
 | Deployment floor | iOS 18 |
@@ -52,11 +53,12 @@ ids above plus `.voice` and a wildcard `*`.
   beyond the default In-App Purchase. **It is not needed:** a product id is not an App ID. The purchase
   is created in App Store Connect under the app (Monetarisierung → In-App-Käufe); nothing builds,
   signs or ships under the bundle id `.pro`. Harmless if kept; removing it avoids the confusion.
-- `com.echoelmusic.app` carries App Groups (needed — the Studio's one entitlement, for the import of
-  earlier songs) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
+- `com.echoelmusic.app` carries App Groups (needed for the import of earlier songs — ⛔ since `2b9956c`
+  (2026-10-19) the Studio's entitlements file asks for NO App Group, because the profile no longer grants
+  `group.com.echoelmusic`, see below; the key comes back once the founder re-ticks it, FOUNDER_INBOX F17) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
   with Apple, Siri, WeatherKit, MusicKit, ShazamKit, Maps, Data Protection „Complete" …). An App ID
   capability only PERMITS an entitlement; what App Review sees is the binary's entitlements, and the
-  Studio's file asks for the App Group alone. Do not untick them while builds of the earlier app exist.
+  Studio's file asks for nothing beyond the defaults today (the App Group alone once it returns). Do not untick them while builds of the earlier app exist.
 - `com.echoelmusic.app.auv3` has **no** App Group (correct — see the row above) and only Sign in with
   Apple ticked, which nothing uses.
 
@@ -68,7 +70,7 @@ ids above plus `.voice` and a wildcard `*`.
 
 | App Group | Status |
 |---|---|
-| `group.com.echoelmusic` | Canonical (entitlements + `CLAUDE.md`). Used by the app + extensions. |
+| `group.com.echoelmusic` | Canonical (entitlements + `CLAUDE.md`). Used by the earlier app, its widget and the unembedded watch target (`git grep -l group.com.echoelmusic -- '*.entitlements'`); the AUv3 carries none on purpose. ⛔ **Measured 2026-10-18/19 (Studio TestFlight runs 39158721875, 39158926622, 39180435790): the profile Apple issues for `com.echoelmusic.app` grants only `group.com.echoelmusic.shared`.** The last earlier-app upload (run 38996952047, 2026-10-17 03:04) still signed with `group.com.echoelmusic`, so the group left the App ID between those dates. Until the founder re-ticks it (F17), every earlier-app build that asks for it fails at signing. |
 
 > ⚠️ **Discrepancy to resolve owner-side:** `fastlane/Appfile` reference comments mention
 > `group.com.echoelmusic.shared`. The committed entitlements use `group.com.echoelmusic`.
