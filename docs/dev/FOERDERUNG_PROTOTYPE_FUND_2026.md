@@ -326,3 +326,54 @@ Hamburg [Founder: konkrete Orte/Kontakte].
 | Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und Ton kalibrieren | Sitzung | 1.11. |
 | Entwurf auf Zeichengrenzen kürzen, Gegenlesen durch eine zweite Person | Sitzung + Founder | 16.11. |
 | Formaler Antrag beim BMFTR (nur nach Jury-Auswahl, auf Deutsch, mit VDI/VDE-IT) | Founder | Dez 2026–März 2027 |
+
+## 10. Fremde Modelle als PRÜFER (nach der Entscheidung A/B/C; Lernmodus-Regeln gelten)
+
+Die Rollen folgen der gemessenen Trefferquote (`python3 -I scripts/learn-intake.py --tally`, 19.10.): ChatGPT Astra 50/57,
+ChatGPT 40/50, Mistral 36/44, Grok 47/74, Gemini 2/6. Urteile von den dreien mit hoher Quote, reines Nachschlagen von
+Gemini. Jeder Brief hat genau EINE Linse und Belegpflicht; der Rückweg ist Text, den eine Sitzung mit
+`scripts/learn-intake.py` säubert und Behauptung für Behauptung misst (eine Zeile in `inspiration.csv`, ein Absatz in
+`memory/inspiration_intake.md`). ⚠️ Nie mitschicken: `.claude/settings.local.json`, Diagnose-Logs, App-Store-Schlüssel,
+Tester-Daten, den Team-ID. Alles, was die Modelle brauchen, ist öffentlich.
+
+**Gemeinsamer Kopf (vor jeden Brief kopieren):**
+
+> Du bist Prüfer*in, nicht Autor*in. Lies den Entwurf einer Prototype-Fund-Bewerbung (Linie Innovation, Jahrgang 03):
+> https://raw.githubusercontent.com/vibrationalforce/Echoelmusic/claude/echoelmusic-review-optimize-u5jjpd/docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md
+> — vor allem §2 (was existiert), §4 (Linie und Risiken) und §7 (Fragenkatalog mit Antwortentwürfen). Das Repo ist
+> öffentlich: https://github.com/vibrationalforce/Echoelmusic. Regeln: höchstens 8 Befunde, die wichtigsten zuerst; jeder
+> Befund mit wörtlichem Zitat aus dem Entwurf, dem Grund, warum es die Jury stört, einem Fix in einem Satz und der
+> Markierung „sicher“ oder „vermutet“. Behauptungen über das Repo nur mit Datei und Zeile. Kein Code. Keine neuen
+> Features. Keine Gesundheits-, Therapie- oder Wellness-Formulierungen vorschlagen. Antworte auf Deutsch.
+
+**ChatGPT — Linse: Jury-Mitglied IT-Sicherheit (CCC/SRLabs-Typ).**
+> Deine Linse: du bist das Jury-Mitglied aus der IT-Sicherheit. Prüfe die Datenschutz-Behauptungen (Egress-Policy mit
+> den Klassen derived/clinical/raw, „Körperdaten verlassen das Gerät nie“, „null Fremdcode“, OSC/Art-Net/sACN über UDP),
+> die Formulierung zu Art. 9 DSGVO und die Antwort auf die KI-Regel des Fonds (Risiko Nr. 1 in §4). Was würdest du in der
+> Jurysitzung als Erstes zerpflücken, und welche ehrliche Formulierung hielte stand?
+
+**Mistral — Linse: Resilienz und Machbarkeit.**
+> Deine Linse: europäische Software-Souveränität und Machbarkeit. Erstens: passt das Projekt besser in die Linie
+> Resilienz („freie Alternativen zu proprietärer, zentralisierter und dominierender Software“) als in Innovation
+> („Datensicherheit und Software-Infrastruktur“)? Begründe aus dem Entwurf. Zweitens: sind die Meilensteine M1–M4 in §7.1
+> Frage 9 für EINE Person in 26 Wochen (950 Stunden) realistisch? Was streichst du, was fehlt, und welche Zahl im Plan ist
+> geschönt?
+
+**Grok — Linse: Wettbewerb und Faktencheck zu Frage 7 (mit Websuche).**
+> Deine Linse: Frage 7 des Bogens („Was ist innovativ, warum nicht auf Ähnlichem aufbauen?“). Prüfe jede Aussage über
+> andere Projekte in §7.1 Frage 7 mit aktuellen Quellen (URL + Datum): AudioKit, Ardour, Zrythm, LMMS, Pure Data/libpd,
+> Ossia Score, Chataigne, anira. Suche aktiv nach Gegenbeispielen: gibt es eine quelloffene Musik-Workstation für
+> iPhone/iPad? Gibt es offene Projekte, die Herzfrequenz oder Atem nach OSC, Art-Net oder sACN bringen? Formuliere
+> Frage 7 so um, dass sie deiner Prüfung standhält.
+
+**Gemini — NUR Nachschlagen mit Quelle, kein Urteil.**
+> Öffne https://www.prototypefund.de/en/faq und zitiere wörtlich (mit Datum des Abrufs) die Antworten auf: „Can I use AI
+> to write my application?“, „Is Vibe-Coding eligible for funding?“, „How do I calculate the funding sum?“, „What costs
+> can I claim?“, „Under which license must the software … be published?“, „Does applying for the Second Stage have any
+> influence …?“. Öffne https://www.prototypefund.de/foerderlinien und gib die Vergleichstabelle der drei Förderlinien
+> wörtlich wieder. Öffne https://www.prototypefund.de/en/blog/ai-at-prototype-fund und zitiere die Absätze zu
+> Programmierkenntnissen, Auslagerung und Account-Pflicht. Keine Zusammenfassung, keine Bewertung, nur Zitate mit URL.
+
+**Was danach passiert:** Du fügst die Antworten hier ein. Die Sitzung lässt `python3 -I scripts/learn-intake.py` über jede
+laufen, misst jede Behauptung gegen Repo oder Quelle, trägt das Ergebnis als `[verified k/n]` ins Ledger und zieht nur die
+bestätigten Befunde in §7. Nichts aus den Antworten wird wörtlich übernommen; der Entwurf bleibt in unseren Worten.
