@@ -22,7 +22,10 @@
 | Formalien Einzelperson | volljährig; **Wohnsitz in Deutschland; selbstständig oder freiberuflich, Steuern hier** (oder für die Laufzeit anteilig vom Arbeitgeber freigestellt); **Bewerbungen von Unternehmen, Vereinen, Organisationen sind nicht zulässig**; Software-Projekt; **Amtssprache Deutsch: der formale Antrag und einige Dokumente müssen auf Deutsch eingereicht werden**, die Bewerbung selbst geht laut Seite „fast alles auch auf Englisch“ | sicher |
 | Echoel erfüllt | MIT-Lizenz (`LICENSE`), öffentliches Repo, Einzelperson in Hamburg. **Offen: Rechtsform des Founders** (Team-Frage 4) — im Repo steht dazu nichts, nur er weiß es | gemessen / offen |
 | Sprechstunde | **Mo 19.10.2026, 17–18 Uhr MESZ**, online. ⚠️ Die Bewerbungsseite, wie am 19.10. gespeichert, **nennt keinen Sprechstunden-Link**. Kandidaten: prototypefund.de/events, Infoletter #65 (August) bzw. der Oktober-Infoletter, OSB-Alliance-Meldung, Mail an info@prototypefund.de, Mastodon @PrototypeFund | Zeit sicher, Link offen |
-| FAQ, nicht gelesen | Die gespeicherte FAQ zeigt nur Überschriften (zugeklappt). **Zwei Antworten muss der Founder vor der Sprechstunde aufklappen:** „Can I use AI to write my application?“ (Application 09) und „Is Vibe-Coding eligible for funding?“ (Funding 08). Dazu nützlich: „How do I calculate the funding sum?“, „What costs can I claim?“, „Under which license …“, „Does applying for the Second Stage have any influence …“ | UNGELESEN |
+| **KI-Regel** (Blog „AI at Prototype Fund?“, per Websuche 19.10.; die FAQ-Antworten selbst bleiben in der gespeicherten PDF zugeklappt) | **Vibe-Coding ist nicht förderfähig.** Wörtlich (engl.): „Outsourcing the technical implementation of the project to external parties has always been prohibited; this also applies to outsourcing work to machines.“ Gefördert werden Personen mit den Programmierkenntnissen, die ihr Projekt braucht; ab Jahrgang 03 ist ein GitHub/GitLab/Codeberg-Account Pflicht, „to ensure that applicants are actual developers“. KI zum Verbessern oder Übersetzen des Bewerbungstexts ist erlaubt, die IDEE muss vom Menschen kommen; KI-Werkzeuge in der Förderphase sind nicht verboten, die Verantwortung liegt bei den Geförderten | sicher (zwei Suchergebnisse zitieren den Blog wörtlich; die Seite selbst war aus der Sitzung nicht abrufbar) |
+| **Was die Jury auf GitHub sieht** | Gemessen im Shallow-Klon: 394 Commits, davon **392 mit dem Trailer `Co-Authored-By: Claude`** (Befehl: `git log --format=%B`, dann `grep -c "Co-Authored-By: Claude"`). Das ist der erste Eindruck eines „actual developer“-Checks. Verschweigen geht nicht, die Trailer sind öffentlich | gemessen 19.10. |
+| Fördersumme, Rechnung | 47.500 € = **950 h × 50 €/h** (eine Vollzeitstelle, 6 Monate); Förderung = 95 % des Projektbudgets (50.000 €); höherer Stundensatz nur gegen weniger Stunden UND gegen Rechnungen früherer Freelance-Arbeit; Second Stage 31.667 € = eine Vollzeitstelle × 4 Monate, Satz gedeckelt bei 50 €/h | sicher (FAQ-Antwort per Websuche) |
+| Bewerbungshandbuch | zwei PDFs gefunden: new.prototypefund.de/files/HandbuchBewerbung.pdf (Stand 07/2023, Runde 15, „wird regelmäßig aktualisiert“, endet mit einer Ausschluss-Checkliste) und new.prototypefund.de/files/ApplicationGuide.pdf (englisch). Die Jahrgang-03-Fassung hängt vermutlich hinter „PDF ÖFFNEN“ auf prototypefund.de/bewerbung | Links bekannt, Inhalt ungelesen → Founder lädt hoch |
 | Bewerbungshandbuch | Auf prototypefund.de/bewerbung als „PDF ÖFFNEN“ verlinkt (Schritt für Schritt, vermutlich mit Zeichengrenzen je Frage) | nicht hochgeladen → nachreichen |
 
 ### 1b. Die Jury (Innovation + Resilienz teilen EINE Jury; Stand 19.10.)
@@ -94,13 +97,30 @@ Zrythm, LMMS laufen dort nicht). Risiko dieser Linie: „freie Alternative zu ei
 nach mehr als 6 Monaten Arbeit — die Jury prüft Machbarkeit, also müsste der Text dasselbe enge
 Förderobjekt behalten und die Alternative nur als Kontext nennen.
 
+⛔ **RISIKO NR. 1, seit 19.10. bekannt: die KI-Regel des Fonds.** Der Blog „AI at Prototype Fund?“ sagt, der
+Fonds fördere gezielt Menschen mit den nötigen Programmierkenntnissen, das Auslagern der Umsetzung sei seit jeher
+untersagt „and this also applies to outsourcing work to machines“, und der Account-Zwang diene dazu, „to ensure that
+applicants are actual developers“. Dieses Repo trägt auf 392 von 394 Commits eine KI-Co-Autorschaft; die Jury
+hat den Account genau dafür. **Ob du die Programmierkenntnisse im Sinne des Fonds hast, kann keine Sitzung aus dem
+Repo ablesen — das beurteilst du ehrlich selbst, und die Jury prüft es am Account.** Drei gangbare Wege, in
+`docs/dev/FOUNDER_INBOX.md` als F19 zur Entscheidung eingetragen:
+- **(A) offen bewerben:** die Arbeitsweise im Antrag selbst benennen (du entscheidest Architektur, Scope, Tests und
+  jede Änderung; KI implementiert unter Review und blockierenden Tests), und das ZUERST in der Sprechstunde fragen
+  — vor jeder anderen Frage. Sagt die Sprechstunde Nein, ist der Rest des Katalogs gegenstandslos.
+- **(B) als Team:** eine Entwicklerin oder ein Entwickler, die oder der die Umsetzung im Förderzeitraum selbst trägt,
+  du als Fach- und Produktführung; dann 95.000 €, verbindliche Namen und Wochenstunden im Antrag.
+- **(C) nicht hier:** Kultur- und Medienförderung statt Software-Fonds (Kandidaten zu prüfen, nichts davon
+  verifiziert: Hamburger Kreativ Gesellschaft, Musikfonds, Fonds Darstellende Künste, Medienboard/Filmförderung
+  für Installationen). Dort zählt das Werk, nicht die Frage, wer die Zeilen tippt.
+Nicht gangbar: die Arbeitsweise verschweigen oder die Trailer entfernen — beides wäre eine Täuschung gegenüber einer
+Jury aus CCC- und Sicherheitsleuten, und die Historie ist öffentlich.
+
 **Erwartbare kritische Rückfragen und die Antworten:**
 - *„App Store, ist das Big-Tech-unabhängig?“* Kern, Format und Protokolle sind offen; die App ist
   ein Fenster, kein Käfig; wer baut, kann die Kaufsperre entfernen (steht so im Plan, §6). Der
   Kauf bezahlt signierte Builds und Updates.
-- *„KI-gestützte Entwicklung?“* Offen sagen: das Repo wird mit KI-Assistenz entwickelt, unter
-  Tests (CISmoke-Bundle), Review und Founder-Entscheidung; welche Haltung der Fonds dazu hat,
-  steht in zwei FAQ-Antworten, die vor dem Gespräch gelesen sein müssen (§1).
+- *„KI-gestützte Entwicklung?“* Siehe Risiko Nr. 1 oben: die Haltung des Fonds ist bekannt (Vibe-Coding nicht
+  förderfähig, KI am Bewerbungstext erlaubt). Die Antwort ist keine Formulierung, sondern deine Entscheidung A/B/C.
 - *„Gesundheitsprodukt?“* Nein. Echoel behandelt Physiologie als Modulationsquelle eines
   Instruments; es diagnostiziert, heilt und berät nicht; die Egress-Policy ist Datenschutz, keine
   Medizin.
@@ -114,7 +134,8 @@ Förderobjekt behalten und die Alternative nur als Kontext nennen.
 
 | Datum | Was |
 |---|---|
-| 19.10., 17:00 | Sprechstunde: die 7 Fragen aus §7.0 stellen, Antworten HIER in §1 nachtragen |
+| 19.10., 17:00 | Sprechstunde: Frage 1 aus §7.0 (Förderfähigkeit) ZUERST; die übrigen nur, wenn sie offen bleibt; Antworten HIER in §1 nachtragen |
+| 19.10., abends | Founder entscheidet A / B / C (F19 in `FOUNDER_INBOX.md`); bei C endet diese Datei als Archiv und eine neue für die Kulturförderung beginnt |
 | bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung · bisherige Software-Projekte · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF |
 | bis 16.11. | Entwurf fertig (§7 ausgefüllt, innerhalb der Zeichengrenzen des Handbuchs), eine Person liest gegen |
 | 30.11., 15:00 | Frist |
@@ -135,20 +156,24 @@ Die Fragen sind wörtlich aus dem Bewerbungsfragen-PDF (Stand 19.10.). Zeichengr
 unbekannt, bis das Bewerbungshandbuch vorliegt — die Entwürfe sind bewusst eher lang und werden
 gekürzt, nicht verlängert. Jeder Entwurf behauptet nur Gemessenes (§2) oder ist als Plan markiert.
 
-### 7.0 Die sieben Fragen für die Sprechstunde (19.10., 17 Uhr)
+### 7.0 Die sieben Fragen für die Sprechstunde (19.10., 17 Uhr) — Frage 1 entscheidet, ob die anderen zählen
 
-1. **Linie:** Ist der offene Kern einer Musik-Workstation (Format, Engine, Körpersignal-Pipeline,
+1. **Förderfähigkeit:** Euer Blog schließt Vibe-Coding aus und will „actual developers“. Ich entwickle seit [JAHR]
+   ein öffentliches Repo mit KI-Assistenz: ich entscheide Architektur, Umfang, Tests und jede Änderung, die KI
+   schreibt unter Review und blockierenden Tests; die Commits tragen das offen als Co-Autorschaft. Ist so ein
+   Antrag bei euch förderfähig — als Einzelperson, oder nur als Team mit einer Entwicklerin, die die Umsetzung
+   selbst trägt?
+2. **Linie:** Ist der offene Kern einer Musik-Workstation (Format, Engine, Körpersignal-Pipeline,
    Protokollbrücken) „Software-Infrastruktur“ im Sinne von Innovation — oder gehört ein freier
    Gegenentwurf zu proprietären DAWs (auf iOS gibt es keinen offenen) in Resilienz?
-2. **Bestehendes Projekt + App Store + ein In-App-Kauf für Instrumente:** Kollidiert das mit
+3. **Bestehendes Projekt + App Store + ein In-App-Kauf für Instrumente:** Kollidiert das mit
    „nicht für den eigenen Geschäftsbetrieb“? Vorschlag: Förderobjekt = der offene Kern, MIT, frei.
-3. **KI-gestützte Entwicklung** (mit Tests und Review): Wie sieht die Jury das? (FAQ Application 09
-   und Funding 08 vorher gelesen haben.)
 4. **Plattform:** reines Swift ohne Abhängigkeiten, Linux-Build als erster Meilenstein — offen genug,
    oder muss der geförderte Teil ohne Apple-Frameworks auskommen?
 5. **Neu vs. Bestand:** Zählt das Portieren aus der Alt-App in den offenen Kern (Egress-Policy,
    Protokollbrücken) als neue Arbeit im Sinne von Frage 5 des Bogens?
-6. **Einzelperson:** Stundensatz, Stundenobergrenze, Geräte als förderfähige Ausgabe?
+6. **Einzelperson:** 950 h × 50 € ist die Vollzeit-Rechnung — wie geht Teilzeit neben laufenden Projekten,
+   und sind Geräte förderfähige Ausgaben?
 7. **Second Stage** gleich mitbeantragen: Beeinflusst das die Auswahl für die reguläre Phase?
 
 ### 7.1 Dein Projekt
@@ -263,9 +288,9 @@ Hamburg [Founder: konkrete Orte/Kontakte].
    mit Egress-Policy) unter MIT; er ist für jede Anwendung nutzbar und nicht an den Verkauf der
    Instrument-Units gebunden. Die Instrument-Units und die iOS-Oberfläche liegen außerhalb des
    Förderobjekts.
-6. **Stunden in 6 Monaten:** [Founder — mit der FAQ „How do I calculate the funding sum?“
-   abgleichen; typisch wird ein Stundensatz × Stunden gerechnet, die Zahl steht in der FAQ-Antwort,
-   die wir noch nicht gelesen haben]
+6. **Stunden in 6 Monaten:** Rechnung des Fonds: Vollzeit = 950 h × 50 €/h = 47.500 €, Förderung = 95 % von
+   50.000 € Projektbudget. [Founder: realistische Stundenzahl neben Installationen und Musikprojekten; bei
+   weniger als Vollzeit sinkt die Summe proportional; ein höherer Satz braucht Rechnungen früherer Arbeit]
 7. **Erfahrung, Hintergrund, Motivation, Perspektive:** [ENTWURF, Founder ergänzt Fakten]
    Künstler für interaktive Wasser-Licht-Klang-Installationen und Musikproduzent (Echoel) in
    Hamburg; baut Echoelmusic seit [JAHR] allein, öffentlich, mit Tests und dokumentierten
@@ -273,7 +298,9 @@ Hamburg [Founder: konkrete Orte/Kontakte].
    kreative Prozesse bringen, ohne dass ihre Körperdaten jemandem gehören. Perspektive: Echoel als
    die offene Quelle, aus der Licht- und Raum-Systeme ihren Körperkanal beziehen. Arbeitsweise:
    KI-gestützte Entwicklung mit menschlicher Entscheidung und blockierenden Tests — offen gesagt,
-   weil die FAQ danach fragt.
+   weil der Fonds Vibe-Coding ausschließt. ⚠️ Dieser Absatz steht und fällt mit der Sprechstunden-
+   Antwort auf Frage 1 und mit deiner ehrlichen Einschätzung deiner eigenen Programmierkenntnisse;
+   bei Weg B wird er zum Absatz über das Team.
 
 ### 7.3 Second Stage
 
@@ -291,7 +318,8 @@ Hamburg [Founder: konkrete Orte/Kontakte].
 
 | Punkt | Wer | Bis |
 |---|---|---|
-| FAQ-Antworten zu KI-Bewerbung und Vibe-Coding lesen, Kernaussage in 2 Sätzen hierher | Founder | vor 17 Uhr am 19.10. |
+| Entscheidung A / B / C zur KI-Regel (F19), nach der Sprechstunden-Antwort auf Frage 1 | Founder | 19.10. abends |
+| Die zwei Handbuch-PDFs hochladen (HandbuchBewerbung.pdf, ApplicationGuide.pdf, Links in §1) | Founder | 25.10. |
 | Sprechstunden-Antworten zu den 7 Fragen | Founder → Sitzung trägt ein | 19.10. abends |
 | Bewerbungshandbuch-PDF hochladen (Zeichengrenzen) | Founder | 25.10. |
 | Rechtsform, Stundenzahl, frühere Projekte, Hintergrund-Fakten, seit welchem Jahr | Founder | 25.10. |
