@@ -1,10 +1,15 @@
-11.0.0, fourth TestFlight upload — the earlier-songs import waits for the App Group; no sale claimed
+11.0.0, fifth TestFlight upload — the app records the plugin purchase for the Audio Units
 
-Previous: 11.0.0 (10006), third upload — plugin store and About page claim no tested host.
-Before that: 11.0.0 (10005) with the About page, and 11.0.0 (10004), the first Echoel Studio build.
-All four carry no App Group entitlement (F17). Since this build, finding no earlier songs no
-longer marks the import done, so a device that ran 10004–10006 still imports once the group is
-back on the App ID (key studio.importedEarlierSongs.v2).
+Since this build the app and the extension request the App Group group.com.echoelmusic.shared:
+the app checks the purchase at launch and stores the answer there, and the Audio Units read it
+before they ask StoreKit themselves (factory job 002). This archive also settles the open half of
+F17: if the .auv3 profile does not grant the group, signing fails here and the run prints every
+profile's groups — or it signs and AUM reports -3000, which is why the baseline comes first below.
+
+Previous: 11.0.0 (10007), fourth upload — finding no earlier songs no longer marks the import
+done (key studio.importedEarlierSongs.v2). Before that: 10006 (no tested host claimed), 10005
+(About page), 10004 (the first Echoel Studio build). Those four carry no App Group entitlement.
+group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -12,9 +17,17 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 What to try on the device (nothing here is device-verified yet):
+- FIRST, the plugin purchase, in this order (FOUNDER_INBOX §2, family SP):
+  1. Install 10007 again and load Echoel Synth, Drums and EQ in AUM — the baseline.
+  2. Install this build and load the same three: no -3000.
+  3. Without a purchase Echoel Synth still pauses after 28 s, every 30 s.
+  4. Once the product exists in App Store Connect (F-15/E37): buy with the sandbox account in the
+     app, reload Synth in AUM — no demo pause.
+  5. As a buyer, sign out of the App Store, launch Echoel once, load Synth in AUM: say whether
+     the demo pause comes back.
 - Song menu → About Echoel: the page names the build, says what is in it and what is not,
-  and its two links open in the browser. "Your data" names the App Store (when you open the
-  store) and Network MIDI (when you turn it on).
+  and its two links open in the browser. "Your data" names the App Store (at launch, and when
+  you open the store: prices, buying, Restore Purchases) and Network MIDI (when you turn it on).
 - Song menu → Echoel Plugins: the footer says the instruments are not yet tested in a host
   app on a device and not on sale yet. With no in-app purchase in App Store Connect (F-15/E37)
   the store says "The instruments are not on sale yet." and shows no price.
