@@ -5,7 +5,7 @@ Die abhakbare Fassung mit Hörspiel, Fragen und Masterplan ist die Seite **Echoe
 Legende: **F** = Founder · **S** = Sitzung · **F+S** = beide. Ein `[x]` hier heißt: im Repo belegbar erledigt (Commit oder Datei genannt in der Quelle).
 
 
-Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05b, F-06b neu — Nummern am 19:35 umbenannt, weil F-05/F-06 schon vergeben waren); 18:10: 24 von 75 (F-04 = A, S-01 entfällt). 19:35: 25 von 75 (F-06b erledigt; F-07 teilweise). 21:30: 26 von 75 (F-06 erledigt — Handbuch gelesen; S-12 erste Fassung, F-07 auf optional gesetzt). 23:50: gemessen **28 von 79** (F-08b und F-08c neu, aus der Verifikations-Runde; Befehl: `grep -c '^- \[x\]'` gegen `grep -c '^- \[[ x]\]'` auf diese Datei). ⛔ Die Handzählungen davor lagen um zwei daneben — ab hier zählt nur der Befehl. 20.10. 01:20: **30 von 84** (F-18b, S-42, S-43, S-44 neu; Factory-Jobs 001/002, Studio-Familie SP).
+Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05b, F-06b neu — Nummern am 19:35 umbenannt, weil F-05/F-06 schon vergeben waren); 18:10: 24 von 75 (F-04 = A, S-01 entfällt). 19:35: 25 von 75 (F-06b erledigt; F-07 teilweise). 21:30: 26 von 75 (F-06 erledigt — Handbuch gelesen; S-12 erste Fassung, F-07 auf optional gesetzt). 23:50: gemessen **28 von 79** (F-08b und F-08c neu, aus der Verifikations-Runde; Befehl: `grep -c '^- \[x\]'` gegen `grep -c '^- \[[ x]\]'` auf diese Datei). ⛔ Die Handzählungen davor lagen um zwei daneben — ab hier zählt nur der Befehl. 20.10. 01:20: **30 von 84** (F-18b, S-42, S-43, S-44 neu; Factory-Jobs 001/002, Studio-Familie SP). 20.10. 01:45: **31 von 84** (S-44 erledigt: Build 10008 signiert mit der Gruppe).
 
 
 ## Heute (19.10.)
@@ -89,7 +89,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 
 - [x] **S-42** (S · bis 2026-10-19) Factory-Job 002: Plugin-Kauf über die App Group statt StoreKit allein in der Erweiterung — zwei Prüfrunden, APPROVE mit fünf Geräte-Prüfungen (F-18b); Rennen zweier Kaufdurchläufe behoben; Privacy-Manifeste beider Bundles erklären den Zugriff (sonst ITMS-91053 beim Upload) · Quelle: scratchpads/factory/002-plugin-unlock-app-group/ · Beleg: 08ded356a, edb5a5d7b, b4557bb19 — Gate „Echoel Studio“ grün auf edb5a5d7b (unsigniert); die Signatur beweist erst der nächste studio-testflight-Lauf
 - [ ] **S-43** (S · bis 2026-10-20) Factory (`/factory`) selbst als Job 001 fertig prüfen: Runde 3 (die letzte) läuft auf f209ecb16; bei CHANGES eskaliert sie mit decision.md und einer Inbox-Zeile · Quelle: .claude/skills/factory/SKILL.md; scratchpads/factory/001-factory-loop/
-- [ ] **S-44** (S · nach grünem Studio-Lauf auf b4557bb19) `EchoelStudio/RELEASE` heben → Build 10008; der Archiv-Lauf entscheidet F17s offene Hälfte (trägt das .auv3-Profil die Gruppe?) — scheitert er, druckt er die Gruppen jedes Profils · Quelle: FOUNDER_INBOX F17; EchoelStudio/RELEASE
+- [x] **S-44** (S · nach grünem Studio-Lauf auf b4557bb19) `EchoelStudio/RELEASE` heben → Build 10008; der Archiv-Lauf entscheidet F17s offene Hälfte (trägt das .auv3-Profil die Gruppe?) — **erledigt 19.10. 23:34 UTC: 10008 hochgeladen (Lauf 39341933847), App und Erweiterung mit `group.com.echoelmusic.shared` signiert; der Host-Start bleibt SP2 auf dem Gerät** · Quelle: FOUNDER_INBOX F17; EchoelStudio/RELEASE
 
 ## Repo und Lizenz — Founder
 

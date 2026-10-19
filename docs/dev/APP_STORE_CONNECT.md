@@ -33,7 +33,7 @@ single `com.echoelmusic.app` ID so one purchase unlocks iOS / macOS / tvOS / vis
 | ASC display name | Bundle ID | Role | CI (`project.yml`) |
 |---|---|---|---|
 | Echoelmusic | `com.echoelmusic.app` | Main app (iOS + universal) | ✅ **builds + ships** |
-| Echoelmusic AUv3 | `com.echoelmusic.app.auv3` | Audio Unit v3 instrument extension (`aumu`/`echl`) | ✅ **embedded + builds** — REVIVED 2026-09-20 (#1385, founder ask) after its removal 2026-07-24 (#121 Slice 1); ships inside the host app like the widget (`project.yml` app dependencies), loads in AUM (device-measured, #1386). **No App Group**: the App ID lacks the capability, and with the key iOS refuses to launch the appex (`-3000`), so its entitlements file is deliberately empty. ⛔ This row said "TARGET DELETED" until 2026-09-25. |
+| Echoelmusic AUv3 | `com.echoelmusic.app.auv3` | Audio Unit v3 instrument extension (`aumu`/`echl`) | ✅ **embedded + builds** — REVIVED 2026-09-20 (#1385, founder ask) after its removal 2026-07-24 (#121 Slice 1); ships inside the host app like the widget (`project.yml` app dependencies), loads in AUM (device-measured, #1386). **No App Group in the EARLIER app's extension** (`Sources/EchoelmusicAUv3`): with the key iOS refused to launch that appex (`-3000`), so its entitlements file is deliberately empty. ⭐ The Studio's extension (`EchoelPlugins.appex`) asks for `group.com.echoelmusic.shared` since factory job 002 and signed with it in build 10008; whether it launches in a host is device step SP2. ⛔ This row said "TARGET DELETED" until 2026-09-25. |
 | Echoelmusic Widgets | `com.echoelmusic.app.widgets` | WidgetKit extension | ✅ **embedded + ships** |
 | Echoelmusic watchOS | `com.echoelmusic.app.watchkitapp` | watchOS companion | ⚠️ compile-verified, **embed blocked** (local Xcode) |
 | Echoelmusic Clip | `com.echoelmusic.app.clip` | App Clip | ❌ ASC-registered, **target deferred** |
@@ -64,9 +64,14 @@ ids above plus `.voice` and a wildcard `*`.
 - `com.echoelmusic.app.auv3` had **no** App Group in these recordings and only Sign in with Apple
   ticked, which nothing uses. ⚠️ The F17 run of the same evening printed the ISSUED .auv3 profile
   carrying `group.com.echoelmusic.shared`, and since factory job 002 the extension requests it (to read
-  the plugin purchase). The two readings disagree; the next Studio archive settles it — on failure
-  `studio-testflight.yml` prints every profile's groups. If the group must be ticked by hand:
-  Identifiers → `com.echoelmusic.app.auv3` → App Groups → `group.com.echoelmusic.shared`.
+  the plugin purchase). ⭐ **Settled on the signing side 2026-10-19 (Studio TestFlight run 39341933847,
+  build 10008, `f61d7872d`):** the archive signed BOTH the app and `EchoelPlugins.appex` with
+  `group.com.echoelmusic.shared` in their entitlements, the extension under the profile
+  „iOS Team Provisioning Profile: com.echoelmusic.app.auv3", and App Store Connect accepted the
+  upload. A profile without the group stops the archive with a profile error (attempts 1–3 of F17 did
+  exactly that for the app), so the issued profile grants it. ⚠️ Whether the extension then LAUNCHES in
+  a host with the group is a device question (the earlier extension signed fine and failed in the host
+  with `-3000`) — FOUNDER_INBOX §2 family SP, step SP2.
 
 > **Deferred platforms** (macOS / tvOS / visionOS) were previously declared only in the removed
 > Tuist `Project.swift`. They are **not currently defined anywhere** and would be re-added to
