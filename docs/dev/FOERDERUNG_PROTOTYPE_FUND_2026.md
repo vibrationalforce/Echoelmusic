@@ -54,10 +54,17 @@
   je mit Test-Target; keine Datei darin importiert SwiftUI, UIKit oder StoreKit). ⚠️ Gemessen (§9):
   Core importiert Foundation + Observation, DSP nur Foundation, die **Engine in vier Dateien
   AVFoundation/AudioToolbox ohne `canImport`** (AUv3-Hosting, Sample-Dateien) — der Host-Split
-  steht im Bauplan P0 und ist Voraussetzung des Linux-Builds. Netzwerkstellen in Studio: genau
-  zwei, StoreKit (Kauf) und Network MIDI (Schalter, Default aus). CI heute nur macOS-Runner
-  (`studio.yml`, `runs-on: macos-26`, kein Merge-Gate); **Linux ungeprüft** — genau das ist
-  Meilenstein 1 der Förderung, kein Bestand.
+  steht im Bauplan P0 und ist Voraussetzung des Linux-Builds der ENGINE. Netzwerkstellen in Studio:
+  genau zwei, StoreKit (Kauf) und Network MIDI (Schalter, Default aus). CI heute: macOS-Runner
+  (`studio.yml`, `runs-on: macos-26`, kein Merge-Gate) und seit 19.10. ein Linux-Job
+  (`.github/workflows/studio-linux.yml`, Container `swift:6.2`, Swift 6.2.4): **EchoelDSP 64/64
+  Tests grün auf Linux, EchoelCore baut samt Tests, Core 201/201 grün** (Lauf 39194215805 auf
+  `11718af`; die Läufe #3/#4 davor fanden drei Linux-eigene Swift-6-Befunde in den TESTS, nicht
+  im Paket — Klassen-`@MainActor` bricht die Test-Erkennung von swift-corelibs-xctest, ein
+  `XCTAssertThrowsError(try …)` macht eine Closure werfend, eine lokale Funktion erbt keine
+  Isolation; alle drei in `EchoelStudio/CLAUDE.md` als Baulehren); die Engine bleibt wegen der vier
+  Apple-Dateien draußen — ihr Host-Split ist Meilenstein 1 der Förderung, kein Bestand. ⛔ Bis zum
+  Lauf stand hier „Linux ungeprüft“ — jetzt ist es gemessen, in beide Richtungen zitierbar.
 - **Alt-App** (`Sources/Echoelmusic/`): rPPG-Puls über die Kamera (live, lockt auf dem Gerät),
   BLE-Herzfrequenzgurt (0x180D), HealthKit; Ausgänge OSC, ADM-OSC, Art-Net, sACN (live);
   **`BioEgressPolicy`** (`Core/BioEgressPolicy.swift`): entscheidet pro QUELLE (Health-Store-Daten
@@ -201,7 +208,7 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 | 19.10., abends | Founder entscheidet A / B / C (F19 in `FOUNDER_INBOX.md`); bei C endet diese Datei als Archiv und eine neue für die Kulturförderung beginnt |
 | bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung (aus der ~590-h-Tabelle in §7.1 Frage 9, nicht aus der 950-h-Formel) · bisherige Software-Projekte · Jahr des Projektbeginns · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF · die vier Fonds-Seiten (innovativ, datensicherheit, software-infrastruktur, foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten · Status „Syng.Visibra“ |
 | bis 1.11. | Sitzung: Repo-Hygiene, die die Jury zuerst sieht (§8; was founder-gated ist, steht dort beim Founder) |
-| bis 15.11. | Linux-Lauf für `EchoelCore`/`EchoelDSP` gemessen (der ubuntu-Job in `studio.yml` ist founder-gated: Sitzung liefert den Job-Text, Founder legt ihn an) |
+| 19.10. | Linux-Lauf für `EchoelCore`/`EchoelDSP` GEMESSEN — eigener Workflow `studio-linux.yml` (Studio-Workflows sind seit 17.10. für die Sitzung frei; „founder-gated“ stand hier zu Unrecht): DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
 | bis 16.11. | Entwurf fertig (§7 ausgefüllt, innerhalb der Zeichengrenzen des Handbuchs), eine Person liest gegen; Belege Dritter liegen vor (Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration) |
 | 30.11., 15:00 | Frist |
 
@@ -300,9 +307,10 @@ Puffer werden beim Aufbau angelegt, nie im Render-Pfad; die Render-Regeln (keine
 Lock, kein ObjC, kein I/O, kein GCD) sind heute Architektur-Vertrag und Code-Review, kein
 automatischer Test. Die Ausnahme ist das AUv3-Hosting — vier Dateien auf AVFoundation/AudioToolbox,
 deren Render-Blöcke aus dem Render-Pfad gerufen werden; ihre Auslagerung in ein eigenes Target ist
-Voraussetzung des Linux-Builds und Teil von M1. Die Paket-Tests prüfen Verhalten
+Voraussetzung des Linux-Builds der Engine und Teil von M1. Die Paket-Tests prüfen Verhalten
 (Offline-Rendering, Determinismus, feste Slot-Zahl) und laufen in einer eigenen CI-Pipeline auf
-macOS; sie zum Merge-Gate zu machen, auf Linux zu ziehen und die Render-Regel als prüfbare
+macOS — und für Core und DSP seit dem 19.10. auch auf Linux (Swift 6.2.4 im Container: DSP 64/64,
+Core 201/201 grün); sie zum Merge-Gate zu machen, die Engine nachzuziehen und die Render-Regel als prüfbare
 Zusicherung zu fassen, ist M1. Das Projektformat ist heute versioniertes JSON mit sortierten
 Schlüsseln, Spezifikation und Golden-Files mit Round-Trip-Tests (Bestand). Für die Förderung kommt
 hinzu: eine Transportschicht hinter einer schmalen Schnittstelle (Apple: Network.framework; Linux:
@@ -326,12 +334,13 @@ StoreKit und Network MIDI (Schalter, Default aus). Kein `URLSession`, kein Serve
 **5. Hast du schon an der Idee gearbeitet? Stand und geplante Neuerungen.** [ENTWURF]
 Ja, seit [JAHR — Founder, gegen das Repo-Erstelldatum geprüft]. Heute existieren (Bestand, nicht
 Förderinhalt): (a) Echoel Studio mit den drei Kern-Paketen, App und AUv3-Instrumenten; Format v1
-spezifiziert (`docs/FORMAT.md`) und durch Golden-Files gepinnt; `SECURITY.md`; CI auf macOS;
+spezifiziert (`docs/FORMAT.md`) und durch Golden-Files gepinnt; `SECURITY.md`; CI auf macOS und —
+für Core und DSP — auf Linux;
 TestFlight-Builds, App-Store-1.0 für 2027 geplant; (b) die ältere App mit live laufender
 rPPG-Pulserkennung, Bluetooth-Gurt, HealthKit, OSC/ADM-OSC/Art-Net/sACN-Ausgängen und der
 Egress-Policy (gebaut, getestet, auf TestFlight); (c) One Clock, eine Seite ohne Server. Neu im
-Förderzeitraum: Core und DSP bauen und testen auf Linux, die Engine wird in einen portablen Teil
-und einen Apple-Adapter geteilt; das Förderobjekt wird ein eigenes, getaggtes Paket, das ein
+Förderzeitraum: die Engine wird in einen portablen Teil und einen Apple-Adapter geteilt und zieht
+auf Linux nach (Core und DSP laufen dort seit dem 19.10. — DSP 64/64, Core 201/201 grün — Bestand); das Förderobjekt wird ein eigenes, getaggtes Paket, das ein
 Dritter per `.package(url:)` zieht; das Körpersignal-Profil wird spezifiziert und bekommt
 Konformitätsvektoren; die Protokollbrücken werden aus der älteren App in `EchoelIO` portiert (mit
 EINER benannten Integration, einem Lichtpult mit sACN/OSC-Eingang); die Egress-Policy wird in den
@@ -394,8 +403,8 @@ und ein Fediverse-Konto gibt es nicht.
 Gekürzt auf das, was eine Person in sechs Monaten neben laufenden Projekten trägt — mit Stunden
 je Meilenstein, menschliche Geschwindigkeit, Bestand ausgewiesen (Herleitung §9):
 - **M1 (Juni, ~90 h):** Host-Split der Engine (vier AVFoundation/AudioToolbox-Dateien in einen
-  Apple-Adapter); Core und DSP bauen und testen auf Linux in der öffentlichen CI, die Engine
-  portabel; ein Import-Scan-Test, der die Render-Regeln und die Plattform-Trennung pinnt;
+  Apple-Adapter), die Engine portabel und auf Linux in der öffentlichen CI (Core und DSP laufen dort
+  seit dem 19.10. — Bestand, nicht M1); ein Import-Scan-Test, der die Render-Regeln und die Plattform-Trennung pinnt;
   Format-Migration v1→v2 mit Golden-File je Version (Format v1 und seine Golden-Files sind
   Bestand); erstes getaggtes Release des Förderobjekts, das ein Dritter per `.package(url:)` zieht.
 - **M2 (Juli–August, ~220 h):** `EchoelIO` = OSC + ADM-OSC + sACN als eigenständiges Paket mit
@@ -500,12 +509,12 @@ nicht der Antragsteller ist.
 | Die zwei Handbuch-PDFs hochladen (HandbuchBewerbung.pdf, ApplicationGuide.pdf, Links in §1) — Zeichengrenzen | Founder | 25.10. |
 | Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF; Sitzung arbeitet sie in §1 ein, erst dann Linie und Förderobjekt festziehen | Founder → Sitzung | 25.10. |
 | Rechtsform, Stundenzahl (aus der ~590-h-Tabelle), frühere Projekte, Jahr des Projektbeginns, Accounts-Feld (`vibrationalforce`) | Founder | 25.10. |
-| `PluginUnlock`/`OwnPlugin` aus `EchoelCore` nach `Plugins/Shared` verlegen; veraltete Demo-Kommentare in `StandardEffectUnit.swift` korrigieren | Sitzung (Council, dann eine Scheibe) | 1.11. |
-| `docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md` §0 (behauptet HaishinKit-Broadcast und Mikrofon „im Arbeitsbaum“ — beides gibt es nicht) und `docs/version.json`-Changelog (AUv3, RTMP, EchoelBeat, „unified“, `EchoelCreativeWorkspace`) bereinigen; README-Kopf: zwei Codebasen | Sitzung | 1.11. |
-| `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, Issue-Vorlage (Community-Health heute 42 %) | Sitzung | 1.11. |
+| `PluginUnlock` aus `EchoelCore` nach `Plugins/Shared` verlegen; veraltete Demo-Kommentare in `StandardEffectUnit.swift` korrigieren | Sitzung | **erledigt 19.10.** (`b035916`, `ea613d7`; macOS-CI grün, nichts gerätegeprüft) |
+| `docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md` §0 (behauptete HaishinKit-Broadcast und Mikrofon „im Arbeitsbaum“) und README-Kopf: zwei Codebasen | Sitzung | **erledigt 19.10.** (`607cf73`, `638d667`); `docs/version.json` braucht KEINE Änderung — sein Changelog trägt seit 28.08. einen HISTORY-NOTE-Banner (Eintrag 0) |
+| `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, Issue-Vorlage (Community-Health war 42 %) | Sitzung | **erledigt 19.10.** (`c477267`) |
 | `LICENSE` auf reinen MIT-Text (LR2 in der Inbox, offen) · GitHub-About (LR1/LR6) · Issue #418 schließen (LR3) | Founder | 1.11. |
 | `docs/privacy.html:205` („we are not a controller“) und die Art.-9-Einordnung durch einen DSB prüfen lassen | Founder | 16.11. |
-| Linux-Lauf für `EchoelCore` und `EchoelDSP`: Sitzung liefert den ubuntu-Job-Text, Founder legt ihn in `studio.yml` an; Ergebnis als Stand in Frage 5 | Sitzung → Founder | 15.11. |
+| Linux-Lauf für `EchoelCore` und `EchoelDSP` (`studio-linux.yml`) | Sitzung | **erledigt 19.10.**: DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
 | Belege Dritter: TestFlight-Tester-/Install-Zahl (datiert) · zwei bis drei namentliche Interessensbekundungen · EINE benannte Integration (freies Lichtpult mit sACN/OSC-Eingang) | Founder | 16.11. |
 | Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und Ton kalibrieren | Sitzung | 1.11. |
 | Lizenzen der Vergleichsprojekte in Frage 7 gegen die Quellen prüfen (Grok-Brief §10) | Sitzung | 16.11. |
@@ -579,8 +588,8 @@ Commit-Zahlen (alle richtig für verschiedene Mengen; es gilt die öffentliche),
 | 2 | Vier Fonds-Seiten + sieben FAQ-Antworten als PDF; einarbeiten; erst dann Linie und Objekt festziehen | Founder (PDF) · Sitzung (einarbeiten) | offen |
 | 3 | Handbuch hochladen; §7 auf Zeichengrenzen kürzen (Bestand vor Plan, Messbares vor Prosa) | Founder · Sitzung | offen |
 | 4 | Förderobjekt verengen (Profil + Policy + `EchoelIO`, taggbar, Linux-CI); Bestand als Bestand; M1 = Core+DSP Linux + Engine-Split; Q4-Überbehauptungen; Stundentabelle | Sitzung | **erledigt 19.10.** (§4, §7.1 Fragen 2/4/5/7/9) |
-| 5 | Linux-Lauf für Core/DSP vor dem 30.11. messen | Sitzung (Job-Text) → Founder (`studio.yml`, founder-gated) | offen |
-| 6 | Repo-Hygiene: LICENSE reiner MIT-Text (LR2, Founder) · CONTRIBUTING/CoC/Issue-Vorlage · #418 (LR3, Founder) · README zwei Codebasen · `version.json`-Changelog · DSGVO-Entwurf §0 | Sitzung, außer den Inbox-Posten | offen, §8 |
+| 5 | Linux-Lauf für Core/DSP vor dem 30.11. messen | Sitzung (`studio-linux.yml`, eigener Workflow) | **erledigt 19.10.**: DSP 64/64 grün, Core 201/201 grün (Swift 6.2.4) |
+| 6 | Repo-Hygiene: LICENSE reiner MIT-Text (LR2, Founder) · CONTRIBUTING/CoC/Issue-Vorlage · #418 (LR3, Founder) · README zwei Codebasen · `version.json`-Changelog · DSGVO-Entwurf §0 | Sitzung, außer den Inbox-Posten | Sitzungsteil **erledigt 19.10.** (`c477267`, `638d667`, `607cf73`; `version.json`-Banner steht seit 28.08.); LR2 und LR3 beim Founder, §8 |
 | 7 | Doppelförderung: Status „Syng.Visibra“; Satz in Frage 5/Team-7; Weg C nicht parallel fürs selbe Objekt | Founder | Satz steht; Status offen |
 | 8 | Belege Dritter: Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration | Founder | offen |
 | 9 | Formalien: Rechtsform, Selbstständigkeit, Stunden aus der ~590-h-Tabelle, frühere Projekte, Startjahr, Accounts-Feld | Founder | offen |
