@@ -89,8 +89,11 @@ targets:
   # xEQ5/xCmp/xDly/xRvb), plus the earlier app's instrument (aumu echl) so saved sessions open.
   # One purchase unlocks them (`PluginUnlock`, Plugins/Shared, compiled into app and extension). Lessons from the legacy AUv3 (root
   # project.yml): AudioComponents under NSExtensionAttributes, a synchronous nonisolated
-  # AUAudioUnitFactory, NO App Group entitlement (the .auv3 App ID lacks the capability; with it
-  # every host failed with -3000), and explicit SDKROOT/SUPPORTED_PLATFORMS.
+  # AUAudioUnitFactory, and explicit SDKROOT/SUPPORTED_PLATFORMS. The legacy rule "NO App Group
+  # entitlement" held while the .auv3 App ID lacked the capability (every host failed with -3000);
+  # since 2026-10-18 its profile carries group.com.echoelmusic.shared (F17), so the extension asks
+  # for exactly that one group to READ the purchase (factory job 002). A group the profile lacks
+  # fails signing in studio-testflight.yml, so a mismatch never reaches a device.
   EchoelPlugins:
     type: app-extension
     platform: iOS
@@ -117,3 +120,4 @@ targets:
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Support/Plugins/EchoelPlugins.entitlements

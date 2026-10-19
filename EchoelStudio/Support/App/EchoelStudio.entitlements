@@ -10,6 +10,13 @@
 	     docs/dev/FOUNDER_INBOX.md). Without the entitlement the import finds no container and
 	     skips silently; nothing else in Echoel Studio touches the group. Restore the key with
 	     <string>group.com.echoelmusic</string> once the founder has re-added the group to the
-	     App ID (developer.apple.com → Identifiers → App Groups). The extension never had it. -->
+	     App ID (developer.apple.com → Identifiers → App Groups).
+	     `group.com.echoelmusic.shared` IS requested (2026-10-19, factory job 002): both profiles
+	     carry it (F17), and the app records the plugin purchase there for the extension to read
+	     (PluginUnlock.recordOwned). Add `group.com.echoelmusic` as a SECOND string, never instead. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.echoelmusic.shared</string>
+	</array>
 </dict>
 </plist>

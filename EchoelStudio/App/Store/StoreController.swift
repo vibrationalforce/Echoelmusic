@@ -4,7 +4,8 @@ import StoreKit
 import os
 
 /// Sells Echoel's own Audio Units as ONE purchase (`PluginUnlock`). It unlocks every plugin in
-/// every host on every device of the same Apple account; the plugins read the same transactions.
+/// every host on every device of the same Apple account: after every check of the transactions
+/// the app records the result in the shared container, where the plugins read it.
 @MainActor
 @Observable
 final class StoreController {
@@ -18,6 +19,7 @@ final class StoreController {
 
     init() {
         updates = Task { [weak self] in
+            await self?.refreshOwned()
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result { await transaction.finish() }
                 await self?.refreshOwned()
@@ -80,5 +82,6 @@ final class StoreController {
             }
         }
         isOwned = found
+        PluginUnlock.recordOwned(found)
     }
 }

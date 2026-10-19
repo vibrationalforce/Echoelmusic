@@ -1,0 +1,4 @@
+{"id": "002-plugin-unlock-app-group", "title": "Plugin-Freischaltung über die App Group", "stage": "review", "round": 1,
+ "base": "1814d6b103a4cc901dc6b9e8d363a32c57fcb4dc", "head": "", "lenses": ["code-reviewer", "security-agent", "ux", "e2e-test-agent"],
+ "history": [{"stage": "spec", "date": "2026-10-19", "note": "Recherche: StoreKit in Erweiterungen nicht unterstützt (Guideline 4.4, Apple DTS)"},
+             {"stage": "build", "date": "2026-10-19", "note": "PluginUnlock-Record, StoreController schreibt, PluginLicense liest zuerst, Entitlements beider Targets"}]}
