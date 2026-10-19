@@ -18,8 +18,9 @@ parallel (Security, UX, UI-Design, Code) → „wait for all 4“ → bei Änder
 höchstens zwei Runden → Approver → APPROVE (Merge) oder ESCALATE (`decision.md`, Spalte „Needs
 human“, Freigabe per `/factory approve <id>`), Zustand als Dateien je Job. Das Reel lag als
 Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NICHT geöffnet.
-Übernommen ist das MUSTER, neu geschrieben für dieses Repo. Verdikt und Messung: die Zeile vom
-2026-10-19 in `inspiration.csv` und der Absatz „Factory-Reel“ in `memory/inspiration_intake.md`.
+Übernommen ist das MUSTER, neu geschrieben für dieses Repo. Verdikt und Messung: die Zeile
+`instagram:zazencodes` in `inspiration.csv` und der Absatz „Factory-Reel“ in
+`memory/inspiration_intake.md`.
 
 ## Was dieses Repo daran anders macht — und warum
 
@@ -46,19 +47,31 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      beantwortet, eskaliert der Workflow — das ist eine Approver-Einstufung, kein Textscan der Spec.
    - **Acceptance criteria** — prüfbar, je Kriterium wie es geprüft wird (Wächter, Befehl,
      Datei:Zeile). Was nur ein Gerät, Ohr oder Auge zeigt, steht hier als `[DEVICE]`: es gilt nie
-     als erfüllt und blockiert die Freigabe trotzdem NICHT — es wird eine Bitte in
-     `docs/dev/FOUNDER_INBOX.md` §2.
+     als erfüllt und blockiert die Freigabe trotzdem NICHT — es wird eine Geräte-Bitte (Schritt 6).
+     Nur ein so markiertes Kriterium darf der Approver als `device` führen; alles andere ist `code`,
+     und eine Freigabe braucht mindestens ein erfülltes `code`-Kriterium.
    - **Out of scope** — was diese Scheibe absichtlich nicht tut.
    Bei einer bedeutenden Scope-Frage zuerst `the-council`, dann die Spec.
 3. **Bauen** (`stage: "build"`) — eine Ralph-Scheibe, Wächter im selben Commit, die acht Prüfer
-   aus `scripts/INDEX.md` Abschnitt A, dann Commit. Den Basis-SHA trägst du beim Anlegen ein,
+   aus `scripts/INDEX.md` Abschnitt A, dann Commit. Hat die Spec ein `[DEVICE]`-Kriterium, zuerst
+   das WIP-Limit prüfen (`docs/dev/FOUNDER_INBOX.md`, Regel 3: höchstens drei gebaute Scheiben
+   warten auf ein Geräte-Urteil). **Eine Scheibe, die `docs/`, `ContentPipeline/` oder
+   `fastlane/metadata/` anfasst, wird auf dem LOKALEN Commit geprüft, bevor sie gepusht wird**:
+   die Linsen lesen das lokale git, und eine reine `docs/`-Delta geht nach dem Push ohne Gate an
+   die Website (Schritt 6). Den Basis-SHA trägst du beim Anlegen ein,
    den Kopf-SHA NACH dem Bau-Commit (ein Commit kann seinen eigenen SHA nicht tragen; der Eintrag
    fährt mit dem nächsten Commit mit). Der Workflow verlangt einen echten SHA, nie `HEAD` — die
    Linsen laufen parallel, und ein beweglicher Name kann ihnen verschiedene Stände zeigen.
 4. **Prüfen** (`stage: "review"`) — der gespeicherte Workflow:
-   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, lenses, paths}})`.
-   Laufen mehrere Jobs verschränkt auf einem Branch, begrenzt `paths` (bis zu 12 Pfade) den Diff
-   auf diesen Job; ab Runde 2 ist `base` der Kopf der vorigen Runde.
+   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, since, lenses, paths}})`.
+   `base` bleibt in JEDER Runde die Basis des Jobs aus `board.json` — der Approver urteilt immer
+   über den ganzen Job, weil nur er jedes Kriterium sieht. Ab Runde 2 ist `since` der Kopf der
+   vorigen Runde: er zeigt den Linsen nur, was die Nacharbeit geändert hat. Alle drei sind SHAs;
+   `round` ist Pflicht. Laufen mehrere Jobs verschränkt auf einem Branch, begrenzt `paths` (bis
+   zu 12 Pfade, steht in `board.json`, jede Runde liest es von dort) den Diff auf diesen Job.
+   Er versteckt nichts: jede Linse liest zuerst die UNGEFILTERTE Dateiliste und meldet, was außerhalb
+   liegt (`outsideScope` — das bekommt einen eigenen Job), der Approver prüft gesperrte Dateien auf
+   der ungefilterten Liste, und ein leerer Diff ist `INVALID`, kein Pass.
    Linsen: immer `code-reviewer`, `security-agent`, `ux` — der Workflow fügt die drei selbst
    hinzu, ein Aufrufer kann sie nicht abwählen. `lenses` nennt höchstens EINE Domänen-Linse
    (`[]` = keine; zwei sind `INVALID`) nach dem, was der Diff anfasst —
@@ -69,11 +82,12 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    Der Workflow wartet auf ALLE Linsen. Ein Befund zählt nur mit Datei und Schwere
    blocker/major; ein „CHANGES“ ohne solchen Befund wird als PASS gewertet, ein „PASS“ mit
    Blocker als CHANGES — das Wort folgt dem Beleg. Eine fehlende Antwort ist kein Pass (`RERUN`).
-   Ein vorhandenes, aber falsches Argument (`round: "3"`, `head: "HEAD"`, eine Linse wie
-   `constructor`) ergibt `INVALID`, nie einen Ersatzwert — ein ersetzter `round` hebelte die
-   Nacharbeitsgrenze aus.
+   Ein falsches oder fehlendes Argument (`round: "3"`, kein `round`, `head: "HEAD"`, `base: "main"`,
+   eine Linse wie `constructor`) ergibt `INVALID`, nie einen Ersatzwert — ein ersetzter `round`
+   hebelte die Nacharbeitsgrenze aus.
 5. **Nacharbeit** — `decision: "REWORK"`: der PM behebt jeden offenen Befund (oder widerlegt ihn
-   mit Messung in `reviews/round-<n>/rebuttal.md`), committet, ruft mit `round + 1` erneut.
+   mit Messung in `reviews/round-<n>/rebuttal.md`), committet, ruft mit `round + 1` und
+   `since` = dem `head` der geprüften Runde erneut.
    **Höchstens `MAX_REWORK_ROUNDS` = 2 Nacharbeitsrunden**; bleibt in Runde 3 etwas offen, eskaliert
    der Workflow selbst. Eine dritte Nacharbeit gibt es nicht — wer sie braucht, hat eine
    Spec-Frage, keine Code-Frage.
@@ -85,31 +99,51 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    3. Ein `founder`-Kriterium offen oder eine Frage an den Menschen → **ESCALATE**.
    4. Ein `code`-Kriterium offen → **REWORK** (solange Runden übrig sind), sonst ESCALATE.
    5. Sonst **APPROVE**; `device`-Kriterien kommen als `deviceAsks` mit.
-   Eine Freigabe ohne ein einziges geprüftes Kriterium ist keine (`RERUN`).
-   - **APPROVE** → `stage: "done"` erst, wenn die Gates SEINES Baums es tragen — die Lesart steht in
-     `Tests/CISmoke/CLAUDE.md` §5 und wird hier nicht wiederholt. Kurz: Alt-App (`Sources/`,
-     `Tests/`) = `Xcode Compile Check` plus der CI/CD-Schritt `Build for Testing`, und ein neuer
-     Wächter erst, wenn `scripts/gh-test-verdict.py` ihn nennt; `EchoelStudio/` = Workflow
-     `Echoel Studio`; nur `.claude/**`, `scripts/**`, `scratchpads/**`, `docs/**` = **kein Lauf** —
-     dann zählen die `--selftest`s und die Python-Transkription, und das Wort heißt „kein Lauf“, nie
-     „grün“. Jede `deviceAsks`-Zeile geht als Bitte in `docs/dev/FOUNDER_INBOX.md` §2.
+   Eine Freigabe ohne ein einziges geprüftes Kriterium ist keine (`RERUN`) — und ebenso eine, deren
+   Kriterien alle `device` sind: ohne ein erfülltes `code`-Kriterium hat niemand etwas belegt.
+   - **APPROVE** → `stage: "done"` erst, wenn die Gates SEINES Baums es tragen:
+     - **Alt-App** (`Sources/`, `Tests/`) = `Xcode Compile Check` plus der CI/CD-Schritt
+       `Build for Testing`, ein neuer Wächter erst, wenn `scripts/gh-test-verdict.py` ihn nennt —
+       Lesart in `Tests/CISmoke/CLAUDE.md` §5. Fehlt er im `WINDOW`, heißt es „kompiliert, Ausführung
+       unbelegt“.
+     - **`EchoelStudio/`** = Workflow `Echoel Studio` — Lesart in `EchoelStudio/CLAUDE.md`
+       „Verifying“. Das ist ein UNSIGNIERTER Build mit Tests: eine Änderung an Entitlements, App
+       Group oder Profil beweist er nicht. Die braucht einen signierten `studio-testflight.yml`-Lauf
+       plus eine Geräte-Prüfung, also ein `[DEVICE]`-Kriterium.
+     - **Website** (`docs/**`) = kein Gate, aber **eine Veröffentlichung**: `auto-merge-docs.yml`
+       nimmt eine reine `docs/`-Delta nach `main`, und der Deploy folgt (`docs/CLAUDE.md` §2). Darum
+       prüft Schritt 3 sie VOR dem Push.
+     - Nur `.claude/**`, `scratchpads/**`, `memory/**` = **kein Lauf** — dann zählen die
+       `--selftest`s und die Python-Transkription, und das Wort heißt „kein Lauf“, nie „grün“.
+       ⚠️ `scripts/**` gehört NICHT dazu: `scripts/check-infoplist.sh` steht im Pfadfilter von
+       `Xcode Compile Check`.
+     **Geräte-Bitten** (`deviceAsks`) gehen nicht einzeln in die Inbox: sie werden in eine FAMILIE
+     der nächsten Geräte-Runde in `docs/dev/FOUNDER_INBOX.md` §2 eingefaltet, im Budget von fünf je
+     Build (Regeln 1 und 4 dort). Ihre Zeilen kommen als `deviceOpen` in `board.json`; ein Job mit
+     offenem `deviceOpen` ist „fertig, gerät-unbestätigt“, und `factory-board.py --open` zeigt ihn,
+     bis jede Zeile ein `VERIFIED-JJJJ-MM-TT` trägt.
    - **ESCALATE** → `stage: "needs-human"`, `decision.md` mit **Why · Acceptance criteria (je
      erfüllt/offen) · For the human** (Fragen mit Empfehlung), plus die Inbox-Zeile im richtigen
      Abschnitt: §1 für Entscheidungen und Scope, §2 für Geräte-Bitten, §3 nur für gesperrte
      Dateien. Ihre Nummer kommt als `inbox` in `board.json`. Erst greppen, ob die Frage schon dort
      steht.
 7. **Protokoll** — die Workflow-Rückgabe schreibt der PM nach `reviews/round-<n>/<linse>.md`;
+   sie trägt `range`, `since` und `paths`, also steht dort, über welchen Diff geurteilt wurde.
    `board.json` führt nur der PM. Überblick: `python3 -I scripts/factory-board.py --open`.
 
 ## `board.json`
 
 ```json
 {"id": "001-kurzer-name", "title": "…", "stage": "spec|build|review|approve|needs-human|done|dropped",
- "round": 1, "base": "<sha>", "head": "<sha>", "lenses": ["code-reviewer", "security-agent", "ux"],
- "inbox": "<Inbox-Nummer>", "history": [{"stage": "spec", "date": "2026-10-19", "note": "…"}]}
+ "round": 1, "base": "<sha>", "head": "<sha>", "since": "<sha der vorigen Runde>",
+ "lenses": ["code-reviewer", "security-agent", "ux"], "paths": ["<pfad>"],
+ "inbox": "<Inbox-Nummer>", "deviceOpen": [{"ask": "<Kurztext>", "inbox": "<§2-Familie>", "verified": "JJJJ-MM-TT"}],
+ "history": [{"stage": "spec", "date": "2026-10-19", "note": "…"}]}
 ```
 
 `id` muss gleich dem Ordnernamen sein; `factory-board.py` meldet eine Abweichung, statt zu raten.
+Ein `deviceOpen`-Eintrag ohne `verified` ist offen; `verified` kommt erst mit dem Datum der
+Geräte-Antwort.
 
 ## Wann nicht
 
@@ -131,4 +165,7 @@ ist ein Roster-Name, und die Rundenzahl hier ist die des Workflows. ⚠️ Er l�
 nächsten Commit, der `Sources/` oder `Tests/` berührt — eine reine `.claude/`-Änderung startet
 kein Gate. Wer den Workflow ändert, transkribiert die Ansprüche vor dem Push und fährt
 `python3 -I scripts/factory-review-selftest.py` — die Entscheidungslogik unter Node mit
-Attrappen-Agenten, ein Fall je Zweig von Schritt 6.
+Attrappen-Agenten, ein Fall je Zweig von Schritt 6, dazu die PROMPTS, die die Attrappen bekommen
+(Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, der Approver liest ab der Job-Basis, ein
+Prüfer-Text kann die Datenmarker nicht schließen). Lädt der Workflow nicht, endet es mit 2, nie mit
+„grün“.

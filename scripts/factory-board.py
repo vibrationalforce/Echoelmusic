@@ -7,19 +7,32 @@ The PM (the main session) is the ONLY writer of board.json; reviewers and the ap
 read-only agents and never touch it (.claude/skills/factory/SKILL.md).
 
     python3 -I scripts/factory-board.py              # the board
-    python3 -I scripts/factory-board.py --open       # only jobs that are not done or dropped
+    python3 -I scripts/factory-board.py --open       # jobs not done or dropped, plus done jobs
+                                                     # whose device checks are still unverified
     python3 -I scripts/factory-board.py --selftest   # after touching this file
 
 Exit 0 = printed · 1 = a board.json is unreadable, is not a JSON object, names an unknown stage,
-or carries an id that is not its folder name (each a finding; the board does not guess) ·
+carries an id that is not its folder name, or has a deviceOpen list that is not a list of objects
+with a YYYY-MM-DD `verified` (each a finding; the board does not guess) ·
 2 = the factory folder does not exist yet.
+
+A job approved with device checks is "done, device-unverified": its gates are green, but no device
+has confirmed it. It stays on --open until every deviceOpen entry carries a `verified` date, so a
+slice is never closed on the strength of code alone (job 001, round 2).
 """
 import json
+import re
 import sys
 from pathlib import Path
 
 STAGES = ["spec", "build", "review", "approve", "needs-human", "done", "dropped"]
 OPEN = {"spec", "build", "review", "approve", "needs-human"}
+DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def device_open(job):
+    """The deviceOpen entries that carry no verified date yet."""
+    return [d for d in job.get("deviceOpen", []) if not d.get("verified")]
 
 
 def load(root):
@@ -41,6 +54,14 @@ def load(root):
         if data.get("id") != board.parent.name:
             problems.append(f"{board}: id {data.get('id')!r} differs from its folder {board.parent.name!r}")
             continue
+        asks = data.get("deviceOpen", [])
+        if not isinstance(asks, list) or not all(isinstance(d, dict) for d in asks):
+            problems.append(f"{board}: deviceOpen must be a list of objects")
+            continue
+        bad = [d.get("verified") for d in asks if d.get("verified") and not DATE.match(str(d["verified"]))]
+        if bad:
+            problems.append(f"{board}: deviceOpen verified must be YYYY-MM-DD, got {bad}")
+            continue
         jobs.append(data)
     return jobs, problems
 
@@ -48,9 +69,12 @@ def load(root):
 def render(jobs, only_open=False):
     lines = []
     for stage in STAGES:
-        if only_open and stage not in OPEN:
-            continue
         here = [j for j in jobs if j.get("stage") == stage]
+        if only_open and stage not in OPEN:
+            # A done job with an unverified device check is not closed yet.
+            here = [j for j in here if stage == "done" and device_open(j)]
+            if not here:
+                continue
         lines.append(f"── {stage.upper()} ({len(here)})")
         for j in here:
             extra = []
@@ -58,6 +82,8 @@ def render(jobs, only_open=False):
                 extra.append(f"round {j['round']}")
             if j.get("inbox"):
                 extra.append(f"inbox {j['inbox']}")
+            if device_open(j):
+                extra.append(f"device open {len(device_open(j))}")
             if j.get("head"):
                 extra.append(str(j["head"])[:9])
             tail = f"  [{', '.join(extra)}]" if extra else ""
@@ -83,20 +109,35 @@ def selftest():
         broken = root / "004-broken"
         broken.mkdir()
         (broken / "board.json").write_text("{not json")
+        device = root / "005-device"
+        device.mkdir()
+        (device / "board.json").write_text(json.dumps(
+            {"id": "005-device", "stage": "done", "deviceOpen": [{"ask": "AUM", "verified": "2026-10-20"}, {"ask": "buy"}]}))
+        checked = root / "006-checked"
+        checked.mkdir()
+        (checked / "board.json").write_text(json.dumps(
+            {"id": "006-checked", "stage": "done", "deviceOpen": [{"ask": "AUM", "verified": "2026-10-20"}]}))
+        bad_date = root / "007-baddate"
+        bad_date.mkdir()
+        (bad_date / "board.json").write_text(json.dumps(
+            {"id": "007-baddate", "stage": "done", "deviceOpen": [{"ask": "AUM", "verified": "yes"}]}))
         jobs, problems = load(root)
-        if [j["id"] for j in jobs] != ["001-good"]:
-            failures.append(f"expected only 001-good, got {[j['id'] for j in jobs]}")
-        if len(problems) != 3:
-            failures.append(f"expected 3 problems (stage, id, json), got {problems}")
+        if [j["id"] for j in jobs] != ["001-good", "005-device", "006-checked"]:
+            failures.append(f"expected 001-good, 005-device, 006-checked, got {[j['id'] for j in jobs]}")
+        if len(problems) != 4:
+            failures.append(f"expected 4 problems (stage, id, json, date), got {problems}")
         text = render(jobs)
         if "── NEEDS-HUMAN (1)" not in text or "inbox F23" not in text:
             failures.append("needs-human column or inbox number missing")
-        if "── DONE" in render(jobs, only_open=True):
-            failures.append("--open still printed a closed column")
+        opened = render(jobs, only_open=True)
+        if "005-device" not in opened or "device open 1" not in opened:
+            failures.append("--open hid a done job with an unverified device check")
+        if "006-checked" in opened:
+            failures.append("--open still printed a done job whose device checks are all verified")
     if failures:
         print("SELFTEST FAILED:\n  " + "\n  ".join(failures))
         return 1
-    print("selftest ok: 1 job loaded, 3 malformed boards reported, --open hides closed columns")
+    print("selftest ok: 3 jobs loaded, 4 malformed boards reported, --open hides closed jobs and keeps device-open ones")
     return 0
 
 
