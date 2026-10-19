@@ -25,7 +25,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 ## Förderung — Founder
 
 - [ ] **F-05** (F · bis 2026-10-23) Status des älteren Antrags „Syng.Visibra“ klären (Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4) · Quelle: FOERDERUNG §8; §9 Handlung 7
-- [ ] **F-06** (F · bis spätestens 2026-10-25) Das Jahrgang-03-Handbuch prototypefund.de/handbuch und die Checkliste auf prototypefund.de/bewerbung als PDF hochladen (⛔ die 2023-PDFs unter new.prototypefund.de sind tot: 404 am 19.10.) — erst damit sind die Zeichengrenzen bekannt · Quelle: FOERDERUNG §8; §9 Handlung 3
+- [ ] **F-06** (F · bis spätestens 2026-10-25) Das Jahrgang-03-Handbuch — Direktlink https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf (die Seite /handbuch selbst ist nur der Download-Knopf; gelesen 19.10.) und die Checkliste auf prototypefund.de/bewerbung als PDF hochladen (⛔ die 2023-PDFs unter new.prototypefund.de sind tot: 404 am 19.10.) — erst damit sind die Zeichengrenzen bekannt · Quelle: FOERDERUNG §8; §9 Handlung 3
 - [ ] **F-07** (F · bis spätestens 2026-10-25) Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF liefern · Quelle: FOERDERUNG §8; §9 Handlung 2 · TEILWEISE 19.10.: foerderlinien ist da und eingearbeitet; es fehlen innovativ · datensicherheit · software-infrastruktur und die FAQ mit AUFGEKLAPPTEN Antworten (die gelieferte FAQ-PDF zeigt nur Überschriften)
 - [ ] **F-08** (F · bis spätestens 2026-10-25) Formalien liefern: Rechtsform, Stundenzahl aus der ~590-h-Tabelle (§7.1 Frage 9), frühere Software-Projekte, Jahr des Projektbeginns, Accounts-Feld (vibrationalforce), 5 Sätze Hintergrund (§7.2) · Quelle: FOERDERUNG §8, §5; §9 Handlung 9
 - [ ] **F-09** (F · bis 2026-10-28) Die vier §10-Prüfer-Briefe (ChatGPT · Mistral · Grok · Gemini) nach der A/B/C-Entscheidung abschicken und die Antworten einfügen — nie settings.local.json, Logs, Schlüssel oder Team-ID mitschicken · Quelle: FOERDERUNG §10
@@ -148,7 +148,7 @@ Fett = fester Termin oder Frist.
 - Studio P0: D4 Import-Scan-Test je Paket (die Engine importiert heute AVFoundation/AudioToolbox) — Vorarbeit für den Target-Split D1 und der Beleg, den Frage 4 („Linux reicht für die portablen Teile?“) braucht. _(S)_
 - Studio P0, klein: E7 Datenschutz-Manifest der Erweiterung um Datei-Zeitstempel (C617.1) ergänzen · E5 Assistent-Menüpunkt ausblenden, wenn das Gerät kein On-Device-Modell hat. _(S)_
 - [~15 min] Status des Altantrags „Syng.Visibra“ (läuft / abgelehnt / zurückgezogen, mit Datum) — ein Satz im Chat. Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4. _(F)_
-- [~15 min] Das Jahrgang-03-Handbuch (prototypefund.de/handbuch) und die Checkliste (prototypefund.de/bewerbung) als PDF hochladen — daraus kommen die Zeichengrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.). _(F)_
+- [~15 min] Das Jahrgang-03-Handbuch (https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf) und die Checkliste (prototypefund.de/bewerbung) als PDF hochladen — daraus kommen die Zeichengrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.). _(F)_
 
 **Samstag 24.10.**
 
