@@ -11,7 +11,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
     <script>
-    (function(){var V='10.21.0',K='echoel-nuke';try{
+    (function(){var V='10.24.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -41,7 +41,7 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/brainstorming.html">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Brainstorming","item":"https://echoelmusic.com/brainstorming.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.79.502">
+    <link rel="stylesheet" href="shared.css?v=10.24.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -120,13 +120,13 @@
             </div>
 
             <div class="bs-note">
-                <strong>How to read this page.</strong> The first section is the <strong>honest current state</strong>: what a TestFlight tester can expect right now. The second is a <strong>brainstorming</strong> of future directions chosen for real market potential in the Apple ecosystem &mdash; these are exploration, not commitments. We keep this page current rather than over-promise.<br><br><strong>&#9888; This changelog stopped being updated after build 1889 (2026-06-17) &mdash; the current TestFlight build is far newer, and several items below were later REMOVED on purpose (the drum sequencer, the piano roll, the Tools menu) &mdash; and one of them, the AUv3 plugin, was removed and then brought back. Read it as history, not as today's state; <a href="architecture.html">Architecture</a> carries the current status.</strong><br><br><strong>Build 1889 &mdash; iOS&nbsp;18+, iPhone (2026-06-17). New at the time:</strong> <strong>live MIDI/MPE OUT</strong> (a virtual &ldquo;Echoelmusic&rdquo; source any DAW can record &mdash; standard or MPE), three new <strong>character controls</strong> (Virtuosity, Syncopation, Humanize) that reshape the generated lead, and a pro <strong>sampler engine</strong> (per-pad start/end trim, reverse, pitch) as the base for sample-based instruments. Plus <strong>click-free playing</strong> &mdash; reusing or stealing a still-ringing voice now glides into the new note instead of clicking. And build 1881's <strong>controls that play + a truer visual</strong>. Every value shows its type (Hz, s, BPM, semitones) and is exact to four decimals; press a value for a <strong>transparent vertical fader</strong> (up/down = fast sweep, sideways = fine, tap = type). New <strong>Transpose</strong> (&plusmn;24 semitones; sub-bass &amp; color follow) and <strong>Visual</strong> controls (Intensity/Detail/Motion/Spread, flash-capped &lt;3&nbsp;Hz). The immersive color is now derived from the heard tone &mdash; the pitch&rsquo;s frequency transposed up whole octaves into the visible-light range (a direct frequency-to-wavelength mapping). Plus pinch-to-zoom for every eye and a realtime fix so the music re-seeds once per window, not in bursts. On build 1869's <strong>self-healing audio engine</strong> &mdash; the instrument auto-recovers from AirPods/Bluetooth connect &amp; disconnect, sample-rate switches and system audio-graph rebuilds that used to leave it silent until relaunch (de-bounced, capped restart; clear &ldquo;tap to retry&rdquo; if recovery is exhausted; render path untouched). On build 1867's <strong>three new dimensions on the one instrument</strong> &mdash; a dedicated <strong>sub-bass / LFE voice</strong> (the &ldquo;felt&rdquo; Vibration dimension) that doubles the bass an octave down with a pushable level for sub/headphones/haptics; a real <strong>Metal GPU bio-visual</strong> (heart&nbsp;rate&nbsp;&rarr;&nbsp;pulse clamped to &le;2&nbsp;Hz for flash safety, coherence&nbsp;&rarr;&nbsp;hue, breath&nbsp;&rarr;&nbsp;spread) reachable from the Tools menu and honouring Reduce&nbsp;Motion; and a fix so <strong>sound starts immediately on first open</strong> (it no longer waits for a camera pulse lock before playing). On top of build 1857's solid biofeedback (bus freshness window + BLE auto-reconnect) and build 1855's deep composition pass (real chord motion, expressive phrasing, seamless bar-boundary morph, crackle-free 8-voice synthesis).
+                <strong>Since 19 October 2026, TestFlight carries Echoel Studio</strong>, a new music workstation for iPhone and iPad. What it holds and the plan are on the <a href="roadmap.html">Roadmap</a>. The first section below describes the earlier app (10.79.515), which is frozen.<br><br><strong>How to read this page.</strong> The first section is the <strong>honest current state</strong>: what a TestFlight tester can expect right now. The second is a <strong>brainstorming</strong> of future directions chosen for real market potential in the Apple ecosystem &mdash; these are exploration, not commitments. We keep this page current rather than over-promise.<br><br><strong>&#9888; This changelog stopped being updated after build 1889 (2026-06-17) &mdash; the current TestFlight build is far newer, and several items below were later REMOVED on purpose (the drum sequencer, the piano roll, the Tools menu) &mdash; and one of them, the AUv3 plugin, was removed and then brought back. Read it as history, not as today's state; <a href="architecture.html">Architecture</a> carries the current status.</strong><br><br><strong>Build 1889 &mdash; iOS&nbsp;18+, iPhone (2026-06-17). New at the time:</strong> <strong>live MIDI/MPE OUT</strong> (a virtual &ldquo;Echoelmusic&rdquo; source any DAW can record &mdash; standard or MPE), three new <strong>character controls</strong> (Virtuosity, Syncopation, Humanize) that reshape the generated lead, and a pro <strong>sampler engine</strong> (per-pad start/end trim, reverse, pitch) as the base for sample-based instruments. Plus <strong>click-free playing</strong> &mdash; reusing or stealing a still-ringing voice now glides into the new note instead of clicking. And build 1881's <strong>controls that play + a truer visual</strong>. Every value shows its type (Hz, s, BPM, semitones) and is exact to four decimals; press a value for a <strong>transparent vertical fader</strong> (up/down = fast sweep, sideways = fine, tap = type). New <strong>Transpose</strong> (&plusmn;24 semitones; sub-bass &amp; color follow) and <strong>Visual</strong> controls (Intensity/Detail/Motion/Spread, flash-capped &lt;3&nbsp;Hz). The immersive color is now derived from the heard tone &mdash; the pitch&rsquo;s frequency transposed up whole octaves into the visible-light range (a direct frequency-to-wavelength mapping). Plus pinch-to-zoom for every eye and a realtime fix so the music re-seeds once per window, not in bursts. On build 1869's <strong>self-healing audio engine</strong> &mdash; the instrument auto-recovers from AirPods/Bluetooth connect &amp; disconnect, sample-rate switches and system audio-graph rebuilds that used to leave it silent until relaunch (de-bounced, capped restart; clear &ldquo;tap to retry&rdquo; if recovery is exhausted; render path untouched). On build 1867's <strong>three new dimensions on the one instrument</strong> &mdash; a dedicated <strong>sub-bass / LFE voice</strong> (the &ldquo;felt&rdquo; Vibration dimension) that doubles the bass an octave down with a pushable level for sub/headphones/haptics; a real <strong>Metal GPU bio-visual</strong> (heart&nbsp;rate&nbsp;&rarr;&nbsp;pulse clamped to &le;2&nbsp;Hz for flash safety, coherence&nbsp;&rarr;&nbsp;hue, breath&nbsp;&rarr;&nbsp;spread) reachable from the Tools menu and honouring Reduce&nbsp;Motion; and a fix so <strong>sound starts immediately on first open</strong> (it no longer waits for a camera pulse lock before playing). On top of build 1857's solid biofeedback (bus freshness window + BLE auto-reconnect) and build 1855's deep composition pass (real chord motion, expressive phrasing, seamless bar-boundary morph, crackle-free 8-voice synthesis).
             </div>
 
             <!-- LIVE NOW -->
             <div class="tool-section" id="live">
                 <div class="tool-header">
-                    <h2>In TestFlight now <span class="bs-badge bs-badge--live">Live</span></h2>
+                    <h2>In the earlier app (10.79) <span class="bs-badge bs-badge--live">Built</span></h2>
                     <p class="tagline">The body as controller &mdash; sound, composition and pro I/O, on-device.</p>
                 </div>
                 <div class="capability-list">
@@ -210,6 +210,7 @@
             <a href="artist.html">Artist</a>
             <a href="press.html">Press</a>
             <a href="brainstorming.html" aria-current="page">Brainstorming</a>
+            <a href="roadmap.html">Roadmap</a>
             <a href="privacy.html">Privacy</a>
             <a href="terms.html">Terms</a>
             <a href="health.html">Health</a>
@@ -220,6 +221,6 @@
         </div>
     </footer>
 
-    <script src="shared.js?v=10.23.3"></script>
+    <script src="shared.js?v=10.24.0"></script>
 </body>
 </html>

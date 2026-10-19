@@ -10,6 +10,18 @@ entfernte zwölf falsche Behauptungen aus dem App-Store-Text — dort ist eine f
 Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
+⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Build 11.0.0), und dieses Register
+beschreibt bis auf die drei Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
+bis zu einem eigenen Abschnitt: behauptet wird, was `EchoelStudio/RELEASE` als Build-Inhalt nennt, mit
+„noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. Die Nachträge:
+(1) **§7:** das Studio hat einen EINMALKAUF für die eigenen AUv3-Instrumente (`com.echoelmusic.app.pro`),
+die App ist frei, kein Abo — sagbar ist „einmal kaufen, kein Abo“, nie ein Preis, nie „Pro“, nie „Trial“.
+(2) **§11:** das Studio nimmt Audio vom Mikrofon oder Interface auf eine scharf geschaltete Audiospur auf,
+der Take bleibt auf dem Gerät; die Stimm-Verbote (Cloning, AI-Voice, Autotune) bleiben. (3) **§1:** die
+eigenen Instrumente sind in AUM geprüft, GarageBand und Logic nicht. Öffentlich steht das auf
+`docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf `docs/claims.html`.
+Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
+
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
 Echoelmusic IST die Workstation. ✅ neu: Mixer-Bühne, Sampler je Spur, Grain-Insert, Stück-Export,
 Siri/Kurzbefehle — alle „Geräte-Verify offen“. §1b und §5 begründen nicht mehr mit einer

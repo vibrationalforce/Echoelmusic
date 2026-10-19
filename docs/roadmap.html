@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.24.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>Roadmap — Echoelmusic</title>
+    <meta name="description" content="Where Echoel is today, what comes next and in which order: Echoel Studio in TestFlight, App Store 1.0 planned for 2027, then live, stage, body and visual modules.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="Roadmap — Echoelmusic">
+    <meta property="og:description" content="Echoel Studio in TestFlight now, App Store 1.0 planned for 2027, then live, stage, body and visual modules.">
+    <meta property="og:url" content="https://echoelmusic.com/roadmap.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Roadmap — Echoelmusic">
+    <meta name="twitter:description" content="Echoel Studio in TestFlight now, App Store 1.0 planned for 2027, then live, stage, body and visual modules.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/roadmap.html">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/roadmap.html">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Roadmap","item":"https://echoelmusic.com/roadmap.html"}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.24.0">
+    <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}</style>
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="faq.html">FAQ</a>
+                <a href="support.html">Support</a>
+                <a class="nav-cta" href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">Join the TestFlight</a>
+            </div>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+            <a href="faq.html">FAQ</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+    <main id="main" class="subpage subpage--wider">
+        <div class="subpage-hero">
+            <h1>Roadmap</h1>
+            <p class="subtitle">Where Echoel is today, what comes next, and in which order. The dates are plans, not promises: when something is not ready, it moves, and the order stays. As of 19 October 2026.</p>
+        </div>
+
+        <section>
+            <h2>In TestFlight now: Echoel Studio</h2>
+            <p>Echoel Studio is a music workstation for iPhone and iPad. It is a fresh start, built since October 2026, and it is still being tested on devices. This build holds:</p>
+            <ul>
+                <li><strong>Instruments:</strong> a synthesizer, drums and a sampler, played from the screen keyboard or a MIDI keyboard.</li>
+                <li><strong>Effects:</strong> EQ, compressor, delay and reverb, on tracks and on the master.</li>
+                <li><strong>Arrangement and automation:</strong> parts on tracks, parameter automation, undo.</li>
+                <li><strong>A session view for live sets:</strong> scenes you launch on the beat or the bar.</li>
+                <li><strong>Recording:</strong> MIDI takes with pitch bend and controllers, and audio takes on an audio track. Echoel asks for the microphone only when you arm an audio track or set one to hear its input; a recording is saved in your song on the device.</li>
+                <li><strong>Mixing and export:</strong> meters on every track, a master chain, WAV export with loudness and true-peak measurement, and MIDI file export.</li>
+                <li><strong>Echoel's own instruments for other apps:</strong> the synthesizer, drums and sampler as Audio Units. So far they are tested in AUM only; other hosts are not tested yet.</li>
+                <li><strong>An assistant on the device:</strong> you describe a change to the song in words, it shows what it did, and one undo takes it back. It uses the language model on the device, where the device has one, and needs no network.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>The earlier app</h2>
+            <p>Until October 2026, TestFlight carried the earlier Echoel app: an instrument played by the body, with a camera pulse reading, Bluetooth heart-rate straps, generative visuals and OSC, Art-Net and sACN output. It is frozen at version 10.79.515. Its parts that worked move into Echoel Studio as separate modules, in the order below. Most other pages of this site still describe that earlier app.</p>
+        </section>
+
+        <section>
+            <h2>The plan</h2>
+            <table class="spec-table">
+                <thead><tr><th>When</th><th>What</th><th>Done when</th></tr></thead>
+                <tbody>
+                <tr><td>Autumn 2026</td><td>Composing: starter projects, instrument presets, scale lock on keys and pads, stem and project export.</td><td>A song with four tracks is made, saved, reopened and exported on a phone in flight mode. Then a public TestFlight beta.</td></tr>
+                <tr><td>Early 2027</td><td>Echoel's own instruments and the one-time purchase, restore purchases, an accessibility check.</td><td>The instruments load and play in two host apps on a device, at 44.1 and 48 kHz. App Store 1.0, planned for March 2027.</td></tr>
+                <tr><td>Spring 2027</td><td>Live: MIDI clock in and out, scene launching from a DJ mixer or controller, Network MIDI only with partners you know.</td><td>A 30 to 60 minute set on a device with hardware, without a dropout.</td></tr>
+                <tr><td>Summer and autumn 2027</td><td>Two open packages, if public funding comes through: one that reads body signals and one that speaks the stage protocols.</td><td>Both released under the MIT licence, usable without the app.</td></tr>
+                <tr><td>Winter 2027–28</td><td>Stage output: cue, OSC, DMX and spatial-object tracks, a connections screen, OSC, ADM-OSC, Art-Net and sACN.</td><td>A water, light and sound installation runs for four hours from Echoel.</td></tr>
+                <tr><td>2028</td><td>Modulation (LFOs, envelope followers, macros), then body signals as a modulation source, then the visual on a second screen.</td><td>Body signals send nothing to other devices unless you turn on an output; the visual never flashes faster than three times a second.</td></tr>
+                <tr><td>2029 and later</td><td>Spatial rendering, video in the workstation, more Apple platforms, collaboration.</td><td>Decided one at a time, in the same way.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>What stays the same</h2>
+            <ul>
+                <li>The app is free to download. No account, no ads, no tracking, no server of ours.</li>
+                <li>No subscription. Echoel's own instruments for other apps are bought once.</li>
+                <li>The source code is public under the MIT licence, and songs are files in an open, documented format.</li>
+                <li>The network is used only for App Store purchases and, when you turn it on, Network MIDI.</li>
+                <li>Before 1.0, every screen is checked with VoiceOver, with larger text and with reduced motion.</li>
+                <li>Echoel is a tool for making music. It is not a medical product and makes no health promise.</li>
+            </ul>
+        </section>
+
+        <section>
+            <div class="contact-box">
+                <h2>Want to test a build?</h2>
+                <p>Write to us to join the TestFlight, and tell us which device you use.</p>
+                <a href="mailto:echoel@tropicaldrones.com?subject=Echoelmusic%20%E2%80%94%20TestFlight%20access">
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    echoel@tropicaldrones.com
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Beta in TestFlight</span>
+        <div class="footer-links">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+            <a href="faq.html">FAQ</a>
+            <a href="support.html">Support</a>
+            <a href="integrations.html">Integrations</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="artist.html">Artist</a>
+            <a href="press.html">Press</a>
+            <a href="brainstorming.html">Brainstorming</a>
+            <a href="roadmap.html" aria-current="page">Roadmap</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="claims.html">What we don&rsquo;t claim</a>
+            <a href="impressum.html">Legal Notice</a>
+        </div>
+    </footer>
+
+    <script src="shared.js?v=10.24.0"></script>
+</body>
+</html>

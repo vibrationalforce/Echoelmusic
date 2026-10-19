@@ -12,7 +12,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops — runs BEFORE anything else -->
     <script>
-    (function(){var V='10.22.0',K='echoel-nuke';try{
+    (function(){var V='10.24.0',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -727,7 +727,7 @@
         <div id="concept" class="section">
             <div class="section-label reveal">Concept</div>
             <h2 class="section-title reveal">A concept in the making</h2>
-            <p class="section-sub reveal">This site describes the full vision of Echoelmusic. It is currently a concept in active development.</p>
+            <p class="section-sub reveal">This site describes the full vision of Echoelmusic and the earlier app (10.79). Since 19 October 2026, TestFlight carries Echoel Studio, a new music workstation; the order in which the rest returns is on the <a href="roadmap.html" style="color:var(--text); border-bottom:1px solid var(--border);">Roadmap</a>.</p>
             <div class="reveal" style="max-width:620px; margin:0 auto; text-align:center;">
                 <p style="color:var(--dim); line-height:1.85; margin-bottom:20px;">Part of it already runs &mdash; bio-reactive synthesis, generative composition, living visuals, Art-Net/sACN lighting and OSC sync; much more is on the roadmap. The <a href="architecture.html" style="color:var(--text); border-bottom:1px solid var(--border);">Architecture</a> page shows exactly what is live today versus planned. We're building the first bio-reactive performance instrument, and we'd love help shaping it.</p>
                 <p style="color:var(--text); font-weight:600; margin-bottom:20px;">Interested, a developer, or want to collaborate or test? Get in touch.</p>
@@ -964,6 +964,7 @@
             <a href="artist.html">Artist</a>
             <a href="press.html">Press</a>
             <a href="brainstorming.html">Brainstorming</a>
+            <a href="roadmap.html">Roadmap</a>
             <a href="privacy.html">Privacy</a>
             <a href="terms.html">Terms</a>
             <a href="health.html">Health</a>
