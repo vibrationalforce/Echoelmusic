@@ -56,6 +56,11 @@ await run('lenses constructor', { ...base, lenses: ['constructor'] }, () => PASS
 await run('lenses __proto__', { ...base, lenses: ['__proto__'] }, () => PASS, null, 'INVALID')
 await run('two domain lenses', { ...base, lenses: ['dsp-reviewer', 'e2e-test-agent'] }, () => PASS, null, 'INVALID')
 await run('args array', ['x'], () => PASS, null, 'INVALID')
+await run('paths string', { ...base, paths: 'Sources' }, () => PASS, null, 'INVALID')
+await run('paths with ..', { ...base, paths: ['../etc'] }, () => PASS, null, 'INVALID')
+await run('paths option-shaped', { ...base, paths: ['--output=x'] }, () => PASS, null, 'INVALID')
+await run('paths absolute', { ...base, paths: ['/etc/passwd'] }, () => PASS, null, 'INVALID')
+await run('paths ok', { ...base, paths: ['.claude/skills/factory', 'scripts/INDEX.md'] }, () => PASS, ap('APPROVE', [C('code', true)]), 'APPROVE')
 const r1 = await run('only dsp lens -> floor of 3 added', { ...base, lenses: ['dsp-reviewer'] }, () => PASS, ap('APPROVE', [C('code', true)]), 'APPROVE',
   ['review:code-reviewer', 'review:security-agent', 'review:ux', 'review:dsp-reviewer', 'approver'])
 await run('device unmet does not block', { ...base, lenses: [] }, () => PASS, ap('APPROVE', [C('code', true), C('device', false)]), 'APPROVE')

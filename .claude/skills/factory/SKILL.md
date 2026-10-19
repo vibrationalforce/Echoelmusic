@@ -56,7 +56,9 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    fährt mit dem nächsten Commit mit). Der Workflow verlangt einen echten SHA, nie `HEAD` — die
    Linsen laufen parallel, und ein beweglicher Name kann ihnen verschiedene Stände zeigen.
 4. **Prüfen** (`stage: "review"`) — der gespeicherte Workflow:
-   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, lenses}})`.
+   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, lenses, paths}})`.
+   Laufen mehrere Jobs verschränkt auf einem Branch, begrenzt `paths` (bis zu 12 Pfade) den Diff
+   auf diesen Job; ab Runde 2 ist `base` der Kopf der vorigen Runde.
    Linsen: immer `code-reviewer`, `security-agent`, `ux` — der Workflow fügt die drei selbst
    hinzu, ein Aufrufer kann sie nicht abwählen. `lenses` nennt höchstens EINE Domänen-Linse
    (`[]` = keine; zwei sind `INVALID`) nach dem, was der Diff anfasst —
