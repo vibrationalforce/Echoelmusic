@@ -47,6 +47,7 @@ struct StudioView: View {
             case .masterEffects: EffectsView(owner: .master)
             case .store: StoreView()
             case .agent: AgentView()
+            case .about: AboutView()
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -308,6 +309,7 @@ struct SongMenu: View {
             Button("New Song", systemImage: "plus") { documents.newSong() }
             Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
             Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
+            Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
             Menu("Send MIDI Clock", systemImage: "metronome") {
                 ForEach(engine.clock.destinations) { destination in
                     Button { engine.clock.toggle(destination) } label: {

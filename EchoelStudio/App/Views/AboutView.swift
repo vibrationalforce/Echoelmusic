@@ -1,0 +1,54 @@
+import SwiftUI
+
+/// What Echoel is, what this build holds, and what happens to the musician's data. Every
+/// sentence here describes this build; nothing promises a date. The page reads nothing that
+/// changes while it is open.
+struct AboutView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private static let sourceURL = URL(string: "https://github.com/vibrationalforce/Echoelmusic")
+    private static let siteURL = URL(string: "https://echoelmusic.com")
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Echoel") {
+                    paragraph("A music workstation for iPhone and iPad: instruments, effects, arrangement, a session view for live sets, mixing and export.")
+                    paragraph("Body signals, visuals, light and spatial output are not in this build. They are planned as separate modules, each added when it works.")
+                    paragraph("Echoel is a tool for making music. It is not a medical product.")
+                }
+                Section("Your data") {
+                    paragraph("No account, no ads, no tracking, no server of ours. Songs are files on this device, in an open, documented format.")
+                    paragraph("Echoel uses the network only for purchases through the App Store and, when you turn it on, for Network MIDI.")
+                }
+                Section("Open source") {
+                    paragraph("The source code is public under the MIT licence. These links open in your browser.")
+                    if let url = Self.sourceURL { Link("Source code on GitHub", destination: url) }
+                    if let url = Self.siteURL { Link("echoelmusic.com", destination: url) }
+                }
+                Section("This build") {
+                    paragraph(Self.versionLine)
+                }
+            }
+            .navigationTitle("About Echoel")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func paragraph(_ text: String) -> some View {
+        Text(text)
+            .font(Theme.Font.body)
+            .foregroundStyle(Theme.Color.text)
+            .padding(.vertical, Theme.Space.xs)
+    }
+
+    /// "Version 11.0.0 (10005)", read from the bundle; a missing key says so instead of guessing.
+    private static var versionLine: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let build = info?["CFBundleVersion"] as? String ?? "unknown"
+        return "Version \(version) (\(build))"
+    }
+}

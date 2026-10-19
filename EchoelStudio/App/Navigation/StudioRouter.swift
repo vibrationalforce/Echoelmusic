@@ -23,6 +23,8 @@ enum StudioSheet: Identifiable, Hashable {
     case store
     /// The assistant: change the song by asking.
     case agent
+    /// What Echoel is, what this build holds, and what happens to the musician's data.
+    case about
 
     var id: Self { self }
 }
