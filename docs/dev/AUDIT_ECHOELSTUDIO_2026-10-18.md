@@ -11,6 +11,8 @@ Zeilennummern sind ein Datum, keine Tatsache — vor dem Handeln neu messen.
 
 ## 1. Antwort in drei Sätzen
 
+> ⛔ **Stand 2026-10-19: §1 beschreibt den Morgen des 18.10.** Seit `1118a1b` (§9) baut Echoel Studio als `com.echoelmusic.app` mit EINER Erweiterung (`com.echoelmusic.app.auv3`) und EINEM Kauf; am 19.10. liefen Build 10004 und 10005 nach TestFlight. Von den zwei fehlenden Türen ist die Ereignis-Spur gebaut (§9, `f7f2aaf`); das Spur-Modell „Quelle + Ziel“ führt §9 nicht.
+
 **Ja — die Vision ist ohne neues App-Store-Objekt erreichbar, aber NICHT so, wie M7 heute gebaut ist.**
 Registriert sind nur `com.echoelmusic.app` (Record 6757957358) und seine Unter-IDs, darunter genau
 EINE Audio-Unit-ID (`.app.auv3`); EchoelStudio baut dagegen unter `com.echoelmusic.studio` mit vier

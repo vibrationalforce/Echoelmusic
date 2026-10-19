@@ -34,7 +34,8 @@ on modules below it — never the other way round.
    Never rename one; add a new command instead.
 4. **Validate at the door.** `apply` rejects non-finite numbers, out-of-range values,
    unknown and duplicate ids, and leaves the project untouched when it throws.
-5. **Render thread** (once the engine exists): no locks, no allocation, no ObjC, no file
+5. **Render thread** (the `AVAudioSourceNode` block in `App/Engine/AudioEngine.swift`, the
+   kernels in `Engine/`, the extension's render block): no locks, no allocation, no ObjC, no file
    I/O, no GCD. It reads a compiled playback plan, never the `Project`.
 6. **No hot state in a view body.** Playhead, meters, levels are read by small leaf views.
 7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum. A presented sheet may own ONE presentation of its own (the Sound page's file picker), because it cannot use the root slot without closing itself.
