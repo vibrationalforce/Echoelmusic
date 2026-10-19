@@ -180,4 +180,4 @@ Form: höchstens 8 Punkte, je Datei:Zeile, "sicher" oder "vermutet", kein Code, 
 Features vorschlagen, nichts zu Gesundheit oder Wellness.
 ```
 
-**Antworten:** _(hier im Chat einfügen; die Sitzung loggt sie im Lernmodus)_
+**Antworten: beide am 19.10. eingetroffen und gemessen** (Workflow `wf_13fad8af-ca3`; Ledger `memory/inspiration_intake.md` 2026-10-19, `inspiration.csv`). ChatGPT `[verified 28/31]` → ADOPT→PRODUCT: zwei Bug-Scheiben (stille `try?`-Abweisung bei Namen über 128 Zeichen an drei Stellen; `exportWAV` wartet nicht auf `mediaLoad`), vier Katalog-Namen in den P0-Posten, Store-Satz „in Echoel frei“, kein Stem-Pfad; Quelle formal kontaminiert (U+2060), kein Satz kopiert. Grok `[verified 3/8]` → WATCH: Extension liest `currentEntitlements` selbst, LUFS im Export real, `.anyone` sitzt bei `MIDIInput.swift:437` (unsere :398 war veraltet), vier externe Behauptungen ungeöffnet.
