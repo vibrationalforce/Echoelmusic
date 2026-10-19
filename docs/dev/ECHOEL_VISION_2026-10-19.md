@@ -165,7 +165,7 @@ genannte Phase · **PLAN** = geplant, noch nirgends gebaut · **FORSCHUNG** = Fr
 | Generatoren (GMMW) | Assistent | Bild-Saat, Grain | Sampler/Slicer ab P1; Noten schreibende Komponier-Hilfen nach 1.0 (Founder-Frage, NEUPLANUNG §0.2/§2.1) | **PLAN** |
 | Lernen (Musik durch den Körper) | — | `LearnLibrary` | nach P6 | **PLAN** |
 | One Clock (Webseite) | — | — | live auf der Website | **LIVE** |
-| Produktionsgesundheit | Lautheitsmessung | — | §6 | **FORSCHUNG** |
+| Produktionsgesundheit | Lautheitsmessung | — (in der App keiner; die Website trägt einen Hörschutz-Text in `docs/health.html`) | §6 | **FORSCHUNG** |
 | Knochen-, Wund-, Gewebe-, Organheilung | — | — | §6 | **FORSCHUNG**, nie Produkt |
 | Brainwave-Entrainment, Heilfrequenzen, Organresonanz, Farbtherapie | — | `EchoelEntrainment` verdrahtet, türlos | — | **NIE** |
 | NFT, Krypto, Token | — | — | — | **NIE** |
@@ -389,7 +389,7 @@ P4); diese Datei ist neuer und gilt.
 ## 10. Bekannte Lücken (für die nächsten Sitzungen)
 
 - **L1** `FEATURE_STATUS.md` kennt das Studio nicht; `ContentPipeline/CLAIMS.md` trägt seit `20a5469`
-  oben einen Studio-Block mit drei Nachträgen. Bis `FEATURE_STATUS.md` nachzieht, wird Kopie für das Studio gegen den Code unter `EchoelStudio/App`
+  oben einen Studio-Block mit vier Nachträgen. Bis `FEATURE_STATUS.md` nachzieht, wird Kopie für das Studio gegen den Code unter `EchoelStudio/App`
   geprüft; `EchoelStudio/RELEASE` ist eine Prüfliste für Tester, keine Quelle für Behauptungen.
 - **L2** Die Alt-App nimmt Video auf (Front- und Rückkamera, `VideoTakeCamera`), während
   `CLAUDE.md`, `FEATURE_STATUS.md`, die Kamera-Beschreibung in `Resources/iOS/Info.plist` und eine

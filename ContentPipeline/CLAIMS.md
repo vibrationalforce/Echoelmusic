@@ -11,7 +11,7 @@ Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
 ⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Version 11.0.0), und dieses Register
-beschreibt bis auf die drei Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
+beschreibt bis auf die vier Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
 bis zu einem eigenen Abschnitt: behauptet wird nur, was im Code von `EchoelStudio/App` gemessen ist, mit
 „noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. ⚠️ `EchoelStudio/RELEASE`
 ist eine PRÜFLISTE für Tester, keine Quelle für Behauptungen — bis 2026-10-19 stand hier das Gegenteil, und
@@ -25,6 +25,11 @@ vom Mikrofon oder Interface auf eine scharf geschaltete Audiospur auf, der Take 
 Stimm-Verbote (Cloning, AI-Voice, Autotune) bleiben. (3) **§1:** die AUM-Messung vom 2026-09-20 (#1386) gilt
 NUR für `echl` der ALT-App (`EchoelmusicAUv3`). Studios Instrumente (`eSyn`, `eDrm`, `eSmp`) liefen auf keinem
 Gerät in einem Host — sagbar ist „noch in keiner Host-App auf einem Gerät geprüft“, nie „in AUM geprüft“.
+(4) **§1, die andere Richtung:** das Studio LÄDT Audio Units anderer Hersteller als Instrument oder Effekt auf
+Spuren (`EchoelStudio/App/Engine/PluginHost.swift`, `AUAudioUnit.instantiate`), auf keinem Gerät geprüft. Sagbar
+ist „spielt Audio Units anderer Apps auf Spuren, noch nicht auf einem Gerät geprüft“; die Verneinung des Hostens
+in diesem Register gilt der Alt-App. Fremde Audio Units laufen unter den Bedingungen ihres Herstellers
+(`docs/privacy.html`, Abschnitt „Echoel Studio“).
 Auf dem Arbeitszweig steht das in `docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf
 `docs/claims.html`. ⚠️ ÖFFENTLICH ist es erst nach dem Merge nach `main` (Founder, F-08b): die Website baut
 aus `main`, und dort sagt `docs/privacy.html` noch „Microphone Access: Not requested“ (FOUNDER_INBOX F22).

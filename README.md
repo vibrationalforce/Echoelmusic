@@ -168,8 +168,8 @@ See [`CLAUDE.md`](./CLAUDE.md) for project doctrine, current state and the open-
 
 MIT. See [LICENSE](./LICENSE).
 
-The code is open; whoever builds it can remove the purchase lock. Buying the App Store version
-pays for signed builds, updates and the work. Your songs are plain JSON plus your own audio
+The code is open; whoever builds it can remove the purchase lock. Buying the instruments in the
+App Store, once they are on sale, pays for signed builds, updates and the work. Your songs are plain JSON plus your own audio
 files (`docs/FORMAT.md`), so nothing you make is locked to this app.
 
 Security reports: [SECURITY.md](./SECURITY.md).
