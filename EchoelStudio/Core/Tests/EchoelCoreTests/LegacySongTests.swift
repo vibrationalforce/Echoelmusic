@@ -131,4 +131,17 @@ final class LegacySongTests: XCTestCase {
         XCTAssertEqual(songs.first?.tracks.first?.clips.count, 2)
         XCTAssertTrue(LegacySong.library(Data("{}".utf8)).isEmpty)
     }
+
+    func testFindingNothingNeverFinishesTheImport() {
+        // A build without the App Group cannot see the earlier app's container: it finds no song.
+        // Marking that run done would stop a later build with the group from ever looking.
+        for attempts in [1, 3, 99] {
+            XCTAssertFalse(LegacySong.importIsFinished(foundSongs: false, failures: 0, attempts: attempts, attemptLimit: 3))
+        }
+        XCTAssertTrue(LegacySong.importIsFinished(foundSongs: true, failures: 0, attempts: 1, attemptLimit: 3))
+        XCTAssertFalse(LegacySong.importIsFinished(foundSongs: true, failures: 2, attempts: 2, attemptLimit: 3),
+                       "a run with failures is retried")
+        XCTAssertTrue(LegacySong.importIsFinished(foundSongs: true, failures: 2, attempts: 3, attemptLimit: 3),
+                      "and given up after the limit")
+    }
 }

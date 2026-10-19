@@ -339,9 +339,10 @@ final class DocumentController {
 
     // MARK: - Songs of the earlier app
 
-    /// Once per install: the songs the earlier Echoelmusic app left in its App Group container —
-    /// the one it had open and every one in its library — become songs here. Its files are only
-    /// read, never changed or removed, and a song deleted here does not come back.
+    /// Once per install, on the first launch that can read them: the songs the earlier Echoelmusic
+    /// app left in its App Group container — the one it had open and every one in its library —
+    /// become songs here. Its files are only read, never changed or removed, and a song deleted
+    /// here does not come back.
     private func importEarlierSongs() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.importedKey) else { return }
@@ -360,20 +361,28 @@ final class DocumentController {
                 log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .public)")
             }
         }
-        log.info("imported \(done.count, privacy: .public) of \(songs.count, privacy: .public) song(s) from the earlier app")
+        if found != nil {
+            log.info("imported \(done.count, privacy: .public) of \(songs.count, privacy: .public) song(s) from the earlier app")
+        }
         // A failure (a full disk, a locked container) is retried on the next launches, a few times.
+        // Nothing found is not done: without the App Group the earlier app's container is out of
+        // reach, and a later build that has it must still look.
         let attempts = defaults.integer(forKey: Self.importAttemptsKey) + 1
-        if failed == 0 || attempts >= Self.importAttemptLimit {
+        if LegacySong.importIsFinished(foundSongs: found != nil, failures: failed, attempts: attempts,
+                                       attemptLimit: Self.importAttemptLimit) {
             defaults.set(true, forKey: Self.importedKey)
             defaults.removeObject(forKey: Self.importedIndicesKey)
             defaults.removeObject(forKey: Self.importAttemptsKey)
-        } else {
+        } else if found != nil {
             defaults.set(done.sorted(), forKey: Self.importedIndicesKey)
             defaults.set(attempts, forKey: Self.importAttemptsKey)
         }
     }
 
-    private static let importedKey = "studio.importedEarlierSongs"
+    /// `.v2` since 2026-10-19: builds 10004–10006 ran without the App Group, found nothing and
+    /// still marked the import done under the old name, so a device that ran them would never
+    /// import once the group is back. The new name lets every such device look once more.
+    private static let importedKey = "studio.importedEarlierSongs.v2"
     private static let importedIndicesKey = "studio.importedEarlierSongIndices"
     private static let importAttemptsKey = "studio.earlierSongImportAttempts"
     private static let importAttemptLimit = 3

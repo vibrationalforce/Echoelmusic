@@ -24,6 +24,17 @@ public enum LegacySong {
         return try project(document, clips: slots.compactMap { $0.value ?? nil }, tempo: tempo, name: name)
     }
 
+    /// Whether the one-time import of the earlier app's songs is finished, so it is not tried
+    /// again. `foundSongs` is false when no place the earlier app wrote to holds a song this app
+    /// can read — which is also what a build without the App Group sees, because the container
+    /// is then out of reach. That case stays open: the songs may become readable with a later
+    /// build, and looking costs a few file reads. A run that found songs is finished when every
+    /// one was written, or after `attemptLimit` runs that had failures.
+    public static func importIsFinished(foundSongs: Bool, failures: Int, attempts: Int, attemptLimit: Int) -> Bool {
+        guard foundSongs else { return false }
+        return failures == 0 || attempts >= attemptLimit
+    }
+
     /// Every song in the earlier app's library (`projects.json`), each with the name it was
     /// saved under. A song whose envelope cannot be read is left out.
     public static func library(_ data: Data) -> [Project] {
