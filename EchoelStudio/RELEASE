@@ -1,11 +1,18 @@
-11.0.1 — attempt 4: no App Group entitlement (F17), legacy import skips until the group is back on the App ID
+11.0.0, second TestFlight upload — About page, honest host list in the plugin store
 
-Previous: 11.0.0 — first Echoel Studio TestFlight (attempts 1–3 failed at signing, F17)
+Previous: 11.0.0 (10004), attempt 4 — first Echoel Studio build in TestFlight, uploaded
+without the App Group entitlement (F17); the import of older songs skips until the group
+is back on the App ID.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
+The version is MARKETING_VERSION in EchoelStudio/project.yml.
 
 What to try on the device (nothing here is device-verified yet):
+- Song menu → About Echoel: the page names the build, says what is in it and what is not,
+  and its two links open in the browser.
+- Song menu → Echoel Plugins: the footer names AUM and GarageBand as examples and says
+  that not every host is tested.
 - Launch, make an instrument track, play notes on the screen keyboard and from a MIDI keyboard.
 - Automate a synth parameter: notes still end and release.
 - Record a take on an audio track; Stop fades it out, its reverb rings.
@@ -13,6 +20,3 @@ What to try on the device (nothing here is device-verified yet):
 - Send the app to the background while stopped: audio stops; come back and play.
 - Take a call while playing: the song does not resume by itself.
 - Buy the instruments; open Echoel Synth/Drums/Sampler in AUM or GarageBand. The effects are free.
-
-Attempt 2: names the provisioning profile entitlements if signing fails again.
-Attempt 3 (2026-10-19): after the founder set group.com.echoelmusic on the App ID (FOUNDER_INBOX F17).
