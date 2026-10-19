@@ -5433,7 +5433,7 @@ Review 2026-11-15.
 
 **Founder:** „Macht es die App erst ohne Apple herauszubringen, wegen accessible for all devices und html https …?“ — dann „Was ist für Weltfrieden das beste? Urgency! Profi Instrumente später“ — dann „du sagst wie es weiter geht … führst mein Ultra Echoelmusic Peacefully Business Mind sicher zum Erfolg“.
 
-**Entscheidung:** Die DAW wird NICHT als Web-App neu gebaut (Latenz, kein Web-MIDI auf dem iPhone, keine AUv3). Was ins offene Web gehört, ist das Gemeinsame: `docs/one-clock.html`, ein Atemzyklus an der Weltzeit (10 s, 4 ein / 6 aus), ohne Server, Konto oder Daten — läuft auf jedem Gerät, bleibt für immer frei und nie hinter dem Kauf. Reihenfolge ab jetzt: (1) One Clock live (PR nach Founder-Ja), (2) Studio-TestFlight sobald das App-Group-Häkchen gesetzt ist (FOUNDER_INBOX F17), (3) App Store 1.0 des Studios, (4) Profi-Instrumente P1/P2, (5) „Zusammen“ in der App: Ableton Link + Publikums-Seite mit der Uhr der App.
+**Entscheidung:** Die DAW wird NICHT als Web-App neu gebaut (Latenz, kein Web-MIDI auf dem iPhone, keine AUv3). Was ins offene Web gehört, ist das Gemeinsame: `docs/one-clock.html`, ein Atemzyklus an der Weltzeit (10 s, 4 ein / 6 aus), ohne Server, Konto oder Daten — läuft auf jedem Gerät, bleibt für immer frei und nie hinter dem Kauf. Reihenfolge ab jetzt: (1) One Clock live (PR nach Founder-Ja), (2) Studio-TestFlight sobald das App-Group-Häkchen gesetzt ist (FOUNDER_INBOX F17), (3) App Store 1.0 des Studios, (4) Profi-Instrumente P1/P2, (5) „Zusammen“ in der App: Ableton Link + Publikums-Seite mit der Uhr der App. ⛔ Reihenfolge und Link überholt 2026-10-19: P1 vor P2, App Store 1.0 mit P2; Ableton Link bleibt draußen (`decisions.csv` 2026-10-19, ECHOEL_VISION §11.8/§11.9).
 
 **Grenzen, ehrlich:** Keine Software bringt Weltfrieden; die Seite ist ein gemeinsamer Moment, kein Programm. Sie zählt niemanden — ein Zähler bräuchte einen Server und änderte den Satz „nobody is counted“ auf der Seite.
 
@@ -5521,7 +5521,7 @@ Review 2026-11-15.
 
 **Was es NICHT ändert:** die rote Linie gegen Heil-, Therapie- und Wellnessbehauptungen; die founder-gesperrten Dateien; den Store-Text (Founder).
 
-**Founder-Berichte daraus:** Alt-App nimmt Video auf (Front- und Rückkamera) gegen CLAUDE.md, FEATURE_STATUS, Kamera-Beschreibung und Website; `main` zeigt kein Studio; Lizenzjahr 2024 gegen Repo-Anlage 2025. Stehen in `docs/dev/FOUNDER_INBOX.md`.
+**Founder-Berichte daraus:** Alt-App nimmt Video auf (Front- und Rückkamera) gegen CLAUDE.md, FEATURE_STATUS, Kamera-Beschreibung und Website; `main` zeigt kein Studio; Lizenzjahr 2024 gegen Repo-Anlage 2025. Video: `FOUNDER_INBOX.md` F20; `main`: `TODO_FOUNDER_2026-10-19.md` F-08b (und F22 für die Datenschutzseite); Lizenz: `FOUNDER_INBOX.md` E31 (Jahr inzwischen 2024-2026).
 
 **Review:** 2026-11-19.
 

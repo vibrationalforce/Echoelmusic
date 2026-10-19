@@ -25,8 +25,9 @@ vom Mikrofon oder Interface auf eine scharf geschaltete Audiospur auf, der Take 
 Stimm-Verbote (Cloning, AI-Voice, Autotune) bleiben. (3) **§1:** die AUM-Messung vom 2026-09-20 (#1386) gilt
 NUR für `echl` der ALT-App (`EchoelmusicAUv3`). Studios Instrumente (`eSyn`, `eDrm`, `eSmp`) liefen auf keinem
 Gerät in einem Host — sagbar ist „noch in keiner Host-App auf einem Gerät geprüft“, nie „in AUM geprüft“.
-Öffentlich steht das auf `docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf
-`docs/claims.html`.
+Auf dem Arbeitszweig steht das in `docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf
+`docs/claims.html`. ⚠️ ÖFFENTLICH ist es erst nach dem Merge nach `main` (Founder, F-08b): die Website baut
+aus `main`, und dort sagt `docs/privacy.html` noch „Microphone Access: Not requested“ (FOUNDER_INBOX F22).
 Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
@@ -324,6 +325,10 @@ Umsatz kommt erst in **v1.1** als „Echoel Live"-Jahresabo (~29,99 €, weltwei
 SharePlay-Sessions) plus Event-Gebühr in v1.2. `ProUnlockView` / `EchoelStore` /
 `ProGate` kompilieren, werden aber **nirgends präsentiert** — sie liegen bereit, um
 dafür umgewidmet zu werden.
+⛔ **Der Abo-Plan in diesem Absatz ist seit 2026-10-17 ABGELÖST** (`decisions.csv`, ECHOEL_VISION §7): kein
+„Echoel Live“-Abo, keine Event-Gebühr — die App bleibt frei, eigene Instrumente werden einmal gekauft (für das
+Studio gebaut, noch nicht im Verkauf, siehe Nachtrag (1) oben). Der Absatz bleibt als Geschichte stehen; die
+Außenregel darunter gilt weiter, für das Studio zusätzlich „geplant als Einmalkauf, kein Abo“.
 Ein Preis in einer Caption ist keine Übertreibung, sondern eine **Falschangabe im
 App-Store-Sinn** (2.3 „Accurate Metadata") und enttäuscht jeden, der deshalb lädt.
 *Erlaubt: „kostenlos". Nicht erlaubt: irgendein Preis, „Pro-Version", „Abo", „Trial".*

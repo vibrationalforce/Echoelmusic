@@ -49,7 +49,7 @@ Befunde stehen hier, jeder mit der Datei, aus der er stammt.
 | Was gehört in die erste Fassung von Echoel Studio? | `docs/dev/NEUSTART_2026-10-17.md` | **Produktgrenze der ersten Fassung.** Ohne Körper, Visual, Video, Licht, Raum, Genres und generierte Noten. |
 | In welcher Reihenfolge wird gebaut? | `docs/dev/NEUPLANUNG_2026-10-18.md` §5 | **Reihenfolge P0–P7.** Ersetzt die Reihenfolge-Teile von NEUSTART. |
 | Wann, über die Jahre? | diese Datei §8 | **Zeitachse.** Die einzige datierte Mehrjahres-Planung im Repo. |
-| Was gibt es heute wirklich? | `EchoelStudio/RELEASE` (Studio-Build) · `docs/dev/FEATURE_STATUS.md` (Alt-App) | **Ist-Stand.** FEATURE_STATUS kennt das Studio noch nicht (§10, Lücke L1). |
+| Was gibt es heute wirklich? | der Code unter `EchoelStudio/App` (Studio, gemessen; `EchoelStudio/RELEASE` ist nur die Prüfliste) · `docs/dev/FEATURE_STATUS.md` (Alt-App) | **Ist-Stand.** FEATURE_STATUS kennt das Studio noch nicht (§10, Lücke L1). |
 | Was darf nach außen gesagt werden? | `ContentPipeline/CLAIMS.md` | **Behauptungsregister.** Gilt für Website, Store, Content und Förderantrag. |
 | Was gab es früher, und hat es funktioniert? | `docs/dev/HISTORY_ARCHIVE.md` | **Archiv.** Mit DO-NOT-RESTORE-Liste (§N). |
 | Wie läuft die Förderung? | `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` | Prototype Fund, Jahrgang 03, Frist 30.11.2026 15:00. |
@@ -89,7 +89,7 @@ Plugin-SDKs). Echoel bindet sie an, statt sie nachzubauen.
 | Name | Bedeutung | Stand |
 |---|---|---|
 | **DMMW** | *distributed multidimensional multimedia workstation*: Audio, MIDI, Instrumente, Effekte, Aufnahme, Arrangement, Mix, Mastering, Automation, Video, Visual, Licht, Raum, Zusammenarbeit. | **Ziel** (`FOUNDER_PRODUCT_LAW.md`). Das Studio baut den Audio- und MIDI-Kern zuerst. |
-| **GMMW** | *generative multidimensional multimedia workstation*: dieselbe Werkstatt, in der **Generatoren Geräte auf Spuren sind** (Komponier-Hilfen, Sampler, Slicer, Bild-Saat, der Assistent). Sie schreiben normale, editierbare Teile, nie ungefragt, jede Aktion mit einem Schritt rückgängig. Keine neue Navigation. | **Entschieden in dieser Sitzung** (GM1, §11). Der Assistent im Studio ist der erste Baustein. |
+| **GMMW** | *generative multidimensional multimedia workstation*: dieselbe Werkstatt, in der **Generatoren Geräte auf Spuren sind** (Komponier-Hilfen, Sampler, Slicer, Bild-Saat, der Assistent). Sie schreiben normale, editierbare Teile, nie ungefragt, jede Aktion mit einem Schritt rückgängig. Keine neue Navigation. ⚠️ Bis 1.0 gilt NEUPLANUNG §0.2/§2.1: Noten stammen nur aus Spiel, Eingabe, Import oder dem Assistenten auf ausdrückliche Bitte — Noten VORSCHLAGENDE Komponier-Hilfen kommen nach 1.0 und sind eine Founder-Frage. | **Entschieden in dieser Sitzung** (GM1, §11). Der Assistent im Studio ist der erste Baustein. |
 | **GSIDMMW** | *Generative Superintelligence Distributed Multidimensional Multimedia Workstation*: der Forschungshorizont, in dem generative Intelligenz die Bereiche verbindet. | **Nordstern ohne Datum** (`FOUNDER_PRODUCT_LAW.md`, 2026-10-16). Nie ausgelieferte Fähigkeit. |
 | **GSIMMW** | Schreibweise des Founders für GSIDMMW. | Kein eigener Begriff (§11). |
 
@@ -129,7 +129,9 @@ Founder-Entscheidung.
 ⚠️ **Der öffentliche `main`-Zweig zeigt keines von beiden Neuen.** `EchoelStudio/`, NEUSTART,
 NEUPLANUNG, der Förderantrag und diese Datei liegen nur auf dem Arbeitszweig; Studio-Commits stehen
 in keinem Auto-Merge-Filter. Wer `main` liest (Jury, Öffentlichkeit), sieht die Alt-App.
-`git rev-list --count origin/main..HEAD` misst den Abstand. Der Merge gehört dem Founder (F-08b).
+`git rev-list --count origin/main..HEAD` misst den Abstand. Der Merge gehört dem Founder (F-08b). ⚠️ Das
+betrifft auch die Website: `main` trägt die Datenschutzseite mit „Microphone Access: Not requested“, während
+der Studio-Build in TestFlight das Mikrofon anfragt (FOUNDER_INBOX F22).
 
 ---
 
@@ -160,7 +162,7 @@ genannte Phase · **PLAN** = geplant, noch nirgends gebaut · **FORSCHUNG** = Fr
 | Video: Spur, Aufnahme, Schnitt | — | Videospur und Aufnahme gebaut | nach P7, Founder-Frage | **PORT** |
 | Apple Watch, Mac, Vision Pro | — | Watch kompiliert, nicht eingebettet | 2029 (§8) | **PLAN** |
 | Zusammenarbeit, Streaming | — | Gerüst, nicht verlinkt | nach 2028 | **PLAN** |
-| Generatoren (GMMW) | Assistent | Bild-Saat, Grain | P1 und später | **PLAN** |
+| Generatoren (GMMW) | Assistent | Bild-Saat, Grain | Sampler/Slicer ab P1; Noten schreibende Komponier-Hilfen nach 1.0 (Founder-Frage, NEUPLANUNG §0.2/§2.1) | **PLAN** |
 | Lernen (Musik durch den Körper) | — | `LearnLibrary` | nach P6 | **PLAN** |
 | One Clock (Webseite) | — | — | live auf der Website | **LIVE** |
 | Produktionsgesundheit | Lautheitsmessung | — | §6 | **FORSCHUNG** |
@@ -305,8 +307,8 @@ git grep -c accessibilityLabel -- 'EchoelStudio/*.swift'
 git grep -n "dynamicTypeSize\|accessibilityReduceMotion" -- EchoelStudio
 ```
 
-Die Förderung trägt Barrierefreiheit als eigenen Meilenstein (M3: VoiceOver, „Bewegung reduzieren“,
-3-Hz-Grenze). Die Mission des Founders, Musik für Menschen mit Einschränkungen erfahrbarer zu
+Die Förderung trägt die Barrierefreiheits-Abnahme in M3 (30 von ~220 h neben `EchoelIO`: VoiceOver,
+„Bewegung reduzieren“, 3-Hz-Grenze als Test). Die Mission des Founders, Musik für Menschen mit Einschränkungen erfahrbarer zu
 machen, ist der Grund, nicht ein Werbesatz: eine haptische Dimension wird erst behauptet, wenn sie
 mit den Menschen geprüft ist, für die sie gedacht ist.
 
@@ -387,8 +389,8 @@ P4); diese Datei ist neuer und gilt.
 ## 10. Bekannte Lücken (für die nächsten Sitzungen)
 
 - **L1** `FEATURE_STATUS.md` kennt das Studio nicht; `ContentPipeline/CLAIMS.md` trägt seit `20a5469`
-  oben einen Studio-Block mit drei Nachträgen. Bis `FEATURE_STATUS.md` nachzieht, ist `EchoelStudio/RELEASE` der Ist-Stand und Kopie für das Studio wird
-  gegen den Build geprüft.
+  oben einen Studio-Block mit drei Nachträgen. Bis `FEATURE_STATUS.md` nachzieht, wird Kopie für das Studio gegen den Code unter `EchoelStudio/App`
+  geprüft; `EchoelStudio/RELEASE` ist eine Prüfliste für Tester, keine Quelle für Behauptungen.
 - **L2** Die Alt-App nimmt Video auf (Front- und Rückkamera, `VideoTakeCamera`), während
   `CLAUDE.md`, `FEATURE_STATUS.md`, die Kamera-Beschreibung in `Resources/iOS/Info.plist` und eine
   Website-Seite das verneinen. Die Alt-App ist eingefroren, die Info.plist founder-gesperrt: Bericht
