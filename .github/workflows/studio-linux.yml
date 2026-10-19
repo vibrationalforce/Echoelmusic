@@ -44,18 +44,29 @@ jobs:
       - name: Toolchain
         run: swift --version
 
-      - name: Test Core (Linux)
+      # Three measurements in the order that keeps the most information when one is red:
+      # does Core COMPILE on Linux (sources + tests), does DSP build and pass, does Core pass.
+      # Run #2 (2026-10-19) answered the first with yes (Swift 6.2.4) and then died inside
+      # XCTest's test DISCOVERY (`__allTests` → `_arrayForceCast` → swift_dynamicCastFailure),
+      # before any Core test ran — with `swift test` first, DSP never got measured at all.
+      - name: Build Core incl. tests (Linux)
         run: |
           set -o pipefail
-          swift test --package-path EchoelStudio/Core 2>&1 | tee core-linux.log
+          swift build --build-tests --package-path EchoelStudio/Core 2>&1 | tee core-build-linux.log
 
       - name: Test DSP (Linux)
         run: |
           set -o pipefail
           swift test --package-path EchoelStudio/DSP 2>&1 | tee dsp-linux.log
 
+      - name: Test Core (Linux)
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/Core 2>&1 | tee core-linux.log
+
       - name: Print logs on failure
         if: failure()
         run: |
-          tail -150 core-linux.log || true
-          tail -150 dsp-linux.log || true
+          grep -n "error:" core-build-linux.log | head -40 || true
+          tail -120 dsp-linux.log || true
+          tail -120 core-linux.log || true
