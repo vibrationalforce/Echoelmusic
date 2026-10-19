@@ -1336,3 +1336,27 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Nachtrag: `1d254e0` LUFS/True-Peak am Export (EBU 3341 Fall 1 als Test) · `b978009` MIDI-Aufnahme
   (`MIDITake` in Core, Erfassung im LiveRouter auf dem MIDI-Thread, Latenz abgezogen) · `1e97c97` Pitch-Bend
   ±2 HT + Sustain (live; Aufnahme braucht Ereignis-Spur) · `2e66371`/`023b219` Master-Inserts (nach dem Fader).
+
+## 2026-10-18/19 — One Clock live · TestFlight-Blocker F17 (App Group) · Förderung: Prototype Fund aus den Originalseiten
+
+- `0c52884` One Clock (`docs/one-clock.html`): gemeinsamer Atemzyklus an der Weltzeit, kein Server. Docs-Auto-Merge
+  scheiterte (F18, `ad9029b`: `--depth=1` macht jeden Cherry-Pick auf eine bestehende Datei zum add/add-Konflikt;
+  founder-gated). Stattdessen PR #427, vom Founder gemerged; `pages.yml` grün → echoelmusic.com/one-clock.html.
+- Studio-TestFlight Versuch 3 (`d105efe`, Run 39180435790) scheiterte identisch an F17: Apples Profile für
+  `com.echoelmusic.app` tragen nur noch `group.com.echoelmusic.shared`, das Entitlement verlangt
+  `group.com.echoelmusic`; die Gruppe verschwand zwischen dem Legacy-Lauf 17.10. 03:04 und dem 18.10. 19:25 von der
+  App ID (`ee64075`). Per API nicht zuweisbar (Apple-Forum 778629) — nur im eingeloggten Portal des Founders.
+  Entitlement NICHT auf `.shared` umgestellt (Songs liegen im alten Container; Import liest ihn).
+- Förderung (Founder: „Lieber Förderung“): `df4570e` Notiz + Entscheidung (decisions.csv/memory, Review 16.11.).
+  19.10.: Founder lud Bewerbungsfragen-PDF, Bewerbungsseite, Jury, FAQ-Überschriften, Projektliste hoch →
+  `4002f6b` `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` komplett aus erster Hand: Frist 30.11. 15 Uhr CET,
+  Förderphase 1.6.–30.11.2027 (Dez–März = Auswahl + formaler BMFTR-Antrag), 47.500 € + Second Stage 31.667 €,
+  Firmen/Vereine dürfen nicht bewerben, formaler Antrag auf Deutsch. Jury (18, Innovation+Resilienz gemeinsam):
+  IT-Sicherheit/offene Protokolle/Public-Interest, KEINE Musik-Person → Egress-Policy und offene Protokolle nach
+  vorn. Präzedenz anira (Jg. 02). §7: alle Fragen des Bogens mit [ENTWURF]-Antworten, §8 Lieferliste. Kalender-
+  Spickzettel (Termin 19.10. 17 Uhr) und Artefakt „Vier Echoel-Klicks“ (v4) nachgezogen: sieben geschärfte Fragen,
+  zwei FAQ-Antworten (KI-Bewerbung, Vibe-Coding) muss der Founder vor dem Gespräch selbst aufklappen.
+- Lehre: die gespeicherte Bewerbungsseite nennt KEINEN Sprechstunden-Link — eine Suchmeldung (OSB-Alliance) hatte
+  die Zeit, nicht den Ort; Kandidaten jetzt Events-Seite, Infoletter, Mail.
+- Nichts gerätegeprüft. Offen: F17 im Portal (Founder), dann Versuch 4; Founder-Angaben bis 25.10. (§8);
+  Bewerbungshandbuch-PDF; Entwurf bis 16.11.
