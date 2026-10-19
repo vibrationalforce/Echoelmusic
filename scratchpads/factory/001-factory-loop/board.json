@@ -1,0 +1,4 @@
+{"id": "001-factory-loop", "title": "Die Factory-Schleife selbst", "stage": "review", "round": 1,
+ "base": "b1cfc8ad1e49b93edc1a4832cac89e96bf1ccde4", "head": "", "lenses": ["code-reviewer", "security-agent", "ux", "e2e-test-agent"],
+ "history": [{"stage": "spec", "date": "2026-10-19", "note": "aus dem zazencodes-Reel gelernt, neu geschrieben"},
+             {"stage": "build", "date": "2026-10-19", "note": "Skill, Workflow, Board, Wächter"}]}

@@ -55,6 +55,7 @@ der Vollständigkeit halber. `window-margins.py` und `doorless-state.py` standen
 | `window-margins.py` | **Sobald ein ⛔-Block über eine bereits geprüfte Stelle geschrieben wird.** Ein Fenster `…prefix(N)` zählt auch die Leerzeichen gestrippter Kommentare mit; Prosa über der Zusicherung schiebt die Nadel aus dem Fenster und macht einen Wächter auf KORREKTEM Code rot. |
 | `isolation-inventory.py` | **Sobald eine Closure an ein Framework geht, das sie auf eigener Queue ruft** (Handler, Completion, Tap, Render-Block, `.sink`, `addObserver`), oder ein Typ `@MainActor` wird. Listet jede solche Closure aus einem isolierten Kontext mit Urteil; `TRAPS-ON-WORKER` ist die Build-2613-SIGTRAP-Klasse. `--selftest` nach jedem Anfassen (die acht historischen Fix-Commits). Auch als `doctor.py --section F`. |
 | `doorless-state.py` | **Nach einer Löschung, und beim Suchen nach einem Knopf ohne Schalter.** Non-private `var` mit Default, auf einem lebenden Pfad gelesen, nirgends geschrieben. ⚠️ Ein Treffer ist eine FRAGE — eine DSP-Konstante ohne Schreiber ist richtig so. |
+| `factory-board.py` | **Sobald ein Factory-Job läuft oder eine Sitzung nach einer Verdichtung weiterarbeitet** — druckt aus `scratchpads/factory/*/board.json` eine Spalte je Stufe (Spec · Build · Review · Approve · Needs human · Done), `--open` nur die offenen. Ein `board.json` mit unbekannter Stufe oder falscher `id` wird gemeldet, nicht erraten. `--selftest` nach jedem Anfassen. Skill: `.claude/skills/factory/SKILL.md`. |
 
 ## C — GATE-LESER: wenn CI rot ist oder man ihr nicht glaubt
 

@@ -1,0 +1,155 @@
+// TheFactoryReviewersAreReadOnlyTests.swift
+// Echoel — the factory's reviewers and approver are read-only agents, and the skill and the
+// workflow agree on the loop.
+//
+// WHY. `.claude/workflows/echoel-factory-review.js` spawns up to five agents per round (four
+// lenses and an approver). `.claude/rules/context.md` §5 requires every subagent prompt to carry
+// one clause verbatim, because a subagent in this repo once destroyed uncommitted work. A
+// workflow that builds a prompt WITHOUT the clause looks exactly like one that does, until it
+// runs. The skill (`.claude/skills/factory/SKILL.md`) states the rework cap a second time for
+// the reader; two spellings of one number is #416, so the guard ties them together instead.
+//
+// CLAIMS (all SOURCE-TEXT SCANS, Tests/CISmoke/CLAUDE.md §1 — they prove where text sits,
+// not that an agent obeys it)
+// 1. Every agent call in the workflow goes through `withReadOnly(`, and there are at least two.
+// 2. The workflow's `READ_ONLY` constant is the §5 clause of `.claude/rules/context.md`,
+//    whitespace-normalised.
+// 3. Every `agentType:` in the workflow is a name on the ultracode roster.
+// 4. `MAX_REWORK_ROUNDS` in the workflow equals the number the skill states for it.
+// 5. The skill routes an escalation to `docs/dev/FOUNDER_INBOX.md`, and that file exists.
+//
+// GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
+// by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
+// files this commit creates; none is a regression. Claim 2's context.md half and claim 5's inbox
+// half are COUNTERWEIGHTS, green on both trees. Not compiled here (no toolchain); transcribed
+// in Python against both trees.
+//
+// THIS GUARD FORBIDS NOTHING (#364): more lenses, a different cap, a new agent type on the
+// roster — each is one consistent edit away from green.
+
+import Foundation
+import XCTest
+
+final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
+
+    private static let workflowPath = ".claude/workflows/echoel-factory-review.js"
+    private static let skillPath = ".claude/skills/factory/SKILL.md"
+
+    private func repoRoot() -> URL {
+        var dir = URL(fileURLWithPath: #filePath)
+        for _ in 0..<3 { dir.deleteLastPathComponent() }
+        return dir
+    }
+
+    private func text(_ relativePath: String) -> String {
+        let url = repoRoot().appendingPathComponent(relativePath)
+        guard let t = try? String(contentsOf: url, encoding: .utf8) else {
+            XCTFail("ANCHOR MISSING: cannot read \(relativePath) (#454)")
+            return ""
+        }
+        return t
+    }
+
+    /// The workflow without its full-line `//` comments, so prose about an agent call is not
+    /// counted as one. Only whole comment lines are dropped: a `//` inside a string survives.
+    private func workflowCode() -> String {
+        text(Self.workflowPath)
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+            .joined(separator: "\n")
+    }
+
+    private func occurrences(of needle: String, in haystack: String) -> Int {
+        haystack.components(separatedBy: needle).count - 1
+    }
+
+    private func normalised(_ s: String) -> String {
+        s.split(whereSeparator: { $0 == " " || $0 == "\n" || $0 == "\t" }).joined(separator: " ")
+    }
+
+    /// The first capture group of `pattern` in `haystack`, or nil.
+    private func firstCapture(_ pattern: String, in haystack: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let ns = haystack as NSString
+        guard let m = regex.firstMatch(in: haystack, range: NSRange(location: 0, length: ns.length)),
+              m.numberOfRanges > 1, m.range(at: 1).location != NSNotFound else { return nil }
+        return ns.substring(with: m.range(at: 1))
+    }
+
+    func testEveryAgentCallCarriesTheReadOnlyClause() {
+        let code = workflowCode()
+        let calls = occurrences(of: "agent(", in: code)
+        let wrapped = occurrences(of: "agent(withReadOnly(", in: code)
+        XCTAssertGreaterThanOrEqual(calls, 2, """
+            The factory workflow makes fewer than two agent calls (lenses + approver). Either the \
+            file did not load or the loop changed shape; re-anchor rather than passing.
+            """)
+        XCTAssertEqual(calls, wrapped, """
+            \(calls - wrapped) agent call(s) in \(Self.workflowPath) do not go through \
+            `withReadOnly(`. Every subagent prompt must carry the §5 clause of \
+            `.claude/rules/context.md` verbatim — a subagent here once destroyed uncommitted work.
+            """)
+    }
+
+    func testTheClauseIsTheOneTheContextRulesDefine() {
+        let rules = normalised(text(".claude/rules/context.md"))
+        guard let start = rules.range(of: "*read-only inspection only"),
+              let end = rules.range(of: "report findings as text.*", range: start.upperBound..<rules.endIndex)
+        else { return XCTFail("ANCHOR MISSING: the §5 clause in .claude/rules/context.md (#454)") }
+        let clause = String(rules[rules.index(after: start.lowerBound)..<rules.index(before: end.upperBound)])
+        guard let constant = firstCapture("const READ_ONLY = '([^\\n]*)'", in: workflowCode()) else {
+            return XCTFail("ANCHOR MISSING: `const READ_ONLY = '…'` in \(Self.workflowPath) (#454)")
+        }
+        XCTAssertEqual(normalised(constant), clause, """
+            The workflow's READ_ONLY clause drifted from `.claude/rules/context.md` §5. Copy it \
+            again from there; the rule says verbatim.
+            """)
+    }
+
+    func testEveryAgentTypeIsOnTheRoster() {
+        let skill = text(".claude/skills/ultracode-teams/SKILL.md")
+        guard let start = skill.range(of: "<!-- ultracode-roster: begin -->"),
+              let end = skill.range(of: "<!-- ultracode-roster: end -->"),
+              start.upperBound < end.lowerBound else {
+            return XCTFail("ANCHOR MISSING: ultracode-roster markers (#454)")
+        }
+        let roster = Set(String(skill[start.upperBound..<end.lowerBound])
+            .split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty })
+        let code = workflowCode()
+        guard let regex = try? NSRegularExpression(pattern: "agentType: '([A-Za-z0-9-]+)'") else {
+            return XCTFail("agentType pattern did not compile")
+        }
+        let ns = code as NSString
+        let used: Set<String> = Set(regex.matches(in: code, range: NSRange(location: 0, length: ns.length))
+            .map { ns.substring(with: $0.range(at: 1)) })
+        XCTAssertGreaterThanOrEqual(used.count, 3, "fewer than three agent types found — the scan matched nothing useful")
+        XCTAssertTrue(used.isSubset(of: roster), """
+            The factory workflow spawns \(used.subtracting(roster).sorted()), which is not on the \
+            ultracode roster. A skill name or an invented type kills the run (the 16-agent \
+            sweep that spawned `echoel-marketing`).
+            """)
+    }
+
+    func testTheSkillStatesTheWorkflowsReworkCap() {
+        guard let inCode = firstCapture("const MAX_REWORK_ROUNDS = ([0-9]+)", in: workflowCode()) else {
+            return XCTFail("ANCHOR MISSING: `const MAX_REWORK_ROUNDS` in \(Self.workflowPath) (#454)")
+        }
+        guard let inSkill = firstCapture("`MAX_REWORK_ROUNDS` = ([0-9]+)", in: text(Self.skillPath)) else {
+            return XCTFail("ANCHOR MISSING: \"`MAX_REWORK_ROUNDS` = N\" in \(Self.skillPath) (#454)")
+        }
+        XCTAssertEqual(inSkill, inCode, """
+            The skill says \(inSkill) rework rounds, the workflow enforces \(inCode). Change both \
+            in one commit.
+            """)
+    }
+
+    func testEscalationsGoToTheFounderInbox() {
+        XCTAssertTrue(text(Self.skillPath).contains("docs/dev/FOUNDER_INBOX.md"), """
+            The factory skill no longer routes ESCALATE to `docs/dev/FOUNDER_INBOX.md`. A question \
+            to the founder stands there once, with a date, or it is not asked.
+            """)
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: repoRoot().appendingPathComponent("docs/dev/FOUNDER_INBOX.md").path),
+            "docs/dev/FOUNDER_INBOX.md is gone — re-point the factory's escalation lane")
+    }
+}
