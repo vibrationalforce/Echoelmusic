@@ -5,7 +5,7 @@ Die abhakbare Fassung mit Hörspiel, Fragen und Masterplan ist die Seite **Echoe
 Legende: **F** = Founder · **S** = Sitzung · **F+S** = beide. Ein `[x]` hier heißt: im Repo belegbar erledigt (Commit oder Datei genannt in der Quelle).
 
 
-Stand beim Schreiben: 18 von 73 Posten erledigt.
+Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28).
 
 
 ## Heute (19.10.)
@@ -50,7 +50,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt.
 
 ## Apple / TestFlight — Founder
 
-- [ ] **F-14** (F · bis 2026-10-20) F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → group.com.echoelmusic anhaken (.shared darf bleiben; fehlt die Gruppe ganz, mit GENAU diesem Namen neu registrieren) — blockiert Studio-TestFlight (3 Versuche) UND den nächsten Alt-App-Build · Quelle: FOUNDER_INBOX §3 F17; ee64075; EchoelStudio/RELEASE
+- [ ] **F-14** (F · bis 2026-10-20) F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → group.com.echoelmusic anhaken (.shared darf bleiben; fehlt die Gruppe ganz, mit GENAU diesem Namen neu registrieren) — blockiert den Import alter Songs im Studio-Build UND den nächsten Alt-App-Build (Studio-TestFlight läuft seit Versuch 4 OHNE die Gruppe: Build 10004, 2b9956c) · Quelle: FOUNDER_INBOX §3 F17; ee64075; 2b9956c; EchoelStudio/RELEASE
 - [ ] **F-15** (F · bis 2026-10-27) E8: In-App-Kauf com.echoelmusic.app.pro (nicht-verbrauchbar) in App Store Connect anlegen; App ID „Echoelmusic Pro“ optional entfernen · Quelle: TODO_2026-10-18 E8; APP_STORE_CONNECT.md:45
 - [ ] **F-16** (F · bis 2026-10-27) E9: Version in App Store Connect von „1.0 In Vorbereitung“ in 11.0 umbenennen (die App baut 11.0.0) · Quelle: TODO_2026-10-18 E9
 - [ ] **F-17** (F · bis 2026-11-06) E10: Screenshots für iPhone UND iPad 13" (die App ist universell; iPad lässt sich später nicht zurücknehmen) · Quelle: TODO_2026-10-18 E10
@@ -74,7 +74,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt.
 - [ ] **S-25** (S · bis 2026-10-20) C5: P0.7 neu fassen — der Einfrier-Test gilt den Swift-Fallnamen der Befehle, den ParameterKeys und den Agent-Werkzeugnamen, nicht den Katalognamen · Quelle: TODO_2026-10-18 C5
 - [ ] **S-26** (S · bis 2026-10-30) D1–D4 Rest von P0: Targets EchoelKernels/EchoelHost (AUv3 linkt EchoelEngine nicht mehr) · ein Instrumentenpfad (Kernel je Slot) · Drums/Sampler-Parametertabellen in Core · Import-Scan-Test je Paket (Engine importiert AVFoundation in 4 Dateien) · Quelle: TODO_2026-10-18 D1–D4
 - [x] **S-27** (S · bis 2026-10-18) E1/E2 Studio-TestFlight-Route + Alt-App-Deploy eingefroren · E3 stille App stoppt Audio im Hintergrund · Quelle: TODO_2026-10-18 E1–E3 · Beleg: c9ac37b (.github/workflows/studio-testflight.yml), 3af0844
-- [ ] **S-28** (S · bis 2026-10-20 (blockiert durch F-14)) Studio-TestFlight Versuch 4: EchoelStudio/RELEASE bumpen, sobald F-14 im Portal sitzt; im Lauf prüfen, dass EchoelPlugins.appex im IPA steckt · Quelle: FOUNDER_INBOX F17; EchoelStudio/RELEASE; d105efe
+- [x] **S-28** (S · bis 2026-10-20) Studio-TestFlight Versuch 4 — hochgeladen 19.10. 14:53 OHNE die App Group (Entitlement entfernt, Import alter Songs in diesem Build aus): Echoel Studio 11.0.0 (10004), Lauf 39272504596, EchoelPlugins.appex im IPA geprüft · Quelle: FOUNDER_INBOX F17; EchoelStudio/RELEASE; 2b9956c
 - [ ] **S-29** (S · bis 2026-10-23) E4 .echoel als Dokumenttyp (P1) · E5 Assistent-Menüpunkt bei fehlendem Modell ausblenden (StudioView.swift:309 ist unbedingt) · E6 Fader/CC kompiliert nicht den ganzen Song · E7 Manifest der Erweiterung klären (sagt „keine required-reason API“, Audit will C617.1) · Quelle: TODO_2026-10-18 E4–E7; EchoelStudio/Support/Plugins/PrivacyInfo.xcprivacy
 - [ ] **S-30** (S · bis 2026-11-06) F1–F4 Texte vor der Einreichung: fastlane/metadata (nennt Genres, Puls, HealthKit) · docs/privacy.html (sagt „kein Mikrofon“, HealthKit/Kamera) · Website terms/faq/index („1.0 gratis“) · CLAIMS.md + docs/claims.html ohne EchoelStudio-Abschnitt — sonst Ablehnung 2.3 · Quelle: TODO_2026-10-18 F1–F4
 - [x] **S-31** (S · bis 2026-10-19) F5 README: die zwei Codebasen oben, Alt-App darunter · Quelle: TODO_2026-10-18 F5; FOERDERUNG §8 · Beleg: 638d667 — README.md
@@ -123,8 +123,8 @@ Fett = fester Termin oder Frist.
 
 **Dienstag 20.10.**
 
-- [Apple-Portal, ~10 min] F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → Configure → group.com.echoelmusic anhaken (.shared darf zusätzlich bleiben) → Save. Fehlt die Gruppe ganz unter App Groups: mit GENAU diesem Namen neu registrieren. Ohne den Haken scheitert jeder TestFlight-Build — Studio und Alt-App. _(F)_
-- Nach dem Haken: EchoelStudio/RELEASE bumpen → Studio-TestFlight Versuch 4. Bei grün: Geräte-Checkliste (TODO §G plus die Liste in der RELEASE-Datei) mit Build-Nummer in den Chat. _(S)_
+- [Apple-Portal, ~10 min] F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → Configure → group.com.echoelmusic anhaken (.shared darf zusätzlich bleiben) → Save. Fehlt die Gruppe ganz unter App Groups: mit GENAU diesem Namen neu registrieren. Ohne den Haken: kein Import alter Songs im Studio-Build und kein Alt-App-Build (der Studio-TestFlight läuft seit Versuch 4 ohne die Gruppe). _(F)_
+- [x] Erledigt 19.10. 14:53, vor dem Haken: Studio-TestFlight Versuch 4 = Echoel Studio 11.0.0 (10004) hochgeladen (2b9956c, ohne App-Group-Entitlement). Geräte-Checkliste mit Build-Nummer im Chat. Nach dem Haken: Schlüssel zurück in die Entitlements + RELEASE-Bump = Versuch 5 mit Alt-Song-Import. _(S)_
 - Messen, warum main (71fa9b7) 264 Commits (Stand c81abb6) hinter dem Zweig steht: lief auto-merge-claude auf a5faa9a (studio-linux.yml ist ein Trigger-Pfad)? EchoelStudio/** triggert keinen Merge, docs-Änderungen an bestehenden Dateien blockiert F18. Befund in die Inbox; Vorschlag: PR wie #427 vor dem 1.11. — die Jury liest main. _(S)_
 - Studio P0: C5 Einfrier-Test für das, was wirklich gespeichert wird — Swift-Fallnamen der Befehle, ParameterKeys, Agent-Werkzeugnamen (MIDI-Mappings und Agenten-Protokolle tragen sie) · C3 formatVersion normalisieren (0/negativ abweisen). _(S)_
 

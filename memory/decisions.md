@@ -5474,3 +5474,15 @@ Review 2026-11-15.
 **Grenzen, ehrlich:** Eine Simulation ist keine Jury; die vier Definitionsseiten des Fonds sind ungelesen (Founder lädt hoch); Zeichengrenzen unbekannt; die Förderfähigkeit entscheidet der Fonds.
 
 **Review:** 2026-11-16.
+
+### 2026-10-19 — Studio-TestFlight Versuch 4 ohne die App Group: der Build fährt, der Alt-Song-Import wartet auf das Portal
+
+**Anlass:** Founder „Schön schieb mir den aktuellen TestFlight raus." Drei Studio-Versuche (18./19.10.) scheiterten identisch beim Signieren: Apples Profil für `com.echoelmusic.app` erlaubt nur `group.com.echoelmusic.shared`, die Entitlements verlangten `group.com.echoelmusic` (F17, Portal-seitig, Founder-Posten F-14). Die Alt-App-Route (`testflight.yml`) ist eingefroren und verlangt dieselbe Gruppe.
+
+**Entscheidung (Sitzung, unter dem Standing „EchoelStudio-Workflows und Plist sind für die Sitzung frei"):** Der Schlüssel `com.apple.security.application-groups` ist aus `EchoelStudio/Support/App/EchoelStudio.entitlements` genommen (Kommentar am Ort nennt F17 und den Rückweg), `EchoelStudio/RELEASE` auf „11.0.1 — attempt 4" gebumpt (2b9956c). Gemessen vorher: die Gruppe hat im Studio genau EINE Verwendung — `DocumentController.earlierBases()` für den Import der Alt-App-Songs, nil-tolerant; kein Wächter pinnt die Datei. Lauf 39272504596: Archive 2:15 min, `EchoelPlugins.appex` im IPA (`com.echoelmusic.app.auv3 11.0.0 (10004)`), „Upload succeeded". Gate `Echoel Studio` auf demselben Commit: Core + DSP + Engine grün, App-Job siehe SESSION_LOG.
+
+**Was der Build NICHT kann:** Alt-App-Songs importieren (kein Container). **Was der Haken weiter entscheidet:** diesen Import (Schlüssel zurück + RELEASE-Bump = Versuch 5) und jeden Alt-App-Build.
+
+**Lehre:** `EchoelStudio/RELEASE` ist ein AUSLÖSER, keine Versionsquelle — die Zeichenkette in TestFlight kommt aus `project.yml` (`MARKETING_VERSION` 11.0.0). Der Bump-Text „11.0.1" ist damit ein Datum, kein Sachverhalt; beim nächsten Bump beide gleichziehen. Nichts gerätegeprüft.
+
+**Review:** 2026-11-18.

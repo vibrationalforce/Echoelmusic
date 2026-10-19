@@ -1419,3 +1419,22 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Lehre (HARNESS_LEDGER): dem Kritiker den VERÖFFENTLICHTEN Text geben, nicht den Rohentwurf — und ihn die Außenwelt
   prüfen lassen (Gmail, Kalender, HEAD); dort lagen die echten Funde.
 - Nichts gerätegeprüft. Beim Founder: 17:00 Sprechstunde (Frage 1 zuerst), Jahr nachreichen, Entscheidung A/B/C abends.
+
+## 2026-10-19 14:55 — Studio-TestFlight Versuch 4 HOCHGELADEN: Echoel Studio 11.0.0 (10004), ohne App Group (F17)
+
+- **Founder:** „Schön schieb mir den aktuellen TestFlight raus." Gemessen zuerst: beide Routen hingen an `group.com.echoelmusic`
+  auf der App-ID (Apples Profil erlaubt seit 18.10. nur `.shared`); Studio-Versuche 1–3 identisch rot nach ~90 s beim Signieren,
+  Alt-App-Trigger eingefroren und mit denselben Entitlements vorhersagbar rot. Die Gruppe hat im Studio genau EINE Verwendung
+  (`DocumentController.earlierBases()`, nil-tolerant), kein Wächter pinnt `EchoelStudio.entitlements`.
+- **Scheibe (2b9956c):** App-Group-Schlüssel aus `EchoelStudio/Support/App/EchoelStudio.entitlements` genommen (Kommentar nennt
+  F17 und den Rückweg), `EchoelStudio/RELEASE` → „11.0.1 — attempt 4". Lauf `Echoel Studio TestFlight` 39272504596 (14:50–14:53):
+  Signieren grün, Archive 2:15 min, `EchoelPlugins.appex` im IPA (`com.echoelmusic.app.auv3 11.0.0 (10004)`), Export/Upload
+  „Upload succeeded" — **Build 10004 liegt in App Store Connect** (Verarbeitung dort läuft). Gate `Echoel Studio` 39272504310
+  auf demselben Commit: Core + DSP + Engine `success`, App (iPhone + iPad) `success` — beide grün.
+- **Nachgeführt:** FOUNDER_INBOX F17 (Studio-Route frei, Haken bleibt für Alt-Song-Import + Alt-App-Build), TODO-Zwilling S-28 `[x]`,
+  F-14 und Woche-1-Zeilen, `decisions.csv` + `memory/decisions.md` (Review 2026-11-18).
+- **Lehre:** `EchoelStudio/RELEASE` ist ein AUSLÖSER, keine Versionsquelle — TestFlight zeigt `MARKETING_VERSION` aus `project.yml`
+  (11.0.0), der Bump-Text „11.0.1" ist ein Datum. Beim nächsten Bump beide gleichziehen (nicht jetzt: jeder RELEASE-Touch lädt
+  einen weiteren Build hoch).
+- **Nichts gerätegeprüft.** Beim Founder: Build 10004 in TestFlight installieren, Checkliste aus `EchoelStudio/RELEASE` fahren;
+  F-14 (Haken) bleibt offen und entscheidet Versuch 5 (Alt-Song-Import) und die Alt-App-Route.
