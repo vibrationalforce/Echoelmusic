@@ -59,6 +59,15 @@ on modules below it — never the other way round.
   do both steps in one task.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
+- **No `@MainActor` on an `XCTestCase` class (Linux, 2026-10-19).** swift-corelibs-xctest's
+  generated discovery casts every synchronous test to `(T) -> () throws -> ()`; a class-level
+  `@MainActor` types them `(T) -> @MainActor () throws -> ()` and the cast traps before any test
+  runs — macOS never shows it. A test that needs `ProjectStore` is `async throws` and does its
+  work inside `try await MainActor.run { … }`; tests on value types stay synchronous.
+- **Inside such a closure, two things the main-actor hop does not carry (Linux run #4):**
+  `XCTAssertThrowsError(try …)` makes the closure INFERRED throwing — the test must be
+  `async throws` with `try await`, even though nothing throws at runtime; and a local `func`
+  does not inherit the closure's isolation — write `@MainActor func` or read `store` outside it.
 
 ## Verifying
 
