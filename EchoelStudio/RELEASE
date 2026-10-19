@@ -1,9 +1,10 @@
-11.0.0, third TestFlight upload — the plugin store and About page claim no tested host and no sale
+11.0.0, fourth TestFlight upload — the earlier-songs import waits for the App Group; no sale claimed
 
-Previous: 11.0.0 (10005), second upload — About page, plugin store footer.
-Before that: 11.0.0 (10004), attempt 4 — first Echoel Studio build in TestFlight. All three
-carry no App Group entitlement (F17); the import of older songs skips until
-the group is back on the App ID.
+Previous: 11.0.0 (10006), third upload — plugin store and About page claim no tested host.
+Before that: 11.0.0 (10005) with the About page, and 11.0.0 (10004), the first Echoel Studio build.
+All four carry no App Group entitlement (F17). Since this build, finding no earlier songs no
+longer marks the import done, so a device that ran 10004–10006 still imports once the group is
+back on the App ID (key studio.importedEarlierSongs.v2).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -15,8 +16,9 @@ What to try on the device (nothing here is device-verified yet):
   and its two links open in the browser. "Your data" names the App Store (when you open the
   store) and Network MIDI (when you turn it on).
 - Song menu → Echoel Plugins: the footer says the instruments are not yet tested in a host
-  app on a device. Buying is not possible yet — no in-app purchase exists in App Store Connect
-  (F-15) — so the store should say it is not available rather than show a price.
+  app on a device and not on sale yet. With no in-app purchase in App Store Connect (F-15/E37)
+  the store says "The instruments are not on sale yet." and shows no price.
+- In a host, an Echoel instrument that is not unlocked says the unlock is not on sale yet.
 - Launch, make an instrument track, play notes from a MIDI keyboard; write notes in a part
   and drum steps on a drum track.
 - Automate a synth parameter: notes still end and release.
