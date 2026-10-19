@@ -18,13 +18,15 @@ final class StoreController {
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "store")
 
     init() {
+        // The listener starts first, as Apple asks; the launch pass that records the purchase for
+        // the plugins runs beside it, so a purchase from another device arrives without a store visit.
         updates = Task { [weak self] in
-            await self?.refreshOwned()
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result { await transaction.finish() }
                 await self?.refreshOwned()
             }
         }
+        Task { [weak self] in await self?.refreshOwned() }
     }
 
     func load() async {

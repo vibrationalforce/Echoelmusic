@@ -38,7 +38,14 @@ das in einem Fremd-Host trägt, ist ungeprüft; fällt er aus, bleiben Käufer i
    die Gruppe in der Erweiterung der erste Verdächtige — Eintrag in `EchoelPlugins.entitlements` entfernen.
 7. [DEVICE] Kauf (Sandbox oder später echt) in der App → Echoel Synth in AUM neu laden → keine Demo-Pause nach 28 s.
 8. [DEVICE] Ohne Kauf bleibt die Demo-Pause im Host bestehen.
+9. [DEVICE] Basis zuerst: Build 10007 (Erweiterung OHNE Gruppe) in AUM laden, dann den ersten Build mit
+   diesem Commit. Nur so lässt sich ein -3000 der Gruppe zuschreiben und nicht der Erweiterung selbst.
+10. [DEVICE] Ein Käufer, der die App einmal ohne App-Store-Anmeldung startet, landet im Host im StoreKit-
+    Rückfall (die App schreibt `false`); prüfen, ob die Demo-Pause dann zurückkommt, und es berichten.
+11. Beide Privacy-Manifeste deklarieren den App-Group-Zugriff (`1C8F.1`); „About → Your data“ und seine drei
+    Zwillinge nennen die Prüfung beim Start.
 
 ## Out of scope
+- Ein Abhilfe-Satz im gesperrten Plugin („Bought it already? Open Echoel once on this device …“) — erst mit E8, wenn das Produkt verkauft wird.
 Kauf-Oberfläche im Plugin (verboten nach 4.4), Schlüsselbund statt App Group, das Alt-App-Plugin `echl`,
 eine Preis- oder Produktänderung.

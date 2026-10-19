@@ -54,13 +54,19 @@ ids above plus `.voice` and a wildcard `*`.
   is created in App Store Connect under the app (Monetarisierung → In-App-Käufe); nothing builds,
   signs or ships under the bundle id `.pro`. Harmless if kept; removing it avoids the confusion.
 - `com.echoelmusic.app` carries App Groups (needed for the import of earlier songs — ⛔ since `2b9956c`
-  (2026-10-19) the Studio's entitlements file asks for NO App Group, because the profile no longer grants
-  `group.com.echoelmusic`, see below; the key comes back once the founder re-ticks it, FOUNDER_INBOX F17) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
+  (2026-10-19) the Studio's entitlements file does not ask for `group.com.echoelmusic`, because the
+  profile no longer grants it; the key comes back once the founder re-ticks it, FOUNDER_INBOX F17. ⭐
+  Since factory job 002 (2026-10-19) it asks for `group.com.echoelmusic.shared`, which the profile
+  grants: the app records the plugin purchase there for the extension, `PluginUnlock`) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
   with Apple, Siri, WeatherKit, MusicKit, ShazamKit, Maps, Data Protection „Complete" …). An App ID
   capability only PERMITS an entitlement; what App Review sees is the binary's entitlements, and the
   Studio's file asks for nothing beyond the defaults today (the App Group alone once it returns). Do not untick them while builds of the earlier app exist.
-- `com.echoelmusic.app.auv3` has **no** App Group (correct — see the row above) and only Sign in with
-  Apple ticked, which nothing uses.
+- `com.echoelmusic.app.auv3` had **no** App Group in these recordings and only Sign in with Apple
+  ticked, which nothing uses. ⚠️ The F17 run of the same evening printed the ISSUED .auv3 profile
+  carrying `group.com.echoelmusic.shared`, and since factory job 002 the extension requests it (to read
+  the plugin purchase). The two readings disagree; the next Studio archive settles it — on failure
+  `studio-testflight.yml` prints every profile's groups. If the group must be ticked by hand:
+  Identifiers → `com.echoelmusic.app.auv3` → App Groups → `group.com.echoelmusic.shared`.
 
 > **Deferred platforms** (macOS / tvOS / visionOS) were previously declared only in the removed
 > Tuist `Project.swift`. They are **not currently defined anywhere** and would be re-added to

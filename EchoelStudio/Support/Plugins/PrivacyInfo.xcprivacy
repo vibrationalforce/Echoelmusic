@@ -8,9 +8,21 @@
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
-	<!-- The extension calls no required-reason API (Plugins/ measured 2026-10-18). Declare one
-	     here in the same commit that first calls it. -->
+	<!-- One required-reason API since 2026-10-19 (factory job 002): the extension READS the plugin
+	     purchase the app recorded in the shared App Group defaults (PluginUnlock.recordedOwned,
+	     group.com.echoelmusic.shared). 1C8F.1 is Apple's reason for defaults shared between an app
+	     and its extensions. Each bundle is checked against its own manifest (ITMS-91053), so a new
+	     required-reason call anywhere in Plugins/ is declared here in the same commit. -->
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>1C8F.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

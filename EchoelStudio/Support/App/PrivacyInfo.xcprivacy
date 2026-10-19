@@ -12,13 +12,17 @@
 	<array/>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
-		<!-- MIDI clock offset, followed clock source, Network MIDI switch (App/Engine). -->
+		<!-- CA92.1: MIDI clock offset, followed clock source, Network MIDI switch (App/Engine),
+		     read only by the app. 1C8F.1: the plugin purchase the app records in the shared App
+		     Group defaults for its own Audio Unit extension to read (PluginUnlock.recordOwned,
+		     group.com.echoelmusic.shared, factory job 002). -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+				<string>1C8F.1</string>
 			</array>
 		</dict>
 		<!-- Tap tempo (systemUptime) and MIDI clock timing (mach_absolute_time): intervals
