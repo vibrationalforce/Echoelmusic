@@ -13,3 +13,4 @@ What to try on the device (nothing here is device-verified yet):
 - Buy the instruments; open Echoel Synth/Drums/Sampler in AUM or GarageBand. The effects are free.
 
 Attempt 2: names the provisioning profile entitlements if signing fails again.
+Attempt 3 (2026-10-19): after the founder set group.com.echoelmusic on the App ID (FOUNDER_INBOX F17).
