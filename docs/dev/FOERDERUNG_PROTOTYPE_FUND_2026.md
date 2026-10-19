@@ -205,7 +205,7 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 |---|---|
 | 19.10., 17:00 | Sprechstunde: Frage 1 aus §7.0 (Förderfähigkeit) ZUERST; die übrigen nur, wenn sie offen bleibt; Antworten HIER in §1 nachtragen |
 | 19.10. | Frage 1 zusätzlich SCHRIFTLICH an info@prototypefund.de, mit den öffentlichen Zahlen aus §1 (Text in §7.0) — Founder schickt |
-| 19.10., abends | Founder entscheidet A / B / C (F19 in `FOUNDER_INBOX.md`); bei C endet diese Datei als Archiv und eine neue für die Kulturförderung beginnt |
+| 19.10., abends | **A, entschieden 18:10** (Sprechstunde: Vorhaben bestätigt). Diese Datei bleibt die Arbeitsdatei; B und C sind vom Tisch |
 | bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung (aus der ~590-h-Tabelle in §7.1 Frage 9, nicht aus der 950-h-Formel) · bisherige Software-Projekte · Jahr des Projektbeginns · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF · die vier Fonds-Seiten (innovativ, datensicherheit, software-infrastruktur, foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten · Status „Syng.Visibra“ |
 | bis 1.11. | Sitzung: Repo-Hygiene, die die Jury zuerst sieht (§8; was founder-gated ist, steht dort beim Founder) |
 | 19.10. | Linux-Lauf für `EchoelCore`/`EchoelDSP` GEMESSEN — eigener Workflow `studio-linux.yml` (Studio-Workflows sind seit 17.10. für die Sitzung frei; „founder-gated“ stand hier zu Unrecht): DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
@@ -503,7 +503,7 @@ nicht der Antragsteller ist.
 
 | Punkt | Wer | Bis |
 |---|---|---|
-| Entscheidung A / B / C zur KI-Regel (F19), nach der Antwort des Fonds auf Frage 1 | Founder | 19.10. abends |
+| Entscheidung A / B / C zur KI-Regel (F19), nach der Antwort des Fonds auf Frage 1 | Founder | **entschieden 19.10. 18:10: A.** Founder wörtlich: „Wir sind völlig fein mit dem gesamten Vorhaben.“ Linie Innovation, Einzelperson, Förderobjekt §4 unverändert; die Antworten werden nicht protokolliert (Founder: nicht nötig) |
 | Frage 1 SCHRIFTLICH an info@prototypefund.de (Text in §7.0, mit den öffentlichen Zahlen aus §1) | Founder | **erledigt 19.10.** (12:35; Nachtrag 15:38 mit 15.10.2025 und 516; Nachbereitungs-Entwurf 18:00 im Thread, TODO F-05) |
 | Sprechstunden-Antworten zu den 7 Fragen | Founder → Sitzung trägt ein | 19.10. abends — Founder 17:58: alle zur vollsten Zufriedenheit beantwortet; der WORTLAUT fehlt noch (du diktierst, die Sitzung schreibt in §7.0) |
 | Die drei Chat-Links der Sprechstunde (Jury-Seite, „Learnings aus 450 Bewerbungen“, „Freie Open-Source-Lizenzen“) lesen; der dritte entscheidet LR2 | Founder lädt hoch → Sitzung arbeitet ein | 25.10. |
@@ -524,6 +524,8 @@ nicht der Antragsteller ist.
 | Formaler Antrag beim BMFTR (nur nach Jury-Auswahl, auf Deutsch, mit VDI/VDE-IT) | Founder | Dez 2026–März 2027 |
 
 ## 9. Jury-Simulation 19.10. — sechs Linsen nach dem echten Jury-Profil, Befunde gemessen
+
+⭐ **Nachtrag 19.10. 18:10, nach der Sprechstunde:** Der Hauptgrund für die 2/5 (die KI-Regel F19) ist nach dem Fazit des Founders entfallen — die Sprechstunde hat das Vorhaben so bestätigt, wie es in §4 steht, ohne Auflagen. Founder zur Simulation: „Deine kritischen Fragen waren quasi zu kritisch.“ Was aus §9 BLEIBT, ist die Messung der Überbehauptungen (die sind korrigiert) und die Kürzungsarbeit an den Zeichengrenzen; die Erfolgschance ist mit diesem Hauptgrund neu zu lesen, eine neue Zahl wird hier bewusst nicht erfunden.
 
 **Verfahren.** Ein Workflow mit 18 Agenten (`wf_fa3287ca-7d5`): je Linse ein Gutachten über den
 Entwurf, dann je Linse eine Widerlegungs-Prüfung der gefundenen Überbehauptungen am Repo (Befehl +

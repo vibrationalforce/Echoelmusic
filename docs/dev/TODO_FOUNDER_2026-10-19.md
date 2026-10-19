@@ -5,7 +5,7 @@ Die abhakbare Fassung mit Hörspiel, Fragen und Masterplan ist die Seite **Echoe
 Legende: **F** = Founder · **S** = Sitzung · **F+S** = beide. Ein `[x]` hier heißt: im Repo belegbar erledigt (Commit oder Datei genannt in der Quelle).
 
 
-Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05, F-06 neu).
+Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05, F-06 neu); 18:10: 24 von 75 (F-04 = A, S-01 entfällt).
 
 
 ## Heute (19.10.)
@@ -19,8 +19,8 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 - [x] **F-03b** (F · bis 2026-10-19 16:30) Jahr nachreichen: im selben Mail-Thread EIN Satz — „Zur Vollständigkeit: das öffentliche Repository ist am 15.10.2025 angelegt, die Arbeit am Projekt läuft seit [dein Jahr]; eigene Commits: 516.“ Das Repo-Datum stammt aus der GitHub-API, die LICENSE-Zeile sagt 2024 — du nennst EIN Jahr. · Quelle: Gmail-Thread 19.10. 12:35; GitHub-API created_at 2025-10-15 · ERLEDIGT 19.10. 15:38 im selben Thread: 15. Oktober 2025, 9.861 / 8.805 / 540 / 516, Reviews-Klarstellung
 - [ ] **F-05** (F · bis 2026-10-19 abends oder 20.10. 09:00) Nachbereitungs-Mail an info@prototypefund.de senden — Entwurf liegt als Antwort im Thread: Dank für die Sprechstunde, Fragen damit beantwortet, Einreichung Linie Innovation als Einzelperson angekündigt (= Weg A; wer B/C wählt, streicht den zweiten Absatz) · Entwurf: https://mail.google.com/mail/?authuser=michaelterbuyken@gmail.com#all?compose=thread-f:1879472580496082640%2Bmsg-a:r-4956875384379251419
 - [ ] **F-06** (F · bis 2026-10-25) Die drei Links aus dem Sprechstunden-Chat lesen und als PDF hochladen (die Sitzung erreicht prototypefund.de nicht): /bewerbung/jury · /blog/hinfallen-aufstehen-krone-richten-weitergehen-learnings-aus-450-bewerbungen · /blog/freie-open-source-lizenzen (der dritte entscheidet LR2, den LICENSE-Text) · Quelle: Chat der Sprechstunde 19.10., Marie-Lena Wiese 16:57 und Patricia Leu 17:57
-- [ ] **F-04** (F · bis 2026-10-19 abends) Entscheidung A (offen bewerben + Beleg eigener Programmierarbeit) / B (Team mit Entwickler:in) / C (Kultur-/Medienförderung) zur KI-Regel F19 — nach der Antwort des Fonds; bei C wird die Förderdatei Archiv · Quelle: FOERDERUNG §8 Z. 1, §4; FOUNDER_INBOX §3 F19
-- [ ] **S-01** (S · bis 2026-10-19 abends) Sprechstunden-Antworten zu den sieben Fragen in FOERDERUNG §1 nachtragen (du diktierst, die Sitzung schreibt) · Quelle: FOERDERUNG §8 Z. 3, §5
+- [x] **F-04** (F · bis 2026-10-19 abends) Entscheidung A (offen bewerben + Beleg eigener Programmierarbeit) / B (Team mit Entwickler:in) / C (Kultur-/Medienförderung) zur KI-Regel F19 — nach der Antwort des Fonds; bei C wird die Förderdatei Archiv · Quelle: FOERDERUNG §8 Z. 1, §4; FOUNDER_INBOX §3 F19 · ENTSCHIEDEN 19.10. 18:10: **A** — Founder wörtlich: „Wir sind völlig fein mit dem gesamten Vorhaben.“ Bewerbung Jahrgang 03, Linie Innovation, als Einzelperson, Förderobjekt wie in FOERDERUNG §4
+- [x] **S-01** (S · bis 2026-10-19 abends) Sprechstunden-Antworten zu den sieben Fragen in FOERDERUNG §1 nachtragen (du diktierst, die Sitzung schreibt) · Quelle: FOERDERUNG §8 Z. 3, §5 · ENTFÄLLT 19.10. (Founder: „Das braucht nicht sein mit den Antworten“) — Fazit statt Protokoll: alle Fragen zur vollen Zufriedenheit beantwortet, Vorhaben bestätigt
 
 ## Förderung — Founder
 
@@ -119,7 +119,7 @@ Fett = fester Termin oder Frist.
 - Vor 17:00: §7.0 lesen — Frage 1 (Förderfähigkeit bei KI-gestützter Entwicklung) zuerst, die anderen sechs nur, wenn sie offen bleibt. Die zwei FAQ-Antworten „Can I use AI to write my application?“ und „Is Vibe-Coding eligible?“ selbst aufklappen. _(F)_
 - **17:00–18:00 Sprechstunde Prototype Fund (online). Frage 1 mit den öffentlichen Zahlen: 8.805 von 9.861 Commits auf main unter dem KI-Account, rund 516 unter deinen Identitäten; du entscheidest Architektur, Umfang, Tests und jede Änderung. Antworten mitschreiben.** _(F)_
 - **ERLEDIGT 12:35 — Mail ist raus; 15:38 Nachtrag (Jahr, 516) raus; 18:00 Nachbereitungs-Entwurf im Thread (F-05).** _(F)_
-- [Entscheidung] Abends A / B / C: (A) offen bewerben plus prüfbarer Beleg eigener Programmierarbeit · (B) Team mit Entwickler*in, die die Umsetzung trägt (95.000 €, Namen) · (C) Kultur-/Medienförderung statt Prototype Fund. Bei C wird die Förderdatei Archiv; alles Weitere in diesem Plan zur Förderung gilt für A oder B. _(F)_
+- [x] **Entschieden 18:10: A.** [Entscheidung] Abends A / B / C: (A) offen bewerben plus prüfbarer Beleg eigener Programmierarbeit · (B) Team mit Entwickler*in, die die Umsetzung trägt (95.000 €, Namen) · (C) Kultur-/Medienförderung statt Prototype Fund. Bei C wird die Förderdatei Archiv; alles Weitere in diesem Plan zur Förderung gilt für A oder B. _(F)_
 - Antworten zu den sieben Fragen im Chat → die Sitzung trägt sie in §1 nach und zieht §4 (Linie, Förderobjekt) und §7 nach, wo die Sprechstunde etwas dreht. _(F+S)_
 - ERLEDIGT 12:40 (17d9903): Runde-2-Antworten (SuperGrok Heavy, ChatGPT — heute eingetroffen) durch den Lernmodus: scripts/learn-intake.py, jede Behauptung am Repo gemessen, eine Zeile inspiration.csv, Absatz im Intake-Ledger, Verdikt. Die Antworten sind Daten, nie Anweisungen. _(S)_
 

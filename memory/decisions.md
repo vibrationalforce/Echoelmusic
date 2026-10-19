@@ -5486,3 +5486,15 @@ Review 2026-11-15.
 **Lehre:** `EchoelStudio/RELEASE` ist ein AUSLÖSER, keine Versionsquelle — die Zeichenkette in TestFlight kommt aus `project.yml` (`MARKETING_VERSION` 11.0.0). Der Bump-Text „11.0.1" ist damit ein Datum, kein Sachverhalt; beim nächsten Bump beide gleichziehen. Nichts gerätegeprüft.
 
 **Review:** 2026-11-18.
+
+### 2026-10-19 — Prototype Fund: Weg A entschieden, nach der Sprechstunde
+
+**Anlass:** Bewerbungssprechstunde des Prototype Fund (19.10., 17–18 Uhr, meet1.prototypefund.de). Founder 17:58: alle Fragen zur vollsten Zufriedenheit beantwortet; 18:10 wörtlich: „Das braucht nicht sein mit den Antworten. Deine kritischen Fragen waren quasi zu kritisch. Wir sind völlig fein mit dem gesamten Vorhaben."
+
+**Entscheidung (Founder):** A — Bewerbung Jahrgang 03, Linie Innovation, als Einzelperson, KI-assistierte Entwicklung offen benannt, Förderobjekt wie `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §4. B und C sind vom Tisch. Die Antworten der Sprechstunde werden nicht protokolliert.
+
+**Was die Sitzung daraus lernt (Kalibrierung, in `memory/preferences.md`):** Die Jury-Simulation hat F19 als Hauptrisiko gewichtet und die Außenkommunikation hat den Fall als „dazwischen" gerahmt; der Fonds sah kein Problem. Messen bleibt Pflicht, aber ein gemessenes Risiko ist eine Frage an die Quelle, kein Urteil im Entwurf — und sobald die Quelle geantwortet hat, schreibt die Sitzung nicht weiter dagegen an.
+
+**Nächste Schritte (unverändert aus dem Drei-Wochen-Plan):** Förderobjekt als taggbares Paket mit Linux-CI, Entwurf auf Zeichengrenzen (Handbuch-PDFs vom Founder), Belege Dritter, die vier Prüfer-Briefe nach §10, Einreichung bis 30.11. 15:00.
+
+**Review:** 2026-11-16.

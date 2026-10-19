@@ -1451,3 +1451,13 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - Drei Chat-Links der Sprechstunde in FOERDERUNG §6/§8 und TODO F-06 (Jury-Seite, „Learnings aus 450 Bewerbungen",
   „Freie Open-Source-Lizenzen"); zwei Websuchen fanden keinen der Posts, prototypefund.de ist aus der Sandbox nicht erreichbar.
 - Lehre: ein Gmail-„Entwurf" aus dem Gedächtnis ist zu MESSEN (`labelIds`), bevor man ihn „fertig machen" will — er war gesendet.
+
+## 2026-10-19 18:10 — Founder: Weg A, Antworten werden nicht protokolliert
+
+- Founder wörtlich: „Das braucht nicht sein mit den Antworten. Deine kritischen Fragen waren quasi zu kritisch. Wir sind
+  völlig fein mit dem gesamten Vorhaben." → F-04 = **A** (Linie Innovation, Einzelperson, Förderobjekt §4), S-01 entfällt,
+  B/C vom Tisch. Eingetragen: FOERDERUNG §5/§8/§9-Nachtrag, TODO-Zwilling (24 von 75), `decisions.csv` + `memory/decisions.md`
+  (Review 16.11.), Kalibrierungs-Notiz in `memory/preferences.md`.
+- Der Nachbereitungs-Entwurf im Gmail-Thread bleibt wie er ist (zweiter Absatz = A); Senden ist Founder-Sache (F-05).
+- Nächste Sitzungs-Scheiben aus dem Plan, unverändert: Förderobjekt taggbar (Paket + Linux-CI), Entwurf kürzen (braucht die
+  Handbuch-PDFs), Prüfer-Briefe §10 nach dem Kürzen; externe Prüfrunde Do 22.10. (Routine).

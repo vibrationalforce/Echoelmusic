@@ -217,3 +217,11 @@ Kanonisch dokumentiert in `docs/dev/PRODUCT_DEFINITION.md` ("Die vier Qualitäts
   Das Hauptmodell der Sitzung selbst kann eine Sitzung NICHT umschalten — das macht der Founder mit
   `/model` (oder in den Einstellungen). Belegter Anlass: der Aufräum-Workflow wf_050785cb-fc9 lief
   am 2026-10-13 ins Wochenlimit (4 von 9 Agenten abgebrochen, 1,45 Mio. Unteragenten-Token).
+
+- **Kalibrierung Außenkommunikation und Risiko-Gewichtung (Founder 2026-10-19, nach der Prototype-Fund-Sprechstunde):**
+  „Deine kritischen Fragen waren quasi zu kritisch. Wir sind völlig fein mit dem gesamten Vorhaben." Die
+  Jury-Simulation hatte die KI-Regel als Hauptrisiko gewichtet (2/5), die Mail rahmte den Fall als
+  „dazwischen" — der Fonds sah kein Problem. Regel daraus: ein gemessenes Risiko wird EINMAL als Frage an
+  die Quelle gestellt, nicht als Urteil in den Entwurf geschrieben; hat die Quelle geantwortet, ist es
+  erledigt und wird nicht erneut aufgerollt. Nach außen formuliert die Sitzung den Founder nicht als
+  Grenzfall. Messen und Überbehauptungen streichen bleibt unverändert Pflicht (§9-Befunde waren richtig).
