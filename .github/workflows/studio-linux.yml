@@ -1,0 +1,56 @@
+name: Echoel Studio (Linux)
+
+# The portability claim as a measurement, not a sentence. EchoelCore and EchoelDSP
+# import Foundation only (Core also Observation), so they should build and test on a
+# Linux toolchain; this job is the proof or the refutation. It is its own workflow on
+# purpose: a red here is a finding about Linux, and it must not hide inside the macOS
+# run (studio.yml) nor block it. EchoelEngine is NOT in this job: it binds AVFoundation
+# and AudioToolbox in four files (AUv3 hosting, sample files) and is split into a
+# portable part and an Apple adapter first (docs/dev/NEUPLANUNG_2026-10-18.md, P0).
+#
+# Context: docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md §7.1 Frage 4/5 and §9 action 5.
+
+on:
+  push:
+    paths:
+      - 'EchoelStudio/Core/**'
+      - 'EchoelStudio/DSP/**'
+      - '.github/workflows/studio-linux.yml'
+  pull_request:
+    paths:
+      - 'EchoelStudio/Core/**'
+      - 'EchoelStudio/DSP/**'
+      - '.github/workflows/studio-linux.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: studio-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    name: Core + DSP on Linux
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: swift --version
+
+      - name: Test Core (Linux)
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/Core 2>&1 | tee core-linux.log
+
+      - name: Test DSP (Linux)
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/DSP 2>&1 | tee dsp-linux.log
+
+      - name: Print logs on failure
+        if: failure()
+        run: |
+          tail -150 core-linux.log || true
+          tail -150 dsp-linux.log || true
