@@ -25,7 +25,8 @@
 	     sessions on them. ONE extension (com.echoelmusic.app.auv3, the only registered Audio Unit
 	     id) carries every Echoel unit; the effect subtypes differ from the app's in-process
 	     eEQ5/eCmp/eDly/eRvb on purpose. "echl" is the earlier app's instrument, kept so sessions
-	     saved with it open (it plays the synth). -->
+	     saved with it open (it plays the synth). Its display name says that, not "EchoelBodyVibe":
+	     the body instrument is a plan (P6), and a host list is an outward surface. -->
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
@@ -178,7 +179,7 @@
 				</dict>
 				<dict>
 					<key>name</key>
-					<string>Echoel: EchoelBodyVibe</string>
+					<string>Echoel: Echoel Synth (earlier sessions)</string>
 					<key>description</key>
 					<string>Opens sessions saved with the earlier Echoelmusic instrument; plays Echoel Synth from Echoel</string>
 					<key>manufacturer</key>
