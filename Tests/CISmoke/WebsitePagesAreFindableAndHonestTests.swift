@@ -1844,8 +1844,8 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// and no other paragraph on the page said anything else about it. Meanwhile
     /// `Resources/iOS/Info.plist` declares `NSLocationWhenInUseUsageDescription`, `LocationNamer`
     /// is constructed at app start and injected into `EchoelStudioView`, and the app renders a
-    /// switch labelled "Place in session name" whose `didSet` requests permission and takes a
-    /// coarse fix. A reader of the policy concluded the app never touches location; iOS then
+    /// switch (then "Place in session name", "Place in piece name" since the H18 rename) whose
+    /// `didSet` requests permission and takes a coarse fix. A reader of the policy concluded the app never touches location; iOS then
     /// showed them a permission prompt.
     ///
     /// ⚠️ THE UNDERLYING BEHAVIOUR WAS NEVER THE PROBLEM, and that is what makes this a copy
@@ -1898,13 +1898,37 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
             contentsOf: root.appendingPathComponent("docs/privacy.html"), encoding: .utf8)
         let flat = privacy.lowercased()
 
-        // (a) the page must describe the opt-in, in its own words.
-        let describes = ["place in session name", "city-level", "coarse"]
+        // (a) the page must describe the opt-in, in its own words — and name the switch by the
+        // label a player actually sees. ⛔ The label stood here as a literal ("place in session
+        // name"); the app renamed the switch to "Place in piece name" (H18), the page followed,
+        // and this claim stayed red on a CORRECT tree (found 2026-10-19 by transcription). The
+        // label is therefore READ from the one view that renders it (#416), so a future rename
+        // turns this red only if the page does not follow.
+        let studioView = SourceText.codeOnly((try? String(
+            contentsOf: sources.appendingPathComponent("Echoelmusic/Studio/EchoelStudioView.swift"),
+            encoding: .utf8)) ?? "")
+        var settingLabel = ""
+        if let open = studioView.range(of: "Text(\"Place in ") {
+            let rest = studioView[open.upperBound...]
+            if let close = rest.firstIndex(of: "\"") {
+                settingLabel = "place in " + rest[..<close].lowercased()
+            }
+        }
+        guard !settingLabel.isEmpty else {
+            XCTFail("""
+                The location switch label `Text("Place in …")` is gone from \
+                `Sources/Echoelmusic/Studio/EchoelStudioView.swift`, so this claim cannot say which \
+                name `docs/privacy.html` has to use. If the switch moved, point this anchor at its \
+                new home; if the feature is gone, the premise above turns the claim off.
+                """)
+            return
+        }
+        let describes = [settingLabel, "city-level", "coarse"]
         let present = describes.filter { flat.contains($0) }
         XCTAssertEqual(present.count, describes.count, """
             `docs/privacy.html` does not describe the optional location fix. Missing phrase(s):             \(describes.filter { !flat.contains($0) }.joined(separator: ", ")).
 
-            The app declares NSLocationWhenInUseUsageDescription and constructs `LocationNamer`             \(constructed)× in `Sources/**`, so a player WILL see a permission prompt. The page             has to say what that prompt is for: one coarse, city-level fix behind the "Place in             session name" setting, a transient city word in a filename, nothing stored on its             own, and Apple's geocoder/WeatherKit as the only recipients.
+            The app declares NSLocationWhenInUseUsageDescription and constructs `LocationNamer`             \(constructed)× in `Sources/**`, so a player WILL see a permission prompt. The page             has to say what that prompt is for: one coarse, city-level fix behind the "\(settingLabel)"             setting, a transient city word in a filename, nothing stored on its             own, and Apple's geocoder/WeatherKit as the only recipients.
             """)
 
         // (b) and it may not carry a flat denial. The bullet listing what is NOT collected is
