@@ -1485,3 +1485,27 @@ Nächstes: Arrangement-Ansicht, dann M2.
   markiert; die EINE gültige Adresse ist prototypefund.de/handbuch (Jahrgang 03), Checkliste auf prototypefund.de/bewerbung.
 - Jury-PDF (25 Seiten, Fotos) gelesen: alle 18 Namen aus §1b stimmen (gegen die Datei geprüft, nicht gegen das Gedächtnis);
   neu in §1b: die Jury EMPFIEHLT, das BMFTR entscheidet; Up and Coming hat eine eigene Sechser-Jury (für uns ohne Belang).
+
+## 2026-10-19 21:30 — Handbuch Jahrgang 03 gelesen: WORT-Grenzen, Formularfassung §7.5, Second Stage ohne Code
+
+- Founder: „Fehlt noch was? Ansonsten GO volle Kontrolle" + `PTF_Handbuch_2026.pdf` (31 Seiten, „Stand: September 2026").
+  Textextraktion scheitert an Type-0-Schriften (`pdftotext` 804 Wörter mit Fehlern, `pypdf` 2.031, null Treffer für
+  „Zeichen") — seitenweise als Bild gelesen (Read, `pages`). ⛔ Drei Dateien sprachen von „Zeichengrenzen": es sind
+  WÖRTER, und das Handbuch macht sie zur GÜLTIGKEITSBEDINGUNG (S. 4). Lehre: eine Grenze, die man noch nicht gelesen hat,
+  bekommt keine Einheit aus dem Gedächtnis.
+- FOERDERUNG: §1d (18 Felder, Limit, was die Jury je Frage lesen/nicht lesen will) · §1e (die 14-Punkte-Checkliste mit
+  Stand) · sieben §1-Zeilen nachgeführt (250-h-Untergrenze, Zeitstrahl mit „keine Statusanfragen vor Mitte März",
+  Antragssprechstunde Pflicht für Einzelentwickler*innen, Second Stage ohne Code, Konto/Hauptansprechperson, Abgrenzung
+  Bestand, GitHub-API `license: NOASSERTION`) · §5 fünf Zeilen nach der Frist · §7.3 UMGEBAUT: Handbuch S. 23 fett
+  „weitere Code-Meilensteine nicht förderfähig" — Art-Net, Linux-Renderer, Kamera-Port, Format v2 aus der Bewerbung
+  gestrichen (Roadmap nach der Förderung, NICHT in die reguläre Phase zurück — §9 Nachtrag 2) · **§7.5 Formularfassung**:
+  alle 18 Felder, 13 Textblöcke mit `<!-- ptf: Fx limit=N -->`-Markern.
+- Neues Werkzeug `scripts/ptf-wordcount.py` (read-only, `--selftest`, Zeile in `scripts/INDEX.md`): Wörter/Limit, Worst-Case
+  mit einzeln gezählten Verbünden, OK/TIGHT/OVER (TIGHT < 8 % Luft). Erste Messung: 7 von 13 OVER; nach dem Kürzen
+  13/13 OK, kein Block OVER, kein TIGHT. Zählregel steht im Skriptkopf — den Zähler der Plattform hat niemand gemessen.
+- Gemessen nebenbei: Repo-Erstelldatum 2025-10-15T17:46:40Z (GitHub-API) = das Jahr, das der Founder in der Mail nannte;
+  `license: NOASSERTION` — die Jury sieht kein MIT-Etikett (LR2 hat einen gemessenen Grund).
+- TODO-Zwilling: F-06 [x], F-07 und S-09 optional, F-08 = die sieben Platzhalter von §7.5, S-12 erste Fassung; 26 von 75.
+  `decisions.csv` + `memory/decisions.md` (Review 16.11.). Nichts ist Code, nichts gerätegeprüft.
+- Nächster Schritt: adversariale Prüfung der 13 Blöcke per Workflow (Behauptung gegen Repo, Regel gegen Handbuch), dann
+  Founder-Fakten einsetzen und neu messen; Prüfer-Briefe §10 auf §7.5 umstellen; Routine Do 22.10.

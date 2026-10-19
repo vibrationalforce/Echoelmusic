@@ -5498,3 +5498,15 @@ Review 2026-11-15.
 **Nächste Schritte (unverändert aus dem Drei-Wochen-Plan):** Förderobjekt als taggbares Paket mit Linux-CI, Entwurf auf Zeichengrenzen (Handbuch-PDFs vom Founder), Belege Dritter, die vier Prüfer-Briefe nach §10, Einreichung bis 30.11. 15:00.
 
 **Review:** 2026-11-16.
+
+### 2026-10-19 — Prototype Fund: Formularfassung in Wortgrenzen, Second Stage ohne Code-Meilensteine
+
+**Anlass:** Das Jahrgang-03-Handbuch (`PTF_Handbuch_2026.pdf`, Stand September 2026, 31 Seiten, seitenweise als Bild gelesen — die Schriften geben keinen Text her). Founder: „Fehlt noch was? Ansonsten GO volle Kontrolle."
+
+**Entscheidung (Sitzung, unter „volle Kontrolle"):** (1) Die Bewerbung wird in `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §7.5 geführt — 18 Felder, jede Antwort innerhalb der WORT-Grenze des Handbuchs (S. 4: „nur gültig, wenn die erlaubte Wortanzahl pro Frage eingehalten wird"), gemessen mit `scripts/ptf-wordcount.py` (konservativ, Verbünde einzeln gezählt, 8 % Luft). ⛔ „Zeichengrenzen" stand in drei Dateien. (2) Handbuch S. 23, fett: „In der Second Stage sind weitere Code-Meilensteine nicht förderfähig" — §7.3 trug vier (Art-Net in EchoelIO, Linux-Renderer, Kamera-Port, Format v2). Sie sind aus der Bewerbung GESTRICHEN und nicht in die reguläre Phase verschoben: die ~590-h-Tabelle ist nach der Jury-Simulation bewusst knapp, vier Posten zurück wären die gemessene Überschätzung. Second Stage jetzt: Nutzertests, Werkstätten, Beitragenden-Prozess mit zweiter Maintainerin oder zweitem Maintainer, Spezifikation + ADM-OSC-Implementierungsliste, Finanzierungsplan (In-App-Kauf finanziert Pflege, Paket bleibt MIT), Transparenzbericht; Programmierarbeit nur aus Feedback.
+
+**Gemessen nebenbei:** Repo-Erstelldatum 15.10.2025 (GitHub-API) — Projektstart „Oktober 2025" ist damit belegt; `license: NOASSERTION` — die Jury sieht auf GitHub kein MIT-Etikett (LR2, Founder).
+
+**Offen (Founder, bis 25.10.):** sieben Platzhalter in §7.5 — E-Mail, zwei Orte/Partner mit Namen, Projekte 2–3 oder „keine", Rechtsform + Syng.Visibra, Stundenzahl (eine Zahl 250–950; Vorschlag 620), Barrierefreiheits-Partner, Jahr der Installationspraxis. Danach neu messen, Gegenlesen bis 16.11.
+
+**Review:** 2026-11-16.

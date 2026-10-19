@@ -22,21 +22,27 @@
 | Formalien Einzelperson | volljährig; **Wohnsitz in Deutschland; selbstständig oder freiberuflich, Steuern hier** (oder für die Laufzeit anteilig vom Arbeitgeber freigestellt); **Bewerbungen von Unternehmen, Vereinen, Organisationen sind nicht zulässig**; Software-Projekt; **Amtssprache Deutsch: der formale Antrag und einige Dokumente müssen auf Deutsch eingereicht werden**, die Bewerbung selbst geht laut Seite „fast alles auch auf Englisch“ | sicher |
 | Echoel erfüllt | MIT-Lizenz (`LICENSE`), öffentliches Repo, Einzelperson in Hamburg. **Offen: Rechtsform des Founders** (Team-Frage 4) — im Repo steht dazu nichts, nur er weiß es | gemessen / offen |
 | Sprechstunde | **Mo 19.10.2026, 17–18 Uhr MESZ**, online. ⚠️ Die Bewerbungsseite, wie am 19.10. gespeichert, **nennt keinen Sprechstunden-Link**. Kandidaten: prototypefund.de/events, Infoletter #65 (August) bzw. der Oktober-Infoletter, OSB-Alliance-Meldung, Mail an info@prototypefund.de, Mastodon @PrototypeFund | Zeit sicher, Link offen |
-| **KI-Regel** (Blog „AI at Prototype Fund?“, per Websuche 19.10.; die FAQ-Antworten selbst bleiben in der gespeicherten PDF zugeklappt) | **Vibe-Coding ist nicht förderfähig.** Wörtlich (engl.): „Outsourcing the technical implementation of the project to external parties has always been prohibited; this also applies to outsourcing work to machines.“ Gefördert werden Personen mit den Programmierkenntnissen, die ihr Projekt braucht; ab Jahrgang 03 ist ein GitHub/GitLab/Codeberg-Account Pflicht, „to ensure that applicants are actual developers“. KI zum Verbessern oder Übersetzen des Bewerbungstexts ist erlaubt, die IDEE muss vom Menschen kommen; KI-Werkzeuge in der Förderphase sind nicht verboten, die Verantwortung liegt bei den Geförderten | sicher (zwei Suchergebnisse zitieren den Blog wörtlich; die Seite selbst war aus der Sitzung nicht abrufbar) ⭐ **Sprechstunde 19.10.:** Founder meldet, die Frage sei zu voller Zufriedenheit beantwortet — der Wortlaut ist nicht protokolliert und steht hier erst, wenn er diktiert ist; bis dahin bleibt die Blog-Regel die einzige schriftliche Quelle. |
+| **KI-Regel** (Blog „AI at Prototype Fund?“, per Websuche 19.10.; die FAQ-Antworten selbst bleiben in der gespeicherten PDF zugeklappt) | **Vibe-Coding ist nicht förderfähig.** Wörtlich (engl.): „Outsourcing the technical implementation of the project to external parties has always been prohibited; this also applies to outsourcing work to machines.“ Gefördert werden Personen mit den Programmierkenntnissen, die ihr Projekt braucht; ab Jahrgang 03 ist ein GitHub/GitLab/Codeberg-Account Pflicht, „to ensure that applicants are actual developers“. KI zum Verbessern oder Übersetzen des Bewerbungstexts ist erlaubt, die IDEE muss vom Menschen kommen; KI-Werkzeuge in der Förderphase sind nicht verboten, die Verantwortung liegt bei den Geförderten | sicher (zwei Suchergebnisse zitieren den Blog wörtlich; die Seite selbst war aus der Sitzung nicht abrufbar) ⭐ **Sprechstunde 19.10.:** Founder meldet, die Frage sei zu voller Zufriedenheit beantwortet — der Wortlaut ist nicht protokolliert und steht hier erst, wenn er diktiert ist; bis dahin bleibt die Blog-Regel die einzige schriftliche Quelle. Das Handbuch Jahrgang 03 (31 Seiten, gelesen 19.10.) enthält KEINEN KI-Abschnitt — nur das Pflichtfeld „persönlicher GitHub-Account“. |
 | **Was die Jury auf GitHub sieht** | Öffentlich (Contributors-Seite und GitHub-API, gemessen 19.10. durch die Jury-Simulation, §9): **`main` trägt 9.861 Commits; 8.805 davon stehen im AUTOR-Feld unter dem Account `claude`**, 540 unter `github-actions[bot]`, rund 516 unter Founder-Identitäten (`vibrationalforce` 448, „Echoel“ 55, der Rest unter älteren Namen). ⛔ Hier stand „392 von 394“ aus dem Shallow-Klon — richtig für den Klon, um den Faktor 25 zu klein für das, was die Jury sieht. Verschweigen geht nicht, die Historie ist öffentlich. Befehl: `GET /repos/vibrationalforce/Echoelmusic/contributors` oder die Contributors-Seite des Repos | gemessen 19.10. (öffentlich) |
 | Fördersumme, Rechnung | 47.500 € = **950 h × 50 €/h** (eine Vollzeitstelle, 6 Monate); Förderung = 95 % des Projektbudgets (50.000 €); höherer Stundensatz nur gegen weniger Stunden UND gegen Rechnungen früherer Freelance-Arbeit; Second Stage 31.667 € = eine Vollzeitstelle × 4 Monate, Satz gedeckelt bei 50 €/h | sicher (FAQ-Antwort per Websuche) |
-| Bewerbungshandbuch | **Jahrgang-03-Fassung: „Handbuch zur Bewerbung – Jahrgang 03, Prototype Fund, Herbst 2026“, Direktlink https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf (von der Seite prototypefund.de/handbuch, PDF 19.10.; „kurz vor dem Start jeder Bewerbungsphase“ aktualisiert)** (Blog 16.09.2026: Handbuch und Checkliste „spätestens mit Start der Bewerbungsphase am 01. Oktober auf dem neuesten Stand“); Checkliste auf prototypefund.de/bewerbung. Die zwei PDFs unter new.prototypefund.de/files/ (HandbuchBewerbung.pdf, ApplicationGuide.pdf) sind die Fassung von 07/2023 — ⛔ **beide 404 am 19.10. (Founder)**, als Rückfall gestrichen | Links bekannt, Inhalt ungelesen → Founder lädt hoch (TODO F-06) |
+| Bewerbungshandbuch | **Jahrgang-03-Fassung: „Handbuch zur Bewerbung – Jahrgang 03, Prototype Fund, Herbst 2026“, Direktlink https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf (von der Seite prototypefund.de/handbuch, PDF 19.10.; „kurz vor dem Start jeder Bewerbungsphase“ aktualisiert)** (Blog 16.09.2026: Handbuch und Checkliste „spätestens mit Start der Bewerbungsphase am 01. Oktober auf dem neuesten Stand“); Checkliste auf prototypefund.de/bewerbung. Die zwei PDFs unter new.prototypefund.de/files/ (HandbuchBewerbung.pdf, ApplicationGuide.pdf) sind die Fassung von 07/2023 — ⛔ **beide 404 am 19.10. (Founder)**, als Rückfall gestrichen | ⭐ **gelesen 19.10. abends (Founder-Upload, 31 Seiten, „Stand: September 2026 – Bewerbungszeitraum Jahrgang 03“)** — Formularfelder und Wortgrenzen in §1d, die 14-Punkte-Checkliste mit Stand in §1e. ⚠️ Die PDF hat Type-0-Schriften ohne CIDSystemInfo: `pdftotext` liefert 804 Wörter mit Fehlern, `pypdf` 2.031 — gelesen wurde sie SEITENWEISE als Bild, nicht als Text |
 | Förderfähige Ausgaben | **Nur Arbeitsstunden** — keine Reisekosten, keine Hardware (Blog 16.09.2026, wörtlich: „Der Prototype Fund fördert nur Arbeitsstunden; rechnet daher keine Reisekosten oder Hardwarekosten ein“). Reisekosten zu PFLICHT-Events übernimmt der Fonds gesondert (Vergleichsseite) | sicher (PDF 19.10.) — beantwortet §7.0 Frage 6, Teil „Geräte“: nein |
-| Mindestumfang | nicht unter 200 Arbeitsstunden bewerben (Blog 16.09.2026) | sicher |
+| Mindestumfang | nicht unter 200 Arbeitsstunden bewerben (Blog 16.09.2026); ⭐ **Handbuch S. 20: unter ca. 250 Stunden lohnt der Verwaltungsaufwand nicht, Obergrenze 950 h (Einzelperson), EINE Zahl für den ganzen Förderzeitraum — keine Wochenstunden; „strategisches“ Unter- oder Überschätzen bringt nichts, bewertet wird, ob die Zahl realistisch ist** | sicher (zwei Quellen, die 250 ist die jüngere) |
 | „Innovativ“, Vergleichsseite wörtlich | „Ich baue etwas vollständig neues, oder **erweitere ein existierendes Projekt um ein neues Modul, eine Bibliothek oder eine Anbindung**.“ Innovation: Muss innovativ sein = Ja | sicher — das Förderobjekt (§4: eigenständiges Paket aus bestehendem Projekt) ist wörtlich der zweite Fall; trägt §7.0 Frage 5 und §7.1 Frage 7 |
 | Richtwert Stundenanteil | Innovation: **80 %** der Stunden Softwareentwicklung in der regulären Phase (Richtwert, „keine festen Kriterien“); Second Stage 20 % | sicher — die ~590-h-Tabelle (§7.1 Frage 9) muss dieses Verhältnis zeigen |
 | Vibe Coding, Vergleichsseite wörtlich | „Nein. Geförderte müssen über die für die Umsetzung des Projekts notwendigen Programmierkenntnisse verfügen und sind für die Ergebnisse verantwortlich.“ (Blog dazu: prototypefund.de/blog/ki-beim-prototype-fund) | sicher; Sprechstunde 19.10.: Vorhaben bestätigt (Founder) |
-| Pflichttermine | Antragsworkshop **remote, Ende Februar/Anfang März 2027** (eine Person je Projekt) · Kick-off-Workshop **Berlin, um den 01.06.2027** · Demo Day **Berlin, um den 30.11.2027** · Abschlussworkshop Berlin um den 30.03.2028 (nur Second Stage). Innovation: vier OPTIONALE Coachingstunden, Sprechstunden und Seminare (Barrierefreiheit · Lizenzen · Gründung) optional; Second Stage: acht VERPFLICHTENDE Coachingstunden | sicher — in den Kalender des Founders, Reisekosten trägt der Fonds |
-| Second Stage, Regeln | optional für Innovation; **die Wahl in der Bewerbung ist endgültig** („Wenn ihr ‚nein‘ wählt, könnt ihr dies später nicht mehr ändern“); mit „ja“ alle zugehörigen Fragen beantworten; Auswahl durch die Jury im Oktober 2027 | sicher (Blog + Vergleichsseite) — §7.3 Frage 1 bleibt „Ja“ |
+| Pflichttermine | Antragsworkshop **remote, Ende Februar/Anfang März 2027** (eine Person je Projekt) · Kick-off-Workshop **Berlin, um den 01.06.2027** · Demo Day **Berlin, um den 30.11.2027** · Abschlussworkshop Berlin um den 30.03.2028 (nur Second Stage). Innovation: vier OPTIONALE Coachingstunden, Sprechstunden und Seminare (Barrierefreiheit · Lizenzen · Gründung) optional; Second Stage: acht VERPFLICHTENDE Coachingstunden. ⭐ **Handbuch S. 29–30, Zeitstrahl:** Dez 2026–März 2027 Begutachtung (Formalien-Shortlist durch Fonds + Projektträger, dann Jury, dann BMFTR), Rückmeldung an ALLE im März 2027 — **„von Anfragen zum Stand der Bewerbungen vor Mitte März abzusehen“**; März 2027 Antragssprechstunde per Videocall, **Pflicht für Einzelentwickler*innen** (dieselbe Seite sagt auch „bis Ende Februar muss der Antrag beim BMFTR eingereicht sein“ — beide Sätze stehen so da, maßgeblich ist die Zusage-Mail); Kick-off um den 01.06.2027 (Pflicht); Sept./Okt. 2027 Second-Stage-Auswahl per digitaler Präsentation; Demo Day **um den 01.12.2027** (Vergleichsseite: ~30.11.); Second Stage 01.12.2027–31.03.2028; Abschlussworkshop um den 01.04.2028 (Vergleichsseite: 30.03.), Pflicht für Second-Stage-Geförderte | sicher — in den Kalender des Founders, Reisekosten trägt der Fonds |
+| Second Stage, Regeln | optional für Innovation; **die Wahl in der Bewerbung ist endgültig** („Wenn ihr ‚nein‘ wählt, könnt ihr dies später nicht mehr ändern“); mit „ja“ alle zugehörigen Fragen beantworten; Auswahl durch die Jury im Oktober 2027. ⭐ **Handbuch S. 23, fett: „In der Second Stage sind weitere Code-Meilensteine nicht förderfähig.“** Programmierarbeit nur, soweit sie sich „aus Feedback und User Testing“ der ersten Phase ergibt; die Second-Stage-Stunden leiten sich aus der ersten Phase ab (100 % beantragt → bis 100 %, 50 % → bis 50 %); Auswahl in einem internen Verfahren im vierten Fördermonat; ein „Vielleicht“ ist keine Antwort | sicher (Blog + Vergleichsseite + Handbuch) — §7.3 Frage 1 bleibt „Ja“; **§7.3 ist am 19.10. umgebaut: kein Code-Meilenstein mehr in der Second Stage** (§9 Nachtrag 2) |
 | Konkurrenz | Jahrgang 02: **über 450 Bewerbungen auf 30 Förderplätze** (Blog 16.09.2026). Häufigste Ablehnungsgründe laut Fonds: Formalien, Übertreibung, fehlender Kontext — nicht die Idee | sicher — eine Basisrate, keine Aussage über diesen Antrag |
 | „Wir fördern Menschen, keine Unternehmen“ | NICHT in Ordnung: ein Unternehmen oder eine Institution, die das Projekt entwickelt/pflegt und davon profitiert, und Bewerbung als Privatperson dafür. In Ordnung: ein Unternehmen für Beratung/Aufträge im Feld, solange das Projekt kein Unternehmensprojekt ist; ein Unternehmen ohne Bezug zum Antrag | sicher — Team-Frage 4 (Rechtsform) und der App-Store-Vertrieb müssen dazu passen; das Förderobjekt trägt keine Kauflogik [Founder: Rechtsform] |
 | Lizenz | FOSS-Lizenz verpflichtend, proprietär nein (Vergleichsseite); **keine bestimmte Lizenz vorgeschrieben**; Blog 2020: bei geförderten Projekten GPL und MIT am häufigsten | sicher — MIT (heute) passt; LR2 (reiner MIT-Text) bleibt die Entscheidung des Founders, der Fonds erzwingt nichts |
 | Was die Jury zuerst lesen will (Blog 16.09.2026) | am Anfang zwei Fragen beantworten: „Was entwickle ich und wie würde ich es Nicht-Expert*innen erklären?“ · „Für wen entwickle ich es?“ — dann: GitHub-Link, Links zu genutzten FOSS-Tools, **Nutzer*innen erreichen mit ein, zwei KONKRETEN Orten oder Partnern** („Website einrichten oder Dokumentation schreiben reicht nicht“), bestehende Alternativen nennen und erklären, warum daneben Platz ist, FOSS-Erfahrung nicht übertreiben (nur Projekte mit auffindbaren Beiträgen), Abkürzungen ausschreiben, eine unbeteiligte Person liest gegen; „Infrastruktur“ nicht in jeden zweiten Satz | sicher → Kasten in §7.1 |
+| **Wortgrenzen = Gültigkeitsbedingung** | Handbuch S. 4, wörtlich: „Bewerbungen sind nur gültig, wenn die erlaubte Wortanzahl pro Frage eingehalten wird.“ Gezählt werden **WÖRTER, nicht Zeichen** (⛔ „Zeichengrenzen“ stand bis 19.10. in §7, §8, §5 und im TODO-Zwilling). Grenzen je Feld in §1d; gemessen mit `python3 -I scripts/ptf-wordcount.py` (konservativ: Verbünde wie `OSC/ADM-OSC` zusätzlich einzeln gezählt, weil niemand den Zähler der Plattform gemessen hat) | sicher |
+| Sprache | „vollständig auf Deutsch oder Englisch“ (Checkliste) — wir schreiben Deutsch; der formale Antrag ist ohnehin Deutsch | sicher |
+| Konto und Hauptansprechperson | Account-Name darf Klarname, Pseudonym oder Teamname sein (also „Echoel“ möglich); zusätzlich Klarname der Hauptansprechperson mit **Wohnsitz in Deutschland** (bei Teams übernimmt sie die GbR-Geschäftsführung — als Einzelperson keine GbR); E-Mail, die bis März regelmäßig gelesen wird; **persönlicher GitHub-Account als Pflichtfeld** (`vibrationalforce`), der Projekt-Link kommt in einer eigenen späteren Frage | sicher (Handbuch S. 5) |
+| Abgrenzung Bestand ↔ Förderteil | Handbuch S. 11: bei bestehenden Projekten „deutlich machen, wie sich der zu fördernde Teil klar vom Projekt abgrenzt … eine ‚Verbesserung der bestehenden Software‘ ist nicht ausreichend“; „nur Dokumentation, Release und Marketing“ ist nicht förderfähig | sicher — trägt die Form von §7.5 F5: Bestand in einem Satz, Förderobjekt als eigene Pakete |
+| Erfahrungs-Felder | „Erfahrungen“: **max. drei Projektbeispiele** mit Name und/oder Link und Rolle (Maintainer*in, Contributor, Designer*in, „ein paar Pull Requests“), ein Satz je Projekt ohne öffentlichen Link; „Erfahrung, Motivation“ ist die **Wild Card** (persönliche Betroffenheit, Domänenexpertise — fehlende Expertise benennen und sagen, wie sie geholt wird) | sicher (Handbuch S. 19, 22) |
+| Lizenz, gemessen | ⚠️ Die GitHub-API meldet für das Repo `license: NOASSERTION` (19.10., `GET /repos/vibrationalforce/Echoelmusic`) — der `LICENSE`-Text wird nicht als MIT erkannt, die Jury sieht auf der Repo-Seite kein „MIT“-Etikett. Das ist LR2 (Founder) mit einem gemessenen Grund mehr | gemessen |
 
 ### 1b. Die Jury (Innovation + Resilienz teilen EINE Jury; Stand 19.10., ⭐ gegen die Jury-PDF des Founders bestätigt: alle 18 Namen stimmen)
 
@@ -53,6 +59,51 @@
 - **transcribee-desktop** (Jahrgang 02, in Förderung): Audio/Video lokal transkribieren — „lokal statt Cloud“ ist förderfähig und aktuell.
 - **]open theater[** (Runde 8, Diversity): Sprachbarrieren in Theater/Oper — Bühne als Förderkontext.
 - Abschlussberichte aller Projekte liegen bei der TIB (Link auf der Projektseite) — vor dem 16.11. zwei davon lesen, um Ton und Tiefe zu kalibrieren.
+
+### 1d. Das Formular Jahrgang 03 — Felder, Wortgrenzen, was die Jury je Frage lesen will (Handbuch, Stand September 2026)
+
+Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-0-Schrift); die Spalte „Kurz gesagt“ ist der Satz, mit dem das Handbuch jede Frage selbst zusammenfasst. **Limit = Wörter, Gültigkeitsbedingung.** Die Spalte „§7.5“ nennt die Formularfassung.
+
+| # | Feld (Handbuch-Seite) | Kurz gesagt | Limit | Lesen will die Jury | Nicht lesen will sie | §7.5 |
+|---|---|---|---|---|---|---|
+| 0 | Projekttitel · Account-Name · Klarname · E-Mail · GitHub-Account (S. 5) | — | frei | Arbeitstitel reicht; Pseudonym erlaubt | — | Kopf |
+| 1 | Ergebnis (S. 7) | **Was** genau soll das Ergebnis sein? | **30** | EIN Satz, konkret („Ich möchte den Linux-Kernel um … erweitern“) | Kontext-Sätze („Im Zeitalter der KI …“) | F1 |
+| 2 | Vorhaben (S. 8) | **Was** habe ich vor? | **100** | Ziele, wie es funktionieren soll, Hintergrund der Idee, warum wichtig | eine nur technische Beschreibung | F2 |
+| 3 | Gesellschaftlicher Mehrwert (S. 9) | **Warum** ist es wichtig für die Gesellschaft? | **175** | das Problem knapp, warum dringend, was fehlt, warum Software hilft | Tech-Solutionismus, „magische Lösungen“ | F3 |
+| 4 | Technische Umsetzung (S. 10) | **Wie** wird es umgesetzt? | **175** | konkreter Stack (Sprachen, Frameworks, Libraries, Infrastruktur), Projekte, auf denen man aufbaut, Sätze | „eine App“, „eine Website“; reine Tool-Listen | F4 |
+| 5 | Stand (S. 11) | **Was** ist der Stand? | **100** | was erreicht ist, was nach der Förderung anders ist; bei Bestandsprojekten die klare Abgrenzung des Förderteils | „Verbesserung der bestehenden Software“; nur Doku/Release/Marketing | F5 |
+| 6 | Link (S. 12, optional) | der **Link** zum Projekt | — | Repo, Projektseite, Folien, Demo | Links auf fremde Projekte (kommt bei Erfahrungen) | F6 |
+| 7 | Innovation (S. 13, nur Innovation/Up and Coming) | **Was** unterscheidet es von dem, was es gibt? | **100** | vergleichbare Projekte und warum sie nicht passen; was anders/besser ist; warum nicht darauf aufbauen | „es gibt nichts Vergleichbares“ | F7 |
+| 8 | Zielgruppe (S. 15, nur Innovation/Up and Coming) | **Für wen** ist es wichtig? | **100** | klar definierte Gruppen; wie man sie erreicht; bestehende Kontakte, Partner, Communities | unklare Pläne („Vorträge“ ohne Beispiel, „Partner“ ohne Namen) | F8 |
+| 9 | Meilensteine (S. 17) | **Wann** werden die Schritte umgesetzt? | **100** | nummerierte Liste mit groben Zeitangaben (Wochen/Monate) | „1/ Backend, 2/ Frontend“ | F9 |
+| 10 | Team (S. 18, optional — „leer lassen, wenn ihr euch allein bewerbt“) | wer, welche Rolle, Wochenstunden | **30** | Namen, Rolle, GitHub, Stunden je Person; Team ab Bewerbung fest | mehr als vier; unverbindliche Zusammensetzungen | leer |
+| 11 | Erfahrungen (S. 19) | **Welche** Erfahrungen sind relevant? | **100** | max. **3** Projekte mit Name/Link und Rolle; ein Satz, wenn kein Link | mehr als drei je Person; lange Beschreibungen | F11 |
+| 12 | Förderfähigkeit / Verbindungen (S. 20, optional) | Unternehmen, Verein, Institut im gleichen Feld? | **60** | „Ich arbeite für … und sorge für saubere Trennung“; **„Unsicher? Zu viele Informationen sind besser als zu wenige“** | intransparente Antworten | F12 |
+| 13 | Stundenzahl (S. 21) | **Wie viel Zeit** braucht ihr? | **1 Zahl** | eine Zahl, 250–950 h für eine Person, Gesamtzahl für den Zeitraum | Wochenstunden; „strategische“ Zahlen | F13 |
+| 14 | Erfahrung, Motivation — Wild Card (S. 22) | **was** sollen wir noch wissen? | **100** | persönliche Betroffenheit, Domänenexpertise, Teamhintergrund; fehlende Expertise und wie sie geholt wird | — | F14 |
+| 15 | Second Stage (S. 24, nur Innovation/Up and Coming) | ist sie **sinnvoll**? | Ja/Nein | ein Ja oder ein Nein | „Vielleicht“ | Ja |
+| 16 | Nachhaltigkeitsstrategie (S. 25, Pflicht bei Second Stage) | **Strategie** gegen Stilllegung im nächsten Jahr | **175** | konkrete, zugeschnittene Pläne über Code hinaus | schwammige Pläne | F16 |
+| 17 | Second-Stage-Meilensteine (S. 26, Pflicht bei Second Stage) | **Wann** in den vier Monaten? | **100** | Liste mit Zeitangaben, Nicht-Code | Entwicklungsschwerpunkt; „1/ Communityaufbau, 2/ Werbung“ | F17 |
+| 18 | Formalia (S. 27) | volljährig, Wohnsitz Deutschland, FOSS-Lizenz | Häkchen | — | — | Founder |
+
+### 1e. Die Checkliste des Handbuchs (S. 28), 14 Punkte, mit Stand 19.10.
+
+| Punkt (Handbuch, verkürzt) | Stand |
+|---|---|
+| Webseite gelesen, Ausrichtung bekannt | ✅ (§1, §6) |
+| die richtige der drei Linien gewählt, richtiges Formular | ✅ Innovation (Weg A, 19.10.) |
+| ein Softwareprojekt | ✅ |
+| keine Firma/Institution/Verein, Team ≤ 4 | ✅ Einzelperson — **Rechtsform-Satz fehlt (Founder, F12)** |
+| vollständig Deutsch ODER Englisch | ✅ Deutsch |
+| auch für Nicht-Expert*innen verständlich | ⏳ F2 beginnt damit; Gegenlesen durch eine unbeteiligte Person (16.11.) |
+| Was · Wie · Warum · Wer beantwortet | ✅ F1–F4, F8 |
+| Second Stage überlegt und, wenn ja, direkt beantragt; nicht nachholbar | ✅ Ja (§7.3) |
+| von einer externen Person gelesen | ⏳ 16.11. (F-12) |
+| technische Umsetzung konkret (Tools, Sprachen, Libraries, Architektur) | ✅ F4 |
+| Zielgruppe und wie sie erreicht wird | ⏳ F8 — **zwei benannte Orte/Partner fehlen (Founder)** |
+| Meilensteine aufgelistet, nicht „1/ Backend, 2/ Frontend“ | ✅ F9 |
+| geprüft, ob es das als Open Source schon gibt; Abgrenzung statt Verschweigen | ✅ F7 (Lizenzen vor Abgabe an der Quelle prüfen, S-11) |
+| errechnet, dass das Vorhaben in der Stundenzahl machbar ist | ⏳ Tabelle ~590 h + Puffer (§7.1 F9); **die EINE Zahl trägt der Founder ein (F13)** |
 
 ## 2. Was Echoel heute IST (nur das wird behauptet)
 
@@ -222,8 +273,13 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 | bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung (aus der ~590-h-Tabelle in §7.1 Frage 9, nicht aus der 950-h-Formel) · bisherige Software-Projekte · Jahr des Projektbeginns · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF · die vier Fonds-Seiten (innovativ, datensicherheit, software-infrastruktur, foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten · Status „Syng.Visibra“ |
 | bis 1.11. | Sitzung: Repo-Hygiene, die die Jury zuerst sieht (§8; was founder-gated ist, steht dort beim Founder) |
 | 19.10. | Linux-Lauf für `EchoelCore`/`EchoelDSP` GEMESSEN — eigener Workflow `studio-linux.yml` (Studio-Workflows sind seit 17.10. für die Sitzung frei; „founder-gated“ stand hier zu Unrecht): DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
-| bis 16.11. | Entwurf fertig (§7 ausgefüllt, innerhalb der Zeichengrenzen des Handbuchs), eine Person liest gegen; Belege Dritter liegen vor (Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration) |
+| bis 16.11. | Entwurf fertig (§7.5 mit Founder-Fakten, jede Antwort innerhalb der WORTGRENZEN des Handbuchs — gemessen, nicht geschätzt), eine Person liest gegen; Belege Dritter liegen vor (Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration) |
 | 30.11., 15:00 | Frist |
+| Dez 2026–Mitte März 2027 | Begutachtung; **keine Statusanfragen vor Mitte März** (Handbuch S. 29); Mailbox der angegebenen Adresse regelmäßig lesen |
+| März 2027 | Rückmeldung an alle; bei Zusage Antragssprechstunde per Videocall, **Pflicht für Einzelentwickler*innen**; formaler Antrag beim BMFTR über VDI/VDE-IT, auf Deutsch |
+| ~01.06.2027 | Kick-off Berlin (Pflicht); Förderzeit 01.06.–30.11.2027 |
+| Sept./Okt. 2027 | Second-Stage-Auswahl per digitaler Präsentation (nur wer sie jetzt beantragt hat) |
+| ~01.12.2027 | Demo Day Berlin (Pflicht); Second Stage 01.12.2027–31.03.2028; Abschlussworkshop ~01.04.2028 |
 
 ## 6. Quellen
 
@@ -243,9 +299,12 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 
 ## 7. Fragenkatalog Linie Innovation, mit Antwortentwurf
 
-Die Fragen sind wörtlich aus dem Bewerbungsfragen-PDF (Stand 19.10.). Zeichengrenzen sind
-unbekannt, bis das Bewerbungshandbuch vorliegt — die Entwürfe sind bewusst eher lang und werden
-gekürzt, nicht verlängert. Jeder Entwurf behauptet nur Gemessenes (§2) oder ist als Plan markiert.
+Die Fragen sind wörtlich aus dem Bewerbungsfragen-PDF (Stand 19.10.). ⭐ **Seit dem Handbuch
+(19.10. abends) sind die Grenzen bekannt: WÖRTER je Frage, Gültigkeitsbedingung — Tabelle §1d.**
+§7.1–7.3 bleiben die LANGFASSUNG mit Belegen und ⛔-Rücknahmen (nichts davon geht ins Formular);
+**§7.5 ist die Formularfassung**, jede Antwort mit gemessener Wortzahl
+(`python3 -I scripts/ptf-wordcount.py`). Jeder Entwurf behauptet nur Gemessenes (§2) oder ist
+als Plan markiert. ⛔ „Zeichengrenzen sind unbekannt“ stand hier — es waren nie Zeichen.
 
 ### 7.0 Die sieben Fragen für die Sprechstunde (19.10., 17 Uhr) — Frage 1 entscheidet, ob die anderen zählen
 
@@ -268,7 +327,7 @@ gekürzt, nicht verlängert. Jeder Entwurf behauptet nur Gemessenes (§2) oder i
    und sind Geräte förderfähige Ausgaben? — ⭐ Geräte: **nein**, der Fonds fördert nur Arbeitsstunden (Blog 16.09.2026, §1); Teilzeit: Sprechstunde, Founder: beantwortet.
 7. **Second Stage** gleich mitbeantragen: Beeinflusst das die Auswahl für die reguläre Phase? — ⭐ Für Innovation optional, die Wahl in der Bewerbung ist endgültig (§1); Sprechstunde, Founder: beantwortet.
 
-### 7.1 Dein Projekt
+### 7.1 Dein Projekt — Langfassung (Belegsammlung; die abgabefähige Fassung ist §7.5)
 
 > ⭐ **Regeln aus dem Blog des Fonds vom 16.09.2026 („Hinfallen, aufstehen, Krone richten, weiterschreiben“), beim Kürzen auf jede Antwort anwenden:**
 > (1) Frage 2 beginnt mit dem Satz für Nicht-Expert*innen und mit „für wen“ · (2) Frage 7 nennt die bestehenden Alternativen und sagt, warum daneben Platz ist (steht) · (3) Frage 8 nennt **ein, zwei konkrete** Orte/Partner mit Namen — Website und Doku zählen nicht · (4) Team-Frage 3/7: nur FOSS-Projekte mit auffindbaren eigenen Beiträgen, sonst erklären · (5) jede Abkürzung beim ersten Mal ausschreiben (rPPG, HRV, OSC, ADM-OSC, sACN, DSGVO) · (6) „Infrastruktur“ sparsam · (7) keine Reise- oder Hardwarekosten in der Rechnung, mindestens 200 h, Richtwert 80 % Entwicklung · (8) eine unbeteiligte Person liest den fertigen Text gegen (§8: 16.11.) · (9) „Seid ehrlich“: offene Fragen und Lernbedarf benennen — der Fonds nennt das überzeugender als Perfektion.
@@ -445,7 +504,7 @@ Summe ~590 h plus Puffer; Art-Net, der Kamera-Port und zwei weitere Integratione
 Second-Stage-Meilensteine (§7.3). ⛔ Die erste Fassung kostete nach Messung 800–1.080 h, zählte
 Bestand (Format, Golden-Files, `SECURITY.md`) als neu und setzte den Kamera-Port in M3 — §9.
 
-### 7.2 Team und Erfahrung
+### 7.2 Team und Erfahrung — Langfassung
 
 1. **Als Team?** Nein, Einzelperson. [Founder bestätigt]
 2. **Teammitglieder:** entfällt.
@@ -481,21 +540,13 @@ Bestand (Format, Golden-Files, `SECURITY.md`) als neu und setzte den Kamera-Port
    Dieser Absatz steht und fällt mit der Antwort des Fonds auf Frage 1 und mit deiner ehrlichen
    Einschätzung deiner eigenen Programmierkenntnisse; bei Weg B wird er zum Absatz über das Team.
 
-### 7.3 Second Stage
+### 7.3 Second Stage — umgebaut 19.10. nach Handbuch S. 23 („weitere Code-Meilensteine nicht förderfähig“)
 
-1. **Beantragen?** Ja. [Founder bestätigt; Sprechstunde 19.10.: beantwortet] ⚠️ Die Wahl ist endgültig („nein“ kann später nicht geändert werden), und mit „ja“ sind alle Second-Stage-Fragen Pflicht (Blog 16.09.2026).
-2. **Was das Projekt braucht, um aus dem Prototypen herauszukommen:** [ENTWURF] Nutzung durch
-   Dritte: mindestens drei fremde Integrationen (ein Lichtpult, ein Medienserver, ein
-   ADM-Renderer) dokumentiert; ein zweiter Laufzeitort des Kerns (Linux-Renderer ohne iPhone für
-   Dauerinstallationen); Einstieg für Beitragende (DCO, gute erste Aufgaben, Format stabil);
-   Werkstätten mit Theatern und Installationsbauenden; erster Transparenzbericht.
-3. **Meilensteine der vier Monate** (mindestens zwei hängen an einem EXTERNEN Akteur, §9): S1
-   (Dezember) Tutorials + Integrator-Leitfäden je Protokoll, Art-Net in `EchoelIO` · S2
-   (Januar–Februar) Linux-Renderer für Installationen, Kamera-Puls portiert, Format v2 eingefroren,
-   **ein gemergter PR einer anderen Person und Commit-Rechte für eine zweite Maintainerin oder
-   einen zweiten Maintainer** · S3 (März) drei externe Integrationen gezeigt, davon **eine
-   Installation oder ein Projekt, das nicht der Antragsteller betreibt**; Beitragenden-Prozess,
-   Transparenzbericht, Abschluss.
+1. **Beantragen?** Ja. [Founder bestätigt; Sprechstunde 19.10.: beantwortet] ⚠️ Die Wahl ist endgültig („nein“ kann später nicht geändert werden), mit „ja“ sind Nachhaltigkeitsstrategie (175 Wörter) und Second-Stage-Meilensteine (100 Wörter) Pflicht, und „Vielleicht“ gilt nicht (Handbuch S. 24). Die Second-Stage-Stunden folgen dem Anteil der ersten Phase: bei ~620 von 950 h (65 %) sind bis zu ~65 % der 31.650 € erreichbar — die Zahl steht hier nur als Herleitung, das Formular fragt sie nicht.
+2. **Was das Projekt braucht, um aus dem Prototypen herauszukommen** (= Nachhaltigkeitsstrategie, Formularfassung F16): Nutzung durch Dritte statt mehr Code von einer Person — drei fremde Integrationen dokumentiert (Lichtpult, Medienserver, ADM-Renderer), eine davon nicht vom Antragsteller betrieben; Beitragenden-Prozess (CONTRIBUTING, Verhaltenskodex, Issue-Vorlagen liegen seit 19.10., `c477267`) mit einem gemergten fremden Beitrag und Commit-Rechten für eine zweite Person; Körpersignal-Profil und Konformitätsvektoren als Spezifikation veröffentlicht, Eintrag in die ADM-OSC-Implementierungsliste; Finanzierung der Pflege aus dem In-App-Kauf der Instrument-Erweiterungen, das Paket bleibt MIT und ohne Kauflogik; Transparenzbericht.
+3. **Meilensteine der vier Monate, ohne Code** (Formularfassung F17): S1 (Dezember) Nutzertests mit den Integrator*innen und TestFlight-Tester*innen, Befunde priorisiert; Integrator-Leitfäden je Protokoll veröffentlicht · S2 (Januar–Februar) Werkstätten mit [Theater/Installationsort, Founder]; Beitragenden-Prozess live, erster fremder Beitrag gemergt, zweite Maintainerin oder zweiter Maintainer; ADM-OSC-Implementierungsliste · S3 (März) drei externe Integrationen gezeigt, eine nicht vom Antragsteller betrieben; Finanzierungsplan der Pflege; Transparenz- und Abschlussbericht; Abschlussworkshop. Programmierarbeit nur, soweit sie sich aus den Nutzertests ergibt — so verlangt es das Handbuch.
+
+⛔ **Was hier stand und GESTRICHEN ist:** „Art-Net in `EchoelIO`“, „Linux-Renderer für Installationen“, „Kamera-Puls portiert“, „Format v2 eingefroren“ waren Code-Meilensteine in S1/S2 — nach Handbuch S. 23 in der Second Stage nicht förderfähig. Sie wandern NICHT in die reguläre Phase (die ~590-h-Tabelle ist nach §9 bewusst knapp), sondern sind **Roadmap nach der Förderung, ohne Förderung**, und stehen deshalb in keiner Formularantwort. Der Kamera-Puls bleibt in der älteren App (dort läuft er heute); die Workstation bekommt ihn, wenn die Zeit da ist. Herleitung: §9 Nachtrag 2.
 
 ### 7.4 Rückfall Resilienz — die zwei abweichenden Fragen (nur falls die Sprechstunde die Linie dreht)
 
@@ -519,6 +570,101 @@ echoelmusic.com/integrations; und mit den Foren der offenen Lichtsteuerung (Frag
 gemessen, nicht behauptet: ein fremdes Pult, das die Quelle liest, ein fremder PR, ein Ort, der
 nicht der Antragsteller ist.
 
+### 7.5 Formularfassung — Wortgrenzen des Handbuchs, jede Antwort gemessen
+
+Das geht ins Formular, Feld für Feld (Nummern wie in §1d). Messen: `python3 -I scripts/ptf-wordcount.py`
+(druckt je Block Wörter/Limit, den Worst-Case mit einzeln gezählten Verbünden und OK/TIGHT/OVER; die
+`<!-- ptf -->`-Marker sind im gerenderten Markdown unsichtbar). Platzhalter in eckigen Klammern sind
+Founder-Fakten und zählen als Wörter mit, damit die Luft auch mit ihnen hält. Nichts hier ist
+gerätegeprüft; alles Behauptete ist in §2 gemessen oder als Plan formuliert.
+
+**Kopf (Feld 0).** Projekttitel: *Echoelmusic — EchoelSense und EchoelIO: Körpersignale lokal verarbeiten, offen ausgeben* (Arbeitstitel) · Account-Name: *Echoel* (Pseudonym erlaubt) · Klarname: Michael Terbuyken, Hamburg · E-Mail: [Founder — die Adresse, die bis März 2027 regelmäßig gelesen wird] · GitHub: https://github.com/vibrationalforce
+
+**F1 — Ergebnis (30 Wörter, ein Satz).**
+<!-- ptf: F1 limit=30 -->
+Ein Open-Source-Paket (Swift), das Puls und Atem auf dem Gerät verarbeitet, jedem Datenfeld eine Ausgaberegel gibt und Klang, Licht und Raum über OSC, ADM-OSC und sACN steuert.
+<!-- /ptf -->
+
+**F2 — Vorhaben (100 Wörter).**
+<!-- ptf: F2 limit=100 -->
+Echoelmusic ist eine Musik-App, in der der eigene Puls und Atem mitspielen: Kamera oder Bluetooth-Gurt messen den Herzschlag, daraus entstehen Klang und Licht. Ich bin Künstler für interaktive Installationen und Musikproduzent; diese Körpersignal-Schicht läuft heute in meiner älteren App. Ich will sie als Paket herauslösen, das jedes Programm einbinden kann: Pulsmessung und Atemphase, eine Regel, welche Körperdaten das Gerät nie verlassen, und Brücken zu den offenen Protokollen der Licht- und Bühnentechnik. Wichtig ist mir, dass Körperdaten nutzbar werden, ohne jemandem zu gehören: kein Konto, kein Server.
+<!-- /ptf -->
+
+**F3 — Gesellschaftlicher Mehrwert (175 Wörter).**
+<!-- ptf: F3 limit=175 -->
+Herzfrequenz und Herzratenvariabilität (HRV) sind nach unserer Einordnung Gesundheitsdaten im Sinne der Datenschutz-Grundverordnung (Art. 4 Nr. 15; juristisch nicht geprüft). Wer solche Signale in Musik, Licht oder Bühne holen will, findet heute keinen offenen Baustein, der die Verarbeitung auf dem Gerät hält und sauber trennt, was es verlassen darf. Bühnen-, Licht- und Installationstechnik ist dazu eine Landschaft proprietärer Inseln: die offenen Protokolle existieren (OSC, ADM-OSC, sACN), offene Brücken bringen Herzfrequenz vom Laptop nach OSC, aber keine trägt eine Regel, welche Felder das Gerät verlassen dürfen, und keine läuft auf dem Gerät selbst. Zugleich wandert Medienproduktion in Abo- und Cloud-Modelle mit proprietären Formaten. Software hilft, weil die Regel in den Code gehört, nicht in eine Datenschutzerklärung: eine neue Datenquelle ohne Entscheidung ist ein Compile-Fehler, ein Feld ohne Klasse wird nicht gesendet. So werden Körperdaten für Kunst, Theater und Installation nutzbar, ohne jemandem zu gehören — mit offenem Format, offenen Protokollen, VoiceOver, Reduce Motion und einer Blitzgrenze, die ein Test prüft.
+<!-- /ptf -->
+
+**F4 — Technische Umsetzung (175 Wörter).**
+<!-- ptf: F4 limit=175 -->
+Swift, 100 Prozent, null externe Abhängigkeiten. Der Kern sind drei Pakete: Core und DSP importieren nur Foundation und laufen auch auf Linux (öffentliche CI, alle 265 Tests grün); die Engine arbeitet ohne Locks und ohne GCD und wird im Förderzeitraum in portablen Teil und Apple-Adapter geteilt. Neu entstehen zwei Pakete. EchoelSense: Signalaufbereitung, Pulsperiodenschätzer und HRV-Kohärenz als reine Werttypen, ein Bluetooth-Adapter und die Egress-Policy — ein erschöpfender Switch über alle Quellen (eine neue Quelle ist ein Compile-Fehler) plus eine Feldklasse je Adresse: musikalische Werte dürfen raus, HRV-Detail nur per Opt-in, Rohsignale nie; eine Adresse ohne Klasse wird nicht gesendet. EchoelIO: Encoder für OSC, ADM-OSC und sACN als reine Funktionen mit Konformitätsvektoren, Transport hinter einer schmalen Schnittstelle (Network.framework, POSIX-Sockets). Wir bauen auf den Standards auf (OSC 1.0, ADM-OSC, ANSI E1.31), getestet gegen QLC+ und ossia score. Grenze: die Protokolle sind unverschlüsselt, wir erfinden keine Kryptografie darüber; Ausgänge senden per UDP nur an einen eingetragenen Host, der OSC-Eingang ist Opt-in mit Allowlist, kein Server.
+<!-- /ptf -->
+
+**F5 — Stand (100 Wörter).**
+<!-- ptf: F5 limit=100 -->
+Ja, seit Oktober 2025, öffentlich unter MIT. Zwei Codebasen: die ältere App, in der Kamera-Puls (rPPG), Bluetooth-Gurt, HealthKit, die Egress-Policy und die Ausgänge OSC, ADM-OSC, Art-Net und sACN live laufen, auf TestFlight; und Echoel Studio, die neue Workstation mit drei abhängigkeitsfreien Paketen, spezifiziertem Projektformat, CI auf macOS und Linux, TestFlight-Build. Gefördert werden soll nicht die Verbesserung der Apps, sondern etwas, das es noch nicht gibt: die Körpersignal-Schicht als eigenständige, getaggte Pakete (EchoelSense, EchoelIO) mit Spezifikation und Konformitätsvektoren, die Dritte per Paketmanager ziehen — plus dem Host-Split der Engine für Linux.
+<!-- /ptf -->
+
+**F6 — Link.** https://github.com/vibrationalforce/Echoelmusic · https://echoelmusic.com
+
+**F7 — Innovation (100 Wörter).**
+<!-- ptf: F7 limit=100 -->
+Vergleichbar, geprüft Oktober 2026: offene Brücken Herzfrequenz→OSC (hr-bridge-ble, HeartOSC) laufen auf Laptop oder Android; QLC+, Chataigne und ossia score bringen OSC nach Art-Net/sACN; anira (Prototype Fund) macht Echtzeit-Inferenz. Keines trägt eine Regel, welche Felder das Gerät verlassen dürfen, keines schreibt Herkunft und Datenklasse auf den Draht, keines kennt ADM-OSC-Objekte, und keines läuft als ein Prozess auf dem Telefon. Wir bauen auf ihren Protokollen auf, nicht auf ihrem Code: die Encoder sind klein, der Beitrag sind Profil und Policy; getestet wird gegen QLC+ und ossia score, statt sie zu ersetzen.
+<!-- /ptf -->
+
+**F8 — Zielgruppe (100 Wörter).**
+<!-- ptf: F8 limit=100 -->
+Drei Gruppen: Musiker*innen und Produzent*innen auf iPad und iPhone, die ohne Abo und Konto arbeiten wollen; Licht-, Show- und Medienkünstler*innen sowie Theater- und Installationsbauende, die den Körper als Steuersignal in bestehende Rigs holen (Lichtpulte, Medienserver und ADM-Renderer sprechen die Protokolle schon); Entwickler*innen, die eine lokale, geprüfte Körpersignal-Pipeline brauchen. Erreichen: über die App (TestFlight heute, App Store 2027), meine eigenen Installationen und Auftritte in Hamburg als Vorführungen, [Ort/Partner 1, Founder] und [Ort/Partner 2, Founder] als Testorte, Integrator-Rezepte je Protokoll auf echoelmusic.com/integrations, das QLC+-Forum, das Open Lighting Project und die ADM-OSC-Implementierungsliste.
+<!-- /ptf -->
+
+**F9 — Meilensteine Juni–November 2027 (100 Wörter).**
+<!-- ptf: F9 limit=100 -->
+1. Juni (~90 h): Host-Split der Engine, portabler Teil auf Linux in der CI; Importscan-Test pinnt Renderregeln und Plattformtrennung; erstes getaggtes Release, das Dritte per Paketmanager ziehen.
+2. Juli–August (~220 h): EchoelIO — OSC, ADM-OSC, sACN mit reinen Encodern, Transport für Apple und Linux, Konformitätsvektoren; „Verbindungen“-Bildschirm, alles standardmäßig aus; eine benannte Integration mit einem freien Lichtpult; VoiceOver, Reduce Motion und Blitzgrenze als Abnahme.
+3. September–Oktober (~200 h): EchoelSense — portable Signalverarbeitung, Egress-Policy, Bluetooth-Adapter; Körpersignal-Profil v1 mit Konformitätsvektoren.
+4. November (~80 h): Referenzinstallation läuft vier Stunden über sACN; security.txt, Fuzzing des Decoders; Abschlussbericht, Release 1.x.
+<!-- /ptf -->
+
+**F10 — Team (30 Wörter).** Leer lassen — das Handbuch sagt es so für Einzelbewerbungen.
+
+**F11 — Erfahrungen (100 Wörter, max. 3 Projekte).**
+<!-- ptf: F11 limit=100 -->
+1. Echoelmusic (https://github.com/vibrationalforce/Echoelmusic): Maintainer seit Oktober 2025; zwei öffentliche Codebasen unter MIT — die ältere App mit Kamera-Puls, Bluetooth-Gurt, OSC-, ADM-OSC-, Art-Net- und sACN-Ausgängen und Egress-Policy; Echoel Studio mit drei abhängigkeitsfreien Swift-Paketen, Tests auf macOS und Linux, TestFlight-Builds.
+2. [Founder: zweites Projekt mit Link und Rolle — oder streichen]
+3. [Founder: drittes Projekt mit Link und Rolle — oder streichen]
+Außerhalb von Software: interaktive Wasser-Licht-Klang-Installationen und Musikproduktion (Echoel) seit [Jahr, Founder] — die Domäne, in die das Paket zurückfließt.
+<!-- /ptf -->
+
+**F12 — Förderfähigkeit, Verbindungen (60 Wörter).**
+<!-- ptf: F12 limit=60 -->
+Ich bin [Rechtsform: selbstständig/freiberuflich als Künstler und Musikproduzent — Founder]; Echoelmusic ist mein privates Open-Source-Projekt, kein Unternehmensprojekt. Die App ist kostenlos, ein In-App-Kauf für Instrument-Erweiterungen ist geplant; das Förderobjekt ist ein eigenes MIT-Paket ohne Kauflogik, das jede Anwendung nutzen kann. Für dieses Vorhaben beziehe und beantrage ich keine andere öffentliche Förderung [Syng.Visibra-Status, Founder].
+<!-- /ptf -->
+
+**F13 — Stundenzahl (eine Zahl).** Vorschlag **620** = ~590 h aus der Tabelle (F9) plus 5 % Puffer; bei 50 €/h sind das 31.000 €. [Founder trägt die Zahl ein, die er neben Installationen und Musikprojekten wirklich trägt — zwischen 250 und 950; keine Wochenstunden.]
+
+**F14 — Erfahrung, Motivation — Wild Card (100 Wörter).**
+<!-- ptf: F14 limit=100 -->
+Ich bin Künstler für interaktive Wasser-Licht-Klang-Installationen und Musikproduzent; Echoelmusic kommt aus meiner eigenen Praxis — Körper, Klang, Licht und Raum zusammen. Bühne, Installation und Lichtpult kenne ich von innen — die Domänenexpertise für die Zielgruppe. Was mir fehlt und wie ich es hole: die DSGVO-Einordnung der Körperdaten prüft vor der Förderung ein Datenschutzbeauftragter; Barrierefreiheit teste ich mit [Partner oder Nutzer*innen, Founder]. Offen gesagt: ich entwickle KI-gestützt — 8.805 von 9.861 Commits auf GitHub tragen den KI-Co-Autor-Account; Architektur, Umfang, Tests und jede Änderung entscheide und verantworte ich, datiert dokumentiert im Repo (decisions.csv).
+<!-- /ptf -->
+
+**F15 — Second Stage.** Ja.
+
+**F16 — Nachhaltigkeitsstrategie (175 Wörter).**
+<!-- ptf: F16 limit=175 -->
+Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von mir. Erstens Nutzer*innen: mindestens drei fremde Integrationen dokumentiert (ein Lichtpult, ein Medienserver, ein ADM-Renderer), davon eine Installation, die nicht ich betreibe; Werkstätten mit [Theater oder Installationsort, Founder]; Nutzertests mit den TestFlight-Tester*innen, deren Feedback die einzige Programmierarbeit der Second Stage bestimmt. Zweitens Community: Beitragenden-Prozess (Beitragsleitfaden, Verhaltenskodex und Issue-Vorlagen liegen seit Oktober 2026), gute erste Aufgaben, ein gemergter Beitrag einer anderen Person und Commit-Rechte für eine zweite Maintainerin oder einen zweiten Maintainer, damit das Paket nicht an einer Person hängt. Drittens Standards: Körpersignal-Profil und Konformitätsvektoren als Spezifikation veröffentlicht, Eintrag in die ADM-OSC-Implementierungsliste, Integrator-Leitfäden je Protokoll. Viertens Finanzierung: die App bleibt kostenlos, Instrument-Erweiterungen als In-App-Kauf finanzieren die Pflege; das Paket bleibt MIT und frei von Kauflogik. Ein Transparenzbericht am Ende sagt, was erreicht wurde und was nicht.
+<!-- /ptf -->
+
+**F17 — Second-Stage-Meilensteine Dezember 2027–März 2028 (100 Wörter).**
+<!-- ptf: F17 limit=100 -->
+1. Dezember: Nutzertests mit den Integrator*innen und TestFlight-Tester*innen, Befunde priorisiert; Integrator-Leitfäden je Protokoll (OSC, ADM-OSC, sACN) veröffentlicht.
+2. Januar–Februar: Werkstätten mit [Theater oder Installationsort, Founder]; Beitragenden-Prozess live (gute erste Aufgaben, Review-Regeln), erster fremder Beitrag gemergt, zweite Maintainerin oder zweiter Maintainer mit Commit-Rechten; Eintrag in die ADM-OSC-Implementierungsliste.
+3. März: drei externe Integrationen gezeigt, eine davon nicht von mir betrieben; Finanzierungsplan für die Pflege (In-App-Kauf); Transparenz- und Abschlussbericht; Abschlussworkshop.
+<!-- /ptf -->
+
+**F18 — Formalia.** Volljährig, Wohnsitz Deutschland, FOSS-Lizenz: Häkchen beim Founder. ⚠️ Die GitHub-API erkennt den `LICENSE`-Text nicht als MIT (`NOASSERTION`, §1) — LR2 vor Abgabe entscheiden.
+
+⚠️ **Was in KEINER Formularantwort steht, mit Absicht:** Heilung, Therapie, Wellness, Meditation, „klinisch“; „CCC“ (E28); „Fediverse“ (kein Konto); „Superintelligenz“; eine Zahl zur Erfolgschance; die Art-Net-, Linux-Renderer- und Kamera-Port-Posten (§7.3 ⛔). Was noch FEHLT, steht in eckigen Klammern — sechs Platzhalter, alle Founder: E-Mail (Kopf), zwei Orte/Partner (F8), Projekte 2–3 oder streichen (F11), Rechtsform und Syng.Visibra (F12), Stundenzahl (F13), Barrierefreiheits-Partner (F14), Jahr der Installationspraxis (F11).
+
 ## 8. Offene Punkte (wer liefert was)
 
 | Punkt | Wer | Bis |
@@ -528,9 +674,9 @@ nicht der Antragsteller ist.
 | Sprechstunden-Antworten zu den 7 Fragen | Founder → Sitzung trägt ein | 19.10. abends — Founder 17:58: alle zur vollsten Zufriedenheit beantwortet; der WORTLAUT fehlt noch (du diktierst, die Sitzung schreibt in §7.0) |
 | Die drei Chat-Links der Sprechstunde (Jury-Seite, „Learnings aus 450 Bewerbungen“, „Freie Open-Source-Lizenzen“) lesen; der dritte entscheidet LR2 | Founder lädt hoch → Sitzung arbeitet ein | **erledigt 19.10.** (vier PDFs; Fakten in §1, Regeln als Kasten in §7.1; der Lizenz-Beitrag schreibt keine Lizenz vor — LR2 bleibt frei). Jury-Seite nachgeliefert 19.10. abends: alle 18 Namen in §1b bestätigt, Verfahren (Empfehlung → BMFTR) ergänzt |
 | Status des älteren Förderantrags „Syng.Visibra“ (Kriterium „keine Doppelförderung“) | Founder | 25.10. |
-| Das Jahrgang-03-Handbuch (Direktlink: https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf) und die Checkliste (prototypefund.de/bewerbung) als PDF — Zeichengrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.) | Founder | 25.10. |
-| Blog-Regeln (Kasten §7.1) beim Kürzen auf jede Antwort anwenden; Frage 8 bekommt ein, zwei benannte Orte/Partner | Sitzung (Namen: Founder) | 16.11. |
-| Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF; Sitzung arbeitet sie in §1 ein, erst dann Linie und Förderobjekt festziehen | Founder → Sitzung | 25.10. |
+| Das Jahrgang-03-Handbuch (Direktlink: https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf) und die Checkliste (prototypefund.de/bewerbung) als PDF — Wortgrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.) | Founder | **erledigt 19.10. abends** — Handbuch geliefert und seitenweise gelesen; die Checkliste steht auf S. 28 des Handbuchs selbst (§1e), ein zweiter Upload ist nicht nötig |
+| Blog-Regeln (Kasten §7.1) beim Kürzen auf jede Antwort anwenden; Frage 8 bekommt ein, zwei benannte Orte/Partner | Sitzung (Namen: Founder) | **erste Fassung erledigt 19.10.** (§7.5, jede Antwort gemessen); offen bleiben NUR die Founder-Platzhalter: zwei Orte/Partner (F8), Rechtsform (F12), Stundenzahl (F13), bis zu zwei weitere Projekte (F11) |
+| Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF; Sitzung arbeitet sie in §1 ein | Founder → Sitzung | foerderlinien erledigt 19.10.; **die drei Schwerpunkt-Seiten und die FAQ sind seit dem Handbuch OPTIONAL** — Linie und Förderobjekt sind mit Weg A festgezogen, das Handbuch trägt alle Formalien; die Seiten lohnen nur noch für Wortwahl (bis 1.11., wenn es passt) |
 | Rechtsform, Stundenzahl (aus der ~590-h-Tabelle), frühere Projekte, Jahr des Projektbeginns, Accounts-Feld (`vibrationalforce`) | Founder | 25.10. |
 | `PluginUnlock` aus `EchoelCore` nach `Plugins/Shared` verlegen; veraltete Demo-Kommentare in `StandardEffectUnit.swift` korrigieren | Sitzung | **erledigt 19.10.** (`b035916`, `ea613d7`; macOS-CI grün, nichts gerätegeprüft) |
 | `docs/dev/DSGVO_ARCHITEKTUR_ENTWURF.md` §0 (behauptete HaishinKit-Broadcast und Mikrofon „im Arbeitsbaum“) und README-Kopf: zwei Codebasen | Sitzung | **erledigt 19.10.** (`607cf73`, `638d667`); `docs/version.json` braucht KEINE Änderung — sein Changelog trägt seit 28.08. einen HISTORY-NOTE-Banner (Eintrag 0) |
@@ -541,12 +687,14 @@ nicht der Antragsteller ist.
 | Belege Dritter: TestFlight-Tester-/Install-Zahl (datiert) · zwei bis drei namentliche Interessensbekundungen · EINE benannte Integration (freies Lichtpult mit sACN/OSC-Eingang) | Founder | 16.11. |
 | Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und Ton kalibrieren | Sitzung | 1.11. |
 | Lizenzen der Vergleichsprojekte in Frage 7 gegen die Quellen prüfen (Grok-Brief §10) | Sitzung | 16.11. |
-| Entwurf auf Zeichengrenzen kürzen (Reihenfolge: Bestand vor Plan, Messbares vor Prosa), Gegenlesen durch eine zweite Person | Sitzung + Founder | 16.11. |
+| Entwurf auf die WORTGRENZEN kürzen (Reihenfolge: Bestand vor Plan, Messbares vor Prosa), Gegenlesen durch eine zweite Person | Sitzung + Founder | **Kürzung erledigt 19.10.** (§7.5, `scripts/ptf-wordcount.py`: kein Block OVER); Founder-Fakten einsetzen und neu messen, dann Gegenlesen bis 16.11. |
 | Formaler Antrag beim BMFTR (nur nach Jury-Auswahl, auf Deutsch, mit VDI/VDE-IT) | Founder | Dez 2026–März 2027 |
 
 ## 9. Jury-Simulation 19.10. — sechs Linsen nach dem echten Jury-Profil, Befunde gemessen
 
 ⭐ **Nachtrag 19.10. 18:10, nach der Sprechstunde:** Der Hauptgrund für die 2/5 (die KI-Regel F19) ist nach dem Fazit des Founders entfallen — die Sprechstunde hat das Vorhaben so bestätigt, wie es in §4 steht, ohne Auflagen. Founder zur Simulation: „Deine kritischen Fragen waren quasi zu kritisch.“ Was aus §9 BLEIBT, ist die Messung der Überbehauptungen (die sind korrigiert) und die Kürzungsarbeit an den Zeichengrenzen; die Erfolgschance ist mit diesem Hauptgrund neu zu lesen, eine neue Zahl wird hier bewusst nicht erfunden. Die einzige harte Zahl dazu steht seit dem Blog-PDF in §1: Jahrgang 02 hatte über 450 Bewerbungen auf 30 Plätze — und der Fonds nennt als häufigste Ablehnungsgründe Formalien, Übertreibung und fehlenden Kontext, nicht die Idee.
+
+⭐ **Nachtrag 2, 19.10. abends, nach dem Handbuch:** (1) Die Grenzen sind WÖRTER und eine Gültigkeitsbedingung — die Formularfassung §7.5 hält sie mit Luft (kein Block OVER, gemessen). (2) Handbuch S. 23 verbietet Code-Meilensteine in der Second Stage; §7.3 S1–S3 trugen vier davon (Art-Net, Linux-Renderer, Kamera-Port, Format v2). Sie sind aus der Bewerbung gestrichen, nicht in die reguläre Phase verschoben: die ~590-h-Tabelle war nach dieser Simulation bewusst auf eine Person neben laufenden Projekten gekürzt, und vier Posten zurückzuholen hätte genau die Überschätzung wiederhergestellt, die hier gemessen wurde. Die Second Stage trägt jetzt Nutzertests, Werkstätten, Beitragenden-Prozess, zweite*r Maintainer*in, Spezifikation, Finanzierungsplan, Transparenzbericht — und Programmierarbeit nur aus Feedback, wie das Handbuch es formuliert. (3) Die Jury sieht auf GitHub kein „MIT“-Etikett (API: `NOASSERTION`) — LR2 hat damit einen gemessenen Grund, der nichts mit Geschmack zu tun hat.
 
 **Verfahren.** Ein Workflow mit 18 Agenten (`wf_fa3287ca-7d5`): je Linse ein Gutachten über den
 Entwurf, dann je Linse eine Widerlegungs-Prüfung der gefundenen Überbehauptungen am Repo (Befehl +

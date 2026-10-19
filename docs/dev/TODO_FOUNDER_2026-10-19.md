@@ -5,7 +5,7 @@ Die abhakbare Fassung mit Hörspiel, Fragen und Masterplan ist die Seite **Echoe
 Legende: **F** = Founder · **S** = Sitzung · **F+S** = beide. Ein `[x]` hier heißt: im Repo belegbar erledigt (Commit oder Datei genannt in der Quelle).
 
 
-Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05b, F-06b neu — Nummern am 19:35 umbenannt, weil F-05/F-06 schon vergeben waren); 18:10: 24 von 75 (F-04 = A, S-01 entfällt). 19:35: 25 von 75 (F-06b erledigt; F-07 teilweise).
+Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05: 22 von 75 (F-00, F-02, F-03b erledigt; F-05b, F-06b neu — Nummern am 19:35 umbenannt, weil F-05/F-06 schon vergeben waren); 18:10: 24 von 75 (F-04 = A, S-01 entfällt). 19:35: 25 von 75 (F-06b erledigt; F-07 teilweise). 21:30: 26 von 75 (F-06 erledigt — Handbuch gelesen; S-12 erste Fassung, F-07 auf optional gesetzt).
 
 
 ## Heute (19.10.)
@@ -25,9 +25,9 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 ## Förderung — Founder
 
 - [ ] **F-05** (F · bis 2026-10-23) Status des älteren Antrags „Syng.Visibra“ klären (Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4) · Quelle: FOERDERUNG §8; §9 Handlung 7
-- [ ] **F-06** (F · bis spätestens 2026-10-25) Das Jahrgang-03-Handbuch — Direktlink https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf (die Seite /handbuch selbst ist nur der Download-Knopf; gelesen 19.10.) und die Checkliste auf prototypefund.de/bewerbung als PDF hochladen (⛔ die 2023-PDFs unter new.prototypefund.de sind tot: 404 am 19.10.) — erst damit sind die Zeichengrenzen bekannt · Quelle: FOERDERUNG §8; §9 Handlung 3
-- [ ] **F-07** (F · bis spätestens 2026-10-25) Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF liefern · Quelle: FOERDERUNG §8; §9 Handlung 2 · TEILWEISE 19.10.: foerderlinien ist da und eingearbeitet; es fehlen innovativ · datensicherheit · software-infrastruktur und die FAQ mit AUFGEKLAPPTEN Antworten (die gelieferte FAQ-PDF zeigt nur Überschriften)
-- [ ] **F-08** (F · bis spätestens 2026-10-25) Formalien liefern: Rechtsform, Stundenzahl aus der ~590-h-Tabelle (§7.1 Frage 9), frühere Software-Projekte, Jahr des Projektbeginns, Accounts-Feld (vibrationalforce), 5 Sätze Hintergrund (§7.2) · Quelle: FOERDERUNG §8, §5; §9 Handlung 9
+- [x] **F-06** (F · bis spätestens 2026-10-25) Das Jahrgang-03-Handbuch — Direktlink https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf (die Seite /handbuch selbst ist nur der Download-Knopf; gelesen 19.10.) und die Checkliste auf prototypefund.de/bewerbung als PDF hochladen (⛔ die 2023-PDFs unter new.prototypefund.de sind tot: 404 am 19.10.) — erst damit sind die Grenzen bekannt · Quelle: FOERDERUNG §8; §9 Handlung 3 · ERLEDIGT 19.10. 21:30: Handbuch geliefert (31 Seiten, Stand September 2026) und seitenweise gelesen; es sind WORT-Grenzen und eine Gültigkeitsbedingung (FOERDERUNG §1d), die Checkliste steht auf S. 28 des Handbuchs (§1e) — kein zweiter Upload nötig
+- [ ] **F-07** (F · bis spätestens 2026-10-25) Die vier Fonds-Seiten (innovativ · datensicherheit · software-infrastruktur · foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten als PDF liefern · Quelle: FOERDERUNG §8; §9 Handlung 2 · TEILWEISE 19.10.: foerderlinien ist da und eingearbeitet · **seit dem Handbuch OPTIONAL** (21:30): Linie und Förderobjekt sind mit Weg A fest, alle Formalien stehen im Handbuch; die drei Schwerpunkt-Seiten und die aufgeklappte FAQ lohnen nur noch für Wortwahl — liefern, wenn es nebenbei geht, sonst streichen
+- [ ] **F-08** (F · bis spätestens 2026-10-25) Die Founder-Platzhalter der Formularfassung (FOERDERUNG §7.5) füllen — sieben Stück, in eckigen Klammern: E-Mail-Adresse fürs Formular · zwei KONKRETE Orte/Partner mit Namen (F8; Blog UND Handbuch verlangen sie) · bis zu zwei weitere Software-Projekte mit Link und Rolle, oder „keine“ (F11) · Rechtsform in einem Satz + Syng.Visibra-Status (F12, 60 Wörter) · Stundenzahl als EINE Zahl zwischen 250 und 950 (F13; Vorschlag 620) · Partner oder Nutzer*innen für den Barrierefreiheits-Test (F14) · Jahr, seit dem du Installationen baust (F11). ⛔ „Jahr des Projektbeginns“ und „5 Sätze Hintergrund“ sind erledigt: Oktober 2025 ist gemessen (Repo-Erstelldatum 15.10.2025), der Hintergrund steht als Wild-Card-Entwurf (F14) — nur korrigieren · Quelle: FOERDERUNG §7.5, §1d
 - [ ] **F-09** (F · bis 2026-10-28) Die vier §10-Prüfer-Briefe (ChatGPT · Mistral · Grok · Gemini) nach der A/B/C-Entscheidung abschicken und die Antworten einfügen — nie settings.local.json, Logs, Schlüssel oder Team-ID mitschicken · Quelle: FOERDERUNG §10
 - [ ] **F-10** (F · bis spätestens 2026-11-16) Belege Dritter beschaffen: TestFlight-Tester-/Install-Zahl (datiert), zwei bis drei namentliche Interessensbekundungen, EINE benannte Integration (freies Lichtpult mit sACN/OSC-Eingang) · Quelle: FOERDERUNG §8; §9 Handlung 8
 - [ ] **F-11** (F · bis spätestens 2026-11-16) docs/privacy.html:205 („we are not a controller“) und die Art.-9-Einordnung durch einen Datenschutzbeauftragten prüfen lassen · Quelle: FOERDERUNG §8; §9 Überbehauptung „Körperdaten … Clouds“
@@ -43,10 +43,10 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 - [x] **S-06** (S · bis 2026-10-19) Resilienz-Fallback §7.4, „klinisch“ → HRV-Detailwerte, Kohärenz definiert, One Clock als Beleg statt Feature, Barrierefreiheit als Abnahme, Netzwerk-Inventar mit Transportgrenze · Quelle: FOERDERUNG §9 Handlung 10 · Beleg: 3f44de7 — FOERDERUNG §2, §4, §7.1 Fragen 3/4/9, §7.4
 - [x] **S-07** (S · bis 2026-10-19) Linux-Lauf für EchoelCore/EchoelDSP gemessen (studio-linux.yml, swift:6.2-Container: Core 201/201, DSP 64/64) und in §2/§5/§7.1/§8 eingetragen · Quelle: FOERDERUNG §8; §9 Handlung 5 · Beleg: 4fccb21 → a5faa9a, 0d15867 — .github/workflows/studio-linux.yml
 - [x] **S-08** (S · bis 2026-10-19) §10-Briefe für die fremden Prüfer geschrieben (eine Linse je Modell, Belegpflicht, gemeinsamer Kopf) · Quelle: FOERDERUNG §10 · Beleg: e6155e4 — FOERDERUNG §10
-- [ ] **S-09** (S · bis 2026-10-26) Fonds-Seiten und FAQ-Antworten (F-07) in §1 einarbeiten; erst danach Linie und Förderobjekt festziehen · Quelle: FOERDERUNG §8; §9 Handlung 2
+- [ ] **S-09** (S · bis 2026-10-26) Fonds-Seiten und FAQ-Antworten (F-07) in §1 einarbeiten, FALLS sie kommen — Linie und Förderobjekt sind seit 19.10. (Weg A + Handbuch) fest; der Posten ist damit optional · Quelle: FOERDERUNG §8; §9 Handlung 2
 - [ ] **S-10** (S · bis 2026-10-24) Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und den Ton des Entwurfs daran kalibrieren · Quelle: FOERDERUNG §8
 - [ ] **S-11** (S · bis spätestens 2026-11-16) Lizenzen der Vergleichsprojekte in Frage 7 an der Quelle prüfen (nach dem Grok-Brief) · Quelle: FOERDERUNG §8, §6
-- [ ] **S-12** (S · bis spätestens 2026-11-16) Entwurf auf die Zeichengrenzen des Handbuchs kürzen (Bestand vor Plan, Messbares vor Prosa) — braucht F-06 · Quelle: FOERDERUNG §8; §9 Handlung 3
+- [ ] **S-12** (S · bis spätestens 2026-11-16) Entwurf auf die WORTGRENZEN des Handbuchs kürzen (Bestand vor Plan, Messbares vor Prosa) · Quelle: FOERDERUNG §8; §9 Handlung 3 · ERSTE FASSUNG 19.10. 21:30: FOERDERUNG §7.5 trägt alle 18 Felder, jede Antwort mit `scripts/ptf-wordcount.py` gemessen (kein Block OVER); offen bleibt: Founder-Fakten (F-08) einsetzen, neu messen, dann F-12 Gegenlesen
 - [ ] **S-13** (S · bis spätestens 2026-11-01) §10-Antworten mit scripts/learn-intake.py säubern, jede Behauptung messen, [verified k/n] ins Ledger, nur Bestätigtes in §7 ziehen — nach F-09 · Quelle: FOERDERUNG §10
 - [ ] **S-14** (S · bis 2026-10-22) DeepSeek hat in §10 keinen Brief (gemessene Trefferquote 10/24, learn-intake --tally) — auf deinen Wunsch nur als Nachschlage-Rolle wie Gemini ergänzen, kein Urteil · Quelle: FOERDERUNG §10; scripts/learn-intake.py --tally; Founder-Auftrag 19.10.
 
@@ -148,7 +148,7 @@ Fett = fester Termin oder Frist.
 - Studio P0: D4 Import-Scan-Test je Paket (die Engine importiert heute AVFoundation/AudioToolbox) — Vorarbeit für den Target-Split D1 und der Beleg, den Frage 4 („Linux reicht für die portablen Teile?“) braucht. _(S)_
 - Studio P0, klein: E7 Datenschutz-Manifest der Erweiterung um Datei-Zeitstempel (C617.1) ergänzen · E5 Assistent-Menüpunkt ausblenden, wenn das Gerät kein On-Device-Modell hat. _(S)_
 - [~15 min] Status des Altantrags „Syng.Visibra“ (läuft / abgelehnt / zurückgezogen, mit Datum) — ein Satz im Chat. Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4. _(F)_
-- [~15 min] Das Jahrgang-03-Handbuch (https://www.prototypefund.de/uploads/Publikationen_und_Onepager/PTF_Handbuch_2026.pdf) und die Checkliste (prototypefund.de/bewerbung) als PDF hochladen — daraus kommen die Zeichengrenzen; die 2023-PDFs unter new.prototypefund.de sind tot (404 am 19.10.). _(F)_
+- ~~[~15 min] Das Jahrgang-03-Handbuch und die Checkliste als PDF hochladen~~ — **erledigt 19.10. abends** (Handbuch geliefert und gelesen; Checkliste = S. 28 darin). _(F)_
 
 **Samstag 24.10.**
 
@@ -157,15 +157,15 @@ Fett = fester Termin oder Frist.
 
 **Sonntag 25.10.**
 
-- **Lieferungen vollständig: Rechtsform · Stundenschätzung · frühere Software-Projekte · Jahr des Projektbeginns · fünf Sätze Hintergrund · Handbuch-PDFs · vier Fonds-Seiten + FAQ · Syng.Visibra-Status · Accounts-Feld (vibrationalforce). Was vom 21./23./24.10. fehlt, heute nachliefern.** _(F)_
-- [Entscheidung, ~30 min] Stundenschätzung: die ~590-h-Tabelle (§7.1 Frage 9) gegen deinen Kalender Juni–November 2027 halten — Teilzeit neben laufenden Projekten. Die Zahl, die du wirklich trägst, nicht die 950-h-Vollzeitformel; Geräte als Ausgaben nur, wenn die Sprechstunde Ja gesagt hat (Frage 6). _(F)_
+- **Lieferungen vollständig = die sieben Platzhalter aus F-08: E-Mail · zwei Orte/Partner · Projekte 2–3 oder „keine“ · Rechtsform + Syng.Visibra · Stundenzahl (eine Zahl) · Barrierefreiheits-Partner · Jahr der Installationspraxis. (Handbuch, Jahr des Projektbeginns, Hintergrund, Accounts-Feld: erledigt.) Was vom 21./23./24.10. fehlt, heute nachliefern.** _(F)_
+- [Entscheidung, ~30 min] Stundenzahl: die ~590-h-Tabelle (§7.1 Frage 9) gegen deinen Kalender Juni–November 2027 halten — Teilzeit neben laufenden Projekten. EINE Zahl zwischen 250 und 950 (Handbuch; Vorschlag 620), nicht die 950-h-Vollzeitformel; Geräte sind keine förderfähigen Ausgaben (nur Stunden). _(F)_
 
 ### Woche 2 (26.10.–1.11.) — Entwurf festziehen, fremde Modelle als Prüfer, Target-Split, Repo-Hygiene
 
 
 **Montag 26.10.**
 
-- Handbuch (Zeichengrenzen), die vier Fonds-Seiten und die FAQ-Antworten in §1 einarbeiten; dann Linie und Förderobjekt in §4 festziehen: Körpersignal-Profil v1 + Egress-Policy + EchoelIO (OSC · ADM-OSC · sACN), taggbar, Linux-CI. Bestand bleibt Bestand. _(S)_
+- ~~Handbuch (Wortgrenzen) in §1 einarbeiten; Linie und Förderobjekt festziehen~~ — **vorgezogen und erledigt 19.10.** (§1d/§1e, §7.5 Formularfassung, §7.3 ohne Code-Meilensteine). Heute stattdessen: Founder-Fakten aus F-08 in §7.5 einsetzen und neu messen; Fonds-Seiten nur, falls geliefert. _(S)_
 - Prüfrunde 4 (Mo-Turnus) schreiben — Zuschnitt: Format eingefroren (C1–C5), B4/B9 Validierung, D4 Import-Scan. _(S)_
 - [~20 min] Runde 4 einkopieren, Antworten in den Chat. _(F)_
 - Studio P0: D3 Parametertabellen für Drums und Sampler in Core; PatchField aus der Tabelle abgeleitet — wie P0.1 beim Synth, mit dem Test, dass Tabelle und beide Verbraucher übereinstimmen. _(S)_
@@ -253,7 +253,7 @@ Fett = fester Termin oder Frist.
 ### Danach, fest
 
 - 10.–14.11.: Gegenlesen des Entwurfs durch die zweite Person (Founder organisiert, Sitzung arbeitet die Anmerkungen ein) — FOERDERUNG §8
-- 16.11.: Entwurf fertig — §7 in den Zeichengrenzen des Handbuchs, gegengelesen; Belege Dritter liegen vor: TestFlight-Tester-/Install-Zahl datiert, zwei bis drei namentliche Interessensbekundungen, EINE benannte Integration; DSB-Prüfung von docs/privacy.html:205 („not a controller“) und der Art.-9-Einordnung (Founder); Review-Datum der Förder-Entscheidung in decisions.csv (df4570e) — FOERDERUNG §5, §8
+- 16.11.: Entwurf fertig — §7.5 mit Founder-Fakten, jede Antwort in den WORTGRENZEN des Handbuchs (gemessen), gegengelesen; Belege Dritter liegen vor: TestFlight-Tester-/Install-Zahl datiert, zwei bis drei namentliche Interessensbekundungen, EINE benannte Integration; DSB-Prüfung von docs/privacy.html:205 („not a controller“) und der Art.-9-Einordnung (Founder); Review-Datum der Förder-Entscheidung in decisions.csv (df4570e) — FOERDERUNG §5, §8
 - 30.11., 15:00 CET: Frist — Einreichung über die Bewerbungsplattform (prototypefund.de/bewerbung); Linie Innovation; Förderobjekt = Körpersignal-Profil v1 + Egress-Policy + EchoelIO, taggbar, Linux-CI; Bewerbung auf Englisch möglich, Amtssprache Deutsch — FOERDERUNG §1, §4
 - Dez 2026–März 2027: Auswahl durch die Jury; nur nach Auswahl der formale Antrag beim BMFTR auf Deutsch mit VDI/VDE-IT (Founder) — FOERDERUNG §1, §8
 - 1.6.–30.11.2027: Förderphase (Einzelperson 47.500 €, 95 % von 50.000 € Projektbudget); 1.12.2027–31.3.2028 Second Stage (31.667 €), gleich mitbeantragt, falls die Sprechstunde Frage 7 mit „ohne Einfluss“ beantwortet hat — FOERDERUNG §1, §7.0 Frage 7, §7.3
