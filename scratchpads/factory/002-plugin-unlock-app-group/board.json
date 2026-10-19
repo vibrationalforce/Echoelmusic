@@ -1,10 +1,10 @@
 {
  "id": "002-plugin-unlock-app-group",
  "title": "Plugin-Freischaltung über die App Group",
- "stage": "review",
+ "stage": "done",
  "round": 2,
  "base": "1814d6b103a4cc901dc6b9e8d363a32c57fcb4dc",
- "head": "08ded356a",
+ "head": "edb5a5d7b",
  "lenses": [
   "code-reviewer",
   "security-agent",
@@ -31,6 +31,47 @@
    "stage": "build",
    "date": "2026-10-19",
    "note": "Nacharbeit 1: alle Major eingearbeitet, drei Optionale mit Grund abgelehnt (reviews/round-1/rebuttal.md)"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-19",
+   "note": "Runde 2 (wf_b2b87d43-108): vier PASS, APPROVE mit fünf Geräte-Kriterien. Der Bereich war noch nach der alten Regel die Nacharbeit (08ded356a..edb5a5d7b); der Approver belegte jedes Kriterium am Kopf-Stand, nicht nur am Diff (reviews/round-2/approver.md)."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-19",
+   "note": "Gate Echoel Studio auf edb5a5d7b grün (Lauf 153, unsigniert). Minors der Runde 2 in b4557bb19 (Rennen im StoreController, Datenschutz-Sätze, Profil-Kommentare). Fertig, gerät-unbestätigt: deviceOpen SP1–SP5; die Signatur beweist erst der nächste studio-testflight-Lauf."
+  }
+ ],
+ "paths": [
+  "EchoelStudio",
+  "SECURITY.md",
+  "docs/roadmap.html",
+  "docs/privacy.html",
+  "docs/dev/FOUNDER_INBOX.md",
+  "docs/dev/APP_STORE_CONNECT.md",
+  "scratchpads/factory/002-plugin-unlock-app-group"
+ ],
+ "deviceOpen": [
+  {
+   "ask": "Kriterium 9: Grundlinie 10007 in AUM",
+   "inbox": "§2 SP1"
+  },
+  {
+   "ask": "Kriterium 6: 10008 lädt in AUM ohne -3000",
+   "inbox": "§2 SP2"
+  },
+  {
+   "ask": "Kriterium 8: ohne Kauf bleibt die Demo-Pause",
+   "inbox": "§2 SP3"
+  },
+  {
+   "ask": "Kriterium 7: Sandbox-Kauf hebt die Demo-Pause auf",
+   "inbox": "§2 SP4"
+  },
+  {
+   "ask": "Kriterium 10: Käufer ohne App-Store-Anmeldung",
+   "inbox": "§2 SP5"
   }
  ]
 }

@@ -2,9 +2,9 @@
  "id": "001-factory-loop",
  "title": "Die Factory-Schleife selbst",
  "stage": "review",
- "round": 2,
+ "round": 3,
  "base": "b1cfc8ad1e49b93edc1a4832cac89e96bf1ccde4",
- "head": "9c0677f03",
+ "head": "f209ecb16",
  "lenses": [
   "code-reviewer",
   "security-agent",
@@ -31,6 +31,28 @@
    "stage": "build",
    "date": "2026-10-19",
    "note": "Nacharbeit 1: alle Befunde eingearbeitet, ein Attrappen-Fall je Zweig; head der Runde 2 = der Nacharbeits-Commit"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-19",
+   "note": "Runde 2 (wf_6970a9ab-570): REWORK, 5 major — Approver-Bereich, paths versteckt Dateien, docs/** veröffentlicht, Geräte-Bitten verschwinden als done, PrivacyInfo (Job 002, dort behoben)"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-19",
+   "note": "Nacharbeit 2 (letzte): since + paths ungefiltert geprüft, deviceOpen, Marker-Escape, round Pflicht; Runde 3 = f209ecb16"
   }
+ ],
+ "since": "0b0e8339b",
+ "paths": [
+  ".claude/workflows/echoel-factory-review.js",
+  ".claude/skills/factory",
+  "scripts/factory-review-selftest.py",
+  "scripts/factory-board.py",
+  "scripts/INDEX.md",
+  "Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift",
+  "scratchpads/factory/001-factory-loop",
+  "memory/inspiration_intake.md",
+  "inspiration.csv"
  ]
 }

@@ -163,6 +163,16 @@ verfallen sie mit der Sitzung):
 
 ⭐ **2026-10-16: Gerätesitzung 2 — Arrangement & Performance steht in `docs/dev/DEVICE_SESSION_2_ARRANGE_2026-10-16.md`** (ab 10.79.515; zehn Prüfungen, ~30 Minuten, nach Wert geordnet). Sie deckt jede Bitte der Arrange-&-Perform-Liste ab (A1 · A2 · A4b · A4c · A5 · A9 · A10 · P1–P4 · 7a–7c; die Quelle druckt `python3 scripts/founder-verify.py --since 26be2e6~1`) und fragt nichts aus der Tabelle unten doppelt. Gerätesitzung 1 (`DEVICE_SESSION_1_2026-10-17.md`) bleibt daneben offen.
 
+⭐ **2026-10-19: Echoel Studio — der erste Build, in dem die App den Plugin-Kauf für die Audio Units hinterlegt (Factory-Job 002, ab 11.0.0 Build 10008).** EINE Familie „SP“, fünf Schritte in dieser Reihenfolge, eine Sitzung in AUM (~15 Minuten). Der Studio-Build zählt eigene fünf, nicht die des alten Builds. Quelle: `scratchpads/factory/002-plugin-unlock-app-group/spec.md`, Kriterien 6–10.
+
+| # | Schritt | Erwartet | Antwort |
+|---|---|---|---|
+| SP1 | ZUERST den alten Build 10007 in TestFlight installieren, in AUM Echoel Synth, Drums und EQ laden. | Alle drei laden (Synth und Drums mit Demo-Pause). Das ist die Grundlinie: lädt schon 10007 nicht, liegt es nicht an der Gruppe. | [ ] |
+| SP2 | Build 10008 installieren, in AUM dieselben drei laden. | Alle drei laden, kein Fehler `-3000`. Kommt `-3000`: sag es, dann nehme ich die Gruppe aus der Erweiterung (dein Kauf funktioniert dann nur über den StoreKit-Rückfall). | [ ] |
+| SP3 | Ohne Kauf: Synth in AUM über 30 Sekunden spielen lassen. | Nach 28 s zwei Sekunden Stille, alle 30 s wieder. | [ ] |
+| SP4 | Erst wenn das Produkt in App Store Connect existiert (F-15/E37): in der App mit dem Sandbox-Konto kaufen, Synth in AUM neu laden, über 30 s spielen. | Keine Demo-Pause mehr. | [ ] |
+| SP5 | Als Käufer im App Store abmelden, Echoel einmal starten, dann Synth in AUM laden. | Sag, ob die Demo-Pause zurückkommt; erwartet ist, dass der StoreKit-Rückfall in der Erweiterung entsperrt. Kein richtig oder falsch, eine Messung. | [ ] |
+
 **G1–G5 gelten ab 10.79.491** (Deploy 2026-10-04; Build-Nummer = Nummer des TestFlight-Laufs). ⭐ Neuester TestFlight-Build, gemessen 2026-10-11: **10.79.496 = Build 2621** (Lauf 2621 grün, 2026-10-09); G6–G8 kamen mit 10.79.492, G9 mit 10.79.494/495. ⛔ Hier stand „Gilt für 10.79.491“, fünf Deploys lang (GMMW CL-4). Neu seit
 10.79.490: der Raum reist mit dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein
 fehlgeschlagenes Sichern ersetzt nichts mehr (P3a), und die einheitliche Gestaltung F1–F6b.
