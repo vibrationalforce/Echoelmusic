@@ -206,17 +206,21 @@ Heilmittelwerbegesetz irreführend (§3 HWG). Deshalb gilt weiter, ohne Ausnahme
 **Produktionsgesundheit ist die Gesundheit der Menschen, die mit Echoel produzieren**, soweit eine
 Software sie berühren kann, ohne etwas zu behaupten:
 
-1. **Hören.** Echoel misst Lautheit und Spitzenpegel schon heute (LUFS, True-Peak am Export). Ein
-   künftiges Werkzeug darf die Abhörlautstärke und die Sitzungsdauer *anzeigen*. Es sagt nicht, dass
-   es das Gehör schützt.
+1. **Hören.** Echoel misst Lautheit und Spitzenpegel schon heute (LUFS, True-Peak am Export). Das ist
+   die *digitale Programmlautheit*, kein Schalldruck am Ohr, und wird auch so beschriftet: iOS gibt einer
+   App nur die Systemlautstärke 0–1, die Empfindlichkeit des Kopfhörers ist unbekannt. Ein künftiges
+   Werkzeug darf die Sitzungsdauer und, nach Opt-in, die Kopfhörerpegel anzeigen, die iOS selbst in
+   Apple Health ablegt, mit Quellenangabe. Es sagt nicht, dass es das Gehör schützt, und nennt die
+   WHO-ITU-Referenz (80 dB(A) über 40 h pro Woche) höchstens als Zitat, nie als „sicher“-Ampel.
 2. **Belastung.** Lange Sitzungen ohne Pause, Abstürze, die Arbeit kosten, und unklare Oberflächen
-   sind die häufigsten Störungen. Die Stabilitätsregeln und die Barrierefreiheit (§6c) sind deshalb
+   sind die häufigsten Störungen. Die Stabilitätsregeln und die Barrierefreiheit (§6e) sind deshalb
    Teil der Produktionsgesundheit, nicht ein eigenes Feature.
 3. **Arbeit ohne Zwang.** Kein Konto, keine Benachrichtigung, die zur Rückkehr drängt, kein
    Zähler, der Nutzung misst.
 
 Ob ein Hinweis auf Hörpausen sinnvoll ist und wie er klingen darf, ist eine Forschungsfrage (F1
-unten).
+unten). Pausen schützen das Gehör beim Menschen nachweislich nicht (die Daten sind fast nur
+Tiermodelle); belegt ist nur, dass weniger Hördauer nach dem Gleichenergie-Prinzip weniger Dosis heißt.
 
 ### 6b. Biofeedback
 
@@ -236,8 +240,11 @@ so wie die Hardware-Linie außerhalb der App liegt (`memory/vision.md`). Die For
   `fastlane/`, `ContentPipeline/` oder im Förderantrag.
 - **Was:** Literatur lesen und bewerten, mit Evidenzgrad und Quelle. Der Stand im Repo: Vibroakustik um
   40 Hz ist ein echtes, aber an Körperschallwandler gebundenes Forschungssignal, kein
-  Telefonlautsprecher-Effekt (`REPORT_SOUND_PAIN_EVIDENCE_2026-07-12.md`). Eine Evidenzkarte zu Gewebe, Knochen und Wunde ist in
-  Arbeit; sie wird hier verlinkt, wenn sie fertig ist.
+  Telefonlautsprecher-Effekt (`REPORT_SOUND_PAIN_EVIDENCE_2026-07-12.md`). Die Evidenzkarte vom
+  2026-10-19 steht in `reports/Evidenzkarte Gesundheitsforschung.md` (Rohkarten je Feld unter
+  `research_notes/Evidenzkarte Gesundheitsforschung/`). ⚠️ Nur Apple-Dokumentation und Repo waren
+  dort selbst geöffnet; jede andere Zahl kommt aus Suchtreffern und wird vor einem Zitat im Volltext
+  geprüft.
 - **Wie weiter:** Wer am Menschen forscht, braucht eine Partnerinstitution und ein Ethikvotum. Echoel
   kann dort höchstens ein Messwerkzeug sein, und auch das erst nach einer Prüfung der
   Zweckbestimmung durch eine fachkundige Stelle.
@@ -248,6 +255,19 @@ Forschungsfragen, die eine Sitzung bearbeiten darf, ohne etwas zu bauen: **F1** 
 Abhörlautstärke: was sagen WHO und ITU zu sicherem Hören? **F2** Vibroakustik: welche Studien gibt
 es zu Gewebe, Knochen und Wundheilung, mit welchem Evidenzgrad? **F3** Wo liegt die Grenze der
 Zweckbestimmung für eine Musik-App, die Körpersignale anzeigt?
+
+**Stand der drei Fragen (Evidenzkarte 2026-10-19), als Literatur, nicht als Produktaussage:**
+**F1** Musizierende berichten deutlich häufiger Tinnitus, Hyperakusis und Hörverlust; für Studio- und
+Kopfhörer-Produzierende gibt es keine eigene Studie, und selbst Hörschutzprogramme sind laut Cochrane
+nur niedrig belegt. **F2** Dass hörbarer Schall Knochen, Wunden oder Gewebe heilt, ist nicht belegt.
+Ultraschall- und Vibrationsbefunde stammen aus Medizinprodukten mit Kontaktkopplung im MHz-Bereich und
+lassen sich nicht auf einen Audiopfad unter 24 kHz übertragen; Musik lindert im klinischen Rahmen das
+Erleben von Schmerz und Angst, Heilungsendpunkte wurden dabei nicht erhoben. **F3** Die
+Zweckbestimmung ergibt sich aus Kennzeichnung, Werbung und Verkaufsangaben (MDR Art. 2 Nr. 12): eine
+einzige Heilaussage auf Website, im Store oder in einem Reel macht Echoel zum Medizinprodukt-Kandidaten,
+und das Heilmittelwerbegesetz greift auch ohne diesen Status. Forschung mit Nutzerdaten braucht
+Einwilligung, Ethikvotum und eine Partnerinstitution als Träger (Apple 5.1.3). Acht konkrete
+Forschungsfragen für Partner stehen in der Karte.
 
 ### 6d. One Clock
 
@@ -359,8 +379,8 @@ P4); diese Datei ist neuer und gilt.
 
 ## 10. Bekannte Lücken (für die nächsten Sitzungen)
 
-- **L1** `FEATURE_STATUS.md` und `ContentPipeline/CLAIMS.md` kennen das Studio nicht. Bis ein
-  Studio-Abschnitt dort steht, ist `EchoelStudio/RELEASE` der Ist-Stand und Kopie für das Studio wird
+- **L1** `FEATURE_STATUS.md` kennt das Studio nicht; `ContentPipeline/CLAIMS.md` trägt seit `20a5469`
+  oben einen Studio-Block mit drei Nachträgen. Bis `FEATURE_STATUS.md` nachzieht, ist `EchoelStudio/RELEASE` der Ist-Stand und Kopie für das Studio wird
   gegen den Build geprüft.
 - **L2** Die Alt-App nimmt Video auf (Front- und Rückkamera, `VideoTakeCamera`), während
   `CLAUDE.md`, `FEATURE_STATUS.md`, die Kamera-Beschreibung in `Resources/iOS/Info.plist` und eine
@@ -370,7 +390,13 @@ P4); diese Datei ist neuer und gilt.
 - **L4** `HISTORY_ARCHIVE.md` sagt richtig, dass es vor dem Graft Heilungs-Code gab (ResonanceHealer,
   gelöscht 2026-01); der Satz „never code here“ in `CLAUDE.md` war historisch falsch. Die rote Linie
   bleibt.
-- **L5** Die Evidenzkarte zu §6c ist in Arbeit.
+- **L5** ~~Die Evidenzkarte zu §6c ist in Arbeit.~~ Erledigt 2026-10-19: `reports/Evidenzkarte
+  Gesundheitsforschung.md`. Offen bleibt die Volltext-Prüfung jeder Zahl, die je zitiert werden soll.
+- **L6** Die Evidenzkarte fand zwei Apple-Health-Punkte in der Alt-App: die Lese-Beschreibung in
+  `Resources/iOS/Info.plist` nennt Herzfrequenz und HRV, gelesen wird auch die Atemrate (Guideline
+  5.1.3(i)); und „Save to Apple Health“ schreibt per Opt-in Werte aus Kamera-rPPG und BLE, deren
+  Genauigkeit nicht validiert ist (5.1.3(ii)). Beides ist founder-gesperrt bzw. eingefroren: Bericht in
+  `FOUNDER_INBOX.md` F21. Echoel Studio liest und schreibt kein Apple Health.
 
 ---
 
