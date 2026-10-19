@@ -1,7 +1,7 @@
 {
  "id": "001-factory-loop",
  "title": "Die Factory-Schleife selbst",
- "stage": "review",
+ "stage": "needs-human",
  "round": 3,
  "base": "b1cfc8ad1e49b93edc1a4832cac89e96bf1ccde4",
  "head": "f209ecb16",
@@ -41,6 +41,11 @@
    "stage": "build",
    "date": "2026-10-19",
    "note": "Nacharbeit 2 (letzte): since + paths ungefiltert geprüft, deviceOpen, Marker-Escape, round Pflicht; Runde 3 = f209ecb16"
+  },
+  {
+   "stage": "needs-human",
+   "date": "2026-10-20",
+   "note": "Runde 3 (wf_74fa31d5-4ba): ESCALATE an der Grenze, 1 major offen (Sperrliste ohne .claude/hooks/**, gelesen vom geänderten Baum). Drei PASS. Empfehlung: annehmen, Befund als Job 003 (decision.md, Inbox GM27)."
   }
  ],
  "since": "0b0e8339b",
@@ -54,5 +59,6 @@
   "scratchpads/factory/001-factory-loop",
   "memory/inspiration_intake.md",
   "inspiration.csv"
- ]
+ ],
+ "inbox": "GM27"
 }

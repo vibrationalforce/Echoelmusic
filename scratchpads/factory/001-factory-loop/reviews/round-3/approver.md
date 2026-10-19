@@ -1,0 +1,40 @@
+# Runde 3 — Approver
+
+Urteil: **ESCALATE**. The job escalates because the rework cap is reached: two rework rounds are done and one major finding is still open after round 3. I checked that finding at f209ecb16 and it is real. The approver prompt (.claude/workflows/echoel-factory-review.js:248-255) defines locked files as only the files named in context.md §3 plus PROTECTED_FILES. That leaves out `.claude/hooks/**`, which .claude/settings.json:35 puts on its ask list (`Edit(/.claude/hooks/**)`) and which the hook's docstring calls the founder's gate. The prompt also never says which tree to read, so the approver reads the working tree, and a job could edit the lock list it is judged against.
+
+Apart from that finding, the job holds up. Seven of the eight criteria are met with evidence I re-ran or read myself, and criterion 8 is a device line with nothing to check.
+
+None of the founder-locked files changed in the UNSCOPED range b1cfc8ad1..f209ecb16 (`.github/workflows/**`, root `project.yml`, `Resources/iOS/Info.plist`, `.claude/settings.json`, `.mcp.json`, and also `.claude/hooks/**`). `EchoelStudio/project.yml` did change, adding `CODE_SIGN_ENTITLEMENTS` in job 002, commits 08ded356a and edb5a5d7b. The hook covers only the root `project.yml` (its docstring at line 102 says `Sources/x/project.yml` is not a match), and 16 earlier agent commits have edited this file, so I do not count it as locked. Legal and health pages outside the scope (docs/terms.html, privacy.html, health.html) come from job 002 and the docs commits, not from this job, so they are not this job's decision. Job 001 touches no product scope, money, legal text, health wording or user data.
+
+What I ran:
+- `python3 -I scripts/factory-review-selftest.py` printed "all cases match", exit 0.
+- `node --check` on the workflow body, with the meta block stripped and wrapped in an async function, returned 0.
+- A Python transcription of guard claims 1-4: 2 of 2 agent calls are wrapped, the READ_ONLY text equals the §5 clause after whitespace normalisation, all 9 agentTypes are on the roster, and the cap is 2 in both files.
+- All 15 paths cited in the skill exist.
+
+What I did not run: `factory-board.py --selftest`, because it creates a temp directory and this run is read-only. On CI, the guard compiled (`Build for Testing` passed on edb5a5d7b), but no run has yet shown it executing. f209ecb16 itself triggers no workflow.
+
+## Abnahme
+
+- [x] (code) 1. The workflow is syntactically valid (node --check in an async wrapper) and rejects malformed arguments with decision INVALID
+  - Beleg: Stripped the `export const meta` block (822 B) and wrapped the body in `(async () => {…})()`: `node --check -` returned 0. The argument check is at echoel-factory-review.js:126-162 and returns `{decision:'INVALID', problems}`. factory-review-selftest.py:57-66 and further cases cover a string/fractional/null round, HEAD or branch refs, missing head, and `--all` or `a..b` as base. `python3 -I scripts/factory-review-selftest.py` printed 'all cases match', exit 0 (node v22.22.0).
+- [x] (code) 2. Every agent call carries the context.md §5 clause verbatim (guard claims 1 and 2)
+  - Beleg: In the workflow, `agent(` occurs 2 times and `agent(withReadOnly(` 2 times. `withReadOnly` puts READ_ONLY first (line 21). `const READ_ONLY` (line 13) equals the §5 clause after whitespace normalisation (Python transcription of testTheClauseIsTheOneTheContextRulesDefine: equal True). Guard: Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift:88,103,111. On CI it compiled (CI/CD 39338612322, `Build for Testing` passed on edb5a5d7b); no run has yet shown it executing.
+- [x] (code) 3. Every agentType is on the ultracode roster (claim 3)
+  - Beleg: Workflow agentTypes: audio-thread-reviewer, bio-safety-reviewer, code-reviewer, concurrency-reviewer, dsp-reviewer, e2e-test-agent, general-purpose, security-agent, ui-state-reviewer. All 9 occur in .claude/skills/ultracode-teams/SKILL.md (transcription). Guard: TheFactoryReviewersAreReadOnlyTests.swift:126 testEveryAgentTypeIsOnTheRoster.
+- [x] (code) 4. The rework cap is defined in ONE place (MAX_REWORK_ROUNDS) and the skill states the same number (claim 4)
+  - Beleg: echoel-factory-review.js:17 `const MAX_REWORK_ROUNDS = 2`, used at lines 145, 214 and 260. .claude/skills/factory/SKILL.md:91 says 'Höchstens `MAX_REWORK_ROUNDS` = 2 Nacharbeitsrunden' (at most 2 rework rounds). Guard: TheFactoryReviewersAreReadOnlyTests.swift:150.
+- [x] (code) 5. CHANGES without a pointed blocker/major does not count, PASS with a blocker counts as CHANGES, a missing reviewer answer is RERUN
+  - Beleg: echoel-factory-review.js:192-200: the verdict comes from `pointed` findings (blocker or major, with a non-empty file), not from what the reviewer said. Lines 210-213 return RERUN when a reviewer is missing. Selftest cases 'missing reviewer -> RERUN' and 'major finding round1 -> REWORK' pass ('all cases match').
+- [x] (code) 6. `scripts/factory-board.py --selftest` exits 0 and the tool is listed in scripts/INDEX.md
+  - Beleg: scripts/INDEX.md:58-59 lists factory-board.py and factory-review-selftest.py. I did not run the selftest because it writes to a tempfile.TemporaryDirectory (factory-board.py:95-97) and this run is read-only. The e2e-test-agent lens ran it at round 3 on a working tree identical to f209ecb16 for these files (`git diff --quiet f209ecb16 -- …` gave SAME_AS_HEAD), exit 0. I read the expected sets (lines 123-137: 3 jobs loaded, 4 problems) and they agree with what load() and render() do.
+- [x] (code) 7. The skill cites only paths that exist
+  - Beleg: A Python scan of every backtick path under .claude/, scripts/, docs/, Tests/, scratchpads/, memory/, EchoelStudio/ etc. in .claude/skills/factory/SKILL.md found 15 cited and 0 missing. Pinned by TheAgentRecipesPointAtThisRepoTests claim 3 and `scripts/doctor.py --section B`.
+- [ ] (device) 8. [DEVICE] does not apply — the slice touches no app
+  - Beleg: Tagged [DEVICE], so code cannot meet it, but there is nothing to check on a device: the scoped diff touches nothing under Sources/ or EchoelStudio/. The PM should NOT spend a §2 device slot or a deviceOpen entry on it. The Studio budget is already full with SP1-SP5 (FOUNDER_INBOX.md:166). The follow-up job should drop the tag, as the ux and e2e lenses propose.
+
+## Für den Menschen
+
+- **Frage:** Factory job 001 (the factory review loop itself) has hit its limit of 2 rework rounds with one major finding still open. The approver's list of locked files leaves out `.claude/hooks/**`, which `.claude/settings.json` asks about and the hook itself calls your gate. The approver also reads that list from the working tree, so a job could change the list before it is checked. Accept job 001 as it is and fix this in a small follow-up job, or allow a third rework round on job 001?
+  - **Empfehlung:** Accept job 001 and open a follow-up job 003. The gap is one sentence in the approver prompt (echoel-factory-review.js:251). It is pipeline-only, APPROVE never merges, and today no job changes a hook or a lock list. Job 003 would: (1) read the locked set at the job base with `git show <base>:` from context.md §3, protect-founder-gated.py (PROTECTED_FILES/PROTECTED_DIRS) and settings.json `permissions.ask`; (2) treat any change to those files or to `.claude/hooks/**` as locked in itself; (3) take the minors along: drop the [DEVICE] tag from spec criterion 8, make SKILL.md:124 say a `verified` date (JJJJ-MM-TT) instead of VERIFIED-…, correct the rule at SKILL.md:118 that says `scripts/**` starts a run, return INVALID only when every lens reports zero files, add a selftest for a malformed deviceOpen, and escape U+2028/U+2029 in the data block.
+  - **Warum deine:** The cap of 2 rework rounds is the factory's own stop rule, and an escalation at the cap is yours by design (SKILL.md step 5/6). Which files count as founder-locked is also your call: context.md §3 does not name `.claude/hooks/**`, and the hook says the gate on its own directory belongs to you. No FOUNDER_INBOX entry covers factory job 001 yet (grep 'factory' finds only the job-002 SP family at :166).

@@ -1545,3 +1545,37 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Wächter-Rotfunde repariert, transkribiert ALLE Ansprüche der Datei, nicht nur die zwei gemeldeten — die
   Meta-Länge und das RTMP-Fenster standen in derselben Datei bzw. Nachbardatei und blieben stehen.
 
+
+## 2026-10-20 01:20 — Factory-Reel gelernt und gebaut, Recherche AUv3/Raum/Video, Jobs 001 + 002, Website
+
+- Auftrag (Founder-Upload: Instagram-Reel zazencodes, „Claude Code software factory“): „Schaue was wir hiervon
+  einbauen können … Integriere alles brauchbare auf höchstem Niveau. Mache Updates im Kalender und suche passende
+  zusätzliche Quellen um voll AUv3 fähig werden, spatial Audio, immersive Video Formate …“. Lernmodus: das Reel
+  ist vollständig im Bild, die Endkarten-URL und der Code des Kanals sind NICHT geöffnet; übernommen ist das Muster.
+- Factory: `/factory` (`.claude/skills/factory/SKILL.md`), Workflow `.claude/workflows/echoel-factory-review.js`
+  (drei Pflicht-Linsen als Boden + eine Domänen-Linse, höchstens zwei Nacharbeiten, getrennter Approver),
+  `scripts/factory-board.py`, `scripts/factory-review-selftest.py` (Node-Attrappen; seit Runde 3 auch die Prompts),
+  Wächter `TheFactoryReviewersAreReadOnlyTests` (sechs Ansprüche, transkribiert grün).
+- Job 001 (die Schleife selbst): Runde 1 sieben Majors, Runde 2 fünf — u. a. der Approver las ab Runde 2 nur die
+  Nacharbeit, `paths` versteckte Dateien vor der Sperrprüfung, `docs/**` hieß „kein Lauf“ und wird veröffentlicht,
+  ein APPROVE mit Geräte-Bitten verschwand als „done“. Nacharbeit 2 (f209ecb16): `since`, ungefilterte Dateiliste,
+  `deviceOpen`, Marker-Escape, `round` Pflicht; zwölf Mutationen am Workflow und drei am Board gefangen. Runde 3
+  (wf_74fa31d5-4ba) läuft — sie ist die letzte; CHANGES dort eskaliert.
+- Job 002 (Plugin-Kauf über die App Group; Recherche: StoreKit in Erweiterungen von Apple nicht unterstützt):
+  08ded356a → Runde 1 fand ITMS-91053 (Privacy-Manifest der Erweiterung ohne UserDefaults-Grund) VOR dem Upload,
+  edb5a5d7b behebt es; Runde 2 vier PASS, APPROVE mit fünf Geräte-Kriterien. Minors in b4557bb19, darunter ein
+  echtes Rennen: zwei Kaufdurchläufe überlappten, der ältere konnte zuletzt schreiben. FOUNDER_INBOX §2 Familie SP
+  (Grundlinie 10007 zuerst), TODO-Zwilling F-18b. ⚠️ Der Studio-Build zählt eigene fünf Geräte-Bitten (Regel 1
+  „je Build“), nicht die des Alt-App-Builds.
+- Recherche (`reports/AUv3 Raumklang und immersives Video.md`, eingearbeitet in fbd51a662): offenes Zwischenformat
+  besitzen, letzte Meile der Plattform — ADM/ADM-BWF zuerst, 360°-Mono-APMP, CLAP dann VST3 über eine C-ABI nach
+  einem Linux-Spike, kein AAX; GM23–GM26 neu in der Inbox; vier Zeilen decisions.csv.
+- Website (c7a8eecff): `hreflang="de"` ohne Ziel entfernt (fünf Seiten), bekannte Lücken auf der
+  Barrierefreiheitsseite, health.html ohne klinisches Publikum.
+- Gates: Echoel Studio grün auf edb5a5d7b (Lauf 153, unsigniert); Lauf 154 auf b4557bb19 läuft. F23: der
+  Auto-Merge nach `main` scheitert seit Lauf 4406 am Merge-Konflikt (Gates davor grün) — Founder-Sache mit F-08b.
+- Nichts gerätegeprüft. Nächster Schritt: RELEASE → 10008 nach grünem Lauf 154; der Archiv-Lauf entscheidet F17s
+  offene Hälfte; Runde 3 von Job 001 auswerten.
+- ⭐ Lehre: der eigene Selbsttest war nach Runde 1 „vollständig“ und ließ drei Mutationen durch, weil er nur
+  Entscheidungen prüfte, nicht die Prompts — ein Prüfer, der die Eingabe der Agenten nie liest, prüft nicht, was
+  sie sehen. Erst die Mutation zeigt, ob ein Fall beißt.
