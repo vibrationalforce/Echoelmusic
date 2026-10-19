@@ -356,13 +356,50 @@ Reihenfolge bleibt.
 | Zeitraum | Was | Ergebnis |
 |---|---|---|
 | **2026 Okt–Dez** | P0 abschließen; P1 Komponieren (Startprojekte, Presets, Skalen-Lock, Stems, Projektpaket); TestFlight-Runden; Förderantrag bis 30.11.; Merge auf `main` (Founder) | öffentliche TestFlight-Beta |
-| **2027 Jan–Mär** | P2: eigene AUv3 und Kauf, Kauf wiederherstellen, Prüfung in AUM und GarageBand, Barrierefreiheits-Abnahme (§6e) | **App Store 1.0**, Ziel März 2027 |
+| **2027 Jan–Mär** | P2: eigene AUv3 und Kauf (App schreibt, Erweiterung liest, §8a), Kauf wiederherstellen, Plugin-Vertrag (Host-Takt, Umbruch-Fenster, Presets, Tails), Prüfung in AUM und GarageBand bei 44,1 und 48 kHz, Barrierefreiheits-Abnahme (§6e) | **App Store 1.0**, Ziel März 2027 |
 | **2027 Apr–Mai** | P3 Live: MIDI-Clock, Szenen-Mapping für die Xone:96, Network MIDI nur mit bekannten Partnern | 1.1, ein Live-Set auf dem Gerät |
 | **2027 Jun–Nov** | Förderzeitraum, falls bewilligt: M1 Paketgerüst, M2 `EchoelSense`, M3 `EchoelIO`, M4 Nutzertest und Paket 1.0. Ohne Bewilligung: P4 nach Plan | offene Pakete, Version 1.0 |
 | **2027 Dez – 2028 Mär** | Second Stage (keine Code-Meilensteine); P4 Bühnen-I/O in der App: Event-Spuren, Verbindungen, OSC/Art-Net/sACN/ADM-OSC | 1.2, eine Installation läuft vier Stunden von Echoel aus |
-| **2028** | P5 Modulation; P6 Körper mit EchoelBodyVibe; P7 Visual und externer Bildschirm | 1.3 und folgende |
-| **2029** | Raum-Rendering; Video in der Workstation (Founder-Frage); Mac und Vision Pro über die iPad-App; Watch als Anzeige | weitere Plattformen |
+| **2028** | P5 Modulation; P6 Körper mit EchoelBodyVibe; P7 Visual und externer Bildschirm; Kopfhörer-Raum-Monitor, offener ADM-BWF-Master, 360°-Mono-Export (§8a) | 1.3 und folgende |
+| **2029** | Raum-Rendering; Video in der Workstation (Founder-Frage); Mac und Vision Pro über die iPad-App; Watch als Anzeige; Desktop-Plugins nach einem Linux-Spike (§8a) | weitere Plattformen |
 | **2030 und danach** | GMMW-Generatoren in der Breite; Zusammenarbeit; Forschungshorizont GSIDMMW | ohne Datum |
+
+### 8a. Formate und Plattformen (Recherche 2026-10-19)
+
+Quelle: `reports/AUv3 Raumklang und immersives Video.md` (fünf Notizen unter `research_notes/`, Belege je
+Satz; Zahlen von Seiten, die nur über Suchtreffer gelesen wurden, sind vor jeder öffentlichen Verwendung im
+Volltext zu prüfen). **Ein Prinzip trägt alles: Echoel besitzt das offene Zwischenformat, die letzte Meile
+gehört der Plattform.** Nichts davon ist gerätegeprüft.
+
+- **AUv3 voll:** acht Komponenten in EINER Erweiterung stehen; es fehlt die Hälfte des Vertrags, die ein
+  Plugin an den Song koppelt — `musicalContextBlock`/`transportStateBlock` in beide Richtungen, ein Fenster,
+  das in jedem Rechteck umbricht (GarageBand ~1024 × 335, Logic fragt keine Größen), Factory- und
+  User-Presets, `tailTime` und `isRenderingOffline` im Export, später UMP (iOS 15) und eine `aumi`-Komponente
+  für Logics MIDI-FX-Platz. Kauf: StoreKit wird in Erweiterungen nicht unterstützt (Apple DTS, März 2026;
+  Guideline 4.4) — die App schreibt den Kauf in die App Group, die Erweiterung liest (Factory-Job 002).
+  Abnahme ist eine Host-Matrix am Gerät, kein Zertifikat; ob `auval` eine reine iOS-Erweiterung prüfen
+  kann, ist offen und kann eine P2-Abnahme ungültig machen.
+- **Raumklang:** eigenes, ADM-förmiges Objektmodell (Objekte · Bett · HOA). Monitor über
+  `AVAudioEnvironmentNode` (nur Mono-Eingänge, HRTF), Head-Tracking braucht ein Entitlement (Founder).
+  Ausgabe offen: ADM-BWF (BS.2076, BW64), AmbiX, Binaural; APAC nur für Bett und HOA ab iOS 26. **Dolby
+  Atmos und Apples ASAF werden nicht behauptet** — das Dolby-Profil ist vertraulich (H19), ASAF hat keine
+  öffentliche Spezifikation.
+- **Immersives Video:** zuerst 360°-Mono nach Apples Projected Media Profile (ein Kompressionsschlüssel ab
+  iOS 18), offline aus dem Visual gerendert, mit dem Blitzbegrenzer in Sehwinkel-Einheiten. Stereo-MV-HEVC
+  wartet, weil Apples Adapter laut Doku-Metadaten mit iOS 27 endet; Apple Immersive Video ist auf iOS nicht
+  autorisierbar. YouTube/Quest brauchen einen zweiten Weg (Spherical V2). NDI wäre die erste fremde
+  Abhängigkeit (Founder).
+- **Andere Betriebssysteme:** Apple zuerst. Danach Desktop: CLAP (MIT, nur C-Header) und VST3 (SDK seit
+  29.10.2025 MIT) über eine C-ABI um den Foundation-only-DSP (`@c`, SE-0495) — erst ein Linux-Spike in einem
+  Host, weil Swift-Laufzeit im fremden Prozess ohne Präzedenz ist; kein CMake, solange die Header reichen
+  (für CLAP sicher, für die VST3-C-API zu prüfen — `clap-wrapper` und das VST3-SDK bauen mit CMake). AAX
+  nicht planen (PACE). Android und Web nicht vor 2029. **Ableton Link ist außerhalb von iOS GPLv2+** — die
+  „frei“-Annahme in `CLAUDE.md` gilt nur für LinkKit auf iOS (F11, GM23).
+- **Website:** drei getrennte Räume — gemessen (mit Datum), geplant (Zukunftsform), erforscht (ohne Wirkung).
+  Kompatibilität nur mit Messdatum. Über Klang, Vibration, Licht und Bild nur Sicherheit und Mechanismus
+  (MDCG 2019-11 rev.1: der Werbetext begründet die Zweckbestimmung). Kein „supports Music Haptics“ — Apples
+  Music Haptics gilt für Apple-Music-Titel, nicht für erzeugten Klang; eigene Haptik nur über Core Haptics und
+  erst nach Ko-Gestaltung mit gehörlosen Menschen. 40-Hz-Licht nie.
 
 **Bedingungen, die die Tabelle kippen:** Kommt App Store 1.0 nach dem 1. Juni 2027, kollidiert es
 mit Förder-M1; dann geht 1.0 vor, und M1 beginnt später im Förderzeitraum. Kommt keine Förderung,
@@ -406,6 +443,8 @@ P4); diese Datei ist neuer und gilt.
   5.1.3(i)); und „Save to Apple Health“ schreibt per Opt-in Werte aus Kamera-rPPG und BLE, deren
   Genauigkeit nicht validiert ist (5.1.3(ii)). Beides ist founder-gesperrt bzw. eingefroren: Bericht in
   `FOUNDER_INBOX.md` F21. Echoel Studio liest und schreibt kein Apple Health.
+- **L7** §8a ist Recherche, kein Plan mit Zusage. Vor jeder Behauptung nach außen: Volltext der Quelle, und
+  für jede Plattform-Aussage ein Gerätebeleg. Die Founder-Posten daraus stehen in `FOUNDER_INBOX.md` GM23–GM26.
 
 ---
 
@@ -428,6 +467,12 @@ P4); diese Datei ist neuer und gilt.
    und Artifact; die abweichende Zeile in `memory/decisions.md` ist überholt).
 10. **Förderreihenfolge:** `EchoelSense` (M2) vor `EchoelIO` (M3), wie im Antrag; das Artifact ist
     älter.
+11. **Plugin-Kauf über die App Group** (Factory-Job 002): die App schreibt, die Erweiterung liest, StoreKit in
+    der Erweiterung nur Rückfall.
+12. **Formate: offenes Zwischenformat zuerst** (§8a) — ADM-förmiges Raummodell und ADM-BWF vor jedem
+    proprietären Format; 360°-Mono vor Stereo-Video; keine Behauptung zu Dolby Atmos, ASAF oder Music Haptics.
+13. **Desktop-Route:** CLAP, dann VST3, nach einem Linux-Spike über eine C-ABI; kein CMake, kein AAX.
+14. **Factory** (`.claude/skills/factory`) ist der Weg für mehrteilige oder sichtbare Scheiben.
 11. **Versionsnummern folgen der Auslieferung.**
 12. **E28 bleibt:** der CCC wird in keiner Kopie genannt. Ein Vortrag auf einem Kongress ist eine
     persönliche Einreichung des Founders und wird nicht beworben.

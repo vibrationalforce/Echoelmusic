@@ -5536,3 +5536,22 @@ Review 2026-11-15.
 **Commits:** `26e507745` (StoreView, echl-Name), `e755fd52d` (Website, CLAIMS, Vision), `e9e36b146` (About-Seite). Zweite Hälfte: `4adabf3a7` (zwei rote Website-Wächter), `75ab37182` (Import-Flag ohne Fund, Schlüssel `.v2` — ohne ihn hätte kein Gerät mit 10004–10006 je importiert), `042cfdfa2` (Kauf im Präsens in der App), `2c45fd058` (GMMW bis 1.0 eng — eigene Zeile in `decisions.csv`), `ffc0a5e5d`, `2b25e03ea`. Founder: F22 (Live-Datenschutzseite gegen Studio-Build).
 
 **Review:** 2026-11-19.
+
+### 2026-10-19 — Factory, Plugin-Kauf über die App Group, Formate und Desktop-Route (Recherche + zwei Factory-Jobs)
+
+**Anlass:** Founder-Reel „Claude Code software factory“ mit dem Auftrag „Integriere alles brauchbare auf höchstem Niveau … voll AUv3 fähig, spatial Audio, immersive Video Formate … Apple Ökosystem first, dann alle anderen Betriebssysteme und optimale Website-Integration“.
+
+**Entscheidungen (Sitzung unter Founder-Delegation, je eine Zeile in `decisions.csv`):**
+1. **Factory** (`.claude/skills/factory`, Workflow `echoel-factory-review`, `scripts/factory-board.py`, `scripts/factory-review-selftest.py`): drei Pflicht-Linsen als Boden plus höchstens eine Domänen-Linse, alle nur lesend; höchstens zwei Nacharbeiten; ein ESCALATE wird nie herabgestuft, ein `[DEVICE]`-Kriterium blockiert nicht, sondern wird eine Bitte für Inbox §2. Am eigenen Bau gefahren — Runde 1 fand sieben echte Fehler in genau dieser Logik.
+2. **Plugin-Kauf über `group.com.echoelmusic.shared`** (Job 002): App schreibt, Erweiterung liest, StoreKit dort nur Rückfall. Die Prüfrunde fand vor dem nächsten Upload: beide Privacy-Manifeste ohne den App-Group-Grund `1C8F.1` (ITMS-91053), eine falsche Signier-Garantie in zwei Kommentaren, einen unwahr gewordenen Datenschutz-Satz in „About“ plus drei Website-/Repo-Zwillinge.
+3. **Formate:** offenes Zwischenformat zuerst (ADM-förmig, ADM-BWF, 360°-Mono-APMP); keine Behauptung zu Dolby Atmos, ASAF, Music Haptics; nie 40-Hz-Licht.
+4. **Desktop:** CLAP, dann VST3 über C-ABI nach Linux-Spike; kein CMake, kein AAX; Link außerhalb iOS nur mit Ableton-Lizenz (GM23).
+
+**Founder-Posten neu:** GM23 (Ableton-Brief), GM24 (C-Header für den Spike), GM25 (visionOS/Mac-Target), GM26 (NDI), F23 (`auto-merge-claude.yml` scheitert seit Lauf 4406 am Merge-Konflikt — Gates grün, Merge rot; hängt an F-08b).
+
+**Gemessen, nicht geglaubt:** Der F17-Lauf (Profil `.auv3` trägt `.shared`) und die Portal-Aufnahmen (keine Gruppe) widersprechen sich; der nächste Studio-Archiv-Lauf entscheidet es, weil `studio-testflight.yml` bei einem Signierfehler die Gruppen jedes Profils druckt. Das Signier-Log von Lauf 7 (10007) zeigt die Profil-Gruppen nicht (sie werden nur im Fehlerfall gedruckt). Nichts gerätegeprüft.
+
+**Lehre:** Ein Kommentar, der eine Garantie ausspricht, die die eigene Spec verneint, ist die teuerste Sorte — drei der vier Linsen fanden denselben Satz unabhängig. Und: wer einen required-reason-Aufruf in eine Erweiterung bringt, zieht ihr Manifest im selben Commit nach; jedes Bundle wird einzeln geprüft.
+
+**Review:** 2026-11-19.
+
