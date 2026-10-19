@@ -1360,3 +1360,38 @@ Nächstes: Arrangement-Ansicht, dann M2.
   die Zeit, nicht den Ort; Kandidaten jetzt Events-Seite, Infoletter, Mail.
 - Nichts gerätegeprüft. Offen: F17 im Portal (Founder), dann Versuch 4; Founder-Angaben bis 25.10. (§8);
   Bewerbungshandbuch-PDF; Entwurf bis 16.11.
+
+## 2026-10-19 — Förderung: Jury-Simulation (6 Linsen) · Repo-Hygiene · PluginUnlock-Grenze · Linux erstmals gemessen
+
+- **KI-Regel gefunden (F19):** der Fonds-Blog schließt Vibe-Coding aus („outsourcing work to machines“), der
+  GitHub-Account ist Pflicht, „um sicherzustellen, dass Bewerbende echte Entwickler sind“. Öffentliche Zahlen
+  (API 19.10.): 9.861 Commits auf `main`, 8.805 unter dem Account `claude`, ~516 Founder-Identitäten — der
+  Shallow-Klon (392/394) lag um Faktor 25 daneben. Frage 1 der Sprechstunde entscheidet, ob die anderen zählen;
+  zusätzlich schriftlich an info@prototypefund.de (Founder). Entscheidung A/B/C beim Founder.
+- **Jury-Simulation** (Workflow `wf_fa3287ca-7d5`, 18 Agenten, sechs Linsen nach dem echten Jury-Profil):
+  Erfolgschance je Linse 2/5, alle nennen F19 als Hauptgrund; Linie Innovation. Bestätigte Über-Behauptungen
+  (blockierendes Test-Bundle, reine Werttypen, „ohne ObjC im Render-Pfad“, „jedes neue Feld ein Compile-Fehler“,
+  voller Export, Cloud-Claim, AudioKit-Abhängigkeiten, Präsens für `EchoelIO`/`EchoelSense`, CCC-Umfeld/Fediverse,
+  M1/M4 zählten Bestand, „nur Sensor-Adapter plattformspezifisch“) sind in `FOERDERUNG_PROTOTYPE_FUND_2026.md`
+  korrigiert; Förderobjekt verengt (Profil + Policy + `EchoelIO`, taggbar, Linux-CI), Stundenplan ~590 h,
+  §9 trägt Methode, Tabelle, zehn Aktionen mit Besitzer (`3f44de7`). Beschlüsse in `decisions.csv`/`memory`.
+- **Hygiene, die die Jury zuerst sieht:** README „Two codebases in one repository“ (`638d667`),
+  CONTRIBUTING/CoC/Issue-Vorlage (`c477267`), DSGVO-Entwurf §0 ohne Phantom-Broadcast/-Mikrofon (`607cf73`);
+  `docs/version.json` braucht nichts — HISTORY-NOTE-Banner seit 28.08. Founder-gated bleiben LR1/LR2/LR3/LR6.
+- **`PluginUnlock` aus `EchoelCore` nach `Plugins/Shared`** (`b035916`): die offenen Pakete wissen nicht, dass
+  etwas verkauft wird; `StandardEffectUnit`-Kommentare korrigiert (`ea613d7`, macOS-Studio-Lauf 39192177684 grün).
+- **Linux erstmals gemessen — `studio-linux.yml`** (`4fccb21` → `a5faa9a`, Container `swift:6.2`, Swift 6.2.4):
+  Lauf #1 starb an `set -o pipefail` in `sh` (→ `shell: bash`); #2/#3: Core kompiliert samt Tests, DSP 64/64 grün,
+  Core-Tests TRAPPEN in der generierten Test-Erkennung (`_arrayForceCast`): Klassen-`@MainActor` auf
+  `XCTestCase` typt jede synchrone Methode `@MainActor () throws`, was swift-corelibs-xctest nicht castet.
+  Umbau (`5ae8780`): je Test `try await MainActor.run`, drei Werttyp-Tests bleiben synchron. Lauf #4 wies
+  ZWEI weitere Stellen ab, die ein Drei-Linsen-Review (600k Tokens) als legal argumentiert hatte —
+  `XCTAssertThrowsError(try …)` macht die Closure werfend, eine lokale `func` erbt keine Isolation
+  (`11718af`). **Lauf #5: Core 201/201, DSP grün, Linux-Job `success`.** Baulehren in `EchoelStudio/CLAUDE.md`
+  (`cfe6f85`), Dead-End im HARNESS_LEDGER, Förderdatei §2/§5/§7.1/§8/§9 auf die Messung (`0d15867`).
+  macOS-Lauf auf `cfe6f85`: `success` (39194314076, Core + DSP + Engine und App iPhone + iPad), also beide Gates grün auf demselben Test-Stand.
+- Lehre: **ein Review ist eine Hypothese über den Compiler, der Linux-Job antwortet in ~90 s** — erst pushen,
+  dann Review-Tokens auf das ausgeben, was der Compiler angenommen hat.
+- Nichts gerätegeprüft. Offen beim Founder: A/B/C nach 17 Uhr, Mail an den Fonds, Handbuch + vier Fonds-Seiten +
+  FAQ als PDF, Rechtsform/Stunden/Projekte/Startjahr, Syng.Visibra-Status, Tester-Zahl, Interessensbekundungen,
+  EINE Integration, DSB-Prüfung, LR1/LR2/LR3/LR6, F17 App Group im Portal.
