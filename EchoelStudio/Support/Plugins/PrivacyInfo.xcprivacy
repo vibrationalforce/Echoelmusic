@@ -12,7 +12,10 @@
 	     purchase the app recorded in the shared App Group defaults (PluginUnlock.recordedOwned,
 	     group.com.echoelmusic.shared). 1C8F.1 is Apple's reason for defaults shared between an app
 	     and its extensions. Each bundle is checked against its own manifest (ITMS-91053), so a new
-	     required-reason call anywhere in Plugins/ is declared here in the same commit. -->
+	     required-reason call anywhere in Plugins/ is declared here in the same commit.
+	     Scope of that count: Plugins/ source only. The extension also links EchoelCore, whose
+	     ProjectLibrary reads file modification dates; build 10007 uploaded with that link and an
+	     empty list, so those calls were not flagged then — evidence for that build, not a rule. -->
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>

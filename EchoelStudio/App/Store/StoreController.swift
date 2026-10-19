@@ -3,9 +3,10 @@ import Observation
 import StoreKit
 import os
 
-/// Sells Echoel's own Audio Units as ONE purchase (`PluginUnlock`). It unlocks every plugin in
-/// every host on every device of the same Apple account: after every check of the transactions
-/// the app records the result in the shared container, where the plugins read it.
+/// Sells Echoel's own Audio Units as ONE purchase (`PluginUnlock`). It lifts the demo pause of
+/// Echoel's instruments (the effects are free) in every host on a device of the same Apple account,
+/// once the app has run on that device: after every check of the transactions the app records the
+/// result in the shared container, where the plugins read it.
 @MainActor
 @Observable
 final class StoreController {
@@ -15,6 +16,10 @@ final class StoreController {
     private(set) var message: String?
 
     @ObservationIgnored private var updates: Task<Void, Never>?
+    /// Raised at the start of every entitlement pass. Passes overlap on the main actor (the launch
+    /// pass, the update listener, a store visit) and interleave at each `await`; only the newest may
+    /// write, or an older pass that finishes last would put back an answer a refund already replaced.
+    @ObservationIgnored private var pass = 0
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "store")
 
     init() {
@@ -76,6 +81,8 @@ final class StoreController {
     }
 
     private func refreshOwned() async {
+        pass &+= 1
+        let mine = pass
         var found = false
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result, transaction.revocationDate == nil,
@@ -83,6 +90,7 @@ final class StoreController {
                 found = true
             }
         }
+        guard mine == pass else { return }
         isOwned = found
         PluginUnlock.recordOwned(found)
     }

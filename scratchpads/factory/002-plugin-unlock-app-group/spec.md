@@ -13,8 +13,9 @@ Heute fragt `Plugins/Shared/PluginLicense.swift` StoreKit IN der Erweiterung —
 das in einem Fremd-Host trägt, ist ungeprüft; fällt er aus, bleiben Käufer in der Demo.
 
 ## Assumptions
-- Die Gruppe ist `group.com.echoelmusic.shared`. Gemessen in F17 (`docs/dev/FOUNDER_INBOX.md`): Apples
-  Profile für `com.echoelmusic.app` UND `com.echoelmusic.app.auv3` tragen sie bereits. Kein Portal-Schritt.
+- Die Gruppe ist `group.com.echoelmusic.shared`. Gemessen im F17-Lauf (`docs/dev/FOUNDER_INBOX.md`): das
+  Profil für `com.echoelmusic.app` trägt sie. Ob das `.auv3`-Profil sie trägt, ist offen — die Portal-Aufnahmen
+  zeigten dort keine Gruppe; der nächste Studio-Archiv-Lauf entscheidet es, danach der AUM-Ladetest (Kriterium 6).
 - Passt ein Profil doch nicht, scheitert `studio-testflight.yml` WAHRSCHEINLICH beim Signieren (wie bei
   F17). Das ist nicht garantiert: die Alt-App-Erweiterung signierte mit einer Gruppe, die ihre App-ID nicht
   trug, und scheiterte erst im Host mit -3000 (`Tests/CISmoke/TheAUv3RegistersAndStaysIsolatedTests.swift`,

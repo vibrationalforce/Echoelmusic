@@ -60,7 +60,7 @@ ids above plus `.voice` and a wildcard `*`.
   grants: the app records the plugin purchase there for the extension, `PluginUnlock`) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
   with Apple, Siri, WeatherKit, MusicKit, ShazamKit, Maps, Data Protection „Complete" …). An App ID
   capability only PERMITS an entitlement; what App Review sees is the binary's entitlements, and the
-  Studio's file asks for nothing beyond the defaults today (the App Group alone once it returns). Do not untick them while builds of the earlier app exist.
+  Studio's file asks for one App Group today (`group.com.echoelmusic.shared`, the plugin purchase); `group.com.echoelmusic` comes back as a second entry with F17. Do not untick them while builds of the earlier app exist.
 - `com.echoelmusic.app.auv3` had **no** App Group in these recordings and only Sign in with Apple
   ticked, which nothing uses. ⚠️ The F17 run of the same evening printed the ISSUED .auv3 profile
   carrying `group.com.echoelmusic.shared`, and since factory job 002 the extension requests it (to read
