@@ -5450,3 +5450,27 @@ Review 2026-11-15.
 **Grenzen, ehrlich:** Förderzeitraum (ab Juni 2027 vs. „Dez 2026–März 2027“ auf der Seite) ist UNSICHER und wird in der Sprechstunde geklärt. Der Link zur Sprechstunde war aus der Sitzung nicht abrufbar. Ein Linux-Build des Kerns ist ein Nachweis, der noch nicht existiert.
 
 **Review:** 2026-11-16 (Entwurf fertig).
+
+### 2026-10-19 — Der offene Kern kennt keinen Kauf: `PluginUnlock` wandert aus `EchoelCore` in die Plugin-Schicht
+
+**Anlass:** Die Jury-Simulation zum Förderantrag (`docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §9, Linse OSS/Lizenz) maß, dass der Satz „die Instrument-Units liegen außerhalb des Förderobjekts“ am Repo scheiterte: die Klangerzeuger (`SynthKernel`/`DrumKernel`/`SamplerKernel`) liegen in `EchoelEngine`, und `EchoelCore.PluginUnlock` trug Produkt-ID und Namen des Kaufs — bei null Lesern im Kern (alle in `App/Store` und `Plugins/Shared`).
+
+**Entscheidung:** Die Kauf-Identität lebt in `Plugins/Shared/PluginUnlock.swift` (internal) und wird in App UND Extension kompiliert (`project.yml`: die App listet die eine Datei per Pfad). `OwnPlugin` (der Katalog) und `StandardEffect` bleiben im Kern — die Engine liest `StandardEffect`, und ein Katalog ist keine Kauflogik. Der Prefix-Anspruch des Core-Tests geht mit dem Typ (Plugins/ hat keine SwiftPM-Tests); die Invariante steht an der Konstante.
+
+**Regel daraus:** Die drei offenen Pakete beschreiben die Plugins, sie wissen nicht, dass etwas verkauft wird. Die Grenze des Förderobjekts ist eine Zuständigkeits-, keine Lizenzgrenze (alles MIT) — und sie ist nur dann wahr, wenn kein Store-Wort im Kern steht.
+
+**Grenzen, ehrlich:** Web-Sitzung ohne Compiler; `studio.yml` (App + Extension) ist der Beweis. Nicht geräteverifiziert.
+
+**Review:** 2026-11-16.
+
+### 2026-10-19 — Förderantrag nach der Jury-Simulation: Förderobjekt verengt, Linie Innovation, Weg A nur mit Beleg
+
+**Anlass:** 18 Agenten, sechs Linsen nach dem echten Jury-Profil (§1b), je Linse Widerlegungsprüfung am Repo, ein Kritiker. Alle sechs: Erfolgschance 2/5, Hauptgrund die KI-Regel des Fonds (F19). Keine der gefundenen Überbehauptungen hielt der Messung stand.
+
+**Entscheidung (Sitzung, unter Founder-Vorbehalt A/B/C):** Förderobjekt = ein eigenständiges, taggbares Paket mit Linux-CI (Körpersignal-Profil als Spezifikation mit Konformitätsvektoren + Egress-Policy pro Quelle × Feldklasse + `EchoelIO` für OSC/ADM-OSC/sACN); Bestand wird als Bestand genannt; Meilensteine mit Stunden (~590 h), Kamera-Puls bleibt in der Alt-App; Linie Innovation (dieselbe Jury liest beide Linien; Resilienz zwänge zur „freien DAW für iOS“). Weg A nur mit prüfbarem Beleg eigener Programmierarbeit, sonst Weg B; Frage 1 zusätzlich schriftlich an info@prototypefund.de. Öffentliche Zahlen statt Klon-Zahlen: 9.861 Commits, 8.805 unter `claude`.
+
+**Was die Sitzung daraus sofort erledigt hat:** §9 und die Korrekturen in §1/§2/§4/§7; DSGVO-Entwurf §0 zurückgenommen; README nennt zwei Codebasen; CONTRIBUTING/Code of Conduct/Issue-Vorlage; `PluginUnlock` aus dem Kern; `studio-linux.yml` misst Core + DSP auf Linux.
+
+**Grenzen, ehrlich:** Eine Simulation ist keine Jury; die vier Definitionsseiten des Fonds sind ungelesen (Founder lädt hoch); Zeichengrenzen unbekannt; die Förderfähigkeit entscheidet der Fonds.
+
+**Review:** 2026-11-16.
