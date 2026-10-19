@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Clock — Echoelmusic</title>
+    <meta name="description" content="Everyone with this page open breathes in and out at the same moment. One clock for every device — no server, no account, no data.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="One Clock — Echoelmusic">
+    <meta property="og:description" content="Everyone with this page open breathes in and out at the same moment. One clock for every device — no server, no account, no data.">
+    <meta property="og:url" content="https://echoelmusic.com/one-clock.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="One Clock — Echoelmusic">
+    <meta name="twitter:description" content="Everyone with this page open breathes in and out at the same moment. One clock for every device.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/one-clock.html">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"One Clock","url":"https://echoelmusic.com/one-clock.html","description":"Everyone with this page open breathes in and out at the same moment. One clock for every device — no server, no account, no data.","isPartOf":{"@type":"WebSite","name":"Echoelmusic","url":"https://echoelmusic.com/"}}</script>
+    <!-- Standalone on purpose: this page must stay small and work on any device, so it
+         loads no shared stylesheet or script. Only the site's own typeface is reused. -->
+    <style>
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+        :root {
+            --bg: #000;
+            --text: #e0e0e0;
+            --dim: rgba(224,224,224,0.55);
+            --border: rgba(224,224,224,0.14);
+            --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { background: var(--bg); }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: var(--text); }
+        a:link, a:visited { text-decoration: underline; text-underline-offset: 3px; }
+        a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+        .skip-link { position: absolute; left: 16px; top: -48px; padding: 8px 12px; background: var(--text); color: #000; border-radius: 6px; }
+        .skip-link:focus { top: 16px; }
+        header, footer { max-width: 640px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 8px 0 24px; }
+        header a { text-decoration: none; font-weight: 700; }
+        header small { color: var(--dim); font-size: 0.875rem; }
+        main { max-width: 640px; margin: 0 auto; }
+        h1 { font-size: 1.75rem; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+        .lead { color: var(--dim); margin-bottom: 32px; }
+        .stage { text-align: center; padding: 8px 0 24px; }
+        .ring { display: block; width: min(72vw, 300px); height: auto; margin: 0 auto 16px; }
+        .ring circle { fill: none; stroke-width: 4; }
+        .ring .track { stroke: var(--border); }
+        .ring .fill { stroke: var(--text); stroke-linecap: butt; }
+        .word { font-size: clamp(2rem, 9vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: 0.01em; }
+        .word-de { color: var(--dim); font-size: 1.125rem; margin-top: 4px; }
+        .count { font-size: 1rem; color: var(--dim); margin-top: 12px; font-variant-numeric: tabular-nums; }
+        .count b { color: var(--text); font-weight: 700; }
+        .clock { margin-top: 20px; color: var(--dim); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+        .controls { margin-top: 20px; display: flex; justify-content: center; gap: 12px; }
+        button {
+            font: inherit; font-size: 0.9375rem; color: var(--text); background: transparent;
+            border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; cursor: pointer;
+            transition: border-color 150ms, color 150ms;
+        }
+        button:hover { border-color: var(--text); }
+        button[aria-pressed="true"] { border-color: var(--text); }
+        section { border-top: 1px solid var(--border); padding: 24px 0; }
+        h2 { font-size: 1.125rem; font-weight: 700; margin-bottom: 8px; }
+        section p + p { margin-top: 10px; }
+        .de { color: var(--dim); }
+        footer { border-top: 1px solid var(--border); padding: 20px 0 32px; color: var(--dim); font-size: 0.875rem; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+        @media (prefers-reduced-motion: no-preference) {
+            .ring .fill { transition: stroke-dashoffset 220ms linear; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header>
+        <a href="index.html">Echoelmusic</a>
+        <small>One Clock</small>
+    </header>
+
+    <main id="main">
+        <h1>One Clock</h1>
+        <p class="lead">Everyone with this page open breathes in and out at the same moment — anywhere on Earth. No server, no account, nothing to install.</p>
+
+        <div class="stage">
+            <svg class="ring" viewBox="0 0 260 260" aria-hidden="true" focusable="false">
+                <circle class="track" cx="130" cy="130" r="120"></circle>
+                <circle class="fill" id="fill" cx="130" cy="130" r="120" transform="rotate(-90 130 130)"></circle>
+            </svg>
+            <p class="word" id="word" aria-live="polite">Inhale</p>
+            <p class="word-de" id="word-de" lang="de" aria-hidden="true">Einatmen</p>
+            <p class="count" aria-hidden="true"><b id="count">4</b> s</p>
+            <p class="clock" id="clock">UTC —</p>
+            <div class="controls">
+                <button type="button" id="sound" aria-pressed="false">Sound</button>
+            </div>
+        </div>
+
+        <section>
+            <h2>How it works</h2>
+            <p>The cycle is tied to Coordinated Universal Time: ten seconds long, four in, six out, starting on every tenth second. Your device sets its clock from the network, usually to within a few hundredths of a second — far closer than anyone can feel across a ten-second breath. Open it in Hamburg, Lagos or Lima: same moment, same breath.</p>
+            <p>Nothing runs behind it. Once the page has loaded it keeps going without a connection, because the only thing it reads is your own clock.</p>
+            <p class="de" lang="de">Alle, die diese Seite offen haben, atmen im selben Moment ein und aus — überall auf der Erde. Vier Sekunden ein, sechs Sekunden aus, nach der Weltzeit. Kein Server, kein Konto, keine Daten.</p>
+        </section>
+
+        <section>
+            <h2>What it is not</h2>
+            <p>It is not a beat and not a tempo. Music over the internet cannot be held to a shared beat without a dedicated clock, and this page does not pretend otherwise. One slow cycle is what a plain clock can carry honestly.</p>
+            <p>It is a shared moment, not a programme. Breathe only as feels comfortable, and stop if you feel light-headed.</p>
+        </section>
+
+        <section>
+            <h2>Nothing leaves your device</h2>
+            <p>Nothing is sent, nothing is stored, nobody is counted. The optional sound is made on your device and follows the cycle; it starts only when you ask for it.</p>
+        </section>
+    </main>
+
+    <footer>
+        <a href="index.html">Echoelmusic</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="health.html">Health</a>
+        <a href="impressum.html">Legal Notice</a>
+    </footer>
+
+    <script>
+    (function () {
+        var PERIOD = 10000, INHALE = 4000;
+        var C = 2 * Math.PI * 120;
+        var fill = document.getElementById('fill');
+        var word = document.getElementById('word');
+        var wordDe = document.getElementById('word-de');
+        var count = document.getElementById('count');
+        var clock = document.getElementById('clock');
+        var button = document.getElementById('sound');
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var audio = null, gain = null;
+        var lastInhale = null, lastCount = null, lastSecond = null;
+
+        fill.setAttribute('stroke-dasharray', C);
+        fill.setAttribute('stroke-dashoffset', C);
+
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function tick() {
+            var now = Date.now();
+            var t = now % PERIOD;
+            var inhale = t < INHALE;
+            var length = inhale ? INHALE : PERIOD - INHALE;
+            var into = inhale ? t : t - INHALE;
+            var p = into / length;                 // 0 → 1 through the current half
+            var f = inhale ? p : 1 - p;            // the ring fills on the way in, empties on the way out
+            if (reduceMotion) { f = Math.round(f * 10) / 10; }
+            fill.setAttribute('stroke-dashoffset', C * (1 - f));
+
+            if (inhale !== lastInhale) {
+                word.textContent = inhale ? 'Inhale' : 'Exhale';
+                wordDe.textContent = inhale ? 'Einatmen' : 'Ausatmen';
+                lastInhale = inhale;
+            }
+            var remaining = Math.max(1, Math.ceil((length - into) / 1000));
+            if (remaining !== lastCount) { count.textContent = remaining; lastCount = remaining; }
+
+            var second = Math.floor(now / 1000);
+            if (second !== lastSecond) {
+                var d = new Date(now);
+                clock.textContent = 'UTC ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds())
+                    + ' · 10 s cycle · 4 in · 6 out';
+                lastSecond = second;
+            }
+
+            if (gain && audio) {
+                // Quiet, and it breathes with the ring: up through the inhale, away through the exhale.
+                var level = 0.015 + 0.055 * f;
+                gain.gain.setTargetAtTime(level, audio.currentTime, 0.08);
+            }
+            window.setTimeout(tick, reduceMotion ? 250 : 50);
+        }
+
+        button.addEventListener('click', function () {
+            var on = button.getAttribute('aria-pressed') === 'true';
+            if (on) {
+                button.setAttribute('aria-pressed', 'false');
+                if (gain && audio) { gain.gain.setTargetAtTime(0, audio.currentTime, 0.05); }
+                if (audio) { window.setTimeout(function () { if (audio) { audio.suspend(); } }, 300); }
+                return;
+            }
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) { button.disabled = true; button.textContent = 'No sound here'; return; }
+            if (!audio) {
+                audio = new Ctx();
+                var osc = audio.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = 220;
+                gain = audio.createGain();
+                gain.gain.value = 0;
+                osc.connect(gain);
+                gain.connect(audio.destination);
+                osc.start();
+            }
+            audio.resume();
+            button.setAttribute('aria-pressed', 'true');
+        });
+
+        tick();
+    })();
+    </script>
+</body>
+</html>
