@@ -90,8 +90,6 @@ final class OwnPluginTests: XCTestCase {
         XCTAssertFalse(OwnPlugin.all.contains(OwnPlugin.legacyBodyVibe), "a door for old sessions, not a product")
         XCTAssertEqual(OwnPlugin.legacyBodyVibe.component.subtype, PluginComponent.code("echl"),
                        "host sessions saved with the earlier app name this id")
-        XCTAssertTrue(PluginUnlock.productID.hasPrefix("com.echoelmusic.app."),
-                      "the one purchase lives in the existing App Store record")
     }
 
     func testThePurchaseIsForTheInstrumentsAndTheEffectsAreFree() {

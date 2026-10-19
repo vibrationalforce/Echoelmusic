@@ -1,16 +1,8 @@
-/// The one purchase that unlocks Echoel's instruments in other hosts; the effects are free there
-/// too (founder decision 2026-10-18). It lives in the app's
-/// existing App Store record (`com.echoelmusic.app`), so selling the plugins needs no new app, no
-/// new bundle id and exactly one in-app purchase. Inside Echoel the same instruments and effects
-/// are free.
-public enum PluginUnlock {
-    public static let productID = "com.echoelmusic.app.pro"
-    public static let name = "Echoel Plugins"
-}
-
 /// The Audio Units Echoel makes, as the app's store and the plugins themselves know them. All of
-/// them ship in ONE extension (`com.echoelmusic.app.auv3`); the instruments are unlocked by
-/// `PluginUnlock`, the effects need nothing.
+/// them ship in ONE extension (`com.echoelmusic.app.auv3`); the instruments are unlocked by the
+/// one purchase the plugin layer names (`PluginUnlock`, `Plugins/Shared/PluginUnlock.swift`), the
+/// effects need nothing. The open packages describe the plugins; they do not know that anything
+/// is sold — the product id lives with the store and the licence check that read it.
 public struct OwnPlugin: Sendable, Equatable, Identifiable {
     public let component: PluginComponent
     public let summary: String

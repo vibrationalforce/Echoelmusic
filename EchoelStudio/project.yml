@@ -41,6 +41,9 @@ targets:
     platform: iOS
     sources:
       - path: App
+      # The purchase id and name, shared with the extension by compiling the ONE file into both
+      # targets; it is not in EchoelCore because the open packages do not know that anything is sold.
+      - path: Plugins/Shared/PluginUnlock.swift
       - path: Support/App/PrivacyInfo.xcprivacy
         type: file
         buildPhase: resources
@@ -84,7 +87,7 @@ targets:
   # Echoel Plugins — every Echoel Audio Unit in ONE extension under the one registered Audio Unit
   # id: Synth (aumu eSyn), Drums (eDrm), Sampler (eSmp), EQ/Compressor/Delay/Reverb (aufx
   # xEQ5/xCmp/xDly/xRvb), plus the earlier app's instrument (aumu echl) so saved sessions open.
-  # One purchase unlocks them (EchoelCore.PluginUnlock). Lessons from the legacy AUv3 (root
+  # One purchase unlocks them (`PluginUnlock`, Plugins/Shared, compiled into app and extension). Lessons from the legacy AUv3 (root
   # project.yml): AudioComponents under NSExtensionAttributes, a synchronous nonisolated
   # AUAudioUnitFactory, NO App Group entitlement (the .auv3 App ID lacks the capability; with it
   # every host failed with -3000), and explicit SDKROOT/SUPPORTED_PLATFORMS.
