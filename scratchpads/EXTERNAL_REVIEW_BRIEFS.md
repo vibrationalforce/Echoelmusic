@@ -84,3 +84,100 @@ Form: höchstens 8 Punkte, je Datei:Zeile, "sicher" oder "vermutet", kein Code.
 ```
 
 **Antworten:** _(hier im Chat einfügen; die Sitzung loggt sie im Lernmodus)_
+
+---
+
+## Runde 2 — Montag, 19.10.2026 (Stand `a66e0e5`)
+
+**Was sich seit Runde 1 geändert hat:** Echoel ist am 17.10. neu aufgesetzt — `EchoelStudio/` ist die
+neue App (drei Swift-Pakete `EchoelCore` · `EchoelDSP` · `EchoelEngine` ohne Abhängigkeiten, App,
+EINE AUv3-Erweiterung). Der Bauplan `docs/dev/NEUPLANUNG_2026-10-18.md` ist vom Founder freigegeben:
+keine Genres, keine generierten Noten, Phase P0 (Ordnung) vor P1 (Komponieren) vor P2 (eigene AUv3 +
+ein Kauf → 1.0). Seit Runde 1 sind P0.1–P0.5 gebaut (eine Parametertabelle, Songformat `docs/FORMAT.md`
+mit Golden-Files, Netzwerk-API-Scan, abgewiesene unspielbare Spur, musikalischer Kontext, Vorwärts-
+kompatibles Öffnen), die Kaufkennung ist aus dem offenen Kern in die Plugin-Schicht gezogen, und Core
+und DSP laufen erstmals auf Linux (Core 201/201, DSP 64/64, Swift 6.2.4). Der Agent aus Runde 1 lebt
+in `EchoelStudio/App/Agent/` weiter und läuft ab P1 mit. Runde 1 ist noch unbeantwortet; ihre Fragen
+(Foundation Models, Siri-Wartezeit, Agenten-DAWs, On-Device-MIDI-Modelle) werden hier NICHT
+wiederholt — sie können zusammen mit Runde 2 beantwortet werden.
+
+### Auftrag an SuperGrok Heavy — aktuelle Entwicklungen (P0/P1/P2-Zuschnitt)
+
+```
+Rolle: externer Prüfer für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift ohne externe
+Abhängigkeiten (alles auf dem Gerät). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic
+— Zweig claude/echoelmusic-review-optimize-u5jjpd, Verzeichnis EchoelStudio/ (Bauplan:
+docs/dev/NEUPLANUNG_2026-10-18.md §3 und §5).
+
+Was gerade gebaut wird: ein Instrumentenpfad für eigene AUv3-Units (eine Erweiterung, Synth · Drums ·
+Sampler, Effekte frei, Instrumente hinter EINEM nicht-verbrauchbaren Kauf), AUv3-Hosting fremder
+Plugins, Swift-6-Pakete, die auch auf Linux bauen und testen (swift:6.2-Container, XCTest).
+
+Bitte recherchiere die AKTUELLEN Entwicklungen der letzten 3 Wochen (Stand heute), nur mit Quelle
+und Datum:
+1. iOS 26.x / Xcode 26.x: Änderungen an AUv3-Erweiterungen, die in einer App eingebettet sind
+   (Registrierung, auval, Darstellung der Plugin-Oberfläche in fremden Hosts, Speicherlimit der
+   Erweiterung). Gibt es neue Pflichten oder Abweisungsgründe im App Review für Audio-Unit-Apps?
+2. StoreKit 2: ein Kauf in der App soll Inhalte INNERHALB der Erweiterung freischalten (die
+   Erweiterung läuft im fremden Host). Was ist Apples aktueller Weg (Transaction.currentEntitlements
+   aus der Erweiterung, App Group, Receipt)? Gab es dazu Änderungen oder bekannte Fehler?
+3. Swift 6.2 auf Linux: Stand von swift-corelibs-xctest gegenüber Swift Testing für Pakete, die
+   @MainActor-Typen testen — ist XCTest dort noch der empfohlene Weg, oder wird Swift Testing für
+   Linux-CI nahegelegt? Bekannte Fallen bei der Test-Erkennung (Discovery) in 6.2.x.
+4. CoreMIDI auf iOS 26: Network MIDI (MIDINetworkSession, Verbindungsrichtlinie), MIDI 2.0 / UMP,
+   MIDI-Clock-Ausgabe — was hat sich geändert, was ist deprecated?
+5. Ableton Link: aktueller Lizenzstand des Link-SDK (Bedingungen für eine kommerzielle iOS-App),
+   Alternativen für Tempo-Sync ohne Fremdcode (MIDI-Clock, MTC), und was andere iOS-DAWs dafür
+   ausliefern.
+6. Wettbewerb der letzten Wochen: Logic Pro für iPad, Cubasis, AUM, Drambo, Koala, BandLab,
+   neue Einsteiger — was ist WIRKLICH ausgeliefert zu (a) AUv3-Hosting mit In-App-Kauf von
+   Instrumenten, (b) Projektformaten, die ein Dritter lesen kann, (c) Offline-Export mit
+   Lautheitsmessung? Ankündigungen als Ankündigungen markieren.
+
+Form: höchstens 8 Punkte. Jeder Punkt: Behauptung · Quelle (URL) · Datum · "sicher" oder
+"vermutet" · was das für Echoel Studio konkret heißt (eine Zeile). Keine Code-Vorschläge.
+Gerüchte als Gerüchte kennzeichnen. Keine Gesundheits- oder Wellness-Themen.
+```
+
+### Auftrag an ChatGPT — Nutzbarkeit dessen, was seit 17.10. gebaut ist
+
+```
+Rolle: externer UX- und Workflow-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift).
+Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic —
+Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand a66e0e5, Verzeichnis EchoelStudio/.
+
+Lies nur diese Dateien (alle getrackt, alle öffentlich):
+- docs/dev/NEUPLANUNG_2026-10-18.md §1 (was Echoel ist und was nicht) und §5 (Bauphasen P0–P2)
+- EchoelStudio/CLAUDE.md (Schichten, die neun Gesetze)
+- EchoelStudio/Core/Sources/EchoelCore/CommandCatalog.swift (die Befehlsnamen — sie werden in P0
+  EINGEFROREN, weil MIDI-Mappings und Agenten-Protokolle sie speichern)
+- EchoelStudio/Core/Sources/EchoelCore/Command.swift (apply: was abgewiesen wird)
+- EchoelStudio/App/Views/StudioView.swift, ArrangeView.swift, TrackListView.swift,
+  SoundPanel.swift, MixerView.swift (die Oberfläche)
+- EchoelStudio/App/Documents/DocumentController.swift (exportWAV, exportMIDI)
+- EchoelStudio/App/Store/StoreView.swift und EchoelStudio/Plugins/Shared/PluginUnlock.swift
+  (ein Kauf schaltet die Instrumente frei; Effekte sind frei)
+- EchoelStudio/App/Agent/AgentView.swift (die Assistenz, die ab P1 mitläuft)
+
+Abnahmekriterium P1 aus dem Bauplan: auf dem Gerät Ton in unter 3 Sekunden; ein Song mit vier
+Spuren im Flugmodus erstellt, gespeichert, wieder geöffnet, als WAV exportiert.
+
+Fragen:
+1. Befehlsnamen (CommandCatalog.swift): welche Namen würde ein Musiker oder eine MIDI-Controller-
+   Nutzerin missverstehen, welche zwei Befehle wirken wie Dubletten, welcher fehlt für den
+   Vier-Spuren-Song? Datei:Zeile. Das zählt doppelt, weil die Namen danach nicht mehr änderbar sind.
+2. Erster Ton: welche Taps liegen zwischen App-Start und dem ersten gespielten Ton, und wo kann
+   der Weg abbrechen (keine Spur, kein Instrument, Kauf-Dialog vor dem ersten Ton)? Datei:Zeile.
+3. Abweisungen (Command.swift apply): welche Abweisung sieht der Nutzer NICHT als Satz auf dem
+   Schirm, sondern nur als "nichts passiert"? Nenne die Stelle.
+4. Kauf-Grenze: ist aus StoreView.swift und PluginUnlock.swift klar, was frei ist und was
+   gekauft wird, BEVOR jemand den Kauf-Dialog sieht? Was würde Apple im Review daran stören?
+5. Export: reicht WAV + MIDI für die Übergabe an Logic/Ableton, oder fehlt vor 1.0 ein Stem-Export?
+   Begründe aus dem, was DocumentController.swift heute tut.
+6. Welche zwei Gerätetests würdest du als Erstes machen, und was genau soll man dabei sehen?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, "sicher" oder "vermutet", kein Code, keine neuen
+Features vorschlagen, nichts zu Gesundheit oder Wellness.
+```
+
+**Antworten:** _(hier im Chat einfügen; die Sitzung loggt sie im Lernmodus)_
