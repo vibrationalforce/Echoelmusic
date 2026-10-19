@@ -6,7 +6,9 @@
 
 ## 0. Stand nach dem 2026-10-04 — zwei neue Datenwege, noch nicht ausgeliefert
 
-Abschnitt 1 beschreibt den Stand vor zwei Änderungen. Beide liegen im Arbeitsbaum, sind **noch nicht ausgeliefert** und warten auf Founder-gesperrte Dateien. Mit ihrer Auslieferung muss Abschnitt 1 nachgezogen werden:
+> ⛔ **ÜBERHOLT, gemessen 2026-10-19 (Jury-Simulation, `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §9): KEINER der beiden Datenwege unten existiert.** B2 Broadcast ist nie verlinkt worden — `Package.swift` hat ein leeres `dependencies`-Array, HaishinKit ist nicht im Baum (`git grep -l HaishinKit -- Sources Package.swift` → nur Compile-Guard-Gerüste hinter `#if canImport`), und der Stream-Key liegt in keinem Keychain, weil es keinen Sender gibt. E10-1 Mikrofon-Aufnahme ist mit #1302 (Founder 2026-09-12, „Face und Audio Input komplett entfernen“) als Code GELÖSCHT — es gibt kein Mikrofon, `NSMicrophoneUsageDescription` ist seit #1415 aus der Info.plist entfernt. Die zwei Blöcke bleiben als datierter Entwurfsstand lesbar, damit die Herleitung der Regeln L00–L0x nachvollziehbar bleibt; **sie beschreiben nichts, was die App tut oder im Arbeitsbaum liegt.** Was Echoelmusic heute tatsächlich nach außen sendet, steht in `docs/dev/SECURITY_AUDIT_2026-10-08.md` (F6: vier UDP-Ausgänge an vom Nutzer eingetragene Hosts, ein OSC-Eingang Opt-in, Multipeer nur nach „Go Live“; kein `URLSession`, kein Server) und, als Inventar, in der Förder-Datei §7.1 Frage 4.
+
+Abschnitt 1 beschreibt den Stand vor zwei Änderungen, die am 2026-10-04 im Arbeitsbaum lagen und inzwischen beide zurückgenommen sind (siehe Kasten). Der ursprüngliche Text:
 
 - **B2 Broadcast (RTMP/RTMPS über HaishinKit 2.2.5):**
   - **Was gesendet wird:** Master-Mix und Visual.
