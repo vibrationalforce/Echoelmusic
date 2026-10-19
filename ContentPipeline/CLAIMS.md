@@ -10,16 +10,23 @@ entfernte zwölf falsche Behauptungen aus dem App-Store-Text — dort ist eine f
 Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
-⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Build 11.0.0), und dieses Register
+⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Version 11.0.0), und dieses Register
 beschreibt bis auf die drei Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
-bis zu einem eigenen Abschnitt: behauptet wird, was `EchoelStudio/RELEASE` als Build-Inhalt nennt, mit
-„noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. Die Nachträge:
-(1) **§7:** das Studio hat einen EINMALKAUF für die eigenen AUv3-Instrumente (`com.echoelmusic.app.pro`),
-die App ist frei, kein Abo — sagbar ist „einmal kaufen, kein Abo“, nie ein Preis, nie „Pro“, nie „Trial“.
-(2) **§11:** das Studio nimmt Audio vom Mikrofon oder Interface auf eine scharf geschaltete Audiospur auf,
-der Take bleibt auf dem Gerät; die Stimm-Verbote (Cloning, AI-Voice, Autotune) bleiben. (3) **§1:** die
-eigenen Instrumente sind in AUM geprüft, GarageBand und Logic nicht. Öffentlich steht das auf
-`docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf `docs/claims.html`.
+bis zu einem eigenen Abschnitt: behauptet wird nur, was im Code von `EchoelStudio/App` gemessen ist, mit
+„noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. ⚠️ `EchoelStudio/RELEASE`
+ist eine PRÜFLISTE für Tester, keine Quelle für Behauptungen — bis 2026-10-19 stand hier das Gegenteil, und
+dieselbe Runde schrieb „tested in AUM“ in Store-Text und Roadmap, für Instrumente, die nie in einem Host
+liefen (`20a5469`, zurückgenommen mit `26e507745` und der Folgescheibe). Die Nachträge:
+(1) **§7:** für die eigenen AUv3-Instrumente ist ein EINMALKAUF GEBAUT (`com.echoelmusic.app.pro`), aber
+NICHT im Verkauf: in App Store Connect ist kein In-App-Kauf angelegt (F-15), der Store-Bildschirm meldet
+„not available“. Sagbar ist „geplant als Einmalkauf, kein Abo, noch nicht im Verkauf“ — nie ein Preis, nie
+„Pro“, nie „Trial“, nie das Präsens „kann man kaufen“. Die App ist frei. (2) **§11:** das Studio nimmt Audio
+vom Mikrofon oder Interface auf eine scharf geschaltete Audiospur auf, der Take bleibt auf dem Gerät; die
+Stimm-Verbote (Cloning, AI-Voice, Autotune) bleiben. (3) **§1:** die AUM-Messung vom 2026-09-20 (#1386) gilt
+NUR für `echl` der ALT-App (`EchoelmusicAUv3`). Studios Instrumente (`eSyn`, `eDrm`, `eSmp`) liefen auf keinem
+Gerät in einem Host — sagbar ist „noch in keiner Host-App auf einem Gerät geprüft“, nie „in AUM geprüft“.
+Öffentlich steht das auf `docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf
+`docs/claims.html`.
 Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:

@@ -106,7 +106,7 @@ in der Tonart vor, die du bearbeiten kannst“, nicht „GMMW“.
 universelle App, Swift 6, keine externen Abhängigkeiten. Messen statt zitieren:
 
 ```
-cat EchoelStudio/RELEASE                       # was der letzte Build enthält und was zu testen ist
+cat EchoelStudio/RELEASE                       # Prüfliste des letzten Builds — keine Quelle für Behauptungen
 git ls-files 'EchoelStudio/*.swift' | wc -l    # Größe
 grep MARKETING_VERSION EchoelStudio/project.yml
 ```
@@ -114,8 +114,11 @@ grep MARKETING_VERSION EchoelStudio/project.yml
 Gebaut und in TestFlight, **nichts davon gerätegeprüft**: Instrumente (Synth, Drums, Sampler),
 Effekte, Arrangement mit Parts, Session-Ansicht mit Szenen und Launch-Quantisierung, Automation,
 MIDI-Aufnahme mit Bend und CC, Audio-Aufnahme auf Spuren, Mix mit Metern, Master-Kette, Export mit
-LUFS und True-Peak, MIDI-Datei-Export, Import alter Projekte, eigene AUv3-Instrumente mit
-Einmalkauf, der Assistent auf dem Gerät, die About-Seite.
+LUFS und True-Peak, MIDI-Datei-Export, Import alter Projekte (gebaut, in 10004/10005 aber wirkungslos:
+ohne App Group sieht Studio die alten Songs nicht, F17), eigene AUv3-Instrumente (in keiner Host-App
+auf einem Gerät geprüft — die AUM-Messung #1386 gilt nur `echl` der Alt-App) mit gebautem Einmalkauf
+(nicht im Verkauf: kein In-App-Kauf in App Store Connect, F-15), der Assistent auf dem Gerät, die
+About-Seite.
 
 **Die Alt-App** (`Sources/Echoelmusic`, eingefroren bei 10.79.515) ist die **Port-Quelle**. Dort
 leben Kamera-Puls (rPPG), Bluetooth-Gurt, HealthKit, die Egress-Policy, OSC, ADM-OSC, Art-Net, sACN,
@@ -160,7 +163,7 @@ genannte Phase · **PLAN** = geplant, noch nirgends gebaut · **FORSCHUNG** = Fr
 | Generatoren (GMMW) | Assistent | Bild-Saat, Grain | P1 und später | **PLAN** |
 | Lernen (Musik durch den Körper) | — | `LearnLibrary` | nach P6 | **PLAN** |
 | One Clock (Webseite) | — | — | live auf der Website | **LIVE** |
-| Produktionsgesundheit | Lautheitsmessung | Gehörschutz-Hinweis | §6 | **FORSCHUNG** |
+| Produktionsgesundheit | Lautheitsmessung | — | §6 | **FORSCHUNG** |
 | Knochen-, Wund-, Gewebe-, Organheilung | — | — | §6 | **FORSCHUNG**, nie Produkt |
 | Brainwave-Entrainment, Heilfrequenzen, Organresonanz, Farbtherapie | — | `EchoelEntrainment` verdrahtet, türlos | — | **NIE** |
 | NFT, Krypto, Token | — | — | — | **NIE** |
@@ -221,6 +224,10 @@ Software sie berühren kann, ohne etwas zu behaupten:
 Ob ein Hinweis auf Hörpausen sinnvoll ist und wie er klingen darf, ist eine Forschungsfrage (F1
 unten). Pausen schützen das Gehör beim Menschen nachweislich nicht (die Daten sind fast nur
 Tiermodelle); belegt ist nur, dass weniger Hördauer nach dem Gleichenergie-Prinzip weniger Dosis heißt.
+
+**Regel nach außen:** „Produktionsgesundheit“ ist ein INTERNES Forschungsetikett. Es steht nicht in
+Store-Text, Website-Kopie, In-App-Text oder einem Förderantrag als Fähigkeit oder Versprechen. Nach außen
+steht, was ein Werkzeug tut („zeigt die Lautheit des Exports in LUFS“), nie, was es für die Gesundheit tue.
 
 ### 6b. Biofeedback
 
