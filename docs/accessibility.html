@@ -41,7 +41,6 @@
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/accessibility.html">
     <link rel="alternate" hreflang="en" href="https://echoelmusic.com/accessibility.html">
-    <link rel="alternate" hreflang="de" href="https://echoelmusic.com/barrierefreiheit">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Accessibility","item":"https://echoelmusic.com/accessibility.html"}]}</script>
     <link rel="stylesheet" href="shared.css?v=10.24.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -121,6 +120,17 @@
         </section>
 
         <section>
+            <h2>Known gaps in Echoel Studio today</h2>
+            <p>Echoel Studio is in TestFlight. Measured on 19 October 2026, before any accessibility check:</p>
+            <ul>
+                <li>The system setting <strong>Reduce Motion</strong> is not read anywhere in Echoel Studio yet.</li>
+                <li>The transport strip at the top stops growing at the largest text sizes; its controls carry VoiceOver labels instead.</li>
+                <li>The accessibility check that App Store 1.0 has to pass has not been run. It has eight points: nothing works only by a gesture, only by colour, only by a picture or only under time pressure; text grows to the largest size wherever text carries the control; every touch target is at least 44 points; Reduce Motion is respected and nothing flashes more than three times a second; one word for each function.</li>
+            </ul>
+            <p>When a gap closes, it leaves this list with the date of the build that closed it.</p>
+        </section>
+
+        <section>
             <h2>Accessibility Profiles (planned)</h2>
             <p class="subpage-summary">A planned direction — one-tap profiles optimized for specific needs. These are not in the app today; the list below is the goal we are building toward.</p>
             <div class="profile-grid">
@@ -149,11 +159,11 @@
                     </ul>
                 </div>
                 <div class="profile-category">
-                    <h3>Cognitive</h3>
+                    <h3>Attention, reading and memory</h3>
                     <ul>
-                        <li><strong>ADHD</strong> - Focus mode</li>
-                        <li><strong>Dyslexia</strong> - OpenDyslexic font</li>
-                        <li><strong>Autism-Friendly</strong> - Calm, predictable</li>
+                        <li><strong>Focus</strong> - Fewer things on screen at once</li>
+                        <li><strong>Reading</strong> - A font option designed for easier reading</li>
+                        <li><strong>Calm</strong> - Predictable layout, no surprise motion or sound</li>
                         <li><strong>Memory Support</strong> - Context reminders</li>
                     </ul>
                 </div>
