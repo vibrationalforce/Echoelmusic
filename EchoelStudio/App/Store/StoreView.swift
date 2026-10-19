@@ -15,7 +15,7 @@ struct StoreView: View {
                     ForEach(OwnPlugin.instruments) { plugin in row(plugin) }
                     purchase
                 } footer: {
-                    Text("They are AUv3 instruments for apps that host Audio Units. They are not yet tested in a host app on a device. Before you buy, the instruments play as a demo: two seconds of silence every thirty. One purchase, no subscription.")
+                    Text("They are AUv3 instruments for apps that host Audio Units. They are not yet tested in a host app on a device, and they are not on sale yet. Until they are unlocked, they play as a demo: two seconds of silence every thirty. Planned as one purchase, no subscription.")
                 }
                 Section("Free") {
                     ForEach(OwnPlugin.free) { plugin in row(plugin) }

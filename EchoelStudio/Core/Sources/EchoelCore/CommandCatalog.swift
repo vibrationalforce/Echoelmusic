@@ -154,7 +154,7 @@ public enum CommandCatalog {
                                parameters: [P("root", .integer, "Pitch class 0–11.")])
         case .setScale:
             return CommandSpec(name: "context.scale", title: "Change Scale",
-                               summary: "Sets the scale a keyboard or pads can stay in. Writes no notes; chromatic constrains nothing.",
+                               summary: "Sets the song's scale. Writes no notes and does not yet constrain played notes; chromatic constrains nothing.",
                                parameters: [P("scale", .string, Scale.allCases.map(\.rawValue).joined(separator: ", ") + ".")])
         case .setTuning:
             return CommandSpec(name: "context.tuning", title: "Change Tone System",

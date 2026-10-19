@@ -30,7 +30,7 @@ final class StoreController {
         defer { isLoading = false }
         do {
             product = try await Product.products(for: [PluginUnlock.productID]).first
-            message = product == nil ? "The store is not available right now." : nil
+            message = product == nil ? "The instruments are not on sale yet." : nil
         } catch {
             log.error("products failed — \(error.localizedDescription, privacy: .public)")
             message = "The store is not available right now."

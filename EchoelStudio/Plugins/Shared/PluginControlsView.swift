@@ -101,7 +101,7 @@ struct PluginControlsView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
                 if !model.isUnlocked {
-                    Text("Demo: two seconds of silence every thirty. Unlock \(model.title) in the Echoel app to remove it.")
+                    Text("Demo: two seconds of silence every thirty, until \(model.title) is unlocked in the Echoel app. The unlock is not on sale yet.")
                         .font(.caption)
                         .foregroundStyle(Color(white: 0.6))
                 }
