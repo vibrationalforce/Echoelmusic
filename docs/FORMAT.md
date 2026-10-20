@@ -84,12 +84,28 @@ slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the 
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
-key → number, e.g. `synth.cutoff`), optional `sample` (a media id), `plugin` (an Audio Unit's
-type, subtype and manufacturer codes plus names) and `pluginState` (the plugin's own saved state,
-base64).
+key → number, e.g. `synth.cutoff`), optional `sample` (a media id), `plugin` (a plugin
+component) and `pluginState` (the plugin's own saved state, base64, at most 8 MiB).
+
+**Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
+the three codes the system finds it by, each the four ASCII characters as one big-endian integer
+(`aufx` = 1635083896), plus the names shown while it is not installed. `type` says what it is:
+`aumu` an instrument, `aufx` or `aumf` an effect. A song keeps a plugin that is missing here; that
+track stays silent and names it.
+
+**Insert:** `{id, plugin, state, isBypassed}` — an effect (a plugin component of an effect type)
+on a track or the master, in signal order; `state` optional, as `pluginState`. At most 8 in one place.
+
+**Media file:** `{id, name, path, frameCount, sampleRate}` — `path` inside the package, always
+under `Media/`, never absolute or with `..`; `frameCount` above 0; `sampleRate` 1 000 … 768 000.
+
+**Audio region:** `{id, media, start, offset, length}` on an audio track's timeline — `start` in
+ticks, `offset` and `length` in frames of the file, inside it. The file plays at its own speed, so
+a tempo change moves where a region starts, never how it sounds.
 
 **Clip:** `id`, `name`, `length` (ticks; the loop length), `notes` — required; optional `audio`
-(`{media, offset, length}` for an audio loop) and `controls`.
+(`{media, offset, length}` in frames: an audio loop, on an audio track, with no notes or controls,
+in session slots only) and `controls`.
 
 **Note:** `{id, pitch, velocity, start, length}`, start relative to the clip.
 

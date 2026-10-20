@@ -210,6 +210,81 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Media, audio on the timeline and in a session slot, effects with saved state, a plugin
+    /// instrument, a sampler, an interface output and input. Plugin codes are the four ASCII
+    /// characters as one big-endian integer: `aufx` is 1635083896.
+    private let formatTwoMedia = Data("""
+    {
+      "formatVersion": 2,
+      "name": "Media",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "masterInserts": [
+        { "id": "15E00000-0000-4000-8000-000000000002",
+          "plugin": { "type": 1635083896, "subtype": 1819112562, "manufacturer": 1096967012,
+                      "name": "Limiter", "manufacturerName": "Maker" },
+          "isBypassed": false }
+      ],
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000001", "name": "Loop",
+          "path": "Media/3ED10000-0000-4000-8000-000000000001.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [ { "id": "5CE7E000-0000-4000-8000-000000000002", "name": "A" } ],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-000000000007",
+          "name": "Loop",
+          "kind": "audio",
+          "colorIndex": 6,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [
+            { "id": "C1000000-0000-4000-8000-000000000003", "name": "Loop", "length": 7680, "notes": [],
+              "audio": { "media": "3ED10000-0000-4000-8000-000000000001", "offset": 0, "length": 96000 } }
+          ],
+          "placements": [],
+          "slots": [ { "scene": "5CE7E000-0000-4000-8000-000000000002", "clip": "C1000000-0000-4000-8000-000000000003" } ],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000001", "media": "3ED10000-0000-4000-8000-000000000001",
+              "start": 3840, "offset": 48000, "length": 24000 }
+          ],
+          "inserts": [
+            { "id": "15E00000-0000-4000-8000-000000000003",
+              "plugin": { "type": 1635083896, "subtype": 1684368505, "manufacturer": 1096967012,
+                          "name": "Delay", "manufacturerName": "Maker" },
+              "state": "AAEC", "isBypassed": true }
+          ],
+          "input": 2,
+          "monitor": "in"
+        },
+        {
+          "id": "7A000000-0000-4000-8000-000000000008",
+          "name": "Keys",
+          "kind": "instrument",
+          "colorIndex": 0,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "plugin", "preset": "Init", "values": {},
+                          "plugin": { "type": 1635085685, "subtype": 1886285617, "manufacturer": 1096967012,
+                                      "name": "Piano", "manufacturerName": "Maker" },
+                          "pluginState": "AQID" },
+          "output": 2
+        },
+        {
+          "id": "7A000000-0000-4000-8000-000000000009",
+          "name": "Chops",
+          "kind": "instrument",
+          "colorIndex": 2,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "instrument": { "device": "sampler", "preset": "Init", "values": {},
+                          "sample": "3ED10000-0000-4000-8000-000000000001" }
+        }
+      ]
+    }
+    """.utf8)
+
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -241,7 +316,7 @@ final class FormatGoldenTests: XCTestCase {
     }
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
-        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames] {
+        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -353,6 +428,64 @@ final class FormatGoldenTests: XCTestCase {
         XCTAssertNil(picked.context.unrecognizedScale, "choosing a scale replaces the unknown one")
         XCTAssertNil(picked.tracks[0].unrecognizedMonitor)
         XCTAssertEqual(picked.context.scale, .dorian)
+    }
+
+    // MARK: - Media, regions, effects and plugins (format 2)
+
+    func testAFileWithMediaRegionsEffectsAndPluginsOpens() throws {
+        let project = try ProjectCodec.decode(formatTwoMedia)
+        let media = MediaID(UUID(uuidString: "3ED10000-0000-4000-8000-000000000001") ?? UUID())
+        let file = try XCTUnwrap(project.media.first)
+        XCTAssertEqual(file.id, media)
+        XCTAssertEqual(file.frameCount, 96_000)
+        XCTAssertEqual(file.sampleRate, 48_000)
+        XCTAssertEqual(file.url(in: URL(fileURLWithPath: "/Song.echoel"))?.lastPathComponent,
+                       "3ED10000-0000-4000-8000-000000000001.wav")
+
+        let loop = project.tracks[0]
+        XCTAssertEqual(loop.kind, .audio)
+        XCTAssertEqual(loop.regions.map(\.start), [3_840])
+        XCTAssertEqual(loop.regions.first?.offset, 48_000)
+        XCTAssertEqual(loop.regions.first?.length, 24_000)
+        XCTAssertEqual(loop.clips.first?.audio, ClipAudio(media: media, offset: 0, length: 96_000))
+        XCTAssertEqual(loop.slots.count, 1)
+        XCTAssertEqual(loop.input, 2)
+        XCTAssertEqual(loop.monitor, .input)
+        let delay = try XCTUnwrap(loop.inserts.first)
+        XCTAssertEqual(delay.plugin.type, PluginComponent.code("aufx"))
+        XCTAssertEqual(delay.plugin.subtype, PluginComponent.code("dely"))
+        XCTAssertEqual(delay.plugin.role, .effect)
+        XCTAssertEqual(delay.state, Data([0, 1, 2]), "a plugin's own state is base64")
+        XCTAssertTrue(delay.isBypassed)
+        XCTAssertEqual(project.masterInserts.map(\.plugin.name), ["Limiter"])
+
+        let keys = project.tracks[1]
+        XCTAssertEqual(keys.instrument.device, .plugin)
+        XCTAssertEqual(keys.instrument.plugin?.role, .instrument)
+        XCTAssertEqual(keys.instrument.pluginState, Data([1, 2, 3]))
+        XCTAssertEqual(keys.output, 2, "outputs 3/4 of the interface")
+        XCTAssertEqual(project.tracks[2].instrument.device, .sampler)
+        XCTAssertEqual(project.tracks[2].instrument.sample, media)
+    }
+
+    /// The keys of media, regions, effects and plugins are the ones `docs/FORMAT.md` lists.
+    func testTheEncoderWritesTheDocumentedMediaAndPluginKeys() throws {
+        let saved = try ProjectCodec.encode(ProjectCodec.decode(formatTwoMedia))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: saved) as? [String: Any])
+        let file = try XCTUnwrap((root["media"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(file.keys), ["id", "name", "path", "frameCount", "sampleRate"])
+        let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
+        let region = try XCTUnwrap((tracks[0]["regions"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(region.keys), ["id", "media", "start", "offset", "length"])
+        let clip = try XCTUnwrap((tracks[0]["clips"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(try XCTUnwrap(clip["audio"] as? [String: Any]).keys), ["media", "offset", "length"])
+        let insert = try XCTUnwrap((tracks[0]["inserts"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(insert.keys), ["id", "plugin", "state", "isBypassed"])
+        let plugin = try XCTUnwrap(insert["plugin"] as? [String: Any])
+        XCTAssertEqual(Set(plugin.keys), ["type", "subtype", "manufacturer", "name", "manufacturerName"])
+        let instrument = try XCTUnwrap(tracks[1]["instrument"] as? [String: Any])
+        XCTAssertEqual(Set(instrument.keys), ["device", "preset", "values", "plugin", "pluginState"])
+        XCTAssertEqual(Set(tracks[1].keys).intersection(["output", "input", "monitor"]), ["output", "monitor"])
     }
 
     func testATrackKindThisBuildDoesNotKnowRefusesTheSong() throws {
