@@ -73,7 +73,7 @@ final class DocumentController {
         }
         if previousDied {
             log.error("the last launch did not finish — starting a new song")
-            newSong()
+            startSong(writing: false)
             lastError = "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
             return
         }
@@ -90,7 +90,7 @@ final class DocumentController {
                 }
             }
         }
-        if currentURL == nil { newSong() }
+        if currentURL == nil { startSong(writing: false) }
         if let unopened {
             lastError = unopened.newer
                 ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
@@ -152,12 +152,19 @@ final class DocumentController {
     }
 
     func newSong() {
+        startSong(writing: true)
+    }
+
+    /// A new song from the starter. `writing: false` keeps it off the disk until its first edit:
+    /// the starter the launch opens in place of a song must not become the newest song over the
+    /// user's — after a false alarm the next healthy launch would open it instead (R8).
+    private func startSong(writing: Bool) {
         beforeLeavingSong?()
         saveNow()
         let project = Project.starter()
         store.open(project)
         currentURL = library.newURL(for: project.name)
-        savedProject = nil
+        savedProject = writing ? nil : project
         saveNow()
         loadMedia(of: project)
     }
