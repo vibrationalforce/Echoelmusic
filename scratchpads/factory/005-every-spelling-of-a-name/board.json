@@ -1,7 +1,7 @@
 {
  "id": "005-every-spelling-of-a-name",
  "title": "Nur leere Namen fallen weg, Sperre und Prüfer in jeder Schreibweise",
- "stage": "review",
+ "stage": "needs-human",
  "round": 3,
  "base": "f5a495fda271a17088e4b7adfea1b74ec4064083",
  "lenses": [
@@ -41,8 +41,19 @@
    "stage": "review",
    "date": "2026-10-20",
    "note": "Runde 2 (wf_b13afc76-111, Prüfer-Fassung der Basis): REWORK, ein Major — Nacharbeit 1 nahm den Sperr- und Prüfer-Namen im Approver-Prompt die JSON-Anführung, ein Name konnte wie ein Satz des Orchestrators lesen; Nacharbeit 2 baut ihn und die acht Minors ein (reviews/round-2/rebuttal.md)"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-20",
+   "note": "Runde 3 (wf_14ff98a0-be0, Prüfer-Fassung der Basis, nach Container-Neustart fortgesetzt): ESCALATE — alle vier Linsen PASS, alle acht Kriterien erfüllt, 0 Majors; eskaliert, weil der Job den Prüfer ändert und die [FOUNDER]-Annahme an GM27 hängt; sechs Minors in decision.md, kein Job 006 begonnen"
+  },
+  {
+   "stage": "needs-human",
+   "date": "2026-10-20",
+   "note": "GM27 (FOUNDER_INBOX §1) um Job 005 erweitert; decision.md"
   }
  ],
- "head": "92e8052ed110531e5388613cbadcc7e771c68d39",
- "since": "92e8052ed110531e5388613cbadcc7e771c68d39"
+ "head": "c130306c3dd90bec2300d9fe5a4295e6149eaccf",
+ "since": "92e8052ed110531e5388613cbadcc7e771c68d39",
+ "inbox": "GM27"
 }
