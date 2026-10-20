@@ -186,6 +186,11 @@ final class AudioEngine {
         pause()
         if let message { notice = message }
         onPausedFromOutside?()
+        // Playing kept the engine up in the background; paused, it must not stay up silent. After
+        // the caller is done: inside configure (a rate change) the graph is still being rebuilt.
+        if isInBackground {
+            Task { [weak self] in self?.suspendIfIdleInBackground() }
+        }
     }
 
     /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such
@@ -261,7 +266,13 @@ final class AudioEngine {
     /// playhead, the voices and the song stay; `enterForeground` or a play brings it back.
     func enterBackground() {
         isInBackground = true
-        guard isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
+        suspendIfIdleInBackground()
+    }
+
+    /// Stops the audio while in the background with nothing to play, record or follow. Also when
+    /// a pause from outside or the end of a take leaves the app that idle after it went there.
+    private func suspendIfIdleInBackground() {
+        guard isInBackground, isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
         log.info("engine: suspend in background")
         suspendedInput = wantsInput
         engine.stop()
@@ -490,6 +501,8 @@ final class AudioEngine {
         take = nil
         let recorder = current.recorder
         recorder.disarm()
+        // The ring holds what was captured, so the drain below needs no running engine.
+        suspendIfIdleInBackground()
         drainTask?.cancel()
         await drainTask?.value
         drainTask = nil
