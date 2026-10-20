@@ -45,6 +45,10 @@ final class AudioEngine {
     /// The last compiled plan and what it was compiled from. A change that leaves the source
     /// equal (a fader, a mute, a parameter) keeps the plan instead of compiling the song again.
     @ObservationIgnored private var compiled: (source: PlaybackPlan.Source, plan: PlaybackPlan)?
+    /// The song the engine was last given, and the wait before a bridge's song follows it: a
+    /// track the engine would cut fades out first (`CutFade`).
+    @ObservationIgnored private var heard: Project?
+    @ObservationIgnored private var bridgeTask: Task<Void, Never>?
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
@@ -281,6 +285,7 @@ final class AudioEngine {
                 self.session.reset()
                 core = current
                 slots = SlotAssigner(capacity: current.slotCapacity)
+                heard = nil                  // a new core plays nothing yet, so nothing to fade
                 isPlaying = false
                 if let project { publish(project) }
             }
@@ -589,10 +594,31 @@ final class AudioEngine {
         return TimeConversion(tempoMap: playing(project).tempoMap, sampleRate: core.sampleRate).tick(atSample: core.positionSample)
     }
 
+    /// Every song goes through here. A deleted track, or one switched to another instrument,
+    /// fades out first: the bridge plays it muted, the song follows `CutFade.duration` later. A
+    /// newer song in between replaces both, bridged again if it still cuts.
+    private func publish(_ song: Project) {
+        bridgeTask?.cancel()
+        bridgeTask = nil
+        guard core != nil else { return }
+        guard let heard, let bridge = CutFade.bridge(from: heard, to: song) else {
+            send(song)
+            return
+        }
+        send(bridge)
+        bridgeTask = Task { [weak self] in
+            try? await Task.sleep(for: CutFade.duration)
+            guard !Task.isCancelled, let self else { return }
+            self.bridgeTask = nil
+            self.send(song)
+        }
+    }
+
     /// Every snapshot goes through here, so none can carry the song's tempo changes while an
     /// external clock sets the tempo (they would jump the playhead until the clock relocks).
-    private func publish(_ song: Project) {
+    private func send(_ song: Project) {
         guard let core else { return }
+        heard = song
         let project = playing(song)
         slots.update(for: project)
         live.set(core: core, slot: liveSlot(in: project))

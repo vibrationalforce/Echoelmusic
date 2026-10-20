@@ -322,6 +322,55 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the note ended")
     }
 
+    /// A deleted track fades out instead of stopping mid-wave (ultra-audit A9). Published the way
+    /// the app publishes — one slot map, one revision counter — the bridge plays it muted, its
+    /// mixer ramps over one 256-frame chunk, and only then the song without it. Its synth plays a
+    /// sine with the filter open, so a cut would step by the wave itself, while the sine's own
+    /// steepest step is 2π · 131 Hz / 48 kHz ≈ 1.7 % of its peak and the ramp adds 1/256 ≈ 0.4 %.
+    func testADeletedTrackFadesOutThroughTheBridgeInsteadOfStopping() throws {
+        var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)], [Note(pitch: 55, start: 0, length: 8 * bar)]])
+        let gone = s.tracks[0]
+        let sine: [(SynthParameter, Double)] = [(.waveform, 0), (.cutoff, 18_000), (.filterAmount, 0)]
+        for track in s.tracks {
+            for (parameter, value) in sine {
+                try Command.setInstrumentParameter(track, key: parameter.key.rawValue, value: value).apply(to: &s.project)
+            }
+        }
+        try Command.setMute(s.tracks[1], true).apply(to: &s.project)   // only the deleted track is heard
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        var revisions = EventRevisions()
+        func publishLikeTheApp(_ project: Project) {
+            let plan = PlaybackPlan(compiling: project)
+            slots.update(for: project)
+            generation += 1
+            engine.publish(EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate,
+                                          generation: generation, revisions: revisions.update(for: plan)))
+        }
+        publishLikeTheApp(s.project)
+        engine.play()
+        let before = render(engine, frames: 9_600)
+        let peak = before.left[4_800...].map { Swift.abs($0) }.max() ?? 0
+        XCTAssertGreaterThan(peak, 0.01, "the note sounds")
+
+        var after = s.project
+        try Command.removeTrack(gone).apply(to: &after)
+        let bridge = try XCTUnwrap(CutFade.bridge(from: s.project, to: after))
+        XCTAssertEqual(bridge.tracks.map(\.id), s.project.tracks.map(\.id), "back in at its old place")
+        XCTAssertEqual(bridge.tracks.first?.mixer.isMuted, true)
+        XCTAssertNil(CutFade.bridge(from: after, to: after), "nothing cut, no bridge")
+        publishLikeTheApp(bridge)
+        let fading = render(engine, frames: 2_400)
+        publishLikeTheApp(after)
+        let rest = render(engine, frames: 2_400)
+
+        let joined = Array(before.left.suffix(256)) + fading.left + rest.left
+        let steepest = zip(joined.dropFirst(), joined).map { Swift.abs($0 - $1) }.max() ?? 0
+        XCTAssertLessThan(steepest, peak * 0.05, "no step where the track left")
+        XCTAssertNil(firstSound(Array(fading.left.suffix(2_000))), "silent before it is removed")
+        XCTAssertNil(firstSound(rest.left))
+    }
+
     func testANudgeMovesThePlayheadWithoutStoppingAHeldNote() throws {
         let s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
         let core = core()
