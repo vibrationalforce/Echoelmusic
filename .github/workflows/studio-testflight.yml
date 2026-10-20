@@ -29,16 +29,75 @@ concurrency:
   group: studio-testflight-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   XCODE_VERSION: '26.2'
   # A new version train (11.0.0); offset so every number is also above the legacy builds.
   BUILD_NUMBER_OFFSET: 10000
+  APP_ID: '6757957358'
 
 jobs:
+  # "Only bump RELEASE on a commit whose Echoel Studio run is green" was a sentence until
+  # 2026-10-20 (ultra-audit TF-7/CI-05): run 155 of studio.yml and run 8 of this workflow started
+  # in the same second on f61d7872, and the upload never looked at the other. Now it waits for
+  # that run on THIS commit, by conclusion, the way the auto-merge reads it. A run that never
+  # appears is refused, never assumed green. ⚠️ studio.yml cancels its older run on a newer push
+  # to the same branch — so push nothing under EchoelStudio/ until this gate has passed, or the
+  # upload is refused as `cancelled` and RELEASE has to change again.
+  gate:
+    name: "Echoel Studio green on this commit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: "Wait for the Echoel Studio run"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          START=$(date +%s)
+          DEADLINE=$(( START + 45 * 60 ))
+          GRACE=300
+          verdict=""
+          while :; do
+            now=$(date +%s)
+            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null \
+                   || echo '{"workflow_runs":[]}')
+            seen=$(printf '%s' "$runs" | jq '[.workflow_runs[] | select(.name == "Echoel Studio")] | length')
+            verdict=$(printf '%s' "$runs" | jq -r '
+              [.workflow_runs[] | select(.name == "Echoel Studio")]
+              | sort_by(.run_started_at) | last
+              | select(. != null and .status == "completed")
+              | .conclusion // empty')
+            [ -n "$verdict" ] && break
+            if [ "$seen" = "0" ] && [ $(( now - START )) -gt "$GRACE" ]; then verdict="never-ran"; break; fi
+            if [ "$now" -ge "$DEADLINE" ]; then verdict="timeout"; break; fi
+            echo "  t+$(( now - START ))s  Echoel Studio runs on ${SHA}: ${seen}, none finished yet"
+            sleep 30
+          done
+          echo "Echoel Studio on ${SHA}: ${verdict}"
+          echo "## Echoel Studio gate: \`${verdict}\` on \`${SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$verdict" != "success" ]; then
+            echo "::error title=No upload::Echoel Studio on ${SHA} is '${verdict}'. Upload only a commit whose Echoel Studio run is green: fix it, push, then change EchoelStudio/RELEASE again."
+            exit 1
+          fi
+
   ios:
     name: "Archive + Upload"
+    needs: [gate]
     runs-on: macos-26
     timeout-minutes: 90
+    # ONE signing job at a time across BOTH upload workflows (ultra-audit TF-8/CI-06):
+    # fastlane setup_signing revokes every development certificate of the team, and its own
+    # note (Fastfile) says that is safe only with one archive job at a time. testflight.yml
+    # uses the same group. ⚠️ It also revokes a development certificate on the founder's Mac.
+    concurrency:
+      group: apple-signing
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
@@ -99,6 +158,19 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_PATH"
 
+      - name: "Install fastlane"
+        run: gem install fastlane:2.225.0 -N --no-document
+
+      # Presence was all "Check secrets" proved (ultra-audit TF-9). This signs a token and asks
+      # App Store Connect for the app once, BEFORE the step that revokes certificates, so a
+      # wrong or revoked key fails here with its HTTP status instead of deep in an archive log.
+      - name: "Sign in to App Store Connect"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: ruby scripts/asc-build-state.rb auth
+
       - name: "Setup signing certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -108,7 +180,6 @@ jobs:
         run: |
           # Revokes stale development certificates so automatic signing can mint fresh profiles
           # for the app and the extension (the legacy workflow learned this the hard way).
-          gem install fastlane:2.225.0 -N --no-document
           set +eo pipefail
           fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
           [ ${PIPESTATUS[0]} -ne 0 ] && echo "::warning title=Signing setup non-zero::falling back to automatic signing"
@@ -171,6 +242,17 @@ jobs:
             echo "::error title=Build number::app $APP_VER, extension $EXT_VER, expected $BUILD"
             exit 1
           fi
+          # The version the archive really carries, for the summary and the App Store Connect
+          # check below — a literal here once said 11.0.0 whatever project.yml said.
+          echo "VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist")" >> "$GITHUB_ENV"
+          # What each signed bundle asks for, measured on every run instead of reconstructed from
+          # a log afterwards (the F17 question). Only the App Groups are printed.
+          for bundle in "$APP" "$APPEX"; do
+            codesign -d --entitlements - --xml "$bundle" > /tmp/ent.plist 2>/dev/null || true
+            groups=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups' /tmp/ent.plist 2>/dev/null | tr -d '\n ' || true)
+            echo "$(basename "$bundle"): application-groups ${groups:-none}"
+            echo "- \`$(basename "$bundle")\` application-groups: \`${groups:-none}\`" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: "Export & upload to TestFlight"
         env:
@@ -226,7 +308,51 @@ jobs:
             { echo '## Export/upload failed'; echo '```'; tail -80 /tmp/export.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          echo "## Uploaded Echoel Studio 11.0.0 ($BUILD) to TestFlight" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Uploaded Echoel Studio $VERSION ($BUILD) to TestFlight" >> "$GITHUB_STEP_SUMMARY"
+
+      # The legacy pipeline asked App Store Connect after every upload; this one stopped at the
+      # exit code of the upload (ultra-audit TF-4). Polls until Apple has PROCESSED the build:
+      # VALID passes, INVALID or FAILED fail the run, a slow ingest is a warning.
+      - name: "Verify the build in App Store Connect"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: ruby scripts/asc-build-state.rb wait "$BUILD" "$VERSION"
+
+      # dSYMs for symbolicating a tester's .ips — 90 days, the life of a TestFlight build.
+      - name: "Keep the dSYMs"
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoel-studio-dsyms-${{ env.BUILD }}
+          path: build/EchoelStudio.xcarchive/dSYMs
+          retention-days: 90
+          if-no-files-found: warn
+
+      # The logs of a failed run. Masking does not reach a file, so the team ID is replaced
+      # before anything leaves the runner.
+      - name: "Scrub the failure logs"
+        if: failure()
+        env:
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for f in /tmp/archive.log /tmp/export.log /tmp/signing.log; do
+            [ -f "$f" ] && [ -n "$TEAM" ] && sed -i '' "s/$TEAM/<team>/g" "$f"
+          done
+          exit 0
+
+      - name: "Keep the failure logs"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: echoel-studio-testflight-logs-${{ github.run_number }}
+          path: |
+            /tmp/archive.log
+            /tmp/export.log
+            /tmp/signing.log
+          retention-days: 3
+          if-no-files-found: ignore
 
       - name: "Cleanup"
         if: always()

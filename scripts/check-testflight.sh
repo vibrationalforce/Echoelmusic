@@ -26,6 +26,8 @@ set -euo pipefail
 
 OWNER="vibrationalforce"
 REPO="Echoelmusic"
+# The EARLIER app's workflow. Since 2026-10-20 it uploads only with legacy_upload=LEGACY, which
+# this script never sends; Echoel Studio ships by changing EchoelStudio/RELEASE instead.
 WORKFLOW="testflight.yml"
 # Default to the current branch so a fresh container/session deploys the work in
 # front of it, not a stale hard-coded branch. Override with DEPLOY_BRANCH=...

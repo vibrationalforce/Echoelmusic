@@ -13,7 +13,7 @@
 | Edit files | ✅ | ✅ | ✅ |
 | `swift build` / `swift test` | ❌ no toolchain | ❌ (iPhone) | ✅ in CI |
 | `xcodebuild archive` / `fastlane pilot` | ❌ | ❌ | ✅ (`testflight.yml`) |
-| Trigger workflow | ✅ `bash scripts/check-testflight.sh dispatch` | ✅ GitHub web | n/a |
+| Trigger workflow | ✅ Studio: push a change to `EchoelStudio/RELEASE` · earlier app: `bash scripts/check-testflight.sh dispatch` (uploads nothing without `legacy_upload=LEGACY`) | ✅ GitHub web | n/a |
 | Read PRs/issues/commits | ✅ `mcp__github__*` | ✅ web | ✅ |
 | Real device test | ❌ | ✅ TestFlight | ❌ |
 

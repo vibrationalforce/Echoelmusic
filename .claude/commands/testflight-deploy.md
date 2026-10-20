@@ -1,5 +1,11 @@
 # TestFlight Deploy
 
+⛔ **Since 2026-10-18 TestFlight carries Echoel Studio.** Echoel Studio ships by changing
+`EchoelStudio/RELEASE` and pushing (`.github/workflows/studio-testflight.yml`) — that is the
+deploy. This command dispatches the EARLIER app's `testflight.yml`, which since 2026-10-20
+uploads only when the dispatch sends `legacy_upload=LEGACY` (step 7 does not), so as written it
+builds and uploads nothing. Upload the earlier app only on a founder decision.
+
 Deploy the current branch to TestFlight via GitHub Actions.
 
 ## Pre-flight Checks

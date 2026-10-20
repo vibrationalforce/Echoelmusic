@@ -38,14 +38,29 @@ on:
         required: false
         default: true
         type: boolean
+      # ⛔ 2026-10-20 (ultra-audit TF-1): five places still dispatch THIS workflow — deploy-on-tag,
+      # trigger-testflight, scripts/check-testflight.sh, /testflight-deploy, and the dormant step in
+      # auto-merge-claude. Today the earlier app fails at signing (F17); the day that is fixed,
+      # every one of them would upload it onto the record testers now get Echoel Studio from.
+      # So the upload job asks for this word, which none of them sends. A door added later
+      # cannot upload either — the lock is here, at the destination, not at each door.
+      legacy_upload:
+        description: 'Type LEGACY to upload the EARLIER app (10.79) onto the shared TestFlight record'
+        required: false
+        default: ''
+        type: string
   # ⛔ FROZEN 2026-10-18: the tokenless `.deploy/release` trigger is off. Echoel Studio now ships
   # to the same App Store record (com.echoelmusic.app) through studio-testflight.yml, version
   # 11.0.0; a routine bump here would put the earlier app back in front of testers between Studio
   # builds. The earlier app can still be built by hand (workflow_dispatch). To restore the
   # trigger, put back:  push: { paths: ['.deploy/release'] }
 
+# ONE signing run at a time across BOTH upload workflows (2026-10-20, ultra-audit TF-8/CI-06):
+# fastlane setup_signing revokes every development certificate of the team, and the Studio
+# upload (studio-testflight.yml) does the same in its archive job, which takes this group too.
+# Before, the groups differed and a legacy dispatch could revoke a Studio certificate mid-archive.
 concurrency:
-  group: testflight-${{ github.event.inputs.platform }}-${{ github.ref }}
+  group: apple-signing
   cancel-in-progress: false
 
 env:
@@ -300,7 +315,8 @@ jobs:
       always() &&
       needs.preflight.outputs.ready == 'true' &&
       ((github.event.inputs.platform || 'ios') == 'ios' || (github.event.inputs.platform || 'ios') == 'all') &&
-      github.event.inputs.build_only != 'true'
+      github.event.inputs.build_only != 'true' &&
+      github.event.inputs.legacy_upload == 'LEGACY'
     timeout-minutes: 120
 
     steps:
