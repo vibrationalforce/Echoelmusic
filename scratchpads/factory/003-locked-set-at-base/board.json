@@ -1,7 +1,7 @@
 {
  "id": "003-locked-set-at-base",
  "title": "Sperrliste von der Job-Basis, Abnahme gezählt",
- "stage": "review",
+ "stage": "needs-human",
  "round": 3,
  "base": "f61d7872d57f7fab8582fb9ed6b63c1c2a389c10",
  "lenses": [
@@ -40,11 +40,17 @@
    "stage": "review",
    "date": "2026-10-20",
    "note": "Runde 2 (wf_29831ef4-24e): REWORK, fünf Majors — founderAssumptions fehlte = 0 und der Prompt nannte die Zahl als Tatsache, die Zählung des PM war geglaubt, deviceCriteria allein entschuldigte ein Kriterium, die Lauf-Regel übersah, was ein Wächter liest; Nacharbeit 2 baut alle fünf und die zehn Minors ein (reviews/round-2/rebuttal.md)"
+  },
+  {
+   "stage": "needs-human",
+   "date": "2026-10-20",
+   "note": "Runde 3 (wf_c8778d4d-f9a, 61d2d1e37): ESCALATE — Grenze erreicht, drei Majors offen (zwei Zähl-Rückfragen vor den Eskalationsregeln, ein founder-Etikett zählt als Code-Beleg), und der Job ändert den Prüfer; Empfehlung GM27 ja, die Befunde baut Job 004 (decision.md)"
   }
  ],
  "criteria": 10,
  "deviceCriteria": [],
- "head": "6d168b44a7bb72d130482e0104cd04221ccb02a8",
+ "head": "61d2d1e37906b468869dc061ace73dc4410ad23c",
  "since": "6d168b44a7bb72d130482e0104cd04221ccb02a8",
- "founderAssumptions": 0
+ "founderAssumptions": 0,
+ "inbox": "GM27"
 }
