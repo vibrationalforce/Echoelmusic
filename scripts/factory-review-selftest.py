@@ -214,7 +214,8 @@ await run('lens lists are united, not taken from one lens', base,
 // --- the lock configuration ---
 for (const f of ['.claude/settings.json', '.claude/settings.local.json', '.mcp.json', '.claude/hooks/x.py']) {
   await run(`lock config ${f} -> ESCALATE over APPROVE`, { ...base, paths: ['scripts'] }, seeing(['scripts/INDEX.md', f]), ap('APPROVE', OK1), 'ESCALATE', [],
-    (r) => (r.lockChanged || []).includes(f) && r.reason.includes('lock configuration') ? '' : 'lock change not named')
+    (r) => !((r.lockChanged || []).includes(f) && r.reason.includes('lock configuration')) ? 'lock change not named'
+      : r.reason.includes('folds to it') ? 'an exact lock name was hedged as a fold' : '')
 }
 await run('a moved-away hook (its old path in the list) -> ESCALATE', base, seeing(['scripts/x.py', '.claude/hooks/protect-founder-gated.py']), ap('APPROVE', OK1), 'ESCALATE')
 // git prints a name with special characters in quotes with octal escapes; the hooks prefix must still match.
@@ -222,7 +223,7 @@ await run('a quoted hook name -> ESCALATE', base, seeing(['scripts/x.py', '".cla
   (r) => (r.lockChanged || []).some(f => f.startsWith('.claude/hooks/x')) ? '' : 'the quoted name escaped the lock')
 await run('the local settings outside paths are lock AND sensitive', { ...base, paths: ['scripts'] }, seeing(['scripts/INDEX.md', '.claude/settings.local.json']),
   ap('APPROVE', OK1), 'ESCALATE', [], (r) => !(r.sensitiveOutside || []).includes('.claude/settings.local.json') ? 'not reported as sensitive'
-    : reasonHas('rotate it and remove the commit')(r))
+    : reasonHas('rotate it and remove the commit')(r) || reasonHas('.claude/settings.local.json holds a token')(r))
 await run('lock config skips the rework exit', base, (l) => l === 'review:ux' ? { ...MAJOR, changedFiles: ['.mcp.json'] } : seeing(['.mcp.json'])(),
   ap('APPROVE', OK1), 'ESCALATE', ['approver'], (r, prompts) => prompts.approver.includes('edits the configuration that defines the lock') ? '' : 'approver not told')
 await run('a hooks lookalike is not the lock', base, seeing(['.claude/hooksX/a.py', 'docs/.claude/hooks/a']), ap('APPROVE', OK1), 'APPROVE')
@@ -232,7 +233,9 @@ for (const [label, f] of [['a capital H', '.claude/Hooks/protect-founder-gated.p
   ['a Kelvin sign', '.claude/hoo' + String.fromCharCode(0x212a) + 's/x.py'],
   ['a zero width space inside', '.claude/hoo' + String.fromCharCode(0x200b) + 'ks/x.py']]) {
   await run(`a lock spelling with ${label} -> ESCALATE as the lock`, { ...base, paths: ['scripts'] }, seeing(['scripts/INDEX.md', f]), ap('APPROVE', OK1), 'ESCALATE', [],
-    (r) => (r.lockChanged || []).includes(f) && r.reason.includes('lock configuration') ? ONLY_ASCII(r) : 'the spelling escaped the lock')
+    (r, prompts) => !((r.lockChanged || []).includes(f) && r.reason.includes('lock configuration')) ? 'the spelling escaped the lock'
+      : reasonHas('a name that folds to it: ')(r) || ONLY_ASCII(r)
+        || (prompts.approver.includes('defines the lock (a name that folds to it: ') ? '' : 'the approver was told the lookalike is the lock'))
 }
 await run('the token file padded by one lens at the cap -> ESCALATE with the lock and the token note', { ...base, round: 3, since: 'abc1234' },
   (l) => l === 'review:security-agent' ? { ...MAJOR, changedFiles: [...FILES, '.claude/settings.local.json '] } : PASS,
@@ -291,6 +294,16 @@ await run('a disguised name beside a name only some lenses report -> ESCALATE, t
 await run('the cap with every name forged by every lens -> ESCALATE, never a scope INVALID', { ...base, round: 3, since: 'abc1234', paths: FILES },
   (l) => ({ ...(l === 'review:ux' ? MAJOR : PASS), changedFiles: FILES.map(f => f + '\n') }),
   ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('rework cap')(r) || reasonHas('name check:')(r))
+// A forged name INSIDE paths with a real one outside: left out of the test, it turned the cap into an INVALID (job 005, round 1).
+await run('the cap with a forged name inside paths and a real one outside -> ESCALATE', { ...base, round: 3, since: 'abc1234', paths: ['scripts'] },
+  (l) => ({ ...(l === 'review:ux' ? MAJOR : PASS), changedFiles: ['docs/outside.md', 'scripts/INDEX.md\n'] }),
+  ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('rework cap')(r) || reasonHas('name check:')(r))
+await run('a lock change with a forged name inside paths and the lock outside -> ESCALATE', { ...base, paths: ['scripts'] },
+  seeing(['scripts/INDEX.md' + String.fromCharCode(1), '.claude/hooks/x.py']), ap('APPROVE', OK1), 'ESCALATE', [],
+  (r) => reasonHas('lock configuration')(r) || reasonHas('name check:')(r))
+await run('the cap with exact-file paths, a forged copy and a real outside name -> ESCALATE', { ...base, round: 3, since: 'abc1234', paths: FILES },
+  (l) => ({ ...(l === 'review:ux' ? MAJOR : PASS), changedFiles: [FILES[0] + '\n', 'README.md'] }),
+  ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('rework cap')(r) || reasonHas('name check:')(r))
 await run('a forged sensitive name beside a lock change still counts as outside and sensitive', { ...base, paths: ['scripts'] },
   (l) => l === 'review:ux' ? { ...PASS, changedFiles: ['scripts/INDEX.md', '.mcp.json', 'docs/privacy.html\n'] } : seeing(['scripts/INDEX.md', '.mcp.json'])(),
   ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('lock configuration')(r) || ((r.sensitiveOutside || []).includes('docs/privacy.html\n') ? '' : 'the forged name left sensitiveOutside'))
@@ -332,7 +345,7 @@ await run('a judge edit with a code criterion unmet still reworks', base, seeing
 await run('a judge edit with an open finding still reworks', base, (l) => l === 'review:ux' ? { ...MAJOR, changedFiles: [JUDGE] } : seeing([JUDGE])(), null, 'REWORK')
 await run('a judge spelling on a case-insensitive volume -> ESCALATE, never APPROVE', base,
   seeing(['scripts/INDEX.md', '.claude/Workflows/Echoel-Factory-Review.js', '.Claude/agents/x.md']), ap('APPROVE', OK1), 'ESCALATE', [],
-  (r) => (r.judgeChanged || []).length === 2 ? reasonHas('own judge')(r) : `judgeChanged ${JSON.stringify(r.judgeChanged)}`)
+  (r) => (r.judgeChanged || []).length === 2 ? reasonHas('own judge (a name that folds to it: ')(r) : `judgeChanged ${JSON.stringify(r.judgeChanged)}`)
 await run('judge lookalikes are not the judge', base, seeing([JUDGE + '.bak', '.claude/agentsX/a.md', 'docs/.claude/agents/a.md']), ap('APPROVE', OK1), 'APPROVE')
 // --- counted acceptance ---
 await run('one entry for three criteria -> RERUN', { ...base, criteria: 3 }, () => PASS, ap('APPROVE', OK1), 'RERUN', [], missingHas('criteria 2,3 ungraded'))
@@ -356,6 +369,7 @@ await run('a lock change with a miscount -> ESCALATE', { ...base, criteria: 2 },
 await run('the cap with the token committed keeps the lock and the token note', { ...base, round: 3, since: 'abc1234' },
   (l) => ({ ...(l === 'review:security-agent' ? MAJOR : PASS), changedFiles: [...FILES, '.claude/settings.local.json'] }), ap('APPROVE', OK1), 'ESCALATE', [],
   (r, prompts) => reasonHas('rework cap')(r) || reasonHas('lock configuration')(r) || reasonHas('rotate it and remove the commit')(r)
+    || reasonHas('.claude/settings.local.json holds a token')(r)
     || (prompts.approver.includes('The rework cap') && prompts.approver.includes('defines the lock') ? '' : 'the approver was told one part only'))
 await run('an early ESCALATE keeps the device asks', { ...base, criteria: 2, deviceCriteria: [2] }, seeing(['.claude/settings.json']),
   { ...ap('APPROVE', [C(1, 'code', true), C(2, 'device', false)]), specCriteria: 3 }, 'ESCALATE', [],
@@ -459,7 +473,7 @@ MUTATIONS = [
     ("all-empty INVALID with a lens missing", "if (lists.every(l => l !== null) && !changed.length) return", "if (lists.some(l => l !== null) && !changed.length) return"),
     ("no-list RERUN dropped", "if (noList.length) return", "if (false) return"),
     ("blind lens RERUN dropped", "if (blind.length) {", "if (false) {"),
-    ("scope-empty INVALID dropped", "if (named.length && named.every(f => !inScope(f))) {", "if (false) {"),
+    ("scope-empty INVALID dropped", "if (!forged && changed.length && outsideScope.length === changed.length) {", "if (false) {"),
     ("prefix without a slash", "f.startsWith(`${q}/`)", "f.startsWith(q)"),
     ("changed from the first lens only", "const changed = [...new Set(listed.flat())].sort()", "const changed = [...new Set(listed[0] || [])].sort()"),
     ("dot segment allowed in paths", r"(?!(?:.*\/)?\.(?:\/|$))", ""),
@@ -518,13 +532,13 @@ MUTATIONS = [
     ("cap escalation dropped", "if (capReached) fixedParts.push(", "if (false) fixedParts.push("),
     ("lock escalation dropped", "if (lockChanged.length) fixedParts.push(", "if (false) fixedParts.push("),
     ("disguised name escalation dropped", "if (disguised.length) fixedParts.push(", "if (false) fixedParts.push("),
-    ("token note dropped", "(${shownNames(lockChanged)})${tokenNote}`)", "(${shownNames(lockChanged)})`)"),
+    ("token note dropped", "(${asFound(lockChanged, isLockConfig)})${tokenNote}`)", "(${asFound(lockChanged, isLockConfig)})`)"),
     ("the cap keeps only one part", "const fixed = fixedParts.join('; ')", "const fixed = fixedParts.slice(0, 1).join('; ')"),
-    ("lock names raw in the reason", "(${shownNames(lockChanged)})${tokenNote}`)", "(${lockChanged.join(', ')})${tokenNote}`)"),
+    ("lock names raw in the reason", "exact.length ? shownNames(exact) : ''", "exact.length ? exact.join(', ') : ''"),
     ("disguised names raw in the reason", "character (${shownNames(disguised)}); the founder", "character (${disguised.join(', ')}); the founder"),
     ("approver told the cap only", "lockChanged.length ? `This change edits the configuration that defines the lock", "false ? `This change edits the configuration that defines the lock"),
     ("approver not told about a disguised name", "disguised.length ? `A changed file name hides", "false ? `A changed file name hides"),
-    ("lock names unescaped in the prompt", "defines the lock (${ascii(lockChanged)}).`", "defines the lock (${lockChanged.join(', ')}).`"),
+    ("lock names unescaped in the prompt", "defines the lock (${asFound(lockChanged, isLockConfig)}).`", "defines the lock (${lockChanged.join(', ')}).`"),
     ("lock skips-rework guard dropped", "&& !lockChanged.length && !disguised.length) {", "&& !disguised.length) {"),
     ("disguised name skips no rework", "&& !lockChanged.length && !disguised.length) {", "&& !lockChanged.length) {"),
     ("judge also skips rework", "&& !lockChanged.length && !disguised.length) {", "&& !lockChanged.length && !disguised.length && !judgeChanged.length) {"),
@@ -561,7 +575,12 @@ MUTATIONS = [
     ("the fold keeps padding", "f.replace(hiddenChars, '').trim().normalize", "f.replace(hiddenChars, '').normalize"),
     ("the token note unfolded", "lockChanged.some(f => fold(f) === TOKEN_FILE)", "false"),
     ("a lookalike called the token file", "lockChanged.includes(TOKEN_FILE) ?", "lockChanged.some(f => fold(f) === TOKEN_FILE) ?"),
-    ("forged names decide the scope", "const named = changed.filter(f => !forgedChar.test(f))", "const named = changed"),
+    ("a forged name makes the call INVALID", "if (!forged && changed.length && outsideScope.length === changed.length) {", "if (changed.length && outsideScope.length === changed.length) {"),
+    ("forged names left out of the INVALID test", "if (!forged && changed.length && outsideScope.length === changed.length) {", "if (changed.some(f => !forgedChar.test(f)) && changed.filter(f => !forgedChar.test(f)).every(f => !inScope(f))) {"),
+    ("the exact token file only may hold a token", "? `; ${TOKEN_FILE} holds a token: rotate it", "? `; a name that folds to ${TOKEN_FILE} may hold its token: if it does, rotate it"),
+    ("a folded lock name said to be the lock", "folded.length ? `a name that folds to it: ${shownNames(folded)}` : ''", "folded.length ? shownNames(folded) : ''"),
+    ("an exact lock name hedged as a fold", "const exact = l.filter(isIt), folded = l.filter(f => !isIt(f))", "const exact = [], folded = l"),
+    ("the approver told a lookalike is the lock", "the lock (${asFound(lockChanged, isLockConfig)}).", "the lock (${ascii(lockChanged)})."),
     ("forged names leave the outside list", "const outsideScope = changed.filter(f => !inScope(f))", "const outsideScope = changed.filter(f => !inScope(f) && !forgedChar.test(f))"),
     ("the lenses get the approver's diff", "\\`git diff ${range}${scope}\\`.", "\\`git diff ${range}${approverScope}\\`."),
     ("name check not noted", "if (garbled.length) notes.push(`name check: ${garbled.join('; ')}`)", ""),

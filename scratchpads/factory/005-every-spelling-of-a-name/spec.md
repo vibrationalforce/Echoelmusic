@@ -1,8 +1,8 @@
 # 005 — Nur leere Einträge fallen weg, und Sperre, Prüfer und Sensibles erkennen jede Schreibweise eines Namens
 
 ## Goal
-Die Namensprüfung des Factory-Prüfers wirft nur wirklich leere Einträge weg, und ein Name, der auf IRGENDEINEM
-Dateisystem die Sperr-Konfiguration, der Prüfer oder eine sensible Fläche sein kann, wird auch so behandelt.
+Die Namensprüfung des Factory-Prüfers wirft nur wirklich leere Einträge weg, und ein Name, der auf einem APFS- oder
+HFS+-Volume die Sperr-Konfiguration, der Prüfer oder eine sensible Fläche ist, wird auch so behandelt.
 
 ## Assumptions
 - Herkunft: der offene Major und die Minors aus Job 004, Runde 3 (`wf_c2619890-b9f`,
@@ -19,7 +19,8 @@ Dateisystem die Sperr-Konfiguration, der Prüfer oder eine sensible Fläche sein
   `.Claude/settings.json` oder ein aufgefüllter Token-Name nicht an der Sperre vorbeigeht. Unter Linux ist nicht
   messbar, ob APFS ohne Unterscheidung der Schreibweise zwei solche Pfade auf eine Datei legt; die Faltung
   eskaliert dann eben einmal zu viel, nie einmal zu wenig. Der Scope (`inScope`) bleibt exakt, weil Git-Pfade
-  im Repo die Schreibweise unterscheiden.
+  im Repo die Schreibweise unterscheiden. Nicht gedeckt, bewusst (Runde 1, security): NTFS-Aliasse (Punkt am
+  Ende, `::$DATA`, 8.3-Namen) und die volle Fallfaltung (ß→ss) — Founder-Rechner sind Apple, Sitzungen Linux.
 - Die Listen der Sperre und des Prüfers stehen in gefalteter Form (Kleinbuchstaben), sonst träfe der gefaltete
   Name sie nicht; der Wächter hält das fest.
 - Dieser Job hat kein Geräte-Kriterium: er berührt keine App.
@@ -33,9 +34,10 @@ Dateisystem die Sperr-Konfiguration, der Prüfer oder eine sensible Fläche sein
 3. `lockChanged`, `judgeChanged` und `sensitiveOutside` prüfen den GEFALTETEN Namen; `.claude/Hooks/x.py`,
    `.Claude/settings.json`, `.claude/SETTINGS.JSON`, ein Token-Name mit Leerzeichen am Ende (auch von nur einer
    Linse, auch an der Grenze, dann mit der Token-Notiz), `.claude/Workflows/echoel-factory-review.js` und
-   `docs/PRIVACY.html` werden erkannt; die Token-Notiz vergleicht ebenfalls gefaltet — Selbsttest-Fälle.
-4. Ein Name mit C0-Zeichen macht den Aufruf nie `INVALID`: an der Grenze mit verfälschten Namen aus jeder Linse ist
-   es `ESCALATE` mit `rework cap` und `name check:`; er bleibt in `outsideScope` und `sensitiveOutside`, damit
+   `docs/PRIVACY.html` werden erkannt; die Token-Notiz vergleicht ebenfalls gefaltet; ein Name, der nur GEFALTET
+   passt, heißt im Grund und im Approver-Prompt „a name that folds to it“, ein exakter nie — Selbsttest-Fälle.
+4. Ein Name mit C0-Zeichen macht den Aufruf nie `INVALID`, in keiner Richtung (innerhalb oder außerhalb von
+   `paths`): an der Grenze oder neben einer Sperr-Änderung ist es `ESCALATE` mit `name check:`; er bleibt in `outsideScope` und `sensitiveOutside`, damit
    nichts, was eine Linse meldete, aus dem Grund fällt — Selbsttest-Fälle.
 5. Der Selbsttest pinnt den Linsen-Diff wieder bis zum schließenden Backtick (`git diff ${range}${scope}` ohne
    den Approver-Ausschluss) — eine Mutation, die den Linsen den Approver-Diff gibt, wird rot.

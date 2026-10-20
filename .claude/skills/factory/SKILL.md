@@ -171,10 +171,12 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    2. Der Diff ändert die Konfiguration, die die Sperre DEFINIERT — `.claude/settings.json`,
       `.claude/settings.local.json` (gitignoriert, mit `git add -f` aber trackbar, und Claude Code
       wertet sie VOR `settings.json`), `.mcp.json` oder etwas unter `.claude/hooks/`, auch außerhalb
-      von `paths` und in JEDER Schreibweise, die auf irgendeinem Dateisystem diese Datei sein kann
+      von `paths` und in jeder Schreibweise, die auf einem APFS- oder HFS+-Volume diese Datei ist
       (verglichen wird der gefaltete Name: versteckte Zeichen und Rand-Leerraum entfernt, NFKC,
-      Kleinbuchstaben — `.claude/Hooks/` ist auf einem APFS-Volume ohne Groß-/Kleinunterscheidung
-      `.claude/hooks/`) → **ESCALATE**, ohne
+      Kleinbuchstaben — `.claude/Hooks/` ist dort `.claude/hooks/`; NTFS-Aliasse wie ein Punkt am Ende
+      und die volle Fallfaltung ß→ss deckt das nicht ab, weil Founder-Rechner Apple sind und Sitzungen
+      unter Linux laufen; ein nur gefaltet passender Name heißt im Grund „a name that folds to it“)
+      → **ESCALATE**, ohne
       Ermessen des Approvers und vor jeder Nacharbeit. Ein Job wird nie an der Sperre gemessen, die
       er selbst geändert hat. Bei `.claude/settings.local.json` sagt der Grund zusätzlich, dass das
       Token zu tauschen und der Commit aus der Geschichte zu entfernen ist; bei einem Namen, der nur

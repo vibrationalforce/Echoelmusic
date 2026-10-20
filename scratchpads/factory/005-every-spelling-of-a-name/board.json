@@ -1,8 +1,8 @@
 {
  "id": "005-every-spelling-of-a-name",
  "title": "Nur leere Namen fallen weg, Sperre und Prüfer in jeder Schreibweise",
- "stage": "build",
- "round": 0,
+ "stage": "review",
+ "round": 2,
  "base": "f5a495fda271a17088e4b7adfea1b74ec4064083",
  "lenses": [
   "code-reviewer",
@@ -31,6 +31,13 @@
    "stage": "build",
    "date": "2026-10-20",
    "note": "Workflow (nur Leeres fällt weg, Ausweichen vor disguised, gefaltete Sperre/Prüfer/SENSITIVE, zweistufige Token-Notiz, C0 nie Scope-INVALID), Selbsttest (Mutationen 131/131), SKILL.md, INDEX, Wächter-Ansprüche 8–10 (an f5a495fda rot durch die Änderung, am Kopf grün); kein Lauf außer dem Wächter im Test-Bundle"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-20",
+   "note": "Runde 1 (wf_1edd4391-ce0, Prüfer-Fassung der Basis): REWORK, zwei Majors zu einem Sachverhalt — ein verfälschter Name innerhalb von paths machte den Aufruf INVALID und verlor Grenze oder Sperre; Nacharbeit 1 baut ihn und die sieben Minors ein (reviews/round-1/rebuttal.md)"
   }
- ]
+ ],
+ "head": "2ee3c736dbda2cfc802b93aaaaa2b4864d6255fb",
+ "since": "2ee3c736dbda2cfc802b93aaaaa2b4864d6255fb"
 }

@@ -76,8 +76,9 @@
 // a verdict on the parent. Transcribed in Python against both trees.
 // Job 005, graded on its parent `f5a495fda`: the two fold needles of claims 8 and 9 and the widened name-RERUN
 // needle of claim 10 are FORWARD (red there by the change: the parent matched the raw name and let the name RERUN
-// stand before a disguised one); the two lower-case checks are COUNTERWEIGHTS, green on both trees — every
-// entry already is lower case — and make an upper-case entry visible, which the fold could never match.
+// stand before a disguised one); the two ASCII-lower-case checks are COUNTERWEIGHTS, green on both trees — every
+// entry already is — and make an entry visible that the fold could never match. Claim 8's subset now compares the
+// hook and permissions.ask paths lower-cased (rework 1); today all are, so that half is unchanged on both trees.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
@@ -282,13 +283,16 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             }
         }
         XCTAssertFalse(files.isEmpty, "PROTECTED_FILES and permissions.ask parsed empty — the scan matched nothing useful")
-        XCTAssertTrue(files.isSubset(of: lockFiles), """
-            The lock is defined over \(files.subtracting(lockFiles).sorted()), which the factory workflow's \
+        // Compared in folded form: the workflow matches the folded name, so a mixed-case lock path is listed in
+        // lower case there (job 005, round 1: an exact-case subset check would contradict the lower-case claim).
+        let foldedFiles = Set(files.map { $0.lowercased() }), foldedDirs = Set(dirs.map { $0.lowercased() })
+        XCTAssertTrue(foldedFiles.isSubset(of: lockFiles), """
+            The lock is defined over \(foldedFiles.subtracting(lockFiles).sorted()), which the factory workflow's \
             LOCK_CONFIG does not escalate. Add it to LOCK_CONFIG in the same commit, or a job that edits it \
             is judged by the approver's discretion instead of escalating.
             """)
-        XCTAssertTrue(dirs.isSubset(of: lockDirs), """
-            The lock covers the director(ies) \(dirs.subtracting(lockDirs).sorted()), which the workflow's \
+        XCTAssertTrue(foldedDirs.isSubset(of: lockDirs), """
+            The lock covers the director(ies) \(foldedDirs.subtracting(lockDirs).sorted()), which the workflow's \
             LOCK_DIRS does not escalate. Add each with its trailing slash.
             """)
         XCTAssertTrue(workflowCode().contains(
@@ -298,13 +302,17 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             """)
         XCTAssertTrue(workflowCode().contains("const lockChanged = changed.filter(f => isLockConfig(fold(f)))"), """
             `lockChanged` in \(Self.workflowPath) no longer tests the FOLDED name: `.claude/Hooks/…` is \
-            `.claude/hooks/…` on a case-insensitive volume, and a token name a lens padded is still the token \
-            file (job 004, round 3).
+            `.claude/hooks/…` on a case-insensitive volume, and a token name a lens padded still counts as the \
+            token file for the lock (job 004, round 3).
             """)
-        let unfoldedLock = lockFiles.union(lockDirs).filter { $0 != $0.lowercased() }
+        // Folded form for an entry means ASCII lower case: NFKC and the hidden-character removal are the identity
+        // on ASCII, so nothing else can equal a folded name (job 005, round 1).
+        let unfoldedLock = lockFiles.union(lockDirs).filter { (entry: String) -> Bool in
+            entry.unicodeScalars.contains { (scalar: Unicode.Scalar) -> Bool in !scalar.isASCII } || entry != entry.lowercased()
+        }
         XCTAssertTrue(unfoldedLock.isEmpty, """
             LOCK_CONFIG / LOCK_DIRS in \(Self.workflowPath) hold \(unfoldedLock.sorted()), a spelling the folded \
-            name never equals, so that lock path would never escalate. Write every entry in lower case.
+            name never equals, so that lock path would never escalate. Write every entry in ASCII lower case.
             """)
     }
 
@@ -328,10 +336,12 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             `judgeChanged` in \(Self.workflowPath) no longer tests the FOLDED name: on a case-insensitive volume \
             `.claude/Workflows/…` is the judge, and a job that edits it would approve itself (job 004, round 3).
             """)
-        let unfoldedJudge = judgeFiles.union(judgeDirs).filter { $0 != $0.lowercased() }
+        let unfoldedJudge = judgeFiles.union(judgeDirs).filter { (entry: String) -> Bool in
+            entry.unicodeScalars.contains { (scalar: Unicode.Scalar) -> Bool in !scalar.isASCII } || entry != entry.lowercased()
+        }
         XCTAssertTrue(unfoldedJudge.isEmpty, """
             JUDGE_FILES / JUDGE_DIRS in \(Self.workflowPath) hold \(unfoldedJudge.sorted()), a spelling the folded \
-            name never equals. Write every entry in lower case.
+            name never equals. Write every entry in ASCII lower case.
             """)
         guard let judgeBranch = code.range(of: "} else if (judgeChanged.length) {"),
               let approveBranch = code.range(of: "decision = 'APPROVE'") else {
