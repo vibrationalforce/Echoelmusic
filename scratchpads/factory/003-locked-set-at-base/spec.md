@@ -17,34 +17,52 @@ immer, und der Workflow zählt selbst, ob der Approver jedes Kriterium der Spec 
 - Die Linsen melden die UNGEFILTERTE Dateiliste (`changedFiles`); was im Scope liegt und was
   draußen, rechnet der Workflow selbst nach Git-Pfadregeln. Eine Linse, die eine leere Liste
   meldet, während andere Dateien sehen, hat sich verzählt (`RERUN`), nicht der Aufruf.
-- Der PM übergibt die Zahl der Kriterien (`criteria`) und die Nummern der `[DEVICE]`-Kriterien
-  (`deviceCriteria`). Ein Eintrag mit Nummer 0 ist eine `[FOUNDER]`-Annahme.
+- Der PM übergibt die Zahl der Kriterien (`criteria`), die Nummern der `[DEVICE]`-Kriterien
+  (`deviceCriteria`) und die Zahl der `[FOUNDER]`-Annahmen (`founderAssumptions`, hier 0). Ein Eintrag mit
+  Nummer 0 ist eine `[FOUNDER]`-Annahme.
 - Sensible Flächen außerhalb des Scopes (Rechtstext, Datenschutz, Gesundheit, Entitlements,
   Privacy-Manifeste, Store-Text) deckt eine Freigabe nicht; sie kommen als `scopeOpen` ins Board.
+- Der PRÜFER selbst gehört zu dem, was ein Job nicht aufweichen darf (Runde 1, Security-Linse; der Harness
+  lädt `.claude/workflows/echoel-factory-review.js` und `.claude/agents/` aus dem Arbeitsbaum, also prüft ein
+  Job, der sie ändert, sich mit seiner eigenen Fassung). Ein solcher Job durchläuft die Nacharbeit, endet aber
+  nie in APPROVE. **Dieser Job eskaliert deshalb am Ende** — gewollt, er gehört zu GM27.
 - Dieser Job hat kein Geräte-Kriterium: er berührt keine App.
 
 ## Acceptance criteria
 1. Der Approver-Prompt liest die Sperrliste mit `git show <base>:` aus `.claude/rules/context.md`,
-   `.claude/hooks/protect-founder-gated.py` und `.claude/settings.json` — Selbsttest-Fall und
-   `TheFactoryReviewersAreReadOnlyTests` Anspruch 7.
+   `.claude/hooks/protect-founder-gated.py` und `.claude/settings.json` und prüft, dass `board.json` am
+   Kopf dieselbe `base` führt — Selbsttest-Fall und `TheFactoryReviewersAreReadOnlyTests` Anspruch 7.
 2. Eine Änderung an `.claude/settings.json`, `.mcp.json` oder unter `.claude/hooks/` ergibt ESCALATE,
-   auch wenn der Approver APPROVE sagt — Selbsttest-Fall.
+   auch wenn der Approver APPROVE sagt und auch wenn die Datei weggeschoben wird (Dateiliste mit
+   `--no-renames`); jeder Pfad, über den Hook und `permissions.ask` die Sperre definieren, steht in der
+   festen Liste — Selbsttest-Fälle und Anspruch 8.
 3. Der Workflow rechnet Scope und Außerhalb selbst aus `changedFiles`: leer bei allen Linsen →
-   `INVALID`, leer bei einer → `RERUN` mit ihrem Namen, Scope leer → `INVALID` — Selbsttest-Fälle.
-4. `criteria` ist Pflicht; benotet der Approver nicht genau die Nummern 1..criteria je einmal, ist
-   es `RERUN`; ein `device`-Etikett außerhalb von `deviceCriteria` zählt als `code`; ein erfülltes
-   `founder`-Kriterium ohne Verweis auf `FOUNDER_INBOX` oder `memory/decisions.md` bleibt offen —
+   `INVALID`, leer oder ohne Liste bei einer → `RERUN` mit ihrem Namen, eine fehlende Linse → `RERUN`,
+   Scope leer → `INVALID`; sensible Dateien außerhalb kommen als `sensitiveOutside` zurück —
    Selbsttest-Fälle.
+4. `criteria` ist Pflicht; benotet der Approver nicht genau die Nummern 1..criteria je einmal oder
+   weniger `[FOUNDER]`-Annahmen als `founderAssumptions`, ist es `RERUN`; die Art folgt allein der Spec
+   (ein `device`- oder `founder`-Etikett auf einer anderen Nummer zählt als `code`, Nummer 0 ist immer
+   `founder`); ein erfüllter `founder`-Eintrag ohne Verweis auf `FOUNDER_INBOX` oder
+   `memory/decisions.md` samt Datum bleibt offen — Selbsttest-Fälle.
 5. Der Datenblock im Approver-Prompt ist reines ASCII (kein U+2028, keine Gedankenstrich-Marker) und
-   dekodiert zum selben JSON — Selbsttest-Fall.
-6. `since` in Runde 1 ist `INVALID` — Selbsttest-Fall.
-7. `factory-board.py`: `scopeOpen` hält einen fertigen Job auf `--open`, bis jeder Eintrag
-   `reviewedBy` trägt; ein `deviceOpen`, der keine Liste von Objekten ist, wird gemeldet statt
-   abzustürzen — `--selftest` mit Mutationen.
+   dekodiert zum selben JSON; Dateinamen der Linsen erreichen den Prompt nur auf demselben Weg —
+   Selbsttest-Fälle.
+6. `since` in Runde 1 ist `INVALID`, ein `paths`-Eintrag mit `.`-Segment oder `//` ebenso —
+   Selbsttest-Fälle.
+7. `factory-board.py`: `scopeOpen` hält einen fertigen Job auf `--open`, bis jeder Eintrag in
+   `reviewedBy` einen anderen Job oder `founder JJJJ-MM-TT` nennt (`null` bleibt offen, jeder andere Wert
+   ist ein Befund); ein `deviceOpen` oder `scopeOpen`, der keine Liste von Objekten ist, wird gemeldet
+   statt abzustürzen — `--selftest` und `--mutate`.
 8. `SKILL.md` sagt dasselbe wie der Workflow: Argumente, Sperrliste von der Basis, `verified`-Datum
-   statt `VERIFIED-…`, die genaue Kein-Lauf-Liste, Website erst „done“ auf `main`, „Docs-Satz“ nur
-   intern — und zitiert nur Pfade, die existieren (`scripts/doctor.py --section B`).
-9. Der Selbsttest endet mit 0, und jede der gezielten Mutationen an den neuen Regeln wird gefangen.
+   statt `VERIFIED-…`, welcher Gate-Lauf zählt und „kein Lauf“ über den ganzen Job, Website erst „done“
+   auf `main`, „Docs-Satz“ nur intern und ohne `FEATURE_STATUS.md` — und zitiert nur Pfade, die
+   existieren (`scripts/doctor.py --section B`).
+9. Beide Selbsttests enden mit 0, und `--mutate` beider Werkzeuge fängt jede Zeile ihrer Tabelle — aus
+   dem Repo nachrechenbar, eine veraltete Zeile ist ein Fehler.
+10. Eine Änderung am Prüfer (`.claude/workflows/echoel-factory-review.js`, `.claude/agents/`) endet nie
+   in APPROVE: Nacharbeit wie immer, sonst ESCALATE; SKILL.md sagt, wie ab Job 004 die Fassung von der
+   Basis prüft — Selbsttest-Fälle und Anspruch 9.
 
 ## Out of scope
 Ein Pro-Lauf-Token in den Markern (der Harness erlaubt kein `Math.random`), eine Prüfung der Rechts-

@@ -23,9 +23,19 @@
 //    `.claude/rules/context.md`, `.claude/hooks/protect-founder-gated.py` and
 //    `.claude/settings.json` — never from the tree under review, which the job itself may have
 //    edited (factory job 001, round 3; job 003).
-// 8. Every file in the hook's `PROTECTED_FILES` is in the workflow's `LOCK_CONFIG`, which escalates
-//    a change to it deterministically. Two lists of one lock is #416: a file added to the hook and
-//    not to the workflow would be judged by the approver's discretion again.
+// 8. Every path the lock is DEFINED by escalates deterministically: each file in the hook's
+//    `PROTECTED_FILES` and each `Edit(/…)`/`Write(/…)` file in `permissions.ask` of
+//    `.claude/settings.json` is in the workflow's `LOCK_CONFIG`; each directory in the hook's
+//    `PROTECTED_DIRS` and each `…/**` entry of `permissions.ask` is in `LOCK_DIRS`; and the
+//    predicate `isLockConfig` reads both lists. Three lists of one lock is #416: a path added to the
+//    hook or to permissions.ask and not to the workflow would be judged by the approver's discretion
+//    again. ⚠️ Fail-closed by design: a ship file the founder puts back under the hook or into
+//    permissions.ask (project.yml, Info.plist, .github/workflows/) then ALWAYS escalates a factory job,
+//    released or not — a dated release costs one inbox answer, a silent miss costs the lock.
+// 9. The judge cannot approve its own edit: `JUDGE_FILES` holds this workflow, `JUDGE_DIRS` holds
+//    `.claude/agents/` (the lens definitions the harness loads from the tree under review), the
+//    predicate `isJudge` reads both, and the judge branch sits BEFORE the APPROVE branch of the decision
+//    (job 003, round 1: the round was reviewed by the very copy it had edited).
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
 // by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
@@ -34,13 +44,14 @@
 // in Python against both trees.
 // Claim 6 (added in the job-001 rework) is a COUNTERWEIGHT: the wrapper already prepended the clause
 // on the parent, so it is green on both trees and pins a premise of claims 1–2 (#343).
-// Claims 7 and 8 (job 003) are FORWARD guards: on the parent `f61d7872d` the approver read the
-// lock files from the working tree and there was no `LOCK_CONFIG`, so both are red there by the
-// change itself, not by an absent anchor; the hook half of claim 8 is green on both trees.
+// Claims 7, 8 and 9 (job 003) are FORWARD guards: on the parent `f61d7872d` the approver read the
+// lock files from the working tree and there was no `LOCK_CONFIG`, `LOCK_DIRS` or `JUDGE_FILES`, so
+// all three are red there by the change itself, not by an absent anchor; the hook and settings halves
+// of claim 8 parse on both trees.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
-// unrelated commit. Whoever edits the workflow transcribes claims 1–4 and 6–8 before pushing, and
+// unrelated commit. Whoever edits the workflow transcribes claims 1–4 and 6–9 before pushing, and
 // runs `scripts/factory-review-selftest.py` for the decision logic, which no guard here can see.
 //
 // THIS GUARD FORBIDS NOTHING (#364): more lenses, a different cap, a new agent type on the
@@ -193,20 +204,78 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
         }
     }
 
-    func testEveryHookProtectedFileEscalatesDeterministically() {
-        guard let hookList = firstCapture("PROTECTED_FILES = \\(([^)]*)\\)", in: text(".claude/hooks/protect-founder-gated.py")) else {
-            return XCTFail("ANCHOR MISSING: `PROTECTED_FILES = (…)` in .claude/hooks/protect-founder-gated.py (#454)")
+    /// The quoted strings of the JavaScript array `const <name> = [...]` in the workflow, or nil.
+    private func workflowList(_ name: String) -> Set<String>? {
+        guard let body = firstCapture("const \(name) = \\[([^\\]]*)\\]", in: workflowCode()) else { return nil }
+        return quoted(body, by: "'")
+    }
+
+    func testEveryLockedPathEscalatesDeterministically() {
+        let hook = text(".claude/hooks/protect-founder-gated.py")
+        guard let hookFileList = firstCapture("PROTECTED_FILES = \\(([^)]*)\\)", in: hook),
+              let hookDirList = firstCapture("PROTECTED_DIRS = \\(([^)]*)\\)", in: hook) else {
+            return XCTFail("ANCHOR MISSING: `PROTECTED_FILES = (…)` / `PROTECTED_DIRS = (…)` in .claude/hooks/protect-founder-gated.py (#454)")
         }
-        guard let lockList = firstCapture("const LOCK_CONFIG = \\[([^\\]]*)\\]", in: workflowCode()) else {
-            return XCTFail("ANCHOR MISSING: `const LOCK_CONFIG = [...]` in \(Self.workflowPath) (#454)")
+        guard let lockFiles = workflowList("LOCK_CONFIG"), let lockDirs = workflowList("LOCK_DIRS") else {
+            return XCTFail("ANCHOR MISSING: `const LOCK_CONFIG = [...]` / `const LOCK_DIRS = [...]` in \(Self.workflowPath) (#454)")
         }
-        let hookFiles = quoted(hookList, by: "\"")
-        let locked = quoted(lockList, by: "'")
-        XCTAssertFalse(hookFiles.isEmpty, "PROTECTED_FILES parsed empty — the scan matched nothing useful")
-        XCTAssertTrue(hookFiles.isSubset(of: locked), """
-            The hook protects \(hookFiles.subtracting(locked).sorted()), which the factory workflow's \
-            LOCK_CONFIG does not escalate. Add it to LOCK_CONFIG in the same commit, or a job that \
-            edits it is judged by the approver's discretion instead of escalating.
+        let settingsURL = repoRoot().appendingPathComponent(".claude/settings.json")
+        guard let data = try? Data(contentsOf: settingsURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let permissions = json["permissions"] as? [String: Any],
+              let ask = permissions["ask"] as? [String] else {
+            return XCTFail("ANCHOR MISSING: permissions.ask in .claude/settings.json (#454)")
+        }
+        var files = quoted(hookFileList, by: "\"")
+        var dirs = Set(quoted(hookDirList, by: "\"").map { $0.hasSuffix("/") ? $0 : $0 + "/" })
+        for entry in ask {
+            guard let path = firstCapture("^(?:Edit|Write|MultiEdit)\\(/(.+)\\)$", in: entry) else { continue }
+            if path.hasSuffix("/**") {
+                dirs.insert(String(path.dropLast(2)))
+            } else {
+                files.insert(path)
+            }
+        }
+        XCTAssertFalse(files.isEmpty, "PROTECTED_FILES and permissions.ask parsed empty — the scan matched nothing useful")
+        XCTAssertTrue(files.isSubset(of: lockFiles), """
+            The lock is defined over \(files.subtracting(lockFiles).sorted()), which the factory workflow's \
+            LOCK_CONFIG does not escalate. Add it to LOCK_CONFIG in the same commit, or a job that edits it \
+            is judged by the approver's discretion instead of escalating.
+            """)
+        XCTAssertTrue(dirs.isSubset(of: lockDirs), """
+            The lock covers the director(ies) \(dirs.subtracting(lockDirs).sorted()), which the workflow's \
+            LOCK_DIRS does not escalate. Add each with its trailing slash.
+            """)
+        XCTAssertTrue(workflowCode().contains(
+            "const isLockConfig = (f) => LOCK_CONFIG.includes(f) || LOCK_DIRS.some(d => f.startsWith(d))"), """
+            `isLockConfig` in \(Self.workflowPath) no longer reads both LOCK_CONFIG and LOCK_DIRS; the lists \
+            above would be checked against a predicate that ignores them.
+            """)
+    }
+
+    func testTheJudgeCannotApproveItsOwnEdit() {
+        let code = workflowCode()
+        guard let judgeFiles = workflowList("JUDGE_FILES"), let judgeDirs = workflowList("JUDGE_DIRS") else {
+            return XCTFail("ANCHOR MISSING: `const JUDGE_FILES = [...]` / `const JUDGE_DIRS = [...]` in \(Self.workflowPath) (#454)")
+        }
+        XCTAssertTrue(judgeFiles.contains(Self.workflowPath), """
+            JUDGE_FILES no longer names \(Self.workflowPath). The harness runs that file from the tree under \
+            review, so a job that edits it would be approved by its own edit.
+            """)
+        XCTAssertTrue(judgeDirs.contains(".claude/agents/"), """
+            JUDGE_DIRS no longer names `.claude/agents/`, the lens definitions the harness loads from the tree \
+            under review.
+            """)
+        XCTAssertTrue(code.contains("const isJudge = (f) => JUDGE_FILES.includes(f) || JUDGE_DIRS.some(d => f.startsWith(d))"), """
+            `isJudge` in \(Self.workflowPath) no longer reads both JUDGE_FILES and JUDGE_DIRS.
+            """)
+        guard let judgeBranch = code.range(of: "} else if (judgeChanged.length) {"),
+              let approveBranch = code.range(of: "decision = 'APPROVE'") else {
+            return XCTFail("ANCHOR MISSING: the judge branch or `decision = 'APPROVE'` in \(Self.workflowPath) (#454)")
+        }
+        XCTAssertLessThan(judgeBranch.lowerBound, approveBranch.lowerBound, """
+            The judge branch no longer comes before APPROVE in the decision ladder, so an edit to the judge \
+            could end in APPROVE.
             """)
     }
 
