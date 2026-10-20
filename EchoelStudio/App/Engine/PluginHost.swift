@@ -31,6 +31,13 @@ final class PluginHost {
     /// Why a unit does not play; absent while it plays or loads.
     private(set) var problems: [Slot: String] = [:]
     private(set) var loading: Set<Slot> = []
+    /// A unit that stopped and was loaded again plays its last saved settings, which may not be
+    /// the ones just heard: said in the status line until the next Play (review 2026-10-20).
+    private(set) var notice: String?
+
+    func clearNotice() {
+        notice = nil
+    }
     /// Changes whenever the loaded units do; observe this, not the units.
     private(set) var revision = 0
 
@@ -125,6 +132,7 @@ final class PluginHost {
     private func unitStopped(_ dead: ObjectIdentifier?) {
         let gone = loaded.filter { dead == nil || ObjectIdentifier($0.value.unit) == dead }
         guard !gone.isEmpty else { return }
+        var reloaded: [String] = []
         for (slot, entry) in gone {
             log.error("plugin: \(entry.component.name, privacy: .public) stopped, reloading")
             if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
@@ -139,7 +147,14 @@ final class PluginHost {
             if count > Self.restartLimit {
                 fail(slot, entry.component, reason: "\(entry.component.name) stopped working and was not loaded again.",
                      detail: "stopped \(count) times")
+            } else {
+                reloaded.append(entry.component.name)
             }
+        }
+        if dead == nil {
+            notice = "After an audio reset the plugins were loaded again with their last saved settings."
+        } else if let name = reloaded.first {
+            notice = "\(name) stopped and was loaded again with its last saved settings."
         }
         revision += 1
         onUnitsChanged?()

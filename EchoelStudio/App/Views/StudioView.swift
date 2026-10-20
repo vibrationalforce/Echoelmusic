@@ -170,7 +170,7 @@ struct TransportBar: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.record)
                 .padding(.bottom, 2)
-        } else if let notice = engine.notice {
+        } else if let notice = engine.notice ?? engine.plugins.notice {
             Text(notice)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)

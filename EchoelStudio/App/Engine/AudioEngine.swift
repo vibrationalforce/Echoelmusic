@@ -570,6 +570,7 @@ final class AudioEngine {
 
     func play() {
         notice = nil
+        plugins.clearNotice()
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
         guard canPlay(), let core else { return }
