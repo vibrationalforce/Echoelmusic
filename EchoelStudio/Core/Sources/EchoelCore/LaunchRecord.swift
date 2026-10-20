@@ -34,3 +34,56 @@ public struct LaunchRecord: Equatable, Sendable {
         return true
     }
 }
+
+/// The songs a launch does not open by itself (ultra-audit R4, review 2026-10-20). While a launch
+/// is not confirmed, the song it opens is named here BEFORE it is read; when that launch dies, the
+/// next one holds the song back: it stays in the list and opens when it is chosen, but no launch
+/// opens it on its own again. Without this, the launch after a crash started a new song, the one
+/// after that reopened the same song, and a song that traps while it opens crashed every second
+/// launch. The app keeps the values in its defaults; this type only decides.
+public struct SongQuarantine: Equatable, Sendable {
+    /// At most this many songs are held; the one held longest is let go first.
+    public static var capacity: Int { 8 }
+
+    /// The song the running launch is opening, while that launch is not confirmed.
+    public private(set) var opening: String?
+    /// The held songs by file name, the most recently held last.
+    public private(set) var held: [String]
+
+    public init(opening: String? = nil, held: [String] = []) {
+        self.opening = opening.flatMap { $0.isEmpty ? nil : $0 }
+        var unique: [String] = []
+        for name in held where !name.isEmpty && !unique.contains(name) { unique.append(name) }
+        self.held = Array(unique.suffix(Self.capacity))
+    }
+
+    /// At the start of a launch. When the previous launch died, the song it was opening is held
+    /// and returned. Either way the new launch has opened nothing yet.
+    public mutating func launchBegan(previousDied: Bool) -> String? {
+        defer { opening = nil }
+        guard previousDied, let suspect = opening else { return nil }
+        held.removeAll { $0 == suspect }
+        held.append(suspect)
+        if held.count > Self.capacity { held.removeFirst(held.count - Self.capacity) }
+        return suspect
+    }
+
+    /// The launch, not yet confirmed, is about to open `name`; nil for a new song.
+    public mutating func willOpen(_ name: String?) {
+        opening = name.flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    /// The launch counts as healthy, so what it opened did not kill it.
+    public mutating func launchConfirmed() {
+        opening = nil
+    }
+
+    /// The song was chosen and opened: launches open it again.
+    public mutating func chosen(_ name: String) {
+        held.removeAll { $0 == name }
+    }
+
+    public func holds(_ name: String) -> Bool {
+        held.contains(name)
+    }
+}

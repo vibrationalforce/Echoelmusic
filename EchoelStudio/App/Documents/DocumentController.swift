@@ -32,6 +32,7 @@ final class DocumentController {
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private var launch = LaunchRecord()
+    @ObservationIgnored private var quarantine = SongQuarantine()
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
@@ -56,13 +57,14 @@ final class DocumentController {
 
     /// Opens the most recent song that opens, or starts a new one when there is none — or the
     /// song the app was opened with, when one came before this. When the last launch ended before
-    /// it was confirmed healthy, a new song starts instead, so a song that kills the app at open
-    /// cannot do it on every launch (ultra-audit R4).
+    /// it was confirmed healthy, a new song starts instead, and the song that launch was opening
+    /// is held: no launch opens it by itself until it is chosen, so a song that kills the app at
+    /// open cannot do it again on every second launch (ultra-audit R4, review 2026-10-20).
     func restore() {
         // Once per launch: a second window on iPad runs its own `.task` and must not reopen a song
         // or count a second launch.
         guard !isRestored else { return }
-        let previousDied = beginLaunch()
+        let (previousDied, suspect) = beginLaunch()
         // The import is skipped once after such a launch, in case it was what died.
         if !previousDied { importEarlierSongs() }
         refresh()
@@ -74,13 +76,21 @@ final class DocumentController {
         if previousDied {
             log.error("the last launch did not finish — starting a new song")
             startSong(writing: false)
-            lastError = "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+            lastError = suspect.map {
+                "Echoel did not finish starting last time, so this is a new song. \(Self.songName($0)) was open then; it opens when you choose it in your songs."
+            } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
             return
         }
         // A song that does not open keeps its place and its name is shown; the newest song that
-        // opens comes up instead, so a new empty song never becomes the newest over it (R8).
+        // opens comes up instead, so a new empty song never becomes the newest over it (R8). A
+        // held song is passed over the same way, and named.
         var unopened: (name: String, newer: Bool)?
+        var held: String?
         for song in songs {
+            if quarantine.holds(song.url.lastPathComponent) {
+                if held == nil { held = song.url.deletingPathExtension().lastPathComponent }
+                continue
+            }
             do {
                 try open(throwing: song.url)
                 break
@@ -95,7 +105,13 @@ final class DocumentController {
             lastError = unopened.newer
                 ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
                 : "\(unopened.name) could not be opened. It stays in your songs."
+        } else if let held {
+            lastError = "\(held) was open when Echoel stopped, so it does not open by itself. Choose it in your songs to open it."
         }
+    }
+
+    private static func songName(_ file: String) -> String {
+        (file as NSString).deletingPathExtension
     }
 
     /// Called when the app goes to the background: a launch that got this far counts as healthy.
@@ -104,19 +120,40 @@ final class DocumentController {
     }
 
     private static let launchPendingKey = "studio.launch.pending"
+    private static let launchOpeningKey = "studio.launch.opening"
+    private static let launchHeldKey = "studio.launch.held"
 
-    private func beginLaunch() -> Bool {
+    /// Whether the previous launch died, and the song it was opening then, which is now held.
+    private func beginLaunch() -> (died: Bool, suspect: String?) {
         let defaults = UserDefaults.standard
         launch = LaunchRecord(isPending: defaults.bool(forKey: Self.launchPendingKey))
+        quarantine = SongQuarantine(opening: defaults.string(forKey: Self.launchOpeningKey),
+                                    held: defaults.stringArray(forKey: Self.launchHeldKey) ?? [])
         let previousDied = launch.begin()
+        let suspect = quarantine.launchBegan(previousDied: previousDied)
         defaults.set(launch.isPending, forKey: Self.launchPendingKey)
+        keepQuarantine()
         launchBegan = .now
         launchCheck = Task { [weak self] in
             try? await Task.sleep(for: .seconds(LaunchRecord.steadySeconds))
             guard !Task.isCancelled else { return }
             self?.confirmLaunch(leaving: false)
         }
-        return previousDied
+        return (previousDied, suspect)
+    }
+
+    private func keepQuarantine() {
+        let defaults = UserDefaults.standard
+        defaults.set(quarantine.opening, forKey: Self.launchOpeningKey)
+        defaults.set(quarantine.held, forKey: Self.launchHeldKey)
+    }
+
+    /// Before a song is read while the launch is not confirmed: if the launch dies now, the next
+    /// one knows which song it was. Nil for a new song.
+    private func noteOpening(_ name: String?) {
+        guard launch.isPending else { return }
+        quarantine.willOpen(name)
+        keepQuarantine()
     }
 
     private func confirmLaunch(leaving: Bool) {
@@ -125,6 +162,8 @@ final class DocumentController {
         let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) * 1e-18
         guard launch.confirm(after: seconds, leaving: leaving) else { return }
         UserDefaults.standard.set(false, forKey: Self.launchPendingKey)
+        quarantine.launchConfirmed()
+        keepQuarantine()
         launchCheck?.cancel()
         launchCheck = nil
     }
@@ -161,6 +200,7 @@ final class DocumentController {
     private func startSong(writing: Bool) {
         beforeLeavingSong?()
         saveNow()
+        noteOpening(nil)
         let project = Project.starter()
         store.open(project)
         currentURL = library.newURL(for: project.name)
@@ -169,10 +209,15 @@ final class DocumentController {
         loadMedia(of: project)
     }
 
+    /// A song chosen by hand, or handed to the app. A held song opens again at launch from now on.
     @discardableResult
     func open(_ url: URL) -> Bool {
         do {
             try open(throwing: url)
+            if quarantine.holds(url.lastPathComponent) {
+                quarantine.chosen(url.lastPathComponent)
+                keepQuarantine()
+            }
             return true
         } catch {
             lastError = Self.isNewer(error)
@@ -185,6 +230,7 @@ final class DocumentController {
     private func open(throwing url: URL) throws {
         beforeLeavingSong?()
         saveNow()
+        noteOpening(url.lastPathComponent)
         do {
             let project = try library.read(url)
             store.open(project)
