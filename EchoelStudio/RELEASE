@@ -9,7 +9,11 @@ target reaches it, tests; nothing here is device-verified yet.
 - When the newest song cannot be opened, the newest one that can comes up and the status line
   names the one that did not. It stays in the list.
 - When the last launch did not get past its first seconds, the app starts a new song instead of
-  reopening the same one, and says so. Every song stays in the list.
+  reopening the same one, and says so. Every song stays in the list. The song that was opening
+  then does not open by itself again until it is chosen in the song list; the status line names
+  it.
+- An import of earlier songs that was running when a launch died is not tried again, and a
+  damaged earlier song with an out-of-range velocity imports instead of stopping the app.
 - A failed audio start is tried again; after three tries Play becomes Restart audio. Play also
   rebuilds the audio when iOS stopped it without telling.
 - Unplugging headphones pauses the song. A call, a media reset or an external clock's Stop ends
@@ -35,7 +39,14 @@ target reaches it, tests; nothing here is device-verified yet.
   silent; following a DAW's clock, it comes back after a call in the background.
 - A MIDI take ended by a sample-rate change keeps its notes in time.
 - After a launch that did not finish, the new song is not saved until it is edited, so the
-  next launch opens your newest song again.
+  next launch opens your newest song again. A song received under that unsaved song's name is
+  not overwritten by it.
+- Record and a session launch start nothing while the audio cannot run.
+- Deleting the armed track, or arming an instrument track instead, closes the input it opened.
+- A take keeps recording through an audio rebuild that first failed with the input, and when
+  the input cannot open, the message says why.
+- During MIDI Learn a controller plays nothing, so a plugin cannot take the learn.
+- A plugin loaded again after it stopped says so in the status line.
 
 Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
 group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
