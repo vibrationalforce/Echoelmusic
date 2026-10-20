@@ -33,11 +33,26 @@ final class ProjectCodecTests: XCTestCase {
     }
 
     func testAFileFromANewerVersionIsRefused() throws {
-        var json = try XCTUnwrap(String(data: ProjectCodec.encode(Project()), encoding: .utf8))
-        json = json.replacingOccurrences(of: "\"formatVersion\" : 1", with: "\"formatVersion\" : 99")
-        XCTAssertThrowsError(try ProjectCodec.decode(Data(json.utf8))) {
-            XCTAssertEqual($0 as? ProjectCodec.DecodeError, .newerFormat(found: 99, supported: 1))
+        XCTAssertThrowsError(try ProjectCodec.decode(withFormatNumber(99))) {
+            XCTAssertEqual($0 as? ProjectCodec.DecodeError, .newerFormat(found: 99, supported: Project.currentFormatVersion))
         }
+    }
+
+    /// No build ever wrote a format below 1, so such a file is damaged, not old.
+    func testAFormatNumberBelowOneIsRefused() throws {
+        for number in [0, -1] {
+            XCTAssertThrowsError(try ProjectCodec.decode(withFormatNumber(number))) {
+                XCTAssertEqual($0 as? ProjectCodec.DecodeError, .invalidFormatVersion(number))
+            }
+        }
+    }
+
+    /// A saved empty song whose format number is replaced by `number`.
+    private func withFormatNumber(_ number: Int) throws -> Data {
+        let today = "\"formatVersion\" : \(Project.currentFormatVersion)"
+        let json = try XCTUnwrap(String(data: ProjectCodec.encode(Project()), encoding: .utf8))
+        XCTAssertTrue(json.contains(today), "the encoder's spacing changed; the replacement would not land")
+        return Data(json.replacingOccurrences(of: today, with: "\"formatVersion\" : \(number)").utf8)
     }
 
     func testAFileWithoutAVersionIsRefused() {

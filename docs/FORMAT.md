@@ -1,4 +1,4 @@
-# The Echoel song format (format 1)
+# The Echoel song format (format 2)
 
 A song is a folder ending in `.echoel` (a package; the Files app shows it as one file):
 
@@ -14,13 +14,21 @@ Every audio file is a plain file you can take out of `Media/`.
 
 ## Versioning
 
-- `formatVersion` (integer) is required. This document describes **1**.
-- A file with a **newer** number is refused rather than opened with parts missing.
-- Inside one format, fields are only ever **added**. A reader of format 1 treats a missing
-  optional field as its default; the fields marked *optional* below were added after the first
-  format-1 builds and older files lack them.
+- `formatVersion` (integer) is required. This document describes **2**. A reader of format 2
+  opens every format-1 file too; the one difference is at the end ("Format 1").
+- A file with a **newer** number is refused rather than opened with parts missing; a number below
+  1 is refused as damaged.
+- An older file is read into today's shape, so saving it writes today's number.
+- Inside one format, fields are only ever **added**. A reader treats a missing optional field as
+  its default; the fields marked *optional* below were added after the first format-1 builds and
+  older files lack them.
 - A key it does not know is ignored, except inside an instrument's `values`, where it is kept
   for the build that knows it.
+- **A name it does not know** follows one rule. Where the field only chooses how the song plays —
+  an instrument's `device`, the `tuning`, the `scale`, a track's `monitor` — the song opens, the
+  name is kept and saved back unchanged, and it plays as the field's fallback: silent, twelve
+  equal steps, chromatic, `auto`. A track's `kind` decides what the track holds and has no
+  fallback, so a new kind comes with a new format number and an unknown one refuses the song.
 - On open, the song is checked against the same rules the editor enforces (ranges, unique ids,
   references that resolve). A file that breaks one is refused, not repaired silently.
 
@@ -62,7 +70,8 @@ Every audio file is a plain file you can take out of `Media/`.
 **Musical context:** `{root, scale, tuning, concertPitch, swing}` — `root` a pitch class 0 (C) …
 11 (B); `scale` one of `chromatic` `major` `minor` `dorian` `phrygian` `lydian` `mixolydian`
 `locrian` `harmonicMinor` `melodicMinor` `majorPentatonic` `minorPentatonic` `blues` `wholeTone`;
-`tuning` a tone-system id (`edo12` and others; an unknown id is kept and plays as 12 equal);
+`tuning` a tone-system id (`edo12` and others); an unknown scale or tone system is kept by name
+and plays as chromatic or 12 equal;
 `concertPitch` 400–480 Hz; `swing` 0 (straight) … 1 (triplet feel). It frames what is played and
 writes no notes.
 
@@ -71,7 +80,7 @@ slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the 
 `slots` (`{scene, clip}` in the session grid) — all required; optional: `instrument`, `regions`
 (audio on the timeline), `inserts`, `sends` (`{target, levelDB}` into a return track), `output`
 (first channel of an interface stereo pair, absent = master), `input`, `monitor`
-(`auto` · `in` · `off`).
+(`auto` · `in` · `off`; another name is kept and behaves as `auto`).
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
@@ -87,6 +96,30 @@ base64).
 **Control change:** `{id, kind, start, value}` where `kind` is `{"pitchBend": {}}` or
 `{"controller": {"number": n}}`. A placement that bends the wheel or holds the sustain pedal
 returns it to rest where it ends.
+
+**Parameter address:** one string, the owner followed by the parameter key — `project/<key>`,
+`master/<key>` or `track/<track id>/<key>`, e.g. `track/7A000000-0000-4000-8000-000000000004/mixer.volume`.
+Everything after the owner is the key, slashes included. Keys: `tempo`, `key.root`, `key.scale`,
+`tuning.system`, `tuning.concertPitch`, `groove.swing` (the song's); `mixer.volume`, `mixer.pan`
+(master and tracks); `mixer.send/<return track id>`; the synth's own (`synth.cutoff` and the
+others in an instrument's `values`); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
+where `n` is the Audio Unit's own parameter address. A key a reader does not know is kept.
+
+**Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),
+`number` 0 … 127, `target` a parameter address. One mapping per control. The controller's travel
+spans the parameter's whole range.
+
+**Automation lane:** `{target, points}`, one lane per parameter and none on a song-wide one;
+`points` is `[{tick, value, curve}]` with ticks rising from 0, each once, at most 10 000. `value`
+is in the parameter's own unit and range (decibels, pan, hertz …; a plugin parameter as 0 … 1 of
+its travel). `curve` −1 … 1 bends the line to the next point, 0 straight; optional, absent = 0.
+
+## Format 1
+
+Format 1 is format 2 with one difference: a parameter address was an object, the owner in the
+form `{"project": {}}`, `{"master": {}}` or `{"track": {"_0": "<track id>"}}` plus the key —
+`{"owner": {"master": {}}, "key": "mixer.volume"}`. A reader of format 2 opens it, and a song
+saved again is written as format 2.
 
 ## What is not in the file
 

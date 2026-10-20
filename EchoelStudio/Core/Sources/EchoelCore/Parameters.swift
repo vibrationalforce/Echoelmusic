@@ -4,7 +4,9 @@ import Foundation
 /// the agent and — later — modulation sources (LFOs, envelopes, the body) all address a control
 /// by this value and nothing else, so a new source never needs its own path into the document.
 public struct ParameterAddress: Hashable, Codable, Sendable, CustomStringConvertible {
-    public enum Owner: Hashable, Codable, Sendable {
+    /// Not `Codable` on purpose: the compiler's coding of an enum with a payload,
+    /// `{"track": {"_0": "<uuid>"}}`, is what format 1 wrote. The address stores its text form.
+    public enum Owner: Hashable, Sendable {
         case project
         case master
         case track(TrackID)
@@ -36,6 +38,62 @@ public struct ParameterAddress: Hashable, Codable, Sendable, CustomStringConvert
         case .master: "master/\(key.rawValue)"
         case .track(let id): "track/\(id.description)/\(key.rawValue)"
         }
+    }
+
+    /// Reads the text form back. Everything after the owner is the key, slashes included
+    /// (`mixer.send/<uuid>`), so every address `description` writes reads back as itself.
+    public init?(text: String) {
+        if text.hasPrefix("project/") {
+            self.init(.project, ParameterKey(rawValue: String(text.dropFirst("project/".count))))
+        } else if text.hasPrefix("master/") {
+            self.init(.master, ParameterKey(rawValue: String(text.dropFirst("master/".count))))
+        } else if text.hasPrefix("track/") {
+            let rest = text.dropFirst("track/".count)
+            guard let slash = rest.firstIndex(of: "/"), let uuid = UUID(uuidString: String(rest[..<slash])) else {
+                return nil
+            }
+            self.init(.track(TrackID(uuid)), ParameterKey(rawValue: String(rest[rest.index(after: slash)...])))
+        } else {
+            return nil
+        }
+    }
+
+    // MARK: - Stored as its text form (format 2)
+
+    private enum FormatOneKeys: String, CodingKey { case owner, key }
+    private enum FormatOneOwnerKeys: String, CodingKey { case project, master, track }
+    private enum FormatOneTrackKeys: String, CodingKey { case id = "_0" }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(description)
+    }
+
+    /// Format 2 writes the text form. Format 1 wrote the compiler's shape —
+    /// `{"owner": {"track": {"_0": "<uuid>"}}, "key": "mixer.volume"}` — and still opens.
+    public init(from decoder: any Decoder) throws {
+        if let text = try? decoder.singleValueContainer().decode(String.self) {
+            guard let address = ParameterAddress(text: text) else {
+                throw DecodingError.dataCorrupted(DecodingError.Context(
+                    codingPath: decoder.codingPath, debugDescription: "not a parameter address: \(text)"))
+            }
+            self = address
+            return
+        }
+        let c = try decoder.container(keyedBy: FormatOneKeys.self)
+        let owners = try c.nestedContainer(keyedBy: FormatOneOwnerKeys.self, forKey: .owner)
+        guard owners.allKeys.count == 1, let which = owners.allKeys.first else {
+            throw DecodingError.dataCorruptedError(forKey: .owner, in: c, debugDescription: "an owner names one of project, master, track")
+        }
+        let owner: Owner
+        switch which {
+        case .project: owner = .project
+        case .master: owner = .master
+        case .track:
+            let track = try owners.nestedContainer(keyedBy: FormatOneTrackKeys.self, forKey: .track)
+            owner = .track(try track.decode(TrackID.self, forKey: .id))
+        }
+        self = ParameterAddress(owner, try c.decode(ParameterKey.self, forKey: .key))
     }
 }
 

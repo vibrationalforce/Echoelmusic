@@ -11,7 +11,15 @@ import Foundation
 public struct MusicalContext: Codable, Equatable, Sendable {
     /// The tonic as a pitch class, 0 = C … 11 = B.
     public var root: Int
-    public var scale: Scale
+    /// A scale this build does not know reads as `.chromatic` (it frames nothing) and is kept
+    /// under its own name until the musician picks another, so a later build still finds it.
+    public var scale: Scale {
+        get { Scale(rawValue: scaleName) ?? .chromatic }
+        set { scaleName = newValue.rawValue }
+    }
+    /// The stored name of a scale this build does not know, if that is what the song holds.
+    public var unrecognizedScale: String? { Scale(rawValue: scaleName) == nil ? scaleName : nil }
+    private var scaleName: String
     /// A `TuningSystem.id`. An id this build does not know is kept and plays as twelve equal steps.
     public var tuning: String
     /// The A above middle C, in hertz.
@@ -19,10 +27,14 @@ public struct MusicalContext: Codable, Equatable, Sendable {
     /// How late every second sixteenth note falls: 0 straight, 1 a full triplet feel (2 : 1).
     public var swing: Double
 
+    private enum CodingKeys: String, CodingKey {
+        case root, scaleName = "scale", tuning, concertPitch, swing
+    }
+
     public init(root: Int = 0, scale: Scale = .chromatic, tuning: String = TuningSystem.equalTemperament.id,
                 concertPitch: Double = 440, swing: Double = 0) {
         self.root = root
-        self.scale = scale
+        self.scaleName = scale.rawValue
         self.tuning = tuning
         self.concertPitch = concertPitch
         self.swing = swing

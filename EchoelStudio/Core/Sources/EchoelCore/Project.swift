@@ -4,9 +4,12 @@
 public struct Project: Codable, Equatable, Sendable {
     /// Bumped whenever the stored shape changes. A file with a NEWER number is refused
     /// (`ProjectCodec`), so an old build never silently drops what it does not understand.
-    public static let currentFormatVersion = 1
+    /// 2 (2026-10-20): a parameter address is stored as its text form (`docs/FORMAT.md`).
+    public static let currentFormatVersion = 2
 
-    public var formatVersion: Int
+    /// Always `currentFormatVersion` in memory: an older file is read into today's shape, so the
+    /// next save writes today's number over today's shape and never an old number over it.
+    public private(set) var formatVersion: Int
     public var name: String
     /// The tempo from tick 0 until the first change.
     public var tempo: Double
@@ -65,7 +68,12 @@ public struct Project: Codable, Equatable, Sendable {
     /// Fields added after format 1 shipped decode with their default when absent.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        formatVersion = try c.decode(Int.self, forKey: .formatVersion)
+        let stored = try c.decode(Int.self, forKey: .formatVersion)
+        guard (1...Self.currentFormatVersion).contains(stored) else {
+            throw DecodingError.dataCorruptedError(forKey: .formatVersion, in: c,
+                                                   debugDescription: "format \(stored) is not 1…\(Self.currentFormatVersion)")
+        }
+        formatVersion = Self.currentFormatVersion
         name = try c.decode(String.self, forKey: .name)
         tempo = try c.decode(Double.self, forKey: .tempo)
         tempoChanges = try c.decodeIfPresent([TempoChange].self, forKey: .tempoChanges) ?? []
@@ -159,8 +167,15 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     /// The interface input an audio track records from, 0-based; nil is the first. A channel the
     /// interface lacks is kept, and the track records the first until it is back.
     public var input: Int?
-    /// When an audio track hears its input; other kinds keep `auto` and ignore it.
-    public var monitor: MonitorMode = .auto
+    /// When an audio track hears its input; other kinds keep `auto` and ignore it. A mode this
+    /// build does not know reads as `auto` and is kept under its own name until one is chosen.
+    public var monitor: MonitorMode {
+        get { MonitorMode(rawValue: monitorName) ?? .auto }
+        set { monitorName = newValue.rawValue }
+    }
+    /// The stored name of a monitoring mode this build does not know, if that is what the track holds.
+    public var unrecognizedMonitor: String? { MonitorMode(rawValue: monitorName) == nil ? monitorName : nil }
+    private var monitorName = MonitorMode.auto.rawValue
 
     /// How many tracks of a kind one song may hold: the engine has exactly this many instrument
     /// voices, smoothed audio channels and return buses, and a track past them would play
@@ -206,7 +221,8 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input, monitor
+        case id, name, kind, colorIndex, mixer, clips, placements, slots, instrument, regions, inserts, sends, output, input
+        case monitorName = "monitor"
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -226,7 +242,7 @@ public struct Track: Codable, Equatable, Sendable, Identifiable {
         sends = try c.decodeIfPresent([Send].self, forKey: .sends) ?? []
         output = try c.decodeIfPresent(Int.self, forKey: .output)
         input = try c.decodeIfPresent(Int.self, forKey: .input)
-        monitor = try c.decodeIfPresent(MonitorMode.self, forKey: .monitor) ?? .auto
+        monitorName = try c.decodeIfPresent(String.self, forKey: .monitorName) ?? MonitorMode.auto.rawValue
     }
 
     public func clipIndex(_ id: ClipID) -> Int? {

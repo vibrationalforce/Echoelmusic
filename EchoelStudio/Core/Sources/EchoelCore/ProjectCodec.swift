@@ -7,6 +7,8 @@ public enum ProjectCodec {
         /// The file was written by a newer version of the app.
         case newerFormat(found: Int, supported: Int)
         case missingFormatVersion
+        /// A format number below 1: no build ever wrote one.
+        case invalidFormatVersion(Int)
         /// The file breaks a rule every command enforces (`Project.validate`).
         case invalidContent(CommandError)
     }
@@ -21,6 +23,7 @@ public enum ProjectCodec {
         struct Header: Decodable { let formatVersion: Int? }
         let header = try JSONDecoder().decode(Header.self, from: data)
         guard let version = header.formatVersion else { throw DecodeError.missingFormatVersion }
+        guard version >= 1 else { throw DecodeError.invalidFormatVersion(version) }
         guard version <= Project.currentFormatVersion else {
             throw DecodeError.newerFormat(found: version, supported: Project.currentFormatVersion)
         }
