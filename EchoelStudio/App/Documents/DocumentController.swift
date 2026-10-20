@@ -31,6 +31,9 @@ final class DocumentController {
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
+    @ObservationIgnored private var launch = LaunchRecord()
+    @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
+    @ObservationIgnored private var launchCheck: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
 
     /// Quiet time after an edit before the song is written.
@@ -47,18 +50,84 @@ final class DocumentController {
             ?? FileManager.default.temporaryDirectory
     }
 
-    /// Opens the most recent song, or starts a new one when there is none — or the song the app
-    /// was opened with, when one came before this.
+    /// Opens the most recent song that opens, or starts a new one when there is none — or the
+    /// song the app was opened with, when one came before this. When the last launch ended before
+    /// it was confirmed healthy, a new song starts instead, so a song that kills the app at open
+    /// cannot do it on every launch (ultra-audit R4).
     func restore() {
-        importEarlierSongs()
+        // Once per launch: a second window on iPad runs its own `.task` and must not reopen a song
+        // or count a second launch.
+        guard !isRestored else { return }
+        let previousDied = beginLaunch()
+        // The import is skipped once after such a launch, in case it was what died.
+        if !previousDied { importEarlierSongs() }
         refresh()
         isRestored = true
         if let incoming = pendingIncoming {
             pendingIncoming = nil
             if open(incoming) { return }
         }
-        if let latest = songs.first, open(latest.url) { return }
-        newSong()
+        if previousDied {
+            log.error("the last launch did not finish — starting a new song")
+            newSong()
+            lastError = "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+            return
+        }
+        // A song that does not open keeps its place and its name is shown; the newest song that
+        // opens comes up instead, so a new empty song never becomes the newest over it (R8).
+        var unopened: (name: String, newer: Bool)?
+        for song in songs {
+            do {
+                try open(throwing: song.url)
+                break
+            } catch {
+                if unopened == nil {
+                    unopened = (name: song.url.deletingPathExtension().lastPathComponent, newer: Self.isNewer(error))
+                }
+            }
+        }
+        if currentURL == nil { newSong() }
+        if let unopened {
+            lastError = unopened.newer
+                ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
+                : "\(unopened.name) could not be opened. It stays in your songs."
+        }
+    }
+
+    /// Called when the app goes to the background: a launch that got this far counts as healthy.
+    func sceneLeft() {
+        confirmLaunch(leaving: true)
+    }
+
+    private static let launchPendingKey = "studio.launch.pending"
+
+    private func beginLaunch() -> Bool {
+        let defaults = UserDefaults.standard
+        launch = LaunchRecord(isPending: defaults.bool(forKey: Self.launchPendingKey))
+        let previousDied = launch.begin()
+        defaults.set(launch.isPending, forKey: Self.launchPendingKey)
+        launchBegan = .now
+        launchCheck = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(LaunchRecord.steadySeconds))
+            guard !Task.isCancelled else { return }
+            self?.confirmLaunch(leaving: false)
+        }
+        return previousDied
+    }
+
+    private func confirmLaunch(leaving: Bool) {
+        guard let began = launchBegan else { return }
+        let elapsed = began.duration(to: .now)
+        let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) * 1e-18
+        guard launch.confirm(after: seconds, leaving: leaving) else { return }
+        UserDefaults.standard.set(false, forKey: Self.launchPendingKey)
+        launchCheck?.cancel()
+        launchCheck = nil
+    }
+
+    private static func isNewer(_ error: Error) -> Bool {
+        if case ProjectCodec.DecodeError.newerFormat = error { return true }
+        return false
     }
 
     /// A song handed to the app — tapped in Files, sent by AirDrop, shared from another app. It
@@ -90,6 +159,18 @@ final class DocumentController {
 
     @discardableResult
     func open(_ url: URL) -> Bool {
+        do {
+            try open(throwing: url)
+            return true
+        } catch {
+            lastError = Self.isNewer(error)
+                ? "\(url.deletingPathExtension().lastPathComponent) was saved by a newer Echoel. Update the app to open it."
+                : "Could not open \(url.deletingPathExtension().lastPathComponent)."
+            return false
+        }
+    }
+
+    private func open(throwing url: URL) throws {
         saveNow()
         do {
             let project = try library.read(url)
@@ -98,11 +179,9 @@ final class DocumentController {
             savedProject = project
             lastError = nil
             loadMedia(of: project)
-            return true
         } catch {
             log.error("open failed — \(error.localizedDescription, privacy: .public)")
-            lastError = "Could not open \(url.deletingPathExtension().lastPathComponent)."
-            return false
+            throw error
         }
     }
 
