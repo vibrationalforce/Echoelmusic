@@ -328,8 +328,9 @@ final class AudioEngine {
             self.sinkNode = nil
         }
         // A running take keeps its recorder: when the input reopens on the same core, the same
-        // recorder (and ring) carries on, so the take survives a route change.
-        let previous = recorder
+        // recorder (and ring) carries on, so the take survives a route change. Taken from the
+        // take too: a rebuild that failed with the input already let go of the engine's.
+        let previous = recorder ?? take?.recorder
         recorder = nil
         if let sourceNode {
             log.info("graph: detach source node")
