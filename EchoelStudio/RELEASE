@@ -1,45 +1,62 @@
-11.0.0, fifth TestFlight upload — the app records the plugin purchase for the Audio Units
+11.0.0, sixth TestFlight upload — the app survives what a device does to it
 
-Since this build the app and the extension request the App Group group.com.echoelmusic.shared:
-the app checks the purchase at launch and stores the answer there, and the Audio Units read it
-before they ask StoreKit themselves (factory job 002). This archive also settles the open half of
-F17: if the .auv3 profile does not grant the group, signing fails here and the run prints every
-profile's groups — or it signs and AUM reports -3000, which is why the baseline comes first below.
+What is new since 10008. Each line is code that the Echoel Studio run builds and, where a test
+target reaches it, tests; nothing here is device-verified yet.
+- A song is one file in Files (type com.echoelmusic.song, extension .echoel). A song tapped in
+  Files or received by AirDrop opens in Echoel and joins the song list.
+- Songs are saved in format 2: a song saved by this build does NOT open in builds 10004–10008.
+- A broken song file is refused whole instead of opening half.
+- When the newest song cannot be opened, the newest one that can comes up and the status line
+  names the one that did not. It stays in the list.
+- When the last launch did not get past its first seconds, the app starts a new song instead of
+  reopening the same one, and says so. Every song stays in the list.
+- A failed audio start is tried again; after three tries Play becomes Restart audio. Play also
+  rebuilds the audio when iOS stopped it without telling.
+- Unplugging headphones pauses the song. A call, a media reset or an external clock's Stop ends
+  a running take and keeps what it captured.
+- A plugin whose extension crashes is loaded again.
+- A new sample rate (an interface plugged in) keeps the playhead and the plugin settings.
+- The mod wheel, expression and any knob that is not learned play the live instrument and are
+  recorded in a take; a learned one moves only its parameter. A hosted plugin instrument gets
+  every controller. The Echoel Synth Audio Unit reads the pitch wheel, the pedal and the mod
+  wheel; panic stops the drums.
+- Deleting a playing track or changing its instrument fades out; a stolen sampler voice, an EQ
+  band coming back and the plugin demo's silence fade instead of clicking.
+- A tempo change while playing never loses a note-off and crossfades audio tracks.
+- The assistant shows only on a device that can run its model.
+- New Song and Open keep the built-in effects' settings made since the app last left the
+  foreground; before, a switch from the song menu dropped them.
+- Soloing a return track plays it with what the other tracks send to it, instead of silence.
+- Tapping a clip in Arrange opens that clip; a recorded MIDI take can now be edited.
+- Export WAV is offered only when something is on the timeline, so it never shares an empty file.
+- Every automatic audio recovery reopens the input an armed audio track asked for, and says so
+  when it cannot; Play no longer runs the song over audio that failed to come back.
+- Paused from outside while in the background, the app stops its audio instead of staying up
+  silent; following a DAW's clock, it comes back after a call in the background.
+- A MIDI take ended by a sample-rate change keeps its notes in time.
+- After a launch that did not finish, the new song is not saved until it is edited, so the
+  next launch opens your newest song again.
 
-Previous: 11.0.0 (10007), fourth upload — finding no earlier songs no longer marks the import
-done (key studio.importedEarlierSongs.v2). Before that: 10006 (no tested host claimed), 10005
-(About page), 10004 (the first Echoel Studio build). Those four carry no App Group entitlement.
-group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
+Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
+group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
+10007 (finding no earlier songs no longer marks the import done), 10006, 10005, 10004 (the first
+Echoel Studio build). group.com.echoelmusic (the import of earlier songs) is still not requested
+(F17): until it is, the import finds nothing.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
 The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
-What to try on the device (nothing here is device-verified yet):
-- FIRST, the plugin purchase, in this order (FOUNDER_INBOX §2, family SP):
-  1. Install 10007 again and load Echoel Synth, Drums and EQ in AUM — the baseline.
-  2. Install this build and load the same three: no -3000.
-  3. Without a purchase Echoel Synth still pauses after 28 s, every 30 s.
-  4. Once the product exists in App Store Connect (F-15/E37): buy with the sandbox account in the
-     app, reload Synth in AUM — no demo pause.
-  5. As a buyer, sign out of the App Store, launch Echoel once, load Synth in AUM: say whether
-     the demo pause comes back.
-- Song menu → About Echoel: the page names the build, says what is in it and what is not,
-  and its two links open in the browser. "Your data" names the App Store (at launch, and when
-  you open the store: prices, buying, Restore Purchases) and Network MIDI (when you turn it on).
-- Song menu → Echoel Plugins: the footer says the instruments are not yet tested in a host
-  app on a device and not on sale yet. With no in-app purchase in App Store Connect (F-15/E37)
-  the store says "The instruments are not on sale yet." and shows no price.
-- In a host, an Echoel instrument that is not unlocked says the unlock is not on sale yet.
-- Launch, make an instrument track, play notes from a MIDI keyboard; write notes in a part
-  and drum steps on a drum track.
-- Automate a synth parameter: notes still end and release.
-- Record a take on an audio track; Stop fades it out, its reverb rings.
-- Export a song with a long reverb: the file ends after the tail, not 2 s after the last note.
-- Send the app to the background while stopped: audio stops; come back and play.
-- Take a call while playing: the song does not resume by itself.
-- Open Echoel Synth, Drums and Sampler in AUM or GarageBand: each loads and plays as a demo
-  (two seconds of silence every thirty); the effects are free. Note host and sample rate.
-- Open an older host session that used the earlier instrument: it now shows as
-  "Echoel Synth (earlier sessions)" and still opens.
+Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
+1. Plugin purchase family SP1-SP3 (FOUNDER_INBOX section 2): load Echoel Synth, Drums and EQ in
+   AUM with 10007 (the baseline), then with this build — no -3000 — and without a purchase the
+   Synth pauses for 2 s after 28 s, every 30 s.
+2. Files app -> On My iPhone -> Echoel: each song is ONE file, not a folder. Share or AirDrop one
+   to yourself and tap it: it opens in Echoel and appears once in the song list.
+3. Arm an instrument track and move a MIDI keyboard's mod wheel: vibrato. MIDI-learn the wheel to
+   a parameter: from then on it moves only that parameter.
+4. Play with headphones and unplug them: the song pauses and the status line says why. Record a
+   take and take a call: the take ends and is kept, and after the call Play plays.
+5. Record a take on an armed audio track: Stop fades it out and its reverb rings. Export a song
+   with a long reverb: the file ends after the tail, not 2 s after the last note.
