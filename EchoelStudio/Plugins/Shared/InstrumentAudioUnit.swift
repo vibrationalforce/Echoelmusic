@@ -41,6 +41,9 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         var kernel: any InstrumentKernel
         var left: UnsafeMutablePointer<Float>?
         var right: UnsafeMutablePointer<Float>?
+        /// The frames `left`, `right` and the kernel were allocated for. A render call asking for
+        /// more is refused instead of writing past them.
+        var capacity = 0
         let unlocked = Atomic<Bool>(true)
         var demoFrame: Int64 = 0
         init(kernel: any InstrumentKernel) { self.kernel = kernel }
@@ -122,6 +125,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         render.kernel = kernel
         render.left = .allocate(capacity: frames)
         render.right = .allocate(capacity: frames)
+        render.capacity = frames
         render.demoFrame = 0
     }
 
@@ -171,6 +175,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         render.right?.deallocate()
         render.left = nil
         render.right = nil
+        render.capacity = 0
         super.deallocateRenderResources()
     }
 
@@ -182,6 +187,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             guard buffers.count >= 2, let ownLeft = state.left, let ownRight = state.right else {
                 return kAudioUnitErr_Uninitialized
             }
+            // More frames than were allocated would write past our buffers and the kernel's.
+            guard frames <= state.capacity else { return kAudioUnitErr_TooManyFramesToProcess }
             // The host may hand buffers or ask for ours.
             if buffers[0].mData == nil { buffers[0].mData = UnsafeMutableRawPointer(ownLeft) }
             if buffers[1].mData == nil { buffers[1].mData = UnsafeMutableRawPointer(ownRight) }

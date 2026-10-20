@@ -29,6 +29,9 @@ public final class StandardEffectUnit: AUAudioUnit {
     /// What the render block reads; the kernel is swapped only in `allocateRenderResources`.
     final class RenderState: @unchecked Sendable {
         var kernel: EffectKernel
+        /// `maximumFramesToRender` when the resources were allocated; a render call asking for
+        /// more is refused (`kAudioUnitErr_TooManyFramesToProcess`), 0 until allocated.
+        var maximumFrames = 0
         let unlocked = Atomic<Bool>(true)
         var demoFrame: Int64 = 0
         init(kernel: EffectKernel) { self.kernel = kernel }
@@ -139,6 +142,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         }
         let old = render.kernel
         render.kernel = EffectKernel(effect: effect, sampleRate: format.sampleRate, values: old.allValues)
+        render.maximumFrames = Int(maximumFramesToRender)
         render.demoFrame = 0
     }
 
@@ -146,6 +150,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         let state = render
         return { flags, timestamp, frameCount, _, outputData, eventList, pullInput in
             let frames = Int(frameCount)
+            guard frames <= state.maximumFrames else { return kAudioUnitErr_TooManyFramesToProcess }
             guard let pullInput else { return kAudioUnitErr_NoConnection }
             // In place: the input arrives in the output's buffers (or the host's own).
             let status = pullInput(flags, timestamp, frameCount, 0, outputData)

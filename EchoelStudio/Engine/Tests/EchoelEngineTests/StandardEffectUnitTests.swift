@@ -84,6 +84,27 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "the tree reads what the kernel holds")
     }
 
+    /// A host that asks for more frames than the unit allocated gets the documented refusal,
+    /// not a write past the buffers (B7). The allocated count itself still plays.
+    func testARenderCallAskingForMoreFramesThanAllocatedIsRefused() throws {
+        let equalizer = try unit(.equalizer)
+        let allocated = equalizer.maximumFramesToRender
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: allocated * 2) else {
+            return XCTFail("no stereo buffer")
+        }
+        buffer.frameLength = allocated * 2
+        var stamp = AudioTimeStamp()
+        stamp.mFlags = .sampleTimeValid
+        var flags = AudioUnitRenderActionFlags()
+        let pull: AURenderPullInputBlock = { _, _, _, _, _ in noErr }
+        let block = equalizer.internalRenderBlock
+        let refused = block(&flags, &stamp, allocated + 1, 0, buffer.mutableAudioBufferList, nil, pull)
+        XCTAssertEqual(refused, kAudioUnitErr_TooManyFramesToProcess, "one frame more than allocated")
+        let played = block(&flags, &stamp, allocated, 0, buffer.mutableAudioBufferList, nil, pull)
+        XCTAssertEqual(played, noErr, "exactly the allocated frames still render")
+    }
+
     func testARegisteredEffectLoadsLikeAnyAudioUnit() throws {
         StandardEffectUnit.register()
         let loaded = expectation(description: "instantiated")
