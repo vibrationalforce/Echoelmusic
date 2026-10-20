@@ -72,7 +72,8 @@ public struct Biquad: Sendable {
 
 /// A five-band stereo equaliser: highpass, low shelf, two bells, high shelf — the channel EQ of
 /// a mixing desk. A band at 0 dB (or the highpass at its floor) is skipped, so a flat EQ passes
-/// the signal bit for bit.
+/// the signal bit for bit; a band that comes back starts from rest, so moving one through 0 dB
+/// never steps.
 ///
 /// Owned by the render thread. Nothing allocates.
 public struct ParametricEQ: Sendable {
@@ -159,7 +160,15 @@ public struct ParametricEQ: Sendable {
             (l.b0, l.b1, l.b2, l.a1, l.a2) = (b.b0, b.b1, b.b2, b.a1, b.a2)
             (r.b0, r.b1, r.b2, r.a1, r.a2) = (b.b0, b.b1, b.b2, b.a1, b.a2)
         }
+        let was = active
         active = (s.highpass > 20, s.lowGain != 0, s.lowMidGain != 0, s.highMidGain != 0, s.highGain != 0)
+        // A band switched back in starts from rest. Skipped, it kept the state of its last
+        // setting, perhaps seconds ago, and played back that state was a step (ultra-audit A9).
+        if active.0 && !was.0 { left.0.reset(); right.0.reset() }
+        if active.1 && !was.1 { left.1.reset(); right.1.reset() }
+        if active.2 && !was.2 { left.2.reset(); right.2.reset() }
+        if active.3 && !was.3 { left.3.reset(); right.3.reset() }
+        if active.4 && !was.4 { left.4.reset(); right.4.reset() }
         set(&left.0, &right.0, .make(.highpass, hz: s.highpass, gain: 0, q: 0.7071, sampleRate: rate))
         set(&left.1, &right.1, .make(.lowShelf, hz: s.lowFrequency, gain: s.lowGain, q: 0.7071, sampleRate: rate))
         set(&left.2, &right.2, .make(.bell, hz: s.lowMidFrequency, gain: s.lowMidGain, q: s.lowMidQ, sampleRate: rate))

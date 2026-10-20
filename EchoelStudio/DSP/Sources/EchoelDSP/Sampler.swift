@@ -172,14 +172,30 @@ struct SamplerVoice: Sendable {
     private var position: Double = 0
     private var increment: Double = 0
     private var gain: Float = 0
+    /// A stolen voice first fades out what it was playing — its read position would jump, a
+    /// click (ultra-audit A9) — and starts the new note when the fade has run: `fadeLeft` frames
+    /// of the old note, from `fadePosition` at `fadeIncrement`, at the level it had when stolen.
+    private var fadeLeft = 0
+    private var fadePosition: Double = 0
+    private var fadeIncrement: Double = 0
+    private var fadeGain: Float = 0
+    /// 2.7 ms at 48 kHz: long enough not to click, short enough not to be heard as a delay.
+    static let stealFadeFrames = 128
 
     init(envelope: Envelope.Settings, sampleRate: Float) {
         self.envelope = Envelope(settings: envelope, sampleRate: sampleRate)
     }
 
-    var isActive: Bool { envelope.isActive }
+    var isActive: Bool { envelope.isActive || fadeLeft > 0 }
 
     mutating func start(pitch: UInt8, velocity: UInt8, increment: Double, order: UInt64) {
+        let stolen = envelope.isActive
+        if stolen {
+            fadeLeft = Self.stealFadeFrames
+            fadePosition = position
+            fadeIncrement = self.increment
+            fadeGain = gain * envelope.level
+        }
         self.pitch = pitch
         isHeld = true
         startOrder = order
@@ -188,7 +204,7 @@ struct SamplerVoice: Sendable {
         let v = Float(Swift.min(velocity, 127)) / 127
         gain = v * v
         envelope.kill()
-        envelope.gateOn()
+        if !stolen { envelope.gateOn() }
     }
 
     mutating func release() {
@@ -198,13 +214,37 @@ struct SamplerVoice: Sendable {
 
     mutating func silence() {
         isHeld = false
+        fadeLeft = 0
         envelope.kill()
     }
 
     @inline(__always)
     mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, sample: SampleBuffer, level: Float) {
         let last = sample.frameCount - 1
-        for i in buffer.indices {
+        var first = buffer.startIndex
+        if fadeLeft > 0 {
+            let end = Swift.min(first + fadeLeft, buffer.endIndex)
+            while first < end {
+                let index = Int(fadePosition)
+                guard index < last || (index == last && fadePosition == Double(last)) else {
+                    fadeLeft = 0
+                    break
+                }
+                let a = sample.frames[index]
+                let b = index < last ? sample.frames[index + 1] : a
+                let t = Float(fadePosition - Double(index))
+                let ramp = Float(fadeLeft) / Float(Self.stealFadeFrames)
+                buffer[first] += (a + (b - a) * t) * fadeGain * ramp * level
+                fadePosition += fadeIncrement
+                fadeLeft -= 1
+                first += 1
+            }
+            guard fadeLeft == 0 else { return }
+            // Faded out: the new note starts here — released at once if its key already came up.
+            envelope.gateOn()
+            if !isHeld { envelope.gateOff() }
+        }
+        for i in first..<buffer.endIndex {
             let index = Int(position)
             guard index < last || (index == last && position == Double(last)) else {
                 silence()

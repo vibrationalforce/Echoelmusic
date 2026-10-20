@@ -97,6 +97,28 @@ final class SamplerTests: XCTestCase {
         XCTAssertTrue(render(&sampler, frames: 4_800).allSatisfy(\.isFinite))
     }
 
+    /// A stolen voice fades out what it played before the new note starts (ultra-audit A9): its
+    /// read position jumps, so cutting it stepped the waveform. A constant sample makes any step
+    /// visible: held at 0.5, a cut fell to the new note's attack at once. The new note waits
+    /// for the fade, so the two never add up to more than one voice.
+    func testAStolenVoiceFadesOutInsteadOfCutting() throws {
+        var sampler = Sampler(patch: SamplerPatch(envelope: .init(attack: 0.01, decay: 0.0001, sustain: 1, release: 0.0001),
+                                                  oneShot: true, level: 1),
+                              voiceCount: 1, sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: Double(rate))))
+        sampler.noteOn(pitch: 60, velocity: 127)
+        var out = render(&sampler, frames: 4_800)
+        XCTAssertEqual(out[4_799], 0.5, accuracy: 1e-3, "held")
+        sampler.noteOn(pitch: 64, velocity: 127)
+        out += render(&sampler, frames: 4_800)
+        let around = out[4_000...]
+        let steepest = zip(around.dropFirst(), around).map { abs($0 - $1) }.max() ?? 0
+        XCTAssertLessThan(steepest, 0.01, "no step where the voice was stolen")
+        XCTAssertLessThanOrEqual(out.max() ?? 0, 0.5 + 1e-3, "the new note waits for the fade")
+        XCTAssertEqual(out.last ?? 0, 0.5, accuracy: 1e-3, "the new note sounds")
+        XCTAssertEqual(sampler.activeVoiceCount, 1)
+    }
+
     func testAStretchReadsOnlyItsFramesAndDoesNotDependOnTheBlockSplit() throws {
         let ramp = (0..<1_000).map { Float($0) }
         let buffer = try XCTUnwrap(SampleBuffer(samples: ramp, sampleRate: 48_000))
