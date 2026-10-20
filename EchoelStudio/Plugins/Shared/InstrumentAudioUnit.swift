@@ -86,7 +86,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             let node = AUParameterTree.createParameter(
                 withIdentifier: parameter.identifier, name: parameter.title, address: AUParameterAddress(index),
                 min: AUValue(parameter.range.lowerBound), max: AUValue(parameter.range.upperBound), unit: unit,
-                unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable, .flag_CanRamp],
+                // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
+                unitName: nil, flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: parameter.choices.isEmpty ? nil : parameter.choices, dependentParameters: nil)
             node.value = AUValue(parameter.defaultValue)
             return node
@@ -198,8 +199,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                   let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
 
             let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
-            let second = Swift.max(Int64(state.kernel.sampleRate), 1)
-            let gain: Float = state.unlocked.load(ordering: .relaxed) || state.demoFrame % (30 * second) < 28 * second ? 1 : 0
+            let demoFrom = state.demoFrame
             state.demoFrame += Int64(frames)
             var done = 0
             var event = eventList
@@ -207,7 +207,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 let header = current.pointee.head
                 let offset = Swift.min(Swift.max(Int(header.eventSampleTime - start), done), frames)
                 if offset > done {
-                    state.kernel.render(frames: offset - done, left: left + done, right: right + done, gain: gain)
+                    state.kernel.render(frames: offset - done, left: left + done, right: right + done, gain: 1)
                     done = offset
                 }
                 switch header.eventType {
@@ -223,7 +223,12 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 event = UnsafePointer(header.next)
             }
             if done < frames {
-                state.kernel.render(frames: frames - done, left: left + done, right: right + done, gain: gain)
+                state.kernel.render(frames: frames - done, left: left + done, right: right + done, gain: 1)
+            }
+            // Locked, the demo's silence fades in and out instead of switching (A9).
+            if !state.unlocked.load(ordering: .relaxed) {
+                DemoGate.apply(left: left, right: right, frames: frames, fromFrame: demoFrom,
+                               sampleRate: state.kernel.sampleRate)
             }
             return noErr
         }

@@ -93,7 +93,8 @@ public final class StandardEffectUnit: AUAudioUnit {
                 withIdentifier: parameter.identifier, name: parameter.title,
                 address: AUParameterAddress(parameter.address),
                 min: parameter.range.lowerBound, max: parameter.range.upperBound, unit: unit, unitName: nil,
-                flags: [.flag_IsReadable, .flag_IsWritable, .flag_CanRamp], valueStrings: nil,
+                // No `.flag_CanRamp`: a ramp event is taken as its end value, so the host ramps (A9).
+                flags: [.flag_IsReadable, .flag_IsWritable], valueStrings: nil,
                 dependentParameters: nil)
             node.value = parameter.defaultValue
             return node
@@ -127,8 +128,7 @@ public final class StandardEffectUnit: AUAudioUnit {
 
     /// Whether a locked unit is silent `frame` frames after its resources were allocated.
     public static func demoIsSilent(atFrame frame: Int64, sampleRate: Double) -> Bool {
-        let second = Swift.max(Int64(sampleRate), 1)
-        return frame % (30 * second) >= 28 * second
+        DemoGate.isSilent(atFrame: frame, sampleRate: sampleRate)
     }
 
     /// The compressor's gain reduction in dB, for a meter.
@@ -178,10 +178,8 @@ public final class StandardEffectUnit: AUAudioUnit {
             }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
             if !state.unlocked.load(ordering: .relaxed) {
-                if Self.demoIsSilent(atFrame: state.demoFrame, sampleRate: kernel.sampleRate) {
-                    left.update(repeating: 0, count: frames)
-                    right.update(repeating: 0, count: frames)
-                }
+                DemoGate.apply(left: left, right: right, frames: frames, fromFrame: state.demoFrame,
+                               sampleRate: kernel.sampleRate)
                 state.demoFrame += Int64(frames)
             }
             return noErr
