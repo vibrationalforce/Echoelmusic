@@ -23,8 +23,11 @@ final class RecordController {
         self.documents = documents
         self.store = store
         // A call, lost headphones or a followed clock's Stop pause the song: a take ends with it
-        // and keeps what it captured, instead of resuming out of time after the pause (R10).
+        // and keeps what it captured, instead of resuming out of time after the pause (R10). A
+        // MIDI take ends right here, against the engine core it was played on: on a rate change
+        // a new core replaces that one as soon as this returns.
         engine.onPausedFromOutside = { [weak self] in
+            self?.endMIDITake()
             Task { await self?.stopRecording() }
         }
     }
@@ -99,18 +102,26 @@ final class RecordController {
 
     func stopRecording() async {
         guard isRecording else { return }
-        isRecording = false
-        if let track = midiTrack {
-            midiTrack = nil
-            commitMIDI(engine.live.stopCapture(), onto: track)
+        if midiTrack != nil {
+            endMIDITake()
             return
         }
+        isRecording = false
         let pending = target
         target = nil
         // The map at the stop, before anything else can change it: the one the take played against.
         let tempoMap = engine.playedTempoMap(of: store.project)
         guard let take = await engine.endTake(), let pending else { return }
         await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: tempoMap)
+    }
+
+    /// Ends a running MIDI take at once and commits it. Synchronous, so it reads the rate and the
+    /// position of the core the take was played on.
+    private func endMIDITake() {
+        guard isRecording, let track = midiTrack else { return }
+        isRecording = false
+        midiTrack = nil
+        commitMIDI(engine.live.stopCapture(), onto: track)
     }
 
     /// The notes of a MIDI take as one new clip on `track`, placed on the bar it began in —
