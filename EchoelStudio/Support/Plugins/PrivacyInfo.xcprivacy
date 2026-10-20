@@ -8,14 +8,19 @@
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
-	<!-- One required-reason API since 2026-10-19 (factory job 002): the extension READS the plugin
+	<!-- Each bundle is checked against its own manifest (ITMS-91053), so a new required-reason
+	     call anywhere in Plugins/ or in a package the extension links is declared here in the
+	     same commit.
+	     UserDefaults, 1C8F.1 (since 2026-10-19, factory job 002): the extension READS the plugin
 	     purchase the app recorded in the shared App Group defaults (PluginUnlock.recordedOwned,
-	     group.com.echoelmusic.shared). 1C8F.1 is Apple's reason for defaults shared between an app
-	     and its extensions. Each bundle is checked against its own manifest (ITMS-91053), so a new
-	     required-reason call anywhere in Plugins/ is declared here in the same commit.
-	     Scope of that count: Plugins/ source only. The extension also links EchoelCore, whose
-	     ProjectLibrary reads file modification dates; build 10007 uploaded with that link and an
-	     empty list, so those calls were not flagged then — evidence for that build, not a rule. -->
+	     group.com.echoelmusic.shared) — Apple's reason for defaults shared between an app and its
+	     extensions.
+	     File timestamp, C617.1 (since 2026-10-20, ultra-audit E7): the extension links EchoelCore,
+	     whose ProjectLibrary reads the modification dates of the app's own song files to sort the
+	     song list. The extension's code never calls it (no use in Plugins/), but the code is in the
+	     binary Apple scans, and the reason is the one that applies wherever it runs: timestamps of
+	     files inside the container. Build 10007 uploaded without this entry and was not flagged —
+	     evidence for that build, not a rule. -->
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>
@@ -24,6 +29,14 @@
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>1C8F.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
 			</array>
 		</dict>
 	</array>
