@@ -35,6 +35,10 @@ final class DocumentController {
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
+    /// Runs before another song replaces the open one. The app sets it to write the plugins'
+    /// current settings into the song, which they keep to themselves until asked; without it a
+    /// built-in effect's tweaks since the app last left the foreground were lost on a switch.
+    @ObservationIgnored var beforeLeavingSong: (() -> Void)?
 
     /// Quiet time after an edit before the song is written.
     static let autosaveDelay: Duration = .seconds(2)
@@ -148,6 +152,7 @@ final class DocumentController {
     }
 
     func newSong() {
+        beforeLeavingSong?()
         saveNow()
         let project = Project.starter()
         store.open(project)
@@ -171,6 +176,7 @@ final class DocumentController {
     }
 
     private func open(throwing url: URL) throws {
+        beforeLeavingSong?()
         saveNow()
         do {
             let project = try library.read(url)

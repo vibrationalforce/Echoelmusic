@@ -38,6 +38,11 @@ struct EchoelStudioApp: App {
             try? store.absorb(engine.plugins.captureCommands(for: store.project))
             return store.project
         }
+        // Opening another song saves this one first, with the plugins' settings in it.
+        documents.beforeLeavingSong = { [weak store, weak engine] in
+            guard let store, let engine else { return }
+            try? store.absorb(engine.plugins.captureCommands(for: store.project))
+        }
         // A control moved in a plugin's own interface: the learn target while learning, else written.
         engine.plugins.onParameterMoved = { [weak writer, weak midi] address, position, phase in
             if let midi, midi.isLearning {
