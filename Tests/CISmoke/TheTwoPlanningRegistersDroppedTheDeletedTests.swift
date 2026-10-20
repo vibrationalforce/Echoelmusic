@@ -88,15 +88,22 @@ final class TheTwoPlanningRegistersDroppedTheDeletedTests: XCTestCase {
 
     /// Claim 3 — counterweight: the TRUE half of the edited CLAIMS entry must survive the edit.
     /// Without this, removing the false first item could take the honest one with it.
+    ///
+    /// ⚠️ Re-anchored 2026-10-20 (S-51). GA-4 (2026-10-10) gave the sampler its door
+    /// (`TrackSampleRow`) and rewrote the entry from "doorless" to "doored since GA-4", keeping
+    /// it as provenance — so the old needle "`SamplerVoice` (in `BeatPlayer`" stopped matching
+    /// a correct tree. The claim is unchanged: the `SamplerVoice` entry still stands in the
+    /// register next to the struck recorder. Only the wording it is found by moved.
     func testTheDoorlessSamplerVoiceStillStandsInTheRegister() throws {
         let text = try Self.text(Self.claims)
         XCTAssertTrue(
-            text.contains("`SamplerVoice` (in `BeatPlayer`"),
-            "the `SamplerVoice` line is gone from `CLAIMS.md`. It shared a bullet with the "
-            + "deleted recorder and is STILL TRUE — the voice is constructed, there is simply no "
-            + "surface that hands the user a sample. Losing it while striking its neighbour is "
-            + "the standard cost of editing a shared bullet (#472), and it would quietly remove "
-            + "a real \"do not claim this\" line from the register that governs content.")
+            text.contains("**Betürt seit 2026-10-10 (GA-4):** `SamplerVoice`"),
+            "the `SamplerVoice` entry is gone from `CLAIMS.md`. It shared a bullet with the "
+            + "deleted recorder; since GA-4 it records that the sampler HAS a door and that the "
+            + "drum kit and the beat maker are NOT back. Losing it while striking its neighbour "
+            + "is the standard cost of editing a shared bullet (#472), and it would quietly "
+            + "remove a real \"what is and is not back\" line from the register that governs "
+            + "content.")
     }
 
     private static func text(_ relativePath: String) throws -> String {
