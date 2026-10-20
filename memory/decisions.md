@@ -5572,3 +5572,10 @@ Review 2026-11-15.
 **Lehre:** Wer etwas aus einem Test ausnimmt, prüft beide Richtungen; ein Satz außerhalb des Zauns hält Namen angeführt.
 
 **Review:** 2026-11-19.
+
+### 2026-10-20 — Studio-Laufzeit: ein Neuaufbau baut mit dem, was gewollt war; Return-Solo in place; Starttest ohne Erweiterung
+
+- **Wiederherstellung:** jede automatische Audio-Wiederherstellung (Retry, Interruption-Ende, Media-Reset, Heilung, Restart audio, Konfigurationswechsel) baut mit `wantsInput` — gesetzt von `openInput`, gelöscht nur von `closeInput` — und darf im Hintergrund nur, solange eine externe Clock gefolgt wird. Ein Eingang, der nicht aufgeht, hinterlässt eine Statuszeile. Im Hintergrund still heißt Audio aus, auch wenn erst eine Pause von außen oder das Ende einer Aufnahme dazu führt (2.5.4). `play()` startet den Transport nur über einer laufenden Engine. Eine MIDI-Aufnahme endet bei einer Pause von außen synchron, auf dem Core, auf dem sie gespielt wurde. Der Ersatz-Song nach einem nicht bestätigten Start wird erst beim ersten Edit geschrieben. Grund: eine Prüfrunde fand am selben Tag sieben Fehler dieser einen Gattung in der eigenen Härtung. Review 2026-11-19.
+- **Return-Solo** spielt in place (Sends an die gesolote Return-Spur kommen an, Direktklang schweigt); ohne gesolote Return-Spur unverändert. Engine-Test in `HostedEffectTests`.
+- **CI-Starttest** installiert die Simulator-App ohne `PlugIns/` und bootet während des Builds; die Erweiterung prüft `studio-testflight.yml`. Kein Ad-hoc-Signierweg neben der echten Signatur.
+- Offen und bewusst nicht heute: Startbestätigung an Meilensteinen statt nach 10 s, neue `AVAudioEngine` nach einem Media-Reset, Wellenform/Preset ohne Automation (S-50).
