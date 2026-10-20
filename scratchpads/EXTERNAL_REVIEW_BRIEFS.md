@@ -181,3 +181,91 @@ Features vorschlagen, nichts zu Gesundheit oder Wellness.
 ```
 
 **Antworten: beide am 19.10. eingetroffen und gemessen** (Workflow `wf_13fad8af-ca3`; Ledger `memory/inspiration_intake.md` 2026-10-19, `inspiration.csv`). ChatGPT `[verified 28/31]` → ADOPT→PRODUCT: zwei Bug-Scheiben (stille `try?`-Abweisung bei Namen über 128 Zeichen an drei Stellen; `exportWAV` wartet nicht auf `mediaLoad`), vier Katalog-Namen in den P0-Posten, Store-Satz „in Echoel frei“, kein Stem-Pfad; Quelle formal kontaminiert (U+2060), kein Satz kopiert. Grok `[verified 3/8]` → WATCH: Extension liest `currentEntitlements` selbst, LUFS im Export real, `.anyone` sitzt bei `MIDIInput.swift:437` (unsere :398 war veraltet), vier externe Behauptungen ungeöffnet.
+
+---
+
+## Runde 3 — Dienstag, 20.10.2026, zum Einkopieren am Do 22.10. (Stand `44009af87`)
+
+**Was sich seit Runde 2 geändert hat:** Songformat 2 mit strengem Leser (S-20 bis S-25, `docs/FORMAT.md`);
+ein Song ist EINE Datei in „Dateien“ und öffnet sich per AirDrop (E4); die Laufzeit-Härtung aus dem
+Ultra-Audit (Audio-Neustart nach gescheitertem Start, Absturz-Schutz beim Start, Kopfhörer, Anruf
+während einer Aufnahme, abgestürzte Plugin-Erweiterung, Wechsel der Abtastrate); ein Starttest im
+Simulator in der CI; und sieben Korrekturen, die zwei interne Prüfrunden am selben Tag gefunden
+haben (Commits `57673cf96` bis `44009af87`). Nichts davon ist auf einem Gerät geprüft. Die App selbst
+hat kein Test-Target — nur die drei Pakete haben Tests.
+
+### Auftrag an ChatGPT — wo verliert die App heute Arbeit oder hängt sich auf?
+
+```
+Rolle: externer Code-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift 6, keine
+externen Abhängigkeiten). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic —
+Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand 44009af87, Verzeichnis EchoelStudio/.
+
+Lies nur diese Dateien (alle getrackt, alle öffentlich):
+- EchoelStudio/CLAUDE.md (Schichten und Gesetze)
+- EchoelStudio/App/Engine/AudioEngine.swift (start, configure, resume, wake, healIfStopped,
+  restartAudio, enterBackground, pauseFromOutside, der Abtastraten-Zweig in configure)
+- EchoelStudio/Engine/Sources/EchoelEngine/AudioRecoveryPolicy.swift
+- EchoelStudio/App/Engine/RecordController.swift
+- EchoelStudio/App/Documents/DocumentController.swift (restore, beginLaunch, confirmLaunch,
+  newSong, open, saveNow, openIncoming)
+- EchoelStudio/Core/Sources/EchoelCore/LaunchRecord.swift
+- EchoelStudio/App/Engine/PluginHost.swift (unitStopped und die zwei Beobachter)
+- EchoelStudio/App/EchoelStudioApp.swift
+- .github/workflows/studio.yml (der Schritt "Launch smoke (iOS Simulator)")
+
+Fragen:
+1. Arbeit verlieren: gibt es einen Weg (Anruf, Hintergrund, Absturz, Songwechsel, Abtastrate,
+   Kopfhörer), auf dem eine Aufnahme, eine Note oder eine Plugin-Einstellung verloren geht,
+   obwohl der Nutzer nichts falsch gemacht hat? Datei:Zeile und die Schrittfolge.
+2. Hängen: kann eine der Wiederherstellungen (Retry, Interruption .ended, Media-Reset,
+   Konfigurationsänderung) sich selbst endlos neu auslösen, oder dauerhaft stillstehen, ohne
+   dass der Knopf "Restart audio" erscheint?
+3. Absturz-Schutz beim Start: LaunchRecord und DocumentController.restore öffnen nach einem
+   abgebrochenen Start einen neuen Song. Gibt es einen Fall, in dem ein gesunder Start als
+   abgebrochen zählt (Fehlalarm), oder ein tödlicher Song trotzdem bei jedem Start geöffnet wird?
+4. Hintergrund: welche Kombination (spielt, nimmt auf, folgt einer externen Clock, wartet auf
+   Eingang) hält die App wach, obwohl sie still ist? Das ist App-Review-Richtlinie 2.5.4.
+5. Der Starttest in studio.yml: was kann er NICHT sehen (zum Beispiel einen Absturz erst nach
+   20 Sekunden, einen Hänger ohne Absturz, die AUv3-Erweiterung, die er weglässt)? Nenne die
+   zwei wichtigsten Lücken.
+6. Swift 6: siehst du in diesen Dateien eine Closure, die Apple-Frameworks außerhalb des
+   Main-Threads aufrufen, die aber MainActor-isoliert ist (das stürzt mit SIGTRAP ab)?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, "sicher" oder "vermutet", kein Code, keine neuen
+Features, nichts zu Gesundheit oder Wellness.
+```
+
+### Auftrag an SuperGrok Heavy — was Apple dazu heute sagt (nur mit Quelle)
+
+```
+Rolle: externer Rechercheur für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift ohne
+externe Abhängigkeiten, die eine eigene AUv3-Erweiterung einbettet und fremde Audio Units hostet.
+Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic (Zweig
+claude/echoelmusic-review-optimize-u5jjpd, Verzeichnis EchoelStudio/).
+
+Bitte recherchiere den AKTUELLEN Stand (iOS 26.x, Xcode 26.x), nur mit Quelle und Datum:
+1. AVAudioSession: Verhalten von Unterbrechungen (Anruf, Siri, Alarm) unter iOS 26 —
+   kommt .ended zuverlässig, wann darf eine App im Hintergrund setActive(true) aufrufen, und
+   welche Fehlercodes kommen dann? Gab es Änderungen gegenüber iOS 18?
+2. App-Review-Richtlinie 2.5.4 (Hintergrund-Audio): ist eine Musik-App, die im Hintergrund
+   still auf den Start-Befehl einer externen MIDI-Clock wartet, zulässig? Gibt es dokumentierte
+   Ablehnungen oder Apple-Aussagen dazu?
+3. AUv3-Erweiterungen: wann sendet iOS kAudioComponentInstanceInvalidationNotification, und
+   lädt AUM/Logic/Cubasis eine Unit danach selbst neu? Was ist die empfohlene Reaktion des Hosts?
+4. Dokumente: ein eigener Dateityp (exportierter UTType, Paket als eine Datei) in "Dateien" und
+   per AirDrop — bekannte Fehler unter iOS 26 beim Öffnen (LSSupportsOpeningDocumentsInPlace,
+   Kopie statt Original, Sicherheitsbereich)?
+5. Simulator in der CI: "Invalid placeholder attributes" beim Installieren einer unsignierten
+   App mit eingebetteter Erweiterung — ist das bekannt, und ist ad-hoc-Signieren
+   (CODE_SIGN_IDENTITY=-) der übliche Weg, die Erweiterung mitzutesten?
+6. Abtastrate: ein USB-Interface ändert die Ausgaberate mitten in der Sitzung — wie verhalten
+   sich AVAudioEngine und gehostete Audio Units, und was liefern andere iOS-DAWs dafür aus?
+
+Form: höchstens 8 Punkte. Jeder Punkt: Behauptung · Quelle (URL) · Datum · "sicher" oder
+"vermutet" · was das für Echoel Studio konkret heißt (eine Zeile). Keine Code-Vorschläge,
+Gerüchte als Gerüchte, keine Gesundheits- oder Wellness-Themen.
+```
+
+**So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo
+(Lernmodus) und trägt das Ergebnis ins Ledger ein.
