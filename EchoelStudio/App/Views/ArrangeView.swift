@@ -8,7 +8,6 @@ import SwiftUI
 /// Reads no playhead, so nothing here rebuilds while the song plays.
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
-    /// Opens a track's editor.
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
     /// Asks for an audio file to place on a track at a tick.
