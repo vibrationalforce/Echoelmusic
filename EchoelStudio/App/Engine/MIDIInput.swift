@@ -126,6 +126,22 @@ final class ControlInbox: Sendable {
         mapped.withLock { $0.contains(control) }
     }
 
+    /// MIDI Learn is on. A controller then waits for its mapping and plays nothing: a hosted
+    /// plugin that answered it by moving one of its own parameters would make that parameter the
+    /// learn target, and the knob would end up on the plugin instead (review 2026-10-20).
+    private let learning = Atomic<Bool>(false)
+
+    /// Main thread.
+    func setLearning(_ on: Bool) {
+        learning.store(on, ordering: .releasing)
+    }
+
+    /// MIDI thread: whether a controller also plays the live instrument. The sustain pedal
+    /// always does; it holds the notes being played.
+    func playsLive(_ control: MIDIControl) -> Bool {
+        control.number == 64 || (!learning.load(ordering: .acquiring) && !isMapped(control))
+    }
+
     /// Main thread.
     func take() -> [MIDIControl: UInt8] {
         scheduled.store(false, ordering: .releasing)
@@ -364,6 +380,7 @@ final class MIDIInput {
     func setLearning(_ on: Bool) {
         isLearning = on
         learnTarget = nil
+        inbox.setLearning(on)
     }
 
     /// While learning: the parameter the next moved control will move.
@@ -535,7 +552,7 @@ final class MIDIInput {
                         // A controller the song does not map plays the live instrument — the mod
                         // wheel, expression, a filter knob — and a take records it. The sustain
                         // pedal always plays: it holds the live instrument's notes (S-16b).
-                        if data1 == 64 || !inbox.isMapped(control) { router.receive(status: status, data1, data2) }
+                        if inbox.playsLive(control) { router.receive(status: status, data1, data2) }
                     } else {
                         router.receive(status: status, data1, data2)
                     }
