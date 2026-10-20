@@ -28,6 +28,9 @@ final class DocumentController {
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     @ObservationIgnored private var savedProject: Project?
+    /// The open song is the starter a launch opened and has not been written yet, so nothing on
+    /// disk holds its name.
+    @ObservationIgnored private var isUnwritten = false
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
@@ -184,6 +187,11 @@ final class DocumentController {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
             let local = try library.adopt(url)
+            // The unwritten starter's name was free when it was picked, so the song that came in
+            // may have taken it; the starter moves to another before anything writes it there.
+            if isUnwritten, let current = currentURL, current.standardizedFileURL == local.standardizedFileURL {
+                currentURL = library.newURL(for: store.project.name)
+            }
             refresh()
             if isRestored { open(local) } else { pendingIncoming = local }
         } catch {
@@ -207,6 +215,7 @@ final class DocumentController {
         store.open(project)
         currentURL = library.newURL(for: project.name)
         savedProject = writing ? nil : project
+        isUnwritten = !writing
         saveNow()
         loadMedia(of: project)
     }
@@ -238,6 +247,7 @@ final class DocumentController {
             store.open(project)
             currentURL = url
             savedProject = project
+            isUnwritten = false
             lastError = nil
             loadMedia(of: project)
         } catch {
@@ -265,6 +275,7 @@ final class DocumentController {
         do {
             try library.write(project, to: url)
             savedProject = project
+            isUnwritten = false
             lastError = nil
             refresh()
         } catch {
