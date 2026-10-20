@@ -79,6 +79,8 @@
 // stand before a disguised one); the two ASCII-lower-case checks are COUNTERWEIGHTS, green on both trees — every
 // entry already is — and make an entry visible that the fold could never match. Claim 8's subset now compares the
 // hook and permissions.ask paths lower-cased (rework 1); today all are, so that half is unchanged on both trees.
+// Rework 2 pins the `fold` definition itself (FORWARD: absent at `f5a495fda`), so dropping its `.toLowerCase()`
+// goes red here, not only in the selftest that no gate runs.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
@@ -299,6 +301,13 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             "const isLockConfig = (f) => LOCK_CONFIG.includes(f) || LOCK_DIRS.some(d => f.startsWith(d))"), """
             `isLockConfig` in \(Self.workflowPath) no longer reads both LOCK_CONFIG and LOCK_DIRS; the lists \
             above would be checked against a predicate that ignores them.
+            """)
+        // The fold itself, not only its call: without `.toLowerCase()` a lock path written in lower case below would
+        // never meet its mixed-case git spelling (job 005, round 2).
+        XCTAssertTrue(workflowCode().contains(
+            "const fold = (f) => f.replace(hiddenChars, '').trim().normalize('NFKC').toLowerCase()"), """
+            `fold` in \(Self.workflowPath) no longer strips hidden characters and padding, applies NFKC and lower-cases \
+            the name; the lower-case lists checked here would stop matching the names they guard.
             """)
         XCTAssertTrue(workflowCode().contains("const lockChanged = changed.filter(f => isLockConfig(fold(f)))"), """
             `lockChanged` in \(Self.workflowPath) no longer tests the FOLDED name: `.claude/Hooks/…` is \

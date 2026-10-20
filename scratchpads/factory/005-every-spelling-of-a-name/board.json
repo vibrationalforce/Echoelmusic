@@ -2,7 +2,7 @@
  "id": "005-every-spelling-of-a-name",
  "title": "Nur leere Namen fallen weg, Sperre und Prüfer in jeder Schreibweise",
  "stage": "review",
- "round": 2,
+ "round": 3,
  "base": "f5a495fda271a17088e4b7adfea1b74ec4064083",
  "lenses": [
   "code-reviewer",
@@ -36,8 +36,13 @@
    "stage": "review",
    "date": "2026-10-20",
    "note": "Runde 1 (wf_1edd4391-ce0, Prüfer-Fassung der Basis): REWORK, zwei Majors zu einem Sachverhalt — ein verfälschter Name innerhalb von paths machte den Aufruf INVALID und verlor Grenze oder Sperre; Nacharbeit 1 baut ihn und die sieben Minors ein (reviews/round-1/rebuttal.md)"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-20",
+   "note": "Runde 2 (wf_b13afc76-111, Prüfer-Fassung der Basis): REWORK, ein Major — Nacharbeit 1 nahm den Sperr- und Prüfer-Namen im Approver-Prompt die JSON-Anführung, ein Name konnte wie ein Satz des Orchestrators lesen; Nacharbeit 2 baut ihn und die acht Minors ein (reviews/round-2/rebuttal.md)"
   }
  ],
- "head": "2ee3c736dbda2cfc802b93aaaaa2b4864d6255fb",
- "since": "2ee3c736dbda2cfc802b93aaaaa2b4864d6255fb"
+ "head": "92e8052ed110531e5388613cbadcc7e771c68d39",
+ "since": "92e8052ed110531e5388613cbadcc7e771c68d39"
 }

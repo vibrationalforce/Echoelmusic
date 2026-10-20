@@ -133,7 +133,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    abgeschnitten (`trim()` striche U+FEFF, U+2028, U+2029 und jedes Zs-Leerzeichen am Rand weg). Melden ihn
    ALLE Linsen, eskaliert er fest (Schritt 6, Regel 2); meldet ihn nicht jede, ist es `RERUN` mit den
    Namen derer, die ihn meldeten, und der Approver läuft nicht. Ein C0-Steuerzeichen oder DEL druckt Git
-   nie roh: so ein Name ist `RERUN` mit dem Namen der Linse und macht den Aufruf nie `INVALID`. Ist die
+   nie roh: so ein Name ist `RERUN` mit dem Namen der Linse und macht den Aufruf nie `INVALID` (liegt dann kein
+   gelisteter Name unter `paths`, sagt der Grund `scope: none …`: der geprüfte Diff kann leer sein). Ist die
    Grenze erreicht, zeigt irgendeine Liste eine Sperr-Änderung oder meldet jede Linse einen versteckten
    Namen — jedes davon eine feste Eskalation —, wird jedes solche `RERUN` ein Vermerk im Grund
    (`name check:`): kein Dateiname hält eine feste Eskalation in einer Schleife. Eine Linse ganz ohne Liste oder mit leerer
@@ -189,7 +190,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
       Beleg oder eine Frage an den Menschen → **ESCALATE**.
    5. Ein `code`-Kriterium offen → **REWORK** (solange Runden übrig sind), sonst ESCALATE.
    6. Alles erfüllt, aber der Diff ändert den PRÜFER (`.claude/workflows/echoel-factory-review.js`,
-      `.claude/agents/`, gefaltet verglichen wie die Sperre) → **ESCALATE** statt APPROVE: ein Prüfer, den der Job geschrieben hat, kann
+      `.claude/agents/`, gefaltet verglichen wie die Sperre; ein nur gefaltet passender Name wird gegen die Datei
+      verglichen, auf die er faltet) → **ESCALATE** statt APPROVE: ein Prüfer, den der Job geschrieben hat, kann
       ihn nicht freigeben. Anders als Regel 2 überspringt das die Nacharbeit NICHT — der Founder soll
       eine fertige Fassung beurteilen.
    7. Sonst **APPROVE**; `device`-Kriterien kommen als `deviceAsks` mit, sensible Dateien außerhalb
@@ -347,7 +349,8 @@ Attrappen-Agenten, ein Fall je Zweig von Schritt 6, dazu die PROMPTS, die die At
 (Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, die Linsen mit dem Diff bis zum schließenden
 Backtick, jeder liest die Spec am Kopf-SHA, der Approver zählt sie ZUERST — keine Zahl des PM im Prompt,
 `board.json` und `reviews/` nicht im Diff — und liest die Sperrliste und den Job ab der Job-Basis, der Datenblock ist ASCII auf einer Zeile und kann
-seine Marker nicht schließen). Lädt der Workflow nicht, endet es mit 2, nie mit „grün“. `--mutate` legt jede Zeile seiner
+seine Marker nicht schließen, und jeder Dateiname AUSSERHALB des Blocks steht im Prompt als JSON-String — ein
+nackter Name könnte wie ein Satz des Orchestrators lesen). Lädt der Workflow nicht, endet es mit 2, nie mit „grün“. `--mutate` legt jede Zeile seiner
 Mutationstabelle einmal an eine Kopie des Workflows und verlangt, dass ein Fall rot wird; eine
 Zeile, deren Text der Workflow nicht mehr genau einmal enthält, ist ein Fehler, kein Überspringen.
 `python3 -I scripts/factory-board.py --selftest` (und `--mutate`) prüft das Board ebenso, auch dass ein

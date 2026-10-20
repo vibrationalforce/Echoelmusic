@@ -35,10 +35,14 @@ HFS+-Volume die Sperr-Konfiguration, der Prüfer oder eine sensible Fläche ist,
    `.Claude/settings.json`, `.claude/SETTINGS.JSON`, ein Token-Name mit Leerzeichen am Ende (auch von nur einer
    Linse, auch an der Grenze, dann mit der Token-Notiz), `.claude/Workflows/echoel-factory-review.js` und
    `docs/PRIVACY.html` werden erkannt; die Token-Notiz vergleicht ebenfalls gefaltet; ein Name, der nur GEFALTET
-   passt, heißt im Grund und im Approver-Prompt „a name that folds to it“, ein exakter nie — Selbsttest-Fälle.
+   passt, heißt im Grund und im Approver-Prompt „a name that folds to it“, ein exakter nie; im Approver-Prompt
+   bleibt jeder Name ein JSON-String wie an der Basis, im Grund bleibt ein nur gefaltet passender Name in
+   Anführungszeichen; ein nur gefaltet passender Prüfer-Name wird gegen die Datei verglichen, auf die er faltet —
+   Selbsttest-Fälle.
 4. Ein Name mit C0-Zeichen macht den Aufruf nie `INVALID`, in keiner Richtung (innerhalb oder außerhalb von
    `paths`): an der Grenze oder neben einer Sperr-Änderung ist es `ESCALATE` mit `name check:`; er bleibt in `outsideScope` und `sensitiveOutside`, damit
-   nichts, was eine Linse meldete, aus dem Grund fällt — Selbsttest-Fälle.
+   nichts, was eine Linse meldete, aus dem Ergebnis fällt; liegt dabei kein gelisteter Name unter `paths`, sagt der
+   Grund `scope: none …` — Selbsttest-Fälle.
 5. Der Selbsttest pinnt den Linsen-Diff wieder bis zum schließenden Backtick (`git diff ${range}${scope}` ohne
    den Approver-Ausschluss) — eine Mutation, die den Linsen den Approver-Diff gibt, wird rot.
 6. `SKILL.md`, `scripts/INDEX.md`, der Docstring des Selbsttests und die Workflow-Kommentare sagen dasselbe wie
