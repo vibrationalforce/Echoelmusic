@@ -146,7 +146,16 @@ final class PluginHost {
         }
         for insert in project.masterInserts { insertOwners[insert.id] = .master }
         var changed = false
-        for (slot, entry) in loaded where wanted[slot]?.component != entry.component || entry.sampleRate != sampleRate {
+        // An undo or a reopened song can carry other settings than the loaded unit has. They are
+        // never written into a unit the engine is rendering (B8: a plugin from another maker need
+        // not survive that): the unit is dropped and loaded again below, and `prepare` applies the
+        // settings before its render resources exist — the path a changed plugin already takes.
+        func settingsChanged(_ slot: Slot) -> Bool {
+            guard let state = wanted[slot]?.state else { return false }
+            return state != syncedState[slot]
+        }
+        for (slot, entry) in loaded where wanted[slot]?.component != entry.component || entry.sampleRate != sampleRate
+            || settingsChanged(slot) {
             if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
             loaded[slot] = nil
             syncedState[slot] = nil
@@ -158,12 +167,6 @@ final class PluginHost {
         }
         failed = failed.filter { wanted[$0.key]?.component == $0.value }
         problems = problems.filter { failed[$0.key] != nil }
-        // An undo or a reopened song can carry other settings than the loaded unit has.
-        for (slot, entry) in loaded {
-            guard let state = wanted[slot]?.state, state != syncedState[slot] else { continue }
-            Self.apply(state, to: entry.unit)
-            syncedState[slot] = state
-        }
         for (slot, want) in wanted where loaded[slot] == nil && requests[slot] == nil && failed[slot] != want.component {
             load(want.component, for: slot, state: want.state, sampleRate: sampleRate)
         }
