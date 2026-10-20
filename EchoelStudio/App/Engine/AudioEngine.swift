@@ -133,29 +133,48 @@ final class AudioEngine {
             let type = raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:))
             MainActor.assumeIsolated {
                 switch type {
-                case .began: self?.pause()
+                case .began: self?.pauseFromOutside(nil)
                 case .ended: self?.resume(after: "interruption ended")
                 default: break
                 }
             }
         }
-        // Headphones in or out: `auto` monitoring follows, so the speaker never howls.
+        // Headphones in or out: `auto` monitoring follows, so the speaker never howls. Headphones
+        // or an interface gone while playing pause the song instead of moving it to the speaker.
         routeObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] note in
+            let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
+            let lost = raw.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:)) == .oldDeviceUnavailable
             MainActor.assumeIsolated {
-                guard let self, let project = self.project else { return }
-                self.publish(project)
+                guard let self else { return }
+                if lost, self.isPlaying {
+                    self.log.info("route: output device gone while playing, pausing")
+                    self.pauseFromOutside("Paused: the headphones or the audio interface were disconnected.")
+                }
+                if let project = self.project { self.publish(project) }
             }
         }
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.pause()
+                self?.pauseFromOutside(nil)
                 self?.resume(after: "media services reset")
             }
         }
+    }
+
+    /// Called when something other than the transport's own Stop pauses the song; the record
+    /// controller ends a running take there, so it never runs on over a paused song (R10).
+    @ObservationIgnored var onPausedFromOutside: (() -> Void)?
+
+    /// The song paused by a call, Siri, a media reset, lost headphones or a followed clock's
+    /// Stop. `message` goes to the status line.
+    func pauseFromOutside(_ message: String?) {
+        pause()
+        if let message { lastError = message }
+        onPausedFromOutside?()
     }
 
     /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such

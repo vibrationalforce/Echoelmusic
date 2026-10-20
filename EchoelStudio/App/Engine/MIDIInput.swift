@@ -305,7 +305,7 @@ final class MIDIInput {
             case .resume:
                 engine.play()
             case .stop:
-                engine.pause()
+                engine.pauseFromOutside(nil)
                 store.endGesture()
             case .position(let sixteenths):
                 engine.seek(toTick: Tick(sixteenths) * MusicalTime.ticksPerQuarter / 4)

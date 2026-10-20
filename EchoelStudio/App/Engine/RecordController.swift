@@ -22,6 +22,11 @@ final class RecordController {
         self.engine = engine
         self.documents = documents
         self.store = store
+        // A call, lost headphones or a followed clock's Stop pause the song: a take ends with it
+        // and keeps what it captured, instead of resuming out of time after the pause (R10).
+        engine.onPausedFromOutside = { [weak self] in
+            Task { await self?.stopRecording() }
+        }
     }
 
     /// Arms `track`, or disarms it when it is the armed one. An instrument track records what is
