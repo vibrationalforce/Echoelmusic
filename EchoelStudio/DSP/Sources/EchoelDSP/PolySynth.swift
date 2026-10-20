@@ -197,14 +197,27 @@ public struct PolySynth: Sendable {
     private var bend: Float = 1
     private var bendTarget: Float = 1
     private var isSustaining = false
+    /// Vibrato depth 0…1 now and where the modulation wheel wants it, and the vibrato's phase 0..<1.
+    private var vibrato: Float = 0
+    private var vibratoTarget: Float = 0
+    private var vibratoPhase: Float = 0
+    /// How far the depth moves toward the wheel per block: ~50 ms, so a wheel never steps.
+    private let vibratoGlide: Float
 
     /// Semitones the wheel bends at either end: the General MIDI default.
     public static let bendRange: Float = 2
+    /// Semitones the vibrato swings either side with the modulation wheel all the way up — the
+    /// General MIDI 2 default modulation depth (±50 cents) — and how fast it swings.
+    public static let vibratoRange: Float = 0.5
+    public static let vibratoRate: Float = 5.5
+    /// Frames between pitch updates while the vibrato moves (0.67 ms at 48 kHz).
+    static let modulationBlock = 32
 
     public init(patch: SynthPatch = SynthPatch(), voiceCount: Int = defaultVoiceCount, sampleRate: Float = 48_000) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.patch = patch
         self.sampleRate = rate
+        vibratoGlide = 1 - expf(-Float(Self.modulationBlock) / (0.05 * rate))
         voices = Array(repeating: SynthVoice(patch: patch, sampleRate: rate), count: Swift.max(1, voiceCount))
     }
 
@@ -243,11 +256,35 @@ public struct PolySynth: Sendable {
         for i in voices.indices where voices[i].isPedalled { voices[i].release() }
     }
 
-    /// Releases every held note (the transport stopped, a MIDI all-notes-off), lifts the pedal
-    /// and centres the wheel.
+    /// The modulation wheel (controller 1), 0…127: vibrato up to ±`vibratoRange` semitones at
+    /// `vibratoRate`. The depth glides toward the wheel, so moving it never steps.
+    public mutating func modulation(_ value: UInt8) {
+        vibratoTarget = Float(Swift.min(value, 127)) / 127
+    }
+
+    /// One MIDI controller as a General MIDI synth reads it: 1 modulation, 64 sustain, 120 all
+    /// sound off, 121 reset all controllers, 123 all notes off. Every other number is ignored.
+    /// The one reading for the app's engine and the Audio Unit, so they cannot disagree.
+    public mutating func controller(_ number: UInt8, _ value: UInt8) {
+        switch number {
+        case 1: modulation(value)
+        case 64: sustain(value >= 64)
+        case 120: reset()
+        case 121:
+            pitchBend(8_192)
+            sustain(false)
+            modulation(0)
+        case 123: allNotesOff()
+        default: break
+        }
+    }
+
+    /// Releases every held note (the transport stopped, a MIDI all-notes-off), lifts the pedal,
+    /// centres the wheel and lets the modulation wheel down.
     public mutating func allNotesOff() {
         isSustaining = false
         bendTarget = 1
+        vibratoTarget = 0
         for i in voices.indices where voices[i].isHeld || voices[i].isPedalled { voices[i].release() }
     }
 
@@ -261,12 +298,47 @@ public struct PolySynth: Sendable {
         guard !buffer.isEmpty else { return }
         let patch = self.patch
         let from = bend, to = bendTarget
-        voices.withUnsafeMutableBufferPointer { all in
-            for i in all.indices where all[i].isActive {
-                all[i].render(into: buffer, patch: patch, bendFrom: from, bendTo: to)
+        guard vibrato > 0 || vibratoTarget > 0 else {
+            voices.withUnsafeMutableBufferPointer { all in
+                for i in all.indices where all[i].isActive {
+                    all[i].render(into: buffer, patch: patch, bendFrom: from, bendTo: to)
+                }
             }
+            bend = to
+            return
+        }
+        // With the wheel up the pitch moves in short blocks: the bend's straight line across the
+        // buffer, times the vibrato at each block's edges.
+        let count = buffer.count
+        var done = 0
+        var ratio = from * vibratoRatio()
+        while done < count {
+            let n = Swift.min(Self.modulationBlock, count - done)
+            vibrato += (vibratoTarget - vibrato) * vibratoGlide
+            vibratoPhase += Self.vibratoRate * Float(n) / sampleRate
+            if vibratoPhase >= 1 { vibratoPhase -= 1 }
+            let blockFrom = ratio
+            let blockTo = (from + (to - from) * Float(done + n) / Float(count)) * vibratoRatio()
+            let offset = buffer.startIndex + done
+            let block = UnsafeMutableBufferPointer(rebasing: buffer[offset..<(offset + n)])
+            voices.withUnsafeMutableBufferPointer { all in
+                for i in all.indices where all[i].isActive {
+                    all[i].render(into: block, patch: patch, bendFrom: blockFrom, bendTo: blockTo)
+                }
+            }
+            ratio = blockTo
+            done += n
         }
         bend = to
+        if vibratoTarget == 0, vibrato < 1e-4 {
+            vibrato = 0
+            vibratoPhase = 0
+        }
+    }
+
+    /// The vibrato's frequency ratio at its current depth and phase.
+    private func vibratoRatio() -> Float {
+        exp2f(vibrato * Self.vibratoRange * sinf(2 * Float.pi * vibratoPhase) / 12)
     }
 
     private func voiceIndex(for pitch: UInt8) -> Int {

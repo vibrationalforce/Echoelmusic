@@ -571,12 +571,11 @@ public final class EngineCore: @unchecked Sendable {
         case (.noteOn(let velocity), .plugin): lane.unit?.noteOn(pitch: event.pitch, velocity: velocity, offset: offset)
         case (.noteOff, .plugin): lane.unit?.noteOff(pitch: event.pitch, offset: offset)
         case let (.pitchBend(value), .synth): synths[lane.slot].pitchBend(Int(value))
-        case let (.control(number, value), .synth) where Int(number) == ControlChange.sustainPedal:
-            synths[lane.slot].sustain(value >= 64)
+        case let (.control(number, value), .synth): synths[lane.slot].controller(number, value)
         case let (.pitchBend(value), .plugin):
             lane.unit?.control(status: 0xE0, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F), offset: offset)
         case let (.control(number, value), .plugin): lane.unit?.control(status: 0xB0, number, value, offset: offset)
-        // The kit and the sampler play notes only; the synth knows the wheel and the pedal.
+        // The kit and the sampler play notes only; the synth reads the wheels and the pedal.
         case (.pitchBend, _), (.control, _): break
         // An instrument from a later build is kept in the song and silent here.
         case (_, .unrecognized): break
@@ -837,7 +836,10 @@ public final class EngineCore: @unchecked Sendable {
             let kind = status & 0xF0
             let on = kind == 0x90 && value > 0
             let off = kind == 0x80 || (kind == 0x90 && value == 0)
-            let allOff = kind == 0xB0 && (pitch == 123 || pitch == 120)
+            // 123 all notes off releases; 120 all sound off (panic) silences at once.
+            let notesOff = kind == 0xB0 && pitch == 123
+            let soundOff = kind == 0xB0 && pitch == 120
+            let allOff = notesOff || soundOff
             let bend = kind == 0xE0
             let pedal = kind == 0xB0 && pitch == 64
             switch devices[slot] {
@@ -845,15 +847,16 @@ public final class EngineCore: @unchecked Sendable {
                 if on { synths[slot].noteOn(pitch: pitch, velocity: value) }
                 if off { synths[slot].noteOff(pitch: pitch) }
                 if bend { synths[slot].pitchBend(Int(pitch) | Int(value) << 7) }
-                if pedal { synths[slot].sustain(value >= 64) }
-                if allOff { synths[slot].allNotesOff() }
+                if kind == 0xB0 { synths[slot].controller(pitch, value) }
             case .drums:
                 if on { drums[slot].noteOn(pitch: pitch, velocity: value) }
                 if off { drums[slot].noteOff(pitch: pitch) }
+                if soundOff { drums[slot].reset() }
             case .sampler:
                 if on { samplers[slot].noteOn(pitch: pitch, velocity: value) }
                 if off { samplers[slot].noteOff(pitch: pitch) }
-                if allOff { samplers[slot].allNotesOff() }
+                if notesOff { samplers[slot].allNotesOff() }
+                if soundOff { samplers[slot].reset() }
             case .plugin:
                 guard let unit = current?.snapshot.lanes.first(where: { $0.slot == slot })?.unit else { continue }
                 if on { unit.noteOn(pitch: pitch, velocity: value, offset: 0) }

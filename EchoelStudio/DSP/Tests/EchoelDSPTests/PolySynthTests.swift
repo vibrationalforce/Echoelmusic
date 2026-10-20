@@ -168,6 +168,72 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue((439...441).contains(crossings(render(&synth, seconds: 1))))
     }
 
+    /// The frequency of every whole cycle, from one rising zero crossing to the next.
+    private func cycleFrequencies(_ samples: [Float]) -> [Float] {
+        var rising: [Float] = []
+        for i in 1..<samples.count where samples[i - 1] < 0 && samples[i] >= 0 {
+            rising.append(Float(i - 1) + -samples[i - 1] / (samples[i] - samples[i - 1]))
+        }
+        return zip(rising, rising.dropFirst()).map { rate / ($1 - $0) }
+    }
+
+    /// Derived, not observed: 440 Hz × 2^(±0.5/12) is 427.5 … 452.9 Hz, and a model of this
+    /// algorithm (blocks of 32 frames, 256-frame buffers) measures exactly that.
+    func testTheModulationWheelSwingsThePitchFiftyCentsEachWayAndRestsInTune() throws {
+        var synth = sineSynth()
+        synth.noteOn(pitch: 69, velocity: 127)
+        synth.modulation(127)
+        _ = render(&synth, seconds: 0.5)
+        let swung = cycleFrequencies(render(&synth, seconds: 2))
+        let low = try XCTUnwrap(swung.min()), high = try XCTUnwrap(swung.max())
+        XCTAssertTrue((426...429).contains(low), "50 cents down is 427.5 Hz, got \(low)")
+        XCTAssertTrue((451...454.5).contains(high), "50 cents up is 452.9 Hz, got \(high)")
+        synth.modulation(0)
+        _ = render(&synth, seconds: 0.5)
+        let rested = cycleFrequencies(render(&synth, seconds: 1))
+        XCTAssertTrue(rested.allSatisfy { (439.5...440.5).contains($0) }, "the wheel down, the note is in tune again")
+    }
+
+    func testAWheelAtRestAndAControllerTheSynthDoesNotReadChangeNothing() {
+        var plain = sineSynth(), touched = sineSynth()
+        touched.modulation(0)
+        touched.controller(7, 20)
+        touched.controller(74, 127)
+        plain.noteOn(pitch: 64, velocity: 100)
+        touched.noteOn(pitch: 64, velocity: 100)
+        XCTAssertEqual(render(&plain, seconds: 0.2), render(&touched, seconds: 0.2))
+    }
+
+    func testTheControllersAGeneralMIDISynthReads() {
+        var synth = sineSynth()
+        synth.controller(64, 127)
+        synth.noteOn(pitch: 60, velocity: 100)
+        synth.noteOff(pitch: 60)
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 1, "controller 64 is the pedal")
+        synth.controller(121, 0)
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 0, "121 resets the controllers: the pedal comes up")
+
+        synth.noteOn(pitch: 62, velocity: 100)
+        synth.controller(123, 0)
+        _ = render(&synth, seconds: 0.3)
+        XCTAssertEqual(synth.activeVoiceCount, 0, "123 releases every note")
+
+        synth.noteOn(pitch: 64, velocity: 100)
+        _ = render(&synth, seconds: 0.05)
+        synth.controller(120, 0)
+        XCTAssertEqual(synth.activeVoiceCount, 0, "120 silences at once")
+
+        synth.controller(1, 127)
+        synth.pitchBend(16_383)
+        synth.controller(121, 0)
+        synth.noteOn(pitch: 69, velocity: 127)
+        _ = render(&synth, seconds: 0.5)
+        let after = cycleFrequencies(render(&synth, seconds: 1))
+        XCTAssertTrue(after.allSatisfy { (439.5...440.5).contains($0) }, "121 also centres the wheel and lowers the modulation")
+    }
+
     func testAFullHardChordAtMaximumResonanceNeverRunsAway() {
         var synth = PolySynth(patch: SynthPatch(resonance: 0.95), sampleRate: rate)
         for pitch in stride(from: UInt8(24), through: 120, by: 6) { synth.noteOn(pitch: pitch, velocity: 127) }

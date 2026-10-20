@@ -87,6 +87,51 @@ final class SynthKernelTests: XCTestCase {
         XCTAssertEqual(fromKernel, fromTrack)
     }
 
+    /// The frequency of every whole cycle, from one rising zero crossing to the next.
+    private func cycleFrequencies(_ samples: [Float]) -> [Float] {
+        var rising: [Float] = []
+        for i in 1..<samples.count where samples[i - 1] < 0 && samples[i] >= 0 {
+            rising.append(Float(i - 1) + -samples[i - 1] / (samples[i] - samples[i - 1]))
+        }
+        return zip(rising, rising.dropFirst()).map { 48_000 / ($1 - $0) }
+    }
+
+    /// A sine with the filter open, so a zero crossing measures the pitch.
+    private func sineKernel() -> SynthKernel {
+        let kernel = SynthKernel(sampleRate: 48_000)
+        let settings: [(SynthParameter, Float)] = [(.waveform, 0), (.cutoff, 18_000), (.filterAmount, 0)]
+        for (parameter, value) in settings {
+            kernel.setParameter(SynthParameter.all.firstIndex { $0.key == parameter.key } ?? -1, value)
+        }
+        return kernel
+    }
+
+    /// What a host sends from a keyboard reaches the plugin's synth (ultra-audit A8): the pitch
+    /// wheel, the sustain pedal and the modulation wheel. Expected values are derived: two
+    /// semitones above 440 Hz is 493.9 Hz, and ±50 cents around that is 479.8 … 508.4 Hz.
+    func testTheHostsPitchWheelPedalAndModulationWheelReachTheSynth() throws {
+        let kernel = sineKernel()
+        kernel.receive(status: 0x90, 69, 127)
+        kernel.receive(status: 0xE0, 0x7F, 0x7F)
+        _ = render(kernel, frames: 24_000)
+        let bent = cycleFrequencies(render(kernel, frames: 48_000).0)
+        XCTAssertTrue(bent.allSatisfy { (492.5...495.5).contains($0) }, "the wheel up is two semitones up")
+
+        kernel.receive(status: 0xB0, 1, 127)
+        _ = render(kernel, frames: 24_000)
+        let swung = cycleFrequencies(render(kernel, frames: 96_000).0)
+        let low = try XCTUnwrap(swung.min()), high = try XCTUnwrap(swung.max())
+        XCTAssertTrue((478...482).contains(low), "\(low)")
+        XCTAssertTrue((506.5...510).contains(high), "\(high)")
+
+        kernel.receive(status: 0xB0, 64, 127)
+        kernel.receive(status: 0x80, 69, 0)
+        XCTAssertGreaterThan(peak(Array(render(kernel, frames: 24_000).0.suffix(480))), 0.01, "the pedal holds the note")
+        kernel.receive(status: 0xB0, 64, 0)
+        _ = render(kernel, frames: 48_000)
+        XCTAssertEqual(peak(render(kernel, frames: 512).0), 0, "pedal up releases it")
+    }
+
     func testDemoGainScalesTheOutput() {
         let kernel = SynthKernel(sampleRate: 48_000)
         kernel.receive(status: 0x90, 60, 100)

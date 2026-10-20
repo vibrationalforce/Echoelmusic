@@ -65,13 +65,15 @@ public final class SynthKernel: @unchecked Sendable {
 
     // MARK: - Render thread
 
-    /// One MIDI 1.0 channel message: note on/off, all notes off (CC 123), all sound off (CC 120).
+    /// One MIDI 1.0 channel message: note on/off, the pitch wheel, and the controllers the synth
+    /// reads (`PolySynth.controller` — modulation, sustain, all sound off, reset, all notes off),
+    /// the same reading the app's engine uses.
     public func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         switch status & 0xF0 {
         case 0x90: synth.noteOn(pitch: data1 & 0x7F, velocity: data2 & 0x7F)
         case 0x80: synth.noteOff(pitch: data1 & 0x7F)
-        case 0xB0 where data1 == 123: synth.allNotesOff()
-        case 0xB0 where data1 == 120: synth.reset()
+        case 0xB0: synth.controller(data1 & 0x7F, data2 & 0x7F)
+        case 0xE0: synth.pitchBend(Int(data1 & 0x7F) | Int(data2 & 0x7F) << 7)
         default: break
         }
     }

@@ -503,6 +503,20 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(afterKickTail, 0, "the kit ignores a note outside the drum map")
     }
 
+    /// MIDI panic (controller 120, all sound off) stops a drum track at once (ultra-audit A8) —
+    /// a kick is still ringing a few milliseconds after it was hit, so silence here is the panic.
+    func testAPanicSilencesADrumTrackAtOnce() throws {
+        var s = try song([[]])
+        try Command.setInstrumentDevice(s.tracks[0], .drums).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        _ = render(engine, frames: 256)
+        engine.playLive(slot: 0, status: 0x99, 36, 120)
+        XCTAssertNotNil(firstSound(render(engine, frames: 256).left), "the kick sounds")
+        engine.playLive(slot: 0, status: 0xB9, 120, 0)
+        XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "all sound off silences the kit")
+    }
+
     func testSwitchingTheInstrumentChangesTheSoundOfTheSameNotes() throws {
         var s = try song([[Note(pitch: 38, start: 0, length: 960)]])
         let synth = core()
