@@ -29,6 +29,8 @@ Every audio file is a plain file you can take out of `Media/`.
   name is kept and saved back unchanged, and it plays as the field's fallback: silent, twelve
   equal steps, chromatic, `auto`. A track's `kind` decides what the track holds and has no
   fallback, so a new kind comes with a new format number and an unknown one refuses the song.
+  The same holds for a parameter address's owner (`project`, `master`, `track`): a new owner is
+  a new format number, and an address with an owner this build does not know refuses the song.
 - On open, the song is checked against the same rules the editor enforces (ranges, unique ids,
   references that resolve). A file that breaks one is refused, not repaired silently.
 

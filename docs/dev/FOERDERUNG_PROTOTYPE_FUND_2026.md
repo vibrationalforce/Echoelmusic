@@ -109,7 +109,7 @@ Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-
 
 - **Echoel Studio** (`EchoelStudio/`): Musik-Workstation für iPhone und iPad, ohne Konto, ohne
   Telemetrie, offline nutzbar (die Kaufprüfung offline ist noch zu testen, Plan P2). Jeder Song ist
-  ein lesbares Paket aus JSON plus eigenen Audiodateien (`docs/FORMAT.md`, Format 1, Golden-Files),
+  ein lesbares Paket aus JSON plus eigenen Audiodateien (`docs/FORMAT.md`, Format 2, liest Format 1, Golden-Files),
   das in der Dateien-App als Ganzes kopiert, geteilt und gesichert wird; **aus der App exportiert
   sie heute den Mix als WAV und die Noten als MIDI** (`DocumentController.exportWAV`/`exportMIDI`)
   — ⛔ „voller Export“ stand hier; Stems und Projektpaket-Export aus der App sind Plan P1. Eigene
