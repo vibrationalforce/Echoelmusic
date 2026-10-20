@@ -1,6 +1,7 @@
 # The Echoel song format (format 2)
 
-A song is a folder ending in `.echoel` (a package; the Files app shows it as one file):
+A song is a folder ending in `.echoel` — a package of the type `com.echoelmusic.song`, which the
+Files app shows as one file and opens in Echoel:
 
 ```
 My Song.echoel/

@@ -64,6 +64,8 @@ struct EchoelStudioApp: App {
                     documents.projectChanged()
                     Task { await recording.trackRemoved(from: project) }
                 }
+                // A song tapped in Files or received by AirDrop (E4).
+                .onOpenURL { url in documents.openIncoming(url) }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {

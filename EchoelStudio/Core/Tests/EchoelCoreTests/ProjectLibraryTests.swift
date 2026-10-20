@@ -85,4 +85,49 @@ final class ProjectLibraryTests: XCTestCase {
         try library.delete(url)
         XCTAssertEqual(try library.list(), [])
     }
+
+    /// A song from elsewhere joins the library whole, a second time under a new name, and one
+    /// already in the library opens where it is (E4).
+    func testASongFromOutsideIsCopiedInWithItsMediaAndOneInsideStaysWhereItIs() throws {
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("out-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: outside) }
+        let elsewhere = ProjectLibrary(directory: outside)
+        let project = try song("Night Drive")
+        let source = elsewhere.newURL(for: project.name)
+        try elsewhere.write(project, to: source)
+        let media = source.appendingPathComponent("Media", isDirectory: true)
+        try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: media.appendingPathComponent("take.wav"))
+
+        let adopted = try library.adopt(source)
+        XCTAssertEqual(adopted.lastPathComponent, "Night Drive.echoel")
+        XCTAssertEqual(try library.read(adopted), project)
+        XCTAssertEqual(try Data(contentsOf: adopted.appendingPathComponent("Media/take.wav")), Data([1, 2, 3]),
+                       "its media came along")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: source.path), "the original stays where it was")
+        XCTAssertEqual(try library.adopt(adopted), adopted, "a song in the library opens in place")
+        XCTAssertEqual(try library.list().count, 1)
+        XCTAssertEqual(try library.adopt(source).lastPathComponent, "Night Drive 2.echoel", "never over the first")
+    }
+
+    func testADamagedSongFromOutsideIsRefusedBeforeAnythingIsCopied() throws {
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("out-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: outside) }
+        let broken = outside.appendingPathComponent("Broken.echoel", isDirectory: true)
+        try FileManager.default.createDirectory(at: broken, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: broken.appendingPathComponent(ProjectLibrary.documentName))
+        XCTAssertThrowsError(try library.adopt(broken))
+        XCTAssertThrowsError(try library.adopt(outside.appendingPathComponent("notes.txt")))
+        XCTAssertEqual(try library.list(), [], "nothing came in")
+    }
+
+    func testASongInTheInboxMovesInAndLeavesNoCopy() throws {
+        let inbox = ProjectLibrary(directory: directory.appendingPathComponent("Inbox", isDirectory: true))
+        let source = inbox.newURL(for: "Sent")
+        try inbox.write(try song("Sent"), to: source)
+        let adopted = try library.adopt(source)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: source.path), "moved out of the Inbox")
+        XCTAssertEqual(try library.read(adopted).name, "Sent")
+        XCTAssertEqual(try library.list().map(\.name), ["Sent"])
+    }
 }

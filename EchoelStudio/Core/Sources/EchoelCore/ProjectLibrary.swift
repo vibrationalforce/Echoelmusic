@@ -70,6 +70,32 @@ public struct ProjectLibrary: Sendable {
         return try ProjectCodec.decode(Data(contentsOf: document))
     }
 
+    /// Brings in a song from outside the library — tapped in Files, sent by AirDrop, shared from
+    /// another app — and returns where it now lives. One already in the library stays where it
+    /// is. Any other is read first, so a damaged file is refused before anything is copied, and
+    /// then copied whole, media and all, under a free name; one in the system's `Inbox` is moved
+    /// instead, so it leaves no second copy behind.
+    public func adopt(_ source: URL) throws -> URL {
+        guard source.pathExtension == Self.fileExtension else { throw LibraryError.notAPackage(source) }
+        let folder = Self.canonicalPath(source.deletingLastPathComponent())
+        if folder == Self.canonicalPath(directory) { return source }
+        _ = try read(source)
+        let target = newURL(for: source.deletingPathExtension().lastPathComponent)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        if folder == Self.canonicalPath(directory.appendingPathComponent("Inbox")) {
+            try FileManager.default.moveItem(at: source, to: target)
+        } else {
+            try FileManager.default.copyItem(at: source, to: target)
+        }
+        return target
+    }
+
+    /// One spelling per folder: no trailing slash, no `..`, symbolic links resolved (`/var` is
+    /// `/private/var` on Apple systems).
+    private static func canonicalPath(_ url: URL) -> String {
+        url.standardizedFileURL.resolvingSymlinksInPath().path
+    }
+
     public func delete(_ url: URL) throws {
         guard url.pathExtension == Self.fileExtension else { throw LibraryError.notAPackage(url) }
         try FileManager.default.removeItem(at: url)

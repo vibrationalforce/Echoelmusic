@@ -29,6 +29,8 @@ final class DocumentController {
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     @ObservationIgnored private var savedProject: Project?
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
+    @ObservationIgnored private var isRestored = false
+    @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
 
     /// Quiet time after an edit before the song is written.
@@ -45,12 +47,35 @@ final class DocumentController {
             ?? FileManager.default.temporaryDirectory
     }
 
-    /// Opens the most recent song, or starts a new one when there is none.
+    /// Opens the most recent song, or starts a new one when there is none — or the song the app
+    /// was opened with, when one came before this.
     func restore() {
         importEarlierSongs()
         refresh()
+        isRestored = true
+        if let incoming = pendingIncoming {
+            pendingIncoming = nil
+            if open(incoming) { return }
+        }
         if let latest = songs.first, open(latest.url) { return }
         newSong()
+    }
+
+    /// A song handed to the app — tapped in Files, sent by AirDrop, shared from another app. It
+    /// joins the library first (`ProjectLibrary.adopt`; one already there opens in place), so the
+    /// library stays the one place a song is saved. Arriving before `restore`, it waits for it.
+    func openIncoming(_ url: URL) {
+        guard url.isFileURL else { return }
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let local = try library.adopt(url)
+            refresh()
+            if isRestored { open(local) } else { pendingIncoming = local }
+        } catch {
+            log.error("incoming song refused — \(error.localizedDescription, privacy: .public)")
+            lastError = "Could not open \(url.deletingPathExtension().lastPathComponent)."
+        }
     }
 
     func newSong() {
