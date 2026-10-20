@@ -57,9 +57,11 @@ final class PluginHost {
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
-    /// How often each slot's unit has stopped by itself; past `restartLimit` it is not reloaded.
-    @ObservationIgnored private var restarts: [Slot: Int] = [:]
+    /// When each slot's unit stopped by itself. More than `restartLimit` stops within
+    /// `restartWindow` and it is not reloaded; one crash an hour is reloaded every time.
+    @ObservationIgnored private var restarts: [Slot: [ContinuousClock.Instant]] = [:]
     private static let restartLimit = 3
+    private static let restartWindow: Duration = .seconds(600)
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "plugins")
 
     private struct Loaded {
@@ -130,8 +132,10 @@ final class PluginHost {
             syncedState[slot] = nil
             // A media reset is the system's doing; only a unit that stops by itself counts.
             guard dead != nil else { continue }
-            let count = restarts[slot, default: 0] + 1
-            restarts[slot] = count
+            let now = ContinuousClock.now
+            let recent = restarts[slot, default: []].filter { $0.duration(to: now) < Self.restartWindow } + [now]
+            restarts[slot] = recent
+            let count = recent.count
             if count > Self.restartLimit {
                 fail(slot, entry.component, reason: "\(entry.component.name) stopped working and was not loaded again.",
                      detail: "stopped \(count) times")
