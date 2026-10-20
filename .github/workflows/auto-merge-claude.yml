@@ -47,7 +47,8 @@
 # each area waits for its own gate — the legacy app for the two above, Echoel
 # Studio for `Echoel Studio` (studio.yml). A gate with no run on this commit is
 # started once by dispatch instead of deadlocking the branch, and a job whose
-# branch moved on stops as `superseded` without merging.
+# branch moved on stops as `superseded` without merging — but only when the newer push
+# started a merge job of its own; otherwise the commit is refused, never left behind silently.
 # Guard: Tests/CISmoke/TheAutoMergeWaitsForTheGatesTests.swift (claim 8).
 # =============================================================================
 name: Auto-Merge Claude Branch
@@ -194,12 +195,26 @@ jobs:
 
           # Where the branch points now; empty when the remote cannot be read.
           tip() { git ls-remote origin "refs/heads/$BRANCH" 2>/dev/null | cut -f1; }
-          # A newer push owns the merge: its job runs after this one (concurrency
-          # group below) and brings this commit with it. Stop WITHOUT merging.
+          # A newer push owns the merge ONLY if it started a merge job of its own: that job
+          # runs after this one (concurrency group below) and brings this commit with it,
+          # so this one stops WITHOUT merging. A push that touches only docs/, memory/ or
+          # scratchpads/ starts no merge job (ultra-audit 2026-10-20, CI-04a): standing
+          # down then would leave this commit unmerged with every run reporting success.
+          # So the newer push is looked up first (a minute, the run may still be queuing),
+          # and without a merge job of its own this returns and the caller REFUSES loudly.
           superseded() {
-            echo "superseded=true" >> $GITHUB_OUTPUT
-            echo "[SKIP] $BRANCH moved past ${SHA} ($1); the newer push's job merges it, this one does not."
-            exit 0
+            for _ in 1 2 3 4 5 6; do
+              own=$(gh api "repos/$REPO/actions/runs?head_sha=$2&per_page=100" 2>/dev/null \
+                    | jq -r '[.workflow_runs[]? | select(.name == "Auto-Merge Claude Branch")] | length' 2>/dev/null)
+              if [ -n "$own" ] && [ "$own" != "0" ]; then
+                echo "superseded=true" >> $GITHUB_OUTPUT
+                echo "[SKIP] $BRANCH moved past ${SHA} to $2 ($1); that push's merge job merges it, this one does not."
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "[GATE] $BRANCH moved past ${SHA} to $2 ($1), and that push started no merge job. Not standing down."
+            return 1
           }
           # Every gate workflow has `workflow_dispatch`. A gate that never started on
           # this commit — its path filter did not match THIS push although the merge
@@ -210,7 +225,11 @@ jobs:
           # touch the right paths. A dispatch that fails is still refused (never-ran).
           dispatch() {
             t=$(tip)
-            if [ -n "$t" ] && [ "$t" != "$SHA" ]; then superseded "before starting $1"; fi
+            if [ -n "$t" ] && [ "$t" != "$SHA" ]; then
+              superseded "before starting $1" "$t"
+              echo "[GATE] could not start $1 on ${SHA}: the branch points at $t"
+              return 1
+            fi
             if gh workflow run "$1" --repo "$REPO" --ref "$BRANCH"; then
               echo "[GATE] $1 had no run on ${SHA}; started it on $BRANCH."
               return 0
@@ -330,7 +349,7 @@ jobs:
             # commit too.
             case "$compile $testbuild $studio" in
               *failure*) ;;
-              *) t=$(tip); if [ -n "$t" ] && [ "$t" != "$SHA" ]; then superseded "gates $compile/$testbuild/$studio"; fi ;;
+              *) t=$(tip); if [ -n "$t" ] && [ "$t" != "$SHA" ]; then superseded "gates $compile/$testbuild/$studio" "$t"; fi ;;
             esac
             echo "::error::REFUSING TO MERGE ${SHA}. Xcode Compile Check=${compile}; CI/CD step 'Build for Testing'=${testbuild}; Echoel Studio=${studio}. The commit stays on its branch — fix it there and push again. This is the repair of #683: before it, an unverified commit reached main anyway."
             exit 1

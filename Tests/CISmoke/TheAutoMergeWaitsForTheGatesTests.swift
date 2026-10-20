@@ -38,7 +38,9 @@
 //  8. Echoel Studio is an area with its OWN gate (2026-10-20, the session took the CI over):
 //     EchoelStudio/** starts the merge, the scope names the area, the merge reads `Echoel
 //     Studio`, a gate that never ran on the commit is dispatched once, and a superseded job
-//     does not merge. Claim 4 still holds: the legacy path list is untouched.
+//     does not merge — and stands down only when the newer push started a merge job of its
+//     own (ultra-audit CI-04a: a docs-only push starts none). The Studio upload ignores pushes
+//     to main (TF-6). Claim 4 still holds: the legacy path list is untouched.
 //     GRADING (§3): its five assertions are red at the parent for the reason each one names
 //     (the parent has no Studio area at all) — ONE absence reported five times (#486), not five
 //     findings; claims 1–7 are green on both trees, transcribed, so they are the counterweights
@@ -309,6 +311,17 @@ final class TheAutoMergeWaitsForTheGatesTests: XCTestCase {
         XCTAssertTrue(yml.contains("steps.gates.outputs.superseded != 'true'"), """
             The merge step no longer skips a superseded job. A job whose branch moved on while its \
             gates ran would merge the older tip, whose dispatched gates may never have run on it.
+            """)
+        XCTAssertTrue(yml.contains(#"select(.name == "Auto-Merge Claude Branch")] | length"#), """
+            A job now stands down without asking whether the newer push started a merge job of \
+            its own. A push touching only docs/, memory/ or scratchpads/ starts none, so the \
+            commit is left unmerged while every run reports success (ultra-audit CI-04a).
+            """)
+        let upload = try rawFile(".github/workflows/studio-testflight.yml")
+        XCTAssertNotNil(upload.range(of: #"(?m)^\s*push:\s*\n\s*branches-ignore:\s*\n\s*-\s*'main'"#,
+                                     options: .regularExpression), """
+            The Studio upload no longer ignores pushes to main. A merge made by a person carries \
+            EchoelStudio/RELEASE in its diff whenever main lags, and uploads an unplanned build.
             """)
     }
 

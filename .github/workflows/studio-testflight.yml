@@ -7,6 +7,10 @@
 # -allowProvisioningUpdates, fresh keychain), pointed at the Studio spec.
 #
 # Deploy: bump EchoelStudio/RELEASE and push, or run it by hand. Ordinary pushes never deploy.
+# ⚠️ ANY change to EchoelStudio/RELEASE uploads — not only a bump (the legacy lesson #1151 in
+# .deploy/release). Editing the test list IS a deploy.
+# A push to main never uploads (ultra-audit 2026-10-20, TF-6): a merge made by a person carries
+# RELEASE in its diff whenever main lags behind, and would upload an unplanned build from main.
 # The legacy app's tokenless deploy (.deploy/release) is frozen so the two never alternate on the
 # same TestFlight record.
 # =============================================================================
@@ -16,6 +20,8 @@ name: "Echoel Studio TestFlight"
 on:
   workflow_dispatch:
   push:
+    branches-ignore:
+      - 'main'
     paths:
       - 'EchoelStudio/RELEASE'
 
