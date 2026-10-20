@@ -21,6 +21,9 @@ final class AudioEngine {
     /// The session records and the sink node hears the interface.
     private(set) var isInputOpen = false
     private(set) var lastError: String?
+    /// Why the song paused by itself (lost headphones, a new sample rate), until the next Play.
+    /// Apart from `lastError`, which every successful start clears.
+    private(set) var notice: String?
     /// Output channels of the interface the graph plays on; 2 on the built-in speaker.
     private(set) var outputChannels = 2
     /// Inputs the open input delivers; 0 while it is closed.
@@ -165,15 +168,20 @@ final class AudioEngine {
         }
     }
 
+    /// Called just before a new output rate replaces the engine core: the plugins are about to
+    /// be loaded again at that rate, so the app absorbs their current settings into the song and
+    /// returns it (R6).
+    @ObservationIgnored var beforeRateChange: (() -> Project?)?
+
     /// Called when something other than the transport's own Stop pauses the song; the record
     /// controller ends a running take there, so it never runs on over a paused song (R10).
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
 
     /// The song paused by a call, Siri, a media reset, lost headphones or a followed clock's
-    /// Stop. `message` goes to the status line.
+    /// Stop. `message` goes to the status line until the next Play.
     func pauseFromOutside(_ message: String?) {
         pause()
-        if let message { lastError = message }
+        if let message { notice = message }
         onPausedFromOutside?()
     }
 
@@ -342,6 +350,21 @@ final class AudioEngine {
             if let existing = core, existing.sampleRate == sampleRate {
                 current = existing
             } else {
+                // A rate change mid-session (an interface plugged in, another app): the song
+                // stops, a take ends with what it has, the playhead stays where it was, and the
+                // plugins' settings since the last save reach the song before they are loaded
+                // again at the new rate (ultra-audit R6).
+                var resumeTick: Tick?
+                if let old = core {
+                    if isPlaying || take != nil {
+                        pauseFromOutside("The song stopped: the audio interface changed its sample rate.")
+                    }
+                    if let fresh = beforeRateChange?() { project = fresh }
+                    resumeTick = project.map {
+                        TimeConversion(tempoMap: playing($0).tempoMap, sampleRate: old.sampleRate).tick(atSample: old.positionSample)
+                    }
+                }
+                defer { if let resumeTick { seek(toTick: resumeTick) } }
                 current = EngineCore(sampleRate: sampleRate)
                 current.setClickEnabled(clickEnabled)
                 current.setLaunchQuantum(self.session.quantum)
@@ -516,6 +539,7 @@ final class AudioEngine {
     }
 
     func play() {
+        notice = nil
         wake("play")
         guard let core else { return }
         core.play()

@@ -31,6 +31,13 @@ struct EchoelStudioApp: App {
         _midi = State(initialValue: midi)
         _launchpad = State(initialValue: LaunchpadController(store: store, engine: engine, midi: midi))
         _agent = State(initialValue: AgentSession(store: store))
+        // A new sample rate reloads every plugin: their settings since the last save go into the
+        // song first, so the reload does not take them back (ultra-audit R6).
+        engine.beforeRateChange = { [weak store, weak engine] in
+            guard let store, let engine else { return nil }
+            try? store.absorb(engine.plugins.captureCommands(for: store.project))
+            return store.project
+        }
         // A control moved in a plugin's own interface: the learn target while learning, else written.
         engine.plugins.onParameterMoved = { [weak writer, weak midi] address, position, phase in
             if let midi, midi.isLearning {

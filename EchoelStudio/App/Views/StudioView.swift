@@ -170,6 +170,11 @@ struct TransportBar: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.record)
                 .padding(.bottom, 2)
+        } else if let notice = engine.notice {
+            Text(notice)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.textSecondary)
+                .padding(.bottom, 2)
         } else if let loudness = documents.lastExportLoudness {
             // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
             Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
