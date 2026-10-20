@@ -65,7 +65,9 @@ final class DocumentController {
         // or count a second launch.
         guard !isRestored else { return }
         let (previousDied, suspect) = beginLaunch()
-        // The import is skipped once after such a launch, in case it was what died.
+        // The import is skipped once after such a launch, in case it was what died. When it was
+        // running then, it is given up: tried again, it would kill every second launch.
+        if previousDied, UserDefaults.standard.bool(forKey: Self.importRunningKey) { giveUpImport() }
         if !previousDied { importEarlierSongs() }
         refresh()
         isRestored = true
@@ -509,6 +511,9 @@ final class DocumentController {
     private func importEarlierSongs() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.importedKey) else { return }
+        // Written before, cleared after: a launch that dies inside the import leaves it set.
+        defaults.set(true, forKey: Self.importRunningKey)
+        defer { defaults.removeObject(forKey: Self.importRunningKey) }
         let found = Self.earlierBases().lazy.compactMap { Self.earlierSongs(in: $0, defaults: defaults) }.first { !$0.isEmpty }
         let songs = found ?? []
         // The songs already written by an earlier attempt, by their place in the earlier app's
@@ -549,6 +554,18 @@ final class DocumentController {
     private static let importedIndicesKey = "studio.importedEarlierSongIndices"
     private static let importAttemptsKey = "studio.earlierSongImportAttempts"
     private static let importAttemptLimit = 3
+    private static let importRunningKey = "studio.earlierSongImportRunning"
+
+    /// The import was running when a launch died: it is not tried again. The earlier app's files
+    /// are only ever read, so nothing of them is lost.
+    private func giveUpImport() {
+        log.error("the import of earlier songs was running when the last launch died — not trying it again")
+        let defaults = UserDefaults.standard
+        defaults.set(true, forKey: Self.importedKey)
+        defaults.removeObject(forKey: Self.importedIndicesKey)
+        defaults.removeObject(forKey: Self.importAttemptsKey)
+        defaults.removeObject(forKey: Self.importRunningKey)
+    }
 
     /// Where the earlier app wrote: its App Group container, or Application Support when the
     /// container was unavailable.
