@@ -126,6 +126,21 @@ final class HostedEffectTests: XCTestCase {
                        "a muted track sends nothing")
     }
 
+    func testASoloedReturnPlaysAloneWithWhatIsSentToIt() throws {
+        var (project, track, unit) = try constantSong()
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Reverb", kind: .returnTrack, index: nil).apply(to: &project)
+        try Command.setSend(track: track, to: verb, db: 0).apply(to: &project)
+        let direct = 0.5 * panLaw
+        try Command.setSolo(verb, true).apply(to: &project)
+        // The track's own output goes quiet; its send still reaches the soloed return.
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], direct * panLaw, accuracy: 1e-5)
+
+        try Command.setMute(track, true).apply(to: &project)
+        XCTAssertEqual(render(project, track: track, unit: unit, effects: [])[10], 0, accuracy: 1e-6,
+                       "a muted track feeds no return, soloed or not")
+    }
+
     func testTheMasterChainRunsOnTheMixAfterTheMasterFader() throws {
         var (project, track, unit) = try constantSong()
         try Command.setVolume(.master, db: -6).apply(to: &project)

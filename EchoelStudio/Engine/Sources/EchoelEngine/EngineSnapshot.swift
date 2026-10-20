@@ -111,7 +111,8 @@ public struct EngineSnapshot: Sendable {
     }
 
     /// A return track: its own bus, effects and fader. Solo does not silence it — the soloed
-    /// track's sends must still be heard through it.
+    /// track's sends must still be heard through it. A soloed return plays in place: every other
+    /// track's own output goes quiet, but what it sends to that return still arrives.
     public struct ReturnLane: Sendable {
         public let track: TrackID
         public let bus: Int
@@ -228,12 +229,14 @@ public struct EngineSnapshot: Sendable {
             return ReturnLane(track: track.id, bus: index, gainLeft: left, gainRight: right, inserts: inserts(track.id),
                               output: output, mix: track.mixer.isMuted ? nil : moving(track, output < 0))
         }
+        let soloedReturns = Set(returnTracks.filter(\.mixer.isSoloed).map(\.id))
         /// Post-fader, post-pan: the track's own gains (without the master) times the send level.
+        /// A track silenced by someone else's solo still feeds a soloed return; a muted one feeds none.
         let sends = { (track: Track, audible: Bool) -> [SendTap] in
-            guard audible else { return [] }
+            guard !track.mixer.isMuted, audible || !soloedReturns.isEmpty else { return [] }
             let (left, right) = Self.gains(track: track.mixer, master: MixerStrip())
             return track.sends.compactMap { send in
-                guard let bus = busOf[send.target] else { return nil }
+                guard let bus = busOf[send.target], audible || soloedReturns.contains(send.target) else { return nil }
                 let level = Self.linear(send.levelDB)
                 let lane = automation[.send(track.id, to: send.target)]
                 let pre = moving(track, false)
