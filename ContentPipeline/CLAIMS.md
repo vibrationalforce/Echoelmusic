@@ -12,8 +12,8 @@ gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
 ⭐ **SEIT 2026-10-19 TRÄGT TESTFLIGHT ECHOEL STUDIO (`EchoelStudio/`, Version 11.0.0), und dieses Register
 beschreibt bis auf die vier Nachträge unten die eingefrorene Alt-App (10.79.515).** Für Studio-Kopie gilt
-bis zu einem eigenen Abschnitt: behauptet wird nur, was im Code von `EchoelStudio/App` gemessen ist, mit
-„noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. ⚠️ `EchoelStudio/RELEASE`
+der eigene Abschnitt „Echoel Studio 11.0.0“ direkt vor der Alt-App-Tabelle: behauptet wird nur, was dort steht,
+mit „noch auf Geräten im Test“, und nichts aus den Körper-, Visual-, Licht- oder OSC-Zeilen. ⚠️ `EchoelStudio/RELEASE`
 ist eine PRÜFLISTE für Tester, keine Quelle für Behauptungen — bis 2026-10-19 stand hier das Gegenteil, und
 dieselbe Runde schrieb „tested in AUM“ in Store-Text und Roadmap, für Instrumente, die nie in einem Host
 liefen (`20a5469`, zurückgenommen mit `26e507745` und der Folgescheibe). Die Nachträge:
@@ -80,6 +80,57 @@ JEDEM Auto-Merge-Pfadfilter heraus, damit reine Pipeline-Commits nie automatisch
 `main` wandern. Der Wächter liegt aber in `Tests/` — **ein Commit, der beide anfasst,
 zieht diese Datei mit nach `main` und löst TestFlight aus.** Wer nur an dieser Datei
 arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
+
+## ✅ Echoel Studio 11.0.0 — was gesagt werden darf (gemessen 2026-10-20)
+
+**Gemessen, nicht erinnert:** 36 Behauptungen über `EchoelStudio/`, je eine Tür vom Startbildschirm
+bis zum Klang im Code verfolgt (Stand `372727570`), dann von einem zweiten Prüfer gegengelesen —
+16 bestätigt, 20 zu weit gefasst und hier enger formuliert. Vier der zu weit gefassten waren
+Fehler im Code und sind seitdem behoben (`57673cf96`, `81133dceb`, `c3ef58028`, `f4ff0b00f`).
+**Nichts davon ist auf einem Gerät geprüft.** Jede Kopie sagt „Beta“ oder „in TestFlight“.
+Die Sätze sind englisch, weil Store und Website englisch zuerst sind: übersetzen darf man,
+erweitern nicht.
+
+**Spuren und Klang**
+- „Songs hold instrument, audio and return tracks (up to 32, 64 and 8). Add any kind, or add a drum track that comes with an empty one-bar pattern to fill. Recolour, mute, solo and delete tracks.“
+- „Instrument tracks can play the built-in 16-voice synth: six presets, four waveforms (sine, saw, square, triangle) and nine adjustable sound parameters.“
+- „… a synthesized eight-piece drum kit (kick, snare, clap, two toms, closed and open hi-hat, crash) on General MIDI drum note numbers.“
+- „… an imported audio file (mixed to mono, up to ten minutes) as a sampler across the keyboard, at its original pitch on C4.“
+- „… an installed third-party Audio Unit instrument that runs in stereo. Its own interface appears on the track's Sound page, and its settings are saved with the song.“
+- „Every track and the master have an insert chain of up to eight effects: Echoel EQ, Compressor, Delay and Reverb, or installed stereo Audio Unit effects.“
+
+**Schreiben und Arrangieren**
+- „On a synth, sampler or plugin instrument track, edit a clip's notes in a piano roll: tap to add or remove a note, drag to move it, drag its right edge to change its length, on a grid from 1/4 to 1/32 or 1/8 and 1/16 triplets.“
+- „Drum tracks have a step grid with one row for each kit piece. Tap a step to set or clear a hit, hold it for an accent.“
+- „In Arrange, place clips on a bar timeline, drag them in whole bars, duplicate them or take them off the timeline. Tap an audio track to import a file at a bar, then move it and trim either edge to the beat.“
+- „A session grid launches clips and scenes on the next bar, the next quarter note or at once, stops a track or all session clips, and hands every track back to the arrangement.“
+
+**MIDI**
+- „Play any instrument track live from a MIDI keyboard or controller by USB, Bluetooth (paired with iOS) or network MIDI. The synth and plugin instruments follow pitch bend, the mod wheel and the sustain pedal; the drum kit and sampler play notes.“
+- „Record a MIDI performance onto an armed instrument track; each take becomes a new clip with its notes, pitch bend and controllers, as one undo step.“
+- „MIDI Learn maps a knob or fader to a mixer control, a synth parameter or a built-in effect parameter.“
+- „Send MIDI clock to the outputs you choose, or follow an external MIDI clock.“ · „Novation Launchpad Mini MK3, X and Pro MK3 become a window onto the session grid.“
+
+**Aufnahme, Mix, Export**
+- „Record mono audio from the microphone or one interface input onto an armed audio track; takes stay on the device.“ (das ist §11, Nachtrag 2)
+- „A channel strip for every track and the master, with fader, pan and a peak meter; sends to up to eight return tracks; any track can go to its own output pair of a multichannel interface.“
+- „Draw automation for volume, pan, sends, synth parameters and the parameters of plugins on a track, or record it by moving the control while the song plays.“
+- „Export the arrangement as a 24-bit, 48 kHz stereo WAV, with its loudness (LUFS) and true peak reported, or as a Standard MIDI File.“
+- „Songs save automatically as .echoel files that the Files app shows, and a song sent by AirDrop opens in Echoel.“
+
+**Nicht sagen — und warum**
+- „ready-made beat“: der neue Schlagzeug-Track bringt ein LEERES Muster mit.
+- „any Audio Unit“, „any controller“: nur Stereo-Units; Launchpads spielen keine Noten, sie steuern das Raster; Drums und Sampler folgen weder Bend noch Pedal.
+- „edit velocity“, „quantize“, „split“, „loop recording“, „overdub“: gibt es nicht.
+- „everything is undoable“: Werte der eingebauten Effekte sind kein Undo-Schritt.
+- „mastering“, „normalised export“, „stems“: der Export misst und warnt, er normalisiert nicht; nur das Arrangement, keine Session-Starts.
+- „works in AUM, Logic, GarageBand“, „plugin you can buy“: Studios Audio Units liefen in keinem Host auf einem Gerät (§1, Nachtrag 3); nichts ist im Verkauf (§7, Nachtrag 1).
+- „imports your old Echoelmusic songs“: der Import findet erst etwas, wenn die App die App Group `group.com.echoelmusic` trägt (FOUNDER_INBOX F17).
+- „AI that writes your song“: der Assistent ist nur mit Apple Intelligence sichtbar, ändert Tempo, Spuren, Sounds, Mix und einfache Muster, und lief auf keinem Gerät. Nie „KI komponiert“, nie „Superintelligenz“.
+- „Network MIDI between two iPads running Echoel“: Echoel nimmt Verbindungen an, startet keine, und sendet nur Clock.
+
+Die volle Messung (Tür, Pfad, Grenze je Behauptung) liegt nicht im Repo; wer sie neu braucht,
+wiederholt sie gegen den heutigen Code, statt diese Liste zu verlängern.
 
 ---
 
