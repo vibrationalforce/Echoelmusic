@@ -46,14 +46,15 @@ geht über einen Menschen. Die Pipeline erzeugt Entwürfe, keine Posts.
   einzutragen.)
 - **`ContentPipeline/**` steht in KEINEM Pfad-Filter der Auto-Merge-Workflows**
   (`auto-merge-claude.yml`: `Sources/**`, `Tests/**`, `Package.swift`, `project.yml`,
-  `.github/workflows/**`; `auto-merge-docs.yml`: `docs/**`). Commits, die nur hier
+  `EchoelStudio/**` (seit 2026-10-20, mit eigenem Gate), `.github/workflows/**`;
+  `auto-merge-docs.yml`: `docs/**`). Commits, die nur hier
   liegen, lösen **keinen eigenen Merge** aus (#252, founder-gated). Bis das
   gelöst ist: Änderungen hier zusammen mit einer Änderung unter `Sources/`/`Tests/`
   pushen, oder von Hand mergen.
 
   ⛔ **#720: hier stand „dasselbe strukturelle Loch wie bei `README.md`, `fastlane/**`
   und `.deploy/release`" — eine AUFZÄHLUNG, wo die Sache eine UMKEHRUNG ist.** Der
-  Filter oben ist eine **Erlaubnis-Liste aus fünf Einträgen**; das Loch haben also
+  Filter oben ist eine **Erlaubnis-Liste** (fünf Einträge bis 2026-10-20, sechs seither); das Loch haben also
   nicht drei Geschwister, sondern **jeder andere getrackte Pfad**. Eine Teil-Liste in
   einem Register liest sich als vollständig, und das ist teurer als eine falsche Zahl:
   sie beantwortet die Frage „bin ich betroffen?" mit Nein für alles, was nicht

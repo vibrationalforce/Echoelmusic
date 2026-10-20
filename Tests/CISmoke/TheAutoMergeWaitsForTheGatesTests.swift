@@ -35,6 +35,14 @@
 //     TestFlight dispatch is `if: false`. Delete claim 6 and the severity of the whole story
 //     changes — which is exactly why it is pinned next to the others.
 //  7. the register says the true thing now.
+//  8. Echoel Studio is an area with its OWN gate (2026-10-20, the session took the CI over):
+//     EchoelStudio/** starts the merge, the scope names the area, the merge reads `Echoel
+//     Studio`, a gate that never ran on the commit is dispatched once, and a superseded job
+//     does not merge. Claim 4 still holds: the legacy path list is untouched.
+//     GRADING (§3): its five assertions are red at the parent for the reason each one names
+//     (the parent has no Studio area at all) — ONE absence reported five times (#486), not five
+//     findings; claims 1–7 are green on both trees, transcribed, so they are the counterweights
+//     of this change.
 //
 // ⚠️ WHY THIS FILE READS ITS TARGET RAW. `SourceText.codeOnly` is a SWIFT stripper: in YAML the
 // comment character is `#`, and `//` appears inside URLs, so running it here would mangle the
@@ -264,6 +272,43 @@ final class TheAutoMergeWaitsForTheGatesTests: XCTestCase {
             The sentence recording that the merge now waits for both gates is gone from \
             CLAUDE.md. A session reads that paragraph before it reasons about what reaches \
             `main`; without it, the next audit re-derives the old finding from scratch.
+            """)
+    }
+
+    // MARK: - 8: Echoel Studio is an area with its own gate (2026-10-20)
+
+    /// Until 2026-10-20 a push touching only `EchoelStudio/` never started the merge, and a
+    /// merge that carried Studio code waited only for two LEGACY gates that never build it —
+    /// so the app that ships to TestFlight reached `main` unverified, or not at all. The repair
+    /// has four parts, and each one alone would be a trap: the trigger without the gate merges
+    /// Studio code unverified; the gate without the dispatch deadlocks a branch whose push did
+    /// not touch the gate's own paths; the dispatch without the branch check would start a gate
+    /// on a NEWER commit and wait for a run that can never carry this SHA; and `superseded`
+    /// without the merge step reading it would merge the older, partly unverified tip.
+    /// It does not forbid a third area (#364) — it says what a new area owes.
+    func testAStudioChangeWaitsForTheStudioGate() throws {
+        let yml = try rawFile(Self.workflow)
+        XCTAssertNotNil(yml.range(of: #"(?m)^\s*-\s*'EchoelStudio/\*\*'"#, options: .regularExpression), """
+            EchoelStudio/** is gone from the trigger paths: a push that changes only the app that \
+            ships to TestFlight no longer starts the merge, and Studio work never reaches `main`.
+            """)
+        XCTAssertTrue(yml.contains("touches_studio") && yml.contains("grep -Eq '^EchoelStudio/'"), """
+            The scope step no longer names the Studio area on its own. Folding EchoelStudio/ into \
+            the legacy path list (claim 4) would gate Studio code with two gates that never build it.
+            """)
+        XCTAssertTrue(yml.contains(#"select(.name == "Echoel Studio")"#)
+                      && yml.contains(#"if [ "$studio" = "success" ]; then"#), """
+            The merge no longer reads the `Echoel Studio` run. A Studio change would merge on the \
+            legacy gates alone — the #683 behaviour restored for the app that ships.
+            """)
+        XCTAssertTrue(yml.contains("gh workflow run \"$1\" --repo \"$REPO\" --ref \"$BRANCH\""), """
+            The dispatch of a gate that never ran on this commit is gone. A push whose own paths do \
+            not start a gate the merge needs is then refused after the grace period, and the branch \
+            stays blocked until some later push happens to touch the right paths.
+            """)
+        XCTAssertTrue(yml.contains("steps.gates.outputs.superseded != 'true'"), """
+            The merge step no longer skips a superseded job. A job whose branch moved on while its \
+            gates ran would merge the older tip, whose dispatched gates may never have run on it.
             """)
     }
 
