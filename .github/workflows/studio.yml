@@ -128,6 +128,15 @@ jobs:
         with:
           version: '2.42.0'
 
+      # A fresh runner's first simulator boot spends minutes on data migration (run 170: 5 min
+      # 58 s), so it starts here and runs while the app builds.
+      - name: Boot a simulator (in the background)
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json, sys; d = json.load(sys.stdin)['devices']; print(next(x['udid'] for r, l in d.items() if 'iOS' in r for x in l if x['name'].startswith('iPhone')))")
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID" || true
+
       - name: Generate project
         run: xcodegen generate --spec EchoelStudio/project.yml
 
@@ -145,14 +154,22 @@ jobs:
 
       # A crash at launch must not reach TestFlight (ultra-audit R7): the simulator build is
       # installed and launched, and must still be running 20 s later — past restore(), the audio
-      # start and the 10-s launch confirmation.
+      # start and the 10-s launch confirmation. The check installs a COPY without the AUv3
+      # extension: an unsigned .appex gets no install placeholder ("Invalid placeholder
+      # attributes", run 170), and the app does not need it to start. The extension is checked
+      # where it ships, by studio-testflight.yml.
       - name: Launch smoke (iOS Simulator)
         run: |
           set -euo pipefail
-          APP=$(find build/sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
-          test -n "$APP" || { echo "::error::no .app in the simulator build"; exit 1; }
-          UDID=$(xcrun simctl list devices available -j | python3 -c "import json, sys; d = json.load(sys.stdin)['devices']; print(next(x['udid'] for r, l in d.items() if 'iOS' in r for x in l if x['name'].startswith('iPhone')))")
-          xcrun simctl boot "$UDID" || true
+          BUILT=$(find build/sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          test -n "$BUILT" || { echo "::error::no .app in the simulator build"; exit 1; }
+          mkdir -p build/smoke
+          APP="build/smoke/$(basename "$BUILT")"
+          rm -rf "$APP"
+          cp -R "$BUILT" "$APP"
+          rm -rf "$APP/PlugIns"
+          UDID="$SIM_UDID"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$APP"
           BUNDLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
