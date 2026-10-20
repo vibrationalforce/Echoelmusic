@@ -101,6 +101,22 @@ final class LegacySongTests: XCTestCase {
         XCTAssertNoThrow(try project.validate())
     }
 
+    func testAVelocityFarOutOfRangeIsHeldToTheKeyboardInsteadOfTrapping() throws {
+        let timeline = Data("""
+        {"lanes":[{"id":"\(keys)","kind":"midi","name":"Keys"}],
+         "regions":[{"clipID":"\(part)","laneID":"\(keys)","lengthTicks":1920,"startTick":0}]}
+        """.utf8)
+        let clips = Data("""
+        [{"id":"\(part)","kind":"midi","name":"Verse","melody":{"notes":[
+          {"pitch":60,"startTick":0,"lengthTicks":480,"velocity":1e30},
+          {"pitch":62,"startTick":480,"lengthTicks":480,"velocity":-1e30}]}}]
+        """.utf8)
+        let project = try LegacySong.project(timeline: timeline, clips: clips, tempo: 120, name: "N")
+        let clip = try XCTUnwrap(project.tracks.first?.clips.first)
+        let velocities = clip.notes.sorted { $0.pitch < $1.pitch }.map(\.velocity)
+        XCTAssertEqual(velocities, [EchoelCore.Note.velocityRange.upperBound, EchoelCore.Note.velocityRange.lowerBound])
+    }
+
     func testASongWithoutLanesIsNotImported() {
         XCTAssertThrowsError(try LegacySong.project(timeline: Data(#"{"lanes":[],"regions":[]}"#.utf8), clips: Data("[]".utf8),
                                                     tempo: 120, name: "N"))

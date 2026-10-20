@@ -142,8 +142,9 @@ public enum LegacySong {
         let (pitch, overflow) = old.pitch.addingReportingOverflow(transpose)
         guard !overflow, EchoelCore.Note.pitchRange.contains(pitch) else { return nil }
         let noteLength = oldLength > 0 ? converted(oldLength) ?? MusicalTime.maximumTick : 1
+        // Held to 0…1 before it becomes an Int: a damaged file's 1e30 would trap the conversion.
         let velocity = Double(old.velocity ?? 0.8)
-        let midi = velocity.isFinite ? Int((velocity * 127).rounded()) : 100
+        let midi = velocity.isFinite ? Int((Swift.min(Swift.max(velocity, 0), 1) * 127).rounded()) : 100
         return EchoelCore.Note(pitch: pitch,
                                velocity: Swift.min(Swift.max(midi, EchoelCore.Note.velocityRange.lowerBound),
                                                    EchoelCore.Note.velocityRange.upperBound),
