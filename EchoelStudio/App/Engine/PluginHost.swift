@@ -55,6 +55,11 @@ final class PluginHost {
     @ObservationIgnored private var syncedState: [Slot: Data] = [:]
     @ObservationIgnored private var requestCount = 0
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
+    @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
+    @ObservationIgnored private var resetObserver: NSObjectProtocol?
+    /// How often each slot's unit has stopped by itself; past `restartLimit` it is not reloaded.
+    @ObservationIgnored private var restarts: [Slot: Int] = [:]
+    private static let restartLimit = 3
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "plugins")
 
     private struct Loaded {
@@ -96,6 +101,44 @@ final class PluginHost {
         ) { @Sendable [weak self] _ in
             Task { @MainActor in self?.refreshCatalog() }
         }
+        // A plugin's extension that crashes, or the media services resetting, leaves its unit
+        // dead: the lane went silent until the song was reopened (ultra-audit R5). The dead unit
+        // is forgotten and the next sync loads it again with the song's saved settings.
+        invalidationObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name(kAudioComponentInstanceInvalidationNotification as String), object: nil,
+            queue: .main
+        ) { @Sendable [weak self] note in
+            let dead = (note.object as AnyObject?).map(ObjectIdentifier.init)
+            MainActor.assumeIsolated { self?.unitStopped(dead) }
+        }
+        resetObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
+        ) { @Sendable [weak self] _ in
+            MainActor.assumeIsolated { self?.unitStopped(nil) }
+        }
+    }
+
+    /// Forgets the loaded unit `dead` names, or every loaded unit when it is nil, and has the
+    /// engine republish so `sync` loads them again.
+    private func unitStopped(_ dead: ObjectIdentifier?) {
+        let gone = loaded.filter { dead == nil || ObjectIdentifier($0.value.unit) == dead }
+        guard !gone.isEmpty else { return }
+        for (slot, entry) in gone {
+            log.error("plugin: \(entry.component.name, privacy: .public) stopped, reloading")
+            if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
+            loaded[slot] = nil
+            syncedState[slot] = nil
+            // A media reset is the system's doing; only a unit that stops by itself counts.
+            guard dead != nil else { continue }
+            let count = restarts[slot, default: 0] + 1
+            restarts[slot] = count
+            if count > Self.restartLimit {
+                fail(slot, entry.component, reason: "\(entry.component.name) stopped working and was not loaded again.",
+                     detail: "stopped \(count) times")
+            }
+        }
+        revision += 1
+        onUnitsChanged?()
     }
 
     /// Re-reads the installed units, off the main thread: the system may scan for them.
