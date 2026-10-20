@@ -296,6 +296,32 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(after - before, block, accuracy: 1, "the song moved on by one block, not by the tempo ratio")
     }
 
+    /// A tempo change that lands on the very sample a note ends still ends it (ultra-audit A10 —
+    /// a followed MIDI clock changes the tempo every few beats). 120 → 120.5 BPM puts tick 1,920
+    /// at 47,800.83 samples: the playhead used to round to 47,801, one sample past the note-off,
+    /// and recounting the cursor from there skipped it as played — the note hung.
+    func testATempoChangeOnTheSampleANoteEndsStillEndsIt() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 2 * MusicalTime.ticksPerQuarter)]])
+        let engine = core()
+        var revisions = EventRevisions()
+        func publishKeepingNotes() {
+            let plan = PlaybackPlan(compiling: s.project)
+            var slots = SlotAssigner(capacity: engine.slotCapacity)
+            slots.update(for: s.project)
+            generation += 1
+            engine.publish(EngineSnapshot(plan: plan, project: s.project, slots: slots.slots, sampleRate: rate,
+                                          generation: generation, revisions: revisions.update(for: plan)))
+        }
+        publishKeepingNotes()
+        engine.play()
+        _ = render(engine, frames: 48_000, block: 480)    // exactly to tick 1,920: the note-off is next
+        XCTAssertEqual(engine.positionSample, 48_000)
+        try Command.setTempo(bpm: 120.5).apply(to: &s.project)
+        publishKeepingNotes()
+        _ = render(engine, frames: 48_000)                // longer than the release
+        XCTAssertNil(firstSound(render(engine, frames: 4_800).left), "the note ended")
+    }
+
     func testANudgeMovesThePlayheadWithoutStoppingAHeldNote() throws {
         let s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
         let core = core()

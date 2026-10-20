@@ -83,6 +83,27 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertLessThan(steepest, 0.08, "no step where the playhead moved")
     }
 
+    /// A tempo change moves the playhead to where the song stands under the new tempo; the audio
+    /// crossfades from exactly what the old tempo was playing instead of jumping (ultra-audit A10).
+    /// 120 → 121 BPM inside a region that starts a beat in moves the read position by about 40
+    /// samples of the sine's 48-sample period, so a jump would be a step of most of its swing.
+    func testATempoChangeCrossfadesTheAudioInsteadOfJumpingIt() throws {
+        var s = try song(frames: 96_000, fileRate: rate)
+        let sine = (0..<96_000).map { Float(0.5 * sin(2 * Double.pi * 1_000 * Double($0) / 48_000)) }
+        let buffer = try XCTUnwrap(SampleBuffer(samples: sine, sampleRate: rate))
+        let engine = playing(s.project, samples: [s.media.id: buffer])
+        var out = render(engine, frames: beat + 4_864)
+        try Command.setTempo(bpm: 121).apply(to: &s.project)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 2, samples: [s.media.id: buffer]))
+        out += render(engine, frames: 4_800)
+        let inside = out[(beat + 1_000)...]
+        let steepest = zip(inside.dropFirst(), inside).map { abs($0 - $1) }.max() ?? 0
+        XCTAssertLessThan(steepest, 0.08, "no step where the tempo moved the playhead")
+    }
+
     func testATrimPlaysOnlyThePartItChose() throws {
         var s = try song(frames: 9_600, fileRate: rate)
         let samples = Array(repeating: Float(0.25), count: 4_800) + Array(repeating: Float(0.75), count: 4_800)

@@ -72,6 +72,14 @@ public final class EngineCore: @unchecked Sendable {
     private let sessions: UnsafeMutablePointer<SessionSlot>
     /// The events revision each slot last played; a different one means its notes were edited.
     private let revisions: UnsafeMutablePointer<UInt64>
+    /// Per slot, while a snapshot is taken: its notes changed or its track did, so its cursors
+    /// are pointed at the playhead again. Every other slot keeps the cursors it has.
+    private let stale: UnsafeMutablePointer<Bool>
+    /// Per audio lane, after a tempo change moved the playhead this chunk: where its fade-out
+    /// reads, so what fades out is exactly what the old tempo was playing.
+    private let remapFade: UnsafeMutablePointer<Int64>
+    /// A tempo change moved the playhead this chunk; the audio lanes crossfade across it.
+    private var remapped = false
     private let scratch: UnsafeMutablePointer<Float>
     /// One stereo bus per slot, `maximumFrames` each: a track renders into its bus, its inserts
     /// process the bus, then the bus is mixed at the track's gains. Plus one bus audio tracks
@@ -185,6 +193,10 @@ public final class EngineCore: @unchecked Sendable {
         sendMemory.initialize(repeating: .nan, count: sending * 2)
         revisions = .allocate(capacity: self.slotCapacity)
         revisions.initialize(repeating: .max, count: self.slotCapacity)
+        stale = .allocate(capacity: self.slotCapacity)
+        stale.initialize(repeating: true, count: self.slotCapacity)
+        remapFade = .allocate(capacity: Self.smoothedAudioTracks)
+        remapFade.initialize(repeating: 0, count: Self.smoothedAudioTracks)
         scratch = .allocate(capacity: Self.maximumFrames)
         scratch.initialize(repeating: 0, count: Self.maximumFrames)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -224,6 +236,8 @@ public final class EngineCore: @unchecked Sendable {
         sessions.deinitialize(count: slotCapacity)
         sessions.deallocate()
         revisions.deallocate()
+        stale.deallocate()
+        remapFade.deallocate()
         gainMemory.deallocate()
         sendMemory.deallocate()
         scratch.deallocate()
@@ -435,6 +449,7 @@ public final class EngineCore: @unchecked Sendable {
         for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
         let left = outputs[0], right = outputs[1]
 
+        remapped = false
         takePendingSnapshot()
 
         // Where the song was heard last block: a stop fades the audio tracks out from here,
@@ -448,6 +463,7 @@ public final class EngineCore: @unchecked Sendable {
             position.store(seek, ordering: .relaxed)
             releaseAllNotes()
             resync()
+            remapped = false
         }
         let shift = nudgeRequest.exchange(0, ordering: .relaxed)
         nudgedBy = 0
@@ -744,18 +760,15 @@ public final class EngineCore: @unchecked Sendable {
 
     private func takePendingSnapshot() {
         guard let pointer = pending.exchange(nil, ordering: .acquiringAndReleasing) else { return }
-        let previous = current?.snapshot.time
-        // Unretained: the main thread's `published` list owns it until we acknowledge a
-        // newer one, so this assignment's release of the old box never frees on this thread.
+        // Unretained, both: the main thread's `published` list owns the old box and the new one
+        // until we acknowledge the new one at the end of this function, so nothing here frees one.
+        let previous = current.map { Unmanaged.passUnretained($0) }
         current = Unmanaged<SnapshotBox>.fromOpaque(pointer).takeUnretainedValue()
         guard let snapshot = current?.snapshot else { return }
-        // A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
-        // beat changes. Without this the playhead kept its sample and jumped in musical time.
-        if let previous, previous != snapshot.time, playhead > 0 {
-            playhead = Swift.max(0, snapshot.time.sample(atPosition: previous.position(atSample: playhead)))
-            position.store(playhead, ordering: .relaxed)
-        }
+        var recountBeats = true
+        if let previous { recountBeats = followTempo(from: previous.takeUnretainedValue(), to: snapshot) }
         unitAutomationPrimed = false
+        stale.update(repeating: previous == nil, count: slotCapacity)
 
         // A slot handed to a different track, or no track at all, starts silent.
         for slot in 0..<slotCapacity {
@@ -775,6 +788,7 @@ public final class EngineCore: @unchecked Sendable {
                 drums[slot].reset()
                 samplers[slot].reset()
                 owners[slot] = owner
+                stale[slot] = true
                 if sessions[slot].overrides { report(slot, nil, .arrangement) }
                 sessions[slot] = SessionSlot()
                 // Another track's level is no place to ramp from.
@@ -823,9 +837,52 @@ public final class EngineCore: @unchecked Sendable {
         for lane in snapshot.lanes where revisions[lane.slot] != lane.eventsRevision {
             silence(lane)
             revisions[lane.slot] = lane.eventsRevision
+            stale[lane.slot] = true
         }
-        resync()
+        resync(keeping: true, recountingBeats: recountBeats)
         acknowledged.store(snapshot.generation, ordering: .releasing)
+    }
+
+    /// A new tempo keeps the song where it is: bar 33 stays bar 33, only the time to the next
+    /// beat changes, so the playhead moves to the new tempo's sample for that position. Rounded
+    /// DOWN: an event the old tempo had not reached then still lies ahead of the playhead —
+    /// rounded to the nearest sample, a note-off due on this very sample could be passed and the
+    /// note hung (ultra-audit A10). Each audio lane's fade-out then reads where the old tempo had
+    /// it, so the moved audio crossfades instead of ticking. Returns whether the beat and clock
+    /// counters need counting again, which only a new time signature asks for.
+    private func followTempo(from old: SnapshotBox, to snapshot: EngineSnapshot) -> Bool {
+        let was = old.snapshot
+        let signatureChanged = was.timeSignature != snapshot.timeSignature
+        guard was.time != snapshot.time, playhead > 0 else { return signatureChanged }
+        let before = playhead
+        let seconds = snapshot.time.tempoMap.seconds(atPosition: was.time.position(atSample: before))
+        guard seconds.isFinite else { return signatureChanged }
+        playhead = Swift.max(0, Int64((seconds * snapshot.time.sampleRate).rounded(.down)))
+        position.store(playhead, ordering: .relaxed)
+        for (index, lane) in snapshot.audioLanes.enumerated() where index < Self.smoothedAudioTracks {
+            remapFade[index] = before
+            guard let same = was.audioLanes.first(where: { $0.track == lane.track }) else { continue }
+            if lane.slot >= 0, lane.slot < slotCapacity, sessions[lane.slot].overrides {
+                // A launched clip: its pass starts on a tick, which the new tempo puts elsewhere.
+                let session = sessions[lane.slot]
+                guard let clip = session.clip, let loop = lane.loops.first(where: { $0.clip == clip }) else { continue }
+                let length = Swift.max(loop.loopLength, 1)
+                let since = was.time.tick(atSample: before) - session.launchTick
+                let pass = since >= 0 ? since / length : -((-since + length - 1) / length)
+                let passStart = session.launchTick + pass * length
+                remapFade[index] = before + snapshot.time.sample(at: passStart) - was.time.sample(at: passStart)
+                continue
+            }
+            // A region starts on a tick too; the same region is the same index, since a tempo
+            // change moves regions but never reorders or adds them.
+            guard same.regions.count == lane.regions.count else { continue }
+            for (i, region) in same.regions.enumerated() where region.startSample <= before && region.endSample > before {
+                remapFade[index] = before + lane.regions[i].startSample - region.startSample
+                break
+            }
+        }
+        remapped = true
+        return signatureChanged
     }
 
     private func playLiveEvents() {
@@ -869,24 +926,30 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
-    /// Points every cursor and the beat counter at the playhead.
-    private func resync() {
+    /// Points every cursor and the beat counter at the playhead. `keeping` leaves alone what a
+    /// new snapshot did not change: a slot not marked `stale` keeps its cursors, which still
+    /// point at its next event — recounted from a rounded sample after a tempo change, they could
+    /// pass a note-off that has not played or play an event twice (A10) — and the beat and clock
+    /// counters keep their ticks unless `recountingBeats`.
+    private func resync(keeping: Bool = false, recountingBeats: Bool = true) {
         guard let snapshot = current?.snapshot else { return }
         let tick = snapshot.time.tick(atSample: playhead)
-        for lane in snapshot.lanes {
+        for lane in snapshot.lanes where !keeping || stale[lane.slot] {
             // The playhead's tick is rounded down: skip events of that tick that already played.
             var cursor = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
             while cursor < lane.events.count, snapshot.time.sample(at: lane.events[cursor].tick) < playhead { cursor += 1 }
             cursors[lane.slot] = cursor
         }
-        let beatTicks = Swift.max(MusicalTime.ticksPerBeat(snapshot.timeSignature), 1)
-        var beat = (tick / beatTicks) * beatTicks
-        if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
-        nextBeat = beat
+        if !keeping || recountingBeats {
+            let beatTicks = Swift.max(MusicalTime.ticksPerBeat(snapshot.timeSignature), 1)
+            var beat = (tick / beatTicks) * beatTicks
+            if snapshot.time.sample(at: beat) < playhead { beat += beatTicks }
+            nextBeat = beat
+        }
         automationNext = playhead
         unitAutomationPrimed = false
         // A playing clip keeps its loop phase from where it was launched.
-        for lane in snapshot.lanes {
+        for lane in snapshot.lanes where !keeping || stale[lane.slot] {
             var session = sessions[lane.slot]
             guard session.index >= 0, session.index < lane.clips.count else { continue }
             let clip = lane.clips[session.index]
@@ -900,6 +963,7 @@ public final class EngineCore: @unchecked Sendable {
             session.cursor = cursor
             sessions[lane.slot] = session
         }
+        guard !keeping || recountingBeats else { return }
         let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter
         var clock = ((tick + clockTicks - 1) / clockTicks) * clockTicks
         if snapshot.time.sample(at: clock) < playhead { clock += clockTicks }
@@ -1166,14 +1230,15 @@ public final class EngineCore: @unchecked Sendable {
                 addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
                 playhead = home
             }
-            if playing, nudgedBy != 0 {
-                // A nudge jumps the read position by a few samples: what would have played fades
+            if playing, remapped || nudgedBy != 0 {
+                // A nudge or a tempo change moves the read position: what would have played fades
                 // out while the moved audio fades in, so a sustained sound does not tick.
                 let length = Swift.min(Int(Self.regionFadeFrames), frames)
                 let state = session ? sessions[lane.slot] : SessionSlot()
-                playhead -= nudgedBy
+                let home = playhead
+                playhead = remapped && index < Self.smoothedAudioTracks ? remapFade[index] : playhead - nudgedBy
                 addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
-                playhead += nudgedBy
+                playhead = home
                 fadeEnd = length
             }
             while from < frames {
