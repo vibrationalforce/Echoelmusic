@@ -570,12 +570,19 @@ final class AudioEngine {
 
     func play() {
         notice = nil
-        wake("play")
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
-        guard let core, engine.isRunning else { return }
+        guard canPlay(), let core else { return }
         core.play()
         isPlaying = true
+    }
+
+    /// Brings the graph back if it was suspended or stopped underneath, and says whether the
+    /// transport can run now. Record and a launch ask before they start anything, so neither a
+    /// take nor a queued launch waits over audio that is down.
+    func canPlay() -> Bool {
+        wake("play")
+        return core != nil && engine.isRunning
     }
 
     /// Stops where it is (an external clock's Stop; Continue goes on from here).
@@ -638,7 +645,7 @@ final class AudioEngine {
 
     /// Plays the clip on its track from the next bar, starting the transport if it is stopped.
     func launch(_ clip: ClipID, on track: TrackID) {
-        guard let core, let slot = slots.slots[track] else { return }
+        guard isPlaying || canPlay(), let core, let slot = slots.slots[track] else { return }
         core.launch(slot: slot, .launch(clip))
         if !isPlaying { play() }
     }
@@ -650,7 +657,7 @@ final class AudioEngine {
 
     /// Every track with a clip in the scene plays it; the others stop.
     func launch(_ scene: SceneID, in project: Project) {
-        guard let core else { return }
+        guard isPlaying || canPlay(), let core else { return }
         for track in project.tracks where track.kind != .returnTrack {
             guard let slot = slots.slots[track.id] else { continue }
             if let clip = track.clipInSlot(scene) {
