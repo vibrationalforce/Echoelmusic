@@ -36,7 +36,10 @@ final class RecordController {
     /// played on MIDI and plays it live; it needs no audio input.
     func toggleArm(_ track: TrackID) async {
         if isRecording { await stopRecording() }
-        let wasAudio = armedTrack.flatMap { store.project.track($0) }?.kind == .audio
+        // An armed track that is gone (deleted, or another song opened) counts as audio: its kind
+        // cannot be read any more, and closing an input nothing else wants is always right. Read
+        // from the project alone, it left the microphone open, and every recovery reopened it.
+        let wasAudio = armedTrack.map { store.project.track($0)?.kind ?? .audio } == .audio
         if armedTrack == track {
             armedTrack = nil
             engine.setArmedTrack(nil)
