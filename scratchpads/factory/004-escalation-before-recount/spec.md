@@ -21,15 +21,22 @@ belegter Code, wenn es als Code benotet ist.
 - Der Approver zählt die Spec BLIND: er bekommt die Zahlen des PM nicht zu sehen, damit seine Zählung eine
   zweite Lesung ist und kein Echo. Weicht sie ab, bleibt es beim ersten Mal `RERUN`; mit `recount: true`
   (der PM hat neu gezählt und ruft erneut) ist eine zweite Abweichung `ESCALATE` statt einer Schleife.
-- `fastlane/Deliverfile` (Abgabe-Konfiguration: `submit_for_review`, `automatic_release`) und
-  `fastlane/Pluginfile` (Gems, die in der Signier-Lane mit dem App-Store-Connect-Schlüssel laufen) sind
-  Ship-Flächen wie `Fastfile` und `Appfile`.
+- `fastlane/Deliverfile` (Abgabe-Konfiguration: `submit_for_review`, `automatic_release`) ist eine
+  Ship-Fläche wie `Fastfile` und `Appfile`. `fastlane/Pluginfile` ist heute INERT (Runde 1, e2e: der `Gemfile`
+  lädt sie nicht, beide Signier-Lanes installieren fastlane ohne Bundler) und bleibt trotzdem sensibel, weil
+  eine Zeile im `Gemfile` sie in die Signier-Lane holte — deshalb ist auch der `Gemfile` sensibel. Ebenso
+  `.github/actions/`: die Signier-Jobs laden dort den App-Store-Connect-Schlüssel (`setup-asc-api-key`).
+- Git druckt mit `core.quotePath=false` jedes Zeichen ab U+0080 roh, auch unsichtbare, Bidi- und
+  Trennzeichen; nur C0, DEL, `"` und `\` stehen in Anführungszeichen (Runde 1, code und security,
+  nachgemessen). Ein Name mit einem solchen Zeichen kann also eine echte Datei sein: meldet ihn jede Linse,
+  entscheidet der Founder, nie eine Schleife aus `RERUN`.
 - Dieser Job hat kein Geräte-Kriterium: er berührt keine App.
 
 ## Acceptance criteria
 1. Grenze erreicht oder Sperr-Konfiguration geändert → `ESCALATE`, gleich ob der Approver nichts, eine leere
-   Liste, eine abweichende Zählung oder eine falsch benotete Menge liefert; der Grund nennt die Abweichung —
-   Selbsttest-Fälle und Mutationen.
+   Liste, eine abweichende Zählung oder eine falsch benotete Menge liefert; der Grund nennt die Abweichung
+   und JEDEN Teil der festen Eskalation (Grenze und Sperre zusammen, samt Token-Notiz); eine frühe
+   Eskalation trägt `deviceAsks`, `founderOpen` und `unmet` mit — Selbsttest-Fälle und Mutationen.
 2. Sagt der Approver `ESCALATE` oder stellt er eine Frage an den Founder, ist es `ESCALATE` vor jeder
    Zähl-Rückfrage, mit Vermerk der Abweichung — Selbsttest-Fälle.
 3. Ein nummeriertes Kriterium mit `founder`-Etikett zählt nie als Code-Beleg: erfüllt nur mit datiertem
@@ -39,10 +46,12 @@ belegter Code, wenn es als Code benotet ist.
    (`git show <head>:<job>/spec.md`) — Selbsttest-Prompt-Fälle.
 5. `recount: true` macht eine Zählabweichung zu `ESCALATE`; ohne es bleibt sie `RERUN`; `recount` ist ein
    Boolean oder fehlt, sonst `INVALID` — Selbsttest-Fälle.
-6. Dateinamen der Linsen: erst entquotet, dann auf leer geprüft (`""` → `RERUN`); C1-Steuerzeichen,
-   Zeilen- und Absatztrenner, Bidi- und Null-Breite-Zeichen → `RERUN` mit dem Namen der Linse —
-   Selbsttest-Fälle.
-7. `SENSITIVE` umfasst `fastlane/Deliverfile` und `fastlane/Pluginfile`; eine Änderung an
+6. Dateinamen der Linsen: erst entquotet, dann auf leer geprüft (ein leerer Eintrag fällt weg; wird eine
+   Liste dadurch leer, ist es `RERUN`); ein C0-Steuerzeichen oder DEL → `RERUN` mit dem Namen der Linse; ein
+   C1-, Trenn-, Bidi-, Null-Breite- oder anderes Format-Zeichen → `ESCALATE`, wenn jede Linse den Namen
+   meldet (der Grund zeigt ihn escaped), sonst `RERUN`; eine Sperr-Änderung in irgendeiner Liste eskaliert
+   vor jedem solchen `RERUN` — Selbsttest-Fälle.
+7. `SENSITIVE` umfasst `fastlane/Deliverfile`, `fastlane/Pluginfile`, den `Gemfile` und `.github/actions/`; eine Änderung an
    `.claude/settings.local.json` sagt im Grund, dass das Token zu tauschen und der Commit zu entfernen ist —
    Selbsttest-Fälle.
 8. `SKILL.md` sagt dasselbe wie der Workflow: die Reihenfolge der Eskalation, `recount`, die blinde Zählung,

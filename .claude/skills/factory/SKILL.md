@@ -71,9 +71,11 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    `fastlane/metadata/` anfasst, wird auf dem LOKALEN Commit geprüft, bevor sie gepusht wird**:
    die Linsen lesen das lokale git, und eine reine `docs/`-Delta geht nach dem Push ohne Gate an
    die Website (Schritt 6). **Vor JEDEM Push** muss
-   `git log --oneline origin/<branch>..HEAD -- .claude/settings.local.json` leer sein (für einen neuen
-   Branch `origin/main..HEAD`): die Datei hält ein Token, und ein Commit, der sie auch nur kurz trug,
-   veröffentlicht es mit dem Push — der Workflow sieht das erst danach. Den Basis-SHA trägst du beim Anlegen ein,
+   `git log --full-history --oneline origin/<branch>..HEAD -- .claude/settings.local.json` leer sein (für
+   einen neuen Branch `origin/main..HEAD`): die Datei hält ein Token, und ein Commit, der sie auch nur kurz
+   trug, veröffentlicht es mit dem Push — der Workflow sieht das erst danach. `--full-history` ist Pflicht:
+   ohne es übergeht `git log` einen gemergten Seitenast, der die Datei anlegt und wieder löscht, und der
+   Push trägt das Token trotzdem (Job 004, Runde 1, nachgemessen). Den Basis-SHA trägst du beim Anlegen ein,
    den Kopf-SHA NACH dem Bau-Commit (ein Commit kann seinen eigenen SHA nicht tragen; der Eintrag
    fährt mit dem nächsten Commit mit). Der Workflow verlangt einen echten SHA, nie `HEAD` — die
    Linsen laufen parallel, und ein beweglicher Name kann ihnen verschiedene Stände zeigen.
@@ -81,7 +83,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    `Workflow({name: "echoel-factory-review", args: {job, base, head, round, since, criteria, deviceCriteria, founderAssumptions, recount, lenses, paths}})`.
    `criteria` (Pflicht) ist die Zahl der Abnahmekriterien der Spec, `deviceCriteria` die Liste
    ihrer `[DEVICE]`-Nummern (`[]` = keine; fehlt sie, gilt `[]` — trägt die Spec dann doch ein
-   `[DEVICE]`-Kriterium, widerspricht die Zählung des Approvers, und es ist `RERUN`),
+   `[DEVICE]`-Kriterium, widerspricht die Zählung des Approvers, und es ist `RERUN`; mit `recount: true`
+   oder neben einer festen Eskalation ESCALATE, Schritt 6),
    `founderAssumptions` (Pflicht, `0` wenn keine) die Zahl ihrer `[FOUNDER]`-Annahmen — damit ZÄHLT der
    Workflow, ob der Approver jede Nummer genau einmal und jede `[FOUNDER]`-Annahme benotet hat, statt
    es zu glauben (Job 001, Runde 3: ein Eintrag gegen acht Kriterien wurde freigegeben). Auch die drei
@@ -118,8 +121,13 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    `git -c core.quotePath=false diff --name-only --no-renames`: mit `--no-renames` erscheint eine
    verschobene Datei mit altem UND neuem Pfad — sonst verschwände ein weggeschobener Hook aus der
    Sperrprüfung —, und ohne Oktal-Escapes passt ein Name mit Umlaut noch auf sein Präfix; ein Paar
-   umschließender Anführungszeichen streicht der Workflow selbst, ein Name mit Steuerzeichen ist
-   `RERUN` mit dem Namen der Linse), und der
+   umschließender Anführungszeichen streicht der Workflow selbst, ein danach leerer Eintrag fällt weg).
+   Git druckt jedes Zeichen ab U+0080 ROH, also auch unsichtbare, Bidi- und Trennzeichen — ein Name
+   damit kann eine echte Datei sein, gebaut, um wie eine andere auszusehen. Melden ihn ALLE Linsen,
+   eskaliert er fest (Schritt 6, Regel 2); meldet ihn nur ein Teil, ist es `RERUN` mit deren Namen. Ein
+   C0-Steuerzeichen oder DEL druckt Git nie roh: so ein Name ist immer `RERUN` mit dem Namen der Linse.
+   Zeigt irgendeine Liste eine Sperr-Änderung, entfällt jedes solche `RERUN` — die Sperre eskaliert
+   zuerst. Und der
    Workflow rechnet daraus SELBST, was im Scope liegt (Git-Pfadregel: ein Pfad deckt sich selbst und
    alles darunter, ein Präfix nur an einem `/`) und was außerhalb (`outsideScope` — das bekommt
    einen eigenen Job; die sensiblen davon kommen als `sensitiveOutside` zurück). Melden alle Linsen
@@ -156,7 +164,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
       von `paths` → **ESCALATE**, ohne
       Ermessen des Approvers und vor jeder Nacharbeit. Ein Job wird nie an der Sperre gemessen, die
       er selbst geändert hat. Bei `.claude/settings.local.json` sagt der Grund zusätzlich, dass das
-      Token zu tauschen und der Commit aus der Geschichte zu entfernen ist.
+      Token zu tauschen und der Commit aus der Geschichte zu entfernen ist. Ebenso fest eskaliert ein
+      Dateiname, den JEDE Linse mit einem versteckten Zeichen meldet (Schritt 4); der Grund zeigt jeden
+      Namen escaped (`\uXXXX`). Treffen Grenze, Sperre und ein solcher Name zusammen, nennt der Grund
+      jeden Teil — die Token-Notiz geht an der Grenze nicht verloren (Job 004, Runde 1).
    3. Der Approver sagt ESCALATE → **ESCALATE**.
    4. Ein `founder`-Eintrag offen, ein nummeriertes Kriterium mit dem Etikett `founder` ohne datierten
       Beleg oder eine Frage an den Menschen → **ESCALATE**.
@@ -173,7 +184,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    **Die Reihenfolge entscheidet:** was die Runde aus EIGENER Messung weiß — die Grenze (Regel 1) und
    eine Änderung an der Sperr-Konfiguration (Regel 2) — und ein ESCALATE oder eine Founder-Frage des
    Approvers (Regeln 3 und 4) eskalieren VOR jeder Zähl-Rückfrage; der Vermerk steht dann im Grund.
-   Nur ohne sie ist ein Vermerk `RERUN` (mit `recount: true` ESCALATE). Grund (Job 003, Runde 3): ein
+   Nur ohne sie ist ein Vermerk `RERUN`; eine Zählabweichung mit `recount: true` ist ESCALATE, jeder andere
+   Vermerk bleibt auch dann `RERUN`. Grund (Job 003, Runde 3): ein
    `RERUN` ruft dieselbe Runde noch einmal, und nichts hält den Kopf über diesen Aufruf still — eine
    Zähl-Rückfrage vor der Grenze hätte die Grenze umgehbar gemacht. Die Art braucht
    beide Lesungen: Nummer 0 ist `founder`; eine Nummer ist `device` nur, wenn sie in `deviceCriteria`
@@ -200,9 +212,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      anlegt oder ändert, zählt ein früherer Lauf deshalb nur, wenn AUCH
      `git diff --name-only S..<head> -- <jede Datei, die dieser Wächter liest>` leer ist (welche Dateien das
      sind, sagen seine Lese-Aufrufe — JEDE API, die eine Datei liest oder nach ihr fragt: `text(…)`,
-     `String(contentsOf:)`, `Data(contentsOf:)`, `FileManager.default.fileExists`; in
-     `TheFactoryReviewersAreReadOnlyTests` sind das die `text(…)`-Stellen und die `fileExists`-Prüfung der
-     Inbox). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
+     `String(contentsOf:)`, `Data(contentsOf:)`, `FileManager.default.fileExists`; gefunden mit
+     `grep -n 'contentsOf\|fileExists\|text(' <Wächter-Datei>`. In `TheFactoryReviewersAreReadOnlyTests`
+     sind das die `text(…)`-Stellen, das `Data(contentsOf:)` auf `.claude/settings.json` (Anspruch 8) und
+     die `fileExists`-Prüfung der Inbox). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
      oder ein weiterer Commit berührt die Wächter-Datei und startet den Lauf auf dem letzten Baum
      (Job 003, Runde 2: ein Lauf auf dem Kopf der ersten Nacharbeit hätte sonst einen Workflow-Text
      bestätigt, den die zweite schon geändert hatte):
@@ -238,8 +251,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      Tag, an dem die Inbox-Zeile ihr `[x]` bekommt, nie vorher.
      **Sensible Dateien außerhalb des Scopes** (`sensitiveOutside`: Rechtstext und Lizenzhinweise,
      Datenschutz samt Weiterleitungen und `docs/_headers`, Gesundheit, Barrierefreiheit,
-     Entitlements, Privacy-Manifeste, Info.plists, `project.yml`, Workflows, `EchoelStudio/RELEASE`,
-     die Fastlane-Dateien `fastlane/Fastfile`, `Appfile`, `Deliverfile` und `Pluginfile`, Store-Text,
+     Entitlements, Privacy-Manifeste, Info.plists, `project.yml`, Workflows und die Composite-Actions
+     unter `.github/actions/` (die Signier-Jobs laden dort den App-Store-Connect-Schlüssel),
+     `EchoelStudio/RELEASE`, die Fastlane-Dateien `fastlane/Fastfile`, `Appfile`, `Deliverfile` und
+     `Pluginfile`, der `Gemfile` (eine Zeile dort aktivierte die heute inerte `Pluginfile`), Store-Text,
      `ContentPipeline/CLAIMS.md`, `docs/dev/FEATURE_STATUS.md` und `.claude/settings.local.json`, die
      das Token hält — die Liste ist `SENSITIVE` im Workflow) deckt die Freigabe nicht. Sie kommen als `scopeOpen` in `board.json`, und der Job
      bleibt auf `--open`, bis jeder Eintrag in `reviewedBy` die Nummer eines ANDEREN, FERTIGEN Jobs

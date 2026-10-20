@@ -1,8 +1,8 @@
 {
  "id": "004-escalation-before-recount",
  "title": "Eskalation vor jeder Rückfrage, founder-Etikett kein Code-Beleg",
- "stage": "build",
- "round": 1,
+ "stage": "review",
+ "round": 2,
  "base": "73e9ae52d77eaaf3e3292aa9841bef3ef716dff8",
  "lenses": [
   "code-reviewer",
@@ -31,6 +31,13 @@
    "stage": "build",
    "date": "2026-10-20",
    "note": "Workflow (feste Eskalation vor jedem Zähl-Vermerk, recount, blinde Zählung, Spec am Kopf, founder-Etikett, Namensprüfung, Deliverfile/Pluginfile, Token-Notiz), Selbsttest (Mutationen 94/94), SKILL.md, INDEX, Wächter-Anspruch 10 (an 73e9ae52d rot durch die Änderung, am Kopf grün); kein Lauf außer dem Wächter im Test-Bundle"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-20",
+   "note": "Runde 1 (wf_630b7969-cf1, erstmals mit der Prüfer-Fassung der Basis 73e9ae52d): REWORK, sieben Majors = vier Sachverhalte — an der Grenze fielen Sperre und Token-Notiz weg, ein echter Name mit unsichtbarem Zeichen ergab eine RERUN-Schleife vor der Sperre, die Token-Prüfung übersah gemergte Seitenäste, die Lese-Liste des Wächters ließ eine Stelle aus; Nacharbeit 1 baut alle und die Minors ein (reviews/round-1/rebuttal.md)"
   }
- ]
+ ],
+ "head": "dcae9534550a973d699ac8472c74c6832a745a75",
+ "since": "dcae9534550a973d699ac8472c74c6832a745a75"
 }

@@ -40,13 +40,14 @@
 //    predicate `isJudge` reads both, and the judge branch sits BEFORE the APPROVE branch of the decision
 //    (job 003, round 1: the round was reviewed by the very copy it had edited).
 // 10. What the round knows from its own measurement escalates before any count is asked again: the
-//    fixed escalation (`fixed` = the rework cap or a lock change) and an escalation the approver
-//    pronounces are read in `const escalation = fixed || pronounced ||`, and every `decision: 'RERUN'`
-//    after `phase('Approve')` sits AFTER `if (escalation) {` — so neither the spec-count note nor the
-//    graded-set note can call the same round again in front of them (job 003, round 3: two count RERUNs
-//    stood ahead of the cap and the lock, and a RERUN re-calls a round nothing holds still). And a
-//    numbered criterion the approver labels `founder` is never code evidence: `kindOf` maps it to
-//    `founderLabel`, and `metCode` admits `code` only.
+//    fixed escalation has a part for the rework cap and a part for a lock change, `fixed` joins EVERY
+//    part (job 004, round 1: as a ternary the cap dropped the lock part and its token note), an
+//    escalation the approver pronounces is read beside it in `const escalation = fixed || pronounced ||`,
+//    and every RERUN after `phase('Approve')` — `decision: 'RERUN'` and `decision = 'RERUN'` alike — sits
+//    AFTER `if (escalation) {`, so neither the spec-count note nor the graded-set note can call the same
+//    round again in front of them (job 003, round 3: two count RERUNs stood ahead of the cap and the lock,
+//    and a RERUN re-calls a round nothing holds still). And a numbered criterion the approver labels
+//    `founder` is never code evidence: `kindOf` maps it to `founderLabel`, and `metCode` admits `code` only.
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
 // by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
@@ -64,9 +65,12 @@
 // has always been double-quoted and permissions.ask has no such rule — so they are counterweights that make
 // an empty or skipped parse visible. Probed: removing the needle, single-quoting PROTECTED_FILES or an ask
 // rule `Edit(.mcp.json)` turns the claim red.
-// Claim 10 (job 004) is a FORWARD guard: on the parent `73e9ae52d` the spec-count RERUN returned before
-// `fixed` was computed and `kindOf` mapped a founder label to `code`, so the claim is red there by the change
-// itself, not by an absent anchor. Transcribed in Python against both trees.
+// Claim 10 (job 004), graded per needle on the parent `73e9ae52d`: the `kindOf`, cap-part, lock-part, join
+// and `escalation` needles are FORWARD (red there by the change: the parent mapped a founder label to code
+// and built `fixed` after the count RERUNs); the `metCode` needle is a COUNTERWEIGHT — that line did not
+// change, the `kindOf` needle carries the fix; the order scan is red there by ANCHOR ABSENCE (no
+// `if (escalation) {`). Every needle runs BEFORE the scan's early return, so each gets
+// a verdict on the parent. Transcribed in Python against both trees.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
@@ -315,37 +319,6 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
 
     func testTheFixedEscalationComesBeforeEveryRecount() {
         let code = workflowCode()
-        XCTAssertTrue(code.contains("const fixed = capReached ?"), """
-            `fixed` in \(Self.workflowPath) no longer starts from the rework cap; a capped round could be called \
-            again for a count instead of escalating.
-            """)
-        XCTAssertTrue(code.contains(": lockChanged.length ? `the change edits the lock configuration"), """
-            `fixed` in \(Self.workflowPath) no longer covers a lock change; an edit to the lock could be called \
-            again for a count instead of escalating.
-            """)
-        XCTAssertTrue(code.contains("const escalation = fixed || pronounced ||"), """
-            The count-note branch of \(Self.workflowPath) no longer reads `fixed` and `pronounced` first, so a \
-            count RERUN could stand in front of an escalation the round already knows.
-            """)
-        guard let approve = code.range(of: "phase('Approve')"),
-              let escalation = code.range(of: "if (escalation) {", range: approve.upperBound..<code.endIndex) else {
-            return XCTFail("ANCHOR MISSING: `phase('Approve')` or `if (escalation) {` in \(Self.workflowPath) (#454)")
-        }
-        var cursor = approve.upperBound
-        var reruns = 0
-        while let rerun = code.range(of: "decision: 'RERUN'", range: cursor..<code.endIndex) {
-            reruns += 1
-            XCTAssertGreaterThan(rerun.lowerBound, escalation.upperBound, """
-                A `decision: 'RERUN'` in the Approve phase of \(Self.workflowPath) stands before \
-                `if (escalation) {`: a count note would call the same round again ahead of the cap, the lock \
-                or the approver's own ESCALATE.
-                """)
-            cursor = rerun.upperBound
-        }
-        XCTAssertGreaterThan(reruns, 0, """
-            ANCHOR MISSING: no `decision: 'RERUN'` after `phase('Approve')` in \(Self.workflowPath) — the scan \
-            above would pass over nothing (#454).
-            """)
         XCTAssertTrue(code.contains(
             "const kindOf = (c) => c.number === 0 ? 'founder' : c.kind === 'founder' ? 'founderLabel'"), """
             `kindOf` in \(Self.workflowPath) no longer keeps a founder-labelled criterion apart from code; a \
@@ -356,6 +329,45 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             `metCode` in \(Self.workflowPath) no longer admits `code` only; an approval could rest on a \
             criterion that is the founder's.
             """)
+        XCTAssertTrue(code.contains("if (capReached) fixedParts.push("), """
+            The fixed escalation in \(Self.workflowPath) no longer has a part for the rework cap; a capped round \
+            could be called again for a count instead of escalating.
+            """)
+        XCTAssertTrue(code.contains("if (lockChanged.length) fixedParts.push(`the change edits the lock configuration"), """
+            The fixed escalation in \(Self.workflowPath) no longer has a part for a lock change; an edit to the \
+            lock could be called again for a count instead of escalating.
+            """)
+        XCTAssertTrue(code.contains("const fixed = fixedParts.join('; ')"), """
+            `fixed` in \(Self.workflowPath) no longer keeps every part: a capped round that also commits the \
+            token would drop the instruction to rotate it (job 004, round 1).
+            """)
+        XCTAssertTrue(code.contains("const escalation = fixed || pronounced ||"), """
+            The count-note branch of \(Self.workflowPath) no longer reads `fixed` and `pronounced` first, so a \
+            count RERUN could stand in front of an escalation the round already knows.
+            """)
+        let ns = code as NSString
+        let approve = ns.range(of: "phase('Approve')")
+        guard approve.location != NSNotFound else {
+            return XCTFail("ANCHOR MISSING: `phase('Approve')` in \(Self.workflowPath) (#454)")
+        }
+        let tail = NSRange(location: NSMaxRange(approve), length: ns.length - NSMaxRange(approve))
+        let escalation = ns.range(of: "if (escalation) {", options: [], range: tail)
+        guard escalation.location != NSNotFound,
+              let rerun = try? NSRegularExpression(pattern: "decision\\s*[:=]\\s*'RERUN'") else {
+            return XCTFail("ANCHOR MISSING: `if (escalation) {` after `phase('Approve')` in \(Self.workflowPath) (#454)")
+        }
+        let reruns = rerun.matches(in: code, range: tail)
+        XCTAssertGreaterThan(reruns.count, 0, """
+            ANCHOR MISSING: no RERUN after `phase('Approve')` in \(Self.workflowPath) — the scan below would \
+            pass over nothing (#454).
+            """)
+        for match in reruns {
+            XCTAssertGreaterThan(match.range.location, escalation.location, """
+                A RERUN in the Approve phase of \(Self.workflowPath) (offset \(match.range.location), either \
+                `decision: 'RERUN'` or `decision = 'RERUN'`) stands before `if (escalation) {`: a count note would \
+                call the same round again ahead of the cap, the lock or the approver's own ESCALATE.
+                """)
+        }
     }
 
     func testEscalationsGoToTheFounderInbox() {
