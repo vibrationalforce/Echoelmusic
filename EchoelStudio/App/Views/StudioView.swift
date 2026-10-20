@@ -303,11 +303,14 @@ struct SongMenu: View {
     @Environment(MIDIInput.self) private var midi
     @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
+    @Environment(AgentSession.self) private var agent
 
     var body: some View {
         Menu {
             Button("New Song", systemImage: "plus") { documents.newSong() }
-            Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
+            if agent.isOffered {
+                Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
+            }
             Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
             Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
             Menu("Send MIDI Clock", systemImage: "metronome") {

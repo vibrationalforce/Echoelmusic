@@ -58,8 +58,10 @@ final class AgentExecutor {
 }
 
 /// The assistant: the musician writes what they want, the on-device language model answers by
-/// calling the tools in `AgentTools`. Nothing leaves the device. Where the model is not
-/// available (before iOS 26, or without Apple Intelligence) the page says so and offers nothing.
+/// calling the tools in `AgentTools`. Nothing leaves the device. On a device that cannot run the
+/// model at all (before iOS 26, or not eligible for Apple Intelligence) the menu does not offer
+/// the assistant; where the musician can fix it (Apple Intelligence off, model still loading) the
+/// page says how and offers nothing else.
 @MainActor
 @Observable
 final class AgentSession {
@@ -71,6 +73,9 @@ final class AgentSession {
     private(set) var lines: [AgentLine] = []
     private(set) var isWorking = false
     private(set) var availability: Availability = .unavailable("Checking…")
+    /// Whether this device can ever run the model. A menu leaves the assistant out when it cannot,
+    /// rather than opening a page that can only say no.
+    private(set) var isOffered = false
 
     @ObservationIgnored private let executor: AgentExecutor
     @ObservationIgnored private var turn = 0
@@ -83,12 +88,15 @@ final class AgentSession {
         executor.onAction = { [weak self] summary in
             self?.lines.append(AgentLine(role: .action, text: summary))
         }
+        refreshAvailability()
     }
 
     func refreshAvailability() {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            switch SystemLanguageModel.default.availability {
+            let current = SystemLanguageModel.default.availability
+            if case .unavailable(.deviceNotEligible) = current { isOffered = false } else { isOffered = true }
+            switch current {
             case .available:
                 availability = .ready
             case .unavailable(.deviceNotEligible):
@@ -103,6 +111,7 @@ final class AgentSession {
             return
         }
         #endif
+        isOffered = false
         availability = .unavailable("The assistant needs iOS 26 with Apple Intelligence.")
     }
 
