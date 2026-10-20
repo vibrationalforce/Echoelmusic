@@ -90,6 +90,40 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 1_024).left), "a slot that does not exist plays nothing")
     }
 
+    /// The modulation wheel played live reaches the track's synth (S-16b): a sine at A4 with the
+    /// filter open holds 440 Hz, and the wheel all the way up swings it ±50 cents —
+    /// 440 · 2^(∓50/1200) = 427.5 … 452.9 Hz (`PolySynth.vibratoRange`).
+    func testTheModulationWheelPlayedLiveSwingsTheTracksSynth() throws {
+        var s = try song([[]])
+        let sine: [(SynthParameter, Double)] = [(.waveform, 0), (.cutoff, 18_000), (.filterAmount, 0)]
+        for (parameter, value) in sine {
+            try Command.setInstrumentParameter(s.tracks[0], key: parameter.key.rawValue, value: value).apply(to: &s.project)
+        }
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.playLive(slot: 0, status: 0x90, 69, 127)
+        _ = render(engine, frames: 24_000)
+        let held = cycleFrequencies(render(engine, frames: 24_000).left)
+        XCTAssertFalse(held.isEmpty)
+        XCTAssertTrue(held.allSatisfy { (439...441).contains($0) }, "no wheel, no vibrato")
+
+        engine.playLive(slot: 0, status: 0xB0, 1, 127)
+        _ = render(engine, frames: 24_000)
+        let swung = cycleFrequencies(render(engine, frames: 96_000).left)
+        let low = try XCTUnwrap(swung.min()), high = try XCTUnwrap(swung.max())
+        XCTAssertTrue((425.5...429.5).contains(low), "\(low)")
+        XCTAssertTrue((451...455).contains(high), "\(high)")
+    }
+
+    /// The frequency of every whole cycle, from one rising zero crossing to the next.
+    private func cycleFrequencies(_ samples: [Float]) -> [Float] {
+        var rising: [Float] = []
+        for i in 1..<samples.count where samples[i - 1] < 0 && samples[i] >= 0 {
+            rising.append(Float(i - 1) + -samples[i - 1] / (samples[i] - samples[i - 1]))
+        }
+        return zip(rising, rising.dropFirst()).map { Float(rate) / ($1 - $0) }
+    }
+
     func testANoteStartsOnItsSample() throws {
         let s = try song([[Note(pitch: 60, start: 960, length: 960)]])
         let core = core()

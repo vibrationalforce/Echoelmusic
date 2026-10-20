@@ -370,7 +370,8 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Controller thread
 
     /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
-    /// the next block. One thread only — the MIDI input's. Note on/off and controllers 120/123.
+    /// the next block. One thread only — the MIDI input's. Notes, pitch bend and controllers:
+    /// 120/123 silence or release, the synth reads 1 and 64, a plugin gets every one.
     public func playLive(slot: Int, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         guard slot >= 0, slot < slotCapacity, slot <= 0xFF else { return }
         live.push(UInt32(slot) << 24 | UInt32(status) << 16 | UInt32(data1 & 0x7F) << 8 | UInt32(data2 & 0x7F))
@@ -931,8 +932,9 @@ public final class EngineCore: @unchecked Sendable {
                 guard let unit = current?.snapshot.lanes.first(where: { $0.slot == slot })?.unit else { continue }
                 if on { unit.noteOn(pitch: pitch, velocity: value, offset: 0) }
                 if off { unit.noteOff(pitch: pitch, offset: 0) }
-                if bend || pedal { unit.control(status: status, pitch, value) }
-                if allOff { unit.allNotesOff() }
+                // Every controller reaches the plugin as played — the mod wheel, expression,
+                // the pedal — as a host passes them (S-16b).
+                if allOff { unit.allNotesOff() } else if bend || kind == 0xB0 { unit.control(status: status, pitch, value) }
             case .unrecognized:
                 break
             }

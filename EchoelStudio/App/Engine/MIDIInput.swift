@@ -112,6 +112,20 @@ final class ControlInbox: Sendable {
         return !scheduled.exchange(true, ordering: .acquiringAndReleasing)
     }
 
+    /// The controls the song maps to a parameter. Those move only their parameter; every other
+    /// controller also plays the live instrument (S-16b).
+    private let mapped = Mutex<Set<MIDIControl>>([])
+
+    /// Main thread, whenever the song's mappings may have changed.
+    func setMapped(_ controls: Set<MIDIControl>) {
+        mapped.withLock { $0 = controls }
+    }
+
+    /// MIDI thread.
+    func isMapped(_ control: MIDIControl) -> Bool {
+        mapped.withLock { $0.contains(control) }
+    }
+
     /// Main thread.
     func take() -> [MIDIControl: UInt8] {
         scheduled.store(false, ordering: .releasing)
@@ -395,8 +409,15 @@ final class MIDIInput {
         }
     }
 
+    /// Main thread: called on every change to the song, so a newly learned control stops playing
+    /// the instrument and a removed mapping lets it play again.
+    func projectChanged(_ project: Project) {
+        inbox.setMapped(Set(project.midiMappings.map(\.control)))
+    }
+
     func start() {
         guard client == 0 else { return }
+        projectChanged(store.project)
         let status = MIDIClientCreateWithBlock("Echoel" as CFString, &client) { @Sendable notification in
             guard notification.pointee.messageID == .msgSetupChanged else { return }
             Task { @MainActor [weak self] in self?.connectSources() }
@@ -509,9 +530,12 @@ final class MIDIInput {
                 } else if type == 0x2 {
                     let status = UInt8((word >> 16) & 0xFF), data1 = UInt8((word >> 8) & 0x7F), data2 = UInt8(word & 0x7F)
                     if status & 0xF0 == 0xB0, data1 != 120, data1 != 123 {
-                        if inbox.post(MIDIControl(channel: status & 0x0F, number: data1), data2) { drain = true }
-                        // The sustain pedal also plays: it holds the live instrument's notes.
-                        if data1 == 64 { router.receive(status: status, data1, data2) }
+                        let control = MIDIControl(channel: status & 0x0F, number: data1)
+                        if inbox.post(control, data2) { drain = true }
+                        // A controller the song does not map plays the live instrument — the mod
+                        // wheel, expression, a filter knob — and a take records it. The sustain
+                        // pedal always plays: it holds the live instrument's notes (S-16b).
+                        if data1 == 64 || !inbox.isMapped(control) { router.receive(status: status, data1, data2) }
                     } else {
                         router.receive(status: status, data1, data2)
                     }

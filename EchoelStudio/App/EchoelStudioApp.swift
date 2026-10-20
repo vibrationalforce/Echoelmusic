@@ -62,6 +62,7 @@ struct EchoelStudioApp: App {
                 }
                 .onChange(of: store.project) { _, project in
                     documents.projectChanged()
+                    midi.projectChanged(project)
                     Task { await recording.trackRemoved(from: project) }
                 }
                 // A song tapped in Files or received by AirDrop (E4).
