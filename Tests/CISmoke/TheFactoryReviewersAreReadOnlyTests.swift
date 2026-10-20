@@ -46,8 +46,10 @@
 //    and every RERUN after `phase('Approve')` — `decision: 'RERUN'` and `decision = 'RERUN'` alike — sits
 //    AFTER `if (escalation) {`, so neither the spec-count note nor the graded-set note can call the same
 //    round again in front of them (job 003, round 3: two count RERUNs stood ahead of the cap and the lock,
-//    and a RERUN re-calls a round nothing holds still). And a numbered criterion the approver labels
-//    `founder` is never code evidence: `kindOf` maps it to `founderLabel`, and `metCode` admits `code` only.
+//    and a RERUN re-calls a round nothing holds still). The file-name RERUN yields to the cap and to a lock
+//    change, and `capReached` is computed before it (job 004, round 2: a name only some lenses reported
+//    reran a capped round). And a numbered criterion the approver labels `founder` is never code evidence:
+//    `kindOf` maps it to `founderLabel`, and `metCode` admits `code` only.
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
 // by ANCHOR ABSENCE — one absence, reported five times (#486). All five are FORWARD guards for
@@ -65,8 +67,8 @@
 // has always been double-quoted and permissions.ask has no such rule — so they are counterweights that make
 // an empty or skipped parse visible. Probed: removing the needle, single-quoting PROTECTED_FILES or an ask
 // rule `Edit(.mcp.json)` turns the claim red.
-// Claim 10 (job 004), graded per needle on the parent `73e9ae52d`: the `kindOf`, cap-part, lock-part, join
-// and `escalation` needles are FORWARD (red there by the change: the parent mapped a founder label to code
+// Claim 10 (job 004), graded per needle on the parent `73e9ae52d`: the `kindOf`, cap-part, lock-part, join,
+// `escalation` and name-RERUN needles are FORWARD (red there by the change: the parent mapped a founder label to code
 // and built `fixed` after the count RERUNs); the `metCode` needle is a COUNTERWEIGHT — that line did not
 // change, the `kindOf` needle carries the fix; the order scan is red there by ANCHOR ABSENCE (no
 // `if (escalation) {`). Every needle runs BEFORE the scan's early return, so each gets
@@ -345,6 +347,20 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             The count-note branch of \(Self.workflowPath) no longer reads `fixed` and `pronounced` first, so a \
             count RERUN could stand in front of an escalation the round already knows.
             """)
+        let capDefinition = code.range(of: "const capReached = open.length > 0 && round > MAX_REWORK_ROUNDS")
+        let nameRerun = code.range(of: "if (garbled.length && !lockChanged.length && !capReached) return")
+        if let capDefinition, let nameRerun {
+            XCTAssertLessThan(capDefinition.lowerBound, nameRerun.lowerBound, """
+                `capReached` in \(Self.workflowPath) is computed after the file-name RERUN, so that RERUN cannot \
+                yield to the cap.
+                """)
+        } else {
+            XCTFail("""
+                The file-name RERUN in \(Self.workflowPath) no longer yields to the cap and to a lock change \
+                (`if (garbled.length && !lockChanged.length && !capReached) return`, after `const capReached`): a \
+                name only some lenses report would stand in front of a fixed escalation (job 004, round 2).
+                """)
+        }
         let ns = code as NSString
         let approve = ns.range(of: "phase('Approve')")
         guard approve.location != NSNotFound else {

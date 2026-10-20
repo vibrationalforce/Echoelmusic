@@ -73,7 +73,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    die Website (Schritt 6). **Vor JEDEM Push** muss
    `git log --full-history --oneline origin/<branch>..HEAD -- .claude/settings.local.json` leer sein (für
    einen neuen Branch `origin/main..HEAD`): die Datei hält ein Token, und ein Commit, der sie auch nur kurz
-   trug, veröffentlicht es mit dem Push — der Workflow sieht das erst danach. `--full-history` ist Pflicht:
+   trug, veröffentlicht es mit dem Push — und der Workflow sieht nur die Netto-Änderung des Bereichs, also nie
+   einen Commit, der die Datei anlegt und später wieder löscht. Diese Prüfung ist dafür die einzige. `--full-history` ist Pflicht:
    ohne es übergeht `git log` einen gemergten Seitenast, der die Datei anlegt und wieder löscht, und der
    Push trägt das Token trotzdem (Job 004, Runde 1, nachgemessen). Den Basis-SHA trägst du beim Anlegen ein,
    den Kopf-SHA NACH dem Bau-Commit (ein Commit kann seinen eigenen SHA nicht tragen; der Eintrag
@@ -89,8 +90,11 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    Workflow, ob der Approver jede Nummer genau einmal und jede `[FOUNDER]`-Annahme benotet hat, statt
    es zu glauben (Job 001, Runde 3: ein Eintrag gegen acht Kriterien wurde freigegeben). Auch die drei
    Zahlen glaubt er dem PM nicht allein: der Approver zählt die Spec selbst (`specCriteria`,
-   `specDevice`, `specFounder`) — BLIND, sein Prompt nennt keine Zahl des PM, und Linsen wie Approver
-   lesen die Spec am Kopf-SHA (`git show <head>:<job>/spec.md`), nie aus dem Arbeitsbaum. Weicht eine
+   `specDevice`, `specFounder`) — ZUERST, aus der Spec allein, bevor er `board.json`, `reviews/` oder die
+   Linsen-Berichte liest; sein Prompt nennt keine Zahl des PM, und sein Diff lässt `board.json` und `reviews/`
+   aus, die sie tragen. Ganz blind ist das nicht — eine Linse kann die Zahlen zitieren, und `board.json` liest er
+   für die `base` doch (Job 004, Runde 2) —, darum heißt es zweite Lesung, nicht unabhängige Messung. Linsen
+   und Approver lesen die Spec am Kopf-SHA (`git show <head>:<job>/spec.md`), nie aus dem Arbeitsbaum. Weicht eine
    Zählung ab, ist es `RERUN` — der PM zählt die Spec neu und ruft DIESELBE Runde mit DEMSELBEN `head`
    noch einmal, jetzt mit `recount: true` (ein Boolean; alles andere ist `INVALID`). Weicht die Zählung
    dann noch ab, eskaliert der Workflow: welche Zählung stimmt, entscheidet der Founder. Ein `RERUN`
@@ -122,12 +126,16 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    verschobene Datei mit altem UND neuem Pfad — sonst verschwände ein weggeschobener Hook aus der
    Sperrprüfung —, und ohne Oktal-Escapes passt ein Name mit Umlaut noch auf sein Präfix; ein Paar
    umschließender Anführungszeichen streicht der Workflow selbst, ein danach leerer Eintrag fällt weg).
-   Git druckt jedes Zeichen ab U+0080 ROH, also auch unsichtbare, Bidi- und Trennzeichen — ein Name
-   damit kann eine echte Datei sein, gebaut, um wie eine andere auszusehen. Melden ihn ALLE Linsen,
-   eskaliert er fest (Schritt 6, Regel 2); meldet ihn nur ein Teil, ist es `RERUN` mit deren Namen. Ein
-   C0-Steuerzeichen oder DEL druckt Git nie roh: so ein Name ist immer `RERUN` mit dem Namen der Linse.
-   Zeigt irgendeine Liste eine Sperr-Änderung, entfällt jedes solche `RERUN` — die Sperre eskaliert
-   zuerst. Und der
+   Git druckt jedes Zeichen ab U+0080 ROH, also auch C1-, unsichtbare, Bidi-, Trenn- und Nicht-ASCII-
+   Leerzeichen, und füllt keinen Namen auf — ein Name damit oder mit Leerraum am Rand kann eine echte
+   Datei sein, gebaut, um wie eine andere auszusehen. Darum wird außer einem Paar Anführungszeichen nichts
+   abgeschnitten (`trim()` striche U+FEFF, U+2028, U+2029 und jedes Zs-Leerzeichen am Rand weg). Melden ihn
+   ALLE Linsen, eskaliert er fest (Schritt 6, Regel 2); meldet ihn nicht jede, ist es `RERUN` mit den
+   Namen derer, die ihn meldeten, und der Approver läuft nicht. Ein C0-Steuerzeichen oder DEL druckt Git
+   nie roh: so ein Name ist immer `RERUN` mit dem Namen der Linse. Ist die Grenze erreicht oder zeigt
+   irgendeine Liste eine Sperr-Änderung, wird jedes solche `RERUN` ein Vermerk im Grund (`name check:`) —
+   kein Dateiname hält eine feste Eskalation in einer Schleife. Eine Linse ganz ohne Liste oder mit leerer
+   Liste ruft weiterhin zuerst neu: das ist die Linse, nicht der Inhalt des Repos. Und der
    Workflow rechnet daraus SELBST, was im Scope liegt (Git-Pfadregel: ein Pfad deckt sich selbst und
    alles darunter, ein Präfix nur an einem `/`) und was außerhalb (`outsideScope` — das bekommt
    einen eigenen Job; die sensiblen davon kommen als `sensitiveOutside` zurück). Melden alle Linsen
@@ -182,8 +190,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    dann: fehlt eine Nummer 1..`criteria`, steht eine doppelt oder eine darüber, oder sind es weniger
    Nummer-0-Einträge als `founderAssumptions`, oder fehlt der Approver ganz, ist das ein Vermerk.
    **Die Reihenfolge entscheidet:** was die Runde aus EIGENER Messung weiß — die Grenze (Regel 1) und
-   eine Änderung an der Sperr-Konfiguration (Regel 2) — und ein ESCALATE oder eine Founder-Frage des
-   Approvers (Regeln 3 und 4) eskalieren VOR jeder Zähl-Rückfrage; der Vermerk steht dann im Grund.
+   eine Änderung an der Sperr-Konfiguration (Regel 2) — und ein ESCALATE oder eine Frage des Approvers an
+   den Menschen (Regel 3 und die Frage aus Regel 4) eskalieren VOR jeder Zähl-Rückfrage; der Vermerk steht
+   dann im Grund. Ein offener `founder`-Eintrag neben einem Zähl-Vermerk bleibt `RERUN`: die Benotung, aus
+   der er stammt, ist selbst ungezählt.
    Nur ohne sie ist ein Vermerk `RERUN`; eine Zählabweichung mit `recount: true` ist ESCALATE, jeder andere
    Vermerk bleibt auch dann `RERUN`. Grund (Job 003, Runde 3): ein
    `RERUN` ruft dieselbe Runde noch einmal, und nichts hält den Kopf über diesen Aufruf still — eine
@@ -252,7 +262,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      **Sensible Dateien außerhalb des Scopes** (`sensitiveOutside`: Rechtstext und Lizenzhinweise,
      Datenschutz samt Weiterleitungen und `docs/_headers`, Gesundheit, Barrierefreiheit,
      Entitlements, Privacy-Manifeste, Info.plists, `project.yml`, Workflows und die Composite-Actions
-     unter `.github/actions/` (die Signier-Jobs laden dort den App-Store-Connect-Schlüssel),
+     unter `.github/actions/` (`setup-xcodegen` läuft in beiden Signier-Jobs, im selben Job wie der
+     App-Store-Connect-Schlüssel, und in jedem Gate; `setup-asc-api-key` nutzt heute kein Workflow),
      `EchoelStudio/RELEASE`, die Fastlane-Dateien `fastlane/Fastfile`, `Appfile`, `Deliverfile` und
      `Pluginfile`, der `Gemfile` (eine Zeile dort aktivierte die heute inerte `Pluginfile`), Store-Text,
      `ContentPipeline/CLAIMS.md`, `docs/dev/FEATURE_STATUS.md` und `.claude/settings.local.json`, die
@@ -302,8 +313,9 @@ Trivia). `docs/dev/FEATURE_STATUS.md` ist eines der zwei Register, aus denen Sto
 Content ihre Behauptungen holen. Ein Satz auf der
 Website, im Store-Text oder in `ContentPipeline/` ist dagegen eine Behauptung nach außen und läuft
 durch die Factory — die UX-Linse prüft genau das. Die Factory kostet bis zu fünf Agentenläufe je Runde — vier Linsen,
-der Approver nur in der Runde ohne offene Befunde, an der Grenze oder bei einer Änderung an der
-Sperr-Konfiguration (die überspringt die Nacharbeit); sie lohnt sich ab mehreren
+der Approver nur in der Runde ohne offene Befunde, an der Grenze, bei einer Änderung an der
+Sperr-Konfiguration oder bei einem Dateinamen, den jede Linse mit einem versteckten Zeichen meldet (die
+beiden überspringen die Nacharbeit); sie lohnt sich ab mehreren
 Dateien, einer sichtbaren Fläche oder einer Behauptung nach außen.
 
 ## Was die Factory nicht ersetzt

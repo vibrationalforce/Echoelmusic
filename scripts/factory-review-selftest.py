@@ -8,9 +8,11 @@ malformed or missing argument is INVALID (`criteria` and `founderAssumptions` ar
 has no place in round 1, no `.` segment in `paths`), the three always-on lenses are a floor, the scope
 is computed from the lenses' unscoped `changedFiles` (all empty or nothing under `paths` is INVALID, one
 lens empty or without a list is RERUN, a quoted name is unquoted, a name with a C0 control character is
-RERUN, a name with an invisible or bidi character is RERUN when one lens reports it and ESCALATE when
-every lens does — git prints those raw), a change to the lock configuration always escalates, before any
-name RERUN and with every part of the reason kept beside the cap, a change to the judge (this workflow,
+RERUN, a name with a C1, invisible, default-ignorable, bidi or non-ASCII space character or with padding
+at either end is RERUN when not every lens reports it and ESCALATE when every lens does — git prints
+those raw and pads nothing; the cap and a lock change turn a name RERUN into a note), a change to the
+lock configuration always escalates, with every part of the reason kept beside the cap, a change to the
+judge (this workflow,
 `.claude/agents/`) never ends in APPROVE, the PM's three counts must match the approver's own count of
 the spec, the approver must grade the numbers 1..criteria exactly once and every [FOUNDER] assumption,
 the cap, a lock change and an escalation the approver pronounces escalate BEFORE any count RERUN (and
@@ -131,9 +133,12 @@ await run('paths ok: every agent gets the scope and the clause, the approver rea
     const noClause = all.filter(([, p]) => !p.startsWith(CLAUSE)).map(([l]) => l)
     if (noClause.length) return `no read-only clause first: ${noClause}`
     // The scope must reach the commands that read the change, not only some line of the prompt.
-    const diff = '`git diff b1cfc8ad1..9c0677f03 -- .claude/skills/factory scripts/INDEX.md`'
+    const diff = '`git diff b1cfc8ad1..9c0677f03 -- .claude/skills/factory scripts/INDEX.md'
     const noScope = all.filter(([, p]) => !p.includes(diff)).map(([l]) => l)
     if (noScope.length) return `scoped diff missing: ${noScope}`
+    // The approver's diff leaves out what carries the PM's counts, and it counts before it reads them (job 004, round 2).
+    if (!prompts.approver.includes(`${diff} ':(exclude)scratchpads/factory/001-x/board.json' ':(exclude)scratchpads/factory/001-x/reviews'\``)) return 'the approver diff carries the counts'
+    if (!prompts.approver.includes('COUNT IT FIRST, from the spec alone, before you')) return 'the approver is not told to count first'
     const lensPrompts = all.filter(([l]) => l !== 'approver')
     const noLog = lensPrompts.filter(([, p]) => !p.includes('`git log --oneline b1cfc8ad1..9c0677f03 -- .claude/skills/factory scripts/INDEX.md`')).map(([l]) => l)
     if (noLog.length) return `scoped log missing: ${noLog}`
@@ -227,15 +232,37 @@ await run('only bare quotes everywhere -> INVALID', base, seeing(['""']), ap('AP
 // git prints every character from U+0080 raw with core.quotePath=false, so a name with one can be real (job 004, round 1).
 const HIDDEN = [['C1 NEL', 0x85], ['line separator', 0x2028], ['paragraph separator', 0x2029], ['bidi override', 0x202e],
   ['zero width space', 0x200b], ['bidi isolate', 0x2066], ['BOM', 0xfeff], ['Arabic letter mark', 0x061c], ['soft hyphen', 0xad],
-  ['Mongolian vowel separator', 0x180e], ['tag letter', 0xe0041]]
+  ['Mongolian vowel separator', 0x180e], ['tag letter', 0xe0041], ['interlinear annotation (format, not default-ignorable)', 0xfff9]]
 const ONLY_ASCII = (r) => /[^\x00-\x7e]/.test(r.reason || '') ? 'a raw character reached the reason' : ''
 for (const [label, code] of HIDDEN) {
   const name = 'scripts/a' + String.fromCodePoint(code) + 'b.py'
   await run(`a name with ${label} from one lens -> RERUN`, base, (l) => l === 'review:ux' ? { ...PASS, changedFiles: [...FILES, name] } : PASS,
-    ap('APPROVE', OK1), 'RERUN', [], missingHas('ux (a file name with an invisible character not every lens reports)'))
+    ap('APPROVE', OK1), 'RERUN', [], (r, prompts) => missingHas('ux (a file name with an invisible character not every lens reports)')(r)
+      || (prompts.approver ? 'the approver ran on a misread list' : ''))
   await run(`a name with ${label} from every lens -> ESCALATE`, base, seeing([...FILES, name]), ap('APPROVE', OK1), 'ESCALATE', [],
     (r) => reasonHas('hides a control or invisible character')(r) || ONLY_ASCII(r) || ((r.disguised || []).includes(name) ? '' : 'disguised not returned'))
 }
+// trim() strips U+FEFF, U+2028, U+2029 and every Zs space: a hidden character at either end must survive (job 004, round 2).
+for (const [label, name] of [['a leading BOM', String.fromCharCode(0xfeff) + 'README.md'], ['a trailing line separator', 'README.md' + String.fromCharCode(0x2028)],
+  ['a trailing paragraph separator', 'docs/x.md' + String.fromCharCode(0x2029)], ['a trailing space', 'Sources/X.swift '], ['a no-break space', 'a' + String.fromCharCode(0xa0) + 'b.md'],
+  ['a combining grapheme joiner', 'a' + String.fromCharCode(0x34f) + 'b.md'], ['a variation selector', 'a' + String.fromCharCode(0xfe0f) + 'b.md'], ['a Hangul filler', 'a' + String.fromCharCode(0x3164) + 'b.md']]) {
+  await run(`${label} from every lens -> ESCALATE`, base, seeing([...FILES, name]), ap('APPROVE', OK1), 'ESCALATE', [],
+    (r) => reasonHas('hides a control or invisible character')(r) || ONLY_ASCII(r) || ((r.disguised || []).includes(name) ? '' : 'disguised not returned'))
+}
+await run('a padded lookalike beside its original stays two files', base, seeing(['README.md', 'README.md ']), ap('APPROVE', OK1), 'ESCALATE', [],
+  (r) => r.changedCount === 2 ? '' : `changedCount ${r.changedCount}`)
+await run('a lookalike of the token file is named as a disguise, not as the token', base,
+  seeing([...FILES, '.claude/settings.local.json' + String.fromCharCode(0xfeff)]), ap('APPROVE', OK1), 'ESCALATE', [],
+  (r) => reasonHas('hides a control or invisible character')(r) || ((r.reason || '').includes('rotate it') ? 'the lookalike was read as the token file' : ''))
+await run('an umlaut, an en dash and a combining diaeresis are ordinary names', base,
+  seeing([...FILES, 'docs/Grüße.md', 'reports/Astra ' + String.fromCharCode(0x2013) + ' Klang.md', 'docs/a' + String.fromCharCode(0x308) + '.md']), ap('APPROVE', OK1), 'APPROVE')
+await run('the cap with a name only some lenses report -> ESCALATE, the name noted', { ...base, round: 3, since: 'abc1234' },
+  (l) => ({ ...(l === 'review:ux' ? MAJOR : PASS), changedFiles: l === 'review:ux' ? [...FILES, 'scripts/ab.py'] : [...FILES, 'scripts/a' + String.fromCharCode(0x200b) + 'b.py'] }),
+  ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('rework cap')(r) || reasonHas('name check: code-reviewer (a file name with an invisible character')(r))
+await run('a lock change with a name only some lenses report notes the name check', base,
+  (l) => l === 'review:ux' ? { ...PASS, changedFiles: ['.mcp.json', 'scripts/ab.py'] } : seeing(['.mcp.json', 'scripts/a' + String.fromCharCode(0x200b) + 'b.py'])(),
+  ap('APPROVE', OK1), 'ESCALATE', [], (r) => reasonHas('lock configuration')(r) || reasonHas('name check:')(r)
+    || ((r.garbled || []).length === 2 ? '' : `garbled ${JSON.stringify(r.garbled)}`))
 await run('a disguised name skips the rework exit', base,
   (l) => ({ ...(l === 'review:ux' ? MAJOR : PASS), changedFiles: [...FILES, 'scripts/a' + String.fromCharCode(0x202e) + 'b.py'] }),
   ap('APPROVE', OK1), 'ESCALATE', ['approver'], (r, prompts) => prompts.approver.includes('A changed file name hides a control or invisible character') ? '' : 'approver not told')
@@ -382,7 +409,6 @@ MUTATIONS = [
     ("approver list with rename detection", r"UNSCOPED list \`git -c core.quotePath=false diff --name-only --no-renames ${range}\`", r"UNSCOPED list \`git -c core.quotePath=false diff --name-only ${range}\`"),
     ("lens list with quoted names", r"\`git -c core.quotePath=false diff --name-only --no-renames ${range}\` WITHOUT", r"\`git diff --name-only --no-renames ${range}\` WITHOUT"),
     ("approver list with quoted names", r"UNSCOPED list \`git -c core.quotePath=false diff", r"UNSCOPED list \`git diff"),
-    ("quoted names not unquoted", ".map(f => unquote(f.trim())).filter(f => f.trim()) : null)", ".map(f => f.trim()).filter(f => f.trim()) : null)"),
     ("lens not told about CLAUDE.md and rules", "If the diff changes a CLAUDE.md (in any directory) or anything under .claude/rules/, those files reach every", "Those files reach every"),
     ("approver not told about CLAUDE.md and rules", "If the diff changes a CLAUDE.md or anything under .claude/rules/, you received", "You received"),
     ("lens list scoped", r"--name-only --no-renames ${range}\` WITHOUT", r"--name-only --no-renames ${range}${scope}\` WITHOUT"),
@@ -412,7 +438,7 @@ MUTATIONS = [
     ("non-ASCII not escaped", "(c) => '", "(c) => c || '"),
     ("dash not escaped", ".replace(/--/g, '-", ".replace(/--/g, '--' || '-"),
     ("recorded base not checked", r"Confirm that \`git show ${head}:${jobDir}/board.json\` records base ${a.base}", "Confirm nothing"),
-    ("sensitive not reported", "+ (sensitiveOutside.length ? `; not covered: ${sensitiveOutside.join(', ')}` : '')", ""),
+    ("sensitive not reported", "+ (sensitiveOutside.length ? `; not covered: ${shownNames(sensitiveOutside)}` : '')", ""),
     ("privacy page not sensitive", r"(privacy|terms|health|impressum|security|claims|accessibility)", r"(terms|health|impressum|security|claims|accessibility)"),
     ("index stubs not sensitive", r"(\.html|\/index\.html)$/", r"\.html$/"),
     ("headers not sensitive", r"/^docs\/_(headers|redirects)$/, ", ""),
@@ -438,7 +464,6 @@ MUTATIONS = [
     ("empty acceptance judged", "if (approver && !acceptance.length) notes.push", "if (false) notes.push"),
     ("founder label counts as code", "c.kind === 'founder' ? 'founderLabel'", "false ? 'founderLabel'"),
     ("founder label needs no record", "(kindOf(c) === 'founder' || kindOf(c) === 'founderLabel') && !(", "kindOf(c) === 'founder' && !("),
-    ("empty test before unquote", ".map(f => unquote(f.trim())).filter(f => f.trim()) : null)", ".filter(f => f.trim()).map(f => unquote(f.trim())) : null)"),
     ("lens reads the spec from the tree", r"Read the job spec as committed, \`git show ${head}:${jobDir}/spec.md\` (", "Read the job spec ${jobDir}/spec.md ("),
     ("approver reads the spec from the tree", r"Read the spec as committed, \`git show ${head}:${jobDir}/spec.md\`, and", "Read ${jobDir}/spec.md and"),
     ("PM numbers shown to the approver", "Count the spec yourself and return", "The PM reports ${criteria} numbered acceptance criteria. Count the spec yourself and return"),
@@ -460,20 +485,30 @@ MUTATIONS = [
     ("lock skips-rework guard dropped", "&& !lockChanged.length && !disguised.length) {", "&& !disguised.length) {"),
     ("disguised name skips no rework", "&& !lockChanged.length && !disguised.length) {", "&& !lockChanged.length) {"),
     ("judge also skips rework", "&& !lockChanged.length && !disguised.length) {", "&& !lockChanged.length && !disguised.length && !judgeChanged.length) {"),
-    ("a name RERUN before the lock", "if (garbled.length && !lockChanged.length) return", "if (garbled.length) return"),
-    ("name RERUN dropped", "if (garbled.length && !lockChanged.length) return", "if (false) return"),
     ("one lens makes a name real", "listed.every(l => l.includes(f))", "listed.some(l => l.includes(f))"),
     ("a control character trusted", "list.some(f => forgedChar.test(f)) ? 'a file name", "false ? 'a file name"),
     ("C0 not forged", r"const forgedChar = /[\x00-\x1f\x7f]/", r"const forgedChar = /[\x00-\x08]/"),
-    ("format characters allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cc}\p{Zl}\p{Zp}"),
-    ("C1 controls allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cf}\p{Zl}\p{Zp}"),
-    ("line separator allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cc}\p{Cf}\p{Zp}"),
-    ("paragraph separator allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cc}\p{Cf}\p{Zl}"),
     ("early ESCALATE loses the device asks", "findings: open, unmet, founderOpen, deviceAsks, reviews: graded, approver, noted: notes }", "findings: open, reviews: graded, approver, noted: notes }"),
     ("workflows not sensitive", r"/^\.github\/(workflows|actions)\//, ", ""),
     ("actions not sensitive", r"/^\.github\/(workflows|actions)\//", r"/^\.github\/workflows\//"),
     ("Gemfile not sensitive", r"(workflows|actions)\//, /^Gemfile(\.lock)?$/,", r"(workflows|actions)\//,"),
     ("Gemfile prefix-matched", r"/^Gemfile(\.lock)?$/", r"/Gemfile(\.lock)?$/"),
+    ("a name RERUN before the lock", "if (garbled.length && !lockChanged.length && !capReached) return", "if (garbled.length && !capReached) return"),
+    ("a name RERUN before the cap", "if (garbled.length && !lockChanged.length && !capReached) return", "if (garbled.length && !lockChanged.length) return"),
+    ("name RERUN dropped", "if (garbled.length && !lockChanged.length && !capReached) return", "if (false) return"),
+    ("format characters allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cc}\p{Zl}\p{Zp}"),
+    ("C1 controls allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cf}\p{Zl}\p{Zp}"),
+    ("line separator allowed", r"\p{Cc}\p{Cf}\p{Zl}\p{Zp}", r"\p{Cc}\p{Cf}\p{Zp}"),
+    ("paragraph separator allowed", r"\p{Zl}\p{Zp}\p{Default", r"\p{Zl}\p{Default"),
+    ("default-ignorable allowed", r"\p{Default_Ignorable_Code_Point}]", "]"),
+    ("other spaces allowed", r"]|(?! )\p{Zs}/u", "]/u"),
+    ("padding not hidden", "|| f !== f.trim()", ""),
+    ("names trimmed before the test", ".map(f => unquote(f)).filter(f => f.trim()) : null)", ".map(f => unquote(f.trim())).filter(f => f.trim()) : null)"),
+    ("quoted names not unquoted", ".map(f => unquote(f)).filter(f => f.trim()) : null)", ".map(f => f).filter(f => f.trim()) : null)"),
+    ("blank entries kept", ".map(f => unquote(f)).filter(f => f.trim()) : null)", ".map(f => unquote(f)) : null)"),
+    ("name check not noted", "if (garbled.length) notes.push(`name check: ${garbled.join('; ')}`)", ""),
+    ("approver diff carries the board", r"""':(exclude)${jobDir}/board.json' ':(exclude)${jobDir}/reviews'`""", "`"),
+    ("approver not told to count first", "COUNT IT FIRST, from the spec alone, before you", "Count it, before you"),
 ]
 
 
