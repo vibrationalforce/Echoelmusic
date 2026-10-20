@@ -455,8 +455,10 @@ final class AudioEngine {
             // An input that cannot open must not take playback down with it, and says so: the
             // successful playback start would otherwise clear the only word about it.
             if input {
+                // Our own reasons say what to change (a rate mismatch, no input); the system's do not.
+                let reason = (error as? EngineError)?.errorDescription.map { " " + $0 } ?? ""
                 configure(input: false)
-                if isRunning { lastError = "The audio input could not be opened. Playback goes on without it." }
+                if isRunning { lastError = "The audio input could not be opened." + reason + " Playback goes on without it." }
                 return
             }
             // Never a log-only catch: a short settle, then again, a few times (R1).
