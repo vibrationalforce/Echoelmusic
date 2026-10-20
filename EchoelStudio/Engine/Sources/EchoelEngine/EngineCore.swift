@@ -76,8 +76,12 @@ public final class EngineCore: @unchecked Sendable {
     /// are pointed at the playhead again. Every other slot keeps the cursors it has.
     private let stale: UnsafeMutablePointer<Bool>
     /// Per audio lane, after a tempo change moved the playhead this chunk: where its fade-out
-    /// reads, so what fades out is exactly what the old tempo was playing.
+    /// reads, so what fades out is exactly what the old tempo was playing — or `nothingToFade`
+    /// when the old tempo played nothing there.
     private let remapFade: UnsafeMutablePointer<Int64>
+    /// Computed, not stored: a stored static is initialised lazily, once, on first read — here
+    /// the render thread.
+    private static var nothingToFade: Int64 { .min }
     /// A tempo change moved the playhead this chunk; the audio lanes crossfade across it.
     private var remapped = false
     private let scratch: UnsafeMutablePointer<Float>
@@ -479,7 +483,11 @@ public final class EngineCore: @unchecked Sendable {
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
         let stopping = wasPlaying && !playing
         if stopping { releaseAllNotes() }
-        if !wasPlaying, playing { resync() }
+        if !wasPlaying, playing {
+            // Paused, nothing was heard: the start fades nothing out (A10 review, E).
+            resync()
+            remapped = false
+        }
         wasPlaying = playing
         // A stopping block still fades out the clips that were playing; they stop after it.
         if !stopping { takeLaunchRequests(playing: playing) }
@@ -564,7 +572,8 @@ public final class EngineCore: @unchecked Sendable {
             }
         }
         renderVoices(rendered..<frames, left: left, right: right)
-        if clocking { sendClocks(snapshot, blockEnd: blockEnd) }
+        // Counted on with clock out off too, so switching it on mid-song sends no burst.
+        sendClocks(snapshot, blockEnd: blockEnd, emitting: clocking)
         renderUnits(frames: frames)
         mixFrom = snapshot.time.position(atSample: playhead)
         mixTo = snapshot.time.position(atSample: blockEnd)
@@ -860,9 +869,13 @@ public final class EngineCore: @unchecked Sendable {
         playhead = Swift.max(0, Int64((seconds * snapshot.time.sampleRate).rounded(.down)))
         position.store(playhead, ordering: .relaxed)
         for (index, lane) in snapshot.audioLanes.enumerated() where index < Self.smoothedAudioTracks {
-            remapFade[index] = before
+            // Nothing found below means nothing played: reading `before` against the new
+            // regions would sound audio the old tempo never reached (A10 review, A).
+            remapFade[index] = Self.nothingToFade
             guard let same = was.audioLanes.first(where: { $0.track == lane.track }) else { continue }
-            if lane.slot >= 0, lane.slot < slotCapacity, sessions[lane.slot].overrides {
+            // The slot's session is this track's only while the slot was this track's; a slot
+            // handed over is reset after this, and plays its regions (A10 review, D).
+            if lane.slot >= 0, lane.slot < slotCapacity, owners[lane.slot] == lane.track, sessions[lane.slot].overrides {
                 // A launched clip: its pass starts on a tick, which the new tempo puts elsewhere.
                 let session = sessions[lane.slot]
                 guard let clip = session.clip, let loop = lane.loops.first(where: { $0.clip == clip }) else { continue }
@@ -994,12 +1007,13 @@ public final class EngineCore: @unchecked Sendable {
         emit(0xFB)
     }
 
-    private func sendClocks(_ snapshot: EngineSnapshot, blockEnd: Int64) {
+    /// Times every clock due before `blockEnd`, or only counts past them while clock out is off.
+    private func sendClocks(_ snapshot: EngineSnapshot, blockEnd: Int64, emitting: Bool) {
         let clockTicks = MusicalTime.ticksPerQuarter / Self.clocksPerQuarter
         while true {
             let sample = snapshot.time.sample(at: nextClock)
             guard sample < blockEnd else { break }
-            emit(0xF8, at: Int(Swift.max(sample - playhead, 0)))
+            if emitting { emit(0xF8, at: Int(Swift.max(sample - playhead, 0))) }
             nextClock += clockTicks
         }
     }
@@ -1236,9 +1250,13 @@ public final class EngineCore: @unchecked Sendable {
                 let length = Swift.min(Int(Self.regionFadeFrames), frames)
                 let state = session ? sessions[lane.slot] : SessionSlot()
                 let home = playhead
-                playhead = remapped && index < Self.smoothedAudioTracks ? remapFade[index] : playhead - nudgedBy
-                addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
-                playhead = home
+                let heard = remapped && index < Self.smoothedAudioTracks ? remapFade[index] : playhead - nudgedBy
+                // What follows fades in either way; only what played fades out.
+                if heard != Self.nothingToFade {
+                    playhead = heard
+                    addAudio(lane, state: state, from: 0, to: length, snapshot, fadeIn: 0..<0, fadeOut: 0..<length)
+                    playhead = home
+                }
                 fadeEnd = length
             }
             while from < frames {

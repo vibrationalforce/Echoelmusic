@@ -181,6 +181,24 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNotNil(firstSound(render(mono, frames: 4_800, channels: 1)[0]), "one channel gets the mix")
     }
 
+    /// Clock out switched on mid-song sends the clocks from there, not every clock since the
+    /// play started (A10 review): at 120 BPM a clock is due every 1,000 samples, so 480 frames
+    /// hold at most one.
+    func testClockOutSwitchedOnMidSongSendsNoBurst() throws {
+        let s = try song([[]])
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 48_000)
+        engine.setClockOutEnabled(true)
+        _ = render(engine, frames: 480, block: 480)
+        var clocks = 0
+        while let message = engine.clockOut.pop() {
+            if message.status == 0xF8 { clocks += 1 }
+        }
+        XCTAssertLessThanOrEqual(clocks, 1)
+    }
+
     func testMIDIClockStartsTicks24PerQuarterAndRepositionsOnASeek() throws {
         let s = try song([[]])
         let engine = core()

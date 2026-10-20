@@ -4,9 +4,11 @@
 ///
 /// Pure and allocation-free: a render block calls it.
 public enum DemoGate {
-    static let period: Double = 30
-    static let silenceStart: Double = 28
-    static let ramp: Double = 0.01
+    // Computed, not stored: the render thread reads them, and a stored static is initialised
+    // lazily on its first read.
+    static var period: Double { 30 }
+    static var silenceStart: Double { 28 }
+    static var ramp: Double { 0.01 }
 
     /// The gain `frame` frames in: 1, ramping to 0 over the 10 ms before second 28, 0, and
     /// ramping back to 1 over the 10 ms before second 30.

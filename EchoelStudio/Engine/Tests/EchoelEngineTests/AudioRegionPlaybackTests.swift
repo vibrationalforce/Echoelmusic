@@ -104,6 +104,24 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertLessThan(steepest, 0.08, "no step where the tempo moved the playhead")
     }
 
+    /// A tempo change in the gap before a region fades nothing out (A10 review, A): the old tempo
+    /// played nothing there. The region starts a beat in (24,000 samples at 120 BPM); 500 samples
+    /// before it, 125 BPM puts the playhead at 22,560 and the region at 23,040 — 480 samples of
+    /// silence still to come. Reading the old position against the new region sounded 64 samples.
+    func testATempoChangeBeforeARegionStaysSilent() throws {
+        var s = try song(frames: 48_000, fileRate: rate)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: rate))
+        let engine = playing(s.project, samples: [s.media.id: buffer])
+        XCTAssertTrue(render(engine, frames: beat - 500).allSatisfy { $0 == 0 }, "before the region")
+        try Command.setTempo(bpm: 125).apply(to: &s.project)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 2, samples: [s.media.id: buffer]))
+        XCTAssertTrue(render(engine, frames: 400).allSatisfy { $0 == 0 }, "still before it at the new tempo")
+        XCTAssertGreaterThan(render(engine, frames: 4_800).map { abs($0) }.max() ?? 0, 0.1, "and then it plays")
+    }
+
     func testATrimPlaysOnlyThePartItChose() throws {
         var s = try song(frames: 9_600, fileRate: rate)
         let samples = Array(repeating: Float(0.25), count: 4_800) + Array(repeating: Float(0.75), count: 4_800)
