@@ -463,7 +463,7 @@ final class AudioEngine {
             guard let wait = recovery.failed() else {
                 log.error("engine: automatic tries used up")
                 isStalled = true
-                lastError = "Audio could not start. Tap Restart audio, or end the call or the other app using it."
+                lastError = "Audio could not start. Tap Restart audio once the call or the other app using audio has ended."
                 return
             }
             log.info("engine: trying again in \(String(describing: wait), privacy: .public)")
@@ -571,7 +571,9 @@ final class AudioEngine {
     func play() {
         notice = nil
         wake("play")
-        guard let core else { return }
+        // A heal that failed leaves nothing rendering. The transport must not run over it: a
+        // retry that succeeds later (the call ended) would start the song by itself.
+        guard let core, engine.isRunning else { return }
         core.play()
         isPlaying = true
     }
