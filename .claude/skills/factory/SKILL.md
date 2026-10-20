@@ -125,16 +125,18 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    `git -c core.quotePath=false diff --name-only --no-renames`: mit `--no-renames` erscheint eine
    verschobene Datei mit altem UND neuem Pfad — sonst verschwände ein weggeschobener Hook aus der
    Sperrprüfung —, und ohne Oktal-Escapes passt ein Name mit Umlaut noch auf sein Präfix; ein Paar
-   umschließender Anführungszeichen streicht der Workflow selbst, ein danach leerer Eintrag fällt weg).
+   umschließender Anführungszeichen streicht der Workflow selbst, und nur ein danach LEERER Eintrag fällt
+   weg — ein Name nur aus Leerraum, BOM oder NBSP ist nicht leer, `trim()` würde ihn leeren).
    Git druckt jedes Zeichen ab U+0080 ROH, also auch C1-, unsichtbare, Bidi-, Trenn- und Nicht-ASCII-
    Leerzeichen, und füllt keinen Namen auf — ein Name damit oder mit Leerraum am Rand kann eine echte
    Datei sein, gebaut, um wie eine andere auszusehen. Darum wird außer einem Paar Anführungszeichen nichts
    abgeschnitten (`trim()` striche U+FEFF, U+2028, U+2029 und jedes Zs-Leerzeichen am Rand weg). Melden ihn
    ALLE Linsen, eskaliert er fest (Schritt 6, Regel 2); meldet ihn nicht jede, ist es `RERUN` mit den
    Namen derer, die ihn meldeten, und der Approver läuft nicht. Ein C0-Steuerzeichen oder DEL druckt Git
-   nie roh: so ein Name ist immer `RERUN` mit dem Namen der Linse. Ist die Grenze erreicht oder zeigt
-   irgendeine Liste eine Sperr-Änderung, wird jedes solche `RERUN` ein Vermerk im Grund (`name check:`) —
-   kein Dateiname hält eine feste Eskalation in einer Schleife. Eine Linse ganz ohne Liste oder mit leerer
+   nie roh: so ein Name ist `RERUN` mit dem Namen der Linse und macht den Aufruf nie `INVALID`. Ist die
+   Grenze erreicht, zeigt irgendeine Liste eine Sperr-Änderung oder meldet jede Linse einen versteckten
+   Namen — jedes davon eine feste Eskalation —, wird jedes solche `RERUN` ein Vermerk im Grund
+   (`name check:`): kein Dateiname hält eine feste Eskalation in einer Schleife. Eine Linse ganz ohne Liste oder mit leerer
    Liste ruft weiterhin zuerst neu: das ist die Linse, nicht der Inhalt des Repos. Und der
    Workflow rechnet daraus SELBST, was im Scope liegt (Git-Pfadregel: ein Pfad deckt sich selbst und
    alles darunter, ein Präfix nur an einem `/`) und was außerhalb (`outsideScope` — das bekommt
@@ -169,10 +171,14 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    2. Der Diff ändert die Konfiguration, die die Sperre DEFINIERT — `.claude/settings.json`,
       `.claude/settings.local.json` (gitignoriert, mit `git add -f` aber trackbar, und Claude Code
       wertet sie VOR `settings.json`), `.mcp.json` oder etwas unter `.claude/hooks/`, auch außerhalb
-      von `paths` → **ESCALATE**, ohne
+      von `paths` und in JEDER Schreibweise, die auf irgendeinem Dateisystem diese Datei sein kann
+      (verglichen wird der gefaltete Name: versteckte Zeichen und Rand-Leerraum entfernt, NFKC,
+      Kleinbuchstaben — `.claude/Hooks/` ist auf einem APFS-Volume ohne Groß-/Kleinunterscheidung
+      `.claude/hooks/`) → **ESCALATE**, ohne
       Ermessen des Approvers und vor jeder Nacharbeit. Ein Job wird nie an der Sperre gemessen, die
       er selbst geändert hat. Bei `.claude/settings.local.json` sagt der Grund zusätzlich, dass das
-      Token zu tauschen und der Commit aus der Geschichte zu entfernen ist. Ebenso fest eskaliert ein
+      Token zu tauschen und der Commit aus der Geschichte zu entfernen ist; bei einem Namen, der nur
+      GEFALTET diese Datei ist, sagt er „kann ihr Token tragen“, nie „trägt“. Ebenso fest eskaliert ein
       Dateiname, den JEDE Linse mit einem versteckten Zeichen meldet (Schritt 4); der Grund zeigt jeden
       Namen escaped (`\uXXXX`). Treffen Grenze, Sperre und ein solcher Name zusammen, nennt der Grund
       jeden Teil — die Token-Notiz geht an der Grenze nicht verloren (Job 004, Runde 1).
@@ -181,7 +187,7 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
       Beleg oder eine Frage an den Menschen → **ESCALATE**.
    5. Ein `code`-Kriterium offen → **REWORK** (solange Runden übrig sind), sonst ESCALATE.
    6. Alles erfüllt, aber der Diff ändert den PRÜFER (`.claude/workflows/echoel-factory-review.js`,
-      `.claude/agents/`) → **ESCALATE** statt APPROVE: ein Prüfer, den der Job geschrieben hat, kann
+      `.claude/agents/`, gefaltet verglichen wie die Sperre) → **ESCALATE** statt APPROVE: ein Prüfer, den der Job geschrieben hat, kann
       ihn nicht freigeben. Anders als Regel 2 überspringt das die Nacharbeit NICHT — der Founder soll
       eine fertige Fassung beurteilen.
    7. Sonst **APPROVE**; `device`-Kriterien kommen als `deviceAsks` mit, sensible Dateien außerhalb
@@ -267,7 +273,8 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      `EchoelStudio/RELEASE`, die Fastlane-Dateien `fastlane/Fastfile`, `Appfile`, `Deliverfile` und
      `Pluginfile`, der `Gemfile` (eine Zeile dort aktivierte die heute inerte `Pluginfile`), Store-Text,
      `ContentPipeline/CLAIMS.md`, `docs/dev/FEATURE_STATUS.md` und `.claude/settings.local.json`, die
-     das Token hält — die Liste ist `SENSITIVE` im Workflow) deckt die Freigabe nicht. Sie kommen als `scopeOpen` in `board.json`, und der Job
+     das Token hält — die Liste ist `SENSITIVE` im Workflow, ohne Groß-/Kleinunterscheidung auf dem
+     gefalteten Namen geprüft) deckt die Freigabe nicht. Sie kommen als `scopeOpen` in `board.json`, und der Job
      bleibt auf `--open`, bis jeder Eintrag in `reviewedBy` die Nummer eines ANDEREN, FERTIGEN Jobs
      (`stage: "done"`) oder `founder JJJJ-MM-TT` trägt — dieselbe Strenge wie das Datum einer
      Geräte-Prüfung; ein Job im Spec-Stadium oder ein verworfener hat nichts geprüft. Fehlt
@@ -335,9 +342,9 @@ nächsten Commit, der `Sources/` oder `Tests/` berührt — eine reine `.claude/
 kein Gate. Wer den Workflow ändert, transkribiert die Ansprüche vor dem Push und fährt
 `python3 -I scripts/factory-review-selftest.py` — die Entscheidungslogik unter Node mit
 Attrappen-Agenten, ein Fall je Zweig von Schritt 6, dazu die PROMPTS, die die Attrappen bekommen
-(Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, jeder liest die Spec am Kopf-SHA, der Approver
-zählt sie blind und liest
-die Sperrliste und den ganzen Job ab der Job-Basis, der Datenblock ist ASCII auf einer Zeile und kann
+(Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, die Linsen mit dem Diff bis zum schließenden
+Backtick, jeder liest die Spec am Kopf-SHA, der Approver zählt sie ZUERST — keine Zahl des PM im Prompt,
+`board.json` und `reviews/` nicht im Diff — und liest die Sperrliste und den Job ab der Job-Basis, der Datenblock ist ASCII auf einer Zeile und kann
 seine Marker nicht schließen). Lädt der Workflow nicht, endet es mit 2, nie mit „grün“. `--mutate` legt jede Zeile seiner
 Mutationstabelle einmal an eine Kopie des Workflows und verlangt, dass ein Fall rot wird; eine
 Zeile, deren Text der Workflow nicht mehr genau einmal enthält, ist ein Fehler, kein Überspringen.

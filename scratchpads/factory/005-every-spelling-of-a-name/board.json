@@ -1,0 +1,36 @@
+{
+ "id": "005-every-spelling-of-a-name",
+ "title": "Nur leere Namen fallen weg, Sperre und Prüfer in jeder Schreibweise",
+ "stage": "build",
+ "round": 0,
+ "base": "f5a495fda271a17088e4b7adfea1b74ec4064083",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "e2e-test-agent"
+ ],
+ "paths": [
+  ".claude/workflows/echoel-factory-review.js",
+  ".claude/skills/factory",
+  "scripts/factory-review-selftest.py",
+  "scripts/INDEX.md",
+  "Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift",
+  "scratchpads/factory/005-every-spelling-of-a-name"
+ ],
+ "criteria": 8,
+ "deviceCriteria": [],
+ "founderAssumptions": 1,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-20",
+   "note": "Nachfolge von Job 004 (GM27): der offene Major (Leer-Test mit trim()) und die Minors der Runde 3; geprüft mit der Prüfer-Fassung der Basis"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-20",
+   "note": "Workflow (nur Leeres fällt weg, Ausweichen vor disguised, gefaltete Sperre/Prüfer/SENSITIVE, zweistufige Token-Notiz, C0 nie Scope-INVALID), Selbsttest (Mutationen 131/131), SKILL.md, INDEX, Wächter-Ansprüche 8–10 (an f5a495fda rot durch die Änderung, am Kopf grün); kein Lauf außer dem Wächter im Test-Bundle"
+  }
+ ]
+}

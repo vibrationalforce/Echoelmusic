@@ -274,34 +274,44 @@ const capReached = open.length > 0 && round > MAX_REWORK_ROUNDS
 const noList = lenses.filter((name, i) => reviews[i] && !Array.isArray(reviews[i].changedFiles))
 if (noList.length) return { ...echo, decision: 'RERUN', missing: noList.map(l => `${l} (no changedFiles)`), reviews: graded }
 // git quotes a name that holds a C0 control character, DEL, a double quote or a backslash ("..."); one pair of quotes is stripped, so a
-// quoted .claude/hooks/ path still matches the lock. An entry that is blank after unquoting is no name and drops
-// out. Nothing else is trimmed: git pads no name, and trim() strips U+FEFF, U+2028, U+2029 and every Zs space, so a
-// hidden character at the start or end of a real name would vanish before the test below (job 004, round 2).
+// quoted .claude/hooks/ path still matches the lock. Only an entry that is EMPTY after unquoting is no name and drops
+// out. Nothing else is trimmed, and blank is not empty: git pads no name, and trim() turns a name made only of
+// spaces, U+00A0, U+FEFF, U+2028 or U+3000 into '' — a real file at the root would vanish before the test below
+// (job 004, rounds 2 and 3).
 const unquote = (f) => f.length > 1 && f.startsWith('"') && f.endsWith('"') ? f.slice(1, -1) : f
 const lists = lenses.map((name, i) => reviews[i] && Array.isArray(reviews[i].changedFiles)
-  ? reviews[i].changedFiles.filter(f => typeof f === 'string').map(f => unquote(f)).filter(f => f.trim()) : null)
+  ? reviews[i].changedFiles.filter(f => typeof f === 'string').map(f => unquote(f)).filter(f => f !== '') : null)
 const listed = lists.filter(l => l !== null)
 const changed = [...new Set(listed.flat())].sort()
-const lockChanged = changed.filter(isLockConfig)
-const judgeChanged = changed.filter(isJudge)
+const forgedChar = /[\x00-\x1f\x7f]/
+const hiddenChar = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Default_Ignorable_Code_Point}]|(?! )\p{Zs}/u
+const hiddenChars = new RegExp(hiddenChar.source, 'gu')
+const hidden = (f) => hiddenChar.test(f) || f !== f.trim()
+// The lock, the judge and the sensitive surfaces are matched on the FOLDED name: control, invisible and padding
+// characters removed, NFKC (it maps U+017F to an ASCII s), lower case. A name that could be one of them on ANY file
+// system counts as one — .claude/Hooks/ is .claude/hooks/ on a case-insensitive APFS volume, and a padded token
+// name is still the token file (job 004, round 3). Folding only ever adds an escalation, never removes one; the
+// scope (inScope) stays exact, because git paths in the repository do tell case apart. The lists are written
+// folded (claims 8 and 9).
+const fold = (f) => f.replace(hiddenChars, '').trim().normalize('NFKC').toLowerCase()
+const lockChanged = changed.filter(f => isLockConfig(fold(f)))
+const judgeChanged = changed.filter(f => isJudge(fold(f)))
 // git never prints C0 or DEL raw, so a name that still carries one is no name a lens copied from git: a miscount, or
 // a name built to break a prompt. Everything from U+0080 up git prints RAW with core.quotePath=false — C1 controls,
 // line and paragraph separators, bidi controls, zero-width and the other invisible format characters (measured, job
 // 004 round 1) — so such a name can be a real file built to look like another (Trojan Source). Reported by every lens
 // that listed files, it is real and escalates with the lock below; reported by not every lens, those lenses
 // miscounted. Hidden also counts: a default-ignorable code point (variation selectors, the Hangul fillers, U+034F),
-// a space other than U+0020, and leading or trailing whitespace. With the cap reached or a lock change in any list a
-// name RERUN becomes a note in the reason instead: no file name can hold a fixed escalation in a RERUN loop. A lens
-// that answered without a list, or with an empty one, still reruns first (above and below): that is the lens, not
-// the repository, and the same content cannot cause it again.
-const forgedChar = /[\x00-\x1f\x7f]/
-const hiddenChar = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Default_Ignorable_Code_Point}]|(?! )\p{Zs}/u
-const hidden = (f) => hiddenChar.test(f) || f !== f.trim()
+// a space other than U+0020, and leading or trailing whitespace (a name of whitespace alone included). With the cap
+// reached, a lock change or a disguised name in any list — each a fixed escalation — a name RERUN becomes a note in
+// the reason instead: no file name can hold a fixed escalation in a RERUN loop. A lens that answered without a
+// list, or with an empty one, still reruns first (above and below): that is the lens, not the repository, and the
+// same content cannot cause it again.
 const disguised = changed.filter(f => !forgedChar.test(f) && hidden(f) && listed.every(l => l.includes(f)))
 const misread = (list) => list.some(f => forgedChar.test(f)) ? 'a file name with a control character git never prints raw'
   : list.some(f => hidden(f) && !disguised.includes(f)) ? 'a file name with an invisible character not every lens reports' : ''
 const garbled = lenses.map((name, i) => Array.isArray(lists[i]) && misread(lists[i]) ? `${name} (${misread(lists[i])})` : '').filter(Boolean)
-if (garbled.length && !lockChanged.length && !capReached) return { ...echo, decision: 'RERUN', missing: garbled, reviews: graded }
+if (garbled.length && !lockChanged.length && !capReached && !disguised.length) return { ...echo, decision: 'RERUN', missing: garbled, reviews: graded }
 // Every lens answered and saw nothing: the range is empty, and the same call again sees the same nothing.
 // With a lens missing, the round is a RERUN (below), not a verdict on the call.
 if (lists.every(l => l !== null) && !changed.length) return { decision: 'INVALID', problems: [`no changed file in ${range}`], ...echo }
@@ -311,11 +321,15 @@ if (blind.length) {
   log(`${blind.join(', ')} returned no changedFiles while others did — rerun, the call is not wrong`)
   return { ...echo, decision: 'RERUN', missing: blind.map(l => `${l} (empty changedFiles)`), reviews: graded }
 }
+// A name with a C0 character is no name git printed (it reaches here only beside a fixed escalation, as a
+// note): it never makes the call INVALID, or a lens that forged every name would turn the cap into an INVALID. It
+// still counts as outside and as sensitive below — nothing a lens reported leaves the reason.
 const outsideScope = changed.filter(f => !inScope(f))
-if (changed.length && outsideScope.length === changed.length) {
-  return { decision: 'INVALID', problems: [`none of the ${changed.length} changed file(s) in ${range} lies under paths`], ...echo }
+const named = changed.filter(f => !forgedChar.test(f))
+if (named.length && named.every(f => !inScope(f))) {
+  return { decision: 'INVALID', problems: [`none of the ${named.length} changed file(s) in ${range} lies under paths`], ...echo }
 }
-const sensitiveOutside = outsideScope.filter(f => SENSITIVE.some(r => r.test(f)))
+const sensitiveOutside = outsideScope.filter(f => SENSITIVE.some(r => new RegExp(r.source, 'i').test(fold(f))))
 const scopeInfo = { changedCount: changed.length, outsideScope, sensitiveOutside, lockChanged, judgeChanged, disguised, garbled }
 if (outsideScope.length) log(`${outsideScope.length} changed file(s) outside paths: this approval does not cover them`)
 const missing = graded.filter(g => g.verdict === 'MISSING').map(g => g.lens)
@@ -346,8 +360,12 @@ const fenced = ascii(graded)
 // round that also commits the token still says to rotate it (job 004, round 1). Names go through ascii() here too:
 // the founder reads the reason in decision.md and the inbox, and a name can carry a bidi or invisible character.
 const shownNames = (l) => l.map(f => ascii(f).slice(1, -1)).join(', ')
-const tokenNote = lockChanged.includes('.claude/settings.local.json')
-  ? '; .claude/settings.local.json holds a token: rotate it and remove the commit from the history' : ''
+// The exact token file holds a token; a name that only FOLDS to it may (a lens padded it, or a lookalike was
+// committed) — the reason says so without calling the lookalike the token file (job 004, rounds 2 and 3).
+const TOKEN_FILE = '.claude/settings.local.json'
+const tokenNote = lockChanged.includes(TOKEN_FILE) ? `; ${TOKEN_FILE} holds a token: rotate it and remove the commit from the history`
+  : lockChanged.some(f => fold(f) === TOKEN_FILE)
+    ? `; a name that folds to ${TOKEN_FILE} may hold its token: if it does, rotate it and remove the commit from the history` : ''
 const fixedParts = []
 if (capReached) fixedParts.push(`rework cap of ${MAX_REWORK_ROUNDS} reached with ${open.length} open finding(s)`)
 if (lockChanged.length) fixedParts.push(`the change edits the lock configuration (${shownNames(lockChanged)})${tokenNote}`)
@@ -417,7 +435,7 @@ const acceptance = approver && Array.isArray(approver.acceptance) ? approver.acc
 const questions = approver && Array.isArray(approver.forTheHuman) ? approver.forTheHuman : []
 const pronounced = !approver ? '' : approver.decision === 'ESCALATE' ? 'the approver escalated'
   : questions.length ? `${questions.length} question(s) for the founder` : ''
-// The PM's numbers count only where the approver's blind count of the spec agrees (job 003, round 2: a stale
+// The PM's numbers count only where the approver's own count of the spec, made first, agrees (job 003, round 2: a stale
 // deviceCriteria excused a criterion, an undercount left one ungraded).
 const shown = (v) => v === undefined ? 'nothing' : ascii(v)
 const sameSet = (x, y) => Array.isArray(x) && x.length === y.length && y.every(n => x.includes(n))

@@ -28,7 +28,8 @@
 //    `PROTECTED_FILES` and each `Edit(/…)`/`Write(/…)` file in `permissions.ask` of
 //    `.claude/settings.json` is in the workflow's `LOCK_CONFIG`; each directory in the hook's
 //    `PROTECTED_DIRS` and each `…/**` entry of `permissions.ask` is in `LOCK_DIRS`; and the
-//    predicate `isLockConfig` reads both lists. The hook half must parse on its own, and a file rule in
+//    predicate `isLockConfig` reads both lists, on the FOLDED name, with every entry in lower case (job 004,
+//    round 3: `.claude/Hooks/` is the lock on a case-insensitive volume). The hook half must parse on its own, and a file rule in
 //    permissions.ask the scan cannot read is a failure, not a skip (job 003, round 2: either would
 //    leave a lock path unchecked while the claim stayed green). Three lists of one lock is #416: a path added to the
 //    hook or to permissions.ask and not to the workflow would be judged by the approver's discretion
@@ -37,7 +38,7 @@
 //    released or not — a dated release costs one inbox answer, a silent miss costs the lock.
 // 9. The judge cannot approve its own edit: `JUDGE_FILES` holds this workflow, `JUDGE_DIRS` holds
 //    `.claude/agents/` (the lens definitions the harness loads from the tree under review), the
-//    predicate `isJudge` reads both, and the judge branch sits BEFORE the APPROVE branch of the decision
+//    predicate `isJudge` reads both on the folded name, and the judge branch sits BEFORE the APPROVE branch of the decision
 //    (job 003, round 1: the round was reviewed by the very copy it had edited).
 // 10. What the round knows from its own measurement escalates before any count is asked again: the
 //    fixed escalation has a part for the rework cap and a part for a lock change, `fixed` joins EVERY
@@ -46,9 +47,9 @@
 //    and every RERUN after `phase('Approve')` — `decision: 'RERUN'` and `decision = 'RERUN'` alike — sits
 //    AFTER `if (escalation) {`, so neither the spec-count note nor the graded-set note can call the same
 //    round again in front of them (job 003, round 3: two count RERUNs stood ahead of the cap and the lock,
-//    and a RERUN re-calls a round nothing holds still). The file-name RERUN yields to the cap and to a lock
-//    change, and `capReached` is computed before it (job 004, round 2: a name only some lenses reported
-//    reran a capped round). And a numbered criterion the approver labels `founder` is never code evidence:
+//    and a RERUN re-calls a round nothing holds still). The file-name RERUN yields to the cap, a lock change
+//    and a disguised name, and `capReached` is computed before it (job 004, round 2: a name only some lenses
+//    reported reran a capped round; round 3: the same name held a disguised one). And a numbered criterion the approver labels `founder` is never code evidence:
 //    `kindOf` maps it to `founderLabel`, and `metCode` admits `code` only.
 //
 // GRADING (§3). On the parent tree the workflow and the skill do not exist: every claim is red
@@ -73,6 +74,10 @@
 // change, the `kindOf` needle carries the fix; the order scan is red there by ANCHOR ABSENCE (no
 // `if (escalation) {`). Every needle runs BEFORE the scan's early return, so each gets
 // a verdict on the parent. Transcribed in Python against both trees.
+// Job 005, graded on its parent `f5a495fda`: the two fold needles of claims 8 and 9 and the widened name-RERUN
+// needle of claim 10 are FORWARD (red there by the change: the parent matched the raw name and let the name RERUN
+// stand before a disguised one); the two lower-case checks are COUNTERWEIGHTS, green on both trees — every
+// entry already is lower case — and make an upper-case entry visible, which the fold could never match.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
@@ -291,6 +296,16 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             `isLockConfig` in \(Self.workflowPath) no longer reads both LOCK_CONFIG and LOCK_DIRS; the lists \
             above would be checked against a predicate that ignores them.
             """)
+        XCTAssertTrue(workflowCode().contains("const lockChanged = changed.filter(f => isLockConfig(fold(f)))"), """
+            `lockChanged` in \(Self.workflowPath) no longer tests the FOLDED name: `.claude/Hooks/…` is \
+            `.claude/hooks/…` on a case-insensitive volume, and a token name a lens padded is still the token \
+            file (job 004, round 3).
+            """)
+        let unfoldedLock = lockFiles.union(lockDirs).filter { $0 != $0.lowercased() }
+        XCTAssertTrue(unfoldedLock.isEmpty, """
+            LOCK_CONFIG / LOCK_DIRS in \(Self.workflowPath) hold \(unfoldedLock.sorted()), a spelling the folded \
+            name never equals, so that lock path would never escalate. Write every entry in lower case.
+            """)
     }
 
     func testTheJudgeCannotApproveItsOwnEdit() {
@@ -308,6 +323,15 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             """)
         XCTAssertTrue(code.contains("const isJudge = (f) => JUDGE_FILES.includes(f) || JUDGE_DIRS.some(d => f.startsWith(d))"), """
             `isJudge` in \(Self.workflowPath) no longer reads both JUDGE_FILES and JUDGE_DIRS.
+            """)
+        XCTAssertTrue(code.contains("const judgeChanged = changed.filter(f => isJudge(fold(f)))"), """
+            `judgeChanged` in \(Self.workflowPath) no longer tests the FOLDED name: on a case-insensitive volume \
+            `.claude/Workflows/…` is the judge, and a job that edits it would approve itself (job 004, round 3).
+            """)
+        let unfoldedJudge = judgeFiles.union(judgeDirs).filter { $0 != $0.lowercased() }
+        XCTAssertTrue(unfoldedJudge.isEmpty, """
+            JUDGE_FILES / JUDGE_DIRS in \(Self.workflowPath) hold \(unfoldedJudge.sorted()), a spelling the folded \
+            name never equals. Write every entry in lower case.
             """)
         guard let judgeBranch = code.range(of: "} else if (judgeChanged.length) {"),
               let approveBranch = code.range(of: "decision = 'APPROVE'") else {
@@ -348,7 +372,7 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
             count RERUN could stand in front of an escalation the round already knows.
             """)
         let capDefinition = code.range(of: "const capReached = open.length > 0 && round > MAX_REWORK_ROUNDS")
-        let nameRerun = code.range(of: "if (garbled.length && !lockChanged.length && !capReached) return")
+        let nameRerun = code.range(of: "if (garbled.length && !lockChanged.length && !capReached && !disguised.length) return")
         if let capDefinition, let nameRerun {
             XCTAssertLessThan(capDefinition.lowerBound, nameRerun.lowerBound, """
                 `capReached` in \(Self.workflowPath) is computed after the file-name RERUN, so that RERUN cannot \
@@ -356,9 +380,10 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
                 """)
         } else {
             XCTFail("""
-                The file-name RERUN in \(Self.workflowPath) no longer yields to the cap and to a lock change \
-                (`if (garbled.length && !lockChanged.length && !capReached) return`, after `const capReached`): a \
-                name only some lenses report would stand in front of a fixed escalation (job 004, round 2).
+                The file-name RERUN in \(Self.workflowPath) no longer yields to the cap, a lock change and a \
+                disguised name (`if (garbled.length && !lockChanged.length && !capReached && !disguised.length) \
+                return`, after `const capReached`): a name only some lenses report would stand in front of a fixed \
+                escalation (job 004, rounds 2 and 3).
                 """)
         }
         let ns = code as NSString
