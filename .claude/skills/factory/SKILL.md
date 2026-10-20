@@ -40,7 +40,7 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
 2. **Spec schreiben** — vier Abschnitte, nicht mehr:
    - **Goal** — ein Satz, was der Nutzer danach kann.
    - **Assumptions** — jede Entscheidung, die du für den Founder triffst („du entscheidest alles“),
-     sichtbar und einzeln. Markiere founder-klassige mit `[FOUNDER]` (Scope nach
+     sichtbar und einzeln. Markiere founder-klassige mit `[FOUNDER]` am ANFANG des Spiegelstrichs (Scope nach
      `docs/dev/FOUNDER_PRODUCT_LAW.md`, Geld, Recht, Lizenztext, Gesundheitswortlaut, App-Store-Abgabe,
      Nutzerdaten löschen, gesperrte Dateien). Der Approver führt jede `[FOUNDER]`-Annahme als
      Eintrag mit Nummer 0 und Art `founder`; der PM übergibt ihre Zahl als `founderAssumptions`
@@ -49,11 +49,12 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      Eintrag, Datum der Antwort (`docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md`); eine offene
      Zeile ist keine Antwort, und dann eskaliert der Workflow. Ein NUMMERIERTES Kriterium ist nie
      `founder`: braucht es den Founder, gehört es als `[FOUNDER]`-Annahme in die Spec. Etikettiert der
-     Approver ein offenes nummeriertes Kriterium trotzdem `founder`, eskaliert der Workflow — er arbeitet
-     es nie als Nacharbeit ab, und eine Eskalation gibt nie frei.
+     Approver ein nummeriertes Kriterium trotzdem `founder`, ist es nie ein Code-Beleg: erfüllt nur mit
+     demselben datierten Beleg, sonst eskaliert der Workflow — er arbeitet es nie als Nacharbeit ab, und
+     eine Eskalation gibt nie frei (Job 003, Runde 3: als `code` gezählt, gab es ohne Beleg frei).
    - **Acceptance criteria** — NUMMERIERT (`1.`, `2.` …), prüfbar, je Kriterium wie es geprüft
      wird (Wächter, Befehl, Datei:Zeile). Was nur ein Gerät, Ohr oder Auge zeigt, steht hier als
-     `[DEVICE]`: es gilt nie als erfüllt und blockiert die Freigabe trotzdem NICHT — es wird eine
+     `[DEVICE]` am ANFANG seines Textes (ein Etikett mitten im Satz ist keins): es gilt nie als erfüllt und blockiert die Freigabe trotzdem NICHT — es wird eine
      Geräte-Bitte (Schritt 6). Welche Nummern `[DEVICE]` sind, sagt die SPEC — und zwar nur, wenn
      ZWEI Lesungen übereinstimmen: der PM übergibt sie als `deviceCriteria`, der Approver zählt sie
      selbst nach (`specDevice`) und etikettiert den Eintrag `device`. Fehlt eine der beiden, zählt das
@@ -69,25 +70,36 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
    warten auf ein Geräte-Urteil). **Eine Scheibe, die `docs/`, `ContentPipeline/` oder
    `fastlane/metadata/` anfasst, wird auf dem LOKALEN Commit geprüft, bevor sie gepusht wird**:
    die Linsen lesen das lokale git, und eine reine `docs/`-Delta geht nach dem Push ohne Gate an
-   die Website (Schritt 6). Den Basis-SHA trägst du beim Anlegen ein,
+   die Website (Schritt 6). **Vor JEDEM Push** muss
+   `git log --oneline origin/<branch>..HEAD -- .claude/settings.local.json` leer sein (für einen neuen
+   Branch `origin/main..HEAD`): die Datei hält ein Token, und ein Commit, der sie auch nur kurz trug,
+   veröffentlicht es mit dem Push — der Workflow sieht das erst danach. Den Basis-SHA trägst du beim Anlegen ein,
    den Kopf-SHA NACH dem Bau-Commit (ein Commit kann seinen eigenen SHA nicht tragen; der Eintrag
    fährt mit dem nächsten Commit mit). Der Workflow verlangt einen echten SHA, nie `HEAD` — die
    Linsen laufen parallel, und ein beweglicher Name kann ihnen verschiedene Stände zeigen.
 4. **Prüfen** (`stage: "review"`) — der gespeicherte Workflow:
-   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, since, criteria, deviceCriteria, founderAssumptions, lenses, paths}})`.
+   `Workflow({name: "echoel-factory-review", args: {job, base, head, round, since, criteria, deviceCriteria, founderAssumptions, recount, lenses, paths}})`.
    `criteria` (Pflicht) ist die Zahl der Abnahmekriterien der Spec, `deviceCriteria` die Liste
-   ihrer `[DEVICE]`-Nummern (`[]` = keine; fehlt sie, ist jedes Kriterium `code`, die strenge Lesart),
+   ihrer `[DEVICE]`-Nummern (`[]` = keine; fehlt sie, gilt `[]` — trägt die Spec dann doch ein
+   `[DEVICE]`-Kriterium, widerspricht die Zählung des Approvers, und es ist `RERUN`),
    `founderAssumptions` (Pflicht, `0` wenn keine) die Zahl ihrer `[FOUNDER]`-Annahmen — damit ZÄHLT der
    Workflow, ob der Approver jede Nummer genau einmal und jede `[FOUNDER]`-Annahme benotet hat, statt
    es zu glauben (Job 001, Runde 3: ein Eintrag gegen acht Kriterien wurde freigegeben). Auch die drei
    Zahlen glaubt er dem PM nicht allein: der Approver zählt die Spec selbst (`specCriteria`,
-   `specDevice`, `specFounder`), und weicht eine Zählung ab, ist es `RERUN` — der PM zählt die Spec neu
-   und ruft dieselbe Runde noch einmal.
+   `specDevice`, `specFounder`) — BLIND, sein Prompt nennt keine Zahl des PM, und Linsen wie Approver
+   lesen die Spec am Kopf-SHA (`git show <head>:<job>/spec.md`), nie aus dem Arbeitsbaum. Weicht eine
+   Zählung ab, ist es `RERUN` — der PM zählt die Spec neu und ruft DIESELBE Runde mit DEMSELBEN `head`
+   noch einmal, jetzt mit `recount: true` (ein Boolean; alles andere ist `INVALID`). Weicht die Zählung
+   dann noch ab, eskaliert der Workflow: welche Zählung stimmt, entscheidet der Founder. Ein `RERUN`
+   ist nie eine neue Runde und nie ein neuer Kopf — hat sich der Kopf geändert, ist es Nacharbeit
+   (Schritt 5). Nach einem ESCALATE ruft der PM denselben Job NICHT erneut; die Antwort steht in der
+   Inbox.
    **Ändert der Job den Prüfer selbst** — `.claude/workflows/echoel-factory-review.js` oder etwas
    unter `.claude/agents/` (die Linsen-Definitionen) —, läuft die Prüfung sonst mit der Fassung, die der
    Job geschrieben hat (der Harness lädt beide aus dem Arbeitsbaum). Dann holt der PM die Fassung von
    der Job-Basis in den Scratchpad (`git show <base>:.claude/workflows/echoel-factory-review.js`) und
-   startet sie mit `Workflow({scriptPath: …, args})` — mit den Argumenten, die DIESE Fassung verlangt.
+   startet sie mit `Workflow({scriptPath: …, args})` — mit den Argumenten, die DIESE Fassung verlangt
+   (die Fassung von Job 003 kennt `recount` nicht und liest die Spec aus dem Arbeitsbaum).
    Das gilt ab Job 004: erst die Fassung von Job 003 kennt die Regel unten (Schritt 6, Regel 6), die
    eine solche Prüfung nie mit APPROVE enden lässt. Job 003 selbst wird mit seiner eigenen Fassung
    geprüft und eskaliert über genau diese Regel.
@@ -143,10 +155,11 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
       wertet sie VOR `settings.json`), `.mcp.json` oder etwas unter `.claude/hooks/`, auch außerhalb
       von `paths` → **ESCALATE**, ohne
       Ermessen des Approvers und vor jeder Nacharbeit. Ein Job wird nie an der Sperre gemessen, die
-      er selbst geändert hat.
+      er selbst geändert hat. Bei `.claude/settings.local.json` sagt der Grund zusätzlich, dass das
+      Token zu tauschen und der Commit aus der Geschichte zu entfernen ist.
    3. Der Approver sagt ESCALATE → **ESCALATE**.
-   4. Ein `founder`-Eintrag offen, ein offenes nummeriertes Kriterium mit dem Etikett `founder` oder
-      eine Frage an den Menschen → **ESCALATE**.
+   4. Ein `founder`-Eintrag offen, ein nummeriertes Kriterium mit dem Etikett `founder` ohne datierten
+      Beleg oder eine Frage an den Menschen → **ESCALATE**.
    5. Ein `code`-Kriterium offen → **REWORK** (solange Runden übrig sind), sonst ESCALATE.
    6. Alles erfüllt, aber der Diff ändert den PRÜFER (`.claude/workflows/echoel-factory-review.js`,
       `.claude/agents/`) → **ESCALATE** statt APPROVE: ein Prüfer, den der Job geschrieben hat, kann
@@ -154,11 +167,18 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
       eine fertige Fassung beurteilen.
    7. Sonst **APPROVE**; `device`-Kriterien kommen als `deviceAsks` mit, sensible Dateien außerhalb
       des Scopes als `not covered` im Grund.
-   Vorher vergleicht der Workflow die drei Zahlen des PM mit der Zählung des Approvers (`RERUN` bei
-   Abweichung) und zählt dann: fehlt eine Nummer 1..`criteria`, steht eine doppelt oder eine darüber,
-   oder sind es weniger Nummer-0-Einträge als `founderAssumptions`, ist es `RERUN`. Die Art braucht
+   Vorher vergleicht der Workflow die drei Zahlen des PM mit der Zählung des Approvers und zählt
+   dann: fehlt eine Nummer 1..`criteria`, steht eine doppelt oder eine darüber, oder sind es weniger
+   Nummer-0-Einträge als `founderAssumptions`, oder fehlt der Approver ganz, ist das ein Vermerk.
+   **Die Reihenfolge entscheidet:** was die Runde aus EIGENER Messung weiß — die Grenze (Regel 1) und
+   eine Änderung an der Sperr-Konfiguration (Regel 2) — und ein ESCALATE oder eine Founder-Frage des
+   Approvers (Regeln 3 und 4) eskalieren VOR jeder Zähl-Rückfrage; der Vermerk steht dann im Grund.
+   Nur ohne sie ist ein Vermerk `RERUN` (mit `recount: true` ESCALATE). Grund (Job 003, Runde 3): ein
+   `RERUN` ruft dieselbe Runde noch einmal, und nichts hält den Kopf über diesen Aufruf still — eine
+   Zähl-Rückfrage vor der Grenze hätte die Grenze umgehbar gemacht. Die Art braucht
    beide Lesungen: Nummer 0 ist `founder`; eine Nummer ist `device` nur, wenn sie in `deviceCriteria`
-   steht UND der Approver sie `device` nennt; alles andere ist `code`. Ein `founder`-Eintrag gilt nur als erfüllt, wenn sein Beleg
+   steht UND der Approver sie `device` nennt; nennt er sie `founder`, ist sie ein Founder-Punkt (Regel 4);
+   alles andere ist `code`. Ein `founder`-Eintrag gilt nur als erfüllt, wenn sein Beleg
    `docs/dev/FOUNDER_INBOX.md` oder `memory/decisions.md` UND ein Datum (`JJJJ-MM-TT`) nennt. Der
    Approver prüft außerdem, dass `board.json` am Kopf dieselbe `base` führt, mit der er gerufen
    wurde — sonst eskaliert er, weil der geprüfte Bereich nicht der ganze Job wäre.
@@ -179,7 +199,10 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      außerhalb jedes Pfadfilters (`.claude/**`, `docs/**`, `CLAUDE.md` …). Für einen Wächter, den der Job
      anlegt oder ändert, zählt ein früherer Lauf deshalb nur, wenn AUCH
      `git diff --name-only S..<head> -- <jede Datei, die dieser Wächter liest>` leer ist (welche Dateien das
-     sind, sagen seine Lese-Aufrufe, in `TheFactoryReviewersAreReadOnlyTests` die `text(…)`-Stellen). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
+     sind, sagen seine Lese-Aufrufe — JEDE API, die eine Datei liest oder nach ihr fragt: `text(…)`,
+     `String(contentsOf:)`, `Data(contentsOf:)`, `FileManager.default.fileExists`; in
+     `TheFactoryReviewersAreReadOnlyTests` sind das die `text(…)`-Stellen und die `fileExists`-Prüfung der
+     Inbox). Sonst heißt der Wächter am Kopf „transkribiert, kein Lauf“, nie grün —
      oder ein weiterer Commit berührt die Wächter-Datei und startet den Lauf auf dem letzten Baum
      (Job 003, Runde 2: ein Lauf auf dem Kopf der ersten Nacharbeit hätte sonst einen Workflow-Text
      bestätigt, den die zweite schon geändert hatte):
@@ -216,7 +239,7 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      **Sensible Dateien außerhalb des Scopes** (`sensitiveOutside`: Rechtstext und Lizenzhinweise,
      Datenschutz samt Weiterleitungen und `docs/_headers`, Gesundheit, Barrierefreiheit,
      Entitlements, Privacy-Manifeste, Info.plists, `project.yml`, Workflows, `EchoelStudio/RELEASE`,
-     die Signier-Lanes `fastlane/Fastfile` und `fastlane/Appfile`, Store-Text,
+     die Fastlane-Dateien `fastlane/Fastfile`, `Appfile`, `Deliverfile` und `Pluginfile`, Store-Text,
      `ContentPipeline/CLAIMS.md`, `docs/dev/FEATURE_STATUS.md` und `.claude/settings.local.json`, die
      das Token hält — die Liste ist `SENSITIVE` im Workflow) deckt die Freigabe nicht. Sie kommen als `scopeOpen` in `board.json`, und der Job
      bleibt auf `--open`, bis jeder Eintrag in `reviewedBy` die Nummer eines ANDEREN, FERTIGEN Jobs
@@ -229,7 +252,7 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
      Dateien. Ihre Nummer kommt als `inbox` in `board.json`. Erst greppen, ob die Frage schon dort
      steht.
 7. **Protokoll** — die Workflow-Rückgabe schreibt der PM nach `reviews/round-<n>/<linse>.md`;
-   sie trägt `range`, `since`, `paths`, `criteria`, `deviceCriteria` und `founderAssumptions`, also
+   sie trägt `range`, `since`, `paths`, `criteria`, `deviceCriteria`, `founderAssumptions` und `recount`, also
    steht dort, über welchen Diff und welche Zählung geurteilt wurde. Die drei Zahlen stehen auch in
    `board.json`, wie `paths`: jede Runde liest sie von dort. `board.json` führt nur der PM, und zwar im
    SELBEN Commit wie die Widerlegung oder Nacharbeit, die die Runde abschließt — sonst zeigt das
@@ -244,7 +267,7 @@ Founder-Upload vor (47,2 s); die Endkarten-URL und der Code des Kanals wurden NI
  "lenses": ["code-reviewer", "security-agent", "ux"], "paths": ["<pfad>"],
  "criteria": 5, "deviceCriteria": [], "founderAssumptions": 0,
  "inbox": "<Inbox-Nummer>", "deviceOpen": [{"ask": "<Kurztext>", "inbox": "<§2-Familie>", "verified": "JJJJ-MM-TT"}],
- "scopeOpen": [{"file": "<pfad außerhalb von paths>", "reviewedBy": "<Nummer eines anderen Jobs oder founder JJJJ-MM-TT>"}],
+ "scopeOpen": [{"file": "<pfad außerhalb von paths>", "reviewedBy": "<Nummer eines anderen, fertigen Jobs oder founder JJJJ-MM-TT>"}],
  "history": [{"stage": "spec", "date": "2026-10-19", "note": "…"}]}
 ```
 
@@ -264,7 +287,8 @@ Trivia). `docs/dev/FEATURE_STATUS.md` ist eines der zwei Register, aus denen Sto
 Content ihre Behauptungen holen. Ein Satz auf der
 Website, im Store-Text oder in `ContentPipeline/` ist dagegen eine Behauptung nach außen und läuft
 durch die Factory — die UX-Linse prüft genau das. Die Factory kostet bis zu fünf Agentenläufe je Runde — vier Linsen,
-der Approver nur in der Runde ohne offene Befunde oder an der Grenze; sie lohnt sich ab mehreren
+der Approver nur in der Runde ohne offene Befunde, an der Grenze oder bei einer Änderung an der
+Sperr-Konfiguration (die überspringt die Nacharbeit); sie lohnt sich ab mehreren
 Dateien, einer sichtbaren Fläche oder einer Behauptung nach außen.
 
 ## Was die Factory nicht ersetzt
@@ -278,12 +302,14 @@ Wächter: `Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift` — jede `ag
 Workflows trägt die Nur-Lesen-Klausel, der Wrapper stellt sie wirklich voran, jeder `agentType`
 ist ein Roster-Name, die Rundenzahl hier ist die des Workflows, der Approver liest die Sperrliste
 an der Job-Basis und prüft die Basis in `board.json`, jeder Pfad, über den die Sperre definiert ist (Hook und `permissions.ask`), eskaliert
-fest, und der Prüfer kann seine eigene Änderung nicht freigeben. ⚠️ Er läuft erst mit dem
+fest, der Prüfer kann seine eigene Änderung nicht freigeben, die feste Eskalation steht vor jeder
+Zähl-Rückfrage, und ein `founder`-Etikett ist kein Code-Beleg. ⚠️ Er läuft erst mit dem
 nächsten Commit, der `Sources/` oder `Tests/` berührt — eine reine `.claude/`-Änderung startet
 kein Gate. Wer den Workflow ändert, transkribiert die Ansprüche vor dem Push und fährt
 `python3 -I scripts/factory-review-selftest.py` — die Entscheidungslogik unter Node mit
 Attrappen-Agenten, ein Fall je Zweig von Schritt 6, dazu die PROMPTS, die die Attrappen bekommen
-(Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, der Approver zählt die Spec selbst und liest
+(Nur-Lesen-Klausel zuerst, `paths` an jedem Diff-Befehl, jeder liest die Spec am Kopf-SHA, der Approver
+zählt sie blind und liest
 die Sperrliste und den ganzen Job ab der Job-Basis, der Datenblock ist ASCII auf einer Zeile und kann
 seine Marker nicht schließen). Lädt der Workflow nicht, endet es mit 2, nie mit „grün“. `--mutate` legt jede Zeile seiner
 Mutationstabelle einmal an eine Kopie des Workflows und verlangt, dass ein Fall rot wird; eine

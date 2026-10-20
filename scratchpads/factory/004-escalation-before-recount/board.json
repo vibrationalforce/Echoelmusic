@@ -1,0 +1,36 @@
+{
+ "id": "004-escalation-before-recount",
+ "title": "Eskalation vor jeder Rückfrage, founder-Etikett kein Code-Beleg",
+ "stage": "build",
+ "round": 1,
+ "base": "73e9ae52d77eaaf3e3292aa9841bef3ef716dff8",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "e2e-test-agent"
+ ],
+ "paths": [
+  ".claude/workflows/echoel-factory-review.js",
+  ".claude/skills/factory",
+  "scripts/factory-review-selftest.py",
+  "scripts/INDEX.md",
+  "Tests/CISmoke/TheFactoryReviewersAreReadOnlyTests.swift",
+  "scratchpads/factory/004-escalation-before-recount"
+ ],
+ "criteria": 10,
+ "deviceCriteria": [],
+ "founderAssumptions": 1,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-20",
+   "note": "Nachfolge von Job 003 (GM27): drei offene Majors der Runde 3 und ihre Minors; erstmals mit der Prüfer-Fassung von der Basis geprüft"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-20",
+   "note": "Workflow (feste Eskalation vor jedem Zähl-Vermerk, recount, blinde Zählung, Spec am Kopf, founder-Etikett, Namensprüfung, Deliverfile/Pluginfile, Token-Notiz), Selbsttest (Mutationen 94/94), SKILL.md, INDEX, Wächter-Anspruch 10 (an 73e9ae52d rot durch die Änderung, am Kopf grün); kein Lauf außer dem Wächter im Test-Bundle"
+  }
+ ]
+}
