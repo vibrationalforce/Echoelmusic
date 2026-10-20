@@ -1614,3 +1614,32 @@ Nächstes: Arrangement-Ansicht, dann M2.
   Namen angeführt** — Lesbarkeit für den Founder rechtfertigt keine nackten Namen im Prompt eines Agenten.
   (3) Eine Rückweisung („Nicht eingearbeitet: nichts“) wird so geprüft wie Code: Runde 1 sagte es falsch, Runde 2
   musste es zurücknehmen.
+
+## 2026-10-20 11:20 — Studio übernimmt die CI, Laufzeit-Härtung, zwei Prüfrunden, Masterplan, Build 10009 vorbereitet
+
+Founder: „Die Echoelmusic CI übernehmen und aus den alten TestFlights alles übernehmen, was uns Production wise
+weiterhilft … Am Ende steht der TestFlight Deploy der alles enthält. Sei transparent …"
+- **CI:** `EchoelStudio/**` startet den Auto-Merge, das `Echoel Studio`-Gate (Conclusion) entscheidet für Studio-Code
+  (`cd7133d43`). Neu: ein Starttest im Simulator (`8c487febb`) — Lauf 170 scheiterte an der Infrastruktur, nicht an
+  der App (erster Boot 5 min 58 s Datenmigration; die unsignierte `.appex` bekam keinen Install-Platzhalter,
+  „Invalid placeholder attributes"). `3d6c20118`: Boot während des Builds, Installation einer Kopie ohne `PlugIns/`.
+- **Produktions-Lehren der Alt-App → Studio** (Ultra-Audit R1–R12): Audio-Neustart mit drei Versuchen und „Restart
+  audio" (`AudioRecoveryPolicy`, Engine-Paket, getestet), Heilung beim Play, Absturz-Schutz beim Start
+  (`LaunchRecord`, Core, getestet), Ersatz-Song, Kopfhörer pausiert, Aufnahme endet bei Pause von außen, Plugin
+  lädt nach Absturz neu, Abtastraten-Wechsel behält Playhead und Plugin-Werte. Grün auf Lauf 169 (`b7abb3bbd`).
+- **Prüfrunde über genau diese Härtung** (Workflow `wf_af10572c-4b9`, Prüfer + je ein Gegenprüfer): 10 Befunde, 9
+  bestätigt; 7 behoben (`38daa014f` MIDI-Take bei Ratenwechsel, `44009af87` Eingang und Clock in der
+  Wiederherstellung, `6c3116dc2` still im Hintergrund = aus, `74fe23870` Play nicht über toter Engine,
+  `e843b7d36` Ersatz-Song erst beim Edit schreiben, `985f8bd85` Plugin-Neustarts im 10-min-Fenster). Offen S-50.
+- **Claims-Audit** (`wf_d9f861df-8c2`): 36 Behauptungen, 16 bestätigt, 20 enger; vier Code-Fehler behoben
+  (`57673cf96` Songwechsel verlor Effektwerte, `81133dceb` leerer WAV-Export, `c3ef58028` Return-Solo in place mit
+  Engine-Test, `f4ff0b00f` Arrange öffnet den angetippten Clip). CLAIMS.md hat einen gemessenen Studio-Abschnitt
+  (`336c4140e`); Abschrift aller 22 CLAIMS-Wächter: 21 grün, der rote war vorher schon rot (S-51).
+- **Masterplan-Dokument** „Echoel Masterplan Oktober" (Claude Docs, privat): Stand, kritischer Pfad als
+  Zeitleiste, Aufträge für Echoel diese und nächste Woche, was die Sitzung baut, Aufträge an andere KIs, was nicht
+  gerätegeprüft ist. KI-Runde 3 geschrieben (`f58d6e83e`).
+- TODO-Zwilling 46 von 92 (Befehl). Nichts davon ist gerätegeprüft.
+- ⭐ Lehren: (1) **eine Härtung braucht ihre eigene Prüfrunde am selben Tag** — sieben der zehn Befunde waren
+  dieselbe Gattung: ein Neuaufbau vergaß, was gewollt war. (2) **ein roter CI-Schritt ist erst ein Befund über die
+  App, wenn das Log zeigt, dass die App lief** — Lauf 170 hat sie nie gestartet. (3) **ein Claims-Audit findet
+  Bugs**: vier der zwanzig zu weit gefassten Behauptungen waren falscher Code, nicht falsche Sätze.
