@@ -144,6 +144,93 @@ final class PlaybackPlanTests: XCTestCase {
         XCTAssertEqual(PlaybackPlan(compiling: project), before)
     }
 
+    // MARK: - Reusing a plan (ultra-audit E6)
+
+    /// Two instrument tracks, an audio track and a return, with a placed clip holding one note.
+    private struct Song {
+        var project = Project()
+        let keys = TrackID(), bass = TrackID(), vox = TrackID(), room = TrackID()
+        let clip = ClipID(), placement = PlacementID()
+        let note = Note(pitch: 60, start: 0, length: 480)
+    }
+
+    private func makeSong() throws -> Song {
+        var song = Song()
+        let commands: [Command] = [
+            .addTrack(id: song.keys, name: "Keys", kind: .instrument, index: nil),
+            .addTrack(id: song.bass, name: "Bass", kind: .instrument, index: nil),
+            .addTrack(id: song.vox, name: "Vox", kind: .audio, index: nil),
+            .addTrack(id: song.room, name: "Room", kind: .returnTrack, index: nil),
+            .createClip(track: song.keys, id: song.clip, name: "A", length: bar),
+            .addNotes(song.clip, [song.note]),
+            .placeClip(track: song.keys, id: song.placement, clip: song.clip, start: 0),
+        ]
+        for command in commands { try command.apply(to: &song.project) }
+        return song
+    }
+
+    /// A fader, a mute, a send or a sound parameter leaves the source equal, so the engine keeps
+    /// the plan it has — and that is only right because the plan compiled again is the same.
+    func testAMixOrSoundChangeLeavesTheSourceAndThePlanAsTheyWere() throws {
+        let song = try makeSong()
+        let source = PlaybackPlan.Source(song.project)
+        let plan = PlaybackPlan(compiling: song.project)
+        let changes: [Command] = [
+            .setVolume(.track(song.keys), db: -12),
+            .setVolume(.master, db: -3),
+            .setPan(.track(song.bass), pan: 0.4),
+            .setMute(song.keys, true),
+            .setSolo(song.bass, true),
+            .setSend(track: song.keys, to: song.room, db: -6),
+            .renameTrack(song.keys, name: "Piano"),
+            .setTrackColor(song.bass, colorIndex: 3),
+            .renameProject(name: "Other"),
+            .setInstrumentParameter(song.keys, key: SynthParameter.level.key.rawValue, value: 0.5),
+            .setTimeSignature(TimeSignature(3, 4)),
+            .setKeyRoot(2),
+            .setSwing(0.3),
+            .mapMIDI(MIDIControl(channel: 0, number: 7), .volume(song.keys)),
+            .setAutomation(.volume(song.keys), points: [AutomationPoint(tick: 0, value: -6),
+                                                        AutomationPoint(tick: bar, value: 0)]),
+        ]
+        for command in changes {
+            var changed = song.project
+            try command.apply(to: &changed)
+            XCTAssertEqual(PlaybackPlan.Source(changed), source, "\(command)")
+            XCTAssertEqual(PlaybackPlan(compiling: changed), plan, "\(command)")
+        }
+    }
+
+    /// Every change to what plays — tempo, notes, controllers, a clip's length, placements, the
+    /// instrument tracks and their order — changes the source, so the engine compiles again.
+    func testEveryChangeToWhatPlaysChangesTheSourceAndThePlan() throws {
+        let song = try makeSong()
+        let source = PlaybackPlan.Source(song.project)
+        let plan = PlaybackPlan(compiling: song.project)
+        let changes: [Command] = [
+            .setTempo(bpm: 90),
+            .setTempoChange(at: bar, bpm: 100),
+            .addNotes(song.clip, [Note(pitch: 64, start: 480, length: 240)]),
+            .removeNotes(song.clip, [song.note.id]),
+            .setControls(song.clip, [ControlChange(kind: .controller(number: 1), start: 0, value: 64)]),
+            .setClipLength(song.clip, length: bar / 2),
+            .placeClip(track: song.keys, id: PlacementID(), clip: song.clip, start: bar),
+            .movePlacement(track: song.keys, song.placement, start: bar),
+            .removePlacement(track: song.keys, song.placement),
+            .moveTrack(song.bass, toIndex: 0),
+            .addTrack(id: TrackID(), name: "Lead", kind: .instrument, index: nil),
+            .removeTrack(song.bass),
+            .createClip(track: song.bass, id: ClipID(), name: "B", length: bar),
+            .deleteClip(song.clip),
+        ]
+        for command in changes {
+            var changed = song.project
+            try command.apply(to: &changed)
+            XCTAssertNotEqual(PlaybackPlan.Source(changed), source, "\(command)")
+            XCTAssertNotEqual(PlaybackPlan(compiling: changed), plan, "\(command)")
+        }
+    }
+
     func testFirstIndexFindsThePlayheadPosition() {
         let events = [0, 960, 960, 1_920].map {
             PlaybackPlan.NoteEvent(tick: Tick($0), pitch: 60, kind: .noteOff)

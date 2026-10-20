@@ -42,6 +42,9 @@ final class AudioEngine {
     @ObservationIgnored private var slots = SlotAssigner(capacity: Track.limit(for: .instrument))
     @ObservationIgnored private var generation: UInt64 = 0
     @ObservationIgnored private var revisions = EventRevisions()
+    /// The last compiled plan and what it was compiled from. A change that leaves the source
+    /// equal (a fader, a mute, a parameter) keeps the plan instead of compiling the song again.
+    @ObservationIgnored private var compiled: (source: PlaybackPlan.Source, plan: PlaybackPlan)?
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
     @ObservationIgnored private var clickEnabled = true
@@ -595,7 +598,14 @@ final class AudioEngine {
         live.set(core: core, slot: liveSlot(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
-        let plan = PlaybackPlan(compiling: project)
+        let source = PlaybackPlan.Source(project)
+        let plan: PlaybackPlan
+        if let previous = compiled, previous.source == source {
+            plan = previous.plan
+        } else {
+            plan = PlaybackPlan(compiling: project)
+            compiled = (source, plan)
+        }
         let snapshot = EngineSnapshot(plan: plan, project: project,
                                       slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
                                       samples: samples, units: plugins.units, effects: plugins.chains,

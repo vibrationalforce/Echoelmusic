@@ -42,6 +42,30 @@ public struct PlaybackPlan: Equatable, Sendable {
         public var kind: Kind
     }
 
+    /// Everything `init(compiling:)` reads, and nothing else: the tempo map and each instrument
+    /// track's clips and placements, in track order. A fader, a pan, a mute, a send, a rename or
+    /// a synth parameter leaves it equal, and an equal source compiles to an equal plan — so the
+    /// engine keeps the plan it has instead of compiling the whole song again for every step of
+    /// a fader drag (ultra-audit E6). Comparing two is cheap while nothing changed: the arrays
+    /// share their storage with the song, and equal storage compares in one step.
+    public struct Source: Equatable, Sendable {
+        let tempoMap: TempoMap
+        let tracks: [TrackSource]
+
+        struct TrackSource: Equatable, Sendable {
+            let id: TrackID
+            let clips: [Clip]
+            let placements: [Placement]
+        }
+
+        public init(_ project: Project) {
+            tempoMap = project.tempoMap
+            tracks = project.tracks.compactMap { track in
+                track.kind == .instrument ? TrackSource(id: track.id, clips: track.clips, placements: track.placements) : nil
+            }
+        }
+    }
+
     public init(compiling project: Project) {
         tempoMap = project.tempoMap
         var end: Tick = 0
