@@ -5555,3 +5555,20 @@ Review 2026-11-15.
 
 **Review:** 2026-11-19.
 
+
+### 2026-10-20 — Factory-Prüfer: Eskalation vor jeder Rückfrage, jeder Name in jeder Schreibweise, der Prüfer nie über sich selbst
+
+**Anlass:** Factory-Jobs 001, 003, 004 und 005 — jeder ändert den Prüfer (`.claude/workflows/echoel-factory-review.js`) und endete darum in GM27.
+
+**Entscheidungen (Sitzung unter Founder-Delegation; eine Zeile in `decisions.csv`):**
+1. Eine feste Eskalation, die der Workflow aus EIGENER Messung kennt (Nacharbeitsgrenze, Sperr-Konfiguration, ein Dateiname mit verstecktem Zeichen, den jede Linse meldet), steht vor jeder Zähl- oder Namens-Rückfrage; jeder Teil bleibt im Grund.
+2. Ein `founder`-Etikett ist nie Code-Beleg; der Approver zählt die Spec ZUERST, ohne `board.json` und `reviews/` (eine zweite Lesung, keine unabhängige Messung).
+3. Nur EXAKT leere Einträge fallen aus den Linsen-Listen; Sperre, Prüfer und SENSITIVE prüfen den gefalteten Namen („a name that folds to it“, nie „ist es“); ein C0-Name macht den Aufruf nie INVALID; im Approver-Prompt bleibt jeder Name eine JSON-Zeichenkette.
+4. Ein Job, der den Prüfer ändert, wird mit der Prüfer-Fassung SEINER Basis geprüft und kann sich nie selbst freigeben.
+5. **Konvergenz-Regel:** endet ein Prüfer-Job ohne offenen Blocker oder Major, beginnt die Sitzung keinen Folge-Job für Minors — sie werden aufgeschrieben (S-47) und warten auf die eine Founder-Antwort.
+
+**Gemessen, nicht geglaubt:** jeder Befund wurde vor der Reparatur unter Node nachgestellt; der Selbsttest fängt jede Zeile seiner Mutationstabelle (143/143 am Kopf von Job 005). Die Ausführung des Wächters in CI ist weiter unbelegt (nicht im Log-Fenster).
+
+**Lehre:** Wer etwas aus einem Test ausnimmt, prüft beide Richtungen; ein Satz außerhalb des Zauns hält Namen angeführt.
+
+**Review:** 2026-11-19.

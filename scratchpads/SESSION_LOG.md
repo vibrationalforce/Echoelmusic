@@ -1579,3 +1579,38 @@ Nächstes: Arrangement-Ansicht, dann M2.
 - ⭐ Lehre: der eigene Selbsttest war nach Runde 1 „vollständig“ und ließ drei Mutationen durch, weil er nur
   Entscheidungen prüfte, nicht die Prompts — ein Prüfer, der die Eingabe der Agenten nie liest, prüft nicht, was
   sie sehen. Erst die Mutation zeigt, ob ein Fall beißt.
+
+## 2026-10-20 05:25 — Build 10008, Factory-Jobs 001 und 003–005 eskaliert, die Kette läuft ohne Major zusammen
+
+- Studio: Build 10008 (11.0.0, `f61d7872d`) im TestFlight und mit der App Group signiert (`532e5b169`) — F17s
+  `.auv3`-Hälfte ist signierseitig entschieden; ob der Kauf im Host ankommt, sagt erst SP1–SP5 (F-18b).
+- Job 001 (die Schleife) eskaliert an der Grenze (`305777fc4`): der Approver kannte `.claude/hooks/**` nicht als
+  gesperrt → GM27. Jeder Folge-Job ändert den Prüfer und wird mit der Prüfer-Fassung SEINER Basis geprüft
+  (`Workflow({scriptPath: <git show base:…>})`), nie mit sich selbst; freigeben kann sich keiner.
+- Job 003 (`9237c3c91`…`73e9ae52d`): Sperrliste von der Job-Basis, Abnahme gezählt statt geglaubt; Grenze mit
+  drei Majors (Zähl-Rückfragen vor den Eskalationsregeln, `founder`-Etikett als Code-Beleg).
+- Job 004 (`dcae95345`…`f5a495fda`): feste Eskalation vor jeder Rückfrage, Approver zählt die Spec ZUERST ohne
+  `board.json`/`reviews/`; Grenze mit EINEM Major — `.filter(f => f.trim())` warf einen Namen aus nur NBSP,
+  BOM, U+2028, U+3000 oder Leerzeichen weg (unter Node nachgestellt, git druckt solche Namen roh).
+- Job 005 (`2ee3c736d`…`e6d4758b5`): nur EXAKT leere Einträge fallen weg; Sperre, Prüfer und SENSITIVE prüfen
+  den gefalteten Namen (Steuer-/Formatzeichen raus, `trim`, NFKC, klein — APFS/HFS+-artig, nicht NTFS-Aliase,
+  nicht ß→ss), „a name that folds to it“ statt „ist es“; ein C0-Name macht den Aufruf nie INVALID; im
+  Approver-Prompt bleiben alle Namen JSON-Zeichenketten. Runde 1 REWORK (verfälschter Name in `paths` → INVALID
+  verlor Grenze/Sperre), Runde 2 REWORK (Nacharbeit 1 nahm den Prompt-Namen die Anführung), **Runde 3 alle vier
+  Linsen PASS, 8/8 Kriterien, 143/143 Mutationen, keine Regel gelockert** — eskaliert nur, weil der Job den
+  Prüfer ändert und die `[FOUNDER]`-Annahme an GM27 hängt. Sechs Minors in `decision.md`, optional S-47.
+- **Kein Job 006 begonnen**: die Kette ist zusammengelaufen; eine fünfte Eskalation an dieselbe Frage brächte
+  keine Information. GM27 bleibt EINE Frage für 001/003/004/005 (F-30, Empfehlung ja).
+- Runde 3 von Job 005 überlebte einen Container-Neustart: das Journal hielt die vier Linsen, `resumeFromRunId`
+  ließ nur den Approver neu laufen. Die Runtime markierte dessen Ausgabe als anweisungsförmig (`settings-json`);
+  nachgemessen war es der Pfadname im Satz über die gesperrten Dateien, keine versteckten Zeichen.
+- Gates: `Xcode Compile Check` grün auf allen Job-Köpfen; CI/CD `Build for Testing` grün auf `2ee3c736d` (der
+  Wächter kompiliert), `Run Tests` dort `TEST EXECUTE FAILED` (#396-Form); der Factory-Wächter liegt in keinem
+  Log-Fenster, Ausführung also unbelegt. Auf `92e8052ed`/`c130306c3` lief CI/CD beim Schreiben noch. Auto-Merge
+  rot (F23). TODO-Zwilling 34 von 88 (Befehl). Nichts gerätegeprüft.
+- ⭐ Lehren: (1) **wer etwas aus einem Test AUSNIMMT, prüft beide Richtungen** — Nacharbeit 1 von Job 005 nahm
+  verfälschte Namen aus dem Scope-INVALID und hätte sie beinahe auch aus `sensitiveOutside` genommen
+  (selbst gefunden, `outsideScope` läuft wieder über `changed`). (2) **ein Satz AUSSERHALB des Zauns hält
+  Namen angeführt** — Lesbarkeit für den Founder rechtfertigt keine nackten Namen im Prompt eines Agenten.
+  (3) Eine Rückweisung („Nicht eingearbeitet: nichts“) wird so geprüft wie Code: Runde 1 sagte es falsch, Runde 2
+  musste es zurücknehmen.
