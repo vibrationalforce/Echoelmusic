@@ -98,7 +98,7 @@ public struct ParameterAddress: Hashable, Codable, Sendable, CustomStringConvert
 }
 
 /// An open set of keys: devices and plugins add their own later without touching this file.
-/// Like command names, a key is stored in mappings and lanes and is never renamed.
+/// A key is stored in every mapping and lane that names it and is never renamed (`StoredNamesTests`).
 public struct ParameterKey: RawRepresentable, Hashable, Codable, Sendable {
     public let rawValue: String
     public init(rawValue: String) { self.rawValue = rawValue }

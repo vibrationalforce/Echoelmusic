@@ -30,8 +30,15 @@ on modules below it — never the other way round.
    and the agent build `Command` values; nothing mutates `Project` directly.
 2. **A new command is three edits:** the case in `Command`, its `apply` branch, its
    `CommandCatalog` entry (the compiler enforces the last one). Plus a test.
-3. **Catalog names are stable.** They are stored in MIDI mappings and agent transcripts.
-   Never rename one; add a new command instead.
+3. **What a song stores is frozen.** A song file stores field names, the names of scales, tone
+   systems, track kinds, monitor modes and devices, the `ParameterKey` inside every mapping and
+   lane — and, for the scale, the tone system and the synth waveform, the INDEX of the choice,
+   so a new choice goes at the end of its list. `FormatGoldenTests` pins the shapes,
+   `StoredNamesTests` the names and orders; never rename one, add a new one at the end and to
+   that test in the same commit. The catalog's names, `Command`'s case names and the
+   assistant's tool names are written nowhere (measured 2026-10-20: `ProjectCodec` is the only
+   encoder) — keep them stable anyway, because the assistant's instructions name them, and the
+   day one is written to disk it joins `StoredNamesTests`.
 4. **Validate at the door.** `apply` rejects non-finite numbers, out-of-range values,
    unknown and duplicate ids, and leaves the project untouched when it throws.
 5. **Render thread** (the `AVAudioSourceNode` block in `App/Engine/AudioEngine.swift`, the

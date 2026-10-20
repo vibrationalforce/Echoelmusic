@@ -3,7 +3,8 @@
 /// MIDI-learn picker are built from this, so a command without an entry cannot exist —
 /// `spec(for:)` switches over every `Kind`, and the compiler enforces that the switch is complete.
 public struct CommandSpec: Equatable, Sendable {
-    /// Stable identifier, e.g. `track.add`. Stored in MIDI mappings — never rename one.
+    /// Stable identifier, e.g. `track.add`. Not stored in a song — a mapping stores a
+    /// `ParameterAddress` — but the assistant's instructions name it, so never rename one.
     public let name: String
     /// Shown in the Undo menu: "Undo Add Track".
     public let title: String
