@@ -100,17 +100,20 @@ struct TransportBar: View {
     private var controls: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
-                if engine.isPlaying {
+                if engine.isStalled {
+                    engine.restartAudio()
+                } else if engine.isPlaying {
                     Task { await recording.stopTransport() }
                 } else {
                     engine.play()
                 }
             } label: {
-                Image(systemName: engine.isPlaying ? "stop.fill" : "play.fill")
+                Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying ? "stop.fill" : "play.fill")
             }
             .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying, activeColor: Theme.Color.play))
-            .accessibilityLabel(engine.isPlaying ? "Stop" : "Play")
-            .disabled(!engine.isRunning)
+            .accessibilityLabel(engine.isStalled ? "Restart audio" : engine.isPlaying ? "Stop" : "Play")
+            // When audio could not start, this is the way to try again (ultra-audit R1).
+            .disabled(!engine.isRunning && !engine.isStalled)
 
             RecordButton()
 

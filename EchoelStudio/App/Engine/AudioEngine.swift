@@ -27,6 +27,13 @@ final class AudioEngine {
     private(set) var inputChannels = 0
     /// Stopped for the background (nothing to play, record or follow); the input it had, to reopen.
     @ObservationIgnored private var suspendedInput: Bool?
+    /// The last start failed and no automatic try is left: Play becomes "Restart audio" (R1).
+    private(set) var isStalled = false
+    /// Audio was started and not given up: a failed start is tried again, not left for good.
+    @ObservationIgnored private var wantsAudio = false
+    @ObservationIgnored private var isInBackground = false
+    @ObservationIgnored private var recovery = AudioRecoveryPolicy()
+    @ObservationIgnored private var retryTask: Task<Void, Never>?
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
@@ -151,14 +158,19 @@ final class AudioEngine {
         }
     }
 
+    /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such
+    /// an event can be what lets it succeed. Not in the background — the foreground return heals.
     private func resume(after reason: String) {
-        guard isRunning else { return }
+        guard wantsAudio, suspendedInput == nil, !isInBackground else { return }
         log.info("engine: \(reason, privacy: .public), rebuilding")
+        recovery.reset()
         configure(input: isInputOpen)
     }
 
     /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
     private func hardwareChanged() {
+        // Not while stopped: configuring can itself post this notification, and a failed start
+        // answered here would retry without end. The retry and Restart audio cover that case.
         guard isRunning else { return }
         let output = engine.outputNode.outputFormat(forBus: 0)
         let channels = Self.usableChannels(output.channelCount)
@@ -174,13 +186,46 @@ final class AudioEngine {
 
     func start() {
         guard !isRunning else { return }
+        wantsAudio = true
         configure(input: false)
+    }
+
+    /// The user asks for audio again after the automatic tries ran out.
+    func restartAudio() {
+        log.info("engine: restart asked")
+        wantsAudio = true
+        suspendedInput = nil
+        recovery.reset()
+        configure(input: false)
+    }
+
+    /// The graph as it was before the background, or rebuilt when iOS stopped it underneath.
+    private func wake(_ reason: String) {
+        guard let input = suspendedInput else {
+            healIfStopped(reason)
+            return
+        }
+        suspendedInput = nil
+        log.info("engine: resume from background")
+        recovery.reset()
+        configure(input: input)
+        if let project { publish(project) }
+    }
+
+    /// Rebuilds the graph when iOS stopped it without telling (an interruption without `.ended`),
+    /// so Play never runs a transport over a stopped engine (R2).
+    private func healIfStopped(_ reason: String) {
+        guard wantsAudio, suspendedInput == nil, !engine.isRunning else { return }
+        log.info("engine: stopped underneath (\(reason, privacy: .public)), rebuilding")
+        recovery.reset()
+        configure(input: isInputOpen)
     }
 
     /// The app went to the background. With nothing playing, recording or following a clock the
     /// audio stops, so a silent app does not keep the device awake (App Review 2.5.4). The
     /// playhead, the voices and the song stay; `enterForeground` or a play brings it back.
     func enterBackground() {
+        isInBackground = true
         guard isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
         log.info("engine: suspend in background")
         suspendedInput = isInputOpen
@@ -191,11 +236,8 @@ final class AudioEngine {
 
     /// Back in the foreground, or asked to play while suspended: the graph as it was.
     func enterForeground() {
-        guard let input = suspendedInput else { return }
-        suspendedInput = nil
-        log.info("engine: resume from background")
-        configure(input: input)
-        if let project { publish(project) }
+        isInBackground = false
+        wake("foreground")
     }
 
     /// Opens the input for recording, asking for microphone permission first. False when it is
@@ -221,6 +263,8 @@ final class AudioEngine {
 
     /// Builds the graph from scratch for playback, or playback plus input.
     private func configure(input: Bool) {
+        retryTask?.cancel()
+        retryTask = nil
         log.info("engine: stop for configure (input \(input, privacy: .public))")
         engine.stop()
         isRunning = false
@@ -335,11 +379,30 @@ final class AudioEngine {
             isInputOpen = input
             inputChannels = input ? Int(engine.inputNode.inputFormat(forBus: 0).channelCount) : 0
             lastError = nil
+            isStalled = false
+            recovery.reset()
         } catch {
             log.error("engine: configure failed — \(error.localizedDescription, privacy: .public)")
             lastError = error.localizedDescription
             // An input that cannot open must not take playback down with it.
-            if input { configure(input: false) }
+            if input {
+                configure(input: false)
+                return
+            }
+            // Never a log-only catch: a short settle, then again, a few times (R1).
+            guard let wait = recovery.failed() else {
+                log.error("engine: automatic tries used up")
+                isStalled = true
+                lastError = "Audio could not start. Tap Restart audio, or end the call or the other app using it."
+                return
+            }
+            log.info("engine: trying again in \(String(describing: wait), privacy: .public)")
+            retryTask = Task { [weak self] in
+                try? await Task.sleep(for: wait)
+                guard !Task.isCancelled, let self, self.wantsAudio, !self.isRunning,
+                      self.suspendedInput == nil, !self.isInBackground else { return }
+                self.configure(input: false)
+            }
         }
     }
 
@@ -434,7 +497,7 @@ final class AudioEngine {
     }
 
     func play() {
-        enterForeground()
+        wake("play")
         guard let core else { return }
         core.play()
         isPlaying = true
