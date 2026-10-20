@@ -34,6 +34,9 @@ final class AudioEngine {
     private(set) var isStalled = false
     /// Audio was started and not given up: a failed start is tried again, not left for good.
     @ObservationIgnored private var wantsAudio = false
+    /// The input was asked for (an armed audio track, a track monitoring its input) and not
+    /// closed since. Every rebuild opens it again, so a recovery never drops it without a word.
+    @ObservationIgnored private var wantsInput = false
     @ObservationIgnored private var isInBackground = false
     @ObservationIgnored private var recovery = AudioRecoveryPolicy()
     @ObservationIgnored private var retryTask: Task<Void, Never>?
@@ -186,13 +189,18 @@ final class AudioEngine {
     }
 
     /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such
-    /// an event can be what lets it succeed. Not in the background — the foreground return heals.
+    /// an event can be what lets it succeed. Not in the background — the foreground return heals —
+    /// unless the engine stays up there to hear a followed clock's Start.
     private func resume(after reason: String) {
-        guard wantsAudio, suspendedInput == nil, !isInBackground else { return }
+        guard wantsAudio, suspendedInput == nil, mayRebuildNow else { return }
         log.info("engine: \(reason, privacy: .public), rebuilding")
         recovery.reset()
-        configure(input: isInputOpen)
+        configure(input: wantsInput)
     }
+
+    /// In the foreground, or in the background while a followed clock keeps the engine running
+    /// (`enterBackground` leaves it up for that): a suspended app would never hear the next Start.
+    private var mayRebuildNow: Bool { !isInBackground || followsExternalClock }
 
     /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
     private func hardwareChanged() {
@@ -203,7 +211,7 @@ final class AudioEngine {
         let channels = Self.usableChannels(output.channelCount)
         log.info("engine: configuration change, \(output.channelCount, privacy: .public) ch at \(output.sampleRate, privacy: .public) Hz")
         if engine.isRunning, channels == outputChannels, output.sampleRate == core?.sampleRate { return }
-        configure(input: isInputOpen)
+        configure(input: wantsInput)
     }
 
     /// Channels the graph renders: at least the stereo pair, at most what a track can name.
@@ -223,7 +231,7 @@ final class AudioEngine {
         wantsAudio = true
         suspendedInput = nil
         recovery.reset()
-        configure(input: false)
+        configure(input: wantsInput)
     }
 
     /// The graph as it was before the background, or rebuilt when iOS stopped it underneath.
@@ -245,7 +253,7 @@ final class AudioEngine {
         guard wantsAudio, suspendedInput == nil, !engine.isRunning else { return }
         log.info("engine: stopped underneath (\(reason, privacy: .public)), rebuilding")
         recovery.reset()
-        configure(input: isInputOpen)
+        configure(input: wantsInput)
     }
 
     /// The app went to the background. With nothing playing, recording or following a clock the
@@ -255,7 +263,7 @@ final class AudioEngine {
         isInBackground = true
         guard isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
         log.info("engine: suspend in background")
-        suspendedInput = isInputOpen
+        suspendedInput = wantsInput
         engine.stop()
         isRunning = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
@@ -270,18 +278,25 @@ final class AudioEngine {
     /// Opens the input for recording, asking for microphone permission first. False when it is
     /// denied or the interface cannot be used; playback keeps running either way.
     func openInput() async -> Bool {
-        if isInputOpen { return true }
+        if isInputOpen {
+            wantsInput = true
+            return true
+        }
         guard await AVAudioApplication.requestRecordPermission() else {
             lastError = "Echoel may not use the microphone. Allow it in Settings."
             return false
         }
         stop()
+        wantsInput = true
         configure(input: true)
         if let project { publish(project) }
+        // Refused now: nothing is armed, so nothing asks for it again.
+        wantsInput = isInputOpen
         return isInputOpen
     }
 
     func closeInput() {
+        wantsInput = false
         guard isInputOpen else { return }
         stop()
         configure(input: false)
@@ -426,9 +441,11 @@ final class AudioEngine {
         } catch {
             log.error("engine: configure failed — \(error.localizedDescription, privacy: .public)")
             lastError = error.localizedDescription
-            // An input that cannot open must not take playback down with it.
+            // An input that cannot open must not take playback down with it, and says so: the
+            // successful playback start would otherwise clear the only word about it.
             if input {
                 configure(input: false)
+                if isRunning { lastError = "The audio input could not be opened. Playback goes on without it." }
                 return
             }
             // Never a log-only catch: a short settle, then again, a few times (R1).
@@ -442,8 +459,8 @@ final class AudioEngine {
             retryTask = Task { [weak self] in
                 try? await Task.sleep(for: wait)
                 guard !Task.isCancelled, let self, self.wantsAudio, !self.isRunning,
-                      self.suspendedInput == nil, !self.isInBackground else { return }
-                self.configure(input: false)
+                      self.suspendedInput == nil, self.mayRebuildNow else { return }
+                self.configure(input: self.wantsInput)
             }
         }
     }
