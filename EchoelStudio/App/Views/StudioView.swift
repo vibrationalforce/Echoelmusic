@@ -367,8 +367,10 @@ struct SongMenu: View {
                     if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }
                 }
             }
+            // Only the arrangement is rendered: a clip that is in no place on the timeline would
+            // give an empty file.
             .disabled(documents.isExporting
-                      || store.project.tracks.allSatisfy { $0.clips.allSatisfy(\.notes.isEmpty) && $0.regions.isEmpty })
+                      || store.project.tracks.allSatisfy { $0.placements.isEmpty && $0.regions.isEmpty })
             Button("Export MIDI", systemImage: "pianokeys") {
                 if let url = documents.exportMIDI() { router.sheet = .share(url) }
             }
