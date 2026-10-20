@@ -16,8 +16,8 @@ read-only agents and never touch it (.claude/skills/factory/SKILL.md).
 Exit 0 = printed · 1 = a board.json is unreadable, is not a JSON object, names an unknown stage,
 carries an id that is not its folder name, has a deviceOpen list that is not a list of objects
 with a YYYY-MM-DD `verified`, or a scopeOpen list that is not a list of objects with a `file` and,
-where present, a `reviewedBy` that names another job of this factory or reads `founder YYYY-MM-DD`
-(each a finding; the board does not guess) · with --selftest or --mutate: a case decided wrong, a
+where present, a `reviewedBy` that names another job of this factory in stage done or reads
+`founder YYYY-MM-DD` (each a finding; the board does not guess) · with --selftest or --mutate: a case decided wrong, a
 mutation survived or a mutation row no longer matches this file exactly once ·
 2 = the factory folder does not exist yet.
 
@@ -27,10 +27,11 @@ slice is never closed on the strength of code alone (job 001, round 2).
 
 The same holds for scopeOpen: a sensitive file the job changed OUTSIDE its paths (the review's
 `sensitiveOutside` — legal, privacy, health, entitlements, store text) is not covered by the
-approval. The job stays on --open until each entry names who reviewed it in `reviewedBy` — another
-job's id or `founder YYYY-MM-DD`, the same rigour as a device check's date. An absent or null
-`reviewedBy` is open; any other value is a finding, never "reviewed" (job 003, round 1: `null`
-read as the string "None" and closed the file).
+approval. The job stays on --open until each entry names who reviewed it in `reviewedBy` — the id of
+another job that is done (a job still in spec, or dropped, reviewed nothing) or `founder YYYY-MM-DD`,
+the same rigour as a device check's date. An absent or null `reviewedBy` is open; any other value is a
+finding, never "reviewed" (job 003, round 1: `null` read as the string "None" and closed the file).
+Every value is matched whole: `$` alone would also accept a trailing newline (round 2).
 """
 import json
 import re
@@ -39,8 +40,9 @@ from pathlib import Path
 
 STAGES = ["spec", "build", "review", "approve", "needs-human", "done", "dropped"]
 OPEN = {"spec", "build", "review", "approve", "needs-human"}
-DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-REVIEWED = re.compile(r"^(?:(?P<job>\d{3}-[a-z0-9-]{1,60})|founder \d{4}-\d{2}-\d{2})$")
+# Used with fullmatch only: re.match with `$` also accepts "2026-10-20\n".
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+REVIEWED = re.compile(r"(?:(?P<job>\d{3}-[a-z0-9-]{1,60})|founder \d{4}-\d{2}-\d{2})")
 
 
 def device_open(job):
@@ -60,12 +62,20 @@ def scope_problem(entry, root, own):
     by = entry.get("reviewedBy")
     if by is None:
         return None
-    match = REVIEWED.match(by) if isinstance(by, str) else None
+    match = REVIEWED.fullmatch(by) if isinstance(by, str) else None
     if not match:
         return f"scopeOpen reviewedBy must be another job's id or 'founder YYYY-MM-DD', got {by!r}"
     job = match.group("job")
-    if job and (job == own or not (root / job).is_dir()):
+    if not job:
+        return None
+    if job == own or not (root / job).is_dir():
         return f"scopeOpen reviewedBy {by!r} names no other job of this factory"
+    try:
+        stage = json.loads((root / job / "board.json").read_text(encoding="utf-8")).get("stage")
+    except (OSError, ValueError, AttributeError):
+        stage = None
+    if stage != "done":
+        return f"scopeOpen reviewedBy {by!r} names a job that is not done (stage {stage!r})"
     return None
 
 
@@ -96,7 +106,7 @@ def load(root):
         if not isinstance(asks, list) or not all(isinstance(d, dict) for d in asks):
             problems.append(f"{board}: deviceOpen must be a list of objects")
             continue
-        bad = [d.get("verified") for d in asks if d.get("verified") and not DATE.match(str(d["verified"]))]
+        bad = [d.get("verified") for d in asks if d.get("verified") and not DATE.fullmatch(str(d["verified"]))]
         if bad:
             problems.append(f"{board}: deviceOpen verified must be YYYY-MM-DD, got {bad}")
             continue
@@ -173,7 +183,7 @@ def selftest():
             "009-devlist": {"id": "009-devlist", "stage": "done", "deviceOpen": ["AUM", "buy"]},
             "010-scope": {"id": "010-scope", "stage": "done",
                           "scopeOpen": [{"file": "docs/privacy.html", "reviewedBy": "founder 2026-10-20"}, {"file": "LICENSE"}]},
-            "011-scoped": {"id": "011-scoped", "stage": "done", "scopeOpen": [{"file": "docs/privacy.html", "reviewedBy": "001-good"}]},
+            "011-scoped": {"id": "011-scoped", "stage": "done", "scopeOpen": [{"file": "docs/privacy.html", "reviewedBy": "006-checked"}]},
             # null is the natural placeholder; it must stay OPEN (round 1 read it as the string "None").
             "012-scopenull": {"id": "012-scopenull", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": None}]},
             "013-scopebad": {"id": "013-scopebad", "stage": "done", "scopeOpen": ["docs/privacy.html"]},
@@ -186,6 +196,14 @@ def selftest():
             "019-scopeblank": {"id": "019-scopeblank", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": "  "}]},
             "020-scopenumber": {"id": "020-scopenumber", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": 0}]},
             "021-scopefalse": {"id": "021-scopefalse", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": False}]},
+            # A reviewer job that is not done (001-good waits on the founder) reviewed nothing yet.
+            "022-scopenotdone": {"id": "022-scopenotdone", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": "001-good"}]},
+            # Lists that cannot even be iterated are reported, never a crash.
+            "023-scopenone": {"id": "023-scopenone", "stage": "done", "scopeOpen": None},
+            "024-devnumber": {"id": "024-devnumber", "stage": "done", "deviceOpen": 5},
+            # A value is matched whole: a trailing newline is no date.
+            "025-scopenewline": {"id": "025-scopenewline", "stage": "done", "scopeOpen": [{"file": "LICENSE", "reviewedBy": "founder 2026-10-20\n"}]},
+            "026-devnewline": {"id": "026-devnewline", "stage": "done", "deviceOpen": [{"ask": "AUM", "verified": "2026-10-20\n"}]},
         }
         for name, data in boards.items():
             (root / name).mkdir()
@@ -202,10 +220,14 @@ def selftest():
             failures.append(f"expected {want}, got {[j['id'] for j in jobs]}")
         named = ["002-bad", "003-moved", "004-broken", "007-baddate", "008-devstring", "009-devlist", "013-scopebad", "014-scopenofile",
                  "015-scopebare", "016-scopepending", "017-scopenojob", "018-scopeself", "019-scopeblank", "020-scopenumber",
-                 "021-scopefalse"]
+                 "021-scopefalse", "022-scopenotdone", "023-scopenone", "024-devnumber", "025-scopenewline", "026-devnewline"]
         unnamed = [n for n in named if not any(f"/{n}/" in p for p in problems)]
         if len(problems) != len(named) or unnamed:
             failures.append(f"expected {len(named)} problems naming {named}, missing {unnamed}, got {problems}")
+        # A missing reviewer and an unfinished one are two findings; each must say which.
+        for board_id, why in (("017-scopenojob", "names no other job"), ("022-scopenotdone", "is not done")):
+            if not any(f"/{board_id}/" in p and why in p for p in problems):
+                failures.append(f"{board_id} is not reported as {why!r}")
         if "── NEEDS-HUMAN (1)" not in text or "inbox F23" not in text:
             failures.append("needs-human column or inbox number missing")
         if "005-device" not in opened or "device open 1" not in opened:
@@ -221,7 +243,7 @@ def selftest():
     if failures:
         print("SELFTEST FAILED:\n  " + "\n  ".join(failures))
         return 1
-    print("selftest ok: 6 jobs loaded, 15 malformed boards reported, --open hides closed jobs and keeps device-open and scope-open ones")
+    print(f"selftest ok: {len(want)} jobs loaded, {len(named)} malformed boards reported, --open hides closed jobs and keeps device-open and scope-open ones")
     return 0
 
 
@@ -229,13 +251,17 @@ def selftest():
 MUTATIONS = [
     ("deviceOpen list-of-objects check dropped", "if not isinstance(asks, list) or not all(isinstance(d, dict) for d in asks):", "if False:"),
     ("deviceOpen items unchecked", "if not isinstance(asks, list) or not all(isinstance(d, dict) for d in asks):", "if not isinstance(asks, list):"),
-    ("verified date unchecked", "and not DATE.match(str(d[\"verified\"]))]", "and False]"),
-    ("scopeOpen list check dropped", "why = (\"scopeOpen must be a list of objects with a file\" if not isinstance(scoped, list)", "why = (None if True"),
+    ("deviceOpen list check dropped", "if not isinstance(asks, list) or not all(", "if not all("),
+    ("verified date unchecked", "and not DATE.fullmatch(str(d[\"verified\"]))]", "and False]"),
+    ("verified date matched with $", "and not DATE.fullmatch(", "and not re.compile(r\"^\\d{4}-\\d{2}-\\d{2}$\").match("),
+    ("scopeOpen list check dropped", "\"scopeOpen must be a list of objects with a file\" if not isinstance(scoped, list)", "\"scopeOpen must be a list of objects with a file\" if False"),
     ("scopeOpen file not required", "isinstance(entry.get(\"file\"), str) and entry[\"file\"].strip()", "True"),
     ("null reviewedBy reads as reviewed", "if s.get(\"reviewedBy\") is None]", "if not str(s.get(\"reviewedBy\", \"\")).strip()]"),
-    ("reviewedBy format unchecked", "match = REVIEWED.match(by) if isinstance(by, str) else None", "match = REVIEWED.match(\"founder 2026-01-01\")"),
-    ("reviewedBy job existence unchecked", "if job and (job == own or not (root / job).is_dir()):", "if job and job == own:"),
-    ("self-review allowed", "if job and (job == own or not (root / job).is_dir()):", "if job and not (root / job).is_dir():"),
+    ("reviewedBy format unchecked", "match = REVIEWED.fullmatch(by) if isinstance(by, str) else None", "match = REVIEWED.fullmatch(\"founder 2026-01-01\")"),
+    ("reviewedBy matched with $", "match = REVIEWED.fullmatch(by)", "match = re.compile(REVIEWED.pattern + \"$\").match(by)"),
+    ("reviewedBy job existence unchecked", "if job == own or not (root / job).is_dir():", "if job == own:"),
+    ("self-review allowed", "if job == own or not (root / job).is_dir():", "if not (root / job).is_dir():"),
+    ("reviewer job stage unchecked", "    if stage != \"done\":\n", "    if False:\n"),
     ("scope_open ignored on --open", "stage == \"done\" and still_open(j)", "stage == \"done\" and device_open(j)"),
     ("device_open ignored on --open", "stage == \"done\" and still_open(j)", "stage == \"done\" and scope_open(j)"),
     ("scope count not rendered", "extra.append(f\"scope open {len(scope_open(j))}\")", "pass"),

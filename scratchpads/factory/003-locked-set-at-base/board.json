@@ -2,7 +2,7 @@
  "id": "003-locked-set-at-base",
  "title": "Sperrliste von der Job-Basis, Abnahme gezählt",
  "stage": "review",
- "round": 2,
+ "round": 3,
  "base": "f61d7872d57f7fab8582fb9ed6b63c1c2a389c10",
  "lenses": [
   "code-reviewer",
@@ -35,10 +35,16 @@
    "stage": "review",
    "date": "2026-10-20",
    "note": "Runde 1 (wf_b852534d-658): REWORK, vier Majors — Umbenennung umging die Sperre, reviewedBy null galt als geprüft, der Prüfer war nicht gesperrt, die Lauf-Regel ignorierte die Pfadfilter; Nacharbeit 1 baut alle ein (reviews/round-1/rebuttal.md)"
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-20",
+   "note": "Runde 2 (wf_29831ef4-24e): REWORK, fünf Majors — founderAssumptions fehlte = 0 und der Prompt nannte die Zahl als Tatsache, die Zählung des PM war geglaubt, deviceCriteria allein entschuldigte ein Kriterium, die Lauf-Regel übersah, was ein Wächter liest; Nacharbeit 2 baut alle fünf und die zehn Minors ein (reviews/round-2/rebuttal.md)"
   }
  ],
  "criteria": 10,
  "deviceCriteria": [],
- "head": "9237c3c91c44b9aeb0eda193822262d0678ee1a9",
- "since": "9237c3c91c44b9aeb0eda193822262d0678ee1a9"
+ "head": "6d168b44a7bb72d130482e0104cd04221ccb02a8",
+ "since": "6d168b44a7bb72d130482e0104cd04221ccb02a8",
+ "founderAssumptions": 0
 }

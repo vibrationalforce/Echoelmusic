@@ -22,12 +22,15 @@
 // 7. The approver reads the locked set AT THE JOB BASE — `git show ${a.base}:` of
 //    `.claude/rules/context.md`, `.claude/hooks/protect-founder-gated.py` and
 //    `.claude/settings.json` — never from the tree under review, which the job itself may have
-//    edited (factory job 001, round 3; job 003).
+//    edited (factory job 001, round 3; job 003) — and confirms that `board.json` at the head records
+//    the same base, so the range under review is the whole job (job 003, round 2).
 // 8. Every path the lock is DEFINED by escalates deterministically: each file in the hook's
 //    `PROTECTED_FILES` and each `Edit(/…)`/`Write(/…)` file in `permissions.ask` of
 //    `.claude/settings.json` is in the workflow's `LOCK_CONFIG`; each directory in the hook's
 //    `PROTECTED_DIRS` and each `…/**` entry of `permissions.ask` is in `LOCK_DIRS`; and the
-//    predicate `isLockConfig` reads both lists. Three lists of one lock is #416: a path added to the
+//    predicate `isLockConfig` reads both lists. The hook half must parse on its own, and a file rule in
+//    permissions.ask the scan cannot read is a failure, not a skip (job 003, round 2: either would
+//    leave a lock path unchecked while the claim stayed green). Three lists of one lock is #416: a path added to the
 //    hook or to permissions.ask and not to the workflow would be judged by the approver's discretion
 //    again. ⚠️ Fail-closed by design: a ship file the founder puts back under the hook or into
 //    permissions.ask (project.yml, Info.plist, .github/workflows/) then ALWAYS escalates a factory job,
@@ -47,7 +50,12 @@
 // Claims 7, 8 and 9 (job 003) are FORWARD guards: on the parent `f61d7872d` the approver read the
 // lock files from the working tree and there was no `LOCK_CONFIG`, `LOCK_DIRS` or `JUDGE_FILES`, so
 // all three are red there by the change itself, not by an absent anchor; the hook and settings halves
-// of claim 8 parse on both trees.
+// of claim 8 parse on both trees. Round 2 tightened two claims. Claim 7's board.json needle is red on
+// `f61d7872d` and `9237c3c91` and green on `6d168b44a`, the rework that wrote the sentence. Claim 8's two
+// additions (the hook half parses on its own, an unreadable file rule fails) hold on every tree — the hook
+// has always been double-quoted and permissions.ask has no such rule — so they are counterweights that make
+// an empty or skipped parse visible. Probed: removing the needle, single-quoting PROTECTED_FILES or an ask
+// rule `Edit(.mcp.json)` turns the claim red.
 //
 // WHEN IT RUNS. Only with a commit that touches `Sources/` or `Tests/` (the gates' path filters). An
 // edit to the workflow or the skill alone starts no gate, so a red here can land on the NEXT
@@ -202,6 +210,10 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
                 under review may have edited — the job would be judged by its own rules.
                 """)
         }
+        XCTAssertTrue(code.contains("Confirm that \\`git show ${head}:${jobDir}/board.json\\` records base ${a.base}"), """
+            The approver prompt in \(Self.workflowPath) no longer checks that board.json at the head records \
+            the base it was called with. A wrong base reviews part of the job as if it were the whole.
+            """)
     }
 
     /// The quoted strings of the JavaScript array `const <name> = [...]` in the workflow, or nil.
@@ -226,10 +238,21 @@ final class TheFactoryReviewersAreReadOnlyTests: XCTestCase {
               let ask = permissions["ask"] as? [String] else {
             return XCTFail("ANCHOR MISSING: permissions.ask in .claude/settings.json (#454)")
         }
-        var files = quoted(hookFileList, by: "\"")
+        let hookFiles = quoted(hookFileList, by: "\"")
+        XCTAssertFalse(hookFiles.isEmpty, """
+            PROTECTED_FILES in .claude/hooks/protect-founder-gated.py parsed empty. The scan reads double-quoted \
+            strings; a hook rewritten with other quotes would leave only permissions.ask checked here.
+            """)
+        var files = hookFiles
         var dirs = Set(quoted(hookDirList, by: "\"").map { $0.hasSuffix("/") ? $0 : $0 + "/" })
-        for entry in ask {
-            guard let path = firstCapture("^(?:Edit|Write|MultiEdit)\\(/(.+)\\)$", in: entry) else { continue }
+        for entry in ask where ["Edit(", "Write(", "MultiEdit("].contains(where: { entry.hasPrefix($0) }) {
+            guard let path = firstCapture("^(?:Edit|Write|MultiEdit)\\(/(.+)\\)$", in: entry) else {
+                XCTFail("""
+                    permissions.ask entry `\(entry)` is a file rule this scan cannot read (it expects \
+                    `Edit(/<repo path>)`). A rule it skips is a lock path it never compares with LOCK_CONFIG.
+                    """)
+                continue
+            }
             if path.hasSuffix("/**") {
                 dirs.insert(String(path.dropLast(2)))
             } else {

@@ -10,16 +10,19 @@ immer, und der Workflow zählt selbst, ob der Approver jedes Kriterium der Spec 
   Minors derselben Runde. Job 001 ist eskaliert (Inbox GM27); dieser Job ist die dort empfohlene
   Nachfolge und beginnt unter der Delegation des Founders — ein Nein zu GM27 nimmt ihn zurück.
 - Die Konfiguration, die die Sperre DEFINIERT, ist `.claude/settings.json`, `.mcp.json` und alles
-  unter `.claude/hooks/` (alle drei stehen in `permissions.ask`). Eine Änderung daran entscheidet die
+  unter `.claude/hooks/` (alle drei stehen in `permissions.ask`), dazu `.claude/settings.local.json`
+  (Runde 2: gitignoriert, aber trackbar, und Claude Code wertet sie vor `settings.json`). Eine Änderung daran entscheidet die
   Factory nie selbst: deterministisch ESCALATE, ohne Ermessen des Approvers.
 - `.claude/rules/context.md` §3 wird NICHT deterministisch gesperrt, weil die Datei auch anderes
   Gesetz trägt; der Approver vergleicht §3 an Basis und Kopf.
 - Die Linsen melden die UNGEFILTERTE Dateiliste (`changedFiles`); was im Scope liegt und was
   draußen, rechnet der Workflow selbst nach Git-Pfadregeln. Eine Linse, die eine leere Liste
   meldet, während andere Dateien sehen, hat sich verzählt (`RERUN`), nicht der Aufruf.
-- Der PM übergibt die Zahl der Kriterien (`criteria`), die Nummern der `[DEVICE]`-Kriterien
-  (`deviceCriteria`) und die Zahl der `[FOUNDER]`-Annahmen (`founderAssumptions`, hier 0). Ein Eintrag mit
-  Nummer 0 ist eine `[FOUNDER]`-Annahme.
+- Der PM übergibt die Zahl der Kriterien (`criteria`, Pflicht), die Nummern der `[DEVICE]`-Kriterien
+  (`deviceCriteria`) und die Zahl der `[FOUNDER]`-Annahmen (`founderAssumptions`, Pflicht, hier 0). Ein
+  Eintrag mit Nummer 0 ist eine `[FOUNDER]`-Annahme. Die drei Zahlen gelten nur, wo die eigene Zählung des
+  Approvers sie bestätigt (Runde 2: sonst entschuldigte eine veraltete Liste ein Kriterium, und eine
+  ausgelassene Zahl hieß „keine `[FOUNDER]`-Annahme“).
 - Sensible Flächen außerhalb des Scopes (Rechtstext, Datenschutz, Gesundheit, Entitlements,
   Privacy-Manifeste, Store-Text) deckt eine Freigabe nicht; sie kommen als `scopeOpen` ins Board.
 - Der PRÜFER selbst gehört zu dem, was ein Job nicht aufweichen darf (Runde 1, Security-Linse; der Harness
@@ -32,32 +35,40 @@ immer, und der Workflow zählt selbst, ob der Approver jedes Kriterium der Spec 
 1. Der Approver-Prompt liest die Sperrliste mit `git show <base>:` aus `.claude/rules/context.md`,
    `.claude/hooks/protect-founder-gated.py` und `.claude/settings.json` und prüft, dass `board.json` am
    Kopf dieselbe `base` führt — Selbsttest-Fall und `TheFactoryReviewersAreReadOnlyTests` Anspruch 7.
-2. Eine Änderung an `.claude/settings.json`, `.mcp.json` oder unter `.claude/hooks/` ergibt ESCALATE,
+2. Eine Änderung an `.claude/settings.json`, `.claude/settings.local.json`, `.mcp.json` oder unter
+   `.claude/hooks/` ergibt ESCALATE,
    auch wenn der Approver APPROVE sagt und auch wenn die Datei weggeschoben wird (Dateiliste mit
-   `--no-renames`); jeder Pfad, über den Hook und `permissions.ask` die Sperre definieren, steht in der
-   festen Liste — Selbsttest-Fälle und Anspruch 8.
+   `--no-renames`) oder von Git in Anführungszeichen gedruckt wird; jeder Pfad, über den Hook und
+   `permissions.ask` die Sperre definieren, steht in der festen Liste, und eine Regel, die der Wächter nicht
+   lesen kann, ist rot — Selbsttest-Fälle und Anspruch 8.
 3. Der Workflow rechnet Scope und Außerhalb selbst aus `changedFiles`: leer bei allen Linsen →
-   `INVALID`, leer oder ohne Liste bei einer → `RERUN` mit ihrem Namen, eine fehlende Linse → `RERUN`,
+   `INVALID`, leer, ohne Liste oder mit einem Steuerzeichen im Namen bei einer → `RERUN` mit ihrem Namen,
+   eine fehlende Linse → `RERUN`,
    Scope leer → `INVALID`; sensible Dateien außerhalb kommen als `sensitiveOutside` zurück —
    Selbsttest-Fälle.
-4. `criteria` ist Pflicht; benotet der Approver nicht genau die Nummern 1..criteria je einmal oder
-   weniger `[FOUNDER]`-Annahmen als `founderAssumptions`, ist es `RERUN`; die Art folgt allein der Spec
-   (ein `device`- oder `founder`-Etikett auf einer anderen Nummer zählt als `code`, Nummer 0 ist immer
-   `founder`); ein erfüllter `founder`-Eintrag ohne Verweis auf `FOUNDER_INBOX` oder
-   `memory/decisions.md` samt Datum bleibt offen — Selbsttest-Fälle.
+4. `criteria` und `founderAssumptions` sind Pflicht; weichen sie oder `deviceCriteria` von der eigenen
+   Zählung des Approvers ab (`specCriteria`, `specDevice`, `specFounder`), ist es `RERUN`; benotet der
+   Approver nicht genau die Nummern 1..criteria je einmal oder weniger `[FOUNDER]`-Annahmen als
+   `founderAssumptions`, ebenso; `device` ist ein Kriterium nur, wenn `deviceCriteria` UND das Etikett des
+   Approvers es sagen, Nummer 0 ist immer `founder`, alles andere `code`; ein offenes nummeriertes
+   Kriterium mit `founder`-Etikett eskaliert; ein erfüllter `founder`-Eintrag ohne Verweis auf
+   `FOUNDER_INBOX` oder `memory/decisions.md` samt Datum bleibt offen; der Approver-Prompt nennt die Zahlen
+   des PM als dessen Angabe, nie als Tatsache — Selbsttest-Fälle.
 5. Der Datenblock im Approver-Prompt ist reines ASCII (kein U+2028, keine Gedankenstrich-Marker) und
    dekodiert zum selben JSON; Dateinamen der Linsen erreichen den Prompt nur auf demselben Weg —
    Selbsttest-Fälle.
 6. `since` in Runde 1 ist `INVALID`, ein `paths`-Eintrag mit `.`-Segment oder `//` ebenso —
    Selbsttest-Fälle.
 7. `factory-board.py`: `scopeOpen` hält einen fertigen Job auf `--open`, bis jeder Eintrag in
-   `reviewedBy` einen anderen Job oder `founder JJJJ-MM-TT` nennt (`null` bleibt offen, jeder andere Wert
-   ist ein Befund); ein `deviceOpen` oder `scopeOpen`, der keine Liste von Objekten ist, wird gemeldet
-   statt abzustürzen — `--selftest` und `--mutate`.
+   `reviewedBy` einen anderen, fertigen Job oder `founder JJJJ-MM-TT` nennt (`null` bleibt offen, jeder
+   andere Wert ist ein Befund, jeder Wert wird ganz gelesen); ein `deviceOpen` oder `scopeOpen`, der keine
+   Liste von Objekten ist — auch `null` oder eine Zahl —, wird gemeldet statt abzustürzen — `--selftest`
+   und `--mutate`.
 8. `SKILL.md` sagt dasselbe wie der Workflow: Argumente, Sperrliste von der Basis, `verified`-Datum
-   statt `VERIFIED-…`, welcher Gate-Lauf zählt und „kein Lauf“ über den ganzen Job, Website erst „done“
-   auf `main`, „Docs-Satz“ nur intern und ohne `FEATURE_STATUS.md` — und zitiert nur Pfade, die
-   existieren (`scripts/doctor.py --section B`).
+   statt `VERIFIED-…`, welcher Gate-Lauf zählt (für einen Wächter samt den Dateien, die er liest) und
+   „kein Lauf“ über den ganzen Job, Website erst „done“ auf `main`, „Docs-Satz“ nur intern und ohne
+   `FEATURE_STATUS.md`, was der Prüfer-Satz nicht umfasst (`CLAUDE.md`, `.claude/rules/`) — und zitiert
+   nur Pfade, die existieren (`scripts/doctor.py --section B`).
 9. Beide Selbsttests enden mit 0, und `--mutate` beider Werkzeuge fängt jede Zeile ihrer Tabelle — aus
    dem Repo nachrechenbar, eine veraltete Zeile ist ein Fehler.
 10. Eine Änderung am Prüfer (`.claude/workflows/echoel-factory-review.js`, `.claude/agents/`) endet nie
