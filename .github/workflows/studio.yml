@@ -139,8 +139,33 @@ jobs:
             -scheme EchoelStudio \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
+            -derivedDataPath build/sim \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee app-sim.log | tail -30
+
+      # A crash at launch must not reach TestFlight (ultra-audit R7): the simulator build is
+      # installed and launched, and must still be running 20 s later — past restore(), the audio
+      # start and the 10-s launch confirmation.
+      - name: Launch smoke (iOS Simulator)
+        run: |
+          set -euo pipefail
+          APP=$(find build/sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          test -n "$APP" || { echo "::error::no .app in the simulator build"; exit 1; }
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json, sys; d = json.load(sys.stdin)['devices']; print(next(x['udid'] for r, l in d.items() if 'iOS' in r for x in l if x['name'].startswith('iPhone')))")
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          BUNDLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
+          PID=$(xcrun simctl launch "$UDID" "$BUNDLE" | awk '{print $NF}')
+          echo "launched $BUNDLE as pid $PID"
+          sleep 20
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::Echoel Studio did not survive 20 s after launch"
+            ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
+            exit 1
+          fi
+          echo "still running 20 s after launch"
+          xcrun simctl terminate "$UDID" "$BUNDLE" || true
 
       - name: Build for iOS device (Release)
         run: |
