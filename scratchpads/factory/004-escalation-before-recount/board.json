@@ -1,7 +1,7 @@
 {
  "id": "004-escalation-before-recount",
  "title": "Eskalation vor jeder Rückfrage, founder-Etikett kein Code-Beleg",
- "stage": "review",
+ "stage": "needs-human",
  "round": 3,
  "base": "73e9ae52d77eaaf3e3292aa9841bef3ef716dff8",
  "lenses": [
@@ -41,8 +41,14 @@
    "stage": "review",
    "date": "2026-10-20",
    "note": "Runde 2 (wf_b6b634a9-2c3, Prüfer-Fassung der Basis): REWORK, drei Majors — ein Namens-RERUN stand vor der Grenze, trim() verbarg ein verstecktes Zeichen am Rand, die Zählung des Approvers war nicht blind; Nacharbeit 2 baut alle drei und die zwölf Minors ein (reviews/round-2/rebuttal.md)"
+  },
+  {
+   "stage": "needs-human",
+   "date": "2026-10-20",
+   "note": "Runde 3 (wf_c2619890-b9f, d5682ae4d, Prüfer-Fassung der Basis): ESCALATE — Grenze erreicht, ein Sachverhalt offen (der Leer-Test trim() wirft einen Namen aus nur Leerraum weg), und der Job ändert den Prüfer; Empfehlung GM27 ja, die Befunde baut Job 005 (decision.md)"
   }
  ],
- "head": "aeb77953d0d88bca6f500d0a0b4cce2e2d5ab106",
- "since": "aeb77953d0d88bca6f500d0a0b4cce2e2d5ab106"
+ "head": "d5682ae4de7b17f7958598d8e83c10a7e0ed31f1",
+ "since": "aeb77953d0d88bca6f500d0a0b4cce2e2d5ab106",
+ "inbox": "GM27"
 }
