@@ -32,7 +32,8 @@ Every audio file is a plain file you can take out of `Media/`.
   The same holds for a parameter address's owner (`project`, `master`, `track`): a new owner is
   a new format number, and an address with an owner this build does not know refuses the song.
 - On open, the song is checked against the same rules the editor enforces (ranges, unique ids,
-  references that resolve). A file that breaks one is refused, not repaired silently.
+  references that resolve, what each kind of track holds, names). A file that breaks one is
+  refused, not repaired silently.
 
 ## Units
 
@@ -47,7 +48,8 @@ Every audio file is a plain file you can take out of `Media/`.
 | pitch bend | 14-bit, 0 … 16383, centre 8192 |
 | controller | number 0 … 119, value 0 … 127 |
 | audio offsets and lengths | sample frames of the audio file |
-| ids | UUID strings |
+| ids | UUID strings — unique in the song, except a note's (unique in its clip) and a placement's (unique on its track) |
+| names | the song's, a track's, a clip's, a scene's, a media file's: never empty or only spaces; the editor keeps them within 128 characters, a reader takes up to 256 |
 
 ## `project.json`
 
@@ -79,10 +81,14 @@ writes no notes.
 
 **Track:** `id`, `name`, `kind` (`instrument` · `audio` · `returnTrack`), `colorIndex` (a palette
 slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the timeline),
-`slots` (`{scene, clip}` in the session grid) — all required; optional: `instrument`, `regions`
+`slots` (`{scene, clip}` in the session grid: a scene of the song and a clip of this track, one
+per scene) — all required; optional: `instrument`, `regions`
 (audio on the timeline), `inserts`, `sends` (`{target, levelDB}` into a return track), `output`
 (first channel of an interface stereo pair, absent = master), `input`, `monitor`
-(`auto` · `in` · `off`; another name is kept and behaves as `auto`).
+(`auto` · `in` · `off`; another name is kept and behaves as `auto`). What a track holds follows
+its kind: an instrument track has MIDI clips and no regions; an audio track has audio clips (in
+session slots only) and regions; a return track has effects only — no clips, placements, slots
+or regions.
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter

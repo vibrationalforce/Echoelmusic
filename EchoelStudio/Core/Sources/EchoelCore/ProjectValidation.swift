@@ -1,3 +1,5 @@
+import Foundation
+
 /// The same rules the commands enforce, applied to a whole project read from disk. A song file
 /// never went through `ProjectStore.perform`, and the engine trusts what it plays: a time
 /// signature over 0 or a tempo of 0 would stop the render thread. So the reader checks it all
@@ -19,7 +21,18 @@ extension Project {
             previous = change.tick
         }
         try Self.validate(master, name: "master")
+        try Self.validateName(name, "name")
+        var sceneIDs = Set<SceneID>()
+        for scene in scenes {
+            guard sceneIDs.insert(scene.id).inserted else { throw CommandError.duplicateID(scene.id.description) }
+            try Self.validateName(scene.name, "scenes")
+        }
+        var mediaIDs = Set<MediaID>()
         for file in media {
+            // Regions, samples and audio clips find their file by id; two files with one id
+            // would leave it to chance which one plays.
+            guard mediaIDs.insert(file.id).inserted else { throw CommandError.duplicateID(file.id.description) }
+            try Self.validateName(file.name, "media")
             guard MediaFile.isSafePath(file.path) else { throw Self.invalid("media", "a path leaves the Media folder") }
             guard file.hasUsableFormat else {
                 throw Self.invalid("media", "a file has no frames, too many, or a sample rate outside \(MediaFile.sampleRateRange)")
@@ -46,12 +59,20 @@ extension Project {
         }
         for track in tracks {
             guard trackIDs.insert(track.id).inserted else { throw CommandError.duplicateID(track.id.description) }
+            try Self.validateName(track.name, "tracks")
             try Self.validate(track.mixer, name: "mixer")
             try validate(track.instrument)
+            try Self.validateContent(of: track)
             for clip in track.clips {
                 guard clipIDs.insert(clip.id).inserted else { throw CommandError.duplicateID(clip.id.description) }
+                try Self.validateName(clip.name, "clips")
                 try Command.validateLength(clip.length)
-                for note in clip.notes { try Command.validate(note, in: clip) }
+                // Note ids are unique within a clip, as `addNotes` keeps them — not across clips.
+                var noteIDs = Set<NoteID>()
+                for note in clip.notes {
+                    guard noteIDs.insert(note.id).inserted else { throw CommandError.duplicateID(note.id.description) }
+                    try Command.validate(note, in: clip)
+                }
                 guard Set(clip.controls.map(\.id)).count == clip.controls.count else {
                     throw Self.invalid("controls", "two controller changes share an id")
                 }
@@ -66,10 +87,20 @@ extension Project {
                     try validate(audio)
                 }
             }
+            // Placement ids are unique within a track, as `placeClip` keeps them.
+            var placementIDs = Set<PlacementID>()
             for placement in track.placements {
+                guard placementIDs.insert(placement.id).inserted else { throw CommandError.duplicateID(placement.id.description) }
                 guard let c = track.clipIndex(placement.clip) else { throw CommandError.unknownClip(placement.clip) }
                 guard track.clips[c].audio == nil else { throw Self.invalid("placements", "an audio clip is session-only") }
                 try Command.validateStart(placement.start)
+            }
+            // A slot holds one of this track's own clips, in a scene that exists, one per scene.
+            var filledScenes = Set<SceneID>()
+            for slot in track.slots {
+                guard sceneIDs.contains(slot.scene) else { throw CommandError.unknownScene(slot.scene) }
+                guard track.clipIndex(slot.clip) != nil else { throw CommandError.unknownClip(slot.clip) }
+                guard filledScenes.insert(slot.scene).inserted else { throw Self.invalid("slots", "a track holds two clips in one scene") }
             }
             if let output = track.output, !Track.isValidOutput(output) { throw Self.invalid("output", "not a stereo pair after 1/2") }
             if let input = track.input, track.kind != .audio || !(0..<Track.inputChannelLimit).contains(input) {
@@ -106,6 +137,32 @@ extension Project {
             // A lane on a parameter this build does not know is kept, but still plays safely.
             let range = descriptor(for: lane.target)?.range ?? -Double.infinity...Double.infinity
             try AutomationLane.validate(lane.points, range: range)
+        }
+    }
+
+    /// What a track holds matches its kind, as the commands keep it: an instrument track plays
+    /// MIDI clips and no audio regions, an audio track audio clips and regions, a return track
+    /// effects only. (An audio clip off an audio track is refused in the clip loop.)
+    private static func validateContent(of track: Track) throws {
+        switch track.kind {
+        case .instrument:
+            guard track.regions.isEmpty else { throw invalid("regions", "only an audio track holds audio regions") }
+        case .audio:
+            guard track.clips.allSatisfy({ $0.audio != nil }) else { throw invalid("clips", "an audio track holds audio clips only") }
+        case .returnTrack:
+            guard track.clips.isEmpty, track.placements.isEmpty, track.slots.isEmpty, track.regions.isEmpty else {
+                throw invalid("tracks", "a return track holds effects only")
+            }
+        }
+    }
+
+    /// A stored name is never empty. Its length is held to twice what the editor allows, not to
+    /// the limit itself: the count of characters follows the system's Unicode rules, and a name
+    /// right at the limit, saved on one system, must not lock the song on another.
+    private static func validateName(_ name: String, _ parameter: String) throws {
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw invalid(parameter, "a name is empty") }
+        guard name.count <= 2 * Names.maximumLength else {
+            throw invalid(parameter, "a name is longer than \(2 * Names.maximumLength) characters")
         }
     }
 
