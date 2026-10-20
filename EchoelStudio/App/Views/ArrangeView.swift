@@ -9,7 +9,8 @@ import SwiftUI
 struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     /// Opens a track's editor.
-    let open: (TrackID) -> Void
+    /// Opens the note editor on this clip of this track.
+    let open: (TrackID, ClipID) -> Void
     /// Asks for an audio file to place on a track at a tick.
     let importAudio: (TrackID, Tick) -> Void
 
@@ -119,7 +120,8 @@ private struct ArrangeLane: View {
     let track: Track
     let project: Project
     let pointsPerBar: CGFloat
-    let open: (TrackID) -> Void
+    /// Opens the note editor on this clip of this track.
+    let open: (TrackID, ClipID) -> Void
     let importAudio: (TrackID, Tick) -> Void
 
     private var signature: TimeSignature { project.timeSignature }
@@ -232,7 +234,8 @@ private struct PlacementBlock: View {
     let clip: Clip
     let signature: TimeSignature
     let pointsPerBar: CGFloat
-    let open: (TrackID) -> Void
+    /// Opens the note editor on this clip of this track.
+    let open: (TrackID, ClipID) -> Void
 
     @State private var dragX: CGFloat = 0
 
@@ -259,7 +262,7 @@ private struct PlacementBlock: View {
             .frame(width: width, height: Theme.Size.trackRowHeight - 8)
             .offset(x: CGFloat(Double(placement.start) / ticksPerPoint) + dragX, y: 4)
             .opacity(dragX == 0 ? 1 : 0.8)
-            .onTapGesture { open(track.id) }
+            .onTapGesture { open(track.id, clip.id) }
             .gesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named(ArrangeLane.space))
                     .onChanged { dragX = $0.translation.width }
@@ -272,7 +275,7 @@ private struct PlacementBlock: View {
                     }
             )
             .contextMenu {
-                Button("Edit Notes", systemImage: "pianokeys") { open(track.id) }
+                Button("Edit Notes", systemImage: "pianokeys") { open(track.id, clip.id) }
                 Button("Duplicate", systemImage: "plus.square.on.square") { duplicate() }
                 Button("Delete", systemImage: "trash", role: .destructive) { remove() }
             }
@@ -280,7 +283,7 @@ private struct PlacementBlock: View {
             .accessibilityLabel("\(clip.name), bar \(startBar), \(lengthBars) bars")
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Opens the note editor.")
-            .accessibilityAction { open(track.id) }
+            .accessibilityAction { open(track.id, clip.id) }
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Duplicate") { duplicate() }

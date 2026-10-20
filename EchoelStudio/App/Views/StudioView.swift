@@ -31,7 +31,7 @@ struct StudioView: View {
             switch surface {
             case .tracks: TrackListView { router.sheet = .clipEditor($0) }
             case .arrange:
-                ArrangeView(open: { router.sheet = .clipEditor($0) },
+                ArrangeView(open: { router.sheet = .clip($0, $1) },
                             importAudio: { router.sheet = .importAudio($0, $1) })
             case .session:
                 SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
