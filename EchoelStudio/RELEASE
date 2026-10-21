@@ -54,8 +54,7 @@ target reaches it, tests; nothing here is device-verified yet.
 - A plugin that stopped is named in the status line once it is loaded again, or with the reason
   it is not; several are all named. Notices no longer hide each other, and an export clears
   only the ones that stood before it.
-- The status line sits under the transport strip instead of over its buttons, and the launch
-  messages stay until something replaces them instead of going with the first autosave.
+- The status line sits under the transport strip instead of over its buttons.
 
 Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
 group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
