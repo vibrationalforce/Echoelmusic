@@ -161,6 +161,14 @@ final class DocumentController {
         keepQuarantine()
     }
 
+    /// A new song was just written under a held song's name — the held one was deleted, and
+    /// `newURL` gave its name out again. The hold was for the song that crashed, not for the name.
+    private func releaseHold(on url: URL) {
+        guard quarantine.holds(url.lastPathComponent) else { return }
+        quarantine.chosen(url.lastPathComponent)
+        keepQuarantine()
+    }
+
     private func confirmLaunch(leaving: Bool) {
         guard let began = launchBegan else { return }
         let elapsed = began.duration(to: .now)
@@ -283,11 +291,13 @@ final class DocumentController {
         starterKeepsItsOwnPackage()
         guard let url = currentURL else { return }
         let project = store.project
+        let isNew = !FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
         do {
             try library.write(project, to: url)
             savedProject = project
             isUnwritten = false
             lastError = nil
+            if isNew { releaseHold(on: url) }
             refresh()
         } catch {
             log.error("save failed — \(error.localizedDescription, privacy: .public)")
@@ -546,7 +556,9 @@ final class DocumentController {
         var failed = 0
         for (index, project) in songs.enumerated() where !done.contains(index) {
             do {
-                try library.write(project, to: library.newURL(for: project.name))
+                let url = library.newURL(for: project.name)
+                try library.write(project, to: url)
+                releaseHold(on: url)
                 done.insert(index)
             } catch {
                 failed += 1
