@@ -1,0 +1,230 @@
+# =============================================================================
+# ECHOEL STUDIO — SIGNING PROBE
+# =============================================================================
+# Answers one question without uploading anything: do Apple's profiles for the app grant the App
+# Groups the app is about to ask for? It signs EchoelStudio exactly as studio-testflight.yml does
+# (automatic signing, -allowProvisioningUpdates, fresh keychain), with `group.com.echoelmusic`
+# added to the APP's entitlements in this checkout only, then exports for the App Store to a
+# local folder. No upload, no build number spent, nothing written to the repo.
+#
+# Green: both the archive (development profile) and the export (App Store profile) granted the
+# group, and the signed app carries it — the App ID has it (F17). Red: the fetched profiles and
+# what they grant are printed.
+#
+# Run: change EchoelStudio/SIGNING_PROBE on a branch and push, or run it by hand.
+# ⚠️ Same side effect as every upload: fastlane setup_signing revokes the team's development
+# certificates, one on the founder's Mac included. It shares the apple-signing group, so it never
+# signs beside an upload.
+# =============================================================================
+
+name: "Echoel Studio Signing Probe"
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'main'
+    paths:
+      - 'EchoelStudio/SIGNING_PROBE'
+
+permissions:
+  contents: read
+
+env:
+  XCODE_VERSION: '26.2'
+
+jobs:
+  probe:
+    name: "Sign with the earlier app's group, no upload"
+    runs-on: macos-26
+    timeout-minutes: 75
+    concurrency:
+      group: apple-signing
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: "Check secrets"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          missing=""
+          [ -z "$ASC_KEY_ID" ] && missing="$missing APP_STORE_CONNECT_KEY_ID"
+          [ -z "$ASC_ISSUER_ID" ] && missing="$missing APP_STORE_CONNECT_ISSUER_ID"
+          [ -z "$ASC_KEY" ] && missing="$missing APP_STORE_CONNECT_PRIVATE_KEY"
+          [ -z "$TEAM_ID" ] && missing="$missing APPLE_TEAM_ID"
+          if [ -n "$missing" ]; then
+            echo "::error title=Missing secrets::$missing"
+            exit 1
+          fi
+
+      - name: "Ask for the earlier app's group as well"
+        run: |
+          ENT=EchoelStudio/Support/App/EchoelStudio.entitlements
+          if ! /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups' "$ENT" | grep -qx ' *group.com.echoelmusic'; then
+            /usr/libexec/PlistBuddy -c 'Add :com.apple.security.application-groups: string group.com.echoelmusic' "$ENT"
+          fi
+          echo "The app asks for:"
+          /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups' "$ENT"
+
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Generate project"
+        run: |
+          sed -i '' "s/\${BUILD_NUMBER:=1}/1/" EchoelStudio/project.yml
+          xcodegen generate --spec EchoelStudio/project.yml
+
+      - name: "Setup API key & keychain"
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          KEYCHAIN_PATH="$HOME/Library/Keychains/build.keychain-db"
+          security create-keychain -p "" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+      - name: "Install fastlane"
+        run: gem install fastlane:2.225.0 -N --no-document
+
+      - name: "Sign in to App Store Connect"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: ruby scripts/asc-build-state.rb auth
+
+      - name: "Setup signing certificates"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          [ ${PIPESTATUS[0]} -ne 0 ] && echo "::warning title=Signing setup non-zero::falling back to automatic signing"
+          exit 0
+
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          set +eo pipefail
+          xcodebuild archive \
+            -project EchoelStudio/EchoelStudio.xcodeproj \
+            -scheme EchoelStudio \
+            -destination "generic/platform=iOS" \
+            -archivePath ./build/EchoelStudio.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            echo "::error title=Archive failed::$(grep -E ': error: |provision|signing|certificate|application-groups' /tmp/archive.log | tail -15 | tr '\n' ' | ')"
+            { echo '## Archive failed — the development profile'; echo '```'; grep -E ': error: |application-groups|provision' /tmp/archive.log | head -30 || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: "Export for the App Store, to a local folder"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          cat > /tmp/ExportOptions.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>destination</key>
+              <string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          set +eo pipefail
+          xcodebuild -exportArchive \
+            -archivePath ./build/EchoelStudio.xcarchive \
+            -exportPath ./build/export \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            echo "::error title=Export failed::$(grep -E 'error|application-groups|provision' /tmp/export.log | tail -15 | tr '\n' ' | ')"
+            { echo '## Export failed — the App Store profile'; echo '```'; tail -60 /tmp/export.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: "What the signed app carries"
+        run: |
+          IPA=$(ls ./build/export/*.ipa | head -1)
+          mkdir -p /tmp/ipa && unzip -q -o "$IPA" -d /tmp/ipa
+          APP=$(ls -d /tmp/ipa/Payload/*.app | head -1)
+          { echo "## Signing probe"; } >> "$GITHUB_STEP_SUMMARY"
+          for bundle in "$APP" "$APP/PlugIns/EchoelPlugins.appex"; do
+            codesign -d --entitlements - --xml "$bundle" > /tmp/ent.plist 2>/dev/null || true
+            groups=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups' /tmp/ent.plist 2>/dev/null | tr -d '\n ' || true)
+            echo "$(basename "$bundle"): application-groups ${groups:-none}"
+            echo "- \`$(basename "$bundle")\` application-groups: \`${groups:-none}\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+          codesign -d --entitlements - --xml "$APP" > /tmp/app.plist 2>/dev/null || true
+          if /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups' /tmp/app.plist | grep -qx ' *group.com.echoelmusic'; then
+            echo "F17: the App Store profile grants group.com.echoelmusic" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error title=F17 open::the signed app does not carry group.com.echoelmusic"
+            exit 1
+          fi
+
+      - name: "What the fetched profiles grant"
+        if: always()
+        run: |
+          for profile in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision \
+                         ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            [ -f "$profile" ] || continue
+            security cms -D -i "$profile" > /tmp/profile.plist 2>/dev/null || continue
+            name=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/profile.plist 2>/dev/null)
+            groups=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups' /tmp/profile.plist 2>/dev/null | tr -d '\n ' || echo none)
+            echo "$name — application-groups: ${groups:-none}"
+            echo "- $name — application-groups: \`${groups:-none}\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: "Cleanup"
+        if: always()
+        run: |
+          security delete-keychain "$HOME/Library/Keychains/build.keychain-db" 2>/dev/null || true
+          rm -rf ~/.appstoreconnect/private_keys ./build/export /tmp/ipa

@@ -1,0 +1,5 @@
+Changing this file on a branch runs .github/workflows/studio-signing-probe.yml: Echoel Studio is
+signed like a TestFlight upload, with group.com.echoelmusic added to the app's entitlements in
+that run only, and exported to a local folder. Nothing is uploaded.
+
+2026-10-21: the founder ticked group.com.echoelmusic on the App ID com.echoelmusic.app (F17).
