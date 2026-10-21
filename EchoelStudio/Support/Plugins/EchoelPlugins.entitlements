@@ -4,11 +4,13 @@
 <dict>
 	<!-- The one shared container (2026-10-19, factory job 002). The extension only READS the
 	     plugin purchase the app recorded here (PluginUnlock.recordedOwned): extensions may not
-	     sell (App Review 4.4) and Apple does not support StoreKit inside them. Whether Apple's
-	     profile for com.echoelmusic.app.auv3 grants this group is not settled (F17 in
-	     docs/dev/FOUNDER_INBOX.md): a missing group can fail signing, or sign and fail later in the
-	     host with -3000 as the legacy extension did. If the plugins return -3000 in AUM, remove
-	     this key first (factory job 002, criterion 6). -->
+	     sell (App Review 4.4) and Apple does not support StoreKit inside them. Apple's profiles for
+	     com.echoelmusic.app.auv3 grant this group: build 10008 signed with it (run 39341933847), and
+	     the signing probe of 2026-10-21 (run 39647016707) printed it in the development and the App
+	     Store profile. Signing is settled, launching is not: the legacy extension signed fine and
+	     failed in the host with -3000. If the plugins return -3000 in AUM, remove this key first
+	     (factory job 002, criterion 6). The same profiles also grant group.com.echoelmusic; the
+	     extension does not ask for it, because nothing in it reads the earlier app's songs. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>

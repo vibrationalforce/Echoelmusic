@@ -2,22 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- The App Group `group.com.echoelmusic` is deliberately NOT requested in this build.
-	     It served one read-only purpose: the earlier app kept its songs in that container and
-	     the first launch imports them (EchoelCore.LegacySong, DocumentController.earlierBases).
-	     Since 2026-10-18 Apple's profile for com.echoelmusic.app grants only
-	     `group.com.echoelmusic.shared`, so three TestFlight attempts failed at signing (F17 in
-	     docs/dev/FOUNDER_INBOX.md). Without the entitlement the import finds no container and
-	     skips silently; nothing else in Echoel Studio touches the group. Restore the key with
-	     <string>group.com.echoelmusic</string> once the founder has re-added the group to the
-	     App ID (developer.apple.com → Identifiers → App Groups).
-	     `group.com.echoelmusic.shared` IS requested (2026-10-19, factory job 002): the app's profile
-	     grants it (measured in the F17 run), and the app records the plugin purchase there for the
-	     extension to read (PluginUnlock.recordOwned). Whether the .auv3 profile grants it too is
-	     open until the next Studio archive — see EchoelPlugins.entitlements. Add `group.com.echoelmusic` as a SECOND string, never instead. -->
+	<!-- Two App Groups, each for one purpose:
+	     `group.com.echoelmusic.shared` (since 2026-10-19, factory job 002): the app records the
+	     plugin purchase there for the extension to read (PluginUnlock.recordOwned).
+	     `group.com.echoelmusic` (back since 2026-10-21, F17 in docs/dev/FOUNDER_INBOX.md): the
+	     container the earlier app kept its songs in. The app only reads it, once, to import those
+	     songs (EchoelCore.LegacySong, EarlierSongImport, DocumentController.earlierBases).
+	     Builds 10004–10007 asked for no group and 10008–10009 for `.shared` alone, because Apple's
+	     profile for com.echoelmusic.app did not grant this group then. The signing probe of 2026-10-21 17:52
+	     UTC (run 39647016707) showed both groups in the development and App Store profiles of the
+	     app and of the extension, and the signed Echoel.app carrying both.
+	     Never drop a string to make signing pass: without `.shared` the plugins stay locked in the
+	     host, and without `group.com.echoelmusic` the import finds no container and skips
+	     silently. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>
+		<string>group.com.echoelmusic</string>
 	</array>
 </dict>
 </plist>

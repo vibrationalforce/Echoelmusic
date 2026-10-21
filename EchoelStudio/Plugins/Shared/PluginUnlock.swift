@@ -16,8 +16,10 @@ enum PluginUnlock {
     static let productID = "com.echoelmusic.app.pro"
     static let name = "Echoel Plugins"
 
-    /// The container app and extension share (requested by both since factory job 002; whether the
-    /// extension's profile grants it is F17's open half). The extension only
+    /// The container app and extension share (requested by both since factory job 002). Both
+    /// profiles grant it: build 10008 signed with it, and the signing probe of 2026-10-21 printed it
+    /// in each development and App Store profile. Whether the extension then launches in a host is
+    /// a device question (FOUNDER_INBOX §2, SP2). The extension only
     /// READS the purchase from here: App Review guideline 4.4 keeps purchases out of extensions,
     /// and Apple does not support StoreKit inside them, so the StoreKit read in `PluginLicense`
     /// is a fallback, not the path.
