@@ -179,6 +179,9 @@ final class AudioEngine {
     /// Called when something other than the transport's own Stop pauses the song; the record
     /// controller ends a running take there, so it never runs on over a paused song (R10).
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
+    /// The input could not be opened again while a take recorded; playback goes on without it.
+    /// The recording controller ends the take there, with what it captured.
+    @ObservationIgnored var onInputLost: (() -> Void)?
 
     /// The song paused by a call, Siri, a media reset, lost headphones or a followed clock's
     /// Stop. `message` goes to the status line until the next Play.
@@ -328,9 +331,11 @@ final class AudioEngine {
             self.sinkNode = nil
         }
         // A running take keeps its recorder: when the input reopens on the same core, the same
-        // recorder (and ring) carries on, so the take survives a route change. Taken from the
-        // take too: a rebuild that failed with the input already let go of the engine's.
-        let previous = recorder ?? take?.recorder
+        // recorder (and ring) carries on, so the take survives a route change. Never the take's
+        // own after a rebuild that failed with the input: the song played on without it, and that
+        // recorder would join later input straight onto the earlier, early by the gap — the take
+        // ends at the failure instead (`onInputLost`, review 2026-10-21).
+        let previous = recorder
         recorder = nil
         if let sourceNode {
             log.info("graph: detach source node")
@@ -458,8 +463,13 @@ final class AudioEngine {
             if input {
                 // Our own reasons say what to change (a rate mismatch, no input); the system's do not.
                 let reason = (error as? EngineError)?.errorDescription.map { " " + $0 } ?? ""
+                let wasRecording = take != nil
                 configure(input: false)
                 if isRunning { lastError = "The audio input could not be opened." + reason + " Playback goes on without it." }
+                if wasRecording {
+                    if let said = lastError { lastError = said + " The take ended there and keeps what it recorded." }
+                    onInputLost?()
+                }
                 return
             }
             // Never a log-only catch: a short settle, then again, a few times (R1).

@@ -30,6 +30,16 @@ final class RecordController {
             self?.endMIDITake()
             Task { await self?.stopRecording() }
         }
+        // The input fell away under an audio take: the take cannot carry on, so it ends with what
+        // it has. A MIDI take needs no input and goes on.
+        engine.onInputLost = { [weak self] in
+            Task { await self?.stopAudioTake() }
+        }
+    }
+
+    private func stopAudioTake() async {
+        guard midiTrack == nil else { return }
+        await stopRecording()
     }
 
     /// Arms `track`, or disarms it when it is the armed one. An instrument track records what is
