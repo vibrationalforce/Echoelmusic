@@ -7,3 +7,5 @@ that run only, and exported to a local folder. Nothing is uploaded.
 2026-10-21 run 2: run 1 stopped before signing (APP_ID was not set).
 2026-10-21 run 3: run 2 signed in and was refused — both fetched profiles grant only group.com.echoelmusic.shared. Retried after a few minutes, in case Apple had not passed the change on yet.
 2026-10-21 run 4: the founder saved the group assignment on the App ID (no screenshot); run again to see whether the fetched profiles now grant group.com.echoelmusic.
+2026-10-21 run 4 result: refused again; the .auv3 profile now grants both groups, the app's profile still only .shared — the group was ticked on com.echoelmusic.app.auv3, not on com.echoelmusic.app.
+2026-10-21 run 5: the founder saved group.com.echoelmusic on com.echoelmusic.app; run again to see whether the app's profile now grants it.
