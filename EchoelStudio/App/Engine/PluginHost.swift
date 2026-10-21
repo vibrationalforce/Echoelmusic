@@ -127,8 +127,27 @@ final class PluginHost {
         resetObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
         ) { @Sendable [weak self] _ in
-            MainActor.assumeIsolated { self?.unitStopped(nil) }
+            MainActor.assumeIsolated { self?.mediaServicesReset() }
         }
+    }
+
+    /// The media services reset: every unit is dead, also one still being made. A load under way
+    /// is withdrawn, so its answer (a dead unit, or a failure never tried again) is ignored and
+    /// the next sync loads it anew. A second reset finds nothing loaded and still withdraws what
+    /// the first started. Failures stay: one from before the reset is the plugin's, and a unit the
+    /// restart limit refused must not come back by a reset.
+    private func mediaServicesReset() {
+        let withdrawn = !requests.isEmpty
+        log.info("plugin: media services reset, \(self.loaded.count, privacy: .public) loaded, \(self.requests.count, privacy: .public) loading")
+        requests = [:]
+        loading = []
+        guard loaded.isEmpty else {
+            unitStopped(nil)
+            return
+        }
+        guard withdrawn else { return }
+        revision += 1
+        onUnitsChanged?()
     }
 
     /// Forgets the loaded unit `dead` names, or every loaded unit when it is nil, and has the

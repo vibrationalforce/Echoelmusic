@@ -41,7 +41,8 @@ final class AudioEngine {
     @ObservationIgnored private var recovery = AudioRecoveryPolicy()
     @ObservationIgnored private var retryTask: Task<Void, Never>?
 
-    @ObservationIgnored private let engine = AVAudioEngine()
+    /// Replaced, never restarted, after the media services reset (`replaceEngine`).
+    @ObservationIgnored private var engine = AVAudioEngine()
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var sinkNode: AVAudioSinkNode?
     @ObservationIgnored private var recorder: InputRecorder?
@@ -64,6 +65,8 @@ final class AudioEngine {
     /// The song the engine was last given, and the wait before a bridge's song follows it: a
     /// track the engine would cut fades out first (`CutFade`).
     @ObservationIgnored private var heard: Project?
+    /// Whether the input was open when the last snapshot was sent: its monitoring reads that.
+    @ObservationIgnored private var snapshotSawInput = false
     @ObservationIgnored private var bridgeTask: Task<Void, Never>?
     @ObservationIgnored private var project: Project?
     @ObservationIgnored private var samples: [MediaID: SampleBuffer] = [:]
@@ -127,12 +130,7 @@ final class AudioEngine {
             guard let self, let project = self.project else { return }
             self.publish(project)
         }
-        // Plugging an interface in or out stops the engine and may change its channels and rate.
-        configurationObserver = NotificationCenter.default.addObserver(
-            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.hardwareChanged() }
-        }
+        observeConfiguration()
         // A call or Siri takes the audio away. The transport stops where it is, so the song does
         // not carry on by itself when the call ends; the graph comes back, silent, ready to play.
         interruptionObserver = NotificationCenter.default.addObserver(
@@ -169,9 +167,41 @@ final class AudioEngine {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.pauseFromOutside(nil)
+                self?.replaceEngine()
                 self?.resume(after: "media services reset")
             }
         }
+    }
+
+    /// Plugging an interface in or out stops the engine and may change its channels and rate.
+    /// The notification names one engine, so a new engine is observed anew.
+    private func observeConfiguration() {
+        if let configurationObserver { NotificationCenter.default.removeObserver(configurationObserver) }
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.hardwareChanged() }
+        }
+    }
+
+    /// After the media services reset, the engine and every node attached to it are dead: Apple's
+    /// guidance is to drop them and build new ones, not to start them again. The nodes are
+    /// forgotten without a detach (they belong to the dead engine, and detaching them from the new
+    /// one would raise). The core and the song stay: they hold no audio object. The recorder goes:
+    /// a running take ends at the reset (its end runs after this, and keeps its own recorder),
+    /// and a reused recorder would join the input after the reset onto it, early by the gap.
+    /// The next `configure` builds the graph on the new engine, now or on the foreground return.
+    private func replaceEngine() {
+        log.info("engine: replace after media services reset")
+        engine.stop()
+        sourceNode = nil
+        sinkNode = nil
+        recorder = nil
+        isRunning = false
+        isInputOpen = false
+        inputChannels = 0
+        engine = AVAudioEngine()
+        observeConfiguration()
     }
 
     /// Called just before a new output rate replaces the engine core: the plugins are about to
@@ -467,6 +497,11 @@ final class AudioEngine {
             lastError = nil
             isStalled = false
             recovery.reset()
+            // The last snapshot's monitoring saw another input state: it was sent while the graph
+            // was down (a new core above, a reset in the background, a failed try). Nothing else
+            // would send the song again until an unrelated change, so a monitored track would
+            // stay without its input.
+            if isInputOpen != snapshotSawInput, let project { publish(project) }
         } catch {
             log.error("engine: configure failed — \(error.localizedDescription, privacy: .public)")
             lastError = error.localizedDescription
@@ -811,6 +846,7 @@ final class AudioEngine {
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         let source = PlaybackPlan.Source(project)
+        snapshotSawInput = isInputOpen
         let plan: PlaybackPlan
         if let previous = compiled, previous.source == source {
             plan = previous.plan
