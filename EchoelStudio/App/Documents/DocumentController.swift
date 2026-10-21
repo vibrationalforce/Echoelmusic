@@ -20,6 +20,11 @@ final class DocumentController {
     /// standing error or notice; an older one only when nothing else stands, so a message never
     /// hides the result of the export the user just made (review 2026-10-21).
     private(set) var lastExportIsNews = false
+    /// What this launch has to say about the last one — a held song, an import given up, a song
+    /// that did not open. Its own line under the messages: an autosave clears `lastError` and
+    /// must not take this with it, and it hides nothing raised later. Play and opening another
+    /// song clear it (review 2026-10-21).
+    private(set) var launchNote: String?
     private(set) var isImporting = false
     /// Changes whenever `samples` does; observe this, not the buffers.
     private(set) var mediaRevision = 0
@@ -88,7 +93,7 @@ final class DocumentController {
         if let incoming = pendingIncoming {
             pendingIncoming = nil
             if open(incoming) {
-                if gaveUpImport { lastError = "Echoel stopped last time while importing your earlier songs. " + Self.importGivenUp }
+                if gaveUpImport { launchNote = "Echoel stopped last time while importing your earlier songs. " + Self.importGivenUp }
                 return
             }
         }
@@ -97,9 +102,9 @@ final class DocumentController {
             startSong(writing: false)
             // Short enough for the status line: about three lines of caption on a phone in portrait.
             if gaveUpImport {
-                lastError = "Echoel stopped last time while importing your earlier songs, so this is a new song. " + Self.importGivenUp
+                launchNote = "Echoel stopped last time while importing your earlier songs, so this is a new song. " + Self.importGivenUp
             } else {
-                lastError = suspect.map {
+                launchNote = suspect.map {
                     "Echoel did not finish starting last time, so this is a new song; \(Self.songName($0)) was open then and waits until you choose it."
                 } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
             }
@@ -126,11 +131,11 @@ final class DocumentController {
         }
         if currentURL == nil { startSong(writing: false) }
         if let unopened {
-            lastError = unopened.newer
+            launchNote = unopened.newer
                 ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
                 : "\(unopened.name) could not be opened. It stays in your songs."
         } else if let held {
-            lastError = "\(held) was open when Echoel stopped, so it does not open by itself. Choose it in your songs to open it."
+            launchNote = "\(held) was open when Echoel stopped, so it does not open by itself. Choose it in your songs to open it."
         }
     }
 
@@ -238,7 +243,7 @@ final class DocumentController {
         let project = Project.starter()
         store.open(project)
         currentURL = library.newURL(for: project.name)
-        forgetExport()
+        anotherSongOpened()
         savedProject = writing ? nil : project
         isUnwritten = !writing
         starterMadeFolder = false
@@ -272,7 +277,7 @@ final class DocumentController {
             let project = try library.read(url)
             store.open(project)
             currentURL = url
-            forgetExport()
+            anotherSongOpened()
             savedProject = project
             isUnwritten = false
             starterMadeFolder = false
@@ -390,14 +395,17 @@ final class DocumentController {
         }
     }
 
-    /// Play started: the last export's loudness is no longer news.
+    /// Play started a fresh status line: the launch note goes, and the last export's loudness is
+    /// no longer news.
     func playStarted() {
+        launchNote = nil
         lastExportIsNews = false
     }
 
-    /// Another song is open: the loudness line spoke of the one before it.
-    private func forgetExport() {
+    /// Another song is open: the loudness line and the launch note spoke of the one before it.
+    private func anotherSongOpened() {
         songsOpened &+= 1
+        launchNote = nil
         lastExportLoudness = nil
         lastExportIsNews = false
     }

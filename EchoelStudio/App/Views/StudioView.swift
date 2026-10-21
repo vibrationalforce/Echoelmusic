@@ -188,9 +188,15 @@ struct TransportBar: View {
                         .foregroundStyle(Theme.Color.textSecondary)
                         .padding(.bottom, 2)
                 }
+                if let note = documents.launchNote {
+                    Text(note)
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.record)
+                        .padding(.bottom, 2)
+                }
                 // The export just made stands under a message; an older one only alone.
                 if let loudness = documents.lastExportLoudness,
-                   documents.lastExportIsNews || (message == nil && notice == nil) {
+                   documents.lastExportIsNews || (message == nil && notice == nil && documents.launchNote == nil) {
                     // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
                     Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
                         .font(Theme.Font.caption.monospacedDigit())
