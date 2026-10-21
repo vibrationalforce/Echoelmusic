@@ -81,17 +81,21 @@ final class DocumentController {
         if let incoming = pendingIncoming {
             pendingIncoming = nil
             if open(incoming) {
-                if gaveUpImport { lastError = Self.importGivenUp }
+                if gaveUpImport { lastError = "Echoel stopped last time while importing your earlier songs. " + Self.importGivenUp }
                 return
             }
         }
         if previousDied {
             log.error("the last launch did not finish — starting a new song")
             startSong(writing: false)
-            let message = suspect.map {
-                "Echoel did not finish starting last time, so this is a new song. \(Self.songName($0)) was open then; it opens when you choose it in your songs."
-            } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
-            lastError = gaveUpImport ? message + " " + Self.importGivenUp : message
+            // Short enough for the status line: about three lines of caption on a phone in portrait.
+            if gaveUpImport {
+                lastError = "Echoel stopped last time while importing your earlier songs, so this is a new song. " + Self.importGivenUp
+            } else {
+                lastError = suspect.map {
+                    "Echoel did not finish starting last time, so this is a new song; \(Self.songName($0)) was open then and waits until you choose it."
+                } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+            }
             return
         }
         // A song that does not open keeps its place and its name is shown; the newest song that
@@ -613,7 +617,7 @@ final class DocumentController {
     private static let importAttemptLimit = 3
     private static let importRunningKey = "studio.earlierSongImportRunning"
 
-    private static let importGivenUp = "The import of your earlier songs was running when Echoel stopped and is not tried again: what it brought over is in your songs, and the earlier app's files are untouched."
+    private static let importGivenUp = "It will not run again; what it brought over is in your songs."
 
     /// The import was running when a launch died: it is not tried again. The earlier app's files
     /// are only ever read, so nothing of them is lost.
