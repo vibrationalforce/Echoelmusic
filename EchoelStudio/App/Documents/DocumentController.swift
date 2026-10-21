@@ -69,21 +69,27 @@ final class DocumentController {
         guard !isRestored else { return }
         let (previousDied, suspect) = beginLaunch()
         // The import is skipped once after such a launch, in case it was what died. When it was
-        // running then, it is given up: tried again, it would kill every second launch.
-        if previousDied, UserDefaults.standard.bool(forKey: Self.importRunningKey) { giveUpImport() }
+        // running then, it is given up: tried again, it would kill every second launch. Said in
+        // the status line, since nothing in the app starts it again (review 2026-10-21).
+        let gaveUpImport = previousDied && UserDefaults.standard.bool(forKey: Self.importRunningKey)
+        if gaveUpImport { giveUpImport() }
         if !previousDied { importEarlierSongs() }
         refresh()
         isRestored = true
         if let incoming = pendingIncoming {
             pendingIncoming = nil
-            if open(incoming) { return }
+            if open(incoming) {
+                if gaveUpImport { lastError = Self.importGivenUp }
+                return
+            }
         }
         if previousDied {
             log.error("the last launch did not finish — starting a new song")
             startSong(writing: false)
-            lastError = suspect.map {
+            let message = suspect.map {
                 "Echoel did not finish starting last time, so this is a new song. \(Self.songName($0)) was open then; it opens when you choose it in your songs."
             } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+            lastError = gaveUpImport ? message + " " + Self.importGivenUp : message
             return
         }
         // A song that does not open keeps its place and its name is shown; the newest song that
@@ -591,6 +597,8 @@ final class DocumentController {
     private static let importAttemptsKey = "studio.earlierSongImportAttempts"
     private static let importAttemptLimit = 3
     private static let importRunningKey = "studio.earlierSongImportRunning"
+
+    private static let importGivenUp = "The import of your earlier songs was running when Echoel stopped and is not tried again: what it brought over is in your songs, and the earlier app's files are untouched."
 
     /// The import was running when a launch died: it is not tried again. The earlier app's files
     /// are only ever read, so nothing of them is lost.
