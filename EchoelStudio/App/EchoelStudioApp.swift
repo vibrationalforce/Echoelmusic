@@ -84,7 +84,9 @@ struct EchoelStudioApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active: engine.enterForeground()
+            case .active:
+                engine.enterForeground()
+                documents.sceneEntered()
             case .background:
                 engine.enterBackground()
                 documents.sceneLeft()

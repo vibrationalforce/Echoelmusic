@@ -1,10 +1,11 @@
 import Foundation
 
 /// The one-time import of the earlier app's songs, across launches that may end in the middle of
-/// it (review 2026-10-21). A run starts only once a launch is confirmed healthy, so a launch that
-/// dies for another reason never counts against it; a run that was under way when the app ended
-/// is found by its own mark, whatever ended the app. The app keeps the values in its defaults
-/// and does the reading and writing; this type only decides.
+/// it (review 2026-10-21). A run starts only once a launch is confirmed healthy and pauses between
+/// two songs when the app leaves the foreground, so the app is rarely ended while one is under
+/// way; a run that was under way when the app ended anyway is found by its own mark, whatever
+/// ended the app. The app keeps the values in its defaults and does the reading and writing; this
+/// type only decides.
 ///
 /// Finding no song this app can read never finishes it. A build without the App Group cannot
 /// see the earlier app's container and finds nothing; the songs may become readable with a later
@@ -17,11 +18,13 @@ public struct EarlierSongImport: Equatable, Sendable {
     /// The places brought over or left out, by place in the earlier app's files (which are never
     /// changed, so the places hold): a later run passes them.
     public private(set) var done: Set<Int>
-    /// Runs in a row that brought no song over. A run that brings one over starts the count anew.
+    /// Runs in a row that brought no song over, counted as each run begins, so a run the app ends
+    /// counts too. A run that brings a song over, or finds none to bring, starts the count anew.
     public private(set) var attempts: Int
-    /// A run began and has not ended.
+    /// A run began and has neither ended nor paused.
     public private(set) var isRunning: Bool
-    /// The place the running run is on.
+    /// The song the running run is reading or writing; nil while it reads the earlier app's files
+    /// and between two songs.
     public private(set) var current: Int?
     /// A place a run ended on once already: ending on it again leaves it out.
     public private(set) var suspect: Int?
@@ -40,14 +43,14 @@ public struct EarlierSongImport: Equatable, Sendable {
     /// What becomes of a run the app ended in the middle of.
     public enum Interruption: Equatable, Sendable {
         /// It goes on at the next run, past what it brought over. The app also ends when it is
-        /// swiped away, so a song under way once is tried again.
+        /// swiped away or the system needs its memory, so an end is tried again.
         case resumes
         /// The song under way had ended a run before, so it may be what ends the app: it is left
         /// out, and the others follow.
         case leftOut
-        /// It does not run again: the app ended while the earlier app's files were read, before
-        /// any song was under way, or on the import's last allowed run. Tried again, it could end
-        /// every launch. The earlier app's files are only ever read, so nothing of them is lost.
+        /// It does not run again: `attemptLimit` runs in a row ended or failed without bringing a
+        /// song over. Tried again, it could end every launch. The earlier app's files are only ever
+        /// read, so nothing of them is lost.
         case givenUp
     }
 
@@ -58,10 +61,11 @@ public struct EarlierSongImport: Equatable, Sendable {
         isRunning = false
         defer { current = nil }
         guard !isFinished else { return nil }
-        guard let underway = current, attempts < Self.attemptLimit else {
+        guard attempts < Self.attemptLimit else {
             finish()
             return .givenUp
         }
+        guard let underway = current else { return .resumes }
         guard suspect == underway else {
             suspect = underway
             return .resumes
@@ -71,10 +75,15 @@ public struct EarlierSongImport: Equatable, Sendable {
         return .leftOut
     }
 
-    /// A run starts. False when there is nothing to do: the import is finished, or a run is
-    /// already under way.
+    /// A run starts and counts. False when there is nothing to do: the import is finished, or a
+    /// run is already under way.
     public mutating func runBegan() -> Bool {
         guard !isFinished, !isRunning else { return false }
+        attempts += 1
+        guard attempts <= Self.attemptLimit else {
+            finish()
+            return false
+        }
         isRunning = true
         current = nil
         failures = 0
@@ -87,12 +96,9 @@ public struct EarlierSongImport: Equatable, Sendable {
     public mutating func found(_ count: Int) -> [Int] {
         guard isRunning else { return [] }
         guard count > 0 else {
+            // Looking and finding nothing is not a failed run.
+            attempts = 0
             isRunning = false
-            return []
-        }
-        attempts += 1
-        guard attempts <= Self.attemptLimit else {
-            finish()
             return []
         }
         let places = (0..<count).filter { !done.contains($0) }
@@ -130,6 +136,15 @@ public struct EarlierSongImport: Equatable, Sendable {
         case .failed:
             failures += 1
         }
+    }
+
+    /// The run stops between two songs because the app leaves the foreground; the next run goes
+    /// on where it stopped. A pause is not a failed run, so it does not count.
+    public mutating func runPaused() {
+        guard isRunning else { return }
+        isRunning = false
+        current = nil
+        attempts = Swift.max(0, attempts - 1)
     }
 
     /// The run went through its places. It is finished when nothing failed, or after

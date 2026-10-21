@@ -56,6 +56,15 @@ final class DocumentController {
     @ObservationIgnored private var quarantine = SongQuarantine()
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
+    /// The run of the earlier songs' import in flight; leaving the foreground cancels it, and it
+    /// then pauses between two songs.
+    @ObservationIgnored private var importRun: Task<Void, Never>?
+    /// The wait before a paused or not yet started import starts once the app is back in front.
+    @ObservationIgnored private var importWait: Task<Void, Never>?
+    /// A run of the import ended (not paused) in this process; the next one is at the next start.
+    @ObservationIgnored private var importRanThisLaunch = false
+    /// Songs the import brought over in this process, for the status line.
+    @ObservationIgnored private var earlierSongsWritten = 0
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
     /// Runs before another song replaces the open one. The app sets it to write the plugins'
     /// current settings into the song, which they keep to themselves until asked; without it a
@@ -147,7 +156,23 @@ final class DocumentController {
 
     /// Called when the app goes to the background: a launch that got this far counts as healthy.
     func sceneLeft() {
+        importWait?.cancel()
+        importWait = nil
+        importRun?.cancel()
         confirmLaunch(leaving: true)
+    }
+
+    /// Called when the app comes to the foreground. A launch confirmed by leaving did not start
+    /// the import, and a run that paused on the way out has not finished: either starts once the
+    /// app has stayed in front for the steady time, as on a fresh launch (review 2026-10-21).
+    func sceneEntered() {
+        guard isRestored, !launch.isPending, importRun == nil, !importRanThisLaunch else { return }
+        importWait?.cancel()
+        importWait = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(LaunchRecord.steadySeconds))
+            guard !Task.isCancelled else { return }
+            self?.importEarlierSongs()
+        }
     }
 
     private static let launchPendingKey = "studio.launch.pending"
@@ -281,8 +306,10 @@ final class DocumentController {
         noteOpening(url.lastPathComponent)
         do {
             let project = try library.read(url)
-            // The open song chosen again is read afresh and keeps its lines (review 2026-10-21).
-            let another = currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
+            // The open song chosen again is read afresh and keeps its lines (review 2026-10-21). The
+            // unwritten starter's URL is only a free name, and a song that arrived under it is another.
+            let another = isUnwritten
+                || currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
             store.open(project)
             currentURL = url
             if another { anotherSongOpened() }
@@ -609,42 +636,81 @@ final class DocumentController {
     /// open and every one in its library — become songs here. Its files are only read, never
     /// changed or removed, and a song deleted here does not come back.
     private func importEarlierSongs() {
-        guard isRestored, !UserDefaults.standard.bool(forKey: Self.importedKey) else { return }
+        guard isRestored, importRun == nil, !importRanThisLaunch,
+              !UserDefaults.standard.bool(forKey: Self.importedKey) else { return }
+        importWait?.cancel()
+        importWait = nil
         let destination = library
         let logger = log
-        Task { [weak self] in
+        importRun = Task { [weak self] in
             // Off the main thread: reading and converting a long library must not hold it, or the
             // system ends the app in the middle (review 2026-10-21).
-            let written = await Task.detached(priority: .utility) {
+            let work = Task.detached(priority: .utility) {
                 DocumentController.runImport(into: destination, log: logger)
-            }.value
+            }
+            let run = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             guard let self else { return }
-            for url in written { self.releaseHold(on: url) }
+            self.importRun = nil
+            if !run.paused { self.importRanThisLaunch = true }
+            for url in run.written { self.releaseHold(on: url) }
             self.refresh()
-            guard !written.isEmpty else { return }
-            self.earlierSongsNote = written.count == 1
-                ? "One song from the earlier Echoelmusic is now in your songs."
-                : "\(written.count) songs from the earlier Echoelmusic are now in your songs."
+            self.earlierSongsWritten += run.written.count
+            // Only a run that brought something over or failed has news; a run that found nothing
+            // left does not bring back a line Play has cleared.
+            guard !run.written.isEmpty || run.failed > 0 else { return }
+            self.earlierSongsNote = Self.earlierSongsLine(written: self.earlierSongsWritten,
+                                                          failed: run.failed, givenUp: run.finished)
         }
+    }
+
+    /// The status line after a run: what came over in this session, and what could not be saved.
+    private static func earlierSongsLine(written: Int, failed: Int, givenUp: Bool) -> String? {
+        var parts: [String] = []
+        if written > 0 {
+            parts.append(written == 1 ? "One song from the earlier Echoelmusic is now in your songs."
+                                      : "\(written) songs from the earlier Echoelmusic are now in your songs.")
+        }
+        if failed > 0 {
+            let songs = failed == 1 ? "One earlier song" : "\(failed) earlier songs"
+            parts.append(givenUp ? "\(songs) could not be saved and \(failed == 1 ? "is" : "are") left out."
+                                 : "\(songs) could not be saved; Echoel tries again at the next start.")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     /// One run: brings over the songs not written yet and returns where they went. Every step is
     /// kept the moment it happens (`EarlierSongImport` decides), so a run the app ends in the
     /// middle loses nothing already brought over and the next launch knows which song it was on.
-    nonisolated private static func runImport(into library: ProjectLibrary, log: Logger) -> [URL] {
+    nonisolated private static func runImport(into library: ProjectLibrary, log: Logger) -> EarlierImportRun {
         let defaults = UserDefaults.standard
         var state = loadImport(defaults)
-        guard state.runBegan() else { return [] }
+        var run = EarlierImportRun()
+        let began = state.runBegan()
         keep(state, defaults)
+        guard began else {
+            run.finished = state.isFinished
+            return run
+        }
         removeLeftoverPackage(in: library, defaults)
         // The first place the earlier app wrote to that holds a song this app can read.
         let songs = earlierBases().lazy.compactMap { earlierSongs(in: $0, defaults: defaults) }
             .first { $0.holdsReadableSong }
-        let places = state.found(songs?.count ?? 0)
+        var places: [Int] = []
+        if Task.isCancelled {
+            run.paused = true
+        } else {
+            places = state.found(songs?.count ?? 0)
+        }
         keep(state, defaults)
         var written: [URL] = []
         var failed = 0
         for place in places {
+            // Leaving the foreground pauses the run here, between two songs: a run suspended with a
+            // song under way, then ended by the system, would count against that song.
+            if Task.isCancelled {
+                run.paused = true
+                break
+            }
             state.willBring(place)
             keep(state, defaults)
             if let project = songs?.project(at: place) {
@@ -661,10 +727,13 @@ final class DocumentController {
             }
             keep(state, defaults)
         }
-        state.runEnded()
+        if run.paused { state.runPaused() } else { state.runEnded() }
         keep(state, defaults)
-        log.info("imported \(written.count, privacy: .public) song(s) from the earlier app, \(failed, privacy: .public) failed")
-        return written
+        log.info("imported \(written.count, privacy: .public) song(s) from the earlier app, \(failed, privacy: .public) failed\(run.paused ? ", paused" : "", privacy: .public)")
+        run.written = written
+        run.failed = failed
+        run.finished = state.isFinished
+        return run
     }
 
     /// Writes one song into a package of its own. The package is noted while it is still empty,
@@ -760,16 +829,18 @@ final class DocumentController {
         let interruption = state.launchBegan()
         Self.keep(state, defaults)
         guard let interruption else { return nil }
-        let opening = "Echoel stopped last time while bringing your earlier songs over."
         switch interruption {
         case .resumes:
-            return opening + " It carries on shortly; what it brought over is in your songs."
+            // Swiped away, or ended by the system: it simply goes on, and the status line says so
+            // when songs arrive.
+            log.info("a run of the import of earlier songs was interrupted — it goes on")
+            return nil
         case .leftOut:
             log.error("the import of earlier songs ended twice on the same song — leaving it out")
-            return opening + " The song it was on is left out; any others follow shortly."
+            return "Echoel ended twice while bringing the same earlier song over, so that song is left out; the others come over as usual."
         case .givenUp:
-            log.error("the import of earlier songs ended while reading them, or on its last run — not running it again")
-            return opening + " It will not run again; what it brought over is in your songs."
+            log.error("the import of earlier songs ended \(EarlierSongImport.attemptLimit, privacy: .public) runs in a row — not running it again")
+            return "Bringing your earlier songs over did not finish after several tries, so Echoel stops trying. Any it brought over are in your songs."
         }
     }
 
@@ -794,4 +865,14 @@ final class DocumentController {
         return LegacySong.Songs(timeline: timeline, clips: clips, tempo: tempo > 0 ? tempo : Tempo.defaultBPM,
                                 library: library.map(LegacySong.libraryRows) ?? LegacySong.libraryRows(Data()))
     }
+}
+
+/// What one run of the import of earlier songs did.
+private struct EarlierImportRun: Sendable {
+    var written: [URL] = []
+    var failed = 0
+    /// It stopped between two songs because the app left the foreground.
+    var paused = false
+    /// The import is finished: nothing is left to bring over, or it was given up.
+    var finished = false
 }

@@ -114,15 +114,72 @@ final class EarlierSongImportTests: XCTestCase {
         XCTAssertTrue(state.isFinished)
     }
 
-    func testEndingWhileTheFilesAreReadGivesTheImportUp() {
+    func testEndingWhileTheFilesAreReadIsTriedAgainUpToTheLimit() {
+        // The app ends before any song is under way. A swipe-away goes on; reading the earlier
+        // app's files may also be what ends it, so it is not tried for ever.
         var state = EarlierSongImport()
-        _ = state.runBegan()
-        // The app ends before any song is under way: reading the earlier app's files may be what
-        // ends it, and tried again it could end every launch.
-        state = relaunched(state)
-        XCTAssertEqual(state.launchBegan(), .givenUp)
+        for run in 1...EarlierSongImport.attemptLimit {
+            XCTAssertTrue(state.runBegan(), "run \(run)")
+            state = relaunched(state)
+            XCTAssertEqual(state.launchBegan(), run < EarlierSongImport.attemptLimit ? .resumes : .givenUp)
+        }
         XCTAssertTrue(state.isFinished)
         XCTAssertFalse(state.runBegan())
+    }
+
+    func testEndingBetweenTwoSongsGoesOn() {
+        var state = EarlierSongImport()
+        _ = state.runBegan()
+        XCTAssertEqual(state.found(3), [0, 1, 2])
+        state.willBring(0)
+        state.brought(0, .written)
+        // The app ends after one song was recorded and before the next is under way.
+        state = relaunched(state)
+        XCTAssertTrue(state.isRunning)
+        XCTAssertNil(state.current)
+        XCTAssertEqual(state.launchBegan(), .resumes)
+        XCTAssertNil(state.suspect, "no song was under way, so none is suspected")
+        _ = state.runBegan()
+        XCTAssertEqual(state.found(3), [1, 2])
+    }
+
+    func testAPlaceThatHoldsNothingReadableStaysOpenThroughEnds() {
+        // Nothing is readable here, so the import stays open for a later build; a run that is
+        // ended now and then while it looks must not close it.
+        var state = EarlierSongImport()
+        for _ in 0..<5 {
+            _ = state.runBegan()
+            state = relaunched(state)
+            XCTAssertEqual(state.launchBegan(), .resumes)
+            _ = state.runBegan()
+            XCTAssertEqual(state.found(0), [])
+            XCTAssertEqual(state.attempts, 0)
+            state = relaunched(state)
+            XCTAssertNil(state.launchBegan())
+        }
+        XCTAssertFalse(state.isFinished)
+    }
+
+    func testAPauseGoesOnWhereItStoppedAndDoesNotCount() {
+        var state = EarlierSongImport(attempts: 1)
+        _ = state.runBegan()
+        XCTAssertEqual(state.attempts, 2)
+        _ = state.found(3)
+        state.willBring(0)
+        state.brought(0, .failed)
+        state.runPaused()
+        XCTAssertFalse(state.isRunning)
+        XCTAssertNil(state.current)
+        XCTAssertEqual(state.attempts, 1, "a pause is not a failed run")
+        state = relaunched(state)
+        XCTAssertNil(state.launchBegan(), "a paused run was not under way when the app ended")
+        _ = state.runBegan()
+        XCTAssertEqual(state.found(3), [0, 1, 2], "the failed song is tried again")
+        state.brought(0, .written)
+        state.runPaused()
+        XCTAssertEqual(state.attempts, 0, "a song came over before the pause")
+        _ = state.runBegan()
+        XCTAssertEqual(state.found(3), [1, 2])
     }
 
     func testEndingOnTheLastAllowedRunGivesTheImportUp() {
@@ -153,8 +210,9 @@ final class EarlierSongImportTests: XCTestCase {
 
     func testARunWhoseSongsAreAllDoneFinishes() {
         // The app ended after the last song was recorded but before the run was marked ended.
-        var state = EarlierSongImport(done: [0, 1])
-        _ = state.runBegan()
+        var state = EarlierSongImport(done: [0, 1], isRunning: true)
+        XCTAssertEqual(state.launchBegan(), .resumes)
+        XCTAssertTrue(state.runBegan())
         XCTAssertEqual(state.found(2), [])
         XCTAssertTrue(state.isFinished)
         XCTAssertFalse(state.isRunning)
