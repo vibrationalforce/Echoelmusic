@@ -186,12 +186,9 @@ final class DocumentController {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
+            // The song that came in may take the unwritten starter's name; the starter moves to
+            // another before anything is written (`starterKeepsItsOwnPackage`).
             let local = try library.adopt(url)
-            // The unwritten starter's name was free when it was picked, so the song that came in
-            // may have taken it; the starter moves to another before anything writes it there.
-            if isUnwritten, let current = currentURL, current.standardizedFileURL == local.standardizedFileURL {
-                currentURL = library.newURL(for: store.project.name)
-            }
             refresh()
             if isRestored { open(local) } else { pendingIncoming = local }
         } catch {
@@ -266,11 +263,25 @@ final class DocumentController {
         }
     }
 
+    /// The unwritten starter's name was free when it was picked, and a song may have arrived
+    /// under it since: by AirDrop, or copied in with the Files app, which sees no clash while
+    /// nothing is on disk. Before anything writes into the starter's package, the starter moves to
+    /// a free name, instead of writing over that song's document (review 2026-10-21).
+    private func starterKeepsItsOwnPackage() {
+        guard isUnwritten, let url = currentURL,
+              FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
+        else { return }
+        currentURL = library.newURL(for: store.project.name)
+        log.info("the starter's name was taken meanwhile; it moves to another")
+    }
+
     /// Writes the open song now if it changed since the last write.
     func saveNow() {
         pendingSave?.cancel()
         pendingSave = nil
-        guard let url = currentURL, store.project != savedProject else { return }
+        guard currentURL != nil, store.project != savedProject else { return }
+        starterKeepsItsOwnPackage()
+        guard let url = currentURL else { return }
         let project = store.project
         do {
             try library.write(project, to: url)
@@ -388,6 +399,7 @@ final class DocumentController {
     /// ready for `media.add`. Nil, with `lastError` set, when it cannot be read — or when
     /// another song was opened meanwhile.
     private func importMedia(_ source: URL) async -> MediaFile? {
+        starterKeepsItsOwnPackage()
         guard !isImporting, let package = currentURL else { return nil }
         isImporting = true
         defer { isImporting = false }
@@ -418,6 +430,7 @@ final class DocumentController {
     }
 
     func newTakeTarget() -> TakeTarget? {
+        starterKeepsItsOwnPackage()
         guard let package = currentURL else { return nil }
         let id = MediaID()
         let path = "\(MediaFile.directory)/\(id).caf"
