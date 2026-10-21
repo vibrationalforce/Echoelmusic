@@ -306,6 +306,9 @@ final class AudioEngine {
             lastError = "Echoel may not use the microphone. Allow it in Settings."
             return false
         }
+        // Opening the input stops the song: a running take ends here, once it is certain the
+        // input opens, instead of recording on over a stopped, rewound transport.
+        onPausedFromOutside?()
         stop()
         wantsInput = true
         configure(input: true)
