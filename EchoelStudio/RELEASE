@@ -12,8 +12,9 @@ target reaches it, tests; nothing here is device-verified yet.
   reopening the same one, and says so. Every song stays in the list. The song that was opening
   then does not open by itself again until it is chosen in the song list; the status line names
   it.
-- An import of earlier songs that was running when a launch died is not tried again, and a
-  damaged earlier song with an out-of-range velocity imports instead of stopping the app.
+- An import of earlier songs that was running when a launch died is not tried again, and the
+  status line says so; a damaged earlier song with an out-of-range velocity imports instead of
+  stopping the app.
 - A failed audio start is tried again; after three tries Play becomes Restart audio. Play also
   rebuilds the audio when iOS stopped it without telling.
 - Unplugging headphones pauses the song. A call, a media reset or an external clock's Stop ends
@@ -39,14 +40,18 @@ target reaches it, tests; nothing here is device-verified yet.
   silent; following a DAW's clock, it comes back after a call in the background.
 - A MIDI take ended by a sample-rate change keeps its notes in time.
 - After a launch that did not finish, the new song is not saved until it is edited, so the
-  next launch opens your newest song again. A song received under that unsaved song's name is
-  not overwritten by it.
-- Record and a session launch start nothing while the audio cannot run.
+  next launch opens your newest song again. A song received, or copied in with the Files app,
+  under that unsaved song's name is not overwritten by it.
+- Record and a session launch start nothing while the audio cannot run, even while the song
+  shows as playing; a new take waits until the last one is written out.
 - Deleting the armed track, or arming an instrument track instead, closes the input it opened.
-- A take keeps recording through an audio rebuild that first failed with the input, and when
-  the input cannot open, the message says why.
-- During MIDI Learn a controller plays nothing, so a plugin cannot take the learn.
-- A plugin loaded again after it stopped says so in the status line.
+- When the input cannot be opened again while an audio take records, the take ends there and
+  keeps what it recorded, in time; the message says why the input failed. Setting a monitor to
+  in ends a running take first, since opening the input stops the song.
+- During MIDI Learn knobs, the pitch wheel, pressure, program change and a pressed pedal play
+  nothing, so a plugin cannot take the learn; notes play, and a held wheel or pedal can return.
+- A plugin that stopped says in the status line once it is loaded again, or why it is not.
+  Notices no longer hide each other or the loudness of a new export.
 
 Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
 group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
