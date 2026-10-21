@@ -4,6 +4,9 @@ import EchoelEngine
 import Foundation
 import Observation
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Which song is open and where it lives. Saves automatically: a short pause after the last
 /// edit, and at once when the app leaves the foreground. There is no Save button to forget.
@@ -29,6 +32,9 @@ final class DocumentController {
     /// the quiet colour: it is news, not a warning, and no message hides it. Play and opening
     /// another song clear it (review 2026-10-21).
     private(set) var earlierSongsNote: String?
+    /// Earlier songs that could not be saved, and whether they are tried again: a warning, so it
+    /// stands in the record colour, beside the news and not inside it. Cleared like the news.
+    private(set) var earlierSongsWarning: String?
     private(set) var isImporting = false
     /// Changes whenever `samples` does; observe this, not the buffers.
     private(set) var mediaRevision = 0
@@ -65,6 +71,13 @@ final class DocumentController {
     @ObservationIgnored private var importRanThisLaunch = false
     /// Songs the import brought over in this process, for the status line.
     @ObservationIgnored private var earlierSongsWritten = 0
+    /// The app is in the background: from `sceneLeft` until `sceneEntered`. A launch starts in
+    /// front, so this starts false.
+    @ObservationIgnored private var isInBackground = false
+    #if canImport(UIKit)
+    /// Background time asked for while a run on its way out reaches its pause point.
+    @ObservationIgnored private var importBackgroundTask: UIBackgroundTaskIdentifier = .invalid
+    #endif
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
     /// Runs before another song replaces the open one. The app sets it to write the plugins'
     /// current settings into the song, which they keep to themselves until asked; without it a
@@ -156,23 +169,55 @@ final class DocumentController {
 
     /// Called when the app goes to the background: a launch that got this far counts as healthy.
     func sceneLeft() {
+        isInBackground = true
         importWait?.cancel()
         importWait = nil
-        importRun?.cancel()
+        if let run = importRun {
+            // The run stops at its next pause point, between two songs; until then it is under
+            // way, and a system that suspends and ends the app there would count against the
+            // song. Background time lets it get there (review 2026-10-21).
+            beginImportBackgroundTime()
+            run.cancel()
+        }
         confirmLaunch(leaving: true)
     }
 
     /// Called when the app comes to the foreground. A launch confirmed by leaving did not start
     /// the import, and a run that paused on the way out has not finished: either starts once the
-    /// app has stayed in front for the steady time, as on a fresh launch (review 2026-10-21).
+    /// app has stayed in front for the steady time, as on a fresh launch (review 2026-10-21). A run
+    /// still on its way to its pause point arms the wait itself when it gets there.
     func sceneEntered() {
-        guard isRestored, !launch.isPending, importRun == nil, !importRanThisLaunch else { return }
+        isInBackground = false
+        armImportWait()
+    }
+
+    private func armImportWait() {
+        guard isRestored, !isInBackground, !launch.isPending, importRun == nil, !importRanThisLaunch else { return }
         importWait?.cancel()
         importWait = Task { [weak self] in
             try? await Task.sleep(for: .seconds(LaunchRecord.steadySeconds))
             guard !Task.isCancelled else { return }
             self?.importEarlierSongs()
         }
+    }
+
+    private func beginImportBackgroundTime() {
+        #if canImport(UIKit)
+        guard importBackgroundTask == .invalid else { return }
+        // The system calls the handler on the main thread and ends the app unless it ends the task
+        // before returning, so it ends it in place rather than in a later task.
+        importBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Earlier songs") { [weak self] in
+            MainActor.assumeIsolated { self?.endImportBackgroundTime() }
+        }
+        #endif
+    }
+
+    private func endImportBackgroundTime() {
+        #if canImport(UIKit)
+        guard importBackgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(importBackgroundTask)
+        importBackgroundTask = .invalid
+        #endif
     }
 
     private static let launchPendingKey = "studio.launch.pending"
@@ -230,10 +275,11 @@ final class DocumentController {
         keepQuarantine()
         launchCheck?.cancel()
         launchCheck = nil
-        // Only in the foreground: a run started on the way to the background is suspended in the
-        // middle, and one the system then ends would count against the song it was on. A launch
-        // confirmed by leaving runs it at a later launch.
-        if !leaving { importEarlierSongs() }
+        // Only in the foreground: a run started on the way to the background, or in it (the audio
+        // background mode keeps a playing app alive past ten seconds), is suspended in the middle,
+        // and one the system then ends would count against the song it was on. Otherwise it waits
+        // for `sceneEntered`.
+        if !leaving, !isInBackground { importEarlierSongs() }
     }
 
     private static func isNewer(_ error: Error) -> Bool {
@@ -435,6 +481,7 @@ final class DocumentController {
     func playStarted() {
         launchNote = nil
         earlierSongsNote = nil
+        earlierSongsWarning = nil
         lastExportIsNews = false
     }
 
@@ -443,6 +490,7 @@ final class DocumentController {
         songsOpened &+= 1
         launchNote = nil
         earlierSongsNote = nil
+        earlierSongsWarning = nil
         lastExportLoudness = nil
         lastExportIsNews = false
     }
@@ -636,7 +684,7 @@ final class DocumentController {
     /// open and every one in its library — become songs here. Its files are only read, never
     /// changed or removed, and a song deleted here does not come back.
     private func importEarlierSongs() {
-        guard isRestored, importRun == nil, !importRanThisLaunch,
+        guard isRestored, !isInBackground, importRun == nil, !importRanThisLaunch,
               !UserDefaults.standard.bool(forKey: Self.importedKey) else { return }
         importWait?.cancel()
         importWait = nil
@@ -651,31 +699,33 @@ final class DocumentController {
             let run = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             guard let self else { return }
             self.importRun = nil
-            if !run.paused { self.importRanThisLaunch = true }
-            for url in run.written { self.releaseHold(on: url) }
+            self.endImportBackgroundTime()
             self.refresh()
+            for url in run.written { self.releaseHold(on: url) }
             self.earlierSongsWritten += run.written.count
-            // Only a run that brought something over or failed has news; a run that found nothing
-            // left does not bring back a line Play has cleared.
-            guard !run.written.isEmpty || run.failed > 0 else { return }
-            self.earlierSongsNote = Self.earlierSongsLine(written: self.earlierSongsWritten,
-                                                          failed: run.failed, givenUp: run.finished)
+            if !run.written.isEmpty {
+                self.earlierSongsNote = self.earlierSongsWritten == 1
+                    ? "One song from the earlier Echoelmusic is now in your songs."
+                    : "\(self.earlierSongsWritten) songs from the earlier Echoelmusic are now in your songs."
+            }
+            if run.failed == 0, !run.written.isEmpty {
+                // The run that went on after a pause saved what the paused one could not.
+                self.earlierSongsWarning = nil
+            } else if run.failed > 0 {
+                let songs = run.failed == 1 ? "One earlier song" : "\(run.failed) earlier songs"
+                self.earlierSongsWarning = run.finished
+                    ? "\(songs) could not be saved and \(run.failed == 1 ? "is" : "are") left out."
+                    : run.paused ? "\(songs) could not be saved; Echoel tries again when it goes on."
+                                 : "\(songs) could not be saved; Echoel tries again at the next start."
+            }
+            if run.paused {
+                // Back in front before the run reached its pause point: `sceneEntered` found it
+                // still under way, so the wait is armed here.
+                self.armImportWait()
+            } else {
+                self.importRanThisLaunch = true
+            }
         }
-    }
-
-    /// The status line after a run: what came over in this session, and what could not be saved.
-    private static func earlierSongsLine(written: Int, failed: Int, givenUp: Bool) -> String? {
-        var parts: [String] = []
-        if written > 0 {
-            parts.append(written == 1 ? "One song from the earlier Echoelmusic is now in your songs."
-                                      : "\(written) songs from the earlier Echoelmusic are now in your songs.")
-        }
-        if failed > 0 {
-            let songs = failed == 1 ? "One earlier song" : "\(failed) earlier songs"
-            parts.append(givenUp ? "\(songs) could not be saved and \(failed == 1 ? "is" : "are") left out."
-                                 : "\(songs) could not be saved; Echoel tries again at the next start.")
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     /// One run: brings over the songs not written yet and returns where they went. Every step is
