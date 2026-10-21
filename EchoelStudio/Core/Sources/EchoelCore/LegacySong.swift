@@ -24,17 +24,6 @@ public enum LegacySong {
         return try project(document, clips: slots.compactMap { $0.value ?? nil }, tempo: tempo, name: name)
     }
 
-    /// Whether the one-time import of the earlier app's songs is finished, so it is not tried
-    /// again. `foundSongs` is false when no place the earlier app wrote to holds a song this app
-    /// can read — which is also what a build without the App Group sees, because the container
-    /// is then out of reach. That case stays open: the songs may become readable with a later
-    /// build, and looking costs a few file reads. A run that found songs is finished when every
-    /// one was written, or after `attemptLimit` runs that had failures.
-    public static func importIsFinished(foundSongs: Bool, failures: Int, attempts: Int, attemptLimit: Int) -> Bool {
-        guard foundSongs else { return false }
-        return failures == 0 || attempts >= attemptLimit
-    }
-
     /// Every song in the earlier app's library (`projects.json`), each with the name it was
     /// saved under. A song whose envelope cannot be read is left out.
     public static func library(_ data: Data) -> [Project] {
@@ -46,6 +35,42 @@ public enum LegacySong {
     /// one at a time and record how far it got (review 2026-10-21).
     public static func libraryRows(_ data: Data) -> Library {
         Library(rows: ((try? JSONDecoder().decode([Lenient<SavedSong>].self, from: data)) ?? []).map(\.value))
+    }
+
+    /// The earlier app's songs in one place it wrote to, read but not converted: its open song
+    /// first, then its library, each in a fixed place, so the import can bring them over one at a
+    /// time (review 2026-10-21).
+    public struct Songs: Sendable {
+        let timeline: Data?
+        let clips: Data
+        let tempo: Double
+        let library: Library
+
+        /// `timeline` and `clips` are the earlier app's open song, nil when it left none; `tempo`
+        /// is the one that song was made at, since the earlier app kept no song tempo.
+        public init(timeline: Data?, clips: Data, tempo: Double, library: Library) {
+            self.timeline = timeline
+            self.clips = clips
+            self.tempo = tempo
+            self.library = library
+        }
+
+        /// Every place, the unreadable ones included.
+        public var count: Int { (timeline == nil ? 0 : 1) + library.count }
+
+        /// The song in place `index`, or nil when it cannot be read or there is no such place.
+        public func project(at index: Int) -> Project? {
+            guard let timeline else { return library.project(at: index) }
+            guard index == 0 else { return library.project(at: index - 1) }
+            return try? LegacySong.project(timeline: timeline, clips: clips, tempo: tempo, name: "Earlier Song")
+        }
+
+        /// Whether any of them can be read here. The earlier app may have left an open song with
+        /// no lanes in one place and its real songs in another; a place that holds nothing
+        /// readable is passed over, and does not finish the import.
+        public var holdsReadableSong: Bool {
+            (0..<count).contains { project(at: $0) != nil }
+        }
     }
 
     /// The rows of the earlier app's library. A row keeps its place whether or not it can be read,

@@ -159,16 +159,24 @@ final class LegacySongTests: XCTestCase {
         XCTAssertEqual(LegacySong.libraryRows(Data("{}".utf8)).count, 0)
     }
 
-    func testFindingNothingNeverFinishesTheImport() {
-        // A build without the App Group cannot see the earlier app's container: it finds no song.
-        // Marking that run done would stop a later build with the group from ever looking.
-        for attempts in [1, 3, 99] {
-            XCTAssertFalse(LegacySong.importIsFinished(foundSongs: false, failures: 0, attempts: attempts, attemptLimit: 3))
-        }
-        XCTAssertTrue(LegacySong.importIsFinished(foundSongs: true, failures: 0, attempts: 1, attemptLimit: 3))
-        XCTAssertFalse(LegacySong.importIsFinished(foundSongs: true, failures: 2, attempts: 2, attemptLimit: 3),
-                       "a run with failures is retried")
-        XCTAssertTrue(LegacySong.importIsFinished(foundSongs: true, failures: 2, attempts: 3, attemptLimit: 3),
-                      "and given up after the limit")
+    func testAPlaceWithNothingReadableIsPassedOver() throws {
+        // The earlier app left an open song without lanes in one place: that place holds no song,
+        // so the import looks in the next one instead of finishing on it (review 2026-10-21).
+        let empty = Data(#"{"lanes":[],"regions":[]}"#.utf8)
+        let broken = LegacySong.libraryRows(try JSONSerialization.data(withJSONObject: [["name": "Broken", "session": "AAAA"]]))
+        let none = LegacySong.Songs(timeline: empty, clips: Data("[]".utf8), tempo: 120, library: broken)
+        XCTAssertEqual(none.count, 2, "every place counts, the unreadable ones included")
+        XCTAssertNil(none.project(at: 0))
+        XCTAssertNil(none.project(at: 1))
+        XCTAssertFalse(none.holdsReadableSong)
+        XCTAssertFalse(LegacySong.Songs(timeline: nil, clips: Data("[]".utf8), tempo: 120,
+                                        library: LegacySong.libraryRows(Data())).holdsReadableSong)
+
+        let open = LegacySong.Songs(timeline: timeline, clips: clips, tempo: 97, library: broken)
+        XCTAssertTrue(open.holdsReadableSong)
+        XCTAssertEqual(open.project(at: 0)?.name, "Earlier Song")
+        XCTAssertEqual(open.project(at: 0)?.tempo, 97, "the open song is made at the tempo it was played at")
+        XCTAssertNil(open.project(at: 1), "the library follows the open song")
+        XCTAssertNil(open.project(at: 2))
     }
 }
