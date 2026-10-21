@@ -53,14 +53,20 @@ ids above plus `.voice` and a wildcard `*`.
   beyond the default In-App Purchase. **It is not needed:** a product id is not an App ID. The purchase
   is created in App Store Connect under the app (Monetarisierung → In-App-Käufe); nothing builds,
   signs or ships under the bundle id `.pro`. Harmless if kept; removing it avoids the confusion.
-- `com.echoelmusic.app` carries App Groups (needed for the import of earlier songs — ⛔ since `2b9956c`
-  (2026-10-19) the Studio's entitlements file does not ask for `group.com.echoelmusic`, because the
-  profile no longer grants it; the key comes back once the founder re-ticks it, FOUNDER_INBOX F17. ⭐
-  Since factory job 002 (2026-10-19) it asks for `group.com.echoelmusic.shared`, which the profile
-  grants: the app records the plugin purchase there for the extension, `PluginUnlock`) plus many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
+- `com.echoelmusic.app` carries two App Groups, each with one purpose: `group.com.echoelmusic.shared`
+  (since factory job 002, 2026-10-19: the app records the plugin purchase there for the extension,
+  `PluginUnlock`) and `group.com.echoelmusic` (the container the earlier app kept its songs in; the
+  Studio reads it once to import them). ⭐ **F17 closed 2026-10-21:** the founder ticked
+  `group.com.echoelmusic` on this App ID again, and the signing probe on `7c0760edc` (run 39647016707,
+  17:52 UTC) printed both groups in the development and App Store profiles of the app and of the
+  extension, with the signed Echoel.app carrying both. The Studio's entitlements ask for both since
+  `a14e1960a`. ⛔ From `2b9956c` (2026-10-19) to then they did not ask for `group.com.echoelmusic`,
+  because the profile did not grant it: builds 10004–10007 asked for no group, 10008–10009 for
+  `.shared` alone, and in all six the import found no container and skipped quietly. The App ID also
+  carries many capabilities the earlier app used (HealthKit, iCloud/CloudKit, Push, Sign in
   with Apple, Siri, WeatherKit, MusicKit, ShazamKit, Maps, Data Protection „Complete" …). An App ID
-  capability only PERMITS an entitlement; what App Review sees is the binary's entitlements, and the
-  Studio's file asks for one App Group today (`group.com.echoelmusic.shared`, the plugin purchase); `group.com.echoelmusic` comes back as a second entry with F17. Do not untick them while builds of the earlier app exist.
+  capability only PERMITS an entitlement; what App Review sees is the binary's entitlements. Do not
+  untick them while builds of the earlier app exist.
 - `com.echoelmusic.app.auv3` had **no** App Group in these recordings and only Sign in with Apple
   ticked, which nothing uses. ⚠️ The F17 run of the same evening printed the ISSUED .auv3 profile
   carrying `group.com.echoelmusic.shared`, and since factory job 002 the extension requests it (to read
@@ -71,7 +77,10 @@ ids above plus `.voice` and a wildcard `*`.
   upload. A profile without the group stops the archive with a profile error (attempts 1–3 of F17 did
   exactly that for the app), so the issued profile grants it. ⚠️ Whether the extension then LAUNCHES in
   a host with the group is a device question (the earlier extension signed fine and failed in the host
-  with `-3000`) — FOUNDER_INBOX §2 family SP, step SP2.
+  with `-3000`) — FOUNDER_INBOX §2 family SP, step SP2. The probe of 2026-10-21 (run 39647016707)
+  printed the .auv3 development and App Store profiles granting both groups; `group.com.echoelmusic`
+  sits there because the founder first ticked it on this App ID by mistake (probe 4, run
+  39591787947). It may stay: the extension does not ask for it.
 
 > **Deferred platforms** (macOS / tvOS / visionOS) were previously declared only in the removed
 > Tuist `Project.swift`. They are **not currently defined anywhere** and would be re-added to
@@ -81,12 +90,13 @@ ids above plus `.voice` and a wildcard `*`.
 
 | App Group | Status |
 |---|---|
-| `group.com.echoelmusic` | Canonical (entitlements + `CLAUDE.md`). Used by the earlier app, its widget and the unembedded watch target (`git grep -l group.com.echoelmusic -- '*.entitlements'`); the AUv3 carries none on purpose. ⛔ **Measured 2026-10-18/19 (Studio TestFlight runs 39158721875, 39158926622, 39180435790): the profile Apple issues for `com.echoelmusic.app` grants only `group.com.echoelmusic.shared`.** The last earlier-app upload (run 38996952047, 2026-10-17 03:04) still signed with `group.com.echoelmusic`, so the group left the App ID between those dates. Until the founder re-ticks it (F17), every earlier-app build that asks for it fails at signing. |
+| `group.com.echoelmusic` | Canonical (entitlements + `CLAUDE.md`). Used by the earlier app, its widget, the unembedded watch target and, since `a14e1960a`, the Studio app, which reads the earlier songs from it once (`git grep -l group.com.echoelmusic -- '*.entitlements'`); the earlier app's AUv3 carries none on purpose. ⭐ **Granted again since 2026-10-21 (F17, signing probe run 39647016707).** ⛔ Measured 2026-10-18/19 (Studio TestFlight runs 39158721875, 39158926622, 39180435790): the profile for `com.echoelmusic.app` granted only `group.com.echoelmusic.shared`; the last earlier-app upload (run 38996952047, 2026-10-17 03:04) still signed with this group, so it left the App ID between those dates. Whether `testflight.yml` signs the earlier app again is not measured: no earlier-app build ran since. |
+| `group.com.echoelmusic.shared` | The plugin purchase record (`PluginUnlock`), written by the Studio app and read by `EchoelPlugins.appex` (factory job 002). Granted on `com.echoelmusic.app` and `com.echoelmusic.app.auv3`; build 10008 signed both with it. |
 
-> ⚠️ **Discrepancy to resolve owner-side:** `fastlane/Appfile` reference comments mention
-> `group.com.echoelmusic.shared`. The committed entitlements use `group.com.echoelmusic`.
-> Confirm which App Group is registered in the Apple Developer portal and make the Appfile
-> comment match the entitlements. Mismatched App Group IDs break signing/provisioning.
+> ⛔ A note here said `fastlane/Appfile` names `group.com.echoelmusic.shared` while the entitlements
+> use `group.com.echoelmusic`. Measured 2026-10-21: the Appfile names `group.com.echoelmusic` only
+> (`grep -n group fastlane/Appfile`), and both groups are registered, each for its own purpose (table
+> above). There is no mismatch to resolve.
 
 ## Notes & deferred work (iPhone-first scope)
 

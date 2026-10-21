@@ -5586,3 +5586,10 @@ Review 2026-11-15.
 - **Plugin-Hinweise** kommen aus `EchoelEngine.PluginReloadNotice` (11 Tests): erst gesagt, wenn geschehen; jeder Satz nennt seine Plugins; Fehler mit Grund; Ratenwechsel nur bei Fehlschlag; ein Slot, der ein anderes Plugin will, fällt still heraus.
 - **Aufnahme:** fällt der Eingang während eines Audio-Takes weg und lässt sich nicht wieder öffnen, endet der Take dort (`onInputLost`) — nie über die Lücke weiterkleben (der Versuch `2bb9bbf39` ist zurückgenommen).
 - **Prüfschleife:** jede Reparatur prüft die nächste Runde; die letzte vor einem Upload ist eng (Compile, Test, Rückschritt); neue kleine Randfälle gehen nach S-50. Grund: vier Runden fanden jeweils Rückschritte der vorigen Reparaturen.
+
+### 2026-10-21 — Studio: die App verlangt `group.com.echoelmusic` wieder (F17 erledigt)
+
+- **Entscheidung:** `EchoelStudio/Support/App/EchoelStudio.entitlements` trägt beide App Groups, `group.com.echoelmusic.shared` (Plugin-Kauf, Factory-Job 002) und `group.com.echoelmusic` (der Container der Alt-App-Songs, einmal gelesen für den Import), seit `a14e1960a`. Die Erweiterung (`EchoelPlugins.entitlements`) behält `.shared` allein. Hebt die Entscheidung vom 2026-10-19 (Versuch 4 ohne die Gruppe, `2b9956c`) auf.
+- **Gemessen, nicht geglaubt:** Signier-Probe Lauf 4 (39591787947) fand den Haken an `com.echoelmusic.app.auv3` statt an der App; Lauf 5 (39647016707, `7c0760edc`, 21.10. 17:52 UTC) zeigt beide Gruppen in allen vier Profilen (Entwicklung und App Store, App und Erweiterung) und das signierte Echoel.app mit beiden.
+- **Was offen bleibt:** der Import wirkt erst ab dem nächsten TestFlight-Build und ist auf keinem Gerät geprüft (F-18). Ob `testflight.yml` die Alt-App wieder signiert, ist nicht gemessen. Gestanden haben veraltet: der Kommentar in `EchoelStudio/project.yml` (Zeilen 86–87, 98–99; founder-gated, nur berichtet) und Zeile 63 in `EchoelStudio/RELEASE` (wird mit dem nächsten Bump neu geschrieben — jede Änderung dort lädt hoch).
+- **Review:** 2026-11-20.

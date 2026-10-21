@@ -125,7 +125,7 @@ erweitern nicht.
 - „everything is undoable“: Werte der eingebauten Effekte sind kein Undo-Schritt.
 - „mastering“, „normalised export“, „stems“: der Export misst und warnt, er normalisiert nicht; nur das Arrangement, keine Session-Starts.
 - „works in AUM, Logic, GarageBand“, „plugin you can buy“: Studios Audio Units liefen in keinem Host auf einem Gerät (§1, Nachtrag 3); nichts ist im Verkauf (§7, Nachtrag 1).
-- „imports your old Echoelmusic songs“: der Import findet erst etwas, wenn die App die App Group `group.com.echoelmusic` trägt (FOUNDER_INBOX F17).
+- „imports your old Echoelmusic songs“: die App verlangt die App Group `group.com.echoelmusic` seit `a14e1960a` wieder (F17 erledigt 21.10.), ausgeliefert erst mit dem nächsten TestFlight-Build und auf keinem Gerät geprüft. Bis ein Gerät es zeigt, nicht behaupten; in 10004–10009 fand der Import nichts.
 - „AI that writes your song“: der Assistent ist nur mit Apple Intelligence sichtbar, ändert Tempo, Spuren, Sounds, Mix und einfache Muster, und lief auf keinem Gerät. Nie „KI komponiert“, nie „Superintelligenz“.
 - „Network MIDI between two iPads running Echoel“: Echoel nimmt Verbindungen an, startet keine, und sendet nur Clock.
 

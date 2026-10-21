@@ -54,7 +54,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 
 ## Apple / TestFlight — Founder
 
-- [ ] **F-14** (F · bis 2026-10-20) ⚠️ **21.10. 11:26 gemessen (Signier-Probe Lauf 4, 39591787947): der Haken sitzt an `com.echoelmusic.app.auv3`, nicht an `com.echoelmusic.app`** — das App-Profil trägt weiterhin nur `.shared`. F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → group.com.echoelmusic anhaken (.shared darf bleiben; fehlt die Gruppe ganz, mit GENAU diesem Namen neu registrieren) — blockiert den Import alter Songs im Studio-Build UND den nächsten Alt-App-Build (Studio-TestFlight läuft seit Versuch 4 OHNE die Gruppe: Build 10004, 2b9956c) · Quelle: FOUNDER_INBOX §3 F17; ee64075; 2b9956c; EchoelStudio/RELEASE
+- [x] **F-14** (F · bis 2026-10-20) ⭐ **ERLEDIGT 21.10.:** Haken an `com.echoelmusic.app` gesetzt, Signier-Probe Lauf 5 (39647016707, 17:52 UTC) grün — beide Gruppen in allen vier Profilen, das signierte Echoel.app trägt beide; die Gruppe ist seit `a14e1960a` zurück in den Studio-Entitlements, wirkt ab dem nächsten Build. Davor: ⚠️ **21.10. 11:26 gemessen (Signier-Probe Lauf 4, 39591787947): der Haken sitzt an `com.echoelmusic.app.auv3`, nicht an `com.echoelmusic.app`** — das App-Profil trägt weiterhin nur `.shared`. F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → group.com.echoelmusic anhaken (.shared darf bleiben; fehlt die Gruppe ganz, mit GENAU diesem Namen neu registrieren) — blockiert den Import alter Songs im Studio-Build UND den nächsten Alt-App-Build (Studio-TestFlight läuft seit Versuch 4 OHNE die Gruppe: Build 10004, 2b9956c) · Quelle: FOUNDER_INBOX §3 F17; ee64075; 2b9956c; EchoelStudio/RELEASE
 - [ ] **F-15** (F · bis 2026-10-27) E8: In-App-Kauf com.echoelmusic.app.pro (nicht-verbrauchbar) in App Store Connect anlegen; App ID „Echoelmusic Pro“ optional entfernen · Quelle: TODO_2026-10-18 E8; APP_STORE_CONNECT.md:45
 - [ ] **F-16** (F · bis 2026-10-27) E9: Version in App Store Connect von „1.0 In Vorbereitung“ in 11.0 umbenennen (die App baut 11.0.0) · Quelle: TODO_2026-10-18 E9
 - [ ] **F-17** (F · bis 2026-11-06) E10: Screenshots für iPhone UND iPad 13" (die App ist universell; iPad lässt sich später nicht zurücknehmen) · Quelle: TODO_2026-10-18 E10
@@ -141,7 +141,7 @@ Fett = fester Termin oder Frist.
 
 **Dienstag 20.10.**
 
-- [Apple-Portal, ~10 min] F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → Configure → group.com.echoelmusic anhaken (.shared darf zusätzlich bleiben) → Save. Fehlt die Gruppe ganz unter App Groups: mit GENAU diesem Namen neu registrieren. Ohne den Haken: kein Import alter Songs im Studio-Build und kein Alt-App-Build (der Studio-TestFlight läuft seit Versuch 4 ohne die Gruppe). _(F)_
+- [x] Erledigt 21.10. (F-14, Signier-Probe Lauf 5 grün). [Apple-Portal, ~10 min] F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → Configure → group.com.echoelmusic anhaken (.shared darf zusätzlich bleiben) → Save. Fehlt die Gruppe ganz unter App Groups: mit GENAU diesem Namen neu registrieren. Ohne den Haken: kein Import alter Songs im Studio-Build und kein Alt-App-Build (der Studio-TestFlight läuft seit Versuch 4 ohne die Gruppe). _(F)_
 - [x] Erledigt 19.10. 14:53, vor dem Haken: Studio-TestFlight Versuch 4 = Echoel Studio 11.0.0 (10004) hochgeladen (2b9956c, ohne App-Group-Entitlement). Geräte-Checkliste mit Build-Nummer im Chat. Nach dem Haken: Schlüssel zurück in die Entitlements + RELEASE-Bump = Versuch 5 mit Alt-Song-Import. _(S)_
 - Messen, warum main (71fa9b7) 264 Commits (Stand c81abb6) hinter dem Zweig steht: lief auto-merge-claude auf a5faa9a (studio-linux.yml ist ein Trigger-Pfad)? EchoelStudio/** triggert keinen Merge, docs-Änderungen an bestehenden Dateien blockiert F18. Befund in die Inbox; Vorschlag: PR wie #427 vor dem 1.11. — die Jury liest main. _(S)_
 - Studio P0: C5 Einfrier-Test für das, was wirklich gespeichert wird — Swift-Fallnamen der Befehle, ParameterKeys, Agent-Werkzeugnamen (MIDI-Mappings und Agenten-Protokolle tragen sie) · C3 formatVersion normalisieren (0/negativ abweisen). _(S)_
@@ -243,7 +243,7 @@ Fett = fester Termin oder Frist.
 
 - P0-Abnahme messen, Kriterium aus dem Bauplan: Core-, DSP- und Engine-Tests grün auf macOS und Linux · App- und AUv3-Build grün · die Erweiterung linkt kein EngineCore · altes Song-Format migriert · kein Verhaltensunterschied für den Nutzer. Was offen bleibt, als Liste mit Besitzer. _(S)_
 - H Doku-Pflege: EchoelStudio/CLAUDE.md (Layout als P0-Schuld, „Effekte gratis“, Gesetz 5, Netzwerk-Schritt) · Banner auf NEUSTART §3.4 und AUDIT §1 · eine Zeile in der Root-CLAUDE.md und memory/vision.md („Produkt = EchoelStudio, Plan = NEUPLANUNG“) · APP_STORE_CONNECT.md-Spalte · decisions.csv: alte Genre-/Bio-Beschlüsse als „ersetzt durch 2026-10-18“. _(S)_
-- Studio-TestFlight „P0 fertig“ (EchoelStudio/RELEASE bumpen, intern) — setzt den F17-Haken vom 20.10. voraus; sonst steht hier der Blocker, nicht der Build. Checkliste G mit Build-Nummer in den Chat. _(S)_
+- Studio-TestFlight „P0 fertig“ (EchoelStudio/RELEASE bumpen, intern) — der F17-Haken sitzt seit 21.10., die Gruppe ist seit `a14e1960a` in den Entitlements; dieser Build ist der erste mit Import alter Songs. Checkliste G mit Build-Nummer in den Chat. _(S)_
 
 **Donnerstag 05.11.**
 

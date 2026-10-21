@@ -141,7 +141,7 @@ Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-
   Alt-App: vier Ausgänge (UDP, je an einen vom Nutzer eingetragenen Host, erst nach Anlegen einer
   Route), ein OSC-Eingang (Opt-in, Default aus, Sender-Allowlist), Peer-Kollaboration nur nach
   „Go Live“; kein `URLSession`, CloudKit hart aus. Was die Jury heute TESTEN kann, ist diese App
-  (TestFlight); der Studio-TestFlight wartet auf F17.
+  (TestFlight); Echoel Studio liegt seit 19.10. ebenfalls auf TestFlight (Build 10004 ff.).
 - **One Clock** (`docs/one-clock.html`): freie Web-Seite, ein 10-s-Zyklus an der Weltzeit, keine
   Daten, kein Server, kein Konto (PR #427, live auf echoelmusic.com/one-clock.html). ⚠️ Im Antrag
   nur als Beleg „eine Seite ohne Server“, nicht als Feature — eine Seite, auf der alle im Takt
@@ -156,7 +156,7 @@ Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-
   als Tatsache; `docs/privacy.html:205` („we are not a controller“) vor der Bewerbung von einem
   DSB prüfen lassen (Founder, §8).
 - **Zwei Codebasen, offen gesagt:** die ältere App (heute auf TestFlight; Körper, Licht, OSC
-  live und durch Wächter gepinnt) und der neue Kern (Workstation; CI grün, TestFlight nach F17).
+  live und durch Wächter gepinnt) und der neue Kern (Workstation; CI grün, auf TestFlight seit Build 10004).
   Der Antrag präsentiert sie nicht als EIN Produkt.
 
 ## 3. Satz in 20 Sekunden (für die Sprechstunde)

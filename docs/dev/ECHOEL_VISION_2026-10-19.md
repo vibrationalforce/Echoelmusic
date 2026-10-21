@@ -114,8 +114,9 @@ grep MARKETING_VERSION EchoelStudio/project.yml
 Gebaut und in TestFlight, **nichts davon gerätegeprüft**: Instrumente (Synth, Drums, Sampler),
 Effekte, Arrangement mit Parts, Session-Ansicht mit Szenen und Launch-Quantisierung, Automation,
 MIDI-Aufnahme mit Bend und CC, Audio-Aufnahme auf Spuren, Mix mit Metern, Master-Kette, Export mit
-LUFS und True-Peak, MIDI-Datei-Export, Import alter Projekte (gebaut, in 10004/10005 aber wirkungslos:
-ohne App Group sieht Studio die alten Songs nicht, F17), eigene AUv3-Instrumente (in keiner Host-App
+LUFS und True-Peak, MIDI-Datei-Export, Import alter Projekte (gebaut, in 10004–10009 aber wirkungslos:
+ohne App Group sah Studio die alten Songs nicht; die Gruppe ist seit 21.10. zurück, F17, wirkt ab dem
+nächsten Build, auf keinem Gerät geprüft), eigene AUv3-Instrumente (in keiner Host-App
 auf einem Gerät geprüft — die AUM-Messung #1386 gilt nur `echl` der Alt-App) mit gebautem Einmalkauf
 (nicht im Verkauf: kein In-App-Kauf in App Store Connect, F-15), der Assistent auf dem Gerät, die
 About-Seite.
