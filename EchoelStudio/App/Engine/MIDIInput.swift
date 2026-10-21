@@ -153,7 +153,9 @@ final class ControlInbox: Sendable {
     func playsLive(status: UInt8, _ data1: UInt8, _ data2: UInt8) -> Bool {
         guard learning.load(ordering: .acquiring) else { return true }
         switch status & 0xF0 {
-        case 0x80, 0x90: return true
+        // Notes, and the controllers that only ever stop or reset things — All Sound Off, Reset
+        // All Controllers, All Notes Off: no learn target is at stake, and a panic must work.
+        case 0x80, 0x90, 0xB0: return true
         case 0xE0: return data1 == 0 && data2 == 0x40
         case 0xD0: return data1 == 0
         case 0xA0: return data2 == 0
@@ -565,7 +567,8 @@ final class MIDIInput {
                     }
                 } else if type == 0x2 {
                     let status = UInt8((word >> 16) & 0xFF), data1 = UInt8((word >> 8) & 0x7F), data2 = UInt8(word & 0x7F)
-                    if status & 0xF0 == 0xB0, data1 != 120, data1 != 123 {
+                    // All Sound Off, Reset All Controllers and All Notes Off are never learned.
+                    if status & 0xF0 == 0xB0, data1 != 120, data1 != 121, data1 != 123 {
                         let control = MIDIControl(channel: status & 0x0F, number: data1)
                         if inbox.post(control, data2) { drain = true }
                         // A controller the song does not map plays the live instrument — the mod
