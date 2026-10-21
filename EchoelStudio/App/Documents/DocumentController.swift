@@ -31,6 +31,8 @@ final class DocumentController {
     /// The open song is the starter a launch opened and has not been written yet, so nothing on
     /// disk holds its name.
     @ObservationIgnored private var isUnwritten = false
+    /// The unwritten starter's package folder exists because an import or a take made it.
+    @ObservationIgnored private var starterMadeFolder = false
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
@@ -227,6 +229,7 @@ final class DocumentController {
         currentURL = library.newURL(for: project.name)
         savedProject = writing ? nil : project
         isUnwritten = !writing
+        starterMadeFolder = false
         saveNow()
         loadMedia(of: project)
     }
@@ -259,6 +262,7 @@ final class DocumentController {
             currentURL = url
             savedProject = project
             isUnwritten = false
+            starterMadeFolder = false
             lastError = nil
             loadMedia(of: project)
         } catch {
@@ -281,11 +285,16 @@ final class DocumentController {
     /// under it since: by AirDrop, or copied in with the Files app, which sees no clash while
     /// nothing is on disk. Before anything writes into the starter's package, the starter moves to
     /// a free name, instead of writing over that song's document (review 2026-10-21).
+    /// A folder the starter did not make counts as taken too: a copy still under way has its
+    /// folder before its document (review 2026-10-21).
     private func starterKeepsItsOwnPackage() {
-        guard isUnwritten, let url = currentURL,
-              FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
-        else { return }
+        guard isUnwritten, let url = currentURL else { return }
+        let fm = FileManager.default
+        let taken = fm.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
+            || (!starterMadeFolder && fm.fileExists(atPath: url.path))
+        guard taken else { return }
         currentURL = library.newURL(for: store.project.name)
+        starterMadeFolder = false
         log.info("the starter's name was taken meanwhile; it moves to another")
     }
 
@@ -421,6 +430,7 @@ final class DocumentController {
     private func importMedia(_ source: URL) async -> MediaFile? {
         starterKeepsItsOwnPackage()
         guard !isImporting, let package = currentURL else { return nil }
+        if isUnwritten { starterMadeFolder = true }   // the import below makes it
         isImporting = true
         defer { isImporting = false }
         let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
@@ -463,6 +473,7 @@ final class DocumentController {
             lastError = "Could not prepare the song's Media folder."
             return nil
         }
+        if isUnwritten { starterMadeFolder = true }
         return TakeTarget(id: id, path: path, url: url)
     }
 
