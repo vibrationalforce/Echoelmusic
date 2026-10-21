@@ -5579,3 +5579,10 @@ Review 2026-11-15.
 - **Return-Solo** spielt in place (Sends an die gesolote Return-Spur kommen an, Direktklang schweigt); ohne gesolote Return-Spur unverändert. Engine-Test in `HostedEffectTests`.
 - **CI-Starttest** installiert die Simulator-App ohne `PlugIns/` und bootet während des Builds; die Erweiterung prüft `studio-testflight.yml`. Kein Ad-hoc-Signierweg neben der echten Signatur.
 - Offen und bewusst nicht heute: Startbestätigung an Meilensteinen statt nach 10 s, neue `AVAudioEngine` nach einem Media-Reset, Wellenform/Preset ohne Automation (S-50).
+
+### 2026-10-21 — Studio: Song-Sperre nach Absturz, getestete Plugin-Hinweise, enge Schlussrunde
+
+- **Song-Sperre:** der Song, den ein nicht bestätigter Start gerade öffnete, als er starb, wird nach Dateiname gehalten (`SongQuarantine` in `LaunchRecord.swift`, höchstens 8) und öffnet erst wieder, wenn er gewählt wird; die Statuszeile nennt ihn. Ein neuer Song, der den Namen eines gelöschten gehaltenen bekommt, löst die Sperre — sie gilt dem Song, nicht dem Namen. Review 2026-11-20.
+- **Plugin-Hinweise** kommen aus `EchoelEngine.PluginReloadNotice` (11 Tests): erst gesagt, wenn geschehen; jeder Satz nennt seine Plugins; Fehler mit Grund; Ratenwechsel nur bei Fehlschlag; ein Slot, der ein anderes Plugin will, fällt still heraus.
+- **Aufnahme:** fällt der Eingang während eines Audio-Takes weg und lässt sich nicht wieder öffnen, endet der Take dort (`onInputLost`) — nie über die Lücke weiterkleben (der Versuch `2bb9bbf39` ist zurückgenommen).
+- **Prüfschleife:** jede Reparatur prüft die nächste Runde; die letzte vor einem Upload ist eng (Compile, Test, Rückschritt); neue kleine Randfälle gehen nach S-50. Grund: vier Runden fanden jeweils Rückschritte der vorigen Reparaturen.

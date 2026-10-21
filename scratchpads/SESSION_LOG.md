@@ -1643,3 +1643,31 @@ weiterhilft … Am Ende steht der TestFlight Deploy der alles enthält. Sei tran
   dieselbe Gattung: ein Neuaufbau vergaß, was gewollt war. (2) **ein roter CI-Schritt ist erst ein Befund über die
   App, wenn das Log zeigt, dass die App lief** — Lauf 170 hat sie nie gestartet. (3) **ein Claims-Audit findet
   Bugs**: vier der zwanzig zu weit gefassten Behauptungen waren falscher Code, nicht falsche Sätze.
+
+## 2026-10-21 10:40 — Vier Prüfrunden über die Laufzeit-Härtung, ein Push, Build 10009 (Studio 175 / TestFlight 9)
+
+Founder (Fortsetzung): „Weiter Greb all context und volle power."
+- **Runde 2** (`f27a99e18..7206aeca0`, `wf_5400c274-317`): 10 Befunde, sechs doppelt bestätigt (vier Gegenprüfer
+  fielen dem Wochenlimit zum Opfer). Repariert in elf Commits `104d5b16a..438141b10` — u. a. der eigene Rückschritt
+  `2bb9bbf39` (Take über eine Eingangslücke zusammengeklebt, zeitlich verschoben) per `7b5158819` zurück: der Take
+  endet jetzt an der Lücke (`onInputLost`). Weiter: Starter schreibt nie in einen Song, der seinen Namen nahm;
+  Sperre gilt dem Song, nicht dem Namen; Import-Aufgabe wird gesagt; canPlay immer; kein neuer Take, solange der
+  letzte geschrieben wird; Arm-Toggle nach await; Plugin-Hinweis erst nach dem Neuladen; Learn hält Bend/Druck/
+  Program zurück; Statuszeile zeigt beide Hinweise.
+- **Runde 3** (`ae09518af..438141b10`, `wf_f50adc31-9ad`, 36 Agenten): kein Compile-Fehler, zwei Mittlere — beide
+  Rückschritte meiner Runde-2-Fixes (Learn schluckte All Notes Off; Record nach Ratenwechsel beendete den neuen Take
+  sofort). Repariert in zehn Commits `0ab5e1251..f48049672`; neu der getestete Engine-Typ `PluginReloadNotice`
+  (11 Tests), die Statuszeile unter der Transportleiste, kürzere Startmeldungen.
+- **Runde 4** (`0a566812a..f48049672`, `wf_0985e62d-1cb`, eng: nur Compile/Test/Rückschritt): ein Rückschritt,
+  doppelt bestätigt — `b1284627b` hielt jede rote Dokument-Meldung und verdeckte spätere Hinweise. Zurückgenommen
+  (`8b24901ff`).
+- Push `394299ab2` (44 Commits, Token-Prüfung leer). Studio 175 und TestFlight 9 laufen; Build = 10009.
+- S-50 trägt nun: Startbestätigung an Meilensteinen, neue AVAudioEngine nach Media-Reset, Clock-Start in der Pause,
+  Import vom Main-Thread und fortsetzbar (vor F17), Export-Lautheit hinter einem Engine-Fehler, ein eigener Platz für
+  Startmeldungen.
+- Nichts davon ist gerätegeprüft.
+- ⭐ Lehren: (1) **jede Prüfrunde fand Rückschritte der vorigen Runde** (2bb9bbf39, e89760b61, a0d84cefd,
+  b1284627b) — eine Reparatur ist erst fertig, wenn eine Runde sie selbst geprüft hat. (2) **die letzte Runde vor
+  einem Upload ist eng**: nur Compile, Test, Rückschritt; neue kleine Randfälle gehen nach S-50, sonst konvergiert
+  die Schleife nie. (3) **Statuszeilen-Logik gehört in einen getesteten Typ**: drei Runden lang war sie falsch in
+  einer anderen Ereignis-Reihenfolge; `PluginReloadNotice` macht jede Reihenfolge prüfbar.
