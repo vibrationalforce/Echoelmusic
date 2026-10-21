@@ -137,12 +137,16 @@ final class ControlInbox: Sendable {
     }
 
     /// MIDI thread: whether a controller also plays the live instrument. The sustain pedal
-    /// always does, since it holds the notes being played — while learning only when it is let
-    /// go, so a pedal held from before can still release its notes (review 2026-10-21).
+    /// always does, since it holds the notes being played. While learning, a pedal — sustain,
+    /// sostenuto, soft, hold 2 — plays only when it is let go, so one held from before can still
+    /// release what it holds (review 2026-10-21).
     func playsLive(_ control: MIDIControl, value: UInt8) -> Bool {
         let isLearning = learning.load(ordering: .acquiring)
-        if control.number == 64 { return !isLearning || value < 64 }
-        return !isLearning && !isMapped(control)
+        switch control.number {
+        case 64: return !isLearning || value < 64
+        case 66, 67, 69: return isLearning ? value < 64 : !isMapped(control)
+        default: return !isLearning && !isMapped(control)
+        }
     }
 
     /// MIDI thread: whether another channel message reaches the live instrument. Always, except
@@ -156,7 +160,8 @@ final class ControlInbox: Sendable {
         // Notes, and the controllers that only ever stop or reset things — All Sound Off, Reset
         // All Controllers, All Notes Off: no learn target is at stake, and a panic must work.
         case 0x80, 0x90, 0xB0: return true
-        case 0xE0: return data1 == 0 && data2 == 0x40
+        // The wheel at rest: its centre, 8192, give or take what a spring or a dead band leaves.
+        case 0xE0: return abs((Int(data2) << 7 | Int(data1)) - 8192) <= 128
         case 0xD0: return data1 == 0
         case 0xA0: return data2 == 0
         default: return false
