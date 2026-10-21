@@ -3,3 +3,5 @@ signed like a TestFlight upload, with group.com.echoelmusic added to the app's e
 that run only, and exported to a local folder. Nothing is uploaded.
 
 2026-10-21: the founder ticked group.com.echoelmusic on the App ID com.echoelmusic.app (F17).
+
+2026-10-21 run 2: run 1 stopped before signing (APP_ID was not set).

@@ -32,6 +32,8 @@ permissions:
 
 env:
   XCODE_VERSION: '26.2'
+  # The app's App Store Connect id; `asc-build-state.rb auth` asks for it (run 1 stopped there).
+  APP_ID: '6757957358'
 
 jobs:
   probe:
