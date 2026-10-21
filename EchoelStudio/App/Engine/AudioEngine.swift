@@ -185,6 +185,9 @@ final class AudioEngine {
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.
     @ObservationIgnored var onInputLost: (() -> Void)?
+    /// Called when Play starts a fresh status line; the document controller drops the last
+    /// export's loudness from beside the messages there.
+    @ObservationIgnored var onPlay: (() -> Void)?
     /// Counts `pauseFromOutside`, so `canPlay` can tell that its own repair stopped the song.
     @ObservationIgnored private var pausesFromOutside = 0
 
@@ -602,6 +605,7 @@ final class AudioEngine {
 
     func play() {
         clearNotices()
+        onPlay?()
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
         guard canPlay(), let core else { return }

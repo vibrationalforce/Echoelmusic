@@ -14,8 +14,12 @@ final class DocumentController {
     private(set) var songs: [ProjectLibrary.Entry] = []
     private(set) var lastError: String?
     private(set) var isExporting = false
-    /// How loud the last WAV export came out, for the status line; nil before one.
+    /// How loud the open song's last WAV export came out, for the status line; nil before one.
     private(set) var lastExportLoudness: (integrated: Double, truePeak: Double)?
+    /// The export just finished and nothing has played since. Then its loudness shows under a
+    /// standing error or notice; an older one only when nothing else stands, so a message never
+    /// hides the result of the export the user just made (review 2026-10-21).
+    private(set) var lastExportIsNews = false
     private(set) var isImporting = false
     /// Changes whenever `samples` does; observe this, not the buffers.
     private(set) var mediaRevision = 0
@@ -33,6 +37,9 @@ final class DocumentController {
     @ObservationIgnored private var isUnwritten = false
     /// The unwritten starter's package folder exists because an import or a take made it.
     @ObservationIgnored private var starterMadeFolder = false
+    /// Counts song switches, so an export that finishes after another song opened does not
+    /// report its loudness as that song's.
+    @ObservationIgnored private var songsOpened = 0
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
@@ -231,6 +238,7 @@ final class DocumentController {
         let project = Project.starter()
         store.open(project)
         currentURL = library.newURL(for: project.name)
+        forgetExport()
         savedProject = writing ? nil : project
         isUnwritten = !writing
         starterMadeFolder = false
@@ -264,6 +272,7 @@ final class DocumentController {
             let project = try library.read(url)
             store.open(project)
             currentURL = url
+            forgetExport()
             savedProject = project
             isUnwritten = false
             starterMadeFolder = false
@@ -332,6 +341,7 @@ final class DocumentController {
         isExporting = true
         defer { isExporting = false }
         let rate = 48_000.0
+        let exportedSong = songsOpened
         try? store.absorb(plugins.captureCommands(for: store.project))
         let project = store.project
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
@@ -362,17 +372,34 @@ final class DocumentController {
         }.value
         switch result {
         case .success(let meter):
-            lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
+            if exportedSong == songsOpened {
+                lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
+                lastExportIsNews = true
+            }
             lastError = offline.missing.isEmpty ? nil
                 : "Exported without \(offline.missing.joined(separator: ", ")): not available on this device."
             return url
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .public)")
+            // The loudness of an earlier export must not stand under this failure as its result.
+            lastExportIsNews = false
             lastError = error as? WAVWriter.WriteError == .tooLong
                 ? "The song is longer than a WAV file can hold (about six hours)."
                 : "Could not export the song."
             return nil
         }
+    }
+
+    /// Play started: the last export's loudness is no longer news.
+    func playStarted() {
+        lastExportIsNews = false
+    }
+
+    /// Another song is open: the loudness line spoke of the one before it.
+    private func forgetExport() {
+        songsOpened &+= 1
+        lastExportLoudness = nil
+        lastExportIsNews = false
     }
 
     /// Writes the open song's notes as a Standard MIDI File in a temporary folder and returns its

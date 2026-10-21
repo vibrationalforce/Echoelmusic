@@ -38,6 +38,8 @@ struct EchoelStudioApp: App {
             try? store.absorb(engine.plugins.captureCommands(for: store.project))
             return store.project
         }
+        // Play starts a fresh status line: the last export's loudness is no longer news.
+        engine.onPlay = { [weak documents] in documents?.playStarted() }
         // Opening another song saves this one first, with the plugins' settings in it.
         documents.beforeLeavingSong = { [weak store, weak engine] in
             guard let store, let engine else { return }

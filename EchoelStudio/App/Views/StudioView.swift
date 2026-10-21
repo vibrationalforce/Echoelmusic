@@ -172,22 +172,32 @@ struct TransportBar: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.accent)
                 .padding(.bottom, 2)
-        } else if let error = engine.lastError ?? documents.lastError {
-            Text(error)
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.record)
-                .padding(.bottom, 2)
-        } else if let notice = Self.notices(engine.notice, engine.plugins.notice) {
-            Text(notice)
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.textSecondary)
-                .padding(.bottom, 2)
-        } else if let loudness = documents.lastExportLoudness {
-            // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
-            Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
-                .font(Theme.Font.caption.monospacedDigit())
-                .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
-                .padding(.bottom, 2)
+        } else {
+            let message = engine.lastError ?? documents.lastError
+            let notice = Self.notices(engine.notice, engine.plugins.notice)
+            // Each line carries its own padding: with nothing to say, the strip keeps its height.
+            VStack(spacing: 0) {
+                if let message {
+                    Text(message)
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.record)
+                        .padding(.bottom, 2)
+                } else if let notice {
+                    Text(notice)
+                        .font(Theme.Font.caption)
+                        .foregroundStyle(Theme.Color.textSecondary)
+                        .padding(.bottom, 2)
+                }
+                // The export just made stands under a message; an older one only alone.
+                if let loudness = documents.lastExportLoudness,
+                   documents.lastExportIsNews || (message == nil && notice == nil) {
+                    // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
+                    Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
+                        .font(Theme.Font.caption.monospacedDigit())
+                        .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
+                        .padding(.bottom, 2)
+                }
+            }
         }
     }
 
