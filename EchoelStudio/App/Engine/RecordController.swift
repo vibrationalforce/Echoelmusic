@@ -87,6 +87,9 @@ final class RecordController {
     func setMonitor(_ mode: MonitorMode, on track: TrackID) async {
         do { try store.perform(.setMonitor(track, mode)) } catch { return }
         if monitorsAlways {
+            // Opening the input stops the song, so a take running then ends first instead of
+            // recording on over a stopped, rewound transport.
+            if !engine.isInputOpen, isRecording { await stopRecording() }
             _ = await engine.openInput()
         } else if armedTrack == nil, !isRecording {
             engine.closeInput()
