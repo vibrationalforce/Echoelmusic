@@ -32,11 +32,29 @@ final class PluginHost {
     private(set) var problems: [Slot: String] = [:]
     private(set) var loading: Set<Slot> = []
     /// A unit that stopped and was loaded again plays its last saved settings, which may not be
-    /// the ones just heard: said in the status line until the next Play (review 2026-10-20).
+    /// the ones just heard: said in the status line until the next Play (review 2026-10-20). Said
+    /// once the reload has happened, and replaced by the reason when it does not (review
+    /// 2026-10-21): announced at the stop, it stood there over a unit that never came back.
     private(set) var notice: String?
+    /// The slots being loaded again after their unit stopped, and whether a media reset did it.
+    @ObservationIgnored private var reloading: [Slot: Bool] = [:]
 
     func clearNotice() {
         notice = nil
+        noticeIsFailure = false
+    }
+
+    /// A unit that did not come back outranks the ones that did, whichever answer arrives last.
+    @ObservationIgnored private var noticeIsFailure = false
+
+    private func noteReloaded(_ text: String) {
+        guard !noticeIsFailure else { return }
+        notice = text
+    }
+
+    private func noteNotReloaded(_ reason: String) {
+        notice = reason
+        noticeIsFailure = true
     }
     /// Changes whenever the loaded units do; observe this, not the units.
     private(set) var revision = 0
@@ -132,7 +150,6 @@ final class PluginHost {
     private func unitStopped(_ dead: ObjectIdentifier?) {
         let gone = loaded.filter { dead == nil || ObjectIdentifier($0.value.unit) == dead }
         guard !gone.isEmpty else { return }
-        var reloaded: [String] = []
         for (slot, entry) in gone {
             log.error("plugin: \(entry.component.name, privacy: .public) stopped, reloading")
             if let observer = entry.observer { entry.unit.parameterTree?.removeParameterObserver(observer) }
@@ -145,17 +162,15 @@ final class PluginHost {
             restarts[slot] = recent
             let count = recent.count
             if count > Self.restartLimit {
-                fail(slot, entry.component, reason: "\(entry.component.name) stopped working and was not loaded again.",
-                     detail: "stopped \(count) times")
+                reloading[slot] = nil
+                let reason = "\(entry.component.name) stopped working and was not loaded again."
+                fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
+                noteNotReloaded(reason)
             } else {
-                reloaded.append(entry.component.name)
+                reloading[slot] = false
             }
         }
-        if dead == nil {
-            notice = "After an audio reset the plugins were loaded again with their last saved settings."
-        } else if let name = reloaded.first {
-            notice = "\(name) stopped and was loaded again with its last saved settings."
-        }
+        if dead == nil { for slot in gone.keys { reloading[slot] = true } }
         revision += 1
         onUnitsChanged?()
     }
@@ -228,6 +243,8 @@ final class PluginHost {
             loading.remove(slot)
         }
         failed = failed.filter { wanted[$0.key]?.component == $0.value }
+        // A slot no longer wanted is not loaded again, so nothing is said about it.
+        reloading = reloading.filter { wanted[$0.key] != nil }
         problems = problems.filter { failed[$0.key] != nil }
         for (slot, want) in wanted where loaded[slot] == nil && requests[slot] == nil && failed[slot] != want.component {
             load(want.component, for: slot, state: want.state, sampleRate: sampleRate)
@@ -291,6 +308,10 @@ final class PluginHost {
                               observer: observe(unit, slot: slot))
         syncedState[slot] = state
         problems[slot] = nil
+        if let afterReset = reloading.removeValue(forKey: slot) {
+            noteReloaded(afterReset ? "After an audio reset the plugins were loaded again with their last saved settings."
+                : "\(request.component.name) stopped and was loaded again with its last saved settings.")
+        }
         revision += 1
         // The chains are rebuilt from the song when the engine republishes.
         onUnitsChanged?()
@@ -301,6 +322,8 @@ final class PluginHost {
         log.error("plugin: \(component.name, privacy: .public) failed — \(detail ?? "", privacy: .public)")
         failed[slot] = component
         problems[slot] = reason
+        // A unit that stopped and does not come back: the status line says so, not the page alone.
+        if reloading.removeValue(forKey: slot) != nil { noteNotReloaded(reason) }
     }
 
     func isLoaded(_ slot: Slot) -> Bool { loaded[slot] != nil }
