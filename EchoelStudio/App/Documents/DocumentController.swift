@@ -315,18 +315,14 @@ final class DocumentController {
             try library.write(project, to: url)
             savedProject = project
             isUnwritten = false
-            // Only a failed save's own message goes: a launch message (a held song, a given-up
-            // import) must outlive the first autosave after it (review 2026-10-21).
-            if lastError == Self.saveFailed { lastError = nil }
+            lastError = nil
             if isNew { releaseHold(on: url) }
             refresh()
         } catch {
             log.error("save failed — \(error.localizedDescription, privacy: .public)")
-            lastError = Self.saveFailed
+            lastError = "Could not save. Your changes are still open."
         }
     }
-
-    private static let saveFailed = "Could not save. Your changes are still open."
 
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
     /// and returns its URL for the share sheet. Plugins play from fresh copies loaded with the
