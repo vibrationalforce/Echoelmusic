@@ -137,9 +137,28 @@ final class ControlInbox: Sendable {
     }
 
     /// MIDI thread: whether a controller also plays the live instrument. The sustain pedal
-    /// always does; it holds the notes being played.
-    func playsLive(_ control: MIDIControl) -> Bool {
-        control.number == 64 || (!learning.load(ordering: .acquiring) && !isMapped(control))
+    /// always does, since it holds the notes being played — while learning only when it is let
+    /// go, so a pedal held from before can still release its notes (review 2026-10-21).
+    func playsLive(_ control: MIDIControl, value: UInt8) -> Bool {
+        let isLearning = learning.load(ordering: .acquiring)
+        if control.number == 64 { return !isLearning || value < 64 }
+        return !isLearning && !isMapped(control)
+    }
+
+    /// MIDI thread: whether another channel message reaches the live instrument. Always, except
+    /// while learning: then notes pass, and what returns a held control to rest — the pitch wheel
+    /// at its centre, pressure at zero — so nothing stays bent or pressed when learning ends. The
+    /// rest are held back: a hosted plugin answering a bend, pressure or a program change by
+    /// moving one of its parameters would take the learn target just as a knob would.
+    func playsLive(status: UInt8, _ data1: UInt8, _ data2: UInt8) -> Bool {
+        guard learning.load(ordering: .acquiring) else { return true }
+        switch status & 0xF0 {
+        case 0x80, 0x90: return true
+        case 0xE0: return data1 == 0 && data2 == 0x40
+        case 0xD0: return data1 == 0
+        case 0xA0: return data2 == 0
+        default: return false
+        }
     }
 
     /// Main thread.
@@ -552,8 +571,8 @@ final class MIDIInput {
                         // A controller the song does not map plays the live instrument — the mod
                         // wheel, expression, a filter knob — and a take records it. The sustain
                         // pedal always plays: it holds the live instrument's notes (S-16b).
-                        if inbox.playsLive(control) { router.receive(status: status, data1, data2) }
-                    } else {
+                        if inbox.playsLive(control, value: data2) { router.receive(status: status, data1, data2) }
+                    } else if inbox.playsLive(status: status, data1, data2) {
                         router.receive(status: status, data1, data2)
                     }
                 }
