@@ -46,12 +46,16 @@ target reaches it, tests; nothing here is device-verified yet.
   shows as playing; a new take waits until the last one is written out.
 - Deleting the armed track, or arming an instrument track instead, closes the input it opened.
 - When the input cannot be opened again while an audio take records, the take ends there and
-  keeps what it recorded, in time; the message says why the input failed. Setting a monitor to
-  in ends a running take first, since opening the input stops the song.
+  keeps what it recorded, in time; the message says why the input failed. Opening the input for
+  a monitor set to in ends a running take first, since it stops the song.
 - During MIDI Learn knobs, the pitch wheel, pressure, program change and a pressed pedal play
-  nothing, so a plugin cannot take the learn; notes play, and a held wheel or pedal can return.
-- A plugin that stopped says in the status line once it is loaded again, or why it is not.
-  Notices no longer hide each other or the loudness of a new export.
+  nothing, so a plugin cannot take the learn; notes, panic and All Notes Off play, and a held
+  wheel or pedal can return to rest.
+- A plugin that stopped is named in the status line once it is loaded again, or with the reason
+  it is not; several are all named. Notices no longer hide each other, and an export clears
+  only the ones that stood before it.
+- The status line sits under the transport strip instead of over its buttons, and the launch
+  messages stay until something replaces them instead of going with the first autosave.
 
 Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
 group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
