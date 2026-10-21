@@ -6,3 +6,4 @@ that run only, and exported to a local folder. Nothing is uploaded.
 
 2026-10-21 run 2: run 1 stopped before signing (APP_ID was not set).
 2026-10-21 run 3: run 2 signed in and was refused — both fetched profiles grant only group.com.echoelmusic.shared. Retried after a few minutes, in case Apple had not passed the change on yet.
+2026-10-21 run 4: the founder saved the group assignment on the App ID (no screenshot); run again to see whether the fetched profiles now grant group.com.echoelmusic.
