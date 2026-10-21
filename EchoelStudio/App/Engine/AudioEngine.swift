@@ -49,6 +49,9 @@ final class AudioEngine {
     @ObservationIgnored private var take: (url: URL, writer: TakeWriter, recorder: InputRecorder,
                                            sampleRate: Double, latency: Int64)?
     @ObservationIgnored private var drainTask: Task<Void, Never>?
+    /// `endTake` is still writing the last take out: its recorder, ring and drain are in use, so
+    /// a new take cannot start on them yet.
+    @ObservationIgnored private var takeEnding = false
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
@@ -492,7 +495,9 @@ final class AudioEngine {
     /// Starts writing the input to `url` from the next input block.
     /// `channel` is the input to record, 0-based; one the input lacks records the first.
     func beginTake(url: URL, channel: Int) throws {
-        guard take == nil, let recorder, let core else { throw EngineError.inputClosed }
+        // Not while the last take is still being written out: a second writer would drain the same
+        // ring, arming would reset the start that take still reads, and its drain task would be lost.
+        guard take == nil, !takeEnding, let recorder, let core else { throw EngineError.inputClosed }
         let writer = try TakeWriter(url: url, sampleRate: core.sampleRate, ring: recorder.ring)
         let session = AVAudioSession.sharedInstance()
         let latency = Int64(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
@@ -512,6 +517,8 @@ final class AudioEngine {
         // Never the engine's recorder: after a route change that is a different one, or none.
         guard let current = take else { return nil }
         take = nil
+        takeEnding = true
+        defer { takeEnding = false }
         let recorder = current.recorder
         recorder.disarm()
         // The ring holds what was captured, so the drain below needs no running engine.
