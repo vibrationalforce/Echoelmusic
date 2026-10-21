@@ -1671,3 +1671,24 @@ Founder (Fortsetzung): „Weiter Greb all context und volle power."
   einem Upload ist eng**: nur Compile, Test, Rückschritt; neue kleine Randfälle gehen nach S-50, sonst konvergiert
   die Schleife nie. (3) **Statuszeilen-Logik gehört in einen getesteten Typ**: drei Runden lang war sie falsch in
   einer anderen Ereignis-Reihenfolge; `PluginReloadNotice` macht jede Reihenfolge prüfbar.
+
+## 2026-10-21 18:30 — Import alter Songs neu gebaut, F17 erledigt, neue Audio-Engine nach Media-Reset
+- **Import alter Songs** (S-50): reiner Kern-Typ `EchoelCore.EarlierSongImport` (14 Tests, macOS + Linux grün) entscheidet
+  über Starts hinweg: ein Lauf zählt bei Beginn, drei Läufe ohne Song in Folge geben auf, zweimal auf demselben Song
+  beendet lässt ihn aus, „nichts gefunden" schließt nie ab. `DocumentController` läuft im Hintergrund-Task, pausiert
+  zwischen zwei Songs beim Verlassen (mit `beginBackgroundTask`), startet nur im Vordergrund; Hinweis und Warnung
+  getrennt in der Statuszeile. Drei Prüfrunden (`518e80374..c586087ab`); Studio 184 grün.
+- **F17 erledigt**: Signier-Probe 4 fand den Haken an `.auv3`, Probe 5 (39647016707, `7c0760edc`) grün — beide Gruppen in
+  allen vier Profilen, das signierte Echoel.app trägt beide. `a14e1960a` holt `group.com.echoelmusic` in die
+  App-Entitlements zurück; Doku `42948a3ed` (Identitätskarte, Inbox F17, TODO F-14, CLAIMS, Vision, Förderung,
+  decisions). Studio 39648529159 grün. ⚠️ Berichtet, nicht editiert: `EchoelStudio/project.yml` Z. 86–87 und 98–99
+  (founder-gated) und `EchoelStudio/RELEASE` Z. 63 (jede Änderung lädt hoch) nennen F17 noch offen;
+  `.github/workflows/testflight.yml:43` sagt, die Alt-App scheitere beim Signieren — nicht gemessen seitdem.
+- **Media-Reset** (S-50, `cb6e3b09d`): `AudioEngine.replaceEngine` baut eine neue Engine samt Knoten und Beobachter;
+  ein laufender Take bekommt keine Eingabe nach dem Reset; `configure` sendet den Song neu, wenn sich der
+  Eingangszustand seit dem letzten Snapshot geändert hat (traf auch den Ratenwechsel); `PluginHost` zieht laufende
+  Ladevorgänge zurück. Zwei Prüfrunden (`wf_82959f41-a34`, `wf_39446ae8-6ae`); Runde 2 fand meinen Rückschritt
+  (Ausfälle löschen hob die Neustart-Sperre auf) — zurückgenommen vor dem Commit.
+- Nichts gerätegeprüft. Kein Upload; `EchoelStudio/RELEASE` unberührt (nächster Wochen-Build ~29.10. trägt den Import).
+- ⭐ Lehre: **ein Snapshot, der einen Zustand liest, muss neu gesendet werden, wenn dieser Zustand sich ändert** —
+  `isInputOpen` änderte sich in `configure` ohne Publish; die Lücke war älter als der Media-Reset.
