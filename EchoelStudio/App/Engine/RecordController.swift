@@ -107,8 +107,9 @@ final class RecordController {
         guard !isRecording, let track = armedTrack else { return }
         // Record starts the song. When it cannot run (audio that failed to come back), nothing
         // starts: a take over a stopped transport would be stamped at a frozen playhead, and a
-        // MIDI take would outlive the core it was played on.
-        guard engine.isPlaying || engine.canPlay() else { return }
+        // MIDI take would outlive the core it was played on. Asked even while playing: a rebuild
+        // that failed at the same rate leaves the transport playing over a stopped engine.
+        guard engine.canPlay() else { return }
         if store.project.track(track)?.kind == .instrument {
             engine.live.startCapture()
             midiTrack = track

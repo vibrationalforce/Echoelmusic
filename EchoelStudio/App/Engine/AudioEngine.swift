@@ -593,7 +593,8 @@ final class AudioEngine {
 
     /// Brings the graph back if it was suspended or stopped underneath, and says whether the
     /// transport can run now. Record and a launch ask before they start anything, so neither a
-    /// take nor a queued launch waits over audio that is down.
+    /// take nor a queued launch waits over audio that is down — also while `isPlaying`, which a
+    /// rebuild that failed at the same rate leaves set over a stopped engine.
     func canPlay() -> Bool {
         wake("play")
         return core != nil && engine.isRunning
@@ -659,7 +660,7 @@ final class AudioEngine {
 
     /// Plays the clip on its track from the next bar, starting the transport if it is stopped.
     func launch(_ clip: ClipID, on track: TrackID) {
-        guard isPlaying || canPlay(), let core, let slot = slots.slots[track] else { return }
+        guard canPlay(), let core, let slot = slots.slots[track] else { return }
         core.launch(slot: slot, .launch(clip))
         if !isPlaying { play() }
     }
@@ -671,7 +672,7 @@ final class AudioEngine {
 
     /// Every track with a clip in the scene plays it; the others stop.
     func launch(_ scene: SceneID, in project: Project) {
-        guard isPlaying || canPlay(), let core else { return }
+        guard canPlay(), let core else { return }
         for track in project.tracks where track.kind != .returnTrack {
             guard let slot = slots.slots[track.id] else { continue }
             if let clip = track.clipInSlot(scene) {
