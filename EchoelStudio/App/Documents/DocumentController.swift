@@ -708,8 +708,10 @@ final class DocumentController {
                     ? "One song from the earlier Echoelmusic is now in your songs."
                     : "\(self.earlierSongsWritten) songs from the earlier Echoelmusic are now in your songs."
             }
-            if run.failed == 0, !run.written.isEmpty {
-                // The run that went on after a pause saved what the paused one could not.
+            if run.failed == 0, !run.paused {
+                // A run that went through every place left without a failure: what an earlier
+                // run in this session could not save is saved now. One that paused again may not
+                // have reached those songs yet, so its warning stands.
                 self.earlierSongsWarning = nil
             } else if run.failed > 0 {
                 let songs = run.failed == 1 ? "One earlier song" : "\(run.failed) earlier songs"
