@@ -45,7 +45,14 @@ final class RecordController {
     /// Arms `track`, or disarms it when it is the armed one. An instrument track records what is
     /// played on MIDI and plays it live; it needs no audio input.
     func toggleArm(_ track: TrackID) async {
-        if isRecording { await stopRecording() }
+        if isRecording {
+            let asked = armedTrack
+            await stopRecording()
+            // Another toggle ran while the take was ending (a second deletion, say): this one
+            // was asked of an arm state that is gone, and acting on it would re-arm a deleted
+            // track and reopen the input.
+            guard armedTrack == asked else { return }
+        }
         // An armed track that is gone (deleted, or another song opened) counts as audio: its kind
         // cannot be read any more, and closing an input nothing else wants is always right. Read
         // from the project alone, it left the microphone open, and every recovery reopened it.
