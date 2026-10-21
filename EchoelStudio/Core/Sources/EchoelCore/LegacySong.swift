@@ -38,15 +38,33 @@ public enum LegacySong {
     /// Every song in the earlier app's library (`projects.json`), each with the name it was
     /// saved under. A song whose envelope cannot be read is left out.
     public static func library(_ data: Data) -> [Project] {
-        let decoder = JSONDecoder()
-        guard let rows = try? decoder.decode([Lenient<SavedSong>].self, from: data) else { return [] }
-        return rows.compactMap { row in
-            guard let song = row.value, let session = song.session,
-                  let envelope = try? decoder.decode(Envelope.self, from: session) else { return nil }
+        let rows = libraryRows(data)
+        return (0..<rows.count).compactMap { rows.project(at: $0) }
+    }
+
+    /// The earlier app's library read but not yet converted, so the app can bring the songs over
+    /// one at a time and record how far it got (review 2026-10-21).
+    public static func libraryRows(_ data: Data) -> Library {
+        Library(rows: ((try? JSONDecoder().decode([Lenient<SavedSong>].self, from: data)) ?? []).map(\.value))
+    }
+
+    /// The rows of the earlier app's library. A row keeps its place whether or not it can be read,
+    /// so an index names the same song on every launch.
+    public struct Library: Sendable {
+        let rows: [SavedSong?]
+
+        /// Every row, the unreadable ones included.
+        public var count: Int { rows.count }
+
+        /// The song in row `index`, each with the name it was saved under; nil when the row or its
+        /// envelope cannot be read, or there is no such row.
+        public func project(at index: Int) -> Project? {
+            guard rows.indices.contains(index), let song = rows[index], let session = song.session,
+                  let envelope = try? JSONDecoder().decode(Envelope.self, from: session) else { return nil }
             let tempo = envelope.timebase?.tempoMap?.entries.first?.bpm ?? song.bpm ?? Tempo.defaultBPM
             let clips = envelope.content.clipSlots.compactMap { $0.value ?? nil }
             let name = song.name ?? envelope.meta?.name ?? "Imported Song"
-            return try? project(envelope.content.timeline, clips: clips, tempo: tempo, name: name)
+            return try? LegacySong.project(envelope.content.timeline, clips: clips, tempo: tempo, name: name)
         }
     }
 
@@ -225,7 +243,7 @@ public enum LegacySong {
         var velocity: Float?
     }
 
-    struct SavedSong: Decodable {
+    struct SavedSong: Decodable, Sendable {
         var name: String?
         var bpm: Double?
         /// The project envelope, written as base64 by the earlier app's encoder.

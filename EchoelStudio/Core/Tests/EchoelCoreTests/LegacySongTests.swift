@@ -146,6 +146,17 @@ final class LegacySongTests: XCTestCase {
         XCTAssertEqual(songs.first?.tempo, 101, "the envelope's tempo map wins over the row's copy")
         XCTAssertEqual(songs.first?.tracks.first?.clips.count, 2)
         XCTAssertTrue(LegacySong.library(Data("{}".utf8)).isEmpty)
+
+        // One at a time: every row keeps its place, so an index names the same song on every
+        // launch, and an unreadable row is nil instead of shifting the ones after it.
+        let library = LegacySong.libraryRows(try JSONSerialization.data(withJSONObject: rows))
+        XCTAssertEqual(library.count, 3)
+        XCTAssertEqual(library.project(at: 0)?.name, "Saved")
+        XCTAssertNil(library.project(at: 1))
+        XCTAssertNil(library.project(at: 2))
+        XCTAssertNil(library.project(at: 3))
+        XCTAssertNil(library.project(at: -1))
+        XCTAssertEqual(LegacySong.libraryRows(Data("{}".utf8)).count, 0)
     }
 
     func testFindingNothingNeverFinishesTheImport() {
