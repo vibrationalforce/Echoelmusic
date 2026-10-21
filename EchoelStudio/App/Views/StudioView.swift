@@ -170,7 +170,7 @@ struct TransportBar: View {
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.record)
                 .padding(.bottom, 2)
-        } else if let notice = engine.notice ?? engine.plugins.notice {
+        } else if let notice = Self.notices(engine.notice, engine.plugins.notice) {
             Text(notice)
                 .font(Theme.Font.caption)
                 .foregroundStyle(Theme.Color.textSecondary)
@@ -182,6 +182,13 @@ struct TransportBar: View {
                 .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
                 .padding(.bottom, 2)
         }
+    }
+
+    /// Both notices when both stand — a pause and a plugin that came back — so the later one is
+    /// not hidden behind the earlier until the next Play clears both (review 2026-10-21).
+    static func notices(_ engine: String?, _ plugins: String?) -> String? {
+        let standing = [engine, plugins].compactMap { $0 }
+        return standing.isEmpty ? nil : standing.joined(separator: " ")
     }
 
     static func exportText(integrated: Double, truePeak: Double) -> String {
@@ -364,7 +371,12 @@ struct SongMenu: View {
             }
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
-                    if let url = await documents.exportWAV(plugins: engine.plugins) { router.sheet = .share(url) }
+                    // A finished export is the newest news: its loudness line must not wait for a
+                    // Play behind an older notice.
+                    if let url = await documents.exportWAV(plugins: engine.plugins) {
+                        engine.clearNotices()
+                        router.sheet = .share(url)
+                    }
                 }
             }
             // Only the arrangement is rendered: a clip that is in no place on the timeline would

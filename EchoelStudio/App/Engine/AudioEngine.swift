@@ -588,9 +588,14 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
-    func play() {
+    /// The pause and plugin notices go; Play and a finished export start a fresh status line.
+    func clearNotices() {
         notice = nil
         plugins.clearNotice()
+    }
+
+    func play() {
+        clearNotices()
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
         guard canPlay(), let core else { return }
