@@ -185,10 +185,13 @@ final class AudioEngine {
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.
     @ObservationIgnored var onInputLost: (() -> Void)?
+    /// Counts `pauseFromOutside`, so `canPlay` can tell that its own repair stopped the song.
+    @ObservationIgnored private var pausesFromOutside = 0
 
     /// The song paused by a call, Siri, a media reset, lost headphones or a followed clock's
     /// Stop. `message` goes to the status line until the next Play.
     func pauseFromOutside(_ message: String?) {
+        pausesFromOutside &+= 1
         pause()
         if let message { notice = message }
         onPausedFromOutside?()
@@ -607,9 +610,13 @@ final class AudioEngine {
     /// transport can run now. Record and a launch ask before they start anything, so neither a
     /// take nor a queued launch waits over audio that is down — also while `isPlaying`, which a
     /// rebuild that failed at the same rate leaves set over a stopped engine.
+    /// Not when that repair itself stopped the song (a new sample rate at the rebuild): the stop
+    /// also ends a running take a moment later, so a take started now would end at once. The
+    /// status line says why; the next press goes ahead (review 2026-10-21).
     func canPlay() -> Bool {
+        let pauses = pausesFromOutside
         wake("play")
-        return core != nil && engine.isRunning
+        return pauses == pausesFromOutside && core != nil && engine.isRunning
     }
 
     /// Stops where it is (an external clock's Stop; Continue goes on from here).
