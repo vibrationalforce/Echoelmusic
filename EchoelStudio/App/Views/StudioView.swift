@@ -372,9 +372,11 @@ struct SongMenu: View {
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
                     // A finished export is the newest news: its loudness line must not wait for a
-                    // Play behind an older notice.
+                    // Play behind an older notice. A notice raised while it ran (a plugin that
+                    // stopped mid-render, headphones pulled) is newer still, and stays.
+                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
                     if let url = await documents.exportWAV(plugins: engine.plugins) {
-                        engine.clearNotices()
+                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
                         router.sheet = .share(url)
                     }
                 }
