@@ -85,16 +85,23 @@ struct TransportBar: View {
     @State private var clickOn = true
 
     var body: some View {
-        // A phone in portrait cannot show every control at once: then the strip scrolls
-        // sideways instead of squeezing or clipping its buttons.
-        ViewThatFits(in: .horizontal) {
-            controls
-            ScrollView(.horizontal, showsIndicators: false) { controls }
+        VStack(spacing: 0) {
+            // A phone in portrait cannot show every control at once: then the strip scrolls
+            // sideways instead of squeezing or clipping its buttons.
+            ViewThatFits(in: .horizontal) {
+                controls
+                ScrollView(.horizontal, showsIndicators: false) { controls }
+            }
+            .frame(minHeight: Theme.Size.transportHeight)
+            // Under the controls, not over them: laid over the strip, a message of two or three
+            // lines covered Play and Record and took their taps (review 2026-10-21).
+            status
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, Theme.Space.m)
         }
-        .frame(minHeight: Theme.Size.transportHeight)
         .dynamicTypeSize(...Theme.Accessibility.denseStripLimit)
         .background(Theme.Color.surface)
-        .overlay(alignment: .bottom) { status }
     }
 
     private var controls: some View {
