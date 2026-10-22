@@ -466,14 +466,13 @@ struct SongMenu: View {
                     }
                 }
             }
-            // Only the arrangement is rendered: a clip that is in no place on the timeline would
-            // give an empty file.
-            .disabled(documents.isExporting
-                      || store.project.tracks.allSatisfy { $0.placements.isEmpty && $0.regions.isEmpty })
+            // Only the arrangement is rendered: without a note or an audio region in it the file
+            // would have no length.
+            .disabled(documents.isExporting || !store.project.arrangementHasSound)
             Button("Export MIDI", systemImage: "pianokeys") {
                 if let url = documents.exportMIDI() { router.sheet = .share(url) }
             }
-            .disabled(store.project.tracks.allSatisfy { $0.placements.isEmpty })
+            .disabled(!store.project.arrangementHasEvents)
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {

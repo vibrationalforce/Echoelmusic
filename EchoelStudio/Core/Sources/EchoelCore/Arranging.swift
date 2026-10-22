@@ -147,3 +147,38 @@ public enum Arranging {
         return .placeClip(track: track.id, id: PlacementID(), clip: placement.clip, start: stop)
     }
 }
+
+extension Project {
+    /// What a WAV export renders: a note that plays in a clip placed on an instrument track, or an
+    /// audio region on an audio track whose file the song still has. A song with neither — the
+    /// four-track starter's empty Beat — rendered a WAV file of no length (critic 2026-10-22).
+    /// Notes and regions only, as the render measures its length: a clip that only moves the
+    /// wheel or a controller sounds nothing on its own.
+    public var arrangementHasSound: Bool {
+        tracks.contains { track in
+            switch track.kind {
+            case .instrument: track.placedClips.contains { clip in clip.notes.contains { $0.start < clip.length } }
+            case .audio: track.regions.contains { $0.length > 0 && mediaFile($0.media) != nil }
+            case .returnTrack: false
+            }
+        }
+    }
+
+    /// What a MIDI export writes: a note or a controller move inside a clip placed on an
+    /// instrument track. Without one the file held empty tracks.
+    public var arrangementHasEvents: Bool {
+        tracks.contains { track in
+            track.kind == .instrument && track.placedClips.contains { clip in
+                clip.notes.contains { $0.start < clip.length } || clip.controls.contains { $0.start < clip.length }
+            }
+        }
+    }
+}
+
+extension Track {
+    /// The clips the arrangement plays, once each however often they are placed.
+    fileprivate var placedClips: [Clip] {
+        let placed = Set(placements.map(\.clip))
+        return clips.filter { placed.contains($0.id) }
+    }
+}

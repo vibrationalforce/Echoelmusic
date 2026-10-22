@@ -88,6 +88,48 @@ final class ArrangingTests: XCTestCase {
         XCTAssertEqual(Arranging.songBars(of: p), 7)
     }
 
+    /// The export doors open only on what the file would hold: a placed clip without a note
+    /// renders no length, a clip in no place is not in the file, a controller move alone is MIDI
+    /// but no sound, and an audio region sounds once the song has its file.
+    func testAnExportIsOfferedOnlyForWhatTheArrangementPlays() throws {
+        var (p, track, clip) = try project()
+        XCTAssertFalse(p.arrangementHasSound)
+        XCTAssertFalse(p.arrangementHasEvents)
+
+        try Command.addNotes(clip, [Note(pitch: 60, start: 0, length: 480)]).apply(to: &p)
+        XCTAssertFalse(p.arrangementHasSound, "a note in a clip that is in no place is not in the file")
+        try Command.placeClip(track: track, id: PlacementID(), clip: clip, start: bar).apply(to: &p)
+        XCTAssertTrue(p.arrangementHasSound)
+        XCTAssertTrue(p.arrangementHasEvents)
+
+        let wheel = ClipID()
+        var moves = Project()
+        let keys = TrackID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &moves)
+        try Command.createClip(track: keys, id: wheel, name: "Wheel", length: bar).apply(to: &moves)
+        try Command.placeClip(track: keys, id: PlacementID(), clip: wheel, start: 0).apply(to: &moves)
+        XCTAssertFalse(moves.arrangementHasEvents, "an empty placed clip")
+        try Command.setControls(wheel, [ControlChange(kind: .controller(number: 1), start: 0, value: 90)]).apply(to: &moves)
+        XCTAssertTrue(moves.arrangementHasEvents)
+        XCTAssertFalse(moves.arrangementHasSound, "a controller move sounds nothing on its own")
+
+        var audio = Project()
+        let lane = TrackID()
+        let file = MediaFile(name: "Loop", path: "Media/loop.wav", frameCount: 48_000, sampleRate: 48_000)
+        try Command.addTrack(id: lane, name: "Audio", kind: .audio, index: nil).apply(to: &audio)
+        try Command.addMedia(file).apply(to: &audio)
+        XCTAssertFalse(audio.arrangementHasSound)
+        try Command.placeAudio(track: lane, id: RegionID(), media: file.id, start: 0).apply(to: &audio)
+        XCTAssertTrue(audio.arrangementHasSound)
+        XCTAssertFalse(audio.arrangementHasEvents, "audio is not in the MIDI file")
+
+        for starter in StarterProject.allCases {
+            let song = try starter.project()
+            XCTAssertFalse(song.arrangementHasSound, "\(starter)")
+            XCTAssertFalse(song.arrangementHasEvents, "\(starter)")
+        }
+    }
+
     func testAnAudioRegionLastsAsLongAsItsFileAtTheSongsTempo() throws {
         var p = Project(tempo: 120)
         let track = TrackID(), region = RegionID()
