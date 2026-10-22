@@ -6,24 +6,29 @@ import Synchronization
 /// The built-in drum kit as a plugin plays it: General MIDI drum notes in, stereo out, one level.
 /// Shared by the Echoel Drums Audio Unit and its tests. Nothing allocates after `init`.
 public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
-    public static let parameters = [
-        InstrumentKernelParameter(identifier: "drums_level", title: "Level", unit: .amount,
-                                  range: 0...1, defaultValue: 0.8),
-    ]
+    /// The drums' Core table (`InstrumentDevice.drums`): one row, the level, at address 0.
+    public static let parameters = InstrumentDevice.drums.parameters.map(InstrumentKernelParameter.init)
     public let sampleRate: Double
     public let maximumFrames: Int
 
-    private let level = Atomic<UInt32>(Float(0.8).bitPattern)
+    private let level: Atomic<UInt32>
+    /// The level's range, copied from the table once.
+    private let range: ClosedRange<Float>
     private var kit: DrumKit
     private let mono: UnsafeMutablePointer<Float>
     /// The level the output is at; it glides toward the parameter so a move never clicks.
-    private var gain: Float = 0.8
+    private var gain: Float
     private let glide: Float
 
     public init(sampleRate: Double, maximumFrames: Int = 4_096) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
         self.maximumFrames = Swift.max(1, maximumFrames)
+        let row = Self.parameters.first
+        let start = Float(row?.defaultValue ?? 0.8)
+        range = row.map { Float($0.range.lowerBound)...Float($0.range.upperBound) } ?? 0...1
+        level = Atomic(start.bitPattern)
+        gain = start
         kit = DrumKit(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
@@ -32,10 +37,10 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
 
     deinit { mono.deallocate() }
 
-    /// Any thread. Clamped to 0…1; a value that is not finite is ignored.
+    /// Any thread. Clamped to the level's range; a value that is not finite is ignored.
     public func setParameter(_ address: Int, _ value: Float) {
         guard address == 0, value.isFinite else { return }
-        level.store(Swift.min(Swift.max(value, 0), 1).bitPattern, ordering: .relaxed)
+        level.store(Swift.min(Swift.max(value, range.lowerBound), range.upperBound).bitPattern, ordering: .relaxed)
     }
 
     public func parameter(_ address: Int) -> Float {

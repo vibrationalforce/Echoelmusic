@@ -19,20 +19,17 @@ public protocol SampleLoadingKernel: InstrumentKernel {
 /// loading side keeps every buffer it handed over alive until the render thread has moved past
 /// it, so no buffer is ever freed on the render thread or freed while it might still be read.
 public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
-    public static let parameters = [
-        InstrumentKernelParameter(identifier: "sampler_root", title: "Root key", unit: .amount,
-                                  range: 0...127, defaultValue: 60),
-        InstrumentKernelParameter(identifier: "sampler_attack", title: "Attack", unit: .seconds,
-                                  range: 0.001...2, defaultValue: 0.001),
-        InstrumentKernelParameter(identifier: "sampler_release", title: "Release", unit: .seconds,
-                                  range: 0.01...5, defaultValue: 0.15),
-        InstrumentKernelParameter(identifier: "sampler_level", title: "Level", unit: .amount,
-                                  range: 0...1, defaultValue: 0.8),
-        InstrumentKernelParameter(identifier: "sampler_mode", title: "Mode", unit: .choice,
-                                  range: 0...1, defaultValue: 0, choices: ["Gate", "One-shot"]),
-    ]
-    private enum Address { static let root = 0, attack = 1, release = 2, level = 3, mode = 4 }
-    private static let ringSize = 64
+    /// The sampler's Core table (`InstrumentDevice.sampler`); the address of a row is its index.
+    public static let parameters = InstrumentDevice.sampler.parameters.map(InstrumentKernelParameter.init)
+    /// Computed, not stored: the render thread reads it, and a stored static is a lazy global.
+    private static var ringSize: Int { 64 }
+
+    /// Where each row sits, looked up by its Core key once, in `init`.
+    private let rootAddress: Int, attackAddress: Int, releaseAddress: Int, levelAddress: Int, modeAddress: Int
+    /// What the table does not set (decay and sustain), copied once from `SamplerPatch()` — the
+    /// counterpart of `SynthPatch.parameterBase`. At the table's defaults the kernel plays exactly
+    /// `SamplerPatch()`.
+    private let base = SamplerPatch()
 
     public let sampleRate: Double
     public let maximumFrames: Int
@@ -61,6 +58,11 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
         self.sampleRate = rate
         self.maximumFrames = Swift.max(1, maximumFrames)
         ranges = Self.parameters.map { Float($0.range.lowerBound)...Float($0.range.upperBound) }
+        rootAddress = Self.address(of: .samplerRoot)
+        attackAddress = Self.address(of: .samplerAttack)
+        releaseAddress = Self.address(of: .samplerRelease)
+        levelAddress = Self.address(of: .samplerLevel)
+        modeAddress = Self.address(of: .samplerMode)
         values = .allocate(capacity: Self.parameters.count)
         for (i, parameter) in Self.parameters.enumerated() { values[i] = Float(parameter.defaultValue) }
         sampler = Sampler(sampleRate: Float(rate))
@@ -89,6 +91,12 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
 
     public func parameter(_ address: Int) -> Float {
         address >= 0 && address < ranges.count ? values[address] : 0
+    }
+
+    /// The row's index in the table. Every sampler row is in it (`InstrumentTablesTests`), so the
+    /// fallback 0 only keeps a broken table memory-safe on the render thread.
+    private static func address(of row: InstrumentParameter) -> Int {
+        InstrumentDevice.sampler.parameters.firstIndex { $0.key == row.key } ?? 0
     }
 
     @discardableResult public func load(_ buffer: SampleBuffer?) -> Bool {
@@ -151,10 +159,12 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
 
     private func applyPatch() {
         // The sampler plays its buffer's root (60) unshifted; the root key moves every note.
-        transpose = 60 - Int(values[Address.root].rounded())
-        let envelope = Envelope.Settings(attack: values[Address.attack], decay: 0.1, sustain: 1,
-                                         release: values[Address.release])
-        sampler.setPatch(SamplerPatch(envelope: envelope, oneShot: values[Address.mode] >= 0.5,
-                                      level: values[Address.level]))
+        transpose = 60 - Int(values[rootAddress].rounded())
+        var patch = base
+        patch.envelope.attack = values[attackAddress]
+        patch.envelope.release = values[releaseAddress]
+        patch.oneShot = values[modeAddress] >= 0.5
+        patch.level = values[levelAddress]
+        sampler.setPatch(patch)
     }
 }

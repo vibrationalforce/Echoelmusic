@@ -20,6 +20,15 @@ public struct InstrumentKernelParameter: Sendable, Equatable {
         self.defaultValue = defaultValue
         self.choices = choices
     }
+
+    /// A row of a built-in device's Core table as its plugin publishes it. The ONE identifier rule:
+    /// the key with "." written "_" (`synth.cutoff` → `synth_cutoff`); hosts store it, so it never
+    /// changes for an existing row.
+    public init(_ row: InstrumentParameter) {
+        self.init(identifier: row.key.rawValue.replacingOccurrences(of: ".", with: "_"),
+                  title: row.title, unit: row.unit, range: row.range,
+                  defaultValue: row.defaultValue, choices: row.choices)
+    }
 }
 
 /// What an Echoel instrument plugin plays: MIDI bytes in, stereo out, parameters by index.
@@ -41,10 +50,6 @@ public protocol InstrumentKernel: AnyObject, Sendable {
 
 extension SynthKernel: InstrumentKernel {
     public static var parameters: [InstrumentKernelParameter] {
-        SynthParameter.all.map {
-            InstrumentKernelParameter(identifier: $0.key.rawValue.replacingOccurrences(of: ".", with: "_"),
-                                      title: $0.title, unit: $0.unit, range: $0.range,
-                                      defaultValue: $0.defaultValue, choices: $0.choices)
-        }
+        InstrumentDevice.synth.parameters.map(InstrumentKernelParameter.init)
     }
 }

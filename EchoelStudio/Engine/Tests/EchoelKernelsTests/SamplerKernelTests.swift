@@ -18,6 +18,11 @@ final class SamplerKernelTests: XCTestCase {
 
     private func peak(_ samples: [Float]) -> Float { samples.map { abs($0) }.max() ?? 0 }
 
+    /// A parameter's address, found by the identifier hosts store — never a bare index.
+    private func address(_ identifier: String) throws -> Int {
+        try XCTUnwrap(SamplerKernel.parameters.firstIndex { $0.identifier == identifier }, identifier)
+    }
+
     /// One second of a constant level, so what a voice plays is easy to read.
     private func constant(_ value: Float, seconds: Double = 1) -> SampleBuffer? {
         SampleBuffer(samples: [Float](repeating: value, count: Int(48_000 * seconds)), sampleRate: 48_000)
@@ -39,13 +44,13 @@ final class SamplerKernelTests: XCTestCase {
         // A sample one second long: at its own speed it lasts a second, an octave up half that.
         let kernel = SamplerKernel(sampleRate: 48_000)
         kernel.load(try XCTUnwrap(constant(0.5)))
-        kernel.setParameter(4, 1) // one-shot: plays to the end
-        kernel.setParameter(0, 48)
+        kernel.setParameter(try address("sampler_mode"), 1) // one-shot: plays to the end
+        kernel.setParameter(try address("sampler_root"), 48)
         _ = render(kernel, frames: 16) // parameters apply at the top of a render, as in a host
         kernel.receive(status: 0x90, 60, 127) // an octave above the root
         _ = render(kernel, frames: 26_400)
         XCTAssertEqual(peak(render(kernel, frames: 480)), 0, "an octave up the second lasts half")
-        kernel.setParameter(0, 60)
+        kernel.setParameter(try address("sampler_root"), 60)
         _ = render(kernel, frames: 16)
         kernel.receive(status: 0x90, 60, 127)
         _ = render(kernel, frames: 26_400)
@@ -55,11 +60,11 @@ final class SamplerKernelTests: XCTestCase {
     func testANoteOffFindsItsNoteAfterTheRootKeyMoved() throws {
         let kernel = SamplerKernel(sampleRate: 48_000)
         kernel.load(try XCTUnwrap(constant(0.5, seconds: 4)))
-        kernel.setParameter(2, 0.01) // short release
+        kernel.setParameter(try address("sampler_release"), 0.01) // short release
         _ = render(kernel, frames: 16)
         kernel.receive(status: 0x90, 64, 127)
         _ = render(kernel, frames: 480)
-        kernel.setParameter(0, 55)
+        kernel.setParameter(try address("sampler_root"), 55)
         _ = render(kernel, frames: 480)
         kernel.receive(status: 0x80, 64, 0)
         _ = render(kernel, frames: 4_800)
@@ -68,10 +73,11 @@ final class SamplerKernelTests: XCTestCase {
 
     func testParametersAreClampedAndLoadsPastAStalledRenderAreRefused() throws {
         let kernel = SamplerKernel(sampleRate: 48_000)
-        kernel.setParameter(3, 7)
-        XCTAssertEqual(kernel.parameter(3), 1)
-        kernel.setParameter(3, .infinity)
-        XCTAssertEqual(kernel.parameter(3), 1)
+        let level = try address("sampler_level")
+        kernel.setParameter(level, 7)
+        XCTAssertEqual(kernel.parameter(level), 1)
+        kernel.setParameter(level, .infinity)
+        XCTAssertEqual(kernel.parameter(level), 1)
         let buffer = try XCTUnwrap(constant(0.1, seconds: 0.01))
         for _ in 0..<63 { XCTAssertTrue(kernel.load(buffer)) }
         XCTAssertFalse(kernel.load(buffer), "the render thread has not taken one of them")
