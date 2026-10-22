@@ -77,9 +77,14 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
         guard let tree = unit.parameterTree else { return }
         let model: PluginControlsModel
         if let instrument = unit as? InstrumentAudioUnit, instrument.acceptsSamples {
-            model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help,
-                                        sampleName: instrument.sample?.name,
-                                        installSample: { mono, name in try instrument.installSample(mono, name: name) })
+            let sampler = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help,
+                                              sampleName: instrument.sample?.name,
+                                              installSample: { mono, name in try instrument.installSample(mono, name: name) })
+            // A host's session restore or preset changes the sample without this window.
+            instrument.observeSample { @Sendable [weak sampler] name in
+                Task { @MainActor in sampler?.showSample(name) }
+            }
+            model = sampler
         } else {
             model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help)
         }

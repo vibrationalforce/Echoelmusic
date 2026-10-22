@@ -64,6 +64,13 @@ final class PluginControlsModel {
         sampleMessage = nil
     }
 
+    /// The unit's sample changed outside this window (a host restored its session or loaded a
+    /// preset): name what plays now.
+    func showSample(_ name: String?) {
+        sampleName = name
+        sampleMessage = nil
+    }
+
     func set(_ parameter: AUParameter, _ value: AUValue) {
         values[parameter.address] = value
         parameter.setValue(value, originator: token)

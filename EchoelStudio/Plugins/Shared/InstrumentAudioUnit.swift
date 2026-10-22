@@ -27,6 +27,9 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         let name: String
     }
     private(set) var sample: LoadedSample?
+    /// Told the new sample's name (nil: none) after every change — from the window, or from a
+    /// host restoring its session or loading a preset — so an open window names what plays.
+    private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
     /// The longest sample the plugin takes. A host keeps it inside its session, so it stays short.
     static let maximumSampleSeconds: Double = 30
     private enum StateKey {
@@ -143,6 +146,12 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         }
         sample = loaded
         (render.kernel as? any SampleLoadingKernel)?.load(loaded?.buffer)
+        let observer = sampleObserver.withLock { $0 }
+        observer?(loaded?.name)
+    }
+
+    func observeSample(_ observer: (@Sendable (String?) -> Void)?) {
+        sampleObserver.withLock { $0 = observer }
     }
 
     /// The parameters (the system's part) plus the sample, so a host's session brings it back.
