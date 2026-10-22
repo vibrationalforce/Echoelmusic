@@ -42,9 +42,9 @@ final class InstrumentTablesTests: XCTestCase {
     }
 
     /// A drums or sampler value is written by the command a synth value is, checked against its
-    /// row, stored in the track's `values` and read back through its address. A lane does not play
-    /// it yet, so the automation menu does not list it and a lane on it is refused.
-    func testADrumsOrSamplerValueIsWrittenAndStoredButTakesNoLaneYet() throws {
+    /// row, stored in the track's `values` and read back through its address; a lane on it is
+    /// checked against the same row. The automation menu lists the rows of the device that plays.
+    func testADrumsOrSamplerValueIsWrittenStoredAndTakesALane() throws {
         var project = Project()
         let track = TrackID()
         try Command.addTrack(id: track, name: "Sampler", kind: .instrument, index: nil).apply(to: &project)
@@ -61,14 +61,30 @@ final class InstrumentTablesTests: XCTestCase {
             let before = project
             XCTAssertThrowsError(try Command.setInstrumentParameter(track, key: row.key.rawValue, value: value + 1)
                 .apply(to: &project), row.key.rawValue)
-            XCTAssertThrowsError(try Command.setAutomation(address, points: [AutomationPoint(tick: 0, value: row.defaultValue)])
-                .apply(to: &project), "a lane here would never be heard")
             XCTAssertEqual(project, before)
+
+            var laned = project
+            try Command.setAutomation(address, points: [AutomationPoint(tick: 0, value: row.defaultValue)]).apply(to: &laned)
+            XCTAssertEqual(laned.automation(for: address)?.points.count, 1, row.key.rawValue)
+            XCTAssertNoThrow(try laned.validate(), row.key.rawValue)
+            let held = laned
+            XCTAssertThrowsError(try Command.setAutomation(address, points: [AutomationPoint(tick: 0, value: row.range.upperBound + 1)])
+                .apply(to: &laned), "a point outside the row is refused")
+            XCTAssertEqual(laned, held)
         }
         XCTAssertThrowsError(try Command.setInstrumentParameter(track, key: "sampler.mode", value: 0.5).apply(to: &project),
                              "a choice is a whole index")
-        let listed = project.parameters.map(\.address.key.rawValue)
-        XCTAssertFalse(listed.contains { $0.hasPrefix("drums.") || $0.hasPrefix("sampler.") }, "\(listed)")
+        func listed(_ project: Project) -> [String] {
+            project.parameters.filter { $0.address.owner == .track(track) }.map(\.address.key.rawValue)
+                .filter { $0.hasPrefix("synth.") || $0.hasPrefix("drums.") || $0.hasPrefix("sampler.") }
+        }
+        let samplerKeys: [String] = InstrumentDevice.sampler.parameters.map(\.key.rawValue)
+        XCTAssertEqual(listed(project), samplerKeys, "the sampler's rows, not the synth's")
+        try Command.setInstrumentDevice(track, .drums).apply(to: &project)
+        XCTAssertEqual(listed(project), ["drums.level"])
+        try Command.setInstrumentDevice(track, .synth).apply(to: &project)
+        let synthKeys: [String] = SynthParameter.all.map(\.key.rawValue)
+        XCTAssertEqual(listed(project), synthKeys)
         var written = project
         written.tracks[0].instrument.values["sampler.attack"] = 9
         XCTAssertThrowsError(try written.validate(), "a song file holding a value outside its row is refused")

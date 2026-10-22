@@ -131,8 +131,8 @@ returns it to rest where it ends.
 Everything after the owner is the key, slashes included. Keys: `tempo`, `key.root`, `key.scale`,
 `tuning.system`, `tuning.concertPitch`, `groove.swing` (the song's); `mixer.volume`, `mixer.pan`
 (master and tracks); `mixer.send/<return track id>`; an instrument's own (`synth.cutoff` and the
-others in an instrument's `values`; a mapping may name a `drums.*` or `sampler.*` key, a lane
-only a `synth.*` one); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
+others in an instrument's `values`: `synth.*`, `drums.*`, `sampler.*` — a mapping or a lane may
+name any of them, and a lane plays while its device plays the track); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
 where `n` is the Audio Unit's own parameter address. A key a reader does not know is kept.
 
 **Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),

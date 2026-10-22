@@ -1181,7 +1181,7 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     /// Sets each automated parameter of a lane's device to its lane's value at `tick`. The lanes
-    /// address the lane's own device; the snapshot builds them for a synth track only.
+    /// address the lane's own device: the snapshot builds them from that device's table.
     private func applyPatchAutomation(_ snapshot: EngineSnapshot, at tick: Double) {
         for lane in snapshot.lanes where !lane.patchLanes.isEmpty {
             guard let builtIn = kernel(lane.slot, lane.builtInIndex), lane.builtInIndex < lane.values.count else { continue }

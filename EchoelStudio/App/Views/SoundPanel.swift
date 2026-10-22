@@ -11,8 +11,9 @@ struct SoundPanel: View {
     @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(ParameterWriter.self) private var writer
-    /// The waveform picked during an automation pass: it goes into the lane, not the track, so the
-    /// picker would otherwise go on showing the track's value and ignore a tap on it.
+    /// The choice picked during an automation pass: it goes into the lane, not the track, so the
+    /// picker would otherwise go on showing the track's value and ignore a tap on it. One for the
+    /// page: each built-in device has at most one choice row (the waveform, the sampler's mode).
     @State private var passPick: Int?
     let track: Track
 
@@ -153,7 +154,7 @@ struct SoundPanel: View {
             }
         }
 
-        samplerModePicker
+        choicePicker(.samplerMode)
         deviceFields(.sampler)
 
         let root = Int(track.instrument.value(.samplerRoot).rounded())
@@ -172,24 +173,6 @@ struct SoundPanel: View {
         }
     }
 
-    /// Gate plays while the key is held; one-shot plays the whole sample from one press. Through
-    /// the writer like every control; a lane does not play the sampler's values, so with
-    /// automation writing armed the choice is set, not written.
-    private var samplerModePicker: some View {
-        let parameter = SynthParameter.samplerMode
-        let address = ParameterAddress(.track(track.id), parameter.key)
-        return Picker(parameter.title, selection: Binding(
-            get: { Int(track.instrument.value(parameter).rounded()) },
-            set: {
-                writer.set(address, to: Double($0), coalescingKey: nil)
-                writer.endGesture()
-            }
-        )) {
-            ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
-        }
-        .pickerStyle(.segmented)
-        .accessibilityLabel(parameter.title)
-    }
 
     @ViewBuilder private var synthControls: some View {
         Menu {
@@ -211,7 +194,7 @@ struct SoundPanel: View {
         }
         .accessibilityLabel("Preset \(track.instrument.preset)\(track.instrument.isEditedFromPreset ? ", edited" : "")")
 
-        waveformPicker
+        choicePicker(.waveform)
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
                   alignment: .leading, spacing: Theme.Space.s) {
@@ -221,10 +204,10 @@ struct SoundPanel: View {
         }
     }
 
+    /// A named choice of the instrument (the synth's waveform, the sampler's gate or one-shot).
     /// Through the writer like every other control, so a choice made while automation writing is
-    /// armed and the song plays lands in the waveform's lane instead of being overridden by it.
-    private var waveformPicker: some View {
-        let parameter = SynthParameter.waveform
+    /// armed and the song plays lands in its lane instead of being overridden by it.
+    private func choicePicker(_ parameter: InstrumentParameter) -> some View {
         let address = ParameterAddress(.track(track.id), parameter.key)
         let current = Int(track.instrument.value(parameter).rounded())
         let writing = writer.isWriting && engine.isPlaying
@@ -242,5 +225,6 @@ struct SoundPanel: View {
         .accessibilityLabel(parameter.title)
         .onChange(of: writing) { _, on in if !on { passPick = nil } }
         .onChange(of: track.id) { passPick = nil }
+        .onChange(of: track.instrument.device) { passPick = nil }
     }
 }

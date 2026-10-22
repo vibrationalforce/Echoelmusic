@@ -41,25 +41,26 @@ public struct EngineSnapshot: Sendable {
         /// Set when automation moves the lane's level or pan (or the master's): the gains above
         /// are then only the value at the playhead.
         public let mix: MovingMix?
-        /// Synth parameters the song automates on this track.
+        /// Values of the track's built-in instrument that the song automates.
         public let patchLanes: [PatchAutomation]
     }
 
-    /// A synth parameter and its lane, compiled for the render thread.
+    /// A value of a built-in instrument and its lane, compiled for the render thread.
     public struct PatchAutomation: Sendable {
-        public let field: PatchField
         public let lane: AutomationLane
-        /// A choice (the waveform) holds each point's value until the next; a number moves
-        /// between points.
+        /// A stepped value (the waveform, the sampler's root key and mode) holds each point's value
+        /// until the next; any other moves between points.
         public let holds: Bool
-        /// The field's address in its device's kernel (its place in `SynthParameter.all`).
+        /// The row's address in its device's kernel: its place in the device's table.
         public let index: Int
 
-        public init(field: PatchField, lane: AutomationLane) {
-            self.field = field
+        /// `parameter` is a row of a built-in device's table. Builds the tables: off the render thread.
+        public init(_ parameter: InstrumentParameter, lane: AutomationLane) {
             self.lane = lane
-            holds = field.parameter.taper == .stepped
-            index = PatchField.allCases.firstIndex(of: field) ?? 0
+            holds = parameter.taper == .stepped
+            index = InstrumentDevice.builtIn.lazy.compactMap { (device: InstrumentDevice) -> Int? in
+                device.parameters.firstIndex { $0.key == parameter.key }
+            }.first ?? 0
         }
 
         /// The lane's value at `position`, the way the field takes it. Render-safe. A choice is an
@@ -201,7 +202,7 @@ public struct EngineSnapshot: Sendable {
     public private(set) var returns: [ReturnLane]
     /// One past the last output sample any audio region writes; 0 without audio.
     public let audioEnd: Int64
-    /// Some lane automates a synth parameter.
+    /// Some lane automates a value of its built-in instrument.
     public let automatesPatches: Bool
     /// The song's lanes on parameters of loaded, playing units. A lane on a unit that is not
     /// loaded, bypassed, or does not have that parameter (another version) does nothing.
@@ -309,13 +310,11 @@ public struct EngineSnapshot: Sendable {
             let outward = audible && heard(track.id)
             let (output, into) = route(track)
             let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
+            // The lanes of the device that plays; another device's stay in the song for switching back.
             var patchLanes: [PatchAutomation] = []
-            if track.instrument.device == .synth {
-                for parameter in SynthParameter.all {
-                    guard let lane = automation[ParameterAddress(.track(track.id), parameter.key)],
-                          let field = PatchField(parameter.key) else { continue }
-                    patchLanes.append(PatchAutomation(field: field, lane: lane))
-                }
+            for parameter in track.instrument.device.parameters {
+                guard let lane = automation[ParameterAddress(.track(track.id), parameter.key)] else { continue }
+                patchLanes.append(PatchAutomation(parameter, lane: lane))
             }
             // Every built-in device's values, the stored one or the row's default: the sampler's
             // root key and envelope sound as the song holds them.

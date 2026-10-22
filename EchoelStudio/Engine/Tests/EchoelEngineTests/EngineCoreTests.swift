@@ -739,19 +739,61 @@ final class EngineCoreTests: XCTestCase {
         try Command.setInstrumentParameter(s.tracks[0], key: SynthParameter.samplerLevel.key.rawValue, value: 0).apply(to: &s.project)
         XCTAssertNil(firstSound(played(s.project)), "a level of zero is silence")
     }
+
+    /// A lane on a sampler value plays over the value the track stores: a level lane brings back a
+    /// track set to silence, a root-key lane an octave up plays the sample at half speed. The same
+    /// lanes on the track as a synth play nothing of the sampler.
+    func testASamplerLanePlaysOverTheStoredValue() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 960)]])
+        let track = s.tracks[0]
+        let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: 4_800, sampleRate: rate)
+        try Command.addMedia(media).apply(to: &s.project)
+        try Command.setInstrumentDevice(track, .sampler).apply(to: &s.project)
+        try Command.setInstrumentSample(track, media.id).apply(to: &s.project)
+        try Command.setInstrumentParameter(track, key: SynthParameter.samplerLevel.key.rawValue, value: 0).apply(to: &s.project)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate, rootPitch: 60))
+        func played(_ project: Project) -> [Float] {
+            var slots = SlotAssigner(capacity: 32)
+            slots.update(for: project)
+            let engine = core()
+            engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
+                                          sampleRate: rate, generation: 1, samples: [media.id: buffer]))
+            engine.play()
+            return render(engine, frames: 14_400).left
+        }
+        XCTAssertNil(firstSound(played(s.project)), "the stored level is silence")
+
+        try Command.setAutomation(ParameterAddress(.track(track), SynthParameter.samplerLevel.key),
+                                  points: [AutomationPoint(tick: 0, value: 1)]).apply(to: &s.project)
+        let level = played(s.project)
+        XCTAssertNotNil(firstSound(level), "the level lane plays over it")
+        XCTAssertEqual(level[6_000], 0, "at its own root the sample ends after 0.1 s")
+
+        try Command.setAutomation(ParameterAddress(.track(track), SynthParameter.samplerRoot.key),
+                                  points: [AutomationPoint(tick: 0, value: 72)]).apply(to: &s.project)
+        let lower = played(s.project)
+        XCTAssertGreaterThan(lower[6_000], 0.05, "the root-key lane an octave up still sounds at 0.125 s")
+        XCTAssertEqual(lower[12_000], 0, "and ends after 0.2 s")
+
+        try Command.setInstrumentDevice(track, .synth).apply(to: &s.project)
+        let snapshot = EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project,
+                                      slots: { var a = SlotAssigner(capacity: 32); a.update(for: s.project); return a.slots }(),
+                                      sampleRate: rate, generation: 1)
+        XCTAssertEqual(snapshot.lanes.first?.patchLanes.count, 0, "the sampler's lanes wait in the song while the synth plays")
+    }
 }
 
 final class InstrumentPatchTests: XCTestCase {
     func testAWaveformLaneSwitchesAtItsPointsAndACutoffLaneGlides() {
         let lane = AutomationLane(target: .masterVolume, points: [AutomationPoint(tick: 0, value: 0),
                                                                   AutomationPoint(tick: 1_000, value: 3)])
-        let waveform = EngineSnapshot.PatchAutomation(field: .waveform, lane: lane)
+        let waveform = EngineSnapshot.PatchAutomation(SynthParameter.waveform, lane: lane)
         var patch = SynthPatch(InstrumentSettings())
-        if let value = waveform.value(atPosition: 999) { waveform.field.apply(value, to: &patch) }
+        if let value = waveform.value(atPosition: 999) { PatchField.waveform.apply(value, to: &patch) }
         XCTAssertEqual(patch.waveform, .sine, "sine up to the point, not saw and square on the way to triangle")
-        if let value = waveform.value(atPosition: 1_000) { waveform.field.apply(value, to: &patch) }
+        if let value = waveform.value(atPosition: 1_000) { PatchField.waveform.apply(value, to: &patch) }
         XCTAssertEqual(patch.waveform, .triangle)
-        let cutoff = EngineSnapshot.PatchAutomation(field: .cutoff, lane: lane)
+        let cutoff = EngineSnapshot.PatchAutomation(SynthParameter.cutoff, lane: lane)
         XCTAssertFalse(cutoff.holds)
         XCTAssertEqual(cutoff.value(atPosition: 500) ?? 0, 1.5, accuracy: 1e-9, "a number glides between points")
     }
@@ -791,17 +833,16 @@ final class InstrumentPatchTests: XCTestCase {
     /// track's own value would, and a number is never rounded.
     func testAChoicePointJustBelowAHalfPlaysTheChoiceBelow() throws {
         let track = TrackID()
-        let waveform = try XCTUnwrap(PatchField(SynthParameter.waveform.key))
-        let cutoff = try XCTUnwrap(PatchField(SynthParameter.cutoff.key))
-        func automation(_ field: PatchField, _ key: ParameterKey, _ value: Double) -> EngineSnapshot.PatchAutomation {
-            EngineSnapshot.PatchAutomation(field: field, lane: AutomationLane(target: ParameterAddress(.track(track), key),
-                                                                              points: [AutomationPoint(tick: 0, value: value)]))
+        func automation(_ parameter: InstrumentParameter, _ value: Double) -> EngineSnapshot.PatchAutomation {
+            EngineSnapshot.PatchAutomation(parameter, lane: AutomationLane(target: ParameterAddress(.track(track), parameter.key),
+                                                                           points: [AutomationPoint(tick: 0, value: value)]))
         }
         let below: Double = 0.49999999
         XCTAssertEqual(Float(below), 0.5, "the trap: as a Float the point is already a half")
-        XCTAssertEqual(automation(waveform, SynthParameter.waveform.key, below).value(atPosition: 10), 0)
-        XCTAssertEqual(automation(waveform, SynthParameter.waveform.key, 1.5).value(atPosition: 10), 2)
-        XCTAssertEqual(automation(cutoff, SynthParameter.cutoff.key, 1_234.56).value(atPosition: 10), 1_234.56,
+        XCTAssertEqual(automation(SynthParameter.waveform, below).value(atPosition: 10), 0)
+        XCTAssertEqual(automation(SynthParameter.waveform, 1.5).value(atPosition: 10), 2)
+        XCTAssertEqual(automation(SynthParameter.cutoff, 1_234.56).value(atPosition: 10), 1_234.56,
                        "a number is not rounded")
+        XCTAssertEqual(automation(.samplerRoot, 71.5).value(atPosition: 10), 72, "the root key is a whole key")
     }
 }

@@ -537,11 +537,6 @@ extension Command {
                 throw CommandError.invalidValue(parameter: "target",
                                                 reason: "names no parameter that can be automated (the tempo has its own track)")
             }
-            // The engine plays a lane on the synth's values; the drums' and the sampler's take a
-            // value but no lane yet, and a lane there would be stored and never heard.
-            if case .track = target.owner, SynthParameter.named(target.key) == nil, SynthParameter.builtIn(target.key) != nil {
-                throw CommandError.invalidValue(parameter: "target", reason: "the drums' and the sampler's values have no automation yet")
-            }
             try AutomationLane.validate(points, range: descriptor.range)
             if let index = project.automation.firstIndex(where: { $0.target == target }) {
                 if points.isEmpty {

@@ -270,8 +270,8 @@ public struct ParameterDescriptor: Sendable, Equatable {
 
 extension Project {
     /// Every parameter a lane plays, in display order: what the automation menu and the agent
-    /// offer. The drums' and the sampler's values have an address (`descriptor(for:)`, MIDI Learn
-    /// from their control) but no lane yet, so they are not listed.
+    /// offer. An instrument track lists the rows of the device it plays; another device's values
+    /// keep their address (`descriptor(for:)`), and a lane on one is kept for switching back.
     public var parameters: [ParameterDescriptor] {
         var list = [
             Self.descriptor(.tempo, title: "Tempo"),
@@ -288,7 +288,7 @@ extension Project {
                 }
             }
             if track.kind == .instrument {
-                list += SynthParameter.all.map { $0.descriptor(track: track) }
+                list += track.instrument.device.parameters.map { $0.descriptor(track: track) }
             }
         }
         return list
