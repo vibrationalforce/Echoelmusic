@@ -80,6 +80,9 @@ final class DocumentController {
     /// The app is in the background: from `sceneLeft` until `sceneEntered`. A launch starts in
     /// front, so this starts false.
     @ObservationIgnored private var isInBackground = false
+    /// The app is in front but not active — the app switcher, Control Center, a call coming in:
+    /// from `sceneInactive` until `sceneEntered`. The app switcher is where an app is swiped away.
+    @ObservationIgnored private var isInactive = false
     #if canImport(UIKit)
     /// Background time asked for while a run on its way out reaches its pause point.
     @ObservationIgnored private var importBackgroundTask: UIBackgroundTaskIdentifier = .invalid
@@ -202,11 +205,24 @@ final class DocumentController {
     /// still on its way to its pause point arms the wait itself when it gets there.
     func sceneEntered() {
         isInBackground = false
+        isInactive = false
         armImportWait()
     }
 
+    /// Called when the app stops being active while it is still in front. A run of the import
+    /// pauses here, between two songs, and goes on once the app is active again: in the app
+    /// switcher a swipe ends the app with no move to the background first, and two such ends on
+    /// the same song left a healthy song out (round 4 measurement).
+    func sceneInactive() {
+        isInactive = true
+        importWait?.cancel()
+        importWait = nil
+        importRun?.cancel()
+    }
+
     private func armImportWait() {
-        guard isRestored, !isInBackground, !launch.isPending, importRun == nil, !importRanThisLaunch else { return }
+        guard isRestored, !isInBackground, !isInactive, !launch.isPending, importRun == nil,
+              !importRanThisLaunch else { return }
         importWait?.cancel()
         importWait = Task { [weak self] in
             try? await Task.sleep(for: .seconds(LaunchRecord.steadySeconds))
@@ -782,7 +798,7 @@ final class DocumentController {
     /// Support — the one it had open and every one in its library — become songs here. Its files
     /// are only read, never changed or removed, and a song deleted here does not come back.
     private func importEarlierSongs() {
-        guard isRestored, !isInBackground, importRun == nil, !importRanThisLaunch,
+        guard isRestored, !isInBackground, !isInactive, importRun == nil, !importRanThisLaunch,
               !UserDefaults.standard.bool(forKey: Self.importedKey) else { return }
         importWait?.cancel()
         importWait = nil

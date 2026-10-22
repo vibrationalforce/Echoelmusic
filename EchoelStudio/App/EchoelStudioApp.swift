@@ -90,6 +90,8 @@ struct EchoelStudioApp: App {
             case .background:
                 engine.enterBackground()
                 documents.sceneLeft()
+            case .inactive:
+                documents.sceneInactive()
             default: break
             }
             guard phase != .active else { return }
