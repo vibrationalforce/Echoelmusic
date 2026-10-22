@@ -571,9 +571,7 @@ final class DocumentController {
         defer { isExporting = false }
         let rate = 48_000.0
         let exportedSong = songsOpened
-        // By its file name, as the other lines name songs: every new song is called "New Song"
-        // inside, so the project's own name says nothing about which one (review 2026-10-22).
-        let songName = currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
+        let songName = openSongName
         // The song's audio files decode after it opens. A render before they arrive left its
         // sampler and audio parts silent, with no word about it (review 2026-10-19).
         await mediaLoaded(for: exportedSong)
@@ -585,7 +583,7 @@ final class DocumentController {
         let buffers = samples
         let unread = Self.unreadMedia(in: project, buffers: buffers)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
-        let name = ProjectLibrary.safeFileName(for: project.name)
+        let name = ProjectLibrary.safeFileName(for: songName)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         // Block by block into the file: a long song never sits in memory whole.
@@ -648,7 +646,7 @@ final class DocumentController {
         }
         let rate = 48_000.0
         let exportedSong = songsOpened
-        let songName = currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
+        let songName = openSongName
         await mediaLoaded(for: exportedSong)
         guard exportedSong == songsOpened else { return exportStopped(songName) }
         try? store.absorb(plugins.captureCommands(for: store.project))
@@ -661,8 +659,7 @@ final class DocumentController {
             lastError = "No track that plays is heard in the mix: unmute one to export its stem."
             return nil
         }
-        // The folder by the song's file name, as the other lines name songs; a stem left by an
-        // earlier export of a track that is gone must not ride along.
+        // A stem left by an earlier export of a track that is gone must not ride along.
         let name = ProjectLibrary.safeFileName(for: songName)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
             .appendingPathComponent(name + " Stems", isDirectory: true)
@@ -814,12 +811,19 @@ final class DocumentController {
         lastExportIsNews = false
     }
 
+    /// The open song as the status lines and the exported files name it: by its file name. Every
+    /// new song is called "New Song" inside, so the project's own name says nothing about which
+    /// one (review 2026-10-22); two exports of two songs would both arrive as "New Song.wav".
+    private var openSongName: String {
+        currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
+    }
+
     /// Writes the open song's notes as a Standard MIDI File in a temporary folder and returns its
     /// URL for the share sheet. Small and quick, so it runs here.
     func exportMIDI() -> URL? {
         let project = store.project
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
-        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: project.name)).appendingPathExtension("mid")
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: openSongName)).appendingPathExtension("mid")
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try MIDIFile.data(for: project).write(to: url, options: .atomic)
