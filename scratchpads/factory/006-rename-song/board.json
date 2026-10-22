@@ -37,6 +37,12 @@
    "stage": "build",
    "date": "2026-10-22",
    "note": "Core: ProjectLibrary.renamedURL/rename (eigenes Paket frei, Groß/Klein über einen sichtbaren Zwischennamen, belegter Name zur nächsten freien Schreibweise), SongFileName (fällig nur bei geänderter Name, wartet, bis das Paket frei ist); 7 Core-Tests. App: DocumentController folgt vor der Unverändert-Prüfung, beschäftigt = Import/Export/Teilen/Medienladen/Aufnahme, Folgen am Ende jeder dieser Arbeiten, Startschutz und Liste nachgeführt, gescheiterte Verschiebung einmal gemeldet; RecordController meldet aufgegebene Takes; StudioSheet.renameSong + RenameSongView + Song-Menü-Tür. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 1 (wf_b6a5d286-f55) auf 963758fb2 — Bau 4586c4a9a plus Häkchen-Fix im Open-Menü; CI läuft parallel. Ein erster Aufruf (wf_65a4a4d0-efb) war INVALID, weil job den Ordnerpfad statt der Kennung trug; kein Prüfer lief."
   }
- ]
+ ],
+ "head": "963758fb2fe0fb16c0d07f6cca233ad49037ecbb"
 }
