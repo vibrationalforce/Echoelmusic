@@ -39,6 +39,11 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 1 (wf_f738a9cc-f68) auf 5942df4fd; CI läuft parallel."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 1 (wf_f738a9cc-f68): APPROVE, vier Linsen PASS, CI grün auf 5942df4fd (Studio 39822259909, Linux 39822259249). Neun Minors, alle gemessen; Nacharbeit 1 nimmt sie auf (ein Satz mit dem Ort, nur Großbuchstaben, echter Rückweg im Wächter, Ansage hoch, Zeile verborgen), Antwort je Befund in reviews/round-1/rebuttal.md. Runde 2 folgt nach grünem CI."
   }
  ],
  "head": "5942df4fd705df3ce32f657776b85942815dd192"

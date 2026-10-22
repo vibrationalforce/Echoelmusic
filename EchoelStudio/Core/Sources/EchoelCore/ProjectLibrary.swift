@@ -203,19 +203,20 @@ public struct ProjectLibrary: Sendable {
     }
 
     /// The name a change of case passes through: the stem, " renaming " and the first eight
-    /// characters of a fresh UUID. Visible on purpose, so a song caught between the two steps is
-    /// never hidden.
+    /// characters of a fresh UUID, in capitals on every platform. Visible on purpose, so a song
+    /// caught between the two steps is never hidden.
     static func betweenStem(for stem: String) -> String {
-        "\(stem) renaming \(UUID().uuidString.prefix(8))"
+        "\(stem) renaming \(UUID().uuidString.prefix(8).uppercased())"
     }
 
-    /// Whether `stem` is a name in between that `rename` wrote: a song left there by a change of
-    /// case that did not finish, not a name anyone chose.
+    /// Whether `stem` is a name in between exactly as `rename` writes it: a song left there by a
+    /// change of case that did not finish, not a name anyone chose. Only capitals count, so a name
+    /// typed by hand in lower case is never taken for one (review 007 round 1).
     public static func isBetweenStem(_ stem: String) -> Bool {
         guard let marker = stem.range(of: " renaming ", options: .backwards),
               marker.lowerBound > stem.startIndex else { return false }
         let tail = stem[marker.upperBound...]
-        return tail.count == 8 && tail.allSatisfy { "0123456789ABCDEFabcdef".contains($0) }
+        return tail.count == 8 && tail.allSatisfy { "0123456789ABCDEF".contains($0) }
     }
 
     /// Two paths that name one item on disk, as one volume spells it two ways.

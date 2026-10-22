@@ -151,6 +151,8 @@ final class ProjectLibraryTests: XCTestCase {
     /// took the old name meanwhile (the earlier songs' import reserves names off the main thread),
     /// reports the package under the name in between, its media with it, and leaves the other
     /// song alone. Asking only whether the old name exists sent the next write into that song.
+    /// The way back is the real move: the import reserves an EMPTY folder, which POSIX rename(2)
+    /// would replace, so the guard holds only while the move refuses a name that is taken.
     func testAStrandedRenameIsFoundByItsPackageNotItsOldName() throws {
         let url = library.newURL(for: "beat")
         try library.write(try song("beat"), to: url)
@@ -161,12 +163,13 @@ final class ProjectLibraryTests: XCTestCase {
         do {
             _ = try library.rename(url, to: "Beat", moving: { (source: URL, destination: URL) in
                 step += 1
-                guard step > 1 else { return try FileManager.default.moveItem(at: source, to: destination) }
                 if step == 2 {
-                    // Another song arrives under the old name, so neither step can land.
+                    // Another song reserves the old name, so the second step fails and the way
+                    // back finds the name taken.
                     try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
+                    throw CocoaError(.fileWriteFileExists)
                 }
-                throw CocoaError(.fileWriteFileExists)
+                try FileManager.default.moveItem(at: source, to: destination)
             })
             XCTFail("a rename that cannot land and cannot go back throws")
         } catch let stranded as ProjectLibrary.RenameStranded {
@@ -203,7 +206,7 @@ final class ProjectLibraryTests: XCTestCase {
         let written = ProjectLibrary.betweenStem(for: "beat 2")
         XCTAssertTrue(ProjectLibrary.isBetweenStem(written), written)
         let chosen: [String] = ["beat", "Beat renaming", "renaming 1A2B3C4D", "beat renaming 1A2B3C4",
-                                "beat renaming 1A2B3C4DE", "beat renaming XYZ12345"]
+                                "beat renaming 1A2B3C4DE", "beat renaming XYZ12345", "beat renaming 1a2b3c4d"]
         for stem in chosen {
             XCTAssertFalse(ProjectLibrary.isBetweenStem(stem), stem)
         }

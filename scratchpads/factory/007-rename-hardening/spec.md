@@ -25,15 +25,19 @@ VoiceOver-Nutzer die Längen-Grenze hört.
   alten Namen das Paket ebenfalls zurück, statt die Zeile zu löschen und es unter dem Zwischennamen
   zu lassen.
 - A4 — Öffnet sich ein Song, dessen Paket einen Zwischennamen trägt („<Stamm> renaming 1A2B3C4D“,
-  genau so, wie `rename` ihn schreibt), gilt es als gestrandet: das nächste Schreiben gibt ihm den
+  genau so, wie `rename` ihn schreibt: acht Zeichen in Großbuchstaben-Hex, auf jeder Plattform
+  groß geschrieben; Runde 1), gilt es als gestrandet: das nächste Schreiben gibt ihm den
   Namen seines Songs. Das ist eine bewusste Ausnahme von Job 006 A3 („ein Unterschied beim Öffnen
   bewegt nichts“): diesen Namen hat kein Musiker gewählt, ihn hat ein abgestürzter oder
   gescheiterter Zwei-Schritt-Umzug hinterlassen. Grenze: ein Paket, das jemand in Dateien von Hand
   genau so benennt und dessen innerer Name abweicht, bekommt beim nächsten Schreiben seinen
   inneren Namen.
-- A5 — Die Zeile über eine gescheiterte Verschiebung sagt, wo die Datei JETZT ist. Ändert sich das
-  (ein späterer Versuch strandet unter dem Zwischennamen), ersetzt der neue Satz den alten; derselbe
-  Satz wird nie zweimal gesagt.
+- A5 — Die Zeile über eine gescheiterte Verschiebung sagt, wo die Datei JETZT ist, in EINEM Satz,
+  der in jedem Zustand stimmt: „In the Files app the song is called <Datei> for now; Echoel tries
+  again when it next saves.“ Kein „renamed“ mehr (Runde 1): nach einem Undo zum alten Namen und bei
+  einem Song, der aus einem Zwischennamen öffnete, hat niemand umbenannt. Weil der Satz nur den Ort
+  nennt, ändert er sich genau dann, wenn der Ort sich ändert (ein späterer Versuch strandet unter
+  dem Zwischennamen); dann ersetzt der neue den alten, derselbe wird nie zweimal gesagt.
 - A6 — Wählt der Musiker den offenen Song in „Open“ erneut, liest der Code das Paket dort, wo es
   nach dem Speichern davor liegt: das Speichern kann eine geschuldete Verschiebung eben ausgeführt
   haben, und die alte URL gibt es dann nicht mehr.
@@ -41,8 +45,11 @@ VoiceOver-Nutzer die Längen-Grenze hört.
   öffentliche Schnittstelle bleibt `rename(_:to:)`. Kein neuer Typ, keine Abhängigkeit.
 - A8 — VoiceOver: das Namensfeld trägt die Zeile darunter als Hinweis; wird der Name zu lang,
   sagt die App „At most 128 characters.“ an (`AccessibilityNotification.Announcement`, wie die
-  alte App mit `import SwiftUI`), und „Rename“ trägt denselben Satz als Hinweis, solange es
-  deshalb gesperrt ist.
+  alte App mit `import SwiftUI`), mit HOHER Priorität, damit das Echo der Taste oder des Einfügens
+  sie nicht überspricht (Runde 1; Form aus Apples WWDC23-Beispiel, `AttributedString` mit
+  `accessibilitySpeechAnnouncementPriority = .high`). „Rename“ trägt denselben Satz als Hinweis,
+  solange es deshalb gesperrt ist. Die Zeile selbst ist für VoiceOver verborgen, weil Hinweis und
+  Ansage sie tragen — sonst käme sie beim Durchwischen zweimal.
 
 ## Acceptance criteria
 
@@ -50,20 +57,26 @@ VoiceOver-Nutzer die Längen-Grenze hört.
    anderes Paket den alten Namen belegt hat, wirft `ProjectLibrary.RenameStranded` mit dem Paket
    unter dem Zwischennamen (es hält `Media/`), und das andere Paket bleibt unberührt; scheitert nur
    der zweite Schritt und der Rückweg gelingt, kommt der Fehler selbst und das Paket liegt wie
-   vorher — Wächter `ProjectLibraryTests.testAStrandedRenameIsFoundByItsPackageNotItsOldName` und
+   vorher. Der Rückweg im ersten Wächter ist ein ECHTER Umzug auf den belegten, leeren Ordner
+   (Runde 1: POSIX `rename(2)` ersetzte einen leeren Ordner; der Schutz hängt daran, dass der Umzug
+   einen belegten Namen verweigert) — Wächter
+   `ProjectLibraryTests.testAStrandedRenameIsFoundByItsPackageNotItsOldName` und
    `ProjectLibraryTests.testACaseRenameThatGoesBackLeavesThePackageAsItWas`.
 2. `ProjectLibrary.isBetweenStem` erkennt den Zwischennamen, den `rename` schreibt, und keinen
-   gewöhnlichen Namen (auch nicht „renaming“ ohne die acht Zeichen) — Wächter
+   gewöhnlichen Namen (auch nicht „renaming“ ohne die acht Zeichen, und nicht die acht Zeichen in
+   Kleinbuchstaben) — Wächter
    `ProjectLibraryTests.testTheNameInBetweenIsKnownAgain`.
 3. `SongFileName.stranded()` macht jeden Namen fällig, auch den gefolgten; „beschäftigt“ schiebt
    ihn weiter auf; `followed(_:)` und `opened(named:)` heben es auf — Wächter
    `SongFileNameTests.testAStrandedPackageIsOwedEvenUnderItsOldName`.
 4. `DocumentController`: der gestrandete Zweig von `followRenamedSong` ruft `fileName.stranded()`;
    `open(throwing:)` markiert ein Paket mit Zwischennamen als gestrandet und liest den offenen Song
-   nach `mayLeaveSong` unter `currentURL`; `moveFailed` ersetzt eine stehende Zeile, deren Satz sich
-   geändert hat, und sagt einen gleichen nie zweimal — belegt durch Code-Lesen von
+   nach `mayLeaveSong` unter `currentURL`; `moveFailed` sagt EINEN Satz, der nur den Ort nennt,
+   ersetzt eine stehende Zeile, wenn der Ort sich geändert hat, und sagt einen gleichen nie zweimal
+   — belegt durch Code-Lesen von
    `App/Documents/DocumentController.swift` und den App-Build im Workflow `Echoel Studio`.
-5. `RenameSongView`: Hinweis am Feld, Ansage beim Überschreiten der Länge, Hinweis an „Rename“ —
+5. `RenameSongView`: Hinweis am Feld, Ansage mit hoher Priorität beim Überschreiten der Länge,
+   Hinweis an „Rename“, die Zeile unter dem Feld für VoiceOver verborgen —
    belegt durch Code-Lesen von `App/Views/RenameSongView.swift` und den App-Build.
 6. [DEVICE] Mit VoiceOver: im Blatt „Rename Song“ über 128 Zeichen hinaus tippen (z. B. einen
    langen Text einfügen). VoiceOver sagt „At most 128 characters.“; „Rename“ wird als gedimmt

@@ -647,9 +647,9 @@ final class DocumentController {
             // It follows no name there, so an Undo back to the old name still moves it home.
             fileName.stranded()
             packageMoved(from: url, to: stranded.url)
-            moveFailed(stranded.underlying, fileNow: stranded.url, moved: true)
+            moveFailed(stranded.underlying, fileNow: stranded.url)
         } catch {
-            moveFailed(error, fileNow: url, moved: false)
+            moveFailed(error, fileNow: url)
         }
     }
 
@@ -663,16 +663,17 @@ final class DocumentController {
         refresh()
     }
 
-    /// The package could not take the song's name; it is at `url` now, under the name it had
-    /// (`moved` false) or under the one in between a change of case (`moved` true).
-    private func moveFailed(_ error: Error, fileNow url: URL, moved: Bool) {
+    /// The package could not take the song's name; it is at `url` now, under the name it had or
+    /// under the one in between a change of case.
+    private func moveFailed(_ error: Error, fileNow url: URL) {
         // Domain and code only: the description spells both song names.
         let failure = error as NSError
         log.error("rename move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
+        // One sentence, true in every state that gets here: after a rename, after an Undo back to
+        // the old name, and for a song that opened from a name in between, where nobody renamed
+        // anything (review 007 round 1). It names where the file is, so it changes only with that.
         let file = url.deletingPathExtension().lastPathComponent
-        let line = moved
-            ? "The song is renamed, but its file is called \(file) for now; Echoel tries again when it next saves."
-            : "The song is renamed, but its file keeps the name \(file) for now; Echoel tries again when it next saves."
+        let line = "In the Files app the song is called \(file) for now; Echoel tries again when it next saves."
         // Said once; a later failure that left the file somewhere else says where it is now.
         guard line != failedMoveLine else { return }
         moveSettled()

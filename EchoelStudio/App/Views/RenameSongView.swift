@@ -25,9 +25,14 @@ struct RenameSongView: View {
                     focused = true
                 }
                 .onChange(of: documents.songsOpened) { dismiss() }
-                // The red line under the field is not seen with VoiceOver: say it as it appears.
+                // The red line under the field is not seen with VoiceOver: say it as it appears,
+                // at high priority, so the echo of the key or the paste that crossed the limit
+                // does not talk over it (review 007 round 1).
                 .onChange(of: isTooLong) { _, tooLong in
-                    if tooLong { AccessibilityNotification.Announcement(caption).post() }
+                    guard tooLong else { return }
+                    var limit = AttributedString(caption)
+                    limit.accessibilitySpeechAnnouncementPriority = .high
+                    AccessibilityNotification.Announcement(limit).post()
                 }
         }
         .preferredColorScheme(.dark)
@@ -42,6 +47,8 @@ struct RenameSongView: View {
             Text(caption)
                 .font(Theme.Font.caption)
                 .foregroundStyle(isTooLong ? Theme.Color.record : Theme.Color.textSecondary)
+                // The field's hint and the announcement say it; read here too, it came twice.
+                .accessibilityHidden(true)
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.l)
