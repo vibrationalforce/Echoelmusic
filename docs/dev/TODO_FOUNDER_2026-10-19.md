@@ -50,7 +50,7 @@ Stand beim Schreiben: 18 von 73 Posten erledigt; 19.10. 14:53: 19 (S-28); 18:05:
 - [ ] **S-11** (S · bis spätestens 2026-11-16) Lizenzen der Vergleichsprojekte in Frage 7 an der Quelle prüfen (nach dem Grok-Brief) · Quelle: FOERDERUNG §8, §6
 - [ ] **S-12** (S · bis spätestens 2026-11-16) Entwurf auf die WORTGRENZEN des Handbuchs kürzen (Bestand vor Plan, Messbares vor Prosa) · Quelle: FOERDERUNG §8; §9 Handlung 3 · ERSTE FASSUNG 19.10. 21:30: FOERDERUNG §7.5 trägt alle 18 Felder, jede Antwort mit `scripts/ptf-wordcount.py` gemessen (kein Block OVER); offen bleibt: Founder-Fakten (F-08) einsetzen, neu messen, dann F-12 Gegenlesen
 - [ ] **S-13** (S · bis spätestens 2026-11-01) §10-Antworten mit scripts/learn-intake.py säubern, jede Behauptung messen, [verified k/n] ins Ledger, nur Bestätigtes in §7 ziehen — nach F-09 · Quelle: FOERDERUNG §10
-- [ ] **S-14** (S · bis 2026-10-22) DeepSeek hat in §10 keinen Brief (gemessene Trefferquote 10/24, learn-intake --tally) — auf deinen Wunsch nur als Nachschlage-Rolle wie Gemini ergänzen, kein Urteil · Quelle: FOERDERUNG §10; scripts/learn-intake.py --tally; Founder-Auftrag 19.10.
+- [x] **S-14** (S · bis 2026-10-22) **ERLEDIGT 22.10.** (Brief in FOERDERUNG §10 unter Gemini: Lizenz, Plattform, Protokoll und letzter Commit der Frage-7-Projekte, nur Zitate) · DeepSeek hat in §10 keinen Brief (gemessene Trefferquote 10/24, learn-intake --tally) — auf deinen Wunsch nur als Nachschlage-Rolle wie Gemini ergänzen, kein Urteil · Quelle: FOERDERUNG §10; scripts/learn-intake.py --tally; Founder-Auftrag 19.10.
 
 ## Apple / TestFlight — Founder
 

@@ -868,6 +868,15 @@ Tester-Daten, den Team-ID. Alles, was die Modelle brauchen, ist öffentlich.
 > wörtlich wieder. Öffne https://www.prototypefund.de/en/blog/ai-at-prototype-fund und zitiere die Absätze zu
 > Programmierkenntnissen, Auslagerung und Account-Pflicht. Keine Zusammenfassung, keine Bewertung, nur Zitate mit URL.
 
+**DeepSeek — NUR Nachschlagen mit Quelle, kein Urteil** (ergänzt 22.10.: gemessene Quote 10/24 mit
+`learn-intake.py --tally`, deshalb wie Gemini keine Linse; die Sitzung prüft jede Zeile an der Quelle nach, S-11).
+> Für jedes dieser Projekte aus §7.1 Frage 7: hr-bridge-ble, BluetoothHeartRateOSC, Polar-Stream, HeartOSC, biofeed,
+> QLC+, Chataigne, ossia score, OpenBCI GUI. Nenne die URL des offiziellen Repositorys, das Abrufdatum, die
+> Lizenz so, wie die Lizenzdatei im Hauptzweig sie nennt (erste Zeile wörtlich, dazu die SPDX-Kennung, die GitHub
+> anzeigt), die Plattformen, die die README nennt, das Ausgabeprotokoll (z. B. OSC, LSL, Art-Net, sACN), und das
+> Datum des letzten Commits im Hauptzweig. Was du nicht öffnen konntest, schreibst du als „nicht abgerufen“. Keine
+> Zusammenfassung, keine Bewertung, keine Empfehlung.
+
 **Was danach passiert:** Du fügst die Antworten hier ein. Die Sitzung lässt `python3 -I scripts/learn-intake.py` über jede
 laufen, misst jede Behauptung gegen Repo oder Quelle, trägt das Ergebnis als `[verified k/n]` ins Ledger und zieht nur die
 bestätigten Befunde in §7. Nichts aus den Antworten wird wörtlich übernommen; der Entwurf bleibt in unseren Worten.
