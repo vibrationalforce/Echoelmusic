@@ -91,11 +91,12 @@ final class InstrumentPathTests: XCTestCase {
     private func reference<Voice: Played>(_ voice: inout Voice, _ tune: Tune, frames: Int) throws -> [Float] {
         let plan = PlaybackPlan(compiling: tune.project)
         let events = try XCTUnwrap(plan.tracks.first { $0.track == tune.track }).events
-        let perTick = rate * 60 / (120 * Double(MusicalTime.ticksPerBeat(.common)))
+        // The engine's own tick-to-sample conversion, so an event lands on the sample it plays at.
+        let time = TimeConversion(tempoMap: tune.project.tempoMap, sampleRate: rate)
         var out = [Float](repeating: 0, count: frames)
         var at = 0
         for event in events {
-            let sample = Int((Double(event.tick) * perTick).rounded())
+            let sample = Int(time.sample(at: event.tick))
             guard sample < frames else { break }
             if sample > at {
                 let from = at
