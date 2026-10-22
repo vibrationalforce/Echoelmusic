@@ -5650,3 +5650,25 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Verhaltensänderung ohne Sperre:** Eine erneut angeschlagene gehaltene Taste beendet zuerst ihre alte Note (vorher blieb sie bei einem Slot-Wechsel stehen), und eine Freigabe einer nie gedrückten Taste sendet nichts mehr.
 - **Nicht belegt:** Kein Gerät, kein Keyboard am Telefon. Offene Founder-Frage GM29 (Bildschirmtastatur).
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio: Stems sind die Mix-Quellen einzeln, in Mixlänge, ohne Master-Inserts (P1 E1–E3)
+
+- **Entscheidung:** „Export Stems“ rendert jede Spur und jeden Return, den der Mix hört (Mute und Solo entscheiden wie beim Mix), einzeln (`OfflineRender.render(isolating:frameCount:)`) in der Länge des Mixes; Dateinamen `01 Keys` … in Mixer-Reihenfolge, Schrägstriche ersetzt. Master-Inserts bleiben weg, damit die Stems Sample für Sample den Mix ergeben; die Statuszeile sagt es. Ordner `tmp/Exports/<Song> Stems` mit der MIDI-Datei, wenn das Arrangement Ereignisse hat; jeder Stem lädt frische Plugin-Units. Scheitert ein Stem, verschwindet der ganze Ordner. WAV, MIDI und Stems heißen nach der Song-Datei.
+- **Warum:** Ein DAW, der die Stems ab Takt 1 nebeneinander legt, soll den Song spielen. Mit Master-Inserts wäre die Summe nicht der Mix (ein Kompressor auf dem Master reagiert auf die Summe, nicht auf Teile).
+- **Belegt:** `StemRenderTests` (Summe = Mix < 1e-5, Mute/Solo, gleiche Namen) in CI auf `f93358555`.
+- **Nicht belegt:** Teilen eines Ordners über das Teilen-Blatt am Gerät.
+- **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio: Drum- und Sampler-Werte sind Song-Werte mit Spuren (P1 A5a–A5c)
+
+- **Entscheidung:** `drums.level` und `sampler.root|attack|release|level|mode` (Modus-Auswahl `Gate`, `One-shot`) stehen im `values` der Spur, gehen durch `setInstrumentParameter`/`setParameter`, werden geprüft wie Synth-Werte und sind in `StoredNamesTests` eingefroren. Seit A5c nimmt jeder dieser Schlüssel eine Automationsspur; die Engine spielt die Spuren des Geräts, das die Spur gerade spielt, die eines anderen Geräts warten im Song. Das Automationsmenü (und der Assistent) listet die Zeilen des spielenden Geräts statt der Synth-Zeilen auf jeder Instrumentenspur.
+- **Warum:** Der Sampler war ohne Grundton nur auf C4 brauchbar, und eine Spur, die nichts spielt, ist eine Behauptung ohne Klang — deshalb listet das Menü nur, was klingt.
+- **Kein Formatwechsel:** Eine Spur auf einem unbekannten Schlüssel wurde immer behalten; ein älterer Build liest die neuen Spuren und spielt sie nicht.
+- **Belegt (CI ausstehend für A5c):** `InstrumentTablesTests`, `EngineCoreTests` (Grundton und Pegel aus dem Song, Pegel- und Grundton-Spur über dem gespeicherten Wert).
+- **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio: bei gleichem Start und gleicher Tonhöhe spielt die längere Note (F1)
+
+- **Entscheidung:** `PlaybackPlan.resolvingOverlaps` sortiert gleiche Starts kürzer zuerst, damit die längere Note überlebt; ein Take, der eine Tonhöhe im selben Tick beendet und neu anschlägt, nimmt EINE gehaltene Note auf statt eines Stummels.
+- **Warum:** Vorher gewann die kürzere, und ein Stummel der Länge 0–1 Tick schnitt die gehaltene Note ab. Prüfrunde `wf_8fcbf4e4-8b0`.
+- **Review:** 2026-11-21.
