@@ -139,7 +139,7 @@ final class SynthKernelTests: XCTestCase {
     }
 
     func testEveryInstrumentKernelPublishesStableDistinctParametersAndPlaysThroughTheProtocol() {
-        let kinds: [any InstrumentKernel.Type] = [SynthKernel.self, DrumKernel.self]
+        let kinds: [any InstrumentKernel.Type] = [SynthKernel.self, DrumKernel.self, SamplerKernel.self]
         for kind in kinds {
             let parameters = kind.parameters
             XCTAssertFalse(parameters.isEmpty)
