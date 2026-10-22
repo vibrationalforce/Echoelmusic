@@ -2,7 +2,7 @@
  "id": "006-rename-song",
  "title": "Song umbenennen (Paket und innerer Name)",
  "stage": "review",
- "round": 1,
+ "round": 2,
  "base": "1f763674e89b703bf8e988165d326490695ae05e",
  "lenses": [
   "code-reviewer",
@@ -42,7 +42,13 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 1 (wf_b6a5d286-f55) auf 963758fb2 — Bau 4586c4a9a plus Häkchen-Fix im Open-Menü; CI läuft parallel. Ein erster Aufruf (wf_65a4a4d0-efb) war INVALID, weil job den Ordnerpfad statt der Kennung trug; kein Prüfer lief."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 1 (wf_b6a5d286-f55): REWORK, ein Major (ein einzelner takeInFlight-Schalter ließ einen Take den anderen freigeben) und zehn Minors über vier Linsen; Nacharbeit 1 in 840643342, Antwort je Befund in reviews/round-1/rebuttal.md. Runde 2 gestartet (wf_ac2238b4-7c1)."
   }
  ],
- "head": "963758fb2fe0fb16c0d07f6cca233ad49037ecbb"
+ "head": "84064334258aee2d8317912b3a0b7aaef597bb4d",
+ "since": "963758fb2fe0fb16c0d07f6cca233ad49037ecbb"
 }
