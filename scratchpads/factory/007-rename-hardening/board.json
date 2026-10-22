@@ -2,7 +2,7 @@
  "id": "007-rename-hardening",
  "title": "Umbenennen härten (Minors aus Job 006)",
  "stage": "review",
- "round": 1,
+ "round": 2,
  "base": "4c4bd5ad86056afa7044a4bb4e507dbd312d83c7",
  "lenses": [
   "code-reviewer",
@@ -44,7 +44,13 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 1 (wf_f738a9cc-f68): APPROVE, vier Linsen PASS, CI grün auf 5942df4fd (Studio 39822259909, Linux 39822259249). Neun Minors, alle gemessen; Nacharbeit 1 nimmt sie auf (ein Satz mit dem Ort, nur Großbuchstaben, echter Rückweg im Wächter, Ansage hoch, Zeile verborgen), Antwort je Befund in reviews/round-1/rebuttal.md. Runde 2 folgt nach grünem CI."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 2 (wf_864aabbe-500) auf 2e7f68ca0 nach grünem CI: Echoel Studio 39824850887 success (Core 289 Tests, die sechs Umbenennen-Wächter namentlich bestanden, auch der mit echtem Rückweg; App-Build grün, die Ansage-Priorität kompiliert), Linux 39824850931 success."
   }
  ],
- "head": "5942df4fd705df3ce32f657776b85942815dd192"
+ "head": "2e7f68ca08a0aedbf7a236b697cb1beb57d3c554",
+ "since": "5942df4fd705df3ce32f657776b85942815dd192"
 }
