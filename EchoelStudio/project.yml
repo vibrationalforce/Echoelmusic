@@ -83,8 +83,9 @@ targets:
         # Only Apple's own encryption (HTTPS for the store); no export-compliance question per build.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         CODE_SIGN_STYLE: Automatic
-        # App Group group.com.echoelmusic.shared: the app records the plugin purchase there for the
-        # extension (PluginUnlock). The earlier app's songs group returns as a second entry with F17.
+        # App Groups: group.com.echoelmusic.shared, where the app records the plugin purchase for the
+        # extension (PluginUnlock), and group.com.echoelmusic, where the earlier app kept its songs
+        # (import at first start). Both are in the issued profiles since signing probe 5 (F17, 2026-10-21).
         CODE_SIGN_ENTITLEMENTS: Support/App/EchoelStudio.entitlements
 
   # Echoel Plugins — every Echoel Audio Unit in ONE extension under the one registered Audio Unit
@@ -94,12 +95,11 @@ targets:
   # project.yml): AudioComponents under NSExtensionAttributes, a synchronous nonisolated
   # AUAudioUnitFactory, and explicit SDKROOT/SUPPORTED_PLATFORMS. The legacy rule "NO App Group
   # entitlement" held while the .auv3 App ID lacked the capability (every host failed with -3000).
-  # The extension now asks for group.com.echoelmusic.shared to READ the purchase (factory job 002):
-  # the issued .auv3 profile carried it in the F17 run of 2026-10-18, the portal screenshots of the
-  # same evening showed no group there. A missing group CAN fail signing (F17, app target; on
-  # failure studio-testflight.yml prints every profile's groups), but it is not guaranteed to: the
-  # legacy extension signed and then returned -3000 in every host. If Echoel Synth, Drums or EQ
-  # return -3000 in AUM, remove the group from EchoelPlugins.entitlements first.
+  # The extension asks for group.com.echoelmusic.shared to READ the purchase (factory job 002); the
+  # .auv3 profiles carry it since build 10008 (2026-10-19) and signing probe 5 (2026-10-21). A missing
+  # group fails signing (on failure studio-testflight.yml prints every profile's groups), but signing
+  # proves nothing in a host: the legacy extension signed and then returned -3000 in every host. If
+  # Echoel Synth, Drums or EQ return -3000 in AUM, remove the group from EchoelPlugins.entitlements first.
   EchoelPlugins:
     type: app-extension
     platform: iOS
