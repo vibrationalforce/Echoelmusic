@@ -23,8 +23,11 @@ public final class EffectKernel: @unchecked Sendable {
     public let sampleRate: Double
     public let parameters: [EffectParameter]
     private let values: UnsafeMutablePointer<Atomic<UInt32>>
-    private let revision = Atomic<UInt32>(0)
-    private var applied: UInt32 = .max
+    /// Counts writes so the render thread knows to pick the set up. 64 bits and a wrapping add:
+    /// a 32-bit checked add trapped the render thread after 2^32 writes — about two weeks of
+    /// automation on ten parameters, an installation's run (audit 2026-10-23).
+    private let revision = Atomic<UInt64>(0)
+    private var applied: UInt64 = .max
     private let reductionBits = Atomic<UInt32>(0)
 
     private var equalizer: ParametricEQ
@@ -63,7 +66,7 @@ public final class EffectKernel: @unchecked Sendable {
     public func setParameter(_ address: Int, _ value: Float) {
         guard address >= 0, address < parameters.count else { return }
         values[address].store(Self.clamp(value, parameters[address]).bitPattern, ordering: .relaxed)
-        revision.add(1, ordering: .releasing)
+        revision.wrappingAdd(1, ordering: .releasing)
     }
 
     public func parameter(_ address: Int) -> Float {
