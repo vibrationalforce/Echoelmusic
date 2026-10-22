@@ -418,7 +418,11 @@ final class DocumentController {
             if isRestored { open(local) } else { pendingIncoming = local }
         } catch {
             log.error("incoming song refused — \(error.localizedDescription, privacy: .public)")
-            lastError = "Could not open \(url.deletingPathExtension().lastPathComponent)."
+            let name = url.deletingPathExtension().lastPathComponent
+            // As a song chosen from the library says it (`open(_:)`).
+            lastError = Self.isNewer(error)
+                ? "\(name) was saved by a newer Echoel. Update the app to open it."
+                : "Could not open \(name)."
         }
     }
 
