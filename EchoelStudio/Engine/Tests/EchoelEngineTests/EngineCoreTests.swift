@@ -536,6 +536,29 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertLessThan(levels[1], levels[0] * 0.5, "the lane, not the stored cutoff, sets the filter")
     }
 
+    func testAWaveformLaneHoldsEachChoiceUntilItsNextPoint() throws {
+        var base = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
+        try Command.setInstrumentParameter(base.tracks[0], key: SynthParameter.waveform.key.rawValue, value: 0)
+            .apply(to: &base.project)
+        // Both carry a lane, so the engine splits both renders at the same automation stops and
+        // the only difference left is the value the lane gives before its second point.
+        let address = ParameterAddress(.track(base.tracks[0]), SynthParameter.waveform.key)
+        var flat = base, held = base
+        try Command.setAutomation(address, points: [AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: 2 * bar, value: 0)])
+            .apply(to: &flat.project)
+        try Command.setAutomation(address, points: [AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: 2 * bar, value: 3)])
+            .apply(to: &held.project)
+        var outputs: [[Float]] = []
+        for tune in [flat, held] {
+            let engine = core()
+            publish(tune.project, to: engine)
+            engine.play()
+            outputs.append(render(engine, frames: 144_000).left)   // a bar and a half, before the point
+        }
+        let difference = zip(outputs[0], outputs[1]).map { Swift.abs($0 - $1) }.max() ?? 1
+        XCTAssertLessThan(difference, 1e-6, "sine up to the point: a line would turn to saw a third of the way there")
+    }
+
     func testAMuteRampsDownOverOneChunkInsteadOfClicking() throws {
         var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
         let engine = core()
