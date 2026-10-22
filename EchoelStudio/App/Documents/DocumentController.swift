@@ -91,6 +91,14 @@ final class DocumentController {
     /// report its loudness as that song's.
     @ObservationIgnored private var songsOpened = 0
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
+    /// The open song's audio files are being decoded from its package.
+    @ObservationIgnored private var isLoadingMedia = false
+    /// A take is being written into the package: from `newTakeTarget` until it is committed or
+    /// given up (`takeAbandoned`).
+    @ObservationIgnored private var takeInFlight = false
+    /// The name the package follows: a renamed song moves its package to match, once nothing
+    /// reads or writes into it.
+    @ObservationIgnored private var fileName = SongFileName()
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private var launch = LaunchRecord()
@@ -420,6 +428,7 @@ final class DocumentController {
         noteOpening(nil)
         let project = Project.starter(starter)
         store.open(project)
+        fileName.opened(named: project.name)
         currentURL = library.newURL(for: project.name)
         anotherSongOpened()
         savedProject = writing ? nil : project
@@ -467,6 +476,7 @@ final class DocumentController {
             let another = isUnwritten
                 || currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
             store.open(project)
+            fileName.opened(named: project.name)
             currentURL = url
             if another { anotherSongOpened() }
             savedProject = project
@@ -534,6 +544,9 @@ final class DocumentController {
     func saveNow() -> Bool {
         pendingSave?.cancel()
         pendingSave = nil
+        // Before the check below: a rename written while the package was busy still has to move
+        // it, though nothing is left to write.
+        followRenamedSong()
         guard currentURL != nil, store.project != savedProject else {
             // Undo back to the written state leaves nothing unsaved.
             saveError = nil
@@ -561,6 +574,52 @@ final class DocumentController {
         }
     }
 
+    /// Renames the open song — one undo step, written at once — and its package takes the new
+    /// name. The door checks the name: trimmed, not empty, not too long. An Undo or a Redo of the
+    /// rename moves the package again with the next write.
+    func renameSong(to name: String) {
+        // The same name again would be an undo step that changes nothing.
+        guard name.trimmingCharacters(in: .whitespacesAndNewlines) != store.project.name else { return }
+        do {
+            try store.perform([.renameProject(name: name)], title: "Rename Song")
+        } catch {
+            lastError = "Could not rename the song."
+            return
+        }
+        saveNow()
+    }
+
+    /// Something reads or writes into the package right now. Moving it under that work would lose
+    /// what it writes, or leave it reading from a folder that is gone.
+    private var packageIsBusy: Bool { isImporting || isExporting || isLoadingMedia || takeInFlight }
+
+    /// The open song's name changed, so its package takes the new name — at once, or when the
+    /// work on the package ends. A move that fails leaves the package where it is, says so, and
+    /// is not tried again until the name changes once more.
+    private func followRenamedSong() {
+        let name = store.project.name
+        guard fileName.shouldMove(for: name, busy: packageIsBusy), let url = currentURL else { return }
+        fileName.followed(name)
+        if isUnwritten && (!starterMadeFolder || !FileManager.default.fileExists(atPath: url.path)) {
+            // Nothing on disk is the starter's yet, so there is nothing to move: it only takes
+            // another free name. A folder there that it did not make is another song's.
+            currentURL = library.newURL(for: name)
+            starterMadeFolder = false
+            return
+        }
+        do {
+            let moved = try library.rename(url, to: name)
+            guard moved != url else { return }
+            currentURL = moved
+            // A launch that dies now holds the song by the name it has now.
+            if quarantine.opening == url.lastPathComponent { noteOpening(moved.lastPathComponent) }
+            refresh()
+        } catch {
+            log.error("rename move failed — \(error.localizedDescription, privacy: .public)")
+            lastError = "The song is renamed, but its file keeps the name \(url.deletingPathExtension().lastPathComponent)."
+        }
+    }
+
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
     /// and returns its URL for the share sheet. Plugins play from fresh copies loaded with the
     /// settings they have right now; one that cannot load is named in `lastError` and left out.
@@ -568,7 +627,10 @@ final class DocumentController {
     func exportWAV(plugins: PluginHost) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
-        defer { isExporting = false }
+        defer {
+            isExporting = false
+            followRenamedSong()
+        }
         let rate = 48_000.0
         let exportedSong = songsOpened
         let songName = openSongName
@@ -649,6 +711,7 @@ final class DocumentController {
         defer {
             isExporting = false
             exportProgress = nil
+            followRenamedSong()
         }
         let rate = 48_000.0
         let exportedSong = songsOpened
@@ -856,6 +919,7 @@ final class DocumentController {
         defer {
             isExporting = false
             exportProgress = nil
+            followRenamedSong()
         }
         let sharedSong = songsOpened
         let songName = openSongName
@@ -943,7 +1007,10 @@ final class DocumentController {
         guard !isImporting, let package = currentURL else { return nil }
         if isUnwritten { starterMadeFolder = true }   // the import below makes it
         isImporting = true
-        defer { isImporting = false }
+        defer {
+            isImporting = false
+            followRenamedSong()
+        }
         let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
             // A file picked outside the app is readable only inside this scope.
             let scoped = source.startAccessingSecurityScopedResource()
@@ -985,13 +1052,25 @@ final class DocumentController {
             return nil
         }
         if isUnwritten { starterMadeFolder = true }
+        takeInFlight = true
         return TakeTarget(id: id, path: path, url: url)
+    }
+
+    /// The take `newTakeTarget` made room for did not come to be: it could not start, or ended
+    /// with nothing.
+    func takeAbandoned() {
+        takeInFlight = false
+        followRenamedSong()
     }
 
     /// Turns a finished take into a region on `track`, lined up with the beat it was played to —
     /// one undo step. The take is decoded off the main thread like an imported file.
     /// `tempoMap` is the one the take was heard against — an external clock's while following one.
     func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID, tempoMap: TempoMap) async {
+        defer {
+            takeInFlight = false
+            followRenamedSong()
+        }
         let package = currentURL
         let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
             Result { try AudioFileImport.decode(take.url) }
@@ -1044,10 +1123,12 @@ final class DocumentController {
         mediaLoad?.cancel()
         // An export waits for this; a song without media leaves nothing to wait for.
         mediaLoad = nil
+        isLoadingMedia = false
         samples = [:]
         mediaRevision += 1
         guard let package = currentURL, !project.media.isEmpty else { return }
         let files = project.media
+        isLoadingMedia = true
         mediaLoad = Task { [weak self] in
             // Another song opening cancels this, and the decode stops after the file it is on: a
             // song switch must not wait for the last song's audio (review 2026-10-22).
@@ -1062,11 +1143,15 @@ final class DocumentController {
                 return decoded
             }
             let loaded = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
-            guard let self, !Task.isCancelled, self.currentURL == package else { return }
+            // Not cancelled, this is still the song's load: another song's load cancels it first.
+            guard let self, !Task.isCancelled else { return }
+            self.isLoadingMedia = false
+            guard self.currentURL == package else { return }
             let missing = files.count - loaded.count
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
             self.samples.merge(loaded) { current, _ in current }
             self.mediaRevision += 1
+            self.followRenamedSong()
         }
     }
 

@@ -118,6 +118,7 @@ final class RecordController {
         do {
             try engine.beginTake(url: file.url, channel: store.project.track(track)?.input ?? 0)
         } catch {
+            documents.takeAbandoned()
             return
         }
         target = (track, file)
@@ -136,7 +137,11 @@ final class RecordController {
         target = nil
         // The map at the stop, before anything else can change it: the one the take played against.
         let tempoMap = engine.playedTempoMap(of: store.project)
-        guard let take = await engine.endTake(), let pending else { return }
+        guard let take = await engine.endTake(), let pending else {
+            // Nothing to commit, so the package is free again (a rename waits while a take runs).
+            documents.takeAbandoned()
+            return
+        }
         await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: tempoMap)
     }
 

@@ -130,6 +130,73 @@ public struct ProjectLibrary: Sendable {
         url.standardizedFileURL.resolvingSymlinksInPath().path
     }
 
+    /// Where the package at `current` goes for a song now called `name`: `current` itself when its
+    /// file name already spells `name`, else the first free spelling — "Beat", "Beat 2"… — with
+    /// `current` counted as free, so "Beat 2" named "Beat" stays "Beat 2" while another song holds
+    /// "Beat". A spelling that differs from `current` only in case is `current` on a volume that
+    /// does not tell them apart, and is returned as it is spelled: that is a change of case.
+    public func renamedURL(for name: String, from current: URL) -> URL {
+        let base = Self.fileName(for: name)
+        for number in 1...10_000 {
+            let stem = number == 1 ? base : "\(base) \(number)"
+            let candidate = directory.appendingPathComponent(stem).appendingPathExtension(Self.fileExtension)
+            if candidate.lastPathComponent == current.lastPathComponent { return current }
+            if !FileManager.default.fileExists(atPath: candidate.path) || Self.isSameItem(candidate, current) {
+                return candidate
+            }
+        }
+        return current
+    }
+
+    /// Moves the package at `url`, media and all, to `renamedURL(for: name, from: url)` and returns
+    /// where it is now; `url` itself when nothing moves. A change of case only goes through a
+    /// name of its own first, so it works where the volume holds "beat" and "Beat" as one name; that
+    /// name stays visible in the list, so a song caught between the two steps is never hidden. A
+    /// spelling taken between the look and the move — the earlier songs' import reserves names off
+    /// the main thread — is passed over for the next free one.
+    public func rename(_ url: URL, to name: String) throws -> URL {
+        guard url.pathExtension == Self.fileExtension,
+              Self.canonicalPath(url.deletingLastPathComponent()) == Self.canonicalPath(directory) else {
+            throw LibraryError.notAPackage(url)
+        }
+        let files = FileManager.default
+        for _ in 0..<8 {
+            let target = renamedURL(for: name, from: url)
+            guard target.lastPathComponent != url.lastPathComponent else { return url }
+            if target.lastPathComponent.lowercased() == url.lastPathComponent.lowercased() {
+                let stem = url.deletingPathExtension().lastPathComponent
+                let between = directory.appendingPathComponent("\(stem) renaming \(UUID().uuidString.prefix(8))")
+                    .appendingPathExtension(Self.fileExtension)
+                try files.moveItem(at: url, to: between)
+                do {
+                    try files.moveItem(at: between, to: target)
+                } catch {
+                    try? files.moveItem(at: between, to: url)
+                    throw error
+                }
+                return target
+            }
+            do {
+                try files.moveItem(at: url, to: target)
+                return target
+            } catch {
+                guard files.fileExists(atPath: target.path), files.fileExists(atPath: url.path) else { throw error }
+            }
+        }
+        throw CocoaError(.fileWriteFileExists)
+    }
+
+    /// Two paths that name one item on disk, as one volume spells it two ways.
+    private static func isSameItem(_ a: URL, _ b: URL) -> Bool {
+        let files = FileManager.default
+        guard let first = try? files.attributesOfItem(atPath: a.path), let second = try? files.attributesOfItem(atPath: b.path),
+              let one = first[.systemFileNumber] as? NSNumber, let other = second[.systemFileNumber] as? NSNumber,
+              let volume = first[.systemNumber] as? NSNumber, let otherVolume = second[.systemNumber] as? NSNumber else {
+            return false
+        }
+        return one == other && volume == otherVolume
+    }
+
     public func delete(_ url: URL) throws {
         guard url.pathExtension == Self.fileExtension else { throw LibraryError.notAPackage(url) }
         try FileManager.default.removeItem(at: url)

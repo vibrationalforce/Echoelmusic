@@ -25,6 +25,8 @@ enum StudioSheet: Identifiable, Hashable {
     case agent
     /// What Echoel is, what this build holds, and what happens to the musician's data.
     case about
+    /// A new name for the open song, which its package takes too.
+    case renameSong
 
     var id: Self { self }
 }

@@ -79,6 +79,53 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertThrowsError(try library.delete(directory.appendingPathComponent("x.txt")))
     }
 
+    /// A renamed song takes the first free spelling of its new name, with its own package counted
+    /// as free: "Beat 2" called "Beat" again stays where it is while another song holds "Beat".
+    func testARenameTakesAFreeNameAndKeepsItsOwn() throws {
+        for name in ["Beat", "Beat", "Pad"] {
+            try library.write(try song(name), to: library.newURL(for: name))
+        }
+        let own = directory.appendingPathComponent("Beat 2.echoel")
+        XCTAssertEqual(library.renamedURL(for: "Beat", from: own), own, "its own spelling, with its number")
+        XCTAssertEqual(library.renamedURL(for: "Pad", from: own).lastPathComponent, "Pad 2.echoel", "past another song")
+        XCTAssertEqual(library.renamedURL(for: "Lead/Line", from: own).lastPathComponent, "Lead-Line.echoel")
+        XCTAssertEqual(library.renamedURL(for: "Night", from: own).lastPathComponent, "Night.echoel")
+    }
+
+    /// The package moves whole — the document and the audio beside it — and nothing stays at the
+    /// old name. A name the package already spells moves nothing.
+    func testARenameMovesThePackageWithItsMedia() throws {
+        let url = library.newURL(for: "Beat")
+        try library.write(try song("Beat"), to: url)
+        let media = url.appendingPathComponent("Media", isDirectory: true)
+        try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: media.appendingPathComponent("take.wav"))
+
+        let moved = try library.rename(url, to: "Night Drive")
+        XCTAssertEqual(moved.lastPathComponent, "Night Drive.echoel")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path), "no folder left at the old name")
+        XCTAssertEqual(try library.read(moved).tempo, 93)
+        XCTAssertEqual(try Data(contentsOf: moved.appendingPathComponent("Media/take.wav")), Data([1, 2, 3]),
+                       "its media came along")
+        XCTAssertEqual(try library.list().map(\.name), ["Night Drive"])
+        XCTAssertEqual(try library.rename(moved, to: "Night Drive"), moved, "the same name moves nothing")
+        XCTAssertThrowsError(try library.rename(directory.appendingPathComponent("x.txt"), to: "Y"))
+    }
+
+    /// A change of case only leaves one package, spelled the new way — also where the volume
+    /// holds "beat" and "Beat" as one name, which a plain free-name search would have turned into
+    /// "Beat 2".
+    func testACaseOnlyRenameKeepsOnePackage() throws {
+        let url = library.newURL(for: "beat")
+        try library.write(try song("beat"), to: url)
+        let moved = try library.rename(url, to: "Beat")
+        XCTAssertEqual(moved.lastPathComponent, "Beat.echoel")
+        XCTAssertEqual(try library.list().map(\.name), ["Beat"])
+        let names = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        XCTAssertEqual(names, ["Beat.echoel"], "no in-between name left behind")
+        XCTAssertEqual(try library.read(moved).tempo, 93)
+    }
+
     func testDeleteRemovesTheSong() throws {
         let url = library.newURL(for: "Gone")
         try library.write(try song("Gone"), to: url)

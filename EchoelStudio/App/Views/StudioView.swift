@@ -48,6 +48,7 @@ struct StudioView: View {
             case .store: StoreView()
             case .agent: AgentView()
             case .about: AboutView()
+            case .renameSong: RenameSongView()
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -409,6 +410,7 @@ struct SongMenu: View {
                     Button(starter.title) { documents.newSong(starter) }
                 }
             }
+            Button("Rename Song…", systemImage: "pencil") { router.sheet = .renameSong }
             keyAndScale
             if agent.isOffered {
                 Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }

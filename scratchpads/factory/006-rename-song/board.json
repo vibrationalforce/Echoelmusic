@@ -1,0 +1,42 @@
+{
+ "id": "006-rename-song",
+ "title": "Song umbenennen (Paket und innerer Name)",
+ "stage": "review",
+ "round": 1,
+ "base": "1f763674e89b703bf8e988165d326490695ae05e",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "ui-state-reviewer"
+ ],
+ "paths": [
+  "EchoelStudio/Core/Sources/EchoelCore/ProjectLibrary.swift",
+  "EchoelStudio/Core/Sources/EchoelCore/SongFileName.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/ProjectLibraryTests.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/SongFileNameTests.swift",
+  "EchoelStudio/App/Documents/DocumentController.swift",
+  "EchoelStudio/App/Engine/RecordController.swift",
+  "EchoelStudio/App/Navigation/StudioRouter.swift",
+  "EchoelStudio/App/Views/StudioView.swift",
+  "EchoelStudio/App/Views/RenameSongView.swift",
+  "scratchpads/factory/006-rename-song"
+ ],
+ "criteria": 8,
+ "deviceCriteria": [
+  7
+ ],
+ "founderAssumptions": 0,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-22",
+   "note": "R1 aus dem P1-Plan; WIP-Limit: SP + SR warten, dies ist die dritte Scheibe"
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-22",
+   "note": "Core: ProjectLibrary.renamedURL/rename (eigenes Paket frei, Groß/Klein über einen sichtbaren Zwischennamen, belegter Name zur nächsten freien Schreibweise), SongFileName (fällig nur bei geänderter Name, wartet, bis das Paket frei ist); 7 Core-Tests. App: DocumentController folgt vor der Unverändert-Prüfung, beschäftigt = Import/Export/Teilen/Medienladen/Aufnahme, Folgen am Ende jeder dieser Arbeiten, Startschutz und Liste nachgeführt, gescheiterte Verschiebung einmal gemeldet; RecordController meldet aufgegebene Takes; StudioSheet.renameSong + RenameSongView + Song-Menü-Tür. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  }
+ ]
+}
