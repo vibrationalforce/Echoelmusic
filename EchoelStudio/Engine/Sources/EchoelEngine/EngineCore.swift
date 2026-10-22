@@ -639,7 +639,8 @@ public final class EngineCore: @unchecked Sendable {
         for index in 0..<builtInCount { kernel(slot, index)?.receive(status: 0xB0, 123, 0) }
     }
 
-    /// All sound off (CC 120) on every built-in device of a slot: its voices stop at once.
+    /// Starts every built-in device of a slot over: its voices stop at once and its controllers
+    /// come to rest (`EngineInstrumentKernel.reset`).
     private func resetBuiltIns(_ slot: Int) {
         for index in 0..<builtInCount { kernel(slot, index)?.reset() }
     }

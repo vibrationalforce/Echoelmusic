@@ -293,6 +293,20 @@ public struct PolySynth: Sendable {
         for i in voices.indices { voices[i].silence() }
     }
 
+    /// Puts every controller at rest at once — pedal up, pitch wheel centred, modulation wheel
+    /// down, the vibrato back at its start — without the glide a played wheel gets, so the next
+    /// note sounds as on a fresh synth. For a synth whose voices are silent (`reset` first), such
+    /// as one handed to another track: on a sounding one the pitch would jump. Controller 121
+    /// glides instead, as a reset played into a sounding synth should.
+    public mutating func resetControllers() {
+        sustain(false)
+        bend = 1
+        bendTarget = 1
+        vibrato = 0
+        vibratoTarget = 0
+        vibratoPhase = 0
+    }
+
     /// Adds every sounding voice into `buffer`; the caller clears it first.
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard !buffer.isEmpty else { return }

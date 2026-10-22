@@ -264,6 +264,32 @@ final class PolySynthTests: XCTestCase {
         XCTAssertEqual(synth.activeVoiceCount, 0)
     }
 
+    func testAfterResetAndResetControllersTheNextNoteSoundsAsOnAFreshSynth() {
+        var used = PolySynth(sampleRate: rate)
+        used.noteOn(pitch: 60, velocity: 100)
+        used.pitchBend(16_383)
+        used.modulation(127)
+        used.sustain(true)
+        _ = render(&used, seconds: 0.25)
+        used.noteOff(pitch: 60)
+        used.reset()
+        used.resetControllers()
+
+        var fresh = PolySynth(sampleRate: rate)
+        used.noteOn(pitch: 64, velocity: 100)
+        fresh.noteOn(pitch: 64, velocity: 100)
+        let usedHeld = render(&used, seconds: 0.1)
+        let freshHeld = render(&fresh, seconds: 0.1)
+        used.noteOff(pitch: 64)
+        fresh.noteOff(pitch: 64)
+        let heard: [Float] = usedHeld + render(&used, seconds: 0.5)
+        let expected: [Float] = freshHeld + render(&fresh, seconds: 0.5)
+        XCTAssertNil(heard.indices.first { heard[$0] != expected[$0] },
+                     "first differing sample: the note is bent, vibrating or held by the pedal")
+        XCTAssertGreaterThan(peak(expected), 0.01, "the reference plays")
+        XCTAssertEqual(used.activeVoiceCount, 0, "the pedal is up, so the key-up released the note")
+    }
+
     func testAPatchChangeReachesSoundingVoices() {
         var synth = PolySynth(sampleRate: rate)
         synth.noteOn(pitch: 60, velocity: 100)

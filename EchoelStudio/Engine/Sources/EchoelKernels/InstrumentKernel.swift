@@ -60,7 +60,10 @@ public protocol EngineInstrumentKernel: InstrumentKernel {
     /// Applies parameter values set since the last render now, so the next event already hears
     /// them. `render` does the same at its top.
     func commitParameters()
-    /// Silences every voice at once — CC 120, all sound off. Controllers stay as they are.
+    /// Starts the kernel over for a new owner; the engine calls it when a slot changes hands or
+    /// instrument. Every voice falls silent at once (CC 120, all sound off) and every controller
+    /// comes to rest without a glide (pedal up, wheels centred), so the next note sounds as on a
+    /// fresh kernel and nothing the last owner did with its wheels carries over.
     func reset()
 }
 

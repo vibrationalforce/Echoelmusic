@@ -258,6 +258,34 @@ final class InstrumentPathTests: XCTestCase {
         XCTAssertNotNil(firstSound(render(core, frames: 4_800)), "and plays its own")
     }
 
+    /// What a track did with its wheels and its pedal stays with it: a slot handed to a new track
+    /// plays the new track's first note exactly as if the last owner had never touched them.
+    func testASlotHandedToANewTrackStartsWithTheControllersAtRest() throws {
+        let moves = [ControlChange(kind: .pitchBend, start: 0, value: 16_383),
+                     ControlChange(kind: .controller(number: 1), start: 0, value: 127),
+                     ControlChange(kind: .controller(number: 64), start: 0, value: 127)]
+        let runs: [[ControlChange]] = [[], moves]
+        var heard: [[Float]] = []
+        for controls in runs {
+            let first = try tune([Note(pitch: 60, start: 0, length: 4 * bar)], controls: controls)
+            var second = first
+            let other = TrackID(), clip = ClipID()
+            try Command.removeTrack(first.track).apply(to: &second.project)
+            try Command.addTrack(id: other, name: "B", kind: .instrument, index: nil).apply(to: &second.project)
+            try Command.createClip(track: other, id: clip, name: "C", length: bar).apply(to: &second.project)
+            try Command.placeClip(track: other, id: PlacementID(), clip: clip, start: 0).apply(to: &second.project)
+            let core = engine()
+            publish(first, to: core)
+            core.play()
+            _ = render(core, frames: 12_000)
+            publish(second, to: core)
+            core.playLive(slot: 0, status: 0x90, 64, 100)
+            heard.append(render(core, frames: 9_600))
+        }
+        XCTAssertGreaterThan(peak(heard[0]), 0.01, "track B plays its note")
+        assertSame(heard[1], heard[0], "track B after a track that bent, vibrated and held the pedal")
+    }
+
     /// Drums are one-shots: stopping and seeking release held notes but let a hit ring out, and
     /// the hit goes on exactly as the kit plays it.
     func testADrumHitRingsOnThroughAStopAndASeek() throws {

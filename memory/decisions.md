@@ -5624,3 +5624,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Entscheidung:** Im Studio-Gate prüft „Imports only where named“ je Bibliothek die importierten Module gegen ihre Zeile (Core, DSP, Kernels, Engine, Host) und verbietet `import EchoelEngine` in `Plugins/`. Nach dem Simulator-Build prüft „Extension carries no engine code“ die Mach-O-Dateien der Erweiterung auf `12EchoelEngine`, mit zwei Positivkontrollen (`13EchoelKernels` in der Erweiterung, `12EchoelEngine` in der App).
 - **Warum:** Gesetz 8 verbietet einen Test, der Quelltext liest; die Netzwerk-Allowlist ist das Vorbild eines CI-Schritts. Weil der Studio-Lauf der Merge-Gate ist, blockiert die Grenze. Der Linux-Lauf (D4.1) misst dieselbe Grenze durch Kompilieren, blockiert aber nicht.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio-Engine: reset() ist ein Neustart, auch für die Controller (S-26 D2.5)
+
+- **Entscheidung:** `EngineInstrumentKernel.reset()` stellt einen Kern für einen neuen Besitzer neu: alle Stimmen sofort stumm (CC 120) und jeder Controller ohne Gleiten in Ruhe. Der Synth bekommt dafür `PolySynth.resetControllers()` (Pedal oben, beide Räder zentriert, Vibrato-Phase 0). Die Engine ruft `reset()` nur, wenn ein Slot den Track oder das Instrument wechselt.
+- **Warum:** Pedal, Biegung und Vibrato des letzten Tracks blieben im Synth. Auch CC 123 setzt nur die Ziele zurück; ein stiller Kern wird nicht gerendert, also blieb die aktuelle Biegung stehen, und die erste Note des neuen Tracks glitt aus der alten Tonhöhe.
+- **Grenze:** Ein CC 120 aus einem fremden Host geht über `receive` und lässt die Controller stehen (MIDI-Bedeutung von All Sound Off). CC 121 gleitet weiter. Die D2.1-Prüfung „reset ≡ CC 120“ bleibt wahr, weil sie nur die Stille vergleicht.
+- **Belegt:** `InstrumentPathTests.testASlotHandedToANewTrackStartsWithTheControllersAtRest` (zwei Engines, nur eine mit bewegten Rädern davor, die Note danach bit-gleich) und `PolySynthTests.testAfterResetAndResetControllersTheNextNoteSoundsAsOnAFreshSynth`. Nicht am Gerät gehört.
+- **Review:** 2026-11-21.

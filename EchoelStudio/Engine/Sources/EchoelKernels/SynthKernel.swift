@@ -110,8 +110,14 @@ public final class SynthKernel: @unchecked Sendable {
     /// Render thread. Whether a voice is sounding.
     public var isSounding: Bool { synth.activeVoiceCount > 0 }
 
-    /// Render thread. All sound off (CC 120): every voice silenced, controllers untouched.
-    public func reset() { synth.reset() }
+    /// Render thread, for the app's engine: starts the synth over for a new owner — every voice
+    /// silenced at once (CC 120) and every controller at rest without a glide, so the next note
+    /// sounds as on a fresh kernel. A host's CC 120 goes through `receive` and leaves the
+    /// controllers alone.
+    public func reset() {
+        synth.reset()
+        synth.resetControllers()
+    }
 
     /// The patch for the current values, through the same `PatchField` mapping a song's track
     /// uses — arithmetic only, so the render thread may build it.
