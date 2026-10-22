@@ -1675,3 +1675,12 @@ Quelle: Founder-Paste 22.10., Antwort auf Runde 4; Websuche ohne Repo-Lektüre. 
 Verdikt: WATCH. Keine eigene Scheibe; der Hintergrund-Befund wird über C7 der ChatGPT-Messung gebaut. Lehre: Grok bestätigt Architektur, die wir schon gebaut haben — als Prüfer für Plattform-Neuigkeiten nur so gut wie seine ungeöffneten Quellen.
 
 Nebenbei (Founder-Paste derselben Nachricht): das dritte Dokument war die ChatGPT-Antwort auf Runde 2 (Stand a66e0e5) und ist am 19.10. schon geloggt (`[verified 28/31]`, oben). Nicht doppelt geloggt; ihre Export-Scheibe war noch offen und ist jetzt Scheibe (1).
+
+## 2026-10-22 — Founder-Paste: Übergabe-Protokoll Förderung (Installation an Hamburg, Software an den Prototype Fund) — ADOPT→PIPELINE (6/13)
+
+Quelle: Founder-Paste 22.10., Autor-Modell unbekannt; `scripts/learn-intake.py`: sauber. Gemessen gegen `docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §1/§7.5, `docs/artist.html`, `EchoelStudio/App/Agent/` und die ältere App:
+- BESTÄTIGT (6): PTF-Frist 30.11.2026, 47.500 € für eine Einzelperson, nur Software-Arbeitsstunden förderfähig, die drei Pakettypen existieren, MIT-Lizenz, keine Medienproduktion im PTF.
+- WIDERLEGT: Bio-Composer und Agent-Desk als stärkste Argumente — beide liegen in der älteren App, außerhalb des vermessenen Förderobjekts EchoelSense + EchoelIO; ein KI-Teil lenkt die Jury auf ihre KI-Regel. „Der Composer ist deterministisch" gilt nur für den Kern, nicht für einen Live-Take (Startwert aus Puls oder einmal je Take zufällig). „Echoel Studio erzeugt keine Noten" ist ebenfalls falsch: der Assistent schreibt auf Anfrage Noten und Drum-Muster.
+- UNVERIFIZIERT: beide Hamburger Fristen (15.11. Inklusive Projekte, 15.12. Kultur für alle!), die Zuständigkeit der Ansprechperson, die Lizenzen der genannten generativen Modelle, ob reine Dokumentation förderfähig ist — hamburg.de war aus der Sandbox nicht erreichbar.
+
+Verdikt: ADOPT→PIPELINE. Die Texte (Mail, Medienabsatz, Modul-C-Kurzfassung, Finanzskizze) liegen nur im privaten Claude Doc, nie im Repo (Entscheidung 2026-10-22). Eine adversariale Runde (`wf_77455dfb-e20`, vier Linsen, je ein Prüfer) hat 30 Korrekturen bestätigt; die zwei teuersten: die Jahreszahl 2006 gilt laut Künstlerseite der Installationspraxis allgemein, nicht den Wasser-Installationen, und 2024 bei Burgbeben waren nur die Pontons zu sehen, als Duo-Arbeit. Lehre: ein Übergabe-Protokoll, das die Argumente schon auswählt, wählt die auffälligsten, nicht die förderfähigen — das Förderobjekt entscheidet, nicht der Glanz eines Features.
