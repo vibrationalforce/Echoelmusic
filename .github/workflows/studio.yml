@@ -114,15 +114,21 @@ jobs:
           set -o pipefail
           swift test --package-path EchoelStudio/Engine 2>&1 | tee engine-test.log
 
+      # One scheme per library product: `EchoelEngine` builds the engine and the kernels below it,
+      # `EchoelHost` the Audio Unit side, which nothing in the package depends on (S-26 D1.3) — so
+      # without its own build its iOS-only imports would be checked only by the app job.
       - name: Build Engine for iOS
         working-directory: EchoelStudio/Engine
         run: |
-          set -o pipefail
-          xcodebuild build \
-            -scheme EchoelEngine \
-            -destination 'generic/platform=iOS' \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee ../../engine-ios.log | tail -40
+          set -eo pipefail   # -e: a red first scheme must not be hidden by a green second one
+          for scheme in EchoelEngine EchoelHost; do
+            echo "== $scheme"
+            xcodebuild build \
+              -scheme "$scheme" \
+              -destination 'generic/platform=iOS' \
+              CODE_SIGNING_ALLOWED=NO \
+              2>&1 | tee -a ../../engine-ios.log | tail -40
+          done
 
       - name: Build for iOS
         working-directory: EchoelStudio/Core
