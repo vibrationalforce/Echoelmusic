@@ -212,6 +212,18 @@ final class ProjectLibraryTests: XCTestCase {
         }
     }
 
+    /// Three new songs are told apart on screen as they are in the Open list; a rename shows at
+    /// once (audit 2026-10-23).
+    func testANewSongIsTitledByItsFileNameAndARenamedOneByItsName() {
+        XCTAssertEqual(ProjectLibrary.title(name: "New Song", stem: "New Song 3"), "New Song 3")
+        XCTAssertEqual(ProjectLibrary.title(name: "New Song", stem: "New Song"), "New Song")
+        XCTAssertEqual(ProjectLibrary.title(name: "Beat", stem: "New Song 3"), "Beat", "renamed, before the package moves")
+        XCTAssertEqual(ProjectLibrary.title(name: "Beat", stem: nil), "Beat")
+        XCTAssertEqual(ProjectLibrary.title(name: "New Song", stem: "New Song Remix"), "New Song", "only the library's number")
+        XCTAssertEqual(ProjectLibrary.title(name: "A/B", stem: "A-B 2"), "A-B 2", "the number follows the file-safe name")
+        XCTAssertEqual(ProjectLibrary.title(name: "A/B", stem: "A-B"), "A/B", "the song keeps its own spelling")
+    }
+
     func testDeleteRemovesTheSong() throws {
         let url = library.newURL(for: "Gone")
         try library.write(try song("Gone"), to: url)

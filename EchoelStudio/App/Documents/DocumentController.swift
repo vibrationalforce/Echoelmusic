@@ -983,6 +983,11 @@ final class DocumentController {
         currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
     }
 
+    /// The open song's title on screen (`ProjectLibrary.title`).
+    var songTitle: String {
+        ProjectLibrary.title(name: store.project.name, stem: currentURL?.deletingPathExtension().lastPathComponent)
+    }
+
     /// Writes a clean copy of the open song as a package in a temporary folder and returns it for
     /// the share sheet: the song as it stands, with the plugins' settings as they are now, and the
     /// audio files it uses — not a take being recorded or a file it let go. A file it uses that is

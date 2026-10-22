@@ -526,7 +526,7 @@ struct SongMenu: View {
             .disabled(documents.songs.isEmpty)
         } label: {
             HStack(spacing: Theme.Space.xs) {
-                Text(store.project.name)
+                Text(documents.songTitle)
                     .font(Theme.Font.title)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
@@ -537,7 +537,7 @@ struct SongMenu: View {
             }
             .frame(minHeight: Theme.Size.touch)
         }
-        .accessibilityLabel("Song \(store.project.name)")
+        .accessibilityLabel("Song \(documents.songTitle)")
         .accessibilityHint("New song or open another. Songs save automatically.")
         .onAppear { documents.refresh() }
     }

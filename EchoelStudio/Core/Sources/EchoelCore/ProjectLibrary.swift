@@ -238,6 +238,19 @@ public struct ProjectLibrary: Sendable {
     /// A file name for `name`, for exports beside the library.
     public static func safeFileName(for name: String) -> String { fileName(for: name) }
 
+    /// How the open song is titled on screen. Its file name when that is the song's own name with
+    /// the number `newURL` added ("New Song 2"): every new song is "New Song" inside, so the name
+    /// alone cannot tell three apart, and the Open list and the exports already go by the file.
+    /// Otherwise the name inside, so a rename shows at once, before or without its package moving.
+    public static func title(name: String, stem: String?) -> String {
+        guard let stem else { return name }
+        let base = fileName(for: name)
+        guard stem.hasPrefix(base + " "), let number = Int(stem.dropFirst(base.count + 1)), number >= 2 else {
+            return name
+        }
+        return stem
+    }
+
     /// The most bytes a file name's stem takes in UTF-8. A file system limits a name in bytes (255),
     /// not in characters, and one character can carry many scalars — a letter with marks, an
     /// emoji with a skin tone — so a name the door accepts could be far too long for a file. 200
