@@ -62,7 +62,7 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     /// Render thread: the unit's input is the bus, in its own buffers or pointed at ours.
     private func fill(_ input: UnsafeMutablePointer<AudioBufferList>, frames: Int) -> AUAudioUnitStatus {
         guard let inLeft, let inRight, frames <= maximumFrames else { return kAudioUnitErr_TooManyFramesToProcess }
-        var buffers = UnsafeMutableAudioBufferListPointer(input)
+        let buffers = UnsafeMutableAudioBufferListPointer(input)
         for (index, buffer) in buffers.enumerated() {
             let source = index == 0 ? inLeft : inRight
             let bytes = UInt32(frames * MemoryLayout<Float>.size)
