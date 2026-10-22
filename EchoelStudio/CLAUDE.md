@@ -65,6 +65,11 @@ on modules below it — never the other way round.
 - **A `@Sendable` callback may send its captured `self` to the main actor only once.** Two
   `Task { @MainActor in self?.… }` in the same block is "sending 'self' risks causing data races";
   do both steps in one task.
+- **Give a test's arithmetic closure its types (2026-10-22).** `(0..<24_000).map { Float(sin(2 * Double.pi
+  * 220 * Double($0) / 48_000) * (1 - Double($0) / 24_000)) }` timed out the type checker; name
+  the parameter and result (`{ (index: Int) -> Float in … }`) and split the steps. And
+  `slice.filter { … }.map(\.field)` compared with `[a + b]` was "ambiguous": an `ArraySlice` has
+  two `filter`s — copy it into an `Array` first and give the expected value a type.
 - **A test file can hold more than one test class.** Appending at the end of the file puts a
   test into the LAST class, which may lack the helpers. Insert next to the tests it belongs to.
 - **No `@MainActor` on an `XCTestCase` class (Linux, 2026-10-19).** swift-corelibs-xctest's
