@@ -1,6 +1,7 @@
 import AudioToolbox
 import AVFoundation
 import EchoelCore
+import EchoelKernels
 import Foundation
 import Synchronization
 

@@ -1,4 +1,5 @@
 import EchoelCore
+@testable import EchoelKernels
 import XCTest
 @testable import EchoelEngine
 

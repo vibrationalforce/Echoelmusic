@@ -1,6 +1,7 @@
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
+import EchoelKernels
 import Foundation
 import Observation
 import os

@@ -1,6 +1,7 @@
 import AudioToolbox
 import AVFoundation
 import EchoelCore
+import EchoelKernels
 import Foundation
 
 /// An Audio Unit effect on a track's insert chain, processed inside the engine's own render

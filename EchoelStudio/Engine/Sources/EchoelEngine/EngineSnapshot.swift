@@ -1,5 +1,6 @@
 import EchoelCore
 import EchoelDSP
+import EchoelKernels
 import Foundation
 
 /// Everything the render thread needs for one state of the project, compiled on the main

@@ -1,5 +1,6 @@
 import EchoelCore
 import EchoelDSP
+import EchoelKernels
 import Foundation
 import Synchronization
 

@@ -1,5 +1,6 @@
 import EchoelCore
 import EchoelEngine
+import EchoelKernels
 import SwiftUI
 
 /// The controls of one of Echoel's standard effects on an insert: every parameter as a value

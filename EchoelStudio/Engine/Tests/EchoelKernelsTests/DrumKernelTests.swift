@@ -1,6 +1,6 @@
 import EchoelCore
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelKernels
 
 final class DrumKernelTests: XCTestCase {
     private func render(_ kernel: DrumKernel, frames: Int, gain: Float = 1) -> ([Float], [Float]) {

@@ -1,7 +1,7 @@
 import EchoelCore
 import EchoelDSP
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelKernels
 
 final class SynthKernelTests: XCTestCase {
     private func render(_ kernel: SynthKernel, frames: Int, gain: Float = 1) -> ([Float], [Float]) {

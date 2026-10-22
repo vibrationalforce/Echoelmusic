@@ -1,7 +1,7 @@
 import EchoelCore
 import EchoelDSP
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelKernels
 
 final class EffectKernelTests: XCTestCase {
     private let rate = 48_000.0

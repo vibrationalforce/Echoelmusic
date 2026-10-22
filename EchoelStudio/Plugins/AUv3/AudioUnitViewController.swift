@@ -1,6 +1,7 @@
 import AudioToolbox
 import EchoelCore
 import EchoelEngine
+import EchoelKernels
 
 /// The principal class of the one Echoel extension (`com.echoelmusic.app.auv3`). It carries every
 /// Echoel Audio Unit; the host's component description says which one to make.

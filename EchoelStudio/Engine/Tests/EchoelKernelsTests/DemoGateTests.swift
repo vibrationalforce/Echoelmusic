@@ -1,5 +1,5 @@
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelKernels
 
 /// The demo's silence fades instead of switching (ultra-audit A9). The expected values follow
 /// from the gate's definition: silent from second 28 to 29.99 of every 30, with 10 ms ramps, so

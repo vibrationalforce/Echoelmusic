@@ -3,6 +3,7 @@ import Darwin
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
+import EchoelKernels
 import Observation
 import os
 

@@ -1,5 +1,6 @@
 import EchoelCore
 import EchoelDSP
+@testable import EchoelKernels
 import XCTest
 @testable import EchoelEngine
 

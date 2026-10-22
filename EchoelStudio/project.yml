@@ -51,6 +51,9 @@ targets:
       - package: EchoelCore
       - package: EchoelDSP
       - package: EchoelEngine
+      # The kernels and the hosting protocols, a second library of the Engine package.
+      - package: EchoelEngine
+        product: EchoelKernels
       # Our own Audio Units ship inside the app (PlugIns/); they are sold as in-app purchases.
       - target: EchoelPlugins
     settings:
@@ -115,6 +118,8 @@ targets:
       - package: EchoelCore
       - package: EchoelDSP
       - package: EchoelEngine
+      - package: EchoelEngine
+        product: EchoelKernels
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3

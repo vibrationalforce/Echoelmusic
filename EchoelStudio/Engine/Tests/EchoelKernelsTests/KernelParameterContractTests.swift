@@ -1,6 +1,6 @@
 import EchoelCore
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelKernels
 
 /// What a host stores for an Echoel instrument: automation and presets keyed by each parameter's
 /// identifier and by its address, which is its index. The lists are written out here on purpose
