@@ -588,24 +588,25 @@ final class DocumentController {
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
         // Block by block into the file: a long song never sits in memory whole.
         // Measured on the way, as the file receives it (BS.1770 / EBU R 128).
-        let result: Result<LoudnessMeter, Error> = await Task.detached(priority: .userInitiated) {
+        let result: Result<(meter: LoudnessMeter, frames: Int), Error> = await Task.detached(priority: .userInitiated) {
             Result {
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 let writer = try WAVWriter(url: url, sampleRate: rate)
                 var meter = LoudnessMeter(sampleRate: rate)
+                let frames: Int
                 do {
-                    _ = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
+                    frames = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
                                                  effects: offline.chains.mapValues { $0 as [any HostedProcessor] },
                                                  masterEffects: offline.masterChain) { left, right, count in
                         try writer.append(left: left, right: right, count: count)
                         meter.process(left: left, right: right, count: count)
-                    }
+                    }.frameCount
                     try writer.finish()
                 } catch {
                     try? FileManager.default.removeItem(at: url)
                     throw error
                 }
-                return meter
+                return (meter, frames)
             }
         }.value
         // The file is the earlier song's; shared from the next one's screen it would pass for that
@@ -615,8 +616,13 @@ final class DocumentController {
             return exportStopped(songName)
         }
         switch result {
-        case .success(let meter):
-            lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
+        case .success(let rendered) where rendered.frames == 0:
+            try? FileManager.default.removeItem(at: url)
+            lastExportIsNews = false
+            lastError = Self.nothingToExport(audio: unread)
+            return nil
+        case .success(let rendered):
+            lastExportLoudness = (rendered.meter.integratedLoudness, rendered.meter.truePeak)
             lastExportIsNews = true
             lastError = Self.exportedWithout(plugins: offline.missing, audio: unread)
             return url
@@ -656,7 +662,9 @@ final class DocumentController {
         let stems = OfflineRender.stems(of: project, samples: buffers)
         guard !stems.isEmpty else {
             lastExportIsNews = false
-            lastError = "No track that plays is heard in the mix: unmute one to export its stem."
+            lastError = unread.isEmpty
+                ? "No track that plays is heard in the mix: unmute one to export its stem."
+                : Self.nothingToExport(audio: unread)
             return nil
         }
         // A stem left by an earlier export of a track that is gone must not ride along.
@@ -680,6 +688,12 @@ final class DocumentController {
         var outcome = measured.map { _ in () }
         // A plugin that loads for one render and not the next is missing from some stems: named.
         var missing = measuring.missing
+        if case .success(0) = measured, exportedSong == songsOpened {
+            try? FileManager.default.removeItem(at: folder)
+            lastExportIsNews = false
+            lastError = Self.nothingToExport(audio: unread)
+            return nil
+        }
         if case .success(let length) = measured {
             for (index, stem) in stems.enumerated() {
                 exportProgress = "Exporting stem \(index + 1) of \(stems.count)…"
@@ -761,11 +775,24 @@ final class DocumentController {
             without.append("Exported without \(missing.joined(separator: ", ")): not available on this device.")
         }
         if !unread.isEmpty {
-            let shown = unread.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
-            let more = unread.count > 3 ? " and \(unread.count - 3) more" : ""
-            without.append("Exported without the audio \(unread.count == 1 ? "file" : "files") \(shown)\(more): missing or unreadable in the song.")
+            without.append("Exported without \(audioFiles(unread)): missing or unreadable in the song.")
         }
         return without.isEmpty ? nil : without.joined(separator: " ")
+    }
+
+    /// The render came out empty, so there is no file: an audio file that did not decode, or a
+    /// region that starts past the end of its file. An empty WAV is no export (review 2026-10-22).
+    private static func nothingToExport(audio unread: [String]) -> String {
+        unread.isEmpty
+            ? "Nothing to export: what the arrangement holds renders no sound."
+            : "Nothing to export: \(audioFiles(unread)) \(unread.count == 1 ? "is" : "are") missing or unreadable in the song."
+    }
+
+    /// "the audio file “A”", or up to three names and how many more.
+    private static func audioFiles(_ names: [String]) -> String {
+        let shown = names.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
+        let more = names.count > 3 ? " and \(names.count - 3) more" : ""
+        return "the audio \(names.count == 1 ? "file" : "files") \(shown)\(more)"
     }
 
     /// Returns once the open song's audio files are decoded, also when reopening it started
