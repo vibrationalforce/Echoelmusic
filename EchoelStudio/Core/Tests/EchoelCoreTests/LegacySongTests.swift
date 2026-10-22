@@ -101,6 +101,34 @@ final class LegacySongTests: XCTestCase {
         XCTAssertNoThrow(try project.validate())
     }
 
+    /// A region saved before the tick field existed carries its trim-in only in seconds, and the
+    /// earlier app plays it from there, held to its sixteenth grid — the right half of a split
+    /// must not replay the left half (review 2026-10-23).
+    func testATrimInSavedInSecondsOrOffTheGridPlaysWhereTheEarlierAppPlayedIt() throws {
+        func notes(offset: String) throws -> [String] {
+            let timeline = Data("""
+            {"lanes":[{"id":"\(keys)","kind":"midi","name":"Keys"}],
+             "regions":[{"clipID":"\(part)","laneID":"\(keys)","lengthTicks":960,"startTick":0,\(offset)}]}
+            """.utf8)
+            let clips = Data("""
+            [{"id":"\(part)","kind":"midi","name":"Verse","melody":{"notes":[
+              {"pitch":60,"startTick":0,"lengthTicks":480},
+              {"pitch":62,"startTick":480,"lengthTicks":480},
+              {"pitch":64,"startTick":960,"lengthTicks":480}]}}]
+            """.utf8)
+            let project = try LegacySong.project(timeline: timeline, clips: clips, tempo: 120, name: "N")
+            let clip = try XCTUnwrap(project.tracks.first?.clips.first)
+            return clip.notes.map { "\($0.pitch)@\($0.start)" }
+        }
+        XCTAssertEqual(try notes(offset: #""contentOffsetSeconds":1,"contentOffsetTicks":0"#), ["64@0"],
+                       "one second at 120 BPM is 960 old ticks")
+        XCTAssertEqual(try notes(offset: #""contentOffsetSeconds":1"#), ["64@0"], "and without a tick field")
+        XCTAssertEqual(try notes(offset: #""contentOffsetTicks":530"#), ["62@0", "64@960"],
+                       "530 old ticks play from the sixteenth at 480")
+        XCTAssertEqual(try notes(offset: #""contentOffsetSeconds":"damaged","contentOffsetTicks":0"#), ["60@0", "62@960"],
+                       "a damaged seconds value drops only itself")
+    }
+
     func testAVelocityFarOutOfRangeIsHeldToTheKeyboardInsteadOfTrapping() throws {
         let timeline = Data("""
         {"lanes":[{"id":"\(keys)","kind":"midi","name":"Keys"}],

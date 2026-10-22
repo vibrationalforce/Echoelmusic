@@ -152,7 +152,7 @@ public enum LegacySong {
                 try Command.setInstrumentDevice(track, .drums).apply(to: &project)
             }
             let own = regions.filter { $0.laneID == lane.id }.sorted { $0.startTick < $1.startTick }
-            try place(own, of: lane, clips: clipsByID, on: track, in: &project)
+            try place(own, of: lane, clips: clipsByID, tempo: tempo, on: track, in: &project)
         }
         return project
     }
@@ -174,14 +174,14 @@ public enum LegacySong {
 
     /// Each region plays its clip from its offset for its length, so each distinct stretch of a
     /// clip becomes one clip here, placed wherever a region played it.
-    static func place(_ regions: [Region], of lane: Lane, clips: [UUID: Clip], on track: TrackID,
+    static func place(_ regions: [Region], of lane: Lane, clips: [UUID: Clip], tempo: Double, on track: TrackID,
                       in project: inout Project) throws {
         struct Stretch: Hashable { var clip: UUID; var offset: Tick; var length: Tick; var transpose: Int }
         var made: [Stretch: ClipID] = [:]
         for region in regions {
             guard let source = clips[region.clipID], source.kind == "midi" || source.kind == nil else { continue }
             guard let length = converted(region.lengthTicks), length > 0, let start = converted(region.startTick),
-                  let offset = converted(Swift.max(0, region.contentOffsetTicks ?? 0)) else { continue }
+                  let offset = trimIn(of: region, tempo: tempo) else { continue }
             let stretch = Stretch(clip: region.clipID, offset: offset, length: length,
                                   transpose: semitones(lane.transposeSemitones) + semitones(region.transposeSemitones))
             let id: ClipID
@@ -199,6 +199,27 @@ public enum LegacySong {
             }
             try Command.placeClip(track: track, id: PlacementID(), clip: id, start: start).apply(to: &project)
         }
+    }
+
+    /// Where a region starts playing its clip, as the earlier app played it
+    /// (`RegionNoteWindow.effectiveOffsetTicks`): the tick field when it is above 0, else the
+    /// seconds field at the song's tempo — a region saved before the tick field existed carries
+    /// only seconds — held to its sixteenth grid, in this format's ticks. Nil when the numbers do
+    /// not fit a song (review 2026-10-23: split and front-trimmed parts played from the start).
+    static func trimIn(of region: Region, tempo: Double) -> Tick? {
+        var raw: Tick = 0
+        if let ticks = region.contentOffsetTicks, ticks > 0 {
+            raw = ticks
+        } else if let seconds = region.contentOffsetSeconds?.value, seconds.isFinite, seconds > 0,
+                  tempo.isFinite, tempo > 0 {
+            let old: Double = (seconds * tempo / 60 * Double(ticksPerQuarter)).rounded()
+            guard old < Double(MusicalTime.maximumTick) else { return nil }
+            raw = Tick(old)
+        }
+        let step = ticksPerQuarter / 4
+        let (nearest, overflow) = raw.addingReportingOverflow(step / 2)
+        guard !overflow else { return nil }
+        return converted(nearest / step * step)
     }
 
     /// A note of the earlier app in this clip's time, or nil when it lies outside the stretch or
@@ -273,6 +294,9 @@ public enum LegacySong {
         var startTick: Tick
         var lengthTicks: Tick
         var contentOffsetTicks: Tick?
+        /// The trim-in before the tick field existed; read leniently, so a damaged value drops
+        /// only itself, never the region.
+        var contentOffsetSeconds: Lenient<Double>?
         var transposeSemitones: Int?
     }
 
