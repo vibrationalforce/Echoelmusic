@@ -38,8 +38,8 @@ public enum LegacySong {
     }
 
     /// The earlier app's songs in one place it wrote to, read but not converted: its open song
-    /// first, then its library, each in a fixed place, so the import can bring them over one at a
-    /// time (review 2026-10-21).
+    /// first, then its library, so the import can bring them over one at a time, each named by its
+    /// key (review 2026-10-21, 2026-10-22).
     public struct Songs: Sendable {
         let timeline: Data?
         let clips: Data
@@ -65,11 +65,15 @@ public enum LegacySong {
             return try? LegacySong.project(timeline: timeline, clips: clips, tempo: tempo, name: "Earlier Song")
         }
 
-        /// Whether any of them can be read here. The earlier app may have left an open song with
-        /// no lanes in one place and its real songs in another; a place that holds nothing
-        /// readable is passed over, and does not finish the import.
-        public var holdsReadableSong: Bool {
-            (0..<count).contains { project(at: $0) != nil }
+        /// What names the song in place `index` on every launch, wherever it sits: a digest of
+        /// what the earlier app wrote for it, without converting it. The same song read from
+        /// another place the earlier app wrote to, or after it saved another song ahead of this
+        /// one, has the same key; a song saved again with changes has another. Nil when there is
+        /// no such place or its row holds no song at all.
+        public func key(at index: Int) -> String? {
+            guard let timeline else { return library.key(at: index) }
+            guard index == 0 else { return library.key(at: index - 1) }
+            return "t" + LegacySong.digest([timeline, clips])
         }
     }
 
@@ -81,6 +85,13 @@ public enum LegacySong {
         /// Every row, the unreadable ones included.
         public var count: Int { rows.count }
 
+        /// See `Songs.key(at:)`.
+        public func key(at index: Int) -> String? {
+            guard rows.indices.contains(index), let song = rows[index] else { return nil }
+            return "r" + LegacySong.digest([Data((song.name ?? "").utf8), Data((song.bpm.map { "\($0)" } ?? "").utf8),
+                                            song.session ?? Data()])
+        }
+
         /// The song in row `index`, each with the name it was saved under; nil when the row or its
         /// envelope cannot be read, or there is no such row.
         public func project(at index: Int) -> Project? {
@@ -91,6 +102,23 @@ public enum LegacySong {
             let name = song.name ?? envelope.meta?.name ?? "Imported Song"
             return try? LegacySong.project(envelope.content.timeline, clips: clips, tempo: tempo, name: name)
         }
+    }
+
+    /// FNV-1a over the parts, each led by its length so two parts never read as one: the same
+    /// bytes give the same key on every launch and every platform, which `Hasher` does not.
+    static func digest(_ parts: [Data]) -> String {
+        let prime: UInt64 = 0x0000_0100_0000_01b3
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for part in parts {
+            var length = UInt64(part.count)
+            for _ in 0..<8 {
+                hash = (hash ^ (length & 0xff)) &* prime
+                length >>= 8
+            }
+            for byte in part { hash = (hash ^ UInt64(byte)) &* prime }
+        }
+        let hex = String(hash, radix: 16)
+        return String(repeating: "0", count: 16 - hex.count) + hex
     }
 
     // MARK: - Conversion

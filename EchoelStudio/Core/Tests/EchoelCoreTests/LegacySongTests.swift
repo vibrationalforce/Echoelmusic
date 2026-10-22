@@ -159,24 +159,59 @@ final class LegacySongTests: XCTestCase {
         XCTAssertEqual(LegacySong.libraryRows(Data("{}".utf8)).count, 0)
     }
 
-    func testAPlaceWithNothingReadableIsPassedOver() throws {
-        // The earlier app left an open song without lanes in one place: that place holds no song,
-        // so the import looks in the next one instead of finishing on it (review 2026-10-21).
+    func testEveryPlaceCountsAndTheLibraryFollowsTheOpenSong() throws {
+        // The earlier app left an open song without lanes: the place counts, holds no song, and
+        // the import leaves it out by its key.
         let empty = Data(#"{"lanes":[],"regions":[]}"#.utf8)
         let broken = LegacySong.libraryRows(try JSONSerialization.data(withJSONObject: [["name": "Broken", "session": "AAAA"]]))
         let none = LegacySong.Songs(timeline: empty, clips: Data("[]".utf8), tempo: 120, library: broken)
         XCTAssertEqual(none.count, 2, "every place counts, the unreadable ones included")
         XCTAssertNil(none.project(at: 0))
         XCTAssertNil(none.project(at: 1))
-        XCTAssertFalse(none.holdsReadableSong)
-        XCTAssertFalse(LegacySong.Songs(timeline: nil, clips: Data("[]".utf8), tempo: 120,
-                                        library: LegacySong.libraryRows(Data())).holdsReadableSong)
+        XCTAssertNotNil(none.key(at: 0), "an unreadable song still has a key, so it is left out once")
+        XCTAssertNotNil(none.key(at: 1))
+        XCTAssertEqual(LegacySong.Songs(timeline: nil, clips: Data("[]".utf8), tempo: 120,
+                                        library: LegacySong.libraryRows(Data())).count, 0)
 
         let open = LegacySong.Songs(timeline: timeline, clips: clips, tempo: 97, library: broken)
-        XCTAssertTrue(open.holdsReadableSong)
         XCTAssertEqual(open.project(at: 0)?.name, "Earlier Song")
         XCTAssertEqual(open.project(at: 0)?.tempo, 97, "the open song is made at the tempo it was played at")
         XCTAssertNil(open.project(at: 1), "the library follows the open song")
         XCTAssertNil(open.project(at: 2))
+    }
+
+    func testASongsKeyDoesNotDependOnWhereItSits() throws {
+        // The import names a song by its key: the earlier app put a newly saved song first, and
+        // a place number then named another song (review 2026-10-22).
+        let session = Data("not an envelope".utf8).base64EncodedString()
+        let first: [String: Any] = ["name": "First", "bpm": 90, "session": session]
+        let second: [String: Any] = ["name": "Second", "session": session]
+        let before = LegacySong.libraryRows(try JSONSerialization.data(withJSONObject: [first, second]))
+        let after = LegacySong.libraryRows(try JSONSerialization.data(
+            withJSONObject: [["name": "Newer", "session": session], first, 7, second]))
+        XCTAssertEqual(before.key(at: 0), after.key(at: 1))
+        XCTAssertEqual(before.key(at: 1), after.key(at: 3))
+        XCTAssertNotEqual(before.key(at: 0), before.key(at: 1))
+        XCTAssertNil(after.key(at: 2), "a row that is no song has no key")
+        XCTAssertNil(before.key(at: 2))
+        XCTAssertNil(before.key(at: -1))
+
+        // With and without the open song before them, the library's songs keep their keys.
+        let withOpen = LegacySong.Songs(timeline: timeline, clips: clips, tempo: 97, library: before)
+        let withoutOpen = LegacySong.Songs(timeline: nil, clips: Data("[]".utf8), tempo: 97, library: before)
+        XCTAssertEqual(withOpen.key(at: 1), withoutOpen.key(at: 0))
+        XCTAssertEqual(withOpen.key(at: 2), withoutOpen.key(at: 1))
+        XCTAssertNil(withOpen.key(at: 3))
+        XCTAssertEqual(withOpen.key(at: 0), LegacySong.Songs(timeline: timeline, clips: clips, tempo: 120, library: after).key(at: 0),
+                       "the tempo the earlier app was locked to is not part of the song")
+        XCTAssertNotEqual(withOpen.key(at: 0), LegacySong.Songs(timeline: timeline, clips: Data("[]".utf8), tempo: 97,
+                                                                library: before).key(at: 0))
+        XCTAssertNotEqual(withOpen.key(at: 0), withOpen.key(at: 1))
+
+        // The same bytes give the same key on every launch and platform: a fixed value, not a
+        // hash seeded per process.
+        let fixed = LegacySong.libraryRows(try JSONSerialization.data(withJSONObject: [["name": "A"], ["name": "A", "bpm": 90]]))
+        XCTAssertEqual(fixed.key(at: 0), "rc03ecfe62e1c11df")
+        XCTAssertEqual(fixed.key(at: 1), "r1ee69e1fda31ec7c")
     }
 }

@@ -763,9 +763,9 @@ final class DocumentController {
     // MARK: - Songs of the earlier app
 
     /// Once per install, when a launch that can read them is confirmed healthy in the foreground:
-    /// the songs the earlier Echoelmusic app left in its App Group container — the one it had
-    /// open and every one in its library — become songs here. Its files are only read, never
-    /// changed or removed, and a song deleted here does not come back.
+    /// the songs the earlier Echoelmusic app left in its App Group container and in Application
+    /// Support — the one it had open and every one in its library — become songs here. Its files
+    /// are only read, never changed or removed, and a song deleted here does not come back.
     private func importEarlierSongs() {
         guard isRestored, !isInBackground, importRun == nil, !importRanThisLaunch,
               !UserDefaults.standard.bool(forKey: Self.importedKey) else { return }
@@ -827,38 +827,39 @@ final class DocumentController {
             return run
         }
         removeLeftoverPackage(in: library, defaults)
-        // The first place the earlier app wrote to that holds a song this app can read.
-        let songs = earlierBases().lazy.compactMap { earlierSongs(in: $0, defaults: defaults) }
-            .first { $0.holdsReadableSong }
-        var places: [Int] = []
+        // Every place the earlier app wrote to, each song once by its key, read but not converted:
+        // a song is converted only once it is marked as under way, so one that ends the app while
+        // it converts is the one left out (review 2026-10-22).
+        let earlier = earlierPlaces(defaults: defaults)
+        var keys: [String] = []
         if Task.isCancelled {
             run.paused = true
         } else {
-            places = state.found(songs?.count ?? 0)
+            keys = state.found(earlier.keys, sawEverything: earlier.sawEverything)
         }
         keep(state, defaults)
         var written: [URL] = []
         var failed = 0
-        for place in places {
+        for key in keys {
             // Leaving the foreground pauses the run here, between two songs: a run suspended with a
             // song under way, then ended by the system, would count against that song.
             if Task.isCancelled {
                 run.paused = true
                 break
             }
-            state.willBring(place)
+            state.willBring(key)
             keep(state, defaults)
-            if let project = songs?.project(at: place) {
+            if let project = earlier.project(key) {
                 do {
                     written.append(try bring(project, into: library, defaults))
-                    state.brought(place, .written)
+                    state.brought(key, .written)
                 } catch {
                     failed += 1
                     log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .public)")
-                    state.brought(place, .failed)
+                    state.brought(key, .failed)
                 }
             } else {
-                state.brought(place, .unreadable)
+                state.brought(key, .unreadable)
             }
             keep(state, defaults)
         }
@@ -923,16 +924,16 @@ final class DocumentController {
 
     nonisolated private static func loadImport(_ defaults: UserDefaults) -> EarlierSongImport {
         EarlierSongImport(isFinished: defaults.bool(forKey: importedKey),
-                          done: defaults.array(forKey: importedRowsKey) as? [Int] ?? [],
+                          done: defaults.stringArray(forKey: importedSongsKey) ?? [],
                           attempts: defaults.integer(forKey: importAttemptsKey),
                           isRunning: defaults.bool(forKey: importRunningKey),
-                          current: defaults.object(forKey: importCurrentKey) as? Int,
-                          suspect: defaults.object(forKey: importSuspectKey) as? Int)
+                          current: defaults.string(forKey: importCurrentKey),
+                          suspect: defaults.string(forKey: importSuspectKey))
     }
 
     nonisolated private static func keep(_ state: EarlierSongImport, _ defaults: UserDefaults) {
         defaults.set(state.isFinished, forKey: importedKey)
-        defaults.set(state.done.sorted(), forKey: importedRowsKey)
+        defaults.set(state.done.sorted(), forKey: importedSongsKey)
         defaults.set(state.attempts, forKey: importAttemptsKey)
         for (value, key) in [(state.current, importCurrentKey), (state.suspect, importSuspectKey)] {
             if let value { defaults.set(value, forKey: key) } else { defaults.removeObject(forKey: key) }
@@ -944,14 +945,14 @@ final class DocumentController {
     /// still marked the import done under the old name, so a device that ran them would never
     /// import once the group is back. The new name lets every such device look once more.
     nonisolated private static let importedKey = "studio.importedEarlierSongs.v2"
-    /// The places written, by row of the earlier app's files (a new name since 2026-10-21: the
-    /// old one counted only the songs that could be read, so its places could shift).
-    nonisolated private static let importedRowsKey = "studio.importedEarlierSongRows"
+    /// The songs brought over or left out, by key. Rows of the earlier app's files were kept
+    /// under another name until 2026-10-22; no build that shipped wrote either.
+    nonisolated private static let importedSongsKey = "studio.importedEarlierSongKeys"
     nonisolated private static let importAttemptsKey = "studio.earlierSongImportAttempts"
     nonisolated private static let importRunningKey = "studio.earlierSongImportRunning"
-    /// The place being brought over right now.
+    /// The song being brought over right now, by key.
     nonisolated private static let importCurrentKey = "studio.earlierSongImportCurrent"
-    /// The place a run ended on once already: ending on it again leaves it out.
+    /// The song a run ended on once already: ending on it again leaves it out.
     nonisolated private static let importSuspectKey = "studio.earlierSongImportSuspect"
     /// The package made for the song under way and not yet written into.
     nonisolated private static let importReservedKey = "studio.earlierSongImportReserved"
@@ -979,26 +980,67 @@ final class DocumentController {
         }
     }
 
-    /// Where the earlier app wrote: its App Group container, or Application Support when the
-    /// container was unavailable.
-    nonisolated static func earlierBases() -> [URL] {
+    /// The earlier app's songs in every place it wrote to — its App Group container, and
+    /// Application Support, where it wrote while the container was unavailable — each once, by
+    /// key. Both are read: songs saved in either are the user's, and a song in both comes over
+    /// once (review 2026-10-22).
+    nonisolated private static func earlierPlaces(defaults: UserDefaults) -> EarlierPlaces {
         let fm = FileManager.default
-        return [fm.containerURL(forSecurityApplicationGroupIdentifier: "group.com.echoelmusic"),
-                fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first].compactMap { $0 }
+        let container = fm.containerURL(forSecurityApplicationGroupIdentifier: "group.com.echoelmusic")
+        var places = EarlierPlaces(sawEverything: container != nil)
+        for base in [container, fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first].compactMap({ $0 }) {
+            let read = earlierSongs(in: base, defaults: defaults)
+            if !read.complete { places.sawEverything = false }
+            guard let songs = read.songs else { continue }
+            for index in 0..<songs.count {
+                guard let key = songs.key(at: index), places.at[key] == nil else { continue }
+                places.keys.append(key)
+                places.at[key] = (songs, index)
+            }
+        }
+        return places
     }
 
     /// The open song (`Timeline/timeline.json` + `Clips/clips.json`) and the library
     /// (`Echoel/projects.json.json`, the earlier store appended `.json` to a name ending in it),
-    /// read but not converted, or nil when this base holds neither.
-    nonisolated static func earlierSongs(in base: URL, defaults: UserDefaults) -> LegacySong.Songs? {
-        let timeline = try? Data(contentsOf: base.appendingPathComponent("Timeline/timeline.json"))
-        let library = try? Data(contentsOf: base.appendingPathComponent("Echoel/projects.json.json"))
-        guard timeline != nil || library != nil else { return nil }
-        let clips = (try? Data(contentsOf: base.appendingPathComponent("Clips/clips.json"))) ?? Data("[]".utf8)
+    /// read but not converted; nil when this base holds neither. `complete` is false when a file
+    /// is there and could not be read: that is not a missing file, and the import must not finish
+    /// on it (review 2026-10-22).
+    nonisolated private static func earlierSongs(in base: URL, defaults: UserDefaults) -> (songs: LegacySong.Songs?, complete: Bool) {
+        var complete = true
+        func read(_ path: String) -> Data? {
+            let url = base.appendingPathComponent(path)
+            guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+            guard let data = try? Data(contentsOf: url) else {
+                complete = false
+                return nil
+            }
+            return data
+        }
+        let timeline = read("Timeline/timeline.json")
+        let library = read("Echoel/projects.json.json")
+        let clipsFile = read("Clips/clips.json")
+        guard timeline != nil || library != nil else { return (nil, complete) }
+        let clips = clipsFile ?? Data("[]".utf8)
         // The earlier app kept no song tempo; its locked tempo is the one the song was made at.
         let tempo = defaults.bool(forKey: "studio.lockBPM") ? defaults.double(forKey: "studio.lockedBPM") : Tempo.defaultBPM
-        return LegacySong.Songs(timeline: timeline, clips: clips, tempo: tempo > 0 ? tempo : Tempo.defaultBPM,
-                                library: library.map(LegacySong.libraryRows) ?? LegacySong.libraryRows(Data()))
+        return (LegacySong.Songs(timeline: timeline, clips: clips, tempo: tempo > 0 ? tempo : Tempo.defaultBPM,
+                                 library: library.map(LegacySong.libraryRows) ?? LegacySong.libraryRows(Data())), complete)
+    }
+}
+
+/// The earlier app's songs found by one run, read but not converted.
+private struct EarlierPlaces {
+    /// Every song's key, in the order of the places and the files, each once.
+    var keys: [String] = []
+    /// Where each key's song is.
+    var at: [String: (songs: LegacySong.Songs, index: Int)] = [:]
+    /// The App Group container was there and every file in both places that exists could be read:
+    /// only then may the import finish.
+    var sawEverything: Bool
+
+    func project(_ key: String) -> Project? {
+        at[key].flatMap { $0.songs.project(at: $0.index) }
     }
 }
 
