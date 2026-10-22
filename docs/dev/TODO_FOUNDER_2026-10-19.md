@@ -231,7 +231,7 @@ Fett = fester Termin oder Frist.
 
 - Prüfrunde 6 (Mo-Turnus): Sitzung schreibt (Zuschnitt D2 Instrumentenpfad, B7/B8), du kopierst, Sitzung misst. _(F+S)_
 - Studio P0: A9 Klicks und Zipper — Spur löschen, Sampler-Voice-Stealing, Demo-Gate als Rampe statt 0/1, CanRamp wirklich auswerten, EQ-Band springt bei 0 dB. _(S)_
-- Entwurf: Tabelle „Antwort → Auswahlkriterium des Fonds“ am Ende von §7 (der Kritiker fand: die Zuordnung fehlt). Jede Zeile nur mit dem, was §2 als existent gemessen hat; Pläne als Plan. _(S)_
+- **ERLEDIGT 23.10. (vorgezogen):** FOERDERUNG §7.6 — je Formularfeld Kriterium, tragender Satz, Beleg, Lücke mit Besitzer; ein Entwurf, zwei Gegenprüfer, 24 Einwände eingearbeitet; dabei §2 und Frage 4/5 auf den Linux-Lauf 39832472465 (Core 289, DSP 72, Engine 161) nachgeführt, „~590 h“ überall auf 620, `main` gemessen (Studio und Community-Dateien dort, Profil 100 %). Entwurf: Tabelle „Antwort → Auswahlkriterium des Fonds“ am Ende von §7 (der Kritiker fand: die Zuordnung fehlt). Jede Zeile nur mit dem, was §2 als existent gemessen hat; Pläne als Plan. _(S)_
 
 **Dienstag 03.11.**
 

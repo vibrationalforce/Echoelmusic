@@ -29,7 +29,7 @@
 | Förderfähige Ausgaben | **Nur Arbeitsstunden** — keine Reisekosten, keine Hardware (Blog 16.09.2026, wörtlich: „Der Prototype Fund fördert nur Arbeitsstunden; rechnet daher keine Reisekosten oder Hardwarekosten ein“). Reisekosten zu PFLICHT-Events übernimmt der Fonds gesondert (Vergleichsseite) | sicher (PDF 19.10.) — beantwortet §7.0 Frage 6, Teil „Geräte“: nein |
 | Mindestumfang | nicht unter 200 Arbeitsstunden bewerben (Blog 16.09.2026); ⭐ **Handbuch S. 20: unter ca. 250 Stunden lohnt der Verwaltungsaufwand nicht, Obergrenze 950 h (Einzelperson), EINE Zahl für den ganzen Förderzeitraum — keine Wochenstunden; „strategisches“ Unter- oder Überschätzen bringt nichts, bewertet wird, ob die Zahl realistisch ist** | sicher (zwei Quellen, die 250 ist die jüngere) |
 | „Innovativ“, Vergleichsseite wörtlich | „Ich baue etwas vollständig neues, oder **erweitere ein existierendes Projekt um ein neues Modul, eine Bibliothek oder eine Anbindung**.“ Innovation: Muss innovativ sein = Ja | sicher — das Förderobjekt (§4: eigenständiges Paket aus bestehendem Projekt) ist wörtlich der zweite Fall; trägt §7.0 Frage 5 und §7.1 Frage 7 |
-| Richtwert Stundenanteil | Innovation: **80 %** der Stunden Softwareentwicklung in der regulären Phase (Richtwert, „keine festen Kriterien“); Second Stage 20 % | sicher — die ~590-h-Tabelle (§7.1 Frage 9) muss dieses Verhältnis zeigen |
+| Richtwert Stundenanteil | Innovation: **80 %** der Stunden Softwareentwicklung in der regulären Phase (Richtwert, „keine festen Kriterien“); Second Stage 20 % | sicher — die 620-h-Tabelle (§7.1 Frage 9) zeigt es: 500 h Entwicklung ≈ 81 % |
 | Vibe Coding, Vergleichsseite wörtlich | „Nein. Geförderte müssen über die für die Umsetzung des Projekts notwendigen Programmierkenntnisse verfügen und sind für die Ergebnisse verantwortlich.“ (Blog dazu: prototypefund.de/blog/ki-beim-prototype-fund) | sicher; Sprechstunde 19.10.: Vorhaben bestätigt (Founder) |
 | Pflichttermine | Antragsworkshop **remote, Ende Februar/Anfang März 2027** (eine Person je Projekt) · Kick-off-Workshop **Berlin, um den 01.06.2027** · Demo Day **Berlin, um den 30.11.2027** · Abschlussworkshop Berlin um den 30.03.2028 (nur Second Stage). Innovation: vier OPTIONALE Coachingstunden, Sprechstunden und Seminare (Barrierefreiheit · Lizenzen · Gründung) optional; Second Stage: acht VERPFLICHTENDE Coachingstunden. ⭐ **Handbuch S. 29–30, Zeitstrahl:** Dez 2026–März 2027 Begutachtung (Formalien-Shortlist durch Fonds + Projektträger, dann Jury, dann BMFTR), Rückmeldung an ALLE im März 2027 — **„von Anfragen zum Stand der Bewerbungen vor Mitte März abzusehen“**; März 2027 Antragssprechstunde per Videocall, **Pflicht für Einzelentwickler*innen** (dieselbe Seite sagt auch „bis Ende Februar muss der Antrag beim BMFTR eingereicht sein“ — beide Sätze stehen so da, maßgeblich ist die Zusage-Mail); Kick-off um den 01.06.2027 (Pflicht); Sept./Okt. 2027 Second-Stage-Auswahl per digitaler Präsentation; Demo Day **um den 01.12.2027** (Vergleichsseite: ~30.11.); Second Stage 01.12.2027–31.03.2028; Abschlussworkshop um den 01.04.2028 (Vergleichsseite: 30.03.), Pflicht für Second-Stage-Geförderte | sicher — in den Kalender des Founders, Reisekosten trägt der Fonds |
 | Second Stage, Regeln | optional für Innovation; **die Wahl in der Bewerbung ist endgültig** („Wenn ihr ‚nein‘ wählt, könnt ihr dies später nicht mehr ändern“); mit „ja“ alle zugehörigen Fragen beantworten; Auswahl durch die Jury im Oktober 2027. ⭐ **Handbuch S. 23, fett: „In der Second Stage sind weitere Code-Meilensteine nicht förderfähig.“** Programmierarbeit nur, soweit sie sich „aus Feedback und User Testing“ der ersten Phase ergibt; die Second-Stage-Stunden leiten sich aus der ersten Phase ab (100 % beantragt → bis 100 %, 50 % → bis 50 %); Auswahl in einem internen Verfahren im vierten Fördermonat; ein „Vielleicht“ ist keine Antwort | sicher (Blog + Vergleichsseite + Handbuch) — §7.3 Frage 1 bleibt „Ja“; **§7.3 ist am 19.10. umgebaut: kein Code-Meilenstein mehr in der Second Stage** (§9 Nachtrag 2) |
@@ -103,7 +103,7 @@ Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-
 | Zielgruppe und wie sie erreicht wird | ⏳ F8 — **zwei benannte Orte/Partner fehlen (Founder)** |
 | Meilensteine aufgelistet, nicht „1/ Backend, 2/ Frontend“ | ✅ F9 |
 | geprüft, ob es das als Open Source schon gibt; Abgrenzung statt Verschweigen | ✅ F7 (Lizenzen vor Abgabe an der Quelle prüfen, S-11) |
-| errechnet, dass das Vorhaben in der Stundenzahl machbar ist | ⏳ Tabelle ~590 h + Puffer (§7.1 F9); **die EINE Zahl trägt der Founder ein (F13)** |
+| errechnet, dass das Vorhaben in der Stundenzahl machbar ist | ⏳ Tabelle 620 h, der Puffer steht in M4 (§7.1 F9); **die EINE Zahl trägt der Founder ein (F13)** |
 
 ## 2. Was Echoel heute IST (nur das wird behauptet)
 
@@ -115,20 +115,23 @@ Die Überschriften der Fragen sind in der PDF nicht als Text extrahierbar (Type-
   — ⛔ „voller Export“ stand hier; Stems und Projektpaket-Export aus der App sind Plan P1. Eigene
   Instrumente als AUv3, On-Device-Agent (nichts verlässt das Gerät). Kern = **drei Swift-Pakete
   ohne Abhängigkeiten**: `EchoelCore`, `EchoelDSP`, `EchoelEngine` (`EchoelStudio/*/Package.swift`,
-  je mit Test-Target; keine Datei darin importiert SwiftUI, UIKit oder StoreKit). ⚠️ Gemessen (§9):
-  Core importiert Foundation + Observation, DSP nur Foundation, die **Engine in vier Dateien
-  AVFoundation/AudioToolbox ohne `canImport`** (AUv3-Hosting, Sample-Dateien) — der Host-Split
-  steht im Bauplan P0 und ist Voraussetzung des Linux-Builds der ENGINE. Netzwerkstellen in Studio:
-  genau zwei, StoreKit (Kauf) und Network MIDI (Schalter, Default aus). CI heute: macOS-Runner
-  (`studio.yml`, `runs-on: macos-26`, kein Merge-Gate) und seit 19.10. ein Linux-Job
-  (`.github/workflows/studio-linux.yml`, Container `swift:6.2`, Swift 6.2.4): **EchoelDSP 64/64
-  Tests grün auf Linux, EchoelCore baut samt Tests, Core 201/201 grün** (Lauf 39194215805 auf
-  `11718af`; die Läufe #3/#4 davor fanden drei Linux-eigene Swift-6-Befunde in den TESTS, nicht
-  im Paket — Klassen-`@MainActor` bricht die Test-Erkennung von swift-corelibs-xctest, ein
+  je mit Test-Target; keine Datei darin importiert SwiftUI, UIKit oder StoreKit). ⚠️ Gemessen (§9,
+  nachgeführt 23.10.): Core importiert Foundation + Observation, DSP nur Foundation. Das
+  Engine-Paket ist seit 22.10. in drei Bibliotheken geteilt — `EchoelKernels`, `EchoelEngine`,
+  `EchoelHost` (`8082aadb1`, `11e6e0797`); AVFoundation/AudioToolbox stehen nur noch in
+  `EchoelHost` (AUv3-Hosting, Sample-Dateien), und die AUv3-Erweiterung linkt `EchoelEngine` nicht.
+  Netzwerkstellen in Studio: genau zwei, StoreKit (Kauf) und Network MIDI (Schalter, Default aus).
+  CI: macOS-Runner (`studio.yml`, `runs-on: macos-26`, seit 20.10. das Merge-Gate für Studio-Code)
+  und ein Linux-Job (`.github/workflows/studio-linux.yml`, Container `swift:6.2`): **Core 289,
+  DSP 72 und Engine 161 Tests grün auf Linux** (Lauf 39832472465 auf `732820e2e`, 22.10.; die
+  Zahlen aus „Executed … tests“ im Job-Log; `EchoelHost` gibt es dort nicht). Die Läufe #3/#4 vom
+  19.10. fanden drei Linux-eigene Swift-6-Befunde in den TESTS, nicht im Paket —
+  Klassen-`@MainActor` bricht die Test-Erkennung von swift-corelibs-xctest, ein
   `XCTAssertThrowsError(try …)` macht eine Closure werfend, eine lokale Funktion erbt keine
-  Isolation; alle drei in `EchoelStudio/CLAUDE.md` als Baulehren); die Engine bleibt wegen der vier
-  Apple-Dateien draußen — ihr Host-Split ist Meilenstein 1 der Förderung, kein Bestand. ⛔ Bis zum
-  Lauf stand hier „Linux ungeprüft“ — jetzt ist es gemessen, in beide Richtungen zitierbar.
+  Isolation; alle drei in `EchoelStudio/CLAUDE.md` als Baulehren. ⛔ Bis 22.10. stand hier „die
+  Engine bleibt wegen der vier Apple-Dateien draußen — ihr Host-Split ist Meilenstein 1 der
+  Förderung, kein Bestand“; der Split ist Bestand (Bauplan P0), kein Förderinhalt. ⛔ Bis zum
+  19.10. stand hier „Linux ungeprüft“.
 - **Alt-App** (`Sources/Echoelmusic/`): rPPG-Puls über die Kamera (live, lockt auf dem Gerät),
   BLE-Herzfrequenzgurt (0x180D), HealthKit; Ausgänge OSC, ADM-OSC, Art-Net, sACN (live);
   **`BioEgressPolicy`** (`Core/BioEgressPolicy.swift`): entscheidet pro QUELLE (Health-Store-Daten
@@ -243,7 +246,7 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 - *„Warum iOS zuerst?“* Sensorik (Kamera mit Blitz für rPPG, BLE), die Zielgruppe arbeitet dort,
   und dort ist die Lücke an offener Software am größten. Der geförderte Kern baut auf Linux.
 - *„Einzelperson, sechs Monate, machbar?“* Deshalb ist das Förderobjekt das verengte Paket mit
-  vier bezifferten Meilensteinen (~590 h, §7.1 Frage 9), nicht die Workstation als Ganzes; M1 und
+  vier bezifferten Meilensteinen (620 h, §7.1 Frage 9), nicht die Workstation als Ganzes; M1 und
   M2 hängen NICHT an den unfinanzierten Phasen P1–P3 davor (`EchoelIO` hängt nur an der Engine);
   der Kamera-Puls bleibt in der Alt-App und wird erst in Second Stage portiert.
 - *„Der Bestand `EchoelStudio/` ist in 72 Stunden entstanden — mit welcher Geschwindigkeit
@@ -273,7 +276,7 @@ Jury aus Sicherheits- und Open-Source-Leuten, und die Historie ist öffentlich.
 | 19.10., 17:00 | Sprechstunde: Frage 1 aus §7.0 (Förderfähigkeit) ZUERST; die übrigen nur, wenn sie offen bleibt; Antworten HIER in §1 nachtragen |
 | 19.10. | Frage 1 zusätzlich SCHRIFTLICH an info@prototypefund.de, mit den öffentlichen Zahlen aus §1 (Text in §7.0) — Founder schickt |
 | 19.10., abends | **A, entschieden 18:10** (Sprechstunde: Vorhaben bestätigt). Diese Datei bleibt die Arbeitsdatei; B und C sind vom Tisch |
-| bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung (aus der ~590-h-Tabelle in §7.1 Frage 9, nicht aus der 950-h-Formel) · bisherige Software-Projekte · Jahr des Projektbeginns · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF · die vier Fonds-Seiten (innovativ, datensicherheit, software-infrastruktur, foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten · Status „Syng.Visibra“ |
+| bis 25.10. | Founder liefert: Rechtsform · Stundenschätzung (aus der 620-h-Tabelle in §7.1 Frage 9, nicht aus der 950-h-Formel) · bisherige Software-Projekte · Jahr des Projektbeginns · 5 Sätze Hintergrund (§7.2) · Bewerbungshandbuch-PDF · die vier Fonds-Seiten (innovativ, datensicherheit, software-infrastruktur, foerderlinien) und die FAQ mit AUFGEKLAPPTEN Antworten · Status „Syng.Visibra“ |
 | bis 1.11. | Sitzung: Repo-Hygiene, die die Jury zuerst sieht (§8; was founder-gated ist, steht dort beim Founder) |
 | 19.10. | Linux-Lauf für `EchoelCore`/`EchoelDSP` GEMESSEN — eigener Workflow `studio-linux.yml` (Studio-Workflows sind seit 17.10. für die Sitzung frei; „founder-gated“ stand hier zu Unrecht): DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
 | bis 16.11. | Entwurf fertig (§7.5 mit Founder-Fakten, jede Antwort innerhalb der WORTGRENZEN des Handbuchs — gemessen, nicht geschätzt), eine Person liest gegen; Belege Dritter liegen vor (Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration) |
@@ -387,12 +390,12 @@ Projektdokument (`Project`, Befehle, Format) besteht aus reinen Werttypen hinter
 Die Engine kommt ohne Locks und ohne GCD aus: ihre einzige Synchronisation sind `Atomic`-Werte,
 Puffer werden beim Aufbau angelegt, nie im Render-Pfad; die Render-Regeln (keine Allokation, kein
 Lock, kein ObjC, kein I/O, kein GCD) sind heute Architektur-Vertrag und Code-Review, kein
-automatischer Test. Die Ausnahme ist das AUv3-Hosting — vier Dateien auf AVFoundation/AudioToolbox,
-deren Render-Blöcke aus dem Render-Pfad gerufen werden; ihre Auslagerung in ein eigenes Target ist
-Voraussetzung des Linux-Builds der Engine und läuft VOR dem Förderzeitraum (Bauplan P0, seit 17.10.). Die Paket-Tests prüfen Verhalten
+automatischer Test. Die Ausnahme ist das AUv3-Hosting auf AVFoundation/AudioToolbox, dessen
+Render-Blöcke aus dem Render-Pfad gerufen werden; es liegt seit 22.10. in einer eigenen Bibliothek
+(`EchoelHost`, Bauplan P0, VOR dem Förderzeitraum), und die Engine baut seitdem auch auf Linux. Die Paket-Tests prüfen Verhalten
 (Offline-Rendering, Determinismus, feste Slot-Zahl) und laufen in einer eigenen CI-Pipeline auf
-macOS — und für Core und DSP seit dem 19.10. auch auf Linux (Swift 6.2.4 im Container: DSP 64/64,
-Core 201/201 grün); sie zum Merge-Gate zu machen und die Engine nachzuziehen, ist ebenfalls P0, nicht Förderinhalt;
+macOS und auf Linux (Swift 6.2 im Container, Lauf 39832472465 am 22.10.: Core 289, DSP 72, Engine
+161 grün); der macOS-Lauf ist seit 20.10. Merge-Gate für Studio-Code — beides Bestand (P0), nicht Förderinhalt;
 die Render-Regel bleibt Architektur-Vertrag und Review — ein Import-Scan kann sie nicht beweisen. Das Projektformat ist heute versioniertes JSON mit sortierten
 Schlüsseln, Spezifikation und Golden-Files mit Round-Trip-Tests (Bestand). Für die Förderung kommt
 hinzu: eine Transportschicht hinter einer schmalen Schnittstelle (Apple: Network.framework; Linux:
@@ -423,8 +426,8 @@ für Core und DSP — auf Linux;
 TestFlight-Builds, App-Store-1.0 für 2027 geplant; (b) die ältere App mit live laufender
 rPPG-Pulserkennung, Bluetooth-Gurt, HealthKit, OSC/ADM-OSC/Art-Net/sACN-Ausgängen und der
 Egress-Policy (gebaut, getestet, auf TestFlight); (c) One Clock, eine Seite ohne Server. VOR dem
-Förderzeitraum (Bauplan P0, läuft seit 17.10., kein Förderinhalt): die Engine wird in einen portablen Teil und einen Apple-Adapter geteilt und zieht
-auf Linux nach (Core und DSP laufen dort seit dem 19.10. — DSP 64/64, Core 201/201 grün — Bestand). Neu im Förderzeitraum: das Förderobjekt wird zwei eigene, versionierte Pakete, deren Kern nur Foundation braucht und die ein
+Förderzeitraum erledigt (Bauplan P0, kein Förderinhalt): die Engine ist in einen portablen Teil und einen Apple-Adapter geteilt
+(`EchoelHost`, 22.10.) und läuft wie Core und DSP auf Linux (Lauf 39832472465: Core 289, DSP 72, Engine 161 grün) — Bestand. Neu im Förderzeitraum: das Förderobjekt wird zwei eigene, versionierte Pakete, deren Kern nur Foundation braucht und die ein
 Dritter per `.package(url:)` zieht; das Körpersignal-Profil wird spezifiziert und bekommt
 Konformitätsvektoren; die Protokollbrücken werden aus der älteren App in `EchoelIO` portiert (mit
 EINER benannten Integration, einem Lichtpult mit sACN/OSC-Eingang); die Egress-Policy wird in den
@@ -547,7 +550,7 @@ Allokation und kein Lock, und der Host-Split ist P0.
    liegen nur AUv3-Hülle, Demo-Sperre und Kauf. Alles — Kern, Hülle, App — steht unter einer
    MIT-Lizenz; die Grenze des Förderobjekts ist eine Zuständigkeits-, keine Lizenzgrenze.
 6. **Stunden in 6 Monaten:** Rechnung des Fonds: Vollzeit = 950 h × 50 €/h = 47.500 €, Förderung = 95 % von
-   50.000 € Projektbudget. Die Meilensteine in 7.1 Frage 9 summieren sich auf ~590 h plus Puffer — die
+   50.000 € Projektbudget. Die Meilensteine in 7.1 Frage 9 summieren sich auf 620 h, der Puffer steht sichtbar in M4 — die
    Stundenzahl hier wird aus DIESER Tabelle abgeleitet, nicht aus der 950-h-Formel. [Founder: realistische
    Stundenzahl neben Installationen und Musikprojekten; bei weniger als Vollzeit sinkt die Summe proportional;
    ein höherer Satz braucht Rechnungen früherer Arbeit]
@@ -571,7 +574,7 @@ Allokation und kein Lock, und der Host-Split ist P0.
 2. **Was das Projekt braucht, um aus dem Prototypen herauszukommen** (= Nachhaltigkeitsstrategie, Formularfassung F16): Nutzung durch Dritte statt mehr Code von einer Person — drei fremde Integrationen dokumentiert (Lichtpult, Medienserver, ADM-Renderer), eine davon nicht vom Antragsteller betrieben; Beitragenden-Prozess (CONTRIBUTING, Verhaltenskodex, Issue-Vorlagen liegen seit 19.10., `c477267`) mit einem gemergten fremden Beitrag und Commit-Rechten für eine zweite Person; Körpersignal-Profil und Konformitätsvektoren als Spezifikation veröffentlicht, Eintrag in die ADM-OSC-Implementierungsliste; Finanzierung der Pflege aus dem In-App-Kauf der Instrument-Erweiterungen, das Paket bleibt MIT und ohne Kauflogik; Transparenzbericht.
 3. **Meilensteine der vier Monate, ohne Code** (Formularfassung F17): S1 (Dezember) Nutzertests mit den Integrator*innen und TestFlight-Tester*innen, Befunde priorisiert; Integrator-Leitfäden je Protokoll veröffentlicht · S2 (Januar–Februar) Werkstätten mit [Theater/Installationsort, Founder]; Beitragenden-Prozess live, erster fremder Beitrag gemergt, zweite Maintainerin oder zweiter Maintainer; ADM-OSC-Implementierungsliste · S3 (März) drei externe Integrationen gezeigt, eine nicht vom Antragsteller betrieben; Finanzierungsplan der Pflege; Transparenz- und Abschlussbericht; Abschlussworkshop. Programmierarbeit nur, soweit sie sich aus den Nutzertests ergibt — so verlangt es das Handbuch.
 
-⛔ **Was hier stand und GESTRICHEN ist:** „Art-Net in `EchoelIO`“, „Linux-Renderer für Installationen“, „Kamera-Puls portiert“, „Format v2 eingefroren“ waren Code-Meilensteine in S1/S2 — nach Handbuch S. 23 in der Second Stage nicht förderfähig. Sie wandern NICHT in die reguläre Phase (die ~590-h-Tabelle ist nach §9 bewusst knapp), sondern sind **Roadmap nach der Förderung, ohne Förderung**, und stehen deshalb in keiner Formularantwort. Der Kamera-Puls bleibt in der älteren App (dort läuft er heute); die Workstation bekommt ihn, wenn die Zeit da ist. Herleitung: §9 Nachtrag 2.
+⛔ **Was hier stand und GESTRICHEN ist:** „Art-Net in `EchoelIO`“, „Linux-Renderer für Installationen“, „Kamera-Puls portiert“, „Format v2 eingefroren“ waren Code-Meilensteine in S1/S2 — nach Handbuch S. 23 in der Second Stage nicht förderfähig. Sie wandern NICHT in die reguläre Phase (die 620-h-Tabelle ist nach §9 bewusst knapp), sondern sind **Roadmap nach der Förderung, ohne Förderung**, und stehen deshalb in keiner Formularantwort. Der Kamera-Puls bleibt in der älteren App (dort läuft er heute); die Workstation bekommt ihn, wenn die Zeit da ist. Herleitung: §9 Nachtrag 2.
 
 ### 7.4 Rückfall Resilienz — die zwei abweichenden Fragen (nur falls die Sprechstunde die Linie dreht)
 
@@ -612,17 +615,17 @@ Zwei Open-Source-Pakete (Swift), die Puls und Atem auf dem Gerät verarbeiten, j
 
 **F2 — Vorhaben (100 Wörter).**
 <!-- ptf: F2 limit=100 -->
-Ich baue zwei freie Software-Bausteine, mit denen Apps für Musik, Licht und Bühne Puls und Atem mitspielen lassen können, ohne dass Körperdaten das Gerät verlassen. Gedacht für Musiker*innen, Licht- und Bühnenleute und Entwickler*innen. Ausgangspunkt ist Echoelmusic, meine Musik-App: die Fingerkuppe auf der Handykamera misst den Herzschlag, daraus entstehen Klang und Licht. Ich löse diese fest eingebaute Schicht heraus, damit andere Swift-Programme sie einbinden können: Pulsmessung und Atemphase, eine Regel, welche Körperdaten das Gerät nie verlassen, und Brücken zu den offenen Protokollen der Licht- und Bühnentechnik. Kein Konto, kein Server.
+Ich baue zwei freie Software-Bausteine, mit denen Apps für Musik, Licht und Bühne Puls und Atem mitspielen lassen können, ohne dass Körperdaten ungefragt das Gerät verlassen. Gedacht für Musiker*innen, Licht- und Bühnenleute und Entwickler*innen. Ausgangspunkt ist Echoelmusic, meine Musik-App: die Fingerkuppe auf der Handykamera misst den Herzschlag, daraus entstehen Klang und Licht. Ich löse diese fest eingebaute Schicht heraus, damit andere Swift-Programme sie einbinden können: Pulsmessung und Atemphase, eine Regel, welche Körperdaten das Gerät nie verlassen, und Brücken zu den offenen Protokollen der Licht- und Bühnentechnik. Kein Konto, kein Server.
 <!-- /ptf -->
 
 **F3 — Gesellschaftlicher Mehrwert (175 Wörter).**
 <!-- ptf: F3 limit=175 -->
-Herzfrequenz und Herzratenvariabilität (HRV) sind nach meiner Einordnung Gesundheitsdaten im Sinne der Datenschutz-Grundverordnung (Art. 4 Nr. 15; juristisch nicht geprüft). Wer solche Signale in Musik, Licht oder Bühne holen will, findet keinen offenen Baustein, der die Verarbeitung auf dem Gerät hält und sauber trennt, was es verlassen darf. Dringend, weil Uhren, Gurte und Handykameras diese Signale jeder App liefern. Die Lichttechnik spricht offene Protokolle, und offene Brücken bringen Herzfrequenz nach Open Sound Control (OSC) — aber keine mir bekannte trägt eine Regel, welche Felder das Gerät verlassen dürfen. Software hilft, weil diese Regel in den Code gehört, nicht in eine Datenschutzerklärung: jede Datenquelle braucht eine ausdrückliche Entscheidung, sonst baut das Programm nicht, und eine Körperdaten-Adresse ohne Freigabe bleibt stumm. So werden Körperdaten von Spielenden und einwilligendem Publikum für Kunst, Theater und Installation nutzbar, ohne jemandem zu gehören — mit offenem Format, offenen Protokollen, Screenreader-Bedienung und einer Blitzgrenze von höchstens 3 Hz für das ausgegebene Licht (geplante Abnahme).
+Herzfrequenz und Herzratenvariabilität (HRV) sind nach meiner Einordnung Gesundheitsdaten im Sinne der Datenschutz-Grundverordnung (Art. 4 Nr. 15; juristisch nicht geprüft). Wer solche Signale in Musik, Licht oder Bühne holen will, findet keinen offenen Baustein, der die Verarbeitung auf dem Gerät hält und sauber trennt, was es verlassen darf. Dringend, weil Uhren, Gurte und Handykameras diese Signale jeder App liefern. Die Lichttechnik spricht offene Protokolle, und offene Brücken bringen Herzfrequenz nach Open Sound Control (OSC) — aber keine mir bekannte trägt eine Regel, welche Felder das Gerät verlassen dürfen. Software hilft, weil diese Regel in den Code gehört, nicht in eine Datenschutzerklärung: jede Datenquelle braucht eine ausdrückliche Entscheidung, sonst baut das Programm nicht, und eine Körperdaten-Adresse ohne Freigabe bleibt stumm. So werden Körperdaten von Spielenden und einwilligendem Publikum für Kunst, Theater und Installation nutzbar, ohne jemandem zu gehören — mit offenem Format und offenen Protokollen; Screenreader-Bedienung und eine Blitzgrenze von höchstens 3 Hz für das ausgegebene Licht sind geplante Abnahmen.
 <!-- /ptf -->
 
 **F4 — Technische Umsetzung (175 Wörter).**
 <!-- ptf: F4 limit=175 -->
-Paketcode: Swift, null externe Abhängigkeiten. Bestand: Core und DSP (Signalverarbeitung) importieren nur Foundation (Core zusätzlich Observation) und laufen öffentlich getestet auf Linux (Tests grün, Oktober 2026); die Engine arbeitet ohne Sperren. Neu entstehen zwei Pakete, deren Kern nur Foundation braucht. EchoelSense: Signalaufbereitung, Pulsperioden- und Atemschätzer, ein Spektralmaß der Herzratenvariabilität (HRV-Kohärenz) als Werttypen, Bluetooth-Anbindung (Apple) und die Ausgaberegel — neue Quellen brechen den Build, bis jemand entscheidet, dazu eine Datenklasse je Adresse: abgeleitete Steuerwerte nach Freigabe, HRV-Detailwerte nur per Opt-in, Rohsignale nie; eine Körperdaten-Adresse ohne Klasse bleibt stumm. EchoelIO: Encoder für Open Sound Control (OSC 1.0, dazu ein Decoder), ADM-OSC (Objektpositionen für Raumklang) und sACN (ANSI E1.31, Lichtsteuerung), Konformitätstests, Übertragung hinter einer schmalen Schnittstelle (Apple: Network.framework, Linux: POSIX-Sockets). Prüfziel: das freie Lichtpult QLC+. Grenze: diese Protokolle sind unverschlüsselt, ich erfinde keine Kryptografie darüber; Ausgänge senden per UDP nur an den eingestellten Host, der OSC-Eingang ist Opt-in mit IP-Allowlist, kein Internetdienst.
+Paketcode: Swift, null externe Abhängigkeiten. Bestand: Core und DSP (Signalverarbeitung) importieren nur Foundation (Core zusätzlich Observation) und laufen öffentlich getestet auf Linux (Tests grün, Oktober 2026); die Engine arbeitet ohne Sperren und läuft dort ebenfalls, ohne ihren Apple-Adapter. Neu entstehen zwei Pakete, deren Kern nur Foundation braucht. EchoelSense: Signalaufbereitung, Pulsperioden- und Atemschätzer, ein Spektralmaß der Herzratenvariabilität (HRV-Kohärenz) als Werttypen, Bluetooth-Anbindung (Apple) und die Ausgaberegel — neue Quellen brechen den Build, bis jemand entscheidet, dazu eine Datenklasse je Adresse: abgeleitete Steuerwerte nach Freigabe, HRV-Detailwerte nur per Opt-in, Rohsignale nie; eine Körperdaten-Adresse ohne Klasse bleibt stumm. EchoelIO: Encoder für Open Sound Control (OSC 1.0, dazu ein Decoder), ADM-OSC (Objektpositionen für Raumklang) und sACN (ANSI E1.31, Lichtsteuerung), Konformitätstests, Übertragung hinter einer schmalen Schnittstelle (Apple: Network.framework, Linux: POSIX-Sockets). Prüfziel: das freie Lichtpult QLC+. Grenze: diese Protokolle sind unverschlüsselt, ich erfinde keine Kryptografie darüber; Ausgänge senden per UDP nur an den eingestellten Host, der OSC-Eingang ist Opt-in mit IP-Allowlist, kein Internetdienst.
 <!-- /ptf -->
 
 **F5 — Stand (100 Wörter).**
@@ -699,11 +702,36 @@ Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von 
 - **F16 und F17:** Theater- oder Installationsort · Zahl der Beta-Tester*innen · Kandidat*in für die zweite Maintainer-Rolle.
 
 ⭐ **Was VOR dem Absenden passieren muss, sonst sind Sätze falsch, die heute wahr klingen:**
-- Den Arbeitszweig nach `main` bringen. Auf `main` fehlen heute `EchoelStudio/`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` und die Issue-Vorlage (der Zweig ist ~275 Commits voraus) — F5, F11 und F16 beschreiben sie, und die Jury öffnet den Standard-Zweig. Danach das Community-Profil neu messen (heute 42 %).
+- ~~Den Arbeitszweig nach `main` bringen~~ — **erledigt, gemessen 23.10.:** `main` trägt `EchoelStudio/`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` und die Issue-Vorlage (`GET /repos/…/contents/<pfad>?ref=main` → 200 je Pfad), das Community-Profil steht auf 100 % (`GET /repos/…/community/profile`), der Zweig ist 1 Commit voraus (`compare/main...<zweig>`). Am Abgabetag dieselben drei Abfragen noch einmal (Sitzung). ⛔ Hier stand „auf `main` fehlen …, ~275 Commits voraus, Community-Profil 42 %“.
 - LR2: `LICENSE` auf den reinen MIT-Text bringen (GitHub zeigt sonst „Other“, und der Drittlizenz-Block nennt HaishinKit als Abhängigkeit, die es nicht gibt).
 - Die externe TestFlight-Gruppe anlegen (`docs/dev/TESTFLIGHT_PUBLIC_BETA.md`), sonst heißt es in F8 „intern“ statt einer Testenden-Zahl.
 - Nach dem Datenschutz-Termin am 16.11. F3 („juristisch nicht geprüft“) und F14 („prüft vor der Förderung“) gemeinsam angleichen.
 - `ptf-wordcount.py` nach dem Einsetzen JEDES Platzhalters erneut laufen lassen; TIGHT liest seit 19.10. auch den Worst-Case.
+
+### 7.6 Zuordnung: Antwort → Auswahlkriterium (23.10., gegengeprüft)
+
+Der Kritiker in §9 fand: „Zuordnung Antworten → Auswahlkriterien fehlt“. Hier ist sie, je Formularfeld aus §7.5. Die Jury bewertet „hinsichtlich Erfolgsaussichten und Sinnhaftigkeit“ (§1b). Für JEDES Feld gelten zusätzlich drei Querbedingungen: die Wortgrenze aus §1d ist eine Gültigkeitsbedingung (Handbuch S. 4, §1), die Sprache ist durchgehend Deutsch (§1e), und nach jedem eingesetzten Platzhalter läuft `python3 -I scripts/ptf-wordcount.py` neu (Sitzung). Jede Beleg-Zelle zeigt auf eine Messung in §2, sonst auf §1, §4, §7.1, §8, §9 oder eine am 22./23.10. im Repo bzw. an der GitHub-API nachgemessene Stelle. Was nur geplant ist, heißt „Plan“; eine ungemessene Behauptung steht nie als Beleg. F10 bleibt leer und hat keine Zeile. Entworfen von einem Agenten, jede Zeile von zwei Gegenprüfern gelesen (Belege gegen §2/Repo, Kriterien gegen §1/§1b/§1d/§1e); 24 Einwände, alle eingearbeitet.
+
+| Feld | Kriterium (Quelle) | Was die Antwort trägt | Beleg | Lücke (wer) |
+|---|---|---|---|---|
+| Kopf | Konto, Klarname mit Wohnsitz in Deutschland, E-Mail bis März gelesen, persönlicher GitHub-Account als Pflichtfeld (Handbuch S. 5, §1) | Echoel · Michael Terbuyken, Hamburg · `vibrationalforce` | §1 „Konto und Hauptansprechperson“ | E-Mail-Adresse (Founder) |
+| F1 Ergebnis | EIN konkreter Satz, 30 Wörter (S. 7, §1d) · „innovativ“ = bestehendes Projekt um Modul, Bibliothek oder Anbindung erweitern (§1) | „Zwei Open-Source-Pakete (Swift), die Puls und Atem auf dem Gerät verarbeiten …“ | Plan (die Pakete gibt es noch nicht, §9); die Fähigkeiten im Bestand: §2 Alt-App (Kamera-Puls, BLE, `BioEgressPolicy`, vier Ausgänge) | — |
+| F2 Vorhaben | Ziele, Funktionsweise, warum wichtig, nicht nur technisch (S. 8) · zuerst „Was, für Nicht-Expert*innen?“ und „Für wen?“ (Blog, §1) | „Ich baue zwei freie Software-Bausteine … Gedacht für Musiker*innen, Licht- und Bühnenleute und Entwickler*innen.“ | §2 Alt-App: Kamera-Puls live; kein `URLSession`, CloudKit hart aus; das Herauslösen ist Plan | Gegenlesen durch eine unbeteiligte Person bis 16.11. (Founder). ⛔ Satz 1 sagte bis 23.10. „ohne dass Körperdaten das Gerät verlassen“ — F4 lässt abgeleitete Steuerwerte nach Freigabe hinaus; jetzt „ungefragt“ |
+| F3 Gesellschaftlicher Mehrwert | Problem, Dringlichkeit, Lücke, warum Software, kein Tech-Solutionismus (S. 9) · „Sinnhaftigkeit“ (§1b) | „Software hilft, weil diese Regel in den Code gehört, nicht in eine Datenschutzerklärung“ | §2 `BioEgressPolicy`: `switch` ohne `default:`, Adresse ohne Klasse fail-closed (OSC-Pfad, §9); Screenreader und 3-Hz-Grenze sind Plan, so benannt seit 23.10. | DSGVO-Einordnung „juristisch nicht geprüft“ → Datenschutz-Termin 16.11. (Founder), danach F3 und F14 angleichen (Sitzung) |
+| F4 Technische Umsetzung | konkreter Stack, Libraries, Infrastruktur, Projekte, auf denen man aufbaut, Sätze statt Tool-Liste (S. 10, §1d) · Links zu genutzten FOSS-Tools (Blog, §1) | „Paketcode: Swift, null externe Abhängigkeiten … (Apple: Network.framework, Linux: POSIX-Sockets)“ | §2: Core Foundation + Observation, DSP nur Foundation; Linux Core 289, DSP 72, Engine 161 (Lauf 39832472465); EchoelSense/EchoelIO sind Plan | — (§2 und Frage 4/5 am 23.10. nachgeführt) |
+| F5 Stand | was erreicht ist und was nach der Förderung anders ist; Förderteil klar vom Bestand abgrenzen, „Verbesserung der bestehenden Software“ reicht nicht (S. 11, §1, §1d) | „Gefördert wird nicht die Verbesserung der Apps, sondern etwas, das es noch nicht gibt“ | §2 (zwei Codebasen, drei Pakete, `docs/FORMAT.md`, Tests auf macOS und Linux, TestFlight); „seit Oktober 2025“: Repo angelegt 15.10.2025 (GitHub-API `created_at`) | `LICENSE` nennt „2024-2026“ — EIN Startjahr wählen, Teil von LR2 (Founder) |
+| F6 Link | Repo, Projektseite, Demo (S. 12) · FOSS-Lizenz Pflicht, keine bestimmte vorgeschrieben (§1) | Repo-URL · `echoelmusic.com/integrations.html` | §1: öffentliches Repo, `LICENSE` beginnt mit dem MIT-Text, die API meldet `NOASSERTION`; `main` trägt `EchoelStudio/`, Community-Profil 100 % (API 23.10.); `docs/integrations.html` mit Abschnitten für OSC, ADM-OSC, Art-Net/sACN, MIDI und den OSC-Eingang (Alt-App) | LR2: Drittlizenz-Block aus `LICENSE` (Founder) |
+| F7 Innovation | Vergleichbares nennen, sagen, warum man nicht darauf aufbaut, nie „nichts Vergleichbares“ (S. 13) · Open-Source-Prüfung (§1e) | „Soweit ich sehe, trägt keines eine Regel, welche Felder das Gerät verlassen dürfen … Prüfziel ist QLC+“ | eigene Seite: §2 Egress-Policy; Herkunftsflagge `/echoelmusic/bio/synthetic` in `Sync/OSCSender.swift` (nur OSC; sACN über den Quellnamen, ADM-OSC und Art-Net ohne); Vergleichsstand = Web-Recherche 19.10. (§7.1 Frage 7), nicht §2 | Lizenzen aller genannten Projekte (hr-bridge-ble, HeartOSC, QLC+, Chataigne, ossia score) an der Quelle, Plattform und Protokoll von hr-bridge-ble/HeartOSC, je mit Abrufdatum — S-11 (Sitzung, bis 16.11.) |
+| F8 Zielgruppe | klar definierte Gruppen, Weg zu ihnen, Partner mit Namen (S. 15) · ein, zwei KONKRETE Orte oder Partner, eine Website reicht nicht (Blog, §1) | „Erreichen: über die App ([Zahl] Testende) … [Ort/Partner 1] und [Ort/Partner 2] als Testorte“ | Bestand nur TestFlight (§2) und `docs/integrations.html`; Orte und Partner sind Plan; öffentliche Reichweite null (§9) | Testenden-Zahl, Hamburger Ort, Ort/Partner 1 und 2, externe TestFlight-Gruppe, zwei bis drei namentliche Interessensbekundungen, EINE benannte Integration (Founder, 16.11., §8) |
+| F9 Meilensteine | nummerierte Liste mit Zeitangaben, nicht „1/ Backend, 2/ Frontend“ (S. 17) · Bestand nie als Meilenstein (§1, §4) · „Erfolgsaussichten“ (§1b) | „1. Juni (~90 h) … 4. November (~110 h): … Paketversion 1.0.“ | Plan; die Abgrenzung ist gemessen: die Pakete fehlen (§9), der zu portierende Atemschätzer existiert (`Bio/RespirationEstimator.swift`) | — („~590 h“ am 23.10. überall auf 620 nachgeführt; §9 Z. 739/796 bleiben als datierte Historie) |
+| F11 Erfahrungen | höchstens drei Projekte mit Name und/oder Link und Rolle, ohne öffentlichen Link ein Satz (S. 19, §1) · FOSS-Erfahrung nicht übertreiben (Blog, §1) | „Echoelmusic …: Maintainer seit Oktober 2025; zwei öffentliche Codebasen unter MIT“ | §2; Repo seit 15.10.2025 (API `created_at`); Rolle: Contributors-API 23.10. `vibrationalforce` 450, „Echoel“ 55 | Projekt 2 und 3: Name, Rolle, Link oder ein Satz — sonst streichen (Founder) |
+| F12 Förderfähigkeit, Verbindungen | Verbindungen offenlegen, „zu viele Informationen sind besser als zu wenige“ (S. 20) · „Menschen, keine Unternehmen“ (§1) · keine Doppelförderung: eigene Vorsicht aus der Jury-Simulation (§9), kein Wortlaut des Fonds | „privates Open-Source-Projekt, kein Unternehmensprojekt … weder bezogen noch beantragt“ | §4: StoreKit nur in `App/Store` (StoreController, StoreView) und `Plugins/Shared/PluginLicense.swift`; Produkt-ID in `PluginUnlock.swift`; Klangerzeuger und Demo-Sperre (`DemoGate`) in `EchoelKernels`; „Pakete ohne Bezahlfunktion“ ist Plan | Rechtsform, Status von Tropical Drones und Syng.Visibra (Founder) |
+| F13 Stundenzahl | EINE Zahl, 250–950 h, realistisch statt strategisch (§1d S. 21; §1 nennt für dieselbe Regel S. 20 — am PDF prüfen) · Richtwert 80 % Entwicklung · nur Arbeitsstunden förderfähig (§1) | „Vorschlag 620 = die Summe der vier Meilensteine in F9“ | Plan (§7.1 Frage 9: 500 h Entwicklung ≈ 81 %, in menschlichem Tempo kalkuliert) | die Zahl, die neben Installationen und Musikprojekten wirklich trägt (Founder) · Seitenzahl am Handbuch-PDF (wer das PDF öffnet) |
+| F14 Erfahrung, Motivation | Domänenexpertise, Lücken und wie man sie schließt (S. 22) · KI-Regel: Vibe-Coding nicht förderfähig, Programmierkenntnisse nötig, GitHub-Pflicht (§1) | „Ich entwickle KI-gestützt — [Zahl] von [Zahl] Commits … Architektur, Umfang und Tests entscheide ich“ | §1: öffentliche Zahlen vom 19.10.; Contributors-API 23.10.: `claude` 9.349, `vibrationalforce` 450, „Echoel“ 55, `github-actions[bot]` 540 — sie wachsen täglich | Jahr des Beginns der Installationspraxis, Beleg der Programmierkenntnisse, Partner für die Barrierefreiheits-Tests (Founder) · beide Commit-Zahlen am Abgabetag neu messen (Sitzung) |
+| F15 Second Stage | Ja oder Nein, kein „Vielleicht“; die Wahl ist endgültig, mit Ja sind F16 und F17 Pflicht (S. 24, §1, §1e) | „Ja.“ | §7.3 Frage 1 (Founder bestätigt, Sprechstunde 19.10.) | — |
+| F16 Nachhaltigkeitsstrategie | konkrete Strategie gegen Stilllegung, über Code hinaus (S. 25) · keine Code-Meilensteine in der Second Stage (S. 23, §1) | „Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von mir.“ | Bestand: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, Issue-Vorlage (`c477267`, auf `main`); Integrationen, Werkstätten, zweite Maintainer-Rolle sind Plan | Theater- oder Installationsort, Zahl der Beta-Tester*innen, Kandidat*in für die zweite Maintainer-Rolle, Issue #418 / LR3 (Founder) |
+| F17 Second-Stage-Meilensteine | Liste mit Zeitangaben, kein Code, nicht „1/ Communityaufbau, 2/ Werbung“ (S. 26) · Programmierarbeit nur aus Feedback (S. 23) | „1. Dezember: Nutzertests … 3. März: drei externe Integrationen gezeigt, eine nicht von mir betrieben“ | Plan | Theater- oder Installationsort, Kandidat*in für die Maintainer-Rolle (Founder) |
+| F18 Formalia | volljährig, Wohnsitz Deutschland, FOSS-Lizenz (S. 27, §1d, §1) | Häkchen | §1: MIT-Text vorhanden, GitHub erkennt ihn nicht (`NOASSERTION`) | Häkchen und LR2 vor Abgabe (Founder) |
 
 ## 8. Offene Punkte (wer liefert was)
 
@@ -723,7 +751,7 @@ Nach dem Prototyp braucht das Projekt Nutzung durch Dritte, nicht mehr Code von 
 | `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, Issue-Vorlage (Community-Health war 42 %) | Sitzung | **erledigt 19.10.** (`c477267`) |
 | `LICENSE` auf reinen MIT-Text (LR2 in der Inbox, offen) · GitHub-About (LR1/LR6) · Issue #418 schließen (LR3) | Founder | 1.11. |
 | `docs/privacy.html:205` („we are not a controller“) und die Art.-9-Einordnung durch einen DSB prüfen lassen | Founder | 16.11. |
-| Linux-Lauf für `EchoelCore` und `EchoelDSP` (`studio-linux.yml`) | Sitzung | **erledigt 19.10.**: DSP 64/64 grün, Core 201/201 grün; Stand in §2 und Frage 4/5 |
+| Linux-Lauf für `EchoelCore` und `EchoelDSP` (`studio-linux.yml`) | Sitzung | **erledigt 19.10.**: DSP 64/64 grün, Core 201/201 grün · 22.10. auch die Engine (Lauf 39832472465: Core 289, DSP 72, Engine 161); Stand in §2 und Frage 4/5 |
 | Belege Dritter: TestFlight-Tester-/Install-Zahl (datiert) · zwei bis drei namentliche Interessensbekundungen · EINE benannte Integration (freies Lichtpult mit sACN/OSC-Eingang) | Founder | 16.11. |
 | Zwei TIB-Abschlussberichte lesen (anira, transcribee-desktop) und Ton kalibrieren | Sitzung | 1.11. |
 | Lizenzen der Vergleichsprojekte in Frage 7 gegen die Quellen prüfen (Grok-Brief §10); dazu die Plattform und das Ausgabeprotokoll von hr-bridge-ble und HeartOSC mit Abrufdatum eintragen | Sitzung | 16.11. |
@@ -807,7 +835,7 @@ Commit-Zahlen (alle richtig für verschiedene Mengen; es gilt die öffentliche),
 | 6 | Repo-Hygiene: LICENSE reiner MIT-Text (LR2, Founder) · CONTRIBUTING/CoC/Issue-Vorlage · #418 (LR3, Founder) · README zwei Codebasen · `version.json`-Changelog · DSGVO-Entwurf §0 | Sitzung, außer den Inbox-Posten | Sitzungsteil **erledigt 19.10.** (`c477267`, `638d667`, `607cf73`; `version.json`-Banner steht seit 28.08.); LR2 und LR3 beim Founder, §8 |
 | 7 | Doppelförderung: Status „Syng.Visibra“; Satz in Frage 5/Team-7; Weg C nicht parallel fürs selbe Objekt | Founder | Satz steht; Status offen |
 | 8 | Belege Dritter: Tester-Zahl, zwei bis drei Interessensbekundungen, EINE Integration | Founder | offen |
-| 9 | Formalien: Rechtsform, Selbstständigkeit, Stunden aus der ~590-h-Tabelle, frühere Projekte, Startjahr, Accounts-Feld | Founder | offen |
+| 9 | Formalien: Rechtsform, Selbstständigkeit, Stunden aus der 620-h-Tabelle, frühere Projekte, Startjahr, Accounts-Feld | Founder | offen |
 | 10 | Resilienz-Fallback (R5/R6); „klinisch“ → HRV-Detailwerte; Kohärenz definiert; One Clock als Beleg, nicht Feature; Barrierefreiheit als Abnahme; Netzwerk-Inventar mit Transportgrenze | Sitzung | **erledigt 19.10.** (§2, §4, §7.1 Fragen 3/4/9, §7.4) |
 
 **Linienempfehlung: Innovation**, unter dem Vorbehalt von F19 und der ungelesenen
