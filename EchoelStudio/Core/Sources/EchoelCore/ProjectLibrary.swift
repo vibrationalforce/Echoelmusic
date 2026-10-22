@@ -241,7 +241,7 @@ public struct ProjectLibrary: Sendable {
     /// The most bytes a file name's stem takes in UTF-8. A file system limits a name in bytes (255),
     /// not in characters, and one character can carry many scalars — a letter with marks, an
     /// emoji with a skin tone — so a name the door accepts could be far too long for a file. 200
-    /// leaves room for " 10000", a rename's " renaming 1a2b3c4d" and ".echoel" (review 006).
+    /// leaves room for " 10000", a rename's " renaming 1A2B3C4D" and ".echoel" (review 006).
     static let stemByteLimit = 200
 
     static func fileName(for name: String) -> String {

@@ -671,9 +671,10 @@ final class DocumentController {
         log.error("rename move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
         // One sentence, true in every state that gets here: after a rename, after an Undo back to
         // the old name, and for a song that opened from a name in between, where nobody renamed
-        // anything (review 007 round 1). It names where the file is, so it changes only with that.
+        // anything (review 007 round 1). It names where the file is, so it changes only with that,
+        // and says what lags behind, the file, so it never reads as a failed save (round 2).
         let file = url.deletingPathExtension().lastPathComponent
-        let line = "In the Files app the song is called \(file) for now; Echoel tries again when it next saves."
+        let line = "Only the file lags behind: in the Files app the song is called \(file) for now, and Echoel tries to rename it when it next saves."
         // Said once; a later failure that left the file somewhere else says where it is now.
         guard line != failedMoveLine else { return }
         moveSettled()

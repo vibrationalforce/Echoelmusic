@@ -33,8 +33,10 @@ VoiceOver-Nutzer die Längen-Grenze hört.
   genau so benennt und dessen innerer Name abweicht, bekommt beim nächsten Schreiben seinen
   inneren Namen.
 - A5 — Die Zeile über eine gescheiterte Verschiebung sagt, wo die Datei JETZT ist, in EINEM Satz,
-  der in jedem Zustand stimmt: „In the Files app the song is called <Datei> for now; Echoel tries
-  again when it next saves.“ Kein „renamed“ mehr (Runde 1): nach einem Undo zum alten Namen und bei
+  der in jedem Zustand stimmt: „Only the file lags behind: in the Files app the song is called
+  <Datei> for now, and Echoel tries to rename it when it next saves.“ Er sagt, was hinterherhinkt —
+  die Datei —, damit die rote Zeile nie wie ein gescheitertes Speichern klingt (Runde 2). Kein
+  „renamed“ mehr (Runde 1): nach einem Undo zum alten Namen und bei
   einem Song, der aus einem Zwischennamen öffnete, hat niemand umbenannt. Weil der Satz nur den Ort
   nennt, ändert er sich genau dann, wenn der Ort sich ändert (ein späterer Versuch strandet unter
   dem Zwischennamen); dann ersetzt der neue den alten, derselbe wird nie zweimal gesagt.
@@ -79,8 +81,11 @@ VoiceOver-Nutzer die Längen-Grenze hört.
    Hinweis an „Rename“, die Zeile unter dem Feld für VoiceOver verborgen —
    belegt durch Code-Lesen von `App/Views/RenameSongView.swift` und den App-Build.
 6. [DEVICE] Mit VoiceOver: im Blatt „Rename Song“ über 128 Zeichen hinaus tippen (z. B. einen
-   langen Text einfügen). VoiceOver sagt „At most 128 characters.“; „Rename“ wird als gedimmt
-   mit demselben Satz vorgelesen.
+   langen Text einfügen). VoiceOver sagt „At most 128 characters.“, ohne dass das Echo des
+   Einfügens es überspricht; „Rename“ wird als gedimmt mit demselben Satz vorgelesen. Dasselbe
+   einmal mit „Hinweise sprechen“ aus (VoiceOver → Ausführlichkeit): die Ansage kommt trotzdem;
+   ob der Grund für das gedimmte „Rename“ dann fehlt, ist eine Messung (Runde 2) — fehlt er, bleibt
+   die Zeile ein eigenes Element und der doppelte Hinweis am Feld geht.
 7. Der Workflow `Echoel Studio` ist auf dem Kopf grün: die Wächter aus 1–3 sind im Core-Log
    namentlich bestanden, und der App-Build (Simulator und Release-Gerät) ist grün; `Echoel Studio
    (Linux)` ebenso.
