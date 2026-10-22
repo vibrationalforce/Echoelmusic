@@ -386,6 +386,7 @@ final class MIDIInput {
             needsLock = action != .stop
             switch action {
             case .start:
+                engine.clockWillMovePlayhead()
                 engine.seek(toTick: 0)
                 engine.play()
             case .resume:
@@ -394,6 +395,7 @@ final class MIDIInput {
                 engine.pauseFromOutside(nil)
                 store.endGesture()
             case .position(let sixteenths):
+                engine.clockWillMovePlayhead()
                 engine.seek(toTick: Tick(sixteenths) * MusicalTime.ticksPerQuarter / 4)
             }
         }

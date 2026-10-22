@@ -246,8 +246,9 @@ final class AudioEngine {
     /// returns it (R6).
     @ObservationIgnored var beforeRateChange: (() -> Project?)?
 
-    /// Called when something other than the transport's own Stop pauses the song; the record
-    /// controller ends a running take there, so it never runs on over a paused song (R10).
+    /// Called when something other than the transport's own Stop pauses the song, or a followed
+    /// clock moves its playhead; the record controller ends a running take there, so it never
+    /// runs on over a paused song (R10) or across a jump.
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.
@@ -775,6 +776,18 @@ final class AudioEngine {
     private static var outputLatency: Double {
         let latency = AVAudioSession.sharedInstance().outputLatency
         return latency.isFinite ? Swift.min(Swift.max(latency, 0), 0.25) : 0
+    }
+
+    /// A followed clock is about to move the playhead (Start, Song Position). An audio take is
+    /// placed from the sample it began at, so one running over the jump put everything played
+    /// after it bars late or early: it ends here, before the jump, with what it captured (audit
+    /// 2026-10-23). A MIDI take ends with it, as at a pause from outside.
+    func clockWillMovePlayhead() {
+        if let take {
+            take.recorder.disarm()
+            takeEndsFromOutside = true
+        }
+        onPausedFromOutside?()
     }
 
     /// Moves the playhead by a few milliseconds without a seek (phase correction).
