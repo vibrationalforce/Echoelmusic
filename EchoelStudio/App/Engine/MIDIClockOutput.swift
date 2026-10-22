@@ -118,7 +118,8 @@ final class ClockPump: Sendable {
 
     private let state = Mutex(State())
     private let queue = DispatchQueue(label: "com.echoelmusic.studio.clock", qos: .userInteractive)
-    /// Set once from `start`, then only kept alive.
+    /// Runs only while an output is chosen: an idle pump woke 500 times a second for the app's
+    /// whole life (audit 2026-10-23). Set from the main actor only (`start`, `setEndpoints`).
     nonisolated(unsafe) private var timer: DispatchSourceTimer?
     /// Host ticks per nanosecond, as a ratio.
     private let timebase: (numer: UInt32, denom: UInt32) = {
@@ -131,11 +132,7 @@ final class ClockPump: Sendable {
 
     func start(port: MIDIPortRef) {
         state.withLock { $0.port = port }
-        let source = DispatchSource.makeTimerSource(queue: queue)
-        source.schedule(deadline: .now(), repeating: .milliseconds(2), leeway: .microseconds(500))
-        source.setEventHandler { @Sendable [weak self] in self?.drain() }
-        source.resume()
-        timer = source
+        runWhileChosen()
     }
 
     func set(core: EngineCore, sampleRate: Double, latency: TimeInterval) {
@@ -154,6 +151,25 @@ final class ClockPump: Sendable {
 
     func setEndpoints(_ endpoints: [MIDIEndpointRef]) {
         state.withLock { $0.endpoints = endpoints }
+        runWhileChosen()
+    }
+
+    /// Starts the timer when an output is chosen and the port exists, stops it when none is.
+    private func runWhileChosen() {
+        let (chosen, hasPort) = state.withLock { (!$0.endpoints.isEmpty, $0.port != 0) }
+        if chosen, hasPort, timer == nil {
+            let source = DispatchSource.makeTimerSource(queue: queue)
+            source.schedule(deadline: .now(), repeating: .milliseconds(2), leeway: .microseconds(500))
+            source.setEventHandler { @Sendable [weak self] in self?.drain() }
+            source.resume()
+            timer = source
+        } else if !chosen, let running = timer {
+            running.cancel()
+            timer = nil
+            // What the ring still holds has nobody to hear it: one last drain throws it away, so a
+            // later output does not get a burst of stale clock.
+            queue.async { [weak self] in self?.drain() }
+        }
     }
 
     private func drain() {
