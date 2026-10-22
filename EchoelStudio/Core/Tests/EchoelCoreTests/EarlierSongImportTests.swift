@@ -153,6 +153,24 @@ final class EarlierSongImportTests: XCTestCase {
         XCTAssertNil(state.suspect, "the song came over this time")
     }
 
+    func testASongWrittenJustBeforeTheAppEndedIsMarkedAndNotBroughtAgain() {
+        // The song's package was written, and the app ended before its mark was kept. The next
+        // launch finds the written package and marks the song before it judges the run: it comes
+        // over once, and it is not called left out although it ended a run before (review
+        // 2026-10-22).
+        var state = EarlierSongImport(suspect: "r-one")
+        _ = state.runBegan()
+        _ = state.found(three, sawEverything: true)
+        state.willBring("r-one")
+        state = relaunched(state)
+        state.brought("r-one", .written)
+        XCTAssertEqual(state.launchBegan(), .resumes)
+        XCTAssertNil(state.suspect)
+        XCTAssertNil(state.current)
+        _ = state.runBegan()
+        XCTAssertEqual(state.found(three, sawEverything: true), ["t-open", "r-two"])
+    }
+
     func testEndingTwiceOnOneSongLeavesItOut() {
         var state = EarlierSongImport()
         for expected in [EarlierSongImport.Interruption.resumes, .leftOut] {

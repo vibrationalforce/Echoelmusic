@@ -841,7 +841,6 @@ final class DocumentController {
             run.finished = state.isFinished
             return run
         }
-        removeLeftoverPackage(in: library, defaults)
         // Every place the earlier app wrote to, each song once by its key, read but not converted:
         // a song is converted only once it is marked as under way, so one that ends the app while
         // it converts is the one left out (review 2026-10-22).
@@ -866,7 +865,7 @@ final class DocumentController {
             keep(state, defaults)
             if let project = earlier.project(key) {
                 do {
-                    written.append(try bring(project, into: library, defaults))
+                    written.append(try bring(project, key: key, into: library, defaults))
                     state.brought(key, .written)
                 } catch {
                     failed += 1
@@ -877,6 +876,8 @@ final class DocumentController {
                 state.brought(key, .unreadable)
             }
             keep(state, defaults)
+            // Only now, with the mark kept, is the package no longer the song under way.
+            clearReservation(defaults)
         }
         if run.paused { state.runPaused() } else { state.runEnded() }
         keep(state, defaults)
@@ -887,32 +888,47 @@ final class DocumentController {
         return run
     }
 
-    /// Writes one song into a package of its own. The package is noted while it is still empty,
-    /// so a run the app ends between the two leaves no empty folder that would push the song to
-    /// "Name 2" on the retry (review 2026-10-21).
-    nonisolated private static func bring(_ project: Project, into library: ProjectLibrary,
+    /// Writes one song into a package of its own. The package and the song's key are noted while
+    /// the package is still empty, and stay noted until the run has kept the song's mark: an app
+    /// ended in between leaves a package the next launch can tell apart — written, so the song is
+    /// marked instead of brought again as "Name 2" (round 4 measurement), or not, so it goes.
+    nonisolated private static func bring(_ project: Project, key: String, into library: ProjectLibrary,
                                           _ defaults: UserDefaults) throws -> URL {
         let url = try reservePackage(for: project.name, in: library)
         defaults.set(url.lastPathComponent, forKey: importReservedKey)
-        defer { defaults.removeObject(forKey: importReservedKey) }
+        defaults.set(key, forKey: importReservedSongKey)
         do {
             try library.write(project, to: url)
         } catch {
             try? FileManager.default.removeItem(at: url)
+            clearReservation(defaults)
             throw error
         }
         return url
     }
 
-    /// The package the last run had made and not written into when the app ended: removed while
-    /// it is still empty, and only then.
-    nonisolated private static func removeLeftoverPackage(in library: ProjectLibrary, _ defaults: UserDefaults) {
-        guard let name = defaults.string(forKey: importReservedKey) else { return }
+    nonisolated private static func clearReservation(_ defaults: UserDefaults) {
         defaults.removeObject(forKey: importReservedKey)
+        defaults.removeObject(forKey: importReservedSongKey)
+    }
+
+    /// At launch, before the run that was under way is judged: the package it had made for the
+    /// song under way when the app ended. Holding the song's document, the song came over and is
+    /// marked so — it is neither brought again nor called left out. Without one it is removed,
+    /// since only the import made it. `ProjectLibrary.write` replaces the document atomically, so
+    /// one that is there is whole.
+    nonisolated private static func settleReservedPackage(_ state: inout EarlierSongImport, in library: ProjectLibrary,
+                                                          _ defaults: UserDefaults) {
+        guard let name = defaults.string(forKey: importReservedKey) else { return }
+        let key = defaults.string(forKey: importReservedSongKey)
+        clearReservation(defaults)
         guard !name.contains("/"), (name as NSString).pathExtension == ProjectLibrary.fileExtension else { return }
         let url = library.directory.appendingPathComponent(name, isDirectory: true)
-        guard let contents = try? FileManager.default.contentsOfDirectory(atPath: url.path), contents.isEmpty else { return }
-        try? FileManager.default.removeItem(at: url)
+        if FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path) {
+            if let key { state.brought(key, .written) }
+        } else {
+            try? FileManager.default.removeItem(at: url)
+        }
     }
 
     /// A free package for an imported song, made here and now. Made at once, not only named: the
@@ -969,14 +985,17 @@ final class DocumentController {
     nonisolated private static let importCurrentKey = "studio.earlierSongImportCurrent"
     /// The song a run ended on once already: ending on it again leaves it out.
     nonisolated private static let importSuspectKey = "studio.earlierSongImportSuspect"
-    /// The package made for the song under way and not yet written into.
+    /// The package made for the song under way, until the run has kept that song's mark.
     nonisolated private static let importReservedKey = "studio.earlierSongImportReserved"
+    /// The key of the song that package is for.
+    nonisolated private static let importReservedSongKey = "studio.earlierSongImportReservedSong"
 
     /// At every launch, before anything runs: when a run of the import was under way as the app
     /// last ended — a crash, or swiped away — what becomes of it, for the status line.
     private func earlierImportLaunchBegan() -> String? {
         let defaults = UserDefaults.standard
         var state = Self.loadImport(defaults)
+        Self.settleReservedPackage(&state, in: library, defaults)
         let interruption = state.launchBegan()
         Self.keep(state, defaults)
         guard let interruption else { return nil }
