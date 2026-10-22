@@ -39,40 +39,49 @@ final class KernelDerivationTests: XCTestCase {
         }
     }
 
+    /// The kernel at its table's defaults against a bare `Sampler`, which plays `SamplerPatch()`:
+    /// the note is held, then let go long before the sample ends, so the attack, the level, the
+    /// root key, the release and the mode (a one-shot would ignore the note-off) are all heard.
+    /// Decay and sustain come from `SamplerPatch()` itself, not from the table.
     func testTheSamplerAtTheTablesDefaultsPlaysExactlyTheDefaultSamplerPatch() throws {
-        let tone: [Float] = (0..<4_800).map { (index: Int) -> Float in Float(index % 48) / 48 - 0.5 }
+        let tone: [Float] = (0..<48_000).map { (index: Int) -> Float in Float(index % 48) / 48 - 0.5 }
         let buffer = try XCTUnwrap(SampleBuffer(samples: tone, sampleRate: 48_000))
-        let frames = 4_000
+        let held = 2_000, released = 12_000
 
         let kernel = SamplerKernel(sampleRate: 48_000, maximumFrames: 4_096)
         kernel.load(buffer)
-        var left = [Float](repeating: 0, count: 16), right = left
-        left.withUnsafeMutableBufferPointer { l in
-            right.withUnsafeMutableBufferPointer { r in
-                guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
-                kernel.render(frames: 16, left: lp, right: rp, gain: 1)
+        func render(_ frames: Int) -> [Float] {
+            var left = [Float](repeating: 0, count: frames), right = left
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    kernel.render(frames: frames, left: lp, right: rp, gain: 1)
+                }
             }
+            return left
         }
+        _ = render(16)
         kernel.receive(status: 0x90, 64, 100)
-        var played = [Float](repeating: 0, count: frames), other = played
-        played.withUnsafeMutableBufferPointer { l in
-            other.withUnsafeMutableBufferPointer { r in
-                guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
-                kernel.render(frames: frames, left: lp, right: rp, gain: 1)
-            }
-        }
+        var played = render(held)
+        kernel.receive(status: 0x80, 64, 0)
+        played += render(released)
 
         var sampler = Sampler(sampleRate: 48_000)
         sampler.setSample(buffer)
-        sampler.setPatch(SamplerPatch())
         var lead = [Float](repeating: 0, count: 16)
         lead.withUnsafeMutableBufferPointer { sampler.render(into: $0) }
         sampler.noteOn(pitch: 64, velocity: 100)
-        var expected = [Float](repeating: 0, count: frames)
-        expected.withUnsafeMutableBufferPointer { sampler.render(into: $0) }
+        var expected = [Float](repeating: 0, count: held + released)
+        expected.withUnsafeMutableBufferPointer { all in
+            sampler.render(into: UnsafeMutableBufferPointer(rebasing: all[0..<held]))
+            sampler.noteOff(pitch: 64)
+            sampler.render(into: UnsafeMutableBufferPointer(rebasing: all[held...]))
+        }
 
         let first = zip(played, expected).enumerated().first { $0.element.0 != $0.element.1 }?.offset
         XCTAssertNil(first, "first differing frame")
         XCTAssertGreaterThan(expected.map { abs($0) }.max() ?? 0, 0.1, "the reference plays")
+        XCTAssertEqual(expected.suffix(1_000).map { abs($0) }.max() ?? 1, 0,
+                       "the release ends inside the render, well before the sample does")
     }
 }
