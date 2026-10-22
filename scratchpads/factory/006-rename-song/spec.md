@@ -37,7 +37,10 @@ Exporte und die Dateien-App zeigen ihn, und Undo nimmt ihn zurück.
   nicht über ihr. Jedes weitere Schreiben versucht es still erneut (Runde 1: ohne Wiederholung gab
   es keinen Weg zurück, weil „Rename“ beim unveränderten Namen gesperrt ist). Scheitert bei einer
   Groß-/Kleinschreibung auch der Rückweg, folgt der Song dem Paket unter den Zwischennamen, statt
-  unter dem alten Namen ein zweites Paket ohne Audio anzulegen.
+  unter dem alten Namen ein zweites Paket ohne Audio anzulegen. Sobald nichts mehr geschuldet ist
+  (die Verschiebung ging durch, ein Undo nahm den Namen zurück), geht die Zeile wieder (Runde 2).
+  Ein Dateiname ist in BYTES begrenzt, nicht in Zeichen: der Stamm hat höchstens 200 Bytes UTF-8,
+  damit ein Name, den die Tür nimmt, nie über die 255 eines Dateinamens kommt (Runde 2).
 - A8 — Ist der Start noch nicht bestätigt, folgt der Name, den der Startschutz als „wird
   geöffnet“ führt, der Verschiebung — sonst hielte ein späterer Absturz einen Namen fest, den
   es nicht mehr gibt.
@@ -46,6 +49,8 @@ Exporte und die Dateien-App zeigen ihn, und Undo nimmt ihn zurück.
   dieser Scheibe, kein Ziel; seit Runde 1 erreicht sie nur ein Undo oder Redo während laufender
   Arbeit am Paket (A4), ebenso ein App-Ende in dieser Zeit (der Werttyp lebt nur im Speicher).
   Ein offenes Blatt gehört dem Song, für den es aufging: öffnet sich ein anderer, schließt es.
+  Derselbe Song, neu gelesen, ist kein anderer: er behält eine Verschiebung, die er noch schuldet
+  (Runde 2).
 - A10 — WIP-Limit 3 (`docs/dev/FOUNDER_INBOX.md`, Regel 3): auf ein Geräte-Urteil warten heute
   die Familien SP (Job 002) und SR (Robustheit, 22.10.); diese Scheibe ist die dritte.
 
@@ -53,7 +58,9 @@ Exporte und die Dateien-App zeigen ihn, und Undo nimmt ihn zurück.
 
 1. `ProjectLibrary.renamedURL(for:from:)` gibt für einen Namen, dessen Schreibweise das Paket
    schon trägt, das Paket selbst zurück; sonst eine freie Schreibweise, an anderen Songs vorbei,
-   mit dem eigenen Paket als frei — Wächter `ProjectLibraryTests.testARenameTakesAFreeNameAndKeepsItsOwn`.
+   mit dem eigenen Paket als frei; der Stamm bleibt in jeder Schreibweise unter 200 Bytes — Wächter
+   `ProjectLibraryTests.testARenameTakesAFreeNameAndKeepsItsOwn` und
+   `ProjectLibraryTests.testAFileNameStaysWithinTheFileSystemLimit`.
 2. `ProjectLibrary.rename(_:to:)` verschiebt das Paket ganz (Dokument und `Media/`), lässt keinen
    alten Ordner zurück, und eine reine Schreibweisen-Änderung hinterlässt genau ein Paket in der
    neuen Schreibweise — Wächter `ProjectLibraryTests.testARenameMovesThePackageWithItsMedia` und

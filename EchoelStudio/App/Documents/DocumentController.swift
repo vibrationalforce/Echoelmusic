@@ -101,9 +101,9 @@ final class DocumentController {
     /// The name the package follows: a renamed song moves its package to match, once nothing
     /// reads or writes into it.
     @ObservationIgnored private var fileName = SongFileName()
-    /// A move that failed was said; it is tried again at every write and said again only after
-    /// one went through.
-    @ObservationIgnored private var failedMoveSaid = false
+    /// The line a failed move added to `lastError`. The move is tried again at every write; the
+    /// line is said once, and goes as soon as nothing is owed any more.
+    @ObservationIgnored private var failedMoveLine: String?
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private var launch = LaunchRecord()
@@ -434,7 +434,7 @@ final class DocumentController {
         let project = Project.starter(starter)
         store.open(project)
         fileName.opened(named: project.name)
-        failedMoveSaid = false
+        moveSettled()
         currentURL = library.newURL(for: project.name)
         anotherSongOpened()
         savedProject = writing ? nil : project
@@ -482,8 +482,12 @@ final class DocumentController {
             let another = isUnwritten
                 || currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
             store.open(project)
-            fileName.opened(named: project.name)
-            failedMoveSaid = false
+            // The open song read again keeps a move it still owes: its document already carries
+            // the new name, so taking that as the name it opened with would drop the move.
+            if another {
+                fileName.opened(named: project.name)
+                moveSettled()
+            }
             currentURL = url
             if another { anotherSongOpened() }
             savedProject = project
@@ -606,6 +610,11 @@ final class DocumentController {
     /// and is tried again at the next write.
     private func followRenamedSong() {
         let name = store.project.name
+        // Nothing owed — the move went through, or an Undo took the name back.
+        guard fileName.isDue(for: name) else {
+            moveSettled()
+            return
+        }
         guard fileName.shouldMove(for: name, busy: packageIsBusy), let url = currentURL else { return }
         if isUnwritten && (!starterMadeFolder || !FileManager.default.fileExists(atPath: url.path)) {
             // Nothing on disk is the starter's yet, so there is nothing to move: it only takes
@@ -618,16 +627,16 @@ final class DocumentController {
         do {
             let moved = try library.rename(url, to: name)
             fileName.followed(name)
-            failedMoveSaid = false
             if moved != url { packageMoved(from: url, to: moved) }
+            moveSettled()
         } catch let stranded as ProjectLibrary.RenameStranded {
             // A change of case failed half way and could not go back: the package is under the
             // name in between. The song follows it there, rather than the next write making a
             // second package, without the audio, under the old name. The next write tries again.
             packageMoved(from: url, to: stranded.url)
-            moveFailed(stranded.underlying, keeping: stranded.url)
+            moveFailed(stranded.underlying, fileNow: stranded.url, moved: true)
         } catch {
-            moveFailed(error, keeping: url)
+            moveFailed(error, fileNow: url, moved: false)
         }
     }
 
@@ -641,15 +650,30 @@ final class DocumentController {
         refresh()
     }
 
-    private func moveFailed(_ error: Error, keeping url: URL) {
+    /// The package could not take the song's name; it is at `url` now, under the name it had
+    /// (`moved` false) or under the one in between a change of case (`moved` true).
+    private func moveFailed(_ error: Error, fileNow url: URL, moved: Bool) {
         // Domain and code only: the description spells both song names.
         let failure = error as NSError
         log.error("rename move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
-        guard !failedMoveSaid else { return }
-        failedMoveSaid = true
-        let line = "The song is renamed, but its file keeps the name \(url.deletingPathExtension().lastPathComponent) for now; Echoel tries again when it next saves."
+        guard failedMoveLine == nil else { return }
+        let file = url.deletingPathExtension().lastPathComponent
+        let line = moved
+            ? "The song is renamed, but its file is called \(file) for now; Echoel tries again when it next saves."
+            : "The song is renamed, but its file keeps the name \(file) for now; Echoel tries again when it next saves."
+        failedMoveLine = line
         // Beside, not over, what the work just finished said (an export's "Exported without …").
         lastError = lastError.map { "\($0) \(line)" } ?? line
+    }
+
+    /// Nothing is owed for the file name any more, so the line a failed move added is no longer
+    /// true and goes; whatever else the status line says stays.
+    private func moveSettled() {
+        guard let line = failedMoveLine else { return }
+        failedMoveLine = nil
+        guard let shown = lastError, shown.contains(line) else { return }
+        let rest = shown.replacingOccurrences(of: line, with: "").trimmingCharacters(in: .whitespaces)
+        lastError = rest.isEmpty ? nil : rest
     }
 
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,

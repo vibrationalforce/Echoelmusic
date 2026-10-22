@@ -70,6 +70,27 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertEqual(ProjectLibrary.fileName(for: String(repeating: "x", count: 300)).count, 100)
     }
 
+    /// A file name is limited in bytes, not in characters: a name the door takes (128 characters)
+    /// can hold far more bytes than a file name may have when its characters carry many scalars.
+    /// The stem stays within its budget, and such a song can still be written and renamed.
+    func testAFileNameStaysWithinTheFileSystemLimit() throws {
+        let marked = String(repeating: "e\u{301}\u{302}\u{303}\u{304}", count: 100)   // 100 characters, 900 bytes
+        let tones = String(repeating: "\u{1F44B}\u{1F3FD}", count: 100)               // a waving hand with a skin tone
+        let zalgo = "a" + String(repeating: "\u{301}", count: 300)                    // one character, 601 bytes
+        for name in [marked, tones] {
+            let stem = ProjectLibrary.fileName(for: name)
+            XCTAssertLessThanOrEqual(stem.utf8.count, ProjectLibrary.stemByteLimit)
+            XCTAssertFalse(stem.isEmpty)
+        }
+        XCTAssertEqual(ProjectLibrary.fileName(for: zalgo), "Untitled", "a character too big for any file name keeps nothing")
+        let url = library.newURL(for: marked)
+        try library.write(try song(marked), to: url)
+        let moved = try library.rename(url, to: tones)
+        XCTAssertNotEqual(moved.lastPathComponent, url.lastPathComponent)
+        XCTAssertEqual(try library.list().count, 1)
+        XCTAssertEqual(try library.read(moved).name, marked)
+    }
+
     func testReadingSomethingElseFailsClearly() throws {
         let folder = directory.appendingPathComponent("Nope.echoel")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

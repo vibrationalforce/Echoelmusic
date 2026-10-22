@@ -47,6 +47,11 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 1 (wf_b6a5d286-f55): REWORK, ein Major (ein einzelner takeInFlight-Schalter ließ einen Take den anderen freigeben) und zehn Minors über vier Linsen; Nacharbeit 1 in 840643342, Antwort je Befund in reviews/round-1/rebuttal.md. Runde 2 gestartet (wf_ac2238b4-7c1)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 2 (wf_ac2238b4-7c1): REWORK, ein Major (Dateiname in Zeichen statt Bytes begrenzt — ein gültiger Name konnte 255 Bytes sprengen und den Start-Song unschreibbar machen) und fünf Minors; code, ux und ui-state PASS. Nacharbeit 2, Antwort je Befund in reviews/round-2/rebuttal.md. outsideScope: dab7568c7 (TODO-Runden), nicht Teil des Jobs."
   }
  ],
  "head": "84064334258aee2d8317912b3a0b7aaef597bb4d",
