@@ -232,8 +232,8 @@ public enum AgentTools {
         }
     }
 
-    /// A parameter by its plain name on a track or the master: volume, pan, or one of the synth's
-    /// (cutoff, resonance …).
+    /// A parameter by its plain name on a track or the master: volume, pan, or a row of the device
+    /// the track plays (the synth's cutoff, resonance …; the sampler's root key …; the kit's level).
     public static func parameter(_ name: String, on reference: String, in project: Project) throws -> ParameterAddress {
         let key = name.lowercased().filter(\.isLetter)
         if reference.lowercased() == "master" {
@@ -251,12 +251,12 @@ public enum AgentTools {
         }
         let aliases = ["filter": "cutoff", "filtercutoff": "cutoff", "res": "resonance", "envelope": "filterenvelope"]
         let wanted = aliases[key] ?? key
-        if target.kind == .instrument, target.instrument.device == .synth,
-           let synth = SynthParameter.all.first(where: { $0.title.lowercased().filter(\.isLetter) == wanted }) {
-            return ParameterAddress(.track(target.id), synth.key)
+        // The rows of the device the track plays: what its lanes play and the Automate menu lists.
+        let rows = target.kind == .instrument ? target.instrument.device.parameters : []
+        if let row = rows.first(where: { $0.title.lowercased().filter(\.isLetter) == wanted }) {
+            return ParameterAddress(.track(target.id), row.key)
         }
-        let names = ["volume", "pan"] + (target.instrument.device == .synth && target.kind == .instrument
-                                          ? SynthParameter.all.map { $0.title.lowercased() } : [])
+        let names = ["volume", "pan"] + rows.map { $0.title.lowercased() }
         throw AgentError.invalid("Track \"\(target.name)\" has no parameter \"\(name)\". It has: \(names.joined(separator: ", ")).")
     }
 

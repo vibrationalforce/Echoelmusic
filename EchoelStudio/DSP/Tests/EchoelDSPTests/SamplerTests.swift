@@ -137,4 +137,34 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(read(elapsed: -10, count: 137) + read(elapsed: 127, count: 363), whole)
     }
 
+    /// A level moved while a note sounds glides there in about 5 ms instead of stepping, the way
+    /// an automation lane moves it; at rest the voices play the level itself.
+    func testAMovedLevelGlidesWhileANoteSounds() throws {
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: 48_000))
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(buffer)
+        sampler.noteOn(pitch: 60, velocity: 127)
+        let held = render(&sampler, frames: 1_000)
+        XCTAssertEqual(held[999], 0.5, accuracy: 1e-4, "full level at rest")
+        var quiet = flat()
+        quiet.level = 0
+        sampler.setPatch(quiet)
+        let fading = render(&sampler, frames: 4_800)
+        let jumps: [Float] = zip(fading.dropFirst(), fading).map { (pair: (Float, Float)) -> Float in abs(pair.0 - pair.1) }
+        XCTAssertLessThan(jumps.max() ?? 1, 0.01, "no frame steps")
+        XCTAssertLessThan(abs(fading[0] - held[999]), 0.01, "the first frame continues from the held level")
+        XCTAssertEqual(fading[4_799], 0, accuracy: 1e-5, "and 100 ms later it is silent")
+    }
+
+    /// A note on a silent sampler starts at the level set while it was silent.
+    func testANoteOnASilentSamplerStartsAtItsLevel() throws {
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: 48_000))
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(buffer)
+        var quiet = flat()
+        quiet.level = 0
+        sampler.setPatch(quiet)
+        sampler.noteOn(pitch: 60, velocity: 127)
+        XCTAssertTrue(render(&sampler, frames: 480).allSatisfy { $0 == 0 }, "silent from the first frame")
+    }
 }

@@ -46,4 +46,22 @@ final class DrumKernelTests: XCTestCase {
         kernel.receive(status: 0x90, 38, 127)
         XCTAssertEqual(peak(render(kernel, frames: 2_400, gain: 0).0), 0)
     }
+
+    /// The app's engine renders no silent kernel, so a level set in a break has to reach the next
+    /// hit from its first sample instead of gliding in after the transient.
+    func testAHitOnASilentKitStartsAtTheLevelSetWhileItWasSilent() {
+        let muted = DrumKernel(sampleRate: 48_000, maximumFrames: 4_096, level: 1)
+        muted.setParameter(0, 0)
+        muted.receive(status: 0x90, 36, 127)
+        XCTAssertEqual(peak(render(muted, frames: 480).0), 0, "the kick is silent from its first sample")
+
+        let raised = DrumKernel(sampleRate: 48_000, maximumFrames: 4_096, level: 0)
+        raised.setParameter(0, 1)
+        raised.receive(status: 0x90, 36, 127)
+        let reference = DrumKernel(sampleRate: 48_000, maximumFrames: 4_096, level: 1)
+        reference.receive(status: 0x90, 36, 127)
+        let expected: [Float] = render(reference, frames: 480).0
+        XCTAssertGreaterThan(peak(expected), 0.05, "the reference kick sounds")
+        XCTAssertEqual(render(raised, frames: 480).0, expected, "a level raised in a break plays the next hit at that level")
+    }
 }

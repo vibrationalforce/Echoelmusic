@@ -447,7 +447,7 @@ struct AutomateTool: Tool {
     struct Arguments {
         @Guide(description: "The track's name or number, or master.")
         var track: String
-        @Guide(description: "volume, pan, or a synth parameter: cutoff, resonance, filter envelope, attack, decay, sustain, release, level.")
+        @Guide(description: "volume, pan, or a parameter of the track's instrument. Synth: cutoff, resonance, filter envelope, attack, decay, sustain, release, level. Sampler: root key, attack, release, level, mode. Drums: level.")
         var parameter: String
         @Guide(description: "The bar the movement starts at.")
         var fromBar: Int

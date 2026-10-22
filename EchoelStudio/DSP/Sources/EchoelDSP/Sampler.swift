@@ -91,12 +91,24 @@ public struct Sampler: Sendable {
     private var voices: [SamplerVoice]
     private let sampleRate: Float
     private var nextOrder: UInt64 = 0
+    /// The level the voices play at. It glides toward `patch.level` in about 5 ms, as the synth's
+    /// level and the kit's do, so a moved or automated level never steps; a note on a silent
+    /// sampler starts at the level instead of gliding to it.
+    private var levelNow: Float
+    private let levelGlide: Float
 
     public init(patch: SamplerPatch = SamplerPatch(), voiceCount: Int = defaultVoiceCount, sampleRate: Float = 48_000) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.patch = patch
         self.sampleRate = rate
         voices = Array(repeating: SamplerVoice(envelope: patch.envelope, sampleRate: rate), count: Swift.max(1, voiceCount))
+        levelNow = Self.playable(patch.level)
+        levelGlide = 1 - expf(-1 / (0.005 * rate))
+    }
+
+    /// A level the voices can play: 0 … 1, and silence for a value that is not finite.
+    private static func playable(_ level: Float) -> Float {
+        level.isFinite ? Swift.min(Swift.max(level, 0), 1) : 0
     }
 
     public var activeVoiceCount: Int { voices.reduce(0) { $0 + ($1.isActive ? 1 : 0) } }
@@ -112,10 +124,12 @@ public struct Sampler: Sendable {
     public mutating func setPatch(_ patch: SamplerPatch) {
         self.patch = patch
         for i in voices.indices { voices[i].envelope.update(patch.envelope) }
+        if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
     }
 
     public mutating func noteOn(pitch: UInt8, velocity: UInt8) {
         guard let sample, velocity > 0 else { return }
+        if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
         nextOrder &+= 1
         let index = voiceIndex(for: pitch)
         let semitones = Double(Int(Swift.min(pitch, 127)) - Int(sample.rootPitch))
@@ -139,13 +153,24 @@ public struct Sampler: Sendable {
         for i in voices.indices { voices[i].silence() }
     }
 
-    /// Adds every sounding voice into `buffer`; the caller clears it first.
+    /// Adds every sounding voice into `buffer`; the caller clears it first. While the level
+    /// glides it moves in a straight line across the buffer; at rest every frame gets the level
+    /// itself, exactly.
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard let sample, !buffer.isEmpty else { return }
-        let level = patch.level.isFinite ? Swift.min(Swift.max(patch.level, 0), 1) : 0
+        let target = Self.playable(patch.level)
+        let start = levelNow
+        var step: Float = 0
+        if start != target {
+            var end = target + (start - target) * powf(1 - levelGlide, Float(buffer.count))
+            // A Float glide stalls just short of its target; close enough is the target.
+            if Swift.abs(end - target) < 1e-6 || !end.isFinite { end = target }
+            step = (end - start) / Float(buffer.count)
+            levelNow = end
+        }
         voices.withUnsafeMutableBufferPointer { all in
             for i in all.indices where all[i].isActive {
-                all[i].render(into: buffer, sample: sample, level: level)
+                all[i].render(into: buffer, sample: sample, level: start, step: step)
             }
         }
     }
@@ -218,8 +243,9 @@ struct SamplerVoice: Sendable {
         envelope.kill()
     }
 
+    /// Frame `i` of `buffer` plays at `level + step × i`.
     @inline(__always)
-    mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, sample: SampleBuffer, level: Float) {
+    mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, sample: SampleBuffer, level: Float, step: Float) {
         let last = sample.frameCount - 1
         var first = buffer.startIndex
         if fadeLeft > 0 {
@@ -234,7 +260,7 @@ struct SamplerVoice: Sendable {
                 let b = index < last ? sample.frames[index + 1] : a
                 let t = Float(fadePosition - Double(index))
                 let ramp = Float(fadeLeft) / Float(Self.stealFadeFrames)
-                buffer[first] += (a + (b - a) * t) * fadeGain * ramp * level
+                buffer[first] += (a + (b - a) * t) * fadeGain * ramp * (level + step * Float(first - buffer.startIndex))
                 fadePosition += fadeIncrement
                 fadeLeft -= 1
                 first += 1
@@ -253,7 +279,7 @@ struct SamplerVoice: Sendable {
             let a = sample.frames[index]
             let b = index < last ? sample.frames[index + 1] : a
             let t = Float(position - Double(index))
-            buffer[i] += (a + (b - a) * t) * envelope.next() * gain * level
+            buffer[i] += (a + (b - a) * t) * envelope.next() * gain * (level + step * Float(i - buffer.startIndex))
             position += increment
             if !envelope.isActive { return }
         }

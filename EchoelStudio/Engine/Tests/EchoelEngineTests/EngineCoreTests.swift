@@ -781,6 +781,39 @@ final class EngineCoreTests: XCTestCase {
                                       sampleRate: rate, generation: 1)
         XCTAssertEqual(snapshot.lanes.first?.patchLanes.count, 0, "the sampler's lanes wait in the song while the synth plays")
     }
+
+    /// A key played the moment the transport starts hears the root-key lane, not the stored root
+    /// the snapshot just put back: the sampler fixes a note's pitch when the note starts.
+    func testALiveNoteHearsTheRootKeyLaneFromTheFirstBlock() throws {
+        let buffer = try XCTUnwrap(SampleBuffer(samples: (0..<4_800).map { (index: Int) -> Float in
+            Float(sin(2 * Double.pi * 220 * Double(index) / 48_000))
+        }, sampleRate: rate, rootPitch: 60))
+        func heard(root: Double, lane: Double?) throws -> [Float] {
+            var s = try song([[]])
+            let track = s.tracks[0]
+            let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: 4_800, sampleRate: rate)
+            try Command.addMedia(media).apply(to: &s.project)
+            try Command.setInstrumentDevice(track, .sampler).apply(to: &s.project)
+            try Command.setInstrumentSample(track, media.id).apply(to: &s.project)
+            try Command.setInstrumentParameter(track, key: SynthParameter.samplerRoot.key.rawValue, value: root).apply(to: &s.project)
+            if let lane {
+                try Command.setAutomation(ParameterAddress(.track(track), SynthParameter.samplerRoot.key),
+                                          points: [AutomationPoint(tick: 0, value: lane)]).apply(to: &s.project)
+            }
+            var slots = SlotAssigner(capacity: 32)
+            slots.update(for: s.project)
+            let slot = try XCTUnwrap(slots.slots[track])
+            let engine = core()
+            engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                          sampleRate: rate, generation: 1, samples: [media.id: buffer]))
+            engine.play()
+            engine.playLive(slot: slot, status: 0x90, 60, 100)
+            return render(engine, frames: 4_800).left
+        }
+        let expected = try heard(root: 72, lane: nil)
+        XCTAssertGreaterThan(expected.map { Swift.abs($0) }.max() ?? 0, 0.01, "the reference sounds")
+        XCTAssertEqual(try heard(root: 60, lane: 72), expected, "the live note plays at the lane's root key")
+    }
 }
 
 final class InstrumentPatchTests: XCTestCase {

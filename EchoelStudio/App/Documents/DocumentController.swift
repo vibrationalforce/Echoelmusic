@@ -868,7 +868,11 @@ final class DocumentController {
         let result: Result<[String], Error> = await Task.detached(priority: .userInitiated) {
             Result { try ProjectLibrary.shareableCopy(of: project, mediaIn: package, at: target) }
         }.value
-        guard sharedSong == songsOpened else { return exportStopped(songName) }
+        guard sharedSong == songsOpened else {
+            // The copy of the earlier song is shared with nobody; it does not stay behind.
+            if case .success = result { try? FileManager.default.removeItem(at: target) }
+            return exportStopped(songName)
+        }
         switch result {
         case .success(let missing):
             lastExportIsNews = false

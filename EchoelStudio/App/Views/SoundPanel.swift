@@ -49,6 +49,11 @@ struct SoundPanel: View {
             .padding(Theme.Space.l)
         }
         .background(Theme.Color.background)
+        // On the page, not on a picker: a device switch swaps the picker out, and a new view's
+        // `onChange` never fires for the value it appears with.
+        .onChange(of: writer.isWriting && engine.isPlaying) { _, on in if !on { passPick = nil } }
+        .onChange(of: track.id) { passPick = nil }
+        .onChange(of: track.instrument.device) { passPick = nil }
         .fileImporter(isPresented: $isPickingFile, allowedContentTypes: [.audio]) { result in
             guard case .success(let url) = result else { return }
             let target = track.id
@@ -223,8 +228,5 @@ struct SoundPanel: View {
         }
         .pickerStyle(.segmented)
         .accessibilityLabel(parameter.title)
-        .onChange(of: writing) { _, on in if !on { passPick = nil } }
-        .onChange(of: track.id) { passPick = nil }
-        .onChange(of: track.instrument.device) { passPick = nil }
     }
 }

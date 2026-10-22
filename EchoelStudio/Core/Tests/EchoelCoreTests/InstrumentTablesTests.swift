@@ -36,6 +36,23 @@ final class InstrumentTablesTests: XCTestCase {
         }
     }
 
+    /// A lane on a device the track no longer plays waits in the song, silent; its title says so,
+    /// so it never reads like the playing device's lane of the same name.
+    func testALaneOfADeviceThatIsNotPlayingIsNamedForThatDevice() throws {
+        var project = Project()
+        let track = TrackID()
+        try Command.addTrack(id: track, name: "Beat", kind: .instrument, index: nil).apply(to: &project)
+        let synthLevel = ParameterAddress(.track(track), SynthParameter.level.key)
+        try Command.setAutomation(synthLevel, points: [AutomationPoint(tick: 0, value: 0.5)]).apply(to: &project)
+        XCTAssertEqual(project.descriptor(for: synthLevel)?.title, "Beat Level", "the playing synth's row keeps its name")
+        try Command.setInstrumentDevice(track, .drums).apply(to: &project)
+        XCTAssertEqual(project.descriptor(for: synthLevel)?.title, "Beat Synth Level (not playing)")
+        let drumsLevel = ParameterAddress(.track(track), SynthParameter.drumsLevel.key)
+        XCTAssertEqual(project.descriptor(for: drumsLevel)?.title, "Beat Level", "the kit's row, which plays, keeps the plain name")
+        XCTAssertEqual(project.parameters.filter { $0.address.owner == .track(track) }.map(\.title).filter { $0.contains("Level") },
+                       ["Beat Level"], "the menu offers only the playing row")
+    }
+
     func testNoTwoDevicesShareAKey() {
         // A track keeps one `values` dictionary whatever its device, so keys must be unique across tables.
         let keys = InstrumentDevice.allCases.flatMap(\.parameters).map(\.key)
@@ -74,7 +91,10 @@ final class InstrumentTablesTests: XCTestCase {
             try Command.setInstrumentParameter(track, key: row.key.rawValue, value: value).apply(to: &project)
             XCTAssertEqual(project.track(track)?.instrument.values[row.key.rawValue], value, row.key.rawValue)
             XCTAssertEqual(project.value(of: address), value, row.key.rawValue)
-            XCTAssertEqual(project.descriptor(for: address)?.title, "Sampler \(row.title)")
+            // The kit's row on a sampler track names the kit: its lane would be silent here.
+            let playing = InstrumentDevice.sampler.parameters.contains { $0.key == row.key }
+            XCTAssertEqual(project.descriptor(for: address)?.title,
+                           playing ? "Sampler \(row.title)" : "Sampler Drums \(row.title) (not playing)")
             XCTAssertNotNil(Command.setParameter(address, to: row.defaultValue), row.key.rawValue)
             XCTAssertNoThrow(try project.validate(), row.key.rawValue)
             let before = project

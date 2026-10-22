@@ -93,6 +93,9 @@ public final class EngineCore: @unchecked Sendable {
     private static var nothingToFade: Int64 { .min }
     /// A tempo change moved the playhead this chunk; the audio lanes crossfade across it.
     private var remapped = false
+    /// A snapshot put the stored values back into the kernels this chunk, over what the lanes had
+    /// set; a live note must not hear them before the next automation step.
+    private var patchesReset = false
     /// One stereo bus per slot, `maximumFrames` each: a track renders into its bus, its inserts
     /// process the bus, then the bus is mixed at the track's gains. Plus one bus audio tracks
     /// take in turn.
@@ -483,6 +486,15 @@ public final class EngineCore: @unchecked Sendable {
             playhead = moved
             position.store(playhead, ordering: .relaxed)
         }
+        // A live note hears the lanes' values at the playhead: not the stored values a snapshot put
+        // back this chunk, nor what the kernels held before a start or a seek. The sampler fixes a
+        // note's pitch when it starts. Only then: in any other chunk the lanes already hold their
+        // values, and setting them here again would make the sound depend on the block size.
+        let patchesMoved = patchesReset || seek >= 0 || !wasPlaying
+        patchesReset = false
+        if patchesMoved, isPlayingFlag.load(ordering: .acquiring), let snapshot = current?.snapshot, snapshot.automatesPatches {
+            applyPatchAutomation(snapshot, at: snapshot.time.position(atSample: playhead))
+        }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)
         let clocking = clockFlag.load(ordering: .relaxed)
@@ -871,6 +883,7 @@ public final class EngineCore: @unchecked Sendable {
                 builtIn.commitParameters()
             }
         }
+        patchesReset = true
         // Only a track whose notes changed lets go of what it holds: a deleted note must not
         // hang, but a fader, a pan or a send must not cut a held chord.
         for lane in snapshot.lanes where revisions[lane.slot] != lane.eventsRevision {

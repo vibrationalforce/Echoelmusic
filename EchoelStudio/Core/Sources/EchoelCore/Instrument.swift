@@ -170,8 +170,9 @@ public struct SynthParameter: Sendable, Equatable {
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
 
-    /// The synth's row for `key`. Only the synth's: the ones a lane plays and `Project.parameters`
-    /// lists. What a command may write and a song stores is `builtIn`.
+    /// The synth's row for `key`; nil for a drums or sampler key. A lane plays, and
+    /// `Project.parameters` lists, the rows of the device a track plays
+    /// (`InstrumentDevice.parameters`); what a command may write and a song stores is `builtIn`.
     public static func named(_ key: ParameterKey) -> SynthParameter? {
         all.first { $0.key == key }
     }
@@ -205,9 +206,16 @@ public struct SynthParameter: Sendable, Equatable {
         self.choices = choices
     }
 
+    /// A row of a device the track does not play names that device and says so: its lane waits
+    /// in the song, silent, and must not read like the playing device's row of the same title.
     func descriptor(track: Track) -> ParameterDescriptor {
-        ParameterDescriptor(address: ParameterAddress(.track(track.id), key), title: "\(track.name) \(title)",
-                            unit: unit, range: range, defaultValue: songDefault, taper: taper, choices: choices)
+        var name = "\(track.name) \(title)"
+        if !track.instrument.device.parameters.contains(where: { $0.key == key }),
+           let owner = InstrumentDevice.builtIn.first(where: { $0.parameters.contains { $0.key == key } }) {
+            name = "\(track.name) \(owner.title) \(title) (not playing)"
+        }
+        return ParameterDescriptor(address: ParameterAddress(.track(track.id), key), title: name,
+                                   unit: unit, range: range, defaultValue: songDefault, taper: taper, choices: choices)
     }
 
     /// Whether `value` is one this parameter accepts.

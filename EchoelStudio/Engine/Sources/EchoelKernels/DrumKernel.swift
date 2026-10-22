@@ -67,9 +67,14 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     public func reset() { kit.reset() }
 
     /// Note on plays a piece; note off is ignored (drums are one-shots); CC 120 silences the kit.
+    /// A hit on a silent kit starts at the level, not gliding from an old one: the app's engine
+    /// renders no silent kernel, so a level set in a break would otherwise reach the next hit
+    /// only after its transient.
     public func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         switch status & 0xF0 {
-        case 0x90: kit.noteOn(pitch: data1 & 0x7F, velocity: data2 & 0x7F)
+        case 0x90:
+            if !isSounding { gain = Float(bitPattern: level.load(ordering: .relaxed)) }
+            kit.noteOn(pitch: data1 & 0x7F, velocity: data2 & 0x7F)
         case 0xB0 where data1 == 120: kit.reset()
         default: break
         }

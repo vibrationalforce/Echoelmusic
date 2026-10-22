@@ -184,6 +184,29 @@ final class AgentToolsTests: XCTestCase {
         }
     }
 
+    /// A parameter is found among the rows of the device the track plays, the rows its lanes play
+    /// and the Automate menu lists: the sampler's and the kit's too, not only the synth's.
+    func testAParameterIsFoundAmongThePlayingDevicesRows() throws {
+        var project = Project()
+        let beat = TrackID(), loop = TrackID(), keys = TrackID()
+        try Command.addTrack(id: beat, name: "Beat", kind: .instrument, index: nil).apply(to: &project)
+        try Command.addTrack(id: loop, name: "Loop", kind: .instrument, index: nil).apply(to: &project)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.setInstrumentDevice(beat, .drums).apply(to: &project)
+        try Command.setInstrumentDevice(loop, .sampler).apply(to: &project)
+        XCTAssertEqual(try AgentTools.parameter("level", on: "Beat", in: project),
+                       ParameterAddress(.track(beat), SynthParameter.drumsLevel.key))
+        XCTAssertEqual(try AgentTools.parameter("Root Key", on: "Loop", in: project),
+                       ParameterAddress(.track(loop), SynthParameter.samplerRoot.key))
+        XCTAssertEqual(try AgentTools.parameter("level", on: "Loop", in: project),
+                       ParameterAddress(.track(loop), SynthParameter.samplerLevel.key))
+        XCTAssertEqual(try AgentTools.parameter("filter", on: "Keys", in: project),
+                       ParameterAddress(.track(keys), SynthParameter.cutoff.key))
+        XCTAssertThrowsError(try AgentTools.parameter("cutoff", on: "Loop", in: project)) { error in
+            XCTAssertTrue(String(describing: error).contains("root key"), "the refusal names the sampler's rows")
+        }
+    }
+
     func testNoteNamesAndDrumNames() {
         XCTAssertEqual(AgentTools.pitch("C4"), 60)
         XCTAssertEqual(AgentTools.pitch("a4"), 69)
