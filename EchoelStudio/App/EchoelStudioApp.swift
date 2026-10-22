@@ -104,12 +104,10 @@ struct EchoelStudioApp: App {
 }
 
 extension Project {
-    /// A new project opens with one instrument track and one scene, so the first thing a
-    /// musician sees is a place to play, not an empty screen.
+    /// A new project opens as the empty starter (`StarterProject` in Core, pinned by its golden),
+    /// so the first thing a musician sees is a place to play, not an empty screen. Its commands
+    /// cannot fail on a new song; if one ever did, the song would open empty instead of stopping.
     static func starter() -> Project {
-        var project = Project(name: "New Song")
-        try? Command.addTrack(id: TrackID(), name: "Instrument 1", kind: .instrument, index: nil).apply(to: &project)
-        try? Command.addScene(id: SceneID(), name: "Scene 1", index: nil).apply(to: &project)
-        return project
+        (try? StarterProject.empty.project()) ?? Project(name: "New Song")
     }
 }
