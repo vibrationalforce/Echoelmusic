@@ -121,6 +121,13 @@ final class InstrumentPathTests: XCTestCase {
         return out.map { $0 * level }
     }
 
+    /// `frames` of a DSP voice rendered directly, from where it stands.
+    private func rendered<Voice: Played>(_ voice: inout Voice, frames: Int) -> [Float] {
+        var out = [Float](repeating: 0, count: frames)
+        out.withUnsafeMutableBufferPointer { voice.render(into: $0) }
+        return out
+    }
+
     /// Bit for bit, naming the first sample that differs instead of printing two long arrays.
     private func assertSame(_ heard: [Float], _ expected: [Float], _ what: String,
                             file: StaticString = #filePath, line: UInt = #line) {
@@ -284,6 +291,140 @@ final class InstrumentPathTests: XCTestCase {
         }
         XCTAssertGreaterThan(peak(heard[0]), 0.01, "track B plays its note")
         assertSame(heard[1], heard[0], "track B after a track that bent, vibrated and held the pedal")
+    }
+
+    /// The kit and the sampler start silent on a slot handed to a new track of their kind too. For
+    /// a sampler on the same file the reset is all that cuts the old voice: the sample the new
+    /// track hands it is the one it already plays.
+    func testASlotHandedToANewDrumOrSamplerTrackStartsSilent() throws {
+        for device in [InstrumentDevice.drums, .sampler] {
+            // A crash in the kit (it falls by e in 0.8 s), a long note on the sampler.
+            var first = try tune([Note(pitch: device == .drums ? 49 : 60, velocity: 127, start: 0, length: 4 * bar)],
+                                 device: device)
+            if device == .sampler { try load([Float](repeating: 0.5, count: 96_000), into: &first) }
+            var second = first
+            let other = TrackID(), clip = ClipID()
+            try Command.removeTrack(first.track).apply(to: &second.project)
+            try Command.addTrack(id: other, name: "B", kind: .instrument, index: nil).apply(to: &second.project)
+            try Command.setInstrumentDevice(other, device).apply(to: &second.project)
+            if let media = second.samples.keys.first {
+                try Command.setInstrumentSample(other, media).apply(to: &second.project)
+            }
+            try Command.createClip(track: other, id: clip, name: "C", length: bar).apply(to: &second.project)
+            try Command.placeClip(track: other, id: PlacementID(), clip: clip, start: 0).apply(to: &second.project)
+            second.track = other
+            let core = engine()
+            publish(first, to: core)
+            core.play()
+            XCTAssertGreaterThan(peak(Array(render(core, frames: 12_000).suffix(1_000))), 0.001, "\(device): track A sounds")
+            publish(second, to: core)
+            XCTAssertNil(firstSound(render(core, frames: 4_800)), "\(device): track B does not inherit A's sound")
+        }
+    }
+
+    /// Played live, the kit and the sampler sound exactly as their DSP voices: the kit ignores a
+    /// note-off and stops at all sound off; the sampler releases on a note-off and on a note-on at
+    /// velocity 0 alike.
+    func testTheKitAndTheSamplerPlayedLiveSoundLikeTheirVoices() throws {
+        let drums = try tune([], device: .drums)
+        var kit = DrumKit(sampleRate: Float(rate))
+        kit.noteOn(pitch: 46, velocity: 100)
+        var kitExpected = rendered(&kit, frames: 4_800)
+        kit.noteOn(pitch: 42, velocity: 90)
+        kitExpected += rendered(&kit, frames: 2_400)
+        kit.reset()
+        kitExpected += rendered(&kit, frames: 1_200)
+        let kitLevel = try gain(drums)
+        kitExpected = kitExpected.map { $0 * kitLevel }
+
+        let kitCore = engine()
+        publish(drums, to: kitCore)
+        _ = render(kitCore, frames: 256)
+        kitCore.playLive(slot: 0, status: 0x90, 46, 100)
+        var kitHeard = render(kitCore, frames: 2_400)
+        kitCore.playLive(slot: 0, status: 0x80, 46, 0)
+        kitHeard += render(kitCore, frames: 2_400)
+        kitCore.playLive(slot: 0, status: 0x90, 42, 90)
+        kitHeard += render(kitCore, frames: 2_400)
+        kitCore.playLive(slot: 0, status: 0xB0, 120, 0)
+        kitHeard += render(kitCore, frames: 1_200)
+        XCTAssertGreaterThan(peak(kitExpected), 0.01, "the kit plays")
+        assertSame(kitHeard, kitExpected, "the kit played live")
+
+        var sampled = try tune([], device: .sampler)
+        let tone: [Float] = (0..<48_000).map { (index: Int) -> Float in
+            let seconds = Double(index) / 48_000
+            return Float(sin(2 * Double.pi * 220 * seconds))
+        }
+        try load(tone, into: &sampled)
+        var sampler = Sampler(sampleRate: Float(rate))
+        sampler.setSample(try XCTUnwrap(sampled.samples.values.first))
+        sampler.noteOn(pitch: 60, velocity: 100)
+        var samplerExpected = rendered(&sampler, frames: 2_400)
+        sampler.noteOff(pitch: 60)
+        samplerExpected += rendered(&sampler, frames: 4_800)
+        sampler.noteOn(pitch: 64, velocity: 90)
+        samplerExpected += rendered(&sampler, frames: 2_400)
+        sampler.noteOff(pitch: 64)
+        samplerExpected += rendered(&sampler, frames: 4_800)
+        let samplerLevel = try gain(sampled)
+        samplerExpected = samplerExpected.map { $0 * samplerLevel }
+
+        let samplerCore = engine()
+        publish(sampled, to: samplerCore)
+        _ = render(samplerCore, frames: 256)
+        samplerCore.playLive(slot: 0, status: 0x90, 60, 100)
+        var samplerHeard = render(samplerCore, frames: 2_400)
+        samplerCore.playLive(slot: 0, status: 0x80, 60, 0)
+        samplerHeard += render(samplerCore, frames: 4_800)
+        samplerCore.playLive(slot: 0, status: 0x90, 64, 90)
+        samplerHeard += render(samplerCore, frames: 2_400)
+        samplerCore.playLive(slot: 0, status: 0x90, 64, 0)
+        samplerHeard += render(samplerCore, frames: 4_800)
+        XCTAssertGreaterThan(peak(samplerExpected), 0.01, "the sampler plays")
+        assertSame(samplerHeard, samplerExpected, "the sampler played live")
+    }
+
+    /// A sound changed while a note is held reaches the note at once and does not release it —
+    /// the publish the app sends, which numbers each track's events so that an unchanged track is
+    /// not silenced.
+    func testASoundChangedWhileANoteIsHeldReachesItWithoutARelease() throws {
+        let held = try tune([Note(pitch: 48, velocity: 100, start: 0, length: 4 * bar)])
+        var changed = held
+        let changes: [(SynthParameter, Double)] = [(.waveform, 1), (.cutoff, 2_500), (.release, 0.05)]
+        for (parameter, value) in changes {
+            try Command.setInstrumentParameter(changed.track, key: parameter.key.rawValue, value: value)
+                .apply(to: &changed.project)
+        }
+        var synth = PolySynth(sampleRate: Float(rate))
+        let before = SynthPatch(try XCTUnwrap(held.project.track(held.track)).instrument)
+        if synth.patch != before { synth.setPatch(before) }
+        synth.noteOn(pitch: 48, velocity: 100)
+        var expected = rendered(&synth, frames: 6_000)
+        let after = SynthPatch(try XCTUnwrap(changed.project.track(changed.track)).instrument)
+        if synth.patch != after { synth.setPatch(after) }
+        expected += rendered(&synth, frames: 9_600)
+        let level = try gain(held)
+        expected = expected.map { $0 * level }
+
+        let core = engine()
+        var revisions = EventRevisions()
+        var slots = SlotAssigner(capacity: core.slotCapacity)
+        slots.update(for: held.project)
+        let plan = PlaybackPlan(compiling: held.project)
+        generation += 1
+        core.publish(EngineSnapshot(plan: plan, project: held.project, slots: slots.slots, sampleRate: rate,
+                                    generation: generation, revisions: revisions.update(for: plan)))
+        core.play()
+        var heard = render(core, frames: 6_000)
+        slots.update(for: changed.project)
+        let next = PlaybackPlan(compiling: changed.project)
+        generation += 1
+        core.publish(EngineSnapshot(plan: next, project: changed.project, slots: slots.slots, sampleRate: rate,
+                                    generation: generation, revisions: revisions.update(for: next)))
+        heard += render(core, frames: 9_600)
+        XCTAssertGreaterThan(peak(expected), 0.01, "the reference sounds")
+        assertSame(heard, expected, "the held note with the new sound, not released")
     }
 
     /// Drums are one-shots: stopping and seeking release held notes but let a hit ring out, and
