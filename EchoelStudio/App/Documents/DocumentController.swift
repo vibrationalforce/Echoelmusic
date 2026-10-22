@@ -22,6 +22,8 @@ final class DocumentController {
     /// clearing this with `lastError` hid the one message about losing work (review 2026-10-22).
     private(set) var saveError: String?
     private(set) var isExporting = false
+    /// Which step of a running export is under way, for the status line; nil when it has only one.
+    private(set) var exportProgress: String?
     /// How loud the open song's last WAV export came out, for the status line; nil before one.
     private(set) var lastExportLoudness: (integrated: Double, truePeak: Double)?
     /// The export just finished and nothing has played since. Then its loudness shows under a
@@ -581,18 +583,7 @@ final class DocumentController {
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
         let buffers = samples
-        // A file the arrangement plays that did not decode renders as silence: the export says
-        // which. Only what it plays — a region, a placed audio clip, a sampler's sample; a file
-        // left in the song by a deleted region, or played only in the session, is not in the file
-        // (review 2026-10-22).
-        let played = Set(project.tracks.flatMap { track -> [MediaID] in
-            let placed = Set(track.placements.map(\.clip))
-            var media = track.regions.map(\.media)
-            media += track.clips.filter { placed.contains($0.id) }.compactMap { $0.audio?.media }
-            if track.instrument.device == .sampler, let sample = track.instrument.sample { media.append(sample) }
-            return media
-        })
-        let unread = project.media.filter { played.contains($0.id) && buffers[$0.id] == nil }.map(\.name)
+        let unread = Self.unreadMedia(in: project, buffers: buffers)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
@@ -629,16 +620,7 @@ final class DocumentController {
         case .success(let meter):
             lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
             lastExportIsNews = true
-            var without: [String] = []
-            if !offline.missing.isEmpty {
-                without.append("Exported without \(offline.missing.joined(separator: ", ")): not available on this device.")
-            }
-            if !unread.isEmpty {
-                let shown = unread.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
-                let more = unread.count > 3 ? " and \(unread.count - 3) more" : ""
-                without.append("Exported without the audio \(unread.count == 1 ? "file" : "files") \(shown)\(more): missing or unreadable in the song.")
-            }
-            lastError = without.isEmpty ? nil : without.joined(separator: " ")
+            lastError = Self.exportedWithout(plugins: offline.missing, audio: unread)
             return url
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .public)")
@@ -649,6 +631,144 @@ final class DocumentController {
                 : "Could not export the song."
             return nil
         }
+    }
+
+    /// Renders each stem of the open song (`OfflineRender.stems`) to a 24-bit WAV in one folder
+    /// named after the song, every file at the mix's length so they line up at bar 1 in any DAW,
+    /// with the song's MIDI file beside them when the arrangement plays a note. Returns the folder
+    /// for the share sheet. The stems leave out the master's inserts: they add up to the mix
+    /// before those. Each render loads its plugins afresh, so no stem starts with a tail an
+    /// earlier render left in an effect.
+    func exportStems(plugins: PluginHost) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        defer {
+            isExporting = false
+            exportProgress = nil
+        }
+        let rate = 48_000.0
+        let exportedSong = songsOpened
+        let songName = currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
+        await mediaLoaded(for: exportedSong)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        try? store.absorb(plugins.captureCommands(for: store.project))
+        let project = store.project
+        let buffers = samples
+        let unread = Self.unreadMedia(in: project, buffers: buffers)
+        let stems = OfflineRender.stems(of: project, samples: buffers)
+        guard !stems.isEmpty else {
+            lastExportIsNews = false
+            lastError = "No track that plays is heard in the mix: unmute one to export its stem."
+            return nil
+        }
+        // The folder by the song's file name, as the other lines name songs; a stem left by an
+        // earlier export of a track that is gone must not ride along.
+        let name = ProjectLibrary.safeFileName(for: songName)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+            .appendingPathComponent(name + " Stems", isDirectory: true)
+        exportProgress = "Measuring the song…"
+        let measuring = await plugins.offlineUnits(for: project, sampleRate: rate)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        // The mix's length as the stems sum to it: without the master's inserts.
+        let measured: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
+            Result {
+                let files = FileManager.default
+                if files.fileExists(atPath: folder.path) { try files.removeItem(at: folder) }
+                try files.createDirectory(at: folder, withIntermediateDirectories: true)
+                return OfflineRender.render(project, sampleRate: rate, samples: buffers, units: measuring.units,
+                                            effects: measuring.chains.mapValues { $0 as [any HostedProcessor] }) { _, _, _ in }
+                    .frameCount
+            }
+        }.value
+        var outcome = measured.map { _ in () }
+        // A plugin that loads for one render and not the next is missing from some stems: named.
+        var missing = measuring.missing
+        if case .success(let length) = measured {
+            for (index, stem) in stems.enumerated() {
+                exportProgress = "Exporting stem \(index + 1) of \(stems.count)…"
+                let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
+                guard exportedSong == songsOpened else { break }
+                for plugin in offline.missing where !missing.contains(plugin) { missing.append(plugin) }
+                let url = folder.appendingPathComponent(stem.name).appendingPathExtension("wav")
+                outcome = await Task.detached(priority: .userInitiated) {
+                    Result {
+                        try Self.writeStem(project, isolating: stem.track, frameCount: length, sampleRate: rate,
+                                           samples: buffers, offline: offline, to: url)
+                    }
+                }.value
+                if case .failure = outcome { break }
+            }
+            if case .success = outcome, exportedSong == songsOpened, project.arrangementHasEvents {
+                let file = folder.appendingPathComponent(name).appendingPathExtension("mid")
+                outcome = Result { try MIDIFile.data(for: project).write(to: file, options: .atomic) }
+            }
+        }
+        // Half a set of stems is no export: what was written goes, whatever stopped it.
+        guard exportedSong == songsOpened, case .success = outcome else {
+            try? FileManager.default.removeItem(at: folder)
+            guard exportedSong == songsOpened else { return exportStopped(songName) }
+            if case .failure(let error) = outcome {
+                log.error("stem export failed — \(error.localizedDescription, privacy: .public)")
+                lastExportIsNews = false
+                lastError = error as? WAVWriter.WriteError == .tooLong
+                    ? "The song is longer than a WAV file can hold (about six hours)."
+                    : "Could not export the stems."
+            }
+            return nil
+        }
+        // A set of stems has no one loudness: the line under the transport spoke of an earlier
+        // file, and "Last export" would now name the wrong one.
+        lastExportLoudness = nil
+        lastExportIsNews = false
+        var notes = [Self.exportedWithout(plugins: missing, audio: unread)].compactMap { $0 }
+        if project.masterInserts.contains(where: { !$0.isBypassed }) {
+            notes.append("The stems leave out the master effects: together they are the mix before those.")
+        }
+        lastError = notes.isEmpty ? nil : notes.joined(separator: " ")
+        return folder
+    }
+
+    /// One stem into `url`, block by block, at `frameCount` frames. Off the main thread; a file
+    /// that fails half-written is left for the caller, which removes the whole folder.
+    private nonisolated static func writeStem(_ project: Project, isolating track: TrackID, frameCount: Int,
+                                              sampleRate: Double, samples: [MediaID: SampleBuffer],
+                                              offline: OfflineUnits, to url: URL) throws {
+        let writer = try WAVWriter(url: url, sampleRate: sampleRate)
+        _ = try OfflineRender.render(project, sampleRate: sampleRate, samples: samples, units: offline.units,
+                                     effects: offline.chains.mapValues { $0 as [any HostedProcessor] },
+                                     isolating: track, frameCount: frameCount) { left, right, count in
+            try writer.append(left: left, right: right, count: count)
+        }
+        try writer.finish()
+    }
+
+    /// The audio files the arrangement plays that did not decode, by name: they render as
+    /// silence, and the export says which. Only what it plays — a region, a placed audio clip, a
+    /// sampler's sample; a file left in the song by a deleted region, or played only in the
+    /// session, is not in the file (review 2026-10-22).
+    private static func unreadMedia(in project: Project, buffers: [MediaID: SampleBuffer]) -> [String] {
+        let played = Set(project.tracks.flatMap { track -> [MediaID] in
+            let placed = Set(track.placements.map(\.clip))
+            var media = track.regions.map(\.media)
+            media += track.clips.filter { placed.contains($0.id) }.compactMap { $0.audio?.media }
+            if track.instrument.device == .sampler, let sample = track.instrument.sample { media.append(sample) }
+            return media
+        })
+        return project.media.filter { played.contains($0.id) && buffers[$0.id] == nil }.map(\.name)
+    }
+
+    /// The line naming what an export was made without, or nil when it lacks nothing.
+    private static func exportedWithout(plugins missing: [String], audio unread: [String]) -> String? {
+        var without: [String] = []
+        if !missing.isEmpty {
+            without.append("Exported without \(missing.joined(separator: ", ")): not available on this device.")
+        }
+        if !unread.isEmpty {
+            let shown = unread.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
+            let more = unread.count > 3 ? " and \(unread.count - 3) more" : ""
+            without.append("Exported without the audio \(unread.count == 1 ? "file" : "files") \(shown)\(more): missing or unreadable in the song.")
+        }
+        return without.isEmpty ? nil : without.joined(separator: " ")
     }
 
     /// Returns once the open song's audio files are decoded, also when reopening it started

@@ -177,7 +177,7 @@ struct TransportBar: View {
             // The menu closed and the export may first wait for the song's audio to decode: without
             // this line nothing on screen said anything was under way (review 2026-10-22).
             if documents.isExporting {
-                Text("Exporting the song…")
+                Text(documents.exportProgress ?? "Exporting the song…")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
                     .padding(.bottom, 2)
@@ -470,6 +470,17 @@ struct SongMenu: View {
             }
             // Only the arrangement is rendered: without a note or an audio region in it the file
             // would have no length.
+            .disabled(documents.isExporting || !store.project.arrangementHasSound)
+            // One file per track and return the mix hears, for another DAW.
+            Button("Export Stems", systemImage: "square.stack.3d.up") {
+                Task {
+                    let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
+                    if let folder = await documents.exportStems(plugins: engine.plugins) {
+                        if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
+                        router.sheet = .share(folder)
+                    }
+                }
+            }
             .disabled(documents.isExporting || !store.project.arrangementHasSound)
             Button("Export MIDI", systemImage: "pianokeys") {
                 if let url = documents.exportMIDI() { router.sheet = .share(url) }
