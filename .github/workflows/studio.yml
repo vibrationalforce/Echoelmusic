@@ -40,7 +40,9 @@ jobs:
           EchoelStudio/App/Store/StoreView.swift
           EchoelStudio/Plugins/Shared/PluginLicense.swift
           EchoelStudio/App/Engine/MIDIInput.swift'
-          found=$(git grep -lE '^[[:space:]]*import (Network|StoreKit|MultipeerConnectivity|CloudKit|WebKit|SafariServices)|URLSession|NWConnection|NWListener|NWBrowser|MIDINetworkSession|URLRequest' \
+          # An import in every spelling the import-boundary step below names (an attribute, an access
+          # level, a kind, after a `;`), or one of the APIs by name.
+          found=$(git grep -lE '(^|;)[[:space:]]*((@[A-Za-z_][A-Za-z0-9_]*(\([^)]*\))?|open|public|package|internal|fileprivate|private)[[:space:]]+)*import[[:space:]]+((typealias|struct|class|enum|protocol|let|var|func)[[:space:]]+)?(Network|StoreKit|MultipeerConnectivity|CloudKit|WebKit|SafariServices)|URLSession|NWConnection|NWListener|NWBrowser|MIDINetworkSession|URLRequest' \
                   -- 'EchoelStudio/*.swift' ':!EchoelStudio/**/Tests/**' | sort -u)
           bad=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$allowed" | sed 's/^ *//' | sort -u) | sed '/^$/d')
           if [ -n "$bad" ]; then
@@ -56,28 +58,51 @@ jobs:
       # until its row is widened on purpose. Not a test (Law 8: tests do not read source).
       - name: Imports only where named
         run: |
-          modules() {
-            git grep -hE '^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]' -- "$1/*.swift" \
-              | sed -E 's/^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]+((typealias|struct|class|enum|protocol|let|var|func)[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*).*/\4/' \
-              | sort -u
-          }
-          fail=0
-          check() {
-            dir=$1; shift
-            found=$(modules "$dir")
-            if [ -z "$found" ]; then echo "::error::no import found under $dir — the scan matches nothing"; fail=1; return; fi
-            bad=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$@" | sort -u) | sed '/^$/d')
-            if [ -n "$bad" ]; then echo "::error::$dir imports outside its row: $(echo $bad)"; fail=1; fi
-            echo "$dir: $(echo $found)"
-          }
-          check EchoelStudio/Core/Sources Foundation Observation
-          check EchoelStudio/DSP/Sources Foundation
-          check EchoelStudio/Engine/Sources/EchoelKernels Foundation Synchronization EchoelCore EchoelDSP
-          check EchoelStudio/Engine/Sources/EchoelEngine Foundation Synchronization EchoelCore EchoelDSP EchoelKernels
-          check EchoelStudio/Engine/Sources/EchoelHost Foundation Synchronization EchoelCore EchoelKernels AVFoundation AudioToolbox
-          stray=$(git grep -nE '^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]+EchoelEngine([^A-Za-z0-9_]|$)' -- 'EchoelStudio/Plugins/*.swift' || true)
-          if [ -n "$stray" ]; then echo "::error::the AUv3 extension imports the engine:"; echo "$stray"; fail=1; fi
-          exit $fail
+          python3 - <<'PY'
+          import re, subprocess, sys
+          # Every spelling Swift accepts, not only a bare `import X` at the start of a line: an
+          # attribute with arguments (`@_spi(A)`, `@_implementationOnly`), an access level (SE-0409,
+          # `internal import X`), a kind (`import struct M.T`), an attribute on the line before,
+          # several imports on one line. Comments are removed first.
+          DECLARATION = re.compile(
+              r"(?:^|;)\s*(?:(?:@[A-Za-z_]\w*(?:\([^)]*\))?|open|public|package|internal|fileprivate|private)\s+)*"
+              r"import\s+(?:(?:typealias|struct|class|enum|protocol|let|var|func)\s+)?([A-Za-z_]\w*)", re.M)
+          COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+          def imports(path):
+              files = subprocess.run(["git", "ls-files", "--", path + "/*.swift"], capture_output=True, text=True,
+                                     check=True).stdout.split()
+              return {name: set(DECLARATION.findall(COMMENT.sub(" ", open(name, encoding="utf-8").read())))
+                      for name in files}
+          rows = [
+              ("EchoelStudio/Core/Sources", "Foundation Observation"),
+              ("EchoelStudio/DSP/Sources", "Foundation"),
+              ("EchoelStudio/Engine/Sources/EchoelKernels", "Foundation Synchronization EchoelCore EchoelDSP"),
+              ("EchoelStudio/Engine/Sources/EchoelEngine", "Foundation Synchronization EchoelCore EchoelDSP EchoelKernels"),
+              ("EchoelStudio/Engine/Sources/EchoelHost",
+               "Foundation Synchronization EchoelCore EchoelKernels AVFoundation AudioToolbox"),
+          ]
+          fail = False
+          for path, allowed in rows:
+              found = set().union(*imports(path).values())
+              if not found:
+                  print(f"::error::no import found under {path} — the scan matches nothing")
+                  fail = True
+                  continue
+              bad = sorted(found - set(allowed.split()))
+              if bad:
+                  print(f"::error::{path} imports outside its row: {' '.join(bad)}")
+                  fail = True
+              print(f"{path}: {' '.join(sorted(found))}")
+          plugins = imports("EchoelStudio/Plugins")
+          if not set().union(*plugins.values()):
+              print("::error::no import found under EchoelStudio/Plugins — the scan matches nothing")
+              fail = True
+          stray = sorted(name for name, found in plugins.items() if "EchoelEngine" in found)
+          if stray:
+              print("::error::the AUv3 extension imports the engine: " + " ".join(stray))
+              fail = True
+          sys.exit(1 if fail else 0)
+          PY
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
