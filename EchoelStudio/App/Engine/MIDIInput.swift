@@ -12,9 +12,9 @@ final class LiveRouter: Sendable {
     private struct Target: @unchecked Sendable {
         var core: EngineCore?
         var slot: Int?
-        /// The slot each held key went to, by channel × key; -1 while not held. A key released
-        /// after the live track changed still ends the note it started.
-        var held = [Int8](repeating: -1, count: 16 * 128)
+        /// The held keys, each with the slot and the pitch it sounds: a key released after the
+        /// live track changed still ends the note it started.
+        var keys = LiveKeys()
         /// Slots that last heard the sustain pedal down: lifting it releases them all.
         var pedalDown: UInt64 = 0
     }
@@ -59,43 +59,54 @@ final class LiveRouter: Sendable {
     /// MIDI thread.
     func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         let kind = status & 0xF0
-        let (core, slot, alsoReleased) = target.withLock { (state: inout Target) -> (EngineCore?, Int?, UInt64) in
-            guard let core = state.core, let slot = state.slot else { return (nil, nil, 0) }
-            let key = Int(status & 0x0F) * 128 + Int(data1 & 0x7F)
+        let channel = status & 0x0F
+        let isNote = kind == 0x80 || kind == 0x90
+        let (core, slot, alsoReleased, notes) = target.withLock {
+            (state: inout Target) -> (EngineCore?, Int?, UInt64, LiveKeys.Output) in
+            guard let core = state.core, let slot = state.slot else { return (nil, nil, 0, LiveKeys.Output()) }
             let bit: UInt64 = slot < 64 ? 1 << UInt64(slot) : 0
             switch kind {
             case 0x90 where data2 > 0:
-                state.held[key] = Int8(clamping: slot)
+                return (core, slot, 0, state.keys.press(channel: channel, key: data1, velocity: data2, slot: slot))
             case 0x80, 0x90:
-                let started = Int(state.held[key])
-                state.held[key] = -1
-                if started >= 0 { return (core, started, 0) }
+                return (core, slot, 0, state.keys.release(channel: channel, key: data1))
             case 0xB0 where data1 == 64:
                 if data2 >= 64 {
                     state.pedalDown |= bit
                 } else {
                     let others = state.pedalDown & ~bit
                     state.pedalDown = 0
-                    return (core, slot, others)
+                    return (core, slot, others, LiveKeys.Output())
                 }
             default:
                 break
             }
-            return (core, slot, 0)
+            return (core, slot, 0, LiveKeys.Output())
         }
         guard let core, let slot else { return }
-        core.playLive(slot: slot, status: status, data1, data2)
-        var others = alsoReleased
-        while others != 0 {
-            let other = others.trailingZeroBitCount
-            others &= others - 1
-            core.playLive(slot: other, status: status, data1, data2)
+        if isNote {
+            // A note plays as the held keys decide, and the take keeps what was heard.
+            for note in notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
+        } else {
+            core.playLive(slot: slot, status: status, data1, data2)
+            var others = alsoReleased
+            while others != 0 {
+                let other = others.trailingZeroBitCount
+                others &= others - 1
+                core.playLive(slot: other, status: status, data1, data2)
+            }
+            guard kind == 0xB0 || kind == 0xE0 else { return }
         }
-        guard kind == 0x90 || kind == 0x80 || kind == 0xB0 || kind == 0xE0 else { return }
         let sample = core.positionSample
         capture.withLock { events in
             guard events != nil else { return }
-            events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+            if isNote {
+                for note in notes {
+                    events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
+                }
+            } else {
+                events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+            }
         }
     }
 }
