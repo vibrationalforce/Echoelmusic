@@ -90,6 +90,13 @@ app for the simulator and as a Release device build; read its job steps on the c
 pushed (a newer push cancels the older run). On a Mac:
 `swift test --package-path EchoelStudio/Core` (likewise `DSP`, `Engine`).
 
+**The module boundary is enforced by building, never by a test (Law 8).** In the gate,
+"Imports only where named" compares each library's imports with its row (Core, DSP, Kernels,
+Engine, Host; `Plugins/` never imports EchoelEngine) and "Extension carries no engine code"
+reads the linked extension. A new import is a deliberate act: widen its row in `studio.yml` in
+the same commit. `studio-linux.yml` builds and tests Core, DSP, Kernels and Engine on Linux,
+where `EchoelHost` is not declared at all; it measures and does not block the merge.
+
 **Shipping to TestFlight:** bump `EchoelStudio/RELEASE` and push —
 `.github/workflows/studio-testflight.yml` archives, signs (App Store Connect API key, automatic
 signing), checks that `EchoelPlugins.appex` is inside and uploads build `10000 + run number` of

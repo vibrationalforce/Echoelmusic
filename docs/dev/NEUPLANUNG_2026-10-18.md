@@ -28,7 +28,7 @@
   - Er will `Tests/CISmoke` nach 1.0 löschen, ohne dass die Lehren daraus gesichert sind.
   - Seine 1.0-Bedingung „vier Hosts gerätegeprüft" ist richtig, aber teuer. Sie gehört in die Plugin-Phase, nicht ins Kompositions-Release.
 - **Alle drei**
-  - Sie planen Import-Scans als CI-Workflow-Änderung. Für EchoelStudio sind Workflows seit 2026-10-17 freigegeben, aber ein Test ist billiger und läuft auch auf dem Mac.
+  - Sie planen Import-Scans als CI-Workflow-Änderung. Für EchoelStudio sind Workflows seit 2026-10-17 freigegeben, aber ein Test ist billiger und läuft auch auf dem Mac. ⛔ Korrigiert 2026-10-22 (S-26 D4): ein Test, der Quelltext liest, verstößt gegen Gesetz 8 in `EchoelStudio/CLAUDE.md`; die Grenze ist der Build (Linux ohne `EchoelHost`) plus ein CI-Schritt im Studio-Gate.
   - Dieselbe Regel lässt sich als gewöhnlicher Test in `EchoelStudio/*/Tests` erzwingen. Außerdem erzwingt SwiftPM die Grenzen zwischen Modulen ohnehin über die Target-Abhängigkeiten.
 
 ## 1. Produkt: was Echoel ist und was nicht
@@ -107,7 +107,7 @@ Bewusst nur **eine** neue Target-Gruppe vor 1.0, alle im bestehenden `EchoelStud
 
 **Abhängigkeitsregeln:**
 - Abhängigkeiten zeigen nur nach unten; SwiftPM-Targets erzwingen das.
-- Systemframeworks prüft ein Import-Scan-Test pro Paket.
+- Systemframeworks prüft kein Test (Gesetz 8: Tests lesen keinen Quelltext), sondern der Build und ein CI-Schritt (seit 2026-10-22, S-26 D4): auf Linux ist `EchoelHost` nicht deklariert, also scheitert dort jeder Kern- oder Engine-Code, der ein Apple-Framework oder die Hülle importiert (`studio-linux.yml`, misst); im Studio-Gate vergleicht „Imports only where named“ die Importe jeder Bibliothek mit ihrer Zeile, und „Extension carries no engine code“ liest die gelinkte Erweiterung (`studio.yml`, blockiert).
 - DSP bleibt Core-frei. Das ist heute schon so und wird nicht aufgegeben.
 
 ### Dokumentmodell
@@ -136,8 +136,8 @@ Jeder Befehl trägt ein `since`. Der Katalog bleibt die eine Quelle für UI, MID
 
 ### Engine
 
-- **Ein Instrumentenpfad.** Die per Slot fest verdrahteten 32×`PolySynth`/`DrumKit`/`Sampler` und die `switch`-Dispatches (`EngineCore.swift:66-68, 158-170, 556-567, 841, 1260-1270`) werden durch vorab allokierte `InstrumentKernel`-Instanzen ersetzt. Das sind dieselben Objekte, die die AUv3 nutzt.
-- Damit verschwindet auch die Drift in `silence()` (`EngineCore.swift:583` gibt die Drums nicht frei).
+- **Ein Instrumentenpfad.** Die per Slot fest verdrahteten 32×`PolySynth`/`DrumKit`/`Sampler` und die `switch`-Dispatches (in `EngineCore`: die Slot-Arrays, ihr Aufbau, der Render-`switch`, `silence()` und die Live-Wege) werden durch vorab allokierte `InstrumentKernel`-Instanzen ersetzt. Das sind dieselben Objekte, die die AUv3 nutzt.
+- Damit verschwindet auch die Drift in `silence()` (`EngineCore.silence()` gibt die Drums nicht frei).
 - Die drei handgeschriebenen Synth-Parameterlisten (`Instrument.swift`, `InstrumentPatch.swift:27`, `SynthKernel.swift:29`) werden zu einer Tabelle.
 - Beibehalten: der atomare Snapshot-Zeiger mit Freigabe auf dem Main-Thread, `MeterBank` im Blatt (`MixerView.swift:110`) und die Mixer-Werte außerhalb des Plans.
 
@@ -209,7 +209,7 @@ Vorher wird `docs/dev/LESSONS.md` geschrieben (maximal 2 Seiten). Es hält die t
 
 | Phase | Inhalt | fertig wenn | was ausgeliefert wird |
 |---|---|---|---|
-| **P0 Ordnung** | Targets Kernels/Host, ein Instrumentenpfad, eine Parametertabelle, `DeviceRef`, `MusicalContext` + `TuningSystem`, Befehlsnamen ordnen und einfrieren, Kapazitätsfehler sichtbar machen, Import-Scan-Test, `docs/FORMAT.md` plus Golden-Files, Network-MIDI-Gerätename als `.private` loggen, `EchoelStudio/CLAUDE.md` korrigieren | Core-, DSP- und Engine-Tests grün; App- und AUv3-Build grün; die Extension linkt kein `EngineCore`; ein neues eingebautes Gerät braucht nur eine Tabelle plus einen Kernel; altes Song-Format migriert; **kein Verhaltensunterschied für den Nutzer** | TestFlight-Build, intern |
+| **P0 Ordnung** | Targets Kernels/Host, ein Instrumentenpfad, eine Parametertabelle, `DeviceRef`, `MusicalContext` + `TuningSystem`, Befehlsnamen ordnen und einfrieren, Kapazitätsfehler sichtbar machen, Import-Grenze (Linux-Build + CI-Schritt, kein Quelltext-Test), `docs/FORMAT.md` plus Golden-Files, Network-MIDI-Gerätename als `.private` loggen, `EchoelStudio/CLAUDE.md` korrigieren | Core-, DSP- und Engine-Tests grün; App- und AUv3-Build grün; die Extension linkt kein `EngineCore`; ein neues eingebautes Gerät braucht nur eine Tabelle plus einen Kernel; altes Song-Format migriert; **kein Verhaltensunterschied für den Nutzer** | TestFlight-Build, intern |
 | **P1 Komponieren** | Startprojekte, Instrument-Presets, Skalen-Lock auf Tastatur und Pads, Stem- und Projektpaket-Export, UTType-Registrierung (`EchoelStudio/project.yml`) | auf dem Gerät: Ton in unter 3 s; Song mit 4 Spuren im Flugmodus erstellt, gespeichert, neu geöffnet und exportiert; die Stems öffnen in einer Desktop-DAW | öffentliche TestFlight-Beta |
 | **P2 Eigene AUv3 + Kauf → 1.0** | Lizenz- und Demo-Flow für alle verkauften Units, `auval` lokal auf dem Founder-Mac (oder als Schritt in `studio.yml`, macOS-Runner), Wiederherstellen des Kaufs, Store-Text aus `FEATURE_STATUS` | `auval` besteht; Units laden und spielen in AUM und GarageBand auf dem Gerät, Tonhöhe geprüft bei 44,1 und 48 kHz (die Legacy-Vorhersage war +8,8 %); Kauf im Flugmodus wiederhergestellt; 1.0 besteht das App Review | **App Store 1.0** |
 | **P3 Live** | MIDI-Clock ein/aus, Szenen-Launch-Mapping für die Xone:96, Network MIDI mit Peer-Liste und „nur bekannte Hosts" statt `.anyone` (`MIDIInput.swift:437`, `setNetwork(_:)`), Ableton Link nur nach Council-Entscheidung | Founder spielt 30–60 min ein Set auf dem Gerät mit Hardware, ohne Aussetzer und ohne Menü-Freeze, Log gesichert | 1.1 |
@@ -321,5 +321,5 @@ Der Agent ist bereits gebaut. Er läuft ab P1 mit. Wo das Modell fehlt, ist er a
 ## 9. Nächste drei Schritte
 
 1. **Entscheidung festhalten:** dieser Plan als `docs/dev/NEUPLANUNG_2026-10-18.md`, eine Zeile in `decisions.csv` („Keine Genres; Studio wird geordnet, nicht neu geschrieben; P0 vor 1.0") und Verweis-Kopfzeilen in NEUSTART und `FOUNDER_PRODUCT_LAW.md`. Die Fragen 1 und 2 aus §8 gehen in `docs/dev/FOUNDER_INBOX.md`.
-2. **Erste P0-Scheibe, klein und testbar:** eine Parametertabelle für den Synth in Core, aus der `SynthKernel.Indices` und `PatchField` abgeleitet werden, plus ein Test, dass die Tabelle und beide Verbraucher übereinstimmen. Danach `silence()` über alle Gerätetypen (Drums-Lücke `EngineCore.swift:583`) mit Test.
+2. **Erste P0-Scheibe, klein und testbar:** eine Parametertabelle für den Synth in Core, aus der die Parameter-Indizes von `SynthKernel` und `PatchField` abgeleitet werden (erledigt, P0.1; einen Typ `SynthKernel.Indices` gab es nie), plus ein Test, dass die Tabelle und beide Verbraucher übereinstimmen. Danach `silence()` über alle Gerätetypen (Drums-Lücke in `EngineCore.silence()`) mit Test.
 3. **Format sichern, bevor es einfriert:** `docs/FORMAT.md` (Schema v1) plus zwei Golden-Files mit Round-Trip-Test in `EchoelStudio/Core/Tests`. UTType (`EchoelStudio/project.yml`) und `auval` (`studio.yml`) sind für EchoelStudio freigegeben (Founder 2026-10-17) und folgen in P1/P2.

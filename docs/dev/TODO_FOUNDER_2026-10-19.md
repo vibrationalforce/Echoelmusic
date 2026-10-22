@@ -161,7 +161,7 @@ Fett = fester Termin oder Frist.
 
 **Freitag 23.10.**
 
-- Studio P0: D4 Import-Scan-Test je Paket (die Engine importiert heute AVFoundation/AudioToolbox) — Vorarbeit für den Target-Split D1 und der Beleg, den Frage 4 („Linux reicht für die portablen Teile?“) braucht. _(S)_
+- ERLEDIGT 2026-10-22 (S-26 D4.1/D4.2, als Build + CI-Schritt statt Test, Gesetz 8) — Studio P0: D4 Import-Scan-Test je Paket (die Engine importiert heute AVFoundation/AudioToolbox) — Vorarbeit für den Target-Split D1 und der Beleg, den Frage 4 („Linux reicht für die portablen Teile?“) braucht. _(S)_
 - Studio P0, klein: E7 Datenschutz-Manifest der Erweiterung um Datei-Zeitstempel (C617.1) ergänzen · E5 Assistent-Menüpunkt ausblenden, wenn das Gerät kein On-Device-Modell hat. _(S)_
 - [~15 min] Status des Altantrags „Syng.Visibra“ (läuft / abgelehnt / zurückgezogen, mit Datum) — ein Satz im Chat. Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4. _(F)_
 - ~~[~15 min] Das Jahrgang-03-Handbuch und die Checkliste als PDF hochladen~~ — **erledigt 19.10. abends** (Handbuch geliefert und gelesen; Checkliste = S. 28 darin). _(F)_
@@ -197,7 +197,7 @@ Fett = fester Termin oder Frist.
 
 - [~20 min] Die vier §10-Briefe abschicken — nur der öffentliche Raw-Link der Förderdatei und das Repo; nie settings.local.json, Diagnose-Logs, App-Store-Schlüssel, Tester-Daten, Team-ID. _(F)_
 - [~30 min] Interessensbekundungen anfragen: zwei bis drei Personen oder Häuser (Licht, Installation, Theater) per Mail um einen datierten Satz bitten, was sie mit dem Paket täten. Antworten brauchen Wochen — deshalb jetzt, nicht am 10.11. _(F)_
-- Studio P0: D1 Scheibe 2 — Import-Scan-Test (D4) auf die neuen Targets, EchoelStudio/CLAUDE.md Schichten nachziehen, beide CI grün; danach messen, was im Engine-Paket noch Apple-Frameworks braucht (Antwort auf Frage 4). _(S)_
+- ERLEDIGT 2026-10-22 (S-26 D1.2–D1.4, D4.1/D4.2; Frage 4: im Engine-Paket braucht nur noch `EchoelHost` Apple-Frameworks) — Studio P0: D1 Scheibe 2 — Import-Scan-Test (D4) auf die neuen Targets, EchoelStudio/CLAUDE.md Schichten nachziehen, beide CI grün; danach messen, was im Engine-Paket noch Apple-Frameworks braucht (Antwort auf Frage 4). _(S)_
 - Rezept für EINE benannte Integration schreiben: ein freies Lichtpult mit sACN/OSC-Eingang (z. B. QLC+) empfängt von Echoel — Schritte, Port, Adressen, was der Screenshot mit Datum zeigen muss. Du spielst es am 7.11. durch. _(S)_
 
 **Donnerstag 29.10.**
@@ -209,7 +209,7 @@ Fett = fester Termin oder Frist.
 
 **Freitag 30.10.**
 
-- Studio P0: D2 Scheibe 2 — A8: Pitch-Bend und Sustain im AUv3-Synth, Mod-Rad wirkt, Panik (CC120) stoppt auch Drums; Split-Rendering; Tests im Engine-Paket. _(S)_
+- A8 ERLEDIGT schon mit 0272cd182 (S-16) — Studio P0: D2 Scheibe 2 — A8: Pitch-Bend und Sustain im AUv3-Synth, Mod-Rad wirkt, Panik (CC120) stoppt auch Drums; Split-Rendering; Tests im Engine-Paket. _(S)_
 - Studio P0: B7 Obergrenze für Render-Aufrufe der Erweiterung (kein Schreiben über die Puffergrenze) · B8 Plugin-Zustand nie setzen, während das Plugin rendert. _(S)_
 - [Entscheidung, ~5 min] LR2: LICENSE auf reinen MIT-Text mit deinem Namen und Jahren; der Drittlizenz-Block (nennt HaishinKit und „SwiftUI Apache 2.0“, beides falsch) nach THIRD_PARTY_NOTICES.md mit nur der Apple-SDK-Zeile. Ein „Ja“ im Chat reicht — die Sitzung schreibt die Dateien. _(F)_
 
