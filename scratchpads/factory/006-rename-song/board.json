@@ -2,7 +2,7 @@
  "id": "006-rename-song",
  "title": "Song umbenennen (Paket und innerer Name)",
  "stage": "review",
- "round": 2,
+ "round": 3,
  "base": "1f763674e89b703bf8e988165d326490695ae05e",
  "lenses": [
   "code-reviewer",
@@ -52,8 +52,13 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 2 (wf_ac2238b4-7c1): REWORK, ein Major (Dateiname in Zeichen statt Bytes begrenzt — ein gültiger Name konnte 255 Bytes sprengen und den Start-Song unschreibbar machen) und fünf Minors; code, ux und ui-state PASS. Nacharbeit 2, Antwort je Befund in reviews/round-2/rebuttal.md. outsideScope: dab7568c7 (TODO-Runden), nicht Teil des Jobs."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 3 (die letzte, genehmigt oder eskaliert) auf 99c4835b7; startet erst nach grünem CI: Linux 39815611487 success, macOS-Dispatch 39816358103 läuft noch (der Push-Lauf 39815611610 wurde von ihm abgelöst)."
   }
  ],
- "head": "84064334258aee2d8317912b3a0b7aaef597bb4d",
- "since": "963758fb2fe0fb16c0d07f6cca233ad49037ecbb"
+ "head": "99c4835b7157abd5ac481e7d408d3b85fdfecd7a",
+ "since": "84064334258aee2d8317912b3a0b7aaef597bb4d"
 }
