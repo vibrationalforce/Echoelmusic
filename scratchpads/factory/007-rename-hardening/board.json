@@ -1,7 +1,7 @@
 {
  "id": "007-rename-hardening",
  "title": "Umbenennen härten (Minors aus Job 006)",
- "stage": "review",
+ "stage": "done",
  "round": 3,
  "base": "4c4bd5ad86056afa7044a4bb4e507dbd312d83c7",
  "lenses": [
@@ -59,8 +59,20 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 3 (die letzte, wf_f7e15ccc-83c) auf fdef21abd nach grünem CI: Echoel Studio 39828730749 success (App iPhone+iPad, Core+DSP+Engine), Linux 39828730750 success."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-22",
+   "note": "Runde 3 (wf_f7e15ccc-83c): APPROVE — alle 7 Kriterien benotet, jedes Code-Kriterium erfüllt, Zählung des Approvers 7 / [6] / 0 gleich der des PM, vier Linsen PASS. Gates tragen: Echoel Studio 39828730749 (Core-Log nennt die vier Wächter bestanden, App Debug-Simulator und Release-Gerät BUILD SUCCEEDED, Start-Test) und Linux 39828730750 auf dem Kopf fdef21abd, danach nur scratchpads/ und docs/dev. Kriterium 6 als SN5 in FOUNDER_INBOX §2. Zwei kosmetische Minors aus Runde 3 (das „it“ im Satz meint die Datei; der Kopf von SongFileName nennt die Ausnahme nicht) gehen als eigener kleiner Commit nach dem Abschluss, nicht als vierte Runde."
   }
  ],
  "head": "fdef21abdff843d30f8b9e33af8ee402d1c6156c",
- "since": "2e7f68ca08a0aedbf7a236b697cb1beb57d3c554"
+ "since": "2e7f68ca08a0aedbf7a236b697cb1beb57d3c554",
+ "deviceOpen": [
+  {
+   "ask": "Kriterium 6: VoiceOver über 128 Zeichen — Ansage ungestört, Rename gedimmt mit Grund; dasselbe mit Hinweise sprechen aus (Messung)",
+   "inbox": "§2 Familie SN (SN5)",
+   "verified": null
+  }
+ ]
 }
