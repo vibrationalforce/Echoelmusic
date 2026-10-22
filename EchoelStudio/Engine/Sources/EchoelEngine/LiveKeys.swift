@@ -87,6 +87,14 @@ public struct LiveKeys: Sendable {
         for index in slots.indices { slots[index] = -1 }
     }
 
+    /// No key is held in `slot` any more; sends nothing. For all sound off or all notes off on that
+    /// slot, which end its notes without their releases: a latch left there would make a later key
+    /// on the same pitch hold its note on. Keys held in other slots keep theirs, and their notes.
+    public mutating func reset(slot: Int) {
+        let slot = Int16(clamping: slot)
+        for index in slots.indices where slots[index] == slot { slots[index] = -1 }
+    }
+
     /// A key went down on `channel`, to sound in `slot`. Velocity 0 is a release.
     public mutating func press(channel: UInt8, key: UInt8, velocity: UInt8, slot: Int) -> Output {
         guard velocity & 0x7F > 0 else { return release(channel: channel, key: key) }

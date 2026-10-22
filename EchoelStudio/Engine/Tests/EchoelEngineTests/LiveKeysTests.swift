@@ -91,6 +91,20 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertEqual(Array(keys.release(channel: 0, key: 61)), [off(61, slot: 2)])
     }
 
+    /// All notes off on a slot frees its keys there: a key that maps to a pitch a freed key held
+    /// sounds and ends on its own, and the freed key's release sends nothing. Another slot keeps
+    /// its keys.
+    func testClearingASlotFreesItsKeysAndLeavesTheOthers() {
+        var keys = LiveKeys(lock: cMajor)
+        XCTAssertEqual(Array(keys.press(channel: 0, key: 61, velocity: 100, slot: 0)), [on(60)])
+        XCTAssertEqual(Array(keys.press(channel: 0, key: 64, velocity: 100, slot: 1)), [on(64, slot: 1)])
+        keys.reset(slot: 0)
+        XCTAssertEqual(Array(keys.press(channel: 0, key: 60, velocity: 100, slot: 0)), [on(60)], "no latch left to restrike")
+        XCTAssertEqual(Array(keys.release(channel: 0, key: 60)), [off(60)], "and nothing holds it on")
+        XCTAssertEqual(keys.release(channel: 0, key: 61).count, 0, "the panic already ended it")
+        XCTAssertEqual(Array(keys.release(channel: 0, key: 64)), [off(64, slot: 1)])
+    }
+
     func testAReleaseOfAKeyNeverPressedSendsNothing() {
         var keys = LiveKeys()
         XCTAssertEqual(keys.release(channel: 0, key: 60).count, 0)

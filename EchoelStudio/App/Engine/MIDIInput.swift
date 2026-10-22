@@ -66,13 +66,21 @@ final class LiveRouter: Sendable {
         let isNote = kind == 0x80 || kind == 0x90
         let (core, slot, alsoReleased, notes) = target.withLock {
             (state: inout Target) -> (EngineCore?, Int?, UInt64, LiveKeys.Output) in
-            guard let core = state.core, let slot = state.slot else { return (nil, nil, 0, LiveKeys.Output()) }
+            guard let core = state.core else { return (nil, nil, 0, LiveKeys.Output()) }
+            // A release ends what its press started, in the slot it went to, also while the song
+            // has no live track: dropped here, the key would stay latched and later hold another
+            // key's note on (review 2026-10-22).
+            if kind == 0x80 || (kind == 0x90 && data2 == 0) {
+                return (core, state.slot, 0, state.keys.release(channel: channel, key: data1))
+            }
+            guard let slot = state.slot else { return (nil, nil, 0, LiveKeys.Output()) }
             let bit: UInt64 = slot < 64 ? 1 << UInt64(slot) : 0
             switch kind {
-            case 0x90 where data2 > 0:
+            case 0x90:
                 return (core, slot, 0, state.keys.press(channel: channel, key: data1, velocity: data2, slot: slot))
-            case 0x80, 0x90:
-                return (core, slot, 0, state.keys.release(channel: channel, key: data1))
+            case 0xB0 where data1 == 120 || data1 == 123:
+                // All sound off and all notes off end the slot's notes without their releases.
+                state.keys.reset(slot: slot)
             case 0xB0 where data1 == 64:
                 if data2 >= 64 {
                     state.pedalDown |= bit
@@ -86,11 +94,12 @@ final class LiveRouter: Sendable {
             }
             return (core, slot, 0, LiveKeys.Output())
         }
-        guard let core, let slot else { return }
+        guard let core else { return }
         if isNote {
             // A note plays as the held keys decide, and the take keeps what was heard.
             for note in notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
         } else {
+            guard let slot else { return }
             core.playLive(slot: slot, status: status, data1, data2)
             var others = alsoReleased
             while others != 0 {
