@@ -138,6 +138,8 @@ spans the parameter's whole range.
 `points` is `[{tick, value, curve}]` with ticks rising from 0, each once, at most 10 000. `value`
 is in the parameter's own unit and range (decibels, pan, hertz …; a plugin parameter as 0 … 1 of
 its travel). `curve` −1 … 1 bends the line to the next point, 0 straight; optional, absent = 0.
+A parameter whose values are choices (the synth's `synth.waveform`) draws no line: each point holds
+its value until the next point, and `curve` has no effect there.
 
 ## Format 1
 

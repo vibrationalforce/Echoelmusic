@@ -109,8 +109,8 @@ struct AutomationName: View {
 /// One lane drawn on the bar timeline: the line between its points, and the points. Tap empty
 /// space to add a point there (snapped to a sixteenth), tap a point to remove it, drag a point
 /// to move it between its neighbours. Each segment has a handle at its middle: drag it up or
-/// down to bend the segment, tap it to straighten it. One drag is one
-/// undo step.
+/// down to bend the segment, tap it to straighten it. A lane of choices (the waveform) holds each
+/// point until the next, is drawn as steps and has no handles. One drag is one undo step.
 struct AutomationRow: View {
     @Environment(ProjectStore.self) private var store
     let lane: AutomationLane
