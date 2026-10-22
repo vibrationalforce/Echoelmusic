@@ -317,7 +317,8 @@ public enum AgentTools {
     public static func track(_ reference: String, in project: Project) throws -> Track {
         let wanted = reference.trimmingCharacters(in: .whitespacesAndNewlines)
         let names = project.tracks.map(\.name)
-        if let number = Int(wanted), project.tracks.indices.contains(number - 1) {
+        // `number >= 1` first: a model's "-9223372036854775808" would overflow `number - 1`.
+        if let number = Int(wanted), number >= 1, project.tracks.indices.contains(number - 1) {
             return project.tracks[number - 1]
         }
         let exact = project.tracks.filter { $0.name.caseInsensitiveCompare(wanted) == .orderedSame }
@@ -362,7 +363,9 @@ public enum AgentTools {
             semitone += "#♯".contains(accidental) ? 1 : -1
             characters = characters.dropFirst()
         }
-        guard let octave = Int(characters) else { return nil }
+        // Every enharmonic spelling of a MIDI note sits in octaves -2…10; a wider number from the
+        // model would overflow `(octave + 1) * 12` before the range check below could refuse it.
+        guard let octave = Int(characters), (-2...10).contains(octave) else { return nil }
         let value = (octave + 1) * 12 + semitone
         return Note.pitchRange.contains(value) ? value : nil
     }

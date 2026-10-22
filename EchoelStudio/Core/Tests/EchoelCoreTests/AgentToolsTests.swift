@@ -148,6 +148,11 @@ final class AgentToolsTests: XCTestCase {
                          "an endless note is cut at the end of the region")
         XCTAssertThrowsError(try AgentTools.commands(for: .writeNotes(track: "Keys", notes: "C4 1 1", bar: Int.max, bars: 1, replace: false), in: project))
         XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Keys", bar: Int.max, times: 1), in: project))
+        XCTAssertNil(AgentTools.pitch("C9223372036854775807"), "an octave past any key is no note")
+        XCTAssertNil(AgentTools.pitch("C-9223372036854775808"))
+        XCTAssertEqual(AgentTools.pitch("B#-2"), 0, "an enharmonic spelling at the edge still names its key")
+        XCTAssertThrowsError(try AgentTools.track("-9223372036854775808", in: project), "a track number below one is no track")
+        XCTAssertThrowsError(try AgentTools.commands(for: .removeTrack(track: "0"), in: project))
     }
 
     func testAMovementReplacesItsBarsOfTheLaneAndKeepsTheRest() async throws {
