@@ -1,9 +1,11 @@
 /// Whether the open song's package takes a new name before the next write. The package follows a
-/// CHANGE of the song's own name — Rename Song, its Undo, its Redo — and nothing else: a song
-/// whose file was called something else when it opened (one brought in from Files as
-/// "Track (1)") keeps that file name until it is renamed. While anything reads from or writes into
-/// the package, the move waits for a write after it. Pure, so the rules are tested here; the
-/// document controller asks it before each write.
+/// CHANGE of the song's own name — Rename Song, its Undo, its Redo: a song whose file was called
+/// something else when it opened (one brought in from Files as "Track (1)") keeps that file name
+/// until it is renamed. The one exception is a package under a name in between, the one a change
+/// of case passes through: left there by a move that failed both ways, or opened from such a name,
+/// it follows no name (`stranded()`) and takes the song's own name at the next write (review 007).
+/// While anything reads from or writes into the package, the move waits for a write after it. Pure,
+/// so the rules are tested here; the document controller asks it before each write.
 public struct SongFileName: Equatable, Sendable {
     /// The song's name the package last followed: the name it had when it opened, or the one it
     /// moved for. Nil before any song is open.

@@ -34,8 +34,10 @@ VoiceOver-Nutzer die Längen-Grenze hört.
   inneren Namen.
 - A5 — Die Zeile über eine gescheiterte Verschiebung sagt, wo die Datei JETZT ist, in EINEM Satz,
   der in jedem Zustand stimmt: „Only the file lags behind: in the Files app the song is called
-  <Datei> for now, and Echoel tries to rename it when it next saves.“ Er sagt, was hinterherhinkt —
-  die Datei —, damit die rote Zeile nie wie ein gescheitertes Speichern klingt (Runde 2). Kein
+  <Datei> for now, and Echoel tries to rename the file when it next saves.“ Er sagt, was
+  hinterherhinkt — die Datei —, damit die rote Zeile nie wie ein gescheitertes Speichern klingt
+  (Runde 2; „the file“ statt „it“ nach der Freigabe, Runde-3-Minor der ux-Linse: das nächste
+  Substantiv vor „it“ war „the song“). Kein
   „renamed“ mehr (Runde 1): nach einem Undo zum alten Namen und bei
   einem Song, der aus einem Zwischennamen öffnete, hat niemand umbenannt. Weil der Satz nur den Ort
   nennt, ändert er sich genau dann, wenn der Ort sich ändert (ein späterer Versuch strandet unter

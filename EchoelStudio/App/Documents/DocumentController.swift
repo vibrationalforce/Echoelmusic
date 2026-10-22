@@ -674,7 +674,7 @@ final class DocumentController {
         // anything (review 007 round 1). It names where the file is, so it changes only with that,
         // and says what lags behind, the file, so it never reads as a failed save (round 2).
         let file = url.deletingPathExtension().lastPathComponent
-        let line = "Only the file lags behind: in the Files app the song is called \(file) for now, and Echoel tries to rename it when it next saves."
+        let line = "Only the file lags behind: in the Files app the song is called \(file) for now, and Echoel tries to rename the file when it next saves."
         // Said once; a later failure that left the file somewhere else says where it is now.
         guard line != failedMoveLine else { return }
         moveSettled()
