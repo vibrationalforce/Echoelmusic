@@ -56,7 +56,7 @@
   {
    "stage": "review",
    "date": "2026-10-22",
-   "note": "Runde 3 (die letzte, genehmigt oder eskaliert) auf 99c4835b7; startet erst nach grünem CI: Linux 39815611487 success, macOS-Dispatch 39816358103 läuft noch (der Push-Lauf 39815611610 wurde von ihm abgelöst)."
+   "note": "Runde 3 (die letzte, genehmigt oder eskaliert) auf 99c4835b7, gestartet als wf_9e31f7a2-0a8 nach grünem CI: Linux 39815611487 success; macOS-Dispatch 39816358103 success (Core 285, DSP 72, Engine 182 Tests ohne Fehler, testAFileNameStaysWithinTheFileSystemLimit bestanden; App iPhone+iPad mit Start-Test grün). Der Push-Lauf 39815611610 wurde vom Dispatch abgelöst."
   }
  ],
  "head": "99c4835b7157abd5ac481e7d408d3b85fdfecd7a",
