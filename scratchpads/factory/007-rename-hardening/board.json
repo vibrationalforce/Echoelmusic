@@ -1,8 +1,8 @@
 {
  "id": "007-rename-hardening",
  "title": "Umbenennen härten (Minors aus Job 006)",
- "stage": "build",
- "round": 0,
+ "stage": "review",
+ "round": 1,
  "base": "4c4bd5ad86056afa7044a4bb4e507dbd312d83c7",
  "lenses": [
   "code-reviewer",
@@ -34,6 +34,12 @@
    "stage": "build",
    "date": "2026-10-22",
    "note": "Core: rename(_:to:moving:) als interner Saum, der Rückweg fragt das Paket unter dem Zwischennamen (nicht den alten Namen), betweenStem/isBetweenStem; SongFileName.stranded() macht jeden Namen fällig; drei ProjectLibrary-Wächter und einer in SongFileNameTests (der erste ist auf dem alten Code rot: dort kam ein gewöhnlicher Fehler statt RenameStranded). App: gestrandeter Zweig ruft stranded(), open(throwing:) liest den offenen Song unter currentURL nach mayLeaveSong und markiert ein Paket mit Zwischennamen, eine noch wahre Verschiebungs-Zeile bleibt beim erneuten Öffnen, moveFailed ersetzt eine geänderte Zeile; RenameSongView: Hinweis am Feld und an Rename, Ansage beim Überschreiten. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 1 (wf_f738a9cc-f68) auf 5942df4fd; CI läuft parallel."
   }
- ]
+ ],
+ "head": "5942df4fd705df3ce32f657776b85942815dd192"
 }
