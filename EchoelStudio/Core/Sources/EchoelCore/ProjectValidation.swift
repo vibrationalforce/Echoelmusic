@@ -169,7 +169,7 @@ extension Project {
     private func validate(_ instrument: InstrumentSettings) throws {
         for (key, value) in instrument.values {
             // A key this build does not know is kept for the build that does; a known one obeys its range.
-            if let parameter = SynthParameter.named(ParameterKey(rawValue: key)), !parameter.accepts(value) {
+            if let parameter = SynthParameter.builtIn(ParameterKey(rawValue: key)), !parameter.accepts(value) {
                 throw Self.invalid(key, "must be within \(parameter.range)")
             }
         }

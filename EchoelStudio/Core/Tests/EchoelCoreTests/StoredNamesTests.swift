@@ -22,6 +22,8 @@ final class StoredNamesTests: XCTestCase {
     private let synthKeys = ["synth.waveform", "synth.cutoff", "synth.resonance", "synth.filterAmount",
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
                              "synth.level"]
+    private let drumsKeys = ["drums.level"]
+    private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
 
     func testEveryStoredNameStillReadsAsTheSameThing() {
         XCTAssertEqual(Scale.allCases.map(\.rawValue), scales, "never rename or reorder; a new scale goes at the end")
@@ -34,12 +36,19 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(SynthParameter.all.map(\.key.rawValue), synthKeys, "a new synth parameter goes at the end")
         XCTAssertEqual(SynthParameter.waveform.choices, ["Sine", "Saw", "Square", "Triangle"],
                        "a lane stores the waveform's index")
+        // The drums' and the sampler's values are stored too (P1 A5); the order is also their
+        // plugin's parameter address, which a host session saves.
+        XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), drumsKeys, "a new row goes at the end")
+        XCTAssertEqual(InstrumentDevice.sampler.parameters.map(\.key.rawValue), samplerKeys, "a new row goes at the end")
+        XCTAssertEqual(SynthParameter.samplerMode.choices, ["Gate", "One-shot"], "the song stores the mode's index")
     }
 
     /// A track stores the name of the preset it was loaded from, and the Sound page shows it. Only
-    /// the name is stored, never a position, and nothing reads the values back through it — the
-    /// song keeps its own — so the order is free and a value may be retuned. A renamed preset would
-    /// leave every earlier song showing a sound the menu no longer offers, so a name stays.
+    /// the name is stored, never a position, and the song keeps its own values, so the order is
+    /// free and a value may be retuned — only the "edited" mark reads the values back through the
+    /// name, and a song that loaded the old value then reads as edited from today's preset, which
+    /// it is. A renamed preset would leave every earlier song showing a sound the menu no longer
+    /// offers, so a name stays.
     func testEveryStoredPresetNameStillNamesAPreset() {
         let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys"]
         XCTAssertEqual(Set(InstrumentPreset.all.map(\.name)), Set(names), "never rename a preset; add a new one here")
@@ -83,7 +92,7 @@ final class StoredNamesTests: XCTestCase {
             finds(.track(keys), key)
         }
         finds(.track(keys), "mixer.send/" + room.description)
-        for key in synthKeys { finds(.track(keys), key) }
+        for key in synthKeys + drumsKeys + samplerKeys { finds(.track(keys), key) }
 
         let insert = InsertID()
         XCTAssertEqual(ParameterKey(rawValue: "plugin.instrument/12").pluginParameter, PluginParameter(.instrument, address: 12))

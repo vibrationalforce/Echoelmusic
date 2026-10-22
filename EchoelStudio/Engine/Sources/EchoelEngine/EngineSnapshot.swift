@@ -15,9 +15,8 @@ public struct EngineSnapshot: Sendable {
         public let gainLeft: Float
         public let gainRight: Float
         /// Per built-in device (`InstrumentDevice.builtIn` order), the values its kernel plays, by
-        /// address: the synth's from the track, for every lane whatever it plays, so the synth keeps
-        /// its sound across a detour through another instrument; none for a device the song stores
-        /// no values for (the drums, the sampler), whose kernel keeps its own.
+        /// address: each from the track, a value it does not store at its row's default, for every
+        /// lane whatever it plays, so each device keeps its sound across a detour through another.
         public let values: [[Float]]
         /// Which instrument in the slot plays the events.
         public let device: InstrumentDevice
@@ -318,9 +317,10 @@ public struct EngineSnapshot: Sendable {
                     patchLanes.append(PatchAutomation(field: field, lane: lane))
                 }
             }
+            // Every built-in device's values, the stored one or the row's default: the sampler's
+            // root key and envelope sound as the song holds them.
             let values: [[Float]] = InstrumentDevice.builtIn.map { (device: InstrumentDevice) -> [Float] in
-                guard device == .synth else { return [] }
-                return SynthParameter.all.map { (parameter: SynthParameter) -> Float in Float(track.instrument.value(parameter)) }
+                device.parameters.map { (parameter: InstrumentParameter) -> Float in Float(track.instrument.value(parameter)) }
             }
             let device = track.instrument.device
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,

@@ -709,6 +709,36 @@ final class EngineCoreTests: XCTestCase {
         missing.play()
         XCTAssertNil(firstSound(render(missing, frames: 4_800).left), "a file that is not loaded stays silent")
     }
+
+    /// The song's sampler values reach the kernel: a root key an octave up plays C4 an octave down,
+    /// at half speed, so a 0.1 s sample lasts 0.2 s; a level of zero is silence.
+    func testASamplerTrackPlaysTheRootKeyAndLevelTheSongStores() throws {
+        var s = try song([[Note(pitch: 60, start: 0, length: 960)]])
+        let media = MediaFile(name: "Tone", path: "Media/tone.wav", frameCount: 4_800, sampleRate: rate)
+        try Command.addMedia(media).apply(to: &s.project)
+        try Command.setInstrumentDevice(s.tracks[0], .sampler).apply(to: &s.project)
+        try Command.setInstrumentSample(s.tracks[0], media.id).apply(to: &s.project)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate, rootPitch: 60))
+        func played(_ project: Project) -> [Float] {
+            var slots = SlotAssigner(capacity: 32)
+            slots.update(for: project)
+            let engine = core()
+            engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
+                                          sampleRate: rate, generation: 1, samples: [media.id: buffer]))
+            engine.play()
+            return render(engine, frames: 14_400).left
+        }
+        let own = played(s.project)
+        XCTAssertEqual(own[6_000], 0, "at its own root the sample ends after 0.1 s")
+
+        try Command.setInstrumentParameter(s.tracks[0], key: SynthParameter.samplerRoot.key.rawValue, value: 72).apply(to: &s.project)
+        let lower = played(s.project)
+        XCTAssertGreaterThan(lower[6_000], 0.05, "an octave down it still sounds at 0.125 s")
+        XCTAssertEqual(lower[12_000], 0, "and ends after 0.2 s")
+
+        try Command.setInstrumentParameter(s.tracks[0], key: SynthParameter.samplerLevel.key.rawValue, value: 0).apply(to: &s.project)
+        XCTAssertNil(firstSound(played(s.project)), "a level of zero is silence")
+    }
 }
 
 final class InstrumentPatchTests: XCTestCase {

@@ -93,8 +93,12 @@ or regions.
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
-key → number, e.g. `synth.cutoff`), optional `sample` (a media id), `plugin` (a plugin
-component) and `pluginState` (the plugin's own saved state, base64, at most 8 MiB).
+key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level`, the sampler's
+`sampler.root` (0 … 127, the key that plays the sample at its own speed), `sampler.attack`,
+`sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
+absent plays its default, and every device's values are kept whichever device plays), optional
+`sample` (a media id), `plugin` (a plugin component) and `pluginState` (the plugin's own saved
+state, base64, at most 8 MiB).
 
 **Plugin component:** `{type, subtype, manufacturer, name, manufacturerName}` — an Audio Unit by
 the three codes the system finds it by, each the four ASCII characters as one big-endian integer
@@ -126,8 +130,9 @@ returns it to rest where it ends.
 `master/<key>` or `track/<track id>/<key>`, e.g. `track/7A000000-0000-4000-8000-000000000004/mixer.volume`.
 Everything after the owner is the key, slashes included. Keys: `tempo`, `key.root`, `key.scale`,
 `tuning.system`, `tuning.concertPitch`, `groove.swing` (the song's); `mixer.volume`, `mixer.pan`
-(master and tracks); `mixer.send/<return track id>`; the synth's own (`synth.cutoff` and the
-others in an instrument's `values`); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
+(master and tracks); `mixer.send/<return track id>`; an instrument's own (`synth.cutoff` and the
+others in an instrument's `values`; a mapping may name a `drums.*` or `sampler.*` key, a lane
+only a `synth.*` one); `plugin.instrument/<n>` and `plugin.insert/<insert id>/<n>`,
 where `n` is the Audio Unit's own parameter address. A key a reader does not know is kept.
 
 **Mapping:** `{control: {channel, number}, target}` — `channel` 0 … 15 (shown as 1 … 16),

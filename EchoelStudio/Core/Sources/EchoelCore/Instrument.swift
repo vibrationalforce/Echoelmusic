@@ -164,15 +164,22 @@ public struct SynthParameter: Sendable, Equatable {
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
 
-    /// The synth's row for `key`. Only the synth's: `all` and this lookup decide what a command
-    /// may write and what a song lists, and no drums or sampler value is stored yet.
+    /// The synth's row for `key`. Only the synth's: the ones a lane plays and `Project.parameters`
+    /// lists. What a command may write and a song stores is `builtIn`.
     public static func named(_ key: ParameterKey) -> SynthParameter? {
         all.first { $0.key == key }
     }
 
-    // The drums' and the sampler's rows, with the values their plugins publish today. Read
-    // through `InstrumentDevice.parameters`; no command writes them and no song stores them yet,
-    // so their names and ranges are not frozen until that step (Law 3).
+    /// A built-in instrument's row for `key` — the synth's, the drums' or the sampler's: the
+    /// values an instrument's `values` stores and `instrument.parameter` writes.
+    public static func builtIn(_ key: ParameterKey) -> InstrumentParameter? {
+        named(key) ?? InstrumentDevice.builtIn.flatMap(\.parameters).first { $0.key == key }
+    }
+
+    // The drums' and the sampler's rows, in the order their plugins publish them. Read through
+    // `InstrumentDevice.parameters`. A song stores their values under these keys, so the names,
+    // the order and the sampler mode's choices are frozen (Law 3, `StoredNamesTests`); a lane
+    // does not play them yet, so `Project.parameters` does not list them.
     public static let drumsLevel = SynthParameter("drums.level", "Level", .amount, 0...1, 0.8, .linear)
     public static let samplerRoot = SynthParameter("sampler.root", "Root key", .amount, 0...127, 60, .stepped)
     public static let samplerAttack = SynthParameter("sampler.attack", "Attack", .seconds, 0.001...2, 0.001, .exponential)

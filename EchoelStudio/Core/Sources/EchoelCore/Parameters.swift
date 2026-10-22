@@ -269,7 +269,9 @@ public struct ParameterDescriptor: Sendable, Equatable {
 }
 
 extension Project {
-    /// Every addressable parameter in the project, in display order.
+    /// Every parameter a lane plays, in display order: what the automation menu and the agent
+    /// offer. The drums' and the sampler's values have an address (`descriptor(for:)`, MIDI Learn
+    /// from their control) but no lane yet, so they are not listed.
     public var parameters: [ParameterDescriptor] {
         var list = [
             Self.descriptor(.tempo, title: "Tempo"),
@@ -310,8 +312,8 @@ extension Project {
         if address.owner == .project, address.key != .tempo {
             return Self.contextDescriptors.first { $0.address == address }
         }
-        if case .track(let id) = address.owner, let synth = SynthParameter.named(address.key), let track = track(id) {
-            return synth.descriptor(track: track)
+        if case .track(let id) = address.owner, let row = SynthParameter.builtIn(address.key), let track = track(id) {
+            return row.descriptor(track: track)
         }
         let title: String
         switch address.owner {
@@ -347,8 +349,8 @@ extension Project {
                   track(target)?.kind == .returnTrack else { return nil }
             return source.send(to: target)?.levelDB ?? MixerStrip.volumeRange.lowerBound
         case (.track(let id), let key):
-            guard let synth = SynthParameter.named(key), let track = track(id), track.kind == .instrument else { return nil }
-            return track.instrument.value(synth)
+            guard let row = SynthParameter.builtIn(key), let track = track(id), track.kind == .instrument else { return nil }
+            return track.instrument.value(row)
         default: return nil
         }
     }
@@ -416,7 +418,7 @@ extension Command {
         case (.track(let id), let key) where key.sendTarget != nil:
             guard let target = key.sendTarget else { return nil }
             return .setSend(track: id, to: target, db: value)
-        case (.track(let id), let key) where SynthParameter.named(key) != nil:
+        case (.track(let id), let key) where SynthParameter.builtIn(key) != nil:
             return .setInstrumentParameter(id, key: key.rawValue, value: value)
         default: return nil
         }

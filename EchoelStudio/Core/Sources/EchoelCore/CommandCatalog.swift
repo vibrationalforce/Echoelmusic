@@ -194,9 +194,10 @@ public enum CommandCatalog {
                                parameters: [P("track", .trackID, "The track."), P("colorIndex", .integer, "Colour 0–11.")])
         case .setInstrumentParameter:
             return CommandSpec(name: "instrument.parameter", title: "Change Sound",
-                               summary: "Sets one synth parameter of an instrument track, e.g. synth.cutoff in Hz.",
+                               summary: "Sets one value of an instrument track's built-in instrument, e.g. synth.cutoff in Hz.",
                                parameters: [P("track", .trackID, "An instrument track."),
-                                            P("key", .string, "A synth parameter key: " + SynthParameter.all.map(\.key.rawValue).joined(separator: ", ") + "."),
+                                            P("key", .string, "An instrument parameter key: "
+                                                + InstrumentDevice.builtIn.flatMap(\.parameters).map(\.key.rawValue).joined(separator: ", ") + "."),
                                             P("value", .number, "The new value, within the parameter's range.")])
         case .loadInstrumentPreset:
             return CommandSpec(name: "instrument.preset", title: "Load Preset",
