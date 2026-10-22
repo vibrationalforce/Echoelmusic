@@ -82,7 +82,7 @@ struct EchoelStudioApp: App {
                 // A song tapped in Files or received by AirDrop (E4).
                 .onOpenURL { url in documents.openIncoming(url) }
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { old, phase in
             switch phase {
             case .active:
                 engine.enterForeground()
@@ -91,7 +91,7 @@ struct EchoelStudioApp: App {
                 engine.enterBackground()
                 documents.sceneLeft()
             case .inactive:
-                documents.sceneInactive()
+                documents.sceneInactive(fromActive: old == .active)
             default: break
             }
             guard phase != .active else { return }

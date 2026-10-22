@@ -77,7 +77,8 @@ final class DocumentController {
     @ObservationIgnored private var quarantine = SongQuarantine()
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
-    /// Confirms the launch once the app has left the foreground and the song it opened is loaded.
+    /// Confirms the launch once the app has left the foreground, or stopped being active, and the
+    /// song open then is loaded.
     @ObservationIgnored private var launchLeave: Task<Void, Never>?
     /// The run of the earlier songs' import in flight; leaving the foreground cancels it, and it
     /// then pauses between two songs.
@@ -97,6 +98,9 @@ final class DocumentController {
     #if canImport(UIKit)
     /// Background time asked for while a run on its way out reaches its pause point.
     @ObservationIgnored private var importBackgroundTask: UIBackgroundTaskIdentifier = .invalid
+    /// Background time asked for while a launch that left waits for its song to load: a suspended
+    /// app stops decoding, and one the system then ends would be taken for a crash.
+    @ObservationIgnored private var launchBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     #endif
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
     /// Runs before another song replaces the open one. The app sets it to write the plugins'
@@ -197,13 +201,25 @@ final class DocumentController {
             beginImportBackgroundTime()
             run.cancel()
         }
+        confirmLaunchOnceLoaded(inBackground: true)
+    }
+
+    /// A launch that leaves, or stops being active, counts as healthy once the song open then has
+    /// loaded its media. Another song opened in the meantime has a decode of its own that can
+    /// still end the app, so the wait follows the song that is open (review 2026-10-22). In the
+    /// background the wait has background time: a suspended app stops decoding.
+    private func confirmLaunchOnceLoaded(inBackground: Bool) {
         guard launch.isPending else { return }
-        let song = songsOpened
+        if inBackground { beginLaunchBackgroundTime() }
         launchLeave?.cancel()
         launchLeave = Task { [weak self] in
-            await self?.mediaLoaded(for: song)
-            guard !Task.isCancelled else { return }
+            while let song = self?.songsOpened {
+                await self?.mediaLoaded(for: song)
+                guard !Task.isCancelled else { return }
+                if self?.songsOpened == song { break }
+            }
             self?.confirmLaunch(leaving: true)
+            self?.endLaunchBackgroundTime()
         }
     }
 
@@ -220,12 +236,16 @@ final class DocumentController {
     /// Called when the app stops being active while it is still in front. A run of the import
     /// pauses here, between two songs, and goes on once the app is active again: in the app
     /// switcher a swipe ends the app with no move to the background first, and two such ends on
-    /// the same song left a healthy song out (round 4 measurement).
-    func sceneInactive() {
+    /// the same song left a healthy song out (round 4 measurement). `fromActive` is false on the
+    /// way into the app (a launch, a return from the background), which is no leave.
+    func sceneInactive(fromActive: Bool) {
         isInactive = true
         importWait?.cancel()
         importWait = nil
         importRun?.cancel()
+        // The same swipe ends a launch that never reached the background, so leaving the active
+        // app confirms it too, on the same terms as a leave (review 2026-10-22).
+        if fromActive { confirmLaunchOnceLoaded(inBackground: false) }
     }
 
     private func armImportWait() {
@@ -255,6 +275,23 @@ final class DocumentController {
         guard importBackgroundTask != .invalid else { return }
         UIApplication.shared.endBackgroundTask(importBackgroundTask)
         importBackgroundTask = .invalid
+        #endif
+    }
+
+    private func beginLaunchBackgroundTime() {
+        #if canImport(UIKit)
+        guard launchBackgroundTask == .invalid else { return }
+        launchBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Launch check") { [weak self] in
+            MainActor.assumeIsolated { self?.endLaunchBackgroundTime() }
+        }
+        #endif
+    }
+
+    private func endLaunchBackgroundTime() {
+        #if canImport(UIKit)
+        guard launchBackgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(launchBackgroundTask)
+        launchBackgroundTask = .invalid
         #endif
     }
 
@@ -315,6 +352,7 @@ final class DocumentController {
         launchCheck = nil
         launchLeave?.cancel()
         launchLeave = nil
+        endLaunchBackgroundTime()
         // Only in the foreground: a run started on the way to the background, or in it (the audio
         // background mode keeps a playing app alive past ten seconds), is suspended in the middle,
         // and one the system then ends would count against the song it was on. Otherwise it waits
