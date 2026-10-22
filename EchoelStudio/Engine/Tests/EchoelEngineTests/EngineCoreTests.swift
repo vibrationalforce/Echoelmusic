@@ -756,4 +756,22 @@ final class InstrumentPatchTests: XCTestCase {
         let waveform = try XCTUnwrap(SynthParameter.all.firstIndex { $0.key == SynthParameter.waveform.key })
         XCTAssertEqual(snapshot.lanes.map { $0.values[synth][waveform] }, [0, 2])
     }
+
+    /// A choice is an index: an automation point just below a half plays the choice below, as the
+    /// track's own value would, and a number is never rounded.
+    func testAChoicePointJustBelowAHalfPlaysTheChoiceBelow() throws {
+        let track = TrackID()
+        let waveform = try XCTUnwrap(PatchField(SynthParameter.waveform.key))
+        let cutoff = try XCTUnwrap(PatchField(SynthParameter.cutoff.key))
+        func automation(_ field: PatchField, _ key: ParameterKey, _ value: Double) -> EngineSnapshot.PatchAutomation {
+            EngineSnapshot.PatchAutomation(field: field, lane: AutomationLane(target: ParameterAddress(.track(track), key),
+                                                                              points: [AutomationPoint(tick: 0, value: value)]))
+        }
+        let below: Double = 0.49999999
+        XCTAssertEqual(Float(below), 0.5, "the trap: as a Float the point is already a half")
+        XCTAssertEqual(automation(waveform, SynthParameter.waveform.key, below).value(atPosition: 10), 0)
+        XCTAssertEqual(automation(waveform, SynthParameter.waveform.key, 1.5).value(atPosition: 10), 2)
+        XCTAssertEqual(automation(cutoff, SynthParameter.cutoff.key, 1_234.56).value(atPosition: 10), 1_234.56,
+                       "a number is not rounded")
+    }
 }

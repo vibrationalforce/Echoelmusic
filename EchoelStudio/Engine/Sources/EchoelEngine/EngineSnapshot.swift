@@ -63,9 +63,11 @@ public struct EngineSnapshot: Sendable {
             index = PatchField.allCases.firstIndex(of: field) ?? 0
         }
 
-        /// The lane's value at `position`, the way the field takes it. Render-safe.
+        /// The lane's value at `position`, the way the field takes it. Render-safe. A choice is an
+        /// index, rounded here in Double: the render thread makes the value a Float, and as a Float
+        /// a point just below a half (0.49999999) is already 0.5 and would round up a choice.
         public func value(atPosition position: Double) -> Double? {
-            holds ? lane.heldValue(atPosition: position) : lane.value(atPosition: position)
+            holds ? lane.heldValue(atPosition: position).map { $0.rounded() } : lane.value(atPosition: position)
         }
     }
 
