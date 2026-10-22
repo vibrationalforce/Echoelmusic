@@ -37,6 +37,22 @@ enum StudioSheet: Identifiable, Hashable {
 @Observable
 final class StudioRouter {
     var sheet: StudioSheet?
+    /// A finished export or share that found another sheet open. It waits for that one to close
+    /// instead of taking the slot from it — an assistant's typed request, an editor in use, a
+    /// file picker (audit 2026-10-23).
+    @ObservationIgnored private var waitingShare: URL?
+
+    /// The share sheet for `url`, now or as soon as the open sheet closes.
+    func share(_ url: URL) {
+        if sheet == nil { sheet = .share(url) } else { waitingShare = url }
+    }
+
+    /// The slot's sheet closed: a share that waited for it comes up.
+    func sheetClosed() {
+        guard sheet == nil, let url = waitingShare else { return }
+        waitingShare = nil
+        sheet = .share(url)
+    }
 }
 
 /// The system file picker for one audio file. It hands over a copy the app may read freely,

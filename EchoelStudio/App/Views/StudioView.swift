@@ -38,7 +38,7 @@ struct StudioView: View {
             case .mixer: MixerView()
             }
         }
-        .sheet(item: $router.sheet) { sheet in
+        .sheet(item: $router.sheet, onDismiss: { router.sheetClosed() }) { sheet in
             switch sheet {
             case .clipEditor(let track): ClipEditorView(trackID: track)
             case let .clip(track, clip): ClipEditorView(trackID: track, clipID: clip)
@@ -476,7 +476,7 @@ struct SongMenu: View {
                     let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
                     if let url = await documents.exportWAV(plugins: engine.plugins) {
                         if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                        router.sheet = .share(url)
+                        router.share(url)
                     }
                 }
             }
@@ -489,19 +489,19 @@ struct SongMenu: View {
                     let standing = TransportBar.notices(engine.notice, engine.plugins.notice)
                     if let folder = await documents.exportStems(plugins: engine.plugins) {
                         if TransportBar.notices(engine.notice, engine.plugins.notice) == standing { engine.clearNotices() }
-                        router.sheet = .share(folder)
+                        router.share(folder)
                     }
                 }
             }
             .disabled(documents.isExporting || !store.project.arrangementHasSound)
             Button("Export MIDI", systemImage: "pianokeys") {
-                if let url = documents.exportMIDI() { router.sheet = .share(url) }
+                if let url = documents.exportMIDI() { router.share(url) }
             }
             .disabled(!store.project.arrangementHasEvents)
             // The song itself, with its audio, for another device running Echoel Studio.
             Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
                 Task {
-                    if let url = await documents.shareSong(plugins: engine.plugins) { router.sheet = .share(url) }
+                    if let url = await documents.shareSong(plugins: engine.plugins) { router.share(url) }
                 }
             }
             .disabled(documents.isExporting)
