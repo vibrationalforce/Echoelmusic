@@ -24,6 +24,18 @@ final class MusicalContextTests: XCTestCase {
         XCTAssertEqual((57...68).filter(pentatonic.contains), [57, 60, 62, 64, 67])
     }
 
+    func testTheFrameReadsAsKeyAndScale() throws {
+        XCTAssertEqual(MusicalContext(root: 2, scale: .dorian).title, "D Dorian")
+        XCTAssertEqual(MusicalContext(root: 10, scale: .harmonicMinor).title, "B♭ Harmonic Minor")
+        XCTAssertEqual(MusicalContext().title, "Chromatic")
+        XCTAssertEqual(MusicalContext(root: 7).title, "Chromatic", "chromatic has no key to name")
+        var later = try JSONDecoder().decode(MusicalContext.self, from: Data(
+            #"{"root":2,"scale":"bebop","tuning":"edo12","concertPitch":440,"swing":0}"#.utf8))
+        XCTAssertEqual(later.title, "Chromatic", "a scale this build does not know frames nothing")
+        later.scale = .minor
+        XCTAssertEqual(later.title, "D Minor")
+    }
+
     func testNearestStaysAMIDIPitch() {
         let cMajor = MusicalContext(scale: .major)
         XCTAssertEqual(cMajor.nearest(200), 127)

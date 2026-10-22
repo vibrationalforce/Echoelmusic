@@ -400,6 +400,7 @@ struct SongMenu: View {
     @Environment(DocumentController.self) private var documents
     @Environment(StudioRouter.self) private var router
     @Environment(AgentSession.self) private var agent
+    @Environment(ParameterWriter.self) private var writer
 
     var body: some View {
         Menu {
@@ -408,6 +409,7 @@ struct SongMenu: View {
                     Button(starter.title) { documents.newSong(starter) }
                 }
             }
+            keyAndScale
             if agent.isOffered {
                 Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
             }
@@ -503,6 +505,32 @@ struct SongMenu: View {
         .accessibilityLabel("Song \(store.project.name)")
         .accessibilityHint("New song or open another. Songs save automatically.")
         .onAppear { documents.refresh() }
+    }
+
+    /// The song's key and scale, the frame a keyboard can later be held in. Through the writer like
+    /// every other control, so a pick while automation writing is armed lands in the lane. Nothing
+    /// else sets them on screen; the assistant is hidden on devices without its model.
+    private var keyAndScale: some View {
+        let context = store.project.context
+        return Menu {
+            Picker("Key", selection: Binding(get: { context.root }, set: { pick(.keyRoot, Double($0)) })) {
+                ForEach(MusicalContext.rootRange, id: \.self) { Text(MusicalContext.rootNames[$0]).tag($0) }
+            }
+            .pickerStyle(.menu)
+            Picker("Scale", selection: Binding(get: { context.scale }, set: { scale in
+                pick(.scale, Double(Scale.allCases.firstIndex(of: scale) ?? 0))
+            })) {
+                ForEach(Scale.allCases, id: \.self) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.menu)
+        } label: {
+            Label("Key \u{00B7} \(context.title)", systemImage: "music.note")
+        }
+    }
+
+    private func pick(_ address: ParameterAddress, _ value: Double) {
+        writer.set(address, to: value, coalescingKey: nil)
+        writer.endGesture()
     }
 
     static func offsetTitle(_ milliseconds: Double) -> String {

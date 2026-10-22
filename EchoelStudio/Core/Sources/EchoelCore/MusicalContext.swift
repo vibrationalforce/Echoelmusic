@@ -45,6 +45,13 @@ public struct MusicalContext: Codable, Equatable, Sendable {
     public static let swingRange: ClosedRange<Double> = 0...1
     public static let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
 
+    /// The frame as the musician reads it: "D Dorian". Chromatic has no key to name and reads
+    /// "Chromatic", and so does a scale this build does not know, which frames nothing either.
+    public var title: String {
+        guard scale != .chromatic, Self.rootNames.indices.contains(root) else { return Scale.chromatic.title }
+        return "\(Self.rootNames[root]) \(scale.title)"
+    }
+
     /// Whether a MIDI pitch belongs to the key and scale.
     public func contains(_ pitch: Int) -> Bool {
         let degree = ((pitch - root) % 12 + 12) % 12
