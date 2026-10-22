@@ -294,6 +294,36 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(states, [.queued, .playing, .stopped, .arrangement])
     }
 
+    /// A clip only waiting for its bar is called off by a stop, or by the transport stopping, and
+    /// the core says which: the session view and a Launchpad stop showing it queued (audit
+    /// 2026-10-23).
+    func testAStopCallsOffAQueuedClipAndSaysSo() throws {
+        var s = try song([[]])
+        let loop = ClipID()
+        try Command.createClip(track: s.tracks[0], id: loop, name: "L", length: bar).apply(to: &s.project)
+        try Command.addNotes(loop, [Note(pitch: 60, start: 0, length: 480)]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 256)
+
+        engine.launch(slot: 0, .launch(loop))
+        _ = render(engine, frames: 256)
+        engine.launch(slot: 0, .stop)
+        XCTAssertNil(firstSound(render(engine, frames: 100_800 - 512).left), "the queued clip never starts")
+        let stopped = Array(sequence(state: engine.launchReports) { $0.pop() })
+        XCTAssertEqual(stopped.map(\.state), [.queued, .stopped])
+        XCTAssertEqual(stopped.last?.clip, loop, "the stop names the clip it called off")
+
+        engine.launch(slot: 0, .launch(loop))
+        _ = render(engine, frames: 256)
+        engine.stop()
+        _ = render(engine, frames: 256)
+        let halted = Array(sequence(state: engine.launchReports) { $0.pop() })
+        XCTAssertEqual(halted.map(\.state), [.queued, .stopped], "the transport stopping calls it off too")
+        XCTAssertEqual(halted.last?.clip, loop)
+    }
+
     func testANoteAfterATempoChangeLandsWhereTheMapSays() throws {
         var s = try song([[Note(pitch: 60, start: bar + 960, length: 480)]])
         try Command.setTempoChange(at: bar, bpm: 60).apply(to: &s.project)

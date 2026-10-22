@@ -831,7 +831,8 @@ final class AudioEngine {
             guard let slot = slots.slots[track.id] else { continue }
             if let clip = track.clipInSlot(scene) {
                 core.launch(slot: slot, .launch(clip))
-            } else if session.playing[track.id] != nil {
+            } else if session.playing[track.id] != nil || session.queued[track.id] != nil {
+                // A clip only queued would otherwise still start at its bar.
                 core.launch(slot: slot, .stop)
             }
         }
@@ -840,7 +841,10 @@ final class AudioEngine {
 
     func stopAllClips() {
         guard let core else { return }
-        for track in session.playing.keys { if let slot = slots.slots[track] { core.launch(slot: slot, .stop) } }
+        // Queued clips too: one waiting for its bar would otherwise still start (audit 2026-10-23).
+        for track in Set(session.playing.keys).union(session.queued.keys) {
+            if let slot = slots.slots[track] { core.launch(slot: slot, .stop) }
+        }
     }
 
     /// Every track the session took over plays its arrangement again.

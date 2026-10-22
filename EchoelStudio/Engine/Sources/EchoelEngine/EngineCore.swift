@@ -685,6 +685,7 @@ public final class EngineCore: @unchecked Sendable {
                 sessions[lane.slot].pending = .launch(clip)
                 report(lane.slot, clip, .queued)
             case .stop:
+                calledOff(lane.slot)
                 guard sessions[lane.slot].clip != nil else {
                     sessions[lane.slot].pending = .none
                     continue
@@ -714,6 +715,7 @@ public final class EngineCore: @unchecked Sendable {
             sessions[slot].pending = .launch(clip)
             report(slot, clip, .queued)
         case .stop:
+            calledOff(slot)
             guard sessions[slot].clip != nil else {
                 sessions[slot].pending = .none
                 return
@@ -794,9 +796,18 @@ public final class EngineCore: @unchecked Sendable {
         sessions[lane.slot] = session
     }
 
+    /// A clip only waiting for its boundary is called off by a stop: said, so the session view and
+    /// a Launchpad stop showing it queued — the core used to drop it without a word (audit
+    /// 2026-10-23). The clip already playing is reported when it stops.
+    private func calledOff(_ slot: Int) {
+        guard case .launch(let queued) = sessions[slot].pending, queued != sessions[slot].clip else { return }
+        report(slot, queued, .stopped)
+    }
+
     /// The transport stopped: every clip stops with it; the tracks stay off the arrangement.
     private func stopSessionClips() {
         for slot in 0..<slotCapacity where sessions[slot].clip != nil || !sessions[slot].isIdle {
+            calledOff(slot)
             if let clip = sessions[slot].clip { report(slot, clip, .stopped) }
             sessions[slot].clip = nil
             sessions[slot].index = -1
