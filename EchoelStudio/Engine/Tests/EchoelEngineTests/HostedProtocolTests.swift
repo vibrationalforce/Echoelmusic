@@ -133,8 +133,10 @@ final class HostedProtocolTests: XCTestCase {
         let before = unit.heard.count
         core.playLive(slot: 0, status: 0xB0, 1, 64)
         _ = render(core, frames: 512, block: 512)
-        let live = unit.heard.dropFirst(before).filter { $0.status == 0xB0 && $0.data == 1 }
-        XCTAssertEqual(live.map(\.frame), [26_000 + 1_024], "the wheel at the start of the next block")
+        let fresh = Array(unit.heard.dropFirst(before))
+        let live: [Int64] = fresh.filter { $0.status == 0xB0 && $0.data == 1 }.map { $0.frame }
+        let nextBlock: Int64 = 26_000 + 1_024
+        XCTAssertEqual(live, [nextBlock], "the wheel at the start of the next block")
     }
 
     func testInsertsProcessTheInstrumentsBusInTheirOrder() throws {

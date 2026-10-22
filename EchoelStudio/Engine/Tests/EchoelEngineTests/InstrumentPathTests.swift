@@ -180,7 +180,11 @@ final class InstrumentPathTests: XCTestCase {
         var t = try tune([Note(pitch: 60, velocity: 100, start: 0, length: 960),
                           Note(pitch: 67, velocity: 80, start: 480, length: 960),
                           Note(pitch: 60, velocity: 120, start: 720, length: 480)], device: .sampler)
-        let tone = (0..<24_000).map { Float(sin(2 * Double.pi * 220 * Double($0) / 48_000) * (1 - Double($0) / 24_000)) }
+        let tone: [Float] = (0..<24_000).map { (index: Int) -> Float in
+            let seconds = Double(index) / 48_000
+            let fade = 1 - Double(index) / 24_000
+            return Float(sin(2 * Double.pi * 220 * seconds) * fade)
+        }
         try load(tone, into: &t)
         var sampler = Sampler(sampleRate: Float(rate))
         sampler.setSample(try XCTUnwrap(t.samples.values.first))
