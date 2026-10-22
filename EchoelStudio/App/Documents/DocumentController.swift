@@ -524,6 +524,8 @@ final class DocumentController {
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
         let buffers = samples
+        // A file the song names that did not decode renders as silence: the export says which.
+        let unread = project.media.filter { buffers[$0.id] == nil }.map(\.name)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
@@ -559,8 +561,16 @@ final class DocumentController {
         case .success(let meter):
             lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
             lastExportIsNews = true
-            lastError = offline.missing.isEmpty ? nil
-                : "Exported without \(offline.missing.joined(separator: ", ")): not available on this device."
+            var without: [String] = []
+            if !offline.missing.isEmpty {
+                without.append("Exported without \(offline.missing.joined(separator: ", ")): not available on this device.")
+            }
+            if !unread.isEmpty {
+                let shown = unread.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
+                let more = unread.count > 3 ? " and \(unread.count - 3) more" : ""
+                without.append("Exported without the audio \(unread.count == 1 ? "file" : "files") \(shown)\(more): missing or unreadable in the song.")
+            }
+            lastError = without.isEmpty ? nil : without.joined(separator: " ")
             return url
         case .failure(let error):
             log.error("export failed — \(error.localizedDescription, privacy: .public)")
