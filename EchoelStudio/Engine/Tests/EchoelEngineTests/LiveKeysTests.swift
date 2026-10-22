@@ -1,4 +1,5 @@
 import EchoelCore
+import Foundation
 import XCTest
 @testable import EchoelEngine
 
@@ -17,6 +18,30 @@ final class LiveKeysTests: XCTestCase {
 
     /// C major: every key to the nearest pitch in the scale, a tie to the lower one.
     private let cMajor: [UInt8] = (0...127).map { (pitch: Int) -> UInt8 in UInt8(MusicalContext(scale: .major).nearest(pitch)) }
+
+    /// The lock holds a melodic instrument's keys in the key and scale, and leaves alone what has
+    /// nothing to hold: a drum kit, whose keys pick drums, and a scale that frames nothing.
+    func testTheLockHoldsAMelodicInstrumentInTheScaleAndLeavesDrumsAlone() throws {
+        let major = MusicalContext(scale: .major)
+        let table = try XCTUnwrap(LiveKeys.lock(for: major, device: .synth))
+        XCTAssertEqual(table, cMajor)
+        XCTAssertEqual(table[61], 60, "C♯ to C: a tie goes down")
+        XCTAssertEqual(table[66], 65)
+        XCTAssertEqual(table[64], 64)
+        XCTAssertEqual(LiveKeys.lock(for: MusicalContext(root: 2, scale: .major), device: .sampler)?[60], 59,
+                       "in D major C lies between B and C♯: the lower wins")
+        XCTAssertNotNil(LiveKeys.lock(for: major, device: .plugin))
+        XCTAssertNil(LiveKeys.lock(for: major, device: .drums))
+        XCTAssertNil(LiveKeys.lock(for: major, device: .unrecognized))
+        XCTAssertNil(LiveKeys.lock(for: MusicalContext(root: 5), device: .synth), "chromatic holds nothing")
+        let later = try JSONDecoder().decode(MusicalContext.self, from: Data(
+            #"{"root":0,"scale":"bebop","tuning":"edo12","concertPitch":440,"swing":0}"#.utf8))
+        XCTAssertNil(LiveKeys.lock(for: later, device: .synth), "a scale this build does not know holds nothing")
+
+        var keys = LiveKeys(lock: table)
+        XCTAssertEqual(Array(keys.press(channel: 0, key: 61, velocity: 100, slot: 0)), [on(60)])
+        XCTAssertEqual(Array(keys.release(channel: 0, key: 61)), [off(60)])
+    }
 
     func testAKeyReleasedAfterTheLiveTrackChangedEndsTheNoteItStarted() {
         var keys = LiveKeys()

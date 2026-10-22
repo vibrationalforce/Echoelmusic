@@ -101,6 +101,18 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
+    /// A controller's keys play the song's key and scale: a key outside it sounds the nearest
+    /// pitch in it. Kept on this device, never in the song — a take stores the notes as they
+    /// sounded, so no song depends on the switch, and the format stays as it is.
+    private(set) var keysFollowScale = UserDefaults.standard.bool(forKey: AudioEngine.keysFollowScaleKey)
+    private static let keysFollowScaleKey = "keysFollowScale"
+
+    func setKeysFollowScale(_ on: Bool) {
+        keysFollowScale = on
+        UserDefaults.standard.set(on, forKey: Self.keysFollowScaleKey)
+        if let project { publish(project) }
+    }
+
     /// The armed audio track; with `auto` monitoring it hears its input.
     @ObservationIgnored private var armedTrack: TrackID?
 
@@ -910,7 +922,7 @@ final class AudioEngine {
         heard = song
         let project = playing(song)
         slots.update(for: project)
-        live.set(core: core, slot: liveSlot(in: project))
+        live.set(core: core, slot: liveSlot(in: project), lock: liveLock(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         let source = PlaybackPlan.Source(project)
@@ -948,6 +960,11 @@ final class AudioEngine {
 
     private func liveSlot(in project: Project) -> Int? {
         liveTrackID(in: project).flatMap { slots.slots[$0] }
+    }
+
+    private func liveLock(in project: Project) -> [UInt8]? {
+        guard keysFollowScale, let track = liveTrackID(in: project).flatMap(project.track) else { return nil }
+        return LiveKeys.lock(for: project.context, device: track.instrument.device)
     }
 
     /// Built outside the main actor and with an explicitly `@Sendable` block: a closure formed

@@ -507,7 +507,7 @@ struct SongMenu: View {
         .onAppear { documents.refresh() }
     }
 
-    /// The song's key and scale, the frame a keyboard can later be held in. Through the writer like
+    /// The song's key and scale, and whether a keyboard is held in them. Through the writer like
     /// every other control, so a pick while automation writing is armed lands in the lane. Nothing
     /// else sets them on screen; the assistant is hidden on devices without its model.
     private var keyAndScale: some View {
@@ -523,6 +523,11 @@ struct SongMenu: View {
                 ForEach(Scale.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.menu)
+            // On this device: a controller's keys sound the nearest pitch in the scale. Not for a
+            // drum kit, whose keys pick drums; a chromatic scale holds nothing.
+            Toggle(isOn: Binding(get: { engine.keysFollowScale }, set: { engine.setKeysFollowScale($0) })) {
+                Label("Keys Follow Scale", systemImage: "pianokeys")
+            }
         } label: {
             Label("Key \u{00B7} \(context.title)", systemImage: "music.note")
         }

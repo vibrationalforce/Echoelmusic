@@ -1,3 +1,4 @@
+import EchoelCore
 import Foundation
 
 /// The keys a musician holds on the live instrument. Each held key remembers the slot it went to
@@ -66,6 +67,19 @@ public struct LiveKeys: Sendable {
 
     public init(lock: [UInt8]? = nil) {
         self.lock = lock
+    }
+
+    /// The table that holds a controller's keys in the song's key and scale: each key to the
+    /// nearest pitch in it, a tie to the lower one. Nil — every key as itself — where there is
+    /// nothing to hold: a chromatic scale or one this build does not know, and a drum kit, whose
+    /// keys pick a drum rather than a pitch. A plugin is held like the synth; a drum plugin cannot
+    /// be told apart, so the musician turns the switch off for it.
+    public static func lock(for context: MusicalContext, device: InstrumentDevice) -> [UInt8]? {
+        guard context.scale != .chromatic else { return nil }
+        switch device {
+        case .synth, .sampler, .plugin: return (0...127).map { (key: Int) -> UInt8 in UInt8(context.nearest(key)) }
+        case .drums, .unrecognized: return nil
+        }
     }
 
     /// No key is held any more; sends nothing. For a new engine core, which has none of the notes.
