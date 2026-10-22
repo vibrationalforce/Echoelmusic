@@ -45,13 +45,17 @@ struct Fader: View {
     @Environment(ProjectStore.self) private var store
     @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
+    /// What an automation pass wrote under the finger, which the song's own value does not
+    /// follow; the strip's level readout shows it too.
+    @Binding var passed: Double?
     var height: CGFloat = 180
 
     private static let width: CGFloat = 44
     private static let thumbHeight: CGFloat = 12
 
     var body: some View {
-        if let descriptor = store.project.descriptor(for: address), let value = store.project.value(of: address) {
+        if let descriptor = store.project.descriptor(for: address), let stored = store.project.value(of: address) {
+            let value = passed ?? stored
             let position = descriptor.normalized(value)
             let unity = descriptor.normalized(descriptor.defaultValue)
             ZStack(alignment: .bottom) {
@@ -73,9 +77,12 @@ struct Fader: View {
                 DragGesture(minimumDistance: 1)
                     .onChanged { drag in
                         let n = 1 - (drag.location.y - Self.thumbHeight / 2) / (height - Self.thumbHeight)
-                        writer.set(address, normalized: Double(n), gesture: true)
+                        passed = writer.set(address, normalized: Double(n), gesture: true)
                     }
-                    .onEnded { _ in writer.endGesture() }
+                    .onEnded { _ in
+                        passed = nil
+                        writer.endGesture()
+                    }
             )
             .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
@@ -96,11 +103,14 @@ struct PanControl: View {
     @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     @State private var start: Double?
+    /// What an automation pass wrote under the finger (see `Fader.passed`).
+    @State private var passed: Double?
 
     private static let width: CGFloat = 64
 
     var body: some View {
-        if let descriptor = store.project.descriptor(for: address), let value = store.project.value(of: address) {
+        if let descriptor = store.project.descriptor(for: address), let stored = store.project.value(of: address) {
+            let value = passed ?? stored
             let position = descriptor.normalized(value)
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: Theme.Radius.small)
@@ -122,10 +132,11 @@ struct PanControl: View {
                     .onChanged { drag in
                         let origin = start ?? position
                         start = origin
-                        writer.set(address, normalized: origin + Double(drag.translation.width / (Self.width * 2)), gesture: true)
+                        passed = writer.set(address, normalized: origin + Double(drag.translation.width / (Self.width * 2)), gesture: true)
                     }
                     .onEnded { _ in
                         start = nil
+                        passed = nil
                         writer.endGesture()
                     }
             )
@@ -149,12 +160,15 @@ struct ParameterField: View {
     @Environment(ParameterWriter.self) private var writer
     let address: ParameterAddress
     @State private var start: Double?
+    /// What an automation pass wrote under the finger (see `Fader.passed`).
+    @State private var passed: Double?
 
     /// Points of vertical travel for the full range.
     private static let travel: CGFloat = 240
 
     var body: some View {
-        if let descriptor = store.project.descriptor(for: address), let value = store.project.value(of: address) {
+        if let descriptor = store.project.descriptor(for: address), let stored = store.project.value(of: address) {
+            let value = passed ?? stored
             let position = descriptor.normalized(value)
             VStack(alignment: .leading, spacing: Theme.Space.xs) {
                 Text(title(descriptor))
@@ -185,10 +199,11 @@ struct ParameterField: View {
                     .onChanged { drag in
                         let origin = start ?? position
                         start = origin
-                        writer.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
+                        passed = writer.set(address, normalized: origin - Double(drag.translation.height / Self.travel), gesture: true)
                     }
                     .onEnded { _ in
                         start = nil
+                        passed = nil
                         writer.endGesture()
                     }
             )

@@ -33,6 +33,8 @@ struct ChannelStrip: View {
     let pan: ParameterAddress
     /// Nil for the master, which has no mute or solo.
     let track: Track?
+    /// The level an automation pass is writing under the fader, for the readout below it.
+    @State private var passedVolume: Double?
 
     var body: some View {
         VStack(spacing: Theme.Space.s) {
@@ -66,10 +68,10 @@ struct ChannelStrip: View {
             }
             PanControl(address: pan)
             HStack(alignment: .bottom, spacing: Theme.Space.xs) {
-                Fader(address: volume)
+                Fader(address: volume, passed: $passedVolume)
                 PeakMeter(track: track?.id, height: 180)
             }
-            Text(ParameterFormat.text(store.project.value(of: volume) ?? 0, unit: .decibel))
+            Text(ParameterFormat.text(passedVolume ?? store.project.value(of: volume) ?? 0, unit: .decibel))
                 .font(Theme.Font.caption.monospacedDigit())
                 .foregroundStyle(Theme.Color.textSecondary)
                 .accessibilityHidden(true)
