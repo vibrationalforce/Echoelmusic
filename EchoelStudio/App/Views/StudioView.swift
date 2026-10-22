@@ -174,6 +174,14 @@ struct TransportBar: View {
                     .foregroundStyle(Theme.Color.record)
                     .padding(.bottom, 2)
             }
+            // The menu closed and the export may first wait for the song's audio to decode: without
+            // this line nothing on screen said anything was under way (review 2026-10-22).
+            if documents.isExporting {
+                Text("Exporting the song…")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .padding(.bottom, 2)
+            }
             if midi.isLearning {
                 Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
                     .font(Theme.Font.caption)

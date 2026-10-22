@@ -28,8 +28,8 @@ final class DocumentController {
     /// hides the result of the export the user just made (review 2026-10-21).
     private(set) var lastExportIsNews = false
     /// What this launch has to say about the last one — a held song, an import given up, a song
-    /// that did not open. Its own line under the messages: an autosave clears `lastError` and
-    /// must not take this with it, and it hides nothing raised later. Play and opening another
+    /// that did not open. Its own line under the messages, so clearing one does not take it along
+    /// and it hides nothing raised later. Play and opening another
     /// song clear it (review 2026-10-21).
     private(set) var launchNote: String?
     /// The import of the earlier app's songs brought some over in this launch. Its own line, in
@@ -318,7 +318,7 @@ final class DocumentController {
     /// the starter the launch opens in place of a song must not become the newest song over the
     /// user's — after a false alarm the next healthy launch would open it instead (R8).
     private func startSong(writing: Bool) {
-        guard mayLeaveSong() else { return }
+        guard mayLeaveSong(for: nil) else { return }
         noteOpening(nil)
         let project = Project.starter()
         store.open(project)
@@ -327,7 +327,15 @@ final class DocumentController {
         savedProject = writing ? nil : project
         isUnwritten = !writing
         starterMadeFolder = false
-        saveNow()
+        if !saveNow(), let url = currentURL {
+            // Nothing is lost yet: the starter waits off the disk as at launch, and its first change
+            // tries again. Left as a failed write it could never make way for another song, though
+            // it held nothing to lose (review 2026-10-22).
+            savedProject = project
+            isUnwritten = true
+            starterMadeFolder = FileManager.default.fileExists(atPath: url.path)
+            saveError = nil
+        }
         loadMedia(of: project)
     }
 
@@ -352,7 +360,7 @@ final class DocumentController {
     }
 
     private func open(throwing url: URL) throws {
-        guard mayLeaveSong() else { throw UnsavedSong() }
+        guard mayLeaveSong(for: url.deletingPathExtension().lastPathComponent) else { throw UnsavedSong() }
         noteOpening(url.lastPathComponent)
         do {
             let project = try library.read(url)
@@ -380,11 +388,17 @@ final class DocumentController {
     /// Before another song replaces the open one, which is written first. When that fails it
     /// stays open: opening the next one went on regardless and dropped every change since the
     /// last write without a word (review 2026-10-22). Reopening the same song reads it from the
-    /// disk, so it waits too.
-    private func mayLeaveSong() -> Bool {
+    /// disk, so it waits too. `next` is the song asked for, nil for a new one; the line names
+    /// both, since a song that just arrived from Files would otherwise read as "this song".
+    private func mayLeaveSong(for next: String?) -> Bool {
         beforeLeavingSong?()
         guard saveNow() else {
-            saveError = "Could not save, so this song stays open with your changes."
+            let open = currentURL?.deletingPathExtension().lastPathComponent ?? "the open song"
+            if next == open {
+                saveError = "Could not save \(open). Your changes are still open."
+            } else {
+                saveError = "Could not save \(open), so \(next ?? "no new song") \(next == nil ? "was started" : "did not open"). \(open) stays open with your changes."
+            }
             return false
         }
         return true
@@ -435,7 +449,9 @@ final class DocumentController {
             try library.write(project, to: url)
             savedProject = project
             isUnwritten = false
-            lastError = nil
+            // Only its own line: a write says nothing about an export or an import, and clearing
+            // `lastError` here took "Exported without …" away two seconds after the export's own
+            // plugin capture changed the song (review 2026-10-22).
             saveError = nil
             if isNew { releaseHold(on: url) }
             refresh()
@@ -457,10 +473,12 @@ final class DocumentController {
         defer { isExporting = false }
         let rate = 48_000.0
         let exportedSong = songsOpened
-        let songName = store.project.name
+        // By its file name, as the other lines name songs: every new song is called "New Song"
+        // inside, so the project's own name says nothing about which one (review 2026-10-22).
+        let songName = currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
         // The song's audio files decode after it opens. A render before they arrive left its
         // sampler and audio parts silent, with no word about it (review 2026-10-19).
-        await mediaLoaded()
+        await mediaLoaded(for: exportedSong)
         guard exportedSong == songsOpened else { return exportStopped(songName) }
         try? store.absorb(plugins.captureCommands(for: store.project))
         // The song and its audio are taken together, with no wait between them: a song opened
@@ -517,9 +535,10 @@ final class DocumentController {
     }
 
     /// Returns once the open song's audio files are decoded, also when reopening it started
-    /// another load meanwhile.
-    private func mediaLoaded() async {
-        while let load = mediaLoad {
+    /// another load meanwhile — or at once when another song opened, whose audio the export
+    /// would only wait for to throw away.
+    private func mediaLoaded(for song: Int) async {
+        while let load = mediaLoad, songsOpened == song {
             await load.value
             if mediaLoad == load { return }
         }
@@ -528,13 +547,15 @@ final class DocumentController {
     private func exportStopped(_ song: String) -> URL? {
         log.info("export stopped — another song was opened")
         lastExportIsNews = false
-        lastError = "The export of \(song) stopped: another song was opened."
+        lastError = "The export of \(song) stopped: you opened or started another song."
         return nil
     }
 
-    /// Play started a fresh status line: the launch note goes, and the last export's loudness is
-    /// no longer news.
+    /// Play started a fresh status line: the last message and the launch note go, and the last
+    /// export's loudness is no longer news. A write no longer clears the message (review
+    /// 2026-10-22), so this is where an outcome the user has moved past goes.
     func playStarted() {
+        lastError = nil
         launchNote = nil
         earlierSongsNote = nil
         earlierSongsWarning = nil
@@ -714,15 +735,19 @@ final class DocumentController {
         guard let package = currentURL, !project.media.isEmpty else { return }
         let files = project.media
         mediaLoad = Task { [weak self] in
-            let loaded = await Task.detached(priority: .userInitiated) {
+            // Another song opening cancels this, and the decode stops after the file it is on: a
+            // song switch must not wait for the last song's audio (review 2026-10-22).
+            let work = Task.detached(priority: .userInitiated) {
                 var decoded: [MediaID: SampleBuffer] = [:]
                 for file in files {
+                    if Task.isCancelled { break }
                     guard let url = file.url(in: package),
                           let buffer = try? AudioFileImport.decode(url) else { continue }
                     decoded[file.id] = buffer
                 }
                 return decoded
-            }.value
+            }
+            let loaded = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             guard let self, !Task.isCancelled, self.currentURL == package else { return }
             let missing = files.count - loaded.count
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
