@@ -5610,3 +5610,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Warum:** Die Engine spielt geladene Units seit D1.1 nur über die zwei Protokolle; die Hülle braucht keinen Engine-Typ (gemessen: keine der vier Dateien nennt einen). So kann die Erweiterung in D1.4 die Engine weglassen.
 - **Folge:** Test-Ziel `EchoelHostTests` darf Host und Engine sehen, weil seine Tests eine Hülle durch die Engine spielen; die Bibliothek darf es nicht. D4 prüft die Grenze im Linux-Build.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — decisions.csv: 425 überfällige Zeilen als durch die Neuplanung abgelöst markiert (S-33)
+
+- **Entscheidung:** 425 der 878 überfälligen Zeilen tragen jetzt `superseded-2026-10-18-neuplanung`. Nur das Statusfeld ist geändert; Datum, Entscheidung, Begründung und Erwartung stehen unverändert.
+- **Wie:** acht Agenten in zwei Stufen. Ein Leser je Batch ordnete jede Zeile gegen `NEUPLANUNG_2026-10-18.md`, `ECHOEL_VISION_2026-10-19.md` und `FOUNDER_PRODUCT_LAW.md` ein; ein Skeptiker je Batch versuchte jedes „abgelöst“ zu widerlegen. 487 abgelöst, 62 zurückgeholt, 425 markiert. 244 in Kraft und 147 unsicher bleiben fällig.
+- **Grenze:** „abgelöst“ beendet die Review einer Zeile, nicht ein Gesetz. Ingenieurs-Lehren der alten App, die in einem Wächter oder einer CLAUDE.md stehen, gelten weiter (Produktgesetz: eine historische Streichung widerruft eine Umsetzung, nicht die Fähigkeit).
+- **Messen:** `./review.sh | grep -c '^REVIEW DUE'` → 453 (vorher 878).
+- **Review:** 2026-11-21.
