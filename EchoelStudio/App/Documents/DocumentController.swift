@@ -118,8 +118,6 @@ final class DocumentController {
     /// Background time asked for while a launch that left waits for its song to load: a suspended
     /// app stops decoding, and one the system then ends would be taken for a crash.
     @ObservationIgnored private var launchBackgroundTask: UIBackgroundTaskIdentifier = .invalid
-    /// Watches for an orderly end of the app (`appWillTerminate`).
-    @ObservationIgnored private var terminateObserver: NSObjectProtocol?
     #endif
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "documents")
     /// Runs before another song replaces the open one. The app sets it to write the plugins'
@@ -133,15 +131,6 @@ final class DocumentController {
     init(store: ProjectStore, directory: URL = DocumentController.defaultDirectory) {
         self.store = store
         library = ProjectLibrary(directory: directory)
-        #if canImport(UIKit)
-        // No queue: the block runs on the posting thread, the main thread, before the app ends; a
-        // block queued on the main queue could come too late.
-        terminateObserver = NotificationCenter.default.addObserver(
-            forName: UIApplication.willTerminateNotification, object: nil, queue: nil
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.appWillTerminate() }
-        }
-        #endif
     }
 
     /// The app's Documents folder, which the Files app shows under the app's name.
@@ -274,16 +263,6 @@ final class DocumentController {
         // The same swipe ends a launch that never reached the background, so leaving the active
         // app confirms it too, on the same terms as a leave (review 2026-10-22).
         if fromActive { confirmLaunchOnceLoaded(inBackground: false) }
-    }
-
-    /// The app is ending in an orderly way: swiped away in the app switcher, or ended by the
-    /// system with notice, while it still runs. A crash or a kill never gets here. A launch still
-    /// waiting for its song's media counts as healthy, so the next start does not take the swipe
-    /// for a crash and hold the song back (review 2026-10-22, residual gap).
-    func appWillTerminate() {
-        guard launch.isPending else { return }
-        log.info("launch: confirmed as the app ends")
-        confirmLaunch(leaving: true)
     }
 
     private func armImportWait() {
