@@ -182,59 +182,87 @@ struct TransportBar: View {
                     .foregroundStyle(Theme.Color.textSecondary)
                     .padding(.bottom, 2)
             }
+            // The learn banner leads the strip and hides nothing under it: a message raised while
+            // learning is as true as one raised before (round 4, C4).
             if midi.isLearning {
                 Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.accent)
                     .padding(.bottom, 2)
-            } else {
-                let message = engine.lastError ?? documents.lastError
-                let notice = Self.notices(engine.notice, engine.plugins.notice)
-                // Each line carries its own padding: with nothing to say, the strip keeps its height.
-                VStack(spacing: 0) {
-                    if let message {
-                        Text(message)
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.record)
-                            .padding(.bottom, 2)
-                    } else if let notice {
-                        Text(notice)
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.textSecondary)
-                            .padding(.bottom, 2)
-                    }
-                    if let note = documents.launchNote {
-                        Text(note)
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.record)
-                            .padding(.bottom, 2)
-                    }
-                    if let warning = documents.earlierSongsWarning {
-                        Text(warning)
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.record)
-                            .padding(.bottom, 2)
-                    }
-                    if let note = documents.earlierSongsNote {
-                        Text(note)
-                            .font(Theme.Font.caption)
-                            .foregroundStyle(Theme.Color.textSecondary)
-                            .padding(.bottom, 2)
-                    }
-                    // The export just made stands under a message; an older one only alone.
-                    if let loudness = documents.lastExportLoudness,
-                       documents.lastExportIsNews
-                        || (message == nil && notice == nil && documents.saveError == nil && documents.launchNote == nil
-                            && documents.earlierSongsWarning == nil && documents.earlierSongsNote == nil) {
-                        // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
-                        Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
-                            .font(Theme.Font.caption.monospacedDigit())
-                            .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
-                            .padding(.bottom, 2)
-                    }
-                }
+            }
+            messages
+        }
+    }
+
+    /// The audio and the document each say their own message, so one never hides the other
+    /// (round 4, C4); a notice only when neither has one. Each line carries its own padding: with
+    /// nothing to say, the strip keeps its height.
+    private var messages: some View {
+        let notice = Self.notices(engine.notice, engine.plugins.notice)
+        let quiet = engine.lastError == nil && documents.lastError == nil
+        return VStack(spacing: 0) {
+            if let audio = engine.lastError {
+                Text(audio)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.record)
+                    .padding(.bottom, 2)
+            }
+            if let document = documents.lastError {
+                Text(document)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.record)
+                    .padding(.bottom, 2)
+            }
+            if quiet, let notice {
+                Text(notice)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .padding(.bottom, 2)
+            }
+            if let note = documents.launchNote {
+                Text(note)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.record)
+                    .padding(.bottom, 2)
+            }
+            if let warning = documents.earlierSongsWarning {
+                earlierSongsWarning(warning)
+            }
+            if let note = documents.earlierSongsNote {
+                Text(note)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+                    .padding(.bottom, 2)
+            }
+            // The export just made stands under a message; an older one only alone.
+            if let loudness = documents.lastExportLoudness,
+               documents.lastExportIsNews
+                || (quiet && notice == nil && documents.saveError == nil && documents.launchNote == nil
+                    && documents.earlierSongsWarning == nil && documents.earlierSongsNote == nil) {
+                // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
+                Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
+                    .font(Theme.Font.caption.monospacedDigit())
+                    .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
+                    .padding(.bottom, 2)
             }
         }
+    }
+
+    /// Still true after a Play or another song, so it stays until the musician hides it.
+    private func earlierSongsWarning(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(text)
+                .font(Theme.Font.caption)
+                .foregroundStyle(Theme.Color.record)
+            Button { documents.hideEarlierSongsWarning() } label: {
+                Image(systemName: "xmark")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Hide this message")
+        }
+        .padding(.bottom, 2)
     }
 
     /// Both notices when both stand — a pause and a plugin that came back — so the later one is
