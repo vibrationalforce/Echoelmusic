@@ -405,17 +405,18 @@ final class DocumentController {
         }
     }
 
-    func newSong() {
-        startSong(writing: true)
+    func newSong(_ starter: StarterProject) {
+        startSong(writing: true, from: starter)
     }
 
-    /// A new song from the starter. `writing: false` keeps it off the disk until its first edit:
+    /// A new song from a starter. `writing: false` keeps it off the disk until its first edit:
     /// the starter the launch opens in place of a song must not become the newest song over the
-    /// user's — after a false alarm the next healthy launch would open it instead (R8).
-    private func startSong(writing: Bool) {
+    /// user's — after a false alarm the next healthy launch would open it instead (R8). The launch
+    /// always opens the empty starter; the others are chosen in the New Song menu.
+    private func startSong(writing: Bool, from starter: StarterProject = .empty) {
         guard mayLeaveSong(for: nil) else { return }
         noteOpening(nil)
-        let project = Project.starter()
+        let project = Project.starter(starter)
         store.open(project)
         currentURL = library.newURL(for: project.name)
         anotherSongOpened()

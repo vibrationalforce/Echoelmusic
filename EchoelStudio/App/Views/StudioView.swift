@@ -403,7 +403,11 @@ struct SongMenu: View {
 
     var body: some View {
         Menu {
-            Button("New Song", systemImage: "plus") { documents.newSong() }
+            Menu("New Song", systemImage: "plus") {
+                ForEach(StarterProject.allCases, id: \.self) { starter in
+                    Button(starter.title) { documents.newSong(starter) }
+                }
+            }
             if agent.isOffered {
                 Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
             }
