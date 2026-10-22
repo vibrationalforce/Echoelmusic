@@ -38,14 +38,20 @@ public enum OfflineRender {
     /// `effects` are plugin units prepared at `sampleRate` for this render alone — never the live
     /// ones, which the render thread is calling. Holds the whole song in memory: for a file, use
     /// the streaming form.
+    ///
+    /// For a stem, `isolating` names the track or return heard (`EngineSnapshot.init`), and
+    /// `frameCount` fixes the length — the mix's, so every file of an export lines up — with no
+    /// ring-out and silence where the source plays nothing.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
-                              effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = []) -> Result {
+                              effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = [],
+                              isolating: TrackID? = nil, frameCount: Int? = nil) -> Result {
         var left: [Float] = [], right: [Float] = []
         let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, ringOutSeconds: ringOutSeconds,
                              samples: samples,
-                             units: units, effects: effects, masterEffects: masterEffects) { l, r, count in
+                             units: units, effects: effects, masterEffects: masterEffects,
+                             isolating: isolating, frameCount: frameCount) { l, r, count in
             left.append(contentsOf: UnsafeBufferPointer(start: l, count: count))
             right.append(contentsOf: UnsafeBufferPointer(start: r, count: count))
         }
@@ -58,6 +64,7 @@ public enum OfflineRender {
                               ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
                               samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                               effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = [],
+                              isolating: TrackID? = nil, frameCount: Int? = nil,
                               blockFrames: Int = 16_384,
                               into write: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) rethrows -> Summary {
         let plan = PlaybackPlan(compiling: project)
@@ -67,15 +74,19 @@ public enum OfflineRender {
         var slots = SlotAssigner(capacity: core.slotCapacity)
         slots.update(for: project)
         let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
-                                      samples: samples, units: units, effects: effects, masterEffects: masterEffects)
-        guard plan.songEnd > 0 || snapshot.audioEnd > 0 else { return Summary(frameCount: 0, sampleRate: rate, peak: 0) }
+                                      samples: samples, units: units, effects: effects, masterEffects: masterEffects,
+                                      isolating: isolating)
+        guard frameCount != nil || plan.songEnd > 0 || snapshot.audioEnd > 0 else {
+            return Summary(frameCount: 0, sampleRate: rate, peak: 0)
+        }
         core.publish(snapshot)
         core.play()
 
         let time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: rate)
         let tail = Int64(Swift.max(0, tailSeconds.isFinite ? tailSeconds : 0) * rate)
-        let frames = Int(Swift.max(time.sample(at: plan.songEnd), snapshot.audioEnd) + tail)
-        let ringOut = Swift.min(Swift.max(0, ringOutSeconds.isFinite ? ringOutSeconds : 0), maximumRingOutSeconds)
+        let frames = frameCount.map { Swift.max(0, $0) }
+            ?? Int(Swift.max(time.sample(at: plan.songEnd), snapshot.audioEnd) + tail)
+        let ringOut = frameCount != nil ? 0 : Swift.min(Swift.max(0, ringOutSeconds.isFinite ? ringOutSeconds : 0), maximumRingOutSeconds)
         let limit = frames + Int(ringOut * rate)
         let quietFrames = Swift.max(1, Int(quietSeconds * rate))
         let block = Swift.max(1, blockFrames)
@@ -104,6 +115,60 @@ public enum OfflineRender {
             done += count
         }
         return Summary(frameCount: done, sampleRate: rate, peak: peak)
+    }
+}
+
+extension OfflineRender {
+    /// One file of a stem export: a track or a return, heard on its own.
+    public struct Stem: Equatable, Sendable {
+        public let track: TrackID
+        /// The file name without its extension: the place in the export, then the track's name,
+        /// so two tracks of one name stay two files and the files sort in mixer order.
+        public let name: String
+    }
+
+    /// The stems of the song's mix, in song order: every track the mix hears that plays a note or
+    /// an audio region in the arrangement, and every return such a track sends to that the mix
+    /// hears. Mute and solo decide as they do for the mix. Rendered `isolating` each one at the
+    /// mix's frame count and without the master's inserts, they add up to the mix before those.
+    public static func stems(of project: Project, samples: [MediaID: SampleBuffer] = [:]) -> [Stem] {
+        var slots = SlotAssigner(capacity: Track.limit(for: .instrument))
+        slots.update(for: project)
+        let snapshot = EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
+                                      sampleRate: 48_000, generation: 1, samples: samples)
+        var playing: [TrackID: [EngineSnapshot.SendTap]] = [:]
+        for lane in snapshot.lanes where lane.events.contains(where: Self.isNoteOn) {
+            playing[lane.track] = lane.sends
+        }
+        for lane in snapshot.audioLanes where !lane.regions.isEmpty {
+            playing[lane.track] = lane.sends
+        }
+        let heard = { (left: Float, right: Float, mix: EngineSnapshot.MovingMix?) -> Bool in
+            left != 0 || right != 0 || mix != nil
+        }
+        var audible = Set<TrackID>()
+        for lane in snapshot.lanes where playing[lane.track] != nil && heard(lane.gainLeft, lane.gainRight, lane.mix) {
+            audible.insert(lane.track)
+        }
+        for lane in snapshot.audioLanes where playing[lane.track] != nil && heard(lane.gainLeft, lane.gainRight, lane.mix) {
+            audible.insert(lane.track)
+        }
+        let fedBuses = Set(playing.values.flatMap { $0.map(\.bus) })
+        for lane in snapshot.returns where fedBuses.contains(lane.bus) && heard(lane.gainLeft, lane.gainRight, lane.mix) {
+            audible.insert(lane.track)
+        }
+        let tracks = project.tracks.filter { audible.contains($0.id) }
+        let width = Swift.max(2, String(tracks.count).count)
+        return tracks.enumerated().map { index, track in
+            let number = String(index + 1)
+            let place = String(repeating: "0", count: width - number.count) + number
+            return Stem(track: track.id, name: place + " " + ProjectLibrary.safeFileName(for: track.name))
+        }
+    }
+
+    private static func isNoteOn(_ event: PlaybackPlan.NoteEvent) -> Bool {
+        if case .noteOn = event.kind { return true }
+        return false
     }
 }
 

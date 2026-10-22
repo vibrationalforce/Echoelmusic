@@ -219,11 +219,17 @@ public struct EngineSnapshot: Sendable {
     /// rate is left out.
     /// `revisions` numbers each track's events (`EventRevisions`); without one, every snapshot
     /// counts as an edit of the track.
+    /// `isolating` is one stem of the mix: only that track or return reaches the output, every
+    /// other one's own output is quiet, and every send still arrives, so the return a track feeds
+    /// carries its reverb. Isolating a track quiets every return; the stems of one song add up
+    /// to its mix.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                 effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
-                masterEffects: [any HostedProcessor] = []) {
+                masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil) {
+        /// Whether a track's own output reaches the mix in this render.
+        let heard = { (track: TrackID) in isolating == nil || isolating == track }
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
         let masterChain = masterEffects.filter { $0.sampleRate == sampleRate }
         self.masterEffects = masterChain
@@ -252,9 +258,10 @@ public struct EngineSnapshot: Sendable {
         for (index, track) in returnTracks.enumerated() { busOf[track.id] = index }
         returns = returnTracks.enumerated().map { index, track in
             let (output, into) = route(track)
-            let (left, right) = track.mixer.isMuted ? (0, 0) : Self.gains(track: track.mixer, master: into)
+            let quiet = track.mixer.isMuted || !heard(track.id)
+            let (left, right) = quiet ? (0, 0) : Self.gains(track: track.mixer, master: into)
             return ReturnLane(track: track.id, bus: index, gainLeft: left, gainRight: right, inserts: inserts(track.id),
-                              output: output, mix: track.mixer.isMuted ? nil : moving(track, output < 0))
+                              output: output, mix: quiet ? nil : moving(track, output < 0))
         }
         let soloedReturns = Set(returnTracks.filter(\.mixer.isSoloed).map(\.id))
         /// Post-fader, post-pan: the track's own gains (without the master) times the send level.
@@ -277,8 +284,9 @@ public struct EngineSnapshot: Sendable {
         }
         audioLanes = project.tracks.filter { $0.kind == .audio }.map { track in
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
+            let outward = audible && heard(track.id)
             let (output, into) = route(track)
-            let (left, right) = audible ? Self.gains(track: track.mixer, master: into) : (0, 0)
+            let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
             let regions = track.regions.compactMap { region in
                 Self.resolve(region, samples: samples, time: conversion, sampleRate: sampleRate)
             }
@@ -292,15 +300,16 @@ public struct EngineSnapshot: Sendable {
             return AudioLane(track: track.id, slot: slots[track.id] ?? -1, loops: loops,
                              gainLeft: left, gainRight: right, regions: regions,
                              inserts: inserts(track.id), sends: sends(track, audible), output: output,
-                             mix: audible ? moving(track, output < 0) : nil,
+                             mix: outward ? moving(track, output < 0) : nil,
                              monitor: monitoring[track.id].flatMap { (0..<InputMonitor.channelLimit).contains($0) ? $0 : nil } ?? -1)
         }
         audioEnd = audioLanes.flatMap(\.regions).map(\.endSample).max() ?? 0
         let compiled = plan.tracks.compactMap { events -> Lane? in
             guard let slot = slots[events.track], let track = project.track(events.track) else { return nil }
             let audible = !track.mixer.isMuted && (!anySolo || track.mixer.isSoloed)
+            let outward = audible && heard(track.id)
             let (output, into) = route(track)
-            let (left, right) = audible ? Self.gains(track: track.mixer, master: into) : (0, 0)
+            let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
             var patchLanes: [PatchAutomation] = []
             if track.instrument.device == .synth {
                 for parameter in SynthParameter.all {
@@ -321,7 +330,7 @@ public struct EngineSnapshot: Sendable {
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
                         clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
-                        mix: audible ? moving(track, output < 0) : nil, patchLanes: patchLanes)
+                        mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes)
         }
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
