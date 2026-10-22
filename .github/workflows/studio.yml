@@ -34,21 +34,35 @@ jobs:
       # (docs/dev/NEUPLANUNG_2026-10-18.md §2 Vertrauen). Every network API in EchoelStudio's
       # sources must sit in one of the files listed here; a new one fails until it is added on
       # purpose, which is the moment to say what it sends and that it is off by default.
+      # It checks the named frameworks and APIs (EchoelStudio/Support/CI/swift_imports.py lists
+      # them), read as Swift: a comment or a string never counts. It cannot see every way to the
+      # network (a remote URL handed to Data(contentsOf:) needs none of them).
       - name: Network only where named
         run: |
-          allowed='EchoelStudio/App/Store/StoreController.swift
-          EchoelStudio/App/Store/StoreView.swift
-          EchoelStudio/Plugins/Shared/PluginLicense.swift
-          EchoelStudio/App/Engine/MIDIInput.swift'
-          # An import in every spelling the import-boundary step below names (an attribute, an access
-          # level, a kind, after a `;`), or one of the APIs by name.
-          found=$(git grep -lE '(^|;)[[:space:]]*((@[A-Za-z_][A-Za-z0-9_]*(\([^)]*\))?|open|public|package|internal|fileprivate|private)[[:space:]]+)*import[[:space:]]+((typealias|struct|class|enum|protocol|let|var|func)[[:space:]]+)?(Network|StoreKit|MultipeerConnectivity|CloudKit|WebKit|SafariServices)|URLSession|NWConnection|NWListener|NWBrowser|MIDINetworkSession|URLRequest' \
-                  -- 'EchoelStudio/*.swift' ':!EchoelStudio/**/Tests/**' | sort -u)
-          bad=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$allowed" | sed 's/^ *//' | sort -u) | sed '/^$/d')
-          if [ -n "$bad" ]; then
-            echo "::error::Network API outside the named files:"; echo "$bad"; exit 1
-          fi
-          echo "Network APIs only in:"; echo "$found"
+          python3 EchoelStudio/Support/CI/swift_imports.py --selftest
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "EchoelStudio/Support/CI")
+          import swift_imports as swift
+          allowed = {
+              "EchoelStudio/App/Store/StoreController.swift",
+              "EchoelStudio/App/Store/StoreView.swift",
+              "EchoelStudio/Plugins/Shared/PluginLicense.swift",
+              "EchoelStudio/App/Engine/MIDIInput.swift",
+          }
+          found = sorted(name for name in swift.files("EchoelStudio/*.swift", ":!EchoelStudio/**/Tests/**")
+                         if swift.names_network(swift.read(name)))
+          if not found:
+              print("::error::no network API found at all — the scan matches nothing (the Store files use StoreKit)")
+              sys.exit(1)
+          bad = [name for name in found if name not in allowed]
+          if bad:
+              print("::error::Network API outside the named files:")
+              print("\n".join(bad))
+              sys.exit(1)
+          print("Network APIs only in:")
+          print("\n".join(found))
+          PY
 
       # The module layering as a check (S-26 D4.2, docs/dev/NEUPLANUNG_2026-10-18.md §3.4): each
       # library imports only what its row names, and the AUv3 extension never imports the engine.
@@ -59,20 +73,14 @@ jobs:
       - name: Imports only where named
         run: |
           python3 - <<'PY'
-          import re, subprocess, sys
-          # Every spelling Swift accepts, not only a bare `import X` at the start of a line: an
-          # attribute with arguments (`@_spi(A)`, `@_implementationOnly`), an access level (SE-0409,
-          # `internal import X`), a kind (`import struct M.T`), an attribute on the line before,
-          # several imports on one line. Comments are removed first.
-          DECLARATION = re.compile(
-              r"(?:^|;)\s*(?:(?:@[A-Za-z_]\w*(?:\([^)]*\))?|open|public|package|internal|fileprivate|private)\s+)*"
-              r"import\s+(?:(?:typealias|struct|class|enum|protocol|let|var|func)\s+)?([A-Za-z_]\w*)", re.M)
-          COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+          import sys
+          # Every spelling Swift accepts (attributes, access levels, kinds, several on a line), read
+          # as Swift: comments and string contents are blanked first (swift_imports.py, whose
+          # --selftest ran in the step above).
+          sys.path.insert(0, "EchoelStudio/Support/CI")
+          import swift_imports as swift
           def imports(path):
-              files = subprocess.run(["git", "ls-files", "--", path + "/*.swift"], capture_output=True, text=True,
-                                     check=True).stdout.split()
-              return {name: set(DECLARATION.findall(COMMENT.sub(" ", open(name, encoding="utf-8").read())))
-                      for name in files}
+              return {name: swift.imports(swift.read(name)) for name in swift.files(path + "/*.swift")}
           rows = [
               ("EchoelStudio/Core/Sources", "Foundation Observation"),
               ("EchoelStudio/DSP/Sources", "Foundation"),
