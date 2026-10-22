@@ -76,6 +76,40 @@ final class ProjectStoreTests: XCTestCase {
         }
     }
 
+    /// A plugin's settings belong to the plugin they were captured from: absorbing them never
+    /// writes them into a step where the track held another plugin — Choose Plugin's before on
+    /// undo, its after on redo (review 2026-10-23).
+    func testAbsorbedPluginSettingsStayWithTheirPlugin() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            let track = TrackID()
+            let first = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("Mini"),
+                                        manufacturer: PluginComponent.code("Acme"), name: "Mini", manufacturerName: "Acme")
+            let second = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("Maxi"),
+                                         manufacturer: PluginComponent.code("Acme"), name: "Maxi", manufacturerName: "Acme")
+            let firstSettings = Data([1])
+            let secondSettings = Data([2])
+            let laterFirstSettings = Data([3])
+            try store.perform(.addTrack(id: track, name: "Keys", kind: .instrument, index: nil))
+            try store.perform(.setInstrumentPlugin(track, first))
+            try store.absorb([.setPluginState(track, firstSettings)])
+            try store.perform(.setInstrumentPlugin(track, second))
+            try store.absorb([.setPluginState(track, secondSettings)])
+            XCTAssertEqual(store.project.tracks.first?.instrument.pluginState, secondSettings)
+            store.undo()
+            XCTAssertEqual(store.project.tracks.first?.instrument.plugin, first)
+            XCTAssertEqual(store.project.tracks.first?.instrument.pluginState, firstSettings,
+                           "the first plugin comes back with its own settings")
+            try store.absorb([.setPluginState(track, laterFirstSettings)])
+            store.redo()
+            XCTAssertEqual(store.project.tracks.first?.instrument.plugin, second)
+            XCTAssertEqual(store.project.tracks.first?.instrument.pluginState, secondSettings,
+                           "and the second with its own on redo")
+            store.undo()
+            XCTAssertEqual(store.project.tracks.first?.instrument.pluginState, laterFirstSettings)
+        }
+    }
+
     func testACommandThatChangesNothingAddsNoStep() async throws {
         try await MainActor.run {
             let store = ProjectStore()

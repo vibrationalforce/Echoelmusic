@@ -74,7 +74,9 @@ public final class ProjectStore {
     /// Writes state that is not an edit — the plugins' own settings, captured before a save or an
     /// export — into the song and into every undo and redo step where it applies. Saving then
     /// neither adds a step nor clears redo, and an undo never takes a plugin back to settings it
-    /// no longer has. All or nothing on the open song; a step it cannot apply to stays as it was.
+    /// no longer has. All or nothing on the open song. In a step, each command is written where it
+    /// applies and nowhere else: a plugin's settings only where the same plugin sits, never into
+    /// the step before a Choose Plugin (review 2026-10-23).
     public func absorb(_ commands: [Command]) throws {
         guard !commands.isEmpty else { return }
         var draft = project
@@ -82,16 +84,40 @@ public final class ProjectStore {
             try command.apply(to: &draft)
         }
         guard draft != project else { return }
+        let song = draft
         func absorbed(_ snapshot: Project) -> Project {
             var copy = snapshot
-            for command in commands {
-                guard (try? command.apply(to: &copy)) != nil else { return snapshot }
+            for command in commands where Self.belongs(command, capturedIn: song, to: snapshot) {
+                var attempt = copy
+                guard (try? command.apply(to: &attempt)) != nil else { continue }
+                copy = attempt
             }
             return copy
         }
         undoStack = undoStack.map { Step(title: $0.title, before: absorbed($0.before), after: absorbed($0.after)) }
         redoStack = redoStack.map { Step(title: $0.title, before: absorbed($0.before), after: absorbed($0.after)) }
         project = draft
+    }
+
+    /// Whether `command`, captured from the open `song`, belongs in `snapshot`: settings belong
+    /// to the plugin they came from, so a step that holds another plugin on that track or insert
+    /// keeps its own. Everything else belongs wherever it applies.
+    private static func belongs(_ command: Command, capturedIn song: Project, to snapshot: Project) -> Bool {
+        switch command {
+        case let .setPluginState(track, _):
+            guard let now = song.trackIndex(track), let then = snapshot.trackIndex(track) else { return false }
+            return song.tracks[now].instrument.plugin == snapshot.tracks[then].instrument.plugin
+        case let .setInsertState(track, id, _):
+            guard let now = try? song.requireInsert(id, on: track),
+                  let then = try? snapshot.requireInsert(id, on: track) else { return false }
+            return song.tracks[now.0].inserts[now.1].plugin == snapshot.tracks[then.0].inserts[then.1].plugin
+        case let .setMasterInsertState(id, _):
+            guard let now = song.masterInserts.first(where: { $0.id == id }),
+                  let then = snapshot.masterInserts.first(where: { $0.id == id }) else { return false }
+            return now.plugin == then.plugin
+        default:
+            return true
+        }
     }
 
     /// Closes an open gesture, so the next perform starts a new undo step.
