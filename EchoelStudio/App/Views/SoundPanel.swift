@@ -29,6 +29,7 @@ struct SoundPanel: View {
                     Text("General MIDI drum kit: Kick 36, Snare 38, Clap 39, Low Tom 45, Closed Hat 42, High Tom 50, Open Hat 46, Crash 49.")
                         .font(Theme.Font.caption)
                         .foregroundStyle(Theme.Color.textSecondary)
+                    deviceFields(.drums)
                 case .sampler:
                     samplerControls
                 case .synth:
@@ -152,9 +153,42 @@ struct SoundPanel: View {
             }
         }
 
-        Text("Plays the sample at its own pitch on C4 (MIDI 60); other notes transpose it.")
+        samplerModePicker
+        deviceFields(.sampler)
+
+        let root = Int(track.instrument.value(.samplerRoot).rounded())
+        Text("Plays the sample at its own pitch on \(NoteEditing.name(of: root)) (MIDI \(root)); other notes transpose it.")
             .font(Theme.Font.caption)
             .foregroundStyle(Theme.Color.textSecondary)
+    }
+
+    /// A built-in instrument's numbers, one field each; its choices have their own picker.
+    private func deviceFields(_ device: InstrumentDevice) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
+                  alignment: .leading, spacing: Theme.Space.s) {
+            ForEach(device.parameters.filter { $0.unit != .choice }, id: \.key) { parameter in
+                ParameterField(address: ParameterAddress(.track(track.id), parameter.key))
+            }
+        }
+    }
+
+    /// Gate plays while the key is held; one-shot plays the whole sample from one press. Through
+    /// the writer like every control; a lane does not play the sampler's values, so with
+    /// automation writing armed the choice is set, not written.
+    private var samplerModePicker: some View {
+        let parameter = SynthParameter.samplerMode
+        let address = ParameterAddress(.track(track.id), parameter.key)
+        return Picker(parameter.title, selection: Binding(
+            get: { Int(track.instrument.value(parameter).rounded()) },
+            set: {
+                writer.set(address, to: Double($0), coalescingKey: nil)
+                writer.endGesture()
+            }
+        )) {
+            ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel(parameter.title)
     }
 
     @ViewBuilder private var synthControls: some View {

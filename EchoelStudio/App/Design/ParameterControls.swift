@@ -27,6 +27,16 @@ enum ParameterFormat {
             return String(Int(value.rounded()))
         }
     }
+
+    /// As `text(_:unit:)`, and a whole number shows whole: the sampler's root key is a note
+    /// (C4), any other stepped number an integer, never "60.00".
+    static func text(_ value: Double, descriptor: ParameterDescriptor) -> String {
+        if descriptor.address.key == SynthParameter.samplerRoot.key {
+            return NoteEditing.name(of: Int(value.rounded()))
+        }
+        if descriptor.taper == .stepped, descriptor.unit == .amount { return String(Int(value.rounded())) }
+        return text(value, unit: descriptor.unit)
+    }
 }
 
 /// A vertical fader. Drag anywhere on it to set the level (the console law puts 0 dB at
@@ -151,7 +161,7 @@ struct ParameterField: View {
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
                     .lineLimit(1)
-                Text(ParameterFormat.text(value, unit: descriptor.unit))
+                Text(ParameterFormat.text(value, descriptor: descriptor))
                     .font(Theme.Font.value)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
@@ -185,17 +195,25 @@ struct ParameterField: View {
             .onTapGesture(count: 2) { writer.reset(address) }
             .accessibilityElement()
             .accessibilityLabel(title(descriptor))
-            .accessibilityValue(ParameterFormat.text(value, unit: descriptor.unit))
+            .accessibilityValue(ParameterFormat.text(value, descriptor: descriptor))
             .accessibilityAdjustableAction { direction in
-                writer.set(address, normalized: position + (direction == .increment ? 0.02 : -0.02), gesture: false)
+                let step = Self.step(descriptor)
+                writer.set(address, normalized: position + (direction == .increment ? step : -step), gesture: false)
             }
             .midiLearnable(address)
         }
     }
 
+    /// One VoiceOver swipe: one whole step of a stepped value (a semitone of the root key), else
+    /// 2 % of the travel.
+    private static func step(_ descriptor: ParameterDescriptor) -> Double {
+        let span = descriptor.range.upperBound - descriptor.range.lowerBound
+        return descriptor.taper == .stepped && span > 0 ? 1 / span : 0.02
+    }
+
     /// The parameter's own name, without the track name the descriptor carries for lists.
     private func title(_ descriptor: ParameterDescriptor) -> String {
         if let target = address.key.sendTarget { return store.project.track(target).map { "→ \($0.name)" } ?? descriptor.title }
-        return SynthParameter.named(address.key)?.title ?? descriptor.title
+        return SynthParameter.builtIn(address.key)?.title ?? descriptor.title
     }
 }
