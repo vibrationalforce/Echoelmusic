@@ -49,7 +49,11 @@ public struct SynthVoice: Sendable {
     var ampEnvelope: Envelope
     var filterEnvelope: Envelope
     private var increment: Float = 0
+    /// The velocity's gain now and where it is going: a fresh note takes it at once, a note
+    /// struck again while it sounds glides there like the level does, because a jump from a hard
+    /// to a soft velocity mid-waveform is a click (audit 2026-10-23).
     private var gain: Float = 0
+    private var gainTarget: Float = 0
     private var controlCountdown = 0
     /// Cutoff (in octaves above 1 Hz), resonance and level glide towards the patch instead of
     /// jumping, so an automated sweep or a 7-bit MIDI knob sounds continuous.
@@ -104,8 +108,9 @@ public struct SynthVoice: Sendable {
         startOrder = order
         increment = 440 * powf(2, (Float(pitch) - 69) / 12) / sampleRate
         let v = Float(Swift.min(velocity, 127)) / 127
-        gain = v * v
+        gainTarget = v * v
         if wasSilent {
+            gain = gainTarget
             oscillator.reset()
             filter.reset()
             // A fresh note starts where the patch is; only a sounding note glides.
@@ -163,6 +168,7 @@ public struct SynthVoice: Sendable {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole
             level = targetLevel + (level - targetLevel) * levelPole
+            gain = gainTarget + (gain - gainTarget) * levelPole
             let modulation = filterEnvelope.next()
             if controlCountdown <= 0 {
                 filter.setResonance(resonance)

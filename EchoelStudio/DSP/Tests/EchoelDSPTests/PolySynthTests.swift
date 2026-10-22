@@ -16,6 +16,17 @@ final class PolySynthTests: XCTestCase {
         return buffer
     }
 
+    private func render(_ synth: inout PolySynth, frames: Int) -> [Float] {
+        var buffer = [Float](repeating: 0, count: frames)
+        var start = 0
+        while start < buffer.count {
+            let end = Swift.min(start + 256, buffer.count)
+            buffer[start..<end].withUnsafeMutableBufferPointer { synth.render(into: $0) }
+            start = end
+        }
+        return buffer
+    }
+
     private func peak(_ samples: [Float]) -> Float { samples.reduce(0) { Swift.max($0, Swift.abs($1)) } }
 
     func testANoteSoundsAndItsReleaseEndsInSilence() {
@@ -41,6 +52,35 @@ final class PolySynthTests: XCTestCase {
         XCTAssertGreaterThan(firstMillisecond, before * 0.5, "the level glides down, it does not cut")
         let later = peak(Array(render(&synth, seconds: 0.06).suffix(480)))
         XCTAssertLessThan(later, before * 0.01, "and arrives within a few time constants")
+    }
+
+    /// A note struck hard and then again softly while it still sounds moves to the softer
+    /// level without a step: the largest sample-to-sample change at the re-strike stays near the
+    /// sine's own (audit 2026-10-23).
+    func testAReStruckNoteGlidesToItsNewVelocityInsteadOfClicking() {
+        let patch = SynthPatch(waveform: .sine, cutoff: 18_000, filterEnvelopeAmount: 0,
+                               ampEnvelope: .init(attack: 0.003, decay: 0.2, sustain: 0.9, release: 0.2), level: 0.35)
+        var synth = PolySynth(patch: patch, sampleRate: rate)
+        synth.noteOn(pitch: 45, velocity: 120)
+        // 110 Hz: 33¼ periods, so the re-strike lands near the top of the waveform, where a
+        // jump in gain is largest.
+        let periodFrames: Double = 48_000 / 110
+        let before = render(&synth, frames: Int((33.25 * periodFrames).rounded()))
+        synth.noteOff(pitch: 45)
+        synth.noteOn(pitch: 45, velocity: 70)
+        let after = render(&synth, frames: 480)
+        func largestStep(_ samples: [Float]) -> Float {
+            var largest: Float = 0
+            for index in 1..<samples.count { largest = Swift.max(largest, Swift.abs(samples[index] - samples[index - 1])) }
+            return largest
+        }
+        let steady = largestStep(Array(before.suffix(480)))
+        XCTAssertGreaterThan(steady, 0.001, "the note sounds")
+        let joined: [Float] = [before[before.count - 1]] + after
+        XCTAssertLessThan(largestStep(joined), steady * 1.5, "the softer strike glides, it does not step")
+        let settled: Float = peak(Array(render(&synth, seconds: 0.1).suffix(480)))
+        let hard: Float = peak(Array(before.suffix(480)))
+        XCTAssertLessThan(settled, hard * 0.5, "and arrives at the softer level")
     }
 
     func testANoteEndsWhileItsPatchIsAutomated() {
