@@ -2,7 +2,7 @@
  "id": "007-rename-hardening",
  "title": "Umbenennen härten (Minors aus Job 006)",
  "stage": "review",
- "round": 2,
+ "round": 3,
  "base": "4c4bd5ad86056afa7044a4bb4e507dbd312d83c7",
  "lenses": [
   "code-reviewer",
@@ -54,8 +54,13 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 2 (wf_864aabbe-500): APPROVE, vier Linsen PASS, alle Runde-1-Befunde am Kopf behoben bestätigt. Drei Minors gemessen; Nacharbeit 2: Kommentar in Großbuchstaben, ein Satz, der sagt, was hinterherhinkt (die Datei), Hinweise-aus als Messung in Gerät-Kriterium 6. Antwort in reviews/round-2/rebuttal.md. Runde 3 (die letzte) nach grünem CI."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-22",
+   "note": "Runde 3 (die letzte, wf_f7e15ccc-83c) auf fdef21abd nach grünem CI: Echoel Studio 39828730749 success (App iPhone+iPad, Core+DSP+Engine), Linux 39828730750 success."
   }
  ],
- "head": "2e7f68ca08a0aedbf7a236b697cb1beb57d3c554",
- "since": "5942df4fd705df3ce32f657776b85942815dd192"
+ "head": "fdef21abdff843d30f8b9e33af8ee402d1c6156c",
+ "since": "2e7f68ca08a0aedbf7a236b697cb1beb57d3c554"
 }
