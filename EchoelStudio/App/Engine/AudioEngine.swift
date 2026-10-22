@@ -922,6 +922,7 @@ final class AudioEngine {
         heard = song
         let project = playing(song)
         slots.update(for: project)
+        session.retain(Set(slots.slots.keys))
         live.set(core: core, slot: liveSlot(in: project), lock: liveLock(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1

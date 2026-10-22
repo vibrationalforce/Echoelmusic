@@ -33,6 +33,18 @@ final class SessionState {
         }
     }
 
+    /// Forgets every track not in `tracks`, the ones that hold a slot. A deleted track, another
+    /// song's, or an audio track whose slot went to an instrument never gets a report again, so
+    /// what it played would stay lit, and Stop All and Back to Arrangement enabled, for good
+    /// (audit 2026-10-23). Writes only what changes: this runs with every snapshot.
+    func retain(_ tracks: Set<TrackID>) {
+        let keptPlaying = playing.filter { tracks.contains($0.key) }
+        if keptPlaying.count != playing.count { playing = keptPlaying }
+        let keptQueued = queued.filter { tracks.contains($0.key) }
+        if keptQueued.count != queued.count { queued = keptQueued }
+        if !detached.isSubset(of: tracks) { detached.formIntersection(tracks) }
+    }
+
     /// A new engine core starts with nothing launched.
     func reset() {
         playing = [:]
