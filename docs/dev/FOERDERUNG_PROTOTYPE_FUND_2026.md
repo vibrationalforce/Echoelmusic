@@ -190,11 +190,12 @@ hinter schmaler Schnittstelle. Die Workstation ist EINE Anwendung davon, die Alt
 Was es heute schon gibt — Format-Spezifikation mit Golden-Files, `SECURITY.md`, die vier Sender,
 der Egress-Switch — wird als **Bestand** genannt, nie als Meilenstein verkauft. ⛔ Hier stand
 „die verkauften Instrument-Units bleiben außerhalb des Förderobjekts“ — gemessen trennt das Repo
-weniger: die Klangerzeuger der Units (`SynthKernel`, `DrumKernel`, `SamplerKernel`) liegen in
-`EchoelEngine`; außerhalb liegen nur AUv3-Hülle, Demo-Sperre und Kauf (StoreKit in `App/Store`
-und `Plugins/Shared`), und `EchoelCore.PluginUnlock` trägt heute noch Produkt-ID und Namen des
-Kaufs (zwei Konstanten, alle Leser in `App/` und `Plugins/`) — die werden vor der Bewerbung in die
-Plugin-Schicht verlegt (§8). Die Grenze des Förderobjekts ist eine Zuständigkeits-, keine
+weniger: die Klangerzeuger der Units (`SynthKernel`, `DrumKernel`, `SamplerKernel`) und der
+Mechanismus der Demo-Sperre (`DemoGate`) liegen in `EchoelKernels`, einer Bibliothek des
+Engine-Pakets (seit 2026-10-22, S-26 D1.2; vorher in `EchoelEngine`); außerhalb liegen nur
+AUv3-Hülle, die Entscheidung der Demo-Sperre und Kauf (StoreKit in `App/Store` und
+`Plugins/Shared`). Produkt-ID und Namen des Kaufs stehen seit 2026-10-19 in
+`Plugins/Shared/PluginUnlock.swift`, nicht mehr in `EchoelCore` (§8). Die Grenze des Förderobjekts ist eine Zuständigkeits-, keine
 Lizenzgrenze: alles steht unter MIT. Das beantwortet Team-Frage 5 („nicht für den eigenen
 Geschäftsbetrieb“), bevor sie gestellt wird — ehrlich, nicht glatt.
 
@@ -542,7 +543,7 @@ Allokation und kein Lock, und der Host-Split ist P0.
    Protokollbrücken); es ist für jede Anwendung nutzbar und nicht an den Verkauf der
    Instrument-Units gebunden. Die iOS-Oberfläche liegt außerhalb (keine Datei in Core, DSP oder
    Engine importiert SwiftUI, UIKit oder StoreKit). Die Instrument-Units für fremde Hosts sind der
-   offene Kern in einer dünnen Hülle: ihre Klangerzeuger sind Teil von `EchoelEngine`; außerhalb
+   offene Kern in einer dünnen Hülle: ihre Klangerzeuger sind Teil von `EchoelKernels` im Engine-Paket; außerhalb
    liegen nur AUv3-Hülle, Demo-Sperre und Kauf. Alles — Kern, Hülle, App — steht unter einer
    MIT-Lizenz; die Grenze des Förderobjekts ist eine Zuständigkeits-, keine Lizenzgrenze.
 6. **Stunden in 6 Monaten:** Rechnung des Fonds: Vollzeit = 950 h × 50 €/h = 47.500 €, Förderung = 95 % von
@@ -767,7 +768,7 @@ keiner Formulierung besser — es ist deine Entscheidung A/B/C.
 | „Kern = reine Werttypen“ | nur fürs Dokument wahr; DSP 3 Klassen, Engine 17; Synchronisation über `Atomic` (0× `Mutex`/`NSLock`/GCD — das trägt) | §7.1 Frage 4 |
 | „ohne ObjC im Render-Pfad“ | AUv3-Hosting ruft `AURenderBlock`/`AUScheduleMIDIEventBlock` (ObjC-Blöcke) aus dem Render-Pfad; vier Dateien AVFoundation/AudioToolbox ohne `canImport` | §7.1 Frage 4, M1 |
 | „jedes neue Feld ist ein Compile-Fehler“ | nur die QUELLE (Switch ohne `default:`); eine Adresse ohne Klasse ist Laufzeit-fail-closed plus Wächter `TheClinicalDetailIsOptInTests` — und die Klassen-Sperre liest nur der OSC-Pfad | §2, §7.1 Frage 4 |
-| „Instrument-Units liegen außerhalb des Förderobjekts“ | Klangerzeuger (`SynthKernel`/`DrumKernel`/`SamplerKernel`) sind `EchoelEngine`; `EchoelCore.PluginUnlock` trägt Produkt-ID + Namen; außerhalb nur Hülle, Demo-Sperre, Kauf. (Die Demo-Verzweigung in `StandardEffectUnit` ist tot; die wirkende Sperre liegt in `Plugins/Shared`) | §4, §7.2 Frage 5, §8 |
+| „Instrument-Units liegen außerhalb des Förderobjekts“ | Klangerzeuger (`SynthKernel`/`DrumKernel`/`SamplerKernel`) sind `EchoelKernels` im Engine-Paket (seit S-26 D1.2, vorher `EchoelEngine`); Produkt-ID + Namen stehen seit 2026-10-19 in `Plugins/Shared/PluginUnlock.swift`; außerhalb nur Hülle, Demo-Sperre, Kauf. (Die Demo-Verzweigung in `StandardEffectUnit` ist tot; die wirkende Sperre liegt in `Plugins/Shared`) | §4, §7.2 Frage 5, §8 |
 | „voller Export“ | `exportWAV` + `exportMIDI`, sonst nichts (`git grep -n 'func export' -- 'EchoelStudio/**/*.swift'`); das Paket ist als Ganzes in der Dateien-App kopierbar | §2, §7.1 Frage 2 |
 | „Körperdaten … fließen standardmäßig in Clouds, obwohl … besonders geschützt“ | Cloud-Hälfte ohne jeden Beleg im Repo; Art.-9-Hälfte als Tatsache gegen §2 („Annahme“); `privacy.html:205` behauptet „not a controller“, die Frage ist in `DSGVO_ARCHITEKTUR_ENTWURF.md:41` offen | §1b, §7.1 Frage 3, §8 (DSB) |
 | „AudioKit … mit vielen Abhängigkeiten“ | Kernpaket ohne externe Paketabhängigkeiten (dessen `Package.swift`, 19.10.) | §7.1 Frage 7 |
