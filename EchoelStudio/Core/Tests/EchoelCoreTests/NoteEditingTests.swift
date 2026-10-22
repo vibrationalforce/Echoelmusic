@@ -77,6 +77,23 @@ final class NoteEditingTests: XCTestCase {
         XCTAssertEqual(NoteEditing.resized(note, toEnd: 99_999, grid: step, in: c).length, bar - 960)
     }
 
+    /// Grabbing a 1/16 note's right edge and dragging right keeps lengthening it on every event:
+    /// the choice is made from the note as the drag found it, never from the grown note.
+    func testADragOnTheRightEdgeStaysAResizeWhileTheNoteGrows() {
+        let origin = Note(pitch: 60, start: 0, length: step)
+        let points = 28.0 / Double(step)
+        func takesTheEnd(_ x: Double, _ note: Note) -> Bool {
+            NoteEditing.dragTakesTheEnd(of: note, startX: x, pointsPerTick: points, edgeWidth: 14, minimumWidth: 6)
+        }
+        XCTAssertTrue(takesTheEnd(20, origin), "inside the 14-point edge")
+        XCTAssertFalse(takesTheEnd(10, origin), "the body moves")
+        let grown = NoteEditing.resized(origin, toEnd: 2 * step, grid: step, in: clip())
+        XCTAssertEqual(grown.length, 2 * step)
+        XCTAssertFalse(takesTheEnd(20, grown), "measured on the grown note, the same grab would read as a move")
+        XCTAssertTrue(takesTheEnd(20, origin), "so the drag asks the note it started on, and stays a resize")
+        XCTAssertTrue(takesTheEnd(4, Note(pitch: 60, start: 0, length: 1)), "a sliver of a note: half of its least width is the edge")
+    }
+
     func testNoteNamesAndKeys() {
         XCTAssertEqual(NoteEditing.name(of: 60), "C4")
         XCTAssertEqual(NoteEditing.name(of: 69), "A4")

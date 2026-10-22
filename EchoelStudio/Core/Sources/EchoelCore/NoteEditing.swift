@@ -64,6 +64,17 @@ public enum NoteEditing {
         return resized
     }
 
+    /// Whether a drag that starts `startX` points into the clip takes the note's right edge
+    /// (resize) rather than its body (move). Asked of the note as it was when the drag began,
+    /// so a note that grows under the finger does not move its edge away and flip the drag into
+    /// a move half way (audit 2026-10-23).
+    public static func dragTakesTheEnd(of origin: Note, startX: Double, pointsPerTick: Double,
+                                       edgeWidth: Double, minimumWidth: Double) -> Bool {
+        let width = Swift.max(Double(origin.length) * pointsPerTick, minimumWidth)
+        let left = Double(origin.start) * pointsPerTick
+        return startX >= left + width - Swift.min(edgeWidth, width / 2)
+    }
+
     /// Note names for the keyboard: MIDI 60 is C4 (scientific pitch notation, as in Logic;
     /// Ableton labels the same key C3). Only the label could ever change, never the number.
     public static func name(of pitch: Int) -> String {

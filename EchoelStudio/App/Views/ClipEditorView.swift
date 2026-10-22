@@ -213,10 +213,11 @@ struct NoteBlock: View {
     @State private var origin: Note?
 
     private static let edgeWidth: CGFloat = 14
+    private static let minimumWidth: CGFloat = 6
     static let gridSpace = "pianoRoll.grid"
 
     var body: some View {
-        let width = Swift.max(CGFloat(note.length) * pointsPerTick, 6)
+        let width = Swift.max(CGFloat(note.length) * pointsPerTick, Self.minimumWidth)
         RoundedRectangle(cornerRadius: Theme.Radius.small)
             .fill(color.opacity(0.45 + 0.55 * Double(note.velocity) / 127))
             .overlay(
@@ -235,7 +236,7 @@ struct NoteBlock: View {
             .frame(width: width, height: rowHeight - 1)
             .contentShape(Rectangle())
             .onTapGesture { perform(.removeNotes(clip.id, [note.id])) }
-            .highPriorityGesture(drag(width: width))
+            .highPriorityGesture(drag)
             .offset(x: CGFloat(note.start) * pointsPerTick,
                     y: CGFloat(Note.pitchRange.upperBound - note.pitch) * rowHeight)
             .accessibilityElement()
@@ -250,16 +251,18 @@ struct NoteBlock: View {
 
     private var key: String { "note.drag.\(note.id.description)" }
 
-    /// One gesture for both edits, decided by where it starts: the right edge resizes, the
-    /// body moves. Measured in the grid's coordinate space, which does not move with the note,
-    /// so the translation stays stable while the block follows the finger.
-    private func drag(width: CGFloat) -> some Gesture {
+    /// One gesture for both edits, decided by where it starts on the note as the drag found it:
+    /// the right edge resizes, the body moves. Measured in the grid's coordinate space, which
+    /// does not move with the note, so the translation stays stable while the block follows the
+    /// finger.
+    private var drag: some Gesture {
         DragGesture(minimumDistance: 4, coordinateSpace: .named(Self.gridSpace))
             .onChanged { value in
                 let start = origin ?? note
                 origin = start
-                let left = CGFloat(start.start) * pointsPerTick
-                let resizing = value.startLocation.x >= left + width - Swift.min(Self.edgeWidth, width / 2)
+                let resizing = NoteEditing.dragTakesTheEnd(
+                    of: start, startX: Double(value.startLocation.x), pointsPerTick: Double(pointsPerTick),
+                    edgeWidth: Double(Self.edgeWidth), minimumWidth: Double(Self.minimumWidth))
                 let edited: Note
                 if resizing {
                     let end = start.start + start.length + Tick(value.translation.width / pointsPerTick)
