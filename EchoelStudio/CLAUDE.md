@@ -31,7 +31,7 @@ on modules below it — never the other way round.
 2. **A new command is three edits:** the case in `Command`, its `apply` branch, its
    `CommandCatalog` entry (the compiler enforces the last one). Plus a test.
 3. **What a song stores is frozen.** A song file stores field names, the names of scales, tone
-   systems, track kinds, monitor modes and devices, the `ParameterKey` inside every mapping and
+   systems, track kinds, monitor modes, devices and presets, the `ParameterKey` inside every mapping and
    lane — and, for the scale, the tone system and the synth waveform, the INDEX of the choice,
    so a new choice goes at the end of its list. `FormatGoldenTests` pins the shapes,
    `StoredNamesTests` the names and orders; never rename one, add a new one at the end and to

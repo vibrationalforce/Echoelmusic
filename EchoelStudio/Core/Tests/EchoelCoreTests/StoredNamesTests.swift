@@ -36,6 +36,16 @@ final class StoredNamesTests: XCTestCase {
                        "a lane stores the waveform's index")
     }
 
+    /// A track stores the name of the preset it was loaded from, and the Sound page shows it. Only
+    /// the name is stored, never a position, and nothing reads the values back through it — the
+    /// song keeps its own — so the order is free and a value may be retuned. A renamed preset would
+    /// leave every earlier song showing a sound the menu no longer offers, so a name stays.
+    func testEveryStoredPresetNameStillNamesAPreset() {
+        let names = ["Init", "Pluck", "Warm Pad", "Sub Bass", "Square Lead", "Soft Keys"]
+        XCTAssertEqual(Set(InstrumentPreset.all.map(\.name)), Set(names), "never rename a preset; add a new one here")
+        XCTAssertEqual(InstrumentSettings().preset, InstrumentPreset.initial.name)
+    }
+
     /// A lane point or a mapped controller stored as index `i` sets the same scale and the same
     /// tone system it set when it was written.
     func testAStoredChoiceIndexStillChoosesTheSameScaleAndToneSystem() throws {
