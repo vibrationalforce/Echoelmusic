@@ -110,6 +110,44 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertEqual(try library.adopt(source).lastPathComponent, "Night Drive 2.echoel", "never over the first")
     }
 
+    /// A song handed on is its document and the media it names, nothing more: a file the song
+    /// does not use stays behind, one it names but lacks is reported, and the copy opens as the
+    /// song when another library adopts it.
+    func testASharedCopyHoldsTheDocumentAndTheMediaTheSongNames() throws {
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent("share-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: outside) }
+        var project = try song("Night Drive")
+        let take = MediaFile(name: "Take", path: "Media/take.wav", frameCount: 3, sampleRate: 48_000)
+        let gone = MediaFile(name: "Gone", path: "Media/gone.wav", frameCount: 3, sampleRate: 48_000)
+        try Command.addMedia(take).apply(to: &project)
+        try Command.addMedia(gone).apply(to: &project)
+        let package = library.newURL(for: project.name)
+        try library.write(project, to: package)
+        let media = package.appendingPathComponent("Media", isDirectory: true)
+        try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: media.appendingPathComponent("take.wav"))
+        try Data([9]).write(to: media.appendingPathComponent("recording.wav"))
+
+        let target = outside.appendingPathComponent("Night Drive.echoel", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        try Data([7]).write(to: target.appendingPathComponent("stale.txt"))
+        let missing = try ProjectLibrary.shareableCopy(of: project, mediaIn: package, at: target)
+        XCTAssertEqual(missing, ["Gone"])
+        let held: [String] = try FileManager.default.subpathsOfDirectory(atPath: target.path).sorted()
+        XCTAssertEqual(held, ["Media", "Media/take.wav", ProjectLibrary.documentName],
+                       "no take in progress, no file from an earlier copy")
+        XCTAssertEqual(try Data(contentsOf: target.appendingPathComponent("Media/take.wav")), Data([1, 2, 3]))
+
+        let other = ProjectLibrary(directory: outside.appendingPathComponent("Other", isDirectory: true))
+        let adopted = try other.adopt(target)
+        XCTAssertEqual(try other.read(adopted), project)
+        XCTAssertEqual(try Data(contentsOf: adopted.appendingPathComponent("Media/take.wav")), Data([1, 2, 3]))
+
+        let bare = try ProjectLibrary.shareableCopy(of: project, mediaIn: nil, at: target)
+        XCTAssertEqual(bare, ["Take", "Gone"], "without a package every file is missing")
+        XCTAssertEqual(try ProjectLibrary(directory: outside).read(target), project)
+    }
+
     func testADamagedSongFromOutsideIsRefusedBeforeAnythingIsCopied() throws {
         let outside = FileManager.default.temporaryDirectory.appendingPathComponent("out-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: outside) }

@@ -486,6 +486,13 @@ struct SongMenu: View {
                 if let url = documents.exportMIDI() { router.sheet = .share(url) }
             }
             .disabled(!store.project.arrangementHasEvents)
+            // The song itself, with its audio, for another device running Echoel Studio.
+            Button("Share Song", systemImage: "square.and.arrow.up.on.square") {
+                Task {
+                    if let url = await documents.shareSong(plugins: engine.plugins) { router.sheet = .share(url) }
+                }
+            }
+            .disabled(documents.isExporting)
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {

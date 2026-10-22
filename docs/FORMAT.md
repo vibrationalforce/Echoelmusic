@@ -9,6 +9,10 @@ My Song.echoel/
   Media/              the audio files the song uses, copied in on import
 ```
 
+A song shared from the app ("Share Song") is the same package, written fresh: `project.json` and
+the files in `Media/` that the song names, nothing else. A file the song names but the package
+lacks is left out, and the song opens without it, as it would where it came from.
+
 `project.json` is written pretty-printed with sorted keys, so the same song always produces the
 same bytes and a diff shows only real changes. Nothing in it is encrypted, compressed or signed.
 Every audio file is a plain file you can take out of `Media/`.

@@ -845,6 +845,43 @@ final class DocumentController {
         currentURL?.deletingPathExtension().lastPathComponent ?? store.project.name
     }
 
+    /// Writes a clean copy of the open song as a package in a temporary folder and returns it for
+    /// the share sheet: the song as it stands, with the plugins' settings as they are now, and the
+    /// audio files it uses — not a take being recorded or a file it let go. A file it uses that is
+    /// gone is named; the copy goes without it.
+    func shareSong(plugins: PluginHost) async -> URL? {
+        guard !isExporting else { return nil }
+        isExporting = true
+        exportProgress = "Preparing the song…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+        }
+        let sharedSong = songsOpened
+        let songName = openSongName
+        try? store.absorb(plugins.captureCommands(for: store.project))
+        let project = store.project
+        let package = currentURL
+        let target = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+            .appendingPathComponent(ProjectLibrary.safeFileName(for: songName))
+            .appendingPathExtension(ProjectLibrary.fileExtension)
+        let result: Result<[String], Error> = await Task.detached(priority: .userInitiated) {
+            Result { try ProjectLibrary.shareableCopy(of: project, mediaIn: package, at: target) }
+        }.value
+        guard sharedSong == songsOpened else { return exportStopped(songName) }
+        switch result {
+        case .success(let missing):
+            lastExportIsNews = false
+            lastError = missing.isEmpty ? nil : "Shared without \(Self.audioFiles(missing)): missing from the song."
+            return target
+        case .failure(let error):
+            log.error("share copy failed — \(error.localizedDescription, privacy: .public)")
+            lastExportIsNews = false
+            lastError = "Could not prepare \(songName) for sharing."
+            return nil
+        }
+    }
+
     /// Writes the open song's notes as a Standard MIDI File in a temporary folder and returns its
     /// URL for the share sheet. Small and quick, so it runs here.
     func exportMIDI() -> URL? {

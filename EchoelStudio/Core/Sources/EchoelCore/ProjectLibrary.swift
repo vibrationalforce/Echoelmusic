@@ -59,9 +59,43 @@ public struct ProjectLibrary: Sendable {
     /// Writes `project` into the package at `url`, creating it if needed. The document is
     /// replaced atomically, so a crash mid-save leaves the previous version intact.
     public func write(_ project: Project, to url: URL) throws {
+        try Self.writeDocument(project, to: url)
+    }
+
+    /// Writes `project` as a new package at `target` to hand to someone: its document as passed,
+    /// and each media file the song names, read from `package` and placed at the same path. Files
+    /// the song does not name (a take being recorded, an import the song let go) stay out. Returns
+    /// the names of media files that are not in `package`; their entries stay in the song, which
+    /// then opens without them on the other side, as it would here. A `target` already there is
+    /// replaced; a copy that fails leaves nothing behind.
+    public static func shareableCopy(of project: Project, mediaIn package: URL?, at target: URL) throws -> [String] {
+        let files = FileManager.default
+        if files.fileExists(atPath: target.path) { try files.removeItem(at: target) }
+        do {
+            try writeDocument(project, to: target)
+            var missing: [String] = []
+            for file in project.media {
+                guard let package, let source = file.url(in: package), let destination = file.url(in: target),
+                      files.fileExists(atPath: source.path) else {
+                    missing.append(file.name)
+                    continue
+                }
+                // Two entries on one path share one file.
+                guard !files.fileExists(atPath: destination.path) else { continue }
+                try files.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try files.copyItem(at: source, to: destination)
+            }
+            return missing
+        } catch {
+            try? files.removeItem(at: target)
+            throw error
+        }
+    }
+
+    private static func writeDocument(_ project: Project, to url: URL) throws {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         let data = try ProjectCodec.encode(project)
-        try data.write(to: url.appendingPathComponent(Self.documentName), options: .atomic)
+        try data.write(to: url.appendingPathComponent(documentName), options: .atomic)
     }
 
     public func read(_ url: URL) throws -> Project {
