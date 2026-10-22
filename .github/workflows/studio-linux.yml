@@ -1,12 +1,15 @@
 name: Echoel Studio (Linux)
 
-# The portability claim as a measurement, not a sentence. EchoelCore and EchoelDSP
-# import Foundation only (Core also Observation), so they should build and test on a
-# Linux toolchain; this job is the proof or the refutation. It is its own workflow on
-# purpose: a red here is a finding about Linux, and it must not hide inside the macOS
-# run (studio.yml) nor block it. EchoelEngine is NOT in this job: it binds AVFoundation
-# and AudioToolbox in four files (AUv3 hosting, sample files) and is split into a
-# portable part and an Apple adapter first (docs/dev/NEUPLANUNG_2026-10-18.md, P0).
+# The portability claim as a measurement, not a sentence. EchoelCore, EchoelDSP and the
+# Engine package's EchoelKernels and EchoelEngine import Foundation and Synchronization only
+# (Core also Observation), so they should build and test on a Linux toolchain; this job is the
+# proof or the refutation. It is its own workflow on purpose: a red here is a finding about
+# Linux, and it must not hide inside the macOS run (studio.yml) nor block it.
+#
+# The Audio Unit side (EchoelHost: AVFoundation, AudioToolbox) is not declared on Linux at all
+# (EchoelStudio/Engine/Package.swift, `#if !os(Linux)`), so this build is also the import
+# boundary: a kernel or engine file that reaches for EchoelHost or an Apple framework fails
+# here (S-26 D4.1).
 #
 # Context: docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md §7.1 Frage 4/5 and §9 action 5.
 
@@ -15,11 +18,13 @@ on:
     paths:
       - 'EchoelStudio/Core/**'
       - 'EchoelStudio/DSP/**'
+      - 'EchoelStudio/Engine/**'
       - '.github/workflows/studio-linux.yml'
   pull_request:
     paths:
       - 'EchoelStudio/Core/**'
       - 'EchoelStudio/DSP/**'
+      - 'EchoelStudio/Engine/**'
       - '.github/workflows/studio-linux.yml'
   workflow_dispatch:
 
@@ -29,10 +34,10 @@ concurrency:
 
 jobs:
   packages:
-    name: Core + DSP on Linux
+    name: Core + DSP + Engine on Linux
     runs-on: ubuntu-latest
     container: swift:6.2
-    timeout-minutes: 20
+    timeout-minutes: 30
     # Inside a container the default step shell is `sh` (dash), where `set -o pipefail` is an
     # illegal option — run #1 died on that line before the first swift command. Bash it is.
     defaults:
@@ -64,9 +69,26 @@ jobs:
           set -o pipefail
           swift test --package-path EchoelStudio/Core 2>&1 | tee core-linux.log
 
+      # Engine: build first for the same reason as Core above — a compile error and a test
+      # failure are two different findings. `!cancelled()` so a red Core step does not hide them.
+      - name: Build Engine incl. tests (Linux)
+        id: engine-build
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          swift build --build-tests --package-path EchoelStudio/Engine 2>&1 | tee engine-build-linux.log
+
+      - name: Test Engine (Linux)
+        if: ${{ !cancelled() && steps.engine-build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          swift test --package-path EchoelStudio/Engine 2>&1 | tee engine-linux.log
+
       - name: Print logs on failure
         if: failure()
         run: |
           grep -n "error:" core-build-linux.log | head -40 || true
           tail -120 dsp-linux.log || true
           tail -120 core-linux.log || true
+          grep -n "error:" engine-build-linux.log | head -40 || true
+          tail -120 engine-linux.log || true
