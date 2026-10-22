@@ -16,6 +16,10 @@ final class DocumentController {
     private(set) var currentURL: URL?
     private(set) var songs: [ProjectLibrary.Entry] = []
     private(set) var lastError: String?
+    /// The open song has changes that could not be written. Its own line, which only a write
+    /// clears: an export or an open that went well says nothing about the song on disk, and
+    /// clearing this with `lastError` hid the one message about losing work (review 2026-10-22).
+    private(set) var saveError: String?
     private(set) var isExporting = false
     /// How loud the open song's last WAV export came out, for the status line; nil before one.
     private(set) var lastExportLoudness: (integrated: Double, truePeak: Double)?
@@ -314,8 +318,7 @@ final class DocumentController {
     /// the starter the launch opens in place of a song must not become the newest song over the
     /// user's — after a false alarm the next healthy launch would open it instead (R8).
     private func startSong(writing: Bool) {
-        beforeLeavingSong?()
-        saveNow()
+        guard mayLeaveSong() else { return }
         noteOpening(nil)
         let project = Project.starter()
         store.open(project)
@@ -338,6 +341,8 @@ final class DocumentController {
                 keepQuarantine()
             }
             return true
+        } catch is UnsavedSong {
+            return false
         } catch {
             lastError = Self.isNewer(error)
                 ? "\(url.deletingPathExtension().lastPathComponent) was saved by a newer Echoel. Update the app to open it."
@@ -347,8 +352,7 @@ final class DocumentController {
     }
 
     private func open(throwing url: URL) throws {
-        beforeLeavingSong?()
-        saveNow()
+        guard mayLeaveSong() else { throw UnsavedSong() }
         noteOpening(url.lastPathComponent)
         do {
             let project = try library.read(url)
@@ -368,6 +372,22 @@ final class DocumentController {
             log.error("open failed — \(error.localizedDescription, privacy: .public)")
             throw error
         }
+    }
+
+    /// The open song could not be written, so it did not make way for another.
+    private struct UnsavedSong: Error {}
+
+    /// Before another song replaces the open one, which is written first. When that fails it
+    /// stays open: opening the next one went on regardless and dropped every change since the
+    /// last write without a word (review 2026-10-22). Reopening the same song reads it from the
+    /// disk, so it waits too.
+    private func mayLeaveSong() -> Bool {
+        beforeLeavingSong?()
+        guard saveNow() else {
+            saveError = "Could not save, so this song stays open with your changes."
+            return false
+        }
+        return true
     }
 
     /// Called on every project change: writes after a short pause.
@@ -397,13 +417,18 @@ final class DocumentController {
         log.info("the starter's name was taken meanwhile; it moves to another")
     }
 
-    /// Writes the open song now if it changed since the last write.
-    func saveNow() {
+    /// Writes the open song now if it changed since the last write. False when it could not.
+    @discardableResult
+    func saveNow() -> Bool {
         pendingSave?.cancel()
         pendingSave = nil
-        guard currentURL != nil, store.project != savedProject else { return }
+        guard currentURL != nil, store.project != savedProject else {
+            // Undo back to the written state leaves nothing unsaved.
+            saveError = nil
+            return true
+        }
         starterKeepsItsOwnPackage()
-        guard let url = currentURL else { return }
+        guard let url = currentURL else { return true }
         let project = store.project
         let isNew = !FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
         do {
@@ -411,11 +436,14 @@ final class DocumentController {
             savedProject = project
             isUnwritten = false
             lastError = nil
+            saveError = nil
             if isNew { releaseHold(on: url) }
             refresh()
+            return true
         } catch {
             log.error("save failed — \(error.localizedDescription, privacy: .public)")
-            lastError = "Could not save. Your changes are still open."
+            saveError = "Could not save. Your changes are still open."
+            return false
         }
     }
 

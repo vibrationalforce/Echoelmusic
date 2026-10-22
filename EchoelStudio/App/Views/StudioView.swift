@@ -165,57 +165,65 @@ struct TransportBar: View {
         .padding(.horizontal, Theme.Space.m)
     }
 
-    @ViewBuilder
     private var status: some View {
-        if midi.isLearning {
-            Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
-                .font(Theme.Font.caption)
-                .foregroundStyle(Theme.Color.accent)
-                .padding(.bottom, 2)
-        } else {
-            let message = engine.lastError ?? documents.lastError
-            let notice = Self.notices(engine.notice, engine.plugins.notice)
-            // Each line carries its own padding: with nothing to say, the strip keeps its height.
-            VStack(spacing: 0) {
-                if let message {
-                    Text(message)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.record)
-                        .padding(.bottom, 2)
-                } else if let notice {
-                    Text(notice)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.textSecondary)
-                        .padding(.bottom, 2)
-                }
-                if let note = documents.launchNote {
-                    Text(note)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.record)
-                        .padding(.bottom, 2)
-                }
-                if let warning = documents.earlierSongsWarning {
-                    Text(warning)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.record)
-                        .padding(.bottom, 2)
-                }
-                if let note = documents.earlierSongsNote {
-                    Text(note)
-                        .font(Theme.Font.caption)
-                        .foregroundStyle(Theme.Color.textSecondary)
-                        .padding(.bottom, 2)
-                }
-                // The export just made stands under a message; an older one only alone.
-                if let loudness = documents.lastExportLoudness,
-                   documents.lastExportIsNews
-                    || (message == nil && notice == nil && documents.launchNote == nil
-                        && documents.earlierSongsWarning == nil && documents.earlierSongsNote == nil) {
-                    // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
-                    Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
-                        .font(Theme.Font.caption.monospacedDigit())
-                        .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
-                        .padding(.bottom, 2)
+        VStack(spacing: 0) {
+            // Work that is not on the disk: nothing else on this strip hides it, MIDI Learn included.
+            if let unsaved = documents.saveError {
+                Text(unsaved)
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.record)
+                    .padding(.bottom, 2)
+            }
+            if midi.isLearning {
+                Text(midi.learnTarget == nil ? "MIDI Learn: tap a control, or move one in a plugin." : "MIDI Learn: move a knob or fader on your device.")
+                    .font(Theme.Font.caption)
+                    .foregroundStyle(Theme.Color.accent)
+                    .padding(.bottom, 2)
+            } else {
+                let message = engine.lastError ?? documents.lastError
+                let notice = Self.notices(engine.notice, engine.plugins.notice)
+                // Each line carries its own padding: with nothing to say, the strip keeps its height.
+                VStack(spacing: 0) {
+                    if let message {
+                        Text(message)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.record)
+                            .padding(.bottom, 2)
+                    } else if let notice {
+                        Text(notice)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                            .padding(.bottom, 2)
+                    }
+                    if let note = documents.launchNote {
+                        Text(note)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.record)
+                            .padding(.bottom, 2)
+                    }
+                    if let warning = documents.earlierSongsWarning {
+                        Text(warning)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.record)
+                            .padding(.bottom, 2)
+                    }
+                    if let note = documents.earlierSongsNote {
+                        Text(note)
+                            .font(Theme.Font.caption)
+                            .foregroundStyle(Theme.Color.textSecondary)
+                            .padding(.bottom, 2)
+                    }
+                    // The export just made stands under a message; an older one only alone.
+                    if let loudness = documents.lastExportLoudness,
+                       documents.lastExportIsNews
+                        || (message == nil && notice == nil && documents.saveError == nil && documents.launchNote == nil
+                            && documents.earlierSongsWarning == nil && documents.earlierSongsNote == nil) {
+                        // Streaming services turn down what is louder than about -14 LUFS and ask for -1 dBTP.
+                        Text(Self.exportText(integrated: loudness.integrated, truePeak: loudness.truePeak))
+                            .font(Theme.Font.caption.monospacedDigit())
+                            .foregroundStyle(loudness.truePeak > -1 ? Theme.Color.accent : Theme.Color.textSecondary)
+                            .padding(.bottom, 2)
+                    }
                 }
             }
         }
