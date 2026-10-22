@@ -70,12 +70,13 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         send(kind, data1 & 0x7F, data2 & 0x7F, offset: offset)
     }
 
-    /// All Notes Off (controller 123), with the pedal lifted and the wheel centred, at the start
-    /// of the next `render` call — a stop in the middle of a bent, held phrase leaves neither.
-    public func allNotesOff() {
-        send(0xB0, 64, 0, offset: 0)
-        send(0xE0, 0, 0x40, offset: 0)
-        send(0xB0, 123, 0, offset: 0)
+    /// All Notes Off (controller 123), with the pedal lifted and the wheel centred, `offset`
+    /// frames into the next `render` call — a stop in the middle of a bent, held phrase leaves
+    /// neither.
+    public func allNotesOff(offset: Int) {
+        send(0xB0, 64, 0, offset: offset)
+        send(0xE0, 0, 0x40, offset: offset)
+        send(0xB0, 123, 0, offset: offset)
     }
 
     private func send(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int) {

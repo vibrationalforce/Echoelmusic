@@ -22,7 +22,7 @@ private final class ConstantInstrument: HostedInstrument, @unchecked Sendable {
     func noteOn(pitch: UInt8, velocity: UInt8, offset: Int) { pending.append((offset, 0x90, pitch)) }
     func noteOff(pitch: UInt8, offset: Int) { pending.append((offset, 0x80, pitch)) }
     func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int) { pending.append((offset, status, data1)) }
-    func allNotesOff() { pending.append((0, 0xB0, 123)) }
+    func allNotesOff(offset: Int) { pending.append((offset, 0xB0, 123)) }
 
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                 gainLeft: Float, gainRight: Float) {
@@ -137,6 +137,38 @@ final class HostedProtocolTests: XCTestCase {
         let live: [Int64] = fresh.filter { $0.status == 0xB0 && $0.data == 1 }.map { $0.frame }
         let nextBlock: Int64 = 26_000 + 1_024
         XCTAssertEqual(live, [nextBlock], "the wheel at the start of the next block")
+    }
+
+    /// A clip launched inside a block silences the plugin at the bar, not at the block's start:
+    /// a note played just before the bar in the same block is ended by the launch instead of
+    /// droning on with no note-off to come (audit 2026-10-23).
+    func testALaunchInsideABlockSilencesThePluginAtTheBarAfterANoteJustAhead() throws {
+        let bar = MusicalTime.ticksPerBar(.common)
+        var project = Project(tempo: 120)
+        let track = TrackID(), arranged = ClipID(), loop = ClipID()
+        let plugin = PluginComponent(type: PluginComponent.code("aumu"), subtype: PluginComponent.code("Pure"),
+                                     manufacturer: PluginComponent.code("Test"), name: "Pure", manufacturerName: "Test")
+        try Command.addTrack(id: track, name: "Keys", kind: .instrument, index: nil).apply(to: &project)
+        try Command.setInstrumentPlugin(track, plugin).apply(to: &project)
+        try Command.createClip(track: track, id: arranged, name: "A", length: 2 * bar).apply(to: &project)
+        // Four ticks — 100 frames — before bar 2, held across it.
+        try Command.addNotes(arranged, [Note(pitch: 62, velocity: 100, start: bar - 4, length: 480)]).apply(to: &project)
+        try Command.placeClip(track: track, id: PlacementID(), clip: arranged, start: 0).apply(to: &project)
+        try Command.createClip(track: track, id: loop, name: "L", length: bar).apply(to: &project)
+        try Command.addNotes(loop, [Note(pitch: 60, velocity: 100, start: 960, length: 480)]).apply(to: &project)
+
+        let unit = ConstantInstrument(level: 0, sampleRate: rate)
+        let core = engine(project, track: track, unit: unit)
+        core.play()
+        _ = render(core, frames: 4_096, block: 4_096)
+        core.launch(slot: 0, .launch(loop))
+        // Up to the block that holds both the note at 95 900 and the bar at 96 000.
+        _ = render(core, frames: 98_304 - 4_096, block: 4_096)
+
+        let noteOn = try XCTUnwrap(unit.heard.first { $0.status == 0x90 && $0.data == 62 }?.frame)
+        XCTAssertEqual(noteOn, 95_900)
+        let allOff: [Int64] = unit.heard.filter { $0.status == 0xB0 && $0.data == 123 }.map { $0.frame }
+        XCTAssertEqual(allOff.last, 96_000, "the launch ends what sounds at the bar, after the note just ahead of it")
     }
 
     func testInsertsProcessTheInstrumentsBusInTheirOrder() throws {

@@ -24,9 +24,11 @@ public protocol HostedInstrument: ParameterScheduling {
     func noteOff(pitch: UInt8, offset: Int)
     /// A pitch bend (`0xE0`) or a controller (`0xB0`), `offset` frames into the next `render` call.
     func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int)
-    /// All notes off with the pedal lifted and the wheel centred, at the start of the next
-    /// `render` call.
-    func allNotesOff()
+    /// All notes off with the pedal lifted and the wheel centred, `offset` frames into the next
+    /// `render` call: 0 for a stop or a seek at a block's start, the boundary's frame for a clip
+    /// launched or stopped inside a block, so a note played just before it in the same block ends
+    /// too (audit 2026-10-23).
+    func allNotesOff(offset: Int)
     /// Renders `frames` and adds them into `left` and `right` at the lane's gains.
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                 gainLeft: Float, gainRight: Float)

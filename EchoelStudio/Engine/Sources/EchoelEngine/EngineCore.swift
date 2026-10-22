@@ -581,7 +581,7 @@ public final class EngineCore: @unchecked Sendable {
                 }
                 sessions[lane.slot] = session
             case .launch:
-                fire(snapshot.lanes[due.lane])
+                fire(snapshot.lanes[due.lane], offset: offset)
             case .automation:
                 let tick = snapshot.time.position(atSample: due.sample)
                 applyPatchAutomation(snapshot, at: tick)
@@ -639,10 +639,12 @@ public final class EngineCore: @unchecked Sendable {
         launchReports.push(LaunchReport(slot: slot, clip: clip, state: state))
     }
 
-    /// Ends every sounding note of one track's instrument.
-    private func silence(_ lane: EngineSnapshot.Lane) {
+    /// Ends every sounding note of one track's instrument. `offset` is the frame in this block it
+    /// happens at: a built-in device hears it at once, since it has rendered up to here; a plugin
+    /// renders the block whole afterwards, so it is told the frame.
+    private func silence(_ lane: EngineSnapshot.Lane, offset: Int) {
         releaseBuiltIns(lane.slot)
-        lane.unit?.allNotesOff()
+        lane.unit?.allNotesOff(offset: offset)
     }
 
     /// All notes off (CC 123) on every built-in device of a slot: held notes release, a drum hit
@@ -676,7 +678,7 @@ public final class EngineCore: @unchecked Sendable {
             let tick = snapshot.time.tick(atSample: playhead)
             switch request.action {
             case .backToArrangement:
-                silence(lane)
+                silence(lane, offset: 0)
                 sessions[lane.slot] = SessionSlot()
                 cursors[lane.slot] = PlaybackPlan.firstIndex(in: lane.events, atOrAfter: tick)
                 report(lane.slot, nil, .arrangement)
@@ -693,7 +695,7 @@ public final class EngineCore: @unchecked Sendable {
                 sessions[lane.slot].pending = .stop
             }
             sessions[lane.slot].pendingTick = playing ? boundary(after: tick, snapshot) : tick
-            if !playing { fire(lane) }
+            if !playing { fire(lane, offset: 0) }
         }
     }
 
@@ -767,14 +769,14 @@ public final class EngineCore: @unchecked Sendable {
         return at
     }
 
-    /// The slot's pending launch or stop takes effect.
-    private func fire(_ lane: EngineSnapshot.Lane) {
+    /// The slot's pending launch or stop takes effect, `offset` frames into this block.
+    private func fire(_ lane: EngineSnapshot.Lane, offset: Int) {
         var session = sessions[lane.slot]
         switch session.pending {
         case .none:
             return
         case .launch(let clip):
-            silence(lane)
+            silence(lane, offset: offset)
             session.overrides = true
             session.clip = clip
             session.index = clipIndex(clip, in: lane)
@@ -784,7 +786,7 @@ public final class EngineCore: @unchecked Sendable {
             if session.index < 0 { session.clip = nil }
             report(lane.slot, session.clip ?? clip, session.index < 0 ? .stopped : .playing)
         case .stop:
-            silence(lane)
+            silence(lane, offset: offset)
             report(lane.slot, session.clip, .stopped)
             session.clip = nil
             session.index = -1
@@ -898,7 +900,7 @@ public final class EngineCore: @unchecked Sendable {
         // Only a track whose notes changed lets go of what it holds: a deleted note must not
         // hang, but a fader, a pan or a send must not cut a held chord.
         for lane in snapshot.lanes where revisions[lane.slot] != lane.eventsRevision {
-            silence(lane)
+            silence(lane, offset: 0)
             revisions[lane.slot] = lane.eventsRevision
             stale[lane.slot] = true
         }
@@ -971,7 +973,7 @@ public final class EngineCore: @unchecked Sendable {
             if off { unit.noteOff(pitch: pitch, offset: 0) }
             // Every controller reaches the plugin as played — the mod wheel, expression, the pedal —
             // as a host passes them (S-16b).
-            if allOff { unit.allNotesOff() } else if kind == 0xE0 || kind == 0xB0 { unit.control(status: status, pitch, value, offset: 0) }
+            if allOff { unit.allNotesOff(offset: 0) } else if kind == 0xE0 || kind == 0xB0 { unit.control(status: status, pitch, value, offset: 0) }
         }
     }
 
@@ -1067,7 +1069,7 @@ public final class EngineCore: @unchecked Sendable {
     private func releaseAllNotes() {
         for slot in 0..<slotCapacity { releaseBuiltIns(slot) }
         if let snapshot = current?.snapshot {
-            for lane in snapshot.lanes { lane.unit?.allNotesOff() }
+            for lane in snapshot.lanes { lane.unit?.allNotesOff(offset: 0) }
         }
     }
 
