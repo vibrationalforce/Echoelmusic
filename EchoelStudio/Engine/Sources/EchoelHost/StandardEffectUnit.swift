@@ -190,6 +190,9 @@ public final class StandardEffectUnit: AUAudioUnit {
             }
             guard !bypassed else { return noErr }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
+            // The pull may have reported a silent input; a delay or reverb tail is not silent, so the
+            // hint must not travel on to the host, which may skip a buffer it thinks is empty.
+            flags.pointee.remove(.unitRenderAction_OutputIsSilence)
             if !state.unlocked.load(ordering: .relaxed) {
                 DemoGate.apply(left: left, right: right, frames: frames, fromFrame: state.demoFrame,
                                sampleRate: kernel.sampleRate)

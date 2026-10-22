@@ -105,6 +105,47 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(played[480], 1, accuracy: 0.05, "and the repeat is back")
     }
 
+    /// An upstream that reports silence does not silence a tail: once the unit has processed, the
+    /// hint is gone, so a host does not skip the delay's or reverb's ring-out (review 2026-10-23).
+    func testATailIsNotReportedAsSilence() throws {
+        let delay = try unit(.delay)
+        let tree = try XCTUnwrap(delay.parameterTree)
+        tree.parameter(withAddress: 0)?.value = 0.01 // time: 480 frames
+        tree.parameter(withAddress: 1)?.value = 0 // feedback
+        tree.parameter(withAddress: 2)?.value = 1 // mix
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 256),
+              let channels = buffer.floatChannelData else {
+            return XCTFail("no stereo buffer")
+        }
+        buffer.frameLength = 256
+        var stamp = AudioTimeStamp()
+        stamp.mFlags = .sampleTimeValid
+        var flags = AudioUnitRenderActionFlags()
+        let block = delay.internalRenderBlock
+        let impulse: AURenderPullInputBlock = { _, _, frames, _, list in
+            for channel in UnsafeMutableAudioBufferListPointer(list) {
+                guard let data = channel.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for index in 0..<Int(frames) { data[index] = index == 0 ? 1 : 0 }
+            }
+            return noErr
+        }
+        let silence: AURenderPullInputBlock = { actionFlags, _, frames, _, list in
+            actionFlags.pointee.insert(.unitRenderAction_OutputIsSilence)
+            for channel in UnsafeMutableAudioBufferListPointer(list) {
+                guard let data = channel.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for index in 0..<Int(frames) { data[index] = 0 }
+            }
+            return noErr
+        }
+        XCTAssertEqual(block(&flags, &stamp, 256, 0, buffer.mutableAudioBufferList, nil, impulse), noErr)
+        stamp.mSampleTime += 256
+        flags = AudioUnitRenderActionFlags()
+        XCTAssertEqual(block(&flags, &stamp, 256, 0, buffer.mutableAudioBufferList, nil, silence), noErr)
+        XCTAssertFalse(flags.contains(.unitRenderAction_OutputIsSilence), "the unit processed: no silence hint")
+        XCTAssertEqual(channels[0][480 - 256], 1, accuracy: 0.05, "the repeat rings out of a silent input")
+    }
+
     /// A host that asks for more frames than the unit allocated gets the documented refusal,
     /// not a write past the buffers (B7). The allocated count itself still plays.
     func testARenderCallAskingForMoreFramesThanAllocatedIsRefused() throws {
