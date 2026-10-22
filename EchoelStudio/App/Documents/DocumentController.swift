@@ -422,16 +422,24 @@ final class DocumentController {
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
     /// and returns its URL for the share sheet. Plugins play from fresh copies loaded with the
     /// settings they have right now; one that cannot load is named in `lastError` and left out.
+    /// When another song opens before the file is handed out, the export stops and says so.
     func exportWAV(plugins: PluginHost) async -> URL? {
         guard !isExporting else { return nil }
         isExporting = true
         defer { isExporting = false }
         let rate = 48_000.0
         let exportedSong = songsOpened
+        let songName = store.project.name
+        // The song's audio files decode after it opens. A render before they arrive left its
+        // sampler and audio parts silent, with no word about it (review 2026-10-19).
+        await mediaLoaded()
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
         try? store.absorb(plugins.captureCommands(for: store.project))
+        // The song and its audio are taken together, with no wait between them: a song opened
+        // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
-        let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let buffers = samples
+        let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
         let url = folder.appendingPathComponent(name).appendingPathExtension("wav")
@@ -456,12 +464,16 @@ final class DocumentController {
                 return meter
             }
         }.value
+        // The file is the earlier song's; shared from the next one's screen it would pass for that
+        // one, and its loudness and missing plugins are not that song's news.
+        guard exportedSong == songsOpened else {
+            if case .success = result { try? FileManager.default.removeItem(at: url) }
+            return exportStopped(songName)
+        }
         switch result {
         case .success(let meter):
-            if exportedSong == songsOpened {
-                lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
-                lastExportIsNews = true
-            }
+            lastExportLoudness = (meter.integratedLoudness, meter.truePeak)
+            lastExportIsNews = true
             lastError = offline.missing.isEmpty ? nil
                 : "Exported without \(offline.missing.joined(separator: ", ")): not available on this device."
             return url
@@ -474,6 +486,22 @@ final class DocumentController {
                 : "Could not export the song."
             return nil
         }
+    }
+
+    /// Returns once the open song's audio files are decoded, also when reopening it started
+    /// another load meanwhile.
+    private func mediaLoaded() async {
+        while let load = mediaLoad {
+            await load.value
+            if mediaLoad == load { return }
+        }
+    }
+
+    private func exportStopped(_ song: String) -> URL? {
+        log.info("export stopped — another song was opened")
+        lastExportIsNews = false
+        lastError = "The export of \(song) stopped: another song was opened."
+        return nil
     }
 
     /// Play started a fresh status line: the launch note goes, and the last export's loudness is
@@ -651,6 +679,8 @@ final class DocumentController {
     /// song's buffers are dropped at once; the engine's snapshot keeps any it still plays.
     private func loadMedia(of project: Project) {
         mediaLoad?.cancel()
+        // An export waits for this; a song without media leaves nothing to wait for.
+        mediaLoad = nil
         samples = [:]
         mediaRevision += 1
         guard let package = currentURL, !project.media.isEmpty else { return }
