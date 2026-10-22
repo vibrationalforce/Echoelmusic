@@ -5641,3 +5641,12 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Aus der Prüfrunde wf_6a70ee84-7b7:** Ein Auswahlwert (Wellenform) aus einer Automation wird in Double gerundet, bevor er zu Float wird, weil `Float(0.49999999) == 0.5` sonst Säge statt Sinus spielt (`92f40c1bd`). Kit- und Sampler-Reset, ihre Live-Wege und eine Klangänderung unter gehaltener Note sind seit `10656831a` gepinnt; das Orakel hatte sie nicht sehen können.
 - **Nicht belegt:** Kein Ohr am Gerät auf dem Kern-Pfad.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio: Skalen-Sperre gerätelokal, gehaltene Tasten latchen (P1 L1–L3)
+
+- **Entscheidung:** „Keys Follow Scale“ ist ein Schalter des Geräts (`AudioEngine.keysFollowScale`, UserDefaults), nicht des Songs. `LiveKeys.lock(for:device:)` baut die Tabelle (jede Taste zur nächsten Tonhöhe in Tonart und Skala, Gleichstand nach unten); nil für chromatisch, für eine unbekannte Skala, für das Drum-Kit und ein unbekanntes Gerät. `LiveKeys` (EchoelEngine, feste Größe) merkt sich je gehaltener Taste Slot und klingende Tonhöhe; `LiveRouter` spielt und nimmt auf, was der Latch ausgibt.
+- **Warum:** Eine Aufnahme speichert die gelatchten Noten, also hängt kein Song am Schalter, und das Format bleibt unberührt. Ein Song-Feld bräuchte den Kontext-Schlüsselsatz-Pin, eine `ParameterAddress` und einen Katalog-Eintrag. Es bleibt später additiv möglich. Ohne Latch strandete jede Note, deren Skala sich unter der gehaltenen Taste ändert (ein MIDI-gelernter Regler kann die Skala mitten im Spiel drehen).
+- **Belegt (CI ausstehend):** `LiveKeysTests` — Freigabe nach Slot-Wechsel, Freigabe der gelatchten Tonhöhe, zwei Tasten auf einer Tonhöhe, erneuter Anschlag ohne Freigabe, Freigabe ohne Anschlag, 5 000-Schritt-Eigenschaft (in Python nachgespielt: 0 Fehler), Take aus dem Latch, Lock-Tabelle je Gerät.
+- **Verhaltensänderung ohne Sperre:** Eine erneut angeschlagene gehaltene Taste beendet zuerst ihre alte Note (vorher blieb sie bei einem Slot-Wechsel stehen), und eine Freigabe einer nie gedrückten Taste sendet nichts mehr.
+- **Nicht belegt:** Kein Gerät, kein Keyboard am Telefon. Offene Founder-Frage GM29 (Bildschirmtastatur).
+- **Review:** 2026-11-21.
