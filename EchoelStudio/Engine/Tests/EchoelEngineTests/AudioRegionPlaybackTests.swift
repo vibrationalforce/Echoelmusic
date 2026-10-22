@@ -133,6 +133,25 @@ final class AudioRegionPlaybackTests: XCTestCase {
         XCTAssertTrue(out[(beat + 2_400)...].allSatisfy { $0 == 0 }, "stops after the chosen length")
     }
 
+    /// A return on solo plays alone with what is sent to it. An audio track that the solo silences
+    /// still feeds it, and the snapshot computes that send, but a lane without inserts was skipped
+    /// whole, its send with it, so a soloed return heard no audio track at all.
+    func testASoloedReturnHearsAnAudioTracksSend() throws {
+        var s = try song(frames: 4_800, fileRate: rate)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate))
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Reverb", kind: .returnTrack, index: nil).apply(to: &s.project)
+        try Command.setSend(track: s.track, to: verb, db: 0).apply(to: &s.project)
+        try Command.setSolo(verb, true).apply(to: &s.project)
+        let out = render(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat)
+        // The send is post-pan, then the return's own centre pan; the track's own output is quiet.
+        XCTAssertEqual(out[beat + 2_400], 0.5 * centre * centre, accuracy: 1e-4)
+
+        try Command.setMute(s.track, true).apply(to: &s.project)
+        XCTAssertTrue(render(playing(s.project, samples: [s.media.id: buffer]), frames: 2 * beat).allSatisfy { $0 == 0 },
+                      "a muted track feeds no return, soloed or not")
+    }
+
     func testMuteSilencesAndAMissingFileIsSilent() throws {
         var s = try song(frames: 4_800, fileRate: rate)
         let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate))

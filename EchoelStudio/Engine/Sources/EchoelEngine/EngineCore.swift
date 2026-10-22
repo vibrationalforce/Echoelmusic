@@ -1243,7 +1243,10 @@ public final class EngineCore: @unchecked Sendable {
             let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
                 && gainMemory[point * 2].isFinite
             let session = lane.slot >= 0 && lane.slot < slotCapacity
-            guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil || fading else {
+            // A track silenced by someone else's solo still feeds a soloed return: the snapshot gives
+            // it sends only then, so a lane with sends renders even when its own output is quiet.
+            guard lane.gainLeft != 0 || lane.gainRight != 0 || !lane.inserts.isEmpty || lane.mix != nil
+                || !lane.sends.isEmpty || fading else {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 // Silent, but a launch still happens on its bar.
                 if playing, session, !sessions[lane.slot].isIdle,
