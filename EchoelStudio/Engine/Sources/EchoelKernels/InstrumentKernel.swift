@@ -48,8 +48,27 @@ public protocol InstrumentKernel: AnyObject, Sendable {
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, gain: Float)
 }
 
+/// What the app's engine needs from a built-in kernel beyond what a plugin host gives it (S-26 D2).
+/// Engine only, render thread only, and nothing here allocates. The Audio Unit keeps using
+/// `InstrumentKernel` alone, so a host sees no difference.
+public protocol EngineInstrumentKernel: InstrumentKernel {
+    /// Whether any voice is sounding. The engine renders a silent kernel not at all, as it never
+    /// rendered a silent instrument: a synth that renders while silent glides its pitch wheel and
+    /// vibrato on, and the next note would start somewhere else.
+    var isSounding: Bool { get }
+    /// Applies parameter values set since the last render now, so the next event already hears
+    /// them. `render` does the same at its top.
+    func commitParameters()
+    /// Silences every voice at once — CC 120, all sound off. Controllers stay as they are.
+    func reset()
+}
+
 extension SynthKernel: InstrumentKernel {
     public static var parameters: [InstrumentKernelParameter] {
         InstrumentDevice.synth.parameters.map(InstrumentKernelParameter.init)
     }
 }
+
+extension SynthKernel: EngineInstrumentKernel {}
+extension DrumKernel: EngineInstrumentKernel {}
+extension SamplerKernel: EngineInstrumentKernel {}

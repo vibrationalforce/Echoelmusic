@@ -81,11 +81,7 @@ public final class SynthKernel: @unchecked Sendable {
     /// Writes `frames` into `left` and `right` (overwriting them). `gain` scales the output, for
     /// the plugin's demo mode.
     public func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, gain: Float = 1) {
-        let current = version.load(ordering: .acquiring)
-        if current != appliedVersion {
-            appliedVersion = current
-            synth.setPatch(patch())
-        }
+        commitParameters()
         var done = 0
         while done < frames {
             let n = Swift.min(frames - done, maximumFrames)
@@ -99,6 +95,23 @@ public final class SynthKernel: @unchecked Sendable {
             done += n
         }
     }
+
+    /// Render thread. Applies values set since the last call. The patch reaches the synth only
+    /// when it differs from the one it plays: `setPatch` restarts each voice's control-rate
+    /// counter, so re-sending equal values would move the sound by a few samples.
+    public func commitParameters() {
+        let current = version.load(ordering: .acquiring)
+        guard current != appliedVersion else { return }
+        appliedVersion = current
+        let next = patch()
+        if next != synth.patch { synth.setPatch(next) }
+    }
+
+    /// Render thread. Whether a voice is sounding.
+    public var isSounding: Bool { synth.activeVoiceCount > 0 }
+
+    /// Render thread. All sound off (CC 120): every voice silenced, controllers untouched.
+    public func reset() { synth.reset() }
 
     /// The patch for the current values, through the same `PatchField` mapping a song's track
     /// uses — arithmetic only, so the render thread may build it.

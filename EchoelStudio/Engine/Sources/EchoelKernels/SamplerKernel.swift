@@ -69,7 +69,9 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
         sounding = .allocate(capacity: 128)
-        sounding.initialize(repeating: 0, count: 128)
+        // Each key starts as itself, so a note-off for a key that never sounded releases its own
+        // pitch (nothing), not pitch 0 — what the app's engine always did.
+        for key in 0..<128 { (sounding + key).initialize(to: UInt8(key)) }
         slots = .allocate(capacity: Self.ringSize)
         slots.initialize(repeating: nil, count: Self.ringSize)
     }
@@ -129,11 +131,7 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
 
     public func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, gain: Float) {
         takeNewSample()
-        let current = version.load(ordering: .acquiring)
-        if current != appliedVersion {
-            appliedVersion = current
-            applyPatch()
-        }
+        commitParameters()
         var done = 0
         while done < frames {
             let n = Swift.min(frames - done, maximumFrames)
@@ -146,6 +144,28 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
             }
             done += n
         }
+    }
+
+    /// Render thread. Applies values set since the last call, so the next note already hears them.
+    public func commitParameters() {
+        let current = version.load(ordering: .acquiring)
+        guard current != appliedVersion else { return }
+        appliedVersion = current
+        applyPatch()
+    }
+
+    /// Render thread. Whether a voice is sounding.
+    public var isSounding: Bool { sampler.activeVoiceCount > 0 }
+
+    /// Render thread. All sound off (CC 120).
+    public func reset() { sampler.reset() }
+
+    /// Render thread, for the app's engine: plays `buffer` from now on (nil: no sample). The caller
+    /// owns the buffer's lifetime and keeps it alive until it knows rendering moved on — the engine
+    /// already does that for its snapshot. Never mix this with `load` on one kernel: `load` keeps
+    /// its own list of buffers and would not know about this one.
+    public func assign(_ buffer: SampleBuffer?) {
+        sampler.setSample(buffer)
     }
 
     private func takeNewSample() {

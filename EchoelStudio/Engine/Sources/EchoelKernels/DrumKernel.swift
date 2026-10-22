@@ -20,15 +20,23 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     private var gain: Float
     private let glide: Float
 
-    public init(sampleRate: Double, maximumFrames: Int = 4_096) {
+    public convenience init(sampleRate: Double, maximumFrames: Int = 4_096) {
+        self.init(sampleRate: sampleRate, maximumFrames: maximumFrames, level: Float(Self.parameters.first?.defaultValue ?? 0.8))
+    }
+
+    /// The kit at `level` from its first sample: the output starts there instead of gliding to it.
+    /// The app's engine plays its drums at 1 (unity, as it always has); the plugin starts at the
+    /// table's default. A glide from 0.8 never quite reaches 1 in `Float`, so a level the engine
+    /// needs exactly has to be set here, not through `setParameter`.
+    public init(sampleRate: Double, maximumFrames: Int, level start: Float) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.sampleRate = rate
         self.maximumFrames = Swift.max(1, maximumFrames)
         let row = Self.parameters.first
-        let start = Float(row?.defaultValue ?? 0.8)
         range = row.map { Float($0.range.lowerBound)...Float($0.range.upperBound) } ?? 0...1
-        level = Atomic(start.bitPattern)
-        gain = start
+        let clamped = start.isFinite ? Swift.min(Swift.max(start, range.lowerBound), range.upperBound) : range.upperBound
+        level = Atomic(clamped.bitPattern)
+        gain = clamped
         kit = DrumKit(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
@@ -48,6 +56,15 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     }
 
     // MARK: - Render thread
+
+    /// Render thread. Whether a piece is ringing.
+    public var isSounding: Bool { kit.activeVoiceCount > 0 }
+
+    /// The level is read at the top of every render; there is nothing to commit.
+    public func commitParameters() {}
+
+    /// Render thread. All sound off (CC 120).
+    public func reset() { kit.reset() }
 
     /// Note on plays a piece; note off is ignored (drums are one-shots); CC 120 silences the kit.
     public func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
