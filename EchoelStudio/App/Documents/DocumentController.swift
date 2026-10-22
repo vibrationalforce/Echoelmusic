@@ -1101,18 +1101,24 @@ final class DocumentController {
     /// on it (review 2026-10-22).
     nonisolated private static func earlierSongs(in base: URL, defaults: UserDefaults) -> (songs: LegacySong.Songs?, complete: Bool) {
         var complete = true
+        var unreadable: Set<String> = []
         func read(_ path: String) -> Data? {
             let url = base.appendingPathComponent(path)
             guard FileManager.default.fileExists(atPath: url.path) else { return nil }
             guard let data = try? Data(contentsOf: url) else {
                 complete = false
+                unreadable.insert(path)
                 return nil
             }
             return data
         }
-        let timeline = read("Timeline/timeline.json")
+        let clipsPath = "Clips/clips.json"
+        let clipsFile = read(clipsPath)
+        // The open song's notes are in the clips file. While it is there and cannot be read, the
+        // open song waits: converted without them it would come over as an empty shell, and again,
+        // whole, under another key once the file reads (review 2026-10-22).
+        let timeline = unreadable.contains(clipsPath) ? nil : read("Timeline/timeline.json")
         let library = read("Echoel/projects.json.json")
-        let clipsFile = read("Clips/clips.json")
         guard timeline != nil || library != nil else { return (nil, complete) }
         let clips = clipsFile ?? Data("[]".utf8)
         // The earlier app kept no song tempo; its locked tempo is the one the song was made at.
