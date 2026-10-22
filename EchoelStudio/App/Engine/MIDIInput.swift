@@ -292,6 +292,8 @@ final class MIDIInput {
         return (Swift.max(info.numer, 1), Swift.max(info.denom, 1))
     }()
     @ObservationIgnored private var gestureEnd: Task<Void, Never>?
+    /// The network session's connections change without any MIDI setup change.
+    @ObservationIgnored private var networkObserver: NSObjectProtocol?
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "midi")
 
     init(router: LiveRouter, store: ProjectStore, engine: AudioEngine, writer: ParameterWriter) {
@@ -321,9 +323,21 @@ final class MIDIInput {
     }
 
     /// Tells the engine whether the followed source is connected, after a choice and whenever the
-    /// sources change.
+    /// sources change. The network session stays listed while it is on, with nobody connected; it
+    /// counts only with a connection, so an empty session does not keep the engine up.
     private func applyClockSource() {
-        engine.clockSourceConnected = followedSource.map { id in sources.contains { $0.id == id } } ?? false
+        engine.clockSourceConnected = followedSource.map { id in
+            sources.contains { $0.id == id }
+                && (id != Self.networkSourceID || !MIDINetworkSession.default().connections().isEmpty)
+        } ?? false
+    }
+
+    /// The unique ID of the network session's source.
+    private static var networkSourceID: MIDIUniqueID? {
+        let endpoint = MIDINetworkSession.default().sourceEndpoint()
+        var id: MIDIUniqueID = 0
+        guard endpoint != 0, MIDIObjectGetIntegerProperty(endpoint, kMIDIPropertyUniqueID, &id) == noErr else { return nil }
+        return id
     }
 
     /// The sources that are grid controllers; their messages go to `onGridPress` only.
@@ -495,6 +509,11 @@ final class MIDIInput {
         guard portStatus == noErr else { return fail("port", portStatus) }
         clockInbox.followed.store(followedSource.map(Self.tag) ?? 0, ordering: .relaxed)
         engine.followsExternalClock = followedSource != nil
+        networkObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name(MIDINetworkNotificationSessionDidChange), object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyClockSource() }
+        }
         if UserDefaults.standard.bool(forKey: Self.networkKey) { setNetwork(true) }
         connectSources()
     }
@@ -508,6 +527,7 @@ final class MIDIInput {
         session.connectionPolicy = on ? .anyone : .noOne
         networkEnabled = on
         UserDefaults.standard.set(on, forKey: Self.networkKey)
+        applyClockSource()
         log.info("midi: network \(on ? "on" : "off", privacy: .public) as \(session.networkName, privacy: .private)")
     }
 
