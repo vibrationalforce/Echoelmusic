@@ -54,7 +54,7 @@ final class AudioEngine {
     /// a new take cannot start on them yet.
     @ObservationIgnored private var takeEnding = false
     /// A pause from outside ended the running take (`onPausedFromOutside`), and `endTake` has not
-    /// run yet: an input that fails to reopen in that gap did not end it, so it says nothing of it.
+    /// run yet: an input that fails to reopen in that gap does not end it a second time.
     @ObservationIgnored private var takeEndsFromOutside = false
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
@@ -78,6 +78,9 @@ final class AudioEngine {
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
     @ObservationIgnored private var lostObserver: NSObjectProtocol?
+    /// The song was playing when the media services went away. The reset that follows finds it
+    /// paused already, and still says how it goes on (review 2026-10-22).
+    @ObservationIgnored private var playingWhenServicesLost = false
     @ObservationIgnored private var routeObserver: NSObjectProtocol?
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
@@ -174,7 +177,9 @@ final class AudioEngine {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 // Only paused, never played on: the musician starts it again (round 4, C6).
-                self.pauseFromOutside(self.isPlaying ? "Paused: the audio system restarted. Press Play to go on." : nil)
+                let wasPlaying = self.isPlaying || self.playingWhenServicesLost
+                self.playingWhenServicesLost = false
+                self.pauseFromOutside(wasPlaying ? "Paused: the audio system restarted. Press Play to go on." : nil)
                 self.replaceEngine()
                 self.resume(after: "media services reset")
             }
@@ -186,7 +191,8 @@ final class AudioEngine {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.log.info("engine: media services lost")
-                self.pauseFromOutside(self.isPlaying ? "Paused: the audio system stopped. Echoel picks it up again when it is back." : nil)
+                if self.isPlaying { self.playingWhenServicesLost = true }
+                self.pauseFromOutside(self.isPlaying ? "Paused: the audio system stopped. Press Play to go on once it is back." : nil)
             }
         }
     }
@@ -273,7 +279,9 @@ final class AudioEngine {
 
     /// In the foreground, or in the background while a followed clock keeps the engine running
     /// (`enterBackground` leaves it up for that): a suspended app would never hear the next Start.
-    private var mayRebuildNow: Bool { !isInBackground || followsExternalClock && clockSourceConnected }
+    private var mayRebuildNow: Bool {
+        !isInBackground || followsExternalClock && (clockSourceConnected || clockSourceGone != nil)
+    }
 
     /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
     private func hardwareChanged() {
@@ -341,7 +349,7 @@ final class AudioEngine {
     /// a pause from outside or the end of a take leaves the app that idle after it went there.
     private func suspendIfIdleInBackground() {
         guard isInBackground, isRunning, !isPlaying, take == nil,
-              !(followsExternalClock && clockSourceConnected) else { return }
+              !(followsExternalClock && (clockSourceConnected || clockSourceGone != nil)) else { return }
         log.info("engine: suspend in background")
         suspendedInput = wantsInput
         engine.stop()
@@ -537,12 +545,14 @@ final class AudioEngine {
             if input {
                 // Our own reasons say what to change (a rate mismatch, no input); the system's do not.
                 let reason = (error as? EngineError)?.errorDescription.map { " " + $0 } ?? ""
-                let wasRecording = take != nil && !takeEndsFromOutside
+                let wasRecording = take != nil
                 configure(input: false)
                 if isRunning { lastError = "The audio input could not be opened." + reason + " Playback goes on without it." }
                 if wasRecording {
-                    if let said = lastError { lastError = said + " The take ended there and keeps what it recorded." }
-                    onInputLost?()
+                    // Ended by the input, or already ending by the pause that came first (a reset, a
+                    // new rate): either way the line says so, since an error hides the pause notice.
+                    if let said = lastError { lastError = said + " The take ended and keeps what it recorded." }
+                    if !takeEndsFromOutside { onInputLost?() }
                 }
                 return
             }
@@ -638,12 +648,25 @@ final class AudioEngine {
     /// The source of the followed clock is connected. Only then does the engine stay up in the
     /// background to hear its Start: the choice is kept across launches, and a device chosen once
     /// and unplugged since must not keep a silent app awake (round 4, C7).
+    /// A source that went away stops the engine only after `clockSourceGrace`: a Bluetooth link
+    /// that drops for a moment, or a cable moved, must not end the background wait for its Start
+    /// (review 2026-10-22). A suspended app does not hear the source come back.
     var clockSourceConnected = false {
         didSet {
-            guard clockSourceConnected != oldValue, !clockSourceConnected else { return }
-            suspendIfIdleInBackground()
+            guard clockSourceConnected != oldValue else { return }
+            clockSourceGone?.cancel()
+            clockSourceGone = nil
+            guard !clockSourceConnected else { return }
+            clockSourceGone = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(Self.clockSourceGrace))
+                guard !Task.isCancelled else { return }
+                self?.clockSourceGone = nil
+                self?.suspendIfIdleInBackground()
+            }
         }
     }
+    @ObservationIgnored private var clockSourceGone: Task<Void, Never>?
+    private static let clockSourceGrace = 15.0
 
     /// The followed clock's tempo, once known. It is played, never written into the song: the
     /// song keeps its own tempo and its undo history while another device sets the pace.
@@ -687,6 +710,7 @@ final class AudioEngine {
         if notice == standing.0 { notice = nil }
         if plugins.notice == standing.1 { plugins.clearNotice() }
         onPlay?()
+        playingWhenServicesLost = false
         core.play()
         isPlaying = true
     }
