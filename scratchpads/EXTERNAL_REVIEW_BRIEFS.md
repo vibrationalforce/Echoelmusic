@@ -367,3 +367,5 @@ Gerüchte als Gerüchte, keine Gesundheits- oder Wellness-Themen.
 
 **So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo
 (Lernmodus) und trägt das Ergebnis ins Ledger ein.
+
+**Antworten: beide am 22.10. eingetroffen und gemessen** (Workflow `wf_c4738df5-31a`; Ledger `memory/inspiration_intake.md` 2026-10-22, `inspiration.csv`). ChatGPT `[verified 6/7]` → ADOPT→PRODUCT: Dublette bei Prozessende vor der Marke, verschiebbare Platznummern, Aufgabe gesunder Songs, Fehlalarm unter 3 s Hintergrund, Hintergrund-Engine bei Clock-Follow und Transport ohne Ende; die Messung fand dazu drei schwerere Befunde (Export ohne Medien nach dem Öffnen, Songwechsel während des Exports, Öffnen nach gescheitertem Speichern verwirft Änderungen). Quelle formal kontaminiert (U+2060), kein Satz kopiert. Grok `[verified 4/8]` → WATCH: die vier Repo-Hälften (Reset, Rückkehr, Invalidation, Ratenwechsel) stimmen, die externen Punkte bleiben ungeöffnet.
