@@ -212,7 +212,7 @@ extension InstrumentDevice {
     }
 }
 
-/// A starting sound. Loading one replaces every synth value of the track.
+/// A starting sound. Loading one replaces every synth value of the track and keeps its other values.
 public struct InstrumentPreset: Sendable, Equatable {
     public let name: String
     public let values: [String: Double]

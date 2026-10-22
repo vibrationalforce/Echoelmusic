@@ -34,6 +34,27 @@ final class InstrumentTests: XCTestCase {
         }
     }
 
+    /// A preset is the synth's sound. Loading one replaced the whole dictionary, which dropped
+    /// another device's values and the ones a later build wrote, though the format keeps them.
+    func testAPresetReplacesTheSynthsValuesAndKeepsEveryOtherOne() throws {
+        var (project, keys, _) = try project()
+        let index = try XCTUnwrap(project.tracks.firstIndex { $0.id == keys })
+        project.tracks[index].instrument.values = ["synth.cutoff": 3_000, "synth.future": 1,
+                                                    "sampler.root": 48, "granular.grain": 2]
+        try Command.loadInstrumentPreset(keys, name: "Pluck").apply(to: &project)
+        let pluck = try XCTUnwrap(InstrumentPreset.named("Pluck"))
+        let loaded = try XCTUnwrap(project.track(keys)?.instrument.values)
+        let synth: [String: Double] = loaded.filter { $0.key.hasPrefix("synth.") }
+        XCTAssertEqual(synth, pluck.values, "every synth value is the preset's, a later build's synth key goes too")
+        XCTAssertEqual(loaded["sampler.root"], 48)
+        XCTAssertEqual(loaded["granular.grain"], 2)
+
+        try Command.loadInstrumentPreset(keys, name: InstrumentPreset.initial.name).apply(to: &project)
+        let initial = try XCTUnwrap(project.track(keys)?.instrument.values)
+        let expected: [String: Double] = ["sampler.root": 48, "granular.grain": 2]
+        XCTAssertEqual(initial, expected, "Init stores no synth value and keeps the rest")
+    }
+
     func testAParameterChangeIsStoredAndReadThroughItsAddress() throws {
         var (project, keys, _) = try project()
         let address = ParameterAddress(.track(keys), SynthParameter.cutoff.key)

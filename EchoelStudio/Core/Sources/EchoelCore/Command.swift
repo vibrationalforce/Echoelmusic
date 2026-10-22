@@ -280,7 +280,11 @@ extension Command {
             }
             var settings = project.tracks[t].instrument
             settings.preset = preset.name
-            settings.values = preset.values
+            // A preset is the synth's sound: it replaces every synth value and keeps the rest,
+            // another device's value or one a later build wrote (docs/FORMAT.md keeps those).
+            let synth = InstrumentDevice.synth.rawValue + "."
+            settings.values = settings.values.filter { !$0.key.hasPrefix(synth) }
+                .merging(preset.values) { _, new in new }
             project.tracks[t].instrument = settings
 
         case let .setInstrumentDevice(id, device):
