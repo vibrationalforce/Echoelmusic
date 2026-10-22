@@ -62,6 +62,9 @@ final class PluginHost {
     @ObservationIgnored private var loaded: [Slot: Loaded] = [:]
     @ObservationIgnored private var requests: [Slot: Request] = [:]
     @ObservationIgnored private var failed: [Slot: PluginComponent] = [:]
+    /// The failures the restart limit made: a unit that kept stopping is not tried again by a
+    /// change in what is installed.
+    @ObservationIgnored private var refused: Set<Slot> = []
     /// The saved state each loaded unit was last brought in line with — applied on load or after
     /// an undo, or captured from the unit. A song whose state differs gets it applied.
     @ObservationIgnored private var syncedState: [Slot: Data] = [:]
@@ -116,7 +119,10 @@ final class PluginHost {
         registrationObserver = NotificationCenter.default.addObserver(
             forName: AVAudioUnitComponentManager.registrationsChangedNotification, object: nil, queue: .main
         ) { @Sendable [weak self] _ in
-            Task { @MainActor in self?.refreshCatalog() }
+            Task { @MainActor in
+                self?.refreshCatalog()
+                self?.retryFailedLoads()
+            }
         }
         // A plugin's extension that crashes, or the media services resetting, leaves its unit
         // dead: the lane went silent until the song was reopened (ultra-audit R5). The dead unit
@@ -173,6 +179,7 @@ final class PluginHost {
             if count > Self.restartLimit {
                 let reason = "\(entry.component.name) stopped working and was not loaded again."
                 fail(slot, entry.component, reason: reason, detail: "stopped \(count) times")
+                refused.insert(slot)
                 reloads.refused(name: entry.component.name, reason: reason)
             } else {
                 reloads.stopped(slot, name: entry.component.name, component: entry.component, cause: .crash)
@@ -184,6 +191,19 @@ final class PluginHost {
             }
         }
         notice = reloads.text
+        revision += 1
+        onUnitsChanged?()
+    }
+
+    /// What is installed changed — a plugin was installed, updated or came back: every slot that
+    /// failed to load is tried again. A failure was kept until the song changed plugins, so a
+    /// plugin installed for a song received by AirDrop stayed silent until a relaunch (audit
+    /// 2026-10-23). The restart limit's refusals stay.
+    private func retryFailedLoads() {
+        let retried = failed.filter { !refused.contains($0.key) }
+        guard !retried.isEmpty else { return }
+        failed = failed.filter { refused.contains($0.key) }
+        problems = problems.filter { failed[$0.key] != nil }
         revision += 1
         onUnitsChanged?()
     }
@@ -260,6 +280,7 @@ final class PluginHost {
             loading.remove(slot)
         }
         failed = failed.filter { wanted[$0.key]?.component == $0.value }
+        refused = refused.filter { failed[$0] != nil }
         // A slot no longer wanted, or wanting another plugin, is not loaded again: nothing is said.
         reloads.keep { slot, component in wanted[slot]?.component == component }
         problems = problems.filter { failed[$0.key] != nil }
