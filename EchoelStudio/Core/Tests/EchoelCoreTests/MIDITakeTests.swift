@@ -59,6 +59,31 @@ final class MIDITakeTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(take.clip(endingAt: 60, bar: bar)).notes.first?.length, 1)
     }
 
+    /// Two keys the scale lock maps to one pitch, pressed in one buffer, arrive as on, off, on at
+    /// one position: the take keeps the held note, not a one-tick remnant beside it. A note played
+    /// and released on one tick and not struck again still lasts a tick.
+    func testANoteEndedAndStruckAgainOnOneTickIsOneHeldNote() throws {
+        var take = MIDITake()
+        take.noteOn(pitch: 60, velocity: 100, at: 240)
+        take.noteOff(pitch: 60, at: 240)
+        take.noteOn(pitch: 60, velocity: 90, at: 240)
+        take.noteOn(pitch: 64, velocity: 80, at: 240)
+        take.noteOff(pitch: 64, at: 240)
+        take.noteOff(pitch: 60, at: 960)
+        let clip = try XCTUnwrap(take.clip(endingAt: 960, bar: bar))
+        XCTAssertEqual(describe(clip.notes), ["60@240+720 v90", "64@240+1 v80"])
+
+        // Two such remnants: removing the first must not lose track of the second.
+        var chord = MIDITake()
+        for pitch in [60, 62] {
+            chord.noteOn(pitch: pitch, velocity: 100, at: 0)
+            chord.noteOff(pitch: pitch, at: 0)
+        }
+        for pitch in [60, 62] { chord.noteOn(pitch: pitch, velocity: 100, at: 0) }
+        let held = try XCTUnwrap(chord.clip(endingAt: 480, bar: bar))
+        XCTAssertEqual(describe(held.notes), ["60@0+480 v100", "62@0+480 v100"])
+    }
+
     func testNothingPlayedIsNoClip() {
         var take = MIDITake()
         take.noteOn(pitch: 200, velocity: 100, at: 0)

@@ -2,8 +2,16 @@
 /// note-off arrive with the song position they were played at; a key still held when the take
 /// stops ends there, a key struck again while it sounds ends the earlier note first. The wheel
 /// and the controllers played along are kept with them.
+///
+/// A note ended on the tick it began, and struck again on that same tick, is not kept: two keys
+/// that the scale lock maps to one pitch, pressed in one buffer, arrive as on, off, on at one
+/// position, and the one-tick remnant would take the held note's place in playback. A note
+/// played and released on one tick and not struck again stays, one tick long.
 public struct MIDITake: Sendable {
     private var open: [Int: (start: Tick, velocity: Int)] = [:]
+    /// By pitch: where in `notes` the last note ended on its own start tick, until the pitch is
+    /// struck or released again.
+    private var remnants: [Int: Int] = [:]
     private(set) var notes: [Note] = []
     private(set) var controls: [ControlChange] = []
 
@@ -22,12 +30,17 @@ public struct MIDITake: Sendable {
         guard Note.pitchRange.contains(pitch) else { return }
         guard velocity > 0 else { return noteOff(pitch: pitch, at: tick) }
         if open[pitch] != nil { noteOff(pitch: pitch, at: tick) }
-        open[pitch] = (Swift.max(0, tick), Swift.min(Swift.max(velocity, Note.velocityRange.lowerBound),
-                                                    Note.velocityRange.upperBound))
+        let start = Swift.max(0, tick)
+        if let remnant = remnants.removeValue(forKey: pitch), remnant < notes.count, notes[remnant].start == start {
+            notes.remove(at: remnant)
+            remnants = remnants.mapValues { $0 > remnant ? $0 - 1 : $0 }
+        }
+        open[pitch] = (start, Swift.min(Swift.max(velocity, Note.velocityRange.lowerBound), Note.velocityRange.upperBound))
     }
 
     public mutating func noteOff(pitch: Int, at tick: Tick) {
         guard let held = open.removeValue(forKey: pitch) else { return }
+        remnants[pitch] = tick <= held.start ? notes.count : nil
         notes.append(Note(pitch: pitch, velocity: held.velocity, start: held.start,
                           length: Swift.max(1, tick - held.start)))
     }

@@ -174,13 +174,15 @@ public struct PlaybackPlan: Equatable, Sendable {
 
     /// One pitch can sound only once on a monophonic MIDI key. Where two notes of the same
     /// pitch overlap (stacked placements, a duplicated note), the earlier one ends where the
-    /// later one starts; a note swallowed entirely by a same-start twin is dropped.
+    /// later one starts; of two that start together the longer plays and the shorter, swallowed
+    /// by it, is dropped. (Until 2026-10-22 the longer was dropped: a take's one-tick remnant
+    /// beside a held note played as a click and the held note vanished.)
     static func resolvingOverlaps(_ intervals: [Interval]) -> [Interval] {
         let byPitch = Dictionary(grouping: intervals, by: \.pitch)
         var result: [Interval] = []
         for pitch in byPitch.keys.sorted() {
             let sorted = (byPitch[pitch] ?? []).sorted {
-                $0.start != $1.start ? $0.start < $1.start : $0.end > $1.end
+                $0.start != $1.start ? $0.start < $1.start : $0.end < $1.end
             }
             for (i, var interval) in sorted.enumerated() {
                 if i + 1 < sorted.count {

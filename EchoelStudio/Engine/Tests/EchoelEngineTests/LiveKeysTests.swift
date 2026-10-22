@@ -143,6 +143,31 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertTrue(sounding.isEmpty, "still sounding once every key is up: \(sounding.sorted())")
     }
 
+    /// Two keys on one pitch pressed in one buffer reach the take at one position, as on, off, on:
+    /// it records the one held note the musician heard, ending with the last release.
+    func testTwoKeysOnOnePitchPressedTogetherRecordOneHeldNote() throws {
+        var keys = LiveKeys(lock: cMajor)
+        var take = MIDITake()
+        func record(_ output: LiveKeys.Output, at tick: Tick) {
+            for message in output {
+                if message.velocity > 0 {
+                    take.noteOn(pitch: Int(message.pitch), velocity: Int(message.velocity), at: tick)
+                } else {
+                    take.noteOff(pitch: Int(message.pitch), at: tick)
+                }
+            }
+        }
+        let first = keys.press(channel: 0, key: 60, velocity: 100, slot: 0)
+        let second = keys.press(channel: 0, key: 61, velocity: 90, slot: 0)
+        record(first, at: 0)
+        record(second, at: 0)
+        record(keys.release(channel: 0, key: 60), at: 480)
+        record(keys.release(channel: 0, key: 61), at: 720)
+        let clip = try XCTUnwrap(take.clip(endingAt: 3_840, bar: 3_840))
+        XCTAssertEqual(clip.notes.map(\.pitch), [60])
+        XCTAssertEqual(clip.notes.map { $0.start + $0.length }, [720])
+    }
+
     /// What the take keeps is what was heard: two keys on one pitch record two notes of that
     /// pitch, the second ending with the last release, and nothing at the key's own pitch.
     func testATakeOfTheLatchedNotesNeverOutlastsTheLastRelease() throws {

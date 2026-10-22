@@ -122,6 +122,15 @@ final class PlaybackPlanTests: XCTestCase {
                        ["0 on 60 v100", "960 off 60", "960 on 60 v100", "3960 off 60"])
     }
 
+    /// Of two notes of one pitch that start together the longer plays: a one-tick remnant a take
+    /// left beside a held note before 2026-10-22 no longer replaces it with a click.
+    func testOfTwoSameStartNotesOfOnePitchTheLongerPlays() throws {
+        let (project, _) = try makeProject(notes: [Note(pitch: 60, start: 0, length: 1),
+                                               Note(pitch: 60, velocity: 90, start: 0, length: 480)],
+                                       placementsAt: [0])
+        XCTAssertEqual(events(PlaybackPlan(compiling: project)), ["0 on 60 v90", "480 off 60"])
+    }
+
     func testChordNotesStayIndependent() throws {
         let (project, _) = try makeProject(notes: [Note(pitch: 64, start: 0, length: 960),
                                                Note(pitch: 60, start: 0, length: 1_920)],
