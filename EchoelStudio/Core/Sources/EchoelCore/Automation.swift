@@ -61,15 +61,31 @@ public struct AutomationLane: Codable, Equatable, Sendable {
         guard let first = points.first, let last = points.last else { return nil }
         guard position.isFinite, position > Double(first.tick) else { return first.value }
         if position >= Double(last.tick) { return last.value }
-        // The last point at or before the position, by binary search.
+        let low = pointIndex(before: position), high = low + 1
+        let a = points[low], b = points[high]
+        let t = (position - Double(a.tick)) / Double(b.tick - a.tick)
+        return a.value + (b.value - a.value) * AutomationPoint.shape(t, curve: a.curve)
+    }
+
+    /// The value at a fractional tick for a parameter whose values are choices (a waveform):
+    /// each point holds until the next one, since nothing lies between two choices. A line
+    /// there would switch at the middle of a segment and pass through choices nobody made.
+    public func heldValue(atPosition position: Double) -> Double? {
+        guard let first = points.first, let last = points.last else { return nil }
+        guard position.isFinite, position > Double(first.tick) else { return first.value }
+        if position >= Double(last.tick) { return last.value }
+        return points[pointIndex(before: position)].value
+    }
+
+    /// The last point at or before `position`, by binary search. Needs at least two points with
+    /// `position` after the first and before the last.
+    private func pointIndex(before position: Double) -> Int {
         var low = 0, high = points.count - 1
         while low + 1 < high {
             let mid = (low + high) / 2
             if Double(points[mid].tick) <= position { low = mid } else { high = mid }
         }
-        let a = points[low], b = points[high]
-        let t = (position - Double(a.tick)) / Double(b.tick - a.tick)
-        return a.value + (b.value - a.value) * AutomationPoint.shape(t, curve: a.curve)
+        return low
     }
 
     /// Rejects what the engine could not play: unsorted or repeated ticks, ticks outside the

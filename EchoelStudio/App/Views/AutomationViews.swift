@@ -149,10 +149,17 @@ struct AutomationRow: View {
     private func draw(_ context: GraphicsContext, _ size: CGSize, _ descriptor: ParameterDescriptor?) {
         guard let descriptor, !lane.points.isEmpty else { return }
         let points = lane.points.map { CGPoint(x: x(of: $0.tick), y: y(of: $0.value, descriptor, size.height)) }
+        let holds = descriptor.taper == .stepped
         var line = Path()
         line.move(to: CGPoint(x: 0, y: points[0].y))
         line.addLine(to: points[0])
         for index in lane.points.indices.dropLast() {
+            if holds {
+                // A choice holds until the next point and jumps there, as the engine plays it.
+                line.addLine(to: CGPoint(x: points[index + 1].x, y: points[index].y))
+                line.addLine(to: points[index + 1])
+                continue
+            }
             let a = lane.points[index], b = lane.points[index + 1]
             // Enough steps that a bend reads as a curve at any zoom.
             let steps = Swift.max(2, Swift.min(48, Int((points[index + 1].x - points[index].x) / 3)))
@@ -165,7 +172,7 @@ struct AutomationRow: View {
         }
         line.addLine(to: CGPoint(x: size.width, y: points[points.count - 1].y))
         context.stroke(line, with: .color(Theme.Color.accent), lineWidth: 1.5)
-        for index in lane.points.indices.dropLast() {
+        for index in lane.points.indices.dropLast() where !holds {
             let handle = bendHandle(index, descriptor, size.height)
             let mark = CGRect(x: handle.x - 3, y: handle.y - 3, width: 6, height: 6)
             context.stroke(Path(roundedRect: mark, cornerRadius: 1), with: .color(Theme.Color.accent), lineWidth: 1)
@@ -185,7 +192,9 @@ struct AutomationRow: View {
         return CGPoint(x: (x(of: a.tick) + x(of: b.tick)) / 2, y: y(of: value, descriptor, height))
     }
 
+    /// A choice has no bend: nothing lies between two choices.
     private func nearestBend(to location: CGPoint, height: CGFloat, _ descriptor: ParameterDescriptor) -> Int? {
+        guard descriptor.taper != .stepped else { return nil }
         for index in lane.points.indices.dropLast() {
             let handle = bendHandle(index, descriptor, height)
             let dx = handle.x - location.x, dy = handle.y - location.y

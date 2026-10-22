@@ -1168,7 +1168,7 @@ public final class EngineCore: @unchecked Sendable {
         for lane in snapshot.lanes where !lane.patchLanes.isEmpty && lane.device == .synth {
             var patch = lane.patch
             for automation in lane.patchLanes {
-                if let value = automation.lane.value(atPosition: tick) { automation.field.apply(value, to: &patch) }
+                if let value = automation.value(atPosition: tick) { automation.field.apply(value, to: &patch) }
             }
             if synths[lane.slot].patch != patch { synths[lane.slot].setPatch(patch) }
         }

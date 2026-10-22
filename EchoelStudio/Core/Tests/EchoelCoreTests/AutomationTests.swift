@@ -35,6 +35,20 @@ final class AutomationTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode(AutomationPoint.self, from: old).curve, 0, "an older file is straight")
     }
 
+    func testAChoiceHoldsEachPointUntilTheNextInsteadOfPassingThroughTheOthers() {
+        let lane = AutomationLane(target: .masterVolume, points: [AutomationPoint(tick: 0, value: 0),
+                                                                  AutomationPoint(tick: 1_000, value: 3),
+                                                                  AutomationPoint(tick: 2_000, value: 1)])
+        XCTAssertEqual(lane.heldValue(atPosition: 999.5), 0, "the first choice up to the next point")
+        XCTAssertEqual(lane.heldValue(atPosition: 1_000), 3, "the next one from its point on")
+        XCTAssertEqual(lane.heldValue(atPosition: 1_999), 3)
+        XCTAssertEqual(lane.heldValue(atPosition: 9_999), 1, "the last one after the last point")
+        XCTAssertEqual(lane.heldValue(atPosition: -5), 0)
+        XCTAssertEqual(lane.heldValue(atPosition: .nan), 0, "a position that is not finite reads the start")
+        XCTAssertNil(AutomationLane(target: .masterVolume, points: []).heldValue(atPosition: 0))
+        XCTAssertEqual(lane.value(atPosition: 500) ?? 0, 1.5, accuracy: 1e-9, "a number still moves between them")
+    }
+
     func testSetAutomationValidatesAndAnEmptyListRemovesTheLane() throws {
         let made = try project()
         var song = made.0

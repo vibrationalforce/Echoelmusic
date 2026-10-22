@@ -688,6 +688,20 @@ final class EngineCoreTests: XCTestCase {
 }
 
 final class InstrumentPatchTests: XCTestCase {
+    func testAWaveformLaneSwitchesAtItsPointsAndACutoffLaneGlides() {
+        let lane = AutomationLane(target: .masterVolume, points: [AutomationPoint(tick: 0, value: 0),
+                                                                  AutomationPoint(tick: 1_000, value: 3)])
+        let waveform = EngineSnapshot.PatchAutomation(field: .waveform, lane: lane)
+        var patch = SynthPatch(InstrumentSettings())
+        if let value = waveform.value(atPosition: 999) { waveform.field.apply(value, to: &patch) }
+        XCTAssertEqual(patch.waveform, .sine, "sine up to the point, not saw and square on the way to triangle")
+        if let value = waveform.value(atPosition: 1_000) { waveform.field.apply(value, to: &patch) }
+        XCTAssertEqual(patch.waveform, .triangle)
+        let cutoff = EngineSnapshot.PatchAutomation(field: .cutoff, lane: lane)
+        XCTAssertFalse(cutoff.holds)
+        XCTAssertEqual(cutoff.value(atPosition: 500) ?? 0, 1.5, accuracy: 1e-9, "a number glides between points")
+    }
+
     func testTheDefaultSettingsGiveTheDefaultSoundAndAPresetChangesIt() throws {
         let initial = SynthPatch(InstrumentSettings())
         XCTAssertEqual(initial.waveform, .saw)

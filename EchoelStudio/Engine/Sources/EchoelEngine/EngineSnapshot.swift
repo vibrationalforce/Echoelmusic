@@ -42,6 +42,20 @@ public struct EngineSnapshot: Sendable {
     public struct PatchAutomation: Sendable {
         public let field: PatchField
         public let lane: AutomationLane
+        /// A choice (the waveform) holds each point's value until the next; a number moves
+        /// between points.
+        public let holds: Bool
+
+        public init(field: PatchField, lane: AutomationLane) {
+            self.field = field
+            self.lane = lane
+            holds = field.parameter.taper == .stepped
+        }
+
+        /// The lane's value at `position`, the way the field takes it. Render-safe.
+        public func value(atPosition position: Double) -> Double? {
+            holds ? lane.heldValue(atPosition: position) : lane.value(atPosition: position)
+        }
     }
 
     /// A hosted unit's parameter and its lane, compiled for the render thread: the lane holds
