@@ -1,4 +1,5 @@
 import EchoelCore
+import EchoelDSP
 import Foundation
 
 /// One parameter of an instrument kernel, as a plugin publishes it: the address is its index.
@@ -63,6 +64,14 @@ public protocol EngineInstrumentKernel: InstrumentKernel {
     func reset()
 }
 
+/// A built-in kernel the engine hands a sample on the render thread (the sampler). The Audio Unit
+/// loads through `SampleLoadingKernel` instead; never mix the two on one kernel.
+public protocol SampleAssigningKernel: EngineInstrumentKernel {
+    /// Render thread: plays `buffer` from now on (nil: no sample). The caller keeps the buffer
+    /// alive until it knows rendering moved on.
+    func assign(_ buffer: SampleBuffer?)
+}
+
 extension SynthKernel: InstrumentKernel {
     public static var parameters: [InstrumentKernelParameter] {
         InstrumentDevice.synth.parameters.map(InstrumentKernelParameter.init)
@@ -71,4 +80,4 @@ extension SynthKernel: InstrumentKernel {
 
 extension SynthKernel: EngineInstrumentKernel {}
 extension DrumKernel: EngineInstrumentKernel {}
-extension SamplerKernel: EngineInstrumentKernel {}
+extension SamplerKernel: SampleAssigningKernel {}

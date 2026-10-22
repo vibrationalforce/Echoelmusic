@@ -14,12 +14,16 @@ public struct EngineSnapshot: Sendable {
         public let events: [PlaybackPlan.NoteEvent]
         public let gainLeft: Float
         public let gainRight: Float
-        /// The track's synth values in `SynthParameter.all` order — the addresses of `SynthKernel`
-        /// — for every lane, whatever it plays, so the synth keeps its sound across a detour
-        /// through another instrument.
-        public let synthValues: [Float]
+        /// Per built-in device (`InstrumentDevice.builtIn` order), the values its kernel plays, by
+        /// address: the synth's from the track, for every lane whatever it plays, so the synth keeps
+        /// its sound across a detour through another instrument; none for a device the song stores
+        /// no values for (the drums, the sampler), whose kernel keeps its own.
+        public let values: [[Float]]
         /// Which instrument in the slot plays the events.
         public let device: InstrumentDevice
+        /// `device`'s place in `InstrumentDevice.builtIn`, or −1 for a plugin or an instrument from a
+        /// later build — found here, so the render thread never reads the list.
+        public let builtInIndex: Int
         /// The sample a sampler lane plays. The snapshot holds the reference, so the buffer
         /// lives exactly as long as a snapshot that can still reach the render thread.
         public let sample: SampleBuffer?
@@ -49,7 +53,7 @@ public struct EngineSnapshot: Sendable {
         /// A choice (the waveform) holds each point's value until the next; a number moves
         /// between points.
         public let holds: Bool
-        /// The field's address in `SynthKernel` (its place in `SynthParameter.all`).
+        /// The field's address in its device's kernel (its place in `SynthParameter.all`).
         public let index: Int
 
         public init(field: PatchField, lane: AutomationLane) {
@@ -303,11 +307,14 @@ public struct EngineSnapshot: Sendable {
                     patchLanes.append(PatchAutomation(field: field, lane: lane))
                 }
             }
-            let synthValues: [Float] = SynthParameter.all.map { (parameter: SynthParameter) -> Float in
-                Float(track.instrument.value(parameter))
+            let values: [[Float]] = InstrumentDevice.builtIn.map { (device: InstrumentDevice) -> [Float] in
+                guard device == .synth else { return [] }
+                return SynthParameter.all.map { (parameter: SynthParameter) -> Float in Float(track.instrument.value(parameter)) }
             }
+            let device = track.instrument.device
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
-                        synthValues: synthValues, device: track.instrument.device,
+                        values: values, device: device,
+                        builtInIndex: InstrumentDevice.builtIn.firstIndex(of: device) ?? -1,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,

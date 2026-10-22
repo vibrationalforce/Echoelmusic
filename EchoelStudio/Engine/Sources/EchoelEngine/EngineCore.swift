@@ -5,9 +5,9 @@ import Foundation
 import Synchronization
 
 /// The render-thread half of the engine: plays the newest `EngineSnapshot` sample-accurately
-/// into one instrument per instrument track — a built-in device's kernel (`SynthKernel`,
-/// `DrumKernel`, `SamplerKernel`, the ones the plugins play) or a hosted unit — mixes them to the
-/// master pair (or a track's own interface pair) and adds the metronome.
+/// into one instrument per instrument track — a built-in device's kernel (from `BuiltInKernels`,
+/// the ones the plugins play) or a hosted unit — mixes them to the master pair (or a track's own
+/// interface pair) and adds the metronome.
 ///
 /// Threading — two sides, never mixed:
 /// - **Main thread:** `publish`, `play`, `stop`, `seek`, `setClickEnabled`. A snapshot is
@@ -65,12 +65,17 @@ public final class EngineCore: @unchecked Sendable {
 
     // Render thread only.
     private var current: SnapshotBox?
-    /// One kernel of each built-in device per slot, allocated in `init`. A class reference read
-    /// from here costs a retain on the render thread, never an allocation.
-    private let synthKernels: UnsafeMutablePointer<SynthKernel>
-    private let drumKernels: UnsafeMutablePointer<DrumKernel>
-    private let samplerKernels: UnsafeMutablePointer<SamplerKernel>
+    /// Per slot, one kernel of each built-in device in `InstrumentDevice.builtIn` order, made by
+    /// `BuiltInKernels` in `init`: the engine names no kernel type. A reference read from here
+    /// costs a retain on the render thread, never an allocation.
+    private let kernels: UnsafeMutablePointer<(any EngineInstrumentKernel)?>
+    private let builtInCount: Int
+    /// Per slot, its kernel that takes a sample, found once in `init`.
+    private let sampleTargets: UnsafeMutablePointer<(any SampleAssigningKernel)?>
     private let devices: UnsafeMutablePointer<InstrumentDevice>
+    /// Per slot, its device's place in `InstrumentDevice.builtIn` (−1: a plugin or an instrument
+    /// from a later build), set together with `devices`.
+    private let deviceIndices: UnsafeMutablePointer<Int>
     private let owners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
     private let sessions: UnsafeMutablePointer<SessionSlot>
@@ -170,22 +175,23 @@ public final class EngineCore: @unchecked Sendable {
         self.sampleRate = rate
         self.slotCapacity = Swift.max(1, slotCapacity)
         meters = MeterBank(count: self.slotCapacity + Self.smoothedAudioTracks + Self.returnCapacity + 1)
-        synthKernels = .allocate(capacity: self.slotCapacity)
-        drumKernels = .allocate(capacity: self.slotCapacity)
-        samplerKernels = .allocate(capacity: self.slotCapacity)
-        for i in 0..<self.slotCapacity {
-            // At the engine's own block size: a kernel with a smaller one would render a range in
-            // pieces and move the synth's wheel and vibrato steps. The drums at unity, as the
-            // engine always played the kit.
-            (synthKernels + i).initialize(to: SynthKernel(sampleRate: rate, maximumFrames: Self.maximumFrames))
-            (drumKernels + i).initialize(to: DrumKernel(sampleRate: rate, maximumFrames: Self.maximumFrames, level: 1))
-            let sampler = SamplerKernel(sampleRate: rate, maximumFrames: Self.maximumFrames)
-            // The table's patch before the first note, not at the first render after it.
-            sampler.commitParameters()
-            (samplerKernels + i).initialize(to: sampler)
+        let builtIn = InstrumentDevice.builtIn
+        builtInCount = builtIn.count
+        kernels = .allocate(capacity: self.slotCapacity * builtIn.count)
+        sampleTargets = .allocate(capacity: self.slotCapacity)
+        for slot in 0..<self.slotCapacity {
+            var target: (any SampleAssigningKernel)?
+            for (index, device) in builtIn.enumerated() {
+                let made = BuiltInKernels.kernel(for: device, sampleRate: rate, maximumFrames: Self.maximumFrames)
+                if target == nil, let taking = made as? any SampleAssigningKernel { target = taking }
+                (kernels + slot * builtIn.count + index).initialize(to: made)
+            }
+            (sampleTargets + slot).initialize(to: target)
         }
         devices = .allocate(capacity: self.slotCapacity)
         devices.initialize(repeating: .synth, count: self.slotCapacity)
+        deviceIndices = .allocate(capacity: self.slotCapacity)
+        deviceIndices.initialize(repeating: builtIn.firstIndex(of: .synth) ?? -1, count: self.slotCapacity)
         owners = .allocate(capacity: self.slotCapacity)
         owners.initialize(repeating: nil, count: self.slotCapacity)
         cursors = .allocate(capacity: self.slotCapacity)
@@ -228,13 +234,12 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     deinit {
-        synthKernels.deinitialize(count: slotCapacity)
-        synthKernels.deallocate()
-        drumKernels.deinitialize(count: slotCapacity)
-        drumKernels.deallocate()
-        samplerKernels.deinitialize(count: slotCapacity)
-        samplerKernels.deallocate()
+        kernels.deinitialize(count: slotCapacity * builtInCount)
+        kernels.deallocate()
+        sampleTargets.deinitialize(count: slotCapacity)
+        sampleTargets.deallocate()
         devices.deallocate()
+        deviceIndices.deallocate()
         owners.deinitialize(count: slotCapacity)
         owners.deallocate()
         cursors.deallocate()
@@ -585,28 +590,23 @@ public final class EngineCore: @unchecked Sendable {
         position.store(playhead, ordering: .relaxed)
     }
 
-    /// A slot's kernel for a built-in device; nil for a plugin or an instrument from a later build.
-    private func builtIn(_ slot: Int, _ device: InstrumentDevice) -> (any EngineInstrumentKernel)? {
-        guard slot >= 0, slot < slotCapacity else { return nil }
-        switch device {
-        case .synth: return synthKernels[slot]
-        case .drums: return drumKernels[slot]
-        case .sampler: return samplerKernels[slot]
-        case .plugin, .unrecognized: return nil
-        }
+    /// A slot's kernel for the built-in device at `index` of `InstrumentDevice.builtIn`; nil for −1
+    /// (a plugin, an instrument from a later build).
+    private func kernel(_ slot: Int, _ index: Int) -> (any EngineInstrumentKernel)? {
+        guard slot >= 0, slot < slotCapacity, index >= 0, index < builtInCount else { return nil }
+        return kernels[slot * builtInCount + index]
     }
 
     private func play(_ event: PlaybackPlan.NoteEvent, on lane: EngineSnapshot.Lane, offset: Int) {
-        // A built-in device gets the bytes its plugin would get, at the sample the event plays on.
-        if let kernel = builtIn(lane.slot, lane.device) {
+        // A built-in device gets the bytes its plugin would get, at the sample the event plays on;
+        // the kernel decides what it hears (the kit and the sampler take notes, the synth the wheels
+        // and the pedal too).
+        if let builtIn = kernel(lane.slot, lane.builtInIndex) {
             switch event.kind {
-            case .noteOn(let velocity): kernel.receive(status: 0x90, event.pitch, velocity)
-            case .noteOff: kernel.receive(status: 0x80, event.pitch, 0)
-            // The kit and the sampler play notes only; the synth reads the wheels and the pedal.
-            case let .pitchBend(value) where lane.device == .synth:
-                kernel.receive(status: 0xE0, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F))
-            case let .control(number, value) where lane.device == .synth: kernel.receive(status: 0xB0, number, value)
-            case .pitchBend, .control: break
+            case .noteOn(let velocity): builtIn.receive(status: 0x90, event.pitch, velocity)
+            case .noteOff: builtIn.receive(status: 0x80, event.pitch, 0)
+            case let .pitchBend(value): builtIn.receive(status: 0xE0, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F))
+            case let .control(number, value): builtIn.receive(status: 0xB0, number, value)
             }
             return
         }
@@ -633,17 +633,15 @@ public final class EngineCore: @unchecked Sendable {
         lane.unit?.allNotesOff()
     }
 
-    /// All notes off (CC 123) on a slot's synth and sampler: held notes release, a drum hit rings out.
+    /// All notes off (CC 123) on every built-in device of a slot: held notes release, a drum hit
+    /// rings out.
     private func releaseBuiltIns(_ slot: Int) {
-        synthKernels[slot].receive(status: 0xB0, 123, 0)
-        samplerKernels[slot].receive(status: 0xB0, 123, 0)
+        for index in 0..<builtInCount { kernel(slot, index)?.receive(status: 0xB0, 123, 0) }
     }
 
     /// All sound off (CC 120) on every built-in device of a slot: its voices stop at once.
     private func resetBuiltIns(_ slot: Int) {
-        synthKernels[slot].reset()
-        drumKernels[slot].reset()
-        samplerKernels[slot].reset()
+        for index in 0..<builtInCount { kernel(slot, index)?.reset() }
     }
 
     private func clipIndex(_ clip: ClipID, in lane: EngineSnapshot.Lane) -> Int {
@@ -853,21 +851,24 @@ public final class EngineCore: @unchecked Sendable {
                 sample = lane.sample
                 break
             }
-            samplerKernels[slot].assign(sample)
+            sampleTargets[slot]?.assign(sample)
         }
         // A track that changes instrument starts the new one silent and cuts the old one.
         for lane in snapshot.lanes where devices[lane.slot] != lane.device {
             resetBuiltIns(lane.slot)
             devices[lane.slot] = lane.device
+            deviceIndices[lane.slot] = lane.builtInIndex
         }
-        // Every lane, whatever it plays: the synth keeps the track's sound across a detour through
-        // another instrument. A value already set is not set again.
+        // Every device of every lane, whatever the lane plays: the synth keeps the track's sound
+        // across a detour through another instrument. A value already set is not set again.
         for lane in snapshot.lanes {
-            let synth = synthKernels[lane.slot]
-            for (index, value) in lane.synthValues.enumerated() where synth.parameter(index) != value {
-                synth.setParameter(index, value)
+            for (index, values) in lane.values.enumerated() {
+                guard let builtIn = kernel(lane.slot, index) else { continue }
+                for (address, value) in values.enumerated() where builtIn.parameter(address) != value {
+                    builtIn.setParameter(address, value)
+                }
+                builtIn.commitParameters()
             }
-            synth.commitParameters()
         }
         // Only a track whose notes changed lets go of what it holds: a deleted note must not
         // hang, but a fader, a pan or a send must not cut a held chord.
@@ -949,30 +950,14 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
-    /// A note or controller played live, to a slot's built-in device: what each device hears, as
-    /// bytes. A note-on at velocity 0 is a note-off.
+    /// A note or controller played live, to a slot's built-in device, as bytes; a note-on at
+    /// velocity 0 is a note-off. The kernel decides what it hears: the synth every controller and
+    /// the wheel, the sampler all notes off (123) and all sound off (120), the kit only 120.
     private func playLive(_ slot: Int, kind: UInt8, _ pitch: UInt8, _ value: UInt8) {
-        let on = kind == 0x90 && value > 0
-        let off = kind == 0x80 || (kind == 0x90 && value == 0)
-        switch devices[slot] {
-        case .synth:
-            let synth = synthKernels[slot]
-            if on { synth.receive(status: 0x90, pitch, value) }
-            if off { synth.receive(status: 0x80, pitch, 0) }
-            // The wheel and every controller: the synth reads the mod wheel, the pedal, 120 and 123.
-            if kind == 0xE0 || kind == 0xB0 { synth.receive(status: kind, pitch, value) }
-        case .drums:
-            // One-shots: a note-off changes nothing; only all sound off (120) cuts the kit.
-            if on { drumKernels[slot].receive(status: 0x90, pitch, value) }
-            if kind == 0xB0, pitch == 120 { drumKernels[slot].reset() }
-        case .sampler:
-            let sampler = samplerKernels[slot]
-            if on { sampler.receive(status: 0x90, pitch, value) }
-            if off { sampler.receive(status: 0x80, pitch, 0) }
-            if kind == 0xB0, pitch == 123 || pitch == 120 { sampler.receive(status: 0xB0, pitch, 0) }
-        case .plugin, .unrecognized:
-            break
-        }
+        guard let builtIn = kernel(slot, deviceIndices[slot]) else { return }
+        if kind == 0x90 && value > 0 { builtIn.receive(status: 0x90, pitch, value) }
+        if kind == 0x80 || (kind == 0x90 && value == 0) { builtIn.receive(status: 0x80, pitch, 0) }
+        if kind == 0xE0 || kind == 0xB0 { builtIn.receive(status: kind, pitch, value) }
     }
 
     /// Points every cursor and the beat counter at the playhead. `keeping` leaves alone what a
@@ -1194,16 +1179,17 @@ public final class EngineCore: @unchecked Sendable {
         unitAutomationPrimed = true
     }
 
-    /// Sets each automated synth parameter to its lane's value at `tick`.
+    /// Sets each automated parameter of a lane's device to its lane's value at `tick`. The lanes
+    /// address the lane's own device; the snapshot builds them for a synth track only.
     private func applyPatchAutomation(_ snapshot: EngineSnapshot, at tick: Double) {
-        for lane in snapshot.lanes where !lane.patchLanes.isEmpty && lane.device == .synth {
+        for lane in snapshot.lanes where !lane.patchLanes.isEmpty {
+            guard let builtIn = kernel(lane.slot, lane.builtInIndex), lane.builtInIndex < lane.values.count else { continue }
             // A lane without a value at `tick` plays the track's own setting.
-            let synth = synthKernels[lane.slot]
-            for automation in lane.patchLanes where automation.index < lane.synthValues.count {
-                let value = automation.value(atPosition: tick).map { Float($0) } ?? lane.synthValues[automation.index]
-                synth.setParameter(automation.index, value)
+            let values = lane.values[lane.builtInIndex]
+            for automation in lane.patchLanes where automation.index < values.count {
+                builtIn.setParameter(automation.index, automation.value(atPosition: tick).map { Float($0) } ?? values[automation.index])
             }
-            synth.commitParameters()
+            builtIn.commitParameters()
         }
     }
 
@@ -1401,9 +1387,9 @@ public final class EngineCore: @unchecked Sendable {
                 // A silent kernel is not rendered: a synth rendering in silence would glide its wheel
                 // and vibrato on, and the next note would start elsewhere. A rendered one writes its
                 // range of the bus, which nothing else wrote this chunk.
-                guard let kernel = builtIn(lane.slot, lane.device), kernel.isSounding else { continue }
-                kernel.render(frames: range.count, left: bus(lane.slot, busLeft) + range.lowerBound,
-                              right: bus(lane.slot, busRight) + range.lowerBound, gain: 1)
+                guard let builtIn = kernel(lane.slot, lane.builtInIndex), builtIn.isSounding else { continue }
+                builtIn.render(frames: range.count, left: bus(lane.slot, busLeft) + range.lowerBound,
+                               right: bus(lane.slot, busRight) + range.lowerBound, gain: 1)
             }
         }
         metronome.render(left: left, right: right, range: range)
