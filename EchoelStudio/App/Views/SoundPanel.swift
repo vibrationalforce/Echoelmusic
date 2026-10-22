@@ -10,6 +10,7 @@ struct SoundPanel: View {
     @Environment(ProjectStore.self) private var store
     @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
+    @Environment(ParameterWriter.self) private var writer
     let track: Track
 
     @State private var isPickingFile = false
@@ -180,12 +181,18 @@ struct SoundPanel: View {
         }
     }
 
+    /// Through the writer like every other control, so a choice made while automation writing is
+    /// armed and the song plays lands in the waveform's lane instead of being overridden by it.
     private var waveformPicker: some View {
         let parameter = SynthParameter.waveform
+        let address = ParameterAddress(.track(track.id), parameter.key)
         let current = Int(track.instrument.value(parameter).rounded())
         return Picker(parameter.title, selection: Binding(
             get: { current },
-            set: { try? store.perform(.setInstrumentParameter(track.id, key: parameter.key.rawValue, value: Double($0))) }
+            set: {
+                writer.set(address, to: Double($0), coalescingKey: nil)
+                writer.endGesture()
+            }
         )) {
             ForEach(parameter.choices.indices, id: \.self) { Text(parameter.choices[$0]).tag($0) }
         }
