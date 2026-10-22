@@ -85,6 +85,26 @@ final class StandardEffectUnitTests: XCTestCase {
         XCTAssertEqual(tree.parameter(withAddress: 2)?.value, 1, "the tree reads what the kernel holds")
     }
 
+    /// A host's bypass passes the input through untouched, and the effect plays again when the
+    /// host switches it back on (review 2026-10-23: GarageBand's switch did nothing before).
+    func testTheHostsBypassPassesTheInputThrough() throws {
+        let delay = try unit(.delay)
+        let tree = try XCTUnwrap(delay.parameterTree)
+        tree.parameter(withAddress: 0)?.value = 0.01 // time
+        tree.parameter(withAddress: 1)?.value = 0 // feedback
+        tree.parameter(withAddress: 2)?.value = 1 // mix
+        var impulse = [Float](repeating: 0, count: 2_000)
+        impulse[0] = 1
+        delay.shouldBypassEffect = true
+        XCTAssertTrue(delay.shouldBypassEffect)
+        let passed = render(delay, impulse)
+        XCTAssertEqual(passed, impulse, "bypassed: the input, sample for sample")
+        delay.shouldBypassEffect = false
+        let played = render(delay, impulse)
+        XCTAssertEqual(played[0], 0, accuracy: 1e-6, "on again: fully wet")
+        XCTAssertEqual(played[480], 1, accuracy: 0.05, "and the repeat is back")
+    }
+
     /// A host that asks for more frames than the unit allocated gets the documented refusal,
     /// not a write past the buffers (B7). The allocated count itself still plays.
     func testARenderCallAskingForMoreFramesThanAllocatedIsRefused() throws {

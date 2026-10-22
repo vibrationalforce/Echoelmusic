@@ -34,6 +34,7 @@ public final class StandardEffectUnit: AUAudioUnit {
         /// more is refused (`kAudioUnitErr_TooManyFramesToProcess`), 0 until allocated.
         var maximumFrames = 0
         let unlocked = Atomic<Bool>(true)
+        let bypassed = Atomic<Bool>(false)
         var demoFrame: Int64 = 0
         init(kernel: EffectKernel) { self.kernel = kernel }
     }
@@ -127,6 +128,15 @@ public final class StandardEffectUnit: AUAudioUnit {
         set { render.unlocked.store(newValue, ordering: .releasing) }
     }
 
+    /// A host's bypass (GarageBand's or AUM's switch): the input passes through unchanged, and
+    /// parameter changes still reach the kernel, so the effect comes back as the host left it. In
+    /// the app the engine drops a bypassed insert from its chain instead (`HostedEffect`), so only
+    /// other hosts set this (review 2026-10-23).
+    public override var shouldBypassEffect: Bool {
+        get { render.bypassed.load(ordering: .acquiring) }
+        set { render.bypassed.store(newValue, ordering: .releasing) }
+    }
+
     /// Whether a locked unit is silent `frame` frames after its resources were allocated.
     public static func demoIsSilent(atFrame frame: Int64, sampleRate: Double) -> Bool {
         DemoGate.isSilent(atFrame: frame, sampleRate: sampleRate)
@@ -161,6 +171,7 @@ public final class StandardEffectUnit: AUAudioUnit {
                   let left = buffers[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = buffers[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
             let kernel = state.kernel
+            let bypassed = state.bypassed.load(ordering: .relaxed)
             let start = AUEventSampleTime(timestamp.pointee.mSampleTime)
             var done = 0
             var event = eventList
@@ -168,7 +179,7 @@ public final class StandardEffectUnit: AUAudioUnit {
                 let header = current.pointee.head
                 let offset = Swift.min(Swift.max(Int(header.eventSampleTime - start), done), frames)
                 if offset > done {
-                    kernel.process(left: left + done, right: right + done, frames: offset - done)
+                    if !bypassed { kernel.process(left: left + done, right: right + done, frames: offset - done) }
                     done = offset
                 }
                 if header.eventType == .parameter || header.eventType == .parameterRamp {
@@ -177,6 +188,7 @@ public final class StandardEffectUnit: AUAudioUnit {
                 }
                 event = UnsafePointer(header.next)
             }
+            guard !bypassed else { return noErr }
             if done < frames { kernel.process(left: left + done, right: right + done, frames: frames - done) }
             if !state.unlocked.load(ordering: .relaxed) {
                 DemoGate.apply(left: left, right: right, frames: frames, fromFrame: state.demoFrame,
