@@ -5618,3 +5618,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Grenze:** „abgelöst“ beendet die Review einer Zeile, nicht ein Gesetz. Ingenieurs-Lehren der alten App, die in einem Wächter oder einer CLAUDE.md stehen, gelten weiter (Produktgesetz: eine historische Streichung widerruft eine Umsetzung, nicht die Fähigkeit).
 - **Messen:** `./review.sh | grep -c '^REVIEW DUE'` → 453 (vorher 878).
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio: die Modul-Grenze ist ein blockierender CI-Schritt, kein Test (S-26 D4.2)
+
+- **Entscheidung:** Im Studio-Gate prüft „Imports only where named“ je Bibliothek die importierten Module gegen ihre Zeile (Core, DSP, Kernels, Engine, Host) und verbietet `import EchoelEngine` in `Plugins/`. Nach dem Simulator-Build prüft „Extension carries no engine code“ die Mach-O-Dateien der Erweiterung auf `12EchoelEngine`, mit zwei Positivkontrollen (`13EchoelKernels` in der Erweiterung, `12EchoelEngine` in der App).
+- **Warum:** Gesetz 8 verbietet einen Test, der Quelltext liest; die Netzwerk-Allowlist ist das Vorbild eines CI-Schritts. Weil der Studio-Lauf der Merge-Gate ist, blockiert die Grenze. Der Linux-Lauf (D4.1) misst dieselbe Grenze durch Kompilieren, blockiert aber nicht.
+- **Review:** 2026-11-21.

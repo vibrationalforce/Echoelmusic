@@ -48,6 +48,37 @@ jobs:
           fi
           echo "Network APIs only in:"; echo "$found"
 
+      # The module layering as a check (S-26 D4.2, docs/dev/NEUPLANUNG_2026-10-18.md §3.4): each
+      # library imports only what its row names, and the AUv3 extension never imports the engine.
+      # SwiftPM target dependencies already refuse an undeclared package module; this step also
+      # catches an Apple framework (AVFoundation in a kernel) and a bare `import EchoelEngine` in
+      # Plugins/, which Xcode's shared module directory can let compile. A new import fails here
+      # until its row is widened on purpose. Not a test (Law 8: tests do not read source).
+      - name: Imports only where named
+        run: |
+          modules() {
+            git grep -hE '^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]' -- "$1/*.swift" \
+              | sed -E 's/^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]+((typealias|struct|class|enum|protocol|let|var|func)[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*).*/\4/' \
+              | sort -u
+          }
+          fail=0
+          check() {
+            dir=$1; shift
+            found=$(modules "$dir")
+            if [ -z "$found" ]; then echo "::error::no import found under $dir — the scan matches nothing"; fail=1; return; fi
+            bad=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$@" | sort -u) | sed '/^$/d')
+            if [ -n "$bad" ]; then echo "::error::$dir imports outside its row: $(echo $bad)"; fail=1; fi
+            echo "$dir: $(echo $found)"
+          }
+          check EchoelStudio/Core/Sources Foundation Observation
+          check EchoelStudio/DSP/Sources Foundation
+          check EchoelStudio/Engine/Sources/EchoelKernels Foundation Synchronization EchoelCore EchoelDSP
+          check EchoelStudio/Engine/Sources/EchoelEngine Foundation Synchronization EchoelCore EchoelDSP EchoelKernels
+          check EchoelStudio/Engine/Sources/EchoelHost Foundation Synchronization EchoelCore EchoelKernels AVFoundation AudioToolbox
+          stray=$(git grep -nE '^[[:space:]]*(@[A-Za-z]+[[:space:]]+)*import[[:space:]]+EchoelEngine([^A-Za-z0-9_]|$)' -- 'EchoelStudio/Plugins/*.swift' || true)
+          if [ -n "$stray" ]; then echo "::error::the AUv3 extension imports the engine:"; echo "$stray"; fail=1; fi
+          exit $fail
+
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -151,6 +182,34 @@ jobs:
             -derivedDataPath build/sim \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee app-sim.log | tail -30
+
+      # The extension links no engine code (S-26 D4.2). Read from the built Mach-O files, not the
+      # project: a mangled Swift name carries its module as <length><name> (`12EchoelEngine`), in
+      # symbols and in reflection metadata alike. Two positive controls keep the needle honest —
+      # the extension must carry `13EchoelKernels` and the app must carry `12EchoelEngine`; if
+      # either is missing, the check could not have seen the thing it forbids.
+      - name: Extension carries no engine code
+        run: |
+          set -euo pipefail
+          APP=$(find build/sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          EXT="$APP/PlugIns/EchoelPlugins.appex"
+          test -d "$EXT" || { echo "::error::no EchoelPlugins.appex in the simulator build"; exit 1; }
+          scan() {
+            while IFS= read -r f; do
+              file -b "$f" | grep -q 'Mach-O' || continue
+              if LC_ALL=C grep -a -q "$1" "$f"; then echo "$f"; fi
+            done
+          }
+          ext_engine=$(find "$EXT" -type f | scan '12EchoelEngine')
+          ext_kernels=$(find "$EXT" -type f | scan '13EchoelKernels')
+          app_engine=$(find "$APP" -path "$APP/PlugIns" -prune -o -type f -print | scan '12EchoelEngine')
+          [ -n "$ext_kernels" ] || { echo "::error::needle broken: no EchoelKernels name in the extension"; exit 1; }
+          [ -n "$app_engine" ] || { echo "::error::needle broken: no EchoelEngine name in the app"; exit 1; }
+          if [ -n "$ext_engine" ]; then
+            echo "::error::the AUv3 extension contains EchoelEngine code:"; echo "$ext_engine"; exit 1
+          fi
+          echo "extension: EchoelKernels in $(echo $ext_kernels | wc -w) file(s), EchoelEngine in none"
+          echo "app: EchoelEngine in $(echo $app_engine | wc -w) file(s)"
 
       # A crash at launch must not reach TestFlight (ultra-audit R7): the simulator build is
       # installed and launched, and must still be running 20 s later — past restore(), the audio
