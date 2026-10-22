@@ -38,11 +38,18 @@ public struct Envelope: Sendable {
     private static let attackTarget: Float = 1.3
     /// A segment counts as done this close to its goal.
     private static let epsilon: Float = 1e-4
+    /// How fast a held note follows a changed sustain level, in seconds: a turned knob or an
+    /// automation step glides there instead of stepping in one sample (audit 2026-10-23).
+    static let sustainGlide: Float = 0.005
+    private var sustainPole: Float = 0
 
     public init(settings: Settings = Settings(), sampleRate: Float = 48_000) {
         self.settings = settings
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
+        sustainPole = Self.pole(self.sampleRate)
     }
+
+    private static func pole(_ sampleRate: Float) -> Float { expf(-1 / (sustainGlide * sampleRate)) }
 
     public var isActive: Bool { stage != .idle }
 
@@ -60,13 +67,14 @@ public struct Envelope: Sendable {
         let rate = rate > 0 && rate.isFinite ? rate : 48_000
         guard rate != sampleRate else { return }
         sampleRate = rate
+        sustainPole = Self.pole(rate)
         retime()
     }
 
     private mutating func retime() {
         switch stage {
         case .attack, .decay, .release: setCurve(for: stage)
-        case .sustain: level = Self.sustainLevel(settings)
+        case .sustain: target = Self.sustainLevel(settings)
         case .idle: break
         }
     }
@@ -90,7 +98,7 @@ public struct Envelope: Sendable {
         case .idle:
             return 0
         case .sustain:
-            return level
+            level = target + (level - target) * sustainPole
         case .attack:
             level = target + (level - target) * coefficient
             if level >= 1 {
@@ -133,7 +141,7 @@ public struct Envelope: Sendable {
             coefficient = coefficientFor(seconds: settings.release, from: Swift.max(segmentStart, Self.epsilon * 2),
                                          to: Self.epsilon, aimingAt: 0)
         case .sustain:
-            level = Self.sustainLevel(settings)
+            target = Self.sustainLevel(settings)
         case .idle:
             level = 0
         }

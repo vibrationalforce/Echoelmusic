@@ -165,6 +165,21 @@ final class EnvelopeTests: XCTestCase {
         XCTAssertLessThan(biggest, 0.02)
     }
 
+    /// A held note whose sustain is turned down glides to the new level over a few milliseconds
+    /// instead of stepping there in one sample, and settles at it (audit 2026-10-23).
+    func testAChangedSustainGlidesInsteadOfStepping() {
+        var settings = Envelope.Settings(attack: 0.001, decay: 0.01, sustain: 0.9, release: 0.1)
+        var env = Envelope(settings: settings, sampleRate: rate)
+        env.gateOn()
+        _ = run(&env, seconds: 0.1)
+        XCTAssertEqual(env.stage, .sustain)
+        settings.sustain = 0.2
+        env.update(settings)
+        XCTAssertGreaterThan(env.next(), 0.85, "the level leaves 0.9 gently, not for 0.2 at once")
+        XCTAssertEqual(run(&env, seconds: 0.05), 0.2, accuracy: 1e-3, "and arrives within a few time constants")
+        XCTAssertEqual(env.stage, .sustain)
+    }
+
     /// The engine applies a patch every 32 frames while a parameter is automated. The envelope
     /// must keep its course through that: same settings change nothing, and the note still
     /// reaches its peak, settles at sustain and ends in silence.
