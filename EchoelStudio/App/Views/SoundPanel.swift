@@ -11,6 +11,9 @@ struct SoundPanel: View {
     @Environment(DocumentController.self) private var documents
     @Environment(AudioEngine.self) private var engine
     @Environment(ParameterWriter.self) private var writer
+    /// The waveform picked during an automation pass: it goes into the lane, not the track, so the
+    /// picker would otherwise go on showing the track's value and ignore a tap on it.
+    @State private var passPick: Int?
     let track: Track
 
     @State private var isPickingFile = false
@@ -187,9 +190,11 @@ struct SoundPanel: View {
         let parameter = SynthParameter.waveform
         let address = ParameterAddress(.track(track.id), parameter.key)
         let current = Int(track.instrument.value(parameter).rounded())
+        let writing = writer.isWriting && engine.isPlaying
         return Picker(parameter.title, selection: Binding(
-            get: { current },
+            get: { passPick ?? current },
             set: {
+                passPick = writing ? $0 : nil
                 writer.set(address, to: Double($0), coalescingKey: nil)
                 writer.endGesture()
             }
@@ -198,5 +203,7 @@ struct SoundPanel: View {
         }
         .pickerStyle(.segmented)
         .accessibilityLabel(parameter.title)
+        .onChange(of: writing) { _, on in if !on { passPick = nil } }
+        .onChange(of: track.id) { passPick = nil }
     }
 }
