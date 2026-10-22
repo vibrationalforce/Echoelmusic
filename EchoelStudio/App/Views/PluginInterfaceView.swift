@@ -25,9 +25,13 @@ struct PluginInterfaceSection: View {
                     .foregroundStyle(Theme.Color.textSecondary)
             }
         }
-        .task(id: engine.plugins.revision) {
-            guard controller == nil else { return }
+        // Asked again for every unit loaded into the slot — at a new rate, say — so the knobs on
+        // screen are the playing unit's (audit 2026-10-23).
+        .task(id: engine.plugins.loadNumber(of: slot)) {
+            controller = nil
+            hasNoInterface = false
             let found = await engine.plugins.interface(for: slot)
+            guard !Task.isCancelled else { return }
             controller = found
             hasNoInterface = found == nil && engine.plugins.isLoaded(slot)
         }

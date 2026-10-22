@@ -85,6 +85,9 @@ final class PluginHost {
         /// Our observer on the unit's parameters; also the originator of values we set, so the
         /// unit does not report them back.
         let observer: AUParameterObserverToken?
+        /// The request that loaded it: unique, so a unit loaded again in the same slot (a new
+        /// rate, settings an undo took back) is told apart from the one before.
+        let number: Int
     }
 
     enum ParameterPhase: Sendable { case touch, value, release }
@@ -319,7 +322,7 @@ final class PluginHost {
         loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
                               instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate),
                               effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate) },
-                              observer: observe(unit, slot: slot))
+                              observer: observe(unit, slot: slot), number: number)
         syncedState[slot] = state
         problems[slot] = nil
         if reloads.isPending(slot) {
@@ -344,6 +347,15 @@ final class PluginHost {
     }
 
     func isLoaded(_ slot: Slot) -> Bool { loaded[slot] != nil }
+
+    /// Which load of the slot's unit is current, nil while none is. A view showing the unit's own
+    /// interface keys on it: a unit loaded again answers with an interface of its own, and the
+    /// old one would drive a unit that no longer plays. Observed through `revision`, which every
+    /// load and unload moves.
+    func loadNumber(of slot: Slot) -> Int? {
+        _ = revision
+        return loaded[slot]?.number
+    }
 
     /// Watches the unit's own controls. The unit calls this on any thread, in batches.
     private func observe(_ unit: AUAudioUnit, slot: Slot) -> AUParameterObserverToken? {
