@@ -120,7 +120,8 @@ targets:
     dependencies:
       - package: EchoelCore
       - package: EchoelDSP
-      - package: EchoelEngine
+      # The kernels and the Audio Unit side only. The extension never links the engine: a unit in a
+      # foreign host plays its kernel directly, and EchoelHost does not depend on EchoelEngine.
       - package: EchoelEngine
         product: EchoelKernels
       - package: EchoelEngine
