@@ -1,6 +1,7 @@
 import AudioToolbox
 import EchoelCore
 import EchoelEngine
+import EchoelHost
 import Observation
 import SwiftUI
 import UniformTypeIdentifiers

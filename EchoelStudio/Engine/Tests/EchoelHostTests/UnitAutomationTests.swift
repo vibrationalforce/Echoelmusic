@@ -2,6 +2,7 @@ import AudioToolbox
 import EchoelCore
 import XCTest
 @testable import EchoelEngine
+@testable import EchoelHost
 
 /// A stand-in Audio Unit that renders silence and notes every parameter it is sent.
 private final class FakeParameterUnit: @unchecked Sendable {

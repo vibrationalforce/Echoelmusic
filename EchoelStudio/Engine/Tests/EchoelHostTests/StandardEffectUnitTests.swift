@@ -2,7 +2,7 @@ import AVFoundation
 import EchoelCore
 @testable import EchoelKernels
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelHost
 
 final class StandardEffectUnitTests: XCTestCase {
     private func unit(_ effect: StandardEffect) throws -> StandardEffectUnit {

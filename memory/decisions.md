@@ -5603,3 +5603,10 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Hintergrund:** eine gefolgte MIDI-Clock hält die Engine nur wach, solange ihre Quelle verbunden ist (2.5.4). Media-Reset, Media-Verlust und Interruption pausieren mit Satz; ein Reset spielt nie von selbst weiter; ein spätes Interruption-Ende baut eine laufende Engine nicht neu.
 - **Alles compile-only**, gerätegeprüft mit Familie SR (`docs/dev/FOUNDER_INBOX.md` §2) im nächsten Studio-Build.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio-Engine: Kerne, Engine und Audio-Unit-Hülle als drei Bibliotheken (S-26 D1.1–D1.3)
+
+- **Entscheidung:** `EchoelStudio/Engine` liefert drei Bibliotheken. `EchoelKernels` hält, was Plugin und Engine beide spielen (Kerne, Patch-Abbildung, Demo-Sperre, `HostedInstrument`/`HostedProcessor`). `EchoelEngine` ist reines Swift auf den Kernen. `EchoelHost` hält die Audio-Unit-Seite (`HostedUnit`, `HostedEffect`, `StandardEffectUnit`, `SampleFile`) und hängt nur von Kernen und Core ab, **nie von der Engine**.
+- **Warum:** Die Engine spielt geladene Units seit D1.1 nur über die zwei Protokolle; die Hülle braucht keinen Engine-Typ (gemessen: keine der vier Dateien nennt einen). So kann die Erweiterung in D1.4 die Engine weglassen.
+- **Folge:** Test-Ziel `EchoelHostTests` darf Host und Engine sehen, weil seine Tests eine Hülle durch die Engine spielen; die Bibliothek darf es nicht. D4 prüft die Grenze im Linux-Build.
+- **Review:** 2026-11-21.

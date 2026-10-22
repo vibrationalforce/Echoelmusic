@@ -2,6 +2,7 @@ import AudioToolbox
 import EchoelCore
 import XCTest
 @testable import EchoelEngine
+@testable import EchoelHost
 
 /// A stand-in Audio Unit effect: pulls its input and writes it scaled. `ownBuffers` decides
 /// whether it hands the pull block buffers of its own or asks to be pointed at the host's.

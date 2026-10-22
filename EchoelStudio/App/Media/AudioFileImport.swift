@@ -2,6 +2,7 @@ import AVFoundation
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
+import EchoelHost
 import Foundation
 
 /// Bringing an audio file into a song: copy it into the song package, then decode the copy to

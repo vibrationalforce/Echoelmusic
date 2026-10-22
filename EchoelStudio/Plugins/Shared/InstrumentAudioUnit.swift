@@ -3,6 +3,7 @@ import AVFoundation
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
+import EchoelHost
 import EchoelKernels
 import Synchronization
 import os

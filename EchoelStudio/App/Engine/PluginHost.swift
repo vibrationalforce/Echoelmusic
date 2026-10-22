@@ -3,6 +3,7 @@ import CoreAudioKit
 import UIKit
 import EchoelCore
 import EchoelEngine
+import EchoelHost
 import Observation
 import os
 

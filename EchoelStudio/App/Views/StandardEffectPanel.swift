@@ -1,5 +1,6 @@
 import EchoelCore
 import EchoelEngine
+import EchoelHost
 import EchoelKernels
 import SwiftUI
 

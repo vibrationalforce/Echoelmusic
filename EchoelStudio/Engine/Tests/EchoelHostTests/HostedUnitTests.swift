@@ -2,6 +2,7 @@ import AudioToolbox
 import EchoelCore
 import XCTest
 @testable import EchoelEngine
+@testable import EchoelHost
 
 /// A stand-in for an Audio Unit instrument: it fills every block with a constant and notes the
 /// absolute frame of each MIDI message it was sent.

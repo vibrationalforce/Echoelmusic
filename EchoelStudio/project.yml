@@ -54,6 +54,9 @@ targets:
       # The kernels and the hosting protocols, a second library of the Engine package.
       - package: EchoelEngine
         product: EchoelKernels
+      # The Audio Unit side (hosted units, our own effect unit, sample files), a third library.
+      - package: EchoelEngine
+        product: EchoelHost
       # Our own Audio Units ship inside the app (PlugIns/); they are sold as in-app purchases.
       - target: EchoelPlugins
     settings:
@@ -120,6 +123,8 @@ targets:
       - package: EchoelEngine
       - package: EchoelEngine
         product: EchoelKernels
+      - package: EchoelEngine
+        product: EchoelHost
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3

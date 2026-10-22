@@ -1,6 +1,6 @@
 import AVFoundation
 import XCTest
-@testable import EchoelEngine
+@testable import EchoelHost
 
 /// Reading a sample file for the sampler (moved out of the kernel tests: the kernels need no AVFoundation).
 final class SampleFileTests: XCTestCase {
