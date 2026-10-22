@@ -6,6 +6,7 @@ import SwiftUI
 struct ClipEditorView: View {
     @Environment(ProjectStore.self) private var store
     @Environment(AudioEngine.self) private var engine
+    @Environment(RecordController.self) private var recording
     @Environment(\.dismiss) private var dismiss
     let trackID: TrackID
     /// The clip to edit; nil edits the track's first clip.
@@ -46,7 +47,12 @@ struct ClipEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        engine.isPlaying ? engine.stop() : engine.play()
+                        if engine.isPlaying {
+                            // A running take ends with the song, as at the transport's Stop.
+                            Task { await recording.stopTransport() }
+                        } else {
+                            engine.play()
+                        }
                     } label: {
                         Image(systemName: engine.isPlaying ? "stop.fill" : "play.fill")
                     }
