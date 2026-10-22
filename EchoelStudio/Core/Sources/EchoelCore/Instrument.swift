@@ -126,9 +126,22 @@ public struct SynthParameter: Sendable, Equatable {
         waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level,
     ]
 
+    /// The synth's row for `key`. Only the synth's: `all` and this lookup decide what a command
+    /// may write and what a song lists, and no drums or sampler value is stored yet.
     public static func named(_ key: ParameterKey) -> SynthParameter? {
         all.first { $0.key == key }
     }
+
+    // The drums' and the sampler's rows, with the values their plugins publish today. Read
+    // through `InstrumentDevice.parameters`; no command writes them and no song stores them yet,
+    // so their names and ranges are not frozen until that step (Law 3).
+    public static let drumsLevel = SynthParameter("drums.level", "Level", .amount, 0...1, 0.8, .linear)
+    public static let samplerRoot = SynthParameter("sampler.root", "Root key", .amount, 0...127, 60, .stepped)
+    public static let samplerAttack = SynthParameter("sampler.attack", "Attack", .seconds, 0.001...2, 0.001, .exponential)
+    public static let samplerRelease = SynthParameter("sampler.release", "Release", .seconds, 0.01...5, 0.15, .exponential)
+    public static let samplerLevel = SynthParameter("sampler.level", "Level", .amount, 0...1, 0.8, .linear)
+    public static let samplerMode = SynthParameter("sampler.mode", "Mode", .choice, 0...1, 0, .stepped,
+                                                   choices: ["Gate", "One-shot"])
 
     init(_ key: String, _ title: String, _ unit: ParameterUnit, _ range: ClosedRange<Double>, _ defaultValue: Double,
          _ taper: ParameterTaper, choices: [String] = []) {
@@ -150,6 +163,24 @@ public struct SynthParameter: Sendable, Equatable {
     func accepts(_ value: Double) -> Bool {
         guard value.isFinite, range.contains(value) else { return false }
         return taper != .stepped || value == value.rounded()
+    }
+}
+
+/// One row of a built-in instrument's parameter table. The type began as the synth's and keeps
+/// its name in the code that predates the other tables; new code says what it means.
+public typealias InstrumentParameter = SynthParameter
+
+extension InstrumentDevice {
+    /// The device's parameter table in the order its plugin publishes it (the Audio Unit address is
+    /// the index). Empty for a third-party plugin and an instrument from a later build. Builds an
+    /// array: never read it on the render thread.
+    public var parameters: [InstrumentParameter] {
+        switch self {
+        case .synth: SynthParameter.all
+        case .drums: [.drumsLevel]
+        case .sampler: [.samplerRoot, .samplerAttack, .samplerRelease, .samplerLevel, .samplerMode]
+        case .plugin, .unrecognized: []
+        }
     }
 }
 

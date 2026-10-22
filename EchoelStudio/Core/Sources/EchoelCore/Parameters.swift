@@ -186,7 +186,8 @@ extension ParameterKey {
 public enum ParameterUnit: String, Codable, Sendable {
     case bpm, decibel, pan
     case hertz, seconds, octaves
-    /// A plain 0…1 amount.
+    /// A plain number without a unit, usually 0…1; the row's range says (the sampler's root key
+    /// is a MIDI note, 0…127).
     case amount
     /// One of the descriptor's named `choices`, stored as its index.
     case choice
