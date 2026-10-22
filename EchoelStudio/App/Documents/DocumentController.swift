@@ -66,6 +66,8 @@ final class DocumentController {
     @ObservationIgnored private var quarantine = SongQuarantine()
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
+    /// Confirms the launch once the app has left the foreground and the song it opened is loaded.
+    @ObservationIgnored private var launchLeave: Task<Void, Never>?
     /// The run of the earlier songs' import in flight; leaving the foreground cancels it, and it
     /// then pauses between two songs.
     @ObservationIgnored private var importRun: Task<Void, Never>?
@@ -171,7 +173,8 @@ final class DocumentController {
         (file as NSString).deletingPathExtension
     }
 
-    /// Called when the app goes to the background: a launch that got this far counts as healthy.
+    /// Called when the app goes to the background: a launch that got this far counts as healthy
+    /// once the song it opened has finished loading, the last thing that could still end it.
     func sceneLeft() {
         isInBackground = true
         importWait?.cancel()
@@ -183,7 +186,14 @@ final class DocumentController {
             beginImportBackgroundTime()
             run.cancel()
         }
-        confirmLaunch(leaving: true)
+        guard launch.isPending else { return }
+        let song = songsOpened
+        launchLeave?.cancel()
+        launchLeave = Task { [weak self] in
+            await self?.mediaLoaded(for: song)
+            guard !Task.isCancelled else { return }
+            self?.confirmLaunch(leaving: true)
+        }
     }
 
     /// Called when the app comes to the foreground. A launch confirmed by leaving did not start
@@ -279,11 +289,16 @@ final class DocumentController {
         keepQuarantine()
         launchCheck?.cancel()
         launchCheck = nil
+        launchLeave?.cancel()
+        launchLeave = nil
         // Only in the foreground: a run started on the way to the background, or in it (the audio
         // background mode keeps a playing app alive past ten seconds), is suspended in the middle,
         // and one the system then ends would count against the song it was on. Otherwise it waits
-        // for `sceneEntered`.
-        if !leaving, !isInBackground { importEarlierSongs() }
+        // for `sceneEntered` — or, when the app came back before the song finished loading and
+        // `sceneEntered` found the launch still pending, it starts its own wait here.
+        if !isInBackground {
+            if leaving { armImportWait() } else { importEarlierSongs() }
+        }
     }
 
     private static func isNewer(_ error: Error) -> Bool {

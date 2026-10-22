@@ -12,7 +12,7 @@ final class LaunchRecordTests: XCTestCase {
         XCTAssertTrue(next.isPending, "and this one is pending until it confirms")
     }
 
-    func testALaunchConfirmsAfterTheSteadyTimeOrWhenItLeavesAfterTheFloor() {
+    func testALaunchConfirmsAfterTheSteadyTimeOrWhenItLeaves() {
         var record = LaunchRecord()
         _ = record.begin()
         XCTAssertFalse(record.confirm(after: LaunchRecord.steadySeconds - 0.5, leaving: false))
@@ -20,17 +20,20 @@ final class LaunchRecordTests: XCTestCase {
         XCTAssertFalse(record.isPending)
         XCTAssertFalse(record.confirm(after: 60, leaving: false), "already confirmed")
 
+        // A song opened and left at once: the launch got to the background alive, and a system
+        // that ends the app there later is no reason to hold the song (review 2026-10-22).
         var leaving = LaunchRecord()
         _ = leaving.begin()
-        XCTAssertFalse(leaving.confirm(after: LaunchRecord.leaveFloorSeconds - 0.5, leaving: true),
-                       "a quick exit is not told apart from a crash")
-        XCTAssertTrue(leaving.confirm(after: LaunchRecord.leaveFloorSeconds, leaving: true))
+        XCTAssertTrue(leaving.confirm(after: 0.8, leaving: true))
         XCTAssertFalse(LaunchRecord(isPending: leaving.isPending).isPending)
+        var next = LaunchRecord(isPending: leaving.isPending)
+        XCTAssertFalse(next.begin(), "the next launch opens the song as usual")
 
         var broken = LaunchRecord()
         _ = broken.begin()
         XCTAssertFalse(broken.confirm(after: .nan, leaving: false))
         XCTAssertFalse(broken.confirm(after: .infinity, leaving: true))
+        XCTAssertFalse(broken.confirm(after: -1, leaving: true), "a clock that went back says nothing")
         XCTAssertTrue(broken.isPending)
     }
 

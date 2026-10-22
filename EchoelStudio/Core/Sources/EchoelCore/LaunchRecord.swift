@@ -5,9 +5,6 @@
 public struct LaunchRecord: Equatable, Sendable {
     /// Seconds after the launch began at which it counts as healthy.
     public static var steadySeconds: Double { 10 }
-    /// A launch that goes to the background after at least this long counts as healthy too. A
-    /// quicker exit cannot be told apart from a crash, and is taken as one.
-    public static var leaveFloorSeconds: Double { 3 }
 
     /// True from the start of a launch until it is confirmed.
     public private(set) var isPending: Bool
@@ -24,12 +21,16 @@ public struct LaunchRecord: Equatable, Sendable {
         return previousDied
     }
 
-    /// Confirms the running launch `seconds` after it began; `leaving` when the app is going to
-    /// the background. Returns whether it confirmed now.
+    /// Confirms the running launch `seconds` after it began; `leaving` when the app went to the
+    /// background, which confirms it whenever it happens: a launch that got there is alive. The
+    /// app says so only once the song it opened has finished loading, the last thing at launch
+    /// that could still end it. A floor of three seconds stood here and took a quick exit for a
+    /// crash, so a song opened, left at once and ended later by the system was held at the next
+    /// launch for nothing (review 2026-10-22). Returns whether it confirmed now.
     @discardableResult
     public mutating func confirm(after seconds: Double, leaving: Bool) -> Bool {
-        guard isPending, seconds.isFinite else { return false }
-        guard seconds >= (leaving ? Self.leaveFloorSeconds : Self.steadySeconds) else { return false }
+        guard isPending, seconds.isFinite, seconds >= 0 else { return false }
+        guard leaving || seconds >= Self.steadySeconds else { return false }
         isPending = false
         return true
     }
