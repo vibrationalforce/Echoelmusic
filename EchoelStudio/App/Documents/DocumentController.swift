@@ -81,6 +81,8 @@ final class DocumentController {
     @ObservationIgnored private let library: ProjectLibrary
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
+    /// When the oldest change the disk does not hold yet arrived (`autosaveLongest`).
+    @ObservationIgnored private var firstUnsavedChange: ContinuousClock.Instant?
     @ObservationIgnored private var savedProject: Project?
     /// The open song is the starter a launch opened and has not been written yet, so nothing on
     /// disk holds its name.
@@ -145,6 +147,10 @@ final class DocumentController {
 
     /// Quiet time after an edit before the song is written.
     static let autosaveDelay: Duration = .seconds(2)
+    /// The longest a change waits for the pause: a control the music keeps moving — a mapped
+    /// knob, an expression pedal, an automation pass — never leaves two quiet seconds, and a
+    /// crash or a memory kill then lost the whole session (audit 2026-10-23).
+    static let autosaveLongest: Duration = .seconds(10)
 
     init(store: ProjectStore, directory: URL = DocumentController.defaultDirectory) {
         self.store = store
@@ -543,6 +549,13 @@ final class DocumentController {
     /// Called on every project change: writes after a short pause.
     func projectChanged() {
         pendingSave?.cancel()
+        let now = ContinuousClock.now
+        let oldest = firstUnsavedChange ?? now
+        firstUnsavedChange = oldest
+        if oldest.duration(to: now) >= Self.autosaveLongest {
+            saveNow()
+            return
+        }
         pendingSave = Task { [weak self] in
             try? await Task.sleep(for: Self.autosaveDelay)
             guard !Task.isCancelled else { return }
@@ -572,6 +585,9 @@ final class DocumentController {
     func saveNow() -> Bool {
         pendingSave?.cancel()
         pendingSave = nil
+        // A write that fails starts the wait again too, so a failing disk is tried every
+        // `autosaveLongest`, not at every change.
+        firstUnsavedChange = nil
         // Before the check below: a rename written while the package was busy still has to move
         // it, though nothing is left to write.
         followRenamedSong()
