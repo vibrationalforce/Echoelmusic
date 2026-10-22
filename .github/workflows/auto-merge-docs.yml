@@ -44,8 +44,10 @@ jobs:
           echo "Push ref: ${{ github.ref }}"
           echo "Push branch: ${{ github.ref_name }}"
 
-          # Fetch the specific commit that was pushed (uses SHA, not branch)
-          git fetch origin ${{ github.sha }} --depth=1 || git fetch origin --all
+          # Fetch the specific commit that was pushed (uses SHA, not branch), with its history:
+          # `--depth=1` made it a root commit, so the cherry-pick below compared against the empty
+          # tree and every change to an existing file ended as an add/add conflict (F18).
+          git fetch origin ${{ github.sha }} || git fetch origin --all
 
           # Verify commit exists in object store
           if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
