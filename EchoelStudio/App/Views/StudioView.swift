@@ -500,7 +500,9 @@ struct SongMenu: View {
                     Button {
                         documents.open(song.url)
                     } label: {
-                        if song.url == documents.currentURL {
+                        // By path: the list spells a package with a trailing slash, and a renamed or
+                        // new song's URL is built without one.
+                        if song.url.standardizedFileURL.path == documents.currentURL?.standardizedFileURL.path {
                             Label(song.name, systemImage: "checkmark")
                         } else {
                             Text(song.name)
