@@ -109,22 +109,50 @@ public struct SynthParameter: Sendable, Equatable {
     public let taper: ParameterTaper
     public let choices: [String]
 
-    public static let waveform = SynthParameter("synth.waveform", "Waveform", .choice, 0...3, 1, .stepped,
-                                                choices: ["Sine", "Saw", "Square", "Triangle"])
-    public static let cutoff = SynthParameter("synth.cutoff", "Cutoff", .hertz, 20...18_000, 800, .exponential)
-    public static let resonance = SynthParameter("synth.resonance", "Resonance", .amount, 0...0.95, 0.3, .linear)
-    public static let filterAmount = SynthParameter("synth.filterAmount", "Filter Envelope", .octaves, 0...8, 3, .linear)
-    public static let filterDecay = SynthParameter("synth.filterDecay", "Filter Decay", .seconds, 0.001...10, 0.3, .exponential)
-    public static let attack = SynthParameter("synth.attack", "Attack", .seconds, 0.001...10, 0.003, .exponential)
-    public static let decay = SynthParameter("synth.decay", "Decay", .seconds, 0.001...10, 0.2, .exponential)
-    public static let sustain = SynthParameter("synth.sustain", "Sustain", .amount, 0...1, 0.7, .linear)
-    public static let release = SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
-    public static let level = SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
+    /// The synth's parameters as a closed list, in display order. Every row of `all` is one case,
+    /// so a new synth parameter is a new case — and the engine's mapping to sound (`PatchField`
+    /// in EchoelKernels, an exhaustive `switch` over these cases) does not compile until it is
+    /// mapped. The case names are part of the code, not of the file: songs store the keys.
+    public enum Name: Sendable, CaseIterable {
+        case waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level
 
-    /// In display order.
-    public static let all: [SynthParameter] = [
-        waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level,
-    ]
+        /// The row this case stands for. Builds a value: read it off the render thread.
+        public var parameter: SynthParameter {
+            switch self {
+            case .waveform: SynthParameter("synth.waveform", "Waveform", .choice, 0...3, 1, .stepped,
+                                           choices: ["Sine", "Saw", "Square", "Triangle"])
+            case .cutoff: SynthParameter("synth.cutoff", "Cutoff", .hertz, 20...18_000, 800, .exponential)
+            case .resonance: SynthParameter("synth.resonance", "Resonance", .amount, 0...0.95, 0.3, .linear)
+            case .filterAmount: SynthParameter("synth.filterAmount", "Filter Envelope", .octaves, 0...8, 3, .linear)
+            case .filterDecay: SynthParameter("synth.filterDecay", "Filter Decay", .seconds, 0.001...10, 0.3, .exponential)
+            case .attack: SynthParameter("synth.attack", "Attack", .seconds, 0.001...10, 0.003, .exponential)
+            case .decay: SynthParameter("synth.decay", "Decay", .seconds, 0.001...10, 0.2, .exponential)
+            case .sustain: SynthParameter("synth.sustain", "Sustain", .amount, 0...1, 0.7, .linear)
+            case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
+            case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
+            }
+        }
+
+        /// The case whose row is stored under `key`; nil for a key the synth does not have.
+        public init?(_ key: ParameterKey) {
+            guard let name = Self.allCases.first(where: { $0.parameter.key == key }) else { return nil }
+            self = name
+        }
+    }
+
+    public static let waveform = Name.waveform.parameter
+    public static let cutoff = Name.cutoff.parameter
+    public static let resonance = Name.resonance.parameter
+    public static let filterAmount = Name.filterAmount.parameter
+    public static let filterDecay = Name.filterDecay.parameter
+    public static let attack = Name.attack.parameter
+    public static let decay = Name.decay.parameter
+    public static let sustain = Name.sustain.parameter
+    public static let release = Name.release.parameter
+    public static let level = Name.level.parameter
+
+    /// In display order: one row per `Name`.
+    public static let all: [SynthParameter] = Name.allCases.map(\.parameter)
 
     /// The synth's row for `key`. Only the synth's: `all` and this lookup decide what a command
     /// may write and what a song lists, and no drums or sampler value is stored yet.

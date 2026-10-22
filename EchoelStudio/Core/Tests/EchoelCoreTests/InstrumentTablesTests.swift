@@ -32,6 +32,15 @@ final class InstrumentTablesTests: XCTestCase {
         XCTAssertEqual(InstrumentDevice.unrecognized.parameters, [])
     }
 
+    func testTheSynthTableIsItsCaseListAndEveryKeyFindsItsCase() {
+        XCTAssertEqual(SynthParameter.all, SynthParameter.Name.allCases.map(\.parameter))
+        for name in SynthParameter.Name.allCases {
+            XCTAssertEqual(SynthParameter.Name(name.parameter.key), name)
+        }
+        XCTAssertNil(SynthParameter.Name(ParameterKey(rawValue: "sampler.root")), "the case list is the synth's only")
+        XCTAssertEqual(SynthParameter.cutoff, SynthParameter.Name.cutoff.parameter)
+    }
+
     func testNoCommandWritesADrumsOrSamplerValueYet() throws {
         var project = Project()
         let track = TrackID()

@@ -20,32 +20,12 @@ extension SynthPatch {
 
 /// One synth parameter as the field of the DSP patch it sets — the ONE mapping from the
 /// document's synth values to sound. The song's tracks (`SynthPatch(_:)`), the plugin kernel and
-/// compiled automation all go through it, so the three cannot drift apart. The cases are in the
-/// order of `SynthParameter.all`.
-public enum PatchField: Sendable, CaseIterable {
-    case waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level
+/// compiled automation all go through it, so the three cannot drift apart. The cases ARE Core's
+/// `SynthParameter.Name` (with its `parameter` and `init?(_:)`), so there is no second list here:
+/// a new synth parameter fails to compile until `apply` below maps it to the DSP.
+public typealias PatchField = SynthParameter.Name
 
-    /// The document parameter this field takes its value from.
-    public var parameter: SynthParameter {
-        switch self {
-        case .waveform: .waveform
-        case .cutoff: .cutoff
-        case .resonance: .resonance
-        case .filterAmount: .filterAmount
-        case .filterDecay: .filterDecay
-        case .attack: .attack
-        case .decay: .decay
-        case .sustain: .sustain
-        case .release: .release
-        case .level: .level
-        }
-    }
-
-    public init?(_ key: ParameterKey) {
-        guard let field = Self.allCases.first(where: { $0.parameter.key == key }) else { return nil }
-        self = field
-    }
-
+extension SynthParameter.Name {
     /// Writes a document value into the patch. Arithmetic only: render-safe.
     public func apply(_ value: Double, to patch: inout SynthPatch) {
         let v = Float(value)
