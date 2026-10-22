@@ -17,6 +17,8 @@ final class RecordController {
     @ObservationIgnored private var target: (track: TrackID, file: DocumentController.TakeTarget)?
     /// The instrument track a MIDI take records onto, while one does.
     @ObservationIgnored private var midiTrack: TrackID?
+    /// The song `inputFollowsSong` last saw, so it can tell an opened song from an edit.
+    @ObservationIgnored private var seenGeneration: Int?
 
     init(engine: AudioEngine, documents: DocumentController, store: ProjectStore) {
         self.engine = engine
@@ -188,6 +190,26 @@ final class RecordController {
     func stopTransport() async {
         await stopRecording()
         engine.stop()
+        await inputFollowsSong()
+    }
+
+    /// The input is open while something wants it: an armed audio track, a take, a track that
+    /// monitors always. A song opened, an undo or a deleted track can change that without going
+    /// through `setMonitor`: the microphone stayed live for a song that uses none, and a song
+    /// that monitors always opened deaf (audit 2026-10-23). Run on every song change. Never while
+    /// playing: opening or closing reconfigures the session and stops the song, so it waits for
+    /// Stop. It opens only for an opened song, never on an ordinary edit (`setMonitor`).
+    func inputFollowsSong() async {
+        let opened = store.documentGeneration != seenGeneration
+        seenGeneration = store.documentGeneration
+        guard !engine.isPlaying, !isRecording else { return }
+        if monitorsAlways {
+            if opened, !engine.isInputOpen { _ = await engine.openInput() }
+            return
+        }
+        guard engine.isInputOpen else { return }
+        if let armed = armedTrack, store.project.track(armed)?.kind == .audio { return }
+        engine.closeInput()
     }
 
     /// Before another song replaces this one: a running take ends and lands in the song it was
