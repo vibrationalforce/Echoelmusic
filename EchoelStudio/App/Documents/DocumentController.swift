@@ -42,14 +42,31 @@ final class DocumentController {
     /// (`hideEarlierSongsWarning`) — or, for the songs a run could not save, a later run that
     /// brings everything over (round 4, C4).
     var earlierSongsWarning: String? {
-        let lines = [importLaunchWarning, importRunWarning].compactMap { $0 }
+        var lines = importLaunchWarning.map { [$0] } ?? []
+        if importLeftOut > 0 {
+            lines.append(importLeftOut == 1
+                ? "One earlier song could not be read, so it is left out."
+                : "\(importLeftOut) earlier songs could not be read, so they are left out.")
+        }
+        if !importUnsaved.isEmpty {
+            let shown = importUnsaved.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
+            let more = importUnsaved.count > 3 ? " and \(importUnsaved.count - 3) more" : ""
+            let songs = importUnsaved.count == 1 ? "The earlier song \(shown) could" : "The earlier songs \(shown)\(more) could"
+            lines.append("\(songs) not be saved here; Echoel tries again \(importRetriesOnReturn ? "once Echoel is back in front" : "at the next start").")
+        }
         return lines.isEmpty ? nil : (lines + [Self.earlierFilesKept]).joined(separator: " ")
     }
     /// What became of a run the last launch ended in the middle of: a song left out, or the
     /// import given up. No later run makes it untrue.
     private var importLaunchWarning: String?
-    /// What the last run of this launch could not save or read.
-    private var importRunWarning: String?
+    /// Songs the runs of this launch could not read. Each is left out for good, so no later run
+    /// takes the count back (review 2026-10-22).
+    private var importLeftOut = 0
+    /// The names of the songs that could not be saved, as of the last run that went through every
+    /// place; a paused run adds to them, since it may not have reached the others.
+    private var importUnsaved: [String] = []
+    /// The last run paused, so the unsaved songs are tried again once the app is back in front.
+    private var importRetriesOnReturn = false
     private(set) var isImporting = false
     /// Changes whenever `samples` does; observe this, not the buffers.
     private(set) var mediaRevision = 0
@@ -562,8 +579,18 @@ final class DocumentController {
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
         let buffers = samples
-        // A file the song names that did not decode renders as silence: the export says which.
-        let unread = project.media.filter { buffers[$0.id] == nil }.map(\.name)
+        // A file the arrangement plays that did not decode renders as silence: the export says
+        // which. Only what it plays — a region, a placed audio clip, a sampler's sample; a file
+        // left in the song by a deleted region, or played only in the session, is not in the file
+        // (review 2026-10-22).
+        let played = Set(project.tracks.flatMap { track -> [MediaID] in
+            let placed = Set(track.placements.map(\.clip))
+            var media = track.regions.map(\.media)
+            media += track.clips.filter { placed.contains($0.id) }.compactMap { $0.audio?.media }
+            if track.instrument.device == .sampler, let sample = track.instrument.sample { media.append(sample) }
+            return media
+        })
+        let unread = project.media.filter { played.contains($0.id) && buffers[$0.id] == nil }.map(\.name)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let name = ProjectLibrary.safeFileName(for: project.name)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
@@ -651,7 +678,8 @@ final class DocumentController {
     /// The musician read the warning about earlier songs and hides it.
     func hideEarlierSongsWarning() {
         importLaunchWarning = nil
-        importRunWarning = nil
+        importLeftOut = 0
+        importUnsaved = []
     }
 
     /// Another song is open: the loudness line and the launch note spoke of the one before it.
@@ -882,14 +910,15 @@ final class DocumentController {
                     ? "One song from the earlier Echoelmusic is now in your songs."
                     : "\(self.earlierSongsWritten) songs from the earlier Echoelmusic are now in your songs."
             }
-            if let warning = Self.importWarning(for: run) {
-                self.importRunWarning = warning
-            } else if !run.paused {
-                // A run that went through every place without a failure: what an earlier run in
-                // this session could not save is saved now. One that paused again may not have
-                // reached those songs yet, so its warning stands.
-                self.importRunWarning = nil
+            self.importLeftOut += run.unreadable
+            if run.paused {
+                // It may not have reached the songs an earlier run could not save: theirs stand.
+                for name in run.failed where !self.importUnsaved.contains(name) { self.importUnsaved.append(name) }
+            } else {
+                // It went through every place: what it could not save is what is left unsaved.
+                self.importUnsaved = run.failed
             }
+            self.importRetriesOnReturn = run.paused
             if run.paused {
                 // Back in front before the run reached its pause point: `sceneEntered` found it
                 // still under way, so the wait is armed here.
@@ -1091,25 +1120,6 @@ final class DocumentController {
 
     /// The import only ever reads the earlier app's files; a song left out here is still there.
     nonisolated private static let earlierFilesKept = "The earlier app's files are not changed."
-
-    /// What a run has to warn about: songs it could not save, by name, and songs it could not
-    /// read. Nil when it has nothing to warn about. `earlierSongsWarning` adds `earlierFilesKept`.
-    nonisolated private static func importWarning(for run: EarlierImportRun) -> String? {
-        var lines: [String] = []
-        if !run.failed.isEmpty {
-            let shown = run.failed.prefix(3).map { "\u{201C}\($0)\u{201D}" }.joined(separator: ", ")
-            let more = run.failed.count > 3 ? " and \(run.failed.count - 3) more" : ""
-            let songs = run.failed.count == 1 ? "The earlier song \(shown) could" : "The earlier songs \(shown)\(more) could"
-            let retry = run.paused ? "once Echoel is back in front" : "at the next start"
-            lines.append("\(songs) not be saved here; Echoel tries again \(retry).")
-        }
-        if run.unreadable > 0 {
-            lines.append(run.unreadable == 1
-                ? "One earlier song could not be read, so it is left out."
-                : "\(run.unreadable) earlier songs could not be read, so they are left out.")
-        }
-        return lines.isEmpty ? nil : lines.joined(separator: " ")
-    }
 
     /// The earlier app's songs in every place it wrote to — its App Group container, and
     /// Application Support, where it wrote while the container was unavailable — each once, by
