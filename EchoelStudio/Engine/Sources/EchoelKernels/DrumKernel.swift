@@ -25,8 +25,8 @@ public final class DrumKernel: InstrumentKernel, @unchecked Sendable {
     }
 
     /// The kit at `level` from its first sample: the output starts there instead of gliding to it.
-    /// The app's engine plays its drums at 1 (unity, as it always has); the plugin starts at the
-    /// table's default. A glide from 0.8 never quite reaches 1 in `Float`, so a level the engine
+    /// The app's engine plays its drums at the song's default, 1 (unity, as it always has); the
+    /// plugin starts at the table's default. A glide from 0.8 never quite reaches 1 in `Float`, so a level the engine
     /// needs exactly has to be set here, not through `setParameter`.
     public init(sampleRate: Double, maximumFrames: Int, level start: Float) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000

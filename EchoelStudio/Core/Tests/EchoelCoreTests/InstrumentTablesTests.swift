@@ -1,19 +1,38 @@
 import XCTest
 @testable import EchoelCore
 
-/// Every built-in device has one parameter table in Core. A command writes all three and a song
-/// stores them; a lane plays the synth's only, for now.
+/// Every built-in device has one parameter table in Core. A command writes all three, a song
+/// stores them, and a lane plays the rows of the device the track plays.
 final class InstrumentTablesTests: XCTestCase {
     func testEveryRowOfEveryTableIsSaneAndNamedForItsDevice() {
         for device in InstrumentDevice.allCases {
             for row in device.parameters {
                 XCTAssertTrue(row.key.rawValue.hasPrefix(device.rawValue + "."), "\(row.key.rawValue) on \(device)")
                 XCTAssertTrue(row.accepts(row.defaultValue), "\(row.key.rawValue) default")
+                XCTAssertTrue(row.accepts(row.songDefault), "\(row.key.rawValue) song default")
                 if row.taper == .exponential { XCTAssertGreaterThan(row.range.lowerBound, 0, row.key.rawValue) }
                 if row.unit == .choice {
                     XCTAssertEqual(row.choices.count, Int(row.range.upperBound - row.range.lowerBound) + 1, row.key.rawValue)
                 }
             }
+        }
+    }
+
+    /// The app always played the kit at unity while the Drums plugin starts at 0.8: a song that
+    /// stores no level plays and resets to unity, the plugin keeps its own default, and every other
+    /// row has one default for both.
+    func testASongPlaysItsDrumsAtUnityWhileThePluginStartsAtItsDefault() throws {
+        XCTAssertEqual(SynthParameter.drumsLevel.songDefault, 1)
+        XCTAssertEqual(SynthParameter.drumsLevel.defaultValue, 0.8)
+        XCTAssertEqual(InstrumentSettings().value(.drumsLevel), 1)
+        var project = Project()
+        let track = TrackID()
+        try Command.addTrack(id: track, name: "Beat", kind: .instrument, index: nil).apply(to: &project)
+        let address = ParameterAddress(.track(track), SynthParameter.drumsLevel.key)
+        XCTAssertEqual(project.value(of: address), 1)
+        XCTAssertEqual(project.descriptor(for: address)?.defaultValue, 1, "a double tap returns to unity")
+        for row in InstrumentDevice.allCases.flatMap(\.parameters) where row.key != SynthParameter.drumsLevel.key {
+            XCTAssertEqual(row.songDefault, row.defaultValue, row.key.rawValue)
         }
     }
 

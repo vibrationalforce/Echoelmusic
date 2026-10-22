@@ -14,8 +14,10 @@ public enum BuiltInKernels {
         case .synth:
             return SynthKernel(sampleRate: sampleRate, maximumFrames: maximumFrames)
         case .drums:
-            // At unity, as the engine always played the kit; the plugin starts at the table's default.
-            return DrumKernel(sampleRate: sampleRate, maximumFrames: maximumFrames, level: 1)
+            // At the song's default (unity, as the engine always played the kit); the plugin starts
+            // at the table's default.
+            return DrumKernel(sampleRate: sampleRate, maximumFrames: maximumFrames,
+                              level: Float(SynthParameter.drumsLevel.songDefault))
         case .sampler:
             let sampler = SamplerKernel(sampleRate: sampleRate, maximumFrames: maximumFrames)
             // The table's patch before the first note, not at the first render after it.

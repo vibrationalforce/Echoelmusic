@@ -97,7 +97,7 @@ or regions.
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
-key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level`, the sampler's
+key → number, e.g. `synth.cutoff`: the synth's `synth.*`, the drums' `drums.level` (0 … 1, absent plays 1), the sampler's
 `sampler.root` (0 … 127, the key that plays the sample at its own speed), `sampler.attack`,
 `sampler.release` (seconds), `sampler.level` (0 … 1) and `sampler.mode` (0 gate, 1 one-shot); a key
 absent plays its default, and every device's values are kept whichever device plays), optional

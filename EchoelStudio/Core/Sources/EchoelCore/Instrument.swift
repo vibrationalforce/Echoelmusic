@@ -63,8 +63,9 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
         try c.encodeIfPresent(pluginState, forKey: .pluginState)
     }
 
+    /// The value the track plays: the stored one, or the row's song default.
     public func value(_ parameter: SynthParameter) -> Double {
-        values[parameter.key.rawValue] ?? parameter.defaultValue
+        values[parameter.key.rawValue] ?? parameter.songDefault
     }
 
     /// Whether the synth sounds other than its preset: a value moved since the preset loaded.
@@ -115,7 +116,12 @@ public struct SynthParameter: Sendable, Equatable {
     public let title: String
     public let unit: ParameterUnit
     public let range: ClosedRange<Double>
+    /// Where the instrument's plugin starts (the Audio Unit publishes it).
     public let defaultValue: Double
+    /// What a song's track plays while it stores no value, and what a double tap returns to. The
+    /// plugin's default everywhere but the drums' level: the app always played the kit at unity
+    /// while the plugin starts at 0.8, and a song that stores no level must sound as it did.
+    public let songDefault: Double
     public let taper: ParameterTaper
     public let choices: [String]
 
@@ -177,10 +183,9 @@ public struct SynthParameter: Sendable, Equatable {
     }
 
     // The drums' and the sampler's rows, in the order their plugins publish them. Read through
-    // `InstrumentDevice.parameters`. A song stores their values under these keys, so the names,
-    // the order and the sampler mode's choices are frozen (Law 3, `StoredNamesTests`); a lane
-    // does not play them yet, so `Project.parameters` does not list them.
-    public static let drumsLevel = SynthParameter("drums.level", "Level", .amount, 0...1, 0.8, .linear)
+    // `InstrumentDevice.parameters`. A song stores their values and lanes under these keys, so
+    // the names, the order and the sampler mode's choices are frozen (Law 3, `StoredNamesTests`).
+    public static let drumsLevel = SynthParameter("drums.level", "Level", .amount, 0...1, 0.8, .linear, songDefault: 1)
     public static let samplerRoot = SynthParameter("sampler.root", "Root key", .amount, 0...127, 60, .stepped)
     public static let samplerAttack = SynthParameter("sampler.attack", "Attack", .seconds, 0.001...2, 0.001, .exponential)
     public static let samplerRelease = SynthParameter("sampler.release", "Release", .seconds, 0.01...5, 0.15, .exponential)
@@ -189,19 +194,20 @@ public struct SynthParameter: Sendable, Equatable {
                                                    choices: ["Gate", "One-shot"])
 
     init(_ key: String, _ title: String, _ unit: ParameterUnit, _ range: ClosedRange<Double>, _ defaultValue: Double,
-         _ taper: ParameterTaper, choices: [String] = []) {
+         _ taper: ParameterTaper, choices: [String] = [], songDefault: Double? = nil) {
         self.key = ParameterKey(rawValue: key)
         self.title = title
         self.unit = unit
         self.range = range
         self.defaultValue = defaultValue
+        self.songDefault = songDefault ?? defaultValue
         self.taper = taper
         self.choices = choices
     }
 
     func descriptor(track: Track) -> ParameterDescriptor {
         ParameterDescriptor(address: ParameterAddress(.track(track.id), key), title: "\(track.name) \(title)",
-                            unit: unit, range: range, defaultValue: defaultValue, taper: taper, choices: choices)
+                            unit: unit, range: range, defaultValue: songDefault, taper: taper, choices: choices)
     }
 
     /// Whether `value` is one this parameter accepts.
