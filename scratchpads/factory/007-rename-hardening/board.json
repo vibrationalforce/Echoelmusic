@@ -1,0 +1,39 @@
+{
+ "id": "007-rename-hardening",
+ "title": "Umbenennen härten (Minors aus Job 006)",
+ "stage": "build",
+ "round": 0,
+ "base": "4c4bd5ad86056afa7044a4bb4e507dbd312d83c7",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "ui-state-reviewer"
+ ],
+ "paths": [
+  "EchoelStudio/Core/Sources/EchoelCore/ProjectLibrary.swift",
+  "EchoelStudio/Core/Sources/EchoelCore/SongFileName.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/ProjectLibraryTests.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/SongFileNameTests.swift",
+  "EchoelStudio/App/Documents/DocumentController.swift",
+  "EchoelStudio/App/Views/RenameSongView.swift",
+  "scratchpads/factory/007-rename-hardening"
+ ],
+ "criteria": 7,
+ "deviceCriteria": [
+  6
+ ],
+ "founderAssumptions": 0,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-22",
+   "note": "Aus den gemessenen Minor-Befunden von Job 006 Runde 3 (wf_9e31f7a2-0a8): Rückweg fragt das Paket, gestrandet bleibt geschuldet (auch beim Öffnen), Zeile ersetzt, Wiederöffnen liest currentURL, VoiceOver. Reparatur einer gebauten Scheibe, keine vierte (Regel 2/3)."
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-22",
+   "note": "Core: rename(_:to:moving:) als interner Saum, der Rückweg fragt das Paket unter dem Zwischennamen (nicht den alten Namen), betweenStem/isBetweenStem; SongFileName.stranded() macht jeden Namen fällig; drei ProjectLibrary-Wächter und einer in SongFileNameTests (der erste ist auf dem alten Code rot: dort kam ein gewöhnlicher Fehler statt RenameStranded). App: gestrandeter Zweig ruft stranded(), open(throwing:) liest den offenen Song unter currentURL nach mayLeaveSong und markiert ein Paket mit Zwischennamen, eine noch wahre Verschiebungs-Zeile bleibt beim erneuten Öffnen, moveFailed ersetzt eine geänderte Zeile; RenameSongView: Hinweis am Feld und an Rename, Ansage beim Überschreiten. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  }
+ ]
+}

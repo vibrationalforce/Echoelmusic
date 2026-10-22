@@ -8,6 +8,9 @@ public struct SongFileName: Equatable, Sendable {
     /// The song's name the package last followed: the name it had when it opened, or the one it
     /// moved for. Nil before any song is open.
     private var followedName: String?
+    /// The package is under a name in between that no song has: a change of case failed half way
+    /// and could not go back. Every name is due then, the one it followed too.
+    private var isStranded = false
 
     public init() {}
 
@@ -15,11 +18,12 @@ public struct SongFileName: Equatable, Sendable {
     /// it: the next song's package is its own.
     public mutating func opened(named name: String) {
         followedName = name
+        isStranded = false
     }
 
     /// The song is called `name` now and the package has not followed it yet.
     public func isDue(for name: String) -> Bool {
-        followedName.map { $0 != name } ?? false
+        followedName.map { isStranded || $0 != name } ?? false
     }
 
     /// Whether to move the package now, for a song called `name`. Never while it is `busy`; an
@@ -32,5 +36,14 @@ public struct SongFileName: Equatable, Sendable {
     /// failed is not followed, so the next write tries it again.
     public mutating func followed(_ name: String) {
         followedName = name
+        isStranded = false
+    }
+
+    /// The package is under a name in between, the one a change of case passes through: it
+    /// follows no name now, so the next quiet write moves it, also when an Undo has taken the song
+    /// back to the name it followed (review 006 round 3). A song that opens from such a package is
+    /// stranded too.
+    public mutating func stranded() {
+        isStranded = true
     }
 }

@@ -456,9 +456,9 @@ final class DocumentController {
     @discardableResult
     func open(_ url: URL) -> Bool {
         do {
-            try open(throwing: url)
-            if quarantine.holds(url.lastPathComponent) {
-                quarantine.chosen(url.lastPathComponent)
+            let opened = try open(throwing: url)
+            if quarantine.holds(opened.lastPathComponent) {
+                quarantine.chosen(opened.lastPathComponent)
                 keepQuarantine()
             }
             return true
@@ -472,8 +472,14 @@ final class DocumentController {
         }
     }
 
-    private func open(throwing url: URL) throws {
-        guard mayLeaveSong(for: url.deletingPathExtension().lastPathComponent) else { throw UnsavedSong() }
+    /// Opens the song at `chosen` and returns where it was read: the open song chosen again is read
+    /// where its package is after the save before it, which may just have moved it to its name
+    /// (review 006 round 3).
+    @discardableResult
+    private func open(throwing chosen: URL) throws -> URL {
+        let isOpenSong = !isUnwritten && currentURL?.standardizedFileURL.path == chosen.standardizedFileURL.path
+        guard mayLeaveSong(for: chosen.deletingPathExtension().lastPathComponent) else { throw UnsavedSong() }
+        let url = isOpenSong ? (currentURL ?? chosen) : chosen
         noteOpening(url.lastPathComponent)
         do {
             let project = try library.read(url)
@@ -487,14 +493,19 @@ final class DocumentController {
             if another {
                 fileName.opened(named: project.name)
                 moveSettled()
+                // A package under a name in between was left by a change of case that did not
+                // finish; no one chose that name, so the next write gives it the song's own.
+                if ProjectLibrary.isBetweenStem(url.deletingPathExtension().lastPathComponent) { fileName.stranded() }
             }
             currentURL = url
             if another { anotherSongOpened() }
             savedProject = project
             isUnwritten = false
             starterMadeFolder = false
-            lastError = nil
+            // A move the open song still owes is still true; another song's went with `moveSettled`.
+            lastError = failedMoveLine
             loadMedia(of: project)
+            return url
         } catch {
             log.error("open failed — \(error.localizedDescription, privacy: .public)")
             throw error
@@ -633,6 +644,8 @@ final class DocumentController {
             // A change of case failed half way and could not go back: the package is under the
             // name in between. The song follows it there, rather than the next write making a
             // second package, without the audio, under the old name. The next write tries again.
+            // It follows no name there, so an Undo back to the old name still moves it home.
+            fileName.stranded()
             packageMoved(from: url, to: stranded.url)
             moveFailed(stranded.underlying, fileNow: stranded.url, moved: true)
         } catch {
@@ -656,11 +669,13 @@ final class DocumentController {
         // Domain and code only: the description spells both song names.
         let failure = error as NSError
         log.error("rename move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
-        guard failedMoveLine == nil else { return }
         let file = url.deletingPathExtension().lastPathComponent
         let line = moved
             ? "The song is renamed, but its file is called \(file) for now; Echoel tries again when it next saves."
             : "The song is renamed, but its file keeps the name \(file) for now; Echoel tries again when it next saves."
+        // Said once; a later failure that left the file somewhere else says where it is now.
+        guard line != failedMoveLine else { return }
+        moveSettled()
         failedMoveLine = line
         // Beside, not over, what the work just finished said (an export's "Exported without …").
         lastError = lastError.map { "\($0) \(line)" } ?? line

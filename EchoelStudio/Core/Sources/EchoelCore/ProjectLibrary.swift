@@ -162,6 +162,11 @@ public struct ProjectLibrary: Sendable {
     /// spelling taken between the look and the move — the earlier songs' import reserves names off
     /// the main thread — is passed over for the next free one.
     public func rename(_ url: URL, to name: String) throws -> URL {
+        try rename(url, to: name, moving: { try FileManager.default.moveItem(at: $0, to: $1) })
+    }
+
+    /// `rename(_:to:)` with the move in the caller's hand, so a test can fail one step of it.
+    func rename(_ url: URL, to name: String, moving move: (URL, URL) throws -> Void) throws -> URL {
         guard url.pathExtension == Self.fileExtension,
               Self.canonicalPath(url.deletingLastPathComponent()) == Self.canonicalPath(directory) else {
             throw LibraryError.notAPackage(url)
@@ -171,29 +176,46 @@ public struct ProjectLibrary: Sendable {
             let target = renamedURL(for: name, from: url)
             guard target.lastPathComponent != url.lastPathComponent else { return url }
             if target.lastPathComponent.lowercased() == url.lastPathComponent.lowercased() {
-                let stem = url.deletingPathExtension().lastPathComponent
-                let between = directory.appendingPathComponent("\(stem) renaming \(UUID().uuidString.prefix(8))")
+                let between = directory.appendingPathComponent(Self.betweenStem(for: url.deletingPathExtension().lastPathComponent))
                     .appendingPathExtension(Self.fileExtension)
-                try files.moveItem(at: url, to: between)
+                try move(url, between)
                 do {
-                    try files.moveItem(at: between, to: target)
+                    try move(between, target)
                 } catch {
-                    do { try files.moveItem(at: between, to: url) } catch {}
-                    // Back under its old name, it is as it was; otherwise the caller learns where
-                    // it is, instead of writing a second package under the old name.
-                    guard files.fileExists(atPath: url.path) else { throw RenameStranded(url: between, underlying: error) }
+                    do { try move(between, url) } catch {}
+                    // Ask the package, not its old name: another song may hold that name by now (the
+                    // earlier songs' import reserves names off the main thread, review 006 round 3).
+                    // Still under the name in between, the caller learns where it is, instead of
+                    // writing into that other package.
+                    guard !files.fileExists(atPath: between.path) else { throw RenameStranded(url: between, underlying: error) }
                     throw error
                 }
                 return target
             }
             do {
-                try files.moveItem(at: url, to: target)
+                try move(url, target)
                 return target
             } catch {
                 guard files.fileExists(atPath: target.path), files.fileExists(atPath: url.path) else { throw error }
             }
         }
         throw CocoaError(.fileWriteFileExists)
+    }
+
+    /// The name a change of case passes through: the stem, " renaming " and the first eight
+    /// characters of a fresh UUID. Visible on purpose, so a song caught between the two steps is
+    /// never hidden.
+    static func betweenStem(for stem: String) -> String {
+        "\(stem) renaming \(UUID().uuidString.prefix(8))"
+    }
+
+    /// Whether `stem` is a name in between that `rename` wrote: a song left there by a change of
+    /// case that did not finish, not a name anyone chose.
+    public static func isBetweenStem(_ stem: String) -> Bool {
+        guard let marker = stem.range(of: " renaming ", options: .backwards),
+              marker.lowerBound > stem.startIndex else { return false }
+        let tail = stem[marker.upperBound...]
+        return tail.count == 8 && tail.allSatisfy { "0123456789ABCDEFabcdef".contains($0) }
     }
 
     /// Two paths that name one item on disk, as one volume spells it two ways.

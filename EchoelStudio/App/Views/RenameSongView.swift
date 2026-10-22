@@ -25,6 +25,10 @@ struct RenameSongView: View {
                     focused = true
                 }
                 .onChange(of: documents.songsOpened) { dismiss() }
+                // The red line under the field is not seen with VoiceOver: say it as it appears.
+                .onChange(of: isTooLong) { _, tooLong in
+                    if tooLong { AccessibilityNotification.Announcement(caption).post() }
+                }
         }
         .preferredColorScheme(.dark)
     }
@@ -56,6 +60,7 @@ struct RenameSongView: View {
                 .focused($focused)
                 .submitLabel(.done)
                 .onSubmit(rename)
+                .accessibilityHint(caption)
             if !name.isEmpty {
                 Button { name = "" } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -77,7 +82,9 @@ struct RenameSongView: View {
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
         ToolbarItem(placement: .confirmationAction) {
-            Button("Rename", action: rename).disabled(!canRename)
+            Button("Rename", action: rename)
+                .disabled(!canRename)
+                .accessibilityHint(isTooLong ? caption : "")
         }
     }
 

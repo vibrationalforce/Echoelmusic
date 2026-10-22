@@ -147,6 +147,68 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertEqual(try library.read(moved).tempo, 93)
     }
 
+    /// A change of case whose second step fails, and whose way back fails because another song
+    /// took the old name meanwhile (the earlier songs' import reserves names off the main thread),
+    /// reports the package under the name in between, its media with it, and leaves the other
+    /// song alone. Asking only whether the old name exists sent the next write into that song.
+    func testAStrandedRenameIsFoundByItsPackageNotItsOldName() throws {
+        let url = library.newURL(for: "beat")
+        try library.write(try song("beat"), to: url)
+        let media = url.appendingPathComponent("Media", isDirectory: true)
+        try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: media.appendingPathComponent("take.wav"))
+        var step = 0
+        do {
+            _ = try library.rename(url, to: "Beat", moving: { (source: URL, destination: URL) in
+                step += 1
+                guard step > 1 else { return try FileManager.default.moveItem(at: source, to: destination) }
+                if step == 2 {
+                    // Another song arrives under the old name, so neither step can land.
+                    try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
+                }
+                throw CocoaError(.fileWriteFileExists)
+            })
+            XCTFail("a rename that cannot land and cannot go back throws")
+        } catch let stranded as ProjectLibrary.RenameStranded {
+            let stem = stranded.url.deletingPathExtension().lastPathComponent
+            XCTAssertTrue(ProjectLibrary.isBetweenStem(stem), "under the name in between: \(stem)")
+            XCTAssertEqual(try Data(contentsOf: stranded.url.appendingPathComponent("Media/take.wav")), Data([1, 2, 3]))
+            XCTAssertEqual(try library.read(stranded.url).tempo, 93)
+            let other: [String] = try FileManager.default.contentsOfDirectory(atPath: url.path)
+            XCTAssertEqual(other, [], "the other song's folder is untouched")
+        }
+    }
+
+    /// A change of case whose second step fails but whose way back works leaves the package as it
+    /// was, under its old name, and the error says why.
+    func testACaseRenameThatGoesBackLeavesThePackageAsItWas() throws {
+        let url = library.newURL(for: "beat")
+        try library.write(try song("beat"), to: url)
+        var step = 0
+        XCTAssertThrowsError(try library.rename(url, to: "Beat", moving: { (source: URL, destination: URL) in
+            step += 1
+            guard step != 2 else { throw CocoaError(.fileWriteNoPermission) }
+            try FileManager.default.moveItem(at: source, to: destination)
+        })) { error in
+            XCTAssertFalse(error is ProjectLibrary.RenameStranded, "back where it was, nothing is stranded")
+        }
+        let names: [String] = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        XCTAssertEqual(names, ["beat.echoel"])
+        XCTAssertEqual(try library.read(url).tempo, 93)
+    }
+
+    /// The name in between that a change of case writes is known again — so a song left there
+    /// takes its own name at the next write — and no name anyone would choose is taken for one.
+    func testTheNameInBetweenIsKnownAgain() {
+        let written = ProjectLibrary.betweenStem(for: "beat 2")
+        XCTAssertTrue(ProjectLibrary.isBetweenStem(written), written)
+        let chosen: [String] = ["beat", "Beat renaming", "renaming 1A2B3C4D", "beat renaming 1A2B3C4",
+                                "beat renaming 1A2B3C4DE", "beat renaming XYZ12345"]
+        for stem in chosen {
+            XCTAssertFalse(ProjectLibrary.isBetweenStem(stem), stem)
+        }
+    }
+
     func testDeleteRemovesTheSong() throws {
         let url = library.newURL(for: "Gone")
         try library.write(try song("Gone"), to: url)
