@@ -234,6 +234,28 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue(rested.allSatisfy { (439.5...440.5).contains($0) }, "the wheel down, the note is in tune again")
     }
 
+    /// The engine does not render a silent synth, so wheels moved between two notes arrive with
+    /// no buffer in between. The next note starts where they are — in tune from its first cycle,
+    /// not scooping down from the old bend under a fading vibrato (audit 2026-10-23).
+    func testAWheelMovedWhileSilentIsWhereTheNextNoteStarts() {
+        var synth = sineSynth()
+        synth.noteOn(pitch: 69, velocity: 127)
+        synth.pitchBend(16_383)
+        synth.modulation(127)
+        _ = render(&synth, seconds: 0.2)
+        synth.noteOff(pitch: 69)
+        _ = render(&synth, seconds: 0.5)
+        XCTAssertEqual(synth.activeVoiceCount, 0)
+        synth.pitchBend(8_192)
+        synth.modulation(0)
+        synth.noteOn(pitch: 69, velocity: 127)
+        var block = [Float](repeating: 0, count: 4_096)
+        block.withUnsafeMutableBufferPointer { synth.render(into: $0) }
+        let cycles = cycleFrequencies(block)
+        XCTAssertGreaterThan(cycles.count, 30)
+        XCTAssertTrue(cycles.allSatisfy { (439...441).contains($0) }, "in tune from the first cycle: \(Array(cycles.prefix(4)))")
+    }
+
     func testAWheelAtRestAndAControllerTheSynthDoesNotReadChangeNothing() {
         var plain = sineSynth(), touched = sineSynth()
         touched.modulation(0)

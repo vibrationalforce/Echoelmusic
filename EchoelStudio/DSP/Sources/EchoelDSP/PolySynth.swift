@@ -238,6 +238,15 @@ public struct PolySynth: Sendable {
         guard pitch <= 127 else { return }
         guard velocity > 0 else { noteOff(pitch: pitch); return }
         let index = voiceIndex(for: pitch)
+        if activeVoiceCount == 0 {
+            // Nothing sounds, and the engine renders nothing then: a wheel moved since the last
+            // note is where this one starts, not a scoop or a fading vibrato over its first
+            // buffer. A synth rendered while silent (the Audio Unit) is there already (audit
+            // 2026-10-23).
+            bend = bendTarget
+            vibrato = vibratoTarget
+            if vibratoTarget == 0 { vibratoPhase = 0 }
+        }
         voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch)
         nextOrder &+= 1
     }
