@@ -88,17 +88,22 @@ final class DocumentController {
     /// The unwritten starter's package folder exists because an import or a take made it.
     @ObservationIgnored private var starterMadeFolder = false
     /// Counts song switches, so an export that finishes after another song opened does not
-    /// report its loudness as that song's.
-    @ObservationIgnored private var songsOpened = 0
+    /// report its loudness as that song's, and a sheet opened for one song closes when another
+    /// opens.
+    private(set) var songsOpened = 0
     @ObservationIgnored private var mediaLoad: Task<Void, Never>?
     /// The open song's audio files are being decoded from its package.
-    @ObservationIgnored private var isLoadingMedia = false
-    /// A take is being written into the package: from `newTakeTarget` until it is committed or
-    /// given up (`takeAbandoned`).
-    @ObservationIgnored private var takeInFlight = false
+    private var isLoadingMedia = false
+    /// The takes being written into the package, each from `newTakeTarget` until it is committed
+    /// or given up (`takeAbandoned`). One per take: a take that ends while the next one starts
+    /// must not free the package from under the other (review 006, round 1).
+    private var takesInFlight: Set<MediaID> = []
     /// The name the package follows: a renamed song moves its package to match, once nothing
     /// reads or writes into it.
     @ObservationIgnored private var fileName = SongFileName()
+    /// A move that failed was said; it is tried again at every write and said again only after
+    /// one went through.
+    @ObservationIgnored private var failedMoveSaid = false
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private var launch = LaunchRecord()
@@ -429,6 +434,7 @@ final class DocumentController {
         let project = Project.starter(starter)
         store.open(project)
         fileName.opened(named: project.name)
+        failedMoveSaid = false
         currentURL = library.newURL(for: project.name)
         anotherSongOpened()
         savedProject = writing ? nil : project
@@ -477,6 +483,7 @@ final class DocumentController {
                 || currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
             store.open(project)
             fileName.opened(named: project.name)
+            failedMoveSaid = false
             currentURL = url
             if another { anotherSongOpened() }
             savedProject = project
@@ -590,34 +597,59 @@ final class DocumentController {
     }
 
     /// Something reads or writes into the package right now. Moving it under that work would lose
-    /// what it writes, or leave it reading from a folder that is gone.
-    private var packageIsBusy: Bool { isImporting || isExporting || isLoadingMedia || takeInFlight }
+    /// what it writes, or leave it reading from a folder that is gone. The Rename door waits for
+    /// it too, so a rename moves at once; only an Undo or a Redo of one can wait.
+    var packageIsBusy: Bool { isImporting || isExporting || isLoadingMedia || !takesInFlight.isEmpty }
 
     /// The open song's name changed, so its package takes the new name — at once, or when the
-    /// work on the package ends. A move that fails leaves the package where it is, says so, and
-    /// is not tried again until the name changes once more.
+    /// work on the package ends. A move that fails leaves the package where it is, says so once,
+    /// and is tried again at the next write.
     private func followRenamedSong() {
         let name = store.project.name
         guard fileName.shouldMove(for: name, busy: packageIsBusy), let url = currentURL else { return }
-        fileName.followed(name)
         if isUnwritten && (!starterMadeFolder || !FileManager.default.fileExists(atPath: url.path)) {
             // Nothing on disk is the starter's yet, so there is nothing to move: it only takes
             // another free name. A folder there that it did not make is another song's.
+            fileName.followed(name)
             currentURL = library.newURL(for: name)
             starterMadeFolder = false
             return
         }
         do {
             let moved = try library.rename(url, to: name)
-            guard moved != url else { return }
-            currentURL = moved
-            // A launch that dies now holds the song by the name it has now.
-            if quarantine.opening == url.lastPathComponent { noteOpening(moved.lastPathComponent) }
-            refresh()
+            fileName.followed(name)
+            failedMoveSaid = false
+            if moved != url { packageMoved(from: url, to: moved) }
+        } catch let stranded as ProjectLibrary.RenameStranded {
+            // A change of case failed half way and could not go back: the package is under the
+            // name in between. The song follows it there, rather than the next write making a
+            // second package, without the audio, under the old name. The next write tries again.
+            packageMoved(from: url, to: stranded.url)
+            moveFailed(stranded.underlying, keeping: stranded.url)
         } catch {
-            log.error("rename move failed — \(error.localizedDescription, privacy: .public)")
-            lastError = "The song is renamed, but its file keeps the name \(url.deletingPathExtension().lastPathComponent)."
+            moveFailed(error, keeping: url)
         }
+    }
+
+    /// The open song's package is at `moved` now.
+    private func packageMoved(from url: URL, to moved: URL) {
+        currentURL = moved
+        // A launch that dies now holds the song by the name it has now.
+        if quarantine.opening == url.lastPathComponent { noteOpening(moved.lastPathComponent) }
+        // The name may be a held song's that was deleted in Files; the hold was for that song.
+        releaseHold(on: moved)
+        refresh()
+    }
+
+    private func moveFailed(_ error: Error, keeping url: URL) {
+        // Domain and code only: the description spells both song names.
+        let failure = error as NSError
+        log.error("rename move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
+        guard !failedMoveSaid else { return }
+        failedMoveSaid = true
+        let line = "The song is renamed, but its file keeps the name \(url.deletingPathExtension().lastPathComponent) for now; Echoel tries again when it next saves."
+        // Beside, not over, what the work just finished said (an export's "Exported without …").
+        lastError = lastError.map { "\($0) \(line)" } ?? line
     }
 
     /// Renders the open song to a 24-bit WAV in a temporary folder, off the main thread,
@@ -1052,14 +1084,14 @@ final class DocumentController {
             return nil
         }
         if isUnwritten { starterMadeFolder = true }
-        takeInFlight = true
+        takesInFlight.insert(id)
         return TakeTarget(id: id, path: path, url: url)
     }
 
-    /// The take `newTakeTarget` made room for did not come to be: it could not start, or ended
-    /// with nothing.
-    func takeAbandoned() {
-        takeInFlight = false
+    /// The take `newTakeTarget` made room for at `target` did not come to be: it could not
+    /// start, or ended with nothing. Another take in flight keeps the package busy.
+    func takeAbandoned(_ target: TakeTarget) {
+        takesInFlight.remove(target.id)
         followRenamedSong()
     }
 
@@ -1068,7 +1100,7 @@ final class DocumentController {
     /// `tempoMap` is the one the take was heard against — an external clock's while following one.
     func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID, tempoMap: TempoMap) async {
         defer {
-            takeInFlight = false
+            takesInFlight.remove(target.id)
             followRenamedSong()
         }
         let package = currentURL

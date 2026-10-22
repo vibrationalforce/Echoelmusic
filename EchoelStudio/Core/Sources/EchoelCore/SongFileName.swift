@@ -28,8 +28,8 @@ public struct SongFileName: Equatable, Sendable {
         !busy && isDue(for: name)
     }
 
-    /// The package follows `name` now — moved, or given up after a move that failed, which is said
-    /// once and not tried again on every write.
+    /// The package follows `name` now: it moved, or had nothing on disk to move. A move that
+    /// failed is not followed, so the next write tries it again.
     public mutating func followed(_ name: String) {
         followedName = name
     }

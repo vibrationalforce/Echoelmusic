@@ -20,6 +20,13 @@ public struct ProjectLibrary: Sendable {
         case notAPackage(URL)
     }
 
+    /// A change of case that failed half way and could not go back: the package is at `url`,
+    /// under the name in between, and `underlying` is why the second step failed.
+    public struct RenameStranded: Error {
+        public let url: URL
+        public let underlying: Error
+    }
+
     public let directory: URL
 
     public init(directory: URL) {
@@ -171,7 +178,10 @@ public struct ProjectLibrary: Sendable {
                 do {
                     try files.moveItem(at: between, to: target)
                 } catch {
-                    try? files.moveItem(at: between, to: url)
+                    do { try files.moveItem(at: between, to: url) } catch {}
+                    // Back under its old name, it is as it was; otherwise the caller learns where
+                    // it is, instead of writing a second package under the old name.
+                    guard files.fileExists(atPath: url.path) else { throw RenameStranded(url: between, underlying: error) }
                     throw error
                 }
                 return target

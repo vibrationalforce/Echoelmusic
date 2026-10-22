@@ -410,7 +410,10 @@ struct SongMenu: View {
                     Button(starter.title) { documents.newSong(starter) }
                 }
             }
+            // Not while an import, an export, a take or the media load uses the package: the rename
+            // then moves it at once, and a finished export cannot take the slot from a typed name.
             Button("Rename Song…", systemImage: "pencil") { router.sheet = .renameSong }
+                .disabled(documents.packageIsBusy)
             keyAndScale
             if agent.isOffered {
                 Button("Assistant", systemImage: "text.bubble") { router.sheet = .agent }
