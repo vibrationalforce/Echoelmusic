@@ -149,6 +149,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     override var fullState: [String: Any]? {
         get {
             var state = super.fullState ?? [:]
+            state[InstrumentState.markerKey] = 1
             if acceptsSamples, let sample {
                 let frames = sample.buffer.copyFrames()
                 state[StateKey.frames] = frames.withUnsafeBufferPointer { Data(buffer: $0) }
@@ -158,7 +159,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             return state
         }
         set {
-            super.fullState = newValue
+            super.fullState = InstrumentState.forBaseRestore(newValue, subtype: componentDescription.componentSubType)
             guard acceptsSamples else { return }
             guard let data = newValue?[StateKey.frames] as? Data, let rate = newValue?[StateKey.rate] as? Double,
                   rate.isFinite, rate > 0, Double(data.count / 4) / rate <= Self.maximumSampleSeconds else {
