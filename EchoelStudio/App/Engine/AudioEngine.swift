@@ -670,18 +670,23 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
-    /// The pause and plugin notices go; Play and a finished export start a fresh status line.
+    /// The pause and plugin notices go: a finished export starts a fresh status line (a Play that
+    /// plays does the same, in `play`).
     func clearNotices() {
         notice = nil
         plugins.clearNotice()
     }
 
     func play() {
-        clearNotices()
-        onPlay?()
+        let standing = (notice, plugins.notice)
         // A heal that failed leaves nothing rendering. The transport must not run over it: a
         // retry that succeeds later (the call ended) would start the song by itself.
         guard canPlay(), let core else { return }
+        // Only a Play that plays starts a fresh status line; one refused leaves every line that
+        // still says why (round 4). What the heal itself raised is newer than the Play, and stays.
+        if notice == standing.0 { notice = nil }
+        if plugins.notice == standing.1 { plugins.clearNotice() }
+        onPlay?()
         core.play()
         isPlaying = true
     }
