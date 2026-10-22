@@ -751,6 +751,8 @@ final class InstrumentPatchTests: XCTestCase {
         let snapshot = EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project,
                                       slots: { var s = SlotAssigner(capacity: 4); s.update(for: project); return s.slots }(),
                                       sampleRate: 48_000, generation: 1)
-        XCTAssertEqual(snapshot.lanes.map(\.patch.waveform), [.sine, .square])
+        // The waveform's address in the synth kernel: 0 is sine, 2 square.
+        let waveform = try XCTUnwrap(SynthParameter.all.firstIndex { $0.key == SynthParameter.waveform.key })
+        XCTAssertEqual(snapshot.lanes.map { $0.synthValues[waveform] }, [0, 2])
     }
 }

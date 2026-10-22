@@ -14,7 +14,6 @@ public struct EngineSnapshot: Sendable {
         public let events: [PlaybackPlan.NoteEvent]
         public let gainLeft: Float
         public let gainRight: Float
-        public let patch: SynthPatch
         /// The track's synth values in `SynthParameter.all` order — the addresses of `SynthKernel`
         /// — for every lane, whatever it plays, so the synth keeps its sound across a detour
         /// through another instrument.
@@ -308,7 +307,7 @@ public struct EngineSnapshot: Sendable {
                 Float(track.instrument.value(parameter))
             }
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
-                        patch: SynthPatch(track.instrument), synthValues: synthValues, device: track.instrument.device,
+                        synthValues: synthValues, device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,

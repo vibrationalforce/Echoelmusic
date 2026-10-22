@@ -4,10 +4,11 @@ import EchoelDSP
 import XCTest
 @testable import EchoelEngine
 
-/// How the three built-in instruments sound through the engine today, pinned before the engine
-/// plays them through kernels (S-26, D2). Each expected output is the DSP voice driven directly
-/// with the planned events at their samples, times the track's fader gain — never a pasted
-/// recording, so the pin holds on every platform the DSP gives the same samples on.
+/// How the three built-in instruments sound through the engine, pinned before the engine played
+/// them through kernels (S-26 D2) and kept since. Each expected output is the DSP voice driven
+/// directly with the planned events at their samples, times the track's fader gain — never a
+/// pasted recording and never the engine's own kernel, so the pin holds on every platform the DSP
+/// gives the same samples on, and a kernel that stops sounding like its voice goes red here.
 final class InstrumentPathTests: XCTestCase {
     private let rate = 48_000.0
     private let bar = MusicalTime.ticksPerBar(.common)
