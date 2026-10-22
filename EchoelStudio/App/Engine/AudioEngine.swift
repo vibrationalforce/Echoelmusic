@@ -923,7 +923,8 @@ final class AudioEngine {
         }
         let snapshot = EngineSnapshot(plan: plan, project: project,
                                       slots: slots.slots, sampleRate: core.sampleRate, generation: generation,
-                                      samples: samples, units: plugins.units, effects: plugins.chains,
+                                      samples: samples, units: plugins.units,
+                                      effects: plugins.chains.mapValues { $0 as [any HostedProcessor] },
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
                                       monitoring: monitoring(in: project), masterEffects: plugins.masterChain)
         meterIndices = core.meterIndices(for: snapshot)

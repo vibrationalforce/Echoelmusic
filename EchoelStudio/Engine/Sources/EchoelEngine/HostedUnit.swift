@@ -2,16 +2,6 @@ import AudioToolbox
 import AVFoundation
 import Foundation
 
-/// A hosted unit whose parameters automation moves. The ranges are read once, on the main
-/// thread; `schedule` is called on the render thread, for the unit's next render call.
-public protocol ParameterScheduling: AnyObject, Sendable {
-    /// The unit's writable parameters by address, each with its range.
-    var parameterRanges: [UInt64: ClosedRange<Float>] { get }
-    /// Moves `address` to `value`, `offset` frames into the next render call, gliding over
-    /// `ramp` frames where the unit can.
-    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int)
-}
-
 /// An Audio Unit instrument the engine plays from inside its own render pass: the sequencer
 /// schedules each note through the unit's MIDI block at its exact frame in the block, then the
 /// unit renders the block into buffers allocated here. One graph, one render thread, the same
@@ -20,7 +10,7 @@ public protocol ParameterScheduling: AnyObject, Sendable {
 /// Built on the main thread from a unit whose render resources are allocated at the engine's
 /// rate. The render thread only calls the two blocks and writes the buffers; it allocates
 /// nothing and never releases the last reference (the snapshot that holds this keeps it).
-public final class HostedUnit: ParameterScheduling, @unchecked Sendable {
+public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     public let sampleRate: Double
     public let maximumFrames: Int
     public let parameterRanges: [UInt64: ClosedRange<Float>]
@@ -64,16 +54,16 @@ public final class HostedUnit: ParameterScheduling, @unchecked Sendable {
     // MARK: - Render thread
 
     /// A note-on `offset` frames into the next `render` call, on MIDI channel 1.
-    func noteOn(pitch: UInt8, velocity: UInt8, offset: Int) {
+    public func noteOn(pitch: UInt8, velocity: UInt8, offset: Int) {
         send(0x90, pitch & 0x7F, Swift.max(1, velocity & 0x7F), offset: offset)
     }
 
-    func noteOff(pitch: UInt8, offset: Int) {
+    public func noteOff(pitch: UInt8, offset: Int) {
         send(0x80, pitch & 0x7F, 0, offset: offset)
     }
 
     /// A pitch bend or controller, `offset` frames into the next `render` call.
-    func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int = 0) {
+    public func control(status: UInt8, _ data1: UInt8, _ data2: UInt8, offset: Int = 0) {
         let kind = status & 0xF0
         guard kind == 0xB0 || kind == 0xE0 else { return }
         send(kind, data1 & 0x7F, data2 & 0x7F, offset: offset)
@@ -81,7 +71,7 @@ public final class HostedUnit: ParameterScheduling, @unchecked Sendable {
 
     /// All Notes Off (controller 123), with the pedal lifted and the wheel centred, at the start
     /// of the next `render` call — a stop in the middle of a bent, held phrase leaves neither.
-    func allNotesOff() {
+    public func allNotesOff() {
         send(0xB0, 64, 0, offset: 0)
         send(0xE0, 0, 0x40, offset: 0)
         send(0xB0, 123, 0, offset: 0)
@@ -103,8 +93,8 @@ public final class HostedUnit: ParameterScheduling, @unchecked Sendable {
 
     /// Renders `frames` and adds them into `left` and `right` at the lane's gains. A unit that
     /// fails a block, or returns a value that is not finite, contributes nothing for that frame.
-    func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
-                gainLeft: Float, gainRight: Float) {
+    public func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
+                       gainLeft: Float, gainRight: Float) {
         guard frames > 0, frames <= maximumFrames else { return }
         let bytes = UInt32(frames * MemoryLayout<Float>.size)
         list[0] = AudioBuffer(mNumberChannels: 1, mDataByteSize: bytes, mData: UnsafeMutableRawPointer(leftBuffer))

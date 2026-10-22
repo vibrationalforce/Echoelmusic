@@ -934,7 +934,7 @@ public final class EngineCore: @unchecked Sendable {
                 if off { unit.noteOff(pitch: pitch, offset: 0) }
                 // Every controller reaches the plugin as played — the mod wheel, expression,
                 // the pedal — as a host passes them (S-16b).
-                if allOff { unit.allNotesOff() } else if bend || kind == 0xB0 { unit.control(status: status, pitch, value) }
+                if allOff { unit.allNotesOff() } else if bend || kind == 0xB0 { unit.control(status: status, pitch, value, offset: 0) }
             case .unrecognized:
                 break
             }

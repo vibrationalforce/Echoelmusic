@@ -604,7 +604,8 @@ final class DocumentController {
                 var meter = LoudnessMeter(sampleRate: rate)
                 do {
                     _ = try OfflineRender.render(project, sampleRate: rate, samples: buffers, units: offline.units,
-                                                 effects: offline.chains, masterEffects: offline.masterChain) { left, right, count in
+                                                 effects: offline.chains.mapValues { $0 as [any HostedProcessor] },
+                                                 masterEffects: offline.masterChain) { left, right, count in
                         try writer.append(left: left, right: right, count: count)
                         meter.process(left: left, right: right, count: count)
                     }

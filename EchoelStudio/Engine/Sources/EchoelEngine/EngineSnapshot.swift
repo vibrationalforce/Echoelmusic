@@ -20,9 +20,9 @@ public struct EngineSnapshot: Sendable {
         /// lives exactly as long as a snapshot that can still reach the render thread.
         public let sample: SampleBuffer?
         /// The loaded Audio Unit a plugin lane plays, held like the sample.
-        public let unit: HostedUnit?
+        public let unit: (any HostedInstrument)?
         /// The track's insert effects, in order, held like the unit.
-        public let inserts: [HostedEffect]
+        public let inserts: [any HostedProcessor]
         public let sends: [SendTap]
         /// First interface channel of the pair the lane plays on, or −1 for the master mix.
         public let output: Int
@@ -132,7 +132,7 @@ public struct EngineSnapshot: Sendable {
         public let bus: Int
         public let gainLeft: Float
         public let gainRight: Float
-        public let inserts: [HostedEffect]
+        public let inserts: [any HostedProcessor]
         public let output: Int
         public let mix: MovingMix?
     }
@@ -148,7 +148,7 @@ public struct EngineSnapshot: Sendable {
         public let gainRight: Float
         /// Sorted by `startSample`. Overlapping regions both sound.
         public let regions: [Region]
-        public let inserts: [HostedEffect]
+        public let inserts: [any HostedProcessor]
         public let sends: [SendTap]
         public let output: Int
         public let mix: MovingMix?
@@ -196,7 +196,7 @@ public struct EngineSnapshot: Sendable {
     public let unitAutomation: [UnitAutomation]
     /// The master's loaded, active insert effects in order, run on the master pair after
     /// everything is mixed into it.
-    public let masterEffects: [HostedEffect]
+    public let masterEffects: [any HostedProcessor]
 
     /// `samples` holds the loaded buffer of every media file a sampler track may play; a
     /// file that is missing or not yet loaded leaves its track silent.
@@ -207,10 +207,10 @@ public struct EngineSnapshot: Sendable {
     /// `revisions` numbers each track's events (`EventRevisions`); without one, every snapshot
     /// counts as an edit of the track.
     public init(plan: PlaybackPlan, project: Project, slots: [TrackID: Int], sampleRate: Double, generation: UInt64,
-                samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                effects: [TrackID: [HostedEffect]] = [:], outputChannels: Int = 2,
+                samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
+                effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
-                masterEffects: [HostedEffect] = []) {
+                masterEffects: [any HostedProcessor] = []) {
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
         let masterChain = masterEffects.filter { $0.sampleRate == sampleRate }
         self.masterEffects = masterChain

@@ -39,8 +39,8 @@ public enum OfflineRender {
     /// the streaming form.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
-                              samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                              effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = []) -> Result {
+                              samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
+                              effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = []) -> Result {
         var left: [Float] = [], right: [Float] = []
         let summary = render(project, sampleRate: sampleRate, tailSeconds: tailSeconds, ringOutSeconds: ringOutSeconds,
                              samples: samples,
@@ -55,8 +55,8 @@ public enum OfflineRender {
     /// two blocks of memory. `write` may throw to stop; the render stops with it.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
                               ringOutSeconds: Double = OfflineRender.maximumRingOutSeconds,
-                              samples: [MediaID: SampleBuffer] = [:], units: [TrackID: HostedUnit] = [:],
-                              effects: [TrackID: [HostedEffect]] = [:], masterEffects: [HostedEffect] = [],
+                              samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
+                              effects: [TrackID: [any HostedProcessor]] = [:], masterEffects: [any HostedProcessor] = [],
                               blockFrames: Int = 16_384,
                               into write: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) rethrows -> Summary {
         let plan = PlaybackPlan(compiling: project)

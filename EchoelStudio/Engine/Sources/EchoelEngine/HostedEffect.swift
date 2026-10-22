@@ -9,7 +9,7 @@ import Foundation
 ///
 /// Built on the main thread from a unit whose render resources are allocated at the engine's
 /// rate. The render thread only calls the blocks and writes buffers allocated here.
-public final class HostedEffect: ParameterScheduling, @unchecked Sendable {
+public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     public let sampleRate: Double
     public let maximumFrames: Int
     /// A bypassed effect is skipped; the bus passes through unchanged.
@@ -83,7 +83,7 @@ public final class HostedEffect: ParameterScheduling, @unchecked Sendable {
 
     /// Replaces `frames` of the bus with the effect's output. A unit that fails a block leaves
     /// the bus as it was; a sample that is not finite becomes silence.
-    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    public func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
         guard !isBypassed, frames > 0, frames <= maximumFrames else { return }
         inLeft = left
         inRight = right
