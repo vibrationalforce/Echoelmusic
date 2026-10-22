@@ -101,6 +101,19 @@ struct ToolButtonStyle: ButtonStyle {
     var activeColor: Color = Theme.Color.accent
 
     func makeBody(configuration: Configuration) -> some View {
+        ToolButtonFace(configuration: configuration, isActive: isActive, activeColor: activeColor)
+    }
+}
+
+/// The style's look, in a view of its own so it can read whether the button is enabled: a
+/// disabled Record, Undo or Play is dimmed instead of looking tappable (audit 2026-10-23).
+private struct ToolButtonFace: View {
+    let configuration: ButtonStyleConfiguration
+    let isActive: Bool
+    let activeColor: Color
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
         configuration.label
             .font(Theme.Font.label)
             .foregroundStyle(isActive ? Theme.Color.background : Theme.Color.text)
@@ -114,7 +127,7 @@ struct ToolButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: Theme.Radius.medium)
                     .stroke(Theme.Color.border, lineWidth: isActive ? 0 : 1)
             )
-            .opacity(configuration.isPressed ? 0.7 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
