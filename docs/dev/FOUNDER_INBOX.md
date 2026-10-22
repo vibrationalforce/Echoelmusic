@@ -186,6 +186,15 @@ verfallen sie mit der Sitzung):
 | SR4 | App starten, sobald der Song sichtbar ist (1–2 s) zum Home-Bildschirm, im App-Umschalter wegwischen, neu starten. | Derselbe Song öffnet normal; KEIN „Echoel did not finish starting last time“. Kommt der Satz doch, sag nach wie vielen Sekunden du gewischt hast (bekannte Restlücke: wer wischt, bevor die Audiodateien des Songs fertig geladen sind). | [ ] |
 | SR5 | Nur falls die alte Echoelmusic-App mit Songs auf dem Gerät war: Studio-Build installieren, starten, 15 s warten. Dann während des Imports (bei vielen Songs) einmal den App-Umschalter öffnen und wieder zurück. Optional mit Xcode: im Debugger nach dem Schreiben eines Songs anhalten (`DocumentController.runImport`, nach `bring`) und die App beenden, neu starten. | Jeder alte Song kommt GENAU einmal an (kein „Name 2“), die Statuszeile sagt, wie viele; ein Song, der nicht gespeichert werden konnte, wird mit Namen genannt, mit dem Satz „The earlier app's files are not changed.“ und einem × zum Ausblenden. | [ ] |
 
+⭐ **2026-10-22: Echoel Studio — Familie „SN“ (Song-Name) für den nächsten Studio-Build nach `99c4835b7`** (Factory-Job 006 „Song umbenennen“, freigegeben in Runde 3, `wf_9e31f7a2-0a8`; Kriterium 7 der Spec). Vier Schritte, ~5 Minuten, Gates-grün und gerät-unbestätigt. Sie ersetzt SP und SR NICHT; die drei sind die Familien dieses Builds und zugleich das WIP-Limit 3 (Regel 3). Quelle: `scratchpads/factory/006-rename-song/spec.md`.
+
+| # | Schritt | Erwartet | Antwort |
+|---|---|---|---|
+| SN1 | Einen Song mit einer Audio- oder Sampler-Spur öffnen. ≡ → „Rename Song…“, einen neuen Namen tippen, „Rename“. Dann ≡ → „Open“ und die Dateien-App (Auf meinem iPhone → Echoel Studio). | Die Kopfzeile zeigt den neuen Namen sofort; „Open“ listet ihn mit Häkchen; in Dateien heißt das Paket so. Kein zweites Paket unter dem alten Namen. | [ ] |
+| SN2 | App im App-Umschalter wegwischen, neu starten. | Derselbe Song öffnet unter dem neuen Namen, die Audio-Spur klingt. | [ ] |
+| SN3 | Kopf → Undo. Einen Moment warten (oder etwas ändern und zurück), dann „Open“ und Dateien. | Kopfzeile, „Open“ und das Paket in Dateien tragen wieder den alten Namen. | [ ] |
+| SN4 | Nur die Schreibweise ändern: „beat“ → „Beat“ (oder umgekehrt). Dann Dateien. | Genau EIN Paket, in der neuen Schreibweise — kein „Beat 2“, kein „renaming“ im Namen. | [ ] |
+
 **G1–G5 gelten ab 10.79.491** (Deploy 2026-10-04; Build-Nummer = Nummer des TestFlight-Laufs). ⭐ Neuester TestFlight-Build, gemessen 2026-10-11: **10.79.496 = Build 2621** (Lauf 2621 grün, 2026-10-09); G6–G8 kamen mit 10.79.492, G9 mit 10.79.494/495. ⛔ Hier stand „Gilt für 10.79.491“, fünf Deploys lang (GMMW CL-4). Neu seit
 10.79.490: der Raum reist mit dem Stück (A3a), der Licht-Look gehört dem Stück (P2), ein
 fehlgeschlagenes Sichern ersetzt nichts mehr (P3a), und die einheitliche Gestaltung F1–F6b.

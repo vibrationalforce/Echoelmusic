@@ -1,7 +1,7 @@
 {
  "id": "006-rename-song",
  "title": "Song umbenennen (Paket und innerer Name)",
- "stage": "review",
+ "stage": "done",
  "round": 3,
  "base": "1f763674e89b703bf8e988165d326490695ae05e",
  "lenses": [
@@ -57,8 +57,20 @@
    "stage": "review",
    "date": "2026-10-22",
    "note": "Runde 3 (die letzte, genehmigt oder eskaliert) auf 99c4835b7, gestartet als wf_9e31f7a2-0a8 nach grünem CI: Linux 39815611487 success; macOS-Dispatch 39816358103 success (Core 285, DSP 72, Engine 182 Tests ohne Fehler, testAFileNameStaysWithinTheFileSystemLimit bestanden; App iPhone+iPad mit Start-Test grün). Der Push-Lauf 39815611610 wurde vom Dispatch abgelöst."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-22",
+   "note": "Runde 3 (wf_9e31f7a2-0a8): APPROVE — alle 8 Kriterien benotet, jedes Code-Kriterium erfüllt, eigene Zählung des Approvers 8 / [7] / 0 gleich der des PM; vier Linsen PASS. Gates tragen: Echoel Studio 39816358103 und Linux 39815611487 auf dem Kopf 99c4835b7, danach nur scratchpads/ geändert. Kriterium 7 als Familie SN in FOUNDER_INBOX §2. Acht Minor-Befunde gemessen, alle bestätigt, keiner blockiert; sie gehen als Reparatur-Job 007 weiter (Rennen mit dem Altsong-Import im Rückweg, gestrandetes Paket nach Undo, Wiederöffnen nach gelungenem Wiederholen, Fehlerzeile nicht ersetzt, VoiceOver der Längen-Zeile). Kriterium 1 sagt „unter 200 Bytes in jeder Schreibweise“; gebaut ist: der Stamm höchstens 200 Bytes, jede Schreibweise (nummeriert bis ~206, Zwischenname bis ~231) unter den 255 eines Dateinamens — die Eigenschaft, die A7 schützt, hält; der Wortlaut ist stärker als der Wächter. Protokolle aller drei Runden je Linse unter reviews/ (Runden 1 und 2 aus den Journalen nachgetragen)."
   }
  ],
  "head": "99c4835b7157abd5ac481e7d408d3b85fdfecd7a",
- "since": "84064334258aee2d8317912b3a0b7aaef597bb4d"
+ "since": "84064334258aee2d8317912b3a0b7aaef597bb4d",
+ "deviceOpen": [
+  {
+   "ask": "Kriterium 7: umbenennen, Kopf/Open/Dateien zeigen den Namen, Neustart öffnet mit Audio, Undo nimmt alles zurück, Schreibweisen-Änderung lässt ein Paket",
+   "inbox": "§2 Familie SN (SN1–SN4)",
+   "verified": null
+  }
+ ]
 }
