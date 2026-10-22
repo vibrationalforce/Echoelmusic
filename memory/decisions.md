@@ -5632,3 +5632,12 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Grenze:** Ein CC 120 aus einem fremden Host geht über `receive` und lässt die Controller stehen (MIDI-Bedeutung von All Sound Off). CC 121 gleitet weiter. Die D2.1-Prüfung „reset ≡ CC 120“ bleibt wahr, weil sie nur die Stille vergleicht.
 - **Belegt:** `InstrumentPathTests.testASlotHandedToANewTrackStartsWithTheControllersAtRest` (zwei Engines, nur eine mit bewegten Rädern davor, die Note danach bit-gleich) und `PolySynthTests.testAfterResetAndResetControllersTheNextNoteSoundsAsOnAFreshSynth`. Nicht am Gerät gehört.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Studio-Engine: ein Instrumentenpfad, die eingebauten Kerne aus einem Register (S-26 D2.2–D2.4)
+
+- **Entscheidung:** `EngineCore` spielt Synth, Drums und Sampler nur noch über Kerne, die `BuiltInKernels.kernel(for:sampleRate:maximumFrames:)` (in `EchoelKernels`) baut, einen je Slot und eingebautem Gerät, in der Reihenfolge von `InstrumentDevice.builtIn`. Ereignisse gehen als rohe MIDI-Bytes an den Kern, und der Kern entscheidet, was er hört. Den Sample bekommt nur ein `SampleAssigningKernel` (heute der Sampler). `EngineCore` nennt keinen Kern-Typ mehr. Der alte Pfad (`InstrumentPath`, die Patch-Kopie je Lane) ist gelöscht.
+- **Warum:** Die Engine trug für jedes Instrument eine eigene Kopie des Wegs, den das Plugin schon ging. Jede Synth-Änderung war zweimal zu bauen und konnte auseinanderlaufen. Ein neues eingebautes Instrument ist jetzt ein Kern, ein Eintrag im Register und eine Zeile in Cores Gerätetabelle.
+- **Belegt:** Das Orakel `InstrumentPathOracleTests` (D2.2, ein Commit lang alter und neuer Pfad nebeneinander) war in CI auf `d9d77c3bd` bit-gleich, erst danach wurde der alte Pfad entfernt (D2.3). Das Register pinnt `BuiltInKernelsTests` (jedes Gerät hat einen Kern mit seiner Tabelle; Plugin und unbekanntes Gerät haben keinen; nur der Sampler nimmt einen Sample; das Kit startet bei 1).
+- **Aus der Prüfrunde wf_6a70ee84-7b7:** Ein Auswahlwert (Wellenform) aus einer Automation wird in Double gerundet, bevor er zu Float wird, weil `Float(0.49999999) == 0.5` sonst Säge statt Sinus spielt (`92f40c1bd`). Kit- und Sampler-Reset, ihre Live-Wege und eine Klangänderung unter gehaltener Note sind seit `10656831a` gepinnt; das Orakel hatte sie nicht sehen können.
+- **Nicht belegt:** Kein Ohr am Gerät auf dem Kern-Pfad.
+- **Review:** 2026-11-21.
