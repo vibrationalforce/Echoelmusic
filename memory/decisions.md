@@ -5593,3 +5593,13 @@ Review 2026-11-15.
 - **Gemessen, nicht geglaubt:** Signier-Probe Lauf 4 (39591787947) fand den Haken an `com.echoelmusic.app.auv3` statt an der App; Lauf 5 (39647016707, `7c0760edc`, 21.10. 17:52 UTC) zeigt beide Gruppen in allen vier Profilen (Entwicklung und App Store, App und Erweiterung) und das signierte Echoel.app mit beiden.
 - **Was offen bleibt:** der Import wirkt erst ab dem nächsten TestFlight-Build und ist auf keinem Gerät geprüft (F-18). Ob `testflight.yml` die Alt-App wieder signiert, ist nicht gemessen. Gestanden haben veraltet: der Kommentar in `EchoelStudio/project.yml` (Zeilen 86–87, 98–99; founder-gated, nur berichtet) und Zeile 63 in `EchoelStudio/RELEASE` (wird mit dem nächsten Bump neu geschrieben — jede Änderung dort lädt hoch).
 - **Review:** 2026-11-20.
+
+### 2026-10-22 — Studio: alte Songs nach Inhalt, Start ohne Untergrenze, Statuszeile ohne Verdecken, Hintergrund nur mit Grund
+
+Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des Tages.
+- **Import alter Songs:** ein Song heißt nach einem Inhalts-Digest (FNV-1a 64, jeder Teil mit 8-Byte-Längenpräfix; `"t"`+Timeline+Clips für den offenen Song, `"r"`+Name+BPM+Session für eine Bibliothekszeile), nie nach seinem Platz. Beide Orte werden gelesen; abgeschlossen wird nur, wenn der App-Group-Container sichtbar war und jede vorhandene Datei lesbar. Nur unterbrochene Läufe zählen gegen `attemptLimit`; ein Schreibfehler wird bei jedem Start erneut versucht. Ein reservierter Paketname plus Song-Schlüssel bleiben in den Defaults, bis die Marke gespeichert ist. Pausiert wird auch bei `.inactive` (App-Umschalter).
+- **Startbestätigung:** die 3-s-Untergrenze beim Verlassen ist weg; ein verlassener Start gilt als gesund, sobald der geöffnete Song seine Medien geladen hat. Restlücke, benannt: wer wischt, bevor die Medien geladen sind.
+- **Speichern und Statuszeile:** ein gescheitertes Speichern behält den Song offen und hat sein eigenes Feld (`saveError`); Play löscht Meldungen nur, wenn es spielt; MIDI Learn verdeckt nichts; Audio- und Dokumentfehler je eine Zeile; die Warnung über alte Songs nennt Namen, bleibt bis zum × oder bis ein Lauf alles bringt, und ihr Start-Teil löscht kein Lauf. Der Export nennt fehlende Plugins UND unlesbare Audiodateien.
+- **Hintergrund:** eine gefolgte MIDI-Clock hält die Engine nur wach, solange ihre Quelle verbunden ist (2.5.4). Media-Reset, Media-Verlust und Interruption pausieren mit Satz; ein Reset spielt nie von selbst weiter; ein spätes Interruption-Ende baut eine laufende Engine nicht neu.
+- **Alles compile-only**, gerätegeprüft mit Familie SR (`docs/dev/FOUNDER_INBOX.md` §2) im nächsten Studio-Build.
+- **Review:** 2026-11-21.
