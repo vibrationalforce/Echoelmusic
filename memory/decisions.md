@@ -5672,3 +5672,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Entscheidung:** `PlaybackPlan.resolvingOverlaps` sortiert gleiche Starts kürzer zuerst, damit die längere Note überlebt; ein Take, der eine Tonhöhe im selben Tick beendet und neu anschlägt, nimmt EINE gehaltene Note auf statt eines Stummels.
 - **Warum:** Vorher gewann die kürzere, und ein Stummel der Länge 0–1 Tick schnitt die gehaltene Note ab. Prüfrunde `wf_8fcbf4e4-8b0`.
 - **Review:** 2026-11-21.
+
+### 2026-10-22 — Förderung: Installation und Software getrennt, Tauchfliege raus
+
+- **Entscheidung:** Die bestehende vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) wird über eine Medienproduktion (Video 60–90 s, 8–12 Fotos, barrierearm) bei der Hamburger Förderung „Inklusive Projekte“ beantragt. Der Prototype Fund bleibt reine Software, Förderobjekt unverändert EchoelSense + EchoelIO (FOERDERUNG §4). Die Tauchfliege ist ein altes, getrenntes Konzept und steht in keinem Text.
+- **Warum:** Founder-Übergabe 22.10. Der Prototype Fund fördert nur Software-Arbeitsstunden; eine Vermischung würde F12 („keine andere öffentliche Förderung für das Förderobjekt“) und die Abgrenzung des Förderobjekts gefährden. Bio-Composer und Agent-Desk der älteren App bleiben Bestand, nicht Förderobjekt — die Jury liest Datensicherheit und Infrastruktur (§1b). Entwürfe (Mail, Antragstexte, Finanzskizze) liegen im privaten Claude Doc, nicht im Repo.
+- **Review:** 2026-11-21.

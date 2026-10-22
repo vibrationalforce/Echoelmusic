@@ -343,7 +343,7 @@ es keine gibt.
 ⛔ **Abgelöst und nicht mehr Plan:** das „Echoel Live“-Jahresabo und die Gebühr pro Veranstaltung
 vom 2026-07-10 (seit 2026-10-17 durch den Einmalkauf ersetzt, `decisions.csv`).
 
-**Die Hardware-Linie** (Liege mit Körperschallwandlern, Tauchflieger) ist ein eigenes Projekt. Sie
+**Die Hardware-Linie** (die bestehende vibrierende Installation mit Wasser-Pontons und Sofa; die Tauchflieger werden seit 2026-10-22 nicht mehr verfolgt) ist ein eigenes Projekt. Sie
 hängt über OSC oder DMX an Echoel, sie bekommt keinen Umbau der App und steht nie in Produkt-Kopie.
 
 ---

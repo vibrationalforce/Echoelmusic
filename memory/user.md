@@ -31,6 +31,10 @@
   Tauchfliegen sind die eigentliche Hardware die ich entwickeln will"). Erklärte
   Hardware-Richtung, eigenes Projekt — für die APP weiterhin North Star: kein Code,
   keine Produkt-Copy, kein Roadmap-Platz.
+  ⛔ **Founder 2026-10-22 (Förder-Übergabe), ersetzt den Satz darüber:** die Tauchfliege ist ein
+  altes, getrenntes Konzept (CAD-Pläne) und wird NICHT weiterverfolgt; sie steht in keinem
+  Förder- oder Antragstext. Gemeint ist ab jetzt nur die BESTEHENDE vibrierende Installation
+  (Wasser-Pontons + vibrierendes Sofa) für inklusive Musikwahrnehmung.
 - **VAPORWAVE PALACE** — der NAME der Vibrations-Installations-Linie (Founder 2026-09-11) und der
   Dachbegriff, unter dem Liege und Tauchflieger stehen. **Mission, wörtlich: „Ein inklusiver Ansatz
   um Musik für Menschen mit Einschränkungen erfahrbarer zu machen."** ⚠️ Das ist ZUGÄNGLICHKEIT,
