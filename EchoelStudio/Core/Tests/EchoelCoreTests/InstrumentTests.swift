@@ -55,6 +55,36 @@ final class InstrumentTests: XCTestCase {
         XCTAssertEqual(initial, expected, "Init stores no synth value and keeps the rest")
     }
 
+    /// The preset's name says "edited" once a synth value moves from what the preset loaded, and
+    /// no longer once it is back.
+    func testAPresetReadsEditedOnceAValueMovesAndNotWhenItIsBack() throws {
+        var (project, keys, _) = try project()
+        let index = try XCTUnwrap(project.tracks.firstIndex { $0.id == keys })
+        let cutoff = ParameterAddress(.track(keys), SynthParameter.cutoff.key)
+        func set(_ value: Double) throws {
+            try XCTUnwrap(Command.setParameter(cutoff, to: value)).apply(to: &project)
+        }
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset, "a new track plays Init")
+        try set(2_000)
+        XCTAssertTrue(project.tracks[index].instrument.isEditedFromPreset)
+        try set(SynthParameter.cutoff.defaultValue)
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset, "back at Init's own value")
+
+        try Command.loadInstrumentPreset(keys, name: "Pluck").apply(to: &project)
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset)
+        try set(400)
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset, "Pluck's own cutoff")
+        try set(401)
+        XCTAssertTrue(project.tracks[index].instrument.isEditedFromPreset)
+
+        try Command.loadInstrumentPreset(keys, name: "Pluck").apply(to: &project)
+        project.tracks[index].instrument.values["synth.future"] = 1
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset, "a later build's value sounds nothing here")
+        project.tracks[index].instrument.preset = "Later"
+        try set(401)
+        XCTAssertFalse(project.tracks[index].instrument.isEditedFromPreset, "a preset this build does not know")
+    }
+
     func testAParameterChangeIsStoredAndReadThroughItsAddress() throws {
         var (project, keys, _) = try project()
         let address = ParameterAddress(.track(keys), SynthParameter.cutoff.key)

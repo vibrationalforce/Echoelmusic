@@ -166,13 +166,16 @@ struct SoundPanel: View {
             HStack {
                 Text("Preset").foregroundStyle(Theme.Color.textSecondary)
                 Text(track.instrument.preset).foregroundStyle(Theme.Color.text)
+                if track.instrument.isEditedFromPreset {
+                    Text("· edited").foregroundStyle(Theme.Color.textSecondary)
+                }
                 Image(systemName: "chevron.down").foregroundStyle(Theme.Color.textSecondary)
                     .accessibilityHidden(true)
             }
             .font(Theme.Font.body)
             .frame(minHeight: Theme.Size.touch)
         }
-        .accessibilityLabel("Preset \(track.instrument.preset)")
+        .accessibilityLabel("Preset \(track.instrument.preset)\(track.instrument.isEditedFromPreset ? ", edited" : "")")
 
         waveformPicker
 

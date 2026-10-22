@@ -66,6 +66,16 @@ public struct InstrumentSettings: Codable, Equatable, Sendable {
     public func value(_ parameter: SynthParameter) -> Double {
         values[parameter.key.rawValue] ?? parameter.defaultValue
     }
+
+    /// Whether the synth sounds other than its preset: a value moved since the preset loaded.
+    /// Compared as the synth plays them, so a value turned back to the preset's own reads as the
+    /// preset again, and a synth value only a later build knows changes nothing here. False for
+    /// a preset this build does not know: there is nothing to compare with.
+    public var isEditedFromPreset: Bool {
+        guard let loaded = InstrumentPreset.named(preset) else { return false }
+        let preset = InstrumentSettings(values: loaded.values)
+        return SynthParameter.all.contains { value($0) != preset.value($0) }
+    }
 }
 
 /// The built-in instruments. Stored by name in the song; never rename a case.
