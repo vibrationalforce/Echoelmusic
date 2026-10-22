@@ -53,6 +53,9 @@ final class AudioEngine {
     /// `endTake` is still writing the last take out: its recorder, ring and drain are in use, so
     /// a new take cannot start on them yet.
     @ObservationIgnored private var takeEnding = false
+    /// A pause from outside ended the running take (`onPausedFromOutside`), and `endTake` has not
+    /// run yet: an input that fails to reopen in that gap did not end it, so it says nothing of it.
+    @ObservationIgnored private var takeEndsFromOutside = false
     /// Which reading of the engine's meters shows each track, as of the last snapshot.
     @ObservationIgnored private var meterIndices: [TrackID: Int] = [:]
     @ObservationIgnored private var core: EngineCore?
@@ -74,6 +77,7 @@ final class AudioEngine {
     @ObservationIgnored private var configurationObserver: NSObjectProtocol?
     @ObservationIgnored private var interruptionObserver: NSObjectProtocol?
     @ObservationIgnored private var resetObserver: NSObjectProtocol?
+    @ObservationIgnored private var lostObserver: NSObjectProtocol?
     @ObservationIgnored private var routeObserver: NSObjectProtocol?
     /// The loaded Audio Unit instruments. Owned here because a unit is only valid at the rate
     /// of the graph this class builds.
@@ -139,9 +143,11 @@ final class AudioEngine {
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             let type = raw.flatMap(AVAudioSession.InterruptionType.init(rawValue:))
             MainActor.assumeIsolated {
+                guard let self else { return }
                 switch type {
-                case .began: self?.pauseFromOutside(nil)
-                case .ended: self?.resume(after: "interruption ended")
+                case .began:
+                    self.pauseFromOutside(self.isPlaying ? "Paused: a call, Siri or another app took the audio." : nil)
+                case .ended: self.resume(after: "interruption ended")
                 default: break
                 }
             }
@@ -166,9 +172,21 @@ final class AudioEngine {
             forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.pauseFromOutside(nil)
-                self?.replaceEngine()
-                self?.resume(after: "media services reset")
+                guard let self else { return }
+                // Only paused, never played on: the musician starts it again (round 4, C6).
+                self.pauseFromOutside(self.isPlaying ? "Paused: the audio system restarted. Press Play to go on." : nil)
+                self.replaceEngine()
+                self.resume(after: "media services reset")
+            }
+        }
+        // The audio system went away; `mediaServicesWereResetNotification` follows when it is back.
+        lostObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.mediaServicesWereLostNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.log.info("engine: media services lost")
+                self.pauseFromOutside(self.isPlaying ? "Paused: the audio system stopped. Echoel picks it up again when it is back." : nil)
             }
         }
     }
@@ -227,6 +245,7 @@ final class AudioEngine {
         pausesFromOutside &+= 1
         pause()
         if let message { notice = message }
+        if take != nil { takeEndsFromOutside = true }
         onPausedFromOutside?()
         // Playing kept the engine up in the background; paused, it must not stay up silent. After
         // the caller is done: inside configure (a rate change) the graph is still being rebuilt.
@@ -240,6 +259,13 @@ final class AudioEngine {
     /// unless the engine stays up there to hear a followed clock's Start.
     private func resume(after reason: String) {
         guard wantsAudio, suspendedInput == nil, mayRebuildNow else { return }
+        // An interruption's end can come late, after the foreground return or a Play already
+        // brought the graph back: rebuilding a running engine would cut the song for nothing.
+        // A reset stopped the engine first, so it always rebuilds.
+        guard !(isRunning && engine.isRunning) else {
+            log.info("engine: \(reason, privacy: .public), already running")
+            return
+        }
         log.info("engine: \(reason, privacy: .public), rebuilding")
         recovery.reset()
         configure(input: wantsInput)
@@ -511,7 +537,7 @@ final class AudioEngine {
             if input {
                 // Our own reasons say what to change (a rate mismatch, no input); the system's do not.
                 let reason = (error as? EngineError)?.errorDescription.map { " " + $0 } ?? ""
-                let wasRecording = take != nil
+                let wasRecording = take != nil && !takeEndsFromOutside
                 configure(input: false)
                 if isRunning { lastError = "The audio input could not be opened." + reason + " Playback goes on without it." }
                 if wasRecording {
@@ -562,6 +588,7 @@ final class AudioEngine {
         // Never the engine's recorder: after a route change that is a different one, or none.
         guard let current = take else { return nil }
         take = nil
+        takeEndsFromOutside = false
         takeEnding = true
         defer { takeEnding = false }
         let recorder = current.recorder
