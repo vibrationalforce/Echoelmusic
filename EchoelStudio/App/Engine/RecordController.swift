@@ -190,6 +190,14 @@ final class RecordController {
         engine.stop()
     }
 
+    /// Before another song replaces this one: a running take ends and lands in the song it was
+    /// recorded for, and one still being committed lands too. Without this the take ended against
+    /// the next song and was lost (audit 2026-10-23).
+    func finishTakes() async {
+        await stopRecording()
+        await documents.takesSettled()
+    }
+
     /// A deleted track cannot stay armed.
     func trackRemoved(from project: Project) async {
         guard let armed = armedTrack, project.track(armed) == nil else { return }

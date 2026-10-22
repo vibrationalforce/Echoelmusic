@@ -399,6 +399,7 @@ struct SongMenu: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(MIDIInput.self) private var midi
     @Environment(DocumentController.self) private var documents
+    @Environment(RecordController.self) private var recording
     @Environment(StudioRouter.self) private var router
     @Environment(AgentSession.self) private var agent
     @Environment(ParameterWriter.self) private var writer
@@ -407,7 +408,13 @@ struct SongMenu: View {
         Menu {
             Menu("New Song", systemImage: "plus") {
                 ForEach(StarterProject.allCases, id: \.self) { starter in
-                    Button(starter.title) { documents.newSong(starter) }
+                    // A take running in this song lands in it first.
+                    Button(starter.title) {
+                        Task {
+                            await recording.finishTakes()
+                            documents.newSong(starter)
+                        }
+                    }
                 }
             }
             // Not while an import, an export, a take or the media load uses the package: the rename
@@ -501,7 +508,10 @@ struct SongMenu: View {
             Menu("Open", systemImage: "folder") {
                 ForEach(documents.songs) { song in
                     Button {
-                        documents.open(song.url)
+                        Task {
+                            await recording.finishTakes()
+                            documents.open(song.url)
+                        }
                     } label: {
                         // By path: the list spells a package with a trailing slash, and a renamed or
                         // new song's URL is built without one.

@@ -98,6 +98,8 @@ final class DocumentController {
     /// or given up (`takeAbandoned`). One per take: a take that ends while the next one starts
     /// must not free the package from under the other (review 006, round 1).
     private var takesInFlight: Set<MediaID> = []
+    /// Who waits for the last take in flight to land (`takesSettled`).
+    @ObservationIgnored private var takeWaiters: [CheckedContinuation<Void, Never>] = []
     /// The name the package follows: a renamed song moves its package to match, once nothing
     /// reads or writes into it.
     @ObservationIgnored private var fileName = SongFileName()
@@ -1132,8 +1134,25 @@ final class DocumentController {
     /// The take `newTakeTarget` made room for at `target` did not come to be: it could not
     /// start, or ended with nothing. Another take in flight keeps the package busy.
     func takeAbandoned(_ target: TakeTarget) {
-        takesInFlight.remove(target.id)
+        takeLanded(target.id)
         followRenamedSong()
+    }
+
+    /// Returns once no take is being recorded into the open song or committed to it. Another
+    /// song must not replace this one before: the take would land on a song that does not hold
+    /// its track, and its file would stay behind in this one's Media folder (audit 2026-10-23).
+    func takesSettled() async {
+        while !takesInFlight.isEmpty {
+            await withCheckedContinuation { takeWaiters.append($0) }
+        }
+    }
+
+    private func takeLanded(_ id: MediaID) {
+        takesInFlight.remove(id)
+        guard takesInFlight.isEmpty else { return }
+        let waiting = takeWaiters
+        takeWaiters = []
+        for waiter in waiting { waiter.resume() }
     }
 
     /// Turns a finished take into a region on `track`, lined up with the beat it was played to —
@@ -1141,7 +1160,7 @@ final class DocumentController {
     /// `tempoMap` is the one the take was heard against — an external clock's while following one.
     func commitTake(_ take: RecordedTake, target: TakeTarget, onto track: TrackID, tempoMap: TempoMap) async {
         defer {
-            takesInFlight.remove(target.id)
+            takeLanded(target.id)
             followRenamedSong()
         }
         let package = currentURL

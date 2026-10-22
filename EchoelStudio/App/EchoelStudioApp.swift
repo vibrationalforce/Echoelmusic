@@ -80,8 +80,14 @@ struct EchoelStudioApp: App {
                     midi.projectChanged(project)
                     Task { await recording.trackRemoved(from: project) }
                 }
-                // A song tapped in Files or received by AirDrop (E4).
-                .onOpenURL { url in documents.openIncoming(url) }
+                // A song tapped in Files or received by AirDrop (E4); a take running in the open
+                // song lands in it first.
+                .onOpenURL { url in
+                    Task {
+                        await recording.finishTakes()
+                        documents.openIncoming(url)
+                    }
+                }
         }
         .onChange(of: scenePhase) { old, phase in
             switch phase {
