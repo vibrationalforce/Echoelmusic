@@ -269,3 +269,101 @@ Gerüchte als Gerüchte, keine Gesundheits- oder Wellness-Themen.
 
 **So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo
 (Lernmodus) und trägt das Ergebnis ins Ledger ein.
+
+## Runde 4 — Donnerstag, 22.10.2026 (Stand `7fd569e65`)
+
+**Diese Runde ersetzt Runde 3.** Runde 3 war für heute vorbereitet und ist nicht verschickt; der Code ist
+seitdem weiter. Ihre Fragen, die noch offen sind, stehen hier in der Fassung für den heutigen Code
+(Start-Fehlalarm, Hintergrund-Audio, Plugin-Invalidierung, Abtastrate). Was eine interne Prüfrunde
+inzwischen selbst beantwortet hat, steht hier nicht mehr.
+
+**Was sich seit Runde 3 geändert hat:** Build 10009 (TestFlight, 21.10.). Der Import der Songs der
+früheren Echoelmusic-App ist neu gebaut: ein reiner Kern-Typ `EarlierSongImport` (14 Tests) entscheidet
+über Starts hinweg, der Lauf geht im Hintergrund-Task, pausiert zwischen zwei Songs, wenn die App den
+Vordergrund verlässt, und startet nur nach einem bestätigten Start (`518e80374..c586087ab`). Die App
+fordert seit `a14e1960a` wieder die App Group `group.com.echoelmusic` an, in der die frühere App ihre
+Songs abgelegt hat (Signier-Probe grün). Nach einem Neustart der Audio-Dienste baut die App jetzt eine
+neue `AVAudioEngine` statt die tote neu zu starten (`cb6e3b09d`). Nichts davon ist auf einem Gerät
+geprüft. Die App selbst hat kein Test-Target, nur die drei Pakete.
+
+### Auftrag an ChatGPT — kann der Import Songs verlieren, und versteht man, was er sagt?
+
+```
+Rolle: externer Code- und UX-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift 6, keine
+externen Abhängigkeiten). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic —
+Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand 7fd569e65, Verzeichnis EchoelStudio/.
+
+Lies nur diese Dateien (alle getrackt, alle öffentlich):
+- EchoelStudio/CLAUDE.md (Schichten und Gesetze)
+- EchoelStudio/Core/Sources/EchoelCore/EarlierSongImport.swift und
+  EchoelStudio/Core/Tests/EchoelCoreTests/EarlierSongImportTests.swift
+- EchoelStudio/Core/Sources/EchoelCore/LegacySong.swift (Songs, project(at:), holdsReadableSong)
+- EchoelStudio/Core/Sources/EchoelCore/LaunchRecord.swift
+- EchoelStudio/App/Documents/DocumentController.swift (restore, sceneLeft, sceneEntered,
+  armImportWait, confirmLaunch, importEarlierSongs, runImport, bring, earlierImportLaunchBegan,
+  earlierBases, earlierSongs)
+- EchoelStudio/App/Views/StudioView.swift (die Statuszeile unter der Transportleiste)
+- EchoelStudio/App/Engine/AudioEngine.swift (replaceEngine, configure, resume, wake,
+  healIfStopped, enterBackground) und EchoelStudio/App/Engine/PluginHost.swift
+  (mediaServicesReset, unitStopped)
+- EchoelStudio/Support/App/EchoelStudio.entitlements,
+  EchoelStudio/Support/Plugins/EchoelPlugins.entitlements,
+  EchoelStudio/Plugins/Shared/PluginUnlock.swift
+
+Fragen:
+1. Import: gibt es eine Schrittfolge (Absturz, Wegwischen, Hintergrund, Speicher voll, zweiter
+   Start während der Lauf pausiert ist), nach der ein Song der früheren App fehlt, doppelt in der
+   Bibliothek steht oder als "übernommen" gilt, obwohl er nicht geschrieben wurde? Datei:Zeile.
+2. Import, die Gegenrichtung: gibt es einen Song, der jeden Start beendet und trotzdem immer wieder
+   geöffnet oder gelesen wird? Oder einen gesunden Song, der fälschlich ausgelassen wird?
+3. Statuszeile: lies die Sätze, die der Import zeigt (Hinweis und Warnung), so wie eine Musikerin
+   sie liest. Was ist unklar, was verdeckt eine andere Meldung, was bleibt zu lange stehen?
+4. Start-Fehlalarm: LaunchRecord und restore öffnen nach einem abgebrochenen Start einen neuen
+   Song. Zählt ein gesunder Start irgendwo als abgebrochen (zum Beispiel ein Start, den der
+   Nutzer nach 2 Sekunden in den Hintergrund schickt)?
+5. Neustart der Audio-Dienste: kann replaceEngine zusammen mit resume, wake oder dem Retry die
+   Engine zweimal aufbauen, gar nicht aufbauen, oder dauerhaft stillstehen, ohne dass der Knopf
+   "Restart audio" erscheint?
+6. Hintergrund (App-Review 2.5.4): welche Kombination (spielt, nimmt auf, folgt einer externen
+   Clock, Import läuft) hält die App wach, obwohl nichts zu hören ist?
+7. Welche zwei Gerätetests würdest du als Erstes machen, und was genau soll man dabei sehen?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, "sicher" oder "vermutet", kein Code, keine neuen
+Features, nichts zu Gesundheit oder Wellness.
+```
+
+### Auftrag an SuperGrok Heavy — was sich in den letzten Tagen geändert hat (nur mit Quelle)
+
+```
+Rolle: externer Rechercheur für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift ohne
+externe Abhängigkeiten, die eine eigene AUv3-Erweiterung einbettet, fremde Audio Units hostet und
+Songs einer früheren App aus deren App-Group-Container übernimmt. Öffentliches Repo:
+https://github.com/vibrationalforce/Echoelmusic (Zweig claude/echoelmusic-review-optimize-u5jjpd,
+Verzeichnis EchoelStudio/).
+
+Bitte recherchiere den Stand von HEUTE (iOS 26.x, Xcode 26.x), nur mit Quelle und Datum. Wo es
+nichts Neues seit dem 1.10.2026 gibt, sag das in einem Satz, statt Älteres aufzuzählen:
+1. Neue iOS-/Xcode-Versionen und Betas der letzten zwei Wochen: Release Notes zu AVAudioEngine,
+   AVAudioSession, Audio Units, App Groups, StoreKit oder TestFlight, die eine Musik-App betreffen.
+2. AVAudioSession.mediaServicesWereResetNotification: was empfiehlt Apple heute (neue Engine und
+   neue Knoten, oder Neustart der alten)? Gibt es Hinweise, dass gehostete Audio Units danach neu
+   instanziiert werden müssen?
+3. App Groups: eine App-Group-ID wurde am App-ID-Eintrag entfernt und wieder eingetragen. Bleibt der
+   Container auf einem Gerät mit der früheren App-Version erhalten, wenn ein Update dieselbe Gruppe
+   wieder anfordert? Was sagen Apple-Doku oder Entwicklerforen?
+4. Unterbrechungen unter iOS 26 (Anruf, Siri, Alarm): kommt .ended zuverlässig, und welche Fehler
+   liefert setActive(true) im Hintergrund?
+5. App-Review 2.5.4: ist eine Musik-App zulässig, die im Hintergrund still auf den Start-Befehl einer
+   externen MIDI-Clock wartet? Dokumentierte Ablehnungen oder Apple-Aussagen.
+6. kAudioComponentInstanceInvalidationNotification: wann sendet iOS sie, und laden AUM, Logic für
+   iPad oder Cubasis eine abgestürzte Unit selbst neu?
+7. Abtastrate: ein USB-Interface wechselt die Ausgaberate mitten in der Sitzung. Wie verhalten sich
+   AVAudioEngine und gehostete Units, und was liefern andere iOS-DAWs dafür aus?
+
+Form: höchstens 8 Punkte. Jeder Punkt: Behauptung · Quelle (URL) · Datum · "sicher" oder
+"vermutet" · was das für Echoel Studio konkret heißt (eine Zeile). Keine Code-Vorschläge,
+Gerüchte als Gerüchte, keine Gesundheits- oder Wellness-Themen.
+```
+
+**So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo
+(Lernmodus) und trägt das Ergebnis ins Ledger ein.
