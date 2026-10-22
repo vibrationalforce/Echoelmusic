@@ -192,7 +192,7 @@ struct SoundPanel: View {
         let current = Int(track.instrument.value(parameter).rounded())
         let writing = writer.isWriting && engine.isPlaying
         return Picker(parameter.title, selection: Binding(
-            get: { passPick ?? current },
+            get: { writing ? (passPick ?? current) : current },
             set: {
                 passPick = writing ? $0 : nil
                 writer.set(address, to: Double($0), coalescingKey: nil)
