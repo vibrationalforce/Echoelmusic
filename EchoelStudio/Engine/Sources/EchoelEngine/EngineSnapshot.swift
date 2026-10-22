@@ -15,6 +15,10 @@ public struct EngineSnapshot: Sendable {
         public let gainLeft: Float
         public let gainRight: Float
         public let patch: SynthPatch
+        /// The track's synth values in `SynthParameter.all` order — the addresses of `SynthKernel`
+        /// — for every lane, whatever it plays, so the synth keeps its sound across a detour
+        /// through another instrument.
+        public let synthValues: [Float]
         /// Which instrument in the slot plays the events.
         public let device: InstrumentDevice
         /// The sample a sampler lane plays. The snapshot holds the reference, so the buffer
@@ -46,11 +50,14 @@ public struct EngineSnapshot: Sendable {
         /// A choice (the waveform) holds each point's value until the next; a number moves
         /// between points.
         public let holds: Bool
+        /// The field's address in `SynthKernel` (its place in `SynthParameter.all`).
+        public let index: Int
 
         public init(field: PatchField, lane: AutomationLane) {
             self.field = field
             self.lane = lane
             holds = field.parameter.taper == .stepped
+            index = PatchField.allCases.firstIndex(of: field) ?? 0
         }
 
         /// The lane's value at `position`, the way the field takes it. Render-safe.
@@ -297,8 +304,11 @@ public struct EngineSnapshot: Sendable {
                     patchLanes.append(PatchAutomation(field: field, lane: lane))
                 }
             }
+            let synthValues: [Float] = SynthParameter.all.map { (parameter: SynthParameter) -> Float in
+                Float(track.instrument.value(parameter))
+            }
             return Lane(track: events.track, slot: slot, events: events.events, gainLeft: left, gainRight: right,
-                        patch: SynthPatch(track.instrument), device: track.instrument.device,
+                        patch: SynthPatch(track.instrument), synthValues: synthValues, device: track.instrument.device,
                         sample: track.instrument.device == .sampler ? track.instrument.sample.flatMap { samples[$0] } : nil,
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
