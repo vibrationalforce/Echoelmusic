@@ -1084,7 +1084,12 @@ final class DocumentController {
     /// another song was opened meanwhile.
     private func importMedia(_ source: URL) async -> MediaFile? {
         starterKeepsItsOwnPackage()
-        guard !isImporting, let package = currentURL else { return nil }
+        if isImporting {
+            // A second file picked while the first decodes: said, not dropped without a word.
+            lastError = "Another file is still importing. Try again when it is in."
+            return nil
+        }
+        guard let package = currentURL else { return nil }
         if isUnwritten { starterMadeFolder = true }   // the import below makes it
         isImporting = true
         defer {
