@@ -316,7 +316,14 @@ final class MIDIInput {
             UserDefaults.standard.removeObject(forKey: Self.followKey)
         }
         clockInbox.followed.store(source.map(Self.tag) ?? 0, ordering: .relaxed)
+        applyClockSource()
         store.endGesture()
+    }
+
+    /// Tells the engine whether the followed source is connected, after a choice and whenever the
+    /// sources change.
+    private func applyClockSource() {
+        engine.clockSourceConnected = followedSource.map { id in sources.contains { $0.id == id } } ?? false
     }
 
     /// The sources that are grid controllers; their messages go to `onGridPress` only.
@@ -534,6 +541,7 @@ final class MIDIInput {
         connected.formIntersection(seen)
         sourceNames = names
         sources = found
+        applyClockSource()
     }
 
     /// MIDI thread: a grid controller's presses. True when some are waiting for the main thread.

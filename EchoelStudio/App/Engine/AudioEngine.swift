@@ -247,7 +247,7 @@ final class AudioEngine {
 
     /// In the foreground, or in the background while a followed clock keeps the engine running
     /// (`enterBackground` leaves it up for that): a suspended app would never hear the next Start.
-    private var mayRebuildNow: Bool { !isInBackground || followsExternalClock }
+    private var mayRebuildNow: Bool { !isInBackground || followsExternalClock && clockSourceConnected }
 
     /// Rebuilds the graph for the interface now attached, unless it already matches and runs.
     private func hardwareChanged() {
@@ -303,9 +303,9 @@ final class AudioEngine {
         configure(input: wantsInput)
     }
 
-    /// The app went to the background. With nothing playing, recording or following a clock the
-    /// audio stops, so a silent app does not keep the device awake (App Review 2.5.4). The
-    /// playhead, the voices and the song stay; `enterForeground` or a play brings it back.
+    /// The app went to the background. With nothing playing, recording or following a connected
+    /// clock the audio stops, so a silent app does not keep the device awake (App Review 2.5.4).
+    /// The playhead, the voices and the song stay; `enterForeground` or a play brings it back.
     func enterBackground() {
         isInBackground = true
         suspendIfIdleInBackground()
@@ -314,7 +314,8 @@ final class AudioEngine {
     /// Stops the audio while in the background with nothing to play, record or follow. Also when
     /// a pause from outside or the end of a take leaves the app that idle after it went there.
     private func suspendIfIdleInBackground() {
-        guard isInBackground, isRunning, !isPlaying, take == nil, !followsExternalClock else { return }
+        guard isInBackground, isRunning, !isPlaying, take == nil,
+              !(followsExternalClock && clockSourceConnected) else { return }
         log.info("engine: suspend in background")
         suspendedInput = wantsInput
         engine.stop()
@@ -604,6 +605,16 @@ final class AudioEngine {
         didSet {
             guard followsExternalClock != oldValue, let project else { return }
             publish(project)
+        }
+    }
+
+    /// The source of the followed clock is connected. Only then does the engine stay up in the
+    /// background to hear its Start: the choice is kept across launches, and a device chosen once
+    /// and unplugged since must not keep a silent app awake (round 4, C7).
+    var clockSourceConnected = false {
+        didSet {
+            guard clockSourceConnected != oldValue, !clockSourceConnected else { return }
+            suspendIfIdleInBackground()
         }
     }
 
