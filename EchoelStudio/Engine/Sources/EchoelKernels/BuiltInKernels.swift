@@ -5,9 +5,9 @@ import EchoelCore
 /// here; `EngineCore` plays whatever this returns, in `InstrumentDevice.builtIn` order.
 public enum BuiltInKernels {
     /// The engine's kernel for `device`, or nil for a plugin or an instrument from a later build.
-    /// Never on the render thread: it allocates. `maximumFrames` is the engine's block size — a
-    /// kernel with a smaller one would render a range in pieces and move the synth's wheel and
-    /// vibrato steps.
+    /// Never on the render thread: it allocates. `maximumFrames` is the engine's block size, the
+    /// most a kernel renders in one call; a smaller one renders a range in pieces, which the
+    /// synth's wheels no longer hear (their glides run per sample, audit 2026-10-23).
     public static func kernel(for device: InstrumentDevice, sampleRate: Double,
                               maximumFrames: Int) -> (any EngineInstrumentKernel)? {
         switch device {

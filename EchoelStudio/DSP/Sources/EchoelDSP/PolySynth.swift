@@ -152,14 +152,14 @@ public struct SynthVoice: Sendable {
         controlCountdown = 0
     }
 
-    /// Adds this voice into `buffer`. Nothing here allocates.
+    /// Adds this voice into `buffer`. Nothing here allocates. `pitch` holds the wheels' frequency
+    /// ratio for each sample of the buffer, from its first; without it every sample plays at
+    /// `ratio`.
     @inline(__always)
-    /// `bendFrom` and `bendTo` are the pitch-bend frequency ratios at the start and end of the
-    /// buffer; the bend moves straight between them, so a wheel never steps.
     mutating func render(into buffer: UnsafeMutableBufferPointer<Float>, patch: SynthPatch,
-                         bendFrom: Float = 1, bendTo: Float = 1) {
+                         pitch: [Float]? = nil, ratio: Float = 1) {
         guard ampEnvelope.isActive else { return }
-        let bendStep = buffer.count > 0 ? (bendTo - bendFrom) / Float(buffer.count) : 0
+        let first = buffer.startIndex
         let amount = patch.filterEnvelopeAmount.isFinite ? Swift.min(Swift.max(patch.filterEnvelopeAmount, 0), 8) : 0
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
@@ -176,7 +176,7 @@ public struct SynthVoice: Sendable {
                 controlCountdown = Self.controlInterval
             }
             controlCountdown -= 1
-            let bend = bendFrom + bendStep * Float(i - buffer.startIndex)
+            let bend = pitch?[i - first] ?? ratio
             let sample = filter.process(oscillator.next(increment: increment * bend)) * ampEnvelope.next()
             buffer[i] += sample * gain * level
             if !ampEnvelope.isActive { break }
@@ -199,7 +199,7 @@ public struct PolySynth: Sendable {
     public private(set) var voices: [SynthVoice]
     private let sampleRate: Float
     private var nextOrder: UInt64 = 1
-    /// Pitch-bend frequency ratio now, and where the next buffer takes it.
+    /// Pitch-bend frequency ratio now, and where the wheel wants it.
     private var bend: Float = 1
     private var bendTarget: Float = 1
     private var isSustaining = false
@@ -207,8 +207,15 @@ public struct PolySynth: Sendable {
     private var vibrato: Float = 0
     private var vibratoTarget: Float = 0
     private var vibratoPhase: Float = 0
-    /// How far the depth moves toward the wheel per block: ~50 ms, so a wheel never steps.
-    private let vibratoGlide: Float
+    /// How far the bend and the vibrato depth move toward their wheels per sample: ~5 ms and
+    /// ~50 ms, so a wheel never steps. Per sample, not per buffer: a glide takes the same time
+    /// however the song is cut into render calls — live at any buffer size and in the export
+    /// alike (audit 2026-10-23).
+    private let bendPole: Float
+    private let vibratoPole: Float
+    /// The wheels' ratio for each sample of the piece being rendered, written before the voices
+    /// read it. Allocated once.
+    private var pitchCurve: [Float]
 
     /// Semitones the wheel bends at either end: the General MIDI default.
     public static let bendRange: Float = 2
@@ -216,14 +223,19 @@ public struct PolySynth: Sendable {
     /// General MIDI 2 default modulation depth (±50 cents) — and how fast it swings.
     public static let vibratoRange: Float = 0.5
     public static let vibratoRate: Float = 5.5
-    /// Frames between pitch updates while the vibrato moves (0.67 ms at 48 kHz).
-    static let modulationBlock = 32
+    /// Seconds the bend takes to settle on a new wheel position (its time constant).
+    static let bendGlide: Float = 0.005
+    static let vibratoGlide: Float = 0.05
+    /// The longest piece rendered against one `pitchCurve`.
+    static let curveLength = 256
 
     public init(patch: SynthPatch = SynthPatch(), voiceCount: Int = defaultVoiceCount, sampleRate: Float = 48_000) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
         self.patch = patch
         self.sampleRate = rate
-        vibratoGlide = 1 - expf(-Float(Self.modulationBlock) / (0.05 * rate))
+        bendPole = expf(-1 / (Self.bendGlide * rate))
+        vibratoPole = expf(-1 / (Self.vibratoGlide * rate))
+        pitchCurve = Array(repeating: 1, count: Self.curveLength)
         voices = Array(repeating: SynthVoice(patch: patch, sampleRate: rate), count: Swift.max(1, voiceCount))
     }
 
@@ -326,43 +338,51 @@ public struct PolySynth: Sendable {
     public mutating func render(into buffer: UnsafeMutableBufferPointer<Float>) {
         guard !buffer.isEmpty else { return }
         let patch = self.patch
-        let from = bend, to = bendTarget
-        guard vibrato > 0 || vibratoTarget > 0 else {
+        guard bend != bendTarget || vibrato > 0 || vibratoTarget > 0 else {
+            // The wheels rest: one ratio for the whole buffer.
+            let ratio = bend
             voices.withUnsafeMutableBufferPointer { all in
                 for i in all.indices where all[i].isActive {
-                    all[i].render(into: buffer, patch: patch, bendFrom: from, bendTo: to)
+                    all[i].render(into: buffer, patch: patch, ratio: ratio)
                 }
             }
-            bend = to
             return
         }
-        // With the wheel up the pitch moves in short blocks: the bend's straight line across the
-        // buffer, times the vibrato at each block's edges.
-        let count = buffer.count
+        // A wheel moves: its ratio sample by sample, a piece at a time.
         var done = 0
-        var ratio = from * vibratoRatio()
-        while done < count {
-            let n = Swift.min(Self.modulationBlock, count - done)
-            vibrato += (vibratoTarget - vibrato) * vibratoGlide
-            vibratoPhase += Self.vibratoRate * Float(n) / sampleRate
-            if vibratoPhase >= 1 { vibratoPhase -= 1 }
-            let blockFrom = ratio
-            let blockTo = (from + (to - from) * Float(done + n) / Float(count)) * vibratoRatio()
+        while done < buffer.count {
+            let n = Swift.min(Self.curveLength, buffer.count - done)
+            for k in 0..<n {
+                let ratio = nextRatio()
+                pitchCurve[k] = ratio
+            }
+            let curve = pitchCurve
             let offset = buffer.startIndex + done
-            let block = UnsafeMutableBufferPointer(rebasing: buffer[offset..<(offset + n)])
+            let piece = UnsafeMutableBufferPointer(rebasing: buffer[offset..<(offset + n)])
             voices.withUnsafeMutableBufferPointer { all in
                 for i in all.indices where all[i].isActive {
-                    all[i].render(into: block, patch: patch, bendFrom: blockFrom, bendTo: blockTo)
+                    all[i].render(into: piece, patch: patch, pitch: curve)
                 }
             }
-            ratio = blockTo
             done += n
         }
-        bend = to
+    }
+
+    /// The wheels' frequency ratio for the next sample: the bend and the vibrato depth one sample
+    /// further toward their wheels, the vibrato one sample on.
+    private mutating func nextRatio() -> Float {
+        bend = bendTarget + (bend - bendTarget) * bendPole
+        if Swift.abs(bend - bendTarget) < 1e-7 { bend = bendTarget }
+        guard vibrato > 0 || vibratoTarget > 0 else { return bend }
+        vibrato = vibratoTarget + (vibrato - vibratoTarget) * vibratoPole
+        vibratoPhase += Self.vibratoRate / sampleRate
+        if vibratoPhase >= 1 { vibratoPhase -= 1 }
         if vibratoTarget == 0, vibrato < 1e-4 {
             vibrato = 0
             vibratoPhase = 0
+            return bend
         }
+        return bend * vibratoRatio()
     }
 
     /// The vibrato's frequency ratio at its current depth and phase.

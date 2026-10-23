@@ -158,16 +158,54 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue((439...441).contains(crossings(render(&synth, seconds: 1))))
     }
 
-    func testTheBendGlidesAcrossABufferInsteadOfStepping() {
+    /// The bend glides to the wheel over a few milliseconds instead of stepping: the first cycle
+    /// after the wheel moves is on its way from 440 to 494 Hz, the last ones of the 100 ms block
+    /// are there. The glide used to stretch over whatever buffer came next, so its length was the
+    /// host's buffer size (audit 2026-10-23); `testTheWheelsSoundTheSameAtEveryBufferSize` pins that.
+    func testTheBendGlidesInsteadOfStepping() throws {
         var synth = sineSynth()
         synth.noteOn(pitch: 69, velocity: 127)
         _ = render(&synth, seconds: 0.05)
         synth.pitchBend(16_383)
         var block = [Float](repeating: 0, count: 4_800)
         block.withUnsafeMutableBufferPointer { synth.render(into: $0) }
-        // Over the 100 ms block the frequency moves from 440 to 494 Hz: in between, not at either end.
-        let measured = crossings(block)
-        XCTAssertTrue((45...48).contains(measured), "\(measured)")
+        let cycles = cycleFrequencies(block)
+        let first = try XCTUnwrap(cycles.first)
+        XCTAssertTrue((441...490).contains(first), "the first cycle is on its way, not at 494 Hz: \(first)")
+        XCTAssertTrue(cycles.suffix(10).allSatisfy { (493...495).contains($0) }, "and it arrives: \(Array(cycles.suffix(10)))")
+    }
+
+    /// However the song is cut into render calls, a bend and the modulation wheel sound the same,
+    /// sample for sample: the engine cuts a call wherever any track has an event, a beat or an
+    /// automation step, so this is what makes playback at any buffer size and the export agree.
+    func testTheWheelsSoundTheSameAtEveryBufferSize() {
+        typealias Move = (sample: Int, apply: (inout PolySynth) -> Void)
+        let moves: [Move] = [(0, { $0.noteOn(pitch: 60, velocity: 100) }), (333, { $0.pitchBend(16_383) }),
+                             (5_000, { $0.modulation(127) }), (30_000, { $0.pitchBend(4_000) }),
+                             (50_000, { $0.modulation(0) })]
+        let frames = 72_000
+        var outputs: [[Float]] = []
+        for block in [64, 256, 1_000, 4_096] {
+            var synth = sineSynth()
+            var out = [Float](repeating: 0, count: frames)
+            var at = 0, next = 0
+            while at < frames {
+                while next < moves.count, moves[next].sample == at {
+                    moves[next].apply(&synth)
+                    next += 1
+                }
+                var end = Swift.min(at + block, frames)
+                if next < moves.count { end = Swift.min(end, moves[next].sample) }
+                out[at..<end].withUnsafeMutableBufferPointer { synth.render(into: $0) }
+                at = end
+            }
+            outputs.append(out)
+        }
+        XCTAssertGreaterThan(outputs[0].map { Swift.abs($0) }.max() ?? 0, 0.1, "the note sounds")
+        for (index, other) in outputs.enumerated().dropFirst() {
+            let differs = other.indices.first { other[$0] != outputs[0][$0] }
+            XCTAssertNil(differs, "buffer size \([64, 256, 1_000, 4_096][index]) differs from 64 at sample \(differs ?? -1)")
+        }
     }
 
     func testTheSustainPedalHoldsReleasedKeysUntilItComesUp() {
@@ -218,7 +256,7 @@ final class PolySynthTests: XCTestCase {
     }
 
     /// Derived, not observed: 440 Hz × 2^(±0.5/12) is 427.5 … 452.9 Hz, and a model of this
-    /// algorithm (blocks of 32 frames, 256-frame buffers) measures exactly that.
+    /// algorithm (the vibrato moved per sample) measures exactly that.
     func testTheModulationWheelSwingsThePitchFiftyCentsEachWayAndRestsInTune() throws {
         var synth = sineSynth()
         synth.noteOn(pitch: 69, velocity: 127)

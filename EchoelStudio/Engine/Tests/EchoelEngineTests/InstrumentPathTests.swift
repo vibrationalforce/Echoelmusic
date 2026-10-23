@@ -165,6 +165,28 @@ final class InstrumentPathTests: XCTestCase {
         }
     }
 
+    /// A clip's bends and modulation wheel sound the same at every block size, so the export
+    /// (4,096-frame blocks) holds what playback played. The engine cuts each block at every event
+    /// and beat, and the bend used to glide over whatever piece came next (audit 2026-10-23).
+    func testASynthsBendsAndVibratoDoNotDependOnTheBlockSize() throws {
+        let t = try tune([Note(pitch: 60, start: 0, length: 9_600)],
+                         controls: [ControlChange(kind: .pitchBend, start: 333, value: 16_383),
+                                    ControlChange(kind: .controller(number: 1), start: 1_000, value: 127),
+                                    ControlChange(kind: .pitchBend, start: 4_000, value: 2_000)])
+        let blocks = [64, 256, 1_000, 4_096]
+        var outputs: [[Float]] = []
+        for block in blocks {
+            let core = engine()
+            publish(t, to: core)
+            core.play()
+            outputs.append(render(core, frames: 72_000, block: block))
+        }
+        XCTAssertGreaterThan(peak(outputs[0]), 0.01, "the note sounds")
+        for index in outputs.indices.dropFirst() {
+            assertSame(outputs[index], outputs[0], "block \(blocks[index]) against 64")
+        }
+    }
+
     func testTheDrumsSoundExactlyLikeTheKitPlayedDirectly() throws {
         // A kick, a snare, an open hat that a closed hat chokes, and a second, harder kick.
         let t = try tune([Note(pitch: 36, velocity: 100, start: 0, length: 240),
