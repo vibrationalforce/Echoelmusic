@@ -318,7 +318,7 @@ public enum CommandCatalog {
             return CommandSpec(name: "track.monitor", title: "Track Monitoring",
                                summary: "Chooses when an audio track plays its input through its channel strip.",
                                parameters: [P("track", .trackID, "The audio track."),
-                                            P("mode", .string, "auto (while armed), in (always) or off. Neither plays into the device's built-in speaker.")])
+                                            P("mode", .string, "auto (while armed), in (always) or off. The device's own microphone is heard only in headphones or through an interface, never on a speaker.")])
         case .mapMIDI:
             return CommandSpec(name: "midi.map", title: "Learn MIDI",
                                summary: "Makes a controller knob or fader move a parameter across its whole range.",

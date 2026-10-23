@@ -122,20 +122,29 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
-    /// The device's own speaker or earpiece, where a monitored microphone would howl.
-    private var outputIsBuiltIn: Bool {
-        AVAudioSession.sharedInstance().currentRoute.outputs.contains {
-            $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
+    /// A monitored input can be heard here without feeding back into itself: never on the
+    /// device's own speaker or earpiece, and the device's own microphone only in wired headphones
+    /// or through an interface — a Bluetooth, AirPlay, HDMI or line-out speaker in the same room
+    /// hears it too (sixth night review, 2026-10-23: such a speaker counted as safe). Any other
+    /// input — a headset's microphone, an interface's inputs — is the musician's own setup.
+    private var monitoringCannotHowl: Bool {
+        let route = AVAudioSession.sharedInstance().currentRoute
+        let outputs = route.outputs
+        guard !outputs.isEmpty,
+              !outputs.contains(where: { $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver }) else {
+            return false
         }
+        let ownMicrophone = route.inputs.isEmpty || route.inputs.contains { $0.portType == .builtInMic }
+        return !ownMicrophone || outputs.allSatisfy { $0.portType == .headphones || $0.portType == .usbAudio }
     }
 
-    /// Which input each audio track plays through its strip right now. Never into the device's
-    /// own speaker, in either mode: headphones pulled with a track set to Always sent the
-    /// microphone straight to the speaker, and the song howled — and the input now opens by
-    /// itself after such a pause (fourth night review, 2026-10-23). The route change publishes
-    /// the song again, so monitoring comes back with the headphones.
+    /// Which input each audio track plays through its strip right now — only where it cannot howl
+    /// (`monitoringCannotHowl`), in either mode: headphones pulled with a track set to Always sent
+    /// the microphone straight to the speaker, and the song howled (fourth night review,
+    /// 2026-10-23). The route change publishes the song again, so monitoring comes back with the
+    /// headphones.
     private func monitoring(in project: Project) -> [TrackID: Int] {
-        guard isInputOpen, !outputIsBuiltIn else { return [:] }
+        guard isInputOpen, monitoringCannotHowl else { return [:] }
         var result: [TrackID: Int] = [:]
         for track in project.tracks where track.kind == .audio {
             switch track.monitor {
