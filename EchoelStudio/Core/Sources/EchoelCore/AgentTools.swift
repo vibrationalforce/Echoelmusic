@@ -273,8 +273,13 @@ public enum AgentTools {
         return effect
     }
 
+    /// How many clip ranges one track lists before the rest is only counted.
+    static let describedRanges = 12
+
     /// One line per fact, for the model's context and for the chat: tempo, metre, every track
-    /// with its number, kind, sound and the bars where it has clips.
+    /// with its number, kind, sound and the bars where it has clips. A clip played back to back
+    /// is one range, and a track lists at most `describedRanges` of them, so the text stays
+    /// small enough for the on-device model's window however long the song grows.
     public static func describe(_ project: Project) -> String {
         let bar = MusicalTime.ticksPerBar(project.timeSignature)
         var lines = ["Song \"\(project.name)\": \(format(project.tempo)) BPM, \(project.timeSignature.numerator)/\(project.timeSignature.denominator)."]
@@ -293,13 +298,12 @@ public enum AgentTools {
             case .audio: parts.append("audio")
             case .returnTrack: parts.append("return")
             }
-            let bars = track.placements.compactMap { placement -> String? in
-                guard let clip = track.clips.first(where: { $0.id == placement.clip }) else { return nil }
-                let first = placement.start / bar + 1
-                let last = (placement.start + Swift.max(clip.length, 1) - 1) / bar + 1
-                return first == last ? "bar \(first)" : "bars \(first)–\(last)"
+            let bars = clipRanges(of: track, bar: bar)
+            if !bars.isEmpty {
+                let listed = bars.prefix(describedRanges).joined(separator: ", ")
+                let more = bars.count - describedRanges
+                parts.append("clips at " + listed + (more > 0 ? " and \(more) more" : ""))
             }
-            if !bars.isEmpty { parts.append("clips at " + bars.joined(separator: ", ")) }
             if !track.regions.isEmpty { parts.append("\(track.regions.count) audio regions") }
             let effects = track.inserts.map { StandardEffect(component: $0.plugin)?.title ?? $0.plugin.name }
             if !effects.isEmpty { parts.append("effects " + effects.joined(separator: " → ")) }
@@ -309,6 +313,36 @@ public enum AgentTools {
             lines.append(parts.joined(separator: ", ") + ".")
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// The bars where a track's clips play, one entry per run of the same clip back to back:
+    /// "bar 3", "bars 1–4", "bars 1–65 (one 1-bar clip, 65 times)".
+    private static func clipRanges(of track: Track, bar: Tick) -> [String] {
+        var ranges: [String] = []
+        var run: (clip: ClipID, length: Tick, start: Tick, end: Tick, count: Int)?
+        func close() {
+            guard let open = run else { return }
+            let first = open.start / bar + 1, last = (open.end - 1) / bar + 1
+            var text = first == last ? "bar \(first)" : "bars \(first)–\(last)"
+            if open.count > 1 {
+                let bars = Swift.max(1, open.length / bar)
+                text += " (one \(bars)-bar clip, \(open.count) times)"
+            }
+            ranges.append(text)
+        }
+        for placement in track.placements.sorted(by: { $0.start < $1.start }) {
+            guard let clip = track.clips.first(where: { $0.id == placement.clip }) else { continue }
+            let length = Swift.max(clip.length, 1)
+            if let open = run, open.clip == clip.id, open.end == placement.start {
+                run = (clip: open.clip, length: open.length, start: open.start, end: placement.start + length,
+                       count: open.count + 1)
+            } else {
+                close()
+                run = (clip: clip.id, length: length, start: placement.start, end: placement.start + length, count: 1)
+            }
+        }
+        close()
+        return ranges
     }
 
     // MARK: - Names

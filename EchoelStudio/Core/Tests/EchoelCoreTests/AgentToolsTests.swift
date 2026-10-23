@@ -238,4 +238,31 @@ final class AgentToolsTests: XCTestCase {
             XCTAssertTrue(text.contains("2. Bass, synth, sound Sub Bass, muted, -6 dB."))
         }
     }
+
+    /// The description goes into the on-device model's small window on every request; a clip
+    /// repeated over a long song must not list every bar, or the song alone outgrows the window
+    /// (audit 2026-10-23).
+    func testARepeatedClipIsOneRangeAndALongSongStaysShort() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            for index in 1...8 {
+                try AgentToolsTests.run([
+                    .addTrack(name: "Drums \(index)", kind: "drums", sound: nil),
+                    .repeatClip(track: "\(index)", bar: 1, times: 64),
+                ], on: store)
+            }
+            let text = AgentTools.describe(store.project)
+            XCTAssertTrue(text.contains("1. Drums 1, drums, clips at bars 1–65 (one 1-bar clip, 65 times)."), text)
+            XCTAssertFalse(text.contains("bar 2,"), "a run back to back is one range, not 65 bars")
+            XCTAssertLessThan(text.count, 1_500, "eight tracks of 65 bars each fit the model's window")
+
+            // Different clips side by side, and a gap, stay separate ranges.
+            let first = try XCTUnwrap(store.project.tracks.first)
+            let second = Clip(name: "Fill", length: 3_840)
+            try store.perform([.createClip(track: first.id, id: second.id, name: second.name, length: second.length),
+                               .placeClip(track: first.id, id: PlacementID(), clip: second.id, start: 3_840 * 70)],
+                              title: "Fill")
+            XCTAssertTrue(AgentTools.describe(store.project).contains("clips at bars 1–65 (one 1-bar clip, 65 times), bar 71."))
+        }
+    }
 }

@@ -24,6 +24,8 @@ final class AgentExecutor {
     private var document = 0
     /// Called with a short sentence for every action that changed the song.
     var onAction: ((String) -> Void)?
+    /// Whether an action of the current request has changed the song.
+    private(set) var changedSong = false
 
     init(store: ProjectStore) {
         self.store = store
@@ -35,6 +37,7 @@ final class AgentExecutor {
         store.endGesture()
         turnKey = "agent.\(turn)"
         document = store.documentGeneration
+        changedSong = false
     }
 
     func end() { store.endGesture() }
@@ -47,6 +50,7 @@ final class AgentExecutor {
         do {
             let commands = try AgentTools.commands(for: action, in: store.project)
             try store.perform(commands, title: "Agent", coalescingKey: turnKey)
+            changedSong = true
             onAction?(summary)
             return "Done: \(summary)."
         } catch let error as AgentError {
@@ -134,6 +138,7 @@ final class AgentSession {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             let prompt = "The song now:\n\(executor.song)\n\nThe musician says: \(text)"
+            let fresh = backend == nil
             do {
                 let answer = try await model().respond(prompt)
                 lines.append(AgentLine(role: .assistant, text: answer))
@@ -141,7 +146,8 @@ final class AgentSession {
                 if case .exceededContextWindowSize = error {
                     // The conversation outgrew the model's window: start over with the song as context.
                     backend = nil
-                    lines.append(AgentLine(role: .problem, text: "The conversation got too long, so I started a fresh one. Please ask again."))
+                    lines.append(AgentLine(role: .problem, text: Self.overflowSentence(changedSong: executor.changedSong,
+                                                                                      fresh: fresh)))
                 } else {
                     log.error("agent: \(String(describing: error), privacy: .public)")
                     lines.append(AgentLine(role: .problem, text: Self.sentence(for: error)))
@@ -152,6 +158,18 @@ final class AgentSession {
             }
         }
         #endif
+    }
+
+    /// What to say when the model's window filled. Asking again repeats what already went into
+    /// the song, and a song too long to describe fills a fresh window as well (audit 2026-10-23).
+    private static func overflowSentence(changedSong: Bool, fresh: Bool) -> String {
+        if changedSong {
+            return "The conversation got too long, so I stopped and started a fresh one. The changes listed above are in the song (Undo takes them back); ask only for what is still missing."
+        }
+        if fresh {
+            return "This request and the song together are too long for the assistant. Try a shorter request."
+        }
+        return "The conversation got too long, so I started a fresh one. Please ask again."
     }
 
     #if canImport(FoundationModels)
