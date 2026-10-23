@@ -81,8 +81,9 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
                                               sampleName: instrument.sampleTitle,
                                               installSample: { buffer, name in instrument.installSample(buffer, name: name) })
             // A host's session restore or preset changes the sample without this window.
-            instrument.observeSample { @Sendable [weak sampler] name in
-                Task { @MainActor in sampler?.showSample(name) }
+            if instrument.sampleIsUnloaded { sampler.showSample(instrument.sampleTitle, notLoaded: true) }
+            instrument.observeSample { @Sendable [weak sampler] name, notLoaded in
+                Task { @MainActor in sampler?.showSample(name, notLoaded: notLoaded) }
             }
             model = sampler
         } else {

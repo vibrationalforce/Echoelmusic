@@ -33,14 +33,14 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     /// (seventh night review, 2026-10-23). Any sample installed replaces it.
     private var unloadedSample: (frames: Data, rate: Double, name: String)?
     /// What the window names: the sample that plays, or one the session holds that the free memory
-    /// could not load, said as such — shown as no sample, it could not be cleared while every save
-    /// kept it (eighth night review, 2026-10-23).
-    var sampleTitle: String? {
-        sample?.name ?? unloadedSample.map { "\($0.name) (not loaded: not enough free memory)" }
-    }
+    /// could not load — shown as no sample, it could not be cleared while every save kept it
+    /// (eighth night review, 2026-10-23). `sampleIsUnloaded` says which, so the window gives the
+    /// reason its own line instead of a suffix the one-line title cuts off (ninth night review).
+    var sampleTitle: String? { sample?.name ?? unloadedSample?.name }
+    var sampleIsUnloaded: Bool { sample == nil && unloadedSample != nil }
     /// Told the new sample's name (nil: none) after every change — from the window, or from a
     /// host restoring its session or loading a preset — so an open window names what plays.
-    private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
+    private let sampleObserver = Mutex<(@Sendable (String?, Bool) -> Void)?>(nil)
     /// The longest sample the plugin takes. A host keeps it inside its session, so it stays short.
     static let maximumSampleSeconds: Double = 30
     /// The same limit in frames — 30 s at 192 kHz, 23 MB. Seconds alone let a 768 kHz file take
@@ -158,16 +158,20 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         install(buffer, name: name)
     }
 
-    private func install(_ buffer: SampleBuffer?, name: String) {
+    /// Makes `buffer` the sample, or none — keeping `unloaded`, a session's sample the memory
+    /// refused, when there is none. The window is told once: two notices could reach it in either
+    /// order (ninth night review, 2026-10-23).
+    private func install(_ buffer: SampleBuffer?, name: String,
+                         unloaded: (frames: Data, rate: Double, name: String)? = nil) {
         let loaded = buffer.map { LoadedSample(buffer: $0, name: name) }
-        unloadedSample = nil
+        unloadedSample = loaded == nil ? unloaded : nil
         sample = loaded
         (render.kernel as? any SampleLoadingKernel)?.load(loaded?.buffer)
         let observer = sampleObserver.withLock { $0 }
-        observer?(loaded?.name)
+        observer?(sampleTitle, sampleIsUnloaded)
     }
 
-    func observeSample(_ observer: (@Sendable (String?) -> Void)?) {
+    func observeSample(_ observer: (@Sendable (String?, Bool) -> Void)?) {
         sampleObserver.withLock { $0 = observer }
     }
 
@@ -209,10 +213,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             } catch {
                 // Only the memory refuses here: silent for now, and the session keeps its sample.
                 log.error("sample not loaded at restore: no free memory")
-                install(nil, name: "")
-                unloadedSample = (frames: data, rate: rate, name: name)
-                let observer = sampleObserver.withLock { $0 }
-                observer?(sampleTitle)
+                install(nil, name: "", unloaded: (frames: data, rate: rate, name: name))
             }
         }
     }

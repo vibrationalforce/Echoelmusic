@@ -77,9 +77,11 @@ final class PluginControlsModel {
 
     /// The unit's sample changed outside this window (a host restored its session or loaded a
     /// preset): name what plays now.
-    func showSample(_ name: String?) {
+    func showSample(_ name: String?, notLoaded: Bool = false) {
         sampleName = name
-        sampleMessage = nil
+        sampleMessage = notLoaded
+            ? "Not loaded: there was not enough free memory. The host keeps it in its session; Clear removes it."
+            : nil
     }
 
     func set(_ parameter: AUParameter, _ value: AUValue) {
