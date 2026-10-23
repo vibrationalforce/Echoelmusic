@@ -697,13 +697,28 @@ final class DocumentController {
     /// under the old name with nothing but the document — which the next launch then opened as
     /// the newest song, its audio silent (audit 2026-10-23). Returns the song's old file name when
     /// the package is nowhere in the library, so the write that follows creates it again and says so.
+    /// A package at the old path that is not the open song's — another song renamed to its name —
+    /// is never written over: the open song is written again under a free name (review 2026-10-23).
     @discardableResult
     private func followMovedPackage() -> String? {
-        guard !isUnwritten, let url = currentURL, !FileManager.default.fileExists(atPath: url.path) else { return nil }
+        guard !isUnwritten, let url = currentURL else { return nil }
+        let files = FileManager.default
+        if files.fileExists(atPath: url.path) {
+            // Still the open song's package, or one it cannot tell apart: nothing moved.
+            guard let identity = packageIdentity, let now = ProjectLibrary.identity(of: url), now != identity else {
+                return nil
+            }
+        }
         if let identity = packageIdentity, let moved = library.package(identity) {
             log.info("the open song's package was renamed outside; it follows")
             packageMoved(from: url, to: moved)
             return nil
+        }
+        // A folder without a document is the open song's own: a take or an import made it again
+        // after the package was deleted, and the write that follows completes it.
+        if files.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path) {
+            log.info("another song took the open song's name outside; it is written under a free one")
+            packageMoved(from: url, to: library.newURL(for: url.deletingPathExtension().lastPathComponent))
         }
         return url.deletingPathExtension().lastPathComponent
     }
@@ -1174,6 +1189,7 @@ final class DocumentController {
             lastError = "Another file is still importing. Try again when it is in."
             return nil
         }
+        followMovedPackage()
         guard let package = currentURL else { return nil }
         if isUnwritten { starterMadeFolder = true }   // the import below makes it
         isImporting = true
@@ -1218,6 +1234,9 @@ final class DocumentController {
 
     func newTakeTarget() -> TakeTarget? {
         starterKeepsItsOwnPackage()
+        // A package renamed in Files while both apps stay in front is followed here too, or the
+        // take would make the old name again beside it (review 2026-10-23).
+        followMovedPackage()
         guard let package = currentURL else { return nil }
         let id = MediaID()
         let path = "\(MediaFile.directory)/\(id).caf"
