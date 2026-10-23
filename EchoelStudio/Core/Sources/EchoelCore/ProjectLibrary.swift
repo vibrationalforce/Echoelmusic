@@ -221,13 +221,37 @@ public struct ProjectLibrary: Sendable {
 
     /// Two paths that name one item on disk, as one volume spells it two ways.
     private static func isSameItem(_ a: URL, _ b: URL) -> Bool {
+        guard let first = identity(of: a), let second = identity(of: b) else { return false }
+        return first == second
+    }
+
+    /// A package as the disk knows it: its volume and its file number, which a rename or a move
+    /// within the volume keeps — in the Files app as much as here.
+    public struct PackageIdentity: Equatable, Sendable {
+        let volume: UInt64
+        let file: UInt64
+    }
+
+    /// The identity of the item at `url`, nil when nothing is there.
+    public static func identity(of url: URL) -> PackageIdentity? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let file = attributes[.systemFileNumber] as? NSNumber,
+              let volume = attributes[.systemNumber] as? NSNumber else { return nil }
+        return PackageIdentity(volume: volume.uint64Value, file: file.uint64Value)
+    }
+
+    /// The song package in the directory that is `identity`, under whatever name it has now: a
+    /// song renamed in the Files app while it was open is found here, rather than written again
+    /// under its old name without its media. Nil when no package in the directory is it — the song
+    /// was deleted or moved somewhere else (audit 2026-10-23).
+    public func package(_ identity: PackageIdentity) -> URL? {
         let files = FileManager.default
-        guard let first = try? files.attributesOfItem(atPath: a.path), let second = try? files.attributesOfItem(atPath: b.path),
-              let one = first[.systemFileNumber] as? NSNumber, let other = second[.systemFileNumber] as? NSNumber,
-              let volume = first[.systemNumber] as? NSNumber, let otherVolume = second[.systemNumber] as? NSNumber else {
-            return false
+        guard let urls = try? files.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil,
+                                                        options: [.skipsHiddenFiles]) else { return nil }
+        return urls.first { url in
+            url.pathExtension == Self.fileExtension && Self.identity(of: url) == identity
+                && files.fileExists(atPath: url.appendingPathComponent(Self.documentName).path)
         }
-        return one == other && volume == otherVolume
     }
 
     public func delete(_ url: URL) throws {

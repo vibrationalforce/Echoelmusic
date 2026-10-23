@@ -224,6 +224,29 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertEqual(ProjectLibrary.title(name: "A/B", stem: "A-B"), "A/B", "the song keeps its own spelling")
     }
 
+    /// A song renamed in the Files app while it is open is found under its new name, media and
+    /// all; one deleted there is found nowhere, so nothing writes it again under the old name as if
+    /// it were still there (audit 2026-10-23).
+    func testASongRenamedOutsideIsFoundByItsPackageAndADeletedOneIsNot() throws {
+        let url = library.newURL(for: "Beat")
+        try library.write(try song("Beat"), to: url)
+        let identity = try XCTUnwrap(ProjectLibrary.identity(of: url))
+        try library.write(try song("Other"), to: library.newURL(for: "Other"))
+
+        let renamed = directory.appendingPathComponent("Beat Final.echoel")
+        try FileManager.default.moveItem(at: url, to: renamed)
+        XCTAssertEqual(library.package(identity)?.lastPathComponent, "Beat Final.echoel")
+        XCTAssertEqual(ProjectLibrary.identity(of: renamed), identity, "a rename keeps the package what it is")
+
+        try library.write(try song("Beat"), to: renamed)
+        XCTAssertEqual(library.package(identity)?.lastPathComponent, "Beat Final.echoel",
+                       "writing the document again keeps the package")
+
+        try FileManager.default.removeItem(at: renamed)
+        XCTAssertNil(library.package(identity))
+        XCTAssertNil(ProjectLibrary.identity(of: renamed))
+    }
+
     func testDeleteRemovesTheSong() throws {
         let url = library.newURL(for: "Gone")
         try library.write(try song("Gone"), to: url)

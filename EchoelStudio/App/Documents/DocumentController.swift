@@ -89,6 +89,9 @@ final class DocumentController {
     @ObservationIgnored private var isUnwritten = false
     /// The unwritten starter's package folder exists because an import or a take made it.
     @ObservationIgnored private var starterMadeFolder = false
+    /// The open song's package as the disk knows it, taken when it is read or written, so a
+    /// rename in the Files app while it is open is followed (`followMovedPackage`).
+    @ObservationIgnored private var packageIdentity: ProjectLibrary.PackageIdentity?
     /// Counts song switches, so an export that finishes after another song opened does not
     /// report its loudness as that song's, and a sheet opened for one song closes when another
     /// opens.
@@ -271,6 +274,7 @@ final class DocumentController {
     func sceneEntered() {
         isInBackground = false
         isInactive = false
+        followMovedPackage()
         armImportWait()
     }
 
@@ -511,6 +515,7 @@ final class DocumentController {
             }
             currentURL = url
             if another { anotherSongOpened() }
+            packageIdentity = ProjectLibrary.identity(of: url)
             savedProject = project
             isUnwritten = false
             starterMadeFolder = false
@@ -597,11 +602,19 @@ final class DocumentController {
             return true
         }
         starterKeepsItsOwnPackage()
+        let gone = followMovedPackage()
         guard let url = currentURL else { return true }
         let project = store.project
         let isNew = !FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
         do {
             try library.write(project, to: url)
+            packageIdentity = ProjectLibrary.identity(of: url)
+            if let gone {
+                // Written again so the changes are kept; the line says what the package took along.
+                lastError = project.media.isEmpty
+                    ? "\(gone) was moved or deleted in the Files app, so Echoel saved it again with your changes."
+                    : "\(gone) was moved or deleted in the Files app with its audio files. Echoel saved it again with your changes, without that audio."
+            }
             savedProject = project
             isUnwritten = false
             // Only its own line: a write says nothing about an export or an import, and clearing
@@ -673,6 +686,23 @@ final class DocumentController {
         } catch {
             moveFailed(error, fileNow: url)
         }
+    }
+
+    /// The open, written song's package is no longer where the app left it: renamed or moved in
+    /// the Files app while it was open, or deleted there. A rename inside the library is followed,
+    /// so the next write lands in the package with the media instead of creating a second one
+    /// under the old name with nothing but the document — which the next launch then opened as
+    /// the newest song, its audio silent (audit 2026-10-23). Returns the song's old file name when
+    /// the package is nowhere in the library, so the write that follows creates it again and says so.
+    @discardableResult
+    private func followMovedPackage() -> String? {
+        guard !isUnwritten, let url = currentURL, !FileManager.default.fileExists(atPath: url.path) else { return nil }
+        if let identity = packageIdentity, let moved = library.package(identity) {
+            log.info("the open song's package was renamed outside; it follows")
+            packageMoved(from: url, to: moved)
+            return nil
+        }
+        return url.deletingPathExtension().lastPathComponent
     }
 
     /// The open song's package is at `moved` now.
@@ -990,6 +1020,7 @@ final class DocumentController {
     /// Another song is open: the loudness line and the launch note spoke of the one before it.
     private func anotherSongOpened() {
         songsOpened &+= 1
+        packageIdentity = nil
         launchNote = nil
         earlierSongsNote = nil
         lastExportLoudness = nil
@@ -1025,6 +1056,7 @@ final class DocumentController {
         let songName = openSongName
         try? store.absorb(plugins.captureCommands(for: store.project))
         let project = store.project
+        followMovedPackage()
         let package = currentURL
         let target = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
             .appendingPathComponent(ProjectLibrary.safeFileName(for: songName))
