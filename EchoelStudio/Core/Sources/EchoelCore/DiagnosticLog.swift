@@ -1,22 +1,25 @@
 import Foundation
 
-/// The app's own diagnostic log: one text file the musician shares from Files, holding the run
-/// before this one and this run (NEUPLANUNG §6 — no account, no server, no telemetry, no crash
-/// SDK; the log is local and the user exports it). A line is written with one unbuffered write
-/// before the call returns, so a run that dies after a step still shows the step.
+/// The app's own diagnostic log: one text file the musician shares from Files, holding the latest
+/// run and the run before it (NEUPLANUNG §6 — no account, no server, no telemetry, no crash SDK;
+/// the log is local and the user exports it). A line is written with one unbuffered write before
+/// the call returns, so a run that dies after a step still shows the step. "Latest", not "this":
+/// shared after a crash and before the next launch, the last run in the file is the one that died.
 ///
 /// What a line can hold is fixed by its types: the event, a reason and the field names are
 /// `StaticString`, so only text written in the source reaches the file; values are numbers. An
-/// error writes its domain and code, never its description, which can carry a file's name. The
-/// version and the build are kept to digits and dots. So nothing a musician typed — a song's,
-/// a track's or a file's name — is ever in the file.
+/// error writes its domain and code, never its description, which can carry a file's name; the
+/// domain — a developer's string, a type name for a Swift error — keeps letters, digits, dots,
+/// dashes and underscores only, the last 64 of them. The version and the build are kept to digits
+/// and dots. A run carried over keeps only lines that begin with this log's time stamp. So nothing
+/// a musician typed — a song's, a track's or a file's name — reaches the file through this type.
 ///
 /// Any thread but the render thread: a line takes a lock and writes to a file.
 public final class DiagnosticLog: @unchecked Sendable {
-    /// The line above the run before this one.
-    public static let previousRunHeader = "== previous run =="
-    /// The line above this run.
-    public static let thisRunHeader = "== this run =="
+    /// The line above the run before the latest one.
+    public static let runBeforeHeader = "== run before =="
+    /// The line above the latest run.
+    public static let latestRunHeader = "== latest run =="
     /// The last line of a run that reached `capacity`.
     public static let fullLine = "diagnostics: this run's log is full, later lines are dropped"
 
@@ -39,10 +42,12 @@ public final class DiagnosticLog: @unchecked Sendable {
         try? handle?.close()
     }
 
-    /// Starts this run: the last run's lines move under `previousRunHeader`, the run before that
-    /// is dropped, and the first line names the version and build. Once per launch; a log whose
+    /// Starts a run: the last run's lines move under `runBeforeHeader`, the run before that is
+    /// dropped, and the first line names the version and build. Once per launch; a log whose
     /// folder cannot be made or written stays silent and never throws.
     public func begin(version: String, build: String) {
+        let launch = "app: launch v\(Self.plain(version)) (\(Self.plain(build))), times in UTC"
+        let time = Self.timestamp(clock())
         lock.lock()
         defer { lock.unlock() }
         try? handle?.close()
@@ -52,24 +57,21 @@ public final class DiagnosticLog: @unchecked Sendable {
         let files = FileManager.default
         do {
             try files.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            // A run written under a larger capacity keeps only its end.
-            let whole = Self.lastRun(in: (try? String(contentsOf: url, encoding: .utf8)) ?? "")
-            let last = String(decoding: whole.utf8.suffix(capacity), as: UTF8.self)
+            // Only the end of the file is read, and a byte cut short by a lost battery costs one
+            // character, not the run: the run before a crash is what the file is for.
+            let last = Self.ownLines(Self.lastRun(in: Self.tail(of: url, bytes: 2 * capacity + 64)), budget: capacity)
             var start = ""
-            if !last.isEmpty {
-                start += Self.previousRunHeader + "\n" + last
-                if !last.hasSuffix("\n") { start += "\n" }
-            }
-            start += Self.thisRunHeader + "\n"
+            if !last.isEmpty { start += Self.runBeforeHeader + "\n" + last }
+            start += Self.latestRunHeader + "\n"
             try Data(start.utf8).write(to: url, options: .atomic)
             let file = try FileHandle(forWritingTo: url)
             try file.seekToEnd()
             handle = file
-            written = (Self.thisRunHeader + "\n").utf8.count
+            written = (Self.latestRunHeader + "\n").utf8.count
         } catch {
             return
         }
-        append(stamped("app: launch v\(Self.plain(version)) (\(Self.plain(build)))"))
+        append(launch, at: time)
     }
 
     /// Writes `event`, then `(reason)` when there is one, then each field as `name=value`.
@@ -80,38 +82,41 @@ public final class DiagnosticLog: @unchecked Sendable {
         var line = event.description
         if let reason { line += " (\(reason.description))" }
         for (name, value) in fields { line += " \(name.description)=\(Self.number(value))" }
+        let time = Self.timestamp(clock())
         lock.lock()
         defer { lock.unlock() }
-        append(stamped(line))
+        append(line, at: time)
         return line
     }
 
     /// Writes `event` with the error's domain and code — never its description.
     @discardableResult
     public func note(_ event: StaticString, error: any Error) -> String {
-        let line = "\(event.description) error=\(error._domain) code=\(error._code)"
+        let line = "\(event.description) error=\(Self.domain(error._domain)) code=\(error._code)"
+        let time = Self.timestamp(clock())
         lock.lock()
         defer { lock.unlock() }
-        append(stamped(line))
+        append(line, at: time)
         return line
     }
 
-    /// The file as it stands: the run before this one, then this run.
+    /// The file as it stands: the run before, then the latest run.
     public func text() -> String {
         lock.lock()
         defer { lock.unlock() }
-        return (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+        return (try? Data(contentsOf: url)).map { String(decoding: $0, as: UTF8.self) } ?? ""
     }
 
     // MARK: - Under the lock
 
-    private func append(_ line: String) {
+    /// `time` was read before the lock, so the clock never runs while it is held.
+    private func append(_ line: String, at time: String) {
         guard let handle, !isFull else { return }
-        var bytes = Data((line + "\n").utf8)
-        let room = capacity - written
-        if bytes.count + Self.fullLine.utf8.count + 1 > room {
+        var bytes = Data((time + "  " + line + "\n").utf8)
+        let closing = (time + "  " + Self.fullLine + "\n").utf8.count
+        if bytes.count + closing > capacity - written {
             isFull = true
-            bytes = Data((Self.fullLine + "\n").utf8)
+            bytes = Data((time + "  " + Self.fullLine + "\n").utf8)
         }
         do {
             try handle.write(contentsOf: bytes)
@@ -121,23 +126,66 @@ public final class DiagnosticLog: @unchecked Sendable {
         }
     }
 
-    private func stamped(_ line: String) -> String {
-        Self.timestamp(clock()) + "  " + line
-    }
-
     // MARK: - Pure
 
-    /// The lines under the last `thisRunHeader`, or nothing when the file has none (an empty
+    /// The last `bytes` of the file, decoded so that a broken byte becomes U+FFFD instead of
+    /// losing the text; empty when there is no file.
+    static func tail(of url: URL, bytes: Int) -> String {
+        guard let file = try? FileHandle(forReadingFrom: url) else { return "" }
+        defer { try? file.close() }
+        guard let size = try? file.seekToEnd() else { return "" }
+        let start = size > UInt64(bytes) ? size - UInt64(bytes) : 0
+        guard (try? file.seek(toOffset: start)) != nil, let data = try? file.readToEnd() else { return "" }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// The lines under the last `latestRunHeader`, or nothing when the text has none (an empty
     /// file, a file this log did not write).
     static func lastRun(in text: String) -> String {
-        guard let marker = text.range(of: thisRunHeader + "\n", options: .backwards) else { return "" }
+        guard let marker = text.range(of: latestRunHeader + "\n", options: .backwards) else { return "" }
         return String(text[marker.upperBound...])
+    }
+
+    /// The lines that begin with this log's time stamp, each ending in a newline, the newest that
+    /// fit in `budget` bytes. Anything else — a line someone added in Files, a run's header — stays
+    /// behind; a line a crash cut short keeps what it has.
+    static func ownLines(_ text: String, budget: Int) -> String {
+        var kept: [Substring] = []
+        var bytes = 0
+        for line in text.split(separator: "\n", omittingEmptySubsequences: true).reversed() where isOwn(line) {
+            let size = line.utf8.count + 1
+            guard bytes + size <= budget else { break }
+            kept.append(line)
+            bytes += size
+        }
+        return kept.reversed().map { String($0) + "\n" }.joined()
+    }
+
+    private static func isOwn(_ line: Substring) -> Bool {
+        let shape = Array("0000-00-00T00:00:00.000Z  ".utf8)
+        let bytes = Array(line.utf8.prefix(shape.count + 1))
+        guard bytes.count > shape.count else { return false }
+        for (byte, expected) in zip(bytes, shape) {
+            let digit = byte >= UInt8(ascii: "0") && byte <= UInt8(ascii: "9")
+            guard expected == UInt8(ascii: "0") ? digit : byte == expected else { return false }
+        }
+        return !line.unicodeScalars.contains { $0.properties.generalCategory == .control }
     }
 
     /// Digits and dots only, at most 16 of them; anything else is `?`.
     static func plain(_ value: String) -> String {
         let allowed = !value.isEmpty && value.count <= 16 && value.allSatisfy { $0 == "." || ($0.isASCII && $0.isWholeNumber) }
         return allowed ? value : "?"
+    }
+
+    /// An error domain kept to ASCII letters, digits, `.`, `-` and `_`, its last 64 characters —
+    /// the end names the type, the start is the module; every other character becomes `_`, so the
+    /// line stays one line.
+    static func domain(_ value: String) -> String {
+        let kept = value.suffix(64).map { character -> Character in
+            character.isASCII && (character.isLetter || character.isNumber || "._-".contains(character)) ? character : "_"
+        }
+        return kept.isEmpty ? "?" : String(kept)
     }
 
     /// A whole number without a fraction, any other to three places.

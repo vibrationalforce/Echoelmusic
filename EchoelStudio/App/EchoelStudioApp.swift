@@ -9,7 +9,7 @@ struct EchoelStudioApp: App {
     @State private var engine: AudioEngine
     @State private var documents: DocumentController
     @State private var recording: RecordController
-    @State private var plugins = StoreController()
+    @State private var plugins: StoreController
     @State private var midi: MIDIInput
     @State private var writer: ParameterWriter
     @State private var launchpad: LaunchpadController
@@ -34,6 +34,8 @@ struct EchoelStudioApp: App {
         _midi = State(initialValue: midi)
         _launchpad = State(initialValue: LaunchpadController(store: store, engine: engine, midi: midi))
         _agent = State(initialValue: AgentSession(store: store))
+        // Not a property default: that would run before `beginApp()` (review 008).
+        _plugins = State(initialValue: StoreController())
         // A new sample rate reloads every plugin: their settings since the last save go into the
         // song first, so the reload does not take them back (ultra-audit R6).
         engine.beforeRateChange = { [weak store, weak engine] in

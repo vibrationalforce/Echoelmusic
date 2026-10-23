@@ -156,7 +156,8 @@ final class AudioEngine {
     /// A step that failed: the file gets the error's domain and code, os_log its description too.
     private func failed(_ event: StaticString, _ error: any Error) {
         DiagnosticLog.app.note(event, error: error)
-        log.error("\(event.description, privacy: .public) — \(error.localizedDescription, privacy: .public)")
+        // The description can name a song or a file, so it stays private even in os_log.
+        log.error("\(event.description, privacy: .public) — \(error.localizedDescription, privacy: .private)")
     }
 
     init() {

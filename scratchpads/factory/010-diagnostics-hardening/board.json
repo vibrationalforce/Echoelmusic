@@ -1,0 +1,35 @@
+{
+ "id": "010-diagnostics-hardening",
+ "title": "Diagnose-Log härten (Minors aus Job 008)",
+ "stage": "build",
+ "round": 1,
+ "base": "eb590a34007cfb182dcfcb4bdf6d9006363aa6c4",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "concurrency-reviewer"
+ ],
+ "paths": [
+  "EchoelStudio/Core/Sources/EchoelCore/DiagnosticLog.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/DiagnosticLogTests.swift",
+  "EchoelStudio/App/EchoelStudioApp.swift",
+  "EchoelStudio/App/Engine/AudioEngine.swift",
+  "scratchpads/factory/010-diagnostics-hardening"
+ ],
+ "criteria": 10,
+ "deviceCriteria": [],
+ "founderAssumptions": 0,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-23",
+   "note": "Aus den acht Runde-1-Minors von Job 008 (wf_dca9ce6d-79c): verlustbehaftetes Lesen nur des Dateiendes, nur eigene Zeilen, Domain gefiltert (letzte 64), Voll-Zeile mit Zeit, Uhr vor dem Schloss, Kopf latest/before + UTC, StoreController nach beginApp, .private im os_log."
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-23",
+   "note": "Core: tail/lastRun/ownLines/isOwn/domain, append(_:at:) rechnet die Voll-Zeile aus dem echten Stempel; vier neue Tests, drei angepasst. App: _plugins nach beginApp, failed .private. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  }
+ ]
+}
