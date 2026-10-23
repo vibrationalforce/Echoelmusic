@@ -118,6 +118,11 @@ public final class EngineCore: @unchecked Sendable {
     private let monoRight: UnsafeMutablePointer<Float>
     /// One audio lane's mono signal for part of a chunk, before it is faded into the lane.
     private let segment: UnsafeMutablePointer<Float>
+    /// The click of the chunk being rendered. It joins the master pair after the master inserts
+    /// and the master meter: it is for the musician, not the mix, so a master compressor does
+    /// not duck on every beat and the meter reads what an export would (audit 2026-10-23).
+    private let clickLeft: UnsafeMutablePointer<Float>
+    private let clickRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
     /// How far this chunk's nudge moved the playhead; audio crossfades across it.
@@ -235,6 +240,10 @@ public final class EngineCore: @unchecked Sendable {
         heard.initialize(repeating: 0, count: InputMonitor.channelLimit * Self.maximumFrames)
         segment = .allocate(capacity: Self.maximumFrames)
         segment.initialize(repeating: 0, count: Self.maximumFrames)
+        clickLeft = .allocate(capacity: Self.maximumFrames)
+        clickLeft.initialize(repeating: 0, count: Self.maximumFrames)
+        clickRight = .allocate(capacity: Self.maximumFrames)
+        clickRight.initialize(repeating: 0, count: Self.maximumFrames)
         monoRight.initialize(repeating: 0, count: Self.maximumFrames)
         outputs = .allocate(capacity: Track.outputChannelLimit)
         outputs.initialize(repeating: monoRight, count: Track.outputChannelLimit)
@@ -267,6 +276,8 @@ public final class EngineCore: @unchecked Sendable {
         returnRight.deallocate()
         monoRight.deallocate()
         segment.deallocate()
+        clickLeft.deallocate()
+        clickRight.deallocate()
         outputs.deallocate()
     }
 
@@ -410,6 +421,7 @@ public final class EngineCore: @unchecked Sendable {
             renderChunk(frames: frames)
             processMaster(frames: frames)
             meterMaster(frames: frames)
+            addClick(frames: frames)
             done += frames
         }
         publishAnchor(frames: frameCount)
@@ -434,6 +446,7 @@ public final class EngineCore: @unchecked Sendable {
             renderChunk(frames: frames)
             processMaster(frames: frames)
             meterMaster(frames: frames)
+            addClick(frames: frames)
             if used == 1 {
                 let mono = outputs[0]
                 for i in 0..<frames { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
@@ -441,6 +454,15 @@ public final class EngineCore: @unchecked Sendable {
             done += frames
         }
         publishAnchor(frames: frameCount)
+    }
+
+    /// The chunk's click into the master pair, once the master is done.
+    private func addClick(frames: Int) {
+        let left = outputs[0], right = outputs[1]
+        for i in 0..<frames {
+            left[i] += clickLeft[i]
+            right[i] += clickRight[i]
+        }
     }
 
     /// The master's inserts on the master pair, every chunk, so a limiter or a reverb tail runs
@@ -465,7 +487,8 @@ public final class EngineCore: @unchecked Sendable {
     private func renderChunk(frames: Int) {
         meterFall = MeterBank.fall(frames: frames, sampleRate: sampleRate)
         for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
-        let left = outputs[0], right = outputs[1]
+        clickLeft.update(repeating: 0, count: frames)
+        clickRight.update(repeating: 0, count: frames)
 
         remapped = false
         takePendingSnapshot()
@@ -526,7 +549,7 @@ public final class EngineCore: @unchecked Sendable {
             let held = stoppedAt ?? current?.snapshot.time.position(atSample: playhead) ?? 0
             mixFrom = held
             mixTo = held
-            renderVoices(0..<frames, left: left, right: right)
+            renderVoices(0..<frames)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
             if let snapshot = current?.snapshot {
@@ -569,7 +592,7 @@ public final class EngineCore: @unchecked Sendable {
             guard due.sample < blockEnd else { break }
 
             let offset = Swift.min(Swift.max(Int(due.sample - playhead), rendered), frames)
-            renderVoices(rendered..<offset, left: left, right: right)
+            renderVoices(rendered..<offset)
             rendered = offset
 
             switch due.kind {
@@ -600,7 +623,7 @@ public final class EngineCore: @unchecked Sendable {
                 automationNext = Swift.max(due.sample, playhead) + Self.automationStep
             }
         }
-        renderVoices(rendered..<frames, left: left, right: right)
+        renderVoices(rendered..<frames)
         // Counted on with clock out off too, so switching it on mid-song sends no burst.
         sendClocks(snapshot, blockEnd: blockEnd, emitting: clocking)
         renderUnits(frames: frames)
@@ -1449,7 +1472,7 @@ public final class EngineCore: @unchecked Sendable {
         }
     }
 
-    private func renderVoices(_ range: Range<Int>, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+    private func renderVoices(_ range: Range<Int>) {
         guard !range.isEmpty else { return }
         if let snapshot = current?.snapshot {
             for lane in snapshot.lanes {
@@ -1461,7 +1484,7 @@ public final class EngineCore: @unchecked Sendable {
                                right: bus(lane.slot, busRight) + range.lowerBound, gain: 1)
             }
         }
-        metronome.render(left: left, right: right, range: range)
+        metronome.render(left: clickLeft, right: clickRight, range: range)
     }
 }
 

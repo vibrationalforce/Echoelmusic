@@ -4,6 +4,27 @@ import EchoelDSP
 import XCTest
 @testable import EchoelEngine
 
+/// A master insert that silences what it is given and remembers how loud that was.
+private final class Silencer: HostedProcessor, @unchecked Sendable {
+    let sampleRate: Double
+    let isBypassed = false
+    let insert: InsertID? = nil
+    let parameterRanges: [UInt64: ClosedRange<Float>] = [:]
+    private(set) var heardPeak: Float = 0
+
+    init(sampleRate: Double) { self.sampleRate = sampleRate }
+
+    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+
+    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        for i in 0..<frames {
+            heardPeak = Swift.max(heardPeak, Swift.abs(left[i]), Swift.abs(right[i]))
+            left[i] = 0
+            right[i] = 0
+        }
+    }
+}
+
 final class EngineCoreTests: XCTestCase {
     private let rate = 48_000.0
     private let bar = MusicalTime.ticksPerBar(.common)
@@ -347,6 +368,23 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertGreaterThan(energy(24_000..<25_440), 0.1)
         XCTAssertEqual(energy(12_000..<23_990), 0)
         XCTAssertGreaterThan(energy(0..<1_440), energy(24_000..<25_440))
+    }
+
+    /// The click is for the musician, not the mix: it reaches the output but never the master
+    /// inserts, so a master compressor does not duck on every beat (audit 2026-10-23).
+    func testTheClickBypassesTheMasterInserts() throws {
+        let s = try song([[]])
+        let silencer = Silencer(sampleRate: rate)
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(true)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, masterEffects: [silencer]))
+        engine.play()
+        let out = render(engine, frames: 4_800).left
+        XCTAssertNotNil(firstSound(out), "the downbeat's click is heard")
+        XCTAssertEqual(silencer.heardPeak, 0, "and never went through the master insert")
     }
 
     func testEditingWhilePlayingKeepsTimeAndNeverHangsANote() throws {
