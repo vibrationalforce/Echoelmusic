@@ -753,7 +753,10 @@ final class EngineCoreTests: XCTestCase {
         engine.playLive(slot: 0, status: 0x90, 60, 100)
         let held = render(engine, frames: 4_800).left
         XCTAssertLessThan(rms(held[2_400..<4_800]), 0.000_1, "the return stays where the song stopped")
+        // A seek moves the transport, which lets the held key go; the next key is heard through it.
         engine.seek(toSample: 0)
+        _ = render(engine, frames: 1_024)
+        engine.playLive(slot: 0, status: 0x90, 62, 100)
         let followed = render(engine, frames: 4_800).left
         XCTAssertGreaterThan(rms(followed[2_400..<4_800]), 0.01, "a seek lets it follow the playhead, bar 1 at 0 dB")
     }
