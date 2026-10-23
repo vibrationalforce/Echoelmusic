@@ -89,7 +89,8 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
             model = PluginControlsModel(tree: tree, title: unit.title, isUnlocked: unit.isUnlocked, help: unit.help)
         }
         let controller = UIHostingController(rootView: PluginControlsView(
-            model: model, maximumSampleSeconds: InstrumentAudioUnit.maximumSampleSeconds))
+            model: model, maximumSampleSeconds: InstrumentAudioUnit.maximumSampleSeconds,
+            maximumSampleFrames: InstrumentAudioUnit.maximumSampleFrames))
         controller.view.backgroundColor = .clear
         addChild(controller)
         controller.view.frame = view.bounds

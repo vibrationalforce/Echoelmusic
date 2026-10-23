@@ -32,6 +32,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
     /// The longest sample the plugin takes. A host keeps it inside its session, so it stays short.
     static let maximumSampleSeconds: Double = 30
+    /// The same limit in frames — 30 s at 48 kHz. Seconds alone let a 768 kHz file take 23 M
+    /// frames, 92 MB, in the extension, which has the tightest memory limit of all (second night
+    /// review, 2026-10-23): a limit in frames is what bounds the memory, as in the app.
+    static let maximumSampleFrames = 1_440_000
     private enum StateKey {
         static let frames = "echoel.sample.frames", rate = "echoel.sample.rate", name = "echoel.sample.name"
     }
@@ -171,7 +175,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             super.fullState = InstrumentState.forBaseRestore(newValue, subtype: componentDescription.componentSubType)
             guard acceptsSamples else { return }
             guard let data = newValue?[StateKey.frames] as? Data, let rate = newValue?[StateKey.rate] as? Double,
-                  rate.isFinite, rate > 0, Double(data.count / 4) / rate <= Self.maximumSampleSeconds else {
+                  rate.isFinite, rate > 0, Double(data.count / 4) / rate <= Self.maximumSampleSeconds,
+                  data.count / 4 <= Self.maximumSampleFrames else {
                 try? installSample(nil, name: "")
                 return
             }

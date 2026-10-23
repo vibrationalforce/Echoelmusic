@@ -39,11 +39,13 @@ final class PluginControlsModel {
     }
 
     /// Reads the file off the main thread, then hands it to the unit.
-    func loadSample(from url: URL, maximumSeconds: Double) async {
+    func loadSample(from url: URL, maximumSeconds: Double, maximumFrames: Int) async {
         guard let installSample else { return }
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
-        let result = await Task.detached { try SampleFile.readMono(url, maximumSeconds: maximumSeconds) }.result
+        let result = await Task.detached {
+            try SampleFile.readMono(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+        }.result
         let name = String(url.deletingPathExtension().lastPathComponent.prefix(60))
         do {
             try installSample(try result.get(), name)
@@ -79,8 +81,10 @@ final class PluginControlsModel {
 
 struct PluginControlsView: View {
     let model: PluginControlsModel
-    /// The longest sample the controls offer to load.
+    /// The longest sample the controls offer to load, in seconds and in frames (the frames bound
+    /// the memory at a high sample rate).
     var maximumSampleSeconds: Double = 30
+    var maximumSampleFrames: Int = 1_440_000
     @State private var importing = false
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.
@@ -143,7 +147,7 @@ struct PluginControlsView: View {
         }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.audio]) { result in
             guard case .success(let url) = result else { return }
-            Task { await model.loadSample(from: url, maximumSeconds: maximumSampleSeconds) }
+            Task { await model.loadSample(from: url, maximumSeconds: maximumSampleSeconds, maximumFrames: maximumSampleFrames) }
         }
     }
 
