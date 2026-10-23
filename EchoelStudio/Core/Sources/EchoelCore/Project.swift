@@ -124,7 +124,7 @@ public struct Project: Codable, Equatable, Sendable {
 public enum MonitorMode: String, Codable, Sendable, CaseIterable {
     /// While the track is armed — and never into the device's own speaker, where it would howl.
     case auto
-    /// Always, armed or not.
+    /// Always, armed or not — but, like `auto`, never into the device's own speaker.
     case input = "in"
     /// Never; the interface or the mixer monitors directly.
     case off

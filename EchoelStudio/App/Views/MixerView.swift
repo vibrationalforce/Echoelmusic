@@ -251,7 +251,7 @@ struct InputMenu: View {
     static func title(_ mode: MonitorMode) -> String {
         switch mode {
         case .auto: "Auto (while armed, not on the speaker)"
-        case .input: "Always"
+        case .input: "Always (not on the speaker)"
         case .off: "Off (the interface monitors)"
         }
     }

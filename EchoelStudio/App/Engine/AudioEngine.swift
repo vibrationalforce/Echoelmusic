@@ -129,15 +129,18 @@ final class AudioEngine {
         }
     }
 
-    /// Which input each audio track plays through its strip right now.
+    /// Which input each audio track plays through its strip right now. Never into the device's
+    /// own speaker, in either mode: headphones pulled with a track set to Always sent the
+    /// microphone straight to the speaker, and the song howled — and the input now opens by
+    /// itself after such a pause (fourth night review, 2026-10-23). The route change publishes
+    /// the song again, so monitoring comes back with the headphones.
     private func monitoring(in project: Project) -> [TrackID: Int] {
-        guard isInputOpen else { return [:] }
-        let speaker = outputIsBuiltIn
+        guard isInputOpen, !outputIsBuiltIn else { return [:] }
         var result: [TrackID: Int] = [:]
         for track in project.tracks where track.kind == .audio {
             switch track.monitor {
             case .input: result[track.id] = track.input ?? 0
-            case .auto: if track.id == armedTrack, !speaker { result[track.id] = track.input ?? 0 }
+            case .auto: if track.id == armedTrack { result[track.id] = track.input ?? 0 }
             case .off: break
             }
         }
