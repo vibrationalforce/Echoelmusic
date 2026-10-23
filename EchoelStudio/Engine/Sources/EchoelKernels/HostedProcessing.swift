@@ -24,7 +24,8 @@ public struct HostTransport: Equatable, Sendable {
     public var beat: Double
     /// The beat on which the bar holding `beat` starts.
     public var downbeat: Double
-    /// Frames from this call's first sample to the next beat of the time signature; 0 while stopped.
+    /// Frames from this call's first sample to the next quarter note — a beat as Audio Units count
+    /// it, not the signature's beat (in 6/8 that would be an eighth); 0 while stopped.
     public var samplesToNextBeat: Int
     /// The song position in samples.
     public var sample: Double
