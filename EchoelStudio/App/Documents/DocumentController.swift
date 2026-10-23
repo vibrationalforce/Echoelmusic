@@ -1205,6 +1205,7 @@ final class DocumentController {
         }
         followMovedPackage()
         guard let package = currentURL else { return nil }
+        let song = songsOpened
         if isUnwritten { starterMadeFolder = true }   // the import below makes it
         isImporting = true
         defer {
@@ -1217,7 +1218,9 @@ final class DocumentController {
             defer { if scoped { source.stopAccessingSecurityScopedResource() } }
             return Result { try AudioFileImport.importFile(source, into: package) }
         }.value
-        guard currentURL == package else { return nil }
+        // Another song opened meanwhile drops the import; the same song followed to a new name in
+        // Files keeps it — its copy moved with the package (second night review, 2026-10-23).
+        guard songsOpened == song, let here = currentURL else { return nil }
         switch result {
         case .success(let imported):
             // A file that does not fit in memory beside the song's audio is not added: the next
@@ -1228,7 +1231,7 @@ final class DocumentController {
             var grown = store.project
             for command in commands { try? command.apply(to: &grown) }
             if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project).isEmpty {
-                if let copy = imported.file.url(in: package) { try? FileManager.default.removeItem(at: copy) }
+                if let copy = imported.file.url(in: here) { try? FileManager.default.removeItem(at: copy) }
                 lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
                 return nil
             }
@@ -1303,11 +1306,17 @@ final class DocumentController {
             takeLanded(target.id)
             followRenamedSong()
         }
-        let package = currentURL
+        // The take is read where its package is now: renamed in Files since the take began, the
+        // package took the file along (second night review, 2026-10-23).
+        let song = songsOpened
+        let source = currentURL.flatMap {
+            MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: $0)
+        } ?? take.url
         let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
-            Result { try AudioFileImport.decode(take.url) }
+            Result { try AudioFileImport.decode(source) }
         }.value
-        guard currentURL == package else { return }
+        // Another song opened meanwhile drops the take; the same song followed keeps it.
+        guard songsOpened == song else { return }
         let buffer: SampleBuffer
         switch result {
         case .success(let decoded): buffer = decoded
@@ -1319,7 +1328,7 @@ final class DocumentController {
         let time = TimeConversion(tempoMap: tempoMap, sampleRate: take.sampleRate)
         let placement = RecordingPlacement.place(startSample: take.startSample, latency: take.latency, time: time)
         guard buffer.frameCount > placement.offset else {
-            try? FileManager.default.removeItem(at: take.url)
+            try? FileManager.default.removeItem(at: source)
             return
         }
         samples[target.id] = buffer
@@ -1374,6 +1383,7 @@ final class DocumentController {
         let files = project.media
         let budget = AudioFileImport.songBudgetBytes
         let plan = project.mediaLoadPlan(budget: budget)
+        let song = songsOpened
         // Only what the song plays is named as silent; a leftover nothing plays is not loaded and
         // not said, as the export says it (second night review, 2026-10-23).
         let audible = Set(project.audibleMedia)
@@ -1410,7 +1420,8 @@ final class DocumentController {
             // Not cancelled, this is still the song's load: another song's load cancels it first.
             guard let self, !Task.isCancelled else { return }
             self.isLoadingMedia = false
-            guard self.currentURL == package else { return }
+            // The same song followed to a new name in Files keeps what was decoded.
+            guard self.songsOpened == song else { return }
             let missing = files.count - loaded.decoded.count - loaded.unfit.count
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
             if !loaded.unfit.isEmpty {
