@@ -77,6 +77,10 @@ public final class EngineCore: @unchecked Sendable {
     /// from a later build), set together with `devices`.
     private let deviceIndices: UnsafeMutablePointer<Int>
     private let owners: UnsafeMutablePointer<TrackID?>
+    /// Per smoothed audio-track mix point and per return bus, the track that owns it: a point
+    /// is a position in the snapshot, so a deletion hands it to the track that moves up.
+    private let audioOwners: UnsafeMutablePointer<TrackID?>
+    private let returnOwners: UnsafeMutablePointer<TrackID?>
     private let cursors: UnsafeMutablePointer<Int>
     private let sessions: UnsafeMutablePointer<SessionSlot>
     /// The events revision each slot last played; a different one means its notes were edited.
@@ -207,6 +211,10 @@ public final class EngineCore: @unchecked Sendable {
         deviceIndices.initialize(repeating: builtIn.firstIndex(of: .synth) ?? -1, count: self.slotCapacity)
         owners = .allocate(capacity: self.slotCapacity)
         owners.initialize(repeating: nil, count: self.slotCapacity)
+        audioOwners = .allocate(capacity: Self.smoothedAudioTracks)
+        audioOwners.initialize(repeating: nil, count: Self.smoothedAudioTracks)
+        returnOwners = .allocate(capacity: Self.returnCapacity)
+        returnOwners.initialize(repeating: nil, count: Self.returnCapacity)
         cursors = .allocate(capacity: self.slotCapacity)
         cursors.initialize(repeating: 0, count: self.slotCapacity)
         sessions = .allocate(capacity: self.slotCapacity)
@@ -259,6 +267,10 @@ public final class EngineCore: @unchecked Sendable {
         deviceIndices.deallocate()
         owners.deinitialize(count: slotCapacity)
         owners.deallocate()
+        audioOwners.deinitialize(count: Self.smoothedAudioTracks)
+        audioOwners.deallocate()
+        returnOwners.deinitialize(count: Self.returnCapacity)
+        returnOwners.deallocate()
         cursors.deallocate()
         sessions.deinitialize(count: slotCapacity)
         sessions.deallocate()
@@ -890,6 +902,27 @@ public final class EngineCore: @unchecked Sendable {
                 forget(point: slot)
             }
         }
+        // The same for an audio track's mix point and a return bus: a track that moves up when
+        // the one above it is deleted neither ramps from its level nor fades into a return it
+        // never sent to (review 2026-10-23).
+        for index in 0..<Self.smoothedAudioTracks {
+            let owner: TrackID? = index < snapshot.audioLanes.count ? snapshot.audioLanes[index].track : nil
+            if audioOwners[index] != owner {
+                audioOwners[index] = owner
+                forget(point: slotCapacity + index)
+            }
+        }
+        for bus in 0..<Self.returnCapacity {
+            var owner: TrackID?
+            for lane in snapshot.returns where lane.bus == bus {
+                owner = lane.track
+                break
+            }
+            if returnOwners[bus] != owner {
+                returnOwners[bus] = owner
+                forget(bus: bus)
+            }
+        }
         // A playing clip follows its edits; a deleted one stops.
         for lane in snapshot.audioLanes where lane.slot >= 0 && lane.slot < slotCapacity {
             guard let clip = sessions[lane.slot].clip, !lane.loops.contains(where: { $0.clip == clip }) else { continue }
@@ -1185,6 +1218,20 @@ public final class EngineCore: @unchecked Sendable {
             sendMemory[index] = .nan
             sendMemory[index + 1] = .nan
         }
+    }
+
+    /// A return bus handed to another track, or to none: its level and every send into it start
+    /// over, and nothing left in it is heard.
+    private func forget(bus: Int) {
+        guard bus >= 0, bus < Self.returnCapacity else { return }
+        forget(point: sendingPoints + bus)
+        for sender in 0..<sendingPoints {
+            let index = (sender * Self.returnCapacity + bus) * 2
+            sendMemory[index] = .nan
+            sendMemory[index + 1] = .nan
+        }
+        (returnLeft + bus * Self.maximumFrames).update(repeating: 0, count: Self.maximumFrames)
+        (returnRight + bus * Self.maximumFrames).update(repeating: 0, count: Self.maximumFrames)
     }
 
     private func memory(point: Int) -> UnsafeMutablePointer<Float>? {

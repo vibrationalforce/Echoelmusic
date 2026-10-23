@@ -152,6 +152,44 @@ final class AudioRegionPlaybackTests: XCTestCase {
                       "a muted track feeds no return, soloed or not")
     }
 
+    /// A track that moves up when the one above it is deleted takes that track's place in the
+    /// mix, not its sends: a return it never sent to stays silent instead of hearing it fade out
+    /// of a send that belonged to the deleted track (review 2026-10-23).
+    func testATrackThatMovesUpDoesNotFadeIntoAReturnItNeverSentTo() throws {
+        var s = try song(frames: 2 * beat, fileRate: rate)
+        let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 2 * beat), sampleRate: rate))
+        let below = TrackID(), verb = TrackID()
+        try Command.addTrack(id: below, name: "Audio 2", kind: .audio, index: nil).apply(to: &s.project)
+        try Command.placeAudio(track: below, id: RegionID(), media: s.media.id,
+                               start: MusicalTime.ticksPerQuarter).apply(to: &s.project)
+        try Command.addTrack(id: verb, name: "Reverb", kind: .returnTrack, index: nil).apply(to: &s.project)
+        try Command.setSend(track: s.track, to: verb, db: 0).apply(to: &s.project)
+        try Command.setSolo(verb, true).apply(to: &s.project)
+        let engine = EngineCore(sampleRate: rate)
+        engine.setClickEnabled(false)
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        var generation: UInt64 = 0
+        func install(_ project: Project) {
+            generation += 1
+            slots.update(for: project)
+            engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: project), project: project, slots: slots.slots,
+                                          sampleRate: rate, generation: generation, samples: [s.media.id: buffer]))
+        }
+        install(s.project)
+        engine.play()
+        let sending = render(engine, frames: beat + 2_400)
+        XCTAssertEqual(sending[beat + 2_000], 0.5 * centre * centre, accuracy: 1e-4, "the return hears the send")
+
+        try Command.removeTrack(s.track).apply(to: &s.project)
+        install(s.project)
+        XCTAssertTrue(render(engine, frames: 1_024).allSatisfy { $0 == 0 },
+                      "the track that moved up never sent to the return")
+        try Command.setSolo(verb, false).apply(to: &s.project)
+        install(s.project)
+        XCTAssertEqual(render(engine, frames: 1_024).last ?? 0, 0.5 * centre, accuracy: 1e-4,
+                       "and it was playing all along")
+    }
+
     func testMuteSilencesAndAMissingFileIsSilent() throws {
         var s = try song(frames: 4_800, fileRate: rate)
         let buffer = try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 4_800), sampleRate: rate))
