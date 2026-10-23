@@ -118,6 +118,11 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
         let note = Int(data1 & 0x7F)
         switch status & 0xF0 {
         case 0x90 where data2 & 0x7F > 0:
+            // A host sends a change and a note at the same offset before any render: the note
+            // hears the root key, the patch and the sample that came with it (audit 2026-10-23).
+            // Both are one atomic compare when nothing changed.
+            takeNewSample()
+            commitParameters()
             let pitch = UInt8(Swift.min(Swift.max(note + transpose, 0), 127))
             sounding[note] = pitch
             sampler.noteOn(pitch: pitch, velocity: data2 & 0x7F)

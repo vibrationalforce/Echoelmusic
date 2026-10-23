@@ -45,6 +45,17 @@ final class SynthKernelTests: XCTestCase {
         XCTAssertGreaterThan(loud, 0)
     }
 
+    /// A level a host sets at a note's own offset, before any render, is the note's level from
+    /// its first sample — not a glide from the old one (audit 2026-10-23).
+    func testAValueThatArrivesWithANoteIsHeardByIt() {
+        let kernel = SynthKernel(sampleRate: 48_000)
+        let level = SynthParameter.all.firstIndex { $0.key == SynthParameter.level.key } ?? -1
+        _ = render(kernel, frames: 16)
+        kernel.setParameter(level, 0)
+        kernel.receive(status: 0x90, 60, 127) // no render in between
+        XCTAssertEqual(peak(render(kernel, frames: 480).0), 0, "silent from the first sample")
+    }
+
     func testEverySynthParameterSetsExactlyOnePatchField() {
         XCTAssertEqual(PatchField.allCases.map(\.parameter.key), SynthParameter.all.map(\.key),
                        "one field per parameter, in the document's order")

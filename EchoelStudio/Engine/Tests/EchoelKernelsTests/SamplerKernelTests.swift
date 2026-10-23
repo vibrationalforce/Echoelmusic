@@ -57,6 +57,24 @@ final class SamplerKernelTests: XCTestCase {
         XCTAssertGreaterThan(peak(render(kernel, frames: 480)), 0.3, "at the root it plays on")
     }
 
+    /// A host sends a change and a note at the same offset, before any render: the note hears
+    /// the root key and the sample that came with it (audit 2026-10-23).
+    func testAChangeThatArrivesWithANoteIsHeardByIt() throws {
+        let kernel = SamplerKernel(sampleRate: 48_000)
+        kernel.load(try XCTUnwrap(constant(0.5)))
+        kernel.setParameter(try address("sampler_mode"), 1) // one-shot: plays to the end
+        _ = render(kernel, frames: 16)
+        kernel.setParameter(try address("sampler_root"), 48)
+        kernel.receive(status: 0x90, 60, 127) // no render in between
+        _ = render(kernel, frames: 26_400)
+        XCTAssertEqual(peak(render(kernel, frames: 480)), 0, "an octave above the new root, the second lasts half")
+
+        let fresh = SamplerKernel(sampleRate: 48_000)
+        fresh.load(try XCTUnwrap(constant(0.5)))
+        fresh.receive(status: 0x90, 60, 127)
+        XCTAssertGreaterThan(peak(render(fresh, frames: 960)), 0.3, "the note plays the sample loaded just before it")
+    }
+
     func testANoteOffFindsItsNoteAfterTheRootKeyMoved() throws {
         let kernel = SamplerKernel(sampleRate: 48_000)
         kernel.load(try XCTUnwrap(constant(0.5, seconds: 4)))

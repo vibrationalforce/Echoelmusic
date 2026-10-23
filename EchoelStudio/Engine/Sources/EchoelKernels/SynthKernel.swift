@@ -70,7 +70,10 @@ public final class SynthKernel: @unchecked Sendable {
     /// the same reading the app's engine uses.
     public func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         switch status & 0xF0 {
-        case 0x90: synth.noteOn(pitch: data1 & 0x7F, velocity: data2 & 0x7F)
+        case 0x90:
+            // A value a host set at the note's own offset reaches the note, not the next render.
+            commitParameters()
+            synth.noteOn(pitch: data1 & 0x7F, velocity: data2 & 0x7F)
         case 0x80: synth.noteOff(pitch: data1 & 0x7F)
         case 0xB0: synth.controller(data1 & 0x7F, data2 & 0x7F)
         case 0xE0: synth.pitchBend(Int(data1 & 0x7F) | Int(data2 & 0x7F) << 7)
