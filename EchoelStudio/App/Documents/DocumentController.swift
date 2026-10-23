@@ -1157,6 +1157,15 @@ final class DocumentController {
         guard currentURL == package else { return nil }
         switch result {
         case .success(let imported):
+            // A file that does not fit in memory beside the song's audio is not added: the next
+            // open would leave it, or audio the song plays, silent (R9).
+            var grown = store.project
+            grown.media.append(imported.file)
+            if grown.mediaLoadPlan(budget: AudioFileImport.songBudgetBytes).skipped.contains(where: { $0.id == imported.file.id }) {
+                if let copy = imported.file.url(in: package) { try? FileManager.default.removeItem(at: copy) }
+                lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
+                return nil
+            }
             samples[imported.file.id] = imported.buffer
             mediaRevision += 1
             return imported.file
@@ -1258,7 +1267,15 @@ final class DocumentController {
             commands.append(.trimRegion(track: track, region, offset: placement.offset,
                                         length: buffer.frameCount - placement.offset))
         }
+        // A take is never refused, but one that takes the song past its memory budget is said:
+        // the next open leaves something silent (R9).
+        let budget = AudioFileImport.songBudgetBytes
+        let unfitBefore = store.project.mediaLoadPlan(budget: budget).skipped.count
         perform(commands, title: "Record Take")
+        if store.project.mediaLoadPlan(budget: budget).skipped.count > unfitBefore {
+            let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, some of it stays silent."
+            lastError = lastError.map { "\($0) \(line)" } ?? line
+        }
     }
 
     private func perform(_ commands: [Command], title: String) {
