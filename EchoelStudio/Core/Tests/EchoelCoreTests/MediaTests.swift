@@ -73,6 +73,9 @@ final class MediaTests: XCTestCase {
         let tight = p.mediaLoadPlan(budget: 1_600 * bytes)
         XCTAssertEqual(tight.load.map(\.id), [take.id, sample.id, small.id])
         XCTAssertEqual(tight.skipped.map(\.id), [unused.id])
+        XCTAssertEqual(tight.silenced, [], "nothing the song plays is left out")
+        XCTAssertEqual(p.mediaLoadPlan(budget: 1_200 * bytes).silenced.map(\.id), [sample.id],
+                       "the sample the sampler plays does not fit: that is heard as silence")
 
         // A sample counts as played only while the sampler plays its track.
         try Command.setInstrumentDevice(keys, .synth).apply(to: &p)
@@ -80,6 +83,60 @@ final class MediaTests: XCTestCase {
 
         XCTAssertEqual(p.mediaLoadPlan(budget: 0).load, [])
         XCTAssertEqual(p.mediaLoadPlan(budget: -1).skipped.count, 4)
+    }
+
+    /// A file is judged where it will be: placed, it plays and ranks before the files nothing
+    /// plays, so a song full of leftovers still takes it (second night review, 2026-10-23).
+    func testAPlacedFileRanksBeforeTheLeftovers() throws {
+        var p = Project()
+        let audio = TrackID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        let played = file(path: "Media/played.wav", frames: 300)
+        let left1 = file(path: "Media/left1.wav", frames: 300), left2 = file(path: "Media/left2.wav", frames: 300)
+        for media in [played, left1, left2] { try Command.addMedia(media).apply(to: &p) }
+        try Command.placeAudio(track: audio, id: RegionID(), media: played.id, start: 0).apply(to: &p)
+        let budget = 1_000 * Project.decodedBytesPerFrame
+
+        let fits = file(path: "Media/new.wav", frames: 200)
+        var orphan = p
+        try Command.addMedia(fits).apply(to: &orphan)
+        XCTAssertEqual(orphan.mediaLoadPlan(budget: budget).skipped.map(\.id), [fits.id], "appended alone, it ranks last")
+        var placed = p
+        try Command.addMedia(fits).apply(to: &placed)
+        // Later than the region already there: regions keep start order, so the order is fixed.
+        try Command.placeAudio(track: audio, id: RegionID(), media: fits.id, start: 1_000).apply(to: &placed)
+        XCTAssertEqual(placed.mediaLoadPlan(budget: budget).skipped.map(\.id), [left2.id], "placed, a leftover gives way")
+        XCTAssertEqual(placed.newlySilencedMedia(budget: budget, comparedTo: p), [])
+
+        let tooBig = file(path: "Media/big.wav", frames: 800)
+        var big = p
+        try Command.addMedia(tooBig).apply(to: &big)
+        try Command.placeAudio(track: audio, id: RegionID(), media: tooBig.id, start: 1_000).apply(to: &big)
+        XCTAssertEqual(big.newlySilencedMedia(budget: budget, comparedTo: p).map(\.id), [tooBig.id])
+    }
+
+    /// A take can push a file the song plays out of memory while a leftover drops back in: the
+    /// count of skipped files stays the same, and still something heard goes silent.
+    func testATakeThatSwapsWhatIsSkippedNamesWhatGoesSilent() throws {
+        var p = Project()
+        let one = TrackID(), two = TrackID()
+        try Command.addTrack(id: one, name: "One", kind: .audio, index: nil).apply(to: &p)
+        try Command.addTrack(id: two, name: "Two", kind: .audio, index: nil).apply(to: &p)
+        let first = file(path: "Media/a.wav", frames: 330), second = file(path: "Media/p.wav", frames: 115)
+        let leftover = file(path: "Media/u.wav", frames: 100)
+        for media in [first, second, leftover] { try Command.addMedia(media).apply(to: &p) }
+        try Command.placeAudio(track: one, id: RegionID(), media: first.id, start: 0).apply(to: &p)
+        try Command.placeAudio(track: two, id: RegionID(), media: second.id, start: 0).apply(to: &p)
+        let budget = 537 * Project.decodedBytesPerFrame
+        XCTAssertEqual(p.mediaLoadPlan(budget: budget).skipped.map(\.id), [leftover.id])
+
+        let take = file(path: "Media/take.wav", frames: 95)
+        var after = p
+        try Command.addMedia(take).apply(to: &after)
+        try Command.placeAudio(track: one, id: RegionID(), media: take.id, start: 1_000).apply(to: &after)
+        XCTAssertEqual(after.mediaLoadPlan(budget: budget).skipped.map(\.id), [second.id], "one skipped before, one after")
+        XCTAssertEqual(after.newlySilencedMedia(budget: budget, comparedTo: p).map(\.id), [second.id])
+        XCTAssertEqual(p.newlySilencedMedia(budget: budget, comparedTo: after), [], "a leftover going out is heard by no one")
     }
 
     func testADuplicateIDIsRefused() throws {

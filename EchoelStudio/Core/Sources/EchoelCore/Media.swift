@@ -73,10 +73,14 @@ public struct MediaLoadPlan: Equatable, Sendable {
     public var load: [MediaFile]
     /// What does not fit. The song still opens; whatever plays these files is silent.
     public var skipped: [MediaFile]
+    /// The skipped files something in the song plays — a region, an audio clip, the sample of a
+    /// track the sampler plays: what is heard as silence. The rest of `skipped` nothing plays now.
+    public var silenced: [MediaFile]
 
-    public init(load: [MediaFile] = [], skipped: [MediaFile] = []) {
+    public init(load: [MediaFile] = [], skipped: [MediaFile] = [], silenced: [MediaFile] = []) {
         self.load = load
         self.skipped = skipped
+        self.silenced = silenced
     }
 }
 
@@ -95,15 +99,11 @@ extension Project {
     /// file no region uses any more). A file that no longer fits is skipped, and a smaller one
     /// after it can still fit.
     public func mediaLoadPlan(budget: Int) -> MediaLoadPlan {
-        let played: [MediaID] = tracks.flatMap { (track: Track) -> [MediaID] in
-            track.regions.map(\.media) + track.clips.compactMap { $0.audio?.media }
-        }
-        let samples: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
-            track.instrument.device == .sampler ? track.instrument.sample : nil
-        }
+        let audible = audibleMedia
+        let heard = Set(audible)
         var order: [MediaID] = []
         var seen = Set<MediaID>()
-        for id in played + samples + media.map(\.id) {
+        for id in audible + media.map(\.id) {
             if seen.insert(id).inserted { order.append(id) }
         }
         let files = Dictionary(media.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -117,8 +117,30 @@ extension Project {
                 plan.load.append(file)
             } else {
                 plan.skipped.append(file)
+                if heard.contains(id) { plan.silenced.append(file) }
             }
         }
         return plan
+    }
+
+    /// The files the song plays, in the order a load plan takes them: the audio regions and audio
+    /// clips track by track, then the samples of tracks the sampler plays. May repeat an id.
+    public var audibleMedia: [MediaID] {
+        let played: [MediaID] = tracks.flatMap { (track: Track) -> [MediaID] in
+            track.regions.map(\.media) + track.clips.compactMap { $0.audio?.media }
+        }
+        let samples: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
+            track.instrument.device == .sampler ? track.instrument.sample : nil
+        }
+        return played + samples
+    }
+
+    /// What this song would leave silent within `budget` that `before` did not: a file it plays
+    /// that no longer fits, or one it newly plays that does not fit. A change that places a new
+    /// file is judged with the file placed — appended alone, nothing points at it yet and it would
+    /// rank behind every file nothing plays (second night review, 2026-10-23).
+    public func newlySilencedMedia(budget: Int, comparedTo before: Project) -> [MediaFile] {
+        let was = Set(before.mediaLoadPlan(budget: budget).silenced.map(\.id))
+        return mediaLoadPlan(budget: budget).silenced.filter { !was.contains($0.id) }
     }
 }

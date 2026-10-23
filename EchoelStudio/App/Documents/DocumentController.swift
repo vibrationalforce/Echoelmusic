@@ -1151,38 +1151,43 @@ final class DocumentController {
     /// Copies an audio file into the song and makes it `track`'s sample, switching the track
     /// to the sampler — one undo step.
     func importAudio(_ source: URL, onto track: TrackID) async {
-        guard let file = await importMedia(source) else { return }
-        perform([.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)],
-                title: "Import \(file.name)")
+        guard let imported = await importMedia(source, placing: { file in
+            [.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)]
+        }) else { return }
+        perform(imported.commands, title: "Import \(imported.file.name)")
     }
 
     /// Copies an audio file into the song and places all of it on an audio track at `start` —
     /// one undo step.
     func importAudio(_ source: URL, placingOn track: TrackID, at start: Tick) async {
-        guard let file = await importMedia(source) else { return }
-        perform([.addMedia(file), .placeAudio(track: track, id: RegionID(), media: file.id, start: start)],
-                title: "Import \(file.name)")
+        guard let imported = await importMedia(source, placing: { file in
+            [.addMedia(file), .placeAudio(track: track, id: RegionID(), media: file.id, start: start)]
+        }) else { return }
+        perform(imported.commands, title: "Import \(imported.file.name)")
     }
 
     /// Copies an audio file into the song as a session clip of an audio track, looping over the
     /// nearest whole number of bars, in a scene's slot — one undo step.
     func importAudioClip(_ source: URL, onto track: TrackID, scene: SceneID) async {
-        guard let file = await importMedia(source) else { return }
-        let project = store.project
-        let length = Arranging.loopLength(seconds: Double(file.frameCount) / file.sampleRate, bpm: project.tempo,
-                                          signature: project.timeSignature)
-        let clip = ClipID()
-        perform([.addMedia(file),
-                 .createAudioClip(track: track, id: clip, name: file.name, length: length,
-                                  audio: ClipAudio(media: file.id, length: file.frameCount)),
-                 .setSlot(track: track, scene: scene, clip: clip)],
-                title: "Import \(file.name)")
+        guard let imported = await importMedia(source, placing: { file in
+            let project = store.project
+            let length = Arranging.loopLength(seconds: Double(file.frameCount) / file.sampleRate, bpm: project.tempo,
+                                              signature: project.timeSignature)
+            let clip = ClipID()
+            return [.addMedia(file),
+                    .createAudioClip(track: track, id: clip, name: file.name, length: length,
+                                     audio: ClipAudio(media: file.id, length: file.frameCount)),
+                    .setSlot(track: track, scene: scene, clip: clip)]
+        }) else { return }
+        perform(imported.commands, title: "Import \(imported.file.name)")
     }
 
-    /// Copies and decodes a file off the main thread and keeps its buffer, returning the file
-    /// ready for `media.add`. Nil, with `lastError` set, when it cannot be read — or when
-    /// another song was opened meanwhile.
-    private func importMedia(_ source: URL) async -> MediaFile? {
+    /// Copies and decodes a file off the main thread and keeps its buffer, returning the file and
+    /// the commands `placing` makes of it, for one undo step. Nil, with `lastError` set, when it
+    /// cannot be read, when placing it would leave something the song plays silent at the next
+    /// open — or when another song was opened meanwhile.
+    private func importMedia(_ source: URL, placing: (MediaFile) -> [Command]) async
+        -> (file: MediaFile, commands: [Command])? {
         starterKeepsItsOwnPackage()
         if isImporting {
             // A second file picked while the first decodes: said, not dropped without a word.
@@ -1207,17 +1212,20 @@ final class DocumentController {
         switch result {
         case .success(let imported):
             // A file that does not fit in memory beside the song's audio is not added: the next
-            // open would leave it, or audio the song plays, silent (R9).
+            // open would leave it, or audio the song plays, silent (R9). Judged with the file
+            // placed — appended alone it would rank behind every file nothing plays any more
+            // (second night review, 2026-10-23). A command that fails here fails in `perform` too.
+            let commands = placing(imported.file)
             var grown = store.project
-            grown.media.append(imported.file)
-            if grown.mediaLoadPlan(budget: AudioFileImport.songBudgetBytes).skipped.contains(where: { $0.id == imported.file.id }) {
+            for command in commands { try? command.apply(to: &grown) }
+            if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project).isEmpty {
                 if let copy = imported.file.url(in: package) { try? FileManager.default.removeItem(at: copy) }
                 lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
                 return nil
             }
             samples[imported.file.id] = imported.buffer
             mediaRevision += 1
-            return imported.file
+            return (file: imported.file, commands: commands)
         case .failure(let error):
             log.error("import failed — \(error.localizedDescription, privacy: .public)")
             lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file."
@@ -1319,13 +1327,14 @@ final class DocumentController {
             commands.append(.trimRegion(track: track, region, offset: placement.offset,
                                         length: buffer.frameCount - placement.offset))
         }
-        // A take is never refused, but one that takes the song past its memory budget is said:
-        // the next open leaves something silent (R9).
-        let budget = AudioFileImport.songBudgetBytes
-        let unfitBefore = store.project.mediaLoadPlan(budget: budget).skipped.count
+        // A take is never refused, but one that takes the song past its memory budget is said, by
+        // the files the song plays that the next open would leave silent (R9) — which, not how
+        // many: a take can push one out while a leftover drops back in (second night review).
+        let before = store.project
         perform(commands, title: "Record Take")
-        if store.project.mediaLoadPlan(budget: budget).skipped.count > unfitBefore {
-            let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, some of it stays silent."
+        let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before)
+        if !silenced.isEmpty {
+            let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
     }
@@ -1356,6 +1365,9 @@ final class DocumentController {
         let files = project.media
         let budget = AudioFileImport.songBudgetBytes
         let plan = project.mediaLoadPlan(budget: budget)
+        // Only what the song plays is named as silent; a leftover nothing plays is not loaded and
+        // not said, as the export says it (second night review, 2026-10-23).
+        let audible = Set(project.audibleMedia)
         isLoadingMedia = true
         mediaLoad = Task { [weak self] in
             // Another song opening cancels this, and the decode stops after the file it is on: a
@@ -1394,8 +1406,11 @@ final class DocumentController {
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
             if !loaded.unfit.isEmpty {
                 self.log.error("media: \(loaded.unfit.count, privacy: .public) file(s) past the song's memory budget")
+            }
+            let silent = loaded.unfit.filter { audible.contains($0.id) }
+            if !silent.isEmpty {
                 // Beside, not over, what the open said (a move the song still owes).
-                let line = "Not loaded, so silent: \(DocumentController.audioFiles(loaded.unfit.map(\.name))). \(DocumentController.overBudget)"
+                let line = "Not loaded, so silent: \(DocumentController.audioFiles(silent.map(\.name))). \(DocumentController.overBudget)"
                 self.lastError = self.lastError.map { "\($0) \(line)" } ?? line
             }
             self.unfitMedia = Set(loaded.unfit.map(\.id))
