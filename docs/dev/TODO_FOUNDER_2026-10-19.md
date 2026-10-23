@@ -137,33 +137,33 @@ Fett = fester Termin oder Frist.
 - **17:00–18:00 Sprechstunde Prototype Fund (online). Frage 1 mit den öffentlichen Zahlen: 8.805 von 9.861 Commits auf main unter dem KI-Account, rund 516 unter deinen Identitäten; du entscheidest Architektur, Umfang, Tests und jede Änderung. Antworten mitschreiben.** _(F)_
 - **ERLEDIGT 12:35 — Mail ist raus; 15:38 Nachtrag (Jahr, 516) raus; 18:00 Nachbereitungs-Entwurf im Thread (F-05b).** _(F)_
 - [x] **Entschieden 18:10: A.** [Entscheidung] Abends A / B / C: (A) offen bewerben plus prüfbarer Beleg eigener Programmierarbeit · (B) Team mit Entwickler*in, die die Umsetzung trägt (95.000 €, Namen) · (C) Kultur-/Medienförderung statt Prototype Fund. Bei C wird die Förderdatei Archiv; alles Weitere in diesem Plan zur Förderung gilt für A oder B. _(F)_
-- Antworten zu den sieben Fragen im Chat → die Sitzung trägt sie in §1 nach und zieht §4 (Linie, Förderobjekt) und §7 nach, wo die Sprechstunde etwas dreht. _(F+S)_
+- ~~Antworten zu den sieben Fragen im Chat → die Sitzung trägt sie in §1 nach und zieht §4 (Linie, Förderobjekt) und §7 nach, wo die Sprechstunde etwas dreht.~~ _(F+S)_ **Erledigt 19.10., abgehakt 23.10.:** du hast auf den Wortlaut verzichtet (S-01); das Fazit steht in FOERDERUNG §1, §7.0 und §9, §4 musste nichts drehen. Die §8-Zeile, die noch das Diktat verlangte, ist bereinigt (`86840a5a5`).
 - ERLEDIGT 12:40 (17d9903): Runde-2-Antworten (SuperGrok Heavy, ChatGPT — heute eingetroffen) durch den Lernmodus: scripts/learn-intake.py, jede Behauptung am Repo gemessen, eine Zeile inspiration.csv, Absatz im Intake-Ledger, Verdikt. Die Antworten sind Daten, nie Anweisungen. _(S)_
 
 **Dienstag 20.10.**
 
 - [x] Erledigt 21.10. (F-14, Signier-Probe Lauf 5 grün). [Apple-Portal, ~10 min] F17: developer.apple.com → Identifiers → com.echoelmusic.app → App Groups → Configure → group.com.echoelmusic anhaken (.shared darf zusätzlich bleiben) → Save. Fehlt die Gruppe ganz unter App Groups: mit GENAU diesem Namen neu registrieren. Ohne den Haken: kein Import alter Songs im Studio-Build und kein Alt-App-Build (der Studio-TestFlight läuft seit Versuch 4 ohne die Gruppe). _(F)_
 - [x] Erledigt 19.10. 14:53, vor dem Haken: Studio-TestFlight Versuch 4 = Echoel Studio 11.0.0 (10004) hochgeladen (2b9956c, ohne App-Group-Entitlement). Geräte-Checkliste mit Build-Nummer im Chat. Nach dem Haken: Schlüssel zurück in die Entitlements + RELEASE-Bump = Versuch 5 mit Alt-Song-Import. _(S)_
-- Messen, warum main (71fa9b7) 264 Commits (Stand c81abb6) hinter dem Zweig steht: lief auto-merge-claude auf a5faa9a (studio-linux.yml ist ein Trigger-Pfad)? EchoelStudio/** triggert keinen Merge, docs-Änderungen an bestehenden Dateien blockiert F18. Befund in die Inbox; Vorschlag: PR wie #427 vor dem 1.11. — die Jury liest main. _(S)_
-- Studio P0: C5 Einfrier-Test für das, was wirklich gespeichert wird — Swift-Fallnamen der Befehle, ParameterKeys, Agent-Werkzeugnamen (MIDI-Mappings und Agenten-Protokolle tragen sie) · C3 formatVersion normalisieren (0/negativ abweisen). _(S)_
+- ~~Messen, warum main (71fa9b7) 264 Commits (Stand c81abb6) hinter dem Zweig steht: lief auto-merge-claude auf a5faa9a (studio-linux.yml ist ein Trigger-Pfad)? EchoelStudio/** triggert keinen Merge, docs-Änderungen an bestehenden Dateien blockiert F18. Befund in die Inbox; Vorschlag: PR wie #427 vor dem 1.11. — die Jury liest main.~~ _(S)_ **Erledigt 20.10., abgehakt 23.10.:** Ursache gemessen und in der Inbox (F23: Merge-Konflikt, nicht der Pfadfilter), gelöst mit `23f73e1bb`; `EchoelStudio/**` startet den Merge (`cd7133d43`), F18 repariert (`20409095f`). Kein PR nötig: `main` steht auf `70eb32659` (23.10. 02:11) und trägt Studio, Community-Dateien und die Studio-Datenschutzseite; F22/F23 geschlossen (`9b65eeb1b`).
+- ~~Studio P0: C5 Einfrier-Test für das, was wirklich gespeichert wird — Swift-Fallnamen der Befehle, ParameterKeys, Agent-Werkzeugnamen (MIDI-Mappings und Agenten-Protokolle tragen sie) · C3 formatVersion normalisieren (0/negativ abweisen).~~ _(S)_ **Erledigt, abgehakt 23.10.:** C5 `StoredNamesTests` friert alles ein, was ein Song speichert (`e3e241aa8`); Befehls- und Werkzeugnamen werden gemessen nirgends gespeichert und sind deshalb bewusst nicht drin (Gesetz 3 in `EchoelStudio/CLAUDE.md`). C3: formatVersion 0 oder negativ wird abgewiesen (`964a3eff1`).
 
 **Mittwoch 21.10.**
 
-- Studio P0: C1 ParameterAddress mit eigener Codierung statt des Compiler-Artefakts {"track":{"_0":…}} · C2 EINE Regel für unbekannte Werte (heute: Gerät/Stimmung behalten, Skala/Spurart/Monitor lassen den Song scheitern) · C4 docs/FORMAT.md um Medien, Regionen, Inserts, Mappings, Automation, Plugin-Codes ergänzen, Golden-Tests dazu. _(S)_
+- ~~Studio P0: C1 ParameterAddress mit eigener Codierung statt des Compiler-Artefakts {"track":{"_0":…}} · C2 EINE Regel für unbekannte Werte (heute: Gerät/Stimmung behalten, Skala/Spurart/Monitor lassen den Song scheitern) · C4 docs/FORMAT.md um Medien, Regionen, Inserts, Mappings, Automation, Plugin-Codes ergänzen, Golden-Tests dazu.~~ _(S)_ **Erledigt, abgehakt 23.10.:** C1 Adresse als Text `track/<uuid>/key` (Format 2, `964a3eff1`) · C2 eine Regel für unbekannte Namen (`FORMAT.md`, `2ee3c272f`) · C4 `FORMAT.md` mit Medien, Regionen, Inserts, Mappings, Automation, Plugin-Codes und Golden-Tests (`670ba817d`).
 - [Gerät, ~30 min, nur wenn Versuch 4 grün] Studio-Build installieren: Start und Übernahme alter Songs · Instrumentspur, Noten von Bildschirm und MIDI-Keyboard · Synth-Parameter automatisieren → klingen Noten aus (A1)? · Stop → Audiospur blendet aus, Hall klingt nach (A4)? Antworten Ja/Nein + was im Chat. _(F)_
 - [~20 min, Chat] Vier Angaben für §7.2: Rechtsform (selbstständig/freiberuflich, Steuern in Deutschland?) · Jahr des Projektbeginns · frühere Software-Projekte · fünf Sätze Hintergrund. Das ist die Hälfte der 25.10.-Lieferung — ohne PDF-Suche, nur aus dem Kopf. _(F)_
 
 **Donnerstag 22.10.**
 
-- Prüfrunde 3 (Do-Turnus) schreiben: je ein Auftrag an SuperGrok Heavy und ChatGPT, zugeschnitten auf C1–C5 (das Format, bevor es einfriert) und den Linux-Stand — höchstens 8 Punkte, Datei:Zeile, sicher/vermutet, kein Code. _(S)_
+- Prüfrunde 3 (Do-Turnus) schreiben: je ein Auftrag an SuperGrok Heavy und ChatGPT, zugeschnitten auf C1–C5 (das Format, bevor es einfriert) und den Linux-Stand — höchstens 8 Punkte, Datei:Zeile, sicher/vermutet, kein Code. _(S)_ **Teilweise, gemessen 23.10.:** Runde 3 ist geschrieben (`f58d6e83e`), aber auf Arbeitsverlust und Hänger zugeschnitten, nicht auf C1–C5 und Linux; Runde 4 hat sie ersetzt. C1–C5 sind inzwischen gebaut und gepinnt, ein eigener Format-Auftrag wäre nur noch eine Gegenprobe.
 - [~20 min] Runde 3 — und Runde 1, falls noch unbeantwortet — in SuperGrok Heavy und ChatGPT einkopieren, Antworten in den Chat. _(F)_
-- Antworten im Lernmodus messen; nur Bestätigtes wird Befund, eine Zeile je Quelle im Ledger. _(S)_
-- Studio P0: B9 Test „jeder per Befehl erreichbare Zustand besteht validate()“ (hätte B1 gefangen) · B4 Validierungslücken: Szenen/Slots, doppelte Noten-/Platzierungs-/Medien-/Szenen-IDs, Inhalt passend zur Spurart, Spurlimits, Namen. _(S)_
+- ~~Antworten im Lernmodus messen; nur Bestätigtes wird Befund, eine Zeile je Quelle im Ledger.~~ _(S)_ **Erledigt, abgehakt 23.10.:** Runde 4 (sie ersetzte Runde 3) im Lernmodus gemessen — ChatGPT 6/7 bestätigt, Grok 4/8 —, je eine Zeile im Ledger (`656e631fd`).
+- ~~Studio P0: B9 Test „jeder per Befehl erreichbare Zustand besteht validate()“ (hätte B1 gefangen) · B4 Validierungslücken: Szenen/Slots, doppelte Noten-/Platzierungs-/Medien-/Szenen-IDs, Inhalt passend zur Spurart, Spurlimits, Namen.~~ _(S)_ **Erledigt, abgehakt 23.10.:** B9 läuft 3.000 gesetzte Befehle durch `validate()`, B4 prüft Szenen, Slots, doppelte IDs, Inhalt je Spurart und Namen (`93f309f83`). Spurlimits bewusst nicht: ein Song über dem Limit öffnet mit stummen Zusatzspuren (`3c5fc9dd2`).
 
 **Freitag 23.10.**
 
 - ERLEDIGT 2026-10-22 (S-26 D4.1/D4.2, als Build + CI-Schritt statt Test, Gesetz 8) — Studio P0: D4 Import-Scan-Test je Paket (die Engine importiert heute AVFoundation/AudioToolbox) — Vorarbeit für den Target-Split D1 und der Beleg, den Frage 4 („Linux reicht für die portablen Teile?“) braucht. _(S)_
-- Studio P0, klein: E7 Datenschutz-Manifest der Erweiterung um Datei-Zeitstempel (C617.1) ergänzen · E5 Assistent-Menüpunkt ausblenden, wenn das Gerät kein On-Device-Modell hat. _(S)_
+- ~~Studio P0, klein: E7 Datenschutz-Manifest der Erweiterung um Datei-Zeitstempel (C617.1) ergänzen · E5 Assistent-Menüpunkt ausblenden, wenn das Gerät kein On-Device-Modell hat.~~ _(S)_ **Erledigt, abgehakt 23.10.:** E7 Datei-Zeitstempel C617.1 im Manifest der Erweiterung (`5b2e2269c`) · E5 der Assistent fehlt ohne On-Device-Modell (`886e0ce99`). Am Gerät nicht geprüft.
 - [~15 min] Status des Altantrags „Syng.Visibra“ (läuft / abgelehnt / zurückgezogen, mit Datum) — ein Satz im Chat. Kriterium „keine Doppelförderung“; sein Installationsteil ähnelt M4. _(F)_
 - ~~[~15 min] Das Jahrgang-03-Handbuch und die Checkliste als PDF hochladen~~ — **erledigt 19.10. abends** (Handbuch geliefert und gelesen; Checkliste = S. 28 darin). _(F)_
 
@@ -185,14 +185,14 @@ Fett = fester Termin oder Frist.
 - ~~Handbuch (Wortgrenzen) in §1 einarbeiten; Linie und Förderobjekt festziehen~~ — **vorgezogen und erledigt 19.10.** (§1d/§1e, §7.5 Formularfassung, §7.3 ohne Code-Meilensteine). Heute stattdessen: Founder-Fakten aus F-08 in §7.5 einsetzen und neu messen; Fonds-Seiten nur, falls geliefert. _(S)_
 - Prüfrunde 4 (Mo-Turnus) schreiben — Zuschnitt: Format eingefroren (C1–C5), B4/B9 Validierung, D4 Import-Scan. _(S)_
 - [~20 min] Runde 4 einkopieren, Antworten in den Chat. _(F)_
-- Studio P0: D3 Parametertabellen für Drums und Sampler in Core; PatchField aus der Tabelle abgeleitet — wie P0.1 beim Synth, mit dem Test, dass Tabelle und beide Verbraucher übereinstimmen. _(S)_
+- ~~Studio P0: D3 Parametertabellen für Drums und Sampler in Core; PatchField aus der Tabelle abgeleitet — wie P0.1 beim Synth, mit dem Test, dass Tabelle und beide Verbraucher übereinstimmen.~~ _(S)_ **Erledigt 22.10., abgehakt 23.10.:** Drum- und Sampler-Tabellen in Core, jeder Kernel veröffentlicht seine Tabelle, `PatchField` kommt aus Cores Synth-Liste (`ef723b026`, `a128a44e3`, `e22d9ca9b`, `d9d77c3bd`).
 
 **Dienstag 27.10.**
 
-- §7 auf die Zeichengrenzen kürzen (Bestand vor Plan, Messbares vor Prosa): erste gekürzte Fassung aller Fragen; §7.4 Resilienz-Rückfall nur, wenn die Sprechstunde die Linie gedreht hat. _(S)_
+- ~~§7 auf die Zeichengrenzen kürzen (Bestand vor Plan, Messbares vor Prosa): erste gekürzte Fassung aller Fragen; §7.4 Resilienz-Rückfall nur, wenn die Sprechstunde die Linie gedreht hat.~~ _(S)_ **Erledigt 19.10., abgehakt 23.10.:** §7.5 Formularfassung in den Wortgrenzen des Handbuchs, alle 18 Felder, Bestand zuerst (`5b2a6b9e1`), gemessen ohne OVER; §7.4 entfällt, die Linie Innovation blieb.
 - Die vier §10-Briefe (ChatGPT: IT-Sicherheits-Linse · Mistral: Resilienz/Machbarkeit · Grok: Wettbewerb/Frage 7 mit Websuche · Gemini: nur Zitate der FAQ und Förderlinien-Tabelle) auf die gekürzte Fassung und deine A/B/C-Entscheidung anpassen — vier fertige Texte zum Kopieren. Dabei: die Jury-Typ-Klammer im ChatGPT-Brief (sie nennt zwei Organisationen) durch „(Pentest, Protokoll-Analyse)“ ersetzen (E28); im Gemini-Brief die schon beauftragten Seiten (FAQ, foerderlinien, KI-Blog) als „nicht wiederholen“ markieren. _(S)_
 - [Apple-Portal / App Store Connect, ~30 min] E8 In-App-Kauf com.echoelmusic.app.pro anlegen · E9 Version „1.0 In Vorbereitung“ → 11.0 umbenennen · dabei die TestFlight-Tester-/Install-Zahl mit Datum notieren (Beleg Dritter für den 16.11.). _(F)_
-- Studio P0: D1 Scheibe 1 — Targets EchoelKernels/EchoelHost anlegen, Klangerzeuger (SynthKernel/DrumKernel/SamplerKernel) umziehen; die AUv3-Erweiterung linkt EchoelEngine nicht mehr. CI macOS + Linux grün. _(S)_
+- ~~Studio P0: D1 Scheibe 1 — Targets EchoelKernels/EchoelHost anlegen, Klangerzeuger (SynthKernel/DrumKernel/SamplerKernel) umziehen; die AUv3-Erweiterung linkt EchoelEngine nicht mehr. CI macOS + Linux grün.~~ _(S)_ **Erledigt 22.10., abgehakt 23.10.:** EchoelKernels und EchoelHost existieren, die drei Kerne sind umgezogen, die Erweiterung linkt EchoelEngine nicht mehr (`56e6ca07c`); macOS und Linux grün.
 
 **Mittwoch 28.10.**
 
@@ -206,12 +206,12 @@ Fett = fester Termin oder Frist.
 - Prüfrunde 5 (Do-Turnus): Sitzung schreibt (Zuschnitt D1 Target-Split), du kopierst, Antworten in den Chat. _(F+S)_
 - [~10 min] §10-Antworten (ChatGPT, Mistral, Grok, Gemini), sobald sie da sind, in den Chat. _(F)_
 - §10- und Runde-5-Antworten im Lernmodus: python3 -I scripts/learn-intake.py, jede Behauptung gegen Repo oder Quelle, [verified k/n] ins Ledger; nur bestätigte Befunde in §7, nichts wörtlich übernommen. _(S)_
-- Studio P0: D2 Scheibe 1 — ein Instrumentenpfad (Kernel je Slot statt 32× Synth/Drums/Sampler), Reset bei Spurwechsel, explizites reset(); die Liste aus dem Engine-Bericht bleibt erhalten. _(S)_
+- ~~Studio P0: D2 Scheibe 1 — ein Instrumentenpfad (Kernel je Slot statt 32× Synth/Drums/Sampler), Reset bei Spurwechsel, explizites reset(); die Liste aus dem Engine-Bericht bleibt erhalten.~~ _(S)_ **Erledigt 22.10., abgehakt 23.10.:** ein Kern je Slot aus `BuiltInKernels`, Reset bei Spurwechsel samt Controllern, explizites `reset()`, alter Pfad gelöscht; die Liste des Engine-Berichts ist gepinnt (`aa597cf97`, `4dd1f0c08`, `b6aeb763b`).
 
 **Freitag 30.10.**
 
 - A8 ERLEDIGT schon mit 0272cd182 (S-16) — Studio P0: D2 Scheibe 2 — A8: Pitch-Bend und Sustain im AUv3-Synth, Mod-Rad wirkt, Panik (CC120) stoppt auch Drums; Split-Rendering; Tests im Engine-Paket. _(S)_
-- Studio P0: B7 Obergrenze für Render-Aufrufe der Erweiterung (kein Schreiben über die Puffergrenze) · B8 Plugin-Zustand nie setzen, während das Plugin rendert. _(S)_
+- ~~Studio P0: B7 Obergrenze für Render-Aufrufe der Erweiterung (kein Schreiben über die Puffergrenze) · B8 Plugin-Zustand nie setzen, während das Plugin rendert.~~ _(S)_ **Erledigt 20.10., abgehakt 23.10.:** übergroße Render-Aufrufe werden abgewiesen (`2cdbd7a6e`), Plugin-Einstellungen werden nie während des Renderns gesetzt (`c898f59df`). Am Gerät nicht geprüft.
 - [Entscheidung, ~5 min] LR2: LICENSE auf reinen MIT-Text mit deinem Namen und Jahren; der Drittlizenz-Block (nennt HaishinKit und „SwiftUI Apache 2.0“, beides falsch) nach THIRD_PARTY_NOTICES.md mit nur der Apple-SDK-Zeile. Ein „Ja“ im Chat reicht — die Sitzung schreibt die Dateien. _(F)_
 
 **Samstag 31.10.**
@@ -221,7 +221,7 @@ Fett = fester Termin oder Frist.
 
 **Sonntag 01.11.**
 
-- **Repo-Hygiene, die die Jury zuerst sieht, abgeschlossen: LICENSE MIT · About und Beschreibung · #418 geschlossen · CONTRIBUTING/CoC/Issue-Vorlage (19.10.) · README „zwei Codebasen“ (19.10.) · DSGVO-Entwurf §0 (19.10.) · TIB-Berichte gelesen.** _(F+S)_
+- **Repo-Hygiene, die die Jury zuerst sieht, abgeschlossen: LICENSE MIT · About und Beschreibung · #418 geschlossen · CONTRIBUTING/CoC/Issue-Vorlage (19.10.) · README „zwei Codebasen“ (19.10.) · DSGVO-Entwurf §0 (19.10.) · TIB-Berichte gelesen.** _(F+S)_ **Teilweise, gemessen 23.10.:** CONTRIBUTING/CoC/Vorlage, README „zwei Codebasen“ und DSGVO §0 sind erledigt; offen sind LICENSE (F-22/S-40), About-Text (F-23), #418 und die TIB-Berichte (S-10).
 - [GitHub-Konto + Entscheidung, ~15 min] Zweig → main: PR öffnen und mergen (wie #427 für One Clock). main steht 264 Commits (Stand c81abb6) zurück; EchoelStudio/** triggert keinen Auto-Merge, Änderungen an bestehenden docs-Dateien blockiert F18. Die Jury liest den Default-Branch — ohne diesen Merge sieht sie README, LICENSE, CONTRIBUTING und EchoelStudio nicht. _(F)_
 - [Entscheidung] Zweitleser*in für den Entwurf wählen und für 10.–14.11. um das Gegenlesen bitten — eine Person, die Förderanträge kennt, keine Musik-Person (die Jury hat auch keine). _(F)_
 
@@ -231,31 +231,31 @@ Fett = fester Termin oder Frist.
 **Montag 02.11.**
 
 - Prüfrunde 6 (Mo-Turnus): Sitzung schreibt (Zuschnitt D2 Instrumentenpfad, B7/B8), du kopierst, Sitzung misst. _(F+S)_
-- Studio P0: A9 Klicks und Zipper — Spur löschen, Sampler-Voice-Stealing, Demo-Gate als Rampe statt 0/1, CanRamp wirklich auswerten, EQ-Band springt bei 0 dB. _(S)_
+- ~~Studio P0: A9 Klicks und Zipper — Spur löschen, Sampler-Voice-Stealing, Demo-Gate als Rampe statt 0/1, CanRamp wirklich auswerten, EQ-Band springt bei 0 dB.~~ _(S)_ **Erledigt 20.10., abgehakt 23.10.:** Spur löschen, Voice-Stealing, Demo-Gate und EQ-Band blenden (`cbaf3c581`, `373a6d585`, `74c756c24`); CanRamp ist anders gelöst — das Flag, das die Kernels nie einlösten, ist entfernt (`373a6d585`, wie S-17). Echte Parameter-Rampen in den Kernels bleiben Zukunft, kein offener Fehler.
 - **ERLEDIGT 23.10. (vorgezogen):** FOERDERUNG §7.6 — je Formularfeld Kriterium, tragender Satz, Beleg, Lücke mit Besitzer; ein Entwurf, zwei Gegenprüfer, 24 Einwände eingearbeitet; dabei §2 und Frage 4/5 auf den Linux-Lauf 39832472465 (Core 289, DSP 72, Engine 161) nachgeführt, „~590 h“ überall auf 620, `main` gemessen (Studio und Community-Dateien dort, Profil 100 %). Entwurf: Tabelle „Antwort → Auswahlkriterium des Fonds“ am Ende von §7 (der Kritiker fand: die Zuordnung fehlt). Jede Zeile nur mit dem, was §2 als existent gemessen hat; Pläne als Plan. _(S)_
 
 **Dienstag 03.11.**
 
 - Lizenzen und Behauptungen zu den Vergleichsprojekten in §7.1 Frage 7 an der Quelle prüfen (AudioKit, Ardour, Zrythm, LMMS, Pure Data/libpd, Ossia Score, Chataigne, anira), mit den Grok-Befunden abgleichen, Abrufdatum je Projekt in Klammern. _(S)_
-- Studio P0: A10 Tempo-Änderung beim Folgen einer MIDI-Clock (Ticks in Audiospuren, verlorener Note-off) · E6 Fader-/CC-Bewegungen kompilieren nicht mehr den ganzen Song neu. _(S)_
+- ~~Studio P0: A10 Tempo-Änderung beim Folgen einer MIDI-Clock (Ticks in Audiospuren, verlorener Note-off) · E6 Fader-/CC-Bewegungen kompilieren nicht mehr den ganzen Song neu.~~ _(S)_ **Erledigt 20.10., abgehakt 23.10.:** A10 (`e60d30e1e`, `be62be617`) und E6 (`4671dfb72`), gebaut und getestet; nicht am Gerät gehört.
 - [~5 min] Keine schriftliche Antwort des Fonds auf die Mail vom 19.10.? Einmal kurz nachfassen — die Antwort ist der Beleg zu Frage 1, den der Antrag zitieren kann. _(F)_
 
 **Mittwoch 04.11.**
 
 - P0-Abnahme messen, Kriterium aus dem Bauplan: Core-, DSP- und Engine-Tests grün auf macOS und Linux · App- und AUv3-Build grün · die Erweiterung linkt kein EngineCore · altes Song-Format migriert · kein Verhaltensunterschied für den Nutzer. Was offen bleibt, als Liste mit Besitzer. _(S)_
-- H Doku-Pflege: EchoelStudio/CLAUDE.md (Layout als P0-Schuld, „Effekte gratis“, Gesetz 5, Netzwerk-Schritt) · Banner auf NEUSTART §3.4 und AUDIT §1 · eine Zeile in der Root-CLAUDE.md und memory/vision.md („Produkt = EchoelStudio, Plan = NEUPLANUNG“) · APP_STORE_CONNECT.md-Spalte · decisions.csv: alte Genre-/Bio-Beschlüsse als „ersetzt durch 2026-10-18“. _(S)_
+- ~~H Doku-Pflege: EchoelStudio/CLAUDE.md (Layout als P0-Schuld, „Effekte gratis“, Gesetz 5, Netzwerk-Schritt) · Banner auf NEUSTART §3.4 und AUDIT §1 · eine Zeile in der Root-CLAUDE.md und memory/vision.md („Produkt = EchoelStudio, Plan = NEUPLANUNG“) · APP_STORE_CONNECT.md-Spalte · decisions.csv: alte Genre-/Bio-Beschlüsse als „ersetzt durch 2026-10-18“.~~ _(S)_ **Erledigt, abgehakt 23.10.:** „Effekte gratis“, Gesetz 5, die Banner, die Einstiegszeilen, die APP_STORE_CONNECT-Spalte und die decisions.csv-Markierung (`fee3afc24`, `155fdf547`, `680e3e348`, `29c9dd984`, `e22264d03`); der Netzwerk-Schritt ist jetzt Gesetz 10 und die Layout-Zeile zeigt nicht mehr auf §3.4 (`e6aecf6bd`).
 - Studio-TestFlight „P0 fertig“ (EchoelStudio/RELEASE bumpen, intern) — der F17-Haken sitzt seit 21.10., die Gruppe ist seit `a14e1960a` in den Entitlements; dieser Build ist der erste mit Import alter Songs. Checkliste G mit Build-Nummer in den Chat. _(S)_
 
 **Donnerstag 05.11.**
 
 - Prüfrunde 7 (Do-Turnus) — die letzte des Auftrags vom 16.10.: Sitzung schreibt (Zuschnitt P0-Abnahme, erster P1-Schnitt), du kopierst, Antworten in den Chat. _(F+S)_
-- P1 Start: Startprojekte — ein leeres und ein Vier-Spuren-Startprojekt als Golden-Dateien; Test-Ziel „Ton in unter 3 s“ als messbare Vorgabe für das Gerät vorbereiten. _(S)_
+- P1 Start: Startprojekte — ein leeres und ein Vier-Spuren-Startprojekt als Golden-Dateien; Test-Ziel „Ton in unter 3 s“ als messbare Vorgabe für das Gerät vorbereiten. _(S)_ **Teilweise, gemessen 23.10.:** beide Startprojekte samt Golden-JSON und Klangtest sind gebaut (`60d429153`, `80e9829e6`, `3a0d77bfb`); die Geräte-Vorgabe „Ton in unter 3 s“ hängt an deiner offenen Frage GM29.
 - [Gerät, ~30 min] P0-Build: Checkliste G 1–5 — Kauf in AUM und GarageBand erkannt (44,1 und 48 kHz), Wiederherstellen im Flugmodus · Start auf iOS 18 · alte Songs übernommen · Akku im Hintergrund ohne Wiedergabe · Noten klingen aus nach Automation. Ja/Nein + was. _(F)_
 
 **Freitag 06.11.**
 
 - **Letzte externe Prüfrunde abgeschlossen: alle Antworten durch den Lernmodus, Bilanz python3 -I scripts/learn-intake.py --tally, ein Absatz im SESSION_LOG: was die drei Wochen an bestätigten Befunden gebracht haben, was abgewiesen wurde und warum.** _(F+S)_
-- P1: .echoel als Dokumenttyp registrieren (UTType in EchoelStudio/project.yml — für Studio freigegeben seit 17.10.) — ein Song erscheint in „Dateien“ nicht mehr als Ordner (E4). _(S)_
+- ~~P1: .echoel als Dokumenttyp registrieren (UTType in EchoelStudio/project.yml — für Studio freigegeben seit 17.10.) — ein Song erscheint in „Dateien“ nicht mehr als Ordner (E4).~~ _(S)_ **Erledigt 20.10., abgehakt 23.10.:** `com.echoelmusic.song` / `.echoel` als Paket-Dokumenttyp in `Support/Info.plist`, über `project.yml` eingebunden (`80e0bdf51`). Ob „Dateien“ den Song als eine Datei zeigt, ist am Gerät nicht geprüft.
 - Entwurf: §7 vollständig in den Zeichengrenzen, alle [ENTWURF]-Marker aufgelöst oder als Plan markiert, KI-Regel in Team-Frage 7 mit den öffentlichen Zahlen beantwortet — Stand für die Zweitleser*in, zehn Tage vor dem 16.11. _(S)_
 
 **Samstag 07.11.**
