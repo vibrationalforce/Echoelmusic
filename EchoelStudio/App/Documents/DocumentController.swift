@@ -90,7 +90,10 @@ final class DocumentController {
     /// The open song is the starter a launch opened and has not been written yet, so nothing on
     /// disk holds its name.
     @ObservationIgnored private var isUnwritten = false
-    /// The unwritten starter's package folder exists because an import or a take made it.
+    /// The package folder at `currentURL` exists because an import or a take made it, while
+    /// nothing of the open song is written there yet: the unwritten starter's, or the free name a
+    /// song waits at (`awaitsFirstWriteAtFreeName`). Any other folder there is another song's — a
+    /// copy still under way has its folder before its document (fourth night review, 2026-10-23).
     @ObservationIgnored private var starterMadeFolder = false
     /// The open song's package as the disk knows it, taken when it is read or written, so a
     /// rename in the Files app while it is open is followed (`followMovedPackage`).
@@ -98,6 +101,9 @@ final class DocumentController {
     /// The name the open song had when its package was found gone and another song's under that
     /// name, until a write tells the musician (second night review, 2026-10-23).
     @ObservationIgnored private var nameTakenFrom: String?
+    /// The identity the open song's package had before its name was taken, so the package is
+    /// recognised if it comes back into the library while the song waits at a free name.
+    @ObservationIgnored private var formerIdentity: ProjectLibrary.PackageIdentity?
     /// The open song was sent to a free name and is not written there yet, so nothing at its path
     /// is its own but a folder a take or an import made: a song that arrived there meanwhile —
     /// received, brought back by the earlier-songs import, renamed to that name in Files — is
@@ -630,6 +636,7 @@ final class DocumentController {
                     lastError = (lastError ?? "") + " Another song has that name now, so this one is \(url.deletingPathExtension().lastPathComponent)."
                 }
                 nameTakenFrom = nil
+                formerIdentity = nil
             }
             savedProject = project
             isUnwritten = false
@@ -717,11 +724,26 @@ final class DocumentController {
         guard !isUnwritten, let url = currentURL else { return nil }
         let name = url.deletingPathExtension().lastPathComponent
         if awaitsFirstWriteAtFreeName {
-            // No identity to compare yet: a document at the free name is another song's.
-            guard FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path) else {
-                return nameTakenFrom
+            // The song's own package back in the library, under whatever name — moved back in
+            // Files: the song follows it and is written there with its audio again (fourth night
+            // review, 2026-10-23: it was split off as a new song without its media).
+            if let formerIdentity, let back = library.package(formerIdentity) {
+                log.info("the open song's package came back into the library; it follows")
+                packageIdentity = formerIdentity
+                nameTakenFrom = nil
+                self.formerIdentity = nil
+                starterMadeFolder = false
+                if back != url { packageMoved(from: url, to: back) }
+                return nil
             }
+            // No identity of its own there yet: a document at the free name is another song's, and
+            // so is a folder no take or import of this song made.
+            let files = FileManager.default
+            let arrived = files.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
+                || (!starterMadeFolder && files.fileExists(atPath: url.path))
+            guard arrived else { return nameTakenFrom }
             log.info("another song arrived at the open song's free name; it moves on to the next")
+            starterMadeFolder = false
             packageMoved(from: url, to: library.newURL(for: nameTakenFrom ?? name))
             return nameTakenFrom
         }
@@ -738,8 +760,10 @@ final class DocumentController {
             // The song's own package is gone and the free name has never held it: the next write
             // is a first write. What happened is owed to the status line until a write says it,
             // whichever caller found it (second night review, 2026-10-23).
+            formerIdentity = packageIdentity
             packageIdentity = nil
             nameTakenFrom = name
+            starterMadeFolder = false
             return name
         case .gone:
             return name
@@ -1093,6 +1117,7 @@ final class DocumentController {
         songsOpened &+= 1
         packageIdentity = nil
         nameTakenFrom = nil
+        formerIdentity = nil
         launchNote = nil
         earlierSongsNote = nil
         lastExportLoudness = nil
@@ -1221,7 +1246,7 @@ final class DocumentController {
         followMovedPackage()
         guard let package = currentURL else { return nil }
         let song = songsOpened
-        if isUnwritten { starterMadeFolder = true }   // the import below makes it
+        if isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }   // the import below makes it
         isImporting = true
         defer {
             isImporting = false
@@ -1298,7 +1323,7 @@ final class DocumentController {
             lastError = "Could not prepare the song's Media folder."
             return nil
         }
-        if isUnwritten { starterMadeFolder = true }
+        if isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }
         takesInFlight.insert(id)
         return TakeTarget(id: id, path: path, url: url)
     }
