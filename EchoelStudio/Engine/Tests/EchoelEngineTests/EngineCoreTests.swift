@@ -446,6 +446,28 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(recorder.last?.changed, true, "the stop is news too")
     }
 
+    /// The host's beat and tempo count quarter notes, and so does the distance to the next beat:
+    /// in 6/8 it is the next quarter, not the next eighth (review 2026-10-23). At 120 BPM a
+    /// quarter is 24,000 samples; at sample 4,864 the next quarter is 19,136 samples away and the
+    /// next eighth only 7,136.
+    func testInSixEightTheNextBeatIsTheNextQuarter() throws {
+        var s = try song([[]], tempo: 120)
+        try Command.setTimeSignature(TimeSignature(6, 8)).apply(to: &s.project)
+        let recorder = TransportRecorder(sampleRate: rate)
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, masterEffects: [recorder]))
+        engine.play()
+        _ = render(engine, frames: 4_864)
+        _ = render(engine, frames: 256)
+        let playing = try XCTUnwrap(recorder.last)
+        XCTAssertEqual(playing.numerator, 6)
+        XCTAssertEqual(playing.denominator, 8)
+        XCTAssertEqual(playing.samplesToNextBeat, 19_136)
+    }
+
     func testEditingWhilePlayingKeepsTimeAndNeverHangsANote() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
         let core = core()

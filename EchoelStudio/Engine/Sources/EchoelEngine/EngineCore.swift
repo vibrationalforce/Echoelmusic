@@ -1156,13 +1156,14 @@ public final class EngineCore: @unchecked Sendable {
     private func follow(_ snapshot: EngineSnapshot, playing: Bool, changed: Bool) {
         let signature = snapshot.timeSignature
         let quarter = Double(MusicalTime.ticksPerQuarter)
-        let beatTicks = Double(Swift.max(MusicalTime.ticksPerBeat(signature), 1))
         let barTicks = Double(Swift.max(MusicalTime.ticksPerBar(signature), 1))
         let raw = snapshot.time.position(atSample: playhead)
         let position = raw.isFinite ? Swift.min(Swift.max(raw, 0), Double(MusicalTime.maximumTick)) : 0
         var toNextBeat = 0
         if playing {
-            let next = Tick((position / beatTicks).rounded(.up) * beatTicks)
+            // The next whole beat in the unit the host's beat and tempo count — the quarter note
+            // — not the signature's beat: in 6/8 that is an eighth (review 2026-10-23).
+            let next = Tick((position / quarter).rounded(.up) * quarter)
             toNextBeat = Int(Swift.max(0, snapshot.time.sample(at: next) - playhead))
         }
         let transport = HostTransport(isPlaying: playing, changed: changed, tempo: snapshot.time.tempoMap.bpm(at: Tick(position)),
