@@ -10,9 +10,13 @@ import Foundation
 /// engine does both, as it does for snapshots).
 public final class SampleBuffer: @unchecked Sendable {
     public let frameCount: Int
-    /// The frames the buffer holds in memory: `frameCount`, or the whole room a short fill was
-    /// given when it was kept (see `init(capacity:…)`). A memory plan counts this.
+    /// The frames the buffer holds in memory: what the allocator keeps for its block — `frameCount`
+    /// up to the allocator's next size after a shrink, or the whole room a short fill was given
+    /// when it was kept (see `init(capacity:…)`). A memory plan counts this.
     public let heldFrames: Int
+    /// The frames that are initialized, which `deinit` releases: `frameCount` after a shrink, the
+    /// whole room otherwise.
+    private let initializedFrames: Int
     public let sampleRate: Double
     /// The MIDI note that plays the sample at its original speed.
     public let rootPitch: UInt8
@@ -25,6 +29,7 @@ public final class SampleBuffer: @unchecked Sendable {
               let storage = Self.allocate(samples.count) else { return nil }
         frameCount = samples.count
         heldFrames = samples.count
+        initializedFrames = samples.count
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = storage
@@ -35,14 +40,15 @@ public final class SampleBuffer: @unchecked Sendable {
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds) and at most half of them, the frames move
-    /// into a new block of exactly their size and the first block goes, so the buffer holds what it
-    /// plays and `heldFrames` is that block, whatever an allocator does with a shrink in place —
-    /// Darwin's `realloc` rounds both sizes and keeps a block that would shrink by less than half
-    /// of its ROUNDED size, so a fill just under half stayed whole while counted as shrunk (seventh
-    /// night review). Above half the block stays whole and is counted whole: the copy would cost
-    /// more at its peak than it gives back. If the new block is refused, the first one stays and is
-    /// counted. Nil when `fill` writes no frame or the rate is not a positive number; throws
+    /// (a file whose header promised more than it holds) and at most half of them, `realloc` gives
+    /// the room back where it is — never a second block beside the first, so the peak stays at the
+    /// size the header asked for, the size a song's memory plan checks before the decode (a copy
+    /// into a block of its own size put up to half that room above the budget: eighth night review,
+    /// as 9d8b08152 had said once before). `heldFrames` is then read from the block itself on
+    /// Darwin, whose `realloc` rounds both sizes and keeps a block that would shrink by less than
+    /// half of its rounded size — a fill just under half stays whole there, and counted as shrunk it
+    /// was a count that lies (seventh night review). Above half the block stays whole and is counted
+    /// whole. Nil when `fill` writes no frame or the rate is not a positive number; throws
     /// `OutOfMemory` when the memory is not there, and an error from `fill` on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
@@ -65,15 +71,21 @@ public final class SampleBuffer: @unchecked Sendable {
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
         var kept = storage
         var held = capacity
-        if written <= capacity / 2, let exact = Self.allocate(written) {
-            exact.moveInitialize(from: storage, count: written)
+        var initialized = capacity
+        if written <= capacity / 2 {
             (storage + written).deinitialize(count: capacity - written)
-            free(storage)
-            kept = exact
-            held = written
+            if let shrunk = realloc(storage, written * MemoryLayout<Float>.stride) {
+                kept = shrunk.bindMemory(to: Float.self, capacity: written)
+                initialized = written
+                held = Self.framesHeld(by: kept, asked: written, whole: capacity)
+            } else {
+                // Refused: the block stays as it was, and is counted.
+                (storage + written).initialize(repeating: 0, count: capacity - written)
+            }
         }
         frameCount = written
         heldFrames = held
+        initializedFrames = initialized
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = kept
@@ -96,8 +108,19 @@ public final class SampleBuffer: @unchecked Sendable {
         public init() {}
     }
 
-    /// `count` frames from `malloc`, which `deinit` frees; nil when the size overflows or the
-    /// memory is not there.
+    /// The frames the allocator holds for `block`, shrunk by `realloc` to `asked` from `whole`: on
+    /// Darwin the block's own size, which can be the whole block (see `init(capacity:…)`);
+    /// elsewhere the shrink is taken at its word.
+    private static func framesHeld(by block: UnsafeMutablePointer<Float>, asked: Int, whole: Int) -> Int {
+        #if canImport(Darwin)
+        return Swift.min(whole, Swift.max(asked, malloc_size(block) / MemoryLayout<Float>.stride))
+        #else
+        return asked
+        #endif
+    }
+
+    /// `count` frames from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
+    /// size overflows or the memory is not there.
     private static func allocate(_ count: Int) -> UnsafeMutablePointer<Float>? {
         let (bytes, overflow) = count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride)
         guard !overflow, let raw = malloc(bytes) else { return nil }
@@ -105,7 +128,7 @@ public final class SampleBuffer: @unchecked Sendable {
     }
 
     deinit {
-        frames.deinitialize(count: heldFrames)
+        frames.deinitialize(count: initializedFrames)
         free(frames)
     }
 }
