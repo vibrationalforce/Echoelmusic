@@ -42,6 +42,11 @@ public struct Envelope: Sendable {
     /// automation step glides there instead of stepping in one sample (audit 2026-10-23).
     static let sustainGlide: Float = 0.005
     private var sustainPole: Float = 0
+    /// A sustain raised mid-decay ended the decay before it arrived. Lowered again below the
+    /// level, the note owes the rest of that decay and falls at the decay time, not in the 5 ms
+    /// glide — a slow pad's two-second decay does not collapse because automation went up and
+    /// down (second night review, 2026-10-23). Cleared by a gate and by a decay that arrives.
+    private var decayOwed = false
 
     public init(settings: Settings = Settings(), sampleRate: Float = 48_000) {
         self.settings = settings
@@ -79,6 +84,10 @@ public struct Envelope: Sendable {
             // and the level stepped there in one sample (review 2026-10-23).
             stage = .sustain
             target = Self.sustainLevel(settings)
+            decayOwed = true
+        case .sustain where decayOwed && Self.sustainLevel(settings) < level:
+            stage = .decay
+            setCurve(for: .decay)
         case .attack, .decay, .release: setCurve(for: stage)
         case .sustain: target = Self.sustainLevel(settings)
         case .idle: break
@@ -116,6 +125,7 @@ public struct Envelope: Sendable {
             if level - target <= Self.epsilon {
                 level = target
                 stage = .sustain
+                decayOwed = false
             }
         case .release:
             level = target + (level - target) * coefficient
@@ -130,6 +140,7 @@ public struct Envelope: Sendable {
 
     private mutating func enter(_ next: Stage) {
         stage = next
+        decayOwed = false
         segmentStart = level
         setCurve(for: next)
     }
