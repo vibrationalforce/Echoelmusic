@@ -1,0 +1,36 @@
+{
+ "id": "008-diagnostics",
+ "title": "Diagnose-Log, das der Nutzer selbst exportiert (R3)",
+ "stage": "build",
+ "round": 1,
+ "base": "f6143a92e67550bba8a2021458b81c6a7438c1bb",
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux",
+  "concurrency-reviewer"
+ ],
+ "paths": [
+  "EchoelStudio/Core/Sources/EchoelCore/DiagnosticLog.swift",
+  "EchoelStudio/Core/Tests/EchoelCoreTests/DiagnosticLogTests.swift",
+  "EchoelStudio/App/Documents/Diagnostics.swift",
+  "EchoelStudio/App/EchoelStudioApp.swift",
+  "EchoelStudio/App/Engine/AudioEngine.swift",
+  "scratchpads/factory/008-diagnostics"
+ ],
+ "criteria": 10,
+ "deviceCriteria": [],
+ "founderAssumptions": 0,
+ "history": [
+  {
+   "stage": "spec",
+   "date": "2026-10-23",
+   "note": "Ultra-Audit R3: NEUPLANUNG §6 Versprechen 1 und die NEUSTART-Leiter-Regel waren nur in os_log eingelöst. Reparatur ohne neue Fläche (WIP 3 voll): Datei im Files-sichtbaren Documents-Ordner, StaticString-Zeilen, zwei Läufe, Kappe."
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-23",
+   "note": "Core: DiagnosticLog + zehn Tests (Linux und macOS). App: DiagnosticLog.app im Documents/Diagnostics-Ordner, beginApp als erste Zeile von init, Szenenwechsel, AudioEngine: 29 os_log-Zeilen sind step/failed (Datei zuerst), neu Unterbrechung Beginn/Ende und Routenwechsel. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  }
+ ]
+}

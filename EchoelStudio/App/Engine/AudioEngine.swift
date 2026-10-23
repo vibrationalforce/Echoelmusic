@@ -12,8 +12,9 @@ import os
 /// `EngineCore`, which this class feeds with snapshots of the project.
 ///
 /// The input is opened only while a track is armed: the session then records, and a sink node
-/// hears the interface. Every graph change writes its log line BEFORE the step, so a crash
-/// mid-step leaves the step it died in on record (the legacy app's input-node crash family).
+/// hears the interface. Every graph change writes its line BEFORE the step — to the diagnostic
+/// file the musician exports (`DiagnosticLog.app`), then to os_log — so a crash mid-step leaves
+/// the step it died in on record (the legacy app's input-node crash family).
 @MainActor
 @Observable
 final class AudioEngine {
@@ -144,6 +145,20 @@ final class AudioEngine {
     }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
+    /// One rung of the lifecycle ladder: the diagnostic file first, with an unbuffered write, then
+    /// os_log. Only source text and numbers reach the file, never a name a musician typed.
+    private func step(_ event: StaticString, because reason: StaticString? = nil,
+                      _ fields: [(StaticString, Double)] = [], level: OSLogType = .info) {
+        let line = DiagnosticLog.app.note(event, because: reason, fields)
+        log.log(level: level, "\(line, privacy: .public)")
+    }
+
+    /// A step that failed: the file gets the error's domain and code, os_log its description too.
+    private func failed(_ event: StaticString, _ error: any Error) {
+        DiagnosticLog.app.note(event, error: error)
+        log.error("\(event.description, privacy: .public) — \(error.localizedDescription, privacy: .public)")
+    }
+
     init() {
         plugins = PluginHost()
         plugins.onUnitsChanged = { [weak self] in
@@ -162,8 +177,11 @@ final class AudioEngine {
                 guard let self else { return }
                 switch type {
                 case .began:
+                    self.step("engine: interruption began")
                     self.pauseFromOutside(self.isPlaying ? "Paused: a call, Siri or another app took the audio." : nil)
-                case .ended: self.resume(after: "interruption ended")
+                case .ended:
+                    self.step("engine: interruption ended")
+                    self.resume(after: "interruption ended")
                 default: break
                 }
             }
@@ -177,8 +195,9 @@ final class AudioEngine {
             let lost = raw.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:)) == .oldDeviceUnavailable
             MainActor.assumeIsolated {
                 guard let self else { return }
+                self.step("route: change", [("reason", Double(raw ?? 0))])
                 if lost, self.isPlaying {
-                    self.log.info("route: output device gone while playing, pausing")
+                    self.step("route: output device gone while playing, pausing")
                     self.pauseFromOutside("Paused: the headphones or the audio interface were disconnected.")
                 }
                 if let project = self.project { self.publish(project) }
@@ -203,7 +222,7 @@ final class AudioEngine {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                self.log.info("engine: media services lost")
+                self.step("engine: media services lost")
                 if self.isPlaying { self.playingWhenServicesLost = true }
                 self.pauseFromOutside(self.isPlaying ? "Paused: the audio system stopped. Press Play to go on once it is back." : nil)
             }
@@ -229,7 +248,7 @@ final class AudioEngine {
     /// and a reused recorder would join the input after the reset onto it, early by the gap.
     /// The next `configure` builds the graph on the new engine, now or on the foreground return.
     private func replaceEngine() {
-        log.info("engine: replace after media services reset")
+        step("engine: replace after media services reset")
         engine.stop()
         sourceNode = nil
         sinkNode = nil
@@ -277,16 +296,16 @@ final class AudioEngine {
     /// Rebuilds the graph after an interruption or a reset. Also when the last start failed: such
     /// an event can be what lets it succeed. Not in the background — the foreground return heals —
     /// unless the engine stays up there to hear a followed clock's Start.
-    private func resume(after reason: String) {
+    private func resume(after reason: StaticString) {
         guard wantsAudio, suspendedInput == nil, mayRebuildNow else { return }
         // An interruption's end can come late, after the foreground return or a Play already
         // brought the graph back: rebuilding a running engine would cut the song for nothing.
         // A reset stopped the engine first, so it always rebuilds.
         guard !(isRunning && engine.isRunning) else {
-            log.info("engine: \(reason, privacy: .public), already running")
+            step("engine: already running", because: reason)
             return
         }
-        log.info("engine: \(reason, privacy: .public), rebuilding")
+        step("engine: rebuilding", because: reason)
         recovery.reset()
         configure(input: wantsInput)
     }
@@ -304,7 +323,7 @@ final class AudioEngine {
         guard isRunning else { return }
         let output = engine.outputNode.outputFormat(forBus: 0)
         let channels = Self.usableChannels(output.channelCount)
-        log.info("engine: configuration change, \(output.channelCount, privacy: .public) ch at \(output.sampleRate, privacy: .public) Hz")
+        step("engine: configuration change", [("ch", Double(output.channelCount)), ("Hz", output.sampleRate)])
         if engine.isRunning, channels == outputChannels, output.sampleRate == core?.sampleRate { return }
         configure(input: wantsInput)
     }
@@ -322,7 +341,7 @@ final class AudioEngine {
 
     /// The user asks for audio again after the automatic tries ran out.
     func restartAudio() {
-        log.info("engine: restart asked")
+        step("engine: restart asked")
         wantsAudio = true
         suspendedInput = nil
         recovery.reset()
@@ -330,13 +349,13 @@ final class AudioEngine {
     }
 
     /// The graph as it was before the background, or rebuilt when iOS stopped it underneath.
-    private func wake(_ reason: String) {
+    private func wake(_ reason: StaticString) {
         guard let input = suspendedInput else {
             healIfStopped(reason)
             return
         }
         suspendedInput = nil
-        log.info("engine: resume from background")
+        step("engine: resume from background")
         recovery.reset()
         configure(input: input)
         if let project { publish(project) }
@@ -344,9 +363,9 @@ final class AudioEngine {
 
     /// Rebuilds the graph when iOS stopped it without telling (an interruption without `.ended`),
     /// so Play never runs a transport over a stopped engine (R2).
-    private func healIfStopped(_ reason: String) {
+    private func healIfStopped(_ reason: StaticString) {
         guard wantsAudio, suspendedInput == nil, !engine.isRunning else { return }
-        log.info("engine: stopped underneath (\(reason, privacy: .public)), rebuilding")
+        step("engine: stopped underneath, rebuilding", because: reason)
         recovery.reset()
         configure(input: wantsInput)
     }
@@ -364,7 +383,7 @@ final class AudioEngine {
     private func suspendIfIdleInBackground() {
         guard isInBackground, isRunning, !isPlaying, take == nil,
               !(followsExternalClock && (clockSourceConnected || clockSourceGone != nil)) else { return }
-        log.info("engine: suspend in background")
+        step("engine: suspend in background")
         suspendedInput = wantsInput
         engine.stop()
         isRunning = false
@@ -412,12 +431,12 @@ final class AudioEngine {
     private func configure(input: Bool) {
         retryTask?.cancel()
         retryTask = nil
-        log.info("engine: stop for configure (input \(input, privacy: .public))")
+        step("engine: stop for configure", [("input", input ? 1 : 0)])
         engine.stop()
         isRunning = false
         isInputOpen = false
         if let sinkNode {
-            log.info("graph: detach sink node")
+            step("graph: detach sink node")
             engine.detach(sinkNode)
             self.sinkNode = nil
         }
@@ -429,30 +448,30 @@ final class AudioEngine {
         let previous = recorder
         recorder = nil
         if let sourceNode {
-            log.info("graph: detach source node")
+            step("graph: detach source node")
             engine.detach(sourceNode)
             self.sourceNode = nil
         }
         do {
             let session = AVAudioSession.sharedInstance()
             if input {
-                log.info("session: configure playAndRecord")
+                step("session: configure playAndRecord")
                 try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP])
             } else {
-                log.info("session: configure playback")
+                step("session: configure playback")
                 try session.setCategory(.playback, mode: .default, options: [])
             }
             try session.setActive(true)
             // Every output the interface has, so a track can play on 3/4, 5/6 …
             let available = session.maximumOutputNumberOfChannels
             if available > 2, session.outputNumberOfChannels != available {
-                log.info("session: prefer \(available, privacy: .public) output channels")
+                step("session: prefer output channels", [("ch", Double(available))])
                 try? session.setPreferredOutputNumberOfChannels(available)
             }
             // Every input too, so a track can record from input 3 of a mixer or interface.
             if input, session.maximumInputNumberOfChannels > 1,
                session.inputNumberOfChannels != session.maximumInputNumberOfChannels {
-                log.info("session: prefer \(session.maximumInputNumberOfChannels, privacy: .public) input channels")
+                step("session: prefer input channels", [("ch", Double(session.maximumInputNumberOfChannels))])
                 try? session.setPreferredInputNumberOfChannels(session.maximumInputNumberOfChannels)
             }
 
@@ -500,15 +519,15 @@ final class AudioEngine {
             }
 
             let node = Self.makeSourceNode(format: format, core: current)
-            log.info("graph: attach source node at \(sampleRate, privacy: .public) Hz, \(channels, privacy: .public) ch")
+            step("graph: attach source node", [("Hz", sampleRate), ("ch", Double(channels))])
             engine.attach(node)
             sourceNode = node
             if channels > 2 {
                 // Straight to the interface: the main mixer would fold the discrete channels to its own layout.
-                log.info("graph: connect source → output")
+                step("graph: connect source → output")
                 engine.connect(node, to: engine.outputNode, format: format)
             } else {
-                log.info("graph: connect source → main mixer")
+                step("graph: connect source → main mixer")
                 engine.connect(node, to: engine.mainMixerNode, format: format)
                 // A multichannel graph before this one took the mixer off the output.
                 engine.connect(engine.mainMixerNode, to: engine.outputNode, format: nil)
@@ -528,17 +547,17 @@ final class AudioEngine {
                 let recorder = previous.flatMap { $0.records(for: current) ? $0 : nil }
                     ?? InputRecorder(core: current, sampleRate: sampleRate)
                 let sink = InputRecorder.makeSinkNode(recorder)
-                log.info("graph: attach sink node, \(inputFormat.channelCount, privacy: .public) ch")
+                step("graph: attach sink node", [("ch", Double(inputFormat.channelCount))])
                 engine.attach(sink)
                 sinkNode = sink
                 self.recorder = recorder
-                log.info("graph: connect input → sink")
+                step("graph: connect input → sink")
                 engine.connect(engine.inputNode, to: sink, format: inputFormat)
             }
 
             clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
             if reportTask == nil { pollLaunchReports() }
-            log.info("engine: start")
+            step("engine: start")
             try engine.start()
             isRunning = true
             isInputOpen = input
@@ -552,7 +571,7 @@ final class AudioEngine {
             // stay without its input.
             if isInputOpen != snapshotSawInput, let project { publish(project) }
         } catch {
-            log.error("engine: configure failed — \(error.localizedDescription, privacy: .public)")
+            failed("engine: configure failed", error)
             lastError = error.localizedDescription
             // An input that cannot open must not take playback down with it, and says so: the
             // successful playback start would otherwise clear the only word about it.
@@ -572,12 +591,13 @@ final class AudioEngine {
             }
             // Never a log-only catch: a short settle, then again, a few times (R1).
             guard let wait = recovery.failed() else {
-                log.error("engine: automatic tries used up")
+                step("engine: automatic tries used up", level: .error)
                 isStalled = true
                 lastError = "Audio could not start. Tap Restart audio once the call or the other app using audio has ended."
                 return
             }
-            log.info("engine: trying again in \(String(describing: wait), privacy: .public)")
+            let seconds = Double(wait.components.seconds) + Double(wait.components.attoseconds) / 1e18
+            step("engine: trying again", [("s", seconds)])
             retryTask = Task { [weak self] in
                 try? await Task.sleep(for: wait)
                 guard !Task.isCancelled, let self, self.wantsAudio, !self.isRunning,
@@ -604,7 +624,7 @@ final class AudioEngine {
                 try? await Task.sleep(for: .milliseconds(50))
             }
         }
-        log.info("record: take started")
+        step("record: take started")
     }
 
     /// Stops the take and closes its file. Nil when nothing was captured; the empty file is gone.
@@ -622,12 +642,12 @@ final class AudioEngine {
         drainTask?.cancel()
         await drainTask?.value
         drainTask = nil
-        log.info("record: take stopped")
+        step("record: take stopped")
         let frames: Int
         do {
             frames = try await current.writer.finish()
         } catch {
-            log.error("record: writing failed — \(error.localizedDescription, privacy: .public)")
+            failed("record: writing failed", error)
             lastError = "The take could not be written."
             return nil
         }

@@ -17,6 +17,8 @@ struct EchoelStudioApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // First, so a launch that dies anywhere below still names its build (NEUPLANUNG §6).
+        DiagnosticLog.beginApp()
         // The standard effects load like any Audio Unit once they are registered in this process.
         StandardEffectUnit.register()
         let store = ProjectStore(project: .starter())
@@ -95,12 +97,15 @@ struct EchoelStudioApp: App {
         .onChange(of: scenePhase) { old, phase in
             switch phase {
             case .active:
+                DiagnosticLog.app.note("app: active")
                 engine.enterForeground()
                 documents.sceneEntered()
             case .background:
+                DiagnosticLog.app.note("app: background")
                 engine.enterBackground()
                 documents.sceneLeft()
             case .inactive:
+                DiagnosticLog.app.note("app: inactive")
                 documents.sceneInactive(fromActive: old == .active)
             default: break
             }
