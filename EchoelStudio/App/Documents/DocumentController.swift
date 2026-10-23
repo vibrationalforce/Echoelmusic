@@ -628,6 +628,7 @@ final class DocumentController {
         guard let url = currentURL else { return true }
         let project = store.project
         let isNew = !FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
+        let folderWasThere = FileManager.default.fileExists(atPath: url.path)
         do {
             try library.write(project, to: url)
             packageIdentity = ProjectLibrary.identity(of: url)
@@ -654,6 +655,13 @@ final class DocumentController {
         } catch {
             log.error("save failed — \(error.localizedDescription, privacy: .private)")
             saveError = "Could not save. Your changes are still open."
+            // The write makes the folder before it writes the document, so a failed first write
+            // leaves the song's own folder there: the next try writes into it, instead of taking
+            // it for another song's and leaving one empty package per try (fifth night review).
+            if !folderWasThere, isUnwritten || awaitsFirstWriteAtFreeName,
+               FileManager.default.fileExists(atPath: url.path) {
+                starterMadeFolder = true
+            }
             return false
         }
     }
