@@ -44,7 +44,7 @@ final class SamplerTests: XCTestCase {
             return 3
         })
         XCTAssertEqual(buffer.frameCount, 3, "the frames it wrote, not the room it had")
-        XCTAssertEqual(buffer.heldFrames, 3, "the unwritten frame is given back: it holds what it plays")
+        XCTAssertEqual(buffer.heldFrames, 4, "three of four keep their block, and the block is counted")
         XCTAssertEqual(buffer.copyFrames(), [0.25, 0, -0.5], "a non-finite frame is silence")
         let inPlace: [Float] = buffer.withFrames { (frames: UnsafeBufferPointer<Float>) -> [Float] in Array(frames) }
         XCTAssertEqual(inPlace, [0.25, 0, -0.5], "read in place, the same frames")
@@ -54,6 +54,10 @@ final class SamplerTests: XCTestCase {
         struct Broken: Error {}
         XCTAssertThrowsError(try SampleBuffer(capacity: 2, sampleRate: 48_000) { _ in throw Broken() }) {
             XCTAssertTrue($0 is Broken)
+        }
+        // A size no memory can hold is said as such, not as a file without audio.
+        XCTAssertThrowsError(try SampleBuffer(capacity: Int.max / 2, sampleRate: 48_000) { _ in 1 }) {
+            XCTAssertTrue($0 is SampleBuffer.OutOfMemory)
         }
     }
 
@@ -77,20 +81,40 @@ final class SamplerTests: XCTestCase {
         #endif
     }
 
-    /// A file one frame short shrinks its block where it is: no copy holds it twice for a moment,
-    /// and what it holds is what it plays, so the memory plan and the open count agree.
-    func testAFillShortByAFrameHoldsWhatItPlays() throws {
+    /// A file one frame short keeps its block, and counts it: a shrink by less than half leaves the
+    /// block as it is on Darwin, so saying it shrank would be a count that lies.
+    func testAFillShortByAFrameKeepsItsBlockAndCountsIt() throws {
         let capacity = 1_600
         let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
             for index in 0..<(capacity - 1) { frames[index] = Float(index) / Float(capacity) }
             return capacity - 1
         })
         XCTAssertEqual(buffer.frameCount, capacity - 1, "it plays what it wrote")
-        XCTAssertEqual(buffer.heldFrames, capacity - 1, "and holds, and is counted for, what it plays")
+        XCTAssertEqual(buffer.heldFrames, capacity, "and holds, and is counted for, its whole block")
         let kept: [Float] = buffer.copyFrames()
         XCTAssertEqual(kept.count, capacity - 1)
         XCTAssertEqual(kept.first, 0)
-        XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity), "the frames survive the shrink")
+        XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity))
+        #if canImport(Darwin)
+        XCTAssertGreaterThanOrEqual(malloc_size(buffer.frames), capacity * MemoryLayout<Float>.size,
+                                    "the count is what the allocator holds")
+        #endif
+    }
+
+    /// A file a quarter as long as its header promised gives the rest back: the block the
+    /// allocator holds is smaller than the one it was given, and the buffer counts what it plays.
+    func testAFillOfAQuarterGivesTheRestBack() throws {
+        let capacity = 1_000_000
+        let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
+            for index in 0..<(capacity / 4) { frames[index] = 0.5 }
+            return capacity / 4
+        })
+        XCTAssertEqual(buffer.frameCount, capacity / 4)
+        XCTAssertEqual(buffer.heldFrames, capacity / 4)
+        XCTAssertEqual(buffer.copyFrames().last, 0.5, "the frames survive the shrink")
+        #if canImport(Darwin)
+        XCTAssertLessThan(malloc_size(buffer.frames), capacity * MemoryLayout<Float>.size, "the room went back")
+        #endif
     }
 
     func testWithoutASampleNothingSounds() {

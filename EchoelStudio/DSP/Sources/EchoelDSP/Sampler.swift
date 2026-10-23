@@ -10,8 +10,8 @@ import Foundation
 /// engine does both, as it does for snapshots).
 public final class SampleBuffer: @unchecked Sendable {
     public let frameCount: Int
-    /// The frames the buffer holds in memory: `frameCount` — unless the allocator refused to
-    /// shrink a short fill's block, then the whole room it was given. A memory plan counts this.
+    /// The frames the buffer holds in memory: `frameCount`, or the whole room a short fill was
+    /// given when it was kept (see `init(capacity:…)`). A memory plan counts this.
     public let heldFrames: Int
     public let sampleRate: Double
     /// The MIDI note that plays the sample at its original speed.
@@ -35,17 +35,16 @@ public final class SampleBuffer: @unchecked Sendable {
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds), `realloc` shrinks the block to what it
-    /// wrote — a large block gives its tail back where it is, at most a small remainder is moved —
-    /// so the buffer holds, and a memory plan counts, what plays (third, fourth and fifth night reviews, 2026-10-23:
-    /// first the unwritten room went uncounted, then a copy held a file twice for a moment, then a
-    /// block kept to avoid the copy was counted by one plan and not the other). Nil when `fill`
-    /// writes no frame, the rate is not a positive number or the memory is not there; an error
-    /// from `fill` is thrown on.
+    /// (a file whose header promised more than it holds) and at most half of them, `realloc` gives
+    /// the room back and the buffer holds what it plays. Above half the block stays whole —
+    /// Darwin's allocator keeps a block that shrinks by less than half as it is, so a shrink there
+    /// would only be a count that lies — and `heldFrames` says how large it is (third to sixth
+    /// night reviews, 2026-10-23). Nil when `fill` writes no frame or the rate is not a positive
+    /// number; throws `OutOfMemory` when the memory is not there, and an error from `fill` on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
-        guard capacity > 0, sampleRate.isFinite, sampleRate > 0,
-              let storage = Self.allocate(capacity) else { return nil }
+        guard capacity > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
+        guard let storage = Self.allocate(capacity) else { throw OutOfMemory() }
         storage.initialize(repeating: 0, count: capacity)
         let written: Int
         do {
@@ -63,7 +62,7 @@ public final class SampleBuffer: @unchecked Sendable {
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
         var kept = storage
         var held = capacity
-        if written < capacity {
+        if written <= capacity / 2 {
             (storage + written).deinitialize(count: capacity - written)
             if let shrunk = realloc(storage, written * MemoryLayout<Float>.stride) {
                 kept = shrunk.bindMemory(to: Float.self, capacity: written)
@@ -89,6 +88,12 @@ public final class SampleBuffer: @unchecked Sendable {
     /// without an array on the way, where memory is tight (the plugin extension).
     public func withFrames<Value>(_ body: (UnsafeBufferPointer<Float>) throws -> Value) rethrows -> Value {
         try body(UnsafeBufferPointer(start: frames, count: frameCount))
+    }
+
+    /// The memory a sample asked for was not there, or its size does not fit in an `Int`: a file
+    /// that is readable, only not here and now — said as such, not as a file with no audio.
+    public struct OutOfMemory: Error, Equatable {
+        public init() {}
     }
 
     /// `count` frames from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
