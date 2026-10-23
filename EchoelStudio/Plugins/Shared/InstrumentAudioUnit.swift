@@ -141,16 +141,9 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         render.demoFrame = 0
     }
 
-    /// Makes `mono` the sample, or takes the sample away. Off the render thread.
-    func installSample(_ mono: SampleFile.Mono?, name: String) throws {
+    /// Makes `buffer` the sample, or takes the sample away. Off the render thread.
+    func installSample(_ buffer: SampleBuffer?, name: String) {
         guard acceptsSamples else { return }
-        var buffer: SampleBuffer?
-        if let mono {
-            guard let made = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else {
-                throw SampleFile.ReadError.empty
-            }
-            buffer = made
-        }
         install(buffer, name: name)
     }
 

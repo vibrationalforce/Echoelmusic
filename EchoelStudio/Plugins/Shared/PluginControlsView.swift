@@ -1,5 +1,6 @@
 import AudioToolbox
 import EchoelCore
+import EchoelDSP
 import EchoelHost
 import Observation
 import SwiftUI
@@ -19,12 +20,12 @@ final class PluginControlsModel {
     private(set) var sampleName: String?
     private(set) var sampleMessage: String?
     var acceptsSamples: Bool { installSample != nil }
-    @ObservationIgnored private let installSample: ((SampleFile.Mono?, String) throws -> Void)?
+    @ObservationIgnored private let installSample: ((SampleBuffer?, String) -> Void)?
     @ObservationIgnored private var token: AUParameterObserverToken?
     @ObservationIgnored private let tree: AUParameterTree
 
     init(tree: AUParameterTree, title: String, isUnlocked: Bool, help: String? = nil, sampleName: String? = nil,
-         installSample: ((SampleFile.Mono?, String) throws -> Void)? = nil) {
+         installSample: ((SampleBuffer?, String) -> Void)? = nil) {
         self.sampleName = sampleName
         self.installSample = installSample
         self.tree = tree
@@ -43,12 +44,18 @@ final class PluginControlsModel {
         guard let installSample else { return }
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
-        let result = await Task.detached {
-            try SampleFile.readMono(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+        // Decoded straight into the sample's own memory, as the app imports: an array on the way
+        // held the file twice more beside the sample still playing, in an extension whose memory
+        // limit is what the frame cap is for (fourth night review, critic).
+        let result = await Task.detached { () throws -> SampleBuffer in
+            let reader = try SampleFile.Reader(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+            guard let buffer = try SampleBuffer(capacity: reader.frameCount, sampleRate: reader.sampleRate,
+                                                fill: { try reader.read(into: $0) }) else { throw SampleFile.ReadError.empty }
+            return buffer
         }.result
         let name = String(url.deletingPathExtension().lastPathComponent.prefix(60))
         do {
-            try installSample(try result.get(), name)
+            installSample(try result.get(), name)
             sampleName = name
             sampleMessage = nil
         } catch SampleFile.ReadError.tooLong(let seconds) {
@@ -61,7 +68,7 @@ final class PluginControlsModel {
     }
 
     func clearSample() {
-        try? installSample?(nil, "")
+        installSample?(nil, "")
         sampleName = nil
         sampleMessage = nil
     }
