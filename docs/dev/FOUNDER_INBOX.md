@@ -177,7 +177,7 @@ verfallen sie mit der Sitzung):
 | # | Schritt | Erwartet | Antwort |
 |---|---|---|---|
 | SP1 | ZUERST den alten Build 10007 in TestFlight installieren, in AUM Echoel Synth, Drums und EQ laden. | Alle drei laden (Synth und Drums mit Demo-Pause). Das ist die Grundlinie: lädt schon 10007 nicht, liegt es nicht an der Gruppe. | [ ] |
-| SP2 | Build 10008 installieren, in AUM dieselben drei laden. | Alle drei laden, kein Fehler `-3000`. Kommt `-3000`: sag es, dann nehme ich die Gruppe aus der Erweiterung (dein Kauf funktioniert dann nur über den StoreKit-Rückfall). | [ ] |
+| SP2 | Build 10008 installieren, in AUM dieselben drei laden. | Alle drei laden, kein Fehler `-3000`. Kommt `-3000`: sag es, dann nehme ich die Gruppe aus der Erweiterung (dein Kauf funktioniert dann nur über den StoreKit-Rückfall). | [ ] teilweise (23.10.): „AUv3 Check. Es läuft“ — Host und Build nicht genannt, darum nicht abgehakt; offen bleibt, welche der drei Komponenten in welchem Host ohne `-3000` geladen hat |
 | SP3 | Ohne Kauf: Synth in AUM über 30 Sekunden spielen lassen. | Nach 28 s zwei Sekunden Stille, alle 30 s wieder. | [ ] |
 | SP4 | Erst wenn das Produkt in App Store Connect existiert (F-15/E37): in der App mit dem Sandbox-Konto kaufen, Synth in AUM neu laden, über 30 s spielen. | Keine Demo-Pause mehr. | [ ] |
 | SP5 | Als Käufer im App Store abmelden, Echoel einmal starten, dann Synth in AUM laden. | Sag, ob die Demo-Pause zurückkommt; erwartet ist, dass der StoreKit-Rückfall in der Erweiterung entsperrt. Kein richtig oder falsch, eine Messung. | [ ] |
