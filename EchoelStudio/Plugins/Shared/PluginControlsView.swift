@@ -83,8 +83,8 @@ struct PluginControlsView: View {
     let model: PluginControlsModel
     /// The longest sample the controls offer to load, in seconds and in frames (the frames bound
     /// the memory at a high sample rate).
-    var maximumSampleSeconds: Double = 30
-    var maximumSampleFrames: Int = 1_440_000
+    var maximumSampleSeconds: Double
+    var maximumSampleFrames: Int
     @State private var importing = false
 
     /// Wide ranges (cutoff, times) move by ratio, so the low end is as reachable as the high.

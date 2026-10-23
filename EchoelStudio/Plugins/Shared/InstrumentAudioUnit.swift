@@ -32,10 +32,13 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
     /// The longest sample the plugin takes. A host keeps it inside its session, so it stays short.
     static let maximumSampleSeconds: Double = 30
-    /// The same limit in frames — 30 s at 48 kHz. Seconds alone let a 768 kHz file take 23 M
-    /// frames, 92 MB, in the extension, which has the tightest memory limit of all (second night
-    /// review, 2026-10-23): a limit in frames is what bounds the memory, as in the app.
-    static let maximumSampleFrames = 1_440_000
+    /// The same limit in frames — 30 s at 192 kHz, 23 MB. Seconds alone let a 768 kHz file take
+    /// 23 M frames, 92 MB, in the extension, which has the tightest memory limit of all (second
+    /// night review, 2026-10-23): a limit in frames is what bounds the memory, as in the app. It is
+    /// not 30 s at 48 kHz, because the builds before it took 30 s at any rate and wrote such samples
+    /// into host sessions: at 48 kHz a 25 s, 96 kHz sample a host kept came back as an empty slot
+    /// (third night review). 192 kHz is the highest rate a recorder commonly writes.
+    static let maximumSampleFrames = 5_760_000
     private enum StateKey {
         static let frames = "echoel.sample.frames", rate = "echoel.sample.rate", name = "echoel.sample.name"
     }
@@ -141,13 +144,18 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     /// Makes `mono` the sample, or takes the sample away. Off the render thread.
     func installSample(_ mono: SampleFile.Mono?, name: String) throws {
         guard acceptsSamples else { return }
-        var loaded: LoadedSample?
+        var buffer: SampleBuffer?
         if let mono {
-            guard let buffer = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else {
+            guard let made = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else {
                 throw SampleFile.ReadError.empty
             }
-            loaded = LoadedSample(buffer: buffer, name: name)
+            buffer = made
         }
+        install(buffer, name: name)
+    }
+
+    private func install(_ buffer: SampleBuffer?, name: String) {
+        let loaded = buffer.map { LoadedSample(buffer: $0, name: name) }
         sample = loaded
         (render.kernel as? any SampleLoadingKernel)?.load(loaded?.buffer)
         let observer = sampleObserver.withLock { $0 }
@@ -177,13 +185,16 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             guard let data = newValue?[StateKey.frames] as? Data, let rate = newValue?[StateKey.rate] as? Double,
                   rate.isFinite, rate > 0, Double(data.count / 4) / rate <= Self.maximumSampleSeconds,
                   data.count / 4 <= Self.maximumSampleFrames else {
-                try? installSample(nil, name: "")
+                install(nil, name: "")
                 return
             }
-            var frames = [Float](repeating: 0, count: data.count / MemoryLayout<Float>.size)
-            _ = frames.withUnsafeMutableBytes { data.copyBytes(to: $0) }
-            let name = newValue?[StateKey.name] as? String ?? "Sample"
-            try? installSample(SampleFile.Mono(samples: frames, sampleRate: rate), name: name)
+            // Copied from the session straight into the sample's own memory: held once beside the
+            // host's data, never a third time as an array on the way.
+            let count = data.count / MemoryLayout<Float>.size
+            let buffer = try? SampleBuffer(capacity: count, sampleRate: rate) { frames in
+                data.copyBytes(to: frames) / MemoryLayout<Float>.size
+            }
+            install(buffer, name: newValue?[StateKey.name] as? String ?? "Sample")
         }
     }
 
