@@ -206,11 +206,18 @@ final class RecordController {
     /// stop too: a song that monitors always and was opened while playing opens its input here, as
     /// it does at the transport's Stop (second night review, 2026-10-23: only the on-screen Stop
     /// did). It only ever opens, never closes: the same callback runs while an arm opens the input,
-    /// before the arm is recorded.
+    /// before the arm is recorded. The song stays where the pause left it — Play or a clock's
+    /// Continue goes on from there — and opening waits while a call or a lost audio system holds
+    /// the session: the song stays unseen, so the next Stop or edit opens it once the audio is back.
+    /// It counts as seen only when the input really opened (third night review, 2026-10-23: it
+    /// rewound to bar 1, and a call marked the song seen and then failed, leaving it deaf).
     private func inputOpensAfterOutsidePause() async {
-        guard !engine.isPlaying, !isRecording, monitorsAlways, store.documentGeneration != seenGeneration else { return }
-        seenGeneration = store.documentGeneration
-        if !engine.isInputOpen { _ = await engine.openInput() }
+        guard !engine.isPlaying, !isRecording, monitorsAlways, store.documentGeneration != seenGeneration,
+              engine.isUp else { return }
+        let generation = store.documentGeneration
+        var opened = engine.isInputOpen
+        if !opened { opened = await engine.openInputKeepingPosition() }
+        if opened, store.documentGeneration == generation { seenGeneration = generation }
     }
 
     func inputFollowsSong() async {

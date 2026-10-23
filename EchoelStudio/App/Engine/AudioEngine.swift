@@ -397,9 +397,26 @@ final class AudioEngine {
         wake("foreground")
     }
 
+    /// The graph is built and the audio session runs it: opening the input now can succeed. Not
+    /// during a call, Siri or a lost audio system, which stop the engine under the app.
+    var isUp: Bool { isRunning && engine.isRunning }
+
     /// Opens the input for recording, asking for microphone permission first. False when it is
     /// denied or the interface cannot be used; playback keeps running either way.
     func openInput() async -> Bool {
+        await openInput(keepingPosition: false)
+    }
+
+    /// The same, for a song already paused where it is (a pause from outside) with no take
+    /// running: the song stays at its position instead of going back to the start, and the pause
+    /// is not announced a second time. False, and nothing opened, when the song plays again by
+    /// the time the permission answer comes (third night review, 2026-10-23: the input opened
+    /// after a call or a followed clock's Stop rewound the song to bar 1).
+    func openInputKeepingPosition() async -> Bool {
+        await openInput(keepingPosition: true)
+    }
+
+    private func openInput(keepingPosition: Bool) async -> Bool {
         if isInputOpen {
             wantsInput = true
             return true
@@ -408,10 +425,20 @@ final class AudioEngine {
             lastError = "Echoel may not use the microphone. Allow it in Settings."
             return false
         }
-        // Opening the input stops the song: a running take ends here, once it is certain the
-        // input opens, instead of recording on over a stopped, rewound transport.
-        onPausedFromOutside?()
-        stop()
+        if keepingPosition {
+            // The answer can take a moment: the song may play again, or the input be open by now.
+            guard !isPlaying else { return false }
+            if isInputOpen {
+                wantsInput = true
+                return true
+            }
+            pause()
+        } else {
+            // Opening the input stops the song: a running take ends here, once it is certain the
+            // input opens, instead of recording on over a stopped, rewound transport.
+            onPausedFromOutside?()
+            stop()
+        }
         wantsInput = true
         configure(input: true)
         if let project { publish(project) }
