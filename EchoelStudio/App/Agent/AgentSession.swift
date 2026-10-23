@@ -153,7 +153,7 @@ final class AgentSession {
                     lines.append(AgentLine(role: .problem, text: Self.sentence(for: error)))
                 }
             } catch {
-                log.error("agent: \(error.localizedDescription, privacy: .public)")
+                log.error("agent: \(error.localizedDescription, privacy: .private)")
                 lines.append(AgentLine(role: .problem, text: "Something went wrong: \(error.localizedDescription)"))
             }
         }

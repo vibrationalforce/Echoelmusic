@@ -433,7 +433,7 @@ final class DocumentController {
             refresh()
             if isRestored { open(local) } else { pendingIncoming = local }
         } catch {
-            log.error("incoming song refused — \(error.localizedDescription, privacy: .public)")
+            log.error("incoming song refused — \(error.localizedDescription, privacy: .private)")
             let name = url.deletingPathExtension().lastPathComponent
             // As a song chosen from the library says it (`open(_:)`).
             lastError = Self.isNewer(error)
@@ -530,7 +530,7 @@ final class DocumentController {
             loadMedia(of: project)
             return url
         } catch {
-            log.error("open failed — \(error.localizedDescription, privacy: .public)")
+            log.error("open failed — \(error.localizedDescription, privacy: .private)")
             throw error
         }
     }
@@ -635,7 +635,7 @@ final class DocumentController {
             refresh()
             return true
         } catch {
-            log.error("save failed — \(error.localizedDescription, privacy: .public)")
+            log.error("save failed — \(error.localizedDescription, privacy: .private)")
             saveError = "Could not save. Your changes are still open."
             return false
         }
@@ -840,7 +840,7 @@ final class DocumentController {
             lastError = Self.exportedWithout(plugins: offline.missing, audio: unread)
             return url
         case .failure(let error):
-            log.error("export failed — \(error.localizedDescription, privacy: .public)")
+            log.error("export failed — \(error.localizedDescription, privacy: .private)")
             // The loudness of an earlier export must not stand under this failure as its result.
             lastExportIsNews = false
             lastError = error as? WAVWriter.WriteError == .tooLong
@@ -933,7 +933,7 @@ final class DocumentController {
             try? FileManager.default.removeItem(at: folder)
             guard exportedSong == songsOpened else { return exportStopped(songName) }
             if case .failure(let error) = outcome {
-                log.error("stem export failed — \(error.localizedDescription, privacy: .public)")
+                log.error("stem export failed — \(error.localizedDescription, privacy: .private)")
                 lastExportIsNews = false
                 lastError = error as? WAVWriter.WriteError == .tooLong
                     ? "The song is longer than a WAV file can hold (about six hours)."
@@ -1132,7 +1132,7 @@ final class DocumentController {
             lastError = missing.isEmpty ? nil : "Shared without \(Self.audioFiles(missing)): missing from the song."
             return target
         case .failure(let error):
-            log.error("share copy failed — \(error.localizedDescription, privacy: .public)")
+            log.error("share copy failed — \(error.localizedDescription, privacy: .private)")
             lastExportIsNews = false
             lastError = "Could not prepare \(songName) for sharing."
             return nil
@@ -1151,7 +1151,7 @@ final class DocumentController {
             lastError = nil
             return url
         } catch {
-            log.error("MIDI export failed — \(error.localizedDescription, privacy: .public)")
+            log.error("MIDI export failed — \(error.localizedDescription, privacy: .private)")
             lastError = "Could not export the MIDI file."
             return nil
         }
@@ -1236,7 +1236,7 @@ final class DocumentController {
             mediaRevision += 1
             return (file: imported.file, commands: commands)
         case .failure(let error):
-            log.error("import failed — \(error.localizedDescription, privacy: .public)")
+            log.error("import failed — \(error.localizedDescription, privacy: .private)")
             lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the file."
             return nil
         }
@@ -1312,7 +1312,7 @@ final class DocumentController {
         switch result {
         case .success(let decoded): buffer = decoded
         case .failure(let error):
-            log.error("take unreadable — \(error.localizedDescription, privacy: .public)")
+            log.error("take unreadable — \(error.localizedDescription, privacy: .private)")
             lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read."
             return
         }
@@ -1525,7 +1525,7 @@ final class DocumentController {
                     state.brought(key, .written)
                 } catch {
                     failed.append(project.name)
-                    log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .public)")
+                    log.error("import of an earlier song failed — \(error.localizedDescription, privacy: .private)")
                     state.brought(key, .failed)
                 }
             } else {
