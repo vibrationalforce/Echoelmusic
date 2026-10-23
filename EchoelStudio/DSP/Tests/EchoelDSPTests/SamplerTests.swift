@@ -45,6 +45,8 @@ final class SamplerTests: XCTestCase {
         })
         XCTAssertEqual(buffer.frameCount, 3, "the frames it wrote, not the room it had")
         XCTAssertEqual(buffer.copyFrames(), [0.25, 0, -0.5], "a non-finite frame is silence")
+        let inPlace: [Float] = buffer.withFrames { (frames: UnsafeBufferPointer<Float>) -> [Float] in Array(frames) }
+        XCTAssertEqual(inPlace, [0.25, 0, -0.5], "read in place, the same frames")
         XCTAssertEqual(buffer.sampleRate, 44_100)
         let clamped = try XCTUnwrap(try SampleBuffer(capacity: 2, sampleRate: 48_000) { _ in 10 })
         XCTAssertEqual(clamped.frameCount, 2, "never more than it holds")

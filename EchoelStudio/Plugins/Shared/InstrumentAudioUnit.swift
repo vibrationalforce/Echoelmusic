@@ -172,8 +172,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             var state = super.fullState ?? [:]
             state[InstrumentState.markerKey] = 1
             if acceptsSamples, let sample {
-                let frames = sample.buffer.copyFrames()
-                state[StateKey.frames] = frames.withUnsafeBufferPointer { Data(buffer: $0) }
+                // Straight from the sample's memory into the session's bytes, no array between.
+                state[StateKey.frames] = sample.buffer.withFrames { Data(buffer: $0) }
                 state[StateKey.rate] = sample.buffer.sampleRate
                 state[StateKey.name] = sample.name
             }

@@ -70,6 +70,12 @@ public final class SampleBuffer: @unchecked Sendable {
         Array(UnsafeBufferPointer(start: frames, count: frameCount))
     }
 
+    /// The frames read where they are, valid only inside `body` — for saving the sample as bytes
+    /// without an array on the way, where memory is tight (the plugin extension).
+    public func withFrames<Value>(_ body: (UnsafeBufferPointer<Float>) throws -> Value) rethrows -> Value {
+        try body(UnsafeBufferPointer(start: frames, count: frameCount))
+    }
+
     deinit {
         frames.deinitialize(count: frameCount)
         frames.deallocate()
