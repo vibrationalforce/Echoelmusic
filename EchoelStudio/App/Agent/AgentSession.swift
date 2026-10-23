@@ -149,7 +149,9 @@ final class AgentSession {
                     lines.append(AgentLine(role: .problem, text: Self.overflowSentence(changedSong: executor.changedSong,
                                                                                       fresh: fresh)))
                 } else {
-                    log.error("agent: \(String(describing: error), privacy: .public)")
+                    // Private like the line below: a refusal carries the transcript, and so the
+                    // musician's words (third night review, critic).
+                    log.error("agent: \(String(describing: error), privacy: .private)")
                     lines.append(AgentLine(role: .problem, text: Self.sentence(for: error)))
                 }
             } catch {
