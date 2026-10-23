@@ -175,6 +175,31 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue(cycles.suffix(10).allSatisfy { (493...495).contains($0) }, "and it arrives: \(Array(cycles.suffix(10)))")
     }
 
+    /// A wheel let go comes back exactly in tune — not 0.025 cents sharp, where a Float glide stops
+    /// moving short of its rest (review 2026-10-23).
+    func testABendLetGoReturnsExactlyToPitch() {
+        func meanFrequency(_ samples: [Float]) -> Double {
+            var rising: [Double] = []
+            for i in 1..<samples.count where samples[i - 1] < 0 && samples[i] >= 0 {
+                rising.append(Double(i - 1) + Double(-samples[i - 1] / (samples[i] - samples[i - 1])))
+            }
+            guard let first = rising.first, let last = rising.last, last > first else { return 0 }
+            return Double(rising.count - 1) * Double(rate) / (last - first)
+        }
+        var still = sineSynth(), bent = sineSynth()
+        still.noteOn(pitch: 69, velocity: 127)
+        bent.noteOn(pitch: 69, velocity: 127)
+        bent.pitchBend(16_383)
+        _ = render(&bent, seconds: 0.1)
+        bent.pitchBend(8_192)
+        _ = render(&still, seconds: 1)
+        _ = render(&bent, seconds: 1)    // 200 time constants of the 5 ms glide
+        let reference = meanFrequency(render(&still, seconds: 1))
+        XCTAssertEqual(reference, 440, accuracy: 0.01)
+        XCTAssertEqual(meanFrequency(render(&bent, seconds: 1)), reference, accuracy: 1e-4,
+                       "a stalled glide sits 0.006 Hz sharp")
+    }
+
     /// However the song is cut into render calls, a bend and the modulation wheel sound the same,
     /// sample for sample: the engine cuts a call wherever any track has an event, a beat or an
     /// automation step, so this is what makes playback at any buffer size and the export agree.

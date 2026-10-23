@@ -118,8 +118,8 @@ public struct Compressor: Sendable {
             let wanted = target(at: level)
             // More reduction follows at the attack, less at the release.
             env += (wanted - env) * (wanted < env ? attackCoefficient : releaseCoefficient)
-            makeupGain += (makeup - makeupGain) * glide
-            wetAmount += (wet - wetAmount) * glide
+            makeupGain = Self.glided(makeupGain, toward: makeup, by: glide)
+            wetAmount = Self.glided(wetAmount, toward: wet, by: glide)
             let gain = env == 0 ? makeupGain : Foundation.powf(10, env / 20) * makeupGain
             let dry = 1 - wetAmount
             left[i] = l * dry + l * gain * wetAmount
@@ -129,5 +129,15 @@ public struct Compressor: Sendable {
         makeupNow = Swift.abs(makeup - makeupGain) < 1e-6 ? makeup : makeupGain
         wetNow = Swift.abs(wet - wetAmount) < 1e-6 ? wet : wetAmount
         reduction = Swift.abs(env) < 1e-6 ? 0 : env
+    }
+
+    /// One sample of a gain glide toward `target`. A Float glide stops moving a few hundred ulps
+    /// short of its target — 3.98101 for 12 dB of makeup, 0.99999 for a full mix — and an
+    /// "arrived" check at that distance never fires; where it stops, it takes the target
+    /// (review 2026-10-23). Shared by the delay's and the reverb's mix.
+    @inline(__always)
+    static func glided(_ value: Float, toward goal: Float, by amount: Float) -> Float {
+        let next = value + (goal - value) * amount
+        return next == value ? goal : next
     }
 }

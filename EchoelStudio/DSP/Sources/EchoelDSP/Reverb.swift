@@ -163,7 +163,7 @@ public final class Reverb: @unchecked Sendable {
         let scale: Float = 2 / Float(Self.lines)
         if frames > 0 { hasRun = true }
         for i in 0..<frames {
-            wet += (wetTarget - wet) * mixGlide
+            wet = Compressor.glided(wet, toward: wetTarget, by: mixGlide)
             let dry = 1 - wet
             // A bad input sample reads as silence; it never reaches the lines.
             let inLeft = left[i].isFinite ? left[i] : 0, inRight = right[i].isFinite ? right[i] : 0

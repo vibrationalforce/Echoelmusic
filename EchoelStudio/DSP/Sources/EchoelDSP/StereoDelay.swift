@@ -118,7 +118,7 @@ public final class StereoDelay: @unchecked Sendable {
         let pingPong = settings.pingPong
         if frames > 0 { hasRun = true }
         for i in 0..<frames {
-            wet += (wetTarget - wet) * mixGlide
+            wet = Compressor.glided(wet, toward: wetTarget, by: mixGlide)
             let dry = 1 - wet
             distance += (target - distance) * glide
             var position = Double(write) - distance

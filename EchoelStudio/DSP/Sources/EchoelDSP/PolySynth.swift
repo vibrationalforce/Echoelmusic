@@ -371,8 +371,10 @@ public struct PolySynth: Sendable {
     /// The wheels' frequency ratio for the next sample: the bend and the vibrato depth one sample
     /// further toward their wheels, the vibrato one sample on.
     private mutating func nextRatio() -> Float {
-        bend = bendTarget + (bend - bendTarget) * bendPole
-        if Swift.abs(bend - bendTarget) < 1e-7 { bend = bendTarget }
+        let next = bendTarget + (bend - bendTarget) * bendPole
+        // A Float glide stops moving about 120 ulps short of its target, far outside 1e-7; where
+        // it stops it takes the target, so a wheel let go rests exactly in tune (review 2026-10-23).
+        bend = (next == bend || Swift.abs(next - bendTarget) < 1e-7) ? bendTarget : next
         guard vibrato > 0 || vibratoTarget > 0 else { return bend }
         vibrato = vibratoTarget + (vibrato - vibratoTarget) * vibratoPole
         vibratoPhase += Self.vibratoRate / sampleRate

@@ -63,6 +63,27 @@ final class CompressorTests: XCTestCase {
         XCTAssertEqual(after[4_752] / input(4_752), Float(Foundation.pow(10, 12.0 / 20)), accuracy: 0.01, "and arrives")
     }
 
+    /// Settled, the compressor plays the makeup itself — not 3.98101 for 12 dB, where a Float glide
+    /// stops moving short of 3.98107 (review 2026-10-23).
+    func testASettledMakeupIsTheSettingItself() {
+        var settings = Compressor.Settings()
+        settings.ratio = 1    // no reduction: the output is the input times the makeup
+        settings.knee = 0
+        var c = Compressor(sampleRate: rate, settings: settings)
+        _ = run(&c, amplitude: 0.25, frames: 1_024)
+        settings.makeup = 12
+        c.settings = settings
+        _ = run(&c, amplitude: 0.25, frames: 96_000)
+        var left: [Float] = [0.25], right: [Float] = [0.25]
+        left.withUnsafeMutableBufferPointer { l in
+            right.withUnsafeMutableBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                c.process(left: lp, right: rp, frames: 1)
+            }
+        }
+        XCTAssertEqual(left[0], 0.25 * Float(Foundation.pow(10, 12.0 / 20)), "exactly the setting")
+    }
+
     func testTheKneeIsSmoothAndMixAndMakeupWork() {
         var settings = Compressor.Settings()
         settings.threshold = -20

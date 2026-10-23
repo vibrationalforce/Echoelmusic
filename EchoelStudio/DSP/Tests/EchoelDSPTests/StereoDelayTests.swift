@@ -36,6 +36,18 @@ final class StereoDelayTests: XCTestCase {
         XCTAssertEqual(moved[moved.count - 1], tone[tone.count - 1 - 480], accuracy: 1e-3, "and it arrives fully wet")
     }
 
+    /// A Mix turned fully wet ends fully wet: no trace of the dry signal stays, as it did where a
+    /// Float glide stops moving at 0.99999 (review 2026-10-23).
+    func testAMixTurnedFullyWetLeavesNoDrySignal() {
+        let delay = StereoDelay(sampleRate: rate, settings: .init(time: 0.01, feedback: 0, mix: 0.25))
+        let silence = [Float](repeating: 0, count: 48_000)
+        _ = run(delay, left: silence, right: silence)
+        delay.settings.mix = 1
+        _ = run(delay, left: silence, right: silence)
+        let (left, _) = run(delay, left: impulse(400), right: [Float](repeating: 0, count: 400))
+        XCTAssertEqual(left[0], 0, "settled fully wet: no dry impulse")
+    }
+
     func testAnImpulseComesBackAfterTheTimeAndEachRepeatIsQuieter() {
         let delay = StereoDelay(sampleRate: rate, settings: .init(time: 0.01, feedback: 0.5, mix: 1, damping: 20_000))
         let (left, right) = run(delay, left: impulse(2_000), right: [Float](repeating: 0, count: 2_000))
