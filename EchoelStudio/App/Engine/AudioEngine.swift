@@ -123,7 +123,7 @@ final class AudioEngine {
     }
 
     /// The device's own speaker or earpiece, where a monitored microphone would howl.
-    var outputIsBuiltIn: Bool {
+    private var outputIsBuiltIn: Bool {
         AVAudioSession.sharedInstance().currentRoute.outputs.contains {
             $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
         }
@@ -205,8 +205,6 @@ final class AudioEngine {
                     self.pauseFromOutside("Paused: the headphones or the audio interface were disconnected.")
                 }
                 if let project = self.project { self.publish(project) }
-                // Headphones in: a song that monitors always and waited for them opens its input.
-                if !self.outputIsBuiltIn { self.cameBack() }
             }
         }
         resetObserver = NotificationCenter.default.addObserver(
@@ -276,9 +274,8 @@ final class AudioEngine {
     /// runs on over a paused song (R10) or across a jump.
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
     /// The graph came back up after it was down — the launch, a call's end, a reset, a new
-    /// interface, the foreground return, a retry or Restart audio — or the output moved off the
-    /// device's speaker: what waited for the audio can go on now (a song that monitors always
-    /// opens its input).
+    /// interface, the foreground return, a retry or Restart audio: what waited for the audio can
+    /// go on now (a song that monitors always opens its input).
     @ObservationIgnored var onAudioBack: (() -> Void)?
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.

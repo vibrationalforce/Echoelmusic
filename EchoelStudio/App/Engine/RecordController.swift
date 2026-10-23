@@ -231,12 +231,10 @@ final class RecordController {
     /// edit (`inputFollowsSong`), here too.
     /// One at a time: a second ask while the first waits for the microphone answer is the same ask
     /// (fifth night review, 2026-10-23: the launch alone asked twice, and a refusal rebuilt the
-    /// graph twice over). And not while the output is the device's speaker, where an Always track
-    /// hears nothing (`AudioEngine.monitoring(in:)`): no microphone question at launch for a song
-    /// that would stay silent — it stays unseen, and headphones in open it.
+    /// graph twice over).
     private func inputOpensForUnseenSong() async {
         guard !openingForSong, !engine.isPlaying, !isRecording, monitorsAlways,
-              store.documentGeneration != seenGeneration, engine.canOpenInputNow, !engine.outputIsBuiltIn else { return }
+              store.documentGeneration != seenGeneration, engine.canOpenInputNow else { return }
         let generation = store.documentGeneration
         var opened = engine.isInputOpen
         if !opened {
