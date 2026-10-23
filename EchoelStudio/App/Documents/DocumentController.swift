@@ -87,7 +87,7 @@ final class DocumentController {
     private enum NotLoaded {
         /// Past the song's memory budget (`AudioFileImport.songBudgetBytes`).
         case overBudget
-        /// The memory was not free when the song opened.
+        /// The memory was not free when the file was loaded — at the open, or for a take.
         case noFreeMemory
     }
 
@@ -1134,8 +1134,8 @@ final class DocumentController {
 
     /// Why a file is left out when the song holds more audio than the device keeps.
     private static let overBudget = "The song holds more audio than Echoel can keep in memory on this device."
-    /// Why a file is left out when the memory was not free at the open.
-    private static let noFreeMemory = "There was not enough free memory when the song opened; it loads the next time the song opens."
+    /// Why a file is left out when the memory was not free to load it.
+    private static let noFreeMemory = "There was not enough free memory; Echoel tries again the next time the song opens."
 
     /// The audio files the arrangement plays that did not decode, by name: they render as
     /// silence, and the export says which and why. Only what it plays — a region, a placed audio
@@ -1556,11 +1556,7 @@ final class DocumentController {
             try? FileManager.default.removeItem(at: source)
             return
         }
-        if let buffer {
-            samples[target.id] = buffer
-        } else {
-            unfitMedia[target.id] = .noFreeMemory
-        }
+        if let buffer { samples[target.id] = buffer }
         mediaRevision += 1
         let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
         let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
@@ -1579,15 +1575,22 @@ final class DocumentController {
         // many: a take can push one out while a leftover drops back in (second night review).
         let before = store.project
         perform(commands, title: "Record Take")
-        if buffer == nil {
-            let line = "\(file.name) is in the song but not loaded, so silent. \(Self.noFreeMemory)"
-            lastError = lastError.map { "\($0) \(line)" } ?? line
-        }
+        let committed = store.project.media.contains { $0.id == file.id }
         if let strandedIn {
             let line = "The take could not be moved into the song and stays in the folder \(strandedIn) in the Files app; it is missing the next time the song opens."
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
         let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before)
+        if buffer == nil, committed {
+            // Named as not loaded in every export. Its own line only where no other line already
+            // says what the next open does with it — stranded, or past the budget — and never for a
+            // take the song refused (eighth night review, 2026-10-23).
+            unfitMedia[target.id] = .noFreeMemory
+            if strandedIn == nil, !silenced.contains(where: { $0.id == file.id }) {
+                let line = "\(file.name) is in the song but not loaded, so silent. \(Self.noFreeMemory)"
+                lastError = lastError.map { "\($0) \(line)" } ?? line
+            }
+        }
         if !silenced.isEmpty {
             let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
             lastError = lastError.map { "\($0) \(line)" } ?? line
@@ -1690,7 +1693,9 @@ final class DocumentController {
             var notLoaded: [MediaID: NotLoaded] = [:]
             for file in loaded.unfit { notLoaded[file.id] = .overBudget }
             for file in loaded.short { notLoaded[file.id] = .noFreeMemory }
-            self.unfitMedia = notLoaded
+            // Merged, not replaced: a take committed while this load ran keeps its mark (eighth
+            // night review, 2026-10-23), as `samples` keeps its buffer below.
+            self.unfitMedia.merge(notLoaded) { _, loaded in loaded }
             self.samples.merge(loaded.decoded) { current, _ in current }
             self.mediaRevision += 1
             self.followRenamedSong()
