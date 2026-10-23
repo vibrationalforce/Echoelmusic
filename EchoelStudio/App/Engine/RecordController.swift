@@ -200,9 +200,11 @@ final class RecordController {
     /// playing: opening or closing reconfigures the session and stops the song, so it waits for
     /// Stop. It opens only for an opened song, never on an ordinary edit (`setMonitor`).
     func inputFollowsSong() async {
+        guard !engine.isPlaying, !isRecording else { return }
+        // Read only past the wait: a song opened while playing is still news at Stop, or a song
+        // that monitors always stays deaf after it (review 2026-10-23).
         let opened = store.documentGeneration != seenGeneration
         seenGeneration = store.documentGeneration
-        guard !engine.isPlaying, !isRecording else { return }
         if monitorsAlways {
             if opened, !engine.isInputOpen { _ = await engine.openInput() }
             return
