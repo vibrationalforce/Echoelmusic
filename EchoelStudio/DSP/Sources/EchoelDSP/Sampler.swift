@@ -9,6 +9,10 @@ import Foundation
 /// must release it off the render thread (the engine does both, as it does for snapshots).
 public final class SampleBuffer: @unchecked Sendable {
     public let frameCount: Int
+    /// The frames the buffer holds in memory: `frameCount`, or the whole room a fill was given when
+    /// it came back short and moving its frames out would have cost more than it gives back. A
+    /// memory plan counts this, not `frameCount`.
+    public let heldFrames: Int
     public let sampleRate: Double
     /// The MIDI note that plays the sample at its original speed.
     public let rootPitch: UInt8
@@ -19,6 +23,7 @@ public final class SampleBuffer: @unchecked Sendable {
     public init?(samples: [Float], sampleRate: Double, rootPitch: UInt8 = 60) {
         guard !samples.isEmpty, sampleRate.isFinite, sampleRate > 0 else { return nil }
         frameCount = samples.count
+        heldFrames = samples.count
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = .allocate(capacity: samples.count)
@@ -29,10 +34,13 @@ public final class SampleBuffer: @unchecked Sendable {
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds), the frames move into a block of their own
-    /// size, so the buffer keeps exactly the memory its `frameCount` says and the song's memory plan
-    /// stays true (third night review, 2026-10-23). Nil when `fill` writes no frame or the rate is
-    /// not a positive number; an error from `fill` is thrown on.
+    /// (a file whose header promised more than it holds), the room it left is given back only when
+    /// what it wrote is at most a sixteenth of it: moving the frames into a block of their own size
+    /// holds both blocks for a moment, so it may cost no more than that over the room the memory
+    /// plan let in. Otherwise the block stays and `heldFrames` says how large it is — the plan
+    /// counts that (third and fourth night reviews, 2026-10-23: first the unwritten room went
+    /// uncounted, then a file one frame short was copied whole beside its first block). Nil when
+    /// `fill` writes no frame or the rate is not a positive number; an error from `fill` is thrown on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
         guard capacity > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
@@ -53,13 +61,16 @@ public final class SampleBuffer: @unchecked Sendable {
         }
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
         var kept = storage
-        if written < capacity {
+        var held = capacity
+        if written <= capacity / Self.compactingShare {
             kept = .allocate(capacity: written)
             kept.moveInitialize(from: storage, count: written)
             (storage + written).deinitialize(count: capacity - written)
             storage.deallocate()
+            held = written
         }
         frameCount = written
+        heldFrames = held
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
         frames = kept
@@ -76,8 +87,11 @@ public final class SampleBuffer: @unchecked Sendable {
         try body(UnsafeBufferPointer(start: frames, count: frameCount))
     }
 
+    /// A short fill gives its room back when it wrote at most this share of it (one in sixteen).
+    private static let compactingShare = 16
+
     deinit {
-        frames.deinitialize(count: frameCount)
+        frames.deinitialize(count: heldFrames)
         frames.deallocate()
     }
 }

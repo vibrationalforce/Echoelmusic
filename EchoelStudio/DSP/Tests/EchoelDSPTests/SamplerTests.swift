@@ -44,6 +44,7 @@ final class SamplerTests: XCTestCase {
             return 3
         })
         XCTAssertEqual(buffer.frameCount, 3, "the frames it wrote, not the room it had")
+        XCTAssertEqual(buffer.heldFrames, 4, "three of four stay in their block, and the block is counted")
         XCTAssertEqual(buffer.copyFrames(), [0.25, 0, -0.5], "a non-finite frame is silence")
         let inPlace: [Float] = buffer.withFrames { (frames: UnsafeBufferPointer<Float>) -> [Float] in Array(frames) }
         XCTAssertEqual(inPlace, [0.25, 0, -0.5], "read in place, the same frames")
@@ -56,8 +57,8 @@ final class SamplerTests: XCTestCase {
         }
     }
 
-    /// A file whose header promises more frames than it holds leaves the buffer holding only what
-    /// it wrote — the memory plan counts `frameCount`, so the block must not be larger.
+    /// A file whose header promises far more frames than it holds gives the unwritten room back:
+    /// the buffer holds what it wrote, and says so.
     func testAShortFillKeepsOnlyTheMemoryItWrote() throws {
         let capacity = 1_000_000
         let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
@@ -65,6 +66,7 @@ final class SamplerTests: XCTestCase {
             return 1_000
         })
         XCTAssertEqual(buffer.frameCount, 1_000)
+        XCTAssertEqual(buffer.heldFrames, 1_000)
         let kept: [Float] = buffer.copyFrames()
         XCTAssertEqual(kept.first, 0)
         XCTAssertEqual(kept.last, 0.999)
@@ -73,6 +75,21 @@ final class SamplerTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(held, 1_000 * MemoryLayout<Float>.size)
         XCTAssertLessThan(held, capacity * MemoryLayout<Float>.size / 100, "the unwritten room is given back")
         #endif
+    }
+
+    /// A file one frame short keeps its block: copying it out would hold the file twice for a
+    /// moment, which is what the memory plan is there to prevent. The block is what it counts.
+    func testAFillShortByAFrameKeepsItsBlockAndCountsIt() throws {
+        let capacity = 1_600
+        let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
+            for index in 0..<(capacity - 1) { frames[index] = Float(index) / Float(capacity) }
+            return capacity - 1
+        })
+        XCTAssertEqual(buffer.frameCount, capacity - 1, "it plays what it wrote")
+        XCTAssertEqual(buffer.heldFrames, capacity, "and holds, and is counted for, its whole block")
+        let kept: [Float] = buffer.copyFrames()
+        XCTAssertEqual(kept.count, capacity - 1)
+        XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity))
     }
 
     func testWithoutASampleNothingSounds() {
