@@ -1,5 +1,8 @@
 # Echoel — Execution Roadmap (backlog history — subordinate to the founder law and the master plan)
 
+> Die aktuelle Reihenfolge steht in [`ROADMAP_NOW.md`](ROADMAP_NOW.md) (2026-10-14).
+> Dieser Text bleibt die ältere Liste. Wo beide die Reihenfolge meinen, gilt `ROADMAP_NOW.md`.
+
 > ⭐ **2026-09-24 (WA2 decision lock): this file is SUBORDINATE to `docs/dev/FOUNDER_PRODUCT_LAW.md`
 > (WHAT Echoel is: a full professional DMMW) and to `docs/dev/ECHOELMUSIC_MASTER_PLAN.md` (the build
 > ORDER — WA1 → WA4 and the phases).** Where this file and the master plan disagree on sequence, the
@@ -17,13 +20,17 @@
 > definition wins and the item is history. The rule two paragraphs down ("this file + vision.md
 > win") was written 2026-06-19, before the definition existed, and is bounded by it (audit 2026-09-02).
 
-> **This is the single source of truth for *how we get there*.**
+> ⛔ **Nicht mehr die eine Quelle für die Reihenfolge.** Das stand hier als „single source of
+> truth for how we get there“. Seit 2026-10-14 gilt dafür [`ROADMAP_NOW.md`](ROADMAP_NOW.md).
+> Dieser Text bleibt die ältere Liste und das Register darunter.
 > The *vision* (north star, tiers, principles) lives in [`memory/vision.md`](../../memory/vision.md)
 > and is not duplicated here. This doc indexes everything else, subordinates the
 > scattered plans under one structure, and gives one pragmatic backlog.
 >
 > Rule: if a scattered `scratchpads/PLAN_*` or `STRATEGY_*` disagrees with this
-> file or `vision.md`, **this file + vision.md win**. Plans are inputs, not truth.
+> file or `vision.md`, the product law and the master plan still win on WHAT, and
+> [`ROADMAP_NOW.md`](ROADMAP_NOW.md) wins on the current sequence. This file's ledger
+> stays the record of the older list. Plans are inputs, not truth.
 
 _Last structured: 2026-06-19. Re-confirm at each session start alongside `memory/`._
 
