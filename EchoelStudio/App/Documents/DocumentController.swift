@@ -1471,10 +1471,17 @@ final class DocumentController {
         followMovedPackage()
         let song = songsOpened
         var source = take.url
+        // A take that could not move in plays now, and the line says where it is: the next open
+        // looks for it in the package (sixth night review, 2026-10-23).
+        var strandedIn: String?
         if let here = currentURL,
-           let there = MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: here),
-           bring(take.url, to: there, into: here) {
-            source = there
+           let there = MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: here) {
+            if bring(take.url, to: there, into: here) {
+                source = there
+            } else if there != take.url {
+                strandedIn = take.url.deletingLastPathComponent().deletingLastPathComponent()
+                    .deletingPathExtension().lastPathComponent
+            }
         }
         let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
             Result { try AudioFileImport.decode(source) }
@@ -1514,6 +1521,10 @@ final class DocumentController {
         // many: a take can push one out while a leftover drops back in (second night review).
         let before = store.project
         perform(commands, title: "Record Take")
+        if let strandedIn {
+            let line = "The take could not be moved into the song and stays in the folder \(strandedIn) in the Files app; it is missing the next time the song opens."
+            lastError = lastError.map { "\($0) \(line)" } ?? line
+        }
         let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before)
         if !silenced.isEmpty {
             let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
