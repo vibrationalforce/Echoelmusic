@@ -19,6 +19,9 @@ final class RecordController {
     @ObservationIgnored private var midiTrack: TrackID?
     /// The song `inputFollowsSong` last saw, so it can tell an opened song from an edit.
     @ObservationIgnored private var seenGeneration: Int?
+    /// `inputOpensForUnseenSong` waits for the microphone answer: the launch, the audio's return,
+    /// a pause and an edit can all ask at once, and each would rebuild the graph again.
+    @ObservationIgnored private var openingForSong = false
 
     init(engine: AudioEngine, documents: DocumentController, store: ProjectStore) {
         self.engine = engine
@@ -82,7 +85,15 @@ final class RecordController {
             engine.setLiveTrack(track)
             return
         }
+        let generation = store.documentGeneration
         guard await engine.openInput() else { return }
+        guard store.documentGeneration == generation, store.project.track(track) != nil else {
+            // Another song opened during the microphone question: the track asked for is not in
+            // it, and the input opened for it is asked again for the song that is (fifth night
+            // review, 2026-10-23).
+            await inputFollowsSong()
+            return
+        }
         armedTrack = track
         engine.setArmedTrack(track)
     }
@@ -104,7 +115,10 @@ final class RecordController {
     func setMonitor(_ mode: MonitorMode, on track: TrackID) async {
         do { try store.perform(.setMonitor(track, mode)) } catch { return }
         if monitorsAlways {
+            let generation = store.documentGeneration
             _ = await engine.openInput()
+            // Another song opened during the microphone question: the input follows that one.
+            if store.documentGeneration != generation { await inputFollowsSong() }
         } else if armedTrack == nil, !isRecording {
             engine.closeInput()
         }
@@ -215,12 +229,19 @@ final class RecordController {
     /// the audio (fourth night review, 2026-10-23). A song that waits for the audio — a call, the
     /// background — is opened by its return (`AudioEngine.onAudioBack`), and by every Stop and
     /// edit (`inputFollowsSong`), here too.
+    /// One at a time: a second ask while the first waits for the microphone answer is the same ask
+    /// (fifth night review, 2026-10-23: the launch alone asked twice, and a refusal rebuilt the
+    /// graph twice over).
     private func inputOpensForUnseenSong() async {
-        guard !engine.isPlaying, !isRecording, monitorsAlways, store.documentGeneration != seenGeneration,
-              engine.canOpenInputNow else { return }
+        guard !openingForSong, !engine.isPlaying, !isRecording, monitorsAlways,
+              store.documentGeneration != seenGeneration, engine.canOpenInputNow else { return }
         let generation = store.documentGeneration
         var opened = engine.isInputOpen
-        if !opened { opened = await engine.openInputKeepingPosition() }
+        if !opened {
+            openingForSong = true
+            opened = await engine.openInputKeepingPosition()
+            openingForSong = false
+        }
         guard store.documentGeneration == generation else {
             // Another song opened during the microphone question, and its own check already ran
             // while the input was still closed: it is asked again now, or the input stays open
