@@ -11,6 +11,27 @@ import Foundation
 enum AudioFileImport {
     /// The longest file a sampler takes: ten minutes, about 115 MB of mono floats at 48 kHz.
     static let maximumSeconds: Double = 600
+    /// The most frames a file or a take holds: ten minutes at 48 kHz. A higher rate makes the
+    /// limit shorter instead of the file larger — ten minutes at 768 kHz are 1.8 GB of floats,
+    /// decoded before the song's memory plan could refuse them (R9).
+    static let maximumFrames = Int(maximumSeconds * 48_000)
+
+    /// The longest a file or a take may run at `rate`.
+    static func longestSeconds(atRate rate: Double) -> Double {
+        guard rate.isFinite, rate > 0 else { return maximumSeconds }
+        return Swift.min(maximumSeconds, Double(maximumFrames) / rate)
+    }
+
+    /// A limit in words: "ten minutes", "5 minutes", "37 seconds".
+    static func spoken(_ seconds: Double) -> String {
+        if seconds >= maximumSeconds { return "ten minutes" }
+        let minutes = seconds / 60
+        if minutes >= 1 {
+            let shown = minutes.formatted(.number.precision(.fractionLength(0...1)))
+            return "\(shown) \(shown == "1" ? "minute" : "minutes")"
+        }
+        return "\(Int(seconds)) seconds"
+    }
 
     /// How much decoded audio one song keeps in memory: a quarter of the device's memory, at
     /// least 512 MiB and at most 2 GiB. A song opens with all its audio decoded, so without a
@@ -23,12 +44,14 @@ enum AudioFileImport {
     enum ImportError: LocalizedError {
         case unreadable
         case empty
-        case tooLong
+        case tooLong(maximumSeconds: Double)
 
         var errorDescription: String? {
             switch self {
             case .unreadable: "This file is not an audio format Echoel can read."
             case .empty: "This file holds no audio."
+            case .tooLong(let seconds) where seconds < AudioFileImport.maximumSeconds:
+                "This file is longer than \(AudioFileImport.spoken(seconds)), the longest Echoel keeps at its sample rate."
             case .tooLong: "This file is longer than ten minutes."
             }
         }
@@ -63,14 +86,20 @@ enum AudioFileImport {
         }
     }
 
-    /// Reads a whole file and mixes its channels down to one.
-    static func decode(_ url: URL) throws -> SampleBuffer {
+    /// Reads a whole file and mixes its channels down to one, refusing one past the limits
+    /// before reading it. The defaults are the import's; a song opening its own files passes the
+    /// room its memory plan has left instead, so a file kept from an earlier build is not
+    /// refused for its length alone.
+    static func decode(_ url: URL, maximumSeconds: Double = AudioFileImport.maximumSeconds,
+                       maximumFrames: Int = AudioFileImport.maximumFrames) throws -> SampleBuffer {
         let mono: SampleFile.Mono
-        do { mono = try SampleFile.readMono(url, maximumSeconds: maximumSeconds) } catch let error as SampleFile.ReadError {
+        do {
+            mono = try SampleFile.readMono(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+        } catch let error as SampleFile.ReadError {
             switch error {
             case .unreadable: throw ImportError.unreadable
             case .empty: throw ImportError.empty
-            case .tooLong: throw ImportError.tooLong
+            case .tooLong(let seconds): throw ImportError.tooLong(maximumSeconds: seconds)
             }
         }
         guard let buffer = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else { throw ImportError.empty }

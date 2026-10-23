@@ -156,7 +156,7 @@ actor TakeWriter {
                                interleaved: false)
         self.chunk = chunk
         self.ring = ring
-        maximumFrames = Int(AudioFileImport.maximumSeconds * sampleRate)
+        maximumFrames = Int(AudioFileImport.longestSeconds(atRate: sampleRate) * sampleRate)
         // A block that arrived as the previous take was stopped would otherwise open this one.
         ring.discardAvailable()
     }

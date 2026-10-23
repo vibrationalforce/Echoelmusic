@@ -1313,16 +1313,21 @@ final class DocumentController {
                 var used = 0
                 for file in plan.load {
                     if Task.isCancelled { break }
-                    guard let url = file.url(in: package),
-                          let buffer = try? AudioFileImport.decode(url) else { continue }
-                    // The plan trusts the length the song states; a file longer than that is
-                    // measured here, so the budget holds for a song from anywhere.
-                    let cost = buffer.frameCount * Project.decodedBytesPerFrame
-                    guard cost <= budget - used else {
+                    guard let url = file.url(in: package) else { continue }
+                    // The plan trusts the length the song states; the read is limited to the room
+                    // left, so a file longer than stated is refused before it is decoded and the
+                    // budget holds for a song from anywhere.
+                    let room = Swift.max(0, budget - used) / Project.decodedBytesPerFrame
+                    let buffer: SampleBuffer
+                    do {
+                        buffer = try AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: room)
+                    } catch AudioFileImport.ImportError.tooLong {
                         unfit.append(file.name)
                         continue
+                    } catch {
+                        continue
                     }
-                    used += cost
+                    used += buffer.frameCount * Project.decodedBytesPerFrame
                     decoded[file.id] = buffer
                 }
                 return (decoded: decoded, unfit: unfit)

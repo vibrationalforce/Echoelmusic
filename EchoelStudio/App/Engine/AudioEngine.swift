@@ -632,7 +632,8 @@ final class AudioEngine {
             return nil
         }
         if await current.writer.reachedLimit {
-            lastError = "The take stopped at ten minutes, the longest the song can hold."
+            let longest = AudioFileImport.spoken(AudioFileImport.longestSeconds(atRate: current.sampleRate))
+            lastError = "The take stopped at \(longest), the longest the song can hold at this sample rate."
         }
         let firstSample = recorder.startSample
         guard frames > 0, firstSample >= 0 else {
