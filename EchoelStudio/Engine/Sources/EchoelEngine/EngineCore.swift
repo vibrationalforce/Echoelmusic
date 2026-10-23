@@ -428,6 +428,12 @@ public final class EngineCore: @unchecked Sendable {
     /// The playhead in samples, for a small leaf view — never for a view body that hosts menus.
     public var positionSample: Int64 { position.load(ordering: .relaxed) }
 
+    /// Render calls finished since this core was made, one per call whatever its size, for the
+    /// diagnostic log: a count that stands still while the engine is said to run means no buffers
+    /// arrive. Each call moves the anchor's sequence twice, so half of it counts the calls; nothing
+    /// on the render thread changed for it.
+    public var renderCount: UInt64 { anchorSequence.load(ordering: .relaxed) >> 1 }
+
     // MARK: - Render thread
 
     /// Writes `frameCount` frames into `left` and `right` (overwriting them).

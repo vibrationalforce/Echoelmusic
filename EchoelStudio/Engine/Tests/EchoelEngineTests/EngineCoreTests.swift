@@ -622,6 +622,23 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(core.positionSample, before - 256 + 512, "a jump is relative to where the playhead is")
     }
 
+    /// The diagnostic log's sign of life: every render call counts once, stopped or playing,
+    /// stereo or multichannel, however many chunks it takes.
+    func testEveryRenderCallIsCountedOnceWhateverItsSize() throws {
+        let s = try song([[Note(pitch: 60, start: 0, length: 9_600)]])
+        let engine = core()
+        XCTAssertEqual(engine.renderCount, 0, "a fresh core has rendered nothing")
+        publish(s.project, to: engine)
+        _ = render(engine, frames: 2_560, block: 256)
+        XCTAssertEqual(engine.renderCount, 10, "ten stereo calls while stopped")
+        engine.play()
+        _ = render(engine, frames: 512, channels: 4)
+        XCTAssertEqual(engine.renderCount, 11, "the multichannel call counts too")
+        let long = EngineCore.maximumFrames * 2 + 100
+        _ = render(engine, frames: long, block: long)
+        XCTAssertEqual(engine.renderCount, 12, "a call longer than one chunk is still one call")
+    }
+
     func testAFaderMoveWhilePlayingKeepsAHeldNote() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 8 * bar)]])
         let engine = core()

@@ -160,6 +160,9 @@ final class AudioEngine {
     }
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "audio")
 
+    /// Render calls of the current core, for the ladder's rungs (0 without a core).
+    private var renderedBuffers: Double { Double(core?.renderCount ?? 0) }
+
     /// One rung of the lifecycle ladder: the diagnostic file first, with an unbuffered write, then
     /// os_log. Only source text and numbers reach the file, never a name a musician typed.
     private func step(_ event: StaticString, because reason: StaticString? = nil,
@@ -193,10 +196,10 @@ final class AudioEngine {
                 guard let self else { return }
                 switch type {
                 case .began:
-                    self.step("engine: interruption began")
+                    self.step("engine: interruption began", [("buffers", self.renderedBuffers)])
                     self.pauseFromOutside(self.isPlaying ? "Paused: a call, Siri or another app took the audio." : nil)
                 case .ended:
-                    self.step("engine: interruption ended")
+                    self.step("engine: interruption ended", [("buffers", self.renderedBuffers)])
                     self.resume(after: "interruption ended")
                 default: break
                 }
@@ -211,7 +214,7 @@ final class AudioEngine {
             let lost = raw.flatMap(AVAudioSession.RouteChangeReason.init(rawValue:)) == .oldDeviceUnavailable
             MainActor.assumeIsolated {
                 guard let self else { return }
-                self.step("route: change", [("reason", Double(raw ?? 0))])
+                self.step("route: change", [("reason", Double(raw ?? 0)), ("buffers", self.renderedBuffers)])
                 if lost, self.isPlaying {
                     self.step("route: output device gone while playing, pausing")
                     self.pauseFromOutside("Paused: the headphones or the audio interface were disconnected.")
@@ -348,7 +351,7 @@ final class AudioEngine {
         // answered here would retry without end. The retry and Restart audio cover that case.
         guard isRunning else { return }
         // Before the output is asked for its format: a crash in that query reads as its own step.
-        step("engine: configuration change")
+        step("engine: configuration change", [("buffers", renderedBuffers)])
         let output = engine.outputNode.outputFormat(forBus: 0)
         let channels = Self.usableChannels(output.channelCount)
         step("graph: output format", [("ch", Double(output.channelCount)), ("Hz", output.sampleRate)])
@@ -416,7 +419,7 @@ final class AudioEngine {
     private func suspendIfIdleInBackground() {
         guard isInBackground, isRunning, !isPlaying, take == nil,
               !(followsExternalClock && (clockSourceConnected || clockSourceGone != nil)) else { return }
-        step("engine: suspend in background")
+        step("engine: suspend in background", [("buffers", renderedBuffers)])
         suspendedInput = wantsInput
         engine.stop()
         isRunning = false
@@ -640,6 +643,15 @@ final class AudioEngine {
             if reportTask == nil { pollLaunchReports() }
             step("engine: start")
             try engine.start()
+            // The session's own values after the start (Studio asks for no rate and no buffer;
+            // Apple QA1631: any such wish is a hint). out_Hz=0 shows an output that reported no
+            // rate before the 48 kHz fallback above. `buffers` counts render calls: a later rung
+            // that repeats it while the engine is said to run means nothing renders.
+            step("engine: started", [("Hz", session.sampleRate), ("out_Hz", output.sampleRate),
+                                     ("io_ms", session.ioBufferDuration * 1_000),
+                                     ("in_ms", session.inputLatency * 1_000),
+                                     ("out_ms", session.outputLatency * 1_000),
+                                     ("buffers", Double(current.renderCount))])
             isRunning = true
             isInputOpen = input
             if input { step("graph: read input channels") }
