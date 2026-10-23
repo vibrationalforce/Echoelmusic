@@ -604,6 +604,34 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(engine, frames: 512, block: 512).left), "and is silent after it")
     }
 
+    /// A muted track's send to a return fades out over one chunk like its dry path, instead of
+    /// stepping to silence in one sample for a delay on the return to repeat as clicks, and an
+    /// unmuted one fades back in from silence (audit 2026-10-23).
+    func testAMutedSendRampsDownAndAnUnmutedOneRampsUp() throws {
+        var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Return", kind: .returnTrack, index: nil).apply(to: &s.project)
+        try Command.setSend(track: s.tracks[0], to: verb, db: 0).apply(to: &s.project)
+        // The return on solo: what is heard is the send alone.
+        try Command.setSolo(verb, true).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 24_000)
+
+        try Command.setMute(s.tracks[0], true).apply(to: &s.project)
+        publish(s.project, to: engine)
+        let down = render(engine, frames: 512, block: 512).left
+        XCTAssertNotNil(firstSound(Array(down[0..<64])), "the send does not vanish at the first sample")
+        XCTAssertGreaterThan(rms(down[0..<64]), rms(down[448..<512]) * 4, "it falls across the chunk")
+        XCTAssertNil(firstSound(render(engine, frames: 512, block: 512).left), "and is silent after it")
+
+        try Command.setMute(s.tracks[0], false).apply(to: &s.project)
+        publish(s.project, to: engine)
+        let up = render(engine, frames: 512, block: 512).left
+        XCTAssertLessThan(rms(up[0..<64]), rms(up[448..<512]), "it comes back from silence, not at full level")
+    }
+
     func testFaderGainsFollowTheMixerLaw() {
         XCTAssertEqual(EngineSnapshot.linear(MixerStrip.volumeRange.lowerBound), 0)
         XCTAssertEqual(EngineSnapshot.linear(0), 1, accuracy: 1e-6)

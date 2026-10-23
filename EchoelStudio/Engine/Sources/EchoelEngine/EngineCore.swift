@@ -1223,12 +1223,40 @@ public final class EngineCore: @unchecked Sendable {
     /// Adds a track's processed bus into the return buses it sends to.
     private func send(_ sends: [EngineSnapshot.SendTap], from point: Int, frames: Int, left: UnsafeMutablePointer<Float>,
                       right: UnsafeMutablePointer<Float>) {
+        var fed: UInt64 = 0
         for tap in sends where tap.bus >= 0 && tap.bus < Self.returnCapacity {
             let l = returnLeft + tap.bus * Self.maximumFrames, r = returnRight + tap.bus * Self.maximumFrames
             let tapMemory = point >= 0 && point < sendingPoints ? sendMemory + (point * Self.returnCapacity + tap.bus) * 2 : nil
             mix(left, right, into: l, r, frames: frames, curve: tap.moving, fixed: (tap.gainLeft, tap.gainRight),
                 memory: tapMemory)
+            fed |= 1 << UInt64(tap.bus)
         }
+        // A send that fed a return last chunk and has no tap now — the track was muted, another
+        // track soloed, the send removed — fades out over this chunk like the dry path, instead of
+        // stepping to silence in one sample for a delay on the return to repeat; its memory ends
+        // at 0, so a send that comes back fades in (audit 2026-10-23).
+        guard point >= 0, point < sendingPoints else { return }
+        for bus in 0..<Self.returnCapacity where fed & (1 << UInt64(bus)) == 0 {
+            let tapMemory = sendMemory + (point * Self.returnCapacity + bus) * 2
+            guard Self.isSounding(tapMemory) else { continue }
+            let l = returnLeft + bus * Self.maximumFrames, r = returnRight + bus * Self.maximumFrames
+            mix(left, right, into: l, r, frames: frames, curve: EngineSnapshot.MovingSend?.none, fixed: (0, 0),
+                memory: tapMemory)
+        }
+    }
+
+    /// Whether a remembered gain pair still lets something through.
+    private static func isSounding(_ gains: UnsafeMutablePointer<Float>) -> Bool {
+        gains[0].isFinite && gains[1].isFinite && (gains[0] != 0 || gains[1] != 0)
+    }
+
+    /// Whether any send of a mix point still has to fade out.
+    private func sendsLinger(point: Int) -> Bool {
+        guard point >= 0, point < sendingPoints else { return false }
+        for bus in 0..<Self.returnCapacity where Self.isSounding(sendMemory + (point * Self.returnCapacity + bus) * 2) {
+            return true
+        }
+        return false
     }
 
     /// Every return bus through its effects, into the mix at its fader, then cleared — every
@@ -1265,9 +1293,9 @@ public final class EngineCore: @unchecked Sendable {
                 meters.record(point, left: 0, right: 0, fall: meterFall)
                 continue
             }
-            // A track just muted still renders this chunk, to ramp down instead of clicking off.
-            let fading = point >= 0 && (gainMemory[point * 2] != 0 || gainMemory[point * 2 + 1] != 0)
-                && gainMemory[point * 2].isFinite
+            // A track just muted still renders this chunk, to ramp its output and its sends down
+            // instead of clicking off.
+            let fading = point >= 0 && (Self.isSounding(gainMemory + point * 2) || sendsLinger(point: point))
             let session = lane.slot >= 0 && lane.slot < slotCapacity
             // A track silenced by someone else's solo still feeds a soloed return: the snapshot gives
             // it sends only then, so a lane with sends renders even when its own output is quiet.
