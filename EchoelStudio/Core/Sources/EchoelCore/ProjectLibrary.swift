@@ -240,10 +240,6 @@ public struct ProjectLibrary: Sendable {
         return PackageIdentity(volume: volume.uint64Value, file: file.uint64Value)
     }
 
-    /// The song package in the directory that is `identity`, under whatever name it has now: a
-    /// song renamed in the Files app while it was open is found here, rather than written again
-    /// under its old name without its media. Nil when no package in the directory is it — the song
-    /// was deleted or moved somewhere else (audit 2026-10-23).
     /// Where an open song's package is now, after the Files app may have renamed, deleted or
     /// replaced it while the song stayed open.
     public enum Whereabouts: Equatable, Sendable {
@@ -275,6 +271,10 @@ public struct ProjectLibrary: Sendable {
         return .gone
     }
 
+    /// The song package in the directory that is `identity`, under whatever name it has now: a
+    /// song renamed in the Files app while it was open is found here, rather than written again
+    /// under its old name without its media. Nil when no package in the directory is it — the song
+    /// was deleted or moved somewhere else (audit 2026-10-23).
     public func package(_ identity: PackageIdentity) -> URL? {
         let files = FileManager.default
         guard let urls = try? files.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil,

@@ -196,12 +196,6 @@ final class RecordController {
         await inputFollowsSong()
     }
 
-    /// The input is open while something wants it: an armed audio track, a take, a track that
-    /// monitors always. A song opened, an undo or a deleted track can change that without going
-    /// through `setMonitor`: the microphone stayed live for a song that uses none, and a song
-    /// that monitors always opened deaf (audit 2026-10-23). Run on every song change. Never while
-    /// playing: opening or closing reconfigures the session and stops the song, so it waits for
-    /// Stop. It opens only for an opened song, never on an ordinary edit (`setMonitor`).
     /// A pause from outside — a followed clock's Stop, a call, lost headphones, a rate change — is a
     /// stop too: a song that monitors always and was opened while playing opens its input here, as
     /// it does at the transport's Stop (second night review, 2026-10-23: only the on-screen Stop
@@ -220,6 +214,12 @@ final class RecordController {
         if opened, store.documentGeneration == generation { seenGeneration = generation }
     }
 
+    /// The input is open while something wants it: an armed audio track, a take, a track that
+    /// monitors always. A song opened, an undo or a deleted track can change that without going
+    /// through `setMonitor`: the microphone stayed live for a song that uses none, and a song
+    /// that monitors always opened deaf (audit 2026-10-23). Run on every song change. Never while
+    /// playing: opening or closing reconfigures the session and stops the song, so it waits for
+    /// Stop. It opens only for an opened song, never on an ordinary edit (`setMonitor`).
     func inputFollowsSong() async {
         guard !engine.isPlaying, !isRecording else { return }
         // Read only past the wait: a song opened while playing is still news at Stop, or a song
