@@ -73,6 +73,12 @@ public struct Envelope: Sendable {
 
     private mutating func retime() {
         switch stage {
+        case .decay where Self.sustainLevel(settings) >= level:
+            // A sustain raised above where the decay has got to ends the decay: the note glides up
+            // to it as a held note does. Left in the decay, a goal above the level read as arrived
+            // and the level stepped there in one sample (review 2026-10-23).
+            stage = .sustain
+            target = Self.sustainLevel(settings)
         case .attack, .decay, .release: setCurve(for: stage)
         case .sustain: target = Self.sustainLevel(settings)
         case .idle: break
