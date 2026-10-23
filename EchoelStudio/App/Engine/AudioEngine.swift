@@ -122,20 +122,22 @@ final class AudioEngine {
         if let project { publish(project) }
     }
 
-    /// A monitored input can be heard here without feeding back into itself: never on the
-    /// device's own speaker or earpiece, and the device's own microphone only in wired headphones
-    /// or through an interface — a Bluetooth, AirPlay, HDMI or line-out speaker in the same room
-    /// hears it too (sixth night review, 2026-10-23: such a speaker counted as safe). Any other
-    /// input — a headset's microphone, an interface's inputs — is the musician's own setup.
+    /// A monitored input can be heard here without feeding back into itself, and soon enough to
+    /// play to: only through wired headphones, an interface or a line output — never the device's
+    /// own speaker or earpiece, nor a Bluetooth, AirPlay, HDMI or car speaker, which may stand in
+    /// the same room and plays 150 ms to 2 s late — and the device's own microphone only through
+    /// wired headphones or an interface (sixth night review, 2026-10-23: a room speaker counted as
+    /// safe for it). Seventh night review: a headset's or an interface's microphone went into an
+    /// AirPlay speaker once the record session kept that route (`.allowAirPlay`), an echo loop
+    /// two seconds long. The port types iOS reports decide, so a headphone adapter into a PA
+    /// counts as headphones — a device question, not one this code can answer.
     private var monitoringCannotHowl: Bool {
         let route = AVAudioSession.sharedInstance().currentRoute
-        let outputs = route.outputs
-        guard !outputs.isEmpty,
-              !outputs.contains(where: { $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver }) else {
-            return false
-        }
         let ownMicrophone = route.inputs.isEmpty || route.inputs.contains { $0.portType == .builtInMic }
-        return !ownMicrophone || outputs.allSatisfy { $0.portType == .headphones || $0.portType == .usbAudio }
+        let close: Set<AVAudioSession.Port> = ownMicrophone
+            ? [.headphones, .usbAudio]
+            : [.headphones, .usbAudio, .lineOut]
+        return !route.outputs.isEmpty && route.outputs.allSatisfy { close.contains($0.portType) }
     }
 
     /// Which input each audio track plays through its strip right now — only where it cannot howl

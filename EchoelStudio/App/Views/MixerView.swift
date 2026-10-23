@@ -250,8 +250,8 @@ struct InputMenu: View {
 
     static func title(_ mode: MonitorMode) -> String {
         switch mode {
-        case .auto: "Auto (while armed, in headphones or an interface)"
-        case .input: "Always (in headphones or an interface)"
+        case .auto: "Auto (while armed, in wired headphones or an interface)"
+        case .input: "Always (in wired headphones or an interface)"
         case .off: "Off (the interface monitors)"
         }
     }

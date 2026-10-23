@@ -122,8 +122,9 @@ public struct Project: Codable, Equatable, Sendable {
 
 /// When an audio track plays its input through its own channel strip.
 public enum MonitorMode: String, Codable, Sendable, CaseIterable {
-    /// While the track is armed — and only where it cannot howl: the device's own microphone is
-    /// heard in headphones or through an interface, never on a speaker in the room.
+    /// While the track is armed — and only where it cannot howl: through wired headphones, an
+    /// interface or a line output, never the device's own speaker, Bluetooth, AirPlay or HDMI, and
+    /// the device's own microphone only through wired headphones or an interface.
     case auto
     /// Always, armed or not — under the same rule as `auto`.
     case input = "in"
