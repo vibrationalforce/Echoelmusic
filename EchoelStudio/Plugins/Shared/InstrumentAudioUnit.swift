@@ -27,6 +27,11 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
         let name: String
     }
     private(set) var sample: LoadedSample?
+    /// A sample the host's session holds that the free memory could not load at the restore: its
+    /// bytes are kept as they came, so the next save hands the session back what it gave. Without
+    /// them, a moment of low memory in the extension erased the sample from the host's song
+    /// (seventh night review, 2026-10-23). Any sample installed replaces it.
+    private var unloadedSample: (frames: Data, rate: Double, name: String)?
     /// Told the new sample's name (nil: none) after every change — from the window, or from a
     /// host restoring its session or loading a preset — so an open window names what plays.
     private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
@@ -149,6 +154,7 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
 
     private func install(_ buffer: SampleBuffer?, name: String) {
         let loaded = buffer.map { LoadedSample(buffer: $0, name: name) }
+        unloadedSample = nil
         sample = loaded
         (render.kernel as? any SampleLoadingKernel)?.load(loaded?.buffer)
         let observer = sampleObserver.withLock { $0 }
@@ -169,6 +175,10 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 state[StateKey.frames] = sample.buffer.withFrames { Data(buffer: $0) }
                 state[StateKey.rate] = sample.buffer.sampleRate
                 state[StateKey.name] = sample.name
+            } else if acceptsSamples, let unloadedSample {
+                state[StateKey.frames] = unloadedSample.frames
+                state[StateKey.rate] = unloadedSample.rate
+                state[StateKey.name] = unloadedSample.name
             }
             return state
         }
@@ -184,10 +194,18 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
             // Copied from the session straight into the sample's own memory: held once beside the
             // host's data, never a third time as an array on the way.
             let count = data.count / MemoryLayout<Float>.size
-            let buffer = try? SampleBuffer(capacity: count, sampleRate: rate) { frames in
-                data.copyBytes(to: frames) / MemoryLayout<Float>.size
+            let name = newValue?[StateKey.name] as? String ?? "Sample"
+            do {
+                let buffer = try SampleBuffer(capacity: count, sampleRate: rate) { frames in
+                    data.copyBytes(to: frames) / MemoryLayout<Float>.size
+                }
+                install(buffer, name: name)
+            } catch {
+                // Only the memory refuses here: silent for now, and the session keeps its sample.
+                log.error("sample not loaded at restore: no free memory")
+                install(nil, name: "")
+                unloadedSample = (frames: data, rate: rate, name: name)
             }
-            install(buffer, name: newValue?[StateKey.name] as? String ?? "Sample")
         }
     }
 
