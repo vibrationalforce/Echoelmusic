@@ -21,6 +21,8 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     private let scheduleParameter: AUScheduleParameterBlock?
     /// What must outlive the blocks — the `AUAudioUnit` itself.
     private let owner: AnyObject?
+    /// What the unit's host blocks read, when they were set on it.
+    private let clock: HostClock?
     private let leftBuffer: UnsafeMutablePointer<Float>
     private let rightBuffer: UnsafeMutablePointer<Float>
     private let list: UnsafeMutableAudioBufferListPointer
@@ -31,8 +33,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     /// address; `scheduleParameter` moves them.
     public init(render: @escaping AURenderBlock, scheduleMIDI: AUScheduleMIDIEventBlock?, sampleRate: Double,
                 maximumFrames: Int, owner: AnyObject?, scheduleParameter: AUScheduleParameterBlock? = nil,
-                parameterRanges: [UInt64: ClosedRange<Float>] = [:]) {
+                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil) {
         renderBlock = render
+        self.clock = clock
         self.scheduleMIDI = scheduleMIDI
         self.scheduleParameter = scheduleParameter
         self.parameterRanges = parameterRanges
@@ -53,6 +56,10 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     }
 
     // MARK: - Render thread
+
+    public func follow(_ transport: HostTransport) {
+        clock?.update(transport)
+    }
 
     /// A note-on `offset` frames into the next `render` call, on MIDI channel 1.
     public func noteOn(pitch: UInt8, velocity: UInt8, offset: Int) {

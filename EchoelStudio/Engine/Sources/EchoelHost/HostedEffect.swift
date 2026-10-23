@@ -22,6 +22,8 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private let renderBlock: AURenderBlock
     private let scheduleParameter: AUScheduleParameterBlock?
     private let owner: AnyObject?
+    /// What the unit's host blocks read, when they were set on it.
+    private let clock: HostClock?
     private let outLeft: UnsafeMutablePointer<Float>
     private let outRight: UnsafeMutablePointer<Float>
     private let list: UnsafeMutableAudioBufferListPointer
@@ -33,8 +35,9 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
 
     public init(render: @escaping AURenderBlock, sampleRate: Double, maximumFrames: Int, isBypassed: Bool = false,
                 owner: AnyObject?, insert: InsertID? = nil, scheduleParameter: AUScheduleParameterBlock? = nil,
-                parameterRanges: [UInt64: ClosedRange<Float>] = [:]) {
+                parameterRanges: [UInt64: ClosedRange<Float>] = [:], clock: HostClock? = nil) {
         renderBlock = render
+        self.clock = clock
         self.insert = insert
         self.scheduleParameter = scheduleParameter
         self.parameterRanges = parameterRanges
@@ -75,6 +78,10 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
             }
         }
         return noErr
+    }
+
+    public func follow(_ transport: HostTransport) {
+        clock?.update(transport)
     }
 
     public func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {

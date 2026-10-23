@@ -528,6 +528,8 @@ public final class EngineCore: @unchecked Sendable {
         let clocking = clockFlag.load(ordering: .relaxed)
         if clocking { sendTransport(playing: playing, sought: seek >= 0) }
         let stopping = wasPlaying && !playing
+        // What a hosted unit learns as "the transport changed": a start, a stop or a jump.
+        let transportMoved = stopping || (playing && !wasPlaying) || seek >= 0
         if stopping { releaseAllNotes() }
         if !wasPlaying, playing {
             // Paused, nothing was heard: the start fades nothing out (A10 review, E).
@@ -549,6 +551,7 @@ public final class EngineCore: @unchecked Sendable {
             let held = stoppedAt ?? current?.snapshot.time.position(atSample: playhead) ?? 0
             mixFrom = held
             mixTo = held
+            if let snapshot = current?.snapshot { follow(snapshot, playing: false, changed: transportMoved) }
             renderVoices(0..<frames)
             renderUnits(frames: frames)
             mixLanes(frames: frames)
@@ -567,6 +570,7 @@ public final class EngineCore: @unchecked Sendable {
         let beatTicks = MusicalTime.ticksPerBeat(snapshot.timeSignature)
         let barTicks = MusicalTime.ticksPerBar(snapshot.timeSignature)
         var rendered = 0
+        follow(snapshot, playing: true, changed: transportMoved)
 
         while true {
             // The earliest due event: a launch, a session note, an arrangement note, or the next
@@ -1109,6 +1113,40 @@ public final class EngineCore: @unchecked Sendable {
 
     /// Every hosted unit renders every block, playing or not, so its notes ring out and its own
     /// clock never skips.
+    /// Tells every hosted unit of the snapshot where the song is at this chunk's first sample,
+    /// before any of them renders it: a tempo-synced effect or an arpeggiator in an Audio Unit
+    /// otherwise runs at a tempo of its own and ignores Play and Stop (audit 2026-10-23). While
+    /// stopped it is where Play starts.
+    private func follow(_ snapshot: EngineSnapshot, playing: Bool, changed: Bool) {
+        let signature = snapshot.timeSignature
+        let quarter = Double(MusicalTime.ticksPerQuarter)
+        let beatTicks = Double(Swift.max(MusicalTime.ticksPerBeat(signature), 1))
+        let barTicks = Double(Swift.max(MusicalTime.ticksPerBar(signature), 1))
+        let raw = snapshot.time.position(atSample: playhead)
+        let position = raw.isFinite ? Swift.min(Swift.max(raw, 0), Double(MusicalTime.maximumTick)) : 0
+        var toNextBeat = 0
+        if playing {
+            let next = Tick((position / beatTicks).rounded(.up) * beatTicks)
+            toNextBeat = Int(Swift.max(0, snapshot.time.sample(at: next) - playhead))
+        }
+        let transport = HostTransport(isPlaying: playing, changed: changed, tempo: snapshot.time.tempoMap.bpm(at: Tick(position)),
+                                      numerator: signature.numerator, denominator: signature.denominator,
+                                      beat: position / quarter,
+                                      downbeat: (position / barTicks).rounded(.down) * barTicks / quarter,
+                                      samplesToNextBeat: toNextBeat, sample: Double(playhead))
+        for lane in snapshot.lanes {
+            lane.unit?.follow(transport)
+            for effect in lane.inserts { effect.follow(transport) }
+        }
+        for lane in snapshot.audioLanes {
+            for effect in lane.inserts { effect.follow(transport) }
+        }
+        for lane in snapshot.returns {
+            for effect in lane.inserts { effect.follow(transport) }
+        }
+        for effect in snapshot.masterEffects { effect.follow(transport) }
+    }
+
     private func renderUnits(frames: Int) {
         guard let snapshot = current?.snapshot else { return }
         for lane in snapshot.lanes {

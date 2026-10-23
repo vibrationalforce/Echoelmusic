@@ -11,6 +11,38 @@ public protocol ParameterScheduling: AnyObject, Sendable {
     func schedule(address: UInt64, value: Float, offset: Int, ramp: Int)
 }
 
+/// Where the song is at the first sample of a render call, as a hosted Audio Unit asks its host
+/// for it: a tempo-synced delay, an LFO, an arpeggiator or a step sequencer follows it. Beats are
+/// quarter notes from the song's start, as Audio Units count them.
+public struct HostTransport: Equatable, Sendable {
+    public var isPlaying: Bool
+    /// The transport started, stopped or jumped since the render call before.
+    public var changed: Bool
+    public var tempo: Double
+    public var numerator: Int
+    public var denominator: Int
+    public var beat: Double
+    /// The beat on which the bar holding `beat` starts.
+    public var downbeat: Double
+    /// Frames from this call's first sample to the next beat of the time signature; 0 while stopped.
+    public var samplesToNextBeat: Int
+    /// The song position in samples.
+    public var sample: Double
+
+    public init(isPlaying: Bool, changed: Bool, tempo: Double, numerator: Int, denominator: Int, beat: Double,
+                downbeat: Double, samplesToNextBeat: Int, sample: Double) {
+        self.isPlaying = isPlaying
+        self.changed = changed
+        self.tempo = tempo
+        self.numerator = numerator
+        self.denominator = denominator
+        self.beat = beat
+        self.downbeat = downbeat
+        self.samplesToNextBeat = samplesToNextBeat
+        self.sample = sample
+    }
+}
+
 /// An instrument the engine plays from inside its own render pass — a hosted Audio Unit. The
 /// engine names only this protocol, never the class that wraps the unit, so it needs no
 /// AudioToolbox.
@@ -29,6 +61,8 @@ public protocol HostedInstrument: ParameterScheduling {
     /// launched or stopped inside a block, so a note played just before it in the same block ends
     /// too (audit 2026-10-23).
     func allNotesOff(offset: Int)
+    /// Where the song is for the next `render` call. Render thread, must not allocate.
+    func follow(_ transport: HostTransport)
     /// Renders `frames` and adds them into `left` and `right` at the lane's gains.
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                 gainLeft: Float, gainRight: Float)
@@ -45,6 +79,17 @@ public protocol HostedProcessor: ParameterScheduling {
     var isBypassed: Bool { get }
     /// The insert this effect plays, so the song's automation of it finds it.
     var insert: InsertID? { get }
+    /// Where the song is for the next `process` call. Render thread, must not allocate.
+    func follow(_ transport: HostTransport)
     /// Replaces `frames` of the bus with the effect's output.
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>)
+}
+
+/// Units that keep no time of their own — the built-in kernels, a test's stand-in — ignore it.
+extension HostedInstrument {
+    public func follow(_ transport: HostTransport) {}
+}
+
+extension HostedProcessor {
+    public func follow(_ transport: HostTransport) {}
 }

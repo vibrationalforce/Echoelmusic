@@ -30,6 +30,11 @@ private final class FakeInstrument: @unchecked Sendable {
     }
 }
 
+/// What a unit under test read through its host blocks, one entry per render call.
+private final class ClockReadings: @unchecked Sendable {
+    var readings: [(tempo: Double, numerator: Double, denominator: Int, beat: Double, moving: Bool, changed: Bool)] = []
+}
+
 final class HostedUnitTests: XCTestCase {
     private let rate = 48_000.0
 
@@ -100,6 +105,37 @@ final class HostedUnitTests: XCTestCase {
         let muted = render(playing(project, track: track, unit: FakeInstrument(level: 0.5).makeUnit(sampleRate: rate)),
                            frames: 4_800, block: 256)
         XCTAssertTrue(muted.allSatisfy { $0 == 0 })
+    }
+
+    /// What a unit reads through its host blocks from inside its own render: the song's tempo and
+    /// beat, and whether it moves — "changed" once, at the start (audit 2026-10-23).
+    func testAUnitReadsTheTempoBeatAndTransportFromInsideItsRender() throws {
+        var (project, track) = try pluginSong()
+        try Command.setTempo(bpm: 95).apply(to: &project)
+        let clock = HostClock()
+        let seen = ClockReadings()
+        let unit = HostedUnit(render: { _, _, _, _, _, _ in
+            var tempo = 0.0, numerator = 0.0, beat = 0.0, downbeat = 0.0
+            var denominator = 0, toNextBeat = 0
+            _ = clock.musicalContextBlock(&tempo, &numerator, &denominator, &beat, &toNextBeat, &downbeat)
+            var flags = AUHostTransportStateFlags()
+            var sample = 0.0
+            _ = clock.transportStateBlock(&flags, &sample, nil, nil)
+            seen.readings.append((tempo: tempo, numerator: numerator, denominator: denominator, beat: beat,
+                                  moving: flags.contains(.moving), changed: flags.contains(.changed)))
+            return noErr
+        }, scheduleMIDI: nil, sampleRate: rate, maximumFrames: 4_096, owner: nil, clock: clock)
+        let engine = playing(project, track: track, unit: unit)
+        _ = render(engine, frames: 48_256, block: 256)
+
+        let first = try XCTUnwrap(seen.readings.first), last = try XCTUnwrap(seen.readings.last)
+        XCTAssertEqual(first.tempo, 95)
+        XCTAssertEqual(first.numerator, 4)
+        XCTAssertEqual(first.denominator, 4)
+        XCTAssertTrue(first.moving)
+        XCTAssertTrue(first.changed, "the start is reported once")
+        XCTAssertFalse(seen.readings.dropFirst().contains { $0.changed }, "and not again while it only runs on")
+        XCTAssertEqual(last.beat, 95.0 / 60, accuracy: 1e-6, "a second in at 95 BPM")
     }
 
     func testAUnitPreparedForAnotherRateIsNotPlayed() throws {

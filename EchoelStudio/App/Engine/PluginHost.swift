@@ -331,9 +331,10 @@ final class PluginHost {
             return
         }
         let isEffect = slot.isInsert
+        let clock = HostClock()
         do {
             log.info("plugin: allocate \(request.component.name, privacy: .public)")
-            try Self.prepare(unit, isEffect: isEffect, sampleRate: request.sampleRate, state: state)
+            try Self.prepare(unit, isEffect: isEffect, sampleRate: request.sampleRate, state: state, clock: clock)
         } catch {
             fail(slot, request.component, reason: "\(request.component.name) cannot play in stereo at this rate.",
                  detail: error.localizedDescription)
@@ -341,8 +342,8 @@ final class PluginHost {
         }
         let rate = request.sampleRate
         loaded[slot] = Loaded(component: request.component, sampleRate: rate, unit: unit,
-                              instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate),
-                              effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate) },
+                              instrument: isEffect ? nil : Self.instrument(unit, sampleRate: rate, clock: clock),
+                              effect: slot.insertID.map { Self.effect(unit, insert: $0, sampleRate: rate, clock: clock) },
                               observer: observe(unit, slot: slot), number: number)
         syncedState[slot] = state
         problems[slot] = nil
@@ -441,8 +442,10 @@ final class PluginHost {
     }
 
     /// Stereo at `sampleRate` (input too, for an effect), the engine's largest block, the saved
-    /// settings, then render resources.
-    private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?) throws {
+    /// settings, the song's tempo and transport through `clock`, then render resources — most
+    /// units read the host blocks only when they allocate (audit 2026-10-23).
+    private static func prepare(_ unit: AUAudioUnit, isEffect: Bool, sampleRate: Double, state: Data?,
+                                clock: HostClock) throws {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
               unit.outputBusses.count > 0 else {
             throw HostError.noOutput
@@ -454,18 +457,21 @@ final class PluginHost {
         }
         unit.maximumFramesToRender = AUAudioFrameCount(EngineCore.maximumFrames)
         if let state { apply(state, to: unit) }
+        unit.musicalContextBlock = clock.musicalContextBlock
+        unit.transportStateBlock = clock.transportStateBlock
         try unit.allocateRenderResources()
     }
 
-    private static func instrument(_ unit: AUAudioUnit, sampleRate: Double) -> HostedUnit {
+    private static func instrument(_ unit: AUAudioUnit, sampleRate: Double, clock: HostClock) -> HostedUnit {
         HostedUnit(render: unit.renderBlock, scheduleMIDI: unit.scheduleMIDIEventBlock, sampleRate: sampleRate,
                    maximumFrames: EngineCore.maximumFrames, owner: unit,
-                   scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit))
+                   scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit), clock: clock)
     }
 
-    private static func effect(_ unit: AUAudioUnit, insert: InsertID, sampleRate: Double) -> HostedEffect {
+    private static func effect(_ unit: AUAudioUnit, insert: InsertID, sampleRate: Double, clock: HostClock) -> HostedEffect {
         HostedEffect(render: unit.renderBlock, sampleRate: sampleRate, maximumFrames: EngineCore.maximumFrames, owner: unit,
-                     insert: insert, scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit))
+                     insert: insert, scheduleParameter: unit.scheduleParameterBlock, parameterRanges: automatable(unit),
+                     clock: clock)
     }
 
     /// The parameters automation may move: writable, with a real range. Read after the saved
@@ -507,17 +513,17 @@ final class PluginHost {
         var missing: [String] = []
         for track in project.tracks {
             if track.kind == .instrument, track.instrument.device == .plugin, let plugin = track.instrument.plugin {
-                if let unit = await Self.instantiate(plugin, isEffect: false, sampleRate: sampleRate,
+                if let made = await Self.instantiate(plugin, isEffect: false, sampleRate: sampleRate,
                                                      state: track.instrument.pluginState) {
-                    units[track.id] = Self.instrument(unit, sampleRate: sampleRate)
+                    units[track.id] = Self.instrument(made.unit, sampleRate: sampleRate, clock: made.clock)
                 } else {
                     missing.append(plugin.name)
                 }
             }
             var chain: [HostedEffect] = []
             for insert in track.inserts where !insert.isBypassed {
-                if let unit = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
-                    chain.append(Self.effect(unit, insert: insert.id, sampleRate: sampleRate))
+                if let made = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
+                    chain.append(Self.effect(made.unit, insert: insert.id, sampleRate: sampleRate, clock: made.clock))
                 } else {
                     missing.append(insert.plugin.name)
                 }
@@ -526,8 +532,8 @@ final class PluginHost {
         }
         var masterChain: [HostedEffect] = []
         for insert in project.masterInserts where !insert.isBypassed {
-            if let unit = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
-                masterChain.append(Self.effect(unit, insert: insert.id, sampleRate: sampleRate))
+            if let made = await Self.instantiate(insert.plugin, isEffect: true, sampleRate: sampleRate, state: insert.state) {
+                masterChain.append(Self.effect(made.unit, insert: insert.id, sampleRate: sampleRate, clock: made.clock))
             } else {
                 missing.append(insert.plugin.name)
             }
@@ -536,7 +542,7 @@ final class PluginHost {
     }
 
     private static func instantiate(_ component: PluginComponent, isEffect: Bool, sampleRate: Double,
-                                    state: Data?) async -> AUAudioUnit? {
+                                    state: Data?) async -> (unit: AUAudioUnit, clock: HostClock)? {
         let description = AudioComponentDescription(componentType: component.type, componentSubType: component.subtype,
                                                     componentManufacturer: component.manufacturer, componentFlags: 0,
                                                     componentFlagsMask: 0)
@@ -546,12 +552,13 @@ final class PluginHost {
             }
         }
         guard let unit = box.unit else { return nil }
+        let clock = HostClock()
         do {
-            try prepare(unit, isEffect: isEffect, sampleRate: sampleRate, state: state)
+            try prepare(unit, isEffect: isEffect, sampleRate: sampleRate, state: state, clock: clock)
         } catch {
             return nil
         }
-        return unit
+        return (unit: unit, clock: clock)
     }
 
     private static func apply(_ state: Data, to unit: AUAudioUnit) {

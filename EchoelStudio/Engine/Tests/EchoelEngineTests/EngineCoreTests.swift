@@ -25,6 +25,21 @@ private final class Silencer: HostedProcessor, @unchecked Sendable {
     }
 }
 
+/// A master insert that only keeps what the host told it last.
+private final class TransportRecorder: HostedProcessor, @unchecked Sendable {
+    let sampleRate: Double
+    let isBypassed = false
+    let insert: InsertID? = nil
+    let parameterRanges: [UInt64: ClosedRange<Float>] = [:]
+    private(set) var last: HostTransport?
+
+    init(sampleRate: Double) { self.sampleRate = sampleRate }
+
+    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+    func follow(_ transport: HostTransport) { last = transport }
+    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {}
+}
+
 final class EngineCoreTests: XCTestCase {
     private let rate = 48_000.0
     private let bar = MusicalTime.ticksPerBar(.common)
@@ -385,6 +400,50 @@ final class EngineCoreTests: XCTestCase {
         let out = render(engine, frames: 4_800).left
         XCTAssertNotNil(firstSound(out), "the downbeat's click is heard")
         XCTAssertEqual(silencer.heardPeak, 0, "and never went through the master insert")
+    }
+
+    /// A hosted Audio Unit asks its host for the tempo, the beat and the transport — a synced
+    /// delay or an arpeggiator follows them. Before each render call it is told where the song is
+    /// at that call's first sample (audit 2026-10-23).
+    func testAHostedUnitIsToldTheTempoTheBeatAndThePlayState() throws {
+        let s = try song([[]], tempo: 95)
+        let recorder = TransportRecorder(sampleRate: rate)
+        let engine = core()
+        var slots = SlotAssigner(capacity: engine.slotCapacity)
+        slots.update(for: s.project)
+        engine.publish(EngineSnapshot(plan: PlaybackPlan(compiling: s.project), project: s.project, slots: slots.slots,
+                                      sampleRate: rate, generation: 1, masterEffects: [recorder]))
+        _ = render(engine, frames: 256)
+        let stopped = try XCTUnwrap(recorder.last)
+        XCTAssertFalse(stopped.isPlaying)
+        XCTAssertEqual(stopped.tempo, 95)
+        XCTAssertEqual(stopped.beat, 0)
+
+        engine.play()
+        _ = render(engine, frames: 256)
+        XCTAssertEqual(recorder.last?.changed, true, "the start is news")
+        _ = render(engine, frames: 47_744)
+        XCTAssertEqual(recorder.last?.changed, false, "a block that only runs on is not")
+
+        let start = engine.positionSample
+        _ = render(engine, frames: 256)
+        let time = TimeConversion(tempoMap: s.project.tempoMap, sampleRate: rate)
+        let playing = try XCTUnwrap(recorder.last)
+        XCTAssertTrue(playing.isPlaying)
+        XCTAssertEqual(playing.tempo, 95)
+        XCTAssertEqual(playing.numerator, 4)
+        XCTAssertEqual(playing.denominator, 4)
+        XCTAssertEqual(playing.sample, Double(start))
+        XCTAssertEqual(playing.beat, time.position(atSample: start) / Double(MusicalTime.ticksPerQuarter), accuracy: 1e-9)
+        XCTAssertGreaterThan(playing.beat, 1, "a second at 95 BPM is past the second beat")
+        XCTAssertEqual(playing.downbeat, 0, "still in the first bar")
+        let nextBeat = Tick(playing.beat.rounded(.up)) * MusicalTime.ticksPerQuarter
+        XCTAssertEqual(Int64(playing.samplesToNextBeat), time.sample(at: nextBeat) - start)
+
+        engine.pause()
+        _ = render(engine, frames: 256)
+        XCTAssertEqual(recorder.last?.isPlaying, false)
+        XCTAssertEqual(recorder.last?.changed, true, "the stop is news too")
     }
 
     func testEditingWhilePlayingKeepsTimeAndNeverHangsANote() throws {
