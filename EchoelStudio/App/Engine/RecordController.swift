@@ -30,7 +30,10 @@ final class RecordController {
         // a new core replaces that one as soon as this returns.
         engine.onPausedFromOutside = { [weak self] in
             self?.endMIDITake()
-            Task { await self?.stopRecording() }
+            Task {
+                await self?.stopRecording()
+                await self?.inputOpensAfterOutsidePause()
+            }
         }
         // The input fell away under an audio take: the take cannot carry on, so it ends with what
         // it has. A MIDI take needs no input and goes on.
@@ -199,6 +202,17 @@ final class RecordController {
     /// that monitors always opened deaf (audit 2026-10-23). Run on every song change. Never while
     /// playing: opening or closing reconfigures the session and stops the song, so it waits for
     /// Stop. It opens only for an opened song, never on an ordinary edit (`setMonitor`).
+    /// A pause from outside — a followed clock's Stop, a call, lost headphones, a rate change — is a
+    /// stop too: a song that monitors always and was opened while playing opens its input here, as
+    /// it does at the transport's Stop (second night review, 2026-10-23: only the on-screen Stop
+    /// did). It only ever opens, never closes: the same callback runs while an arm opens the input,
+    /// before the arm is recorded.
+    private func inputOpensAfterOutsidePause() async {
+        guard !engine.isPlaying, !isRecording, monitorsAlways, store.documentGeneration != seenGeneration else { return }
+        seenGeneration = store.documentGeneration
+        if !engine.isInputOpen { _ = await engine.openInput() }
+    }
+
     func inputFollowsSong() async {
         guard !engine.isPlaying, !isRecording else { return }
         // Read only past the wait: a song opened while playing is still news at Stop, or a song
