@@ -32,6 +32,12 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
     /// them, a moment of low memory in the extension erased the sample from the host's song
     /// (seventh night review, 2026-10-23). Any sample installed replaces it.
     private var unloadedSample: (frames: Data, rate: Double, name: String)?
+    /// What the window names: the sample that plays, or one the session holds that the free memory
+    /// could not load, said as such — shown as no sample, it could not be cleared while every save
+    /// kept it (eighth night review, 2026-10-23).
+    var sampleTitle: String? {
+        sample?.name ?? unloadedSample.map { "\($0.name) (not loaded: not enough free memory)" }
+    }
     /// Told the new sample's name (nil: none) after every change — from the window, or from a
     /// host restoring its session or loading a preset — so an open window names what plays.
     private let sampleObserver = Mutex<(@Sendable (String?) -> Void)?>(nil)
@@ -205,6 +211,8 @@ final class InstrumentAudioUnit: AUAudioUnit, EchoelPluginUnit {
                 log.error("sample not loaded at restore: no free memory")
                 install(nil, name: "")
                 unloadedSample = (frames: data, rate: rate, name: name)
+                let observer = sampleObserver.withLock { $0 }
+                observer?(sampleTitle)
             }
         }
     }
