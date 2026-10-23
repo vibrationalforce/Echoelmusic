@@ -1468,8 +1468,8 @@ final class DocumentController {
                     } catch {
                         continue
                     }
-                    // What the buffer holds, which a file shorter than its header can make more
-                    // than what it plays (fourth night review, 2026-10-23).
+                    // What the buffer holds — what it plays, unless its block could not shrink
+                    // (fourth and fifth night reviews, 2026-10-23).
                     used += buffer.heldFrames * Project.decodedBytesPerFrame
                     decoded[file.id] = buffer
                 }

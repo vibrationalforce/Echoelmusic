@@ -44,7 +44,7 @@ final class SamplerTests: XCTestCase {
             return 3
         })
         XCTAssertEqual(buffer.frameCount, 3, "the frames it wrote, not the room it had")
-        XCTAssertEqual(buffer.heldFrames, 4, "three of four stay in their block, and the block is counted")
+        XCTAssertEqual(buffer.heldFrames, 3, "the unwritten frame is given back: it holds what it plays")
         XCTAssertEqual(buffer.copyFrames(), [0.25, 0, -0.5], "a non-finite frame is silence")
         let inPlace: [Float] = buffer.withFrames { (frames: UnsafeBufferPointer<Float>) -> [Float] in Array(frames) }
         XCTAssertEqual(inPlace, [0.25, 0, -0.5], "read in place, the same frames")
@@ -77,19 +77,20 @@ final class SamplerTests: XCTestCase {
         #endif
     }
 
-    /// A file one frame short keeps its block: copying it out would hold the file twice for a
-    /// moment, which is what the memory plan is there to prevent. The block is what it counts.
-    func testAFillShortByAFrameKeepsItsBlockAndCountsIt() throws {
+    /// A file one frame short shrinks its block where it is: no copy holds it twice for a moment,
+    /// and what it holds is what it plays, so the memory plan and the open count agree.
+    func testAFillShortByAFrameHoldsWhatItPlays() throws {
         let capacity = 1_600
         let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
             for index in 0..<(capacity - 1) { frames[index] = Float(index) / Float(capacity) }
             return capacity - 1
         })
         XCTAssertEqual(buffer.frameCount, capacity - 1, "it plays what it wrote")
-        XCTAssertEqual(buffer.heldFrames, capacity, "and holds, and is counted for, its whole block")
+        XCTAssertEqual(buffer.heldFrames, capacity - 1, "and holds, and is counted for, what it plays")
         let kept: [Float] = buffer.copyFrames()
         XCTAssertEqual(kept.count, capacity - 1)
-        XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity))
+        XCTAssertEqual(kept.first, 0)
+        XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity), "the frames survive the shrink")
     }
 
     func testWithoutASampleNothingSounds() {

@@ -4,14 +4,14 @@ import Foundation
 /// the key it sounds at unshifted. Built off the render thread; the frames are written once in
 /// `init` and never again, so the render thread reads them without a lock.
 ///
-/// The frames live in manual memory, not a Swift array, so reading them never retains or
-/// copies anything. The owner must keep the buffer alive while any `Sampler` plays it, and
-/// must release it off the render thread (the engine does both, as it does for snapshots).
+/// The frames live in manual memory (`malloc`, so a short fill can shrink its block where it is),
+/// not a Swift array, so reading them never retains or copies anything. The owner must keep the
+/// buffer alive while any `Sampler` plays it, and must release it off the render thread (the
+/// engine does both, as it does for snapshots).
 public final class SampleBuffer: @unchecked Sendable {
     public let frameCount: Int
-    /// The frames the buffer holds in memory: `frameCount`, or the whole room a fill was given when
-    /// it came back short and moving its frames out would have cost more than it gives back. A
-    /// memory plan counts this, not `frameCount`.
+    /// The frames the buffer holds in memory: `frameCount` — unless the allocator refused to
+    /// shrink a short fill's block, then the whole room it was given. A memory plan counts this.
     public let heldFrames: Int
     public let sampleRate: Double
     /// The MIDI note that plays the sample at its original speed.
@@ -21,12 +21,13 @@ public final class SampleBuffer: @unchecked Sendable {
     /// Copies `samples`; non-finite values become silence. Nil for an empty sample or a
     /// sample rate that is not a positive number.
     public init?(samples: [Float], sampleRate: Double, rootPitch: UInt8 = 60) {
-        guard !samples.isEmpty, sampleRate.isFinite, sampleRate > 0 else { return nil }
+        guard !samples.isEmpty, sampleRate.isFinite, sampleRate > 0,
+              let storage = Self.allocate(samples.count) else { return nil }
         frameCount = samples.count
         heldFrames = samples.count
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
-        frames = .allocate(capacity: samples.count)
+        frames = storage
         for (i, s) in samples.enumerated() { (frames + i).initialize(to: s.isFinite ? s : 0) }
     }
 
@@ -34,40 +35,43 @@ public final class SampleBuffer: @unchecked Sendable {
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds), the room it left is given back only when
-    /// what it wrote is at most a sixteenth of it: moving the frames into a block of their own size
-    /// holds both blocks for a moment, so it may cost no more than that over the room the memory
-    /// plan let in. Otherwise the block stays and `heldFrames` says how large it is — the plan
-    /// counts that (third and fourth night reviews, 2026-10-23: first the unwritten room went
-    /// uncounted, then a file one frame short was copied whole beside its first block). Nil when
-    /// `fill` writes no frame or the rate is not a positive number; an error from `fill` is thrown on.
+    /// (a file whose header promised more than it holds), `realloc` shrinks the block to what it
+    /// wrote — a large block gives its tail back where it is, at most a small remainder is moved —
+    /// so the buffer holds, and a memory plan counts, what plays (third, fourth and fifth night reviews, 2026-10-23:
+    /// first the unwritten room went uncounted, then a copy held a file twice for a moment, then a
+    /// block kept to avoid the copy was counted by one plan and not the other). Nil when `fill`
+    /// writes no frame, the rate is not a positive number or the memory is not there; an error
+    /// from `fill` is thrown on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
-        guard capacity > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
-        let storage = UnsafeMutablePointer<Float>.allocate(capacity: capacity)
+        guard capacity > 0, sampleRate.isFinite, sampleRate > 0,
+              let storage = Self.allocate(capacity) else { return nil }
         storage.initialize(repeating: 0, count: capacity)
         let written: Int
         do {
             written = Swift.min(capacity, Swift.max(0, try fill(UnsafeMutableBufferPointer(start: storage, count: capacity))))
         } catch {
             storage.deinitialize(count: capacity)
-            storage.deallocate()
+            free(storage)
             throw error
         }
         guard written > 0 else {
             storage.deinitialize(count: capacity)
-            storage.deallocate()
+            free(storage)
             return nil
         }
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
         var kept = storage
         var held = capacity
-        if written <= capacity / Self.compactingShare {
-            kept = .allocate(capacity: written)
-            kept.moveInitialize(from: storage, count: written)
+        if written < capacity {
             (storage + written).deinitialize(count: capacity - written)
-            storage.deallocate()
-            held = written
+            if let shrunk = realloc(storage, written * MemoryLayout<Float>.stride) {
+                kept = shrunk.bindMemory(to: Float.self, capacity: written)
+                held = written
+            } else {
+                // Refused: the block stays as it was, and is counted.
+                (storage + written).initialize(repeating: 0, count: capacity - written)
+            }
         }
         frameCount = written
         heldFrames = held
@@ -87,12 +91,17 @@ public final class SampleBuffer: @unchecked Sendable {
         try body(UnsafeBufferPointer(start: frames, count: frameCount))
     }
 
-    /// A short fill gives its room back when it wrote at most this share of it (one in sixteen).
-    private static let compactingShare = 16
+    /// `count` frames from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
+    /// size overflows or the memory is not there.
+    private static func allocate(_ count: Int) -> UnsafeMutablePointer<Float>? {
+        let (bytes, overflow) = count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride)
+        guard !overflow, let raw = malloc(bytes) else { return nil }
+        return raw.bindMemory(to: Float.self, capacity: count)
+    }
 
     deinit {
         frames.deinitialize(count: heldFrames)
-        frames.deallocate()
+        free(frames)
     }
 }
 
