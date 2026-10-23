@@ -130,7 +130,8 @@ final class AudioEngine {
     /// safe for it). Seventh night review: a headset's or an interface's microphone went into an
     /// AirPlay speaker once the record session kept that route (`.allowAirPlay`), an echo loop
     /// two seconds long. The port types iOS reports decide, so a headphone adapter into a PA
-    /// counts as headphones — a device question, not one this code can answer.
+    /// counts as headphones, and a USB speaker or a USB DAC into monitors as an interface — a
+    /// device question, not one this code can answer (eighth night review; FOUNDER_INBOX SM4).
     private var monitoringCannotHowl: Bool {
         let route = AVAudioSession.sharedInstance().currentRoute
         let ownMicrophone = route.inputs.isEmpty || route.inputs.contains { $0.portType == .builtInMic }
