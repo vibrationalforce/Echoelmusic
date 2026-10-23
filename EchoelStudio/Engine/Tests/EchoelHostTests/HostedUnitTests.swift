@@ -126,7 +126,8 @@ final class HostedUnitTests: XCTestCase {
             return noErr
         }, scheduleMIDI: nil, sampleRate: rate, maximumFrames: 4_096, owner: nil, clock: clock)
         let engine = playing(project, track: track, unit: unit)
-        _ = render(engine, frames: 48_256, block: 256)
+        // 201 blocks of 240 frames: the last one starts at sample 48,000, one second in.
+        _ = render(engine, frames: 48_240, block: 240)
 
         let first = try XCTUnwrap(seen.readings.first), last = try XCTUnwrap(seen.readings.last)
         XCTAssertEqual(first.tempo, 95)
