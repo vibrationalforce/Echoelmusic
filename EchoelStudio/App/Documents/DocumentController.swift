@@ -104,6 +104,10 @@ final class DocumentController {
     /// The identity the open song's package had before its name was taken, so the package is
     /// recognised if it comes back into the library while the song waits at a free name.
     @ObservationIgnored private var formerIdentity: ProjectLibrary.PackageIdentity?
+    /// The free-name folder a take or an import of the open song wrote into before its own package
+    /// came back: its audio moves into the package once nothing reads or writes there
+    /// (`gatherLeftBehind`), or the song would miss it at the next open (fifth night review).
+    @ObservationIgnored private var leftBehind: URL?
     /// The open song was sent to a free name and is not written there yet, so nothing at its path
     /// is its own but a folder a take or an import made: a song that arrived there meanwhile —
     /// received, brought back by the earlier-songs import, renamed to that name in Files — is
@@ -722,18 +726,22 @@ final class DocumentController {
     @discardableResult
     private func followMovedPackage() -> String? {
         guard !isUnwritten, let url = currentURL else { return nil }
+        if leftBehind != nil, !packageIsBusy { gatherLeftBehind() }
         let name = url.deletingPathExtension().lastPathComponent
         if awaitsFirstWriteAtFreeName {
             // The song's own package back in the library, under whatever name — moved back in
             // Files: the song follows it and is written there with its audio again (fourth night
-            // review, 2026-10-23: it was split off as a new song without its media).
+            // review, 2026-10-23: it was split off as a new song without its media). What a take
+            // or an import wrote at the free name meanwhile goes along (fifth night review).
             if let formerIdentity, let back = library.package(formerIdentity) {
                 log.info("the open song's package came back into the library; it follows")
                 packageIdentity = formerIdentity
                 nameTakenFrom = nil
                 self.formerIdentity = nil
+                if starterMadeFolder, back != url { leftBehind = url }
                 starterMadeFolder = false
                 if back != url { packageMoved(from: url, to: back) }
+                if leftBehind != nil, !packageIsBusy { gatherLeftBehind() }
                 return nil
             }
             // No identity of its own there yet: a document at the free name is another song's, and
@@ -767,6 +775,52 @@ final class DocumentController {
             return name
         case .gone:
             return name
+        }
+    }
+
+    /// Moves the audio a take or an import wrote into `leftBehind` into the package the song writes
+    /// to now, and removes the folder once only its empty Media folder is left. A file that cannot
+    /// move stays there, and the line says where.
+    private func gatherLeftBehind() {
+        guard let folder = leftBehind else { return }
+        leftBehind = nil
+        guard let here = currentURL, folder != here else { return }
+        let fm = FileManager.default
+        // A document there is another song's that arrived since: nothing in it is touched.
+        guard !fm.fileExists(atPath: folder.appendingPathComponent(ProjectLibrary.documentName).path) else { return }
+        let media = folder.appendingPathComponent(MediaFile.directory)
+        let names = (try? fm.contentsOfDirectory(atPath: media.path)) ?? []
+        var stayed = 0
+        for name in names {
+            let target = here.appendingPathComponent(MediaFile.directory).appendingPathComponent(name)
+            if !bring(media.appendingPathComponent(name), to: target, into: here) { stayed += 1 }
+        }
+        if stayed > 0 {
+            let line = "\(stayed == 1 ? "An audio file" : "\(stayed) audio files") of this song stayed in the folder \(folder.deletingPathExtension().lastPathComponent) in the Files app."
+            lastError = lastError.map { "\($0) \(line)" } ?? line
+            return
+        }
+        let left = (try? fm.contentsOfDirectory(atPath: folder.path)) ?? []
+        if left.isEmpty || left == [MediaFile.directory] { try? fm.removeItem(at: folder) }
+    }
+
+    /// Moves the audio file at `source` to `target` in the package at `here`, unless it is there
+    /// already. True when it is at `target` now. A package folder this makes for a song not yet
+    /// written there is the song's own (`starterMadeFolder`).
+    private func bring(_ source: URL, to target: URL, into here: URL) -> Bool {
+        let fm = FileManager.default
+        if fm.fileExists(atPath: target.path) { return true }
+        guard source != target, fm.fileExists(atPath: source.path) else { return false }
+        let makes = !fm.fileExists(atPath: here.path)
+        do {
+            try fm.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if makes, isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }
+            try fm.moveItem(at: source, to: target)
+            return true
+        } catch {
+            let failure = error as NSError
+            log.error("media move failed — \(failure.domain, privacy: .public) \(failure.code, privacy: .public)")
+            return false
         }
     }
 
@@ -1118,6 +1172,7 @@ final class DocumentController {
         packageIdentity = nil
         nameTakenFrom = nil
         formerIdentity = nil
+        leftBehind = nil
         launchNote = nil
         earlierSongsNote = nil
         lastExportLoudness = nil
@@ -1268,11 +1323,12 @@ final class DocumentController {
         switch result {
         case .success(let imported):
             // Kept only when its copy is in the package the song writes to now. A package renamed
-            // in Files took the copy along; one deleted there, or whose name another song took, did
-            // not — the song would play it this session and miss it at the next open. A copy left
-            // at the old path is this import's alone, even inside another song's package (third
-            // night review, 2026-10-23).
-            guard let copy = imported.file.url(in: here), FileManager.default.fileExists(atPath: copy.path) else {
+            // in Files took the copy along; a copy left at the old path — the song sent to a free
+            // name, or back to its own package — is this import's alone, even inside another song's
+            // package, and moves to where the song writes now, or the song would play it this
+            // session and miss it at the next open (third and fifth night reviews, 2026-10-23).
+            guard let copy = imported.file.url(in: here), let left = imported.file.url(in: package),
+                  bring(left, to: copy, into: here) else {
                 if let stray = imported.file.url(in: package) { try? FileManager.default.removeItem(at: stray) }
                 lastError = "The song was moved or deleted in the Files app while the file was importing. Import it again."
                 return nil
@@ -1363,12 +1419,17 @@ final class DocumentController {
         // The take is read where its package is now: renamed in Files since the take began, the
         // package took the file along (second night review, 2026-10-23). Recording changes
         // nothing in the song, so no save has followed the rename yet; follow it here, as
-        // `newTakeTarget` does (third night review).
+        // `newTakeTarget` does (third night review). A package that did not take it — the song
+        // sent to a free name, or back to its own package, while the take ran — gets it moved in;
+        // a take that cannot move is read where it was written (fifth night review).
         followMovedPackage()
         let song = songsOpened
-        let source = currentURL.flatMap {
-            MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: $0)
-        } ?? take.url
+        var source = take.url
+        if let here = currentURL,
+           let there = MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: here),
+           bring(take.url, to: there, into: here) {
+            source = there
+        }
         let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
             Result { try AudioFileImport.decode(source) }
         }.value
