@@ -23,5 +23,11 @@ final class SampleFileTests: XCTestCase {
         XCTAssertThrowsError(try SampleFile.readMono(url, maximumSeconds: 0.001)) {
             XCTAssertEqual($0 as? SampleFile.ReadError, .tooLong(maximumSeconds: 0.001))
         }
+        // A limit in frames: 441 frames do not fit in 220, and the error names the seconds 220
+        // frames last at this file's rate.
+        XCTAssertThrowsError(try SampleFile.readMono(url, maximumSeconds: 1, maximumFrames: 220)) {
+            XCTAssertEqual($0 as? SampleFile.ReadError, .tooLong(maximumSeconds: 220.0 / 44_100))
+        }
+        XCTAssertEqual(try SampleFile.readMono(url, maximumSeconds: 1, maximumFrames: 441).samples.count, 441)
     }
 }
