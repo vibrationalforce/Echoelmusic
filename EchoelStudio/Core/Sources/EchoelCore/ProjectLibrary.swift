@@ -244,6 +244,37 @@ public struct ProjectLibrary: Sendable {
     /// song renamed in the Files app while it was open is found here, rather than written again
     /// under its old name without its media. Nil when no package in the directory is it — the song
     /// was deleted or moved somewhere else (audit 2026-10-23).
+    /// Where an open song's package is now, after the Files app may have renamed, deleted or
+    /// replaced it while the song stayed open.
+    public enum Whereabouts: Equatable, Sendable {
+        /// At its URL, or never written yet, so nothing can have moved it.
+        case inPlace
+        /// Renamed outside: the package is here now, media and all.
+        case renamed(URL)
+        /// Gone, and another song's package has its name now: it is written under this free name.
+        case nameTaken(free: URL)
+        /// Gone — deleted, or moved out of the library: the next write makes it again by its name.
+        case gone
+    }
+
+    /// Where the package the open song wrote at `url` is now. `identity` is the package's as the
+    /// last open or write found it; nil when the song has never been written, as a new song before
+    /// its first save, which nothing can have moved (second night review, 2026-10-23). A folder
+    /// without a document at `url` is the song's own — a take or an import made it again after the
+    /// package was deleted — and the write that follows completes it.
+    public func whereabouts(of url: URL, identity: PackageIdentity?) -> Whereabouts {
+        guard let identity else { return .inPlace }
+        let files = FileManager.default
+        if files.fileExists(atPath: url.path) {
+            guard let now = Self.identity(of: url), now != identity else { return .inPlace }
+        }
+        if let moved = package(identity) { return .renamed(moved) }
+        if files.fileExists(atPath: url.appendingPathComponent(Self.documentName).path) {
+            return .nameTaken(free: newURL(for: url.deletingPathExtension().lastPathComponent))
+        }
+        return .gone
+    }
+
     public func package(_ identity: PackageIdentity) -> URL? {
         let files = FileManager.default
         guard let urls = try? files.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil,

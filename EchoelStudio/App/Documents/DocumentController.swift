@@ -95,6 +95,9 @@ final class DocumentController {
     /// The open song's package as the disk knows it, taken when it is read or written, so a
     /// rename in the Files app while it is open is followed (`followMovedPackage`).
     @ObservationIgnored private var packageIdentity: ProjectLibrary.PackageIdentity?
+    /// The name the open song had when its package was found gone and another song's under that
+    /// name, until a write tells the musician (second night review, 2026-10-23).
+    @ObservationIgnored private var nameTakenFrom: String?
     /// Counts song switches, so an export that finishes after another song opened does not
     /// report its loudness as that song's, and a sheet opened for one song closes when another
     /// opens.
@@ -605,7 +608,7 @@ final class DocumentController {
             return true
         }
         starterKeepsItsOwnPackage()
-        let gone = followMovedPackage()
+        let gone = followMovedPackage() ?? nameTakenFrom
         guard let url = currentURL else { return true }
         let project = store.project
         let isNew = !FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path)
@@ -617,6 +620,10 @@ final class DocumentController {
                 lastError = project.media.isEmpty
                     ? "\(gone) was moved or deleted in the Files app, so Echoel saved it again with your changes."
                     : "\(gone) was moved or deleted in the Files app with its audio files. Echoel saved it again with your changes, without that audio."
+                if nameTakenFrom != nil {
+                    lastError = (lastError ?? "") + " Another song has that name now, so this one is \(url.deletingPathExtension().lastPathComponent)."
+                }
+                nameTakenFrom = nil
             }
             savedProject = project
             isUnwritten = false
@@ -702,25 +709,26 @@ final class DocumentController {
     @discardableResult
     private func followMovedPackage() -> String? {
         guard !isUnwritten, let url = currentURL else { return nil }
-        let files = FileManager.default
-        if files.fileExists(atPath: url.path) {
-            // Still the open song's package, or one it cannot tell apart: nothing moved.
-            guard let identity = packageIdentity, let now = ProjectLibrary.identity(of: url), now != identity else {
-                return nil
-            }
-        }
-        if let identity = packageIdentity, let moved = library.package(identity) {
+        let name = url.deletingPathExtension().lastPathComponent
+        switch library.whereabouts(of: url, identity: packageIdentity) {
+        case .inPlace:
+            return nil
+        case .renamed(let moved):
             log.info("the open song's package was renamed outside; it follows")
             packageMoved(from: url, to: moved)
             return nil
-        }
-        // A folder without a document is the open song's own: a take or an import made it again
-        // after the package was deleted, and the write that follows completes it.
-        if files.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path) {
+        case .nameTaken(let free):
             log.info("another song took the open song's name outside; it is written under a free one")
-            packageMoved(from: url, to: library.newURL(for: url.deletingPathExtension().lastPathComponent))
+            packageMoved(from: url, to: free)
+            // The song's own package is gone and the free name has never held it: the next write
+            // is a first write. What happened is owed to the status line until a write says it,
+            // whichever caller found it (second night review, 2026-10-23).
+            packageIdentity = nil
+            nameTakenFrom = name
+            return name
+        case .gone:
+            return name
         }
-        return url.deletingPathExtension().lastPathComponent
     }
 
     /// The open song's package is at `moved` now.
@@ -1069,6 +1077,7 @@ final class DocumentController {
     private func anotherSongOpened() {
         songsOpened &+= 1
         packageIdentity = nil
+        nameTakenFrom = nil
         launchNote = nil
         earlierSongsNote = nil
         lastExportLoudness = nil

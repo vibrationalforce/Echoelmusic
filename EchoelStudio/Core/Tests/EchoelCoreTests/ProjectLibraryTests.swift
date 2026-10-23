@@ -247,6 +247,49 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertNil(ProjectLibrary.identity(of: renamed))
     }
 
+    /// What an open song's package became outside, each case once: never written, in place,
+    /// renamed, deleted, deleted and its name taken by another song, deleted and its folder made
+    /// again by a take (second night review, 2026-10-23).
+    func testAnOpenSongsPackageIsFoundWhereverTheFilesAppLeftIt() throws {
+        let fresh = library.newURL(for: "New Song")
+        XCTAssertEqual(library.whereabouts(of: fresh, identity: nil), .inPlace,
+                       "a new song before its first write was never anywhere to be moved from")
+
+        let url = library.newURL(for: "A")
+        try library.write(try song("A"), to: url)
+        let identity = try XCTUnwrap(ProjectLibrary.identity(of: url))
+        let other = library.newURL(for: "B")
+        try library.write(try song("B"), to: other)
+        XCTAssertEqual(library.whereabouts(of: url, identity: identity), .inPlace)
+
+        let renamed = directory.appendingPathComponent("A Final.echoel")
+        try FileManager.default.moveItem(at: url, to: renamed)
+        guard case .renamed(let found) = library.whereabouts(of: url, identity: identity) else {
+            return XCTFail("a renamed package is found by what it is")
+        }
+        XCTAssertEqual(found.lastPathComponent, "A Final.echoel")
+
+        // Moved out of the library rather than deleted: the package lives on elsewhere, so no new
+        // file can take its number on a file system that reuses them.
+        let outside = directory.deletingLastPathComponent().appendingPathComponent("outside-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: outside) }
+        try FileManager.default.moveItem(at: renamed, to: outside.appendingPathComponent("A Final.echoel"))
+        XCTAssertEqual(library.whereabouts(of: url, identity: identity), .gone)
+
+        // Another song renamed to the gone one's name.
+        try FileManager.default.moveItem(at: other, to: url)
+        guard case .nameTaken(let free) = library.whereabouts(of: url, identity: identity) else {
+            return XCTFail("another song's package under the name is not the open song")
+        }
+        XCTAssertEqual(free.lastPathComponent, "A 2.echoel")
+
+        // A take made the folder again, without a document.
+        try FileManager.default.removeItem(at: url)
+        try FileManager.default.createDirectory(at: url.appendingPathComponent("Media"), withIntermediateDirectories: true)
+        XCTAssertEqual(library.whereabouts(of: url, identity: identity), .gone)
+    }
+
     func testDeleteRemovesTheSong() throws {
         let url = library.newURL(for: "Gone")
         try library.write(try song("Gone"), to: url)
