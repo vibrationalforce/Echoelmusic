@@ -21,8 +21,8 @@ nothing has to be fished out of the long file.
 | `Plugins/AUv3/` | the ONE AUv3 extension `EchoelPlugins` under `com.echoelmusic.app.auv3` (the only registered Audio Unit id): Synth `eSyn`, Drums `eDrm`, Sampler `eSmp`, EQ/Compressor/Delay/Reverb `xEQ5`/`xCmp`/`xDly`/`xRvb`, plus `echl` (the earlier app's instrument, kept so saved host sessions open). ONE purchase unlocks the instruments (`PluginUnlock` in `Plugins/Shared/PluginUnlock.swift`, compiled into app and extension, `com.echoelmusic.app.pro` — not in `EchoelCore`: the open packages do not know that anything is sold, 2026-10-19); the effects are free and never demo-locked. Never add a second extension or product: no other id is registered | EchoelCore, EchoelDSP, EchoelKernels, EchoelHost — never EchoelEngine (since S-26 D1.4) |
 | `Plugins/Shared/` | the extension's building blocks: the one instrument unit (`InstrumentAudioUnit` over an `InstrumentKernel`), the principal-class base (demo lock, license, controls), controls from the parameter tree. An extension adds only its `makeUnit` | EchoelCore, EchoelKernels, EchoelHost — never EchoelEngine |
 
-More modules follow the plan (§3.4): DSP, Engine, App, Plugins. A module may depend only
-on modules below it — never the other way round.
+This table is the layout P0 left (S-26 D1, 2026-10-22); NEUSTART §3.4 was the proposal before it.
+A module may depend only on modules below it — never the other way round.
 
 ## Laws
 
@@ -48,6 +48,11 @@ on modules below it — never the other way round.
 7. **One presentation slot.** Modals go through one `.sheet(item:)` with an enum. A presented sheet may own ONE presentation of its own (the Sound page's file picker), because it cannot use the root slot without closing itself.
 8. **Tests test behaviour.** No test reads source text or prose.
 9. **Swift 6 language mode, strict concurrency.** No `print`, no force unwrap.
+10. **Network only where the musician turns it on** (NEUPLANUNG §6, rule 3). Today there are
+    exactly two places: StoreKit (the app sells the one purchase; the extension asks StoreKit
+    only when the shared record says nothing, `PluginLicense`) and Network MIDI, off until the toggle in the MIDI settings turns it on (`MIDIInput.setNetwork`). A new
+    connection waits for the one connections module (P3/P4), is off by default and shows there.
+    Measure, do not trust this line: `git grep -n -E "import Network\b|URLSession|NWConnection|MIDINetworkSession|import StoreKit" -- 'EchoelStudio/**/*.swift'`.
 
 ## Build lessons (each cost one red CI round, 2026-10-17)
 
