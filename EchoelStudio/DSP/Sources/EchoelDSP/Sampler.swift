@@ -41,10 +41,11 @@ public final class SampleBuffer: @unchecked Sendable {
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
     /// (a file whose header promised more than it holds) and at most half of them, `realloc` gives
-    /// the room back where it is — never a second block beside the first, so the peak stays at the
-    /// size the header asked for, the size a song's memory plan checks before the decode (a copy
-    /// into a block of its own size put up to half that room above the budget: eighth night review,
-    /// as 9d8b08152 had said once before). `heldFrames` is then read from the block itself on
+    /// the room back where it is, so the peak stays near the size the header asked for, the size a
+    /// song's memory plan checks before the decode — a copy into a block of its own size put up to
+    /// half that room above the budget (eighth night review, as 9d8b08152 had said once before).
+    /// Only a shrink into a smaller size class makes the allocator copy, and then at most that
+    /// class's largest block (ninth night review). `heldFrames` is then read from the block itself on
     /// Darwin, whose `realloc` rounds both sizes and keeps a block that would shrink by less than
     /// half of its rounded size — a fill just under half stays whole there, and counted as shrunk it
     /// was a count that lies (seventh night review). Above half the block stays whole and is counted
