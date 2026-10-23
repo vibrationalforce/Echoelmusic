@@ -51,6 +51,20 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(sampler.activeVoiceCount, 0)
     }
 
+    /// A sample that ends mid-waveform fades out over its last frames instead of falling to 0 in
+    /// one sample (audit 2026-10-23).
+    func testAVoiceThatReachesTheSampleEndFadesInsteadOfClicking() throws {
+        var sampler = Sampler(patch: flat(), sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 1_000), sampleRate: Double(rate))))
+        sampler.noteOn(pitch: 60, velocity: 127)
+        let out = render(&sampler, frames: 2_000)
+        XCTAssertEqual(out[900], 0.5, accuracy: 0.01, "full level before the end")
+        let tail = Array(out[900...])
+        let steepest: Float = zip(tail.dropFirst(), tail).map { (pair: (Float, Float)) -> Float in abs(pair.0 - pair.1) }.max() ?? 1
+        XCTAssertLessThan(steepest, 0.01, "no step at the end")
+        XCTAssertEqual(out[1_500], 0, "and the voice stops")
+    }
+
     func testAnOctaveUpPlaysTwiceAsFast() throws {
         let buffer = try XCTUnwrap(ramp(1_000))
         var sampler = Sampler(patch: flat(), sampleRate: rate)

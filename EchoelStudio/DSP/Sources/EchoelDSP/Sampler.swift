@@ -206,6 +206,10 @@ struct SamplerVoice: Sendable {
     private var fadeGain: Float = 0
     /// 2.7 ms at 48 kHz: long enough not to click, short enough not to be heard as a delay.
     static let stealFadeFrames = 128
+    /// Output frames over which a voice that reaches its sample's end fades to 0, as an audio
+    /// region's edge does: a sample cut mid-waveform otherwise fell from its last frame to 0 in
+    /// one sample, a click at the end of every one-shot (audit 2026-10-23).
+    static let endFadeFrames = 64
 
     init(envelope: Envelope.Settings, sampleRate: Float) {
         self.envelope = Envelope(settings: envelope, sampleRate: sampleRate)
@@ -249,6 +253,7 @@ struct SamplerVoice: Sendable {
         let last = sample.frameCount - 1
         var first = buffer.startIndex
         if fadeLeft > 0 {
+            let fadeEndScale = 1 / (Double(Self.endFadeFrames) * fadeIncrement)
             let end = Swift.min(first + fadeLeft, buffer.endIndex)
             while first < end {
                 let index = Int(fadePosition)
@@ -260,6 +265,7 @@ struct SamplerVoice: Sendable {
                 let b = index < last ? sample.frames[index + 1] : a
                 let t = Float(fadePosition - Double(index))
                 let ramp = Float(fadeLeft) / Float(Self.stealFadeFrames)
+                    * Float(Swift.min(1, (Double(last) - fadePosition) * fadeEndScale))
                 buffer[first] += (a + (b - a) * t) * fadeGain * ramp * (level + step * Float(first - buffer.startIndex))
                 fadePosition += fadeIncrement
                 fadeLeft -= 1
@@ -270,6 +276,7 @@ struct SamplerVoice: Sendable {
             envelope.gateOn()
             if !isHeld { envelope.gateOff() }
         }
+        let endScale = 1 / (Double(Self.endFadeFrames) * increment)
         for i in first..<buffer.endIndex {
             let index = Int(position)
             guard index < last || (index == last && position == Double(last)) else {
@@ -279,7 +286,8 @@ struct SamplerVoice: Sendable {
             let a = sample.frames[index]
             let b = index < last ? sample.frames[index + 1] : a
             let t = Float(position - Double(index))
-            buffer[i] += (a + (b - a) * t) * envelope.next() * gain * (level + step * Float(i - buffer.startIndex))
+            let toEnd = Float(Swift.min(1, (Double(last) - position) * endScale))
+            buffer[i] += (a + (b - a) * t) * envelope.next() * gain * toEnd * (level + step * Float(i - buffer.startIndex))
             position += increment
             if !envelope.isActive { return }
         }
