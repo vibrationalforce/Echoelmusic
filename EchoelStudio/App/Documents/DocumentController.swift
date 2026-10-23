@@ -1335,6 +1335,7 @@ final class DocumentController {
             [.addMedia(file), .setInstrumentDevice(track, .sampler), .setInstrumentSample(track, file.id)]
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
+        dropBufferUnlessHeld(imported.file.id)
     }
 
     /// Copies an audio file into the song and places all of it on an audio track at `start` —
@@ -1344,6 +1345,7 @@ final class DocumentController {
             [.addMedia(file), .placeAudio(track: track, id: RegionID(), media: file.id, start: start)]
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
+        dropBufferUnlessHeld(imported.file.id)
     }
 
     /// Copies an audio file into the song as a session clip of an audio track, looping over the
@@ -1360,6 +1362,7 @@ final class DocumentController {
                     .setSlot(track: track, scene: scene, clip: clip)]
         }) else { return }
         perform(imported.commands, title: "Import \(imported.file.name)")
+        dropBufferUnlessHeld(imported.file.id)
     }
 
     /// Copies and decodes a file off the main thread and keeps its buffer, returning the file and
@@ -1576,6 +1579,7 @@ final class DocumentController {
         let before = store.project
         perform(commands, title: "Record Take")
         let committed = store.project.media.contains { $0.id == file.id }
+        dropBufferUnlessHeld(file.id)
         if let strandedIn {
             let line = "The take could not be moved into the song and stays in the folder \(strandedIn) in the Files app; it is missing the next time the song opens."
             lastError = lastError.map { "\($0) \(line)" } ?? line
@@ -1596,6 +1600,15 @@ final class DocumentController {
             let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
             lastError = lastError.map { "\($0) \(line)" } ?? line
         }
+    }
+
+    /// A file the song refused — its track deleted while the file was read — keeps no buffer:
+    /// nothing plays it, and no memory budget counts it. Kept, it stayed until the next open
+    /// (ninth night review, 2026-10-23).
+    private func dropBufferUnlessHeld(_ id: MediaID) {
+        guard !store.project.media.contains(where: { $0.id == id }) else { return }
+        guard samples.removeValue(forKey: id) != nil else { return }
+        mediaRevision += 1
     }
 
     private func perform(_ commands: [Command], title: String) {
