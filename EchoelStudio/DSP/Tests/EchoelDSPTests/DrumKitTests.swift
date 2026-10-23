@@ -64,6 +64,28 @@ final class DrumKitTests: XCTestCase {
         XCTAssertEqual(render(&a, seconds: 0.2), render(&b, seconds: 0.2))
     }
 
+    /// A tom hit again while it still rings starts the new hit without a step in the waveform —
+    /// a roll does not click on every hit — whatever point of its cycle the old hit stood at
+    /// (audit 2026-10-23).
+    func testAReHitOfARingingTomDoesNotClick() {
+        for pitch: UInt8 in [45, 50] {
+            var largest: Float = 0
+            for gap in 100...150 {
+                var kit = DrumKit(sampleRate: rate)
+                kit.noteOn(pitch: pitch, velocity: 127)
+                let before = render(&kit, seconds: Float(gap) / 1_000)
+                kit.noteOn(pitch: pitch, velocity: 127)
+                let after = render(&kit, seconds: 0.01)
+                guard let last = before.last, let first = after.first else {
+                    XCTFail("nothing rendered")
+                    continue
+                }
+                largest = Swift.max(largest, Swift.abs(first - last))
+            }
+            XCTAssertLessThan(largest, 0.05, "pitch \(pitch)")
+        }
+    }
+
     func testABadSampleRateFallsBack() {
         var kit = DrumKit(sampleRate: .nan)
         kit.noteOn(pitch: 36, velocity: 100)

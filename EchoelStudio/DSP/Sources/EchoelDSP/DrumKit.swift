@@ -77,6 +77,13 @@ struct DrumVoice: Sendable {
     private var elapsed: Int = 0
     private var noise: UInt32 = 0x9E37_79B9
     private var filter: SVFilter
+    /// A hit on a voice that still rings starts its waveform over at phase 0, while the old one
+    /// stood wherever it was: what the voice played last carries over and fades in ~2.5 ms, so a
+    /// tom or kick roll does not click on every hit (audit 2026-10-23).
+    private var lastOutput: Float = 0
+    private var carry: Float = 0
+    private let carryDecay: Float
+    static let carrySeconds: Float = 0.0025
 
     /// −60 dB: below this a voice is inaudible and stops.
     private static let floor: Float = 1e-3
@@ -84,6 +91,7 @@ struct DrumVoice: Sendable {
     init(piece: DrumKit.Piece, sampleRate: Float) {
         self.piece = piece
         self.sampleRate = sampleRate
+        carryDecay = Self.coefficient(seconds: Self.carrySeconds, sampleRate: sampleRate)
         let setup: (mode: SVFilter.Mode, cutoff: Float) = switch piece {
         case .snare: (.bandpass, 1_800)
         case .clap: (.bandpass, 1_200)
@@ -127,6 +135,7 @@ struct DrumVoice: Sendable {
     }
 
     mutating func trigger(velocity: UInt8) {
+        carry = isActive ? lastOutput : 0
         let v = Float(velocity) / 127
         gain = v * v
         amp = 1
@@ -148,6 +157,8 @@ struct DrumVoice: Sendable {
     mutating func silence() {
         isActive = false
         amp = 0
+        carry = 0
+        lastOutput = 0
         filter.reset()
     }
 
@@ -178,7 +189,10 @@ struct DrumVoice: Sendable {
             case .closedHat, .openHat, .crash:
                 sample = filter.process(nextNoise())
             }
-            buffer[i] += sample * amp * gain * 0.8
+            let output = sample * amp * gain * 0.8 + carry
+            buffer[i] += output
+            lastOutput = output
+            carry *= carryDecay
             amp *= ampDecay
             elapsed &+= 1
             if amp < Self.floor {
