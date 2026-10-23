@@ -98,6 +98,11 @@ final class DocumentController {
     /// The name the open song had when its package was found gone and another song's under that
     /// name, until a write tells the musician (second night review, 2026-10-23).
     @ObservationIgnored private var nameTakenFrom: String?
+    /// The open song was sent to a free name and is not written there yet, so nothing at its path
+    /// is its own but a folder a take or an import made: a song that arrived there meanwhile —
+    /// received, brought back by the earlier-songs import, renamed to that name in Files — is
+    /// another song, never written over (third night review, 2026-10-23).
+    private var awaitsFirstWriteAtFreeName: Bool { !isUnwritten && packageIdentity == nil && nameTakenFrom != nil }
     /// Counts song switches, so an export that finishes after another song opened does not
     /// report its loudness as that song's, and a sheet opened for one song closes when another
     /// opens.
@@ -499,7 +504,8 @@ final class DocumentController {
     /// (review 006 round 3).
     @discardableResult
     private func open(throwing chosen: URL) throws -> URL {
-        let isOpenSong = !isUnwritten && currentURL?.standardizedFileURL.path == chosen.standardizedFileURL.path
+        let isOpenSong = !isUnwritten && !awaitsFirstWriteAtFreeName
+            && currentURL?.standardizedFileURL.path == chosen.standardizedFileURL.path
         guard mayLeaveSong(for: chosen.deletingPathExtension().lastPathComponent) else { throw UnsavedSong() }
         let url = isOpenSong ? (currentURL ?? chosen) : chosen
         noteOpening(url.lastPathComponent)
@@ -507,7 +513,7 @@ final class DocumentController {
             let project = try library.read(url)
             // The open song chosen again is read afresh and keeps its lines (review 2026-10-21). The
             // unwritten starter's URL is only a free name, and a song that arrived under it is another.
-            let another = isUnwritten
+            let another = isUnwritten || awaitsFirstWriteAtFreeName
                 || currentURL.map { $0.standardizedFileURL.path != url.standardizedFileURL.path } ?? true
             store.open(project)
             // The open song read again keeps a move it still owes: its document already carries
@@ -710,6 +716,15 @@ final class DocumentController {
     private func followMovedPackage() -> String? {
         guard !isUnwritten, let url = currentURL else { return nil }
         let name = url.deletingPathExtension().lastPathComponent
+        if awaitsFirstWriteAtFreeName {
+            // No identity to compare yet: a document at the free name is another song's.
+            guard FileManager.default.fileExists(atPath: url.appendingPathComponent(ProjectLibrary.documentName).path) else {
+                return nameTakenFrom
+            }
+            log.info("another song arrived at the open song's free name; it moves on to the next")
+            packageMoved(from: url, to: library.newURL(for: nameTakenFrom ?? name))
+            return nameTakenFrom
+        }
         switch library.whereabouts(of: url, identity: packageIdentity) {
         case .inPlace:
             return nil
@@ -1223,6 +1238,16 @@ final class DocumentController {
         guard songsOpened == song, let here = currentURL else { return nil }
         switch result {
         case .success(let imported):
+            // Kept only when its copy is in the package the song writes to now. A package renamed
+            // in Files took the copy along; one deleted there, or whose name another song took, did
+            // not — the song would play it this session and miss it at the next open. A copy left
+            // at the old path is this import's alone, even inside another song's package (third
+            // night review, 2026-10-23).
+            guard let copy = imported.file.url(in: here), FileManager.default.fileExists(atPath: copy.path) else {
+                if let stray = imported.file.url(in: package) { try? FileManager.default.removeItem(at: stray) }
+                lastError = "The song was moved or deleted in the Files app while the file was importing. Import it again."
+                return nil
+            }
             // A file that does not fit in memory beside the song's audio is not added: the next
             // open would leave it, or audio the song plays, silent (R9). Judged with the file
             // placed — appended alone it would rank behind every file nothing plays any more
@@ -1231,7 +1256,7 @@ final class DocumentController {
             var grown = store.project
             for command in commands { try? command.apply(to: &grown) }
             if !grown.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: store.project).isEmpty {
-                if let copy = imported.file.url(in: here) { try? FileManager.default.removeItem(at: copy) }
+                try? FileManager.default.removeItem(at: copy)
                 lastError = "This file does not fit: the song already holds as much audio as Echoel can keep in memory on this device."
                 return nil
             }
