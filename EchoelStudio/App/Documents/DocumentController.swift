@@ -823,7 +823,10 @@ final class DocumentController {
         var writing = Set(takesInFlight.map { "\($0)" })
         if let importingMedia { writing.insert("\(importingMedia)") }
         var stayed = 0
-        var waiting = false
+        // An import or a take still under way may write here though its file is not there yet —
+        // the copy starts a hop later — so the folder waits for it to land instead of going while
+        // the import is about to write into it (seventh night review, 2026-10-23).
+        var waiting = importingMedia != nil || !takesInFlight.isEmpty
         for name in names {
             if writing.contains((name as NSString).deletingPathExtension) {
                 waiting = true
