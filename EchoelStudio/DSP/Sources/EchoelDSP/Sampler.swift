@@ -4,7 +4,7 @@ import Foundation
 /// the key it sounds at unshifted. Built off the render thread; the frames are written once in
 /// `init` and never again, so the render thread reads them without a lock.
 ///
-/// The frames live in manual memory (`malloc`, so a short fill can shrink its block where it is),
+/// The frames live in manual memory (`malloc`, so a short fill can hand its unwritten room back),
 /// not a Swift array, so reading them never retains or copies anything. The owner must keep the
 /// buffer alive while any `Sampler` plays it, and must release it off the render thread (the
 /// engine does both, as it does for snapshots).
@@ -35,12 +35,15 @@ public final class SampleBuffer: @unchecked Sendable {
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
     /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
-    /// (a file whose header promised more than it holds) and at most half of them, `realloc` gives
-    /// the room back and the buffer holds what it plays. Above half the block stays whole —
-    /// Darwin's allocator keeps a block that shrinks by less than half as it is, so a shrink there
-    /// would only be a count that lies — and `heldFrames` says how large it is (third to sixth
-    /// night reviews, 2026-10-23). Nil when `fill` writes no frame or the rate is not a positive
-    /// number; throws `OutOfMemory` when the memory is not there, and an error from `fill` on.
+    /// (a file whose header promised more than it holds) and at most half of them, the frames move
+    /// into a new block of exactly their size and the first block goes, so the buffer holds what it
+    /// plays and `heldFrames` is that block, whatever an allocator does with a shrink in place —
+    /// Darwin's `realloc` rounds both sizes and keeps a block that would shrink by less than half
+    /// of its ROUNDED size, so a fill just under half stayed whole while counted as shrunk (seventh
+    /// night review). Above half the block stays whole and is counted whole: the copy would cost
+    /// more at its peak than it gives back. If the new block is refused, the first one stays and is
+    /// counted. Nil when `fill` writes no frame or the rate is not a positive number; throws
+    /// `OutOfMemory` when the memory is not there, and an error from `fill` on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
         guard capacity > 0, sampleRate.isFinite, sampleRate > 0 else { return nil }
@@ -62,15 +65,12 @@ public final class SampleBuffer: @unchecked Sendable {
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
         var kept = storage
         var held = capacity
-        if written <= capacity / 2 {
+        if written <= capacity / 2, let exact = Self.allocate(written) {
+            exact.moveInitialize(from: storage, count: written)
             (storage + written).deinitialize(count: capacity - written)
-            if let shrunk = realloc(storage, written * MemoryLayout<Float>.stride) {
-                kept = shrunk.bindMemory(to: Float.self, capacity: written)
-                held = written
-            } else {
-                // Refused: the block stays as it was, and is counted.
-                (storage + written).initialize(repeating: 0, count: capacity - written)
-            }
+            free(storage)
+            kept = exact
+            held = written
         }
         frameCount = written
         heldFrames = held
@@ -96,8 +96,8 @@ public final class SampleBuffer: @unchecked Sendable {
         public init() {}
     }
 
-    /// `count` frames from `malloc`, which `realloc` can shrink and `deinit` frees; nil when the
-    /// size overflows or the memory is not there.
+    /// `count` frames from `malloc`, which `deinit` frees; nil when the size overflows or the
+    /// memory is not there.
     private static func allocate(_ count: Int) -> UnsafeMutablePointer<Float>? {
         let (bytes, overflow) = count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride)
         guard !overflow, let raw = malloc(bytes) else { return nil }

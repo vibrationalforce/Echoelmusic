@@ -81,8 +81,8 @@ final class SamplerTests: XCTestCase {
         #endif
     }
 
-    /// A file one frame short keeps its block, and counts it: a shrink by less than half leaves the
-    /// block as it is on Darwin, so saying it shrank would be a count that lies.
+    /// A file one frame short keeps its block, and counts it: moving almost all of it into a new
+    /// block would cost more at its peak than it gives back.
     func testAFillShortByAFrameKeepsItsBlockAndCountsIt() throws {
         let capacity = 1_600
         let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
@@ -95,9 +95,27 @@ final class SamplerTests: XCTestCase {
         XCTAssertEqual(kept.count, capacity - 1)
         XCTAssertEqual(kept.first, 0)
         XCTAssertEqual(kept.last, Float(capacity - 2) / Float(capacity))
+    }
+
+    /// A file just under half as long as its header promised: Darwin's `realloc` rounds both sizes
+    /// and keeps a block that would shrink by less than half of its rounded size, so a shrink in
+    /// place stayed whole here while the count said half (seventh night review, 2026-10-23). The
+    /// frames move into a block of their own size, and the block held is the one counted.
+    func testAFillJustUnderHalfHoldsTheBlockItCounts() throws {
+        let capacity = 1_000_000
+        let written = capacity / 2 - 100
+        let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
+            for index in 0..<written { frames[index] = 0.25 }
+            return written
+        })
+        XCTAssertEqual(buffer.frameCount, written)
+        XCTAssertEqual(buffer.heldFrames, written, "it holds what it plays")
+        let kept: [Float] = buffer.copyFrames()
+        XCTAssertEqual(kept.count, written)
+        XCTAssertEqual(kept.last, 0.25, "the frames survive the move")
         #if canImport(Darwin)
-        XCTAssertGreaterThanOrEqual(malloc_size(buffer.frames), capacity * MemoryLayout<Float>.size,
-                                    "the count is what the allocator holds")
+        XCTAssertLessThan(malloc_size(buffer.frames), capacity * MemoryLayout<Float>.size * 3 / 4,
+                          "the block the allocator holds is about the counted half, not the whole")
         #endif
     }
 
@@ -111,7 +129,7 @@ final class SamplerTests: XCTestCase {
         })
         XCTAssertEqual(buffer.frameCount, capacity / 4)
         XCTAssertEqual(buffer.heldFrames, capacity / 4)
-        XCTAssertEqual(buffer.copyFrames().last, 0.5, "the frames survive the shrink")
+        XCTAssertEqual(buffer.copyFrames().last, 0.5, "the frames survive the move")
         #if canImport(Darwin)
         XCTAssertLessThan(malloc_size(buffer.frames), capacity * MemoryLayout<Float>.size, "the room went back")
         #endif
