@@ -550,6 +550,22 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertEqual(after, 0, "and holds the lane's last value, silence")
     }
 
+    /// Stop sends the playhead home, but the release rings out at the gain it was playing at: a
+    /// fade-in at bar 1 does not cut it (audit 2026-10-23).
+    func testAfterStopTheTailRingsOutAtTheGainWhereItStopped() throws {
+        var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)]])
+        try Command.setAutomation(.volume(s.tracks[0]), points: [
+            AutomationPoint(tick: 0, value: MixerStrip.volumeRange.lowerBound), AutomationPoint(tick: bar / 4, value: 0),
+        ]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 2 * 96_000)
+        engine.stop()
+        let after = render(engine, frames: 4 * 512, block: 512).left
+        XCTAssertGreaterThan(rms(after[1_024..<2_048]), 0.001, "the release still sounds after the first chunk")
+    }
+
     func testACutoffLaneShapesTheSynth() throws {
         var open = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
         var closed = open

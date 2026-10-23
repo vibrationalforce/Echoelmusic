@@ -128,6 +128,11 @@ public final class EngineCore: @unchecked Sendable {
     /// Ticks at the start and end of the chunk being mixed; automated gains ramp between them.
     private var mixFrom: Double = 0
     private var mixTo: Double = 0
+    /// Stopped: the song position the mix's curves stay at — where it was heard when it stopped,
+    /// although Stop sends the playhead home — so release and effect tails ring out at the gains
+    /// they were playing at, not at bar 1's (audit 2026-10-23). A seek while stopped and Play
+    /// let the curves follow the playhead again.
+    private var stoppedAt: Double?
     /// The gains each mix point ended the last chunk on (NaN: none yet), so every change —
     /// a hand on a fader, a MIDI knob, an automation jump after a seek — ramps over one chunk
     /// instead of stepping. Points: instrument slots, then audio tracks, then return buses.
@@ -505,6 +510,7 @@ public final class EngineCore: @unchecked Sendable {
             // Paused, nothing was heard: the start fades nothing out (A10 review, E).
             resync()
             remapped = false
+            stoppedAt = nil
         }
         wasPlaying = playing
         // A stopping block still fades out the clips that were playing; they stop after it.
@@ -512,7 +518,12 @@ public final class EngineCore: @unchecked Sendable {
         metronome.isEnabled = clickFlag.load(ordering: .relaxed)
 
         guard playing, let box = current else {
-            let held = current?.snapshot.time.position(atSample: playhead) ?? 0
+            if stopping {
+                stoppedAt = current?.snapshot.time.position(atSample: heardAt)
+            } else if seek >= 0 {
+                stoppedAt = nil
+            }
+            let held = stoppedAt ?? current?.snapshot.time.position(atSample: playhead) ?? 0
             mixFrom = held
             mixTo = held
             renderVoices(0..<frames, left: left, right: right)
