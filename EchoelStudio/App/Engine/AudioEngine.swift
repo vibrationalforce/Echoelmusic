@@ -338,9 +338,11 @@ final class AudioEngine {
         // Not while stopped: configuring can itself post this notification, and a failed start
         // answered here would retry without end. The retry and Restart audio cover that case.
         guard isRunning else { return }
+        // Before the output is asked for its format: a crash in that query reads as its own step.
+        step("engine: configuration change")
         let output = engine.outputNode.outputFormat(forBus: 0)
         let channels = Self.usableChannels(output.channelCount)
-        step("engine: configuration change", [("ch", Double(output.channelCount)), ("Hz", output.sampleRate)])
+        step("graph: output format", [("ch", Double(output.channelCount)), ("Hz", output.sampleRate)])
         if engine.isRunning, channels == outputChannels, output.sampleRate == core?.sampleRate { return }
         configure(input: wantsInput)
         cameBack()
@@ -536,6 +538,8 @@ final class AudioEngine {
                 try? session.setPreferredInputNumberOfChannels(session.maximumInputNumberOfChannels)
             }
 
+            // The first touch of the output node on a new engine makes it.
+            step("graph: read output format")
             let output = engine.outputNode.outputFormat(forBus: 0)
             let sampleRate = output.sampleRate > 0 ? output.sampleRate : 48_000
             let channels = Self.usableChannels(output.channelCount)
@@ -601,7 +605,10 @@ final class AudioEngine {
 
             if input {
                 // Connect only in the input's own format, and only when it runs at the output rate:
-                // a mismatch is refused here instead of raising inside AVAudioEngine.
+                // a mismatch is refused here instead of raising inside AVAudioEngine. The first
+                // touch of the input node makes it — where the earlier app's input crashes raised
+                // (fifth night review, 2026-10-23: this step had no line of its own).
+                step("graph: open input node")
                 let inputFormat = engine.inputNode.inputFormat(forBus: 0)
                 guard inputFormat.channelCount > 0, inputFormat.sampleRate == sampleRate else {
                     throw EngineError.inputUnusable(inputFormat.sampleRate, sampleRate)
@@ -623,6 +630,7 @@ final class AudioEngine {
             try engine.start()
             isRunning = true
             isInputOpen = input
+            if input { step("graph: read input channels") }
             inputChannels = input ? Int(engine.inputNode.inputFormat(forBus: 0).channelCount) : 0
             lastError = nil
             isStalled = false
