@@ -62,6 +62,8 @@ final class PluginControlsModel {
             sampleMessage = "This file is longer than \(Int(seconds)) seconds."
         } catch SampleFile.ReadError.empty {
             sampleMessage = "This file holds no audio."
+        } catch is SampleBuffer.OutOfMemory {
+            sampleMessage = "There is not enough free memory to load this file right now."
         } catch {
             sampleMessage = "This file is not an audio format Echoel can read."
         }

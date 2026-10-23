@@ -45,11 +45,14 @@ enum AudioFileImport {
         case unreadable
         case empty
         case tooLong(maximumSeconds: Double)
+        /// The memory to decode it was not there: the file is fine, the device is full right now.
+        case noMemory
 
         var errorDescription: String? {
             switch self {
             case .unreadable: "This file is not an audio format Echoel can read."
             case .empty: "This file holds no audio."
+            case .noMemory: "There is not enough free memory to load this file right now."
             case .tooLong(let seconds) where seconds < AudioFileImport.maximumSeconds:
                 "This file is longer than \(AudioFileImport.spoken(seconds)), the longest Echoel keeps at its sample rate."
             case .tooLong: "This file is longer than ten minutes."
@@ -101,6 +104,8 @@ enum AudioFileImport {
             guard let buffer = try SampleBuffer(capacity: reader.frameCount, sampleRate: reader.sampleRate,
                                                 fill: { try reader.read(into: $0) }) else { throw ImportError.empty }
             return buffer
+        } catch is SampleBuffer.OutOfMemory {
+            throw ImportError.noMemory
         } catch let error as SampleFile.ReadError {
             switch error {
             case .unreadable: throw ImportError.unreadable

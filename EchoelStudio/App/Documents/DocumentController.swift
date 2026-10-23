@@ -1528,12 +1528,18 @@ final class DocumentController {
                     guard let url = file.url(in: package) else { continue }
                     // The plan trusts the length the song states; the read is limited to the room
                     // left, so a file longer than stated is refused before it is decoded and the
-                    // budget holds for a song from anywhere.
+                    // budget holds for a song from anywhere. The room is checked against the file's
+                    // header, because the buffer is allocated at that size before it is filled: a
+                    // file whose header promises more than it holds (a truncated recording) can be
+                    // refused here near the budget though the plan, which counts what it plays, let
+                    // it in — and is then named as not loaded, never silent without a word (sixth
+                    // night review, 2026-10-23: known, rare, and safer than allocating past the budget).
                     let room = Swift.max(0, budget - used) / Project.decodedBytesPerFrame
                     let buffer: SampleBuffer
                     do {
                         buffer = try AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: room)
-                    } catch AudioFileImport.ImportError.tooLong {
+                    } catch AudioFileImport.ImportError.tooLong, AudioFileImport.ImportError.noMemory {
+                        // Past the room, or past the memory free right now: named as not loaded.
                         unfit.append(file)
                         continue
                     } catch {
