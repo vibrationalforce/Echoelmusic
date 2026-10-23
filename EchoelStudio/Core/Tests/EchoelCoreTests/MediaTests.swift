@@ -46,6 +46,42 @@ final class MediaTests: XCTestCase {
         }
     }
 
+    /// A song's audio is decoded whole when it opens; the plan keeps what the song plays inside
+    /// the memory it is given, and a song with too much audio opens instead of ending the app.
+    func testTheLoadPlanTakesWhatTheSongPlaysFirstAndSkipsWhatDoesNotFit() throws {
+        var p = Project()
+        let audio = TrackID(), keys = TrackID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &p)
+        let unused = file(path: "Media/unused.wav", frames: 1_000)
+        let take = file(path: "Media/take.wav", frames: 1_000)
+        let sample = file(path: "Media/sample.wav", frames: 500)
+        let small = file(path: "Media/small.wav", frames: 100)
+        for media in [unused, take, sample, small] { try Command.addMedia(media).apply(to: &p) }
+        try Command.placeAudio(track: audio, id: RegionID(), media: take.id, start: 0).apply(to: &p)
+        try Command.setInstrumentSample(keys, sample.id).apply(to: &p)
+        try Command.setInstrumentDevice(keys, .sampler).apply(to: &p)
+        let bytes = Project.decodedBytesPerFrame
+        XCTAssertEqual(bytes, 4, "one mono Float per frame")
+
+        let roomy = p.mediaLoadPlan(budget: .max)
+        XCTAssertEqual(roomy.load.map(\.id), [take.id, sample.id, unused.id, small.id])
+        XCTAssertEqual(roomy.skipped, [])
+
+        // Room for 1,600 frames: the take and the sample fit, the unused file does not, and the
+        // small one after it still does.
+        let tight = p.mediaLoadPlan(budget: 1_600 * bytes)
+        XCTAssertEqual(tight.load.map(\.id), [take.id, sample.id, small.id])
+        XCTAssertEqual(tight.skipped.map(\.id), [unused.id])
+
+        // A sample counts as played only while the sampler plays its track.
+        try Command.setInstrumentDevice(keys, .synth).apply(to: &p)
+        XCTAssertEqual(p.mediaLoadPlan(budget: .max).load.map(\.id), [take.id, unused.id, sample.id, small.id])
+
+        XCTAssertEqual(p.mediaLoadPlan(budget: 0).load, [])
+        XCTAssertEqual(p.mediaLoadPlan(budget: -1).skipped.count, 4)
+    }
+
     func testADuplicateIDIsRefused() throws {
         var (p, _) = try project()
         let f = file()

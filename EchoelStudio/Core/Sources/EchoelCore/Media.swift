@@ -64,3 +64,61 @@ extension Project {
         media.first { $0.id == id }
     }
 }
+
+/// Which of a song's audio files to decode when only so many bytes of decoded audio fit in
+/// memory. A file is decoded whole, one mono `Float` per frame, so its cost is known from the
+/// song before the file is read.
+public struct MediaLoadPlan: Equatable, Sendable {
+    /// What to decode, in this order.
+    public var load: [MediaFile]
+    /// What does not fit. The song still opens; whatever plays these files is silent.
+    public var skipped: [MediaFile]
+
+    public init(load: [MediaFile] = [], skipped: [MediaFile] = []) {
+        self.load = load
+        self.skipped = skipped
+    }
+}
+
+extension Project {
+    /// What one decoded frame of a song file takes in memory: a mono `Float`.
+    public static let decodedBytesPerFrame = MemoryLayout<Float>.size
+
+    /// What decoding `file` costs in memory, from the frame count the song stores.
+    public static func decodedBytes(_ file: MediaFile) -> Int {
+        Swift.min(Swift.max(0, file.frameCount), MediaFile.maximumFrameCount) * decodedBytesPerFrame
+    }
+
+    /// The files to decode within `budget` bytes. What the song plays comes first — the audio
+    /// regions and audio clips track by track, then the samples of tracks the sampler plays —
+    /// then the rest in the song's order (a sample kept for a track that plays another device, a
+    /// file no region uses any more). A file that no longer fits is skipped, and a smaller one
+    /// after it can still fit.
+    public func mediaLoadPlan(budget: Int) -> MediaLoadPlan {
+        let played: [MediaID] = tracks.flatMap { (track: Track) -> [MediaID] in
+            track.regions.map(\.media) + track.clips.compactMap { $0.audio?.media }
+        }
+        let samples: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
+            track.instrument.device == .sampler ? track.instrument.sample : nil
+        }
+        var order: [MediaID] = []
+        var seen = Set<MediaID>()
+        for id in played + samples + media.map(\.id) {
+            if seen.insert(id).inserted { order.append(id) }
+        }
+        let files = Dictionary(media.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var plan = MediaLoadPlan()
+        var left = Swift.max(0, budget)
+        for id in order {
+            guard let file = files[id] else { continue }
+            let cost = Self.decodedBytes(file)
+            if cost <= left {
+                left -= cost
+                plan.load.append(file)
+            } else {
+                plan.skipped.append(file)
+            }
+        }
+        return plan
+    }
+}
