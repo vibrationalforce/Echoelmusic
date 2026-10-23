@@ -32,8 +32,13 @@ final class RecordController {
             self?.endMIDITake()
             Task {
                 await self?.stopRecording()
-                await self?.inputOpensAfterOutsidePause()
+                await self?.inputOpensForUnseenSong()
             }
+        }
+        // The audio is back — after a call, the background, a reset or a failed start: a song
+        // that monitors always and waited for it opens its input now, where it stands.
+        engine.onAudioBack = { [weak self] in
+            Task { await self?.inputOpensForUnseenSong() }
         }
         // The input fell away under an audio take: the take cannot carry on, so it ends with what
         // it has. A MIDI take needs no input and goes on.
@@ -204,14 +209,21 @@ final class RecordController {
     /// Continue goes on from there — and opening waits while a call or a lost audio system holds
     /// the session: the song stays unseen, so the next Stop or edit opens it once the audio is back.
     /// It counts as seen only when the input really opened (third night review, 2026-10-23: it
-    /// rewound to bar 1, and a call marked the song seen and then failed, leaving it deaf).
-    private func inputOpensAfterOutsidePause() async {
+    /// rewound to bar 1, and a call marked the song seen and then failed, leaving it deaf) — or
+    /// when it was tried with the audio running and refused: no permission, an input at another
+    /// rate. Tried again at every pause, each locate of a followed clock would stop and restart
+    /// the audio (fourth night review, 2026-10-23). A song that waits for the audio — a call, the
+    /// background — is opened by its return (`AudioEngine.onAudioBack`), and by every Stop and
+    /// edit (`inputFollowsSong`), here too.
+    private func inputOpensForUnseenSong() async {
         guard !engine.isPlaying, !isRecording, monitorsAlways, store.documentGeneration != seenGeneration,
-              engine.isUp else { return }
+              engine.canOpenInputNow else { return }
         let generation = store.documentGeneration
         var opened = engine.isInputOpen
         if !opened { opened = await engine.openInputKeepingPosition() }
-        if opened, store.documentGeneration == generation { seenGeneration = generation }
+        guard store.documentGeneration == generation,
+              opened || (engine.canOpenInputNow && !engine.isPlaying) else { return }
+        seenGeneration = generation
     }
 
     /// The input is open while something wants it: an armed audio track, a take, a track that
@@ -225,11 +237,14 @@ final class RecordController {
         // Read only past the wait: a song opened while playing is still news at Stop, or a song
         // that monitors always stays deaf after it (review 2026-10-23).
         let opened = store.documentGeneration != seenGeneration
-        seenGeneration = store.documentGeneration
         if monitorsAlways {
-            if opened, !engine.isInputOpen { _ = await engine.openInput() }
+            // Where the song stands — after a call it is paused, and an edit must not send it to
+            // bar 1 — and only while the audio runs; a song that waits stays unseen until it is
+            // back (fourth night review, 2026-10-23).
+            if opened { await inputOpensForUnseenSong() }
             return
         }
+        seenGeneration = store.documentGeneration
         guard engine.isInputOpen else { return }
         if let armed = armedTrack, store.project.track(armed)?.kind == .audio { return }
         engine.closeInput()

@@ -270,6 +270,10 @@ final class AudioEngine {
     /// clock moves its playhead; the record controller ends a running take there, so it never
     /// runs on over a paused song (R10) or across a jump.
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
+    /// The graph came back up after it was down — the launch, a call's end, a reset, the
+    /// foreground return, a retry or Restart audio: what waited for the audio can go on now (a
+    /// song that monitors always opens its input).
+    @ObservationIgnored var onAudioBack: (() -> Void)?
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.
     @ObservationIgnored var onInputLost: (() -> Void)?
@@ -309,6 +313,12 @@ final class AudioEngine {
         step("engine: rebuilding", because: reason)
         recovery.reset()
         configure(input: wantsInput)
+        cameBack()
+    }
+
+    /// Tells `onAudioBack` when the graph that was down runs again.
+    private func cameBack() {
+        if isUp { onAudioBack?() }
     }
 
     /// In the foreground, or in the background while a followed clock keeps the engine running
@@ -338,6 +348,7 @@ final class AudioEngine {
         guard !isRunning else { return }
         wantsAudio = true
         configure(input: false)
+        cameBack()
     }
 
     /// The user asks for audio again after the automatic tries ran out.
@@ -347,6 +358,7 @@ final class AudioEngine {
         suspendedInput = nil
         recovery.reset()
         configure(input: wantsInput)
+        cameBack()
     }
 
     /// The graph as it was before the background, or rebuilt when iOS stopped it underneath.
@@ -360,6 +372,7 @@ final class AudioEngine {
         recovery.reset()
         configure(input: input)
         if let project { publish(project) }
+        cameBack()
     }
 
     /// Rebuilds the graph when iOS stopped it without telling (an interruption without `.ended`),
@@ -369,6 +382,7 @@ final class AudioEngine {
         step("engine: stopped underneath, rebuilding", because: reason)
         recovery.reset()
         configure(input: wantsInput)
+        cameBack()
     }
 
     /// The app went to the background. With nothing playing, recording or following a connected
@@ -401,6 +415,9 @@ final class AudioEngine {
     /// The graph is built and the audio session runs it: opening the input now can succeed. Not
     /// during a call, Siri or a lost audio system, which stop the engine under the app.
     var isUp: Bool { isRunning && engine.isRunning }
+    /// The input can be opened now: the audio runs, and the app is in front — iOS does not let an
+    /// app start recording from the background, so the foreground return opens it (`onAudioBack`).
+    var canOpenInputNow: Bool { isUp && !isInBackground }
 
     /// Opens the input for recording, asking for microphone permission first. False when it is
     /// denied or the interface cannot be used; playback keeps running either way.
@@ -427,8 +444,10 @@ final class AudioEngine {
             return false
         }
         if keepingPosition {
-            // The answer can take a moment: the song may play again, or the input be open by now.
-            guard !isPlaying else { return false }
+            // The answer can take a moment: the song may play again, or the input be open by now,
+            // or a call or the background may have taken the audio — then it waits for its return
+            // (`onAudioBack`) instead of raising the session under them (fourth night review).
+            guard !isPlaying, canOpenInputNow || isInputOpen else { return false }
             if isInputOpen {
                 wantsInput = true
                 return true
@@ -634,6 +653,7 @@ final class AudioEngine {
                 guard !Task.isCancelled, let self, self.wantsAudio, !self.isRunning,
                       self.suspendedInput == nil, self.mayRebuildNow else { return }
                 self.configure(input: self.wantsInput)
+                self.cameBack()
             }
         }
     }
