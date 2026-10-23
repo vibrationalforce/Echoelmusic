@@ -265,4 +265,19 @@ final class AgentToolsTests: XCTestCase {
             XCTAssertTrue(AgentTools.describe(store.project).contains("clips at bars 1–65 (one 1-bar clip, 65 times), bar 71."))
         }
     }
+
+    /// A repeated clip that is not whole bars is named in beats: the 4/4 bars of a song switched
+    /// to 3/4 are four beats each, and 65 of them run to bar 87 (review 2026-10-23).
+    func testARepeatedClipThatIsNotWholeBarsIsNamedInBeats() async throws {
+        try await MainActor.run {
+            let store = ProjectStore()
+            try AgentToolsTests.run([
+                .addTrack(name: "Drums", kind: "drums", sound: nil),
+                .repeatClip(track: "1", bar: 1, times: 64),
+            ], on: store)
+            try store.perform([.setTimeSignature(TimeSignature(3, 4))], title: "3/4")
+            let text = AgentTools.describe(store.project)
+            XCTAssertTrue(text.contains("clips at bars 1–87 (one 4-beat clip, 65 times)."), text)
+        }
+    }
 }

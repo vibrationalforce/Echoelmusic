@@ -298,7 +298,7 @@ public enum AgentTools {
             case .audio: parts.append("audio")
             case .returnTrack: parts.append("return")
             }
-            let bars = clipRanges(of: track, bar: bar)
+            let bars = clipRanges(of: track, bar: bar, beat: MusicalTime.ticksPerBeat(project.timeSignature))
             if !bars.isEmpty {
                 let listed = bars.prefix(describedRanges).joined(separator: ", ")
                 let more = bars.count - describedRanges
@@ -317,7 +317,9 @@ public enum AgentTools {
 
     /// The bars where a track's clips play, one entry per run of the same clip back to back:
     /// "bar 3", "bars 1–4", "bars 1–65 (one 1-bar clip, 65 times)".
-    private static func clipRanges(of track: Track, bar: Tick) -> [String] {
+    /// A repeated clip is named by its length: in bars when it is whole bars, else in beats — a
+    /// 4/4 bar in a 3/4 song is four beats, not "1 bar" (review 2026-10-23).
+    private static func clipRanges(of track: Track, bar: Tick, beat: Tick) -> [String] {
         var ranges: [String] = []
         var run: (clip: ClipID, length: Tick, start: Tick, end: Tick, count: Int)?
         func close() {
@@ -325,8 +327,10 @@ public enum AgentTools {
             let first = open.start / bar + 1, last = (open.end - 1) / bar + 1
             var text = first == last ? "bar \(first)" : "bars \(first)–\(last)"
             if open.count > 1 {
-                let bars = Swift.max(1, open.length / bar)
-                text += " (one \(bars)-bar clip, \(open.count) times)"
+                let size = open.length % bar == 0
+                    ? "\(open.length / bar)-bar"
+                    : "\(format(Double(open.length) / Double(Swift.max(beat, 1))))-beat"
+                text += " (one \(size) clip, \(open.count) times)"
             }
             ranges.append(text)
         }
