@@ -123,7 +123,7 @@ final class AudioEngine {
     }
 
     /// The device's own speaker or earpiece, where a monitored microphone would howl.
-    private var outputIsBuiltIn: Bool {
+    var outputIsBuiltIn: Bool {
         AVAudioSession.sharedInstance().currentRoute.outputs.contains {
             $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
         }
@@ -205,6 +205,8 @@ final class AudioEngine {
                     self.pauseFromOutside("Paused: the headphones or the audio interface were disconnected.")
                 }
                 if let project = self.project { self.publish(project) }
+                // Headphones in: a song that monitors always and waited for them opens its input.
+                if !self.outputIsBuiltIn { self.cameBack() }
             }
         }
         resetObserver = NotificationCenter.default.addObserver(
@@ -273,9 +275,10 @@ final class AudioEngine {
     /// clock moves its playhead; the record controller ends a running take there, so it never
     /// runs on over a paused song (R10) or across a jump.
     @ObservationIgnored var onPausedFromOutside: (() -> Void)?
-    /// The graph came back up after it was down — the launch, a call's end, a reset, the
-    /// foreground return, a retry or Restart audio: what waited for the audio can go on now (a
-    /// song that monitors always opens its input).
+    /// The graph came back up after it was down — the launch, a call's end, a reset, a new
+    /// interface, the foreground return, a retry or Restart audio — or the output moved off the
+    /// device's speaker: what waited for the audio can go on now (a song that monitors always
+    /// opens its input).
     @ObservationIgnored var onAudioBack: (() -> Void)?
     /// The input could not be opened again while a take recorded; playback goes on without it.
     /// The recording controller ends the take there, with what it captured.
@@ -340,6 +343,7 @@ final class AudioEngine {
         step("engine: configuration change", [("ch", Double(output.channelCount)), ("Hz", output.sampleRate)])
         if engine.isRunning, channels == outputChannels, output.sampleRate == core?.sampleRate { return }
         configure(input: wantsInput)
+        cameBack()
     }
 
     /// Channels the graph renders: at least the stereo pair, at most what a track can name.
@@ -409,10 +413,15 @@ final class AudioEngine {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    /// Back in the foreground, or asked to play while suspended: the graph as it was.
+    /// Back in the foreground, or asked to play while suspended: the graph as it was. A graph that
+    /// stayed up through the background — a followed clock keeps it — did not come back, but what
+    /// waited for the app to be in front can go on now: the input opens only there (fifth night
+    /// review, 2026-10-23: a song that monitors always stayed deaf for the clock's next run).
     func enterForeground() {
+        let stayedUp = isUp
         isInBackground = false
         wake("foreground")
+        if stayedUp { cameBack() }
     }
 
     /// The graph is built and the audio session runs it: opening the input now can succeed. Not
