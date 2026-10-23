@@ -65,11 +65,10 @@ enum AudioFileImport {
         let buffer: SampleBuffer
     }
 
-    /// Copies `source` into the `Media` folder of the song package at `package` under a fresh
-    /// id, decodes the copy, and describes it for `media.add`. Nothing is left behind when the
+    /// Copies `source` into the `Media` folder of the song package at `package` under the fresh
+    /// `id`, decodes the copy, and describes it for `media.add`. Nothing is left behind when the
     /// file turns out to be unreadable.
-    static func importFile(_ source: URL, into package: URL) throws -> Imported {
-        let id = MediaID()
+    static func importFile(_ source: URL, into package: URL, id: MediaID = MediaID()) throws -> Imported {
         let path = "\(MediaFile.directory)/\(id).\(fileExtension(of: source))"
         let name = displayName(of: source)
         let probe = MediaFile(id: id, name: name, path: path, frameCount: 1, sampleRate: 1)

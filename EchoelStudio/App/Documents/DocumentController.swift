@@ -104,10 +104,12 @@ final class DocumentController {
     /// The identity the open song's package had before its name was taken, so the package is
     /// recognised if it comes back into the library while the song waits at a free name.
     @ObservationIgnored private var formerIdentity: ProjectLibrary.PackageIdentity?
-    /// The free-name folder a take or an import of the open song wrote into before its own package
-    /// came back: its audio moves into the package once nothing reads or writes there
-    /// (`gatherLeftBehind`), or the song would miss it at the next open (fifth night review).
+    /// The free-name folder a take or an import of the open song still writes into, after the
+    /// song's own package came back and everything else there moved in (`gather`): its last files
+    /// move in when that work lands (`settleLeftBehind`).
     @ObservationIgnored private var leftBehind: URL?
+    /// The import copying into the package right now, so a gather leaves its file to the import.
+    @ObservationIgnored private var importingMedia: MediaID?
     /// The open song was sent to a free name and is not written there yet, so nothing at its path
     /// is its own but a folder a take or an import made: a song that arrived there meanwhile —
     /// received, brought back by the earlier-songs import, renamed to that name in Files — is
@@ -616,8 +618,9 @@ final class DocumentController {
         // `autosaveLongest`, not at every change.
         firstUnsavedChange = nil
         // Before the check below: a rename written while the package was busy still has to move
-        // it, though nothing is left to write.
+        // it, though nothing is left to write; and audio still at a free name moves in.
         followRenamedSong()
+        settleLeftBehind()
         guard currentURL != nil, store.project != savedProject else {
             // Undo back to the written state leaves nothing unsaved.
             saveError = nil
@@ -736,22 +739,22 @@ final class DocumentController {
     @discardableResult
     private func followMovedPackage() -> String? {
         guard !isUnwritten, let url = currentURL else { return nil }
-        if leftBehind != nil, !packageIsBusy { gatherLeftBehind() }
         let name = url.deletingPathExtension().lastPathComponent
         if awaitsFirstWriteAtFreeName {
             // The song's own package back in the library, under whatever name — moved back in
             // Files: the song follows it and is written there with its audio again (fourth night
             // review, 2026-10-23: it was split off as a new song without its media). What a take
-            // or an import wrote at the free name meanwhile goes along (fifth night review).
+            // or an import wrote at the free name meanwhile goes along at once, where the song is
+            // now; a file still being written moves when it lands (fifth and sixth night reviews).
             if let formerIdentity, let back = library.package(formerIdentity) {
                 log.info("the open song's package came back into the library; it follows")
                 packageIdentity = formerIdentity
                 nameTakenFrom = nil
                 self.formerIdentity = nil
-                if starterMadeFolder, back != url { leftBehind = url }
+                let made = starterMadeFolder && back != url
                 starterMadeFolder = false
                 if back != url { packageMoved(from: url, to: back) }
-                if leftBehind != nil, !packageIsBusy { gatherLeftBehind() }
+                if made { gather(from: url) }
                 return nil
             }
             // No identity of its own there yet: a document at the free name is another song's, and
@@ -788,20 +791,28 @@ final class DocumentController {
         }
     }
 
-    /// Moves the audio a take or an import wrote into `leftBehind` into the package the song writes
-    /// to now, and removes the folder once only its empty Media folder is left. A file that cannot
-    /// move stays there, and the line says where.
-    private func gatherLeftBehind() {
-        guard let folder = leftBehind else { return }
-        leftBehind = nil
+    /// Moves the audio a take or an import of the open song wrote into `folder` — the free name it
+    /// waited at — into the package it writes to now, at once, so neither a song switch nor the
+    /// app's end can leave it behind (sixth night review, 2026-10-23: deferred, it went missing,
+    /// or into a package path that was stale by then). A take or an import still writing there is
+    /// left to move its own file when it lands (`bring`, `settleLeftBehind`). A file that cannot
+    /// move stays, and the line says where; the folder goes only when nothing is left in it.
+    private func gather(from folder: URL) {
         guard let here = currentURL, folder != here else { return }
         let fm = FileManager.default
         // A document there is another song's that arrived since: nothing in it is touched.
         guard !fm.fileExists(atPath: folder.appendingPathComponent(ProjectLibrary.documentName).path) else { return }
         let media = folder.appendingPathComponent(MediaFile.directory)
         let names = (try? fm.contentsOfDirectory(atPath: media.path)) ?? []
+        var writing = Set(takesInFlight.map { "\($0)" })
+        if let importingMedia { writing.insert("\(importingMedia)") }
         var stayed = 0
+        var waiting = false
         for name in names {
+            if writing.contains((name as NSString).deletingPathExtension) {
+                waiting = true
+                continue
+            }
             let target = here.appendingPathComponent(MediaFile.directory).appendingPathComponent(name)
             if !bring(media.appendingPathComponent(name), to: target, into: here) { stayed += 1 }
         }
@@ -810,8 +821,22 @@ final class DocumentController {
             lastError = lastError.map { "\($0) \(line)" } ?? line
             return
         }
-        let left = (try? fm.contentsOfDirectory(atPath: folder.path)) ?? []
-        if left.isEmpty || left == [MediaFile.directory] { try? fm.removeItem(at: folder) }
+        if waiting {
+            leftBehind = folder
+            return
+        }
+        // Only empty folders go: a remove of a folder that still holds anything would take it along.
+        if (try? fm.contentsOfDirectory(atPath: media.path))?.isEmpty == true { try? fm.removeItem(at: media) }
+        if (try? fm.contentsOfDirectory(atPath: folder.path))?.isEmpty == true { try? fm.removeItem(at: folder) }
+    }
+
+    /// A take or an import that wrote into `leftBehind` has landed: what is left there moves in,
+    /// where the song is now, and the folder goes.
+    private func settleLeftBehind() {
+        guard let folder = leftBehind, !isImporting, takesInFlight.isEmpty else { return }
+        leftBehind = nil
+        followMovedPackage()
+        gather(from: folder)
     }
 
     /// Moves the audio file at `source` to `target` in the package at `here`, unless it is there
@@ -1312,16 +1337,20 @@ final class DocumentController {
         guard let package = currentURL else { return nil }
         let song = songsOpened
         if isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }   // the import below makes it
+        let id = MediaID()
         isImporting = true
+        importingMedia = id
         defer {
             isImporting = false
+            importingMedia = nil
             followRenamedSong()
+            settleLeftBehind()
         }
         let result: Result<AudioFileImport.Imported, Error> = await Task.detached(priority: .userInitiated) {
             // A file picked outside the app is readable only inside this scope.
             let scoped = source.startAccessingSecurityScopedResource()
             defer { if scoped { source.stopAccessingSecurityScopedResource() } }
-            return Result { try AudioFileImport.importFile(source, into: package) }
+            return Result { try AudioFileImport.importFile(source, into: package, id: id) }
         }.value
         // Another song opened meanwhile drops the import; the same song followed to a new name in
         // Files keeps it — its copy moved with the package (second night review, 2026-10-23). A
@@ -1413,6 +1442,7 @@ final class DocumentController {
     private func takeLanded(_ id: MediaID) {
         takesInFlight.remove(id)
         guard takesInFlight.isEmpty else { return }
+        settleLeftBehind()
         let waiting = takeWaiters
         takeWaiters = []
         for waiter in waiting { waiter.resume() }
