@@ -94,7 +94,8 @@ extension Project {
     }
 
     /// The files to decode within `budget` bytes. What the song plays comes first — the audio
-    /// regions and audio clips track by track, then the samples of tracks the sampler plays —
+    /// regions and the audio clips in a slot track by track, then the samples of tracks the
+    /// sampler plays (`audibleMedia`) —
     /// then the rest in the song's order (a sample kept for a track that plays another device, a
     /// file no region uses any more). A file that no longer fits is skipped, and a smaller one
     /// after it can still fit.
@@ -123,11 +124,14 @@ extension Project {
         return plan
     }
 
-    /// The files the song plays, in the order a load plan takes them: the audio regions and audio
-    /// clips track by track, then the samples of tracks the sampler plays. May repeat an id.
+    /// The files the song plays, in the order a load plan takes them: the audio regions and the
+    /// audio clips in a slot or placed, track by track, then the samples of tracks the sampler
+    /// plays. A clip in no slot plays nowhere, so it is a leftover too (second night review,
+    /// 2026-10-23). May repeat an id.
     public var audibleMedia: [MediaID] {
         let played: [MediaID] = tracks.flatMap { (track: Track) -> [MediaID] in
-            track.regions.map(\.media) + track.clips.compactMap { $0.audio?.media }
+            let used = Set(track.slots.map(\.clip) + track.placements.map(\.clip))
+            return track.regions.map(\.media) + track.clips.filter { used.contains($0.id) }.compactMap { $0.audio?.media }
         }
         let samples: [MediaID] = tracks.compactMap { (track: Track) -> MediaID? in
             track.instrument.device == .sampler ? track.instrument.sample : nil

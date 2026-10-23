@@ -139,6 +139,25 @@ final class MediaTests: XCTestCase {
         XCTAssertEqual(p.newlySilencedMedia(budget: budget, comparedTo: after), [], "a leftover going out is heard by no one")
     }
 
+    /// An audio clip plays while it sits in a slot; taken out of every slot it is a leftover, and
+    /// its file is not named silent when it does not fit.
+    func testAnAudioClipPlaysWhileItIsInASlot() throws {
+        var p = Project()
+        let audio = TrackID(), clip = ClipID(), scene = SceneID()
+        try Command.addTrack(id: audio, name: "Audio", kind: .audio, index: nil).apply(to: &p)
+        try Command.addScene(id: scene, name: "A", index: nil).apply(to: &p)
+        let loop = file(path: "Media/loop.wav", frames: 1_000)
+        try Command.addMedia(loop).apply(to: &p)
+        try Command.createAudioClip(track: audio, id: clip, name: "Loop", length: 3_840,
+                                    audio: ClipAudio(media: loop.id, length: 1_000)).apply(to: &p)
+        XCTAssertEqual(p.audibleMedia, [], "a clip in no slot plays nowhere")
+        try Command.setSlot(track: audio, scene: scene, clip: clip).apply(to: &p)
+        XCTAssertEqual(p.audibleMedia, [loop.id])
+        XCTAssertEqual(p.mediaLoadPlan(budget: 0).silenced.map(\.id), [loop.id])
+        try Command.setSlot(track: audio, scene: scene, clip: nil).apply(to: &p)
+        XCTAssertEqual(p.mediaLoadPlan(budget: 0).silenced, [], "out of every slot, nothing plays it")
+    }
+
     func testADuplicateIDIsRefused() throws {
         var (p, _) = try project()
         let f = file()
