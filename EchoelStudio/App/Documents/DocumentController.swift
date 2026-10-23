@@ -697,9 +697,11 @@ final class DocumentController {
             return
         }
         guard fileName.shouldMove(for: name, busy: packageIsBusy), let url = currentURL else { return }
-        if isUnwritten && (!starterMadeFolder || !FileManager.default.fileExists(atPath: url.path)) {
-            // Nothing on disk is the starter's yet, so there is nothing to move: it only takes
-            // another free name. A folder there that it did not make is another song's.
+        if (isUnwritten || awaitsFirstWriteAtFreeName)
+            && (!starterMadeFolder || !FileManager.default.fileExists(atPath: url.path)) {
+            // Nothing on disk is the song's yet — the starter's, or a song waiting at a free name —
+            // so there is nothing to move: it only takes another free name. A folder there that it
+            // did not make is another song's, and is never renamed (fifth night review, 2026-10-23).
             fileName.followed(name)
             currentURL = library.newURL(for: name)
             starterMadeFolder = false
