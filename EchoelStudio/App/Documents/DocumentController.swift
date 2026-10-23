@@ -77,6 +77,9 @@ final class DocumentController {
     /// The open song's audio files, decoded, for the engine and the export. A file that is
     /// missing or unreadable is simply absent, and its track stays silent.
     @ObservationIgnored private(set) var samples: [MediaID: SampleBuffer] = [:]
+    /// The open song's audio files its memory plan left out: an export names them for what they
+    /// are, not as missing.
+    @ObservationIgnored private var unfitMedia: Set<MediaID> = []
 
     @ObservationIgnored private let library: ProjectLibrary
     @ObservationIgnored private let store: ProjectStore
@@ -768,7 +771,7 @@ final class DocumentController {
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
         let buffers = samples
-        let unread = Self.unreadMedia(in: project, buffers: buffers)
+        let unread = Self.unreadMedia(in: project, buffers: buffers, unfit: unfitMedia)
         let offline = await plugins.offlineUnits(for: project, sampleRate: rate)
         let name = ProjectLibrary.safeFileName(for: songName)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
@@ -846,7 +849,7 @@ final class DocumentController {
         try? store.absorb(plugins.captureCommands(for: store.project))
         let project = store.project
         let buffers = samples
-        let unread = Self.unreadMedia(in: project, buffers: buffers)
+        let unread = Self.unreadMedia(in: project, buffers: buffers, unfit: unfitMedia)
         let stems = OfflineRender.stems(of: project, samples: buffers)
         guard !stems.isEmpty else {
             lastExportIsNews = false
@@ -941,11 +944,24 @@ final class DocumentController {
         try writer.finish()
     }
 
+    /// The audio files an export renders as silence, by name, and why.
+    private struct UnheardAudio {
+        /// Missing from the song package or not decodable.
+        var missing: [String] = []
+        /// Left out by the song's memory plan on this device.
+        var unfit: [String] = []
+        var isEmpty: Bool { missing.isEmpty && unfit.isEmpty }
+    }
+
+    /// Why a file is left out when the song holds more audio than the device keeps.
+    private static let overBudget = "The song holds more audio than Echoel can keep in memory on this device."
+
     /// The audio files the arrangement plays that did not decode, by name: they render as
-    /// silence, and the export says which. Only what it plays — a region, a placed audio clip, a
-    /// sampler's sample; a file left in the song by a deleted region, or played only in the
-    /// session, is not in the file (review 2026-10-22).
-    private static func unreadMedia(in project: Project, buffers: [MediaID: SampleBuffer]) -> [String] {
+    /// silence, and the export says which and why. Only what it plays — a region, a placed audio
+    /// clip, a sampler's sample; a file left in the song by a deleted region, or played only in
+    /// the session, is not in the file (review 2026-10-22).
+    private static func unreadMedia(in project: Project, buffers: [MediaID: SampleBuffer],
+                                    unfit: Set<MediaID>) -> UnheardAudio {
         let played = Set(project.tracks.flatMap { track -> [MediaID] in
             let placed = Set(track.placements.map(\.clip))
             var media = track.regions.map(\.media)
@@ -953,27 +969,44 @@ final class DocumentController {
             if track.instrument.device == .sampler, let sample = track.instrument.sample { media.append(sample) }
             return media
         })
-        return project.media.filter { played.contains($0.id) && buffers[$0.id] == nil }.map(\.name)
+        var unheard = UnheardAudio()
+        for file in project.media where played.contains(file.id) && buffers[file.id] == nil {
+            if unfit.contains(file.id) { unheard.unfit.append(file.name) } else { unheard.missing.append(file.name) }
+        }
+        return unheard
     }
 
     /// The line naming what an export was made without, or nil when it lacks nothing.
-    private static func exportedWithout(plugins missing: [String], audio unread: [String]) -> String? {
+    private static func exportedWithout(plugins missing: [String], audio unread: UnheardAudio) -> String? {
         var without: [String] = []
         if !missing.isEmpty {
             without.append("Exported without \(missing.joined(separator: ", ")): not available on this device.")
         }
-        if !unread.isEmpty {
-            without.append("Exported without \(audioFiles(unread)): missing or unreadable in the song.")
+        if !unread.missing.isEmpty {
+            without.append("Exported without \(audioFiles(unread.missing)): missing or unreadable in the song.")
+        }
+        if !unread.unfit.isEmpty {
+            without.append("Exported without \(audioFiles(unread.unfit)), not loaded: \(overBudget)")
         }
         return without.isEmpty ? nil : without.joined(separator: " ")
     }
 
-    /// The render came out empty, so there is no file: an audio file that did not decode, or a
-    /// region that starts past the end of its file. An empty WAV is no export (review 2026-10-22).
-    private static func nothingToExport(audio unread: [String]) -> String {
-        unread.isEmpty
+    /// The render came out empty, so there is no file: an audio file that did not decode or did
+    /// not fit, or a region that starts past the end of its file. An empty WAV is no export
+    /// (review 2026-10-22).
+    private static func nothingToExport(audio unread: UnheardAudio) -> String {
+        var why: [String] = []
+        if !unread.missing.isEmpty {
+            let verb = unread.missing.count == 1 ? "is" : "are"
+            why.append("\(audioFiles(unread.missing)) \(verb) missing or unreadable in the song.")
+        }
+        if !unread.unfit.isEmpty {
+            let verb = unread.unfit.count == 1 ? "is" : "are"
+            why.append("\(audioFiles(unread.unfit)) \(verb) not loaded. \(overBudget)")
+        }
+        return why.isEmpty
             ? "Nothing to export: what the arrangement holds renders no sound."
-            : "Nothing to export: \(audioFiles(unread)) \(unread.count == 1 ? "is" : "are") missing or unreadable in the song."
+            : "Nothing to export: " + why.joined(separator: " ")
     }
 
     /// "the audio file “A”", or up to three names and how many more.
@@ -1298,6 +1331,7 @@ final class DocumentController {
         mediaLoad = nil
         isLoadingMedia = false
         samples = [:]
+        unfitMedia = []
         mediaRevision += 1
         guard let package = currentURL, !project.media.isEmpty else { return }
         let files = project.media
@@ -1307,9 +1341,9 @@ final class DocumentController {
         mediaLoad = Task { [weak self] in
             // Another song opening cancels this, and the decode stops after the file it is on: a
             // song switch must not wait for the last song's audio (review 2026-10-22).
-            let work = Task.detached(priority: .userInitiated) { () -> (decoded: [MediaID: SampleBuffer], unfit: [String]) in
+            let work = Task.detached(priority: .userInitiated) { () -> (decoded: [MediaID: SampleBuffer], unfit: [MediaFile]) in
                 var decoded: [MediaID: SampleBuffer] = [:]
-                var unfit = plan.skipped.map(\.name)
+                var unfit = plan.skipped
                 var used = 0
                 for file in plan.load {
                     if Task.isCancelled { break }
@@ -1322,7 +1356,7 @@ final class DocumentController {
                     do {
                         buffer = try AudioFileImport.decode(url, maximumSeconds: .infinity, maximumFrames: room)
                     } catch AudioFileImport.ImportError.tooLong {
-                        unfit.append(file.name)
+                        unfit.append(file)
                         continue
                     } catch {
                         continue
@@ -1342,9 +1376,10 @@ final class DocumentController {
             if !loaded.unfit.isEmpty {
                 self.log.error("media: \(loaded.unfit.count, privacy: .public) file(s) past the song's memory budget")
                 // Beside, not over, what the open said (a move the song still owes).
-                let line = "Not loaded, so silent: \(DocumentController.audioFiles(loaded.unfit)). The song holds more audio than Echoel can keep in memory on this device."
+                let line = "Not loaded, so silent: \(DocumentController.audioFiles(loaded.unfit.map(\.name))). \(DocumentController.overBudget)"
                 self.lastError = self.lastError.map { "\($0) \(line)" } ?? line
             }
+            self.unfitMedia = Set(loaded.unfit.map(\.id))
             self.samples.merge(loaded.decoded) { current, _ in current }
             self.mediaRevision += 1
             self.followRenamedSong()
