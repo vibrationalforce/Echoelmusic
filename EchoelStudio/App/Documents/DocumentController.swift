@@ -1271,8 +1271,10 @@ final class DocumentController {
         }
     }
 
-    /// Decodes every audio file of the song just opened, off the main thread. The previous
-    /// song's buffers are dropped at once; the engine's snapshot keeps any it still plays.
+    /// Decodes the audio files of the song just opened, off the main thread, as many as fit in
+    /// `AudioFileImport.songBudgetBytes` — what the song plays first (`Project.mediaLoadPlan`).
+    /// The rest stay silent and the status line names them. The previous song's buffers are
+    /// dropped at once; the engine's snapshot keeps any it still plays.
     private func loadMedia(of project: Project) {
         mediaLoad?.cancel()
         // An export waits for this; a song without media leaves nothing to wait for.
@@ -1282,28 +1284,46 @@ final class DocumentController {
         mediaRevision += 1
         guard let package = currentURL, !project.media.isEmpty else { return }
         let files = project.media
+        let budget = AudioFileImport.songBudgetBytes
+        let plan = project.mediaLoadPlan(budget: budget)
         isLoadingMedia = true
         mediaLoad = Task { [weak self] in
             // Another song opening cancels this, and the decode stops after the file it is on: a
             // song switch must not wait for the last song's audio (review 2026-10-22).
-            let work = Task.detached(priority: .userInitiated) {
+            let work = Task.detached(priority: .userInitiated) { () -> (decoded: [MediaID: SampleBuffer], unfit: [String]) in
                 var decoded: [MediaID: SampleBuffer] = [:]
-                for file in files {
+                var unfit = plan.skipped.map(\.name)
+                var used = 0
+                for file in plan.load {
                     if Task.isCancelled { break }
                     guard let url = file.url(in: package),
                           let buffer = try? AudioFileImport.decode(url) else { continue }
+                    // The plan trusts the length the song states; a file longer than that is
+                    // measured here, so the budget holds for a song from anywhere.
+                    let cost = buffer.frameCount * Project.decodedBytesPerFrame
+                    guard cost <= budget - used else {
+                        unfit.append(file.name)
+                        continue
+                    }
+                    used += cost
                     decoded[file.id] = buffer
                 }
-                return decoded
+                return (decoded: decoded, unfit: unfit)
             }
             let loaded = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
             // Not cancelled, this is still the song's load: another song's load cancels it first.
             guard let self, !Task.isCancelled else { return }
             self.isLoadingMedia = false
             guard self.currentURL == package else { return }
-            let missing = files.count - loaded.count
+            let missing = files.count - loaded.decoded.count - loaded.unfit.count
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
-            self.samples.merge(loaded) { current, _ in current }
+            if !loaded.unfit.isEmpty {
+                self.log.error("media: \(loaded.unfit.count, privacy: .public) file(s) past the song's memory budget")
+                // Beside, not over, what the open said (a move the song still owes).
+                let line = "Not loaded, so silent: \(DocumentController.audioFiles(loaded.unfit)). The song holds more audio than Echoel can keep in memory on this device."
+                self.lastError = self.lastError.map { "\($0) \(line)" } ?? line
+            }
+            self.samples.merge(loaded.decoded) { current, _ in current }
             self.mediaRevision += 1
             self.followRenamedSong()
         }

@@ -12,6 +12,14 @@ enum AudioFileImport {
     /// The longest file a sampler takes: ten minutes, about 115 MB of mono floats at 48 kHz.
     static let maximumSeconds: Double = 600
 
+    /// How much decoded audio one song keeps in memory: a quarter of the device's memory, at
+    /// least 512 MiB and at most 2 GiB. A song opens with all its audio decoded, so without a
+    /// limit enough long files end the app on every open (ultra-audit R9).
+    static let songBudgetBytes: Int = {
+        let quarter = ProcessInfo.processInfo.physicalMemory / 4
+        return Int(Swift.min(Swift.max(quarter, 512 << 20), 2 << 30))
+    }()
+
     enum ImportError: LocalizedError {
         case unreadable
         case empty
