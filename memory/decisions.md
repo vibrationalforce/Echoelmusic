@@ -5685,3 +5685,10 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Warum:** Ein Wert `.builtin | .audioUnit` wäre ein Rückschritt — heute behält eine Spur ihr Plugin, während sie Synth, Drums oder Sampler spielt, und der Wechsel zurück stellt es her. Ein Umbau ohne Verhaltensänderung kostet Commits ohne Nutzen.
 - **Aufgeschoben:** `version` je eingebautem Gerät — ein zusätzliches Feld mit Formatwechsel, wenn eine DSP-Änderung alte Songs nicht verändern darf. Fehlerkorrekturen (Klickschutz, Glides der Nacht zum 23.10.) fallen nicht darunter.
 - **Review:** 2026-11-22.
+
+### 2026-10-23 — Studio: das eigene Mikro ist nur im Kopfhörer oder über ein Interface zu hören (Nachtprüfung 6)
+
+- **Entscheidung:** Mithören (auto und Always) läuft nur, wenn kein Ausgang der eingebaute Lautsprecher oder die Hörmuschel ist UND entweder der Eingang nicht das eingebaute Mikro ist (Headset-Mikro, Interface-Eingang) oder alle Ausgänge kabelgebundene Kopfhörer bzw. ein USB-Interface sind (`AudioEngine.monitoringCannotHowl`). Bluetooth, AirPlay, HDMI und Line-out zählen mit dem eingebauten Mikro also nicht als sicher. Die Record-Sitzung trägt `.allowAirPlay`, damit das Öffnen des Eingangs einen Song nicht vom AirPlay-Lautsprecher wirft.
+- **Warum:** Runde 6 fand, dass ein Bluetooth-/AirPlay-/HDMI-Lautsprecher als „kein Lautsprecher“ galt und so über das eingebaute Mikro pfeifen konnte. Die zwei vorherigen Reparaturen (Lautsprecher-Sperre beim automatischen Öffnen, Route-Wechsel als Auslöser) erzeugten selbst Fehler — ein auf dem Lautsprecher gestarteter Always-Song blieb nach dem Einstecken von Kopfhörern bis Stop taub, und AirPlay/BT öffneten das Mikro von selbst. Sie sind zurückgenommen (edd04f7d7); eine Regel am Mithören selbst ersetzt beide (8195276c3). Bluetooth ist ohnehin 150–250 ms zu spät zum Mithören.
+- **Folge:** Ein Always-Song öffnet das Mikro auch auf dem Lautsprecher wieder (dort still). Welche Port-Typen USB-C-EarPods und der USB-C-Klinken-Adapter melden, ist eine Gerätefrage.
+- **Review:** 2026-11-22.
