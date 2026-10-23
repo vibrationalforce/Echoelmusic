@@ -1,20 +1,48 @@
 {
  "id": "009-earlier-app-notice",
  "title": "Hinweis „frühere App“ auf sieben Website-Seiten",
- "stage": "build",
+ "stage": "done",
  "round": 1,
  "base": "42d91ecfb54b987251777bb67e3649deb7472b8d",
- "lenses": ["code-reviewer", "security-agent", "ux"],
+ "lenses": [
+  "code-reviewer",
+  "security-agent",
+  "ux"
+ ],
  "paths": [
-  "docs/integrations.html", "docs/reaper-osc.html", "docs/resolume-osc.html", "docs/touchdesigner-osc.html",
-  "docs/artnet-sacn-from-a-phone.html", "docs/tools.html", "docs/support.html",
+  "docs/integrations.html",
+  "docs/reaper-osc.html",
+  "docs/resolume-osc.html",
+  "docs/touchdesigner-osc.html",
+  "docs/artnet-sacn-from-a-phone.html",
+  "docs/tools.html",
+  "docs/support.html",
   "scratchpads/factory/009-earlier-app-notice"
  ],
  "criteria": 5,
  "deviceCriteria": [],
  "founderAssumptions": 0,
  "history": [
-  {"stage": "spec", "date": "2026-10-23", "note": "Masterplan „Texte nach außen“: sieben App-Seiten ohne Studio-Hinweis, gemessen per grep; Wortlaut von brainstorming/press/index übernommen; zwei gemessene Abwesenheiten."},
-  {"stage": "build", "date": "2026-10-23", "note": "Ein Absatz je Seite unter der Überschrift, kein CSS, keine Überschrift. Lokal geprüft vor dem Push (Website-Delta)."}
- ]
+  {
+   "stage": "spec",
+   "date": "2026-10-23",
+   "note": "Masterplan „Texte nach außen“: sieben App-Seiten ohne Studio-Hinweis, gemessen per grep; Wortlaut von brainstorming/press/index übernommen; zwei gemessene Abwesenheiten."
+  },
+  {
+   "stage": "build",
+   "date": "2026-10-23",
+   "note": "Ein Absatz je Seite unter der Überschrift, kein CSS, keine Überschrift. Lokal geprüft vor dem Push (Website-Delta)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-23",
+   "note": "Runde 1 (wf_756e310a-c7c): drei Linsen PASS, Approver APPROVE, 5/5. Minors: der Roadmap-Link ist außerhalb von <section> nicht als Link sichtbar (shared.css a{text-decoration:none}, WCAG 1.4.1); auf tools steht der Hinweis nach dem Alt-App-Slogan; integrations nennt MIDI-Out nicht; margin-top auf support wirkungslos; support-Datenschutzantwort gilt auch für Studio."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-23",
+   "note": "Kopf 29bb6cc74 (ff in den Arbeitszweig). Kein Gate-Pfad; Kriterium 5 lokal gemessen: foreign-needles, dead-needles, moved-needles enden mit 0."
+  }
+ ],
+ "head": "29bb6cc74c872858d9469c66ead2d06705d2ea69"
 }

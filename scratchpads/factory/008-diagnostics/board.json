@@ -1,7 +1,7 @@
 {
  "id": "008-diagnostics",
  "title": "Diagnose-Log, das der Nutzer selbst exportiert (R3)",
- "stage": "build",
+ "stage": "done",
  "round": 1,
  "base": "f6143a92e67550bba8a2021458b81c6a7438c1bb",
  "lenses": [
@@ -31,6 +31,17 @@
    "stage": "build",
    "date": "2026-10-23",
    "note": "Core: DiagnosticLog + zehn Tests (Linux und macOS). App: DiagnosticLog.app im Documents/Diagnostics-Ordner, beginApp als erste Zeile von init, Szenenwechsel, AudioEngine: 29 os_log-Zeilen sind step/failed (Datei zuerst), neu Unterbrechung Beginn/Ende und Routenwechsel. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-23",
+   "note": "Runde 1 (wf_dca9ce6d-79c): vier Linsen PASS, Approver APPROVE, 10/10 Kriterien. Minors (strenges UTF-8 beim Lesen der ganzen Datei, Domain ungefiltert, Übernahme nur am Marker, Voll-Zeile ohne Zeit, Uhr unter dem Schloss, @State-Default vor init, .public-Beschreibung im os_log, Kopf „this run“ nach Absturz irreführend) gehen gesammelt in Job 010."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-23",
+   "note": "Kopf 42d91ecfb: Echoel Studio (macOS, inkl. App Simulator + Release-Gerätebuild) und Echoel Studio (Linux) grün. Nichts gerätegeprüft."
   }
- ]
+ ],
+ "head": "42d91ecfb54b987251777bb67e3649deb7472b8d"
 }
