@@ -1,0 +1,20 @@
+{
+ "id": "009-earlier-app-notice",
+ "title": "Hinweis „frühere App“ auf sieben Website-Seiten",
+ "stage": "build",
+ "round": 1,
+ "base": "42d91ecfb54b987251777bb67e3649deb7472b8d",
+ "lenses": ["code-reviewer", "security-agent", "ux"],
+ "paths": [
+  "docs/integrations.html", "docs/reaper-osc.html", "docs/resolume-osc.html", "docs/touchdesigner-osc.html",
+  "docs/artnet-sacn-from-a-phone.html", "docs/tools.html", "docs/support.html",
+  "scratchpads/factory/009-earlier-app-notice"
+ ],
+ "criteria": 5,
+ "deviceCriteria": [],
+ "founderAssumptions": 0,
+ "history": [
+  {"stage": "spec", "date": "2026-10-23", "note": "Masterplan „Texte nach außen“: sieben App-Seiten ohne Studio-Hinweis, gemessen per grep; Wortlaut von brainstorming/press/index übernommen; zwei gemessene Abwesenheiten."},
+  {"stage": "build", "date": "2026-10-23", "note": "Ein Absatz je Seite unter der Überschrift, kein CSS, keine Überschrift. Lokal geprüft vor dem Push (Website-Delta)."}
+ ]
+}
