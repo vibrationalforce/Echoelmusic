@@ -221,8 +221,14 @@ final class RecordController {
         let generation = store.documentGeneration
         var opened = engine.isInputOpen
         if !opened { opened = await engine.openInputKeepingPosition() }
-        guard store.documentGeneration == generation,
-              opened || (engine.canOpenInputNow && !engine.isPlaying) else { return }
+        guard store.documentGeneration == generation else {
+            // Another song opened during the microphone question, and its own check already ran
+            // while the input was still closed: it is asked again now, or the input stays open
+            // for a song that uses none (fourth night review, critic).
+            await inputFollowsSong()
+            return
+        }
+        guard opened || (engine.canOpenInputNow && !engine.isPlaying) else { return }
         seenGeneration = generation
     }
 
