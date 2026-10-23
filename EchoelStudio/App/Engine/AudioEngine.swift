@@ -1132,7 +1132,7 @@ final class AudioEngine {
             case .noFormat: "No usable audio format for the output."
             case let .inputUnusable(input, output):
                 input > 0
-                    ? "The input runs at \(Int(input)) Hz and the output at \(Int(output)) Hz; set both to the same rate."
+                    ? "The input runs at \(Int(input)) Hz and the output at \(Int(output)) Hz; set both to the same rate, then arm the track or choose Always again."
                     : "No audio input is available."
             case .inputClosed: "Arm a track before recording."
             }
