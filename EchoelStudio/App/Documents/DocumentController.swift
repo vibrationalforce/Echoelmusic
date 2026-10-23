@@ -1582,14 +1582,15 @@ final class DocumentController {
         }
         let silenced = store.project.newlySilencedMedia(budget: AudioFileImport.songBudgetBytes, comparedTo: before)
         if buffer == nil, committed {
-            // Named as not loaded in every export. Its own line only where no other line already
-            // says what the next open does with it — stranded, or past the budget — and never for a
-            // take the song refused (eighth night review, 2026-10-23).
-            unfitMedia[target.id] = .noFreeMemory
-            if strandedIn == nil, !silenced.contains(where: { $0.id == file.id }) {
-                let line = "\(file.name) is in the song but not loaded, so silent. \(Self.noFreeMemory)"
-                lastError = lastError.map { "\($0) \(line)" } ?? line
-            }
+            // Silent now is always said; the retry only where the next open makes one. A take past
+            // the budget is skipped by the next open's plan and named so in an export; a stranded
+            // one is missing there, as its own line says. Never for a take the song refused (eighth
+            // and ninth night reviews, 2026-10-23).
+            let pastBudget = silenced.contains { $0.id == file.id }
+            if strandedIn == nil { unfitMedia[target.id] = pastBudget ? .overBudget : .noFreeMemory }
+            let retry = strandedIn == nil && !pastBudget ? " \(Self.noFreeMemory)" : ""
+            let line = "\(file.name) is in the song but not loaded, so silent.\(retry)"
+            lastError = lastError.map { "\($0) \(line)" } ?? line
         }
         if !silenced.isEmpty {
             let line = "The song now holds more audio than Echoel can keep in memory on this device; the next time it opens, \(Self.audioFiles(silenced.map(\.name))) \(silenced.count == 1 ? "stays" : "stay") silent."
