@@ -991,7 +991,7 @@ final class DocumentController {
             // The loudness of an earlier export must not stand under this failure as its result.
             lastExportIsNews = false
             lastError = error as? WAVWriter.WriteError == .tooLong
-                ? "The song is longer than a WAV file can hold (about six hours)."
+                ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
                 : "Could not export the song."
             return nil
         }
@@ -1083,7 +1083,7 @@ final class DocumentController {
                 log.error("stem export failed — \(error.localizedDescription, privacy: .private)")
                 lastExportIsNews = false
                 lastError = error as? WAVWriter.WriteError == .tooLong
-                    ? "The song is longer than a WAV file can hold (about six hours)."
+                    ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
                     : "Could not export the stems."
             }
             return nil

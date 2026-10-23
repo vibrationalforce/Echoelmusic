@@ -228,8 +228,8 @@ public enum WAVFile {
         return out
     }
 
-    /// The most stereo frames one file can hold: RIFF counts its size in 32 bits (about six and a
-    /// half hours at 48 kHz in 24-bit).
+    /// The most stereo frames one file can hold: RIFF counts its size in 32 bits — about four
+    /// hours at 48 kHz in 24-bit (715,827,876 frames), six at 16-bit.
     public static func maximumFrames(_ bitDepth: BitDepth) -> Int {
         (Int(UInt32.max) - 36) / (2 * bitDepth.rawValue / 8)
     }
