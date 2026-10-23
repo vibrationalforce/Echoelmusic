@@ -524,7 +524,10 @@ final class AudioEngine {
             let session = AVAudioSession.sharedInstance()
             if input {
                 step("session: configure playAndRecord")
-                try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP])
+                // AirPlay allowed too: without it, opening the input moved a song playing on an
+                // AirPlay speaker back to the device's own speaker (sixth night review, 2026-10-23).
+                try session.setCategory(.playAndRecord, mode: .default,
+                                        options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowAirPlay])
             } else {
                 step("session: configure playback")
                 try session.setCategory(.playback, mode: .default, options: [])
