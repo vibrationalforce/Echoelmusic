@@ -141,7 +141,13 @@ public final class EngineCore: @unchecked Sendable {
     /// although Stop sends the playhead home — so release and effect tails ring out at the gains
     /// they were playing at, not at bar 1's (audit 2026-10-23). A seek while stopped and Play
     /// let the curves follow the playhead again.
-    private var stoppedAt: Double?
+    private var stoppedAt: Double? {
+        didSet { liveSinceStop.update(repeating: false, count: slotCapacity) }
+    }
+    /// Per slot: a key was played on it since the song stopped. That lane is new sound, heard at
+    /// the playhead's gains; every other lane and every return keeps ringing out where the song
+    /// stopped (second night review, 2026-10-23).
+    private let liveSinceStop: UnsafeMutablePointer<Bool>
     /// The gains each mix point ended the last chunk on (NaN: none yet), so every change —
     /// a hand on a fader, a MIDI knob, an automation jump after a seek — ramps over one chunk
     /// instead of stepping. Points: instrument slots, then audio tracks, then return buses.
@@ -229,6 +235,8 @@ public final class EngineCore: @unchecked Sendable {
         revisions.initialize(repeating: .max, count: self.slotCapacity)
         stale = .allocate(capacity: self.slotCapacity)
         stale.initialize(repeating: true, count: self.slotCapacity)
+        liveSinceStop = .allocate(capacity: self.slotCapacity)
+        liveSinceStop.initialize(repeating: false, count: self.slotCapacity)
         remapFade = .allocate(capacity: Self.smoothedAudioTracks)
         remapFade.initialize(repeating: 0, count: Self.smoothedAudioTracks)
         busLeft = .allocate(capacity: self.slotCapacity * Self.maximumFrames)
@@ -276,6 +284,7 @@ public final class EngineCore: @unchecked Sendable {
         sessions.deallocate()
         revisions.deallocate()
         stale.deallocate()
+        liveSinceStop.deallocate()
         remapFade.deallocate()
         gainMemory.deallocate()
         sendMemory.deallocate()
@@ -1031,9 +1040,10 @@ public final class EngineCore: @unchecked Sendable {
             let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
             guard slot < slotCapacity else { continue }
             let kind = status & 0xF0
-            // A note played after Stop is new sound, not a tail: the mix it plays through follows
-            // the playhead again instead of the gains where the song stopped (review 2026-10-23).
-            if kind == 0x90 && value > 0 { stoppedAt = nil }
+            // A note played after Stop is new sound, not a tail: its lane's mix follows the playhead
+            // again instead of the gains where the song stopped (review 2026-10-23) — that lane
+            // only, so the other lanes' and the returns' tails keep theirs.
+            if kind == 0x90 && value > 0, stoppedAt != nil { liveSinceStop[slot] = true }
             guard devices[slot] == .plugin else {
                 playLive(slot, kind: kind, pitch, value)
                 continue
@@ -1204,9 +1214,15 @@ public final class EngineCore: @unchecked Sendable {
             let (left, right) = pair(lane.output)
             let l = bus(lane.slot, busLeft), r = bus(lane.slot, busRight)
             for effect in lane.inserts { effect.process(frames: frames, left: l, right: r) }
+            let held = (mixFrom, mixTo)
+            if stoppedAt != nil, lane.slot >= 0, lane.slot < slotCapacity, liveSinceStop[lane.slot] {
+                mixFrom = snapshot.time.position(atSample: playhead)
+                mixTo = mixFrom
+            }
             mix(l, r, into: left, right, frames: frames, curve: lane.mix, fixed: (lane.gainLeft, lane.gainRight),
                 memory: memory(point: lane.slot), meter: lane.slot)
             send(lane.sends, from: lane.slot, frames: frames, left: l, right: r)
+            (mixFrom, mixTo) = held
             l.update(repeating: 0, count: frames)
             r.update(repeating: 0, count: frames)
         }

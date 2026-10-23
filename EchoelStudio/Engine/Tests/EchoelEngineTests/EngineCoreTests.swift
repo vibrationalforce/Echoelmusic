@@ -704,6 +704,32 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertGreaterThan(rms(heard[2_400..<4_800]), 0.01, "the key sounds at bar 1's level")
     }
 
+    /// A key played after Stop moves only its own lane to the playhead's gains: another track's
+    /// release, under a fade-in at bar 1, keeps ringing at the gain it stopped at (second night
+    /// review, 2026-10-23 — the key used to end the hold for the whole mix).
+    func testALiveNoteAfterStopLeavesTheOtherTracksTailsAlone() throws {
+        var levels: [Float] = []
+        for playsKey in [false, true] {
+            var s = try song([[Note(pitch: 48, start: 0, length: 8 * bar)], []])
+            try Command.setAutomation(.volume(s.tracks[0]), points: [
+                AutomationPoint(tick: 0, value: MixerStrip.volumeRange.lowerBound), AutomationPoint(tick: bar / 4, value: 0),
+            ]).apply(to: &s.project)
+            // The second track is silent, so what is heard is the first track's tail alone.
+            try Command.setVolume(.track(s.tracks[1]), db: MixerStrip.volumeRange.lowerBound).apply(to: &s.project)
+            let engine = core()
+            publish(s.project, to: engine)
+            engine.play()
+            _ = render(engine, frames: 2 * 96_000)
+            engine.stop()
+            _ = render(engine, frames: 1_024, block: 512)
+            if playsKey { engine.playLive(slot: 1, status: 0x90, 60, 100) }
+            let after = render(engine, frames: 2_048, block: 512).left
+            levels.append(rms(after[1_024..<2_048]))
+        }
+        XCTAssertGreaterThan(levels[0], 0.001, "the release rings after Stop")
+        XCTAssertGreaterThan(levels[1], levels[0] * 0.5, "and a key on another track does not cut it")
+    }
+
     func testACutoffLaneShapesTheSynth() throws {
         var open = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
         var closed = open
