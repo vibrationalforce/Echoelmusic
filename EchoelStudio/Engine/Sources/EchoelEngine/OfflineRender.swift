@@ -26,8 +26,11 @@ public enum OfflineRender {
 
     /// The longest a render goes on past the fixed tail while something still sounds.
     public static let maximumRingOutSeconds: Double = 30
-    /// A tail counts as rung out once this long stays below `quietLevel`.
-    static let quietSeconds: Double = 0.25
+    /// A tail counts as rung out once this long stays below `quietLevel`: longer than the
+    /// built-in delay's longest time, so a repeat that follows a silent gap is waited for — the
+    /// window was 0.25 s and cut every repeat of a slower delay (audit 2026-10-23). A plugin
+    /// effect that leaves a longer gap is not seen.
+    static let quietSeconds: Double = StereoDelay.maximumSeconds + 0.25
     /// −100 dBFS: below anything a 16-bit file can carry.
     static let quietLevel: Float = 1e-5
 
@@ -92,12 +95,20 @@ public enum OfflineRender {
         let block = Swift.max(1, blockFrames)
         let left = UnsafeMutablePointer<Float>.allocate(capacity: block)
         let right = UnsafeMutablePointer<Float>.allocate(capacity: block)
+        // Ring-out frames after the last audible one, held back: written only if sound follows
+        // them, so a file ends where its sound does, not on the quiet window. The loop stops
+        // before more than a window and a block are held.
+        let holdCapacity = ringOut > 0 ? quietFrames + block : 1
+        let heldLeft = UnsafeMutablePointer<Float>.allocate(capacity: holdCapacity)
+        let heldRight = UnsafeMutablePointer<Float>.allocate(capacity: holdCapacity)
         defer {
             left.deallocate()
             right.deallocate()
+            heldLeft.deallocate()
+            heldRight.deallocate()
         }
         var peak: Float = 0
-        var done = 0
+        var done = 0, written = 0, held = 0
         // One past the last sample that was still audible.
         var lastAudible = 0
         // The song and its fixed tail, then a block at a time while the tail still sounds.
@@ -111,10 +122,26 @@ public enum OfflineRender {
                 peak = Swift.max(peak, level)
                 if level >= quietLevel || !level.isFinite { lastAudible = done + i + 1 }
             }
-            try write(left, right, count)
+            if done < frames {
+                try write(left, right, count)
+                written += count
+            } else {
+                let audible = Swift.min(Swift.max(lastAudible - done, 0), count)
+                if audible > 0 {
+                    if held > 0 { try write(heldLeft, heldRight, held) }
+                    written += held
+                    held = 0
+                    try write(left, right, audible)
+                    written += audible
+                }
+                let rest = Swift.min(count - audible, holdCapacity - held)
+                (heldLeft + held).update(from: left + audible, count: rest)
+                (heldRight + held).update(from: right + audible, count: rest)
+                held += rest
+            }
             done += count
         }
-        return Summary(frameCount: done, sampleRate: rate, peak: peak)
+        return Summary(frameCount: written, sampleRate: rate, peak: peak)
     }
 }
 

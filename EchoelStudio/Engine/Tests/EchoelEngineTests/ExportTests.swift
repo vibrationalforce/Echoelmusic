@@ -1,6 +1,24 @@
 import EchoelCore
+import EchoelKernels
 import XCTest
 @testable import EchoelEngine
+
+/// A built-in effect kernel on an insert chain, the way its Audio Unit plays it.
+private final class KernelInsert: HostedProcessor, @unchecked Sendable {
+    let kernel: EffectKernel
+    let isBypassed = false
+    let insert: InsertID? = nil
+    let parameterRanges: [UInt64: ClosedRange<Float>] = [:]
+    var sampleRate: Double { kernel.sampleRate }
+
+    init(_ kernel: EffectKernel) { self.kernel = kernel }
+
+    func schedule(address: UInt64, value: Float, offset: Int, ramp: Int) {}
+
+    func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) {
+        kernel.process(left: left, right: right, frames: frames)
+    }
+}
 
 final class ExportTests: XCTestCase {
     private let bar = MusicalTime.ticksPerBar(.common)
@@ -41,6 +59,32 @@ final class ExportTests: XCTestCase {
 
         let cut = OfflineRender.render(song, sampleRate: rate, tailSeconds: 2, ringOutSeconds: 0)
         XCTAssertEqual(cut.frameCount, Int(2.5 * rate), "no ring-out keeps the fixed length")
+    }
+
+    /// A delay whose repeats lie further apart than a short silence: the export waits through
+    /// each gap for the next repeat instead of stopping in it, and the file still ends where the
+    /// last repeat dies away, not on the quiet window after it (audit 2026-10-23).
+    func testASlowDelaysRepeatsAreAllInTheExportAndItEndsWithThem() throws {
+        var song = try oneNoteSong(start: 0, length: 120)
+        let track = try XCTUnwrap(song.tracks.first?.id)
+        try Command.setInstrumentParameter(track, key: SynthParameter.release.key.rawValue, value: 0.01).apply(to: &song)
+        let rate = 48_000.0
+        let delay = KernelInsert(EffectKernel(effect: .delay, sampleRate: rate))
+        delay.kernel.setParameter(0, 1)     // time, seconds
+        delay.kernel.setParameter(1, 0.6)   // feedback
+        delay.kernel.setParameter(2, 0.5)   // mix
+        let result = OfflineRender.render(song, sampleRate: rate, tailSeconds: 2, effects: [track: [delay]])
+        func peak(_ seconds: ClosedRange<Double>) -> Float {
+            let from = Int(seconds.lowerBound * rate)
+            let to = Swift.min(Int(seconds.upperBound * rate), result.frameCount)
+            guard from < to else { return 0 }
+            return result.left[from..<to].reduce(Float(0)) { Swift.max($0, Swift.abs($1)) }
+        }
+        XCTAssertGreaterThan(peak(3.0...3.1), 1e-3, "the third repeat, after a silent gap past the fixed tail")
+        XCTAssertGreaterThan(peak(5.0...5.1), 1e-4, "and the fifth")
+        let last = try XCTUnwrap(result.left.indices.last)
+        let ending: Float = Swift.max(Swift.abs(result.left[last]), Swift.abs(result.right[last]))
+        XCTAssertGreaterThanOrEqual(ending, OfflineRender.quietLevel, "the file ends with the sound, not seconds after it")
     }
 
     func testAnEmptySongRendersNothing() {
