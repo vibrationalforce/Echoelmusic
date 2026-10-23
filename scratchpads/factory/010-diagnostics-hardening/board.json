@@ -1,7 +1,7 @@
 {
  "id": "010-diagnostics-hardening",
  "title": "Diagnose-Log härten (Minors aus Job 008)",
- "stage": "build",
+ "stage": "done",
  "round": 1,
  "base": "eb590a34007cfb182dcfcb4bdf6d9006363aa6c4",
  "lenses": [
@@ -30,6 +30,17 @@
    "stage": "build",
    "date": "2026-10-23",
    "note": "Core: tail/lastRun/ownLines/isOwn/domain, append(_:at:) rechnet die Voll-Zeile aus dem echten Stempel; vier neue Tests, drei angepasst. App: _plugins nach beginApp, failed .private. Kein Lauf vor dem Push (keine Swift-Toolchain)."
+  },
+  {
+   "stage": "review",
+   "date": "2026-10-23",
+   "note": "Runde 1 (wf_7897b747-bee): vier Linsen PASS, Approver APPROVE, 10/10. Minors: der Übergroß-Test unterschied Ende-Lesen nicht von Ganz-Lesen, die Doku versprach mehr als die Form-Prüfung hält, 2*capacity+64 konnte bei riesiger Kapazität überlaufen, die Voll-Zeile sagte noch „this run“, Zeilen in Schloss- statt Zeit-Reihenfolge (ohne Wirkung, alle Schreiber auf dem Main-Actor). Die ersten vier im Folge-Commit erledigt; 13 weitere os_log-.public-Beschreibungen in DocumentController/StoreController/AgentSession sind eine eigene Scheibe."
+  },
+  {
+   "stage": "done",
+   "date": "2026-10-23",
+   "note": "Kopf 5fa246424: Echoel Studio (39885512255, inkl. Simulator, Start-Rauchtest, Release-Gerätebuild) und Linux (39885512238) grün. Nichts gerätegeprüft."
   }
- ]
+ ],
+ "head": "5fa2464245b82ab5227d29cce2e8db208bb6a14d"
 }

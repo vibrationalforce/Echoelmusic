@@ -165,6 +165,21 @@ final class DiagnosticLogTests: XCTestCase {
         XCTAssertLessThanOrEqual(text.utf8.count, 2 * capacity + DiagnosticLog.runBeforeHeader.utf8.count + 1)
     }
 
+    /// The next launch reads only the end of the file: a run header and a line far before it, past
+    /// what two runs can take, are never read (review 010, round 1 — the oversize test could not
+    /// tell a tail read from a whole-file read).
+    func testOnlyTheEndOfTheFileIsRead() throws {
+        let url = try folder().appendingPathComponent("a.log")
+        let capacity = 1024
+        var text = DiagnosticLog.latestRunHeader + "\n2026-10-23T01:14:00.000Z  early: line\n"
+        text += String(repeating: "x", count: 40 * capacity) + "\n"
+        try Data(text.utf8).write(to: url)
+        let diagnostics = log(at: url, capacity: capacity)
+        diagnostics.begin(version: "11.0.0", build: "2")
+        XCTAssertFalse(diagnostics.text().contains("early: line"))
+        XCTAssertTrue(diagnostics.text().hasPrefix(DiagnosticLog.latestRunHeader + "\n"))
+    }
+
     /// An error domain is a developer's string; whatever it holds, the line stays one line.
     func testAnErrorDomainStaysOneShortLine() throws {
         let diagnostics = log(at: try folder().appendingPathComponent("a.log"))

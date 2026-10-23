@@ -11,8 +11,10 @@ import Foundation
 /// error writes its domain and code, never its description, which can carry a file's name; the
 /// domain — a developer's string, a type name for a Swift error — keeps letters, digits, dots,
 /// dashes and underscores only, the last 64 of them. The version and the build are kept to digits
-/// and dots. A run carried over keeps only lines that begin with this log's time stamp. So nothing
-/// a musician typed — a song's, a track's or a file's name — reaches the file through this type.
+/// and dots. So nothing a musician typed — a song's, a track's or a file's name — reaches the file
+/// through what this type writes. A run carried over keeps only lines in this log's shape (a time
+/// stamp, two spaces, no control character): text added to the file in Files in another shape does
+/// not move on, but a line typed in that exact shape would.
 ///
 /// Any thread but the render thread: a line takes a lock and writes to a file.
 public final class DiagnosticLog: @unchecked Sendable {
@@ -21,10 +23,11 @@ public final class DiagnosticLog: @unchecked Sendable {
     /// The line above the latest run.
     public static let latestRunHeader = "== latest run =="
     /// The last line of a run that reached `capacity`.
-    public static let fullLine = "diagnostics: this run's log is full, later lines are dropped"
+    public static let fullLine = "diagnostics: log full here, the run's later lines are dropped"
 
     public let url: URL
-    /// The bytes one run may take, its header included; the file holds at most two runs.
+    /// The bytes one run may take, its header included, 1 KiB to 64 MiB; the file holds at most two
+    /// runs.
     public let capacity: Int
     private let clock: @Sendable () -> Date
     private let lock = NSLock()
@@ -34,7 +37,8 @@ public final class DiagnosticLog: @unchecked Sendable {
 
     public init(url: URL, capacity: Int = 256 * 1024, clock: @escaping @Sendable () -> Date = { Date() }) {
         self.url = url
-        self.capacity = Swift.max(1024, capacity)
+        // Bounded, so the end the next launch reads (`2 * capacity + 64`) cannot overflow.
+        self.capacity = Swift.min(Swift.max(1024, capacity), 64 * 1024 * 1024)
         self.clock = clock
     }
 
@@ -146,9 +150,9 @@ public final class DiagnosticLog: @unchecked Sendable {
         return String(text[marker.upperBound...])
     }
 
-    /// The lines that begin with this log's time stamp, each ending in a newline, the newest that
-    /// fit in `budget` bytes. Anything else — a line someone added in Files, a run's header — stays
-    /// behind; a line a crash cut short keeps what it has.
+    /// The lines in this log's shape, each ending in a newline, the newest that fit in `budget`
+    /// bytes. A run's header and a line in any other shape stay behind; a line a crash cut short
+    /// keeps what it has.
     static func ownLines(_ text: String, budget: Int) -> String {
         var kept: [Substring] = []
         var bytes = 0
