@@ -118,6 +118,7 @@ Was bleibt: `formatVersion`, neuere Dateien werden abgelehnt, Wachstum über `de
 - `InstrumentDevice` (geschlossenes Enum) wird zu **`DeviceRef`**: entweder `.builtin(id, version)` oder `.audioUnit(type, subtype, manufacturer)`.
   - Jedes Gerät bekommt `params: [ParamID: Double]`, validiert gegen seine Tabelle.
   - Damit bekommen Drums und Sampler endlich Dokumentparameter (Schuld 3, `SamplerKernel.swift:23-31`).
+  - ⭐ **Entschieden 2026-10-23: kein eigener Typ `DeviceRef` — das Format trägt ihn schon.** Ein eingebautes Gerät steht als Name in `device` (ein unbekannter Name bleibt wörtlich erhalten), ein Audio Unit als `plugin` mit den drei Codes (`docs/FORMAT.md` „Instrument“, „Plugin component“). Die Werte jedes Geräts stehen in `values`, werden an der Tür gegen dessen Tabelle geprüft und beim Gerätewechsel behalten (P1 A5a). Ein einzelner Wert `.builtin | .audioUnit` wäre ein Rückschritt: das getrennte `plugin`-Feld hält das gewählte Plugin, während die Spur ein eingebautes Gerät spielt, und der Wechsel zurück stellt es wieder her. **Aufgeschoben ist nur `version`:** sie kommt als zusätzliches Feld mit Formatwechsel, wenn zum ersten Mal eine DSP-Änderung alte Songs nicht verändern darf (Fehlerkorrekturen wie Klickschutz fallen nicht darunter).
 - `Project.context: MusicalContext` (siehe §1).
 - `ParameterAddress.Owner` bekommt `.device(track, slot)` und `.send(track, slot)`.
   - Ein `ModSource`-Typ wird **reserviert** (leer in 1.0), damit Bio, LFO und OSC-Eingang später ohne Formatbruch andocken.

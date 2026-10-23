@@ -5678,3 +5678,10 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Entscheidung:** Die bestehende vibrierende Installation (Wasser-Pontons + vibrierendes Sofa) wird über eine Medienproduktion (Video 60–90 s, 8–12 Fotos, barrierearm) bei der Hamburger Förderung „Inklusive Projekte“ beantragt. Der Prototype Fund bleibt reine Software, Förderobjekt unverändert EchoelSense + EchoelIO (FOERDERUNG §4). Die Tauchfliege ist ein altes, getrenntes Konzept und steht in keinem Text.
 - **Warum:** Founder-Übergabe 22.10. Der Prototype Fund fördert nur Software-Arbeitsstunden; eine Vermischung würde F12 („keine andere öffentliche Förderung für das Förderobjekt“) und die Abgrenzung des Förderobjekts gefährden. Bio-Composer und Agent-Desk der älteren App bleiben Bestand, nicht Förderobjekt — die Jury liest Datensicherheit und Infrastruktur (§1b). Entwürfe (Mail, Antragstexte, Finanzskizze) liegen im privaten Claude Doc, nicht im Repo.
 - **Review:** 2026-11-21.
+
+### 2026-10-23 — Studio: DeviceRef ist das Format, kein neuer Typ (P0-Rest)
+
+- **Entscheidung:** Der P0-Punkt „`InstrumentDevice` wird `DeviceRef`“ (NEUPLANUNG §Dokumentmodell) ist durch die gespeicherte Form erfüllt: `device` nennt ein eingebautes Gerät (ein unbekannter Name bleibt wörtlich, die Spur schweigt), `plugin` nennt ein Audio Unit mit seinen drei Codes, `values` hält die Werte jedes Geräts, geprüft gegen dessen Tabelle.
+- **Warum:** Ein Wert `.builtin | .audioUnit` wäre ein Rückschritt — heute behält eine Spur ihr Plugin, während sie Synth, Drums oder Sampler spielt, und der Wechsel zurück stellt es her. Ein Umbau ohne Verhaltensänderung kostet Commits ohne Nutzen.
+- **Aufgeschoben:** `version` je eingebautem Gerät — ein zusätzliches Feld mit Formatwechsel, wenn eine DSP-Änderung alte Songs nicht verändern darf. Fehlerkorrekturen (Klickschutz, Glides der Nacht zum 23.10.) fallen nicht darunter.
+- **Review:** 2026-11-22.
