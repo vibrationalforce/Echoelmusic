@@ -1111,6 +1111,13 @@ final class DocumentController {
         try writer.finish()
     }
 
+    /// A finished take, decoded — or, when the free memory could not take it, its length and rate
+    /// from the file's header, so it joins the song unloaded.
+    private enum TakeAudio: Sendable {
+        case decoded(SampleBuffer)
+        case unloaded(frameCount: Int, sampleRate: Double)
+    }
+
     /// The audio files an export renders as silence, by name, and why.
     private struct UnheardAudio {
         /// Missing from the song package or not decodable.
@@ -1508,14 +1515,33 @@ final class DocumentController {
                     .deletingPathExtension().lastPathComponent
             }
         }
-        let result: Result<SampleBuffer, Error> = await Task.detached(priority: .userInitiated) {
-            Result { try AudioFileImport.decode(source) }
+        // A take the free memory cannot load now is still the musician's recording: it joins the
+        // song at its recorded length, silent until the next open loads it. Dropped here, its file
+        // stayed in the package with nothing pointing to it (seventh night review, 2026-10-23).
+        let result: Result<TakeAudio, Error> = await Task.detached(priority: .userInitiated) { () -> Result<TakeAudio, Error> in
+            Result { () throws -> TakeAudio in
+                do {
+                    return TakeAudio.decoded(try AudioFileImport.decode(source))
+                } catch AudioFileImport.ImportError.noMemory {
+                    let header = try AudioFileImport.header(of: source)
+                    return TakeAudio.unloaded(frameCount: header.frameCount, sampleRate: header.sampleRate)
+                }
+            }
         }.value
         // Another song opened meanwhile drops the take; the same song followed keeps it.
         guard songsOpened == song else { return }
-        let buffer: SampleBuffer
+        let buffer: SampleBuffer?
+        let frameCount: Int
+        let sampleRate: Double
         switch result {
-        case .success(let decoded): buffer = decoded
+        case .success(.decoded(let decoded)):
+            buffer = decoded
+            frameCount = decoded.frameCount
+            sampleRate = decoded.sampleRate
+        case .success(.unloaded(let count, let rate)):
+            buffer = nil
+            frameCount = count
+            sampleRate = rate
         case .failure(let error):
             log.error("take unreadable — \(error.localizedDescription, privacy: .private)")
             lastError = (error as? LocalizedError)?.errorDescription ?? "The take could not be read."
@@ -1523,15 +1549,19 @@ final class DocumentController {
         }
         let time = TimeConversion(tempoMap: tempoMap, sampleRate: take.sampleRate)
         let placement = RecordingPlacement.place(startSample: take.startSample, latency: take.latency, time: time)
-        guard buffer.frameCount > placement.offset else {
+        guard frameCount > placement.offset else {
             try? FileManager.default.removeItem(at: source)
             return
         }
-        samples[target.id] = buffer
+        if let buffer {
+            samples[target.id] = buffer
+        } else {
+            unfitMedia[target.id] = .noFreeMemory
+        }
         mediaRevision += 1
         let number = store.project.media.filter { $0.name.hasPrefix("Take ") }.count + 1
         let file = MediaFile(id: target.id, name: "Take \(number)", path: target.path,
-                             frameCount: buffer.frameCount, sampleRate: buffer.sampleRate)
+                             frameCount: frameCount, sampleRate: sampleRate)
         let region = RegionID()
         var commands: [Command] = [
             .addMedia(file),
@@ -1539,13 +1569,17 @@ final class DocumentController {
         ]
         if placement.offset > 0 {
             commands.append(.trimRegion(track: track, region, offset: placement.offset,
-                                        length: buffer.frameCount - placement.offset))
+                                        length: frameCount - placement.offset))
         }
         // A take is never refused, but one that takes the song past its memory budget is said, by
         // the files the song plays that the next open would leave silent (R9) — which, not how
         // many: a take can push one out while a leftover drops back in (second night review).
         let before = store.project
         perform(commands, title: "Record Take")
+        if buffer == nil {
+            let line = "\(file.name) is in the song but not loaded, so silent. \(Self.noFreeMemory)"
+            lastError = lastError.map { "\($0) \(line)" } ?? line
+        }
         if let strandedIn {
             let line = "The take could not be moved into the song and stays in the folder \(strandedIn) in the Files app; it is missing the next time the song opens."
             lastError = lastError.map { "\($0) \(line)" } ?? line

@@ -114,6 +114,21 @@ enum AudioFileImport {
         }
     }
 
+    /// The length and rate a file's header states, read without decoding it: a take the free
+    /// memory cannot load now still joins its song, at the length it was recorded (seventh night
+    /// review, 2026-10-23).
+    static func header(of url: URL) throws -> (frameCount: Int, sampleRate: Double) {
+        do {
+            let reader = try SampleFile.Reader(url, maximumSeconds: .infinity)
+            return (reader.frameCount, reader.sampleRate)
+        } catch let error as SampleFile.ReadError {
+            switch error {
+            case .empty: throw ImportError.empty
+            default: throw ImportError.unreadable
+            }
+        }
+    }
+
     /// The original extension when it is a short plain word, so the copy keeps its type hint.
     private static func fileExtension(of url: URL) -> String {
         let ext = url.pathExtension.lowercased()
