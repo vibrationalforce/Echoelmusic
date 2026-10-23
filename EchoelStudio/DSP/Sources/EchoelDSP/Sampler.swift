@@ -28,7 +28,10 @@ public final class SampleBuffer: @unchecked Sendable {
     /// Allocates `capacity` frames and lets `fill` write them where they stay, keeping the count it
     /// returns (at most `capacity`); non-finite values become silence. A file decoded straight into
     /// the buffer is held in memory once — decoded into an array and copied, it briefly cost twice
-    /// its size (second night review, 2026-10-23). Nil when `fill` writes no frame or the rate is
+    /// its size (second night review, 2026-10-23). When `fill` writes fewer frames than `capacity`
+    /// (a file whose header promised more than it holds), the frames move into a block of their own
+    /// size, so the buffer keeps exactly the memory its `frameCount` says and the song's memory plan
+    /// stays true (third night review, 2026-10-23). Nil when `fill` writes no frame or the rate is
     /// not a positive number; an error from `fill` is thrown on.
     public init?(capacity: Int, sampleRate: Double, rootPitch: UInt8 = 60,
                  fill: (UnsafeMutableBufferPointer<Float>) throws -> Int) throws {
@@ -49,10 +52,17 @@ public final class SampleBuffer: @unchecked Sendable {
             return nil
         }
         for i in 0..<written where !storage[i].isFinite { storage[i] = 0 }
+        var kept = storage
+        if written < capacity {
+            kept = .allocate(capacity: written)
+            kept.moveInitialize(from: storage, count: written)
+            (storage + written).deinitialize(count: capacity - written)
+            storage.deallocate()
+        }
         frameCount = written
         self.sampleRate = sampleRate
         self.rootPitch = Swift.min(rootPitch, 127)
-        frames = storage
+        frames = kept
     }
 
     /// A copy of the frames, for saving the sample. Allocates: never on the render thread.

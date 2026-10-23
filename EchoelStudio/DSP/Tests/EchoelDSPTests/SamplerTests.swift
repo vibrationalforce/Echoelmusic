@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import EchoelDSP
 
@@ -51,6 +52,25 @@ final class SamplerTests: XCTestCase {
         XCTAssertThrowsError(try SampleBuffer(capacity: 2, sampleRate: 48_000) { _ in throw Broken() }) {
             XCTAssertTrue($0 is Broken)
         }
+    }
+
+    /// A file whose header promises more frames than it holds leaves the buffer holding only what
+    /// it wrote — the memory plan counts `frameCount`, so the block must not be larger.
+    func testAShortFillKeepsOnlyTheMemoryItWrote() throws {
+        let capacity = 1_000_000
+        let buffer = try XCTUnwrap(try SampleBuffer(capacity: capacity, sampleRate: 48_000) { (frames: UnsafeMutableBufferPointer<Float>) -> Int in
+            for index in 0..<1_000 { frames[index] = Float(index) / 1_000 }
+            return 1_000
+        })
+        XCTAssertEqual(buffer.frameCount, 1_000)
+        let kept: [Float] = buffer.copyFrames()
+        XCTAssertEqual(kept.first, 0)
+        XCTAssertEqual(kept.last, 0.999)
+        #if canImport(Darwin)
+        let held = malloc_size(buffer.frames)
+        XCTAssertGreaterThanOrEqual(held, 1_000 * MemoryLayout<Float>.size)
+        XCTAssertLessThan(held, capacity * MemoryLayout<Float>.size / 100, "the unwritten room is given back")
+        #endif
     }
 
     func testWithoutASampleNothingSounds() {
