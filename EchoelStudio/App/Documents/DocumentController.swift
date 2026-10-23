@@ -104,6 +104,10 @@ final class DocumentController {
     /// The identity the open song's package had before its name was taken, so the package is
     /// recognised if it comes back into the library while the song waits at a free name.
     @ObservationIgnored private var formerIdentity: ProjectLibrary.PackageIdentity?
+    /// The name that package followed (`fileName`) when the song left it: a rename while the song
+    /// waits at a free name moves only the free name, so the package that comes back still takes
+    /// the song's name at the next write (sixth night review, 2026-10-23).
+    @ObservationIgnored private var formerFileName = SongFileName()
     /// The free-name folder a take or an import of the open song still writes into, after the
     /// song's own package came back and everything else there moved in (`gather`): its last files
     /// move in when that work lands (`settleLeftBehind`).
@@ -751,6 +755,7 @@ final class DocumentController {
                 packageIdentity = formerIdentity
                 nameTakenFrom = nil
                 self.formerIdentity = nil
+                fileName = formerFileName
                 let made = starterMadeFolder && back != url
                 starterMadeFolder = false
                 if back != url { packageMoved(from: url, to: back) }
@@ -782,6 +787,7 @@ final class DocumentController {
             // is a first write. What happened is owed to the status line until a write says it,
             // whichever caller found it (second night review, 2026-10-23).
             formerIdentity = packageIdentity
+            formerFileName = fileName
             packageIdentity = nil
             nameTakenFrom = name
             starterMadeFolder = false
