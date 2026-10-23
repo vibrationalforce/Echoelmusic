@@ -199,7 +199,7 @@ Fett = fester Termin oder Frist.
 - [~20 min] Die vier §10-Briefe abschicken — nur der öffentliche Raw-Link der Förderdatei und das Repo; nie settings.local.json, Diagnose-Logs, App-Store-Schlüssel, Tester-Daten, Team-ID. _(F)_
 - [~30 min] Interessensbekundungen anfragen: zwei bis drei Personen oder Häuser (Licht, Installation, Theater) per Mail um einen datierten Satz bitten, was sie mit dem Paket täten. Antworten brauchen Wochen — deshalb jetzt, nicht am 10.11. _(F)_
 - ERLEDIGT 2026-10-22 (S-26 D1.2–D1.4, D4.1/D4.2; Frage 4: im Engine-Paket braucht nur noch `EchoelHost` Apple-Frameworks) — Studio P0: D1 Scheibe 2 — Import-Scan-Test (D4) auf die neuen Targets, EchoelStudio/CLAUDE.md Schichten nachziehen, beide CI grün; danach messen, was im Engine-Paket noch Apple-Frameworks braucht (Antwort auf Frage 4). _(S)_
-- Rezept für EINE benannte Integration schreiben: ein freies Lichtpult mit sACN/OSC-Eingang (z. B. QLC+) empfängt von Echoel — Schritte, Port, Adressen, was der Screenshot mit Datum zeigen muss. Du spielst es am 7.11. durch. _(S)_
+- ~~Rezept für EINE benannte Integration schreiben: ein freies Lichtpult mit sACN/OSC-Eingang (z. B. QLC+) empfängt von Echoel — Schritte, Port, Adressen, was der Screenshot mit Datum zeigen muss. Du spielst es am 7.11. durch.~~ _(S)_ **Erledigt 2026-10-23:** `docs/dev/INTEGRATION_QLCPLUS.md` — frühere App → QLC+ über sACN Unicast, Port 5568, Universe 1, Kanalbelegung aus dem Code, QLC+-Schritte aus dessen Doku; nicht durchgespielt. Dein Teil bleibt der 7.11.
 
 **Donnerstag 29.10.**
 
