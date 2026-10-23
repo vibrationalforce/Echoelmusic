@@ -388,6 +388,7 @@ final class AudioEngine {
         suspendedInput = wantsInput
         engine.stop()
         isRunning = false
+        step("session: deactivate")
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -489,6 +490,7 @@ final class AudioEngine {
                 step("session: configure playback")
                 try session.setCategory(.playback, mode: .default, options: [])
             }
+            step("session: activate")
             try session.setActive(true)
             // Every output the interface has, so a track can play on 3/4, 5/6 …
             let available = session.maximumOutputNumberOfChannels
@@ -558,6 +560,7 @@ final class AudioEngine {
                 step("graph: connect source → main mixer")
                 engine.connect(node, to: engine.mainMixerNode, format: format)
                 // A multichannel graph before this one took the mixer off the output.
+                step("graph: connect main mixer → output")
                 engine.connect(engine.mainMixerNode, to: engine.outputNode, format: nil)
             }
             if outputChannels != channels {
