@@ -9,6 +9,10 @@
 ## Project Vision
 **Echoel is a bio-reactive instrument — your body plays it, and its output is multidimensional (sound, image, light, space).** ONE unified instrument (single EchoelStudioView), over open standards; vibration/haptics ride the output stage (sub-bass/haptics). (⛔ 2026-08-28: the "multidimensional production instrument … sound, space, light and vibration" variant that stood here predated the ratified 2026-07-25 sentence — "production" is the retired framing, and *image* was missing. The old "12 EchoelTools" is an internal taxonomy over real modules, not separate tools — see FEATURE_MATRIX.)
 
+## Werte (Founder 2026-10-23)
+- Wörtlich: „Finde den besten Weg um well aging und Longgevity und friedvolles, kreatives Miteinander in Harmonie und Übereinkunft mit Mensch und Natur. Menschenrechte, Umweltschutz und tierwohl sind mitnähme am Herzen, deshalb soll Echoelmusic groß werden.“
+- Lesart für jede Sitzung: Menschenrechte, Umweltschutz und Tierwohl sind der GRUND für Wachstum, nicht ein Zusatz. Well Aging und Longevity sind sein persönliches Ziel und ein Wert des Unternehmens — für Produkt, Store, Website und Anträge gilt weiter die Gesundheits-Rotlinie: Echoel bietet Zugang, Teilhabe und kreatives Tun, nie ein Gesundheits- oder Langlebigkeitsversprechen. Auswertung und Entwurf der Grundsätze: privates Strategie-Doc, Abschnitt „Werte und Wachstum“.
+
 ## Technical Background
 - Swift/SwiftUI primary (85% of codebase)
 - DSP expertise (DDSP, vDSP, spectral morphing)
