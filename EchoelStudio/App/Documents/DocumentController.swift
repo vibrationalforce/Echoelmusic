@@ -1332,7 +1332,10 @@ final class DocumentController {
             followRenamedSong()
         }
         // The take is read where its package is now: renamed in Files since the take began, the
-        // package took the file along (second night review, 2026-10-23).
+        // package took the file along (second night review, 2026-10-23). Recording changes
+        // nothing in the song, so no save has followed the rename yet; follow it here, as
+        // `newTakeTarget` does (third night review).
+        followMovedPackage()
         let song = songsOpened
         let source = currentURL.flatMap {
             MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: $0)
