@@ -730,6 +730,34 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertGreaterThan(levels[1], levels[0] * 0.5, "and a key on another track does not cut it")
     }
 
+    /// A return carries the song's tails and a key played after Stop at once, and one fader gain
+    /// cannot serve both: the return stays at the level where the song stopped — here the silence
+    /// its lane fell to — so the key's send is not heard through it, until a seek (or Play) lets the
+    /// return follow the playhead again (third night review, 2026-10-23: a stated choice).
+    func testAKeyAfterStopGoesThroughTheReturnAtTheLevelWhereTheSongStopped() throws {
+        var s = try song([[]])
+        let verb = TrackID()
+        try Command.addTrack(id: verb, name: "Return", kind: .returnTrack, index: nil).apply(to: &s.project)
+        try Command.setSend(track: s.tracks[0], to: verb, db: 0).apply(to: &s.project)
+        try Command.setAutomation(.volume(verb), points: [
+            AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: bar, value: MixerStrip.volumeRange.lowerBound),
+        ]).apply(to: &s.project)
+        // The return on solo: what is heard is the send alone.
+        try Command.setSolo(verb, true).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 2 * 96_000)        // bar 3, where the return's lane holds silence
+        engine.stop()
+        _ = render(engine, frames: 1_024)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        let held = render(engine, frames: 4_800).left
+        XCTAssertLessThan(rms(held[2_400..<4_800]), 0.000_1, "the return stays where the song stopped")
+        engine.seek(toSample: 0)
+        let followed = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(followed[2_400..<4_800]), 0.01, "a seek lets it follow the playhead, bar 1 at 0 dB")
+    }
+
     func testACutoffLaneShapesTheSynth() throws {
         var open = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
         var closed = open

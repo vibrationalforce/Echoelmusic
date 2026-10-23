@@ -146,7 +146,10 @@ public final class EngineCore: @unchecked Sendable {
     }
     /// Per slot: a key was played on it since the song stopped. That lane is new sound, heard at
     /// the playhead's gains; every other lane and every return keeps ringing out where the song
-    /// stopped (second night review, 2026-10-23).
+    /// stopped (second night review, 2026-10-23). So the key's sends reach a return at the
+    /// playhead's send level, but the return itself stays at the level where the song stopped: it
+    /// carries the song's tails too, and one gain cannot serve both, so the tails win until a seek
+    /// or Play (third night review — a return automated to silence at the end plays the key dry).
     private let liveSinceStop: UnsafeMutablePointer<Bool>
     /// The gains each mix point ended the last chunk on (NaN: none yet), so every change —
     /// a hand on a fader, a MIDI knob, an automation jump after a seek — ramps over one chunk
