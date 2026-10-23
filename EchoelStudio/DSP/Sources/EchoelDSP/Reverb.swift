@@ -67,6 +67,9 @@ public final class Reverb: @unchecked Sendable {
     private let glide: Double
     /// Until the first sample runs, a new size takes effect at once (see `StereoDelay`).
     private var hasRun = false
+    /// The mix as it sounds now, gliding to a new one in ~10 ms (see `StereoDelay`).
+    private var wetNow: Float = 0
+    private let mixGlide: Float
 
     private let preCapacity: Int
     private let pre: UnsafeMutablePointer<Float>
@@ -96,6 +99,7 @@ public final class Reverb: @unchecked Sendable {
         outputs = .allocate(capacity: Self.lines)
         outputs.initialize(repeating: 0, count: Self.lines)
         glide = 1 - Foundation.exp(-1 / (0.1 * rate))
+        mixGlide = Float(1 - Foundation.exp(-1 / (Compressor.gainGlideSeconds * rate)))
         preCapacity = Int(Self.maximumPredelay * rate) + 2
         pre = .allocate(capacity: preCapacity)
         pre.initialize(repeating: 0, count: preCapacity)
@@ -133,6 +137,7 @@ public final class Reverb: @unchecked Sendable {
         damp.update(repeating: 0, count: Self.lines)
         for i in 0..<Self.lines { length[i] = target[i] }
         hasRun = false
+        wetNow = Float(settings.mix)
     }
 
     private func update() {
@@ -145,15 +150,21 @@ public final class Reverb: @unchecked Sendable {
         }
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
         preLength = Swift.min(Int(settings.predelay * sampleRate), preCapacity - 1)
-        if !hasRun { for i in 0..<Self.lines { length[i] = target[i] } }
+        if !hasRun {
+            for i in 0..<Self.lines { length[i] = target[i] }
+            wetNow = Float(settings.mix)
+        }
     }
 
     /// Processes `frames` samples in place.
     public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
-        let wet = Float(settings.mix), dry = 1 - wet
+        let wetTarget = Float(settings.mix)
+        var wet = wetNow
         let scale: Float = 2 / Float(Self.lines)
         if frames > 0 { hasRun = true }
         for i in 0..<frames {
+            wet += (wetTarget - wet) * mixGlide
+            let dry = 1 - wet
             // A bad input sample reads as silence; it never reaches the lines.
             let inLeft = left[i].isFinite ? left[i] : 0, inRight = right[i].isFinite ? right[i] : 0
             // Pre-delay.
@@ -206,6 +217,7 @@ public final class Reverb: @unchecked Sendable {
             left[i] = inLeft * dry + wetLeft * 0.5 * wet
             right[i] = inRight * dry + wetRight * 0.5 * wet
         }
+        wetNow = Swift.abs(wetTarget - wet) < 1e-6 ? wetTarget : wet
         for l in 0..<Self.lines where Swift.abs(damp[l]) < 1e-20 { damp[l] = 0 }
     }
 }

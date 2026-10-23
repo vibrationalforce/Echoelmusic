@@ -65,6 +65,10 @@ public final class StereoDelay: @unchecked Sendable {
     /// Until the first sample runs, a new time takes effect at once: a delay loaded with its
     /// settings must not sweep from the default into them.
     private var hasRun = false
+    /// The mix as it sounds now: a change glides there in ~10 ms instead of stepping the output
+    /// in one sample (audit 2026-10-23); before the first sample, at once, like the time.
+    private var wetNow: Float = 0
+    private let mixGlide: Float
 
     public init(sampleRate: Double, settings: Settings = Settings()) {
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -74,6 +78,7 @@ public final class StereoDelay: @unchecked Sendable {
         lineRight = .allocate(capacity: capacity)
         lineRight.initialize(repeating: 0, count: capacity)
         glide = 1 - Foundation.exp(-1 / (0.05 * self.sampleRate))
+        mixGlide = Float(1 - Foundation.exp(-1 / (Compressor.gainGlideSeconds * self.sampleRate)))
         self.settings = settings.clamped
         distance = 1
         update()
@@ -93,21 +98,28 @@ public final class StereoDelay: @unchecked Sendable {
         dampRight = 0
         distance = target
         hasRun = false
+        wetNow = Float(settings.mix)
     }
 
     private func update() {
         target = Swift.min(Swift.max(settings.time * sampleRate, 1), Double(capacity - 3))
         dampCoefficient = Float(1 - Foundation.exp(-2 * Double.pi * settings.damping / sampleRate))
-        if !hasRun { distance = target }
+        if !hasRun {
+            distance = target
+            wetNow = Float(settings.mix)
+        }
     }
 
     /// Processes `frames` samples in place.
     public func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         let feedback = Float(settings.feedback)
-        let wet = Float(settings.mix), dry = 1 - wet
+        let wetTarget = Float(settings.mix)
+        var wet = wetNow
         let pingPong = settings.pingPong
         if frames > 0 { hasRun = true }
         for i in 0..<frames {
+            wet += (wetTarget - wet) * mixGlide
+            let dry = 1 - wet
             distance += (target - distance) * glide
             var position = Double(write) - distance
             if position < 0 { position += Double(capacity) }
@@ -139,6 +151,7 @@ public final class StereoDelay: @unchecked Sendable {
             left[i] = inLeft * dry + delayedLeft * wet
             right[i] = inRight * dry + delayedRight * wet
         }
+        wetNow = Swift.abs(wetTarget - wet) < 1e-6 ? wetTarget : wet
         // Keep the decaying tail out of denormal range.
         if Swift.abs(dampLeft) < 1e-20 { dampLeft = 0 }
         if Swift.abs(dampRight) < 1e-20 { dampRight = 0 }

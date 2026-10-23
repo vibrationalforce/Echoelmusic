@@ -45,6 +45,24 @@ final class CompressorTests: XCTestCase {
         XCTAssertEqual(c.reduction, 0, accuracy: 0.01)
     }
 
+    /// A turned Makeup glides to the new gain in ~10 ms instead of stepping the output in one
+    /// sample — a MIDI knob moves it in steps, a zipper otherwise — and settled, the compressor
+    /// plays the setting itself (audit 2026-10-23).
+    func testAChangedMakeupGlidesInsteadOfStepping() {
+        var settings = Compressor.Settings()
+        settings.ratio = 1    // no reduction: the output is the input times the makeup
+        settings.knee = 0
+        var c = Compressor(sampleRate: rate, settings: settings)
+        _ = run(&c, amplitude: 0.25, frames: 1_024)
+        settings.makeup = 12
+        c.settings = settings
+        let after = run(&c, amplitude: 0.25, frames: 4_800)
+        func input(_ n: Int) -> Float { 0.25 * Float(sin(Double(n) * 2 * .pi * 997 / 48_000)) }
+        // Sample 12 sits near the top of the 997 Hz sine; 4 752 near its bottom.
+        XCTAssertLessThan(after[12] / input(12), 1.2, "12 dB up arrives gradually, not in one sample")
+        XCTAssertEqual(after[4_752] / input(4_752), Float(Foundation.pow(10, 12.0 / 20)), accuracy: 0.01, "and arrives")
+    }
+
     func testTheKneeIsSmoothAndMixAndMakeupWork() {
         var settings = Compressor.Settings()
         settings.threshold = -20

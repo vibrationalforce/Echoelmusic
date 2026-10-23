@@ -57,9 +57,19 @@ public struct Compressor: Sendable {
     private var slope: Float = 0
     private var knee: Float = 0
     private var makeup: Float = 1
+    private var wet: Float = 1
+    /// Makeup and mix as they sound now: a change glides there in ~10 ms instead of stepping the
+    /// output in one sample — a MIDI knob on Makeup moves in 0.19 dB steps, a zipper without it
+    /// (audit 2026-10-23). Until the first sample runs, a setting takes effect at once.
+    private var makeupNow: Float = 1
+    private var wetNow: Float = 1
+    private var hasRun = false
+    private let glide: Float
+    static let gainGlideSeconds = 0.01
 
     public init(sampleRate: Double, settings: Settings = Settings()) {
         self.sampleRate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
+        glide = Float(1 - Foundation.exp(-1 / (Self.gainGlideSeconds * self.sampleRate)))
         self.settings = settings.clamped
         update()
     }
@@ -72,10 +82,18 @@ public struct Compressor: Sendable {
         slope = Float(1 / s.ratio - 1)
         knee = Float(s.knee)
         makeup = Float(Foundation.pow(10, s.makeup / 20))
+        wet = Float(s.mix)
+        if !hasRun {
+            makeupNow = makeup
+            wetNow = wet
+        }
     }
 
     public mutating func reset() {
         reduction = 0
+        hasRun = false
+        makeupNow = makeup
+        wetNow = wet
     }
 
     /// The reduction in dB the gain computer asks for at `level` dBFS — before attack/release.
@@ -90,8 +108,9 @@ public struct Compressor: Sendable {
 
     /// Processes `frames` samples in place.
     public mutating func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
-        let wet = Float(settings.mix), dry = 1 - wet
         var env = reduction.isFinite ? reduction : 0
+        var makeupGain = makeupNow, wetAmount = wetNow
+        if frames > 0 { hasRun = true }
         for i in 0..<frames {
             let l = left[i].isFinite ? left[i] : 0, r = right[i].isFinite ? right[i] : 0
             let peak = Swift.max(Swift.abs(l), Swift.abs(r))
@@ -99,10 +118,16 @@ public struct Compressor: Sendable {
             let wanted = target(at: level)
             // More reduction follows at the attack, less at the release.
             env += (wanted - env) * (wanted < env ? attackCoefficient : releaseCoefficient)
-            let gain = env == 0 ? makeup : Foundation.powf(10, env / 20) * makeup
-            left[i] = l * dry + l * gain * wet
-            right[i] = r * dry + r * gain * wet
+            makeupGain += (makeup - makeupGain) * glide
+            wetAmount += (wet - wetAmount) * glide
+            let gain = env == 0 ? makeupGain : Foundation.powf(10, env / 20) * makeupGain
+            let dry = 1 - wetAmount
+            left[i] = l * dry + l * gain * wetAmount
+            right[i] = r * dry + r * gain * wetAmount
         }
+        // Arrived: hold the setting itself, so a settled compressor plays it exactly.
+        makeupNow = Swift.abs(makeup - makeupGain) < 1e-6 ? makeup : makeupGain
+        wetNow = Swift.abs(wet - wetAmount) < 1e-6 ? wet : wetAmount
         reduction = Swift.abs(env) < 1e-6 ? 0 : env
     }
 }

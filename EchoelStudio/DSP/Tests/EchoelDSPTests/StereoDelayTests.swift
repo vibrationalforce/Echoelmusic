@@ -21,6 +21,21 @@ final class StereoDelayTests: XCTestCase {
         return x
     }
 
+    /// A turned Mix glides from dry to wet instead of switching the output in one sample: on a
+    /// continuous tone no step is larger than the tone's own (audit 2026-10-23).
+    func testAChangedMixGlidesInsteadOfStepping() {
+        let delay = StereoDelay(sampleRate: rate, settings: .init(time: 0.01, feedback: 0, mix: 0))
+        let tone = (0..<19_200).map { (n: Int) -> Float in Float(sin(Double(n) * 0.05)) }
+        let first = Array(tone[..<9_600]), second = Array(tone[9_600...])
+        let (dry, _) = run(delay, left: first, right: first)
+        delay.settings.mix = 1
+        let (moved, _) = run(delay, left: second, right: second)
+        let joined: [Float] = [dry[dry.count - 1]] + moved
+        let steepest: Float = zip(joined.dropFirst(), joined).map { (pair: (Float, Float)) -> Float in abs(pair.0 - pair.1) }.max() ?? 1
+        XCTAssertLessThan(steepest, 0.06, "the tone's own step is 0.05")
+        XCTAssertEqual(moved[moved.count - 1], tone[tone.count - 1 - 480], accuracy: 1e-3, "and it arrives fully wet")
+    }
+
     func testAnImpulseComesBackAfterTheTimeAndEachRepeatIsQuieter() {
         let delay = StereoDelay(sampleRate: rate, settings: .init(time: 0.01, feedback: 0.5, mix: 1, damping: 20_000))
         let (left, right) = run(delay, left: impulse(2_000), right: [Float](repeating: 0, count: 2_000))
