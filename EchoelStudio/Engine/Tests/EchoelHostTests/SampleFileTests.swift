@@ -29,5 +29,17 @@ final class SampleFileTests: XCTestCase {
             XCTAssertEqual($0 as? SampleFile.ReadError, .tooLong(maximumSeconds: 220.0 / 44_100))
         }
         XCTAssertEqual(try SampleFile.readMono(url, maximumSeconds: 1, maximumFrames: 441).samples.count, 441)
+
+        // The reader writes into memory the caller owns: the same frames, and never past it.
+        let reader = try SampleFile.Reader(url, maximumSeconds: 1)
+        XCTAssertEqual(reader.frameCount, 441)
+        XCTAssertEqual(reader.sampleRate, 44_100)
+        var frames = [Float](repeating: 9, count: 300)
+        let read = try frames.withUnsafeMutableBufferPointer { try reader.read(into: $0) }
+        XCTAssertEqual(read, 300, "it stops at the room it was given")
+        XCTAssertEqual(frames[299], 0.2, accuracy: 1e-5)
+        XCTAssertThrowsError(try SampleFile.Reader(url, maximumSeconds: 1, maximumFrames: 220)) {
+            XCTAssertEqual($0 as? SampleFile.ReadError, .tooLong(maximumSeconds: 220.0 / 44_100))
+        }
     }
 }

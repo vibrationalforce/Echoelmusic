@@ -27,9 +27,30 @@ final class SamplerTests: XCTestCase {
     func testABadSampleIsRefused() {
         XCTAssertNil(SampleBuffer(samples: [], sampleRate: 48_000))
         XCTAssertNil(SampleBuffer(samples: [1], sampleRate: .nan))
+        XCTAssertNil(try SampleBuffer(capacity: 0, sampleRate: 48_000) { _ in 0 })
+        XCTAssertNil(try SampleBuffer(capacity: 4, sampleRate: 48_000) { _ in 0 }, "nothing written, no sample")
         XCTAssertNil(SampleBuffer(samples: [1], sampleRate: 0))
         let cleaned = SampleBuffer(samples: [.nan, .infinity, 0.5], sampleRate: 48_000)
         XCTAssertEqual(cleaned.map { [$0.frames[0], $0.frames[1], $0.frames[2]] }, [0, 0, 0.5])
+    }
+
+    /// Decoding writes straight into the sample's own memory, so a file is held once, not twice.
+    func testAFillWritesTheSampleInPlace() throws {
+        let buffer = try XCTUnwrap(try SampleBuffer(capacity: 4, sampleRate: 44_100) { frames in
+            frames[0] = 0.25
+            frames[1] = .nan
+            frames[2] = -0.5
+            return 3
+        })
+        XCTAssertEqual(buffer.frameCount, 3, "the frames it wrote, not the room it had")
+        XCTAssertEqual(buffer.copyFrames(), [0.25, 0, -0.5], "a non-finite frame is silence")
+        XCTAssertEqual(buffer.sampleRate, 44_100)
+        let clamped = try XCTUnwrap(try SampleBuffer(capacity: 2, sampleRate: 48_000) { _ in 10 })
+        XCTAssertEqual(clamped.frameCount, 2, "never more than it holds")
+        struct Broken: Error {}
+        XCTAssertThrowsError(try SampleBuffer(capacity: 2, sampleRate: 48_000) { _ in throw Broken() }) {
+            XCTAssertTrue($0 is Broken)
+        }
     }
 
     func testWithoutASampleNothingSounds() {

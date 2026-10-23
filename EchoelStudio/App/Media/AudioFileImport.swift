@@ -90,11 +90,17 @@ enum AudioFileImport {
     /// before reading it. The defaults are the import's; a song opening its own files passes the
     /// room its memory plan has left instead, so a file kept from an earlier build is not
     /// refused for its length alone.
+    /// The file is decoded straight into the buffer, so it is held in memory once: decoded into
+    /// an array and copied, every file briefly cost twice what the memory plan counts — on a song
+    /// opening near its budget, that is the out-of-memory end R9 is there to prevent (second night
+    /// review, 2026-10-23).
     static func decode(_ url: URL, maximumSeconds: Double = AudioFileImport.maximumSeconds,
                        maximumFrames: Int = AudioFileImport.maximumFrames) throws -> SampleBuffer {
-        let mono: SampleFile.Mono
         do {
-            mono = try SampleFile.readMono(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+            let reader = try SampleFile.Reader(url, maximumSeconds: maximumSeconds, maximumFrames: maximumFrames)
+            guard let buffer = try SampleBuffer(capacity: reader.frameCount, sampleRate: reader.sampleRate,
+                                                fill: { try reader.read(into: $0) }) else { throw ImportError.empty }
+            return buffer
         } catch let error as SampleFile.ReadError {
             switch error {
             case .unreadable: throw ImportError.unreadable
@@ -102,8 +108,6 @@ enum AudioFileImport {
             case .tooLong(let seconds): throw ImportError.tooLong(maximumSeconds: seconds)
             }
         }
-        guard let buffer = SampleBuffer(samples: mono.samples, sampleRate: mono.sampleRate) else { throw ImportError.empty }
-        return buffer
     }
 
     /// The original extension when it is a short plain word, so the copy keeps its type hint.
