@@ -254,10 +254,12 @@ public struct PolySynth: Sendable {
             // Nothing sounds, and the engine renders nothing then: a wheel moved since the last
             // note is where this one starts, not a scoop or a fading vibrato over its first
             // buffer. A synth rendered while silent (the Audio Unit) is there already (audit
-            // 2026-10-23).
+            // 2026-10-23). The vibrato starts from its beginning: how long a silent synth went on
+            // rendering is the end of the host's buffer, so a phase carried through the rest made
+            // playback and export differ (review 2026-10-23).
             bend = bendTarget
             vibrato = vibratoTarget
-            if vibratoTarget == 0 { vibratoPhase = 0 }
+            vibratoPhase = 0
         }
         voices[index].start(pitch: pitch, velocity: velocity, order: nextOrder, sampleRate: sampleRate, patch: patch)
         nextOrder &+= 1

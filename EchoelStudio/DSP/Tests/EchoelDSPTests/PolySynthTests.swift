@@ -175,6 +175,26 @@ final class PolySynthTests: XCTestCase {
         XCTAssertTrue(cycles.suffix(10).allSatisfy { (493...495).contains($0) }, "and it arrives: \(Array(cycles.suffix(10)))")
     }
 
+    /// The first note after a rest starts its vibrato from the beginning, however long the silent
+    /// synth went on rendering: the engine stops at the end of a chunk, so that length is the
+    /// buffer size, and a phase carried through the rest made playback and export differ
+    /// (review 2026-10-23).
+    func testTheFirstNoteAfterARestSoundsTheSameHoweverLongTheRestWasRendered() {
+        func take(renderingTheRestFor frames: Int) -> [Float] {
+            var synth = sineSynth()
+            synth.modulation(127)
+            synth.noteOn(pitch: 69, velocity: 127)
+            _ = render(&synth, frames: 4_800)
+            synth.noteOff(pitch: 69)
+            _ = render(&synth, frames: 9_600)    // the 50 ms release is long over
+            XCTAssertEqual(synth.activeVoiceCount, 0)
+            _ = render(&synth, frames: frames)
+            synth.noteOn(pitch: 72, velocity: 127)
+            return render(&synth, frames: 4_800)
+        }
+        XCTAssertEqual(take(renderingTheRestFor: 0), take(renderingTheRestFor: 4_095))
+    }
+
     /// A wheel let go comes back exactly in tune — not 0.025 cents sharp, where a Float glide stops
     /// moving short of its rest (review 2026-10-23).
     func testABendLetGoReturnsExactlyToPitch() {
