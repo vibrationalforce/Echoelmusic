@@ -48,6 +48,28 @@ final class InputMonitorTests: XCTestCase {
         XCTAssertTrue(pass(silent, channel: 2, value: 0.5, frames: 256).allSatisfy { $0 == 0 }, "its strip rules the input")
     }
 
+    /// After Stop the song's tails ring out at the gains where it stopped, but a monitored input
+    /// is new sound: it is heard at the playhead's level again (review 2026-10-23). The vocal's
+    /// volume falls from 0 dB at bar 1 to silence at bar 2; stopped in bar 3, the playhead goes
+    /// home to bar 1.
+    func testAMonitoredInputAfterStopIsHeardAtThePlayheadsLevel() throws {
+        var p = Project(tempo: 120)
+        let vocal = TrackID()
+        try Command.addTrack(id: vocal, name: "Vocal", kind: .audio, index: nil).apply(to: &p)
+        try Command.setAutomation(.volume(vocal), points: [
+            AutomationPoint(tick: 0, value: 0),
+            AutomationPoint(tick: MusicalTime.ticksPerBar(.common), value: MixerStrip.volumeRange.lowerBound),
+        ]).apply(to: &p)
+        let core = engine(p, monitoring: [vocal: 2])
+        core.play()
+        for _ in 0..<48 { _ = pass(core, channel: 2, value: 0.5, frames: 4_096) }   // 196,608 samples: bar 3
+        XCTAssertEqual(pass(core, channel: 2, value: 0.5, frames: 256)[255], 0, "silent where the lane ends")
+        core.stop()
+        for _ in 0..<4 { _ = pass(core, channel: 2, value: 0.5, frames: 256) }
+        XCTAssertEqual(pass(core, channel: 2, value: 0.5, frames: 256)[255], 0.5 * centre, accuracy: 1e-4,
+                       "the input is heard at bar 1's level")
+    }
+
     private func write(_ monitor: InputMonitor, _ samples: [Float]) {
         samples.withUnsafeBufferPointer { b in
             if let base = b.baseAddress { monitor.write(channel: 0, base, count: b.count) }

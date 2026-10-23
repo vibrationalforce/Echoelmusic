@@ -1031,6 +1031,9 @@ public final class EngineCore: @unchecked Sendable {
             let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
             guard slot < slotCapacity else { continue }
             let kind = status & 0xF0
+            // A note played after Stop is new sound, not a tail: the mix it plays through follows
+            // the playhead again instead of the gains where the song stopped (review 2026-10-23).
+            if kind == 0x90 && value > 0 { stoppedAt = nil }
             guard devices[slot] == .plugin else {
                 playLive(slot, kind: kind, pitch, value)
                 continue
@@ -1495,9 +1498,17 @@ public final class EngineCore: @unchecked Sendable {
                 }
             }
             for effect in lane.inserts { effect.process(frames: frames, left: audioLeft, right: audioRight) }
+            // A monitored input is new sound too: after the block that stops, it is heard at the
+            // playhead's gains, not at the ones the song's tails ring out at.
+            let held = (mixFrom, mixTo)
+            if !playing, fadingFrom == nil, lane.monitor >= 0, stoppedAt != nil {
+                mixFrom = snapshot.time.position(atSample: playhead)
+                mixTo = mixFrom
+            }
             mix(audioLeft, audioRight, into: left, right, frames: frames, curve: lane.mix,
                 fixed: (lane.gainLeft, lane.gainRight), memory: memory(point: point), meter: point)
             send(lane.sends, from: point, frames: frames, left: audioLeft, right: audioRight)
+            (mixFrom, mixTo) = held
         }
     }
 

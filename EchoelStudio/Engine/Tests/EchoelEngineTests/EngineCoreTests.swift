@@ -663,6 +663,25 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertGreaterThan(rms(after[1_024..<2_048]), 0.001, "the release still sounds after the first chunk")
     }
 
+    /// The tails ring out where the song stopped, but a key played after Stop is new sound: it is
+    /// heard at the playhead's level, bar 1 at 0 dB, not in the silence the song stopped in
+    /// (review 2026-10-23).
+    func testALiveNoteAfterStopIsHeardAtThePlayheadsLevel() throws {
+        var s = try song([[]])
+        try Command.setAutomation(.volume(s.tracks[0]), points: [
+            AutomationPoint(tick: 0, value: 0), AutomationPoint(tick: bar, value: MixerStrip.volumeRange.lowerBound),
+        ]).apply(to: &s.project)
+        let engine = core()
+        publish(s.project, to: engine)
+        engine.play()
+        _ = render(engine, frames: 2 * 96_000)        // bar 3, where the lane holds silence
+        engine.stop()
+        _ = render(engine, frames: 1_024)
+        engine.playLive(slot: 0, status: 0x90, 60, 100)
+        let heard = render(engine, frames: 4_800).left
+        XCTAssertGreaterThan(rms(heard[2_400..<4_800]), 0.01, "the key sounds at bar 1's level")
+    }
+
     func testACutoffLaneShapesTheSynth() throws {
         var open = try song([[Note(pitch: 48, start: 0, length: 4 * bar)]])
         var closed = open
