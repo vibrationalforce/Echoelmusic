@@ -1234,8 +1234,12 @@ final class DocumentController {
             return Result { try AudioFileImport.importFile(source, into: package) }
         }.value
         // Another song opened meanwhile drops the import; the same song followed to a new name in
-        // Files keeps it — its copy moved with the package (second night review, 2026-10-23).
-        guard songsOpened == song, let here = currentURL else { return nil }
+        // Files keeps it — its copy moved with the package (second night review, 2026-10-23). A
+        // rename during the decode is followed here, before the copy is looked for: with Files
+        // beside Echoel nothing else follows it, and the copy is at the new name (fourth night review).
+        guard songsOpened == song else { return nil }
+        followMovedPackage()
+        guard let here = currentURL else { return nil }
         switch result {
         case .success(let imported):
             // Kept only when its copy is in the package the song writes to now. A package renamed
