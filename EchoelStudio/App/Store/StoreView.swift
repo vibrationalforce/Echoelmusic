@@ -15,13 +15,14 @@ struct StoreView: View {
                     ForEach(OwnPlugin.instruments) { plugin in row(plugin) }
                     purchase
                 } footer: {
-                    Text("They are AUv3 instruments for apps that host Audio Units. They are not yet tested in a host app on a device, and they are not on sale yet. Until they are unlocked, they play as a demo: two seconds of silence every thirty. Planned as one purchase, no subscription.")
+                    Text(footer)
                 }
                 Section("Free") {
                     ForEach(OwnPlugin.free) { plugin in row(plugin) }
                 }
                 Section {
                     Button("Restore Purchases") { Task { await store.restore() } }
+                        .disabled(store.isBusy)
                 }
                 if let message = store.message {
                     Section { Text(message).foregroundStyle(Theme.Color.textSecondary) }
@@ -33,6 +34,17 @@ struct StoreView: View {
             .task { await store.load() }
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// "Not on sale yet" is true only while the App Store knows no product; the day the product
+    /// exists, the price button beside this text would have contradicted it (store review 2026-10-24).
+    private var footer: String {
+        let sale = store.product == nil
+            ? " They are not yet tested in a host app on a device, and they are not on sale yet."
+            : " They are not yet tested in a host app on a device."
+        return "They are AUv3 instruments for apps that host Audio Units." + sale
+            + " Until they are unlocked, they play as a demo: two seconds of silence every thirty."
+            + " One purchase, no subscription."
     }
 
     private func row(_ plugin: OwnPlugin) -> some View {
@@ -54,6 +66,8 @@ struct StoreView: View {
                 Text("Owned")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.play)
+            } else if store.isBusy {
+                ProgressView()
             } else if let product = store.product {
                 Button(product.displayPrice) { Task { await store.buy() } }
                     .buttonStyle(.borderedProminent)
