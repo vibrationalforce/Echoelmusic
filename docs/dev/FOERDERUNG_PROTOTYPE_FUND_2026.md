@@ -1,5 +1,7 @@
 # Förderung: Prototype Fund, Jahrgang 03 (Bewerbung bis 30.11.2026, 15 Uhr)
 
+> ⛔ **GESTRICHEN 2026-10-24 (Founder: „Scheiß auf alles im Bereich Förderung … Förderungen nerven und verpflichten“).** Es wird keine Bewerbung eingereicht, auch nicht in Jahrgang 04. Diese Datei bleibt unverändert als Archiv und Beleg; nichts darin ist mehr ein Auftrag. Entscheidung: `decisions.csv` 2026-10-24, `memory/decisions.md`.
+
 > Founder 2026-10-18: „Lieber Förderung.“ — Förderung geht vor Kredit und vor Investoren.
 > Diese Datei ist die EINE Stelle für Fakten, Pitch, Fragenkatalog und Antwortentwurf. Die
 > Kalender-Termine (19.10. Sprechstunde, 16.11. Entwurf) zeigen hierher. Fakten tragen ein

@@ -103,7 +103,7 @@ Bewusst nur **eine** neue Target-Gruppe vor 1.0, alle im bestehenden `EchoelStud
 | *ab P4* **EchoelIO** | OSC ein/aus, Art-Net, sACN, ADM-OSC, Network-MIDI-Policy | Foundation, `EchoelSense` (nur die Ausgaberegel als Werttyp), Network je `canImport`. **Nicht Core, nicht Engine** (seit 2026-10-19): die Bindung an `EngineTap` ist eine dünne Brücke in der App |
 | *ab P6* **EchoelSense** | Puls- und Atemschätzer, HRV-Kohärenz, Ausgaberegel, BLE-Herzgurt; Kamera-Puls (rPPG) bleibt in der App. Ausgabe als eigene Werttypen; die App-Brücke bildet sie auf `ModSource` ab | Foundation; AVFoundation, CoreBluetooth je `canImport`. **Nie IO, nie Core** (seit 2026-10-19). |
 
-⭐ **Warum EchoelIO und EchoelSense seit 2026-10-19 nicht an Core und Engine hängen:** sie sind das Förderobjekt des Prototype-Fund-Antrags (`docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §7.5), und der verspricht zwei Pakete, „die jede Anwendung nutzen kann“. Hingen sie an Core, zöge eine Licht-App das Dokumentmodell der Workstation mit. Die Kopplung an `EngineTap` und `ModSource` sitzt deshalb in einer dünnen Brücke der App; die Pakete kennen die Workstation nicht.
+⛔ (2026-10-24: der Förder-Grund darunter ist weggefallen; die Trennung bleibt als Architektur sinnvoll, nicht mehr als Antragsgrund.) ⭐ **Warum EchoelIO und EchoelSense seit 2026-10-19 nicht an Core und Engine hängen:** sie sind das Förderobjekt des Prototype-Fund-Antrags (`docs/dev/FOERDERUNG_PROTOTYPE_FUND_2026.md` §7.5), und der verspricht zwei Pakete, „die jede Anwendung nutzen kann“. Hingen sie an Core, zöge eine Licht-App das Dokumentmodell der Workstation mit. Die Kopplung an `EngineTap` und `ModSource` sitzt deshalb in einer dünnen Brücke der App; die Pakete kennen die Workstation nicht.
 
 **Abhängigkeitsregeln:**
 - Abhängigkeiten zeigen nur nach unten; SwiftPM-Targets erzwingen das.
@@ -218,6 +218,8 @@ Vorher wird `docs/dev/LESSONS.md` geschrieben (maximal 2 Seiten). Es hält die t
 | **P5 Modulation** | `ModRoute` (LFO, Hüllkurvenfolger, MIDI-CC, benutzerdefinierte Makros ohne vorgegebene Bedeutung), Auswertung im Render-Pass mit fester Routen-Obergrenze | Filter-Sweep über Makro plus LFO ist automatisierbar, per MIDI-Learn erreichbar und mit einem Schritt rückgängig; CPU auf einem älteren iPhone gemessen | 1.3 |
 | **P6 Körper** | `EchoelSense`: rPPG und BLE-Gurt als `ModSource`, Egress-Policy portiert, sichtbares „Aus" | der Puls lockt auf dem Gerät; Text gegen die Markenregeln geprüft; Bio sendet ohne Opt-in nichts nach außen | 1.4 |
 | **P7 Visual, dann Raum** | Metal-Visual aus `EngineTap`, externer Bildschirm, Raum-Rendering zuletzt | Blitzrate ≤ 3 Hz per Test; Geräte-Check | später |
+
+⛔ **GEGENSTANDSLOS seit 2026-10-24 (Founder: keine Förderung, nirgends; `decisions.csv` 2026-10-24).** `EchoelSense` und `EchoelIO` folgen allein der Tabelle oben; das Verbot „nicht vor dem Bescheid“ ist aufgehoben. Der Absatz bleibt als Geschichte:
 
 ⚠️ **Förder-Reihenfolge (2026-10-19):** die PAKET-Hälften von P4 und P6 (`EchoelIO`, `EchoelSense`) sind das Förderobjekt. Mit Förderzusage werden sie im Förderzeitraum Juni–November 2027 gebaut, und zwar `EchoelSense` vor `EchoelIO` (M2/M3) — nicht vorher, sonst fördert der Antrag fertige Arbeit. Die App-Hälften (Event-Spuren, `EngineTap`, die Brücken) folgen der Tabelle oben. Ohne Zusage gilt die Tabelle unverändert.
 

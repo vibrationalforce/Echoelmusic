@@ -5707,3 +5707,12 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Folge:** Kein Code an `EchoelSense` oder `EchoelIO` vor dem Bescheid (der Fonds fördert keine fertige Arbeit). Second Stage bleibt im Formular plausibel. Die 950-h-Tabelle ist ein Vorschlag im privaten Doc, bis der Fonds die Abgrenzungsfrage beantwortet hat.
 - **Entscheidung 2 (active):** Die Vision ist bestätigt — das Produkt ist die gemergte Echoelmusic-App (GSIDMMW) mit eigenen Plugins und dem Besten der früheren TestFlights, zurückgeholt nach `docs/dev/HISTORY_ARCHIVE.md` (Klassen) und `docs/dev/PLAN_ENGINE_RECOVERY_2026-10-23.md` (Stufen K, D, B). Nichts wird zurückkopiert; jede Fähigkeit wird in die heutigen Besitzer neu gebaut. GM30 (welche Engine wann, `aumi` frei?) bleibt die offene Founder-Frage; die Gates (WIP 3, Gerät, GM30) gelten weiter.
 - **Review:** 2026-11-16 (Tor) und 2026-11-24.
+
+### 2026-10-24 (abends) — Keine Förderung, keine Installation im Plan; Store first für das ganze Apple-Ökosystem, dann privat
+
+- **Entscheidung (Founder, wörtlich):** „Scheiß auf alles im Bereich Förderung und Installation. … Ich bringe einfach die App so schnell wie es geht an den Start, verkaufe diese über den App Store, Small Business Program ist angemeldet. Sobald die App für das gesamte Apple-Ökosystem zeitgleich im Store ist, stelle ich das Repo auf privat. Dann kommen die anderen Betriebssysteme. Wir konzentrieren uns also wieder nur auf die Entwicklung.“
+- **Folge 1:** Kein Antrag beim Prototype Fund (das Tor vom 16.11. entfällt), kein Hamburg, kein Musikfonds. Die Einträge vom 18.10., 19.10., 22.10. und 24.10. (Vollzeit) sind `superseded-2026-10-24-keine-foerderung`. `EchoelSense` und `EchoelIO` folgen allein der Phasentabelle; das Code-Verbot „nicht vor dem Bescheid“ ist gegenstandslos.
+- **Folge 2:** Die physische Installation ist kein Geschäftsfeld im Plan (keine Open Calls, kein Dossier). Die Licht- und Raum-Ausgabe der Software (P4, P7) bleibt.
+- **Folge 3:** Zielbild 1.0 = ein zeitgleicher Store-Start auf dem ganzen Apple-Ökosystem. Welche Plattformen das genau sind und was ein privates Repo kostet (macOS-CI-Minuten, GitHub Pages), fragt GM36 mit Empfehlung; die Messung läuft (`wf_64e229bb-d22`), der Plan folgt als `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`.
+- **Was bleibt:** Produktgesetz, Vision GSIDMMW mit Plugins und Altbestand, WIP 3, Gerätegates, GM30. Die privaten Docs (Audit, Geld, Morgen) tragen Banner.
+- **Review:** 2026-11-24.

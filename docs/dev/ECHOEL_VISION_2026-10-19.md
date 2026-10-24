@@ -1,5 +1,7 @@
 # Echoel — Vision, Ordnung und Mehrjahres-Roadmap
 
+> ⛔ **Nachtrag 2026-10-24:** Alles in dieser Datei, was Förderung (Prototype Fund, Antrag bis 30.11., Förderzeitraum 2027, M1–M4) oder die Installation als Geschäftsfeld betrifft, ist seit dem 24.10. gegenstandslos (Founder: keine Förderung, keine Installation im Plan; Store first für das ganze Apple-Ökosystem, dann privates Repo). Produkt, Prinzipien und Phasen gelten weiter. `decisions.csv` 2026-10-24.
+
 **Stand 2026-10-19 · Status: CURRENT, Einstieg für jede Scope-, Reihenfolge- oder Außenfrage.**
 Diese Datei entscheidet nur, was in §11 steht. Für alles andere sagt sie, welche Datei die Frage
 beantwortet. Wer hier eine Zahl braucht, findet den Befehl daneben, nicht die Zahl.

@@ -56,6 +56,12 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 > BodyVibe). The gates do not move: WIP 3, a device-verified host load, and GM30 in
 > `FOUNDER_INBOX.md`. Logged in `decisions.csv` (2026-10-24, active).
 
+> ⭐ **Course set the same evening (founder 2026-10-24):** no funding applications anywhere, the
+> physical installation is no business line in the plan, development only — ship Echoel Studio on
+> the whole Apple ecosystem in one simultaneous Store launch, then the repository goes private,
+> then other operating systems. Which platforms "whole" means and what private costs: GM36.
+> Logged in `decisions.csv` (2026-10-24, three rows).
+
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
 
