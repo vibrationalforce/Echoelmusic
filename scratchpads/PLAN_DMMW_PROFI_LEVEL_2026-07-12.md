@@ -69,7 +69,7 @@ Spatial-Kern rund (S4); keine bekannten UI-Fallen. Dann EIN Deploy + Founder-Tes
       geschlossen (LyricsModel Diphthong/Hiatus/sch-Cluster, TimelineStore.
       setLanePan). Die anderen 6 Dimensionen (Concurrency/Render-Safety/Audio-
       Thread/Brand-Health/Protected-DSP/EchoelAI) = 0 Defekte = Batch sauber.
-      5 Design-Briefs gesichert: `scratchpads/DESIGN_BRIEFS_PENDING_2026-07-12.md`.
+      5 Design-Briefs gesichert: `scratchpads/archive/DESIGN_BRIEFS_PENDING_2026-07-12.md`.
       OFFEN: .deploy/release-Bump (Milestone) erst nach Founder-Freeze-Ende.
 
 ## "Ableton 20"-Spur (Founder 24h-Mandat 2026-07-12: "nicht nur einholen

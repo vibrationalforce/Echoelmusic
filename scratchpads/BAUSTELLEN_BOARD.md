@@ -59,7 +59,7 @@ im Workflow-Journal (`wf_2b471bbf-b14`) und in `decisions.csv` (Zeile
 `ultracode-sweep-11-tasks-reconfirmed-blocked`).
 
 Parallel dazu lief der bereits geplante **Task #79 Slice A Pilot** (siehe
-`scratchpads/PLAN_RHYTHMIC_DIVERSITY_2026-07-21.md`) durch Implement→Review→Commit:
+`scratchpads/archive/PLAN_RHYTHMIC_DIVERSITY_2026-07-21.md`) durch Implement→Review→Commit:
 
 | Punkt | Commit | Verify |
 |-------|--------|--------|

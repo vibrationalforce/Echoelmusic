@@ -96,4 +96,4 @@ steht in Council §9, was sich je Frage verschiebt.
 - Eine Founder-Antwort auf Frage 1 mit „Nein" — dann wird Schritt 23 zur Grand-Council-Epic mit
   Flip Nr. 19, und die Zyklen 3–21 bleiben trotzdem die Reihenfolge.
 
-**Nachtrag 2026-09-10 (nach Zeile 9):** Visual-/Render-Ressourcen-Audit → `scratchpads/VISUAL_AUDIT_2026-09-10.md`, sechs Scheiben V1–V6 in der Reihenfolge V5→V3→V4→V2→V1→V6; sie gehen VOR Zeile 12 (Feature), weil sie den Founder-Ask direkt bedienen.
+**Nachtrag 2026-09-10 (nach Zeile 9):** Visual-/Render-Ressourcen-Audit → `scratchpads/archive/VISUAL_AUDIT_2026-09-10.md`, sechs Scheiben V1–V6 in der Reihenfolge V5→V3→V4→V2→V1→V6; sie gehen VOR Zeile 12 (Feature), weil sie den Founder-Ask direkt bedienen.

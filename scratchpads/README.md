@@ -1,22 +1,29 @@
 # scratchpads/ — live plans & logs
 
-Session-specific plans, specs, audits, and the session log. **Read `SESSION_LOG.md` first.**
-Superseded material lives in `archive/` (still in git, moved not deleted — 2026-07 cleanup).
+Session-specific plans, specs, audits and the session log. **Read `SESSION_LOG.md` first**
+(its END — `grep -n '^## ' scratchpads/SESSION_LOG.md | tail -20` + `tail -200`), then the
+DEAD-ENDS table of `HARNESS_LEDGER.md`.
 
-## Live
+## What lives here — measure, do not recite
 
-| File | Purpose |
+| Question | Command |
 |---|---|
-| `SESSION_LOG.md` | Session history — read first |
-| `PLAN_PROFESSIONALIZE_AV_2026-07-02.md` | Current: professionalize audio + visual (M/V cycles) |
-| `PLAN_PRODUCT_STRUCTURE_2026-07-01.md` | Product/surface structure |
-| `PLAN_DMMW_PRO_2026-06-23.md` · `PLAN_PRO_LEVEL_2026-06-22.md` · `PLAN_MULTIDIMENSIONAL_SOUND_2026-06-22.md` | Recent pro-level plans |
-| `PLAN_ARRANGEMENT_VIDEO_ONE_VIEW.md` · `PLAN_VIDEO_PAGE.md` | Arrangement + deferred Video page |
-| `PLAN_MODULARIZATION.md` · `PLAN_MULTIPLATFORM_LINKING.md` · `PLAN_UNIFIED_PROJECT_AND_UNDO.md` · `PLAN_TRANSPORT_CLOCK.md` · `PLAN_PRO_PRODUCTION_SUITE.md` · `PLAN_ECHOELUI_DESIGN_SYSTEM.md` · `PLAN_COMPETITIVE_ROADMAP_2026-06-16.md` | Referenced by CLAUDE.md / active backlog |
-| `STRATEGY_STATE_OF_THE_ART_2026-06-06.md` | Positioning (referenced by CLAUDE.md) |
-| `ARCHITECTURE_AUDIT_2026-06-09.md` · `APPLE_INTEGRATION_AUDIT_2026-06-19.md` · `DEEP_AUDIT_2026-06-03.md` | Architecture references (linked from CLAUDE.md) |
-| `SALVAGE_INVENTORY_REBUILD.md` · `SPEC_LIGHT_OSC_VERIFICATION.md` | Referenced specs |
+| live documents | `git ls-files 'scratchpads/*.md' 'scratchpads/*.txt' 'scratchpads/*.json' \| wc -l` |
+| archived documents | `git ls-files 'scratchpads/archive/*' \| wc -l` |
+| which plans CLAUDE.md still cites | `git grep -o 'scratchpads/[A-Za-z0-9_./-]*' CLAUDE.md \| sort -u` |
 
-## Archived (`archive/`)
+⛔ A table of "live" file names stood here from the 2026-07 cleanup and was stale three ways by
+2026-10-24 (two listed files moved, two did not exist, and "37 archived" against 67 on disk).
+A list of names in a README is a date, not a fact; the commands above are the fact.
 
-37 superseded docs — completed-foundation plans, dated audits (2026-05/06), one-off research/specs for shipped features, and consolidated strategy notes. Kept for history; not part of the live workflow. See `docs/AUDIT_2026-07.md` §7.
+## Always live (never archive)
+
+`SESSION_LOG.md` · `HARNESS_LEDGER.md` · `BAUSTELLEN_BOARD.md` · `FOUNDER_DEVICE_SESSION.md` ·
+`EXECUTION_CHECKPOINT.md` · any `PLAN_*` named by CLAUDE.md or by an `in_progress` task ·
+`factory/` (job state) · `tools/` (pipeline scripts) · `inspiration/` (intake notes).
+
+## Archive (`archive/`)
+
+Superseded material, moved with `git mv` so history stays. `archive/README.md` carries the rules
+and each dated batch with the reason per file. Nothing is deleted; bring a file back instead of
+rewriting it.

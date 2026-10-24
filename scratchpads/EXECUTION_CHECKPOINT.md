@@ -47,7 +47,7 @@ CURRENT (2026-10-07d): branch tip 62d0f9489 (= TestFlight 10.79.492 bump, run 37
   exit 65 #396 shape, failing names unseen). main = bc4fc5205 (auto-merge #310 rejects).
   HELD, not pushed: hold/auto-merge-310 = 6685327b0 (workflow fix; hook did not see it — founder informed).
   BLOCKED on Info.plist (auto mode denies): E10-1 (+ scratchpads/E10-1_review_fixes.patch), then J0
-  (scratchpads/J0_ACOUSTIC_PROBE_DESIGN_2026-10-07.md). Uncommitted 52 E10/B2 files in main checkout: untouched.
+  (scratchpads/archive/J0_ACOUSTIC_PROBE_DESIGN_2026-10-07.md). Uncommitted 52 E10/B2 files in main checkout: untouched.
 CURRENT_HEAD: 7e6aea965 on claude/echoelmusic-review-optimize-u5jjpd (PUSHED code/gate SHA; subsequent docs commits
   may advance the branch tip). Codex applied the prepared, founder-authorized case-20 manifest patch through the connected
   GitHub tools; Claude's local checkout was not inspected and must incorporate the remote commit before its next push.
@@ -263,7 +263,7 @@ REPAIR_21_f84d4121e (2026-09-28, founder order "Nachbesserung … nächster bela
   30503f2b0 review repair (independent reviewer: no build-break, 3 low findings fixed; 1 nit kept: the latch exemption
   recognises only `var x = false` and fails CLOSED on a restyle).
   CASE 20: APPLIED by Codex in 7e6aea965b01c822ca87e1f4127b492c6b53a239 after the founder asked the agents to handle the
-  repository work. This is exactly scratchpads/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff; remote project.yml blob
+  repository work. This is exactly scratchpads/archive/FOUNDER_APPLY_case20_auv3_privacy_manifest.diff; remote project.yml blob
   e41e906ac97934092757d807ab5849b56639dc26 matches the prepared patch. YAML parsing and structural comparison passed:
   only the AUv3 manifest resource entry changes, and app/widget/AUv3 each declare it under sources with buildPhase: resources.
   The Claude hook/settings were NOT changed. This records this authorized patch, not a general permission exception.
@@ -572,7 +572,7 @@ Push-Regel: ein SHA nach dem anderen, jeweils nach dem Compile Check des vorigen
 | `24297e7d7` | P6 · S3 Generierte Note trägt die Stimmungs-Cents | `Studio/PianoRollView` (`musicalFrame(…pitchClassCents:…)` Pflichtargument, `musicalPitchClassCents`, `equalTemperamentCents`), `EchoelStudioView.applyTuning` (dieselbe Tabelle an den Frame), 14 Test-Aufrufstellen, Guard `AGeneratedNoteIsLitByItsTunedPitchTests` (neu) | In Maqām/Just/Pythagoreisch: Licht einer generierten Note = die Frequenz, die die Engine spielt (vorher 12-TET-Farbe über umgestimmtem Klang) | lokal; Transkription grün; Checker sauber | Transpose/Detune pro Stimme nicht im Frame (Touch-Farbe ignoriert sie ebenso); Gerät offen |
 | `81a0cb805` | P6 · S4 Graustufen/Reduce Motion/Stille (test-only) | Guard `TheGridSaysItsNotesWithoutColourOrMotionTests` (neu) | Festgenagelt: jede Rasterzelle NENNT ihre Note in Weiß (nie in der Tönung), Grundton per Randbreite; Reduce Motion nimmt nur die Welle, nie das Raster; Stille = EIN festes Neutral im Shader | lokal; Transkription grün auf beiden Bäumen (Regressions-Pins) | `accessibilityDifferentiateWithoutColor` wird nirgends gelesen; Shader-Neutral warm ≠ Daten-Neutral grau = Look-Entscheidung Founder; Graustufen-Filter = Gerät |
 | `853d9f3a7` | Doku: welche Farbregel ausgeliefert ist | `Core/SpectralColor` (Doc von `displayComponents`: einziger Aufrufer = Touch-Griffbrett, kein Transpose), `docs/dev/DMMW_ARCHITECTURE.md` (physikalisch CIE statt „OKLab-Farbkreis") | Keine Sitzung plant mehr aus einer toten Beschreibung | nur Kommentar/Doku; Checker sauber | — |
-| `a382d5278` | Checkpoint + iPhone-Testliste (Entwurf) | `scratchpads/EXECUTION_CHECKPOINT.md`, `scratchpads/IPHONE_TEST_5MIN_2026-09-29.md` | 16 Schritte, je ein erwartetes Ergebnis | Doku | Build-Nummer nach VALID eintragen |
+| `a382d5278` | Checkpoint + iPhone-Testliste (Entwurf) | `scratchpads/EXECUTION_CHECKPOINT.md`, `scratchpads/archive/IPHONE_TEST_5MIN_2026-09-29.md` | 16 Schritte, je ein erwartetes Ergebnis | Doku | Build-Nummer nach VALID eintragen |
 | `2836f7e3b` | Review MED-1 (24297e7d7): umgestimmte Note landet auf ihrer GESCHRIEBENEN Zelle | `Studio/TouchInstrumentView` (`fieldPosition(forHz:…pitchClassCents:…)` Pflicht, `writtenPitch`), `Views/MetalBioView` (Tabelle einmal je Bild, im draw-Callback), 5 Test-Aufrufstellen, Guard `ARetunedNoteLandsOnItsWrittenCellTests` (neu) | Bayātī auf C-Dur: E/A/H blieben ohne Zelle und schwebten neben dem Raster — jetzt auf ihrer Zelle; auch Touch-Noten | Transkription: ganze Bibliothek × 12 Grundtöne × 4 Skalen × 3 Kammertöne, 833 931 eigene Zelle + 180 621 gleichklingend, 0 Verstöße; Checker sauber | Zwei gleich klingende Stufen der Tonart (Sléndro E/F) → Wolke auf der tieferen Zelle (Frame trägt nur Hz); Gerät offen |
 | `f5d340ea7` | Review LOW-3: Frame-A4 aus dem einen Kammerton-Fächer | `EchoelStudioView.applyConcertPitch` (+`pianoRoll.musicalA4Hz`), Kommentar in `applyTuning` korrigiert, Guard `AGeneratedNoteIsLitByItsTunedPitchTests` Anspruch 4 (+Pin) | Nach dem Öffnen eines 432-Projekts leuchtet der Frame sofort im neuen A4 (vorher erst nach dem nächsten Generate) | Transkription beide Bäume (Eltern rot durch eine Abwesenheit); Checker sauber | — |
 
