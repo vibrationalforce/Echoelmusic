@@ -80,8 +80,8 @@ if [ $? -eq 0 ]; then
         ls -lh .build/debug/ 2>/dev/null || echo "  (Debug build directory)"
     fi
     echo ""
-    echo -e "${YELLOW}📱 Next step: Deploy to iPhone${NC}"
-    echo "   Run: ${GREEN}./deploy.sh${NC}"
+    echo -e "${YELLOW}📱 Next step: open the Xcode project${NC}"
+    echo "   See README.md §Build (xcodegen generate, then xcodebuild)"
     echo ""
 else
     echo ""

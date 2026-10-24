@@ -74,7 +74,7 @@ der Vollständigkeit halber. `window-margins.py` und `doorless-state.py` standen
 | `check-secrets.sh` | Wenn der Deploy an der Secret-Prüfung scheitert. Erwartet `ASC_*` in der Umgebung. |
 | `check-testflight.sh` | Lokaler Helfer zum Diagnostizieren des TestFlight-Workflows; liest den Token aus `.claude/settings.local.json` (gitignored). ⚠️ Diese Datei existiert in einer Web-Sitzung NICHT. |
 | `check-infoplist.sh` | Nach `xcodegen generate` — die Plist bleibt vollständig und wahr. Sie selbst ist founder-gated: berichten, nicht editieren. |
-| `generate-xcode-project.sh` · `install-hooks.sh` · `build-guard.sh` | Einrichtung auf dem Mac. `build-guard.sh` hängt als pre-push-Hook. |
+| `install-hooks.sh` · `build-guard.sh` | Einrichtung auf dem Mac — das Xcode-Projekt entsteht mit `xcodegen generate --spec project.yml` (README.md §Build). `build-guard.sh` hängt als pre-push-Hook. |
 | `test-asc-api.rb` | Nur wenn die App-Store-Connect-Anmeldung selbst fraglich ist. |
 | `asc-build-state.rb` | Läuft in `studio-testflight.yml`: `auth` meldet sich vor dem Signieren einmal bei App Store Connect an, `wait <build> <version>` wartet nach dem Upload, bis Apple den Build als VALID, INVALID oder FAILED verarbeitet hat. Liest den Schlüssel nur aus der Umgebung und druckt ihn nie. |
 

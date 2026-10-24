@@ -70,7 +70,7 @@ Full LIVE/ROADMAP/NORTH-STAR detail in [`vision.md`](../../memory/vision.md) and
 - Presets: save/recall your own · 16 curated · search by name+tag · favorites + recents (on-device ranking).
 - **Community loop:** in-app "Submit" → GitHub issue → `community-triage` Action validates JSON & opens a PR to `community/curated/`.
 - **Sound/patch parity:** same community + favorites/recents on `SynthPatch`.
-- Apple integration: [`APPLE_INTEGRATION_NOTES.md`](../../APPLE_INTEGRATION_NOTES.md) + [repo audit](../../scratchpads/APPLE_INTEGRATION_AUDIT_2026-06-19.md).
+- Apple integration: [`APPLE_INTEGRATION_NOTES.md`](../../scratchpads/archive/APPLE_INTEGRATION_NOTES.md) (archived 2026-10-24) + [repo audit](../../scratchpads/APPLE_INTEGRATION_AUDIT_2026-06-19.md).
 
 ---
 

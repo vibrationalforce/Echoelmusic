@@ -13,3 +13,12 @@ Regeln:
 - Verschieben mit `git mv` (Historie bleibt), Batch pro Hygiene-Zyklus, eine Zeile
   Begründung im Commit.
 - Nichts hier drin ist gelöscht — bei Bedarf zurückholen statt neu schreiben.
+
+## Batch 2026-10-24 (Repo-Aufräumen, Inventur mit Skeptiker-Gegenprüfung)
+
+Root: `LOOP-STATE.md` (Loop-Zustand einer Juli-Sitzung, 0 Verweise) · `TODO.md` (abgelöst von
+`docs/dev/TODO_FOUNDER_2026-10-19.md` + `docs/dev/TODO_2026-10-18.md`) ·
+`APPLE_INTEGRATION_NOTES.md` (Fragenkatalog; die Antworten stehen in
+`APPLE_INTEGRATION_AUDIT_2026-06-19.md` hier im Archiv). Gelöscht statt archiviert (kein
+Aufrufer, Inhalt widerspricht dem Stand): `deploy.sh`, `run_integration_tests.sh`,
+`.gitmessage`, `scripts/generate-xcode-project.sh`.
