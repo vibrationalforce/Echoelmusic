@@ -369,3 +369,77 @@ Gerüchte als Gerüchte, keine Gesundheits- oder Wellness-Themen.
 (Lernmodus) und trägt das Ergebnis ins Ledger ein.
 
 **Antworten: beide am 22.10. eingetroffen und gemessen** (Workflow `wf_c4738df5-31a`; Ledger `memory/inspiration_intake.md` 2026-10-22, `inspiration.csv`). ChatGPT `[verified 6/7]` → ADOPT→PRODUCT: Dublette bei Prozessende vor der Marke, verschiebbare Platznummern, Aufgabe gesunder Songs, Fehlalarm unter 3 s Hintergrund, Hintergrund-Engine bei Clock-Follow und Transport ohne Ende; die Messung fand dazu drei schwerere Befunde (Export ohne Medien nach dem Öffnen, Songwechsel während des Exports, Öffnen nach gescheitertem Speichern verwirft Änderungen). Quelle formal kontaminiert (U+2060), kein Satz kopiert. Grok `[verified 4/8]` → WATCH: die vier Repo-Hälften (Reset, Rückkehr, Invalidation, Ratenwechsel) stimmen, die externen Punkte bleiben ungeöffnet.
+
+---
+
+## Runde 5 — Samstag, 24.10.2026 (Stand `b0f4e8b36`), vorgezogen von Montag
+
+**Founder 2026-10-24:** „Gib mir Deep Research und Review Aufträge für DeepSeek, Mistral und vor allem ChatGPT Astra sehr hoch, super Grok Heavy.“ Diese Runde deckt deshalb vier Modelle ab. Hier stehen nur die drei Aufträge zum Code. Die Aufträge zu Förderung, Promo und Recht enthalten persönliche Rahmendaten und stehen nur im privaten Doc „Echoel · Deep Audit Förderung oder Unabhängigkeit“, Tab „KI-Aufträge“.
+
+**Was sich seit Runde 4 geändert hat:** Starter-Song beim ersten Start, Tonart und Skala mit „Keys Follow Scale“, Stem-Export, Sampler- und Drum-Werte auf der Sound-Seite samt Automation, Song teilen als saubere Kopie, Song umbenennen (Factory 006/007). Nichts davon ist auf einem Gerät geprüft.
+
+**Bilanz bisher** (`python3 -I scripts/learn-intake.py --tally`, 24.10.): ChatGPT Astra 50/57 · Mistral 36/44 · SuperGrok Heavy 43/65 · DeepSeek 10/24. DeepSeek bekommt deshalb nur einen engen Auftrag mit öffentlichem Code.
+
+### Auftrag an ChatGPT (Astra, höchste Stufe) — Code- und Bedien-Prüfung
+
+```
+Rolle: externer Code- und UX-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift 6, keine externen Abhängigkeiten). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic, Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand b0f4e8b36, Verzeichnis EchoelStudio/.
+
+Lies nur diese Dateien (alle öffentlich):
+- EchoelStudio/CLAUDE.md
+- EchoelStudio/Core/Sources/EchoelCore/StarterProject.swift und MusicalContext.swift, dazu ihre Tests in EchoelStudio/Core/Tests/EchoelCoreTests/
+- EchoelStudio/Core/Sources/EchoelCore/Automation.swift und EchoelStudio/App/Views/AutomationViews.swift
+- EchoelStudio/App/Views/SoundPanel.swift, StudioView.swift, RenameSongView.swift
+- EchoelStudio/App/Documents/DocumentController.swift (Umbenennen, Teilen, Speichern)
+- EchoelStudio/App/Engine/AudioEngine.swift (Stem-Export) und EchoelStudio/Engine/Tests/EchoelEngineTests/StemRenderTests.swift
+- EchoelStudio/DSP/Sources/EchoelDSP/Sampler.swift, DrumKit.swift und EchoelStudio/Engine/Sources/EchoelKernels/SamplerKernel.swift, DrumKernel.swift
+
+Fragen:
+1. Starter-Song: Was hört und sieht jemand beim allerersten Start? Kann der Starter einen gespeicherten Song überschreiben?
+2. Tonart und Skala: Wenn „Keys Follow Scale“ an ist und man die Tonart während gehaltener Noten wechselt, bleibt eine Note hängen oder klingt falsch?
+3. Stems: Haben alle Stems exakt dieselbe Länge und denselben Startpunkt, auch mit Effekt-Fahnen, Automation und einer stummen Spur?
+4. Sampler und Drums: Kann ein Wert auf der Sound-Seite oder eine Automation einen Klick, eine Stille oder einen Wert außerhalb des Bereichs erzeugen?
+5. Umbenennen und Teilen: Gibt es eine Schrittfolge, nach der ein Song doppelt, leer oder unter altem Namen geteilt wird?
+6. Welche zwei Gerätetests würdest du zuerst machen, und was genau soll man sehen oder hören?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, „sicher“ oder „vermutet“, kein Code, keine neuen Features.
+```
+
+### Auftrag an SuperGrok Heavy — was sich für iOS-Musik-Apps geändert hat (nur mit Quelle)
+
+```
+Rolle: externer Rechercheur für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift, die eine eigene AUv3-Erweiterung einbettet, fremde Audio Units hostet und Plugins als einmaligen In-App-Kauf verkaufen will. Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic (Zweig claude/echoelmusic-review-optimize-u5jjpd, Verzeichnis EchoelStudio/).
+
+Nur der Stand seit dem 10.10.2026, nur mit Quelle und Datum. Wo es nichts Neues gibt, sag das in einem Satz.
+1. Neue iOS-, iPadOS- und Xcode-Versionen und Betas: Release Notes zu AVAudioEngine, AVAudioSession, Audio Units, App Groups, StoreKit, TestFlight.
+2. App-Review-Regeln zu In-App-Käufen, die eine AUv3-Erweiterung freischalten: Was ist erlaubt, wenn der Kauf in der App passiert und die Erweiterung ihn über eine App Group liest? Dokumentierte Ablehnungen oder Freigaben.
+3. Was iOS-DAWs und Hosts (AUM, Logic Pro für iPad, Cubasis, Loopy Pro, Drambo) zuletzt bei AUv3 geändert haben.
+4. Neue Preis- oder Steuerregeln im App Store für Deutschland und die EU.
+
+Form: höchstens 8 Punkte. Jeder Punkt: Behauptung · Link · Datum · „sicher“ oder „vermutet“ · eine Zeile, was das für Echoel Studio heißt. Keine Code-Vorschläge.
+```
+
+### Auftrag an DeepSeek (DeepThink) — Echtzeit-Sicherheit und Rechenfehler in Sampler und Drums
+
+```
+Rolle: DSP-Prüfer für Echtzeit-Audio in Swift. Du prüfst, du schreibst keinen Code.
+
+Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic, Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand b0f4e8b36.
+
+Lies nur:
+- EchoelStudio/DSP/Sources/EchoelDSP/Sampler.swift
+- EchoelStudio/DSP/Sources/EchoelDSP/DrumKit.swift
+- EchoelStudio/Engine/Sources/EchoelKernels/SamplerKernel.swift
+- EchoelStudio/Engine/Sources/EchoelKernels/DrumKernel.swift
+- die Tests dazu: EchoelStudio/DSP/Tests/EchoelDSPTests/SamplerTests.swift, DrumKitTests.swift, EchoelStudio/Engine/Tests/EchoelKernelsTests/SamplerKernelTests.swift, DrumKernelTests.swift
+
+Fragen:
+1. Läuft auf dem Audio-Thread etwas, das Speicher anlegt, sperrt, Dateien liest oder auf einen anderen Thread wartet?
+2. Welche Eingaben (NaN, unendlich, 0, negative Werte, sehr kurze Samples, Tonhöhe am Rand) erzeugen Stille, einen Knack, einen Absturz oder einen Wert außerhalb des Bereichs?
+3. Stimmt die Interpolation beim Abspielen in anderer Tonhöhe, und gibt es Fehler am Ende einer Schleife?
+4. Welcher Fall fehlt in den Tests?
+
+Form: höchstens 8 Punkte, jeder mit Datei:Zeile, „sicher“ oder „vermutet“, kein Code. Wenn du eine Datei nicht lesen kannst, sag das, statt zu raten.
+```
+
+**So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo (Lernmodus) und trägt das Ergebnis ins Ledger ein.
