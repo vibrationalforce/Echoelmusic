@@ -14,7 +14,8 @@ final class PluginControlsModel {
     private(set) var values: [AUParameterAddress: AUValue] = [:]
     let parameters: [AUParameter]
     let title: String
-    let isUnlocked: Bool
+    /// False while the purchase is unknown; `unlock()` when the license check finds it.
+    private(set) var isUnlocked: Bool
     let help: String?
     /// For a sampler: what it plays, and the last problem loading one.
     private(set) var sampleName: String?
@@ -67,6 +68,11 @@ final class PluginControlsModel {
         } catch {
             sampleMessage = "This file is not an audio format Echoel can read."
         }
+    }
+
+    /// The purchase was found after the controls appeared: the demo text goes.
+    func unlock() {
+        isUnlocked = true
     }
 
     func clearSample() {

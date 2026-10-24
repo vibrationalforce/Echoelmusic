@@ -24,6 +24,8 @@ extension EchoelPluginUnit {
 class PluginViewController: AUViewController, AUAudioUnitFactory {
     private var audioUnit: (any EchoelPluginUnit)?
     private var hosting: UIHostingController<PluginControlsView>?
+    /// The controls on screen, so a license found after they appeared can lift their demo text.
+    private var model: PluginControlsModel?
 
     /// Carries the new unit across threads: from the host's to the license check and the view.
     private final class UnitBox: @unchecked Sendable {
@@ -38,7 +40,9 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
 
     /// Synchronous and nonisolated, as the protocol requires; the host calls it on any thread.
     /// The unit starts locked and is unlocked as soon as the purchase is found, well before the
-    /// demo's first silence at 28 seconds.
+    /// demo's first silence at 28 seconds. The controls appear at once, locked, and unlock with the
+    /// unit: a window that waited for the license check showed the host nothing for as long as
+    /// StoreKit took to answer (store review 2026-10-24).
     nonisolated func createAudioUnit(with componentDescription: AudioComponentDescription) throws -> AUAudioUnit {
         let unit = try Self.makeUnit(componentDescription)
         let box = UnitBox(unit)
@@ -49,9 +53,10 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
         }
         unit.isUnlocked = false
         Task {
-            let unlocked = await PluginLicense.isUnlocked()
-            box.unit.isUnlocked = unlocked
             await MainActor.run { self.adopt(box.unit) }
+            guard await PluginLicense.isUnlocked() else { return }
+            box.unit.isUnlocked = true
+            await MainActor.run { self.unlock() }
         }
         return unit
     }
@@ -66,6 +71,12 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
     private func adopt(_ unit: any EchoelPluginUnit) {
         audioUnit = unit
         if isViewLoaded { show(unit) }
+    }
+
+    /// The purchase was found after the controls appeared: the unit is already unlocked, and the
+    /// controls built later (`show`) read it; the ones showing now are told.
+    private func unlock() {
+        model?.unlock()
     }
 
     private func show(_ unit: any EchoelPluginUnit) {
@@ -99,5 +110,6 @@ class PluginViewController: AUViewController, AUAudioUnitFactory {
         view.addSubview(controller.view)
         controller.didMove(toParent: self)
         hosting = controller
+        self.model = model
     }
 }
