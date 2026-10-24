@@ -208,6 +208,8 @@ Vorher wird `docs/dev/LESSONS.md` geschrieben (maximal 2 Seiten). Es hält die t
 
 ## 5. Bauphasen
 
+> ⭐ **Nach P1 gilt der Store-first-Fahrplan `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`** (Founder 2026-10-24: ein zeitgleicher Store-Start auf dem Apple-Ökosystem, dann Repo privat, dann andere Betriebssysteme). Er ersetzt die gestrichene Förder-Reihenfolge weiter unten; die Phasen P0–P6 bleiben die BAU-Reihenfolge.
+
 | Phase | Inhalt | fertig wenn | was ausgeliefert wird |
 |---|---|---|---|
 | **P0 Ordnung** | Targets Kernels/Host, ein Instrumentenpfad, eine Parametertabelle, `DeviceRef`, `MusicalContext` + `TuningSystem`, Befehlsnamen ordnen und einfrieren, Kapazitätsfehler sichtbar machen, Import-Grenze (Linux-Build + CI-Schritt, kein Quelltext-Test), `docs/FORMAT.md` plus Golden-Files, Network-MIDI-Gerätename als `.private` loggen, `EchoelStudio/CLAUDE.md` korrigieren | Core-, DSP- und Engine-Tests grün; App- und AUv3-Build grün; die Extension linkt kein `EngineCore`; ein neues eingebautes Gerät braucht nur eine Tabelle plus einen Kernel; altes Song-Format migriert; **kein Verhaltensunterschied für den Nutzer** | TestFlight-Build, intern |

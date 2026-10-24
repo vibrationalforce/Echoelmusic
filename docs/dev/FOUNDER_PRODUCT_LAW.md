@@ -60,7 +60,9 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 > physical installation is no business line in the plan, development only — ship Echoel Studio on
 > the whole Apple ecosystem in one simultaneous Store launch, then the repository goes private,
 > then other operating systems. Which platforms "whole" means and what private costs: GM36.
-> Logged in `decisions.csv` (2026-10-24, three rows).
+> Logged in `decisions.csv` (2026-10-24, three rows). The measured plan for that course — what ships today,
+> the slice order, what "simultaneous" costs, and the three private-repo options — is
+> `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`.
 
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
