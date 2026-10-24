@@ -48,6 +48,14 @@ This page is published under `docs/dev/` and must be read as a roadmap, never as
 > control and undo structures. Order: `ECHOELMUSIC_MASTER_PLAN.md` §1; the audit behind it and
 > its packages A–G: `scratchpads/GSIDMMW_AUDIT_2026-10-16.md`.
 
+> ⭐ **Reaffirmed by the founder 2026-10-24** („unserer gesamt Vision Echoelmusic App GSIMMW gemerged
+> mit Plugins und dem besten aus den alten TestFlights kombiniert"): the product is the merged
+> workstation (Echoel Studio) with its own plug-ins, and the best of the earlier TestFlight builds
+> comes back — never copied, rebuilt into today's owners by recovery class
+> (`HISTORY_ARCHIVE.md`) and stage (`PLAN_ENGINE_RECOVERY_2026-10-23.md`: Keys → DDSP engine →
+> BodyVibe). The gates do not move: WIP 3, a device-verified host load, and GM30 in
+> `FOUNDER_INBOX.md`. Logged in `decisions.csv` (2026-10-24, active).
+
 **Echoelmusic is a full professional distributed multidimensional multimedia workstation
 (DMMW).** It is not limited to being a bio-reactive instrument.
 
