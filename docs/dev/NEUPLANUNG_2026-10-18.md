@@ -208,6 +208,8 @@ Vorher wird `docs/dev/LESSONS.md` geschrieben (maximal 2 Seiten). Es hält die t
 
 ## 5. Bauphasen
 
+> ⭐ **Seit 2026-10-25 enthält 1.0 alles** (Founder: „die fertige App, die alles enthält“): Körper, Modulation, Bild, Licht/OSC und DDSP rücken VOR den Store-Start, Reihenfolge in `scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md`. Die Versions-Spalte der Tabelle unten (1.1–1.4) ist damit überholt.
+>
 > ⭐ **Nach P1 gilt der Store-first-Fahrplan `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`** (Founder 2026-10-24: ein zeitgleicher Store-Start auf dem Apple-Ökosystem, dann Repo privat, dann andere Betriebssysteme). Er ersetzt die gestrichene Förder-Reihenfolge weiter unten; die Phasen P0–P6 bleiben die BAU-Reihenfolge.
 
 | Phase | Inhalt | fertig wenn | was ausgeliefert wird |

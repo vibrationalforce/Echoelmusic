@@ -5716,3 +5716,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Folge 3:** Zielbild 1.0 = ein zeitgleicher Store-Start auf dem ganzen Apple-Ökosystem. Welche Plattformen das genau sind und was ein privates Repo kostet (macOS-CI-Minuten, GitHub Pages), fragt GM36 mit Empfehlung; die Messung läuft (`wf_64e229bb-d22`), der Plan folgt als `scratchpads/PLAN_STORE_FIRST_2026-10-24.md`.
 - **Was bleibt:** Produktgesetz, Vision GSIDMMW mit Plugins und Altbestand, WIP 3, Gerätegates, GM30. Die privaten Docs (Audit, Geld, Morgen) tragen Banner.
 - **Review:** 2026-11-24.
+
+### 2026-10-25 — Studio 1.0 enthält alles
+- **Decision:** 1.0 = die DAW plus jede Fähigkeit, die in der alten App funktionierend lief (Körper, Modulation, Bild, Licht/OSC/ADM-OSC, DDSP, MPE out). Store-Start danach.
+- **Why:** Founder: „die fertige App, die alles enthält". Der Plan vom 18.10. setzte den Körper auf 1.4; ohne ihn wäre 1.0 eine gewöhnliche DAW.
+- **Plan:** `scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md` (W1 Körper → W2 Modulation → W3 Bild / W4 Verbindungen → W5 Klang+ → W6 Store).
+- **Out of 1.0:** Video, Streaming, Harmonizer/Granular/Autotune, native Mac/Vision/Watch, Link.
+- **Review:** 2026-11-24.
+
