@@ -10,6 +10,8 @@ struct StudioView: View {
 
     @State private var router = StudioRouter()
     @State private var surface: Surface = .tracks
+    /// The keys and pads under the surface; on by default so the phone alone makes sound.
+    @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
 
     enum Surface: Hashable { case tracks, arrange, session, mixer }
 
@@ -36,6 +38,10 @@ struct StudioView: View {
             case .session:
                 SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
             case .mixer: MixerView()
+            }
+            if showsKeys {
+                Divider().overlay(Theme.Color.border)
+                PlayKeysView()
             }
         }
         .sheet(item: $router.sheet, onDismiss: { router.sheetClosed() }) { sheet in
@@ -84,6 +90,7 @@ struct TransportBar: View {
     @Environment(MIDIInput.self) private var midi
     @Environment(ParameterWriter.self) private var writer
     @State private var clickOn = true
+    @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -138,6 +145,12 @@ struct TransportBar: View {
             .accessibilityValue(clickOn ? "On" : "Off")
 
             MIDILearnButton()
+
+            Button { showsKeys.toggle() } label: { Image(systemName: "pianokeys") }
+                .buttonStyle(ToolButtonStyle(isActive: showsKeys))
+                .accessibilityLabel("Keys")
+                .accessibilityValue(showsKeys ? "Shown" : "Hidden")
+                .accessibilityHint("Shows keys and pads that play the live track.")
 
             Button { writer.setWriting(!writer.isWriting) } label: {
                 Text("A").font(Theme.Font.label)

@@ -20,6 +20,10 @@ final class LiveRouter: Sendable {
     }
 
     private let target = Mutex(Target())
+    /// The engine's live ring has exactly one producer (`EngineCore.playLive`). Two threads play
+    /// into it — the MIDI input and the keys on the screen (`PlayKeysView`) — so every push is made
+    /// under this lock. Never taken on the render thread, which only drains the ring.
+    private let producer = Mutex<Void>(())
 
     /// A note, bend or controller as it was played while a MIDI take records: the output sample
     /// the engine had reached, and the message.
@@ -59,7 +63,8 @@ final class LiveRouter: Sendable {
         }
     }
 
-    /// MIDI thread.
+    /// The MIDI thread, or the main thread for the keys on the screen; the pushes are serialized
+    /// by `producer`.
     func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         let kind = status & 0xF0
         let channel = status & 0x0F
@@ -95,11 +100,13 @@ final class LiveRouter: Sendable {
             return (core, slot, 0, LiveKeys.Output())
         }
         guard let core else { return }
-        if isNote {
-            // A note plays as the held keys decide, and the take keeps what was heard.
-            for note in notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
-        } else {
-            guard let slot else { return }
+        let keepsInTake = producer.withLock { (_: inout Void) -> Bool in
+            if isNote {
+                // A note plays as the held keys decide, and the take keeps what was heard.
+                for note in notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
+                return true
+            }
+            guard let slot else { return false }
             core.playLive(slot: slot, status: status, data1, data2)
             var others = alsoReleased
             while others != 0 {
@@ -107,8 +114,9 @@ final class LiveRouter: Sendable {
                 others &= others - 1
                 core.playLive(slot: other, status: status, data1, data2)
             }
-            guard kind == 0xB0 || kind == 0xE0 else { return }
+            return kind == 0xB0 || kind == 0xE0
         }
+        guard keepsInTake else { return }
         let sample = core.positionSample
         capture.withLock { events in
             guard events != nil else { return }
