@@ -1,62 +1,30 @@
-11.0.0, sixth TestFlight upload — the app survives what a device does to it
+11.0.0, seventh upload — play it with the phone alone
 
-What is new since 10008. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10009. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- A song is one file in Files (type com.echoelmusic.song, extension .echoel). A song tapped in
-  Files or received by AirDrop opens in Echoel and joins the song list.
-- Songs are saved in format 2: a song saved by this build does NOT open in builds 10004–10008.
-- A broken song file is refused whole instead of opening half.
-- When the newest song cannot be opened, the newest one that can comes up and the status line
-  names the one that did not. It stays in the list.
-- When the last launch did not get past its first seconds, the app starts a new song instead of
-  reopening the same one, and says so. Every song stays in the list. The song that was opening
-  then does not open by itself again until it is chosen in the song list; the status line names
-  it.
-- An import of earlier songs that was running when a launch died is not tried again, and the
-  status line says so; a damaged earlier song with an out-of-range velocity imports instead of
-  stopping the app.
-- A failed audio start is tried again; after three tries Play becomes Restart audio. Play also
-  rebuilds the audio when iOS stopped it without telling.
-- Unplugging headphones pauses the song. A call, a media reset or an external clock's Stop ends
-  a running take and keeps what it captured.
-- A plugin whose extension crashes is loaded again.
-- A new sample rate (an interface plugged in) keeps the playhead and the plugin settings.
-- The mod wheel, expression and any knob that is not learned play the live instrument and are
-  recorded in a take; a learned one moves only its parameter. A hosted plugin instrument gets
-  every controller. The Echoel Synth Audio Unit reads the pitch wheel, the pedal and the mod
-  wheel; panic stops the drums.
-- Deleting a playing track or changing its instrument fades out; a stolen sampler voice, an EQ
-  band coming back and the plugin demo's silence fade instead of clicking.
-- A tempo change while playing never loses a note-off and crossfades audio tracks.
-- The assistant shows only on a device that can run its model.
-- New Song and Open keep the built-in effects' settings made since the app last left the
-  foreground; before, a switch from the song menu dropped them.
-- Soloing a return track plays it with what the other tracks send to it, instead of silence.
-- Tapping a clip in Arrange opens that clip; a recorded MIDI take can now be edited.
-- Export WAV is offered only when something is on the timeline, so it never shares an empty file.
-- Every automatic audio recovery reopens the input an armed audio track asked for, and says so
-  when it cannot; Play no longer runs the song over audio that failed to come back.
-- Paused from outside while in the background, the app stops its audio instead of staying up
-  silent; following a DAW's clock, it comes back after a call in the background.
-- A MIDI take ended by a sample-rate change keeps its notes in time.
-- After a launch that did not finish, the new song is not saved until it is edited, so the
-  next launch opens your newest song again. A song received, or copied in with the Files app,
-  under that unsaved song's name is not overwritten by it.
-- Record and a session launch start nothing while the audio cannot run, even while the song
-  shows as playing; a new take waits until the last one is written out.
-- Deleting the armed track, or arming an instrument track instead, closes the input it opened.
-- When the input cannot be opened again while an audio take records, the take ends there and
-  keeps what it recorded, in time; the message says why the input failed. Opening the input for
-  a monitor set to in ends a running take first, since it stops the song.
-- During MIDI Learn knobs, the pitch wheel, pressure, program change and a pressed pedal play
-  nothing, so a plugin cannot take the learn; notes, panic and All Notes Off play, and a held
-  wheel or pedal can return to rest.
-- A plugin that stopped is named in the status line once it is loaded again, or with the reason
-  it is not; several are all named. Notices no longer hide each other, and an export clears
-  only the ones that stood before it.
-- The status line sits under the transport strip instead of over its buttons.
+- Keys and drum pads on the screen. Under every view sits a keyboard as wide as the screen
+  holds (octave down/up, the lowest key is shown), and for a drum track the kit as eight pads,
+  kick at the bottom left. The keys button in the transport hides and shows them.
+- The keys play the live track, the same one a MIDI keyboard plays (choose it with the keys
+  button on a track). The song's key lock applies, and a MIDI take records what you play on
+  the screen, exactly as from a keyboard.
+- A key held on the screen and the same key held on a MIDI keyboard are two keys: lifting
+  one does not end the other, and their notes never change order on the way to the engine.
+  On a phone on its side the keys and pads shrink so the tracks above keep their room; a
+  short tap sounds; VoiceOver's activate plays a key.
+- A first install opens Four Tracks: Keys, Bass and Lead on their sounds and a Drums track
+  with an empty one-bar pattern. The first touch on the keys sounds.
+- The store: closing the store page no longer marks the purchase as not owned; Restore says
+  what it found; Buy and Restore wait for each other; "not on sale yet" shows only while the
+  App Store knows no product.
+- A plugin window shows its controls at once, with the demo note, and unlocks when the
+  purchase is found; the extension asks the App Store for at most five seconds.
+- Under the hood since 10009: about two hundred repairs from eight review rounds — taking a
+  song file the memory cannot hold, audio takes that cannot move or load, the input opening
+  only into headphones or an interface, the sampler's memory, sample-rate changes, and plugin
+  sessions restored in low memory. Each names itself in the status line when it happens.
 
-Previous: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
+Previous: 11.0.0 (10009), sixth upload — the app survives what a device does to it (songs as one file in Files and AirDrop, launch and audio recovery, headphone unplug pauses, plugin crash reload). Before that: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
 group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
 10007 (finding no earlier songs no longer marks the import done), 10006, 10005, 10004 (the first
 Echoel Studio build). group.com.echoelmusic (the import of earlier songs) is still not requested
@@ -68,14 +36,14 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Plugin purchase family SP1-SP3 (FOUNDER_INBOX section 2): load Echoel Synth, Drums and EQ in
-   AUM with 10007 (the baseline), then with this build — no -3000 — and without a purchase the
-   Synth pauses for 2 s after 28 s, every 30 s.
-2. Files app -> On My iPhone -> Echoel: each song is ONE file, not a folder. Share or AirDrop one
-   to yourself and tap it: it opens in Echoel and appears once in the song list.
-3. Arm an instrument track and move a MIDI keyboard's mod wheel: vibrato. MIDI-learn the wheel to
-   a parameter: from then on it moves only that parameter.
-4. Play with headphones and unplug them: the song pauses and the status line says why. Record a
-   take and take a call: the take ends and is kept, and after the call Play plays.
-5. Record a take on an armed audio track: Stop fades it out and its reverb rings. Export a song
-   with a long reverb: the file ends after the tail, not 2 s after the last note.
+1. Delete Echoel, install this build, open it: Four Tracks opens, and touching a key under the
+   tracks sounds within three seconds, without a MIDI keyboard. Two fingers play two notes.
+2. Tap the keys button on the Drums track: the pads appear, Kick, Snare and the hats sound.
+   Hide the keys with the transport's keys button and show them again.
+3. Arm the Keys track, press Record, play eight bars on the screen keys, Stop: the take is a
+   clip, and it plays back what you played. Pull down Notification Center mid-note: no note
+   keeps sounding.
+4. Choose a key and scale for the song and turn on the key lock: every screen key plays a
+   note of the scale.
+5. Plugin family SP1-SP3 (FOUNDER_INBOX section 2): Echoel Synth, Drums and EQ load in AUM, the
+   window shows its controls at once, and without a purchase the Synth pauses 2 s every 30 s.
