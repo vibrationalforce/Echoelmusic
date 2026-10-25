@@ -19,11 +19,10 @@ final class LiveRouter: Sendable {
         var pedalDown: UInt64 = 0
     }
 
+    /// Also what keeps the engine's live ring single-producer (`EngineCore.playLive`): the MIDI
+    /// input and the keys on the screen (`PlayKeysView`) both push under it. Never taken on the
+    /// render thread, which only drains the ring.
     private let target = Mutex(Target())
-    /// The engine's live ring has exactly one producer (`EngineCore.playLive`). Two threads play
-    /// into it — the MIDI input and the keys on the screen (`PlayKeysView`) — so every push is made
-    /// under this lock. Never taken on the render thread, which only drains the ring.
-    private let producer = Mutex<Void>(())
 
     /// A note, bend or controller as it was played while a MIDI take records: the output sample
     /// the engine had reached, and the message.
@@ -63,71 +62,77 @@ final class LiveRouter: Sendable {
         }
     }
 
-    /// The MIDI thread, or the main thread for the keys on the screen; the pushes are serialized
-    /// by `producer`.
+    /// The MIDI thread, or the main thread for the keys on the screen. The decision, the push into
+    /// the engine's ring and the take's copy happen under ONE lock: decided under one lock and
+    /// pushed under another, a release decided first could reach the ring after a later press,
+    /// and the note would hang (review of the screen keys, 2026-10-25). The push is a lock-free
+    /// ring write, never a wait on the render thread.
     func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
-        let kind = status & 0xF0
-        let channel = status & 0x0F
-        let isNote = kind == 0x80 || kind == 0x90
-        let (core, slot, alsoReleased, notes) = target.withLock {
-            (state: inout Target) -> (EngineCore?, Int?, UInt64, LiveKeys.Output) in
-            guard let core = state.core else { return (nil, nil, 0, LiveKeys.Output()) }
-            // A release ends what its press started, in the slot it went to, also while the song
-            // has no live track: dropped here, the key would stay latched and later hold another
-            // key's note on (review 2026-10-22).
-            if kind == 0x80 || (kind == 0x90 && data2 == 0) {
-                return (core, state.slot, 0, state.keys.release(channel: channel, key: data1))
-            }
-            guard let slot = state.slot else { return (nil, nil, 0, LiveKeys.Output()) }
-            let bit: UInt64 = slot < 64 ? 1 << UInt64(slot) : 0
-            switch kind {
-            case 0x90:
-                return (core, slot, 0, state.keys.press(channel: channel, key: data1, velocity: data2, slot: slot))
-            case 0xB0 where data1 == 120 || data1 == 123:
-                // All sound off and all notes off end the slot's notes without their releases.
-                state.keys.reset(slot: slot)
-            case 0xB0 where data1 == 64:
-                if data2 >= 64 {
-                    state.pedalDown |= bit
-                } else {
-                    let others = state.pedalDown & ~bit
-                    state.pedalDown = 0
-                    return (core, slot, others, LiveKeys.Output())
-                }
-            default:
-                break
-            }
-            return (core, slot, 0, LiveKeys.Output())
-        }
-        guard let core else { return }
-        let keepsInTake = producer.withLock { (_: inout Void) -> Bool in
+        target.withLock { (state: inout Target) in
+            guard let core = state.core else { return }
+            let decided = Self.decide(&state, status: status, data1, data2)
+            let kind = status & 0xF0
+            let isNote = kind == 0x80 || kind == 0x90
             if isNote {
                 // A note plays as the held keys decide, and the take keeps what was heard.
-                for note in notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
-                return true
-            }
-            guard let slot else { return false }
-            core.playLive(slot: slot, status: status, data1, data2)
-            var others = alsoReleased
-            while others != 0 {
-                let other = others.trailingZeroBitCount
-                others &= others - 1
-                core.playLive(slot: other, status: status, data1, data2)
-            }
-            return kind == 0xB0 || kind == 0xE0
-        }
-        guard keepsInTake else { return }
-        let sample = core.positionSample
-        capture.withLock { events in
-            guard events != nil else { return }
-            if isNote {
-                for note in notes {
-                    events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
-                }
+                for note in decided.notes { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
             } else {
-                events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+                guard let slot = decided.slot else { return }
+                core.playLive(slot: slot, status: status, data1, data2)
+                var others = decided.alsoReleased
+                while others != 0 {
+                    let other = others.trailingZeroBitCount
+                    others &= others - 1
+                    core.playLive(slot: other, status: status, data1, data2)
+                }
+                guard kind == 0xB0 || kind == 0xE0 else { return }
+            }
+            let sample = core.positionSample
+            capture.withLock { events in
+                guard events != nil else { return }
+                if isNote {
+                    for note in decided.notes {
+                        events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
+                    }
+                } else {
+                    events?.append(Captured(sample: sample, status: status, data1: data1, data2: data2))
+                }
             }
         }
+    }
+
+    /// What a message does to the held keys: the notes to play, the slot it goes to, and the
+    /// slots a lifted pedal releases besides.
+    private static func decide(_ state: inout Target, status: UInt8, _ data1: UInt8, _ data2: UInt8)
+        -> (slot: Int?, alsoReleased: UInt64, notes: LiveKeys.Output) {
+        let kind = status & 0xF0
+        let channel = status & 0x0F
+        // A release ends what its press started, in the slot it went to, also while the song
+        // has no live track: dropped here, the key would stay latched and later hold another
+        // key's note on (review 2026-10-22).
+        if kind == 0x80 || (kind == 0x90 && data2 == 0) {
+            return (state.slot, 0, state.keys.release(channel: channel, key: data1))
+        }
+        guard let slot = state.slot else { return (nil, 0, LiveKeys.Output()) }
+        let bit: UInt64 = slot < 64 ? 1 << UInt64(slot) : 0
+        switch kind {
+        case 0x90:
+            return (slot, 0, state.keys.press(channel: channel, key: data1, velocity: data2, slot: slot))
+        case 0xB0 where data1 == 120 || data1 == 123:
+            // All sound off and all notes off end the slot's notes without their releases.
+            state.keys.reset(slot: slot)
+        case 0xB0 where data1 == 64:
+            if data2 >= 64 {
+                state.pedalDown |= bit
+            } else {
+                let others = state.pedalDown & ~bit
+                state.pedalDown = 0
+                return (slot, others, LiveKeys.Output())
+            }
+        default:
+            break
+        }
+        return (slot, 0, LiveKeys.Output())
     }
 }
 

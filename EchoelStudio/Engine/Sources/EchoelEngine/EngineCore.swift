@@ -418,7 +418,8 @@ public final class EngineCore: @unchecked Sendable {
     // MARK: - Controller thread
 
     /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
-    /// the next block. One thread only — the MIDI input's. Notes, pitch bend and controllers:
+    /// the next block. One producer at a time: callers on several threads serialize their pushes
+    /// (the app's `LiveRouter` does it under one lock). Notes, pitch bend and controllers:
     /// 120/123 silence or release, the synth reads 1 and 64, a plugin gets every one.
     public func playLive(slot: Int, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         guard slot >= 0, slot < slotCapacity, slot <= 0xFF else { return }
