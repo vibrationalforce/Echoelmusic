@@ -255,7 +255,10 @@ final class DocumentController {
                 }
             }
         }
-        if currentURL == nil { startSong(writing: false) }
+        // A first install has no song at all: it opens Four Tracks (keys, bass, lead, drums on
+        // sounds), so the first touch plays something. When songs exist but none opens, the
+        // empty starter stands in, as after a launch that did not finish.
+        if currentURL == nil { startSong(writing: false, from: songs.isEmpty ? .fourTracks : .empty) }
         if let unopened {
             note = unopened.newer
                 ? "\(unopened.name) was saved by a newer Echoel. It stays in your songs; update the app to open it."
@@ -479,8 +482,8 @@ final class DocumentController {
 
     /// A new song from a starter. `writing: false` keeps it off the disk until its first edit:
     /// the starter the launch opens in place of a song must not become the newest song over the
-    /// user's — after a false alarm the next healthy launch would open it instead (R8). The launch
-    /// always opens the empty starter; the others are chosen in the New Song menu.
+    /// user's — after a false alarm the next healthy launch would open it instead (R8). A first
+    /// install opens Four Tracks; every other launch that finds no song to open, the empty one.
     private func startSong(writing: Bool, from starter: StarterProject = .empty) {
         guard mayLeaveSong(for: nil) else { return }
         noteOpening(nil)
