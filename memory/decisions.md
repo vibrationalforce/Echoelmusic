@@ -5724,3 +5724,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Out of 1.0:** Video, Streaming, Harmonizer/Granular/Autotune, native Mac/Vision/Watch, Link.
 - **Review:** 2026-11-24.
 
+### 2026-10-25 (Nachtrag) — 1.0 auch mit Video, Stimme, Gesicht/Bewegung, generativer Intelligenz
+- **Decision:** Video-Aufnahme und -Schnitt, Harmonizer, Granular, Autotune, Gesicht und Bewegung (als Modulationsquellen) und die generative Intelligenz auf dem Gerät gehören in 1.0. Die alten EchoelTools werden katalogisiert und portiert.
+- **Why:** Founder 2026-10-25, wörtlich „Alle alten Features geschickt in die Studio Umgebung implementieren“. Das hebt die Umfangs-Streichungen vom 2026-09-12 auf; deren technische Lehren bleiben (Eingangsgraph, Refcount #299, Kamera-Konflikt mit dem rPPG-Puls).
+- **Rules that hold:** generiert wird nur auf Anfrage (NEUPLANUNG §0); nach außen nie „Superintelligenz“; keine Gesundheitsbehauptung; Gesicht nur als Modulationsquelle, nichts verlässt das Gerät.
+- **Review:** 2026-11-24.
+
