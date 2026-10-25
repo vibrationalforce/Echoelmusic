@@ -99,8 +99,11 @@ final class RecordController {
     }
 
     /// Whether Record can start: an armed instrument track, or an armed audio track with the input open.
+    /// With nothing armed, Record takes the track the keys play (`record()`), so it is ready
+    /// whenever the song has an instrument track.
     var canRecord: Bool {
-        guard let armedTrack, let track = store.project.track(armedTrack) else { return false }
+        guard let armedTrack else { return engine.liveTrackID(in: store.project) != nil }
+        guard let track = store.project.track(armedTrack) else { return false }
         return track.kind == .instrument || engine.isInputOpen
     }
 
@@ -125,7 +128,14 @@ final class RecordController {
     }
 
     func record() {
-        guard !isRecording, let track = armedTrack else { return }
+        guard !isRecording else { return }
+        if armedTrack == nil, let live = engine.liveTrackID(in: store.project) {
+            // Nothing armed: Record arms the track the keys play, as arming it would, so the take
+            // goes to the track that is heard (review of the first five minutes, 2026-10-25).
+            armedTrack = live
+            engine.setLiveTrack(live)
+        }
+        guard let track = armedTrack else { return }
         // Record starts the song. When it cannot run (audio that failed to come back), nothing
         // starts: a take over a stopped transport would be stamped at a frozen playhead, and a
         // MIDI take would outlive the core it was played on. Asked even while playing: a rebuild

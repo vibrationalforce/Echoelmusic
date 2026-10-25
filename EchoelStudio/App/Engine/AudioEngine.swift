@@ -106,6 +106,34 @@ final class AudioEngine {
     /// pitch in it. Kept on this device, never in the song — a take stores the notes as they
     /// sounded, so no song depends on the switch, and the format stays as it is.
     private(set) var keysFollowScale = UserDefaults.standard.bool(forKey: AudioEngine.keysFollowScaleKey)
+
+    /// The song loops: while playing, the playhead goes back to bar 1 at the end of the last bar
+    /// that holds a clip, so a beat repeats and a part can be layered over it. A MIDI take keeps
+    /// recording through the wrap, so each pass lands on the same bars (an overdub in one clip);
+    /// an audio take suspends the loop, since one file cannot be placed twice. Kept on this
+    /// device, never in the song, like the key lock: the file format stays as it is.
+    private(set) var loopsSong = UserDefaults.standard.object(forKey: AudioEngine.loopsSongKey) as? Bool ?? true
+    private static let loopsSongKey = "loopsSong"
+    /// The range the last published song loops over: from bar 1 to the end of its last bar.
+    @ObservationIgnored private var songLoop: Range<Tick>?
+
+    func setLoopsSong(_ on: Bool) {
+        loopsSong = on
+        UserDefaults.standard.set(on, forKey: Self.loopsSongKey)
+        applyLoop()
+    }
+
+    private func applyLoop() {
+        core?.setLoop(loopsSong && take == nil ? songLoop : nil)
+    }
+
+    /// Bar 1 to the end of the last bar a clip or an audio region reaches; at least one bar.
+    nonisolated static func loopRange(songEnd: Tick, signature: TimeSignature) -> Range<Tick>? {
+        let bar = MusicalTime.ticksPerBar(signature)
+        guard bar > 0, songEnd >= 0 else { return nil }
+        let bars = Swift.max(1, (songEnd + bar - 1) / bar)
+        return 0..<Swift.min(bars * bar, MusicalTime.maximumTick)
+    }
     private static let keysFollowScaleKey = "keysFollowScale"
 
     func setKeysFollowScale(_ on: Bool) {
@@ -713,6 +741,7 @@ final class AudioEngine {
         let latency = Int64(((session.inputLatency + session.outputLatency) * core.sampleRate).rounded())
         take = (url, writer, recorder, core.sampleRate, Swift.max(0, latency))
         recorder.arm(channel: channel)
+        applyLoop()
         drainTask = Task.detached(priority: .userInitiated) {
             while !Task.isCancelled {
                 try? await writer.drain()
@@ -727,6 +756,7 @@ final class AudioEngine {
         // Never the engine's recorder: after a route change that is a different one, or none.
         guard let current = take else { return nil }
         take = nil
+        applyLoop()
         takeEndsFromOutside = false
         takeEnding = true
         defer { takeEnding = false }
@@ -1076,6 +1106,9 @@ final class AudioEngine {
                                       monitoring: monitoring(in: project), masterEffects: plugins.masterChain)
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
+        let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))
+        songLoop = Self.loopRange(songEnd: songEnd, signature: project.timeSignature)
+        applyLoop()
     }
 
     /// A track's peak meter, or the master's for nil. For a small leaf view that polls it.

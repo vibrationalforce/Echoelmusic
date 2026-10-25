@@ -132,6 +132,12 @@ struct TransportBar: View {
 
             RecordButton()
 
+            Button { engine.setLoopsSong(!engine.loopsSong) } label: { Image(systemName: "repeat") }
+                .buttonStyle(ToolButtonStyle(isActive: engine.loopsSong))
+                .accessibilityLabel("Loop")
+                .accessibilityValue(engine.loopsSong ? "On" : "Off")
+                .accessibilityHint("Plays the song from bar 1 again after its last bar.")
+
             TempoField()
 
             Button {
@@ -311,7 +317,7 @@ struct RecordButton: View {
         }
         .buttonStyle(ToolButtonStyle(isActive: recording.isRecording, activeColor: Theme.Color.record))
         .accessibilityLabel(recording.isRecording ? "Stop Recording" : "Record")
-        .accessibilityHint(recording.armedTrack == nil ? "Arm a track first." : "")
+        .accessibilityHint(recording.armedTrack == nil ? "Records the track the keys play." : "")
         .disabled(!recording.canRecord)
     }
 }
