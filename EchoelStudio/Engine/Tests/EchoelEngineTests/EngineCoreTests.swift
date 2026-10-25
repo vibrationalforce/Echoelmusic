@@ -203,6 +203,54 @@ final class EngineCoreTests: XCTestCase {
         XCTAssertNil(firstSound(render(core, frames: 4_800).left))
     }
 
+    func testTheSongLoopWrapsOnItsSampleAndPlaysEveryPassAlike() throws {
+        // Two bars at 120 BPM are 192 000 samples; the note on beat 2 sounds at 24 000 in every
+        // pass, and its release has long rung out before the next one begins.
+        let passLength = 192_000
+        let s = try song([[Note(pitch: 60, start: 960, length: 480)]])
+        let core = core()
+        publish(s.project, to: core)
+        core.setLoop(0..<(2 * bar))
+        core.play()
+        let out = render(core, frames: 3 * passLength + 4_800).left
+        for pass in 0..<3 {
+            let base = pass * passLength
+            let window = Array(out[base..<(base + passLength)])
+            let first = try XCTUnwrap(firstSound(window), "pass \(pass)")
+            XCTAssertTrue((24_000...24_002).contains(first), "pass \(pass): \(first)")
+        }
+        XCTAssertEqual(core.positionSample, 4_800)
+    }
+
+    func testTheLoopWrapDoesNotDependOnTheBlockSize() throws {
+        // The second note crosses the loop's end, so the wrap must release it on the same sample
+        // whatever the buffer size.
+        let notes = [Note(pitch: 48, start: 0, length: 700), Note(pitch: 55, start: 3_000, length: 1_500)]
+        var outputs: [[Float]] = []
+        for block in [64, 256, 1_000, 4_096] {
+            let s = try song([notes])
+            let core = core()
+            publish(s.project, to: core)
+            core.setLoop(0..<bar)
+            core.play()
+            outputs.append(render(core, frames: 3 * 96_000 + 1_234, block: block).left)
+        }
+        for other in outputs.dropFirst() {
+            XCTAssertEqual(other, outputs[0])
+        }
+    }
+
+    func testSwitchingTheLoopOffLetsTheSongRunOn() throws {
+        let s = try song([[]])
+        let core = core()
+        publish(s.project, to: core)
+        core.setLoop(0..<bar)
+        core.setLoop(nil)
+        core.play()
+        _ = render(core, frames: 120_000)
+        XCTAssertEqual(core.positionSample, 120_000)
+    }
+
     func testMuteSoloAndPanShapeTheMix() throws {
         var s = try song([[Note(pitch: 60, start: 0, length: 9_600)], [Note(pitch: 67, start: 0, length: 9_600)]])
         let core = core()

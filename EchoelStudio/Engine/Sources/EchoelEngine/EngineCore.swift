@@ -36,6 +36,9 @@ public final class EngineCore: @unchecked Sendable {
     private let nudgeRequest = Atomic<Int64>(0)
     /// Samples to jump by AS a seek (notes released, cues rebuilt), for a far-off phase.
     private let jumpRequest = Atomic<Int64>(0)
+    /// The song loop as start << 32 | end, in ticks; 0 while it is off. One word, so the render
+    /// thread never reads a start from one range and an end from another.
+    private let loopRange = Atomic<UInt64>(0)
     private let pending = Atomic<UnsafeMutableRawPointer?>(nil)
     // Render → main.
     private let acknowledged = Atomic<UInt64>(0)
@@ -129,6 +132,9 @@ public final class EngineCore: @unchecked Sendable {
     private let clickRight: UnsafeMutablePointer<Float>
     private var metronome: Metronome
     private var playhead: Int64 = 0
+    /// Render thread: where the next chunk starts when the last one ended on the loop's end; −1
+    /// for none.
+    private var loopSeek: Int64 = -1
     /// How far this chunk's nudge moved the playhead; audio crossfades across it.
     private var nudgedBy: Int64 = 0
     private var wasPlaying = false
@@ -396,6 +402,18 @@ public final class EngineCore: @unchecked Sendable {
         seekRequest.store(Swift.max(0, sample), ordering: .releasing)
     }
 
+    /// Main thread: while playing, the playhead goes back to `range.lowerBound` on the exact
+    /// sample it reaches `range.upperBound`, as a seek does (held notes released, cues rebuilt),
+    /// whatever the buffer size. Nil, an empty range or one out of the song's reach: no loop.
+    public func setLoop(_ range: Range<Tick>?) {
+        guard let range, range.lowerBound >= 0, range.upperBound > range.lowerBound,
+              range.upperBound <= MusicalTime.maximumTick else {
+            loopRange.store(0, ordering: .releasing)
+            return
+        }
+        loopRange.store(UInt64(range.lowerBound) << 32 | UInt64(range.upperBound), ordering: .releasing)
+    }
+
     public func setClickEnabled(_ enabled: Bool) { clickFlag.store(enabled, ordering: .relaxed) }
 
     /// Session: launch a clip on the track in `slot`, stop it, or give the track back to the
@@ -449,11 +467,11 @@ public final class EngineCore: @unchecked Sendable {
             outputs[0] = left + done
             outputs[1] = right + done
             outputCount = 2
-            renderChunk(frames: frames)
-            processMaster(frames: frames)
-            meterMaster(frames: frames)
-            addClick(frames: frames)
-            done += frames
+            let rendered = renderChunk(frames: frames)
+            processMaster(frames: rendered)
+            meterMaster(frames: rendered)
+            addClick(frames: rendered)
+            done += rendered
         }
         publishAnchor(frames: frameCount)
     }
@@ -474,15 +492,15 @@ public final class EngineCore: @unchecked Sendable {
             for c in 0..<used { outputs[c] = channels[c] + done }
             if used == 1 { outputs[1] = monoRight }
             outputCount = Swift.max(used, 2)
-            renderChunk(frames: frames)
-            processMaster(frames: frames)
-            meterMaster(frames: frames)
-            addClick(frames: frames)
+            let rendered = renderChunk(frames: frames)
+            processMaster(frames: rendered)
+            meterMaster(frames: rendered)
+            addClick(frames: rendered)
             if used == 1 {
                 let mono = outputs[0]
-                for i in 0..<frames { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
+                for i in 0..<rendered { mono[i] = (mono[i] + monoRight[i]) * 0.5 }
             }
-            done += frames
+            done += rendered
         }
         publishAnchor(frames: frameCount)
     }
@@ -515,7 +533,10 @@ public final class EngineCore: @unchecked Sendable {
         return (outputs[output], outputs[output + 1])
     }
 
-    private func renderChunk(frames: Int) {
+    /// Renders up to `requested` frames and says how many it did: fewer only when the song loop
+    /// ends inside them, so the wrap falls on its exact sample and the next chunk starts there.
+    private func renderChunk(frames requested: Int) -> Int {
+        var frames = requested
         meterFall = MeterBank.fall(frames: frames, sampleRate: sampleRate)
         for c in 0..<outputCount { outputs[c].update(repeating: 0, count: frames) }
         clickLeft.update(repeating: 0, count: frames)
@@ -530,6 +551,9 @@ public final class EngineCore: @unchecked Sendable {
         var seek = seekRequest.exchange(-1, ordering: .acquiringAndReleasing)
         let jump = jumpRequest.exchange(0, ordering: .relaxed)
         if seek < 0, jump != 0 { seek = Swift.max(0, playhead + jump) }
+        // The loop's wrap, decided where the last chunk ended; a seek asked meanwhile wins.
+        if seek < 0, loopSeek >= 0 { seek = loopSeek }
+        loopSeek = -1
         if seek >= 0 {
             playhead = seek
             position.store(seek, ordering: .relaxed)
@@ -594,9 +618,19 @@ public final class EngineCore: @unchecked Sendable {
                 takeLaunchRequests(playing: false)
             }
             mixReturns(frames: frames)
-            return
+            return frames
         }
         let snapshot = box.snapshot
+        if let loop = loopSamples(snapshot) {
+            if playhead >= loop.end {
+                // Already past the end (the loop was set behind the playhead): back at once.
+                loopSeek = loop.start
+            } else if playhead + Int64(frames) >= loop.end {
+                frames = Int(loop.end - playhead)
+                loopSeek = loop.start
+                meterFall = MeterBank.fall(frames: frames, sampleRate: sampleRate)
+            }
+        }
         let blockEnd = playhead + Int64(frames)
         let beatTicks = MusicalTime.ticksPerBeat(snapshot.timeSignature)
         let barTicks = MusicalTime.ticksPerBar(snapshot.timeSignature)
@@ -669,6 +703,17 @@ public final class EngineCore: @unchecked Sendable {
         mixReturns(frames: frames)
         playhead = blockEnd
         position.store(playhead, ordering: .relaxed)
+        return frames
+    }
+
+    /// The loop's start and end as samples of this snapshot's time; nil while it is off.
+    private func loopSamples(_ snapshot: EngineSnapshot) -> (start: Int64, end: Int64)? {
+        let packed = loopRange.load(ordering: .acquiring)
+        guard packed != 0 else { return nil }
+        let start = snapshot.time.sample(at: Tick(packed >> 32))
+        let end = snapshot.time.sample(at: Tick(packed & 0xFFFF_FFFF))
+        guard end > start, start >= 0 else { return nil }
+        return (start, end)
     }
 
     /// A slot's kernel for the built-in device at `index` of `InstrumentDevice.builtIn`; nil for −1
