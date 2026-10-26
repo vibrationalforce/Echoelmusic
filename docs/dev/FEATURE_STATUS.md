@@ -1,5 +1,10 @@
 # FEATURE STATUS — was läuft, was versteckt ist, was gestrichen ist
 
+> ⭐ **Banner (2026-10-26):** Diese Datei beschreibt nur die eingefrorene Alt-App
+> (`Sources/Echoelmusic`, Versionsstand 10.79.515); die folgenden Einträge behalten ihre historischen Messstände.
+> Studio (`EchoelStudio/`, TestFlight 11.0.0, siebter Upload am 2026-10-25) ist hier nicht abgedeckt —
+> bekannte Lücke L1 (`ECHOEL_VISION_2026-10-19.md`, §10).
+
 > **Produktumfang ≠ diese Seite.** Was Echoelmusic werden soll, entscheidet
 > [`FOUNDER_PRODUCT_LAW.md`](FOUNDER_PRODUCT_LAW.md) (DMMW, seit 2026-09-24). Diese Seite sagt nur, was HEUTE
 > läuft. Fach 3 ist Historie: eine Streichung dort nahm eine Implementierung zurück, nicht die Fähigkeit.
