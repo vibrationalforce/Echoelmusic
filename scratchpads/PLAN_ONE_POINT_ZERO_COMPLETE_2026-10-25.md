@@ -1,59 +1,59 @@
-# PLAN — Echoel Studio 1.0 enthält alles (2026-10-25)
+# PLAN — Echoel Studio 1.0 ist die Workstation (Entscheid 2026-10-26)
 
-> **Founder 2026-10-25:** „Ich möchte einfach die fertige App auf dem Markt bringen, die alles
-> enthält." Das ersetzt die Reihenfolge in `docs/dev/NEUPLANUNG_2026-10-18.md` §5, nach der der
-> Körper (P6) erst in 1.4, Licht und OSC (P4) in 1.2 und die Modulation (P5) in 1.3 kamen. Ab
-> heute ist **1.0 die vollständige App**; der Store-Start (`PLAN_STORE_FIRST_2026-10-24.md`)
-> folgt, wenn die Liste unten erfüllt ist. Die Bau-Gesetze von `EchoelStudio/CLAUDE.md` gelten
-> unverändert.
+> ⭐ **Entscheid 2026-10-26.** Founder: „Du entscheidest.“ Ausgeführt: **1.0 ist die Musik-Workstation, nicht die vollständige App.** Der Store-Termin bleibt März 2027. GSIDMMW bleibt der Horizont in `docs/dev/FOUNDER_PRODUCT_LAW.md`, kein Release und kein öffentliches Wort.
+>
+> Aufgehoben sind damit die zwei Sätze vom 25.10. unten („1.0 ist die vollständige App“ und der Nachtrag, der Video, Harmonizer, Granular, Autotune, Gesicht und „generative Super Intelligence“ in 1.0 zieht). Die Zitate bleiben stehen. Gelöscht wird nichts. Die DSP-Ports, die am 25.10. schon auf `main` liegen (rPPG-Konditionierung, Pulsperiode, HRV), bleiben Bibliothek. Sie sind kein Store-Gate.
 
-## Was „alles" heißt — gemessen, mit der einen Annahme
+> **Founder 2026-10-25, aufgehoben 2026-10-26:** „Ich möchte einfach die fertige App auf dem Markt bringen, die alles enthält.“ Das ersetzte an dem Tag die Reihenfolge in `docs/dev/NEUPLANUNG_2026-10-18.md` §5. **Diese Ersetzung gilt nicht mehr.** Es gilt wieder die Staffel der Vision vom 19.10. (`docs/dev/ECHOEL_VISION_2026-10-19.md`), ohne Förderung und ohne Installation als Geschäft.
 
-**Annahme:** „alles" ist die DAW, die Studio heute ist, plus **jede Fähigkeit, die in der alten
-App schon einmal funktionierend auf dem Gerät lief** (Klasse CURRENT oder REUSE in
-`docs/dev/HISTORY_ARCHIVE.md`). Portiert wird der erprobte Kern in Studios Besitzer, nie ein
-ganzes altes Subsystem (Produktgesetz §5, „recovery principle").
+## Was 1.0 ist
 
-⭐ **Nachtrag 2026-10-25 (Founder: „Alle alten Features … auch Video-Aufnahme und -Schnitt, Harmonizer, Granular und Autotune sowie Gesicht und Bewegung. Und die ganze on Device generative Super Inteligence“):** diese Punkte sind jetzt IN 1.0, als Wellen W7–W10 unten. Der Katalog der alten EchoelTools: `docs/dev/ECHOELTOOLS_CATALOG_2026-10-25.md`.
+Die App, die TestFlight seit dem 19.10.2026 trägt, plus das, was die öffentliche Roadmap vor dem Store noch nennt:
 
-~~**Nicht in 1.0, mit Grund** (Founder-Entscheidungen vom 2026-09-12 oder kein erprobter Kern):
-Video-Aufnahme und -Schnitt, RTMP-Streaming, Harmonizer, Granular, Autotune, Gesicht/Bewegung,
-native Watch-, Mac- und Vision-Ziele, Ableton Link. Mac und Vision Pro laufen zum Start als
-„Designed for iPad" ohne eigenen Code (Store-Plan, Scheibe 0). Wer davon etwas in 1.0 will, sagt
-es mit einem Wort; dann rückt es in die Liste.~~ Übrig bleiben außerhalb von 1.0 nur: native Watch-, Mac- und Vision-Ziele (zum Start „Designed for iPad"), Streaming, Ableton Link.
+- Instrumente, Effekte, Arrange, Session, Aufnahme, Mix, WAV- und MIDI-Export, Assistent nur mit Vorschlag und Undo.
+- Komponieren: Startprojekte, Presets, Skalen-Lock, Stems, Projektpaket. Fertig heißt: ein Song mit vier Spuren entsteht, wird gespeichert und im Flugmodus exportiert.
+- Eigene AUv3 als Einmalkauf, Wiederherstellung, Barrierefreiheits-Abnahme. Fertig heißt: sie klingen in zwei Hosts bei 44,1 und 48 kHz.
 
-## Die Wellen (jede Welle = mehrere Scheiben ≤ 3 Dateien, Gate grün, dann TestFlight)
+App frei, Plugins einmal, kein Konto, keine Telemetrie, on-device. Kein Heilungsversprechen. Das Wort Superintelligence steht in keinem Store-Text und auf keiner Seite.
 
-| Welle | Inhalt | Alte Quelle (Zeilen, gemessen) | Größe | Deine Hand |
-|---|---|---|---|---|
-| **W0** ✅ | Bildschirmtasten, Pads, Erststart mit Inhalt (10010) · Song-Loop, Overdub, Record ohne Vorbereitung (10011) | — | erledigt | — |
-| **W1 Körper** | Puls über Kamera (rPPG), BLE-Gurt, HealthKit/Watch → ein `BodyFrame` (Puls, HRV, Kohärenz, Atem) · sichtbare Anzeige · Aus-Schalter | CameraCapture 681 · CameraAnalyzer 1 401 · RPPGConditioning 182 · PulsePeriodEstimator 100 · CameraRPPGBioPublisher 2 342 · PolarH10 563 · HealthKit 181 · HRVCoherence 363 | L | keine (App hat keine Import-Sperre; Kamera-/Bluetooth-/Health-Texte in `EchoelStudio/project.yml`) |
-| **W2 Modulation** | `ModRoute` im Song (Quelle → Parameter, Tiefe, Kurve): Körper, LFO, Makro, MIDI-CC → jeder automatisierbare Parameter · im Render-Pass, feste Routen-Obergrenze | ModulationEngine 391 · ModulationMatrix 561 | M–L | keine; **Format-Version 3** mit Migration (`docs/FORMAT.md`, Golden) |
-| **W3 Bild** | Generative Visuals als eigene Fläche und schwebendes Fenster, gespeist vom Song (Takt, Tonart, Pegel) und vom Körper · 3-Hz-Blitzgrenze | MetalBioView 3 169 | L | keine |
-| **W4 Verbindungen** | Licht (Art-Net, sACN), OSC-Ausgang, ADM-OSC-Raumobjekte; ein Modul „Verbindungen", alles aus bis zum Einschalten, Bio-Daten nur mit Opt-in (`BioEgressPolicy`) | ArtNet · sACN · OSCSender · ADMOSCSender 610 · BioEgressPolicy 226 | M–L | **ja: eine Zeile in `studio.yml`** (F25 in der Inbox) |
-| **W5 Klang+** | DDSP-Engine als viertes eingebautes Instrument · MPE-Ausgang · Bio-Reaktivität der Stimmen über W2 | EchoelDDSP 3 804 · MIDIOutput 872 | M–L | GM30 (2) beantwortet sich damit: **vor** 1.0 |
-| **W6 Store** | Kaufprodukt, Store-Text aus `CLAIMS.md`, Datenschutz-Labels (Kamera, Health, Bluetooth), Screenshots, Review-Hinweis (kein Medizinprodukt) | — | M | **ja: F-15, Preis, Paid-Apps-Vertrag, Einreichen** |
+## Was nicht in 1.0 ist
 
-| **W7 Video** | Performance-Video aufnehmen, synchron zur Song-Zeitleiste; auf Takte schneiden; mit dem Mix exportieren | Video/VideoRecorder · VideoMuxer · VisualRecorder (gelöscht #1304, aus der Historie) | L | keine (Kamera-Text in `EchoelStudio/project.yml`) |
-| **W8 Stimme** | Autotune (Tonhöhe auf die Skala), Harmonizer (Intervalle mit Namen), Granular — live am Eingang und offline am Clip | Phase-Vocoder/WSOLA/PitchTracker (Archiv B4–B6, gelöscht #1302/#1305) | L | keine |
-| **W9 Gesicht + Bewegung** | Mimik und Kopf/Gerät als Modulationsquellen über W2; nichts verlässt das Gerät | FaceExpressionBioPublisher (gelöscht #1301) · CoreMotion | M | keine; App-Review-Texte zu Kamera/Gesicht |
-| **W10 Generative Intelligenz** | Assistent bedient die DAW über die Befehlstür; erzeugt auf Anfrage Pattern, Melodie, Harmonie in Tonart und Skala; Klang aus einem Satz; Arrangement-Vorschläge | EchoelAI · BioComposer · Studio-Agent | L | keine; nur Geräte mit Apple Intelligence |
+Körper, Modulation, Bild, Licht, OSC, ADM-OSC, DDSP als Store-Bedingung, Videoschnitt, Gesicht, Harmonizer, Granular, Autotune, Streaming, Ableton Link, native Watch, Mac und Vision. Mac und Vision Pro nur als „Designed for iPad“, ohne eigenen Code.
 
-**Reihenfolge und warum:** W1 zuerst, weil der Körper Echoels Kern ist und jede spätere Welle
-(Modulation, Bild, Licht) ihn als Quelle braucht. W2 direkt danach, weil ohne Routen der Puls
-nichts bewegt. W3 und W4 hängen beide nur an W1 + W2 und können sich abwechseln. W5 vor W6,
-weil der Store-Text keinen Klang behaupten darf, der fehlt.
+Danach, jedes Modul erst wenn es auf dem Gerät läuft: Live (MIDI-Clock, Szenen) im Frühjahr 2027, dann Bühne, dann Modulation, dann Körper als eine Quelle unter mehreren, dann Bild mit 3-Hz-Grenze. Video, Raum, Kollaboration und Generatoren erst, wenn Arrange und Export langweilig stabil sind.
 
-**Je Welle ein TestFlight.** Kein Build ohne etwas Neues zum Anfassen; jede Release-Notiz nennt
-höchstens fünf Gerätetests.
+## Was „alles“ am 25.10. heißen sollte — Historie
+
+**Annahme jenes Tages:** „alles“ ist die DAW, die Studio heute ist, plus jede Fähigkeit, die in der alten App schon einmal funktionierend auf dem Gerät lief (Klasse CURRENT oder REUSE in `docs/dev/HISTORY_ARCHIVE.md`). Portiert wird der erprobte Kern, nie ein ganzes altes Subsystem (Produktgesetz §5). Diese Annahme beschreibt die späteren Module, nicht den Inhalt von 1.0.
+
+⭐ **Nachtrag 2026-10-25, aufgehoben am 2026-10-26** (Founder: „Alle alten Features … auch Video-Aufnahme und -Schnitt, Harmonizer, Granular und Autotune sowie Gesicht und Bewegung. Und die ganze on Device generative Super Inteligence“): diese Punkte waren an dem Tag als W7–W10 in 1.0 gezogen. Der Katalog bleibt `docs/dev/ECHOELTOOLS_CATALOG_2026-10-25.md`. Sie sind wieder draußen. Video (#1304) und Audio-Eingang (#1302) wurden gelöscht, weil sie nicht hielten; sie kommen nicht als 1.0-Welle zurück.
+
+Übrig außerhalb von 1.0, wie vor dem Nachtrag: native Watch-, Mac- und Vision-Ziele, RTMP-Streaming, Ableton Link — und zusätzlich W1–W5 als Module nach dem Store sowie W7–W10.
+
+## Die Wellen
+
+W0 ist erledigt und Teil von 1.0. W1–W5 sind Module nach dem Store, nicht seine Bedingung. W6 ist der Store selbst, aber ohne Kamera-, Health- und Bluetooth-Labels, solange der Körper nicht im Build ist. W7–W10 sind draußen.
+
+| Welle | Inhalt | Stand 2026-10-26 |
+|---|---|---|
+| **W0** ✅ | Bildschirmtasten, Pads, Erststart mit Inhalt (10010) · Song-Loop, Overdub, Record ohne Vorbereitung (10011) | in 1.0, erledigt |
+| **W1 Körper** | Puls über Kamera (rPPG), BLE-Gurt, HealthKit/Watch → ein `BodyFrame` · Anzeige · Aus-Schalter | nach dem Store. Bibliothek (HRV, rPPG) liegt schon in `EchoelDSP`; kein UI, kein Gate |
+| **W2 Modulation** | `ModRoute` im Song | nach dem Store. Format-Version 3 erst dann |
+| **W3 Bild** | Generative Visuals, 3-Hz-Blitzgrenze | nach dem Store |
+| **W4 Verbindungen** | Art-Net, sACN, OSC, ADM-OSC, Opt-in | nach dem Store. Braucht die Zeile in `studio.yml` (F25) |
+| **W5 Klang+** | DDSP, MPE-Ausgang | nach dem Store, nicht vor dem Store-Text |
+| **W6 Store** | Kaufprodukt, Text aus `CLAIMS.md`, Screenshots, Hinweis kein Medizinprodukt | 1.0. Datenschutz-Labels nur für das, was der Build wirklich anfasst |
+| **W7 Video** | Aufnahme, Schnitt, Export mit dem Mix | nicht in 1.0 (gelöscht #1304) |
+| **W8 Stimme** | Autotune, Harmonizer, Granular | nicht in 1.0 (gelöscht #1302/#1305) |
+| **W9 Gesicht + Bewegung** | Mimik und Bewegung als Modulationsquellen | nicht in 1.0 |
+| **W10 Generative Intelligenz** | Muster, Melodie, Klang aus einem Satz | nicht in 1.0. Der Assistent bleibt Vorschlag und Undo. „Superintelligence“ ist kein Feature-Name |
+
+**Reihenfolge, die am 25.10. hier stand** („W1 zuerst, weil der Körper Echoels Kern ist“), ist aufgehoben. Der Körper ist seit dem 15.10. nicht der Kern. Zuerst kommt der Store der Workstation, die schon läuft.
+
+**Je Welle ein TestFlight**, wenn eine Welle überhaupt gebaut wird. Kein Build ohne etwas Neues zum Anfassen. Eine Release-Notiz nennt höchstens fünf Gerätetests.
 
 ## Was diesen Plan aufhalten kann
 
-- **Gerät:** der rPPG-Puls lockte in der alten App erst nach mehreren Reparaturen (Licht, Takt,
-  Konditionierung). Die Portierung erbt die Lösungen, die Bestätigung braucht trotzdem dich am
-  Gerät (W1-Gerätetest).
-- **Format:** W2 speichert Routen im Song, also Format-Version 3; ein Song aus 1.0 öffnet nicht in
-  10004–10011. Das ist geplant, nicht ein Unfall.
-- **Review:** Gesundheitsdaten in einer Musik-App prüft Apple genau. Die Texte bleiben bei
-  „Selbstbeobachtung, keine Diagnose"; Bio verlässt das Gerät nie ohne Opt-in.
-- **Gate:** W4 wartet auf die eine Workflow-Zeile (F25).
+- **Umfang.** Der aufgehobene Nachtrag vom 25.10. ist die Gefahr: die nächste Session liest „1.0 enthält alles“ und baut W7. Diese Datei gewinnt gegen diesen Satz.
+- **Review.** Gesundheitsdaten in einer Musik-App prüft Apple genau. Solange W1 nicht im Build ist, fragt 1.0 nicht nach Kamera, Health oder Bluetooth.
+- **Gerät.** Was nach dem Store kommt, gilt erst nach einem Lauf auf dem Gerät. Die Bibliothek in `EchoelDSP` ist kein Beweis, dass der Puls in Studio läuft.
