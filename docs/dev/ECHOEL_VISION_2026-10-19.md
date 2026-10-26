@@ -62,7 +62,7 @@ Befunde stehen hier, jeder mit der Datei, aus der er stammt.
 
 **Konfliktregel.** NEUSTART/NEUPLANUNG und das Produktgesetz widersprechen sich nicht: das eine ist
 die erste Fassung, das andere das Ziel. Wo zwei Stellen dasselbe verschieden sagen, gilt das neuere
-datierte Founder-Wort. Wo kein Founder-Wort existiert, gilt die Datei aus der Tabelle oben. Andere
+datierte Founder-Word. Wo kein Founder-Wort existiert, gilt die Datei aus der Tabelle oben. Andere
 Pläne (`PLAN_GMMW_2026-10-08`, `DMMW_DEEP_ARCHITECTURE_2026-10-15`, `ULTRAPLAN_2026-09-10`,
 `GSIDMMW_AUDIT_2026-10-16`) sind **Ideenquellen für die Phasen P4–P7**, keine Reihenfolge.
 
@@ -239,8 +239,8 @@ steht, was ein Werkzeug tut („zeigt die Lautheit des Exports in LUFS“), nie,
 
 ### 6b. Biofeedback
 
-Biofeedback bleibt Signalwissenschaft: gemessenes Signal → Qualität → abgeleitetes kreatives
-Merkmal → Einwilligung → Steuerquelle (`FOUNDER_PRODUCT_LAW.md` §4). Im Studio kommt es in P6 als Paket
+Biofeedback bleibt Signalwissenschaft: gemessenes Signal → Qualität → abgeleitetes kreatives Merkmal
+→ Einwilligung → Steuerquelle (`FOUNDER_PRODUCT_LAW.md` §4). Im Studio kommt es in P6 als Paket
 `EchoelSense`. Die stärkste belegte Kopplung zwischen Atem und Herzrate ist die Resonanzatmung bei
 etwa sechs Atemzügen pro Minute (`scratchpads/REPORT_SOUND_PAIN_EVIDENCE_2026-07-12.md`, Deep
 Research 2026-09-30). Echoel darf sie als Tempo anbieten und den Puls dazu zeigen. Es behauptet
@@ -404,7 +404,7 @@ gehört der Plattform.** Nichts davon ist gerätegeprüft.
 - **Website:** drei getrennte Räume — gemessen (mit Datum), geplant (Zukunftsform), erforscht (ohne Wirkung).
   Kompatibilität nur mit Messdatum. Über Klang, Vibration, Licht und Bild nur Sicherheit und Mechanismus
   (MDCG 2019-11 rev.1: der Werbetext begründet die Zweckbestimmung). Kein „supports Music Haptics“ — Apples
-  Music Haptics gilt für Apple-Musik-Titel, nicht für erzeugten Klang; eigene Haptik nur über Core Haptics und
+  Music Haptics gilt für Apple-Music-Titel, nicht für erzeugten Klang; eigene Haptik nur über Core Haptics und
   erst nach Ko-Gestaltung mit gehörlosen Menschen. 40-Hz-Licht nie.
 
 **Bedingungen, die die Tabelle kippen:** Kommt App Store 1.0 nach dem 1. Juni 2027, kollidiert es
