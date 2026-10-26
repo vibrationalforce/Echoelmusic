@@ -16,8 +16,8 @@ An immersive, iPhone-first instrument for **Installation · Event · Content · 
 
 | | Where | What it is | State |
 |---|---|---|---|
-| **Echoel Studio** (new) | [`EchoelStudio/`](EchoelStudio/) — three dependency-free Swift packages `EchoelCore` · `EchoelDSP` · `EchoelEngine`, plus `App/` and `Plugins/` | the music workstation being built since 2026-10-17: open JSON song format ([`docs/FORMAT.md`](docs/FORMAT.md)), own AUv3 instruments and effects, on-device agent, no account, no telemetry | CI on macOS (`studio.yml`); TestFlight pending an App Group fix; Linux build is planned, not measured |
-| **Echoelmusic** (legacy app) | [`Sources/Echoelmusic/`](Sources/Echoelmusic/) — the root `Package.swift` | the bio-reactive instrument described below: camera pulse (rPPG), Bluetooth heart-rate straps, HealthKit; OSC · ADM-OSC · Art-Net · sACN out; the egress policy that decides which body data may leave the device | on TestFlight today; the guards in `Tests/CISmoke` pin it |
+| **Echoel Studio** (new) | [`EchoelStudio/`](EchoelStudio/) — three dependency-free Swift packages `EchoelCore` · `EchoelDSP` · `EchoelEngine`, plus `App/` and `Plugins/` | the music workstation being built since 2026-10-17: open JSON song format ([`docs/FORMAT.md`](docs/FORMAT.md)), own AUv3 instruments and effects, on-device agent, no account, no telemetry | CI on macOS (`studio.yml`); on TestFlight since 19 October 2026 (iPhone and iPad; no body input, no OSC, MIDI clock only); Linux build is planned, not measured |
+| **Echoelmusic** (legacy app) | [`Sources/Echoelmusic/`](Sources/Echoelmusic/) — the root `Package.swift` | the bio-reactive instrument described below: camera pulse (rPPG), Bluetooth heart-rate straps, HealthKit; OSC · ADM-OSC · Art-Net · sACN out; the egress policy that decides which body data may leave the device | frozen at 10.79.515; not the TestFlight build since 19 October 2026; the guards in `Tests/CISmoke` pin the code |
 
 They share one licence (MIT, [`LICENSE`](LICENSE)) and one repository, not one build. Depend on the packages, not on the app: `EchoelStudio/Core/Package.swift`, `EchoelStudio/DSP/Package.swift`, `EchoelStudio/Engine/Package.swift`. The rest of this README describes the **legacy app**; the Studio plan is [`docs/dev/NEUPLANUNG_2026-10-18.md`](docs/dev/NEUPLANUNG_2026-10-18.md). How to contribute: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
@@ -25,7 +25,7 @@ They share one licence (MIT, [`LICENSE`](LICENSE)) and one repository, not one b
 
 ## Positioning
 
-Today Echoelmusic ships as a bio-reactive **instrument**: it is about the sound being made *now*. The long-term product is a full professional multimedia workstation — see [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md) — but this README describes only what the app you install does today. The July 2026 timeline, clip/arrangement and video-editing UIs were removed as implementations, not as a direction; the current build has a read-and-play Workstation panel for imported audio and MIDI files, and no audio input or recording (removed in September 2026).
+**What you install today is Echoel Studio**, on TestFlight since 19 October 2026. This section describes the frozen legacy app (10.79.515), not that build. The legacy app shipped as a bio-reactive **instrument**: it is about the sound being made *now*. The long-term product is a full professional multimedia workstation — see [`docs/dev/FOUNDER_PRODUCT_LAW.md`](docs/dev/FOUNDER_PRODUCT_LAW.md). The July 2026 timeline, clip/arrangement and video-editing UIs were removed as implementations, not as a direction; the current build has a read-and-play Workstation panel for imported audio and MIDI files, and no audio input or recording (removed in September 2026).
 
 What it does have, structurally, is **biofeedback as a first-class modulation source on a typed bus**:
 
