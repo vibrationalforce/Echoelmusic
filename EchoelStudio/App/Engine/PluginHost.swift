@@ -68,6 +68,9 @@ final class PluginHost {
     /// The saved state each loaded unit was last brought in line with — applied on load or after
     /// an undo, or captured from the unit. A song whose state differs gets it applied.
     @ObservationIgnored private var syncedState: [Slot: Data] = [:]
+    /// Results of the most recent capture pass, including failures that produce no command.
+    /// These describe capture only, not acceptance by the store or a successful file save.
+    @ObservationIgnored private(set) var captureResults: [Slot: PluginStateCapture] = [:]
     @ObservationIgnored private var requestCount = 0
     @ObservationIgnored private var registrationObserver: NSObjectProtocol?
     @ObservationIgnored private var invalidationObserver: NSObjectProtocol?
@@ -569,23 +572,27 @@ final class PluginHost {
 
     /// The commands that store every loaded unit's current settings in the song, for the units
     /// whose settings changed since they were last stored — all of them, or the one `only` names.
-    /// Empty when nothing changed.
+    /// An empty list can also mean capture failed; `captureResults` keeps those reasons.
     func captureCommands(for project: Project, only: Slot? = nil) -> [Command] {
+        captureResults = [:]
         var commands: [Command] = []
         for track in project.tracks {
-            if let command = capture(.instrument(track.id), stored: track.instrument.pluginState, only: only,
+            if track.kind == .instrument, track.instrument.device == .plugin,
+               let component = track.instrument.plugin,
+               let command = capture(.instrument(track.id), expected: component,
+                                     stored: track.instrument.pluginState, only: only,
                                      make: { .setPluginState(track.id, $0) }) {
                 commands.append(command)
             }
             for insert in track.inserts {
-                if let command = capture(.insert(insert.id), stored: insert.state, only: only,
+                if let command = capture(.insert(insert.id), expected: insert.plugin, stored: insert.state, only: only,
                                          make: { .setInsertState(track: track.id, insert.id, $0) }) {
                     commands.append(command)
                 }
             }
         }
         for insert in project.masterInserts {
-            if let command = capture(.insert(insert.id), stored: insert.state, only: only,
+            if let command = capture(.insert(insert.id), expected: insert.plugin, stored: insert.state, only: only,
                                      make: { .setMasterInsertState(insert.id, $0) }) {
                 commands.append(command)
             }
@@ -593,10 +600,15 @@ final class PluginHost {
         return commands
     }
 
-    private func capture(_ slot: Slot, stored: Data?, only: Slot?, make: (Data) -> Command) -> Command? {
-        guard only == nil || only == slot, let settings = loaded[slot]?.unit.fullStateForDocument,
-              let data = try? PropertyListSerialization.data(fromPropertyList: settings, format: .binary, options: 0),
-              data.count <= PluginComponent.maximumStateBytes, data != stored else { return nil }
+    private func capture(_ slot: Slot, expected: PluginComponent, stored: Data?, only: Slot?,
+                         make: (Data) -> Command) -> Command? {
+        guard only == nil || only == slot else { return nil }
+        let entry = loaded[slot]
+        let result = PluginStateCapture.evaluate(component: entry?.component, expected: expected, stored: stored) {
+            entry?.unit.fullStateForDocument
+        }
+        captureResults[slot] = result
+        guard case .changed(let data) = result else { return nil }
         syncedState[slot] = data
         return make(data)
     }
