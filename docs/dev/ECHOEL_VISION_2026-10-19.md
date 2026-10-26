@@ -62,7 +62,7 @@ Befunde stehen hier, jeder mit der Datei, aus der er stammt.
 
 **Konfliktregel.** NEUSTART/NEUPLANUNG und das Produktgesetz widersprechen sich nicht: das eine ist
 die erste Fassung, das andere das Ziel. Wo zwei Stellen dasselbe verschieden sagen, gilt das neuere
-datierte Founder-Word. Wo kein Founder-Wort existiert, gilt die Datei aus der Tabelle oben. Andere
+datierte Founder-Wort. Wo kein Founder-Wort existiert, gilt die Datei aus der Tabelle oben. Andere
 Pläne (`PLAN_GMMW_2026-10-08`, `DMMW_DEEP_ARCHITECTURE_2026-10-15`, `ULTRAPLAN_2026-09-10`,
 `GSIDMMW_AUDIT_2026-10-16`) sind **Ideenquellen für die Phasen P4–P7**, keine Reihenfolge.
 
