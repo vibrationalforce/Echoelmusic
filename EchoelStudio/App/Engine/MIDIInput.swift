@@ -67,10 +67,14 @@ final class LiveRouter: Sendable {
     /// pushed under another, a release decided first could reach the ring after a later press,
     /// and the note would hang (review of the screen keys, 2026-10-25). The push is a lock-free
     /// ring write, never a wait on the render thread.
-    func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
+    ///
+    /// `source` tells two keyboards apart (`LiveKeys`, Codex handover S5): two holding one key end
+    /// its note only when both let go. The take keeps what was HEARD — the merged notes the engine
+    /// got, a second press as an off and an on — never one voice per keyboard.
+    func receive(source: UInt8 = LiveKeys.defaultSource, status: UInt8, _ data1: UInt8, _ data2: UInt8) {
         target.withLock { (state: inout Target) in
             guard let core = state.core else { return }
-            let decided = Self.decide(&state, status: status, data1, data2)
+            let decided = Self.decide(&state, source: source, status: status, data1, data2)
             let kind = status & 0xF0
             let isNote = kind == 0x80 || kind == 0x90
             if isNote {
@@ -103,7 +107,7 @@ final class LiveRouter: Sendable {
 
     /// What a message does to the held keys: the notes to play, the slot it goes to, and the
     /// slots a lifted pedal releases besides.
-    private static func decide(_ state: inout Target, status: UInt8, _ data1: UInt8, _ data2: UInt8)
+    private static func decide(_ state: inout Target, source: UInt8, status: UInt8, _ data1: UInt8, _ data2: UInt8)
         -> (slot: Int?, alsoReleased: UInt64, notes: LiveKeys.Output) {
         let kind = status & 0xF0
         let channel = status & 0x0F
@@ -111,13 +115,13 @@ final class LiveRouter: Sendable {
         // has no live track: dropped here, the key would stay latched and later hold another
         // key's note on (review 2026-10-22).
         if kind == 0x80 || (kind == 0x90 && data2 == 0) {
-            return (state.slot, 0, state.keys.release(channel: channel, key: data1))
+            return (state.slot, 0, state.keys.release(source: source, channel: channel, key: data1))
         }
         guard let slot = state.slot else { return (nil, 0, LiveKeys.Output()) }
         let bit: UInt64 = slot < 64 ? 1 << UInt64(slot) : 0
         switch kind {
         case 0x90:
-            return (slot, 0, state.keys.press(channel: channel, key: data1, velocity: data2, slot: slot))
+            return (slot, 0, state.keys.press(source: source, channel: channel, key: data1, velocity: data2, slot: slot))
         case 0xB0 where data1 == 120 || data1 == 123:
             // All sound off and all notes off end the slot's notes without their releases.
             state.keys.reset(slot: slot)
@@ -536,7 +540,8 @@ final class MIDIInput {
                 return
             }
             let (controls, clock) = Self.receive(list, router: router, inbox: inbox,
-                                                 clock: fromFollowed ? clockInbox : nil)
+                                                 clock: fromFollowed ? clockInbox : nil,
+                                                 source: Self.liveSource(tag))
             // One hop: two tasks would each send the captured `self` across actors.
             guard controls || clock else { return }
             Task { @MainActor in
@@ -616,8 +621,17 @@ final class MIDIInput {
 
     /// MIDI thread: MIDI 1.0 channel voice messages in Universal MIDI Packets (message type 2).
     /// True when controller moves are waiting for the main thread.
+    /// The live-keys source of a connection: 1 … 7 from its tag, 0 (the screen's) for a source
+    /// without one. Two devices can share a number; then they are one keyboard to the held keys,
+    /// as every device was before (no hanging note either way).
+    nonisolated private static func liveSource(_ tag: UnsafeMutableRawPointer?) -> UInt8 {
+        let value = UInt(bitPattern: tag)
+        guard value != 0 else { return LiveKeys.defaultSource }
+        return 1 + UInt8(truncatingIfNeeded: value % 7)
+    }
+
     nonisolated private static func receive(_ list: UnsafePointer<MIDIEventList>, router: LiveRouter,
-                                            inbox: ControlInbox, clock: ClockInbox?) -> (Bool, Bool) {
+                                            inbox: ControlInbox, clock: ClockInbox?, source: UInt8) -> (Bool, Bool) {
         var drain = false
         var drainClock = false
         for packet in list.unsafeSequence() {
@@ -645,9 +659,9 @@ final class MIDIInput {
                         // A controller the song does not map plays the live instrument — the mod
                         // wheel, expression, a filter knob — and a take records it. The sustain
                         // pedal always plays: it holds the live instrument's notes (S-16b).
-                        if inbox.playsLive(control, value: data2) { router.receive(status: status, data1, data2) }
+                        if inbox.playsLive(control, value: data2) { router.receive(source: source, status: status, data1, data2) }
                     } else if inbox.playsLive(status: status, data1, data2) {
-                        router.receive(status: status, data1, data2)
+                        router.receive(source: source, status: status, data1, data2)
                     }
                 }
                 // Message length by type: 0–2 one word, 3–4 two, 5 four; the rest one.
