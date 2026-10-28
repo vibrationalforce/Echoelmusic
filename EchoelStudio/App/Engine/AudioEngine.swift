@@ -93,6 +93,9 @@ final class AudioEngine {
     let clock = MIDIClockOutput()
     /// Which session clip each track plays, as the render thread reports it.
     let session = SessionState()
+    /// The live body and controller values a song's modulation routes read (W2); the strap writes
+    /// its pulse here. Only the live engine reads them — an export passes none.
+    let modulation = ModulationInputs()
     @ObservationIgnored private var reportTask: Task<Void, Never>?
     /// The instrument track a controller plays. Nil: the first instrument track.
     private(set) var liveTrack: TrackID?
@@ -1103,7 +1106,8 @@ final class AudioEngine {
                                       samples: samples, units: plugins.units,
                                       effects: plugins.chains.mapValues { $0 as [any HostedProcessor] },
                                       outputChannels: outputChannels, revisions: revisions.update(for: plan),
-                                      monitoring: monitoring(in: project), masterEffects: plugins.masterChain)
+                                      monitoring: monitoring(in: project), masterEffects: plugins.masterChain,
+                                      modulation: modulation)
         meterIndices = core.meterIndices(for: snapshot)
         core.publish(snapshot)
         let songEnd = Swift.max(plan.songEnd, snapshot.time.tick(atSample: snapshot.audioEnd))

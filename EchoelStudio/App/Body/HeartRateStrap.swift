@@ -1,6 +1,7 @@
 import CoreBluetooth
 import EchoelCore
 import EchoelDSP
+import EchoelEngine
 import Foundation
 import Observation
 import os
@@ -51,6 +52,13 @@ final class HeartRateStrap: NSObject {
     @ObservationIgnored private var scanTimeout: Task<Void, Never>?
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private let started = ContinuousClock.now
+    /// Where the pulse goes as the heart-rate modulation source (W2). It glides there over about
+    /// `glideSeconds` instead of stepping once a second, and is absent the moment the pulse is.
+    @ObservationIgnored var output: ModulationInputs?
+    @ObservationIgnored private var glide: Task<Void, Never>?
+    @ObservationIgnored private var gliding: Double?
+    static let glideSeconds = 0.6
+    static let glideStepSeconds = 1.0 / 30
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
 
     var isOn: Bool { status != .off }
@@ -72,6 +80,25 @@ final class HeartRateStrap: NSObject {
                 self?.apply(.tick)
             }
         }
+        glide = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Self.glideStepSeconds))
+                self?.glideTowardsPulse()
+            }
+        }
+    }
+
+    /// One step of the glide: towards the measured pulse, or absent at once without one.
+    private func glideTowardsPulse() {
+        guard let target = pulse.value else {
+            if gliding != nil { output?.set(.heartRate, nil) }
+            gliding = nil
+            return
+        }
+        let factor = 1 - Foundation.exp(-Self.glideStepSeconds / Self.glideSeconds)
+        let next = gliding.map { $0 + (target - $0) * factor } ?? target
+        gliding = next
+        output?.set(.heartRate, next)
     }
 
     /// The musician turned it off: the connection ends and the value is gone.
@@ -79,6 +106,9 @@ final class HeartRateStrap: NSObject {
         guard isOn else { return }
         scanTimeout?.cancel()
         ticker?.cancel()
+        glide?.cancel()
+        gliding = nil
+        output?.set(.heartRate, nil)
         if let central {
             if central.isScanning { central.stopScan() }
             if let peripheral { central.cancelPeripheralConnection(peripheral) }

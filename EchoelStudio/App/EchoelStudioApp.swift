@@ -15,7 +15,7 @@ struct EchoelStudioApp: App {
     @State private var launchpad: LaunchpadController
     @State private var agent: AgentSession
     /// The chest strap, off until the musician turns it on in the Song menu (wave W1).
-    @State private var strap = HeartRateStrap()
+    @State private var strap: HeartRateStrap
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -28,6 +28,9 @@ struct EchoelStudioApp: App {
         let documents = DocumentController(store: store)
         _store = State(initialValue: store)
         _engine = State(initialValue: engine)
+        let strap = HeartRateStrap()
+        strap.output = engine.modulation
+        _strap = State(initialValue: strap)
         _documents = State(initialValue: documents)
         _recording = State(initialValue: RecordController(engine: engine, documents: documents, store: store))
         let writer = ParameterWriter(store: store, engine: engine)
