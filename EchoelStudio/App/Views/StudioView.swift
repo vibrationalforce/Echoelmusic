@@ -13,7 +13,7 @@ struct StudioView: View {
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
 
-    enum Surface: Hashable { case tracks, arrange, session, mixer }
+    enum Surface: Hashable { case tracks, arrange, session, mixer, field }
 
     var body: some View {
         @Bindable var router = router
@@ -25,6 +25,7 @@ struct StudioView: View {
                 Text("Arrange").tag(Surface.arrange)
                 Text("Session").tag(Surface.session)
                 Text("Mixer").tag(Surface.mixer)
+                Text("Field").tag(Surface.field)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, Theme.Space.m)
@@ -38,6 +39,7 @@ struct StudioView: View {
             case .session:
                 SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
             case .mixer: MixerView()
+            case .field: FieldView()
             }
             if showsKeys {
                 Divider().overlay(Theme.Color.border)
