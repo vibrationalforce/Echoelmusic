@@ -1,22 +1,26 @@
-11.0.0, eighth upload — loop it, layer it, record without setting up
+11.0.0, ninth upload — your heart on the transport, chorus and phaser, two keyboards at once
 
-What is new since 10010. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10011. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- The song loops. The Loop button in the transport (on by default) repeats the song from bar 1
-  at its last bar, sample-exact and the same at every buffer size; switching it off lets the
-  song run on.
-- Overdub: a MIDI take that runs through the loop's end keeps recording into the same take on
-  the next pass, so a second layer adds to the first. An audio take suspends the loop while it
-  records and gives it back when it ends.
-- Record without setting up: with no track armed, Record arms the track the keys play and
-  records it.
-- A plugin's settings are taken only from the plugin the song names. During a swap the old unit
-  can no longer write its settings into the new one, and a failed capture keeps the last good
-  state.
-- Groundwork for the body (no screen or sensor yet): pulse conditioning, pulse period, HRV
-  (RMSSD, SDNN, pNN50), interval hygiene and coherence are in the DSP package with their tests.
+- Heart Rate Strap in the Song menu: turn it on and a Bluetooth chest strap's pulse shows beside
+  Record. iOS asks for Bluetooth only then. With no strap, off the skin, or more than three
+  seconds without a reading, it shows in words what is missing, never a number. The pulse does
+  not move any sound yet; that comes with modulation.
+- Chorus and Phaser, the fifth and sixth standard effects (Chorus: Rate, Depth, Mix; Phaser:
+  Rate, Depth, Feedback, Mix), on any insert and as Echoel Chorus and Echoel Phaser in other
+  hosts, free like every effect.
+- Two MIDI keyboards on one key: the note ends only when both let go, and an unplugged keyboard
+  ends the notes it held.
+- The sampler ends each key's own voice: a key struck again after the root moved, or two keys
+  that land on one pitch, no longer hang or cut each other.
+- A plugin's settings count as saved only once the song took them, so a refused save no longer
+  reloads the plugin with older settings. An export or stems where a plugin refused to render
+  fail with a message instead of saving a file with gaps.
 
-Previous: 11.0.0 (10010), seventh upload — play it with the phone alone (keys and pads on the screen, Four Tracks on first launch, store and plugin-window repairs). Before that: 11.0.0 (10009), sixth upload — the app survives what a device does to it. 10008, fifth upload — the plugin purchase in the App Group group.com.echoelmusic.shared. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build). group.com.echoelmusic (the import of earlier songs) is still not requested (F17): until it is, the import finds nothing.
+Previous: 11.0.0 (10011), eighth upload — loop, overdub, record without arming. 10010 — play it
+with the phone alone. 10009 — the app survives what a device does to it. 10008 — the plugin
+purchase in the App Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio
+build). group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -24,13 +28,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Open Four Tracks, press Play: at the end of the song it starts again at bar 1 without a gap
-   or click. Tap Loop off: it plays on past the end.
-2. With nothing armed, press Record and play four notes on the screen keys: Record works without
-   arming, and the take lands on the Keys track.
-3. Keep recording through two loop passes, playing different notes each pass: after Stop, both
-   layers play back, and no note is doubled.
-4. Record a short take on a track with a microphone or interface input: the loop pauses during
-   the take and is back on after Stop.
-5. Load a third-party plugin on a track, change a knob, swap the plugin for another one, save,
-   reopen the song: the new plugin opens with its own settings, not the old one's.
+1. Song menu, Heart Rate Strap on: iOS asks for Bluetooth once. With a chest strap on, within
+   twenty seconds its pulse shows beside Record and matches the strap's own app or watch.
+2. Take the strap off: within a few seconds the number gives way to words. Turn it off: the
+   reading disappears.
+3. Put Chorus, then Phaser, on a Keys track and play: Chorus widens and thickens, Phaser
+   sweeps; Mix 0 sounds dry on both.
+4. Two MIDI keyboards (or one plus the screen keys) hold the same note: lifting one keeps it
+   sounding, lifting the second ends it. Unplug one while holding: its notes stop.
+5. In AUM, Echoel Chorus is listed among the effects and loads.
