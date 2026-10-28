@@ -5730,3 +5730,9 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Rules that hold:** generiert wird nur auf Anfrage (NEUPLANUNG §0); nach außen nie „Superintelligenz“; keine Gesundheitsbehauptung; Gesicht nur als Modulationsquelle, nichts verlässt das Gerät.
 - **Review:** 2026-11-24.
 
+
+### 2026-10-28 (Abend) — Eine Produktions-Session, alle anderen lesend
+- **Decision:** Genau EINE Session schreibt auf `claude/echoelmusic-review-optimize-u5jjpd` und bumpt `EchoelStudio/RELEASE`; wiederbelebte Archiv-Sessions (Neustart AUv3 · App feasibility · Audit TestFlight · Website audit) arbeiten lesend und übergeben per `send_message`, nie per Push. Ab 21:41Z ist die Orchestrierungs-Session `session_01TBcE2dPzGY62Cs3Emwmave` dieser eine Schreiber; die bisherige Produktions-Session `session_01DqTpc8…` hat übergeben (nichts Ungepushtes, Sky S1b nicht angefangen) und wertet nur noch das Strategie-Panel `wf_71c82e09-e37` aus.
+- **Why:** Founder: „Bringe alle Prozesse zusammen und orchestriere auf höchstem Level. Wir starten hier im Chat neu.“ Gemessen: vier Archiv-Sessions liefen gleichzeitig auf HEAD `fd1d374`, eine hatte RELEASE lokal gebumpt und der Push wurde abgewiesen, weil der Zweig sich bewegt hatte — ohne Stopp wären zwei Release-Commits auf einem Gate gelandet, und jeder Push unter `EchoelStudio/` bricht den laufenden Gate-Lauf ab (HARNESS-Lehre vom 28.10.).
+- **Grenzen der Sitzung:** `update_trigger enabled=false` und `git push --delete park/morph-2026-10-28` wurden vom Auto-Modus-Klassifikator verweigert (fremde Workloads / destruktiv); die Produktions-Session hat den Timer selbst abgeschaltet, der Park-Zweig (zeigt auf `68a2690`, längst in `main`) bleibt bis zur Founder-Hand stehen.
+- **Review:** 2026-11-28.

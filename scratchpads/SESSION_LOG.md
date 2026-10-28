@@ -1894,3 +1894,27 @@ Lehre: ein Wert, den die Engine spielt, ist noch keine Fähigkeit — erst mit T
 waren nur über den Assistenten erreichbar; ich hatte sie dem Founder als „im Studio“ genannt).
 Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuerst) oder Texture-Engine;
 12. Upload, sobald genug Neues grün ist.
+
+## 2026-10-28 (Abend) — Orchestrierung: vier Archiv-Sessions gestoppt, ein Schreiber, 12. Upload
+
+- **Founder 21:41Z:** „In den anderen Chats laufen noch Prozesse … Bringe alle Prozesse zusammen und
+  orchestriere auf höchstem Level. Wir starten hier im Chat neu.“ Gemessen: vier wiederbelebte
+  Archiv-Sessions (Neustart AUv3 · App feasibility · Audit TestFlight · Website audit) liefen
+  gleichzeitig auf HEAD `fd1d374`, alle mit „Du entscheidest“; die Website-Session hatte
+  `EchoelStudio/RELEASE` lokal gebumpt (Push abgewiesen, Zweig hatte sich bewegt); die
+  Produktions-Session `01DqTpc8` hatte einen Einmal-Timer 21:51Z (Sky S1b + 12. Upload).
+- **Getan:** fünf Stopp-Nachrichten per `send_message` (Priorität now); alle vier haben übergeben und
+  sind idle, nichts davon gepusht. Die Produktions-Session hat übergeben (nichts Ungepushtes, Sky S1b
+  nur spezifiziert, Timer selbst abgeschaltet) und wertet nur noch das Strategie-Panel
+  `wf_71c82e09-e37` aus (6/7 Profile, Richter folgen). Entscheidung „ein Schreiber“ in
+  `decisions.csv` + `memory/decisions.md`.
+- **12. Upload:** `587090bc` (RELEASE: Morph, Mallet, Tonsystem + Kammerton im Key-Menü, Route auf
+  einen Send, „measuring“-Zeile, Sky-Arithmetik ohne Tür; fünf Gerätetests). Studio-Lauf 302 und
+  TestFlight-Lauf 15 gestartet 21:53Z — Ergebnis folgt im nächsten Eintrag.
+- **Verweigert vom Klassifikator (berichten):** `update_trigger enabled=false` auf den fremden Timer;
+  `git push --delete park/morph-2026-10-28` (zeigt auf `68a2690`, längst in `main`).
+- **Aus den Übergaben:** AUv3-Session schlägt K1+K2 (reiner MIDI-Kern „Echoel Keys“, kein gatetes
+  File) vor, wartet auf GM30; Audit-TestFlight-Session fand `fastlane/Appfile:52` veraltet („auv3
+  RETIRED — no target“, das Target lebt seit #1385); Feasibility-Session: `docs/version.json`
+  HISTORY-NOTE ist Absicht, nichts zu reparieren.
+- Nichts gerätegeprüft.
