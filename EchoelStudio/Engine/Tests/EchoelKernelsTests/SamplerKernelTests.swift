@@ -130,18 +130,20 @@ final class SamplerKernelTests: XCTestCase {
         XCTAssertEqual(peak(render(kernel, frames: 480)), 0)
     }
 
-    /// Two keys clamped onto one pitch at the top of the range: each key ends only its own voice.
+    /// Two keys clamped onto one pitch at the bottom of the range: each key ends only its own
+    /// voice. At the bottom, not the top: clamped to 127 a key plays the sample about 48 times
+    /// faster, and the four seconds end on their own before the check.
     func testTwoKeysOnOnePitchEndOnlyTheirOwnVoice() throws {
         let kernel = try heldKernel()
-        kernel.setParameter(try address("sampler_root"), 36) // +24: keys 104 … 127 all land on 127
+        kernel.setParameter(try address("sampler_root"), 107) // −47: keys 0 … 47 all land on 0
         _ = render(kernel, frames: 16)
-        kernel.receive(status: 0x90, 120, 127)
-        kernel.receive(status: 0x90, 125, 127)
+        kernel.receive(status: 0x90, 10, 127)
+        kernel.receive(status: 0x90, 20, 127)
         _ = render(kernel, frames: 480)
-        kernel.receive(status: 0x80, 120, 0)
+        kernel.receive(status: 0x80, 10, 0)
         _ = render(kernel, frames: 4_800)
-        XCTAssertTrue(kernel.isSounding, "key 125 still holds its voice")
-        kernel.receive(status: 0x80, 125, 0)
+        XCTAssertTrue(kernel.isSounding, "key 20 still holds its voice")
+        kernel.receive(status: 0x80, 20, 0)
         _ = render(kernel, frames: 4_800)
         XCTAssertFalse(kernel.isSounding)
     }
