@@ -449,5 +449,6 @@ extension Project {
         }
         automation.removeAll { gone($0.target) }
         midiMappings.removeAll { gone($0.target) }
+        modRoutes.removeAll { gone($0.target) }
     }
 }

@@ -237,6 +237,8 @@ extension Command {
             for i in project.tracks.indices { project.tracks[i].sends.removeAll { $0.target == id } }
             project.midiMappings.removeAll { $0.target.involves(id) }
             project.automation.removeAll { $0.target.involves(id) }
+            // A route on a parameter that is gone would refuse the song when it next opens.
+            project.modRoutes.removeAll { $0.target.involves(id) }
 
         case let .renameTrack(id, name):
             let t = try project.requireTrack(id)

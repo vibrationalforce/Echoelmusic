@@ -107,12 +107,38 @@ final class AutomationTests: XCTestCase {
         let decoded = try ProjectCodec.decode(ProjectCodec.encode(song))
         XCTAssertEqual(decoded.automation, song.automation)
 
+        // A modulation route goes with its parameter exactly as a lane does (W2, format 3).
+        song.modRoutes = [ModulationRoute(source: .heartRate, target: feedback, depth: 0.3),
+                          ModulationRoute(source: .breath, target: cutoff, depth: -0.3)]
+        XCTAssertNoThrow(try song.validate())
+
         try Command.removeInsert(track: track, insert).apply(to: &song)
         XCTAssertNil(song.automation(for: feedback), "the insert took its lanes")
         XCTAssertNotNil(song.automation(for: cutoff))
+        XCTAssertEqual(song.modRoutes.map(\.target), [cutoff], "and its routes")
         try Command.setInstrumentPlugin(track, synth).apply(to: &song)
         XCTAssertNotNil(song.automation(for: cutoff), "the same plugin keeps them")
         try Command.setInstrumentPlugin(track, nil).apply(to: &song)
         XCTAssertNil(song.automation(for: cutoff), "another plugin's addresses mean nothing")
+        XCTAssertTrue(song.modRoutes.isEmpty)
+        XCTAssertNoThrow(try song.validate(), "no route is left on a parameter that is gone")
+    }
+
+    /// Removing a track removes every route on its parameters and on sends into it, so the song
+    /// still opens; a route elsewhere stays.
+    func testRemovingATrackRemovesItsRoutes() throws {
+        var song = Project()
+        let keys = TrackID(), room = TrackID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &song)
+        try Command.addTrack(id: room, name: "Room", kind: .returnTrack, index: nil).apply(to: &song)
+        let onMaster = ModulationRoute(source: .coherence, target: .masterPan, depth: 0.4)
+        song.modRoutes = [ModulationRoute(source: .heartRate, target: .volume(keys), depth: 0.2),
+                          ModulationRoute(source: .hrv, target: .send(keys, to: room), depth: 0.2), onMaster]
+        XCTAssertNoThrow(try song.validate())
+        try Command.removeTrack(room).apply(to: &song)
+        XCTAssertEqual(song.modRoutes.count, 2, "the send into the return went with it")
+        try Command.removeTrack(keys).apply(to: &song)
+        XCTAssertEqual(song.modRoutes, [onMaster])
+        XCTAssertNoThrow(try song.validate())
     }
 }
