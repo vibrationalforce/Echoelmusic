@@ -1,26 +1,23 @@
-11.0.0, ninth upload — your heart on the transport, chorus and phaser, two keyboards at once
+11.0.0, tenth upload — your pulse moves the mix, a flanger, songs that store modulation
 
-What is new since 10011. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10012. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Heart Rate Strap in the Song menu: turn it on and a Bluetooth chest strap's pulse shows beside
-  Record. iOS asks for Bluetooth only then. With no strap, off the skin, or more than three
-  seconds without a reading, it shows in words what is missing, never a number. The pulse does
-  not move any sound yet; that comes with modulation.
-- Chorus and Phaser, the fifth and sixth standard effects (Chorus: Rate, Depth, Mix; Phaser:
-  Rate, Depth, Feedback, Mix), on any insert and as Echoel Chorus and Echoel Phaser in other
-  hosts, free like every effect.
-- Two MIDI keyboards on one key: the note ends only when both let go, and an unplugged keyboard
-  ends the notes it held.
-- The sampler ends each key's own voice: a key struck again after the root moved, or two keys
-  that land on one pitch, no longer hang or cut each other.
-- A plugin's settings count as saved only once the song took them, so a refused save no longer
-  reloads the plugin with older settings. An export or stems where a plugin refused to render
-  fail with a message instead of saving a file with gaps.
+- The body moves the mix: long-press a track name (or the bar count above the tracks for the
+  master), Modulate, Volume or Pan, Heart Rate. The chest strap's pulse then moves that fader or
+  pan along its travel, gliding instead of stepping. Each route offers depths 10/25/50/100 %,
+  Invert, bipolar or unipolar, on/off and Remove, each one undo step. With no strap, off the skin
+  or stale, a route adds nothing and the fader stays where it is. An export never reads the
+  strap: it renders the song as stored.
+- Flanger, the seventh standard effect (Rate, Depth, Feedback −0.95…0.95, Mix), on any insert and
+  as Echoel Flanger in other hosts, free like every effect.
+- Song format 3: a song stores its modulation routes. Every earlier song opens unchanged; a song
+  saved by this build no longer opens in 10012 or earlier.
 
-Previous: 11.0.0 (10011), eighth upload — loop, overdub, record without arming. 10010 — play it
-with the phone alone. 10009 — the app survives what a device does to it. 10008 — the plugin
-purchase in the App Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio
-build). group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
+Previous: 11.0.0 (10012), ninth upload — heart rate strap, chorus and phaser, two keyboards on
+one key. 10011 — loop, overdub, record without arming. 10010 — play it with the phone alone.
+10009 — the app survives what a device does to it. 10008 — the plugin purchase in the App
+Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build).
+group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -28,12 +25,12 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Song menu, Heart Rate Strap on: iOS asks for Bluetooth once. With a chest strap on, within
-   twenty seconds its pulse shows beside Record and matches the strap's own app or watch.
-2. Take the strap off: within a few seconds the number gives way to words. Turn it off: the
-   reading disappears.
-3. Put Chorus, then Phaser, on a Keys track and play: Chorus widens and thickens, Phaser
-   sweeps; Mix 0 sounds dry on both.
-4. Two MIDI keyboards (or one plus the screen keys) hold the same note: lifting one keeps it
-   sounding, lifting the second ends it. Unplug one while holding: its notes stop.
-5. In AUM, Echoel Chorus is listed among the effects and loads.
+1. Strap on, a Keys track playing: long-press Keys, Modulate, Volume, Heart Rate. The level now
+   follows your pulse; raise your pulse (stand up, a few squats) and it moves within a few
+   seconds, smoothly, without clicks.
+2. On that route choose Depth 100 % and Invert: a higher pulse now turns Keys down. Remove: Keys
+   is back at its fader.
+3. Take the strap off while the route is on: the level returns to the fader and stays there.
+4. Put Flanger on a track: it sweeps; negative Feedback sounds hollower than positive.
+5. Save the song with a route, close and reopen it: the route is still there; Export WAV sounds
+   like the fader setting, not like your pulse at the moment of export.
