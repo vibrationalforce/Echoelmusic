@@ -143,15 +143,18 @@ public struct EngineSnapshot: Sendable {
         }
     }
 
-    /// A send whose level, or whose track's level, moves.
+    /// A send whose level, or whose track's level, moves — by a lane, by routes (W2), or both.
     public struct MovingSend: GainCurve {
         public let mix: MovingMix
         public let levelDB: Double
         public let level: AutomationLane?
+        /// Routes on the send's level; the lane's value, or the stored one, is their base.
+        public var levelRoutes: MixModulation? = nil
 
         public func gains(at position: Double) -> (Float, Float) {
             let (left, right) = mix.gains(at: position)
-            let send = EngineSnapshot.linear(level?.value(atPosition: position) ?? levelDB)
+            let base = level?.value(atPosition: position) ?? levelDB
+            let send = EngineSnapshot.linear(levelRoutes?.value(base) ?? base)
             return (left * send, right * send)
         }
     }
@@ -312,12 +315,15 @@ public struct EngineSnapshot: Sendable {
                 guard let bus = busOf[send.target], audible || soloedReturns.contains(send.target) else { return nil }
                 let level = Self.linear(send.levelDB)
                 let lane = automation[.send(track.id, to: send.target)]
+                let routes = MixModulation(.send(track.id, to: send.target), in: project, inputs: modulation)
                 let pre = moving(track, false)
-                guard level > 0 || lane != nil else { return nil }
-                let movingSend = lane != nil || pre != nil
-                    ? MovingSend(mix: pre ?? MovingMix(strip: track.mixer, volume: nil, pan: nil, master: nil),
-                                 levelDB: send.levelDB, level: lane)
-                    : nil
+                guard level > 0 || lane != nil || routes != nil else { return nil }
+                var movingSend: MovingSend?
+                if lane != nil || pre != nil || routes != nil {
+                    movingSend = MovingSend(mix: pre ?? MovingMix(strip: track.mixer, volume: nil, pan: nil, master: nil),
+                                            levelDB: send.levelDB, level: lane)
+                    movingSend?.levelRoutes = routes
+                }
                 return SendTap(bus: bus, gainLeft: left * level, gainRight: right * level, moving: movingSend)
             }
         }

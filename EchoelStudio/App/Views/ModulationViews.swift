@@ -18,7 +18,7 @@ struct ModulateMenu: View {
     /// The depths offered, as a share of the control's travel.
     static let depths: [Double] = [0.1, 0.25, 0.5, 1]
 
-    /// The values a route can move: the mixer's volume and pan, and on an instrument track the
+    /// The values a route can move: the mixer's volume and pan, the track's sends, and on an instrument track the
     /// values of the built-in instrument it plays (a plugin's parameters are not routable yet).
     private func targets(in project: Project) -> [ParameterAddress] {
         switch owner {
@@ -26,7 +26,9 @@ struct ModulateMenu: View {
         case .project: return []
         case .track(let id):
             var list: [ParameterAddress] = [.volume(id), .pan(id)]
-            if let track = project.track(id), track.kind == .instrument {
+            guard let track = project.track(id) else { return list }
+            list += track.sends.map { .send(id, to: $0.target) }
+            if track.kind == .instrument {
                 list += track.instrument.device.parameters.map { ParameterAddress(.track(id), $0.key) }
             }
             return list

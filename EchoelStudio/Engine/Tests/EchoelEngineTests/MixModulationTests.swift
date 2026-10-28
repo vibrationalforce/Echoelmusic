@@ -67,6 +67,27 @@ final class MixModulationTests: XCTestCase {
         XCTAssertEqual(mix.gains(at: 0).0, 0, accuracy: 1e-6)
     }
 
+    /// A route on a send moves what the track feeds its return, and nothing else; absent, the
+    /// send is exactly its stored level.
+    func testARouteOnASendMovesWhatTheReturnGets() throws {
+        var (project, keys) = try song { _ in [] }
+        let room = TrackID()
+        try Command.addTrack(id: room, name: "Room", kind: .returnTrack, index: nil).apply(to: &project)
+        try Command.setSend(track: keys, to: room, db: -12).apply(to: &project)
+        try Command.setModRoute(ModulationRoute(source: .heartRate, target: .send(keys, to: room), depth: 1))
+            .apply(to: &project)
+        let inputs = ModulationInputs()
+        let lane = try XCTUnwrap(snapshot(project, inputs: inputs).lanes.first { $0.sends.count == 1 })
+        let tap = try XCTUnwrap(lane.sends.first)
+        let moving = try XCTUnwrap(tap.moving, "a route makes the send move")
+        XCTAssertEqual(moving.gains(at: 0).0, tap.gainLeft, accuracy: 1e-6, "absent: the stored level")
+        inputs.set(.heartRate, 1)
+        XCTAssertGreaterThan(moving.gains(at: 0).0, tap.gainLeft * 1.5, "measured: full depth opens the send")
+        XCTAssertNil(lane.mix, "the track's own fader does not move")
+        XCTAssertNil(snapshot(project, inputs: nil).lanes.first { $0.sends.count == 1 }?.sends.first?.moving,
+                     "an offline render keeps the stored level")
+    }
+
     /// An offline render never reads a live sensor: without inputs nothing moves.
     func testWithoutInputsNoRouteMovesAnything() throws {
         let (project, _) = try song { [ModulationRoute(source: .heartRate, target: .volume($0), depth: -1)] }
