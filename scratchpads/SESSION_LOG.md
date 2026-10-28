@@ -1922,3 +1922,13 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   App Store Connect `state=VALID`** (im Log gelesen, Zeile `[ASC] build 10015 … state=VALID`, nicht
   der Timeout-Pfad). dSYMs als Artefakt 12855653610. Nichts gerätegeprüft; die fünf Gerätetests
   stehen in `EchoelStudio/RELEASE`.
+
+- **Strategie-Panel `wf_71c82e09-e37` fertig (22:35Z, Übergabe der Produktions-Session, Volltext dort
+  im Scratchpad, nicht im Repo):** Rangliste Studio 6,2 · Palace 5,3 · Kombination mit Tauchfliege 4,2 ·
+  Somachord 2,5 · Visibra 1,8 · Tauchfliege 1,0 · BLAB 0,25. Alle sechs Richter: Studio + Palace OHNE
+  Tauchfliege, OHNE „heilsam“. Vier Repo-Behauptungen hier nachgemessen und bestätigt: `terms.html` §8
+  (Personenschaden ausgeschlossen, Deckel), `privacy.html:110` („heart-rate sensors“ nicht im Studio —
+  falsch seit 10012, **in dieser Sitzung korrigiert**), `vision.md:13` (Tauchfliege wieder drin),
+  `decisions.csv:1329` (Förderung gestrichen). Die drei Founder-Fragen daraus stehen EINMAL als **GM37**
+  in `FOUNDER_INBOX.md` §1. Kapazitätsbefund des Panels: Engpass sind Founder-Minuten (Geräte-Bitten,
+  F-15), nicht Entwicklung.
