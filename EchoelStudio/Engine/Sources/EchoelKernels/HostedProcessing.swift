@@ -67,6 +67,10 @@ public protocol HostedInstrument: ParameterScheduling {
     /// Renders `frames` and adds them into `left` and `right` at the lane's gains.
     func render(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
                 gainLeft: Float, gainRight: Float)
+    /// The blocks the unit refused to render since it was made: each one left silence where its
+    /// sound belonged. Any thread; an export reads it after its render to fail instead of saving
+    /// a file with holes (Codex handover S6).
+    var renderFailures: Int { get }
 }
 
 /// An effect on an insert chain, processed inside the engine's own render pass.
@@ -84,13 +88,18 @@ public protocol HostedProcessor: ParameterScheduling {
     func follow(_ transport: HostTransport)
     /// Replaces `frames` of the bus with the effect's output.
     func process(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>)
+    /// The blocks the effect refused to process since it was made (see `HostedInstrument`).
+    var renderFailures: Int { get }
 }
 
-/// Units that keep no time of their own — the built-in kernels, a test's stand-in — ignore it.
+/// Units that keep no time of their own — the built-in kernels, a test's stand-in — ignore it,
+/// and units that cannot refuse a block report no failures.
 extension HostedInstrument {
     public func follow(_ transport: HostTransport) {}
+    public var renderFailures: Int { 0 }
 }
 
 extension HostedProcessor {
     public func follow(_ transport: HostTransport) {}
+    public var renderFailures: Int { 0 }
 }

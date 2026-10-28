@@ -30,6 +30,26 @@ private final class FakeInstrument: @unchecked Sendable {
     }
 }
 
+/// A stand-in that fills every block with 0.5, except the one call it refuses.
+private final class RefusingInstrument: @unchecked Sendable {
+    let refused: Int
+    private var calls = 0
+
+    init(refusing call: Int) { refused = call }
+
+    func makeUnit(sampleRate: Double) -> HostedUnit {
+        HostedUnit(render: { [self] _, _, frames, _, list, _ in
+            calls += 1
+            if calls == refused { return kAudioUnitErr_CannotDoInCurrentContext }
+            for buffer in UnsafeMutableAudioBufferListPointer(list) {
+                guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for i in 0..<Int(frames) { data[i] = 0.5 }
+            }
+            return noErr
+        }, scheduleMIDI: nil, sampleRate: sampleRate, maximumFrames: 256, owner: nil)
+    }
+}
+
 /// What a unit under test read through its host blocks, one entry per render call.
 private final class ClockReadings: @unchecked Sendable {
     var readings: [(tempo: Double, numerator: Double, denominator: Int, beat: Double, moving: Bool, changed: Bool)] = []
@@ -184,5 +204,29 @@ final class HostedUnitTests: XCTestCase {
         XCTAssertEqual(fake.heard.filter { $0.status == 0xE0 && $0.frame > 0 }.map(\.frame), [48_000])
         let atBeat = fake.heard.filter { $0.frame == 24_000 }.map(\.status)
         XCTAssertEqual(atBeat, [0xB0, 0x90], "the pedal is down before the note it holds")
+    }
+
+    /// A unit that refuses a block is counted, block by block, so an export can say its file has
+    /// a hole instead of reporting success (Codex handover S6). A unit that never fails counts 0.
+    func testARefusedBlockIsCountedAndAGoodUnitCountsNone() throws {
+        let failing = RefusingInstrument(refusing: 2).makeUnit(sampleRate: rate)
+        var left = [Float](repeating: 0, count: 256), right = left
+        for _ in 0..<3 {
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    failing.render(frames: 256, left: lp, right: rp, gainLeft: 1, gainRight: 1)
+                }
+            }
+        }
+        XCTAssertEqual(failing.renderFailures, 1, "the second of three blocks was refused")
+        XCTAssertEqual(left[0], 1.0, accuracy: 1e-6, "the two good blocks still added their sound")
+        XCTAssertEqual(FakeInstrument(level: 0.5).makeUnit(sampleRate: rate).renderFailures, 0)
+
+        let (project, track) = try pluginSong()
+        let export = HostedUnit(render: { _, _, _, _, _, _ in kAudioUnitErr_CannotDoInCurrentContext },
+                                scheduleMIDI: nil, sampleRate: rate, maximumFrames: 16_384, owner: nil)
+        _ = OfflineRender.render(project, sampleRate: rate, tailSeconds: 0, ringOutSeconds: 0, units: [track: export])
+        XCTAssertGreaterThan(export.renderFailures, 0, "an export through a failing unit leaves a count to read")
     }
 }

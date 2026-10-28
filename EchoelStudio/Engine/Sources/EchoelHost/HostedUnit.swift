@@ -2,6 +2,7 @@ import AudioToolbox
 import AVFoundation
 import EchoelKernels
 import Foundation
+import Synchronization
 
 /// An Audio Unit instrument the engine plays from inside its own render pass: the sequencer
 /// schedules each note through the unit's MIDI block at its exact frame in the block, then the
@@ -28,6 +29,9 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
     private let list: UnsafeMutableAudioBufferListPointer
     /// Render thread only: the unit's own clock, one step per rendered frame.
     private var sampleTime: Double = 0
+    /// Blocks the unit refused: written on the render thread, read from any.
+    private let failures = Atomic<Int>(0)
+    public var renderFailures: Int { failures.load(ordering: .relaxed) }
 
     /// `parameterRanges` holds the unit's writable parameters that automation may move, by
     /// address; `scheduleParameter` moves them.
@@ -114,7 +118,10 @@ public final class HostedUnit: HostedInstrument, @unchecked Sendable {
         stamp.mFlags = .sampleTimeValid
         let status = renderBlock(&flags, &stamp, AUAudioFrameCount(frames), 0, list.unsafeMutablePointer, nil)
         sampleTime += Double(frames)
-        guard status == noErr else { return }
+        guard status == noErr else {
+            failures.add(1, ordering: .relaxed)
+            return
+        }
         // A unit may point the buffers at its own memory instead of filling ours.
         guard let l = list[0].mData?.assumingMemoryBound(to: Float.self) else { return }
         let r = list.count > 1 ? (list[1].mData?.assumingMemoryBound(to: Float.self) ?? l) : l
