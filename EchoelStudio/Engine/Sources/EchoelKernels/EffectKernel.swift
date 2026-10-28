@@ -35,6 +35,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let delay: StereoDelay?
     private let reverb: Reverb?
     private let chorus: Chorus?
+    private let phaser: Phaser?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -51,6 +52,7 @@ public final class EffectKernel: @unchecked Sendable {
         delay = effect == .delay ? StereoDelay(sampleRate: self.sampleRate) : nil
         reverb = effect == .reverb ? Reverb(sampleRate: self.sampleRate) : nil
         chorus = effect == .chorus ? Chorus(sampleRate: self.sampleRate) : nil
+        phaser = effect == .phaser ? Phaser(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -89,6 +91,7 @@ public final class EffectKernel: @unchecked Sendable {
         delay?.reset()
         reverb?.reset()
         chorus?.reset()
+        phaser?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -106,6 +109,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .delay: delay?.process(left: left, right: right, frames: frames)
         case .reverb: reverb?.process(left: left, right: right, frames: frames)
         case .chorus: chorus?.process(left: left, right: right, frames: frames)
+        case .phaser: phaser?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -150,6 +154,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let chorus else { return }
             let s = Chorus.Settings(rate: value(0), depth: value(1), mix: value(2))
             if s != chorus.settings { chorus.settings = s }
+        case .phaser:
+            guard let phaser else { return }
+            let s = Phaser.Settings(rate: value(0), depth: value(1), feedback: value(2), mix: value(3))
+            if s != phaser.settings { phaser.settings = s }
         }
     }
 
@@ -195,6 +203,11 @@ public final class EffectKernel: @unchecked Sendable {
         case .chorus:
             add("rate", "Rate", 0.05...8, 0.6, .hertz)
             add("depth", "Depth", 0...1, 0.5, .amount)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .phaser:
+            add("rate", "Rate", 0.05...8, 0.4, .hertz)
+            add("depth", "Depth", 0...1, 0.7, .amount)
+            add("feedback", "Feedback", 0...0.95, 0.3, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
