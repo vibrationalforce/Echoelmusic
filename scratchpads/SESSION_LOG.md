@@ -1918,3 +1918,7 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   RETIRED — no target“, das Target lebt seit #1385); Feasibility-Session: `docs/version.json`
   HISTORY-NOTE ist Absicht, nichts zu reparieren.
 - Nichts gerätegeprüft.
+- **Ergebnis (22:17Z):** Studio-Lauf 302 grün; TestFlight-Lauf 15 grün, **Build 10015 (11.0.0) in
+  App Store Connect `state=VALID`** (im Log gelesen, Zeile `[ASC] build 10015 … state=VALID`, nicht
+  der Timeout-Pfad). dSYMs als Artefakt 12855653610. Nichts gerätegeprüft; die fünf Gerätetests
+  stehen in `EchoelStudio/RELEASE`.
