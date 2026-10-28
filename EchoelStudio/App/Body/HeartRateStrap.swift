@@ -184,74 +184,61 @@ final class HeartRateStrap: NSObject {
 
 // MARK: - CoreBluetooth (delivered on the main queue: `queue: nil`)
 
-extension HeartRateStrap: CBCentralManagerDelegate, CBPeripheralDelegate {
-    nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        MainActor.assumeIsolated { centralChanged(central) }
+// `@preconcurrency`: CoreBluetooth predates Swift concurrency, and its objects are not Sendable.
+// The manager is created with `queue: nil`, so every callback arrives on the main queue; the
+// conformance lets these methods stay main-actor isolated, and Swift checks that at entry.
+// (`nonisolated` + `MainActor.assumeIsolated` failed the Xcode 26.2 gate: "sending 'central'
+// risks causing data races".)
+extension HeartRateStrap: @preconcurrency CBCentralManagerDelegate, @preconcurrency CBPeripheralDelegate {
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        centralChanged(central)
     }
 
-    nonisolated func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
-                                    advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        MainActor.assumeIsolated {
-            guard isOn, self.peripheral == nil else { return }
-            connect(peripheral, with: central)
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
+                        advertisementData: [String: Any], rssi RSSI: NSNumber) {
+        guard isOn, self.peripheral == nil else { return }
+        connect(peripheral, with: central)
+    }
+
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        guard isOn, peripheral == self.peripheral else { return }
+        status = .connected(peripheral.name ?? "Heart rate strap")
+        peripheral.discoverServices([Self.service])
+    }
+
+    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        guard isOn, peripheral == self.peripheral else { return }
+        self.peripheral = nil
+        status = .lost(peripheral.name ?? "Heart rate strap")
+    }
+
+    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral,
+                        error: Error?) {
+        guard isOn, peripheral == self.peripheral else { return }
+        self.peripheral = nil
+        status = .lost(peripheral.name ?? "Heart rate strap")
+        // The value ends with the strap; a new run starts when it is found again.
+        apply(.suspend)
+        apply(.resume)
+        scan(central)
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        guard isOn, peripheral == self.peripheral else { return }
+        for service in peripheral.services ?? [] where service.uuid == Self.service {
+            peripheral.discoverCharacteristics([Self.measurement], for: service)
         }
     }
 
-    nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral else { return }
-            status = .connected(peripheral.name ?? "Heart rate strap")
-            peripheral.discoverServices([Self.service])
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        guard isOn, peripheral == self.peripheral else { return }
+        for characteristic in service.characteristics ?? [] where characteristic.uuid == Self.measurement {
+            peripheral.setNotifyValue(true, for: characteristic)
         }
     }
 
-    nonisolated func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral,
-                                    error: Error?) {
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral else { return }
-            self.peripheral = nil
-            status = .lost(peripheral.name ?? "Heart rate strap")
-        }
-    }
-
-    nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral,
-                                    error: Error?) {
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral else { return }
-            self.peripheral = nil
-            status = .lost(peripheral.name ?? "Heart rate strap")
-            // The value ends with the strap; a new run starts when it is found again.
-            apply(.suspend)
-            apply(.resume)
-            scan(central)
-        }
-    }
-
-    nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral else { return }
-            for service in peripheral.services ?? [] where service.uuid == Self.service {
-                peripheral.discoverCharacteristics([Self.measurement], for: service)
-            }
-        }
-    }
-
-    nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService,
-                                error: Error?) {
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral else { return }
-            for characteristic in service.characteristics ?? [] where characteristic.uuid == Self.measurement {
-                peripheral.setNotifyValue(true, for: characteristic)
-            }
-        }
-    }
-
-    nonisolated func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic,
-                                error: Error?) {
-        let bytes = characteristic.value.map { [UInt8]($0) }
-        MainActor.assumeIsolated {
-            guard isOn, peripheral == self.peripheral, let bytes else { return }
-            received(bytes)
-        }
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        guard isOn, peripheral == self.peripheral, let value = characteristic.value else { return }
+        received([UInt8](value))
     }
 }
