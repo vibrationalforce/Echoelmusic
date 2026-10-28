@@ -40,7 +40,7 @@ struct EchoelStudioApp: App {
         // song first, so the reload does not take them back (ultra-audit R6).
         engine.beforeRateChange = { [weak store, weak engine] in
             guard let store, let engine else { return nil }
-            try? store.absorb(engine.plugins.captureCommands(for: store.project))
+            engine.plugins.store(into: store)
             return store.project
         }
         // Play starts a fresh status line: the last export's loudness is no longer news.
@@ -48,7 +48,7 @@ struct EchoelStudioApp: App {
         // Opening another song saves this one first, with the plugins' settings in it.
         documents.beforeLeavingSong = { [weak store, weak engine] in
             guard let store, let engine else { return }
-            try? store.absorb(engine.plugins.captureCommands(for: store.project))
+            engine.plugins.store(into: store)
         }
         // A control moved in a plugin's own interface: the learn target while learning, else written.
         engine.plugins.onParameterMoved = { [weak writer, weak midi] address, position, phase in
@@ -113,7 +113,7 @@ struct EchoelStudioApp: App {
             }
             guard phase != .active else { return }
             // Plugins keep their settings to themselves until asked; ask before writing the song.
-            try? store.absorb(engine.plugins.captureCommands(for: store.project))
+            engine.plugins.store(into: store)
             documents.saveNow()
         }
     }

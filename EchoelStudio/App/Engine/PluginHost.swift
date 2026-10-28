@@ -68,6 +68,11 @@ final class PluginHost {
     /// The saved state each loaded unit was last brought in line with — applied on load or after
     /// an undo, or captured from the unit. A song whose state differs gets it applied.
     @ObservationIgnored private var syncedState: [Slot: Data] = [:]
+    /// Settings read by the last capture and not yet taken by the song. They become `syncedState`
+    /// only when the store accepts them (`store(into:)`): marked at once, a refused capture left
+    /// the host believing the song held settings it did not, and the next sync reloaded the unit
+    /// with the song's older ones (Codex handover S1).
+    @ObservationIgnored private var capturedState: [Slot: Data] = [:]
     /// Results of the most recent capture pass, including failures that produce no command.
     /// These describe capture only, not acceptance by the store or a successful file save.
     @ObservationIgnored private(set) var captureResults: [Slot: PluginStateCapture] = [:]
@@ -575,6 +580,7 @@ final class PluginHost {
     /// An empty list can also mean capture failed; `captureResults` keeps those reasons.
     func captureCommands(for project: Project, only: Slot? = nil) -> [Command] {
         captureResults = [:]
+        capturedState = [:]
         var commands: [Command] = []
         for track in project.tracks {
             if track.kind == .instrument, track.instrument.device == .plugin,
@@ -609,8 +615,27 @@ final class PluginHost {
         }
         captureResults[slot] = result
         guard case .changed(let data) = result else { return nil }
-        syncedState[slot] = data
+        capturedState[slot] = data
         return make(data)
+    }
+
+    /// Captures every loaded unit's changed settings (or `only` one's) and hands them to `store`:
+    /// with `title` as one undo step, without one absorbed into the current step. The host counts
+    /// them as the song's only once the store took them. False when the store refused them; the
+    /// song and the units then keep what they had, and the next capture tries again.
+    @discardableResult
+    func store(into store: ProjectStore, only: Slot? = nil, title: String? = nil) -> Bool {
+        let commands = captureCommands(for: store.project, only: only)
+        defer { capturedState = [:] }
+        guard !commands.isEmpty else { return true }
+        do {
+            if let title { try store.perform(commands, title: title) } else { try store.absorb(commands) }
+        } catch {
+            log.error("plugin settings not taken by the song — \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+        for (slot, data) in capturedState { syncedState[slot] = data }
+        return true
     }
 
     /// The plugin's own interface, or nil when it has none or its unit is not loaded.

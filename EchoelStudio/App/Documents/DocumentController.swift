@@ -939,7 +939,7 @@ final class DocumentController {
         // sampler and audio parts silent, with no word about it (review 2026-10-19).
         await mediaLoaded(for: exportedSong)
         guard exportedSong == songsOpened else { return exportStopped(songName) }
-        try? store.absorb(plugins.captureCommands(for: store.project))
+        plugins.store(into: store)
         // The song and its audio are taken together, with no wait between them: a song opened
         // while the plugins load must not lend this one its buffers (review 2026-10-22).
         let project = store.project
@@ -1022,7 +1022,7 @@ final class DocumentController {
         let songName = openSongName
         await mediaLoaded(for: exportedSong)
         guard exportedSong == songsOpened else { return exportStopped(songName) }
-        try? store.absorb(plugins.captureCommands(for: store.project))
+        plugins.store(into: store)
         let project = store.project
         let buffers = samples
         let unread = Self.unreadMedia(in: project, buffers: buffers, notLoaded: unfitMedia)
@@ -1291,7 +1291,7 @@ final class DocumentController {
         }
         let sharedSong = songsOpened
         let songName = openSongName
-        try? store.absorb(plugins.captureCommands(for: store.project))
+        plugins.store(into: store)
         let project = store.project
         followMovedPackage()
         let package = currentURL
