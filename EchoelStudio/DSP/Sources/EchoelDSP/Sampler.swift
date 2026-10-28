@@ -164,6 +164,15 @@ extension SampleBuffer {
     }
 }
 
+/// One started note: the voice it sounds on and the start that put it there. A voice is reused
+/// when it is stolen, reset or the sample is swapped, and every start has its own `order`, so a
+/// handle kept past that moment names nothing and releasing it does nothing. Two notes of the
+/// same pitch have two handles, so one can end without the other (Codex handover S2, 2026-10-26).
+public struct SamplerVoiceHandle: Equatable, Sendable {
+    let index: Int
+    let order: UInt64
+}
+
 public struct SamplerPatch: Equatable, Sendable {
     public var envelope: Envelope.Settings
     /// Play to the end of the sample regardless of note-off — the drum-pad behaviour.
@@ -225,14 +234,33 @@ public struct Sampler: Sendable {
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
     }
 
-    public mutating func noteOn(pitch: UInt8, velocity: UInt8) {
-        guard let sample, velocity > 0 else { return }
+    /// Starts a note and names the voice it sounds on; nil when nothing starts (no sample, or
+    /// velocity 0). Callers that end notes by pitch can ignore the handle.
+    @discardableResult
+    public mutating func noteOn(pitch: UInt8, velocity: UInt8) -> SamplerVoiceHandle? {
+        guard let sample, velocity > 0 else { return nil }
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
         nextOrder &+= 1
         let index = voiceIndex(for: pitch)
         let semitones = Double(Int(Swift.min(pitch, 127)) - Int(sample.rootPitch))
         let increment = sample.sampleRate / Double(sampleRate) * Foundation.pow(2, semitones / 12)
         voices[index].start(pitch: pitch, velocity: velocity, increment: increment, order: nextOrder)
+        return SamplerVoiceHandle(index: index, order: nextOrder)
+    }
+
+    /// Whether the note `handle` started still sounds held: false once released, stolen, reset,
+    /// or the sample was swapped.
+    public func isHolding(_ handle: SamplerVoiceHandle) -> Bool {
+        guard voices.indices.contains(handle.index) else { return false }
+        let voice = voices[handle.index]
+        return voice.isActive && voice.isHeld && voice.startOrder == handle.order
+    }
+
+    /// Releases the one note `handle` started, and no other voice of the same pitch. A handle
+    /// whose voice has moved on does nothing. A one-shot plays out, as with `noteOff(pitch:)`.
+    public mutating func noteOff(_ handle: SamplerVoiceHandle) {
+        guard !patch.oneShot, isHolding(handle) else { return }
+        voices[handle.index].release()
     }
 
     public mutating func noteOff(pitch: UInt8) {

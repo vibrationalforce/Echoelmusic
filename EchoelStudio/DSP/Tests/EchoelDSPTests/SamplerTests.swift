@@ -298,4 +298,83 @@ final class SamplerTests: XCTestCase {
         sampler.noteOn(pitch: 60, velocity: 127)
         XCTAssertTrue(render(&sampler, frames: 480).allSatisfy { $0 == 0 }, "silent from the first frame")
     }
+
+    // MARK: Voice handles (Codex handover S2)
+
+    private func held() -> SamplerPatch {
+        SamplerPatch(envelope: .init(attack: 0.0001, decay: 0.0001, sustain: 1, release: 0.0001), oneShot: false, level: 1)
+    }
+
+    /// Two notes of one pitch are two voices: ending one by its handle leaves the other sounding.
+    /// `noteOff(pitch:)` would have ended both.
+    func testAHandleReleasesOnlyItsOwnVoiceOfThatPitch() throws {
+        var sampler = Sampler(patch: held(), sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: Double(rate))))
+        let first = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        let second = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        XCTAssertNotEqual(first, second)
+        _ = render(&sampler, frames: 480)
+        sampler.noteOff(first)
+        let out = render(&sampler, frames: 4_800)
+        XCTAssertFalse(sampler.isHolding(first))
+        XCTAssertTrue(sampler.isHolding(second), "the other note of the same pitch is still held")
+        XCTAssertEqual(sampler.activeVoiceCount, 1)
+        XCTAssertEqual(out.last ?? 0, 0.5, accuracy: 1e-3, "and still sounds at one voice's level")
+        XCTAssertTrue(out.allSatisfy(\.isFinite))
+    }
+
+    /// A voice taken by a newer note no longer belongs to the old handle: releasing the old
+    /// handle must not end the note that stole it.
+    func testAHandleWhoseVoiceWasStolenDoesNothing() throws {
+        var sampler = Sampler(patch: held(), voiceCount: 1, sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(ramp(48_000)))
+        let old = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        let new = try XCTUnwrap(sampler.noteOn(pitch: 64, velocity: 127))
+        XCTAssertFalse(sampler.isHolding(old))
+        sampler.noteOff(old)
+        _ = render(&sampler, frames: 4_800)
+        XCTAssertTrue(sampler.isHolding(new), "the stealing note keeps sounding")
+        XCTAssertEqual(sampler.activeVoiceCount, 1)
+    }
+
+    /// Reset and a new sample silence every voice; a handle from before names nothing, and the
+    /// next note on the same voice gets a handle of its own.
+    func testAHandleFromBeforeAResetOrASampleSwapNamesNothing() throws {
+        var sampler = Sampler(patch: held(), voiceCount: 1, sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(ramp(48_000)))
+        let beforeReset = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        sampler.reset()
+        XCTAssertFalse(sampler.isHolding(beforeReset))
+        let afterReset = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        XCTAssertNotEqual(beforeReset, afterReset, "the same voice and pitch, a new start")
+        sampler.noteOff(beforeReset)
+        XCTAssertTrue(sampler.isHolding(afterReset), "the old handle does not end the new note")
+        sampler.setSample(try XCTUnwrap(ramp(48_000)))
+        XCTAssertFalse(sampler.isHolding(afterReset))
+        var empty = Sampler(sampleRate: rate)
+        let withoutSample = empty.noteOn(pitch: 60, velocity: 127)
+        XCTAssertNil(withoutSample, "no sample, no note, no handle")
+        let silent = sampler.noteOn(pitch: 60, velocity: 0)
+        XCTAssertNil(silent, "velocity 0 starts nothing")
+    }
+
+    /// Over many starts on a small pool no handle repeats, and a one-shot plays out even when
+    /// its handle is released.
+    func testHandlesNeverRepeatAndAOneShotIgnoresItsRelease() throws {
+        var sampler = Sampler(patch: held(), voiceCount: 2, sampleRate: rate)
+        sampler.setSample(try XCTUnwrap(ramp(48_000)))
+        var seen: [SamplerVoiceHandle] = []
+        for n in 0..<64 {
+            let handle = try XCTUnwrap(sampler.noteOn(pitch: UInt8(40 + n % 8), velocity: 100))
+            XCTAssertFalse(seen.contains(handle), "start \(n) reused a handle")
+            seen.append(handle)
+        }
+        XCTAssertEqual(sampler.activeVoiceCount, 2, "the pool never grows")
+        var shot = Sampler(patch: flat(), sampleRate: rate)
+        shot.setSample(try XCTUnwrap(ramp(48_000)))
+        let handle = try XCTUnwrap(shot.noteOn(pitch: 60, velocity: 127))
+        shot.noteOff(handle)
+        _ = render(&shot, frames: 4_800)
+        XCTAssertEqual(shot.activeVoiceCount, 1, "a one-shot plays to its end")
+    }
 }
