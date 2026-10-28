@@ -5,7 +5,8 @@ public struct Project: Codable, Equatable, Sendable {
     /// Bumped whenever the stored shape changes. A file with a NEWER number is refused
     /// (`ProjectCodec`), so an old build never silently drops what it does not understand.
     /// 2 (2026-10-20): a parameter address is stored as its text form (`docs/FORMAT.md`).
-    public static let currentFormatVersion = 2
+    /// 3 (2026-10-28): `modRoutes`, required; an older file opens with none (wave W2).
+    public static let currentFormatVersion = 3
 
     /// Always `currentFormatVersion` in memory: an older file is read into today's shape, so the
     /// next save writes today's number over today's shape and never an old number over it.
@@ -30,6 +31,9 @@ public struct Project: Codable, Equatable, Sendable {
     public var midiMappings: [MIDIMapping]
     /// Parameters that move over time, one lane per parameter.
     public var automation: [AutomationLane]
+    /// Sources (body, LFO, macro, controller) that move parameters, each by its own depth. Nothing
+    /// plays them yet; the arithmetic is `Modulation`.
+    public var modRoutes: [ModulationRoute]
 
     public init(
         name: String = "Untitled",
@@ -43,7 +47,8 @@ public struct Project: Codable, Equatable, Sendable {
         midiMappings: [MIDIMapping] = [],
         automation: [AutomationLane] = [],
         masterInserts: [Insert] = [],
-        context: MusicalContext = MusicalContext()
+        context: MusicalContext = MusicalContext(),
+        modRoutes: [ModulationRoute] = []
     ) {
         self.formatVersion = Self.currentFormatVersion
         self.name = name
@@ -58,11 +63,12 @@ public struct Project: Codable, Equatable, Sendable {
         self.midiMappings = midiMappings
         self.automation = automation
         self.masterInserts = masterInserts
+        self.modRoutes = modRoutes
     }
 
     private enum CodingKeys: String, CodingKey {
         case formatVersion, name, tempo, tempoChanges, timeSignature, tracks, scenes, master, media, midiMappings, automation
-        case masterInserts, context
+        case masterInserts, context, modRoutes
     }
 
     /// Fields added after format 1 shipped decode with their default when absent.
@@ -86,6 +92,17 @@ public struct Project: Codable, Equatable, Sendable {
         automation = try c.decodeIfPresent([AutomationLane].self, forKey: .automation) ?? []
         masterInserts = try c.decodeIfPresent([Insert].self, forKey: .masterInserts) ?? []
         context = try c.decodeIfPresent(MusicalContext.self, forKey: .context) ?? MusicalContext()
+        // Format 3 requires the routes; an older file opens with none and never carries the key —
+        // a format-2 file with routes in it came from somewhere this reader cannot vouch for.
+        if stored < 3 {
+            guard !c.contains(.modRoutes) else {
+                throw DecodingError.dataCorruptedError(forKey: .modRoutes, in: c,
+                                                       debugDescription: "format \(stored) has no modulation routes")
+            }
+            modRoutes = []
+        } else {
+            modRoutes = try c.decode([ModulationRoute].self, forKey: .modRoutes)
+        }
     }
 
     /// Whether one more track of `kind` fits (`Track.limit(for:)`).

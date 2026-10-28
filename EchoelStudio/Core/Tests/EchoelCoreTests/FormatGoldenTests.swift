@@ -6,7 +6,8 @@ import XCTest
 /// the builds of each format wrote them; each must keep opening for as long as its format is
 /// supported. A change that breaks one is a format change: bump `Project.currentFormatVersion`
 /// and migrate, never edit the golden file to match. Format 2 (2026-10-20) changed how an
-/// address is stored; every format-1 file here opens unchanged.
+/// address is stored; every format-1 file here opens unchanged. Format 3 (2026-10-28) adds the
+/// required `modRoutes`; every format-1 and format-2 file opens with none.
 final class FormatGoldenTests: XCTestCase {
     /// The first format-1 shape: only the keys those builds wrote.
     private let earliest = Data("""
@@ -285,6 +286,25 @@ final class FormatGoldenTests: XCTestCase {
     """.utf8)
 
 
+    /// Format 3: the same as format 2 plus the required `modRoutes`.
+    private let formatThree = Data("""
+    {
+      "formatVersion": 3,
+      "name": "Routed",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "scenes": [],
+      "tracks": [],
+      "modRoutes": [
+        { "id": "40D00000-0000-4000-8000-000000000001", "source": "body.heartRate", "target": "master/mixer.pan",
+          "depth": 0.25, "curve": "square", "polarity": "bipolar", "enabled": true },
+        { "id": "40D00000-0000-4000-8000-000000000002", "source": "macro.1", "target": "master/mixer.volume",
+          "depth": -0.5, "curve": "linear", "polarity": "unipolar", "enabled": false }
+      ]
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -316,7 +336,7 @@ final class FormatGoldenTests: XCTestCase {
     }
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
-        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia] {
+        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -329,7 +349,7 @@ final class FormatGoldenTests: XCTestCase {
         let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
         XCTAssertEqual(Set(root.keys), ["formatVersion", "name", "tempo", "tempoChanges", "timeSignature", "context",
                                         "tracks", "scenes", "master", "masterInserts", "media", "midiMappings",
-                                        "automation"])
+                                        "automation", "modRoutes"])
         let context = try XCTUnwrap(root["context"] as? [String: Any])
         XCTAssertEqual(Set(context.keys), ["root", "scale", "tuning", "concertPitch", "swing"])
         let tracks = try XCTUnwrap(root["tracks"] as? [[String: Any]])
@@ -339,6 +359,51 @@ final class FormatGoldenTests: XCTestCase {
         XCTAssertEqual(Set(clip.keys), ["id", "name", "length", "notes", "controls"])
         let control = try XCTUnwrap((clip["controls"] as? [[String: Any]])?.first)
         XCTAssertEqual(Set(control.keys), ["id", "kind", "start", "value"])
+    }
+
+    // MARK: - Modulation routes (format 3)
+
+    func testAFormatThreeFileOpensWithItsRoutes() throws {
+        let project = try ProjectCodec.decode(formatThree)
+        XCTAssertEqual(project.modRoutes.map(\.source), [.heartRate, .macro1])
+        XCTAssertEqual(project.modRoutes.map(\.target), [.masterPan, .masterVolume])
+        XCTAssertEqual(project.modRoutes.map(\.depth), [0.25, -0.5])
+        XCTAssertEqual(project.modRoutes.map(\.curve), [.square, .linear])
+        XCTAssertEqual(project.modRoutes.map(\.polarity), [.bipolar, .unipolar])
+        XCTAssertEqual(project.modRoutes.map(\.enabled), [true, false])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let route = try XCTUnwrap((root["modRoutes"] as? [[String: Any]])?.first)
+        XCTAssertEqual(Set(route.keys), ["id", "source", "target", "depth", "curve", "polarity", "enabled"])
+    }
+
+    /// G-A migration F01/F02: an older song opens with no routes and changes in nothing else.
+    func testAnOlderSongOpensWithNoRoutes() throws {
+        for data in [earliest, formatTwo, formatTwoMedia] {
+            XCTAssertEqual(try ProjectCodec.decode(data).modRoutes, [])
+        }
+    }
+
+    /// F08 and F09: format 3 without routes, and an older file that carries some, are refused.
+    func testRoutesBelongToFormatThreeAndOnlyThere() throws {
+        let withoutRoutes = Data("""
+        { "formatVersion": 3, "name": "Bare", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [] }
+        """.utf8)
+        XCTAssertThrowsError(try ProjectCodec.decode(withoutRoutes))
+        let olderWithRoutes = Data("""
+        { "formatVersion": 2, "name": "Odd", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [],
+          "modRoutes": [] }
+        """.utf8)
+        XCTAssertThrowsError(try ProjectCodec.decode(olderWithRoutes))
+    }
+
+    /// An unknown source or curve refuses the song rather than being guessed (M13, M15).
+    func testARouteWithAnUnknownNameRefusesTheSong() throws {
+        for (from, to) in [("\"body.heartRate\"", "\"eeg\""), ("\"square\"", "\"magic\"")] {
+            let text = try XCTUnwrap(String(data: formatThree, encoding: .utf8))
+            XCTAssertThrowsError(try ProjectCodec.decode(Data(text.replacingOccurrences(of: from, with: to).utf8)), to)
+        }
     }
 
     // MARK: - Addresses (format 2) and names a build does not know

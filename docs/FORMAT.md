@@ -1,4 +1,4 @@
-# The Echoel song format (format 2)
+# The Echoel song format (format 3)
 
 A song is a folder ending in `.echoel` — a package of the type `com.echoelmusic.song`, which the
 Files app shows as one file and opens in Echoel:
@@ -19,8 +19,9 @@ Every audio file is a plain file you can take out of `Media/`.
 
 ## Versioning
 
-- `formatVersion` (integer) is required. This document describes **2**. A reader of format 2
-  opens every format-1 file too; the one difference is at the end ("Format 1").
+- `formatVersion` (integer) is required. This document describes **3**. A reader of format 3
+  opens every format-2 and format-1 file too; the differences are at the end ("Format 2",
+  "Format 1").
 - A file with a **newer** number is refused rather than opened with parts missing; a number below
   1 is refused as damaged.
 - An older file is read into today's shape, so saving it writes today's number.
@@ -73,6 +74,7 @@ Every audio file is a plain file you can take out of `Media/`.
 | `media` | `[media file]` | optional; the files in `Media/` |
 | `midiMappings` | `[mapping]` | optional; learned controllers |
 | `automation` | `[lane]` | optional; one lane per parameter |
+| `modRoutes` | `[route]` | **required** in format 3; sources that move parameters |
 
 **Mixer strip:** `{volumeDB, pan, isMuted, isSoloed}`.
 
@@ -151,12 +153,30 @@ A parameter whose values are choices or whole steps (the synth's `synth.waveform
 `sampler.root` and `sampler.mode`) draws no line: each point holds its value, taken to the nearest
 whole step, until the next point, and `curve` has no effect there.
 
+**Modulation route:** `{id, source, target, depth, curve, polarity, enabled}`, every key
+required. `source` one of `body.heartRate` `body.hrv` `body.coherence` `body.breath` `lfo.1`
+`macro.1` `midi.cc.1`; `target` a parameter address in its text form; `depth` −1 … 1; `curve`
+`linear` or `square` (signed: `u·|u|`); `polarity` `unipolar` (the source's 0 … 1 as is) or
+`bipolar` (centred, −1 … 1); `enabled` true or false. An unknown source, curve or polarity
+refuses the song — a route is never guessed. Each source is normalized to 0 … 1; a parameter's
+value is its stored or automated value plus each enabled route's `depth × curve(source)`, in the
+order of the route ids, clamped to the parameter's range once, after the last route. A source
+that is not measured at the moment adds nothing. A song stores the routes, never a measured
+value: what a body did during a take is not in the file.
+
+## Format 2
+
+Format 2 is format 3 without `modRoutes`. A reader of format 3 opens it with no routes; a
+format-2 file that carries `modRoutes` is refused, since no format-2 build wrote one. A song saved
+again is written as format 3, and builds before format 3 (Echoel Studio 10012 and earlier) do not
+open it.
+
 ## Format 1
 
 Format 1 is format 2 with one difference: a parameter address was an object, the owner in the
 form `{"project": {}}`, `{"master": {}}` or `{"track": {"_0": "<track id>"}}` plus the key —
-`{"owner": {"master": {}}, "key": "mixer.volume"}`. A reader of format 2 opens it, and a song
-saved again is written as format 2.
+`{"owner": {"master": {}}, "key": "mixer.volume"}`, and it has no `modRoutes`. A reader of
+format 3 opens it, and a song saved again is written as format 3.
 
 ## What is not in the file
 
