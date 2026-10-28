@@ -73,6 +73,27 @@ final class MixModulationTests: XCTestCase {
         XCTAssertNil(snapshot(project, inputs: nil).lanes.first?.mix)
     }
 
+    /// A route on a synth value compiles to the lane's patch routes, with the row's index, and
+    /// moves the value along the row's travel; the lane's automation, if any, is its base.
+    func testARouteOnASynthValueBecomesAPatchRoute() throws {
+        let cutoff = SynthParameter.cutoff.key
+        var (project, keys) = try song { [ModulationRoute(source: .heartRate, target: ParameterAddress(.track($0), cutoff),
+                                                          depth: 1)] }
+        try Command.setAutomation(ParameterAddress(.track(keys), cutoff), points: [AutomationPoint(tick: 0, value: 400)])
+            .apply(to: &project)
+        let inputs = ModulationInputs()
+        let built = snapshot(project, inputs: inputs)
+        XCTAssertTrue(built.modulatesPatches)
+        let lane = try XCTUnwrap(built.lanes.first)
+        let route = try XCTUnwrap(lane.patchRoutes.first)
+        XCTAssertEqual(route.index, InstrumentDevice.synth.parameters.firstIndex { $0.key == cutoff })
+        XCTAssertNotNil(route.lane, "the automated cutoff is the route's base")
+        XCTAssertEqual(route.routes.value(400), 400, accuracy: 1e-9, "no pulse, the lane's value")
+        inputs.set(.heartRate, 1)
+        XCTAssertGreaterThan(route.routes.value(400), 400, "the pulse opens the filter")
+        XCTAssertNil(snapshot(project, inputs: nil).lanes.first?.patchRoutes.first, "an offline render compiles none")
+    }
+
     func testADisabledRouteMovesNothing() throws {
         let (project, _) = try song { [ModulationRoute(source: .heartRate, target: .volume($0), depth: -1, enabled: false)] }
         XCTAssertNil(snapshot(project, inputs: ModulationInputs()).lanes.first?.mix)

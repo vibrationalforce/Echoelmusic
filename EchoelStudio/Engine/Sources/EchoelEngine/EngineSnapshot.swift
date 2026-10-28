@@ -43,6 +43,16 @@ public struct EngineSnapshot: Sendable {
         public let mix: MovingMix?
         /// Values of the track's built-in instrument that the song automates.
         public let patchLanes: [PatchAutomation]
+        /// Values of the track's built-in instrument that routes move (W2).
+        public var patchRoutes: [PatchModulation] = []
+    }
+
+    /// A value of a built-in instrument that routes move, compiled for the render thread: its row,
+    /// its lane if the song automates it too, and the routes.
+    public struct PatchModulation: Sendable {
+        public let index: Int
+        public let lane: PatchAutomation?
+        public let routes: MixModulation
     }
 
     /// A value of a built-in instrument and its lane, compiled for the render thread.
@@ -58,7 +68,12 @@ public struct EngineSnapshot: Sendable {
         public init(_ parameter: InstrumentParameter, lane: AutomationLane) {
             self.lane = lane
             holds = parameter.taper == .stepped
-            index = InstrumentDevice.builtIn.lazy.compactMap { (device: InstrumentDevice) -> Int? in
+            index = Self.index(of: parameter)
+        }
+
+        /// The row's place in its device's table. Off the render thread.
+        static func index(of parameter: InstrumentParameter) -> Int {
+            InstrumentDevice.builtIn.lazy.compactMap { (device: InstrumentDevice) -> Int? in
                 device.parameters.firstIndex { $0.key == parameter.key }
             }.first ?? 0
         }
@@ -216,6 +231,8 @@ public struct EngineSnapshot: Sendable {
     public let audioEnd: Int64
     /// Some lane automates a value of its built-in instrument.
     public let automatesPatches: Bool
+    /// Some lane's built-in instrument has a value that routes move (W2).
+    public let modulatesPatches: Bool
     /// The song's lanes on parameters of loaded, playing units. A lane on a unit that is not
     /// loaded, bypassed, or does not have that parameter (another version) does nothing.
     public let unitAutomation: [UnitAutomation]
@@ -334,9 +351,14 @@ public struct EngineSnapshot: Sendable {
             let (left, right) = outward ? Self.gains(track: track.mixer, master: into) : (0, 0)
             // The lanes of the device that plays; another device's stay in the song for switching back.
             var patchLanes: [PatchAutomation] = []
+            var patchRoutes: [PatchModulation] = []
             for parameter in track.instrument.device.parameters {
-                guard let lane = automation[ParameterAddress(.track(track.id), parameter.key)] else { continue }
-                patchLanes.append(PatchAutomation(parameter, lane: lane))
+                let address = ParameterAddress(.track(track.id), parameter.key)
+                let lane = automation[address].map { PatchAutomation(parameter, lane: $0) }
+                if let lane { patchLanes.append(lane) }
+                if let routes = MixModulation(address, in: project, inputs: modulation) {
+                    patchRoutes.append(PatchModulation(index: PatchAutomation.index(of: parameter), lane: lane, routes: routes))
+                }
             }
             // Every built-in device's values, the stored one or the row's song default: the sampler's
             // root key and envelope sound as the song holds them.
@@ -351,10 +373,11 @@ public struct EngineSnapshot: Sendable {
                         unit: track.instrument.device == .plugin ? units[events.track].flatMap { $0.sampleRate == sampleRate ? $0 : nil } : nil,
                         inserts: inserts(events.track), sends: sends(track, audible), output: output,
                         clips: events.clips, eventsRevision: revisions[events.track] ?? generation,
-                        mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes)
+                        mix: outward ? moving(track, output < 0) : nil, patchLanes: patchLanes, patchRoutes: patchRoutes)
         }
         lanes = compiled
         automatesPatches = compiled.contains { !$0.patchLanes.isEmpty }
+        modulatesPatches = compiled.contains { !$0.patchRoutes.isEmpty }
         unitAutomation = project.automation.compactMap { lane -> UnitAutomation? in
             if lane.target.owner == .master, let parameter = lane.target.key.pluginParameter,
                case .insert(let insert) = parameter.unit {

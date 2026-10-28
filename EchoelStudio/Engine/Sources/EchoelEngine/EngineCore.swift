@@ -578,6 +578,11 @@ public final class EngineCore: @unchecked Sendable {
         if patchesMoved, isPlayingFlag.load(ordering: .acquiring), let snapshot = current?.snapshot, snapshot.automatesPatches {
             applyPatchAutomation(snapshot, at: snapshot.time.position(atSample: playhead))
         }
+        // Routes on instrument values follow the body every chunk, playing or not (W2).
+        if let snapshot = current?.snapshot, snapshot.modulatesPatches {
+            applyPatchModulation(snapshot, at: snapshot.time.position(atSample: playhead),
+                                 playing: isPlayingFlag.load(ordering: .acquiring))
+        }
         playLiveEvents()
         let playing = isPlayingFlag.load(ordering: .acquiring)
         let clocking = clockFlag.load(ordering: .relaxed)
@@ -688,6 +693,7 @@ public final class EngineCore: @unchecked Sendable {
             case .automation:
                 let tick = snapshot.time.position(atSample: due.sample)
                 applyPatchAutomation(snapshot, at: tick)
+                if snapshot.modulatesPatches { applyPatchModulation(snapshot, at: tick, playing: true) }
                 applyUnitAutomation(snapshot, at: tick, offset: offset)
                 automationNext = Swift.max(due.sample, playhead) + Self.automationStep
             }
@@ -1407,10 +1413,33 @@ public final class EngineCore: @unchecked Sendable {
             guard let builtIn = kernel(lane.slot, lane.builtInIndex), lane.builtInIndex < lane.values.count else { continue }
             // A lane without a value at `tick` plays the track's own setting.
             let values = lane.values[lane.builtInIndex]
-            for automation in lane.patchLanes where automation.index < values.count {
+            // A value that routes also move is set by `applyPatchModulation`, lane included —
+            // setting the bare lane value here would undo the route until the next chunk.
+            for automation in lane.patchLanes where automation.index < values.count
+                && !lane.patchRoutes.contains(where: { $0.index == automation.index }) {
                 builtIn.setParameter(automation.index, automation.value(atPosition: tick).map { Float($0) } ?? values[automation.index])
             }
             builtIn.commitParameters()
+        }
+    }
+
+    /// Sets each routed value of a lane's built-in instrument to its base — the lane's value at
+    /// `tick` while playing, else the track's own — moved by its routes. Only a changed value is
+    /// set, so a quiet source costs nothing and a held patch is never rebuilt for nothing.
+    private func applyPatchModulation(_ snapshot: EngineSnapshot, at tick: Double, playing: Bool) {
+        for lane in snapshot.lanes where !lane.patchRoutes.isEmpty {
+            guard let builtIn = kernel(lane.slot, lane.builtInIndex), lane.builtInIndex < lane.values.count else { continue }
+            let values = lane.values[lane.builtInIndex]
+            var changed = false
+            for modulation in lane.patchRoutes where modulation.index < values.count {
+                let stored = Double(values[modulation.index])
+                let base = playing ? (modulation.lane?.value(atPosition: tick) ?? stored) : stored
+                let value = Float(modulation.routes.value(base))
+                guard value.isFinite, builtIn.parameter(modulation.index) != value else { continue }
+                builtIn.setParameter(modulation.index, value)
+                changed = true
+            }
+            if changed { builtIn.commitParameters() }
         }
     }
 
