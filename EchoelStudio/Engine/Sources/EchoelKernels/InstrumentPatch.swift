@@ -56,6 +56,7 @@ extension SynthParameter.Name {
             default: patch.engine = .classic
             }
         case .character: patch.character = v
+        case .filter: patch.filterModel = Int(value.rounded()) == 1 ? .ladder : .stateVariable
         }
     }
 }
