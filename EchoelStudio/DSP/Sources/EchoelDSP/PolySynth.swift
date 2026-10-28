@@ -17,6 +17,13 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     public var engine: SynthEngine = .classic
     /// The engine's one control, 0…1 (`SynthEngine`).
     public var character: Float = 0.5
+    /// Which filter shapes the tone: the clean state-variable one in `filterMode`, or the
+    /// four-pole ladder, always lowpass (EchoelTools A2).
+    public var filterModel: FilterModel = .stateVariable
+
+    public enum FilterModel: String, CaseIterable, Codable, Sendable {
+        case stateVariable, ladder
+    }
 
     public init(
         waveform: Oscillator.Waveform = .saw,
@@ -51,6 +58,7 @@ public struct SynthVoice: Sendable {
     var oscillator = Oscillator()
     var source = EngineSource()
     var filter: SVFilter
+    var ladder: LadderFilter
     var ampEnvelope: Envelope
     var filterEnvelope: Envelope
     private var increment: Float = 0
@@ -88,6 +96,7 @@ public struct SynthVoice: Sendable {
         resonancePole = Self.pole(Self.resonanceGlide, sampleRate)
         levelPole = Self.pole(Self.levelGlide, sampleRate)
         filter = SVFilter(mode: patch.filterMode, cutoff: patch.cutoff, resonance: patch.resonance, sampleRate: sampleRate)
+        ladder = LadderFilter(cutoff: patch.cutoff, resonance: patch.resonance, sampleRate: sampleRate)
         ampEnvelope = Envelope(settings: patch.ampEnvelope, sampleRate: sampleRate)
         filterEnvelope = Envelope(settings: patch.filterEnvelope, sampleRate: sampleRate)
         oscillator.waveform = patch.waveform
@@ -119,11 +128,13 @@ public struct SynthVoice: Sendable {
             oscillator.reset()
             source.reset()
             filter.reset()
+            ladder.reset()
             // A fresh note starts where the patch is; only a sounding note glides.
             cutoffOctaves = Self.octaves(patch.cutoff)
             resonance = Self.clampedResonance(patch.resonance)
             level = Self.clampedLevel(patch.level)
             filter.setResonance(resonance)
+            ladder.setResonance(resonance)
         }
         controlCountdown = 0
         ampEnvelope.gateOn()
@@ -170,6 +181,7 @@ public struct SynthVoice: Sendable {
         let targetOctaves = Self.octaves(patch.cutoff)
         let targetResonance = Self.clampedResonance(patch.resonance)
         let targetLevel = Self.clampedLevel(patch.level)
+        let usesLadder = patch.filterModel == .ladder
         for i in buffer.indices {
             cutoffOctaves = targetOctaves + (cutoffOctaves - targetOctaves) * cutoffPole
             resonance = targetResonance + (resonance - targetResonance) * resonancePole
@@ -177,14 +189,21 @@ public struct SynthVoice: Sendable {
             gain = gainTarget + (gain - gainTarget) * levelPole
             let modulation = filterEnvelope.next()
             if controlCountdown <= 0 {
-                filter.setResonance(resonance)
-                filter.setCutoff(exp2f(cutoffOctaves + amount * modulation))
+                let hz = exp2f(cutoffOctaves + amount * modulation)
+                if usesLadder {
+                    ladder.setResonance(resonance)
+                    ladder.setCutoff(hz)
+                } else {
+                    filter.setResonance(resonance)
+                    filter.setCutoff(hz)
+                }
                 controlCountdown = Self.controlInterval
             }
             controlCountdown -= 1
             let bend = pitch?[i - first] ?? ratio
             let tone = source.next(patch.engine, character: patch.character, main: &oscillator, dt: increment * bend)
-            let sample = filter.process(tone) * ampEnvelope.next()
+            let shaped = usesLadder ? ladder.process(tone) : filter.process(tone)
+            let sample = shaped * ampEnvelope.next()
             buffer[i] += sample * gain * level
             if !ampEnvelope.isActive { break }
         }
