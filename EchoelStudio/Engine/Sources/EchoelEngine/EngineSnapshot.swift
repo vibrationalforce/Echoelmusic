@@ -92,6 +92,11 @@ public struct EngineSnapshot: Sendable {
         public let strip: MixerStrip
         public let volume: AutomationLane?
         public let pan: AutomationLane?
+        /// Routes on the master's volume and pan (W2), nil without one.
+        public var volumeRoutes: MixModulation? = nil
+        public var panRoutes: MixModulation? = nil
+
+        var moves: Bool { volume != nil || pan != nil || volumeRoutes != nil || panRoutes != nil }
     }
 
     /// A track's gains that move with automation. Pure, render-safe.
@@ -101,16 +106,23 @@ public struct EngineSnapshot: Sendable {
         public let pan: AutomationLane?
         /// Nil when the lane skips the master (its own output pair, or a send's pre-master tap).
         public let master: MasterMix?
+        /// Routes on the track's volume and pan (W2), nil without one.
+        public var volumeRoutes: MixModulation? = nil
+        public var panRoutes: MixModulation? = nil
 
         public func gains(at position: Double) -> (Float, Float) {
             var track = strip
             if let value = volume?.value(atPosition: position) { track.volumeDB = value }
             if let value = pan?.value(atPosition: position) { track.pan = value }
+            if let volumeRoutes { track.volumeDB = volumeRoutes.value(track.volumeDB) }
+            if let panRoutes { track.pan = panRoutes.value(track.pan) }
             var bus = MixerStrip()
             if let master {
                 bus = master.strip
                 if let value = master.volume?.value(atPosition: position) { bus.volumeDB = value }
                 if let value = master.pan?.value(atPosition: position) { bus.pan = value }
+                if let routes = master.volumeRoutes { bus.volumeDB = routes.value(bus.volumeDB) }
+                if let routes = master.panRoutes { bus.pan = routes.value(bus.pan) }
             }
             return EngineSnapshot.gains(track: track, master: bus)
         }
@@ -227,7 +239,8 @@ public struct EngineSnapshot: Sendable {
                 samples: [MediaID: SampleBuffer] = [:], units: [TrackID: any HostedInstrument] = [:],
                 effects: [TrackID: [any HostedProcessor]] = [:], outputChannels: Int = 2,
                 revisions: [TrackID: UInt64] = [:], monitoring: [TrackID: Int] = [:],
-                masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil) {
+                masterEffects: [any HostedProcessor] = [], isolating: TrackID? = nil,
+                modulation: ModulationInputs? = nil) {
         /// Whether a track's own output reaches the mix in this render.
         let heard = { (track: TrackID) in isolating == nil || isolating == track }
         let inserts = { (track: TrackID) in (effects[track] ?? []).filter { $0.sampleRate == sampleRate } }
@@ -245,13 +258,22 @@ public struct EngineSnapshot: Sendable {
             return (output, MixerStrip())
         }
         let automation = Dictionary(project.automation.map { ($0.target, $0) }, uniquingKeysWith: { first, _ in first })
-        let masterMix = MasterMix(strip: master, volume: automation[.masterVolume], pan: automation[.masterPan])
-        let masterMoves = masterMix.volume != nil || masterMix.pan != nil
+        var masterMix = MasterMix(strip: master, volume: automation[.masterVolume], pan: automation[.masterPan])
+        masterMix.volumeRoutes = MixModulation(.masterVolume, in: project, inputs: modulation)
+        masterMix.panRoutes = MixModulation(.masterPan, in: project, inputs: modulation)
+        let masterMoves = masterMix.moves
         /// Nil when nothing moves the track's gains, so the render thread keeps the fixed ones.
+        /// A route moves them as a lane does; an offline render passes no inputs, so it never does.
         let moving = { (track: Track, throughMaster: Bool) -> MovingMix? in
             let volume = automation[.volume(track.id)], pan = automation[.pan(track.id)]
-            guard volume != nil || pan != nil || (throughMaster && masterMoves) else { return nil }
-            return MovingMix(strip: track.mixer, volume: volume, pan: pan, master: throughMaster ? masterMix : nil)
+            let volumeRoutes = MixModulation(.volume(track.id), in: project, inputs: modulation)
+            let panRoutes = MixModulation(.pan(track.id), in: project, inputs: modulation)
+            guard volume != nil || pan != nil || volumeRoutes != nil || panRoutes != nil || (throughMaster && masterMoves)
+            else { return nil }
+            var mix = MovingMix(strip: track.mixer, volume: volume, pan: pan, master: throughMaster ? masterMix : nil)
+            mix.volumeRoutes = volumeRoutes
+            mix.panRoutes = panRoutes
+            return mix
         }
         let returnTracks = project.tracks.filter { $0.kind == .returnTrack }
         var busOf: [TrackID: Int] = [:]

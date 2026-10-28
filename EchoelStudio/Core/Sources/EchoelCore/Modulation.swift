@@ -81,11 +81,20 @@ public enum Modulation {
         if let automation { guard automation.isFinite, (0...1).contains(automation) else { throw Failure.base } }
         var sum = automation ?? base
         for route in try validate(routes, targets: targets) where route.enabled && route.target == target {
-            guard let reading = sources[route.source], reading.isFinite, (0...1).contains(reading) else { continue }
-            let position = route.polarity == .unipolar ? reading : 2 * reading - 1
-            let curved = route.curve == .linear ? position : position * Swift.abs(position)
-            sum += route.depth * curved
+            sum += contribution(of: sources[route.source], depth: route.depth, curve: route.curve, polarity: route.polarity)
         }
         return Swift.min(1, Swift.max(0, sum))
+    }
+
+    /// What one route adds for one reading: nothing for a missing, non-finite or out-of-range
+    /// reading, else `depth × curve(position)`. Plain arithmetic, render-safe; the engine calls it
+    /// with the same rules as `value`, so the two can never disagree.
+    @inline(__always)
+    public static func contribution(of reading: Double?, depth: Double, curve: ModulationRoute.Curve,
+                                    polarity: ModulationRoute.Polarity) -> Double {
+        guard let reading, reading.isFinite, reading >= 0, reading <= 1 else { return 0 }
+        let position = polarity == .unipolar ? reading : 2 * reading - 1
+        let curved = curve == .linear ? position : position * Swift.abs(position)
+        return depth * curved
     }
 }
