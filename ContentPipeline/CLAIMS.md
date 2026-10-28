@@ -30,9 +30,10 @@ Spuren (`EchoelStudio/App/Engine/PluginHost.swift`, `AUAudioUnit.instantiate`), 
 ist „spielt Audio Units anderer Apps auf Spuren, noch nicht auf einem Gerät geprüft“; die Verneinung des Hostens
 in diesem Register gilt der Alt-App. Fremde Audio Units laufen unter den Bedingungen ihres Herstellers
 (`docs/privacy.html`, Abschnitt „Echoel Studio“).
-Auf dem Arbeitszweig steht das in `docs/roadmap.html`, `docs/privacy.html` (Abschnitt „Echoel Studio“) und oben auf
-`docs/claims.html`. ⚠️ ÖFFENTLICH ist es erst nach dem Merge nach `main` (Founder, F-08b): die Website baut
-aus `main`, und dort sagt `docs/privacy.html` noch „Microphone Access: Not requested“ (FOUNDER_INBOX F22).
+Der Merge nach `main` ist erfolgt (gemessen 2026-10-26). Die Studio-Hinweise in `docs/roadmap.html`,
+`docs/privacy.html` und `docs/claims.html` stehen inzwischen auf `main`. `docs/privacy.html` nennt den
+Studio-Mikrofonzugriff beim Scharfschalten einer Audiospur oder beim Abhören ihres Eingangs ausdrücklich.
+F22 ist erledigt (`docs/dev/FOUNDER_INBOX.md`, seit 2026-10-23 als gegenstandslos markiert).
 Einstieg: `docs/dev/ECHOEL_VISION_2026-10-19.md`.
 
 Stand: 2026-10-13 (Produktgesetz vom 2026-09-24 nachgezogen — `docs/dev/FOUNDER_PRODUCT_LAW.md`:
@@ -121,7 +122,9 @@ erweitern nicht.
 **Nicht sagen — und warum**
 - „ready-made beat“: der neue Schlagzeug-Track bringt ein LEERES Muster mit.
 - „any Audio Unit“, „any controller“: nur Stereo-Units; Launchpads spielen keine Noten, sie steuern das Raster; Drums und Sampler folgen weder Bend noch Pedal.
-- „edit velocity“, „quantize“, „split“, „loop recording“, „overdub“: gibt es nicht.
+- „edit velocity“, „quantize“, „split“: gibt es nicht. „loop recording“ und „overdub“ sind für MIDI
+  seit 2026-10-25 im Studio-Code gebaut (`4ab8ba4`, `8f6d94a`); compile-only, noch nicht auf einem
+  Gerät geprüft. Nur mit Kennzeichnung **„Beta“** behaupten, nie als stabil.
 - „everything is undoable“: Werte der eingebauten Effekte sind kein Undo-Schritt.
 - „mastering“, „normalised export“, „stems“: der Export misst und warnt, er normalisiert nicht; nur das Arrangement, keine Session-Starts.
 - „works in AUM, Logic, GarageBand“, „plugin you can buy“: Studios Audio Units liefen in keinem Host auf einem Gerät (§1, Nachtrag 3); nichts ist im Verkauf (§7, Nachtrag 1).

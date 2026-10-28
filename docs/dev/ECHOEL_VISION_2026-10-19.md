@@ -2,14 +2,16 @@
 
 > ⛔ **Nachtrag 2026-10-24:** Alles in dieser Datei, was Förderung (Prototype Fund, Antrag bis 30.11., Förderzeitraum 2027, M1–M4) oder die Installation als Geschäftsfeld betrifft, ist seit dem 24.10. gegenstandslos (Founder: keine Förderung, keine Installation im Plan; Store first für das ganze Apple-Ökosystem, dann privates Repo). Produkt, Prinzipien und Phasen gelten weiter. `decisions.csv` 2026-10-24.
 
+> ⭐ **Nachtrag 2026-10-25 (Scope; nachgetragen 2026-10-26):** Die erste Fassung von Studio 1.0 ist am 25.10. auf Founder-Wort komplett gesetzt („die fertige App, die alles enthält“, `scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md`): 1.0 ist der DAW-Kern plus jede Fähigkeit, die in der Alt-App auf einem Gerät lief, kern-zuerst in die Studio-Eigner portiert — Wellen W1 Körper, W2 Modulation, W3 Visuals, W4 Verbindungen, W5 DDSP + MPE, W6 Store; am selben Abend erweitert um W7 Video, W8 Stimme (Harmonizer, Granular, Autotune), W9 Gesicht + Bewegung (nur als Modulationsquellen) und W10 Generative Intelligenz auf dem Gerät (nur auf Bitte, nie „Super Intelligence“ nach außen). Die Scope-Schnitte #1301/#1302/#1304/#1305 sind damit aufgehoben, ihre Ingenieurs-Lehren bleiben Gesetz. Betroffen sind hier: §3 (Komponier-Hilfen — W10 trägt sie in 1.0), §5 (Phasen P4–P7 — die Wellen W1–W10 ordnen jetzt den Umbau) und §8 (Zeitachse — das Store-Ziel bleibt, das Datum folgt der Auslieferung). Nach der Konfliktregel (§1) gewinnt das neuere Founder-Wort; diese Datei bleibt Einstieg und nennt ab jetzt die neuere Quelle. Nachgetragen vom Deep Audit 2026-10-26 (`scratchpads/GSIMMW_AUDIT_2026-10-26.md`, Befund B1).
+
 **Stand 2026-10-19 · Status: CURRENT, Einstieg für jede Scope-, Reihenfolge- oder Außenfrage.**
 Diese Datei entscheidet nur, was in §11 steht. Für alles andere sagt sie, welche Datei die Frage
 beantwortet. Wer hier eine Zahl braucht, findet den Befehl daneben, nicht die Zahl.
 
 **Founder-Auftrag, wörtlich (2026-10-19):** *„Ultraechoel mit dem Neuen Wissen: Alles
 Aktualisieren, kombinieren der Echoelmusic Vision im Repo, TestFlight Deploy und Website. Wir haben
-den gesamten Kontext nun auf dem Prüfstand und sehen über den gesamten künstlerischen Ansatz über
-die Gesundheitlichen Aspekte, die ich erforschen will von produktionsgesundheit, Oneclock,
+den gesamten Kontext nun auf dem Prüfstand und sehen über den gesamten künstlerischen Ansatz über die
+Gesundheitlichen Aspekte, die ich erforschen will von produktionsgesundheit, Oneclock,
 Biofeedback, Knochen-, Wund-, Gewebe- und Orgsnheilung, sowie Inklusion accesible Design,
 EchoelBodyVibe Instrument , alle anderen vorbereiteten EchoelTools aus der Featurematrix der
 gesamten history seit Beginn der Entwicklung, DMMW GMMW GSIMMW. Langfristiges ausrollen meines
@@ -129,12 +131,13 @@ das Metal-Visual, die Videospur und eine Video-Aufnahme. Portiert wird nach NEUP
 übernehmen, nie ein Subsystem zurückkopieren“). Archiviert wird erst nach Studio-1.0 und nur per
 Founder-Entscheidung.
 
-⚠️ **Der öffentliche `main`-Zweig zeigt keines von beiden Neuen.** `EchoelStudio/`, NEUSTART,
-NEUPLANUNG, der Förderantrag und diese Datei liegen nur auf dem Arbeitszweig; Studio-Commits stehen
-in keinem Auto-Merge-Filter. Wer `main` liest (Jury, Öffentlichkeit), sieht die Alt-App.
-`git rev-list --count origin/main..HEAD` misst den Abstand. Der Merge gehört dem Founder (F-08b). ⚠️ Das
-betrifft auch die Website: `main` trägt die Datenschutzseite mit „Microphone Access: Not requested“, während
-der Studio-Build in TestFlight das Mikrofon anfragt (FOUNDER_INBOX F22).
+✅ **Der Merge nach `main` ist erfolgt (gemessen 2026-10-26 am HEAD `8c2e010`).** `EchoelStudio/`, NEUSTART,
+NEUPLANUNG, der Förderantrag und diese Datei liegen auf `main`; wer `main` liest (Jury, Öffentlichkeit),
+sieht beide Codebasen. Die Website baut aus `main`, und die Datenschutzseite nennt den Studio-Mikrofon-Zugriff
+(„Echoel Studio asks for it the first time you arm an audio track“, `docs/privacy.html`, gemessen 2026-10-26) —
+der F22-Warnsatz ist damit erledigt. Davor stand hier: der öffentliche `main`-Zweig zeige keines von beiden
+Neuen, der Merge gehöre dem Founder (F-08b). `git rev-list --count origin/main..HEAD` misst weiter den
+Abstand künftiger Vorläufe.
 
 ---
 
