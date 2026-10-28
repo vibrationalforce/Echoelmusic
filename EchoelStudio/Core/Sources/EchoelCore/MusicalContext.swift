@@ -43,6 +43,16 @@ public struct MusicalContext: Codable, Equatable, Sendable {
     public static let rootRange = 0...11
     public static let concertPitchRange: ClosedRange<Double> = 400...480
     public static let swingRange: ClosedRange<Double> = 0...1
+
+    /// Concert pitches a musician can pick by name; a song stores only the number.
+    public static let concertPitchPresets: [ConcertPitchPreset] = [
+        ConcertPitchPreset("Standard 440 (ISO 16)", hertz: 440),
+        ConcertPitchPreset("Orchestra 442", hertz: 442),
+        ConcertPitchPreset("Baroque 415", hertz: 415),
+        ConcertPitchPreset("Classical 430", hertz: 430),
+        ConcertPitchPreset("Diapason normal 435 (1859)", hertz: 435),
+        ConcertPitchPreset("Venetian 466", hertz: 466),
+    ] + ConcertPitchPreset.orbits.map { ConcertPitchPreset(orbit: $0.0, days: $0.1) }
     public static let rootNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]
 
     /// The frame as the musician reads it: "D Dorian". Chromatic has no key to name and reads
@@ -128,6 +138,40 @@ public enum Scale: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// A named concert pitch. An orbit's preset is arithmetic, not a claim: the body's period,
+/// doubled in frequency until it is audible (Cousto's octave rule), and A set so that this tone
+/// lands exactly on its nearest equal-tempered pitch.
+public struct ConcertPitchPreset: Equatable, Sendable {
+    public let title: String
+    public let hertz: Double
+
+    public init(_ title: String, hertz: Double) {
+        self.title = title
+        self.hertz = hertz
+    }
+
+    /// Periods in days: tropical year, sidereal orbits, synodic month, solar day.
+    static let orbits: [(String, Double)] = [
+        ("Earth year", 365.24219), ("Earth day", 1), ("Moon (synodic month)", 29.530589),
+        ("Mercury", 87.969), ("Venus", 224.701), ("Mars", 686.980), ("Jupiter", 4332.59), ("Saturn", 10759.22),
+    ]
+
+    /// The orbit's tone and the A that makes it an in-tune note, rounded to 0.01 Hz.
+    init(orbit name: String, days: Double) {
+        let tone = Self.audibleOctave(ofPeriodDays: days)
+        let semitones = 12 * Foundation.log2(tone / 440)
+        let a = 440 * Foundation.pow(2, (semitones - semitones.rounded()) / 12)
+        self.init("\(name), octaved \(String(format: "%.2f", a))", hertz: (a * 100).rounded() / 100)
+    }
+
+    /// The period's frequency doubled until it reaches 20 Hz.
+    static func audibleOctave(ofPeriodDays days: Double) -> Double {
+        var hertz = 1 / (days * 86_400)
+        while hertz < 20 { hertz *= 2 }
+        return hertz
+    }
+}
+
 /// A tone system: ascending pitches in cents within one repeating period (1200 = an octave).
 /// Ported from the earlier app's `TuningSystem` without its pitch-correction half.
 ///
@@ -179,6 +223,12 @@ public struct TuningSystem: Equatable, Sendable, Identifiable {
         TuningSystem(id: "hirajoshi", name: "Hirajōshi", degreesCents: [0, 200, 300, 700, 800]),
         TuningSystem(id: "bohlen-pierce", name: "Bohlen–Pierce (non-octave)",
                      degreesCents: (0..<13).map { Double($0) * 1901.955 / 13 }, periodCents: 1901.955),
+        // Ancient Greek: two tetrachords a 9/8 tone apart, as Archytas (28/27 · 8/7 · 9/8) and
+        // Ptolemy's intense diatonic (16/15 · 9/8 · 10/9) give them; the ratios are documented.
+        TuningSystem(id: "archytas-diatonic", name: "Archytas diatonic (ancient Greek)",
+                     degreesCents: [0, 62.961, 294.135, 498.045, 701.955, 764.916, 996.090]),
+        TuningSystem(id: "ptolemy-intense-diatonic", name: "Ptolemy intense diatonic (ancient Greek)",
+                     degreesCents: [0, 111.731, 315.641, 498.045, 701.955, 813.686, 1017.596]),
     ]
 
     /// The system with `id`, or twelve equal steps.

@@ -18,7 +18,8 @@ final class StoredNamesTests: XCTestCase {
                           "harmonicMinor", "melodicMinor", "majorPentatonic", "minorPentatonic", "blues", "wholeTone"]
     private let toneSystems = ["edo12", "edo24", "edo19", "edo31", "just-major", "just-minor", "pythagorean",
                                "meantone-quarter", "maqam-rast", "maqam-bayati", "maqam-hijaz", "gamelan-slendro",
-                               "gamelan-pelog", "hirajoshi", "bohlen-pierce"]
+                               "gamelan-pelog", "hirajoshi", "bohlen-pierce", "archytas-diatonic",
+                               "ptolemy-intense-diatonic"]
     private let synthKeys = ["synth.waveform", "synth.cutoff", "synth.resonance", "synth.filterAmount",
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
                              "synth.level", "synth.engine", "synth.character", "synth.filter"]

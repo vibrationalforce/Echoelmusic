@@ -67,6 +67,22 @@ final class MusicalContextTests: XCTestCase {
         }
     }
 
+    /// Every named concert pitch is one a song can store, and an orbit's is the arithmetic it
+    /// says: the Earth's tropical year, octaved, is C♯ at 136.10 Hz, which puts A at 432.10.
+    func testEveryConcertPitchPresetIsStorableAndTheOrbitsAreArithmetic() throws {
+        let presets = MusicalContext.concertPitchPresets
+        XCTAssertEqual(presets.first?.hertz, 440)
+        for preset in presets {
+            XCTAssertTrue(MusicalContext.concertPitchRange.contains(preset.hertz), preset.title)
+            var project = Project()
+            XCTAssertNoThrow(try Command.setConcertPitch(hertz: preset.hertz).apply(to: &project), preset.title)
+        }
+        XCTAssertEqual(ConcertPitchPreset.audibleOctave(ofPeriodDays: 365.24219) * 4, 136.10, accuracy: 0.01)
+        let earth = try XCTUnwrap(presets.first { $0.title.hasPrefix("Earth year") })
+        XCTAssertEqual(earth.hertz, 432.10, accuracy: 0.005)
+        XCTAssertEqual(Set(presets.map(\.title)).count, presets.count)
+    }
+
     func testTheToneSystemIdsAreUniqueAndEqualTemperamentComesFirst() {
         let ids = TuningSystem.library.map(\.id)
         XCTAssertEqual(Set(ids).count, ids.count)
