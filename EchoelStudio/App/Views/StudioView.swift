@@ -587,6 +587,27 @@ struct SongMenu: View {
                 ForEach(Scale.allCases, id: \.self) { Text($0.title).tag($0) }
             }
             .pickerStyle(.menu)
+            // The tone system and concert pitch every tuned voice plays in; a song stores the
+            // system's index and the pitch in hertz.
+            Picker("Tone System", selection: Binding(get: { context.tuning }, set: { id in
+                pick(.tuning, Double(TuningSystem.library.firstIndex { $0.id == id } ?? 0))
+            })) {
+                ForEach(TuningSystem.library) { Text($0.name).tag($0.id) }
+            }
+            .pickerStyle(.menu)
+            Menu("Concert Pitch \u{00B7} A = \(String(format: "%.2f", context.concertPitch)) Hz") {
+                ForEach(MusicalContext.concertPitchPresets, id: \.title) { preset in
+                    Button {
+                        pick(.concertPitch, preset.hertz)
+                    } label: {
+                        if abs(preset.hertz - context.concertPitch) < 0.005 {
+                            Label(preset.title, systemImage: "checkmark")
+                        } else {
+                            Text(preset.title)
+                        }
+                    }
+                }
+            }
             // On this device: a controller's keys sound the nearest pitch in the scale. Not for a
             // drum kit, whose keys pick drums; a chromatic scale holds nothing.
             Toggle(isOn: Binding(get: { engine.keysFollowScale }, set: { engine.setKeysFollowScale($0) })) {
