@@ -1,34 +1,22 @@
-11.0.0, seventh upload — play it with the phone alone
+11.0.0, eighth upload — loop it, layer it, record without setting up
 
-What is new since 10009. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10010. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- Keys and drum pads on the screen. Under every view sits a keyboard as wide as the screen
-  holds (octave down/up, the lowest key is shown), and for a drum track the kit as eight pads,
-  kick at the bottom left. The keys button in the transport hides and shows them.
-- The keys play the live track, the same one a MIDI keyboard plays (choose it with the keys
-  button on a track). The song's key lock applies, and a MIDI take records what you play on
-  the screen, exactly as from a keyboard.
-- A key held on the screen and the same key held on a MIDI keyboard are two keys: lifting
-  one does not end the other, and their notes never change order on the way to the engine.
-  On a phone on its side the keys and pads shrink so the tracks above keep their room; a
-  short tap sounds; VoiceOver's activate plays a key.
-- A first install opens Four Tracks: Keys, Bass and Lead on their sounds and a Drums track
-  with an empty one-bar pattern. The first touch on the keys sounds.
-- The store: closing the store page no longer marks the purchase as not owned; Restore says
-  what it found; Buy and Restore wait for each other; "not on sale yet" shows only while the
-  App Store knows no product.
-- A plugin window shows its controls at once, with the demo note, and unlocks when the
-  purchase is found; the extension asks the App Store for at most five seconds.
-- Under the hood since 10009: about two hundred repairs from eight review rounds — taking a
-  song file the memory cannot hold, audio takes that cannot move or load, the input opening
-  only into headphones or an interface, the sampler's memory, sample-rate changes, and plugin
-  sessions restored in low memory. Each names itself in the status line when it happens.
+- The song loops. The Loop button in the transport (on by default) repeats the song from bar 1
+  at its last bar, sample-exact and the same at every buffer size; switching it off lets the
+  song run on.
+- Overdub: a MIDI take that runs through the loop's end keeps recording into the same take on
+  the next pass, so a second layer adds to the first. An audio take suspends the loop while it
+  records and gives it back when it ends.
+- Record without setting up: with no track armed, Record arms the track the keys play and
+  records it.
+- A plugin's settings are taken only from the plugin the song names. During a swap the old unit
+  can no longer write its settings into the new one, and a failed capture keeps the last good
+  state.
+- Groundwork for the body (no screen or sensor yet): pulse conditioning, pulse period, HRV
+  (RMSSD, SDNN, pNN50), interval hygiene and coherence are in the DSP package with their tests.
 
-Previous: 11.0.0 (10009), sixth upload — the app survives what a device does to it (songs as one file in Files and AirDrop, launch and audio recovery, headphone unplug pauses, plugin crash reload). Before that: 11.0.0 (10008), fifth upload — the app records the plugin purchase in the App Group
-group.com.echoelmusic.shared and the Audio Units read it there (factory job 002). Before that:
-10007 (finding no earlier songs no longer marks the import done), 10006, 10005, 10004 (the first
-Echoel Studio build). group.com.echoelmusic (the import of earlier songs) is still not requested
-(F17): until it is, the import finds nothing.
+Previous: 11.0.0 (10010), seventh upload — play it with the phone alone (keys and pads on the screen, Four Tracks on first launch, store and plugin-window repairs). Before that: 11.0.0 (10009), sixth upload — the app survives what a device does to it. 10008, fifth upload — the plugin purchase in the App Group group.com.echoelmusic.shared. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build). group.com.echoelmusic (the import of earlier songs) is still not requested (F17): until it is, the import finds nothing.
 
 Bump this file on a commit whose "Echoel Studio" run is green to upload a build
 (.github/workflows/studio-testflight.yml). Build number = 10000 + the workflow's run number.
@@ -36,14 +24,13 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Delete Echoel, install this build, open it: Four Tracks opens, and touching a key under the
-   tracks sounds within three seconds, without a MIDI keyboard. Two fingers play two notes.
-2. Tap the keys button on the Drums track: the pads appear, Kick, Snare and the hats sound.
-   Hide the keys with the transport's keys button and show them again.
-3. Arm the Keys track, press Record, play eight bars on the screen keys, Stop: the take is a
-   clip, and it plays back what you played. Pull down Notification Center mid-note: no note
-   keeps sounding.
-4. Choose a key and scale for the song and turn on the key lock: every screen key plays a
-   note of the scale.
-5. Plugin family SP1-SP3 (FOUNDER_INBOX section 2): Echoel Synth, Drums and EQ load in AUM, the
-   window shows its controls at once, and without a purchase the Synth pauses 2 s every 30 s.
+1. Open Four Tracks, press Play: at the end of the song it starts again at bar 1 without a gap
+   or click. Tap Loop off: it plays on past the end.
+2. With nothing armed, press Record and play four notes on the screen keys: Record works without
+   arming, and the take lands on the Keys track.
+3. Keep recording through two loop passes, playing different notes each pass: after Stop, both
+   layers play back, and no note is doubled.
+4. Record a short take on a track with a microphone or interface input: the loop pauses during
+   the take and is back on after Stop.
+5. Load a third-party plugin on a track, change a knob, swap the plugin for another one, save,
+   reopen the song: the new plugin opens with its own settings, not the old one's.
