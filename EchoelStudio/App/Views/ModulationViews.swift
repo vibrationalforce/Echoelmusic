@@ -1,7 +1,7 @@
 import EchoelCore
 import SwiftUI
 
-/// "Modulate" for one owner (wave W2): the body moves the owner's volume or pan. Only sources
+/// "Modulate" for one owner (wave W2): the body moves the owner's volume, pan or instrument values. Only sources
 /// with a producer are offered — the chest strap's pulse, HRV and coherence; a source nothing
 /// measures would be a control that does nothing. Every change goes through
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
@@ -17,19 +17,27 @@ struct ModulateMenu: View {
     /// The depths offered, as a share of the control's travel.
     static let depths: [Double] = [0.1, 0.25, 0.5, 1]
 
-    private var targets: [ParameterAddress] {
+    /// The values a route can move: the mixer's volume and pan, and on an instrument track the
+    /// values of the built-in instrument it plays (a plugin's parameters are not routable yet).
+    private func targets(in project: Project) -> [ParameterAddress] {
         switch owner {
-        case .master: [.masterVolume, .masterPan]
-        case .track(let id): [.volume(id), .pan(id)]
-        case .project: []
+        case .master: return [.masterVolume, .masterPan]
+        case .project: return []
+        case .track(let id):
+            var list: [ParameterAddress] = [.volume(id), .pan(id)]
+            if let track = project.track(id), track.kind == .instrument {
+                list += track.instrument.device.parameters.map { ParameterAddress(.track(id), $0.key) }
+            }
+            return list
         }
     }
 
     var body: some View {
         let project = store.project
-        let routes = project.modRoutes.filter { targets.contains($0.target) }
+        let routable = targets(in: project)
+        let routes = project.modRoutes.filter { routable.contains($0.target) }
         Menu("Modulate", systemImage: "waveform.path.ecg") {
-            ForEach(targets, id: \.self) { target in
+            ForEach(routable, id: \.self) { target in
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {
                         ForEach(Self.sources, id: \.0) { source, title in
@@ -45,7 +53,7 @@ struct ModulateMenu: View {
                 Menu(Self.title(of: route, in: project)) { RouteActions(route: route) }
             }
         }
-        .disabled(targets.isEmpty)
+        .disabled(routable.isEmpty)
     }
 
     static func title(of route: ModulationRoute, in project: Project) -> String {
