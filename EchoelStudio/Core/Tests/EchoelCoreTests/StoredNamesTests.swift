@@ -41,7 +41,7 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(SynthParameter.all.map(\.key.rawValue), synthKeys, "a new synth parameter goes at the end")
         XCTAssertEqual(SynthParameter.waveform.choices, ["Sine", "Saw", "Square", "Triangle"],
                        "a lane stores the waveform's index")
-        XCTAssertEqual(SynthParameter.engine.choices, ["Classic", "Supersaw", "FM", "Sub", "Morph"],
+        XCTAssertEqual(SynthParameter.engine.choices, ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet"],
                        "a lane stores the engine's index; a new engine goes at the end")
         XCTAssertEqual(SynthParameter.filter.choices, ["Clean", "Ladder"], "a lane stores the filter's index")
         // The drums' and the sampler's values are stored too (P1 A5); the order is also their

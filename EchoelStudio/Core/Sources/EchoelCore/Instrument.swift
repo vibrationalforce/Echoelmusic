@@ -148,8 +148,8 @@ public struct SynthParameter: Sendable, Equatable {
             case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
             case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
             // The engine stores the index of its choice: a new engine goes at the end.
-            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...4, 0, .stepped,
-                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph"])
+            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...5, 0, .stepped,
+                                         choices: ["Classic", "Supersaw", "FM", "Sub", "Morph", "Mallet"])
             case .character: SynthParameter("synth.character", "Character", .amount, 0...1, 0.5, .linear)
             case .filter: SynthParameter("synth.filter", "Filter", .choice, 0...1, 0, .stepped, choices: ["Clean", "Ladder"])
             }
