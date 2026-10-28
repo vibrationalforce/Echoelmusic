@@ -1,0 +1,1200 @@
+{
+  "schema_version": 1,
+  "title": "Echoel Studio — Engineering-Abnahme für die vollständige Vision und nächste TestFlights",
+  "prepared_date": "2026-10-26",
+  "timezone": "Europe/Madrid",
+  "repository": "vibrationalforce/Echoelmusic",
+  "measured_base_sha": "3f240b3d2d784379d4b645d0a83438b6da77f354",
+  "implemented_code_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+  "scope_source": "scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md",
+  "rules": [
+    "Diese Fälle sind ein Abnahmeplan, kein ausgeführter Testsatz.",
+    "Nur observed_runs dokumentiert bereits ausgeführte Prüfungen.",
+    "NOT_RUN und SKIP sind kein PASS.",
+    "Je Release höchstens fünf konkrete Founder-Gerätefälle auswählen; Engineering-Abnahme separat weiterführen.",
+    "Bei neuer Basis jeden offenen Befund am echten Code erneut prüfen.",
+    "Vorab begründete numerische Toleranzen und Gerätebedingungen im jeweiligen Grok-Vertrag festlegen."
+  ],
+  "observed_runs": [
+    {
+      "kind": "local_xctest",
+      "subject": "EchoelCore including PluginStateCaptureTests",
+      "source_code_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+      "tree_sha": "a3eb43ec7774ff534827be3402150b92e9888423",
+      "toolchain": "Swift 6.4.1, SwiftPM --build-system native",
+      "platform": "Ubuntu 24.04 x86_64",
+      "executed": 327,
+      "passed": 327,
+      "failed": 0,
+      "skipped": 0,
+      "all_method_results_accounted_for": true,
+      "included_new_capture_methods": 11,
+      "included_existing_format_golden_methods": 13,
+      "status": "PASS",
+      "limitation": "Core tests only; no App/AU/device proof. Native build-mode deprecation warning retained."
+    },
+    {
+      "kind": "ci_baseline",
+      "source_sha": "3f240b3d2d784379d4b645d0a83438b6da77f354",
+      "run_url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40295827025",
+      "package_job_id": 121481863482,
+      "toolchain": "Xcode 26.2; Apple Swift 6.2.3",
+      "xctest_counts": {
+        "Core": 316,
+        "DSP": 154,
+        "Engine_Kernels_Host": 206
+      },
+      "failed": 0,
+      "status": "PASS",
+      "limitation": "Baseline only, not the new implementation."
+    },
+    {
+      "kind": "testflight_baseline",
+      "source_sha": "5eeeb3e35313eed66350b13d973ba59adbe5b0b2",
+      "run_url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40179831237",
+      "job_id": 121131206608,
+      "version": "11.0.0",
+      "build": 10010,
+      "upload_status": "succeeded",
+      "apple_processing_state": "VALID",
+      "device_status": "NOT_RUN",
+      "limitation": "No observed 10011 upload; loop commits follow this source SHA."
+    },
+    {
+      "kind": "ci_package_job",
+      "source_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+      "job_id": 121749238828,
+      "run_url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40373230888",
+      "toolchain": "Xcode 26.2; Apple Swift 6.2.3",
+      "xctest_counts": {
+        "Core": 327,
+        "DSP": 154,
+        "Engine_Kernels_Host": 206
+      },
+      "failed": 0,
+      "skipped_test_cases": 0,
+      "included_new_capture_methods": 11,
+      "status": "PASS",
+      "limitation": "App is a separate job; no device/real-AU-host acceptance."
+    },
+    {
+      "kind": "ci_package_job",
+      "source_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+      "job_id": 121749238614,
+      "run_url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40373230754",
+      "toolchain": "Swift 6.2.4; x86_64 Linux",
+      "xctest_counts": {
+        "Core": 327,
+        "DSP": 154,
+        "Engine_Kernels": 181
+      },
+      "failed": 0,
+      "skipped_test_cases": 0,
+      "included_new_capture_methods": 11,
+      "status": "PASS",
+      "limitation": "Host target is not declared on Linux; no Apple framework verification."
+    }
+  ],
+  "candidate_ci_links": [
+    {
+      "source_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+      "name": "Echoel Studio",
+      "url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40373230888",
+      "instruction": "Read actual completed jobs and test summaries before adoption."
+    },
+    {
+      "source_sha": "21a22939c0cd4f85c120bfc2d8fb89f98ebaddf3",
+      "name": "Echoel Studio Linux",
+      "url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40373230754",
+      "instruction": "Additional portability evidence; no EchoelHost on Linux."
+    }
+  ],
+  "acceptance_cases": [
+    {
+      "id": "G4-HOST-IDENTITY",
+      "wave": "Foundation",
+      "stage": "host",
+      "depends_on": [
+        "G4a"
+      ],
+      "procedure": "Plugin A wählen, danach B; während der CutFade-Brücke Settings erfassen; B speichern und neu öffnen.",
+      "expected": "A wird vor jedem Settings-Zugriff als falsche Komponente abgewiesen; B erhält niemals A-Settings.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G4-CAPTURE-FAILURE",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G4a",
+        "G4b"
+      ],
+      "procedure": "Nicht geladenes, nicht serialisierbares und zu großes Plugin-State-Ergebnis durch die echten Save-/Export-Aufrufer führen.",
+      "expected": "Ursache erkennbar, letzter gültiger Zustand erhalten; keine falsche Gespeichert-Meldung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G4-STORE-REJECTION",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G4b"
+      ],
+      "procedure": "Store-Übernahme eines erfassten Zustands kontrolliert ablehnen und anschließend erneut synchronisieren/erfassen.",
+      "expected": "Abgelehnte Übernahme wird nicht als gespeichert oder synchronisiert bestätigt; Retry bleibt möglich.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G3-RETRIGGER",
+      "wave": "Foundation",
+      "stage": "unit",
+      "depends_on": [
+        "G3a",
+        "G3b"
+      ],
+      "procedure": "Gate-Sample spielen, Root ändern, dieselbe Taste erneut anschlagen und loslassen.",
+      "expected": "Keine gehaltene erste Stimme nach dem zweiten Note-Off.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G3-VOICE-IDENTITY",
+      "wave": "Foundation",
+      "stage": "unit",
+      "depends_on": [
+        "G3a"
+      ],
+      "procedure": "Zwei reine Sampler-Stimmen derselben Tonhöhe starten und eine gezielt über ihr Handle lösen.",
+      "expected": "Nur deren Voice-Handle wird gelöst; andere Stimme bleibt gehalten.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G3-STALE-GENERATION",
+      "wave": "Foundation",
+      "stage": "unit",
+      "depends_on": [
+        "G3a"
+      ],
+      "procedure": "Voice-Handle nach Stimmenraub, Reset und Samplewechsel erneut freigeben.",
+      "expected": "Veraltetes Handle verändert keine neu belegte Stimme.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G3-PARAMETER-HANDOFF",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G3b",
+        "atomic-parameter-slice"
+      ],
+      "procedure": "Parameter vom Kontrollpfad ändern, während der Kernel rendert; NaN/Inf und Grenzwerte einschließen.",
+      "expected": "Definierte atomare Übergabe, keine Datenrennen, endliche Werte und bestehendes Clamping.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-TWO-SOURCES",
+      "wave": "Foundation",
+      "stage": "unit",
+      "depends_on": [
+        "G2a"
+      ],
+      "procedure": "Quelle A und B senden Kanal 1/Taste 60; anschließend Note-Off nur von A.",
+      "expected": "B bleibt gehalten und A-Off erzeugt kein abschließendes Engine-Note-Off; erst letzter Halter wird freigegeben. Source, Kanal und Taste sind Teil der Halteridentität.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-DISCONNECT",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G2a",
+        "G2b"
+      ],
+      "procedure": "Eine Quelle mit gehaltenen Noten trennen, andere weiter spielen; alte Callbacks nach Reconnect injizieren.",
+      "expected": "Nur getrennte Quelle wird gelöst; alte Generation erreicht keine neue Stimme.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-CAPTURE",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G2b"
+      ],
+      "procedure": "Überlappende gleiche Noten zweier Quellen aufnehmen und Take abschließen.",
+      "expected": "Note-On/Off-Paare bleiben korrekt; keine fehlende oder überlange Note durch Quellvermischung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-LEARN-ISOLATION",
+      "wave": "Foundation",
+      "stage": "device",
+      "depends_on": [
+        "G2b"
+      ],
+      "procedure": "Bedien-Port für Mute/Send/Bypass verwenden; parallel expressive Notendaten senden.",
+      "expected": "Performance-Daten werden nicht unbeabsichtigt als Bedienzuordnung gelernt; nur belegte Protokollfähigkeiten behaupten.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "EXPORT-AU-ERROR",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "AU-error-contract"
+      ],
+      "procedure": "Stub-AU liefert Nicht-null-Status erst in einem späteren Renderblock; Instrument und Insert getrennt prüfen.",
+      "expected": "Export meldet Fehler mit betroffener Unit/Block; unvollständige Datei wird nicht als Erfolg angeboten.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "EXPORT-STEM-ALIGNMENT",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "AU-error-contract"
+      ],
+      "procedure": "Mix und Stems desselben Songs mit bekannten Impulsen und Automation rendern.",
+      "expected": "Gemeinsames Startsample, erwartete Länge/Kanalzahl/Peak und rekonstruierbare Zeitlage.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "EXPORT-RECALL",
+      "wave": "Foundation",
+      "stage": "host",
+      "depends_on": [
+        "G4b",
+        "AU-error-contract"
+      ],
+      "procedure": "Fremdes Instrument und Insert einstellen, Song sichern, Host/App neu starten und gleichen Export wiederholen.",
+      "expected": "Gültige Zustände wiederhergestellt; Veränderungen oder fehlende Unit ausdrücklich erkennbar.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "EXPORT-HARDWARE",
+      "wave": "Foundation",
+      "stage": "device",
+      "depends_on": [],
+      "procedure": "Big Six/H90-Rückweg mit kalibriertem Impuls über vorgesehenen Echtzeitpfad aufnehmen.",
+      "expected": "Dokumentierter Roundtrip und Routenstatus; Hardware-Rückweg wird nicht durch einen Offline-Export als enthalten behauptet.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W0-FIRST-SOUND",
+      "wave": "W0",
+      "stage": "device",
+      "depends_on": [],
+      "procedure": "Neuinstallation, Four Tracks, Bildschirmtaste und Drumpad, Zweifinger-Spiel.",
+      "expected": "Hörbarer erster Klang, alle angebotenen Instrumentflächen erreichbar, keine hängenbleibende Note.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W0-LOOP-WRAP",
+      "wave": "W0",
+      "stage": "device",
+      "depends_on": [
+        "loop-commits-in-upload"
+      ],
+      "procedure": "Mehrere Song-Schleifen abspielen und eine MIDI-Note über den Wrap halten.",
+      "expected": "Definierte Länge und Note-Off-Zuordnung, kein versehentlicher Doppelstart.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W0-OVERDUB",
+      "wave": "W0",
+      "stage": "device",
+      "depends_on": [
+        "loop-commits-in-upload"
+      ],
+      "procedure": "Ersten MIDI-Take aufnehmen, zweiten Durchgang overdubben, Stop, Playback und Undo.",
+      "expected": "Beide erwarteten Takes vorhanden; Undo nimmt genau den letzten gewünschten Vorgang zurück.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W1-STATE",
+      "wave": "W1",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Aus/Demo/Warten/Gültig/Veraltet mit expliziten Zeitpunkten und Herkunft durchlaufen.",
+      "expected": "Demo unverwechselbar; fehlender Messwert ist kein Nullwert und kein gültiger Standardpuls.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W1-STALE-CALLBACK",
+      "wave": "W1",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Quelle wechseln oder deaktivieren, dann alten Callback zustellen.",
+      "expected": "Alte Generation bleibt verworfen; Opt-out beendet Producer-Arbeit.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W1-PARTIAL-VALIDITY",
+      "wave": "W1",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Frischer Puls neben fehlendem Atem und altem HRV; NaN/Inf injizieren.",
+      "expected": "Gültigkeit pro Kanal; keine erfundene Ableitung und keine nicht-endlichen Werte am Verbraucher.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W1-PERMISSION",
+      "wave": "W1",
+      "stage": "device",
+      "depends_on": [
+        "producer-platform-matrix",
+        "G-A"
+      ],
+      "procedure": "Kamera/Bluetooth/Health-Berechtigungen verweigern und entziehen, je tatsächlich integriertem Producer.",
+      "expected": "Verständlicher Zustand, keine Crash-Schleife, keine unautorisierte fortgesetzte Erfassung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W1-MEASUREMENT",
+      "wave": "W1",
+      "stage": "device",
+      "depends_on": [
+        "real-producer",
+        "G-A"
+      ],
+      "procedure": "Reale Kamera-/BLE-Quelle gegen einen vorher festgelegten Referenzaufbau unter Bewegung, schlechtem Licht und Unterbrechung prüfen.",
+      "expected": "Qualität/Ausfälle und Abweichungen dokumentiert; durchschnittlicher Puls ist kein Nachweis präziser RR-/HRV-Messung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-MIGRATION",
+      "wave": "W2",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Unveränderte Format-1/2-Goldens in Format 3 öffnen, kanonisch speichern und wieder öffnen.",
+      "expected": "Vorhandene Songdaten vollständig erhalten; neue Routen erhalten die dokumentierten Defaults.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-INVALID",
+      "wave": "W2",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Ungültiges Ziel, doppelte ID, nicht-endliche Tiefe und Kapazitätsüberschreitung eingeben.",
+      "expected": "Gesamte Mutation abgelehnt oder explizit dokumentiertes Verhalten; vorheriges Dokument bleibt gültig.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-ZERO-DEPTH",
+      "wave": "W2",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Bestehenden Referenzrender mit identischem Startzustand und Modulationstiefe null wiederholen.",
+      "expected": "Unmodulierter Pfad bleibt innerhalb der begründeten numerischen Toleranz identisch.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-BLOCKS",
+      "wave": "W2",
+      "stage": "unit",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Dieselbe musikalische Sample-Zeit mit 64/256/1024-Frame-Blöcken berechnen.",
+      "expected": "Gleiche Modulationsentwicklung gemäß definiertem Raster/Interpolation.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-NO-DOCUMENT-DRIFT",
+      "wave": "W2",
+      "stage": "integration",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Nur Playback mit laufenden Quellen, davor/danach kanonisches JSON und Undo-Historie vergleichen.",
+      "expected": "Keine Dokumentmutation und kein Undo-Wachstum ohne Benutzergeste.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-AUTOMATION",
+      "wave": "W2",
+      "stage": "integration",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Automation, zwei Modrouten, gestuften und logarithmischen Parameter kombinieren.",
+      "expected": "Festgelegte Reihenfolge, korrekte Parametereinheit, definierter Clamp/Glide.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-OFFLINE",
+      "wave": "W2",
+      "stage": "integration",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Einmal denselben aufgezeichneten/eingefrorenen Quellenzustand festlegen. Zwei Render mit identischem Dokument und Startzustand ausführen, während irrelevante Live-Sensordaten wechseln.",
+      "expected": "Reproduzierbare Ausgabe innerhalb begründeter Toleranz. Ein bewusst neuer Freeze darf neue Werte erfassen und wird als anderer Ausgangszustand kenntlich gemacht.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W2-UI",
+      "wave": "W2",
+      "stage": "device",
+      "depends_on": [
+        "G-A"
+      ],
+      "procedure": "Route anlegen, Tiefe ändern, Ziel entfernen, Undo/Redo und Song-Neuladen.",
+      "expected": "Editierbare und verständliche Route; keine stille Umdeutung auf einen anderen Parameter.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W3-TIME",
+      "wave": "W3",
+      "stage": "integration",
+      "depends_on": [
+        "G-B",
+        "W2"
+      ],
+      "procedure": "Transport springen, Tempo ändern, stoppen und fortsetzen.",
+      "expected": "Visual liest dieselbe Songzeit; kein unabhängiger zweiter Transport.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W3-LIFECYCLE",
+      "wave": "W3",
+      "stage": "device",
+      "depends_on": [
+        "G-B"
+      ],
+      "procedure": "Visual öffnen, schwebendes Fenster schließen, Hintergrund und Display-Trennung.",
+      "expected": "Ressourcen werden freigegeben; Audio/Transport bleiben im definierten Zustand.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W3-FLASH",
+      "wave": "W3",
+      "stage": "integration",
+      "depends_on": [
+        "G-B"
+      ],
+      "procedure": "Kontrast-/Helligkeitsfolge unter maximalen erlaubten Modulationswerten auswerten.",
+      "expected": "Definierte Flash-Prüfung erfüllt; ein 3-Hz-Konstantenname allein zählt nicht als Beleg.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W3-ACCESS",
+      "wave": "W3",
+      "stage": "device",
+      "depends_on": [
+        "G-B"
+      ],
+      "procedure": "Reduce Motion, große Schrift und VoiceOver in der Visual-Bedienung verwenden.",
+      "expected": "Verständliche Steuerung und reduzierte Bewegung ohne alleinige Farbcodierung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W4-OFF",
+      "wave": "W4",
+      "stage": "network",
+      "depends_on": [
+        "G-B",
+        "F25"
+      ],
+      "procedure": "Frische Installation und deaktivierte Verbindungen mit Paketbeobachtung prüfen.",
+      "expected": "Keine Datagramme der deaktivierten Ausgänge.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W4-EGRESS",
+      "wave": "W4",
+      "stage": "unit",
+      "depends_on": [
+        "G-B",
+        "G-A"
+      ],
+      "procedure": "Songdaten, abgeleitete Steuersignale und rohe Bio-Werte mit verschiedenen Ziel-Freigaben serialisieren.",
+      "expected": "Fail-closed-Freigaberegel; ausgeschaltete/entzogene Freigaben gelten auch für pending Daten.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W4-PACKETS",
+      "wave": "W4",
+      "stage": "unit",
+      "depends_on": [
+        "G-B"
+      ],
+      "procedure": "Offizielle Protokollvektoren einschließlich Padding/Länge/Endianness/Sequence-Wrap gegen Encoder/Decoder prüfen.",
+      "expected": "Bytegenaue Übereinstimmung und sinnvolle Ablehnung ungültiger Werte.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W4-RECONNECT",
+      "wave": "W4",
+      "stage": "network",
+      "depends_on": [
+        "G-B",
+        "F25"
+      ],
+      "procedure": "Rückstau und Verbindungsabbruch erzeugen, dann verbinden.",
+      "expected": "Begrenzte Queue und keine Wiederholung alter Cue-Generationen.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W4-RECEIVER",
+      "wave": "W4",
+      "stage": "network",
+      "depends_on": [
+        "G-B",
+        "F25"
+      ],
+      "procedure": "Art-Net/sACN/OSC/ADM-OSC einzeln mit benanntem realem Empfänger und Version ausführen.",
+      "expected": "Beobachtbare Zielwirkung und Trace; ADM-OSC nicht als Atmos-Audiorendering ausweisen.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W5-DDSP",
+      "wave": "W5",
+      "stage": "integration",
+      "depends_on": [
+        "G-C",
+        "W2"
+      ],
+      "procedure": "DDSP als eingebautes Gerät wählen, Parameter/Preset ändern, speichern, öffnen, modulieren und exportieren.",
+      "expected": "Durchgängiger bestehender Instrumentenpfad, editierbarer gespeicherter Zustand und tatsächlich hörbarer Export.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W5-MPE-OUT",
+      "wave": "W5",
+      "stage": "unit",
+      "depends_on": [
+        "G-C",
+        "G2",
+        "G3"
+      ],
+      "procedure": "Zwei expressive Noten mit unabhängigem Bend/Pressure, Voice-Steal und Note-Off erzeugen.",
+      "expected": "Korrekte Member-Kanalfolge, Freigabe/Reuse und Panic ohne falsche Note-Offs.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W5-MPE-DEVICE",
+      "wave": "W5",
+      "stage": "device",
+      "depends_on": [
+        "G-C",
+        "W5-MPE-OUT"
+      ],
+      "procedure": "MPE-Out-Sequenz mit benanntem kompatiblem Empfänger spielen und MIDI-Ereignisse aufzeichnen.",
+      "expected": "Unabhängige Ausdrucksdimensionen tatsächlich hörbar; kein daraus abgeleiteter MPE-In/MIDI-2.0-Claim.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W6-PURCHASE",
+      "wave": "W6",
+      "stage": "host",
+      "depends_on": [
+        "F-15",
+        "signed-build"
+      ],
+      "procedure": "Sandbox-Kauf/Restore, App-Neustart und mindestens zwei reale AUv3-Hosts mit eigener Extension.",
+      "expected": "Richtige Instrument-Freischaltung, unveränderte freie Effekte, verständliche Demo und kein unbeabsichtigter Lock.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W6-ARCHIVE",
+      "wave": "W6",
+      "stage": "release",
+      "depends_on": [
+        "final-native-gate"
+      ],
+      "procedure": "Signiertes Archiv auf App/Extension-Bundle-ID, Buildnummer, App Groups und enthaltene Extension prüfen.",
+      "expected": "Übereinstimmung mit realem Upload und tatsächlicher Capability-Verwendung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W6-METADATA",
+      "wave": "W6",
+      "stage": "release",
+      "depends_on": [
+        "all-required-feature-acceptances"
+      ],
+      "procedure": "Store-Text, Screenshots, Privacy-Labels und Kaufprodukt gegen eingeschlossene Code-/Device-Belege lesen.",
+      "expected": "Keine ungeprüfte Fähigkeit als stabil, kein Health-/Superintelligence-/Marktführerschaftsclaim.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W6-COMMERCIAL",
+      "wave": "W6",
+      "stage": "founder",
+      "depends_on": [],
+      "procedure": "Bestehende Founder-Einträge für Preis, Produktanlage, Paid-Apps-Vertrag und Einreichen prüfen.",
+      "expected": "Konkrete Founder-Entscheidungen vorhanden; keine stellvertretend erfundene kommerzielle Freigabe.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W6-APPLE-VALID",
+      "wave": "W6",
+      "stage": "release",
+      "depends_on": [
+        "authorized-release-trigger"
+      ],
+      "procedure": "Upload des konkreten Release-SHA mit Runnummer/Build verbinden und Apple-Verarbeitung lesen.",
+      "expected": "Explizit VALID; Timeout mit Warnung ist kein Verarbeitungserfolg.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W7-CAMERA",
+      "wave": "W7",
+      "stage": "unit",
+      "depends_on": [
+        "G-D",
+        "G-A"
+      ],
+      "procedure": "Video, rPPG und Gesicht fordern Kamera an; höhere Priorität, Unterbrechung, Freigabe und Wiederaufnahme.",
+      "expected": "Ein Besitzer, Produktion hat Vorrang, nachrangige Quelle sichtbar pausiert.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W7-AV-SYNC",
+      "wave": "W7",
+      "stage": "device",
+      "depends_on": [
+        "G-D",
+        "W7-CAMERA"
+      ],
+      "procedure": "Audioimpulse und bekannte Bildmarken am Anfang und Ende eines vorher definierten langen Takes aufnehmen/exportieren.",
+      "expected": "Startversatz und Drift gemessen gegen vorab begründete Toleranz; keine Synchronitätsbehauptung nur aufgrund einer Datei.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W7-EDIT",
+      "wave": "W7",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Video auf Takte schneiden, Tempoänderung einschließen, Undo/Redo, speichern/öffnen und exportieren.",
+      "expected": "Nichtdestruktive Quelle, reproduzierbare Schnitt-/Zeitlage und vollständiges Projektpaket.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W7-INTERRUPTION",
+      "wave": "W7",
+      "stage": "device",
+      "depends_on": [
+        "G-D",
+        "AU-error-contract"
+      ],
+      "procedure": "Kameraunterbrechung, Audiounterbrechung und Exportabbruch getrennt auslösen.",
+      "expected": "Definierter Transport-/Dateizustand, keine kaputte Datei als erfolgreicher Export.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W8-PITCH",
+      "wave": "W8",
+      "stage": "unit",
+      "depends_on": [
+        "G-C"
+      ],
+      "procedure": "Sinus-/Zweiton-/Geräuschreferenzen, Notenwechsel und nicht stimmhafte Bereiche durch Pitch-/Korrekturpfad führen.",
+      "expected": "Begründete Pitch-/Zeit-Toleranz, definierter Unsicherheits-Bypass und endliche Ausgabe.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W8-GRANULAR",
+      "wave": "W8",
+      "stage": "unit",
+      "depends_on": [
+        "G-C"
+      ],
+      "procedure": "Festen Seed, Samplegrenzen, Samplewechsel, Poolüberschreitung und Reset bei mehreren Blockgrößen prüfen.",
+      "expected": "Reproduzierbarer Render, begrenzte Stimmen und keine zurückbleibenden Grain-Stimmen.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W8-LIVE-OFFLINE",
+      "wave": "W8",
+      "stage": "integration",
+      "depends_on": [
+        "G-C"
+      ],
+      "procedure": "Gleiche Parameter-/Quellsignale live und offline verarbeiten; Latenz, Bypass und Tail berücksichtigen.",
+      "expected": "Dieselbe musikalische Semantik; Unterschiede sind zeitlich kompensiert oder ausdrücklich ausgewiesen.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W8-HARMONIZER",
+      "wave": "W8",
+      "stage": "device",
+      "depends_on": [
+        "G-C",
+        "W8-PITCH"
+      ],
+      "procedure": "Benannte Intervalle und Musikrahmen an Gesang/Instrument pegelangepasst gegen Referenz hören.",
+      "expected": "Erwartete Intervalle und brauchbare Übergänge; Qualitätsurteil getrennt von mathematischem Pitch-Test.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W9-LOCAL-CONSENT",
+      "wave": "W9",
+      "stage": "device",
+      "depends_on": [
+        "G-D",
+        "W1",
+        "W2"
+      ],
+      "procedure": "Gesicht-/Bewegungsquelle einschalten, stoppen, Berechtigung entziehen und ausgehende Daten beobachten.",
+      "expected": "Lokale opt-in Steuersignale, keine Diagnose und keine unzulässige Weitergabe.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W9-COORDINATES",
+      "wave": "W9",
+      "stage": "unit",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Definierte Kopf-/Geräteorientierungen, Quaternion-/Winkelgrenzen und ungültige Samples prüfen.",
+      "expected": "Dokumentierte Achsen/Einheiten, keine Sprünge durch unklare Koordinaten, gültige begrenzte Ausgabe.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W9-CAMERA-YIELD",
+      "wave": "W9",
+      "stage": "device",
+      "depends_on": [
+        "G-D",
+        "W7-CAMERA"
+      ],
+      "procedure": "Gesichtsquelle aktiv, dann Produktionsvideo starten und stoppen.",
+      "expected": "Übergabe an den einen Kamera-Besitzer; kein alter Gesichts-Callback nach neuer Generation.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-AVAILABILITY",
+      "wave": "W10",
+      "stage": "device",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Nicht geeignetes Gerät, deaktivierte Apple Intelligence, ladendes Modell und verfügbares Modell prüfen.",
+      "expected": "Vorhandene Verfügbarkeitslogik verständlich; manuelle Workstation funktioniert immer.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-OTHER-SONG",
+      "wave": "W10",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Modellturn beginnen, anderen Song öffnen, verspäteten Toolaufruf zustellen.",
+      "expected": "Vorhandener documentGeneration-Schutz erhält den neuen Song unverändert.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-SAME-SONG-TARGET",
+      "wave": "W10",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Während eines Turns Spuren umordnen/entfernen und Zielparameter per MIDI/Touch ändern.",
+      "expected": "Stabile Ziel-ID und dokumentierte Konfliktregel verhindern unbemerkte Änderung eines anderen Ziels.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-CANCEL",
+      "wave": "W10",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Request abbrechen; danach noch Toolresultate/Callbacks zustellen.",
+      "expected": "Keine neuen Aktionen nach Abbruch; sichtbarer definierter Turnzustand.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-PARTIAL-UNDO",
+      "wave": "W10",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Erste Aktion erfolgreich, zweite abgelehnt/abgebrochen; Undo/Redo ausführen.",
+      "expected": "Definierte Teilresultat-Policy, ein nachvollziehbarer Request-Undo, keine falsche Done-Aussage.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-MUSICAL-FRAME",
+      "wave": "W10",
+      "stage": "device",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Pattern/Melodie/Harmonie ausdrücklich in gewählter Tonart/Skala anfordern, editieren und exportieren.",
+      "expected": "Musikrahmen validiert, editierbare Befehle/Noten, keine ungefragte Generierung.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-QUEUED-CANCEL",
+      "wave": "Design",
+      "stage": "device",
+      "depends_on": [
+        "current-code-recheck"
+      ],
+      "procedure": "Clip quantisiert anfordern und vor Start über angebotene Aktion abbrechen.",
+      "expected": "Wartender Start sichtbar aufgehoben; laufender Clip bleibt gemäß definierter Semantik.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-RECORD-TARGET",
+      "wave": "Design",
+      "stage": "device",
+      "depends_on": [
+        "current-code-recheck"
+      ],
+      "procedure": "Während MIDI-Aufnahme die Auswahl wechseln.",
+      "expected": "Aufnahmeziel eindeutig sichtbar und stabil oder Wechsel ausdrücklich geregelt.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-VOICEOVER-AUTOMATION",
+      "wave": "Design",
+      "stage": "device",
+      "depends_on": [
+        "current-code-recheck"
+      ],
+      "procedure": "Automationspunkt ohne Sicht setzen, auswählen, ändern und löschen.",
+      "expected": "Alle Aktionen mit VoiceOver erreichbar, Werte und Zeitposition verständlich angesagt.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-COMPACT-MIXER",
+      "wave": "Design",
+      "stage": "device",
+      "depends_on": [
+        "current-code-recheck"
+      ],
+      "procedure": "iPhonebreite und große Schrift, viele Kanalzüge sowie sichtbaren Transport verwenden.",
+      "expected": "Keine abgeschnittenen Pflichtaktionen, erreichbare Fader/Werte, Transport bleibt bedienbar.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "UX-MISSING-INPUT",
+      "wave": "Design",
+      "stage": "device",
+      "depends_on": [
+        "current-code-recheck"
+      ],
+      "procedure": "Gespeicherten Interface-Eingang ohne angeschlossenes Interface öffnen.",
+      "expected": "Gewählter und tatsächlich verfügbarer Eingang erkennbar; kein still falscher Aufnahmekanal.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "RELEASE-REGRESSION",
+      "wave": "Release",
+      "stage": "device",
+      "depends_on": [
+        "Apple-VALID"
+      ],
+      "procedure": "Fünf aus der Matrix bewusst ausgewählte neue/tragende Szenarien auf genau dem hochgeladenen Build ausführen.",
+      "expected": "Je Fall Gerät/OS/Host/Route, beobachtetes Ergebnis und Fehlerlog; offene Fälle bleiben NOT_RUN.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-LAST-HOLDER",
+      "wave": "Foundation",
+      "stage": "unit",
+      "depends_on": [
+        "G2a"
+      ],
+      "procedure": "Mehrere Quellen/Kanäle halten dieselbe (slot,pitch)-Note; einzelne Halter lösen oder trennen.",
+      "expected": "Kein abschließendes Engine-Note-Off vor dem letzten Halter. Das eigene Off→On beim erneuten Anschlag folgt der getrennten Retrigger-Regel.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "G2-RETRIGGER-CAPTURE",
+      "wave": "Foundation",
+      "stage": "integration",
+      "depends_on": [
+        "G2a",
+        "G2b"
+      ],
+      "procedure": "A-On → B-On derselben Taste → A-Off → B-Off mit unterschiedlichen Zeitpunkten; nach jedem Schritt decided.notes und offene Take-Ereignisse vergleichen.",
+      "expected": "Synthetische Offs erben keine falsche Quellenidentität; Captured und MIDITake folgen gemeinsam der festgelegten Roh-/Ausgangs-Aufnahmesemantik.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-SOUND-REQUEST",
+      "wave": "W10",
+      "stage": "device",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Einen Klang in einem Satz beschreiben, resultierende Preset-/Parameter-/Effektänderungen prüfen, danach Undo, speichern/öffnen und exportieren.",
+      "expected": "Nachvollziehbare editierbare Klangänderung über die Befehlstür. Bloße Preset-Auswahl wird nicht als weitergehende Klangerzeugung behauptet.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    },
+    {
+      "id": "W10-ARRANGEMENT",
+      "wave": "W10",
+      "stage": "integration",
+      "depends_on": [
+        "G-D"
+      ],
+      "procedure": "Arrangement-Vorschlag mit Clip-/Track-/Zeit-IDs erzeugen, Ziel währenddessen ändern und anschließend den definierten Apply-/Undo-/Redo-Weg ausführen.",
+      "expected": "Editierbarer Vorschlag, stabile Ziele und explizite Konfliktregel; vorhandene Komposition nicht still überschrieben.",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "environment": null,
+      "evidence": []
+    }
+  ],
+  "result_template": {
+    "case_id": "",
+    "tested_sha": "",
+    "version": "",
+    "build": null,
+    "environment": {
+      "device": "",
+      "os": "",
+      "host": "",
+      "plugin_version": "",
+      "route": ""
+    },
+    "status": "NOT_RUN",
+    "observed": "",
+    "evidence": []
+  },
+  "dependency_note": "depends_on enthält benannte Arbeitspakete/Verträge des Claude-Handovers oder IDs anderer Fälle. Es ist keine automatisch ausführbare Workflow-DAG und keine Behauptung erfüllter Voraussetzungen."
+}
