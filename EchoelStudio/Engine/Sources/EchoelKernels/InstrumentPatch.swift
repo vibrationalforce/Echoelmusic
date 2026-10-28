@@ -53,6 +53,7 @@ extension SynthParameter.Name {
             case 1: patch.engine = .supersaw
             case 2: patch.engine = .fm
             case 3: patch.engine = .sub
+            case 4: patch.engine = .morph
             default: patch.engine = .classic
             }
         case .character: patch.character = v
