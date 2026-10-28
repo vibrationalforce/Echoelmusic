@@ -1849,3 +1849,13 @@ Founder (Fortsetzung): „Weiter Greb all context und volle power."
 - Keine Produktions-/Projekt-/Workflow-/Entitlement-/Release-Änderung, kein Merge
   nach main, keine Swift-/Geräteabnahme. G-B/C/D bleiben offene Lieferpakete.
   Branch: `codex/claude-grok-handover-2026-10-27`.
+
+## 2026-10-28 — Abnahme-Mittwoch, Zweige zusammengeführt, 10011, Codex-Scheiben S1–S6, W1-Gurt, Chorus
+
+- **Abnahme** (`scratchpads/KI_ABNAHME_2026-10-28.md`): PR #430 Plugin-Zustandsfix übernommen; BodyFrame-Platzhalter (feste 72 bpm) zurückgenommen; Groks Feedback 0/5 neu; G1–G4/C1–C4 unbeantwortet. Zusammengeführt: Codex-Übergabe 27.10. (G-A-Vertrag, `reference.py` 63/63), PR #430-Doku, CLAIMS/Audit, 7 Skills. Nicht: `docs/one-point-zero-is-the-workstation` (widerspricht Founder 25.10.), `feat/w1-rest-bodyframe-display`.
+- **10011** hochgeladen, ASC `state=VALID` im Log gelesen (Codex-Warnung: das Prüfskript meldet auch bei Timeout grün).
+- **Regelwerk-Lockerung** (L1–L7) vom Auto-Modus-Klassifikator zweimal gesperrt (Selbstveränderung / Instruction Poisoning); Vorschlag nur im Scratchpad, wartet auf Founder-Freigabe.
+- **Code:** S2 Sampler-Handles (`startNote`), S3 Kernel je Kanal und Taste, S4 LiveKeys-Quellen, S5 CoreMIDI-Quelle + Abziehen beendet Noten, S6 Renderfehler zählen und Export scheitert, S1 Plugin-Zustand erst nach Annahme „gesichert“, A1 `BodyChannel` mit 22 generierten Vektoren, A2 Gurt-Parser + `HeartRateStrap` + Tür (Song-Menü, Puls neben Record), Chorus als fünfter Standardeffekt (DSP, Kernel, AUv3 `xCho`).
+- **Zwei rote Läufe, beide repariert:** (1) `noteOn` mit Rückgabe brach ein Test-Protokoll → `startNote`; (2) ein Test klemmte am oberen Rand, das Sample spielte 48× schneller und endete vor der Prüfung → unterer Rand.
+- **Lehre (HARNESS):** Jeder Push unter `EchoelStudio/` bricht den laufenden Lauf ab; bei Pushes im Minutentakt gibt es nie ein Ergebnis. Pushes bündeln oder den Lauf durchlaufen lassen.
+- Nichts davon auf einem Gerät geprüft.
