@@ -7,6 +7,7 @@ import SwiftUI
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(HeartRateStrap.self) private var strap
     let owner: ParameterAddress.Owner
 
     /// The sources a route can be made from today, with the words the menu uses: the strap's
@@ -36,12 +37,14 @@ struct ModulateMenu: View {
         let project = store.project
         let routable = targets(in: project)
         let routes = project.modRoutes.filter { routable.contains($0.target) }
+        let measuring = strap.measuring
         Menu("Modulate", systemImage: "waveform.path.ecg") {
+            Text(Self.measuringLine(measuring, strapOn: strap.isOn))
             ForEach(routable, id: \.self) { target in
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {
                         ForEach(Self.sources, id: \.0) { source, title in
-                            Button("\(title) → \(descriptor.title)") {
+                            Button("\(title) → \(descriptor.title)\(measuring.contains(source) ? " · measuring" : "")") {
                                 try? store.perform(.setModRoute(ModulationRoute(source: source, target: target, depth: 0.25)))
                             }
                         }
@@ -54,6 +57,14 @@ struct ModulateMenu: View {
             }
         }
         .disabled(routable.isEmpty)
+    }
+
+    /// The menu's first line: which sources a route would follow right now. HRV and coherence
+    /// arrive after enough clean beats; with nothing measured a route adds nothing.
+    static func measuringLine(_ measuring: Set<ModulationSource>, strapOn: Bool) -> String {
+        let names = sources.filter { measuring.contains($0.0) }.map(\.1)
+        if !names.isEmpty { return "Measuring: " + names.joined(separator: ", ") }
+        return strapOn ? "Nothing measured yet" : "Strap off — routes add nothing"
     }
 
     static func title(of route: ModulationRoute, in project: Project) -> String {

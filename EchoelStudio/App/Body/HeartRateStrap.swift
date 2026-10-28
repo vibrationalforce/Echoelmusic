@@ -35,6 +35,9 @@ final class HeartRateStrap: NSObject {
     private(set) var beatsPerMinute: Int?
     /// The newest beat-to-beat intervals, oldest first, at most `intervalCapacity`.
     private(set) var rrIntervalsMilliseconds: [Double] = []
+    /// The sources that carry a value right now — what a route would actually follow. Changes
+    /// only when a source starts or stops being measured, so a menu may read it (Law 6).
+    private(set) var measuring: Set<ModulationSource> = []
 
     static let plausibleBeats = 40...200
     /// A strap sends about once a second; three missed packets and the pulse is no longer live.
@@ -114,6 +117,8 @@ final class HeartRateStrap: NSObject {
             gliding[source] = next
             output?.set(source, next)
         }
+        let now = Set(gliding.keys)
+        if now != measuring { measuring = now }
     }
 
     /// The musician turned it off: the connection ends and the value is gone.
@@ -123,6 +128,7 @@ final class HeartRateStrap: NSObject {
         ticker?.cancel()
         glide?.cancel()
         gliding = [:]
+        measuring = []
         derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
         for source in Self.feeds { output?.set(source, nil) }
         if let central {
