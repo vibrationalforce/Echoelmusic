@@ -6,9 +6,16 @@
 > ohne jede Behauptung. Diese Datei bleibt der Filter für fremde Ideen; ihre Tiers beschreiben die
 > eingefrorene Alt-App und das Ziel, nicht den Studio-Build.
 
+**Update 2026-10-28 (Vision Alignment):** Homogene Gesamtvision — implementierbar und respektiert.
+
+- **Software-Kern:** Echoelmusic / Echoel Studio als offener Steuerbus (OSC, MIDI, Art-Net/sACN, ADM-OSC). Bio optional. DMMW-Scope.
+- **Nah-Hardware:** Bestehende vibrierende Wasser-Installation (VAPORWAVE PALACE: Pontons/Platte + Exciter + Liege) als Abonnent für sinnlichen Zugang und Inklusion.
+- **Mittel-Hardware:** Tauchfliege als modularer bio-inspirierter hybrider amphibischer Abonnent (Luft↔Wasser, Plastron-inspirierte Oberflächen, effiziente Antriebe). Für Mobilität, marine Beobachtung oder immersive Kunst. Anbindung nur über offene Standards — keine App-Umbauten.
+- **Werte-Schicht (immer aktiv):** Ernsthafter Umweltschutz und Nachhaltigkeit (niedriger Fußabdruck, reparierbar, optionales Monitoring), Frieden durch Transparenz und Offenheit, Inklusion als Zugang und Teilhabe (nicht Therapie). Reichtum und Ansehen entstehen aus hochwertiger, ehrlicher Umsetzung des Produkts plus konsistenter Werte-Praxis.
+
 Durable knowledge. Read at session start with the rest of `memory/`. This is the
 **optimized Echoel vision** — the filter every external idea is measured against
-(see `memory/inspiration_intake.md` + `.claude/skills/vision-gate/`).
+(see `memory/inspiration_intake.md` + `.claude/skills/vision-gate/` and the new `.claude/skills/vision-alignment/`).
 
 > **Echoel is a bio-reactive instrument — your body plays it, and its output is
 > multidimensional (sound, image, light, space).** Over open standards, no SDK
