@@ -268,7 +268,8 @@ public enum AgentTools {
                                                  "delay": .delay, "echo": .delay,
                                                  "reverb": .reverb, "verb": .reverb, "hall": .reverb, "room": .reverb,
                                                  "chorus": .chorus, "ensemble": .chorus,
-                                                 "phaser": .phaser, "phase": .phaser]
+                                                 "phaser": .phaser, "phase": .phaser,
+                                                 "flanger": .flanger, "flange": .flanger, "jet": .flanger]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

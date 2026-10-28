@@ -36,6 +36,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let reverb: Reverb?
     private let chorus: Chorus?
     private let phaser: Phaser?
+    private let flanger: Flanger?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -53,6 +54,7 @@ public final class EffectKernel: @unchecked Sendable {
         reverb = effect == .reverb ? Reverb(sampleRate: self.sampleRate) : nil
         chorus = effect == .chorus ? Chorus(sampleRate: self.sampleRate) : nil
         phaser = effect == .phaser ? Phaser(sampleRate: self.sampleRate) : nil
+        flanger = effect == .flanger ? Flanger(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -92,6 +94,7 @@ public final class EffectKernel: @unchecked Sendable {
         reverb?.reset()
         chorus?.reset()
         phaser?.reset()
+        flanger?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -110,6 +113,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .reverb: reverb?.process(left: left, right: right, frames: frames)
         case .chorus: chorus?.process(left: left, right: right, frames: frames)
         case .phaser: phaser?.process(left: left, right: right, frames: frames)
+        case .flanger: flanger?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -158,6 +162,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let phaser else { return }
             let s = Phaser.Settings(rate: value(0), depth: value(1), feedback: value(2), mix: value(3))
             if s != phaser.settings { phaser.settings = s }
+        case .flanger:
+            guard let flanger else { return }
+            let s = Flanger.Settings(rate: value(0), depth: value(1), feedback: value(2), mix: value(3))
+            if s != flanger.settings { flanger.settings = s }
         }
     }
 
@@ -208,6 +216,11 @@ public final class EffectKernel: @unchecked Sendable {
             add("rate", "Rate", 0.05...8, 0.4, .hertz)
             add("depth", "Depth", 0...1, 0.7, .amount)
             add("feedback", "Feedback", 0...0.95, 0.3, .amount)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .flanger:
+            add("rate", "Rate", 0.05...8, 0.25, .hertz)
+            add("depth", "Depth", 0...1, 0.7, .amount)
+            add("feedback", "Feedback", -0.95...0.95, 0.5, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
