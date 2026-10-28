@@ -43,6 +43,7 @@ extension Command {
         case addMedia, removeMedia
         case setVolume, setPan, setMute, setSolo, setSend, setOutput, setInput, setMonitor
         case mapMIDI, unmapMIDI, setAutomation
+        case setModRoute, removeModRoute
         case createClip, createAudioClip, deleteClip, renameClip, setClipLength
         case addNotes, updateNotes, removeNotes, setControls
         case placeClip, movePlacement, removePlacement
@@ -96,6 +97,8 @@ extension Command {
         case .mapMIDI: .mapMIDI
         case .unmapMIDI: .unmapMIDI
         case .setAutomation: .setAutomation
+        case .setModRoute: .setModRoute
+        case .removeModRoute: .removeModRoute
         case .createClip: .createClip
         case .createAudioClip: .createAudioClip
         case .deleteClip: .deleteClip
@@ -329,6 +332,19 @@ public enum CommandCatalog {
                                summary: "Sets how a mixer or instrument parameter moves over the song: straight lines between points. No points removes the automation.",
                                parameters: [P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume."),
                                             P("points", .pointList, "Points of tick and value, ticks rising, values in the parameter's range.")])
+        case .setModRoute:
+            return CommandSpec(name: "modulation.set", title: "Edit Modulation",
+                               summary: "Makes a source (the body's heart rate, HRV, coherence or breath, an LFO, a macro or a MIDI controller) move a parameter by a depth, or changes the route with that id.",
+                               parameters: [P("id", .string, "The route's identifier; a new one adds a route."),
+                                            P("source", .string, "body.heartRate, body.hrv, body.coherence, body.breath, lfo.1, macro.1 or midi.cc.1."),
+                                            P("target", .string, "The parameter address, e.g. track/<id>/mixer.volume."),
+                                            P("depth", .number, "−1…1 of the parameter's travel."),
+                                            P("curve", .string, "linear or square.", optional: true),
+                                            P("polarity", .string, "unipolar (0…1) or bipolar (centred).", optional: true)])
+        case .removeModRoute:
+            return CommandSpec(name: "modulation.remove", title: "Remove Modulation",
+                               summary: "Removes one modulation route.",
+                               parameters: [P("id", .string, "The route's identifier.")])
         case .unmapMIDI:
             return CommandSpec(name: "midi.unmap", title: "Forget MIDI",
                                summary: "Stops a controller knob or fader moving anything.",

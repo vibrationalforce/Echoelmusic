@@ -197,6 +197,38 @@ final class ModulationTests: XCTestCase {
         XCTAssertEqual(try Modulation.value(of: try address("master/mixer.pan"), base: 0.9, automation: nil, routes: routes, sources: sources, targets: targets), 0.9, accuracy: 1e-12)
     }
 
+    /// The two commands are the one door to the song's routes: add, replace by id, remove, and
+    /// every refusal leaves the song as it was.
+    func testTheRouteCommandsAddReplaceAndRemove() throws {
+        var song = Project()
+        let keys = TrackID()
+        try Command.addTrack(id: keys, name: "Keys", kind: .instrument, index: nil).apply(to: &song)
+        var route = ModulationRoute(source: .heartRate, target: .volume(keys), depth: 0.4)
+        try Command.setModRoute(route).apply(to: &song)
+        route.depth = -0.2
+        route.polarity = .bipolar
+        try Command.setModRoute(route).apply(to: &song)
+        XCTAssertEqual(song.modRoutes, [route], "the same id replaces, never adds")
+        XCTAssertNoThrow(try song.validate())
+
+        let before = song
+        for refused: Command in [.setModRoute(ModulationRoute(source: .hrv, target: .volume(TrackID()), depth: 0.1)),
+                                 .setModRoute(ModulationRoute(source: .hrv, target: .masterPan, depth: 1.5)),
+                                 .setModRoute(ModulationRoute(source: .hrv, target: .masterPan, depth: .infinity)),
+                                 .removeModRoute(UUID())] {
+            XCTAssertThrowsError(try refused.apply(to: &song))
+            XCTAssertEqual(song, before, "a refused route leaves the song as it was")
+        }
+        for _ in 1..<Modulation.routeLimit {
+            try Command.setModRoute(ModulationRoute(source: .macro1, target: .masterPan, depth: 0.1)).apply(to: &song)
+        }
+        XCTAssertThrowsError(try Command.setModRoute(ModulationRoute(source: .macro1, target: .masterPan, depth: 0.1))
+            .apply(to: &song), "the 65th route")
+        try Command.removeModRoute(route.id).apply(to: &song)
+        XCTAssertEqual(song.modRoutes.count, Modulation.routeLimit - 1)
+        XCTAssertFalse(song.modRoutes.contains { $0.id == route.id })
+    }
+
     /// The limit counts every route, disabled ones too: one more refuses the list.
     func testTheRouteLimitCountsDisabledRoutes() throws {
         let pan = try address("master/mixer.pan")

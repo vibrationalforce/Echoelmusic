@@ -68,6 +68,11 @@ public enum Command: Codable, Equatable, Sendable {
     /// Replaces the automation of `target` with `points`; none removes the lane.
     case setAutomation(ParameterAddress, points: [AutomationPoint])
 
+    // Modulation (W2)
+    /// Adds `route`, or replaces the route with its id.
+    case setModRoute(ModulationRoute)
+    case removeModRoute(UUID)
+
     // Clips
     case createClip(track: TrackID, id: ClipID, name: String, length: Tick)
     /// An audio clip on an audio track: a session loop of `length` ticks playing a song file.
@@ -549,6 +554,28 @@ extension Command {
             } else if !points.isEmpty {
                 project.automation.append(AutomationLane(target: target, points: points))
             }
+
+        case let .setModRoute(route):
+            guard project.descriptor(for: route.target) != nil else {
+                throw CommandError.invalidValue(parameter: "target", reason: "names no parameter in this song")
+            }
+            guard route.depth.isFinite, (-1...1).contains(route.depth) else {
+                throw CommandError.invalidValue(parameter: "depth", reason: "must be within −1…1")
+            }
+            if let index = project.modRoutes.firstIndex(where: { $0.id == route.id }) {
+                project.modRoutes[index] = route
+            } else {
+                guard project.modRoutes.count < Modulation.routeLimit else {
+                    throw CommandError.invalidValue(parameter: "route", reason: "a song holds at most \(Modulation.routeLimit) routes")
+                }
+                project.modRoutes.append(route)
+            }
+
+        case let .removeModRoute(id):
+            guard project.modRoutes.contains(where: { $0.id == id }) else {
+                throw CommandError.invalidValue(parameter: "route", reason: "is not in this song")
+            }
+            project.modRoutes.removeAll { $0.id == id }
 
         case let .unmapMIDI(control):
             guard project.midiMappings.contains(where: { $0.control == control }) else {
