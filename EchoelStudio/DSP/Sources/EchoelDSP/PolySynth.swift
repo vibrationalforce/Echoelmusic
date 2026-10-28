@@ -13,6 +13,10 @@ public struct SynthPatch: Equatable, Codable, Sendable {
     public var ampEnvelope: Envelope.Settings
     /// Output gain, linear (0…1).
     public var level: Float
+    /// What makes the raw tone (`SynthEngine`); the classic oscillator plays `waveform`.
+    public var engine: SynthEngine = .classic
+    /// The engine's one control, 0…1 (`SynthEngine`).
+    public var character: Float = 0.5
 
     public init(
         waveform: Oscillator.Waveform = .saw,
@@ -45,6 +49,7 @@ public struct SynthVoice: Sendable {
     public private(set) var startOrder: UInt64 = 0
 
     var oscillator = Oscillator()
+    var source = EngineSource()
     var filter: SVFilter
     var ampEnvelope: Envelope
     var filterEnvelope: Envelope
@@ -112,6 +117,7 @@ public struct SynthVoice: Sendable {
         if wasSilent {
             gain = gainTarget
             oscillator.reset()
+            source.reset()
             filter.reset()
             // A fresh note starts where the patch is; only a sounding note glides.
             cutoffOctaves = Self.octaves(patch.cutoff)
@@ -177,7 +183,8 @@ public struct SynthVoice: Sendable {
             }
             controlCountdown -= 1
             let bend = pitch?[i - first] ?? ratio
-            let sample = filter.process(oscillator.next(increment: increment * bend)) * ampEnvelope.next()
+            let tone = source.next(patch.engine, character: patch.character, main: &oscillator, dt: increment * bend)
+            let sample = filter.process(tone) * ampEnvelope.next()
             buffer[i] += sample * gain * level
             if !ampEnvelope.isActive { break }
         }
