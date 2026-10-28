@@ -81,6 +81,22 @@ final class SynthEngineTests: XCTestCase {
                              "away from the sine the tone gains harmonics")
     }
 
+    /// A struck object: loud at the strike, then dying on its own while the key is held, and
+    /// metal rings longer and less harmonically than wood.
+    func testTheMalletRingsOutAndMetalRingsLonger() {
+        let frames = 48_000
+        let wood = tone(.mallet, character: 0, frames: frames), metal = tone(.mallet, character: 1, frames: frames)
+        for out in [wood, metal] { XCTAssertTrue(out.allSatisfy(\.isFinite)) }
+        let early = { (x: [Float]) -> Float in self.rms(Array(x[0..<4_800])) }
+        let late = { (x: [Float]) -> Float in self.rms(Array(x[38_400..<48_000])) }
+        XCTAssertGreaterThan(early(wood), 0.05)
+        XCTAssertLessThan(late(wood), early(wood) * 0.25, "a held key still dies away: nothing sustains a bar")
+        XCTAssertGreaterThan(late(metal) / early(metal), late(wood) / early(wood), "metal rings longer")
+        let start = Array(metal[0..<9_600]), woodStart = Array(wood[0..<9_600])
+        XCTAssertGreaterThan(magnitude(start, hertz: 220 * 2.756), magnitude(woodStart, hertz: 220 * 2.756),
+                             "metal's second mode sits at 2.756 times the note")
+    }
+
     func testTheSubAddsTheOctaveBelow() {
         XCTAssertEqual(tone(.sub, character: 0), tone(.classic, character: 0), "no sub, the oscillator alone")
         XCTAssertGreaterThan(magnitude(tone(.sub, character: 1), hertz: 110),
