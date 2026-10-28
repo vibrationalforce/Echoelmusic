@@ -1,0 +1,417 @@
+{
+  "schema": "echoel.g-a.reference.v1",
+  "scope": "Hand-authored contract examples; normalized creative signals, not medical data or Swift execution.",
+  "state": [
+    {
+      "id": "S01_default_off",
+      "basis": "No opt-in means no value and no active producer.",
+      "events": [
+        {"kind": "tick","now_ms": 0}
+      ],
+      "expected": [{"state": "off","epoch": 0,"value": null,"result": "accepted"}]
+    },
+    {
+      "id": "S02_age_boundary",
+      "basis": "At age 2000 ms valid; at 2001 stale. Arrival never resets measurement age.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "tick","now_ms": 2100},
+        {"kind": "tick","now_ms": 2101}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "stale","epoch": 1,"value": null,"result": "accepted"}]
+    },
+    {
+      "id": "S03_source_switch",
+      "basis": "A previous producer cannot write after the selected source changed.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "start","now_ms": 200,"source": "ble","permission": "granted"},
+        {"kind": "sample","now_ms": 201,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 101,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 202,"source": "ble","epoch": 2,"sequence": 1,"captured_ms": 202,"value": 0.25,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "waiting","epoch": 2,"value": null,"result": "accepted"},{"state": "waiting","epoch": 2,"value": null,"result": "ignored_generation"},{"state": "valid","epoch": 2,"value": 0.25,"result": "accepted"}]
+    },
+    {
+      "id": "S04_stop_restart",
+      "basis": "Same source name with old epoch is still an old producer.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "stop","now_ms": 200},
+        {"kind": "sample","now_ms": 201,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 201,"value": 0.75,"quality": 0.9},
+        {"kind": "start","now_ms": 300,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 301,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 301,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 302,"source": "camera","epoch": 3,"sequence": 1,"captured_ms": 302,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "off","epoch": 2,"value": null,"result": "accepted"},{"state": "off","epoch": 2,"value": null,"result": "ignored_inactive"},{"state": "waiting","epoch": 3,"value": null,"result": "accepted"},{"state": "waiting","epoch": 3,"value": null,"result": "ignored_generation"},{"state": "valid","epoch": 3,"value": 0.75,"result": "accepted"}]
+    },
+    {
+      "id": "S05_permission_revoked",
+      "basis": "Revocation invalidates current value and pending callback generation.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "permission","now_ms": 200,"permission": "denied","source": "camera","epoch": 1},
+        {"kind": "sample","now_ms": 201,"source": "camera","epoch": 2,"sequence": 1,"captured_ms": 201,"value": 0.75,"quality": 0.9},
+        {"kind": "permission","now_ms": 300,"permission": "granted","source": "camera","epoch": 2},
+        {"kind": "sample","now_ms": 301,"source": "camera","epoch": 2,"sequence": 1,"captured_ms": 301,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 302,"source": "camera","epoch": 3,"sequence": 1,"captured_ms": 302,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "denied","epoch": 2,"value": null,"result": "accepted"},{"state": "denied","epoch": 2,"value": null,"result": "ignored_inactive"},{"state": "waiting","epoch": 3,"value": null,"result": "accepted"},{"state": "waiting","epoch": 3,"value": null,"result": "ignored_generation"},{"state": "valid","epoch": 3,"value": 0.75,"result": "accepted"}]
+    },
+    {
+      "id": "S06_suspension",
+      "basis": "Resume starts a new generation; switching source does not bypass suspension.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "suspend","now_ms": 200},
+        {"kind": "start","now_ms": 201,"source": "ble","permission": "granted"},
+        {"kind": "sample","now_ms": 202,"source": "ble","epoch": 3,"sequence": 1,"captured_ms": 202,"value": 0.25,"quality": 0.9},
+        {"kind": "resume","now_ms": 300},
+        {"kind": "sample","now_ms": 301,"source": "ble","epoch": 3,"sequence": 2,"captured_ms": 301,"value": 0.25,"quality": 0.9},
+        {"kind": "sample","now_ms": 302,"source": "ble","epoch": 4,"sequence": 1,"captured_ms": 302,"value": 0.25,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "suspended","epoch": 2,"value": null,"result": "accepted"},{"state": "suspended","epoch": 3,"value": null,"result": "accepted"},{"state": "suspended","epoch": 3,"value": null,"result": "ignored_inactive"},{"state": "waiting","epoch": 4,"value": null,"result": "accepted"},{"state": "waiting","epoch": 4,"value": null,"result": "ignored_generation"},{"state": "valid","epoch": 4,"value": 0.25,"result": "accepted"}]
+    },
+    {
+      "id": "S07_duplicate_not_refresh",
+      "basis": "Duplicate sequence cannot keep a frozen sensor alive.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 2101,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 2101,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "stale","epoch": 1,"value": null,"result": "ignored_order"}]
+    },
+    {
+      "id": "S08_timestamp_order",
+      "basis": "Newer sequence with older timestamp cannot roll value backwards.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 200,"source": "camera","epoch": 1,"sequence": 2,"captured_ms": 99,"value": 0.1,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "ignored_order"}]
+    },
+    {
+      "id": "S09_quality_boundary",
+      "basis": "Quality threshold 0.7 is inclusive; lower quality removes the current value.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.5,"quality": 0.7},
+        {"kind": "sample","now_ms": 200,"source": "camera","epoch": 1,"sequence": 2,"captured_ms": 200,"value": 0.9,"quality": 0.699}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.5,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S10_future_timestamp",
+      "basis": "A sample from the future is invalid, not clamped to now.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 101,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S11_late_delivery",
+      "basis": "Fresh callback does not make a measurement captured 2001 ms ago fresh.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 2101,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "stale","epoch": 1,"value": null,"result": "stale"}]
+    },
+    {
+      "id": "S12_invalid_recovery",
+      "basis": "Out-of-domain normalized value is invalid; a new ordered sample recovers.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 1.1,"quality": 0.9},
+        {"kind": "sample","now_ms": 200,"source": "camera","epoch": 1,"sequence": 2,"captured_ms": 200,"value": 0.4,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"},{"state": "valid","epoch": 1,"value": 0.4,"result": "accepted"}]
+    },
+    {
+      "id": "S13_health_read_unknown",
+      "basis": "Health read permission is not inferable; actual fresh data can be accepted.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "health","permission": "unknown"},
+        {"kind": "sample","now_ms": 100,"source": "health","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"}]
+    },
+    {
+      "id": "S14_camera_unknown",
+      "basis": "Camera is not acquired before explicit usable authorization.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "unknown"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "waiting","epoch": 1,"value": null,"result": "ignored_inactive"}]
+    },
+    {
+      "id": "S15_quality_outside_domain",
+      "basis": "Quality above one is invalid rather than accepted as very good.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 1.1}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S16_null",
+      "basis": "Missing normalized value cannot become plausible measurement.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": null,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S17_boolean",
+      "basis": "JSON booleans are not numeric measurements.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": true,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S18_clock_reversal",
+      "basis": "Host monotonic clock must never go backwards.",
+      "events": [
+        {"kind": "tick","now_ms": 20},
+        {"kind": "tick","now_ms": 19}
+      ],
+      "expected": {"error": "clock"}
+    },
+    {
+      "id": "S19_equal_timestamp",
+      "basis": "A new sequence with identical capture time is not a fresh measurement.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9},
+        {"kind": "sample","now_ms": 200,"source": "camera","epoch": 1,"sequence": 2,"captured_ms": 100,"value": 0.1,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "accepted"},{"state": "valid","epoch": 1,"value": 0.75,"result": "ignored_order"}]
+    },
+    {
+      "id": "S20_wrong_source",
+      "basis": "Correct epoch does not override source identity.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "ble","epoch": 1,"sequence": 1,"captured_ms": 100,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "waiting","epoch": 1,"value": null,"result": "ignored_generation"}]
+    },
+    {
+      "id": "S21_missing_sequence",
+      "basis": "Malformed current-source sample invalidates instead of throwing through callback.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "granted"},
+        {"kind": "sample","now_ms": 100,"source": "camera","epoch": 1,"sequence": null,"captured_ms": 100,"value": 0.75,"quality": 0.9}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "invalid","epoch": 1,"value": null,"result": "invalid"}]
+    },
+    {
+      "id": "S22_stale_permission",
+      "basis": "Late camera denial cannot revoke the newly selected BLE source.",
+      "events": [
+        {"kind": "start","now_ms": 0,"source": "camera","permission": "unknown"},
+        {"kind": "start","now_ms": 10,"source": "ble","permission": "granted"},
+        {"kind": "sample","now_ms": 20,"source": "ble","epoch": 2,"sequence": 1,"captured_ms": 20,"value": 0.6,"quality": 0.9},
+        {"kind": "permission","now_ms": 30,"permission": "denied","source": "camera","epoch": 1}
+      ],
+      "expected": [{"state": "waiting","epoch": 1,"value": null,"result": "accepted"},{"state": "waiting","epoch": 2,"value": null,"result": "accepted"},{"state": "valid","epoch": 2,"value": 0.6,"result": "accepted"},{"state": "valid","epoch": 2,"value": 0.6,"result": "ignored_generation"}]
+    }
+  ],
+  "modulation": [
+    {
+      "id": "M01_two_routes",
+      "basis": "0.5 + 0.2*0.75 - 0.1*0.5 = 0.6; stable id order.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000002","source": "macro.1","target": "master/mixer.pan","depth": -0.1,"curve": "linear","polarity": "unipolar","enabled": true},{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75,"macro.1": 0.5},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.6
+    },
+    {
+      "id": "M02_missing_neutral",
+      "basis": "Absent source contributes zero, never a centered substitute.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.5
+    },
+    {
+      "id": "M03_bipolar_midpoint",
+      "basis": "2*0.5-1 = 0.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "bipolar","enabled": true}],"sources": {"body.heartRate": 0.5},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.5
+    },
+    {
+      "id": "M04_signed_square",
+      "basis": "x=.25 -> signed square(-.5)=-.25; .5-.1=.4.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.4,"curve": "square","polarity": "bipolar","enabled": true}],"sources": {"body.heartRate": 0.25},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.4
+    },
+    {
+      "id": "M05_automation",
+      "basis": "Automation .3 replaces base .5; .3+.2*.75=.45.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": 0.3},
+      "expected": 0.45
+    },
+    {
+      "id": "M06_upper_clamp",
+      "basis": "1.0+.75 -> 1.0.",
+      "input": {"base": 1.0,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 1.0,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 1.0
+    },
+    {
+      "id": "M07_lower_clamp",
+      "basis": ".1-.75 -> 0.",
+      "input": {"base": 0.1,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": -1.0,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.0
+    },
+    {
+      "id": "M08_disabled",
+      "basis": "Disabled route has zero contribution.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": false}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.5
+    },
+    {
+      "id": "M09_invalid_live_value",
+      "basis": "Out-of-domain live source is absent, not clamped into expressive maximum.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 2},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.5
+    },
+    {
+      "id": "M10_duplicate_uuid",
+      "basis": "Duplicate route ids reject atomically.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true},{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "duplicate_id"}
+    },
+    {
+      "id": "M11_unknown_target",
+      "basis": "Targets must resolve through production descriptor registry.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "track/missing/synth.cutoff","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "target"}
+    },
+    {
+      "id": "M12_bad_depth",
+      "basis": "Depth outside [-1,1] rejects rather than changes document.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 1.01,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "depth"}
+    },
+    {
+      "id": "M13_unknown_curve",
+      "basis": "Unknown semantics refuse route.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "magic","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "curve"}
+    },
+    {
+      "id": "M14_bad_base",
+      "basis": "Bad base cannot silently become zero.",
+      "input": {"base": true,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "base"}
+    },
+    {
+      "id": "M15_unknown_source",
+      "basis": "Missing producers are not inferred from a name.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "eeg","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": {"error": "source"}
+    },
+    {
+      "id": "M16_negative_depth",
+      "basis": "0.5-.4*.75=.2.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": -0.4,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.2
+    },
+    {
+      "id": "M17_missing_bipolar_neutral",
+      "basis": "Missing source is not bipolar zero input; it has no contribution.",
+      "input": {"base": 0.5,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "bipolar","enabled": true}],"sources": {},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.5
+    },
+    {
+      "id": "M18_clamp_once",
+      "basis": "0.9+0.75-0.75=.9; per-route clipping would give .25.",
+      "input": {"base": 0.9,"routes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 1.0,"curve": "linear","polarity": "unipolar","enabled": true},{"id": "00000000-0000-0000-0000-000000000002","source": "body.heartRate","target": "master/mixer.pan","depth": -1.0,"curve": "linear","polarity": "unipolar","enabled": true}],"sources": {"body.heartRate": 0.75},"target": "master/mixer.pan","targets": ["master/mixer.pan"],"automation": null},
+      "expected": 0.9
+    }
+  ],
+  "migration": [
+    {
+      "id": "F01",
+      "basis": "Envelope only: add empty routes; all other values unchanged; no default body route.",
+      "input": {"formatVersion": 1,"name": "Preserve me","tracks": [],"automation": [{"opaque": "retained"}]},
+      "expected": {"formatVersion": 3,"name": "Preserve me","tracks": [],"automation": [{"opaque": "retained"}],"modRoutes": []}
+    },
+    {
+      "id": "F02",
+      "basis": "Envelope only: add empty routes; all other values unchanged; no default body route.",
+      "input": {"formatVersion": 2,"name": "Preserve me","tracks": [],"automation": [{"opaque": "retained"}]},
+      "expected": {"formatVersion": 3,"name": "Preserve me","tracks": [],"automation": [{"opaque": "retained"}],"modRoutes": []}
+    },
+    {
+      "id": "F03",
+      "basis": "Idempotent v3 envelope.",
+      "input": {"formatVersion": 3,"name": "V3","modRoutes": []},
+      "expected": {"formatVersion": 3,"name": "V3","modRoutes": []}
+    },
+    {
+      "id": "F04",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {"formatVersion": 4},
+      "expected": {"error": "newer_format"}
+    },
+    {
+      "id": "F05",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {},
+      "expected": {"error": "format"}
+    },
+    {
+      "id": "F06",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {"formatVersion": 0},
+      "expected": {"error": "format"}
+    },
+    {
+      "id": "F07",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {"formatVersion": true},
+      "expected": {"error": "format"}
+    },
+    {
+      "id": "F08",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {"formatVersion": 3},
+      "expected": {"error": "missing_routes"}
+    },
+    {
+      "id": "F09",
+      "basis": "Refuse ambiguous or unsupported format without mutating input.",
+      "input": {"formatVersion": 2,"modRoutes": [{"id": "00000000-0000-0000-0000-000000000001","source": "body.heartRate","target": "master/mixer.pan","depth": 0.2,"curve": "linear","polarity": "unipolar","enabled": true}]},
+      "expected": {"error": "legacy_routes"}
+    }
+  ],
+  "ramp": [
+    {
+      "id": "R01",
+      "basis": "Linear sample-domain ramp reaches target at index 4, independent of blocks.",
+      "input": {"start": 0.8,"target": 0.2,"duration": 4,"count": 7,"blocks": [2,3]},
+      "expected": [0.8,0.65,0.5,0.35,0.2,0.2,0.2]
+    },
+    {
+      "id": "R02",
+      "basis": "No transition produces identical value at every sample.",
+      "input": {"start": 0.5,"target": 0.5,"duration": 4,"count": 3,"blocks": [1]},
+      "expected": [0.5,0.5,0.5]
+    },
+    {
+      "id": "R03",
+      "basis": "Zero duration refuses division by zero.",
+      "input": {"start": 0.5,"target": 0.2,"duration": 0,"count": 3,"blocks": [1]},
+      "expected": {"error": "ramp"}
+    }
+  ]
+}

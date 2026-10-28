@@ -1826,3 +1826,26 @@ Founder (Fortsetzung): „Weiter Greb all context und volle power."
 - **Kein TestFlight-Upload.** `EchoelStudio/RELEASE` unberührt bis ~29.10.
 - ⭐ Lehren: (1) **`git add` mit einem Pfad, der nicht mehr existiert, fügt NICHTS hinzu** — der Move-Commit trug nur die Umbenennungen, die versprochenen Zeiger kamen einen Commit später (Ledger-Zeile). (2) Ein Index-Wächter, der gebacktickte Namen gegen das Verzeichnis prüft, verbietet auch den GRABSTEIN eines gelöschten Werkzeugs in derselben Datei — der Grabstein gehört ins Archiv-README. (3) Zeilennummern einer lebenden Datei in einem Plan durch Zeilen-IDs ersetzen, bevor der Plan committet wird; meine F24-Einfügung hätte sonst eine Zitatzeile im selben Commit verschoben.
 - **Nachtrag 23:20 — Gate `Echoel Studio` Lauf 250 (40131901941) auf `929af2f98`: BEIDE Jobs grün** (Core+DSP+Engine; App: Simulator-Build, „Extension carries no engine code“, Launch-Smoke, Release-Gerätebuild). Die zwei Store-Commits kompilieren und starten im Simulator; Kauf und Freischaltung bleiben ungerätegeprüft (SP4 wartet auf F-15). `main` stand beim Lesen noch auf `8c940c303`; der Auto-Merge folgt dem Gate. KI-Aufträge für Grok/ChatGPT bis Mi 28.10.: `docs/dev/KI_AUFTRAEGE_2026-10-24.md`.
+
+## 2026-10-27 — Grok-Gegenprüfung und ausführbare Claude-Übergabe (Codex)
+
+- Founder: Groks Arbeit nochmals prüfen, dann loslegen und alles strukturiert im Repo ablegen.
+  Gemessene main-Basis `31ce86372ed852626f186f91d2984996bb958b89`; Groks drei Dateien
+  enthielten keine der angekündigten G-A-Referenzen. W10 hat bereits einen lokalen
+  Assistenten; W0-Upload-/Gerätebehauptungen bleiben von vorhandenem Code getrennt.
+- Zentraler Einstieg: `scratchpads/grok-handover-2026-10-27/README.md`, mit Audit,
+  Doctor-Einordnung, Integration von #430/G4b/G3/G2/AU und vollständigem W0–W10-Scope.
+  Die drei G-A-Ressourcen unter `.claude/skills/g-a-body-modulation/references/`
+  sind erstellt: Vertrag, literale JSON-Sollwerte, Python-Referenz ohne Abhängigkeiten.
+- Tatsächlich geprüft: Referenz und CLI-Negativfälle vollständig bestanden; exakte
+  Ergebnisse, Befehle, Quellhashes und separate NOT_RUN-Integrationsfälle stehen in
+  `scratchpads/grok-handover-2026-10-27/VALIDATION.json`. Zwei unabhängige
+  Review-Befunde vor Veröffentlichung repariert: späte Permission-Antwort einer
+  fremden Generation und ungültige Fixture-Dateien ohne sauberen CLI-Fehlerpfad.
+- Vollständiger Doctor vorher/nachher: Exit 1, dieselben drei kritischen Gruppen.
+  Studio enthält `set -eo pipefail`; die zugehörige Teilmeldung ist ein Fehlalarm.
+  Keine pauschale CI-grün-Aussage. #430 Studio-PR-Lauf ist inzwischen success;
+  das ist kein Test dieses Pakets und kein neuer Upload.
+- Keine Produktions-/Projekt-/Workflow-/Entitlement-/Release-Änderung, kein Merge
+  nach main, keine Swift-/Geräteabnahme. G-B/C/D bleiben offene Lieferpakete.
+  Branch: `codex/claude-grok-handover-2026-10-27`.

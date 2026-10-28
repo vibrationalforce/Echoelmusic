@@ -1,0 +1,599 @@
+{
+  "schema": "echoel.claude_handover.validation.v1",
+  "measured_at_utc": "2026-10-27T17:11:57.710621+00:00",
+  "user_date_timezone": "Europe/Madrid",
+  "base_sha": "31ce86372ed852626f186f91d2984996bb958b89",
+  "branch": "codex/claude-grok-handover-2026-10-27",
+  "reference_code_commit": "304fcdb040d862811e5fd4c57c9447939e8d7b70",
+  "documentation_commit": "192dac915688b31cdf3be0b0cb626f03b7095576",
+  "scope": "Reference and handover only; no new Swift build, device test or TestFlight upload.",
+  "environment": {
+    "python": "3.12.14",
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "source_blobs_at_base": {
+    "EchoelStudio/App/Models/BodyFrameSource.swift": "e5b351fd13b772070de29c64105fc8a8875f44c9",
+    "EchoelStudio/App/Models/BodyFramePublisherAdapter.swift": "2106c7275a0c01bc624bb6d8a5d55e2db6b1060a",
+    "EchoelStudio/App/Views/BodyFrameView.swift": "ff8cbd30b5ce2b63ed887bfe56c6af5ffb4e2148",
+    "EchoelStudio/App/Views/StudioView.swift": "ab6eb00b4abdf354607d5024ae1dac45fd624330",
+    "EchoelStudio/App/Agent/AgentSession.swift": "a18e062221940efae764dea9c389af51a7d7a329",
+    "EchoelStudio/Core/Sources/EchoelCore/AgentTools.swift": "0589d4f1202074317c8fb0ccc93e634d0808e8f5",
+    "EchoelStudio/Core/Sources/EchoelCore/Project.swift": "c1281f5f775a3a802c1d379d3ffaac0b2565b3da",
+    "EchoelStudio/Core/Sources/EchoelCore/Parameters.swift": "02f1c1f93633c14c7f5b25445ddd1200383912f4",
+    "EchoelStudio/App/Engine/PluginHost.swift": "6a0ef67de87b1a33c6a78fa66376d63c6eade13e",
+    "EchoelStudio/project.yml": "6a058bad9b708cdb35f4965c5207b1dc68c65db1",
+    "EchoelStudio/Support/App/EchoelStudio.entitlements": "253bf7ffe67b90bf6112e98eeaf7dec77dde0910",
+    "docs/FORMAT.md": "a13dd4e934395ed9038d9cd93f29cb462124bf83",
+    ".github/workflows/studio.yml": "be87977a6f96072a2f78c156c426d87983616f77"
+  },
+  "delivered_sha256_excluding_this_manifest_and_session_log": {
+    ".claude/skills/g-a-body-modulation/SKILL.md": "a3a7f62ec214c892529dc6247e2aca710b88b6f1f523c7afd7178cbd3489ded1",
+    ".claude/skills/g-a-body-modulation/references/CONTRACT.md": "e042bde5aa23b09df25afd0b2b56ec2a10acab1af42c6170d45fcf1f7f67a894",
+    ".claude/skills/g-a-body-modulation/references/FIXTURES.json": "f87d120589d42c2fe742ed07da1805eae36bc1df17a08b75caf4b3d40537d2cf",
+    ".claude/skills/g-a-body-modulation/references/reference.py": "4d14ecef751546caca218477fb67f93ca5f97e55dd3019aed9a33fb4c4a68a04",
+    "scratchpads/grok-handover-2026-10-27/README.md": "12ad989f03ecf27dfc218dd8520568a3b6d955b2eea11c0d386b0827d1ab368b",
+    "scratchpads/grok-handover-2026-10-27/AUDIT.md": "f3bd56964db32060944c8947624ccaf0c58b207c4950dc9b9fcefb1c68232fd8",
+    "scratchpads/grok-handover-2026-10-27/DOCTOR_STATUS.md": "209ac667e1143c0d4676b29da45471fcc4e80c675a53837858000a070e43b1f0"
+  },
+  "commands": {
+    "reference": "python3 .claude/skills/g-a-body-modulation/references/reference.py --selftest --json",
+    "reference_exit": 0,
+    "doctor": "python3 scripts/doctor.py",
+    "doctor_baseline_exit": 1,
+    "doctor_after_exit": 1,
+    "diff_check": "git diff --check",
+    "diff_check_exit": 0
+  },
+  "reference_result": {
+    "scope": "python_contract_reference_only",
+    "total": 63,
+    "passed": 63,
+    "failed": 0,
+    "results": [
+      {
+        "id": "S01_default_off",
+        "passed": true
+      },
+      {
+        "id": "S02_age_boundary",
+        "passed": true
+      },
+      {
+        "id": "S03_source_switch",
+        "passed": true
+      },
+      {
+        "id": "S04_stop_restart",
+        "passed": true
+      },
+      {
+        "id": "S05_permission_revoked",
+        "passed": true
+      },
+      {
+        "id": "S06_suspension",
+        "passed": true
+      },
+      {
+        "id": "S07_duplicate_not_refresh",
+        "passed": true
+      },
+      {
+        "id": "S08_timestamp_order",
+        "passed": true
+      },
+      {
+        "id": "S09_quality_boundary",
+        "passed": true
+      },
+      {
+        "id": "S10_future_timestamp",
+        "passed": true
+      },
+      {
+        "id": "S11_late_delivery",
+        "passed": true
+      },
+      {
+        "id": "S12_invalid_recovery",
+        "passed": true
+      },
+      {
+        "id": "S13_health_read_unknown",
+        "passed": true
+      },
+      {
+        "id": "S14_camera_unknown",
+        "passed": true
+      },
+      {
+        "id": "S15_quality_outside_domain",
+        "passed": true
+      },
+      {
+        "id": "S16_null",
+        "passed": true
+      },
+      {
+        "id": "S17_boolean",
+        "passed": true
+      },
+      {
+        "id": "S18_clock_reversal",
+        "passed": true
+      },
+      {
+        "id": "S19_equal_timestamp",
+        "passed": true
+      },
+      {
+        "id": "S20_wrong_source",
+        "passed": true
+      },
+      {
+        "id": "S21_missing_sequence",
+        "passed": true
+      },
+      {
+        "id": "S22_stale_permission",
+        "passed": true
+      },
+      {
+        "id": "M01_two_routes",
+        "passed": true
+      },
+      {
+        "id": "M02_missing_neutral",
+        "passed": true
+      },
+      {
+        "id": "M03_bipolar_midpoint",
+        "passed": true
+      },
+      {
+        "id": "M04_signed_square",
+        "passed": true
+      },
+      {
+        "id": "M05_automation",
+        "passed": true
+      },
+      {
+        "id": "M06_upper_clamp",
+        "passed": true
+      },
+      {
+        "id": "M07_lower_clamp",
+        "passed": true
+      },
+      {
+        "id": "M08_disabled",
+        "passed": true
+      },
+      {
+        "id": "M09_invalid_live_value",
+        "passed": true
+      },
+      {
+        "id": "M10_duplicate_uuid",
+        "passed": true
+      },
+      {
+        "id": "M11_unknown_target",
+        "passed": true
+      },
+      {
+        "id": "M12_bad_depth",
+        "passed": true
+      },
+      {
+        "id": "M13_unknown_curve",
+        "passed": true
+      },
+      {
+        "id": "M14_bad_base",
+        "passed": true
+      },
+      {
+        "id": "M15_unknown_source",
+        "passed": true
+      },
+      {
+        "id": "M16_negative_depth",
+        "passed": true
+      },
+      {
+        "id": "M17_missing_bipolar_neutral",
+        "passed": true
+      },
+      {
+        "id": "M18_clamp_once",
+        "passed": true
+      },
+      {
+        "id": "F01",
+        "passed": true
+      },
+      {
+        "id": "F02",
+        "passed": true
+      },
+      {
+        "id": "F03",
+        "passed": true
+      },
+      {
+        "id": "F04",
+        "passed": true
+      },
+      {
+        "id": "F05",
+        "passed": true
+      },
+      {
+        "id": "F06",
+        "passed": true
+      },
+      {
+        "id": "F07",
+        "passed": true
+      },
+      {
+        "id": "F08",
+        "passed": true
+      },
+      {
+        "id": "F09",
+        "passed": true
+      },
+      {
+        "id": "R01",
+        "passed": true
+      },
+      {
+        "id": "R02",
+        "passed": true
+      },
+      {
+        "id": "R03",
+        "passed": true
+      },
+      {
+        "id": "route_order",
+        "passed": true
+      },
+      {
+        "id": "block_partition",
+        "passed": true
+      },
+      {
+        "id": "nonfinite_sample_nan",
+        "passed": true
+      },
+      {
+        "id": "nonfinite_sample_inf",
+        "passed": true
+      },
+      {
+        "id": "nonfinite_sample_-inf",
+        "passed": true
+      },
+      {
+        "id": "capacity_64_65",
+        "passed": true
+      },
+      {
+        "id": "huge_integer_is_invalid",
+        "passed": true
+      },
+      {
+        "id": "wrong_expected_state",
+        "passed": true
+      },
+      {
+        "id": "wrong_expected_modulation",
+        "passed": true
+      },
+      {
+        "id": "wrong_expected_migration",
+        "passed": true
+      },
+      {
+        "id": "wrong_expected_ramp",
+        "passed": true
+      }
+    ]
+  },
+  "cli_checks": [
+    {
+      "id": "array_root",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: fixture_schema\n"
+    },
+    {
+      "id": "null_root",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: fixture_schema\n"
+    },
+    {
+      "id": "broken_json",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\n"
+    },
+    {
+      "id": "nonstandard_nan",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: nonstandard_json_NaN\n"
+    },
+    {
+      "id": "overflow_float",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: unrepresentable_json_number\n"
+    },
+    {
+      "id": "missing_schema",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: fixture_schema\n"
+    },
+    {
+      "id": "wrong_expected",
+      "expected_exit": 1,
+      "actual_exit": 1,
+      "passed": true,
+      "stdout": "G-A reference: 62/63 passed; Swift/device NOT_RUN\n",
+      "stderr": "[\n  {\n    \"id\": \"M01_two_routes\",\n    \"passed\": false,\n    \"expected\": 0.123,\n    \"actual\": 0.6\n  }\n]\n"
+    },
+    {
+      "id": "empty_group",
+      "expected_exit": 2,
+      "actual_exit": 2,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Invalid reference input: empty_fixture_group\n"
+    },
+    {
+      "id": "malformed_sources_is_contract_error",
+      "mutation": "modulation[0].input.sources=[]; expected={error:routing_input}",
+      "expected_exit": 0,
+      "actual_exit": 0,
+      "passed": true,
+      "stdout": "G-A reference: 63/63 passed; Swift/device NOT_RUN\n",
+      "stderr": ""
+    }
+  ],
+  "cli_reproduction": "Use a temporary copy of FIXTURES.json for wrong_expected (modulation[0].expected=0.123), empty_group (state=[]), or malformed_sources (modulation[0].input.sources=[] and expected={error:routing_input}); root files named by remaining cases are [], null, {, {\"x\":NaN}, {\"x\":1e400}, {}. Run reference.py --fixtures PATH --selftest and compare expected_exit.",
+  "doctor": {
+    "critical_groups_unchanged": true,
+    "critical_groups": [
+      "❌ [CRITICAL] A build failure here cannot turn anything red",
+      "❌ [CRITICAL] A test filter names a suite that does not exist — that step tests nothing",
+      "❌ [CRITICAL] The spacing ratchet is over its ceiling — Run Tests will name it"
+    ],
+    "baseline_stdout": "Echoel doctor — are the instruments telling the truth?\n\n── A. GATES — does a green check mean the work actually ran?\n   ❌ [CRITICAL] A build failure here cannot turn anything red\n        .github/workflows/benchmark.yml:67  step 'Benchmark: Clean Build Time' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:244  JOB 'performance-tests' is entirely non-blocking, and it builds\n        .github/workflows/ci.yml:293  step 'Run Performance Tests' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:293  step 'Run Performance Tests' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:294  step 'Run Performance Tests' tolerates a BUILD failure\n        .github/workflows/ci.yml:304  step 'Memory Leak Detection' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:304  step 'Memory Leak Detection' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:305  step 'Memory Leak Detection' tolerates a BUILD failure\n        .github/workflows/ci.yml:381  step 'Build Release Archive' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:381  step 'Build Release Archive' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:382  step 'Build Release Archive' tolerates a BUILD failure\n        .github/workflows/full-tests.yml:65  step 'Build the 294-file suite (reveal-only)' tolerates a BUILD failure\n        .github/workflows/full-tests.yml:83  step 'Run the 294-file suite (reveal-only)' tolerates a BUILD failure\n        .github/workflows/studio.yml:163  step 'Build Engine for iOS' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        → A test failure may be tolerable in a reveal-only run; a build failure never is. The repair\n        → DEPENDS ON WHICH LINE: a `|| true` or a missing `set -o pipefail` must be removed first — a\n        → guard step added on top of either reads success forever. Only once the step's own exit\n        → status is honest can a final step gate on `steps.<id>.outcome` (NOT `.conclusion`, which\n        → continue-on-error forces to success), and that requires the step to HAVE an `id:`. Changing\n        → CI config is founder-gated in this repo — report, do not edit.\n\n   ℹ️  [INFO] The blocking gate runs the largest test suite\n        ci.yml -scheme Echoelmusic -> test targets ['EchoelmusicTests']\n        those bundles build: EchoelmusicTests = Tests/CISmoke (969 files)\n        largest suite on disk = Tests/CISmoke (969 files)\n        → Stated positively on purpose: a guard written into that suite gates a push. The OTHER bundle\n        → building a different directory is the deliberate reveal-only split, not a defect — which is\n        → exactly what the old wording could not tell apart.\n\n   ❌ [CRITICAL] A test filter names a suite that does not exist — that step tests nothing\n        .github/workflows/ci.yml:290  names suite 'ComprehensiveTestSuite' — no such XCTestCase class\n        .github/workflows/ci.yml:291  names suite 'ComprehensiveTestSuite' — no such XCTestCase class\n        → A run with zero matched tests is understood to report success rather than fail — UNVERIFIED\n        → here, there is no Xcode in this environment, so treat it as the assumption this finding\n        → rests on. Before renaming: check whether the step is ALSO masked (see the finding above). If\n        → it is, fixing the name restores nothing observable — the mask is the bigger defect and has\n        → to go first.\n\n── B. TOOLING — do the commands and skills still describe THIS repo?\n   ✅ Commands and skills reference only paths that exist; decisions.csv parses; every plist-named class is declared.\n\n── C. SURFACES — is there a door to what the code builds?\n   ⚠️  [WARN] View types built ONLY in a DEBUG branch (absent from the shipped app)\n        Sources/Echoelmusic/Resources/AppIcon.swift:258  struct AppIconView: View — built ONLY inside `#if DEBUG`\n        Sources/Echoelmusic/Resources/AppIcon.swift:326  struct LaunchScreenView: View — built ONLY inside `#if DEBUG`\n        → A PreviewProvider is a design tool, not a door: a Release build contains neither the preview\n        → nor — for these — any other caller. C1 above could not see them because it asks 'is it built\n        → AT ALL' and a debug-only call is still a call. Treat each exactly like a C1 entry:\n        → unreachable is not itself a defect, unreachable AND unwritten-down is. A design-asset\n        → renderer parked behind a preview is legitimate; a SCREEN here is a door that was lost.\n\n   ⚠️  [WARN] View types reachable only through a doorless view (transitive, #947)\n        Sources/Echoelmusic/Studio/NetworkActivityDot.swift:229  struct ADMStreamStatusLine: View — built only by views that are themselves unreachable\n        Sources/Echoelmusic/Studio/BreathGuideView.swift:20  struct BreathGuideView: View — built only by views that are themselves unreachable\n        Sources/Echoelmusic/Studio/PulseMeasurementView.swift:61  struct PulseMeasurementView: View — built only by views that are themselves unreachable\n        → C1 above asks whether a view is built AT ALL; these ARE built, by code nobody can reach.\n        → Same verdict, one hop further, and it is the hop this tool used to hand to a human:\n        → CLAUDE.md registered PulseMeasurementView by hand at #525 while this section reported clean.\n        → Treat each exactly like a C1 entry — unreachable is not itself a defect, unreachable AND\n        → unwritten-down is. Re-dooring one of these means dooring its PARENT, not the entry itself.\n\n   ⚠️  [WARN] View types that nothing in Sources/ ever constructs\n        Sources/Echoelmusic/Studio/BioSourceView.swift:33  struct BioSourceView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/BroadcastView.swift:16  struct BroadcastView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/ImmersiveStageView.swift:33  struct ImmersiveStageView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/ProUnlockView.swift:24  struct ProUnlockView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/SessionView.swift:33  struct SessionView: View — never constructed anywhere in Sources/\n        → Being constructed nowhere is proof of unreachability; being constructed somewhere is NOT\n        → proof of reachability — the caller may itself be dead (that is how the Tools-grid views\n        → stayed 'wired' for weeks). Some of these are parked on purpose (ImmersiveStageView,\n        → BroadcastView while RTMP is unlinked); the test per entry is whether that parking is WRITTEN\n        → DOWN in CLAUDE.md. Undocumented + unreachable is the defect, not unreachable by itself.\n\n   ⚠️  [WARN] Modal flags that nothing can ever set to true\n        Sources/Echoelmusic/Studio/EchoelStudioView.swift:835  @State showMeditation — never assigned anything but its default\n        → The modifier bound to such a flag is unreachable UI that still counts against the\n        → presentation-modifier budget (the 10.76.34 black-screen law). These are the FIRST place to\n        → look for a slot when a new modal is needed.\n\n── D. DOCS — do the numbers in CLAUDE.md still hold?\n   ℹ️  [INFO] Counted now — compare against what CLAUDE.md claims\n        Sources/**/*.swift (git-tracked)      = 522\n        Tests/EchoelmusicTests/*.swift        = 301\n        EchoelStudioView presentation modifiers (file-wide, line-initial) = 12\n        → The modifier count is FILE-WIDE, not body-chain-only — a modifier nested inside another\n        → modifier's content closure is counted here but does not sit on the body's generic type. Read\n        → the quoted CLAUDE.md lines against these numbers before trusting either.\n\n   ℹ️  [INFO] Always-loaded surface = 169,013 B (4 files); CLAUDE.md = 149,149 B\n          149,149 B  CLAUDE.md\n           11,042 B  .claude/rules/context.md\n            6,217 B  .claude/rules/swift-audio.md\n            2,605 B  .claude/rules/engineering.md\n        → Under the ceiling. This number only moves in the wrong direction by accretion, so it is\n        → worth re-reading whenever a cycle adds a paragraph to CLAUDE.md rather than to a ledger.\n\n   ℹ️  [INFO] SessionStart hook reads 162,873 B of a possible 1,923,931 B (8.5 %)\n        1,761,058 B  kept off the bill by the two caps\n          798,784 B  memory/LEDGER_COUNTS.md — in memory/ and deliberately NOT in the hook's cat list\n        → Single digits is the durable claim `.claude/rules/context.md` §1 makes; the literal bytes\n        → are a date, so they live here and not in an always-loaded file (#764).\n\n── E. RATCHETS — is the tree still under the ceilings its guards pin?\n   ❌ [CRITICAL] The spacing ratchet is over its ceiling — Run Tests will name it\n        712 literal gaps in Sources/ against ceiling 696 (+16)\n        largest holders: Sources/Echoelmusic/Studio/EchoelStudioView.swift (114), Sources/Echoelmusic/Studio/WorkstationView.swift (65), Sources/Echoelmusic/Studio/PatchbayView.swift (47), Sources/Echoelmusic/Studio/BioStripView.swift (28), Sources/Echoelmusic/Views/OnboardingView.swift (23)\n        no Sources/ file is touched by the working tree or HEAD; the overshoot is older than this commit\n        → Tests/CISmoke/TheSpacingSitsOnTheScaleTests.swift claim 2 (`testTheLiteralGapsOnlyFall`) is\n        → red. A new row takes its gap from `EchoelTheme.spaceXS` … `spaceXL`; never raise the\n        → ceiling. Measured BEFORE the push this costs seconds, after it a 25-minute test job\n        → (2026-10-08, 0ecd593).\n\n── F. ISOLATION — does a framework call a main-actor closure on its own queue?\n   ✅ 3133 closures formed in an isolated context; none reaches a framework queue unmarked, none waits on an SDK reading.\n\n── LIMITS (what this run did NOT check)\n   Reachability is grep-based: it proves a NAME is never constructed, not that a surface is\n     unreachable at runtime. The chain to a rendering parent still has to be read by hand.\n     Comments no longer count as calls (#762 — the note documenting a doorless view used\n     to hide it); a STRING LITERAL still can — C1c pins that no view relies on one,\n     and says so with the quoted line when one ever does.\n   And an entry point can live OUTSIDE Swift entirely: `ExternalDisplaySceneDelegate` has\n     zero references in Sources/ and is reached from an Info.plist string. A grep-based\n     audit calls that file dead and is wrong. Section B now resolves every class name\n     under the plist keys iOS treats as class names, prefixed or bare, at any depth — so\n     the NEXT such entry point is found too, as long as its key is in that list. A key\n     nobody listed, or an entry point outside a plist altogether, still is not.\n   Nothing here compiles or runs anything. A green doctor says the instruments look honest,\n     never that the code works.\n   Sound, feel and device behaviour are outside its reach entirely — those need a listen.\n\n❌ 3 critical finding(s).\n",
+    "after_stdout": "Echoel doctor — are the instruments telling the truth?\n\n── A. GATES — does a green check mean the work actually ran?\n   ❌ [CRITICAL] A build failure here cannot turn anything red\n        .github/workflows/benchmark.yml:67  step 'Benchmark: Clean Build Time' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:244  JOB 'performance-tests' is entirely non-blocking, and it builds\n        .github/workflows/ci.yml:293  step 'Run Performance Tests' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:293  step 'Run Performance Tests' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:294  step 'Run Performance Tests' tolerates a BUILD failure\n        .github/workflows/ci.yml:304  step 'Memory Leak Detection' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:304  step 'Memory Leak Detection' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:305  step 'Memory Leak Detection' tolerates a BUILD failure\n        .github/workflows/ci.yml:381  step 'Build Release Archive' ends its build in `|| true` — the failure never reaches the runner\n        .github/workflows/ci.yml:381  step 'Build Release Archive' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        .github/workflows/ci.yml:382  step 'Build Release Archive' tolerates a BUILD failure\n        .github/workflows/full-tests.yml:65  step 'Build the 294-file suite (reveal-only)' tolerates a BUILD failure\n        .github/workflows/full-tests.yml:83  step 'Run the 294-file suite (reveal-only)' tolerates a BUILD failure\n        .github/workflows/studio.yml:163  step 'Build Engine for iOS' pipes its build without `set -o pipefail` — the pipeline reports the LAST command's status\n        → A test failure may be tolerable in a reveal-only run; a build failure never is. The repair\n        → DEPENDS ON WHICH LINE: a `|| true` or a missing `set -o pipefail` must be removed first — a\n        → guard step added on top of either reads success forever. Only once the step's own exit\n        → status is honest can a final step gate on `steps.<id>.outcome` (NOT `.conclusion`, which\n        → continue-on-error forces to success), and that requires the step to HAVE an `id:`. Changing\n        → CI config is founder-gated in this repo — report, do not edit.\n\n   ℹ️  [INFO] The blocking gate runs the largest test suite\n        ci.yml -scheme Echoelmusic -> test targets ['EchoelmusicTests']\n        those bundles build: EchoelmusicTests = Tests/CISmoke (969 files)\n        largest suite on disk = Tests/CISmoke (969 files)\n        → Stated positively on purpose: a guard written into that suite gates a push. The OTHER bundle\n        → building a different directory is the deliberate reveal-only split, not a defect — which is\n        → exactly what the old wording could not tell apart.\n\n   ❌ [CRITICAL] A test filter names a suite that does not exist — that step tests nothing\n        .github/workflows/ci.yml:290  names suite 'ComprehensiveTestSuite' — no such XCTestCase class\n        .github/workflows/ci.yml:291  names suite 'ComprehensiveTestSuite' — no such XCTestCase class\n        → A run with zero matched tests is understood to report success rather than fail — UNVERIFIED\n        → here, there is no Xcode in this environment, so treat it as the assumption this finding\n        → rests on. Before renaming: check whether the step is ALSO masked (see the finding above). If\n        → it is, fixing the name restores nothing observable — the mask is the bigger defect and has\n        → to go first.\n\n── B. TOOLING — do the commands and skills still describe THIS repo?\n   ✅ Commands and skills reference only paths that exist; decisions.csv parses; every plist-named class is declared.\n\n── C. SURFACES — is there a door to what the code builds?\n   ⚠️  [WARN] View types built ONLY in a DEBUG branch (absent from the shipped app)\n        Sources/Echoelmusic/Resources/AppIcon.swift:258  struct AppIconView: View — built ONLY inside `#if DEBUG`\n        Sources/Echoelmusic/Resources/AppIcon.swift:326  struct LaunchScreenView: View — built ONLY inside `#if DEBUG`\n        → A PreviewProvider is a design tool, not a door: a Release build contains neither the preview\n        → nor — for these — any other caller. C1 above could not see them because it asks 'is it built\n        → AT ALL' and a debug-only call is still a call. Treat each exactly like a C1 entry:\n        → unreachable is not itself a defect, unreachable AND unwritten-down is. A design-asset\n        → renderer parked behind a preview is legitimate; a SCREEN here is a door that was lost.\n\n   ⚠️  [WARN] View types reachable only through a doorless view (transitive, #947)\n        Sources/Echoelmusic/Studio/NetworkActivityDot.swift:229  struct ADMStreamStatusLine: View — built only by views that are themselves unreachable\n        Sources/Echoelmusic/Studio/BreathGuideView.swift:20  struct BreathGuideView: View — built only by views that are themselves unreachable\n        Sources/Echoelmusic/Studio/PulseMeasurementView.swift:61  struct PulseMeasurementView: View — built only by views that are themselves unreachable\n        → C1 above asks whether a view is built AT ALL; these ARE built, by code nobody can reach.\n        → Same verdict, one hop further, and it is the hop this tool used to hand to a human:\n        → CLAUDE.md registered PulseMeasurementView by hand at #525 while this section reported clean.\n        → Treat each exactly like a C1 entry — unreachable is not itself a defect, unreachable AND\n        → unwritten-down is. Re-dooring one of these means dooring its PARENT, not the entry itself.\n\n   ⚠️  [WARN] View types that nothing in Sources/ ever constructs\n        Sources/Echoelmusic/Studio/BioSourceView.swift:33  struct BioSourceView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/BroadcastView.swift:16  struct BroadcastView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/ImmersiveStageView.swift:33  struct ImmersiveStageView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/ProUnlockView.swift:24  struct ProUnlockView: View — never constructed anywhere in Sources/\n        Sources/Echoelmusic/Studio/SessionView.swift:33  struct SessionView: View — never constructed anywhere in Sources/\n        → Being constructed nowhere is proof of unreachability; being constructed somewhere is NOT\n        → proof of reachability — the caller may itself be dead (that is how the Tools-grid views\n        → stayed 'wired' for weeks). Some of these are parked on purpose (ImmersiveStageView,\n        → BroadcastView while RTMP is unlinked); the test per entry is whether that parking is WRITTEN\n        → DOWN in CLAUDE.md. Undocumented + unreachable is the defect, not unreachable by itself.\n\n   ⚠️  [WARN] Modal flags that nothing can ever set to true\n        Sources/Echoelmusic/Studio/EchoelStudioView.swift:835  @State showMeditation — never assigned anything but its default\n        → The modifier bound to such a flag is unreachable UI that still counts against the\n        → presentation-modifier budget (the 10.76.34 black-screen law). These are the FIRST place to\n        → look for a slot when a new modal is needed.\n\n── D. DOCS — do the numbers in CLAUDE.md still hold?\n   ℹ️  [INFO] Counted now — compare against what CLAUDE.md claims\n        Sources/**/*.swift (git-tracked)      = 522\n        Tests/EchoelmusicTests/*.swift        = 301\n        EchoelStudioView presentation modifiers (file-wide, line-initial) = 12\n        → The modifier count is FILE-WIDE, not body-chain-only — a modifier nested inside another\n        → modifier's content closure is counted here but does not sit on the body's generic type. Read\n        → the quoted CLAUDE.md lines against these numbers before trusting either.\n\n   ℹ️  [INFO] Always-loaded surface = 169,013 B (4 files); CLAUDE.md = 149,149 B\n          149,149 B  CLAUDE.md\n           11,042 B  .claude/rules/context.md\n            6,217 B  .claude/rules/swift-audio.md\n            2,605 B  .claude/rules/engineering.md\n        → Under the ceiling. This number only moves in the wrong direction by accretion, so it is\n        → worth re-reading whenever a cycle adds a paragraph to CLAUDE.md rather than to a ledger.\n\n   ℹ️  [INFO] SessionStart hook reads 162,873 B of a possible 1,923,931 B (8.5 %)\n        1,761,058 B  kept off the bill by the two caps\n          798,784 B  memory/LEDGER_COUNTS.md — in memory/ and deliberately NOT in the hook's cat list\n        → Single digits is the durable claim `.claude/rules/context.md` §1 makes; the literal bytes\n        → are a date, so they live here and not in an always-loaded file (#764).\n\n── E. RATCHETS — is the tree still under the ceilings its guards pin?\n   ❌ [CRITICAL] The spacing ratchet is over its ceiling — Run Tests will name it\n        712 literal gaps in Sources/ against ceiling 696 (+16)\n        largest holders: Sources/Echoelmusic/Studio/EchoelStudioView.swift (114), Sources/Echoelmusic/Studio/WorkstationView.swift (65), Sources/Echoelmusic/Studio/PatchbayView.swift (47), Sources/Echoelmusic/Studio/BioStripView.swift (28), Sources/Echoelmusic/Views/OnboardingView.swift (23)\n        no Sources/ file is touched by the working tree or HEAD; the overshoot is older than this commit\n        → Tests/CISmoke/TheSpacingSitsOnTheScaleTests.swift claim 2 (`testTheLiteralGapsOnlyFall`) is\n        → red. A new row takes its gap from `EchoelTheme.spaceXS` … `spaceXL`; never raise the\n        → ceiling. Measured BEFORE the push this costs seconds, after it a 25-minute test job\n        → (2026-10-08, 0ecd593).\n\n── F. ISOLATION — does a framework call a main-actor closure on its own queue?\n   ✅ 3133 closures formed in an isolated context; none reaches a framework queue unmarked, none waits on an SDK reading.\n\n── LIMITS (what this run did NOT check)\n   Reachability is grep-based: it proves a NAME is never constructed, not that a surface is\n     unreachable at runtime. The chain to a rendering parent still has to be read by hand.\n     Comments no longer count as calls (#762 — the note documenting a doorless view used\n     to hide it); a STRING LITERAL still can — C1c pins that no view relies on one,\n     and says so with the quoted line when one ever does.\n   And an entry point can live OUTSIDE Swift entirely: `ExternalDisplaySceneDelegate` has\n     zero references in Sources/ and is reached from an Info.plist string. A grep-based\n     audit calls that file dead and is wrong. Section B now resolves every class name\n     under the plist keys iOS treats as class names, prefixed or bare, at any depth — so\n     the NEXT such entry point is found too, as long as its key is in that list. A key\n     nobody listed, or an entry point outside a plist altogether, still is not.\n   Nothing here compiles or runs anything. A green doctor says the instruments look honest,\n     never that the code works.\n   Sound, feel and device behaviour are outside its reach entirely — those need a listen.\n\n❌ 3 critical finding(s).\n",
+    "studio_pipefail_false_positive_verified_by_reading": ".github/workflows/studio.yml:156 uses set -eo pipefail"
+  },
+  "remote_metadata_observed": {
+    "base": "31ce86372ed852626f186f91d2984996bb958b89",
+    "rechecked_main": "31ce86372ed852626f186f91d2984996bb958b89",
+    "ci430": {
+      "id": 40376079505,
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "8f4cd9611833e3909d398056fe139d18ee7eb182",
+      "url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40376079505"
+    },
+    "testflight_window_size": 50,
+    "testflight_runs": [
+      {
+        "id": 40179831237,
+        "name": "Echoel Studio TestFlight",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "5eeeb3e35313eed66350b13d973ba59adbe5b0b2",
+        "run_number": 10,
+        "url": "https://github.com/vibrationalforce/Echoelmusic/actions/runs/40179831237"
+      }
+    ]
+  },
+  "independent_review": {
+    "method": "read-only separate reviewer; no code or device tests",
+    "findings_fixed": [
+      "stale permission callback source/generation identity, S22",
+      "malformed root JSON / unrepresentable number handling, CLI controls"
+    ],
+    "followup_sources_list": "Current reference has explicit routing-input shape validation; executed malformed_sources_is_contract_error regression confirms it."
+  },
+  "integration_acceptance": [
+    {
+      "id": "GA-I01",
+      "description": "Swift state/permission lifecycle tests",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I02",
+      "description": "Per-metric raw producer validation and normalization",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I03",
+      "description": "Camera/BLE/Health permissions and lifecycle on device",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I04",
+      "description": "Registry identity and existing parameter tapers",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I05",
+      "description": "Real v1/v2 Golden -> v3 ProjectCodec migration",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I06",
+      "description": "Routing commands, undo, target deletion and duplicate identities",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I07",
+      "description": "Coherent bounded render snapshot handoff and plan lifetime",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I08",
+      "description": "Audio callback allocations/locks and measured performance",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I09",
+      "description": "Frozen/recorded source export with block-size invariance in Swift",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I10",
+      "description": "Plugin capture, store rejection, file-save and reopen",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I11",
+      "description": "AU render errors and no false successful export",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I12",
+      "description": "Production-camera arbitration and resume",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I13",
+      "description": "VoiceOver/Dynamic Type and actual reachable controls",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    },
+    {
+      "id": "GA-I14",
+      "description": "End-to-end iPhone/AUv3-host listening session",
+      "status": "NOT_RUN",
+      "tested_sha": null,
+      "evidence": null
+    }
+  ],
+  "earlier_acceptance_matrix": "https://github.com/vibrationalforce/Echoelmusic/blob/8f4cd9611833e3909d398056fe139d18ee7eb182/scratchpads/TESTFLIGHT_ACCEPTANCE_2026-10-26.json",
+  "production_diff": "",
+  "not_claimed": [
+    "sensor accuracy",
+    "latency",
+    "real-time safety",
+    "Swift v3 codec correctness",
+    "AUv3 recall",
+    "device accessibility",
+    "complete W0-W10 delivery",
+    "B/C/D package delivery"
+  ],
+  "local_markdown_links": {
+    "count": 13,
+    "missing": [],
+    "links": [
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "scratchpads/grok-handover-2026-10-27/AUDIT.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": ".claude/skills/g-a-body-modulation/references/CONTRACT.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": ".claude/skills/g-a-body-modulation/references/FIXTURES.json"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": ".claude/skills/g-a-body-modulation/references/reference.py"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "scratchpads/grok-handover-2026-10-27/VALIDATION.json"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "scratchpads/grok-handover-2026-10-27/DOCTOR_STATUS.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": ".claude/skills/g-a-body-modulation/SKILL.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "scratchpads/grok-handover-2026-10-27/DOCTOR_STATUS.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "docs/dev/FOUNDER_PRODUCT_LAW.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/README.md",
+        "target": "EchoelStudio/CLAUDE.md"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/AUDIT.md",
+        "target": "scratchpads/grok-handover-2026-10-27/VALIDATION.json"
+      },
+      {
+        "from": "scratchpads/grok-handover-2026-10-27/DOCTOR_STATUS.md",
+        "target": "scratchpads/grok-handover-2026-10-27/VALIDATION.json"
+      }
+    ]
+  },
+  "local_tested_reference_commit": "13488337319e7445e9844cb955b473a362f629f7",
+  "local_reviewed_documentation_commit": "bf377a375a5bc422da0ccb2e53b4548f3cbc0c95",
+  "publication_note": "Published through connected GitHub after unauthenticated CLI push failed. Remote trees for reference and documentation equal the locally reviewed trees; commit metadata differs."
+}
