@@ -201,6 +201,7 @@ struct SoundPanel: View {
 
         choicePicker(.engine)
         choicePicker(.waveform)
+        choicePicker(.filter)
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
                   alignment: .leading, spacing: Theme.Space.s) {
