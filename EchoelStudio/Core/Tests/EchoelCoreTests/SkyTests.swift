@@ -7,7 +7,10 @@ import XCTest
 final class SkyTests: XCTestCase {
     /// Meeus example 12.a: 1987 April 10, 0h UT is JD 2446895.5 and 13h10m46.3668s sidereal.
     func testSiderealTimeMatchesMeeusExample() {
-        let expected = (13 + 10.0 / 60 + 46.3668 / 3600) * 15
+        let hours: Double = 13
+        let minutes: Double = 10
+        let seconds: Double = 46.3668
+        let expected: Double = (hours + minutes / 60 + seconds / 3600) * 15
         XCTAssertEqual(Sky.greenwichSiderealDegrees(julianDay: 2_446_895.5), expected, accuracy: 1e-4)
     }
 
@@ -32,7 +35,8 @@ final class SkyTests: XCTestCase {
         let ra = Sky.normalized(Sky.greenwichSiderealDegrees(julianDay: jd) + longitude)
         let star = try XCTUnwrap(Sky.horizontal(rightAscension: ra, declination: 20, latitude: latitude,
                                                 longitude: longitude, julianDay: jd))
-        XCTAssertEqual(star.altitude, 90 - (latitude - 20), accuracy: 1e-9)
+        let expectedAltitude: Double = 90 - (latitude - 20)
+        XCTAssertEqual(star.altitude, expectedAltitude, accuracy: 1e-9)
         XCTAssertEqual(star.azimuth, 180, accuracy: 1e-9)
         let north = try XCTUnwrap(Sky.horizontal(rightAscension: ra, declination: 80, latitude: latitude,
                                                  longitude: longitude, julianDay: jd))
