@@ -25,6 +25,10 @@ final class KernelParameterContractTests: XCTestCase {
             entry("synth_sustain", "Sustain", .amount, 0...1, 0.7),
             entry("synth_release", "Release", .seconds, 0.001...10, 0.25),
             entry("synth_level", "Level", .amount, 0...1, 0.25),
+            // Appended 2026-10-28: new values join at the end, so every earlier address holds.
+            entry("synth_engine", "Engine", .choice, 0...3, 0, ["Classic", "Supersaw", "FM", "Sub"]),
+            entry("synth_character", "Character", .amount, 0...1, 0.5),
+            entry("synth_filter", "Filter", .choice, 0...1, 0, ["Clean", "Ladder"]),
         ])
     }
 
