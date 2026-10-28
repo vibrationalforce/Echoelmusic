@@ -39,8 +39,7 @@ struct PluginInterfaceSection: View {
     }
 
     private func storeSettings() {
-        let commands = engine.plugins.captureCommands(for: store.project, only: slot)
-        try? store.perform(commands, title: "Plugin Settings")
+        engine.plugins.store(into: store, only: slot, title: "Plugin Settings")
     }
 
     /// The plugin's preferred height, kept between a usable minimum and most of a phone screen.
