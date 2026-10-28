@@ -1,20 +1,21 @@
-11.0.0, tenth upload — your pulse moves the mix, a flanger, songs that store modulation
+11.0.0, eleventh upload — HRV and coherence as sources, the body moves the instrument, four synth engines, a ladder filter, the Field
 
-What is new since 10012. Each line is code that the Echoel Studio run builds and, where a test
+What is new since 10013. Each line is code that the Echoel Studio run builds and, where a test
 target reaches it, tests; nothing here is device-verified yet.
-- The body moves the mix: long-press a track name (or the bar count above the tracks for the
-  master), Modulate, Volume or Pan, Heart Rate. The chest strap's pulse then moves that fader or
-  pan along its travel, gliding instead of stepping. Each route offers depths 10/25/50/100 %,
-  Invert, bipolar or unipolar, on/off and Remove, each one undo step. With no strap, off the skin
-  or stale, a route adds nothing and the fader stays where it is. An export never reads the
-  strap: it renders the song as stored.
-- Flanger, the seventh standard effect (Rate, Depth, Feedback −0.95…0.95, Mix), on any insert and
-  as Echoel Flanger in other hosts, free like every effect.
-- Song format 3: a song stores its modulation routes. Every earlier song opens unchanged; a song
-  saved by this build no longer opens in 10012 or earlier.
+- Modulate offers three sources from the strap: Heart Rate, HRV (after 8 beats) and Coherence
+  (after 16). Each glides like the pulse and is absent whenever the pulse is.
+- On an instrument track, Modulate also lists the built-in instrument's own values (cutoff,
+  resonance, envelope, level, the sampler's and the drums' values) as targets. Plugin parameters
+  are not routable yet.
+- The synth has an Engine choice on the Sound page: Classic, Supersaw, FM, Sub, with Character as
+  the engine's one shaping value (detune, FM index, sub level), and a Filter choice: Clean or
+  Ladder (four-pole, warmer, stays bounded at full resonance).
+- Field, the fifth surface beside Mixer: a ring per beat, an arc per bar, the key as colour, the
+  master level as the disc, coherence as a halo while it is measured. Brightness never flashes
+  more than three times a second.
 
-Previous: 11.0.0 (10012), ninth upload — heart rate strap, chorus and phaser, two keyboards on
-one key. 10011 — loop, overdub, record without arming. 10010 — play it with the phone alone.
+Previous: 11.0.0 (10013), tenth upload — your pulse moves the mix, a flanger, songs that store
+modulation. 10012 — heart rate strap, chorus and phaser, two keyboards on one key. 10011 — loop, overdub, record without arming. 10010 — play it with the phone alone.
 10009 — the app survives what a device does to it. 10008 — the plugin purchase in the App
 Group. Before that: 10007, 10006, 10005, 10004 (the first Echoel Studio build).
 group.com.echoelmusic (the import of earlier songs) is still not requested (F17).
@@ -25,12 +26,11 @@ The version is MARKETING_VERSION in EchoelStudio/project.yml.
 This file is a test list for the device, not a source for claims (ContentPipeline/CLAIMS.md).
 
 Five things to try on the device (FOUNDER_INBOX rule 1: five per build; answer each yes or no):
-1. Strap on, a Keys track playing: long-press Keys, Modulate, Volume, Heart Rate. The level now
-   follows your pulse; raise your pulse (stand up, a few squats) and it moves within a few
-   seconds, smoothly, without clicks.
-2. On that route choose Depth 100 % and Invert: a higher pulse now turns Keys down. Remove: Keys
-   is back at its fader.
-3. Take the strap off while the route is on: the level returns to the fader and stays there.
-4. Put Flanger on a track: it sweeps; negative Feedback sounds hollower than positive.
-5. Save the song with a route, close and reopen it: the route is still there; Export WAV sounds
-   like the fader setting, not like your pulse at the moment of export.
+1. Strap on, a Keys track playing: long-press Keys, Modulate, Cutoff, Heart Rate. The sound gets
+   brighter as your pulse rises, gliding without clicks.
+2. Same with HRV or Coherence: after a minute of calm breathing the route starts to move
+   something; with the strap off it adds nothing.
+3. Sound page: switch Engine through Classic, Supersaw, FM, Sub and turn Character — each sounds
+   clearly different and none clicks or goes silent.
+4. Filter Ladder at high Resonance: warmer than Clean, loud but never runaway.
+5. Field while a song plays: rings follow the beat, nothing flickers fast, the app stays smooth.
