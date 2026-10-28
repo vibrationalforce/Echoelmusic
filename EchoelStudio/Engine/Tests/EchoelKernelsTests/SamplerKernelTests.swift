@@ -102,5 +102,86 @@ final class SamplerKernelTests: XCTestCase {
         _ = render(kernel, frames: 16)
         XCTAssertTrue(kernel.load(buffer), "once it has, the ring is free again")
     }
+
+    // MARK: Held keys (Codex handover S3)
+
+    /// A kernel with a long constant sample and a short release, rendered once so both apply.
+    private func heldKernel() throws -> SamplerKernel {
+        let kernel = SamplerKernel(sampleRate: 48_000)
+        kernel.load(try XCTUnwrap(constant(0.5, seconds: 4)))
+        kernel.setParameter(try address("sampler_release"), 0.01)
+        _ = render(kernel, frames: 16)
+        return kernel
+    }
+
+    /// Key on, root moved, the same key on again, key off: nothing is left sounding. The first
+    /// voice sounded at the old pitch, so a note-off by the new pitch alone missed it.
+    func testARepeatedKeyAfterTheRootMovedLeavesNoVoiceBehind() throws {
+        let kernel = try heldKernel()
+        kernel.receive(status: 0x90, 64, 127)
+        _ = render(kernel, frames: 480)
+        kernel.setParameter(try address("sampler_root"), 55)
+        _ = render(kernel, frames: 480)
+        kernel.receive(status: 0x90, 64, 127)
+        _ = render(kernel, frames: 480)
+        kernel.receive(status: 0x80, 64, 0)
+        _ = render(kernel, frames: 4_800)
+        XCTAssertFalse(kernel.isSounding, "both voices of the key have ended")
+        XCTAssertEqual(peak(render(kernel, frames: 480)), 0)
+    }
+
+    /// Two keys clamped onto one pitch at the top of the range: each key ends only its own voice.
+    func testTwoKeysOnOnePitchEndOnlyTheirOwnVoice() throws {
+        let kernel = try heldKernel()
+        kernel.setParameter(try address("sampler_root"), 36) // +24: keys 104 … 127 all land on 127
+        _ = render(kernel, frames: 16)
+        kernel.receive(status: 0x90, 120, 127)
+        kernel.receive(status: 0x90, 125, 127)
+        _ = render(kernel, frames: 480)
+        kernel.receive(status: 0x80, 120, 0)
+        _ = render(kernel, frames: 4_800)
+        XCTAssertTrue(kernel.isSounding, "key 125 still holds its voice")
+        kernel.receive(status: 0x80, 125, 0)
+        _ = render(kernel, frames: 4_800)
+        XCTAssertFalse(kernel.isSounding)
+    }
+
+    /// The same key on two channels is two keys: a note-off on one channel leaves the other held.
+    /// A note-off for a key that never sounded ends nothing.
+    func testTheSameKeyOnTwoChannelsIsTwoKeys() throws {
+        let kernel = try heldKernel()
+        kernel.receive(status: 0x90, 60, 127)
+        kernel.receive(status: 0x91, 60, 127)
+        _ = render(kernel, frames: 480)
+        kernel.receive(status: 0x80, 60, 0)
+        kernel.receive(status: 0x82, 61, 0)
+        _ = render(kernel, frames: 4_800)
+        XCTAssertTrue(kernel.isSounding, "channel 2's key is still held")
+        kernel.receive(status: 0x91, 60, 0) // note-on with velocity 0 is a note-off
+        _ = render(kernel, frames: 4_800)
+        XCTAssertFalse(kernel.isSounding)
+    }
+
+    /// All sound off, all notes off and a new sample each end every held key, and the next
+    /// note-off of an old key ends nothing that started after.
+    func testResetNotesOffAndANewSampleLeaveNoStaleKey() throws {
+        let kernel = try heldKernel()
+        kernel.receive(status: 0x90, 60, 127)
+        kernel.receive(status: 0xB0, 120, 0)
+        XCTAssertFalse(kernel.isSounding, "CC 120 silences at once")
+        kernel.receive(status: 0x90, 62, 127)
+        kernel.receive(status: 0xB0, 123, 0)
+        _ = render(kernel, frames: 4_800)
+        XCTAssertFalse(kernel.isSounding, "CC 123 releases every held key")
+        kernel.receive(status: 0x90, 64, 127)
+        kernel.load(try XCTUnwrap(constant(0.5, seconds: 4)))
+        _ = render(kernel, frames: 16)
+        XCTAssertFalse(kernel.isSounding, "a new sample stops the voice")
+        kernel.receive(status: 0x90, 65, 127)
+        kernel.receive(status: 0x80, 64, 0) // the old key's off must not end key 65
+        _ = render(kernel, frames: 4_800)
+        XCTAssertTrue(kernel.isSounding)
+        XCTAssertTrue(render(kernel, frames: 480).allSatisfy(\.isFinite))
+    }
 }
 

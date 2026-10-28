@@ -42,8 +42,12 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     private let mono: UnsafeMutablePointer<Float>
     /// Notes are shifted so the sample's root key plays it at its own speed.
     private var transpose = 0
-    /// Where each held note sounded, so its note-off finds it after the root key moved.
-    private let sounding: UnsafeMutablePointer<UInt8>
+    /// The voice each held key started, per MIDI channel and key (16 × 128), so its note-off ends
+    /// that voice after the root key moved, a repeated key first ends its own earlier voice, and
+    /// two keys that land on one pitch (clamped at an edge, or the same key on two channels) end
+    /// only their own (Codex handover S3). This is no MPE: the channel only tells keys apart.
+    private let held: UnsafeMutablePointer<SamplerVoiceHandle?>
+    private static var heldCount: Int { 16 * 128 }
 
     // The sample hand-over.
     private let slots: UnsafeMutablePointer<UnsafeMutableRawPointer?>
@@ -51,7 +55,7 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     private let installed = Atomic<Int>(0)
     private var renderSequence = 0
     private var nextSequence = 0
-    private var held: [(sequence: Int, buffer: SampleBuffer)] = []
+    private var kept: [(sequence: Int, buffer: SampleBuffer)] = []
 
     public init(sampleRate: Double, maximumFrames: Int = 4_096) {
         let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
@@ -68,10 +72,9 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
         sampler = Sampler(sampleRate: Float(rate))
         mono = .allocate(capacity: self.maximumFrames)
         mono.initialize(repeating: 0, count: self.maximumFrames)
-        sounding = .allocate(capacity: 128)
-        // Each key starts as itself, so a note-off for a key that never sounded releases its own
-        // pitch (nothing), not pitch 0 — what the app's engine always did.
-        for key in 0..<128 { (sounding + key).initialize(to: UInt8(key)) }
+        held = .allocate(capacity: Self.heldCount)
+        // No key holds a voice yet: a note-off for a key that never sounded ends nothing.
+        held.initialize(repeating: nil, count: Self.heldCount)
         slots = .allocate(capacity: Self.ringSize)
         slots.initialize(repeating: nil, count: Self.ringSize)
     }
@@ -79,7 +82,8 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     deinit {
         values.deallocate()
         mono.deallocate()
-        sounding.deallocate()
+        held.deinitialize(count: Self.heldCount)
+        held.deallocate()
         slots.deallocate()
     }
 
@@ -103,11 +107,11 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
 
     @discardableResult public func load(_ buffer: SampleBuffer?) -> Bool {
         let done = installed.load(ordering: .acquiring)
-        held.removeAll { $0.sequence < done }
+        kept.removeAll { $0.sequence < done }
         guard nextSequence + 1 - done < Self.ringSize else { return false }
         nextSequence += 1
         slots[nextSequence % Self.ringSize] = buffer.map { Unmanaged.passUnretained($0).toOpaque() }
-        if let buffer { held.append((nextSequence, buffer)) }
+        if let buffer { kept.append((nextSequence, buffer)) }
         published.store(nextSequence, ordering: .releasing)
         return true
     }
@@ -115,7 +119,7 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
     // MARK: - Render thread
 
     public func receive(status: UInt8, _ data1: UInt8, _ data2: UInt8) {
-        let note = Int(data1 & 0x7F)
+        let key = Int(status & 0x0F) * 128 + Int(data1 & 0x7F)
         switch status & 0xF0 {
         case 0x90 where data2 & 0x7F > 0:
             // A host sends a change and a note at the same offset before any render: the note
@@ -123,11 +127,13 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
             // Both are one atomic compare when nothing changed.
             takeNewSample()
             commitParameters()
-            let pitch = UInt8(Swift.min(Swift.max(note + transpose, 0), 127))
-            sounding[note] = pitch
-            sampler.noteOn(pitch: pitch, velocity: data2 & 0x7F)
+            // The same key again ends its own earlier voice first, never another key's.
+            if let earlier = held[key] { sampler.noteOff(earlier) }
+            let pitch = UInt8(Swift.min(Swift.max(Int(data1 & 0x7F) + transpose, 0), 127))
+            held[key] = sampler.noteOn(pitch: pitch, velocity: data2 & 0x7F)
         case 0x80, 0x90:
-            sampler.noteOff(pitch: sounding[note])
+            if let voice = held[key] { sampler.noteOff(voice) }
+            held[key] = nil
         case 0xB0 where data1 == 123: sampler.allNotesOff()
         case 0xB0 where data1 == 120: sampler.reset()
         default: break
