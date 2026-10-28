@@ -114,7 +114,8 @@ final class AgentToolsTests: XCTestCase {
             try AgentToolsTests.run([.removeEffect(track: "Drums", effect: "verb")], on: store)
             XCTAssertEqual(store.project.tracks[0].inserts.count, 1)
             XCTAssertThrowsError(try AgentTools.commands(for: .removeEffect(track: "Drums", effect: "delay"), in: store.project))
-            XCTAssertThrowsError(try AgentTools.commands(for: .addEffect(track: "Drums", effect: "flanger"), in: store.project))
+            XCTAssertThrowsError(try AgentTools.commands(for: .addEffect(track: "Drums", effect: "vocoder"), in: store.project),
+                                 "an effect Echoel does not have")
             XCTAssertThrowsError(try AgentTools.commands(for: .repeatClip(track: "Drums", bar: 9, times: 1), in: store.project))
         }
     }
