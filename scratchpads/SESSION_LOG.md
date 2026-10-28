@@ -1859,3 +1859,20 @@ Founder (Fortsetzung): „Weiter Greb all context und volle power."
 - **Zwei rote Läufe, beide repariert:** (1) `noteOn` mit Rückgabe brach ein Test-Protokoll → `startNote`; (2) ein Test klemmte am oberen Rand, das Sample spielte 48× schneller und endete vor der Prüfung → unterer Rand.
 - **Lehre (HARNESS):** Jeder Push unter `EchoelStudio/` bricht den laufenden Lauf ab; bei Pushes im Minutentakt gibt es nie ein Ergebnis. Pushes bündeln oder den Lauf durchlaufen lassen.
 - Nichts davon auf einem Gerät geprüft.
+
+## 2026-10-28 (Nachmittag) — W2: der Puls bewegt die Mischung
+
+Founder: „du entscheidest und integrierst alles“, dann „ohne Zwischenfragen und TestFlight bis in
+drei Tagen“ (bis 31.10.). Build 10012 VALID (13:55 UTC): Gurt, Chorus, Phaser, zwei Keyboards.
+Danach, alles CI-gebaut, nichts geräteverifiziert:
+- Flanger (DSP, Standard-Effekt eFlg/xFlg, AUv3) · AgentTools-Test nannte „flanger“ als Nicht-Effekt → „vocoder“.
+- W2 Core: `Modulation` (M01–M18 aus FIXTURES generiert), `LinearRamp` (R01–R03), Route Codable +
+  StoredNames, Format 3 (`modRoutes` Pflicht, v1/v2 öffnen leer, F08/F09 abgelehnt, neues Golden),
+  Prüfung beim Öffnen, Routen gehen mit Spur/Insert/Plugin, Kommandos `modulation.set/remove`.
+- W2 Engine: `ModulationInputs` (atomare Zellen, NaN = abwesend), `MixModulation` auf Fader/Pan von
+  Spur und Master; Offline-Export ohne Eingänge.
+- W2 App: Gurt schreibt Puls (0,6-s-Gleiten, 30 Hz, ohne Observation), Menü „Modulate“ neben „Automate“.
+- Fixes: HeartRateStrap-Delegate `@preconcurrency` (Xcode 26.2 „sending … risks data races“).
+Lehre: jeder Push unter EchoelStudio/ bricht den laufenden Gate-Lauf ab — Studio-Code bündeln,
+einen Release-Commit nur auf grünem Stand, Folgearbeit auf einem lokalen Zweig parken.
+Nächster Schritt: Gate auf 54a9d03b5 → RELEASE (Entwurf scratchpad RELEASE.10013) → zehnter Upload.
