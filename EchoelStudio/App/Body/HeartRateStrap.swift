@@ -56,7 +56,12 @@ final class HeartRateStrap: NSObject {
     /// `glideSeconds` instead of stepping once a second, and is absent the moment the pulse is.
     @ObservationIgnored var output: ModulationInputs?
     @ObservationIgnored private var glide: Task<Void, Never>?
-    @ObservationIgnored private var gliding: Double?
+    /// Where each source the strap feeds stands in its glide; absent sources are not in it.
+    @ObservationIgnored private var gliding: [ModulationSource: Double] = [:]
+    /// HRV and coherence from the newest intervals, nil while they cannot be stated.
+    @ObservationIgnored private var derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+    /// The sources the strap feeds.
+    static let feeds: [ModulationSource] = [.heartRate, .hrv, .coherence]
     static let glideSeconds = 0.6
     static let glideStepSeconds = 1.0 / 30
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
@@ -69,6 +74,7 @@ final class HeartRateStrap: NSObject {
         apply(.start(.ble, Self.permission(CBCentralManager.authorization)))
         status = .searching
         rrIntervalsMilliseconds = []
+        derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
         if let central {
             centralChanged(central)
         } else {
@@ -88,17 +94,26 @@ final class HeartRateStrap: NSObject {
         }
     }
 
-    /// One step of the glide: towards the measured pulse, or absent at once without one.
+    /// One step of the glide: each source towards its measurement, or absent at once without
+    /// one. HRV and coherence exist only while the pulse does — they come from its beats.
     private func glideTowardsPulse() {
-        guard let target = pulse.value else {
-            if gliding != nil { output?.set(.heartRate, nil) }
-            gliding = nil
-            return
-        }
         let factor = 1 - Foundation.exp(-Self.glideStepSeconds / Self.glideSeconds)
-        let next = gliding.map { $0 + (target - $0) * factor } ?? target
-        gliding = next
-        output?.set(.heartRate, next)
+        let pulseValue = pulse.value
+        for source in Self.feeds {
+            let target: Double? = switch source {
+            case .heartRate: pulseValue
+            case .hrv: pulseValue == nil ? nil : derived.hrv
+            case .coherence: pulseValue == nil ? nil : derived.coherence
+            default: nil
+            }
+            guard let target else {
+                if gliding.removeValue(forKey: source) != nil { output?.set(source, nil) }
+                continue
+            }
+            let next = gliding[source].map { $0 + (target - $0) * factor } ?? target
+            gliding[source] = next
+            output?.set(source, next)
+        }
     }
 
     /// The musician turned it off: the connection ends and the value is gone.
@@ -107,8 +122,9 @@ final class HeartRateStrap: NSObject {
         scanTimeout?.cancel()
         ticker?.cancel()
         glide?.cancel()
-        gliding = nil
-        output?.set(.heartRate, nil)
+        gliding = [:]
+        derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
+        for source in Self.feeds { output?.set(source, nil) }
         if let central {
             if central.isScanning { central.stopScan() }
             if let peripheral { central.cancelPeripheralConnection(peripheral) }
@@ -208,6 +224,7 @@ final class HeartRateStrap: NSObject {
             if rrIntervalsMilliseconds.count > Self.intervalCapacity {
                 rrIntervalsMilliseconds.removeFirst(rrIntervalsMilliseconds.count - Self.intervalCapacity)
             }
+            derived = BeatDerivedSources.readings(rrMs: rrIntervalsMilliseconds)
         }
     }
 }
@@ -247,7 +264,10 @@ extension HeartRateStrap: @preconcurrency CBCentralManagerDelegate, @preconcurre
         guard isOn, peripheral == self.peripheral else { return }
         self.peripheral = nil
         status = .lost(peripheral.name ?? "Heart rate strap")
-        // The value ends with the strap; a new run starts when it is found again.
+        // The value ends with the strap; a new run starts when it is found again, and its
+        // intervals do not continue the old run's — a gap is not a beat.
+        rrIntervalsMilliseconds = []
+        derived = BeatDerivedSources.Readings(hrv: nil, coherence: nil)
         apply(.suspend)
         apply(.resume)
         scan(central)
