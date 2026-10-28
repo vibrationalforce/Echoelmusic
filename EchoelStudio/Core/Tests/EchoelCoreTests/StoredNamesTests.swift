@@ -21,7 +21,7 @@ final class StoredNamesTests: XCTestCase {
                                "gamelan-pelog", "hirajoshi", "bohlen-pierce"]
     private let synthKeys = ["synth.waveform", "synth.cutoff", "synth.resonance", "synth.filterAmount",
                              "synth.filterDecay", "synth.attack", "synth.decay", "synth.sustain", "synth.release",
-                             "synth.level"]
+                             "synth.level", "synth.engine", "synth.character"]
     private let drumsKeys = ["drums.level"]
     private let samplerKeys = ["sampler.root", "sampler.attack", "sampler.release", "sampler.level", "sampler.mode"]
 
@@ -41,6 +41,8 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(SynthParameter.all.map(\.key.rawValue), synthKeys, "a new synth parameter goes at the end")
         XCTAssertEqual(SynthParameter.waveform.choices, ["Sine", "Saw", "Square", "Triangle"],
                        "a lane stores the waveform's index")
+        XCTAssertEqual(SynthParameter.engine.choices, ["Classic", "Supersaw", "FM", "Sub"],
+                       "a lane stores the engine's index; a new engine goes at the end")
         // The drums' and the sampler's values are stored too (P1 A5); the order is also their
         // plugin's parameter address, which a host session saves.
         XCTAssertEqual(InstrumentDevice.drums.parameters.map(\.key.rawValue), drumsKeys, "a new row goes at the end")

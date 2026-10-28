@@ -130,7 +130,8 @@ public struct SynthParameter: Sendable, Equatable {
     /// in EchoelKernels, an exhaustive `switch` over these cases) does not compile until it is
     /// mapped. The case names are part of the code, not of the file: songs store the keys.
     public enum Name: Sendable, CaseIterable {
-        case waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level
+        // A new row goes at the end: a song stores the key, and the plugin its place.
+        case waveform, cutoff, resonance, filterAmount, filterDecay, attack, decay, sustain, release, level, engine, character
 
         /// The row this case stands for. Builds a value: read it off the render thread.
         public var parameter: SynthParameter {
@@ -146,6 +147,10 @@ public struct SynthParameter: Sendable, Equatable {
             case .sustain: SynthParameter("synth.sustain", "Sustain", .amount, 0...1, 0.7, .linear)
             case .release: SynthParameter("synth.release", "Release", .seconds, 0.001...10, 0.25, .exponential)
             case .level: SynthParameter("synth.level", "Level", .amount, 0...1, 0.25, .linear)
+            // The engine stores the index of its choice: a new engine goes at the end.
+            case .engine: SynthParameter("synth.engine", "Engine", .choice, 0...3, 0, .stepped,
+                                         choices: ["Classic", "Supersaw", "FM", "Sub"])
+            case .character: SynthParameter("synth.character", "Character", .amount, 0...1, 0.5, .linear)
             }
         }
 
@@ -166,6 +171,8 @@ public struct SynthParameter: Sendable, Equatable {
     public static let sustain = Name.sustain.parameter
     public static let release = Name.release.parameter
     public static let level = Name.level.parameter
+    public static let engine = Name.engine.parameter
+    public static let character = Name.character.parameter
 
     /// In display order: one row per `Name`.
     public static let all: [SynthParameter] = Name.allCases.map(\.parameter)

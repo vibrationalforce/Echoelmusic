@@ -48,6 +48,14 @@ extension SynthParameter.Name {
             patch.ampEnvelope.release = v
             patch.filterEnvelope.release = v
         case .level: patch.level = v
+        case .engine:
+            switch Int(value.rounded()) {
+            case 1: patch.engine = .supersaw
+            case 2: patch.engine = .fm
+            case 3: patch.engine = .sub
+            default: patch.engine = .classic
+            }
+        case .character: patch.character = v
         }
     }
 }
