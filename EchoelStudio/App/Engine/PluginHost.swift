@@ -676,4 +676,15 @@ struct OfflineUnits: @unchecked Sendable {
     let masterChain: [HostedEffect]
     /// Plugins that could not load; the export is made without them.
     let missing: [String]
+
+    /// Blocks these units refused during the render so far: more than 0 means the file has
+    /// silence where a plugin's sound belonged (Codex handover S6).
+    var renderFailures: Int {
+        units.values.reduce(0) { $0 + $1.renderFailures }
+            + chains.values.joined().reduce(0) { $0 + $1.renderFailures }
+            + masterChain.reduce(0) { $0 + $1.renderFailures }
+    }
 }
+
+/// A plugin refused to render part of an export: the file would have had a gap, so none is kept.
+struct PluginRenderFailed: Error {}

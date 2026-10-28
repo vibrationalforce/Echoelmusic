@@ -964,6 +964,7 @@ final class DocumentController {
                         try writer.append(left: left, right: right, count: count)
                         meter.process(left: left, right: right, count: count)
                     }.frameCount
+                    guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
                     try writer.finish()
                 } catch {
                     try? FileManager.default.removeItem(at: url)
@@ -993,7 +994,9 @@ final class DocumentController {
             log.error("export failed — \(error.localizedDescription, privacy: .private)")
             // The loudness of an earlier export must not stand under this failure as its result.
             lastExportIsNews = false
-            lastError = error as? WAVWriter.WriteError == .tooLong
+            lastError = error is PluginRenderFailed
+                ? "A plugin stopped rendering during the export, so the file would have had gaps. Nothing was saved."
+                : error as? WAVWriter.WriteError == .tooLong
                 ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
                 : "Could not export the song."
             return nil
@@ -1085,7 +1088,9 @@ final class DocumentController {
             if case .failure(let error) = outcome {
                 log.error("stem export failed — \(error.localizedDescription, privacy: .private)")
                 lastExportIsNews = false
-                lastError = error as? WAVWriter.WriteError == .tooLong
+                lastError = error is PluginRenderFailed
+                    ? "A plugin stopped rendering during the export, so the stems would have had gaps. Nothing was saved."
+                    : error as? WAVWriter.WriteError == .tooLong
                     ? "The song is longer than a WAV file can hold (about four hours at 24-bit, 48 kHz)."
                     : "Could not export the stems."
             }
@@ -1114,6 +1119,7 @@ final class DocumentController {
                                      isolating: track, frameCount: frameCount) { left, right, count in
             try writer.append(left: left, right: right, count: count)
         }
+        guard offline.renderFailures == 0 else { throw PluginRenderFailed() }
         try writer.finish()
     }
 
