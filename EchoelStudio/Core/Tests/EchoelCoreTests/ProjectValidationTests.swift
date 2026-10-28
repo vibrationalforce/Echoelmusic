@@ -242,6 +242,28 @@ final class ProjectValidationTests: XCTestCase {
         }, "a clip on a return track")
     }
 
+    /// G-A M10–M12 and the limit, on a whole song: a route on nothing, a repeated id, a depth past
+    /// ±1 and a 65th route each refuse the file; one good route on the keys' volume opens.
+    func testARouteMovesAParameterOfTheSongWithinItsLimits() throws {
+        var s = try song()
+        let route = ModulationRoute(source: .heartRate, target: .volume(s.keys), depth: 0.5)
+        s.project.modRoutes = [route]
+        XCTAssertNoThrow(try s.project.validate())
+        XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(s.project)).modRoutes, [route])
+        try refuses({ s in s.project.modRoutes = [ModulationRoute(source: .hrv, target: .volume(TrackID()), depth: 0.2)] },
+                    "a route on a track that is not in the song")
+        try refuses({ s in s.project.modRoutes = [route, route] }, "two routes with one id")
+        try refuses({ s in s.project.modRoutes = [ModulationRoute(source: .breath, target: .masterPan, depth: 1.01)] },
+                    "a depth past 1")
+        try refuses({ s in s.project.modRoutes = [ModulationRoute(source: .breath, target: .masterPan, depth: .nan)] },
+                    "a depth that is not a number")
+        try refuses({ s in
+            s.project.modRoutes = (0...Modulation.routeLimit).map { (_: Int) -> ModulationRoute in
+                ModulationRoute(source: .macro1, target: .masterPan, depth: 0.1, enabled: false)
+            }
+        }, "one route past the limit, disabled ones counted")
+    }
+
     func testEveryNameIsNonEmptyAndWithinTwiceTheEditorsLimit() throws {
         try refuses({ s in s.project.name = "" }, "a song without a name")
         try refuses({ s in s.project.tracks[0].name = " \n" }, "a track without a name")

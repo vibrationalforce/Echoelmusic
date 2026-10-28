@@ -133,6 +133,16 @@ extension Project {
                 }
             }
         }
+        // A route moves a parameter that exists in this song; unlike a lane it is not kept for a
+        // later build — a route on nothing would be a body moving nothing (G-A M11).
+        guard modRoutes.allSatisfy({ descriptor(for: $0.target) != nil }) else {
+            throw Self.invalid("modRoutes", "a route's target names nothing in this song")
+        }
+        do {
+            _ = try Modulation.validate(modRoutes, targets: Set(modRoutes.map(\.target)))
+        } catch {
+            throw Self.invalid("modRoutes", "more than \(Modulation.routeLimit) routes, a repeated id, or a depth outside −1…1")
+        }
         for lane in automation {
             // A lane on a parameter this build does not know is kept, but still plays safely.
             let range = descriptor(for: lane.target)?.range ?? -Double.infinity...Double.infinity
