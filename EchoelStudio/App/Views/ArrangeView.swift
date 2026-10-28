@@ -33,7 +33,10 @@ struct ArrangeView: View {
                         .minimumScaleFactor(0.7)
                         .frame(height: Theme.Size.rulerHeight)
                         .accessibilityLabel("Song length \(Arranging.songBars(of: project)) bars")
-                        .contextMenu { AutomateMenu(owner: .master) }
+                        .contextMenu {
+                            AutomateMenu(owner: .master)
+                            ModulateMenu(owner: .master)
+                        }
                     ForEach(project.tracks) { track in
                         Text(track.name)
                             .font(Theme.Font.label)
@@ -44,7 +47,10 @@ struct ArrangeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: Theme.Size.trackRowHeight)
                             .background(Theme.Color.surface)
-                            .contextMenu { AutomateMenu(owner: .track(track.id)) }
+                            .contextMenu {
+                                AutomateMenu(owner: .track(track.id))
+                                ModulateMenu(owner: .track(track.id))
+                            }
                             .accessibilityHidden(true)
                         ForEach(Self.lanes(of: .track(track.id), in: project), id: \.target) { lane in
                             AutomationName(lane: lane)
