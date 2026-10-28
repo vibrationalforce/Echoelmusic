@@ -205,4 +205,52 @@ final class LiveKeysTests: XCTestCase {
         XCTAssertEqual(clip.notes.map(\.start), [0, 240])
         XCTAssertEqual(clip.notes.map { $0.start + $0.length }, [240, 720])
     }
+
+    // MARK: Sources (Codex handover S4)
+
+    /// Two keyboards on one channel hold one key: the first to let go sends nothing, the last
+    /// ends the pitch. The second press strikes the pitch again, as two keys of one source do.
+    func testTwoSourcesHoldingOneKeyEndThePitchWithTheLastRelease() {
+        var keys = LiveKeys()
+        XCTAssertEqual(Array(keys.press(source: 1, channel: 0, key: 60, velocity: 100, slot: 0)), [on(60)])
+        XCTAssertEqual(Array(keys.press(source: 2, channel: 0, key: 60, velocity: 90, slot: 0)),
+                       [off(60), on(60, velocity: 90)])
+        XCTAssertEqual(keys.release(source: 1, channel: 0, key: 60).count, 0, "source 2 still holds it")
+        XCTAssertEqual(Array(keys.release(source: 2, channel: 0, key: 60)), [off(60)])
+        XCTAssertEqual(keys.release(source: 2, channel: 0, key: 60).count, 0, "nothing left to end")
+    }
+
+    /// A source that goes away is released key by key; a pitch another source holds stays on, and
+    /// the other source's keys are untouched.
+    func testALostSourceReleasesOnlyItsOwnKeys() {
+        var keys = LiveKeys()
+        _ = keys.press(source: 1, channel: 0, key: 60, velocity: 100, slot: 0)
+        _ = keys.press(source: 1, channel: 3, key: 62, velocity: 100, slot: 0)
+        _ = keys.press(source: 2, channel: 0, key: 60, velocity: 100, slot: 0)
+        var sent: [Message] = []
+        var rounds = 0
+        while let output = keys.releaseNext(source: 1) {
+            sent += Array(output)
+            rounds += 1
+            if rounds > 16 { break }
+        }
+        XCTAssertEqual(rounds, 2, "one round per held key of the lost source")
+        XCTAssertEqual(sent, [off(62, channel: 3)], "60 stays on: source 2 holds it")
+        XCTAssertNil(keys.releaseNext(source: 1))
+        XCTAssertEqual(Array(keys.release(source: 2, channel: 0, key: 60)), [off(60)])
+    }
+
+    /// The calls without a source are the default source, and a source past the capacity folds
+    /// onto one inside it, so its keys still end.
+    func testTheDefaultAndAFoldedSourceStillPairTheirNotes() {
+        var keys = LiveKeys()
+        _ = keys.press(channel: 0, key: 64, velocity: 100, slot: 0)
+        XCTAssertEqual(Array(keys.release(source: LiveKeys.defaultSource, channel: 0, key: 64)), [off(64)])
+        let far = UInt8(LiveKeys.sourceCapacity + 3)
+        _ = keys.press(source: far, channel: 0, key: 65, velocity: 100, slot: 0)
+        XCTAssertEqual(Array(keys.release(source: far, channel: 0, key: 65)), [off(65)])
+        _ = keys.press(source: 4, channel: 0, key: 66, velocity: 100, slot: 2)
+        keys.reset(slot: 2)
+        XCTAssertNil(keys.releaseNext(source: 4), "all notes off on the slot left nothing held")
+    }
 }

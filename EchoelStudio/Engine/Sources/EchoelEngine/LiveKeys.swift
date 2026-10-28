@@ -15,7 +15,20 @@ import Foundation
 /// - A held key struck again without a release first ends what it held, also in another slot.
 /// A release of a key that was never pressed sends nothing: a note-off for a pitch it did not
 /// start would cut one the arrangement or another key plays.
+///
+/// A held key belongs to its SOURCE, channel and key (Codex handover S4): two keyboards on
+/// channel 1 holding the same key are two holders of one pitch, so the first to let go sends no
+/// note-off while the other still holds it. Sources are small numbers the caller assigns
+/// (`sourceCapacity` of them; a larger number folds onto one of those). `defaultSource` is what
+/// the channel-only calls use. A source that goes away is released with `releaseNext(source:)`.
+/// None of this gives a source its own voice or expression: it only decides when a pitch ends.
 public struct LiveKeys: Sendable {
+    /// The sources told apart; a source number past this folds onto one of them.
+    /// Computed, not stored: a stored static is a lazy global, and the MIDI thread reads it.
+    public static var sourceCapacity: Int { 8 }
+    /// The source the calls without one use.
+    public static let defaultSource: UInt8 = 0
+
     /// One note to send.
     public struct Message: Equatable, Sendable {
         public let slot: Int
@@ -61,9 +74,10 @@ public struct LiveKeys: Sendable {
     /// table of another length.
     public var lock: [UInt8]?
 
-    /// By channel × key: the slot a held key sounds in, -1 while it is up, and the pitch it sounds.
-    private var slots = [Int16](repeating: -1, count: 16 * 128)
-    private var pitches = [UInt8](repeating: 0, count: 16 * 128)
+    /// By source × channel × key: the slot a held key sounds in, -1 while it is up, and the pitch
+    /// it sounds. Allocated once, here; nothing on the MIDI thread grows them.
+    private var slots = [Int16](repeating: -1, count: LiveKeys.sourceCapacity * 16 * 128)
+    private var pitches = [UInt8](repeating: 0, count: LiveKeys.sourceCapacity * 16 * 128)
 
     public init(lock: [UInt8]? = nil) {
         self.lock = lock
@@ -97,13 +111,23 @@ public struct LiveKeys: Sendable {
 
     /// A key went down on `channel`, to sound in `slot`. Velocity 0 is a release.
     public mutating func press(channel: UInt8, key: UInt8, velocity: UInt8, slot: Int) -> Output {
-        guard velocity & 0x7F > 0 else { return release(channel: channel, key: key) }
-        let channel = channel & 0x0F, index = Self.index(channel, key)
+        press(source: Self.defaultSource, channel: channel, key: key, velocity: velocity, slot: slot)
+    }
+
+    /// A key came up on `channel`.
+    public mutating func release(channel: UInt8, key: UInt8) -> Output {
+        release(source: Self.defaultSource, channel: channel, key: key)
+    }
+
+    /// A key of `source` went down on `channel`, to sound in `slot`. Velocity 0 is a release.
+    public mutating func press(source: UInt8, channel: UInt8, key: UInt8, velocity: UInt8, slot: Int) -> Output {
+        guard velocity & 0x7F > 0 else { return release(source: source, channel: channel, key: key) }
+        let channel = channel & 0x0F, index = Self.index(source, channel, key)
         let slot = Int16(clamping: slot)
         var output = Output()
         if slots[index] >= 0 {
             // Struck again without a release: what it held ends first, in its own slot.
-            output = release(channel: channel, key: key)
+            output = release(source: source, channel: channel, key: key)
         }
         let pitch = sounding(key & 0x7F)
         if holder(slot: slot, pitch: pitch, besides: index) != nil {
@@ -115,9 +139,24 @@ public struct LiveKeys: Sendable {
         return output
     }
 
-    /// A key came up on `channel`.
-    public mutating func release(channel: UInt8, key: UInt8) -> Output {
-        let channel = channel & 0x0F, index = Self.index(channel, key)
+    /// A key of `source` came up on `channel`.
+    public mutating func release(source: UInt8, channel: UInt8, key: UInt8) -> Output {
+        let channel = channel & 0x0F
+        return release(at: Self.index(source, channel, key), channel: channel)
+    }
+
+    /// `source` went away (unplugged, or its connection reset): ends one of its held keys and
+    /// returns what to send for it — nothing when another holder keeps the pitch. Nil once the
+    /// source holds no key; call it until nil. Keys of other sources keep theirs.
+    public mutating func releaseNext(source: UInt8) -> Output? {
+        let base = Self.index(source, 0, 0)
+        for index in base..<(base + 16 * 128) where slots[index] >= 0 {
+            return release(at: index, channel: UInt8((index - base) / 128))
+        }
+        return nil
+    }
+
+    private mutating func release(at index: Int, channel: UInt8) -> Output {
         let slot = slots[index]
         var output = Output()
         guard slot >= 0 else { return output }
@@ -135,7 +174,7 @@ public struct LiveKeys: Sendable {
         return lock[Int(key)] & 0x7F
     }
 
-    /// Another held key that sounds `pitch` in `slot`, on any channel.
+    /// Another held key that sounds `pitch` in `slot`, on any channel of any source.
     private func holder(slot: Int16, pitch: UInt8, besides index: Int) -> Int? {
         for other in slots.indices where other != index && slots[other] == slot && pitches[other] == pitch {
             return other
@@ -143,7 +182,7 @@ public struct LiveKeys: Sendable {
         return nil
     }
 
-    private static func index(_ channel: UInt8, _ key: UInt8) -> Int {
-        Int(channel & 0x0F) * 128 + Int(key & 0x7F)
+    private static func index(_ source: UInt8, _ channel: UInt8, _ key: UInt8) -> Int {
+        (Int(source) % sourceCapacity * 16 + Int(channel & 0x0F)) * 128 + Int(key & 0x7F)
     }
 }
