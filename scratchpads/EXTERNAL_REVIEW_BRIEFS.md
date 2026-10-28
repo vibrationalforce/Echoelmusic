@@ -443,3 +443,46 @@ Form: höchstens 8 Punkte, jeder mit Datei:Zeile, „sicher“ oder „vermutet�
 ```
 
 **So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo (Lernmodus) und trägt das Ergebnis ins Ledger ein.
+
+## Runde 6 — Mittwoch, 28.10.2026 (Stand `08dda9ab6`)
+
+**Runde 5 ist unbeantwortet** (keine Antwort im Chat oder im Repo bis 28.10.); ihre Fragen bleiben gültig und werden hier nicht wiederholt.
+**Neu seit Runde 5:** Tasten und Pads auf dem Bildschirm, Song-Loop mit Overdub, Record ohne Vorbereitung (TestFlight 10010/10011), Pulsmathematik in EchoelDSP portiert (rPPG-Aufbereitung, Puls-Periode, HRV, Kohärenz), Plugin-Zustand nur vom erwarteten Component. Nichts davon ist auf einem Gerät geprüft.
+
+### Auftrag an ChatGPT — Nutzbarkeit: das Telefon allein spielt es
+
+```
+Rolle: externer UX- und Code-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift 6). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic, Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand 08dda9ab6.
+
+Lies nur:
+- EchoelStudio/CLAUDE.md
+- EchoelStudio/App/Views/PlayKeysView.swift und StudioView.swift
+- EchoelStudio/App/Engine/MIDIInput.swift (LiveRouter) und RecordController.swift
+- EchoelStudio/App/Engine/AudioEngine.swift (loopsSong, applyLoop, beginTake, endTake)
+- EchoelStudio/Engine/Sources/EchoelEngine/EngineCore.swift (setLoop, renderChunk) und Engine/Tests/EchoelEngineTests/EngineCoreTests.swift
+
+Fragen:
+1. Jemand öffnet die App zum ersten Mal und will 30 Sekunden später eine Idee aufgenommen haben: an welchem Schritt bleibt er hängen?
+2. Kann eine Note hängen bleiben (Finger gleitet von Taste zu Taste, Oktave wechselt bei gehaltener Taste, Anruf kommt)?
+3. Loop und Overdub: verliert eine Aufnahme über die Loop-Grenze Noten oder verdoppelt sie welche?
+4. Tasten im Querformat und mit großer Schrift: was ist zu klein oder verdeckt?
+5. Welche zwei Gerätetests zuerst, und was genau soll man hören?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, „sicher“ oder „vermutet“, kein Code, keine neuen Features.
+```
+
+### Auftrag an SuperGrok Heavy — Neues seit dem 24.10.2026 (nur mit Quelle)
+
+```
+Rolle: externer Rechercheur für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift ohne externe Abhängigkeiten, mit eigenem AUv3 und einem Assistenten über Apple Foundation Models (nur auf dem Gerät). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic.
+
+Nur der Stand seit dem 24.10.2026, nur mit Quelle und Datum; Gerüchte als „Gerücht“ kennzeichnen. Wo es nichts Neues gibt, ein Satz.
+1. Apple Foundation Models Framework: Änderungen an Tool-Calling, Kontextlänge, Gerätelisten, Lizenzbedingungen für Musik-Apps.
+2. Kamera-Puls (rPPG) und HealthKit in App-Store-Apps: neue Review-Fälle oder Regeln zu Gesundheitsdaten in Nicht-Medizin-Apps.
+3. iOS-Musik-Apps: was Konkurrenten bei Bildschirm-Tasten, Loop-Aufnahme oder On-Device-KI neu ausgeliefert haben.
+4. Neue iOS-/Xcode-Betas mit Änderungen an AVAudioEngine, Audio Units oder TestFlight.
+
+Form: höchstens 8 Punkte. Jeder: Behauptung · Link · Datum · „sicher“/„vermutet“ · eine Zeile, was das für Echoel Studio heißt. Kein Code.
+```
+
+**So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung (Lernmodus).
