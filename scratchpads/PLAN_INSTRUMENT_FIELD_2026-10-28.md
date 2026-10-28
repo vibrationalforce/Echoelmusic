@@ -28,7 +28,7 @@ Ende ihrer Liste (StoredNames).
 | A7 | Wavetable → „Morph“ | Engine-Wahl: vier bandbegrenzte Formen (Sinus·Dreieck·Säge·Rechteck) überblendet, Character = Position, keine Tabellen | **gebaut 28.10.** (Index 4) |
 | A2 | Moog-Ladder + Slide/Accent | `LadderFilter` als `synth.filter`; Slide/Accent offen | **Ladder gebaut 28.10.** |
 | A3 | 808-Glide/Reese | Presets auf A1/A2 + Kick-Pitch | Presets |
-| A5 | Modalbank „Mallets“ | eigenes Gerät (angeschlagene Objekte, keine Hüllkurve) | Gerät |
+| A5 | Modalbank „Mallet“ | **als Engine-Wahl statt Gerät**: sechs abklingende Moden je Stimme, Character = Material Holz→Metall; so sofort gespeichert, automatisiert, geroutet und im Plugin | **gebaut 28.10.** (Index 5) |
 | A10 | Zellulärer Automat „Texture“ | eigenes Gerät | Gerät |
 | A9 | DDSP Harmonic+Noise | viertes eingebautes Gerät (W5) | groß |
 | A11/A12 | Drum-Ausbau, euklidisch | `DrumKit` / Schritt-Befehl | klein |
@@ -71,3 +71,19 @@ Klangwert bewegt, und nichts darüber, was der Klang mit einem Menschen macht.
 
 Offen und zu klären vor S2: zwei neue Berechtigungen (Standort, Bewegung) — Begründungstexte; der
 Katalog als gebündelte Daten (Lizenz prüfen, Quelle nennen). Nichts davon kopiert Sky Guide.
+
+## Alte Vision — Stand 28.10. (Founder-Frage nach Tempi, Kammertönen, Tonsystemen, Vaporwave Palace …)
+
+| Wunsch | Stand | Nächster Schritt |
+|---|---|---|
+| Tonsysteme | 16 im Studio, **seit fd1d37429 mit Tür** (Key-Menü); neu: Archytas, Ptolemäus | Sumerisch (Nippur) nur als markierte Rekonstruktion |
+| Kammertöne | 400–480 Hz, **seit fd1d37429 mit Tür**; benannte historische Werte | — |
+| Planetentöne | 8 Umlaufzeiten als Rechnung (Oktavregel), Erdjahr → A 432,10 | Sterne: Asteroseismologie (siehe „Himmel und Natur“) |
+| Tempi | Tempo-Spur, Flow folgt dem Puls | — |
+| Knochenflöte | — | Engine-Kandidat „geblasene Röhre“ (Waveguide), Grifflöcher nur als Rekonstruktion |
+| Pyramiden-Resonanz | — | nur mit gemessener Raumantwort als Hall-Preset |
+| Papyrus/Ägypten | zu wenig belegte Daten | offen sagen |
+| Mystische Musik | als Stimmung/Genre | ohne Wirkungsversprechen |
+| Vaporwave Palace | Hardware außerhalb der App | Ansteuerung über OSC/Art-Net (W4, wartet auf F25) |
+| Retrofuturistisches Design | — | eigenes Farbthema als Entwurf, innerhalb der Uncodixfy-Regeln, dem Founder vorlegen |
+| Organ-/Gewebe-Regeneration | **nie Produkt**, nur Forschung (`research_notes/`, Vision §6c) | — |

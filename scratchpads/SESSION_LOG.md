@@ -1876,3 +1876,21 @@ Danach, alles CI-gebaut, nichts geräteverifiziert:
 Lehre: jeder Push unter EchoelStudio/ bricht den laufenden Gate-Lauf ab — Studio-Code bündeln,
 einen Release-Commit nur auf grünem Stand, Folgearbeit auf einem lokalen Zweig parken.
 Nächster Schritt: Gate auf 54a9d03b5 → RELEASE (Entwurf scratchpad RELEASE.10013) → zehnter Upload.
+
+## 2026-10-28 (Abend) — 11. Upload VALID, Engines, Routen, Tonsysteme mit Tür
+
+- **TestFlight 10014 VALID** (11.0.0, elfter Upload, auf grünem be5967dc3): HRV/Kohärenz-Quellen,
+  Instrumentwerte als Routenziele, Engines Supersaw/FM/Sub, Ladder, Field.
+- Danach, grün, noch in keinem Build: Engine **Morph** (Index 4), Engine **Mallet** (Index 5, Modalbank
+  als Engine statt Gerät), Modulate zeigt gemessene Quellen, **Routen auf Sends**, Tonsystem- und
+  Kammerton-Wahl im Key-Menü (bisher türlos!), Archytas/Ptolemäus, benannte + orbitale Kammertöne.
+- Rote Runden: Ladder-Test `2.squareRoot()` als Double; Host-Vertragstest schreibt Synth-Parameter
+  aus — jede neue Zeile/Wahl muss dort mit (so gewollt).
+- Founder-Vision (Tempi, Kammertöne, Planeten, Pyramiden, Knochenflöte, Vaporwave Palace, Retro-Design,
+  Gewebe-Regeneration) und Sky-Guide-Idee (Stern im Blick → Klang; Moleküle/Pflanzen/Tiere) in
+  `scratchpads/PLAN_INSTRUMENT_FIELD_2026-10-28.md` eingeordnet; Regeneration bleibt Forschung.
+- Remote-Zweig `park/morph-2026-10-28` ließ sich nicht löschen (Proxy 403) — Founder gebeten.
+Lehre: ein Wert, den die Engine spielt, ist noch keine Fähigkeit — erst mit Tür (Tonsystem/Kammerton
+waren nur über den Assistenten erreichbar; ich hatte sie dem Founder als „im Studio“ genannt).
+Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuerst) oder Texture-Engine;
+12. Upload, sobald genug Neues grün ist.
