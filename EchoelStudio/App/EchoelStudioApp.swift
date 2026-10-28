@@ -14,6 +14,8 @@ struct EchoelStudioApp: App {
     @State private var writer: ParameterWriter
     @State private var launchpad: LaunchpadController
     @State private var agent: AgentSession
+    /// The chest strap, off until the musician turns it on in the Song menu (wave W1).
+    @State private var strap = HeartRateStrap()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -71,6 +73,7 @@ struct EchoelStudioApp: App {
                 .environment(midi)
                 .environment(writer)
                 .environment(agent)
+                .environment(strap)
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
