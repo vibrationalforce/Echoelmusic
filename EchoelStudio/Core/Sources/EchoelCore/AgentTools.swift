@@ -266,7 +266,8 @@ public enum AgentTools {
         let aliases: [String: StandardEffect] = ["eq": .equalizer, "equalizer": .equalizer, "equaliser": .equalizer,
                                                  "compressor": .compressor, "comp": .compressor,
                                                  "delay": .delay, "echo": .delay,
-                                                 "reverb": .reverb, "verb": .reverb, "hall": .reverb, "room": .reverb]
+                                                 "reverb": .reverb, "verb": .reverb, "hall": .reverb, "room": .reverb,
+                                                 "chorus": .chorus, "ensemble": .chorus]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

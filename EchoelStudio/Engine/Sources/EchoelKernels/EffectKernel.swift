@@ -34,6 +34,7 @@ public final class EffectKernel: @unchecked Sendable {
     private var compressor: Compressor
     private let delay: StereoDelay?
     private let reverb: Reverb?
+    private let chorus: Chorus?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -49,6 +50,7 @@ public final class EffectKernel: @unchecked Sendable {
         compressor = Compressor(sampleRate: self.sampleRate)
         delay = effect == .delay ? StereoDelay(sampleRate: self.sampleRate) : nil
         reverb = effect == .reverb ? Reverb(sampleRate: self.sampleRate) : nil
+        chorus = effect == .chorus ? Chorus(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -86,6 +88,7 @@ public final class EffectKernel: @unchecked Sendable {
         compressor.reset()
         delay?.reset()
         reverb?.reset()
+        chorus?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -102,6 +105,7 @@ public final class EffectKernel: @unchecked Sendable {
             reductionBits.store(compressor.reduction.bitPattern, ordering: .relaxed)
         case .delay: delay?.process(left: left, right: right, frames: frames)
         case .reverb: reverb?.process(left: left, right: right, frames: frames)
+        case .chorus: chorus?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -142,6 +146,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let reverb else { return }
             let s = Reverb.Settings(size: value(0), decay: value(1), damping: value(2), predelay: value(3), mix: value(4))
             if s != reverb.settings { reverb.settings = s }
+        case .chorus:
+            guard let chorus else { return }
+            let s = Chorus.Settings(rate: value(0), depth: value(1), mix: value(2))
+            if s != chorus.settings { chorus.settings = s }
         }
     }
 
@@ -184,6 +192,10 @@ public final class EffectKernel: @unchecked Sendable {
             add("damping", "Damping", 500...20_000, 7_000, .hertz)
             add("predelay", "Pre-Delay", 0...0.2, 0.02, .seconds)
             add("mix", "Mix", 0...1, 0.2, .amount)
+        case .chorus:
+            add("rate", "Rate", 0.05...8, 0.6, .hertz)
+            add("depth", "Depth", 0...1, 0.5, .amount)
+            add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
     }
