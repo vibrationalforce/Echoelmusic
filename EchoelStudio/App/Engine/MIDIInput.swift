@@ -105,6 +105,26 @@ final class LiveRouter: Sendable {
         }
     }
 
+    /// Main thread: `source` went away (unplugged, its app quit). Its held keys end — a note
+    /// another keyboard still holds keeps sounding — and a take records the offs, as it would
+    /// the keyboard's own (Codex handover S5).
+    func releaseSource(_ source: UInt8) {
+        target.withLock { (state: inout Target) in
+            let core = state.core
+            let sample = core?.positionSample ?? 0
+            while let output = state.keys.releaseNext(source: source) {
+                guard let core else { continue }
+                for note in output { core.playLive(slot: note.slot, status: note.status, note.pitch, note.velocity) }
+                capture.withLock { events in
+                    guard events != nil else { return }
+                    for note in output {
+                        events?.append(Captured(sample: sample, status: note.status, data1: note.pitch, data2: note.velocity))
+                    }
+                }
+            }
+        }
+    }
+
     /// What a message does to the held keys: the notes to play, the slot it goes to, and the
     /// slots a lifted pedal releases besides.
     private static func decide(_ state: inout Target, source: UInt8, status: UInt8, _ data1: UInt8, _ data2: UInt8)
@@ -307,7 +327,8 @@ final class MIDIInput {
 
     @ObservationIgnored private var client = MIDIClientRef()
     @ObservationIgnored private var port = MIDIPortRef()
-    @ObservationIgnored private var connected: Set<MIDIEndpointRef> = []
+    /// Every connected source, with the live-keys source number its packets carry.
+    @ObservationIgnored private var connected: [MIDIEndpointRef: UInt8] = [:]
     @ObservationIgnored private let router: LiveRouter
     @ObservationIgnored private let store: ProjectStore
     @ObservationIgnored private let inbox = ControlInbox()
@@ -592,8 +613,8 @@ final class MIDIInput {
             let hasID = MIDIObjectGetIntegerProperty(source, kMIDIPropertyUniqueID, &id) == noErr
             // The tag tells the receive block which source a packet came from.
             let tag = hasID ? UnsafeMutableRawPointer(bitPattern: Self.tag(id)) : nil
-            if !connected.contains(source), MIDIPortConnectSource(port, source, tag) == noErr {
-                connected.insert(source)
+            if connected[source] == nil, MIDIPortConnectSource(port, source, tag) == noErr {
+                connected[source] = Self.liveSource(tag)
             }
             var name: Unmanaged<CFString>?
             let title = MIDIObjectGetStringProperty(source, kMIDIPropertyDisplayName, &name) == noErr
@@ -601,7 +622,11 @@ final class MIDIInput {
             if let title { names.append(title) }
             if hasID { found.append(Source(id: id, name: title ?? "MIDI In")) }
         }
-        connected.formIntersection(seen)
+        // A source that went away ends the keys it held, so nothing it pressed hangs.
+        for (source, number) in connected where !seen.contains(source) {
+            connected[source] = nil
+            router.releaseSource(number)
+        }
         sourceNames = names
         sources = found
         applyClockSource()
