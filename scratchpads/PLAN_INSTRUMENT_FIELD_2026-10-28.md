@@ -53,3 +53,21 @@ Spektral-Donuts, Analyse-Ansichten). In Studio wird sie **eine Ausgabe derselben
 ## Reihenfolge und Takt
 Engine-Wahlen A6 → A7 → A2, dann F1–F3 (TestFlight 11 bis 31.10. mit dem, was grün ist), dann
 Geräte A5/A10, dann A9 und F4/F5. Jede Scheibe ≤ 3 Dateien, Test zuerst, Gate grün vor Release.
+
+## Himmel und Natur als Quelle (Founder 28.10., nach einem Abend mit Sky Guide)
+
+Idee: der Stern, auf den das Telefon zeigt, wird Klang; ebenso Moleküle, Pflanzen, Tiere, Menschen.
+Gesetz dafür: **Sonifikation und Rechnung, nie Wirkung** — die App sagt, welche Messgröße welchen
+Klangwert bewegt, und nichts darüber, was der Klang mit einem Menschen macht.
+
+| Teil | Was echt messbar ist | Form in Echoel |
+|---|---|---|
+| Stern im Blick | Position (Katalog + Standort + Uhrzeit + Ausrichtung), Helligkeit, Farbe (B−V ≈ Temperatur) | **S1** Core: Sternkatalog offline (hellste ~300, gemeinfreier Yale Bright Star Catalogue) + reine Rechnung Rektaszension/Deklination → Höhe/Azimut, mit Tests · **S2** App: CoreLocation + Kompass/Lage → der Stern in Blickrichtung; ohne Netz; Kamera nur optional als Bild dahinter · **S3** Stern = Modulationsquelle (Helligkeit, Farbe) und Grundton-Vorschlag |
+| „Ton“ eines Sterns | Asteroseismologie: echte Eigenschwingungen (Sonne ~3 mHz, Kepler-Daten), um Oktaven hochgesetzt | Kammerton-/Grundton-Vorschlag wie die Planeten (Rechnung, Quelle genannt) |
+| Moleküle | Schwingungsspektren (IR/Raman, THz), um Oktaven heruntergesetzt | Tonsystem oder Akkord aus den Linien eines Moleküls (z. B. Wasser), mit Quelle |
+| Pflanzen | bioelektrische Signale nur mit Sensor (Elektroden) | später, über BLE/MIDI eines Sensors, wie der Brustgurt |
+| Tiere | Rufe (Aufnahme), Herzschlag mit Sensor | Sampler/Audio-Import; kein Sensor im Telefon |
+| Menschen | Puls, HRV, Kohärenz | **schon da** (Gurt) |
+
+Offen und zu klären vor S2: zwei neue Berechtigungen (Standort, Bewegung) — Begründungstexte; der
+Katalog als gebündelte Daten (Lizenz prüfen, Quelle nennen). Nichts davon kopiert Sky Guide.
