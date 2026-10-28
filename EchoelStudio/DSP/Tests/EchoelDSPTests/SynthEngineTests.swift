@@ -68,6 +68,19 @@ final class SynthEngineTests: XCTestCase {
         XCTAssertLessThan(rms(wide), saw * 3)
     }
 
+    /// The morph's ends are its first and last shape, and its middle is neither.
+    func testTheMorphRunsFromSineToSquare() {
+        let start = tone(.morph, character: 0), sine = tone(.classic, character: 0, waveform: .sine)
+        for (a, b) in zip(start, sine) { XCTAssertEqual(a, b, accuracy: 1e-4) }
+        let end = tone(.morph, character: 1), square = tone(.classic, character: 0, waveform: .square)
+        for (a, b) in zip(end, square) { XCTAssertEqual(a, b, accuracy: 1e-4) }
+        let middle = tone(.morph, character: 0.5)
+        XCTAssertNotEqual(middle, start)
+        XCTAssertNotEqual(middle, end)
+        XCTAssertGreaterThan(magnitude(middle, hertz: 440), magnitude(start, hertz: 440) + 0.01,
+                             "away from the sine the tone gains harmonics")
+    }
+
     func testTheSubAddsTheOctaveBelow() {
         XCTAssertEqual(tone(.sub, character: 0), tone(.classic, character: 0), "no sub, the oscillator alone")
         XCTAssertGreaterThan(magnitude(tone(.sub, character: 1), hertz: 110),

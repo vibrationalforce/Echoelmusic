@@ -1,12 +1,14 @@
 import Foundation
 
 /// What makes a synth voice's raw tone before its filter and envelopes (EchoelTools A1, A4, A8):
-/// the classic oscillator, a seven-saw supersaw, two-operator FM, or the oscillator with a sine
-/// an octave below. `character` (0 … 1) is each engine's one control — the supersaw's detune,
-/// the FM index, the sub's level; the classic oscillator ignores it. Ported from the earlier
+/// the classic oscillator, a seven-saw supersaw, two-operator FM, the oscillator with a sine
+/// an octave below, or a morph through four shapes (A7). `character` (0 … 1) is each engine's one
+/// control — the supersaw's detune, the FM index, the sub's level, the morph's position; the
+/// classic oscillator ignores it. Ported from the earlier
 /// app's `EchoelPolySynth` engines as one value type a voice owns; nothing here allocates.
 public enum SynthEngine: String, CaseIterable, Codable, Sendable {
-    case classic, supersaw, fm, sub
+    // A song stores the index of the choice: a new engine goes at the end.
+    case classic, supersaw, fm, sub, morph
 }
 
 /// The oscillators behind one voice's engine. All of them are stored inline — six extra saws,
@@ -30,6 +32,11 @@ struct EngineSource: Sendable {
     private var carrier: Float = 0
     private var modulator: Float = 0
     private var subPhase: Float = 0
+    /// The morph's four shapes, phase-locked: they start together and advance by the same step.
+    private var m0 = Oscillator(waveform: .sine)
+    private var m1 = Oscillator(waveform: .triangle)
+    private var m2 = Oscillator(waveform: .saw)
+    private var m3 = Oscillator(waveform: .square)
 
     mutating func reset() {
         s0.reset(phase: 0.11); s1.reset(phase: 0.37); s2.reset(phase: 0.59)
@@ -37,6 +44,7 @@ struct EngineSource: Sendable {
         carrier = 0
         modulator = 0
         subPhase = 0
+        m0.reset(); m1.reset(); m2.reset(); m3.reset()
     }
 
     /// One sample. `main` is the voice's own oscillator; `dt` its increment this sample.
@@ -73,6 +81,15 @@ struct EngineSource: Sendable {
             subPhase += dt / 2
             if subPhase >= 1 { subPhase -= 1 }
             return (top + c * below) / (1 + c * 0.5)
+        case .morph:
+            // Sine at 0, triangle at ⅓, saw at ⅔, square at 1; between two, a crossfade. All four
+            // advance every sample so the next crossfade starts in phase.
+            let a = m0.next(increment: dt), b = m1.next(increment: dt)
+            let d = m2.next(increment: dt), e = m3.next(increment: dt)
+            let position = c * 3
+            if position < 1 { return a + (b - a) * position }
+            if position < 2 { return b + (d - b) * (position - 1) }
+            return d + (e - d) * (position - 2)
         }
     }
 }
