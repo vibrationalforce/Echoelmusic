@@ -199,6 +199,7 @@ struct SoundPanel: View {
         }
         .accessibilityLabel("Preset \(track.instrument.preset)\(track.instrument.isEditedFromPreset ? ", edited" : "")")
 
+        choicePicker(.engine)
         choicePicker(.waveform)
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: columnWidth), spacing: Theme.Space.s)],
