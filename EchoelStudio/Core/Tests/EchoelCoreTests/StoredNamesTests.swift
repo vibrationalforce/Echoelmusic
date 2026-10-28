@@ -30,6 +30,11 @@ final class StoredNamesTests: XCTestCase {
         XCTAssertEqual(TuningSystem.library.map(\.id), toneSystems, "never rename or reorder; a new one goes at the end")
         XCTAssertEqual(TrackKind.allCases.map(\.rawValue), ["instrument", "audio", "returnTrack"])
         XCTAssertEqual(MonitorMode.allCases.map(\.rawValue), ["auto", "in", "off"])
+        // A modulation route stores its source, curve and polarity by name (W2).
+        XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
+                       ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1"])
+        for curve in ["linear", "square"] { XCTAssertNotNil(ModulationRoute.Curve(rawValue: curve), curve) }
+        for polarity in ["unipolar", "bipolar"] { XCTAssertNotNil(ModulationRoute.Polarity(rawValue: polarity), polarity) }
         for device in ["synth", "drums", "sampler", "plugin"] {
             XCTAssertNotNil(InstrumentDevice(rawValue: device), device)
         }

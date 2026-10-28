@@ -13,9 +13,11 @@ public enum ModulationSource: String, Codable, Sendable, CaseIterable {
     case midiCC1 = "midi.cc.1"
 }
 
-/// One route: a source moves one parameter by `depth` (−1 … 1) through a curve. Wave W2. Not yet
-/// stored in a song: storing it is format 3, its own step.
-public struct ModulationRoute: Equatable, Sendable, Identifiable {
+/// One route: a source moves one parameter by `depth` (−1 … 1) through a curve. Wave W2. Stored
+/// with exactly these keys (`id`, `source`, `target`, `depth`, `curve`, `polarity`, `enabled`), all
+/// required, the target in its text form; an unknown source, curve or polarity refuses the file
+/// rather than being guessed (G-A contract).
+public struct ModulationRoute: Codable, Equatable, Sendable, Identifiable {
     public enum Curve: String, Codable, Sendable { case linear, square }
     /// Unipolar reads the source 0 … 1 as is; bipolar centres it, −1 … 1.
     public enum Polarity: String, Codable, Sendable { case unipolar, bipolar }

@@ -208,10 +208,4 @@ final class ModulationTests: XCTestCase {
         }
         XCTAssertEqual(try Modulation.validate(Array(routes.dropLast()), targets: [pan]).count, Modulation.routeLimit)
     }
-
-    /// The stored names are the contract's; a rename would orphan every saved route later.
-    func testTheSourceNamesAreTheContracts() {
-        XCTAssertEqual(ModulationSource.allCases.map(\.rawValue),
-                       ["body.heartRate", "body.hrv", "body.coherence", "body.breath", "lfo.1", "macro.1", "midi.cc.1"])
-    }
 }
