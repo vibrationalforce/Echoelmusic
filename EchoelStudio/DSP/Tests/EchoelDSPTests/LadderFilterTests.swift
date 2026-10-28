@@ -12,7 +12,7 @@ final class LadderFilterTests: XCTestCase {
             let y = filter.process(amplitude * sinf(2 * Float.pi * hertz * Float(n) / rate))
             if n >= frames / 2 { sum += y * y }
         }
-        return (sum / Float(frames / 2)).squareRoot() / (amplitude / 2.squareRoot())
+        return (sum / Float(frames / 2)).squareRoot() / (amplitude / Float(2).squareRoot())
     }
 
     func testItPassesBelowAndCutsAboveTheCutoff() {
