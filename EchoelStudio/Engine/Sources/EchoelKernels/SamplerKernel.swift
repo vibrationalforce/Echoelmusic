@@ -130,7 +130,7 @@ public final class SamplerKernel: SampleLoadingKernel, @unchecked Sendable {
             // The same key again ends its own earlier voice first, never another key's.
             if let earlier = held[key] { sampler.noteOff(earlier) }
             let pitch = UInt8(Swift.min(Swift.max(Int(data1 & 0x7F) + transpose, 0), 127))
-            held[key] = sampler.noteOn(pitch: pitch, velocity: data2 & 0x7F)
+            held[key] = sampler.startNote(pitch: pitch, velocity: data2 & 0x7F)
         case 0x80, 0x90:
             if let voice = held[key] { sampler.noteOff(voice) }
             held[key] = nil

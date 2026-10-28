@@ -310,8 +310,8 @@ final class SamplerTests: XCTestCase {
     func testAHandleReleasesOnlyItsOwnVoiceOfThatPitch() throws {
         var sampler = Sampler(patch: held(), sampleRate: rate)
         sampler.setSample(try XCTUnwrap(SampleBuffer(samples: Array(repeating: 0.5, count: 48_000), sampleRate: Double(rate))))
-        let first = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
-        let second = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        let first = try XCTUnwrap(sampler.startNote(pitch: 60, velocity: 127))
+        let second = try XCTUnwrap(sampler.startNote(pitch: 60, velocity: 127))
         XCTAssertNotEqual(first, second)
         _ = render(&sampler, frames: 480)
         sampler.noteOff(first)
@@ -328,8 +328,8 @@ final class SamplerTests: XCTestCase {
     func testAHandleWhoseVoiceWasStolenDoesNothing() throws {
         var sampler = Sampler(patch: held(), voiceCount: 1, sampleRate: rate)
         sampler.setSample(try XCTUnwrap(ramp(48_000)))
-        let old = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
-        let new = try XCTUnwrap(sampler.noteOn(pitch: 64, velocity: 127))
+        let old = try XCTUnwrap(sampler.startNote(pitch: 60, velocity: 127))
+        let new = try XCTUnwrap(sampler.startNote(pitch: 64, velocity: 127))
         XCTAssertFalse(sampler.isHolding(old))
         sampler.noteOff(old)
         _ = render(&sampler, frames: 4_800)
@@ -342,19 +342,19 @@ final class SamplerTests: XCTestCase {
     func testAHandleFromBeforeAResetOrASampleSwapNamesNothing() throws {
         var sampler = Sampler(patch: held(), voiceCount: 1, sampleRate: rate)
         sampler.setSample(try XCTUnwrap(ramp(48_000)))
-        let beforeReset = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        let beforeReset = try XCTUnwrap(sampler.startNote(pitch: 60, velocity: 127))
         sampler.reset()
         XCTAssertFalse(sampler.isHolding(beforeReset))
-        let afterReset = try XCTUnwrap(sampler.noteOn(pitch: 60, velocity: 127))
+        let afterReset = try XCTUnwrap(sampler.startNote(pitch: 60, velocity: 127))
         XCTAssertNotEqual(beforeReset, afterReset, "the same voice and pitch, a new start")
         sampler.noteOff(beforeReset)
         XCTAssertTrue(sampler.isHolding(afterReset), "the old handle does not end the new note")
         sampler.setSample(try XCTUnwrap(ramp(48_000)))
         XCTAssertFalse(sampler.isHolding(afterReset))
         var empty = Sampler(sampleRate: rate)
-        let withoutSample = empty.noteOn(pitch: 60, velocity: 127)
+        let withoutSample = empty.startNote(pitch: 60, velocity: 127)
         XCTAssertNil(withoutSample, "no sample, no note, no handle")
-        let silent = sampler.noteOn(pitch: 60, velocity: 0)
+        let silent = sampler.startNote(pitch: 60, velocity: 0)
         XCTAssertNil(silent, "velocity 0 starts nothing")
     }
 
@@ -365,14 +365,14 @@ final class SamplerTests: XCTestCase {
         sampler.setSample(try XCTUnwrap(ramp(48_000)))
         var seen: [SamplerVoiceHandle] = []
         for n in 0..<64 {
-            let handle = try XCTUnwrap(sampler.noteOn(pitch: UInt8(40 + n % 8), velocity: 100))
+            let handle = try XCTUnwrap(sampler.startNote(pitch: UInt8(40 + n % 8), velocity: 100))
             XCTAssertFalse(seen.contains(handle), "start \(n) reused a handle")
             seen.append(handle)
         }
         XCTAssertEqual(sampler.activeVoiceCount, 2, "the pool never grows")
         var shot = Sampler(patch: flat(), sampleRate: rate)
         shot.setSample(try XCTUnwrap(ramp(48_000)))
-        let handle = try XCTUnwrap(shot.noteOn(pitch: 60, velocity: 127))
+        let handle = try XCTUnwrap(shot.startNote(pitch: 60, velocity: 127))
         shot.noteOff(handle)
         _ = render(&shot, frames: 4_800)
         XCTAssertEqual(shot.activeVoiceCount, 1, "a one-shot plays to its end")

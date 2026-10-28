@@ -234,10 +234,15 @@ public struct Sampler: Sendable {
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
     }
 
+    /// Starts a note; it ends with `noteOff(pitch:)`. To end this one note alone, start it with
+    /// `startNote` and keep its handle.
+    public mutating func noteOn(pitch: UInt8, velocity: UInt8) {
+        _ = startNote(pitch: pitch, velocity: velocity)
+    }
+
     /// Starts a note and names the voice it sounds on; nil when nothing starts (no sample, or
-    /// velocity 0). Callers that end notes by pitch can ignore the handle.
-    @discardableResult
-    public mutating func noteOn(pitch: UInt8, velocity: UInt8) -> SamplerVoiceHandle? {
+    /// velocity 0).
+    public mutating func startNote(pitch: UInt8, velocity: UInt8) -> SamplerVoiceHandle? {
         guard let sample, velocity > 0 else { return nil }
         if activeVoiceCount == 0 { levelNow = Self.playable(patch.level) }
         nextOrder &+= 1
