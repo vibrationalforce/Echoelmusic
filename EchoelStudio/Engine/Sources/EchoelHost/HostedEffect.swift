@@ -3,6 +3,7 @@ import AVFoundation
 import EchoelCore
 import EchoelKernels
 import Foundation
+import Synchronization
 
 /// An Audio Unit effect on a track's insert chain, processed inside the engine's own render
 /// pass like `HostedUnit`. The unit pulls the track's stereo bus through a pull-input block made
@@ -32,6 +33,9 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
     private var inRight: UnsafeMutablePointer<Float>?
     private var sampleTime: Double = 0
     private var pullInput: AURenderPullInputBlock?
+    /// Blocks the effect refused: written on the render thread, read from any.
+    private let failures = Atomic<Int>(0)
+    public var renderFailures: Int { failures.load(ordering: .relaxed) }
 
     public init(render: @escaping AURenderBlock, sampleRate: Double, maximumFrames: Int, isBypassed: Bool = false,
                 owner: AnyObject?, insert: InsertID? = nil, scheduleParameter: AUScheduleParameterBlock? = nil,
@@ -105,7 +109,11 @@ public final class HostedEffect: HostedProcessor, @unchecked Sendable {
         stamp.mFlags = .sampleTimeValid
         let status = renderBlock(&flags, &stamp, AUAudioFrameCount(frames), 0, list.unsafeMutablePointer, pullInput)
         sampleTime += Double(frames)
-        guard status == noErr, let l = list[0].mData?.assumingMemoryBound(to: Float.self) else { return }
+        guard status == noErr else {
+            failures.add(1, ordering: .relaxed)
+            return
+        }
+        guard let l = list[0].mData?.assumingMemoryBound(to: Float.self) else { return }
         let r = list.count > 1 ? (list[1].mData?.assumingMemoryBound(to: Float.self) ?? l) : l
         for i in 0..<frames {
             let a = l[i], b = r[i]

@@ -176,4 +176,32 @@ final class HostedEffectTests: XCTestCase {
                          effects: [FakeEffect(scale: 0, ownBuffers: true).makeEffect(sampleRate: 44_100)])
         XCTAssertEqual(out[10], 0.5 * panLaw, accuracy: 1e-5)
     }
+
+    /// An effect that refuses a block leaves the bus as it was and counts the block, so an export
+    /// can fail instead of saving a file whose insert went missing (Codex handover S6).
+    func testARefusedBlockLeavesTheBusAndIsCounted() {
+        let refusing = HostedEffect(render: { _, _, _, _, _, _ in kAudioUnitErr_CannotDoInCurrentContext },
+                                    sampleRate: rate, maximumFrames: 256, owner: nil)
+        var left = [Float](repeating: 0.25, count: 256), right = left
+        for _ in 0..<2 {
+            left.withUnsafeMutableBufferPointer { l in
+                right.withUnsafeMutableBufferPointer { r in
+                    guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                    refusing.process(frames: 256, left: lp, right: rp)
+                }
+            }
+        }
+        XCTAssertEqual(refusing.renderFailures, 2)
+        XCTAssertEqual(left[100], 0.25, "the bus passes through unchanged")
+        XCTAssertEqual(FakeEffect(scale: 0.5, ownBuffers: true).makeEffect(sampleRate: rate).renderFailures, 0)
+        let bypassed = HostedEffect(render: { _, _, _, _, _, _ in kAudioUnitErr_CannotDoInCurrentContext },
+                                    sampleRate: rate, maximumFrames: 256, isBypassed: true, owner: nil)
+        left.withUnsafeMutableBufferPointer { l in
+            right.withUnsafeMutableBufferPointer { r in
+                guard let lp = l.baseAddress, let rp = r.baseAddress else { return }
+                bypassed.process(frames: 256, left: lp, right: rp)
+            }
+        }
+        XCTAssertEqual(bypassed.renderFailures, 0, "a bypassed effect is never asked, so it never fails")
+    }
 }
