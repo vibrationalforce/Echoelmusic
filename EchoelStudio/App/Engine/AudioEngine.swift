@@ -94,6 +94,8 @@ final class AudioEngine {
     let live = LiveRouter()
     /// Sends the transport's MIDI clock to the outputs picked in the song menu.
     let clock = MIDIClockOutput()
+    /// Sends the live track's notes as an MPE zone to the outputs picked in the song menu (W5b).
+    let mpe = MIDIMPEOutput()
     /// Which session clip each track plays, as the render thread reports it.
     let session = SessionState()
     /// The live body and controller values a song's modulation routes read (W2); the strap writes
@@ -748,6 +750,8 @@ final class AudioEngine {
             }
 
             clock.attach(current, sampleRate: sampleRate, latency: session.outputLatency)
+            mpe.start()
+            mpe.attach(current, sampleRate: sampleRate, latency: session.outputLatency, modulation: modulation)
             if reportTask == nil { pollLaunchReports() }
             step("engine: start")
             try engine.start()
@@ -1164,6 +1168,7 @@ final class AudioEngine {
         slots.update(for: project)
         session.retain(Set(slots.slots.keys))
         live.set(core: core, slot: liveSlot(in: project), lock: liveLock(in: project))
+        mpe.setSlot(liveSlot(in: project))
         plugins.sync(project, sampleRate: core.sampleRate)
         generation += 1
         let source = PlaybackPlan.Source(project)
