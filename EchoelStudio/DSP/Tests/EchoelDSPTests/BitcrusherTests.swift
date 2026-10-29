@@ -4,7 +4,7 @@ import XCTest
 final class BitcrusherTests: XCTestCase {
     private let rate = 48_000.0
 
-    private func run(_ effect: x, left: [Float], right: [Float]) -> ([Float], [Float]) {
+    private func run(_ effect: Bitcrusher, left: [Float], right: [Float]) -> ([Float], [Float]) {
         var l = left, r = right
         l.withUnsafeMutableBufferPointer { lp in
             r.withUnsafeMutableBufferPointer { rp in
