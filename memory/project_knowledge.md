@@ -5,7 +5,7 @@
 > Dossier dazu: `scratchpads/ULTRA_DEEP_AUDIT_2026-10-29.md`. Das Produkt ist **Echoel Studio** (`EchoelStudio/`,
 > TestFlight 11.0.0 Build 10015); `Sources/Echoelmusic/` ist die eingefrorene Alt-App 10.79.515. Genau EINE
 > Sitzung schreibt auf `claude/echoelmusic-review-optimize-u5jjpd`. Dieser Block ersetzt sich, wenn eine neuere
-> Übergabe existiert — nie zwei Zeiger.
+> Übergabe existiert — nie zwei Zeiger. `HANDOVER_2026-10-29_may-session-01Q2ZFqs.md` ist HISTORIE einer Mai-Session, keine zweite Übergabe (§7 der kanonischen).
 
 Durable, comprehensive knowledge of the project from the start. Read at session
 start with `memory/vision.md` (tiered vision/north-star), `decisions.md`/`decisions.csv`
