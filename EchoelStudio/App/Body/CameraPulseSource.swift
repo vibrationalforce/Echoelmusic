@@ -101,6 +101,9 @@ final class CameraPulseSource {
     @ObservationIgnored private var findingSince: Int64 = 0
     @ObservationIgnored private var stallWasRhythmless: Bool?
     @ObservationIgnored private var suspended = false
+    /// A video take holds the camera (`CameraArbitration`, W7): a pulse chosen now waits suspended,
+    /// and `resume()` opens it when the take gives the camera back. Set by `VideoTakeRecorder` only.
+    @ObservationIgnored var takeHoldsCamera = false
     @ObservationIgnored private let log = Logger(subsystem: "com.echoelmusic.studio", category: "body")
 
     var isOn: Bool { status != .off }
@@ -120,6 +123,14 @@ final class CameraPulseSource {
         }
         generation &+= 1
         let run = generation
+        if takeHoldsCamera {
+            // Production wins: the pulse is on, and waits for the camera.
+            suspended = true
+            status = .interrupted
+            apply(.start(.camera, CameraCapture.permission()))
+            apply(.suspend)
+            return
+        }
         status = .starting
         apply(.start(.camera, CameraCapture.permission()))
         Task { @MainActor [weak self] in
@@ -140,7 +151,7 @@ final class CameraPulseSource {
     }
 
     /// A production camera takes the lens (camera-arbitration: production wins): the pulse pauses
-    /// without turning off, and `resume()` reopens it. Nothing else calls these today.
+    /// without turning off, and `resume()` reopens it. `VideoTakeRecorder` calls these (W7).
     func suspend() {
         guard isOn, !suspended else { return }
         suspended = true
