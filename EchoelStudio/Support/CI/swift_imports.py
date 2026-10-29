@@ -21,9 +21,12 @@ DECLARATION = re.compile(
     r"import\s+(?:(?:typealias|struct|class|enum|protocol|let|var|func)\s+)?([A-Za-z_]\w*)(?:\.\w+)*[ \t]*(?=;|\r?$)",
     re.M)
 
-# Frameworks that reach the network, and APIs that do so without one of them.
+# Frameworks that reach the network, and APIs that do so without one of them. The HaishinKit
+# modules (the live-stream package, W14) open their sockets inside the package, where this scan
+# cannot look, so importing one counts as reaching the network.
 NETWORK_MODULES = {"Network", "StoreKit", "MultipeerConnectivity", "CloudKit", "WebKit", "SafariServices",
-                   "CFNetwork", "GroupActivities", "AuthenticationServices", "WeatherKit", "MapKit"}
+                   "CFNetwork", "GroupActivities", "AuthenticationServices", "WeatherKit", "MapKit",
+                   "HaishinKit", "RTMPHaishinKit", "SRTHaishinKit"}
 NETWORK_API = re.compile(
     r"\b(?:URLSession|URLRequest|NWConnection|NWListener|NWBrowser|MIDINetworkSession|NSURLConnection"
     r"|CFSocket\w*|CFStream\w*|getaddrinfo)\b|\b(?:socket|sendto)\s*\(")
@@ -158,6 +161,7 @@ def selftest():
         ('let s = "URLSession"', False),
         ("let task = URLSession.shared", True),
         ("import Network", True),
+        ("import RTMPHaishinKit", True),
         ("import Foundation", False),
         ("let fd = socket(AF_INET, SOCK_DGRAM, 0)", True),
         ("func load(\n    import Network: URL) {}", False),
