@@ -1,4 +1,4 @@
-# The Echoel song format (format 3)
+# The Echoel song format (format 4)
 
 A song is a folder ending in `.echoel` — a package of the type `com.echoelmusic.song`, which the
 Files app shows as one file and opens in Echoel:
@@ -6,7 +6,7 @@ Files app shows as one file and opens in Echoel:
 ```
 My Song.echoel/
   project.json        the song, UTF-8 JSON
-  Media/              the audio files the song uses, copied in on import
+  Media/              the audio and video files the song uses, copied in on import
 ```
 
 A song shared from the app ("Share Song") is the same package, written fresh: `project.json` and
@@ -15,13 +15,13 @@ lacks is left out, and the song opens without it, as it would where it came from
 
 `project.json` is written pretty-printed with sorted keys, so the same song always produces the
 same bytes and a diff shows only real changes. Nothing in it is encrypted, compressed or signed.
-Every audio file is a plain file you can take out of `Media/`.
+Every audio and video file is a plain file you can take out of `Media/`.
 
 ## Versioning
 
-- `formatVersion` (integer) is required. This document describes **3**. A reader of format 3
-  opens every format-2 and format-1 file too; the differences are at the end ("Format 2",
-  "Format 1").
+- `formatVersion` (integer) is required. This document describes **4**. A reader of format 4
+  opens every format-3, format-2 and format-1 file too; the differences are at the end
+  ("Format 3", "Format 2", "Format 1").
 - A file with a **newer** number is refused rather than opened with parts missing; a number below
   1 is refused as damaged.
 - An older file is read into today's shape, so saving it writes today's number.
@@ -54,6 +54,7 @@ Every audio file is a plain file you can take out of `Media/`.
 | pitch bend | 14-bit, 0 … 16383, centre 8192 |
 | controller | number 0 … 119, value 0 … 127 |
 | audio offsets and lengths | sample frames of the audio file |
+| video offsets and lengths | units of the video file's `sampleRate` per second (Echoel writes 48 000) |
 | ids | UUID strings — unique in the song, except a note's (unique in its clip) and a placement's (unique on its track) |
 | names | the song's, a track's, a clip's, a scene's, a media file's: never empty or only spaces; the editor keeps them within 128 characters, a reader takes up to 256 |
 
@@ -71,7 +72,7 @@ Every audio file is a plain file you can take out of `Media/`.
 | `masterInserts` | `[insert]` | optional; effects after the master fader |
 | `tracks` | `[track]` | required |
 | `scenes` | `[{id, name}]` | required; rows of the session grid |
-| `media` | `[media file]` | optional; the files in `Media/` |
+| `media` | `[media file]` | optional; the audio and video files in `Media/` |
 | `midiMappings` | `[mapping]` | optional; learned controllers |
 | `automation` | `[lane]` | optional; one lane per parameter |
 | `modRoutes` | `[route]` | **required** in format 3; sources that move parameters |
@@ -86,7 +87,7 @@ and plays as chromatic or 12 equal;
 `concertPitch` 400–480 Hz; `swing` 0 (straight) … 1 (triplet feel). It frames what is played and
 writes no notes.
 
-**Track:** `id`, `name`, `kind` (`instrument` · `audio` · `returnTrack`), `colorIndex` (a palette
+**Track:** `id`, `name`, `kind` (`instrument` · `audio` · `returnTrack` · `video`), `colorIndex` (a palette
 slot, not a colour), `mixer`, `clips`, `placements` (`{id, clip, start}` on the timeline),
 `slots` (`{scene, clip}` in the session grid: a scene of the song and a clip of this track, one
 per scene) — all required; optional: `instrument`, `regions`
@@ -94,8 +95,11 @@ per scene) — all required; optional: `instrument`, `regions`
 (first channel of an interface stereo pair, absent = master), `input`, `monitor`
 (`auto` · `in` · `off`; another name is kept and behaves as `auto`). What a track holds follows
 its kind: an instrument track has MIDI clips and no regions; an audio track has audio clips (in
-session slots only) and regions; a return track has effects only — no clips, placements, slots
-or regions.
+session slots only) and regions of audio files; a return track has effects only — no clips,
+placements, slots or regions; a video track has regions of video files only — no clips,
+placements, slots, inserts, sends or output. A video track is never heard: Echoel does not play a
+video's own sound, and the song's mix is the sound of a video export. Where two parts of video
+tracks overlap, the top track shows, and within a track the part that starts later.
 
 **Instrument:** `device` (`synth` · `drums` · `sampler` · `plugin`; a name a reader does not know
 is kept as written and that track stays silent — the song still opens), `preset`, `values` (parameter
@@ -115,11 +119,15 @@ track stays silent and names it.
 **Insert:** `{id, plugin, state, isBypassed}` — an effect (a plugin component of an effect type)
 on a track or the master, in signal order; `state` optional, as `pluginState`. At most 8 in one place.
 
-**Media file:** `{id, name, path, frameCount, sampleRate}` — `path` inside the package, always
-under `Media/`, never absolute or with `..`; `frameCount` above 0; `sampleRate` 1 000 … 768 000.
+**Media file:** `{id, name, path, frameCount, sampleRate}` plus, for a video only, `kind`:
+`"video"` (absent is an audio file; a kind a reader does not know refuses the song) — `path`
+inside the package, always under `Media/`, never absolute or with `..`; `frameCount` above 0;
+`sampleRate` 1 000 … 768 000. An audio file's `frameCount` counts its frames at `sampleRate`; a
+video's counts its length in units of `sampleRate` per second, so a region cuts both alike.
 
-**Audio region:** `{id, media, start, offset, length}` on an audio track's timeline — `start` in
-ticks, `offset` and `length` in frames of the file, inside it. The file plays at its own speed, so
+**Audio region:** `{id, media, start, offset, length}` on an audio track's timeline — or, of a
+video file, on a video track's — `start` in ticks, `offset` and `length` in the file's units,
+inside it. Cutting a region never changes its file. The file plays at its own speed, so
 a tempo change moves where a region starts, never how it sounds.
 
 **Clip:** `id`, `name`, `length` (ticks; the loop length), `notes` — required; optional `audio`
@@ -163,6 +171,12 @@ value is its stored or automated value plus each enabled route's `depth × curve
 order of the route ids, clamped to the parameter's range once, after the last route. A source
 that is not measured at the moment adds nothing. A song stores the routes, never a measured
 value: what a body did during a take is not in the file.
+
+## Format 3
+
+Format 3 is format 4 without video: no track of kind `video` and no media file with a `kind`. A
+format-3 file that carries either is refused, since no format-3 build wrote one. A song saved
+again is written as format 4, and builds before format 4 do not open it.
 
 ## Format 2
 

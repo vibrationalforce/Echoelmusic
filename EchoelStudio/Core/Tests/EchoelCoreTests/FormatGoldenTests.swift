@@ -7,7 +7,8 @@ import XCTest
 /// supported. A change that breaks one is a format change: bump `Project.currentFormatVersion`
 /// and migrate, never edit the golden file to match. Format 2 (2026-10-20) changed how an
 /// address is stored; every format-1 file here opens unchanged. Format 3 (2026-10-28) adds the
-/// required `modRoutes`; every format-1 and format-2 file opens with none.
+/// required `modRoutes`; every format-1 and format-2 file opens with none. Format 4 (2026-10-29)
+/// adds video tracks and video media files; every older file opens unchanged and has neither.
 final class FormatGoldenTests: XCTestCase {
     /// The first format-1 shape: only the keys those builds wrote.
     private let earliest = Data("""
@@ -305,6 +306,41 @@ final class FormatGoldenTests: XCTestCase {
     }
     """.utf8)
 
+    /// Format 4: a video track showing two parts of one take, beside an audio file that states no kind.
+    private let formatFour = Data("""
+    {
+      "formatVersion": 4,
+      "name": "Filmed",
+      "tempo": 120,
+      "timeSignature": { "numerator": 4, "denominator": 4 },
+      "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+      "media": [
+        { "id": "3ED10000-0000-4000-8000-000000000002", "name": "Take 1", "kind": "video",
+          "path": "Media/3ED10000-0000-4000-8000-000000000002.mov", "frameCount": 480000, "sampleRate": 48000 },
+        { "id": "3ED10000-0000-4000-8000-000000000003", "name": "Loop",
+          "path": "Media/3ED10000-0000-4000-8000-000000000003.wav", "frameCount": 96000, "sampleRate": 48000 }
+      ],
+      "scenes": [],
+      "tracks": [
+        {
+          "id": "7A000000-0000-4000-8000-00000000000A",
+          "name": "Video 1",
+          "kind": "video",
+          "colorIndex": 7,
+          "mixer": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false },
+          "clips": [], "placements": [], "slots": [],
+          "regions": [
+            { "id": "4E610000-0000-4000-8000-000000000002", "media": "3ED10000-0000-4000-8000-000000000002",
+              "start": 0, "offset": 0, "length": 96000 },
+            { "id": "4E610000-0000-4000-8000-000000000003", "media": "3ED10000-0000-4000-8000-000000000002",
+              "start": 7680, "offset": 192000, "length": 288000 }
+          ]
+        }
+      ],
+      "modRoutes": []
+    }
+    """.utf8)
+
     private let pad = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000004") ?? UUID())
     private let room = TrackID(UUID(uuidString: "7A000000-0000-4000-8000-000000000005") ?? UUID())
 
@@ -336,7 +372,7 @@ final class FormatGoldenTests: XCTestCase {
     }
 
     func testEveryGoldenFileSurvivesARoundTrip() throws {
-        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree] {
+        for data in [earliest, current, formatOneAddresses, formatTwo, laterNames, formatTwoMedia, formatThree, formatFour] {
             let project = try ProjectCodec.decode(data)
             XCTAssertEqual(try ProjectCodec.decode(ProjectCodec.encode(project)), project)
         }
@@ -554,9 +590,55 @@ final class FormatGoldenTests: XCTestCase {
     }
 
     func testATrackKindThisBuildDoesNotKnowRefusesTheSong() throws {
+        // "video" stood here until format 4 made it a kind; the rule is the same for the next one.
         let later = String(decoding: earliest, as: UTF8.self)
-            .replacingOccurrences(of: "\"kind\": \"instrument\"", with: "\"kind\": \"video\"")
+            .replacingOccurrences(of: "\"kind\": \"instrument\"", with: "\"kind\": \"hologram\"")
         XCTAssertNotEqual(Data(later.utf8), earliest, "the replacement must land")
         XCTAssertThrowsError(try ProjectCodec.decode(Data(later.utf8)))
+    }
+
+    // MARK: - Video (format 4)
+
+    func testAFormatFourFileOpensWithItsVideoTrack() throws {
+        let project = try ProjectCodec.decode(formatFour)
+        let video = try XCTUnwrap(project.tracks.first)
+        XCTAssertEqual(video.kind, .video)
+        XCTAssertEqual(video.regions.map(\.start), [0, 7_680])
+        XCTAssertEqual(video.regions.map(\.offset), [0, 192_000])
+        XCTAssertEqual(project.media.map(\.kind), [.video, .audio], "a file that states no kind is audio")
+        XCTAssertTrue(project.audibleMedia.isEmpty, "a picture is not sound")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: ProjectCodec.encode(project)) as? [String: Any])
+        let media = try XCTUnwrap(root["media"] as? [[String: Any]])
+        XCTAssertEqual(Set(try XCTUnwrap(media.first).keys), ["id", "name", "kind", "path", "frameCount", "sampleRate"])
+        XCTAssertEqual(Set(try XCTUnwrap(media.last).keys), ["id", "name", "path", "frameCount", "sampleRate"])
+    }
+
+    /// Video belongs to format 4: an older file that carries a video track or a video file is
+    /// refused, never opened as if an older build had written it.
+    func testVideoBelongsToFormatFourAndOnlyThere() throws {
+        let three = String(decoding: formatFour, as: UTF8.self)
+            .replacingOccurrences(of: "\"formatVersion\": 4", with: "\"formatVersion\": 3")
+        XCTAssertNotEqual(Data(three.utf8), formatFour, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(three.utf8)))
+        let mediaOnly = Data("""
+        { "formatVersion": 3, "name": "Odd", "tempo": 120, "timeSignature": { "numerator": 4, "denominator": 4 },
+          "master": { "volumeDB": 0, "pan": 0, "isMuted": false, "isSoloed": false }, "scenes": [], "tracks": [],
+          "media": [ { "id": "3ED10000-0000-4000-8000-000000000004", "name": "Clip", "kind": "video",
+                       "path": "Media/clip.mov", "frameCount": 48000, "sampleRate": 48000 } ],
+          "modRoutes": [] }
+        """.utf8)
+        XCTAssertThrowsError(try ProjectCodec.decode(mediaOnly))
+        let unknownKind = String(decoding: formatFour, as: UTF8.self)
+            .replacingOccurrences(of: "\"kind\": \"video\",", with: "\"kind\": \"hologram\",")
+        XCTAssertNotEqual(Data(unknownKind.utf8), formatFour, "the replacement must land")
+        XCTAssertThrowsError(try ProjectCodec.decode(Data(unknownKind.utf8)), "a media kind this build does not know")
+    }
+
+    func testAnOlderSongOpensWithNoVideo() throws {
+        for data in [earliest, current, formatTwo, formatTwoMedia, formatThree] {
+            let project = try ProjectCodec.decode(data)
+            XCTAssertFalse(project.tracks.contains { $0.kind == .video })
+            XCTAssertTrue(project.media.allSatisfy { $0.kind == .audio })
+        }
     }
 }
