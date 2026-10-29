@@ -185,7 +185,7 @@ public enum StreamPlatform: String, Codable, Sendable, CaseIterable {
 /// One destination: a name, its preset, the server it is sent to, its picture shape and bit
 /// rates, and whether it is in the next stream. Everything here may be stored on the device; the key is NOT here — the keychain holds
 /// it under `id` (`App/Streaming/StreamKeyStore.swift`).
-public struct StreamTarget: Codable, Equatable, Identifiable, Sendable {
+public struct StreamTarget: Codable, Hashable, Identifiable, Sendable {
     public var id: UUID
     public var name: String
     public var platform: StreamPlatform
@@ -290,7 +290,7 @@ public struct StreamTarget: Codable, Equatable, Identifiable, Sendable {
 }
 
 /// A destination's encoder settings: one video and one audio bit rate, at 30 frames a second.
-public struct StreamQuality: Codable, Equatable, Sendable {
+public struct StreamQuality: Codable, Hashable, Sendable {
     public static let videoRange = 500...12_000
     public static let audioRange = 64...320
     public static let framesPerSecond = 30

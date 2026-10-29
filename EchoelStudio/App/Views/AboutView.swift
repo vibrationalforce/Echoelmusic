@@ -19,7 +19,7 @@ struct AboutView: View {
                 }
                 Section("Your data") {
                     paragraph("No account, no ads, no tracking, no server of ours. Songs are files on this device, in an open, documented format.")
-                    paragraph("Echoel uses the network only for the App Store — at launch, to check whether you bought Echoel Plugins, and when you open the store (prices, buying, Restore Purchases) — and for Network MIDI, when you turn it on.")
+                    paragraph("Echoel uses the network only for the App Store (at launch, to check whether you bought Echoel Plugins, and when you open the store: prices, buying, Restore Purchases), for Network MIDI when you turn it on, and for a live stream, from Go Live to Stop, to the servers you enter.")
                 }
                 Section("Open source") {
                     paragraph("The source code is public under the MIT licence. These links open in your browser.")
