@@ -17,7 +17,7 @@ struct SessionView: View {
     static let sceneWidth: CGFloat = 104
 
     var body: some View {
-        let tracks = store.project.tracks.filter { $0.kind != .returnTrack }
+        let tracks = store.project.tracks.filter { $0.kind == .instrument || $0.kind == .audio }
         VStack(spacing: 0) {
             ScrollView([.horizontal, .vertical]) {
                 VStack(alignment: .leading, spacing: 1) {
