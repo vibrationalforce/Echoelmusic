@@ -1894,3 +1894,14 @@ Lehre: ein Wert, den die Engine spielt, ist noch keine Fähigkeit — erst mit T
 waren nur über den Assistenten erreichbar; ich hatte sie dem Founder als „im Studio“ genannt).
 Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuerst) oder Texture-Engine;
 12. Upload, sobald genug Neues grün ist.
+
+## 2026-10-29 — Übergabe (kein Code)
+
+Reine Übergabe-Sitzung, kein Quelltext geändert. Baum sauber auf `claude/code-session-work-Nm1KQ`.
+Stand seit dem Abend-Eintrag 2026-10-28:
+- `bd5ace6` Himmel S1a gebaut: Sternzeit, Höhe, Azimut (Core, reine Arithmetik).
+- `7091694` Typen für die Literal-Arithmetik im Himmel-Test (Gate grün).
+- `587090b` zwölfter 11.0.0-Upload auf dem grünen `7091694`.
+Offen: Remote-Zweig `park/morph-2026-10-28` löschen (Proxy 403 — Founder).
+Nächster Schritt: Himmel S1b (Sternkatalog + Sichtbarkeit, Test zuerst) oder Texture-Engine;
+13. Upload, sobald genug Neues grün ist. Vor jedem Upload: Gates lesen (`Tests/CISmoke/CLAUDE.md` §5).
