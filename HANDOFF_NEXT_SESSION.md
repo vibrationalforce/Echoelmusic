@@ -393,6 +393,16 @@ See `IPLUG2_SUPER_WISE_MODE_ULTRATHINK.md` page 8-10 for full ADM Exporter speci
 
 ---
 
+## ⚠️ UNVERIFIED CLAIMS — CHECK FIRST
+
+Several figures in this file and in `IPLUG2_SUPER_WISE_MODE_ULTRATHINK.md` are estimates, not measurements:
+
+- **"70% / 60% / 90% complete"**: based on reading header files only. `SpatialForge.cpp` and `VideoWeaver.cpp` were not reviewed, so the headers may promise more than the implementations deliver. First task of the next session: read both `.cpp` files and correct these numbers.
+- **Grant amounts, success rates, deadlines**: from general knowledge, not checked against current calls. Verify each program before writing an application.
+- **Star/download targets**: aspirational, not derived from data.
+- **"<50 warnings", "-15% CPU"**: quoted from earlier session summaries, not re-measured here.
+- **VoidXH Cavern**: only the GitHub README was read, not the source. Check its license before borrowing any code (reference use is fine regardless).
+
 ## ⚠️ WARNINGS & GOTCHAS
 
 ### DO NOT:
@@ -489,6 +499,8 @@ git clone https://github.com/VoidXH/Cavern.git
 
 ---
 
-**Commits This Session:**
+**Commits This Session (all pushed):**
 1. `docs: Add comprehensive GitHub profile review for VoidXH`
 2. `docs: Add comprehensive iPlug2 Super Wise Mode strategic analysis`
+3. `docs: Add comprehensive session handoff documentation`
+4. `docs: Flag unverified estimates in session handoff`
