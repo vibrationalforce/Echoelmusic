@@ -1,5 +1,12 @@
 # Echoel — Project Knowledge (the always-present reference)
 
+> ⭐ **START HIER (2026-10-29):** `scratchpads/HANDOVER_2026-10-29.md` ist die interne Übergabe — Stand,
+> Gesetze, Arbeitsannahmen bis zur Entscheidungsrunde, Reihenfolge der nächsten Scheiben ohne Founder-Hand.
+> Dossier dazu: `scratchpads/ULTRA_DEEP_AUDIT_2026-10-29.md`. Das Produkt ist **Echoel Studio** (`EchoelStudio/`,
+> TestFlight 11.0.0 Build 10015); `Sources/Echoelmusic/` ist die eingefrorene Alt-App 10.79.515. Genau EINE
+> Sitzung schreibt auf `claude/echoelmusic-review-optimize-u5jjpd`. Dieser Block ersetzt sich, wenn eine neuere
+> Übergabe existiert — nie zwei Zeiger.
+
 Durable, comprehensive knowledge of the project from the start. Read at session
 start with `memory/vision.md` (tiered vision/north-star), `decisions.md`/`decisions.csv`
 (decisions), `inspiration_intake.md` (the vision-gate funnel) and `scratchpads/SESSION_LOG.md`

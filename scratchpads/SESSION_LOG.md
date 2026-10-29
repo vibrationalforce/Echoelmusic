@@ -1946,3 +1946,13 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   Geräte-Sitzung, F25, Kamera-Zeile) und zwei Richtungsentscheide (Umfang von 1.0, Tauchfliege/Förderung).
   Store-Text in `fastlane/metadata` ist zu 100 % Alt-App; `AboutView.swift:17` widerspricht dem eigenen Build.
 - Nichts gebaut, nichts geändert außer diesem Dossier und diesem Eintrag.
+
+## 2026-10-29 08:45 — Interne Übergabe im Repo (Founder: „ohne dass ich was machen muss“)
+- `scratchpads/HANDOVER_2026-10-29.md`: Stand, sieben Arbeitsgesetze der Woche, Arbeitsannahmen bis zur Entscheidungsrunde
+  (aus den Inbox-Empfehlungen, keine neue Founder-Entscheidung), zehn Scheiben ohne Founder-Hand in Reihenfolge, Warteliste
+  der Founder-Posten, Gerätetests, Kurzchronik 28./29.10. Zeiger als START-HIER-Block oben in `memory/project_knowledge.md`
+  (der Hook druckt die Datei ganz).
+- Vorher: Runde 7 der Externen Prüf-Aufträge (von der alten Produktions-Session per `send_message` geliefert) angehängt;
+  `fastlane/Appfile` AUv3-Zeile korrigiert (Übergabe der Audit-TestFlight-Session). Alle fünf Nebensessions haben übergeben, idle.
+- Nichts gebaut, kein Upload. Nächste Code-Scheibe laut Übergabe §4: AboutView/claims/RELEASE-Korrektur mit dem nächsten Bump,
+  dann Format-3-Rückwärtsfall, dann Sky S1b.
