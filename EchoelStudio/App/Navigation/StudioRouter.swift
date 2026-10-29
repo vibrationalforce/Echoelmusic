@@ -27,6 +27,8 @@ enum StudioSheet: Identifiable, Hashable {
     case about
     /// A new name for the open song, which its package takes too.
     case renameSong
+    /// OSC, ADM-OSC, Art-Net and sACN out, each off until switched on here (wave W4).
+    case connections
 
     var id: Self { self }
 }
