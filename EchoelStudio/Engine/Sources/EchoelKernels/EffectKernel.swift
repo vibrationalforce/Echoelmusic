@@ -43,6 +43,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let bitcrusher: Bitcrusher?
     private let tape: Tape?
     private let stereoWidth: StereoWidth?
+    private let ringModulator: RingModulator?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -67,6 +68,7 @@ public final class EffectKernel: @unchecked Sendable {
         bitcrusher = effect == .bitcrusher ? Bitcrusher(sampleRate: self.sampleRate) : nil
         tape = effect == .tape ? Tape(sampleRate: self.sampleRate) : nil
         stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
+        ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -113,6 +115,7 @@ public final class EffectKernel: @unchecked Sendable {
         bitcrusher?.reset()
         tape?.reset()
         stereoWidth?.reset()
+        ringModulator?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -141,6 +144,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .bitcrusher: bitcrusher?.process(left: left, right: right, frames: frames)
         case .tape: tape?.process(left: left, right: right, frames: frames)
         case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
+        case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -217,6 +221,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let stereoWidth else { return }
             let s = StereoWidth.Settings(width: value(0))
             if s != stereoWidth.settings { stereoWidth.settings = s }
+        case .ringModulator:
+            guard let ringModulator else { return }
+            let s = RingModulator.Settings(frequency: value(0), mix: value(1))
+            if s != ringModulator.settings { ringModulator.settings = s }
         }
     }
 
@@ -295,6 +303,9 @@ public final class EffectKernel: @unchecked Sendable {
             add("tone", "Tone", 0...1, 0.8, .amount)
         case .stereoWidth:
             add("width", "Width", 0...2, 1.4, .ratio)
+        case .ringModulator:
+            add("frequency", "Frequency", 1...5_000, 440, .hertz)
+            add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
     }
