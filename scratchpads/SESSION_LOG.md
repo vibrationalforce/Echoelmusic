@@ -1894,3 +1894,16 @@ Lehre: ein Wert, den die Engine spielt, ist noch keine Fähigkeit — erst mit T
 waren nur über den Assistenten erreichbar; ich hatte sie dem Founder als „im Studio“ genannt).
 Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuerst) oder Texture-Engine;
 12. Upload, sobald genug Neues grün ist.
+
+## 2026-10-29 — Internal handover from session 01Q2ZFqsbyPW4rwFnTMp5Bhq (May → Oct, 5½ months dormant)
+
+A long-dormant session from 2026-05 resurfaced on this branch (`claude/echoelmusic-deep-audit-6efQv`)
+and committed an internal handover to `scratchpads/HANDOVER_2026-10-29.md`. Nothing in that
+session's May commits is current — they predate the pure-instrument phase (2026-07-25) and the
+DMMW Product Law restoration (2026-09-24), and specifically predate #1301–#1305 which deleted
+audio input, video capture and the beat engine. The handover file flags each May commit by SHA
+and marks what must not be resurrected (`MultiTrackRecorder`, four-tab `StudioRoot`,
+"Make Beats · Record Video · Stream Live" copy, pad-grid beat UI). Only durable item: the AUv3
+`Info.plist` `aufx` → `augn` fix, if the current plist still needs it.
+
+No code change on this turn. The May-era handover-only commits land on this branch (`claude/echoelmusic-deep-audit-6efQv`), which is 7 commits ahead of `main` with other sessions' sky-arithmetic + Studio-11.0.0-upload work on top; the handover is for future sessions that find themselves here, not for `main`.
