@@ -1,6 +1,8 @@
-// Ported unchanged from the earlier app (Sources/Echoelmusic/Video/PulsePeriodEstimator.swift) for Echoel Studio 1.0, wave W1 "body"
+// Ported from the earlier app (Sources/Echoelmusic/Video/PulsePeriodEstimator.swift) for Echoel Studio 1.0, wave W1 "body"
 // (scratchpads/PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md): the algorithm that locked on the
-// device there, now in EchoelDSP, Foundation only.
+// device there, now in EchoelDSP, Foundation only. One correction since the port: the half-lag
+// check below, which keeps a pulse above ~80 bpm from being reported at half its rate
+// (`PulsePeriodEstimatorTests.testADoublePeriodInsideTheBandIsNotTheAnswer`).
 
 // PulsePeriodEstimator.swift
 // Echoel — robust pulse-rate estimate via normalized autocorrelation. The camera
@@ -81,6 +83,29 @@ public enum PulsePeriodEstimator {
             if c > bestCorr { bestCorr = c; bestLag = lag }
         }
         guard bestLag > 0, bestCorr > 0 else { return nil }
+
+        // THE FUNDAMENTAL, NOT ITS DOUBLE (Studio W1, 2026-10-29). Any T-periodic signal correlates
+        // as strongly at lag 2T as at lag T, and the per-lag normalization above makes the two
+        // sums comparable — so whenever 2T lies inside the searched band (every pulse above
+        // ~80 bpm at 15 fps: T < 11 samples, 2T ≤ the 22-sample floor of 40 bpm) noise decides
+        // which of the two wins, and a 90 bpm pulse was reported as 45 on about every other
+        // window. The device sessions sat at resting rates, where 2T is out of band, which is why
+        // this never showed there. When the lag at HALF the winner correlates nearly as well, the
+        // half is the period: a true period's half correlates poorly (negatively for a sine).
+        if bestLag >= 2 * minLag {
+            let halfLow = Swift.max(minLag, bestLag / 2 - 1)
+            let halfHigh = Swift.min(maxLag, (bestLag + 1) / 2 + 1)
+            var halfLag = -1
+            var halfCorr = 0.0
+            for lag in halfLow...halfHigh where corr[lag] > halfCorr {
+                halfCorr = corr[lag]
+                halfLag = lag
+            }
+            if halfLag > 0, halfCorr >= 0.85 * bestCorr {
+                bestLag = halfLag
+                bestCorr = halfCorr
+            }
+        }
 
         // Parabolic interpolation around the peak for sub-sample lag resolution
         // (at ~15 Hz one lag step is several BPM — interpolation matters).
