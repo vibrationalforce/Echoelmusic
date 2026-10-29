@@ -42,6 +42,9 @@ final class AudioEngine {
     @ObservationIgnored private var isInBackground = false
     @ObservationIgnored private var recovery = AudioRecoveryPolicy()
     @ObservationIgnored private var retryTask: Task<Void, Never>?
+    /// Looks at the render count once a second while the song plays (`watchRendering`).
+    @ObservationIgnored private var watchdog = RenderWatchdog()
+    @ObservationIgnored private var watchTask: Task<Void, Never>?
 
     /// Replaced, never restarted, after the media services reset (`replaceEngine`).
     @ObservationIgnored private var engine = AVAudioEngine()
@@ -435,6 +438,55 @@ final class AudioEngine {
         recovery.reset()
         configure(input: wantsInput)
         cameBack()
+    }
+
+    /// While the song plays, once a second: a render count that stood still for two seconds means
+    /// the source node is no longer called although the engine may say it runs — the transport
+    /// would go on over silence. The step is written first, then the graph is rebuilt at the same
+    /// rate, which keeps the core, the playhead and the voices (`configure`). On the main actor,
+    /// never on the render thread; it reads the count the render thread already publishes. It ends
+    /// by itself when the song stops, and the next Play starts it again.
+    private func watchRendering() {
+        guard watchTask == nil else { return }
+        let origin = ContinuousClock.now
+        watchTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, !Task.isCancelled else { return }
+                guard self.isPlaying else {
+                    _ = self.watchdog.look(count: 0, at: ContinuousClock.now - origin, playing: false)
+                    self.watchTask = nil
+                    return
+                }
+                self.lookAtRendering(at: ContinuousClock.now - origin)
+            }
+        }
+    }
+
+    private func lookAtRendering(at now: Duration) {
+        guard let core else { return }
+        let playing = isPlaying && suspendedInput == nil && wantsAudio
+        switch watchdog.look(count: core.renderCount, at: now, playing: playing) {
+        case .fine:
+            return
+        case .heal(let stalled):
+            let seconds = Double(stalled.components.seconds) + Double(stalled.components.attoseconds) / 1e18
+            step("engine: render stalled, rebuilding", [("s", seconds), ("buffers", renderedBuffers),
+                                                         ("running", engine.isRunning ? 1 : 0)], level: .error)
+            guard engine.isRunning else {
+                healIfStopped("render stalled")
+                return
+            }
+            recovery.reset()
+            configure(input: wantsInput)
+            cameBack()
+        case .gaveUp:
+            // Rebuilt and still silent: the song pauses (a take ends with what it has) and Play
+            // becomes Restart audio, the one door that rebuilds a graph the engine calls running.
+            step("engine: render still stalled after rebuilds", [("buffers", renderedBuffers)], level: .error)
+            pauseFromOutside("The audio stopped responding, so the song paused. Tap Restart audio.")
+            isStalled = true
+        }
     }
 
     /// The app went to the background. With nothing playing, recording or following a connected
@@ -876,6 +928,7 @@ final class AudioEngine {
         playingWhenServicesLost = false
         core.play()
         isPlaying = true
+        watchRendering()
     }
 
     /// Brings the graph back if it was suspended or stopped underneath, and says whether the
