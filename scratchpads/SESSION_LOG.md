@@ -1894,3 +1894,24 @@ Lehre: ein Wert, den die Engine spielt, ist noch keine Fähigkeit — erst mit T
 waren nur über den Assistenten erreichbar; ich hatte sie dem Founder als „im Studio“ genannt).
 Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuerst) oder Texture-Engine;
 12. Upload, sobald genug Neues grün ist.
+
+## 2026-10-29 — Übergabe: zwölfter Upload 10015 grün, Zweig leer, nächste Session startet auf `main`
+
+- **Stand beim Schließen:** Arbeitsbaum leer, lokaler HEAD `587090b` = `origin/main`. Der
+  Session-Zweig `claude/implement-missing-features-011CV4Aij7vn9Xd42Yegtwve` war nach dem
+  Auto-Merge remote schon weg; dieser Docs-Commit legt ihn nur für die Übergabe neu an und fährt
+  als Passagier auf dem nächsten Code-Commit mit (§AO) — nichts zu tun für den Founder.
+- **TestFlight 10015** (zwölfter 11.0.0-Upload, `Echoel Studio TestFlight` Lauf 15 auf `587090b`):
+  alle Schritte grün, inkl. „Verify the build in App Store Connect“. ⚠️ Der ASC-Zustand
+  (`VALID`/`INVALID`) ist NICHT aus dem Log gelesen — der Job-Log-Download wird vom
+  Session-Proxy blockiert (HTTP 000), und das Prüfskript meldet laut Codex-Warnung vom 28.10.
+  auch bei Timeout grün. Wer es wissen will: Lauf 40775620825, Job „Archive + Upload“, Schritt 15.
+- **Inhalt von 10015** steht in `EchoelStudio/RELEASE` samt den fünf Geräte-Fragen (Morph,
+  Mallet, Tonsystem/Kammerton im Key-Menü, Route auf Send, Modulate-Quellenzeile). Nichts davon
+  geräteverifiziert.
+- **Keine neue Entscheidung** in dieser Sitzung; `decisions.csv` unverändert.
+- **Nächster Schritt (neue Session, auf `main`):** `git log --oneline -20`, Ende dieser Datei,
+  dann entweder Himmel S1b (Sternkatalog + Tür auf die S1a-Arithmetik in `Core/`, Test zuerst)
+  oder die Texture-Engine — `scratchpads/PLAN_INSTRUMENT_FIELD_2026-10-28.md`. Studio-Pushes
+  bündeln (jeder Push unter `EchoelStudio/` bricht den laufenden Gate-Lauf ab); dreizehnter
+  Upload erst, wenn genug Neues grün ist und der Founder 10015 auf dem Gerät gesehen hat.
