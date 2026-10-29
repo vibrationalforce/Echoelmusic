@@ -1,3 +1,4 @@
+import AVFoundation
 import EchoelCore
 import EchoelDSP
 import EchoelEngine
@@ -1189,7 +1190,8 @@ final class DocumentController {
     /// the session, is not in the file (review 2026-10-22).
     private static func unreadMedia(in project: Project, buffers: [MediaID: SampleBuffer],
                                     notLoaded: [MediaID: NotLoaded]) -> UnheardAudio {
-        let played = Set(project.tracks.flatMap { track -> [MediaID] in
+        // A video track's regions are pictures: no buffer is ever made for them.
+        let played = Set(project.tracks.filter { $0.kind != .video }.flatMap { track -> [MediaID] in
             let placed = Set(track.placements.map(\.clip))
             var media = track.regions.map(\.media)
             media += track.clips.filter { placed.contains($0.id) }.compactMap { $0.audio?.media }
@@ -1411,6 +1413,185 @@ final class DocumentController {
         dropBufferUnlessHeld(imported.file.id)
     }
 
+    // MARK: - Video (wave W7)
+
+    /// Copies a video into the song and places all of it at `start` on `track`, or on a new video
+    /// track when `track` is not one — one undo step. The video is measured, never decoded.
+    func importVideo(_ source: URL, onto track: TrackID?, at start: Tick) async {
+        starterKeepsItsOwnPackage()
+        if isImporting {
+            lastError = "Another file is still importing. Try again when it is in."
+            return
+        }
+        followMovedPackage()
+        guard let package = currentURL else { return }
+        let song = songsOpened
+        if isUnwritten || awaitsFirstWriteAtFreeName { starterMadeFolder = true }
+        let id = MediaID()
+        isImporting = true
+        importingMedia = id
+        defer {
+            isImporting = false
+            importingMedia = nil
+            followRenamedSong()
+            settleLeftBehind()
+        }
+        let result: Result<MediaFile, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MediaFile, Error> in
+            let scoped = source.startAccessingSecurityScopedResource()
+            defer { if scoped { source.stopAccessingSecurityScopedResource() } }
+            do {
+                return .success(try await VideoFileImport.importFile(source, into: package, id: id))
+            } catch {
+                return .failure(error)
+            }
+        }.value
+        guard songsOpened == song else { return }
+        followMovedPackage()
+        guard let here = currentURL else { return }
+        switch result {
+        case .success(let file):
+            guard let copy = file.url(in: here), let left = file.url(in: package), bring(left, to: copy, into: here) else {
+                if let stray = file.url(in: package) { try? FileManager.default.removeItem(at: stray) }
+                lastError = "The song was moved or deleted in the Files app while the video was importing. Import it again."
+                return
+            }
+            placeVideo(file, onto: track, at: start, title: "Import \(file.name)")
+            if !store.project.media.contains(where: { $0.id == file.id }) { try? FileManager.default.removeItem(at: copy) }
+        case .failure(let error):
+            log.error("video import failed — \(error.localizedDescription, privacy: .private)")
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not import the video."
+        }
+    }
+
+    /// Lays a finished camera take on `track` (or a new video track) at `start`, the tick its first
+    /// frame was heard — one undo step. A take is never deleted: one that cannot be read stays in
+    /// the Media folder and the line says so.
+    func commitVideoTake(_ url: URL, target: TakeTarget, onto track: TrackID?, at start: Tick) async {
+        defer {
+            takeLanded(target.id)
+            followRenamedSong()
+        }
+        followMovedPackage()
+        let song = songsOpened
+        var source = url
+        if let here = currentURL,
+           let there = MediaFile(id: target.id, name: "Take", path: target.path, frameCount: 1, sampleRate: 1).url(in: here),
+           bring(url, to: there, into: here) {
+            source = there
+        }
+        let number = store.project.media.filter { $0.kind == .video && $0.name.hasPrefix("Take ") }.count + 1
+        let name = "Take \(number)"
+        let path = target.path
+        let id = target.id
+        let read = source
+        let result: Result<MediaFile, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<MediaFile, Error> in
+            do {
+                return .success(try await VideoFileImport.describe(read, id: id, name: name, path: path))
+            } catch {
+                return .failure(error)
+            }
+        }.value
+        guard songsOpened == song else { return }
+        switch result {
+        case .success(let file):
+            placeVideo(file, onto: track, at: start, title: "Record Video Take")
+        case .failure(let error):
+            log.error("video take unreadable — \(error.localizedDescription, privacy: .private)")
+            lastError = "The take could not be read; its file stays in the song's Media folder."
+        }
+    }
+
+    /// The commands that add a video file and place it, making a video track when needed.
+    private func placeVideo(_ file: MediaFile, onto track: TrackID?, at start: Tick, title: String) {
+        var commands: [Command] = []
+        let target: TrackID
+        if let track, store.project.track(track)?.kind == .video {
+            target = track
+        } else {
+            target = TrackID()
+            let count = store.project.tracks.filter { $0.kind == .video }.count + 1
+            commands.append(.addTrack(id: target, name: "Video \(count)", kind: .video, index: nil))
+        }
+        commands.append(.addMedia(file))
+        commands.append(.placeVideo(track: target, id: RegionID(), media: file.id,
+                                    start: Swift.min(Swift.max(0, start), MusicalTime.maximumTick)))
+        perform(commands, title: title)
+    }
+
+    /// Where a song file is now, for a player that reads it.
+    func mediaURL(_ file: MediaFile) -> URL? {
+        currentURL.flatMap { file.url(in: $0) }
+    }
+
+    /// Renders the song (or `options.range` of it) as an MP4 in a temporary folder: the mix,
+    /// brought to social loudness, under what the video tracks show in the chosen frame. Returns
+    /// its URL for the share sheet. Nothing in the song changes; the export writes one new file.
+    func exportVideo(plugins: PluginHost, options: VideoExport.Options) async -> URL? {
+        guard !isExporting else { return nil }
+        let exportedSong = songsOpened
+        let songName = openSongName
+        let mix = await exportWAV(plugins: plugins)
+        guard exportedSong == songsOpened else { return exportStopped(songName) }
+        guard !isExporting else { return nil }
+        isExporting = true
+        exportProgress = "Writing the video…"
+        defer {
+            isExporting = false
+            exportProgress = nil
+            followRenamedSong()
+            if let mix { try? FileManager.default.removeItem(at: mix) }
+        }
+        let project = store.project
+        let mixSeconds = mix.flatMap { try? AVAudioFile(forReading: $0) }.map { Double($0.length) / $0.processingFormat.sampleRate } ?? 0
+        let span: (from: Double, to: Double)
+        if let range = options.range {
+            span = VideoExportPlan.seconds(of: range, in: project)
+        } else {
+            span = (0, VideoExportPlan.longFormSeconds(mixSeconds: mixSeconds, of: project))
+        }
+        let segments = VideoExportPlan.program(of: project, from: span.from, to: span.to)
+        var files: [MediaID: URL] = [:]
+        for segment in segments where files[segment.media] == nil {
+            if let file = project.mediaFile(segment.media), let url = mediaURL(file) { files[segment.media] = url }
+        }
+        let sources = files
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Exports", isDirectory: true)
+        let url = folder.appendingPathComponent(ProjectLibrary.safeFileName(for: songName)).appendingPathExtension("mp4")
+        let result: Result<VideoExport.Loudness?, Error> = await Task.detached(priority: .userInitiated) { () async -> Result<VideoExport.Loudness?, Error> in
+            do {
+                let prepared = try mix.flatMap {
+                    try VideoExport.preparedMix($0, from: span.from, to: span.to, normalize: options.normalizesLoudness,
+                                                into: folder.appendingPathComponent("Mix", isDirectory: true))
+                }
+                defer { if let prepared { try? FileManager.default.removeItem(at: prepared.url) } }
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                try await VideoExport.write(segments: segments, files: sources, mix: prepared?.url,
+                                            duration: span.to - span.from, options: options, to: url)
+                return .success(prepared?.loudness)
+            } catch {
+                return .failure(error)
+            }
+        }.value
+        guard exportedSong == songsOpened else {
+            if case .success = result { try? FileManager.default.removeItem(at: url) }
+            return exportStopped(songName)
+        }
+        switch result {
+        case .success(let loudness):
+            if let loudness {
+                lastExportLoudness = (loudness.integrated, loudness.truePeak)
+                lastExportIsNews = true
+            }
+            lastError = nil
+            return url
+        case .failure(let error):
+            log.error("video export failed — \(error.localizedDescription, privacy: .private)")
+            lastExportIsNews = false
+            lastError = (error as? LocalizedError)?.errorDescription ?? "Could not export the video."
+            return nil
+        }
+    }
+
     /// Copies and decodes a file off the main thread and keeps its buffer, returning the file and
     /// the commands `placing` makes of it, for one undo step. Nil, with `lastError` set, when it
     /// cannot be read, when placing it would leave something the song plays silent at the next
@@ -1491,14 +1672,15 @@ final class DocumentController {
         let url: URL
     }
 
-    func newTakeTarget() -> TakeTarget? {
+    /// `fileExtension` names what is written: `caf` for audio, `mov` for a video take (W7).
+    func newTakeTarget(fileExtension: String = "caf") -> TakeTarget? {
         starterKeepsItsOwnPackage()
         // A package renamed in Files while both apps stay in front is followed here too, or the
         // take would make the old name again beside it (review 2026-10-23).
         followMovedPackage()
         guard let package = currentURL else { return nil }
         let id = MediaID()
-        let path = "\(MediaFile.directory)/\(id).caf"
+        let path = "\(MediaFile.directory)/\(id).\(fileExtension)"
         guard let url = MediaFile(id: id, name: "Take", path: path, frameCount: 1, sampleRate: 1).url(in: package) else {
             return nil
         }
@@ -1735,7 +1917,7 @@ final class DocumentController {
             self.isLoadingMedia = false
             // The same song followed to a new name in Files keeps what was decoded.
             guard self.songsOpened == song else { return }
-            let missing = files.count - loaded.decoded.count - loaded.unfit.count - loaded.short.count
+            let missing = files.filter { $0.kind == .audio }.count - loaded.decoded.count - loaded.unfit.count - loaded.short.count
             if missing > 0 { self.log.error("media: \(missing, privacy: .public) file(s) missing or unreadable") }
             if !loaded.unfit.isEmpty {
                 self.log.error("media: \(loaded.unfit.count, privacy: .public) file(s) past the song's memory budget")
