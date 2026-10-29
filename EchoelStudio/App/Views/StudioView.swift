@@ -214,6 +214,9 @@ struct TransportBar: View {
                     .foregroundStyle(Theme.Color.accent)
                     .padding(.bottom, 2)
             }
+            // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
+            // never observes the camera.
+            CameraPulseCueLine()
             messages
         }
     }
@@ -426,7 +429,6 @@ struct SongMenu: View {
     @Environment(StudioRouter.self) private var router
     @Environment(AgentSession.self) private var agent
     @Environment(ParameterWriter.self) private var writer
-    @Environment(HeartRateStrap.self) private var strap
 
     var body: some View {
         Menu {
@@ -492,11 +494,10 @@ struct SongMenu: View {
             Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
                 Label("Network MIDI", systemImage: "network")
             }
-            // The body as a source (wave W1): off until turned on here; only then does iOS ask
-            // for Bluetooth. The pulse shows beside Record while it is measured.
-            Toggle(isOn: Binding(get: { strap.isOn }, set: { $0 ? strap.start() : strap.stop() })) {
-                Label("Heart Rate Strap", systemImage: "heart")
-            }
+            // The body as a source (wave W1): off until chosen here — the chest strap or the rear
+            // camera, one at a time; only then does iOS ask for Bluetooth or the camera. The pulse
+            // shows beside Record while it is measured.
+            BodySourceMenu()
             Button("Export WAV", systemImage: "square.and.arrow.up") {
                 Task {
                     // A finished export is the newest news: its loudness line must not wait for a

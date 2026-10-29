@@ -14,8 +14,10 @@ struct EchoelStudioApp: App {
     @State private var writer: ParameterWriter
     @State private var launchpad: LaunchpadController
     @State private var agent: AgentSession
-    /// The chest strap, off until the musician turns it on in the Song menu (wave W1).
+    /// The chest strap and the rear camera, off until the musician chooses one in the Song menu
+    /// (wave W1); the chooser keeps one on at a time.
     @State private var strap: HeartRateStrap
+    @State private var camera: CameraPulseSource
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -31,6 +33,9 @@ struct EchoelStudioApp: App {
         let strap = HeartRateStrap()
         strap.output = engine.modulation
         _strap = State(initialValue: strap)
+        let camera = CameraPulseSource()
+        camera.output = engine.modulation
+        _camera = State(initialValue: camera)
         _documents = State(initialValue: documents)
         _recording = State(initialValue: RecordController(engine: engine, documents: documents, store: store))
         let writer = ParameterWriter(store: store, engine: engine)
@@ -77,6 +82,7 @@ struct EchoelStudioApp: App {
                 .environment(writer)
                 .environment(agent)
                 .environment(strap)
+                .environment(camera)
                 .preferredColorScheme(.dark)
                 .task {
                     documents.restore()
