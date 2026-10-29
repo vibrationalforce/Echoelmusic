@@ -37,6 +37,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let chorus: Chorus?
     private let phaser: Phaser?
     private let flanger: Flanger?
+    private let limiter: Limiter?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -55,6 +56,7 @@ public final class EffectKernel: @unchecked Sendable {
         chorus = effect == .chorus ? Chorus(sampleRate: self.sampleRate) : nil
         phaser = effect == .phaser ? Phaser(sampleRate: self.sampleRate) : nil
         flanger = effect == .flanger ? Flanger(sampleRate: self.sampleRate) : nil
+        limiter = effect == .limiter ? Limiter(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -83,7 +85,7 @@ public final class EffectKernel: @unchecked Sendable {
     /// Every value, in address order, to carry into a new kernel.
     public var allValues: [Float] { parameters.indices.map(parameter) }
 
-    /// The compressor's gain reduction in dB (0 or less); 0 for the other effects.
+    /// The compressor's or the limiter's gain reduction in dB (0 or less); 0 for the other effects.
     public var gainReduction: Float { Float(bitPattern: reductionBits.load(ordering: .relaxed)) }
 
     /// Empties delay lines and tails.
@@ -95,6 +97,7 @@ public final class EffectKernel: @unchecked Sendable {
         chorus?.reset()
         phaser?.reset()
         flanger?.reset()
+        limiter?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -114,6 +117,10 @@ public final class EffectKernel: @unchecked Sendable {
         case .chorus: chorus?.process(left: left, right: right, frames: frames)
         case .phaser: phaser?.process(left: left, right: right, frames: frames)
         case .flanger: flanger?.process(left: left, right: right, frames: frames)
+        case .limiter:
+            guard let limiter else { return }
+            limiter.process(left: left, right: right, frames: frames)
+            reductionBits.store(limiter.reduction.bitPattern, ordering: .relaxed)
         }
     }
 
@@ -166,6 +173,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let flanger else { return }
             let s = Flanger.Settings(rate: value(0), depth: value(1), feedback: value(2), mix: value(3))
             if s != flanger.settings { flanger.settings = s }
+        case .limiter:
+            guard let limiter else { return }
+            let s = Limiter.Settings(gain: value(0), ceiling: value(1), release: value(2))
+            if s != limiter.settings { limiter.settings = s }
         }
     }
 
@@ -222,6 +233,10 @@ public final class EffectKernel: @unchecked Sendable {
             add("depth", "Depth", 0...1, 0.7, .amount)
             add("feedback", "Feedback", -0.95...0.95, 0.5, .amount)
             add("mix", "Mix", 0...1, 0.5, .amount)
+        case .limiter:
+            add("gain", "Gain", 0...24, 0, .decibels)
+            add("ceiling", "Ceiling", -24...0, -0.3, .decibels)
+            add("release", "Release", 0.005...1, 0.06, .seconds)
         }
         return list
     }
