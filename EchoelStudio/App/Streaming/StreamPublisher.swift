@@ -14,7 +14,7 @@ import VideoToolbox
 ///
 /// One session per destination. Each has its own encoder, so destinations may differ in shape
 /// and bit rate; the picture of one shape is drawn once and handed to every destination in that
-/// shape (`append(video:format:)`), the master mix to all of them (`append(audio:when:)`).
+/// shape, the master mix to all of them (the two `append`s).
 /// Nothing opens until `open` is called — the musician's Go Live — and `closeAll` ends every one.
 actor StreamPublisher {
     /// What a destination is doing, as the live page shows it.
@@ -93,19 +93,19 @@ actor StreamPublisher {
         publish(id, Report(state: .live))
     }
 
-    /// The picture of `format`, to every open destination in that shape.
-    func append(video sampleBuffer: CMSampleBuffer, format: StreamFormat) async {
-        nonisolated(unsafe) let buffer = sampleBuffer
-        for destination in destinations.values where destination.format == format {
+    /// A picture of one shape, to every open destination in that shape.
+    func append(_ frame: FieldStreamSource.Frame) async {
+        nonisolated(unsafe) let buffer = frame.sampleBuffer
+        for destination in destinations.values where destination.format == frame.format {
             await destination.session.stream.append(buffer)
         }
     }
 
-    /// One block of the master mix, to every open destination. `when` carries the host time the
+    /// One block of the master mix, to every open destination. Its time is the host time the
     /// picture's timestamps share, so sound and picture stay together.
-    func append(audio pcm: AVAudioPCMBuffer, when: AVAudioTime) async {
-        nonisolated(unsafe) let buffer = pcm
-        nonisolated(unsafe) let time = when
+    func append(_ block: MasterAudioTap.Block) async {
+        nonisolated(unsafe) let buffer = block.buffer
+        nonisolated(unsafe) let time = block.time
         for destination in destinations.values {
             await destination.session.stream.append(buffer, when: time)
         }
