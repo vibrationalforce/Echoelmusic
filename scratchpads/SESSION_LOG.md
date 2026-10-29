@@ -1956,3 +1956,8 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   `fastlane/Appfile` AUv3-Zeile korrigiert (Übergabe der Audit-TestFlight-Session). Alle fünf Nebensessions haben übergeben, idle.
 - Nichts gebaut, kein Upload. Nächste Code-Scheibe laut Übergabe §4: AboutView/claims/RELEASE-Korrektur mit dem nächsten Bump,
   dann Format-3-Rückwärtsfall, dann Sky S1b.
+- Nachtrag 09:00: die Audit-TestFlight-Session hatte denselben Founder-Auftrag und lokal eine ZWEITE
+  `scratchpads/HANDOVER_2026-10-29.md` angelegt (ungepusht). Per `send_message` geklärt: ihr Appfile-Fix ist als
+  `86786685` drin, ihre Übergabe ist durch `244450ab` abgedeckt — sie pusht nicht, bleibt idle. Ihr Befund
+  „origin/claude auf Mai-Stand zurückgesetzt“ war ein veralteter Fetch; der Zweig steht remote auf `244450ab`.
+  ⭐ Gesetz: ein Founder-Auftrag an mehrere Chats erzeugt mehrere Dateien gleichen Namens — der Arbeitszweig hat EINE.
