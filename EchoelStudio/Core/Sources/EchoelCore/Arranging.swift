@@ -159,7 +159,7 @@ extension Project {
             switch track.kind {
             case .instrument: track.placedClips.contains { clip in clip.notes.contains { $0.start < clip.length } }
             case .audio: track.regions.contains { $0.length > 0 && mediaFile($0.media) != nil }
-            case .returnTrack: false
+            case .returnTrack, .video: false
             }
         }
     }

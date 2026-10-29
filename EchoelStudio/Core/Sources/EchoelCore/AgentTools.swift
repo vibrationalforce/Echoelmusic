@@ -300,6 +300,7 @@ public enum AgentTools {
                 }
             case .audio: parts.append("audio")
             case .returnTrack: parts.append("return")
+            case .video: parts.append("video")
             }
             let bars = clipRanges(of: track, bar: bar, beat: MusicalTime.ticksPerBeat(project.timeSignature))
             if !bars.isEmpty {
@@ -307,7 +308,7 @@ public enum AgentTools {
                 let more = bars.count - describedRanges
                 parts.append("clips at " + listed + (more > 0 ? " and \(more) more" : ""))
             }
-            if !track.regions.isEmpty { parts.append("\(track.regions.count) audio regions") }
+            if !track.regions.isEmpty { parts.append("\(track.regions.count) \(track.kind == .video ? "video" : "audio") regions") }
             let effects = track.inserts.map { StandardEffect(component: $0.plugin)?.title ?? $0.plugin.name }
             if !effects.isEmpty { parts.append("effects " + effects.joined(separator: " → ")) }
             if track.mixer.isMuted { parts.append("muted") }
