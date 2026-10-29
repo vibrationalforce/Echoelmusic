@@ -27,10 +27,12 @@ final class RecordController {
         self.engine = engine
         self.documents = documents
         self.store = store
-        // A call, lost headphones or a followed clock's Stop pause the song: a take ends with it
-        // and keeps what it captured, instead of resuming out of time after the pause (R10). A
-        // MIDI take ends right here, against the engine core it was played on: on a rate change
-        // a new core replaces that one as soon as this returns.
+        // A call, lost headphones, a rebuilt graph (a route change, a new rate, a reset) or a
+        // followed clock's Stop pause the song: a take ends with it and keeps what it captured,
+        // instead of resuming out of time after the pause (R10). The engine stopped the take's
+        // input capture before the pause; the file is written out here. A MIDI take ends right
+        // here, against the engine core it was played on: on a rate change a new core replaces
+        // that one as soon as this returns.
         engine.onPausedFromOutside = { [weak self] in
             self?.endMIDITake()
             Task {
@@ -43,16 +45,6 @@ final class RecordController {
         engine.onAudioBack = { [weak self] in
             Task { await self?.inputOpensForUnseenSong() }
         }
-        // The input fell away under an audio take: the take cannot carry on, so it ends with what
-        // it has. A MIDI take needs no input and goes on.
-        engine.onInputLost = { [weak self] in
-            Task { await self?.stopAudioTake() }
-        }
-    }
-
-    private func stopAudioTake() async {
-        guard midiTrack == nil else { return }
-        await stopRecording()
     }
 
     /// Arms `track`, or disarms it when it is the armed one. An instrument track records what is
@@ -169,15 +161,17 @@ final class RecordController {
         isRecording = false
         let pending = target
         target = nil
-        // The map at the stop, before anything else can change it: the one the take played against.
-        let tempoMap = engine.playedTempoMap(of: store.project)
         guard let take = await engine.endTake(), let pending else {
             // Nothing to commit, so this take no longer holds the package (a rename waits while
             // a take runs).
             if let pending { documents.takeAbandoned(pending.file) }
             return
         }
-        await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: tempoMap)
+        // Placed with the map the take began under, which the engine kept with it — never the
+        // map at the stop: a followed clock drifts, the engine keeps the song's musical position
+        // across each change, and so the take's start sample names a later tick under the later
+        // map, bars off on a long set (review 2026-10-28, 2.2).
+        await documents.commitTake(take, target: pending.file, onto: pending.track, tempoMap: take.tempoMap)
     }
 
     /// Ends a running MIDI take at once and commits it. Synchronous, so it reads the rate and the
