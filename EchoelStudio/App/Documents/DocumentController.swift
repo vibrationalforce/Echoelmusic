@@ -539,7 +539,8 @@ final class DocumentController {
         let url = isOpenSong ? (currentURL ?? chosen) : chosen
         noteOpening(url.lastPathComponent)
         do {
-            let project = try library.read(url)
+            let found = try library.readRecovering(url)
+            let project = found.project
             // The open song chosen again is read afresh and keeps its lines (review 2026-10-21). The
             // unwritten starter's URL is only a free name, and a song that arrived under it is another.
             let another = isUnwritten || awaitsFirstWriteAtFreeName
@@ -557,11 +558,19 @@ final class DocumentController {
             currentURL = url
             if another { anotherSongOpened() }
             packageIdentity = ProjectLibrary.identity(of: url)
-            savedProject = project
+            // A song read from the copy one save back is not what is on disk: nothing counts as
+            // written, so the next save puts it back over the damaged document.
+            savedProject = found.fromPrevious ? nil : project
             isUnwritten = false
             starterMadeFolder = false
             // A move the open song still owes is still true; another song's went with `moveSettled`.
             lastError = failedMoveLine
+            if found.fromPrevious {
+                let name = url.deletingPathExtension().lastPathComponent
+                log.error("the document did not open — opened the copy one save back")
+                lastError = [failedMoveLine, "\(name) was damaged on disk, so Echoel opened it as it was one save earlier."]
+                    .compactMap { $0 }.joined(separator: " ")
+            }
             loadMedia(of: project)
             return url
         } catch {

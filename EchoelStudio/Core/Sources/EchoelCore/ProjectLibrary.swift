@@ -8,6 +8,10 @@ import Foundation
 public struct ProjectLibrary: Sendable {
     public static let fileExtension = "echoel"
     public static let documentName = "project.json"
+    /// The version of the document before the last write that changed it, kept beside it so a
+    /// document damaged on disk — by a sync service, a full disk, a hand in the Files app — still
+    /// opens as the song it was one save ago (`readRecovering`).
+    public static let previousDocumentName = "project.previous.json"
 
     public struct Entry: Equatable, Sendable, Identifiable {
         public let url: URL
@@ -64,9 +68,18 @@ public struct ProjectLibrary: Sendable {
     }
 
     /// Writes `project` into the package at `url`, creating it if needed. The document is
-    /// replaced atomically, so a crash mid-save leaves the previous version intact.
+    /// replaced atomically, so a crash mid-save leaves the previous version intact. Before that,
+    /// the document on disk becomes `previousDocumentName` when it opens and differs from what is
+    /// written: the copy is always a song that opens, one change back. A copy that cannot be
+    /// written does not stop the save — the song itself matters more than its spare.
     public func write(_ project: Project, to url: URL) throws {
-        try Self.writeDocument(project, to: url)
+        let data = try ProjectCodec.encode(project)
+        let document = url.appendingPathComponent(Self.documentName)
+        if let old = try? Data(contentsOf: document), old != data, (try? ProjectCodec.decode(old)) != nil {
+            try? old.write(to: url.appendingPathComponent(Self.previousDocumentName), options: .atomic)
+        }
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try data.write(to: document, options: .atomic)
     }
 
     /// Writes `project` as a new package at `target` to hand to someone: its document as passed,
@@ -109,6 +122,29 @@ public struct ProjectLibrary: Sendable {
         let document = url.appendingPathComponent(Self.documentName)
         guard FileManager.default.fileExists(atPath: document.path) else { throw LibraryError.notAPackage(url) }
         return try ProjectCodec.decode(Data(contentsOf: document))
+    }
+
+    /// A song read by `readRecovering`, and whether it came from the copy kept one save back.
+    public struct Recovered: Equatable, Sendable {
+        public let project: Project
+        public let fromPrevious: Bool
+    }
+
+    /// Reads the song at `url`; when its document does not open, the copy the last write kept
+    /// (`previousDocumentName`) instead. Not for a document saved by a newer Echoel: that one is
+    /// fine, only this app is too old for it, and opening the copy would let the next save write
+    /// the older song over the newer. A package without a document is not a song, copy or not.
+    /// When the copy does not open either, the document's own error is thrown.
+    public func readRecovering(_ url: URL) throws -> Recovered {
+        do {
+            return Recovered(project: try read(url), fromPrevious: false)
+        } catch {
+            if case ProjectCodec.DecodeError.newerFormat = error { throw error }
+            if case LibraryError.notAPackage = error { throw error }
+            let previous = url.appendingPathComponent(Self.previousDocumentName)
+            guard let data = try? Data(contentsOf: previous), let project = try? ProjectCodec.decode(data) else { throw error }
+            return Recovered(project: project, fromPrevious: true)
+        }
     }
 
     /// Brings in a song from outside the library — tapped in Files, sent by AirDrop, shared from

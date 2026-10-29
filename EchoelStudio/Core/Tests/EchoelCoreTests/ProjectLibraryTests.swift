@@ -63,6 +63,60 @@ final class ProjectLibraryTests: XCTestCase {
         XCTAssertEqual(try library.list().count, 1)
     }
 
+    /// Each write that changes the song keeps the version before it beside the document, and a
+    /// damaged document opens as that version — said so, so the caller can tell the musician.
+    func testADamagedDocumentOpensAsTheVersionOneSaveBack() throws {
+        let url = library.newURL(for: "Loop")
+        var project = try song("Loop")
+        try library.write(project, to: url)
+        let previous = url.appendingPathComponent(ProjectLibrary.previousDocumentName)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: previous.path), "a first write has nothing to keep")
+        try Command.setTempo(bpm: 128).apply(to: &project)
+        try library.write(project, to: url)
+        try library.write(project, to: url)
+        XCTAssertEqual(try ProjectCodec.decode(Data(contentsOf: previous)).tempo, 93,
+                       "the copy is the version before the change, and writing the same song again keeps it")
+        XCTAssertEqual(try library.readRecovering(url), ProjectLibrary.Recovered(project: project, fromPrevious: false))
+
+        try Data("{\"formatVersion\": 1, \"trac".utf8).write(to: url.appendingPathComponent(ProjectLibrary.documentName))
+        XCTAssertThrowsError(try library.read(url), "a plain read still refuses it")
+        let recovered = try library.readRecovering(url)
+        XCTAssertTrue(recovered.fromPrevious)
+        XCTAssertEqual(recovered.project.tempo, 93)
+        XCTAssertEqual(try library.list().map(\.name), ["Loop"], "the song stays in the list")
+
+        // The next write replaces the damaged document and leaves the copy alone: a copy is only
+        // ever a song that opens.
+        try library.write(recovered.project, to: url)
+        XCTAssertEqual(try library.read(url).tempo, 93)
+        XCTAssertEqual(try ProjectCodec.decode(Data(contentsOf: previous)).tempo, 93)
+    }
+
+    /// A newer Echoel's song is not damaged, and the copy must not stand in for it: the next save
+    /// would write the older song over the newer. Without a usable copy the document's own error
+    /// comes back, so the caller still tells a newer song from a damaged one.
+    func testANewerSongIsNeverReplacedByItsCopy() throws {
+        let url = library.newURL(for: "Loop")
+        var project = try song("Loop")
+        try library.write(project, to: url)
+        try Command.setTempo(bpm: 128).apply(to: &project)
+        try library.write(project, to: url)
+        let document = url.appendingPathComponent(ProjectLibrary.documentName)
+        let today = "\"formatVersion\" : \(Project.currentFormatVersion)"
+        let json = try XCTUnwrap(String(data: Data(contentsOf: document), encoding: .utf8))
+        XCTAssertTrue(json.contains(today), "the encoder's spacing changed; the replacement would not land")
+        try Data(json.replacingOccurrences(of: today, with: "\"formatVersion\" : 99").utf8).write(to: document)
+        XCTAssertThrowsError(try library.readRecovering(url)) {
+            XCTAssertEqual($0 as? ProjectCodec.DecodeError, .newerFormat(found: 99, supported: Project.currentFormatVersion))
+        }
+
+        try Data("not a song".utf8).write(to: document)
+        try Data("nor this".utf8).write(to: url.appendingPathComponent(ProjectLibrary.previousDocumentName))
+        XCTAssertThrowsError(try library.readRecovering(url)) {
+            XCTAssertNotNil($0 as? DecodingError, "the document's own error, not the copy's")
+        }
+    }
+
     func testNamesAreMadeSafeForFiles() {
         XCTAssertEqual(ProjectLibrary.fileName(for: "a/b:c"), "a-b-c")
         XCTAssertEqual(ProjectLibrary.fileName(for: "  ...  "), "Untitled")
