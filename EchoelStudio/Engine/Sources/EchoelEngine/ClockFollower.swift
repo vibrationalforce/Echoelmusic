@@ -122,3 +122,23 @@ public struct ClockFollower: Sendable {
         tempo = Swift.min(Swift.max((bpm * 100).rounded() / 100, Tempo.range.lowerBound), Tempo.range.upperBound)
     }
 }
+
+extension ClockFollower {
+    /// The song as the engine plays it while a followed clock sets the tempo: the clock's `tempo`
+    /// in place of the song's, within `Tempo.range`, and none of the song's own tempo changes —
+    /// they would run the song off the clock. Nil, or a tempo that is not a number, keeps the
+    /// song's tempo until the clock's is known. The song itself is never written: it keeps its
+    /// tempo and its undo history while another device sets the pace.
+    ///
+    /// Every snapshot the engine publishes, every seek, every placement and every automation
+    /// point goes through this one function while following, so none of them is computed from
+    /// the song's own map while the clock plays another (review 2026-10-28, 2.2).
+    public static func played(_ project: Project, tempo: Double?) -> Project {
+        var played = project
+        played.tempoChanges = []
+        if let tempo, tempo.isFinite {
+            played.tempo = Swift.min(Swift.max(tempo, Tempo.range.lowerBound), Tempo.range.upperBound)
+        }
+        return played
+    }
+}

@@ -57,4 +57,23 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(early.start, 0)
         XCTAssertEqual(early.offset, 380)
     }
+
+    /// A take is placed with the tempo map in force when its first frame was stamped — the one the
+    /// app's engine keeps with the take (`RecordedTake.tempoMap`) — never the map at the stop: a
+    /// followed clock drifts, and the engine keeps the song's musical position across each change,
+    /// so the same output sample names a later tick under the later map (review 2026-10-28, 2.2).
+    func testATakeIsPlacedWithTheMapItBeganUnder() {
+        let began = TimeConversion(bpm: 120, sampleRate: 48_000)
+        // Bar 33 of 4/4 at 120 BPM: 128 beats, 64 s, 3 072 000 samples.
+        let bar33 = 32 * MusicalTime.ticksPerBar(.common)
+        let stamped = began.sample(at: bar33)
+        let placed = RecordingPlacement.place(startSample: stamped, latency: 0, time: began)
+        XCTAssertEqual(placed.start, bar33)
+        XCTAssertEqual(placed.offset, 0)
+
+        // The clock drifted half a BPM by the stop; with that map the take lands a beat late.
+        let stopped = TimeConversion(bpm: 120.5, sampleRate: 48_000)
+        let late = RecordingPlacement.place(startSample: stamped, latency: 0, time: stopped)
+        XCTAssertGreaterThan(late.start - bar33, MusicalTime.ticksPerQuarter / 2)
+    }
 }
