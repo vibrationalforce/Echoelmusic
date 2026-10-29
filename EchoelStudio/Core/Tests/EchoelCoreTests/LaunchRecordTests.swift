@@ -37,6 +37,34 @@ final class LaunchRecordTests: XCTestCase {
         XCTAssertTrue(broken.isPending)
     }
 
+    /// Stage two: one death holds the song, a second in a row starts the next launch safe, and a
+    /// launch that confirms — safe or not — lets the one after it start as usual.
+    func testTwoDeathsInARowStartTheNextLaunchSafe() {
+        var record = LaunchRecord()
+        _ = record.begin()
+        XCTAssertFalse(record.startsSafe)
+        // Dies; the stored flag and count are read by the next launch.
+        var second = LaunchRecord(isPending: record.isPending, deathsInARow: record.deathsInARow)
+        XCTAssertTrue(second.begin())
+        XCTAssertEqual(second.deathsInARow, 1)
+        XCTAssertFalse(second.startsSafe, "one death holds the song, nothing more")
+        var third = LaunchRecord(isPending: second.isPending, deathsInARow: second.deathsInARow)
+        XCTAssertTrue(third.begin())
+        XCTAssertEqual(third.deathsInARow, LaunchRecord.safeStartDeaths)
+        XCTAssertTrue(third.startsSafe)
+
+        third.confirm(after: LaunchRecord.steadySeconds, leaving: false)
+        var fourth = LaunchRecord(isPending: third.isPending, deathsInARow: third.deathsInARow)
+        XCTAssertFalse(fourth.begin())
+        XCTAssertEqual(fourth.deathsInARow, 0)
+        XCTAssertFalse(fourth.startsSafe, "the safe launch confirmed, so this one starts as usual")
+
+        XCTAssertEqual(LaunchRecord(deathsInARow: -5).deathsInARow, 0, "a damaged count is never negative")
+        var flooded = LaunchRecord(isPending: true, deathsInARow: 1_000)
+        _ = flooded.begin()
+        XCTAssertEqual(flooded.deathsInARow, 1_000, "the count does not run over")
+    }
+
     func testAConfirmedLaunchLetsTheNextOpenAsUsual() {
         var record = LaunchRecord()
         _ = record.begin()

@@ -1,25 +1,40 @@
 /// Whether the last launch reached a steady state (ultra-audit R4). A launch that dies before it
 /// does — a song that traps while it opens, decodes or plays — must not be repeated by reopening
 /// that song on every launch: the next launch starts a new song instead, and every song stays in
-/// the list. The app keeps `isPending` in its defaults; this type only decides.
+/// the list. The app keeps `isPending` and `deathsInARow` in its defaults; this type only decides.
 public struct LaunchRecord: Equatable, Sendable {
     /// Seconds after the launch began at which it counts as healthy.
     public static var steadySeconds: Double { 10 }
 
+    /// Launches in a row that ended before they were confirmed, as of the last `begin`, at which
+    /// the safe start comes in (stage two: the first death holds the song, a second one in a row
+    /// also turns off what else could kill a launch — the Field window, plugins of other makers).
+    public static var safeStartDeaths: Int { 2 }
+
     /// True from the start of a launch until it is confirmed.
     public private(set) var isPending: Bool
+    /// How many launches in a row ended before they were confirmed; a confirmed launch clears it.
+    public private(set) var deathsInARow: Int
 
-    public init(isPending: Bool = false) {
+    public init(isPending: Bool = false, deathsInARow: Int = 0) {
         self.isPending = isPending
+        // A count from a damaged defaults file is never negative.
+        self.deathsInARow = Swift.max(deathsInARow, 0)
     }
 
     /// Called once per launch, before a song opens. Returns whether the previous launch ended
-    /// before it was confirmed.
+    /// before it was confirmed, and counts it: one more death in a row, or none after a launch
+    /// that confirmed.
     public mutating func begin() -> Bool {
         let previousDied = isPending
+        deathsInARow = previousDied ? Swift.min(deathsInARow + 1, 1_000) : 0
         isPending = true
         return previousDied
     }
+
+    /// Whether this launch starts safe: the launches before it died at least `safeStartDeaths`
+    /// times in a row.
+    public var startsSafe: Bool { deathsInARow >= Self.safeStartDeaths }
 
     /// Confirms the running launch `seconds` after it began; `leaving` when the app went to the
     /// background, which confirms it whenever it happens: a launch that got there is alive. The

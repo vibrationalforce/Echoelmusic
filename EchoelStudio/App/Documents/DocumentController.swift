@@ -151,6 +151,10 @@ final class DocumentController {
     @ObservationIgnored private var isRestored = false
     @ObservationIgnored private var pendingIncoming: URL?
     @ObservationIgnored private var launch = LaunchRecord()
+    /// The launches before this one died twice or more in a row (stage two of the safe start):
+    /// the Field window starts off and plugins of other makers wait until the musician loads
+    /// them (`PluginHost.holdsPlugins`). Set by `restore`, for the whole launch.
+    private(set) var startsSafe = false
     @ObservationIgnored private var quarantine = SongQuarantine()
     @ObservationIgnored private var launchBegan: ContinuousClock.Instant?
     @ObservationIgnored private var launchCheck: Task<Void, Never>?
@@ -234,6 +238,14 @@ final class DocumentController {
             note = suspect.map {
                 "Echoel did not finish starting last time, so this is a new song; \(Self.songName($0)) was open then and waits until you choose it."
             } ?? "Echoel did not finish starting last time, so this is a new song. Your songs are in the list."
+            if launch.startsSafe {
+                // Before any view reads it: the window's own setting, so the button brings it back.
+                startsSafe = true
+                UserDefaults.standard.set(false, forKey: FieldWindow.shownKey)
+                DiagnosticLog.app.note("launch: safe start", [("deaths", Double(launch.deathsInARow))])
+                log.error("the last launches did not finish twice in a row — safe start")
+                note = (note ?? "") + " It happened more than once, so the Field window is off and plugins from other makers wait until you load them."
+            }
             return
         }
         // A song that does not open keeps its place and its name is shown; the newest song that
@@ -383,15 +395,18 @@ final class DocumentController {
     private static let launchPendingKey = "studio.launch.pending"
     private static let launchOpeningKey = "studio.launch.opening"
     private static let launchHeldKey = "studio.launch.held"
+    private static let launchDeathsKey = "studio.launch.deaths"
 
     /// Whether the previous launch died, and the song it was opening then, which is now held.
     private func beginLaunch() -> (died: Bool, suspect: String?) {
         let defaults = UserDefaults.standard
-        launch = LaunchRecord(isPending: defaults.bool(forKey: Self.launchPendingKey))
+        launch = LaunchRecord(isPending: defaults.bool(forKey: Self.launchPendingKey),
+                              deathsInARow: defaults.integer(forKey: Self.launchDeathsKey))
         quarantine = SongQuarantine(opening: defaults.string(forKey: Self.launchOpeningKey),
                                     held: defaults.stringArray(forKey: Self.launchHeldKey) ?? [])
         let previousDied = launch.begin()
         let suspect = quarantine.launchBegan(previousDied: previousDied)
+        defaults.set(launch.deathsInARow, forKey: Self.launchDeathsKey)
         defaults.set(launch.isPending, forKey: Self.launchPendingKey)
         keepQuarantine()
         launchBegan = .now
