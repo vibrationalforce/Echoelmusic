@@ -87,3 +87,26 @@ Katalog als gebündelte Daten (Lizenz prüfen, Quelle nennen). Nichts davon kopi
 | Vaporwave Palace | Hardware außerhalb der App | Ansteuerung über OSC/Art-Net (W4, wartet auf F25) |
 | Retrofuturistisches Design | — | eigenes Farbthema als Entwurf, innerhalb der Uncodixfy-Regeln, dem Founder vorlegen |
 | Organ-/Gewebe-Regeneration | **nie Produkt**, nur Forschung (`research_notes/`, Vision §6c) | — |
+
+## Übergabe 29.10. (Produktions-Session `01DqTpc8`, danach nur noch lesend)
+
+**Gebaut und grün seit diesem Plan (TestFlight 10014 und 10015 VALID, nichts gerätegeprüft):** Engines
+Supersaw/FM/Sub (A1/A4/A8), Morph (A7, Index 4), Mallet (A5, Index 5), Ladder (A2, `synth.filter`);
+Modulate mit Puls/HRV/Kohärenz, Instrumentwerten und Sends als Ziel, „Measuring: …“-Zeile; Field F1–F3
+als fünfte Fläche; Tonsystem + Kammerton im Key-Menü (vorher türlos), Archytas/Ptolemäus, benannte und
+orbitale Kammertöne; Sky S1a (`Core/Sky.swift`: Sternzeit, Höhe/Azimut, Winkelabstand, Meeus 12/13).
+
+**Sky S1b — Sternkatalog, SPEZIFIZIERT, nicht angefangen.** `EchoelStudio/Core/Sources/EchoelCore/StarCatalogue.swift`
+mit den ~40 hellsten benannten Sternen (Name, HR-Nummer, RA/Dec J2000 in Grad, V-Magnitude, B−V); Werte
+gegen Yale BSC5 (public domain) bzw. SIMBAD prüfen, nie aus dem Gedächtnis; Quelle und Lizenz im Dateikopf.
+`Sky.nearest(to: Horizontal, at: jd, latitude:, longitude:, limit:)` liefert den Stern mit kleinster
+`Sky.separation`. Tests: Sirius (RA 101.287, Dec −16.716, V −1.46), Polaris (RA 37.954, Dec 89.264, V 1.98),
+`nearest` findet den Stern in Blickrichtung. **S2 (App)** braucht zwei neue Usage-Descriptions (Standort,
+Bewegung) in der Studio-Info.plist → Founder-Text (FOUNDER_INBOX).
+
+**Nächste Scheiben in dieser Reihenfolge (ohne Founder-Hand baubar):** S1b Katalog · A10 Texture als
+Engine-Wahl prüfen (zellulärer Automat steuert Teiltöne, inline, sonst Gerät) · Knochenflöte als
+Waveguide-Engine (Tabelle „Alte Vision“) · Körperkanal in die AUv3-Extension über die App Group (Panel-
+Befund: das verkaufte Objekt hat heute null Körperkanal). **Mit Founder-Hand:** W4 (F25-Zeile), Terms/Privacy
+fürs Studio, Gerätesitzung (F-15 + fünf RELEASE-Punkte). Strategie-Rangliste und Begründung:
+`scratchpads/STRATEGIE_VARIANTEN_PANEL_2026-10-28.md`.

@@ -1961,3 +1961,23 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   `86786685` drin, ihre Übergabe ist durch `244450ab` abgedeckt — sie pusht nicht, bleibt idle. Ihr Befund
   „origin/claude auf Mai-Stand zurückgesetzt“ war ein veralteter Fetch; der Zweig steht remote auf `244450ab`.
   ⭐ Gesetz: ein Founder-Auftrag an mehrere Chats erzeugt mehrere Dateien gleichen Namens — der Arbeitszweig hat EINE.
+
+## 2026-10-29 (Vormittag) — Produktions-Session `01DqTpc8` schließt ab: Übergabe im Repo, Routine eigenständig
+
+- **Founder:** „Prozesse abschließen: Übergabe im Repo ohne dass ich was machen muss.“
+- **Ins Repo gebracht (docs-only, einziger Push dieser Session seit der Ein-Schreiber-Regel, mit der
+  Orchestrierungs-Session abgestimmt):** `scratchpads/STRATEGIE_VARIANTEN_PANEL_2026-10-28.md` (Synthese
+  des Richter-Panels, bisher nur im Scratchpad) · Übergabe-Abschnitt in
+  `scratchpads/PLAN_INSTRUMENT_FIELD_2026-10-28.md` (Stand, Sky-S1b-Spezifikation, nächste Scheiben mit und
+  ohne Founder-Hand) · Panel-Empfehlung als `proposed`-Zeile in `decisions.csv` + `memory/decisions.md`
+  (Review 12.11.; Entscheidung = GM37).
+- **Routine „Externe Prüf-Aufträge“ umgehängt, damit sie niemanden braucht:** alt
+  `trig_01Y2pBTXaHx9mom1ogzddoHr` (an diese Session gebunden) abgeschaltet; neu
+  `trig_01XEEBHiBhDoiM9QkG1xF8Dg` startet Mo/Do 8:47 Berlin eine FRISCHE Session (Push-Benachrichtigung an
+  den Founder), die Runde anhängt, docs-only pusht und die zwei Aufträge zeigt. ⚠️ Fresh Sessions haben keine
+  MCP-Werkzeuge → sie kann sich nach dem 6.11. nicht selbst abschalten; Sicherheitsnetz: Einmal-Timer
+  in dieser Session am 7.11. 09:30Z schaltet sie ab. Heute hatte die alte Routine doppelt gefeuert
+  (07:48Z planmäßig, 08:50Z passt zu keiner Cron-Minute) — keine Runde 8 geschrieben.
+- **Stand dieser Session danach:** Baum sauber, keine offenen Einmal-Timer außer dem 7.11., kein Workflow
+  offen; die Session bleibt lesend erreichbar. Alles Weitere (W4, Katalog, 13. Upload) baut die
+  Orchestrierungs-Session nach `scratchpads/HANDOVER_2026-10-29.md`.
