@@ -486,3 +486,55 @@ Form: höchstens 8 Punkte. Jeder: Behauptung · Link · Datum · „sicher“/�
 ```
 
 **So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung (Lernmodus).
+
+## Runde 7 — Donnerstag, 29.10.2026 (Stand `9f1cd817e`)
+
+**Runde 6 (28.10.) ist unbeantwortet;** ihre Fragen bleiben gültig und werden hier nicht wiederholt.
+**Neu seit Runde 6 (alles grün in der CI, TestFlight 10014 und 10015 VALID, nichts gerätegeprüft):** Modulate-Menü mit drei Körperquellen (Puls, HRV, Kohärenz) und Zielen Lautstärke · Pan · Sends · Instrumentwerte; „Measuring: …“-Zeile; sechs Synth-Engines (Classic, Supersaw, FM, Sub, Morph, Mallet) und Ladder-Filter; Field als fünfte Fläche; Tonsystem und Kammerton im Key-Menü (zwei antike griechische Stimmungen, benannte und orbitale Kammertöne); Sternzeit-/Höhen-/Azimut-Rechnung ohne Tür. Als Nächstes geplant: W4 (OSC/Art-Net-Ausgang im Studio), Sternkatalog, Körperkanal in die AUv3-Extension, Nutzungsbedingungen/Datenschutz fürs Studio. Die Entscheidungsrunde dazu ist am 29.10. (`scratchpads/ULTRA_DEEP_AUDIT_2026-10-29.md`).
+
+### Auftrag an ChatGPT — Nutzbarkeit und Rechenfehler der Körper-Modulation und der neuen Engines
+
+```
+Rolle: externer UX- und DSP-Prüfer für Echoel Studio (iPhone/iPad-Musik-Workstation, Swift 6, keine externen Abhängigkeiten). Du prüfst, du schreibst keinen Code. Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic, Zweig claude/echoelmusic-review-optimize-u5jjpd, Stand 9f1cd817e.
+
+Lies nur:
+- EchoelStudio/App/Views/ModulationViews.swift (ModulateMenu, RouteActions)
+- EchoelStudio/App/Body/HeartRateStrap.swift (glideTowardsPulse, measuring)
+- EchoelStudio/Engine/Sources/EchoelEngine/MixModulation.swift und EngineSnapshot.swift (MovingMix, MovingSend, PatchModulation)
+- EchoelStudio/Core/Sources/EchoelCore/Modulation.swift (contribution, validate)
+- EchoelStudio/DSP/Sources/EchoelDSP/SynthEngine.swift, LadderFilter.swift, PolySynth.swift (SynthVoice.start/render)
+- EchoelStudio/Core/Sources/EchoelCore/MusicalContext.swift (ConcertPitchPreset, TuningSystem.library) und EchoelStudio/App/Views/StudioView.swift (keyAndScale)
+- EchoelStudio/App/Field/FieldView.swift und EchoelStudio/Core/Sources/EchoelCore/Field.swift (FlashLimit)
+- die Tests: EchoelStudio/Engine/Tests/EchoelEngineTests/MixModulationTests.swift, EchoelStudio/DSP/Tests/EchoelDSPTests/SynthEngineTests.swift, LadderFilterTests.swift
+- EchoelStudio/RELEASE (die fünf Gerätetests)
+
+Fragen:
+1. Ein Musiker legt den Gurt an, öffnet Modulate: versteht er ohne Anleitung, was „Measuring: Heart Rate“ und „Heart Rate → Cutoff +25%“ bedeuten, und wo bricht der Weg Gurt → Route → hören ab?
+2. Kann eine Route einen Wert unbrauchbar machen — Pan bipolar bei Depth 100 %, Send bei −∞ dB als Basis, Cutoff über die Taper-Grenzen; stimmt die Reihenfolge Automation → Routen → Clamp?
+3. Engine-Wechsel bei gehaltener Note (Classic → Mallet → Morph): Klick, DC-Versatz, Lautstärkesprung? Wo fehlt ein Reset oder ein Crossfade?
+4. Ladder bei Resonanz 0,95 und Cutoff nahe Nyquist bei 44,1 kHz: bleibt der Ausgang endlich und unter 0 dBFS?
+5. Kammerton-Presets „Earth year, octaved 432.10“: liest ein Nutzer das als Wirkungsaussage? Welche neutrale Formulierung wäre im Menü richtig?
+6. Field mit TimelineView 30 fps: Batterie, Thermik, Reduce Motion — was fehlt, damit es auf einem iPhone 12 eine Stunde ruhig läuft?
+7. Welche zwei Gerätetests zuerst, und was genau soll man hören oder sehen?
+
+Form: höchstens 8 Punkte, je Datei:Zeile, „sicher“ oder „vermutet“, kein Code, keine neuen Features. Wenn du eine Datei nicht lesen kannst, sag das.
+```
+
+### Auftrag an SuperGrok Heavy — Neues seit dem 28.10.2026 (nur mit Quelle)
+
+```
+Rolle: externer Rechercheur für Echoel Studio, eine iPhone/iPad-Musik-Workstation in Swift ohne externe Abhängigkeiten, mit eigenem AUv3, Bluetooth-Brustgurt als Modulationsquelle und einem Assistenten über Apple Foundation Models (nur auf dem Gerät). Öffentliches Repo: https://github.com/vibrationalforce/Echoelmusic.
+
+Nur der Stand seit dem 28.10.2026, nur mit Quelle und Datum; Gerüchte als „Gerücht“ kennzeichnen. Wo es nichts Neues gibt, ein Satz.
+1. App Review: neue Fälle oder Regeln zu Herzfrequenz/HRV-Anzeige in Nicht-Medizin-Apps (Richtlinie 1.4.1, 5.1.3), zu Bluetooth-HR-Gurten und zu Formulierungen wie „coherence“.
+2. Standort und Kompass in einer Musik-App (Stern im Blick): Review-Anforderungen für CoreLocation ohne Karte, Änderungen an CLLocationManager/CMMotion-Heading in iOS 26.x.
+3. Offene Sternkataloge für Apps: Lizenz und Attributionspflicht von Yale BSC5 bzw. HYG — sicher oder vermutet.
+4. Apple Foundation Models Framework: Änderungen an Tool-Calling, Kontextlänge, Gerätelisten.
+5. AUv3-Extension liest Sensordaten der Host-App über eine App Group: dokumentierte Beispiele, Review-Hinweise, Latenzangaben.
+6. Konkurrenz: Musik-Apps, die seit Oktober 2026 Körper- oder Biosignale als Modulation ausliefern.
+7. Xcode 26.2 / iOS 26.x: Änderungen an AVAudioEngine, Audio Units, TestFlight, App-Store-Connect-Verifikation.
+
+Form: höchstens 8 Punkte. Jeder: Behauptung · Link · Datum · „sicher“/„vermutet“ · eine Zeile, was das für Echoel Studio heißt. Kein Code.
+```
+
+**So kommen die Antworten zurück:** in den Chat einfügen; die Sitzung prüft jede Behauptung am Repo (Lernmodus) und trägt das Ergebnis ins Ledger ein.
