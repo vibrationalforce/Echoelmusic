@@ -27,6 +27,14 @@ enum StudioSheet: Identifiable, Hashable {
     case about
     /// A new name for the open song, which its package takes too.
     case renameSong
+    /// Pick a video from the photo library to place at a tick, on a video track or a new one (W7).
+    case importVideoFromPhotos(TrackID?, Tick)
+    /// The same from the Files app.
+    case importVideoFromFiles(TrackID?, Tick)
+    /// The rear camera films a take while the song plays, onto a video track or a new one.
+    case cameraTake(TrackID?)
+    /// The song as an MP4: frame, fit, codec, whole song or a stretch of bars.
+    case exportVideo
 
     var id: Self { self }
 }
@@ -55,16 +63,17 @@ final class StudioRouter {
     }
 }
 
-/// The system file picker for one audio file. It hands over a copy the app may read freely,
-/// so no security scope outlives the pick.
+/// The system file picker for one audio file — or, given other types, one video. It hands over
+/// a copy the app may read freely, so no security scope outlives the pick.
 struct AudioFilePicker: UIViewControllerRepresentable {
     let pick: (URL) -> Void
     let cancel: () -> Void
+    var types: [UTType] = [.audio]
 
     func makeCoordinator() -> Coordinator { Coordinator(pick: pick, cancel: cancel) }
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.audio], asCopy: true)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true)
         picker.allowsMultipleSelection = false
         picker.delegate = context.coordinator
         return picker
