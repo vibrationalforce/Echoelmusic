@@ -260,4 +260,43 @@ final class PlaybackPlanTests: XCTestCase {
         XCTAssertEqual(time.tick(atSample: 24_000), 960)
         XCTAssertEqual(time.samplesPerTick(at: 0), 25, accuracy: 1e-12)
     }
+
+    /// A song longer than 2³² samples converts like any other: positions are 64-bit all the way
+    /// (review 2026-10-28, 2.3). The last bar of the longest song at 32 BPM — a tick is exactly
+    /// 1/512 s there — lies twenty-one hours in: 7.2 billion samples at 96 kHz.
+    func testPositionsPastTwoToThe32SamplesConvertBothWays() {
+        let time = TimeConversion(bpm: 32, sampleRate: 96_000)
+        let lastBar = MusicalTime.maximumTick - MusicalTime.ticksPerBar(.common)
+        let sample = time.sample(at: lastBar)
+        XCTAssertGreaterThan(sample, Int64(UInt32.max))
+        XCTAssertEqual(sample, 7_198_560_000)
+        XCTAssertEqual(time.tick(atSample: sample), lastBar)
+        XCTAssertEqual(time.position(atSample: sample), Double(lastBar), accuracy: 1e-6)
+        XCTAssertEqual(time.sample(atPosition: Double(lastBar)), sample)
+    }
+
+    /// Where `Int64(_:)` would stop the app, the conversions saturate or read as 0: a rate that is
+    /// no number, a tick or a time past anything a song holds.
+    func testConversionsNeverTrapOnNumbersNoSongCanHold() {
+        XCTAssertEqual(TimeConversion(bpm: 120, sampleRate: .nan).sampleRate, 48_000)
+        XCTAssertEqual(TimeConversion(bpm: 120, sampleRate: 0).sampleRate, 48_000)
+        XCTAssertEqual(TimeConversion(bpm: 120, sampleRate: -1).sampleRate, 48_000)
+        XCTAssertEqual(TimeConversion(bpm: 120, sampleRate: 0).tick(atSample: 24_000), 960, "no division by zero")
+
+        let time = TimeConversion(bpm: 120, sampleRate: 48_000)
+        XCTAssertEqual(time.sample(at: .max), .max)
+        XCTAssertEqual(time.sample(at: .min), .min)
+        XCTAssertEqual(time.sample(atPosition: .infinity), 0)
+        XCTAssertEqual(time.sample(atPosition: 1e300), .max)
+        XCTAssertEqual(time.tempoMap.tick(atSeconds: 1e300), .max)
+        XCTAssertEqual(time.tempoMap.tick(atSeconds: -1e300), .min)
+        XCTAssertGreaterThan(time.tick(atSample: .max), MusicalTime.maximumTick)
+
+        XCTAssertEqual(MusicalTime.integer(.nan), 0)
+        XCTAssertEqual(MusicalTime.integer(.infinity), .max)
+        XCTAssertEqual(MusicalTime.integer(-.infinity), .min)
+        XCTAssertEqual(MusicalTime.integer(1e30), .max)
+        XCTAssertEqual(MusicalTime.integer(-1e30), .min)
+        XCTAssertEqual(MusicalTime.integer(24_000), 24_000)
+    }
 }

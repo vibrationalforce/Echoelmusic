@@ -17,6 +17,18 @@ public enum MusicalTime {
     public static func ticksPerBeat(_ signature: TimeSignature) -> Tick {
         ticksPerQuarter * 4 / Tick(signature.denominator)
     }
+
+    /// `value`, already rounded, as a tick or a sample count within what `Int64` holds:
+    /// `Int64.max` or `.min` beyond it, 0 for a value that is not a number — where `Int64(_:)`
+    /// would stop the app. Every place a tempo map turns clock time into whole ticks or samples
+    /// goes through this, so a song past 2³² samples, or a position no song can hold, is a number
+    /// and never a trap (review 2026-10-28, 2.3).
+    public static func integer(_ value: Double) -> Int64 {
+        guard value.isFinite else { return 0 }
+        if value >= Double(Int64.max) { return .max }
+        if value <= Double(Int64.min) { return .min }
+        return Int64(value)
+    }
 }
 
 public struct TimeSignature: Codable, Hashable, Sendable {

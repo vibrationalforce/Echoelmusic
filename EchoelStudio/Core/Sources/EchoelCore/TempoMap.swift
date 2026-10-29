@@ -53,12 +53,13 @@ public struct TempoMap: Equatable, Sendable {
         return s.startSeconds + Double(tick - s.startTick) * s.secondsPerTick
     }
 
-    /// The tick sounding at `seconds`, rounded down. Non-finite input reads as tick 0.
+    /// The tick sounding at `seconds`, rounded down. Non-finite input reads as tick 0; a time past
+    /// any tick saturates instead of overflowing (`MusicalTime.integer`).
     public func tick(atSeconds seconds: Double) -> Tick {
         guard seconds.isFinite else { return 0 }
         let s = segments[segmentIndex(atSeconds: seconds)]
         let ticks = (seconds - s.startSeconds) / s.secondsPerTick
-        return s.startTick + Tick(ticks.rounded(.down))
+        return MusicalTime.integer(Double(s.startTick) + ticks.rounded(.down))
     }
 
     /// Where in musical time `seconds` falls, in fractional ticks — for what moves continuously
