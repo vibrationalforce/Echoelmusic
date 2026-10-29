@@ -27,6 +27,8 @@ enum StudioSheet: Identifiable, Hashable {
     case about
     /// A new name for the open song, which its package takes too.
     case renameSong
+    /// The live stream: destinations, Go Live and Stop (wave W14).
+    case streaming
 
     var id: Self { self }
 }

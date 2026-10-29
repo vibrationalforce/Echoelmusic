@@ -17,6 +17,8 @@ struct StudioView: View {
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
     /// The Field over the whole studio. A layer, not a presentation: the sheet slot stays one.
     @State private var fieldFullscreen = false
+    /// The live stream (W14); off until Go Live on its page. Owned here so a stream outlives the page.
+    @State private var streaming = StreamingController()
 
     enum Surface: Hashable { case tracks, arrange, session, mixer, field }
 
@@ -45,6 +47,12 @@ struct StudioView: View {
                             .padding(Theme.Space.m)
                             .transition(.opacity)
                     }
+                    // `isLive`/`isStarting` change only at Go Live and Stop; the clock ticks in the badge.
+                    if streaming.isLive || streaming.isStarting {
+                        StreamLiveBadge(open: { router.sheet = .streaming })
+                            .padding(Theme.Space.m)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    }
                 }
                 if showsKeys {
                     Divider().overlay(Theme.Color.border)
@@ -68,6 +76,7 @@ struct StudioView: View {
             case .agent: AgentView()
             case .about: AboutView()
             case .renameSong: RenameSongView()
+            case .streaming: StreamingView()
             case let .importAudio(track, start):
                 AudioFilePicker(pick: { url in
                     router.sheet = nil
@@ -83,6 +92,7 @@ struct StudioView: View {
             }
         }
         .environment(router)
+        .environment(streaming)
         .background(Theme.Color.background)
         .onAppear {
             engine.setSamples(documents.samples)
@@ -500,6 +510,7 @@ struct SongMenu: View {
             }
             Button("Echoel Plugins", systemImage: "puzzlepiece.extension") { router.sheet = .store }
             Button("About Echoel", systemImage: "info.circle") { router.sheet = .about }
+            Button("Live Stream…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
             Menu("Send MIDI Clock", systemImage: "metronome") {
                 ForEach(engine.clock.destinations) { destination in
                     Button { engine.clock.toggle(destination) } label: {
