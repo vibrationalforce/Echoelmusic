@@ -56,6 +56,12 @@ public final class EngineCore: @unchecked Sendable {
     /// Render → MIDI sender: clock (24 per quarter), start/continue/stop and song position,
     /// written only while `setClockOutEnabled(true)`.
     public let clockOut = MIDIClockRing()
+    /// Render → MPE sender (W5b): the notes, bends and controllers ONE slot plays — sequenced or
+    /// live — and its all-notes-off, timed like the clock, written only while `setNoteOut(slot:)`
+    /// names a slot. Channel messages on channel 1; the sender spreads them over a zone.
+    public let noteOut = MIDIClockRing()
+    /// The slot whose notes `noteOut` carries; −1 for none.
+    private let noteOutSlot = Atomic<Int>(-1)
 
     /// MIDI clock ticks per quarter note.
     public static let clocksPerQuarter: Tick = 24
@@ -433,6 +439,13 @@ public final class EngineCore: @unchecked Sendable {
     /// so the ring never fills up.
     public func setClockOutEnabled(_ enabled: Bool) { clockFlag.store(enabled, ordering: .relaxed) }
 
+    /// The slot whose notes are timed into `noteOut`, or nil for none (the default), so the ring
+    /// never fills while nothing reads it.
+    public func setNoteOut(slot: Int?) {
+        let chosen = slot.map { $0 >= 0 && $0 < slotCapacity ? $0 : -1 } ?? -1
+        noteOutSlot.store(chosen, ordering: .relaxed)
+    }
+
     // MARK: - Controller thread
 
     /// A MIDI channel message played live into the instrument in `slot`, heard at the start of
@@ -730,6 +743,14 @@ public final class EngineCore: @unchecked Sendable {
     }
 
     private func play(_ event: PlaybackPlan.NoteEvent, on lane: EngineSnapshot.Lane, offset: Int) {
+        if lane.slot == noteOutSlot.load(ordering: .relaxed) {
+            switch event.kind {
+            case .noteOn(let velocity): sendNote(0x90, event.pitch, velocity, at: offset)
+            case .noteOff: sendNote(0x80, event.pitch, 0, at: offset)
+            case let .pitchBend(value): sendNote(0xE0, UInt8(value & 0x7F), UInt8(value >> 7 & 0x7F), at: offset)
+            case let .control(number, value): sendNote(0xB0, number, value, at: offset)
+            }
+        }
         // A built-in device gets the bytes its plugin would get, at the sample the event plays on;
         // the kernel decides what it hears (the kit and the sampler take notes, the synth the wheels
         // and the pedal too).
@@ -770,12 +791,14 @@ public final class EngineCore: @unchecked Sendable {
     /// All notes off (CC 123) on every built-in device of a slot: held notes release, a drum hit
     /// rings out.
     private func releaseBuiltIns(_ slot: Int) {
+        if slot == noteOutSlot.load(ordering: .relaxed) { sendNote(0xB0, 123, 0) }
         for index in 0..<builtInCount { kernel(slot, index)?.receive(status: 0xB0, 123, 0) }
     }
 
     /// Starts every built-in device of a slot over: its voices stop at once and its controllers
     /// come to rest (`EngineInstrumentKernel.reset`).
     private func resetBuiltIns(_ slot: Int) {
+        if slot == noteOutSlot.load(ordering: .relaxed) { sendNote(0xB0, 123, 0) }
         for index in 0..<builtInCount { kernel(slot, index)?.reset() }
     }
 
@@ -1101,6 +1124,9 @@ public final class EngineCore: @unchecked Sendable {
             let status = UInt8((event >> 16) & 0xFF), pitch = UInt8((event >> 8) & 0x7F), value = UInt8(event & 0x7F)
             guard slot < slotCapacity else { continue }
             let kind = status & 0xF0
+            if slot == noteOutSlot.load(ordering: .relaxed), kind == 0x80 || kind == 0x90 || kind == 0xB0 || kind == 0xE0 {
+                sendNote(kind, pitch, value)
+            }
             // A note played after Stop is new sound, not a tail: its lane's mix follows the playhead
             // again instead of the gains where the song stopped (review 2026-10-23) — that lane
             // only, so the other lanes' and the returns' tails keep theirs.
@@ -1179,6 +1205,12 @@ public final class EngineCore: @unchecked Sendable {
     private func emit(_ status: UInt8, _ data1: UInt8 = 0, _ data2: UInt8 = 0, at offset: Int = 0) {
         clockOut.push(TimedMIDIMessage(hostTime: callHostTime, frame: chunkStart + offset,
                                        status: status, data1: data1, data2: data2))
+    }
+
+    /// One channel message of the `noteOut` slot, at its frame in this chunk.
+    private func sendNote(_ status: UInt8, _ data1: UInt8, _ data2: UInt8, at offset: Int = 0) {
+        noteOut.push(TimedMIDIMessage(hostTime: callHostTime, frame: chunkStart + offset,
+                                      status: status, data1: data1 & 0x7F, data2: data2 & 0x7F))
     }
 
     /// Start from the top, or stop · song position · continue from anywhere else, so a device
