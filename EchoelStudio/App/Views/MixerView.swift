@@ -21,12 +21,16 @@ struct MixerView: View {
             .padding(Theme.Space.m)
         }
         .background(Theme.Color.background)
+        // A level readout tapped opens Echoel's number pad at the mixer's bottom edge.
+        .numberPadHost()
     }
 }
 
 struct ChannelStrip: View {
     @Environment(ProjectStore.self) private var store
     @Environment(StudioRouter.self) private var router
+    @Environment(ParameterWriter.self) private var writer
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let title: String
     let color: Color
     let volume: ParameterAddress
@@ -71,10 +75,7 @@ struct ChannelStrip: View {
                 Fader(address: volume, passed: $passedVolume)
                 PeakMeter(track: track?.id, height: 180)
             }
-            Text(ParameterFormat.text(passedVolume ?? store.project.value(of: volume) ?? 0, unit: .decibel))
-                .font(Theme.Font.caption.monospacedDigit())
-                .foregroundStyle(Theme.Color.textSecondary)
-                .accessibilityHidden(true)
+            levelReadout
             if let track {
                 HStack(spacing: Theme.Space.xs) {
                     Button("M") { try? store.perform(.setMute(track.id, !track.mixer.isMuted)) }
@@ -94,6 +95,28 @@ struct ChannelStrip: View {
         .padding(.vertical, Theme.Space.s)
         .background(Theme.Color.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium))
+    }
+
+    /// The level in dB under the fader; tap it to type an exact level on the number pad.
+    private var levelReadout: some View {
+        let level = passedVolume ?? store.project.value(of: volume) ?? 0
+        let typed = pad?.request?.owner == "\(volume)"
+        return Button {
+            guard let descriptor = store.project.descriptor(for: volume) else { return }
+            pad?.type(volume, descriptor: descriptor, value: store.project.value(of: volume) ?? level,
+                      title: "\(title) Level", owner: "\(volume)", writer: writer)
+        } label: {
+            Text(ParameterFormat.text(level, unit: .decibel))
+                .font(Theme.Font.caption.monospacedDigit())
+                .foregroundStyle(typed ? Theme.Color.accent : Theme.Color.textSecondary)
+                .frame(minWidth: Theme.Size.touch, minHeight: Theme.Size.touch)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(pad == nil)
+        .accessibilityLabel("\(title) level")
+        .accessibilityValue(ParameterFormat.text(level, unit: .decibel))
+        .accessibilityHint("Type an exact level")
     }
 }
 

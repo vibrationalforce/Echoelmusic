@@ -246,14 +246,7 @@ struct ParameterField: View {
 
     /// The pad for this field, typed in the unit a musician reads (ms, %, Hz).
     private func openPad(_ descriptor: ParameterDescriptor, value: Double) {
-        guard let pad, let format = NumberEntryFormat(descriptor) else { return }
-        let target = address
-        let writer = writer
-        pad.open(NumberPadRequest(owner: owner, title: title(descriptor), format: format,
-                                  range: descriptor.range, value: value, standard: descriptor.defaultValue) { typed in
-            writer.set(target, to: typed, coalescingKey: nil)
-            writer.endGesture()
-        })
+        pad?.type(address, descriptor: descriptor, value: value, title: title(descriptor), owner: owner, writer: writer)
     }
 
     /// One VoiceOver swipe: one whole step of a stepped value (a semitone of the root key), else
@@ -267,5 +260,19 @@ struct ParameterField: View {
     private func title(_ descriptor: ParameterDescriptor) -> String {
         if let target = address.key.sendTarget { return store.project.track(target).map { "→ \($0.name)" } ?? descriptor.title }
         return SynthParameter.builtIn(address.key)?.title ?? descriptor.title
+    }
+}
+
+extension NumberPadController {
+    /// Opens the pad for a song parameter; the typed value goes through the writer, like a drag,
+    /// as one undo step. A named choice is not typed (it is a picker), so nothing opens.
+    func type(_ address: ParameterAddress, descriptor: ParameterDescriptor, value: Double, title: String,
+              owner: String, writer: ParameterWriter) {
+        guard let format = NumberEntryFormat(descriptor) else { return }
+        open(NumberPadRequest(owner: owner, title: title, format: format, range: descriptor.range,
+                              value: value, standard: descriptor.defaultValue) { typed in
+            writer.set(address, to: typed, coalescingKey: nil)
+            writer.endGesture()
+        })
     }
 }
