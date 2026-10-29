@@ -44,6 +44,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let tape: Tape?
     private let stereoWidth: StereoWidth?
     private let ringModulator: RingModulator?
+    private let frequencyShifter: FrequencyShifter?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -69,6 +70,7 @@ public final class EffectKernel: @unchecked Sendable {
         tape = effect == .tape ? Tape(sampleRate: self.sampleRate) : nil
         stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
         ringModulator = effect == .ringModulator ? RingModulator(sampleRate: self.sampleRate) : nil
+        frequencyShifter = effect == .frequencyShifter ? FrequencyShifter(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -116,6 +118,7 @@ public final class EffectKernel: @unchecked Sendable {
         tape?.reset()
         stereoWidth?.reset()
         ringModulator?.reset()
+        frequencyShifter?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -145,6 +148,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .tape: tape?.process(left: left, right: right, frames: frames)
         case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
         case .ringModulator: ringModulator?.process(left: left, right: right, frames: frames)
+        case .frequencyShifter: frequencyShifter?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -225,6 +229,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let ringModulator else { return }
             let s = RingModulator.Settings(frequency: value(0), mix: value(1))
             if s != ringModulator.settings { ringModulator.settings = s }
+        case .frequencyShifter:
+            guard let frequencyShifter else { return }
+            let s = FrequencyShifter.Settings(shift: value(0), mix: value(1))
+            if s != frequencyShifter.settings { frequencyShifter.settings = s }
         }
     }
 
@@ -305,6 +313,9 @@ public final class EffectKernel: @unchecked Sendable {
             add("width", "Width", 0...2, 1.4, .ratio)
         case .ringModulator:
             add("frequency", "Frequency", 1...5_000, 440, .hertz)
+            add("mix", "Mix", 0...1, 0.5, .amount)
+        case .frequencyShifter:
+            add("shift", "Shift", -1_000...1_000, 100, .hertz)
             add("mix", "Mix", 0...1, 0.5, .amount)
         }
         return list
