@@ -1876,3 +1876,28 @@ Danach, alles CI-gebaut, nichts geräteverifiziert:
 Lehre: jeder Push unter EchoelStudio/ bricht den laufenden Gate-Lauf ab — Studio-Code bündeln,
 einen Release-Commit nur auf grünem Stand, Folgearbeit auf einem lokalen Zweig parken.
 Nächster Schritt: Gate auf 54a9d03b5 → RELEASE (Entwurf scratchpad RELEASE.10013) → zehnter Upload.
+
+## 2026-10-29 — Übergabe Session website-audit-KMcUX (TestFlight-12-Analyse; zentral bereits geshippt)
+
+Resümierte Session auf `claude/echoelmusic-website-audit-KMcUX`. Erstmals mit den GitHub-Actions-MCP-Tools
+den echten CI-/TestFlight-Stand gelesen — der frühere Dauerblocker „keine Actions-Sicht, kein Trigger" ist weg.
+
+**Analyse & Entscheidung**
+- `fd1d374` war grün (Echoel-Studio-Gate Lauf #299 = success) und auf `main`; trug unveröffentlichte Arbeit über
+  dem 11. Upload (10014): Morph (5.) + Mallet (6.) Synth-Engine = sechs Engines; zwei antike Tonsysteme + benannte
+  Kammertöne, jetzt im Key-Menü erreichbar; Body→Send-Modulation; Modulate nennt die gerade gemessenen Quellen.
+- Daraus den 12. Upload geschnitten (lokaler `EchoelStudio/RELEASE`-Bump, Commit 925887a) — **nie gepusht** (origin
+  wies ab: Remote-Ref bewegt).
+- Zeitgleich Orchestrierungs-Session `session_01TBcE2dPzGY62Cs3Emwmave`: Chats zusammengeführt, 12. Upload wird
+  zentral ausgelöst, nicht selbst pushen. Live-Übergabe dorthin = „delivered".
+
+**Ergebnis (am Repo gemessen, nicht geschätzt)**
+- ZENTRAL ERLEDIGT: `origin/main` @ `587090bc` = „twelfth 11.0.0 upload on the green 7091694". Die zentrale Zwölf
+  enthält zusätzlich das Sky-Feature (sidereal/altitude/azimuth) — also MEHR als mein Schnitt. Richtig so.
+- Mein RELEASE-Bump ist damit **obsolet und verworfen**; es ist **kein konkurrierender Release-Commit** auf dem Gate
+  gelandet (der fehlgeschlagene Push + die zentrale Auslösung haben zusammengepasst).
+- `origin/claude/echoelmusic-website-audit-KMcUX` wurde (von außen) auf `71eee336` zurückgesetzt — die frühere
+  Website-/„second brain"-Arbeit dieser Session (FEATURE_MATRIX, status.json, MIDI-Crash-Fix, Overview/Homepage-Ehrlichkeit).
+
+**Offen:** nichts von dieser Session; keine Founder-Frage offen. Diese Übergabe liegt auf Branch
+`claude/handover-2026-10-29` (nur dieser Log-Eintrag; triggert bewusst kein Gate/Upload/Auto-Merge).
