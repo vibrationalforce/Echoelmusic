@@ -1929,3 +1929,46 @@ genau so anbieten, zeigt erst der nächste Lauf von `pr-check.yml`/`ci.yml`; sch
 Destination fehl, auf die vom Image gelistete Simulator-Version anpassen.
 Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt dann das iOS-26-SDK
 (die Mail verschwindet mit dem ersten so gebauten Upload).
+
+## 2026-10-29 — Unified Production App: Deep Audit + Vision-Pivot-Plan (planmodus-geöffnet, kein Code)
+
+Founder bat (sinngemäß): „Wie ist der aktuelle Stand? Deep Audit, neutral und unabhängig.
+Aktuellster Stand. M5/M6 Ready mit Multi-Touch, high Accessibility, multidimensionale/immersive
+Multimedia-Produktionssuite für Musik, Visuals und AI-driven Video/Audio in XR/AR/Glasses,
+künftige Handhelds und Desktop. Apple-first, abwärtskompatibel bis A15. Echoelmusic-Sweetspot.
+Ohne Biofeedback, aber mit dem gesamten Wissen. HealthKit-Daten und Wetter-Daten mit minimalen
+Funktionen (Produktionspause/Bewegung, leichte UI-Mood-Anpassung ans Wetter). Live Streaming,
+Video und Content mit räumlichem 180°–360°-Video und Spatial Audio in einer kreativen Leichtbau-
+Oberfläche." Danach: „Ordentlich beenden und in Repo übergeben, ohne dass ich etwas machen muss.
+An Gesamt-Vision anpassen."
+
+Agents waren rate-limited (reset 12:50 UTC) — Audit wurde aus der immer-geladenen Grundwahrheit
+(CLAUDE.md v10 vom 2026-10-29, `.claude/rules/*`, `memory/`-Slices) hergeleitet statt aus
+Live-Explore. Herausgekommen: ein phasierter Plan (A–H), der die DMMW-Produkt-Law (seit
+2026-09-24) als Rahmen nimmt, die Biofeedback-Identität als EINE Modulations-Dimension
+rahmt (Code bleibt — nur Framing dimmt), und die vier wirklich fehlenden Teile sauber ergänzt:
+RTMP via HaishinKit (geplant seit 2026-05, nie verlinkt), 180°/360°-Playback (keine
+Capture-Rückkehr — #1304 ist bindend), Spatial-Audio-Render (die vier schlafenden Hälften
+`VBAPPanner`/`AmbisonicsEncode`/`BinauralPanner`/`EchoelSpaceReverb` einklinken), visionOS-Target
+mit `ImmersiveStageView` als natürlichem Sitz. Dazu zwei leichte Health/Wetter-Nudges
+(Pausenbanner Opt-in, Theme-Accent-Hue-Shift mit No-op-Fallback) — ohne jedes Wellness-/
+Medizin-Vokabular. Multi-Touch + Accessibility-Durchgang als Phase H.
+
+Harter Rahmen, der nicht angerührt wird: Audio-Thread-Sanctity, Rausch-Triade read-only,
+Sheet-Chain-Decke 14 auf `EchoelStudioView`, 10-Hz-`@Observable` nie in Picker-Ancestors,
+`EchoelValueField` als EINE numerische Parameter-Idiom, keine Mikro-/Kamera-Resurrektion
+(#1302/#1304), null bezahlte Frameworks, founder-gated bleiben
+`.github/workflows/**`+`project.yml`+`Info.plist`.
+
+Offene Entscheidungen für den Founder (im Plan dokumentiert): Branch-Name
+(`multimedia-production-suite-pN0Eo` behalten vs. nach `unified-production-app-Qdm6b` umbenennen
+— **letzterer existiert bereits auf origin als 2537-Commit April-2026-Sprint; Rename statt
+Force-Push), Grand-Council für den Framing-Shift, später Council-Gates für HaishinKit/mlx-swift/
+visionOS-Target.
+
+Übergabe-Artefakt: `scratchpads/PLAN_UNIFIED_PRODUCTION_APP_2026-10-29.md` (mirror des Planmodus-
+Files unter `/root/.claude/plans/`). Scratchpad-only-Commit — löst per CLAUDE.md-Gesetz keinen
+Auto-Merge aus, fährt als Passagier mit dem nächsten Code-Commit.
+
+Status: KEIN Code geändert. Plan steht, Branch-Frage offen, nächster Schritt gehört dem
+Founder.
