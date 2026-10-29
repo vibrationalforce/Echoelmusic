@@ -39,6 +39,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let flanger: Flanger?
     private let limiter: Limiter?
     private let saturation: Saturation?
+    private let tremolo: Tremolo?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -59,6 +60,7 @@ public final class EffectKernel: @unchecked Sendable {
         flanger = effect == .flanger ? Flanger(sampleRate: self.sampleRate) : nil
         limiter = effect == .limiter ? Limiter(sampleRate: self.sampleRate) : nil
         saturation = effect == .saturation ? Saturation(sampleRate: self.sampleRate) : nil
+        tremolo = effect == .tremolo ? Tremolo(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -101,6 +103,7 @@ public final class EffectKernel: @unchecked Sendable {
         flanger?.reset()
         limiter?.reset()
         saturation?.reset()
+        tremolo?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -125,6 +128,7 @@ public final class EffectKernel: @unchecked Sendable {
             limiter.process(left: left, right: right, frames: frames)
             reductionBits.store(limiter.reduction.bitPattern, ordering: .relaxed)
         case .saturation: saturation?.process(left: left, right: right, frames: frames)
+        case .tremolo: tremolo?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -185,6 +189,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let saturation else { return }
             let s = Saturation.Settings(drive: value(0), tone: value(1), mix: value(2))
             if s != saturation.settings { saturation.settings = s }
+        case .tremolo:
+            guard let tremolo else { return }
+            let s = Tremolo.Settings(rate: value(0), depth: value(1), pan: value(2) >= 0.5)
+            if s != tremolo.settings { tremolo.settings = s }
         }
     }
 
@@ -249,6 +257,10 @@ public final class EffectKernel: @unchecked Sendable {
             add("drive", "Drive", 0...1, 0.4, .amount)
             add("tone", "Tone", 0...1, 0.85, .amount)
             add("mix", "Mix", 0...1, 0.6, .amount)
+        case .tremolo:
+            add("rate", "Rate", 0.1...20, 5, .hertz)
+            add("depth", "Depth", 0...1, 0.5, .amount)
+            add("pan", "Pan", 0...1, 0, .boolean)
         }
         return list
     }
