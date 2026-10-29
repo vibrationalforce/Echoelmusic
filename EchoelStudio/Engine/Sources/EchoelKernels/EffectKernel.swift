@@ -42,6 +42,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let tremolo: Tremolo?
     private let bitcrusher: Bitcrusher?
     private let tape: Tape?
+    private let stereoWidth: StereoWidth?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -65,6 +66,7 @@ public final class EffectKernel: @unchecked Sendable {
         tremolo = effect == .tremolo ? Tremolo(sampleRate: self.sampleRate) : nil
         bitcrusher = effect == .bitcrusher ? Bitcrusher(sampleRate: self.sampleRate) : nil
         tape = effect == .tape ? Tape(sampleRate: self.sampleRate) : nil
+        stereoWidth = effect == .stereoWidth ? StereoWidth(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -110,6 +112,7 @@ public final class EffectKernel: @unchecked Sendable {
         tremolo?.reset()
         bitcrusher?.reset()
         tape?.reset()
+        stereoWidth?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -137,6 +140,7 @@ public final class EffectKernel: @unchecked Sendable {
         case .tremolo: tremolo?.process(left: left, right: right, frames: frames)
         case .bitcrusher: bitcrusher?.process(left: left, right: right, frames: frames)
         case .tape: tape?.process(left: left, right: right, frames: frames)
+        case .stereoWidth: stereoWidth?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -209,6 +213,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let tape else { return }
             let s = Tape.Settings(wow: value(0), saturation: value(1), tone: value(2))
             if s != tape.settings { tape.settings = s }
+        case .stereoWidth:
+            guard let stereoWidth else { return }
+            let s = StereoWidth.Settings(width: value(0))
+            if s != stereoWidth.settings { stereoWidth.settings = s }
         }
     }
 
@@ -285,6 +293,8 @@ public final class EffectKernel: @unchecked Sendable {
             add("wow", "Wow", 0...1, 0.35, .amount)
             add("saturation", "Saturation", 0...1, 0.25, .amount)
             add("tone", "Tone", 0...1, 0.8, .amount)
+        case .stereoWidth:
+            add("width", "Width", 0...2, 1.4, .ratio)
         }
         return list
     }
