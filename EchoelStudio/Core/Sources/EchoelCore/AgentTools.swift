@@ -269,7 +269,18 @@ public enum AgentTools {
                                                  "reverb": .reverb, "verb": .reverb, "hall": .reverb, "room": .reverb,
                                                  "chorus": .chorus, "ensemble": .chorus,
                                                  "phaser": .phaser, "phase": .phaser,
-                                                 "flanger": .flanger, "flange": .flanger, "jet": .flanger]
+                                                 "flanger": .flanger, "flange": .flanger, "jet": .flanger,
+                                                 "limiter": .limiter, "limit": .limiter, "brickwall": .limiter,
+                                                 "saturation": .saturation, "saturator": .saturation, "drive": .saturation,
+                                                 "warmth": .saturation,
+                                                 "tremolo": .tremolo, "autopan": .tremolo,
+                                                 "bitcrusher": .bitcrusher, "bitcrush": .bitcrusher, "crusher": .bitcrusher,
+                                                 "lofi": .bitcrusher,
+                                                 "tape": .tape, "wowandflutter": .tape,
+                                                 "stereowidth": .stereoWidth, "width": .stereoWidth, "widener": .stereoWidth,
+                                                 "ringmodulator": .ringModulator, "ringmod": .ringModulator, "ring": .ringModulator,
+                                                 "frequencyshifter": .frequencyShifter, "frequencyshift": .frequencyShifter,
+                                                 "freqshift": .frequencyShifter, "shifter": .frequencyShifter]
         guard let effect = aliases[key] else {
             throw AgentError.invalid("There is no effect \"\(name)\". Effects: \(StandardEffect.allCases.map(\.title).joined(separator: ", ")).")
         }

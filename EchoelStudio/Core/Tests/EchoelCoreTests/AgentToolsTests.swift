@@ -120,6 +120,15 @@ final class AgentToolsTests: XCTestCase {
         }
     }
 
+    func testEveryEffectIsFoundByItsTitleAndACommonWord() throws {
+        for effect in StandardEffect.allCases {
+            XCTAssertEqual(try AgentTools.standardEffect(effect.title), effect, effect.title)
+        }
+        XCTAssertEqual(try AgentTools.standardEffect("lo-fi"), .bitcrusher)
+        XCTAssertEqual(try AgentTools.standardEffect("ring mod"), .ringModulator)
+        XCTAssertEqual(try AgentTools.standardEffect("Freq Shift"), .frequencyShifter)
+    }
+
     func testAPatternOnPartOfALongerClipKeepsTheRestAndASharedClipIsNotStretched() async throws {
         try await MainActor.run {
             let store = ProjectStore()
