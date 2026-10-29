@@ -1,3 +1,4 @@
+import CoreText
 import SwiftUI
 
 /// The design system. Every colour, size and radius on screen comes from here, so the app
@@ -101,15 +102,45 @@ enum Theme {
     }
 
     enum Font {
-        // Text styles, never fixed point sizes: every label follows the reader's Dynamic Type
-        // setting. Dense surfaces (the transport) cap the size they grow to, they never opt out.
-        static let title = SwiftUI.Font.headline
-        static let body = SwiftUI.Font.body
-        static let label = SwiftUI.Font.subheadline.weight(.medium)
-        static let caption = SwiftUI.Font.caption.weight(.medium)
-        /// Numbers that change (tempo, position, levels) use monospaced digits so they never jitter.
-        static let value = SwiftUI.Font.headline.monospacedDigit()
-        static let valueLarge = SwiftUI.Font.title2.weight(.semibold).monospacedDigit()
+        // The brand face, Atkinson Hyperlegible (Braille Institute, SIL Open Font License 1.1 —
+        // the licence travels in each file's own name table): letters built to be told apart at a
+        // glance, the face of the website and of the earlier instrument. Two faces ship, Regular
+        // and Bold; a custom font synthesises no weight in between, so every token names one.
+        //
+        // Text styles, never fixed point sizes: each size is relative to a text style, so every
+        // label follows the reader's Dynamic Type setting. Dense surfaces (the transport) cap the
+        // size they grow to, they never opt out. Should the face fail to register, `.custom`
+        // falls back to the system face at the same size — never to nothing.
+        static let title = brand(.bold, 17, relativeTo: .headline)
+        static let body = brand(.regular, 17, relativeTo: .body)
+        static let label = brand(.regular, 15, relativeTo: .subheadline)
+        static let caption = brand(.regular, 12, relativeTo: .caption)
+        /// Numbers that change (tempo, position, levels) use the face's tabular figures, so they
+        /// never jitter.
+        static let value = brand(.bold, 17, relativeTo: .headline).monospacedDigit()
+        static let valueLarge = brand(.bold, 22, relativeTo: .title2).monospacedDigit()
+        /// The number a pad is typing: the largest numeral on screen.
+        static let display = brand(.bold, 30, relativeTo: .largeTitle).monospacedDigit()
+
+        enum Face: String, CaseIterable {
+            case regular = "AtkinsonHyperlegible-Regular"
+            case bold = "AtkinsonHyperlegible-Bold"
+        }
+
+        static func brand(_ face: Face, _ size: CGFloat, relativeTo style: SwiftUI.Font.TextStyle) -> SwiftUI.Font {
+            _ = registered
+            return .custom(face.rawValue, size: size, relativeTo: style)
+        }
+
+        /// The faces in the app bundle (`Design/Fonts`), registered for this process the first
+        /// time any token is read — before the first text draws, and without an Info.plist entry.
+        private static let registered: Void = {
+            for face in Face.allCases {
+                guard let url = Bundle.main.url(forResource: face.rawValue, withExtension: "ttf") else { continue }
+                // False when the face is already registered; either way it can be drawn.
+                _ = CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+            }
+        }()
     }
 
     enum Motion {
