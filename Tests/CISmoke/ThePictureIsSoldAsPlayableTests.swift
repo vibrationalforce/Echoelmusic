@@ -19,8 +19,19 @@ import XCTest
 /// ⚠️ WHY NOT IN `TheStoreTextClaimsOnlyWhatShipsTests` (#416). That file asks one question — is
 /// anything sold that does not ship. This asks the opposite one — is something that ships absent
 /// from the copy — and it also reaches `docs/` and `Sources/`, which that file does not read.
-/// Two questions, two homes; the store needle here is a PRESENCE check and cannot collide with a
-/// ban there.
+/// Two questions, two homes; the store needle here was a PRESENCE check and could not collide
+/// with a ban there.
+///
+/// ⛔ 2026-10-29 (GM28, W6 STORE): CLAIM 2 FLIPPED FROM PRESENCE TO ABSENCE, and the reason is the
+/// App Store record, not the surface. `fastlane/metadata/{en-US,de-DE}` now describes Echoel
+/// Studio 11.0.0 (builds 10004–10017), and the Studio build has no playable picture — its visual
+/// is being built by another wave and is not in 10017 (`ContentPipeline/CLAIMS.md`, Nachtrag 5).
+/// A store description that said "touch the visual" would sell, to a Studio buyer, a surface the
+/// app they download does not have — the 2.3 mismatch GM28 names. The WEBSITE (`docs/`) still
+/// describes the earlier app, where the surface IS mounted (claim 4), so claims 1, 3 and 4 are
+/// unchanged. Claim 2 now asserts that the earlier app's sentence does not come back into the
+/// Studio listing; when the Studio ships a playable visual, flip it back to presence in the SAME
+/// commit as the code — the message says so.
 final class ThePictureIsSoldAsPlayableTests: XCTestCase {
 
     private func source(_ relative: String) throws -> String {
@@ -54,16 +65,24 @@ final class ThePictureIsSoldAsPlayableTests: XCTestCase {
             """)
     }
 
-    // 2 — the acquisition copy carries it, in BOTH locales. This was the harder half of the
-    // finding: the denial was one page, the absence was sixteen files.
+    // 2 — the acquisition copy does NOT carry it while the Studio build has no such surface.
+    // Until 2026-10-29 this was the presence check (#999): "touch the visual" in both locales,
+    // the harder half of that finding — the denial was one page, the absence was sixteen files.
+    // The listing now describes Echoel Studio, whose build (10004–10017) has no playable picture,
+    // so the same sentence is an over-claim there and the needles are inverted. The anchor is the
+    // sentence's own wording in both locales, so a paraphrase ("tap the picture") walks past —
+    // stated rather than hidden; `TheStoreTextClaimsOnlyWhatShipsTests` bans the broader
+    // vocabulary (camera, visual outputs) that such a paraphrase would need.
     func testBothStoreLocalesSayThePictureIsPlayable() throws {
         for (path, needles) in [("fastlane/metadata/en-US/description.txt", ["touch the visual"]),
                                 ("fastlane/metadata/de-DE/description.txt", ["berühre das visual"])] {
             let text = try source(path).lowercased()
-            XCTAssertTrue(needles.contains(where: { text.contains($0) }), """
-                \(path) does not tell a buyer the picture can be played. Zero of the sixteen \
-                metadata files mentioned it before #999, so this is the state it returns to by \
-                default rather than by decision.
+            XCTAssertFalse(needles.contains(where: { text.contains($0) }), """
+                \(path) tells a buyer the picture can be played, but the Echoel Studio build on \
+                this App Store record has no playable picture (GM28, CLAIMS Nachtrag 5). That is \
+                the earlier app's sentence returning to a listing that no longer describes it. \
+                When the Studio ships a playable visual, flip this claim back to presence in the \
+                SAME commit as the code and the copy — do not leave the sentence unguarded either way.
                 """)
         }
     }
@@ -94,9 +113,10 @@ final class ThePictureIsSoldAsPlayableTests: XCTestCase {
         let window = try source("Sources/Echoelmusic/Studio/FloatingVisualWindow.swift")
         XCTAssertTrue(window.contains("TouchInstrumentView("), """
             `FloatingVisualWindow` no longer mounts `TouchInstrumentView`, so the picture is not \
-            playable — and the FAQ, both store descriptions and `ContentPipeline/CLAIMS.md` now \
-            say it is. If the surface was removed on purpose, remove those four claims in the \
-            same commit and delete this guard with them.
+            playable — and the FAQ and `ContentPipeline/CLAIMS.md` still say it is (the store \
+            descriptions stopped saying it on 2026-10-29, when they moved to Echoel Studio). If \
+            the surface was removed on purpose, remove those claims in the same commit and delete \
+            this guard with them.
             """)
     }
 }

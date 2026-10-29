@@ -57,6 +57,15 @@ Multicast-/MPE-/Medizin-Sätze), `TheStoreTextClaimsOnlyWhatShipsTests.testNoRem
 `ThePictureIsSoldAsPlayableTests.testBothStoreLocalesSayThePictureIsPlayable`, `TheGenreListsMatchTheirOwnCountTests`
 (alle drei, Release Notes). Der Store-Commit fasst `Tests/` absichtlich nicht an (W6-Zuschnitt, kein Gate, kein Upload);
 die Wächter sind im selben Merge nach `main` zu ziehen, sonst landet das Rot auf dem nächsten fremden Code-Commit.
+⭐ **Nachgezogen am selben Tag, zweite W6-Scheibe (`test(store): guards pin the Echoel Studio listing (GM28)`, gleicher
+Branch):** die vier Wächter pinnen jetzt den Studio-Text — `TheStoreFrontLinesSellTheRigTests` 4–7 umgeschrieben (Falz =
+Workstation-Satz, Promo = Engines/Drumkit/Sampler/Audio Unit/WAV/MIDI, Export-Zahlen 24 Bit/48 kHz/LUFS/True Peak,
+Ehrlichkeitssätze Konto/Takes/Import), `testNoRemovedCapabilityIsSoldAgain` misst gegen `EchoelStudio/` (AUv3, Pianorolle,
+Step-Raster raus; Kamera, Art-Net, sACN, OSC, MPE, DDSP, HealthKit, externer Bildschirm, kuratierte Genres als „nicht in
+10017“ rein), `ThePictureIsSoldAsPlayableTests` Anspruch 2 von Präsenz auf Abwesenheit gedreht, die Release Notes aus der
+Genre-Aufzählung genommen und als Gegen-Gewicht invertiert. Transkribiert (§0): 7 umgeschriebene Zusicherungen ROT auf dem
+Alt-Text, GRÜN auf dem Studio-Text; 0 rot auf dem Studio-Text. Jede Nadel dieser Liste geht mit dem Build, der die Fähigkeit
+liefert — im selben Commit wie der Code.
 Der Merge nach `main` ist erfolgt (gemessen 2026-10-26). Die Studio-Hinweise in `docs/roadmap.html`,
 `docs/privacy.html` und `docs/claims.html` stehen inzwischen auf `main`. `docs/privacy.html` nennt den
 Studio-Mikrofonzugriff beim Scharfschalten einer Audiospur oder beim Abhören ihres Eingangs ausdrücklich.
