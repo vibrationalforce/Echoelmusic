@@ -1932,3 +1932,17 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
   `decisions.csv:1329` (Förderung gestrichen). Die drei Founder-Fragen daraus stehen EINMAL als **GM37**
   in `FOUNDER_INBOX.md` §1. Kapazitätsbefund des Panels: Engpass sind Founder-Minuten (Geräte-Bitten,
   F-15), nicht Entwicklung.
+
+## 2026-10-29 (Nacht) — Ultra Deep Audit für die Entscheidungsrunde
+
+- **Founder:** „Mache Ultra Deep Audit, wir entscheiden alles morgen zusammen.“ Vier lesende Linsen parallel
+  (Produktcode · Außenbehauptungen/Website/Recht · Ship-Pfad/CI/Sicherheit · Backlog/Entscheidungen), dazu
+  eigene Messungen. Ergebnis: `scratchpads/ULTRA_DEEP_AUDIT_2026-10-29.md` (264 Zeilen) — Kernbefund,
+  harte Zahlen, Wellen-Status W0–W10 gemessen, Risiken gerankt, W6-Checkliste, elf Dokument-Widersprüche
+  K1–K11, offene Founder-Fragen nach Blockwirkung, 15-Punkte-Agenda mit Empfehlung und dem, was die
+  Sitzung nach jeder Antwort am selben Tag bauen kann.
+- **Kernsatz:** Code solide als DAW+Gurt+Field (810 Tests, alle Hausgesetze halten); kein „1.0 enthält
+  alles“-Kandidat (W4/W7/W8/W9 null Zeilen, W1 nur Gurt, W5 ohne DDSP/MPE). Engpass = Founder-Hand (F-15,
+  Geräte-Sitzung, F25, Kamera-Zeile) und zwei Richtungsentscheide (Umfang von 1.0, Tauchfliege/Förderung).
+  Store-Text in `fastlane/metadata` ist zu 100 % Alt-App; `AboutView.swift:17` widerspricht dem eigenen Build.
+- Nichts gebaut, nichts geändert außer diesem Dossier und diesem Eintrag.
