@@ -40,6 +40,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let limiter: Limiter?
     private let saturation: Saturation?
     private let tremolo: Tremolo?
+    private let bitcrusher: Bitcrusher?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -61,6 +62,7 @@ public final class EffectKernel: @unchecked Sendable {
         limiter = effect == .limiter ? Limiter(sampleRate: self.sampleRate) : nil
         saturation = effect == .saturation ? Saturation(sampleRate: self.sampleRate) : nil
         tremolo = effect == .tremolo ? Tremolo(sampleRate: self.sampleRate) : nil
+        bitcrusher = effect == .bitcrusher ? Bitcrusher(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -104,6 +106,7 @@ public final class EffectKernel: @unchecked Sendable {
         limiter?.reset()
         saturation?.reset()
         tremolo?.reset()
+        bitcrusher?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -129,6 +132,7 @@ public final class EffectKernel: @unchecked Sendable {
             reductionBits.store(limiter.reduction.bitPattern, ordering: .relaxed)
         case .saturation: saturation?.process(left: left, right: right, frames: frames)
         case .tremolo: tremolo?.process(left: left, right: right, frames: frames)
+        case .bitcrusher: bitcrusher?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -193,6 +197,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let tremolo else { return }
             let s = Tremolo.Settings(rate: value(0), depth: value(1), pan: value(2) >= 0.5)
             if s != tremolo.settings { tremolo.settings = s }
+        case .bitcrusher:
+            guard let bitcrusher else { return }
+            let s = Bitcrusher.Settings(bits: value(0), downsample: value(1), mix: value(2))
+            if s != bitcrusher.settings { bitcrusher.settings = s }
         }
     }
 
@@ -261,6 +269,10 @@ public final class EffectKernel: @unchecked Sendable {
             add("rate", "Rate", 0.1...20, 5, .hertz)
             add("depth", "Depth", 0...1, 0.5, .amount)
             add("pan", "Pan", 0...1, 0, .boolean)
+        case .bitcrusher:
+            add("bits", "Bits", 1...16, 8, .ratio)
+            add("downsample", "Downsample", 1...64, 4, .ratio)
+            add("mix", "Mix", 0...1, 1, .amount)
         }
         return list
     }
