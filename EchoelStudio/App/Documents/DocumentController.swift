@@ -953,6 +953,10 @@ final class DocumentController {
         // Measured on the way, as the file receives it (BS.1770 / EBU R 128).
         let result: Result<(meter: LoudnessMeter, frames: Int), Error> = await Task.detached(priority: .userInitiated) {
             Result {
+                // A song longer than one WAV file holds is refused before the first block, not
+                // after hours of rendering: RIFF counts its size in 32 bits (review 2026-10-28, 2.3).
+                guard OfflineRender.fixedFrameCount(project, sampleRate: rate, samples: buffers)
+                        <= Int64(WAVFile.maximumFrames(.twentyFour)) else { throw WAVWriter.WriteError.tooLong }
                 try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 let writer = try WAVWriter(url: url, sampleRate: rate)
                 var meter = LoudnessMeter(sampleRate: rate)
@@ -1044,12 +1048,21 @@ final class DocumentController {
         // The mix's length as the stems sum to it: without the master's inserts.
         let measured: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
             Result {
+                // Refused before the measuring render, not after it and the first stem: no WAV file
+                // holds a song past `WAVFile.maximumFrames` (review 2026-10-28, 2.3).
+                let limit = WAVFile.maximumFrames(.twentyFour)
+                guard OfflineRender.fixedFrameCount(project, sampleRate: rate, samples: buffers) <= Int64(limit) else {
+                    throw WAVWriter.WriteError.tooLong
+                }
                 let files = FileManager.default
                 if files.fileExists(atPath: folder.path) { try files.removeItem(at: folder) }
                 try files.createDirectory(at: folder, withIntermediateDirectories: true)
-                return OfflineRender.render(project, sampleRate: rate, samples: buffers, units: measuring.units,
-                                            effects: measuring.chains.mapValues { $0 as [any HostedProcessor] }) { _, _, _ in }
+                let length = OfflineRender.render(project, sampleRate: rate, samples: buffers, units: measuring.units,
+                                                  effects: measuring.chains.mapValues { $0 as [any HostedProcessor] }) { _, _, _ in }
                     .frameCount
+                // The ring-out can carry the mix past the limit where the song alone fit.
+                guard length <= limit else { throw WAVWriter.WriteError.tooLong }
+                return length
             }
         }.value
         var outcome = measured.map { _ in () }

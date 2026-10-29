@@ -61,6 +61,43 @@ public enum OfflineRender {
         return Result(left: left, right: right, sampleRate: summary.sampleRate, peak: summary.peak)
     }
 
+    /// The rates a render runs at: an output rate outside them reads as 48 kHz, so no length
+    /// below multiplies into a trap.
+    static let rates: ClosedRange<Double> = 8_000...768_000
+    /// The longest fixed tail: more silence than that is no tail.
+    static let longestTailSeconds: Double = 600
+
+    /// The frames a render of `project` writes before any ring-out — the song to the end of its
+    /// last note or audio region, plus `tailSeconds` — without rendering it. For telling before
+    /// the first block whether a file can hold the song (`WAVFile.maximumFrames`), instead of
+    /// after hours of rendering (review 2026-10-28, 2.3). 0 for an empty song; 64-bit, since a
+    /// song may be longer than 2³² samples.
+    public static func fixedFrameCount(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
+                                       samples: [MediaID: SampleBuffer] = [:]) -> Int64 {
+        let plan = PlaybackPlan(compiling: project)
+        let rate = renderRate(sampleRate)
+        var slots = SlotAssigner(capacity: Track.limit(for: .instrument))
+        slots.update(for: project)
+        let snapshot = EngineSnapshot(plan: plan, project: project, slots: slots.slots, sampleRate: rate, generation: 1,
+                                      samples: samples)
+        guard plan.songEnd > 0 || snapshot.audioEnd > 0 else { return 0 }
+        return fixedFrames(plan: plan, audioEnd: snapshot.audioEnd, rate: rate, tailSeconds: tailSeconds)
+    }
+
+    private static func renderRate(_ sampleRate: Double) -> Double {
+        sampleRate.isFinite && rates.contains(sampleRate) ? sampleRate : 48_000
+    }
+
+    /// The song's end in samples plus the tail: one tempo map conversion, saturating, never a trap.
+    private static func fixedFrames(plan: PlaybackPlan, audioEnd: Int64, rate: Double, tailSeconds: Double) -> Int64 {
+        let time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: rate)
+        let tail = MusicalTime.integer((Swift.min(Swift.max(tailSeconds.isFinite ? tailSeconds : 0, 0), longestTailSeconds) * rate).rounded())
+        let end = Swift.max(time.sample(at: Swift.max(0, plan.songEnd)), audioEnd, 0)
+        // Both bounded far below Int64.max: the song by `MusicalTime.maximumTick` and `rates`, the
+        // tail by `longestTailSeconds`.
+        return end + tail
+    }
+
     /// The same render, handed to `write` one block at a time, so a song of any length needs only
     /// two blocks of memory. `write` may throw to stop; the render stops with it.
     public static func render(_ project: Project, sampleRate: Double = 48_000, tailSeconds: Double = 2,
@@ -71,7 +108,7 @@ public enum OfflineRender {
                               blockFrames: Int = 16_384,
                               into write: (UnsafePointer<Float>, UnsafePointer<Float>, Int) throws -> Void) rethrows -> Summary {
         let plan = PlaybackPlan(compiling: project)
-        let rate = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48_000
+        let rate = renderRate(sampleRate)
         let core = EngineCore(sampleRate: rate)
         core.setClickEnabled(false)
         var slots = SlotAssigner(capacity: core.slotCapacity)
@@ -85,10 +122,8 @@ public enum OfflineRender {
         core.publish(snapshot)
         core.play()
 
-        let time = TimeConversion(tempoMap: plan.tempoMap, sampleRate: rate)
-        let tail = Int64(Swift.max(0, tailSeconds.isFinite ? tailSeconds : 0) * rate)
         let frames = frameCount.map { Swift.max(0, $0) }
-            ?? Int(Swift.max(time.sample(at: plan.songEnd), snapshot.audioEnd) + tail)
+            ?? Int(fixedFrames(plan: plan, audioEnd: snapshot.audioEnd, rate: rate, tailSeconds: tailSeconds))
         let ringOut = frameCount != nil ? 0 : Swift.min(Swift.max(0, ringOutSeconds.isFinite ? ringOutSeconds : 0), maximumRingOutSeconds)
         let limit = frames + Int(ringOut * rate)
         let quietFrames = Swift.max(1, Int(quietSeconds * rate))
