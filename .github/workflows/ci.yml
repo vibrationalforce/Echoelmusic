@@ -286,7 +286,7 @@ jobs:
       run: |
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
           CODE_SIGNING_ALLOWED=NO \
@@ -298,7 +298,7 @@ jobs:
         echo "🔍 Checking for memory leaks..."
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 17' \
           -enableAddressSanitizer YES \
           CODE_SIGNING_ALLOWED=NO \
           2>&1 | xcpretty || true
