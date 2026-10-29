@@ -2020,3 +2020,12 @@ den echten CI-/TestFlight-Stand gelesen — der frühere Dauerblocker „keine A
 
 **Offen:** nichts von dieser Session; keine Founder-Frage offen. Diese Übergabe liegt auf Branch
 `claude/handover-2026-10-29` (nur dieser Log-Eintrag; triggert bewusst kein Gate/Upload/Auto-Merge).
+
+## 2026-10-29 ~09:30 Z — Prozesse geschlossen (Founder: „Prozesse abschließen: Übergabe im Repo ohne dass ich was machen muss“)
+- Der Satz ging an mehrere Chats: `01Q2ZFqs` pushte eine Übergabe DIREKT auf `main` (`c2fd172c`) unter dem
+  kanonischen Dateinamen; `01DqTpc8` pushte seinen Abschluss auf den Arbeitszweig (`199b5042`) und hängte die
+  Prüf-Routine auf eine frische Session um; die Website-Audit-Session ließ einen Log-Block auf dem Streuzweig
+  `claude/handover-2026-10-29`. Merge `9f56725a`: `main` in den Zweig, Fremd-Übergabe → `HANDOVER_2026-10-29_may-session-01Q2ZFqs.md`,
+  alle Log-Blöcke behalten. Vollständiger Stand (Sessions, Zeitpläne, Streuzweige): `HANDOVER_2026-10-29.md` §7.
+- Fünf Nebensessions archiviert; `01DqTpc8` bleibt, weil sie den 7.11.-Timer hält. Zweites Sicherheitsnetz
+  in dieser Session (7.11. 10:00 Z) gegen eine Routine, die sich ohne MCP nicht selbst abschalten kann.
