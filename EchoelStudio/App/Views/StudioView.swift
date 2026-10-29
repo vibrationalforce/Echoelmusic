@@ -12,38 +12,49 @@ struct StudioView: View {
     @State private var surface: Surface = .tracks
     /// The keys and pads under the surface; on by default so the phone alone makes sound.
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
+    /// The Field as a small window over the other views (wave W3); on by default, so the picture
+    /// is in sight from the first launch, fullscreen one tap away.
+    @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
+    /// The Field over the whole studio. A layer, not a presentation: the sheet slot stays one.
+    @State private var fieldFullscreen = false
 
     enum Surface: Hashable { case tracks, arrange, session, mixer, field }
 
     var body: some View {
         @Bindable var router = router
-        VStack(spacing: 0) {
-            TransportBar()
-            Divider().overlay(Theme.Color.border)
-            Picker("View", selection: $surface) {
-                Text("Tracks").tag(Surface.tracks)
-                Text("Arrange").tag(Surface.arrange)
-                Text("Session").tag(Surface.session)
-                Text("Mixer").tag(Surface.mixer)
-                Text("Field").tag(Surface.field)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, Theme.Space.m)
-            .padding(.vertical, Theme.Space.s)
-            .background(Theme.Color.surface)
-            switch surface {
-            case .tracks: TrackListView { router.sheet = .clipEditor($0) }
-            case .arrange:
-                ArrangeView(open: { router.sheet = .clip($0, $1) },
-                            importAudio: { router.sheet = .importAudio($0, $1) })
-            case .session:
-                SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
-            case .mixer: MixerView()
-            case .field: FieldView()
-            }
-            if showsKeys {
+        ZStack {
+            VStack(spacing: 0) {
+                TransportBar()
                 Divider().overlay(Theme.Color.border)
-                PlayKeysView()
+                Picker("View", selection: $surface) {
+                    Text("Tracks").tag(Surface.tracks)
+                    Text("Arrange").tag(Surface.arrange)
+                    Text("Session").tag(Surface.session)
+                    Text("Mixer").tag(Surface.mixer)
+                    Text("Field").tag(Surface.field)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Theme.Space.m)
+                .padding(.vertical, Theme.Space.s)
+                .background(Theme.Color.surface)
+                ZStack(alignment: .bottomTrailing) {
+                    surfaceView
+                    // One picture at a time: the window rests while the Field is the view or fills the screen.
+                    if showsFieldWindow, surface != .field, !fieldFullscreen {
+                        FieldWindow(expand: { openFieldFullscreen() }, close: { showsFieldWindow = false })
+                            .padding(Theme.Space.m)
+                            .transition(.opacity)
+                    }
+                }
+                if showsKeys {
+                    Divider().overlay(Theme.Color.border)
+                    PlayKeysView()
+                }
+            }
+            if fieldFullscreen {
+                FieldFullscreen(close: { closeFieldFullscreen() })
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .sheet(item: $router.sheet, onDismiss: { router.sheetClosed() }) { sheet in
@@ -80,6 +91,34 @@ struct StudioView: View {
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
     }
+
+    /// The chosen view. While the Field fills the screen its own view rests, so the GPU draws one
+    /// picture, not two.
+    @ViewBuilder private var surfaceView: some View {
+        switch surface {
+        case .tracks: TrackListView { router.sheet = .clipEditor($0) }
+        case .arrange:
+            ArrangeView(open: { router.sheet = .clip($0, $1) },
+                        importAudio: { router.sheet = .importAudio($0, $1) })
+        case .session:
+            SessionView(open: { router.sheet = .clip($0, $1) }, importClip: { router.sheet = .importClip($0, $1) })
+        case .mixer: MixerView()
+        case .field:
+            if fieldFullscreen {
+                Theme.Color.background
+            } else {
+                FieldSurface(expand: { openFieldFullscreen() })
+            }
+        }
+    }
+
+    private func openFieldFullscreen() {
+        withAnimation(.easeOut(duration: 0.15)) { fieldFullscreen = true }
+    }
+
+    private func closeFieldFullscreen() {
+        withAnimation(.easeOut(duration: 0.15)) { fieldFullscreen = false }
+    }
 }
 
 /// Play/Stop, tempo, click, undo/redo. Reads only cold state (tempo, flags), never the
@@ -93,6 +132,7 @@ struct TransportBar: View {
     @Environment(ParameterWriter.self) private var writer
     @State private var clickOn = true
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
+    @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,6 +201,13 @@ struct TransportBar: View {
                 .accessibilityLabel("Keys")
                 .accessibilityValue(showsKeys ? "Shown" : "Hidden")
                 .accessibilityHint("Shows keys and pads that play the live track.")
+
+            // The Field as a small window over the other views (wave W3).
+            Button { showsFieldWindow.toggle() } label: { Image(systemName: "rectangle.inset.bottomright.filled") }
+                .buttonStyle(ToolButtonStyle(isActive: showsFieldWindow))
+                .accessibilityLabel("Field Window")
+                .accessibilityValue(showsFieldWindow ? "Shown" : "Hidden")
+                .accessibilityHint("Shows the Field as a small window over the other views.")
 
             Button { writer.setWriting(!writer.isWriting) } label: {
                 Text("A").font(Theme.Font.label)

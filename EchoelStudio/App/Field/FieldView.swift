@@ -2,31 +2,57 @@ import EchoelCore
 import EchoelEngine
 import SwiftUI
 
-/// The Field (wave W3): the picture that moves with the music and the body. It reads one
-/// `FieldFrame` per drawn frame in this leaf (Law 6), and every brightness passes the
-/// `FlashLimit`, so it never flashes more than three times a second. Calm by design: a slow
-/// ring for each beat, the key as its colour, the level as its size, the pulse and coherence
-/// as a breathing centre — nothing on screen that the song or the body does not carry.
+/// The Field (wave W3): the picture that moves with the music and the body. On a device with Metal
+/// the GPU draws it (`MetalFieldView`, the earlier app's proven renderer); anywhere else the Canvas
+/// does (`FieldCanvasView`). Both draw from the ONE `FieldFrame` snapshot, built by
+/// `FieldFrame.current(store:engine:)` from the engine's playhead — one timebase, no second clock —
+/// and every brightness passes the `FlashLimit`, so neither flashes more than three times a second.
+/// Calm by design: nothing on screen that the song or the body does not carry.
 struct FieldView: View {
-    @Environment(ProjectStore.self) private var store
-    @Environment(AudioEngine.self) private var engine
-    @State private var light = FieldLight()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30)) { context in
-            let frame = currentFrame()
-            let shown = light.shown(frame, at: context.date)
-            Canvas { canvas, size in
-                FieldView.draw(frame, shown, in: &canvas, size: size)
-            }
-            .background(Theme.Color.background)
+        #if canImport(MetalKit) && canImport(UIKit)
+        if MetalField.isAvailable {
+            MetalFieldView(reduceMotion: reduceMotion)
+                .background(Color.black)
+                .accessibilityHidden(true)
+                .overlay { FieldSpokenValue().allowsHitTesting(false) }
+        } else {
+            FieldCanvasView()
+        }
+        #else
+        FieldCanvasView()
+        #endif
+    }
+}
+
+/// What VoiceOver says the Field shows, from the same sources the picture draws. Its own leaf: the
+/// strap's pulse changes about once a second, and only this view reads it (Law 6).
+private struct FieldSpokenValue: View {
+    @Environment(AudioEngine.self) private var engine
+    @Environment(HeartRateStrap.self) private var strap
+
+    var body: some View {
+        Color.clear
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Field")
-            .accessibilityValue(FieldView.spoken(frame))
-        }
+            .accessibilityValue(spoken)
     }
 
-    private func currentFrame() -> FieldFrame {
+    private var spoken: String {
+        var parts = [engine.isPlaying ? "Playing" : "Stopped"]
+        if let bpm = strap.beatsPerMinute { parts.append("pulse \(bpm) beats per minute") }
+        return parts.joined(separator: ", ")
+    }
+}
+
+extension FieldFrame {
+    /// The one snapshot every Field renderer draws: the song from the engine's playhead, master
+    /// meter and musical context, the body from the engine's modulation inputs. Built on the main
+    /// actor, in the renderer's own loop or a `TimelineView` leaf, never in an ancestor body.
+    @MainActor
+    static func current(store: ProjectStore, engine: AudioEngine) -> FieldFrame {
         let project = store.project
         let meter = engine.meterLevel(nil)
         let peak = Double(Swift.max(meter.left, meter.right))
@@ -34,7 +60,31 @@ struct FieldView: View {
         return FieldFrame.at(tick: Double(engine.playheadTick(in: project)), signature: project.timeSignature,
                              context: project.context, level: peak.squareRoot(),
                              pulse: inputs.value(.heartRate), hrv: inputs.value(.hrv),
-                             coherence: inputs.value(.coherence), isPlaying: engine.isPlaying)
+                             coherence: inputs.value(.coherence), isPlaying: engine.isPlaying,
+                             breath: inputs.value(.breath))
+    }
+}
+
+/// The Field on the CPU: a SwiftUI Canvas at 30 frames a second, for a device without Metal. It
+/// reads one `FieldFrame` per drawn frame in this leaf (Law 6). A slow ring for each beat, the key
+/// as its colour, the level as its size, the pulse and coherence as a breathing centre.
+struct FieldCanvasView: View {
+    @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
+    @State private var light = FieldLight()
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30)) { context in
+            let frame = FieldFrame.current(store: store, engine: engine)
+            let shown = light.shown(frame, at: context.date)
+            Canvas { canvas, size in
+                FieldCanvasView.draw(frame, shown, in: &canvas, size: size)
+            }
+            .background(Theme.Color.background)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Field")
+            .accessibilityValue(FieldCanvasView.spoken(frame))
+        }
     }
 
     /// The brightnesses the frame asks for, after the flash guard.
@@ -77,20 +127,20 @@ struct FieldView: View {
     }
 }
 
-/// The flash guards behind the Field's brightnesses. A plain class the view owns: it changes
+/// The flash guards behind the Canvas Field's brightnesses. A plain class the view owns: it changes
 /// every frame, and nothing observes it.
 final class FieldLight {
     private var beat = FlashLimit()
     private var centre = FlashLimit()
     private var last: Date?
 
-    func shown(_ frame: FieldFrame, at now: Date) -> FieldView.Shown {
+    func shown(_ frame: FieldFrame, at now: Date) -> FieldCanvasView.Shown {
         let seconds = last.map { now.timeIntervalSince($0) } ?? 0
         last = now
         // A beat lights the ring at its start and lets it fade; the guard decides how fast.
         let beatTarget = frame.isPlaying ? 1 - frame.beatPhase : 0
         let centreTarget = frame.pulse ?? frame.level
-        return FieldView.Shown(beat: beat.next(towards: beatTarget, after: seconds),
-                               centre: centre.next(towards: centreTarget, after: seconds))
+        return FieldCanvasView.Shown(beat: beat.next(towards: beatTarget, after: seconds),
+                                     centre: centre.next(towards: centreTarget, after: seconds))
     }
 }
