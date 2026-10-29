@@ -294,7 +294,7 @@ final class PlaybackPlanTests: XCTestCase {
 
         XCTAssertEqual(MusicalTime.integer(.nan), 0)
         XCTAssertEqual(MusicalTime.integer(.infinity), .max)
-        XCTAssertEqual(MusicalTime.integer(-.infinity), .min)
+        XCTAssertEqual(MusicalTime.integer(-Double.infinity), .min)
         XCTAssertEqual(MusicalTime.integer(1e30), .max)
         XCTAssertEqual(MusicalTime.integer(-1e30), .min)
         XCTAssertEqual(MusicalTime.integer(24_000), 24_000)
