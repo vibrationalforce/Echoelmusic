@@ -99,6 +99,21 @@ final class PulsePeriodEstimatorTests: XCTestCase {
         }
     }
 
+    /// A pulse above ~80 bpm at 15 Hz has its DOUBLE period inside the 40–200 bpm band, where a
+    /// T-periodic signal correlates just as well. Every window must report the fundamental, not
+    /// the half rate the noise happens to favour (Studio W1 correction).
+    func testADoublePeriodInsideTheBandIsNotTheAnswer() throws {
+        for seed in UInt64(1)...UInt64(12) {
+            let s = sine(hz: 1.5, rate: 15, seconds: 10, noise: 0.05, seed: seed)   // 90 bpm, T = 10 samples
+            let r = try XCTUnwrap(PulsePeriodEstimator.dominantBPM(s, sampleRate: 15))
+            XCTAssertEqual(r.bpm, 90, accuracy: 4, "seed \(seed) reported the half rate")
+        }
+        // The exact-tie case: no noise at all, two equal maxima at lags 10 and 20.
+        let clean = sine(hz: 1.5, rate: 15, seconds: 10)
+        let r = try XCTUnwrap(PulsePeriodEstimator.dominantBPM(clean, sampleRate: 15))
+        XCTAssertEqual(r.bpm, 90, accuracy: 4)
+    }
+
     func testPulseBeatsShortLagBias_withNormalizedLags() {
         // With per-lag normalization, a real pulse must win against mild broadband
         // noise instead of losing to the extra terms short lags used to accumulate.

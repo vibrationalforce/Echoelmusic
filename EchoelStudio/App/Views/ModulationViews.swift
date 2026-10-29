@@ -2,15 +2,16 @@ import EchoelCore
 import SwiftUI
 
 /// "Modulate" for one owner (wave W2): the body moves the owner's volume, pan or instrument values. Only sources
-/// with a producer are offered — the chest strap's pulse, HRV and coherence; a source nothing
-/// measures would be a control that does nothing. Every change goes through
+/// with a producer are offered — the pulse, HRV and coherence of the chest strap or the camera
+/// (W1); a source nothing measures would be a control that does nothing. Every change goes through
 /// `ProjectStore.perform` (`modulation.set` / `modulation.remove`), one undo step each.
 struct ModulateMenu: View {
     @Environment(ProjectStore.self) private var store
     @Environment(HeartRateStrap.self) private var strap
+    @Environment(CameraPulseSource.self) private var camera
     let owner: ParameterAddress.Owner
 
-    /// The sources a route can be made from today, with the words the menu uses: the strap's
+    /// The sources a route can be made from today, with the words the menu uses: a body source's
     /// pulse and what its beat-to-beat intervals carry. HRV needs 8 beats and coherence 16
     /// before they add anything.
     static let sources: [(ModulationSource, String)] = [(.heartRate, "Heart Rate"), (.hrv, "HRV"),
@@ -39,9 +40,9 @@ struct ModulateMenu: View {
         let project = store.project
         let routable = targets(in: project)
         let routes = project.modRoutes.filter { routable.contains($0.target) }
-        let measuring = strap.measuring
+        let measuring = strap.measuring.union(camera.measuring)
         Menu("Modulate", systemImage: "waveform.path.ecg") {
-            Text(Self.measuringLine(measuring, strapOn: strap.isOn))
+            Text(Self.measuringLine(measuring, sourceOn: strap.isOn || camera.isOn))
             ForEach(routable, id: \.self) { target in
                 if let descriptor = project.descriptor(for: target) {
                     Menu(descriptor.title) {
@@ -63,10 +64,10 @@ struct ModulateMenu: View {
 
     /// The menu's first line: which sources a route would follow right now. HRV and coherence
     /// arrive after enough clean beats; with nothing measured a route adds nothing.
-    static func measuringLine(_ measuring: Set<ModulationSource>, strapOn: Bool) -> String {
+    static func measuringLine(_ measuring: Set<ModulationSource>, sourceOn: Bool) -> String {
         let names = sources.filter { measuring.contains($0.0) }.map(\.1)
         if !names.isEmpty { return "Measuring: " + names.joined(separator: ", ") }
-        return strapOn ? "Nothing measured yet" : "Strap off — routes add nothing"
+        return sourceOn ? "Nothing measured yet" : "Body source off — routes add nothing"
     }
 
     static func title(of route: ModulationRoute, in project: Project) -> String {

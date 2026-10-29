@@ -75,6 +75,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UIBackgroundModes: audio
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Echoel reads the heart rate of a Bluetooth chest strap when you turn the strap on as a body source."
+        INFOPLIST_KEY_NSCameraUsageDescription: "Echoel measures your pulse from the rear camera when you choose Camera as a body source. Frames never leave the device."
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Echoel records your microphone or audio interface onto the audio track you arm."
         # Network MIDI (CoreMIDI's RTP-MIDI session): the prompt shows the first time it is
         # turned on. NSBonjourServices is an array, which the generated plist cannot carry, so
