@@ -4,7 +4,7 @@ import XCTest
 final class RingModulatorTests: XCTestCase {
     private let rate = 48_000.0
 
-    private func run(_ effect: x, left: [Float], right: [Float]) -> ([Float], [Float]) {
+    private func run(_ effect: RingModulator, left: [Float], right: [Float]) -> ([Float], [Float]) {
         var l = left, r = right
         l.withUnsafeMutableBufferPointer { lp in
             r.withUnsafeMutableBufferPointer { rp in
