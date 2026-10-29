@@ -49,6 +49,7 @@ extension Command {
         case placeClip, movePlacement, removePlacement
         case placeAudio, moveRegion, trimRegion, removeRegion
         case addScene, removeScene, renameScene, setSlot
+        case generateLoopFromVibe
     }
 
     public var kind: Kind {
@@ -119,6 +120,7 @@ extension Command {
         case .removeScene: .removeScene
         case .renameScene: .renameScene
         case .setSlot: .setSlot
+        case .generateLoopFromVibe: .generateLoopFromVibe
         }
     }
 }
@@ -452,6 +454,14 @@ public enum CommandCatalog {
                                summary: "Puts a clip into a track's slot in a scene, or empties the slot.",
                                parameters: [P("track", .trackID, "The track."), P("scene", .sceneID, "The scene."),
                                             P("clip", .clipID, "The clip; omit to empty the slot.", optional: true)])
+        case .generateLoopFromVibe:
+            return CommandSpec(name: "loop.generate", title: "Generate Loop",
+                               summary: "Generates a role-shaped pattern from a vibe + seed and adds the notes to the clip; the user remains the author.",
+                               parameters: [P("clip", .clipID, "The MIDI clip to fill."),
+                                            P("vibe", .string, "A VibeParameters value: genre, energy, density, brightness, targetBPM, targetKeyRoot, targetScale."),
+                                            P("seed", .integer, "A UInt64 seed. Pass vibe.defaultSeed for the vibe's canonical pattern."),
+                                            P("role", .string, "The role in the loop: drums, bass, chords or lead."),
+                                            P("bars", .integer, "How many bars to generate, 1…16.")])
         }
     }
 }

@@ -87,6 +87,10 @@ public enum Command: Codable, Equatable, Sendable {
     case removeNotes(ClipID, [NoteID])
     /// Replaces a MIDI clip's pitch bends and controllers with `controls`; none clears them.
     case setControls(ClipID, [ControlChange])
+    /// Generates a role-shaped pattern from `vibe` + `seed` and adds the notes to the clip
+    /// (wave W11.1d). Pure, deterministic: the same (clip, vibe, seed, role, bars) always
+    /// records the same notes. The user remains the author — the vibe is a hint, nothing more.
+    case generateLoopFromVibe(ClipID, vibe: VibeParameters, seed: UInt64, role: PatternGenerator.Role, bars: Int)
 
     // Arrangement
     case placeClip(track: TrackID, id: PlacementID, clip: ClipID, start: Tick)
@@ -672,6 +676,26 @@ extension Command {
             project.tracks[t].clips[c].controls = controls.enumerated()
                 .sorted { $0.element.start != $1.element.start ? $0.element.start < $1.element.start : $0.offset < $1.offset }
                 .map(\.element)
+
+        case let .generateLoopFromVibe(id, vibe, seed, role, bars):
+            let (t, c) = try project.requireClip(id)
+            var clip = project.tracks[t].clips[c]
+            guard clip.audio == nil else { throw CommandError.invalidValue(parameter: "clip", reason: "an audio clip has no notes") }
+            guard (1...16).contains(bars) else { throw CommandError.invalidValue(parameter: "bars", reason: "must be 1…16") }
+            let generated = PatternGenerator.generate(vibe: vibe, seed: seed, role: role,
+                                                      bars: bars, signature: project.timeSignature)
+            var seen = Set(clip.notes.map(\.id))
+            for note in generated where note.start < clip.length {
+                var toAdd = note
+                while !seen.insert(toAdd.id).inserted {
+                    toAdd = Note(id: NoteID(), pitch: note.pitch, velocity: note.velocity,
+                                 start: note.start, length: note.length)
+                }
+                try Self.validate(toAdd, in: clip)
+                clip.notes.append(toAdd)
+            }
+            clip.notes.sort(by: Self.noteOrder)
+            project.tracks[t].clips[c] = clip
 
         case let .placeClip(trackID, id, clipID, start):
             let t = try project.requireTrack(trackID)
