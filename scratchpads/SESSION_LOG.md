@@ -1907,3 +1907,27 @@ and marks what must not be resurrected (`MultiTrackRecorder`, four-tab `StudioRo
 `Info.plist` `aufx` → `augn` fix, if the current plist still needs it.
 
 No code change on this turn. The May-era handover-only commits land on this branch (`claude/echoelmusic-deep-audit-6efQv`), which is 7 commits ahead of `main` with other sessions' sky-arithmetic + Studio-11.0.0-upload work on top; the handover is for future sessions that find themselves here, not for `main`.
+
+## 2026-10-29 — Übergabe (Founder: „Prozesse abschließen, ohne dass ich was machen muss“)
+
+Stand bei Sitzungsstart: Arbeitsbaum sauber, `main` = `587090b` (zwölfter 11.0.0-Release-Commit).
+Die drei Commits nach dem letzten Log-Eintrag (28.10. Abend) sind hiermit nachgetragen:
+- **Himmel S1a** (`bd5ace6`): `EchoelStudio/Core/.../Sky.swift` — Sternzeit, Höhe, Azimut als reine
+  Arithmetik, mit `SkyTests`. Erster Lauf rot (Literal-Arithmetik ohne Typen im Test), repariert in `7091694`.
+- **Zwölfter Upload** (`587090b`, `EchoelStudio/RELEASE`): Gate `Echoel Studio` grün, `studio-testflight.yml`
+  Lauf 40775620825 alle Schritte `success`, inklusive „Verify the build in App Store Connect“.
+  ⚠️ Die Build-Nummer und das ASC-`state` konnte ich NICHT lesen — der Log-Download endet am Proxy (403).
+  Codex-Warnung vom 28.10. gilt weiter: das Prüfskript meldet auch bei Timeout grün. Nummer in
+  App Store Connect ablesen; erwartet 10015.
+- Diese Sitzung: keine Code-Änderung, kein neuer Upload, nichts geräteverifiziert. Branch
+  `claude/restore-echoelmusic-core-01T39fVTfCUDS2uqi88gHzEa` trägt nur diesen Log-Eintrag.
+
+Offen (unverändert vom 28.10.): Himmel S1b (Sternkatalog, Stern im Blick → Klang) oder Texture-Engine;
+Remote-Zweig `park/morph-2026-10-28` wartet auf Löschung durch den Founder (Proxy 403);
+Regelwerk-Lockerung L1–L7 wartet auf Founder-Freigabe (Scratchpad); G-B/C/D offene Lieferpakete.
+Für den Founder bleibt nur: Build 10015 auf dem Gerät hören.
+Nachtrag: während dieser Sitzung landete `c2fd172` auf `main` (Übergabe einer seit Mai ruhenden
+Sitzung, `scratchpads/HANDOVER_2026-10-29.md` — reine Historie, nichts davon ist Richtung). Dieser
+Zweig ist darauf rebased. ⚠️ Ein Commit, der nur `scratchpads/` anfasst, merged NICHT von allein
+(`auto-merge-docs.yml` filtert auf `docs/**`); der Eintrag fährt als Passagier auf dem nächsten
+Code-Commit dieses Zweigs mit, oder über den PR.
