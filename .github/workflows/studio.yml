@@ -49,6 +49,7 @@ jobs:
               "EchoelStudio/App/Store/StoreView.swift",
               "EchoelStudio/Plugins/Shared/PluginLicense.swift",
               "EchoelStudio/App/Engine/MIDIInput.swift",
+              "EchoelStudio/App/Streaming/StreamPublisher.swift",
           }
           found = sorted(name for name in swift.files("EchoelStudio/*.swift", ":!EchoelStudio/**/Tests/**")
                          if swift.names_network(swift.read(name)))
@@ -109,6 +110,17 @@ jobs:
           if stray:
               print("::error::the AUv3 extension imports the engine: " + " ".join(stray))
               fail = True
+          # The one package from outside (HaishinKit, W14) is imported only by the streaming module.
+          haishin = {"HaishinKit", "RTMPHaishinKit", "SRTHaishinKit"}
+          users = sorted(name for name, found in imports("EchoelStudio").items() if found & haishin)
+          if not users:
+              print("::error::no HaishinKit import found — the scan matches nothing")
+              fail = True
+          outside = [name for name in users if not name.startswith("EchoelStudio/App/Streaming/")]
+          if outside:
+              print("::error::HaishinKit imported outside EchoelStudio/App/Streaming/: " + " ".join(outside))
+              fail = True
+          print("HaishinKit: " + " ".join(users))
           sys.exit(1 if fail else 0)
           PY
 
