@@ -56,7 +56,7 @@ public struct OwnPlugin: Sendable, Equatable, Identifiable {
 /// saved, automated and learned the same way.
 public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
     // A new effect goes at the end: a saved insert names its component, never this order.
-    case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter
+    case equalizer, compressor, delay, reverb, chorus, phaser, flanger, limiter, saturation
 
     public var id: String { rawValue }
 
@@ -70,6 +70,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .phaser: "Phaser"
         case .flanger: "Flanger"
         case .limiter: "Limiter"
+        case .saturation: "Saturation"
         }
     }
 
@@ -83,6 +84,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .phaser: "ePhs"
         case .flanger: "eFlg"
         case .limiter: "eLim"
+        case .saturation: "eSat"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",
@@ -102,6 +104,7 @@ public enum StandardEffect: String, CaseIterable, Sendable, Identifiable {
         case .phaser: "xPhs"
         case .flanger: "xFlg"
         case .limiter: "xLim"
+        case .saturation: "xSat"
         }
         return PluginComponent(type: PluginComponent.code("aufx"), subtype: PluginComponent.code(subtype),
                                manufacturer: PluginComponent.code("Echo"), name: "Echoel \(title)",

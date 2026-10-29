@@ -38,6 +38,7 @@ public final class EffectKernel: @unchecked Sendable {
     private let phaser: Phaser?
     private let flanger: Flanger?
     private let limiter: Limiter?
+    private let saturation: Saturation?
 
     /// `values` carries settings over from a kernel at another rate; missing ones take defaults.
     public init(effect: StandardEffect, sampleRate: Double, values from: [Float] = []) {
@@ -57,6 +58,7 @@ public final class EffectKernel: @unchecked Sendable {
         phaser = effect == .phaser ? Phaser(sampleRate: self.sampleRate) : nil
         flanger = effect == .flanger ? Flanger(sampleRate: self.sampleRate) : nil
         limiter = effect == .limiter ? Limiter(sampleRate: self.sampleRate) : nil
+        saturation = effect == .saturation ? Saturation(sampleRate: self.sampleRate) : nil
         applySettings()
     }
 
@@ -98,6 +100,7 @@ public final class EffectKernel: @unchecked Sendable {
         phaser?.reset()
         flanger?.reset()
         limiter?.reset()
+        saturation?.reset()
     }
 
     /// Render thread: processes `frames` samples in place.
@@ -121,6 +124,7 @@ public final class EffectKernel: @unchecked Sendable {
             guard let limiter else { return }
             limiter.process(left: left, right: right, frames: frames)
             reductionBits.store(limiter.reduction.bitPattern, ordering: .relaxed)
+        case .saturation: saturation?.process(left: left, right: right, frames: frames)
         }
     }
 
@@ -177,6 +181,10 @@ public final class EffectKernel: @unchecked Sendable {
             guard let limiter else { return }
             let s = Limiter.Settings(gain: value(0), ceiling: value(1), release: value(2))
             if s != limiter.settings { limiter.settings = s }
+        case .saturation:
+            guard let saturation else { return }
+            let s = Saturation.Settings(drive: value(0), tone: value(1), mix: value(2))
+            if s != saturation.settings { saturation.settings = s }
         }
     }
 
@@ -237,6 +245,10 @@ public final class EffectKernel: @unchecked Sendable {
             add("gain", "Gain", 0...24, 0, .decibels)
             add("ceiling", "Ceiling", -24...0, -0.3, .decibels)
             add("release", "Release", 0.005...1, 0.06, .seconds)
+        case .saturation:
+            add("drive", "Drive", 0...1, 0.4, .amount)
+            add("tone", "Tone", 0...1, 0.85, .amount)
+            add("mix", "Mix", 0...1, 0.6, .amount)
         }
         return list
     }
