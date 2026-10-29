@@ -49,6 +49,8 @@ struct SoundPanel: View {
             .padding(Theme.Space.l)
         }
         .background(Theme.Color.background)
+        // A field typed into opens Echoel's number pad at the page's bottom edge, not a sheet.
+        .numberPadHost()
         // On the page, not on a picker: a device switch swaps the picker out, and a new view's
         // `onChange` never fires for the value it appears with.
         .onChange(of: writer.isWriting && engine.isPlaying) { _, on in if !on { passPick = nil } }
