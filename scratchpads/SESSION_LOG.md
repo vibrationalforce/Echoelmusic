@@ -1907,3 +1907,25 @@ and marks what must not be resurrected (`MultiTrackRecorder`, four-tab `StudioRo
 `Info.plist` `aufx` → `augn` fix, if the current plist still needs it.
 
 No code change on this turn. The May-era handover-only commits land on this branch (`claude/echoelmusic-deep-audit-6efQv`), which is 7 commits ahead of `main` with other sessions' sky-arithmetic + Studio-11.0.0-upload work on top; the handover is for future sessions that find themselves here, not for `main`.
+
+## 2026-10-29 — iOS 26 SDK (Apple ITMS-90725) — Übergabe
+
+Anlass: Apple-Mail zu ITMS-90725 für Echoelmusic 3.0.0 (Build 653), gebaut mit dem iOS-18.2-SDK;
+ab 2026-04-28 verlangt Apple das iOS-26-SDK (Xcode 26). Branch `claude/update-ios-sdk-version-ly4dD`,
+neu aufgesetzt auf `main` `c2fd172c` (der alte Branch hatte nach dem Umschreiben von `main` keine
+gemeinsame Basis mehr).
+
+Der Großteil war auf `main` schon erledigt (`testflight.yml`, `studio-testflight.yml`, `studio.yml`,
+`xcode-compile-check.yml`, `quick-test.yml`, `full-tests.yml`, `project.yml` = Xcode 26.2 / macos-26).
+Nachgezogen wurden nur noch die drei Reste:
+- `benchmark.yml`: `XCODE_VERSION` 16.2 → 26.2, `runs-on` macos-15 → macos-26
+- `ci.yml` (performance-tests, 2 Schritte) und `pr-check.yml` (2 Schritte): Simulator-Ziel
+  `OS=18.2,name=iPhone 16 Pro` → `OS=26.0,name=iPhone 17`
+
+Workflow-Edits sind founder-gated; hier ausdrücklich vom Founder für diese Aufgabe freigegeben.
+Deployment-Ziele (iOS 18) bleiben unverändert, nur das Build-SDK wechselt.
+Nur compile-relevant, NICHT gerät-verifiziert. ⚠️ Ob die Runner-Images `OS=26.0` + `iPhone 17`
+genau so anbieten, zeigt erst der nächste Lauf von `pr-check.yml`/`ci.yml`; schlägt die
+Destination fehl, auf die vom Image gelistete Simulator-Version anpassen.
+Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt dann das iOS-26-SDK
+(die Mail verschwindet mit dem ersten so gebauten Upload).
