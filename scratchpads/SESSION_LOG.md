@@ -1981,3 +1981,42 @@ Nächster Schritt: Himmel S1 (Sternkatalog + Positionsrechnung, Core, Test zuers
 - **Stand dieser Session danach:** Baum sauber, keine offenen Einmal-Timer außer dem 7.11., kein Workflow
   offen; die Session bleibt lesend erreichbar. Alles Weitere (W4, Katalog, 13. Upload) baut die
   Orchestrierungs-Session nach `scratchpads/HANDOVER_2026-10-29.md`.
+
+## 2026-10-29 — Internal handover from session 01Q2ZFqsbyPW4rwFnTMp5Bhq (May → Oct, 5½ months dormant)
+
+A long-dormant session from 2026-05 resurfaced on this branch (`claude/echoelmusic-deep-audit-6efQv`)
+and committed an internal handover to `scratchpads/HANDOVER_2026-10-29.md`. Nothing in that
+session's May commits is current — they predate the pure-instrument phase (2026-07-25) and the
+DMMW Product Law restoration (2026-09-24), and specifically predate #1301–#1305 which deleted
+audio input, video capture and the beat engine. The handover file flags each May commit by SHA
+and marks what must not be resurrected (`MultiTrackRecorder`, four-tab `StudioRoot`,
+"Make Beats · Record Video · Stream Live" copy, pad-grid beat UI). Only durable item: the AUv3
+`Info.plist` `aufx` → `augn` fix, if the current plist still needs it.
+
+No code change on this turn. The May-era handover-only commits land on this branch (`claude/echoelmusic-deep-audit-6efQv`), which is 7 commits ahead of `main` with other sessions' sky-arithmetic + Studio-11.0.0-upload work on top; the handover is for future sessions that find themselves here, not for `main`.
+
+
+## 2026-10-29 — Übergabe Session website-audit-KMcUX (TestFlight-12-Analyse; zentral bereits geshippt)
+
+Resümierte Session auf `claude/echoelmusic-website-audit-KMcUX`. Erstmals mit den GitHub-Actions-MCP-Tools
+den echten CI-/TestFlight-Stand gelesen — der frühere Dauerblocker „keine Actions-Sicht, kein Trigger" ist weg.
+
+**Analyse & Entscheidung**
+- `fd1d374` war grün (Echoel-Studio-Gate Lauf #299 = success) und auf `main`; trug unveröffentlichte Arbeit über
+  dem 11. Upload (10014): Morph (5.) + Mallet (6.) Synth-Engine = sechs Engines; zwei antike Tonsysteme + benannte
+  Kammertöne, jetzt im Key-Menü erreichbar; Body→Send-Modulation; Modulate nennt die gerade gemessenen Quellen.
+- Daraus den 12. Upload geschnitten (lokaler `EchoelStudio/RELEASE`-Bump, Commit 925887a) — **nie gepusht** (origin
+  wies ab: Remote-Ref bewegt).
+- Zeitgleich Orchestrierungs-Session `session_01TBcE2dPzGY62Cs3Emwmave`: Chats zusammengeführt, 12. Upload wird
+  zentral ausgelöst, nicht selbst pushen. Live-Übergabe dorthin = „delivered".
+
+**Ergebnis (am Repo gemessen, nicht geschätzt)**
+- ZENTRAL ERLEDIGT: `origin/main` @ `587090bc` = „twelfth 11.0.0 upload on the green 7091694". Die zentrale Zwölf
+  enthält zusätzlich das Sky-Feature (sidereal/altitude/azimuth) — also MEHR als mein Schnitt. Richtig so.
+- Mein RELEASE-Bump ist damit **obsolet und verworfen**; es ist **kein konkurrierender Release-Commit** auf dem Gate
+  gelandet (der fehlgeschlagene Push + die zentrale Auslösung haben zusammengepasst).
+- `origin/claude/echoelmusic-website-audit-KMcUX` wurde (von außen) auf `71eee336` zurückgesetzt — die frühere
+  Website-/„second brain"-Arbeit dieser Session (FEATURE_MATRIX, status.json, MIDI-Crash-Fix, Overview/Homepage-Ehrlichkeit).
+
+**Offen:** nichts von dieser Session; keine Founder-Frage offen. Diese Übergabe liegt auf Branch
+`claude/handover-2026-10-29` (nur dieser Log-Eintrag; triggert bewusst kein Gate/Upload/Auto-Merge).
