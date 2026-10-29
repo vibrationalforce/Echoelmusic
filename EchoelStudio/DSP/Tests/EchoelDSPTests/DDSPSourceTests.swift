@@ -173,21 +173,26 @@ final class DDSPSourceTests: XCTestCase {
     }
 
     /// Two notes never share a noise sequence: the same engine seeded from two note counters
-    /// renders the same harmonics under different breath, and the same seed renders the same.
+    /// renders different breath under the same harmonics — at Character 1, where there is no
+    /// breath, the seed changes nothing — and the same seed renders the same. (The fundamental's
+    /// bin carries some of the pink noise, about 0.03 of 0.29 in a 4 800-sample window, so the
+    /// harmonic comparison allows for it.)
     func testEveryNoteHasItsOwnNoise() {
-        func breath(seed: UInt64) -> [Float] {
+        func render(seed: UInt64, character: Float) -> [Float] {
             var source = DDSPSource()
             source.reseed(seed)
             var out: [Float] = []
-            for _ in 0..<4_800 { out.append(source.next(character: 0, dt: 220 / rate)) }
+            for _ in 0..<4_800 { out.append(source.next(character: character, dt: 220 / rate)) }
             return out
         }
-        let first = breath(seed: 1), second = breath(seed: 2), again = breath(seed: 1)
-        XCTAssertEqual(first, again)
+        let first = render(seed: 1, character: 0), second = render(seed: 2, character: 0)
+        XCTAssertEqual(first, render(seed: 1, character: 0), "the same seed renders the same")
         var difference: [Float] = []
         for i in first.indices { difference.append(first[i] - second[i]) }
         XCTAssertGreaterThan(rms(difference[2_400...]), 0.05, "different seeds, different noise")
-        XCTAssertEqual(magnitude(first[...], hertz: 220), magnitude(second[...], hertz: 220), accuracy: 0.02,
+        XCTAssertEqual(magnitude(first[...], hertz: 220), magnitude(second[...], hertz: 220), accuracy: 0.1,
                        "the harmonics are the same")
+        XCTAssertEqual(render(seed: 1, character: 1), render(seed: 2, character: 1),
+                       "without breath the seed changes no sample")
     }
 }
