@@ -5730,3 +5730,11 @@ Aus Lernmodus Runde 4 (ChatGPT 6/7 bestätigt, Grok 4/8) und den Prüfrunden des
 - **Rules that hold:** generiert wird nur auf Anfrage (NEUPLANUNG §0); nach außen nie „Superintelligenz“; keine Gesundheitsbehauptung; Gesicht nur als Modulationsquelle, nichts verlässt das Gerät.
 - **Review:** 2026-11-24.
 
+
+### 2026-10-29 — Loop Generator als Welle W11 von Studio 1.0
+- **Decision:** Loop Generator (Vibe-gesteuerte Pattern-Erzeugung für HipHop/Trap, Chill, Score, EDM mit Sampler, DSP-Engines, BPM/Key-Match, Stem-Export) wird als Welle W11 ergänzt. **Authorship-First:** keine Cloud-Generative-AI, nur eigene Samples, lokale DSP-Engines, deterministische Pattern-Generatoren.
+- **Why:** Founder 2026-10-29 wörtlich: „Loop Generator für meine Hip Hop / Trap, Chill, Score und Electronic/Dance Musik … Urheber bleibt allein der User … Sampler, wo man eigene Sounds laden und recorden kann, und umfangreiche Engines". Passt vollständig in das One-door-Modell: pure Werttypen in Core + neuer Command `.generateLoopFromVibe`, Format bleibt frozen (W11-Noten gehen durch bestehende `addNote`-Mutationen).
+- **Session 2026-10-29 liefert W11.0 (Doku) + W11.1a–d:** VibeParameters · VibeMatrix · VibePromptParser · PatternGenerator · Command-Case. UI-Chip ist W11.2 (Folge-Session), BPM/Key-Match-Engine für importiertes Audio ist W11.3.
+- **Rules that hold:** generiert wird nur auf Anfrage; Pattern deterministisch bei gleichem `(Vibe, Seed)`; nach außen nie „KI komponiert für dich", immer „du komponierst, das Tool schlägt Variationen vor".
+- **Plan:** `scratchpads/PLAN_v11_LOOP_GENERATOR_2026-10-29.md`.
+- **Review:** 2026-11-28.

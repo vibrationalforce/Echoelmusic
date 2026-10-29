@@ -1929,3 +1929,25 @@ genau so anbieten, zeigt erst der nächste Lauf von `pr-check.yml`/`ci.yml`; sch
 Destination fehl, auf die vom Image gelistete Simulator-Version anpassen.
 Nächster Schritt: PR prüfen und mergen; der nächste TestFlight-Upload trägt dann das iOS-26-SDK
 (die Mail verschwindet mit dem ersten so gebauten Upload).
+
+
+## 2026-10-29 — Session `01Rs2DgVk6x81mA152aJGL8u` — Loop Generator Welle W11 angelegt
+
+**Branch:** `claude/music-loop-generator-D1tml`
+**Founder-Input:** „Ich habe mein Konzept überdacht … Loop Generator für HipHop/Trap, Chill, Score, Electronic/Dance … Urheber bleibt allein der User … Sampler + umfangreiche Engines … iPhone first auf allen Apple-Plattformen". Vorbild = „Deep Research und Adaptive Thinking für den Sound, aber Urheber bleibt User".
+
+**Was abgegeben:**
+
+- `scratchpads/PLAN_v11_LOOP_GENERATOR_2026-10-29.md` — Plan: Welle W11 ergänzt `PLAN_ONE_POINT_ZERO_COMPLETE_2026-10-25.md` ohne eine Zeile dort zu ändern. 5 Scheiben W11.0–W11.1d in dieser Session, UI (W11.2) und Match-Engine (W11.3) als Folge.
+- `decisions.csv` + `memory/decisions.md` — Entscheidung notiert, Review 2026-11-28.
+- **4 Core-Scheiben** W11.1a–d (in Folge-Commits dieser Session), jede pure Werttyp in `EchoelCore`, kein Format-Change, keine Audio-Thread-Pfade, keine neuen Abhängigkeiten:
+  - `VibeParameters` (genre, energy, density, brightness, targetBPM, targetKey, deterministischer seedHash)
+  - `VibeMatrix` (3×3 Grid pro Genre) + `VibePromptParser` (lokaler Keyword-Parser, kein LLM)
+  - `PatternGenerator` (deterministische pure function: `(Vibe, Seed, Role) → [Note]`)
+  - `Command.generateLoopFromVibe` + `apply`-Branch + `CommandCatalog`-Eintrag (One-door-konform)
+
+**Authorship-First-Linie:** keine Cloud-Generative-AI. „Deep Research" bedeutet lokale Heuristiken, nicht Cloud-API — der User bleibt alleiniger Urheber.
+
+**Nicht in dieser Session (ehrlich):** kein UI-Chip, keine Match-Engine für Audio, kein Mikrofon-Rückbau. Alles W11.2+.
+
+**Nächster Schritt:** CI-Status prüfen (Xcode Compile Check + Studio-Gate), dann W11.2 (Agent-Tool + UI-Chip).
