@@ -136,8 +136,9 @@ public struct SynthVoice: Sendable {
             filter.setResonance(resonance)
             ladder.setResonance(resonance)
         }
-        // Every key strikes, a repeated one too: a mallet rings again on top of its tail.
-        source.strike(character: patch.character)
+        // Every key strikes, a repeated one too: a mallet rings again on top of its tail, and the
+        // DDSP's noise takes a sequence of its own from the note counter.
+        source.strike(character: patch.character, order: order)
         controlCountdown = 0
         ampEnvelope.gateOn()
         filterEnvelope.gateOn()
