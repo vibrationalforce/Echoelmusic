@@ -10,7 +10,7 @@ struct ArrangeView: View {
     @Environment(ProjectStore.self) private var store
     /// Opens the note editor on this clip of this track.
     let open: (TrackID, ClipID) -> Void
-    /// Asks for an audio file to place on a track at a tick.
+    /// Asks for an audio file to place on a track at a tick — or, on a video track, a video.
     let importAudio: (TrackID, Tick) -> Void
 
     @ScaledMetric(relativeTo: .body) private var nameWidth: CGFloat = 96
@@ -151,7 +151,7 @@ private struct ArrangeLane: View {
             .accessibilityElement()
             .accessibilityLabel("\(track.name) lane")
             .accessibilityHint(laneHint)
-            .accessibilityAction(named: track.kind == .audio ? "Import Audio at End" : "Place Clip at End") { placeAtEnd() }
+            .accessibilityAction(named: endActionName) { placeAtEnd() }
 
             placementBlocks
             regionBlocks
@@ -185,12 +185,21 @@ private struct ArrangeLane: View {
         case .audio: "Tap to import an audio file at that bar."
         case .instrument: track.clips.isEmpty ? "Tap to create a clip." : ""
         case .returnTrack: ""
+        case .video: "Tap to import a video from the photo library at that bar."
+        }
+    }
+
+    private var endActionName: String {
+        switch track.kind {
+        case .audio: "Import Audio at End"
+        case .video: "Import Video at End"
+        default: "Place Clip at End"
         }
     }
 
     private func tapEmpty(at x: CGFloat) {
         let tick = Tick((Double(x) * ticksPerPoint).rounded(.down))
-        if track.kind == .audio {
+        if track.kind == .audio || track.kind == .video {
             if Arranging.region(in: track, at: tick, project: project) == nil {
                 importAudio(track.id, Arranging.barStart(tick, signature: signature))
             }
@@ -209,7 +218,7 @@ private struct ArrangeLane: View {
         let audioEnd = track.regions.compactMap { Arranging.end(of: $0, in: project) }.max() ?? 0
         let start = Arranging.barStart(Swift.max(clipsEnd, audioEnd) + MusicalTime.ticksPerBar(signature) - 1,
                                        signature: signature)
-        if track.kind == .audio {
+        if track.kind == .audio || track.kind == .video {
             importAudio(track.id, start)
         } else if track.clips.isEmpty {
             createClip(at: start)
@@ -314,6 +323,7 @@ private struct PlacementBlock: View {
 /// undo step on release; drag an edge to trim it to the beat; hold for Delete.
 private struct RegionBlock: View {
     @Environment(ProjectStore.self) private var store
+    @Environment(AudioEngine.self) private var engine
     let track: Track
     let region: AudioRegion
     let file: MediaFile
@@ -341,7 +351,7 @@ private struct RegionBlock: View {
                 RoundedRectangle(cornerRadius: Theme.Radius.small).stroke(color, lineWidth: 1)
             )
             .overlay(alignment: .topLeading) {
-                Label(file.name, systemImage: "waveform")
+                Label(file.name, systemImage: file.kind == .video ? "film" : "waveform")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.text)
                     .lineLimit(1)
@@ -364,13 +374,15 @@ private struct RegionBlock: View {
                     }
             )
             .contextMenu {
+                Button("Split at Playhead Bar", systemImage: "scissors") { split() }
                 Button("Delete", systemImage: "trash", role: .destructive) { remove() }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(file.name), audio, bar \(startBar), \(seconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+            .accessibilityLabel("\(file.name), \(file.kind == .video ? "video" : "audio"), bar \(startBar), \(seconds.formatted(.number.precision(.fractionLength(1)))) seconds")
             .accessibilityAction(named: "Move One Bar Later") { move(byBars: 1) }
             .accessibilityAction(named: "Move One Bar Earlier") { move(byBars: -1) }
             .accessibilityAction(named: "Delete") { remove() }
+            .accessibilityAction(named: "Split at Playhead Bar") { split() }
             .accessibilityAction(named: "Trim Start One Beat Later") { trim(.start, beats: 1) }
             .accessibilityAction(named: "Trim End One Beat Earlier") { trim(.end, beats: -1) }
             .accessibilityAction(named: "Extend End One Beat") { trim(.end, beats: 1) }
@@ -415,5 +427,13 @@ private struct RegionBlock: View {
 
     private func remove() {
         try? store.perform(.removeRegion(track: track.id, region.id))
+    }
+
+    /// A cut at the bar line nearest the playhead (C5): nothing of the file is lost, both parts
+    /// stay movable and trimmable, and one Undo joins them again.
+    private func split() {
+        let project = store.project
+        let at = Arranging.nearestBar(engine.playheadTick(in: project), signature: project.timeSignature)
+        try? store.perform(.splitRegion(track: track.id, region.id, at: at, newID: RegionID()))
     }
 }
