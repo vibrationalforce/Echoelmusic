@@ -66,15 +66,18 @@ private struct ReductionMeter: View {
     }
 }
 
-/// One effect parameter: label, value, a bar; drag up or down to change it, double-tap for the
-/// default, tap a switch to flip it. Frequencies move on a logarithmic scale, as an ear hears
-/// them; the song still stores the position along the parameter's own travel.
+/// One effect parameter, as the value field (`ParameterField`): label, value, a bar; drag up or
+/// down — slowly for fine steps — double-tap for the default, tap to type it on the number pad,
+/// tap a switch to flip it. Frequencies move on a logarithmic scale, as an ear hears them; the
+/// song still stores the position along the parameter's own travel.
 private struct EffectParameterField: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(ParameterWriter.self) private var writer
+    @Environment(NumberPadController.self) private var pad: NumberPadController?
     let address: ParameterAddress
     let parameter: EffectParameter
-    @State private var start: Double?
+    /// The drag in progress: the place on the control it has reached and the translation last read.
+    @State private var drag: (place: Double, translation: CGFloat)?
 
     private static let travel: CGFloat = 240
 
@@ -89,6 +92,7 @@ private struct EffectParameterField: View {
     @ViewBuilder private func field(position: Double?) -> some View {
         let shown = value(at: position ?? self.position(of: parameter.defaultValue))
         let place = curve(of: shown)
+        let engaged = drag != nil || pad?.request?.owner == owner
         VStack(alignment: .leading, spacing: Theme.Space.xs) {
             Text(parameter.title)
                 .font(Theme.Font.caption)
@@ -96,7 +100,7 @@ private struct EffectParameterField: View {
                 .lineLimit(1)
             Text(text(shown))
                 .font(Theme.Font.value)
-                .foregroundStyle(position == nil ? Theme.Color.textSecondary : Theme.Color.text)
+                .foregroundStyle(position == nil ? Theme.Color.textSecondary : (engaged ? Theme.Color.accent : Theme.Color.text))
                 .lineLimit(1)
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -110,19 +114,23 @@ private struct EffectParameterField: View {
         .padding(Theme.Space.s)
         .frame(maxWidth: .infinity, minHeight: Theme.Size.touch, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: Theme.Radius.medium).fill(Theme.Color.surface))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium).stroke(Theme.Color.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.medium)
+            .strokeBorder(engaged ? Theme.Color.accent : Theme.Color.borderStrong, lineWidth: 1))
+        .animation(Theme.Motion.quick, value: engaged)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 2)
-                .onChanged { drag in
+                .onChanged { gesture in
                     guard parameter.unit != .boolean else { return }
-                    let origin = start ?? place
-                    start = origin
-                    let moved = Swift.min(Swift.max(origin - Double(drag.translation.height / Self.travel), 0), 1)
-                    writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: true)
+                    let reached = drag ?? (place: place, translation: 0)
+                    let moved = gesture.translation.height - reached.translation
+                    let scale = DragPrecision.scale(speed: Double(gesture.velocity.height))
+                    let next = Swift.min(Swift.max(reached.place - Double(moved / Self.travel) * scale, 0), 1)
+                    drag = (place: next, translation: gesture.translation.height)
+                    writer.set(address, normalized: self.position(of: self.value(atCurve: next)), gesture: true)
                 }
                 .onEnded { _ in
-                    start = nil
+                    drag = nil
                     writer.endGesture()
                 }
         )
@@ -131,8 +139,12 @@ private struct EffectParameterField: View {
             writer.endGesture()
         }
         .onTapGesture {
-            guard parameter.unit == .boolean else { return }
+            guard parameter.unit == .boolean else { openPad(shown); return }
             writer.set(address, normalized: shown >= 0.5 ? 0 : 1, gesture: false)
+        }
+        .sensoryFeedback(.selection, trigger: shown) { old, new in
+            drag != nil && DragPrecision.reachesDetent(from: old, to: new, standard: Double(parameter.defaultValue),
+                                                       range: low...high)
         }
         .accessibilityElement()
         .accessibilityLabel(parameter.title)
@@ -142,7 +154,37 @@ private struct EffectParameterField: View {
             let moved = Swift.min(Swift.max(place + (direction == .increment ? step : -step), 0), 1)
             writer.set(address, normalized: self.position(of: self.value(atCurve: moved)), gesture: false)
         }
+        .accessibilityAction(named: "Type a value") { openPad(shown) }
         .midiLearnable(address)
+    }
+
+    private var owner: String { "\(address)" }
+
+    /// How the number pad reads this parameter: a time in ms, a frequency in Hz; a switch is not
+    /// typed.
+    private var entryFormat: NumberEntryFormat? {
+        switch parameter.unit {
+        case .hertz: NumberEntryFormat(scale: 1, decimals: high <= 1_000 ? 1 : 0, unit: "Hz")
+        case .seconds: NumberEntryFormat(scale: 1_000, decimals: (high - low) * 1_000 < 100 ? 1 : 0, unit: "ms")
+        case .decibels: NumberEntryFormat(scale: 1, decimals: 1, unit: "dB")
+        case .ratio: NumberEntryFormat(scale: 1, decimals: parameter.identifier == "ratio" ? 1 : 2,
+                                       unit: parameter.identifier == "ratio" ? ": 1" : "")
+        case .amount: NumberEntryFormat(scale: 1, decimals: 2, unit: "")
+        case .boolean: nil
+        }
+    }
+
+    private func openPad(_ shown: Double) {
+        guard let pad, let format = entryFormat else { return }
+        let target = address
+        let writer = writer
+        let lower = low, upper = high
+        pad.open(NumberPadRequest(owner: owner, title: parameter.title, format: format, range: lower...upper,
+                                  value: shown, standard: Double(parameter.defaultValue)) { typed in
+            let position = upper > lower ? Swift.min(Swift.max((typed - lower) / (upper - lower), 0), 1) : 0
+            writer.set(target, normalized: position, gesture: false)
+            writer.endGesture()
+        })
     }
 
     private var low: Double { Double(parameter.range.lowerBound) }

@@ -38,6 +38,8 @@ struct EffectsView: View {
                 .padding(Theme.Space.l)
             }
             .background(Theme.Color.background)
+            // A field typed into opens Echoel's number pad at the page's bottom edge, not a sheet.
+            .numberPadHost()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
