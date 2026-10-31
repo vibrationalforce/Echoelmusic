@@ -1,4 +1,3 @@
-import CoreText
 import SwiftUI
 
 /// The design system. Every colour, size and radius on screen comes from here, so the app
@@ -18,30 +17,29 @@ import SwiftUI
 /// Black on `accent` (an active button's label) is 11.6:1.
 enum Theme {
     enum Color {
-        /// The one neutral every grey here is a slice of (#e0e0e0, the website's `--text`).
-        private static let neutral = SwiftUI.Color(red: 0.878, green: 0.878, blue: 0.878)
-
-        static let background = SwiftUI.Color.black
+        // The values live in `EchoelBrand` (`Plugins/Shared/EchoelBrand.swift`), which the AUv3
+        // extension compiles too, so the plugin window and the Studio share ONE source.
+        static let background = EchoelBrand.Color.background
         /// Panels and rows (#0e0e12).
-        static let surface = SwiftUI.Color(red: 0.055, green: 0.055, blue: 0.070)
+        static let surface = EchoelBrand.Color.surface
         /// A control's own fill: the earlier app's 6 % neutral, composited onto `surface` so it
         /// reads the same wherever it sits.
-        static let surfaceRaised = SwiftUI.Color(red: 0.104, green: 0.104, blue: 0.118)
+        static let surfaceRaised = EchoelBrand.Color.surfaceRaised
         /// A hairline that separates; it does not announce a control.
-        static let border = neutral.opacity(0.10)
+        static let border = EchoelBrand.Color.border
         /// The boundary of something operable — a parameter field, a key of the number pad.
-        static let borderStrong = neutral.opacity(0.45)
-        static let text = neutral
-        static let textSecondary = neutral.opacity(0.65)
-        static let textTertiary = neutral.opacity(0.58)
+        static let borderStrong = EchoelBrand.Color.borderStrong
+        static let text = EchoelBrand.Color.text
+        static let textSecondary = EchoelBrand.Color.textSecondary
+        static let textTertiary = EchoelBrand.Color.textTertiary
         /// Bio-green: the signal colour, for what is active, selected or measured.
-        static let accent = SwiftUI.Color(red: 0.30, green: 0.85, blue: 0.55)
+        static let accent = EchoelBrand.Color.accent
         /// The label on an `accent` or `text` fill.
-        static let onAccent = SwiftUI.Color.black
+        static let onAccent = EchoelBrand.Color.onAccent
         /// Running, healthy, in range — the same green as the accent, so the app has one.
         static let play = accent
-        static let record = SwiftUI.Color(red: 0.90, green: 0.30, blue: 0.30)
-        static let warning = SwiftUI.Color(red: 0.90, green: 0.62, blue: 0.20)
+        static let record = EchoelBrand.Color.record
+        static let warning = EchoelBrand.Color.warning
 
         /// The 12 track colours. `Track.colorIndex` stores an index into this list.
         static let tracks: [SwiftUI.Color] = [
@@ -80,77 +78,57 @@ enum Theme {
     }
 
     enum Space {
-        static let xs: CGFloat = 4
-        static let s: CGFloat = 8
-        static let m: CGFloat = 12
-        static let l: CGFloat = 16
-        static let xl: CGFloat = 24
+        static let xs = EchoelBrand.Space.xs
+        static let s = EchoelBrand.Space.s
+        static let m = EchoelBrand.Space.m
+        static let l = EchoelBrand.Space.l
+        static let xl = EchoelBrand.Space.xl
     }
 
     enum Radius {
-        static let small: CGFloat = 4
-        static let medium: CGFloat = 8
-        static let large: CGFloat = 12
+        static let small = EchoelBrand.Radius.small
+        static let medium = EchoelBrand.Radius.medium
+        static let large = EchoelBrand.Radius.large
     }
 
     enum Size {
         /// Minimum touch target (Apple HIG).
-        static let touch: CGFloat = 44
+        static let touch = EchoelBrand.touch
         static let transportHeight: CGFloat = 56
         static let trackRowHeight: CGFloat = 56
         static let rulerHeight: CGFloat = 24
     }
 
     enum Font {
-        // The brand face, Atkinson Hyperlegible (Braille Institute, SIL Open Font License 1.1 —
-        // the licence travels in each file's own name table): letters built to be told apart at a
-        // glance, the face of the website and of the earlier instrument. Two faces ship, Regular
-        // and Bold; a custom font synthesises no weight in between, so every token names one.
-        //
-        // Text styles, never fixed point sizes: each size is relative to a text style, so every
-        // label follows the reader's Dynamic Type setting. Dense surfaces (the transport) cap the
-        // size they grow to, they never opt out. Should the face fail to register, `.custom`
-        // falls back to the system face at the same size — never to nothing.
-        static let title = brand(.bold, 17, relativeTo: .headline)
-        static let body = brand(.regular, 17, relativeTo: .body)
-        static let label = brand(.regular, 15, relativeTo: .subheadline)
-        static let caption = brand(.regular, 12, relativeTo: .caption)
+        // The brand face, Atkinson Hyperlegible, and every size: `EchoelBrand.Font`, shared with
+        // the AUv3 extension (which carries the two font files too). Text styles, never fixed point
+        // sizes; dense surfaces cap the size they grow to, they never opt out.
+        static let title = EchoelBrand.Font.title
+        static let body = EchoelBrand.Font.body
+        static let label = EchoelBrand.Font.label
+        static let caption = EchoelBrand.Font.caption
         /// Numbers that change (tempo, position, levels) use the face's tabular figures, so they
         /// never jitter.
-        static let value = brand(.bold, 17, relativeTo: .headline).monospacedDigit()
-        static let valueLarge = brand(.bold, 22, relativeTo: .title2).monospacedDigit()
+        static let value = EchoelBrand.Font.value
+        static let valueLarge = EchoelBrand.Font.valueLarge
         /// The number a pad is typing: the largest numeral on screen.
-        static let display = brand(.bold, 30, relativeTo: .largeTitle).monospacedDigit()
+        static let display = EchoelBrand.Font.display
 
-        enum Face: String, CaseIterable {
-            case regular = "AtkinsonHyperlegible-Regular"
-            case bold = "AtkinsonHyperlegible-Bold"
-        }
+        typealias Face = EchoelBrand.Font.Face
 
         static func brand(_ face: Face, _ size: CGFloat, relativeTo style: SwiftUI.Font.TextStyle) -> SwiftUI.Font {
-            _ = registered
-            return .custom(face.rawValue, size: size, relativeTo: style)
+            EchoelBrand.Font.brand(face, size, relativeTo: style)
         }
-
-        /// The faces in the app bundle (`Design/Fonts`), registered for this process the first
-        /// time any token is read — before the first text draws, and without an Info.plist entry.
-        private static let registered: Void = {
-            for face in Face.allCases {
-                guard let url = Bundle.main.url(forResource: face.rawValue, withExtension: "ttf") else { continue }
-                // False when the face is already registered; either way it can be drawn.
-                _ = CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
-            }
-        }()
     }
 
     enum Motion {
         /// A press, a highlight: 120 ms.
-        static var quick: Animation { .easeOut(duration: 0.12) }
+        static var quick: Animation { EchoelBrand.Motion.quick }
         /// A state that changes what a control shows: 180 ms. Motion is opacity and colour only,
         /// never scale or position.
-        static var standard: Animation { .easeInOut(duration: 0.18) }
+        static var standard: Animation { EchoelBrand.Motion.standard }
         /// How far a pressed control dims.
-        static let pressedOpacity: Double = 0.6
+        static let pressedOpacity = EchoelBrand.Motion.pressedOpacity
     }
 
     enum Accessibility {

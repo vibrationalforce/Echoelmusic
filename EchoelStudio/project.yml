@@ -51,6 +51,9 @@ targets:
       # The purchase id and name, shared with the extension by compiling the ONE file into both
       # targets; it is not in EchoelCore because the open packages do not know that anything is sold.
       - path: Plugins/Shared/PluginUnlock.swift
+      # Echoel's colours, sizes and face, shared with the extension the same way, so the plugin
+      # window and the Studio read ONE source (`Theme` reads its values from here).
+      - path: Plugins/Shared/EchoelBrand.swift
       - path: Support/App/PrivacyInfo.xcprivacy
         type: file
         buildPhase: resources
@@ -136,6 +139,10 @@ targets:
         excludes:
           - "Info.plist"
       - path: Plugins/Shared
+      # The brand face (Atkinson Hyperlegible, SIL OFL 1.1), so the plugin window in a host shows
+      # the Studio's letters; `EchoelBrand.Font` registers it from the extension's own bundle.
+      - path: App/Design/Fonts
+        buildPhase: resources
       - path: Support/Plugins/PrivacyInfo.xcprivacy
         type: file
         buildPhase: resources
