@@ -36,7 +36,7 @@ struct VideoExportView: View {
                     Picker("Length", selection: $shortSeconds) {
                         Text("Whole Song").tag(Double?.none)
                         ForEach(VideoExportPlan.shortFormSeconds, id: \.self) { seconds in
-                            Text("About \(Int(seconds)) s").tag(Double?.some(seconds))
+                            Text("About " + NumberText.string(seconds, decimals: 0, unit: "s")).tag(Double?.some(seconds))
                         }
                     }
                     if let range = shortRange {
@@ -85,7 +85,7 @@ struct VideoExportView: View {
     private func rangeText(_ range: ClosedRange<Tick>, seconds: Double) -> String {
         let bar = Swift.max(1, MusicalTime.ticksPerBar(store.project.timeSignature))
         let bars = (range.upperBound - range.lowerBound) / bar
-        return "Bars \(startBar) to \(startBar + Int(bars) - 1), \(seconds.formatted(.number.precision(.fractionLength(1)))) s."
+        return "Bars \(startBar) to \(startBar + Int(bars) - 1), \(NumberText.string(seconds, decimals: 1, unit: "s"))."
     }
 
     private func export() {

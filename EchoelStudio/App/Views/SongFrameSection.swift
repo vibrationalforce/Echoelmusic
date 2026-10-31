@@ -97,11 +97,11 @@ struct SongFrameSection: View {
         let barText = "Bar \(tick / bar + 1)"
         guard within != 0 else { return barText }
         let beats = Double(within) / Double(beat) + 1
-        return barText + ", beat " + beats.formatted(.number.precision(.fractionLength(0...2)))
+        return barText + ", beat " + NumberText.string(beats, decimalsUpTo: 2)
     }
 
     private func bpmText(_ bpm: Double) -> String {
-        bpm.formatted(.number.precision(.fractionLength(1))) + " BPM"
+        NumberText.string(bpm, decimals: 1, unit: "BPM")
     }
 
     private func heading(_ text: String) -> some View {

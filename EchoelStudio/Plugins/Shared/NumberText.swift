@@ -19,6 +19,13 @@ enum NumberText {
         return value.formatted(.number.precision(.fractionLength(decimals)).grouping(.never))
     }
 
+    /// `value` with as few digits after the separator as it needs, at most `decimalsUpTo`:
+    /// a beat reads "3", "2,5" or "1,25".
+    static func string(_ value: Double, decimalsUpTo: Int) -> String {
+        guard value.isFinite else { return "–" }
+        return value.formatted(.number.precision(.fractionLength(0...Swift.max(0, decimalsUpTo))).grouping(.never))
+    }
+
     /// `value` and its unit, a space between: "120,0 BPM", "-6,0 dB", "250 ms".
     static func string(_ value: Double, decimals: Int, unit: String) -> String {
         string(value, decimals: decimals) + " " + unit
