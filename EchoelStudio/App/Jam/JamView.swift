@@ -54,7 +54,7 @@ struct JamView: View {
 
     @ViewBuilder private var hostingSections: some View {
         EchoelSection("Hosting") {
-            ParagraphText("Phones nearby join from Song menu, Jam, Join a Jam. They play your tempo, time signature, Play and Stop, and come in on your next bar.")
+            ParagraphText("Phones nearby join from Song menu, Jam, Join a Jam. They play your tempo, time signature, Play and Stop. When you press Play, everyone starts together on the next bar; a phone that joins while you play comes in on your next bar.")
         }
         playersSection
         EchoelSection(footer: "Everyone else plays on at the last tempo until they leave.") {

@@ -207,6 +207,7 @@ struct TransportBar: View {
     @Environment(RecordController.self) private var recording
     @Environment(MIDIInput.self) private var midi
     @Environment(ParameterWriter.self) private var writer
+    @Environment(JamSession.self) private var jam: JamSession?
     @State private var clickOn = true
     @AppStorage(PlayKeysView.shownKey) private var showsKeys = true
     @AppStorage(FieldWindow.shownKey) private var showsFieldWindow = true
@@ -319,22 +320,29 @@ struct TransportBar: View {
         .accessibilityValue(writer.isWriting ? "Writing automation" : midi.isLearning ? "MIDI Learn on" : "")
     }
 
-    /// Play, Record and Loop, side by side in every layout.
+    /// The jam's host pressed Play and waits for the next bar line: Stop calls the start off.
+    private var countsIn: Bool { jam?.startIsPending == true }
+
+    /// Play, Record and Loop, side by side in every layout. With phones in a jam this phone
+    /// hosts, Play waits for the jam's next bar line, so everyone starts together.
     private var transportGroup: some View {
         HStack(spacing: Theme.Space.s) {
             Button {
                 if engine.isStalled {
                     engine.restartAudio()
+                } else if countsIn {
+                    jam?.cancelPendingStart()
                 } else if engine.isPlaying {
                     Task { await recording.stopTransport() }
-                } else {
+                } else if jam?.playOnTheNextBar() != true {
                     engine.play()
                 }
             } label: {
-                Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying ? "stop.fill" : "play.fill")
+                Image(systemName: engine.isStalled ? "arrow.clockwise" : engine.isPlaying || countsIn ? "stop.fill" : "play.fill")
             }
-            .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying, activeColor: Theme.Color.play))
-            .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying ? "Stop" : "Play")
+            .buttonStyle(ToolButtonStyle(isActive: engine.isPlaying || countsIn, activeColor: Theme.Color.play))
+            .accessibilityLabel(engine.isStalled ? "Restart Audio" : engine.isPlaying || countsIn ? "Stop" : "Play")
+            .accessibilityValue(countsIn ? "Starts on the next bar" : "")
             // When audio could not start, this is the way to try again (ultra-audit R1).
             .disabled(!engine.isRunning && !engine.isStalled)
 

@@ -39,6 +39,9 @@ final class JamSession {
     private(set) var followedTempo: Double?
     private(set) var followedSignature: TimeSignature?
     private(set) var followPhase: JamFollower.Phase = .waiting
+    /// The host pressed Play with phones in the jam and waits for the next bar line
+    /// (`playOnTheNextBar`): the transport shows Stop, which calls the start off.
+    private(set) var startIsPending = false
     /// What went wrong, in words, until the next Host a Jam or Join a Jam.
     private(set) var problem: String?
 
@@ -57,6 +60,9 @@ final class JamSession {
     @ObservationIgnored private var guests: [JamPeer] = []
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var startTask: Task<Void, Never>?
+    /// The host's announced start, from the press until its first check held it to its word.
+    @ObservationIgnored private var countIn: JamCountIn?
+    @ObservationIgnored private var countInTask: Task<Void, Never>?
     @ObservationIgnored private var joinTimer: Task<Void, Never>?
     @ObservationIgnored private var pings: UInt32 = 0
     @ObservationIgnored private var loopTurn = 0
@@ -137,6 +143,10 @@ final class JamSession {
         loop = nil
         startTask?.cancel()
         startTask = nil
+        countInTask?.cancel()
+        countInTask = nil
+        countIn = nil
+        if startIsPending { startIsPending = false }
         joinTimer?.cancel()
         joinTimer = nil
         stopFollowing()
@@ -265,8 +275,9 @@ final class JamSession {
     }
 
     /// The host's word, when its beacon says it is due: what it plays, anchored where it is heard.
+    /// Not while it counts in: the announced start is its word until the first check held it.
     private func speak() {
-        guard let link, let engine, let store, !guests.isEmpty else { return }
+        guard countIn == nil, let link, let engine, let store, !guests.isEmpty else { return }
         let project = store.project
         let map = engine.playedTempoMap(of: project)
         let state: JamState
@@ -285,6 +296,100 @@ final class JamSession {
         if let due = beacon.due(state) {
             link.send(JamMessage(state: due), reliably: true)
         }
+    }
+
+    /// The host's Play while phones are in the jam (founder 2026-10-31): announced at once for the
+    /// next bar line of the jam's grid and started there, so every phone comes in together, the
+    /// song from the start of the bar its playhead stands in (`JamCountIn`). False, with nothing
+    /// done — Play then starts at once, as it always did — without a phone in the jam, while the
+    /// song plays or already counts in, while this phone follows a MIDI clock (whose Start is the
+    /// start), or while the audio cannot run.
+    func playOnTheNextBar() -> Bool {
+        guard role == .hosting, !guests.isEmpty, !startIsPending, midi?.followedSource == nil,
+              let link, let engine, let store, !engine.isPlaying, engine.canPlay() else { return false }
+        let project = store.project
+        let playhead = engine.playheadTick(in: project)
+        guard let announced = JamCountIn(playhead: playhead, now: JamTime.now(),
+                                         tempo: engine.playedTempoMap(of: project).bpm(at: playhead),
+                                         signature: project.timeSignature) else { return false }
+        // A start is always news, whatever the beacon said last.
+        beacon.reset()
+        guard let due = beacon.due(announced.state) else { return false }
+        link.send(JamMessage(state: due), reliably: true)
+        countIn = announced
+        startIsPending = true
+        let delay = Self.secondsUntilHeard(at: announced.state.anchorTime)
+        countInTask = Task { @MainActor [weak self] in
+            if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
+            guard !Task.isCancelled else { return }
+            self?.beginCountIn()
+        }
+        DiagnosticLog.app.note("jam: count in", [("tick", announced.state.anchorTick),
+                                                 ("seconds", announced.state.anchorTime - JamTime.now())])
+        return true
+    }
+
+    /// Stop while the host counts in: the start is called off, here and on every phone.
+    func cancelPendingStart() {
+        guard startIsPending else { return }
+        countInTask?.cancel()
+        countInTask = nil
+        countIn = nil
+        startIsPending = false
+        speak()
+        DiagnosticLog.app.note("jam: count-in called off")
+    }
+
+    /// The bar line has come: the song from the announced bar, started early by the output's
+    /// latency like a guest's start; a buffer later the first check holds it to its word.
+    private func beginCountIn() {
+        countInTask = nil
+        guard startIsPending, let announced = countIn, let engine else { return }
+        startIsPending = false
+        // Something else started the song meanwhile (Record, a launch): that start stands, and the
+        // host's next word says where it is.
+        guard !engine.isPlaying else {
+            countIn = nil
+            return
+        }
+        engine.seek(toTick: MusicalTime.integer(announced.state.anchorTick))
+        engine.play()
+        guard engine.isPlaying else {
+            // The audio refused: the next word says the host is stopped, and the phones stop too.
+            countIn = nil
+            return
+        }
+        DiagnosticLog.app.note("jam: host start", [("tick", announced.state.anchorTick)])
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(80))
+            self?.holdCountIn()
+        }
+    }
+
+    /// The host's first check after its counted-in start: what it hears, brought onto the bar
+    /// line it announced (`JamCountIn.correction`). Then it speaks as usual again.
+    private func holdCountIn() {
+        guard !startIsPending, let announced = countIn else { return }
+        guard let engine, engine.isPlaying else {
+            countIn = nil
+            return
+        }
+        let now = mach_absolute_time()
+        // The first buffer after Play is not heard yet: the check waits for it — for a second at
+        // most, on a device that gives no host time.
+        guard let heard = engine.heardPosition(atHostTime: now) else {
+            if JamTime.seconds(now) > announced.state.anchorTime + 1 { countIn = nil }
+            return
+        }
+        switch announced.correction(heard: heard.tick, atHostTime: JamTime.seconds(now)) {
+        case .none:
+            break
+        case .nudge(let seconds):
+            engine.nudge(seconds: seconds)
+        case .relock(let gap):
+            engine.relock(byTicks: gap, samplesPerTick: heard.samplesPerTick)
+        }
+        countIn = nil
     }
 
     // MARK: - Following
@@ -333,15 +438,20 @@ final class JamSession {
     /// phase check takes out what is left (`JamFollower.correct`).
     private func schedule(_ start: JamStart) {
         startTask?.cancel()
-        let session = AVAudioSession.sharedInstance()
-        let latency = Self.bounded(session.outputLatency, 0.25)
-        let buffer = Self.bounded(session.ioBufferDuration, 0.1)
-        let wait = start.localTime - latency - 1.5 * buffer - JamTime.now()
+        let delay = Self.secondsUntilHeard(at: start.localTime)
         startTask = Task { @MainActor [weak self] in
-            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+            if delay > 0 { try? await Task.sleep(for: .seconds(delay)) }
             guard !Task.isCancelled else { return }
             self?.begin(start)
         }
+    }
+
+    /// How long to wait before Play so the start is heard at `time` on this phone's clock.
+    private static func secondsUntilHeard(at time: Double) -> Double {
+        let session = AVAudioSession.sharedInstance()
+        let latency = bounded(session.outputLatency, 0.25)
+        let buffer = bounded(session.ioBufferDuration, 0.1)
+        return time - latency - 1.5 * buffer - JamTime.now()
     }
 
     private func begin(_ start: JamStart) {
@@ -405,7 +515,11 @@ final class JamSession {
         loopTurn &+= 1
         switch role {
         case .hosting:
-            if loopTurn % 2 == 0 { speak() }
+            if countIn != nil {
+                holdCountIn()
+            } else if loopTurn % 2 == 0 {
+                speak()
+            }
         case .joined:
             guard let engine else { return }
             // Eight pings a second for the first second, so the clocks are measured before the
@@ -441,7 +555,7 @@ final class JamSession {
     var transportLine: (text: String, warning: Bool)? {
         switch role {
         case .hosting:
-            return (text: "Hosting a Jam.", warning: false)
+            return (text: startIsPending ? "Starting on the next bar." : "Hosting a Jam.", warning: false)
         case .joined:
             return (text: followText, warning: hostIsGone)
         case .off, .looking, .joining:
