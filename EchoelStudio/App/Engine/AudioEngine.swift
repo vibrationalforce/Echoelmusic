@@ -953,12 +953,29 @@ final class AudioEngine {
         }
     }
 
-    /// The song as the engine plays it: itself, or the clock's tempo in place of its own while a
-    /// clock is followed (`ClockFollower.played`). Every snapshot, seek, placement and automation
-    /// point goes through this one function (review 2026-10-28, 2.2).
+    /// A jam host's time signature while a jam is followed (W16); nil for a MIDI clock, which has
+    /// none. Played, never written into the song, like `externalTempo`.
+    var externalSignature: TimeSignature? {
+        didSet {
+            guard externalSignature != oldValue, followsExternalClock, let project else { return }
+            publish(project)
+        }
+    }
+
+    /// The song as the engine plays it: itself, or the clock's tempo — and a jam host's time
+    /// signature — in place of its own while a clock is followed (`ClockFollower.played`). Every
+    /// snapshot, seek, placement and automation point goes through this one function (review
+    /// 2026-10-28, 2.2).
     private func playing(_ project: Project) -> Project {
         guard followsExternalClock else { return project }
-        return ClockFollower.played(project, tempo: externalTempo)
+        return ClockFollower.played(project, tempo: externalTempo, signature: externalSignature)
+    }
+
+    /// The bars the song loops over while it does (bar 1 to the end of its last bar, in the played
+    /// time signature); nil while the loop is off or a take suspends it. A jam's guest comes in on
+    /// the bar of its own loop that matches the host's (`JamStart.songTick`).
+    var activeLoop: Range<Tick>? {
+        loopsSong && take == nil ? songLoop : nil
     }
 
     /// The decoded audio files sampler tracks play. Republishes the current project with them.

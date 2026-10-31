@@ -51,6 +51,7 @@ jobs:
               "EchoelStudio/App/Engine/MIDIInput.swift",
               "EchoelStudio/App/Streaming/StreamPublisher.swift",
               "EchoelStudio/App/Connections/UDPSender.swift",
+              "EchoelStudio/App/Jam/JamLink.swift",
           }
           found = sorted(name for name in swift.files("EchoelStudio/*.swift", ":!EchoelStudio/**/Tests/**")
                          if swift.names_network(swift.read(name)))

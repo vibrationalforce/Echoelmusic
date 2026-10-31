@@ -43,6 +43,8 @@ enum StudioSheet: Identifiable, Hashable {
     case streaming
     /// OSC, ADM-OSC, Art-Net and sACN out, each off until switched on here (wave W4).
     case connections
+    /// Phones in one room play to one bar: host a jam or join one nearby (W16).
+    case jam
 
     var id: Self { self }
 }

@@ -133,11 +133,19 @@ extension ClockFollower {
     /// Every snapshot the engine publishes, every seek, every placement and every automation
     /// point goes through this one function while following, so none of them is computed from
     /// the song's own map while the clock plays another (review 2026-10-28, 2.2).
-    public static func played(_ project: Project, tempo: Double?) -> Project {
+    ///
+    /// A jam's host (W16) also owns the time signature: `signature`, when it is one a song can
+    /// have, is played in place of the song's, so the click and the bar lines are the host's. A MIDI
+    /// clock carries none and passes nil; the song's own signature, like its tempo, waits
+    /// underneath unchanged.
+    public static func played(_ project: Project, tempo: Double?, signature: TimeSignature? = nil) -> Project {
         var played = project
         played.tempoChanges = []
         if let tempo, tempo.isFinite {
             played.tempo = Swift.min(Swift.max(tempo, Tempo.range.lowerBound), Tempo.range.upperBound)
+        }
+        if let signature, signature.isValid {
+            played.timeSignature = signature
         }
         return played
     }

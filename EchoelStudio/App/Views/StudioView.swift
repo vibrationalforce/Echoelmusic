@@ -9,6 +9,7 @@ struct StudioView: View {
     @Environment(AudioEngine.self) private var engine
     @Environment(DocumentController.self) private var documents
     @Environment(HeartRateStrap.self) private var strap
+    @Environment(MIDIInput.self) private var midi
 
     @State private var router = StudioRouter()
     /// The Connections module (wave W4), owned here so a connection keeps sending while its
@@ -26,6 +27,9 @@ struct StudioView: View {
     @AppStorage(VideoWindow.shownKey) private var showsVideoWindow = true
     /// The live stream (W14); off until Go Live on its page. Owned here so a stream outlives the page.
     @State private var streaming = StreamingController()
+    /// The jam (W16); off until the musician hosts or joins one on its page. Owned here so a jam
+    /// keeps its clock while the page is closed.
+    @State private var jam = JamSession()
 
     enum Surface: Hashable { case tracks, arrange, session, mixer, field, sky }
 
@@ -49,11 +53,13 @@ struct StudioView: View {
         .environment(router)
         .environment(streaming)
         .environment(connections)
+        .environment(jam)
         .background(Theme.Color.background)
         .onAppear {
             engine.setSamples(documents.samples)
             engine.update(store.project)
             connections.attach(engine: engine, store: store, strap: strap)
+            jam.attach(engine: engine, store: store, midi: midi)
         }
         .onChange(of: store.project) { _, project in engine.update(project) }
         .onChange(of: documents.mediaRevision) { engine.setSamples(documents.samples) }
@@ -111,6 +117,7 @@ struct StudioView: View {
         case .rename(let target): RenameView(target: target)
         case .streaming: StreamingView()
         case .connections: ConnectionsView()
+        case .jam: JamView()
         case let .importAudio(track, start):
             AudioFilePicker(pick: { url in
                 router.sheet = nil
@@ -409,6 +416,8 @@ struct TransportBar: View {
             // What the fingertip on the camera should do (wave W1); its own leaf, so this strip
             // never observes the camera.
             TransportCueLine()
+            // Hosting, following, or the host lost (W16); its own leaf too.
+            JamStatusLine()
             messages
         }
     }
@@ -545,11 +554,29 @@ private struct TransportCueLine: View {
     }
 }
 
+/// The jam under the transport while there is one: hosting, following, or the host lost — in the
+/// warning colour, with the tempo this phone plays on at. Its own leaf, the one view here that
+/// reads the jam's phase, which changes only when the jam does (Law 6).
+private struct JamStatusLine: View {
+    @Environment(JamSession.self) private var jam: JamSession?
+
+    var body: some View {
+        if let line = jam?.transportLine {
+            Text(line.text)
+                .font(Theme.Font.caption)
+                .foregroundStyle(line.warning ? Theme.Color.warning : Theme.Color.textSecondary)
+                .padding(.bottom, Theme.Space.xxs)
+        }
+    }
+}
+
 /// Tempo as a number you drag vertically (up = faster) or step with the buttons. One drag is
-/// one undo step.
+/// one undo step. While an external MIDI clock or a jam's host sets the pace, it shows theirs and
+/// is locked.
 struct TempoField: View {
     @Environment(ProjectStore.self) private var store
     @Environment(MIDIInput.self) private var midi
+    @Environment(JamSession.self) private var jam: JamSession?
     @Environment(NumberPadController.self) private var pad: NumberPadController?
     @State private var dragStart: Double?
     @State private var taps = TapTempo()
@@ -577,9 +604,10 @@ struct TempoField: View {
                     .font(Theme.Font.valueLarge)
                     .foregroundStyle(isTyped ? Theme.Color.accent : Theme.Color.text)
                 // "EXT" stands where the unit stands, in the same three letters' room: while an
-                // external MIDI clock sets the tempo, the number is the clock's. A word would not
-                // fit under the number; VoiceOver says it in full below.
-                Text(midi.followedSource == nil ? "BPM" : "EXT")
+                // external MIDI clock sets the tempo, the number is the clock's — and "JAM" while a
+                // jam's host sets it. A word would not fit under the number; VoiceOver says it in
+                // full below, and the line under the transport says "Following the Jam."
+                Text(followsJam ? "JAM" : midi.followedSource == nil ? "BPM" : "EXT")
                     .font(Theme.Font.caption)
                     .foregroundStyle(Theme.Color.textSecondary)
             }
@@ -603,7 +631,7 @@ struct TempoField: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Tempo")
             .accessibilityValue(NumberText.string(shownTempo, decimalsUpTo: 2, unit: "BPM")
-                                + (followsClock ? ", External Clock" : ""))
+                                + (followsJam ? ", Following the Jam" : followsClock ? ", External Clock" : ""))
             .accessibilityAdjustableAction { direction in
                 nudge(direction == .increment ? 1 : -1)
             }
@@ -623,7 +651,10 @@ struct TempoField: View {
         }
     }
 
-    private var followsClock: Bool { midi.followedSource != nil }
+    /// A MIDI clock or a jam's host sets the pace: the field shows theirs and takes no edit.
+    private var followsClock: Bool { midi.followedSource != nil || followsJam }
+
+    private var followsJam: Bool { jam?.followsJam == true }
 
     private static let padOwner = "project.tempo"
 
@@ -642,9 +673,11 @@ struct TempoField: View {
         })
     }
 
-    /// While a clock is followed it sets the pace; the song's own tempo waits underneath, unchanged.
+    /// While a clock or a jam is followed it sets the pace; the song's own tempo waits underneath,
+    /// unchanged.
     private var shownTempo: Double {
-        followsClock ? (midi.clockTempo ?? store.project.tempo) : store.project.tempo
+        if followsJam { return jam?.followedTempo ?? store.project.tempo }
+        return followsClock ? (midi.clockTempo ?? store.project.tempo) : store.project.tempo
     }
 
     /// A run of taps is one undo step: a new measurement closes the one before.
@@ -676,6 +709,7 @@ struct SongMenu: View {
     @Environment(StudioRouter.self) private var router
     @Environment(AgentSession.self) private var agent
     @Environment(ParameterWriter.self) private var writer
+    @Environment(JamSession.self) private var jam: JamSession?
 
     var body: some View {
         Menu {
@@ -803,6 +837,8 @@ struct SongMenu: View {
                         }
                     }
                 }
+                // One external clock at a time: while a jam's host sets the pace, this waits.
+                .disabled(jam?.followsJam == true)
                 Toggle(isOn: Binding(get: { midi.networkEnabled }, set: { midi.setNetwork($0) })) {
                     Label("Network MIDI", systemImage: "network")
                 }
@@ -815,6 +851,8 @@ struct SongMenu: View {
                 // shows beside Record while it is measured.
                 BodySourceMenu()
                 Button("Go Live…", systemImage: "dot.radiowaves.left.and.right") { router.sheet = .streaming }
+                // Phones in one room play to one bar (W16): off until the musician hosts or joins.
+                Button("Jam…", systemImage: "person.2.wave.2") { router.sheet = .jam }
             }
             Section("App") {
                 if agent.isOffered {
